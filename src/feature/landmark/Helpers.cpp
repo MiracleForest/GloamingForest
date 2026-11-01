@@ -4,6 +4,7 @@
 // The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757,
 // src/generated/resources/data/twilightforest/worldgen/structure/lich_tower.json; LGPL-2.1-or-later).
 #include <cctype>
+#include <filesystem>
 #include <mutex>
 #include <optional>
 #include <set>
@@ -31,6 +32,7 @@
 #include "game/Blocks.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
+#include "mod/Main.h"
 
 namespace gf::feature::landmark {
 
@@ -137,8 +139,12 @@ BlockBox porchBox(Start const& s) { return {s.center.x - 3, s.center.y, s.center
 
 } // namespace
 
-void registerFixture() {
-    if (info(kFixtureKey)) return;
+bool registerFixture() {
+    if (info(kFixtureKey)) return true;
+    // only where the gf_test fixture data is deployed (development builds; a release build made with
+    // GF_NO_TEST_PACKS=1 has no <mod>/data/gf_test, so /place, locate and genbook never see these)
+    std::error_code ec;
+    if (!std::filesystem::is_directory(Mod::getInstance().getSelf().getModDir() / "data" / "gf_test", ec)) return false;
     Info fixture = parseRecord(kFixtureKey, Json::parse(R"({
         "type": "twilightforest:progression",
         "advancements_required": ["twilightforest:progress_naga"],
@@ -172,6 +178,7 @@ void registerFixture() {
         .pieceProtected = [](Start const& s, BlockPos const& pos) { return shellBox(s).contains(pos.x, pos.y, pos.z); },
     });
     setGenerator(kOpenFixtureKey, Generator{.layout = layout});
+    return true;
 }
 
 } // namespace gf::feature::landmark

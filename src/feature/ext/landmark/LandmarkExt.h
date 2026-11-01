@@ -83,10 +83,12 @@ struct Located {
     std::string key;
     GlobalPos   pos; ///< landmark center / locate position (y 0 for grid landmarks)
 };
-/// The nearest start position of structure `key` (or any member of tag "#twilightforest:landmark")
-/// within `chunkRadius` chunks of (x, z): WorldUtil#findNearestMapLandmark for landmark grid sets,
-/// the vanilla ring search for random spread sets.
-[[nodiscard]] std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x, int z, int chunkRadius, bool skipKnownStructures = false);
+/// ChunkGenerator#findNearestMapStructure with TF's hook, for structure `key` (or any member of tag
+/// "#twilightforest:landmark") around (x, z): first vanilla's ring search over the random spread
+/// sets (`searchRadius` rings of their spacing; the first ring with a hit returns), else
+/// WorldUtil#findNearestMapLandmark over the landmark grid sets (`searchRadius` cells of 16
+/// chunks, as TF passes vanilla's radius on). /locate passes 100.
+[[nodiscard]] std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x, int z, int searchRadius, bool skipKnownStructures = false);
 
 #ifdef GF_CLIENT
 namespace client {

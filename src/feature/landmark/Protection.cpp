@@ -17,9 +17,10 @@
 // ProtectionBox entities and 20 protection particles. Here the companion clients get
 // landmark.area_protection, and every player near (vanilla clients too) sees the boxes as
 // twilightforest:protection_box entities (BP timer: 60 ticks, refreshed while the protection
-// repeats) and the twilightforest:protection particles. Every 100 ticks companions also get the
-// locked structure's boxes (landmark.structure_protection, StructureProtectionPacket) for the
-// protection weather. Handlers run at interactions priority Highest (rule R8).
+// repeats; never kept with the world: a box loaded back with its chunk is removed) and the
+// twilightforest:protection particles. Every 100 ticks companions also get the locked structure's
+// boxes (landmark.structure_protection, StructureProtectionPacket) for the protection weather.
+// Handlers run at interactions priority Highest (rule R8).
 #include <algorithm>
 #include <cmath>
 #include <map>
@@ -28,8 +29,11 @@
 #include <unordered_map>
 #include <variant>
 
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/server/ServerPlayer.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
@@ -65,20 +69,25 @@ namespace {
 constexpr char kProtectionBox[]      = "twilightforest:protection_box";
 constexpr char kProtectionParticle[] = "twilightforest:protection";
 constexpr int  kBoxLifetime          = 60; ///< ProtectionBox#lifeTime
+/// The size and refresh properties of the box entity (BP entity, synced to every client).
+constexpr char kSizeX[] = "gf:size_x", kSizeY[] = "gf:size_y", kSizeZ[] = "gf:size_z", kEpoch[] = "gf:epoch";
 
 struct LiveBox {
     int           dim = 0;
     BlockBox      box;
     std::int64_t  actor   = 0;
     std::uint64_t expires = 0;
+    int           epoch   = 0; ///< refreshes so far (the gf:epoch property, mod 1024)
 };
 
 struct State {
     std::mutex                                   mutex;
     std::optional<bool>                          enforcedOverride;
+    AdvancementCheck                             advancementOverride;
     std::vector<LiveBox>                         boxes;
     std::unordered_map<std::int64_t, std::string> lastStructurePayload; ///< per companion
     std::vector<ia::HandlerId>                   handlers;
+    ll::event::ListenerPtr                       disconnect;
     std::uint64_t                                tick = 0;
 };
 State& state() {
@@ -109,16 +118,9 @@ std::optional<Hit> protectionAt(Player const& player, int dim, int x, int y, int
     if (!rec) return std::nullopt;
     auto const* inf = info(rec->start.key);
     if (!inf || !inf->traits.progression) return std::nullopt;
-    auto const* gen     = generatorFor(rec->start.key);
-    bool        inPiece = false;
-    for (auto const& p : rec->pieces) {
-        if (!p.box.contains(x, y, z)) continue;
-        bool prot = gen && gen->pieceProtected ? gen->pieceProtected(rec->start, BlockPos{x, y, z}) : p.protectedPiece;
-        if (prot) {
-            inPiece = true;
-            break;
-        }
-    }
+    bool inPiece = false;
+    for (std::size_t i = 0; i < rec->pieces.size() && !inPiece; ++i)
+        inPiece = rec->pieces[i].box.contains(x, y, z) && pieceProtectedAt(*rec, i, x, y, z);
     if (!inPiece) return std::nullopt;
     if (hasRequiredAdvancements(player, *inf)) return std::nullopt;
     return Hit{rec, inf};
@@ -159,6 +161,20 @@ void raise(Actor& actor, std::string const& event) {
     actor.executeEvent(event, params);
 }
 
+/// Queues an int entity property of the box entity (false: refused).
+bool setIntProperty(Actor& actor, char const* name, int value) {
+    auto props = actor.getEntityContext().tryGetComponent<PropertyComponent>();
+    return props && ActorPropertyUtils::tryQueueIntValue(*props, actor, HashedString(name).getHash(), value);
+}
+
+/// Every protection box entity of the level (stray ones included).
+std::vector<Actor*> boxEntities(Level& level) {
+    std::vector<Actor*> out;
+    for (auto* a : level.getRuntimeActorList())
+        if (a && a->getTypeName() == kProtectionBox) out.push_back(a);
+    return out;
+}
+
 /// Spawns a protection box entity for `box`, or refreshes the living one (ProtectionBox#matches /
 /// resetLifetime). The entity stands on the box's top center; its geometry hangs below and is scaled by the
 /// size properties (sizeX * 16 + 2 pixels as ProtectionBoxModel).
@@ -178,11 +194,21 @@ void spawnOrRefreshBox(int dim, BlockBox const& box) {
         ActorUniqueID id;
         id.rawID = actorId;
         if (auto* a = level->fetchEntity(id, false); a && a->isAlive()) {
+            // ProtectionBox#resetLifetime: the BP timer starts again, and the epoch tells the client's
+            // render controller the 60 ticks restart (its alpha fade over the last 20)
             raise(*a, "gf:refresh");
-            auto            expires = now() + kBoxLifetime;
-            std::lock_guard lock(s.mutex);
-            for (auto& live : s.boxes)
-                if (live.actor == actorId) live.expires = expires;
+            auto expires = now() + kBoxLifetime;
+            int  epoch   = 0;
+            {
+                std::lock_guard lock(s.mutex);
+                for (auto& live : s.boxes)
+                    if (live.actor == actorId) {
+                        live.expires = expires;
+                        live.epoch   = (live.epoch + 1) % 1024;
+                        epoch        = live.epoch;
+                    }
+            }
+            (void)setIntProperty(*a, kEpoch, epoch);
             return;
         }
     }
@@ -199,14 +225,13 @@ void spawnOrRefreshBox(int dim, BlockBox const& box) {
     float z  = static_cast<float>(box.minZ) + static_cast<float>(sz) / 2.0f;
     auto* actor = spawnEntity(*region, kProtectionBox, x, y, z, [sx, sy, sz](Actor& a) {
         // the size properties gf:size_x / _y / _z (declared in the BP entity, synced to every client)
-        auto props = a.getEntityContext().tryGetComponent<PropertyComponent>();
-        if (!props) {
+        if (!a.getEntityContext().tryGetComponent<PropertyComponent>()) {
             log().warn("landmark: the protection box has no entity properties");
             return;
         }
         bool ok = true;
-        for (auto [name, value] : {std::pair{"gf:size_x", sx}, std::pair{"gf:size_y", sy}, std::pair{"gf:size_z", sz}})
-            ok = ActorPropertyUtils::tryQueueIntValue(*props, a, HashedString(name).getHash(), std::clamp(value, 1, 1023)) && ok;
+        for (auto [name, value] : {std::pair{kSizeX, sx}, std::pair{kSizeY, sy}, std::pair{kSizeZ, sz}})
+            ok = setIntProperty(a, name, std::clamp(value, 1, 1023)) && ok;
         static bool warned = false;
         if (!ok && !warned) {
             warned = true;
@@ -241,9 +266,13 @@ void checkForLockedStructures(Player& player) {
     auto const* inf = info(rec->start.key);
     if (inf && inf->traits.progression && !hasRequiredAdvancements(player, *inf)) {
         Json boxes = Json::array();
-        for (auto const& p : rec->pieces) {
-            auto b = p.protectedPiece ? BlockBox{p.box.minX - 4, p.box.minY - 4, p.box.minZ - 4, p.box.maxX + 4, p.box.maxY + 4, p.box.maxZ + 4} : p.box;
-            boxes.push_back(Json{{"box", boxArray(b)}, {"protected", p.protectedPiece}});
+        for (std::size_t i = 0; i < rec->pieces.size(); ++i) {
+            // isPieceProtected(piece), the same rule as isAreaProtected (asked at the piece's center)
+            auto const& p    = rec->pieces[i];
+            auto        c    = core::landmark::boxCenter(p.box);
+            bool        prot = pieceProtectedAt(*rec, i, c.x, (p.box.minY + p.box.maxY) / 2, c.z);
+            auto        b    = prot ? BlockBox{p.box.minX - 4, p.box.minY - 4, p.box.minZ - 4, p.box.maxX + 4, p.box.maxY + 4, p.box.maxZ + 4} : p.box;
+            boxes.push_back(Json{{"box", boxArray(b)}, {"protected", prot}});
         }
         sendStructureProtection(player, Json{{"boxes", boxes}});
         return;
@@ -272,10 +301,27 @@ void setEnforcedOverride(std::optional<bool> value) {
     state().enforcedOverride = value;
 }
 
+void setAdvancementOverride(AdvancementCheck check) {
+    std::lock_guard lock(state().mutex);
+    state().advancementOverride = std::move(check);
+}
+
 bool hasRequiredAdvancements(Player const& player, Info const& inf) {
+    // PlayerHelper#doesPlayerHaveRequiredAdvancements: every advancement of the lock
+    AdvancementCheck check;
+    {
+        std::lock_guard lock(state().mutex);
+        check = state().advancementOverride;
+    }
     for (auto const& adv : inf.d.lockAdvancements)
-        if (!progression::has(player, adv)) return false;
+        if (!(check ? check(player, adv) : progression::has(player, adv))) return false;
     return true;
+}
+
+bool pieceProtectedAt(Record const& record, std::size_t index, int x, int y, int z) {
+    if (index >= record.pieces.size()) return false;
+    if (auto gen = generatorFor(record.start.key); gen && gen->pieceProtected) return gen->pieceProtected(record.start, BlockPos{x, y, z});
+    return record.pieces[index].protectedPiece;
 }
 
 bool isAreaProtectedQuery(Player const& player, int dim, int x, int y, int z) { return protectionAt(player, dim, x, y, z).has_value(); }
@@ -356,6 +402,25 @@ std::string describeProtectionBoxes() {
     return out;
 }
 
+std::size_t sweepStrayProtectionBoxes() {
+    auto level = ll::service::getLevel();
+    if (!level) return 0;
+    std::vector<std::int64_t> tracked;
+    {
+        std::lock_guard lock(state().mutex);
+        for (auto const& b : state().boxes) tracked.push_back(b.actor);
+    }
+    std::size_t removed = 0;
+    for (auto* a : boxEntities(*level)) {
+        auto id = a->getOrCreateUniqueID().rawID;
+        if (std::find(tracked.begin(), tracked.end(), id) != tracked.end()) continue;
+        raise(*a, "gf:expire"); // minecraft:instant_despawn
+        ++removed;
+    }
+    if (removed > 0) log().info("landmark: removed {} stray protection box(es)", removed);
+    return removed;
+}
+
 std::size_t protectionBoxEntities() {
     auto level = ll::service::getLevel();
     if (!level) return 0;
@@ -380,6 +445,8 @@ void protectionTick(std::uint64_t tick) {
         std::lock_guard lock(state().mutex);
         std::erase_if(state().boxes, [t](LiveBox const& b) { return t > b.expires + 5; });
     }
+    // TF's ProtectionBox is a client entity, never saved: a box that came back with its chunk goes
+    if (tick % 20 == 0) (void)sweepStrayProtectionBoxes();
     // ProgressionEvents#performProtectionAndPortalChecks: every 100 ticks the nearby locked structure
     if (tick % 100 != 0 || !enforced()) return;
     std::vector<ActorUniqueID> companions;
@@ -414,7 +481,11 @@ void installProtection() {
         if (!region) return ia::Result::Pass;
         BlockPos clicked = game::blockPos(c.pos);
         BlockPos target  = game::replaceable(*region, clicked) ? clicked : stepOf(clicked, c.face);
-        for (auto const& p : multiPlaceExtras(c.itemId, target, c.player)) {
+        auto     extras  = multiPlaceExtras(c.itemId, target, c.player);
+        if (extras.empty()) return ia::Result::Pass;
+        // EntityMultiPlaceEvent#getReplacedBlockSnapshots: the target block and the extra ones
+        extras.insert(extras.begin(), target);
+        for (auto const& p : extras) {
             if (blockProtectedFromBreaking(game::blockIdAt(*region, p)) && isAreaProtected(c.player, c.pos.dim, p.x, p.y, p.z, c.firstEvent))
                 return ia::Result::Deny;
         }
@@ -427,10 +498,22 @@ void installProtection() {
         int  dim = static_cast<int>(c.entity.getDimensionId());
         return isAreaProtected(c.player, dim, pos.x, pos.y, pos.z, true) ? ia::Result::Deny : ia::Result::Pass;
     }, ia::priority::Highest));
-    // preventLockedAreaEntityDamage (any damage a player causes: projectiles, ...)
+    // a companion that joins (again) starts with no structure boxes: send them on the next check
+    // (TF sends every 100 ticks without remembering what it sent)
+    s.disconnect = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& e) {
+        auto            id = e.self().getOrCreateUniqueID().rawID;
+        std::lock_guard lock(state().mutex);
+        state().lastStructurePayload.erase(id);
+    });
     static bool combatRegistered = false;
     if (!combatRegistered) {
         combatRegistered = true;
+        net::onCompanionJoined([](Player& p) {
+            auto            id = p.getOrCreateUniqueID().rawID;
+            std::lock_guard lock(state().mutex);
+            state().lastStructurePayload.erase(id);
+        });
+        // preventLockedAreaEntityDamage (any damage a player causes: projectiles, ...)
         combat::onIncoming(combat::priority::Highest, [](combat::DamageInfo& d) {
             if (!d.attacker || !d.attacker->isPlayer()) return combat::Verdict::Pass;
             if (!isEnemy(d.victim) || d.victim.getTypeName() == "twilightforest:kobold") return combat::Verdict::Pass;
@@ -444,6 +527,8 @@ void installProtection() {
 void uninstallProtection() {
     for (auto id : state().handlers) ia::remove(id);
     state().handlers.clear();
+    if (state().disconnect) ll::event::EventBus::getInstance().removeListener(state().disconnect);
+    state().disconnect = nullptr;
 }
 
 void resetProtection() {

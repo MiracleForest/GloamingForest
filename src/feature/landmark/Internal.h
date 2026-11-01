@@ -127,7 +127,9 @@ void registerInfo(Info info);
 
 // ---- generators (Starts.cpp) -------------------------------------------------------------------------
 
-[[nodiscard]] Generator const* generatorFor(std::string const& key);
+/// The generator of `key` (nullptr: none). A shared copy: setGenerator / removeGenerator may run on
+/// another thread meanwhile.
+[[nodiscard]] std::shared_ptr<Generator const> generatorFor(std::string const& key);
 void setGenerator(std::string const& key, Generator generator);
 void removeGenerator(std::string const& key);
 /// Every terraformer of a structure (Generator::terraform, then addTerraformer's), immutable.
@@ -152,7 +154,11 @@ struct PieceInfo {
 struct Record {
     Start                                          start;
     int                                            chunkX = 0, chunkZ = 0; ///< the start chunk
-    bool                                           forced = false;         ///< made by forceStart / place
+    bool                                           forced = false;         ///< made by forceStart / generateAt
+    /// Made by generateAt (/twilightforest place, saplings): Java's /place structure and sapling
+    /// growth place the pieces without storing a start, so LandmarkUtil, locate, protection and the
+    /// controlled spawns never see it. forceStart's starts (selftests) are full starts.
+    bool                                           placed = false;
     std::vector<PieceInfo>                         pieces;
     std::vector<std::shared_ptr<structure::Piece>> livePieces; ///< empty when not loadable / reserved
     std::atomic<bool>                              reviveTried{false}; ///< reviveRecord ran (once per record)
@@ -183,8 +189,9 @@ void clearRecords();
 [[nodiscard]] std::string recordDbKey(int dim, int chunkX, int chunkZ);
 
 /// LandmarkUtil#locateNearestLandmarkStart: the #twilightforest:landmark start in the landmark
-/// center chunk nearest to chunk (cx, cz), plus off-grid starts (forceStart / place) whose box
-/// contains `pos` when given.
+/// center chunk nearest to chunk (cx, cz). With `pos`, also an off-grid start made by forceStart
+/// (the selftests' stand-in for a grid start; never a /twilightforest place one) whose box contains
+/// it.
 [[nodiscard]] RecordPtr nearestLandmark(int dim, int chunkX, int chunkZ, std::optional<GlobalPos> pos = std::nullopt);
 /// LandmarkUtil#locateNearestLandmarkStart(level, structureKey, pos) for a structure key.
 [[nodiscard]] RecordPtr nearestLandmarkOf(int dim, std::string const& key, int blockX, int blockZ);
@@ -204,6 +211,12 @@ void clearRecords();
 void ensureStartsIn(int dim, int chunkX, int chunkZ);
 /// ensureStartsIn for every start chunk that can reach chunk (cx, cz).
 void ensureStartsAround(int dim, int chunkX, int chunkZ);
+/// Whether the structure sets of start chunk (cx, cz) were evaluated (StructureCheck's "known").
+[[nodiscard]] bool startsEvaluated(int dim, int chunkX, int chunkZ);
+/// The index of a structure inside its decoration step: ChunkGenerator#applyBiomeDecoration counts
+/// every Structure registry entry of the step, vanilla's 34 included, in registry order (resource
+/// locations sorted path first, then namespace).
+[[nodiscard]] int featureIndex(Info const& info);
 /// Creates a start of `key` with its center at block (x, y, z) (y: nullopt = TF's height rule)
 /// for start chunk (cx, cz); nullptr when the generator made no pieces.
 [[nodiscard]] RecordPtr createStart(Info const& info, int dim, int chunkX, int chunkZ, std::optional<GlobalPos> at, bool forced);
@@ -243,10 +256,20 @@ void uninstallProtection();
 void resetProtection();
 /// Test seam: forces the enforcement result (nullopt: the gamerule).
 void setEnforcedOverride(std::optional<bool> value);
+/// Test seam: answers PlayerHelper's advancement check instead of gf::progression (nullptr: the
+/// progression store), so the allow path is testable while progression is a contract stub.
+using AdvancementCheck = std::function<bool(Player const& player, std::string const& advancement)>;
+void setAdvancementOverride(AdvancementCheck check);
+/// ProgressionEvents#isPieceProtected for piece `index` of a record: Generator::pieceProtected
+/// (asked at `at`, a position inside the piece) when the generator has one, else the piece's flag.
+[[nodiscard]] bool pieceProtectedAt(Record const& record, std::size_t index, int x, int y, int z);
 /// Test seam: protection boxes the server keeps alive (min corners and sizes).
 [[nodiscard]] std::vector<BlockBox> liveProtectionBoxes();
 /// Ids of the protection box entities alive (tests).
 [[nodiscard]] std::size_t protectionBoxEntities();
+/// Removes protection box entities the server does not track (a box saved with its chunk and loaded
+/// again: TF's ProtectionBox is a client entity that is never saved). Returns how many.
+std::size_t sweepStrayProtectionBoxes();
 /// The protection box entities with their positions (test diagnostics).
 [[nodiscard]] std::string describeProtectionBoxes();
 
@@ -259,6 +282,17 @@ void setEnforcedOverride(std::optional<bool> value);
 [[nodiscard]] std::optional<ItemStack> makeBook(std::string const& name, int pages, Player const* player);
 /// ProgressionStructure#trySpawnHintMonster (rate limited per structure, 20 attempts).
 bool trySpawnHintMonster(Info const& info, Player& player, int x, int y, int z);
+/// Spawns the hint mob of `info` at (x, y, z) holding the hint book for `player`, its main hand
+/// dropped on death (setDropChance(MAINHAND, PRESERVE_ITEM_DROP_CHANCE_THRESHOLD)).
+Actor* spawnHintCarrier(Info const& info, BlockSource& region, float x, float y, float z, Player const* player);
+/// The main-hand drop chance of a mob (SlotDropChancesComponent; nullopt: none set).
+[[nodiscard]] std::optional<float> mainHandDropChance(Actor& actor);
+/// Rewrites a hint book (translatable_book) for `reader`'s language; true when it changed.
+bool retranslateBook(ItemStack& book, Player const& reader);
+/// Level#getGameTime: the persisted world tick (level.dat's currentTick).
+[[nodiscard]] std::uint64_t gameTime();
+void installHints();
+void uninstallHints();
 void resetHints();
 
 // ---- shared helpers ----------------------------------------------------------------------------------
@@ -274,8 +308,11 @@ void emitParticles(int dim, std::string const& id, std::vector<std::array<float,
 /// Whether a contract stub was hit (core/Stub.h) since start.
 [[nodiscard]] bool stubHit(std::string const& name);
 
-/// Registers the test fixture landmark "gf_test:landmark_fixture" (descriptor + generator) when the
-/// gf_test fixture pack is present (development builds).
-void registerFixture();
+/// Registers the test fixture landmarks "gf_test:landmark_fixture" / "_open" (descriptor +
+/// generator) when the gf_test fixture data is deployed (<mod>/data/gf_test: development builds;
+/// GF_NO_TEST_PACKS=1 leaves it out). True when they are registered.
+bool registerFixture();
+/// Whether a structure key is a gf_test fixture.
+[[nodiscard]] inline bool isFixtureKey(std::string const& key) { return key.starts_with("gf_test:"); }
 
 } // namespace gf::feature::landmark

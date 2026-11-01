@@ -15,6 +15,9 @@
 // /place structure, which know TF's structures there; Bedrock's do not). Locating landmark grid
 // structures follows TF's ResolveNearestNonRandomSpreadMapStructure hook (WorldUtil
 // #findNearestMapLandmark); random spread structures use vanilla's ring search.
+//
+// Permissions: TF's levels mapped one down onto Bedrock's (Java 2 "gamemasters" -> GameDirectors,
+// commands::isAdmin; Java 3 "admins", genbook -> Admin).
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -25,6 +28,7 @@
 
 #include "mc/server/commands/CommandOrigin.h"
 #include "mc/server/commands/CommandOutput.h"
+#include "mc/server/commands/CommandPermissionLevel.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
@@ -164,9 +168,9 @@ void giveBook(Player& player, ItemStack book) {
     player.sendInventory(false);
 }
 
-/// GenerateBookCommand#generateBook.
+/// GenerateBookCommand#generateBook (requires permission level 3).
 void genbook(CommandOrigin const& origin, CommandOutput& output, std::optional<std::string> structure) {
-    if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
+    if (origin.getPermissionsLevel() < CommandPermissionLevel::Admin) return output.error("You need operator permission.");
     auto* player = commands::playerOf(origin);
     if (!player || player->isSimulatedPlayer())
         return output.error(say(origin, "commands.tffeature.not_player", "This command must be run by a valid player!"));
@@ -190,7 +194,8 @@ void genbook(CommandOrigin const& origin, CommandOutput& output, std::optional<s
             ++given;
         }
     }
-    output.success("Gave " + std::to_string(given) + " book(s)");
+    // Command.SINGLE_SUCCESS without a message, as TF
+    ++output.mSuccessCount;
     log().info("landmark: genbook gave {} book(s) to {}", given, player->getRealName());
 }
 
@@ -200,6 +205,7 @@ void locate(CommandOrigin const& origin, CommandOutput& output, std::string cons
     int  dim = originDim(origin);
     auto pos = originBlock(origin);
     auto key = structure.starts_with("#") ? structure : normalizeKey(structure);
+    // LocateCommand: ChunkGenerator#findNearestMapStructure(level, holders, pos, 100, false)
     auto hit = gf::landmark::ext::locate(dim, key, pos.x, pos.z, 100);
     if (!hit) {
         log().info("landmark: locate {} from {} {}: none", key, pos.x, pos.z);
@@ -264,8 +270,29 @@ namespace fl  = gf::feature::landmark;
 namespace cl  = gf::core::landmark;
 namespace plc = gf::core::landmark::placement;
 
-std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x, int z, int chunkRadius, bool skipKnownStructures) {
-    auto tf = fl::twilightDim();
+namespace {
+
+/// A structure set and the targets it places (in the order of the targets).
+struct SetTargets {
+    fl::StructureSet const*  set = nullptr;
+    std::vector<std::string> keys;
+};
+
+/// StructureCheck#checkStart for a random spread placement: a start known for the chunk (its sets
+/// were evaluated), else the frequency reduction and the structure's biome at the generation point.
+bool structureAt(int dimension, std::string const& key, plc::Placement const& p, std::int64_t seed, int chunkX, int chunkZ, bool skipKnownStructures) {
+    if (fl::startsEvaluated(dimension, chunkX, chunkZ)) {
+        auto rec = fl::findRecord(dimension, chunkX, chunkZ, key);
+        return rec && !rec->placed && !skipKnownStructures;
+    }
+    if (!plc::applyAdditionalChunkRestrictions(p, seed, chunkX, chunkZ)) return false;
+    auto const* inf = fl::info(key);
+    return inf && fl::biomeMatches(inf->biomes, fl::biomeAt(dimension, chunkX * 16 + 8, fl::seaLevelOf(dimension), chunkZ * 16 + 8));
+}
+
+} // namespace
+
+std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x, int z, int searchRadius, bool skipKnownStructures) {
     // targets: one key or the #twilightforest:landmark tag
     std::vector<std::string> targets;
     if (keyOrTag == "#twilightforest:landmark") {
@@ -275,19 +302,23 @@ std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x,
         targets.push_back(keyOrTag);
     }
     if (targets.empty()) return std::nullopt;
-    // off-grid starts already made (forceStart / place) count too
+    auto distSqr = [&](int px, int pz) {
+        double ddx = px - x, ddz = pz - z;
+        return ddx * ddx + ddz * ddz;
+    };
     std::optional<Located> best;
     double                 bestDist = std::numeric_limits<double>::max();
-    auto                   consider = [&](std::string const& key, int px, int py, int pz) {
-        double ddx = px - x, ddz = pz - z, d = ddx * ddx + ddz * ddz;
-        if (d < bestDist) {
+    auto                   consider = [&](std::string const& key, int px, int pz) {
+        if (double d = distSqr(px, pz); d < bestDist) {
             bestDist = d;
-            best     = Located{key, GlobalPos{dimension, px, py, pz}};
+            best     = Located{key, GlobalPos{dimension, px, 0, pz}};
         }
     };
+    // the gf_test fixtures have no structure set: their forceStart starts are what locate finds
     for (auto const& rec : fl::allRecords(dimension))
-        if (rec->forced && std::find(targets.begin(), targets.end(), rec->start.key) != targets.end())
-            consider(rec->start.key, rec->start.center.x, rec->start.center.y, rec->start.center.z);
+        if (rec->forced && !rec->placed && fl::isFixtureKey(rec->start.key) && std::find(targets.begin(), targets.end(), rec->start.key) != targets.end())
+            consider(rec->start.key, rec->start.center.x, rec->start.center.z);
+    auto tf = fl::twilightDim();
     if (!tf || *tf != dimension) return best;
 
     auto seed    = fl::levelSeed();
@@ -296,51 +327,69 @@ std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x,
         auto const* s = fl::structureSet(id);
         return s ? &s->placement : nullptr;
     };
+    std::vector<SetTargets> spread, grid;
     for (auto const* set : fl::structureSets()) {
-        std::vector<std::string> keys;
-        for (auto const& [k, w] : set->structures)
-            if (std::find(targets.begin(), targets.end(), k) != targets.end()) keys.push_back(k);
-        if (keys.empty()) continue;
-        if (set->placement.kind == plc::Kind::LandmarkGrid) {
-            // WorldUtil#findNearestMapLandmark over LegacyLandmarkPlacements#landmarkCenterScanner
-            // (TF passes the chunk radius as the number of 16-chunk cells: capped at 16 cells here)
-            for (auto const& c : cl::centerScanner(x, z, std::min(chunkRadius, 16))) {
-                if (!plc::isStructureChunk(set->placement, seed, c.x >> 4, c.z >> 4, variety, lookup)) continue;
-                for (auto const& k : keys) {
-                    auto const* inf = fl::info(k);
-                    if (!inf || !fl::biomeMatches(inf->biomes, fl::biomeAt(dimension, c.x, 0, c.z))) continue;
-                    if (skipKnownStructures && fl::findRecord(dimension, c.x >> 4, c.z >> 4, k)) break;
-                    // distToLowCornerSqr(pos.x, 0, pos.z)
-                    consider(k, c.x, 0, c.z);
-                }
-            }
-        } else if (set->placement.spacing > 0) {
-            // ChunkGenerator#getNearestGeneratedStructure (rings of placement regions)
-            int    spacing = set->placement.spacing;
-            int    cx = x >> 4, cz = z >> 4;
-            int    regions = chunkRadius / spacing + 1;
-            for (int ring = 0; ring <= regions; ++ring) {
-                bool found = false;
-                for (int i = -ring; i <= ring; ++i) {
-                    for (int j = -ring; j <= ring; ++j) {
-                        if (std::abs(i) != ring && std::abs(j) != ring) continue;
-                        int  rx  = cx + spacing * i, rz = cz + spacing * j;
-                        auto pot = plc::potentialStructureChunk(set->placement, seed, rx, rz);
-                        if (!plc::isStructureChunk(set->placement, seed, pot.x, pot.z, variety, lookup)) continue;
-                        for (auto const& k : keys) {
-                            auto const* inf = fl::info(k);
-                            if (!inf || !fl::biomeMatches(inf->biomes, fl::biomeAt(dimension, pot.x * 16 + 8, fl::seaLevelOf(dimension), pot.z * 16 + 8))) continue;
-                            auto [lx, lz] = plc::locatePos(set->placement, pot.x, pot.z);
-                            consider(k, lx, 0, lz);
-                            found = true;
+        SetTargets st{set, {}};
+        for (auto const& t : targets)
+            if (std::any_of(set->structures.begin(), set->structures.end(), [&](auto const& e) { return e.first == t; })) st.keys.push_back(t);
+        if (st.keys.empty()) continue;
+        if (set->placement.kind == plc::Kind::LandmarkGrid) grid.push_back(std::move(st));
+        else if (set->placement.spacing > 0) spread.push_back(std::move(st)); // random spread, avoid_landmark_grid
+    }
+
+    // ChunkGenerator#findNearestMapStructure: the random spread placements ring by ring (ring k of
+    // getNearestGeneratedStructure, `searchRadius` rings); the first ring with a hit decides
+    if (!spread.empty()) {
+        int cx = x >> 4, cz = z >> 4;
+        for (int k = 0; k <= searchRadius; ++k) {
+            bool found = false;
+            for (auto const& st : spread) {
+                auto const& p       = st.set->placement;
+                bool        hitRing = false;
+                for (int i = -k; i <= k && !hitRing; ++i) {
+                    bool edgeI = i == -k || i == k;
+                    for (int j = -k; j <= k && !hitRing; ++j) {
+                        if (!edgeI && j != -k && j != k) continue;
+                        auto pot = plc::potentialStructureChunk(p, seed, cx + p.spacing * i, cz + p.spacing * j);
+                        for (auto const& key : st.keys) {
+                            if (!structureAt(dimension, key, p, seed, pot.x, pot.z, skipKnownStructures)) continue;
+                            auto [lx, lz] = plc::locatePos(p, pot.x, pot.z);
+                            consider(key, lx, lz); // getStructureGeneratingAt: the first one of the ring
+                            hitRing = true;
+                            break;
                         }
                     }
                 }
-                if (found) break;
+                found = found || hitRing;
+            }
+            if (found) return best;
+        }
+    }
+    if (grid.empty()) return best;
+
+    // MapHooks#resolveNearestNonRandomSpreadMapStructure: WorldUtil#findNearestMapLandmark over
+    // LegacyLandmarkPlacements#landmarkCenterScanner (TF passes the radius as 16-chunk cells), and
+    // its result replaces vanilla's
+    std::optional<Located> landmark;
+    double                 landmarkDist = std::numeric_limits<double>::max();
+    for (auto const& c : cl::centerScanner(x, z, searchRadius)) {
+        for (auto const& st : grid) {
+            if (!plc::isStructureChunk(st.set->placement, seed, c.x >> 4, c.z >> 4, variety, lookup)) continue;
+            auto biome = fl::biomeAt(dimension, c.x, 0, c.z);
+            for (auto const& k : targets) {
+                if (std::find(st.keys.begin(), st.keys.end(), k) == st.keys.end()) continue;
+                auto const* inf = fl::info(k);
+                if (!inf || !fl::biomeMatches(inf->biomes, biome)) continue;
+                if (skipKnownStructures && fl::findRecord(dimension, c.x >> 4, c.z >> 4, k)) break;
+                // distToLowCornerSqr(pos.x, 0, pos.z)
+                if (double d = distSqr(c.x, c.z); d < landmarkDist) {
+                    landmarkDist = d;
+                    landmark     = Located{k, GlobalPos{dimension, c.x, 0, c.z}};
+                }
             }
         }
     }
-    return best;
+    return landmark ? landmark : best;
 }
 
 } // namespace gf::landmark::ext

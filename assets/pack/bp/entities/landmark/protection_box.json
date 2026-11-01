@@ -4,7 +4,7 @@
     "description": {
       "identifier": "twilightforest:protection_box",
       "is_spawnable": false,
-      "is_summonable": true,
+      "is_summonable": false,
       "properties": {
         "gf:size_x": {
           "type": "int",
@@ -25,6 +25,15 @@
           "client_sync": true
         },
         "gf:size_z": {
+          "type": "int",
+          "range": [
+            0,
+            1023
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "gf:epoch": {
           "type": "int",
           "range": [
             0,

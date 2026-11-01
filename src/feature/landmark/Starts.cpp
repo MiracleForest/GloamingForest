@@ -23,10 +23,13 @@
 // on worker threads: the cache is locked, the DB is written on the server thread only.
 #include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <cmath>
+#include <condition_variable>
 #include <map>
 #include <set>
 #include <shared_mutex>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -43,6 +46,7 @@
 #include "core/Keys.h"
 #include "core/jrand/JRand.h"
 #include "core/landmark/Grid.h"
+#include "core/landmark/JavaMath.h"
 #include "core/landmark/Landmark.h"
 #include "feature/dimension/World.h"
 #include "feature/ext/landmark/LandmarkExt.h"
@@ -67,7 +71,7 @@ namespace {
 
 struct Generators {
     std::mutex                                                                             mutex;
-    std::map<std::string, Generator>                                                       gens;
+    std::map<std::string, std::shared_ptr<Generator const>>                                gens;
     /// addTerraformer's functions per key
     std::map<std::string, std::vector<std::function<double(Start const&, int, int, int)>>> extraTerraformers;
     /// copy-on-write lists of every terraformer per key: per-block readers only copy the pointer
@@ -94,11 +98,17 @@ struct ChunkKeyHash {
     }
 };
 
+/// Bound of the evaluated / aroundDone caches (entries; both are rebuilt on demand when dropped).
+constexpr std::size_t kMaxEvaluatedChunks = std::size_t{1} << 18;
+
 struct Records {
     std::shared_mutex                                                       mutex;
     std::unordered_map<ChunkKey, std::vector<RecordPtr>, ChunkKeyHash>      byStartChunk;
     std::unordered_map<ChunkKey, std::vector<RecordPtr>, ChunkKeyHash>      byChunk; ///< chunks a box covers
-    std::unordered_set<ChunkKey, ChunkKeyHash>                              evaluated;
+    std::unordered_set<ChunkKey, ChunkKeyHash>                              evaluated; ///< start chunks whose sets ran
+    /// start chunks whose sets are being evaluated, with the thread doing it
+    std::unordered_map<ChunkKey, std::thread::id, ChunkKeyHash>             inProgress;
+    std::condition_variable_any                                             evaluatedChanged;
     std::unordered_set<ChunkKey, ChunkKeyHash>                              aroundDone; ///< ensureStartsAround ran
     std::set<std::tuple<int, int, int>>                                     dirty; ///< start chunks to write
     std::atomic<std::int64_t>                                               seed{0};
@@ -248,21 +258,69 @@ int stepIndex(std::string const& step) {
     return 4;
 }
 
-/// The index of a structure inside its decoration step (ChunkGenerator#applyBiomeDecoration's
-/// feature index; TF's structures in key order).
-int featureIndex(Info const& info) {
-    int n = 0;
-    for (auto const& k : descriptorKeys()) {
-        if (k == info.d.key) return n;
-        if (auto const* o = landmark::info(k); o && o->step == info.step) ++n;
-    }
-    return n;
+/// Minecraft 1.21.1's Structure registry entries (data/minecraft/worldgen/structure/*.json of the
+/// vanilla data pack): path and GenerationStep. TF's structures share the steps with them.
+struct VanillaStructure {
+    char const* path;
+    char const* step;
+};
+constexpr VanillaStructure kVanillaStructures[] = {
+    {"ancient_city", "underground_decoration"},
+    {"bastion_remnant", "surface_structures"},
+    {"buried_treasure", "underground_structures"},
+    {"desert_pyramid", "surface_structures"},
+    {"end_city", "surface_structures"},
+    {"fortress", "underground_decoration"},
+    {"igloo", "surface_structures"},
+    {"jungle_pyramid", "surface_structures"},
+    {"mansion", "surface_structures"},
+    {"mineshaft", "underground_structures"},
+    {"mineshaft_mesa", "underground_structures"},
+    {"monument", "surface_structures"},
+    {"nether_fossil", "underground_decoration"},
+    {"ocean_ruin_cold", "surface_structures"},
+    {"ocean_ruin_warm", "surface_structures"},
+    {"pillager_outpost", "surface_structures"},
+    {"ruined_portal", "surface_structures"},
+    {"ruined_portal_desert", "surface_structures"},
+    {"ruined_portal_jungle", "surface_structures"},
+    {"ruined_portal_mountain", "surface_structures"},
+    {"ruined_portal_nether", "surface_structures"},
+    {"ruined_portal_ocean", "surface_structures"},
+    {"ruined_portal_swamp", "surface_structures"},
+    {"shipwreck", "surface_structures"},
+    {"shipwreck_beached", "surface_structures"},
+    {"stronghold", "surface_structures"},
+    {"swamp_hut", "surface_structures"},
+    {"trail_ruins", "underground_structures"},
+    {"trial_chambers", "underground_structures"},
+    {"village_desert", "surface_structures"},
+    {"village_plains", "surface_structures"},
+    {"village_savanna", "surface_structures"},
+    {"village_snowy", "surface_structures"},
+    {"village_taiga", "surface_structures"},
+};
+
+/// The registry order of two structure ids. RegistryDataLoader adds the entries in the order of
+/// ResourceManager#listResources (a TreeMap over the file locations "worldgen/structure/<path>.json")
+/// and ResourceLocation#compareTo compares the path first, then the namespace.
+bool registryBefore(std::string const& aNamespace, std::string const& aPath, std::string const& bNamespace, std::string const& bPath) {
+    auto a = aPath + ".json", b = bPath + ".json";
+    if (a != b) return a < b;
+    return aNamespace < bNamespace;
+}
+
+std::pair<std::string, std::string> splitKey(std::string const& key) {
+    auto colon = key.find(':');
+    if (colon == std::string::npos) return {"minecraft", key};
+    return {key.substr(0, colon), key.substr(colon + 1)};
 }
 
 /// StructureStart#placeInChunk for chunk (cx, cz) of `region`.
 void placeInChunk(Record const& rec, worldgen::Region& region, int chunkX, int chunkZ) {
     if (rec.livePieces.empty()) return;
-    BlockBox chunkBox{chunkX * 16, region.minY(), chunkZ * 16, chunkX * 16 + 15, region.maxY() - 1, chunkZ * 16 + 15};
+    // ChunkGenerator#getWritableArea: the chunk column from minBuildHeight + 1 to maxBuildHeight - 1
+    BlockBox chunkBox{chunkX * 16, region.minY() + 1, chunkZ * 16, chunkX * 16 + 15, region.maxY() - 1, chunkZ * 16 + 15};
     auto const& first = rec.livePieces.front()->bbox;
     auto        c     = cl::boxCenter(first);
     BlockPos    pivot{c.x, first.minY, c.z};
@@ -296,16 +354,31 @@ int heightFor(Info const& info, int dim, int x, int z) {
     return std::clamp(*h, sea + 1, sea + 7);
 }
 
-bool isWithinRange(int a, int b) { return std::abs(a - b) <= kReferenceRange; }
-
 } // namespace
 
 // ---- generators --------------------------------------------------------------------------------------
 
-Generator const* generatorFor(std::string const& key) {
+std::shared_ptr<Generator const> generatorFor(std::string const& key) {
     std::lock_guard lock(generators().mutex);
     auto            it = generators().gens.find(key);
-    return it == generators().gens.end() ? nullptr : &it->second;
+    return it == generators().gens.end() ? nullptr : it->second;
+}
+
+int featureIndex(Info const& info) {
+    // ChunkGenerator#applyBiomeDecoration: registry.stream() grouped by step; every structure of the
+    // step before this one counts (vanilla's and TF's, never the gf_test fixtures)
+    auto [ns, path] = splitKey(info.d.key);
+    int n           = 0;
+    for (auto const& v : kVanillaStructures)
+        if (info.step == v.step && registryBefore("minecraft", v.path, ns, path)) ++n;
+    for (auto const& k : descriptorKeys()) {
+        if (k == info.d.key || isFixtureKey(k)) continue;
+        auto const* o = landmark::info(k);
+        if (!o || o->step != info.step) continue;
+        auto [kns, kpath] = splitKey(k);
+        if (registryBefore(kns, kpath, ns, path)) ++n;
+    }
+    return n;
 }
 
 namespace {
@@ -315,7 +388,7 @@ void rebuildTerraformers(Generators& g, std::string const& key, std::function<do
 void setGenerator(std::string const& key, Generator generator) {
     std::lock_guard lock(generators().mutex);
     auto            k = normalizeKey(key);
-    generators().gens[k] = std::move(generator);
+    generators().gens[k] = std::make_shared<Generator const>(std::move(generator));
     rebuildTerraformers(generators(), k, {});
 }
 
@@ -337,7 +410,7 @@ namespace {
 /// addTerraformer ones). Called with the generators lock held.
 void rebuildTerraformers(Generators& g, std::string const& key, std::function<double(Start const&, int, int, int)> added = {}) {
     std::vector<std::function<double(Start const&, int, int, int)>> list;
-    if (auto it = g.gens.find(key); it != g.gens.end() && it->second.terraform) list.push_back(it->second.terraform);
+    if (auto it = g.gens.find(key); it != g.gens.end() && it->second->terraform) list.push_back(it->second->terraform);
     if (auto it = g.extraTerraformers.find(key); it != g.extraTerraformers.end()) list.insert(list.end(), it->second.begin(), it->second.end());
     if (added) {
         g.extraTerraformers[key].push_back(added);
@@ -475,6 +548,7 @@ Json recordToJson(Record const& rec) {
         {"conquered", rec.start.conquered},
         {"generated", rec.start.generated},
         {"forced", rec.forced},
+        {"placed", rec.placed},
         {"pieces", pieces},
         {"data", rec.start.data},
     };
@@ -495,6 +569,7 @@ RecordPtr recordFromJson(Json const& j) {
     rec->start.conquered  = j.value("conquered", false);
     rec->start.generated  = j.value("generated", false);
     rec->forced           = j.value("forced", false);
+    rec->placed           = j.value("placed", false);
     rec->start.data       = j.value("data", Json::object());
     bool allLive          = true;
     std::vector<std::shared_ptr<structure::Piece>> live;
@@ -598,24 +673,14 @@ RecordPtr createStart(Info const& info, int dim, int chunkX, int chunkZ, std::op
     rec->start.conquered  = false;
     rec->start.data       = Json{{"chunk", Json::array({chunkX, chunkZ})}};
 
-    Generator gen;
-    bool      haveGen = false;
-    {
-        std::lock_guard lock(generators().mutex);
-        if (auto it = generators().gens.find(info.d.key); it != generators().gens.end() && it->second.layout) {
-            gen     = it->second;
-            haveGen = true;
-        }
-    }
-    if (haveGen) {
+    auto gen = generatorFor(info.d.key);
+    if (gen && gen->layout) {
         // RandomSource.create(seed + chunkX * 25117L + chunkZ * 151121L)
-        std::int64_t seed = static_cast<std::int64_t>(static_cast<std::uint64_t>(rec->start.seed) + static_cast<std::uint64_t>(chunkX) * 25117ULL
-                                                      + static_cast<std::uint64_t>(chunkZ) * 151121ULL);
-        core::jrand::LegacyRandom    random(seed);
+        core::jrand::LegacyRandom    random(core::landmark::java::chunkSeed(rec->start.seed, chunkX, chunkZ));
         gf::landmark::LayoutContext  ctx{rec->start, random, {}};
         bool                         ok = false;
         try {
-            ok = gen.layout(ctx);
+            ok = gen->layout(ctx);
         } catch (std::exception const& e) {
             log().error("landmark: layout of {} failed: {}", info.d.key, e.what());
         }
@@ -677,6 +742,7 @@ void reviveRecord(RecordPtr const& existing) {
     if (existing->forced || existing->start.generated) at = existing->start.center;
     auto rec = createStart(*inf, existing->start.dimension, existing->chunkX, existing->chunkZ, at, existing->forced);
     if (!rec) return;
+    rec->placed          = existing->placed;
     rec->start.conquered = existing->start.conquered;
     putRecord(rec);
 }
@@ -720,15 +786,44 @@ plc::SetLookup setLookup() {
 void ensureStartsIn(int dim, int chunkX, int chunkZ) {
     auto tf = twilightDim();
     if (!tf || *tf != dim) return; // TF's structure sets only place in the Twilight Forest
+    auto&          r = records();
+    ChunkKey const key{dim, chunkX, chunkZ};
     {
-        auto& r = records();
-        {
-            std::shared_lock lock(r.mutex);
-            if (r.evaluated.contains({dim, chunkX, chunkZ})) return;
-        }
-        std::unique_lock lock(r.mutex);
-        if (!r.evaluated.insert({dim, chunkX, chunkZ}).second) return;
+        std::shared_lock lock(r.mutex);
+        if (r.evaluated.contains(key)) return;
     }
+    {
+        // one thread creates the starts of a chunk; the others wait until they exist (a protection
+        // check on the server thread while a generation thread builds the start sees the record)
+        std::unique_lock lock(r.mutex);
+        auto const       deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+        for (;;) {
+            if (r.evaluated.contains(key)) return;
+            auto it = r.inProgress.find(key);
+            if (it == r.inProgress.end()) break;
+            // the same thread again (a layout asking about its own chunk): nothing to wait for
+            if (it->second == std::this_thread::get_id()) return;
+            if (r.evaluatedChanged.wait_until(lock, deadline) == std::cv_status::timeout && r.inProgress.contains(key)) {
+                static std::atomic<bool> warned{false};
+                if (!warned.exchange(true)) log().warn("landmark: gave up waiting for the starts of chunk {} {} (another thread)", chunkX, chunkZ);
+                return;
+            }
+        }
+        r.inProgress.emplace(key, std::this_thread::get_id());
+    }
+    struct Finish {
+        Records&       r;
+        ChunkKey const key;
+        ~Finish() {
+            {
+                std::unique_lock lock(r.mutex);
+                r.inProgress.erase(key);
+                if (r.evaluated.size() >= kMaxEvaluatedChunks) r.evaluated.clear(); // re-evaluating is idempotent
+                r.evaluated.insert(key);
+            }
+            r.evaluatedChanged.notify_all();
+        }
+    } finish{r, key};
     auto seed    = levelSeed();
     auto variety = [seed](int cx, int cz) { return cl::pickVariety(seed, cx, cz); };
     auto lookup  = setLookup();
@@ -736,12 +831,18 @@ void ensureStartsIn(int dim, int chunkX, int chunkZ) {
         if (set->placement.kind == plc::Kind::Unknown) continue;
         if (!plc::isStructureChunk(set->placement, seed, chunkX, chunkZ, variety, lookup)) continue;
         std::vector<int> weights;
-        for (auto const& [key, w] : set->structures) weights.push_back(w);
+        for (auto const& [k, w] : set->structures) weights.push_back(w);
         (void)plc::tryWeighted(seed, chunkX, chunkZ, weights, [&](int index) {
             auto const* inf = info(set->structures[index].first);
             return inf && tryGenerateStructure(*inf, dim, chunkX, chunkZ);
         });
     }
+}
+
+bool startsEvaluated(int dim, int chunkX, int chunkZ) {
+    auto&            r = records();
+    std::shared_lock lock(r.mutex);
+    return r.evaluated.contains({dim, chunkX, chunkZ});
 }
 
 void ensureStartsAround(int dim, int chunkX, int chunkZ) {
@@ -756,6 +857,7 @@ void ensureStartsAround(int dim, int chunkX, int chunkZ) {
     for (int dx = -kReferenceRange; dx <= kReferenceRange; ++dx)
         for (int dz = -kReferenceRange; dz <= kReferenceRange; ++dz) ensureStartsIn(dim, chunkX + dx, chunkZ + dz);
     std::unique_lock lock(r.mutex);
+    if (r.aroundDone.size() >= kMaxEvaluatedChunks) r.aroundDone.clear(); // only a fast path
     r.aroundDone.insert({dim, chunkX, chunkZ});
 }
 
@@ -764,14 +866,16 @@ RecordPtr nearestLandmark(int dim, int chunkX, int chunkZ, std::optional<GlobalP
     int  ccx = center.x >> 4, ccz = center.z >> 4;
     ensureStartsIn(dim, ccx, ccz);
     for (auto const& rec : recordsStartedIn(dim, ccx, ccz)) {
+        if (rec->placed) continue; // /place stores no start
         auto const* inf = info(rec->start.key);
         if (inf && inf->traits.landmarkTag) return rec;
     }
     if (pos) {
-        // off-grid starts (forceStart, /twilightforest place) whose box holds the position
+        // TF reads the grid center chunk only. forceStart's starts (the selftests' stand-in for a
+        // grid start, at test positions off the grid) count too; /twilightforest place's never do
         for (auto const& rec : recordsIntersecting(dim, pos->x >> 4, pos->z >> 4)) {
             auto const* inf = info(rec->start.key);
-            if (rec->forced && inf && inf->traits.landmarkTag && rec->start.box.contains(pos->x, pos->y, pos->z)) return rec;
+            if (rec->forced && !rec->placed && inf && inf->traits.landmarkTag && rec->start.box.contains(pos->x, pos->y, pos->z)) return rec;
         }
     }
     return nullptr;
@@ -783,9 +887,9 @@ RecordPtr nearestLandmarkOf(int dim, std::string const& key, int blockX, int blo
     ensureStartsAround(dim, ccx, ccz);
     // the starts of `key` referencing the center chunk (ChunkAccess#getReferencesForStructure)
     for (auto const& rec : recordsIntersecting(dim, ccx, ccz))
-        if (rec->start.key == key) return rec;
+        if (rec->start.key == key && !rec->placed) return rec;
     for (auto const& rec : recordsIntersecting(dim, blockX >> 4, blockZ >> 4))
-        if (rec->start.key == key && rec->start.box.minX <= blockX && blockX <= rec->start.box.maxX && rec->start.box.minZ <= blockZ && blockZ <= rec->start.box.maxZ) return rec;
+        if (rec->start.key == key && !rec->placed && rec->start.box.minX <= blockX && blockX <= rec->start.box.maxX && rec->start.box.minZ <= blockZ && blockZ <= rec->start.box.maxZ) return rec;
     return nullptr;
 }
 
@@ -797,7 +901,7 @@ std::vector<BlockBox> pieceBoxesAt(Record const& r, int x, int y, int z) {
 }
 
 int spawnIndexAt(Record const& r, int x, int y, int z) {
-    if (auto const* gen = generatorFor(r.start.key); gen && gen->spawnIndex) return gen->spawnIndex(r.start, BlockPos{x, y, z});
+    if (auto gen = generatorFor(r.start.key); gen && gen->spawnIndex) return gen->spawnIndex(r.start, BlockPos{x, y, z});
     int highest = -1;
     for (auto const& p : r.pieces)
         if (p.box.contains(x, y, z) && p.spawnIndex > highest) highest = p.spawnIndex;
@@ -887,11 +991,17 @@ bool generateAt(std::string const& key, BlockSource& region, BlockPos const& pos
     int  dim = static_cast<int>(region.getDimensionId());
     auto rec = fl::createStart(*inf, dim, pos.x >> 4, pos.z >> 4, GlobalPos{dim, pos.x, pos.y, pos.z}, true);
     if (!rec || !rec->start.generated) return false;
-    // a start of the same key in that chunk is replaced: keep its conquest
-    if (auto old = fl::findRecord(dim, pos.x >> 4, pos.z >> 4, inf->d.key)) rec->start.conquered = old->start.conquered;
-    fl::putRecord(rec);
+    // Java's /place structure (and sapling growth) places the pieces and stores no start: the record
+    // is kept only so the parts in chunks generated later still get placed, marked `placed` so
+    // protection, locate, conquest and the controlled spawns ignore it, and never in place of the
+    // chunk's own start of that key
+    rec->placed = true;
+    auto old    = fl::findRecord(dim, pos.x >> 4, pos.z >> 4, inf->d.key);
+    if (!old || old->placed) {
+        fl::putRecord(rec);
+        fl::flushRecords();
+    }
     fl::placeLoaded(*rec, region);
-    fl::flushRecords();
     return true;
 }
 
@@ -1002,6 +1112,7 @@ std::optional<std::vector<nlohmann::json>> potentialSpawns(int dimension, std::s
     // StructureManager#startsForStructure(new ChunkPos(pos), ControlledSpawns): every start that
     // references the position's chunk, whether or not its box holds the position
     for (auto const& rec : fl::recordsIntersecting(dimension, x >> 4, z >> 4)) {
+        if (rec->placed) continue; // /place stores no start, so no structure references the chunk
         auto const* inf = fl::info(rec->start.key);
         if (!inf || !inf->traits.controlledSpawns || rec->pieces.empty()) continue; // a reserved site is no valid start yet
         auto const& cs   = inf->d.controlledSpawns;

@@ -56,6 +56,7 @@ std::optional<std::vector<spawn::SpawnEntry>> specialSpawns(BlockSource& region,
     if (auto controlled = gf::landmark::ext::potentialSpawns(dim, category, pos.x, pos.y, pos.z)) return convert(*controlled);
     // Structure#spawnOverrides (StructureSpawnOverride: "full" = the start box, "piece" = a piece)
     for (auto const& rec : recordsIntersecting(dim, pos.x >> 4, pos.z >> 4)) {
+        if (rec->placed) continue; // /place stores no start: no structure references the chunk
         auto const* inf = info(rec->start.key);
         if (!inf || rec->pieces.empty() || !inf->d.spawnOverrides.is_object() || !inf->d.spawnOverrides.contains(category)) continue;
         auto const& o      = inf->d.spawnOverrides[category];
@@ -102,8 +103,9 @@ class LandmarkModule {
 public:
     void install() {
         loadDescriptors();
-        registerFixture();
+        (void)registerFixture();
         installProtection();
+        installHints();
         static bool once = false;
         if (!once) {
             once = true;
@@ -139,6 +141,7 @@ public:
     void uninstall() {
         ll::event::EventBus::getInstance().removeListener(mTick);
         uninstallProtection();
+        uninstallHints();
         flushRecords();
     }
 

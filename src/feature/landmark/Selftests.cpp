@@ -3,17 +3,21 @@
 // on W0 and this unit: the fixture landmark gf_test:landmark_fixture (locked like TF's lich tower by
 // twilightforest:progress_naga, hint book "lichtower") stands in for the W1 structures.
 //
-//   landmark.grid           the grid and TF's structure records (descriptors, structure sets)
-//   landmark.protection     forceStart + protection: break / use / multi-place refused for a
-//                           non-qualified survival player, boxes + packets shown, allowed after
-//                           the grant (when the progression store exists), creative bypass
-//   landmark.conquer        setConquered on a forced start, the conquered flag persisted
-//   landmark.persistence    a start written to the world DB reads back (pieces, flags)
-//   landmark.hint_book      the hint book written for a player
-//   landmark.clearance      decorationAllowed / featureBlocked / startsIntersecting / spawns
-//   landmark.persist_write  (server scenario, before a restart) a forced, conquered start
-//   landmark.persist_read   (after the restart) that start, then removed
-//   landmark.display        (client scenario) keeps protection boxes on show for a screenshot
+//   landmark.grid             the grid and TF's structure records (descriptors with every TF field,
+//                             structure sets, the decoration step indexes)
+//   landmark.protection       forceStart + protection: break / use / multi-place refused for a
+//                             non-qualified survival player, boxes + packets shown, allowed after
+//                             the grant (the advancement seam now, the progression store once F10
+//                             lands), creative bypass, /place'd structures never protected
+//   landmark.conquer          setConquered on a forced start, the conquered flag persisted
+//   landmark.persistence      a start written to the world DB reads back (pieces, flags)
+//   landmark.hint_book        the hint book written for a player, rewritten for another language
+//   landmark.hint_drop        the hint mob carries the book and always drops it (drop chance 2.0)
+//   landmark.clearance        decorationAllowed / featureBlocked / startsIntersecting / spawns
+//   landmark.persist_1_write  (server scenario, before a restart) a forced, conquered start
+//   landmark.persist_2_read   (after the restart) that start, then removed; in a 'full' run the
+//                             two run back to back and leave nothing behind
+//   landmark.display          (client scenario) keeps protection boxes on show for a screenshot
 #include <algorithm>
 #include <optional>
 #include <vector>
@@ -21,6 +25,8 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/server/SimulatedPlayer.h"
+#include "mc/world/actor/Actor.h"
+#include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/item/ItemStack.h"
@@ -29,6 +35,7 @@
 #include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/phys/AABB.h"
 
 #include "core/landmark/Grid.h"
 #include "core/landmark/Landmark.h"
@@ -41,6 +48,8 @@
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
+#include "mod/Config.h"
+#include "mod/I18n.h"
 #include "mod/Log.h"
 #include "selftest/SelfTest.h"
 
@@ -77,6 +86,7 @@ struct Cleanup {
     Cleanup& operator=(Cleanup const&) = delete;
     ~Cleanup() {
         fl::setEnforcedOverride(std::nullopt);
+        fl::setAdvancementOverride(nullptr);
         if (companion) {
             if (auto level = ll::service::getLevel()) {
                 ActorUniqueID id;
@@ -150,6 +160,37 @@ GF_REGISTER_SELFTEST("landmark.grid", [](Context& ctx) {
               "camp: avoid_landmark_grid, spacing 18");
     auto const* lichSet = fl::structureSet("twilightforest:lich_tower");
     ctx.check(lichSet && lichSet->placement.gridLock == "twilightforest:lich_tower", "lich tower: landmark_grid locked to itself");
+    // Descriptor::extra: the rest of the TF record, verbatim, and what GF derives under "gf"
+    auto const* hill = lm::descriptor("twilightforest:small_hollow_hill");
+    ctx.require(hill != nullptr, "small hollow hill descriptor");
+    ctx.check(hill->extra.value("hill_size", 0) == 1 && hill->extra.contains("speleothem_config"), "hollow hill: hill_size and speleothem_config");
+    ctx.check(!hill->extra.contains("controlled_spawns") && hill->extra["gf"].value("type", std::string{}) == "twilightforest:hollow_hill",
+              "parsed fields left out, derived ones under extra.gf");
+    for (auto const* k : {"hydra_lair", "troll_cave", "yeti_cave", "medium_hollow_hill", "large_hollow_hill"}) {
+        auto const* d = lm::descriptor(std::string("twilightforest:") + k);
+        ctx.check(d && d->extra.contains("speleothem_config"), std::string(k) + ": speleothem_config");
+    }
+    auto const* trunk = lm::descriptor("twilightforest:fallen_trunk");
+    ctx.check(trunk && trunk->extra.contains("log") && trunk->extra.contains("length") && trunk->extra.contains("big_trunk_length")
+                  && trunk->extra.value("chest_loot_table", std::string{}) == "twilightforest:fallen_trunk_loot",
+              "fallen trunk: log, length, big_trunk_length, chest_loot_table");
+    for (auto const* k : {"hollow_tree", "swamp_hollow_tree"}) {
+        auto const* d  = lm::descriptor(std::string("twilightforest:") + k);
+        bool        ok = d != nullptr;
+        for (auto const* f : {"height", "radius", "log", "wood", "leaves", "root", "vine", "bug", "dungeon_air", "dungeon_wood", "dungeon_monster",
+                              "dungeon_loot_block", "dungeon_loot_table"})
+            ok = ok && d->extra.contains(f);
+        ctx.check(ok, std::string(k) + ": the hollow tree parameters");
+    }
+    auto const* swampTree = lm::descriptor("twilightforest:swamp_hollow_tree");
+    ctx.check(swampTree && swampTree->extra.contains("allow_in_water"), "swamp hollow tree: allow_in_water");
+    // ChunkGenerator#applyBiomeDecoration's index: every structure of the step before it in registry
+    // order (path, then namespace), vanilla's included: lich_tower follows 5 vanilla and 9 TF
+    // surface structures, labyrinth buried_treasure and knight_stronghold
+    auto const* lichInfo = fl::info("twilightforest:lich_tower");
+    auto const* labInfo  = fl::info("twilightforest:labyrinth");
+    ctx.check(lichInfo && fl::featureIndex(*lichInfo) == 14, "lich_tower is decoration index 14 of surface_structures");
+    ctx.check(labInfo && fl::featureIndex(*labInfo) == 2, "labyrinth is decoration index 2 of underground_structures");
 });
 
 GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -205,7 +246,6 @@ GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTa
     auto shown = [&](gf::core::BlockBox const& b) { return std::any_of(boxes.begin(), boxes.end(), [&](auto const& x) { return x == b; }); };
     ctx.check(shown(start->pieceBoxes[0]) || shown(start->pieceBoxes[1]),
               "the protected box is shown");
-    ctx.info("protection box entities alive: " + std::to_string(fl::protectionBoxEntities()));
 
     // creative and spectator players are never refused; neither is anyone without enforcement
     p.setPlayerGameType(GameType::Creative);
@@ -215,14 +255,50 @@ GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(!lm::isProtectedFor(p, gf::game::blockPos(wall)), "nothing is protected without tfEnforcedProgression");
     fl::setEnforcedOverride(true);
 
-    // allowed after the grant
+    // allowed after the grant: PlayerHelper's check answered by the test seam (every lock
+    // advancement of the descriptor must be held), then by the progression store once it exists
+    auto pid = p.getOrCreateUniqueID().rawID;
+    fl::setAdvancementOverride([pid](Player const& who, std::string const& adv) {
+        return who.getOrCreateUniqueID().rawID == pid && adv == kLock;
+    });
+    ctx.check(!lm::isProtectedFor(p, gf::game::blockPos(wall)), "with progress_naga (seam) the shell is open");
+    ctx.check(destroyAs(p, wall) == ia::Result::Pass, "with progress_naga (seam) breaking passes");
+    ctx.check(useOnAs(p, wall, "minecraft:stone", *stone) == ia::Result::Pass, "with progress_naga (seam) placing passes");
+    fl::setAdvancementOverride([](Player const&, std::string const&) { return false; });
+    ctx.check(lm::isProtectedFor(p, gf::game::blockPos(wall)), "without it (seam) the shell is locked again");
+    fl::setAdvancementOverride(nullptr);
     gf::progression::grant(p, kLock);
     if (fl::stubHit("progression.grant")) {
-        ctx.info("the progression store is the F0 contract stub: the grant half waits for F10");
+        ctx.info("the progression store is the F0 contract stub: the store half of the grant waits for F10");
     } else {
         ctx.check(!lm::isProtectedFor(p, gf::game::blockPos(wall)), "with progress_naga the shell is open");
         ctx.check(destroyAs(p, wall) == ia::Result::Pass, "with progress_naga breaking passes");
         gf::progression::revoke(p, kLock);
+    }
+
+    // Java's /place structure stores no start: a /twilightforest place landmark protects nothing
+    {
+        auto const* fixture = fl::info(kFixture);
+        ctx.require(fixture != nullptr, "the fixture descriptor");
+        auto placedAt = at(center, 16, 40, 0); // another chunk: records are kept per chunk and key
+        auto placed   = fl::createStart(*fixture, placedAt.dim, placedAt.x >> 4, placedAt.z >> 4, placedAt, true);
+        ctx.require(placed != nullptr, "a placed fixture start");
+        placed->placed = true;
+        fl::putRecord(placed);
+        cleanup.starts.push_back(placedAt);
+        auto& q = ctx.player();
+        ctx.check(!lm::isProtectedFor(q, gf::game::blockPos(at(placedAt, 3, 2, 0))), "a /place'd landmark is not protected");
+    }
+    if (gf::config::get<fl::LandmarkConfig>().protectionBoxes) {
+        ctx.check(fl::protectionBoxEntities() > 0, "a protection box entity is alive");
+        // TF's ProtectionBox is never saved: an untracked box (one loaded back with its chunk) goes,
+        // the live ones stay
+        auto* stray = fl::spawnEntity(*gf::game::regionOf(center.dim), "twilightforest:protection_box", static_cast<float>(center.x) + 0.5f,
+                                      static_cast<float>(center.y) + 12.0f, static_cast<float>(center.z) + 0.5f);
+        ctx.check(stray != nullptr, "a protection box entity can be spawned");
+        if (stray) ctx.check(fl::sweepStrayProtectionBoxes() >= 1, "an untracked protection box is removed");
+        co_await ctx.ticks(2);
+        ctx.check(fl::protectionBoxEntities() > 0, "the tracked boxes are kept");
     }
     (void)area;
 });
@@ -284,7 +360,58 @@ GF_REGISTER_SELFTEST("landmark.hint_book", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(marker.value("name", std::string{}) == "lichtower" && marker.value("pages", 0) == 4, "the translatable_book marker");
     auto unknown = fl::makeBook("unknown", 2, &p);
     ctx.check(unknown.has_value(), "the default book (twilightforest.book.unknown)");
+    ctx.check(marker.value("locale", std::string{"?"}) == gf::localeOf(p), "written in the reader's language");
+    // another reader (another language): the book is written again from its keys
+    ctx.check(!fl::retranslateBook(*book, p), "the same reader gets it unchanged");
+    auto foreign = marker;
+    foreign["locale"] = "xx_XX";
+    gf::game::items::setData(*book, "translatable_book", foreign);
+    ctx.check(fl::retranslateBook(*book, p), "a book written for another language is rewritten");
+    ctx.check(gf::game::items::getData(*book, "translatable_book").value("locale", std::string{}) == gf::localeOf(p)
+                  && gf::game::items::getData(*book, "translatable_book").value("pages", 0) == 4,
+              "in the reader's language, with its pages");
     ctx.check(!fl::createHintBook(*fl::info("twilightforest:hedge_maze"), &p).has_value(), "no book for structures without hints");
+});
+
+GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // StructureHints#didSpawnHintMonster: the hint mob holds the book in its main hand with drop
+    // chance PRESERVE_ITEM_DROP_CHANCE_THRESHOLD (2.0), so killing it always yields the hint. The
+    // kobold is U17's entity: a vanilla zombie carries the lich tower's book here.
+    auto area = co_await ctx.flatArea(5650, 8);
+    auto pos  = ctx.testPos(5652, 2);
+    auto level = ll::service::getLevel();
+    ctx.require(static_cast<bool>(level), "a level");
+    // Level#getGameTime: level.dat's currentTick, the tick the level counts
+    auto gt = fl::gameTime(), ct = level->getCurrentTick().tickID;
+    ctx.check((gt > ct ? gt - ct : ct - gt) <= 1, "the hint timer reads level.dat's currentTick (" + std::to_string(gt) + " vs " + std::to_string(ct) + ")");
+    auto const* lich = fl::info("twilightforest:lich_tower");
+    ctx.require(lich != nullptr, "lich tower");
+    fl::Info carrier = *lich;
+    carrier.hintMob  = "minecraft:zombie";
+    auto* region     = ctx.region();
+    ctx.require(region != nullptr, "the test region");
+    (void)ctx.player();
+    co_await ctx.ticks(1);
+    auto* mob = fl::spawnHintCarrier(carrier, *region, static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + 0.5f, &ctx.player());
+    ctx.require(mob != nullptr, "the hint mob spawned");
+    ctx.check(gf::game::items::idOf(mob->getCarriedItem()) == "minecraft:written_book", "it holds the hint book");
+    auto chance = fl::mainHandDropChance(*mob);
+    ctx.check(chance.has_value() && *chance >= 2.0f, "its main hand always drops (chance " + std::to_string(chance.value_or(-1.0f)) + ")");
+    auto mobId = mob->getOrCreateUniqueID();
+    mob->kill();
+    co_await ctx.ticks(30);
+    AABB box{Vec3{static_cast<float>(area.minX), static_cast<float>(area.minY) - 2.0f, static_cast<float>(area.minZ)},
+             Vec3{static_cast<float>(area.maxX + 1), static_cast<float>(area.minY) + 8.0f, static_cast<float>(area.maxZ + 1)}};
+    bool dropped = false;
+    if (auto* r = ctx.region()) {
+        for (auto* a : r->getEntities(box)) {
+            if (!a || a->getTypeName() != "minecraft:item") continue;
+            if (gf::game::items::idOf(static_cast<ItemActor*>(a)->item()) == "minecraft:written_book") dropped = true;
+            a->remove(); // the drops of the test
+        }
+    }
+    ctx.check(dropped, "killing it dropped the hint book");
+    if (auto* left = level->fetchEntity(mobId, false)) left->remove();
 });
 
 GF_REGISTER_SELFTEST("landmark.clearance", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -312,11 +439,11 @@ GF_REGISTER_SELFTEST("landmark.clearance", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(!spawns.has_value(), "the fixture's pieces have no spawn index (no list)");
 });
 
-GF_REGISTER_SELFTEST("landmark.persist_write", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("landmark.persist_1_write", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto center = at(ctx.testPos(5660, 2), 0, 60, 0);
     ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5660, 2)), "test area loaded");
-    // the unlocked fixture: when nothing reads it back (a "full" run sorts persist_read first) the
-    // record it leaves protects nothing
+    // the unlocked fixture (protects nothing). A 'full' run reads it back right away (persist_2_read
+    // sorts after this test) and removes it; the server scenario restarts the server in between
     auto const* fixture = fl::info(kOpenFixture);
     ctx.require(fixture != nullptr, "the open fixture descriptor");
     auto rec = fl::createStart(*fixture, center.dim, center.x >> 4, center.z >> 4, center, true);
@@ -324,19 +451,19 @@ GF_REGISTER_SELFTEST("landmark.persist_write", [](Context& ctx) -> ll::coro::Cor
     rec->start.conquered = true;
     fl::putRecord(rec);
     fl::flushRecords();
-    gf::log().info("landmark.persist_write: start written at {} {} {}", center.x, center.y, center.z);
+    gf::log().info("landmark.persist_1_write: start written at {} {} {}", center.x, center.y, center.z);
 });
 
-GF_REGISTER_SELFTEST("landmark.persist_read", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("landmark.persist_2_read", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto center = at(ctx.testPos(5660, 2), 0, 60, 0);
     co_await ctx.ticks(1);
     auto rec = fl::findRecord(center.dim, center.x >> 4, center.z >> 4, kOpenFixture);
     if (!rec) {
-        gf::log().info("landmark.persist_read: no start");
+        gf::log().info("landmark.persist_2_read: no start");
         co_return;
     }
     ctx.check(rec->start.conquered && rec->forced && rec->pieces.size() == 2, "the start came back with its flag and pieces");
-    gf::log().info("landmark.persist_read: start verified at {} {} {}", center.x, center.y, center.z);
+    gf::log().info("landmark.persist_2_read: start verified at {} {} {}", center.x, center.y, center.z);
     dropStart(center, kOpenFixture);
 });
 

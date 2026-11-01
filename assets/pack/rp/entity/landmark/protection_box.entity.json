@@ -16,6 +16,12 @@
         "scale": "animation.twilightforest.protection_box.scale"
       },
       "scripts": {
+        "pre_animation": [
+          "v.epoch = q.property('gf:epoch');",
+          "v.since = (v.epoch != (v.last_epoch ?? 0)) ? q.life_time : (v.since ?? 0);",
+          "v.last_epoch = v.epoch;",
+          "v.box_life = 60 - (q.life_time - v.since) * 20;"
+        ],
         "animate": [
           "scale"
         ],

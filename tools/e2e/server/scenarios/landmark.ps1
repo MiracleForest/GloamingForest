@@ -1,13 +1,14 @@
 # Landmark (F6): the landmark grid and TF's structure records, forceStart + progression protection
 # (break / use / multi-place refused for a survival player without the lock advancement, the boxes
-# and packets shown, allowed after the grant once the progression store exists), conquest, the
-# start store (written, read back, kept over a server restart), hint books, decoration clearance;
-# then /twilightforest center | info | conquer | locate | place | genbook from the console.
+# and packets shown, allowed after the grant through the advancement seam and the progression store
+# once it exists), conquest, the start store (written, read back, kept over a server restart), hint
+# books and the hint mob's guaranteed book drop, decoration clearance, the descriptors' full TF
+# records; then /twilightforest center | info | conquer | locate | place | genbook from the console.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'landmark.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) landmark selftest(s) failed" }
-if ($r.Pass -lt 9) { throw "expected at least 9 landmark selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 10) { throw "expected at least 10 landmark selftests to pass, got $($r.Pass)" }
 
 # The commands (console origin: the overworld at 0 0 0)
 $mark = Get-LogMark
@@ -32,16 +33,16 @@ Wait-LogLine 'commands.tffeature.structure.required|You are not in a structure' 
 
 # The start store survives a restart: a forced, conquered start written to the world DB
 $mark = Get-LogMark
-$r = Invoke-SelfTest 'landmark.persist_write'
-if ($r.Pass -ne 1) { throw 'landmark.persist_write did not pass' }
-Wait-LogLine 'landmark\.persist_write: start written at' 30 -Since $mark | Out-Null
+$r = Invoke-SelfTest 'landmark.persist_1_write'
+if ($r.Pass -ne 1) { throw 'landmark.persist_1_write did not pass' }
+Wait-LogLine 'landmark\.persist_1_write: start written at' 30 -Since $mark | Out-Null
 Restart-Server
 $mark = Get-LogMark
 Wait-LogLine 'landmark: \d+ starts loaded' 60 | Out-Null
-$r = Invoke-SelfTest 'landmark.persist_read'
-if ($r.Pass -ne 1) { throw 'landmark.persist_read did not pass after the restart' }
-Wait-LogLine 'landmark\.persist_read: start verified at' 30 -Since $mark | Out-Null
+$r = Invoke-SelfTest 'landmark.persist_2_read'
+if ($r.Pass -ne 1) { throw 'landmark.persist_2_read did not pass after the restart' }
+Wait-LogLine 'landmark\.persist_2_read: start verified at' 30 -Since $mark | Out-Null
 Write-Step 'the forced start and its conquered flag survived the restart'
 $mark = Get-LogMark
-$r = Invoke-SelfTest 'landmark.persist_read'
-if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'landmark\.persist_read: no start' -Quiet)) { throw 'landmark.persist_read did not remove its start' }
+$r = Invoke-SelfTest 'landmark.persist_2_read'
+if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'landmark\.persist_2_read: no start' -Quiet)) { throw 'landmark.persist_2_read did not remove its start' }

@@ -37,7 +37,7 @@
         "r": 1,
         "g": 1,
         "b": 1,
-        "a": 1
+        "a": "math.clamp((v.box_life ?? 60) / 20, 0, 1)"
       }
     },
     "controller.render.twilightforest.protection_box.y": {
@@ -76,7 +76,7 @@
         "r": 1,
         "g": 1,
         "b": 1,
-        "a": 1
+        "a": "math.clamp((v.box_life ?? 60) / 20, 0, 1)"
       }
     },
     "controller.render.twilightforest.protection_box.z": {
@@ -115,7 +115,7 @@
         "r": 1,
         "g": 1,
         "b": 1,
-        "a": 1
+        "a": "math.clamp((v.box_life ?? 60) / 20, 0, 1)"
       }
     }
   }
