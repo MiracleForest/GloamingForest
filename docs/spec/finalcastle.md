@@ -109,12 +109,61 @@ Reserved, never opened). U30 owns the template-pool entries (registry `twilightf
 
 | Registry entry | Content (TF data) | Original template to author (`assets/structures/finalcastle/final_castle/temp/<name>.gft.json`) |
 |---|---|---|
-| `template_definition/twilightforest:final_castle/temp/gazebo` | `{"twilightforest:final_castle/temp/gazebo": 100}` | 21 x 12 x 21 gazebo on the keep roof: violet force-field walls and roof (as the commented procedural code: four walls 0..10 high, roof layer at y 11), a jigsaw connector named `twilightforest:final_castle/final_boss` at the floor centre (pairs with the host at local (10, -1, 10), `UP_SOUTH`); may hold the U5 `twilightforest:final_boss_boss_spawner` (it never spawns, section 4.4) and the "Final Castle WIP." text displays with an interaction box tagged `final_castle_wip` (attacking it removes the texts, `EntityEvents.removeCastleTextIfAttacked`) |
+| `template_definition/twilightforest:final_castle/temp/gazebo` | `{"twilightforest:final_castle/temp/gazebo": 100}` | 21 x 12 x 21 gazebo on the keep roof: violet force-field walls and roof (as the commented procedural code: four walls 0..10 high, roof layer at y 11), a jigsaw connector named `twilightforest:final_castle/final_boss` at the floor centre (pairs with the host at local (10, -1, 10), `UP_SOUTH`); may hold the U5 `twilightforest:final_boss_boss_spawner` (it never spawns, section 4.4); **holds** the four "Final Castle WIP." text lines and their punch box tagged `final_castle_wip` at the connector's block (below: "Gazebo WIP texts") |
 | `template_definition/twilightforest:final_castle/temp/large_tower` | `{"twilightforest:final_castle/temp/large_tower": 100}` | interior of the 13 x 61 x 13 large tower (floors and stairs between the yellow door at y 1 and the roof), connector `twilightforest:final_castle/large_tower` at local (0, 1, 2), `WEST_UP` |
 | `template_definition/twilightforest:final_castle/temp/bell_tower` | `{"twilightforest:final_castle/temp/bell_tower": 100}` | interior of the 21-wide bell tower from the entrance at y 9 upwards (floors, stairs, bell room under the force-field windows), connector `twilightforest:final_castle/room` at local (0, 9, 10), `WEST_UP` |
 
 `tools/structures/build.ps1 -Unit finalcastle -Check` validates the three files against F7's imported definitions
 (size limits, connector names); `/tf structure_util place twilightforest:final_castle/temp/<name>` shows them.
+
+**Gazebo WIP texts** (`FinalCastleBossGazeboComponent.willBeAddingFinalBossSoon`, LGPL). In TF 4.8 the gazebo's
+procedural `postProcess` is commented out ("Placed by Template"): walls, roof and these entities come from the ARR
+`gazebo.nbt`, while `EntityEvents.removeCastleTextIfAttacked` stays live and the 4.8 castle shows the texts. U30's
+original gazebo therefore **includes them**, built from the data of `willBeAddingFinalBossSoon` (the template file is
+never read, R10):
+
+- Four `minecraft:text_display` entities, each placed by TF's base call
+  `TFStructureComponent.setInvisibleTextEntity(world, 10, 0, 10, sbb, text, forcePlace = true, yOffset,
+  positionAccumulator, billboard)` (F7's `Component::setInvisibleTextEntity` translates it without the last two
+  arguments and is a no-op outside debugging, so U30 does not use it: see the Bedrock bullet): block = gazebo-local
+  (10, 0, 10) (the centre column for every rotation; the template's `final_boss` connector lands on this same block,
+  host junction (10, -1, 10) + UP in `JigsawPlaceContext.getPlacement`), placed only when that block is inside the box
+  being generated (`sbb.isInside`); entity at (bx + 0.5, by + yOffset, bz + 0.5), yaw 0, pitch 0, text
+  `Component.literal(...)` (not translated: the same English in every locale), billboard constraint **`VERTICAL`**
+  (turns only around the vertical axis); every other text-display setting is Java's default (scale 1, line width 200,
+  background 0x40000000, opacity 255, no shadow, not see-through, centred, lit by world light).
+
+  | Line | Text | yOffset |
+  |---|---|---|
+  | 1 | `Final Castle WIP.` | 2.3 |
+  | 2 | `Join our Discord server to` | 1.3 |
+  | 3 | `follow development of the mod:` | 1.0 |
+  | 4 | `discord.experiment115.com` | 0.7 |
+
+  (The commented-out older message, "Final Boss Here" / "You win!" / two Discord lines, is not placed.)
+- Punch box: the positions of the displays actually added (`addFreshEntity` true) are accumulated;
+  `BoundingBoxUtils.vectorsMinMax(positions, 1)` is their component-wise min / max, each side moved out by 1 (no
+  display added -> no box, no interaction). A `minecraft:interaction` entity tagged `final_castle_wip` gets width
+  `(xsize + zsize) x 0.5`, height `ysize`, position (box centre x, box minY, box centre z). With all four lines: x / z
+  = block centre +- 1 and y = by - 0.3 .. by + 3.3, so width 2.0 and height 3.6 at (bx + 0.5, by - 0.3, bz + 0.5);
+  the interaction's own box is x bx - 0.5 .. bx + 1.5, y by - 0.3 .. by + 3.3, z bz - 0.5 .. bz + 1.5.
+- `EntityEvents.removeCastleTextIfAttacked` (`AttackEntityEvent`, server, not cancelled): attacking an `Interaction`
+  tagged `final_castle_wip` discards every `Display` entity inside the interaction's bounding box, then the
+  interaction. Nothing else removes them.
+- Bedrock has no `text_display` or `interaction` entities. The `.gft` gazebo holds a marker `final_castle_wip` at the
+  `final_boss` connector's position instead of entities; U30's F7 marker handler (`structure::registerMarkerHandler`)
+  does at that block what `willBeAddingFinalBossSoon` does: four persistent text carriers at the line positions and one
+  punch carrier with the computed box. The carriers are U30 helper actors in its BP folder
+  (`assets/pack/bp/entities/finalcastle/`, ids outside TF's id space, e.g. `gloamingforest:final_castle_text` and
+  `gloamingforest:final_castle_punch`, so they are not owners.tsv id rows): invisible, no gravity, no physics
+  collision, not pushable, immune to damage, no loot, no spawn egg, persistent. A text carrier shows its line as an
+  always-shown name tag (`minecraft:nameable` `always_show`, renaming off); the punch carrier has a 2.0 x 3.6
+  `minecraft:collision_box` (the hit box). `interactions::onAttack({.block = <punch carrier id>})` (`Match::block`
+  is the entity type for entity events) returns Deny and removes the text carriers inside its box, then itself (TF's
+  rule). With the client mod, U30's F12 entity renderer
+  draws the lines with the Java look above (vertical billboard, defaults) in place of the name tags; vanilla clients
+  see Bedrock name tags (listed deviation: name-tag font size and background). If the F12 render contract lacks a
+  world-text call, U30 adds it under `src/feature/ext/finalcastle/` (R18).
 
 ### 1.3 Golden hash
 
@@ -162,10 +211,17 @@ destroy, shade brightness 1, propagates skylight; tags `#twilightforest:common_p
 immune), `#twilightforest:annihilation_inclusions`, relocation not supported. Map colours purple / magenta / orange / green / light blue;
 tints violet 0x5C1074, pink 0xFA057E, orange 0xFF5B02, green 0x89E701, blue 0x0DDEFF. Names: pink = "Magenta Force Field".
 
-- Placement: the face opposite the clicked face always connects; the clicked direction connects unless sneaking; other
-  directions connect when `canConnectTo` (same block always; else only while fewer than 3 connections exist and the
-  neighbour face is sturdy and not a connection exception).
-- `updateShape` only ever **adds** connections (never removes); water is ticked when waterlogged.
+- `canConnectTo(state, pos, direction)`: the neighbour in `direction` is the same block (same colour) -> connect.
+  Otherwise count "better connections": during **placement** (`state == null`) the number of the 6 neighbours that are
+  the same force-field block, read from the world (so the result does not depend on the order in which directions are
+  decided); in **`updateShape`** the number of connection booleans already true in `state`. 3 or more -> refuse; else
+  connect when the neighbour is not a connection exception (`Block.isExceptionForConnection`: leaves, barrier, carved
+  pumpkin, jack o'lantern, melon, pumpkin, shulker boxes) and its face towards this block is sturdy.
+- Placement (`getStateForPlacement`, all 6 directions): the face opposite the clicked face (towards the clicked
+  block) always connects; the clicked direction connects unless sneaking; every other direction connects when
+  `canConnectTo(null, ...)`.
+- `updateShape(direction)`: sets that direction's connection when `canConnectTo(state, ...)`, never clears one (only
+  ever **adds** connections); water is ticked when waterlogged.
 - Shape (= collision): 2 x 2 x 2 core, a 2-thick arm per connection, and corner panels (e.g. DOWN_NORTH (7..9, 0..7,
   0..7)) when both directions are set and `cornerConnects` (either neighbour along one direction has a sturdy face or is a
   force field connected in the other direction). The model (`ForceFieldModel`) draws the same parts.
@@ -340,13 +396,17 @@ clients get the text without the click event (deviation).
 - Thorn damage for vanilla clients is server-side (`blockevents::onEntityInside`), item entities filtered by the tag.
 - Templates: original `.gft` designs only (section 1.2); the jigsaw connector names must match TF's so F7's pool logic
   places them exactly as TF does.
+- Gazebo WIP texts: Java text-display / interaction entities become a template marker and U30 helper actors (name-tag
+  text carriers plus a punch carrier, section 1.2); exact look with the client mod, name tags on vanilla clients.
 - Dungeon rooms use `bury` terrain adaptation inside a `beard_box` structure: F7 must honour the per-piece override.
 - The castle is the end of progression in 4.8: nothing inside drops loot chests; doors, force fields and runes are the
   interactive parts.
 
 ## 12. Acceptance (selftests `finalcastle.*`, dx 3000-3099)
 
-Per the unit record: golden hash of the castle (`finalcastle.castle_hash`) and `-Check` of the three templates; a
+Per the unit record: golden hash of the castle (`finalcastle.castle_hash`) and `-Check` of the three templates; the
+gazebo shows the four WIP lines at by + 2.3 / 1.3 / 1.0 / 0.7 above its centre and one attack on the 2.0 x 3.6 punch
+box removes all of them and the box; a
 castle door activated by use or redstone vanishes after 2-6 ticks, chains to adjacent doors (rune-colour flow through a
 door frame), reappears after 80 ticks with the sounds; force fields connect on placement and are unbreakable; thorns deal
 4 `thorns` damage, spare thorn-rose items, burst instead of breaking for survival players, burn into burnt thorns with
