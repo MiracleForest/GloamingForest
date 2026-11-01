@@ -378,11 +378,28 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
             p.later = client->getSoundEngine()->isPlayingSound(p.handle) ? 1 : 0;
         });
     };
+    // the engine's level of a play, once the sound has started (a sound that is still loading at the
+    // play has no attributes yet)
+    auto levelLater = [res, slot](int index) {
+        ll::thread::ClientThreadExecutor::getDefault().execute([res, slot, index] {
+            auto* client = gf::client::currentClient();
+            std::lock_guard lock(res->lock);
+            auto&           p = slot(index);
+            if (!client || !p.played || p.volume) return;
+            if (auto attr = client->getSoundEngine()->tryGetPlayingSoundAttributes(p.handle)) {
+                p.volume = attr->mVolume;
+                p.pitch  = attr->mPitch;
+            }
+        });
+    };
     constexpr double kControlSec = 5.0; // mob.enderdragon.death plays for longer
     play("mob.enderdragon.death", -1);           // a long vanilla event: the engine knows it and plays it for seconds
     play("gf.synth.selftest.no_such_sound", -2); // an unknown event
     for (int i = 0; i < int(std::size(kEvents)) + kLagTicks; ++i) {
         if (i < int(std::size(kEvents))) play(kEvents[i].id, i);
+        for (int back : {1, 2, 4}) {
+            if (i - back >= 0 && i - back < int(std::size(kEvents))) levelLater(i - back);
+        }
         if (i >= kLagTicks && i <= kLagTicks * 4) checkLater(-1, kControlSec);
         int const j = i - kLagTicks;
         if (j >= 0 && minSeconds[std::size_t(j)] >= kLongSec) checkLater(j, minSeconds[std::size_t(j)]);
@@ -493,7 +510,8 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
         if (!lvl || (lvl->first == 1.0 && lvl->second == 1.0)) continue;
         auto const& p   = plays[i];
         bool        bad = false;
-        if (checkVol && p.volume && !approx(*p.volume, kPlayVolume * lvl->first)) bad = true;
+        if (!p.volume) continue; // not observed (the sound ended before the engine reported it)
+        if (checkVol && !approx(*p.volume, kPlayVolume * lvl->first)) bad = true;
         if (checkPitch && p.pitch && !approx(*p.pitch, kPlayPitch * lvl->second)) bad = true;
         ++levels;
         if (bad && ++badLevels <= 20) ctx.check(false, describe(i) + ": TF's level is volume " + std::to_string(lvl->first) + " pitch " + std::to_string(lvl->second));
@@ -502,7 +520,7 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
     ctx.info(
         "engine levels: volume " + std::string(checkVol ? "checked" : "not checked") + " (" + std::to_string(calVolOk) + "/" + std::to_string(calVol)
         + " calibration plays at the requested volume), pitch " + (checkPitch ? "checked" : "not checked") + " (" + std::to_string(calPitchOk) + "/"
-        + std::to_string(calPitch) + "), " + std::to_string(levels) + " events at another level; " + std::to_string(measured) + " long sounds measured playing"
+        + std::to_string(calPitch) + "), " + std::to_string(levels) + " events at another level observed; " + std::to_string(measured) + " long sounds measured playing"
     );
     gf::log().info(
         "synth: played {} sound events on the client ({} long sounds still playing after {}s; levels checked: volume {}, pitch {})",
