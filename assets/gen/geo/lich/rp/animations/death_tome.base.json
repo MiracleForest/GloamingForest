@@ -5,7 +5,43 @@
       "loop": true,
       "bones": {
         "book": {
-          "rotation": [0, 0, 0]
+          "rotation": [0, 0, -50],
+          "position": [0, "math.sin(query.life_time * 343.7747) * 2 - 8", 0]
+        },
+        "cover_left": {
+          "rotation": [0, "math.sin(query.life_time * 458.3662) * (-15.4699) - 64.4578", 0]
+        },
+        "cover_right": {
+          "rotation": [0, "math.sin(query.life_time * 458.3662) * 15.4699 + 244.4578", 0]
+        },
+        "flipping_page_left": {
+          "position": ["math.sin(math.sin(query.life_time * 458.3662) * 15.4699 + 64.4578)", 0, 0]
+        },
+        "flipping_page_right": {
+          "position": ["math.sin(math.sin(query.life_time * 458.3662) * 15.4699 + 64.4578)", 0, 0]
+        },
+        "loose_page_0": {
+          "rotation": ["math.sin(query.life_time * 229.1831) * 19.0986", "query.life_time * 286.4789", "math.cos(query.life_time * 229.1831) * 11.4592"]
+        },
+        "loose_page_1": {
+          "rotation": ["math.sin(query.life_time * 229.1831) * 19.0986", "query.life_time * 381.9719", "math.cos(query.life_time * 229.1831) * 14.3239 + 114.5916"]
+        },
+        "loose_page_2": {
+          "rotation": ["math.sin(query.life_time * 229.1831) * (-19.0986)", "query.life_time * 286.4789", "math.cos(query.life_time * 229.1831) * 11.4592 - 57.2958"]
+        },
+        "loose_page_3": {
+          "rotation": ["math.sin(query.life_time * 572.9578) * (-14.3239)", "query.life_time * 286.4789", "math.cos(query.life_time * 163.7022) * 11.4592"]
+        },
+        "pages_left": {
+          "rotation": [0, "math.sin(query.life_time * 458.3662) * (-15.4699) - 64.4578", 0],
+          "position": ["math.sin(math.sin(query.life_time * 458.3662) * 15.4699 + 64.4578)", 0, 0]
+        },
+        "pages_right": {
+          "rotation": [0, "math.sin(query.life_time * 458.3662) * 15.4699 + 64.4578", 0],
+          "position": ["math.sin(math.sin(query.life_time * 458.3662) * 15.4699 + 64.4578)", 0, 0]
+        },
+        "paper_storm": {
+          "rotation": [0, "query.life_time * 20 + 90", 50]
         }
       }
     }

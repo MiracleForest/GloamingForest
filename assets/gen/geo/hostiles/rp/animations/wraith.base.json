@@ -5,10 +5,10 @@
       "loop": true,
       "bones": {
         "leftArm": {
-          "rotation": ["math.sin(variable.attack_time * 180) * (-68.7549) + math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 22.9183 - 90", "math.sin(variable.attack_time * 180) * (-34.3775) + 5.7296", 0]
+          "rotation": ["math.sin(variable.attack_time * 180) * (-68.7549) + math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 22.9183 + math.sin(query.life_time * 76.7763) * (-2.8648) - 90", "math.sin(variable.attack_time * 180) * (-34.3775) + 5.7296", "math.cos(query.life_time * 103.1324) * (-2.8648) - 2.8648"]
         },
         "rightArm": {
-          "rotation": ["math.sin(variable.attack_time * 180) * (-68.7549) + math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 22.9183 - 90", "math.sin(variable.attack_time * 180) * 34.3775 - 5.7296", 0]
+          "rotation": ["math.sin(variable.attack_time * 180) * (-68.7549) + math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 22.9183 + math.sin(query.life_time * 76.7763) * 2.8648 - 90", "math.sin(variable.attack_time * 180) * 34.3775 - 5.7296", "math.cos(query.life_time * 103.1324) * 2.8648 + 2.8648"]
         }
       }
     }

@@ -84,18 +84,18 @@
   "setupAnim": {
     "class": "RisingZombieModel",
     "identifier": "animation.twilightforest.rising_zombie.base",
-    "notes": ["stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
+    "notes": ["vanilla base AbstractZombieModel: super.setupAnim (line 20) runs the vanilla Bedrock humanoid animations plus animation.zombie.attack_bare_hand (AnimationUtils.animateZombieArms) on head / body / rightArm / leftArm / rightLeg / leftLeg; the base animation adds to it", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {
         "line": 20,
         "java": "super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);",
-        "why": "the super class's setupAnim (see the notes for the vanilla base)"
+        "why": "the vanilla AbstractZombieModel.setupAnim (see the notes)"
       },
       {
         "line": 21,
         "java": "this.leftLeg.visible = this.rightLeg.visible = entity.getRisingTicks() > 40;",
-        "why": "not a bone assignment"
+        "why": "property 'visible' (visibility / scale): use part_visibility or a scale channel"
       }
     ]
   },

@@ -1047,8 +1047,20 @@ namespace Gf.Models
                         case "true": p++; return new LitExpr { Value = true, Line = line };
                         case "false": p++; return new LitExpr { Value = false, Line = line };
                         case "null": p++; return new LitExpr { Value = null, Line = line };
-                        case "this": p++; return new ThisExpr { Line = line };
-                        case "super": p++; return new SuperExpr { Line = line };
+                        case "this":
+                        case "super":
+                        {
+                            p++;
+                            Expr self = c.Text == "this" ? (Expr)new ThisExpr { Line = line } : new SuperExpr { Line = line };
+                            if (Is("("))
+                            {
+                                // an explicit constructor call: this(...) / super(...)
+                                var ctorCall = new CallExpr { Target = self, Name = "<init>", Line = line };
+                                ParseArgs(ctorCall.Args);
+                                return ctorCall;
+                            }
+                            return self;
+                        }
                         case "new": return ParseNew();
                         case "switch":
                         {

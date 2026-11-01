@@ -6,6 +6,21 @@
       "bones": {
         "head": {
           "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
+        },
+        "left_back_leg": {
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 40.107", 0, 0]
+        },
+        "leg2": {
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 40.107", 0, 0]
+        },
+        "leg3": {
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 40.107", 0, 0]
+        },
+        "neck": {
+          "rotation": [0, "query.target_y_rotation", 0]
+        },
+        "right_back_leg": {
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 40.107", 0, 0]
         }
       }
     }

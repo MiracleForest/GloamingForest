@@ -35,13 +35,13 @@
   "setupAnim": {
     "class": "NagaModel",
     "identifier": "animation.twilightforest.naga.base",
-    "notes": ["vanilla base ListModel (super calls): nothing (ListModel has no default animation)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
+    "notes": ["vanilla base ListModel: nothing (ListModel has no default animation)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {
         "line": 84,
         "java": "this.entity = entity;",
-        "why": "not a bone assignment"
+        "why": "not a bone assignment (this.entity: entity or model state)"
       }
     ]
   }

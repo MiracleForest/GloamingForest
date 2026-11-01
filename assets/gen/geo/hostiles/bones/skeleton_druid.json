@@ -93,7 +93,7 @@
   "setupAnim": {
     "class": "SkeletonDruidModel",
     "identifier": "animation.twilightforest.skeleton_druid.base",
-    "notes": ["no setupAnim / prepareMobModel in SkeletonDruidModel or its TF super classes", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
+    "notes": ["no setupAnim / prepareMobModel in SkeletonDruidModel or its TF super classes", "vanilla base SkeletonModel animates every part (no setupAnim in SkeletonDruidModel or its TF super classes): the vanilla Bedrock humanoid animations plus animation.skeleton.attack and animation.humanoid.bow_and_arrow on head / body / rightArm / leftArm / rightLeg / leftLeg", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": []
   }

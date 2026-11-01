@@ -102,7 +102,7 @@
   "setupAnim": {
     "class": "DeerModel",
     "identifier": "animation.twilightforest.deer.base",
-    "notes": ["vanilla base QuadrupedModel (super calls): animation.quadruped.walk and animation.common.look_at_target (Bedrock vanilla) on head / leg0 (right hind) / leg1 (left hind) / leg2 (right front) / leg3 (left front)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
+    "notes": ["vanilla base QuadrupedModel animates every part (no setupAnim in DeerModel or its TF super classes): animation.quadruped.walk and animation.common.look_at_target (Bedrock vanilla) on head / leg0 (right hind) / leg1 (left hind) / leg2 (right front) / leg3 (left front)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {
@@ -118,7 +118,7 @@
       {
         "line": 152,
         "java": "super.prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);",
-        "why": "the super class's prepareMobModel (see the notes for the vanilla base)"
+        "why": "the vanilla QuadrupedModel.prepareMobModel (see the notes)"
       }
     ]
   }

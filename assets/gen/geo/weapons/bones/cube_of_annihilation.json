@@ -54,7 +54,7 @@
   "setupAnim": {
     "class": "CubeOfAnnihilationModel",
     "identifier": "animation.twilightforest.cube_of_annihilation.base",
-    "notes": ["vanilla base ListModel (super calls): nothing (ListModel has no default animation)"],
+    "notes": ["vanilla base ListModel: nothing (ListModel has no default animation)"],
     "translated": ["this.boxX.xRot = Mth.sin((entity.tickCount + headPitch)) / 5.0F;", "this.boxY.yRot = Mth.sin((entity.tickCount + headPitch)) / 5.0F;", "this.boxZ.zRot = Mth.sin((entity.tickCount + headPitch)) / 5.0F;"],
     "todo": []
   },

@@ -395,18 +395,19 @@
   "setupAnim": {
     "class": "UrGhastModel",
     "identifier": "animation.twilightforest.ur_ghast.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)", "stub: a zero rotation on body (Bedrock needs at least one bone in an animation)"],
-    "translated": [],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)"],
+    "translated": ["super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);", "TFGhastModel: this.body.xRot = headPitch * Mth.DEG_TO_RAD;", "TFGhastModel: this.body.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.waveTentacles(limbSwingAmount, ageInTicks);"],
     "todo": [
       {
-        "line": 93,
-        "java": "super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);",
-        "why": "the super class's setupAnim (see the notes for the vanilla base)"
+        "line": 68,
+        "class": "TFGhastModel",
+        "java": "for (int i = 0; i < this.tentacles.length; ++i) {",
+        "why": "inside a loop (not translated)"
       },
       {
-        "line": 96,
-        "java": "this.waveTentacles(limbSwingAmount, ageInTicks);",
-        "why": "not a bone assignment"
+        "line": 100,
+        "java": "for (int i = 0; i < this.tentacles.length; ++i) {",
+        "why": "inside a loop (not translated)"
       }
     ]
   },

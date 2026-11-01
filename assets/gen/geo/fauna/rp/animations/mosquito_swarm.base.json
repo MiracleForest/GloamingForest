@@ -5,7 +5,25 @@
       "loop": true,
       "bones": {
         "core": {
-          "rotation": [0, 0, 0]
+          "rotation": ["math.sin(query.life_time * 229.1831) * 14.3239", "query.life_time * 229.1831", "math.cos(query.life_time * 229.1831) * 14.3239"]
+        },
+        "group_1": {
+          "rotation": ["math.sin(query.life_time * 190.9859) * 28.6479", "query.life_time * 572.9578", "math.cos(query.life_time * 229.1831) * 14.3239"]
+        },
+        "group_2": {
+          "rotation": ["query.life_time * 229.1831", "math.sin(query.life_time * 572.9578) * 19.0986", "math.cos(query.life_time * 229.1831) * 14.3239"]
+        },
+        "group_3": {
+          "rotation": ["math.cos(query.life_time * 286.4789) * 28.6479", "math.sin(query.life_time * 163.7022) * 19.0986", "query.life_time * 229.1831"]
+        },
+        "group_4": {
+          "rotation": ["query.life_time * 572.9578", "math.sin(query.life_time * 229.1831) * 14.3239", "math.sin(query.life_time * 190.9859) * 28.6479"]
+        },
+        "group_5": {
+          "rotation": ["math.cos(query.life_time * 229.1831) * 14.3239", "math.cos(query.life_time * 229.1831) * 14.3239", "query.life_time * 572.9578"]
+        },
+        "group_6": {
+          "rotation": ["math.cos(query.life_time * 286.4789) * 28.6479", "query.life_time * 229.1831", "math.cos(query.life_time * 163.7022) * 19.0986"]
         }
       }
     }

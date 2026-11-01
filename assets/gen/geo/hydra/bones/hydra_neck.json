@@ -27,7 +27,7 @@
   "setupAnim": {
     "class": "HydraNeckModel",
     "identifier": "animation.twilightforest.hydra_neck.base",
-    "notes": ["vanilla base ListModel (super calls): nothing (ListModel has no default animation)"],
+    "notes": ["vanilla base ListModel: nothing (ListModel has no default animation)"],
     "translated": ["this.neck.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.neck.xRot = headPitch * Mth.DEG_TO_RAD;"],
     "todo": []
   }

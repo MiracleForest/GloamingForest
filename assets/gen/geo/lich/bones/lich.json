@@ -106,33 +106,61 @@
   "setupAnim": {
     "class": "LichModel",
     "identifier": "animation.twilightforest.lich.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
-    "translated": [],
+    "notes": ["vanilla base HumanoidModel: super.setupAnim (line 109) runs the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg; the base animation adds to it. overrides_vanilla lists the bone axes Java sets with '=' after that call: they replace the vanilla pose, so the vanilla animations must not drive them (in the cases whose lines it gives)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": ["} else limbSwingAmount *= 0.75F;", "float ogSin = Mth.sin(this.attackTime * Mth.PI);", "float otherSin = Mth.sin((1.0F - (1.0F - this.attackTime) * (1.0F - this.attackTime)) * Mth.PI);", "this.leftArm.yRot = 0.1F - ogSin * 0.6F;", "this.leftArm.xRot = -3.141593F;", "this.leftArm.xRot -= ogSin * 1.2F - otherSin * 0.4F;", "this.leftArm.xRot -= Mth.sin(ageInTicks * 0.167F) * 0.15F;", "this.leftArm.xRot = 0.0F;", "this.leftArm.yRot = 0.0F;", "this.rightArm.zRot = 0.0F;", "this.rightArm.yRot = -(0.1F - ogSin * 0.6F);", "this.rightArm.xRot = -Mth.HALF_PI;", "this.rightArm.xRot -= ogSin * 1.2F - otherSin * 0.4F;", "this.rightArm.zRot += Mth.cos(ageInTicks * 0.26F) * 0.15F + 0.05F;", "this.rightArm.xRot += Mth.sin(ageInTicks * 0.167F) * 0.15F;"],
     "todo": [
       {
         "line": 101,
+        "end_line": 107,
         "java": "if (entity.isDeadOrDying() && entity.deathTime < Lich.DEATH_ANIMATION_POINT_A) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.isDeadOrDying(), entity.deathTime < Lich.DEATH_ANIMATION_POINT_A as false; so it runs the else branch and leaves out lines 101-106",
+        "affects": []
       },
       {
         "line": 108,
         "java": "this.shadowClone = entity.isShadowClone();",
-        "why": "not a bone assignment"
+        "why": "not a bone assignment (this.shadowClone: entity or model state)"
       },
       {
         "line": 109,
         "java": "super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);",
-        "why": "the super class's setupAnim (see the notes for the vanilla base)"
+        "why": "the vanilla HumanoidModel.setupAnim (see the notes); it passes limbSwingAmount = query.modified_move_speed * 0.75 where the vanilla animations read query.modified_move_speed"
       },
       {
         "line": 111,
+        "end_line": 150,
         "java": "if (entity.getPhase() != 3) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.getPhase() == 3 as false; so it runs the if branch and leaves out lines 137-150",
+        "affects": ["leftArm.xRot", "leftArm.yRot", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
+      },
+      {
+        "line": 114,
+        "java": "if (entity.tickCount > 0 && !entity.isDeadOrDying()) {",
+        "why": "the base animation counts entity.isDeadOrDying() as false",
+        "affects": ["leftArm.xRot", "leftArm.yRot"]
+      },
+      {
+        "line": 115,
+        "java": "this.leftArm.zRot = 0.5F;",
+        "why": "its effect is not in the base animation: leftArm.zRot: the vanilla pose is kept on one branch of line 114 only"
+      },
+      {
+        "line": 119,
+        "java": "this.leftArm.zRot -= Mth.cos(ageInTicks * 0.26F) * 0.15F + 0.05F;",
+        "why": "its effect is not in the base animation: leftArm.zRot: the vanilla pose is kept on one branch of line 114 only"
+      },
+      {
+        "line": 126,
+        "end_line": 135,
+        "java": "if (!entity.getMainHandItem().isEmpty()) {",
+        "why": "the base animation counts entity.getMainHandItem().isEmpty() as false; so it runs the if branch and leaves out lines 133-135",
+        "affects": ["rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
       },
       {
         "line": 153,
         "java": "boolean flag = entity.deathTime > Lich.DEATH_ANIMATION_POINT_A;",
-        "why": "local 'flag': field deathTime"
+        "why": "the base animation counts entity.deathTime > Lich.DEATH_ANIMATION_POINT_A as false",
+        "affects": []
       },
       {
         "line": 154,
@@ -162,17 +190,49 @@
       {
         "line": 159,
         "java": "this.cloak.skipDraw = flag;",
-        "why": "not a bone assignment"
+        "why": "property 'skipDraw' (visibility / scale): use part_visibility or a scale channel"
       },
       {
         "line": 160,
         "java": "this.collar.skipDraw = flag;",
-        "why": "not a bone assignment"
+        "why": "property 'skipDraw' (visibility / scale): use part_visibility or a scale channel"
       },
       {
         "line": 161,
         "java": "this.head.skipDraw = flag;",
         "why": "property 'skipDraw' (visibility / scale): use part_visibility or a scale channel"
+      }
+    ],
+    "overrides_vanilla": [
+      {
+        "bone": "leftArm",
+        "property": "xRot",
+        "lines": [117, 122]
+      },
+      {
+        "bone": "leftArm",
+        "property": "yRot",
+        "lines": [116, 123]
+      },
+      {
+        "bone": "leftArm",
+        "property": "zRot",
+        "lines": [115]
+      },
+      {
+        "bone": "rightArm",
+        "property": "xRot",
+        "lines": [129, 134]
+      },
+      {
+        "bone": "rightArm",
+        "property": "yRot",
+        "lines": [128, 135]
+      },
+      {
+        "bone": "rightArm",
+        "property": "zRot",
+        "lines": [127]
       }
     ]
   }

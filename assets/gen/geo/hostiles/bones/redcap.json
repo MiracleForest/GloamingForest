@@ -88,43 +88,165 @@
   "setupAnim": {
     "class": "RedcapModel",
     "identifier": "animation.twilightforest.redcap.base",
-    "notes": ["setupAnim is inherited from FixedHumanoidModel", "vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
-    "translated": ["this.head.yRot = headYaw * Mth.DEG_TO_RAD;", "this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.body.yRot = 0.0F;", "this.rightArm.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F;", "this.leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * limbSwingAmount * 0.5F;", "this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightLeg.yRot = 0.0F;", "this.leftLeg.yRot = 0.0F;", "this.rightLeg.zRot = 0.0F;", "this.leftLeg.zRot = 0.0F;", "this.rightArm.yRot = 0.0F;", "this.leftArm.yRot = 0.0F;", "this.hat.copyFrom(this.head);"],
+    "notes": ["setupAnim is inherited from FixedHumanoidModel", "setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": [
+      "FixedHumanoidModel: this.head.yRot = headYaw * Mth.DEG_TO_RAD;",
+      "FixedHumanoidModel: this.head.xRot = headPitch * Mth.DEG_TO_RAD;",
+      "FixedHumanoidModel: this.body.yRot = 0.0F;",
+      "FixedHumanoidModel: this.rightArm.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F;",
+      "FixedHumanoidModel: this.leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * limbSwingAmount * 0.5F;",
+      "FixedHumanoidModel: this.rightArm.zRot = 0.0F;",
+      "FixedHumanoidModel: this.leftArm.zRot = 0.0F;",
+      "FixedHumanoidModel: this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;",
+      "FixedHumanoidModel: this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;",
+      "FixedHumanoidModel: this.rightLeg.yRot = 0.0F;",
+      "FixedHumanoidModel: this.leftLeg.yRot = 0.0F;",
+      "FixedHumanoidModel: this.rightLeg.zRot = 0.0F;",
+      "FixedHumanoidModel: this.leftLeg.zRot = 0.0F;",
+      "FixedHumanoidModel: if (this.riding) {",
+      "FixedHumanoidModel: this.rightArm.xRot += -Mth.PI / 5.0F;",
+      "FixedHumanoidModel: this.leftArm.xRot += -Mth.PI / 5.0F;",
+      "FixedHumanoidModel: this.rightLeg.xRot = -1.4137167F;",
+      "FixedHumanoidModel: this.rightLeg.yRot = Mth.PI / 10F;",
+      "FixedHumanoidModel: this.rightLeg.zRot = 0.07853982F;",
+      "FixedHumanoidModel: this.leftLeg.xRot = -1.4137167F;",
+      "FixedHumanoidModel: this.leftLeg.yRot = -Mth.PI / 10F;",
+      "FixedHumanoidModel: this.leftLeg.zRot = -0.07853982F;",
+      "FixedHumanoidModel: this.rightArm.yRot = 0.0F;",
+      "FixedHumanoidModel: this.leftArm.yRot = 0.0F;",
+      "FixedHumanoidModel: this.setupAttackAnimation(entity, ageInTicks);",
+      "FixedHumanoidModel: if (!(this.attackTime <= 0.0F)) {",
+      "FixedHumanoidModel: float f = this.attackTime;",
+      "FixedHumanoidModel: this.body.yRot = Mth.sin(Mth.sqrt(f) * (Mth.PI * 2F)) * 0.2F;",
+      "FixedHumanoidModel: this.rightArm.yRot += this.body.yRot;",
+      "FixedHumanoidModel: this.leftArm.yRot += this.body.yRot;",
+      "FixedHumanoidModel: this.leftArm.xRot += this.body.yRot;",
+      "FixedHumanoidModel: f = 1.0F - this.attackTime;",
+      "FixedHumanoidModel: f *= f;",
+      "FixedHumanoidModel: f *= f;",
+      "FixedHumanoidModel: f = 1.0F - f;",
+      "FixedHumanoidModel: float f1 = Mth.sin(f * Mth.PI);",
+      "FixedHumanoidModel: float f2 = Mth.sin(this.attackTime * Mth.PI) * -(this.head.xRot - 0.7F) * 0.75F;",
+      "FixedHumanoidModel: modelpart.xRot -= f1 * 1.2F + f2;",
+      "FixedHumanoidModel: modelpart.yRot += this.body.yRot * 2.0F;",
+      "FixedHumanoidModel: modelpart.zRot += Mth.sin(this.attackTime * Mth.PI) * -0.4F;",
+      "FixedHumanoidModel: AnimationUtils.bobModelPart(this.rightArm, ageInTicks, 1.0F);",
+      "FixedHumanoidModel: AnimationUtils.bobModelPart(this.leftArm, ageInTicks, -1.0F);",
+      "FixedHumanoidModel: this.hat.copyFrom(this.head);"
+    ],
     "todo": [
       {
-        "line": 40,
-        "java": "if (this.riding) {",
-        "why": "not a bone assignment"
-      },
-      {
         "line": 53,
+        "class": "FixedHumanoidModel",
         "java": "boolean flag2 = entity.getMainArm() == HumanoidArm.RIGHT;",
-        "why": "local 'flag2': call entity.getMainArm()"
+        "why": "the base animation counts entity.getMainArm() == HumanoidArm.RIGHT as false",
+        "affects": ["leftArm.xRot", "leftArm.y", "leftArm.yRot", "leftArm.zRot", "rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.zRot"]
       },
       {
         "line": 54,
+        "end_line": 68,
+        "class": "FixedHumanoidModel",
         "java": "if (entity.isUsingItem()) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.isUsingItem() as false; so it runs the else branch and leaves out lines 54-59",
+        "affects": ["leftArm.xRot", "leftArm.y", "leftArm.yRot", "leftArm.zRot", "rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.zRot"]
       },
       {
-        "line": 72,
-        "java": "this.setupAttackAnimation(entity, ageInTicks);",
-        "why": "not a bone assignment"
+        "line": 62,
+        "class": "FixedHumanoidModel",
+        "java": "boolean flag4 = flag2 ? this.leftArmPose.isTwoHanded() : this.rightArmPose.isTwoHanded();",
+        "why": "the base animation counts flag2 ? this.leftArmPose.isTwoHanded() : this.rightArmPose.isTwoHanded() as false",
+        "affects": ["leftArm.xRot", "leftArm.y", "leftArm.yRot", "leftArm.zRot", "rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.zRot"]
+      },
+      {
+        "line": 63,
+        "end_line": 68,
+        "class": "FixedHumanoidModel",
+        "java": "if (flag2 != flag4) {",
+        "why": "the condition is constant on the base path (it uses values of the cases at lines 53, 62); so it runs the else branch and leaves out lines 63-65",
+        "affects": ["leftArm.xRot", "leftArm.y", "leftArm.yRot", "leftArm.zRot", "rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.zRot"]
+      },
+      {
+        "line": 67,
+        "class": "FixedHumanoidModel",
+        "java": "this.poseRightArm(entity);",
+        "why": "the base animation counts this.rightArmPose != ArmPose.EMPTY (with EMPTY the vanilla HumanoidModel.poseRightArm sets rightArm.yRot = 0) as false",
+        "affects": ["leftArm.xRot", "leftArm.y", "leftArm.zRot", "rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.zRot"]
+      },
+      {
+        "line": 68,
+        "class": "FixedHumanoidModel",
+        "java": "this.poseLeftArm(entity);",
+        "why": "the base animation counts this.leftArmPose != ArmPose.EMPTY (with EMPTY the vanilla HumanoidModel.poseLeftArm sets leftArm.yRot = 0) as false",
+        "affects": ["leftArm.xRot", "leftArm.y", "leftArm.yRot", "leftArm.zRot", "rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.zRot"]
+      },
+      {
+        "line": 124,
+        "class": "FixedHumanoidModel",
+        "java": "HumanoidArm humanoidarm = this.getAttackArm(pLivingEntity);",
+        "why": "local 'humanoidarm': call this.getAttackArm()"
+      },
+      {
+        "line": 125,
+        "class": "FixedHumanoidModel",
+        "java": "ModelPart modelpart = this.getArm(humanoidarm);",
+        "why": "the base animation counts this.getArm(humanoidarm) == this.leftArm as false",
+        "affects": ["leftArm.xRot", "leftArm.y", "leftArm.yRot", "leftArm.zRot", "rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.zRot"]
+      },
+      {
+        "line": 128,
+        "end_line": 129,
+        "class": "FixedHumanoidModel",
+        "java": "if (humanoidarm == HumanoidArm.LEFT) {",
+        "why": "the base animation counts humanoidarm == HumanoidArm.LEFT as false; so it runs neither branch and leaves out lines 128-129",
+        "affects": ["body.yRot", "leftArm.xRot", "leftArm.yRot", "rightArm.yRot"]
+      },
+      {
+        "line": 132,
+        "class": "FixedHumanoidModel",
+        "java": "this.rightArm.z = Mth.sin(this.body.yRot) * (this.armWidth + 1.0F);",
+        "why": "rightArm.z (line 132) is not translated: field this.armWidth"
+      },
+      {
+        "line": 133,
+        "class": "FixedHumanoidModel",
+        "java": "this.rightArm.x = -Mth.cos(this.body.yRot) * (this.armWidth + 1.0F);",
+        "why": "rightArm.x (line 133) is not translated: field this.armWidth"
+      },
+      {
+        "line": 134,
+        "class": "FixedHumanoidModel",
+        "java": "this.leftArm.z = -Mth.sin(this.body.yRot) * (this.armWidth + 1.0F);",
+        "why": "leftArm.z (line 134) is not translated: field this.armWidth"
+      },
+      {
+        "line": 135,
+        "class": "FixedHumanoidModel",
+        "java": "this.leftArm.x = Mth.cos(this.body.yRot) * (this.armWidth + 1.0F);",
+        "why": "leftArm.x (line 135) is not translated: field this.armWidth"
       },
       {
         "line": 74,
+        "end_line": 75,
+        "class": "FixedHumanoidModel",
         "java": "if (this.rightArmPose != HumanoidModel.ArmPose.SPYGLASS) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts this.rightArmPose == HumanoidModel.ArmPose.SPYGLASS as false; so it runs the if branch",
+        "affects": ["rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.zRot"]
       },
       {
         "line": 78,
+        "end_line": 79,
+        "class": "FixedHumanoidModel",
         "java": "if (this.leftArmPose != HumanoidModel.ArmPose.SPYGLASS) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts this.leftArmPose == HumanoidModel.ArmPose.SPYGLASS as false; so it runs the if branch",
+        "affects": ["leftArm.xRot", "leftArm.y", "leftArm.yRot", "leftArm.zRot"]
       },
       {
         "line": 82,
+        "end_line": 115,
+        "class": "FixedHumanoidModel",
         "java": "if (this.swimAmount > 0.0F) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts this.swimAmount > 0F as false; so it runs neither branch and leaves out lines 82-115",
+        "affects": ["leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "leftLeg.xRot", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot", "rightLeg.xRot"]
       }
     ]
   }

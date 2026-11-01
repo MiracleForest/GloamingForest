@@ -259,13 +259,13 @@
   "setupAnim": {
     "class": "HydraModel",
     "identifier": "animation.twilightforest.hydra.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)"],
     "translated": ["this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;"],
     "todo": [
       {
         "line": 413,
         "java": "this.hydra = entity;",
-        "why": "not a bone assignment"
+        "why": "not a bone assignment (this.hydra: entity or model state)"
       }
     ]
   }

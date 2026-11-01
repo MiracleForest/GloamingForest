@@ -281,8 +281,8 @@
   "setupAnim": {
     "class": "QuestRamModel",
     "identifier": "animation.twilightforest.quest_ram.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
-    "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;"],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.neck.yRot = this.head.yRot;", "this.leftFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount * 0.5F;", "this.rightFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount * 0.5F;", "this.leftBackLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount * 0.5F;", "this.rightBackLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount * 0.5F;"],
     "todo": [
       {
         "line": 314,
@@ -292,77 +292,65 @@
       {
         "line": 315,
         "java": "boolean jappa = JappaPackReloadListener.INSTANCE.isJappaPackLoaded();",
-        "why": "local 'jappa': call isJappaPackLoaded()"
+        "why": "the base animation counts JappaPackReloadListener.INSTANCE.isJappaPackLoaded() as false",
+        "affects": []
       },
       {
         "line": 317,
         "java": "this.head.z = -count - (jappa ? 20 : 11);",
-        "why": "'count' (entity state or a field)"
+        "why": "head.z (line 317) is not translated: local 'count' (line 314) is not translated"
       },
       {
         "line": 318,
         "java": "this.neck.z = -count - (jappa ? 17 : 11);",
-        "why": "not a bone assignment"
+        "why": "neck.z (line 318) is not translated: local 'count' (line 314) is not translated"
       },
       {
         "line": 319,
         "java": "this.frontTorso.z = -count - (jappa ? 12 : 0);",
-        "why": "not a bone assignment"
+        "why": "front_torso.z (line 319) is not translated: local 'count' (line 314) is not translated"
       },
       {
         "line": 320,
         "java": "this.backTorso.z = count - (jappa ? 10 : 0);",
-        "why": "not a bone assignment"
+        "why": "back_torso.z (line 320) is not translated: local 'count' (line 314) is not translated"
       },
       {
         "line": 321,
         "java": "this.leftBackLeg.z = 9 + count;",
-        "why": "not a bone assignment"
+        "why": "left_back_leg.z (line 321) is not translated: local 'count' (line 314) is not translated"
       },
       {
         "line": 322,
         "java": "this.rightBackLeg.z = 9 + count;",
-        "why": "not a bone assignment"
+        "why": "right_back_leg.z (line 322) is not translated: local 'count' (line 314) is not translated"
       },
       {
         "line": 323,
         "java": "this.leftFrontLeg.z = -11 - count;",
-        "why": "not a bone assignment"
+        "why": "leg3.z (line 323) is not translated: local 'count' (line 314) is not translated"
       },
       {
         "line": 324,
         "java": "this.rightFrontLeg.z = -11 - count;",
-        "why": "not a bone assignment"
+        "why": "leg2.z (line 324) is not translated: local 'count' (line 314) is not translated"
+      },
+      {
+        "line": 327,
+        "java": "int segmentOffset = 0;",
+        "why": "its effect is not in the base animation: local 'segmentOffset' changed by a loop at line 328"
       },
       {
         "line": 328,
         "java": "for (int color : this.colorOrder) {",
-        "why": "not a bone assignment"
+        "why": "inside a loop (not translated)"
       },
       {
         "line": 300,
+        "end_line": 301,
         "java": "if (!JappaPackReloadListener.INSTANCE.isJappaPackLoaded()) {",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 304,
-        "java": "this.leftFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount * 0.5F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 305,
-        "java": "this.rightFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount * 0.5F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 306,
-        "java": "this.leftBackLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount * 0.5F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 307,
-        "java": "this.rightBackLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount * 0.5F;",
-        "why": "not a bone assignment"
+        "why": "the base animation counts JappaPackReloadListener.INSTANCE.isJappaPackLoaded() as false; so it runs the if branch",
+        "affects": ["neck.yRot"]
       }
     ]
   }

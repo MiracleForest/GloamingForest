@@ -734,7 +734,11 @@
       "bones": 7,
       "cubes": 7,
       "visible_bounds": [2.5, 3.5, 1],
-      "animation": "animation.twilightforest.redcap_inner.base"
+      "animation": "animation.twilightforest.redcap_inner.base",
+      "preview": {
+        "texture": "textures/models/armor/iron_2",
+        "why": "HumanoidArmorLayer draws the inner model (leggings) with layer 2 of the armor material"
+      }
     },
     {
       "identifier": "geometry.twilightforest.redcap_outer",
@@ -748,7 +752,11 @@
       "bones": 7,
       "cubes": 7,
       "visible_bounds": [2.5, 3.5, 1],
-      "animation": "animation.twilightforest.redcap_outer.base"
+      "animation": "animation.twilightforest.redcap_outer.base",
+      "preview": {
+        "texture": "textures/models/armor/iron_1",
+        "why": "HumanoidArmorLayer draws the outer model (helmet, chestplate, boots) with layer 1 of the armor material"
+      }
     },
     {
       "identifier": "geometry.twilightforest.rising_zombie",
@@ -2233,7 +2241,7 @@
       "identifier": "animation.twilightforest.alpha_yeti.base",
       "file": "animations/alpha_yeti.base.json",
       "unit": "caves",
-      "bones": ["body", "head"]
+      "bones": ["body", "head", "leftArm", "leftLeg", "rightArm", "rightLeg"]
     },
     {
       "identifier": "animation.twilightforest.bighorn_sheep.base",
@@ -2245,7 +2253,7 @@
       "identifier": "animation.twilightforest.blockchain_goblin.base",
       "file": "animations/blockchain_goblin.base.json",
       "unit": "stronghold",
-      "bones": ["leftArm", "rightArm"]
+      "bones": ["body", "hat", "head", "leftArm", "leftLeg", "rightArm", "rightLeg"]
     },
     {
       "identifier": "animation.twilightforest.boar.base",
@@ -2275,7 +2283,7 @@
       "identifier": "animation.twilightforest.carminite_golem.base",
       "file": "animations/carminite_golem.base.json",
       "unit": "darktower",
-      "bones": ["head"]
+      "bones": ["head", "leftArm", "leftLeg", "rightArm", "rightLeg"]
     },
     {
       "identifier": "animation.twilightforest.chain.base",
@@ -2299,7 +2307,7 @@
       "identifier": "animation.twilightforest.death_tome.base",
       "file": "animations/death_tome.base.json",
       "unit": "lich",
-      "bones": ["book"]
+      "bones": ["book", "cover_left", "cover_right", "flipping_page_left", "flipping_page_right", "loose_page_0", "loose_page_1", "loose_page_2", "loose_page_3", "pages_left", "pages_right", "paper_storm"]
     },
     {
       "identifier": "animation.twilightforest.deer.base",
@@ -2311,7 +2319,7 @@
       "identifier": "animation.twilightforest.fire_beetle.base",
       "file": "animations/fire_beetle.base.json",
       "unit": "hostiles",
-      "bones": ["head"]
+      "bones": ["head", "left_leg_1", "left_leg_2", "left_leg_3", "right_leg_1", "right_leg_2", "right_leg_3"]
     },
     {
       "identifier": "animation.twilightforest.harbinger_cube.base",
@@ -2323,7 +2331,7 @@
       "identifier": "animation.twilightforest.helmet_crab.base",
       "file": "animations/helmet_crab.base.json",
       "unit": "stronghold",
-      "bones": ["body", "crab", "left_leg_1", "left_leg_2", "right_leg_1", "right_leg_2"]
+      "bones": ["body", "crab", "left_claw", "left_leg_1", "left_leg_2", "right_claw", "right_leg_1", "right_leg_2"]
     },
     {
       "identifier": "animation.twilightforest.hydra.base",
@@ -2371,7 +2379,7 @@
       "identifier": "animation.twilightforest.lich.base",
       "file": "animations/lich.base.json",
       "unit": "lich",
-      "bones": ["head"]
+      "bones": ["leftArm", "rightArm"]
     },
     {
       "identifier": "animation.twilightforest.lich_minion.base",
@@ -2383,7 +2391,7 @@
       "identifier": "animation.twilightforest.lower_goblin_knight.base",
       "file": "animations/lower_goblin_knight.base.json",
       "unit": "stronghold",
-      "bones": ["leftLeg", "rightLeg"]
+      "bones": ["hat", "head", "leftArm", "leftLeg", "rightArm", "rightLeg"]
     },
     {
       "identifier": "animation.twilightforest.loyal_zombie.base",
@@ -2395,7 +2403,7 @@
       "identifier": "animation.twilightforest.minoshroom.base",
       "file": "animations/minoshroom.base.json",
       "unit": "labyrinth",
-      "bones": ["hat", "head", "leftLeg", "rightLeg"]
+      "bones": ["hat", "head", "leftArm", "leftLeg", "left_back_leg", "leg2", "leg3", "rightArm", "rightLeg", "right_back_leg"]
     },
     {
       "identifier": "animation.twilightforest.minotaur.base",
@@ -2407,7 +2415,7 @@
       "identifier": "animation.twilightforest.mosquito_swarm.base",
       "file": "animations/mosquito_swarm.base.json",
       "unit": "fauna",
-      "bones": ["core"]
+      "bones": ["core", "group_1", "group_2", "group_3", "group_4", "group_5", "group_6"]
     },
     {
       "identifier": "animation.twilightforest.naga.base",
@@ -2431,7 +2439,7 @@
       "identifier": "animation.twilightforest.pinch_beetle.base",
       "file": "animations/pinch_beetle.base.json",
       "unit": "hostiles",
-      "bones": ["head", "left_leg_1", "left_leg_2", "left_leg_3", "right_leg_1", "right_leg_2", "right_leg_3"]
+      "bones": ["head", "left_leg_1", "left_leg_2", "left_leg_3", "left_pincher", "right_leg_1", "right_leg_2", "right_leg_3", "right_pincher"]
     },
     {
       "identifier": "animation.twilightforest.protection_box.base",
@@ -2443,19 +2451,19 @@
       "identifier": "animation.twilightforest.quest_ram.base",
       "file": "animations/quest_ram.base.json",
       "unit": "questcamps",
-      "bones": ["head"]
+      "bones": ["head", "left_back_leg", "leg2", "leg3", "neck", "right_back_leg"]
     },
     {
       "identifier": "animation.twilightforest.raven.base",
       "file": "animations/raven.base.json",
       "unit": "fauna",
-      "bones": ["head", "leftLeg", "rightLeg"]
+      "bones": ["head", "leftLeg", "left_wing", "rightLeg", "right_wing"]
     },
     {
       "identifier": "animation.twilightforest.redcap.base",
       "file": "animations/redcap.base.json",
       "unit": "hostiles",
-      "bones": ["hat", "head"]
+      "bones": ["body", "hat", "head", "leftArm", "leftLeg", "rightArm", "rightLeg"]
     },
     {
       "identifier": "animation.twilightforest.redcap_inner.base",
@@ -2509,7 +2517,7 @@
       "identifier": "animation.twilightforest.squirrel.base",
       "file": "animations/squirrel.base.json",
       "unit": "fauna",
-      "bones": ["head", "leg0", "leg1", "leg2", "leg3"]
+      "bones": ["head", "leg0", "leg1", "leg2", "leg3", "tail", "tail_1", "tail_2"]
     },
     {
       "identifier": "animation.twilightforest.stable_ice_core.base",
@@ -2527,7 +2535,7 @@
       "identifier": "animation.twilightforest.troll.base",
       "file": "animations/troll.base.json",
       "unit": "caves",
-      "bones": ["hat", "head", "leftLeg", "rightLeg"]
+      "bones": ["hat", "head", "leftArm", "leftLeg", "rightArm", "rightLeg"]
     },
     {
       "identifier": "animation.twilightforest.unstable_ice_core.base",
@@ -2539,7 +2547,7 @@
       "identifier": "animation.twilightforest.upper_goblin_knight.base",
       "file": "animations/upper_goblin_knight.base.json",
       "unit": "stronghold",
-      "bones": ["head"]
+      "bones": ["head", "leftArm", "leftLeg", "rightArm", "rightLeg", "shield"]
     },
     {
       "identifier": "animation.twilightforest.ur_ghast.base",
@@ -2557,7 +2565,7 @@
       "identifier": "animation.twilightforest.yeti.base",
       "file": "animations/yeti.base.json",
       "unit": "caves",
-      "bones": ["head", "leftLeg", "rightLeg"]
+      "bones": ["head", "leftArm", "leftLeg", "rightArm", "rightLeg"]
     },
     {
       "identifier": "animation.twilightforest.ur_ghast_trophy.base",

@@ -9,6 +9,18 @@
         },
         "head": {
           "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
+        },
+        "leftArm": {
+          "rotation": ["math.sin(variable.attack_time * 180) * (-68.7549) + math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 22.9183 - math.sin(query.life_time * 76.7763) * 2.8648 - 90", "math.sin(variable.attack_time * 180) * (-34.3775) + 5.7296", "math.cos(query.life_time * 103.1324) * (-2.8648) - 2.8648"]
+        },
+        "leftLeg": {
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141", 0, 0]
+        },
+        "rightArm": {
+          "rotation": ["math.sin(variable.attack_time * 180) * (-68.7549) + math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 22.9183 + math.sin(query.life_time * 76.7763) * 2.8648 - 90", "math.sin(variable.attack_time * 180) * 34.3775 - 5.7296", "math.cos(query.life_time * 103.1324) * 2.8648 + 2.8648"]
+        },
+        "rightLeg": {
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141", 0, 0]
         }
       }
     }

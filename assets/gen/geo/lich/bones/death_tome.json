@@ -146,198 +146,122 @@
   "setupAnim": {
     "class": "DeathTomeModel",
     "identifier": "animation.twilightforest.death_tome.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)", "stub: a zero rotation on book (Bedrock needs at least one bone in an animation)"],
-    "translated": [],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": [
+      "float bounce = onLectern ? 0.0F : entity.tickCount + partialTicks;",
+      "float open = onLectern ? 1.2F : 0.9f;",
+      "this.loosePage0.yRot = (bounce) / 4.0F;",
+      "this.loosePage0.xRot = Mth.sin((bounce) / 5.0F) / 3.0F;",
+      "this.loosePage0.zRot = Mth.cos((bounce) / 5.0F) / 5.0F;",
+      "this.loosePage1.yRot = (bounce) / 3.0F;",
+      "this.loosePage1.xRot = Mth.sin((bounce) / 5.0F) / 3.0F;",
+      "this.loosePage1.zRot = Mth.cos((bounce) / 5.0F) / 4.0F + 2;",
+      "this.loosePage2.yRot = (bounce) / 4.0F;",
+      "this.loosePage2.xRot = -Mth.sin((bounce) / 5.0F) / 3.0F;",
+      "this.loosePage2.zRot = Mth.cos((bounce) / 5.0F) / 5.0F - 1.0F;",
+      "this.loosePage3.yRot = (bounce) / 4.0F;",
+      "this.loosePage3.xRot = -Mth.sin((bounce) / 2.0F) / 4.0F;",
+      "this.loosePage3.zRot = Mth.cos((bounce) / 7.0F) / 5.0F;",
+      "this.book.setPos(0, 8 - Mth.sin((bounce) * 0.3F) * 2.0F, 0);",
+      "float openAngle = (Mth.sin(bounce * 0.4F) * 0.3F + 1.25F) * open;",
+      "this.coverRight.yRot = Mth.PI + openAngle;",
+      "this.coverLeft.yRot = -openAngle;",
+      "this.pagesRight.yRot = openAngle;",
+      "this.pagesLeft.yRot = -openAngle;",
+      "this.pagesRight.x = Mth.sin(openAngle);",
+      "this.pagesLeft.x = Mth.sin(openAngle);",
+      "this.flippingPageRight.x = Mth.sin(openAngle);",
+      "this.flippingPageLeft.x = Mth.sin(openAngle);",
+      "this.book.zRot = -0.8726646259971647F;",
+      "this.book.x = 0.0F;",
+      "this.paperStorm.yRot = ageInTicks * Mth.DEG_TO_RAD + Mth.HALF_PI;",
+      "this.paperStorm.zRot = 0.8726646259971647F;"
+    ],
     "todo": [
       {
         "line": 140,
         "java": "boolean onLectern = entity.isOnLectern();",
-        "why": "local 'onLectern': call entity.isOnLectern()"
-      },
-      {
-        "line": 142,
-        "java": "float bounce = onLectern ? 0.0F : entity.tickCount + partialTicks;",
-        "why": "local 'bounce': 'onLectern' (entity state or a field)"
-      },
-      {
-        "line": 143,
-        "java": "float open = onLectern ? 1.2F : 0.9f;",
-        "why": "local 'open': 'onLectern' (entity state or a field)"
+        "why": "the base animation counts entity.isOnLectern() as false",
+        "affects": [
+          "book.y",
+          "cover_left.yRot",
+          "cover_right.yRot",
+          "flipping_page_left.x",
+          "flipping_page_right.x",
+          "loose_page_0.xRot",
+          "loose_page_0.yRot",
+          "loose_page_0.zRot",
+          "loose_page_1.xRot",
+          "loose_page_1.yRot",
+          "loose_page_1.zRot",
+          "loose_page_2.xRot",
+          "loose_page_2.yRot",
+          "loose_page_2.zRot",
+          "loose_page_3.xRot",
+          "loose_page_3.yRot",
+          "loose_page_3.zRot",
+          "pages_left.x",
+          "pages_left.yRot",
+          "pages_right.x",
+          "pages_right.yRot"
+        ]
       },
       {
         "line": 145,
         "java": "float flip = Mth.lerp(partialTicks, entity.oFlip, entity.flip);",
-        "why": "local 'flip': field oFlip"
+        "why": "local 'flip': field entity.oFlip"
       },
       {
         "line": 146,
         "java": "float flipRight = Mth.clamp(Mth.frac(flip + 0.25F) * 1.6F - 0.3F, 0.0F, 1.0F);",
-        "why": "local 'flipRight': 'flip' (entity state or a field)"
+        "why": "local 'flipRight': local 'flip' (line 145) is not translated"
       },
       {
         "line": 147,
         "java": "float flipLeft = Mth.clamp(Mth.frac(flip + 0.75F) * 1.6F - 0.3F, 0.0F, 1.0F);",
-        "why": "local 'flipLeft': 'flip' (entity state or a field)"
+        "why": "local 'flipLeft': local 'flip' (line 145) is not translated"
       },
       {
         "line": 150,
         "java": "this.loosePage0.skipDraw = onLectern;",
-        "why": "not a bone assignment"
+        "why": "property 'skipDraw' (visibility / scale): use part_visibility or a scale channel"
       },
       {
         "line": 151,
         "java": "this.loosePage1.skipDraw = onLectern;",
-        "why": "not a bone assignment"
+        "why": "property 'skipDraw' (visibility / scale): use part_visibility or a scale channel"
       },
       {
         "line": 152,
         "java": "this.loosePage2.skipDraw = onLectern;",
-        "why": "not a bone assignment"
+        "why": "property 'skipDraw' (visibility / scale): use part_visibility or a scale channel"
       },
       {
         "line": 153,
         "java": "this.loosePage3.skipDraw = onLectern;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 156,
-        "java": "this.loosePage0.yRot = (bounce) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 157,
-        "java": "this.loosePage0.xRot = Mth.sin((bounce) / 5.0F) / 3.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 158,
-        "java": "this.loosePage0.zRot = Mth.cos((bounce) / 5.0F) / 5.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 160,
-        "java": "this.loosePage1.yRot = (bounce) / 3.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 161,
-        "java": "this.loosePage1.xRot = Mth.sin((bounce) / 5.0F) / 3.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 162,
-        "java": "this.loosePage1.zRot = Mth.cos((bounce) / 5.0F) / 4.0F + 2;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 164,
-        "java": "this.loosePage2.yRot = (bounce) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 165,
-        "java": "this.loosePage2.xRot = -Mth.sin((bounce) / 5.0F) / 3.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 166,
-        "java": "this.loosePage2.zRot = Mth.cos((bounce) / 5.0F) / 5.0F - 1.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 168,
-        "java": "this.loosePage3.yRot = (bounce) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 169,
-        "java": "this.loosePage3.xRot = -Mth.sin((bounce) / 2.0F) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 170,
-        "java": "this.loosePage3.zRot = Mth.cos((bounce) / 7.0F) / 5.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 173,
-        "java": "this.book.setPos(0, 8 - Mth.sin((bounce) * 0.3F) * 2.0F, 0);",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 177,
-        "java": "float openAngle = (Mth.sin(bounce * 0.4F) * 0.3F + 1.25F) * open;",
-        "why": "local 'openAngle': 'bounce' (entity state or a field)"
-      },
-      {
-        "line": 178,
-        "java": "this.coverRight.yRot = Mth.PI + openAngle;",
-        "why": "'openAngle' (entity state or a field)"
-      },
-      {
-        "line": 179,
-        "java": "this.coverLeft.yRot = -openAngle;",
-        "why": "'openAngle' (entity state or a field)"
-      },
-      {
-        "line": 180,
-        "java": "this.pagesRight.yRot = openAngle;",
-        "why": "'openAngle' (entity state or a field)"
-      },
-      {
-        "line": 181,
-        "java": "this.pagesLeft.yRot = -openAngle;",
-        "why": "'openAngle' (entity state or a field)"
+        "why": "property 'skipDraw' (visibility / scale): use part_visibility or a scale channel"
       },
       {
         "line": 182,
         "java": "this.flippingPageRight.yRot = openAngle - openAngle * 2.0F * flipRight;",
-        "why": "'openAngle' (entity state or a field)"
+        "why": "flipping_page_right.yRot (line 182) is not translated: local 'flipRight' (line 146) is not translated"
       },
       {
         "line": 183,
         "java": "this.flippingPageLeft.yRot = openAngle - openAngle * 2.0F * flipLeft;",
-        "why": "'openAngle' (entity state or a field)"
-      },
-      {
-        "line": 184,
-        "java": "this.pagesRight.x = Mth.sin(openAngle);",
-        "why": "'openAngle' (entity state or a field)"
-      },
-      {
-        "line": 185,
-        "java": "this.pagesLeft.x = Mth.sin(openAngle);",
-        "why": "'openAngle' (entity state or a field)"
-      },
-      {
-        "line": 186,
-        "java": "this.flippingPageRight.x = Mth.sin(openAngle);",
-        "why": "'openAngle' (entity state or a field)"
-      },
-      {
-        "line": 187,
-        "java": "this.flippingPageLeft.x = Mth.sin(openAngle);",
-        "why": "'openAngle' (entity state or a field)"
+        "why": "flipping_page_left.yRot (line 183) is not translated: local 'flipLeft' (line 147) is not translated"
       },
       {
         "line": 124,
         "java": "this.root.yRot = Mth.HALF_PI;",
-        "why": "not a bone assignment"
+        "why": "the model root has no bone in the geometry: turn / move the whole entity (or a wrapper bone)"
       },
       {
         "line": 126,
+        "end_line": 131,
         "java": "if (entity.isOnLectern()) {",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 134,
-        "java": "this.paperStorm.yRot = ageInTicks * Mth.DEG_TO_RAD + Mth.HALF_PI;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 135,
-        "java": "this.paperStorm.zRot = 0.8726646259971647F;",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.isOnLectern() as false; so it runs the else branch and leaves out lines 126-128",
+        "affects": ["book.x", "book.zRot"]
       }
     ]
   }

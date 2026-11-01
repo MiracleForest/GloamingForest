@@ -84,13 +84,13 @@
   "setupAnim": {
     "class": "LichMinionModel",
     "identifier": "animation.twilightforest.lich_minion.base",
-    "notes": ["stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
+    "notes": ["vanilla base ZombieModel animates every part (no setupAnim in LichMinionModel or its TF super classes): the vanilla Bedrock humanoid animations plus animation.zombie.attack_bare_hand (AnimationUtils.animateZombieArms) on head / body / rightArm / leftArm / rightLeg / leftLeg", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {
         "line": 21,
         "java": "this.hasStrength = entity.getEffect(MobEffects.DAMAGE_BOOST) != null;",
-        "why": "not a bone assignment"
+        "why": "not a bone assignment (this.hasStrength: entity or model state)"
       }
     ]
   },

@@ -102,7 +102,7 @@
   "setupAnim": {
     "class": "AdherentModel",
     "identifier": "animation.twilightforest.adherent.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
+    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)"],
     "translated": ["this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.rightArm.xRot = 0.0F;", "this.leftArm.xRot = 0.0F;", "this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightArm.zRot += Mth.cos((ageInTicks + 10.0F) * 0.133F) * 0.3F + 0.3F;", "this.leftArm.zRot -= Mth.cos((ageInTicks + 10.0F) * 0.133F) * 0.3F + 0.3F;", "this.rightArm.xRot += Mth.sin(ageInTicks * 0.067F) * 0.05F;", "this.leftArm.xRot -= Mth.sin(ageInTicks * 0.067F) * 0.05F;"],
     "todo": []
   }

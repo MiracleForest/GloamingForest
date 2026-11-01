@@ -101,8 +101,8 @@
   "setupAnim": {
     "class": "CarminiteGolemModel",
     "identifier": "animation.twilightforest.carminite_golem.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
-    "translated": [],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": ["this.rightArm.xRot = (-0.2F + 1.5F * Mth.triangleWave(limbSwing, 13.0F)) * limbSwingAmount;", "this.leftArm.xRot = (-0.2F - 1.5F * Mth.triangleWave(limbSwing, 13.0F)) * limbSwingAmount;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.leftLeg.xRot = -1.5F * Mth.triangleWave(limbSwing, 13.0F) * limbSwingAmount;", "this.rightLeg.xRot = 1.5F * Mth.triangleWave(limbSwing, 13.0F) * limbSwingAmount;", "this.leftLeg.yRot = 0.0F;", "this.rightLeg.yRot = 0.0F;", "this.rightArm.zRot = Mth.cos(ageInTicks * 0.09F) * 0.05F + 0.05F;", "this.leftArm.zRot = -Mth.cos(ageInTicks * 0.09F) * 0.05F - 0.05F;"],
     "todo": [
       {
         "line": 132,
@@ -111,48 +111,10 @@
       },
       {
         "line": 134,
+        "end_line": 139,
         "java": "if (timer > 0) {",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 118,
-        "java": "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 119,
-        "java": "this.head.xRot = headPitch * Mth.DEG_TO_RAD;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 120,
-        "java": "this.leftLeg.xRot = -1.5F * Mth.triangleWave(limbSwing, 13.0F) * limbSwingAmount;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 121,
-        "java": "this.rightLeg.xRot = 1.5F * Mth.triangleWave(limbSwing, 13.0F) * limbSwingAmount;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 122,
-        "java": "this.leftLeg.yRot = 0.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 123,
-        "java": "this.rightLeg.yRot = 0.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 126,
-        "java": "this.rightArm.zRot = Mth.cos(ageInTicks * 0.09F) * 0.05F + 0.05F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 127,
-        "java": "this.leftArm.zRot = -Mth.cos(ageInTicks * 0.09F) * 0.05F - 0.05F;",
-        "why": "not a bone assignment"
+        "why": "the base animation counts timer > 0 as false; so it runs the else branch and leaves out lines 134-136",
+        "affects": ["leftArm.xRot", "rightArm.xRot"]
       }
     ]
   }

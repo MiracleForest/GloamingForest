@@ -1047,115 +1047,31 @@
   "setupAnim": {
     "class": "MosquitoSwarmModel",
     "identifier": "animation.twilightforest.mosquito_swarm.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)", "stub: a zero rotation on core (Bedrock needs at least one bone in an animation)"],
-    "translated": [],
-    "todo": [
-      {
-        "line": 96,
-        "java": "this.core.yRot = (entity.tickCount + partialTicks) / 5.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 97,
-        "java": "this.core.xRot = Mth.sin((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 98,
-        "java": "this.core.zRot = Mth.cos((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 100,
-        "java": "this.group1.yRot = (entity.tickCount + partialTicks) / 2.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 101,
-        "java": "this.group1.xRot = Mth.sin((entity.tickCount + partialTicks) / 6.0F) / 2.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 102,
-        "java": "this.group1.zRot = Mth.cos((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 104,
-        "java": "this.group2.yRot = Mth.sin((entity.tickCount + partialTicks) / 2.0F) / 3.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 105,
-        "java": "this.group2.xRot = (entity.tickCount + partialTicks) / 5.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 106,
-        "java": "this.group2.zRot = Mth.cos((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 108,
-        "java": "this.group3.yRot = Mth.sin((entity.tickCount + partialTicks) / 7.0F) / 3.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 109,
-        "java": "this.group3.xRot = Mth.cos((entity.tickCount + partialTicks) / 4.0F) / 2.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 110,
-        "java": "this.group3.zRot = (entity.tickCount + partialTicks) / 5.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 112,
-        "java": "this.group4.xRot = (entity.tickCount + partialTicks) / 2.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 113,
-        "java": "this.group4.zRot = Mth.sin((entity.tickCount + partialTicks) / 6.0F) / 2.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 114,
-        "java": "this.group4.yRot = Mth.sin((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 116,
-        "java": "this.group5.zRot = (entity.tickCount + partialTicks) / 2.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 117,
-        "java": "this.group5.yRot = Mth.cos((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 118,
-        "java": "this.group5.xRot = Mth.cos((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 120,
-        "java": "this.group6.zRot = Mth.cos((entity.tickCount + partialTicks) / 7.0F) / 3.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 121,
-        "java": "this.group6.xRot = Mth.cos((entity.tickCount + partialTicks) / 4.0F) / 2.0F;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 122,
-        "java": "this.group6.yRot = (entity.tickCount + partialTicks) / 5.0F;",
-        "why": "not a bone assignment"
-      }
-    ]
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)"],
+    "translated": [
+      "this.core.yRot = (entity.tickCount + partialTicks) / 5.0F;",
+      "this.core.xRot = Mth.sin((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
+      "this.core.zRot = Mth.cos((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
+      "this.group1.yRot = (entity.tickCount + partialTicks) / 2.0F;",
+      "this.group1.xRot = Mth.sin((entity.tickCount + partialTicks) / 6.0F) / 2.0F;",
+      "this.group1.zRot = Mth.cos((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
+      "this.group2.yRot = Mth.sin((entity.tickCount + partialTicks) / 2.0F) / 3.0F;",
+      "this.group2.xRot = (entity.tickCount + partialTicks) / 5.0F;",
+      "this.group2.zRot = Mth.cos((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
+      "this.group3.yRot = Mth.sin((entity.tickCount + partialTicks) / 7.0F) / 3.0F;",
+      "this.group3.xRot = Mth.cos((entity.tickCount + partialTicks) / 4.0F) / 2.0F;",
+      "this.group3.zRot = (entity.tickCount + partialTicks) / 5.0F;",
+      "this.group4.xRot = (entity.tickCount + partialTicks) / 2.0F;",
+      "this.group4.zRot = Mth.sin((entity.tickCount + partialTicks) / 6.0F) / 2.0F;",
+      "this.group4.yRot = Mth.sin((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
+      "this.group5.zRot = (entity.tickCount + partialTicks) / 2.0F;",
+      "this.group5.yRot = Mth.cos((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
+      "this.group5.xRot = Mth.cos((entity.tickCount + partialTicks) / 5.0F) / 4.0F;",
+      "this.group6.zRot = Mth.cos((entity.tickCount + partialTicks) / 7.0F) / 3.0F;",
+      "this.group6.xRot = Mth.cos((entity.tickCount + partialTicks) / 4.0F) / 2.0F;",
+      "this.group6.yRot = (entity.tickCount + partialTicks) / 5.0F;"
+    ],
+    "todo": []
   },
   "notes": ["TF places the 102 bugs with an unseeded RandomSource (a new layout every game start); the converter uses a fixed seed."]
 }

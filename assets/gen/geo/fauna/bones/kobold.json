@@ -123,18 +123,20 @@
   "setupAnim": {
     "class": "KoboldModel",
     "identifier": "animation.twilightforest.kobold.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
-    "translated": ["this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightArm.xRot = -(Mth.PI * 0.15F);", "this.leftArm.xRot = -(Mth.PI * 0.15F);", "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightLeg.yRot = 0.0F;", "this.leftLeg.yRot = 0.0F;", "this.rightArm.zRot += Mth.cos(ageInTicks * 0.19F) * 0.15F + 0.05F;", "this.leftArm.zRot -= Mth.cos(ageInTicks * 0.19F) * 0.15F + 0.05F;", "this.rightArm.xRot += Mth.sin(ageInTicks * 0.267F) * 0.25F;", "this.leftArm.xRot -= Mth.sin(ageInTicks * 0.267F) * 0.25F;"],
+    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": ["this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightArm.xRot = -(Mth.PI * 0.15F);", "this.leftArm.xRot = -(Mth.PI * 0.15F);", "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightLeg.yRot = 0.0F;", "this.leftLeg.yRot = 0.0F;", "this.rightArm.zRot += Mth.cos(ageInTicks * 0.19F) * 0.15F + 0.05F;", "this.leftArm.zRot -= Mth.cos(ageInTicks * 0.19F) * 0.15F + 0.05F;", "this.rightArm.xRot += Mth.sin(ageInTicks * 0.267F) * 0.25F;", "this.leftArm.xRot -= Mth.sin(ageInTicks * 0.267F) * 0.25F;", "this.jaw.xRot = 0.20944F;"],
     "todo": [
       {
         "line": 187,
         "java": "this.isJumping = !entity.isNoAi() && entity.getDeltaMovement().y() > 0;",
-        "why": "not a bone assignment"
+        "why": "not a bone assignment (this.isJumping: entity or model state)"
       },
       {
         "line": 169,
+        "end_line": 173,
         "java": "if (this.isJumping) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts this.isJumping as false; so it runs the else branch and leaves out lines 169-171",
+        "affects": ["mouth.xRot"]
       }
     ]
   }

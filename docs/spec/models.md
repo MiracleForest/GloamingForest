@@ -40,7 +40,7 @@ Per unit `<u>` (the owner of the entity / block / item the layer serves, from `t
 |---|---|
 | `assets/gen/geo/<u>/rp/models/entity/<name>.geo.json` | `geometry.twilightforest.<name>`, format 1.12.0. `<name>` is the TF model layer (`TFModelLayers`, `<path>` or `<path>_<layer>` when the layer is not `main`), an armor piece (`<material>.<slot>`) or an extract. |
 | `assets/gen/geo/<u>/rp/animations/<name>.base.json` | `animation.twilightforest.<name>.base` (format 1.8.0): one per entity layer, with the setupAnim statements translated to Molang (a stub with a zero rotation on the first bone when none translates: the owning unit adds the rest by hand); also the Ur-Ghast trophy extracts' tentacle wave. |
-| `assets/gen/geo/<u>/bones/<name>.json` | The bone map: Java part path -> bone, parent, Bedrock pivot / rotation, Java offset / rotation, cube count, mirror; the layer and its supplier; the textures (Bedrock path and TF source); the setupAnim report (`translated`, `todo` with line, Java source and reason); notes. Not part of the pack. |
+| `assets/gen/geo/<u>/bones/<name>.json` | The bone map: Java part path -> bone, parent, Bedrock pivot / rotation, Java offset / rotation, cube count, mirror; the layer and its supplier; the textures (Bedrock path and TF source); the setupAnim report (`translated`: what the base animation does; `todo`: line (`end_line` for a branch), `class` when another class's source holds it, Java source, reason, and for a case entry `affects`, the channels that differ when it holds; `overrides_vanilla`: bone axes Java sets with `=` after the vanilla `super.setupAnim`); notes. Not part of the pack. |
 | `assets/gen/geo/<u>/rp/attachables/<item>.json` | Attachables of armor and Travellers' Gear; of the trophies and the mystic crown (worn on the head, held in the right and left hand) and of the knightmetal shield (right and left hand): one geometry per slot, drawn only in that slot. |
 | `assets/gen/geo/models/rp/render_controllers/twilightforest.models.render_controllers.json` | `controller.render.twilightforest.models.part<N>`: the extra geometries of multi-part attachables (`Geometry.part1`, ...), with the enchantment glint (`variable.is_enchanted`, `Material.enchanted`, `Texture.enchanted`) like `controller.render.item_default`. |
 | `assets/gen/geo/models/data/gf/models/index.json` | Every geometry, base animation and attachable with unit, ids, textures, bone / cube counts and visible bounds. Deployed as `<mod>/data/gf/models/index.json` (the `models.*` selftests, the e2e preview). |
@@ -115,9 +115,12 @@ because Bedrock's vanilla zombie texture is 64×32; TF draws Java's 64×64 one w
 ## setupAnim → Molang
 
 Per entity layer, `prepareMobModel` then `setupAnim` of the model class (catalog `animClass`, default the
-supplier's class) are read statement by statement. Assignments to a part's `xRot` / `yRot` / `zRot` / `x` /
-`y` / `z` whose right side uses only the parameters, constants, earlier locals, earlier assignments and
-`Mth` / `Math` functions become Molang:
+supplier's class) are run statement by statement, together with the TF methods they call (a TF
+`super.setupAnim`, `this.helper(...)`, inlined with their own lines in the report). Assignments to a part's
+`xRot` / `yRot` / `zRot` / `x` / `y` / `z` (also `setPos`, `setRotation`, `copyFrom`, `resetPose`,
+`getAllParts().forEach(ModelPart::resetPose)` and the vanilla `AnimationUtils.bobArms` / `bobModelPart`) whose
+value uses only the parameters, constants, earlier locals, earlier values and `Mth` / `Math` functions
+(`triangleWave`, `frac`, `square` included) become Molang:
 
 | Java | Molang |
 |---|---|
@@ -129,9 +132,44 @@ supplier's class) are read statement by statement. Assignments to a part's `xRot
 | `part.y = e` (pixels, y down) | `position[1] = −(e − default)` |
 | `this.attackTime`, `this.young`, `this.riding` | `variable.attack_time`, `query.is_baby`, `query.is_riding` |
 
-Locals are followed through reassignments (a local changed inside a condition or loop is dropped), divisions by
-a constant zero stay untranslated, and the re-parented `hat` gets only its difference to the head (nothing when
-Java copies the head's pose). The position channel moves along the geometry's own axes: x as Java's x (the
+**The base path.** Every value (a local or a bone property) is followed with the statements it carries and
+the cases it depends on:
+
+- A condition that translates (`this.young`, `this.riding`, `limbSwingAmount > 0.2`, `this.attackTime > 0`)
+  runs both branches and merges what they set with Molang `?:`.
+- A condition that does not translate (entity state: `entity.isTired()`, `this.leftArmPose != ...`) counts as
+  **false**; for `a != b` the `a == b` counts as false (so the `!=` holds), and for `!x` the `x` counts as false.
+  The base animation runs the branch that follows and is correct for that case. The condition becomes a **case
+  entry** in `todo` ("the base animation counts X as false, so it runs ... and leaves out lines a-b") whose
+  `affects` lists every channel that differs when X holds: what either branch changes, and every later value
+  computed from it. A boolean local of entity state (`boolean flag = e.isAggressive()`) and a ternary on one
+  work the same way (LoyalZombieModel's arms: `-PI / 2.25`, `-80` degrees, the not aggressive case). Two vanilla
+  helpers are cases too: `HumanoidModel.poseRightArm` / `poseLeftArm` with `ArmPose.EMPTY` (`yRot = 0`) and
+  `getArm(arm)` as the right arm.
+- A value that does not translate (`float f2 = e.getArmAngle()`, a field, a call) makes the property
+  **unknown** from that line on: a later compound assignment (`+=` ...) or read of it stays in `todo` ("previous
+  value at line N not translated") and gets no channel, and the statements whose effect it replaced leave
+  `translated` ("its effect is not in the base animation: ..."). A loop, a switch, an assignment inside an
+  expression (`a = b = v`, `for (a = ...; ...; b += ...)`), a call on a part or one the translator does not know
+  makes everything it may change unknown the same way (a part it cannot resolve counts as one of its
+  candidates: an array element or an unresolved `this.<field>` any part no field names, `getArm(...)` either
+  arm, an unknown local or lambda parameter any part).
+- After a vanilla `super.setupAnim` (HumanoidModel and its subclasses, QuadrupedModel and its subclasses) the
+  vanilla parts hold "the vanilla pose plus a delta": `+=` / `-=` add to the delta (emitted on top of the vanilla
+  Bedrock animations), `=` replaces the vanilla pose and is listed in `overrides_vanilla` (bone, property, lines:
+  the vanilla animations must not drive those bone axes, in the cases those lines belong to), and `*=` or a
+  read of the vanilla value stays untranslated, as does a copy of it onto a bone no vanilla animation drives.
+  Arguments the model changed before the call (LichModel: `limbSwingAmount * 0.75`) are named in the call's
+  todo entry, since the vanilla Bedrock animations read the unchanged queries. A model whose setupAnim does not call `super.setupAnim` gets a
+  note that no vanilla animation may play on these bones; one without its own setupAnim gets the vanilla
+  animations of its base class.
+
+`translated` therefore lists exactly what the base animation reproduces, and `todo` everything the owning unit
+has to add (the cases, the unknown values, visibility, the vanilla parts). Divisions by a constant zero stay
+untranslated. `copyFrom` copies every property of the source, its initial pose where nothing set it (Java
+copies the whole pose). The re-parented `hat` gets only its difference to the head, on the rotation and the
+position channels (nothing when Java copies the head's pose; a hat with no cube or only empty ones is left out).
+The position channel moves along the geometry's own axes: x as Java's x (the
 geometry keeps Java's x), y negated, z as is. The e2e preview checks the x sign in game: its first actor
 (`gfpreview:xsign`, shot_01) is a test model whose setupAnim sets `moved.x = 10`, converted by this translator;
 the blue cube lands on the red one at x 8..12 (it would sit on the other side of the white origin cube if
@@ -141,8 +179,8 @@ The quadruped walk comes out as Bedrock's own `animation.quadruped.walk` (`math.
 * 38.1704) * query.modified_move_speed * 80.2141`) and the head look as `look_at_target`. Everything else
 (entity state, loops, conditions, visibility, other models' parts) is listed in the bone map's `setupAnim.todo`
 with its line, Java source and reason; models without their own setupAnim name the vanilla animations of their
-base class. Every converted entity layer (56) gets `animation.twilightforest.<layer>.base`: 28 with translated
-statements, 28 stubs (no translatable statement, or `noAnim`: posed by its renderer) that hold a zero rotation on
+base class. Every converted entity layer (56) gets `animation.twilightforest.<layer>.base`: 35 with translated
+statements, 21 stubs (no translatable statement, or `noAnim`: posed by its renderer) that hold a zero rotation on
 the first bone, because the client rejects an animation with an empty `bones` object (`Required child ... not
 found`, found by the content-log check); the owning units
 translate the rest by hand on top. Vanilla-model layers (spiders, wolves, slimes, silverfish, the giants' player
@@ -246,7 +284,7 @@ geometry, so there is nothing to convert; their owners reproduce the behaviour w
   `TRAVELLERS_HAS_GLOVES`; drawn flat (not GUI-3D, no block light).
 ## Layers
 
-Every converted entity layer has a base animation; `+ base animation` marks the 28 with translated statements.
+Every converted entity layer has a base animation; `+ base animation` marks the 35 with translated statements (`slime_beetle` / `slime_beetle_tail` share a row).
 
 | Layer | Unit | Serves | Output |
 |---|---|---|---|
@@ -261,14 +299,14 @@ Every converted entity layer has a base animation; `+ base animation` marks the 
 | `brazier` | lichdecor | twilightforest:brazier | `geometry.twilightforest.brazier` (7 bones, 7 cubes) |
 | `bunny` | fauna | twilightforest:dwarf_rabbit | `geometry.twilightforest.bunny` (6 bones, 9 cubes) + base animation |
 | `carminite_broodling` | darktower | twilightforest:carminite_broodling | vanilla `geometry.spider.v1.8` |
-| `carminite_ghastguard` | darktower | twilightforest:carminite_ghastguard | `geometry.twilightforest.carminite_ghastguard` (10 bones, 10 cubes) |
-| `carminite_ghastling` | darktower | twilightforest:carminite_ghastling | `geometry.twilightforest.carminite_ghastling` (10 bones, 10 cubes) |
-| `carminite_golem` | darktower | twilightforest:carminite_golem | `geometry.twilightforest.carminite_golem` (9 bones, 22 cubes) |
+| `carminite_ghastguard` | darktower | twilightforest:carminite_ghastguard | `geometry.twilightforest.carminite_ghastguard` (10 bones, 10 cubes) + base animation |
+| `carminite_ghastling` | darktower | twilightforest:carminite_ghastling | `geometry.twilightforest.carminite_ghastling` (10 bones, 10 cubes) + base animation |
+| `carminite_golem` | darktower | twilightforest:carminite_golem | `geometry.twilightforest.carminite_golem` (9 bones, 22 cubes) + base animation |
 | `chain` | weapons | twilightforest:chain_block | `geometry.twilightforest.chain` (1 bone, 1 cube) |
 | `chain_block` | weapons | twilightforest:chain_block | `geometry.twilightforest.chain_block` (28 bones, 28 cubes) |
 | `cicada` | flora | twilightforest:cicada | `geometry.twilightforest.cicada` (6 bones, 6 cubes) |
 | `cube_of_annihilation` | weapons | twilightforest:cube_of_annihilation | `geometry.twilightforest.cube_of_annihilation` (4 bones, 4 cubes) + base animation |
-| `death_tome` | lich | twilightforest:death_tome | `geometry.twilightforest.death_tome` (13 bones, 11 cubes) |
+| `death_tome` | lich | twilightforest:death_tome | `geometry.twilightforest.death_tome` (13 bones, 11 cubes) + base animation |
 | `deer` | fauna | twilightforest:deer | `geometry.twilightforest.deer` (9 bones, 31 cubes) |
 | `fiery_armor_inner` / `_outer` | armory |  | per-slot armor geometry |
 | `fire_beetle` | hostiles | twilightforest:fire_beetle | `geometry.twilightforest.fire_beetle` (19 bones, 19 cubes) + base animation |
@@ -291,7 +329,7 @@ Every converted entity layer has a base animation; `+ base animation` marks the 
 | `knightmetal_armor_inner` / `_outer` | armory |  | per-slot armor geometry |
 | `knightmetal_shield` | weapons | twilightforest:knightmetal_shield | `geometry.twilightforest.knightmetal_shield` (2 bones, 2 cubes) + held extracts (right and left hand) |
 | `kobold` | fauna | twilightforest:kobold | `geometry.twilightforest.kobold` (11 bones, 10 cubes) + base animation |
-| `lich` | lich | twilightforest:lich | `geometry.twilightforest.lich` (9 bones, 9 cubes) |
+| `lich` | lich | twilightforest:lich | `geometry.twilightforest.lich` (9 bones, 9 cubes) + base animation |
 | `lich_minion` | lich | twilightforest:lich_minion | `geometry.twilightforest.lich_minion` (7 bones, 7 cubes) |
 | `lich_trophy` | building |  | trophy extracts (floor, wall, worn, held), mystic crown (worn, held; unit artifacts) |
 | `lower_goblin_knight` | stronghold | twilightforest:lower_goblin_knight | `geometry.twilightforest.lower_goblin_knight` (8 bones, 7 cubes) + base animation |
@@ -302,7 +340,7 @@ Every converted entity layer has a base animation; `+ base animation` marks the 
 | `minotaur` | labyrinth | twilightforest:minotaur | `geometry.twilightforest.minotaur` (12 bones, 11 cubes) |
 | `mist_wolf` | hostiles | twilightforest:mist_wolf | vanilla `geometry.wolf` (registered, unused: MistWolfRenderer bakes `hostile_wolf`) |
 | `moonworm` | flora | twilightforest:moonworm | `geometry.twilightforest.moonworm` (4 bones, 4 cubes) |
-| `mosquito_swarm` | fauna | twilightforest:mosquito_swarm | `geometry.twilightforest.mosquito_swarm` (103 bones, 103 cubes; TF's unseeded layout, fixed seed here) |
+| `mosquito_swarm` | fauna | twilightforest:mosquito_swarm | `geometry.twilightforest.mosquito_swarm` (103 bones, 103 cubes; TF's unseeded layout, fixed seed here) + base animation |
 | `naga` / `naga_body` | naga | twilightforest:naga | `geometry.twilightforest.naga` / `naga_body` (1 bone, 1 cube) |
 | `naga_trophy` | building |  | trophy extracts (floor, wall, worn, held) |
 | `noop` | aurora |  | not drawn (NoopModel, 0×0 texture: the snow guardian shows only armor) |
@@ -332,7 +370,7 @@ Every converted entity layer has a base animation; `+ base animation` marks the 
 | `troll` | caves | twilightforest:troll | `geometry.twilightforest.troll` (8 bones, 7 cubes) + base animation |
 | `unstable_ice_core` | aurora | twilightforest:unstable_ice_core | `geometry.twilightforest.unstable_ice_core` (33 bones, 33 cubes) |
 | `upper_goblin_knight` | stronghold | twilightforest:upper_goblin_knight | `geometry.twilightforest.upper_goblin_knight` (15 bones, 15 cubes) + base animation |
-| `ur_ghast` | darktower | twilightforest:ur_ghast | `geometry.twilightforest.ur_ghast` (37 bones, 37 cubes) |
+| `ur_ghast` | darktower | twilightforest:ur_ghast | `geometry.twilightforest.ur_ghast` (37 bones, 37 cubes) + base animation |
 | `ur_ghast_trophy` | building |  | trophy extracts (floor, wall, worn, held) + tentacle animations |
 | `winter_wolf` | hostiles | twilightforest:winter_wolf | vanilla `geometry.wolf` |
 | `wraith` | hostiles | twilightforest:wraith | `geometry.twilightforest.wraith` (8 bones, 8 cubes) + base animation |
@@ -344,7 +382,7 @@ Totals: 101 layers (every model class of `client/model/entity` but the base / in
 model classes, the block-entity and item models), 149 generated geometries (64 layer geometries, 25 armor and
 gear pieces, 18 floor and wall trophies plus 4 overlay geometries, 12 worn extracts (9 trophies, 2 overlays, the
 mystic crown) and 26 held extracts (the same 12 plus the knightmetal shield, in each hand)), 12 vanilla-model
-layers, 61 base animations (56 entity layers, 28 of them with translated statements, and 5 Ur-Ghast trophy
+layers, 61 base animations (56 entity layers, 35 of them with translated statements, and 5 Ur-Ghast trophy
 extracts), 45 attachables. The Curios charm of life necklace (`CuriosCompat`) is not ported (docs/spec/README.md).
 
 ## Tests
@@ -352,7 +390,11 @@ extracts), 45 attachables. The Curios charm of life necklace (`CuriosCompat`) is
 - `pwsh tools/models/test.ps1`: the lexer and parser, the interpreter's Java semantics (integer division,
   float arithmetic, string concatenation, `Mth`'s sine table, `java.util.Random` values for seed 42), the
   conversion against Bedrock's vanilla pig geometry, per-face UV and mirror, unique bone names, euler
-  round trips, setupAnim → Molang (including the position channel signs), the three hard models (Hydra, Naga
+  round trips, setupAnim → Molang (the position channel signs; the base path: unknown values and the compound
+  assignments after them, statements that leave `translated`, cases and their `affects`, loops and nested
+  assignments, vanilla deltas and `overrides_vanilla`, `copyFrom` of an unset source, the hat's position; the
+  real Loyal Zombie, Alpha Yeti and Yeti outputs), the catalog's LGPL attribution, `-Java` matching whole class
+  names (YetiModel is not AlphaYetiModel), the three hard models (Hydra, Naga
   segment, Snow Queen) against values worked out by hand from TF's code, the item display transforms (the Alpha
   Yeti's and Ur-Ghast's own head displays, the left-hand fallback and mirror), the per-slot attachables, the
   Ur-Ghast tentacle animation, a base animation per entity layer, `-Java` / `-Item` selection and `-Unit`

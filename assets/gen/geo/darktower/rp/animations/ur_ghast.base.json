@@ -5,7 +5,7 @@
       "loop": true,
       "bones": {
         "body": {
-          "rotation": [0, 0, 0]
+          "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
         }
       }
     }

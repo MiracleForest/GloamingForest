@@ -92,23 +92,23 @@
   "setupAnim": {
     "class": "BighornModel",
     "identifier": "animation.twilightforest.bighorn_sheep.base",
-    "notes": ["stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
+    "notes": ["vanilla base SheepModel animates every part (no setupAnim in BighornModel or its TF super classes): animation.quadruped.walk, animation.common.look_at_target and the sheep's grazing animation (Bedrock vanilla) on head / leg0..leg3", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {
         "line": 140,
         "java": "this.head.getChild(\"left_horn\").visible = !entity.isBaby();",
-        "why": "not a bone assignment"
+        "why": "property 'visible' (visibility / scale): use part_visibility or a scale channel"
       },
       {
         "line": 141,
         "java": "this.head.getChild(\"right_horn\").visible = !entity.isBaby();",
-        "why": "not a bone assignment"
+        "why": "property 'visible' (visibility / scale): use part_visibility or a scale channel"
       },
       {
         "line": 142,
         "java": "super.prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);",
-        "why": "the super class's prepareMobModel (see the notes for the vanilla base)"
+        "why": "the vanilla SheepModel.prepareMobModel (see the notes)"
       }
     ]
   },

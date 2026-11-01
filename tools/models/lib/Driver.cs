@@ -205,10 +205,18 @@ namespace Gf.Models
             if (onlyClass != null)
             {
                 bool hit = string.Equals(info.SupplierClass, onlyClass, StringComparison.Ordinal) || string.Equals(animClass, onlyClass, StringComparison.Ordinal)
-                           || (info.Supplier != null && info.Supplier.Contains(onlyClass + ".")) || (info.Supplier != null && info.Supplier.Contains(onlyClass + "::"));
+                           || SupplierNames(info.Supplier, onlyClass);
                 if (!hit) return false;
             }
             return true;
+        }
+
+        // The supplier names the class as a whole identifier ("YetiModel::create", "() -> YetiModel.x(...)"),
+        // not as the end of a longer one ("AlphaYetiModel::create", "TFGhastModel::create" for GhastModel).
+        public static bool SupplierNames(string supplier, string cls)
+        {
+            if (supplier == null || string.IsNullOrEmpty(cls)) return false;
+            return System.Text.RegularExpressions.Regex.IsMatch(supplier, @"(^|[^A-Za-z0-9_$])" + System.Text.RegularExpressions.Regex.Escape(cls) + @"(::|\.)");
         }
 
         // A TF texture (path below assets/twilightforest/textures/) as a Bedrock texture path; "minecraft:<path>" names a vanilla one.
@@ -346,12 +354,27 @@ namespace Gf.Models
             {
                 var a = new JObj().Add("class", animClass).Add("identifier", animId);
                 if (anim.Notes.Count > 0) a.Add("notes", anim.Notes.Cast<object>().ToList());
-                a.Add("translated", anim.Statements.Where(s => s.Translated).Select(s => (object)s.Java).ToList());
-                a.Add("todo", anim.Statements.Where(s => !s.Translated).Select(s => (object)new JObj().Add("line", s.Line).Add("java", s.Java).Add("why", s.Reason)).ToList());
+                a.Add("translated", anim.Statements.Where(s => s.Translated).Select(s => (object)((s.Class != null ? s.Class + ": " : "") + s.Java)).ToList());
+                a.Add("todo", anim.Statements.Where(s => !s.Translated).Select(s => (object)TodoJson(s)).ToList());
+                if (anim.OverridesVanilla.Count > 0)
+                    a.Add("overrides_vanilla", anim.OverridesVanilla.Select(kv => (object)new JObj()
+                        .Add("bone", kv.Key.Substring(0, kv.Key.LastIndexOf('.'))).Add("property", kv.Key.Substring(kv.Key.LastIndexOf('.') + 1))
+                        .Add("lines", kv.Value.Cast<object>().ToList())).ToList());
                 o.Add("setupAnim", a);
             }
             var notes = StrList(spec, "notes");
             if (notes.Count > 0) o.Add("notes", notes.Cast<object>().ToList());
+            return o;
+        }
+
+        // A todo entry: the Java line(s), why, and for a case entry the channels that differ when it holds.
+        static JObj TodoJson(AnimStatement s)
+        {
+            var o = new JObj().Add("line", s.Line);
+            if (s.EndLine > s.Line) o.Add("end_line", s.EndLine);
+            if (s.Class != null) o.Add("class", s.Class);
+            o.Add("java", s.Java).Add("why", s.Reason);
+            if (s.Case) o.Add("affects", s.Affects.Cast<object>().ToList());
             return o;
         }
 

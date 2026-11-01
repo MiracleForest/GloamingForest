@@ -125,23 +125,13 @@
   "setupAnim": {
     "class": "TFGhastModel",
     "identifier": "animation.twilightforest.carminite_ghastling.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)", "stub: a zero rotation on body (Bedrock needs at least one bone in an animation)"],
-    "translated": [],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)"],
+    "translated": ["this.body.xRot = headPitch * Mth.DEG_TO_RAD;", "this.body.yRot = netHeadYaw * Mth.DEG_TO_RAD;"],
     "todo": [
       {
         "line": 68,
         "java": "for (int i = 0; i < this.tentacles.length; ++i) {",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 73,
-        "java": "this.body.xRot = headPitch * Mth.DEG_TO_RAD;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 74,
-        "java": "this.body.yRot = netHeadYaw * Mth.DEG_TO_RAD;",
-        "why": "not a bone assignment"
+        "why": "inside a loop (not translated)"
       }
     ]
   }

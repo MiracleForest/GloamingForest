@@ -47,18 +47,18 @@
   "setupAnim": {
     "class": "HydraHeadModel",
     "identifier": "animation.twilightforest.hydra_head.base",
-    "notes": ["vanilla base ListModel (super calls): nothing (ListModel has no default animation)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
+    "notes": ["vanilla base ListModel: nothing (ListModel has no default animation)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {
         "line": 121,
         "java": "this.head.yRot = this.getRotationY(entity, partialTicks);",
-        "why": "call getRotationY()"
+        "why": "head.yRot (line 121) is not translated: call this.getRotationY()"
       },
       {
         "line": 122,
         "java": "this.head.xRot = this.getRotationX(entity, partialTicks);",
-        "why": "call getRotationX()"
+        "why": "head.xRot (line 122) is not translated: call this.getRotationX()"
       },
       {
         "line": 124,
@@ -73,17 +73,17 @@
       {
         "line": 126,
         "java": "float mouthOpen = Mth.lerp(partialTicks, mouthOpenLast, mouthOpenReal);",
-        "why": "local 'mouthOpen': 'mouthOpenLast' (entity state or a field)"
+        "why": "local 'mouthOpen': local 'mouthOpenLast' (line 124) is not translated"
       },
       {
         "line": 127,
         "java": "this.head.xRot -= mouthOpen * (Mth.PI / 12.0F);",
-        "why": "'mouthOpen' (entity state or a field)"
+        "why": "previous value at line 122 not translated"
       },
       {
         "line": 128,
         "java": "this.jaw.xRot = mouthOpen * (Mth.PI / 3.0F);",
-        "why": "'mouthOpen' (entity state or a field)"
+        "why": "jaw.xRot (line 128) is not translated: local 'mouthOpen' (line 126) is not translated"
       }
     ]
   },

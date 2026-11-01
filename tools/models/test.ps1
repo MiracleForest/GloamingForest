@@ -225,6 +225,7 @@ $gen.Run($null, $null, $null)
 $files = $gen.Files
 function Geo([string]$unit, [string]$name) { ($files["assets/gen/geo/$unit/rp/models/entity/$name.geo.json"] | ConvertFrom-Json).'minecraft:geometry'[0] }
 function BoneOf($geo, [string]$name) { $geo.bones | Where-Object name -eq $name }
+function BoneMap([string]$unit, [string]$name) { $files["assets/gen/geo/$unit/bones/$name.json"] | ConvertFrom-Json }
 Test 'every TF layer is registered and described (101 layers)' {
     Eq $gen.Layers.Count 101
     Eq $gen.Errors.Count 0 ($gen.Errors -join '; ')
@@ -288,8 +289,38 @@ Test 'setupAnim -> Molang: the hat under the head is not turned a second time' {
     Eq ($bones.head.rotation -join '|') 'query.target_x_rotation|query.target_y_rotation|0'
     if ($bones.PSObject.Properties.Name -contains 'hat') { throw 'the hat (a child of the head) has its own copy of the head rotation' }
 }
-Test 'setupAnim -> Molang: reassigned locals follow the last value, unknown ones are dropped' {
-    $c = New-TestModel @'
+# setupAnim of a test model (the whole class source, LGPL-free fixture) over a test mesh: the
+# animation's bones, the statements and the result.
+function Translate-Test([string]$classSrc, [string]$meshBody) {
+    $cls = [Gf.Models.Parser]::ParseUnit("package test; $classSrc", 'Test.java').Types[0]
+    $mesh = $interp.CallStatic((New-TestModel $meshBody 'TestMesh'), 'create', [System.Collections.Generic.List[object]]::new())
+    $g = Convert-Layer $mesh
+    $res = [Gf.Models.AnimTranslator]::new($cp, $interp).Translate($cls, $g.Geo)
+    $json = [Gf.Models.Json]::Write([Gf.Models.AnimTranslator]::AnimationJson('animation.test', $res)) | ConvertFrom-Json
+    return @{
+        Res = $res; Bones = $json.animations.'animation.test'.bones
+        Translated = @($res.Statements | Where-Object Translated | ForEach-Object Java)
+        Todo = @($res.Statements | Where-Object { -not $_.Translated })
+    }
+}
+function TodoOf($t, [string]$javaStart) {
+    $s = @($t.Todo | Where-Object { $_.Java.StartsWith($javaStart) })
+    if ($s.Count -ne 1) { throw "expected one todo entry for '$javaStart', got $($s.Count) (todo: $(($t.Todo | ForEach-Object Java) -join ' | '))" }
+    return $s[0]
+}
+$headMesh = @'
+    public static LayerDefinition create() {
+        MeshDefinition mesh = new MeshDefinition();
+        mesh.getRoot().addOrReplaceChild("head", CubeListBuilder.create().addBox(0, 0, 0, 1, 1, 1), PartPose.ZERO);
+        return LayerDefinition.create(mesh, 16, 16);
+    }
+'@
+$humanoidMesh = @'
+    public static LayerDefinition create() { return LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F), 64, 64); }
+'@
+Test 'setupAnim -> Molang: locals follow reassignments; a condition that does not translate keeps the base case' {
+    $t = Translate-Test @'
+public class TestAnim {
     private final ModelPart head;
     public TestAnim(ModelPart root) { this.head = root.getChild("head"); }
     public void setupAnim(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
@@ -301,21 +332,189 @@ Test 'setupAnim -> Molang: reassigned locals follow the last value, unknown ones
         this.head.yRot = g;
         this.head.zRot = 1.0F / 0.0F;
     }
-'@ 'TestAnim'
-    $mesh = $interp.CallStatic((New-TestModel @'
+}
+'@ $headMesh
+    $rot = $t.Bones.head.rotation
+    Eq $rot[0] 'query.life_time * 114.5916 + 57.2958' 'f = ageInTicks * 0.1 + 1 (radians -> degrees)'
+    Eq $rot[1] 114.5916 'g = 2 on the base path (entity.isAngry() counts as false)'
+    Eq $rot[2] 0 'division by zero is left untranslated'
+    $case = TodoOf $t 'if (entity.isAngry())'
+    if (-not $case.Case) { throw 'the condition is not a case entry' }
+    Eq ($case.Affects -join ',') 'head.yRot' 'the case names the channel that differs when it holds'
+    if ($t.Translated -notcontains 'this.head.yRot = g;') { throw 'head.yRot = g is not translated' }
+    Eq (TodoOf $t 'this.head.zRot').Reason 'head.zRot (line 11) is not translated: division by zero'
+}
+Test 'setupAnim -> Molang: a compound assignment after an untranslated one stays in todo (LoyalZombieModel pattern)' {
+    # LoyalZombieModel: xRot = f2 (unknown), then xRot += attack swing; the += must not land on the default pose
+    $t = Translate-Test @'
+public class TestZombie extends HumanoidModel<Zombie> {
+    public TestZombie(ModelPart root) { super(root); }
+    public void setupAnim(Zombie e, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float f = Mth.sin(this.attackTime * Mth.PI);
+        this.rightArm.xRot = 0.5F;
+        float f2 = e.getArmAngle();
+        this.rightArm.xRot = f2;
+        this.rightArm.xRot += f * 1.2F;
+        this.leftArm.xRot = -f;
+        if (e.isClimbing()) { this.leftArm.xRot = 1.0F; }
+        this.leftArm.xRot -= 0.1F;
+        this.leftArm.yRot = 0.1F;
+        for (int i = 0; i < 2; i++) { this.leftArm.yRot += 0.1F; }
+        this.leftArm.yRot += 0.2F;
+    }
+}
+'@ $humanoidMesh
+    if ($t.Bones.rightArm.rotation -and $t.Bones.rightArm.rotation[0] -ne 0) { throw "rightArm.xRot has a channel: $($t.Bones.rightArm.rotation[0])" }
+    Eq (TodoOf $t 'this.rightArm.xRot += f').Reason 'previous value at line 7 not translated'
+    Eq (TodoOf $t 'this.rightArm.xRot = f2').Reason "rightArm.xRot (line 7) is not translated: local 'f2' (line 6) is not translated"
+    $lost = TodoOf $t 'this.rightArm.xRot = 0.5F'
+    if ($lost.Reason -notlike 'its effect is not in the base animation: rightArm.xRot*') { throw "the overwritten statement is still translated: $($lost.Reason)" }
+    # the base case of an untranslated condition: leftArm.xRot = -f - 0.1 (isClimbing counts as false)
+    Eq $t.Bones.leftArm.rotation[0] 'math.sin(variable.attack_time * 180) * (-57.2958) - 5.7296'
+    Eq ((TodoOf $t 'if (e.isClimbing())').Affects -join ',') 'leftArm.xRot'
+    # a loop makes the value unknown: the later += stays in todo, the earlier = leaves the translated list
+    Eq $t.Bones.leftArm.rotation[1] 0 'leftArm.yRot after the loop'
+    Eq (TodoOf $t 'this.leftArm.yRot += 0.2F').Reason 'previous value at line 13 not translated'
+    if ($t.Translated -contains 'this.leftArm.yRot = 0.1F;') { throw 'leftArm.yRot = 0.1 is still translated after the loop changed it' }
+}
+Test 'setupAnim -> Molang: the real LoyalZombieModel keeps the raised arms (-80 degrees: isAggressive counts as false)' {
+    $m = BoneMap 'artifacts' 'loyal_zombie'
+    $a = ($files['assets/gen/geo/artifacts/rp/animations/loyal_zombie.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.loyal_zombie.base'.bones
+    foreach ($arm in 'rightArm', 'leftArm') {
+        if ($a.$arm.rotation[0] -notmatch '- 80$') { throw "$arm.xRot does not hold -PI / 2.25 (-80 degrees): $($a.$arm.rotation[0])" }
+        if ($a.$arm.rotation[0] -notmatch 'variable\.attack_time') { throw "$arm.xRot lost the attack swing" }
+        if ($a.$arm.rotation[0] -notmatch 'query\.life_time') { throw "$arm.xRot lost bobArms" }
+    }
+    $flag = @($m.setupAnim.todo | Where-Object { $_.java -eq 'boolean flag = e.isAggressive();' })
+    Eq ($flag[0].affects -join ',') 'leftArm.xRot,rightArm.xRot'
+    $ov = @($m.setupAnim.overrides_vanilla | ForEach-Object { "$($_.bone).$($_.property)" })
+    Eq ($ov -join ',') 'leftArm.xRot,leftArm.yRot,leftArm.zRot,rightArm.xRot,rightArm.yRot,rightArm.zRot' 'the arm axes replace the vanilla pose'
+}
+Test 'setupAnim -> Molang: the Alpha Yeti and the Yeti walk and swing their arms in the base animation; only the conditions are todo' {
+    $m = BoneMap 'caves' 'alpha_yeti'
+    Eq (@($m.setupAnim.todo | ForEach-Object java) -join ' | ') 'if (entity.isTired()) { | if (entity.isRampaging()) { | if (entity.isVehicle()) {'
+    foreach ($s in 'this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;', 'this.rightArm.xRot = -Mth.HALF_PI;', 'this.body.y = -6F;') {
+        if ($m.setupAnim.translated -notcontains $s) { throw "alpha_yeti: '$s' is not translated" }
+    }
+    $a = ($files['assets/gen/geo/caves/rp/animations/alpha_yeti.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.alpha_yeti.base'.bones
+    Eq $a.rightLeg.rotation[0] 'math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141'
+    if ($a.rightArm.rotation[0] -notmatch '- 90$') { throw "alpha_yeti rightArm.xRot is not -90 + swing: $($a.rightArm.rotation[0])" }
+    $tired = @($m.setupAnim.todo | Where-Object { $_.java -eq 'if (entity.isTired()) {' })[0]
+    if ($tired.affects -notcontains 'body.y' -or $tired.affects -notcontains 'rightArm.xRot') { throw "isTired affects $($tired.affects -join ',')" }
+    $y = BoneMap 'caves' 'yeti'
+    if ($y.setupAnim.translated -notcontains 'AnimationUtils.bobArms(this.rightArm, this.leftArm, ageInTicks);') { throw 'yeti: bobArms is not translated' }
+    $ya = ($files['assets/gen/geo/caves/rp/animations/yeti.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.yeti.base'.bones
+    Eq $ya.rightArm.rotation[0] 'math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 57.2958 + math.sin(query.life_time * 76.7763) * 2.8648'
+    foreach ($e in $y.setupAnim.todo) { if ($e.why -like 'its effect is not in the base animation*') { throw "yeti: $($e.java) lost" } }
+}
+Test 'setupAnim -> Molang: conditions that translate become ?:; vanilla super.setupAnim makes += a delta and = an override' {
+    $t = Translate-Test @'
+public class TestHumanoid extends HumanoidModel<Zombie> {
+    public TestHumanoid(ModelPart root) { super(root); }
+    public void setupAnim(Zombie e, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        super.setupAnim(e, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        this.rightArm.xRot += Mth.PI;
+        this.leftArm.zRot = 0.5F;
+        this.body.xRot *= 0.5F;
+        if (this.young) { this.rightLeg.yRot = 1.0F; } else { this.rightLeg.yRot = 0.5F; }
+    }
+}
+'@ $humanoidMesh
+    Eq $t.Bones.rightArm.rotation[0] 180 'a delta on top of the vanilla pose'
+    Eq $t.Bones.leftArm.rotation[2] 28.6479 'an absolute value (0.5 rad)'
+    Eq $t.Bones.rightLeg.rotation[1] '(query.is_baby ? 1 : 0.5) * 57.2958'
+    if (-not (TodoOf $t 'this.body.xRot *= 0.5F').Reason.Contains('needs the value the vanilla HumanoidModel.setupAnim gives')) { throw 'body.xRot *= is translated' }
+    Eq (@($t.Res.OverridesVanilla.Keys) -join ',') 'leftArm.zRot,rightLeg.yRot'
+}
+Test 'setupAnim -> Molang: a vanilla value copied onto a bone no vanilla animation drives, and changed super arguments, stay todo' {
+    $t = Translate-Test @'
+public class TestCape extends HumanoidModel<Zombie> {
+    private final ModelPart cape;
+    public TestCape(ModelPart root) { super(root); this.cape = root.getChild("cape"); }
+    public void setupAnim(Zombie e, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        limbSwingAmount *= 0.75F;
+        super.setupAnim(e, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        this.cape.copyFrom(this.body);
+    }
+}
+'@ @'
+    public static LayerDefinition create() {
+        MeshDefinition mesh = HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F);
+        mesh.getRoot().addOrReplaceChild("cape", CubeListBuilder.create().addBox(-5, 0, -1, 10, 16, 1), PartPose.ZERO);
+        return LayerDefinition.create(mesh, 64, 64);
+    }
+'@
+    if (-not (TodoOf $t 'this.cape.copyFrom').Reason.Contains('onto a bone the vanilla animations do not drive')) { throw 'the cape follows only the delta of the vanilla body pose' }
+    if (-not (TodoOf $t 'super.setupAnim').Reason.Contains('it passes limbSwingAmount = query.modified_move_speed * 0.75')) { throw "the changed argument is not reported: $((TodoOf $t 'super.setupAnim').Reason)" }
+}
+Test 'setupAnim -> Molang: copyFrom copies the initial pose too; nested and loop-header assignments invalidate' {
+    $t = Translate-Test @'
+public class TestCopy {
+    private final ModelPart a, b, c, d;
+    public TestCopy(ModelPart root) { this.a = root.getChild("a"); this.b = root.getChild("b"); this.c = root.getChild("c"); this.d = root.getChild("d"); }
+    public void setupAnim(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.a.xRot = 1.0F;
+        this.a.copyFrom(this.b);
+        this.c.xRot = this.d.xRot = 0.25F;
+        this.c.yRot = 0.5F;
+        for (this.c.yRot = 0.0F; this.d.yRot < 1.0F; this.d.yRot += 0.5F) { }
+        this.c.yRot += 0.1F;
+    }
+}
+'@ @'
     public static LayerDefinition create() {
         MeshDefinition mesh = new MeshDefinition();
-        mesh.getRoot().addOrReplaceChild("head", CubeListBuilder.create().addBox(0, 0, 0, 1, 1, 1), PartPose.ZERO);
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("a", CubeListBuilder.create().addBox(0, 0, 0, 1, 1, 1), PartPose.offsetAndRotation(0.0F, 2.0F, 0.0F, 0.1F, 0.0F, 0.0F));
+        root.addOrReplaceChild("b", CubeListBuilder.create().addBox(0, 0, 0, 1, 1, 1), PartPose.offsetAndRotation(0.0F, 5.0F, 0.0F, 0.3F, 0.0F, 0.0F));
+        root.addOrReplaceChild("c", CubeListBuilder.create().addBox(0, 0, 0, 1, 1, 1), PartPose.ZERO);
+        root.addOrReplaceChild("d", CubeListBuilder.create().addBox(0, 0, 0, 1, 1, 1), PartPose.ZERO);
         return LayerDefinition.create(mesh, 16, 16);
     }
-'@), 'create', [System.Collections.Generic.List[object]]::new())
-    $g = Convert-Layer $mesh
-    $res = [Gf.Models.AnimTranslator]::new($cp, $interp).Translate($c, $g.Geo)
-    $json = [Gf.Models.Json]::Write([Gf.Models.AnimTranslator]::AnimationJson('animation.test', $res)) | ConvertFrom-Json
-    $rot = $json.animations.'animation.test'.bones.head.rotation
-    Eq $rot[0] 'query.life_time * 114.5916 + 57.2958' 'f = ageInTicks * 0.1 + 1 (radians -> degrees)'
-    Eq $rot[1] 0 'g is unknown after the conditional reassignment'
-    Eq $rot[2] 0 'division by zero is left untranslated'
+'@
+    # a takes b's initial pose (0.3 rad, y 5): 0.3 - 0.1 rad = 11.4592 degrees, y -(5 - 2)
+    Near $t.Bones.a.rotation[0] 11.4592 2e-4 'a.xRot = b''s initial 0.3 rad'
+    Eq ($t.Bones.a.position -join ',') '0,-3,0' 'a.y = b''s initial 5'
+    Eq $t.Bones.c.rotation[0] 14.3239 'c.xRot = d.xRot = 0.25'
+    Eq $t.Bones.d.rotation[0] 14.3239
+    if ($t.Bones.c.rotation[1] -ne 0) { throw "c.yRot set in the for header is still translated: $($t.Bones.c.rotation[1])" }
+    if ($t.Bones.d.rotation[1] -ne 0 -and $null -ne $t.Bones.d.rotation[1]) { throw "d.yRot changed in the for update is still translated: $($t.Bones.d.rotation[1])" }
+    Eq (TodoOf $t 'this.c.yRot += 0.1F').Reason 'previous value at line 9 not translated'
+}
+Test 'setupAnim -> Molang: the re-parented hat gets its position relative to the head too' {
+    $t = Translate-Test @'
+public class TestHat extends HumanoidModel<Zombie> {
+    public TestHat(ModelPart root) { super(root); }
+    public void setupAnim(Zombie e, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.head.y = 4.2F;
+        this.head.xRot = 0.5F;
+        this.hat.copyFrom(this.head);
+    }
+}
+'@ $humanoidMesh
+    Eq ($t.Bones.head.position -join ',') '0,-4.2,0'
+    if ($t.Bones.PSObject.Properties.Name -contains 'hat') { throw "the hat (under the head) moves a second time: $($t.Bones.hat | ConvertTo-Json -Compress)" }
+}
+Test 'catalog.json carries the LGPL attribution of the TF code its extracts translate' {
+    $catalog = Get-Content (Join-Path $PSScriptRoot 'catalog.json') -Raw | ConvertFrom-Json
+    $attr = @($catalog.attribution)
+    if (-not ($attr -match 'Copyright \(c\) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors\.')) { throw 'no copyright line' }
+    if (-not ($attr -match 'GNU Lesser General Public License v2\.1 or later')) { throw 'no licence line' }
+    $raw = Get-Content (Join-Path $PSScriptRoot 'catalog.json') -Raw
+    $sources = @([regex]::Matches($raw, '"source":\s*"([^"]*)"') | ForEach-Object { $_.Groups[1].Value })
+    if ($sources.Count -lt 20) { throw "only $($sources.Count) extract sources" }
+    $classes = @($sources | ForEach-Object { [regex]::Matches($_, '\b(TrophyRenderer|ISTER|\w+Model(?=\.renderTrophy)|\w+Item(?=[,:)]))\b') | ForEach-Object Value }) + 'UrGhastModel' | Sort-Object -Unique
+    foreach ($c in $classes) { if (-not ($attr -match "/$c\.java$")) { throw "the attribution does not name $c.java" } }
+}
+Test 'Matches: -Java YetiModel does not select AlphaYetiModel''s layers (whole class names in the supplier)' {
+    if (-not [Gf.Models.Generator]::SupplierNames('event.registerLayerDefinition(TFModelLayers.YETI, YetiModel::create);', 'YetiModel')) { throw 'YetiModel::create' }
+    if ([Gf.Models.Generator]::SupplierNames('event.registerLayerDefinition(TFModelLayers.ALPHA_YETI, AlphaYetiModel::create);', 'YetiModel')) { throw 'AlphaYetiModel::create matches YetiModel' }
+    if ([Gf.Models.Generator]::SupplierNames('event.registerLayerDefinition(TFModelLayers.CARMINITE_GHASTLING, TFGhastModel::create);', 'GhastModel')) { throw 'TFGhastModel matches GhastModel' }
+    if (-not [Gf.Models.Generator]::SupplierNames('() -> LayerDefinition.create(ArcticArmorModel.addPieces(x), 64, 32)', 'ArcticArmorModel')) { throw 'ArcticArmorModel.addPieces' }
+    $yeti = @($gen.Select('YetiModel', $null))
+    $alpha = @($yeti | Where-Object { $_ -like '*alpha_yeti*' })
+    if ($alpha) { throw "-Java YetiModel selects $($alpha -join ', ')" }
+    if ($yeti -notcontains 'assets/gen/geo/caves/rp/models/entity/yeti.geo.json') { throw '-Java YetiModel misses yeti.geo.json' }
 }
 Test 'worn extracts never reuse the wearer''s bone names' {
     $g = Geo 'building' 'naga_trophy_worn'
@@ -324,7 +523,6 @@ Test 'worn extracts never reuse the wearer''s bone names' {
     $crown = Geo 'artifacts' 'mystic_crown_worn'
     Eq (($crown.bones.name) -join ',') 'mystic_crown_worn,mystic_crown_worn_hat'
 }
-function BoneMap([string]$unit, [string]$name) { $files["assets/gen/geo/$unit/bones/$name.json"] | ConvertFrom-Json }
 Test 'worn trophies use their own item model''s head display (alpha yeti: 0 2 0 x1.5, Ur-Ghast: 0 18 0)' {
     $d = (BoneMap 'building' 'alpha_yeti_trophy_worn').item_display[0]
     Eq $d.file 'src/generated/resources/assets/twilightforest/models/item/alpha_yeti_trophy.json'

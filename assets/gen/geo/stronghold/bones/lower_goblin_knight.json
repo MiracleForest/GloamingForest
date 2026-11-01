@@ -92,28 +92,34 @@
   "setupAnim": {
     "class": "LowerGoblinKnightModel",
     "identifier": "animation.twilightforest.lower_goblin_knight.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
-    "translated": ["this.hat.yRot = this.head.yRot;", "this.hat.xRot = this.head.xRot;", "this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightLeg.yRot = 0.0F;", "this.leftLeg.yRot = 0.0F;"],
+    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": ["this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.hat.yRot = this.head.yRot;", "this.hat.xRot = this.head.xRot;", "this.rightArm.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F;", "this.leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * limbSwingAmount * 0.5F;", "this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightLeg.yRot = 0.0F;", "this.leftLeg.yRot = 0.0F;", "AnimationUtils.bobArms(this.rightArm, this.leftArm, ageInTicks);"],
     "todo": [
       {
         "line": 125,
+        "end_line": 130,
         "java": "if (entity.isVehicle()) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.isVehicle() as false; so it runs the else branch and leaves out lines 125-127",
+        "affects": ["hat.xRot", "hat.yRot", "head.xRot", "head.yRot"]
       },
       {
         "line": 134,
+        "end_line": 139,
         "java": "if (!entity.hasArmor() && !entity.isVehicle()) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.hasArmor(), entity.isVehicle() as false; so it runs the if branch and leaves out lines 137-139",
+        "affects": ["leftArm.xRot", "rightArm.xRot"]
       },
       {
         "line": 148,
+        "end_line": 149,
         "java": "if (!entity.hasArmor() && !entity.isVehicle()) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.hasArmor(), entity.isVehicle() as false; so it runs the if branch",
+        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.y", "leftArm.yRot", "leftArm.z", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.z", "rightArm.zRot"]
       },
       {
         "line": 152,
         "java": "this.tunic.visible = entity.hasArmor();",
-        "why": "not a bone assignment"
+        "why": "property 'visible' (visibility / scale): use part_visibility or a scale channel"
       }
     ]
   }

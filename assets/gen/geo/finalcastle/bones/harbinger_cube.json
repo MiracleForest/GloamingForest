@@ -72,7 +72,7 @@
   "setupAnim": {
     "class": "HarbingerCubeModel",
     "identifier": "animation.twilightforest.harbinger_cube.base",
-    "notes": ["no setupAnim / prepareMobModel in HarbingerCubeModel or its TF super classes", "vanilla base QuadrupedModel animates every part: animation.quadruped.walk and animation.common.look_at_target (Bedrock vanilla) on head / leg0 (right hind) / leg1 (left hind) / leg2 (right front) / leg3 (left front)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
+    "notes": ["no setupAnim / prepareMobModel in HarbingerCubeModel or its TF super classes", "vanilla base QuadrupedModel animates every part (no setupAnim in HarbingerCubeModel or its TF super classes): animation.quadruped.walk and animation.common.look_at_target (Bedrock vanilla) on head / leg0 (right hind) / leg1 (left hind) / leg2 (right front) / leg3 (left front)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": []
   }

@@ -93,18 +93,45 @@
   "setupAnim": {
     "class": "WraithModel",
     "identifier": "animation.twilightforest.wraith.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
-    "translated": ["this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightArm.yRot = -(0.1F - var8 * 0.6F);", "this.leftArm.yRot = 0.1F - var8 * 0.6F;", "this.rightArm.xRot = -Mth.HALF_PI;", "this.leftArm.xRot = -Mth.HALF_PI;", "this.rightArm.xRot -= var8 * 1.2F - var9 * 0.4F;", "this.leftArm.xRot -= var8 * 1.2F - var9 * 0.4F;"],
+    "notes": ["vanilla base HumanoidModel: super.setupAnim (line 65) runs the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg; the base animation adds to it. overrides_vanilla lists the bone axes Java sets with '=' after that call: they replace the vanilla pose, so the vanilla animations must not drive them (in the cases whose lines it gives)"],
+    "translated": ["float var8 = Mth.sin(this.attackTime * Mth.PI);", "float var9 = Mth.sin((1.0F - (1.0F - this.attackTime) * (1.0F - this.attackTime)) * Mth.PI);", "this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightArm.yRot = -(0.1F - var8 * 0.6F);", "this.leftArm.yRot = 0.1F - var8 * 0.6F;", "this.rightArm.xRot = -Mth.HALF_PI;", "this.leftArm.xRot = -Mth.HALF_PI;", "this.rightArm.xRot -= var8 * 1.2F - var9 * 0.4F;", "this.leftArm.xRot -= var8 * 1.2F - var9 * 0.4F;", "AnimationUtils.bobArms(this.rightArm, this.leftArm, ageInTicks);"],
     "todo": [
       {
         "line": 65,
         "java": "super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);",
-        "why": "the super class's setupAnim (see the notes for the vanilla base)"
+        "why": "the vanilla HumanoidModel.setupAnim (see the notes)"
+      }
+    ],
+    "overrides_vanilla": [
+      {
+        "bone": "leftArm",
+        "property": "xRot",
+        "lines": [74]
       },
       {
-        "line": 77,
-        "java": "AnimationUtils.bobArms(this.rightArm, this.leftArm, ageInTicks);",
-        "why": "not a bone assignment"
+        "bone": "leftArm",
+        "property": "yRot",
+        "lines": [72]
+      },
+      {
+        "bone": "leftArm",
+        "property": "zRot",
+        "lines": [70]
+      },
+      {
+        "bone": "rightArm",
+        "property": "xRot",
+        "lines": [73]
+      },
+      {
+        "bone": "rightArm",
+        "property": "yRot",
+        "lines": [71]
+      },
+      {
+        "bone": "rightArm",
+        "property": "zRot",
+        "lines": [69]
       }
     ]
   }

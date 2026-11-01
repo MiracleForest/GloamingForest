@@ -190,53 +190,83 @@
   "setupAnim": {
     "class": "MinoshroomModel",
     "identifier": "animation.twilightforest.minoshroom.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
-    "translated": ["this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.hat.yRot = this.head.yRot;", "this.hat.xRot = this.head.xRot;", "this.rightArm.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F;", "this.leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * limbSwingAmount * 0.5F;", "this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightLeg.yRot = 0.0F;", "this.leftLeg.yRot = 0.0F;", "this.rightArm.yRot = 0.0F;", "this.leftArm.yRot = 0.0F;", "this.leftArm.y = this.rightArm.y;", "this.leftArm.z = this.rightArm.z;"],
+    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": [
+      "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;",
+      "this.head.xRot = headPitch * Mth.DEG_TO_RAD;",
+      "this.hat.yRot = this.head.yRot;",
+      "this.hat.xRot = this.head.xRot;",
+      "this.rightArm.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F;",
+      "this.leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * limbSwingAmount * 0.5F;",
+      "this.rightArm.zRot = 0.0F;",
+      "this.leftArm.zRot = 0.0F;",
+      "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;",
+      "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;",
+      "this.rightLeg.yRot = 0.0F;",
+      "this.leftLeg.yRot = 0.0F;",
+      "this.rightArm.yRot = 0.0F;",
+      "this.leftArm.yRot = 0.0F;",
+      "AnimationUtils.bobModelPart(this.rightArm, ageInTicks, 1.0F);",
+      "AnimationUtils.bobModelPart(this.leftArm, ageInTicks, -1.0F);",
+      "this.cowTorso.xRot = Mth.HALF_PI;",
+      "this.leftFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;",
+      "this.rightFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;",
+      "this.leftBackLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;",
+      "this.rightBackLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;",
+      "float f = ageInTicks - entity.tickCount;"
+    ],
     "todo": [
       {
         "line": 215,
         "java": "boolean flag2 = entity.getMainArm() == HumanoidArm.RIGHT;",
-        "why": "local 'flag2': call entity.getMainArm()"
+        "why": "the base animation counts entity.getMainArm() == HumanoidArm.RIGHT as false",
+        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
       },
       {
         "line": 216,
+        "end_line": 230,
         "java": "if (entity.isUsingItem()) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.isUsingItem() as false; so it runs the else branch and leaves out lines 216-221",
+        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
+      },
+      {
+        "line": 224,
+        "java": "boolean flag4 = flag2 ? this.leftArmPose.isTwoHanded() : this.rightArmPose.isTwoHanded();",
+        "why": "the base animation counts flag2 ? this.leftArmPose.isTwoHanded() : this.rightArmPose.isTwoHanded() as false",
+        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
+      },
+      {
+        "line": 225,
+        "end_line": 230,
+        "java": "if (flag2 != flag4) {",
+        "why": "the condition is constant on the base path (it uses values of the cases at lines 215, 224); so it runs the else branch and leaves out lines 225-227",
+        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
+      },
+      {
+        "line": 229,
+        "java": "this.poseRightArm(entity);",
+        "why": "the base animation counts this.rightArmPose != ArmPose.EMPTY (with EMPTY the vanilla HumanoidModel.poseRightArm sets rightArm.yRot = 0) as false",
+        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
+      },
+      {
+        "line": 230,
+        "java": "this.poseLeftArm(entity);",
+        "why": "the base animation counts this.leftArmPose != ArmPose.EMPTY (with EMPTY the vanilla HumanoidModel.poseLeftArm sets leftArm.yRot = 0) as false",
+        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
       },
       {
         "line": 234,
+        "end_line": 235,
         "java": "if (this.rightArmPose != HumanoidModel.ArmPose.SPYGLASS) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts this.rightArmPose == HumanoidModel.ArmPose.SPYGLASS as false; so it runs the if branch",
+        "affects": ["rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
       },
       {
         "line": 238,
+        "end_line": 239,
         "java": "if (this.leftArmPose != HumanoidModel.ArmPose.SPYGLASS) {",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 243,
-        "java": "this.cowTorso.xRot = Mth.HALF_PI;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 244,
-        "java": "this.leftFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 245,
-        "java": "this.rightFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 246,
-        "java": "this.leftBackLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 247,
-        "java": "this.rightBackLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;",
-        "why": "not a bone assignment"
+        "why": "the base animation counts this.leftArmPose == HumanoidModel.ArmPose.SPYGLASS as false; so it runs the if branch",
+        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot"]
       },
       {
         "line": 251,
@@ -246,77 +276,90 @@
       {
         "line": 252,
         "java": "f1 = f1 * f1;",
-        "why": "local 'f1': 'f1' (entity state or a field)"
+        "why": "local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
       },
       {
         "line": 254,
         "java": "boolean jappa = JappaPackReloadListener.INSTANCE.isJappaPackLoaded();",
-        "why": "local 'jappa': call isJappaPackLoaded()"
+        "why": "the base animation counts JappaPackReloadListener.INSTANCE.isJappaPackLoaded() as false",
+        "affects": []
       },
       {
         "line": 256,
         "java": "this.leftFrontLeg.y = 12.0F + ((jappa ? -7.0F : -5.0F) * f1);",
-        "why": "not a bone assignment"
+        "why": "leg3.y (line 256) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
       },
       {
         "line": 257,
         "java": "this.leftFrontLeg.z = -4.0F + f1;",
-        "why": "not a bone assignment"
+        "why": "leg3.z (line 257) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
       },
       {
         "line": 258,
         "java": "this.rightFrontLeg.y = this.leftFrontLeg.y;",
-        "why": "not a bone assignment"
+        "why": "leg2.y (line 258) is not translated: leg3.y is not translated (line 256)"
       },
       {
         "line": 259,
         "java": "this.rightFrontLeg.z = this.leftFrontLeg.z;",
-        "why": "not a bone assignment"
+        "why": "leg2.z (line 259) is not translated: leg3.z is not translated (line 257)"
       },
       {
         "line": 260,
         "java": "this.head.y = (jappa ? -4.0F : -6.0F) + -3.0F * f1;",
-        "why": "'jappa' (entity state or a field)"
+        "why": "head.y (line 260) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
       },
       {
         "line": 261,
         "java": "this.head.z = -9.0F + 6.0F * f1;",
-        "why": "'f1' (entity state or a field)"
+        "why": "head.z (line 261) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
       },
       {
         "line": 262,
         "java": "this.body.y = (jappa ? -4.0F : -6.0F) + -3.0F * f1;",
-        "why": "'jappa' (entity state or a field)"
+        "why": "body.y (line 262) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
       },
       {
         "line": 263,
         "java": "this.body.z = (jappa ? -11.0F : -9.0F) + 6.0F * f1;",
-        "why": "'jappa' (entity state or a field)"
+        "why": "body.z (line 263) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
       },
       {
         "line": 264,
         "java": "this.cowTorso.y = (jappa ? 10.0F : 5.0F) + f1;",
-        "why": "not a bone assignment"
+        "why": "cow_torso.y (line 264) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
       },
       {
         "line": 265,
         "java": "this.cowTorso.z = (jappa ? 6.0F : 2.0F) + ((jappa ? 1.0F : 4.0F) * f1);",
-        "why": "not a bone assignment"
+        "why": "cow_torso.z (line 265) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
       },
       {
         "line": 266,
         "java": "this.rightArm.y = (jappa ? -6.0F : -4.0F) - (3.0F * f1);",
-        "why": "'jappa' (entity state or a field)"
+        "why": "rightArm.y (line 266) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
       },
       {
         "line": 267,
         "java": "this.rightArm.z = -9.0F + (6.0F * f1);",
-        "why": "'f1' (entity state or a field)"
+        "why": "rightArm.z (line 267) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
+      },
+      {
+        "line": 268,
+        "java": "this.leftArm.y = this.rightArm.y;",
+        "why": "leftArm.y (line 268) is not translated: rightArm.y is not translated (line 266)"
+      },
+      {
+        "line": 269,
+        "java": "this.leftArm.z = this.rightArm.z;",
+        "why": "leftArm.z (line 269) is not translated: rightArm.z is not translated (line 267)"
       },
       {
         "line": 271,
+        "end_line": 283,
         "java": "if (f1 > 0) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts f1 > 0 as false; so it runs neither branch and leaves out lines 271-283",
+        "affects": ["cow_torso.xRot", "leftArm.xRot", "leftArm.zRot", "leg2.xRot", "leg3.xRot", "rightArm.xRot", "rightArm.zRot"]
       }
     ]
   }

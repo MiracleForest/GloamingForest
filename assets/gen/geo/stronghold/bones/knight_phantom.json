@@ -85,18 +85,50 @@
   "setupAnim": {
     "class": "KnightPhantomModel",
     "identifier": "animation.twilightforest.knight_phantom.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
+    "notes": ["vanilla base HumanoidModel: super.setupAnim (line 129) runs the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg; the base animation adds to it. overrides_vanilla lists the bone axes Java sets with '=' after that call: they replace the vanilla pose, so the vanilla animations must not drive them (in the cases whose lines it gives)"],
     "translated": ["this.leftLeg.yRot = 0;", "this.leftLeg.zRot = 0;", "this.rightLeg.yRot = 0;", "this.rightLeg.zRot = 0;", "this.rightLeg.xRot = 0.2F * Mth.sin(ageInTicks * 0.3F) + 0.4F;", "this.leftLeg.xRot = 0.2F * Mth.sin(ageInTicks * 0.3F) + 0.4F;"],
     "todo": [
       {
         "line": 127,
         "java": "this.knight = entity;",
-        "why": "not a bone assignment"
+        "why": "not a bone assignment (this.knight: entity or model state)"
       },
       {
         "line": 129,
         "java": "super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);",
-        "why": "the super class's setupAnim (see the notes for the vanilla base)"
+        "why": "the vanilla HumanoidModel.setupAnim (see the notes)"
+      }
+    ],
+    "overrides_vanilla": [
+      {
+        "bone": "leftLeg",
+        "property": "xRot",
+        "lines": [137]
+      },
+      {
+        "bone": "leftLeg",
+        "property": "yRot",
+        "lines": [130]
+      },
+      {
+        "bone": "leftLeg",
+        "property": "zRot",
+        "lines": [131]
+      },
+      {
+        "bone": "rightLeg",
+        "property": "xRot",
+        "lines": [136]
+      },
+      {
+        "bone": "rightLeg",
+        "property": "yRot",
+        "lines": [133]
+      },
+      {
+        "bone": "rightLeg",
+        "property": "zRot",
+        "lines": [134]
       }
     ]
   },

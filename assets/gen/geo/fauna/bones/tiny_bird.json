@@ -108,12 +108,15 @@
   "setupAnim": {
     "class": "TinyBirdModel",
     "identifier": "animation.twilightforest.tiny_bird.base",
-    "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.rightFoot.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftFoot.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightWing.zRot = ageInTicks;", "this.leftWing.zRot = -ageInTicks;"],
+    "notes": ["vanilla base AgeableListModel: nothing (AgeableListModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.rightFoot.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftFoot.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightWing.zRot = ageInTicks;", "this.leftWing.zRot = -ageInTicks;", "this.rightFoot.y = 22.5F;", "this.leftFoot.y = 22.5F;"],
     "todo": [
       {
         "line": 178,
+        "end_line": 183,
         "java": "if (entity.isBirdLanded()) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.isBirdLanded() as false; so it runs the else branch and leaves out lines 178-180",
+        "affects": ["left_foot.y", "right_foot.y"]
       }
     ]
   }

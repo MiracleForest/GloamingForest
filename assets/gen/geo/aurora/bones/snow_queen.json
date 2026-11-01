@@ -251,18 +251,52 @@
   "setupAnim": {
     "class": "SnowQueenModel",
     "identifier": "animation.twilightforest.snow_queen.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
+    "notes": ["vanilla base HumanoidModel: super.setupAnim (line 187) runs the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg; the base animation adds to it. overrides_vanilla lists the bone axes Java sets with '=' after that call: they replace the vanilla pose, so the vanilla animations must not drive them (in the cases whose lines it gives)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {
         "line": 187,
         "java": "super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);",
-        "why": "the super class's setupAnim (see the notes for the vanilla base)"
+        "why": "the vanilla HumanoidModel.setupAnim (see the notes)"
       },
       {
         "line": 190,
+        "end_line": 206,
         "java": "if (entity.getCurrentPhase() == Phase.BEAM) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.getCurrentPhase() == Phase.BEAM as false; so it runs neither branch and leaves out lines 190-206",
+        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.y", "leftArm.yRot", "leftArm.z", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.z", "rightArm.zRot"]
+      }
+    ],
+    "overrides_vanilla": [
+      {
+        "bone": "leftArm",
+        "property": "xRot",
+        "lines": [199]
+      },
+      {
+        "bone": "leftArm",
+        "property": "yRot",
+        "lines": [197]
+      },
+      {
+        "bone": "leftArm",
+        "property": "zRot",
+        "lines": [195]
+      },
+      {
+        "bone": "rightArm",
+        "property": "xRot",
+        "lines": [198]
+      },
+      {
+        "bone": "rightArm",
+        "property": "yRot",
+        "lines": [196]
+      },
+      {
+        "bone": "rightArm",
+        "property": "zRot",
+        "lines": [194]
       }
     ]
   }

@@ -4,11 +4,27 @@
     "animation.twilightforest.blockchain_goblin.base": {
       "loop": true,
       "bones": {
+        "body": {
+          "rotation": [0, "(!(variable.attack_time <= 0) ? math.sin(math.sqrt(variable.attack_time) * 360) * 0.2 : 0) * 57.2958", 0]
+        },
+        "hat": {
+          "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0],
+          "position": [0, -10, 0]
+        },
+        "head": {
+          "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
+        },
         "leftArm": {
-          "rotation": [180, 0, 0]
+          "rotation": ["(!(variable.attack_time <= 0) ? (query.is_riding ? math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed - 0.628319 : math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed) + math.sin(math.sqrt(variable.attack_time) * 360) * 0.2 : (query.is_riding ? math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed - 0.628319 : math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed)) * 57.2958 + math.sin(query.life_time * 76.7763) * (-2.8648) + 180", "(!(variable.attack_time <= 0) ? math.sin(math.sqrt(variable.attack_time) * 360) * 0.2 : 0) * 57.2958", "math.cos(query.life_time * 103.1324) * (-2.8648) - 2.8648"]
+        },
+        "leftLeg": {
+          "rotation": ["(query.is_riding ? -1.4137 : math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 1.4) * 57.2958", "(query.is_riding ? -0.314159 : 0) * 57.2958", "(query.is_riding ? -0.07854 : 0) * 57.2958"]
         },
         "rightArm": {
-          "rotation": [180, 0, 0]
+          "rotation": ["(!(variable.attack_time <= 0) ? (query.is_riding ? math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed - 0.628319 : math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed) - math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 1.2 - math.sin(variable.attack_time * 180) * (query.target_x_rotation * (-0.017453) + 0.7) * 0.75 : (query.is_riding ? math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed - 0.628319 : math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed)) * 57.2958 + math.sin(query.life_time * 76.7763) * 2.8648 + 180", "(!(variable.attack_time <= 0) ? math.sin(math.sqrt(variable.attack_time) * 360) * 0.2 + math.sin(math.sqrt(variable.attack_time) * 360) * 0.4 : 0) * 57.2958", "(!(variable.attack_time <= 0) ? math.sin(variable.attack_time * 180) * (-0.4) : 0) * 57.2958 + math.cos(query.life_time * 103.1324) * 2.8648 + 2.8648"]
+        },
+        "rightLeg": {
+          "rotation": ["(query.is_riding ? -1.4137 : math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 1.4) * 57.2958", "(query.is_riding ? 0.314159 : 0) * 57.2958", "(query.is_riding ? 0.07854 : 0) * 57.2958"]
         }
       }
     }

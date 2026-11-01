@@ -80,7 +80,7 @@
   "setupAnim": {
     "class": "BunnyModel",
     "identifier": "animation.twilightforest.bunny.base",
-    "notes": ["vanilla base QuadrupedModel (super calls): animation.quadruped.walk and animation.common.look_at_target (Bedrock vanilla) on head / leg0 (right hind) / leg1 (left hind) / leg2 (right front) / leg3 (left front)"],
+    "notes": ["setupAnim replaces QuadrupedModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play animation.quadruped.walk and animation.common.look_at_target (Bedrock vanilla) on head / leg0 (right hind) / leg1 (left hind) / leg2 (right front) / leg3 (left front))"],
     "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.leftHindLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.rightHindLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.leftFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;"],
     "todo": []
   }

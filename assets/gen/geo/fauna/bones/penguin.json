@@ -91,7 +91,7 @@
   "setupAnim": {
     "class": "PenguinModel",
     "identifier": "animation.twilightforest.penguin.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
+    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)"],
     "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.rightLeg.xRot = Mth.cos(limbSwing) * 0.7F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing + Mth.PI) * 0.7F * limbSwingAmount;", "this.rightArm.zRot = ageInTicks;", "this.leftArm.zRot = -ageInTicks;"],
     "todo": []
   }

@@ -5,7 +5,19 @@
       "loop": true,
       "bones": {
         "head": {
-          "rotation": [0, 0, 0]
+          "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
+        },
+        "leftArm": {
+          "rotation": ["(-(math.abs(math.mod(query.modified_distance_moved, 13) - 6.5) * 0.461538) + 1.3) * query.modified_move_speed * 57.2958", 0, "math.cos(query.life_time * 103.1324) * (-2.8648) - 2.8648"]
+        },
+        "leftLeg": {
+          "rotation": ["(math.abs(math.mod(query.modified_distance_moved, 13) - 6.5) * (-0.461538) + 1.5) * query.modified_move_speed * 57.2958", 0, 0]
+        },
+        "rightArm": {
+          "rotation": ["(math.abs(math.mod(query.modified_distance_moved, 13) - 6.5) * 0.461538 - 1.7) * query.modified_move_speed * 57.2958", 0, "math.cos(query.life_time * 103.1324) * 2.8648 + 2.8648"]
+        },
+        "rightLeg": {
+          "rotation": ["(math.abs(math.mod(query.modified_distance_moved, 13) - 6.5) * 0.461538 - 1.5) * query.modified_move_speed * 57.2958", 0, 0]
         }
       }
     }

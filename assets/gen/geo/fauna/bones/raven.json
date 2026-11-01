@@ -124,23 +124,15 @@
   "setupAnim": {
     "class": "RavenModel",
     "identifier": "animation.twilightforest.raven.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
-    "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.head.zRot = netHeadYaw > 5.0F ? -0.2617994F : 0.0F;", "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;"],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.head.zRot = netHeadYaw > 5.0F ? -0.2617994F : 0.0F;", "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightWing.zRot = ageInTicks;", "this.leftWing.zRot = -ageInTicks;", "this.rightLeg.y = 20.0F;", "this.leftLeg.y = 20.0F;"],
     "todo": [
       {
-        "line": 163,
-        "java": "this.rightWing.zRot = ageInTicks;",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 164,
-        "java": "this.leftWing.zRot = -ageInTicks;",
-        "why": "not a bone assignment"
-      },
-      {
         "line": 166,
+        "end_line": 171,
         "java": "if (entity.isBirdLanded()) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.isBirdLanded() as false; so it runs the else branch and leaves out lines 166-168",
+        "affects": ["leftLeg.y", "rightLeg.y"]
       }
     ]
   }

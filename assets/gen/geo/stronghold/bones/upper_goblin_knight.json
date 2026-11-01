@@ -164,7 +164,7 @@
   "setupAnim": {
     "class": "UpperGoblinKnightModel",
     "identifier": "animation.twilightforest.upper_goblin_knight.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
+    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
     "translated": [
       "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;",
       "this.head.xRot = headPitch * Mth.DEG_TO_RAD;",
@@ -173,72 +173,65 @@
       "this.hat.xRot = this.head.xRot;",
       "this.hat.zRot = this.head.zRot;",
       "this.rightArm.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F;",
+      "float leftConstraint = hasShield ? 0.2F : limbSwingAmount;",
+      "this.leftArm.zRot = 0.0F;",
+      "this.leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * leftConstraint * 0.5F;",
       "this.rightArm.zRot = 0.0F;",
       "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;",
       "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;",
       "this.rightLeg.yRot = 0.0F;",
       "this.leftLeg.yRot = 0.0F;",
+      "if (this.riding) {",
+      "this.rightArm.xRot -= (Mth.PI / 5.0F);",
+      "this.leftArm.xRot -= (Mth.PI / 5.0F);",
+      "this.rightLeg.xRot = 0;",
+      "this.leftLeg.xRot = 0;",
+      "this.leftArm.xRot = this.leftArm.xRot * 0.5F - (Mth.PI / 10.0F);",
       "this.rightArm.xRot = this.rightArm.xRot * 0.5F - (Mth.PI / 10.0F);",
       "rightArm.xRot -= (Mth.PI * 0.66F);",
       "this.rightArm.yRot = 0.0F;",
       "this.leftArm.yRot = 0.0F;",
-      "this.leftArm.zRot = -this.leftArm.zRot;"
+      "AnimationUtils.bobArms(this.rightArm, this.leftArm, ageInTicks);",
+      "this.leftArm.zRot = -this.leftArm.zRot;",
+      "this.shield.xRot = Mth.TWO_PI - this.leftArm.xRot;"
     ],
     "todo": [
       {
         "line": 179,
         "java": "boolean hasShield = entity.hasShield();",
-        "why": "local 'hasShield': call entity.hasShield()"
-      },
-      {
-        "line": 190,
-        "java": "float leftConstraint = hasShield ? 0.2F : limbSwingAmount;",
-        "why": "local 'leftConstraint': 'hasShield' (entity state or a field)"
+        "why": "the base animation counts entity.hasShield() as false",
+        "affects": ["leftArm.xRot", "shield.xRot"]
       },
       {
         "line": 192,
+        "end_line": 195,
         "java": "if (entity.isShieldDisabled()) {",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 198,
-        "java": "this.leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * leftConstraint * 0.5F;",
-        "why": "'leftConstraint' (entity state or a field)"
-      },
-      {
-        "line": 206,
-        "java": "if (this.riding) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.isShieldDisabled() as false; so it runs the else branch and leaves out lines 192-193",
+        "affects": ["leftArm.zRot"]
       },
       {
         "line": 213,
+        "end_line": 214,
         "java": "if (this.leftArmPose != ArmPose.EMPTY) {",
-        "why": "not a bone assignment"
+        "why": "the base animation counts this.leftArmPose == ArmPose.EMPTY as false; so it runs the if branch",
+        "affects": ["leftArm.xRot", "shield.xRot"]
       },
       {
         "line": 222,
+        "end_line": 223,
         "java": "if (entity.heavySpearTimer > 0) {",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 229,
-        "java": "AnimationUtils.bobArms(this.rightArm, this.leftArm, ageInTicks);",
-        "why": "not a bone assignment"
-      },
-      {
-        "line": 235,
-        "java": "this.shield.xRot = Mth.TWO_PI - this.leftArm.xRot;",
-        "why": "not a bone assignment"
+        "why": "the base animation counts entity.heavySpearTimer > 0 as false; so it runs neither branch and leaves out lines 222-223",
+        "affects": ["rightArm.xRot"]
       },
       {
         "line": 237,
         "java": "this.breastplate.visible = entity.hasArmor();",
-        "why": "not a bone assignment"
+        "why": "property 'visible' (visibility / scale): use part_visibility or a scale channel"
       },
       {
         "line": 238,
         "java": "this.shield.visible = entity.hasShield();",
-        "why": "not a bone assignment"
+        "why": "property 'visible' (visibility / scale): use part_visibility or a scale channel"
       }
     ]
   }

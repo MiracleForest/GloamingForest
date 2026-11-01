@@ -6,6 +6,21 @@
       "bones": {
         "head": {
           "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
+        },
+        "leftArm": {
+          "rotation": ["(query.is_riding ? math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed - 0.628319 : math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed) * 28.6479 + math.sin(query.life_time * 76.7763) * (-2.8648) - 18", 0, "math.cos(query.life_time * 103.1324) * 2.8648 + 2.8648"]
+        },
+        "leftLeg": {
+          "rotation": ["(query.is_riding ? 0 : math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 1.4) * 57.2958", 0, 0]
+        },
+        "rightArm": {
+          "rotation": ["(query.is_riding ? math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed - 0.628319 : math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed) * 28.6479 + math.sin(query.life_time * 76.7763) * 2.8648 - 136.8", 0, "math.cos(query.life_time * 103.1324) * 2.8648 + 2.8648"]
+        },
+        "rightLeg": {
+          "rotation": ["(query.is_riding ? 0 : math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 1.4) * 57.2958", 0, 0]
+        },
+        "shield": {
+          "rotation": ["(query.is_riding ? math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed - 0.628319 : math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed) * (-28.6479) - math.sin(query.life_time * 76.7763) * (-2.8648) + 288", 0, 0]
         }
       }
     }

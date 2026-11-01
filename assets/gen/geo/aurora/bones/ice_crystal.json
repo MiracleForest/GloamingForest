@@ -322,18 +322,18 @@
   "setupAnim": {
     "class": "IceCrystalModel",
     "identifier": "animation.twilightforest.ice_crystal.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)", "stub: a zero rotation on spike_0 (Bedrock needs at least one bone in an animation)"],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "stub: a zero rotation on spike_0 (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {
         "line": 74,
         "java": "this.alive = entity.isAlive();",
-        "why": "not a bone assignment"
+        "why": "not a bone assignment (this.alive: entity or model state)"
       },
       {
         "line": 75,
         "java": "for (int i = 0; i < this.spikes.length; i++) {",
-        "why": "not a bone assignment"
+        "why": "inside a loop (not translated)"
       }
     ]
   }

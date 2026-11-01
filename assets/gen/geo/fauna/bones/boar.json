@@ -72,7 +72,7 @@
   "setupAnim": {
     "class": "BoarModel",
     "identifier": "animation.twilightforest.boar.base",
-    "notes": ["no setupAnim / prepareMobModel in BoarModel or its TF super classes", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
+    "notes": ["no setupAnim / prepareMobModel in BoarModel or its TF super classes", "vanilla base PigModel animates every part (no setupAnim in BoarModel or its TF super classes): animation.quadruped.walk and animation.common.look_at_target (Bedrock vanilla) on head / leg0..leg3", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": []
   }
