@@ -15,6 +15,8 @@
 //   src/main/java/twilightforest/block/entity/spawner/MinoshroomSpawnerBlockEntity.java
 //   src/main/java/twilightforest/block/entity/spawner/AlphaYetiSpawnerBlockEntity.java
 //   src/main/java/twilightforest/block/entity/spawner/FinalBossSpawnerBlockEntity.java
+//   src/main/java/twilightforest/block/entity/spawner/SinisterSpawnerBlockEntity.java
+//   src/main/java/twilightforest/block/entity/spawner/SinisterSpawnerLogic.java
 //   src/main/java/twilightforest/block/AbstractTrophyBlock.java
 //   src/main/java/twilightforest/enums/BossVariant.java
 //   src/main/java/twilightforest/components/entity/MultiplayerInclusivityAttachment.java
@@ -29,16 +31,19 @@
 // Contract "boss" (F8, rule R20): BaseTFBoss's lifecycle on top of F8's entity hooks.
 //   - Boss bar: a vanilla BossEventPacket bar per boss for the players that see it (Java's
 //     tracking: 160 blocks), coloured with the nearest of Bedrock's 8 BossBarColor values; the
-//     companion protocol carries TFBossBarPacket's exact RGB, overlay, darken and fog
-//     ("boss.bar") and UpdateDeathTimePacket ("boss.death_time").
+//     companion protocol carries TFBossBarPacket's exact RGB, overlay, darken and fog plus the
+//     viewer's title and the progress ("boss.bar"; the client mod paints the bar with the RGB) and
+//     UpdateDeathTimePacket ("boss.death_time", when a player starts seeing a dying boss).
 //   - Death (postmortem): the loot table rolls into the 27-slot buffer (IBossLootBuffer, saved
 //     with the boss), the home landmark is conquered (gf::landmark), "hurt_boss" fires for every
-//     qualified player; after the death animation the buffer goes into the death chest under the
-//     home point (gf::inventory, or a vanilla container) with the chest sound and poof.
+//     qualified player; after the death animation the buffer goes into the death chest at
+//     EntityUtil#bossChestLocation (home.below(), replacing the floor block when a piston could
+//     move it) through gf::inventory or a vanilla container, with the chest sound and poof.
 //   - Peaceful: the boss turns back into its spawner at home and disappears.
-//   - Spawners (BossSpawnerBlockEntity): custom blocks have no block entities, so the spawner
-//     blocks around players are found with the chunk palettes (BlockSource::fetchBlocksInBox)
-//     and ticked from the level tick (range, particles, peaceful, self-destruct).
+//   - Spawners (BossSpawnerBlockEntity, SinisterSpawnerLogic): custom blocks have no block
+//     entities, so the spawner blocks around players are found with the chunk palettes
+//     (BlockSource::fetchBlocksInBox, one slice of the box per tick, a margin beyond the longest
+//     range so a spawner is known before a player gets in range) and ticked every level tick.
 //   - Multiplayer: health adjuster on spawn, qualified players (participants), config "bosses".
 
 #include "feature/boss/Boss.h"
@@ -64,6 +69,7 @@
 #include "mc/platform/UUID.h"
 #include "mc/world/Container.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/ai/util/BossBarColor.h"
@@ -91,9 +97,11 @@
 #include "mc/world/level/levelgen/structure/BoundingBox.h"
 #include "mc/world/level/storage/GameRuleId.h"
 #include "mc/world/level/storage/GameRules.h"
+#include "mc/world/phys/AABB.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 
 #include "feature/combat/Combat.h"
+#include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
@@ -114,12 +122,16 @@
 
 namespace gf::feature::boss {
 
+/// TFConfig.MultiplayerFightAdjuster (its names are the config values; the config screen refuses
+/// anything else, a config file with another value fails to load and keeps the previous value).
+enum class MultiplayerFightAdjuster { NONE, MORE_LOOT, MORE_HEALTH, MORE_LOOT_AND_HEALTH };
+
 /// Config section "bosses" (docs/spec/config.md): TFConfig.bossDropChests and
-/// multiplayerFightAdjuster (NONE, MORE_LOOT, MORE_HEALTH, MORE_LOOT_AND_HEALTH).
+/// multiplayerFightAdjuster.
 struct BossesConfig {
-    int         version                  = 1;
-    bool        bossesSpawnDropChests    = true;
-    std::string multiplayerFightAdjuster = "NONE";
+    int                      version                  = 1;
+    bool                     bossesSpawnDropChests    = true;
+    MultiplayerFightAdjuster multiplayerFightAdjuster = MultiplayerFightAdjuster::NONE;
 };
 
 } // namespace gf::feature::boss
@@ -130,6 +142,7 @@ namespace gf::feature::boss {
 
 namespace fe = gf::feature::entity;
 namespace ia = gf::interactions;
+namespace bd = gf::feature::common::blockdata;
 using gf::boss::BossSpec;
 using gf::boss::SpawnerSpec;
 using Json = nlohmann::json;
@@ -140,7 +153,12 @@ constexpr int    kContainerSize = 27;   ///< IBossLootBuffer.CONTAINER_SIZE
 constexpr double kTrackRange    = 160.; ///< Java tracks bosses as far as the view distance (10 chunks)
 constexpr int    kShortRange    = 9;    ///< BossSpawnerBlockEntity.SHORT_RANGE
 constexpr int    kLongRange     = 50;   ///< BossSpawnerBlockEntity.LONG_RANGE
+constexpr int    kScanMargin    = 16;   ///< spawners are found this far beyond their range
+constexpr int    kScanSlices    = 20;   ///< the scan box is covered in 20 slices, one per tick
 constexpr char const* kInclusiveTag = "twilightforest:multiplayer_inclusive_entities";
+constexpr char const* kSinisterBlock = "twilightforest:sinister_spawner";
+constexpr char const* kSinisterKey   = "sinister_spawner"; ///< the block data key (the block's path)
+constexpr char const* kCoronationCarpet = "twilightforest:coronation_carpet";
 
 BossesConfig const& config() { return gf::config::get<BossesConfig>(); }
 
@@ -172,10 +190,21 @@ struct Dying {
     std::int64_t                 seed = 0;
 };
 
-/// Per-spawner position state (KnightPhantomSpawnerBlockEntity#spawned).
+/// SinisterSpawnerLogic's runtime (the spawn buffer and scan position are not saved in Java).
+struct SinisterRuntime {
+    gf::boss::ext::SinisterSpawner cfg;
+    bool                           loaded = false;
+    std::optional<BlockPos>        checkPos;
+    std::vector<BlockPos>          spawnBuffer;
+    int                            countNextToSpawn = 0;
+};
+
+/// Per-spawner position state (KnightPhantomSpawnerBlockEntity#spawned, SinisterSpawnerLogic).
 struct SpawnerRuntime {
-    std::string blockId;
-    int         spawned = 0;
+    std::string     blockId;
+    int             spawned = 0;
+    bool            sinister = false;
+    SinisterRuntime sin;
 };
 
 struct State {
@@ -186,6 +215,7 @@ struct State {
     std::vector<Dying>                           dying;
     std::map<core::GlobalPos, SpawnerRuntime>    activeSpawners;
     std::unordered_set<std::string>              inclusiveForTest;
+    std::unordered_set<std::string>              sinisterBlocks{kSinisterBlock};
     std::vector<ia::HandlerId>                   handlers;
     // the last death chest (selftests)
     std::optional<core::GlobalPos>               lastChest;
@@ -199,6 +229,9 @@ struct State {
     std::unordered_set<std::int64_t> discarding; ///< bosses removed on peaceful (removal pending)
     int                              spawnerVersion = 0;
     std::optional<std::pair<core::GlobalPos, std::string>> lastConquest;
+    int                              sinisterSpawned = 0; ///< mobs spawned by sinister spawners (selftests)
+    std::unordered_map<std::string, SpawnerKind> kindsForTest; ///< fixture spawners with a variant's rules
+    int sinisterRange = 16; ///< the longest requiredPlayerRange a sinister spawner was given (scan box)
 };
 State& S() {
     static State s;
@@ -343,24 +376,32 @@ void sendBossEvent(Player& player, std::int64_t bossId, BossEventUpdateType type
     packet->sendTo(player);
 }
 
-/// TFBossBarPacket for companions.
+/// TFBossBarPacket for companions (with the title the viewer's vanilla bar shows: the client mod
+/// finds that bar by it).
 void sendCompanionBar(Player& player, Mob& boss, Bar const& bar, char const* op, bool allowLerp = true) {
     if (!gf::net::isCompanion(player)) return;
     gf::net::send(
         player,
         "boss.bar",
         {
-            {"op",      op                                                 },
-            {"id",      uidOf(boss)                                        },
-            {"rid",     static_cast<std::int64_t>(boss.getRuntimeID().rawID)},
-            {"rgb",     bar.rgb                                            },
-            {"overlay", bar.overlay                                        },
-            {"darken",  bar.darken                                         },
-            {"fog",     bar.fog                                            },
-            {"lerp",    allowLerp                                          },
-            {"progress", bar.progress                                      },
+            {"op",       op                                                  },
+            {"id",       uidOf(boss)                                         },
+            {"rid",      static_cast<std::int64_t>(boss.getRuntimeID().rawID)},
+            {"rgb",      bar.rgb                                             },
+            {"overlay",  bar.overlay                                         },
+            {"darken",   bar.darken                                          },
+            {"fog",      bar.fog                                             },
+            {"lerp",     allowLerp                                           },
+            {"progress", bar.progress                                        },
+            {"title",    barTitle(boss, player)                              },
         }
     );
+}
+
+int deathTimeOf(Mob& boss) {
+    for (auto const& d : S().dying)
+        if (d.uid == uidOf(boss)) return d.deathTime;
+    return boss.getDeathTime();
 }
 
 void addViewer(Mob& boss, Bar& bar, Player& player) {
@@ -368,9 +409,9 @@ void addViewer(Mob& boss, Bar& bar, Player& player) {
     if (!bar.visible) return;
     sendBossEvent(player, uidOf(boss), BossEventUpdateType::Add, barTitle(boss, player), bar.progress, nearest(bar.rgb), bar.overlay);
     sendCompanionBar(player, boss, bar, "add");
-    // BaseTFBoss#startSeenByPlayer: a dying boss sends its death time
-    if (boss.getDeathTime() > 0 && gf::net::isCompanion(player))
-        gf::net::send(player, "boss.death_time", {{"id", uidOf(boss)}, {"rid", static_cast<std::int64_t>(boss.getRuntimeID().rawID)}, {"deathTime", boss.getDeathTime()}});
+    // BaseTFBoss#startSeenByPlayer: a dying boss sends its death time (UpdateDeathTimePacket)
+    if (int dt = deathTimeOf(boss); dt > 0 && gf::net::isCompanion(player))
+        gf::net::send(player, "boss.death_time", {{"id", uidOf(boss)}, {"rid", static_cast<std::int64_t>(boss.getRuntimeID().rawID)}, {"deathTime", dt}});
 }
 
 void removeViewer(std::int64_t bossId, Player& player) {
@@ -412,6 +453,16 @@ void setProgress(Mob& boss, Bar& bar, float progress) {
     bar.progress = progress;
     forEachViewer(bar, [&](Player& p) {
         sendBossEvent(p, uidOf(boss), BossEventUpdateType::UpdatePercent, barTitle(boss, p), progress, nearest(bar.rgb), bar.overlay);
+        if (gf::net::isCompanion(p)) gf::net::send(p, "boss.bar", {{"op", "progress"}, {"id", uidOf(boss)}, {"progress", progress}});
+    });
+}
+
+/// A new title for the bar's viewers (BaseTFBoss#setCustomName / BossBar::setName).
+void sendTitle(Mob& boss, Bar& bar) {
+    forEachViewer(bar, [&](Player& p) {
+        auto title = barTitle(boss, p);
+        sendBossEvent(p, uidOf(boss), BossEventUpdateType::UpdateName, title, bar.progress, nearest(bar.rgb), bar.overlay);
+        if (gf::net::isCompanion(p)) gf::net::send(p, "boss.bar", {{"op", "name"}, {"id", uidOf(boss)}, {"title", title}});
     });
 }
 
@@ -555,13 +606,57 @@ bool fillContainer(core::GlobalPos const& gpos, std::vector<ItemStack> const& it
     return false;
 }
 
-/// IBossLootBuffer#tryDeposit.
+} // namespace
+
+/// BlockBehaviour#getPistonPushReaction() != PushReaction.BLOCK: a piston may push or break the
+/// block. Bedrock has no push reaction to read (its movable component's type ids are the game's),
+/// so the BLOCK blocks are: unbreakable ones (destroy speed < 0: bedrock, barrier, portals,
+/// end portal frame, force fields, ...), vanilla's BLOCK list and TF's (TFBlocks).
+bool pistonMovable(BlockSource& region, BlockPos const& pos) {
+    Block const& block = region.getBlock(pos);
+    if (block.isAir()) return true;
+    if (block.getBlockType().getDestroySpeed() < 0.0f) return false;
+    static std::unordered_set<std::string> const blocked{
+        // vanilla (Blocks: .pushReaction(PushReaction.BLOCK))
+        "minecraft:obsidian", "minecraft:crying_obsidian", "minecraft:respawn_anchor", "minecraft:reinforced_deepslate",
+        "minecraft:portal", "minecraft:end_portal", "minecraft:end_gateway", "minecraft:end_portal_frame",
+        "minecraft:moving_block", "minecraft:piston_arm_collision", "minecraft:sticky_piston_arm_collision",
+        "minecraft:barrier", "minecraft:bedrock", "minecraft:border_block", "minecraft:allow", "minecraft:deny",
+        // TF (TFBlocks: .pushReaction(PushReaction.BLOCK))
+        "twilightforest:twilight_portal", "twilightforest:skull_chest", "twilightforest:keepsake_casket",
+        "twilightforest:stronghold_shield", "twilightforest:reappearing_block", "twilightforest:vanishing_block",
+        "twilightforest:locked_vanishing_block", "twilightforest:carminite_builder", "twilightforest:built_block",
+        "twilightforest:antibuilder", "twilightforest:antibuilt_block", "twilightforest:ghast_trap",
+        "twilightforest:carminite_reactor", "twilightforest:reactor_debris", "twilightforest:fake_gold",
+        "twilightforest:fake_diamond", "twilightforest:brown_thorns", "twilightforest:green_thorns",
+        "twilightforest:giant_cobblestone", "twilightforest:giant_log", "twilightforest:giant_leaves",
+        "twilightforest:giant_obsidian", "twilightforest:violet_force_field", "twilightforest:pink_force_field",
+        "twilightforest:orange_force_field", "twilightforest:green_force_field", "twilightforest:blue_force_field",
+        "twilightforest:yellow_castle_door", "twilightforest:violet_castle_door", "twilightforest:pink_castle_door",
+        "twilightforest:blue_castle_door",
+    };
+    auto id = game::blockId(block);
+    if (blocked.contains(id)) return false;
+    if (id == "twilightforest:trophy_pedestal") {
+        // TrophyPedestalBlock: NORMAL once active, BLOCK before
+        for (auto const& [name, value] : game::statesOf(block))
+            if (name.ends_with("active")) return value == "true" || value == "1";
+        return false;
+    }
+    return true;
+}
+
+namespace {
+
+/// IBossLootBuffer#tryDeposit: an existing chest of the type, or a block that is replaceable or
+/// that a piston could move (stone, dirt, grass: the floor under the home point), without a block
+/// entity; then its container takes the 27 slots.
 bool tryDeposit(Dying const& d, Block const& chest, BlockPos const& pos, fe::JavaRandom& random, std::vector<ItemStack> const& items) {
     auto* region = game::regionOf(d.dim);
     if (!region || !region->hasChunksAt(pos, 0, false)) return false;
     bool isChest = game::blockIdAt(*region, pos) == d.chestBlock;
     if (!isChest) {
-        if (!game::replaceable(*region, pos) || region->getBlockEntity(pos)) return false;
+        if (!(game::replaceable(*region, pos) || pistonMovable(*region, pos)) || region->getBlockEntity(pos)) return false;
         if (!game::setBlock(*region, pos, chest)) return false;
     }
     core::GlobalPos gpos{d.dim, pos.x, pos.y, pos.z};
@@ -648,25 +743,20 @@ void onBossDie(Mob& boss, std::string const& damageType, Actor* killer) {
     log().info("boss: {} died ({})", boss.getTypeName(), damageType);
 }
 
-/// BaseTFBoss#tickDeath for the dying bosses, then #postRemoval.
+/// BaseTFBoss#tickDeath for the dying bosses, then #postRemoval. The death time reaches companion
+/// clients only when they start seeing a dying boss (UpdateDeathTimePacket from
+/// #startSeenByPlayer); clients that watched the death count it themselves.
 void tickDying() {
     auto& dying = S().dying;
     for (auto it = dying.begin(); it != dying.end();) {
         auto& d = *it;
         d.deathTime++;
-        auto* actor = fe::actorById(d.uid);
         if (d.deathTime < d.finish) {
-            if (actor)
-                if (auto bar = S().bars.find(d.uid); bar != S().bars.end())
-                    forEachViewer(bar->second, [&](Player& p) {
-                        if (gf::net::isCompanion(p))
-                            gf::net::send(p, "boss.death_time", {{"id", d.uid}, {"rid", static_cast<std::int64_t>(actor->getRuntimeID().rawID)}, {"deathTime", d.deathTime}});
-                    });
             ++it;
             continue;
         }
         removeBar(d.uid);
-        if (actor) actor->remove(); // RemovalReason.KILLED
+        if (auto* actor = fe::actorById(d.uid)) actor->remove(); // RemovalReason.KILLED
         if (d.loot) depositDropsIntoChest(d);
         S().qualified.erase(d.uid);
         it = dying.erase(it);
@@ -737,10 +827,7 @@ void onBossTick(Actor& actor, fe::ActorState const& state) {
     // BaseTFBoss#setCustomName: a renamed boss renames its bar
     if (auto const& tag = boss->getNameTag(); tag != bar.lastTag) {
         bar.lastTag = tag;
-        if (!bar.name)
-            forEachViewer(bar, [&](Player& p) {
-                sendBossEvent(p, uidOf(*boss), BossEventUpdateType::UpdateName, barTitle(*boss, p), bar.progress, nearest(bar.rgb), bar.overlay);
-            });
+        if (!bar.name) sendTitle(*boss, bar);
     }
 }
 
@@ -758,55 +845,57 @@ void onBossSpawn(Actor& actor, fe::ActorState& state) {
 
 // ---- spawners (BossSpawnerBlockEntity) ----------------------------------------------------------
 
-/// The per-variant player conditions and spawn logic of TF's spawner block entities.
-enum class SpawnerKind { Default, AboveMinus4, AboveMinus2, BelowPlus4, Lich, KnightPhantoms, Never };
 struct SpawnerDefault {
     char const* entityId;
     int         range;
     char const* particle;
     SpawnerKind kind;
+    Json        params; ///< fx params of the particle (DustParticleOptions.REDSTONE: red, scale 1)
 };
 std::unordered_map<std::string, SpawnerDefault> const& spawnerDefaults() {
+    static Json const redstone{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}};
     static std::unordered_map<std::string, SpawnerDefault> const m{
-        {"twilightforest:naga_boss_spawner",           {"twilightforest:naga", kLongRange, "minecraft:crit", SpawnerKind::Default}                         },
-        {"twilightforest:lich_boss_spawner",           {"twilightforest:lich", kShortRange, "twilightforest:ominous_flame", SpawnerKind::Lich}            },
-        {"twilightforest:hydra_boss_spawner",          {"twilightforest:hydra", kLongRange, "minecraft:flame", SpawnerKind::Default}                       },
-        {"twilightforest:ur_ghast_boss_spawner",       {"twilightforest:ur_ghast", kShortRange, "minecraft:flame", SpawnerKind::Default}                   },
-        {"twilightforest:knight_phantom_boss_spawner", {"twilightforest:knight_phantom", kShortRange, "twilightforest:ominous_flame", SpawnerKind::KnightPhantoms}},
-        {"twilightforest:snow_queen_boss_spawner",     {"twilightforest:snow_queen", kShortRange, "minecraft:snowflake", SpawnerKind::Default}             },
-        {"twilightforest:minoshroom_boss_spawner",     {"twilightforest:minoshroom", kShortRange, "minecraft:crimson_spore", SpawnerKind::BelowPlus4}      },
-        {"twilightforest:alpha_yeti_boss_spawner",     {"twilightforest:alpha_yeti", kShortRange, "minecraft:falling_water", SpawnerKind::AboveMinus4}     },
-        {"twilightforest:final_boss_boss_spawner",     {"twilightforest:plateau_boss", kShortRange, "twilightforest:annihilate", SpawnerKind::Never}       },
+        {"twilightforest:naga_boss_spawner",           {"twilightforest:naga", kLongRange, "minecraft:crit", SpawnerKind::Default, {}}                          },
+        {"twilightforest:lich_boss_spawner",           {"twilightforest:lich", kShortRange, "twilightforest:ominous_flame", SpawnerKind::Lich, {}}             },
+        {"twilightforest:hydra_boss_spawner",          {"twilightforest:hydra", kLongRange, "minecraft:flame", SpawnerKind::Default, {}}                        },
+        {"twilightforest:ur_ghast_boss_spawner",       {"twilightforest:ur_ghast", kShortRange, "minecraft:dust", SpawnerKind::AboveMinus4, redstone}          },
+        {"twilightforest:knight_phantom_boss_spawner", {"twilightforest:knight_phantom", kShortRange, "twilightforest:ominous_flame", SpawnerKind::KnightPhantoms, {}}},
+        {"twilightforest:snow_queen_boss_spawner",     {"twilightforest:snow_queen", kShortRange, "twilightforest:snow", SpawnerKind::AboveMinus4, {}}         },
+        {"twilightforest:minoshroom_boss_spawner",     {"twilightforest:minoshroom", kShortRange, "minecraft:crimson_spore", SpawnerKind::BelowPlus4, {}}       },
+        {"twilightforest:alpha_yeti_boss_spawner",     {"twilightforest:alpha_yeti", kShortRange, "minecraft:falling_water", SpawnerKind::AboveMinus4, {}}      },
+        {"twilightforest:final_boss_boss_spawner",     {"twilightforest:plateau_boss", kShortRange, "twilightforest:annihilate", SpawnerKind::Never, {}}        },
     };
     return m;
 }
 
 SpawnerKind kindOf(std::string const& blockId) {
+    if (auto t = S().kindsForTest.find(blockId); t != S().kindsForTest.end()) return t->second;
     auto it = spawnerDefaults().find(blockId);
     return it != spawnerDefaults().end() ? it->second.kind : SpawnerKind::Default;
 }
 
-/// BossSpawnerBlockEntity#anyPlayerInRange (with the variants' height conditions).
-bool anyPlayerInRange(int dim, BlockPos const& pos, SpawnerSpec const& spec) {
-    Vec3        c{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f};
-    SpawnerKind kind    = kindOf(spec.blockId);
-    Player*     nearest = nullptr;
-    double      best    = 1e30;
-    for (auto* p : fe::playersNear(dim, c, spec.range)) {
+Json particleParamsOf(std::string const& blockId, std::string const& particle) {
+    auto it = spawnerDefaults().find(blockId);
+    return it != spawnerDefaults().end() && it->second.particle == particle ? it->second.params : Json();
+}
+
+/// The nearest player within `range` (Level#getNearestPlayer(x, y, z, range, false): no spectators).
+Player* nearestPlayer(int dim, Vec3 const& c, double range) {
+    Player* nearest = nullptr;
+    double  best    = 1e30;
+    for (auto* p : fe::playersNear(dim, c, range)) {
         if (p->isSpectator()) continue;
         double d = fe::mobs::distanceSqr(*p, c);
         if (d < best) best = d, nearest = p;
     }
-    if (!nearest) return false;
-    double y = nearest->getFeetPos().y;
-    switch (kind) {
-    case SpawnerKind::AboveMinus4:
-    case SpawnerKind::Lich: return y > pos.y - 4;
-    case SpawnerKind::AboveMinus2:
-    case SpawnerKind::KnightPhantoms: return y > pos.y - 2;
-    case SpawnerKind::BelowPlus4: return y < pos.y + 4;
-    default: return true;
-    }
+    return nearest;
+}
+
+/// BossSpawnerBlockEntity#anyPlayerInRange (with the variants' height conditions).
+bool anyPlayerInRange(int dim, BlockPos const& pos, SpawnerSpec const& spec) {
+    Vec3    c{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f};
+    Player* nearest = nearestPlayer(dim, c, spec.range);
+    return nearest && heightRuleAllows(kindOf(spec.blockId), pos.y, nearest->getFeetPos().y);
 }
 
 /// The level's random source of the spawners (Level#getRandom).
@@ -825,13 +914,16 @@ Mob* spawnBoss(BlockSource& region, std::string const& entityId, Vec3 const& at,
     return mob;
 }
 
-/// BossSpawnerBlockEntity#spawnMyBoss and the variants'.
+/// BossSpawnerBlockEntity#spawnMyBoss and the variants'. Every spawned boss carries
+/// data(boss, "boss:spawner") = the spawner block id, so its unit can run the variant's spawn
+/// set-up (LichSpawnerBlockEntity: setAttackCooldown(40), setExtinguishTimer()).
 bool spawnMyBoss(BlockSource& region, int dim, BlockPos const& pos, SpawnerSpec const& spec, SpawnerRuntime& rt) {
     auto&       random = spawnerRandom();
     SpawnerKind kind   = kindOf(spec.blockId);
     if (kind == SpawnerKind::Never && !spec.spawnFn) return false; // no spawning for you
     auto setHome = [&](Mob& mob, BlockPos const& home) {
         if (!gf::entity::home(mob)) gf::entity::setHome(mob, core::GlobalPos{dim, home.x, home.y, home.z}, 0);
+        gf::entity::data(mob, "boss:spawner") = spec.blockId;
     };
     if (spec.spawnFn) {
         Mob* mob = spec.spawnFn(region, pos);
@@ -859,51 +951,279 @@ bool spawnMyBoss(BlockSource& region, int dim, BlockPos const& pos, SpawnerSpec 
     }
     BlockPos spawnPos = pos;
     if (kind == SpawnerKind::Lich) {
-        // the lich stands on the floor below its spawner
+        // LichSpawnerBlockEntity#spawnMyBoss: down through the air below the spawner, then one up
         BlockPos m = pos;
         while (region.getMinHeight() < m.y && region.getBlock(BlockPos{m.x, m.y - 1, m.z}).isAir()) m.y--;
+        m.y += 1; // mutableBlockPos.move(Direction.UP)
         spawnPos = m;
     } else {
-        // below the spawner when that block has no collision
+        // below the spawner when that block has no collision shape
         BlockPos below{pos.x, pos.y - 1, pos.z};
-        if (game::replaceable(region, below)) spawnPos = below;
+        if (fe::mobs::emptyCollision(region, below)) spawnPos = below;
     }
     Mob* mob = spawnBoss(region, spec.entityId, Vec3{spawnPos.x + 0.5f, float(spawnPos.y), spawnPos.z + 0.5f}, random.nextFloat() * 360.0F);
     if (!mob) return false;
+    // BossSpawnerBlockEntity#initializeCreature: home at the spawner; the lich's at its spawn point
     setHome(*mob, kind == SpawnerKind::Lich ? spawnPos : pos);
     return true;
 }
 
-/// Finds registered spawner blocks around the players (palette-filtered, cheap).
+// ---- the sinister spawner (SinisterSpawnerLogic over BaseSpawner) --------------------------------
+
+using gf::boss::ext::SinisterSpawner;
+
+Json toJson(SinisterSpawner const& s) {
+    Json potentials = Json::array();
+    for (auto const& [id, w] : s.potentials) potentials.push_back({id, w});
+    return {
+        {"potentials",  potentials            },
+        {"next",        s.nextEntity          },
+        {"delay",       s.spawnDelay          },
+        {"minDelay",    s.minSpawnDelay       },
+        {"maxDelay",    s.maxSpawnDelay       },
+        {"count",       s.spawnCount          },
+        {"maxNearby",   s.maxNearbyEntities   },
+        {"playerRange", s.requiredPlayerRange },
+        {"range",       s.spawnRange          },
+        {"scanRange",   s.entityScanRange     },
+        {"particles",   s.particles           },
+        {"loot",        s.lootTable           },
+        {"params",      s.particleParams      },
+    };
+}
+
+SinisterSpawner sinisterFromJson(Json const* j) {
+    SinisterSpawner s;
+    if (!j || !j->is_object()) return s;
+    if (auto p = j->find("potentials"); p != j->end() && p->is_array())
+        for (auto const& e : *p)
+            if (e.is_array() && e.size() == 2 && e[0].is_string() && e[1].is_number_integer()) s.potentials.emplace_back(e[0].get<std::string>(), e[1].get<int>());
+    s.nextEntity          = j->value("next", s.nextEntity);
+    s.spawnDelay          = j->value("delay", s.spawnDelay);
+    s.minSpawnDelay       = j->value("minDelay", s.minSpawnDelay);
+    s.maxSpawnDelay       = j->value("maxDelay", s.maxSpawnDelay);
+    s.spawnCount          = j->value("count", s.spawnCount);
+    s.maxNearbyEntities   = j->value("maxNearby", s.maxNearbyEntities);
+    s.requiredPlayerRange = j->value("playerRange", s.requiredPlayerRange);
+    s.spawnRange          = j->value("range", s.spawnRange);
+    s.entityScanRange     = j->value("scanRange", s.entityScanRange);
+    if (auto p = j->find("particles"); p != j->end() && p->is_array())
+        for (auto const& e : *p)
+            if (e.is_string()) s.particles.push_back(e.get<std::string>());
+    s.lootTable      = j->value("loot", s.lootTable);
+    s.particleParams = j->value("params", Json());
+    return s;
+}
+
+bool isSinisterBlock(std::string const& id) { return S().sinisterBlocks.contains(id); }
+
+/// The spawner of a sinister block, read once from its block data.
+SinisterRuntime& sinisterOf(BlockSource& region, BlockPos const& pos, SpawnerRuntime& rt) {
+    if (!rt.sin.loaded) {
+        rt.sin.cfg    = sinisterFromJson(bd::get(region, pos, kSinisterKey));
+        rt.sin.loaded = true;
+    }
+    return rt.sin;
+}
+
+void saveSinister(BlockSource& region, BlockPos const& pos, SinisterSpawner const& cfg) { bd::set(region, pos, kSinisterKey, toJson(cfg)); }
+
+/// WeightedRandomList#getRandom (empty: none).
+std::string drawPotential(SinisterSpawner const& s, fe::JavaRandom& random) {
+    int total = 0;
+    for (auto const& [id, w] : s.potentials) total += std::max(0, w);
+    if (total <= 0) return {};
+    int i = random.nextInt(total);
+    for (auto const& [id, w] : s.potentials) {
+        i -= std::max(0, w);
+        if (i < 0) return id;
+    }
+    return {};
+}
+
+/// BaseSpawner#delay (the spin event of broadcastEvent(1) is the block renderer's).
+void sinisterDelay(SinisterSpawner& s, fe::JavaRandom& random) {
+    if (s.maxSpawnDelay <= s.minSpawnDelay) s.spawnDelay = s.minSpawnDelay;
+    else s.spawnDelay = s.minSpawnDelay + random.nextInt(s.maxSpawnDelay - s.minSpawnDelay);
+    if (auto next = drawPotential(s, random); !next.empty()) s.nextEntity = next;
+}
+
+/// BoundingBoxUtils#isPosWithinBox: |dx|, |dy|, |dz| <= radius.
+bool withinBox(BlockPos const& c, BlockPos const& p, int radius) {
+    return std::abs(p.x - c.x) <= radius && std::abs(p.y - c.y) <= radius && std::abs(p.z - c.z) <= radius;
+}
+
+/// SinisterSpawnerLogic#scanSpawnPositions.
+void scanSpawnPositions(BlockSource& region, BlockPos const& pos, SinisterRuntime& rt, fe::JavaRandom& random) {
+    if (static_cast<int>(rt.spawnBuffer.size()) >= rt.countNextToSpawn) return; // spawn limit reached
+    if (!rt.checkPos || !withinBox(pos, *rt.checkPos, rt.cfg.spawnRange)) {
+        // restart from beginning, under the spawning block
+        BlockPos below{pos.x, pos.y - 1, pos.z};
+        rt.checkPos = region.getBlock(below).isAir() ? below : BlockPos{pos.x, pos.y + 1, pos.z};
+    }
+    auto&    c = *rt.checkPos;
+    BlockPos under{c.x, c.y - 1, c.z};
+    if (region.getBlock(under).isAir()) {
+        c.y--;
+        return;
+    }
+    bool floor = fe::mobs::legacySolid(region, under) || game::blockIdAt(region, under) == kCoronationCarpet;
+    // if below is solid, then maybe record this position for being clear to spawn
+    if (floor && random.nextBoolean() && std::find(rt.spawnBuffer.begin(), rt.spawnBuffer.end(), c) == rt.spawnBuffer.end()
+        && region.getBlock(c).isAir())
+        rt.spawnBuffer.push_back(c);
+    // Direction.Plane.HORIZONTAL.getRandomDirection: north, east, south, west
+    static int const dx[] = {0, 1, 0, -1}, dz[] = {-1, 0, 1, 0};
+    int              d    = random.nextInt(4);
+    BlockPos         next{c.x + dx[d], c.y, c.z + dz[d]};
+    if (!fe::mobs::legacySolid(region, next)) c = next;
+    else rt.checkPos.reset();
+}
+
+/// EntityType#getSpawnAABB is free of blocks and entities (the type's size is the engine's: the
+/// standard 0.6 x 1.95 mob box is checked).
+bool noCollision(BlockSource& region, Vec3 const& at) {
+    AABB box{Vec3{at.x - 0.3f, at.y, at.z - 0.3f}, Vec3{at.x + 0.3f, at.y + 1.95f, at.z + 0.3f}};
+    std::vector<AABB> shapes;
+    region.fetchAABBs(shapes, box, false);
+    for (auto const& s : shapes)
+        if (s.min.x < box.max.x && s.max.x > box.min.x && s.min.y < box.max.y && s.max.y > box.min.y && s.min.z < box.max.z && s.max.z > box.min.z) return false;
+    return true;
+}
+
+/// SinisterSpawnerLogic#serverTick.
+void tickSinister(BlockSource& region, int dim, BlockPos const& pos, SpawnerRuntime& srt) {
+    auto& rt     = sinisterOf(region, pos, srt);
+    auto& cfg    = rt.cfg;
+    auto& random = spawnerRandom();
+    Vec3  c{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f};
+    // BaseSpawner#isNearPlayer: Level#hasNearbyAlivePlayer (no spectators)
+    if (!nearestPlayer(dim, c, cfg.requiredPlayerRange)) return;
+    // the client's particles (SinisterSpawnerLogic#clientTick), one of each per tick
+    for (auto const& p : cfg.particles)
+        gf::fx::particle(region.getDimension(), p, Vec3{pos.x + float(random.nextDouble()), pos.y + float(random.nextDouble()), pos.z + float(random.nextDouble())}, {}, 1, cfg.particleParams.is_object() ? cfg.particleParams.value(p, Json()) : Json());
+    if (rt.countNextToSpawn < 1) rt.countNextToSpawn = random.nextInt(1 + std::max(0, cfg.spawnCount));
+    if (cfg.spawnDelay <= -1) sinisterDelay(cfg, random);
+    scanSpawnPositions(region, pos, rt, random);
+    if (cfg.spawnDelay > 0) {
+        cfg.spawnDelay--;
+        return;
+    }
+    if (rt.spawnBuffer.empty()) {
+        // spawn buffer is empty, let spawnDelay tick over into resetting delay
+        if (cfg.spawnDelay == 0) cfg.spawnDelay--;
+        return;
+    }
+    // BaseSpawner#getOrCreateNextSpawnData
+    if (cfg.nextEntity.empty()) cfg.nextEntity = drawPotential(cfg, random);
+    std::string const entityId = cfg.nextEntity;
+    bool              spawned  = false;
+    int               scan     = cfg.entityScanRange >= 0 ? cfg.entityScanRange : cfg.spawnRange;
+    auto*             lv       = level();
+    for (auto const& at : rt.spawnBuffer) {
+        if (entityId.empty() || !lv) {
+            sinisterDelay(cfg, random); // EntityType.by(...) is empty: delay, the buffer stays
+            return;
+        }
+        Vec3 spawnAt{at.x + 0.5f, float(at.y), at.z + 0.5f};
+        if (!noCollision(region, spawnAt)) continue;
+        // the mobs of the type around the spawner (counted before the new one is added, as Java)
+        AABB around{Vec3{float(pos.x - scan), float(pos.y - scan), float(pos.z - scan)}, Vec3{float(pos.x + 1 + scan), float(pos.y + 1 + scan), float(pos.z + 1 + scan)}};
+        int  like = 0;
+        for (auto* e : region.getEntities(around, 0.0f))
+            if (e && e->isAlive() && e->getTypeName() == entityId && !(e->isPlayer() && static_cast<Player*>(e)->isSpectator())) ++like;
+        if (like >= cfg.maxNearbyEntities) {
+            sinisterDelay(cfg, random);
+            rt.spawnBuffer.clear();
+            return;
+        }
+        Mob* mob = lv->getSpawner().spawnMob(region, ActorDefinitionIdentifier(entityId), nullptr, spawnAt, false, false, true);
+        if (!mob) {
+            sinisterDelay(cfg, random);
+            rt.spawnBuffer.clear();
+            return;
+        }
+        // SpawnPlacements#checkSpawnRules for SPAWNER: hostile mobs need a difficulty
+        if (peaceful() && mob->hasCategory(ActorCategory::Monster)) {
+            mob->remove();
+            continue;
+        }
+        float yaw = random.nextFloat() * 360.0F;
+        mob->setYBodyRotation(yaw);
+        const_cast<Vec2&>(mob->getRotation()) = Vec2{0.0f, yaw};
+        rt.checkPos = pos; // this.checkPos = blockEntityPos.mutable()
+        auto const& bb = mob->getAABB();
+        float       w  = bb.max.x - bb.min.x, h = bb.max.y - bb.min.y;
+        for (auto const& p : cfg.particles) {
+            Json params = cfg.particleParams.is_object() ? cfg.particleParams.value(p, Json::object()) : Json::object();
+            if (!params.is_object()) params = Json::object();
+            params["spread"] = {w * 0.5f, h * 0.5f, w * 0.5f};
+            gf::fx::particle(region.getDimension(), p, Vec3{spawnAt.x, spawnAt.y + h * 0.5f, spawnAt.z}, {}, 10, params);
+        }
+        mob->spawnAnim();
+        ++S().sinisterSpawned;
+        spawned = true;
+    }
+    rt.spawnBuffer.clear(); // loop iterated, now reset
+    if (spawned) {
+        for (auto const& p : cfg.particles) {
+            Json params = cfg.particleParams.is_object() ? cfg.particleParams.value(p, Json::object()) : Json::object();
+            if (!params.is_object()) params = Json::object();
+            params["spread"] = {1, 1, 1};
+            gf::fx::particle(region.getDimension(), p, c, {}, 10, params);
+        }
+        log().info("boss: sinister spawner at {} {} {} spawned {}", pos.x, pos.y, pos.z, entityId);
+        sinisterDelay(cfg, random);
+    }
+}
+
+// ---- spawner discovery and ticking ----------------------------------------------------------------
+
+/// Finds the registered spawner blocks around the players: every tick one horizontal slice of the
+/// box (a margin beyond the longest range) of each player, chunk by chunk (palette-filtered).
 void scanSpawners() {
     auto& s = S();
-    if (s.spawners.empty()) return;
-    // the registered spawner block types, rebuilt only when a registration changed
+    // the spawner block types, rebuilt only when a registration changed
     static std::unordered_set<BlockType const*> types;
     static int                                  range = 0, version = -1;
     if (version != s.spawnerVersion) {
         types.clear();
-        range = 0;
+        range = s.sinisterRange; // BaseSpawner#requiredPlayerRange of the sinister spawners
         for (auto const& [id, spec] : s.spawners) {
             if (auto const* b = game::blockWith(id)) types.insert(&b->getBlockType());
             range = std::max(range, spec.range);
         }
+        for (auto const& id : s.sinisterBlocks)
+            if (auto const* b = game::blockWith(id)) types.insert(&b->getBlockType());
         version = s.spawnerVersion;
     }
     if (types.empty()) return;
     auto* lv = level();
     if (!lv) return;
+    int const r     = range + kScanMargin;
+    int const slice = static_cast<int>(fe::currentTick() % kScanSlices);
     std::vector<std::pair<int, BlockPos>> found;
     lv->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
         int   dim    = static_cast<int>(p.getDimensionId());
         auto* region = game::regionOf(dim);
         if (!region) return true;
-        BlockPos c = p.getFeetBlockPos();
-        int      r = range;
-        while (r > 8 && !region->hasChunksAt(c, r, false)) r /= 2;
-        BoundingBox box{BlockPos{c.x - r, std::max<int>(c.y - r, region->getMinHeight()), c.z - r}, BlockPos{c.x + r, std::min<int>(c.y + r, region->getMaxHeight() - 1), c.z + r}};
-        auto        hits = region->fetchBlocksInBox(box, [&](Block const& b) { return types.contains(&b.getBlockType()); });
-        for (auto const& h : hits) found.emplace_back(dim, h.mDataPos);
+        BlockPos c   = p.getFeetBlockPos();
+        int      y0  = std::max<int>(c.y - r, region->getMinHeight());
+        int      y1  = std::min<int>(c.y + r, region->getMaxHeight() - 1);
+        int      h   = (y1 - y0 + kScanSlices) / kScanSlices;
+        int      ys  = y0 + slice * h;
+        int      ye  = std::min(y1, ys + h - 1);
+        if (ys > ye) return true;
+        for (int cx = (c.x - r) >> 4; cx <= (c.x + r) >> 4; ++cx)
+            for (int cz = (c.z - r) >> 4; cz <= (c.z + r) >> 4; ++cz) {
+                if (!region->hasChunksAt(BlockPos{cx * 16, ys, cz * 16}, 0, false)) continue;
+                BoundingBox box{
+                    BlockPos{std::max(cx * 16, c.x - r), ys, std::max(cz * 16, c.z - r)},
+                    BlockPos{std::min(cx * 16 + 15, c.x + r), ye, std::min(cz * 16 + 15, c.z + r)}
+                };
+                auto hits = region->fetchBlocksInBox(box, [&](Block const& b) { return types.contains(&b.getBlockType()); });
+                for (auto const& hit : hits) found.emplace_back(dim, hit.mDataPos);
+            }
         return true;
     }));
     for (auto const& [dim, pos] : found) {
@@ -911,14 +1231,16 @@ void scanSpawners() {
         if (s.activeSpawners.contains(gp)) continue;
         auto* region = game::regionOf(dim);
         if (!region) continue;
-        s.activeSpawners[gp].blockId = game::blockIdAt(*region, pos);
+        auto& rt    = s.activeSpawners[gp];
+        rt.blockId  = game::blockIdAt(*region, pos);
+        rt.sinister = isSinisterBlock(rt.blockId);
     }
 }
 
-/// BossSpawnerBlockEntity#tick for the known spawners.
+/// BossSpawnerBlockEntity#tick / SinisterSpawnerBlockEntity#serverTick for the known spawners.
 void tickSpawners() {
     auto& s = S();
-    if (fe::currentTick() % 20 == 0) scanSpawners();
+    scanSpawners();
     for (auto it = s.activeSpawners.begin(); it != s.activeSpawners.end();) {
         auto const& gp     = it->first;
         auto*       region = game::regionOf(gp.dim);
@@ -927,7 +1249,16 @@ void tickSpawners() {
             it = s.activeSpawners.erase(it);
             continue;
         }
-        auto id   = game::blockIdAt(*region, pos);
+        auto id = game::blockIdAt(*region, pos);
+        if (it->second.sinister) {
+            if (!isSinisterBlock(id)) {
+                it = s.activeSpawners.erase(it);
+                continue;
+            }
+            tickSinister(*region, gp.dim, pos, it->second);
+            ++it;
+            continue;
+        }
         auto spec = s.spawners.find(id);
         if (spec == s.spawners.end()) {
             it = s.activeSpawners.erase(it);
@@ -941,7 +1272,7 @@ void tickSpawners() {
             // the waiting particles (client side in Java)
             if (!spec->second.particle.empty()) {
                 auto& r = spawnerRandom();
-                gf::fx::particle(region->getDimension(), spec->second.particle, Vec3{pos.x + r.nextFloat(), pos.y + r.nextFloat(), pos.z + r.nextFloat()});
+                gf::fx::particle(region->getDimension(), spec->second.particle, Vec3{pos.x + r.nextFloat(), pos.y + r.nextFloat(), pos.z + r.nextFloat()}, {}, 1, particleParamsOf(id, spec->second.particle));
             }
             ++it;
             continue;
@@ -954,6 +1285,15 @@ void tickSpawners() {
             log().info("boss: {} spawned {} at {} {} {}", id, spec->second.entityId, pos.x, pos.y, pos.z);
             it = s.activeSpawners.erase(it);
         } else ++it;
+    }
+}
+
+/// The delay counters of the sinister spawners being ticked go into their block data before a save
+/// (BaseSpawner#save writes Delay).
+void writeBackSinister(core::GlobalPos const* only) {
+    for (auto& [gp, rt] : S().activeSpawners) {
+        if (!rt.sinister || !rt.sin.loaded || (only && !(*only == gp))) continue;
+        if (auto* region = game::regionOf(gp.dim)) saveSinister(*region, BlockPos{gp.x, gp.y, gp.z}, rt.sin.cfg);
     }
 }
 
@@ -1043,6 +1383,8 @@ public:
             if (S().spawners.contains(block)) continue;
             S().spawners[block] = SpawnerSpec{.blockId = block, .entityId = def.entityId, .range = def.range, .particle = def.particle};
         }
+        S().spawnerVersion++;
+        bd::onWriteBack([](core::GlobalPos const* pos) { writeBackSinister(pos); });
         game::db::onWorldClosed([] {
             S().bars.clear();
             S().qualified.clear();
@@ -1057,8 +1399,20 @@ public:
 
 } // namespace
 
+bool heightRuleAllows(SpawnerKind kind, int spawnerY, double playerY) {
+    switch (kind) {
+    case SpawnerKind::AboveMinus4:
+    case SpawnerKind::Lich: return playerY > spawnerY - 4; // closestPlayer.getY() > pos.getY() - 4
+    case SpawnerKind::AboveMinus2:
+    case SpawnerKind::KnightPhantoms: return playerY > spawnerY - 2;
+    case SpawnerKind::BelowPlus4: return playerY < spawnerY + 4;
+    default: return true;
+    }
+}
+
 // test seams (BossTests.cpp)
 void markInclusiveForTest(std::string const& type) { S().inclusiveForTest.insert(type); }
+void unmarkInclusiveForTest(std::string const& type) { S().inclusiveForTest.erase(type); }
 std::optional<core::GlobalPos> lastDeathChest() { return S().lastChest; }
 std::optional<std::pair<core::GlobalPos, std::string>> lastConquest() { return S().lastConquest; }
 void resetTestRecords() {
@@ -1070,6 +1424,33 @@ void unregisterSpawnerForTest(std::string const& blockId) {
     S().spawners.erase(blockId);
     S().spawnerVersion++;
     std::erase_if(S().activeSpawners, [&](auto const& kv) { return kv.second.blockId == blockId; });
+}
+void unregisterBossForTest(std::string const& entityId) {
+    S().bosses.erase(entityId);
+    fe::invalidateInterest();
+}
+std::optional<SpawnerRule> spawnerRuleForTest(std::string const& blockId) {
+    auto it = S().spawners.find(blockId);
+    if (it == S().spawners.end()) return std::nullopt;
+    return SpawnerRule{it->second.entityId, it->second.range, it->second.particle, kindOf(blockId), particleParamsOf(blockId, it->second.particle)};
+}
+bool anyPlayerInRangeForTest(int dim, BlockPos const& pos, std::string const& blockId) {
+    auto it = S().spawners.find(blockId);
+    return it != S().spawners.end() && anyPlayerInRange(dim, pos, it->second);
+}
+void registerSinisterBlockForTest(std::string const& blockId) {
+    S().sinisterBlocks.insert(blockId);
+    S().spawnerVersion++;
+}
+void unregisterSinisterBlockForTest(std::string const& blockId) {
+    S().sinisterBlocks.erase(blockId);
+    S().spawnerVersion++;
+    std::erase_if(S().activeSpawners, [&](auto const& kv) { return kv.second.blockId == blockId; });
+}
+int sinisterSpawnedForTest() { return S().sinisterSpawned; }
+void setSpawnerKindForTest(std::string const& blockId, std::optional<SpawnerKind> kind) {
+    if (kind) S().kindsForTest[blockId] = *kind;
+    else S().kindsForTest.erase(blockId);
 }
 
 } // namespace gf::feature::boss
@@ -1084,6 +1465,7 @@ namespace fe = gf::feature::entity;
 void registerBoss(BossSpec spec) {
     auto id             = spec.entityId;
     fb::S().bosses[id] = std::move(spec);
+    fe::invalidateInterest();
 }
 
 void registerSpawner(SpawnerSpec spec) {
@@ -1106,9 +1488,7 @@ void BossBar::setName(std::string const& name) const {
     auto* mob = fe::asMob(*a);
     if (!mob) return;
     it->second.name = name;
-    fb::forEachViewer(it->second, [&](Player& p) {
-        fb::sendBossEvent(p, mobId, BossEventUpdateType::UpdateName, name, it->second.progress, fb::nearest(it->second.rgb), it->second.overlay);
-    });
+    fb::sendTitle(*mob, it->second);
 }
 
 void BossBar::setVisible(bool visible) const {
@@ -1226,18 +1606,94 @@ void setLootBufferSlot(Mob& boss, int slot, ItemStack const& stack) {
 
 bool dropChests() { return fb::config().bossesSpawnDropChests; }
 bool adjustsLootRolls() {
-    auto const& a = fb::config().multiplayerFightAdjuster;
-    return a == "MORE_LOOT" || a == "MORE_LOOT_AND_HEALTH";
+    auto a = fb::config().multiplayerFightAdjuster;
+    return a == fb::MultiplayerFightAdjuster::MORE_LOOT || a == fb::MultiplayerFightAdjuster::MORE_LOOT_AND_HEALTH;
 }
 bool adjustsHealth() {
-    auto const& a = fb::config().multiplayerFightAdjuster;
-    return a == "MORE_HEALTH" || a == "MORE_LOOT_AND_HEALTH";
+    auto a = fb::config().multiplayerFightAdjuster;
+    return a == fb::MultiplayerFightAdjuster::MORE_HEALTH || a == fb::MultiplayerFightAdjuster::MORE_LOOT_AND_HEALTH;
 }
 
 std::optional<RareSound> trophyRareSound(std::string const& blockId) {
     if (blockId == "twilightforest:alpha_yeti_trophy" || blockId == "twilightforest:alpha_yeti_wall_trophy" || blockId == "alpha_yeti")
         return RareSound{"entity.twilightforest.alpha_yeti.roar", 50};
     return std::nullopt;
+}
+
+namespace {
+/// The sinister spawner runtime of `pos` when it is being ticked (nullptr: not active).
+fb::SpawnerRuntime* activeSinister(BlockSource& region, BlockPos const& pos) {
+    core::GlobalPos gp = game::globalPos(region, pos);
+    auto            it = fb::S().activeSpawners.find(gp);
+    return it != fb::S().activeSpawners.end() && it->second.sinister ? &it->second : nullptr;
+}
+} // namespace
+
+bool setSinisterSpawner(BlockSource& region, BlockPos const& pos, SinisterSpawner const& spawner) {
+    if (!fb::isSinisterBlock(game::blockIdAt(region, pos))) return false;
+    fb::saveSinister(region, pos, spawner);
+    if (spawner.requiredPlayerRange > fb::S().sinisterRange) {
+        fb::S().sinisterRange = spawner.requiredPlayerRange; // the scan box reaches it in time
+        fb::S().spawnerVersion++;
+    }
+    if (auto* rt = activeSinister(region, pos)) {
+        rt->sin.cfg    = spawner;
+        rt->sin.loaded = true;
+    }
+    return true;
+}
+
+std::optional<SinisterSpawner> sinisterSpawner(BlockSource& region, BlockPos const& pos) {
+    if (!fb::isSinisterBlock(game::blockIdAt(region, pos))) return std::nullopt;
+    if (auto* rt = activeSinister(region, pos); rt && rt->sin.loaded) return rt->sin.cfg;
+    return fb::sinisterFromJson(fb::bd::get(region, pos, fb::kSinisterKey));
+}
+
+namespace {
+template <class Fn>
+bool editSinister(BlockSource& region, BlockPos const& pos, Fn&& fn) {
+    auto s = sinisterSpawner(region, pos);
+    if (!s) return false;
+    if (!fn(*s)) return false;
+    return setSinisterSpawner(region, pos, *s);
+}
+} // namespace
+
+bool setSinisterParticles(BlockSource& region, BlockPos const& pos, std::vector<std::string> const& particles) {
+    return editSinister(region, pos, [&](SinisterSpawner& s) {
+        // a set: duplicates once, order kept
+        std::vector<std::string> unique;
+        for (auto const& p : particles)
+            if (std::find(unique.begin(), unique.end(), p) == unique.end()) unique.push_back(p);
+        if (unique == s.particles) return false;
+        s.particles = std::move(unique);
+        return true;
+    });
+}
+
+bool addSinisterParticle(BlockSource& region, BlockPos const& pos, std::string const& particle) {
+    return editSinister(region, pos, [&](SinisterSpawner& s) {
+        if (std::find(s.particles.begin(), s.particles.end(), particle) != s.particles.end()) return false;
+        s.particles.push_back(particle);
+        return true;
+    });
+}
+
+bool removeSinisterParticle(BlockSource& region, BlockPos const& pos, std::string const& particle) {
+    return editSinister(region, pos, [&](SinisterSpawner& s) { return std::erase(s.particles, particle) > 0; });
+}
+
+bool setSinisterLootTable(BlockSource& region, BlockPos const& pos, std::string const& tableId) {
+    return editSinister(region, pos, [&](SinisterSpawner& s) {
+        if (s.lootTable == tableId) return false;
+        s.lootTable = tableId;
+        return true;
+    });
+}
+
+std::string sinisterLootTable(BlockSource& region, BlockPos const& pos) {
+    auto s = sinisterSpawner(region, pos);
+    return s ? s->lootTable : std::string();
 }
 
 } // namespace ext
