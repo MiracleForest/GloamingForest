@@ -80,7 +80,9 @@ GF_REGISTER_SELFTEST("core.blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto const* stairs = gf::game::blockWithStates("minecraft:oak_stairs", {{"upside_down_bit", true}, {"weirdo_direction", 2}});
     ctx.require(stairs != nullptr, "states by name and value");
     auto states = gf::game::statesOf(*stairs);
-    ctx.check(states["upside_down_bit"] == "true" && states["weirdo_direction"] == "2", "statesOf reads the states back");
+    std::string got;
+    for (auto const& [k, v] : states) got += k + "=" + v + " ";
+    ctx.check(states["upside_down_bit"] == "true" && states["weirdo_direction"] == "2", "statesOf reads the states back (got " + got + ")");
     ctx.check(gf::game::blockWithStates("minecraft:oak_stairs", {{"no_such_state", 1}}) == nullptr, "unknown states are refused");
 });
 

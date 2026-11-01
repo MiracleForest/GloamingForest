@@ -72,33 +72,29 @@ Block const* blockWithStates(std::string_view id, nlohmann::json const& states) 
     auto const* base = blockWith(id);
     if (!base) return nullptr;
     if (!states.is_object() || states.empty()) return base;
-    // every state of the default permutation (with its type), the given ones replaced
-    Block::BlockStatesType list;
-    auto const&            nbt = *base->mSerializationId;
-    if (nbt.contains("states") && nbt["states"].is_object()) {
-        for (auto const& [name, value] : nbt["states"].items()) {
-            if (value.is_string()) list.emplace_back(name, std::string(value.get<StringTag>()));
-            else if (value.hold(Tag::Type::Byte)) list.emplace_back(name, static_cast<int>(value.get<ByteTag>().data) != 0);
-            else if (value.hold(Tag::Type::Int)) list.emplace_back(name, value.get<IntTag>().data);
-        }
-    }
+    // the default permutation's serialization id ({name, states, version}) with the given states
+    // replaced (keeping each state's tag type), looked up as the game deserializes blocks
+    auto nbt = base->mSerializationId->clone();
+    if (!nbt->contains("states") || !(*nbt)["states"].is_object()) return nullptr;
+    auto& current = (*nbt)["states"].get<CompoundTag>();
     for (auto const& [name, value] : states.items()) {
-        Block::BlockStateValueType v;
-        if (value.is_boolean()) v = value.get<bool>();
-        else if (value.is_number_integer()) v = value.get<int>();
-        else if (value.is_string()) v = value.get<std::string>();
-        else return nullptr;
-        bool replaced = false;
-        for (auto& [n, old] : list) {
-            if (n != name) continue;
-            // a bool state may be given as 0 / 1
-            if (std::holds_alternative<bool>(old) && std::holds_alternative<int>(v)) v = std::get<int>(v) != 0;
-            old      = v;
-            replaced = true;
+        if (!current.contains(name)) return nullptr; // the block has no such state
+        auto& slot = current[name];
+        if (slot.hold(Tag::Type::Byte)) {
+            if (value.is_boolean()) slot = ByteTag(value.get<bool>() ? 1 : 0);
+            else if (value.is_number_integer()) slot = ByteTag(value.get<int>() != 0 ? 1 : 0);
+            else return nullptr;
+        } else if (slot.hold(Tag::Type::Int)) {
+            if (!value.is_number_integer()) return nullptr;
+            slot = IntTag(value.get<int>());
+        } else if (slot.is_string()) {
+            if (!value.is_string()) return nullptr;
+            slot = StringTag(value.get<std::string>());
+        } else {
+            return nullptr;
         }
-        if (!replaced) return nullptr; // the block has no such state
     }
-    auto found = Block::tryGetFromRegistry(HashedString(std::string(id)), list);
+    auto found = Block::tryGetFromRegistry(*nbt);
     return found ? found.as_ptr() : nullptr;
 }
 
