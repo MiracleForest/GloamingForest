@@ -11,6 +11,9 @@
   A path is allowed for unit <u> when
     - its owner is <u>, or
     - it lies under src/feature/ext/<name>/ (contract extensions, rule R18), or
+    - its owning row has mode `gen` under assets/gen/<layer>/ and <u> is the tool unit owning
+      assets/gen/<layer>/** (F1 import, F2 geo, F3 audio): the tools generate every unit's layer
+      (rule R3: generated files are only ever (re)written by the tool), or
     - <u> is F0 (the scaffold) and the path is one of its `stub` rows (placeholders in W0b
       directories, replaced by their owners).
   -Unit takes a unit id (F0, F4, U12, A8) or a unit name (core, dimension, tgmove).
@@ -74,6 +77,7 @@ function Expand-Braces([string]$glob) {
 
 $pathRules = [Collections.Generic.List[object]]::new()
 $stubs = @{}
+$genTools = @{}
 foreach ($line in Get-Content $Owners) {
     if ($line.StartsWith('#') -or $line.StartsWith("kind`t")) { continue }
     $c = $line -split "`t"
@@ -82,8 +86,10 @@ foreach ($line in Get-Content $Owners) {
         # one rule per brace alternative, so a rule's specificity is that of the alternative matching
         foreach ($alt in Expand-Braces $c[1]) {
             $score = ($alt -replace '[\*\?]', '').Length + $(if ($alt -notmatch '[\*\?]') { 1000 } else { 0 })
-            $pathRules.Add([pscustomobject]@{ glob = $c[1]; owner = $c[2]; re = Get-GlobRegexes $alt; score = $score })
+            $pathRules.Add([pscustomobject]@{ glob = $c[1]; owner = $c[2]; mode = $(if ($c.Count -gt 3) { $c[3] } else { 'manual' }); re = Get-GlobRegexes $alt; score = $score })
         }
+        # the tool unit of a generated layer: the owner of "assets/gen/<layer>/**"
+        if ($c[1] -match '^assets/gen/([^/{}*?]+)/\*\*$') { $genTools[$Matches[1]] = $c[2] }
     } elseif ($c[0] -eq 'stub') { $stubs[$c[1]] = $c[2] }
 }
 
@@ -96,7 +102,7 @@ function Get-PathOwner([string]$path) {
     }
     if ($tie) { return @{ owner = $null; why = "ambiguous: $($best.glob) ($($best.owner)) vs $($tie.glob) ($($tie.owner))" } }
     if (-not $best) { return @{ owner = $null; why = 'no owner in docs/spec/owners.tsv' } }
-    return @{ owner = $best.owner; why = $best.glob }
+    return @{ owner = $best.owner; why = $best.glob; mode = $best.mode }
 }
 
 # changed files since the merge base
@@ -112,6 +118,7 @@ foreach ($p in $changed) {
     if ($p.StartsWith("src/feature/ext/$unitName/")) { continue }
     if ($unitId -eq 'F0' -and $stubs.ContainsKey($p)) { continue }
     $o = Get-PathOwner $p
+    if ($o.owner -and $o.owner -ne $unitId -and $o.mode -eq 'gen' -and $p -match '^assets/gen/([^/]+)/' -and $genTools[$Matches[1]] -eq $unitId) { continue }
     if ($o.owner -ne $unitId) {
         $who = if ($o.owner) { "owned by $($o.owner) ($($o.why))" } else { $o.why }
         $violations.Add("$p : $who")
