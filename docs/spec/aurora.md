@@ -30,7 +30,7 @@ Sources: `world/components/structures/type/AuroraPalaceStructure.java`, `world/c
 | Progression lock | `twilightforest:progress_yeti` (advancement lock; landmark protection until the Alpha Yeti is beaten) |
 | Restriction (U14 data) | `restrictions/twilightforest:glacier`: structure aurora_palace, enforcement `frost`, multiplier 1.0, hint item `twilightforest:alpha_yeti_fur`, advancement `twilightforest:progress_yeti` |
 | Hint | `twilightforest:kobold` carrying book `twilightforest.book.icetower` ("Notes on Auroral Fortification", 3 pages; F6 hint system) |
-| Decoration clearance | chunk clearance radius 2, surface decorations false, underground decorations true, vegetation false, adjust elevation false |
+| Decoration clearance | chunk clearance radius 2, surface decorations false, underground decorations true, vegetation true, adjust elevation false |
 | Centred in chunk | true |
 | Controlled spawns label 0 | `twilightforest:snow_guardian` 10 1-2, `twilightforest:stable_ice_core` 10 1-2, `twilightforest:unstable_ice_core` 5 1-2 |
 | Spawn overrides | every mob category empty over the structure box (`STRUCTURE` box type) |
@@ -122,10 +122,13 @@ Sources: `world/components/structures/type/MushroomTowerStructure.java`, `world/
 | Structure set | **none**: TF's `TFStructureSets` registration is commented out and the legacy placement entry for `dense_mushroom_forest` too; the structure never generates naturally and is reachable only with `/place structure twilightforest:mushroom_tower` (F6 `/twilightforest place`) |
 | Biomes | `#twilightforest:valid_mushroom_tower_biomes` = `twilightforest:dense_mushroom_forest` (U1 tag) |
 | Step | `surface_structures`, terrain adjustment `none` |
-| Decoration clearance | radius 2, surface true, underground true, vegetation true, adjust elevation true (F6 surface rule) |
+| Decoration clearance | radius 2, surface true, underground true, vegetation true, adjust elevation true: start y = `clamp(firstOccupiedHeight(WORLD_SURFACE_WG), seaLevel + 1, seaLevel + 7)` |
 | Map icon | none |
 | Structure tag | member of `#twilightforest:landmark` |
 | Name | `structure.twilightforest.mushroom_tower` "Mushroom Castle" |
+
+Start: centred in chunk (`x = chunkX x 16 + 7`, `z = chunkZ x 16 + 7`), y from the elevation rule above, piece random as
+the palace.
 
 Decorator `MushroomTowerDecorator`: block and pillar `minecraft:mushroom_stem` (up=false, down=false, sides true),
 accent `minecraft:red_mushroom_block` (default: all faces), fence `minecraft:oak_fence`, stairs `minecraft:spruce_stairs`,
