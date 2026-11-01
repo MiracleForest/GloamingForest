@@ -1,16 +1,28 @@
-# Synth (F3): the assembled resource pack defines every TF sound event with its variants and every
-# synthesized file is a valid mono Ogg Vorbis stream (synth.definitions); every event is played
-# once, one per tick, to the players of the world (synth.play_all); the BDS content log stays
-# clean (run.ps1 fails on content errors); and the renderer reproduces the committed tree
-# byte for byte (tools/sounds/synth.ps1 -Check).
+# Synth (F3): the assembled resource pack defines every TF sound event as TF's inventory says
+# (category, subtitle, variants with TF's volume, pitch and stream) and every synthesized file is a
+# valid mono Ogg Vorbis stream (synth.definitions); synth.play_all plays every event to the real
+# players of the server, and says it is skipped when there are none (a BDS without clients: the
+# client scenario's remote modes run it with one); the BDS content log stays clean (run.ps1 fails on
+# content errors); the renderer reproduces the committed tree byte for byte and every definition
+# matches TF's inventory (tools/sounds/synth.ps1 -Check), and the baseline and the inventory match
+# TF's sounds.json (tools/sounds/baseline/generate.ps1 -Check, when the TF checkout is present).
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'synth.*' -TimeoutSeconds 300
 if ($r.Fail -gt 0) { throw "$($r.Fail) synth selftest(s) failed" }
 if ($r.Pass -lt 2) { throw "expected 2 synth selftests to pass, got $($r.Pass)" }
-Wait-LogLine 'synth: played \d+ sound events' 30 | Out-Null
+$line = Wait-LogLine 'synth: (played \d+ sound events|play_all skipped)' 30
+if ($line -match 'skipped') { Write-Step 'synth.play_all SKIPPED: no real player on this BDS (tools/e2e/client/run.ps1 -Scenario synth -Mode remote-vanilla plays every event to one)' }
 
 $root = (Resolve-Path "$PSScriptRoot/../../../..").Path
 Write-Step 'tools/sounds/synth.ps1 -Check'
 & pwsh -NoProfile -File (Join-Path $root 'tools/sounds/synth.ps1') -Check
-if ($LASTEXITCODE -ne 0) { throw 'tools/sounds/synth.ps1 -Check failed: the rendered audio is not deterministic or not committed' }
+if ($LASTEXITCODE -ne 0) { throw 'tools/sounds/synth.ps1 -Check failed: the rendered audio is not deterministic, not committed or not TF''s' }
+$tf = if ($env:GF_TF_DIR) { $env:GF_TF_DIR } else { Join-Path $env:LOCALAPPDATA 'gf-tf' }
+if (Test-Path (Join-Path $tf 'src/generated/resources/assets/twilightforest/sounds.json')) {
+    Write-Step 'tools/sounds/baseline/generate.ps1 -Check'
+    & pwsh -NoProfile -File (Join-Path $root 'tools/sounds/baseline/generate.ps1') -Check
+    if ($LASTEXITCODE -ne 0) { throw 'tools/sounds/baseline/generate.ps1 -Check failed: the baseline or the inventory differs from TF''s sounds.json' }
+} else {
+    Write-Step 'tools/sounds/baseline/generate.ps1 -Check skipped (no TF checkout: pwsh tools/tf/fetch.ps1)'
+}
