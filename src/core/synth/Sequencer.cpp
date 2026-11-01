@@ -51,7 +51,7 @@ Cell parseCell(std::string const& tok) {
 
 std::vector<std::string> tokens(Json const& notes) {
     std::vector<std::string> out;
-    auto add = [&out](std::string const& s) {
+    auto                     add = [&out](std::string const& s) {
         std::stringstream ss(s);
         std::string       t;
         while (ss >> t) {
@@ -82,7 +82,7 @@ int parseNote(std::string const& t) {
         ++i;
     }
     if (i >= t.size()) return -1;
-    int  sign = 1;
+    int sign = 1;
     if (t[i] == '-') {
         sign = -1;
         ++i;
@@ -99,10 +99,10 @@ std::vector<float> renderTrack(Json const& track, int sampleRate, PatchLibrary c
     double    bpm  = track.num("bpm", 90);
     double    rpb  = track.num("rpb", 4);
     if (bpm <= 0 || rpb <= 0) throw PatchError("track needs bpm > 0 and rpb > 0");
-    double const rowSec = 60.0 / (bpm * rpb);
-    double const swing  = track.num("swing", 0);
-    double const length = math::clamp(track.num("length", 60), 1.0, 900.0);
-    std::uint64_t const seed = std::uint64_t(track.num("seed", 1));
+    double const        rowSec      = 60.0 / (bpm * rpb);
+    double const        swing       = track.num("swing", 0);
+    double const        length      = math::clamp(track.num("length", 60), 1.0, 900.0);
+    std::uint64_t const seed        = std::uint64_t(track.num("seed", 1));
     Json const&         instruments = track["instruments"];
     Json const&         patterns    = track["patterns"];
     Json const&         order       = track["order"];
@@ -110,14 +110,14 @@ std::vector<float> renderTrack(Json const& track, int sampleRate, PatchLibrary c
         throw PatchError("a track needs \"instruments\", \"patterns\" and \"order\"");
     }
 
-    std::vector<double>                            mix(std::size_t(length * rate) + 1, 0.0);
-    std::map<std::string, std::vector<double>>     cache;
+    std::vector<double>                        mix(std::size_t(length * rate) + 1, 0.0);
+    std::map<std::string, std::vector<double>> cache;
     auto renderNote = [&](std::string const& instName, int note, double vel, double dur) -> std::vector<double> const& {
         Json const* inst = instruments.find(instName);
         if (!inst) throw PatchError("unknown instrument \"" + instName + "\"");
         auto        durSamples = std::int64_t(math::round(dur * rate));
-        std::string key        = instName + "|" + std::to_string(note) + "|" + Json(vel).dump()
-                        + "|" + std::to_string(durSamples);
+        std::string key =
+            instName + "|" + std::to_string(note) + "|" + Json(vel).dump() + "|" + std::to_string(durSamples);
         auto it = cache.find(key);
         if (it != cache.end()) return it->second;
         Json params = Json::object();
@@ -128,9 +128,9 @@ std::vector<float> renderTrack(Json const& track, int sampleRate, PatchLibrary c
         params.set("note", double(note));
         params.set("vel", vel);
         params.set("dur", double(durSamples) / rate);
-        std::uint64_t s   = hashString(key, seed);
-        auto          pcm = renderPatch((*inst)["patch"], params, s, rate, library);
-        double        g   = math::dbToGain(inst->num("gain", 0)) * (inst->flag("velAmp", true) ? vel : 1.0);
+        std::uint64_t       s   = hashString(key, seed);
+        auto                pcm = renderPatch((*inst)["patch"], params, s, rate, library);
+        double              g   = math::dbToGain(inst->num("gain", 0)) * (inst->flag("velAmp", true) ? vel : 1.0);
         std::vector<double> buf(pcm.size());
         for (std::size_t i = 0; i < pcm.size(); ++i) buf[i] = double(pcm[i]) * g;
         return cache.emplace(key, std::move(buf)).first->second;
@@ -151,10 +151,10 @@ std::vector<float> renderTrack(Json const& track, int sampleRate, PatchLibrary c
         int rows = int(pat->num("rows", 16));
         if (rows <= 0) throw PatchError("pattern \"" + name + "\" has no rows");
         for (auto const& ch : (*pat)["channels"].items()) {
-            std::string instName = ch.str("inst", "");
-            int         octave   = int(ch.num("octave", 0));
-            double      chGain   = math::dbToGain(ch.num("gain", 0));
-            auto        toks     = tokens(ch["notes"]);
+            std::string       instName = ch.str("inst", "");
+            int               octave   = int(ch.num("octave", 0));
+            double            chGain   = math::dbToGain(ch.num("gain", 0));
+            auto              toks     = tokens(ch["notes"]);
             std::vector<Cell> cells;
             for (auto const& t : toks) cells.push_back(parseCell(t));
             for (std::size_t r = 0; r < cells.size() && int(r) < rows; ++r) {
@@ -179,9 +179,9 @@ std::vector<float> renderTrack(Json const& track, int sampleRate, PatchLibrary c
     std::map<std::string, double> params;
     detail::finish(mix, track, params, seed, rate, false);
     mix.resize(std::size_t(length * rate));
-    double fadeIn  = track.num("fadeIn", 0);
-    double fadeOut = track.num("fadeOut", 2.0);
-    std::size_t fi = std::min(mix.size(), std::size_t(fadeIn * rate));
+    double      fadeIn  = track.num("fadeIn", 0);
+    double      fadeOut = track.num("fadeOut", 2.0);
+    std::size_t fi      = std::min(mix.size(), std::size_t(fadeIn * rate));
     for (std::size_t i = 0; i < fi; ++i) mix[i] *= double(i) / double(fi);
     std::size_t fo = std::min(mix.size(), std::size_t(fadeOut * rate));
     for (std::size_t i = 0; i < fo; ++i) mix[mix.size() - 1 - i] *= double(i) / double(fo);

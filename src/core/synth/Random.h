@@ -37,14 +37,14 @@ public:
     }
 
     std::uint64_t next() {
-        std::uint64_t const result = rotl(mS[1] * 5, 7) * 9;
-        std::uint64_t const t      = mS[1] << 17;
-        mS[2] ^= mS[0];
-        mS[3] ^= mS[1];
-        mS[1] ^= mS[2];
-        mS[0] ^= mS[3];
-        mS[2] ^= t;
-        mS[3] = rotl(mS[3], 45);
+        std::uint64_t const result  = rotl(mS[1] * 5, 7) * 9;
+        std::uint64_t const t       = mS[1] << 17;
+        mS[2]                      ^= mS[0];
+        mS[3]                      ^= mS[1];
+        mS[1]                      ^= mS[2];
+        mS[0]                      ^= mS[3];
+        mS[2]                      ^= t;
+        mS[3]                       = rotl(mS[3], 45);
         return result;
     }
 

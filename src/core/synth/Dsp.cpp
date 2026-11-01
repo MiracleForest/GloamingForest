@@ -39,17 +39,20 @@ Wave parseWave(std::string_view n) {
 
 double oscSample(Wave wave, double phase, double dt, double pw) {
     switch (wave) {
-    case Wave::Sine: return math::sin(math::kTwoPi * phase);
-    case Wave::Saw:  return (2.0 * phase - 1.0) - polyBlep(phase, dt);
+    case Wave::Sine:
+        return math::sin(math::kTwoPi * phase);
+    case Wave::Saw:
+        return (2.0 * phase - 1.0) - polyBlep(phase, dt);
     case Wave::Square:
     case Wave::Pulse: {
-        double w = wave == Wave::Square ? 0.5 : math::clamp(pw, 0.02, 0.98);
-        double v = phase < w ? 1.0 : -1.0;
-        v += polyBlep(phase, dt);
-        v -= polyBlep(frac(phase + 1.0 - w), dt);
+        double w  = wave == Wave::Square ? 0.5 : math::clamp(pw, 0.02, 0.98);
+        double v  = phase < w ? 1.0 : -1.0;
+        v        += polyBlep(phase, dt);
+        v        -= polyBlep(frac(phase + 1.0 - w), dt);
         return v;
     }
-    case Wave::Triangle: return 1.0 - 4.0 * math::abs(phase - 0.5);
+    case Wave::Triangle:
+        return 1.0 - 4.0 * math::abs(phase - 0.5);
     }
     return 0;
 }
@@ -64,7 +67,8 @@ NoiseColor parseNoise(std::string_view n) {
 double Noise::next() {
     double white = mRng.bipolar();
     switch (mColor) {
-    case NoiseColor::White: return white;
+    case NoiseColor::White:
+        return white;
     case NoiseColor::Pink: {
         // Paul Kellet's refined pink filter
         mB[0]       = 0.99886 * mB[0] + white * 0.0555179;
@@ -103,29 +107,41 @@ FilterType parseFilter(std::string_view n) {
 }
 
 void Svf::setup(FilterType type, double freq, double q, double gainDb, double rate) {
-    mType  = type;
-    freq   = math::clamp(freq, 10.0, rate * 0.49);
-    q      = math::clamp(q, 0.05, 60.0);
+    mType    = type;
+    freq     = math::clamp(freq, 10.0, rate * 0.49);
+    q        = math::clamp(q, 0.05, 60.0);
     double g = math::tan(math::kPi * freq / rate);
     double k = 1.0 / q;
     mA       = math::dbToGain(gainDb / 2.0); // 10^(gain/40)
     switch (type) {
-    case FilterType::Lowpass:  mM0 = 0, mM1 = 0, mM2 = 1; break;
-    case FilterType::Bandpass: mM0 = 0, mM1 = k, mM2 = 0; break;
-    case FilterType::Highpass: mM0 = 1, mM1 = -k, mM2 = -1; break;
-    case FilterType::Notch:    mM0 = 1, mM1 = -k, mM2 = 0; break;
-    case FilterType::Peak:     mM0 = 1, mM1 = -k, mM2 = -2; break;
-    case FilterType::Allpass:  mM0 = 1, mM1 = -2 * k, mM2 = 0; break;
+    case FilterType::Lowpass:
+        mM0 = 0, mM1 = 0, mM2 = 1;
+        break;
+    case FilterType::Bandpass:
+        mM0 = 0, mM1 = k, mM2 = 0;
+        break;
+    case FilterType::Highpass:
+        mM0 = 1, mM1 = -k, mM2 = -1;
+        break;
+    case FilterType::Notch:
+        mM0 = 1, mM1 = -k, mM2 = 0;
+        break;
+    case FilterType::Peak:
+        mM0 = 1, mM1 = -k, mM2 = -2;
+        break;
+    case FilterType::Allpass:
+        mM0 = 1, mM1 = -2 * k, mM2 = 0;
+        break;
     case FilterType::Bell:
         k   = 1.0 / (q * mA);
         mM0 = 1, mM1 = k * (mA * mA - 1), mM2 = 0;
         break;
     case FilterType::LowShelf:
-        g /= math::sqrt(mA);
+        g   /= math::sqrt(mA);
         mM0 = 1, mM1 = k * (mA - 1), mM2 = mA * mA - 1;
         break;
     case FilterType::HighShelf:
-        g *= math::sqrt(mA);
+        g   *= math::sqrt(mA);
         mM0 = mA * mA, mM1 = k * (1 - mA) * mA, mM2 = 1 - mA * mA;
         break;
     }
@@ -177,27 +193,27 @@ void ModalBank::add(double freq, double decay, double gain, double phase, double
 double ModalBank::next() {
     double out = 0;
     for (auto& m : mModes) {
-        out += m.g * m.s;
-        double c = (m.c * m.cw - m.s * m.sw) * m.r;
-        double s = (m.c * m.sw + m.s * m.cw) * m.r;
-        m.c      = flushTiny(c);
-        m.s      = flushTiny(s);
+        out      += m.g * m.s;
+        double c  = (m.c * m.cw - m.s * m.sw) * m.r;
+        double s  = (m.c * m.sw + m.s * m.cw) * m.r;
+        m.c       = flushTiny(c);
+        m.s       = flushTiny(s);
     }
     return out;
 }
 
 Pluck::Pluck(double freq, double decay, double brightness, double rate, std::uint64_t seed) {
-    freq           = math::clamp(freq, 20.0, rate * 0.25);
-    double period  = rate / freq - 0.5; // the averaging filter adds half a sample
-    std::size_t n  = std::size_t(math::floor(period));
-    mFrac          = period - double(n);
+    freq               = math::clamp(freq, 20.0, rate * 0.25);
+    double      period = rate / freq - 0.5; // the averaging filter adds half a sample
+    std::size_t n      = std::size_t(math::floor(period));
+    mFrac              = period - double(n);
     mLine.assign(n + 2, 0.0); // x[n-D-2] .. x[n-1]
     Random rng(seed);
     double lp    = 0;
     double coeff = math::clamp(brightness, 0.02, 1.0);
     for (auto& v : mLine) {
         lp += coeff * (rng.bipolar() - lp);
-        v = lp;
+        v   = lp;
     }
     // remove DC from the excitation
     double mean = 0;
@@ -210,9 +226,9 @@ Pluck::Pluck(double freq, double decay, double brightness, double rate, std::uin
 double Pluck::next() {
     // y[n] = g ((1 - f) avg(x[n-D], x[n-D-1]) + f avg(x[n-D-1], x[n-D-2])): loop delay D + 1/2 + f
     std::size_t size = mLine.size();
-    double      xc   = mLine[mPos];                // x[n-D-2], the oldest
-    double      xb   = mLine[(mPos + 1) % size];   // x[n-D-1]
-    double      xa   = mLine[(mPos + 2) % size];   // x[n-D]
+    double      xc   = mLine[mPos];              // x[n-D-2], the oldest
+    double      xb   = mLine[(mPos + 1) % size]; // x[n-D-1]
+    double      xa   = mLine[(mPos + 2) % size]; // x[n-D]
     double      y    = mGain * ((1.0 - mFrac) * 0.5 * (xa + xb) + mFrac * 0.5 * (xb + xc));
     y                = flushTiny(y);
     mLine[mPos]      = y;
@@ -240,7 +256,8 @@ Reverb::Reverb(double room, double damp, double rate) {
     static constexpr int kAllpass[4] = {556, 441, 341, 225};
     double               scale       = rate / 44100.0;
     for (int i = 0; i < 8; ++i) mCombs[i].buf.assign(std::max<std::size_t>(1, std::size_t(kComb[i] * scale)), 0.0);
-    for (int i = 0; i < 4; ++i) mAllpasses[i].buf.assign(std::max<std::size_t>(1, std::size_t(kAllpass[i] * scale)), 0.0);
+    for (int i = 0; i < 4; ++i)
+        mAllpasses[i].buf.assign(std::max<std::size_t>(1, std::size_t(kAllpass[i] * scale)), 0.0);
     mFeedback = math::clamp(room, 0.0, 1.0) * 0.28 + 0.7;
     mDamp     = math::clamp(damp, 0.0, 1.0) * 0.4;
 }
@@ -249,11 +266,11 @@ double Reverb::process(double x) {
     double in  = x * 0.015;
     double out = 0;
     for (auto& c : mCombs) {
-        double y = c.buf[c.pos];
-        c.store  = flushTiny(y * (1.0 - mDamp) + c.store * mDamp);
-        c.buf[c.pos] = in + c.store * mFeedback;
-        c.pos        = (c.pos + 1) % c.buf.size();
-        out += y;
+        double y      = c.buf[c.pos];
+        c.store       = flushTiny(y * (1.0 - mDamp) + c.store * mDamp);
+        c.buf[c.pos]  = in + c.store * mFeedback;
+        c.pos         = (c.pos + 1) % c.buf.size();
+        out          += y;
     }
     for (auto& a : mAllpasses) {
         double b     = a.buf[a.pos];

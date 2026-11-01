@@ -17,8 +17,8 @@
 namespace gf::tests::synth {
 
 std::vector<float> decodeVorbis(std::vector<std::uint8_t> const& file, int* channels, int* rate) {
-    int    err = 0;
-    auto*  v   = stb_vorbis_open_memory(file.data(), int(file.size()), &err, nullptr);
+    int   err = 0;
+    auto* v   = stb_vorbis_open_memory(file.data(), int(file.size()), &err, nullptr);
     if (!v) return {};
     stb_vorbis_info info = stb_vorbis_get_info(v);
     if (channels) *channels = info.channels;

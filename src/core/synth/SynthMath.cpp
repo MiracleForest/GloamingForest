@@ -61,10 +61,14 @@ double sin(double x) {
     int    q = 0;
     double r = reduce(x, q);
     switch (q) {
-    case 0:  return sinPoly(r);
-    case 1:  return cosPoly(r);
-    case 2:  return -sinPoly(r);
-    default: return -cosPoly(r);
+    case 0:
+        return sinPoly(r);
+    case 1:
+        return cosPoly(r);
+    case 2:
+        return -sinPoly(r);
+    default:
+        return -cosPoly(r);
     }
 }
 
@@ -73,10 +77,14 @@ double cos(double x) {
     int    q = 0;
     double r = reduce(x, q);
     switch (q) {
-    case 0:  return cosPoly(r);
-    case 1:  return -sinPoly(r);
-    case 2:  return -cosPoly(r);
-    default: return sinPoly(r);
+    case 0:
+        return cosPoly(r);
+    case 1:
+        return -sinPoly(r);
+    case 2:
+        return -cosPoly(r);
+    default:
+        return sinPoly(r);
     }
 }
 

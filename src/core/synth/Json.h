@@ -57,8 +57,8 @@ public:
     [[nodiscard]] std::string const& string() const;
 
     // arrays
-    [[nodiscard]] std::size_t       size() const;
-    [[nodiscard]] Json const&       operator[](std::size_t i) const;
+    [[nodiscard]] std::size_t              size() const;
+    [[nodiscard]] Json const&              operator[](std::size_t i) const;
     [[nodiscard]] std::vector<Json> const& items() const { return mArray; }
     void                                   push(Json v);
 
@@ -66,7 +66,7 @@ public:
     [[nodiscard]] bool        has(std::string_view key) const { return find(key) != nullptr; }
     [[nodiscard]] Json const* find(std::string_view key) const;
     /// The member `key`, or a null value when absent.
-    [[nodiscard]] Json const& operator[](std::string_view key) const;
+    [[nodiscard]] Json const&                                      operator[](std::string_view key) const;
     [[nodiscard]] std::vector<std::pair<std::string, Json>> const& members() const { return mObject; }
     void                                                           set(std::string key, Json v);
 
@@ -79,11 +79,11 @@ public:
     [[nodiscard]] std::string dump() const;
 
 private:
-    Type                                    mType   = Type::Null;
-    bool                                    mBool   = false;
-    double                                  mNumber = 0;
-    std::string                             mString;
-    std::vector<Json>                       mArray;
+    Type                                      mType   = Type::Null;
+    bool                                      mBool   = false;
+    double                                    mNumber = 0;
+    std::string                               mString;
+    std::vector<Json>                         mArray;
     std::vector<std::pair<std::string, Json>> mObject;
 };
 

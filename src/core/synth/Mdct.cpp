@@ -18,10 +18,10 @@ Mdct::Mdct(int n) : mN(n) {
     mPostCos.resize(H);
     mPostSin.resize(H);
     for (int m = 0; m < H; ++m) {
-        double a   = -math::kPi * double(4 * m + 1) / double(4 * M);
-        mPreCos[m] = math::cos(a);
-        mPreSin[m] = math::sin(a);
-        double b   = -math::kPi * double(m) / double(M);
+        double a    = -math::kPi * double(4 * m + 1) / double(4 * M);
+        mPreCos[m]  = math::cos(a);
+        mPreSin[m]  = math::sin(a);
+        double b    = -math::kPi * double(m) / double(M);
         mPostCos[m] = math::cos(b);
         mPostSin[m] = math::sin(b);
     }
@@ -91,9 +91,9 @@ void Mdct::forward(double const* x, double* out) const {
     }
     fft(re, im);
     for (int k = 0; k < H; ++k) {
-        double wr      = re[k] * mPostCos[k] - im[k] * mPostSin[k];
-        double wi      = re[k] * mPostSin[k] + im[k] * mPostCos[k];
-        out[2 * k]     = wr;
+        double wr          = re[k] * mPostCos[k] - im[k] * mPostSin[k];
+        double wi          = re[k] * mPostSin[k] + im[k] * mPostCos[k];
+        out[2 * k]         = wr;
         out[M - 1 - 2 * k] = -wi;
     }
 }

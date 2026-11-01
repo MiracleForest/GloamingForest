@@ -18,10 +18,10 @@
 namespace gf::core::synth {
 
 struct VorbisOptions {
-    int           sampleRate = 44100;
-    double        quality    = 0.5; ///< 0..1
-    std::uint32_t serial     = 0x47460001;
-    std::string   vendor     = "GloamingForest synth";
+    int                      sampleRate = 44100;
+    double                   quality    = 0.5; ///< 0..1
+    std::uint32_t            serial     = 0x47460001;
+    std::string              vendor     = "GloamingForest synth";
     std::vector<std::string> comments; ///< "KEY=value" user comments
 };
 
@@ -33,11 +33,11 @@ struct VorbisOptions {
 
 /// Basic facts from an .ogg file's first pages (validation in tests and selftests).
 struct OggVorbisInfo {
-    bool          valid      = false;
-    int           channels   = 0;
-    int           sampleRate = 0;
-    std::int64_t  samples    = 0; ///< granule position of the last page
-    std::string   error;
+    bool         valid      = false;
+    int          channels   = 0;
+    int          sampleRate = 0;
+    std::int64_t samples    = 0; ///< granule position of the last page
+    std::string  error;
 };
 [[nodiscard]] OggVorbisInfo probeOggVorbis(std::span<std::uint8_t const> file);
 

@@ -41,7 +41,7 @@ std::string readFile(std::string const& path) {
 }
 
 void writeFile(std::string const& path, std::vector<std::uint8_t> const& data) {
-    std::string   tmp = path + ".tmp";
+    std::string tmp = path + ".tmp";
     {
         std::ofstream f(tmp, std::ios::binary | std::ios::trunc);
         if (!f) throw std::runtime_error("cannot write " + tmp);
@@ -72,8 +72,8 @@ int render(std::string const& jobsPath) {
             Json const& job  = jobs[i];
             std::string name = job.str("name", "job" + std::to_string(i));
             try {
-                int    rate    = int(job.num("rate", 44100));
-                double quality = job.num("quality", 0.5);
+                int                rate    = int(job.num("rate", 44100));
+                double             quality = job.num("quality", 0.5);
                 std::vector<float> pcm;
                 std::string        kind = job.str("kind", "patch");
                 if (kind == "track") {
@@ -111,11 +111,18 @@ int probe(int argc, char** argv) {
     int bad = 0;
     for (int i = 2; i < argc; ++i) {
         try {
-            std::string s = readFile(argv[i]);
-            auto        info =
-                probeOggVorbis(std::span<std::uint8_t const>(reinterpret_cast<std::uint8_t const*>(s.data()), s.size()));
+            std::string s    = readFile(argv[i]);
+            auto        info = probeOggVorbis(
+                std::span<std::uint8_t const>(reinterpret_cast<std::uint8_t const*>(s.data()), s.size())
+            );
             if (info.valid) {
-                std::printf("%s %d %d %lld\n", argv[i], info.channels, info.sampleRate, static_cast<long long>(info.samples));
+                std::printf(
+                    "%s %d %d %lld\n",
+                    argv[i],
+                    info.channels,
+                    info.sampleRate,
+                    static_cast<long long>(info.samples)
+                );
             } else {
                 ++bad;
                 std::printf("BAD %s: %s\n", argv[i], info.error.c_str());

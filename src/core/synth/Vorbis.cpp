@@ -31,52 +31,78 @@ constexpr int kYBits         = 7;   // ilog(kRange - 1)
 constexpr int kRangeBits     = 10;  // X range 0..1024
 constexpr int kPartitionSize = 16;
 constexpr int kPartitions    = kHalf / kPartitionSize;
-constexpr int kClassDim      = 3;   // floor-1 partition dimension
+constexpr int kClassDim      = 3; // floor-1 partition dimension
 
 // interior floor-1 posts (sorted); 10 partitions of 3
-constexpr std::array<int, 30> kPostsSorted = {1,   2,   3,   4,   6,   8,   10,  13,  16,  20,  25,  31,  38,  46,  56,
-                                              68,  82,  99,  119, 143, 172, 207, 249, 299, 359, 431, 518, 622, 747, 896};
-constexpr int kPosts = int(kPostsSorted.size()) + 2;
+constexpr std::array<int, 30> kPostsSorted = {1,  2,  3,  4,   6,   8,   10,  13,  16,  20,  25,  31,  38,  46,  56,
+                                              68, 82, 99, 119, 143, 172, 207, 249, 299, 359, 431, 518, 622, 747, 896};
+constexpr int                 kPosts       = int(kPostsSorted.size()) + 2;
 
 // floor1_inverse_dB_table (Vorbis I specification, section 10.1)
-constexpr float kInverseDb[256] = {
-    1.0649863e-07f, 1.1341951e-07f, 1.2079015e-07f, 1.2863978e-07f, 1.3699951e-07f, 1.4590251e-07f, 1.5538408e-07f,
-    1.6548181e-07f, 1.7623575e-07f, 1.8768855e-07f, 1.9988561e-07f, 2.1287530e-07f, 2.2670913e-07f, 2.4144197e-07f,
-    2.5713223e-07f, 2.7384213e-07f, 2.9163793e-07f, 3.1059021e-07f, 3.3077411e-07f, 3.5226968e-07f, 3.7516214e-07f,
-    3.9954229e-07f, 4.2550680e-07f, 4.5315863e-07f, 4.8260743e-07f, 5.1396998e-07f, 5.4737065e-07f, 5.8294187e-07f,
-    6.2082472e-07f, 6.6116941e-07f, 7.0413592e-07f, 7.4989464e-07f, 7.9862701e-07f, 8.5052630e-07f, 9.0579828e-07f,
-    9.6466216e-07f, 1.0273513e-06f, 1.0941144e-06f, 1.1652161e-06f, 1.2409384e-06f, 1.3215816e-06f, 1.4074654e-06f,
-    1.4989305e-06f, 1.5963394e-06f, 1.7000785e-06f, 1.8105592e-06f, 1.9282195e-06f, 2.0535261e-06f, 2.1869758e-06f,
-    2.3290978e-06f, 2.4804557e-06f, 2.6416497e-06f, 2.8133190e-06f, 2.9961443e-06f, 3.1908506e-06f, 3.3982101e-06f,
-    3.6190449e-06f, 3.8542308e-06f, 4.1047004e-06f, 4.3714470e-06f, 4.6555282e-06f, 4.9580707e-06f, 5.2802740e-06f,
-    5.6234160e-06f, 5.9888572e-06f, 6.3780469e-06f, 6.7925283e-06f, 7.2339451e-06f, 7.7040476e-06f, 8.2047000e-06f,
-    8.7378876e-06f, 9.3057248e-06f, 9.9104632e-06f, 1.0554501e-05f, 1.1240392e-05f, 1.1970856e-05f, 1.2748789e-05f,
-    1.3577278e-05f, 1.4459606e-05f, 1.5399272e-05f, 1.6400004e-05f, 1.7465768e-05f, 1.8600792e-05f, 1.9809576e-05f,
-    2.1096914e-05f, 2.2467911e-05f, 2.3928002e-05f, 2.5482978e-05f, 2.7139006e-05f, 2.8902651e-05f, 3.0780908e-05f,
-    3.2781225e-05f, 3.4911534e-05f, 3.7180282e-05f, 3.9596466e-05f, 4.2169667e-05f, 4.4910090e-05f, 4.7828601e-05f,
-    5.0936773e-05f, 5.4246931e-05f, 5.7772202e-05f, 6.1526565e-05f, 6.5524908e-05f, 6.9783085e-05f, 7.4317983e-05f,
-    7.9147585e-05f, 8.4291040e-05f, 8.9768747e-05f, 9.5602426e-05f, 0.00010181521f, 0.00010843174f, 0.00011547824f,
-    0.00012298267f, 0.00013097477f, 0.00013948625f, 0.00014855085f, 0.00015820453f, 0.00016848555f, 0.00017943469f,
-    0.00019109536f, 0.00020351382f, 0.00021673929f, 0.00023082423f, 0.00024582449f, 0.00026179955f, 0.00027881276f,
-    0.00029693158f, 0.00031622787f, 0.00033677814f, 0.00035866388f, 0.00038197188f, 0.00040679456f, 0.00043323036f,
-    0.00046138411f, 0.00049136745f, 0.00052329927f, 0.00055730621f, 0.00059352311f, 0.00063209358f, 0.00067317058f,
-    0.00071691700f, 0.00076350630f, 0.00081312324f, 0.00086596457f, 0.00092223983f, 0.00098217216f, 0.0010459992f,
-    0.0011139742f,  0.0011863665f,  0.0012634633f,  0.0013455702f,  0.0014330129f,  0.0015261382f,  0.0016253153f,
-    0.0017309374f,  0.0018434235f,  0.0019632195f,  0.0020908006f,  0.0022266726f,  0.0023713743f,  0.0025254795f,
-    0.0026895994f,  0.0028643847f,  0.0030505286f,  0.0032487691f,  0.0034598925f,  0.0036847358f,  0.0039241906f,
-    0.0041792066f,  0.0044507950f,  0.0047400328f,  0.0050480668f,  0.0053761186f,  0.0057254891f,  0.0060975636f,
-    0.0064938176f,  0.0069158225f,  0.0073652516f,  0.0078438871f,  0.0083536271f,  0.0088964928f,  0.009474637f,
-    0.010090352f,   0.010746080f,   0.011444421f,   0.012188144f,   0.012980198f,   0.013823725f,   0.014722068f,
-    0.015678791f,   0.016697687f,   0.017782797f,   0.018938423f,   0.020169149f,   0.021479854f,   0.022875735f,
-    0.024362330f,   0.025945531f,   0.027631618f,   0.029427276f,   0.031339626f,   0.033376252f,   0.035545228f,
-    0.037855157f,   0.040315199f,   0.042935108f,   0.045725273f,   0.048696758f,   0.051861348f,   0.055231591f,
-    0.058820850f,   0.062643361f,   0.066714279f,   0.071049749f,   0.075666962f,   0.080584227f,   0.085821044f,
-    0.091398179f,   0.097337747f,   0.10366330f,    0.11039993f,    0.11757434f,    0.12521498f,    0.13335215f,
-    0.14201813f,    0.15124727f,    0.16107617f,    0.17154380f,    0.18269168f,    0.19456402f,    0.20720788f,
-    0.22067342f,    0.23501402f,    0.25028656f,    0.26655159f,    0.28387361f,    0.30232132f,    0.32196786f,
-    0.34289114f,    0.36517414f,    0.38890521f,    0.41417847f,    0.44109412f,    0.46975890f,    0.50028648f,
-    0.53279791f,    0.56742212f,    0.60429640f,    0.64356699f,    0.68538959f,    0.72993007f,    0.77736504f,
-    0.82788260f,    0.88168307f,    0.9389798f,     1.0f};
+constexpr float kInverseDb[256] = {1.0649863e-07f, 1.1341951e-07f, 1.2079015e-07f, 1.2863978e-07f,
+                                   1.3699951e-07f, 1.4590251e-07f, 1.5538408e-07f, 1.6548181e-07f,
+                                   1.7623575e-07f, 1.8768855e-07f, 1.9988561e-07f, 2.1287530e-07f,
+                                   2.2670913e-07f, 2.4144197e-07f, 2.5713223e-07f, 2.7384213e-07f,
+                                   2.9163793e-07f, 3.1059021e-07f, 3.3077411e-07f, 3.5226968e-07f,
+                                   3.7516214e-07f, 3.9954229e-07f, 4.2550680e-07f, 4.5315863e-07f,
+                                   4.8260743e-07f, 5.1396998e-07f, 5.4737065e-07f, 5.8294187e-07f,
+                                   6.2082472e-07f, 6.6116941e-07f, 7.0413592e-07f, 7.4989464e-07f,
+                                   7.9862701e-07f, 8.5052630e-07f, 9.0579828e-07f, 9.6466216e-07f,
+                                   1.0273513e-06f, 1.0941144e-06f, 1.1652161e-06f, 1.2409384e-06f,
+                                   1.3215816e-06f, 1.4074654e-06f, 1.4989305e-06f, 1.5963394e-06f,
+                                   1.7000785e-06f, 1.8105592e-06f, 1.9282195e-06f, 2.0535261e-06f,
+                                   2.1869758e-06f, 2.3290978e-06f, 2.4804557e-06f, 2.6416497e-06f,
+                                   2.8133190e-06f, 2.9961443e-06f, 3.1908506e-06f, 3.3982101e-06f,
+                                   3.6190449e-06f, 3.8542308e-06f, 4.1047004e-06f, 4.3714470e-06f,
+                                   4.6555282e-06f, 4.9580707e-06f, 5.2802740e-06f, 5.6234160e-06f,
+                                   5.9888572e-06f, 6.3780469e-06f, 6.7925283e-06f, 7.2339451e-06f,
+                                   7.7040476e-06f, 8.2047000e-06f, 8.7378876e-06f, 9.3057248e-06f,
+                                   9.9104632e-06f, 1.0554501e-05f, 1.1240392e-05f, 1.1970856e-05f,
+                                   1.2748789e-05f, 1.3577278e-05f, 1.4459606e-05f, 1.5399272e-05f,
+                                   1.6400004e-05f, 1.7465768e-05f, 1.8600792e-05f, 1.9809576e-05f,
+                                   2.1096914e-05f, 2.2467911e-05f, 2.3928002e-05f, 2.5482978e-05f,
+                                   2.7139006e-05f, 2.8902651e-05f, 3.0780908e-05f, 3.2781225e-05f,
+                                   3.4911534e-05f, 3.7180282e-05f, 3.9596466e-05f, 4.2169667e-05f,
+                                   4.4910090e-05f, 4.7828601e-05f, 5.0936773e-05f, 5.4246931e-05f,
+                                   5.7772202e-05f, 6.1526565e-05f, 6.5524908e-05f, 6.9783085e-05f,
+                                   7.4317983e-05f, 7.9147585e-05f, 8.4291040e-05f, 8.9768747e-05f,
+                                   9.5602426e-05f, 0.00010181521f, 0.00010843174f, 0.00011547824f,
+                                   0.00012298267f, 0.00013097477f, 0.00013948625f, 0.00014855085f,
+                                   0.00015820453f, 0.00016848555f, 0.00017943469f, 0.00019109536f,
+                                   0.00020351382f, 0.00021673929f, 0.00023082423f, 0.00024582449f,
+                                   0.00026179955f, 0.00027881276f, 0.00029693158f, 0.00031622787f,
+                                   0.00033677814f, 0.00035866388f, 0.00038197188f, 0.00040679456f,
+                                   0.00043323036f, 0.00046138411f, 0.00049136745f, 0.00052329927f,
+                                   0.00055730621f, 0.00059352311f, 0.00063209358f, 0.00067317058f,
+                                   0.00071691700f, 0.00076350630f, 0.00081312324f, 0.00086596457f,
+                                   0.00092223983f, 0.00098217216f, 0.0010459992f,  0.0011139742f,
+                                   0.0011863665f,  0.0012634633f,  0.0013455702f,  0.0014330129f,
+                                   0.0015261382f,  0.0016253153f,  0.0017309374f,  0.0018434235f,
+                                   0.0019632195f,  0.0020908006f,  0.0022266726f,  0.0023713743f,
+                                   0.0025254795f,  0.0026895994f,  0.0028643847f,  0.0030505286f,
+                                   0.0032487691f,  0.0034598925f,  0.0036847358f,  0.0039241906f,
+                                   0.0041792066f,  0.0044507950f,  0.0047400328f,  0.0050480668f,
+                                   0.0053761186f,  0.0057254891f,  0.0060975636f,  0.0064938176f,
+                                   0.0069158225f,  0.0073652516f,  0.0078438871f,  0.0083536271f,
+                                   0.0088964928f,  0.009474637f,   0.010090352f,   0.010746080f,
+                                   0.011444421f,   0.012188144f,   0.012980198f,   0.013823725f,
+                                   0.014722068f,   0.015678791f,   0.016697687f,   0.017782797f,
+                                   0.018938423f,   0.020169149f,   0.021479854f,   0.022875735f,
+                                   0.024362330f,   0.025945531f,   0.027631618f,   0.029427276f,
+                                   0.031339626f,   0.033376252f,   0.035545228f,   0.037855157f,
+                                   0.040315199f,   0.042935108f,   0.045725273f,   0.048696758f,
+                                   0.051861348f,   0.055231591f,   0.058820850f,   0.062643361f,
+                                   0.066714279f,   0.071049749f,   0.075666962f,   0.080584227f,
+                                   0.085821044f,   0.091398179f,   0.097337747f,   0.10366330f,
+                                   0.11039993f,    0.11757434f,    0.12521498f,    0.13335215f,
+                                   0.14201813f,    0.15124727f,    0.16107617f,    0.17154380f,
+                                   0.18269168f,    0.19456402f,    0.20720788f,    0.22067342f,
+                                   0.23501402f,    0.25028656f,    0.26655159f,    0.28387361f,
+                                   0.30232132f,    0.32196786f,    0.34289114f,    0.36517414f,
+                                   0.38890521f,    0.41417847f,    0.44109412f,    0.46975890f,
+                                   0.50028648f,    0.53279791f,    0.56742212f,    0.60429640f,
+                                   0.64356699f,    0.68538959f,    0.72993007f,    0.77736504f,
+                                   0.82788260f,    0.88168307f,    0.9389798f,     1.0f};
 
 // ---- bit packing (LSB first, Vorbis I section 2) -----------------------------------------------------
 
@@ -85,11 +111,11 @@ public:
     void write(std::uint64_t value, int bits) {
         while (bits > 0) {
             if (mBit == 0) mBytes.push_back(0);
-            int take = std::min(bits, 8 - mBit);
-            mBytes.back() |= std::uint8_t((value & ((1ull << take) - 1)) << mBit);
-            value >>= take;
-            bits -= take;
-            mBit = (mBit + take) & 7;
+            int take        = std::min(bits, 8 - mBit);
+            mBytes.back()  |= std::uint8_t((value & ((1ull << take) - 1)) << mBit);
+            value         >>= take;
+            bits           -= take;
+            mBit            = (mBit + take) & 7;
         }
     }
     void bytes(char const* s, std::size_t n) {
@@ -141,7 +167,9 @@ std::vector<int> huffmanLengths(std::vector<std::uint64_t> counts, int maxLen) {
             std::uint64_t weight;
             int           id;
         };
-        auto cmp = [](Node const& a, Node const& b) { return a.weight != b.weight ? a.weight > b.weight : a.id > b.id; };
+        auto cmp = [](Node const& a, Node const& b) {
+            return a.weight != b.weight ? a.weight > b.weight : a.id > b.id;
+        };
         std::priority_queue<Node, std::vector<Node>, decltype(cmp)> heap(cmp);
         std::vector<int>                                            parent;
         int                                                         used = 0;
@@ -252,7 +280,7 @@ struct Codebook {
         int e   = 0;
         int mul = 1;
         for (int d = 0; d < dim; ++d) {
-            e += ((v[d] - minimum) / delta) * mul;
+            e   += ((v[d] - minimum) / delta) * mul;
             mul *= values;
         }
         return e;
@@ -276,7 +304,7 @@ struct Codebook {
             std::uint32_t c = codes[i];
             std::uint32_t r = 0;
             for (int b = 0; b < lengths[i]; ++b) {
-                r = (r << 1) | (c & 1);
+                r   = (r << 1) | (c & 1);
                 c >>= 1;
             }
             reversed[i] = r;
@@ -318,19 +346,21 @@ struct Codebook {
 // ---- floor 1 ----------------------------------------------------------------------------------------
 
 struct FloorLayout {
-    std::array<int, kPosts> x{};        // coded order: 0, 1024, then coarse to fine
-    std::array<int, kPosts> low{};      // low_neighbor offsets
-    std::array<int, kPosts> high{};     // high_neighbor offsets
-    std::array<int, kPosts> sorted{};   // post indices by X
-    std::array<int, kPosts> lowEdge{};  // envelope interval per post (bins)
+    std::array<int, kPosts> x{};       // coded order: 0, 1024, then coarse to fine
+    std::array<int, kPosts> low{};     // low_neighbor offsets
+    std::array<int, kPosts> high{};    // high_neighbor offsets
+    std::array<int, kPosts> sorted{};  // post indices by X
+    std::array<int, kPosts> lowEdge{}; // envelope interval per post (bins)
     std::array<int, kPosts> highEdge{};
 
     FloorLayout() {
         x[0] = 0;
         x[1] = kHalf;
         // coarse-to-fine order: breadth-first bisection of the sorted interior posts
-        std::vector<std::pair<int, int>> queue{{0, int(kPostsSorted.size()) - 1}};
-        int                              k = 2;
+        std::vector<std::pair<int, int>> queue{
+            {0, int(kPostsSorted.size()) - 1}
+        };
+        int k = 2;
         for (std::size_t qi = 0; qi < queue.size(); ++qi) {
             auto [lo, hi] = queue[qi];
             if (lo > hi) continue;
@@ -374,20 +404,20 @@ int renderPoint(int x0, int y0, int x1, int y1, int x) {
 }
 
 void renderLine(int x0, int y0, int x1, int y1, int* v, int n) {
-    int dy   = y1 - y0;
-    int adx  = x1 - x0;
-    int ady  = dy < 0 ? -dy : dy;
-    int base = dy / adx;
-    int y    = y0;
-    int err  = 0;
-    int sy   = dy < 0 ? base - 1 : base + 1;
-    ady -= (base < 0 ? -base : base) * adx;
+    int dy    = y1 - y0;
+    int adx   = x1 - x0;
+    int ady   = dy < 0 ? -dy : dy;
+    int base  = dy / adx;
+    int y     = y0;
+    int err   = 0;
+    int sy    = dy < 0 ? base - 1 : base + 1;
+    ady      -= (base < 0 ? -base : base) * adx;
     if (x0 < n) v[x0] = y;
     for (int x = x0 + 1; x < x1; ++x) {
         err += ady;
         if (err >= adx) {
             err -= adx;
-            y += sy;
+            y   += sy;
         } else {
             y += base;
         }
@@ -495,9 +525,9 @@ constexpr int kClassBooks[kClasses][2] = {
 };
 
 struct Block {
-    bool                              nonzero = false;
-    std::array<int, kPosts>           vals{};
-    std::array<std::int16_t, kHalf>   q{};
+    bool                                  nonzero = false;
+    std::array<int, kPosts>               vals{};
+    std::array<std::int16_t, kHalf>       q{};
     std::array<std::uint8_t, kPartitions> cls{};
 };
 
@@ -574,7 +604,7 @@ struct Analyzer {
         for (int i = 0; i < kPosts; ++i) {
             double peak = 0, energy = 0;
             for (int k = L.lowEdge[i]; k <= L.highEdge[i]; ++k) {
-                peak = std::max(peak, math::abs(coef[k]));
+                peak    = std::max(peak, math::abs(coef[k]));
                 energy += coef[k] * coef[k];
             }
             double rms  = math::sqrt(energy / double(L.highEdge[i] - L.lowEdge[i] + 1));
@@ -599,10 +629,10 @@ struct Analyzer {
         floorCurve(b.vals, curve.data());
         bool any = false;
         for (int k = 0; k < kHalf; ++k) {
-            double r = coef[k] / double(curve[k]);
-            int    q = int(math::round(math::clamp(r, -double(kResidueMax), double(kResidueMax))));
-            b.q[k]   = std::int16_t(q);
-            any |= q != 0;
+            double r  = coef[k] / double(curve[k]);
+            int    q  = int(math::round(math::clamp(r, -double(kResidueMax), double(kResidueMax))));
+            b.q[k]    = std::int16_t(q);
+            any      |= q != 0;
         }
         if (!any) return; // all residue zero: an unused floor is cheaper
         b.nonzero = true;
@@ -756,8 +786,8 @@ std::vector<std::uint8_t> setupHeader(std::vector<Codebook> const& books) {
     // residues: one residue 1
     w.write(0, 6);
     w.write(1, 16);
-    w.write(0, 24);          // begin
-    w.write(kHalf, 24);      // end
+    w.write(0, 24);     // begin
+    w.write(kHalf, 24); // end
     w.write(kPartitionSize - 1, 24);
     w.write(kClasses - 1, 6);
     w.write(kClassBook, 8);
@@ -823,7 +853,8 @@ std::uint32_t oggCrc(std::uint8_t const* data, std::size_t size) {
 }
 
 std::vector<std::uint8_t> encodeVorbis(std::span<float const> pcm, VorbisOptions const& options) {
-    if (options.sampleRate < 8000 || options.sampleRate > 192000) throw std::invalid_argument("vorbis: bad sample rate");
+    if (options.sampleRate < 8000 || options.sampleRate > 192000)
+        throw std::invalid_argument("vorbis: bad sample rate");
     std::int64_t const length = std::max<std::int64_t>(1, std::int64_t(pcm.size()));
     int const          blocks = int((length + kHalf - 1) / kHalf) + 1;
 
@@ -835,12 +866,12 @@ std::vector<std::uint8_t> encodeVorbis(std::span<float const> pcm, VorbisOptions
     Mdct const     mdct(kN);
     Analyzer const analyzer(options.quality, options.sampleRate);
 
-    std::vector<Block>     coded(static_cast<std::size_t>(blocks));
-    std::array<double, kN> buf{};
+    std::vector<Block>        coded(static_cast<std::size_t>(blocks));
+    std::array<double, kN>    buf{};
     std::array<double, kHalf> coef{};
     // libvorbis' forward scale: with the decoders' unscaled inverse MDCT and the power-complementary
     // window this reconstructs the input amplitude (checked against ffmpeg and stb_vorbis)
-    double const           scale = 4.0 / double(kN);
+    double const scale = 4.0 / double(kN);
     for (int b = 0; b < blocks; ++b) {
         std::int64_t start = std::int64_t(b - 1) * kHalf;
         for (int i = 0; i < kN; ++i) {
@@ -861,7 +892,13 @@ std::vector<std::uint8_t> encodeVorbis(std::span<float const> pcm, VorbisOptions
         for (int pass = 0; pass < 2; ++pass) {
             for (int p = 0; p < kPartitions; ++p) {
                 if (pass == 0) books[kClassBook].counts[b.cls[p]]++;
-                partitionEntries(b, p, pass, [&](int book, int entry) { books[book].counts[std::size_t(entry)]++; }, books);
+                partitionEntries(
+                    b,
+                    p,
+                    pass,
+                    [&](int book, int entry) { books[book].counts[std::size_t(entry)]++; },
+                    books
+                );
             }
         }
     }
@@ -912,13 +949,15 @@ OggVorbisInfo probeOggVorbis(std::span<std::uint8_t const> f) {
             return info;
         }
         if (pages == 0) {
-            if (!(page[5] & 0x02) || body < 30 || page[hdr] != 1 || std::memcmp(page.data() + hdr + 1, "vorbis", 6) != 0) {
+            if (!(page[5] & 0x02) || body < 30 || page[hdr] != 1
+                || std::memcmp(page.data() + hdr + 1, "vorbis", 6) != 0) {
                 info.error = "first page is not a Vorbis identification header";
                 return info;
             }
-            info.channels   = page[hdr + 11];
-            info.sampleRate = int(std::uint32_t(page[hdr + 12]) | std::uint32_t(page[hdr + 13]) << 8
-                                  | std::uint32_t(page[hdr + 14]) << 16 | std::uint32_t(page[hdr + 15]) << 24);
+            info.channels = page[hdr + 11];
+            info.sampleRate =
+                int(std::uint32_t(page[hdr + 12]) | std::uint32_t(page[hdr + 13]) << 8
+                    | std::uint32_t(page[hdr + 14]) << 16 | std::uint32_t(page[hdr + 15]) << 24);
         }
         std::uint64_t granule = 0;
         for (int i = 0; i < 8; ++i) granule |= std::uint64_t(page[6 + std::size_t(i)]) << (8 * i);

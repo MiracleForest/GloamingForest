@@ -44,9 +44,11 @@ std::vector<float> testSignal(int rate, int n) {
     std::vector<float> pcm(static_cast<std::size_t>(n));
     Random             rng(7);
     for (int i = 0; i < n; ++i) {
-        double t = double(i) / rate;
-        pcm[std::size_t(i)] = float(0.4 * math::sin(math::kTwoPi * 440 * t) + 0.2 * math::sin(math::kTwoPi * 1250 * t) * (t > 0.3 ? 1 : 0)
-                                    + 0.05 * rng.bipolar());
+        double t            = double(i) / rate;
+        pcm[std::size_t(i)] = float(
+            0.4 * math::sin(math::kTwoPi * 440 * t) + 0.2 * math::sin(math::kTwoPi * 1250 * t) * (t > 0.3 ? 1 : 0)
+            + 0.05 * rng.bipolar()
+        );
     }
     return pcm;
 }
@@ -68,8 +70,10 @@ fs::path repoRoot() {
     static fs::path const dir = [] {
         if (fs::path env = envPath("GF_ROOT"); !env.empty()) return env;
         std::error_code ec;
-        auto const      isRoot = [&](fs::path const& p) { return fs::exists(p / "tools/sounds/baseline/inventory.json", ec); };
-        fs::path        here   = fs::path(__FILE__).parent_path();
+        auto const      isRoot = [&](fs::path const& p) {
+            return fs::exists(p / "tools/sounds/baseline/inventory.json", ec);
+        };
+        fs::path here = fs::path(__FILE__).parent_path();
         for (fs::path start : {here, fs::current_path(ec)}) {
             if (!start.is_absolute()) start = fs::current_path(ec) / start;
             for (fs::path p = start; !p.empty(); p = p.parent_path()) {
@@ -133,7 +137,8 @@ TEST(SynthRandom, IsReproducible) {
 
 TEST(SynthJson, ParsesAndDumps) {
     std::string const uEscape = std::string(1, '\\') + "u00e9"; // a JSON unicode escape
-    auto j = Json::parse(R"json({"a": 1.5, "b": [1, "x", true, null], "c": {"d": -2e-3}, "s": "q\")json" + uEscape + "\"}");
+    auto              j =
+        Json::parse(R"json({"a": 1.5, "b": [1, "x", true, null], "c": {"d": -2e-3}, "s": "q\")json" + uEscape + "\"}");
     EXPECT_DOUBLE_EQ(j["a"].number(), 1.5);
     EXPECT_EQ(j["b"].size(), 4u);
     EXPECT_EQ(j["b"][1].string(), "x");
@@ -151,7 +156,10 @@ TEST(SynthJson, ParsesAndDumps) {
 }
 
 TEST(SynthExpression, Evaluates) {
-    std::map<std::string, double> p{{"pitch", 2.0}, {"len", 0.5}};
+    std::map<std::string, double> p{
+        {"pitch", 2.0},
+        {"len",   0.5}
+    };
     EXPECT_DOUBLE_EQ(evalExpression("$pitch*220+1", p), 441.0);
     EXPECT_DOUBLE_EQ(evalExpression("-(1+2)*3", p), -9.0);
     EXPECT_DOUBLE_EQ(evalExpression("2^10", p), 1024.0);
@@ -169,26 +177,28 @@ TEST(SynthExpression, Evaluates) {
 
 TEST(SynthMdct, FastMatchesDefinition) {
     for (int n : {16, 64, 256, 2048}) {
-        std::vector<double> x(static_cast<std::size_t>(n)), a(static_cast<std::size_t>(n / 2)), b(static_cast<std::size_t>(n / 2));
-        Random              r{static_cast<std::uint64_t>(n)};
+        std::vector<double> x(static_cast<std::size_t>(n)), a(static_cast<std::size_t>(n / 2)),
+            b(static_cast<std::size_t>(n / 2));
+        Random r{static_cast<std::uint64_t>(n)};
         for (auto& v : x) v = r.bipolar();
         Mdct(n).forward(x.data(), a.data());
         Mdct::forwardDirect(n, x.data(), b.data());
-        for (int k = 0; k < n / 2; ++k) EXPECT_NEAR(a[std::size_t(k)], b[std::size_t(k)], 1e-9 * n) << "n=" << n << " k=" << k;
+        for (int k = 0; k < n / 2; ++k)
+            EXPECT_NEAR(a[std::size_t(k)], b[std::size_t(k)], 1e-9 * n) << "n=" << n << " k=" << k;
     }
 }
 
 TEST(SynthVorbis, DecodesWithStbVorbis) {
     for (int rate : {44100, 22050}) {
         for (double q : {0.0, 0.4, 1.0}) {
-            int  n   = rate + 777; // not a multiple of the block size: the end is trimmed exactly
-            auto pcm = testSignal(rate, n);
+            int           n   = rate + 777; // not a multiple of the block size: the end is trimmed exactly
+            auto          pcm = testSignal(rate, n);
             VorbisOptions o;
             o.sampleRate = rate;
             o.quality    = q;
             auto ogg     = encodeVorbis(pcm, o);
             int  ch = 0, sr = 0;
-            auto dec     = decodeVorbis(ogg, &ch, &sr);
+            auto dec = decodeVorbis(ogg, &ch, &sr);
             ASSERT_EQ(ch, 1);
             ASSERT_EQ(sr, rate);
             ASSERT_EQ(dec.size(), pcm.size()) << "rate " << rate << " q " << q;
@@ -253,9 +263,9 @@ TEST(SynthPatch, RendersDeterministically) {
         ],
         "fx": [{"type": "echo", "time": 0.05}, {"type": "reverb", "mix": 0.2}, {"type": "filter", "filter": "hp", "freq": 60}]
     })json");
-    auto a = renderPatch(patch, Json::object(), 5, 44100);
-    auto b = renderPatch(patch, Json::object(), 5, 44100);
-    auto c = renderPatch(patch, Json::object(), 6, 44100);
+    auto a     = renderPatch(patch, Json::object(), 5, 44100);
+    auto b     = renderPatch(patch, Json::object(), 5, 44100);
+    auto c     = renderPatch(patch, Json::object(), 6, 44100);
     EXPECT_EQ(a, b);
     EXPECT_NE(a, c);
     float peak = 0;
@@ -269,17 +279,24 @@ TEST(SynthPatch, RendersDeterministically) {
 }
 
 TEST(SynthPatch, ReportsBadInput) {
-    EXPECT_THROW((void)renderPatch(Json::parse(R"json({"layers": [{"type": "kazoo"}]})json"), Json(), 1, 44100), PatchError);
+    EXPECT_THROW(
+        (void)renderPatch(Json::parse(R"json({"layers": [{"type": "kazoo"}]})json"), Json(), 1, 44100),
+        PatchError
+    );
     EXPECT_THROW((void)renderPatch(Json::parse(R"json({"length": 1})json"), Json(), 1, 44100), PatchError);
     EXPECT_THROW((void)renderPatch(Json("missing/patch"), Json(), 1, 44100), PatchError);
-    EXPECT_THROW((void)renderPatch(Json::parse(R"json({"layers": [{"freq": "$undefined"}]})json"), Json(), 1, 44100), PatchError);
+    EXPECT_THROW(
+        (void)renderPatch(Json::parse(R"json({"layers": [{"freq": "$undefined"}]})json"), Json(), 1, 44100),
+        PatchError
+    );
 }
 
 TEST(SynthPatch, UsesTheLibrary) {
     PatchLibrary lib;
     lib.add("beep", Json::parse(R"json({"params": {"f": 440}, "length": 0.1, "layers": [{"freq": "$f"}]})json"));
-    auto outer = Json::parse(R"json({"length": 0.2, "layers": [{"type": "patch", "patch": "beep", "params": {"f": 660}}]})json");
-    auto pcm   = renderPatch(outer, Json(), 1, 22050, &lib);
+    auto outer =
+        Json::parse(R"json({"length": 0.2, "layers": [{"type": "patch", "patch": "beep", "params": {"f": 660}}]})json");
+    auto pcm = renderPatch(outer, Json(), 1, 22050, &lib);
     EXPECT_GT(pcm.size(), std::size_t(0.1 * 22050));
     EXPECT_FALSE(renderPatch(Json("beep"), Json(), 1, 22050, &lib).empty());
 }
@@ -297,20 +314,25 @@ TEST(SynthSequencer, ParsesNotes) {
 
 TEST(SynthSequencer, RendersExactLength) {
     PatchLibrary lib;
-    lib.add("tone", Json::parse(R"json({"params": {"freq": 440, "dur": 0.2}, "length": "$dur", "layers": [{"freq": "$freq"}]})json"));
+    lib.add(
+        "tone",
+        Json::parse(R"json({"params": {"freq": 440, "dur": 0.2}, "length": "$dur", "layers": [{"freq": "$freq"}]})json")
+    );
     auto track = Json::parse(R"json({
         "bpm": 120, "rpb": 4, "length": 3.0, "seed": 3,
         "instruments": {"t": {"patch": "tone", "gain": -6}},
         "patterns": {"A": {"rows": 8, "channels": [{"inst": "t", "notes": "C4 . E4:0.5 - G4+C5 . . ."}]}},
         "order": ["A", {"p": "A", "t": 2}]
     })json");
-    auto a = renderTrack(track, 16000, &lib);
+    auto a     = renderTrack(track, 16000, &lib);
     EXPECT_EQ(a.size(), std::size_t(3 * 16000));
     EXPECT_EQ(a, renderTrack(track, 16000, &lib));
     float peak = 0;
     for (float v : a) peak = std::max(peak, std::fabs(v));
     EXPECT_GT(peak, 0.5f);
-    auto bad = Json::parse(R"json({"bpm": 120, "instruments": {}, "patterns": {"A": {"rows": 4, "channels": [{"inst": "x", "notes": "C4"}]}}, "order": ["A"]})json");
+    auto bad = Json::parse(
+        R"json({"bpm": 120, "instruments": {}, "patterns": {"A": {"rows": 4, "channels": [{"inst": "x", "notes": "C4"}]}}, "order": ["A"]})json"
+    );
     EXPECT_THROW((void)renderTrack(bad, 16000, &lib), PatchError);
 }
 
@@ -334,7 +356,8 @@ TEST(SynthPatch, NegativeStartCutsTheHead) {
 }
 
 // Every committed sound decodes with an independent decoder (stb_vorbis) to the length its last
-// granule position announces: mono, 22.05 or 44.1 kHz, finite samples near -1..1 (a lossy decode may\n// overshoot full scale a little; garbage would not stay this close).
+// granule position announces: mono, 22.05 or 44.1 kHz, finite samples near -1..1 (a lossy decode may\n// overshoot full
+// scale a little; garbage would not stay this close).
 TEST(SynthAssets, EveryFileDecodes) {
     auto const root = repoRoot();
     ASSERT_FALSE(root.empty()) << "repository root not found (set GF_ROOT)";
@@ -352,7 +375,8 @@ TEST(SynthAssets, EveryFileDecodes) {
         EXPECT_TRUE(rate == 22050 || rate == 44100) << name << ": " << rate << " Hz";
         EXPECT_EQ(std::int64_t(pcm.size()), info.samples) << name;
         EXPECT_GT(pcm.size(), std::size_t(0)) << name;
-        bool finite = std::all_of(pcm.begin(), pcm.end(), [](float x) { return std::isfinite(x) && std::fabs(x) <= 1.5f; });
+        bool finite =
+            std::all_of(pcm.begin(), pcm.end(), [](float x) { return std::isfinite(x) && std::fabs(x) <= 1.5f; });
         EXPECT_TRUE(finite) << name << ": a sample is not finite or far outside -1..1";
     }
     EXPECT_GT(files, 200);
@@ -376,7 +400,8 @@ TEST(SynthAssets, DefinitionsMatchTheInventory) {
             defs[id] = def;
             for (auto const& s : def["sounds"].items()) {
                 auto const name = s.isString() ? s.string() : s.str("name", "");
-                if (name.rfind("sounds/twilightforest/", 0) == 0) EXPECT_TRUE(fs::exists(unit.path() / "rp" / (name + ".ogg"))) << id << ": " << name;
+                if (name.rfind("sounds/twilightforest/", 0) == 0)
+                    EXPECT_TRUE(fs::exists(unit.path() / "rp" / (name + ".ogg"))) << id << ": " << name;
             }
         }
     }

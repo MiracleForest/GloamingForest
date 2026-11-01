@@ -28,7 +28,7 @@ inline constexpr double kLn10  = 2.30258509299404568402;
 [[nodiscard]] double sqrt(double x);
 [[nodiscard]] double floor(double x);
 /// Round half away from zero.
-[[nodiscard]] double round(double x);
+[[nodiscard]] double        round(double x);
 [[nodiscard]] inline double abs(double x) { return x < 0 ? -x : x; }
 [[nodiscard]] inline double clamp(double x, double lo, double hi) { return x < lo ? lo : (x > hi ? hi : x); }
 

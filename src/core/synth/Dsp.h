@@ -42,7 +42,7 @@ enum class FilterType { Lowpass, Highpass, Bandpass, Notch, Peak, Bell, LowShelf
 /// Topology-preserving-transform state-variable filter.
 class Svf {
 public:
-    void setup(FilterType type, double freq, double q, double gainDb, double rate);
+    void   setup(FilterType type, double freq, double q, double gainDb, double rate);
     double process(double x);
     void   reset() { mIc1 = mIc2 = 0; }
 
@@ -60,8 +60,8 @@ private:
 /// Exponentially decaying sinusoid bank (modal synthesis of struck objects).
 class ModalBank {
 public:
-    void   add(double freq, double decaySeconds, double gain, double phase, double rate);
-    double next();
+    void               add(double freq, double decaySeconds, double gain, double phase, double rate);
+    double             next();
     [[nodiscard]] bool empty() const { return mModes.empty(); }
 
 private:
@@ -89,7 +89,7 @@ private:
 class Delay {
 public:
     explicit Delay(std::size_t maxSamples = 1) : mBuf(maxSamples + 2, 0.0) {}
-    void   push(double x);
+    void push(double x);
     /// The sample `delay` samples ago (fractional, linear interpolation).
     [[nodiscard]] double tap(double delay) const;
 

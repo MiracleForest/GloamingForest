@@ -13,7 +13,7 @@ std::vector<std::uint8_t> encodeWav(std::span<float const> pcm, int sampleRate) 
     auto                      put = [&out](std::uint32_t v, int n) {
         for (int i = 0; i < n; ++i) out.push_back(std::uint8_t(v >> (8 * i)));
     };
-    auto tag = [&out](char const* s) { out.insert(out.end(), s, s + 4); };
+    auto                tag       = [&out](char const* s) { out.insert(out.end(), s, s + 4); };
     std::uint32_t const dataBytes = std::uint32_t(pcm.size() * 2);
     tag("RIFF");
     put(36 + dataBytes, 4);
@@ -38,7 +38,8 @@ std::vector<std::uint8_t> encodeWav(std::span<float const> pcm, int sampleRate) 
 
 std::vector<float> decodeWav(std::span<std::uint8_t const> f, int* sampleRate) {
     auto u32 = [&f](std::size_t p) {
-        return std::uint32_t(f[p]) | std::uint32_t(f[p + 1]) << 8 | std::uint32_t(f[p + 2]) << 16 | std::uint32_t(f[p + 3]) << 24;
+        return std::uint32_t(f[p]) | std::uint32_t(f[p + 1]) << 8 | std::uint32_t(f[p + 2]) << 16
+             | std::uint32_t(f[p + 3]) << 24;
     };
     auto u16 = [&f](std::size_t p) { return std::uint16_t(f[p] | f[p + 1] << 8); };
     if (f.size() < 12 || std::memcmp(f.data(), "RIFF", 4) != 0 || std::memcmp(f.data() + 8, "WAVE", 4) != 0) return {};

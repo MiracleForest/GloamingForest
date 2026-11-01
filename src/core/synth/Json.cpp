@@ -33,7 +33,9 @@ private:
                 ++col;
             }
         }
-        throw JsonError("JSON " + std::string(what) + " at line " + std::to_string(line) + ", column " + std::to_string(col));
+        throw JsonError(
+            "JSON " + std::string(what) + " at line " + std::to_string(line) + ", column " + std::to_string(col)
+        );
     }
 
     void skipSpace() {
@@ -118,8 +120,8 @@ private:
         if (mPos + 4 > mText.size()) error("bad \\u escape");
         unsigned v = 0;
         for (int i = 0; i < 4; ++i) {
-            char c = mText[mPos++];
-            v <<= 4;
+            char c   = mText[mPos++];
+            v      <<= 4;
             if (c >= '0' && c <= '9') v |= unsigned(c - '0');
             else if (c >= 'a' && c <= 'f') v |= unsigned(c - 'a' + 10);
             else if (c >= 'A' && c <= 'F') v |= unsigned(c - 'A' + 10);
@@ -142,25 +144,43 @@ private:
             if (mPos >= mText.size()) error("unterminated string");
             char e = mText[mPos++];
             switch (e) {
-            case '"':  out += '"'; break;
-            case '\\': out += '\\'; break;
-            case '/':  out += '/'; break;
-            case 'b':  out += '\b'; break;
-            case 'f':  out += '\f'; break;
-            case 'n':  out += '\n'; break;
-            case 'r':  out += '\r'; break;
-            case 't':  out += '\t'; break;
+            case '"':
+                out += '"';
+                break;
+            case '\\':
+                out += '\\';
+                break;
+            case '/':
+                out += '/';
+                break;
+            case 'b':
+                out += '\b';
+                break;
+            case 'f':
+                out += '\f';
+                break;
+            case 'n':
+                out += '\n';
+                break;
+            case 'r':
+                out += '\r';
+                break;
+            case 't':
+                out += '\t';
+                break;
             case 'u': {
                 unsigned cp = parseHex4();
-                if (cp >= 0xD800 && cp < 0xDC00 && mPos + 1 < mText.size() && mText[mPos] == '\\' && mText[mPos + 1] == 'u') {
-                    mPos += 2;
-                    unsigned lo = parseHex4();
-                    cp          = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
+                if (cp >= 0xD800 && cp < 0xDC00 && mPos + 1 < mText.size() && mText[mPos] == '\\'
+                    && mText[mPos + 1] == 'u') {
+                    mPos        += 2;
+                    unsigned lo  = parseHex4();
+                    cp           = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
                 }
                 appendUtf8(out, cp);
                 break;
             }
-            default: error("bad escape");
+            default:
+                error("bad escape");
             }
         }
         return out;
@@ -247,11 +267,21 @@ void dumpString(std::string& out, std::string const& s) {
     out += '"';
     for (char c : s) {
         switch (c) {
-        case '"':  out += "\\\""; break;
-        case '\\': out += "\\\\"; break;
-        case '\n': out += "\\n"; break;
-        case '\r': out += "\\r"; break;
-        case '\t': out += "\\t"; break;
+        case '"':
+            out += "\\\"";
+            break;
+        case '\\':
+            out += "\\\\";
+            break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
         default:
             if (std::uint8_t(c) < 0x20) {
                 char buf[8];
@@ -267,18 +297,24 @@ void dumpString(std::string& out, std::string const& s) {
 
 void dumpValue(std::string& out, Json const& v) {
     switch (v.type()) {
-    case Json::Type::Null:   out += "null"; break;
-    case Json::Type::Bool:   out += v.boolean() ? "true" : "false"; break;
+    case Json::Type::Null:
+        out += "null";
+        break;
+    case Json::Type::Bool:
+        out += v.boolean() ? "true" : "false";
+        break;
     case Json::Type::Number: {
         char buf[64];
         auto res = std::to_chars(buf, buf + sizeof(buf), v.number());
         out.append(buf, res.ptr);
         break;
     }
-    case Json::Type::String: dumpString(out, v.string()); break;
+    case Json::Type::String:
+        dumpString(out, v.string());
+        break;
     case Json::Type::Array: {
-        out += '[';
-        bool first = true;
+        out        += '[';
+        bool first  = true;
         for (auto const& x : v.items()) {
             if (!first) out += ',';
             first = false;
@@ -288,8 +324,8 @@ void dumpValue(std::string& out, Json const& v) {
         break;
     }
     case Json::Type::Object: {
-        out += '{';
-        bool first = true;
+        out        += '{';
+        bool first  = true;
         for (auto const& [k, x] : v.members()) {
             if (!first) out += ',';
             first = false;
@@ -307,7 +343,8 @@ void dumpValue(std::string& out, Json const& v) {
 
 Json Json::parse(std::string_view text) {
     // a UTF-8 byte order mark is skipped
-    if (text.size() >= 3 && std::uint8_t(text[0]) == 0xEF && std::uint8_t(text[1]) == 0xBB && std::uint8_t(text[2]) == 0xBF) {
+    if (text.size() >= 3 && std::uint8_t(text[0]) == 0xEF && std::uint8_t(text[1]) == 0xBB
+        && std::uint8_t(text[2]) == 0xBF) {
         text.remove_prefix(3);
     }
     return Parser(text).parseDocument();

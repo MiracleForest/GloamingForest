@@ -83,7 +83,9 @@ private:
     }
     std::string ident() {
         std::size_t start = mPos;
-        while (mPos < mS.size() && (std::isalnum(static_cast<unsigned char>(mS[mPos])) || mS[mPos] == '_' || mS[mPos] == '.')) ++mPos;
+        while (mPos < mS.size()
+               && (std::isalnum(static_cast<unsigned char>(mS[mPos])) || mS[mPos] == '_' || mS[mPos] == '.'))
+            ++mPos;
         return std::string(mS.substr(start, mPos - start));
     }
     double primary() {
@@ -108,8 +110,10 @@ private:
             while (mPos < mS.size()
                    && (std::isdigit(static_cast<unsigned char>(mS[mPos])) || mS[mPos] == '.'
                        || ((mS[mPos] == 'e' || mS[mPos] == 'E') && mPos + 1 < mS.size()
-                           && (std::isdigit(static_cast<unsigned char>(mS[mPos + 1])) || mS[mPos + 1] == '-' || mS[mPos + 1] == '+'))
-                       || ((mS[mPos] == '-' || mS[mPos] == '+') && mPos > start && (mS[mPos - 1] == 'e' || mS[mPos - 1] == 'E')))) {
+                           && (std::isdigit(static_cast<unsigned char>(mS[mPos + 1])) || mS[mPos + 1] == '-'
+                               || mS[mPos + 1] == '+'))
+                       || ((mS[mPos] == '-' || mS[mPos] == '+') && mPos > start
+                           && (mS[mPos - 1] == 'e' || mS[mPos - 1] == 'E')))) {
                 ++mPos;
             }
             return Json::parse(mS.substr(start, mPos - start)).number();
@@ -173,7 +177,9 @@ double evalNum(Json const& v, Scope& scope, double def) {
     throw PatchError("expected a number or an expression, got " + v.dump());
 }
 
-double evalKey(Json const& obj, std::string_view key, Scope& scope, double def) { return evalNum(obj[key], scope, def); }
+double evalKey(Json const& obj, std::string_view key, Scope& scope, double def) {
+    return evalNum(obj[key], scope, def);
+}
 
 // ---- time-varying values -------------------------------------------------------------------------------
 
@@ -261,14 +267,15 @@ public:
     /// The value `t` seconds into a layer of `len` seconds.
     [[nodiscard]] double at(double t, double len) const {
         switch (mKind) {
-        case Kind::Const: return mConst;
+        case Kind::Const:
+            return mConst;
         case Kind::Env: {
             double tt = mRel && len > 0 ? t / len : t;
             if (tt <= mPts.front().first) return mPts.front().second;
             for (std::size_t i = 1; i < mPts.size(); ++i) {
                 if (tt < mPts[i].first) {
                     double t0 = mPts[i - 1].first, t1 = mPts[i].first;
-                    double x  = t1 > t0 ? (tt - t0) / (t1 - t0) : 1.0;
+                    double x = t1 > t0 ? (tt - t0) / (t1 - t0) : 1.0;
                     return interp(mPts[i - 1].second, mPts[i].second, x);
                 }
             }
@@ -323,9 +330,12 @@ private:
         case 1:
             if (a > 0 && b > 0) return a * math::pow(b / a, x);
             return a + (b - a) * x;
-        case 2:  return x < 1.0 ? a : b;
-        case 3:  return a + (b - a) * x * x * (3.0 - 2.0 * x);
-        default: return a + (b - a) * x;
+        case 2:
+            return x < 1.0 ? a : b;
+        case 3:
+            return a + (b - a) * x * x * (3.0 - 2.0 * x);
+        default:
+            return a + (b - a) * x;
         }
     }
 
@@ -348,16 +358,71 @@ struct ModeSpec {
 };
 
 std::vector<ModeSpec> modalPreset(std::string const& name) {
-    if (name == "wood") return {{1.0, 0.12, 1.0}, {2.57, 0.07, 0.5}, {4.21, 0.045, 0.3}, {6.13, 0.03, 0.18}};
+    if (name == "wood")
+        return {
+            {1.0,  0.12,  1.0 },
+            {2.57, 0.07,  0.5 },
+            {4.21, 0.045, 0.3 },
+            {6.13, 0.03,  0.18}
+        };
     if (name == "metal")
-        return {{1.0, 1.4, 1.0}, {2.756, 1.0, 0.6}, {5.404, 0.75, 0.45}, {8.933, 0.55, 0.3}, {13.34, 0.4, 0.2}};
-    if (name == "glass") return {{1.0, 0.9, 1.0}, {2.32, 0.55, 0.6}, {4.25, 0.4, 0.4}, {6.63, 0.28, 0.25}, {9.38, 0.2, 0.15}};
+        return {
+            {1.0,   1.4,  1.0 },
+            {2.756, 1.0,  0.6 },
+            {5.404, 0.75, 0.45},
+            {8.933, 0.55, 0.3 },
+            {13.34, 0.4,  0.2 }
+        };
+    if (name == "glass")
+        return {
+            {1.0,  0.9,  1.0 },
+            {2.32, 0.55, 0.6 },
+            {4.25, 0.4,  0.4 },
+            {6.63, 0.28, 0.25},
+            {9.38, 0.2,  0.15}
+        };
     if (name == "bell")
-        return {{0.56, 2.0, 0.6}, {0.92, 1.6, 0.5}, {1.19, 1.4, 1.0}, {1.71, 1.0, 0.5}, {2.0, 0.9, 0.6}, {2.74, 0.7, 0.4}, {3.0, 0.6, 0.35}, {3.76, 0.45, 0.25}, {4.07, 0.4, 0.2}};
-    if (name == "stone") return {{1.0, 0.05, 1.0}, {1.73, 0.035, 0.7}, {2.91, 0.025, 0.5}, {4.4, 0.02, 0.3}};
-    if (name == "bone") return {{1.0, 0.06, 1.0}, {2.2, 0.04, 0.6}, {3.9, 0.03, 0.4}, {5.8, 0.02, 0.25}};
-    if (name == "ice") return {{1.0, 0.25, 1.0}, {2.9, 0.18, 0.7}, {5.2, 0.12, 0.5}, {8.3, 0.09, 0.35}, {12.1, 0.06, 0.2}};
-    if (name == "drum") return {{1.0, 0.3, 1.0}, {1.59, 0.2, 0.5}, {2.14, 0.15, 0.35}, {2.3, 0.12, 0.3}, {2.65, 0.1, 0.2}};
+        return {
+            {0.56, 2.0,  0.6 },
+            {0.92, 1.6,  0.5 },
+            {1.19, 1.4,  1.0 },
+            {1.71, 1.0,  0.5 },
+            {2.0,  0.9,  0.6 },
+            {2.74, 0.7,  0.4 },
+            {3.0,  0.6,  0.35},
+            {3.76, 0.45, 0.25},
+            {4.07, 0.4,  0.2 }
+        };
+    if (name == "stone")
+        return {
+            {1.0,  0.05,  1.0},
+            {1.73, 0.035, 0.7},
+            {2.91, 0.025, 0.5},
+            {4.4,  0.02,  0.3}
+        };
+    if (name == "bone")
+        return {
+            {1.0, 0.06, 1.0 },
+            {2.2, 0.04, 0.6 },
+            {3.9, 0.03, 0.4 },
+            {5.8, 0.02, 0.25}
+        };
+    if (name == "ice")
+        return {
+            {1.0,  0.25, 1.0 },
+            {2.9,  0.18, 0.7 },
+            {5.2,  0.12, 0.5 },
+            {8.3,  0.09, 0.35},
+            {12.1, 0.06, 0.2 }
+        };
+    if (name == "drum")
+        return {
+            {1.0,  0.3,  1.0 },
+            {1.59, 0.2,  0.5 },
+            {2.14, 0.15, 0.35},
+            {2.3,  0.12, 0.3 },
+            {2.65, 0.1,  0.2 }
+        };
     throw PatchError("unknown modal preset \"" + name + "\" (wood, metal, glass, bell, stone, bone, ice, drum)");
 }
 
@@ -366,13 +431,15 @@ struct Formant {
 };
 
 std::array<Formant, 3> vowel(int i) {
-    static constexpr std::array<std::array<Formant, 3>, 5> table = {{
-        {{{800, 0, 80}, {1150, -6, 90}, {2900, -32, 120}}},  // a
-        {{{400, 0, 60}, {1700, -14, 80}, {2600, -18, 120}}}, // e
-        {{{250, 0, 60}, {1750, -30, 90}, {2600, -16, 100}}}, // i
-        {{{400, 0, 40}, {750, -11, 80}, {2400, -21, 100}}},  // o
-        {{{350, 0, 40}, {600, -20, 80}, {2400, -32, 100}}},  // u
-    }};
+    static constexpr std::array<std::array<Formant, 3>, 5> table = {
+        {
+         {{{800, 0, 80}, {1150, -6, 90}, {2900, -32, 120}}},  // a
+            {{{400, 0, 60}, {1700, -14, 80}, {2600, -18, 120}}}, // e
+            {{{250, 0, 60}, {1750, -30, 90}, {2600, -16, 100}}}, // i
+            {{{400, 0, 40}, {750, -11, 80}, {2400, -21, 100}}},  // o
+            {{{350, 0, 40}, {600, -20, 80}, {2400, -32, 100}}},  // u
+        }
+    };
     return table[std::size_t(std::clamp(i, 0, 4))];
 }
 
@@ -410,10 +477,27 @@ void mixInto(std::vector<double>& out, std::vector<double> const& src, std::int6
     for (std::size_t i = skip; i < src.size(); ++i) out[std::size_t(at) + (i - skip)] += src[i] * gain;
 }
 
-std::vector<double> renderPatchBuffer(Json const& patch, Scope& parent, Json const& params, std::uint64_t seed, int rate, PatchLibrary const* lib, int depth, bool finishIt);
+std::vector<double> renderPatchBuffer(
+    Json const&         patch,
+    Scope&              parent,
+    Json const&         params,
+    std::uint64_t       seed,
+    int                 rate,
+    PatchLibrary const* lib,
+    int                 depth,
+    bool                finishIt
+);
 
 /// Source samples of one layer (before amplitude, filters and shaping).
-std::vector<double> layerSource(Json const& L, std::string const& type, Scope& scope, Ctx const& ctx, double len, std::size_t n, std::uint64_t seed) {
+std::vector<double> layerSource(
+    Json const&        L,
+    std::string const& type,
+    Scope&             scope,
+    Ctx const&         ctx,
+    double             len,
+    std::size_t        n,
+    std::uint64_t      seed
+) {
     double const        rate = ctx.rate;
     std::vector<double> buf(n, 0.0);
     if (type == "osc") {
@@ -442,17 +526,18 @@ std::vector<double> layerSource(Json const& L, std::string const& type, Scope& s
         for (std::size_t i = 0; i < n; ++i) {
             double t = double(i) / rate;
             double f = constFreq ? f0 : freq.at(t, len);
-            if (vDepth != 0 && t >= vDelay) f *= math::semitones(vDepth * math::sin(math::kTwoPi * vRate * (t - vDelay)));
+            if (vDepth != 0 && t >= vDelay)
+                f *= math::semitones(vDepth * math::sin(math::kTwoPi * vRate * (t - vDelay)));
             double w = constFreq ? w0 : pw.at(t, len);
             double s = 0;
             for (int v = 0; v < voices; ++v) {
-                double cents = voices > 1 ? detune * (2.0 * v / (voices - 1) - 1.0) : 0.0;
-                double fv    = cents != 0 ? f * math::semitones(cents / 100.0) : f;
-                double dt    = math::clamp(fv / rate, 0.0, 0.49);
-                double& ph   = phases[std::size_t(v)];
-                s += dsp::oscSample(wave, ph, dt, w);
-                ph += dt;
-                ph -= math::floor(ph);
+                double  cents  = voices > 1 ? detune * (2.0 * v / (voices - 1) - 1.0) : 0.0;
+                double  fv     = cents != 0 ? f * math::semitones(cents / 100.0) : f;
+                double  dt     = math::clamp(fv / rate, 0.0, 0.49);
+                double& ph     = phases[std::size_t(v)];
+                s             += dsp::oscSample(wave, ph, dt, w);
+                ph            += dt;
+                ph            -= math::floor(ph);
             }
             buf[i] = s / double(voices);
         }
@@ -465,8 +550,8 @@ std::vector<double> layerSource(Json const& L, std::string const& type, Scope& s
             if (h > 0) {
                 acc += h / rate;
                 if (acc >= 1.0) {
-                    acc -= math::floor(acc);
-                    held = noise.next();
+                    acc  -= math::floor(acc);
+                    held  = noise.next();
                 }
                 buf[i] = held;
             } else {
@@ -482,21 +567,27 @@ std::vector<double> layerSource(Json const& L, std::string const& type, Scope& s
         auto   carrier  = dsp::parseWave(L.str("wave", "sine"));
         double pc = 0, pm = 0, prev = 0;
         for (std::size_t i = 0; i < n; ++i) {
-            double t  = double(i) / rate;
-            double f  = freq.at(t, len);
-            double fm = modFixed > 0 ? modFixed : f * ratio;
-            double m  = math::sin(math::kTwoPi * pm + feedback * prev);
-            prev      = m;
-            double ph = pc + index.at(t, len) * m / math::kTwoPi;
-            ph -= math::floor(ph);
-            buf[i] = dsp::oscSample(carrier, ph, f / rate, 0.5);
-            pc += f / rate;
-            pc -= math::floor(pc);
-            pm += fm / rate;
-            pm -= math::floor(pm);
+            double t   = double(i) / rate;
+            double f   = freq.at(t, len);
+            double fm  = modFixed > 0 ? modFixed : f * ratio;
+            double m   = math::sin(math::kTwoPi * pm + feedback * prev);
+            prev       = m;
+            double ph  = pc + index.at(t, len) * m / math::kTwoPi;
+            ph        -= math::floor(ph);
+            buf[i]     = dsp::oscSample(carrier, ph, f / rate, 0.5);
+            pc        += f / rate;
+            pc        -= math::floor(pc);
+            pm        += fm / rate;
+            pm        -= math::floor(pm);
         }
     } else if (type == "pluck") {
-        dsp::Pluck pl(evalKey(L, "freq", scope, 220), evalKey(L, "decay", scope, 1.0), evalKey(L, "bright", scope, 0.5), rate, seed);
+        dsp::Pluck pl(
+            evalKey(L, "freq", scope, 220),
+            evalKey(L, "decay", scope, 1.0),
+            evalKey(L, "bright", scope, 0.5),
+            rate,
+            seed
+        );
         for (std::size_t i = 0; i < n; ++i) buf[i] = pl.next();
     } else if (type == "modal") {
         double                base   = evalKey(L, "freq", scope, 440);
@@ -510,14 +601,14 @@ std::vector<double> layerSource(Json const& L, std::string const& type, Scope& s
                 modes.push_back({evalNum(x[0], scope, 1), evalNum(x[1], scope, 0.2), evalNum(x[2], scope, 1)});
             }
         } else modes = modalPreset("wood");
-        Random           mrng(seed);
-        dsp::ModalBank   bank;
+        Random         mrng(seed);
+        dsp::ModalBank bank;
         for (auto const& md : modes) {
             double f = base * md.ratio * (spread > 0 ? math::semitones(mrng.bipolar() * spread) : 1.0);
             bank.add(f, md.decay * dscale, md.gain, mrng.uniform(), rate);
         }
-        double     strike = evalKey(L, "strike", scope, 0.004);
-        dsp::Noise nz(dsp::NoiseColor::White, seed ^ 0x5157);
+        double      strike = evalKey(L, "strike", scope, 0.004);
+        dsp::Noise  nz(dsp::NoiseColor::White, seed ^ 0x5157);
         std::size_t sn = std::size_t(strike * rate);
         for (std::size_t i = 0; i < n; ++i) {
             double s = bank.next();
@@ -525,9 +616,9 @@ std::vector<double> layerSource(Json const& L, std::string const& type, Scope& s
             buf[i] = s;
         }
     } else if (type == "grains") {
-        Value  density = Value::compile(L["density"], scope, 40);
-        Value  gamp    = Value::compile(L["grainAmp"], scope, 1);
-        auto   range   = [&](char const* key, double lo, double hi) {
+        Value density = Value::compile(L["density"], scope, 40);
+        Value gamp    = Value::compile(L["grainAmp"], scope, 1);
+        auto  range   = [&](char const* key, double lo, double hi) {
             Json const& r = L[key];
             if (r.isArray()) return std::pair{evalNum(r[0], scope, lo), evalNum(r[1], scope, hi)};
             if (!r.isNull()) {
@@ -536,15 +627,15 @@ std::vector<double> layerSource(Json const& L, std::string const& type, Scope& s
             }
             return std::pair{lo, hi};
         };
-        auto        [g0, g1] = range("grain", 0.01, 0.04);
-        auto        [f0, f1] = range("freq", 400, 4000);
-        std::string gw       = L.str("wave", "sine");
-        double      q        = evalKey(L, "q", scope, 6);
+        auto [g0, g1]  = range("grain", 0.01, 0.04);
+        auto [f0, f1]  = range("freq", 400, 4000);
+        std::string gw = L.str("wave", "sine");
+        double      q  = evalKey(L, "q", scope, 6);
         Random      grng(seed);
         double      t = 0;
         while (t < len) {
-            double d = math::clamp(density.at(t, len), 0.1, 20000.0);
-            t += -math::log(std::max(1e-9, 1.0 - grng.uniform())) / d;
+            double d  = math::clamp(density.at(t, len), 0.1, 20000.0);
+            t        += -math::log(std::max(1e-9, 1.0 - grng.uniform())) / d;
             if (t >= len) break;
             double gl   = grng.uniform(g0, g1);
             double gf   = f0 > 0 && f1 > 0 ? f0 * math::pow(f1 / f0, grng.uniform()) : f0;
@@ -556,30 +647,30 @@ std::vector<double> layerSource(Json const& L, std::string const& type, Scope& s
                 dsp::Noise gn(dsp::NoiseColor::White, grng.next());
                 bp.setup(dsp::FilterType::Bandpass, gf, q, 0, rate);
                 for (std::size_t i = 0; i < glen && at + i < n; ++i) {
-                    double e = math::sin(math::kPi * double(i) / double(glen));
+                    double e     = math::sin(math::kPi * double(i) / double(glen));
                     buf[at + i] += ga * e * bp.process(gn.next()) * 1.5;
                 }
             } else if (gw == "click") {
                 double ph = 0;
                 for (std::size_t i = 0; i < glen && at + i < n; ++i) {
-                    double e = math::exp(-6.0 * double(i) / double(glen));
+                    double e     = math::exp(-6.0 * double(i) / double(glen));
                     buf[at + i] += ga * e * math::sin(math::kTwoPi * ph);
-                    ph += gf / rate;
+                    ph          += gf / rate;
                 }
             } else {
                 double ph = grng.uniform();
                 for (std::size_t i = 0; i < glen && at + i < n; ++i) {
-                    double e = math::sin(math::kPi * double(i) / double(glen));
+                    double e     = math::sin(math::kPi * double(i) / double(glen));
                     buf[at + i] += ga * e * e * math::sin(math::kTwoPi * ph);
-                    ph += gf / rate;
-                    ph -= math::floor(ph);
+                    ph          += gf / rate;
+                    ph          -= math::floor(ph);
                 }
             }
         }
     } else if (type == "patch") {
         if (ctx.depth >= kMaxDepth) throw PatchError("nested patches too deep");
         Json const& inner = resolvePatch(L["patch"], ctx.library);
-        auto        sub   = renderPatchBuffer(inner, scope, L["params"], seed, ctx.rate, ctx.library, ctx.depth + 1, true);
+        auto sub = renderPatchBuffer(inner, scope, L["params"], seed, ctx.rate, ctx.library, ctx.depth + 1, true);
         for (std::size_t i = 0; i < n && i < sub.size(); ++i) buf[i] = sub[i];
         if (sub.size() > n) { // the layer ends before the nested patch: fade out instead of a click
             std::size_t fn = std::min<std::size_t>(n, std::size_t(0.01 * rate));
@@ -594,12 +685,12 @@ std::vector<double> layerSource(Json const& L, std::string const& type, Scope& s
 void applyFilters(std::vector<double>& buf, Json const& filters, Scope& scope, double rate, double len) {
     if (filters.isNull()) return;
     auto one = [&](Json const& f) {
-        auto       type = dsp::parseFilter(f.str("type", "lp"));
-        Value      freq = Value::compile(f["freq"], scope, 1000);
-        Value      q    = Value::compile(f["q"], scope, 0.707);
-        double     gain = evalKey(f, "gain", scope, 0);
-        int        poles = std::clamp(int(evalKey(f, "stages", scope, 1)), 1, 4);
-        bool const fixed = freq.isConstant() && q.isConstant();
+        auto                  type  = dsp::parseFilter(f.str("type", "lp"));
+        Value                 freq  = Value::compile(f["freq"], scope, 1000);
+        Value                 q     = Value::compile(f["q"], scope, 0.707);
+        double                gain  = evalKey(f, "gain", scope, 0);
+        int                   poles = std::clamp(int(evalKey(f, "stages", scope, 1)), 1, 4);
+        bool const            fixed = freq.isConstant() && q.isConstant();
         std::vector<dsp::Svf> svf(static_cast<std::size_t>(poles));
         for (std::size_t i = 0; i < buf.size(); ++i) {
             if (i == 0 || (!fixed && i % 16 == 0)) {
@@ -621,14 +712,15 @@ void applyFilters(std::vector<double>& buf, Json const& filters, Scope& scope, d
 void applyFormant(std::vector<double>& buf, Json const& F, Scope& scope, double rate, double len) {
     Value                    vow;
     static std::string const letters = "aeiou";
-    if (F["vowel"].isString() && F["vowel"].string().size() == 1 && letters.find(F["vowel"].string()[0]) != std::string::npos) {
+    if (F["vowel"].isString() && F["vowel"].string().size() == 1
+        && letters.find(F["vowel"].string()[0]) != std::string::npos) {
         vow = Value::constant(double(letters.find(F["vowel"].string()[0]))); // "a", "e", "i", "o", "u"
     } else {
         vow = Value::compile(F["vowel"], scope, 0);
     }
-    double shift = evalKey(F, "shift", scope, 1);
-    double qmul  = evalKey(F, "q", scope, 1);
-    double mix   = evalKey(F, "mix", scope, 1);
+    double                  shift = evalKey(F, "shift", scope, 1);
+    double                  qmul  = evalKey(F, "q", scope, 1);
+    double                  mix   = evalKey(F, "mix", scope, 1);
     std::array<dsp::Svf, 3> bp;
     std::array<double, 3>   gains{};
     for (std::size_t i = 0; i < buf.size(); ++i) {
@@ -642,7 +734,9 @@ void applyFormant(std::vector<double>& buf, Json const& F, Scope& scope, double 
                 double f  = (fa[std::size_t(k)].f + (fb[std::size_t(k)].f - fa[std::size_t(k)].f) * x) * shift;
                 double bw = (fa[std::size_t(k)].bw + (fb[std::size_t(k)].bw - fa[std::size_t(k)].bw) * x) * shift;
                 bp[std::size_t(k)].setup(dsp::FilterType::Bandpass, f, math::clamp(f / bw * qmul, 0.5, 40), 0, rate);
-                gains[std::size_t(k)] = math::dbToGain(fa[std::size_t(k)].gainDb + (fb[std::size_t(k)].gainDb - fa[std::size_t(k)].gainDb) * x);
+                gains[std::size_t(k)] = math::dbToGain(
+                    fa[std::size_t(k)].gainDb + (fb[std::size_t(k)].gainDb - fa[std::size_t(k)].gainDb) * x
+                );
             }
         }
         double s = 0;
@@ -667,15 +761,24 @@ void shape(std::vector<double>& buf, Json const& L, Scope& scope, double rate) {
         for (auto& x : buf) {
             acc += hold / rate;
             if (acc >= 1.0) {
-                acc -= math::floor(acc);
-                held = step > 0 ? math::round(x / step) * step : x;
+                acc  -= math::floor(acc);
+                held  = step > 0 ? math::round(x / step) * step : x;
             }
             x = held;
         }
     }
 }
 
-void renderLayer(Json const& L, Scope& scope, Ctx const& ctx, std::vector<double>& out, double offset, double gainScale, std::uint64_t seed, bool repeated) {
+void renderLayer(
+    Json const&          L,
+    Scope&               scope,
+    Ctx const&           ctx,
+    std::vector<double>& out,
+    double               offset,
+    double               gainScale,
+    std::uint64_t        seed,
+    bool                 repeated
+) {
     if (!L.isObject()) throw PatchError("a layer is an object");
     if (!repeated) {
         if (auto const* rep = L.find("repeat")) {
@@ -699,11 +802,11 @@ void renderLayer(Json const& L, Scope& scope, Ctx const& ctx, std::vector<double
     std::string type   = L.str("type", "osc");
 
     // amplitude envelope
-    double a = 0.002, d = 0, s = 1, r = 0.01;
-    bool   expEnv = true;
-    Value  ampCurve;
-    bool   hasCurve = false;
-    Json const& env = L["env"];
+    double      a = 0.002, d = 0, s = 1, r = 0.01;
+    bool        expEnv = true;
+    Value       ampCurve;
+    bool        hasCurve = false;
+    Json const& env      = L["env"];
     if (env.isObject() && (env.has("a") || env.has("d") || env.has("s") || env.has("r"))) {
         a      = evalKey(env, "a", scope, a);
         d      = evalKey(env, "d", scope, d);
@@ -715,8 +818,9 @@ void renderLayer(Json const& L, Scope& scope, Ctx const& ctx, std::vector<double
         hasCurve = true;
         r        = 0;
     }
-    if (type == "pluck" || type == "modal") r = std::max(r, evalKey(L, "ring", scope, 0)); // natural decay past the gate
-    Value amp  = Value::compile(L["amp"], scope, 1);
+    if (type == "pluck" || type == "modal")
+        r = std::max(r, evalKey(L, "ring", scope, 0)); // natural decay past the gate
+    Value  amp = Value::compile(L["amp"], scope, 1);
     double gdb = evalKey(L, "gain", scope, 0);
 
     std::size_t n = std::size_t((len + r) * rate);
@@ -749,10 +853,10 @@ void applyFx(std::vector<double>& buf, Json const& fxList, Scope& scope, int rat
     for (auto const& fx : fxList.items()) {
         std::string type = fx.str("type", "");
         if (type == "reverb") {
-            double     mix = evalKey(fx, "mix", scope, 0.25);
+            double      mix = evalKey(fx, "mix", scope, 0.25);
             dsp::Reverb rv(evalKey(fx, "room", scope, 0.5), evalKey(fx, "damp", scope, 0.5), rate);
-            double     pre = evalKey(fx, "predelay", scope, 0);
-            dsp::Delay dl(std::size_t(pre * rate) + 2);
+            double      pre = evalKey(fx, "predelay", scope, 0);
+            dsp::Delay  dl(std::size_t(pre * rate) + 2);
             for (auto& x : buf) {
                 dl.push(x);
                 double wet = rv.process(pre > 0 ? dl.tap(pre * rate) : x);
@@ -807,7 +911,9 @@ void applyFx(std::vector<double>& buf, Json const& fxList, Scope& scope, int rat
             std::size_t n = std::size_t(evalKey(fx, "time", scope, 0.01) * rate);
             for (std::size_t i = 0; i < n && i < buf.size(); ++i) buf[i] *= double(i) / double(n);
         } else {
-            throw PatchError("unknown effect \"" + type + "\" (reverb, echo, chorus, drive, filter, crush, reverse, gain, fadein)");
+            throw PatchError(
+                "unknown effect \"" + type + "\" (reverb, echo, chorus, drive, filter, crush, reverse, gain, fadein)"
+            );
         }
     }
     (void)seed;
@@ -818,7 +924,16 @@ void evalParams(Json const& defs, Scope& scope) {
     for (auto const& [k, v] : defs.members()) scope.params[k] = evalNum(v, scope, 0);
 }
 
-std::vector<double> renderPatchBuffer(Json const& patch, Scope& parent, Json const& params, std::uint64_t seed, int rate, PatchLibrary const* lib, int depth, bool finishIt) {
+std::vector<double> renderPatchBuffer(
+    Json const&         patch,
+    Scope&              parent,
+    Json const&         params,
+    std::uint64_t       seed,
+    int                 rate,
+    PatchLibrary const* lib,
+    int                 depth,
+    bool                finishIt
+) {
     Random rng(seed);
     Scope  scope;
     scope.rng = &rng;
@@ -846,7 +961,14 @@ std::vector<double> renderPatchBuffer(Json const& patch, Scope& parent, Json con
 
 namespace detail {
 
-void finish(std::vector<double>& buf, Json const& spec, std::map<std::string, double> const& params, std::uint64_t seed, int rate, bool trim) {
+void finish(
+    std::vector<double>&                 buf,
+    Json const&                          spec,
+    std::map<std::string, double> const& params,
+    std::uint64_t                        seed,
+    int                                  rate,
+    bool                                 trim
+) {
     Random rng(mixSeed(seed, 0xF1));
     Scope  scope;
     scope.params = params;
@@ -884,7 +1006,8 @@ void finish(std::vector<double>& buf, Json const& spec, std::map<std::string, do
 
 } // namespace detail
 
-std::vector<float> renderPatch(Json const& patch, Json const& params, std::uint64_t seed, int sampleRate, PatchLibrary const* library) {
+std::vector<float>
+renderPatch(Json const& patch, Json const& params, std::uint64_t seed, int sampleRate, PatchLibrary const* library) {
     if (sampleRate < 8000 || sampleRate > 96000) throw PatchError("bad sample rate");
     Json const& p = resolvePatch(patch, library);
     Random      rng(seed);
