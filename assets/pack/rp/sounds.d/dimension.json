@@ -1,0 +1,6 @@
+{
+  "block.twilightforest.portal.whoosh": {
+    "category": "block",
+    "sounds": ["sounds/portal/portal"]
+  }
+}
