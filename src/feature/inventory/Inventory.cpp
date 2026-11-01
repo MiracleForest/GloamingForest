@@ -6,9 +6,11 @@
 //     game Container (one ContainerBlockActorComponent::tryCreateFor hook), saved with the block
 //     actor (its own NBT, "GfItems");
 //   - BlockData: any other block keeps its slots in its block data ("inventory": {items, loot}).
-// Both are shown with the client mod's chest screen ("inventory.chest") or a form for vanilla
-// clients: the client does not show the game's screen for an injected container (S3;
-// openNativeScreen keeps the experiment).
+// Both are shown with the client mod's chest screen ("inventory.chest"; the server keeps what each
+// player opened and refuses screen data / actions for anything else) and, on vanilla clients,
+// with the game's chest screen through a chest minecart proxy (27 slots, VanillaContainer.cpp)
+// or a form (take a stack, put stacks in) for other sizes: the client does not show the game's
+// screen for a custom block's own container (S3; openNativeScreen keeps the experiment).
 // Chest-like containers can be declared as data, <mod>/data/gf/containers/<u>.json:
 //     [{"block": "twilightforest:twilight_oak_chest", "rows": 3, "title": "container.chest", "skin": ""}]
 // which registers the storage, opens it on use (not while sneaking with an item) and drops the
@@ -27,11 +29,13 @@
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/player/PlayerDisconnectEvent.h"
+#include "ll/api/event/player/PlayerJoinEvent.h"
 #include "ll/api/form/SimpleForm.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/nbt/CompoundTag.h"
+#include "mc/legacy/ActorUniqueID.h"
 #include "mc/deps/nbt/StringTag.h"
 #include "mc/deps/shared_types/legacy/ContainerType.h"
 #include "mc/safety/RedactableString.h"
@@ -164,6 +168,7 @@ struct Store {
     std::map<std::string, Handler>  handlers;
     std::map<std::string, Declared> declared;
     std::set<std::string>           interactionsFor; ///< blocks whose use / destroy handlers exist
+    std::set<std::string>           defaultStorage;  ///< blocks whose slots are the default backend's
 };
 
 Store& store() {
@@ -315,11 +320,14 @@ Handler withDefaults(Handler h) {
 
 // ---- the chest-like screen (client mod) and the form (vanilla clients) ---------------------------
 
+/// The container the server opened for a player (openChestLike): the only one its screen may
+/// read or change (a client's screen context is never trusted for the position, rows or title).
 struct OpenScreen {
     GlobalPos   pos;
     int         rows = 3;
     std::string title;
     ItemStack   carried; ///< the stack on the cursor of the native screen
+    bool        valid = false;
 };
 
 std::map<std::int64_t, OpenScreen>& openScreens() {
@@ -327,9 +335,11 @@ std::map<std::int64_t, OpenScreen>& openScreens() {
     return m;
 }
 
-GlobalPos posOf(Json const& ctx) {
+std::optional<GlobalPos> posOf(Json const& ctx) {
     auto p = ctx.value("pos", Json::array());
-    if (!p.is_array() || p.size() != 4) return {};
+    if (!p.is_array() || p.size() != 4) return std::nullopt;
+    for (auto const& v : p)
+        if (!v.is_number_integer()) return std::nullopt;
     return GlobalPos{p[0].get<int>(), p[1].get<int>(), p[2].get<int>(), p[3].get<int>()};
 }
 
@@ -340,36 +350,63 @@ bool inReach(Player& player, GlobalPos const& pos) {
     return dx * dx + dy * dy + dz * dz <= 64.f; // Java: stillValid within 8 blocks
 }
 
+/// The screen the server opened for `player` when the client's context names it (same position),
+/// nullptr otherwise.
+OpenScreen* openedFor(Player& player, Json const& ctx) {
+    auto it = openScreens().find(player.getOrCreateUniqueID().rawID);
+    auto at = posOf(ctx);
+    if (it == openScreens().end() || !it->second.valid || !at || !(it->second.pos == *at)) return nullptr;
+    return &it->second;
+}
+
+/// Every slot of a container with one read of the storage (the default backend parses its block
+/// data once instead of once per slot).
+std::vector<ItemStack> slotsOf(GlobalPos const& pos, Handler const& h, std::string const& blockId) {
+    bool defaultStorage;
+    {
+        std::lock_guard lock(store().mutex);
+        defaultStorage = store().defaultStorage.contains(blockId);
+    }
+    if (defaultStorage) {
+        unpackLoot(pos, nullptr);
+        return readSlots(pos, h.slots);
+    }
+    std::vector<ItemStack> all;
+    all.reserve(static_cast<std::size_t>(std::max(0, h.slots)));
+    for (int i = 0; i < h.slots; ++i) all.push_back(h.get(pos, i));
+    return all;
+}
+
 std::optional<Json> screenData(Player& player, Json const& ctx) {
-    auto pos    = posOf(ctx);
+    auto* open = openedFor(player, ctx);
+    if (!open) return std::nullopt; // not a container this player opened
+    auto pos    = open->pos;
     auto region = regionFor(pos);
     if (!region || !inReach(player, pos)) return std::nullopt;
-    auto h = find(*region, game::blockPos(pos));
+    auto bp = game::blockPos(pos);
+    auto h  = find(*region, bp);
     if (!h) return std::nullopt;
     Json items = Json::array();
-    for (int i = 0; i < h->slots; ++i) {
-        auto s = h->get(pos, i);
+    for (auto const& s : slotsOf(pos, *h, game::blockIdAt(*region, bp)))
         items.push_back(game::items::isEmpty(s) ? Json(nullptr) : game::items::toJson(s));
-    }
-    auto&       open    = openScreens()[player.getOrCreateUniqueID().rawID];
-    std::string titleKey = ctx.value("title", std::string{"container.chest"});
     return Json{
-        {"title", trFor(player, titleKey, "Chest")},
-        {"rows", ctx.value("rows", 3)},
+        {"title", trFor(player, open->title, "Chest")},
+        {"rows", open->rows},
         {"items", items},
-        {"carried", game::items::isEmpty(open.carried) ? Json(nullptr) : game::items::toJson(open.carried)},
+        {"carried", game::items::isEmpty(open->carried) ? Json(nullptr) : game::items::toJson(open->carried)},
     };
 }
 
 /// Java's ChestMenu clicks on the container slots (pickup / place / swap / split / quick move).
 void screenAction(Player& player, Json const& ctx, Json const& action) {
-    auto pos    = posOf(ctx);
+    auto* opened = openedFor(player, ctx);
+    if (!opened) return; // only the container the server opened for this player
+    auto pos    = opened->pos;
     auto region = regionFor(pos);
     if (!region || !inReach(player, pos)) return;
     auto h = find(*region, game::blockPos(pos));
     if (!h) return;
-    auto& open  = openScreens()[player.getOrCreateUniqueID().rawID];
-    open.pos    = pos;
+    auto& open  = *opened;
     auto op     = action.value("op", std::string{});
     int  slot   = action.value("slot", -1);
     bool right  = action.value("button", std::string{"left"}) == "right";
@@ -431,30 +468,101 @@ void screenAction(Player& player, Json const& ctx, Json const& action) {
     player.sendInventory(false);
 }
 
+/// Gives a stack back to a player (inventory, else at its feet).
+void giveBack(Player& player, ItemStack stack) {
+    if (game::items::isEmpty(stack)) return;
+    if (!player.add(stack) && !game::items::isEmpty(stack))
+        player.getLevel().getSpawner().spawnItem(player.getDimensionBlockSource(), stack, nullptr, player.getPosition(), 0);
+    player.sendInventory(false);
+}
+
 void screenClosed(Player& player, Json const&) {
     auto it = openScreens().find(player.getOrCreateUniqueID().rawID);
     if (it == openScreens().end()) return;
     ItemStack carried = it->second.carried;
     openScreens().erase(it);
-    if (game::items::isEmpty(carried)) return;
-    if (!player.add(carried) && !game::items::isEmpty(carried))
-        player.getLevel().getSpawner().spawnItem(player.getDimensionBlockSource(), carried, nullptr, player.getPosition(), 0);
-    player.sendInventory(false);
+    giveBack(player, carried);
 }
 
-/// Vanilla clients without a native container: a form listing the stacks; a button takes one.
+constexpr char kCarriedKey[] = "gf:inventory:carried:";
+
+/// The world closes: every cursor stack waits in the world DB for its player's next join (the
+/// players may already be saved: a stack given now could be lost).
+void returnAllCarried() {
+    for (auto& [raw, open] : openScreens()) {
+        if (game::items::isEmpty(open.carried)) continue;
+        game::db::put(kCarriedKey + std::to_string(raw), game::items::toJson(open.carried));
+        open.carried = ItemStack{};
+    }
+    openScreens().clear();
+}
+
+/// A player joins: a cursor stack kept from a world that closed while its screen was open.
+void returnStoredCarried(Player& player) {
+    auto key = kCarriedKey + std::to_string(player.getOrCreateUniqueID().rawID);
+    auto doc = game::db::get(key);
+    if (!doc) return;
+    game::db::erase(key);
+    giveBack(player, game::items::fromJson(*doc));
+    log().info("inventory: returned a cursor stack to {}", player.getRealName());
+}
+
+/// Vanilla clients without the game's container screen (more or fewer than 27 slots): a form
+/// listing the stacks (a button takes one) and "Put in" (a second form lists the player's stacks;
+/// a button moves one in, Java's quick move).
+void screenForm(Player& player, Json const& ctx);
+
+void putInForm(Player& player, GlobalPos const& pos, Json const& ctx) {
+    ll::form::SimpleForm form;
+    form.setTitle(trFor(player, "gf.combat.container.put_in", "Put in"));
+    auto&            inv = player.getInventory();
+    std::vector<int> slots; // button -> inventory slot
+    for (int i = 0; i < inv.getContainerSize(); ++i) {
+        auto const& s = inv.getItem(i);
+        if (game::items::isEmpty(s)) continue;
+        slots.push_back(i);
+        form.appendButton(game::items::displayName(s) + " x" + std::to_string(game::items::countOf(s)));
+    }
+    form.setContent(slots.empty() ? trFor(player, "gf.combat.container.nothing", "(nothing to put in)") : std::string{});
+    // one callback (button callbacks are ignored with it): a choice moves that stack in, closing
+    // the form goes back to the container's form
+    form.sendTo(player, [pos, ctx, slots](Player& p, int choice, ll::form::FormCancelReason) {
+        if (choice >= 0 && choice < static_cast<int>(slots.size())) {
+            auto* r  = regionFor(pos);
+            auto  hh = r && inReach(p, pos) ? find(*r, game::blockPos(pos)) : std::nullopt;
+            if (!hh) return;
+            int   i    = slots[static_cast<std::size_t>(choice)];
+            auto& pinv = p.getInventory();
+            if (i >= pinv.getContainerSize()) return;
+            auto cur = pinv.getItem(i);
+            if (!game::items::isEmpty(cur)) {
+                pinv.setItem(i, hh->insert(pos, cur, false)); // what does not fit stays
+                p.sendInventory(false);
+                log().info("inventory: {} put {} into the container at {} {} {} (form)", p.getRealName(), game::items::idOf(cur), pos.x, pos.y, pos.z);
+            }
+        }
+        screenForm(p, ctx);
+    });
+}
+
 void screenForm(Player& player, Json const& ctx) {
-    auto pos    = posOf(ctx);
+    auto at = posOf(ctx);
+    if (!at) return;
+    auto pos    = *at;
     auto region = regionFor(pos);
     if (!region) return;
-    auto h = find(*region, game::blockPos(pos));
+    auto bp = game::blockPos(pos);
+    auto h  = find(*region, bp);
     if (!h) return;
     ll::form::SimpleForm form;
     form.setTitle(trFor(player, ctx.value("title", std::string{"container.chest"}), "Chest"));
-    std::string body;
-    int         used = 0;
-    for (int i = 0; i < h->slots; ++i) {
-        auto s = h->get(pos, i);
+    form.appendButton(trFor(player, "gf.combat.container.put_in", "Put in"), [pos, ctx](Player& p) {
+        if (inReach(p, pos)) putInForm(p, pos, ctx);
+    });
+    int  used = 0;
+    auto all  = slotsOf(pos, *h, game::blockIdAt(*region, bp));
+    for (int i = 0; i < static_cast<int>(all.size()); ++i) {
+        auto const& s = all[static_cast<std::size_t>(i)];
         if (game::items::isEmpty(s)) continue;
         ++used;
         form.appendButton(game::items::displayName(s) + " x" + std::to_string(game::items::countOf(s)), [pos, i, ctx](Player& p) {
@@ -468,8 +576,7 @@ void screenForm(Player& player, Json const& ctx) {
             screenForm(p, ctx);
         });
     }
-    if (used == 0) body = trFor(player, "gf.combat.container.empty", "(empty)");
-    form.setContent(body);
+    form.setContent(used == 0 ? trFor(player, "gf.combat.container.empty", "(empty)") : std::string{});
     form.sendTo(player);
 }
 
@@ -631,11 +738,10 @@ Declared const* declared(std::string const& blockId) {
 std::vector<ItemStack> contents(GlobalPos const& pos) {
     auto* region = regionFor(pos);
     if (!region) return {};
-    auto h = find(*region, game::blockPos(pos));
+    auto bp = game::blockPos(pos);
+    auto h  = find(*region, bp);
     if (!h) return {};
-    std::vector<ItemStack> out;
-    for (int i = 0; i < h->slots; ++i) out.push_back(h->get(pos, i));
-    return out;
+    return slotsOf(pos, *h, game::blockIdAt(*region, bp));
 }
 
 std::optional<std::pair<std::string, std::int64_t>> pendingLoot(GlobalPos const& pos) {
@@ -679,6 +785,8 @@ bool unpackLoot(GlobalPos const& pos, Player* opener) {
 
 void registerBlock(std::string const& blockId, Handler handler) {
     std::lock_guard lock(store().mutex);
+    if (handler.get) store().defaultStorage.erase(blockId);
+    else store().defaultStorage.insert(blockId);
     store().handlers[blockId] = withDefaults(std::move(handler));
 }
 
@@ -695,15 +803,35 @@ bool openChestLike(Player& player, GlobalPos const& pos, int rows, std::string c
     if (!find(*region, bp)) return false;
     unpackLoot(pos, &player);
     rows = std::clamp(rows, 1, 6);
-    auto const* d = declared(game::blockIdAt(*region, bp));
-    // Both backends show the client mod's chest screen (companions) or the form (vanilla clients):
-    // the game's container screen for an injected container is opened by the server
-    // (openUnmanagedContainer) but not shown by the client (spike S3), so it stays an experiment
-    // (openNativeScreen).
-    (void)d;
+    std::string skin;
+    if (auto const* d = declared(game::blockIdAt(*region, bp))) skin = d->skin;
+    // Companions: the client mod's chest screen. Vanilla clients: the game's chest screen through
+    // a chest minecart proxy for 27 slots (VanillaContainer.cpp; the client shows no screen for a
+    // custom block's own container, spike S3), the form for other sizes. The title of the
+    // vanilla screen goes through F12's container title skin convention (Declared::skin).
+    bool companion = net::isCompanion(player);
+    if (!companion) {
+        auto title = trFor(player, titleKey, "Chest");
+        if (!skin.empty()) title = ui::containerTitleSkin(title, skin);
+        if (openVanillaContainer(player, pos, title)) return true;
+    }
+    // the server's record of what this player may see and change (screenData / screenAction)
+    auto& open = openScreens()[player.getOrCreateUniqueID().rawID];
+    open.pos   = pos;
+    open.rows  = rows;
+    open.title = titleKey;
+    open.valid = true;
     Json ctx{{"pos", {pos.dim, pos.x, pos.y, pos.z}}, {"rows", rows}, {"title", titleKey}};
     bool ok = screens::open(player, "inventory.chest", ctx);
-    log().info("inventory: {} opened the container at {} {} {} ({})", player.getRealName(), pos.x, pos.y, pos.z, net::isCompanion(player) ? "client mod screen" : "form");
+    if (!ok || !companion) { // a form needs no record; a refused screen leaves none
+        auto it = openScreens().find(player.getOrCreateUniqueID().rawID);
+        if (it != openScreens().end()) {
+            ItemStack carried = it->second.carried;
+            openScreens().erase(it);
+            giveBack(player, carried);
+        }
+    }
+    log().info("inventory: {} opened the container at {} {} {} ({})", player.getRealName(), pos.x, pos.y, pos.z, companion ? "client mod screen" : "form");
     return ok;
 }
 
@@ -771,10 +899,14 @@ public:
         if (!mHooked) InventoryNativeContainerHook::hook();
         mHooked = true;
         InventoryNativeRemovedHook::hook();
-        // a player who leaves with a stack on the chest screen's cursor gets it back first
+        // a player who leaves with a stack on the chest screen's cursor gets it back first; one
+        // kept from a world that closed comes back on the next join
         mDisconnect = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerDisconnectEvent>(
             [](ll::event::PlayerDisconnectEvent& ev) { onDisconnect(ev.self()); }
         );
+        mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerJoinEvent>([](ll::event::PlayerJoinEvent& ev) {
+            if (!ev.self().isClientSide()) returnStoredCarried(ev.self());
+        });
         static bool registered = false;
         if (registered) return;
         registered = true;
@@ -786,10 +918,11 @@ public:
             .closed = screenClosed,
         });
         blockdata::onErase(dropErased);
-        game::db::onWorldClosed([] { openScreens().clear(); });
+        game::db::onWorldClosed([] { returnAllCarried(); });
     }
     void uninstall() {
         ll::event::EventBus::getInstance().removeListener(mDisconnect);
+        ll::event::EventBus::getInstance().removeListener(mJoin);
         InventoryNativeRemovedHook::unhook();
         if (mHooked) InventoryNativeContainerHook::unhook();
         mHooked = false;
@@ -798,6 +931,7 @@ public:
 private:
     bool                   mHooked = false;
     ll::event::ListenerPtr mDisconnect;
+    ll::event::ListenerPtr mJoin;
 };
 
 } // namespace

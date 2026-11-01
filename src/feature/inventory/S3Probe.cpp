@@ -5,6 +5,7 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -40,6 +41,17 @@
 
 namespace gf::inventory::s3 {
 
+/// An environment variable of the spike's runs (nullopt: not set); _dupenv_s, as the CRT
+/// deprecates getenv.
+std::optional<std::string> env(char const* name) {
+    char*       value = nullptr;
+    std::size_t size  = 0;
+    if (_dupenv_s(&value, &size, name) != 0 || !value) return std::nullopt;
+    std::string out(value);
+    std::free(value);
+    return out;
+}
+
 namespace {
 
 using selftest::Context;
@@ -47,8 +59,8 @@ using selftest::Context;
 /// "5,6" -> experiment indices forced on by the spike (GF_S3_EXPERIMENTS).
 std::vector<int> forcedExperiments() {
     std::vector<int> out;
-    if (char const* env = std::getenv("GF_S3_EXPERIMENTS")) {
-        std::stringstream ss(env);
+    if (auto value = env("GF_S3_EXPERIMENTS")) {
+        std::stringstream ss(*value);
         std::string       item;
         while (std::getline(ss, item, ','))
             if (!item.empty()) out.push_back(std::atoi(item.c_str()));
@@ -119,7 +131,7 @@ LL_STATIC_HOOK(
     cereal::ReflectionCtx& ctx
 ) {
     origin(ctx);
-    bool unlock = std::getenv("GF_S3_UNLOCK") != nullptr;
+    bool unlock = gf::inventory::s3::env("GF_S3_UNLOCK").has_value();
     auto& map   = BlockComponentFactory::setupContextInstanceIfRequired(ctx);
     gf::log().info("S3: {}", gf::inventory::s3::describeComponent(map, "minecraft:container", unlock));
     gf::log().info("S3: {}", gf::inventory::s3::describeComponent(map, "minecraft:block_entity", false));
@@ -144,7 +156,7 @@ std::string experimentsText() {
 /// The spike's probe pack is in this run: GF_S3_PROBE (server harness) or the flag file the client
 /// harness leaves next to the mod (<mod>/s3-probe.flag).
 bool probeEnabled() {
-    if (std::getenv("GF_S3_PROBE")) return true;
+    if (env("GF_S3_PROBE")) return true;
     try {
         std::error_code ec;
         return std::filesystem::exists(Mod::getInstance().getSelf().getModDir() / "s3-probe.flag", ec);
@@ -166,7 +178,7 @@ public:
     // Everything here is spike-only: without the probe pack (or the GF_S3_* variables) nothing is
     // hooked or logged.
     void load() {
-        if (!probeEnabled() && forcedExperiments().empty() && !std::getenv("GF_S3_UNLOCK")) return;
+        if (!probeEnabled() && forcedExperiments().empty() && !env("GF_S3_UNLOCK")) return;
         S3ComponentRegistryHook::hook();
         mRegistryHooked = true;
         // the spike's probe block with a data-driven block actor is a 27-slot container

@@ -40,8 +40,16 @@ void declare(Declared const& d);
 /// Spike S3: asks the server to open the game's container screen of the injected container at
 /// `pos` as ContainerType `containerType` (0 Container, 37 DataDrivenContainer); the ContainerID or -1.
 int openNativeScreen(Player& player, GlobalPos const& pos, int containerType);
-/// Every slot of the container at `pos` (empty when none).
+/// Every slot of the container at `pos` (empty when none), read once.
 [[nodiscard]] std::vector<ItemStack> contents(GlobalPos const& pos);
+/// Vanilla clients: the game's own chest screen for the 27-slot container at `pos`, titled
+/// `title`, through an invisible chest minecart that mirrors the storage while the screen is open
+/// (VanillaContainer.cpp); false when the container is not 27 slots or the proxy cannot be made.
+bool openVanillaContainer(Player& player, GlobalPos const& pos, std::string const& title);
+/// Container proxies open now (selftests).
+[[nodiscard]] int vanillaProxyCount();
+/// The proxy's container for `pos` (selftests; nullptr when none is open).
+[[nodiscard]] Container* vanillaProxyContainer(GlobalPos const& pos);
 /// Rolls a pending loot table of the container at `pos` into it (RandomizableContainer#unpackLootTable).
 bool unpackLoot(GlobalPos const& pos, Player* opener);
 /// The pending loot table at `pos` (selftests).

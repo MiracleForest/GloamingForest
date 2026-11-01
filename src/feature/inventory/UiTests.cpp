@@ -6,8 +6,10 @@
 //                               opening it rolls the Java table into the game's chest screen
 //   combat.ui_native_container  the S3 probe block with a data-driven block actor and the injected
 //                               game container: the game's container screen for a custom block
+//   combat.ui_vanilla_container the vanilla clients' route for every client: the game's chest screen
+//                               through the chest minecart proxy (27 slots)
 //   combat.ui_chest_screen      a BlockData container: the client mod's chest screen (companions)
-//                               or the form (vanilla clients)
+//                               or, on vanilla clients, the game's chest screen through the proxy
 
 #include "ll/api/service/Bedrock.h"
 
@@ -29,6 +31,7 @@
 #include "feature/loot/LootInternal.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "mod/I18n.h"
 #include "mod/Log.h"
 #include "selftest/SelfTest.h"
 
@@ -110,6 +113,28 @@ GF_REGISTER_SELFTEST("combat.ui_native_container", [](Context& ctx) -> ll::coro:
     int containerId = gf::inventory::openNativeScreen(*p, pos, 37);
     ctx.check(containerId >= 0, "the server opened the injected container (id " + std::to_string(containerId) + ")");
     gf::log().info("combat ui: native container opened for {}", p->getRealName());
+});
+
+// The vanilla clients' route for every client (S3): the game's chest screen through the chest
+// minecart proxy, opened for the real player even when it runs the client mod.
+GF_REGISTER_SELFTEST("combat.ui_vanilla_container", [](Context& ctx) {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        return;
+    }
+    gf::inventory::declare({.block = "gf_test:fixture_block", .rows = 3, .slots = 27, .title = "container.chest", .skin = ""});
+    auto& region = p->getDimensionBlockSource();
+    auto  bp     = besidePlayer(*p, 0, -2);
+    ctx.require(gf::game::setBlock(region, bp, *gf::game::blockWith("gf_test:fixture_block")), "the fixture block beside the player");
+    auto pos = gf::game::globalPos(region, bp);
+    auto h   = gf::inventory::find(region, bp);
+    ctx.require(h.has_value(), "the fixture block is a container");
+    h->set(pos, 0, *gf::game::items::make("minecraft:gold_ingot", 9));
+    h->set(pos, 13, *gf::game::items::make("minecraft:bread", 4));
+    h->set(pos, 26, *gf::game::items::make("gf_test:fixture_item", 1));
+    ctx.require(gf::inventory::openVanillaContainer(*p, pos, gf::trFor(*p, "container.chest", "Chest")), "the proxy for the game's chest screen");
+    gf::log().info("combat ui: vanilla container opened for {}", p->getRealName());
 });
 
 GF_REGISTER_SELFTEST("combat.ui_chest_screen", [](Context& ctx) {
