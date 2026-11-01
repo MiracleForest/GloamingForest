@@ -5734,6 +5734,12 @@ path	src/feature/spawn/Spawn.h	F0	manual
 path	src/feature/stats/Stats.h	F0	manual
 path	src/feature/stronghold/**	U25	manual
 path	src/feature/structure/**	F7	manual
+path	src/feature/structure/bases/Component.h	F0	manual
+path	src/feature/structure/bases/ComponentOld.h	F0	manual
+path	src/feature/structure/bases/HollowHill.h	F0	manual
+path	src/feature/structure/bases/Maze.h	F0	manual
+path	src/feature/structure/bases/TemplatePieces.h	F0	manual
+path	src/feature/structure/bases/Tower.h	F0	manual
 path	src/feature/structure/Structure.h	F0	manual
 path	src/feature/tags/Tags.h	F0	manual
 path	src/feature/terrain/**	U2	manual
@@ -7688,6 +7694,7 @@ stub	src/feature/projectile/Projectile.cpp	F0	manual
 stub	src/feature/recipes/Recipes.cpp	F0	manual
 stub	src/feature/spawn/Spawn.cpp	F0	manual
 stub	src/feature/stats/Stats.cpp	F0	manual
+stub	src/feature/structure/bases/Bases.cpp	F0	manual
 stub	src/feature/structure/Structure.cpp	F0	manual
 stub	src/feature/tags/Tags.cpp	F0	manual
 stub	src/feature/traits/Traits.cpp	F0	manual

@@ -16,6 +16,8 @@
                "src/core/jrand/JRand.h", "src/core/noise/Noise.h", "src/core/landmark/Landmark.h",
                "src/feature/dimension/World.h", "src/feature/worldgen/Worldgen.h", "src/feature/features/Features.h", "src/feature/spawn/Spawn.h",
                "src/feature/landmark/Landmark.h", "src/feature/structure/Structure.h",
+               "src/feature/structure/bases/Component.h", "src/feature/structure/bases/ComponentOld.h", "src/feature/structure/bases/TemplatePieces.h",
+               "src/feature/structure/bases/Maze.h", "src/feature/structure/bases/HollowHill.h", "src/feature/structure/bases/Tower.h",
                "src/feature/entity/Entity.h", "src/feature/projectile/Projectile.h", "src/feature/boss/Boss.h",
                "src/feature/item/Item.h", "src/feature/enchant/Enchant.h", "src/feature/effects/Effects.h", "src/feature/recipes/Recipes.h",
                "src/feature/tags/Tags.h", "src/feature/datamaps/DataMaps.h", "src/feature/stats/Stats.h", "src/feature/traits/Traits.h",
@@ -29,7 +31,7 @@
              "stubs": [
                "src/core/jrand/JRand.cpp", "src/core/noise/Noise.cpp", "src/core/landmark/Landmark.cpp",
                "src/feature/dimension/World.cpp", "src/feature/worldgen/Worldgen.cpp", "src/feature/features/Features.cpp", "src/feature/spawn/Spawn.cpp",
-               "src/feature/landmark/Landmark.cpp", "src/feature/structure/Structure.cpp",
+               "src/feature/landmark/Landmark.cpp", "src/feature/structure/Structure.cpp", "src/feature/structure/bases/Bases.cpp",
                "src/feature/entity/Entity.cpp", "src/feature/projectile/Projectile.cpp", "src/feature/boss/Boss.cpp",
                "src/feature/item/Item.cpp", "src/feature/enchant/Enchant.cpp", "src/feature/effects/Effects.cpp", "src/feature/recipes/Recipes.cpp",
                "src/feature/tags/Tags.cpp", "src/feature/datamaps/DataMaps.cpp", "src/feature/stats/Stats.cpp", "src/feature/traits/Traits.cpp",

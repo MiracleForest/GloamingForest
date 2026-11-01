@@ -20,6 +20,13 @@ int Piece::worldX(int x, int) const {
 }
 int          Piece::worldY(int y) const { return bbox.minY + y; }
 int          Piece::worldZ(int, int z) const { return bbox.minZ + z; }
+BlockPos     Piece::getWorldPos(int x, int y, int z) const { return BlockPos{worldX(x, z), worldY(y), worldZ(x, z)}; }
+BlockPos     Piece::getLocatorPosition() const { return getWorldPos(0, 0, 0); }
+void         Piece::generateMaybeBox(Region&, BlockBox const&, RandomSource&, float, int, int, int, int, int, int, Block const&, Block const&, bool, bool) {
+    GF_STUB("structure.Piece");
+}
+void Piece::maybeGenerateBlock(Region&, BlockBox const&, RandomSource&, float, int, int, int, Block const&) { GF_STUB("structure.Piece"); }
+void Piece::fillColumnDown(Region&, Block const&, int, int, int, BlockBox const&) { GF_STUB("structure.Piece"); }
 Block const& Piece::oriented(Block const& block) const { return block; }
 void         Piece::placeBlock(Region&, Block const&, int, int, int, BlockBox const&) { GF_STUB("structure.Piece"); }
 void         Piece::placeBlock(Region&, std::string const&, Json const&, int, int, int, BlockBox const&) { GF_STUB("structure.Piece"); }

@@ -11,9 +11,12 @@
 //     class NagaCourtyardMain : public gf::structure::Piece { ... void postProcess(...) override; };
 //     gf::structure::registerPieceType("twilightforest:TFNCMn", [](nlohmann::json const& saved) { ... });
 //
-// The shared bases (TFMaze, HollowHillComponent, the TowerWing family of 16 classes,
-// TFStructureComponentOld / TFStructureComponentTemplate, TwilightTemplate / DoubleTemplate /
-// Jigsaw pieces) are W0 headers added by F7 under feature/structure/bases/. Piece-local
+// The shared bases are part of this contract, declared by F0 in feature/structure/bases/ and
+// implemented by F7 (neutral stubs in bases/Bases.cpp until then): Component.h
+// (TFStructureComponent, TFStructureDecorator, UtilityPiece, SortablePiece), ComponentOld.h
+// (TFStructureComponentOld), TemplatePieces.h (TFStructureComponentTemplate, TwilightTemplate /
+// DoubleTemplate / Jigsaw pieces, JigsawRecord), Maze.h (TFMaze), HollowHill.h
+// (HollowHillComponent) and Tower.h (the 16 classes of the TowerWing family). Piece-local
 // coordinates follow Java: (x, y, z) inside `bbox`, turned by `orientation` and `mirror`.
 
 #include <cstdint>
@@ -87,19 +90,33 @@ public:
     virtual void               load(Json const& data);
 
     // ---- helpers in piece-local coordinates (StructurePiece / TFStructureComponentOld) --------
-    [[nodiscard]] int worldX(int x, int z) const;
-    [[nodiscard]] int worldY(int y) const;
-    [[nodiscard]] int worldZ(int x, int z) const;
+    /// getWorldX / getWorldY / getWorldZ (virtual: a few TF pieces override them).
+    [[nodiscard]] virtual int worldX(int x, int z) const;
+    [[nodiscard]] virtual int worldY(int y) const;
+    [[nodiscard]] virtual int worldZ(int x, int z) const;
+    /// StructurePiece#getWorldPos: the world position of piece-local (x, y, z).
+    [[nodiscard]] BlockPos getWorldPos(int x, int y, int z) const;
+    /// StructurePiece#getLocatorPosition: the world position of piece-local (0, 0, 0).
+    [[nodiscard]] BlockPos getLocatorPosition() const;
     /// Turns a block for this piece's orientation and mirror.
     [[nodiscard]] Block const& oriented(Block const& block) const;
-    void placeBlock(Region& region, Block const& block, int x, int y, int z, BlockBox const& chunkBox);
+    virtual void placeBlock(Region& region, Block const& block, int x, int y, int z, BlockBox const& chunkBox);
     /// A block by id and state names ({"facing": "north", "half": "top"}), Java state names
     /// mapped to the frozen Bedrock states of docs/spec/blockstates.md.
     void placeBlock(Region& region, std::string const& blockId, Json const& states, int x, int y, int z, BlockBox const& chunkBox);
-    [[nodiscard]] Block const& getBlock(Region& region, int x, int y, int z, BlockBox const& chunkBox) const;
+    [[nodiscard]] virtual Block const& getBlock(Region& region, int x, int y, int z, BlockBox const& chunkBox) const;
+    /// generateBox (edge / inside blocks), generateAirBox and generateBox with a block selector.
     void fill(Region& region, BlockBox const& chunkBox, int x0, int y0, int z0, int x1, int y1, int z1, Block const& edge, Block const& inside, bool keepAir);
     void fillAir(Region& region, BlockBox const& chunkBox, int x0, int y0, int z0, int x1, int y1, int z1);
     void randomFill(Region& region, BlockBox const& chunkBox, int x0, int y0, int z0, int x1, int y1, int z1, bool alwaysReplace, RandomSource& random, BlockSelector& selector);
+    /// generateMaybeBox: like `fill`, each block placed with probability `chance` (only over
+    /// non-air with `requireNonAir`, only under open sky with `requireSkylight`).
+    void generateMaybeBox(Region& region, BlockBox const& chunkBox, RandomSource& random, float chance, int x0, int y0, int z0, int x1, int y1, int z1,
+                          Block const& edge, Block const& inside, bool requireNonAir, bool requireSkylight);
+    /// maybeGenerateBlock: one block with probability `chance`.
+    void maybeGenerateBlock(Region& region, BlockBox const& chunkBox, RandomSource& random, float chance, int x, int y, int z, Block const& block);
+    /// fillColumnDown: `block` from (x, y, z) down through air and liquids.
+    void fillColumnDown(Region& region, Block const& block, int x, int y, int z, BlockBox const& chunkBox);
     /// A chest-like container block with a loot table (through gf::loot::placeContainer).
     bool placeChest(Region& region, BlockBox const& chunkBox, RandomSource& random, int x, int y, int z, std::string const& blockId, std::string const& tableId);
     /// A mob spawner for `entityId` (vanilla spawner or a boss spawner block id).
