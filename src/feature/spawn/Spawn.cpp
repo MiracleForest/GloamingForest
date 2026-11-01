@@ -218,11 +218,45 @@ bool positionOk(PlacementRule rule, worldgen::Region& region, BlockPos const& po
     return false;
 }
 
+/// An entity box: EntityType#getSpawnAABB / EntityDimensions#makeBoundingBox at feet (x, y, z)
+/// (half the float width, the float height).
+struct SpawnBox {
+    double x0, y0, z0, x1, y1, z1;
+};
+SpawnBox spawnBox(double x, double y, double z, double width, double height) {
+    float f = static_cast<float>(width) / 2.0F;
+    float h = static_cast<float>(height);
+    return {x - static_cast<double>(f), y, z - static_cast<double>(f), x + static_cast<double>(f), y + static_cast<double>(h), z + static_cast<double>(f)};
+}
+
+/// LevelReader#containsAnyLiquid(box): a block with a fluid (water or lava, a waterlogged block's
+/// liquid layer included) in [floor(min), ceil(max)) on every axis.
+bool containsAnyLiquid(worldgen::Region& region, SpawnBox const& b) {
+    int   i = core::mth::floor(b.x0), j = core::mth::ceil(b.x1);
+    int   k = core::mth::floor(b.y0), l = core::mth::ceil(b.y1);
+    int   i1 = core::mth::floor(b.z0), j1 = core::mth::ceil(b.z1);
+    auto* src = kit::blockSource(region);
+    for (int x = i; x < j; ++x)
+        for (int y = k; y < l; ++y)
+            for (int z = i1; z < j1; ++z) {
+                BlockPos p{x, y, z};
+                if (kit::isFluid(region.getBlock(p))) return true;
+                if (src && y >= src->getMinHeight() && y < src->getMaxHeight() && kit::isFluid(src->getExtraBlock(p))) return true;
+            }
+    return false;
+}
+
+/// The water categories, whose usual mobs are WaterAnimals (or Axolotls): Mob#checkSpawnObstruction
+/// without the liquid check.
+bool waterCategory(std::string_view category) {
+    return category == "water_creature" || category == "water_ambient" || category == "underground_water_creature" || category == "axolotls";
+}
+
 /// LevelReader#noCollision(EntityType#getSpawnAABB(x, y, z)) against blocks (the collision
 /// shapes through a BlockSource, cubes in memory).
 bool noCollision(worldgen::Region& region, double x, double y, double z, double width, double height) {
-    double hw = width / 2.0;
-    double ax0 = x - hw, ax1 = x + hw, ay0 = y, ay1 = y + height, az0 = z - hw, az1 = z + hw;
+    auto   box = spawnBox(x, y, z, width, height);
+    double ax0 = box.x0, ax1 = box.x1, ay0 = box.y0, ay1 = box.y1, az0 = box.z0, az1 = box.z1;
     int    x0 = core::mth::floor(ax0), x1 = core::mth::ceil(ax1) - 1;
     int    y0 = core::mth::floor(ay0), y1 = core::mth::ceil(ay1) - 1;
     int    z0 = core::mth::floor(az0), z1 = core::mth::ceil(az1) - 1;
@@ -287,15 +321,56 @@ int rawBrightness(worldgen::Region& region, BlockPos const& pos, bool generation
 }
 
 /// Mob#checkSpawnRules of a mob without its own override: PathfinderMob#getWalkTargetValue >= 0
-/// (Monster: 0.5 - light, Animal: 10 on grass else light - 0.5, others 0).
-bool defaultSpawnRules(worldgen::Region& region, BlockPos const& pos, std::string const& category, bool generation) {
-    if (category == "monster") return 0.5F - brightness(rawBrightness(region, pos, generation)) >= 0.0F;
-    if (category == "creature") {
+/// with the walk target of its class (Monster: 0.5 - light, Animal: 10 on grass else light - 0.5,
+/// Mob / PathfinderMob / WaterAnimal: 0), by default the one its spawn category implies.
+bool defaultSpawnRules(worldgen::Region& region, BlockPos const& pos, ext::WalkTarget walkTarget, std::string_view category, bool generation) {
+    if (walkTarget == ext::WalkTarget::ByCategory)
+        walkTarget = category == "monster" ? ext::WalkTarget::Monster : category == "creature" ? ext::WalkTarget::Animal : ext::WalkTarget::Zero;
+    switch (walkTarget) {
+    case ext::WalkTarget::Monster:
+        return 0.5F - brightness(rawBrightness(region, pos, generation)) >= 0.0F;
+    case ext::WalkTarget::Animal:
         if (kit::javaId(region.getBlock({pos.x, pos.y - 1, pos.z})) == "minecraft:grass_block") return true;
         return brightness(rawBrightness(region, pos, generation)) - 0.5F >= 0.0F;
+    default:
+        return true;
     }
+}
+
+/// Entity#blocksBuilding: living mobs and players, boats and minecarts.
+bool blocksBuilding(Actor const& a) {
+    if (!a.isAlive()) return false;
+    return a.hasCategory(ActorCategory::Mob) || a.hasCategory(ActorCategory::Player) || a.hasCategory(ActorCategory::Boat)
+        || a.hasCategory(ActorCategory::Minecart);
+}
+
+/// Mob#checkSpawnObstruction of a mob without its own override at feet (x, y, z): Mob's
+/// `!containsAnyLiquid(box) && isUnobstructed(this)` or WaterAnimal's `isUnobstructed(this)`, by
+/// default the one its spawn category implies. `entities` is the level the entity check reads;
+/// nullptr during chunk generation, where Java's WorldGenRegion#getEntities is always empty.
+bool defaultObstruction(
+    worldgen::Region&          region,
+    BlockSource*               entities,
+    ext::SpawnBehaviour const& mob,
+    std::string_view           category,
+    double                     x,
+    double                     y,
+    double                     z
+) {
+    auto obstruction = mob.obstruction;
+    if (obstruction == ext::Obstruction::ByCategory)
+        obstruction = waterCategory(category) ? ext::Obstruction::EntitiesOnly : ext::Obstruction::LiquidAndEntities;
+    auto box = spawnBox(x, y, z, mob.width, mob.height);
+    if (obstruction == ext::Obstruction::LiquidAndEntities && containsAnyLiquid(region, box)) return false;
+    if (!entities) return true;
+    // CollisionGetter#isUnobstructed: an entity that blocks building whose box overlaps the mob's
+    AABB aabb{Vec3{static_cast<float>(box.x0), static_cast<float>(box.y0), static_cast<float>(box.z0)},
+              Vec3{static_cast<float>(box.x1), static_cast<float>(box.y1), static_cast<float>(box.z1)}};
+    for (Actor* a : entities->fetchEntities(static_cast<Actor const*>(nullptr), aabb, false, false))
+        if (blocksBuilding(*a)) return false;
     return true;
 }
+
 
 /// A spawn chosen on a generation thread, done on the server thread.
 struct Queued {
@@ -311,18 +386,6 @@ std::mutex& queueMutex() {
 std::deque<Queued>& queue() {
     static std::deque<Queued> q;
     return q;
-}
-
-/// Whether two spawn boxes (feet centers, width x height) overlap.
-bool boxesOverlap(double x0, double y0, double z0, double w0, double h0, double x1, double y1, double z1, double w1, double h1) {
-    return std::abs(x0 - x1) < (w0 + w1) / 2.0 && std::abs(z0 - z1) < (w0 + w1) / 2.0 && y0 < y1 + h1 && y1 < y0 + h0;
-}
-
-/// Entity#blocksBuilding: living mobs and players, boats and minecarts.
-bool blocksBuilding(Actor const& a) {
-    if (!a.isAlive()) return false;
-    return a.hasCategory(ActorCategory::Mob) || a.hasCategory(ActorCategory::Player) || a.hasCategory(ActorCategory::Boat)
-        || a.hasCategory(ActorCategory::Minecart);
 }
 
 /// Mob#isPersistenceRequired / requiresCustomPersistence: Bedrock's persistent component or a name.
@@ -487,6 +550,34 @@ spawnOverridesOf(landmark::Start const& start, landmark::Descriptor const& d, Bl
     return entriesOf(fieldArr(o, "spawns"));
 }
 
+bool spawnRulesDefault(worldgen::Region& region, BlockPos const& pos, ext::WalkTarget walkTarget, std::string_view category, bool generation) {
+    return defaultSpawnRules(region, pos, walkTarget, category, generation);
+}
+
+bool obstructionDefault(
+    worldgen::Region&          region,
+    BlockSource*               entities,
+    ext::SpawnBehaviour const& mob,
+    std::string_view           category,
+    double                     x,
+    double                     y,
+    double                     z
+) {
+    return defaultObstruction(region, entities, mob, category, x, y, z);
+}
+
+bool biomeHasTag(std::string const& biome, std::string const& tag) {
+    // the vanilla tags the spawner reads are built in (Bedrock's packs do not carry Java's):
+    // BiomeTags.REDUCED_WATER_AMBIENT_SPAWNS = minecraft:reduce_water_ambient_spawns: [#minecraft:is_river],
+    // minecraft:is_river: [river, frozen_river] (1.21.1 data)
+    if (tag == "minecraft:reduce_water_ambient_spawns" || tag == "minecraft:is_river")
+        if (biome == "minecraft:river" || biome == "minecraft:frozen_river") return true;
+    // gf::tags (F9), then the imported tag files (<mod>/data/<ns>/tags/worldgen/biome) whatever F9 answers
+    if (tags::has(tags::Registry::Biome, tag, biome)) return true;
+    auto members = features::detail::dataTag("worldgen/biome", tag);
+    return members && members->contains(biome);
+}
+
 int worldSurfaceY(BlockSource& region, int x, int z) {
     int minY = region.getMinHeight(), maxY = region.getMaxHeight();
     auto const* lc = region.getChunk(x >> 4, z >> 4);
@@ -528,17 +619,16 @@ std::optional<std::vector<SpawnEntry>> spawnOverrides(std::vector<landmark::Star
 
 namespace detail {
 
-void spawnForChunkGeneration(worldgen::Region& region, std::string const& biomeId, int chunkX, int chunkZ, RandomSource& random) {
+int spawnForChunkGeneration(worldgen::Region& region, std::string const& biomeId, int chunkX, int chunkZ, RandomSource& random) {
     Table t  = tableOf(biomeId);
     auto  it = t.byCategory.find("creature");
-    if (it == t.byCategory.end() || it->second.empty()) return;
+    if (it == t.byCategory.end() || it->second.empty()) return 0;
     auto const& list = it->second;
     int         i    = chunkX * 16, j = chunkZ * 16;
     // SpawnPlacements#checkSpawnRules gets levelAccessor.getRandom() (the WorldGenRegion's random),
     // never the spawn sequence random
     std::unique_ptr<RandomSource> regionRandom;
     std::vector<Queued>           out;
-    std::vector<double>           sizes; ///< width, height of every queued mob (obstruction checks)
     while (random.nextFloat() < t.creatureProbability) {
         auto const* data = pick(list, random);
         if (!data) continue;
@@ -571,19 +661,15 @@ void spawnForChunkGeneration(worldgen::Region& region, std::string const& biomeI
                         if (!src || !placement.predicate(*src, data->entityId, at, SpawnReason::ChunkGeneration, *regionRandom)) continue;
                     }
                     (void)random.nextFloat(); // the yaw (Entity#moveTo)
-                    // EventHooks#checkSpawnPosition: Mob#checkSpawnRules and #checkSpawnObstruction
-                    // (against the mobs this pass already placed)
+                    // EventHooks#checkSpawnPosition: Mob#checkSpawnRules, then #checkSpawnObstruction
+                    // (the WorldGenRegion holds no entities: the mobs this pass placed never obstruct)
                     bool rules = mob.checkSpawnRules ? mob.checkSpawnRules(region, at, SpawnReason::ChunkGeneration)
-                                                     : defaultSpawnRules(region, at, "creature", true);
-                    bool clear = true;
-                    if (mob.checkSpawnObstruction) clear = mob.checkSpawnObstruction(region, d0, static_cast<double>(pos.y), d1);
-                    else
-                        for (std::size_t q = 0; q < out.size() && clear; ++q)
-                            if (boxesOverlap(d0, pos.y, d1, mob.width, mob.height, out[q].x, out[q].y, out[q].z, sizes[2 * q], sizes[2 * q + 1])) clear = false;
-                    if (rules && clear) {
+                                                     : defaultSpawnRules(region, at, mob.walkTarget, "creature", true);
+                    bool clear = rules
+                              && (mob.checkSpawnObstruction ? mob.checkSpawnObstruction(region, d0, static_cast<double>(pos.y), d1)
+                                                            : defaultObstruction(region, nullptr, mob, "creature", d0, static_cast<double>(pos.y), d1));
+                    if (clear) {
                         out.push_back({region.dimension(), static_cast<float>(d0), static_cast<float>(pos.y), static_cast<float>(d1), data->entityId, chunkX, chunkZ});
-                        sizes.push_back(mob.width);
-                        sizes.push_back(mob.height);
                         flag = true;
                     }
                 }
@@ -595,9 +681,11 @@ void spawnForChunkGeneration(worldgen::Region& region, std::string const& biomeI
             }
         }
     }
-    if (out.empty()) return;
+    int queued = static_cast<int>(out.size());
+    if (out.empty() || region.dimension() < 0) return queued; // an in-memory region: nothing to spawn into
     std::lock_guard lock(queueMutex());
     for (auto& q : out) queue().push_back(std::move(q));
+    return queued;
 }
 
 } // namespace detail
@@ -800,7 +888,7 @@ struct Spawner {
                 if (!data) {
                     // getRandomSpawnMobAt (REDUCED_WATER_AMBIENT_SPAWNS biomes keep 2% of their fish)
                     auto biome = view.biome(pos);
-                    if (std::string(cat.name) == "water_ambient" && tags::has(tags::Registry::Biome, "minecraft:reduced_water_ambient_spawns", biome)
+                    if (std::string_view(cat.name) == "water_ambient" && detail::biomeHasTag(biome, "minecraft:reduce_water_ambient_spawns")
                         && random.nextFloat() < 0.98F)
                         break;
                     auto mobs   = mobsAt(region, pos, cat.name, biome);
@@ -822,8 +910,12 @@ struct Spawner {
                 if (!noCollision(view, d0, static_cast<double>(y), d1, mob.width, mob.height)) continue;
                 (void)random.nextFloat(); // the yaw (Entity#moveTo)
                 // isValidPositionForMob: EventHooks#checkSpawnPosition (checkSpawnRules, checkSpawnObstruction)
-                bool rules = mob.checkSpawnRules ? mob.checkSpawnRules(view, pos, SpawnReason::Natural) : defaultSpawnRules(view, pos, cat.name, false);
-                if (!rules || !unobstructed(region, view, mob, d0, y, d1)) continue;
+                bool rules = mob.checkSpawnRules ? mob.checkSpawnRules(view, pos, SpawnReason::Natural)
+                                                 : defaultSpawnRules(view, pos, mob.walkTarget, cat.name, false);
+                if (!rules) continue;
+                bool clear = mob.checkSpawnObstruction ? mob.checkSpawnObstruction(view, d0, y, d1)
+                                                       : defaultObstruction(view, &region, mob, cat.name, d0, y, d1);
+                if (!clear) continue;
                 if (spawnMob(region, data->entityId, Vec3{static_cast<float>(d0), static_cast<float>(y), static_cast<float>(d1)}, SpawnReason::Natural)) {
                     ++j;
                     ++l1;
@@ -833,17 +925,6 @@ struct Spawner {
                 }
             }
         }
-    }
-
-    /// Mob#checkSpawnObstruction: no entity that blocks building overlaps the new mob's box.
-    static bool unobstructed(BlockSource& region, worldgen::Region& view, ext::SpawnBehaviour const& mob, double x, double y, double z) {
-        if (mob.checkSpawnObstruction) return mob.checkSpawnObstruction(view, x, y, z);
-        double hw = mob.width / 2.0;
-        AABB   box{Vec3{static_cast<float>(x - hw), static_cast<float>(y), static_cast<float>(z - hw)},
-                 Vec3{static_cast<float>(x + hw), static_cast<float>(y + mob.height), static_cast<float>(z + hw)}};
-        for (Actor* a : region.fetchEntities(static_cast<Actor const*>(nullptr), box, false, false))
-            if (blocksBuilding(*a)) return false;
-        return true;
     }
 };
 

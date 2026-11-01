@@ -119,6 +119,7 @@ std::shared_ptr<Data const> loadData() {
             {"placed_feature", &d->placed},
             {"biome", &d->biomes},
             {"configured_carver", &d->carvers},
+            {"structure", &d->structures},
         };
         for (auto& k : kinds) {
             auto dir = ns.path() / "worldgen" / k.dir;
@@ -150,11 +151,12 @@ std::shared_ptr<Data const> loadData() {
         }
     }
     gf::log().info(
-        "worldgen data: {} configured features, {} placed features, {} biomes, {} carvers ({} files)",
+        "worldgen data: {} configured features, {} placed features, {} biomes, {} carvers, {} structures ({} files)",
         d->configured.size(),
         d->placed.size(),
         d->biomes.size(),
         d->carvers.size(),
+        d->structures.size(),
         files
     );
     return d;

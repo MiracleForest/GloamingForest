@@ -399,12 +399,18 @@ DataTags& dataTags() {
     return t;
 }
 
-/// <mod>/data/<ns>/tags/block/<path>.json of `tag` ("values": ids, {"id", "required"} objects and
-/// "#tag" references, expanded recursively).
-void readTag(std::filesystem::path const& root, std::string const& tag, std::unordered_set<std::string>& out, std::set<std::string>& visiting) {
+/// <mod>/data/<ns>/tags/<registryDir>/<path>.json of `tag` ("values": ids, {"id", "required"}
+/// objects and "#tag" references, expanded recursively).
+void readTag(
+    std::filesystem::path const&     root,
+    std::string const&               registryDir,
+    std::string const&               tag,
+    std::unordered_set<std::string>& out,
+    std::set<std::string>&           visiting
+) {
     if (!visiting.insert(tag).second) return; // a reference cycle
     auto colon = tag.find(':');
-    auto file  = root / tag.substr(0, colon) / "tags" / "block" / (tag.substr(colon + 1) + ".json");
+    auto file  = root / tag.substr(0, colon) / "tags" / std::filesystem::path(registryDir) / (tag.substr(colon + 1) + ".json");
     std::error_code ec;
     if (!std::filesystem::is_regular_file(file, ec)) return;
     Json doc;
@@ -412,44 +418,47 @@ void readTag(std::filesystem::path const& root, std::string const& tag, std::uno
         std::ifstream in(file);
         doc = Json::parse(in);
     } catch (std::exception const& e) {
-        warnOnce("tag file " + tag, "cannot read block tag " + tag + ": " + e.what());
+        warnOnce("tag file " + registryDir + " " + tag, "cannot read " + registryDir + " tag " + tag + ": " + e.what());
         return;
     }
     for (auto const& v : fieldArr(doc, "values")) {
         std::string entry = v.is_string() ? v.get<std::string>() : (v.is_object() ? v.value("id", std::string()) : std::string());
         if (entry.empty()) continue;
-        if (entry[0] == '#') readTag(root, normalizeId(entry), out, visiting);
+        if (entry[0] == '#') readTag(root, registryDir, normalizeId(entry), out, visiting);
         else out.insert(normalizeId(entry));
     }
 }
 
 } // namespace
 
-std::shared_ptr<std::unordered_set<std::string> const> dataBlockTag(std::string const& tag) {
-    auto& t          = dataTags();
-    auto  generation = data().generation;
+std::shared_ptr<std::unordered_set<std::string> const> dataTag(std::string const& registryDir, std::string const& tag) {
+    auto&       t          = dataTags();
+    auto        generation = data().generation;
+    std::string key        = registryDir + "|" + tag;
     {
         // the hot path (every tag query of every worker thread): a shared lock
         std::shared_lock lock(t.mutex);
         if (t.generation == generation)
-            if (auto it = t.sets.find(tag); it != t.sets.end()) return it->second;
+            if (auto it = t.sets.find(key); it != t.sets.end()) return it->second;
     }
     std::unique_lock lock(t.mutex);
     if (t.generation != generation) {
         t.sets.clear();
         t.generation = generation;
     }
-    if (auto it = t.sets.find(tag); it != t.sets.end()) return it->second;
+    if (auto it = t.sets.find(key); it != t.sets.end()) return it->second;
     auto set = std::make_shared<std::unordered_set<std::string>>();
     try {
         auto                  root = Mod::getInstance().getSelf().getModDir() / "data";
         std::set<std::string> visiting;
-        readTag(root, tag, *set, visiting);
+        readTag(root, registryDir, tag, *set, visiting);
     } catch (std::exception const&) {
         // no mod directory (tests): no data tags
     }
-    return t.sets.emplace(tag, std::move(set)).first->second;
+    return t.sets.emplace(std::move(key), std::move(set)).first->second;
 }
+
+std::shared_ptr<std::unordered_set<std::string> const> dataBlockTag(std::string const& tag) { return dataTag("block", tag); }
 
 void clearBlockCache() {
     std::lock_guard lock(cacheMutex());

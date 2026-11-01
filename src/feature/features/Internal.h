@@ -86,6 +86,7 @@ struct Data {
     std::map<std::string, Json> placed;     ///< placed_feature id -> JSON
     std::map<std::string, Json> biomes;     ///< biome id -> JSON
     std::map<std::string, Json> carvers;    ///< configured_carver id -> JSON
+    std::map<std::string, Json> structures; ///< structure id -> JSON (worldgen/structure)
     std::map<std::string, std::unordered_set<std::string>> biomeFeatureSets; ///< biome id -> its placed feature ids
     std::map<std::string, std::vector<std::vector<std::string>>> biomeSteps;   ///< biome id -> placed feature ids per step
     std::uint64_t generation = 0; ///< increases with every (re)load (cache keys)
@@ -134,8 +135,11 @@ void clearBlockCache();
 [[nodiscard]] Block const* blockFromJson(Json const& json);
 /// Java property value of `block` ("axis" -> "y"), nullopt when absent.
 [[nodiscard]] std::optional<std::string> javaProperty(Block const& block, std::string_view name);
-/// The members of block tag `tag` in the imported data (<mod>/data/<ns>/tags/block), cached per
-/// loaded data; empty when the tag has no file.
+/// The members of tag `tag` of a registry in the imported data (<mod>/data/<ns>/tags/<registryDir>,
+/// e.g. "block", "worldgen/biome"), "#tag" references expanded, cached per loaded data; empty when
+/// the tag has no file.
+[[nodiscard]] std::shared_ptr<std::unordered_set<std::string> const> dataTag(std::string const& registryDir, std::string const& tag);
+/// dataTag("block", tag).
 [[nodiscard]] std::shared_ptr<std::unordered_set<std::string> const> dataBlockTag(std::string const& tag);
 
 } // namespace gf::features::detail
