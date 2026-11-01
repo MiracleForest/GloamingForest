@@ -167,10 +167,15 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
   final boss spawner -> annihilate; quest ram trophy -> transformation particle.
 - Lich tower rooms place it through `sinister_spawner[:mobs[:range[:scan]]]` with ominous flame particles and loot
   `twilightforest:blocks/ominous_spawner_drops` (= one `twilightforest:exanimate_essence`).
-- Subcommand (owners row `subcommand spawner`; TF literal **`/twilightforest sinister_spawner`**, permission 2):
-  `add_particle <particle> <pos>`, `remove_particle <particle> <pos>`, `set_loot <loot_table> <pos>` (suggests loot
-  tables), `clear_loot <pos>`; each returns 1 on change, 0 otherwise. Register with `GF_REGISTER_SUBCOMMAND` under
-  the name `sinister_spawner` (alias `spawner` is not used by TF).
+- Subcommand: TF literal **`/twilightforest sinister_spawner`**, permission 2. Children: `add_particle <particle>
+  <pos>`, `remove_particle <particle> <pos>`, `set_loot <loot_table> <pos>` (suggests loot tables) and `clear_loot
+  <pos>`. Each returns 1 on a change, 0 otherwise.
+- Ownership conflict: owners.tsv (row `subcommand spawner U22`) and AGENTS.md R14 name the subcommand `spawner`, but
+  TF registers `sinister_spawner` (`SinisterSpawnerCommand.java:31`). This spec does not decide between them. It is
+  raised with the coordinator in [issue #5](https://github.com/MiracleForest/GloamingForest/issues/5), so that
+  F0/A8 can correct owners.tsv to `sinister_spawner`. The literal command players type must be `sinister_spawner`
+  for parity. U22 registers it with `GF_REGISTER_SUBCOMMAND` under the id that owners.tsv holds once the issue is
+  resolved, and does not add a `spawner` alias, because TF has none.
 
 ### 2.6 Skull chest
 

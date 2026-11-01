@@ -430,7 +430,12 @@ Used by `twilightforest:entities/carminite_ghastling` (U26). Implement with `loo
    `<dir>:<w>:<h>` hang a vanilla painting from `#twilightforest:tower_paintings` (rarity 1/10, 2 tries).
    Segments: terrain NONE, spawn label 1.
 6. Boss room: after placement 20 lit candles on a ring (seeded by the centre position 9 above the source jigsaw;
-   angle += rand, radius 7..11, y 0..2) where the spot and the block below are air. Paintings from
+   angle += rand, radius 7..11, y 0..2) where the spot and the block below are air. Exactly:
+   - `random.setSeed(center.asLong())`, then per candle `angle += nextFloat()` and `range = Mth.clampedLerp(7f, 11f,
+     nextFloat())` (float).
+   - `x = Math.round(Mth.cos(angle) * range)` and `z = Math.round(Mth.sin(angle) * range)`, then `y = nextInt(3)`.
+   - The cosine and sine are table lookups, and the round is Java's float round (ties toward +infinity); terrain.md
+     section 3 has both. Placement is only inside the chunk bounds, with flag UPDATE_CLIENTS. Paintings from
    `#twilightforest:tower_boss_paintings` (rarity 1/3, 3 tries). Jigsaw `tower_below` -> `LichBossRoof`
    (`lich_tower/tower_boss_roof`). No spawns (Deny). The `twilightforest:lich_boss_spawner` sits in this template.
 7. Wings (`LichTowerWingBridge.tryRoomAndBridge`): from the central tower try shuffled `bridge_from_central`
@@ -507,9 +512,12 @@ those structures and any saved starts load; new lich towers never generate the l
 | `twilightforest:TFLTRSt` | TowerRoofStairsComponent |
 | `twilightforest:TFLTRStO` | TowerRoofStairsOverhangComponent |
 
-Revamp piece types registered by `TFStructurePieceTypes` (names built as `"TFLT" + suffix`). **owners.tsv does not
-list them** (the generator missed the string concatenation); U21 registers them as part of the lich tower and A8
-should add the rows: `twilightforest:TFLTTFoy` (LichTowerFoyer), `TFLTCTBase` (LichTowerBase), `TFLTCTTrim`
+Revamp piece types registered by `TFStructurePieceTypes`, with names built as `"TFLT" + suffix`. **owners.tsv does not
+list them**: `tools/spec/owners.ps1` does not match the string concatenation. The ownership below is **proposed, pending
+an owners.tsv fix by F0/A8**. It is tracked in [issue #4](https://github.com/MiracleForest/GloamingForest/issues/4).
+The existing rules would assign the `lichtowerrevamp` package to U21 once the regex is fixed. Until owners.tsv has the
+rows, these ids are outside the manifest (R1), so U21 should wait for the fix or confirm with the coordinator
+before registering them. The ids are `twilightforest:TFLTTFoy` (LichTowerFoyer), `TFLTCTBase` (LichTowerBase), `TFLTCTTrim`
 (LichTowerBaseTrim), `TFLTCTSeg` (LichTowerSegment), `TFLTMobBridge` (LichTowerSpawnerBridge), `TFLTBridge`
 (LichTowerWingBridge), `TFLTTRoof` (LichTowerWingRoof), `TFLTTBeard` (LichTowerWingBeard), `TFLTTRoom`
 (LichTowerWingRoom), `TFLTTDecor` (LichTowerRoomDecor), `TFLTTGallery` (LichTowerMagicGallery), `TFLTTFoyD`

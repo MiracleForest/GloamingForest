@@ -34,7 +34,7 @@ Display name `entity.twilightforest.naga` = "Naga". Tags: `#twilightforest:bosse
 
 | Attribute / constant | Value |
 |---|---|
-| max health | 120; `finalizeSpawn`: NORMAL adds +80, HARD adds +130 (permanent modifier `twilightforest:difficulty_health_boost`, ADD_VALUE), then heals to full. EASY stays 120. |
+| max health | 120. In `finalizeSpawn`, when the level difficulty is **not EASY**, a permanent modifier `twilightforest:difficulty_health_boost` (ADD_VALUE) adds +130 on HARD and +80 otherwise. PEACEFUL and NORMAL therefore both get +80 (200 total), HARD gets 250, and EASY stays 120. The modifier is added only if missing, and the Naga then heals to full. |
 | movement speed | 0.5 (DEFAULT_SPEED) + transient modifier `twilightforest:segment_speed_boost` = `MAX_SEGMENTS / segments * 0.02` (ADD_VALUE), recomputed whenever the segment count changes |
 | attack damage | 5.0 |
 | follow range | 80.0 |
@@ -272,7 +272,9 @@ In peaceful the boss turns back into its spawner at the restriction point (`chec
   BlockIgnore AIR + BlockRot 0.5, both with flags 18.
 - Boss spawner: `CourtyardMain.addChildren` picks from template pool `twilightforest:courtyard/center` at
   `getWorldPos(22, 1, 22)` facing a random rotation of SOUTH (`FrontAndTop(UP, dir)`), junction name
-  `"twilightforest:center"`, as a `TwilightJigsawPiece` (F7 `twilightforest:TFJigsawTemplate`). Legacy saves without
+  `"twilightforest:center"`, as a `TwilightJigsawPiece` (piece type `twilightforest:TFJigsawTemplate`; owner F7 is
+  proposed, pending an owners.tsv fix by F0/A8,
+  [issue #4](https://github.com/MiracleForest/GloamingForest/issues/4)). Legacy saves without
   `placeSpawner = false` place `twilightforest:naga_boss_spawner` at `(22, 3, 22)` in `postProcess` (keep for
   old-save parity only).
 
