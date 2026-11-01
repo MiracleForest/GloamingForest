@@ -62,7 +62,7 @@ All saplings: PLANT, push DESTROY, instabreak, grass sound, no collision, random
 
 | Sapling | Grower (`TFTreeGrowers`) | Potted |
 |---|---|---|
-| `twilightforest:twilight_oak_sapling` ("Sickly Twilight Oak Sapling") | `twilight_oak`: 2x2 mega -> `twilightforest:tree/forest_mega_oak_tree`, secondary mega `tree/savannah_mega_oak_tree`; tree `tree/twilight_oak_tree`, 10 % secondary `tree/large_twilight_oak_tree` | `twilightforest:potted_twilight_oak_sapling` |
+| `twilightforest:twilight_oak_sapling` ("Sickly Twilight Oak Sapling") | `twilight_oak` (vanilla `TreeGrower`, `secondaryChance 0.1`): 2x2: 90 % `twilightforest:tree/forest_mega_oak_tree`, 10 % `tree/savannah_mega_oak_tree` (the same `secondaryChance 0.1`); single: 90 % `tree/twilight_oak_tree`, 10 % `tree/large_twilight_oak_tree`. RNG order (vanilla `growTree`): every attempt first draws the mega roll (`nextFloat() < 0.1`, drawn even for a single sapling because a secondary mega tree exists), then checks the four 2x2 corners; a 2x2 whose mega tree fails to place restores the saplings and returns false (no single-tree fallback); otherwise a second `nextFloat() < 0.1` picks the single tree | `twilightforest:potted_twilight_oak_sapling` |
 | `twilightforest:canopy_sapling` | `canopy`: 2x2 -> `tree/mega_canopy_tree`, else `tree/canopy_tree` | `twilightforest:potted_canopy_sapling` |
 | `twilightforest:mangrove_sapling` | `mangrove`: `tree/mangrove_tree`; MangroveSaplingBlock is waterloggable (`waterlogged` + `stage`), placed waterlogged in a full water source, unwaterlogs when no water touches it, survives on its normal soils | `twilightforest:potted_mangrove_sapling` |
 | `twilightforest:darkwood_sapling` | `dark`: `tree/homegrown_darkwood_tree` | `twilightforest:potted_darkwood_sapling` |

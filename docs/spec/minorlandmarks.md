@@ -58,11 +58,18 @@ adaptation none; centre in chunk.
 Component (`HollowHillComponent`, translate exactly):
 - Box `(-r, -(3 + s), -r, 2r, r / (s == 1 ? 2 : s), 2r)`, orientation SOUTH.
 - `postProcess`: drain water (radius `16.5 s`, depth `3s + 2` below sea level: water -> cave air, dirt/sand under the
-  floor -> stone); then for every lattice position of the speleothem config within `r^2 * 0.85`: reseed
-  `rand.nextLong() ^ pos`, ceiling speleothem (when the config rolls a stalactite) at
-  `ceilingY = ceil(cos(d / hdiam * PI) * hdiam / 4)`, floor feature at `floorY = floor(2s - cos(d/hdiam*PI) *
-  hdiam/20 + 1 + 0.25)`: 2.5 % spawner, 2.5 % treasure chest (moved by `sqrt(2)` in a random direction, on two
-  cobblestone blocks), else a stalagmite capped to `ceilingY - floorY + 4`.
+  floor -> stone); then for every lattice position of the speleothem config within `r^2 * 0.85` (`setFeatures`),
+  in this order, all on the one piece `rand`:
+  1. reseed `rand.setSeed(rand.nextLong() ^ pos.asLong())`;
+  2. ceiling feature first (`placeCeilingFeature`): if `speleothemConfig.shouldDoAStalactite(rand)`
+     (`rand.nextFloat() < stalactiteChance`), `getStalactite(rand)` and a hanging spike (`startSpike`, no height cap)
+     at `ceilingY = ceil(cos(d / hdiam * PI) * hdiam / 4)`; otherwise nothing more is drawn for the ceiling;
+  3. then the floor feature (`placeFloorFeature`) at `floorY = floor(2s - cos(d/hdiam*PI) * hdiam/20 + 1 + 0.25)`:
+     one `floatChance = rand.nextFloat()`; `< 0.025` spawner (`getMobID(rand)`), `< 0.05` treasure chest (both moved
+     by `sqrt(2)` in a random direction drawn after `floatChance`, set at `floorY + 1` on two cobblestone blocks at
+     `floorY` and `floorY - 1`); else, if `speleothemConfig.shouldDoAStalagmite(rand)` (`rand.nextFloat() <
+     stalagmiteChance`; this roll consumes RNG and can fail, leaving the point bare), `getStalagmite(rand)` and a
+     standing spike at `floorY` capped to `ceilingY - floorY + 4`.
 - These formulas are `float` with `Mth` (definitions in terrain.md section 3; bit-exact for the volume-hash goldens).
   - `radius = (2s + 1) * 8 - 6` and `hdiam = (2s + 1) * 16` are ints.
   - `distSq = dx*dx + dz*dz`, with `dx = (float)(x - cx) - 0.5f` (`getDistSqFromCenter`, float); `shortenedRadiusSq =

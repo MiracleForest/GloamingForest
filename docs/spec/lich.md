@@ -139,7 +139,10 @@ nextInt(3)`, holding the twilight scepter, same teleport invisibility; its UUID 
 - every tick where `attackCooldown % 15 == 0`: when minions-to-summon > 0 and own minions < 3: spawn one at
   `findVecInLOSOf(target)` (`LichMinion(level, this)`, `finalizeMobSpawn` MOB_SUMMONED, target set, spawn anim,
   `entity.twilightforest.minion.summon` (1.0, `((r1 - r2) * 0.7 + 1) * 0.75`), swing, magic trail with random dim
-  grey `0.125 + rand * 0.0625` per channel) and decrement minions-to-summon.
+  grey `0.125 + rand * 0.0625` per channel), then decrement minions-to-summon. `checkAndSpawnMinions` decrements
+  the counter unconditionally after `spawnMinionAt`, so it is decremented even when `findVecInLOSOf` finds no spot
+  (returns null) and `spawnMinionAt` places nothing: failed attempts still use up the summons (9 by default, from the
+  `twilightforest:minion_count` attribute), which shortens phase 2.
 - strafing (bow-skeleton style): `seeTime` counts line-of-sight ticks; within 20 blocks and `seeTime >= 20` stop
   navigation and strafe; every 20 strafe ticks 30 % flip clockwise and 30 % flip backwards; beyond 15 blocks never
   backwards, closer than 5 always backwards; strafe `(back ? -0.5 : 0.5, cw ? 0.5 : -0.5)` and look at the target.
