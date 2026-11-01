@@ -1,0 +1,178 @@
+// Selftests of F8's "projectile" contract (rule R12: prefix entity.*, dx 5800..5899): a simulated
+// throwable hits an entity and a block face, sticks when its block hit keeps it, follows
+// ThrowableProjectile's drag and gravity, and steering replaces its velocity. The projectile
+// fixture is gf_test:boss_part (no engine physics), registered only while the test runs.
+
+#include <cmath>
+
+#include "ll/api/chrono/GameChrono.h"
+#include "ll/api/coro/CoroTask.h"
+#include "ll/api/service/Bedrock.h"
+
+#include "mc/server/SimulatedPlayer.h"
+#include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/world/actor/Mob.h"
+#include "mc/world/actor/player/Player.h"
+#include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
+#include "mc/world/level/Level.h"
+#include "mc/world/level/Spawner.h"
+#include "mc/world/level/dimension/DimensionType.h"
+
+#include "feature/entity/Entity.h"
+#include "feature/entity/EntityInternal.h"
+#include "feature/ext/entity/EntityExt.h"
+#include "feature/projectile/Projectile.h"
+#include "feature/projectile/ProjectileInternal.h"
+#include "game/Blocks.h"
+#include "selftest/SelfTest.h"
+
+namespace gf::feature::projectile::tests {
+
+using gf::selftest::Context;
+namespace fe = gf::feature::entity;
+namespace gp = gf::projectile;
+
+namespace {
+
+constexpr char const* kFixture = "gf_test:boss_part";
+
+struct Hits {
+    std::string entity;
+    int         face      = -1;
+    bool        keepBlock = false;
+    bool        steer     = false;
+};
+Hits& hits() {
+    static Hits h;
+    return h;
+}
+
+/// The fixture projectile type exists only while the test runs.
+struct ProjectileScope {
+    ProjectileScope() {
+        hits() = {};
+        gp::registerType(
+            kFixture,
+            {
+                .gravity = 0.03f,
+                .drag    = 0.99f,
+                .onHitEntity =
+                    [](Actor&, Actor& target) {
+                        hits().entity = target.getTypeName();
+                        return true;
+                    },
+                .onHitBlock =
+                    [](Actor&, BlockPos const&, int face) {
+                        hits().face = face;
+                        return !hits().keepBlock;
+                    },
+            }
+        );
+        static bool steering = false;
+        if (!std::exchange(steering, true)) {
+            gp::addSteering([](Actor&, std::string const& id) -> std::optional<Vec3> {
+                if (id != kFixture || !hits().steer) return std::nullopt;
+                return Vec3{0.0f, 0.0f, 0.5f};
+            });
+        }
+    }
+    ~ProjectileScope() {
+        hits().steer = false;
+        unregisterTypeForTest(kFixture);
+    }
+};
+
+Mob* spawnMob(core::GlobalPos const& at, std::string const& id) {
+    auto* region = game::regionOf(at.dim);
+    auto  level  = ll::service::getLevel();
+    if (!region || !level) return nullptr;
+    return level->getSpawner().spawnMob(*region, ActorDefinitionIdentifier(id), nullptr, Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f}, false, false, false);
+}
+
+} // namespace
+
+GF_REGISTER_SELFTEST("entity.projectile", [](Context& ctx) -> ll::coro::CoroTask<> {
+    ProjectileScope scope;
+    auto            box  = co_await ctx.flatArea(5870, 10);
+    auto            at   = ctx.testPos(5871, 2);
+    auto&           sp   = ctx.spawnPlayer();
+    auto            spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f}, DimensionType(at.dim));
+    co_await ctx.ticks(2);
+    // an entity hit: a fixture boss 6 blocks east
+    auto* target = spawnMob(at.offset(6, 0, 0), "gf_test:boss");
+    ctx.require(target != nullptr, "a target spawns");
+    auto  targetId = fe::uidOf(*target);
+    auto* shooter  = fe::playerById(spId);
+    ctx.require(shooter != nullptr, "the shooter is there");
+    auto  eye  = shooter->getEyePos();
+    auto  tpos = target->getFeetPos();
+    Vec3  dir{tpos.x - eye.x, tpos.y + 1.0f - eye.y, tpos.z - eye.z};
+    auto* p = gp::shoot(*shooter, kFixture, dir, 1.0f, 0.0f, {{"probe", 1}});
+    ctx.require(p != nullptr, "shoot spawns the projectile");
+    auto pid = fe::uidOf(*p);
+    ctx.check(gp::ext::isProjectile(*p), "ext::isProjectile");
+    ctx.check(gp::ext::owner(*p) == shooter, "ext::owner is the shooter");
+    ctx.check(gf::entity::data(*p, "init").value("probe", 0) == 1, "the init document is the projectile's data");
+    for (int i = 0; i < 30 && hits().entity.empty(); ++i) co_await ctx.ticks(1);
+    ctx.check(hits().entity == "gf_test:boss", "onHitEntity hit the target (" + hits().entity + ")");
+    co_await ctx.ticks(2);
+    ctx.check(fe::actorById(pid) == nullptr, "a hit that returns true removes the projectile");
+    if (auto* t = fe::actorById(targetId)) t->remove();
+    // a block hit straight down: the top face (1)
+    shooter = fe::playerById(spId);
+    ctx.require(shooter != nullptr, "the shooter is still there");
+    p = gp::shoot(*shooter, kFixture, Vec3{0.0f, -1.0f, 0.0f}, 0.5f, 0.0f);
+    ctx.require(p != nullptr, "a second projectile");
+    pid = fe::uidOf(*p);
+    for (int i = 0; i < 30 && hits().face < 0; ++i) co_await ctx.ticks(1);
+    ctx.check(hits().face == 1, "onHitBlock got the top face (" + std::to_string(hits().face) + ")");
+    co_await ctx.ticks(2);
+    ctx.check(fe::actorById(pid) == nullptr, "removed after the block hit");
+    // a block hit that keeps the projectile: it sticks (AbstractArrow#inGround)
+    hits().face      = -1;
+    hits().keepBlock = true;
+    shooter          = fe::playerById(spId);
+    ctx.require(shooter != nullptr, "the shooter is still there");
+    p = gp::shoot(*shooter, kFixture, Vec3{0.0f, -1.0f, 0.0f}, 0.5f, 0.0f);
+    ctx.require(p != nullptr, "a third projectile");
+    pid = fe::uidOf(*p);
+    for (int i = 0; i < 30 && hits().face < 0; ++i) co_await ctx.ticks(1);
+    co_await ctx.ticks(3);
+    if (auto* stuck = fe::actorById(pid)) {
+        auto v = gp::ext::velocity(*stuck);
+        ctx.check(v.x == 0 && v.y == 0 && v.z == 0, "a kept projectile stays in the ground, still");
+        stuck->remove();
+    } else {
+        ctx.check(false, "a kept projectile stays in the ground");
+    }
+    // drag and gravity: horizontal shot, y after two ticks = y0 + 0 + (0 * 0.99 - 0.03)
+    hits().keepBlock = false;
+    shooter          = fe::playerById(spId);
+    ctx.require(shooter != nullptr, "the shooter is still there");
+    p = gp::shoot(*shooter, kFixture, Vec3{1.0f, 0.0f, 0.0f}, 0.2f, 0.0f);
+    ctx.require(p != nullptr, "a fourth projectile");
+    pid      = fe::uidOf(*p);
+    float y0 = p->getPosition().y;
+    co_await ctx.ticks(2);
+    auto* q = fe::actorById(pid);
+    ctx.require(q != nullptr, "the fourth projectile flies");
+    float dy = q->getPosition().y - y0;
+    ctx.check(dy < -0.01f && dy > -0.2f, "gravity pulls the projectile down (" + std::to_string(dy) + ")");
+    auto v = gp::ext::velocity(*q);
+    ctx.check(v.x < 0.2f && v.x > 0.18f, "drag slows it (" + std::to_string(v.x) + ")");
+    // steering replaces the velocity
+    hits().steer = true;
+    co_await ctx.ticks(2);
+    if (auto* r = fe::actorById(pid)) {
+        auto w = gp::ext::velocity(*r);
+        ctx.check(w.z > 0.4f, "steering set the velocity (" + std::to_string(w.z) + ")");
+        r->remove();
+    }
+    (void)box;
+    (void)liveCount();
+});
+
+} // namespace gf::feature::projectile::tests
