@@ -22,7 +22,10 @@
 namespace gf::core::landmark {
 
 /// net.minecraft.world.level.levelgen.LegacyRandomSource (java.util.Random's LCG, Minecraft's
-/// BitRandomSource helpers; bit exact).
+/// BitRandomSource helpers; bit exact). The same source as F5's core/jrand LegacyRandom: the grid
+/// keeps this small copy only while core/jrand is F0's GF_STUB on main (its next() returns 0, which
+/// would break the oracle goldens). tests/landmark/OracleGridTest.cpp cross-checks the two draw for
+/// draw as soon as jrand is real, so the swap to jrand::LegacyRandom is mechanical (A8, rule R18).
 class JavaRandom {
 public:
     explicit JavaRandom(std::int64_t seed = 0) { setSeed(seed); }

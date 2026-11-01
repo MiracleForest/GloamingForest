@@ -6,36 +6,26 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The pure landmark grid (contract "landmark", F6). Java's int and long arithmetic wraps on
-// overflow: the helpers below compute in unsigned types so the C++ results stay bit exact.
+// overflow: core/landmark/JavaMath.h computes in unsigned types so the C++ results stay bit exact.
 #include "core/landmark/Landmark.h"
 
 #include <cstdlib>
 
 #include "core/landmark/Grid.h"
+#include "core/landmark/JavaMath.h"
 
 namespace gf::core::landmark {
 
-namespace {
-
-/// Java int arithmetic (two's complement wrap-around).
-constexpr int wrapAdd(int a, int b) { return static_cast<int>(static_cast<unsigned>(a) + static_cast<unsigned>(b)); }
-constexpr int wrapMul(int a, int b) { return static_cast<int>(static_cast<unsigned>(a) * static_cast<unsigned>(b)); }
-/// Java `a << n` on an int.
-constexpr int shl(int a, int n) { return static_cast<int>(static_cast<unsigned>(a) << (n & 31)); }
-/// Java long arithmetic.
-constexpr std::int64_t lmul(std::int64_t a, std::int64_t b) {
-    return static_cast<std::int64_t>(static_cast<std::uint64_t>(a) * static_cast<std::uint64_t>(b));
-}
-constexpr std::int64_t ladd(std::int64_t a, std::int64_t b) {
-    return static_cast<std::int64_t>(static_cast<std::uint64_t>(a) + static_cast<std::uint64_t>(b));
-}
-
-} // namespace
+using java::iadd;
+using java::imul;
+using java::ishl;
+using java::ladd;
+using java::lmul;
 
 ColumnXZ nearestCenter(int chunkX, int chunkZ) {
     // generate random number for the whole biome area
-    int regionX = wrapAdd(chunkX, 8) >> 4;
-    int regionZ = wrapAdd(chunkZ, 8) >> 4;
+    int regionX = iadd(chunkX, 8) >> 4;
+    int regionZ = iadd(chunkZ, 8) >> 4;
 
     std::int64_t seed = lmul(regionX, 3129871LL) ^ lmul(regionZ, 116129781LL);
     seed              = ladd(lmul(lmul(seed, seed), 42317861LL), lmul(seed, 7LL));
@@ -52,16 +42,16 @@ ColumnXZ nearestCenter(int chunkX, int chunkZ) {
     // centers are offset strangely depending on +/-
     int ccz;
     if (regionZ >= 0) {
-        ccz = wrapAdd(wrapMul(wrapAdd(wrapMul(regionZ, 16), centerZ - 8), 16), 8);
+        ccz = iadd(imul(iadd(imul(regionZ, 16), centerZ - 8), 16), 8);
     } else {
-        ccz = wrapAdd(wrapMul(wrapAdd(wrapMul(regionZ, 16), (16 - centerZ) - 8), 16), 9);
+        ccz = iadd(imul(iadd(imul(regionZ, 16), (16 - centerZ) - 8), 16), 9);
     }
 
     int ccx;
     if (regionX >= 0) {
-        ccx = wrapAdd(wrapMul(wrapAdd(wrapMul(regionX, 16), centerX - 8), 16), 8);
+        ccx = iadd(imul(iadd(imul(regionX, 16), centerX - 8), 16), 8);
     } else {
-        ccx = wrapAdd(wrapMul(wrapAdd(wrapMul(regionX, 16), (16 - centerX) - 8), 16), 9);
+        ccx = iadd(imul(iadd(imul(regionX, 16), (16 - centerX) - 8), 16), 9);
     }
 
     return {ccx, ccz};
@@ -81,11 +71,11 @@ int manhattanDistanceFromCenter(int chunkX, int chunkZ) {
 
 std::string pickVariety(std::int64_t seed, int chunkX, int chunkZ) {
     // set the chunkX and chunkZ to the center of the biome in case they arent already
-    chunkX = wrapMul(roundRegion(chunkX), 16);
-    chunkZ = wrapMul(roundRegion(chunkZ), 16);
+    chunkX = imul(roundRegion(chunkX), 16);
+    chunkZ = imul(roundRegion(chunkZ), 16);
 
-    int regionOffsetX = std::abs((wrapAdd(chunkX, 64) >> 4) % 8);
-    int regionOffsetZ = std::abs((wrapAdd(chunkZ, 64) >> 4) % 8);
+    int regionOffsetX = std::abs((iadd(chunkX, 64) >> 4) % 8);
+    int regionOffsetZ = std::abs((iadd(chunkZ, 64) >> 4) % 8);
 
     // plant two lich towers near the center of each 2048x2048 map area
     if ((regionOffsetX == 4 && regionOffsetZ == 5) || (regionOffsetX == 4 && regionOffsetZ == 3)) return "twilightforest:lich_tower";
@@ -99,7 +89,7 @@ std::string pickVariety(std::int64_t seed, int chunkX, int chunkZ) {
     int         total = 0;
     for (auto const& [key, weight] : list) total += weight;
     if (total <= 0) return "twilightforest:small_hollow_hill";
-    JavaRandom random(ladd(ladd(seed, lmul(chunkX, 25117LL)), lmul(chunkZ, 151121LL)));
+    JavaRandom random(java::chunkSeed(seed, chunkX, chunkZ));
     int        index = random.nextInt(total);
     for (auto const& [key, weight] : list) {
         index -= weight;
@@ -110,12 +100,12 @@ std::string pickVariety(std::int64_t seed, int chunkX, int chunkZ) {
 
 std::string pickForChunk(std::int64_t seed, int chunkX, int chunkZ, BiomeAtFn const& biomeAt) {
     // set the chunkX and chunkZ to the center of the biome
-    chunkX = wrapMul(roundRegion(chunkX), 16);
-    chunkZ = wrapMul(roundRegion(chunkZ), 16);
+    chunkX = imul(roundRegion(chunkX), 16);
+    chunkZ = imul(roundRegion(chunkZ), 16);
 
     // what biome is at the center of the chunk?
     if (biomeAt) {
-        auto biome = biomeAt(wrapAdd(shl(chunkX, 4), 8), wrapAdd(shl(chunkZ, 4), 8));
+        auto biome = biomeAt(iadd(ishl(chunkX, 4), 8), iadd(ishl(chunkZ, 4), 8));
         if (!biome.empty()) {
             auto landmark = biomeLandmark(biome);
             if (!landmark.empty()) return landmark;

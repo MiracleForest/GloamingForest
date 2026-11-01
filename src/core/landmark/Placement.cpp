@@ -14,18 +14,15 @@
 #include <cstdlib>
 
 #include "core/landmark/Grid.h"
+#include "core/landmark/JavaMath.h"
 #include "core/landmark/Landmark.h"
 
 namespace gf::core::landmark::placement {
 
 namespace {
 
-constexpr std::int64_t lmul(std::int64_t a, std::int64_t b) {
-    return static_cast<std::int64_t>(static_cast<std::uint64_t>(a) * static_cast<std::uint64_t>(b));
-}
-constexpr std::int64_t ladd(std::int64_t a, std::int64_t b) {
-    return static_cast<std::int64_t>(static_cast<std::uint64_t>(a) + static_cast<std::uint64_t>(b));
-}
+using java::ladd;
+using java::lmul;
 
 int floorDiv(int a, int b) {
     int q = a / b;
