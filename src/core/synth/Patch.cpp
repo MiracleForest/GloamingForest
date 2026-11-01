@@ -536,7 +536,7 @@ std::vector<double> layerSource(Json const& L, std::string const& type, Scope& s
         Random      grng(seed);
         double      t = 0;
         while (t < len) {
-            double d = std::max(0.1, density.at(t, len));
+            double d = math::clamp(density.at(t, len), 0.1, 20000.0);
             t += -math::log(std::max(1e-9, 1.0 - grng.uniform())) / d;
             if (t >= len) break;
             double gl   = grng.uniform(g0, g1);
