@@ -24,7 +24,13 @@ tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_mag
 ## 1. Structure `twilightforest:aurora_palace`
 
 Sources: `world/components/structures/type/AuroraPalaceStructure.java`, `world/components/structures/icetower/*.java`
-(9 piece / decorator classes), `world/components/structures/icetower/floordecorators/*.java` (13 floor-plan classes),
+(9 piece / decorator classes), `world/components/structures/icetower/floordecorators/*.java` (13 floor-plan classes:
+the enum `FloorTypesAuroraPalace` with its weight and class maps, the interface `IFloorDecorator` (default empty
+required / blocked lists), the abstract `FloorWith3x3Map implements IFloorDecorator` (holds `REQUIRED_FLOOR_PARTS` /
+`BLOCKED_FLOOR_PARTS`, returned as copies), the enum `FloorParts`, and the nine `FloorWith3x3Map` subclasses named per
+row in the section 1.2 table: `FloorFarWallSteps`, `FloorPillarParkour`, `FloorPillarPlatforms`,
+`FloorPillarPlatformsOutside`, `FloorPlatform`, `FloorQuadPillarStairs`, `FloorTop`, `FloorWraparoundWallSteps`,
+`FloorWraparoundWallStepsPillars`),
 `world/components/structures/selectors/IceTowerRandomBlockSelectorFactory.java`, F7 tower base (`bases/Tower.h`:
 `TowerWingComponent`, `TowerRoofComponent`), `world/components/structures/UtilityPiece.java` (F7 `TFUtilityPiece`).
 
@@ -92,23 +98,36 @@ R (4,7)-(6,10), RF (7,7)-(10,10)).
 
 | Type | Weight | Required | Blocked | Decoration (`IceTowerWingComponent`) | Treasure (`aurora_cache`) |
 |---|---|---|---|---|---|
-| FAR_WALL_STEPS | 1 | L, LB | LB, L, LF | two parallel step rows of pillar / slab along x 8 and 9, entry slab (7, 1, 1), hole in the ceiling (9, top, 2..6) | (1, bottom + 8, 5) on an x-axis pillar |
-| WRAPAROUND_WALL_STEPS | 1 | LB, L | RF | slab spiral along two walls (top / bottom slabs alternating), entry slabs (1, 1, 7..8), ceiling hole (9, top, 2..6) | (1, bottom + 5, 5) on a pillar |
-| WRAPAROUND_WALL_STEPS_PILLARS | 1 | L, LB | LB, LF, RF, PILLARS | wraparound steps + 4 full pillars + 10 short pillar beams between them and the walls | (7, bottom + 7, 1) |
-| PLATFORM | 1 | LB, L | RB, B, PILLARS | 4 pillars, 5 x 5 planks platform at y 5, two flights up to it and two flights from it to the ceiling hole | (5, bottom + 6, 5) |
-| PILLAR_PARKOUR | 6 | L, MID, R, LF, F, RF, PILLARS | MID, R, PILLARS | 4 pillars, a centre stub and 9 short pillar beams at rising heights forming a jump course; ceiling holes (6..8, top, 6..8) and (2..5, top, 6..8) | (8, bottom + 8, 7) |
-| PILLAR_PLATFORMS | 6 | LB, B, RB, L, MID, R, PILLARS | LB, B, L, MID, LF, F, PILLARS | 3 x 3 plank platforms spiralling around the 4 pillars (y 1..9), ceiling cleared (2..8, top, 2..4) and (2..4, top, 2..6), slab tops on two pillars | (3, bottom + 5, 2) |
-| PILLAR_PLATFORMS_OUTSIDE | 1 | RB, R, RF | LB, RB, L, LF, PILLARS | plank ledges (1..6, bottom, 1..3) on 4 sides with slabs on 3 of them, a 22-step slab stairway (`buildStairway`) to the ceiling plus 4 full-block landings, 4 pillars | (3, bottom + 5, 2) on a 2-long pillar |
-| QUAD_PILLAR_STAIRS | 1 | L, LF | B, RB, PILLARS | 4 pillars, four slab flights around them to the ceiling | (3, bottom + 7, 5) on a 3-long pillar |
-| TOP | 0 | - | MID, PILLARS | the top floor (never chosen for lower floors) | - |
+| FAR_WALL_STEPS (`FloorFarWallSteps`) | 1 | L, LB | LB, L, LF | two parallel step rows of pillar / slab along x 8 and 9, entry slab (7, 1, 1), hole in the ceiling (9, top, 2..6) | (1, bottom + 8, 5) on an x-axis pillar |
+| PILLAR_PARKOUR (`FloorPillarParkour`) | 6 | L, MID, R, LF, F, RF, PILLARS | MID, R, PILLARS | 4 pillars, a centre stub and 9 short pillar beams at rising heights forming a jump course; ceiling holes (6..8, top, 6..8) and (2..5, top, 6..8) | (8, bottom + 8, 7) |
+| PILLAR_PLATFORMS (`FloorPillarPlatforms`) | 6 | LB, B, RB, L, MID, R, PILLARS | LB, B, L, MID, LF, F, PILLARS | 3 x 3 plank platforms spiralling around the 4 pillars (y 1..9), ceiling cleared (2..8, top, 2..4) and (2..4, top, 2..6), slab tops on two pillars | (3, bottom + 5, 2) |
+| PILLAR_PLATFORMS_OUTSIDE (`FloorPillarPlatformsOutside`) | 1 | RB, R, RF | LB, RB, L, LF, PILLARS | plank ledges (1..6, bottom, 1..3) on 4 sides with slabs on 3 of them, a 22-step slab stairway (`buildStairway`) to the ceiling plus 4 full-block landings, 4 pillars | (3, bottom + 5, 2) on a 2-long pillar |
+| PLATFORM (`FloorPlatform`) | 1 | LB, L | RB, B, PILLARS | 4 pillars, 5 x 5 planks platform at y 5, two flights up to it and two flights from it to the ceiling hole | (5, bottom + 6, 5) |
+| QUAD_PILLAR_STAIRS (`FloorQuadPillarStairs`) | 1 | L, LF | B, RB, PILLARS | 4 pillars, four slab flights around them to the ceiling | (3, bottom + 7, 5) on a 3-long pillar |
+| WRAPAROUND_WALL_STEPS (`FloorWraparoundWallSteps`) | 1 | LB, L | RF | slab spiral along two walls (top / bottom slabs alternating), entry slabs (1, 1, 7..8), ceiling hole (9, top, 2..6) | (1, bottom + 5, 5) on a pillar |
+| WRAPAROUND_WALL_STEPS_PILLARS (`FloorWraparoundWallStepsPillars`) | 1 | L, LB | LB, LF, RF, PILLARS | wraparound steps + 4 full pillars + 10 short pillar beams between them and the walls | (7, bottom + 7, 1) |
+| TOP (`FloorTop`) | 0 | - | MID, PILLARS | the top floor (never chosen for lower floors) | - |
 
 Algorithm: start with `topBlocked` = TOP's blocked parts + parts blocked by doors of the top floor and `bottomBlocked` =
 parts blocked by doors of the floor below; repeat until the plan has `floors - 1` entries: collect every type except TOP
 with its allowed rotations (0..3, `required` rotated disjoint from `topBlocked` and `blocked` rotated disjoint from
-`bottomBlocked`); if none, restart the plan (`tries++`; after 10000 tries both blocked sets are cleared and the error
-"Unable to generate floor plan for aurora palace at {}..." is logged); else pick a type by weight
+`bottomBlocked`); if none, restart the plan (`tries++`; once `tries > 10000`, every later iteration first clears both
+current blocked sets and logs the error "Unable to generate floor plan for aurora palace at {}..."); else pick a type
+by weight
 (`WorldUtil.getRandomElementWithWeights`) and a rotation (`Util.getRandom`), then recompute the blocked sets for the
 next floor down. All randoms come from `decoRNG` (translate exactly; the golden hash depends on it).
+
+Candidate order (a GloamingForest decision): `getRandomElementWithWeights` sums the float weights, draws
+`decoRNG.nextFloat() * total` and subtracts the weights **in list order**, returning the first type that takes the
+value below 0, so the order of the candidates decides which type a given draw picks. TF builds the candidates with
+`Arrays.stream(values()).collect(Collectors.toMap(...))` (IceTowerWingComponent.java:317-337), a `HashMap` keyed by
+enum constants whose `hashCode` is the identity hash, and iterates its `keySet()`: TF's own order depends on the JVM
+run, so no TF run is a reference for the pick. GloamingForest fixes the order to the enum declaration order with TOP
+removed and the types that have no allowed rotation skipped: FAR_WALL_STEPS, PILLAR_PARKOUR, PILLAR_PLATFORMS,
+PILLAR_PLATFORMS_OUTSIDE, PLATFORM, QUAD_PILLAR_STAIRS, WRAPAROUND_WALL_STEPS, WRAPAROUND_WALL_STEPS_PILLARS (the table
+order above). The total is `(float)` of the double sum of the candidates' float weights; keep the float arithmetic.
+The rotation is then `Util.getRandom(allowed, decoRNG)` over the allowed rotations in ascending order
+(`IntStream.range(0, 4).filter(...)`), which is deterministic in TF too.
 
 Chests: `TFStructureComponentOld.placeTreasureRotated` places a vanilla `minecraft:chest` (not trapped) facing the
 given direction with the loot table (F10 `loot::placeContainer`), skipped when a chest is already there.
@@ -116,7 +135,9 @@ given direction with the loot table (F10 `loot::placeContainer`), skipped when a
 ### 1.3 Golden hash
 
 R19: `aurora.palace_hash` generates the palace for a fixed seed and chunk with `landmark::forceStart` and hashes the
-volume (F0 `snapshotVolume`); reviewed once with screenshots (aurora tint visible on walls).
+volume (F0 `snapshotVolume`); reviewed once with screenshots (aurora tint visible on walls). Because of the candidate
+order decision in section 1.2, the hash is GloamingForest's own golden (recorded from the translation after the
+screenshot review), not an oracle value: a TF run can produce a different floor plan for the same seed.
 
 ## 2. Structure `twilightforest:mushroom_tower`
 
