@@ -1,0 +1,113 @@
+// Container screens for a real player (client e2e, tools/e2e/client/scenarios/combat.ps1; spike
+// S3's screenshots): each test opens one screen for the first non-simulated player and leaves it
+// open for the scenario to take a screenshot (the scenario closes it). Without a real player (the
+// server harness, the 'full' run) they have nothing to show and pass.
+//   combat.ui_loot_chest        a vanilla chest placed with a loot table (gf::loot::placeContainer):
+//                               opening it rolls the Java table into the game's chest screen
+//   combat.ui_native_container  the S3 probe block with a data-driven block actor and the injected
+//                               game container: the game's container screen for a custom block
+//   combat.ui_chest_screen      a BlockData container: the client mod's chest screen (companions)
+//                               or the form (vanilla clients)
+
+#include "ll/api/service/Bedrock.h"
+
+#include "mc/world/actor/player/Player.h"
+#include "mc/world/item/ItemStack.h"
+#include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
+#include "mc/world/level/Level.h"
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/ChestBlockActor.h"
+
+#include "feature/inventory/Inventory.h"
+#include "feature/inventory/InventoryInternal.h"
+#include "feature/loot/Loot.h"
+#include "feature/loot/LootInternal.h"
+#include "game/Blocks.h"
+#include "game/Items.h"
+#include "mod/Log.h"
+#include "selftest/SelfTest.h"
+
+namespace {
+
+using gf::selftest::Context;
+
+Player* realPlayer() {
+    auto level = ll::service::getLevel();
+    if (!level) return nullptr;
+    Player* found = nullptr;
+    level->forEachPlayer([&](Player& p) {
+        if (!p.isSimulatedPlayer() && !p.isClientSide()) {
+            found = &p;
+            return false;
+        }
+        return true;
+    });
+    return found;
+}
+
+/// A free spot next to the player, at its feet level.
+BlockPos besidePlayer(Player& p, int dx, int dz) {
+    auto const& at = p.getPosition();
+    return BlockPos{static_cast<int>(std::floor(at.x)) + dx, static_cast<int>(std::floor(at.y - 1.62f)), static_cast<int>(std::floor(at.z)) + dz};
+}
+
+} // namespace
+
+GF_REGISTER_SELFTEST("combat.ui_loot_chest", [](Context& ctx) {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        return;
+    }
+    auto& region = p->getDimensionBlockSource();
+    auto  bp     = besidePlayer(*p, 2, 0);
+    ctx.require(gf::loot::placeContainer(region, bp, "minecraft:chest", 4, "gf_test:chests/fixture_chest", 20261102), "a loot chest beside the player");
+    auto* actor = region.getBlockEntity(bp);
+    ctx.require(actor && actor->getType() == BlockActorType::Chest, "the chest block actor");
+    static_cast<ChestBlockActor*>(actor)->openBy(*p);
+    gf::log().info("combat ui: loot chest opened for {}", p->getRealName());
+});
+
+GF_REGISTER_SELFTEST("combat.ui_native_container", [](Context& ctx) {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        return;
+    }
+    if (!gf::game::blockWith("gf_s3:entity") || !gf::inventory::declared("gf_s3:entity")) {
+        ctx.info("no S3 probe block in this run: nothing to show");
+        return;
+    }
+    auto& region = p->getDimensionBlockSource();
+    auto  bp     = besidePlayer(*p, -2, 0);
+    ctx.require(gf::game::setBlock(region, bp, *gf::game::blockWith("gf_s3:entity")), "the probe block beside the player");
+    auto pos = gf::game::globalPos(region, bp);
+    auto h   = gf::inventory::find(region, bp);
+    ctx.require(h.has_value(), "the probe block is a container");
+    ctx.require(gf::inventory::nativeContainer(region, bp) != nullptr, "it has the injected game container");
+    h->set(pos, 0, *gf::game::items::make("minecraft:diamond", 7));
+    h->set(pos, 4, *gf::game::items::make("minecraft:stick", 12));
+    h->set(pos, 22, *gf::game::items::make("gf_test:fixture_item", 3));
+    ctx.require(gf::inventory::openChestLike(*p, pos, 3, "container.chest"), "the container screen opened");
+    gf::log().info("combat ui: native container opened for {}", p->getRealName());
+});
+
+GF_REGISTER_SELFTEST("combat.ui_chest_screen", [](Context& ctx) {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        return;
+    }
+    gf::inventory::declare({.block = "gf_test:fixture_block", .rows = 3, .slots = 27, .title = "container.chest", .skin = ""});
+    auto& region = p->getDimensionBlockSource();
+    auto  bp     = besidePlayer(*p, 0, 2);
+    ctx.require(gf::game::setBlock(region, bp, *gf::game::blockWith("gf_test:fixture_block")), "the fixture block beside the player");
+    auto pos = gf::game::globalPos(region, bp);
+    auto h   = gf::inventory::find(region, bp);
+    ctx.require(h.has_value(), "the fixture block is a container");
+    h->set(pos, 0, *gf::game::items::make("minecraft:emerald", 5));
+    h->set(pos, 10, *gf::game::items::make("minecraft:apple", 2));
+    ctx.require(gf::inventory::openChestLike(*p, pos, 3, "container.chest"), "the chest screen opened");
+    gf::log().info("combat ui: chest screen opened for {}", p->getRealName());
+});
