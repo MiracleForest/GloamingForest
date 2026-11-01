@@ -79,15 +79,17 @@ void tick() {
     bool     before = s.portalTimer > 0;
     if (inside) {
         s.portalTimer = std::min(s.portalTimer + 1, kMaxTicks);
-        // close any open screen but the pause and death screens; a pop takes effect a few frames
-        // later, so each screen is popped once (popping again while it closes would take the HUD)
+        // close any open screen but the pause and death screens. A pop takes effect a few frames
+        // later and a screen may close by itself meanwhile (the chat after Enter): the pop names
+        // the screen it expects, so it never takes the HUD below, and is scheduled once per screen
         if (auto* c = currentClient()) {
             if (ISceneStack* stack = c->getClientSceneStack().get()) {
                 auto name = stack->getScreenName();
-                if (name == "hud_screen" || name.empty()) {
+                bool base = name.empty() || name.starts_with("hud") || name == "in_game_play_screen";
+                if (base) {
                     s.popped.clear();
-                } else if (name != "pause_screen" && name != "death_screen" && name != s.popped) {
-                    stack->schedulePopScreen(1);
+                } else if (name != "pause_screen" && name != "death_screen" && name != s.popped && stack->getScheduledPopCount() == 0) {
+                    stack->schedulePopScreenWithExpectedNames({name});
                     s.popped = name;
                 }
             }
