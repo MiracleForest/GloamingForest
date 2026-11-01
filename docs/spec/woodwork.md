@@ -14,9 +14,10 @@ U4 owns the wooden building set of the eight TF woods and the wooden furniture o
 - **Banisters** and **drying racks** for all 19 woods (8 TF + oak, spruce, birch, jungle, acacia, dark oak, crimson,
   warped, "vangrove" = vanilla mangrove, bamboo, cherry).
 - **Hollow logs** (horizontal, vertical, climbable) for 18 woods (8 TF + 10 vanilla; no bamboo) and their 18 items.
-- `canopy_bookshelf`, the drying recipe type `twilightforest:drying` (4 TF + 15 vanilla coral recipes), the
-  `drying_rack` block entity, particle and two sounds, and the leather / slime items made on racks or from them
-  (`tannin`, `treated_leather`, `tanned_leather`, `gelatinous_slime_drop`, `gelatinous_maze_slime_drop`).
+- `canopy_bookshelf`, the drying recipe type `twilightforest:drying` (20 TF recipes: kelp, mud, sapling, sponge, tanned
+  leather, 2 gelatinous drops, stale bread, 12 jerkies; + 15 vanilla coral recipes), the `drying_rack` block entity,
+  particle and two sounds, and the leather / slime items made on racks or from them (`tannin`, `treated_leather`,
+  `tanned_leather`, `gelatinous_slime_drop`, `gelatinous_maze_slime_drop`).
 - 230 recipes (wood set crafting, drying) with their recipe-unlock advancements, 245 block loot tables, 25 tags.
 
 Not U4 (string references only, R2): leaves, saplings, potted saplings and magic log cores (U3 `trees`); the
@@ -140,7 +141,14 @@ vanilla logs) can be used as a **jar lid** (`JarBlockEntity.addLid`, consumed by
   `facing` face (`ParticleUtils.spawnParticleOnFace(level, pos, facing, type, Vec3.ZERO, 0.3)`). The particle is a
   `BaseAshSmokeParticle` (quad size x0.5, colour multiplier 0.3, lifetime 16, gravity -0.025, physics on) tinted
   RGB (0.7294118, 0.69411767, 0.7607843).
-- Breaking / replacing the block drops the held item.
+- Any state change of the rack drops the held item (`DryingRackBlock.onRemove` has no same-block check, and the
+  server calls it on every state change): breaking or replacing it, **becoming waterlogged** (a water source placed
+  into it, e.g. a water bucket; flowing water never waterlogs it, `SimpleWaterloggedBlock` accepts only source water)
+  or losing its water (bucket pickup), and any other in-world state change of the same rack (vanilla has none for
+  `facing`: `rotate` / `mirror` only shape the state a structure template places, which is a new block, not a change).
+  The item is ejected with `Containers.dropItemStack` at the block position and the rack stays, now empty, when only
+  its state changed. On Bedrock, a water source entering or leaving the rack's liquid layer counts as the waterlogged
+  change; flowing water does not.
 - Automation (item handler, any side): 1 slot, limit 1; insert only when empty (one item); extract is refused while
   `drying`.
 - Renderer (`DryingRackRenderer`): the item is drawn with display context FIXED at x = 0.5 + 0.4*facing.stepX,
@@ -239,7 +247,9 @@ dried slime balls; both render lower on the drying rack.
 - Banister: placement shape rule, axe cycle order short -> tall -> connected with `extended` toggling on the full cycle,
   forced un-extend over a non-short banister.
 - Drying rack: add/remove sounds, dried kelp after 3600 ticks, coral after 40 ticks, no drying while waterlogged,
-  default 6000 when no recipe, item dropped on break, hopper cannot extract while drying.
+  default 6000 when no recipe, item dropped on break, item also dropped (rack stays, empty) when the rack becomes
+  waterlogged by a water bucket or loses its water (flowing water does not waterlog it), hopper cannot extract while
+  drying.
 - Hollow logs: item places vertical on top faces and horizontal on side faces; moss / grass / snow / vine / ladder /
   shears / shovel transitions and drops; climbable variant is in `#minecraft:climbable`.
 - Chest pairing and trapped chest redstone; sign editing; boats placeable and rideable.

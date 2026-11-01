@@ -107,7 +107,7 @@ Missing registry entries are warned once and treated as absent.
 
 | Modifier (U11) | Slot | Type / component (default) | Effect |
 |---|---|---|---|
-| `auto_repair` | any armor | `auto_repair_probability` 0.001 | server tick, if no armor damage in the last 200 ticks (`last_damage_armor_time`, U12 attachment): each piece repairs 1 with the probability; under open sky in daytime the chance is boosted to at-least-one-success in 3 tries (Twilight dimension 1.5 tries) |
+| `auto_repair` | any armor | `auto_repair_probability` 0.001 | server tick, only when **more than** 200 ticks have passed since the last armor damage (`gameTime - last_damage_armor_time <= 200` returns; U12 attachment): each piece with the modifier repairs 1 durability when `chance > nextFloat()`. Chance (`getAutoRepairChance`): not under open sky (`canSeeSky` at the block position) -> the base probability; under open sky: in the Twilight dimension (dimension type) **always** at-least-one-success in 1.5 tries (`1 - (1 - p)^1.5`, any time of day); in other dimensions at-least-one-success in 3 tries only while `isDay()`, otherwise the base probability |
 | `zoom` | head | builtin `zoom_ability_modifier` (0.3) | while the zoom key is held (not scoping): FOV x 0.3, mouse sensitivity x (0.5 - 1/(6s)) / (0.3 + 0.05); sounds `item.twilightforest.travellers_goggles.zoom_in` / `zoom_out`; state synced with `GogglesZoomPacket` to the server and trackers (texture flip) |
 | `red_thread_vision` | head | `red_thread_vision` (unit) | the key toggles `travellers_goggles_red_thread_vision` (kept on death); red threads render full bright through the glow render type while active or while holding red thread |
 | `all_night_goggles` | head | `all_night_goggles` (unit) | no phantom spawns for the wearer; endermen do not aggro on gaze (ender mask) |
@@ -190,7 +190,8 @@ corners; full-bright glow render type while the viewer holds red thread or has r
   repair; anvil/grindstone rules.
 - Every modifier recipe adds its modifier (respecting free slots and duplicates) and fires `add_modifier`;
   vest + gloves merge; `/twilightforest travellers_gear` errors and success messages.
-- Auto repair probability with sky boost; haste, stealth, perfect dodge (seeded 0.3), arrow magnetism, efficient
+- Auto repair probability with sky boost (Twilight: 1.5 tries day and night; elsewhere 3 tries by day only), none
+  within 200 ticks of armor damage; haste, stealth, perfect dodge (seeded 0.3), arrow magnetism, efficient
   eater halving exhaustion, all-night goggles blocking phantoms.
 - Item display insert/swap/remove rules, map cycling sounds, HUD layout screenshot (client mod).
 - Belt swap exchanges hotbar and storage, respects the blacklist.

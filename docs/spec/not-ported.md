@@ -48,7 +48,7 @@ are listed in the appendices; none of them has runtime behaviour in GloamingFore
 
 | TF id / feature | Status |
 |---|---|
-| Structure `twilightforest:quest_island` | key only, no structure / set / pieces in TF 4.8: not ported |
+| Structure `twilightforest:quest_island` | key only, no structure / set / pieces in TF 4.8 (the set registration is commented out in `TFStructureSets`): not ported. `LegacyLandmarkPlacements` still maps the `twilightforest:lake` biome centre to `quest_island`; with no registered structure TF places nothing there (no landmark's `valid_*_biomes` tag contains the lake: neither the variety landmarks picked by `pickVarietyLandmark` nor the biome-locked ones placed by `forceStructureForCenters`), and the magic map shows no icon (`structureRegistry.getHolder` is empty). F6 and U13 must keep the key in `pickForChunk` and treat it as absent without warnings: no generator, no map decoration, no hint, no log line. `/tf center` (F6) at a lake centre names it as TF does, `structure.twilightforest.quest_island` (no lang key in TF, so the raw key is shown) |
 | Structure `twilightforest:druid_grove` | key only: not ported |
 | Structure `twilightforest:floating_ruins` | key only: not ported |
 | Structure `twilightforest:world_tree` | key only: not ported |
