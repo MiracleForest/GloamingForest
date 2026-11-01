@@ -1,0 +1,19 @@
+{
+  "item.twilightforest.knightmetal_armor.equip": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/armor/equip_netherite1"
+      },
+      {
+        "name": "sounds/armor/equip_netherite2"
+      },
+      {
+        "name": "sounds/armor/equip_netherite3"
+      },
+      {
+        "name": "sounds/armor/equip_netherite4"
+      }
+    ]
+  }
+}

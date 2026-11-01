@@ -1,0 +1,10 @@
+{
+  "block.twilightforest.beanstalk.grow": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/giants/random/beanstalk_grow"
+      }
+    ]
+  }
+}

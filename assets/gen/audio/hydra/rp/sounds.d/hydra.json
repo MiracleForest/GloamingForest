@@ -1,0 +1,108 @@
+{
+  "block.twilightforest.jet.active": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/fireball4"
+      }
+    ]
+  },
+  "block.twilightforest.jet.pop": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/liquid/lavapop"
+      }
+    ]
+  },
+  "block.twilightforest.jet.start": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.twilightforest.smoker.start": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/death"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.growl": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/growl1"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/growl2"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/growl3"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/hurt1"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/hurt2"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/hurt3"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/hurt4"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.roar": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/roar1"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/roar2"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.shoot": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/fireball4"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.shoot_fire": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/fireball4"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.warn": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/warn"
+      }
+    ]
+  }
+}

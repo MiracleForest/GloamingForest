@@ -1,0 +1,18 @@
+{
+  "block.twilightforest.core.time": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.twilightforest.core.transformation": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/note/harp"
+      }
+    ]
+  }
+}

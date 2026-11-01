@@ -1,0 +1,64 @@
+{
+  "entity.twilightforest.quest_ram.ambient": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "sounds/mob/sheep/say1"
+      },
+      {
+        "name": "sounds/mob/sheep/say2"
+      },
+      {
+        "name": "sounds/mob/sheep/say3"
+      }
+    ]
+  },
+  "entity.twilightforest.quest_ram.death": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "sounds/mob/sheep/say1"
+      },
+      {
+        "name": "sounds/mob/sheep/say2"
+      },
+      {
+        "name": "sounds/mob/sheep/say3"
+      }
+    ]
+  },
+  "entity.twilightforest.quest_ram.hurt": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "sounds/mob/sheep/say1"
+      },
+      {
+        "name": "sounds/mob/sheep/say2"
+      },
+      {
+        "name": "sounds/mob/sheep/say3"
+      }
+    ]
+  },
+  "entity.twilightforest.quest_ram.step": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "sounds/mob/sheep/step1"
+      },
+      {
+        "name": "sounds/mob/sheep/step2"
+      },
+      {
+        "name": "sounds/mob/sheep/step3"
+      },
+      {
+        "name": "sounds/mob/sheep/step4"
+      },
+      {
+        "name": "sounds/mob/sheep/step5"
+      }
+    ]
+  }
+}

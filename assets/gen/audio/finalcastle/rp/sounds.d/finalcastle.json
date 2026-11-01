@@ -1,0 +1,26 @@
+{
+  "block.twilightforest.door.activate": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.twilightforest.door.reappear": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/fizz"
+      }
+    ]
+  },
+  "block.twilightforest.door.vanish": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/fizz"
+      }
+    ]
+  }
+}

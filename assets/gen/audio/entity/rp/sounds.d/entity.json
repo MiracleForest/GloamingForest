@@ -1,0 +1,10 @@
+{
+  "block.twilightforest.boss_chest.appear": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/mob/evocation_illager/prepare_summon"
+      }
+    ]
+  }
+}

@@ -1,0 +1,543 @@
+{
+  "block.twilightforest.builder.create": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.twilightforest.builder.off": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.twilightforest.builder.on": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.twilightforest.builder.replace": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/pop"
+      }
+    ]
+  },
+  "block.twilightforest.ghast_trap.ambient": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/note/harp"
+      }
+    ]
+  },
+  "block.twilightforest.ghast_trap.on": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_on1"
+      },
+      {
+        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_on2"
+      },
+      {
+        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_on3"
+      },
+      {
+        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_on4"
+      },
+      {
+        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_on5"
+      }
+    ]
+  },
+  "block.twilightforest.ghast_trap.spindown": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_spin_down"
+      }
+    ]
+  },
+  "block.twilightforest.ghast_trap.warmup": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/darktower/mob/ur_ghast/trap_warmup"
+      }
+    ]
+  },
+  "block.twilightforest.reactor.ambient": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/portal/portal"
+      }
+    ]
+  },
+  "block.twilightforest.reappearing_block.reappear": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.twilightforest.reappearing_block.vanish": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/pop"
+      }
+    ]
+  },
+  "block.twilightforest.slider.move": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/darktower/random/creakgo2"
+      }
+    ]
+  },
+  "block.twilightforest.vanish.locked": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.twilightforest.vanish.unlock": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.twilightforest.vanish.vanish": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/pop"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_broodling.ambient": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/spider/say1"
+      },
+      {
+        "name": "sounds/mob/spider/say2"
+      },
+      {
+        "name": "sounds/mob/spider/say3"
+      },
+      {
+        "name": "sounds/mob/spider/say4"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_broodling.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/spider/death"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_broodling.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/spider/say1"
+      },
+      {
+        "name": "sounds/mob/spider/say2"
+      },
+      {
+        "name": "sounds/mob/spider/say3"
+      },
+      {
+        "name": "sounds/mob/spider/say4"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_broodling.step": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/spider/step1"
+      },
+      {
+        "name": "sounds/mob/spider/step2"
+      },
+      {
+        "name": "sounds/mob/spider/step3"
+      },
+      {
+        "name": "sounds/mob/spider/step4"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_ghastguard.ambient": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/moan1"
+      },
+      {
+        "name": "sounds/mob/ghast/moan2"
+      },
+      {
+        "name": "sounds/mob/ghast/moan3"
+      },
+      {
+        "name": "sounds/mob/ghast/moan4"
+      },
+      {
+        "name": "sounds/mob/ghast/moan5"
+      },
+      {
+        "name": "sounds/mob/ghast/moan6"
+      },
+      {
+        "name": "sounds/mob/ghast/moan7"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_ghastguard.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/death"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_ghastguard.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/scream1"
+      },
+      {
+        "name": "sounds/mob/ghast/scream2"
+      },
+      {
+        "name": "sounds/mob/ghast/scream3"
+      },
+      {
+        "name": "sounds/mob/ghast/scream4"
+      },
+      {
+        "name": "sounds/mob/ghast/scream5"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_ghastguard.shoot": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/fireball4"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_ghastguard.warn": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/charge"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_ghastling.ambient": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/moan1"
+      },
+      {
+        "name": "sounds/mob/ghast/moan2"
+      },
+      {
+        "name": "sounds/mob/ghast/moan3"
+      },
+      {
+        "name": "sounds/mob/ghast/moan4"
+      },
+      {
+        "name": "sounds/mob/ghast/moan5"
+      },
+      {
+        "name": "sounds/mob/ghast/moan6"
+      },
+      {
+        "name": "sounds/mob/ghast/moan7"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_ghastling.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/death"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_ghastling.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/scream1"
+      },
+      {
+        "name": "sounds/mob/ghast/scream2"
+      },
+      {
+        "name": "sounds/mob/ghast/scream3"
+      },
+      {
+        "name": "sounds/mob/ghast/scream4"
+      },
+      {
+        "name": "sounds/mob/ghast/scream5"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_ghastling.shoot": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/fireball4"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_ghastling.warn": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/charge"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_golem.attack": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/irongolem/throw"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_golem.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/irongolem/death"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_golem.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/irongolem/hit1"
+      },
+      {
+        "name": "sounds/mob/irongolem/hit2"
+      },
+      {
+        "name": "sounds/mob/irongolem/hit3"
+      },
+      {
+        "name": "sounds/mob/irongolem/hit4"
+      }
+    ]
+  },
+  "entity.twilightforest.carminite_golem.step": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/irongolem/walk1"
+      },
+      {
+        "name": "sounds/mob/irongolem/walk2"
+      },
+      {
+        "name": "sounds/mob/irongolem/walk3"
+      },
+      {
+        "name": "sounds/mob/irongolem/walk4"
+      }
+    ]
+  },
+  "entity.twilightforest.tear.break": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/random/glass1"
+      },
+      {
+        "name": "sounds/random/glass2"
+      },
+      {
+        "name": "sounds/random/glass3"
+      }
+    ]
+  },
+  "entity.twilightforest.towerwood_borer.ambient": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/silverfish/say1"
+      },
+      {
+        "name": "sounds/mob/silverfish/say2"
+      },
+      {
+        "name": "sounds/mob/silverfish/say3"
+      },
+      {
+        "name": "sounds/mob/silverfish/say4"
+      }
+    ]
+  },
+  "entity.twilightforest.towerwood_borer.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/silverfish/kill"
+      }
+    ]
+  },
+  "entity.twilightforest.towerwood_borer.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/silverfish/hit1"
+      },
+      {
+        "name": "sounds/mob/silverfish/hit2"
+      },
+      {
+        "name": "sounds/mob/silverfish/hit3"
+      }
+    ]
+  },
+  "entity.twilightforest.towerwood_borer.step": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/silverfish/step1"
+      },
+      {
+        "name": "sounds/mob/silverfish/step2"
+      },
+      {
+        "name": "sounds/mob/silverfish/step3"
+      },
+      {
+        "name": "sounds/mob/silverfish/step4"
+      }
+    ]
+  },
+  "entity.twilightforest.ur_ghast.ambient": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/moan1"
+      },
+      {
+        "name": "sounds/mob/ghast/moan2"
+      },
+      {
+        "name": "sounds/mob/ghast/moan3"
+      },
+      {
+        "name": "sounds/mob/ghast/moan4"
+      },
+      {
+        "name": "sounds/mob/ghast/moan5"
+      },
+      {
+        "name": "sounds/mob/ghast/moan6"
+      },
+      {
+        "name": "sounds/mob/ghast/moan7"
+      }
+    ]
+  },
+  "entity.twilightforest.ur_ghast.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/death"
+      }
+    ]
+  },
+  "entity.twilightforest.ur_ghast.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/scream1"
+      },
+      {
+        "name": "sounds/mob/ghast/scream2"
+      },
+      {
+        "name": "sounds/mob/ghast/scream3"
+      },
+      {
+        "name": "sounds/mob/ghast/scream4"
+      },
+      {
+        "name": "sounds/mob/ghast/scream5"
+      }
+    ]
+  },
+  "entity.twilightforest.ur_ghast.shoot": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/fireball4"
+      }
+    ]
+  },
+  "entity.twilightforest.ur_ghast.tantrum": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/scream1"
+      },
+      {
+        "name": "sounds/mob/ghast/scream2"
+      },
+      {
+        "name": "sounds/mob/ghast/scream3"
+      },
+      {
+        "name": "sounds/mob/ghast/scream4"
+      },
+      {
+        "name": "sounds/mob/ghast/scream5"
+      }
+    ]
+  },
+  "entity.twilightforest.ur_ghast.warn": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/charge"
+      }
+    ]
+  }
+}

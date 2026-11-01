@@ -1,0 +1,10 @@
+{
+  "environment.twilightforest.acid_rain": {
+    "category": "weather",
+    "sounds": [
+      {
+        "name": "sounds/random/fizz"
+      }
+    ]
+  }
+}

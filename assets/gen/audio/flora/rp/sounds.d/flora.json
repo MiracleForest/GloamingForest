@@ -1,0 +1,146 @@
+{
+  "block.twilightforest.bug.squish": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/mob/slime/small1"
+      },
+      {
+        "name": "sounds/mob/slime/small2"
+      },
+      {
+        "name": "sounds/mob/slime/small3"
+      },
+      {
+        "name": "sounds/mob/slime/small4"
+      },
+      {
+        "name": "sounds/mob/slime/small5"
+      }
+    ]
+  },
+  "block.twilightforest.cicada": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/flora/mob/cicada1"
+      },
+      {
+        "name": "sounds/twilightforest/flora/mob/cicada2"
+      }
+    ]
+  },
+  "block.twilightforest.jar.break": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar1"
+      },
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar2"
+      },
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar3"
+      }
+    ]
+  },
+  "block.twilightforest.jar.fall": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar1"
+      },
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar2"
+      },
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar3"
+      }
+    ]
+  },
+  "block.twilightforest.jar.hit": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar1"
+      },
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar2"
+      },
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar3"
+      }
+    ]
+  },
+  "block.twilightforest.jar.insert": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar_in"
+      }
+    ]
+  },
+  "block.twilightforest.jar.lid_swap": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar_swap"
+      }
+    ]
+  },
+  "block.twilightforest.jar.place": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar_place"
+      }
+    ]
+  },
+  "block.twilightforest.jar.remove": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar_out"
+      }
+    ]
+  },
+  "block.twilightforest.jar.step": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar1"
+      },
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar2"
+      },
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar3"
+      }
+    ]
+  },
+  "block.twilightforest.jar.wiggle": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar_wiggle1"
+      },
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar_wiggle2"
+      },
+      {
+        "name": "sounds/twilightforest/flora/random/jar/jar_wiggle3"
+      }
+    ]
+  },
+  "block.twilightforest.torchberry.harvest": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/block/sweet_berry_bush/pick_from_bush1"
+      },
+      {
+        "name": "sounds/block/sweet_berry_bush/pick_from_bush2"
+      }
+    ]
+  }
+}

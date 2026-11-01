@@ -1,0 +1,304 @@
+{
+  "block.twilightforest.trophy_pedestal.activate": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/unfect"
+      }
+    ]
+  },
+  "entity.twilightforest.blockchain_goblin.ambient": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap3"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap4"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap5"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap6"
+      }
+    ]
+  },
+  "entity.twilightforest.blockchain_goblin.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/die1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/die2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/die3"
+      }
+    ]
+  },
+  "entity.twilightforest.blockchain_goblin.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/hurt1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/hurt2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/hurt3"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/hurt4"
+      }
+    ]
+  },
+  "entity.twilightforest.goblin_knight.ambient": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap3"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap4"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap5"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/redcap6"
+      }
+    ]
+  },
+  "entity.twilightforest.goblin_knight.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/die1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/die2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/die3"
+      }
+    ]
+  },
+  "entity.twilightforest.goblin_knight.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/hurt1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/hurt2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/hurt3"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/hurt4"
+      }
+    ]
+  },
+  "entity.twilightforest.goblin_knight.muffled.ambient": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/redcap1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/redcap2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/redcap3"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/redcap4"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/redcap5"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/redcap6"
+      }
+    ]
+  },
+  "entity.twilightforest.goblin_knight.muffled.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/die1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/die2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/die3"
+      }
+    ]
+  },
+  "entity.twilightforest.goblin_knight.muffled.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/hurt1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/hurt2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/hurt3"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/hurt4"
+      }
+    ]
+  },
+  "entity.twilightforest.helmet_crab.ambient": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/idle1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/idle2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/idle3"
+      }
+    ]
+  },
+  "entity.twilightforest.helmet_crab.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/hurt1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/hurt2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/hurt3"
+      }
+    ]
+  },
+  "entity.twilightforest.helmet_crab.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/hurt1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/hurt2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/hurt3"
+      }
+    ]
+  },
+  "entity.twilightforest.helmet_crab.step": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/step1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/step2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/step3"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/step4"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/step5"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/helmet_crab/step6"
+      }
+    ]
+  },
+  "entity.twilightforest.knight_phantom.ambient": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith3"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith4"
+      }
+    ]
+  },
+  "entity.twilightforest.knight_phantom.axe": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/random/bow"
+      }
+    ]
+  },
+  "entity.twilightforest.knight_phantom.death": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith3"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith4"
+      }
+    ]
+  },
+  "entity.twilightforest.knight_phantom.hurt": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith1"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith2"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith3"
+      },
+      {
+        "name": "sounds/twilightforest/stronghold/mob/wraith/wraith4"
+      }
+    ]
+  },
+  "entity.twilightforest.knight_phantom.pickaxe": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/random/bow"
+      }
+    ]
+  }
+}

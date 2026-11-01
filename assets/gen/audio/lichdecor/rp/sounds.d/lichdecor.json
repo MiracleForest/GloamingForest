@@ -1,0 +1,67 @@
+{
+  "block.twilightforest.candelabra.light": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/candelabra/light"
+      }
+    ]
+  },
+  "block.twilightforest.candelabra.ominous": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/candelabra/ominous"
+      }
+    ]
+  },
+  "block.twilightforest.chiseled_bookshelf.convert": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/remedy"
+      }
+    ]
+  },
+  "block.twilightforest.ominous_fire.light": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/candelabra/ominous"
+      }
+    ]
+  },
+  "block.twilightforest.skull_chest.close": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/casket/close"
+      }
+    ]
+  },
+  "block.twilightforest.skull_chest.locked": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/door_close"
+      }
+    ]
+  },
+  "block.twilightforest.skull_chest.open": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/casket/open",
+        "pitch": 1.25
+      }
+    ]
+  },
+  "block.twilightforest.wrought_iron_fence.extend": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/casket/repair"
+      }
+    ]
+  }
+}

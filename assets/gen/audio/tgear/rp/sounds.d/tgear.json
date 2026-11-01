@@ -1,0 +1,89 @@
+{
+  "item.twilightforest.travellers_gear.cycle_maps": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/item/book/open_flip1"
+      }
+    ]
+  },
+  "item.twilightforest.travellers_gear.cycle_maps_empty": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/item/book/open_flip2"
+      }
+    ]
+  },
+  "item.twilightforest.travellers_gear.double_jump": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/tgear/random/travellers/double_jump"
+      }
+    ]
+  },
+  "item.twilightforest.travellers_gear.perfect_dodge": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/tgear/random/travellers/perfect_dodge"
+      }
+    ]
+  },
+  "item.twilightforest.travellers_gear.side_step": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/tgear/random/travellers/side_step"
+      }
+    ]
+  },
+  "item.twilightforest.travellers_gear.side_step_ready": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/tgear/random/travellers/side_step_ready"
+      }
+    ]
+  },
+  "item.twilightforest.travellers_gear.swap_hotbar": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/armor/equip_leather1"
+      },
+      {
+        "name": "sounds/armor/equip_leather2"
+      },
+      {
+        "name": "sounds/armor/equip_leather3"
+      },
+      {
+        "name": "sounds/armor/equip_leather4"
+      },
+      {
+        "name": "sounds/armor/equip_leather5"
+      },
+      {
+        "name": "sounds/armor/equip_leather6"
+      }
+    ]
+  },
+  "item.twilightforest.travellers_goggles.zoom_in": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/item/spyglass/use"
+      }
+    ]
+  },
+  "item.twilightforest.travellers_goggles.zoom_out": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/item/spyglass/stop"
+      }
+    ]
+  }
+}

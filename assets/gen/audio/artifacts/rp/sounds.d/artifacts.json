@@ -1,0 +1,274 @@
+{
+  "block.twilightforest.casket.close": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/casket/close"
+      }
+    ]
+  },
+  "block.twilightforest.casket.locked": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/random/door_close"
+      }
+    ]
+  },
+  "block.twilightforest.casket.open": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/casket/open"
+      }
+    ]
+  },
+  "block.twilightforest.casket.repair": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/casket/repair"
+      }
+    ]
+  },
+  "entity.twilightforest.fortification_shield.add": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/shield_use"
+      }
+    ]
+  },
+  "entity.twilightforest.fortification_shield.block": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/mob/irongolem/hit1"
+      },
+      {
+        "name": "sounds/mob/irongolem/hit2"
+      },
+      {
+        "name": "sounds/mob/irongolem/hit3"
+      }
+    ]
+  },
+  "entity.twilightforest.fortification_shield.break": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/shield_break"
+      }
+    ]
+  },
+  "entity.twilightforest.fortification_shield.expire": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/shield_stop"
+      }
+    ]
+  },
+  "entity.twilightforest.loyal_zombie.ambient": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/say1"
+      },
+      {
+        "name": "sounds/mob/zombie/say2"
+      },
+      {
+        "name": "sounds/mob/zombie/say3"
+      }
+    ]
+  },
+  "entity.twilightforest.loyal_zombie.death": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/death"
+      }
+    ]
+  },
+  "entity.twilightforest.loyal_zombie.hurt": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/hurt1"
+      },
+      {
+        "name": "sounds/mob/zombie/hurt2"
+      }
+    ]
+  },
+  "entity.twilightforest.loyal_zombie.step": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/step1"
+      },
+      {
+        "name": "sounds/mob/zombie/step2"
+      },
+      {
+        "name": "sounds/mob/zombie/step3"
+      },
+      {
+        "name": "sounds/mob/zombie/step4"
+      },
+      {
+        "name": "sounds/mob/zombie/step5"
+      }
+    ]
+  },
+  "item.twilightforest.charm.keep": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/unfect"
+      }
+    ]
+  },
+  "item.twilightforest.charm.life": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/random/use_totem"
+      }
+    ]
+  },
+  "item.twilightforest.flask.break": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/random/glass1"
+      },
+      {
+        "name": "sounds/random/glass2"
+      },
+      {
+        "name": "sounds/random/glass3"
+      }
+    ]
+  },
+  "item.twilightforest.flask.crack": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/random/glass1"
+      },
+      {
+        "name": "sounds/random/glass2"
+      },
+      {
+        "name": "sounds/random/glass3"
+      }
+    ]
+  },
+  "item.twilightforest.flask.fill": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/block/brewing_stand/brew1"
+      },
+      {
+        "name": "sounds/block/brewing_stand/brew2"
+      }
+    ]
+  },
+  "item.twilightforest.life_scepter.drain": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/drain1"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/drain2"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/drain3"
+      }
+    ]
+  },
+  "item.twilightforest.ore_meter.clear": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/block/crafter/craft"
+      }
+    ]
+  },
+  "item.twilightforest.ore_meter.crackle": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/vanilla/ambient/nether/basalt_deltas/click1"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/vanilla/ambient/nether/basalt_deltas/click2"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/vanilla/ambient/nether/basalt_deltas/click3"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/vanilla/ambient/nether/basalt_deltas/click4"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/vanilla/ambient/nether/basalt_deltas/click5"
+      }
+    ]
+  },
+  "item.twilightforest.ore_meter.target_block": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/vanilla/item.lodestone_compass.lock"
+      }
+    ]
+  },
+  "item.twilightforest.shield.shatter": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/woodbreak"
+      }
+    ]
+  },
+  "item.twilightforest.twilight_scepter.pearl_hit": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_hit1"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_hit2"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_hit3"
+      }
+    ]
+  },
+  "item.twilightforest.twilight_scepter.use": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_use1"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_use2"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_use3"
+      }
+    ]
+  },
+  "item.twilightforest.zombie_scepter.use": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/zombie"
+      }
+    ]
+  }
+}
