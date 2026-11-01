@@ -123,12 +123,8 @@ namespace GfImport
                 }
                 var cm = Regex.Match(body, @"new\s+(\w+)\s*[(<]");
                 if (b.Cls == null) b.Cls = cm.Success ? cm.Groups[1].Value : Regex.Match(f.Item1, @"DeferredBlock<(\w+)").Groups[1].Value;
-                // inline named property sets (TWILIGHT_OAK_LOG_PROPS)
-                foreach (Match pm in Regex.Matches(body, @"\b([A-Z][A-Z0-9_]*_PROPS)\b"))
-                {
-                    string p;
-                    if (props.TryGetValue(pm.Groups[1].Value, out p)) body = body + " " + p;
-                }
+                // inline named property sets in place (TWILIGHT_OAK_LOG_PROPS): calls chained onto the set apply after its own
+                body = Regex.Replace(body, @"\b([A-Z][A-Z0-9_]*_PROPS)\b", pm => { string p; return props.TryGetValue(pm.Groups[1].Value, out p) ? p : pm.Value; });
                 b.PropText = body;
                 foreach (var h in propHelpers)
                     if (Regex.IsMatch(body, @"\b" + h + @"\s*\(")) unknownHelpers.Add(b.Id + ": " + h);

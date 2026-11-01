@@ -74,7 +74,7 @@ namespace GfImport
                 if (text == null) break;   // a vanilla class: Minecraft's own value
                 var m = Regex.Match(text, @"float\s+" + method + @"\s*\([^)]*\)\s*\{");
                 if (!m.Success) continue;
-                string body = Body(text, m.Index + m.Length - 1);
+                string body = Light.Body(text, m.Index + m.Length - 1);
                 var rm = ReturnExpr.Match(body);
                 if (!rm.Success)
                 {
@@ -88,7 +88,10 @@ namespace GfImport
                     t = t.Trim();
                     if (t.StartsWith("super.", StringComparison.Ordinal))
                     {
+                        int before = runtime.Count;
                         var up = Chain(ctx, bi, method, i + 1, registered, res, sources, warn, runtime);
+                        // a superclass that decides at run time: the registration's value stands in for it, said loudly
+                        if (up == null && runtime.Count > before) warn("block " + bi.Id + ": " + cls + "." + method + " calls a runtime super override; the registration value is used for it");
                         return up ?? (st => registered);
                     }
                     if (t == "Float.MAX_VALUE") return st => Indestructible;
@@ -109,15 +112,5 @@ namespace GfImport
             return null;
         }
 
-        static string Body(string text, int open)
-        {
-            int depth = 0;
-            for (int i = open; i < text.Length; i++)
-            {
-                if (text[i] == '{') depth++;
-                else if (text[i] == '}' && --depth == 0) return text.Substring(open + 1, i - open - 1);
-            }
-            return "";
-        }
     }
 }

@@ -152,7 +152,7 @@ namespace GfImport
                         foreach (var k in c["state"].Keys)
                         {
                             if (!defaults.ContainsKey(k)) Errors.Add("tools/import/expected-behaviour.json: " + id + " has no state twilightforest:" + k);
-                            state[k] = c["state"][k].AsString();
+                            state[k] = StateText(c["state"][k]);
                         }
                     string where = "bp/blocks/" + id + ".json" + (c["state"] != null ? " " + c["state"].ToCompact() : "");
                     J mining, explosion, mapColor;

@@ -68,7 +68,8 @@ namespace GfImport
             return Regex.Replace(expr, @"\b" + Regex.Escape(m.Groups[1].Value) + @"\.getValue\(", "state.getValue(");
         }
 
-        static string Body(string text, int open)
+        /// <summary>The text between the brace at open and its matching closing brace.</summary>
+        internal static string Body(string text, int open)
         {
             int depth = 0;
             for (int i = open; i < text.Length; i++)

@@ -389,7 +389,8 @@ namespace GfImport
                 else if (jb.DynamicLight) Warn("block " + bi.Id + ": state-dependent light not translated (" + (jb.LightExpr ?? "?") + ")");
                 // map colour: a constant, or by state (permutations below)
                 var mapColor = MapColorOf(bi);
-                if (mapColor == null && jb.MapColor != null) comps.Set("minecraft:map_color", MapColorHex(bi, jb.MapColor));
+                string hex = mapColor == null && jb.MapColor != null ? MapColorHex(bi, jb.MapColor) : null;
+                if (hex != null) comps.Set("minecraft:map_color", hex);
                 // flammability: only the blocks TF registers with FireBlock.setFlammable (encouragement = Bedrock's
                 // catch chance, flammability = its destroy chance)
                 if (jb.FireEncouragement >= 0)
@@ -546,6 +547,7 @@ namespace GfImport
                 var axis = bi.JavaProps.FirstOrDefault(p => p.Name == "axis");
                 if (axis == null || !bi.States.Any(s => s.Java == "axis")) { Warn("block " + bi.Id + ": logProperties(top, side) without an axis state"); return null; }
                 string top = MapColorHex(bi, jb.MapColor), side = MapColorHex(bi, jb.MapColorSide);
+                if (top == null || side == null) return null;
                 return Tuple.Create(new List<JProp> { axis }, (Func<Dictionary<string, string>, J>)(st => J.Str(st["axis"] == "y" ? top : side)));
             }
             if (jb.MapColorProp != null)
