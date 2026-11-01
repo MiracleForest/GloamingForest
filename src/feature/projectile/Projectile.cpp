@@ -12,10 +12,14 @@
 // ThrowableProjectile#tick (TFThrowable) and AbstractArrow#tick (TFArrow) do:
 //   - the hit test runs first, along this tick's motion (ProjectileUtil#getHitResultOnMoveVector:
 //     blocks by their collision shape, entities with a 0.3 margin, the owner only after the
-//     projectile left it), then the move, then drag (0.99, 0.8 in water) and gravity;
-//   - Spec::onHitEntity / onHitBlock decide whether the projectile is gone (no callback: gone);
-//     a block hit that keeps the projectile sticks it in the ground like an arrow (despawns after
-//     1200 ticks, AbstractArrow#tickDespawn);
+//     projectile left it), then the move, then drag (0.99; in water 0.8, arrows 0.6) and gravity;
+//   - throwables: Spec::onHitEntity / onHitBlock decide whether the projectile is gone (no
+//     callback: gone); a block hit that keeps the projectile sticks it in the ground;
+//   - arrows (ext::registerArrow, TFArrow over AbstractArrow): an entity hit deals
+//     ceil(speed * baseDamage) (+ the crit bonus) of minecraft:arrow by the owner and removes the
+//     arrow, or deflects it when the hit did not land; a block hit sticks it (shake 7, despawn
+//     after 1200 ticks, falling again when its block goes); a player touching a stuck arrow picks
+//     it up by its pickup rule; the Spec hooks run after as the subclass's additions;
 //   - steering functions (seeker arrows, moonworm shots) may replace the velocity every tick.
 // The entity is moved every tick (clients interpolate); its state is saved with the actor and the
 // flight resumes after a reload.
@@ -23,6 +27,7 @@
 #include "feature/projectile/Projectile.h"
 #include "feature/projectile/ProjectileInternal.h"
 
+#include <climits>
 #include <cmath>
 #include <numbers>
 #include <unordered_map>
@@ -38,16 +43,25 @@
 #include "mc/world/actor/ActorFactory.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
+#include "mc/world/attribute/SharedAttributes.h"
+#include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/ShapeType.h"
+#include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/phys/HitResult.h"
 
+#include "feature/combat/Combat.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/fx/Fx.h"
+#include "game/Blocks.h"
+#include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -55,6 +69,7 @@
 namespace gf::feature::projectile {
 
 namespace fe = gf::feature::entity;
+namespace pe = gf::projectile::ext;
 using gf::projectile::Spec;
 
 namespace {
@@ -69,15 +84,23 @@ struct Sim {
     std::int64_t owner     = 0;
     bool         leftOwner = false;
     bool         inGround  = false;
-    int          inGroundTicks = 0;
+    int          inGroundTicks = 0; ///< AbstractArrow#life while in the ground
     int          age           = 0;
+    // AbstractArrow
+    double       baseDamage = 2.0;
+    bool         crit       = false;
+    int          pickup     = 0; ///< pe::Pickup
+    int          shake      = 0;
+    double       knockback  = 0.0; ///< the firing weapon's knockback (punch)
+    std::string  groundBlock;       ///< AbstractArrow#lastState (the block it is stuck in)
 };
 
 struct State {
-    std::unordered_map<std::string, Spec>       specs;
-    std::vector<gf::projectile::SteeringFn>     steering;
-    std::unordered_map<std::int64_t, Sim>       live;
-    std::vector<std::int64_t>                   toRemove;
+    std::unordered_map<std::string, Spec>         specs;
+    std::unordered_map<std::string, pe::ArrowSpec> arrows;
+    std::vector<gf::projectile::SteeringFn>       steering;
+    std::unordered_map<std::int64_t, Sim>         live;
+    std::vector<std::int64_t>                     toRemove;
 };
 State& S() {
     static State s;
@@ -90,6 +113,11 @@ Spec const& specOf(std::string const& type) {
     return it != S().specs.end() ? it->second : fallback;
 }
 
+pe::ArrowSpec const* arrowOf(std::string const& type) {
+    auto it = S().arrows.find(type);
+    return it != S().arrows.end() ? &it->second : nullptr;
+}
+
 Vec2 rotationOf(Vec3 const& v) {
     double horizontal = std::sqrt(v.x * v.x + v.z * v.z);
     auto   yaw        = static_cast<float>(-std::atan2(v.x, v.z) * 180.0 / std::numbers::pi);
@@ -97,15 +125,23 @@ Vec2 rotationOf(Vec3 const& v) {
     return Vec2{pitch, yaw};
 }
 
+double lengthOf(Vec3 const& v) { return std::sqrt(double(v.x) * v.x + double(v.y) * v.y + double(v.z) * v.z); }
+
 nlohmann::json toJson(Sim const& s) {
     return {
-        {"type",     s.type         },
-        {"vel",      {s.vel.x, s.vel.y, s.vel.z}},
-        {"owner",    s.owner        },
-        {"left",     s.leftOwner    },
-        {"inGround", s.inGround     },
-        {"ground",   s.inGroundTicks},
-        {"age",      s.age          },
+        {"type",      s.type         },
+        {"vel",       {s.vel.x, s.vel.y, s.vel.z}},
+        {"owner",     s.owner        },
+        {"left",      s.leftOwner    },
+        {"inGround",  s.inGround     },
+        {"ground",    s.inGroundTicks},
+        {"age",       s.age          },
+        {"damage",    s.baseDamage   },
+        {"crit",      s.crit         },
+        {"pickup",    s.pickup       },
+        {"shake",     s.shake        },
+        {"knockback", s.knockback    },
+        {"block",     s.groundBlock  },
     };
 }
 
@@ -119,6 +155,12 @@ Sim fromJson(nlohmann::json const& j, std::string const& type) {
     s.inGround      = j.value("inGround", false);
     s.inGroundTicks = j.value("ground", 0);
     s.age           = j.value("age", 0);
+    s.baseDamage    = j.value("damage", 2.0);
+    s.crit          = j.value("crit", false);
+    s.pickup        = j.value("pickup", 0);
+    s.shake         = j.value("shake", 0);
+    s.knockback     = j.value("knockback", 0.0);
+    s.groundBlock   = j.value("block", std::string());
     return s;
 }
 
@@ -163,6 +205,85 @@ void markRemoved(Actor& projectile) {
     S().live.erase(fe::uidOf(projectile));
 }
 
+/// The arrow's hit sound pitch: 1.2 / (nextFloat() * 0.2 + 0.9).
+float hitPitch(Actor& p) { return 1.2F / (fe::randomOf(p).nextFloat() * 0.2F + 0.9F); }
+
+/// AbstractArrow#onHitEntity. True: the arrow is gone.
+bool arrowHitEntity(Actor& p, Sim& s, pe::ArrowSpec const& arrow, Actor& target) {
+    if (arrow.beforeHitEntity) arrow.beforeHitEntity(p, target);
+    auto&  random = fe::randomOf(p);
+    double speed  = lengthOf(s.vel);
+    int    dmg    = static_cast<int>(std::ceil(std::clamp(speed * s.baseDamage, 0.0, 2.147483647E9)));
+    if (s.crit) {
+        long long k = random.nextInt(dmg / 2 + 2);
+        dmg         = static_cast<int>(std::min<long long>(k + dmg, INT_MAX));
+    }
+    Actor* owner     = fe::actorById(s.owner);
+    bool   enderman  = target.getTypeName() == "minecraft:enderman";
+    if (p.isOnFire() && !enderman) target.setOnFire(5, true);
+    bool   landed    = gf::combat::hurt(target, static_cast<float>(dmg), "minecraft:arrow", owner ? owner : &p, &p);
+    if (landed) {
+        if (enderman) return false;
+        if (s.knockback > 0.0) {
+            // AbstractArrow#doKnockback
+            double resist = 0.0;
+            auto   attr   = target.getAttribute(SharedAttributes::KNOCKBACK_RESISTANCE());
+            if (attr.mPtr) resist = attr.mPtr->mCurrentValue;
+            double h = std::sqrt(double(s.vel.x) * s.vel.x + double(s.vel.z) * s.vel.z);
+            if (h > 1e-9) {
+                double f = s.knockback * 0.6 * std::max(0.0, 1.0 - resist) / h;
+                fe::push(target, Vec3{float(s.vel.x * f), 0.1f, float(s.vel.z * f)});
+            }
+        }
+        // ClientboundGameEventPacket.ARROW_HIT_PLAYER: the shooter hears its hit on a player
+        if (target.isPlayer() && owner && owner != &target && owner->isPlayer())
+            gf::fx::soundTo(static_cast<Player&>(*owner), "minecraft:entity.arrow.hit_player", 0.18F, 0.45F);
+        gf::fx::sound(p.getDimension(), arrow.hitSound, p.getPosition(), 1.0F, hitPitch(p));
+        return true;
+    }
+    // ProjectileDeflection.REVERSE, then * 0.2
+    float turn = 170.0F + random.nextFloat() * 20.0F;
+    s.vel      = Vec3{s.vel.x * -0.1f, s.vel.y * -0.1f, s.vel.z * -0.1f};
+    auto rot   = p.getRotation();
+    const_cast<Vec2&>(p.getRotation()) = Vec2{rot.x, rot.y + turn};
+    if (double(s.vel.x) * s.vel.x + double(s.vel.y) * s.vel.y + double(s.vel.z) * s.vel.z < 1.0E-7) {
+        if (s.pickup == static_cast<int>(pe::Pickup::Allowed)) {
+            if (auto item = game::items::make(arrow.pickupItem, 1)) {
+                if (auto* lv = ll::service::getLevel().as_ptr()) {
+                    auto pos = p.getPosition();
+                    lv->getSpawner().spawnItem(p.getDimensionBlockSource(), *item, nullptr, Vec3{pos.x, pos.y + 0.1f, pos.z}, 0);
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+/// AbstractArrow#playerTouch / #tryPickup for a stuck arrow.
+void arrowPickup(Actor& p, Sim& s, pe::ArrowSpec const& arrow) {
+    if (s.shake > 0 || s.pickup == static_cast<int>(pe::Pickup::Disallowed)) return;
+    auto const& bb = p.getAABB();
+    for (auto* player : fe::playersNear(static_cast<int>(p.getDimensionId()), p.getPosition(), 4.0)) {
+        if (player->isSpectator()) continue;
+        auto const& pb = player->getAABB();
+        AABB        reach{Vec3{pb.min.x - 1.0f, pb.min.y - 0.5f, pb.min.z - 1.0f}, Vec3{pb.max.x + 1.0f, pb.max.y + 0.5f, pb.max.z + 1.0f}};
+        if (!intersects(reach, bb)) continue;
+        bool taken = false;
+        if (s.pickup == static_cast<int>(pe::Pickup::CreativeOnly)) taken = player->isCreative();
+        else if (auto item = game::items::make(arrow.pickupItem, 1)) {
+            taken = player->add(*item);
+            if (taken) player->sendInventory(false);
+        }
+        if (!taken) continue;
+        // Player#take: the pickup sound
+        gf::fx::sound(p.getDimension(), "minecraft:entity.item.pickup", p.getPosition(), 0.2F, (fe::randomOf(p).nextFloat() - fe::randomOf(p).nextFloat()) * 1.4F + 2.0F);
+        log().info("projectile: {} picked up {}", player->getRealName(), s.type);
+        markRemoved(p);
+        return;
+    }
+}
+
 /// ThrowableProjectile#tick / AbstractArrow#tick, server side.
 void tickProjectile(Actor& p, fe::ActorState& state) {
     auto& live = S().live;
@@ -175,18 +296,45 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
         else {
             s.type = p.getTypeName();
             s.vel  = p.getPosDelta();
+            if (auto const* a = arrowOf(s.type)) s.baseDamage = a->baseDamage;
         }
         it = live.emplace(uid, std::move(s)).first;
     }
-    Sim&        s    = it->second;
-    Spec const& spec = specOf(s.type);
+    Sim&        s     = it->second;
+    Spec const& spec  = specOf(s.type);
+    auto const* arrow = arrowOf(s.type);
     if (spec.tick) spec.tick(p);
     if (!p.isAlive() || !live.contains(uid)) return;
     auto& region = p.getDimensionBlockSource();
     Vec3  pos    = p.getPosition();
+    if (s.shake > 0) --s.shake;
     if (s.inGround) {
-        if (++s.inGroundTicks >= kInGroundLimit) markRemoved(p);
-        return;
+        if (arrow) {
+            // AbstractArrow: falls again when its block went (shouldFall: no collision around it)
+            BlockPos at = game::blockPosOf(pos);
+            if (game::blockIdAt(region, at) != s.groundBlock) {
+                std::vector<AABB> shapes;
+                AABB              box{Vec3{pos.x - 0.06f, pos.y - 0.06f, pos.z - 0.06f}, Vec3{pos.x + 0.06f, pos.y + 0.06f, pos.z + 0.06f}};
+                region.fetchAABBs(shapes, box, false);
+                bool blocked = false;
+                for (auto const& sh : shapes) blocked |= intersects(sh, box);
+                if (!blocked) {
+                    // AbstractArrow#startFalling
+                    auto& r         = fe::randomOf(p);
+                    s.inGround      = false;
+                    s.vel           = Vec3{s.vel.x * r.nextFloat() * 0.2f, s.vel.y * r.nextFloat() * 0.2f, s.vel.z * r.nextFloat() * 0.2f};
+                    s.inGroundTicks = 0;
+                }
+            }
+            if (s.inGround) {
+                if (++s.inGroundTicks >= kInGroundLimit) markRemoved(p);
+                else arrowPickup(p, s, *arrow);
+                return;
+            }
+        } else {
+            if (++s.inGroundTicks >= kInGroundLimit) markRemoved(p);
+            return;
+        }
     }
     ++s.age;
     for (auto const& steer : S().steering)
@@ -209,7 +357,7 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
     Vec3      a = pos;
     Vec3      b{pos.x + s.vel.x, pos.y + s.vel.y, pos.z + s.vel.z};
     HitResult hr = region.clip(a, b, false, ShapeType::Collision, 64, false, false, nullptr, [](BlockSource const&, Block const&, bool) { return true; }, false);
-    double    len = std::sqrt(s.vel.x * s.vel.x + s.vel.y * s.vel.y + s.vel.z * s.vel.z);
+    double    len = lengthOf(s.vel);
     double    tBlock = 2;
     if (hr.mType == HitResultType::Tile) {
         double dx = hr.mPos.x - a.x, dy = hr.mPos.y - a.y, dz = hr.mPos.z - a.z;
@@ -225,7 +373,7 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
             Vec3{std::max(bb.max.x, bb.max.x + s.vel.x) + 1.0f, std::max(bb.max.y, bb.max.y + s.vel.y) + 1.0f, std::max(bb.max.z, bb.max.z + s.vel.z) + 1.0f}
         };
         Vec3 full{pos.x + s.vel.x, pos.y + s.vel.y, pos.z + s.vel.z};
-        for (auto* e : region.getEntities(search, 0.0f)) {
+        for (auto* e : fe::actorsIn(region, static_cast<int>(p.getDimensionId()), search)) {
             if (!e || !canHit(p, s, *e)) continue;
             auto t = segmentBox(a, full, e->getAABB(), kEntityMargin);
             if (t && *t < tBest && *t <= tBlock) tBest = *t, best = e;
@@ -233,12 +381,35 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
     }
     bool gone = false;
     if (best) {
-        gone = spec.onHitEntity ? spec.onHitEntity(p, *best) : true;
+        if (arrow) {
+            gone = arrowHitEntity(p, s, *arrow, *best);
+            if (spec.onHitEntity) spec.onHitEntity(p, *best); // the subclass's additions (IceArrow's chill)
+        } else {
+            gone = spec.onHitEntity ? spec.onHitEntity(p, *best) : true;
+        }
     } else if (hr.mType == HitResultType::Tile) {
+        if (arrow) {
+            // AbstractArrow#onHitBlock: stuck, 0.05 back along the motion
+            if (spec.onHitBlock) spec.onHitBlock(p, hr.mBlock, hr.mFacing);
+            if (!live.contains(uid)) return;
+            Vec3   d{hr.mPos.x - pos.x, hr.mPos.y - pos.y, hr.mPos.z - pos.z};
+            double dl = lengthOf(d);
+            Vec3   back = dl > 1e-9 ? Vec3{float(d.x / dl * 0.05), float(d.y / dl * 0.05), float(d.z / dl * 0.05)} : Vec3{0, 0, 0};
+            gf::fx::sound(p.getDimension(), arrow->hitSound, p.getPosition(), 1.0F, hitPitch(p));
+            s.vel           = d;
+            s.inGround      = true;
+            s.inGroundTicks = 0;
+            s.shake         = 7;
+            s.crit          = false;
+            Vec3 at{hr.mPos.x - back.x, hr.mPos.y - back.y, hr.mPos.z - back.z};
+            s.groundBlock = game::blockIdAt(region, hr.mBlock); // lastState: the block that was hit
+            p.moveTo(at, p.getRotation());
+            return;
+        }
         if (spec.onHitBlock) {
             gone = spec.onHitBlock(p, hr.mBlock, hr.mFacing);
             if (!gone && live.contains(uid)) {
-                // AbstractArrow: stuck in the block
+                // stuck in the block
                 s.inGround = true;
                 s.vel      = Vec3{0, 0, 0};
                 p.moveTo(hr.mPos, p.getRotation());
@@ -250,10 +421,15 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
         if (live.contains(uid)) markRemoved(p);
         return;
     }
+    // AbstractArrow: the crit trail (client side in Java)
+    if (arrow && s.crit)
+        for (int i = 0; i < 4; ++i)
+            gf::fx::particle(p.getDimension(), "minecraft:crit", Vec3{pos.x + s.vel.x * i / 4.0f, pos.y + s.vel.y * i / 4.0f, pos.z + s.vel.z * i / 4.0f}, Vec3{-s.vel.x, -s.vel.y + 0.2f, -s.vel.z});
     // move, then drag and gravity
     Vec3  next{pos.x + s.vel.x, pos.y + s.vel.y, pos.z + s.vel.z};
-    float f = p.isInWater() ? 0.8f : spec.drag;
-    s.vel   = Vec3{s.vel.x * f, s.vel.y * f - spec.gravity, s.vel.z * f};
+    float f = p.isInWater() ? (arrow ? arrow->waterInertia : 0.8f) : spec.drag;
+    float g = arrow ? arrow->gravity : spec.gravity;
+    s.vel   = Vec3{s.vel.x * f, s.vel.y * f - g, s.vel.z * f};
     if (next.y < region.getMinHeight() - 64) {
         markRemoved(p); // Entity#onBelowWorld
         return;
@@ -266,8 +442,12 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
 } // namespace gf::feature::projectile
 
 namespace gf::feature::projectile {
-void unregisterTypeForTest(std::string const& entityId) { S().specs.erase(entityId); }
-int  liveCount() { return static_cast<int>(S().live.size()); }
+void unregisterTypeForTest(std::string const& entityId) {
+    S().specs.erase(entityId);
+    S().arrows.erase(entityId);
+    fe::invalidateInterest();
+}
+int liveCount() { return static_cast<int>(S().live.size()); }
 } // namespace gf::feature::projectile
 
 namespace gf::projectile {
@@ -275,7 +455,10 @@ namespace gf::projectile {
 namespace fp = gf::feature::projectile;
 namespace fe = gf::feature::entity;
 
-void registerType(std::string const& entityId, Spec spec) { fp::S().specs[entityId] = std::move(spec); }
+void registerType(std::string const& entityId, Spec spec) {
+    fp::S().specs[entityId] = std::move(spec);
+    fe::invalidateInterest();
+}
 
 Actor* shoot(Actor& shooter, std::string const& entityId, Vec3 const& direction, float speed, float inaccuracy, nlohmann::json const& init) {
     auto  level  = ll::service::getLevel();
@@ -303,6 +486,11 @@ Actor* shoot(Actor& shooter, std::string const& entityId, Vec3 const& direction,
     s.type  = entityId;
     s.vel   = vel;
     s.owner = fe::uidOf(shooter);
+    if (auto const* arrow = fp::arrowOf(entityId)) {
+        s.baseDamage = arrow->baseDamage;
+        // AbstractArrow(type, owner, ...): a player's arrow may be picked up
+        s.pickup = static_cast<int>(shooter.isPlayer() ? ext::Pickup::Allowed : ext::Pickup::Disallowed);
+    }
     fp::S().live[fe::uidOf(*added)] = s;
     if (!init.is_null()) gf::entity::data(*added, "init") = init;
     return added;
@@ -331,6 +519,59 @@ void setVelocity(Actor& projectile, Vec3 const& v) {
     if (it == fp::S().live.end()) return;
     it->second.vel      = v;
     it->second.inGround = false;
+}
+
+void registerArrow(std::string const& entityId, Spec spec, ArrowSpec arrow) {
+    fp::S().specs[entityId]  = std::move(spec);
+    fp::S().arrows[entityId] = std::move(arrow);
+    fe::invalidateInterest();
+}
+
+namespace {
+fp::Sim* simOf(Actor const& a) {
+    auto it = fp::S().live.find(fe::uidOf(a));
+    return it != fp::S().live.end() ? &it->second : nullptr;
+}
+} // namespace
+
+void setBaseDamage(Actor& arrow, double damage) {
+    if (auto* s = simOf(arrow)) s->baseDamage = damage;
+}
+double baseDamage(Actor const& arrow) {
+    auto* s = simOf(arrow);
+    return s ? s->baseDamage : 2.0;
+}
+void setCritArrow(Actor& arrow, bool crit) {
+    if (auto* s = simOf(arrow)) s->crit = crit;
+}
+bool isCritArrow(Actor const& arrow) {
+    auto* s = simOf(arrow);
+    return s && s->crit;
+}
+void setPickup(Actor& arrow, Pickup pickup) {
+    if (auto* s = simOf(arrow)) s->pickup = static_cast<int>(pickup);
+}
+Pickup pickup(Actor const& arrow) {
+    auto* s = simOf(arrow);
+    return s ? static_cast<Pickup>(s->pickup) : Pickup::Disallowed;
+}
+bool inGround(Actor const& arrow) {
+    auto* s = simOf(arrow);
+    return s && s->inGround;
+}
+void setKnockback(Actor& arrow, double knockback) {
+    if (auto* s = simOf(arrow)) s->knockback = knockback;
+}
+
+void makeTrail(Actor& projectile, std::string const& particle, int amount, Vec3 const& rgb) {
+    auto& random = fe::randomOf(projectile);
+    auto  pos    = projectile.getPosition();
+    for (int i = 0; i < amount; ++i) {
+        double dx = pos.x + 0.5 * (random.nextDouble() - random.nextDouble());
+        double dy = pos.y + 0.5 * (random.nextDouble() - random.nextDouble());
+        double dz = pos.z + 0.5 * (random.nextDouble() - random.nextDouble());
+        gf::fx::particle(projectile.getDimension(), particle, Vec3{float(dx), float(dy), float(dz)}, rgb);
+    }
 }
 
 } // namespace ext

@@ -3,6 +3,7 @@
 //   src/main/java/twilightforest/entity/ITFCharger.java
 //   src/main/java/twilightforest/entity/IBreathAttacker.java
 //   src/main/java/twilightforest/entity/ai/control/NoClipMoveControl.java
+//   src/main/java/twilightforest/init/TFDataSerializers.java
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -63,6 +64,24 @@ void doBreathAttack(Mob& breather, Actor& target, std::string const& damageType)
         return;
     }
     gf::combat::hurt(target, 2.0f, damageType, &breather);
+}
+
+// TFDataSerializers.STRING_LIST: EntityDataSerializer.forValueType(STRING_UTF8.apply(list())).
+void setStringList(Actor& actor, std::string const& key, std::vector<std::string> const& values) {
+    auto& v = gf::entity::data(actor, key);
+    nlohmann::json list(values);
+    if (v == list) return; // SynchedEntityData sends only changed values
+    v = std::move(list);
+    gf::entity::sync(actor, key);
+}
+
+std::vector<std::string> stringList(Actor& actor, std::string const& key) {
+    std::vector<std::string> out;
+    auto const&              v = gf::entity::data(actor, key);
+    if (v.is_array())
+        for (auto const& e : v)
+            if (e.is_string()) out.push_back(e.get<std::string>());
+    return out;
 }
 
 } // namespace gf::entity::ext
