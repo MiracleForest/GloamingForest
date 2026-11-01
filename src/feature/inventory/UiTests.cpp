@@ -117,11 +117,11 @@ GF_REGISTER_SELFTEST("combat.ui_native_container", [](Context& ctx) -> ll::coro:
 
 // The vanilla clients' route for every client (S3): the game's chest screen through the chest
 // minecart proxy, opened for the real player even when it runs the client mod.
-GF_REGISTER_SELFTEST("combat.ui_vanilla_container", [](Context& ctx) {
+GF_REGISTER_SELFTEST("combat.ui_vanilla_container", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto* p = realPlayer();
     if (!p) {
         ctx.info("no real player: nothing to show");
-        return;
+        co_return;
     }
     gf::inventory::declare({.block = "gf_test:fixture_block", .rows = 3, .slots = 27, .title = "container.chest", .skin = ""});
     auto& region = p->getDimensionBlockSource();
@@ -133,17 +133,23 @@ GF_REGISTER_SELFTEST("combat.ui_vanilla_container", [](Context& ctx) {
     h->set(pos, 0, *gf::game::items::make("minecraft:gold_ingot", 9));
     h->set(pos, 13, *gf::game::items::make("minecraft:bread", 4));
     h->set(pos, 26, *gf::game::items::make("gf_test:fixture_item", 1));
+    // as a player opens it: a moment later, once the chat that ran the test has closed (a client
+    // refuses a container screen while another screen is up)
+    auto id = p->getOrCreateUniqueID();
+    co_await ctx.ticks(10);
+    p = ll::service::getLevel()->getPlayer(id);
+    ctx.require(p != nullptr, "the player is still there");
     ctx.require(gf::inventory::openVanillaContainer(*p, pos, gf::trFor(*p, "container.chest", "Chest")), "the proxy for the game's chest screen");
     gf::log().info("combat ui: vanilla container opened for {}", p->getRealName());
 });
 
-GF_REGISTER_SELFTEST("combat.ui_chest_screen", [](Context& ctx) {
+GF_REGISTER_SELFTEST("combat.ui_chest_screen", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto* p = realPlayer();
     if (!p) {
         ctx.info("no real player: nothing to show");
-        return;
+        co_return;
     }
-    // the BlockData screen is the client mod's / a form: no block actor the client must know first
+    // a BlockData container: the client mod's screen, or the proxy chest screen on a vanilla client
     gf::inventory::declare({.block = "gf_test:fixture_block", .rows = 3, .slots = 27, .title = "container.chest", .skin = ""});
     auto& region = p->getDimensionBlockSource();
     auto  bp     = besidePlayer(*p, 0, 2);
@@ -153,6 +159,10 @@ GF_REGISTER_SELFTEST("combat.ui_chest_screen", [](Context& ctx) {
     ctx.require(h.has_value(), "the fixture block is a container");
     h->set(pos, 0, *gf::game::items::make("minecraft:emerald", 5));
     h->set(pos, 10, *gf::game::items::make("minecraft:apple", 2));
+    auto id = p->getOrCreateUniqueID();
+    co_await ctx.ticks(10); // once the chat that ran the test has closed
+    p = ll::service::getLevel()->getPlayer(id);
+    ctx.require(p != nullptr, "the player is still there");
     ctx.require(gf::inventory::openChestLike(*p, pos, 3, "container.chest"), "the chest screen opened");
     gf::log().info("combat ui: chest screen opened for {}", p->getRealName());
 });
