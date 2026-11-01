@@ -118,9 +118,11 @@ foreach ($a in $index.attachables) {
     $att['minecraft:attachable']['description']['identifier'] = $id
     foreach ($t in $att['minecraft:attachable']['description']['textures'].Values) { Copy-Texture $t }
     Write-J (Join-Path $prp "attachables/item_$short.json") $att
-    $components = [ordered]@{ 'minecraft:max_stack_size' = 1 }
+    # an item without an icon is silently not registered (every command naming it fails to parse):
+    # borrow a vanilla icon, as the Levitate items do with their own (format 1.21.70)
+    $components = [ordered]@{ 'minecraft:icon' = 'apple'; 'minecraft:max_stack_size' = 1 }
     if ($a.slot -ne 'main_hand') { $components['minecraft:wearable'] = [ordered]@{ slot = $slotOf[$a.slot]; protection = 0 } }
-    Write-J (Join-Path $bp "items/item_$short.json") ([ordered]@{ format_version = '1.21.0'; 'minecraft:item' = [ordered]@{ description = [ordered]@{ identifier = $id; menu_category = [ordered]@{ category = 'none' } }; components = $components } })
+    Write-J (Join-Path $bp "items/item_$short.json") ([ordered]@{ format_version = '1.21.70'; 'minecraft:item' = [ordered]@{ description = [ordered]@{ identifier = $id; menu_category = [ordered]@{ category = 'equipment' } }; components = $components } })
     # one stand per armor material / per worn or held item
     $group = if ($a.slot -in 'helmet', 'chestplate', 'leggings', 'boots') {
         if ($short -like 'travellers_*') { if ($short -in 'travellers_gloves', 'travellers_wings') { 'travellers_gloves_wings' } else { 'travellers_goggles_vest_belt_boots' } }
@@ -142,6 +144,9 @@ function Add-Shot($entries, [string]$label) {
     $name = 'shot_{0:D2}' -f $script:n
     $lines = [System.Collections.Generic.List[string]]::new()
     $clear | ForEach-Object { $lines.Add($_) }
+    # A function with one line that does not parse (an unknown item) is dropped whole: the commands
+    # naming preview items run after the function instead, where a failure is reported on its own.
+    $after = [System.Collections.Generic.List[string]]::new()
     $shown = @()
     for ($i = 0; $i -lt $entries.Count; $i++) {
         $x = $slots[$i]; $e = $entries[$i]
@@ -153,12 +158,12 @@ function Add-Shot($entries, [string]$label) {
         } else {
             # no spawn event: armor stands have no minecraft:entity_spawned, and one bad line drops the whole function
             $lines.Add("summon armor_stand $pos facing $look")
-            foreach ($it in $e.items) { $lines.Add("replaceitem entity @e[type=armor_stand,x=$x,y=-60,z=0,r=0.5] $($it.slot) 0 $($it.item)") }
+            foreach ($it in $e.items) { $after.Add("replaceitem entity @e[type=armor_stand,x=$x,y=-60,z=0,r=0.5] $($it.slot) 0 $($it.item)") }
             $shown += $e.group
         }
     }
     [IO.File]::WriteAllText((Join-Path $fn "$name.mcfunction"), ($lines -join "`n") + "`n", [Text.UTF8Encoding]::new($false))
-    $script:shots.Add([pscustomobject]@{ name = $name; label = $label; shows = $shown })
+    $script:shots.Add([pscustomobject]@{ name = $name; label = $label; shows = $shown; commands = @($after) })
 }
 New-Item -ItemType Directory -Force $fn | Out-Null
 [IO.File]::WriteAllText((Join-Path $fn 'clear.mcfunction'), ($clear -join "`n") + "`n", [Text.UTF8Encoding]::new($false))

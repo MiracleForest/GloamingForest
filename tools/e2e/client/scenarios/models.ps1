@@ -26,6 +26,8 @@ Press-Key F1   # hide the HUD (and the chat feedback) for the screenshots
 Start-Sleep -Seconds 2
 foreach ($s in $plan.shots) {
     Invoke-Chat "/function gfpreview/$($s.name)"
+    # the commands naming preview items (kept out of the functions, see preview.ps1)
+    foreach ($c in @($s.commands)) { if ($c) { Invoke-Chat "/$c" } }
     Start-Sleep -Milliseconds 1800
     Save-Screenshot $s.name | Out-Null
     Write-Step "$($s.name): $($s.label)"
@@ -33,5 +35,5 @@ foreach ($s in $plan.shots) {
 Invoke-Chat '/function gfpreview/clear'
 Press-Key F1
 # a function with one bad command is dropped by the game: every shot must have run
-$missing = @(Get-LeviLog | Select-String -Pattern 'functionNameNotFound \[gfpreview/[^\]]+\]' | ForEach-Object { $_.Matches[0].Value } | Sort-Object -Unique)
-if ($missing) { throw "preview functions failed to load: $($missing -join ', ')" }
+$missing = @(Get-LeviLog | Select-String -Pattern 'functionNameNotFound \[gfpreview/[^\]]+\]|Syntax error.*gfpreview' | ForEach-Object { $_.Matches[0].Value } | Sort-Object -Unique)
+if ($missing) { throw "preview commands failed: $($missing -join ', ')" }
