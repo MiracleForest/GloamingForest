@@ -9,6 +9,8 @@
 // F1 owns no source directory, so these tests live in src/feature/ext/import/ (new files only,
 // rule R18); A8 may fold them into a unit directory.
 
+#include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -319,6 +321,98 @@ GF_REGISTER_SELFTEST("import.light", [](Context& ctx) {
         // the light emission of this permutation (its minecraft:light_emission component, per block state)
         int light = static_cast<int>(block->mDirectData->mLightEmission->mValue);
         ctx.check(light == c.light, std::string(c.id) + " " + c.states.dump() + ": light " + std::to_string(light) + ", TF gives " + std::to_string(c.light));
+    }
+});
+
+// Hardness and explosion resistance TF gives (written down by hand from TFBlocks.java and the block classes'
+// getExplosionResistance / getDestroyProgress overrides, independent of the generator), read back from the game's
+// block permutations. The game's units are calibrated on twilight_oak_planks (Java strength(2.0F, 3.0F)): every
+// other value must be the same multiple of TF's.
+GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
+    constexpr double kUnbreakable    = -1; // destroyTime -1 / getDestroyProgress -1: minecraft:destructible_by_mining false
+    constexpr double kIndestructible = -2; // resistance >= 3600000 or Float.MAX_VALUE: minecraft:destructible_by_explosion false
+    struct Case {
+        char const* id;
+        JDoc        states;
+        double      hardness;
+        double      resistance;
+    };
+    std::vector<Case> const cases{
+        {"twilight_oak_planks", JDoc::object(), 2.0, 3.0},                 // strength(2.0F, 3.0F): the calibration
+        {"oak_drying_rack", JDoc::object(), 1.0, 1.5},                     // copyAndScaleProperties(Blocks.OAK_SLAB, 0.5F)
+        {"crimson_drying_rack", JDoc::object(), 1.0, 1.5},                 // copyAndScaleProperties(Blocks.CRIMSON_SLAB, 0.5F)
+        {"twilight_oak_drying_rack", JDoc::object(), 1.0, 1.5},            // copyAndScaleProperties(TWILIGHT_OAK_SLAB, 0.5F)
+        {"brazier", JDoc::object(), 0.0, 0.0},                             // Properties.of(): no strength call
+        {"raspberry_bush", JDoc::object(), 0.4, 0.0},                      // destroyTime(0.4F) only
+        {"iron_oreberry", JDoc::object(), 0.4, 0.0},
+        {"twilight_oak_chest", JDoc::object(), 2.5, 2.5},                  // ofFullCopy(TWILIGHT_OAK_PLANKS).strength(2.5F)
+        {"giant_leaves", JDoc::object(), 12.8, 15.0},                      // strength(0.2F * 64.0F, 15.0F)
+        {"twilight_portal", JDoc::object(), kUnbreakable, 0.0},            // strength(-1.0F): resistance max(0, -1)
+        {"stronghold_shield", JDoc::object(), kUnbreakable, kIndestructible}, // strength(-1.0F, 6000000.0F)
+        {"skull_chest", JDoc::object(), 3.0, kIndestructible},             // SkullChestBlock: Float.MAX_VALUE
+        {"vanishing_block", {{"twilightforest:active", false}}, 10.0, 6000.0}, // VanishingBlock: !ACTIVE ? 6000F : super
+        {"vanishing_block", {{"twilightforest:active", true}}, 10.0, 35.0},
+        {"locked_vanishing_block", JDoc::object(), kUnbreakable, kIndestructible}, // default LOCKED (true): 6000000.0F
+        {"locked_vanishing_block", {{"twilightforest:locked", false}, {"twilightforest:active", false}}, kUnbreakable, 6000.0},
+        {"locked_vanishing_block", {{"twilightforest:locked", false}, {"twilightforest:active", true}}, kUnbreakable, 2000.0},
+        {"trophy_pedestal", {{"twilightforest:active", false}}, kUnbreakable, 2000.0}, // getDestroyProgress: ACTIVE ? super : -1
+        {"trophy_pedestal", {{"twilightforest:active", true}}, 2.0, 2000.0},
+    };
+    auto valuesOf = [&](Case const& c, double& h, double& r) {
+        auto const* block = gf::game::blockWithStates(std::string("twilightforest:") + c.id, c.states);
+        if (!block) return false;
+        h = block->mDirectData->mDestroySpeed;
+        r = block->mDirectData->mExplosionResistance;
+        return true;
+    };
+    double h0 = 0, r0 = 0;
+    ctx.require(valuesOf(cases.front(), h0, r0) && h0 > 0 && r0 > 0, "twilight_oak_planks is registered with a hardness and a resistance");
+    double const hs = h0 / 2.0, rs = r0 / 3.0; // game units per TF unit
+    ctx.info("calibration (twilight_oak_planks): destroy speed " + std::to_string(h0) + ", explosion resistance " + std::to_string(r0));
+    auto near = [](double a, double b) { return std::abs(a - b) <= 1e-4 * std::max(1.0, std::abs(b)); };
+    for (auto const& c : cases) {
+        std::string what = std::string(c.id) + " " + c.states.dump();
+        double      h = 0, r = 0;
+        if (!valuesOf(c, h, r)) {
+            ctx.check(false, what + " is not a registered state");
+            continue;
+        }
+        ctx.info(what + ": destroy speed " + std::to_string(h) + ", explosion resistance " + std::to_string(r));
+        if (c.hardness == kUnbreakable) ctx.check(h < 0, what + ": unbreakable in TF, destroy speed " + std::to_string(h));
+        else ctx.check(near(h, c.hardness * hs), what + ": destroy speed " + std::to_string(h) + ", TF gives " + std::to_string(c.hardness * hs));
+        if (c.resistance == kIndestructible)
+            ctx.check(r >= 3600000.0 * rs, what + ": indestructible by explosions in TF, resistance " + std::to_string(r));
+        else ctx.check(near(r, c.resistance * rs), what + ": explosion resistance " + std::to_string(r) + ", TF gives " + std::to_string(c.resistance * rs));
+    }
+});
+
+// TF's booleans that default to true (Java's StateDefinition.any(): trophies' powered, HugeMushroomBlock faces, rope y,
+// terrorcotta rotated, a locked vanishing block) are declared [true, false]: the game's default permutation has them
+// true, the explicit true state is that permutation and the false one another (Bedrock takes the first listed value as
+// the default and reads a boolean by its value, not its position).
+GF_REGISTER_SELFTEST("import.bool_defaults", [](Context& ctx) {
+    std::vector<std::pair<char const*, char const*>> const cases{
+        {"twilightforest:naga_trophy", "twilightforest:powered"},
+        {"twilightforest:naga_wall_trophy", "twilightforest:powered"},
+        {"twilightforest:huge_mushgloom", "twilightforest:up"},
+        {"twilightforest:huge_mushgloom_stem", "twilightforest:north"},
+        {"twilightforest:rope", "twilightforest:y"},
+        {"twilightforest:terrorcotta_lines", "twilightforest:rotated"},
+        {"twilightforest:locked_vanishing_block", "twilightforest:locked"},
+    };
+    for (auto const& [id, state] : cases) {
+        auto const* def = gf::game::blockWith(id);
+        if (!def) {
+            ctx.check(false, std::string(id) + " is not a registered block");
+            continue;
+        }
+        auto got = gf::game::statesOf(*def);
+        auto it  = got.find(state);
+        ctx.check(it != got.end() && it->second == "true", std::string(id) + ": default " + state + "=" + (it != got.end() ? it->second : "?") + ", TF's default is true");
+        auto const* on  = gf::game::blockWithStates(id, JDoc{{state, true}});
+        auto const* off = gf::game::blockWithStates(id, JDoc{{state, false}});
+        ctx.check(on == def, std::string(id) + ": " + state + "=true is the default permutation");
+        ctx.check(off != nullptr && off != def && gf::game::statesOf(*off)[state] == "false", std::string(id) + ": " + state + "=false is another permutation");
     }
 });
 

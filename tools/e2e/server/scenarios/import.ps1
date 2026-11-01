@@ -6,7 +6,11 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'import.*' -TimeoutSeconds 900
 if ($r.Fail -gt 0) { throw "$($r.Fail) import selftest(s) failed" }
-if ($r.Pass -lt 5) { throw "expected 5 import selftests to pass, got $($r.Pass)" }
+# every import selftest by name (src/feature/ext/import/ImportTests.cpp): one that stopped registering fails the run
+$expected = @('import.blocks', 'import.items', 'import.entities', 'import.lang_and_data', 'import.java_states',
+    'import.rotations', 'import.light', 'import.behaviour', 'import.bool_defaults', 'import.place_blocks')
+$missing = @($expected | Where-Object { $r.Passed -notcontains $_ })
+if ($missing.Count -gt 0) { throw "import selftest(s) did not pass: $($missing -join ', ') (passed: $($r.Passed -join ', '))" }
 
 # Content-log warnings about the skeleton are reported for the spike (S7), errors fail the run.
 $warn = @(Get-ServerLog | Where-Object { $_ -match '\bWARN\]?\s?\[Server\]\s*(<[^>]*>\s*)?\[[A-Za-z][A-Za-z ]*\]' })
