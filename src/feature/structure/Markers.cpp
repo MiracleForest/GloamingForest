@@ -186,8 +186,9 @@ void registerBuiltins() {
         auto seed = data.contains("seed") ? data["seed"].get<std::int64_t>() : random.nextLong();
         blockentities::lootTable(region, pos, data.value("table", std::string{}), seed);
     });
+    // (the template's block stays: a vanilla spawner is set up, TF's sinister spawner keeps the data)
     registerMarkerHandler("spawner", [](Region& region, BlockPos const& pos, std::string const&, Json const& data, RandomSource&) {
-        blockentities::spawner(region, pos, data.value("entity", std::string{}), data);
+        blockentities::spawnerData(region, pos, data.value("entity", std::string{}), data);
     });
     registerMarkerHandler("sign", [](Region& region, BlockPos const& pos, std::string const&, Json const& data, RandomSource&) {
         std::vector<std::string> lines;
@@ -200,7 +201,7 @@ void registerBuiltins() {
         if (data.contains("SpawnData") || data.contains("entity")) {
             std::string id = data.value("entity", std::string{});
             if (id.empty() && data["SpawnData"].is_object()) id = data["SpawnData"].value("entity", Json::object()).value("id", std::string{});
-            blockentities::spawner(region, pos, id, data);
+            blockentities::spawnerData(region, pos, id, data);
         }
     });
 }

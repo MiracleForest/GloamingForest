@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <map>
 #include <optional>
+#include <set>
 #include <unordered_map>
 
 #include "ll/api/command/CommandRegistrar.h"
@@ -22,6 +23,7 @@
 #include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorType.h"
+#include "mc/world/actor/HangingActor.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/Motif.h"
 #include "mc/world/actor/Painting.h"
@@ -30,6 +32,8 @@
 #include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/level/BaseMobSpawner.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/ChunkBlockPos.h"
+#include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
@@ -39,6 +43,7 @@
 #include "mc/world/level/block/actor/MobSpawnerBlockActor.h"
 #include "mc/world/phys/AABB.h"
 
+#include "core/Keys.h"
 #include "core/VolumeHash.h"
 #include "feature/ext/structure/Placement.h"
 #include "feature/ext/structure/Processors.h"
@@ -49,6 +54,7 @@
 #include "feature/structure/bases/Maze.h"
 #include "feature/structure/bases/Tower.h"
 #include "game/Blocks.h"
+#include "game/Items.h"
 #include "game/WorldDb.h"
 #include "selftest/SelfTest.h"
 
@@ -143,6 +149,43 @@ private:
     static long long colKey(int x, int z) { return (static_cast<long long>(x) << 32) ^ static_cast<unsigned int>(z); }
     std::unordered_map<long long, Block const*> mBlocks;
     std::unordered_map<long long, int>          mTop;
+};
+
+/// A region as world generation sees one, over the loaded world: blocks go straight into the
+/// chunks' storage (LevelChunk::setBlockSimple: no block events, no neighbour updates, as a
+/// ProtoChunk is written) and it is not a live region (no BlockSource adapter), so block entity
+/// work and shape updates are queued for their chunk.
+class ChunkWriteRegion final : public worldgen::Region {
+public:
+    ChunkWriteRegion(BlockSource& source, BlockPos const& center) : mSource(source), mCenter(center) { resetRegionRandom(this); }
+    [[nodiscard]] int          centerChunkX() const override { return core::chunkOf(mCenter.x); }
+    [[nodiscard]] int          centerChunkZ() const override { return core::chunkOf(mCenter.z); }
+    [[nodiscard]] int          minY() const override { return mSource.getMinHeight(); }
+    [[nodiscard]] int          maxY() const override { return mSource.getMaxHeight(); }
+    [[nodiscard]] bool         isInside(int x, int z) const override { return mSource.hasChunksAt(BlockPos{x, mSource.getMinHeight(), z}, 0, false); }
+    [[nodiscard]] Block const& getBlock(BlockPos const& pos) const override {
+        if (pos.y < minY() || pos.y >= maxY() || !isInside(pos.x, pos.z)) return blocks::air();
+        return mSource.getBlock(pos);
+    }
+    bool setBlock(BlockPos const& pos, Block const& block, int) override {
+        if (pos.y < minY() || pos.y >= maxY()) return false;
+        auto* chunk = mSource.getChunkAt(pos);
+        if (!chunk) return false;
+        chunk->setBlockSimple(ChunkBlockPos(pos, static_cast<short>(mSource.getMinHeight())), block);
+        return true;
+    }
+    [[nodiscard]] int height(worldgen::Heightmap, int x, int z) const override {
+        for (int y = maxY() - 1; y >= minY(); y--)
+            if (!getBlock(BlockPos{x, y, z}).isAir()) return y + 1;
+        return minY();
+    }
+    [[nodiscard]] std::string  biome(BlockPos const&) const override { return {}; }
+    [[nodiscard]] std::int64_t seed() const override { return static_cast<std::int64_t>(mSource.getLevel().getSeed()); }
+    [[nodiscard]] int          dimension() const override { return static_cast<int>(mSource.getDimensionId()); }
+
+private:
+    BlockSource& mSource;
+    BlockPos     mCenter;
 };
 
 constexpr BlockPos kOrigin{0, 64, 0};
@@ -408,6 +451,15 @@ GF_REGISTER_SELFTEST("structure.template_validate", [](Context& ctx) {
     ctx.check(!templates::validate(badMarker).empty(), "a marker outside the template is refused");
     ctx.check(templates::parsed(fixtureId()) != nullptr, "the fixture registers");
     ctx.check(templates::get("gf_test:fixture") != nullptr, "F0's assets/test fixture template is found on disk");
+    // entity data: the fields the kit applies (Rotation, nbt) and nothing it would lose silently
+    Json entity                         = fixtureTemplate();
+    entity["entities"][0]["data"]       = Json{{"Rotation", {30.0, 0.0}}, {"nbt", "{CustomName:\"stand\"}"}};
+    ctx.check(templates::validate(entity).empty(), "an entity with Rotation and nbt is valid");
+    entity["entities"][0]["data"]["ArmorItems"] = Json::array();
+    ctx.check(!templates::validate(entity).empty(), "an entity data field the kit does not apply is refused");
+    entity["entities"][0]["data"].erase("ArmorItems");
+    entity["entities"][0]["data"]["nbt"] = "{not snbt";
+    ctx.check(!templates::validate(entity).empty(), "unreadable entity nbt is refused");
 });
 
 GF_REGISTER_SELFTEST("structure.template_transforms", [](Context& ctx) {
@@ -435,6 +487,19 @@ GF_REGISTER_SELFTEST("structure.template_transforms", [](Context& ctx) {
         checkGolden(ctx, std::string("template_") + c.name, mem.hash(box));
         ctx.check(data.size() == 1 && data[0].second == "gf_test:mark@east", std::string("one data marker with its label (") + c.name + ")");
     }
+    // StructureTemplate#placeEntities turns an entity's yaw by Entity#rotate + Entity#mirror - yaw
+    auto near = [](float a, float b) { return std::abs(std::remainder(a - b, 360.0f)) < 1e-3f; };
+    ctx.check(near(templates::turnedYaw(30.0f, Rotation::None, Mirror::None), 30.0f), "an entity keeps its yaw without a transform");
+    ctx.check(near(templates::turnedYaw(30.0f, Rotation::Clockwise90, Mirror::None), 120.0f), "CLOCKWISE_90 adds 90 degrees");
+    ctx.check(near(templates::turnedYaw(30.0f, Rotation::Counterclockwise90, Mirror::None), 300.0f), "COUNTERCLOCKWISE_90 adds 270 degrees");
+    ctx.check(near(templates::turnedYaw(30.0f, Rotation::None, Mirror::FrontBack), -30.0f), "FRONT_BACK negates the yaw");
+    ctx.check(near(templates::turnedYaw(30.0f, Rotation::Clockwise90, Mirror::LeftRight), 240.0f), "LEFT_RIGHT and CLOCKWISE_90: 90 + 180 - yaw");
+    // HangingEntity#rotate first, then #mirror on the turned direction
+    ctx.check(templates::turnedPaintingFacing(Orientation::North, Rotation::Clockwise90, Mirror::LeftRight) == Orientation::East,
+              "a north painting under LEFT_RIGHT and CLOCKWISE_90 faces east (rotated to east, which LEFT_RIGHT keeps)");
+    ctx.check(templates::turnedPaintingFacing(Orientation::North, Rotation::None, Mirror::LeftRight) == Orientation::South, "LEFT_RIGHT flips a north painting");
+    ctx.check(templates::turnedPaintingFacing(Orientation::East, Rotation::Clockwise90, Mirror::FrontBack) == Orientation::South,
+              "FRONT_BACK keeps a painting turned to south");
 });
 
 GF_REGISTER_SELFTEST("structure.template_world", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -1118,7 +1183,11 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
             for (int y = wallBox.minY; y <= wallBox.maxY; y++) (void)region.setBlock(BlockPos{x, y, wallBox.minZ}, blocks::java("minecraft:stone"), 2);
         before = static_cast<int>(paintingsIn(*source, area).size());
         ctx.check(paintings::tryHang(region, front, Orientation::South, kebabVariant), "a painting hangs on the wall");
-        ctx.check(!paintings::tryHang(region, front, Orientation::South, paintings::byId("minecraft:aztec")), "a second painting on the same spot is refused");
+        // TF's check reads ProtoChunk entities only: in a live world it does not see the painting
+        // that hangs there (the game refuses the overlapping one, which drops as an item)
+        ctx.check(paintings::tryHang(region, front, Orientation::South, paintings::byId("minecraft:aztec")),
+                  "TF's spot check does not see a painting that hangs in a loaded chunk");
+        ctx.check(!paintings::occupied(region, front), "nor does EntityUtil.getEntitiesInAABB in a loaded chunk");
         // TF's check passes without a wall (TF hangs it and it drops off as an item); the game
         // hangs nothing, so the item drops at once
         ctx.check(paintings::tryHang(region, noWall, Orientation::South, kebabVariant), "TF's spot check ignores the wall");
@@ -1140,13 +1209,19 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(static_cast<int>(hung.size()) - before == 3, "three paintings hang (" + std::to_string(hung.size() - before) + ")");
     Actor* kebab   = nullptr;
     Actor* baroque = nullptr;
+    Actor* aztec   = nullptr;
     for (auto* a : hung) {
         auto const* motif = static_cast<Painting*>(a)->mMotif;
         BlockPos    at    = game::blockPosOf(a->getPosition());
         if (motif == &Motif::mKebab() && at.x == front.x && at.y == front.y) kebab = a;
         if (motif == &Motif::mBaroque()) baroque = a;
+        if (motif == &Motif::mAztec()) aztec = a;
     }
     ctx.check(kebab != nullptr, "the hung painting shows the requested motive (kebab)");
+    ctx.check(aztec == nullptr, "the game does not hang a painting over one that hangs there");
+    auto overlapDrop = itemsIn(*source, BlockBox{front.x - 1, front.y - 1, front.z - 1, front.x + 1, front.y + 1, front.z + 1}, "minecraft:painting");
+    ctx.check(!overlapDrop.empty(), "the overlapping painting dropped as a painting item");
+    for (auto* a : overlapDrop) a->despawn();
     if (kebab) {
         // where it hangs: TF's box for the requested block
         double tf[6];
@@ -1180,6 +1255,72 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(!dropped.empty(), "the painting the game refused dropped as a painting item");
     for (auto* a : dropped) a->despawn();
     for (auto* a : hung) a->despawn();
+});
+
+// ---- the kit's paintings keep Java's survival rules -------------------------------------------------------------------
+
+GF_REGISTER_SELFTEST("structure.painting_rules", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // A painting the kit hung stays while Java's HangingEntity#survives holds (the game asks the
+    // hooked HangingActor::wouldSurvive every few seconds): no block that stops movement in its box,
+    // solid blocks (or diodes) behind it, no other hanging entity in its box. The game's own rule
+    // is logged next to Java's for every case.
+    auto area = co_await ctx.flatArea(5731, 4, 4);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5731)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    BlockPos covered{area.minX + 1, area.minY, area.minZ + 1};
+    BlockPos wall{covered.x, covered.y, covered.z - 1};
+    for (int x = area.minX; x <= area.maxX; x++)
+        for (int y = area.minY; y <= area.minY + 1; y++) (void)game::setBlock(*source, BlockPos{x, y, wall.z}, blocks::java("minecraft:stone"));
+    {
+        BlockSourceRegion region(*source, covered);
+        ctx.require(paintings::tryHang(region, covered, Orientation::South, paintings::byId("minecraft:kebab")), "TF's spot check takes the spot");
+    }
+    co_await ctx.ticks(1);
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto hung = paintingsIn(*source, BlockBox{covered.x, covered.y, covered.z, covered.x, covered.y, covered.z});
+    ctx.require(hung.size() == 1, "the painting hangs");
+    auto*    painting  = static_cast<HangingActor*>(hung.front());
+    BlockPos placement = blockentities::paintingPlacement(covered, Orientation::South);
+    ctx.check(painting->hasTag("gf_structure_painting"), "the kit's painting is marked for Java's survival rules");
+    struct Case {
+        char const* name;
+        char const* wallBlock;  ///< the block behind the painting
+        char const* frontBlock; ///< the block in the painting's cell
+        bool        item;       ///< an item lies against the wall in the painting's cell
+        bool        java;       ///< HangingEntity#survives
+    };
+    for (auto const& c : {Case{"stone behind", "minecraft:stone", "minecraft:air", false, true},
+                          Case{"a torch in front", "minecraft:stone", "minecraft:torch", false, true},
+                          Case{"a glass pane behind", "minecraft:glass_pane", "minecraft:air", false, true},
+                          Case{"a bottom slab behind", "minecraft:stone_slab", "minecraft:air", false, true},
+                          Case{"an oak fence behind", "minecraft:oak_fence", "minecraft:air", false, true},
+                          Case{"an item in front", "minecraft:stone", "minecraft:air", true, true},
+                          Case{"a carpet behind", "minecraft:white_carpet", "minecraft:air", false, false},
+                          Case{"nothing behind", "minecraft:air", "minecraft:air", false, false},
+                          Case{"a stone block in front", "minecraft:stone", "minecraft:stone", false, false}}) {
+        source = ctx.region();
+        ctx.require(source != nullptr, "block source");
+        (void)game::setBlock(*source, wall, blocks::java(c.wallBlock));
+        (void)game::setBlock(*source, covered, blocks::java(c.frontBlock));
+        Actor* item = nullptr;
+        if (c.item)
+            if (auto stack = game::items::make("minecraft:stick", 1, 0); stack && ll::service::getLevel())
+                item = ll::service::getLevel()->getSpawner().spawnItem(*source, *stack, nullptr,
+                                                                      Vec3{covered.x + 0.5f, covered.y + 0.3f, covered.z + 0.05f}, 0);
+        auto  java  = blockentities::javaSurvives(*painting);
+        bool  kept  = painting->wouldSurvive(*source);
+        bool  own   = painting->_wouldSurvive(*source, placement, false);
+        ctx.info(std::string(c.name) + ": Java " + (java && *java ? "keeps" : "drops") + " the painting, the game's own rule " + (own ? "keeps" : "drops") + " it");
+        ctx.check(java && *java == c.java, std::string(c.name) + ": HangingEntity#survives is " + (c.java ? "true" : "false"));
+        ctx.check(kept == c.java, std::string(c.name) + ": the game's survival check of the kit's painting follows Java");
+        if (item) item->despawn();
+        (void)game::setBlock(*source, covered, blocks::air());
+    }
+    source = ctx.region();
+    if (source) (void)game::setBlock(*source, wall, blocks::java("minecraft:stone"));
+    painting->despawn();
 });
 
 // ---- TF marker handlers and template markers in the world --------------------------------------------------------------
@@ -1222,6 +1363,72 @@ GF_REGISTER_SELFTEST("structure.markers", [](Context& ctx) -> ll::coro::CoroTask
             ctx.info("twilightforest:birch_drying_rack is not registered (block skeleton): drying rack placement checked by its refusal only");
         }
     }
+});
+
+// ---- TF's sinister spawner in a template keeps its block ---------------------------------------------------------------
+
+GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // SpawnerProcessor handles TF's sinister spawner as it handles the vanilla one; the template's
+    // block stays a sinister spawner and its spawner data waits in BlockData for the block's own
+    // block entity (F8). Until the block skeleton registers it, the fixture block stands in (the
+    // kit treats every spawner block that is not the vanilla one alike) with the data the
+    // processor would give it.
+    bool        registered = blocks::isRegisteredBlock("twilightforest:sinister_spawner");
+    std::string blockId    = registered ? "twilightforest:sinister_spawner" : "gf_test:fixture_block";
+    if (!registered) ctx.info("twilightforest:sinister_spawner is not registered (block skeleton): gf_test:fixture_block stands in for it");
+    float const scale = 0.8f / 1.4f; // entity_width_max 0.8 over the spider's width
+    Json        doc   = makeTemplate("gf_test:structure/sinister", {state("minecraft:air"), state(blockId), state("minecraft:spawner")}, {{"12"}});
+    if (!registered)
+        doc["markers"] = Json::array({Json{{"pos", {0, 0, 0}},
+                                           {"marker", "spawner"},
+                                           {"data",
+                                            {{"entity", "minecraft:spider"},
+                                             {"SpawnRange", 4},
+                                             {"Delay", 50},
+                                             {"entity_scale", scale},
+                                             {"spawn_rules", {{"block_light", {0, 7}}, {"sky_light", {0, 15}}}}}}}});
+    std::string error;
+    ctx.require(templates::add(doc, &error), "the sinister spawner template registers " + error);
+    auto area = co_await ctx.flatArea(5745, 4, 4);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5745)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    BlockPos origin{area.minX + 1, area.minY, area.minZ + 1};
+    BlockPos sinister = origin, vanilla{origin.x + 1, origin.y, origin.z};
+    {
+        BlockSourceRegion region(*source, origin);
+        TemplateSettings  settings;
+        settings.processors = {ext::compileSpawnerProcessor(4, 0.8f, {{"minecraft:spider", 1}})};
+        ctx.require(templates::place("gf_test:structure/sinister", region, origin, settings), "the template places");
+    }
+    co_await ctx.ticks(8); // block actors exist a tick later; queued work runs every 5 ticks
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto standing = game::blockIdAt(*source, sinister);
+    ctx.check(standing == blockId, "the template's spawner block stays " + blockId + " (" + standing + ")");
+    auto* actor = source->getBlockEntity(sinister);
+    ctx.check(!actor || actor->getType() != BlockActorType::MobSpawner, "no vanilla spawner block entity at the sinister spawner");
+    auto record = blockentities::spawnerRecord(*source, sinister);
+    ctx.check(record.has_value(), "the sinister spawner's data is kept");
+    if (record) {
+        auto const& d = record->value("data", Json::object());
+        ctx.check(record->value("entity", std::string{}) == "minecraft:spider", "its mob (" + record->dump() + ")");
+        ctx.check(d.value("SpawnRange", 0) == 4 && d.value("Delay", 0) == 50, "its range 4 and delay round(200 * 0.25)");
+        ctx.check(std::abs(record->value("scale", 0.0f) - scale) < 1e-4f, "its generic.scale for entity_width_max 0.8");
+        ctx.check(record->contains("spawn_rules") && (*record)["spawn_rules"] == Json{{"block_light", {0, 7}}, {"sky_light", {0, 15}}}, "its custom spawn rules");
+    }
+    // the vanilla spawner next to it gets the same processor's data in its block entity
+    ctx.check(game::blockIdAt(*source, vanilla) == "minecraft:mob_spawner", "the vanilla spawner stands");
+    std::string mob;
+    int         range = 0;
+    if (auto* v = source->getBlockEntity(vanilla); v && v->getType() == BlockActorType::MobSpawner)
+        if (auto* sp = static_cast<MobSpawnerBlockActor&>(*v).mSpawner.get()) {
+            mob   = sp->mActorDefId->mCanonicalName->getString();
+            range = sp->mSpawnRange;
+        }
+    ctx.check(mob == "minecraft:spider" && range == 4, "the vanilla spawner spawns spiders within 4 (" + mob + ", " + std::to_string(range) + ")");
+    blockentities::forgetSpawnerRecord(*source, sinister);
+    blockentities::forgetSpawnerRecord(*source, vanilla);
 });
 
 // ---- jigsaw over terrain, the template definitions API --------------------------------------------------------------
@@ -1396,28 +1603,50 @@ AABB aabbOf(BlockBox const& b) {
                 Vec3{static_cast<float>(b.maxX + 1), static_cast<float>(b.maxY + 1), static_cast<float>(b.maxZ + 1)}};
 }
 
-std::vector<Actor*> cowsIn(BlockSource& source, BlockBox const& box) {
+std::vector<Actor*> mobsIn(BlockSource& source, BlockBox const& box, ActorType type) {
     std::vector<Actor*> out;
-    for (auto* a : source.getEntities(aabbOf(box), 0.0f, ActorType::Cow))
-        if (a && a->isType(ActorType::Cow)) out.push_back(a);
+    for (auto* a : source.getEntities(aabbOf(box), 0.0f, type))
+        if (a && a->isType(type)) out.push_back(a);
     return out;
 }
 
+std::vector<Actor*> cowsIn(BlockSource& source, BlockBox const& box) { return mobsIn(source, box, ActorType::Cow); }
+
 float widthOf(Actor const& a) { return a.getAABB().max.x - a.getAABB().min.x; }
 
-/// Waits up to `ticks` for a cow in `box` that is not in `ignore`; its unique id.
-ll::coro::CoroTask<std::optional<std::int64_t>> awaitCow(Context& ctx, BlockBox box, std::vector<std::int64_t> ignore, int ticks) {
+/// Waits up to `ticks` for a mob of `type` in `box` that is not in `ignore`; its unique id.
+ll::coro::CoroTask<std::optional<std::int64_t>> awaitMob(Context& ctx, BlockBox box, std::vector<std::int64_t> ignore, int ticks, ActorType type) {
     for (int i = 0; i < ticks; i += 5) {
         co_await ctx.ticks(5);
         (void)ctx.player(); // keep the test player near the spawner (RequiredPlayerRange)
         auto* source = ctx.region();
         if (!source) co_return std::nullopt;
-        for (auto* a : cowsIn(*source, box)) {
+        for (auto* a : mobsIn(*source, box, type)) {
             auto id = a->getOrCreateUniqueID().rawID;
             if (std::find(ignore.begin(), ignore.end(), id) == ignore.end()) co_return id;
         }
     }
     co_return std::nullopt;
+}
+
+ll::coro::CoroTask<std::optional<std::int64_t>> awaitCow(Context& ctx, BlockBox box, std::vector<std::int64_t> ignore, int ticks) {
+    co_return co_await awaitMob(ctx, box, std::move(ignore), ticks, ActorType::Cow);
+}
+
+void despawnMobs(Context& ctx, BlockBox const& box, ActorType type) {
+    if (auto* source = ctx.region())
+        for (auto* a : mobsIn(*source, box, type)) a->despawn();
+}
+
+/// What a spawn egg does to a spawner: another mob (and a short delay, so the test does not wait).
+bool changeSpawnerMob(BlockSource& source, BlockPos const& pos, std::string const& mob) {
+    auto* actor = source.getBlockEntity(pos);
+    if (!actor || actor->getType() != BlockActorType::MobSpawner) return false;
+    auto& spawner = static_cast<MobSpawnerBlockActor&>(*actor);
+    spawner.setMob(source, ActorDefinitionIdentifier(mob), nullptr);
+    if (auto* sp = spawner.mSpawner.get()) sp->mSpawnDelay = 1;
+    actor->refresh(source);
+    return true;
 }
 
 Actor* fetch(std::int64_t raw) {
@@ -1527,6 +1756,24 @@ GF_REGISTER_SELFTEST("structure.spawner_scale", [](Context& ctx) -> ll::coro::Co
     if (!width) ctx.check(false, "the scaled spawner spawned a cow within 200 ticks");
     // 0.4 of an adult (0.9) or of a calf (0.45); unscaled they are 0.9 / 0.45
     else ctx.check(std::abs(*width - 0.36f) < 0.03f || std::abs(*width - 0.18f) < 0.03f, "a cow from the scaled spawner is scaled to 0.4 (width " + std::to_string(*width) + ")");
+
+    // a spawn egg turns the scaled spawner into a sheep spawner: Java replaces the whole SpawnData,
+    // its generic.scale with it, so the sheep spawn at their own size and the cow's record goes
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    ctx.require(changeSpawnerMob(*source, scaledPos, "minecraft:sheep"), "the spawner takes the sheep");
+    auto sheep = co_await awaitMob(ctx, near, {}, 200, ActorType::Sheep);
+    std::optional<float> sheepWidth;
+    if (sheep) {
+        co_await ctx.ticks(5); // (a scale would apply by now)
+        if (auto* a = fetch(*sheep)) sheepWidth = widthOf(*a);
+    }
+    despawnMobs(ctx, near, ActorType::Sheep);
+    ctx.check(sheepWidth && (std::abs(*sheepWidth - 0.9f) < 0.03f || std::abs(*sheepWidth - 0.45f) < 0.03f),
+              "a sheep from the changed spawner keeps its size (width " + (sheepWidth ? std::to_string(*sheepWidth) : std::string("-")) + ")");
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    ctx.check(!blockentities::spawnerRecord(*source, scaledPos), "the cow's scale record was dropped with the cow");
 });
 
 GF_REGISTER_SELFTEST("structure.spawner_rules", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -1575,56 +1822,199 @@ GF_REGISTER_SELFTEST("structure.spawner_rules", [](Context& ctx) -> ll::coro::Co
     auto dark = co_await awaitCow(ctx, near, {}, 200);
     ctx.check(dark.has_value(), "without the glowstone (block light 0) the spawner spawns");
     despawnCows(ctx, near);
+
+    // a spawn egg gives the spawner another mob: Java replaces the whole SpawnData, the custom
+    // spawn rules with it. Under the glowstone again, the sheep spawn and the cow's rules are gone.
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    {
+        BlockSourceRegion region(*source, spawnerPos);
+        for (int x = area.minX; x <= area.maxX; x++)
+            for (int z = area.minZ; z <= area.maxZ; z++) (void)region.setBlock(BlockPos{x, area.minY + 3, z}, blocks::java("minecraft:glowstone"), 3);
+    }
+    ctx.require(changeSpawnerMob(*source, spawnerPos, "minecraft:sheep"), "the spawner takes the sheep");
+    int  vetoesBeforeSheep = spawners::vetoes();
+    auto sheep             = co_await awaitMob(ctx, near, {}, 200, ActorType::Sheep);
+    ctx.check(sheep.has_value(), "the sheep spawn under the glowstone (the cow's light rules went with the cow)");
+    ctx.check(spawners::vetoes() == vetoesBeforeSheep, "no sheep spawn was vetoed");
+    despawnMobs(ctx, near, ActorType::Sheep);
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    ctx.check(!blockentities::spawnerRecord(*source, spawnerPos), "the cow's record was dropped");
+});
+
+// ---- template entities: capture -> place keeps their data and turns their facing -------------------------------------
+
+GF_REGISTER_SELFTEST("structure.template_entities", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // StructureTemplate#fillEntityList / #placeEntities for an entity that is not a painting: its
+    // saved data comes back (a named armor stand) and its facing turns with the placement
+    auto area = co_await ctx.flatArea(5758, 6, 4);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5758)), "test area loaded");
+    BlockPos at{area.minX + 1, area.minY, area.minZ + 1};
+    ctx.require(runCommand("summon minecraft:armor_stand " + std::to_string(at.x + 0.5) + " " + std::to_string(at.y) + " " + std::to_string(at.z + 0.5) +
+                           " 30 0 minecraft:entity_spawned gf_capture_stand"),
+                "an armor stand is summoned");
+    co_await ctx.ticks(2);
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    BlockBox capturedBox{at.x - 1, at.y, at.z - 1, at.x + 1, at.y + 1, at.z + 1};
+    Actor*   original = nullptr;
+    for (auto* a : mobsIn(*source, capturedBox, ActorType::ArmorStand))
+        if (a->getNameTag() == "gf_capture_stand") original = a;
+    ctx.require(original != nullptr, "the armor stand is there");
+    float yaw = original->getRotation().y;
+    int   skipped = 0;
+    Json  doc     = templates::capture(*source, capturedBox, "gf_test:structure/captured_stand", skipped);
+    original->despawn();
+    Json entry;
+    for (auto const& e : doc.value("entities", Json::array()))
+        if (e.value("id", std::string{}) == "minecraft:armor_stand") entry = e;
+    ctx.require(entry.is_object(), "the capture holds the armor stand (" + doc.value("entities", Json::array()).dump() + ")");
+    auto const& data = entry["data"];
+    ctx.check(data.contains("Rotation") && std::abs(data["Rotation"][0].get<float>() - yaw) < 1e-3f, "the capture keeps its rotation");
+    ctx.check(data.contains("nbt") && data["nbt"].get<std::string>().find("gf_capture_stand") != std::string::npos, "the capture keeps its saved data (its name)");
+    std::string error;
+    ctx.require(templates::add(doc, &error), "the captured template is valid " + error);
+    // placed elsewhere, turned (CLOCKWISE_90) and mirrored (LEFT_RIGHT): the stand (template
+    // 1.5, 0, 1.5) lands at the origin + (1.5, 0, 1.5), facing 90 + (180 - yaw)
+    BlockPos         origin{area.minX + 3, area.minY, area.minZ + 1};
+    TemplateSettings settings;
+    settings.rotation = Rotation::Clockwise90;
+    settings.mirror   = Mirror::LeftRight;
+    {
+        BlockSourceRegion region(*source, origin);
+        ctx.require(templates::place("gf_test:structure/captured_stand", region, origin, settings), "the captured template places");
+    }
+    co_await ctx.ticks(2);
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    Actor* placed = nullptr;
+    for (auto* a : mobsIn(*source, BlockBox{area.minX, area.minY - 1, area.minZ, area.maxX, area.minY + 3, area.maxZ}, ActorType::ArmorStand))
+        if (a->getNameTag() == "gf_capture_stand") placed = a;
+    ctx.check(placed != nullptr, "the placed armor stand carries its saved data (its name)");
+    if (placed) {
+        Vec3 const& p = placed->getPosition();
+        ctx.check(std::abs(p.x - (origin.x + 1.5f)) < 0.01f && std::abs(p.z - (origin.z + 1.5f)) < 0.01f,
+                  "it stands where the template's position turns to (" + std::to_string(p.x) + ", " + std::to_string(p.z) + ")");
+        float expected = templates::turnedYaw(yaw, settings.rotation, settings.mirror);
+        float actual   = placed->getRotation().y;
+        ctx.check(std::abs(std::remainder(actual - expected, 360.0f)) < 0.5f,
+                  "it faces the turned yaw (" + std::to_string(actual) + ", " + std::to_string(expected) + " expected from " + std::to_string(yaw) + ")");
+        placed->despawn();
+    }
 });
 
 // ---- a scaled mob keeps its size across a save and load (tools/e2e/server/scenarios/structure.ps1) ---------------------
 
 GF_REGISTER_SELFTEST("structure.scale_probe", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // without a record: a scaled mob (an armor stand: it stays where it is) is left in the world and
-    // recorded; the server scenario restarts the server and runs this test again, which loads the
-    // mob and measures it (Bedrock sets a loaded mob's size from its definition: the kit scales it
-    // again)
-    auto probe = game::db::get("gf:structure:scale_probe");
+    // Only armed by `/twilightforest structure_util scale_probe` (the server scenario, before a
+    // restart): then a scaled calf is left in a glass pen and recorded; after the restart this
+    // test loads it, measures it, makes the game set its size from its definition again (it grows
+    // up: the adult's collision box) and checks that the kit, watching the mob since it loaded,
+    // puts the factor on the new size. A plain run leaves nothing behind.
+    constexpr char kProbeKey[] = "gf:structure:scale_probe";
+    constexpr char kArmedKey[] = "gf:structure:scale_probe_armed";
+    auto           probe       = game::db::get(kProbeKey);
     if (!probe) {
-        auto area = co_await ctx.flatArea(5793, 6, 4);
-        ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5793)), "test area loaded");
+        if (!game::db::get(kArmedKey)) {
+            ctx.info("scale probe not armed (structure_util scale_probe arms it before a restart): nothing to do");
+            co_return;
+        }
+        game::db::erase(kArmedKey);
+        // (dx 5712..5714: outside every flat area of the kit's tests and the boxes the spawner
+        // tests count cows in, so the calf neither disturbs them nor is disturbed)
+        auto base = ctx.testPos(5713, 2);
+        ctx.require(co_await ctx.ensureLoaded(base), "test area loaded");
         auto* source = ctx.region();
-        auto  level  = ll::service::getLevel();
-        ctx.require(source != nullptr && level != nullptr, "block source");
-        Vec3  at{static_cast<float>(area.minX) + 3.5f, static_cast<float>(area.minY), static_cast<float>(area.minZ) + 2.5f};
-        auto* mob = level->getSpawner().spawnMob(*source, ActorDefinitionIdentifier("minecraft:armor_stand"), nullptr, at, false, false, false);
-        ctx.require(mob != nullptr, "an armor stand spawns");
-        auto  id       = mob->getOrCreateUniqueID().rawID;
+        ctx.require(source != nullptr, "block source");
+        BlockPos at = game::blockPos(base);
+        ctx.require(blocks::blocksMotion(source->getBlock(BlockPos{at.x, at.y - 1, at.z})), "the probe stands on the ground");
+        // a glass pen two blocks high keeps the cow in place until the restart
+        Json pen = Json::array();
+        for (auto [dx, dz] : {std::pair{1, 0}, std::pair{-1, 0}, std::pair{0, 1}, std::pair{0, -1}})
+            for (int dy = 0; dy < 2; dy++) {
+                BlockPos p{at.x + dx, at.y + dy, at.z + dz};
+                ctx.require(source->getBlock(p).isAir() && source->getBlock(BlockPos{at.x, at.y + dy, at.z}).isAir(), "the pen's place is free");
+                pen.push_back(Json::array({p.x, p.y, p.z}));
+            }
+        for (auto const& p : pen) (void)game::setBlock(*source, BlockPos{p[0].get<int>(), p[1].get<int>(), p[2].get<int>()}, blocks::java("minecraft:glass"));
+        ctx.require(runCommand("summon minecraft:cow " + std::to_string(at.x + 0.5) + " " + std::to_string(at.y) + " " + std::to_string(at.z + 0.5) +
+                               " 0 0 minecraft:entity_born gf_scale_probe"),
+                    "a calf is summoned");
+        co_await ctx.ticks(2);
+        source = ctx.region();
+        ctx.require(source != nullptr, "block source");
+        std::optional<std::int64_t> id;
+        for (auto* a : cowsIn(*source, BlockBox{at.x - 1, at.y - 1, at.z - 1, at.x + 1, at.y + 2, at.z + 1}))
+            if (a->getNameTag() == "gf_scale_probe") id = a->getOrCreateUniqueID().rawID;
+        ctx.require(id.has_value(), "the probe cow is there");
+        auto* mob = fetch(*id);
+        ctx.require(mob != nullptr, "the probe cow can be fetched");
         float unscaled = widthOf(*mob);
         spawners::scaleMob(*mob, 0.5f);
         co_await ctx.ticks(5);
-        auto* scaled = fetch(id);
-        ctx.require(scaled != nullptr, "the armor stand is there");
-        ctx.check(std::abs(widthOf(*scaled) - unscaled * 0.5f) < 0.02f, "the armor stand is scaled to 0.5 (width " + std::to_string(widthOf(*scaled)) + ")");
-        auto pos = game::blockPosOf(scaled->getPosition());
-        game::db::put("gf:structure:scale_probe", Json{{"id", id}, {"pos", {pos.x, pos.y, pos.z}}, {"width", unscaled * 0.5f}});
-        ctx.info("scale probe written id=" + std::to_string(id));
+        auto* scaled = fetch(*id);
+        ctx.require(scaled != nullptr, "the probe cow is still there");
+        float width     = widthOf(*scaled);
+        float dataScale = spawners::dataScaleOf(*scaled).value_or(0.0f);
+        ctx.check(std::abs(width - unscaled * 0.5f) < 0.02f, "the calf is scaled to 0.5 (width " + std::to_string(width) + ")");
+        game::db::put(kProbeKey, Json{{"id", *id}, {"pos", {at.x, at.y, at.z}}, {"width", width}, {"data_scale", dataScale}, {"pen", pen}});
+        ctx.info("scale probe written id=" + std::to_string(*id));
         co_return;
     }
-    game::db::erase("gf:structure:scale_probe");
-    auto id    = probe->value("id", std::int64_t{0});
-    auto pos   = probe->value("pos", Json::array());
-    auto width = probe->value("width", 0.0f);
+    game::db::erase(kProbeKey);
+    auto id        = probe->value("id", std::int64_t{0});
+    auto pos       = probe->value("pos", Json::array());
+    auto width     = probe->value("width", 0.0f);
+    auto dataScale = probe->value("data_scale", 0.0f);
     ctx.require(pos.is_array() && pos.size() == 3, "the probe record is complete");
-    ctx.require(co_await ctx.ensureLoaded(core::GlobalPos{0, pos[0].get<int>(), pos[1].get<int>(), pos[2].get<int>()}), "probe chunk loaded");
+    bool loaded = co_await ctx.ensureLoaded(core::GlobalPos{0, pos[0].get<int>(), pos[1].get<int>(), pos[2].get<int>()});
+    if (auto* source = ctx.region()) // the pen goes first: nothing stays behind whatever the checks say
+        for (auto const& p : probe->value("pen", Json::array())) {
+            BlockPos at{p[0].get<int>(), p[1].get<int>(), p[2].get<int>()};
+            if (source->hasChunksAt(at, 0, false)) (void)game::setBlock(*source, at, blocks::air());
+        }
+    ctx.require(loaded, "probe chunk loaded");
     Actor* mob = nullptr;
     for (int i = 0; i < 40 && !mob; i++) {
         co_await ctx.ticks(1);
         mob = fetch(id);
     }
     ctx.require(mob != nullptr, "the probe mob loaded");
-    ctx.info("the probe mob as it loaded: width " + std::to_string(widthOf(*mob)) + " (Bedrock keeps part of a mob's size)");
+    ctx.info("the probe mob as it loaded: width " + std::to_string(widthOf(*mob)) + ", data scale " + std::to_string(spawners::dataScaleOf(*mob).value_or(0)) +
+             " (Bedrock keeps part of a mob's size)");
     co_await ctx.ticks(5); // the kit scales a loaded mob once it is set up
     mob = fetch(id);
     ctx.require(mob != nullptr, "the probe mob is still there");
-    float now = widthOf(*mob);
+    float now    = widthOf(*mob);
+    float nowBox = spawners::dataScaleOf(*mob).value_or(0.0f);
     ctx.check(std::abs(now - width) < 0.02f, "the loaded mob keeps its scale (width " + std::to_string(now) + ", " + std::to_string(width) + " expected)");
-    if (std::abs(now - width) < 0.02f) ctx.info("scale probe verified width=" + std::to_string(now));
+    ctx.check(std::abs(nowBox - dataScale) < 0.02f, "the loaded mob is drawn at its scale (data scale " + std::to_string(nowBox) + ", " + std::to_string(dataScale) + " expected)");
+    // the calf grows up: the game sets its size from the adult's definition (the kit's size checks
+    // are held while that is measured), then the kit puts the factor on the new size
+    spawners::holdSizeChecks(true);
+    bool fired = runCommand("event entity @e[name=gf_scale_probe] minecraft:ageable_grow_up");
+    co_await ctx.ticks(2);
+    mob            = fetch(id);
+    float reset    = mob ? widthOf(*mob) : 0.0f;
+    float resetBox = mob ? spawners::dataScaleOf(*mob).value_or(0.0f) : 0.0f;
+    spawners::holdSizeChecks(false);
+    ctx.require(mob != nullptr && fired, "the probe mob takes the event");
+    ctx.info("grown up, before the kit's check: width " + std::to_string(reset) + ", data scale " + std::to_string(resetBox));
+    ctx.check(std::abs(reset - now) > 0.1f, "growing up set the definition's size (width " + std::to_string(reset) + " from " + std::to_string(now) + ")");
+    co_await ctx.ticks(25);
+    mob = fetch(id);
+    ctx.require(mob != nullptr, "the probe mob is still there after growing up");
+    float after       = widthOf(*mob);
+    float afterBox    = spawners::dataScaleOf(*mob).value_or(0.0f);
+    // the parts the game set are the definition's times the factor, the others stay as they were
+    float expectBox   = std::abs(resetBox - nowBox) > 1e-3f ? resetBox * 0.5f : nowBox;
+    bool  widthKept   = std::abs(after - reset * 0.5f) < 0.02f;
+    bool  scaleKept   = std::abs(afterBox - expectBox) < 0.02f;
+    ctx.check(widthKept, "the kit put the factor on the loaded mob's new size (width " + std::to_string(after) + ", " + std::to_string(reset * 0.5f) + " expected)");
+    ctx.check(scaleKept, "and it is drawn at its scale (data scale " + std::to_string(afterBox) + ", " + std::to_string(expectBox) + " expected)");
+    if (std::abs(now - width) < 0.02f && widthKept && scaleKept)
+        ctx.info("scale probe verified width=" + std::to_string(after) + " data scale=" + std::to_string(afterBox));
     mob->despawn();
 });
 
@@ -1643,6 +2033,10 @@ GF_REGISTER_SELFTEST("structure.update_marking", [](Context& ctx) -> ll::coro::C
         templates::add(doc);
         return std::string("gf_test:structure/walls");
     }();
+    // Placed as world generation places it: through a region that writes into the chunks without
+    // block events or neighbour updates (a ProtoChunk) and is not a live region, so the marked
+    // positions are queued for their chunk. Bedrock's own wall fix (on placement in a loaded world)
+    // never runs: only update_marking changes a wall.
     auto area = co_await ctx.flatArea(5775, 8, 4);
     ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5775)), "test area loaded");
     auto* source = ctx.region();
@@ -1654,8 +2048,8 @@ GF_REGISTER_SELFTEST("structure.update_marking", [](Context& ctx) -> ll::coro::C
     std::size_t       before = blockentities::pending();
     std::size_t       afterMarked = 0, afterPlain = 0;
     {
-        BlockSourceRegion region(*source, marked);
-        TemplateSettings  withMark;
+        ChunkWriteRegion region(*source, marked);
+        TemplateSettings withMark;
         withMark.processors = {decay, mark};
         TemplateSettings onlyDecay;
         onlyDecay.processors = {decay};
@@ -1664,10 +2058,21 @@ GF_REGISTER_SELFTEST("structure.update_marking", [](Context& ctx) -> ll::coro::C
         ctx.require(templates::place(id, region, plain, onlyDecay), "the walls place (no update_marking)");
         afterPlain = blockentities::pending();
     }
-    // markPosForPostprocessing: one queued shape update per marked block (the two cobblestone
-    // walls; the decayed mossy wall is marked by nothing), none without the processor
-    ctx.check(afterMarked - before == 2, "update_marking queued a shape update for each marked wall (" + std::to_string(afterMarked - before) + ")");
-    ctx.check(afterPlain == afterMarked, "no shape updates without update_marking");
+    // markPosForPostprocessing: one marked position per marked block (the two cobblestone walls;
+    // the decayed mossy wall is marked by nothing) in its chunk's list, none without the processor
+    ctx.check(afterMarked - before == 2, "update_marking marked each marked wall for its chunk (" + std::to_string(afterMarked - before) + ")");
+    ctx.check(afterPlain == afterMarked, "nothing is marked without update_marking");
+    // stored as the chunk's list of packed positions (one record per chunk, not one job each)
+    int  dim       = static_cast<int>(source->getDimensionId());
+    auto recordKey = [&](BlockPos const& p) {
+        return "gf:structure:pending:" + std::to_string(dim) + ":" + std::to_string(core::chunkOf(p.x)) + ":" + std::to_string(core::chunkOf(p.z));
+    };
+    std::set<std::string> keys{recordKey(marked), recordKey(BlockPos{marked.x + 1, marked.y, marked.z})};
+    blockentities::save();
+    std::size_t stored = 0;
+    for (auto const& k : keys)
+        if (auto doc = game::db::get(k); doc && doc->is_object()) stored += doc->value("shape", Json::array()).size();
+    ctx.check(stored == 2, "the marked positions are stored packed in their chunk's record (" + std::to_string(stored) + ")");
     auto eastOf = [&](BlockPos const& p) {
         auto* s = ctx.region();
         if (!s) return std::string("?");
@@ -1678,13 +2083,16 @@ GF_REGISTER_SELFTEST("structure.update_marking", [](Context& ctx) -> ll::coro::C
     BlockPos markedMiddle{marked.x + 1, marked.y, marked.z};
     BlockPos plainMiddle{plain.x + 1, plain.y, plain.z};
     ctx.check(game::blockIdAt(*source, BlockPos{marked.x + 2, marked.y, marked.z}) == "minecraft:air", "vertical_decay removed the mossy wall");
-    ctx.check(eastOf(markedMiddle) == "short", "the template's east arm is placed as it is (" + eastOf(markedMiddle) + ")");
+    ctx.check(eastOf(markedMiddle) == "short" && eastOf(plainMiddle) == "short", "both middle walls keep the template's east arm as written (" +
+                                                                                   eastOf(markedMiddle) + ", " + eastOf(plainMiddle) + ")");
     co_await ctx.ticks(15);
-    ctx.check(blockentities::pending() <= before, "the shape updates ran once the structure stood");
-    ctx.check(eastOf(markedMiddle) == "none", "update_marking: the wall dropped the arm to the removed wall (" + eastOf(markedMiddle) + ")");
-    // (a wall set in a loaded world also fixes its own connections a tick later on Bedrock, marked
-    // or not; generation writes keep the template's states unless update_marking marks them)
-    ctx.info("unmarked wall after placement in a loaded world: east " + eastOf(plainMiddle));
+    ctx.check(blockentities::pending() <= before, "the chunk's post-processing ran once it was loaded");
+    ctx.check(eastOf(markedMiddle) == "none", "update_marking: the marked wall dropped the arm to the removed wall (" + eastOf(markedMiddle) + ")");
+    ctx.check(eastOf(plainMiddle) == "short", "the unmarked wall keeps the template's stale arm, as in Java (" + eastOf(plainMiddle) + ")");
+    blockentities::save();
+    bool erased = true;
+    for (auto const& k : keys) erased = erased && !game::db::get(k);
+    ctx.check(erased, "the chunk's record is gone once its work ran");
 });
 
 // ---- queued work survives a restart (tools/e2e/server/scenarios/structure.ps1) -----------------------------------------

@@ -176,41 +176,21 @@ bool tryHang(Region& region, BlockPos const& pos, Orientation direction, std::op
         for (int y = pure::mthFloor(box[1]); y < pure::mthCeil(box[4]); y++)
             for (int z = pure::mthFloor(box[2]); z < pure::mthCeil(box[5]); z++)
                 if (blocks::blocksMotion(region.getBlock(BlockPos{x, y, z}))) return false;
-    // ... and no hanging entity in it: queued paintings (TF: the ProtoChunk's entities) and, in a
-    // live world, the ones that hang already
+    // ... and no hanging entity in it: EntityUtil.getEntitiesInAABB reads the entities of
+    // ProtoChunks only, the queued paintings here. A loaded chunk is an ImposterProtoChunk without
+    // entities, so in a live world TF sees none of the paintings that hang already either (the
+    // game then refuses an overlapping one, which drops as an item).
     if (blockentities::pendingPaintingIntersects(region.dimension(), box)) return false;
-    if (auto* source = blockentities::sourceOf(region)) {
-        AABB range{Vec3{static_cast<float>(box[0]), static_cast<float>(box[1]), static_cast<float>(box[2])},
-                   Vec3{static_cast<float>(box[3]), static_cast<float>(box[4]), static_cast<float>(box[5])}};
-        for (auto* actor : source->getEntities(range, 0.0f, ActorType::Painting)) {
-            if (!actor) continue;
-            AABB const& b = actor->getAABB();
-            if (range.min.x < b.max.x && range.max.x > b.min.x && range.min.y < b.max.y && range.max.y > b.min.y && range.min.z < b.max.z &&
-                range.max.z > b.min.z)
-                return false;
-        }
-    }
     auto motive = variant->id.substr(variant->id.find(':') + 1);
     return blockentities::painting(region, pos, direction, motive, Json::array({box[0], box[1], box[2], box[3], box[4], box[5]}));
 }
 
 bool occupied(Region& region, BlockPos const& pos) {
-    // EntityUtil.getEntitiesInAABB(world, new AABB(pos)) is not empty (structure entities: paintings)
+    // EntityUtil.getEntitiesInAABB(world, new AABB(pos)) is not empty: the ProtoChunk entities
+    // (structure entities: the queued paintings); a live world's chunks show TF none
     double box[6] = {static_cast<double>(pos.x), static_cast<double>(pos.y), static_cast<double>(pos.z),
                      pos.x + 1.0,                pos.y + 1.0,                pos.z + 1.0};
-    if (blockentities::pendingPaintingIntersects(region.dimension(), box)) return true;
-    if (auto* source = blockentities::sourceOf(region)) {
-        AABB range{Vec3{static_cast<float>(box[0]), static_cast<float>(box[1]), static_cast<float>(box[2])},
-                   Vec3{static_cast<float>(box[3]), static_cast<float>(box[4]), static_cast<float>(box[5])}};
-        for (auto* actor : source->getEntities(range, 0.0f)) {
-            if (!actor) continue;
-            AABB const& b = actor->getAABB();
-            if (range.min.x < b.max.x && range.max.x > b.min.x && range.min.y < b.max.y && range.max.y > b.min.y && range.min.z < b.max.z &&
-                range.max.z > b.min.z)
-                return true;
-        }
-    }
-    return false;
+    return blockentities::pendingPaintingIntersects(region.dimension(), box);
 }
 
 std::optional<Variant> ofSize(RandomSource& random, int width, int height, bool exactMeasurements) {

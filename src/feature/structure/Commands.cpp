@@ -25,6 +25,8 @@
 //   jigsaw <pool> [depth]            assembles a template pool at your feet
 //   templates                        lists the known templates, pools and data counts
 //   outline <x1> <y1> <z1> <x2> <y2> <z2> [seconds]  outlines a box (server e2e)
+//   pending_probe / scale_probe      restart probes of the server e2e (a queued job in an unloaded
+//                                    chunk; a scaled mob left by the next structure.scale_probe)
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -41,6 +43,8 @@
 
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/deps/nbt/CompoundTag.h"
+#include "mc/deps/nbt/Tag.h"
 #include "mc/network/packet/TextPacket.h"
 #include "mc/network/packet/TextPacketType.h"
 #include "mc/server/commands/CommandOrigin.h"
@@ -585,6 +589,16 @@ void pendingProbe(CommandOrigin const& origin, CommandOutput& output) {
     output.success("queued " + nonce);
 }
 
+/// Development (server e2e restart step): the next structure.scale_probe run leaves a scaled mob
+/// in the world for the run after the restart (plain selftest runs leave nothing behind).
+void scaleProbe(CommandOrigin const& origin, CommandOutput& output) {
+    if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
+    if (!game::db::available()) return output.error("no world");
+    game::db::put("gf:structure:scale_probe_armed", Json(true));
+    log().info("structure_util scale_probe armed");
+    output.success("armed");
+}
+
 void listTemplates(CommandOrigin const& origin, CommandOutput& output) {
     if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
     auto ids = templates::ids();
@@ -653,8 +667,16 @@ Json templates::capture(BlockSource& source, BlockBox const& box, std::string co
             skipped++;
             continue;
         }
-        Vec2 const& rot = actor->getRotation();
-        entities.push_back(Json{{"pos", Json::array({x, y, z})}, {"id", actor->getTypeName()}, {"data", {{"Rotation", Json::array({rot.y, rot.x})}}}});
+        // StructureEntityInfo#nbt: the actor's saved data (its position, rotation and identity are
+        // the placement's) and its rotation as [yaw, pitch]
+        Vec2 const& rot  = actor->getRotation();
+        Json        data = Json{{"Rotation", Json::array({rot.y, rot.x})}};
+        CompoundTag tag;
+        if (actor->save(tag)) {
+            for (char const* k : {"UniqueID", "Pos", "Rotation", "LinksTag", "LeasherID"}) tag.erase(k);
+            data["nbt"] = tag.toSnbt(SnbtFormat::Minimize);
+        }
+        entities.push_back(Json{{"pos", Json::array({x, y, z})}, {"id", actor->getTypeName()}, {"data", std::move(data)}});
     }
     if (!entities.empty()) doc["entities"] = entities;
     return doc;
@@ -706,6 +728,7 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
         [](CommandOrigin const& o, CommandOutput& out, StructureUtilPieceParams const& p) { pieceCmd(o, out, p); }
     );
     cmd.overload().text("structure_util").text("pending_probe").execute([](CommandOrigin const& o, CommandOutput& out) { pendingProbe(o, out); });
+    cmd.overload().text("structure_util").text("scale_probe").execute([](CommandOrigin const& o, CommandOutput& out) { scaleProbe(o, out); });
     cmd.overload<StructureUtilOutlineParams>()
         .text("structure_util")
         .text("outline")

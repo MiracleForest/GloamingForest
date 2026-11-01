@@ -98,6 +98,7 @@ std::mutex                 gPendingMutex;
 std::vector<PendingScale>  gPending;
 int                        gTicks  = 0;
 int                        gVetoes = 0;
+bool                       gHeld   = false; ///< size checks held (selftests measure the game's own reset)
 ll::event::ListenerPtr     gSpawningListener;
 ll::event::ListenerPtr     gSpawnedListener;
 bool                       gHooked = false;
@@ -224,6 +225,21 @@ void rescale(Actor& actor, float scale, std::optional<Size> const& applied) {
 
 std::string canonical(ActorDefinitionIdentifier const& id) { return id.mCanonicalName->getString(); }
 
+std::string namespaced(std::string id) { return id.find(':') == std::string::npos ? "minecraft:" + id : id; }
+
+/// The record of the spawner at `pos` while that spawner still spawns the mob the record was made
+/// for. Changing a spawner's mob (a spawn egg, a command) replaces Java's whole SpawnData, its
+/// generic.scale attribute and custom spawn rules included: a record of another mob is dropped.
+std::optional<Json> recordFor(BlockSource& source, BlockPos const& pos, std::string const& entityId) {
+    auto record = blockentities::spawnerRecord(source, pos);
+    if (!record) return std::nullopt;
+    if (namespaced(record->value("entity", std::string{})) != namespaced(entityId)) {
+        blockentities::forgetSpawnerRecord(source, pos);
+        return std::nullopt;
+    }
+    return record;
+}
+
 bool inLightRange(Json const& range, int value) {
     if (!range.is_array() || range.size() != 2) return true;
     return value >= range[0].get<int>() && value <= range[1].get<int>();
@@ -232,6 +248,10 @@ bool inLightRange(Json const& range, int value) {
 } // namespace
 
 // ---- the actor-load hook ---------------------------------------------------------------------------
+// An engine hook outside F8's entity contract (rule R8: entity save / load is F8's; its
+// Behaviour{load} only reaches the entity types F8 registers): kept minimal (it only queues a
+// rescale for mobs carrying the kit's scale tag) and disclosed for A8 to fold into F8's load
+// dispatch once gf::entity has a generic on-load event.
 
 LL_TYPE_INSTANCE_HOOK(
     StructureScaledActorLoadHook,
@@ -269,6 +289,12 @@ bool applyScale(Actor& actor, float scale) {
     for (int i = 1; i < 5; i++) target.v[i] *= scale;
     setSize(actor, target);
     return true;
+}
+
+std::optional<float> dataScaleOf(Actor& mob) {
+    auto* data = boxData(mob);
+    if (!data) return std::nullopt;
+    return (*data)[0] > 0 ? (*data)[0] : 1.0f;
 }
 
 std::optional<float> scaleOf(Actor const& mob) {
@@ -322,6 +348,8 @@ std::optional<BlockPos> firingSpawner(BlockSource& source, Vec3 const& at, std::
 
 int vetoes() { return gVetoes; }
 
+void holdSizeChecks(bool held) { gHeld = held; }
+
 void tick() {
     auto level = ll::service::getLevel();
     if (!level) return;
@@ -354,7 +382,7 @@ void tick() {
             if (!queued) gPending.push_back(r);
         }
     }
-    if (++gTicks % kCheckInterval != 0 || gScaled.empty()) return;
+    if (++gTicks % kCheckInterval != 0 || gScaled.empty() || gHeld) return;
     // the game sets a mob's size from its definition when it grows up or its components reload:
     // the factor goes on top of the new size
     for (auto it = gScaled.begin(); it != gScaled.end();) {
@@ -385,9 +413,10 @@ void install() {
         gSpawningListener = bus.emplaceListener<ll::event::SpawningMobEvent>([](ll::event::SpawningMobEvent& ev) {
             if (!ev.fromSpawner()) return;
             auto& source  = ev.blockSource();
-            auto  spawner = firingSpawner(source, ev.pos(), canonical(ev.identifier()));
+            auto  mob     = canonical(ev.identifier());
+            auto  spawner = firingSpawner(source, ev.pos(), mob);
             if (!spawner) return;
-            auto record = blockentities::spawnerRecord(source, *spawner);
+            auto record = recordFor(source, *spawner, mob);
             if (!record || !record->contains("spawn_rules")) return;
             auto const& rules = (*record)["spawn_rules"];
             Vec3 const& at    = ev.pos();
@@ -403,9 +432,10 @@ void install() {
         gSpawnedListener = bus.emplaceListener<ll::event::SpawnedMobEvent>([](ll::event::SpawnedMobEvent& ev) {
             if (!ev.fromSpawner() || !ev.mob()) return;
             auto& source  = ev.blockSource();
-            auto  spawner = firingSpawner(source, ev.pos(), canonical(ev.identifier()));
+            auto  mob     = canonical(ev.identifier());
+            auto  spawner = firingSpawner(source, ev.pos(), mob);
             if (!spawner) return;
-            auto record = blockentities::spawnerRecord(source, *spawner);
+            auto record = recordFor(source, *spawner, mob);
             if (!record || !record->contains("scale")) return;
             scaleMob(*ev.mob(), (*record)["scale"].get<float>());
         });
@@ -417,6 +447,7 @@ void install() {
 }
 
 void clear() {
+    gHeld = false;
     gScaled.clear();
     std::lock_guard lock(gPendingMutex);
     gPending.clear();
@@ -432,6 +463,7 @@ void uninstall() {
         StructureScaledActorLoadHook::unhook();
         gHooked = false;
     }
+    gHeld = false;
     gScaled.clear();
     std::lock_guard lock(gPendingMutex);
     gPending.clear();

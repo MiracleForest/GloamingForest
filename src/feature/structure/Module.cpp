@@ -52,11 +52,13 @@ public:
             s::outlines::tick();
         });
         s::spawners::install();
+        s::blockentities::install();
     }
     void uninstall() {
         if (mTick) ll::event::EventBus::getInstance().removeListener(mTick);
         mTick.reset();
         s::spawners::uninstall();
+        s::blockentities::uninstall();
         s::outlines::shutdown();
         s::blockentities::save();
     }

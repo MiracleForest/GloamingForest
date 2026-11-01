@@ -8,9 +8,15 @@
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 Wait-LogLine 'structure kit: \d+ wood palettes, \d+ speleothem configs' 60 | Out-Null
 
+# the next structure.scale_probe leaves a scaled calf for the run after the restart (plain runs
+# leave nothing behind)
+$mark = Get-LogMark
+Send-Console 'twilightforest structure_util scale_probe'
+Wait-LogLine 'structure_util scale_probe armed' 30 -Since $mark | Out-Null
+
 $r = Invoke-SelfTest 'structure.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) structure selftest(s) failed" }
-if ($r.Pass -lt 23) { throw "expected at least 23 structure selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 26) { throw "expected at least 26 structure selftests to pass, got $($r.Pass)" }
 $probeWritten = Get-ServerLog | Select-String -Pattern 'scale probe written id=(-?\d+)' | Select-Object -Last 1
 if (-not $probeWritten) { throw 'structure.scale_probe did not leave its scaled mob for the restart' }
 
@@ -51,7 +57,9 @@ $verified = Get-ServerLog -Since $mark | Select-String -Pattern "pending probe v
 if (-not $verified) { throw "the probe job with nonce $nonce did not run after the reload (no 'verified' line)" }
 Write-Step 'the queued job survived the restart and ran when its chunk was loaded'
 
-# a mob scaled by a structure spawner (entity_width_max) keeps its size after it was saved and loaded
+# a mob scaled by a structure spawner (entity_width_max) keeps its size after it was saved and
+# loaded, and the kit puts the factor on the size the game sets from its definition afterwards
+# (the calf grows up)
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'structure.scale_probe'
 if ($r.Pass -ne 1) { throw 'structure.scale_probe did not pass after the restart' }

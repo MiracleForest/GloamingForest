@@ -201,9 +201,15 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
                   std::vector<std::pair<BlockPos, std::string>>* dataMarkers = nullptr, std::vector<Placed>* placedOut = nullptr);
 /// StructureTemplate.calculateRelativePosition(settings, pos) (rotation, mirror, pivot).
 [[nodiscard]] BlockPos relative(Placement const& placement, BlockPos const& local);
+/// The yaw StructureTemplate#placeEntities gives an entity facing `yaw` in the template:
+/// Entity#rotate(rotation) + Entity#mirror(mirror) - yaw.
+[[nodiscard]] float turnedYaw(float yaw, Rotation rotation, Mirror mirror);
+/// A template painting's facing after the placement: HangingEntity#rotate, then #mirror (which
+/// flips the turned direction when the mirror crosses its axis).
+[[nodiscard]] Orientation turnedPaintingFacing(Orientation facing, Rotation rotation, Mirror mirror);
 /// StructureTemplate#fillFromWorld with entities: the blocks of `box` (Bedrock ids and states) and
 /// its entities but players (paintings by the block they cover, facing and variant; the others
-/// by position and rotation) as a template document `id`. `skipped` counts the entities that
+/// by position, rotation and their saved actor data) as a template document `id`. `skipped` counts the entities that
 /// reach outside the box (left out). (Commands.cpp, /twilightforest structure_util capture.)
 [[nodiscard]] Json capture(BlockSource& source, BlockBox const& box, std::string const& id, int& skipped);
 
@@ -268,13 +274,23 @@ void container(Region& region, BlockPos const& pos, std::string const& blockId, 
                std::int64_t seed);
 /// Sets the loot table of an existing container at `pos` (custom containers: gf::inventory).
 void lootTable(Region& region, BlockPos const& pos, std::string const& tableId, std::int64_t seed);
-/// A mob spawner (vanilla mob_spawner) for `entityId` with optional spawner data (Delay,
-/// MinSpawnDelay, MaxSpawnDelay, SpawnCount, MaxNearbyEntities, RequiredPlayerRange, SpawnRange).
+/// Places a mob spawner (vanilla mob_spawner, TF's setSpawner / placeSpawner) for `entityId` with
+/// optional spawner data (Delay, MinSpawnDelay, MaxSpawnDelay, SpawnCount, MaxNearbyEntities,
+/// RequiredPlayerRange, SpawnRange; entity_scale and spawn_rules from spawner_processor).
 void spawner(Region& region, BlockPos const& pos, std::string const& entityId, Json const& data);
+/// A template's spawner block entity data for the block the template put at `pos` (the block
+/// stays, as StructureTemplate loads the data into that block's own block entity): a vanilla
+/// spawner is set up as spawner() does; any other block (TF's sinister spawner, whose block entity
+/// is F8's) keeps the data in its BlockData "structure"."spawner" record
+/// ({"entity", "data": {the BaseSpawner fields}, "scale"?, "spawn_rules"?}); air takes nothing.
+void spawnerData(Region& region, BlockPos const& pos, std::string const& entityId, Json const& data);
 /// Sign text (lines 0..3).
 void sign(Region& region, BlockPos const& pos, std::vector<std::string> const& lines);
-/// Spawns an entity at a world position (template entities); false when it could not (live
-/// regions) or when the id is empty. Paintings go through paintings::tryHang.
+/// Spawns a template entity at a world position (StructureTemplate#placeEntities); false when the
+/// id is empty. `data`: "Rotation" [yaw, pitch] (already turned by the placement) and "nbt" (a
+/// Bedrock actor tag in SNBT, as capture writes it: the entity is loaded from it with its position,
+/// rotation and identity replaced; without it a new entity of the type is spawned). Paintings go
+/// through paintings::tryHang.
 bool entity(Region& region, double x, double y, double z, std::string const& entityId, Json const& data);
 /// Hangs painting `motive` ("kebab") at `pos` (the block it covers) facing `direction` once the
 /// caller ran TF's spot check (true, as EntityUtil.tryHangPainting): at once in a live region, when
@@ -299,11 +315,14 @@ struct HungPainting {
 /// The placement position spawnPainting hands Bedrock for a painting covering `covered`.
 [[nodiscard]] BlockPos paintingPlacement(BlockPos const& covered, Orientation direction);
 /// UpdateMarkingProcessor / ProtoChunk#markPosForPostprocessing: the block at `pos` takes its shape
-/// from its neighbours once its chunk is loaded and the structure stands (a queued job, live
-/// regions included; nothing for scratch regions).
+/// from its neighbours once its chunk is loaded and the structure stands (queued in its chunk's
+/// list of marked positions, live regions included; nothing for scratch regions).
 void updateShape(Region& region, BlockPos const& pos);
-/// The spawner data F7 keeps for the spawner at `pos` ({"entity", "scale"?, "spawn_rules"?}).
+/// The spawner data F7 keeps for the spawner at `pos` ({"entity", "scale"?, "spawn_rules"?,
+/// "data"?}).
 [[nodiscard]] std::optional<Json> spawnerRecord(BlockSource& source, BlockPos const& pos);
+/// Drops that record (its spawner spawns another mob now: Java replaced the whole SpawnData).
+void forgetSpawnerRecord(BlockSource& source, BlockPos const& pos);
 /// A flower pot's plant (FlowerPotBlockActor PlantBlock).
 void flowerPot(Region& region, BlockPos const& pos, std::string const& plantId);
 /// Water in the liquid layer at `pos` of a generation region, put there once the chunk is loaded
@@ -318,14 +337,20 @@ struct LootRecord {
 };
 [[nodiscard]] std::optional<LootRecord> lootRecord(int dim, BlockPos const& pos);
 void                                    forgetLootRecord(int dim, BlockPos const& pos);
-/// Runs the deferred work whose chunks are loaded (server tick; every job of a chunk at once,
-/// chunks checked every few ticks).
+/// Runs the deferred work whose chunks are loaded (server tick; every job of a chunk at once, then
+/// its shape updates; chunks checked every few ticks).
 void flush();
+/// Queued jobs plus marked positions.
 [[nodiscard]] std::size_t pending();
 /// A selftest job (kind "gf_test_mark": writes `nonce` under gf:structure:test_mark when run).
 void queueTestMark(int dim, BlockPos const& pos, std::string const& nonce);
 void load();
 void save();
+/// The hook that gives the kit's paintings Java's survival check (HangingActor::$wouldSurvive).
+void install();
+void uninstall();
+/// HangingEntity#survives for the painting `actor` (the kit's check; nullopt: not a painting).
+[[nodiscard]] std::optional<bool> javaSurvives(Actor& actor);
 } // namespace blockentities
 
 // ---- spawners placed by structures (Spawners.cpp) ------------------------------------------------------
@@ -343,6 +368,8 @@ bool applyScale(Actor& actor, float scale);
 void scaleMob(Actor& mob, float scale);
 /// The generic.scale scaleMob gave `mob` (nullopt: none).
 [[nodiscard]] std::optional<float> scaleOf(Actor const& mob);
+/// The scale of the mob's bounding box data (what clients draw it at; 1 when unset).
+[[nodiscard]] std::optional<float> dataScaleOf(Actor& mob);
 /// Spawns the SpawningMobEvent veto (custom spawn rules) and SpawnedMobEvent scale listeners, the
 /// actor-load hook and the size checks run from tick().
 void install();
@@ -353,6 +380,8 @@ void tick();
 void clear();
 /// Spawns vetoed by custom spawn rules so far (selftests).
 [[nodiscard]] int vetoes();
+/// Holds the periodic size checks of scaled mobs (selftests measure the game's own size reset).
+void holdSizeChecks(bool held);
 } // namespace spawners
 
 // ---- liquids (Liquids.cpp) ---------------------------------------------------------------------------
@@ -398,7 +427,8 @@ struct Variant {
 void boundingBox(BlockPos const& pos, Orientation direction, Variant const& variant, double (&out)[6]);
 /// EntityUtil.tryHangPainting.
 bool tryHang(Region& region, BlockPos const& pos, Orientation direction, std::optional<Variant> const& variant);
-/// An entity (a painting so far, or any in a live world) overlaps the block at `pos`.
+/// EntityUtil.getEntitiesInAABB(new AABB(pos)) is not empty: a queued painting (the ProtoChunk
+/// entities TF reads; in a live world TF sees none) overlaps the block at `pos`.
 [[nodiscard]] bool occupied(Region& region, BlockPos const& pos);
 /// EntityUtil.getPaintingOfSize.
 [[nodiscard]] std::optional<Variant> ofSize(RandomSource& random, int width, int height, bool exactMeasurements);

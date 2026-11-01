@@ -10,28 +10,43 @@
 // Block entity work of structure placement (loot containers, drying racks, spawners, signs, flower
 // pots, paintings, entities, water in the liquid layer, shape updates) and the BlockSource-backed
 // region. During world generation the region is the generator's window without a BlockSource: the
-// work is queued per chunk with its dimension and position, persisted in the world DB
-// (gf:structure:pending) and done on the server thread once the chunk is loaded.
+// work is queued per chunk with its dimension and position, persisted in the world DB (one record
+// per chunk, gf:structure:pending:<dim>:<cx>:<cz>; shape updates as packed positions, as Java's
+// ProtoChunk post-processing lists) and done on the server thread once the chunk is loaded.
 #include "feature/structure/Region.h"
 
+#include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <cstdio>
 #include <deque>
 #include <mutex>
+#include <set>
 #include <shared_mutex>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 
+#include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/dataloadhelper/DataLoadHelper.h"
+#include "mc/dataloadhelper/DefaultDataLoadHelper.h"
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/deps/nbt/CompoundTag.h"
+#include "mc/deps/nbt/CompoundTagVariant.h"
+#include "mc/deps/nbt/ListTag.h"
+#include "mc/entity/components/ActorRotationComponent.h"
+#include "mc/world/actor/ActorCategory.h"
+#include "mc/world/actor/BuiltInActorComponents.h"
+#include "mc/world/actor/HangingActor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorFactory.h"
 #include "mc/world/actor/ActorType.h"
+#include "mc/world/actor/Mob.h"
 #include "mc/world/actor/Motif.h"
 #include "mc/world/actor/Painting.h"
 #include "mc/world/item/ItemStack.h"
@@ -49,6 +64,8 @@
 #include "mc/world/level/block/actor/MobSpawnerBlockActor.h"
 #include "mc/world/level/block/actor/SignBlockActor.h"
 #include "mc/world/level/block/actor/SignTextSide.h"
+#include "mc/world/level/dimension/Dimension.h"
+#include "mc/world/level/material/Material.h"
 #include "mc/world/level/storage/GameRuleId.h"
 #include "mc/world/level/storage/GameRules.h"
 #include "mc/world/phys/AABB.h"
@@ -171,9 +188,12 @@ namespace {
 
 namespace bd = ::gf::feature::common::blockdata;
 
-constexpr char kPendingKey[]  = "gf:structure:pending";
-constexpr char kTestMarkKey[] = "gf:structure:test_mark";
-/// BlockData key: {"loot": {table, seed}, "spawner": {entity, scale?, spawn_rules?}}
+/// One record per chunk with queued work: {"jobs": [{x, y, z, action}], "shape": [packed positions]}.
+constexpr char kPendingPrefix[] = "gf:structure:pending:";
+/// Older builds kept every job in one array under this key (read once, then erased).
+constexpr char kLegacyPendingKey[] = "gf:structure:pending";
+constexpr char kTestMarkKey[]      = "gf:structure:test_mark";
+/// BlockData key: {"loot": {table, seed}, "spawner": {entity, scale?, spawn_rules?, data?}}
 constexpr char kDataKey[]     = "structure";
 /// Chunks with queued work are checked this often (ticks); a chunk's jobs run together.
 constexpr int kFlushInterval = 5;
@@ -181,16 +201,43 @@ constexpr int kFlushInterval = 5;
 struct Job {
     int      dim = 0;
     BlockPos pos{0, 0, 0};
-    Json     action; ///< {"kind": "container" | "loot" | "spawner" | "sign" | "entity" | "painting" | "flower_pot" | "waterlog" | "rack" | "update_shape" | "gf_test_mark", ...}
+    Json     action; ///< {"kind": "container" | "loot" | "spawner" | "sign" | "entity" | "painting" | "flower_pot" | "waterlog" | "rack" | "gf_test_mark", ...}
 };
 using ChunkKey = std::tuple<int, int, int>; ///< dimension, chunk x, chunk z
-std::mutex                         gJobsMutex;
-std::map<ChunkKey, std::deque<Job>> gJobs;
-std::size_t                        gJobCount = 0;
-bool                               gDirty    = false;
-int                                gTicks    = 0;
+/// The queued work of one chunk: its jobs, and the positions marked for a shape update
+/// (ProtoChunk#markPosForPostprocessing) packed into one number each (local x, local z, y).
+struct ChunkWork {
+    std::deque<Job>                   jobs;
+    std::vector<std::uint32_t>        shapes;    ///< in the order they were marked
+    std::unordered_set<std::uint32_t> shapeSet;  ///< the same, for marking a position only once
+    [[nodiscard]] bool         empty() const { return jobs.empty() && shapes.empty(); }
+};
+std::mutex                    gJobsMutex;
+std::map<ChunkKey, ChunkWork> gWork;
+/// Chunks whose stored record no longer matches gWork (written or erased at the next save).
+std::set<ChunkKey>            gDirtyChunks;
+/// The legacy single-key record still exists (erased at the next save).
+bool                          gLegacyStored = false;
+int                           gTicks        = 0;
 
 ChunkKey chunkKey(int dim, BlockPos const& pos) { return {dim, core::chunkOf(pos.x), core::chunkOf(pos.z)}; }
+
+/// A marked position in its chunk: local x (4 bits), local z (4 bits), y + 2048 (12 bits).
+std::uint32_t packShape(BlockPos const& pos) {
+    return static_cast<std::uint32_t>(pos.x & 15) | (static_cast<std::uint32_t>(pos.z & 15) << 4) |
+           ((static_cast<std::uint32_t>(pos.y + 2048) & 0xfffu) << 8);
+}
+BlockPos unpackShape(ChunkKey const& key, std::uint32_t packed) {
+    return BlockPos{std::get<1>(key) * 16 + static_cast<int>(packed & 15u), static_cast<int>((packed >> 8) & 0xfffu) - 2048,
+                    std::get<2>(key) * 16 + static_cast<int>((packed >> 4) & 15u)};
+}
+/// The 16-block section of a packed position (LevelChunk#postProcessGeneration goes up section by section).
+std::uint32_t shapeSection(std::uint32_t packed) { return packed >> 12; }
+
+std::string pendingKey(ChunkKey const& key) {
+    return std::string(kPendingPrefix) + std::to_string(std::get<0>(key)) + ":" + std::to_string(std::get<1>(key)) + ":" +
+           std::to_string(std::get<2>(key));
+}
 
 // ---- queued paintings (the ProtoChunk entities TF's painting check sees) ----------------------------------
 
@@ -227,9 +274,18 @@ void unindexPainting(int dim, BlockPos const& pos, Json const& action) {
 
 void pushLocked(Job job) {
     auto key = chunkKey(job.dim, job.pos);
-    gJobs[key].push_back(std::move(job));
-    gJobCount++;
-    gDirty = true;
+    gWork[key].jobs.push_back(std::move(job));
+    gDirtyChunks.insert(key);
+}
+
+/// Marks `pos` for a shape update (once: marking a position again changes nothing).
+void pushShapeLocked(int dim, BlockPos const& pos) {
+    auto  key    = chunkKey(dim, pos);
+    auto& work   = gWork[key];
+    auto  packed = packShape(pos);
+    if (!work.shapeSet.insert(packed).second) return;
+    work.shapes.push_back(packed);
+    gDirtyChunks.insert(key);
 }
 
 /// Queues a painting job (its box indexed first, the job carrying the index id).
@@ -317,18 +373,125 @@ bool withPainting(BlockPos const& placement, Orientation direction, Motif const&
     return fn(painting, owner);
 }
 
+/// Paintings the kit hung carry this actor tag (saved with them): whether they stay is decided by
+/// Java's HangingEntity#survives, not by the game's own check (the hook below).
+std::string const kJavaPaintingTag = "gf_structure_painting";
+
+/// BlockState#isSolid (the legacy solid flag: a collision shape whose bounds average at least
+/// 0.7291666 or are a full block high), or a diode: what HangingEntity#survives accepts behind a
+/// painting.
+bool javaSupport(BlockSource& source, BlockPos const& pos) {
+    Block const& b    = source.getBlock(pos);
+    auto const&  name = b.getTypeName();
+    if (name == "minecraft:unpowered_repeater" || name == "minecraft:powered_repeater" || name == "minecraft:unpowered_comparator" ||
+        name == "minecraft:powered_comparator")
+        return true;
+    if (!blocks::blocksMotion(b)) return false;
+    AABB   shape = b.getBlockType().getCollisionShape(b, source, pos, nullptr);
+    double dx = shape.max.x - shape.min.x, dy = shape.max.y - shape.min.y, dz = shape.max.z - shape.min.z;
+    if (dx <= 0 || dy <= 0 || dz <= 0) return false;
+    return (dx + dy + dz) / 3.0 >= 0.7291666666666666 || dy >= 1.0;
+}
+
+/// HangingEntity#survives for a painting of `variant` covering `covered` and facing `direction`:
+/// no block that stops movement in its box (Level#noCollision), every block behind it solid or a
+/// diode (calculateSupportBox), and no other hanging entity in its box (`self` left out).
+bool javaSurvives(BlockSource& source, BlockPos const& covered, Orientation direction, paintings::Variant const& variant, Actor const* self) {
+    double box[6];
+    paintings::boundingBox(covered, direction, variant, box);
+    for (int x = pure::mthFloor(box[0]); x < pure::mthCeil(box[3]); x++)
+        for (int y = pure::mthFloor(box[1]); y < pure::mthCeil(box[4]); y++)
+            for (int z = pure::mthFloor(box[2]); z < pure::mthCeil(box[5]); z++) {
+                if (blocks::blocksMotion(source.getBlock(BlockPos{x, y, z}))) return false;
+                if (!javaSupport(source, BlockPos{x - stepX(direction), y, z - stepZ(direction)})) return false;
+            }
+    AABB range{Vec3{static_cast<float>(box[0]), static_cast<float>(box[1]), static_cast<float>(box[2])},
+               Vec3{static_cast<float>(box[3]), static_cast<float>(box[4]), static_cast<float>(box[5])}};
+    for (auto* other : source.getEntities(range, 0.0f, ActorType::Painting)) {
+        if (!other || other == self) continue;
+        AABB const& o = other->getAABB();
+        // AABB#intersects: strictly overlapping
+        if (range.min.x < o.max.x && range.max.x > o.min.x && range.min.y < o.max.y && range.max.y > o.min.y && range.min.z < o.max.z && range.max.z > o.min.z)
+            return false;
+    }
+    return true;
+}
+
+/// Refused paintings described so far this session (the log keeps the first few).
+int gRefusalReports = 0;
+
+std::string fmtPos(BlockPos const& p) { return std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z); }
+
+/// One log line when the game's own HangingActor::_wouldSurvive and Java's HangingEntity#survives
+/// disagree on a painting TF's spot check accepted (`java`: Java's verdict; the game's is the
+/// other): TF's box and the game's, and for every block the painting covers the block there and
+/// the wall block behind it with what the game's check reads of them, and the entities around.
+void reportRefusal(BlockSource& source, Painting& painting, BlockPos const& covered, BlockPos const& at, Orientation direction, Motif const& motif,
+                   bool java) {
+    if (gRefusalReports >= 64) return;
+    gRefusalReports++;
+    auto        variant = paintings::byId(variantOf(&motif));
+    std::string line    = std::string(java ? "structure: the game would refuse a painting Java keeps: " : "structure: Java refuses a painting the game would keep: ") +
+                       (variant ? variant->id : std::string("?")) + " covering " + fmtPos(covered) + " facing " + blocks::directionName(direction) +
+                       " (placed from " + fmtPos(at) + ")";
+    AABB const& b = painting.getAABB();
+    char        buf[160];
+    std::snprintf(buf, sizeof(buf), "; game box %.4f %.4f %.4f .. %.4f %.4f %.4f", b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z);
+    line += buf;
+    if (variant) {
+        double tf[6];
+        paintings::boundingBox(covered, direction, *variant, tf);
+        std::snprintf(buf, sizeof(buf), ", TF box %.4f %.4f %.4f .. %.4f %.4f %.4f", tf[0], tf[1], tf[2], tf[3], tf[4], tf[5]);
+        line += buf;
+        line += "; cells:";
+        for (int x = pure::mthFloor(tf[0]); x < pure::mthCeil(tf[3]); x++)
+            for (int y = pure::mthFloor(tf[1]); y < pure::mthCeil(tf[4]); y++)
+                for (int z = pure::mthFloor(tf[2]); z < pure::mthCeil(tf[5]); z++) {
+                    BlockPos     cell{x, y, z};
+                    BlockPos     wall{x - stepX(direction), y, z - stepZ(direction)};
+                    Block const& front = source.getBlock(cell);
+                    Block const& back  = source.getBlock(wall);
+                    Material const& m  = back.getMaterial();
+                    line += " [" + fmtPos(cell) + " " + front.getTypeName() + (painting._blockIsObstruction(source, cell) ? " obstruction" : "") +
+                            (painting._blockContainsObstruction(source, cell) ? " contains-obstruction" : "") + " | wall " + back.getTypeName() +
+                            (m.mSolid ? " solid" : " not-solid") + (m.mBlocksMotion ? " blocks-motion" : "") +
+                            (back.canProvideFullSupport(static_cast<uchar>(facingIndex(direction))) ? " full-face" : "") + "]";
+                }
+    }
+    int         hanging = 0;
+    std::string others;
+    AABB        range{Vec3{b.min.x - 0.01f, b.min.y - 0.01f, b.min.z - 0.01f}, Vec3{b.max.x + 0.01f, b.max.y + 0.01f, b.max.z + 0.01f}};
+    for (auto* other : source.getEntities(range, 0.0f)) {
+        if (!other || other == &painting) continue;
+        if (other->isType(ActorType::Painting)) hanging++;
+        else others += (others.empty() ? "" : ", ") + other->getTypeName();
+    }
+    line += "; paintings around " + std::to_string(hanging) + "; other entities around: " + (others.empty() ? std::string("none") : others);
+    line += "; wouldSurvive(not placing) " + std::string(painting._wouldSurvive(source, at, false) ? "yes" : "no");
+    log().info("{}", line);
+}
+
 /// Spawns a painting of `motif` hanging at `pos` (the block it covers) facing `direction` (Java
-/// 2D data value, which Bedrock's HangingActor direction shares). False when Bedrock's own survival
-/// check (wall behind, nothing in the way) refuses the spot.
+/// 2D data value, which Bedrock's HangingActor direction shares). TF adds the painting once its
+/// spot check passed and Java keeps it while HangingEntity#survives holds: the painting hangs when
+/// Java's check holds (the game's own check is not asked; it refuses spots Java keeps, see
+/// reportRefusal), and keeps Java's check for good (kJavaPaintingTag). False when Java's check
+/// fails (the caller drops the item, as TF's painting drops on its next check).
 bool spawnPainting(BlockSource& source, BlockPos const& pos, Orientation direction, Motif const& motif) {
-    BlockPos at = placementPosition(pos, direction);
+    BlockPos at      = placementPosition(pos, direction);
+    auto     variant = paintings::byId(variantOf(&motif));
+    if (!variant) return false;
     return withPainting(at, direction, motif, [&](Painting& painting, auto& owner) {
-        if (!painting._wouldSurvive(source, at, true)) return false;
+        bool java = javaSurvives(source, pos, direction, *variant, nullptr);
+        bool game = painting._wouldSurvive(source, at, true);
+        if (java != game) reportRefusal(source, painting, pos, at, direction, motif, java);
+        if (!java) return false;
         auto level = ll::service::getLevel();
         auto* added = level ? level->addEntity(source, std::move(owner)) : nullptr;
         if (!added) return false;
         auto& hung = static_cast<Painting&>(*added);
         if (hung.mMotif != &motif) hung.mMotif = &motif; // adding may re-run the definition's setup
+        (void)hung.addTag(kJavaPaintingTag);
         return true;
     });
 }
@@ -350,17 +513,65 @@ void dropPaintingItem(BlockSource& source, Json const& box) {
 
 // ---- running a job ------------------------------------------------------------------------------------
 
+/// The BaseSpawner fields a spawner's data may set (vanilla block entity names).
+constexpr char const* kSpawnerFields[] = {"Delay", "MinSpawnDelay", "MaxSpawnDelay", "SpawnCount", "MaxNearbyEntities", "RequiredPlayerRange", "SpawnRange"};
+
+/// What the kit keeps about a spawner in its BlockData ("structure"."spawner"): the mob, what
+/// Bedrock's spawner does not keep for the spawner events (Spawners.cpp: SpawnerProcessor
+/// entity_width_max, the generic.scale its spawn data gives the mob, and SpawnData's custom spawn
+/// rules, the light ranges BaseSpawner checks instead of the mob's spawn rules) and, for a spawner
+/// block the kit does not drive (`withFields`: TF's sinister spawner), the BaseSpawner fields of
+/// its data. Empty when there is nothing to keep.
+Json spawnerRecordOf(std::string const& entityId, Json const& data, bool withFields) {
+    Json record = Json::object();
+    // (a vanilla spawner without a mob keeps nothing; a spawner block of its own keeps its fields)
+    if (entityId.empty() && !withFields) return record;
+    if (data.contains("entity_scale") && data["entity_scale"].is_number()) {
+        float scale = data["entity_scale"].get<float>();
+        if (std::isfinite(scale) && scale > 0 && scale != 1.0f) record["scale"] = scale;
+    }
+    if (data.contains("spawn_rules") && data["spawn_rules"].is_object()) record["spawn_rules"] = data["spawn_rules"];
+    if (withFields) {
+        Json fields = Json::object();
+        for (char const* f : kSpawnerFields)
+            if (data.contains(f) && data[f].is_number_integer()) fields[f] = data[f];
+        if (!fields.empty() || !entityId.empty()) record["data"] = fields;
+    }
+    if (!record.empty() && !entityId.empty()) record["entity"] = entityId;
+    return record;
+}
+
+/// Replaces the spawner part of the BlockData at `pos` (nothing kept: removed).
+void storeSpawnerRecord(BlockSource& source, BlockPos const& pos, Json const& record) {
+    Json doc = Json::object();
+    if (auto const* old = bd::get(source, pos, kDataKey); old && old->is_object()) doc = *old;
+    doc.erase("spawner");
+    if (!record.empty()) doc["spawner"] = record;
+    bd::set(source, pos, kDataKey, doc.empty() ? Json() : doc);
+}
+
 bool runSpawner(BlockSource& source, BlockPos const& pos, Json const& action) {
-    auto entityId = action.value("entity", std::string{});
-    auto const& b = source.getBlock(pos);
+    auto        entityId = action.value("entity", std::string{});
+    auto const& data     = action.value("data", Json::object());
+    auto const& b        = source.getBlock(pos);
     if (b.getTypeName() != "minecraft:mob_spawner") {
+        // placeSpawner / setSpawner place the vanilla spawner (TF's setSpawner places
+        // Blocks.SPAWNER); a template's block entity data stays with the block the template put
+        // there (StructureTemplate loads it into that block's own block entity)
+        if (!action.value("place", true)) {
+            // nothing there (a processor dropped it): vanilla has no block entity to load the data into
+            if (b.isAir() || blocks::isLiquid(b)) return true;
+            // a spawner block of its own (TF's sinister spawner, SpawnerProcessor handles it like
+            // the vanilla one): the block stays, its block entity (F8) reads the spawner data here
+            storeSpawnerRecord(source, pos, spawnerRecordOf(entityId, data, true));
+            return true;
+        }
         if (auto const* sp = game::blockWith("minecraft:mob_spawner")) game::setBlock(source, pos, *sp);
     }
     auto* actor = source.getBlockEntity(pos);
     if (!actor || actor->getType() != BlockActorType::MobSpawner) return false; // the actor is created a tick later
     auto& spawnerActor = static_cast<MobSpawnerBlockActor&>(*actor);
     if (!entityId.empty()) spawnerActor.setMob(source, ActorDefinitionIdentifier(entityId), nullptr);
-    auto const& data = action.value("data", Json::object());
     if (BaseMobSpawner* spawner = spawnerActor.mSpawner.get()) {
         if (data.contains("Delay")) spawner->mSpawnDelay = data["Delay"].get<int>();
         if (data.contains("MinSpawnDelay")) spawner->mMinSpawnDelay = data["MinSpawnDelay"].get<int>();
@@ -370,24 +581,68 @@ bool runSpawner(BlockSource& source, BlockPos const& pos, Json const& action) {
         if (data.contains("RequiredPlayerRange")) spawner->mRequiredPlayerRange = data["RequiredPlayerRange"].get<int>();
         if (data.contains("SpawnRange")) spawner->mSpawnRange = data["SpawnRange"].get<int>();
     }
-    // what Bedrock's spawner does not keep, for the spawner events (Spawners.cpp): SpawnerProcessor
-    // entity_width_max (the generic.scale its spawn data gives the mob) and SpawnData's custom
-    // spawn rules (the light ranges BaseSpawner checks instead of the mob's spawn rules)
-    Json record = Json::object();
-    if (data.contains("entity_scale") && data["entity_scale"].is_number()) {
-        float scale = data["entity_scale"].get<float>();
-        if (std::isfinite(scale) && scale > 0 && scale != 1.0f) record["scale"] = scale;
-    }
-    if (data.contains("spawn_rules") && data["spawn_rules"].is_object()) record["spawn_rules"] = data["spawn_rules"];
-    Json doc = Json::object();
-    if (auto const* old = bd::get(source, pos, kDataKey); old && old->is_object()) doc = *old;
-    doc.erase("spawner");
-    if (!record.empty() && !entityId.empty()) {
-        record["entity"] = entityId;
-        doc["spawner"]   = record;
-    }
-    bd::set(source, pos, kDataKey, doc.empty() ? Json() : doc);
+    storeSpawnerRecord(source, pos, spawnerRecordOf(entityId, data, false));
     actor->refresh(source);
+    return true;
+}
+
+// ---- template entities ------------------------------------------------------------------------------
+
+/// The game's DefaultDataLoadHelper: it holds no data, only its vtable (the way Levitate v0.1.0's
+/// src/feature/schematics/World.cpp, LGPL-3.0-or-later, loads saved actors as they are).
+DataLoadHelper& defaultLoadHelper() {
+    static void** helper = DefaultDataLoadHelper::$vftable();
+    return *reinterpret_cast<DataLoadHelper*>(&helper);
+}
+
+/// Faces an actor `yaw` / `pitch` (degrees; a mob's body and head too).
+void applyRotation(Actor& actor, float yaw, float pitch) {
+    auto& rotation     = *actor.mBuiltInComponents->mActorRotationComponent;
+    rotation.mRot      = Vec2{pitch, yaw};
+    rotation.mRotPrev  = Vec2{pitch, yaw};
+    actor.setYHeadRotations(yaw, yaw);
+    if (actor.hasCategory(ActorCategory::Mob)) static_cast<Mob&>(actor).setYBodyRotations(yaw, yaw);
+}
+
+/// StructureTemplate#placeEntities for one entity: the entity from its saved data (data.nbt, a
+/// Bedrock actor tag in SNBT, as capture writes it: everything the actor saves, its position,
+/// rotation and identity replaced) or a new one of its type, at its turned position and facing
+/// data.Rotation (already turned by the placement).
+bool runEntity(BlockSource& source, Json const& action) {
+    auto id = action.value("id", std::string{});
+    if (id == "minecraft:painting") return true; // (a job queued by an older build: paintings have their own job)
+    auto level = ll::service::getLevel();
+    if (!level) return false;
+    double      x = action.value("x", 0.0), y = action.value("y", 0.0), z = action.value("z", 0.0);
+    Vec3        at{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)};
+    auto const& data = action.value("data", Json::object());
+    std::optional<std::pair<float, float>> rotation; // yaw, pitch
+    if (data.is_object() && data.contains("Rotation") && data["Rotation"].is_array() && data["Rotation"].size() == 2 && data["Rotation"][0].is_number() &&
+        data["Rotation"][1].is_number())
+        rotation = std::pair{data["Rotation"][0].get<float>(), data["Rotation"][1].get<float>()};
+    if (data.is_object() && data.contains("nbt") && data["nbt"].is_string()) {
+        auto parsed = CompoundTag::fromSnbt(data["nbt"].get<std::string>());
+        if (!parsed) {
+            warnOnce("entity-nbt:" + id, "structure: template entity " + id + " has unreadable nbt; spawned without its data");
+        } else {
+            CompoundTag& tag = *parsed;
+            if (!tag.contains("identifier")) tag["identifier"] = id;
+            tag["Pos"] = ListTag{at.x, at.y, at.z};
+            if (rotation) tag["Rotation"] = ListTag{rotation->first, rotation->second};
+            // a new entity: the game gives it its own id; riders and leashes of the original are not linked
+            for (char const* k : {"UniqueID", "LinksTag", "LeasherID"}) tag.erase(k);
+            auto owner = level->getActorFactory().loadActor(&tag, defaultLoadHelper(), source.getDimension().mHeightRange.get(), nullptr);
+            if (owner && level->addEntity(source, std::move(owner))) return true;
+            warnOnce("entity-load:" + id, "structure: could not load template entity " + id + " from its nbt; spawned without its data");
+        }
+    }
+    Actor* actor = spawn::spawnMob(source, id, at, spawn::SpawnReason::Structure);
+    if (!actor) actor = level->getSpawner().spawnMob(source, ActorDefinitionIdentifier(id), nullptr, at, false, false, false);
+    if (!actor) {
+        warnOnce("entity:" + id, "structure: could not spawn template entity " + id);
+        return true;
+    }
+    if (rotation) applyRotation(*actor, rotation->first, rotation->second);
     return true;
 }
 
@@ -495,7 +750,7 @@ bool run(BlockSource& source, BlockPos const& pos, Json const& action) {
         if (!spawnPainting(source, pos, dir, *motif)) dropPaintingItem(source, action.value("box", Json::array()));
         return true;
     }
-    if (kind == "update_shape") {
+    if (kind == "update_shape") { // (a job queued by an older build: shape updates are kept per chunk now)
         runUpdateShape(source, pos);
         return true;
     }
@@ -510,18 +765,7 @@ bool run(BlockSource& source, BlockPos const& pos, Json const& action) {
         game::db::put(kTestMarkKey, Json{{"nonce", action.value("nonce", std::string{})}, {"pos", {pos.x, pos.y, pos.z}}});
         return true;
     }
-    if (kind == "entity") {
-        auto id = action.value("id", std::string{});
-        if (id == "minecraft:painting") return true; // (a job queued by an older build: paintings have their own job)
-        double x = action.value("x", 0.0), y = action.value("y", 0.0), z = action.value("z", 0.0);
-        Vec3   at{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)};
-        if (spawn::spawnMob(source, id, at, spawn::SpawnReason::Structure)) return true;
-        auto level = ll::service::getLevel();
-        if (!level) return false;
-        auto* mob = level->getSpawner().spawnMob(source, ActorDefinitionIdentifier(id), nullptr, at, false, false, false);
-        if (!mob) warnOnce("entity:" + id, "structure: could not spawn template entity " + id);
-        return true;
-    }
+    if (kind == "entity") return runEntity(source, action);
     return true;
 }
 
@@ -567,7 +811,11 @@ void fillRack(Region& region, BlockPos const& pos, std::string const& tableId, s
 
 void spawner(Region& region, BlockPos const& pos, std::string const& entityId, Json const& data) {
     if (auto const* sp = blocks::fromJava("minecraft:spawner")) region.setBlock(pos, *sp, 2);
-    queue(region, pos, Json{{"kind", "spawner"}, {"entity", entityId}, {"data", data}});
+    queue(region, pos, Json{{"kind", "spawner"}, {"entity", entityId}, {"data", data}, {"place", true}});
+}
+
+void spawnerData(Region& region, BlockPos const& pos, std::string const& entityId, Json const& data) {
+    queue(region, pos, Json{{"kind", "spawner"}, {"entity", entityId}, {"data", data}, {"place", false}});
 }
 
 void sign(Region& region, BlockPos const& pos, std::vector<std::string> const& lines) {
@@ -615,6 +863,51 @@ bool painting(Region& region, BlockPos const& pos, Orientation direction, std::s
     return true;
 }
 
+// ---- structure paintings keep Java's survival check ------------------------------------------------
+// An engine hook outside the W0 contracts (no contract dispatches HangingActor's survival check;
+// disclosed for A8): the game checks a hanging actor's spot every few seconds and drops it when its
+// own rules refuse it. For the paintings the kit hung (kJavaPaintingTag) Java's
+// HangingEntity#survives decides instead, as in TF; every other painting keeps the game's rules.
+
+LL_TYPE_INSTANCE_HOOK(
+    StructurePaintingSurvivalHook,
+    ll::memory::HookPriority::Normal,
+    HangingActor,
+    &HangingActor::$wouldSurvive,
+    bool,
+    ::BlockSource& region
+) {
+    if (!isClientSide() && isType(ActorType::Painting) && hasTags() && hasTag(kJavaPaintingTag)) {
+        auto hung    = describePainting(*this);
+        auto variant = hung ? paintings::byId(hung->variant) : std::nullopt;
+        if (hung && variant) return javaSurvives(region, hung->block, hung->facing, *variant, this);
+    }
+    return origin(region);
+}
+
+namespace {
+bool gPaintingHooked = false;
+} // namespace
+
+std::optional<bool> javaSurvives(Actor& actor) {
+    auto hung    = describePainting(actor);
+    auto variant = hung ? paintings::byId(hung->variant) : std::nullopt;
+    if (!hung || !variant) return std::nullopt;
+    return javaSurvives(actor.getDimensionBlockSource(), hung->block, hung->facing, *variant, &actor);
+}
+
+void install() {
+    if (gPaintingHooked) return;
+    StructurePaintingSurvivalHook::hook();
+    gPaintingHooked = true;
+}
+
+void uninstall() {
+    if (!gPaintingHooked) return;
+    StructurePaintingSurvivalHook::unhook();
+    gPaintingHooked = false;
+}
+
 bool pendingPaintingIntersects(int dim, double const (&box)[6]) {
     std::shared_lock lock(gPaintingsMutex);
     if (gPendingPaintings.empty()) return false;
@@ -639,7 +932,7 @@ void updateShape(Region& region, BlockPos const& pos) {
     int dim = region.dimension();
     if (auto* source = sourceOf(region)) dim = static_cast<int>(source->getDimensionId());
     std::lock_guard lock(gJobsMutex);
-    pushLocked(Job{dim, pos, Json{{"kind", "update_shape"}}});
+    pushShapeLocked(dim, pos);
 }
 
 std::optional<HungPainting> describePainting(Actor& actor) {
@@ -698,37 +991,43 @@ std::optional<Json> spawnerRecord(BlockSource& source, BlockPos const& pos) {
     return (*d)["spawner"];
 }
 
+void forgetSpawnerRecord(BlockSource& source, BlockPos const& pos) {
+    if (spawnerRecord(source, pos)) storeSpawnerRecord(source, pos, Json::object());
+}
+
 void flush() {
     if (++gTicks % kFlushInterval != 0) return;
     // the chunks with work whose chunk is loaded now
-    std::vector<std::pair<ChunkKey, std::deque<Job>>> ready;
+    std::vector<std::pair<ChunkKey, ChunkWork>> ready;
     {
         std::lock_guard lock(gJobsMutex);
-        if (gJobs.empty()) return;
-        for (auto it = gJobs.begin(); it != gJobs.end();) {
+        if (gWork.empty()) return;
+        for (auto it = gWork.begin(); it != gWork.end();) {
             auto [dim, cx, cz] = it->first;
             auto* source       = game::regionOf(dim);
             if (!source || !source->hasChunksAt(BlockPos{cx * 16 + 8, source->getMinHeight(), cz * 16 + 8}, 0, false)) {
                 ++it;
                 continue;
             }
-            gJobCount -= it->second.size();
+            gDirtyChunks.insert(it->first);
             ready.emplace_back(it->first, std::move(it->second));
-            it = gJobs.erase(it);
+            it = gWork.erase(it);
         }
     }
     if (ready.empty()) return;
     std::vector<Job> keep;
-    bool             changed = false;
-    for (auto& [key, jobs] : ready) {
+    for (auto& [key, work] : ready) {
         auto* source = game::regionOf(std::get<0>(key));
-        for (auto& job : jobs) {
-            if (!source) {
-                keep.push_back(std::move(job));
-                continue;
-            }
+        if (!source) {
+            for (auto& job : work.jobs) keep.push_back(std::move(job));
+            std::lock_guard lock(gJobsMutex);
+            for (auto s : work.shapes) pushShapeLocked(std::get<0>(key), unpackShape(key, s));
+            continue;
+        }
+        // the block entities and entities of the chunk first (a LevelChunk is made of the
+        // ProtoChunk with them), then its post-processing (LevelChunk#postProcessGeneration)
+        for (auto& job : work.jobs) {
             if (run(*source, job.pos, job.action)) {
-                changed = true;
                 if (job.action.contains("pid")) unindexPainting(job.dim, job.pos, job.action);
                 continue;
             }
@@ -737,27 +1036,31 @@ void flush() {
                 job.action["tries"] = tries + 1;
                 keep.push_back(std::move(job));
             } else {
-                changed = true;
                 if (job.action.contains("pid")) unindexPainting(job.dim, job.pos, job.action);
                 warnOnce("job-dropped:" + job.action.value("kind", std::string{}),
                          "structure: gave up a queued " + job.action.value("kind", std::string{}) + " at " + std::to_string(job.pos.x) + " " +
                              std::to_string(job.pos.y) + " " + std::to_string(job.pos.z));
             }
         }
+        // section by section from the bottom, in the order the positions were marked
+        std::stable_sort(work.shapes.begin(), work.shapes.end(), [](std::uint32_t a, std::uint32_t b) { return shapeSection(a) < shapeSection(b); });
+        for (auto s : work.shapes) runUpdateShape(*source, unpackShape(key, s));
     }
+    if (keep.empty()) return;
     std::lock_guard lock(gJobsMutex);
     // retried jobs keep their order and their place before work queued meanwhile
     for (auto it = keep.rbegin(); it != keep.rend(); ++it) {
         auto key = chunkKey(it->dim, it->pos);
-        gJobs[key].push_front(std::move(*it));
-        gJobCount++;
+        gWork[key].jobs.push_front(std::move(*it));
+        gDirtyChunks.insert(key);
     }
-    if (changed || !keep.empty()) gDirty = true;
 }
 
 std::size_t pending() {
     std::lock_guard lock(gJobsMutex);
-    return gJobCount;
+    std::size_t     n = 0;
+    for (auto const& [key, work] : gWork) n += work.jobs.size() + work.shapes.size();
+    return n;
 }
 
 void queueTestMark(int dim, BlockPos const& pos, std::string const& nonce) {
@@ -765,37 +1068,99 @@ void queueTestMark(int dim, BlockPos const& pos, std::string const& nonce) {
     pushLocked(Job{dim, pos, Json{{"kind", "gf_test_mark"}, {"nonce", nonce}}});
 }
 
+namespace {
+
+/// Queues a stored job (a shape update of an older build goes to its chunk's list).
+void restoreLocked(Job job) {
+    job.action.erase("pid"); // index ids are per session
+    auto kind = job.action.value("kind", std::string{});
+    if (kind == "update_shape") {
+        pushShapeLocked(job.dim, job.pos);
+        return;
+    }
+    if (kind == "painting")
+        if (auto id = indexPainting(job.dim, job.pos, job.action.value("box", Json::array()))) job.action["pid"] = id;
+    pushLocked(std::move(job));
+}
+
+} // namespace
+
 void load() {
     {
         std::unique_lock lock(gPaintingsMutex);
         gPendingPaintings.clear();
     }
+    // the chunk records (collected first: nothing is read while the DB iterates)
+    std::vector<ChunkKey> keys;
+    game::db::forEachKey(kPendingPrefix, [&](std::string_view suffix) {
+        int dim = 0, cx = 0, cz = 0;
+        if (core::parseChunkSuffix(suffix, dim, cx, cz)) keys.emplace_back(dim, cx, cz);
+    });
+    std::vector<std::pair<ChunkKey, Json>> docs;
+    for (auto const& key : keys)
+        if (auto doc = game::db::get(pendingKey(key))) docs.emplace_back(key, std::move(*doc));
+    auto legacy = game::db::get(kLegacyPendingKey);
+
     std::lock_guard lock(gJobsMutex);
-    gJobs.clear();
-    gJobCount = 0;
-    if (auto doc = game::db::get(kPendingKey); doc && doc->is_array()) {
-        for (auto const& j : *doc) {
-            Job job{j.value("dim", 0), BlockPos{j.value("x", 0), j.value("y", 0), j.value("z", 0)}, j.value("action", Json::object())};
-            job.action.erase("pid"); // index ids are per session
-            if (job.action.value("kind", std::string{}) == "painting")
-                if (auto id = indexPainting(job.dim, job.pos, job.action.value("box", Json::array()))) job.action["pid"] = id;
-            pushLocked(std::move(job));
+    gWork.clear();
+    gDirtyChunks.clear();
+    gLegacyStored = false;
+    std::set<ChunkKey> stale; ///< stored records with nothing usable in them (erased at the next save)
+    for (auto const& [key, doc] : docs) {
+        if (doc.is_object()) {
+            for (auto const& j : doc.value("jobs", Json::array()))
+                restoreLocked(Job{std::get<0>(key), BlockPos{j.value("x", 0), j.value("y", 0), j.value("z", 0)}, j.value("action", Json::object())});
+            for (auto const& p : doc.value("shape", Json::array())) {
+                if (!p.is_number_unsigned()) continue;
+                auto& work = gWork[key];
+                if (work.shapeSet.insert(p.get<std::uint32_t>()).second) work.shapes.push_back(p.get<std::uint32_t>());
+            }
+        }
+        if (auto it = gWork.find(key); it == gWork.end() || it->second.empty()) {
+            if (it != gWork.end()) gWork.erase(it);
+            stale.insert(key);
         }
     }
-    gDirty = false;
+    // records just read are up to date; the single array of older builds moves into chunk records
+    gDirtyChunks = std::move(stale);
+    if (legacy) {
+        gLegacyStored = true;
+        if (legacy->is_array())
+            for (auto const& j : *legacy)
+                restoreLocked(Job{j.value("dim", 0), BlockPos{j.value("x", 0), j.value("y", 0), j.value("z", 0)}, j.value("action", Json::object())});
+    }
 }
 
 void save() {
-    Json doc = Json::array();
+    std::vector<std::pair<std::string, std::optional<Json>>> writes;
+    bool                                                     eraseLegacy = false;
     {
         std::lock_guard lock(gJobsMutex);
-        if (!gDirty) return;
-        for (auto const& [key, jobs] : gJobs)
-            for (auto const& j : jobs) doc.push_back(Json{{"dim", j.dim}, {"x", j.pos.x}, {"y", j.pos.y}, {"z", j.pos.z}, {"action", j.action}});
-        gDirty = false;
+        if (gDirtyChunks.empty() && !gLegacyStored) return;
+        // only the chunks whose work changed since the last save
+        for (auto const& key : gDirtyChunks) {
+            auto it = gWork.find(key);
+            if (it == gWork.end() || it->second.empty()) {
+                writes.emplace_back(pendingKey(key), std::nullopt);
+                continue;
+            }
+            Json jobs = Json::array();
+            for (auto const& j : it->second.jobs) {
+                Json action = j.action;
+                action.erase("pid");
+                jobs.push_back(Json{{"x", j.pos.x}, {"y", j.pos.y}, {"z", j.pos.z}, {"action", std::move(action)}});
+            }
+            writes.emplace_back(pendingKey(key), Json{{"jobs", std::move(jobs)}, {"shape", it->second.shapes}});
+        }
+        gDirtyChunks.clear();
+        eraseLegacy   = gLegacyStored;
+        gLegacyStored = false;
     }
-    if (doc.empty()) game::db::erase(kPendingKey);
-    else game::db::put(kPendingKey, doc);
+    for (auto const& [key, doc] : writes) {
+        if (doc) game::db::put(key, *doc);
+        else game::db::erase(key);
+    }
+    if (eraseLegacy) game::db::erase(kLegacyPendingKey);
 }
 
 } // namespace blockentities
