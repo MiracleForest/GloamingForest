@@ -497,7 +497,8 @@
       "texture_height": 64,
       "bones": 7,
       "cubes": 7,
-      "visible_bounds": [2, 3.5, 1]
+      "visible_bounds": [2, 3.5, 1],
+      "animation": "animation.twilightforest.loyal_zombie.base"
     },
     {
       "identifier": "geometry.slime",
@@ -954,7 +955,8 @@
       "texture_height": 32,
       "bones": 8,
       "cubes": 8,
-      "visible_bounds": [2, 3.5, 1]
+      "visible_bounds": [2, 3.5, 1],
+      "animation": "animation.twilightforest.wraith.base"
     },
     {
       "identifier": "geometry.twilightforest.yeti",
@@ -1848,6 +1850,12 @@
       "bones": ["leftLeg", "rightLeg"]
     },
     {
+      "identifier": "animation.twilightforest.loyal_zombie.base",
+      "file": "animations/loyal_zombie.base.json",
+      "unit": "artifacts",
+      "bones": ["leftArm", "rightArm"]
+    },
+    {
       "identifier": "animation.twilightforest.minoshroom.base",
       "file": "animations/minoshroom.base.json",
       "unit": "labyrinth",
@@ -1924,6 +1932,12 @@
       "file": "animations/upper_goblin_knight.base.json",
       "unit": "stronghold",
       "bones": ["hat", "head"]
+    },
+    {
+      "identifier": "animation.twilightforest.wraith.base",
+      "file": "animations/wraith.base.json",
+      "unit": "hostiles",
+      "bones": ["leftArm", "rightArm"]
     },
     {
       "identifier": "animation.twilightforest.yeti.base",

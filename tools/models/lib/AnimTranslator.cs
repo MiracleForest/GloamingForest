@@ -518,6 +518,16 @@ namespace Gf.Models
                 {
                     MNode known;
                     if (f.Target is NameExpr en && env.TryGetValue(en.Name + "." + f.Name, out known)) return known;
+                    // EntityModel's own state: attack progress, baby, riding
+                    if (f.Target is ThisExpr)
+                    {
+                        switch (f.Name)
+                        {
+                            case "attackTime": return new MAtom("variable.attack_time");
+                            case "young": return new MAtom("query.is_baby");
+                            case "riding": return new MAtom("query.is_riding");
+                        }
+                    }
                     if (f.Target is NameExpr cn && (cn.Name == "Mth" || cn.Name == "Math"))
                     {
                         try { var v = interp.Eval(f, new Frame(null)); return M.Num(Interp.ToDouble(v)); }
