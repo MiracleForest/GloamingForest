@@ -164,7 +164,7 @@
   "setupAnim": {
     "class": "UpperGoblinKnightModel",
     "identifier": "animation.twilightforest.upper_goblin_knight.base",
-    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "catalog baseCase: this.leftArmPose is ArmPose.EMPTY on every frame (TF's humanoid mobs keep HumanoidModel.ArmPose.EMPTY: no TF model or renderer sets an arm pose, HumanoidMobRenderer and HumanoidModel.prepareMobModel (1.21.1) do not either, and only the vanilla SkeletonModel / DrownedModel prepareMobModel would, for a bow / trident no TF mob drawn with them holds); the base animation uses that value at line 213 (no case entry)", "the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
     "translated": [
       "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;",
       "this.head.xRot = headPitch * Mth.DEG_TO_RAD;",
@@ -186,7 +186,7 @@
       "this.leftArm.xRot -= (Mth.PI / 5.0F);",
       "this.rightLeg.xRot = 0;",
       "this.leftLeg.xRot = 0;",
-      "this.leftArm.xRot = this.leftArm.xRot * 0.5F - (Mth.PI / 10.0F);",
+      "if (this.leftArmPose != ArmPose.EMPTY) {",
       "this.rightArm.xRot = this.rightArm.xRot * 0.5F - (Mth.PI / 10.0F);",
       "rightArm.xRot -= (Mth.PI * 0.66F);",
       "this.rightArm.yRot = 0.0F;",
@@ -199,7 +199,7 @@
       {
         "line": 179,
         "java": "boolean hasShield = entity.hasShield();",
-        "why": "the base animation counts entity.hasShield() as false",
+        "why": "the base animation counts entity.hasShield() as true (the UpperGoblinKnight constructor sets hasShield(true); breakShield() clears it)",
         "affects": ["leftArm.xRot", "shield.xRot"]
       },
       {
@@ -208,13 +208,6 @@
         "java": "if (entity.isShieldDisabled()) {",
         "why": "the base animation counts entity.isShieldDisabled() as false; so it runs the else branch and leaves out lines 192-193",
         "affects": ["leftArm.zRot"]
-      },
-      {
-        "line": 213,
-        "end_line": 214,
-        "java": "if (this.leftArmPose != ArmPose.EMPTY) {",
-        "why": "the base animation counts this.leftArmPose == ArmPose.EMPTY as false; so it runs the if branch",
-        "affects": ["leftArm.xRot", "shield.xRot"]
       },
       {
         "line": 222,

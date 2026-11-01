@@ -293,6 +293,17 @@ namespace Gf.Models
             { "right_hind_leg", "leg0" }, { "left_hind_leg", "leg1" }, { "right_front_leg", "leg2" }, { "left_front_leg", "leg3" },
         };
 
+        // The vanilla skeleton names a model gets at the root: only in the vanilla family whose Bedrock
+        // animations drive those bones (HumanoidModel and its subclasses: rightArm ...; QuadrupedModel and its
+        // subclasses: leg0..leg3). Elsewhere the Java names stay: a HierarchicalModel's right_leg may sit at +x
+        // (the hydra) and the Minoshroom's left_front_leg (a HumanoidModel) at -x, against the vanilla bones.
+        public static Dictionary<string, string> RenamesFor(string vanillaBase)
+        {
+            if (AnimTranslator.IsHumanoid(vanillaBase)) return HumanoidNames;
+            if (AnimTranslator.IsQuadruped(vanillaBase)) return QuadrupedNames;
+            return new Dictionary<string, string>();
+        }
+
         // The standard entity mapping: (x, 24 - y, z), scaled about the model origin and moved.
         public static Func<V3, V3> EntityMap(double scale, V3 offset, bool yOffset24)
         {

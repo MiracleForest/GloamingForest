@@ -106,8 +106,26 @@
   "setupAnim": {
     "class": "LichModel",
     "identifier": "animation.twilightforest.lich.base",
-    "notes": ["vanilla base HumanoidModel: super.setupAnim (line 109) runs the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg; the base animation adds to it. overrides_vanilla lists the bone axes Java sets with '=' after that call: they replace the vanilla pose, so the vanilla animations must not drive them (in the cases whose lines it gives)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
-    "translated": ["} else limbSwingAmount *= 0.75F;", "float ogSin = Mth.sin(this.attackTime * Mth.PI);", "float otherSin = Mth.sin((1.0F - (1.0F - this.attackTime) * (1.0F - this.attackTime)) * Mth.PI);", "this.leftArm.yRot = 0.1F - ogSin * 0.6F;", "this.leftArm.xRot = -3.141593F;", "this.leftArm.xRot -= ogSin * 1.2F - otherSin * 0.4F;", "this.leftArm.xRot -= Mth.sin(ageInTicks * 0.167F) * 0.15F;", "this.leftArm.xRot = 0.0F;", "this.leftArm.yRot = 0.0F;", "this.rightArm.zRot = 0.0F;", "this.rightArm.yRot = -(0.1F - ogSin * 0.6F);", "this.rightArm.xRot = -Mth.HALF_PI;", "this.rightArm.xRot -= ogSin * 1.2F - otherSin * 0.4F;", "this.rightArm.zRot += Mth.cos(ageInTicks * 0.26F) * 0.15F + 0.05F;", "this.rightArm.xRot += Mth.sin(ageInTicks * 0.167F) * 0.15F;"],
+    "notes": ["vanilla base HumanoidModel: super.setupAnim (line 109) runs the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg; the base animation adds to it. overrides_vanilla lists the bone axes Java sets with '=' after that call: they replace the vanilla pose, so the vanilla animations must not drive them (in the cases whose lines it gives)", "the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": [
+      "} else limbSwingAmount *= 0.75F;",
+      "float ogSin = Mth.sin(this.attackTime * Mth.PI);",
+      "float otherSin = Mth.sin((1.0F - (1.0F - this.attackTime) * (1.0F - this.attackTime)) * Mth.PI);",
+      "this.leftArm.zRot = 0.5F;",
+      "this.leftArm.yRot = 0.1F - ogSin * 0.6F;",
+      "this.leftArm.xRot = -3.141593F;",
+      "this.leftArm.xRot -= ogSin * 1.2F - otherSin * 0.4F;",
+      "this.leftArm.zRot -= Mth.cos(ageInTicks * 0.26F) * 0.15F + 0.05F;",
+      "this.leftArm.xRot -= Mth.sin(ageInTicks * 0.167F) * 0.15F;",
+      "this.leftArm.xRot = 0.0F;",
+      "this.leftArm.yRot = 0.0F;",
+      "this.rightArm.zRot = 0.0F;",
+      "this.rightArm.yRot = -(0.1F - ogSin * 0.6F);",
+      "this.rightArm.xRot = -Mth.HALF_PI;",
+      "this.rightArm.xRot -= ogSin * 1.2F - otherSin * 0.4F;",
+      "this.rightArm.zRot += Mth.cos(ageInTicks * 0.26F) * 0.15F + 0.05F;",
+      "this.rightArm.xRot += Mth.sin(ageInTicks * 0.167F) * 0.15F;"
+    ],
     "todo": [
       {
         "line": 101,
@@ -131,23 +149,13 @@
         "end_line": 150,
         "java": "if (entity.getPhase() != 3) {",
         "why": "the base animation counts entity.getPhase() == 3 as false; so it runs the if branch and leaves out lines 137-150",
-        "affects": ["leftArm.xRot", "leftArm.yRot", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
+        "affects": ["leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
       },
       {
         "line": 114,
         "java": "if (entity.tickCount > 0 && !entity.isDeadOrDying()) {",
-        "why": "the base animation counts entity.isDeadOrDying() as false",
-        "affects": ["leftArm.xRot", "leftArm.yRot"]
-      },
-      {
-        "line": 115,
-        "java": "this.leftArm.zRot = 0.5F;",
-        "why": "its effect is not in the base animation: leftArm.zRot: the vanilla pose is kept on one branch of line 114 only"
-      },
-      {
-        "line": 119,
-        "java": "this.leftArm.zRot -= Mth.cos(ageInTicks * 0.26F) * 0.15F + 0.05F;",
-        "why": "its effect is not in the base animation: leftArm.zRot: the vanilla pose is kept on one branch of line 114 only"
+        "why": "the base animation counts entity.isDeadOrDying() as false; leftArm.zRot: the base animation takes the if branch, which sets it (query.life_time * 20 > 0 holds on every frame after the first); the else branch keeps the vanilla pose there",
+        "affects": ["leftArm.xRot", "leftArm.yRot", "leftArm.zRot"]
       },
       {
         "line": 126,

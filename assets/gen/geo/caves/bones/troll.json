@@ -93,10 +93,8 @@
   "setupAnim": {
     "class": "TrollModel",
     "identifier": "animation.twilightforest.troll.base",
-    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "catalog baseCase: this.leftArmPose is ArmPose.EMPTY on every frame (TF's humanoid mobs keep HumanoidModel.ArmPose.EMPTY: no TF model or renderer sets an arm pose, HumanoidMobRenderer and HumanoidModel.prepareMobModel (1.21.1) do not either, and only the vanilla SkeletonModel / DrownedModel prepareMobModel would, for a bow / trident no TF mob drawn with them holds); the base animation uses that value at line 129 (no case entry)", "catalog baseCase: this.rightArmPose is ArmPose.EMPTY on every frame (TF's humanoid mobs keep HumanoidModel.ArmPose.EMPTY: no TF model or renderer sets an arm pose, HumanoidMobRenderer and HumanoidModel.prepareMobModel (1.21.1) do not either, and only the vanilla SkeletonModel / DrownedModel prepareMobModel would, for a bow / trident no TF mob drawn with them holds); the base animation uses that value at line 132 (no case entry)", "the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
     "translated": [
-      "this.rightArm.xRot += Mth.PI;",
-      "this.leftArm.xRot += Mth.PI;",
       "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;",
       "this.head.xRot = headPitch * Mth.DEG_TO_RAD;",
       "this.hat.yRot = this.head.yRot;",
@@ -109,8 +107,8 @@
       "this.leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * limbSwingAmount * 0.5F;",
       "this.rightArm.zRot = 0.0F;",
       "this.leftArm.zRot = 0.0F;",
-      "this.rightArm.xRot += Mth.PI;",
-      "this.leftArm.xRot += Mth.PI;",
+      "if (this.leftArmPose != ArmPose.EMPTY) {",
+      "if (this.rightArmPose != ArmPose.EMPTY) {",
       "if (this.attackTime > 0F) {",
       "float swing = 1.0F - this.attackTime;",
       "this.rightArm.xRot -= (Mth.PI * swing);",
@@ -124,7 +122,7 @@
         "line": 153,
         "end_line": 155,
         "java": "if (entity.getTarget() != null) {",
-        "why": "the base animation counts entity.getTarget() == null as false; so it runs the if branch",
+        "why": "the base animation counts entity.getTarget() as null (the troll has no attack target while it walks or stands); so it runs neither branch and leaves out lines 153-155",
         "affects": []
       },
       {
@@ -133,20 +131,6 @@
         "java": "if (entity.isVehicle()) {",
         "why": "the base animation counts entity.isVehicle() as false; so it runs the else branch and leaves out lines 118-121",
         "affects": ["leftArm.xRot", "rightArm.xRot"]
-      },
-      {
-        "line": 129,
-        "end_line": 130,
-        "java": "if (this.leftArmPose != ArmPose.EMPTY) {",
-        "why": "the base animation counts this.leftArmPose == ArmPose.EMPTY as false; so it runs the if branch",
-        "affects": ["rightArm.xRot"]
-      },
-      {
-        "line": 132,
-        "end_line": 133,
-        "java": "if (this.rightArmPose != ArmPose.EMPTY) {",
-        "why": "the base animation counts this.rightArmPose == ArmPose.EMPTY as false; so it runs the if branch",
-        "affects": ["leftArm.xRot"]
       },
       {
         "line": 146,

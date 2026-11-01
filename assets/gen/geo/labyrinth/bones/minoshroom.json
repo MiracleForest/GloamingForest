@@ -190,7 +190,7 @@
   "setupAnim": {
     "class": "MinoshroomModel",
     "identifier": "animation.twilightforest.minoshroom.base",
-    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "catalog baseCase: this.leftArmPose.isTwoHanded() is false on every frame (ArmPose.EMPTY is not two-handed (TF's humanoid mobs keep ArmPose.EMPTY)); the base animation uses that value at line 224 (no case entry)", "catalog baseCase: this.leftArmPose is ArmPose.EMPTY on every frame (TF's humanoid mobs keep HumanoidModel.ArmPose.EMPTY: no TF model or renderer sets an arm pose, HumanoidMobRenderer and HumanoidModel.prepareMobModel (1.21.1) do not either, and only the vanilla SkeletonModel / DrownedModel prepareMobModel would, for a bow / trident no TF mob drawn with them holds); the base animation uses that value at lines 226, 238 (no case entry)", "catalog baseCase: this.rightArmPose is ArmPose.EMPTY on every frame (TF's humanoid mobs keep HumanoidModel.ArmPose.EMPTY: no TF model or renderer sets an arm pose, HumanoidMobRenderer and HumanoidModel.prepareMobModel (1.21.1) do not either, and only the vanilla SkeletonModel / DrownedModel prepareMobModel would, for a bow / trident no TF mob drawn with them holds); the base animation uses that value at lines 227, 234 (no case entry)", "catalog baseCase: JappaPackReloadListener.INSTANCE.isJappaPackLoaded() is false on every frame (the Jappa models belong to an optional resource pack TF does not ship; not ported (docs/spec/README.md)); the base animation uses that value at line 254 (no case entry)", "the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
     "translated": [
       "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;",
       "this.head.xRot = headPitch * Mth.DEG_TO_RAD;",
@@ -206,20 +206,41 @@
       "this.leftLeg.yRot = 0.0F;",
       "this.rightArm.yRot = 0.0F;",
       "this.leftArm.yRot = 0.0F;",
+      "boolean flag4 = flag2 ? this.leftArmPose.isTwoHanded() : this.rightArmPose.isTwoHanded();",
+      "this.poseLeftArm(entity);",
+      "this.poseRightArm(entity);",
+      "if (this.rightArmPose != HumanoidModel.ArmPose.SPYGLASS) {",
       "AnimationUtils.bobModelPart(this.rightArm, ageInTicks, 1.0F);",
+      "if (this.leftArmPose != HumanoidModel.ArmPose.SPYGLASS) {",
       "AnimationUtils.bobModelPart(this.leftArm, ageInTicks, -1.0F);",
       "this.cowTorso.xRot = Mth.HALF_PI;",
       "this.leftFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;",
       "this.rightFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;",
       "this.leftBackLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;",
       "this.rightBackLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;",
-      "float f = ageInTicks - entity.tickCount;"
+      "float f = ageInTicks - entity.tickCount;",
+      "f1 = f1 * f1;",
+      "boolean jappa = JappaPackReloadListener.INSTANCE.isJappaPackLoaded();",
+      "this.leftFrontLeg.y = 12.0F + ((jappa ? -7.0F : -5.0F) * f1);",
+      "this.leftFrontLeg.z = -4.0F + f1;",
+      "this.rightFrontLeg.y = this.leftFrontLeg.y;",
+      "this.rightFrontLeg.z = this.leftFrontLeg.z;",
+      "this.head.y = (jappa ? -4.0F : -6.0F) + -3.0F * f1;",
+      "this.head.z = -9.0F + 6.0F * f1;",
+      "this.body.y = (jappa ? -4.0F : -6.0F) + -3.0F * f1;",
+      "this.body.z = (jappa ? -11.0F : -9.0F) + 6.0F * f1;",
+      "this.cowTorso.y = (jappa ? 10.0F : 5.0F) + f1;",
+      "this.cowTorso.z = (jappa ? 6.0F : 2.0F) + ((jappa ? 1.0F : 4.0F) * f1);",
+      "this.rightArm.y = (jappa ? -6.0F : -4.0F) - (3.0F * f1);",
+      "this.rightArm.z = -9.0F + (6.0F * f1);",
+      "this.leftArm.y = this.rightArm.y;",
+      "this.leftArm.z = this.rightArm.z;"
     ],
     "todo": [
       {
         "line": 215,
         "java": "boolean flag2 = entity.getMainArm() == HumanoidArm.RIGHT;",
-        "why": "the base animation counts entity.getMainArm() == HumanoidArm.RIGHT as false",
+        "why": "the base animation counts entity.getMainArm() as HumanoidArm.RIGHT (Mob.finalizeSpawn makes 5% of mobs left-handed; the others use the right arm)",
         "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
       },
       {
@@ -230,135 +251,45 @@
         "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
       },
       {
-        "line": 224,
-        "java": "boolean flag4 = flag2 ? this.leftArmPose.isTwoHanded() : this.rightArmPose.isTwoHanded();",
-        "why": "the base animation counts flag2 ? this.leftArmPose.isTwoHanded() : this.rightArmPose.isTwoHanded() as false",
-        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
-      },
-      {
         "line": 225,
         "end_line": 230,
         "java": "if (flag2 != flag4) {",
-        "why": "the condition is constant on the base path (it uses values of the cases at lines 215, 224); so it runs the else branch and leaves out lines 225-227",
+        "why": "the condition is constant on the base path (it uses values of the cases at lines 215); so it runs the if branch and leaves out lines 228-230",
         "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
-      },
-      {
-        "line": 229,
-        "java": "this.poseRightArm(entity);",
-        "why": "the base animation counts this.rightArmPose != ArmPose.EMPTY (with EMPTY the vanilla HumanoidModel.poseRightArm sets rightArm.yRot = 0) as false",
-        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
-      },
-      {
-        "line": 230,
-        "java": "this.poseLeftArm(entity);",
-        "why": "the base animation counts this.leftArmPose != ArmPose.EMPTY (with EMPTY the vanilla HumanoidModel.poseLeftArm sets leftArm.yRot = 0) as false",
-        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
-      },
-      {
-        "line": 234,
-        "end_line": 235,
-        "java": "if (this.rightArmPose != HumanoidModel.ArmPose.SPYGLASS) {",
-        "why": "the base animation counts this.rightArmPose == HumanoidModel.ArmPose.SPYGLASS as false; so it runs the if branch",
-        "affects": ["rightArm.x", "rightArm.xRot", "rightArm.yRot", "rightArm.zRot"]
-      },
-      {
-        "line": 238,
-        "end_line": 239,
-        "java": "if (this.leftArmPose != HumanoidModel.ArmPose.SPYGLASS) {",
-        "why": "the base animation counts this.leftArmPose == HumanoidModel.ArmPose.SPYGLASS as false; so it runs the if branch",
-        "affects": ["leftArm.x", "leftArm.xRot", "leftArm.yRot", "leftArm.zRot"]
       },
       {
         "line": 251,
         "java": "float f1 = entity.getChargeAnimationScale(f);",
-        "why": "local 'f1': call entity.getChargeAnimationScale()"
-      },
-      {
-        "line": 252,
-        "java": "f1 = f1 * f1;",
-        "why": "local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 254,
-        "java": "boolean jappa = JappaPackReloadListener.INSTANCE.isJappaPackLoaded();",
-        "why": "the base animation counts JappaPackReloadListener.INSTANCE.isJappaPackLoaded() as false",
-        "affects": []
-      },
-      {
-        "line": 256,
-        "java": "this.leftFrontLeg.y = 12.0F + ((jappa ? -7.0F : -5.0F) * f1);",
-        "why": "leg3.y (line 256) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 257,
-        "java": "this.leftFrontLeg.z = -4.0F + f1;",
-        "why": "leg3.z (line 257) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 258,
-        "java": "this.rightFrontLeg.y = this.leftFrontLeg.y;",
-        "why": "leg2.y (line 258) is not translated: leg3.y is not translated (line 256)"
-      },
-      {
-        "line": 259,
-        "java": "this.rightFrontLeg.z = this.leftFrontLeg.z;",
-        "why": "leg2.z (line 259) is not translated: leg3.z is not translated (line 257)"
-      },
-      {
-        "line": 260,
-        "java": "this.head.y = (jappa ? -4.0F : -6.0F) + -3.0F * f1;",
-        "why": "head.y (line 260) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 261,
-        "java": "this.head.z = -9.0F + 6.0F * f1;",
-        "why": "head.z (line 261) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 262,
-        "java": "this.body.y = (jappa ? -4.0F : -6.0F) + -3.0F * f1;",
-        "why": "body.y (line 262) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 263,
-        "java": "this.body.z = (jappa ? -11.0F : -9.0F) + 6.0F * f1;",
-        "why": "body.z (line 263) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 264,
-        "java": "this.cowTorso.y = (jappa ? 10.0F : 5.0F) + f1;",
-        "why": "cow_torso.y (line 264) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 265,
-        "java": "this.cowTorso.z = (jappa ? 6.0F : 2.0F) + ((jappa ? 1.0F : 4.0F) * f1);",
-        "why": "cow_torso.z (line 265) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 266,
-        "java": "this.rightArm.y = (jappa ? -6.0F : -4.0F) - (3.0F * f1);",
-        "why": "rightArm.y (line 266) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 267,
-        "java": "this.rightArm.z = -9.0F + (6.0F * f1);",
-        "why": "rightArm.z (line 267) is not translated: local 'f1' (line 252) is not translated: local 'f1' (line 251) is not translated"
-      },
-      {
-        "line": 268,
-        "java": "this.leftArm.y = this.rightArm.y;",
-        "why": "leftArm.y (line 268) is not translated: rightArm.y is not translated (line 266)"
-      },
-      {
-        "line": 269,
-        "java": "this.leftArm.z = this.rightArm.z;",
-        "why": "leftArm.z (line 269) is not translated: rightArm.z is not translated (line 267)"
+        "why": "the base animation counts entity.getChargeAnimationScale(f) as 0 (Minoshroom.getChargeAnimationScale is 0 outside the ground slam charge)",
+        "affects": [
+          "body.y",
+          "body.z",
+          "cow_torso.xRot",
+          "cow_torso.y",
+          "cow_torso.z",
+          "head.y",
+          "head.z",
+          "leftArm.xRot",
+          "leftArm.y",
+          "leftArm.z",
+          "leftArm.zRot",
+          "leg2.xRot",
+          "leg2.y",
+          "leg2.z",
+          "leg3.xRot",
+          "leg3.y",
+          "leg3.z",
+          "rightArm.xRot",
+          "rightArm.y",
+          "rightArm.z",
+          "rightArm.zRot"
+        ]
       },
       {
         "line": 271,
         "end_line": 283,
         "java": "if (f1 > 0) {",
-        "why": "the base animation counts f1 > 0 as false; so it runs neither branch and leaves out lines 271-283",
+        "why": "the condition is constant on the base path (it uses values of the cases at lines 251); so it runs neither branch and leaves out lines 271-283",
         "affects": ["cow_torso.xRot", "leftArm.xRot", "leftArm.zRot", "leg2.xRot", "leg3.xRot", "rightArm.xRot", "rightArm.zRot"]
       }
     ]

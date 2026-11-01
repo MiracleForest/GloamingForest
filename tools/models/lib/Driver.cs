@@ -67,7 +67,44 @@ namespace Gf.Models
                 Path.Combine(src, "generated", "resources", "assets", "twilightforest", "models", "item"),
                 Path.Combine(src, "main", "resources", "assets", "twilightforest", "models", "item"),
             };
+            BaseCases = ParseBaseCases(Prop(cat, "baseCase"), Errors);
         }
+
+        // catalog.json "baseCase": {"values": [{scope, expr, value, fixed?, why}]} (see BaseCaseValue).
+        public readonly List<BaseCaseValue> BaseCases;
+
+        public static List<BaseCaseValue> ParseBaseCases(JsonElement section, List<string> errors)
+        {
+            var list = new List<BaseCaseValue>();
+            var values = Prop(section, "values");
+            if (values.ValueKind != JsonValueKind.Array) return list;
+            int k = 0;
+            foreach (var v in values.EnumerateArray())
+            {
+                k++;
+                var b = new BaseCaseValue { Scope = Str(v, "scope"), Expr = Str(v, "expr"), Fixed = Bool(v, "fixed"), Why = Str(v, "why") };
+                var val = Prop(v, "value");
+                switch (val.ValueKind)
+                {
+                    case JsonValueKind.String: b.Value = val.GetString(); break;
+                    case JsonValueKind.Number: b.Value = val.GetDouble(); break;
+                    case JsonValueKind.True: b.Value = true; break;
+                    case JsonValueKind.False: b.Value = false; break;
+                    case JsonValueKind.Null: b.Value = "null"; break;
+                }
+                if (b.Scope == null || b.Expr == null || b.Value == null || string.IsNullOrEmpty(b.Why))
+                {
+                    errors.Add("catalog baseCase entry " + k + ": scope, expr, value and why are required");
+                    continue;
+                }
+                if (list.Any(x => x.Scope == b.Scope && x.Expr == b.Expr)) { errors.Add("catalog baseCase entry " + k + ": " + b.Scope + " / " + b.Expr + " is listed twice"); continue; }
+                list.Add(b);
+            }
+            return list;
+        }
+
+        // A setupAnim translator with the catalog's base-case values.
+        public AnimTranslator NewTranslator() { return new AnimTranslator(ClassPath, Interp) { BaseCases = BaseCases }; }
 
         static string Str(JsonElement e, string key, string def = null)
         {
@@ -244,6 +281,7 @@ namespace Gf.Models
             string kind = Str(spec, "kind", "entity");
             string id = geoPrefix + name;
             var opt = new ConvertOptions { Identifier = id };
+            string animClass = Str(spec, "animClass") ?? info.SupplierClass;
             foreach (var kv in Converter.HumanoidNames) opt.Rename[kv.Key] = kv.Value;
             foreach (var kv in Converter.QuadrupedNames) opt.Rename[kv.Key] = kv.Value;
             var def = info.Def;
@@ -253,7 +291,6 @@ namespace Gf.Models
                 // the Bedrock texture the layer is drawn with has another size (UVs stay in pixels)
                 def = new LayerDef { Mesh = def.Mesh, TexWidth = size[0].GetInt32(), TexHeight = size[1].GetInt32() };
             }
-            string animClass = Str(spec, "animClass") ?? info.SupplierClass;
             var items = StrList(spec, "item");
             cur = new Origin { Info = info, Unit = unit, AnimClass = Str(spec, "animClass"), Item = items.Count > 0 ? items[0] : null };
             var geo = Converter.Convert(def, opt);
@@ -270,7 +307,7 @@ namespace Gf.Models
                 {
                     var ac = ClassPath.Find(animClass, null);
                     if (ac == null) Errors.Add("layer '" + name + "': animClass " + animClass + " not found");
-                    else anim = new AnimTranslator(ClassPath, Interp).Translate(ac, geo);
+                    else anim = NewTranslator().Translate(ac, geo);
                 }
                 if (anim == null)
                 {

@@ -8,15 +8,13 @@
           "rotation": ["query.target_x_rotation", "query.target_y_rotation", "((query.target_y_rotation > 5) ? -0.261799 : 0) * 57.2958"]
         },
         "leftLeg": {
-          "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141", 0, 0],
-          "position": [0, 1, 0]
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141", 0, 0]
         },
         "left_wing": {
           "rotation": [0, 0, "query.life_time * (-1145.9156)"]
         },
         "rightLeg": {
-          "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141", 0, 0],
-          "position": [0, 1, 0]
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141", 0, 0]
         },
         "right_wing": {
           "rotation": [0, 0, "query.life_time * 1145.9156"]

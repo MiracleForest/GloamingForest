@@ -281,19 +281,13 @@
   "setupAnim": {
     "class": "QuestRamModel",
     "identifier": "animation.twilightforest.quest_ram.base",
-    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
-    "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.neck.yRot = this.head.yRot;", "this.leftFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount * 0.5F;", "this.rightFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount * 0.5F;", "this.leftBackLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount * 0.5F;", "this.rightBackLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount * 0.5F;"],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "catalog baseCase: JappaPackReloadListener.INSTANCE.isJappaPackLoaded() is false on every frame (the Jappa models belong to an optional resource pack TF does not ship; not ported (docs/spec/README.md)); the base animation uses that value at lines 300, 315 (no case entry)"],
+    "translated": ["boolean jappa = JappaPackReloadListener.INSTANCE.isJappaPackLoaded();", "this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "if (!JappaPackReloadListener.INSTANCE.isJappaPackLoaded()) {", "this.neck.yRot = this.head.yRot;", "this.leftFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount * 0.5F;", "this.rightFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount * 0.5F;", "this.leftBackLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount * 0.5F;", "this.rightBackLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount * 0.5F;"],
     "todo": [
       {
         "line": 314,
         "java": "int count = entity.countColorsSet();",
         "why": "local 'count': call entity.countColorsSet()"
-      },
-      {
-        "line": 315,
-        "java": "boolean jappa = JappaPackReloadListener.INSTANCE.isJappaPackLoaded();",
-        "why": "the base animation counts JappaPackReloadListener.INSTANCE.isJappaPackLoaded() as false",
-        "affects": []
       },
       {
         "line": 317,
@@ -344,13 +338,6 @@
         "line": 328,
         "java": "for (int color : this.colorOrder) {",
         "why": "inside a loop (not translated)"
-      },
-      {
-        "line": 300,
-        "end_line": 301,
-        "java": "if (!JappaPackReloadListener.INSTANCE.isJappaPackLoaded()) {",
-        "why": "the base animation counts JappaPackReloadListener.INSTANCE.isJappaPackLoaded() as false; so it runs the if branch",
-        "affects": ["neck.yRot"]
       }
     ]
   }

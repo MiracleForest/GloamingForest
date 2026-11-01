@@ -211,7 +211,7 @@
   "setupAnim": {
     "class": "HelmetCrabModel",
     "identifier": "animation.twilightforest.helmet_crab.base",
-    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "catalog baseCase: JappaPackReloadListener.INSTANCE.isJappaPackLoaded() is false on every frame (the Jappa models belong to an optional resource pack TF does not ship; not ported (docs/spec/README.md)); the base animation uses that value at line 260 (no case entry)", "the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
     "translated": [
       "this.root().getAllParts().forEach(ModelPart::resetPose);",
       "this.crab.zRot = 0.0F;",
@@ -242,6 +242,7 @@
       "this.leftLeg1.zRot -= f14;",
       "this.rightLeg2.zRot += f15;",
       "this.leftLeg2.zRot -= f15;",
+      "if (JappaPackReloadListener.INSTANCE.isJappaPackLoaded()) {",
       "this.rightClaw.yRot = -1.319531F;",
       "this.rightClaw.yRot += Mth.cos(limbSwing * 0.6662F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F;",
       "this.leftClaw.zRot = f6;",
@@ -266,13 +267,6 @@
         "java": "if (entity.deathTime > 0) {",
         "why": "the base animation counts entity.deathTime > 0 as false; so it runs the else branch and leaves out lines 287-295",
         "affects": ["crab.zRot"]
-      },
-      {
-        "line": 260,
-        "end_line": 271,
-        "java": "if (JappaPackReloadListener.INSTANCE.isJappaPackLoaded()) {",
-        "why": "the base animation counts JappaPackReloadListener.INSTANCE.isJappaPackLoaded() as false; so it runs the else branch and leaves out lines 260-264",
-        "affects": ["left_claw.yRot", "left_claw.zRot", "right_claw.yRot"]
       }
     ]
   }

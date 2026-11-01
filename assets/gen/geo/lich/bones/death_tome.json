@@ -146,7 +146,7 @@
   "setupAnim": {
     "class": "DeathTomeModel",
     "identifier": "animation.twilightforest.death_tome.base",
-    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
     "translated": [
       "float bounce = onLectern ? 0.0F : entity.tickCount + partialTicks;",
       "float open = onLectern ? 1.2F : 0.9f;",

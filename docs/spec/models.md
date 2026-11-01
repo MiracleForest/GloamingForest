@@ -137,28 +137,57 @@ the cases it depends on:
 
 - A condition that translates (`this.young`, `this.riding`, `limbSwingAmount > 0.2`, `this.attackTime > 0`)
   runs both branches and merges what they set with Molang `?:`.
-- A condition that does not translate (entity state: `entity.isTired()`, `this.leftArmPose != ...`) counts as
-  **false**; for `a != b` the `a == b` counts as false (so the `!=` holds), and for `!x` the `x` counts as false.
-  The base animation runs the branch that follows and is correct for that case. The condition becomes a **case
-  entry** in `todo` ("the base animation counts X as false, so it runs ... and leaves out lines a-b") whose
-  `affects` lists every channel that differs when X holds: what either branch changes, and every later value
-  computed from it. A boolean local of entity state (`boolean flag = e.isAggressive()`) and a ternary on one
-  work the same way (LoyalZombieModel's arms: `-PI / 2.25`, `-80` degrees, the not aggressive case). Two vanilla
-  helpers are cases too: `HumanoidModel.poseRightArm` / `poseLeftArm` with `ArmPose.EMPTY` (`yRot = 0`) and
-  `getArm(arm)` as the right arm.
+- A condition that does not translate (entity state: `entity.isTired()`) counts as **false**; for `a != b` the
+  `a == b` counts as false (so the `!=` holds), and for `!x` the `x` counts as false. The base animation runs the
+  branch that follows and is correct for that case. The condition becomes a **case entry** in `todo` ("the base
+  animation counts X as false, so it runs ... and leaves out lines a-b") whose `affects` lists every channel that
+  differs when X holds: what either branch changes, and every later value computed from it. A boolean local of
+  entity state (`boolean flag = e.isAggressive()`) and a ternary on one work the same way (LoyalZombieModel's
+  arms: `-PI / 2.25`, `-80` degrees, the not aggressive case).
+- **Base-case values** (catalog `baseCase`). Where "false" is not the state TF's mobs are in, the catalog gives
+  the value: `{scope, expr, value, fixed?, why}` with `scope` a class of the model's chain (`HumanoidModel` /
+  `QuadrupedModel` cover their vanilla families, `*` every model), `expr` the Java expression (`entity` for the
+  entity parameter, `this.` for the model's fields and methods, `(*)` for any arguments), `value` a number,
+  boolean, enum constant (`HumanoidArm.RIGHT`) or `null`. Enum constants and `null` only take part in `==` / `!=`
+  (folded against a base-case value of the same type), never in Molang. A **fixed** value is one TF never
+  changes: `this.leftArmPose` / `this.rightArmPose` are `ArmPose.EMPTY` (TF's humanoid mobs never get an arm
+  pose: no TF model or renderer sets one, `HumanoidMobRenderer` and `HumanoidModel.prepareMobModel` of 1.21.1
+  do not either) and `isTwoHanded()` of them false, `JappaPackReloadListener.isJappaPackLoaded()` false; a
+  comparison with it folds to a constant, leaves no case entry, and the bone map notes the value and the
+  lines. So TrollModel's `if (this.leftArmPose != ArmPose.EMPTY) rightArm.xRot += PI` never runs (the troll's
+  arms swing at its sides) and UpperGoblinKnightModel's `leftArm.xRot * 0.5 - PI / 10` neither; the vanilla
+  `poseRightArm` / `poseLeftArm` set `yRot = 0`. Any other value is the common state and its statements are
+  case entries ("counts entity.hasShield() as true (the UpperGoblinKnight constructor ...)"): the main and
+  attack arm `HumanoidArm.RIGHT` (95% of mobs; `getArm(arm)` follows it), the troll's target `null`, the lower
+  goblin knight ridden and armored, the upper one with its shield, the birds landed, the Minoshroom's charge
+  scale 0. Without an entry, `getArm(arm)` is the right arm and `poseRightArm` / `poseLeftArm` assume EMPTY, as
+  cases. The `models` test fails on an entry no model uses.
+- A branch that **returns early** is never the base path's (whatever the condition counted as false): `if
+  (!entity.isAlive()) return;` runs on, as "counts !entity.isAlive() as false (the if branch returns early)";
+  the case's `affects` also lists everything the rest of the method sets. A branch that may return in a nested
+  condition is a case the same way.
+- An **assignment inside an expression** (a condition, an initializer, a value, an argument: `if ((head.yRot =
+  ageInTicks) > 2)`, `x = y++`) that always runs and whose target the expression does not read elsewhere runs
+  first, like a statement, and the expression reads its result; one behind `&&` / `||` / `?:` or in a lambda
+  makes what it changes unknown. `a = b = v` assigns both. A call inside an expression that changes parts (a
+  TF method, a part method) makes what it changes unknown.
 - A value that does not translate (`float f2 = e.getArmAngle()`, a field, a call) makes the property
   **unknown** from that line on: a later compound assignment (`+=` ...) or read of it stays in `todo` ("previous
   value at line N not translated") and gets no channel, and the statements whose effect it replaced leave
-  `translated` ("its effect is not in the base animation: ..."). A loop, a switch, an assignment inside an
-  expression (`a = b = v`, `for (a = ...; ...; b += ...)`), a call on a part or one the translator does not know
-  makes everything it may change unknown the same way (a part it cannot resolve counts as one of its
-  candidates: an array element or an unresolved `this.<field>` any part no field names, `getArm(...)` either
-  arm, an unknown local or lambda parameter any part).
+  `translated` ("its effect is not in the base animation: ..."). A loop, a switch (`for (a = ...; ...; b += ...)`
+  included), a call on a part or one the translator does not know makes everything it may change unknown the
+  same way (a part it cannot resolve counts as one of its candidates: an array element or an unresolved
+  `this.<field>` any part no field names, `getArm(...)` either arm, an unknown local or lambda parameter any
+  part).
 - After a vanilla `super.setupAnim` (HumanoidModel and its subclasses, QuadrupedModel and its subclasses) the
   vanilla parts hold "the vanilla pose plus a delta": `+=` / `-=` add to the delta (emitted on top of the vanilla
   Bedrock animations), `=` replaces the vanilla pose and is listed in `overrides_vanilla` (bone, property, lines:
   the vanilla animations must not drive those bone axes, in the cases those lines belong to), and `*=` or a
   read of the vanilla value stays untranslated, as does a copy of it onto a bone no vanilla animation drives.
+  Where one branch of a translated condition sets an axis and the other keeps the vanilla pose (which a Molang
+  `?:` cannot pick), the base animation takes the branch that sets it and the condition becomes a case for the
+  other: LichModel's `if (entity.tickCount > 0 && ...)` holds on every frame after the first, so its raised left
+  arm keeps `leftArm.zRot = 0.5 - (cos(age * 0.26) * 0.15 + 0.05)` (in `overrides_vanilla`).
   Arguments the model changed before the call (LichModel: `limbSwingAmount * 0.75`) are named in the call's
   todo entry, since the vanilla Bedrock animations read the unchanged queries. A model whose setupAnim does not call `super.setupAnim` gets a
   note that no vanilla animation may play on these bones; one without its own setupAnim gets the vanilla
@@ -392,8 +421,10 @@ extracts), 45 attachables. The Curios charm of life necklace (`CuriosCompat`) is
   conversion against Bedrock's vanilla pig geometry, per-face UV and mirror, unique bone names, euler
   round trips, setupAnim → Molang (the position channel signs; the base path: unknown values and the compound
   assignments after them, statements that leave `translated`, cases and their `affects`, loops and nested
-  assignments, vanilla deltas and `overrides_vanilla`, `copyFrom` of an unset source, the hat's position; the
-  real Loyal Zombie, Alpha Yeti and Yeti outputs), the catalog's LGPL attribution, `-Java` matching whole class
+  assignments, assignments inside conditions, early returns, base-case values (the TrollModel pattern) and
+  every catalog entry in use, vanilla deltas and `overrides_vanilla`, a branch that keeps the vanilla pose (the
+  LichModel pattern), `copyFrom` of an unset source, the hat's position; the real Loyal Zombie, Alpha Yeti,
+  Yeti, Troll, goblin knight and Lich outputs), the catalog's LGPL attribution, `-Java` matching whole class
   names (YetiModel is not AlphaYetiModel), the three hard models (Hydra, Naga
   segment, Snow Queen) against values worked out by hand from TF's code, the item display transforms (the Alpha
   Yeti's and Ur-Ghast's own head displays, the left-hand fallback and mirror), the per-slot attachables, the

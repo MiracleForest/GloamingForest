@@ -92,28 +92,28 @@
   "setupAnim": {
     "class": "LowerGoblinKnightModel",
     "identifier": "animation.twilightforest.lower_goblin_knight.base",
-    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
-    "translated": ["this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.hat.yRot = this.head.yRot;", "this.hat.xRot = this.head.xRot;", "this.rightArm.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F;", "this.leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * limbSwingAmount * 0.5F;", "this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightLeg.yRot = 0.0F;", "this.leftLeg.yRot = 0.0F;", "AnimationUtils.bobArms(this.rightArm, this.leftArm, ageInTicks);"],
+    "notes": ["setupAnim replaces HumanoidModel.setupAnim (no super call): play no vanilla animation on these bones (the base class would play the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg)", "the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": ["this.head.yRot = 0;", "this.head.xRot = 0;", "this.hat.yRot = this.head.yRot;", "this.hat.xRot = this.head.xRot;", "this.rightArm.xRot = 0.0F;", "this.leftArm.xRot = 0.0F;", "this.rightArm.zRot = 0.0F;", "this.leftArm.zRot = 0.0F;", "this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightLeg.yRot = 0.0F;", "this.leftLeg.yRot = 0.0F;"],
     "todo": [
       {
         "line": 125,
         "end_line": 130,
         "java": "if (entity.isVehicle()) {",
-        "why": "the base animation counts entity.isVehicle() as false; so it runs the else branch and leaves out lines 125-127",
+        "why": "the base animation counts entity.isVehicle() as true (LowerGoblinKnight.finalizeSpawn puts an upper goblin knight on it); so it runs the if branch and leaves out lines 128-130",
         "affects": ["hat.xRot", "hat.yRot", "head.xRot", "head.yRot"]
       },
       {
         "line": 134,
         "end_line": 139,
         "java": "if (!entity.hasArmor() && !entity.isVehicle()) {",
-        "why": "the base animation counts entity.hasArmor(), entity.isVehicle() as false; so it runs the if branch and leaves out lines 137-139",
+        "why": "the base animation counts entity.hasArmor() as true (the LowerGoblinKnight constructor sets hasArmor(true); breakArmor() clears it), entity.isVehicle() as true (LowerGoblinKnight.finalizeSpawn puts an upper goblin knight on it); so it runs the else branch and leaves out lines 134-136",
         "affects": ["leftArm.xRot", "rightArm.xRot"]
       },
       {
         "line": 148,
         "end_line": 149,
         "java": "if (!entity.hasArmor() && !entity.isVehicle()) {",
-        "why": "the base animation counts entity.hasArmor(), entity.isVehicle() as false; so it runs the if branch",
+        "why": "the base animation counts entity.hasArmor() as true (the LowerGoblinKnight constructor sets hasArmor(true); breakArmor() clears it), entity.isVehicle() as true (LowerGoblinKnight.finalizeSpawn puts an upper goblin knight on it); so it runs neither branch and leaves out lines 148-149",
         "affects": ["leftArm.x", "leftArm.xRot", "leftArm.y", "leftArm.yRot", "leftArm.z", "leftArm.zRot", "rightArm.x", "rightArm.xRot", "rightArm.y", "rightArm.yRot", "rightArm.z", "rightArm.zRot"]
       },
       {

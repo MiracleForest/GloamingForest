@@ -2391,7 +2391,7 @@
       "identifier": "animation.twilightforest.lower_goblin_knight.base",
       "file": "animations/lower_goblin_knight.base.json",
       "unit": "stronghold",
-      "bones": ["hat", "head", "leftArm", "leftLeg", "rightArm", "rightLeg"]
+      "bones": ["leftLeg", "rightLeg"]
     },
     {
       "identifier": "animation.twilightforest.loyal_zombie.base",

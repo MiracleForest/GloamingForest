@@ -20,10 +20,12 @@
           "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141", 0, 0]
         },
         "leg2": {
-          "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141", 0, 0]
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141", 0, 0],
+          "position": [0, 0, 1]
         },
         "leg3": {
-          "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141", 0, 0]
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141", 0, 0],
+          "position": [0, 0, 1]
         },
         "rightArm": {
           "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 57.2958 + math.sin(query.life_time * 76.7763) * 2.8648", 0, "math.cos(query.life_time * 103.1324) * 2.8648 + 2.8648"]

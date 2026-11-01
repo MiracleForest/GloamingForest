@@ -18,11 +18,52 @@
     "  src/main/java/twilightforest/item/MysticCrownItem.java",
     "  src/main/java/twilightforest/item/travellers_gear/TravellersArmorItem.java",
     "Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.",
-    "Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE)."
+    "Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).",
+    "The 'baseCase' values restate what TF's entity code sets (same copyright and licence):",
+    "  src/main/java/twilightforest/entity/monster/LowerGoblinKnight.java",
+    "  src/main/java/twilightforest/entity/monster/UpperGoblinKnight.java",
+    "  src/main/java/twilightforest/entity/passive/FlyingBird.java",
+    "  src/main/java/twilightforest/entity/boss/Minoshroom.java"
   ],
   "texturePrefix": "textures/twilightforest/",
   "geometryPrefix": "geometry.twilightforest.",
   "animationPrefix": "animation.twilightforest.",
+
+  "baseCase": {
+    "comment": "The value entity or model state has on the base path of setupAnim -> Molang (docs/spec/models.md): the state TF's mobs are in most of the time, instead of 'a condition that does not translate counts as false'. scope: a class of the model's chain (a TF model class, its vanilla base, 'HumanoidModel' / 'QuadrupedModel' for those families) or '*'; expr: the Java expression ('entity' = the entity parameter, 'this.' = a field or method of the model, '(*)' = any arguments); value: a number, true / false, an enum constant ('Type.NAME') or null; fixed: TF never changes it (comparisons fold to a constant and leave no case entry; the bone map notes the value); otherwise the statements that use it are case entries whose 'affects' names the channels that differ in the other states; why: the TF code it comes from.",
+    "values": [
+      { "scope": "*", "expr": "JappaPackReloadListener.INSTANCE.isJappaPackLoaded()", "value": false, "fixed": true,
+        "why": "the Jappa models belong to an optional resource pack TF does not ship; not ported (docs/spec/README.md)" },
+      { "scope": "HumanoidModel", "expr": "this.leftArmPose", "value": "ArmPose.EMPTY", "fixed": true,
+        "why": "TF's humanoid mobs keep HumanoidModel.ArmPose.EMPTY: no TF model or renderer sets an arm pose, HumanoidMobRenderer and HumanoidModel.prepareMobModel (1.21.1) do not either, and only the vanilla SkeletonModel / DrownedModel prepareMobModel would, for a bow / trident no TF mob drawn with them holds" },
+      { "scope": "HumanoidModel", "expr": "this.rightArmPose", "value": "ArmPose.EMPTY", "fixed": true,
+        "why": "TF's humanoid mobs keep HumanoidModel.ArmPose.EMPTY: no TF model or renderer sets an arm pose, HumanoidMobRenderer and HumanoidModel.prepareMobModel (1.21.1) do not either, and only the vanilla SkeletonModel / DrownedModel prepareMobModel would, for a bow / trident no TF mob drawn with them holds" },
+      { "scope": "HumanoidModel", "expr": "this.leftArmPose.isTwoHanded()", "value": false, "fixed": true,
+        "why": "ArmPose.EMPTY is not two-handed (TF's humanoid mobs keep ArmPose.EMPTY)" },
+      { "scope": "HumanoidModel", "expr": "this.rightArmPose.isTwoHanded()", "value": false, "fixed": true,
+        "why": "ArmPose.EMPTY is not two-handed (TF's humanoid mobs keep ArmPose.EMPTY)" },
+      { "scope": "*", "expr": "entity.getMainArm()", "value": "HumanoidArm.RIGHT",
+        "why": "Mob.finalizeSpawn makes 5% of mobs left-handed; the others use the right arm" },
+      { "scope": "HumanoidModel", "expr": "this.getAttackArm(entity)", "value": "HumanoidArm.RIGHT",
+        "why": "HumanoidModel.getAttackArm is the main arm (right on 95% of mobs) while the mob swings its main hand, as TF's mobs do when they attack" },
+      { "scope": "TrollModel", "expr": "entity.getTarget()", "value": null,
+        "why": "the troll has no attack target while it walks or stands" },
+      { "scope": "LowerGoblinKnightModel", "expr": "entity.isVehicle()", "value": true,
+        "why": "LowerGoblinKnight.finalizeSpawn puts an upper goblin knight on it" },
+      { "scope": "LowerGoblinKnightModel", "expr": "entity.hasArmor()", "value": true,
+        "why": "the LowerGoblinKnight constructor sets hasArmor(true); breakArmor() clears it" },
+      { "scope": "UpperGoblinKnightModel", "expr": "entity.hasShield()", "value": true,
+        "why": "the UpperGoblinKnight constructor sets hasShield(true); breakShield() clears it" },
+      { "scope": "UpperGoblinKnightModel", "expr": "entity.hasArmor()", "value": true,
+        "why": "the UpperGoblinKnight constructor sets hasArmor(true); breakArmor() clears it" },
+      { "scope": "RavenModel", "expr": "entity.isBirdLanded()", "value": true,
+        "why": "FlyingBird starts landed (its constructor) and lands again soon after it takes off (customServerAiStep)" },
+      { "scope": "TinyBirdModel", "expr": "entity.isBirdLanded()", "value": true,
+        "why": "FlyingBird starts landed (its constructor) and lands again soon after it takes off (customServerAiStep)" },
+      { "scope": "MinoshroomModel", "expr": "entity.getChargeAnimationScale(*)", "value": 0,
+        "why": "Minoshroom.getChargeAnimationScale is 0 outside the ground slam charge" }
+    ]
+  },
 
   "layers": {
     "adherent": { "unit": "finalcastle", "entity": "twilightforest:adherent", "textures": ["entity/adherent.png"] },

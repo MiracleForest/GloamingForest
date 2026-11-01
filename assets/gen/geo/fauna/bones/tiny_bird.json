@@ -108,14 +108,14 @@
   "setupAnim": {
     "class": "TinyBirdModel",
     "identifier": "animation.twilightforest.tiny_bird.base",
-    "notes": ["vanilla base AgeableListModel: nothing (AgeableListModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
-    "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.rightFoot.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftFoot.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightWing.zRot = ageInTicks;", "this.leftWing.zRot = -ageInTicks;", "this.rightFoot.y = 22.5F;", "this.leftFoot.y = 22.5F;"],
+    "notes": ["vanilla base AgeableListModel: nothing (AgeableListModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "translated": ["this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.rightFoot.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;", "this.leftFoot.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;", "this.rightWing.zRot = ageInTicks;", "this.leftWing.zRot = -ageInTicks;", "this.rightFoot.y = 23.0F;", "this.leftFoot.y = 23.0F;"],
     "todo": [
       {
         "line": 178,
         "end_line": 183,
         "java": "if (entity.isBirdLanded()) {",
-        "why": "the base animation counts entity.isBirdLanded() as false; so it runs the else branch and leaves out lines 178-180",
+        "why": "the base animation counts entity.isBirdLanded() as true (FlyingBird starts landed (its constructor) and lands again soon after it takes off (customServerAiStep)); so it runs the if branch and leaves out lines 181-183",
         "affects": ["left_foot.y", "right_foot.y"]
       }
     ]

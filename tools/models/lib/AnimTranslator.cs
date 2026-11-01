@@ -14,13 +14,18 @@
 //
 // The base path. Every value is followed with the statements it carries and the cases it depends on.
 // A condition that translates becomes a Molang ?: over both branches; one that does not (entity
-// state) counts as false (a negated one as true): the base animation runs that branch, and the
-// condition is a "case" entry of the todo list naming the channels that differ when it holds. A
-// value that does not translate (or a loop / unknown call that may change it) is unknown from then
-// on: a later compound assignment or read of it stays in todo too, and statements whose effect it
-// replaced leave the translated list. After a vanilla super.setupAnim the vanilla parts hold "the
-// vanilla pose plus a delta": += / -= add to the delta, '=' replaces the vanilla pose (listed in
-// OverridesVanilla), reads and *= of the vanilla value stay untranslated.
+// state) counts as false (a negated one as true), unless catalog.json's baseCase gives the state's
+// value in TF's common state (or a value TF never changes, which folds to a constant): the base
+// animation runs that branch, and the condition is a "case" entry of the todo list naming the
+// channels that differ when it holds. A branch that returns early is never the base path's: the
+// other one is, and what the rest of the method sets differs in that case. An assignment inside an
+// expression runs before it when it always runs (else what it changes is unknown). A value that does
+// not translate (or a loop / unknown call that may change it) is unknown from then on: a later
+// compound assignment or read of it stays in todo too, and statements whose effect it replaced leave
+// the translated list. After a vanilla super.setupAnim the vanilla parts hold "the vanilla pose plus
+// a delta": += / -= add to the delta, '=' replaces the vanilla pose (listed in OverridesVanilla), reads
+// and *= of the vanilla value stay untranslated; where one branch of a Molang condition sets an axis
+// and the other keeps the vanilla pose, the base animation takes the one that sets it (a case).
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -240,6 +245,55 @@ namespace Gf.Models
         public override string Emit() { return "!" + EmitIn(X, 3); }
     }
 
+    // A value that is not a number: an enum constant ("ArmPose.EMPTY", "HumanoidArm.RIGHT") or null. It only
+    // takes part in == / != against another one and never reaches Molang (Tr refuses it in arithmetic and
+    // bone values). Known: the value of a base-case entry (catalog.json baseCase), whose type is known.
+    public sealed class MSym : MNode
+    {
+        public string Name;
+        public bool Known;
+        public override int Prec { get { return 3; } }
+        public override string Emit() { return Name; }
+        public string Qualifier { get { int dot = Name.LastIndexOf('.'); return dot < 0 ? "" : Name.Substring(0, dot); } }
+        public static bool Has(MNode n)
+        {
+            switch (n)
+            {
+                case MSym _: return true;
+                case MCall c: return c.Args.Any(Has);
+                case MSum s: return s.Terms.Any(t => Has(t.Value));
+                case MProd p: return p.Factors.Any(f => Has(f.Value));
+                case MCond c: return Has(c.C) || Has(c.A) || Has(c.B);
+                case MCmp c: return Has(c.L) || Has(c.R);
+                case MNot x: return Has(x.X);
+            }
+            return false;
+        }
+    }
+
+    // The value entity or model state has on the base path (catalog.json "baseCase"): the common state of
+    // TF's mobs, or one TF never changes (Fixed: comparisons with it fold to a constant, no case entry).
+    public sealed class BaseCaseValue
+    {
+        public string Scope;   // a class of the model's chain (its TF classes, its vanilla base, "HumanoidModel" /
+                               // "QuadrupedModel" for their families) or "*"
+        public string Expr;    // Java text: "entity" names the entity parameter, "this." a field or method of the
+                               // model; "(*)" at the end stands for any arguments
+        public object Value;   // double, bool or string (an enum constant, "null")
+        public bool Fixed;
+        public string Why;
+        public string ValueText
+        {
+            get
+            {
+                if (Value is string s) return s;
+                if (Value is bool b) return b ? "true" : "false";
+                return Number.ToString("0.######", CultureInfo.InvariantCulture);
+            }
+        }
+        public double Number { get { return Value is bool b ? (b ? 1 : 0) : Convert.ToDouble(Value, CultureInfo.InvariantCulture); } }
+    }
+
     public sealed class AnimStatement
     {
         public string Java;       // source text
@@ -275,12 +329,15 @@ namespace Gf.Models
         readonly Interp interp;
         public AnimTranslator(ClassPath cp, Interp interp) { this.cp = cp; this.interp = interp; }
 
+        // catalog.json "baseCase": the values entity / model state takes on the base path
+        public List<BaseCaseValue> BaseCases = new List<BaseCaseValue>();
+
         static readonly string[] ParamQueries = { null, "query.modified_distance_moved", "query.modified_move_speed", "query.life_time", "query.target_y_rotation", "query.target_x_rotation" };
         static readonly string[] PoseProps = { "xRot", "yRot", "zRot", "x", "y", "z" };
 
         // The vanilla model families TF extends: the parts their setupAnim drives.
-        static readonly string[] HumanoidFamily = { "HumanoidModel", "PlayerModel", "ZombieModel", "AbstractZombieModel", "SkeletonModel", "DrownedModel", "PiglinModel", "GiantZombieModel" };
-        static readonly string[] QuadrupedFamily = { "QuadrupedModel", "SheepModel", "CowModel", "PigModel", "PolarBearModel", "PandaModel" };
+        public static readonly string[] HumanoidFamily = { "HumanoidModel", "PlayerModel", "ZombieModel", "AbstractZombieModel", "SkeletonModel", "DrownedModel", "PiglinModel", "GiantZombieModel" };
+        public static readonly string[] QuadrupedFamily = { "QuadrupedModel", "SheepModel", "CowModel", "PigModel", "PolarBearModel", "PandaModel" };
         static readonly string[] HumanoidParts = { "head", "hat", "body", "right_arm", "left_arm", "right_leg", "left_leg" };
         static readonly string[] HumanoidFields = { "head", "hat", "body", "rightArm", "leftArm", "rightLeg", "leftLeg" };
         static readonly string[] QuadrupedParts = { "head", "body", "right_hind_leg", "left_hind_leg", "right_front_leg", "left_front_leg" };
@@ -349,14 +406,24 @@ namespace Gf.Models
             }
         }
 
-        // What an expression read (statements, cases) and the conditions it counted as false.
+        // What an expression read (statements, cases), the conditions it counted as false and the base-case
+        // values (catalog.json baseCase) it took for entity state.
         sealed class Deps
         {
             public HashSet<AnimStatement> From = new HashSet<AnimStatement>();
             public HashSet<AnimStatement> When = new HashSet<AnimStatement>();
-            public List<string> Assumed = new List<string>();
+            public List<string> Assumed = new List<string>(); // Java text counted as false
+            public List<string> Valued = new List<string>();  // "<Java> as <value> (<why>)"
+            public bool Assumes { get { return Assumed.Count > 0 || Valued.Count > 0; } }
             public void Read(Val v) { From.UnionWith(v.From); When.UnionWith(v.When); }
-            public void Add(Deps d) { From.UnionWith(d.From); When.UnionWith(d.When); Assumed.AddRange(d.Assumed); }
+            public void Add(Deps d) { From.UnionWith(d.From); When.UnionWith(d.When); Assumed.AddRange(d.Assumed); Valued.AddRange(d.Valued); }
+            public string Text()
+            {
+                var parts = new List<string>();
+                if (Assumed.Count > 0) parts.Add(string.Join(", ", Assumed.Distinct()) + " as false");
+                parts.AddRange(Valued.Distinct());
+                return string.Join(", ", parts);
+            }
         }
 
         // State shared by every frame of one model.
@@ -373,7 +440,13 @@ namespace Gf.Models
             public int VanillaLine;
             public Dictionary<AnimStatement, string> Lost = new Dictionary<AnimStatement, string>();
             public Dictionary<string, SortedSet<int>> Overrides = new Dictionary<string, SortedSet<int>>(StringComparer.Ordinal); // key -> lines
+            public List<BaseCaseValue> BaseCases = new List<BaseCaseValue>(); // the entries whose scope the model is in
+            public Dictionary<BaseCaseValue, SortedSet<string>> FixedUsed = new Dictionary<BaseCaseValue, SortedSet<string>>(); // fixed value -> "[Class ]line"
         }
+
+        // A condition whose other branch leaves the method early: what the rest of the method sets
+        // differs in its case (Cur: the values when the base path passed the condition).
+        sealed class Exit { public AnimStatement St; public Dictionary<string, Val> Cur; }
 
         // One method body on the base path (a branch of a translated condition runs in a fork).
         sealed class Ctx
@@ -384,6 +457,9 @@ namespace Gf.Models
             public Dictionary<string, string> Fields;    // field / parameter / local name -> part path
             public Dictionary<string, List<string>> PartLocals = new Dictionary<string, List<string>>(StringComparer.Ordinal); // ModelPart locals of unknown part -> candidates
             public HashSet<string> BoolLocals = new HashSet<string>(StringComparer.Ordinal);
+            public HashSet<string> EntityNames = new HashSet<string>(StringComparer.Ordinal); // parameters / locals holding the entity
+            public List<Exit> Exits = new List<Exit>();  // shared with forks; closed at the end of the method
+            public HashSet<Expr> Applied = new HashSet<Expr>(); // assignments inside expressions already run (ApplyNested)
             public CompilationUnit Unit;
             public ClassDecl Owner;                      // the class whose method runs (super / this calls)
             public string Label;                         // class name for statements of another class (null: the model)
@@ -404,14 +480,27 @@ namespace Gf.Models
 
         // ---- parts ----------------------------------------------------------------------------------------
 
-        static bool IsHumanoid(string vanilla) { return vanilla != null && Array.IndexOf(HumanoidFamily, vanilla) >= 0; }
-        static bool IsQuadruped(string vanilla) { return vanilla != null && Array.IndexOf(QuadrupedFamily, vanilla) >= 0; }
+        public static bool IsHumanoid(string vanilla) { return vanilla != null && Array.IndexOf(HumanoidFamily, vanilla) >= 0; }
+        public static bool IsQuadruped(string vanilla) { return vanilla != null && Array.IndexOf(QuadrupedFamily, vanilla) >= 0; }
 
-        string VanillaBaseOf(ClassDecl cls)
+        // The first super class of the chain that is not a TF class (HumanoidModel, QuadrupedModel, ...).
+        public string VanillaBaseOf(ClassDecl cls)
         {
             string vanilla = null;
             for (var c = cls; c != null; c = c.Extends != null ? cp.Find(c.Extends, c) : null) if (c.Extends != null) vanilla = c.Extends;
             return vanilla;
+        }
+
+        // The base-case entries a model is in scope of: its TF classes, its vanilla base class and that class's
+        // family ("HumanoidModel" covers ZombieModel, SkeletonModel, ...; "QuadrupedModel" SheepModel, ...).
+        List<BaseCaseValue> BaseCasesFor(ClassDecl cls, string vanilla)
+        {
+            var names = new HashSet<string>(StringComparer.Ordinal) { "*" };
+            for (var c = cls; c != null; c = c.Extends != null ? cp.Find(c.Extends, c) : null) names.Add(c.Name);
+            if (vanilla != null) names.Add(vanilla);
+            if (IsHumanoid(vanilla)) names.Add("HumanoidModel");
+            if (IsQuadruped(vanilla)) names.Add("QuadrupedModel");
+            return BaseCases.Where(b => b.Scope != null && names.Contains(b.Scope)).ToList();
         }
 
         // Field name -> Java part path, from the constructor and the vanilla base classes.
@@ -591,6 +680,7 @@ namespace Gf.Models
         {
             var res = new AnimResult { Method = "prepareMobModel + setupAnim" };
             var s = new Shared { Res = res, Model = cls, Vanilla = VanillaBaseOf(cls), Bones = new Dictionary<string, BoneOut>(StringComparer.Ordinal), FieldMap = FieldParts(cls) };
+            s.BaseCases = BaseCasesFor(cls, s.Vanilla);
             foreach (var b in geo.Bones) s.Bones[b.JavaPath] = b;
             foreach (var p in s.FieldMap.Values) s.NamedParts.Add(p);
             var vparts = IsHumanoid(s.Vanilla) ? HumanoidParts : IsQuadruped(s.Vanilla) ? QuadrupedParts : new string[0];
@@ -621,8 +711,13 @@ namespace Gf.Models
                     c.Env[m.Params[i].Name] = new Val { Node = ParamNode(i) };
                 }
                 // entity.tickCount (+ partialTick) is the age in ticks
-                if (m.Params.Count > 0) c.Env[m.Params[0].Name + ".tickCount"] = new Val { Node = ParamNode(3) };
+                if (m.Params.Count > 0)
+                {
+                    c.Env[m.Params[0].Name + ".tickCount"] = new Val { Node = ParamNode(3) };
+                    c.EntityNames.Add(m.Params[0].Name);
+                }
                 Exec(body, c);
+                CloseExits(c);
             }
             if (found == 0) res.Notes.Add("no setupAnim / prepareMobModel in " + cls.Name + " or its TF super classes");
             if (!ownSetupAnim)
@@ -728,8 +823,34 @@ namespace Gf.Models
                 }
             }
             foreach (var kv in s.Overrides) res.OverridesVanilla[Label(ctx, kv.Key)] = kv.Value;
+            foreach (var kv in s.FixedUsed)
+                res.Notes.Add("catalog baseCase: " + kv.Key.Expr + " is " + kv.Key.ValueText + " on every frame (" + kv.Key.Why + "); the base animation uses that value at line"
+                              + (kv.Value.Count > 1 ? "s " : " ") + string.Join(", ", kv.Value) + " (no case entry)");
             if (res.Statements.Any(x => x.Case))
-                res.Notes.Add("the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold");
+                res.Notes.Add("the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold");
+        }
+
+        // The end of a method: what it set after a condition whose other branch returns early differs in that case.
+        static void CloseExits(Ctx c)
+        {
+            if (c.Exits.Count == 0) return;
+            var changed = new List<KeyValuePair<Exit, List<string>>>();
+            foreach (var ex in c.Exits)
+            {
+                var keys = new List<string>();
+                foreach (var kv in c.Cur)
+                {
+                    Val old;
+                    if (!ex.Cur.TryGetValue(kv.Key, out old) || !ReferenceEquals(old, kv.Value)) keys.Add(kv.Key);
+                }
+                changed.Add(new KeyValuePair<Exit, List<string>>(ex, keys));
+            }
+            foreach (var kv in changed)
+            {
+                var tags = new HashSet<AnimStatement> { kv.Key.St };
+                foreach (var k in kv.Value) TagKey(c, k, tags);
+            }
+            c.Exits.Clear();
         }
 
         // ---- statements -------------------------------------------------------------------------------------
@@ -749,13 +870,89 @@ namespace Gf.Models
             else if (!st.Reason.Contains(why)) st.Reason += "; " + why;
         }
 
-        // The statement relies on conditions counted as false: a case entry.
+        // The statement relies on conditions counted as false or on base-case values: a case entry.
         static void Assume(AnimStatement st, Deps d)
         {
-            if (d.Assumed.Count == 0) return;
+            if (!d.Assumes) return;
             st.Case = true;
-            Fail(st, "the base animation counts " + string.Join(", ", d.Assumed.Distinct()) + " as false");
+            Fail(st, "the base animation counts " + d.Text());
             d.When.Add(st);
+        }
+
+        // Assignments and ++ / -- inside an expression (a condition, an initializer, an argument, a value).
+        // One that runs whenever the expression does (not behind && / || / ?: or in a lambda) and whose target
+        // the expression does not read elsewhere runs first, like a statement: the expression then reads its
+        // result. Any other makes what it changes unknown afterwards.
+        void ApplyNested(Expr e, Ctx c, AnimStatement st, string where)
+        {
+            if (e == null) return;
+            var run = new List<Expr>();
+            var poison = new List<Expr>();
+            CollectNested(e, true, run, poison);
+            run.RemoveAll(x => c.Applied.Contains(x));      // already run (an argument that is also a value: setPos)
+            poison.RemoveAll(x => c.Applied.Contains(x));
+            // calls inside the expression that change parts (a TF method, a part method) are not run: unknown
+            var called = new HashSet<string>(StringComparer.Ordinal);
+            Touched(new[] { e }, c, called, new HashSet<string>(StringComparer.Ordinal), 0, true);
+            called.RemoveWhere(k => !c.S.Bones.ContainsKey(k.Substring(0, k.LastIndexOf('.'))));
+            if (called.Count > 0)
+            {
+                Fail(st, "a call inside " + where + " may change " + string.Join(", ", called.OrderBy(k => k, StringComparer.Ordinal).Select(k => Label(c, k))) + " (not translated)");
+                foreach (var k in called.OrderBy(k => k, StringComparer.Ordinal)) SetKey(c, k, Val.Unknown(Label(c, k) + " may be changed by a call inside an expression at line " + e.Line, e.Line));
+            }
+            if (run.Count == 0 && poison.Count == 0) return;
+            foreach (var a in run.ToList())
+            {
+                // Java evaluates left to right: a read of the target elsewhere in the expression may see the old value
+                var target = a is AssignExpr ae ? ae.Target : ((UnaryExpr)a).Operand;
+                string t = JavaText(target);
+                if (Walk(e).Count(x => (x is FieldExpr || x is NameExpr) && JavaText(x) == t) > 1) { run.Remove(a); poison.Add(a); }
+            }
+            foreach (var a in run)
+            {
+                ExecEffect(a, c, st);
+                c.Applied.Add(a);
+            }
+            if (poison.Count > 0)
+            {
+                Fail(st, "an assignment inside " + where + " (" + JavaText(poison[0]) + ") that does not always run or whose target the expression also reads: what it changes is unknown afterwards");
+                PoisonTouched(poison, c, "is changed inside an expression at line " + e.Line, e.Line);
+            }
+        }
+
+        // The assignments inside e in evaluation order: run (evaluated whenever e is) or poison (behind && / || /
+        // ?:, in a lambda, a switch expression or an object creation).
+        static void CollectNested(Expr e, bool always, List<Expr> run, List<Expr> poison)
+        {
+            switch (e)
+            {
+                case null: return;
+                case AssignExpr _: (always ? run : poison).Add(e); return; // its own target and value: Assign
+                case UnaryExpr u:
+                    if (u.Op == "++" || u.Op == "--") { (always ? run : poison).Add(e); return; }
+                    CollectNested(u.Operand, always, run, poison);
+                    return;
+                case BinaryExpr b:
+                    CollectNested(b.Left, always, run, poison);
+                    CollectNested(b.Right, always && b.Op != "&&" && b.Op != "||", run, poison);
+                    return;
+                case CondExpr ce:
+                    CollectNested(ce.Cond, always, run, poison);
+                    CollectNested(ce.Then, false, run, poison);
+                    CollectNested(ce.Else, false, run, poison);
+                    return;
+                case CastExpr ca: CollectNested(ca.Operand, always, run, poison); return;
+                case InstanceOfExpr io: CollectNested(io.Operand, always, run, poison); return;
+                case FieldExpr f: CollectNested(f.Target, always, run, poison); return;
+                case IndexExpr ix: CollectNested(ix.Target, always, run, poison); CollectNested(ix.Index, always, run, poison); return;
+                case CallExpr call:
+                    CollectNested(call.Target, always, run, poison);
+                    foreach (var a in call.Args) CollectNested(a, always, run, poison);
+                    return;
+                case LitExpr _: case NameExpr _: case ThisExpr _: case SuperExpr _: case ClassLitExpr _: case MethodRefExpr _: return;
+            }
+            // lambdas, switch expressions, object and array creation
+            foreach (var x in Walk(e)) if (!ReferenceEquals(x, e) && (x is AssignExpr || (x is UnaryExpr u2 && (u2.Op == "++" || u2.Op == "--")))) poison.Add(x);
         }
 
         void Exec(Stmt s, Ctx c)
@@ -789,7 +986,9 @@ namespace Gf.Models
             {
                 c.Fields.Remove(v.Key);
                 c.PartLocals.Remove(v.Key);
+                c.EntityNames.Remove(v.Key);
                 if (isBool) c.BoolLocals.Add(v.Key); else c.BoolLocals.Remove(v.Key);
+                ApplyNested(v.Value, c, st, "the initializer of '" + v.Key + "'");
                 if (type == "ModelPart" && lv.Type.Dims == 0)
                 {
                     // a part local: an alias of the part, or one of the candidates of an unknown one
@@ -798,18 +997,37 @@ namespace Gf.Models
                     if (v.Value != null && PartOf(v.Value, c.Fields, out path)) c.Fields[v.Key] = path;
                     else if (v.Value is CallExpr ga && ga.Name == "getArm" && (ga.Target == null || ga.Target is ThisExpr) && c.S.Bones.ContainsKey("right_arm"))
                     {
-                        // HumanoidModel.getArm(arm): the base animation takes the right arm
-                        c.Fields[v.Key] = "right_arm";
+                        // HumanoidModel.getArm(arm): the arm the argument names (a base-case value), else the right arm
                         var arm = new Deps();
-                        arm.Assumed.Add(JavaText(v.Value) + " == this.leftArm");
+                        string armWhy;
+                        var side = ga.Args.Count == 1 ? Tr(ga.Args[0], c, arm, out armWhy) as MSym : null;
+                        string part = side != null && side.Name == "HumanoidArm.LEFT" ? "left_arm" : side != null && side.Name == "HumanoidArm.RIGHT" ? "right_arm" : null;
+                        if (part == null || !c.S.Bones.ContainsKey(part))
+                        {
+                            part = "right_arm";
+                            arm = new Deps();
+                            arm.Assumed.Add(JavaText(v.Value) + " == this.leftArm");
+                        }
+                        c.Fields[v.Key] = part;
                         Assume(st, arm);
-                        var tags = new HashSet<AnimStatement> { st };
-                        foreach (var p in new[] { "right_arm", "left_arm" }) foreach (var prop in PoseProps) TagKey(c, p + "." + prop, tags);
+                        // what the alias changes differs in the cases the arm depends on
+                        var tags = new HashSet<AnimStatement>(arm.When);
+                        if (tags.Count > 0)
+                            foreach (var p in new[] { "right_arm", "left_arm" }) foreach (var prop in PoseProps) TagKey(c, p + "." + prop, tags);
                     }
                     else c.PartLocals[v.Key] = Candidates(v.Value, c);
                     continue;
                 }
                 if (v.Value == null) { c.Env[v.Key] = Val.Unknown("local '" + v.Key + "' has no value yet", lv.Line); continue; }
+                if (v.Value is NameExpr en && c.EntityNames.Contains(en.Name))
+                {
+                    // another name for the entity
+                    Val tick;
+                    c.EntityNames.Add(v.Key);
+                    c.Env.Remove(v.Key);
+                    if (c.Env.TryGetValue(en.Name + ".tickCount", out tick)) c.Env[v.Key + ".tickCount"] = tick;
+                    continue;
+                }
                 var d = new Deps();
                 string why = null;
                 MNode n = isBool ? TrBool(v.Value, c, d) : Tr(v.Value, c, d, out why);
@@ -851,6 +1069,9 @@ namespace Gf.Models
         // target op= value on the base path.
         void Assign(Expr target, string op, Expr value, Ctx c, AnimStatement st, int line)
         {
+            ApplyNested(value, c, st, "the assigned value");
+            if (target is FieldExpr tfe) ApplyNested(tfe.Target, c, st, "the assigned part");
+            if (target is IndexExpr tix) ApplyNested(tix, c, st, "the assigned element");
             if (target is NameExpr ln && c.Env.ContainsKey(ln.Name))
             {
                 // a local or a parameter
@@ -882,6 +1103,7 @@ namespace Gf.Models
                 var d = new Deps();
                 string why = null;
                 MNode rhs = Tr(value, c, d, out why);
+                if (rhs is MSym sym) { why = sym.Name + " is not a number"; rhs = null; }
                 AssignKey(c, path + "." + prop, op, rhs, d, why, st, line);
                 return;
             }
@@ -923,6 +1145,7 @@ namespace Gf.Models
         {
             if (op != "=" && old.Node == null) return Val.Unknown("previous value at line " + old.At + " not translated", old.At);
             if (rhs == null) return Val.Unknown(label + " (line " + line + ") is not translated: " + why, line);
+            if (op != "=" && (old.Node is MSym || rhs is MSym)) return Val.Unknown(label + " (line " + line + "): operator " + op + " on " + (old.Node is MSym ? old.Node : rhs).Emit() + ", not a number", line);
             Assume(st, d);
             var from = new HashSet<AnimStatement>(d.From) { st };
             var when = new HashSet<AnimStatement>(d.When);
@@ -964,46 +1187,65 @@ namespace Gf.Models
         void ExecIf(IfStmt i, Ctx c)
         {
             var st = NewSt(c, i);
+            // an assignment inside the condition: what it changes is unknown afterwards
+            ApplyNested(i.Cond, c, st, "the condition");
             var d = new Deps();
             MNode cond = TrBool(i.Cond, c, d);
-            if (!(cond is MNum) && (Jumps(i.Then) || Jumps(i.Else)))
-            {
-                d.Assumed.Add(JavaText(i.Cond) + " (a branch returns early)");
-                cond = M.Num(0);
-            }
             double cv;
-            if (M.IsNum(cond, out cv))
+            bool constant = M.IsNum(cond, out cv);
+            // a condition that is constant without counting anything as false: the other branch never runs
+            if (constant && !d.Assumes && d.When.Count == 0) { Exec(cv != 0 ? i.Then : i.Else, c); return; }
+            // A branch that always leaves the method early: the base path takes the other one, whatever the
+            // condition counted as false (else `if (!entity.isAlive()) return;` would end the base path).
+            bool thenExits = AlwaysJumps(i.Then), elseExits = AlwaysJumps(i.Else);
+            string exits = null;
+            if (thenExits != elseExits)
             {
-                bool takeThen = cv != 0;
-                Stmt taken = takeThen ? i.Then : i.Else, other = takeThen ? i.Else : i.Then;
-                if (d.Assumed.Count == 0 && d.When.Count == 0)
+                bool takeThen = elseExits;
+                if (!constant || (cv != 0) != takeThen)
                 {
-                    // a constant condition: the other branch never runs
-                    Exec(taken, c);
-                    return;
+                    d.Assumed.Clear();
+                    d.Valued.Clear();
+                    d.Assumed.Add(takeThen ? "!(" + JavaText(i.Cond) + ")" : JavaText(i.Cond));
+                    cond = M.Num(takeThen ? 1 : 0);
+                    cv = takeThen ? 1 : 0;
+                    constant = true;
                 }
-                // the base animation runs one branch; the other is a case for the owning unit
-                Assume(st, d);
-                st.Case = true;
-                if (d.Assumed.Count == 0)
-                    Fail(st, "the condition is constant on the base path (it uses values of the cases at lines " + string.Join(", ", d.When.Where(w => w != st).Select(w => w.Line).Distinct().OrderBy(x => x)) + ")");
-                Fail(st, "so it runs " + (taken == null ? "neither branch" : "the " + (takeThen ? "if" : "else") + " branch")
-                         + (other != null ? " and leaves out lines " + other.Line + "-" + LastLine(other) : ""));
-                st.EndLine = Math.Max(LastLine(i.Then), LastLine(i.Else));
-                var tags = new HashSet<AnimStatement>(d.When) { st };
-                Exec(taken, c);
-                // what either branch changes differs when the condition holds
-                TagTouched(Exprs(i.Then).Concat(Exprs(i.Else)), c, tags);
-                if (other != null) foreach (var e in Exprs(other)) foreach (var x in Walk(e)) NoteBranchOverride(x, c);
-                return;
+                exits = "the " + (takeThen ? "else" : "if") + " branch returns early";
             }
+            else if (!constant && thenExits)
+            {
+                // both branches return: no ?: over them
+                d.Assumed.Add(JavaText(i.Cond));
+                cond = M.Num(0);
+                cv = 0;
+                constant = true;
+            }
+            if (constant) { ExecCase(i, c, st, d, cv != 0, exits); return; }
             // a Molang condition: both branches, merged with ?:
             Assume(st, d);
             d.From.Add(st);
+            var before = new Dictionary<string, Val>(c.Cur, StringComparer.Ordinal);
             var ct = c.Fork();
             Exec(i.Then, ct);
             var ce = c.Fork();
             if (i.Else != null) Exec(i.Else, ce);
+            if (ct.Returned != ce.Returned)
+            {
+                // one branch returned through a constant condition inside it: the base path continues with
+                // the other one, and the condition is a case for everything after it
+                var keep = ct.Returned ? ce : ct;
+                st.Case = true;
+                Fail(st, "the base animation counts " + (ct.Returned ? JavaText(i.Cond) : "!(" + JavaText(i.Cond) + ")") + " as false (the "
+                         + (ct.Returned ? "if" : "else") + " branch returns early)");
+                d.When.Add(st);
+                foreach (var kv in keep.Cur.ToList()) { Val old; if (!c.Cur.TryGetValue(kv.Key, out old) || !ReferenceEquals(old, kv.Value)) SetKey(c, kv.Key, kv.Value); }
+                foreach (var kv in keep.Env.ToList()) if (c.Env.ContainsKey(kv.Key)) c.Env[kv.Key] = kv.Value;
+                c.Exits.Add(new Exit { St = st, Cur = before });
+                TagTouched(Exprs(i.Then).Concat(Exprs(i.Else)), c, new HashSet<AnimStatement>(d.When));
+                return;
+            }
+            if (ct.Returned) c.Returned = true;
             foreach (var key in ct.Cur.Keys.Union(ce.Cur.Keys).ToList())
             {
                 Val t, e;
@@ -1012,7 +1254,7 @@ namespace Gf.Models
                 if (ReferenceEquals(t, e)) continue;
                 if (t == null) t = Get(ct, key);
                 if (e == null) e = Get(ce, key);
-                SetKey(c, key, Merge(cond, t, e, d, Label(c, key), i.Line, c));
+                SetKey(c, key, Merge(cond, t, e, d, Label(c, key), i, st, c));
             }
             foreach (var name in c.Env.Keys.ToList())
             {
@@ -1020,25 +1262,75 @@ namespace Gf.Models
                 if (!ct.Env.TryGetValue(name, out t)) t = Val.Unknown("local '" + name + "' is not a number after line " + i.Line, i.Line);
                 if (!ce.Env.TryGetValue(name, out e)) e = Val.Unknown("local '" + name + "' is not a number after line " + i.Line, i.Line);
                 if (ReferenceEquals(t, e)) continue;
-                c.Env[name] = Merge(cond, t, e, d, "local '" + name + "'", i.Line, c);
+                c.Env[name] = Merge(cond, t, e, d, "local '" + name + "'", i, st, c);
             }
         }
 
-        static Val Merge(MNode cond, Val t, Val e, Deps d, string label, int line, Ctx c)
+        // The base animation runs one branch of a condition that does not translate (or is constant through
+        // the cases); the other is a case for the owning unit.
+        void ExecCase(IfStmt i, Ctx c, AnimStatement st, Deps d, bool takeThen, string exits)
+        {
+            Stmt taken = takeThen ? i.Then : i.Else, other = takeThen ? i.Else : i.Then;
+            Assume(st, d);
+            st.Case = true;
+            if (!d.Assumes)
+                Fail(st, "the condition is constant on the base path (it uses values of the cases at lines " + string.Join(", ", d.When.Where(w => w != st).Select(w => w.Line).Distinct().OrderBy(x => x)) + ")");
+            Fail(st, "so it runs " + (taken == null ? "neither branch" : "the " + (takeThen ? "if" : "else") + " branch")
+                     + (other != null ? " and leaves out lines " + other.Line + "-" + LastLine(other) : ""));
+            // the other branch may leave the method: then everything the rest of the method sets differs too
+            if (Jumps(other))
+            {
+                Fail(st, (exits ?? "the " + (takeThen ? "else" : "if") + " branch may return early") + ", so what the rest of the method sets differs in this case too");
+                c.Exits.Add(new Exit { St = st, Cur = new Dictionary<string, Val>(c.Cur, StringComparer.Ordinal) });
+            }
+            st.EndLine = Math.Max(LastLine(i.Then), LastLine(i.Else));
+            var tags = new HashSet<AnimStatement>(d.When) { st };
+            Exec(taken, c);
+            // what either branch changes differs when the condition holds (what the condition itself changes
+            // runs on every path: ApplyNested ran or invalidated it before the condition was read)
+            TagTouched(Exprs(i.Then).Concat(Exprs(i.Else)), c, tags);
+            if (other != null) foreach (var e in Exprs(other)) foreach (var x in Walk(e)) NoteBranchOverride(x, c);
+        }
+
+        // Both branches of a Molang condition (cond ? then : else).
+        static Val Merge(MNode cond, Val t, Val e, Deps d, string label, IfStmt i, AnimStatement st, Ctx c)
         {
             if (t.Node == null) { Lose(c, e, label + ": " + t.Why); return t; }
             if (e.Node == null) { Lose(c, t, label + ": " + e.Why); return e; }
             if (t.Vanilla != e.Vanilla)
             {
-                var u = Val.Unknown(label + ": the vanilla pose is kept on one branch of line " + line + " only", line);
-                Lose(c, t, u.Why);
-                Lose(c, e, u.Why);
-                return u;
+                // One branch sets the axis, the other keeps the vanilla pose, which a Molang ?: cannot pick:
+                // the base animation takes the branch that sets it (overrides_vanilla lists the axis, so the
+                // vanilla animations do not drive it) and the condition is a case for the other branch.
+                bool thenSets = !t.Vanilla;
+                Val keep = thenSets ? t : e, drop = thenSets ? e : t;
+                st.Case = true;
+                Fail(st, label + ": the base animation takes the " + (thenSets ? "if" : "else") + " branch, which sets it"
+                         + (thenSets && HoldsAfterFirstFrame(cond) ? " (" + cond.Emit() + " holds on every frame after the first)" : "")
+                         + "; the " + (thenSets ? "else" : "if") + " branch keeps the vanilla pose there");
+                Lose(c, drop, label + ": the base animation takes the " + (thenSets ? "if" : "else") + " branch of line " + i.Line);
+                var k = new Val { Node = keep.Node, From = new HashSet<AnimStatement>(keep.From), When = new HashSet<AnimStatement>(keep.When) };
+                k.From.UnionWith(d.From);
+                k.When.UnionWith(d.When);
+                k.When.Add(st);
+                return k;
             }
             var v = new Val { Node = M.Cond(cond, t.Node, e.Node), Vanilla = t.Vanilla, From = new HashSet<AnimStatement>(t.From), When = new HashSet<AnimStatement>(t.When) };
             v.From.UnionWith(e.From); v.From.UnionWith(d.From);
             v.When.UnionWith(e.When); v.When.UnionWith(d.When);
             return v;
+        }
+
+        // query.life_time [* k] > 0 (entity.tickCount > 0): true on every frame but the first.
+        static bool HoldsAfterFirstFrame(MNode cond)
+        {
+            var cmp = cond as MCmp;
+            double r, k;
+            if (cmp == null || cmp.Op != ">" || !M.IsNum(cmp.R, out r) || r != 0) return false;
+            if (cmp.L is MAtom a) return a.Text == "query.life_time";
+            var p = cmp.L as MProd;
+            return p != null && p.Factors.Count == 2 && !p.Factors[0].Key && !p.Factors[1].Key && p.Factors[0].Value is MAtom pa && pa.Text == "query.life_time"
+                   && M.IsNum(p.Factors[1].Value, out k) && k > 0;
         }
 
         // '=' to a vanilla-driven bone axis inside a branch the base animation leaves out.
@@ -1070,6 +1362,7 @@ namespace Gf.Models
         void ExecCall(CallExpr call, Ctx c, AnimStatement st)
         {
             string name = call.Name;
+            foreach (var a in call.Args) ApplyNested(a, c, st, "an argument of " + name + "()");
             if (call.Target is SuperExpr)
             {
                 var sup = c.Owner.Extends != null ? cp.Find(c.Owner.Extends, c.Owner) : null;
@@ -1109,11 +1402,27 @@ namespace Gf.Models
                     bool right = name == "poseRightArm";
                     string arm = right ? "right_arm" : "left_arm";
                     var d = new Deps();
-                    d.Assumed.Add("this." + (right ? "right" : "left") + "ArmPose != ArmPose.EMPTY (with EMPTY the vanilla HumanoidModel." + name + " sets " + (right ? "rightArm" : "leftArm") + ".yRot = 0)");
+                    string why;
+                    var pose = Tr(new FieldExpr { Target = new ThisExpr { Line = call.Line }, Name = right ? "rightArmPose" : "leftArmPose", Line = call.Line }, c, d, out why) as MSym;
+                    if (pose != null && pose.Name != "ArmPose.EMPTY")
+                    {
+                        // another arm pose (a base-case value): the vanilla pose method is not translated
+                        Fail(st, "the vanilla HumanoidModel." + name + " with " + pose.Name + " (not translated)");
+                        PoisonTouched(new Expr[] { call }, c, name + "() at line " + call.Line, call.Line);
+                        return;
+                    }
+                    if (pose == null)
+                    {
+                        d = new Deps();
+                        d.Assumed.Add("this." + (right ? "right" : "left") + "ArmPose != ArmPose.EMPTY (with EMPTY the vanilla HumanoidModel." + name + " sets " + (right ? "rightArm" : "leftArm") + ".yRot = 0)");
+                    }
                     Assume(st, d);
                     if (c.S.Bones.ContainsKey(arm)) AssignKey(c, arm + ".yRot", "=", M.Num(0), d, null, st, call.Line);
-                    var tags = new HashSet<AnimStatement> { st };
-                    foreach (var p in new[] { "right_arm", "left_arm" }) foreach (var prop in PoseProps) TagKey(c, p + "." + prop, tags);
+                    if (st.Case)
+                    {
+                        var tags = new HashSet<AnimStatement> { st };
+                        foreach (var p in new[] { "right_arm", "left_arm" }) foreach (var prop in PoseProps) TagKey(c, p + "." + prop, tags);
+                    }
                     return;
                 }
                 Fail(st, "call " + name + "() (a vanilla method)");
@@ -1231,6 +1540,7 @@ namespace Gf.Models
                 if (p.Type != null && p.Type.Simple == "ModelPart") { f.PartLocals[p.Name] = Candidates(a, c); continue; }
                 Val tv;
                 if (a is NameExpr an && c.Env.TryGetValue(an.Name + ".tickCount", out tv)) f.Env[p.Name + ".tickCount"] = tv;
+                if (a is NameExpr ae && c.EntityNames.Contains(ae.Name)) { f.EntityNames.Add(p.Name); continue; }
                 bool isBool = p.Type != null && p.Type.Simple == "boolean";
                 if (isBool) f.BoolLocals.Add(p.Name);
                 if (a == null) { f.Env[p.Name] = Val.Unknown("argument '" + p.Name + "' of " + md.Name + "() is missing", call.Line); continue; }
@@ -1243,13 +1553,14 @@ namespace Gf.Models
                 f.Env[p.Name] = new Val { Node = n, From = d.From, When = d.When };
             }
             Exec(body, f);
+            CloseExits(f);
         }
 
         // ---- what statements may change ------------------------------------------------------------------
 
         // The bone properties and locals the expressions may change: assignments, ++ / --, calls on or with
         // parts, the TF methods they call and vanilla methods with side effects.
-        void Touched(IEnumerable<Expr> roots, Ctx c, HashSet<string> keys, HashSet<string> locals, int depth)
+        void Touched(IEnumerable<Expr> roots, Ctx c, HashSet<string> keys, HashSet<string> locals, int depth, bool callsOnly = false)
         {
             foreach (var root in roots)
                 foreach (var e in Walk(root))
@@ -1257,6 +1568,7 @@ namespace Gf.Models
                     Expr t = null;
                     if (e is AssignExpr a) t = a.Target;
                     else if (e is UnaryExpr u && (u.Op == "++" || u.Op == "--")) t = u.Operand;
+                    if (t != null && callsOnly) continue;
                     if (t != null)
                     {
                         string path, prop;
@@ -1432,19 +1744,37 @@ namespace Gf.Models
             }
         }
 
-        static bool Jumps(Stmt s)
+        // May the statement leave the method (return, throw; a break / continue / yield not inside a loop or
+        // switch of its own, which the base path never runs into)?
+        static bool Jumps(Stmt s, bool nested = false)
         {
             switch (s)
             {
                 case null: return false;
-                case ReturnStmt _: case BreakStmt _: case ContinueStmt _: case ThrowStmt _: case YieldStmt _: return true;
-                case BlockStmt b: return b.Stmts.Any(Jumps);
-                case IfStmt i: return Jumps(i.Then) || Jumps(i.Else);
-                case TryStmt t: return Jumps(t.Body) || Jumps(t.Finally);
-                case SwitchStmt sw: return sw.Cases.Any(cs => cs.Body.Any(Jumps) || Jumps(cs.ArrowStmt));
-                case ForStmt f: return Jumps(f.Body);
-                case ForEachStmt fe: return Jumps(fe.Body);
-                case WhileStmt w: return Jumps(w.Body);
+                case ReturnStmt _: case ThrowStmt _: return true;
+                case BreakStmt _: case ContinueStmt _: case YieldStmt _: return !nested;
+                case BlockStmt b: return b.Stmts.Any(x => Jumps(x, nested));
+                case IfStmt i: return Jumps(i.Then, nested) || Jumps(i.Else, nested);
+                case TryStmt t: return Jumps(t.Body, nested) || Jumps(t.Finally, nested);
+                case SwitchStmt sw: return sw.Cases.Any(cs => cs.Body.Any(x => Jumps(x, true)) || Jumps(cs.ArrowStmt, true));
+                case ForStmt f: return Jumps(f.Body, true);
+                case ForEachStmt fe: return Jumps(fe.Body, true);
+                case WhileStmt w: return Jumps(w.Body, true);
+            }
+            return false;
+        }
+
+        // Does the statement leave the method on every path (a return / throw at its top level, or an if
+        // whose branches both do)?
+        static bool AlwaysJumps(Stmt s)
+        {
+            switch (s)
+            {
+                case null: return false;
+                case ReturnStmt _: case ThrowStmt _: return true;
+                case BlockStmt b: return b.Stmts.Any(AlwaysJumps);
+                case IfStmt i: return AlwaysJumps(i.Then) && AlwaysJumps(i.Else);
+                case TryStmt t: return AlwaysJumps(t.Body) || AlwaysJumps(t.Finally);
             }
             return false;
         }
@@ -1512,7 +1842,8 @@ namespace Gf.Models
             };
             var d = new Deps();
             var n = Tr(e, c, d, out why);
-            if (n != null && d.Assumed.Count > 0) { why = "counts " + string.Join(", ", d.Assumed) + " as false"; return null; }
+            if (n != null && d.Assumes) { why = "counts " + d.Text(); return null; }
+            if (n is MSym) { why = n.Emit() + " is not a number"; return null; }
             return n;
         }
 
@@ -1535,11 +1866,97 @@ namespace Gf.Models
         MNode Tr(Expr e, Ctx c, Deps d, out string why)
         {
             why = null;
+            var known = BaseValue(e, c, d);
+            if (known != null) return known;
+            var n = TrCore(e, c, d, out why);
+            if (n != null && !(n is MSym) && MSym.Has(n))
+            {
+                why = "an enum constant or null (" + JavaText(e) + ") in arithmetic";
+                return null;
+            }
+            return n;
+        }
+
+        // ---- base-case values (catalog.json baseCase) ---------------------------------------------------
+
+        // The value a base-case entry gives the expression (null: none). A fixed one is a constant; another
+        // one is counted as an assumption (the statement becomes a case entry).
+        MNode BaseValue(Expr e, Ctx c, Deps d)
+        {
+            if (c.S.BaseCases.Count == 0 || !(e is NameExpr || e is FieldExpr || e is CallExpr)) return null;
+            if (e is NameExpr n && (c.Env.ContainsKey(n.Name) || c.EntityNames.Contains(n.Name))) return null;
+            string key = Canon(e, c);
+            var bc = FindBase(c, key);
+            if (bc == null) return null;
+            if (bc.Fixed)
+            {
+                SortedSet<string> lines;
+                if (!c.S.FixedUsed.TryGetValue(bc, out lines)) c.S.FixedUsed[bc] = lines = new SortedSet<string>(Comparer<string>.Create(CompareLines));
+                lines.Add((c.Label != null ? c.Label + " " : "") + e.Line);
+            }
+            else d.Valued.Add(JavaText(e) + " as " + bc.ValueText + " (" + bc.Why + ")");
+            if (bc.Value is string s) return new MSym { Name = s, Known = true };
+            return M.Num(bc.Number);
+        }
+
+        static int CompareLines(string a, string b)
+        {
+            // "123" before "Class 45"; numbers in numeric order
+            int ia, ib;
+            bool na = int.TryParse(a, NumberStyles.Integer, CultureInfo.InvariantCulture, out ia), nb = int.TryParse(b, NumberStyles.Integer, CultureInfo.InvariantCulture, out ib);
+            if (na && nb) return ia.CompareTo(ib);
+            if (na != nb) return na ? -1 : 1;
+            return string.CompareOrdinal(a, b);
+        }
+
+        static BaseCaseValue FindBase(Ctx c, string key)
+        {
+            foreach (var b in c.S.BaseCases)
+            {
+                if (b.Expr == key) return b;
+                if (b.Expr.EndsWith("(*)", StringComparison.Ordinal) && key.EndsWith(")", StringComparison.Ordinal)
+                    && key.StartsWith(b.Expr.Substring(0, b.Expr.Length - 2), StringComparison.Ordinal)) return b;
+            }
+            return null;
+        }
+
+        // Java text in the form base-case entries use: the entity is "entity", fields and methods of the
+        // model are "this.<name>", type names stay.
+        static string Canon(Expr e, Ctx c)
+        {
+            switch (e)
+            {
+                case NameExpr n:
+                    if (c.EntityNames.Contains(n.Name)) return "entity";
+                    if (c.Env.ContainsKey(n.Name) || (n.Name.Length > 0 && char.IsUpper(n.Name[0]))) return n.Name;
+                    return "this." + n.Name;
+                case ThisExpr _: return "this";
+                case FieldExpr f: return Canon(f.Target, c) + "." + f.Name;
+                case CallExpr call: return (call.Target == null ? "this" : Canon(call.Target, c)) + "." + call.Name + "(" + string.Join(", ", call.Args.Select(a => Canon(a, c))) + ")";
+                case CastExpr ca: return Canon(ca.Operand, c);
+            }
+            return JavaText(e);
+        }
+
+        // Type.CONSTANT (HumanoidArm.RIGHT, HumanoidModel.ArmPose.EMPTY -> ArmPose.EMPTY): an enum constant.
+        static MSym EnumConstant(FieldExpr f, Ctx c)
+        {
+            if (f.Name.Length == 0 || !f.Name.All(ch => char.IsUpper(ch) || char.IsDigit(ch) || ch == '_')) return null;
+            string type = f.Target is NameExpr tn ? tn.Name : f.Target is FieldExpr tf ? tf.Name : null;
+            if (type == null || type.Length == 0 || !char.IsUpper(type[0]) || type == "Mth" || type == "Math") return null;
+            if (f.Target is NameExpr tn2 && (c.Env.ContainsKey(tn2.Name) || c.Fields.ContainsKey(tn2.Name))) return null;
+            return new MSym { Name = type + "." + f.Name };
+        }
+
+        MNode TrCore(Expr e, Ctx c, Deps d, out string why)
+        {
+            why = null;
             switch (e)
             {
                 case LitExpr l:
                     if (Interp.IsNumeric(l.Value)) return M.Num(Interp.ToDouble(l.Value));
                     if (l.Value is bool lb) return M.Num(lb ? 1 : 0);
+                    if (l.Value == null) return new MSym { Name = "null" };
                     why = "literal " + Interp.Describe(l.Value);
                     return null;
                 case NameExpr n:
@@ -1578,6 +1995,8 @@ namespace Gf.Models
                         try { var v = interp.Eval(f, new Frame(null)); return M.Num(Interp.ToDouble(v)); }
                         catch (Exception) { why = cn.Name + "." + f.Name; return null; }
                     }
+                    var ec = EnumConstant(f, c);
+                    if (ec != null) return ec;
                     string path, prop;
                     if (BoneProp(f, c.Fields, out path, out prop) && IsPoseProp(prop) && c.S.Bones.ContainsKey(path))
                     {
@@ -1605,8 +2024,20 @@ namespace Gf.Models
                     }
                     return x;
                 }
+                case AssignExpr a:
+                    // run before the expression (ApplyNested): its value is the target's new value
+                    if (c.Applied.Contains(a)) return Tr(a.Target, c, d, out why);
+                    why = "an assignment inside an expression";
+                    return null;
                 case UnaryExpr u:
                 {
+                    if ((u.Op == "++" || u.Op == "--") && c.Applied.Contains(u))
+                    {
+                        // ++x / --x: the new value; x++ / x--: the old one
+                        var x = Tr(u.Operand, c, d, out why);
+                        if (x == null) return null;
+                        return u.Postfix ? M.Add(x, M.Num(1), u.Op == "++" ? -1 : 1) : x;
+                    }
                     if (u.Op == "-") { var x = Tr(u.Operand, c, d, out why); return x != null ? M.Neg(x) : null; }
                     if (u.Op == "+") return Tr(u.Operand, c, d, out why);
                     if (u.Op == "!") { var x = Tr(u.Operand, c, d, out why); return x != null ? M.Not(x) : null; }
@@ -1620,6 +2051,17 @@ namespace Gf.Models
                     if (l == null) return null;
                     var r = Tr(bi.Right, c, d, out why);
                     if (r == null) return null;
+                    if (l is MSym || r is MSym)
+                    {
+                        // enum constants and null: == / != fold when one side is a base-case value of that type
+                        var ls = l as MSym;
+                        var rs = r as MSym;
+                        if ((bi.Op == "==" || bi.Op == "!=") && ls != null && rs != null && (ls.Known || rs.Known)
+                            && (ls.Name == "null" || rs.Name == "null" || ls.Qualifier == rs.Qualifier))
+                            return M.Num((ls.Name == rs.Name) == (bi.Op == "==") ? 1 : 0);
+                        why = "operator " + bi.Op + " on " + JavaText(bi) + " (an enum constant or null whose value is not known)";
+                        return null;
+                    }
                     switch (bi.Op)
                     {
                         case "+": return M.Add(l, r);

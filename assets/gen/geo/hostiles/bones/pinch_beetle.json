@@ -260,8 +260,9 @@
   "setupAnim": {
     "class": "PinchBeetleModel",
     "identifier": "animation.twilightforest.pinch_beetle.base",
-    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "catalog baseCase: JappaPackReloadListener.INSTANCE.isJappaPackLoaded() is false on every frame (the Jappa models belong to an optional resource pack TF does not ship; not ported (docs/spec/README.md)); the base animation uses that value at line 311 (no case entry)", "the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
     "translated": [
+      "this.rightPincer.yRot = (JappaPackReloadListener.INSTANCE.isJappaPackLoaded() ? -45.0F : 135.0F) * Mth.DEG_TO_RAD;",
       "this.leftPincer.yRot = 45.0F * Mth.DEG_TO_RAD;",
       "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;",
       "this.head.xRot = headPitch * Mth.DEG_TO_RAD;",
@@ -306,12 +307,6 @@
         "java": "if (entity.isVehicle()) {",
         "why": "the base animation counts entity.isVehicle() as false; so it runs the else branch and leaves out lines 305-308",
         "affects": ["left_pincher.yRot", "right_pincher.yRot"]
-      },
-      {
-        "line": 311,
-        "java": "this.rightPincer.yRot = (JappaPackReloadListener.INSTANCE.isJappaPackLoaded() ? -45.0F : 135.0F) * Mth.DEG_TO_RAD;",
-        "why": "the base animation counts JappaPackReloadListener.INSTANCE.isJappaPackLoaded() as false",
-        "affects": ["right_pincher.yRot"]
       }
     ]
   }

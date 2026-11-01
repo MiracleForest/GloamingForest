@@ -52,11 +52,11 @@ function New-TestModel([string]$body, [string]$name = 'TestModel') {
     $cu = [Gf.Models.Parser]::ParseUnit($src, "$name.java")
     return $cu.Types[0]
 }
-function Convert-Layer($layer, [string]$id = 'geometry.test') {
+function Convert-Layer($layer, [string]$vanilla = $null, [string]$id = 'geometry.test') {
+    # the vanilla skeleton names of the model's vanilla family (none for $null)
     $opt = [Gf.Models.ConvertOptions]::new()
     $opt.Identifier = $id
-    foreach ($kv in [Gf.Models.Converter]::HumanoidNames.GetEnumerator()) { $opt.Rename[$kv.Key] = $kv.Value }
-    foreach ($kv in [Gf.Models.Converter]::QuadrupedNames.GetEnumerator()) { $opt.Rename[$kv.Key] = $kv.Value }
+    foreach ($kv in [Gf.Models.Converter]::RenamesFor($vanilla).GetEnumerator()) { $opt.Rename[$kv.Key] = $kv.Value }
     $geo = [Gf.Models.Converter]::Convert($layer, $opt, $null, 1.0)
     $json = [Gf.Models.Json]::Write($geo.ToJson()) | ConvertFrom-Json
     return @{ Geo = $geo; Json = $json; Bones = @{} + (& { $h = @{}; foreach ($b in $json.'minecraft:geometry'[0].bones) { $h[$b.name] = $b }; $h }) }
@@ -155,7 +155,7 @@ Write-Host '[geo-test] conversion'
 $quad = $interp.CallStatic((New-TestModel @'
     public static LayerDefinition create() { return LayerDefinition.create(QuadrupedModel.createBodyMesh(6, CubeDeformation.NONE), 64, 32); }
 '@), 'create', [System.Collections.Generic.List[object]]::new())
-$pig = Convert-Layer $quad
+$pig = Convert-Layer $quad 'PigModel'
 Test 'pivots and cube origins match Bedrock''s pig' {
     Eq ($pig.Bones['head'].pivot -join ',') '0,12,-6'
     Eq ($pig.Bones['head'].cubes[0].origin -join ',') '-4,8,-14'
@@ -172,7 +172,7 @@ Test 'box UV and mirror' {
     Eq ($pig.Bones['body'].cubes[0].uv -join ',') '28,8'
     $h = Convert-Layer ($interp.CallStatic((New-TestModel @'
         public static LayerDefinition create() { return LayerDefinition.create(HumanoidModel.createMesh(new CubeDeformation(0.5F), 0.0F), 64, 32); }
-'@), 'create', [System.Collections.Generic.List[object]]::new()))
+'@), 'create', [System.Collections.Generic.List[object]]::new())) 'HumanoidModel'
     Eq $h.Bones['leftArm'].cubes[0].mirror $true
     Eq ($h.Bones['rightArm'].pivot -join ',') '-5,22,0'
     Eq ($h.Bones['rightArm'].cubes[0].origin -join ',') '-8,12,-2'
@@ -291,11 +291,13 @@ Test 'setupAnim -> Molang: the hat under the head is not turned a second time' {
 }
 # setupAnim of a test model (the whole class source, LGPL-free fixture) over a test mesh: the
 # animation's bones, the statements and the result.
-function Translate-Test([string]$classSrc, [string]$meshBody) {
+function Translate-Test([string]$classSrc, [string]$meshBody, $baseCases = $null) {
     $cls = [Gf.Models.Parser]::ParseUnit("package test; $classSrc", 'Test.java').Types[0]
     $mesh = $interp.CallStatic((New-TestModel $meshBody 'TestMesh'), 'create', [System.Collections.Generic.List[object]]::new())
-    $g = Convert-Layer $mesh
-    $res = [Gf.Models.AnimTranslator]::new($cp, $interp).Translate($cls, $g.Geo)
+    $tr = [Gf.Models.AnimTranslator]::new($cp, $interp)
+    if ($baseCases) { $tr.BaseCases = $baseCases }
+    $g = Convert-Layer $mesh $tr.VanillaBaseOf($cls)
+    $res = $tr.Translate($cls, $g.Geo)
     $json = [Gf.Models.Json]::Write([Gf.Models.AnimTranslator]::AnimationJson('animation.test', $res)) | ConvertFrom-Json
     return @{
         Res = $res; Bones = $json.animations.'animation.test'.bones
@@ -494,6 +496,161 @@ public class TestHat extends HumanoidModel<Zombie> {
 '@ $humanoidMesh
     Eq ($t.Bones.head.position -join ',') '0,-4.2,0'
     if ($t.Bones.PSObject.Properties.Name -contains 'hat') { throw "the hat (under the head) moves a second time: $($t.Bones.hat | ConvertTo-Json -Compress)" }
+}
+Test 'setupAnim -> Molang: catalog baseCase values (TrollModel pattern: ArmPose.EMPTY is fixed, the main arm is a case)' {
+    # TrollModel adds PI to an arm when the other arm pose is not EMPTY; TF's mobs keep EMPTY, so the base
+    # animation must not raise the arms (the TrollModel pattern), and a comparison with EMPTY leaves no case
+    $t = Translate-Test @'
+public class TestTroll extends HumanoidModel<Zombie> {
+    public TestTroll(ModelPart root) { super(root); }
+    public void setupAnim(Zombie entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.rightArm.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * limbSwingAmount;
+        this.leftArm.xRot = 0.0F;
+        if (this.leftArmPose != ArmPose.EMPTY) { this.rightArm.xRot += Mth.PI; }
+        if (this.rightArmPose != HumanoidModel.ArmPose.EMPTY) { this.leftArm.xRot += Mth.PI; }
+        boolean two = this.rightArmPose.isTwoHanded();
+        if (two) { this.body.xRot = 1.0F; }
+        if (entity.getMainArm() == HumanoidArm.RIGHT) { this.head.zRot = 0.5F; }
+        this.poseRightArm(entity);
+        if (JappaPackReloadListener.INSTANCE.isJappaPackLoaded()) { this.leftLeg.xRot = 1.0F; }
+    }
+}
+'@ $humanoidMesh $gen.BaseCases
+    Eq $t.Bones.rightArm.rotation[0] 'math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 57.2958' 'no PI: the left arm pose is EMPTY'
+    if ($t.Bones.PSObject.Properties.Name -contains 'leftArm') { throw "leftArm moved: $($t.Bones.leftArm | ConvertTo-Json -Compress)" }
+    if ($t.Bones.PSObject.Properties.Name -contains 'body' -or $t.Bones.PSObject.Properties.Name -contains 'leftLeg') { throw 'EMPTY.isTwoHanded() / the Jappa pack counted as true' }
+    Eq $t.Bones.head.rotation[2] 28.6479 'the right main arm (HumanoidArm.RIGHT)'
+    $cases = @($t.Todo | Where-Object Case)
+    Eq (@($cases | ForEach-Object Java) -join ' | ') 'if (entity.getMainArm() == HumanoidArm.RIGHT) { this.head.zRot = 0.5F; }' 'only the main arm is a case'
+    if ($cases[0].Reason -notlike '*counts entity.getMainArm() as HumanoidArm.RIGHT (Mob.finalizeSpawn*') { throw "reason: $($cases[0].Reason)" }
+    Eq ($cases[0].Affects -join ',') 'head.zRot'
+    if ($t.Translated -notcontains 'this.poseRightArm(entity);') { throw 'poseRightArm with the fixed EMPTY arm pose is not translated' }
+    if (-not ($t.Res.Notes | Where-Object { $_ -like 'catalog baseCase: this.leftArmPose is ArmPose.EMPTY on every frame*at line 6 (no case entry)' })) { throw "no note on the fixed arm pose: $($t.Res.Notes -join ' / ')" }
+    # without the catalog the arm pose is not known: the != counts as true (the old base case), a case entry
+    $u = Translate-Test @'
+public class TestTroll2 extends HumanoidModel<Zombie> {
+    public TestTroll2(ModelPart root) { super(root); }
+    public void setupAnim(Zombie entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.rightArm.xRot = 0.0F;
+        if (this.leftArmPose != ArmPose.EMPTY) { this.rightArm.xRot += Mth.PI; }
+    }
+}
+'@ $humanoidMesh
+    if (-not (TodoOf $u 'if (this.leftArmPose').Case) { throw 'without baseCase the arm pose condition is not a case' }
+}
+Test 'setupAnim -> Molang: the real Troll and Upper Goblin Knight take ArmPose.EMPTY (arms at their sides, the shield arm held)' {
+    $a = ($files['assets/gen/geo/caves/rp/animations/troll.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.troll.base'.bones
+    # attackTime 0: the walk swing only (TF: no PI from the arm poses); attacking: x - PI * (1 - attackTime)
+    Eq $a.rightArm.rotation[0] '((variable.attack_time > 0) ? math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed - variable.attack_time * (-3.1416) - 3.1416 : math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed) * 57.2958 + math.sin(query.life_time * 76.7763) * 2.8648'
+    $m = BoneMap 'caves' 'troll'
+    foreach ($e in $m.setupAnim.todo) { if ($e.java -like '*ArmPose*') { throw "troll: $($e.java) is still a case" } }
+    $u = BoneMap 'stronghold' 'upper_goblin_knight'
+    foreach ($e in $u.setupAnim.todo) { if ($e.java -like '*ArmPose*') { throw "upper_goblin_knight: $($e.java) is still a case" } }
+    $shield = @($u.setupAnim.todo | Where-Object { $_.java -eq 'boolean hasShield = entity.hasShield();' })[0]
+    if ($shield.why -notlike '*counts entity.hasShield() as true (*') { throw "hasShield: $($shield.why)" }
+    $ua = ($files['assets/gen/geo/stronghold/rp/animations/upper_goblin_knight.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.upper_goblin_knight.base'.bones
+    # with the shield the left arm swings 0.2 (leftConstraint), and no '* 0.5 - PI / 10' of a non-EMPTY arm pose
+    if ($ua.leftArm.rotation[0] -notmatch '\* 0\.2 ' -or $ua.leftArm.rotation[0] -match '- 18$') { throw "upper_goblin_knight leftArm.xRot: $($ua.leftArm.rotation[0])" }
+    $lower = BoneMap 'stronghold' 'lower_goblin_knight'
+    $ride = @($lower.setupAnim.todo | Where-Object { $_.java -eq 'if (entity.isVehicle()) {' })[0]
+    if ($ride.why -notlike '*counts entity.isVehicle() as true (LowerGoblinKnight.finalizeSpawn*') { throw "lower knight ridden: $($ride.why)" }
+}
+Test 'setupAnim -> Molang: a branch that returns early is not taken, and the rest of the method is its case' {
+    $t = Translate-Test @'
+public class TestReturn {
+    private final ModelPart head;
+    public TestReturn(ModelPart root) { this.head = root.getChild("head"); }
+    public void setupAnim(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        if (!entity.isAlive()) return;
+        this.head.xRot = 1.0F;
+        if (entity.isAngry()) { this.head.yRot = 0.5F; } else { return; }
+        this.head.zRot = 0.25F;
+    }
+}
+'@ $headMesh
+    Eq ($t.Bones.head.rotation -join ',') '57.2958,28.6479,14.3239' 'every statement after the returns is on the base path'
+    $alive = TodoOf $t 'if (!entity.isAlive())'
+    if (-not $alive.Case -or $alive.Reason -notlike '*counts !entity.isAlive() as false*the if branch returns early*') { throw "isAlive: $($alive.Reason)" }
+    Eq ($alive.Affects -join ',') 'head.xRot,head.yRot,head.zRot' 'what the method sets after it'
+    $angry = TodoOf $t 'if (entity.isAngry())'
+    if ($angry.Reason -notlike '*counts !(entity.isAngry()) as false*runs the if branch*the else branch returns early*') { throw "isAngry: $($angry.Reason)" }
+    Eq ($angry.Affects -join ',') 'head.yRot,head.zRot'
+}
+Test 'setupAnim -> Molang: an assignment inside a condition runs first; behind && it makes its target unknown' {
+    $t = Translate-Test @'
+public class TestCondAssign {
+    private final ModelPart head, body;
+    public TestCondAssign(ModelPart root) { this.head = root.getChild("head"); this.body = root.getChild("body"); }
+    public void setupAnim(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        if ((this.head.yRot = ageInTicks) > 2.0F) { this.head.zRot = 1.0F; }
+        this.head.xRot = this.head.yRot * 2.0F;
+        if (entity.isAngry() && (this.body.xRot = 1.0F) > 0.0F) { }
+        this.body.xRot += 0.5F;
+    }
+}
+'@ @'
+    public static LayerDefinition create() {
+        MeshDefinition mesh = new MeshDefinition();
+        mesh.getRoot().addOrReplaceChild("head", CubeListBuilder.create().addBox(0, 0, 0, 1, 1, 1), PartPose.ZERO);
+        mesh.getRoot().addOrReplaceChild("body", CubeListBuilder.create().addBox(0, 0, 0, 1, 1, 1), PartPose.ZERO);
+        return LayerDefinition.create(mesh, 16, 16);
+    }
+'@
+    Eq $t.Bones.head.rotation[1] 'query.life_time * 1145.9156' 'head.yRot = ageInTicks (the assignment in the condition)'
+    Eq $t.Bones.head.rotation[0] 'query.life_time * 2291.8312' 'a later read sees the assigned value'
+    Eq $t.Bones.head.rotation[2] '((query.life_time * 20 > 2) ? 1 : 0) * 57.2958' 'the condition reads the assigned value'
+    if ($t.Bones.PSObject.Properties.Name -contains 'body') { throw "body.xRot (assigned behind &&) has a channel: $($t.Bones.body | ConvertTo-Json -Compress)" }
+    $andWhy = (TodoOf $t 'if (entity.isAngry() &&').Reason
+    if ($andWhy -notlike '*an assignment inside the condition (this.body.xRot = 1F)*unknown afterwards*') { throw "no report of the assignment behind the &&: $andWhy" }
+    Eq (TodoOf $t 'this.body.xRot += 0.5F').Reason 'previous value at line 7 not translated'
+}
+Test 'setupAnim -> Molang: one branch keeps the vanilla pose: the base animation takes the one that sets it (LichModel pattern)' {
+    $t = Translate-Test @'
+public class TestLichArm extends HumanoidModel<Zombie> {
+    public TestLichArm(ModelPart root) { super(root); }
+    public void setupAnim(Zombie entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        if (entity.tickCount > 0) {
+            this.leftArm.zRot = 0.5F;
+            this.leftArm.xRot = 1.0F;
+        } else {
+            this.leftArm.xRot = 0.0F;
+        }
+    }
+}
+'@ $humanoidMesh
+    Eq $t.Bones.leftArm.rotation[2] 28.6479 'the if branch (0.5 rad), not dropped'
+    Eq $t.Bones.leftArm.rotation[0] '((query.life_time * 20 > 0) ? 1 : 0) * 57.2958'
+    $c = TodoOf $t 'if (entity.tickCount > 0)'
+    if (-not $c.Case -or $c.Reason -notlike '*leftArm.zRot: the base animation takes the if branch, which sets it (query.life_time * 20 > 0 holds on every frame after the first)*') { throw "reason: $($c.Reason)" }
+    Eq ($c.Affects -join ',') 'leftArm.zRot'
+    if (@($t.Res.OverridesVanilla.Keys) -notcontains 'leftArm.zRot') { throw 'leftArm.zRot is not in overrides_vanilla' }
+    $lich = ($files['assets/gen/geo/lich/rp/animations/lich.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.lich.base'.bones
+    Eq $lich.leftArm.rotation[2] 'math.cos(query.life_time * 297.938) * (-8.5944) + 25.7831' 'LichModel: 0.5 - (cos(age * 0.26) * 0.15 + 0.05)'
+}
+Test 'catalog baseCase: every entry is well-formed and used by a model' {
+    $errs = [System.Collections.Generic.List[string]]::new()
+    $bad = [Gf.Models.Generator]::ParseBaseCases(([System.Text.Json.JsonDocument]::Parse('{"values":[{"scope":"X","expr":"entity.a()","value":true},{"scope":"X","expr":"entity.b()","value":1,"why":"w"},{"scope":"X","expr":"entity.b()","value":2,"why":"w"}]}')).RootElement, $errs)
+    Eq $bad.Count 1 'the entry without why and the duplicate are rejected'
+    Eq $errs.Count 2
+    $texts = [System.Collections.Generic.List[string]]::new()
+    foreach ($k in $files.Keys) {
+        if ($k -notlike 'assets/gen/geo/*/bones/*.json') { continue }
+        $sa = ($files[$k] | ConvertFrom-Json).setupAnim
+        if (-not $sa) { continue }
+        foreach ($n in @($sa.notes)) { if ($n) { $texts.Add($n) } }
+        foreach ($e in @($sa.todo)) { if ($e.why) { $texts.Add($e.why) } }
+    }
+    $all = $texts -join "`n"
+    $modelSrc = (Get-ChildItem (Join-Path (Get-GfTfJavaRoot) 'twilightforest/client/model/entity') -Filter *.java | ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
+    foreach ($b in $gen.BaseCases) {
+        $needle = if ($b.Fixed) { "catalog baseCase: $($b.Expr) is $($b.ValueText) on every frame" } else { " as $($b.ValueText) ($($b.Why))" }
+        if ($all.Contains($needle)) { continue }
+        # read only off the base path (this.rightArmPose.isTwoHanded() for a left-handed mob): TF's models
+        # must still use it
+        $tail = ($b.Expr -replace '^(entity|this)\.', '') -replace '\(\*\)$', '('
+        if (-not $modelSrc.Contains($tail)) { throw "baseCase $($b.Scope) / $($b.Expr) is not used by any model" }
+    }
 }
 Test 'catalog.json carries the LGPL attribution of the TF code its extracts translate' {
     $catalog = Get-Content (Join-Path $PSScriptRoot 'catalog.json') -Raw | ConvertFrom-Json

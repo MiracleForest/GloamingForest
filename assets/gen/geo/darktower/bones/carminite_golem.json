@@ -101,7 +101,7 @@
   "setupAnim": {
     "class": "CarminiteGolemModel",
     "identifier": "animation.twilightforest.carminite_golem.base",
-    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true); the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
+    "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)", "the base animation is the case in which every condition that does not translate is false (a negated one true), entity state catalog.json's baseCase lists takes the value it has in TF's common state, and a branch that returns early is not taken; the todo entries with 'affects' name those conditions and the channels that differ when they hold"],
     "translated": ["this.rightArm.xRot = (-0.2F + 1.5F * Mth.triangleWave(limbSwing, 13.0F)) * limbSwingAmount;", "this.leftArm.xRot = (-0.2F - 1.5F * Mth.triangleWave(limbSwing, 13.0F)) * limbSwingAmount;", "this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.head.xRot = headPitch * Mth.DEG_TO_RAD;", "this.leftLeg.xRot = -1.5F * Mth.triangleWave(limbSwing, 13.0F) * limbSwingAmount;", "this.rightLeg.xRot = 1.5F * Mth.triangleWave(limbSwing, 13.0F) * limbSwingAmount;", "this.leftLeg.yRot = 0.0F;", "this.rightLeg.yRot = 0.0F;", "this.rightArm.zRot = Mth.cos(ageInTicks * 0.09F) * 0.05F + 0.05F;", "this.leftArm.zRot = -Mth.cos(ageInTicks * 0.09F) * 0.05F - 0.05F;"],
     "todo": [
       {
