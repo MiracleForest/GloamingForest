@@ -72,9 +72,14 @@ pages), a `texScale`, visible-face sets or a scaled extract gets per-face UV wit
 west `[u+d+w, v+d]`, up `[u+d, v] w×d`, down `[u+d+w, v+d] w×−d`; `mirror()` swaps east / west and flips every
 face horizontally.
 
-Names: Java part names stay, except the vanilla skeleton names at the root (`right_arm` → `rightArm`, ...,
-`right_hind_leg` → `leg0`, `left_hind_leg` → `leg1`, `right_front_leg` → `leg2`, `left_front_leg` → `leg3`) so
-the vanilla humanoid / quadruped animations apply. A name used twice (Snow Queen's `spike_4` under each crown
+Names: Java part names stay, except the vanilla skeleton names at the root of a model of that vanilla family
+(the layer's model class, catalog `animClass` or the supplier's class): `right_arm` → `rightArm`, ... in a
+`HumanoidModel` (and its vanilla subclasses `ZombieModel`, `SkeletonModel`, ...), `right_hind_leg` → `leg0`,
+`left_hind_leg` → `leg1`, `right_front_leg` → `leg2`, `left_front_leg` → `leg3` in a `QuadrupedModel` (`PigModel`,
+`SheepModel`, ...), so the vanilla humanoid / quadruped animations apply. Other models keep TF's names, which need
+not follow the vanilla sides: the hydra's (a `HierarchicalModel`) `left_leg` sits at −x where Bedrock's `leftLeg`
+is at +x, and the Minoshroom (a `HumanoidModel`: `rightArm` ...) keeps `left_front_leg` / `right_front_leg`
+(at −x / +x, mirrored against `leg3` / `leg2`), as do the quest ram and the carminite golem. A name used twice (Snow Queen's `spike_4` under each crown
 piece) becomes `<parent bone>_<name>`. A root `hat` with the head's pivot and rotation is parented to `head`
 (Java copies the head pose to the hat every frame). `addOrReplaceChild` keeps the replaced part's children,
 as Minecraft 1.21.1 does. Worn and held extracts prefix every bone with their wrapper's name
@@ -419,7 +424,8 @@ extracts), 45 attachables. The Curios charm of life necklace (`CuriosCompat`) is
 - `pwsh tools/models/test.ps1`: the lexer and parser, the interpreter's Java semantics (integer division,
   float arithmetic, string concatenation, `Mth`'s sine table, `java.util.Random` values for seed 42), the
   conversion against Bedrock's vanilla pig geometry, per-face UV and mirror, unique bone names, euler
-  round trips, setupAnim → Molang (the position channel signs; the base path: unknown values and the compound
+  round trips, the vanilla skeleton names only in their family (Minoshroom, quest ram, golem, hydra keep TF's),
+  setupAnim → Molang (the position channel signs; the base path: unknown values and the compound
   assignments after them, statements that leave `translated`, cases and their `affects`, loops and nested
   assignments, assignments inside conditions, early returns, base-case values (the TrollModel pattern) and
   every catalog entry in use, vanilla deltas and `overrides_vanilla`, a branch that keeps the vanilla pose (the

@@ -98,7 +98,7 @@
           ]
         },
         {
-          "name": "rightLeg",
+          "name": "right_leg",
           "pivot": [-1.5, 3, 1],
           "cubes": [
             {
@@ -110,7 +110,7 @@
         },
         {
           "name": "right_foot",
-          "parent": "rightLeg",
+          "parent": "right_leg",
           "pivot": [-1.5, 1, 2],
           "rotation": [30, 0, 0],
           "cubes": [
@@ -122,7 +122,7 @@
           ]
         },
         {
-          "name": "leftLeg",
+          "name": "left_leg",
           "pivot": [0.5, 3, 1],
           "cubes": [
             {
@@ -134,7 +134,7 @@
         },
         {
           "name": "left_foot",
-          "parent": "leftLeg",
+          "parent": "left_leg",
           "pivot": [0.5, 1, 2],
           "rotation": [30, 0, 0],
           "cubes": [

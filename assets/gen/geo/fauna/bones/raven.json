@@ -84,7 +84,7 @@
     },
     {
       "java": "right_leg",
-      "bone": "rightLeg",
+      "bone": "right_leg",
       "pivot": [-1.5, 3, 1],
       "rotation": [0, 0, 0],
       "java_offset": [-1.5, 21, 1],
@@ -94,7 +94,7 @@
     {
       "java": "right_leg/right_foot",
       "bone": "right_foot",
-      "parent": "rightLeg",
+      "parent": "right_leg",
       "pivot": [-1.5, 1, 2],
       "rotation": [30, 0, 0],
       "java_offset": [0, 2, 1],
@@ -103,7 +103,7 @@
     },
     {
       "java": "left_leg",
-      "bone": "leftLeg",
+      "bone": "left_leg",
       "pivot": [0.5, 3, 1],
       "rotation": [0, 0, 0],
       "java_offset": [0.5, 21, 1],
@@ -113,7 +113,7 @@
     {
       "java": "left_leg/left_foot",
       "bone": "left_foot",
-      "parent": "leftLeg",
+      "parent": "left_leg",
       "pivot": [0.5, 1, 2],
       "rotation": [30, 0, 0],
       "java_offset": [0, 2, 1],
@@ -132,7 +132,7 @@
         "end_line": 171,
         "java": "if (entity.isBirdLanded()) {",
         "why": "the base animation counts entity.isBirdLanded() as true (FlyingBird starts landed (its constructor) and lands again soon after it takes off (customServerAiStep)); so it runs the if branch and leaves out lines 169-171",
-        "affects": ["leftLeg.y", "rightLeg.y"]
+        "affects": ["left_leg.y", "right_leg.y"]
       }
     ]
   }

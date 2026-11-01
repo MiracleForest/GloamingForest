@@ -4,10 +4,10 @@
     "animation.twilightforest.hydra.base": {
       "loop": true,
       "bones": {
-        "leftLeg": {
+        "left_leg": {
           "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141", 0, 0]
         },
-        "rightLeg": {
+        "right_leg": {
           "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141", 0, 0]
         }
       }

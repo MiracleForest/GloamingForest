@@ -247,7 +247,26 @@ Test 'Hydra (HydraModel.create): body, legs, three heads with jaws and frills, n
     Eq (BoneOf $g 'neck_1c').parent 'neck_1b'
     Eq ((BoneOf $g 'neck_1c').pivot -join ',') '-74,104,-32' # -42-16-16, 24-(-48-16-16), 0-16-16
     Eq ((BoneOf $g 'tail_4').pivot -join ',') '0,18,204'      # z 108 + 3 * 32
-    Eq (BoneOf $g 'leftLeg').cubes[0].mirror $true
+    # a HierarchicalModel keeps its Java names (its left_leg sits at -x, the vanilla leftLeg at +x)
+    Eq (BoneOf $g 'left_leg').cubes[0].mirror $true
+    Eq ((BoneOf $g 'left_leg').pivot -join ',') '-48,48,0'
+}
+Test 'vanilla skeleton names only in their vanilla family (rightArm in HumanoidModel, leg0..leg3 in QuadrupedModel)' {
+    # Minoshroom (a HumanoidModel): the humanoid names, but its quadruped legs keep TF's names (its
+    # left_front_leg sits at -x, Bedrock's vanilla leg3 at +x)
+    $m = @((Geo 'labyrinth' 'minoshroom').bones.name)
+    foreach ($b in 'rightArm', 'leftArm', 'rightLeg', 'leftLeg', 'left_front_leg', 'right_front_leg', 'left_back_leg', 'right_back_leg') { if ($m -notcontains $b) { throw "minoshroom: no bone $b ($($m -join ','))" } }
+    foreach ($b in 'leg0', 'leg1', 'leg2', 'leg3') { if ($m -contains $b) { throw "minoshroom has a vanilla quadruped bone $b" } }
+    Eq ((BoneOf (Geo 'labyrinth' 'minoshroom') 'left_front_leg').pivot -join ',') '-3,12,-5'
+    $q = @((Geo 'questcamps' 'quest_ram').bones.name)   # a HierarchicalModel
+    if ($q -contains 'leg2' -or $q -notcontains 'right_front_leg') { throw "quest_ram: $($q -join ',')" }
+    $g = @((Geo 'darktower' 'carminite_golem').bones.name)   # a HierarchicalModel
+    if ($g -contains 'rightArm' -or $g -notcontains 'right_arm') { throw "carminite_golem: $($g -join ',')" }
+    foreach ($n in 'bunny', 'boar', 'deer', 'squirrel', 'bighorn_sheep') {   # QuadrupedModel / PigModel / SheepModel
+        $b = @((Geo 'fauna' $n).bones.name)
+        foreach ($l in 'leg0', 'leg1', 'leg2', 'leg3') { if ($b -notcontains $l) { throw "$n has no $l" } }
+    }
+    if (@((Geo 'artifacts' 'loyal_zombie').bones.name) -notcontains 'rightArm') { throw 'loyal_zombie (LoyalZombieModel, a HumanoidModel) has no rightArm' }
 }
 Test 'Naga segment (NagaModel.create, naga_body): one 16x16x16 cube at the pivot' {
     $g = Geo 'naga' 'naga_body'

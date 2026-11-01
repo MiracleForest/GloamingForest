@@ -170,7 +170,7 @@
     },
     {
       "java": "left_front_leg",
-      "bone": "leg3",
+      "bone": "left_front_leg",
       "pivot": [-3, 12, -5],
       "rotation": [0, 0, 0],
       "java_offset": [-3, 12, -5],
@@ -179,7 +179,7 @@
     },
     {
       "java": "right_front_leg",
-      "bone": "leg2",
+      "bone": "right_front_leg",
       "pivot": [3, 12, -5],
       "rotation": [0, 0, 0],
       "java_offset": [3, 12, -5],
@@ -273,16 +273,16 @@
           "leftArm.y",
           "leftArm.z",
           "leftArm.zRot",
-          "leg2.xRot",
-          "leg2.y",
-          "leg2.z",
-          "leg3.xRot",
-          "leg3.y",
-          "leg3.z",
+          "left_front_leg.xRot",
+          "left_front_leg.y",
+          "left_front_leg.z",
           "rightArm.xRot",
           "rightArm.y",
           "rightArm.z",
-          "rightArm.zRot"
+          "rightArm.zRot",
+          "right_front_leg.xRot",
+          "right_front_leg.y",
+          "right_front_leg.z"
         ]
       },
       {
@@ -290,7 +290,7 @@
         "end_line": 283,
         "java": "if (f1 > 0) {",
         "why": "the condition is constant on the base path (it uses values of the cases at lines 251); so it runs neither branch and leaves out lines 271-283",
-        "affects": ["cow_torso.xRot", "leftArm.xRot", "leftArm.zRot", "leg2.xRot", "leg3.xRot", "rightArm.xRot", "rightArm.zRot"]
+        "affects": ["cow_torso.xRot", "leftArm.xRot", "leftArm.zRot", "left_front_leg.xRot", "rightArm.xRot", "rightArm.zRot", "right_front_leg.xRot"]
       }
     ]
   }

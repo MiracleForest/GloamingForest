@@ -97,7 +97,7 @@
     },
     {
       "java": "left_front_leg",
-      "bone": "leg3",
+      "bone": "left_front_leg",
       "pivot": [6, 17, -10.5],
       "rotation": [0, 0, 0],
       "java_offset": [6, 7, -10.5],
@@ -106,7 +106,7 @@
     },
     {
       "java": "right_front_leg",
-      "bone": "leg2",
+      "bone": "right_front_leg",
       "pivot": [-6, 17, -10.5],
       "rotation": [0, 0, 0],
       "java_offset": [-6, 7, -10.5],
@@ -322,12 +322,12 @@
       {
         "line": 323,
         "java": "this.leftFrontLeg.z = -11 - count;",
-        "why": "leg3.z (line 323) is not translated: local 'count' (line 314) is not translated"
+        "why": "left_front_leg.z (line 323) is not translated: local 'count' (line 314) is not translated"
       },
       {
         "line": 324,
         "java": "this.rightFrontLeg.z = -11 - count;",
-        "why": "leg2.z (line 324) is not translated: local 'count' (line 314) is not translated"
+        "why": "right_front_leg.z (line 324) is not translated: local 'count' (line 314) is not translated"
       },
       {
         "line": 327,

@@ -25,7 +25,7 @@
     },
     {
       "java": "right_leg",
-      "bone": "rightLeg",
+      "bone": "right_leg",
       "pivot": [48, 48, 0],
       "rotation": [0, 0, 0],
       "java_offset": [48, -24, 0],
@@ -34,7 +34,7 @@
     },
     {
       "java": "left_leg",
-      "bone": "leftLeg",
+      "bone": "left_leg",
       "pivot": [-48, 48, 0],
       "rotation": [0, 0, 0],
       "java_offset": [-48, -24, 0],

@@ -2283,7 +2283,7 @@
       "identifier": "animation.twilightforest.carminite_golem.base",
       "file": "animations/carminite_golem.base.json",
       "unit": "darktower",
-      "bones": ["head", "leftArm", "leftLeg", "rightArm", "rightLeg"]
+      "bones": ["head", "left_arm", "left_leg", "right_arm", "right_leg"]
     },
     {
       "identifier": "animation.twilightforest.chain.base",
@@ -2337,7 +2337,7 @@
       "identifier": "animation.twilightforest.hydra.base",
       "file": "animations/hydra.base.json",
       "unit": "hydra",
-      "bones": ["leftLeg", "rightLeg"]
+      "bones": ["left_leg", "right_leg"]
     },
     {
       "identifier": "animation.twilightforest.hydra_head.base",
@@ -2403,7 +2403,7 @@
       "identifier": "animation.twilightforest.minoshroom.base",
       "file": "animations/minoshroom.base.json",
       "unit": "labyrinth",
-      "bones": ["hat", "head", "leftArm", "leftLeg", "left_back_leg", "leg2", "leg3", "rightArm", "rightLeg", "right_back_leg"]
+      "bones": ["hat", "head", "leftArm", "leftLeg", "left_back_leg", "left_front_leg", "rightArm", "rightLeg", "right_back_leg", "right_front_leg"]
     },
     {
       "identifier": "animation.twilightforest.minotaur.base",
@@ -2451,13 +2451,13 @@
       "identifier": "animation.twilightforest.quest_ram.base",
       "file": "animations/quest_ram.base.json",
       "unit": "questcamps",
-      "bones": ["head", "left_back_leg", "leg2", "leg3", "neck", "right_back_leg"]
+      "bones": ["head", "left_back_leg", "left_front_leg", "neck", "right_back_leg", "right_front_leg"]
     },
     {
       "identifier": "animation.twilightforest.raven.base",
       "file": "animations/raven.base.json",
       "unit": "fauna",
-      "bones": ["head", "leftLeg", "left_wing", "rightLeg", "right_wing"]
+      "bones": ["head", "left_leg", "left_wing", "right_leg", "right_wing"]
     },
     {
       "identifier": "animation.twilightforest.redcap.base",

@@ -43,7 +43,7 @@
     },
     {
       "java": "right_arm",
-      "bone": "rightArm",
+      "bone": "right_arm",
       "pivot": [-8, 36, 0],
       "rotation": [0, 0, 0],
       "java_offset": [-8, -12, 0],
@@ -52,7 +52,7 @@
     },
     {
       "java": "left_arm",
-      "bone": "leftArm",
+      "bone": "left_arm",
       "pivot": [8, 36, 0],
       "rotation": [0, 0, 0],
       "java_offset": [8, -12, 0],
@@ -80,7 +80,7 @@
     },
     {
       "java": "right_leg",
-      "bone": "rightLeg",
+      "bone": "right_leg",
       "pivot": [-1, 22, 0],
       "rotation": [0, 0, 0],
       "java_offset": [-1, 2, 0],
@@ -89,7 +89,7 @@
     },
     {
       "java": "left_leg",
-      "bone": "leftLeg",
+      "bone": "left_leg",
       "pivot": [1, 22, 0],
       "rotation": [0, 0, 0],
       "java_offset": [1, 2, 0],
@@ -114,7 +114,7 @@
         "end_line": 139,
         "java": "if (timer > 0) {",
         "why": "the base animation counts timer > 0 as false; so it runs the else branch and leaves out lines 134-136",
-        "affects": ["leftArm.xRot", "rightArm.xRot"]
+        "affects": ["left_arm.xRot", "right_arm.xRot"]
       }
     ]
   }

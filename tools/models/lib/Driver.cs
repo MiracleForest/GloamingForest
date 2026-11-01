@@ -282,8 +282,9 @@ namespace Gf.Models
             string id = geoPrefix + name;
             var opt = new ConvertOptions { Identifier = id };
             string animClass = Str(spec, "animClass") ?? info.SupplierClass;
-            foreach (var kv in Converter.HumanoidNames) opt.Rename[kv.Key] = kv.Value;
-            foreach (var kv in Converter.QuadrupedNames) opt.Rename[kv.Key] = kv.Value;
+            // the vanilla skeleton names only in the vanilla family of the layer's model class
+            var modelCls = animClass != null ? ClassPath.Find(animClass, null) : null;
+            foreach (var kv in Converter.RenamesFor(modelCls != null ? NewTranslator().VanillaBaseOf(modelCls) : null)) opt.Rename[kv.Key] = kv.Value;
             var def = info.Def;
             var size = Prop(spec, "textureSize");
             if (size.ValueKind == JsonValueKind.Array)

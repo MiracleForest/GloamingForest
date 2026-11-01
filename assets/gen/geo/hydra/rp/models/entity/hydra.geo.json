@@ -24,7 +24,7 @@
           ]
         },
         {
-          "name": "rightLeg",
+          "name": "right_leg",
           "pivot": [48, 48, 0],
           "cubes": [
             {
@@ -50,7 +50,7 @@
           ]
         },
         {
-          "name": "leftLeg",
+          "name": "left_leg",
           "pivot": [-48, 48, 0],
           "cubes": [
             {

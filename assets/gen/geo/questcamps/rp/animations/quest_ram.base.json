@@ -10,10 +10,7 @@
         "left_back_leg": {
           "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 40.107", 0, 0]
         },
-        "leg2": {
-          "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 40.107", 0, 0]
-        },
-        "leg3": {
+        "left_front_leg": {
           "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 40.107", 0, 0]
         },
         "neck": {
@@ -21,6 +18,9 @@
         },
         "right_back_leg": {
           "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 40.107", 0, 0]
+        },
+        "right_front_leg": {
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 40.107", 0, 0]
         }
       }
     }
