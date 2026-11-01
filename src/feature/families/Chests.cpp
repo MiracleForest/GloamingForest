@@ -21,6 +21,8 @@
 #include <random>
 #include <set>
 
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/form/SimpleForm.h"
 #include "ll/api/service/Bedrock.h"
 
@@ -326,16 +328,29 @@ void countChanged(GlobalPos const& half) {
     }
 }
 
+/// AbstractContainerMenu.removed: the cursor stack goes back to the player (dropped at the chest
+/// when the player is gone already).
+void returnCarried(std::int64_t uid, Viewer const& v) {
+    if (game::items::isEmpty(v.carried)) return;
+    if (auto* p = playerById(uid)) {
+        give(*p, v.carried);
+    } else if (auto* region = regionOf(v.opened.dim)) {
+        drop(*region, game::blockPos(v.opened), v.carried);
+    }
+}
+
 void removeViewer(std::int64_t uid) {
     auto it = viewers().find(uid);
     if (it == viewers().end()) return;
-    auto     halves  = it->second.halves;
-    auto     carried = it->second.carried;
+    Viewer v = std::move(it->second);
     viewers().erase(it);
-    if (!game::items::isEmpty(carried)) {
-        if (auto* p = playerById(uid)) give(*p, carried);
-    }
-    for (auto const& h : halves) countChanged(h);
+    returnCarried(uid, v);
+    for (auto const& h : v.halves) countChanged(h);
+}
+
+ll::event::ListenerPtr& disconnectListener() {
+    static ll::event::ListenerPtr l;
+    return l;
 }
 
 void addViewer(Player& player, GlobalPos const& opened, bool native) {
@@ -525,7 +540,8 @@ std::optional<BlockPos> chestPartner(BlockSource& region, BlockPos const& pos) {
     if (!b || !isChest(entryOf(*b)) || typeOf(*b) == "single") return std::nullopt;
     BlockPos     p = offset(pos, connectedDirection(*b));
     Block const* o = blockAt(region, p);
-    if (!o || o->getTypeName() != b->getTypeName() || typeOf(*o) == "single" || typeOf(*o) == typeOf(*b)) return std::nullopt;
+    // DoubleBlockCombiner.combineWithNeigbour: the same block, the other type, the same facing
+    if (!o || o->getTypeName() != b->getTypeName() || typeOf(*o) == "single" || typeOf(*o) == typeOf(*b) || facingOf(*o) != facingOf(*b)) return std::nullopt;
     return p;
 }
 
@@ -570,7 +586,12 @@ void      chestSet(GlobalPos const& pos, int slot, ItemStack const& stack) { set
 void chestsTick(int tick) {
     if (tick % 5 == 0 && !viewers().empty()) recheck();
 }
-void clearChests() { viewers().clear(); }
+void clearChests() {
+    // the world goes: cursor stacks back to the players still there
+    for (auto const& [uid, v] : viewers())
+        if (auto* p = playerById(uid); p && !game::items::isEmpty(v.carried)) give(*p, v.carried);
+    viewers().clear();
+}
 } // namespace detail
 
 void installChests() {
@@ -586,6 +607,10 @@ void installChests() {
             }));
         }
     }
+    // a player leaving with a chest open: its cursor stack back to its inventory first
+    disconnectListener() = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {
+        removeViewer(ev.self().getOrCreateUniqueID().rawID);
+    });
     static bool registered = false;
     if (registered) return;
     registered = true;
@@ -640,7 +665,11 @@ void installChests() {
 void uninstallChests() {
     for (auto id : handlerIds()) ia::remove(id);
     handlerIds().clear();
-    viewers().clear();
+    if (disconnectListener()) {
+        ll::event::EventBus::getInstance().removeListener(disconnectListener());
+        disconnectListener() = nullptr;
+    }
+    detail::clearChests();
 }
 
 } // namespace gf::feature::families

@@ -259,6 +259,18 @@ void installDoors() {
             ia::Match m;
             m.block = e->id;
             handlerIds().push_back(ia::onUseOn(m, useOn));
+            if (family != Family::Door) continue;
+            // DoorBlock.playerWillDestroy -> DoublePlantBlock.preventDropFromBottomPart: a creative
+            // player breaking the upper half takes the lower one without a drop (the upper half
+            // drops nothing itself: its BP permutation has the empty loot table; tools/families)
+            handlerIds().push_back(ia::onDestroyed(m, [](ia::DestroyContext const& c, bool destroyed) {
+                if (!destroyed || !c.player.isCreative() || !upperHalf(c.block)) return;
+                auto        lower = offset(c.pos, Down);
+                auto const* lb    = blockAt(lower);
+                if (!lb || lb->getTypeName() != c.blockId || upperHalf(*lb)) return;
+                if (auto* region = regionOf(lower.dim)) breakEffect(*region, game::blockPos(lower), *lb);
+                clear(lower);
+            }));
         }
     }
     static bool registered = false;

@@ -189,6 +189,17 @@ ll::coro::CoroTask<std::optional<GlobalPos>> place(Context& ctx, GlobalPos again
     co_return placed;
 }
 
+/// The dropped items within 2 blocks of `p`.
+std::vector<Actor*> itemsNear(Context& ctx, GlobalPos const& p) {
+    std::vector<Actor*> out;
+    auto*               region = ctx.region();
+    if (!region) return out;
+    AABB box{Vec3{p.x - 2.f, p.y - 2.f, p.z - 2.f}, Vec3{p.x + 3.f, p.y + 3.f, p.z + 3.f}};
+    for (Actor* a : region->getEntities(box, 0.0f))
+        if (a && a->getTypeName() == "minecraft:item") out.push_back(a);
+    return out;
+}
+
 int dustSignal(GlobalPos const& p) {
     auto const* dust = fam::blockAt(p);
     return dust ? fam::intState(*dust, "redstone_signal").value_or(-1) : -1;
@@ -316,6 +327,34 @@ GF_REGISTER_SELFTEST("families.door_pair", [](Context& ctx) -> ll::coro::CoroTas
     fam::clear(at(door, 0, 1, 0));
     co_await ctx.ticks(3);
     ctx.check(ctx.blockAt(door) != "gf_test:family_door", "the lower half goes with the upper half (got " + ctx.blockAt(door) + ")");
+    // the upper half broken with its drops (a survival player's break): one door, the lower half's
+    // (the upper half has no loot: Java's half=lower loot condition)
+    auto upper = at(door, 0, 1, 0);
+    ctx.setBlock(door, "gf_test:family_door", {{fam::state::Half, "lower"}});
+    ctx.setBlock(upper, "gf_test:family_door", {{fam::state::Half, "upper"}});
+    co_await ctx.ticks(2);
+    for (auto* item : itemsNear(ctx, door)) item->remove();
+    fam::destroyWithDrops(*ctx.region(), gf::game::blockPos(upper));
+    co_await ctx.ticks(4);
+    auto drops = itemsNear(ctx, door).size();
+    ctx.check(ctx.blockAt(door) != "gf_test:family_door", "the lower half goes with the broken upper half");
+    ctx.check(drops == 1u, "breaking the upper half drops one door (" + std::to_string(drops) + ")");
+    for (auto* item : itemsNear(ctx, door)) item->remove();
+    // a creative player breaking the upper half (GameMode::destroyBlock): no drop at all
+    // (DoorBlock.playerWillDestroy -> preventDropFromBottomPart)
+    ctx.setBlock(door, "gf_test:family_door", {{fam::state::Half, "lower"}});
+    ctx.setBlock(upper, "gf_test:family_door", {{fam::state::Half, "upper"}});
+    auto name = simPlayer(ctx).getRealName();
+    ctx.require(command("gamemode creative \"" + name + "\""), "the player in creative");
+    stand(ctx, upper, fam::North, "");
+    co_await ctx.ticks(2);
+    destroy(ctx, upper, Facing::North);
+    co_await ctx.ticks(4);
+    command("gamemode survival \"" + name + "\"");
+    drops = itemsNear(ctx, door).size();
+    ctx.check(ctx.blockAt(door) != "gf_test:family_door" && ctx.blockAt(upper) != "gf_test:family_door", "a creative player's break takes both halves");
+    ctx.check(drops == 0u, "and drops nothing (" + std::to_string(drops) + ")");
+    for (auto* item : itemsNear(ctx, door)) item->remove();
     (void)box;
 });
 
@@ -574,6 +613,11 @@ GF_REGISTER_SELFTEST("families.sign_edit", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(co_await click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:red_dye"), "a dye click");
     co_await ctx.ticks(2);
     ctx.check(gf::blockdata::get(p) && (*gf::blockdata::get(p))["sign"]["front"].value("color", "") == "red", "the dye colours the front");
+    // SignBlock.useItemOn: another item (and a dye that changes nothing) goes on to the editor
+    ctx.check(co_await click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:red_dye"), "the same dye again");
+    ctx.check(fam::detail::signEdit(ctx.player(), p, true, {"WWW again"}), "a dye that changes nothing opens the editor");
+    ctx.check(co_await click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:stick"), "a stick click");
+    ctx.check(fam::detail::signEdit(ctx.player(), p, true, {"WWW stick"}), "any other item opens the editor");
     ctx.check(co_await click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:honeycomb"), "a honeycomb click");
     co_await ctx.ticks(2);
     fam::detail::signEditorFor(ctx.player(), p, true);

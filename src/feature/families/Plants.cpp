@@ -428,7 +428,8 @@ void installPlants() {
     }
     // ---- potted plants: plant into a vanilla pot (FlowerPotBlock.useItemOn)
     handlerIds().push_back(ia::onUseOn({.block = "minecraft:flower_pot"}, [](ia::UseOnContext const& c) {
-        if (c.itemId.empty()) return ia::Result::Pass;
+        // ServerPlayerGameMode.useItemOn: sneaking with an item skips the block (the item's own use)
+        if (c.itemId.empty() || c.sneaking) return ia::Result::Pass;
         auto const* potted = pottedFor(c.itemId);
         if (!potted || !emptyVanillaPot(c.block)) return ia::Result::Pass;
         auto const* block = game::blockWith(potted->id);
@@ -443,11 +444,12 @@ void installPlants() {
         m.block = e->id;
         handlerIds().push_back(ia::onUseOn(m, [](ia::UseOnContext const& c) {
             auto const* e = entryOf(c.block);
-            if (!e) return ia::Result::Pass;
+            if (!e || (c.sneaking && !c.itemId.empty())) return ia::Result::Pass; // sneaking with an item: the item's use
             if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
             // FlowerPotBlock.useItemOn: a plant on a full pot does nothing; any other item takes
             // the plant out (PASS_TO_DEFAULT_BLOCK_INTERACTION -> useWithoutItem)
             if (!c.itemId.empty() && pottedFor(c.itemId)) return ia::Result::Consume;
+            if (!c.itemId.empty() && c.offhand) return ia::Result::Pass; // useWithoutItem: the main hand only
             // useWithoutItem: the plant back to the player (TF's SpecialFlowerPotBlock keeps it)
             if (!e->flag("special")) {
                 if (auto plant = makeItem(e->str("plant")); !plant.isNull()) give(c.player, plant);

@@ -10,8 +10,10 @@
 //   hang on (StandingAndWallBlockItem.getPlacementState, WallSignBlock / WallHangingSignBlock /
 //   CeilingHangingSignBlock.getStateForPlacement), then the editor for the placer;
 // - a sign without its support breaks (canSurvive / updateShape);
-// - using a sign: dyes, glow ink, ink sac and honeycomb on the side facing the player (other items
-//   do nothing to it), an empty hand opens the editor; a waxed sign takes nothing;
+// - using a sign: dyes, glow ink, ink sac and honeycomb on the side facing the player; an empty
+//   hand, any other item and an applicator that changes nothing open the editor (Java's
+//   PASS_TO_DEFAULT_BLOCK_INTERACTION; sneaking with an item uses the item); a waxed sign takes
+//   nothing (its fail sound);
 // - the editor (gf::screens "families.sign": the client mod's native editor, a form for vanilla
 //   clients) edits only for the player it was opened for (SignBlockEntity.playerWhoMayEdit), who
 //   may build and stays within reach; lines are cut at Java's line width (90 px, hanging signs 60).
@@ -113,14 +115,28 @@ int charWidth(unsigned char c) {
     }
 }
 
+/// The byte length of the UTF-8 sequence that starts with `c`.
+std::size_t utf8Length(unsigned char c) { return c < 0x80 ? 1 : (c >> 5) == 6 ? 2 : (c >> 4) == 14 ? 3 : 4; }
+
+/// At most `maxBytes` of `s`, cut between characters (JSON documents need valid UTF-8).
+std::string utf8Prefix(std::string const& s, std::size_t maxBytes) {
+    std::size_t end = 0;
+    while (end < s.size()) {
+        std::size_t len = utf8Length(static_cast<unsigned char>(s[end]));
+        if (end + len > maxBytes || end + len > s.size()) break;
+        end += len;
+    }
+    return s.substr(0, end);
+}
+
 /// The line cut where Java's SignEditScreen stops typing (line width in font pixels).
 std::string fitLine(std::string const& line, int maxWidth) {
     std::string out;
     int         width = 0;
-    for (std::size_t i = 0; i < line.size() && out.size() < static_cast<std::size_t>(kMaxLineChars);) {
+    for (std::size_t i = 0; i < line.size();) {
         unsigned char c   = static_cast<unsigned char>(line[i]);
-        std::size_t   len = c < 0x80 ? 1 : (c >> 5) == 6 ? 2 : (c >> 4) == 14 ? 3 : 4;
-        if (c == '\n' || c == '\r') break;
+        std::size_t   len = utf8Length(c);
+        if (c == '\n' || c == '\r' || i + len > line.size() || out.size() + len > static_cast<std::size_t>(kMaxLineChars)) break;
         int w = charWidth(c);
         if (width + w > maxWidth) break;
         width += w;
@@ -261,9 +277,10 @@ void sweepDisplays(BlockSource& region, LevelChunk& chunk) {
 
 // ---- companions ---------------------------------------------------------------------------------
 
+/// The text of the sign at `pos` to a companion (`doc` null: the sign is gone).
 void sendText(Player& p, GlobalPos const& pos, Json const& doc) {
     Json clean = doc;
-    clean.erase("display");
+    if (clean.is_object()) clean.erase("display");
     net::send(p, "signs.text", {{"dim", pos.dim}, {"x", pos.x}, {"y", pos.y}, {"z", pos.z}, {"sign", clean}});
 }
 
@@ -286,8 +303,8 @@ void broadcast(GlobalPos const& pos, Json const& doc) {
     });
 }
 
-/// Every 20 ticks: the signs of the chunks that came into a companion's range (Java sends block
-/// entity data with the chunk).
+/// Every 20 ticks: the signs of the loaded chunks that came into a companion's range (Java sends
+/// block entity data with the chunk; a chunk not loaded yet is sent once it is).
 void syncCompanions() {
     auto level = ll::service::getLevel();
     if (!level) return;
@@ -297,12 +314,17 @@ void syncCompanions() {
         auto uid = p.getOrCreateUniqueID().rawID;
         present.insert(uid);
         int   dim  = static_cast<int>(p.getDimensionId());
+        auto* region = regionOf(dim);
+        if (!region) return true;
         auto  at   = p.getPosition();
         int   pcx  = static_cast<int>(std::floor(at.x)) >> 4, pcz = static_cast<int>(std::floor(at.z)) >> 4;
         auto& have = companionChunks()[uid];
         std::set<std::tuple<int, int, int>> now;
-        for (int cx = pcx - kSyncChunks; cx <= pcx + kSyncChunks; ++cx)
-            for (int cz = pcz - kSyncChunks; cz <= pcz + kSyncChunks; ++cz) now.insert({dim, cx, cz});
+        for (int cx = pcx - kSyncChunks; cx <= pcx + kSyncChunks; ++cx) {
+            for (int cz = pcz - kSyncChunks; cz <= pcz + kSyncChunks; ++cz) {
+                if (region->hasChunksAt(BlockPos{cx * 16, 0, cz * 16}, 0, false)) now.insert({dim, cx, cz});
+            }
+        }
         for (auto const& c : now) {
             if (have.contains(c)) continue;
             bd::forEachInChunk(std::get<0>(c), std::get<1>(c), std::get<2>(c), [&p](GlobalPos const& pos, Json const& doc) {
@@ -533,24 +555,30 @@ bool applyItem(Player& player, GlobalPos const& pos, std::string const& itemId, 
 }
 
 ia::Result useSign(ia::UseOnContext const& c) {
+    // ServerPlayerGameMode.useItemOn: sneaking with an item skips the block (the item's own use)
     if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass;
     auto const* e = entryOf(c.block);
     if (!e) return ia::Result::Pass;
     if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
-    bool front = facingFront(c.block, *e, c.pos, c.player);
-    bool waxed = docAt(c.pos).value("waxed", false);
-    if (!c.itemId.empty()) {
-        // SignBlock.useItemOn: an applicator acts (or nothing happens); other items go on to their
-        // own use (SKIP_DEFAULT_BLOCK_INTERACTION)
-        if (!isApplicator(c.itemId)) return ia::Result::Pass;
-        if (mayBuild(c.player) && !waxed && !otherEditing(c.player, c.pos)) applyItem(c.player, c.pos, c.itemId, c.item, front);
-        return ia::Result::Consume;
-    }
-    // SignBlock.useWithoutItem
-    if (waxed) {
+    bool front    = facingFront(c.block, *e, c.pos, c.player);
+    bool waxed    = docAt(c.pos).value("waxed", false);
+    auto waxedHit = [&] {
+        // SignBlockEntity.getSignInteractionFailedSoundEvent
         bedrockSound(c.player.getDimensionBlockSource(), game::blockPos(c.pos), "block.sign.waxed_interact_fail");
         return ia::Result::Consume;
+    };
+    if (!c.itemId.empty()) {
+        // SignBlock.useItemOn: a waxed sign fails with any item; an applicator the player may use
+        // acts when it changes something (SignApplicator.canApplyToSign / tryApplyToSign)
+        if (waxed) return waxedHit();
+        if (isApplicator(c.itemId) && mayBuild(c.player) && !otherEditing(c.player, c.pos) && applyItem(c.player, c.pos, c.itemId, c.item, front)) {
+            return ia::Result::Consume;
+        }
+        // PASS_TO_DEFAULT_BLOCK_INTERACTION: the main hand goes on to useWithoutItem
+        if (c.offhand) return ia::Result::Pass;
     }
+    // SignBlock.useWithoutItem
+    if (waxed) return waxedHit();
     if (otherEditing(c.player, c.pos) || !mayBuild(c.player)) return ia::Result::Pass;
     openEditor(c.player, c.pos, front);
     return ia::Result::Consume;
@@ -716,8 +744,10 @@ void installSigns() {
         }
     }
     // the display entities of a broken sign
-    bd::onErase([](GlobalPos const&, Json const& doc, std::string const&) {
-        if (!doc.contains(kKey) || !doc[kKey].contains("display")) return;
+    bd::onErase([](GlobalPos const& pos, Json const& doc, std::string const&) {
+        if (!doc.contains(kKey)) return;
+        broadcast(pos, nullptr); // the companions that have its text drop it
+        if (!doc[kKey].contains("display")) return;
         for (auto const& [side, id] : doc[kKey]["display"].items()) {
             if (auto* a = entityById(id.is_number_integer() ? id.get<std::int64_t>() : 0)) a->remove();
         }
@@ -788,8 +818,7 @@ bool setText(core::GlobalPos const& pos, std::vector<std::string> const& lines, 
     auto side = nlohmann::json::array();
     for (int i = 0; i < fam::kLines; ++i) {
         std::string l = i < static_cast<int>(lines.size()) ? lines[i] : std::string();
-        if (l.size() > static_cast<std::size_t>(fam::kMaxLineChars)) l.resize(fam::kMaxLineChars);
-        side.push_back(l);
+        side.push_back(fam::utf8Prefix(l, fam::kMaxLineChars));
     }
     doc[front ? "front" : "back"]["lines"] = side;
     fam::store(pos, doc);

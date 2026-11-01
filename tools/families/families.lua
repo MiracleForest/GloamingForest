@@ -847,6 +847,9 @@ visual.door = function (doc, e, t, ctx)
     perm(doc, is(NS .. "half", "upper"), {["minecraft:material_instances"] = {["*"] = mat(tex(t, "top", "upper", "*"), m)}})
 end
 behaviour.door = function (doc)
+    -- Java's door loot drops only for half=lower (block_state_property): the upper half has none,
+    -- the lower half drops the door when it goes with the upper one (the runtime's updateShape)
+    perm(doc, is(NS .. "half", "upper"), {["minecraft:loot"] = "loot_tables/empty.json"})
     for _, f in ipairs(FACING4) do
         for _, open in ipairs({false, true}) do
             for _, right in ipairs({false, true}) do
