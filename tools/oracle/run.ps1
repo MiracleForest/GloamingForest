@@ -39,7 +39,11 @@ param(
     [string]$Out,
     [int]$MemoryMB = 4096,
     [int]$TimeoutMinutes = 180,
-    [int]$StartupMinutes = 15
+    [int]$StartupMinutes = 15,
+    # longest a single dump may take before the run fails (the RCON reply timeout)
+    [int]$DumpMinutes = 30,
+    # oracle work directories kept under <oracle home>\runs (failed runs keep their logs there)
+    [int]$KeepRuns = 5
 )
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot '../lib/Throttle.psm1') -Force
@@ -58,6 +62,7 @@ $Kinds = @($Kinds | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim(
 foreach ($k in $Kinds) { if ($k -notin ($globalKinds + $seedKinds)) { Write-Host "[oracle] unknown kind '$k' (known: $(($globalKinds + $seedKinds) -join ', '))" -ForegroundColor Red; exit 1 } }
 $allSeeds = @($spec.seeds | ForEach-Object { [long]$_ })
 if (-not $PSBoundParameters.ContainsKey('Seeds')) { $Seeds = $allSeeds }
+if (@($Seeds).Count -eq 0) { Write-Host '[oracle] -Seeds is empty' -ForegroundColor Red; exit 1 }
 
 if (-not ($AcceptEula -or $env:GF_ORACLE_ACCEPT_EULA -eq '1')) {
     Write-Host '[oracle] running the oracle starts a Minecraft server: pass -AcceptEula (or set GF_ORACLE_ACCEPT_EULA=1) to accept the Minecraft EULA (https://aka.ms/MinecraftEULA)' -ForegroundColor Red
@@ -93,15 +98,18 @@ $slot = $null
 $lock = $null
 $proc = $null
 try {
-    & (Join-Path $PSScriptRoot 'fetch.ps1') -Quiet | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw 'tools/oracle/fetch.ps1 failed' }
-    $dumper = Build-OracleDumper { param($m) Say $m }
-    Say "dumper: $dumper"
-
     [void](Enable-GfKillOnExit)
     try { $slot = Enter-GfSlot -Pool bds -Unit F13 -TimeoutMinutes $TimeoutMinutes }
     catch [System.TimeoutException] { Write-Host "[oracle] NOT RUN: $($_.Exception.Message)" -ForegroundColor Yellow; exit 2 }
-    $lock = Enter-GfLock -Path (Join-Path (Get-OracleHome) 'server.lock') -What 'oracle server' -TimeoutMinutes $TimeoutMinutes -Unit F13
+    # one oracle at a time owns the server directory, the JDK and the dumper cache
+    $lock = Enter-GfLock -Path (Get-OracleServerLockPath) -What 'oracle server' -TimeoutMinutes $TimeoutMinutes -Unit F13
+    & (Join-Path $PSScriptRoot 'fetch.ps1') -Quiet -NoServerLock | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'tools/oracle/fetch.ps1 failed' }
+    $dumper = Build-OracleDumper { param($m) Say $m }
+    Say "dumper: $dumper"
+    Get-ChildItem -LiteralPath (Split-Path $work) -Directory | Where-Object FullName -ne $work |
+        Sort-Object LastWriteTime -Descending | Select-Object -Skip ([Math]::Max(0, $KeepRuns - 1)) |
+        ForEach-Object { Remove-Item -Recurse -Force -LiteralPath $_.FullName -ErrorAction SilentlyContinue }
 
     $server = Get-OracleServerDir
     $java = Get-OracleJava
@@ -120,21 +128,6 @@ try {
         New-Item -ItemType Directory -Force (Join-Path $server 'mods') | Out-Null
         Copy-Item -LiteralPath (Get-OracleTfJar) -Destination (Join-Path $server 'mods')
         Copy-Item -LiteralPath $dumper -Destination (Join-Path $server 'mods')
-        $port = Get-OracleFreePort
-        $rconPort = Get-OracleFreePort
-        while ($rconPort -eq $port) { $rconPort = Get-OracleFreePort }
-        $password = [guid]::NewGuid().ToString('N')
-        $props = @(
-            '# written by tools/oracle/run.ps1 (GloamingForest unit F13)',
-            "level-seed=$seed", 'level-name=world', 'level-type=minecraft\:flat', 'generate-structures=true',
-            'online-mode=false', 'enforce-secure-profile=false', 'server-ip=127.0.0.1', "server-port=$port",
-            'enable-rcon=true', "rcon.port=$rconPort", "rcon.password=$password", 'broadcast-rcon-to-ops=false',
-            'enable-query=false', 'max-tick-time=-1', 'spawn-protection=0', 'view-distance=3', 'simulation-distance=3',
-            'sync-chunk-writes=false', 'difficulty=normal', 'gamemode=survival', 'max-players=1', 'spawn-monsters=true',
-            'motd=GloamingForest oracle'
-        )
-        [IO.File]::WriteAllLines((Join-Path $server 'server.properties'), [string[]]$props)
-        [IO.File]::WriteAllText((Join-Path $server 'eula.txt'), "# accepted for the oracle's private server (tools/oracle/run.ps1 -AcceptEula)`neula=true`n")
         $runSpec = [ordered]@{}
         foreach ($k in $spec.Keys) { $runSpec[$k] = $spec[$k] }
         $runSpec['source'] = [ordered]@{
@@ -142,23 +135,50 @@ try {
             minecraft = $pins.minecraft; neoforge = $pins.neoforge.version
         }
         [IO.File]::WriteAllText((Join-Path $server 'gf-oracle-spec.json'), ($runSpec | ConvertTo-Json -Depth 20))
-
+        [IO.File]::WriteAllText((Join-Path $server 'eula.txt'), "# accepted for the oracle's private server (tools/oracle/run.ps1 -AcceptEula)`neula=true`n")
         $log = Join-Path $work "server-$(Get-SeedName $seed).log"
         $stdin = Join-Path $work 'stdin.txt'
         [IO.File]::WriteAllText($stdin, '')
-        $jvm = @("-Xmx${MemoryMB}M", '-Xms1024M', '-Dfile.encoding=UTF-8', '-Dterminal.jline=false', '-Dterminal.ansi=false', "@$argsFile", 'nogui')
-        Say "starting the server (seed $seed, RCON on 127.0.0.1:$rconPort)"
-        $proc = Start-Process -FilePath $java -ArgumentList $jvm -WorkingDirectory $server -NoNewWindow -PassThru `
-            -RedirectStandardOutput $log -RedirectStandardError "$log.err" -RedirectStandardInput $stdin
 
         $rcon = $null
-        $deadline = (Get-Date).AddMinutes($StartupMinutes)
-        while (-not $rcon) {
-            if ($proc.HasExited) { throw "the server exited during startup (exit $($proc.ExitCode)); see $log" }
-            if ((Get-Date) -gt $deadline) { throw "the server did not open RCON within $StartupMinutes min; see $log" }
-            if (Select-String -LiteralPath $log -Pattern 'RCON running on' -Quiet -ErrorAction SilentlyContinue) {
-                try { $rcon = Connect-OracleRcon -Port $rconPort -Password $password } catch { Start-Sleep -Seconds 2 }
-            } else { Start-Sleep -Seconds 2 }
+        for ($attempt = 1; -not $rcon; $attempt++) {
+            if (Test-Path (Join-Path $server 'world')) { Remove-Item -Recurse -Force (Join-Path $server 'world') }
+            $port = Get-OracleFreePort
+            $rconPort = Get-OracleFreePort
+            while ($rconPort -eq $port) { $rconPort = Get-OracleFreePort }
+            $password = [guid]::NewGuid().ToString('N')
+            $props = @(
+                '# written by tools/oracle/run.ps1 (GloamingForest unit F13)',
+                "level-seed=$seed", 'level-name=world', 'level-type=minecraft\:flat', 'generate-structures=true',
+                'online-mode=false', 'enforce-secure-profile=false', 'server-ip=127.0.0.1', "server-port=$port",
+                'enable-rcon=true', "rcon.port=$rconPort", "rcon.password=$password", 'broadcast-rcon-to-ops=false',
+                'enable-query=false', 'max-tick-time=-1', 'spawn-protection=0', 'view-distance=3', 'simulation-distance=3',
+                'sync-chunk-writes=false', 'difficulty=normal', 'gamemode=survival', 'max-players=1', 'spawn-monsters=true',
+                'motd=GloamingForest oracle'
+            )
+            [IO.File]::WriteAllLines((Join-Path $server 'server.properties'), [string[]]$props)
+            $jvm = @("-Xmx${MemoryMB}M", '-Xms1024M', '-Dfile.encoding=UTF-8', '-Dterminal.jline=false', '-Dterminal.ansi=false', "@$argsFile", 'nogui')
+            Say "starting the server (seed $seed, RCON on 127.0.0.1:$rconPort)"
+            $proc = Start-Process -FilePath $java -ArgumentList $jvm -WorkingDirectory $server -NoNewWindow -PassThru `
+                -RedirectStandardOutput $log -RedirectStandardError "$log.err" -RedirectStandardInput $stdin
+
+            $deadline = (Get-Date).AddMinutes($StartupMinutes)
+            while (-not $rcon) {
+                if ($proc.HasExited) {
+                    # another process took a probed port before the server bound it: new ports, new try
+                    if ($attempt -lt 3 -and (Select-String -LiteralPath $log -Pattern 'FAILED TO BIND|Address already in use|BindException' -Quiet -ErrorAction SilentlyContinue)) {
+                        Say 'a port was taken before the server bound it: retrying with new ports'
+                        Copy-Item -LiteralPath $log -Destination "$log.attempt$attempt" -Force
+                        $proc = $null
+                        break
+                    }
+                    throw "the server exited during startup (exit $($proc.ExitCode)); see $log"
+                }
+                if ((Get-Date) -gt $deadline) { throw "the server did not open RCON within $StartupMinutes min; see $log" }
+                if (Select-String -LiteralPath $log -Pattern 'RCON running on' -Quiet -ErrorAction SilentlyContinue) {
+                    try { $rcon = Connect-OracleRcon -Port $rconPort -Password $password -TimeoutMs ($DumpMinutes * 60000) } catch { Start-Sleep -Seconds 2 }
+                } else { Start-Sleep -Seconds 2 }
+            }
         }
         try {
             $pong = $rcon.Command('gforacle ping')
@@ -176,7 +196,8 @@ try {
         } finally { $rcon.Close() }
         if (-not $proc.WaitForExit(300000)) { Say 'the server did not stop in 5 min: killing it'; $proc.Kill($true) }
         $proc = $null
-        $errs = @(Select-String -LiteralPath $log -Pattern '\[gf_oracle/ERROR\]|gf_oracle: dump .* failed' -ErrorAction SilentlyContinue)
+        # NeoForge's layout: "[time] [thread/LEVEL] [logger/]: message"
+        $errs = @(Select-String -LiteralPath $log -Pattern '/ERROR\] \[gf_oracle/|gf_oracle: dump .* failed' -ErrorAction SilentlyContinue)
         if ($errs.Count) { throw "the dumper logged errors: $($errs[0].Line)" }
     }
 

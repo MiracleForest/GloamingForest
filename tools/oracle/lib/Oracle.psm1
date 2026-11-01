@@ -59,6 +59,10 @@ function Get-OracleJava([string]$Tool = 'java') {
 
 function Get-OracleServerDir { return Join-Path (Get-OracleHome) 'server' }
 
+# Held while the server directory, the JDK or the dumper cache is used or replaced (run.ps1 for a
+# whole run, fetch.ps1 while it installs).
+function Get-OracleServerLockPath { return Join-Path (Get-OracleHome) 'server.lock' }
+
 # The NeoForge launch arguments file of the installed server.
 function Get-OracleServerArgsFile {
     $pins = Get-OraclePins
@@ -83,7 +87,9 @@ function Get-OracleJavaProxyArgs {
         $out += "-D$scheme.proxyHost=$($u.Host)", "-D$scheme.proxyPort=$port"
     }
     if ($out.Count -and $env:NO_PROXY) {
-        $hosts = ($env:NO_PROXY -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) -join '|'
+        # NO_PROXY ".corp.example" (a domain suffix) is "*.corp.example" for Java
+        $hosts = ($env:NO_PROXY -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ } |
+            ForEach-Object { if ($_.StartsWith('.')) { "*$_" } else { $_ } }) -join '|'
         if ($hosts) { $out += "-Dhttp.nonProxyHosts=$hosts" }
     }
     return $out
@@ -247,5 +253,5 @@ function Connect-OracleRcon([int]$Port, [string]$Password, [int]$TimeoutMs = 360
 }
 
 Export-ModuleMember -Function Get-OracleRoot, Get-OracleRepoRoot, Get-OracleHome, Get-OraclePins, Get-OracleSha256,
-    Get-OracleDownload, Get-OracleJdkDir, Get-OracleJava, Get-OracleJavaProxyArgs, Get-OracleServerDir, Get-OracleServerArgsFile,
+    Get-OracleDownload, Get-OracleJdkDir, Get-OracleJava, Get-OracleJavaProxyArgs, Get-OracleServerDir, Get-OracleServerLockPath, Get-OracleServerArgsFile,
     Get-OracleTfJar, Get-OracleCompileClasspath, Build-OracleDumper, Get-OracleFnv1a64, Get-OracleFreePort, Connect-OracleRcon

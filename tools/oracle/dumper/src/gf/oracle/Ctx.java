@@ -70,12 +70,12 @@ public final class Ctx {
 		return e != null && e.isJsonObject() ? e.getAsJsonObject() : new JsonObject();
 	}
 
-	/** Whether the dump depends on the world seed (it is then recorded in the header). */
+	/** Whether the dump depends on the world seed (spec.json "seedKinds"; the seed is then recorded in the header). */
 	public boolean seedDependent() {
-		return switch (this.kind) {
-			case "biomes", "heights", "surface", "density", "landmarks" -> true;
-			default -> false;
-		};
+		JsonElement kinds = this.spec.get("seedKinds");
+		if (kinds == null || !kinds.isJsonArray()) throw new IllegalStateException(SPEC_FILE + " has no seedKinds");
+		for (JsonElement k : kinds.getAsJsonArray()) if (k.getAsString().equals(this.kind)) return true;
+		return false;
 	}
 
 	/** The common header: format, kind, the pinned sources, the seed of seed-dependent dumps. */

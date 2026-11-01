@@ -131,7 +131,7 @@ public final class Json {
 			for (boolean x : a) l.add(x);
 			writeArray(sb, l, level, inline);
 		} else if (v instanceof Object[] a) {
-			writeArray(sb, List.of(a), level, inline);
+			writeArray(sb, java.util.Arrays.asList(a), level, inline);
 		} else {
 			throw new IllegalArgumentException("not JSON: " + v.getClass().getName());
 		}

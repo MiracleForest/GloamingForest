@@ -15,7 +15,9 @@
   dumper mod): no file is ever extracted from it, in particular none of its All Rights Reserved
   .ogg sounds or .nbt structure templates (rules R10, R11).
 
-  Idempotent and safe for concurrent callers (holds <oracle home>\fetch.lock). Prints the oracle
+  Idempotent and safe for concurrent callers: holds <oracle home>\fetch.lock, and the oracle
+  server lock (server.lock) so a reinstall never replaces the JDK or the server under a running
+  oracle; tools/oracle/run.ps1 takes that lock itself and passes -NoServerLock. Prints the oracle
   home on success. Exit code 0 = ready, 1 = failed.
 
 .EXAMPLE
@@ -25,6 +27,8 @@
 param(
     [switch]$Force,
     [switch]$Quiet,
+    # the caller already holds the oracle server lock (tools/oracle/run.ps1)
+    [switch]$NoServerLock,
     [int]$TimeoutMinutes = 60
 )
 $ErrorActionPreference = 'Stop'
@@ -41,8 +45,12 @@ $stamp = Join-Path $serverDir '.gf-oracle-installed'
 $wantStamp = "neoforge=$($pins.neoforge.version) minecraft=$($pins.minecraft)"
 
 $lock = $null
+$serverLock = $null
 try {
     $lock = Enter-GfLock -Path (Join-Path $home_ 'fetch.lock') -What 'oracle fetch lock' -TimeoutMinutes $TimeoutMinutes -Unit F13
+    if (-not $NoServerLock) {
+        $serverLock = Enter-GfLock -Path (Get-OracleServerLockPath) -What 'oracle server' -TimeoutMinutes $TimeoutMinutes -Unit F13
+    }
 
     # 1. JDK
     $jdkDir = Get-OracleJdkDir
@@ -90,5 +98,6 @@ try {
     Write-Host "[oracle] FAILED: $_" -ForegroundColor Red
     exit 1
 } finally {
+    Exit-GfLock $serverLock
     Exit-GfLock $lock
 }
