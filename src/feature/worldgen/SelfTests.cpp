@@ -405,6 +405,30 @@ GF_REGISTER_SELFTEST("worldgen.functions", [](Context& ctx) -> ll::coro::CoroTas
     for (std::size_t i = 0; i < std::size(rules); ++i)
         ctx.check(ruleText(rules[i].first) == expected[i], std::string(rules[i].second) + " = " + expected[i] + " (" + ruleText(rules[i].first) + ")");
     ctx.check(gf::worldgen::detail::devNewWorldRuns() == before + 1, "the function's scriptevent reached the mod (tfEnforcedProgression, teleport)");
+
+    // run by a player in the overworld: `execute in twilightforest:twilight_forest run teleport ~ 128 ~`
+    // (x / z times 8, the overworld's coordinate scale over the Twilight Forest's 0.125)
+    if (auto twilight = gf::world::twilight()) {
+        auto&       player = ctx.player();
+        std::string name   = player.getRealName();
+        Vec3        from   = player.getFeetPos();
+        ctx.check(runCommand(ctx, "execute as @a[name=\"" + name + "\"] at @s run function twilightforest/dev_new_world") > 0, "dev_new_world run by a player");
+        // the first tick in the dimension (the player falls from y 128 afterwards)
+        bool arrived = false;
+        Vec3 to{};
+        for (int i = 0; i < 200 && !arrived; ++i) {
+            co_await ctx.ticks(1);
+            auto& moved = ctx.player();
+            if (moved.getDimensionId() == *twilight) {
+                arrived = true;
+                to      = moved.getFeetPos();
+            }
+        }
+        ctx.check(arrived, "the player is in the Twilight Forest");
+        ctx.check(arrived && std::abs(to.y - 128.0F) < 2.0F && std::abs(to.x - from.x * 8.0F) < 1.0F && std::abs(to.z - from.z * 8.0F) < 1.0F,
+                  "at x * 8, y 128, z * 8 (" + std::to_string(to.x) + " " + std::to_string(to.y) + " " + std::to_string(to.z) + ")");
+        gf::log().info("worldgen functions: dev_new_world sent {} to the Twilight Forest at {:.1f} {:.1f} {:.1f}", name, to.x, to.y, to.z);
+    }
     gf::log().info("worldgen functions: dev_powerwash_chunk and dev_new_world ran");
 });
 
