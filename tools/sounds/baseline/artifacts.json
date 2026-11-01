@@ -270,7 +270,7 @@
       ]
     },
     "entity.twilightforest.loyal_zombie.ambient": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.loyal_zombie.ambient",
       "variants": [
         {
@@ -285,7 +285,7 @@
       ]
     },
     "entity.twilightforest.loyal_zombie.death": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.loyal_zombie.death",
       "variants": [
         {
@@ -294,7 +294,7 @@
       ]
     },
     "entity.twilightforest.loyal_zombie.hurt": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.loyal_zombie.hurt",
       "variants": [
         {
@@ -306,7 +306,7 @@
       ]
     },
     "entity.twilightforest.loyal_zombie.step": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.block.generic.footsteps",
       "variants": [
         {

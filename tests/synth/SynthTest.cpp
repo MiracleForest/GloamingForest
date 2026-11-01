@@ -81,7 +81,8 @@ TEST(SynthRandom, IsReproducible) {
 }
 
 TEST(SynthJson, ParsesAndDumps) {
-    auto j = Json::parse(R"({"a": 1.5, "b": [1, "x", true, null], "c": {"d": -2e-3}, "s": "q\"é"})");
+    std::string const uEscape = std::string(1, '\\') + "u00e9"; // a JSON unicode escape
+    auto j = Json::parse(R"json({"a": 1.5, "b": [1, "x", true, null], "c": {"d": -2e-3}, "s": "q\")json" + uEscape + "\"}");
     EXPECT_DOUBLE_EQ(j["a"].number(), 1.5);
     EXPECT_EQ(j["b"].size(), 4u);
     EXPECT_EQ(j["b"][1].string(), "x");
@@ -118,7 +119,7 @@ TEST(SynthExpression, Evaluates) {
 TEST(SynthMdct, FastMatchesDefinition) {
     for (int n : {16, 64, 256, 2048}) {
         std::vector<double> x(static_cast<std::size_t>(n)), a(static_cast<std::size_t>(n / 2)), b(static_cast<std::size_t>(n / 2));
-        Random              r(std::uint64_t(n));
+        Random              r{static_cast<std::uint64_t>(n)};
         for (auto& v : x) v = r.bipolar();
         Mdct(n).forward(x.data(), a.data());
         Mdct::forwardDirect(n, x.data(), b.data());
@@ -186,7 +187,7 @@ TEST(SynthWav, RoundTrips) {
 }
 
 TEST(SynthPatch, RendersDeterministically) {
-    auto patch = Json::parse(R"({
+    auto patch = Json::parse(R"json({
         "params": {"pitch": 220, "len": 0.3},
         "length": "$len", "tail": 0.1,
         "layers": [
@@ -200,7 +201,7 @@ TEST(SynthPatch, RendersDeterministically) {
             {"type": "osc", "freq": 880, "amp": 0.1, "length": 0.02, "repeat": {"count": 3, "every": 0.05}}
         ],
         "fx": [{"type": "echo", "time": 0.05}, {"type": "reverb", "mix": 0.2}, {"type": "filter", "filter": "hp", "freq": 60}]
-    })");
+    })json");
     auto a = renderPatch(patch, Json::object(), 5, 44100);
     auto b = renderPatch(patch, Json::object(), 5, 44100);
     auto c = renderPatch(patch, Json::object(), 6, 44100);
@@ -217,16 +218,16 @@ TEST(SynthPatch, RendersDeterministically) {
 }
 
 TEST(SynthPatch, ReportsBadInput) {
-    EXPECT_THROW((void)renderPatch(Json::parse(R"({"layers": [{"type": "kazoo"}]})"), Json(), 1, 44100), PatchError);
-    EXPECT_THROW((void)renderPatch(Json::parse(R"({"length": 1})"), Json(), 1, 44100), PatchError);
+    EXPECT_THROW((void)renderPatch(Json::parse(R"json({"layers": [{"type": "kazoo"}]})json"), Json(), 1, 44100), PatchError);
+    EXPECT_THROW((void)renderPatch(Json::parse(R"json({"length": 1})json"), Json(), 1, 44100), PatchError);
     EXPECT_THROW((void)renderPatch(Json("missing/patch"), Json(), 1, 44100), PatchError);
-    EXPECT_THROW((void)renderPatch(Json::parse(R"({"layers": [{"freq": "$undefined"}]})"), Json(), 1, 44100), PatchError);
+    EXPECT_THROW((void)renderPatch(Json::parse(R"json({"layers": [{"freq": "$undefined"}]})json"), Json(), 1, 44100), PatchError);
 }
 
 TEST(SynthPatch, UsesTheLibrary) {
     PatchLibrary lib;
-    lib.add("beep", Json::parse(R"({"params": {"f": 440}, "length": 0.1, "layers": [{"freq": "$f"}]})"));
-    auto outer = Json::parse(R"({"length": 0.2, "layers": [{"type": "patch", "patch": "beep", "params": {"f": 660}}]})");
+    lib.add("beep", Json::parse(R"json({"params": {"f": 440}, "length": 0.1, "layers": [{"freq": "$f"}]})json"));
+    auto outer = Json::parse(R"json({"length": 0.2, "layers": [{"type": "patch", "patch": "beep", "params": {"f": 660}}]})json");
     auto pcm   = renderPatch(outer, Json(), 1, 22050, &lib);
     EXPECT_GT(pcm.size(), std::size_t(0.1 * 22050));
     EXPECT_FALSE(renderPatch(Json("beep"), Json(), 1, 22050, &lib).empty());
@@ -245,19 +246,19 @@ TEST(SynthSequencer, ParsesNotes) {
 
 TEST(SynthSequencer, RendersExactLength) {
     PatchLibrary lib;
-    lib.add("tone", Json::parse(R"({"params": {"freq": 440, "dur": 0.2}, "length": "$dur", "layers": [{"freq": "$freq"}]})"));
-    auto track = Json::parse(R"({
+    lib.add("tone", Json::parse(R"json({"params": {"freq": 440, "dur": 0.2}, "length": "$dur", "layers": [{"freq": "$freq"}]})json"));
+    auto track = Json::parse(R"json({
         "bpm": 120, "rpb": 4, "length": 3.0, "seed": 3,
         "instruments": {"t": {"patch": "tone", "gain": -6}},
         "patterns": {"A": {"rows": 8, "channels": [{"inst": "t", "notes": "C4 . E4:0.5 - G4+C5 . . ."}]}},
         "order": ["A", {"p": "A", "t": 2}]
-    })");
+    })json");
     auto a = renderTrack(track, 16000, &lib);
     EXPECT_EQ(a.size(), std::size_t(3 * 16000));
     EXPECT_EQ(a, renderTrack(track, 16000, &lib));
     float peak = 0;
     for (float v : a) peak = std::max(peak, std::fabs(v));
     EXPECT_GT(peak, 0.5f);
-    auto bad = Json::parse(R"({"bpm": 120, "instruments": {}, "patterns": {"A": {"rows": 4, "channels": [{"inst": "x", "notes": "C4"}]}}, "order": ["A"]})");
+    auto bad = Json::parse(R"json({"bpm": 120, "instruments": {}, "patterns": {"A": {"rows": 4, "channels": [{"inst": "x", "notes": "C4"}]}}, "order": ["A"]})json");
     EXPECT_THROW((void)renderTrack(bad, 16000, &lib), PatchError);
 }

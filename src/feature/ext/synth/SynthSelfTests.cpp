@@ -21,6 +21,7 @@
 #include <mutex>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "nlohmann/json.hpp"
@@ -31,6 +32,7 @@
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
 #include "mc/network/packet/PlaySoundPacket.h"
+#include "mc/network/packet/StopSoundPacket.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/Level.h"
@@ -217,6 +219,15 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
     } else {
         ctx.info("the sound engine does not report unknown events (control " + std::to_string(res->control) + ", bogus " + std::to_string(res->bogus) + ")");
     }
+    // stop what still plays (the music tracks run for minutes)
+    std::vector<std::uint64_t> handles = res->handles;
+    ll::thread::ClientThreadExecutor::getDefault().execute([handles = std::move(handles)] {
+        auto* client = gf::client::currentClient();
+        if (!client) return;
+        for (auto h : handles) {
+            if (h != 0) client->getSoundEngine()->stop(h);
+        }
+    });
     gf::log().info("synth: played {} sound events on the client", std::size(kEvents));
 #else
     // the server: PlaySoundPacket to every real player (simulated players receive nothing)
@@ -244,6 +255,23 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
             return true;
         });
         co_await ctx.ticks(1);
+    }
+    // stop what still plays (the music tracks run for minutes)
+    if (auto lvl = ll::service::getLevel()) {
+        lvl->forEachPlayer([](Player& p) {
+            if (p.isSimulated()) return true;
+            for (auto const& ev : kEvents) {
+                if (std::string_view(ev.id).rfind("music", 0) != 0) continue;
+                auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::StopSound);
+                if (!packet) continue;
+                auto& pkt            = static_cast<StopSoundPacket&>(*packet);
+                pkt.mName            = ev.id;
+                pkt.mStopAll         = false;
+                pkt.mStopMusicLegacy = false;
+                pkt.sendTo(p);
+            }
+            return true;
+        });
     }
     ctx.info("played " + std::to_string(std::size(kEvents)) + " events to " + std::to_string(targets) + " player(s)");
     gf::log().info("synth: played {} sound events to {} player(s)", std::size(kEvents), targets);

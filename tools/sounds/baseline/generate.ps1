@@ -53,6 +53,7 @@ function Get-Category([string]$e) {
         '^environment\.' { return 'weather' }
         '^block\.' { return 'block' }
         '^item\.' { return 'player' }
+        '^entity\.twilightforest\.(parrot|loyal_zombie)\.' { return 'neutral' } # parrots imitating TF mobs; the tamed zombie
         '^entity\.twilightforest\.([a-z_]+)\.' {
             $m = $Matches[1]
             if ($hostile.ContainsKey($m)) { return $(if ($hostile[$m]) { 'hostile' } else { 'neutral' }) }

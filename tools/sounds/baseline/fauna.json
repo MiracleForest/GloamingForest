@@ -770,7 +770,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.alpha_yeti": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.alpha_yeti",
       "variants": [
         {
@@ -779,7 +779,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.carminite_golem": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.carminite_golem",
       "variants": [
         {
@@ -788,7 +788,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.death_tome": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.death_tome",
       "variants": [
         {
@@ -797,7 +797,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.hostile_wolf": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.hostile_wolf",
       "variants": [
         {
@@ -806,7 +806,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.hydra": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.hydra",
       "variants": [
         {
@@ -815,7 +815,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.ice_core": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.ice_core",
       "variants": [
         {
@@ -824,7 +824,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.kobold": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.kobold",
       "variants": [
         {
@@ -833,7 +833,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.minotaur": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.minotaur",
       "variants": [
         {
@@ -842,7 +842,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.mosquito": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.mosquito",
       "variants": [
         {
@@ -851,7 +851,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.naga": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.naga",
       "variants": [
         {
@@ -860,7 +860,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.redcap": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.redcap",
       "variants": [
         {
@@ -869,7 +869,7 @@
       ]
     },
     "entity.twilightforest.parrot.imitate.wraith": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.wraith",
       "variants": [
         {
