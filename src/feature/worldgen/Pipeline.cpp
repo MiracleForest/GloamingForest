@@ -16,6 +16,7 @@
 
 #include "core/jrand/JavaOrder.h"
 #include "core/jrand/Mth.h"
+#include "feature/ext/worldgen/Carving.h"
 #include "feature/spawn/Internal.h"
 #include "feature/worldgen/Internal.h"
 #include "game/Blocks.h"
@@ -42,9 +43,10 @@ ext::Stats& statsRef() {
 }
 
 /// FeatureSorter's per-step order over the possible biomes, with each biome's feature indices per
-/// step (cached per biome list).
+/// step (cached per biome list and per loaded data).
 struct FeatureOrder {
     std::vector<std::string>                       biomes;
+    std::uint64_t                                  dataGeneration = 0;
     std::set<std::string>                          possible;
     std::vector<std::vector<std::string>>          steps;        ///< step -> sorted placed feature ids
     std::map<std::string, std::vector<std::vector<int>>> indices; ///< biome -> step -> feature indices
@@ -54,9 +56,10 @@ std::shared_ptr<FeatureOrder const> featureOrder() {
     static std::mutex                          m;
     static std::shared_ptr<FeatureOrder const> cached;
     auto                                       biomes = ext::possibleBiomes();
+    auto const&                                data   = features::detail::data();
     std::lock_guard                            lock(m);
-    if (cached && biomes == cached->biomes) return cached;
-    auto const&                            biomeSteps = features::detail::data().biomeSteps;
+    if (cached && biomes == cached->biomes && cached->dataGeneration == data.generation) return cached;
+    auto const&                            biomeSteps = data.biomeSteps;
     std::vector<core::jrand::StepFeatures> sources;
     for (auto const& b : biomes) {
         auto it = biomeSteps.find(b);
@@ -76,8 +79,9 @@ std::shared_ptr<FeatureOrder const> featureOrder() {
             for (auto const& f : sources[b][l])
                 if (auto it = index[l].find(f); it != index[l].end()) per[l].push_back(it->second);
     }
-    out->biomes   = std::move(biomes);
-    out->possible = std::set<std::string>(out->biomes.begin(), out->biomes.end());
+    out->biomes         = std::move(biomes);
+    out->dataGeneration = data.generation;
+    out->possible       = std::set<std::string>(out->biomes.begin(), out->biomes.end());
     cached        = out;
     return cached;
 }
@@ -167,25 +171,127 @@ void generateChunk(Chunk& chunk, Region& chunkRegion, std::int64_t seed) {
     runSteps(*p, Stage::Noise, chunk, chunkRegion);
     if (p->surface) p->surface(chunk, chunkRegion);
     runSteps(*p, Stage::Surface, chunk, chunkRegion);
-    if (!p->carvers.empty()) {
-        // the carvers the biomes of this chunk reference, once each; a CarverFn covers the chunks in
-        // its own range (ChunkGenerator#applyCarvers' 8-chunk loop) and re-seeds per source chunk
-        std::set<std::string> ids;
-        for (int qx = 0; qx < 4; ++qx)
-            for (int qz = 0; qz < 4; ++qz)
-                for (auto const& c : ext::biomeCarvers(chunk.biome(qx * 4, 0, qz * 4))) ids.insert(c);
-        for (auto const& id : ids) {
-            auto const& carvers = features::detail::data().carvers;
-            std::string type    = id;
-            if (auto it = carvers.find(id); it != carvers.end()) type = normalizeId(it->second.value("type", id));
-            auto fn = p->carvers.find(id);
-            if (fn == p->carvers.end()) fn = p->carvers.find(type);
-            if (fn == p->carvers.end()) continue;
-            core::jrand::WorldgenRandom random(std::make_unique<core::jrand::LegacyRandom>(seed));
-            fn->second(chunk, chunkRegion, random);
+    applyCarvers(*p, chunk, chunkRegion, seed);
+    runSteps(*p, Stage::Carvers, chunk, chunkRegion);
+}
+
+// ==== carvers ===========================================================================================
+
+namespace {
+
+thread_local ext::CarverContext* tCarverContext = nullptr;
+
+struct CarverScope {
+    ext::CarverContext* previous;
+    explicit CarverScope(ext::CarverContext* context) : previous(tCarverContext) { tCarverContext = context; }
+    ~CarverScope() { tCarverContext = previous; }
+    CarverScope(CarverScope const&)            = delete;
+    CarverScope& operator=(CarverScope const&) = delete;
+};
+
+/// The carver biomes of source chunks (ChunkAccess#carverBiome: the biome source at the chunk's
+/// minimum block, quart y 0), shared by the generation threads: a chunk is the source of 289
+/// carves. Dropped when the biome source or the seed changes, or on world close.
+struct CarverBiomeCache {
+    std::mutex                                     mutex;
+    std::uint64_t                                  sourceGeneration = 0;
+    std::int64_t                                   seed             = 0;
+    std::unordered_map<std::int64_t, std::string>  biomes;
+};
+CarverBiomeCache& carverBiomeCache() {
+    static CarverBiomeCache c;
+    return c;
+}
+
+constexpr int kCarverRange = 8; // ChunkGenerator#applyCarvers
+
+} // namespace
+
+void clearCarverBiomeCache() {
+    auto&           c = carverBiomeCache();
+    std::lock_guard lock(c.mutex);
+    c.biomes.clear();
+}
+
+void applyCarvers(Providers const& p, Chunk& chunk, Region& region, std::int64_t seed, CarverListFn const& carversOf) {
+    if (p.carvers.empty()) return;
+    constexpr int side = 2 * kCarverRange + 1;
+    int           cx = chunk.chunkX(), cz = chunk.chunkZ();
+
+    // the biome of every source chunk
+    std::vector<std::string> sourceBiomes(static_cast<std::size_t>(side * side));
+    auto slot = [&](int j, int k) -> std::string& { return sourceBiomes[static_cast<std::size_t>((j + kCarverRange) * side + (k + kCarverRange))]; };
+    if (!p.biomeSource) {
+        // no biome source: every chunk has the dimension's single default biome
+        auto b = chunk.biome(0, 0, 0);
+        for (auto& s : sourceBiomes) s = b;
+    } else {
+        auto&                     cache = carverBiomeCache();
+        std::vector<std::pair<int, int>> missing;
+        {
+            std::lock_guard lock(cache.mutex);
+            if (cache.sourceGeneration != p.biomeSourceGeneration || cache.seed != seed || cache.biomes.size() > 65536) {
+                cache.biomes.clear();
+                cache.sourceGeneration = p.biomeSourceGeneration;
+                cache.seed             = seed;
+            }
+            for (int j = -kCarverRange; j <= kCarverRange; ++j)
+                for (int k = -kCarverRange; k <= kCarverRange; ++k) {
+                    auto it = cache.biomes.find(core::mth::chunkPosAsLong(cx + j, cz + k));
+                    if (it != cache.biomes.end()) slot(j, k) = it->second;
+                    else missing.emplace_back(j, k);
+                }
+        }
+        if (!missing.empty()) {
+            for (auto [j, k] : missing)
+                slot(j, k) = p.biomeSource(core::mth::fromBlock(core::mth::chunkMinBlock(cx + j)), 0, core::mth::fromBlock(core::mth::chunkMinBlock(cz + k)));
+            std::lock_guard lock(cache.mutex);
+            if (cache.sourceGeneration == p.biomeSourceGeneration && cache.seed == seed)
+                for (auto [j, k] : missing) cache.biomes.try_emplace(core::mth::chunkPosAsLong(cx + j, cz + k), slot(j, k));
         }
     }
-    runSteps(*p, Stage::Carvers, chunk, chunkRegion);
+
+    // each biome's carver list, resolved once per call
+    struct Resolved {
+        std::string     id;
+        CarverFn const* fn     = nullptr;
+        Json const*     config = nullptr;
+    };
+    static Json const                                     emptyConfig = Json::object();
+    auto const&                                           data        = features::detail::data();
+    std::unordered_map<std::string, std::vector<Resolved>> lists;
+    auto resolve = [&](std::string const& biome) -> std::vector<Resolved> const& {
+        auto [it, fresh] = lists.try_emplace(biome);
+        if (!fresh) return it->second;
+        for (auto const& id : carversOf ? carversOf(biome) : ext::biomeCarvers(biome)) {
+            Resolved    r{id, nullptr, &emptyConfig};
+            std::string type = id;
+            if (auto c = data.carvers.find(id); c != data.carvers.end()) {
+                type     = normalizeId(c->second.value("type", id));
+                r.config = &features::detail::fieldObj(c->second, "config");
+            }
+            auto fn = p.carvers.find(id);
+            if (fn == p.carvers.end()) fn = p.carvers.find(type);
+            if (fn != p.carvers.end()) r.fn = &fn->second;
+            it->second.push_back(std::move(r));
+        }
+        return it->second;
+    };
+
+    ext::CarvingMask            mask(chunk.minY(), chunk.maxY());
+    core::jrand::WorldgenRandom random(std::make_unique<core::jrand::LegacyRandom>(0)); // re-seeded per carver
+    for (int j = -kCarverRange; j <= kCarverRange; ++j)
+        for (int k = -kCarverRange; k <= kCarverRange; ++k) {
+            int         sx = cx + j, sz = cz + k;
+            auto const& list = resolve(slot(j, k));
+            for (std::size_t l = 0; l < list.size(); ++l) {
+                if (!list[l].fn) continue; // Java still counts it: the index stays the list position
+                random.setLargeFeatureSeed(core::mth::ladd(seed, static_cast<std::int64_t>(l)), sx, sz);
+                ext::CarverContext ctx{sx, sz, static_cast<int>(l), list[l].id, list[l].config, &mask};
+                CarverScope        scope(&ctx);
+                (*list[l].fn)(chunk, region, random);
+            }
+        }
 }
 
 void decorateChunk(Chunk* chunkIn, Region& region, std::int64_t seed) {
@@ -196,16 +302,24 @@ void decorateChunk(Chunk* chunkIn, Region& region, std::int64_t seed) {
     int         minX = cx * 16, minZ = cz * 16;
     BlockPos    origin{minX, region.minY(), minZ}; // SectionPos.of(chunk, minSection).origin()
 
-    // the biomes of the 3x3 chunks (every section), restricted to the possible biomes
+    // the biomes of the 3x3 chunks (every section's palette, as Java's applyBiomeDecoration),
+    // restricted to the possible biomes
     auto                  order = featureOrder();
     std::set<std::string> present;
     if (!order->possible.empty()) {
-        for (int x = minX - 16; x < minX + 32; x += 4)
-            for (int z = minZ - 16; z < minZ + 32; z += 4)
-                for (int y = region.minY(); y < region.maxY(); y += 4) {
-                    auto b = region.biome({x, y, z});
-                    if (order->possible.contains(b)) present.insert(std::move(b));
-                }
+        std::vector<std::string> ids;
+        auto*                    source = dynamic_cast<SourceRegionAdapter*>(&region);
+        if (!source || !source->chunkBiomes(1, ids)) {
+            ids.clear();
+            for (int x = minX - 16; x < minX + 32; x += 4)
+                for (int z = minZ - 16; z < minZ + 32; z += 4)
+                    for (int y = region.minY(); y < region.maxY(); y += 4) {
+                        auto b = region.biome({x, y, z});
+                        if (std::find(ids.begin(), ids.end(), b) == ids.end()) ids.push_back(std::move(b));
+                    }
+        }
+        for (auto& b : ids)
+            if (order->possible.contains(b)) present.insert(std::move(b));
     }
 
     core::jrand::WorldgenRandom random(std::make_unique<core::jrand::Xoroshiro128pp>(0));
@@ -244,6 +358,35 @@ void decorateChunk(Chunk* chunkIn, Region& region, std::int64_t seed) {
 } // namespace detail
 
 namespace ext {
+
+CarvingMask::CarvingMask(int minY, int maxY)
+: mBits(static_cast<std::size_t>(std::max(0, maxY - minY)) * 256),
+  mMinY(minY),
+  mMaxY(maxY) {}
+
+std::size_t CarvingMask::index(int localX, int y, int localZ) const {
+    // CarvingMask#getIndex: x & 15 | (z & 15) << 4 | (y - minY) << 8
+    return static_cast<std::size_t>((localX & 15) | ((localZ & 15) << 4) | ((y - mMinY) << 8));
+}
+
+bool CarvingMask::get(int localX, int y, int localZ) const {
+    if (y < mMinY || y >= mMaxY) return false;
+    return mBits[index(localX, y, localZ)];
+}
+
+void CarvingMask::set(int localX, int y, int localZ) {
+    if (y < mMinY || y >= mMaxY) return;
+    auto i = index(localX, y, localZ);
+    if (!mBits[i]) ++mCount;
+    mBits[i] = true;
+}
+
+CarverContext* carverContext() { return detail::tCarverContext; }
+
+bool isStartChunk(RandomSource& random, CarverContext const& context) {
+    float probability = context.config ? context.config->value("probability", 0.0F) : 0.0F;
+    return random.nextFloat() <= probability;
+}
 
 Stats stats() {
     std::lock_guard lock(detail::statsMutex());

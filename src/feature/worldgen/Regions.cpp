@@ -118,6 +118,28 @@ std::string SourceRegionAdapter::biome(BlockPos const& pos) const {
     return biomeIdOf(mSource.getBiome(p));
 }
 
+bool SourceRegionAdapter::chunkBiomes(int radius, std::vector<std::string>& out) const {
+    std::vector<Biome const*> seen;
+    for (int dx = -radius; dx <= radius; ++dx)
+        for (int dz = -radius; dz <= radius; ++dz) {
+            auto const* lc = mSource.getChunk(mCX + dx, mCZ + dz);
+            if (!lc) return false;
+            // every quart of every section (Java collects each section's biome palette); biomes
+            // are compared by pointer and named once
+            Biome const* last = nullptr;
+            for (int y = mMinY; y < mMaxY; y += 4)
+                for (int qz = 0; qz < 16; qz += 4)
+                    for (int qx = 0; qx < 16; qx += 4) {
+                        Biome const* b = &lc->getBiome(cpos(qx, y, qz, mMinY));
+                        if (b == last) continue;
+                        last = b;
+                        if (std::find(seen.begin(), seen.end(), b) == seen.end()) seen.push_back(b);
+                    }
+        }
+    for (auto const* b : seen) out.push_back(biomeIdOf(*b));
+    return true;
+}
+
 // ==== MemoryWorld =======================================================================================
 
 class MemoryWorld::MemChunk final : public Chunk {

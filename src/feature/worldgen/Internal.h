@@ -6,6 +6,7 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -59,6 +60,7 @@ struct Providers {
     std::map<std::string, BlanketFn> blankets;
     std::map<Stage, std::vector<Step>> stages; ///< sorted by (order, seq)
     std::vector<std::string>         possibleBiomes;
+    std::uint64_t                    biomeSourceGeneration = 0; ///< increases with every setBiomeSource
 };
 [[nodiscard]] std::shared_ptr<Providers const> providers();
 
@@ -119,6 +121,9 @@ public:
     BlockSource* source() override { return &mSource; }
     /// Blocks set through this region.
     [[nodiscard]] int writes() const { return mWrites; }
+    /// The biome ids in the section palettes of the chunks within `radius` of the center (the set
+    /// Java's applyBiomeDecoration collects); false when one of the chunks is not available.
+    bool chunkBiomes(int radius, std::vector<std::string>& out) const;
 
 private:
     BlockSource&                                      mSource;
@@ -162,7 +167,17 @@ void generateChunk(Chunk& chunk, Region& chunkRegion, std::int64_t seed);
 void decorateChunk(Chunk* chunk, Region& region, std::int64_t seed);
 /// The flat placeholder terrain used while no terrain provider is registered (config).
 void fallbackTerrain(Chunk& chunk);
+/// The configured carver ids of a biome (default: ext::biomeCarvers).
+using CarverListFn = std::function<std::vector<std::string>(std::string const& biomeId)>;
+/// ChunkGenerator#applyCarvers: every source chunk within 8 chunks, the carvers of its biome, each
+/// seeded with setLargeFeatureSeed(seed + index, sourceX, sourceZ) (see ext/worldgen/Carving.h).
+void applyCarvers(Providers const& providers, Chunk& chunk, Region& region, std::int64_t seed, CarverListFn const& carversOf = {});
+/// Forgets the cached carver biomes of source chunks (world close).
+void clearCarverBiomeCache();
 
 void addStats(bool decorate, double ms);
+
+/// How often the mod answered dev_new_world's scriptevent (Functions.cpp; selftests).
+[[nodiscard]] int devNewWorldRuns();
 
 } // namespace gf::worldgen::detail

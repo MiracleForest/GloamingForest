@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <mutex>
+#include <shared_mutex>
+#include <unordered_map>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -71,6 +73,15 @@ std::map<std::pair<BiomeRegistry const*, std::string>, Biome const*>& biomeCache
     static std::map<std::pair<BiomeRegistry const*, std::string>, Biome const*> c;
     return c;
 }
+/// Engine biome -> id (region.biome() is asked for every placement position).
+std::shared_mutex& biomeNameMutex() {
+    static std::shared_mutex m;
+    return m;
+}
+std::unordered_map<Biome const*, std::string>& biomeNames() {
+    static std::unordered_map<Biome const*, std::string> n;
+    return n;
+}
 } // namespace
 
 void clearWorldCaches() {
@@ -78,6 +89,11 @@ void clearWorldCaches() {
         std::lock_guard lock(biomeCacheMutex());
         biomeCache().clear(); // a later world's registry may reuse the address
     }
+    {
+        std::unique_lock lock(biomeNameMutex());
+        biomeNames().clear();
+    }
+    clearCarverBiomeCache();
     features::detail::clearBlockCache();
 }
 
@@ -95,8 +111,14 @@ Biome const* engineBiome(BiomeRegistry const& registry, std::string const& id) {
 }
 
 std::string biomeIdOf(Biome const& biome) {
+    {
+        std::shared_lock lock(biomeNameMutex());
+        if (auto it = biomeNames().find(&biome); it != biomeNames().end()) return it->second;
+    }
     auto const& name = biome.mHash->getString();
-    return name.find(':') == std::string::npos ? "minecraft:" + name : name;
+    std::string id   = name.find(':') == std::string::npos ? "minecraft:" + name : name;
+    std::unique_lock lock(biomeNameMutex());
+    return biomeNames().try_emplace(&biome, std::move(id)).first->second;
 }
 
 bool heightmapMatches(Heightmap type, Block const& block) {
@@ -120,7 +142,10 @@ bool heightmapMatches(Heightmap type, Block const& block) {
 using detail::update;
 
 void setBiomeSource(BiomeSourceFn fn) {
-    update([&](detail::Providers& p) { p.biomeSource = std::move(fn); });
+    update([&](detail::Providers& p) {
+        p.biomeSource = std::move(fn);
+        ++p.biomeSourceGeneration;
+    });
 }
 void setMainBiomeSource(MainBiomeFn fn) {
     update([&](detail::Providers& p) { p.mainBiome = std::move(fn); });

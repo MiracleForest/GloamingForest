@@ -132,7 +132,11 @@ private:
             return true;
         }
         int          height(Heightmap t, int x, int z) const override { return isInside(x, z) ? mC.height(t, x & 15, z & 15) : mC.minY(); }
-        std::string  biome(BlockPos const& p) const override { return mC.biome(p.x & 15, p.y, p.z & 15); }
+        /// Another column's biome is the biome source's (the chunk holds only its own).
+        std::string biome(BlockPos const& p) const override {
+            if (!isInside(p.x, p.z)) return gf::worldgen::biomeAt(p);
+            return mC.biome(p.x & 15, p.y, p.z & 15);
+        }
         std::int64_t seed() const override { return mSeed; }
         int          dimension() const override { return mDimId; }
 
