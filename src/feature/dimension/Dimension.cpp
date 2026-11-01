@@ -25,6 +25,7 @@
 #include <unordered_set>
 
 #include "ll/api/event/EventBus.h"
+#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
@@ -432,13 +433,19 @@ public:
         TwilightTakeBlockGoalHook::hook();
         TwilightTimeBroadcastHook::hook();
         TwilightTimeToClientHook::hook();
-        mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>(
-            [](ll::event::ServerLevelTickEvent& ev) { syncClocks(ev.level()); }
-        );
+        auto& bus = ll::event::EventBus::getInstance();
+        mTick     = bus.emplaceListener<ll::event::ServerLevelTickEvent>([](ll::event::ServerLevelTickEvent& ev) { syncClocks(ev.level()); });
+        // a player who comes back still in the Twilight Forest gets its clock again (StartGame
+        // carries the level time)
+        mLeave = bus.emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {
+            std::lock_guard lock(timeMutex());
+            inTwilightClock().erase(idOf(ev.self()));
+        });
     }
 
     void uninstall() {
         ll::event::EventBus::getInstance().removeListener(mTick);
+        ll::event::EventBus::getInstance().removeListener(mLeave);
         TwilightTimeToClientHook::unhook();
         TwilightTimeBroadcastHook::unhook();
         TwilightTakeBlockGoalHook::unhook();
@@ -447,6 +454,7 @@ public:
 
 private:
     ll::event::ListenerPtr mTick;
+    ll::event::ListenerPtr mLeave;
 };
 
 } // namespace gf::feature::dimension

@@ -83,6 +83,8 @@ void moveAcross(Player& player, int dim, Vec3 const& pos, float yaw, float pitch
 
 /// CapabilityEvents#newSpawnInTwilightForest (no-op unless newPlayersSpawnInTF).
 void newSpawnInTwilightForest(Player& player);
+/// ServerPlayer#getRespawnPosition() != null: the player has a bed / anchor / forced spawn point.
+[[nodiscard]] bool hasRespawnPosition(Player const& player);
 
 /// Per-player state kept across ticks, keyed by the unique id (rule R16).
 [[nodiscard]] std::int64_t idOf(Actor const& actor);

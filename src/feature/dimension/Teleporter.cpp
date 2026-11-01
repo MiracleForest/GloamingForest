@@ -196,8 +196,7 @@ std::int64_t columnKey(int x, int z) { return (static_cast<std::int64_t>(x) << 3
 struct Cache {
     std::mutex                                                                               mutex;
     std::unordered_map<std::string, std::unordered_map<std::int64_t, std::pair<std::pair<int, int>, PortalPosition>>> dest;
-    bool                                                                                     dirty  = false;
-    bool                                                                                     loaded = false;
+    bool                                                                                     dirty = false;
 };
 Cache& cache() {
     static Cache c;
@@ -210,8 +209,7 @@ void cacheLoad() {
     auto& c = cache();
     std::lock_guard lock(c.mutex);
     c.dest.clear();
-    c.dirty  = false;
-    c.loaded = true;
+    c.dirty = false;
     auto doc = game::db::get(kCacheKey);
     if (!doc || !doc->is_object() || !(*doc)["dest"].is_array()) return;
     for (auto const& d : (*doc)["dest"]) {
@@ -256,8 +254,7 @@ void cacheClear() {
     auto& c = cache();
     std::lock_guard lock(c.mutex);
     c.dest.clear();
-    c.dirty  = false;
-    c.loaded = false;
+    c.dirty = false;
 }
 
 std::optional<PortalPosition> cacheGet(std::string const& dimension, int x, int z) {

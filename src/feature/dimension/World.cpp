@@ -9,6 +9,7 @@
 
 #include "feature/dimension/World.h"
 
+#include <algorithm>
 #include <mutex>
 #include <vector>
 
@@ -68,7 +69,9 @@ void moveAcross(Player& player, int dim, Vec3 const& pos, float yaw, float pitch
             if (!p) co_return;
             if (static_cast<int>(p->getDimensionId()) != dim) continue;
             auto* region = game::regionOf(dim);
-            if (!region || !region->hasChunksAt(at, 2, false)) continue;
+            if (!region) continue;
+            BlockPos probe{at.x, std::clamp(at.y, static_cast<int>(region->getMinHeight()), region->getMaxHeight() - 1), at.z};
+            if (!region->hasChunksAt(probe, 2, false)) continue;
             if (then) then(*p);
             co_return;
         }

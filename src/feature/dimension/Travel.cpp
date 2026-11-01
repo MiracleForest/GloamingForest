@@ -218,6 +218,7 @@ void finishTrip(std::int64_t id, int from, int to, Vec3 const& at, float yaw, fl
     auto* p = playerById(id);
     if (!p) return;
     p->teleport(at, DimensionType(to), Vec2{pitch, yaw});
+    p->setFallDistance(0.0f); // waiting for the destination may have dropped it from the top of the world
     auto& st      = states()[id];
     st.travelling = false;
     if (st.fading) {
@@ -242,7 +243,14 @@ void finishTrip(std::int64_t id, int from, int to, Vec3 const& at, float yaw, fl
 struct TripGuard {
     std::int64_t id;
     ~TripGuard() {
-        if (auto it = states().find(id); it != states().end()) it->second.travelling = false;
+        auto it = states().find(id);
+        if (it == states().end()) return;
+        it->second.travelling = false;
+        if (it->second.fading) {
+            // an aborted trip: take the camera fade down (finishTrip does it for a completed one)
+            it->second.fading = false;
+            if (auto* p = playerById(id)) sendFade(*p, true, 0.0f, 0.0f, 0.5f);
+        }
     }
 };
 
@@ -350,9 +358,21 @@ void newSpawnInTwilightForest(Player& player) {
     }).launch(ll::thread::ServerThreadExecutor::getDefault());
 }
 
-namespace {
+bool hasRespawnPosition(Player const& player) {
+    // Bedrock always keeps a respawn point: without a bed / anchor / forced spawn it is the world
+    // spawn itself (spawn block == position == the shared spawn column, in the overworld); a bed
+    // sets the bed block and the stand position, a forced spawn the position only (block MIN)
+    auto const& rp    = *player.mPlayerRespawnPoint;
+    BlockPos    block = *rp.mSpawnBlockPos;
+    BlockPos    at    = *rp.mPlayerPosition;
+    auto        level = ll::service::getLevel();
+    if (!level) return true;
+    BlockPos shared = level->getSharedSpawnPos();
+    bool     world  = rp.mDimension->mValue == 0 && block == at && block.x == shared.x && block.z == shared.z;
+    return !world;
+}
 
-bool hasRespawnPosition(Player const& player) { return *player.mPlayerRespawnPoint->mSpawnBlockPos != BlockPos::MIN(); }
+namespace {
 
 // ---- animateTick (server-side stand-in for the client's random display ticks) --------------------------------------------
 

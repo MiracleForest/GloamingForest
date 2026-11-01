@@ -205,11 +205,11 @@ GF_REGISTER_SELFTEST("dimension.portal_light", [](Context& ctx) -> ll::coro::Cor
     ctx.check(countPortals(*region, game::blockPos(wide), 3, 2) == 6, "all 6 pool blocks are portal blocks");
 
     // maxPortalSize
+    auto big = at(10, 10);
+    ctx.require(buildPool(ctx, big, true, 3, 2), "pool built");
     auto& cfg  = gf::config::mut<DimensionConfig>();
     int   keep = cfg.maxPortalSize;
     cfg.maxPortalSize = 5;
-    auto big = at(10, 10);
-    ctx.require(buildPool(ctx, big, true, 3, 2), "pool built");
     bool lit = portal::tryActivate(*region, game::blockPos(big));
     cfg.maxPortalSize = keep;
     ctx.check(!lit, "a pool larger than maxPortalSize refuses");
@@ -387,7 +387,16 @@ GF_REGISTER_SELFTEST("dimension.new_player_spawn", [](Context& ctx) -> ll::coro:
     auto& sp = ctx.spawnPlayer("gf_test_newcomer");
     auto  id = idOf(sp);
     co_await ctx.ticks(2);
-    if (auto* p = playerById(id)) newSpawnInTwilightForest(*p);
+    auto respawnInfo = [](Player const& pl) {
+        auto const& rp = *pl.mPlayerRespawnPoint;
+        return "spawn block " + str(*rp.mSpawnBlockPos) + ", position " + str(*rp.mPlayerPosition) + ", dimension "
+             + std::to_string(rp.mDimension->mValue) + " (MIN " + str(BlockPos::MIN()) + ")";
+    };
+    if (auto* p = playerById(id)) {
+        ctx.info("new player respawn point: " + respawnInfo(*p));
+        ctx.check(!hasRespawnPosition(*p), "a new player has no respawn point");
+        newSpawnInTwilightForest(*p);
+    }
     bool there = false;
     for (int i = 0; i < 300 && !there; ++i) {
         co_await ctx.ticks(1);
@@ -399,6 +408,8 @@ GF_REGISTER_SELFTEST("dimension.new_player_spawn", [](Context& ctx) -> ll::coro:
     co_await ctx.ticks(5);
     auto* p = playerById(id);
     ctx.require(p != nullptr, "player");
+    ctx.info("after the new spawn: " + respawnInfo(*p));
+    ctx.check(hasRespawnPosition(*p), "the new spawn is a respawn point");
     ctx.check(p->mPlayerRespawnPoint->mDimension->mValue == static_cast<int>(*tf), "respawns in the Twilight Forest");
     auto portals = tp::portalBlocksNear(*game::regionOf(static_cast<int>(*tf)), game::blockPosOf(p->getFeetPos()), 4);
     ctx.check(portals.size() == 4, "next to a fresh portal (portalForNewPlayer)");

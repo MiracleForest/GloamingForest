@@ -198,9 +198,18 @@ bool tryToCreatePortal(BlockSource& region, BlockPos const& pos, ItemActor* cata
         }
     }
     if (catalyst) {
+        // catalyst.getItem().shrink(1); Bedrock does not resend a floating item's stack, so the
+        // rest of a stack floats on as a fresh item of the same thrower
         auto& stack = catalyst->item();
-        if (stack.mCount <= 1) catalyst->remove();
-        else stack.remove(1);
+        if (stack.mCount > 1) {
+            auto  rest  = game::items::withCount(stack, stack.mCount - 1);
+            auto* owner = playerById(itemOwner(*catalyst));
+            Vec3  at    = catalyst->getFeetPos();
+            catalyst->remove();
+            region.getLevel().getSpawner().spawnItem(region, rest, owner, at, 0);
+        } else {
+            catalyst->remove();
+        }
     }
     causeLightning(region, pos, cfg.destructivePortalLightning);
     auto const* portal = portalBlock(false);
