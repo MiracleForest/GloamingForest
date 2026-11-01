@@ -43,9 +43,7 @@ bool stubHit(std::string const& name) {
 }
 
 std::string structureName(std::string const& key, Player const* player) {
-    auto        colon = key.find(':');
-    std::string ns    = colon == std::string::npos ? "minecraft" : key.substr(0, colon);
-    std::string path  = colon == std::string::npos ? key : key.substr(colon + 1);
+    auto [ns, path] = splitKey(key);
     // fallback: "lich_tower" -> "Lich Tower"
     std::string pretty;
     bool        up = true;

@@ -267,6 +267,14 @@ void loadDescriptors() {
         store().infos = std::move(infos);
         store().sets  = std::move(sets);
     }
+    // the decoration step indexes (ChunkGenerator#applyBiomeDecoration), once per load
+    for (auto const& key : descriptorKeys()) {
+        auto const* i = info(key);
+        if (!i) continue;
+        int             index = featureIndex(*i);
+        std::unique_lock lock(store().mutex);
+        if (auto it = store().infos.find(key); it != store().infos.end()) it->second.featureIndex = index;
+    }
     log().info("landmark: {} descriptors, {} structure sets loaded", descriptorKeys().size(), structureSets().size());
     (void)n;
 }
@@ -299,6 +307,7 @@ std::vector<StructureSet const*> structureSets() {
 
 void registerInfo(Info i) {
     i.raw["gf_runtime"] = true;
+    i.featureIndex      = featureIndex(i);
     std::unique_lock lock(store().mutex);
     auto             key = i.d.key;
     // never overwrite or erase: info() hands out pointers into the map

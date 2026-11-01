@@ -120,12 +120,11 @@ std::uint64_t gameTime() {
     return level->getLevelData().mCurrentTick->tickID;
 }
 
-std::optional<ItemStack> makeBook(std::string const& name, int pageCount, Player const* player) {
-    // StructureHints.addBookInformationStatic
-    std::string key   = name.empty() ? "unknown" : name;
-    auto        stack = game::items::make("minecraft:written_book", 1, 0);
-    if (!stack) return std::nullopt;
-    auto    tag = std::make_unique<CompoundTag>();
+namespace {
+
+/// StructureHints.addBookInformationStatic's text: pages, title and author written into `tag` for
+/// `player` (the book's other data stays), and the translatable_book marker with the language.
+void writeBookText(ItemStack& stack, std::unique_ptr<CompoundTag> tag, std::string const& key, int pageCount, Player const* player) {
     ListTag pages;
     for (int index = 0; index < pageCount; ++index) {
         auto pageKey = std::string(kBookPrefix) + key + "." + std::to_string(index + 1);
@@ -139,22 +138,34 @@ std::optional<ItemStack> makeBook(std::string const& name, int pageCount, Player
     tag->putString("author", text(player, std::string(kBookPrefix) + "author", "a forgotten explorer"));
     auto titleKey = std::string(kBookPrefix) + key;
     tag->putString("title", text(player, titleKey, titleKey));
+    stack.setUserData(std::move(tag));
+    // TFDataComponents.TRANSLATABLE_BOOK, with the language the text is written in
+    game::items::setData(stack, kTranslatable, Json{{"name", key}, {"pages", pageCount}, {"locale", player ? localeOf(*player) : std::string{}}});
+}
+
+} // namespace
+
+std::optional<ItemStack> makeBook(std::string const& name, int pageCount, Player const* player) {
+    // StructureHints.addBookInformationStatic (generation 3: "tattered")
+    auto stack = game::items::make("minecraft:written_book", 1, 0);
+    if (!stack) return std::nullopt;
+    auto tag = std::make_unique<CompoundTag>();
     tag->putInt("generation", 3);
     tag->putInt64("xuid", 0);
-    stack->setUserData(std::move(tag));
-    // TFDataComponents.TRANSLATABLE_BOOK, with the language the text is written in
-    game::items::setData(*stack, kTranslatable, Json{{"name", key}, {"pages", pageCount}, {"locale", player ? localeOf(*player) : std::string{}}});
+    writeBookText(*stack, std::move(tag), name.empty() ? "unknown" : name, pageCount, player);
     return stack;
 }
 
 bool retranslateBook(ItemStack& book, Player const& reader) {
     auto data = game::items::getData(book, kTranslatable);
     if (!data.is_object() || !data.contains("name")) return false;
-    auto locale = localeOf(reader);
-    if (data.value("locale", std::string{}) == locale) return false;
-    auto fresh = makeBook(data.value("name", std::string{"unknown"}), data.value("pages", 2), &reader);
-    if (!fresh) return false;
-    book = game::items::withCount(*fresh, std::max(1, game::items::countOf(book)));
+    if (data.value("locale", std::string{}) == localeOf(reader)) return false;
+    // the pages, title and author again, in the reader's language; everything else of the stack
+    // (a custom name, enchantments, the repair cost) stays
+    auto const* old = game::items::userData(book);
+    auto        tag = old ? old->clone() : std::make_unique<CompoundTag>();
+    auto        key = data.value("name", std::string{"unknown"});
+    writeBookText(book, std::move(tag), key.empty() ? "unknown" : key, data.value("pages", 2), &reader);
     return true;
 }
 

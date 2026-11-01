@@ -446,7 +446,8 @@ void protectionTick(std::uint64_t tick) {
         std::erase_if(state().boxes, [t](LiveBox const& b) { return t > b.expires + 5; });
     }
     // TF's ProtectionBox is a client entity, never saved: a box that came back with its chunk goes
-    if (tick % 20 == 0) (void)sweepStrayProtectionBoxes();
+    // (every 5 s: a loaded box's own BP timer runs out after 3 s anyway once its chunk ticks)
+    if (tick % 100 == 50) (void)sweepStrayProtectionBoxes();
     // ProgressionEvents#performProtectionAndPortalChecks: every 100 ticks the nearby locked structure
     if (tick % 100 != 0 || !enforced()) return;
     std::vector<ActorUniqueID> companions;

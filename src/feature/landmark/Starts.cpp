@@ -111,6 +111,7 @@ struct Records {
     std::condition_variable_any                                             evaluatedChanged;
     std::unordered_set<ChunkKey, ChunkKeyHash>                              aroundDone; ///< ensureStartsAround ran
     std::set<std::tuple<int, int, int>>                                     dirty; ///< start chunks to write
+    std::uint64_t                                                           world = 0; ///< bumped by clearRecords
     std::atomic<std::int64_t>                                               seed{0};
     std::atomic<bool>                                                       haveSeed{false};
 };
@@ -310,12 +311,6 @@ bool registryBefore(std::string const& aNamespace, std::string const& aPath, std
     return aNamespace < bNamespace;
 }
 
-std::pair<std::string, std::string> splitKey(std::string const& key) {
-    auto colon = key.find(':');
-    if (colon == std::string::npos) return {"minecraft", key};
-    return {key.substr(0, colon), key.substr(colon + 1)};
-}
-
 /// StructureStart#placeInChunk for chunk (cx, cz) of `region`.
 void placeInChunk(Record const& rec, worldgen::Region& region, int chunkX, int chunkZ) {
     if (rec.livePieces.empty()) return;
@@ -328,7 +323,7 @@ void placeInChunk(Record const& rec, worldgen::Region& region, int chunkX, int c
 
     core::jrand::WorldgenRandom random(std::make_unique<core::jrand::LegacyRandom>(0));
     auto decoration = random.setDecorationSeed(region.seed(), chunkX * 16, chunkZ * 16);
-    random.setFeatureSeed(decoration, inf ? featureIndex(*inf) : 0, inf ? stepIndex(inf->step) : 4);
+    random.setFeatureSeed(decoration, inf ? inf->featureIndex : 0, inf ? stepIndex(inf->step) : 4);
     for (auto const& piece : rec.livePieces) {
         if (!piece->bbox.intersects(chunkBox)) continue;
         try {
@@ -649,6 +644,7 @@ void clearRecords() {
     r.byStartChunk.clear();
     r.byChunk.clear();
     r.evaluated.clear();
+    ++r.world; // a chunk still being evaluated for the closed world never lands in the next one
     r.aroundDone.clear();
     r.dirty.clear();
     r.haveSeed.store(false);
@@ -752,7 +748,8 @@ void reviveRecord(RecordPtr const& existing) {
 namespace {
 
 bool tryGenerateStructure(Info const& info, int dim, int chunkX, int chunkZ) {
-    if (auto existing = findRecord(dim, chunkX, chunkZ, info.d.key)) {
+    // a /twilightforest place record of the key is no start: the chunk's own start replaces it
+    if (auto existing = findRecord(dim, chunkX, chunkZ, info.d.key); existing && !existing->placed) {
         reviveRecord(existing);
         return true;
     }
@@ -788,6 +785,7 @@ void ensureStartsIn(int dim, int chunkX, int chunkZ) {
     if (!tf || *tf != dim) return; // TF's structure sets only place in the Twilight Forest
     auto&          r = records();
     ChunkKey const key{dim, chunkX, chunkZ};
+    std::uint64_t  world = 0;
     {
         std::shared_lock lock(r.mutex);
         if (r.evaluated.contains(key)) return;
@@ -810,20 +808,24 @@ void ensureStartsIn(int dim, int chunkX, int chunkZ) {
             }
         }
         r.inProgress.emplace(key, std::this_thread::get_id());
+        world = r.world;
     }
     struct Finish {
-        Records&       r;
-        ChunkKey const key;
+        Records&            r;
+        ChunkKey const      key;
+        std::uint64_t const world;
         ~Finish() {
             {
                 std::unique_lock lock(r.mutex);
                 r.inProgress.erase(key);
-                if (r.evaluated.size() >= kMaxEvaluatedChunks) r.evaluated.clear(); // re-evaluating is idempotent
-                r.evaluated.insert(key);
+                if (r.world == world) {
+                    if (r.evaluated.size() >= kMaxEvaluatedChunks) r.evaluated.clear(); // re-evaluating is idempotent
+                    r.evaluated.insert(key);
+                }
             }
             r.evaluatedChanged.notify_all();
         }
-    } finish{r, key};
+    } finish{r, key, world};
     auto seed    = levelSeed();
     auto variety = [seed](int cx, int cz) { return cl::pickVariety(seed, cx, cz); };
     auto lookup  = setLookup();
@@ -938,14 +940,15 @@ void registerGenerator(std::string const& key, Generator generator) { fl::setGen
 std::optional<Start> startAt(int dimension, BlockPos const& pos) {
     fl::ensureStartsAround(dimension, pos.x >> 4, pos.z >> 4);
     for (auto const& rec : fl::recordsIntersecting(dimension, pos.x >> 4, pos.z >> 4))
-        if (rec->start.box.contains(pos.x, pos.y, pos.z)) return rec->start;
+        if (!rec->placed && rec->start.box.contains(pos.x, pos.y, pos.z)) return rec->start;
     return std::nullopt;
 }
 
 std::vector<Start> startsIntersecting(int dimension, ChunkPos chunk) {
     fl::ensureStartsAround(dimension, chunk.x, chunk.z);
     std::vector<Start> out;
-    for (auto const& rec : fl::recordsIntersecting(dimension, chunk.x, chunk.z)) out.push_back(rec->start);
+    for (auto const& rec : fl::recordsIntersecting(dimension, chunk.x, chunk.z))
+        if (!rec->placed) out.push_back(rec->start); // /place stores no start
     return out;
 }
 
@@ -1038,6 +1041,7 @@ bool decorationAllowed(ChunkPos chunk, DecoKind kind) {
     }
     int x = chunk.x * 16 + 8, z = chunk.z * 16 + 8;
     for (auto const& rec : fl::recordsIntersecting(*tf, chunk.x, chunk.z)) {
+        if (rec->placed) continue; // no structure references the chunk
         auto const* inf = fl::info(rec->start.key);
         if (!inf || core::landmark::clearFromStructureZone(inf->decoration, occ)) continue;
         if (inf->decoration.chunkClearanceRadius > 0) {
@@ -1062,6 +1066,7 @@ namespace fl = gf::feature::landmark;
 double terraformDensity(int dimension, int x, int y, int z) {
     double sum = 0.0;
     for (auto const& rec : fl::recordsIntersecting(dimension, x >> 4, z >> 4)) {
+        if (rec->placed) continue; // /place stores no start: no terraforming
         // WorldgenHooks#gatherCustomTerrain: only within the start's X-Z boundaries
         if (x < rec->start.box.minX || x > rec->start.box.maxX || z < rec->start.box.minZ || z > rec->start.box.maxZ) continue;
         if (auto list = fl::terraformersFor(rec->start.key))
@@ -1073,7 +1078,7 @@ double terraformDensity(int dimension, int x, int y, int z) {
 bool hasTerraformers(int dimension, int chunkX, int chunkZ) {
     fl::ensureStartsAround(dimension, chunkX, chunkZ);
     for (auto const& rec : fl::recordsIntersecting(dimension, chunkX, chunkZ))
-        if (fl::terraformersFor(rec->start.key)) return true;
+        if (!rec->placed && fl::terraformersFor(rec->start.key)) return true;
     return false;
 }
 
@@ -1097,6 +1102,7 @@ bool featureBlocked(int dimension, int x, int y, int z, Occupancy const& occupan
     fl::ensureStartsAround(dimension, x >> 4, z >> 4);
     core::landmark::FeatureOccupancy occ{occupancy.surface, occupancy.underground, occupancy.vegetation, occupancy.additionalClearance};
     for (auto const& rec : fl::recordsIntersecting(dimension, x >> 4, z >> 4)) {
+        if (rec->placed) continue; // no structure references the chunk
         if (std::find(occupancy.structuresAllowed.begin(), occupancy.structuresAllowed.end(), rec->start.key) != occupancy.structuresAllowed.end()) continue;
         auto const* inf = fl::info(rec->start.key);
         if (!inf || core::landmark::clearFromStructureZone(inf->decoration, occ)) continue;

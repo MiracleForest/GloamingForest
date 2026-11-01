@@ -17,7 +17,8 @@
 // #findNearestMapLandmark); random spread structures use vanilla's ring search.
 //
 // Permissions: TF's levels mapped one down onto Bedrock's (Java 2 "gamemasters" -> GameDirectors,
-// commands::isAdmin; Java 3 "admins", genbook -> Admin).
+// commands::isAdmin; Java 3 "admins", genbook -> Admin, or any operator: Java's default
+// op-permission-level 4 gives operators level 3, Bedrock operators run at GameDirectors).
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -168,10 +169,12 @@ void giveBook(Player& player, ItemStack book) {
     player.sendInventory(false);
 }
 
-/// GenerateBookCommand#generateBook (requires permission level 3).
+/// GenerateBookCommand#generateBook (requires permission level 3: Bedrock's Admin, or an operator,
+/// as Java's default op-permission-level 4 gives every operator level 3).
 void genbook(CommandOrigin const& origin, CommandOutput& output, std::optional<std::string> structure) {
-    if (origin.getPermissionsLevel() < CommandPermissionLevel::Admin) return output.error("You need operator permission.");
     auto* player = commands::playerOf(origin);
+    if (origin.getPermissionsLevel() < CommandPermissionLevel::Admin && !(player && player->isOperator()))
+        return output.error("You need operator permission.");
     if (!player || player->isSimulatedPlayer())
         return output.error(say(origin, "commands.tffeature.not_player", "This command must be run by a valid player!"));
     int given = 0;

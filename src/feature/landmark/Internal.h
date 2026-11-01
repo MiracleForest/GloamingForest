@@ -31,6 +31,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "nlohmann/json.hpp"
@@ -100,6 +101,7 @@ struct Info {
     std::string                        hintMob;      ///< hint_creature.hint_mob
     std::string                        hintBook;     ///< "lichtower" (twilightforest.book.<name>)
     int                                hintPages = 0;
+    int                                featureIndex = 0; ///< in its decoration step (set at load: featureIndex())
     Json                               raw;          ///< the record as loaded
 };
 
@@ -124,6 +126,12 @@ void registerInfo(Info info);
 [[nodiscard]] Info parseRecord(std::string const& key, Json const& record);
 /// "twilightforest:lich_tower" from "lich_tower" or the full id.
 [[nodiscard]] std::string normalizeKey(std::string const& id);
+/// A resource location's (namespace, path); "minecraft" without a namespace, as ResourceLocation.
+[[nodiscard]] inline std::pair<std::string, std::string> splitKey(std::string const& key) {
+    auto colon = key.find(':');
+    if (colon == std::string::npos) return {"minecraft", key};
+    return {key.substr(0, colon), key.substr(colon + 1)};
+}
 
 // ---- generators (Starts.cpp) -------------------------------------------------------------------------
 
