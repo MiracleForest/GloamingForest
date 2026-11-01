@@ -25,6 +25,7 @@
 #include "mc/world/level/block/BlockProperty.h"
 
 #include "feature/structure/Internal.h"
+#include "feature/structure/pure/Xoroshiro.h"
 #include "mod/Log.h"
 
 namespace gf::structure {
@@ -79,17 +80,19 @@ struct RegionRandom {
     Region const* region = nullptr;
     int           cx = 0, cz = 0, dim = 0;
     std::int64_t  seed = 0;
-    std::unique_ptr<JavaRandom> random;
+    std::unique_ptr<RandomSource> random;
 };
 /// The regions this thread decorates lately (a generator may interleave a few): each keeps its
-/// own random until it drops out of the list.
+/// own random until it drops out of the list or a new region at that address starts
+/// (resetRegionRandom, ext::regionStarted).
 thread_local std::vector<RegionRandom> tRegionRandoms;
 constexpr std::size_t                 kRegionRandoms = 8;
 } // namespace
 
 RandomSource& regionRandom(Region& region) {
-    // WorldGenRegion's random is made with the region (seeded at its center chunk) and shared by
-    // everything decorating it
+    // WorldGenRegion's random is made with the region and shared by everything decorating it:
+    // RandomState#getOrCreateRandomFactory(worldgen_region_random).at(center chunk) over the
+    // dimension's Xoroshiro source (pure/Xoroshiro.h)
     auto& list = tRegionRandoms;
     int   cx = region.centerChunkX(), cz = region.centerChunkZ(), dim = region.dimension();
     auto  seed = region.seed();
@@ -99,7 +102,7 @@ RandomSource& regionRandom(Region& region) {
         return *list.front().random;
     }
     if (list.size() >= kRegionRandoms) list.pop_back();
-    list.insert(list.begin(), RegionRandom{&region, cx, cz, dim, seed, std::make_unique<JavaRandom>(seed ^ pure::mthGetSeed(cx * 16, 0, cz * 16))});
+    list.insert(list.begin(), RegionRandom{&region, cx, cz, dim, seed, pure::worldgenRegionRandom(seed, cx, cz)});
     return *list.front().random;
 }
 

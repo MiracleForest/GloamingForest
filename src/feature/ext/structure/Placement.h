@@ -33,7 +33,15 @@ void setWaterlogged(Region& region, BlockPos const& pos, bool waterlogged);
 /// Level#getFluidState(pos) is a water source (the block or its liquid layer).
 [[nodiscard]] bool isWaterSource(Region& region, BlockPos const& pos);
 
-/// WorldGenRegion#getRandom: the region's random (world.getRandom() in TF's pieces and features).
+/// WorldGenRegion#getRandom: the region's random (world.getRandom() in TF's pieces and features):
+/// Minecraft's Xoroshiro128++ RandomState random "minecraft:worldgen_region_random" at the
+/// region's center chunk, bit for bit (the TF dimension's noise settings use the Xoroshiro source).
+/// Everything decorating the same region draws from the same sequence.
 [[nodiscard]] RandomSource& worldRandom(Region& region);
+/// A new WorldGenRegion starts: its random starts over (Java makes one per region). F5's region
+/// (one per chunk decoration) calls this when it is created, so a region object that reuses the
+/// address of an earlier one for the same chunk does not continue the old sequence; the kit's own
+/// regions (BlockSourceRegion, the selftests' memory regions) do it themselves.
+void regionStarted(Region const& region);
 
 } // namespace gf::structure::ext

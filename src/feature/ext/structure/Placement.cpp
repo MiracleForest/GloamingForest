@@ -26,4 +26,6 @@ bool isWaterSource(Region& region, BlockPos const& pos) { return liquids::waterS
 
 RandomSource& worldRandom(Region& region) { return regionRandom(region); }
 
+void regionStarted(Region const& region) { resetRegionRandom(&region); }
+
 } // namespace gf::structure::ext
