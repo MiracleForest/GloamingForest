@@ -1,0 +1,372 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.chain_block",
+        "texture_width": 32,
+        "texture_height": 16,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 1.75, 0]
+      },
+      "bones": [
+        {
+          "name": "block",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-4, 24, -4],
+              "size": [8, 8, 8],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_0",
+          "parent": "block",
+          "pivot": [0, 33, 0],
+          "cubes": [
+            {
+              "origin": [-1, 32, -1],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_1",
+          "parent": "block",
+          "pivot": [0, 32, 4],
+          "rotation": [45, 0, 0],
+          "cubes": [
+            {
+              "origin": [-1, 31, 3],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_2",
+          "parent": "block",
+          "pivot": [4, 32, 4],
+          "rotation": [-55, 45, 0],
+          "cubes": [
+            {
+              "origin": [3, 31, 3],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_3",
+          "parent": "block",
+          "pivot": [4, 32, 0],
+          "rotation": [0, 0, 45],
+          "cubes": [
+            {
+              "origin": [3, 31, -1],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_4",
+          "parent": "block",
+          "pivot": [4, 32, -4],
+          "rotation": [-35, -45, 0],
+          "cubes": [
+            {
+              "origin": [3, 31, -5],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_5",
+          "parent": "block",
+          "pivot": [0, 32, -4],
+          "rotation": [45, 0, 0],
+          "cubes": [
+            {
+              "origin": [-1, 31, -5],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_6",
+          "parent": "block",
+          "pivot": [-4, 32, -4],
+          "rotation": [-35, 45, 0],
+          "cubes": [
+            {
+              "origin": [-5, 31, -5],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_7",
+          "parent": "block",
+          "pivot": [-4, 32, 0],
+          "rotation": [0, 0, 45],
+          "cubes": [
+            {
+              "origin": [-5, 31, -1],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_8",
+          "parent": "block",
+          "pivot": [-4, 32, 4],
+          "rotation": [-55, -45, 0],
+          "cubes": [
+            {
+              "origin": [-5, 31, 3],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_9",
+          "parent": "block",
+          "pivot": [0, 28, 0],
+          "cubes": [
+            {
+              "origin": [-1, 27, -1],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_10",
+          "parent": "block",
+          "pivot": [0, 28, 4],
+          "cubes": [
+            {
+              "origin": [-1, 27, 3],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_11",
+          "parent": "block",
+          "pivot": [4, 28, 5],
+          "rotation": [0, 45, 0],
+          "cubes": [
+            {
+              "origin": [3, 27, 4],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_12",
+          "parent": "block",
+          "pivot": [5, 28, 0],
+          "cubes": [
+            {
+              "origin": [4, 27, -1],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_13",
+          "parent": "block",
+          "pivot": [4, 28, -4],
+          "rotation": [0, 45, 0],
+          "cubes": [
+            {
+              "origin": [3, 27, -5],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_14",
+          "parent": "block",
+          "pivot": [0, 28, -5],
+          "cubes": [
+            {
+              "origin": [-1, 27, -6],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_15",
+          "parent": "block",
+          "pivot": [-4, 28, -4],
+          "rotation": [0, 45, 0],
+          "cubes": [
+            {
+              "origin": [-5, 27, -5],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_16",
+          "parent": "block",
+          "pivot": [-5, 28, 0],
+          "cubes": [
+            {
+              "origin": [-6, 27, -1],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_17",
+          "parent": "block",
+          "pivot": [-4, 28, 4],
+          "rotation": [0, 45, 0],
+          "cubes": [
+            {
+              "origin": [-5, 27, 3],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_18",
+          "parent": "block",
+          "pivot": [0, 23, 0],
+          "cubes": [
+            {
+              "origin": [-1, 22, -1],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_19",
+          "parent": "block",
+          "pivot": [0, 24, 4],
+          "rotation": [45, 0, 0],
+          "cubes": [
+            {
+              "origin": [-1, 23, 3],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_20",
+          "parent": "block",
+          "pivot": [4, 24, 4],
+          "rotation": [-35, 45, 0],
+          "cubes": [
+            {
+              "origin": [3, 23, 3],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_21",
+          "parent": "block",
+          "pivot": [4, 24, 0],
+          "rotation": [0, 0, 45],
+          "cubes": [
+            {
+              "origin": [3, 23, -1],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_22",
+          "parent": "block",
+          "pivot": [4, 24, -4],
+          "rotation": [-55, -45, 0],
+          "cubes": [
+            {
+              "origin": [3, 23, -5],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_23",
+          "parent": "block",
+          "pivot": [0, 24, -4],
+          "rotation": [45, 0, 0],
+          "cubes": [
+            {
+              "origin": [-1, 23, -5],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_24",
+          "parent": "block",
+          "pivot": [-4, 24, -4],
+          "rotation": [-55, 45, 0],
+          "cubes": [
+            {
+              "origin": [-5, 23, -5],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_25",
+          "parent": "block",
+          "pivot": [-4, 24, 0],
+          "rotation": [0, 0, 45],
+          "cubes": [
+            {
+              "origin": [-5, 23, -1],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "spikes_26",
+          "parent": "block",
+          "pivot": [-4, 24, 4],
+          "rotation": [-35, -45, 0],
+          "cubes": [
+            {
+              "origin": [-5, 23, 3],
+              "size": [2, 2, 2],
+              "uv": [24, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,218 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.knight_phantom_trophy_held_left_armor",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3.5,
+        "visible_bounds_offset": [0, 1.25, 0]
+      },
+      "bones": [
+        {
+          "name": "knight_phantom_trophy_held_left_armor",
+          "parent": "leftArm",
+          "pivot": [0, 0, 0],
+          "rotation": [-54.7356, 150, -35.2644]
+        },
+        {
+          "name": "knight_phantom_trophy_held_left_armor_helmet",
+          "parent": "knight_phantom_trophy_held_left_armor",
+          "pivot": [-7.74264, 7.78082, 0.74264],
+          "rotation": [0, 180, 0],
+          "cubes": [
+            {
+              "origin": [-9.94264, 7.78082, -1.45736],
+              "size": [4.4, 4.4, 4.4],
+              "inflate": 0.1375,
+              "uv": {
+                "north": {
+                  "uv": [8, 8],
+                  "uv_size": [8, 8]
+                },
+                "east": {
+                  "uv": [0, 8],
+                  "uv_size": [8, 8]
+                },
+                "south": {
+                  "uv": [24, 8],
+                  "uv_size": [8, 8]
+                },
+                "west": {
+                  "uv": [16, 8],
+                  "uv_size": [8, 8]
+                },
+                "up": {
+                  "uv": [8, 0],
+                  "uv_size": [8, 8]
+                },
+                "down": {
+                  "uv": [16, 8],
+                  "uv_size": [8, -8]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "knight_phantom_trophy_held_left_armor_right_horn_1",
+          "parent": "knight_phantom_trophy_held_left_armor_helmet",
+          "pivot": [-9.94264, 11.35582, 0.74264],
+          "rotation": [0, -25, 45],
+          "cubes": [
+            {
+              "origin": [-12.96764, 10.53082, -0.08236],
+              "size": [2.75, 1.65, 1.65],
+              "inflate": 0.1375,
+              "uv": {
+                "north": {
+                  "uv": [27, 3],
+                  "uv_size": [5, 3]
+                },
+                "east": {
+                  "uv": [24, 3],
+                  "uv_size": [3, 3]
+                },
+                "south": {
+                  "uv": [35, 3],
+                  "uv_size": [5, 3]
+                },
+                "west": {
+                  "uv": [32, 3],
+                  "uv_size": [3, 3]
+                },
+                "up": {
+                  "uv": [27, 0],
+                  "uv_size": [5, 3]
+                },
+                "down": {
+                  "uv": [32, 3],
+                  "uv_size": [5, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "knight_phantom_trophy_held_left_armor_right_horn_2",
+          "parent": "knight_phantom_trophy_held_left_armor_right_horn_1",
+          "pivot": [-12.41764, 11.35582, 0.74264],
+          "rotation": [0, -15, 45],
+          "cubes": [
+            {
+              "origin": [-14.34264, 10.80582, 0.19264],
+              "size": [1.65, 1.1, 1.1],
+              "inflate": 0.1375,
+              "uv": {
+                "north": {
+                  "uv": [56, 18],
+                  "uv_size": [3, 2]
+                },
+                "east": {
+                  "uv": [54, 18],
+                  "uv_size": [2, 2]
+                },
+                "south": {
+                  "uv": [61, 18],
+                  "uv_size": [3, 2]
+                },
+                "west": {
+                  "uv": [59, 18],
+                  "uv_size": [2, 2]
+                },
+                "up": {
+                  "uv": [56, 16],
+                  "uv_size": [3, 2]
+                },
+                "down": {
+                  "uv": [59, 18],
+                  "uv_size": [3, -2]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "knight_phantom_trophy_held_left_armor_left_horn_1",
+          "parent": "knight_phantom_trophy_held_left_armor_helmet",
+          "pivot": [-5.54264, 11.35582, 0.74264],
+          "rotation": [0, 25, -45],
+          "cubes": [
+            {
+              "origin": [-5.26764, 10.53082, -0.08236],
+              "size": [2.75, 1.65, 1.65],
+              "inflate": 0.1375,
+              "uv": {
+                "north": {
+                  "uv": [32, 3],
+                  "uv_size": [-5, 3]
+                },
+                "east": {
+                  "uv": [35, 3],
+                  "uv_size": [-3, 3]
+                },
+                "south": {
+                  "uv": [40, 3],
+                  "uv_size": [-5, 3]
+                },
+                "west": {
+                  "uv": [27, 3],
+                  "uv_size": [-3, 3]
+                },
+                "up": {
+                  "uv": [32, 0],
+                  "uv_size": [-5, 3]
+                },
+                "down": {
+                  "uv": [37, 3],
+                  "uv_size": [-5, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "knight_phantom_trophy_held_left_armor_left_horn_2",
+          "parent": "knight_phantom_trophy_held_left_armor_left_horn_1",
+          "pivot": [-3.06764, 11.35582, 0.74264],
+          "rotation": [0, 15, -45],
+          "cubes": [
+            {
+              "origin": [-2.79264, 10.80582, 0.19264],
+              "size": [1.65, 1.1, 1.1],
+              "inflate": 0.1375,
+              "uv": {
+                "north": {
+                  "uv": [56, 18],
+                  "uv_size": [3, 2]
+                },
+                "east": {
+                  "uv": [54, 18],
+                  "uv_size": [2, 2]
+                },
+                "south": {
+                  "uv": [61, 18],
+                  "uv_size": [3, 2]
+                },
+                "west": {
+                  "uv": [59, 18],
+                  "uv_size": [2, 2]
+                },
+                "up": {
+                  "uv": [56, 16],
+                  "uv_size": [3, 2]
+                },
+                "down": {
+                  "uv": [59, 18],
+                  "uv_size": [3, -2]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

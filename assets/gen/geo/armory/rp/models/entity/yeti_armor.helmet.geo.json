@@ -1,0 +1,190 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.yeti_armor.helmet",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 2.5,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 2, 0]
+      },
+      "bones": [
+        {
+          "name": "head",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-4.5, 24, -4],
+              "size": [9, 8, 8],
+              "inflate": 1,
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "horn_1_left_bottom",
+          "parent": "head",
+          "pivot": [-4.5, 32, -1],
+          "rotation": [0, -30, 35],
+          "cubes": [
+            {
+              "origin": [-7.5, 30.5, -2.5],
+              "size": [3, 3, 3],
+              "uv": [52, 8]
+            }
+          ]
+        },
+        {
+          "name": "horn_1_left_top",
+          "parent": "horn_1_left_bottom",
+          "pivot": [-7.5, 32, -1],
+          "rotation": [0, -20, 35],
+          "cubes": [
+            {
+              "origin": [-11.5, 31, -2],
+              "size": [5, 2, 2],
+              "uv": [34, 10]
+            }
+          ]
+        },
+        {
+          "name": "horn_1_right_bottom",
+          "parent": "head",
+          "pivot": [4.5, 32, -1],
+          "rotation": [0, 30, -35],
+          "cubes": [
+            {
+              "origin": [4.5, 30.5, -2.5],
+              "size": [3, 3, 3],
+              "uv": [52, 8]
+            }
+          ]
+        },
+        {
+          "name": "horn_1_right_top",
+          "parent": "horn_1_right_bottom",
+          "pivot": [7.5, 32, -1],
+          "rotation": [0, 20, -35],
+          "cubes": [
+            {
+              "origin": [6.5, 31, -2],
+              "size": [5, 2, 2],
+              "uv": [34, 10]
+            }
+          ]
+        },
+        {
+          "name": "horn_2_left_bottom",
+          "parent": "head",
+          "pivot": [-4.5, 30, -1],
+          "rotation": [0, -30, 15],
+          "cubes": [
+            {
+              "origin": [-7.5, 28.5, -2.5],
+              "size": [3, 3, 3],
+              "uv": [52, 8]
+            }
+          ]
+        },
+        {
+          "name": "horn_2_left_top",
+          "parent": "horn_2_left_bottom",
+          "pivot": [-7.5, 30, -1],
+          "rotation": [0, -20, 15],
+          "cubes": [
+            {
+              "origin": [-11.5, 29, -2],
+              "size": [5, 2, 2],
+              "uv": [34, 10]
+            }
+          ]
+        },
+        {
+          "name": "horn_2_right_bottom",
+          "parent": "head",
+          "pivot": [4.5, 30, -1],
+          "rotation": [0, 30, -15],
+          "cubes": [
+            {
+              "origin": [4.5, 28.5, -2.5],
+              "size": [3, 3, 3],
+              "uv": [52, 8]
+            }
+          ]
+        },
+        {
+          "name": "horn_2_right_top",
+          "parent": "horn_2_right_bottom",
+          "pivot": [7.5, 30, -1],
+          "rotation": [0, 20, -15],
+          "cubes": [
+            {
+              "origin": [6.5, 29, -2],
+              "size": [5, 2, 2],
+              "uv": [34, 10]
+            }
+          ]
+        },
+        {
+          "name": "horn_3_left_bottom",
+          "parent": "head",
+          "pivot": [-4.5, 28, -1],
+          "rotation": [0, -30, -5],
+          "cubes": [
+            {
+              "origin": [-7.5, 26.5, -2.5],
+              "size": [3, 3, 3],
+              "uv": [52, 8]
+            }
+          ]
+        },
+        {
+          "name": "horn_3_left_top",
+          "parent": "horn_3_left_bottom",
+          "pivot": [-7.5, 28, -1],
+          "rotation": [0, -20, -5],
+          "cubes": [
+            {
+              "origin": [-11.5, 27, -2],
+              "size": [5, 2, 2],
+              "uv": [34, 10]
+            }
+          ]
+        },
+        {
+          "name": "horn_3_right_bottom",
+          "parent": "head",
+          "pivot": [4.5, 28, -1],
+          "rotation": [0, 30, 5],
+          "cubes": [
+            {
+              "origin": [4.5, 26.5, -2.5],
+              "size": [3, 3, 3],
+              "uv": [52, 8]
+            }
+          ]
+        },
+        {
+          "name": "horn_3_right_top",
+          "parent": "horn_3_right_bottom",
+          "pivot": [7.5, 28, -1],
+          "rotation": [0, 20, 5],
+          "cubes": [
+            {
+              "origin": [6.5, 27, -2],
+              "size": [5, 2, 2],
+              "uv": [34, 10]
+            }
+          ]
+        },
+        {
+          "name": "hat",
+          "parent": "head",
+          "pivot": [0, 24, 0]
+        }
+      ]
+    }
+  ]
+}

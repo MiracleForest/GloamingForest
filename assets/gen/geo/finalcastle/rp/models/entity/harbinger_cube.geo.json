@@ -1,0 +1,76 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.harbinger_cube",
+        "texture_width": 128,
+        "texture_height": 64,
+        "visible_bounds_width": 3.5,
+        "visible_bounds_height": 3.5,
+        "visible_bounds_offset": [0, 1.25, 0]
+      },
+      "bones": [
+        {
+          "name": "head",
+          "pivot": [0, 24, 0]
+        },
+        {
+          "name": "body",
+          "pivot": [0, 24, -2],
+          "cubes": [
+            {
+              "origin": [-16, 8, -18],
+              "size": [32, 32, 32],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "leg0",
+          "pivot": [-6, 8, 9],
+          "cubes": [
+            {
+              "origin": [-10, 0, 5],
+              "size": [8, 8, 8],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "leg1",
+          "pivot": [6, 8, 9],
+          "cubes": [
+            {
+              "origin": [2, 0, 5],
+              "size": [8, 8, 8],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "leg2",
+          "pivot": [-9, 8, -14],
+          "cubes": [
+            {
+              "origin": [-13, 0, -18],
+              "size": [8, 8, 8],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "leg3",
+          "pivot": [9, 8, -14],
+          "cubes": [
+            {
+              "origin": [5, 0, -18],
+              "size": [8, 8, 8],
+              "uv": [0, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
