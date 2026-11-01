@@ -29,7 +29,7 @@
           "minecraft:collision_box": { "origin": [-8, 0, -8], "size": [16, 13, 16] },
           "minecraft:material_instances": {
             "*": { "texture": "portal", "render_method": "blend", "ambient_occlusion": false, "face_dimming": false },
-            "barrier": { "texture": "gf_dimension_portal_barrier", "render_method": "alpha_test", "ambient_occlusion": false, "face_dimming": false }
+            "barrier": { "texture": "tf_block_portal_barrier", "render_method": "alpha_test", "ambient_occlusion": false, "face_dimming": false }
           }
         }
       }
