@@ -1046,7 +1046,7 @@
   ],
   "setupAnim": {
     "class": "MosquitoSwarmModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.mosquito_swarm.base",
     "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
     "translated": [],
     "todo": [

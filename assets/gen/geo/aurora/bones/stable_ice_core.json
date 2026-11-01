@@ -330,7 +330,7 @@
   ],
   "setupAnim": {
     "class": "StableIceCoreModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.stable_ice_core.base",
     "notes": ["setupAnim is inherited from UnstableIceCoreModel", "vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
     "translated": [],
     "todo": [

@@ -1,7 +1,9 @@
-# Server scenario 'models.preview' (unit F2): the preview packs of the client scenario 'models' load
-# without a content-log error (run.ps1 fails the run on any; a function with one bad command is
-# dropped by the game), every preview function runs, and the follow-up commands of each shot (armor
-# stands dressed in the preview items) succeed. Dot-sourced by tools/e2e/server/run.ps1.
+# Server scenario 'models.preview' (unit F2): the preview behavior pack of the client scenario 'models'
+# (actors, test items, functions) loads on BDS without a content-log error (run.ps1 fails the run on
+# any; a function with one bad command is dropped by the game), every preview function runs, and the
+# follow-up commands of each shot (armor stands dressed in the preview items) succeed. BDS does not
+# load resource packs (geometry, animations, attachables, render controllers): their content log is
+# checked by the client scenario 'models'. Dot-sourced by tools/e2e/server/run.ps1.
 $plan = Get-Content (Join-Path $script:OutDir 'preview-shots.json') -Raw | ConvertFrom-Json
 # no player stands at the preview spot: keep its chunks loaded, or summons fail now and then
 Send-Console 'tickingarea add -16 -64 -16 16 -40 16 gfpreview true'

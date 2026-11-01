@@ -1,5 +1,5 @@
 {
-  "comment": "Catalog of tools/models/convert.ps1 (contract 'geo', unit F2). 'layers': every model layer TF registers in ClientRegistrationEvents.registerLayerDefinitions (the converter fails on a missing one) with its owning unit (rule R3), the ids it serves (checked against docs/spec/owners.tsv), its textures (paths below TF's assets/twilightforest/textures/, 'minecraft:' = vanilla) and the class whose setupAnim becomes the base animation. kind: entity (default) | block | item (block entity / item models, no animation) | armor (written per slot by 'armor') | source (used by 'extracts' only); vanilla: the layer is a vanilla Minecraft model, use that Bedrock geometry; skip: not drawn. 'armor': armor and Travellers' Gear attachables (bones carry the player's bone names). 'extracts': parts drawn with a renderer's PoseStack transforms (trophies on blocks and on heads, worn and held items); 'opChains' are shared PoseStack transform chains (translate in blocks, rotations in degrees, as TF's renderers apply them). See docs/spec/models.md.",
+  "comment": "Catalog of tools/models/convert.ps1 (contract 'geo', unit F2). 'layers': every model layer TF registers in ClientRegistrationEvents.registerLayerDefinitions (the converter fails on a missing one) with its owning unit (rule R3), the ids it serves (checked against docs/spec/owners.tsv), its textures (paths below TF's assets/twilightforest/textures/, 'minecraft:' = vanilla) and the class whose setupAnim becomes the base animation. kind: entity (default) | block | item (block entity / item models, no animation) | armor (written per slot by 'armor') | source (used by 'extracts' only); vanilla: the layer is a vanilla Minecraft model, use that Bedrock geometry; skip: not drawn. 'armor': armor and Travellers' Gear attachables (bones carry the player's bone names). 'extracts': parts drawn with a renderer's PoseStack transforms (trophies on blocks; worn and held items); 'opChains' are shared PoseStack transform chains (translate in blocks, rotations in degrees, as TF's renderers apply them); ['display', <context>] is the display transform (ItemTransform) of the extract's TF item model (models/item/<item>.json and its parents, read from the TF checkout). An extract with 'item' and 'forms' is written once per form of 'itemForms' (<name>_worn on the head, <name>_held in the right hand, <name>_held_left in the left hand) and gets one attachable with the geometry of every form, drawn in its slot (c.item_slot). Pose expressions may use ageInTicks (0 in the geometry); with 'animation' they also become a base animation. See docs/spec/models.md.",
   "texturePrefix": "textures/twilightforest/",
   "geometryPrefix": "geometry.twilightforest.",
   "animationPrefix": "animation.twilightforest.",
@@ -142,10 +142,44 @@
   "opChains": {
     "trophy_floor": [["scale", -1, -1, 1]],
     "trophy_wall": [["translate", 0, 0.25, 0.249], ["scale", -1, -1, 1]],
-    "worn_on_head": [["translate", 0, -0.25, 0], ["rotateY", 180], ["scale", 0.625, -0.625, -0.625],
-                     ["translate", 0, 0.375, 0], ["rotateXYZ", 180, 0, 180], ["scale", 1.6, 1.6, 1.6],
-                     ["translate", -0.5, -0.5, -0.5]],
+    "custom_head_layer": [["translate", 0, -0.25, 0], ["rotateY", 180], ["scale", 0.625, -0.625, -0.625]],
+    "item_in_right_hand": [["rotateX", -90], ["rotateY", 180], ["translate", 0.0625, 0.125, -0.625]],
+    "item_in_left_hand": [["rotateX", -90], ["rotateY", 180], ["translate", -0.0625, 0.125, -0.625]],
+    "builtin_entity_item": [["translate", -0.5, -0.5, -0.5]],
     "trophy_item": [["translate", 0.5, 0, 0.5], ["scale", -1, -1, 1]]
+  },
+
+  "itemForms": {
+    "trophy": [
+      { "suffix": "worn", "frame": "head", "slot": "head", "kind": "worn",
+        "source": "CustomHeadLayer.translateToHead + the item model's 'head' display + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, ItemDisplayContext.HEAD)",
+        "prefix": ["custom_head_layer", ["display", "head"], "builtin_entity_item", "trophy_item"] },
+      { "suffix": "held", "frame": "rightArm", "slot": "main_hand", "kind": "held",
+        "source": "ItemInHandLayer (right arm) + the item model's 'thirdperson_righthand' display + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, THIRD_PERSON_RIGHT_HAND)",
+        "prefix": ["item_in_right_hand", ["display", "thirdperson_righthand"], "builtin_entity_item", "trophy_item"] },
+      { "suffix": "held_left", "frame": "leftArm", "slot": "off_hand", "kind": "held",
+        "source": "ItemInHandLayer (left arm) + the item model's 'thirdperson_lefthand' display (leftHand: x, y and z rotation mirrored) + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, THIRD_PERSON_LEFT_HAND)",
+        "prefix": ["item_in_left_hand", ["display", "thirdperson_lefthand"], "builtin_entity_item", "trophy_item"] }
+    ],
+    "builtin_item": [
+      { "suffix": "worn", "frame": "head", "slot": "head", "kind": "worn",
+        "source": "CustomHeadLayer.translateToHead + the item model's 'head' display + ItemRenderer (builtin/entity) + ISTER",
+        "prefix": ["custom_head_layer", ["display", "head"], "builtin_entity_item"] },
+      { "suffix": "held", "frame": "rightArm", "slot": "main_hand", "kind": "held",
+        "source": "ItemInHandLayer (right arm) + the item model's 'thirdperson_righthand' display + ItemRenderer (builtin/entity) + ISTER",
+        "prefix": ["item_in_right_hand", ["display", "thirdperson_righthand"], "builtin_entity_item"] },
+      { "suffix": "held_left", "frame": "leftArm", "slot": "off_hand", "kind": "held",
+        "source": "ItemInHandLayer (left arm) + the item model's 'thirdperson_lefthand' display (leftHand) + ItemRenderer (builtin/entity) + ISTER",
+        "prefix": ["item_in_left_hand", ["display", "thirdperson_lefthand"], "builtin_entity_item"] }
+    ],
+    "held_item": [
+      { "suffix": "held", "frame": "rightArm", "slot": "main_hand", "kind": "held",
+        "source": "ItemInHandLayer (right arm) + the item model's 'thirdperson_righthand' display + ItemRenderer (builtin/entity) + ISTER",
+        "prefix": ["item_in_right_hand", ["display", "thirdperson_righthand"], "builtin_entity_item"] },
+      { "suffix": "held_left", "frame": "leftArm", "slot": "off_hand", "kind": "held",
+        "source": "ItemInHandLayer (left arm) + the item model's 'thirdperson_lefthand' display (leftHand) + ItemRenderer (builtin/entity) + ISTER",
+        "prefix": ["item_in_left_hand", ["display", "thirdperson_lefthand"], "builtin_entity_item"] }
+    ]
   },
 
   "extracts": [
@@ -168,15 +202,17 @@
         { "parts": ["head"], "ops": [["translate", 0, 0.25, 0]], "texture": "entity/phantomskeleton.png" },
         { "geometry": "knight_phantom_trophy_armor", "parts": ["helmet"], "ops": [["translate", 0, 0.25, 0], ["scale", 1.1, 1.1, 1.1], ["translate", 0, 0.05, 0]], "texture": "models/armor/phantom_layer_1.png", "material": "entity_alphablend" }
       ] },
-    { "name": "ur_ghast_trophy", "unit": "building", "layer": "ur_ghast_trophy", "block": "twilightforest:ur_ghast_trophy", "kind": "trophy", "source": "TrophyRenderer.render + UrGhastModel.renderTrophy / waveTentacles(0, 0) (floor)",
+    { "name": "ur_ghast_trophy", "unit": "building", "layer": "ur_ghast_trophy", "block": "twilightforest:ur_ghast_trophy", "kind": "trophy", "source": "TrophyRenderer.render + UrGhastModel.renderTrophy + waveTentacles (floor; the geometry is the pose at tick 0, the base animation waves the tentacles)",
       "prefix": ["trophy_floor"],
       "pose": [
         { "part": "body", "xRot": "0", "yRot": "0" },
-        { "part": "body/tentacle_{i}", "range": [0, 8], "xRot": "0.2F + Mth.cos((i * 9.0F) / 2.0F * 0.3335F) * 0.15F", "yRot": "0.4F * Mth.sin((i * 9.0F) / 2.0F * 0.3F)" },
-        { "part": "body/tentacle_{i}/tentacle_{i}_extension", "range": [0, 8], "xRot": "0.1F + Mth.cos((i * 9.0F) / 2.0F * 0.4445F) * 0.20F" },
-        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2", "range": [0, 8], "xRot": "0.1F + Mth.cos((i * 9.0F) / 2.0F * 0.5555F) * 0.25F" },
-        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2/tentacle_{i}_tip", "range": [0, 8], "xRot": "0.1F + Mth.cos((i * 9.0F) / 2.0F * 0.6665F) * 0.30F" }
+        { "part": "body/tentacle_{i}", "range": [0, 8], "xRot": "0.2F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.3335F) * 0.15F", "yRot": "0.4F * Mth.sin((ageInTicks + i * 9.0F) / 2.0F * 0.3F)" },
+        { "part": "body/tentacle_{i}/tentacle_{i}_extension", "range": [0, 8], "xRot": "0.1F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.4445F) * 0.20F" },
+        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2", "range": [0, 8], "xRot": "0.1F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.5555F) * 0.25F" },
+        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2/tentacle_{i}_tip", "range": [0, 8], "xRot": "0.1F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.6665F) * 0.30F" }
       ],
+      "animation": { "ageInTicks": { "query": "query.life_time", "scale": 18 },
+                     "source": "UrGhastModel.setupRotationsForTrophy(x = ticks * 4.5) -> waveTentacles(x, x * 0.2): ageInTicks = 0.9 * ticks, where ticks are TrophyBlockEntity's animatedTicks (Ur-Ghast trophies always animate) or, in item form, ClientGameEvents.time (ISTER); query.life_time * 20 ticks" },
       "groups": [{ "parts": ["body"], "ops": [["translate", 0, -1, 0], ["scale", 0.5, 0.5, 0.5]], "texture": "entity/towerboss.png" }] },
     { "name": "alpha_yeti_trophy", "unit": "building", "layer": "alpha_yeti_trophy", "block": "twilightforest:alpha_yeti_trophy", "kind": "trophy", "source": "TrophyRenderer.render + AlphaYetiModel.renderTrophy (floor)",
       "prefix": ["trophy_floor"], "pose": [{ "part": "head", "xRot": "0", "yRot": "0" }],
@@ -214,11 +250,13 @@
       "prefix": ["trophy_floor"],
       "pose": [
         { "part": "body", "xRot": "0", "yRot": "0" },
-        { "part": "body/tentacle_{i}", "range": [0, 8], "xRot": "0.2F + Mth.cos((i * 9.0F) / 2.0F * 0.3335F) * 0.15F", "yRot": "0.4F * Mth.sin((i * 9.0F) / 2.0F * 0.3F)" },
-        { "part": "body/tentacle_{i}/tentacle_{i}_extension", "range": [0, 8], "xRot": "0.1F + Mth.cos((i * 9.0F) / 2.0F * 0.4445F) * 0.20F" },
-        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2", "range": [0, 8], "xRot": "0.1F + Mth.cos((i * 9.0F) / 2.0F * 0.5555F) * 0.25F" },
-        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2/tentacle_{i}_tip", "range": [0, 8], "xRot": "0.1F + Mth.cos((i * 9.0F) / 2.0F * 0.6665F) * 0.30F" }
+        { "part": "body/tentacle_{i}", "range": [0, 8], "xRot": "0.2F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.3335F) * 0.15F", "yRot": "0.4F * Mth.sin((ageInTicks + i * 9.0F) / 2.0F * 0.3F)" },
+        { "part": "body/tentacle_{i}/tentacle_{i}_extension", "range": [0, 8], "xRot": "0.1F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.4445F) * 0.20F" },
+        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2", "range": [0, 8], "xRot": "0.1F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.5555F) * 0.25F" },
+        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2/tentacle_{i}_tip", "range": [0, 8], "xRot": "0.1F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.6665F) * 0.30F" }
       ],
+      "animation": { "ageInTicks": { "query": "query.life_time", "scale": 18 },
+                     "source": "UrGhastModel.setupRotationsForTrophy(x = ticks * 4.5) -> waveTentacles(x, x * 0.2): ageInTicks = 0.9 * ticks, where ticks are TrophyBlockEntity's animatedTicks (Ur-Ghast trophies always animate) or, in item form, ClientGameEvents.time (ISTER); query.life_time * 20 ticks" },
       "groups": [{ "parts": ["body"], "ops": [["translate", 0, -1, 0], ["scale", 0.5, 0.5, 0.5]], "texture": "entity/towerboss.png" }] },
     { "name": "alpha_yeti_wall_trophy", "unit": "building", "layer": "alpha_yeti_trophy", "block": "twilightforest:alpha_yeti_wall_trophy", "kind": "trophy", "source": "TrophyRenderer.render + AlphaYetiModel.renderTrophy (wall, facing north)",
       "prefix": ["trophy_wall"], "pose": [{ "part": "head", "xRot": "0", "yRot": "0" }],
@@ -233,67 +271,56 @@
         { "geometry": "quest_ram_wall_trophy_lines", "parts": ["head"], "ops": [["scale", 0.67, 0.67, 0.67], ["translate", 0, 0.5, 0.67], ["scale", 1.025, 1.025, 1.025]], "texture": "entity/questram_lines.png", "material": "entity_emissive_alpha" }
       ] },
 
-    { "name": "naga_trophy_worn", "unit": "building", "layer": "naga_trophy", "frame": "head", "item": "twilightforest:naga_trophy", "slot": "head", "slotCondition": "c.item_slot == 'head'", "kind": "worn",
-      "source": "CustomHeadLayer + template_trophy 'head' display + ISTER + TrophyRenderer.render(null, 180) + NagaModel.renderTrophy (ItemDisplayContext.HEAD)",
-      "prefix": ["worn_on_head", "trophy_item"], "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
+    { "name": "naga_trophy", "unit": "building", "layer": "naga_trophy", "item": "twilightforest:naga_trophy", "forms": "trophy", "source": "NagaModel.renderTrophy (item form)",
+      "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
       "groups": [{ "parts": ["head"], "ops": [["scale", 0.5, 0.5, 0.5], ["translate", 0, -0.25, 0]], "texture": "entity/nagahead.png" }] },
-    { "name": "lich_trophy_worn", "unit": "building", "layer": "lich_trophy", "frame": "head", "item": "twilightforest:lich_trophy", "slot": "head", "slotCondition": "c.item_slot == 'head'", "kind": "worn",
-      "source": "CustomHeadLayer + template_trophy 'head' display + ISTER + TrophyRenderer.render(null, 180) + LichModel.renderTrophy (ItemDisplayContext.HEAD)",
-      "prefix": ["worn_on_head", "trophy_item"], "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }, { "part": "hat", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
+    { "name": "lich_trophy", "unit": "building", "layer": "lich_trophy", "item": "twilightforest:lich_trophy", "forms": "trophy", "source": "LichModel.renderTrophy (item form)",
+      "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }, { "part": "hat", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
       "groups": [{ "parts": ["head", "hat"], "ops": [], "texture": "entity/twilightlich64.png" }] },
-    { "name": "minoshroom_trophy_worn", "unit": "building", "layer": "minoshroom_trophy", "frame": "head", "item": "twilightforest:minoshroom_trophy", "slot": "head", "slotCondition": "c.item_slot == 'head'", "kind": "worn",
-      "source": "CustomHeadLayer + template_trophy 'head' display + ISTER + TrophyRenderer.render(null, 180) + MinoshroomModel.renderTrophy (ItemDisplayContext.HEAD)",
-      "prefix": ["worn_on_head", "trophy_item"], "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
+    { "name": "minoshroom_trophy", "unit": "building", "layer": "minoshroom_trophy", "item": "twilightforest:minoshroom_trophy", "forms": "trophy", "source": "MinoshroomModel.renderTrophy (item form)",
+      "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
       "groups": [{ "parts": ["head"], "ops": [["translate", 0, 0.375, 0.56]], "texture": "entity/minoshroomtaur.png" }] },
-    { "name": "hydra_trophy_worn", "unit": "building", "layer": "hydra_trophy", "frame": "head", "item": "twilightforest:hydra_trophy", "slot": "head", "slotCondition": "c.item_slot == 'head'", "kind": "worn",
-      "source": "CustomHeadLayer + template_trophy 'head' display + ISTER + TrophyRenderer.render(null, 180) + HydraHeadModel.renderTrophy (ItemDisplayContext.HEAD: item form)",
-      "prefix": ["worn_on_head", "trophy_item"], "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }, { "part": "head/jaw", "xRot": "0.0F * (Mth.PI / 3.0F)" }],
+    { "name": "hydra_trophy", "unit": "building", "layer": "hydra_trophy", "item": "twilightforest:hydra_trophy", "forms": "trophy", "source": "HydraHeadModel.renderTrophy (item form: scale 0.9, z -1; mouth angle 0)",
+      "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }, { "part": "head/jaw", "xRot": "0.0F * (Mth.PI / 3.0F)" }],
       "groups": [{ "parts": ["head"], "ops": [["scale", 0.25, 0.25, 0.25], ["scale", 0.9, 0.9, 0.9], ["translate", 0, -1, -1]], "texture": "entity/hydra4.png" }] },
-    { "name": "knight_phantom_trophy_worn", "unit": "building", "layer": "knight_phantom_trophy", "frame": "head", "item": "twilightforest:knight_phantom_trophy", "slot": "head", "slotCondition": "c.item_slot == 'head'", "kind": "worn",
-      "source": "CustomHeadLayer + template_trophy 'head' display + ISTER + TrophyRenderer.render(null, 180) + KnightPhantomModel.renderTrophy (ItemDisplayContext.HEAD)",
-      "prefix": ["worn_on_head", "trophy_item"], "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }, { "part": "helmet", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
+    { "name": "knight_phantom_trophy", "unit": "building", "layer": "knight_phantom_trophy", "item": "twilightforest:knight_phantom_trophy", "forms": "trophy", "source": "KnightPhantomModel.renderTrophy (item form, not GUI)",
+      "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }, { "part": "helmet", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
       "groups": [
         { "parts": ["head"], "ops": [["translate", 0, 0.25, 0]], "texture": "entity/phantomskeleton.png" },
-        { "geometry": "knight_phantom_trophy_worn_armor", "parts": ["helmet"], "ops": [["translate", 0, 0.25, 0], ["scale", 1.1, 1.1, 1.1], ["translate", 0, 0.05, 0]], "texture": "models/armor/phantom_layer_1.png", "material": "entity_alphablend" }
+        { "suffix": "armor", "parts": ["helmet"], "ops": [["translate", 0, 0.25, 0], ["scale", 1.1, 1.1, 1.1], ["translate", 0, 0.05, 0]], "texture": "models/armor/phantom_layer_1.png", "material": "entity_alphablend" }
       ] },
-    { "name": "ur_ghast_trophy_worn", "unit": "building", "layer": "ur_ghast_trophy", "frame": "head", "item": "twilightforest:ur_ghast_trophy", "slot": "head", "slotCondition": "c.item_slot == 'head'", "kind": "worn",
-      "source": "CustomHeadLayer + template_trophy 'head' display + ISTER + TrophyRenderer.render(null, 180) + UrGhastModel.renderTrophy (ItemDisplayContext.HEAD)",
-      "prefix": ["worn_on_head", "trophy_item"],
+    { "name": "ur_ghast_trophy", "unit": "building", "layer": "ur_ghast_trophy", "item": "twilightforest:ur_ghast_trophy", "forms": "trophy", "source": "UrGhastModel.renderTrophy (item form: no y offset) + waveTentacles",
       "pose": [
         { "part": "body", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" },
-        { "part": "body/tentacle_{i}", "range": [0, 8], "xRot": "0.2F + Mth.cos((i * 9.0F) / 2.0F * 0.3335F) * 0.15F", "yRot": "0.4F * Mth.sin((i * 9.0F) / 2.0F * 0.3F)" },
-        { "part": "body/tentacle_{i}/tentacle_{i}_extension", "range": [0, 8], "xRot": "0.1F + Mth.cos((i * 9.0F) / 2.0F * 0.4445F) * 0.20F" },
-        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2", "range": [0, 8], "xRot": "0.1F + Mth.cos((i * 9.0F) / 2.0F * 0.5555F) * 0.25F" },
-        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2/tentacle_{i}_tip", "range": [0, 8], "xRot": "0.1F + Mth.cos((i * 9.0F) / 2.0F * 0.6665F) * 0.30F" }
+        { "part": "body/tentacle_{i}", "range": [0, 8], "xRot": "0.2F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.3335F) * 0.15F", "yRot": "0.4F * Mth.sin((ageInTicks + i * 9.0F) / 2.0F * 0.3F)" },
+        { "part": "body/tentacle_{i}/tentacle_{i}_extension", "range": [0, 8], "xRot": "0.1F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.4445F) * 0.20F" },
+        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2", "range": [0, 8], "xRot": "0.1F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.5555F) * 0.25F" },
+        { "part": "body/tentacle_{i}/tentacle_{i}_extension/tentacle_{i}_extension_2/tentacle_{i}_tip", "range": [0, 8], "xRot": "0.1F + Mth.cos((ageInTicks + i * 9.0F) / 2.0F * 0.6665F) * 0.30F" }
       ],
+      "animation": { "ageInTicks": { "query": "query.life_time", "scale": 18 },
+                     "source": "UrGhastModel.setupRotationsForTrophy(x = ticks * 4.5) -> waveTentacles(x, x * 0.2): ageInTicks = 0.9 * ticks, where ticks are TrophyBlockEntity's animatedTicks (Ur-Ghast trophies always animate) or, in item form, ClientGameEvents.time (ISTER); query.life_time * 20 ticks" },
       "groups": [{ "parts": ["body"], "ops": [["scale", 0.5, 0.5, 0.5]], "texture": "entity/towerboss.png" }] },
-    { "name": "alpha_yeti_trophy_worn", "unit": "building", "layer": "alpha_yeti_trophy", "frame": "head", "item": "twilightforest:alpha_yeti_trophy", "slot": "head", "slotCondition": "c.item_slot == 'head'", "kind": "worn",
-      "source": "CustomHeadLayer + template_trophy 'head' display + ISTER + TrophyRenderer.render(null, 180) + AlphaYetiModel.renderTrophy (ItemDisplayContext.HEAD)",
-      "prefix": ["worn_on_head", "trophy_item"], "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
+    { "name": "alpha_yeti_trophy", "unit": "building", "layer": "alpha_yeti_trophy", "item": "twilightforest:alpha_yeti_trophy", "forms": "trophy", "source": "AlphaYetiModel.renderTrophy (item form)",
+      "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
       "groups": [{ "parts": ["head"], "ops": [["scale", 0.2, 0.2, 0.2], ["translate", 0, -1.5, 0]], "texture": "entity/yetialpha.png" }] },
-    { "name": "snow_queen_trophy_worn", "unit": "building", "layer": "snow_queen_trophy", "frame": "head", "item": "twilightforest:snow_queen_trophy", "slot": "head", "slotCondition": "c.item_slot == 'head'", "kind": "worn",
-      "source": "CustomHeadLayer + template_trophy 'head' display + ISTER + TrophyRenderer.render(null, 180) + SnowQueenModel.renderTrophy (ItemDisplayContext.HEAD)",
-      "prefix": ["worn_on_head", "trophy_item"], "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
+    { "name": "snow_queen_trophy", "unit": "building", "layer": "snow_queen_trophy", "item": "twilightforest:snow_queen_trophy", "forms": "trophy", "source": "SnowQueenModel.renderTrophy (item form)",
+      "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
       "groups": [{ "parts": ["head"], "ops": [["translate", 0, 0.25, 0]], "texture": "entity/snowqueen.png" }] },
-    { "name": "quest_ram_trophy_worn", "unit": "building", "layer": "quest_ram_trophy", "frame": "head", "item": "twilightforest:quest_ram_trophy", "slot": "head", "slotCondition": "c.item_slot == 'head'", "kind": "worn",
-      "source": "CustomHeadLayer + template_trophy 'head' display + ISTER + TrophyRenderer.render(null, 180) + QuestRamModel.renderTrophy (ItemDisplayContext.HEAD)",
-      "prefix": ["worn_on_head", "trophy_item"], "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
+    { "name": "quest_ram_trophy", "unit": "building", "layer": "quest_ram_trophy", "item": "twilightforest:quest_ram_trophy", "forms": "trophy", "source": "QuestRamModel.renderTrophy (item form: z 0.5)",
+      "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
       "groups": [
         { "parts": ["head"], "ops": [["scale", 0.67, 0.67, 0.67], ["translate", 0, 0.5, 0.5]], "texture": "entity/questram.png" },
-        { "geometry": "quest_ram_trophy_worn_lines", "parts": ["head"], "ops": [["scale", 0.67, 0.67, 0.67], ["translate", 0, 0.5, 0.5], ["scale", 1.025, 1.025, 1.025]], "texture": "entity/questram_lines.png", "material": "entity_emissive_alpha" }
+        { "suffix": "lines", "parts": ["head"], "ops": [["scale", 0.67, 0.67, 0.67], ["translate", 0, 0.5, 0.5], ["scale", 1.025, 1.025, 1.025]], "texture": "entity/questram_lines.png", "material": "entity_emissive_alpha" }
       ] },
 
-    { "name": "mystic_crown", "unit": "artifacts", "layer": "lich_trophy", "frame": "head", "item": "twilightforest:mystic_crown", "slot": "head", "slotCondition": "c.item_slot == 'head'", "kind": "worn",
-      "source": "CustomHeadLayer + mystic_crown 'head' display (template_trophy) + ISTER (MysticCrownItem: the Lich trophy model's hat)",
-      "prefix": ["worn_on_head"], "pose": [{ "part": "hat", "xRot": "0", "yRot": "0" }],
+    { "name": "mystic_crown", "unit": "artifacts", "layer": "lich_trophy", "item": "twilightforest:mystic_crown", "forms": "builtin_item",
+      "source": "ISTER (MysticCrownItem, not GUI: the Lich trophy model's hat, yRot 0, scale(1, -1, -1), translate(0.5, 0, -0.5), scale 1.05)",
+      "pose": [{ "part": "hat", "xRot": "0", "yRot": "0" }],
       "groups": [{ "parts": ["hat"], "ops": [["scale", 1, -1, -1], ["translate", 0.5, 0, -0.5], ["scale", 1.05, 1.05, 1.05]], "texture": "entity/twilightlich64.png" }] },
 
-    { "name": "knightmetal_shield_held", "unit": "weapons", "layer": "knightmetal_shield", "frame": "rightArm", "item": "twilightforest:knightmetal_shield", "slot": "main_hand", "slotCondition": "c.item_slot == 'main_hand'", "kind": "held",
-      "source": "ItemInHandLayer (right hand) + knightmetal_shield 'thirdperson_righthand' display + ISTER (KnightmetalShieldModel)",
-      "notes": ["Third person only: Bedrock draws attachables in first person from the same bones; the first-person pose ('firstperson_righthand': rotation 0 180 5, translation -10 2 -10, scale 1.25) and the blocking model (knightmetal_shield_blocking) need an animation."],
-      "prefix": [["rotateX", -90], ["rotateY", 180], ["translate", 0.0625, 0.125, -0.625],
-                 ["translate", 0.656875, 0.375, -0.25], ["rotateXYZ", 0, 90, 0],
-                 ["translate", -0.5, -0.5, -0.5]],
+    { "name": "knightmetal_shield", "unit": "weapons", "layer": "knightmetal_shield", "item": "twilightforest:knightmetal_shield", "forms": "held_item",
+      "source": "ISTER (KnightmetalShieldItem: scale(1, -1, -1), KnightmetalShieldModel)",
+      "notes": ["Third person: Bedrock draws attachables in first person from the same (first-person) arm bones. TF's first-person poses ('firstperson_righthand': rotation 0 180 5, translation -10 2 -10, scale 1.25; 'firstperson_lefthand': translation 10 0 -10) and the blocking model (models/item/knightmetal_shield_blocking.json: thirdperson_righthand rotation 45 135 0, translation 3.51 11 -2; thirdperson_lefthand translation 13.51 3 5; firstperson_righthand rotation 0 180 -5, translation -15 5 -11; firstperson_lefthand translation 5 5 -11) are animations of unit weapons (c.is_first_person, query.blocking)."],
       "groups": [{ "parts": ["plate", "handle"], "ops": [["scale", 1, -1, -1]], "texture": "entity/knightmetal_shield.png" }] }
   ]
 }

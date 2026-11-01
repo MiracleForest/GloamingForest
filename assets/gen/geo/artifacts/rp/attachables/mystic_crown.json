@@ -4,17 +4,31 @@
     "description": {
       "identifier": "twilightforest:mystic_crown",
       "materials": {
-        "default": "entity_alphatest"
+        "default": "entity_alphatest",
+        "part1": "entity_alphatest",
+        "part2": "entity_alphatest",
+        "enchanted": "entity_alphatest_glint"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/twilightlich64"
+        "default": "textures/twilightforest/entity/twilightlich64",
+        "part1": "textures/twilightforest/entity/twilightlich64",
+        "part2": "textures/twilightforest/entity/twilightlich64",
+        "enchanted": "textures/misc/enchanted_item_glint"
       },
       "geometry": {
-        "default": "geometry.twilightforest.mystic_crown"
+        "default": "geometry.twilightforest.mystic_crown_worn",
+        "part1": "geometry.twilightforest.mystic_crown_held",
+        "part2": "geometry.twilightforest.mystic_crown_held_left"
       },
       "render_controllers": [
         {
           "controller.render.item_default": "c.item_slot == 'head'"
+        },
+        {
+          "controller.render.twilightforest.models.part1": "c.item_slot == 'main_hand'"
+        },
+        {
+          "controller.render.twilightforest.models.part2": "c.item_slot == 'off_hand'"
         }
       ]
     }

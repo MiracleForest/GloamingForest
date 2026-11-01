@@ -11,14 +11,16 @@
                    the parts HumanoidArmorLayer shows for it (helmet: head + hat, chestplate: body +
                    arms, leggings: inner layer body + legs, boots: legs); vanilla-model armor uses
                    geometry.humanoid.armor.*; render controller controller.render.armor.
-    extracts       parts of a TF model drawn through a chain of PoseStack transforms (CustomHeadLayer,
-                   the item's display transform, the ISTER, TrophyRenderer, renderTrophy), hung from
-                   the wearer's head / rightArm bone (trophy heads, the mystic crown, the knightmetal
-                   shield in the right hand).
+    extracts       parts of a TF model drawn through a chain of PoseStack transforms (CustomHeadLayer or
+                   ItemInHandLayer, the display transform of TF's item model, the ISTER, TrophyRenderer,
+                   renderTrophy), hung from the wearer's head / rightArm / leftArm bone: one geometry per
+                   slot the item is drawn in (trophies and the mystic crown on the head and in either
+                   hand, the knightmetal shield in either hand), each drawn only in its slot.
 
-  Output: assets/gen/geo/<unit>/rp/attachables/<item>.json (+ the geometry it names). Without -Item
-  every attachable is written. -Check compares instead of writing. tools/models/convert.ps1 writes
-  the same files as part of a full run.
+  Output: assets/gen/geo/<unit>/rp/attachables/<item>.json and the files written for the item (its
+  geometries, bone maps and animations). Without -Item every attachable is written; -Unit keeps to
+  that unit's partition. -Check compares instead of writing. tools/models/convert.ps1 writes the
+  same files as part of a full run.
 
   Exit code 0 = OK, 1 = an error, an unknown item or (with -Check) a difference.
 
@@ -35,41 +37,25 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'lib/Models.psm1') -Force
 
 try {
-    $r = Invoke-GfModelsGenerator
+    # every file written for the item (its geometries, bone maps, animations and the attachable)
+    $r = Invoke-GfModelsGenerator -Item $(if ($Item) { $Item } else { '*' })
 } catch {
     Write-Host "[geo] $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 foreach ($e in $r.Errors) { Write-Host "[geo] ERROR $e" -ForegroundColor Red }
-# keep the attachables (and the geometries they name) of the selection
 $index = $r.Files['assets/gen/geo/models/data/gf/models/index.json'] | ConvertFrom-Json
 $atts = @($index.attachables | Where-Object { (-not $Item -or $_.item -eq $Item) -and (-not $Unit -or $_.unit -eq $Unit) })
 if (-not $atts) { Write-Host "[geo] no attachable for '$Item'$(if ($Unit) { " in unit $Unit" })" -ForegroundColor Red; exit 1 }
-$keep = [System.Collections.Generic.List[string]]::new()
-$units = [System.Collections.Generic.HashSet[string]]::new()
-foreach ($a in $atts) {
-    $p = "assets/gen/geo/$($a.unit)/rp/$($a.file)"
-    $keep.Add($p); [void]$units.Add($a.unit)
-    foreach ($g in $a.geometry) {
-        $geo = $index.geometries | Where-Object identifier -eq $g | Select-Object -First 1
-        if ($geo -and -not $geo.vanilla) {
-            $gp = "assets/gen/geo/$($geo.unit)/rp/$($geo.file)"
-            if ($r.Files.Contains($gp)) { $keep.Add($gp); [void]$units.Add($geo.unit) }
-        }
-    }
-    Write-Host "[geo] $($a.item) -> $p ($($a.geometry -join ', '))"
-}
-$r.Selected = @($keep)
-$problems = 0; $files = 0
-foreach ($u in $units) {
-    $w = Write-GfModelsFiles $r -Unit $u -Check:$Check
-    $problems += $w.Problems; $files += $w.Files
-}
+foreach ($a in $atts) { Write-Host "[geo] $($a.item) -> assets/gen/geo/$($a.unit)/rp/$($a.file) ($($a.slots -join ', '): $($a.geometry -join ', '))" }
+if ($Unit) { $r.Selected = @($r.Selected | Where-Object { $_ -like "assets/gen/geo/$Unit/*" }) }
+# the selection limits the scope; -Unit keeps it to that unit's partition (no shared files)
+$w = Write-GfModelsFiles $r -Unit $Unit -Check:$Check
 if ($Check) {
-    if ($problems -or $r.Errors.Count) { Write-Host "[geo] -Check FAILED ($problems difference(s))" -ForegroundColor Red; exit 1 }
-    Write-Host "[geo] -Check OK ($files files match)" -ForegroundColor Green
+    if ($w.Problems -or $r.Errors.Count) { Write-Host "[geo] -Check FAILED ($($w.Problems) difference(s))" -ForegroundColor Red; exit 1 }
+    Write-Host "[geo] -Check OK ($($w.Files) files match)" -ForegroundColor Green
     exit 0
 }
-if ($r.Errors.Count) { exit 1 }
-Write-Host "[geo] $files file(s) up to date" -ForegroundColor Green
+if ($r.Errors.Count -or $w.Problems) { exit 1 }
+Write-Host "[geo] $($w.Files) file(s) up to date" -ForegroundColor Green
 exit 0

@@ -71,7 +71,7 @@
   ],
   "setupAnim": {
     "class": "BoarModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.boar.base",
     "notes": ["no setupAnim / prepareMobModel in BoarModel or its TF super classes"],
     "translated": [],
     "todo": []

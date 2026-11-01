@@ -100,7 +100,7 @@
   ],
   "setupAnim": {
     "class": "CarminiteGolemModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.carminite_golem.base",
     "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
     "translated": [],
     "todo": [

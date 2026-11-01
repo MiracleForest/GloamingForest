@@ -83,7 +83,7 @@
   ],
   "setupAnim": {
     "class": "LichMinionModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.lich_minion.base",
     "translated": [],
     "todo": [
       {

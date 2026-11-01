@@ -75,5 +75,12 @@
       "mirror": true
     }
   ],
+  "setupAnim": {
+    "class": "RedcapModel",
+    "identifier": "animation.twilightforest.redcap_inner.base",
+    "notes": ["no setupAnim to translate: the layer is posed by its renderer (see the notes and docs/spec/models.md)"],
+    "translated": [],
+    "todo": []
+  },
   "notes": ["Armor layer of the redcaps (HumanoidModel.createMesh(0.25, 0.7)): vanilla armor textures on the redcap's lower body."]
 }

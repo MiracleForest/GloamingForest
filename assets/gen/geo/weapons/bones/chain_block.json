@@ -293,5 +293,12 @@
       "java_rotation": [-0.61087, -0.7854, 0],
       "cubes": 1
     }
-  ]
+  ],
+  "setupAnim": {
+    "class": "SpikeBlockModel",
+    "identifier": "animation.twilightforest.chain_block.base",
+    "notes": ["no setupAnim to translate: the layer is posed by its renderer (see the notes and docs/spec/models.md)"],
+    "translated": [],
+    "todo": []
+  }
 }

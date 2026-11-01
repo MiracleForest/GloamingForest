@@ -20,11 +20,11 @@
         {
           "name": "ur_ghast_trophy_worn_body",
           "parent": "ur_ghast_trophy_worn",
-          "pivot": [0, 19.75, 0],
+          "pivot": [0, 27.25, 0],
           "rotation": [0, 180, 0],
           "cubes": [
             {
-              "origin": [-4, 15.75, -4],
+              "origin": [-4, 23.25, -4],
               "size": [8, 8, 8],
               "uv": {
                 "north": {
@@ -58,11 +58,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_0",
           "parent": "ur_ghast_trophy_worn_body",
-          "pivot": [2.25, 16.25, 2.25],
+          "pivot": [2.25, 23.75, 2.25],
           "rotation": [20.0535, 0, 0],
           "cubes": [
             {
-              "origin": [1.5, 13.75, 1.5],
+              "origin": [1.5, 21.25, 1.5],
               "size": [1.5, 2.5, 1.5],
               "uv": {
                 "north": {
@@ -96,11 +96,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_0_extension",
           "parent": "ur_ghast_trophy_worn_tentacle_0",
-          "pivot": [2.25, 14.25, 2.25],
+          "pivot": [2.25, 21.75, 2.25],
           "rotation": [17.1887, 0, 0],
           "cubes": [
             {
-              "origin": [1.5, 11.75, 1.5],
+              "origin": [1.5, 19.25, 1.5],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -134,11 +134,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_0_extension_2",
           "parent": "ur_ghast_trophy_worn_tentacle_0_extension",
-          "pivot": [2.25, 12.25, 2.25],
+          "pivot": [2.25, 19.75, 2.25],
           "rotation": [20.0535, 0, 0],
           "cubes": [
             {
-              "origin": [1.5, 9.75, 1.5],
+              "origin": [1.5, 17.25, 1.5],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -172,11 +172,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_0_tip",
           "parent": "ur_ghast_trophy_worn_tentacle_0_extension_2",
-          "pivot": [2.25, 10.25, 2.25],
+          "pivot": [2.25, 17.75, 2.25],
           "rotation": [22.9183, 0, 0],
           "cubes": [
             {
-              "origin": [1.5, 7.75, 1.5],
+              "origin": [1.5, 15.25, 1.5],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -210,11 +210,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_1",
           "parent": "ur_ghast_trophy_worn_body",
-          "pivot": [-2.25, 16.25, 2.25],
+          "pivot": [-2.25, 23.75, 2.25],
           "rotation": [12.061, 22.3619, 0],
           "cubes": [
             {
-              "origin": [-3, 13.75, 1.5],
+              "origin": [-3, 21.25, 1.5],
               "size": [1.5, 2.5, 1.5],
               "uv": {
                 "north": {
@@ -248,11 +248,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_1_extension",
           "parent": "ur_ghast_trophy_worn_tentacle_1",
-          "pivot": [-2.25, 14.25, 2.25],
+          "pivot": [-2.25, 21.75, 2.25],
           "rotation": [0.9586, 0, 0],
           "cubes": [
             {
-              "origin": [-3, 11.75, 1.5],
+              "origin": [-3, 19.25, 1.5],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -286,11 +286,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_1_extension_2",
           "parent": "ur_ghast_trophy_worn_tentacle_1_extension",
-          "pivot": [-2.25, 12.25, 2.25],
+          "pivot": [-2.25, 19.75, 2.25],
           "rotation": [-5.7435, 0, 0],
           "cubes": [
             {
-              "origin": [-3, 9.75, 1.5],
+              "origin": [-3, 17.25, 1.5],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -324,11 +324,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_1_tip",
           "parent": "ur_ghast_trophy_worn_tentacle_1_extension_2",
-          "pivot": [-2.25, 10.25, 2.25],
+          "pivot": [-2.25, 17.75, 2.25],
           "rotation": [-11.2852, 0, 0],
           "cubes": [
             {
-              "origin": [-3, 7.75, 1.5],
+              "origin": [-3, 15.25, 1.5],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -362,11 +362,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_2",
           "parent": "ur_ghast_trophy_worn_body",
-          "pivot": [0, 16.25, 0],
+          "pivot": [0, 23.75, 0],
           "rotation": [2.9491, 9.7949, 0],
           "cubes": [
             {
-              "origin": [-0.75, 13.75, -0.75],
+              "origin": [-0.75, 21.25, -0.75],
               "size": [1.5, 2.5, 1.5],
               "uv": {
                 "north": {
@@ -400,11 +400,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_2_extension",
           "parent": "ur_ghast_trophy_worn_tentacle_2",
-          "pivot": [0, 14.25, 0],
+          "pivot": [0, 21.75, 0],
           "rotation": [-1.7569, 0, 0],
           "cubes": [
             {
-              "origin": [-0.75, 11.75, -0.75],
+              "origin": [-0.75, 19.25, -0.75],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -438,11 +438,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_2_extension_2",
           "parent": "ur_ghast_trophy_worn_tentacle_2_extension",
-          "pivot": [0, 12.25, 0],
+          "pivot": [0, 19.75, 0],
           "rotation": [9.785, 0, 0],
           "cubes": [
             {
-              "origin": [-0.75, 9.75, -0.75],
+              "origin": [-0.75, 17.25, -0.75],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -476,11 +476,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_2_tip",
           "parent": "ur_ghast_trophy_worn_tentacle_2_extension_2",
-          "pivot": [0, 10.25, 0],
+          "pivot": [0, 17.75, 0],
           "rotation": [22.2262, 0, 0],
           "cubes": [
             {
-              "origin": [-0.75, 7.75, -0.75],
+              "origin": [-0.75, 15.25, -0.75],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -514,11 +514,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_3",
           "parent": "ur_ghast_trophy_worn_body",
-          "pivot": [2.75, 16.25, -2.25],
+          "pivot": [2.75, 23.75, -2.25],
           "rotation": [9.6663, -18.0716, 0],
           "cubes": [
             {
-              "origin": [2, 13.75, -3],
+              "origin": [2, 21.25, -3],
               "size": [1.5, 2.5, 1.5],
               "uv": {
                 "north": {
@@ -552,11 +552,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_3_extension",
           "parent": "ur_ghast_trophy_worn_tentacle_3",
-          "pivot": [2.75, 14.25, -2.25],
+          "pivot": [2.75, 21.75, -2.25],
           "rotation": [16.7347, 0, 0],
           "cubes": [
             {
-              "origin": [2, 11.75, -3],
+              "origin": [2, 19.25, -3],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -590,11 +590,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_3_extension_2",
           "parent": "ur_ghast_trophy_worn_tentacle_3_extension",
-          "pivot": [2.75, 12.25, -2.25],
+          "pivot": [2.75, 19.75, -2.25],
           "rotation": [10.7049, 0, 0],
           "cubes": [
             {
-              "origin": [2, 9.75, -3],
+              "origin": [2, 17.25, -3],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -628,11 +628,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_3_tip",
           "parent": "ur_ghast_trophy_worn_tentacle_3_extension_2",
-          "pivot": [2.75, 10.25, -2.25],
+          "pivot": [2.75, 17.75, -2.25],
           "rotation": [-9.915, 0, 0],
           "cubes": [
             {
-              "origin": [2, 7.75, -3],
+              "origin": [2, 15.25, -3],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -666,11 +666,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_4",
           "parent": "ur_ghast_trophy_worn_body",
-          "pivot": [-2.75, 16.25, -2.25],
+          "pivot": [-2.75, 23.75, -2.25],
           "rotation": [19.7183, -17.7105, 0],
           "cubes": [
             {
-              "origin": [-3.5, 13.75, -3],
+              "origin": [-3.5, 21.25, -3],
               "size": [1.5, 2.5, 1.5],
               "uv": {
                 "north": {
@@ -704,11 +704,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_4_extension",
           "parent": "ur_ghast_trophy_worn_tentacle_4",
-          "pivot": [-2.75, 14.25, -2.25],
+          "pivot": [-2.75, 21.75, -2.25],
           "rotation": [4.0514, 0, 0],
           "cubes": [
             {
-              "origin": [-3.5, 11.75, -3],
+              "origin": [-3.5, 19.25, -3],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -742,11 +742,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_4_extension_2",
           "parent": "ur_ghast_trophy_worn_tentacle_4_extension",
-          "pivot": [-2.75, 12.25, -2.25],
+          "pivot": [-2.75, 19.75, -2.25],
           "rotation": [-6.2973, 0, 0],
           "cubes": [
             {
-              "origin": [-3.5, 9.75, -3],
+              "origin": [-3.5, 17.25, -3],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -780,11 +780,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_4_tip",
           "parent": "ur_ghast_trophy_worn_tentacle_4_extension_2",
-          "pivot": [-2.75, 10.25, -2.25],
+          "pivot": [-2.75, 17.75, -2.25],
           "rotation": [20.2064, 0, 0],
           "cubes": [
             {
-              "origin": [-3.5, 7.75, -3],
+              "origin": [-3.5, 15.25, -3],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -818,11 +818,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_5",
           "parent": "ur_ghast_trophy_worn_body",
-          "pivot": [-3.75, 18, -0.5],
+          "pivot": [-3.75, 25.5, -0.5],
           "rotation": [14.4088, 10.3141, 45],
           "cubes": [
             {
-              "origin": [-4.5, 15.5, -1.25],
+              "origin": [-4.5, 23, -1.25],
               "size": [1.5, 2.5, 1.5],
               "uv": {
                 "north": {
@@ -856,11 +856,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_5_extension",
           "parent": "ur_ghast_trophy_worn_tentacle_5",
-          "pivot": [-3.75, 16, -0.5],
+          "pivot": [-3.75, 23.5, -0.5],
           "rotation": [-3.8782, 0, 0],
           "cubes": [
             {
-              "origin": [-4.5, 13.5, -1.25],
+              "origin": [-4.5, 21, -1.25],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -894,11 +894,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_5_extension_2",
           "parent": "ur_ghast_trophy_worn_tentacle_5_extension",
-          "pivot": [-3.75, 14, -0.5],
+          "pivot": [-3.75, 21.5, -0.5],
           "rotation": [20.0207, 0, 0],
           "cubes": [
             {
-              "origin": [-4.5, 11.5, -1.25],
+              "origin": [-4.5, 19, -1.25],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -932,11 +932,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_5_tip",
           "parent": "ur_ghast_trophy_worn_tentacle_5_extension_2",
-          "pivot": [-3.75, 12, -0.5],
+          "pivot": [-3.75, 19.5, -0.5],
           "rotation": [-7.2859, 0, 0],
           "cubes": [
             {
-              "origin": [-4.5, 9.5, -1.25],
+              "origin": [-4.5, 17, -1.25],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -970,11 +970,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_6",
           "parent": "ur_ghast_trophy_worn_body",
-          "pivot": [-3.75, 20.5, 1.75],
+          "pivot": [-3.75, 28, 1.75],
           "rotation": [3.6128, 22.2283, 60],
           "cubes": [
             {
-              "origin": [-4.5, 18, 1],
+              "origin": [-4.5, 25.5, 1],
               "size": [1.5, 2.5, 1.5],
               "uv": {
                 "north": {
@@ -1008,11 +1008,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_6_extension",
           "parent": "ur_ghast_trophy_worn_tentacle_6",
-          "pivot": [-3.75, 18.5, 1.75],
+          "pivot": [-3.75, 26, 1.75],
           "rotation": [15.4085, 0, 0],
           "cubes": [
             {
-              "origin": [-4.5, 16, 1],
+              "origin": [-4.5, 23.5, 1],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -1046,11 +1046,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_6_extension_2",
           "parent": "ur_ghast_trophy_worn_tentacle_6_extension",
-          "pivot": [-3.75, 16.5, 1.75],
+          "pivot": [-3.75, 24, 1.75],
           "rotation": [-5.1381, 0, 0],
           "cubes": [
             {
-              "origin": [-4.5, 14, 1],
+              "origin": [-4.5, 21.5, 1],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -1084,11 +1084,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_6_tip",
           "parent": "ur_ghast_trophy_worn_tentacle_6_extension_2",
-          "pivot": [-3.75, 14.5, 1.75],
+          "pivot": [-3.75, 22, 1.75],
           "rotation": [17.0203, 0, 0],
           "cubes": [
             {
-              "origin": [-4.5, 12, 1],
+              "origin": [-4.5, 19.5, 1],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -1122,11 +1122,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_7",
           "parent": "ur_ghast_trophy_worn_body",
-          "pivot": [3.75, 18, -0.5],
+          "pivot": [3.75, 25.5, -0.5],
           "rotation": [7.4114, -0.5778, -45],
           "cubes": [
             {
-              "origin": [3, 15.5, -1.25],
+              "origin": [3, 23, -1.25],
               "size": [1.5, 2.5, 1.5],
               "uv": {
                 "north": {
@@ -1160,11 +1160,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_7_extension",
           "parent": "ur_ghast_trophy_worn_tentacle_7",
-          "pivot": [3.75, 16, -0.5],
+          "pivot": [3.75, 23.5, -0.5],
           "rotation": [7.2772, 0, 0],
           "cubes": [
             {
-              "origin": [3, 13.5, -1.25],
+              "origin": [3, 21, -1.25],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -1198,11 +1198,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_7_extension_2",
           "parent": "ur_ghast_trophy_worn_tentacle_7_extension",
-          "pivot": [3.75, 14, -0.5],
+          "pivot": [3.75, 21.5, -0.5],
           "rotation": [8.8479, 0, 0],
           "cubes": [
             {
-              "origin": [3, 11.5, -1.25],
+              "origin": [3, 19, -1.25],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -1236,11 +1236,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_7_tip",
           "parent": "ur_ghast_trophy_worn_tentacle_7_extension_2",
-          "pivot": [3.75, 12, -0.5],
+          "pivot": [3.75, 19.5, -0.5],
           "rotation": [-3.6093, 0, 0],
           "cubes": [
             {
-              "origin": [3, 9.5, -1.25],
+              "origin": [3, 17, -1.25],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -1274,11 +1274,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_8",
           "parent": "ur_ghast_trophy_worn_body",
-          "pivot": [3.75, 20.5, 1.75],
+          "pivot": [3.75, 28, 1.75],
           "rotation": [18.739, -22.4814, -60],
           "cubes": [
             {
-              "origin": [3, 18, 1],
+              "origin": [3, 25.5, 1],
               "size": [1.5, 2.5, 1.5],
               "uv": {
                 "north": {
@@ -1312,11 +1312,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_8_extension",
           "parent": "ur_ghast_trophy_worn_tentacle_8",
-          "pivot": [3.75, 18.5, 1.75],
+          "pivot": [3.75, 26, 1.75],
           "rotation": [-5.2381, 0, 0],
           "cubes": [
             {
-              "origin": [3, 16, 1],
+              "origin": [3, 23.5, 1],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -1350,11 +1350,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_8_extension_2",
           "parent": "ur_ghast_trophy_worn_tentacle_8_extension",
-          "pivot": [3.75, 16.5, 1.75],
+          "pivot": [3.75, 24, 1.75],
           "rotation": [11.6019, 0, 0],
           "cubes": [
             {
-              "origin": [3, 14, 1],
+              "origin": [3, 21.5, 1],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {
@@ -1388,11 +1388,11 @@
         {
           "name": "ur_ghast_trophy_worn_tentacle_8_tip",
           "parent": "ur_ghast_trophy_worn_tentacle_8_extension_2",
-          "pivot": [3.75, 14.5, 1.75],
+          "pivot": [3.75, 22, 1.75],
           "rotation": [12.9264, 0, 0],
           "cubes": [
             {
-              "origin": [3, 12, 1],
+              "origin": [3, 19.5, 1],
               "size": [1.5, 2, 1.5],
               "uv": {
                 "north": {

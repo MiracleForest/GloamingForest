@@ -1,0 +1,9 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.chain_block.base": {
+      "loop": true,
+      "bones": {}
+    }
+  }
+}

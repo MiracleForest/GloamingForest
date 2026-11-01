@@ -13,7 +13,7 @@ $script:GenRoot = 'assets/gen/geo'
 function Import-GfModelsAssembly {
     if ('Gf.Models.Generator' -as [type]) { return }
     $sources = @(Get-ChildItem (Join-Path $PSScriptRoot '*.cs') | Sort-Object Name | ForEach-Object FullName)
-    Add-Type -Path $sources -ReferencedAssemblies 'System.Text.Json', 'System.Memory', 'System.Collections', 'System.Linq', 'System.Runtime', 'System.Console', 'System.Text.Encodings.Web' -WarningAction SilentlyContinue
+    Add-Type -Path $sources -ReferencedAssemblies 'System.Text.Json', 'System.Memory', 'System.Collections', 'System.Linq', 'System.Runtime', 'System.Console', 'System.Text.Encodings.Web', 'System.Text.RegularExpressions' -WarningAction SilentlyContinue
 }
 
 # The TF source tree (src/main/java) of the shared checkout (rule R24).
@@ -35,23 +35,18 @@ function Get-GfUnitNames {
     return $names
 }
 
-# Runs the generator. Returns @{ Files = [ordered] path -> text (every partition); Selected = paths
-# a -Java / -Item filter matched (or $null); Log; Errors }.
+# Runs the generator once over everything. Returns @{ Files = [ordered] path -> text (every
+# partition); Selected = paths a -Java (model class) / -Item ('*' = every item) filter matched, taken
+# from the same run (or $null); Log; Errors }.
 function Invoke-GfModelsGenerator([string]$Java, [string]$Item) {
     Import-GfModelsAssembly
     $catalog = Get-Content (Join-Path $PSScriptRoot '../catalog.json') -Raw
-    $javaRoot = Get-GfTfJavaRoot
-    $full = [Gf.Models.Generator]::new($javaRoot, $catalog)
+    $full = [Gf.Models.Generator]::new((Get-GfTfJavaRoot), $catalog)
     $full.Run($null, $null, $null)
     $result = @{ Files = [ordered]@{}; Selected = $null; Log = @($full.Log); Errors = [System.Collections.Generic.List[string]]::new() }
     foreach ($e in $full.Errors) { $result.Errors.Add($e) }
     foreach ($k in $full.Files.Keys) { $result.Files[$k] = $full.Files[$k] }
-    if ($Java -or $Item) {
-        $part = [Gf.Models.Generator]::new($javaRoot, $catalog)
-        $part.Run($(if ($Java) { $Java } else { $null }), $null, $(if ($Item) { $Item } else { $null }))
-        $result.Log = @($part.Log)
-        $result.Selected = @($part.Files.Keys)
-    }
+    if ($Java -or $Item) { $result.Selected = @($full.Select($Java, $Item)) }
     foreach ($e in @(Test-GfModelsOwners $full)) { if ($e) { $result.Errors.Add($e) } }
     return $result
 }
@@ -102,7 +97,8 @@ function Get-GfModelsPartition([string]$path) {
 # Writes (or with -Check compares) the generated files of a scope:
 #   default   every partition (stale files and partitions are removed / reported)
 #   -Unit u   the partition of unit u
-#   -Java / -Item (result.Selected)   only the matched files (+ the shared models partition)
+#   -Java / -Item (result.Selected)   only the matched files (+ the shared models partition without
+#             -Unit; with -Unit only the matched files of that partition)
 # -Out writes below another root. Returns @{ Problems; Files; Partitions }.
 function Write-GfModelsFiles($result, [string]$Unit, [switch]$Check, [string]$Out) {
     $base = if ($Out) { $Out } else { $script:Root }
@@ -112,10 +108,12 @@ function Write-GfModelsFiles($result, [string]$Unit, [switch]$Check, [string]$Ou
         return @{ Problems = 1; Files = 0; Partitions = @($Unit) }
     }
     $selected = $null
-    if ($Unit) { $parts = @($Unit) }
-    elseif ($null -ne $result.Selected) {
+    if ($null -ne $result.Selected) {
         $selected = @{}
         foreach ($s in $result.Selected) { $selected[$s] = $true }
+    }
+    if ($Unit) { $parts = @($Unit) }
+    elseif ($null -ne $selected) {
         $parts = @(@($result.Selected | ForEach-Object { Get-GfModelsPartition $_ }) + 'models' | Sort-Object -Unique)
     } else {
         # every generated partition and every partition directory on disk (a removed one is stale)
@@ -130,7 +128,7 @@ function Write-GfModelsFiles($result, [string]$Unit, [switch]$Check, [string]$Ou
     foreach ($path in $result.Files.Keys) {
         $part = Get-GfModelsPartition $path
         if ($parts -notcontains $part) { continue }
-        if ($selected -and -not $selected.ContainsKey($path) -and $part -ne 'models') { continue }
+        if ($null -ne $selected -and -not $selected.ContainsKey($path) -and $part -ne 'models') { continue }
         $generated[$path] = $true
         $abs = Join-Path $base $path
         $text = $result.Files[$path]
@@ -146,7 +144,7 @@ function Write-GfModelsFiles($result, [string]$Unit, [switch]$Check, [string]$Ou
         }
         $written++
     }
-    if (-not $selected) {
+    if ($null -eq $selected) {
         foreach ($path in @(Get-GfModelsExisting $base $parts)) {
             if ($generated.ContainsKey($path)) { continue }
             if ($Check) { Write-Host "[geo] stale (not generated, never hand-edit assets/gen): $path" -ForegroundColor Red; $problems++ }

@@ -101,7 +101,7 @@
   ],
   "setupAnim": {
     "class": "DeerModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.deer.base",
     "notes": ["vanilla base QuadrupedModel (super calls): animation.quadruped.walk and animation.common.look_at_target (Bedrock vanilla) on head / leg0 (right hind) / leg1 (left hind) / leg2 (right front) / leg3 (left front)"],
     "translated": [],
     "todo": [

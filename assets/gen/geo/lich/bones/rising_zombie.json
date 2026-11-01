@@ -83,7 +83,7 @@
   ],
   "setupAnim": {
     "class": "RisingZombieModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.rising_zombie.base",
     "translated": [],
     "todo": [
       {

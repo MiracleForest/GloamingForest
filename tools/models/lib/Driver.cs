@@ -44,7 +44,14 @@ namespace Gf.Models
         readonly List<object> indexAnimations = new List<object>();
         readonly SortedDictionary<string, JObj> renderControllers = new SortedDictionary<string, JObj>(StringComparer.Ordinal);
         readonly string texPrefix, geoPrefix, animPrefix, tfPrefix;
+        // TF's item models (display transforms): the datagen output first, then the hand-written ones
+        readonly string[] itemModelDirs;
         public string TfRevision = "9e40a757";
+
+        // What a file was written for (the -Java / -Item selection of a full run, Select).
+        sealed class Origin { public LayerInfo Info; public string Unit, AnimClass, Item; }
+        Origin cur;
+        readonly Dictionary<string, Origin> origins = new Dictionary<string, Origin>(StringComparer.Ordinal);
 
         public Generator(string tfJavaRoot, string catalogJson)
         {
@@ -55,6 +62,11 @@ namespace Gf.Models
             geoPrefix = Str(cat, "geometryPrefix", "geometry.twilightforest.");
             animPrefix = Str(cat, "animationPrefix", "animation.twilightforest.");
             tfPrefix = "src/main/resources/assets/twilightforest/textures/";
+            string src = Path.GetFullPath(Path.Combine(tfJavaRoot, "..", ".."));
+            itemModelDirs = new[] {
+                Path.Combine(src, "generated", "resources", "assets", "twilightforest", "models", "item"),
+                Path.Combine(src, "main", "resources", "assets", "twilightforest", "models", "item"),
+            };
         }
 
         static string Str(JsonElement e, string key, string def = null)
@@ -129,6 +141,7 @@ namespace Gf.Models
             if (string.IsNullOrEmpty(onlyUnit)) onlyUnit = null;
             if (string.IsNullOrEmpty(onlyItem)) onlyItem = null;
             LoadLayers();
+            attachables.Clear(); attachableOrder.Clear(); origins.Clear();
             var layersCat = Prop(cat, "layers");
             // every registered layer must be described in the catalog (no silent gaps)
             foreach (var l in Layers.Values)
@@ -159,8 +172,31 @@ namespace Gf.Models
                 foreach (var a in armor.EnumerateArray()) Gear(a, onlyClass, onlyUnit, onlyItem);
             var extracts = Prop(cat, "extracts");
             if (extracts.ValueKind == JsonValueKind.Array)
-                foreach (var x in extracts.EnumerateArray()) Extract(x, onlyClass, onlyUnit, onlyItem);
+                foreach (var x in extracts.EnumerateArray())
+                    foreach (var spec in ExtractSpecs(x)) Extract(spec, onlyClass, onlyUnit, onlyItem);
+            // one attachable per item, with the geometry of every slot it is drawn in
+            foreach (var acc in attachableOrder)
+                if (acc.Failed) Errors.Add("attachable " + acc.Item + ": a form failed, not written"); else WriteExtractAttachable(acc);
+            cur = null;
             if (onlyClass == null && onlyUnit == null && onlyItem == null) WriteShared();
+        }
+
+        // The files of a full run that a -Java (model class) / -Item filter selects: the files written for
+        // a matching layer class or animation class, or for the item ("*": any item).
+        public List<string> Select(string onlyClass, string onlyItem)
+        {
+            if (string.IsNullOrEmpty(onlyClass)) onlyClass = null;
+            if (string.IsNullOrEmpty(onlyItem)) onlyItem = null;
+            var list = new List<string>();
+            foreach (var kv in origins)
+            {
+                var o = kv.Value;
+                if (onlyItem != null && (o.Item == null || (onlyItem != "*" && o.Item != onlyItem))) continue;
+                if (onlyClass != null && (o.Info == null || !Matches(onlyClass, null, o.Info, o.Unit, o.AnimClass))) continue;
+                list.Add(kv.Key);
+            }
+            list.Sort(StringComparer.Ordinal);
+            return list;
         }
 
         bool Matches(string onlyClass, string onlyUnit, LayerInfo info, string unit, string animClass = null)
@@ -186,7 +222,11 @@ namespace Gf.Models
 
         static string UnitDir(string unit) { return "assets/gen/geo/" + unit + "/"; }
 
-        void Put(string path, object json) { Files[path] = Json.Write(json); }
+        void Put(string path, object json)
+        {
+            Files[path] = Json.Write(json);
+            if (cur != null) origins[path] = cur; else origins.Remove(path);
+        }
 
         // ---- entity / block / item layers ----------------------------------------------------------------
 
@@ -205,29 +245,36 @@ namespace Gf.Models
                 // the Bedrock texture the layer is drawn with has another size (UVs stay in pixels)
                 def = new LayerDef { Mesh = def.Mesh, TexWidth = size[0].GetInt32(), TexHeight = size[1].GetInt32() };
             }
+            string animClass = Str(spec, "animClass") ?? info.SupplierClass;
+            var items = StrList(spec, "item");
+            cur = new Origin { Info = info, Unit = unit, AnimClass = Str(spec, "animClass"), Item = items.Count > 0 ? items[0] : null };
             var geo = Converter.Convert(def, opt);
             string geoFile = "models/entity/" + name + ".geo.json";
             Put(UnitDir(unit) + "rp/" + geoFile, geo.ToJson());
 
-            // setupAnim -> base animation
-            string animClass = Str(spec, "animClass") ?? info.SupplierClass;
+            // setupAnim -> base animation: a stub for every entity layer (the owning unit translates the
+            // rest of setupAnim by hand on top of it), with the statements the translator could do
             AnimResult anim = null;
             string animId = null;
-            if (animClass != null && kind == "entity" && !Bool(spec, "noAnim"))
+            if (kind == "entity")
             {
-                var ac = ClassPath.Find(animClass, null);
-                if (ac == null) Errors.Add("layer '" + name + "': animClass " + animClass + " not found");
-                else
+                if (animClass != null && !Bool(spec, "noAnim"))
                 {
-                    anim = new AnimTranslator(ClassPath, Interp).Translate(ac, geo);
-                    if (anim.Bones.Count > 0)
-                    {
-                        animId = animPrefix + name + ".base";
-                        Put(UnitDir(unit) + "rp/animations/" + name + ".base.json", AnimTranslator.AnimationJson(animId, anim));
-                        indexAnimations.Add(new JObj().Add("identifier", animId).Add("file", "animations/" + name + ".base.json").Add("unit", unit)
-                            .Add("bones", anim.Bones.Keys.Cast<object>().ToList()));
-                    }
+                    var ac = ClassPath.Find(animClass, null);
+                    if (ac == null) Errors.Add("layer '" + name + "': animClass " + animClass + " not found");
+                    else anim = new AnimTranslator(ClassPath, Interp).Translate(ac, geo);
                 }
+                if (anim == null)
+                {
+                    anim = new AnimResult { Method = "none" };
+                    anim.Notes.Add(Bool(spec, "noAnim")
+                        ? "no setupAnim to translate: the layer is posed by its renderer (see the notes and docs/spec/models.md)"
+                        : "no model class with a setupAnim");
+                }
+                animId = animPrefix + name + ".base";
+                Put(UnitDir(unit) + "rp/animations/" + name + ".base.json", AnimTranslator.AnimationJson(animId, anim));
+                indexAnimations.Add(new JObj().Add("identifier", animId).Add("file", "animations/" + name + ".base.json").Add("unit", unit)
+                    .Add("bones", anim.Bones.Keys.Cast<object>().ToList()));
             }
             Put(UnitDir(unit) + "bones/" + name + ".json", BoneMap(name, spec, info, geo, anim, animId, animClass));
             var textures = StrList(spec, "textures");
@@ -304,6 +351,7 @@ namespace Gf.Models
         void AddVanilla(string name, JsonElement spec, LayerInfo info)
         {
             string unit = Str(spec, "unit");
+            cur = new Origin { Info = info, Unit = unit, AnimClass = Str(spec, "animClass") };
             var o = new JObj()
                 .Add("comment", "Generated by tools/models/convert.ps1 (F2). This TF layer uses a vanilla Minecraft model: use the vanilla Bedrock geometry.")
                 .Add("geometry", Str(spec, "vanilla"))
@@ -359,6 +407,7 @@ namespace Gf.Models
                 string tex = Str(piece, "texture") ?? Str(a, "texture")?.Replace("{layer}", layerNo);
                 string geoId;
                 string geoName = Str(piece, "name") ?? material + "." + key;
+                cur = new Origin { Unit = unit, Item = item };
                 if (vanilla) geoId = VanillaArmorGeo[slot];
                 else
                 {
@@ -366,6 +415,7 @@ namespace Gf.Models
                     LayerInfo info;
                     if (layerName == null || !Layers.TryGetValue(layerName, out info) || info.Def == null) { Errors.Add("armor " + material + " " + slot + ": layer '" + layerName + "' missing"); continue; }
                     if (onlyClass != null && !Matches(onlyClass, null, info, unit)) continue;
+                    cur.Info = info;
                     var parts = StrList(piece, "parts");
                     if (parts.Count == 0) parts = SlotParts[slot].ToList();
                     var opt = new ConvertOptions { Identifier = geoPrefix + geoName, RootFilter = new HashSet<string>(parts) };
@@ -400,7 +450,8 @@ namespace Gf.Models
                     .Add("render_controllers", Json.Arr("controller.render.armor"));
                 string afile = "attachables/" + item.Substring(item.IndexOf(':') + 1) + ".json";
                 Put(UnitDir(unit) + "rp/" + afile, new JObj().Add("format_version", "1.10.0").Add("minecraft:attachable", new JObj().Add("description", desc)));
-                indexAttachables.Add(new JObj().Add("item", item).Add("file", afile).Add("unit", unit).Add("slot", slot).Add("geometry", Json.Arr(geoId)).Add("textures", Json.Arr(Tex(tex))));
+                indexAttachables.Add(new JObj().Add("item", item).Add("file", afile).Add("unit", unit).Add("slot", slot).Add("slots", Json.Arr(slot))
+                    .Add("geometry", Json.Arr(geoId)).Add("textures", Json.Arr(Tex(tex))));
             }
         }
 
@@ -439,21 +490,144 @@ namespace Gf.Models
                 case "head": return new FrameSpec { A = M3.Diag(16, -16, 16), C = new V3(0, 24, 0), Parent = "head" };
                 // the wearer's right arm part (pivot -5, 2, 0)
                 case "rightArm": return new FrameSpec { A = M3.Diag(16, -16, 16), C = new V3(-5, 22, 0), Parent = "rightArm" };
+                // the wearer's left arm part (pivot 5, 2, 0)
+                case "leftArm": return new FrameSpec { A = M3.Diag(16, -16, 16), C = new V3(5, 22, 0), Parent = "leftArm" };
             }
             throw new JavaEvalException("unknown extract frame '" + frame + "'");
         }
 
-        Pose OpsPose(JsonElement chainHolder, string key, Pose start)
+        // One extract to write: a catalog entry, or one item form of it (catalog "itemForms": worn on the
+        // head, held in the right hand, held in the left hand), named <entry>_<form suffix>.
+        sealed class ExtractSpec
         {
-            var p = start ?? new Pose();
-            var ops = Prop(chainHolder, key);
+            public JsonElement X;          // the catalog entry: layer, pose, groups, notes, animation
+            public string Name, Unit, Layer, Frame, Item, ItemModel, Slot, SlotCondition, Kind, Source, FormKey;
+            public JsonElement Prefix;     // the PoseStack ops before the groups' own
+        }
+
+        List<ExtractSpec> ExtractSpecs(JsonElement x)
+        {
+            var list = new List<ExtractSpec>();
+            string name = Str(x, "name"), item = Str(x, "item");
+            string itemModel = Str(x, "itemModel") ?? (item != null ? item.Substring(item.IndexOf(':') + 1) : null);
+            string formsName = Str(x, "forms");
+            if (formsName == null)
+            {
+                string slot = Str(x, "slot");
+                list.Add(new ExtractSpec {
+                    X = x, Name = name, Unit = Str(x, "unit"), Layer = Str(x, "layer"), Frame = Str(x, "frame", "world"), Item = item, ItemModel = itemModel,
+                    Slot = slot, SlotCondition = slot != null ? "c.item_slot == '" + slot + "'" : null, Kind = Str(x, "kind", "extract"),
+                    Source = Str(x, "source"), Prefix = Prop(x, "prefix"),
+                });
+                return list;
+            }
+            var forms = Prop(Prop(cat, "itemForms"), formsName);
+            if (forms.ValueKind != JsonValueKind.Array) throw new JavaEvalException("extract " + name + ": unknown item forms '" + formsName + "'");
+            foreach (var f in forms.EnumerateArray())
+            {
+                string suffix = Str(f, "suffix"), slot = Str(f, "slot");
+                list.Add(new ExtractSpec {
+                    X = x, Name = name + "_" + suffix, FormKey = suffix, Unit = Str(x, "unit"), Layer = Str(x, "layer"), Frame = Str(f, "frame"),
+                    Item = item, ItemModel = itemModel, Slot = slot, SlotCondition = "c.item_slot == '" + slot + "'", Kind = Str(f, "kind"),
+                    Source = Str(f, "source") + " + " + Str(x, "source"), Prefix = Prop(f, "prefix"),
+                });
+            }
+            return list;
+        }
+
+        // ---- item display transforms (ItemTransform) from TF's item models ----
+
+        sealed class ItemDisplay { public string Model, File, Context, From; public V3 Rotation, Translation, Scale; }
+
+        readonly Dictionary<string, JsonElement> itemModels = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+
+        // models/item/<name>.json of TF (the datagen output first); null when TF has none.
+        JsonElement? ItemModel(string name, out string file)
+        {
+            file = null;
+            foreach (var dir in itemModelDirs)
+            {
+                string p = Path.Combine(dir, name + ".json");
+                if (!File.Exists(p)) continue;
+                file = p;
+                JsonElement e;
+                if (!itemModels.TryGetValue(p, out e))
+                    itemModels[p] = e = JsonDocument.Parse(File.ReadAllText(p), new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true }).RootElement;
+                return e;
+            }
+            return null;
+        }
+
+        static V3 Vec3(JsonElement o, string key, V3 def)
+        {
+            var v = Prop(o, key);
+            return v.ValueKind == JsonValueKind.Array ? new V3(v[0].GetDouble(), v[1].GetDouble(), v[2].GetDouble()) : def;
+        }
+
+        // The display transform BlockModel.getTransforms() resolves for a context: the model's own, else
+        // its parent's (twilightforest:item/... parents); a missing *_lefthand falls back to the same
+        // model's *_righthand (ItemTransforms.Deserializer). Null = ItemTransform.NO_TRANSFORM.
+        ItemDisplay Display(string modelName, string context)
+        {
+            string name = modelName;
+            for (int depth = 0; depth < 8 && name != null; depth++)
+            {
+                string file;
+                var m = ItemModel(name, out file);
+                if (m == null) throw new JavaEvalException("TF has no item model models/item/" + name + ".json (src/generated or src/main resources)");
+                var display = Prop(m.Value, "display");
+                string from = context;
+                var t = Prop(display, context);
+                if (t.ValueKind != JsonValueKind.Object && context.EndsWith("_lefthand", StringComparison.Ordinal))
+                {
+                    from = context.Replace("_lefthand", "_righthand");
+                    t = Prop(display, from);
+                }
+                if (t.ValueKind == JsonValueKind.Object)
+                {
+                    if (Prop(t, "right_rotation").ValueKind != JsonValueKind.Undefined) throw new JavaEvalException("models/item/" + name + ".json: right_rotation is not supported");
+                    var tr = Vec3(t, "translation", new V3(0, 0, 0));
+                    var sc = Vec3(t, "scale", new V3(1, 1, 1));
+                    Func<double, double, double> clamp = (v, lim) => Math.Max(-lim, Math.Min(lim, v));
+                    return new ItemDisplay {
+                        Model = name, Context = context, From = from,
+                        File = Path.GetRelativePath(Path.GetFullPath(Path.Combine(itemModelDirs[0], "..", "..", "..", "..", "..", "..", "..")), file).Replace('\\', '/'),
+                        Rotation = Vec3(t, "rotation", new V3(0, 0, 0)),
+                        // ItemTransform.Deserializer: translation / 16 clamped to +-5 blocks, scale clamped to +-4
+                        Translation = new V3(clamp(tr.X / 16, 5), clamp(tr.Y / 16, 5), clamp(tr.Z / 16, 5)),
+                        Scale = new V3(clamp(sc.X, 4), clamp(sc.Y, 4), clamp(sc.Z, 4)),
+                    };
+                }
+                string parent = Str(m.Value, "parent");
+                if (parent == null || !parent.StartsWith("twilightforest:item/", StringComparison.Ordinal)) return null;
+                name = parent.Substring("twilightforest:item/".Length);
+            }
+            return null;
+        }
+
+        // ItemTransform.apply(leftHand, poseStack): translate (x mirrored for the left hand), rotationXYZ
+        // (y and z negated for the left hand), scale.
+        static void ApplyDisplay(Pose p, ItemDisplay d, bool leftHand)
+        {
+            if (d == null) return;
+            double rx = d.Rotation.X, ry = leftHand ? -d.Rotation.Y : d.Rotation.Y, rz = leftHand ? -d.Rotation.Z : d.Rotation.Z;
+            p.Translate((leftHand ? -1 : 1) * d.Translation.X, d.Translation.Y, d.Translation.Z);
+            p.Rotate(M3.RotX(rx * Math.PI / 180) * M3.RotY(ry * Math.PI / 180) * M3.RotZ(rz * Math.PI / 180));
+            p.Scale(d.Scale.X, d.Scale.Y, d.Scale.Z);
+        }
+
+        // Applies a list of ops: [name, args...] or the name of a chain in "opChains". ["display", context]
+        // is the display transform of the extract's item model for that context.
+        Pose ApplyOps(JsonElement ops, Pose p, ExtractSpec spec, List<ItemDisplay> displays)
+        {
             if (ops.ValueKind != JsonValueKind.Array) return p;
             foreach (var op in ops.EnumerateArray())
             {
                 if (op.ValueKind == JsonValueKind.String)
                 {
-                    // a named chain from "opChains"
-                    p = OpsPose(Prop(cat, "opChains"), op.GetString(), p);
+                    var chain = Prop(Prop(cat, "opChains"), op.GetString());
+                    if (chain.ValueKind != JsonValueKind.Array) throw new JavaEvalException("unknown op chain '" + op.GetString() + "'");
+                    p = ApplyOps(chain, p, spec, displays);
                     continue;
                 }
                 var a = op.EnumerateArray().ToList();
@@ -468,6 +642,15 @@ namespace Gf.Models
                     case "rotateZ": p.Rotate(M3.RotZ(n(1) * Math.PI / 180)); break;
                     // Quaternionf.rotationXYZ: Rx * Ry * Rz (ItemTransform)
                     case "rotateXYZ": p.Rotate(M3.RotX(n(1) * Math.PI / 180) * M3.RotY(n(2) * Math.PI / 180) * M3.RotZ(n(3) * Math.PI / 180)); break;
+                    case "display":
+                    {
+                        if (spec.ItemModel == null) throw new JavaEvalException("extract " + spec.Name + ": 'display' needs an item (model)");
+                        string ctx = a[1].GetString();
+                        var d = Display(spec.ItemModel, ctx);
+                        ApplyDisplay(p, d, ctx.EndsWith("_lefthand", StringComparison.Ordinal));
+                        if (displays != null) displays.Add(d ?? new ItemDisplay { Model = spec.ItemModel, Context = ctx });
+                        break;
+                    }
                     default: throw new JavaEvalException("unknown op '" + name + "'");
                 }
             }
@@ -483,46 +666,125 @@ namespace Gf.Models
             return Interp.ToDouble(Interp.Eval(e, f));
         }
 
-        Dictionary<string, double[]> PoseOverrides(JsonElement x)
+        static readonly string[] RotAxes = { "xRot", "yRot", "zRot" };
+
+        // The pose entries of an extract, expanded over their "range" (variable i): part path -> axis -> Java source.
+        static List<KeyValuePair<string, string[]>> PoseEntries(JsonElement x)
         {
-            var map = new Dictionary<string, double[]>();
+            var list = new List<KeyValuePair<string, string[]>>();
             var pose = Prop(x, "pose");
-            if (pose.ValueKind != JsonValueKind.Array) return map;
+            if (pose.ValueKind != JsonValueKind.Array) return list;
             foreach (var p in pose.EnumerateArray())
             {
                 var range = Prop(p, "range");
                 int from = 0, to = 0;
-                bool hasRange = range.ValueKind == JsonValueKind.Array;
-                if (hasRange) { from = range[0].GetInt32(); to = range[1].GetInt32(); }
+                if (range.ValueKind == JsonValueKind.Array) { from = range[0].GetInt32(); to = range[1].GetInt32(); }
                 for (int i = from; i <= to; i++)
                 {
-                    var vars = new Dictionary<string, object> { { "i", i } };
-                    string part = Str(p, "part").Replace("{i}", i.ToString(CultureInfo.InvariantCulture));
-                    double[] cur;
-                    if (!map.TryGetValue(part, out cur)) map[part] = cur = new[] { double.NaN, double.NaN, double.NaN };
-                    string[] axes = { "xRot", "yRot", "zRot" };
+                    string si = i.ToString(CultureInfo.InvariantCulture);
+                    var src = new string[3];
                     for (int k = 0; k < 3; k++)
                     {
-                        string expr = Str(p, axes[k]);
-                        if (expr != null) cur[k] = EvalJava(expr, vars);
+                        string e = Str(p, RotAxes[k]);
+                        // "i" is the loop variable (a whole word, so "xRot" or "Mth.sin" stay)
+                        if (e != null) src[k] = System.Text.RegularExpressions.Regex.Replace(e, @"\bi\b", si);
                     }
+                    list.Add(new KeyValuePair<string, string[]>(Str(p, "part").Replace("{i}", si), src));
                 }
+            }
+            return list;
+        }
+
+        // The bind pose: ageInTicks (the trophy animation's clock) is 0.
+        Dictionary<string, double[]> PoseOverrides(JsonElement x)
+        {
+            var map = new Dictionary<string, double[]>();
+            var vars = new Dictionary<string, object> { { "ageInTicks", 0.0f } };
+            foreach (var kv in PoseEntries(x))
+            {
+                double[] cur;
+                if (!map.TryGetValue(kv.Key, out cur)) map[kv.Key] = cur = new[] { double.NaN, double.NaN, double.NaN };
+                for (int k = 0; k < 3; k++) if (kv.Value[k] != null) cur[k] = EvalJava(kv.Value[k], vars);
             }
             return map;
         }
 
-        void Extract(JsonElement x, string onlyClass, string onlyUnit, string onlyItem)
+        // The pose expressions that use ageInTicks, as a Molang animation of the extract's bones (the
+        // catalog's "animation": ageInTicks = query * scale, e.g. the Ur-Ghast trophy's waving tentacles).
+        AnimResult ExtractAnimation(JsonElement x, Dictionary<string, BoneOut> bonesByPath)
         {
-            string name = Str(x, "name");
-            string unit = Str(x, "unit");
-            string layerName = Str(x, "layer");
+            var spec = Prop(x, "animation");
+            if (spec.ValueKind != JsonValueKind.Object) return null;
+            var age = Prop(spec, "ageInTicks");
+            MNode ageNode = M.Mul(new MAtom(Str(age, "query")), M.Num(Prop(age, "scale").GetDouble()));
+            var tr = new AnimTranslator(ClassPath, Interp);
+            var res = new AnimResult { Method = "pose" };
+            foreach (var kv in PoseEntries(x))
+            {
+                BoneOut bone;
+                if (!bonesByPath.TryGetValue(kv.Key, out bone)) continue;
+                for (int k = 0; k < 3; k++)
+                {
+                    string src = kv.Value[k];
+                    if (src == null || !System.Text.RegularExpressions.Regex.IsMatch(src, @"\bageInTicks\b")) continue;
+                    string why;
+                    var value = tr.TranslateExpression(src, new Dictionary<string, MNode> { { "ageInTicks", ageNode } }, out why);
+                    if (value == null) throw new JavaEvalException("extract animation " + kv.Key + ": " + why);
+                    double def = k == 0 ? bone.Rot.X : k == 1 ? bone.Rot.Y : bone.Rot.Z;
+                    var rel = M.Add(M.Mul(value, M.Num(180.0 / Math.PI)), M.Num(GeometryOut.Deg(def)), -1);
+                    res.Statements.Add(new AnimStatement { Java = kv.Key + "." + RotAxes[k] + " = " + src, Bone = bone.Name, Channel = "rotation", Axis = k, Translated = true });
+                    Dictionary<string, MNode[]> ch;
+                    if (!res.Bones.TryGetValue(bone.Name, out ch)) res.Bones[bone.Name] = ch = new Dictionary<string, MNode[]>();
+                    MNode[] axes;
+                    if (!ch.TryGetValue("rotation", out axes)) ch["rotation"] = axes = new MNode[3];
+                    axes[k] = rel;
+                }
+            }
+            var note = Str(spec, "source");
+            if (note != null) res.Notes.Add(note);
+            return res;
+        }
+
+        // Attachables of the extracts, one per item: every slot form adds its geometries (in catalog order).
+        sealed class AttachablePart { public string Geometry, Texture, Material, Condition; }
+        sealed class AttachableAnim { public string Key, Id, Condition; }
+        sealed class AttachableAcc
+        {
+            public string Item, Unit;
+            public Origin Origin;
+            public bool Failed;
+            public List<string> Slots = new List<string>();
+            public List<AttachablePart> Parts = new List<AttachablePart>();
+            public List<AttachableAnim> Animations = new List<AttachableAnim>();
+        }
+        readonly Dictionary<string, AttachableAcc> attachables = new Dictionary<string, AttachableAcc>(StringComparer.Ordinal);
+        readonly List<AttachableAcc> attachableOrder = new List<AttachableAcc>();
+
+        // An extract; a form that fails marks its item's attachable as failed (never written with a slot missing).
+        void Extract(ExtractSpec spec, string onlyClass, string onlyUnit, string onlyItem)
+        {
+            int errors = Errors.Count;
+            ExtractBody(spec, onlyClass, onlyUnit, onlyItem);
+            AttachableAcc acc;
+            if (Errors.Count > errors && spec.Item != null)
+            {
+                if (!attachables.TryGetValue(spec.Item, out acc)) { attachables[spec.Item] = acc = new AttachableAcc { Item = spec.Item, Unit = spec.Unit, Origin = cur }; attachableOrder.Add(acc); }
+                acc.Failed = true;
+            }
+        }
+
+        void ExtractBody(ExtractSpec spec, string onlyClass, string onlyUnit, string onlyItem)
+        {
+            string name = spec.Name, unit = spec.Unit, layerName = spec.Layer;
+            var x = spec.X;
             if (onlyUnit != null && !string.Equals(onlyUnit, unit, StringComparison.OrdinalIgnoreCase)) return;
             LayerInfo info;
             if (!Layers.TryGetValue(layerName, out info) || info.Def == null) { Errors.Add("extract " + name + ": layer '" + layerName + "' missing"); return; }
             if (onlyClass != null && !Matches(onlyClass, null, info, unit)) return;
-            string item = Str(x, "item");
+            string item = spec.Item;
             if (onlyItem != null && item != onlyItem) return;
-            string frameName = Str(x, "frame", "world");
+            cur = new Origin { Info = info, Unit = unit, Item = item };
+            string frameName = spec.Frame;
             var frame = FrameOf(frameName);
             var overrides = PoseOverrides(x);
             var geoTex = new Dictionary<string, string>();
@@ -530,9 +792,12 @@ namespace Gf.Models
             var boneMaps = new List<object>();
             var byGeo = new Dictionary<string, List<JsonElement>>();
             var order = new List<string>();
+            var displays = new List<ItemDisplay>();
+            var mainBones = new Dictionary<string, BoneOut>(StringComparer.Ordinal);
             foreach (var g in Prop(x, "groups").EnumerateArray())
             {
-                string gname = Str(g, "geometry") ?? name;
+                string suffix = Str(g, "suffix");
+                string gname = Str(g, "geometry") ?? (suffix != null ? name + "_" + suffix : name);
                 List<JsonElement> l;
                 if (!byGeo.TryGetValue(gname, out l)) { byGeo[gname] = l = new List<JsonElement>(); order.Add(gname); }
                 l.Add(g);
@@ -545,8 +810,8 @@ namespace Gf.Models
                 int cubes = 0, boneCount = 0, gi = 0;
                 foreach (var g in byGeo[gname])
                 {
-                    var pose = OpsPose(x, "prefix", null);
-                    pose = OpsPose(g, "ops", pose);
+                    var pose = ApplyOps(spec.Prefix, new Pose(), spec, gi == 0 && gname == name ? displays : null);
+                    pose = ApplyOps(Prop(g, "ops"), pose, spec, null);
                     // b = A (L p / 16 + T) + C = K p + D;  K = s R E  (E = diag(1, -1, 1))
                     var K = (1.0 / 16) * (frame.A * pose.L);
                     var D = frame.A * pose.T + frame.C;
@@ -581,6 +846,7 @@ namespace Gf.Models
                     cubes += geo.Bones.Sum(b => b.Cubes.Count);
                     foreach (var b in geo.Bones)
                     {
+                        if (gname == name && !mainBones.ContainsKey(b.JavaPath)) mainBones[b.JavaPath] = b;
                         var piv = geo.MapPoint(b.JavaPivot);
                         boneMaps.Add(new JObj().Add("geometry", geoPrefix + gname).Add("java", b.JavaPath).Add("bone", b.Name).Add("parent", b.Parent)
                             .Add("pivot", Json.Vec(piv.X, piv.Y, piv.Z)).Add("rotation", Json.Vec(GeometryOut.Deg(b.Rot.X), GeometryOut.Deg(b.Rot.Y), GeometryOut.Deg(b.Rot.Z)))
@@ -603,34 +869,71 @@ namespace Gf.Models
                 }
                 string file = "models/entity/" + gname + ".geo.json";
                 Put(UnitDir(unit) + "rp/" + file, json);
-                var entry = new JObj().Add("identifier", geoPrefix + gname).Add("file", file).Add("unit", unit).Add("kind", Str(x, "kind", "extract"))
+                var entry = new JObj().Add("identifier", geoPrefix + gname).Add("file", file).Add("unit", unit).Add("kind", spec.Kind)
                     .Add("textures", Json.Arr(Tex(geoTex[gname]))).Add("texture_width", first.TexWidth).Add("texture_height", first.TexHeight)
                     .Add("bones", boneCount).Add("cubes", cubes)
                     .Add("visible_bounds", Json.Vec(Convert.ToDouble(desc.Get("visible_bounds_width")), Convert.ToDouble(desc.Get("visible_bounds_height")), Convert.ToDouble(((List<object>)desc.Get("visible_bounds_offset"))[1])))
                     .Add("frame", frameName);
                 if (frame.Parent != null) entry.Add("external_parents", Json.Arr(frame.Parent));
-                foreach (var key in new[] { "block", "item" })
+                if (spec.Slot != null) entry.Add("slot", spec.Slot);
+                foreach (var key in new[] { "block" })
                 {
                     var refs = StrList(x, key);
                     if (refs.Count > 0) entry.Add(key, refs.Cast<object>().ToList());
                 }
+                if (item != null) entry.Add("item", Json.Arr(item));
                 var preview = Prop(x, "preview");
                 if (preview.ValueKind == JsonValueKind.Object) entry.Add("preview", ToJObj(preview));
                 indexGeometries.Add(entry);
                 Log.Add(string.Format("{0,-28} {1,-14} {2,3} bones {3,4} cubes (extract of {4})", gname, unit, boneCount, cubes, layerName));
             }
+
+            // the pose expressions that run on a clock (ageInTicks) animate the main geometry
+            var anim = ExtractAnimation(x, mainBones);
+            string animId = null;
+            if (anim != null && anim.Bones.Count > 0)
+            {
+                animId = animPrefix + name + ".base";
+                string afile = "animations/" + name + ".base.json";
+                Put(UnitDir(unit) + "rp/" + afile, AnimTranslator.AnimationJson(animId, anim));
+                indexAnimations.Add(new JObj().Add("identifier", animId).Add("file", afile).Add("unit", unit).Add("bones", anim.Bones.Keys.Cast<object>().ToList()));
+                foreach (var e in indexGeometries.Cast<JObj>()) if ((string)e.Get("identifier") == geoPrefix + name) e.Add("animation", animId);
+            }
+
             var bm = new JObj()
                 .Add("comment", "Generated by tools/models/convert.ps1 (F2) from The Twilight Forest 4.8 @ " + TfRevision + " (LGPL-2.1-or-later code): parts of a TF model drawn with the PoseStack transforms of its renderer.")
-                .Add("source", Str(x, "source"))
+                .Add("source", spec.Source)
                 .Add("layer", new JObj().Add("name", layerName).Add("field", "TFModelLayers." + info.Field).Add("supplier", info.Supplier))
-                .Add("frame", frameName)
-                .Add("geometries", order.Select(gn => (object)new JObj().Add("identifier", geoPrefix + gn).Add("texture", new JObj().Add("bedrock", Tex(geoTex[gn])).Add("tf", TfTex(geoTex[gn]))).Add("material", geoMaterial[gn])).ToList())
-                .Add("bones", boneMaps);
+                .Add("frame", frameName);
+            if (spec.Slot != null) bm.Add("slot", spec.Slot);
+            if (displays.Count > 0)
+                bm.Add("item_display", displays.Select(dd => (object)(dd.File == null
+                    ? new JObj().Add("model", "models/item/" + dd.Model + ".json").Add("context", dd.Context).Add("transform", "none (ItemTransform.NO_TRANSFORM)")
+                    : new JObj().Add("model", "models/item/" + dd.Model + ".json").Add("file", dd.File).Add("context", dd.Context).Add("from", dd.From)
+                        .Add("rotation", Json.Vec(dd.Rotation.X, dd.Rotation.Y, dd.Rotation.Z))
+                        .Add("translation", Json.Vec(dd.Translation.X * 16, dd.Translation.Y * 16, dd.Translation.Z * 16))
+                        .Add("scale", Json.Vec(dd.Scale.X, dd.Scale.Y, dd.Scale.Z)))).ToList());
+            bm.Add("geometries", order.Select(gn => (object)new JObj().Add("identifier", geoPrefix + gn).Add("texture", new JObj().Add("bedrock", Tex(geoTex[gn])).Add("tf", TfTex(geoTex[gn]))).Add("material", geoMaterial[gn])).ToList())
+              .Add("bones", boneMaps);
+            if (anim != null && animId != null)
+                bm.Add("animation", new JObj().Add("identifier", animId).Add("notes", anim.Notes.Cast<object>().ToList())
+                    .Add("translated", anim.Statements.Select(st => (object)st.Java).ToList()));
             var notes = StrList(x, "notes");
             if (notes.Count > 0) bm.Add("notes", notes.Cast<object>().ToList());
             Put(UnitDir(unit) + "bones/" + name + ".json", bm);
 
-            if (item != null) ExtractAttachable(x, unit, item, order, geoTex, geoMaterial);
+            if (item == null) return;
+            AttachableAcc acc;
+            if (!attachables.TryGetValue(item, out acc))
+            {
+                attachables[item] = acc = new AttachableAcc { Item = item, Unit = unit, Origin = cur };
+                attachableOrder.Add(acc);
+            }
+            if (acc.Unit != unit) { Errors.Add("attachable " + item + ": forms in units " + acc.Unit + " and " + unit); return; }
+            if (spec.Slot != null && !acc.Slots.Contains(spec.Slot)) acc.Slots.Add(spec.Slot);
+            foreach (var gname in order)
+                acc.Parts.Add(new AttachablePart { Geometry = gname, Texture = geoTex[gname], Material = geoMaterial[gname], Condition = spec.SlotCondition });
+            if (animId != null) acc.Animations.Add(new AttachableAnim { Key = spec.FormKey ?? "base", Id = animId, Condition = spec.SlotCondition });
         }
 
         GeometryOut ConvertWith(LayerDef def, ConvertOptions opt, Func<V3, V3> map, double scale, HashSet<string> used)
@@ -651,32 +954,53 @@ namespace Gf.Models
             return geo;
         }
 
-        void ExtractAttachable(JsonElement x, string unit, string item, List<string> geos, Dictionary<string, string> geoTex, Dictionary<string, string> geoMaterial)
+        // One attachable per item: geometry "default" (controller.render.item_default) and "part<N>"
+        // (controller.render.twilightforest.models.part<N>), each drawn only in its slot (c.item_slot), plus
+        // the enchantment glint (variable.is_enchanted) and the animations of the forms.
+        void WriteExtractAttachable(AttachableAcc acc)
         {
-            string slotCond = Str(x, "slotCondition");
+            cur = acc.Origin;
             var materials = new JObj(); var textures = new JObj(); var geometry = new JObj();
             var controllers = new List<object>();
-            for (int i = 0; i < geos.Count; i++)
+            for (int i = 0; i < acc.Parts.Count; i++)
             {
+                var part = acc.Parts[i];
                 string key = i == 0 ? "default" : "part" + i;
-                materials.Add(key, geoMaterial[geos[i]]);
-                textures.Add(key, Tex(geoTex[geos[i]]));
-                geometry.Add(key, geoPrefix + geos[i]);
+                materials.Add(key, part.Material);
+                textures.Add(key, Tex(part.Texture));
+                geometry.Add(key, geoPrefix + part.Geometry);
                 string rc = i == 0 ? "controller.render.item_default" : "controller.render.twilightforest.models." + key;
                 if (i > 0 && !renderControllers.ContainsKey(rc))
                 {
                     renderControllers[rc] = new JObj()
                         .Add("geometry", "Geometry." + key)
-                        .Add("materials", Json.Arr(new JObj().Add("*", "Material." + key)))
-                        .Add("textures", Json.Arr("Texture." + key));
+                        .Add("materials", Json.Arr(new JObj().Add("*", "variable.is_enchanted ? Material.enchanted : Material." + key)))
+                        .Add("textures", Json.Arr("Texture." + key, "Texture.enchanted"));
                 }
-                controllers.Add(slotCond != null ? (object)new JObj().Add(rc, slotCond) : rc);
+                controllers.Add(part.Condition != null ? (object)new JObj().Add(rc, part.Condition) : rc);
             }
-            var desc = new JObj().Add("identifier", item).Add("materials", materials).Add("textures", textures).Add("geometry", geometry).Add("render_controllers", controllers);
-            string afile = "attachables/" + item.Substring(item.IndexOf(':') + 1) + ".json";
-            Put(UnitDir(unit) + "rp/" + afile, new JObj().Add("format_version", "1.10.0").Add("minecraft:attachable", new JObj().Add("description", desc)));
-            indexAttachables.Add(new JObj().Add("item", item).Add("file", afile).Add("unit", unit).Add("slot", Str(x, "slot", "head"))
-                .Add("geometry", geos.Select(g => (object)(geoPrefix + g)).ToList()).Add("textures", geos.Select(g => (object)Tex(geoTex[g])).ToList()));
+            materials.Add("enchanted", "entity_alphatest_glint");
+            textures.Add("enchanted", "textures/misc/enchanted_item_glint");
+            var desc = new JObj().Add("identifier", acc.Item).Add("materials", materials).Add("textures", textures).Add("geometry", geometry);
+            if (acc.Animations.Count > 0)
+            {
+                var anims = new JObj();
+                var animate = new List<object>();
+                foreach (var a in acc.Animations)
+                {
+                    anims.Add(a.Key, a.Id);
+                    animate.Add(a.Condition != null ? (object)new JObj().Add(a.Key, a.Condition) : a.Key);
+                }
+                desc.Add("animations", anims).Add("scripts", new JObj().Add("animate", animate));
+            }
+            desc.Add("render_controllers", controllers);
+            string afile = "attachables/" + acc.Item.Substring(acc.Item.IndexOf(':') + 1) + ".json";
+            Put(UnitDir(acc.Unit) + "rp/" + afile, new JObj().Add("format_version", "1.10.0").Add("minecraft:attachable", new JObj().Add("description", desc)));
+            var entry = new JObj().Add("item", acc.Item).Add("file", afile).Add("unit", acc.Unit).Add("slot", acc.Slots.Count > 0 ? acc.Slots[0] : "head")
+                .Add("slots", acc.Slots.Cast<object>().ToList())
+                .Add("geometry", acc.Parts.Select(p => (object)(geoPrefix + p.Geometry)).ToList()).Add("textures", acc.Parts.Select(p => (object)Tex(p.Texture)).ToList());
+            if (acc.Animations.Count > 0) entry.Add("animations", acc.Animations.Select(a => (object)a.Id).ToList());
+            indexAttachables.Add(entry);
         }
 
         // ---- shared files ----------------------------------------------------------------------------------

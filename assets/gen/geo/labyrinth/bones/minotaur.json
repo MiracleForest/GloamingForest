@@ -135,7 +135,7 @@
   ],
   "setupAnim": {
     "class": "MinotaurModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.minotaur.base",
     "notes": ["no setupAnim / prepareMobModel in MinotaurModel or its TF super classes", "vanilla base HumanoidModel animates every part: the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
     "translated": [],
     "todo": []

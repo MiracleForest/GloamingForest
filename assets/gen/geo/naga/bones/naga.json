@@ -34,7 +34,7 @@
   ],
   "setupAnim": {
     "class": "NagaModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.naga.base",
     "notes": ["vanilla base ListModel (super calls): nothing (ListModel has no default animation)"],
     "translated": [],
     "todo": [

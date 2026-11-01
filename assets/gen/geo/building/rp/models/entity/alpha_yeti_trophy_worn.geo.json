@@ -20,12 +20,12 @@
         {
           "name": "alpha_yeti_trophy_worn_head",
           "parent": "alpha_yeti_trophy_worn",
-          "pivot": [0, 29.75, 0],
+          "pivot": [0, 27.375, 0],
           "rotation": [0, 180, 0],
           "cubes": [
             {
-              "origin": [-4.8, 23.75, -3.6],
-              "size": [9.6, 10.8, 7.2],
+              "origin": [-4.5, 21.75, -3.375],
+              "size": [9, 10.125, 6.75],
               "uv": {
                 "north": {
                   "uv": [116, 36],
@@ -54,8 +54,8 @@
               }
             },
             {
-              "origin": [1.6, 31.35, -3.9],
-              "size": [2.4, 2.4, 0.4],
+              "origin": [1.5, 28.875, -3.65625],
+              "size": [2.25, 2.25, 0.375],
               "uv": {
                 "north": {
                   "uv": [66, 2],
@@ -84,8 +84,8 @@
               }
             },
             {
-              "origin": [-3.4, 25.55, -3.9],
-              "size": [6.8, 5.8, 0.4],
+              "origin": [-3.1875, 23.4375, -3.65625],
+              "size": [6.375, 5.4375, 0.375],
               "uv": {
                 "north": {
                   "uv": [123, 52],
@@ -114,8 +114,8 @@
               }
             },
             {
-              "origin": [-4, 31.35, -3.9],
-              "size": [2.4, 2.4, 0.4],
+              "origin": [-3.75, 28.875, -3.65625],
+              "size": [2.25, 2.25, 0.375],
               "uv": {
                 "north": {
                   "uv": [66, 2],
@@ -148,12 +148,12 @@
         {
           "name": "alpha_yeti_trophy_worn_left_horn_1",
           "parent": "alpha_yeti_trophy_worn_head",
-          "pivot": [-4.8, 32.95, -1.6],
+          "pivot": [-4.5, 30.375, -1.5],
           "rotation": [0, -30, 35],
           "cubes": [
             {
-              "origin": [-6.6, 31.95, -2.6],
-              "size": [2, 2, 2],
+              "origin": [-6.1875, 29.4375, -2.4375],
+              "size": [1.875, 1.875, 1.875],
               "uv": {
                 "north": {
                   "uv": [10, 118],
@@ -186,12 +186,12 @@
         {
           "name": "alpha_yeti_trophy_worn_left_horn_1_top",
           "parent": "alpha_yeti_trophy_worn_left_horn_1",
-          "pivot": [-6.4, 32.95, -1.6],
+          "pivot": [-6, 30.375, -1.5],
           "rotation": [0, -20, 35],
           "cubes": [
             {
-              "origin": [-9.2, 32.15, -2.4],
-              "size": [3.6, 1.6, 1.6],
+              "origin": [-8.625, 29.625, -2.25],
+              "size": [3.375, 1.5, 1.5],
               "uv": {
                 "north": {
                   "uv": [48, 116],
@@ -224,12 +224,12 @@
         {
           "name": "alpha_yeti_trophy_worn_right_horn_1",
           "parent": "alpha_yeti_trophy_worn_head",
-          "pivot": [4.8, 32.95, 0],
+          "pivot": [4.5, 30.375, 0],
           "rotation": [0, 30, -35],
           "cubes": [
             {
-              "origin": [4.6, 31.95, -1],
-              "size": [2, 2, 2],
+              "origin": [4.3125, 29.4375, -0.9375],
+              "size": [1.875, 1.875, 1.875],
               "uv": {
                 "north": {
                   "uv": [10, 118],
@@ -262,12 +262,12 @@
         {
           "name": "alpha_yeti_trophy_worn_right_horn_1_top",
           "parent": "alpha_yeti_trophy_worn_right_horn_1",
-          "pivot": [6.4, 32.95, 0],
+          "pivot": [6, 30.375, 0],
           "rotation": [0, 20, -35],
           "cubes": [
             {
-              "origin": [6, 32.15, -0.8],
-              "size": [3.6, 1.6, 1.6],
+              "origin": [5.625, 29.625, -0.75],
+              "size": [3.375, 1.5, 1.5],
               "uv": {
                 "north": {
                   "uv": [48, 116],
@@ -300,12 +300,12 @@
         {
           "name": "alpha_yeti_trophy_worn_left_horn_2",
           "parent": "alpha_yeti_trophy_worn_head",
-          "pivot": [-4.8, 30.55, -1.6],
+          "pivot": [-4.5, 28.125, -1.5],
           "rotation": [0, -30, 15],
           "cubes": [
             {
-              "origin": [-6.6, 29.55, -2.6],
-              "size": [2, 2, 2],
+              "origin": [-6.1875, 27.1875, -2.4375],
+              "size": [1.875, 1.875, 1.875],
               "uv": {
                 "north": {
                   "uv": [10, 118],
@@ -338,12 +338,12 @@
         {
           "name": "alpha_yeti_trophy_worn_left_horn_2_top",
           "parent": "alpha_yeti_trophy_worn_left_horn_2",
-          "pivot": [-6.4, 30.55, -1.6],
+          "pivot": [-6, 28.125, -1.5],
           "rotation": [0, -20, 15],
           "cubes": [
             {
-              "origin": [-9.2, 29.75, -2.4],
-              "size": [3.6, 1.6, 1.6],
+              "origin": [-8.625, 27.375, -2.25],
+              "size": [3.375, 1.5, 1.5],
               "uv": {
                 "north": {
                   "uv": [48, 116],
@@ -376,12 +376,12 @@
         {
           "name": "alpha_yeti_trophy_worn_right_horn_2",
           "parent": "alpha_yeti_trophy_worn_head",
-          "pivot": [4.8, 30.55, 0],
+          "pivot": [4.5, 28.125, 0],
           "rotation": [0, 30, -15],
           "cubes": [
             {
-              "origin": [4.6, 29.55, -1],
-              "size": [2, 2, 2],
+              "origin": [4.3125, 27.1875, -0.9375],
+              "size": [1.875, 1.875, 1.875],
               "uv": {
                 "north": {
                   "uv": [10, 118],
@@ -414,12 +414,12 @@
         {
           "name": "alpha_yeti_trophy_worn_right_horn_2_top",
           "parent": "alpha_yeti_trophy_worn_right_horn_2",
-          "pivot": [6.4, 30.55, 0],
+          "pivot": [6, 28.125, 0],
           "rotation": [0, 20, -15],
           "cubes": [
             {
-              "origin": [6, 29.75, -0.8],
-              "size": [3.6, 1.6, 1.6],
+              "origin": [5.625, 27.375, -0.75],
+              "size": [3.375, 1.5, 1.5],
               "uv": {
                 "north": {
                   "uv": [48, 116],
@@ -452,12 +452,12 @@
         {
           "name": "alpha_yeti_trophy_worn_left_horn_3",
           "parent": "alpha_yeti_trophy_worn_head",
-          "pivot": [-4.8, 28.55, -1.6],
+          "pivot": [-4.5, 26.25, -1.5],
           "rotation": [0, -30, -5],
           "cubes": [
             {
-              "origin": [-6.6, 27.55, -2.6],
-              "size": [2, 2, 2],
+              "origin": [-6.1875, 25.3125, -2.4375],
+              "size": [1.875, 1.875, 1.875],
               "uv": {
                 "north": {
                   "uv": [10, 118],
@@ -490,12 +490,12 @@
         {
           "name": "alpha_yeti_trophy_worn_left_horn_3_top",
           "parent": "alpha_yeti_trophy_worn_left_horn_3",
-          "pivot": [-6.4, 28.55, -1.6],
+          "pivot": [-6, 26.25, -1.5],
           "rotation": [0, -20, -5],
           "cubes": [
             {
-              "origin": [-9.2, 27.75, -2.4],
-              "size": [3.6, 1.6, 1.6],
+              "origin": [-8.625, 25.5, -2.25],
+              "size": [3.375, 1.5, 1.5],
               "uv": {
                 "north": {
                   "uv": [48, 116],
@@ -528,12 +528,12 @@
         {
           "name": "alpha_yeti_trophy_worn_right_horn_3",
           "parent": "alpha_yeti_trophy_worn_head",
-          "pivot": [4.8, 28.55, 0],
+          "pivot": [4.5, 26.25, 0],
           "rotation": [0, 30, 5],
           "cubes": [
             {
-              "origin": [4.6, 27.55, -1],
-              "size": [2, 2, 2],
+              "origin": [4.3125, 25.3125, -0.9375],
+              "size": [1.875, 1.875, 1.875],
               "uv": {
                 "north": {
                   "uv": [10, 118],
@@ -566,12 +566,12 @@
         {
           "name": "alpha_yeti_trophy_worn_right_horn_3_top",
           "parent": "alpha_yeti_trophy_worn_right_horn_3",
-          "pivot": [6.4, 28.55, 0],
+          "pivot": [6, 26.25, 0],
           "rotation": [0, 20, 5],
           "cubes": [
             {
-              "origin": [6, 27.75, -0.8],
-              "size": [3.6, 1.6, 1.6],
+              "origin": [5.625, 25.5, -0.75],
+              "size": [3.375, 1.5, 1.5],
               "uv": {
                 "north": {
                   "uv": [48, 116],

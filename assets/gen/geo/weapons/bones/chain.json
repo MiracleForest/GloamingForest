@@ -24,5 +24,12 @@
       "cubes": 1
     }
   ],
+  "setupAnim": {
+    "class": "ChainModel",
+    "identifier": "animation.twilightforest.chain.base",
+    "notes": ["no setupAnim to translate: the layer is posed by its renderer (see the notes and docs/spec/models.md)"],
+    "translated": [],
+    "todo": []
+  },
   "notes": ["Drawn link by link by BlockChainRenderer (chain_block) and BlockChainGoblinRenderer (unit stronghold)."]
 }

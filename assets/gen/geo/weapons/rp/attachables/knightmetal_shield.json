@@ -4,17 +4,25 @@
     "description": {
       "identifier": "twilightforest:knightmetal_shield",
       "materials": {
-        "default": "entity_alphatest"
+        "default": "entity_alphatest",
+        "part1": "entity_alphatest",
+        "enchanted": "entity_alphatest_glint"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/knightmetal_shield"
+        "default": "textures/twilightforest/entity/knightmetal_shield",
+        "part1": "textures/twilightforest/entity/knightmetal_shield",
+        "enchanted": "textures/misc/enchanted_item_glint"
       },
       "geometry": {
-        "default": "geometry.twilightforest.knightmetal_shield_held"
+        "default": "geometry.twilightforest.knightmetal_shield_held",
+        "part1": "geometry.twilightforest.knightmetal_shield_held_left"
       },
       "render_controllers": [
         {
           "controller.render.item_default": "c.item_slot == 'main_hand'"
+        },
+        {
+          "controller.render.twilightforest.models.part1": "c.item_slot == 'off_hand'"
         }
       ]
     }

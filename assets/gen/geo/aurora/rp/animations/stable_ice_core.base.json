@@ -1,0 +1,9 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.stable_ice_core.base": {
+      "loop": true,
+      "bones": {}
+    }
+  }
+}

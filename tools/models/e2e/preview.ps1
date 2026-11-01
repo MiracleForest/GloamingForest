@@ -106,8 +106,63 @@ foreach ($g in $index.geometries) {
     $actors.Add([pscustomobject]@{ kind = 'actor'; id = $id; name = $name; geometry = $g.identifier; unit = $g.unit })
 }
 
-# stands: armor sets and worn / held items (test items wear copies of the generated attachables)
-$slotOf = @{ helmet = 'slot.armor.head'; chestplate = 'slot.armor.chest'; leggings = 'slot.armor.legs'; boots = 'slot.armor.feet'; head = 'slot.armor.head'; main_hand = 'slot.weapon.mainhand' }
+# ---- the x-sign check: a Java part.x assignment through AnimTranslator against the geometry's x ----
+# A test-only model (written here, LGPL-free): a white cube at the origin, a red one at x 8..12 and a
+# blue one above the origin that setupAnim moves by moved.x = 10. Blue lands on red when the
+# animation's position x runs along the geometry's x (docs/spec/models.md, setupAnim -> Molang).
+$cp = [Gf.Models.ClassPath]::new((Get-GfTfJavaRoot)); $interp = [Gf.Models.Interp]::new($cp)
+$xsignSrc = @'
+package gfpreview; public class XSign {
+    private final ModelPart moved;
+    public XSign(ModelPart root) { this.moved = root.getChild("moved"); }
+    public static LayerDefinition create() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("origin", CubeListBuilder.create().texOffs(0, 0).addBox(-2.0F, -4.0F, -2.0F, 4.0F, 4.0F, 4.0F), PartPose.offset(0.0F, 24.0F, 0.0F));
+        root.addOrReplaceChild("plus_x", CubeListBuilder.create().texOffs(0, 8).addBox(8.0F, -4.0F, -2.0F, 4.0F, 4.0F, 4.0F), PartPose.offset(0.0F, 24.0F, 0.0F));
+        root.addOrReplaceChild("moved", CubeListBuilder.create().texOffs(0, 16).addBox(-2.0F, -9.0F, -2.0F, 4.0F, 4.0F, 4.0F), PartPose.offset(0.0F, 24.0F, 0.0F));
+        return LayerDefinition.create(mesh, 16, 32);
+    }
+    public void setupAnim(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.moved.x = 10.0F;
+    }
+}
+'@
+$xsignCls = ([Gf.Models.Parser]::ParseUnit($xsignSrc, 'XSign.java')).Types[0]
+$xsignMesh = $interp.CallStatic($xsignCls, 'create', [System.Collections.Generic.List[object]]::new())
+$xsignOpt = [Gf.Models.ConvertOptions]::new(); $xsignOpt.Identifier = 'geometry.gfpreview.xsign'
+$xsignGeo = [Gf.Models.Converter]::Convert($xsignMesh, $xsignOpt, $null, 1.0)
+$xsignAnim = [Gf.Models.AnimTranslator]::new($cp, $interp).Translate($xsignCls, $xsignGeo)
+New-Item -ItemType Directory -Force (Join-Path $prp 'models/entity'), (Join-Path $prp 'animations'), (Join-Path $prp 'textures/gfpreview') | Out-Null
+[IO.File]::WriteAllText((Join-Path $prp 'models/entity/gfpreview_xsign.geo.json'), [Gf.Models.Json]::Write($xsignGeo.ToJson()), [Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText((Join-Path $prp 'animations/gfpreview_xsign.animation.json'), [Gf.Models.Json]::Write([Gf.Models.AnimTranslator]::AnimationJson('animation.gfpreview.xsign', $xsignAnim)), [Text.UTF8Encoding]::new($false))
+Add-Type -AssemblyName System.Drawing
+$bmp = [System.Drawing.Bitmap]::new(16, 32)
+for ($y = 0; $y -lt 32; $y++) { for ($x = 0; $x -lt 16; $x++) {
+    $c = if ($y -lt 8) { [System.Drawing.Color]::White } elseif ($y -lt 16) { [System.Drawing.Color]::FromArgb(255, 220, 30, 30) } else { [System.Drawing.Color]::FromArgb(255, 30, 60, 230) }
+    $bmp.SetPixel($x, $y, $c) } }
+$bmp.Save((Join-Path $prp 'textures/gfpreview/xsign.png'), [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose()
+$xsign = [pscustomobject]@{ kind = 'actor'; id = 'gfpreview:xsign'; name = 'x-sign: blue above red'; geometry = 'geometry.gfpreview.xsign'; unit = 'models' }
+Write-J (Join-Path $prp 'entity/xsign.entity.json') ([ordered]@{ format_version = '1.10.0'; 'minecraft:client_entity' = [ordered]@{ description = [ordered]@{
+    identifier = $xsign.id; materials = [ordered]@{ default = 'entity_alphatest' }; textures = [ordered]@{ default = 'textures/gfpreview/xsign' }
+    geometry = [ordered]@{ default = 'geometry.gfpreview.xsign' }; animations = [ordered]@{ base = 'animation.gfpreview.xsign' }
+    scripts = [ordered]@{ scale = '2'; animate = @('base') }; render_controllers = @('controller.render.default') } } })
+Write-J (Join-Path $bp 'entities/xsign.json') ([ordered]@{ format_version = '1.20.0'; 'minecraft:entity' = [ordered]@{
+    description = [ordered]@{ identifier = $xsign.id; is_spawnable = $false; is_summonable = $true; is_experimental = $false }
+    components = [ordered]@{ 'minecraft:type_family' = [ordered]@{ family = @('gfpreview') }; 'minecraft:physics' = [ordered]@{ has_gravity = $false; has_collision = $false }
+        'minecraft:collision_box' = [ordered]@{ width = 0.6; height = 0.6 }; 'minecraft:pushable' = [ordered]@{ is_pushable = $false; is_pushable_by_piston = $false }
+        'minecraft:nameable' = [ordered]@{ always_show = $true; allow_name_tag_renaming = $false } } } })
+$actors.Insert(0, $xsign)
+
+# ---- content-log canaries: two broken files the client must report (the scenario requires their
+# lines, which proves the content log is captured, and fails on every other error or warning) ----
+[IO.File]::WriteAllText((Join-Path $prp 'models/entity/gfpreview_canary.geo.json'), "{ `"format_version`": `"1.12.0`", `"minecraft:geometry`": [ { `"description`": { `"identifier`": `"geometry.gfpreview_canary`"", [Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText((Join-Path $prp 'animations/gfpreview_canary.animation.json'), '{ "format_version": "1.8.0", "animations": { "animation.gfpreview_canary": { "loop": true, "bones": { "gfpreview_canary": { "rotation": ["math.cos(query.life_time *", 0, 0] } } } } }', [Text.UTF8Encoding]::new($false))
+
+# stands: armor sets and worn / held items (test items wear copies of the generated attachables);
+# an item drawn in several slots (trophies, the mystic crown: head + both hands; the shield: both
+# hands) is put in every one of them on its own stand
+$slotOf = @{ helmet = 'slot.armor.head'; chestplate = 'slot.armor.chest'; leggings = 'slot.armor.legs'; boots = 'slot.armor.feet'; head = 'slot.armor.head'; main_hand = 'slot.weapon.mainhand'; off_hand = 'slot.weapon.offhand' }
 $stands = [ordered]@{}
 foreach ($a in $index.attachables) {
     $path = "assets/gen/geo/$($a.unit)/rp/$($a.file)"
@@ -118,10 +173,13 @@ foreach ($a in $index.attachables) {
     $att['minecraft:attachable']['description']['identifier'] = $id
     foreach ($t in $att['minecraft:attachable']['description']['textures'].Values) { Copy-Texture $t }
     Write-J (Join-Path $prp "attachables/item_$short.json") $att
+    $slots = @(if ($a.slots) { $a.slots } else { $a.slot })
     # an item without an icon is silently not registered (every command naming it fails to parse):
     # borrow a vanilla icon, as the Levitate items do with their own (format 1.21.70)
     $components = [ordered]@{ 'minecraft:icon' = 'apple'; 'minecraft:max_stack_size' = 1 }
-    if ($a.slot -ne 'main_hand') { $components['minecraft:wearable'] = [ordered]@{ slot = $slotOf[$a.slot]; protection = 0 } }
+    $worn = @($slots | Where-Object { $_ -notin 'main_hand', 'off_hand' })
+    if ($worn) { $components['minecraft:wearable'] = [ordered]@{ slot = $slotOf[$worn[0]]; protection = 0 } }
+    if ($slots -contains 'off_hand') { $components['minecraft:allow_off_hand'] = $true }
     Write-J (Join-Path $bp "items/item_$short.json") ([ordered]@{ format_version = '1.21.70'; 'minecraft:item' = [ordered]@{ description = [ordered]@{ identifier = $id; menu_category = [ordered]@{ category = 'equipment' } }; components = $components } })
     # one stand per armor material / per worn or held item
     $group = if ($a.slot -in 'helmet', 'chestplate', 'leggings', 'boots') {
@@ -129,7 +187,7 @@ foreach ($a in $index.attachables) {
         else { $short -replace '_(helmet|chestplate|leggings|boots)$', '' }
     } else { $short }
     if (-not $stands.Contains($group)) { $stands[$group] = [System.Collections.Generic.List[object]]::new() }
-    $stands[$group].Add([pscustomobject]@{ item = $id; slot = $slotOf[$a.slot] })
+    foreach ($s in $slots) { $stands[$group].Add([pscustomobject]@{ item = $id; slot = $slotOf[$s] }) }
 }
 
 # shots: actors four at a time on x = -3, -1, 1, 3 (z = 0, facing the camera at z = 6), then stands
@@ -156,8 +214,11 @@ function Add-Shot($entries, [string]$label) {
             $lines.Add("summon $($e.id) $pos facing $look minecraft:entity_spawned `"$($e.name)`"")
             $shown += $e.name
         } else {
-            # no spawn event: armor stands have no minecraft:entity_spawned, and one bad line drops the whole function
-            $lines.Add("summon armor_stand $pos facing $look")
+            # no spawn event: armor stands have no minecraft:entity_spawned, and one bad line drops the
+            # whole function; yaw 0 faces the camera (south), set again by tp (a summoned stand takes
+            # the rotation of whoever ran the command)
+            $lines.Add("summon armor_stand $pos 0 0")
+            $lines.Add("tp @e[type=armor_stand,x=$x,y=-60,z=0,r=0.5] $pos 0 0")
             foreach ($it in $e.items) { $after.Add("replaceitem entity @e[type=armor_stand,x=$x,y=-60,z=0,r=0.5] $($it.slot) 0 $($it.item)") }
             $shown += $e.group
         }

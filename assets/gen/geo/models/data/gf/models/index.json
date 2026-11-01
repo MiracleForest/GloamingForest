@@ -52,7 +52,8 @@
       "texture_height": 32,
       "bones": 8,
       "cubes": 16,
-      "visible_bounds": [3, 2.5, 0.75]
+      "visible_bounds": [3, 2.5, 0.75],
+      "animation": "animation.twilightforest.bighorn_sheep.base"
     },
     {
       "identifier": "geometry.twilightforest.blockchain_goblin",
@@ -79,7 +80,8 @@
       "texture_height": 32,
       "bones": 6,
       "cubes": 9,
-      "visible_bounds": [3, 2, 0.5]
+      "visible_bounds": [3, 2, 0.5],
+      "animation": "animation.twilightforest.boar.base"
     },
     {
       "identifier": "geometry.twilightforest.brazier",
@@ -128,7 +130,8 @@
       "texture_height": 32,
       "bones": 10,
       "cubes": 10,
-      "visible_bounds": [2, 3, 0.5]
+      "visible_bounds": [2, 3, 0.5],
+      "animation": "animation.twilightforest.carminite_ghastguard.base"
     },
     {
       "identifier": "geometry.twilightforest.carminite_ghastling",
@@ -141,7 +144,8 @@
       "texture_height": 32,
       "bones": 10,
       "cubes": 10,
-      "visible_bounds": [2, 3, 0.5]
+      "visible_bounds": [2, 3, 0.5],
+      "animation": "animation.twilightforest.carminite_ghastling.base"
     },
     {
       "identifier": "geometry.twilightforest.carminite_golem",
@@ -154,7 +158,8 @@
       "texture_height": 64,
       "bones": 9,
       "cubes": 22,
-      "visible_bounds": [3, 4, 1.5]
+      "visible_bounds": [3, 4, 1.5],
+      "animation": "animation.twilightforest.carminite_golem.base"
     },
     {
       "identifier": "geometry.twilightforest.chain",
@@ -167,7 +172,8 @@
       "texture_height": 16,
       "bones": 1,
       "cubes": 1,
-      "visible_bounds": [1.5, 1.5, 1.5]
+      "visible_bounds": [1.5, 1.5, 1.5],
+      "animation": "animation.twilightforest.chain.base"
     },
     {
       "identifier": "geometry.twilightforest.chain_block",
@@ -180,7 +186,8 @@
       "texture_height": 16,
       "bones": 28,
       "cubes": 28,
-      "visible_bounds": [2, 2, 1.75]
+      "visible_bounds": [2, 2, 1.75],
+      "animation": "animation.twilightforest.chain_block.base"
     },
     {
       "identifier": "geometry.twilightforest.cicada",
@@ -220,7 +227,8 @@
       "texture_height": 32,
       "bones": 13,
       "cubes": 11,
-      "visible_bounds": [2.5, 2, 1.5]
+      "visible_bounds": [2.5, 2, 1.5],
+      "animation": "animation.twilightforest.death_tome.base"
     },
     {
       "identifier": "geometry.twilightforest.deer",
@@ -233,7 +241,8 @@
       "texture_height": 32,
       "bones": 9,
       "cubes": 31,
-      "visible_bounds": [3.5, 3.5, 1.25]
+      "visible_bounds": [3.5, 3.5, 1.25],
+      "animation": "animation.twilightforest.deer.base"
     },
     {
       "identifier": "geometry.twilightforest.fire_beetle",
@@ -282,7 +291,8 @@
       "texture_height": 64,
       "bones": 6,
       "cubes": 5,
-      "visible_bounds": [3.5, 3.5, 1.25]
+      "visible_bounds": [3.5, 3.5, 1.25],
+      "animation": "animation.twilightforest.harbinger_cube.base"
     },
     {
       "identifier": "geometry.spider.v1.8",
@@ -341,7 +351,8 @@
       "texture_height": 256,
       "bones": 3,
       "cubes": 16,
-      "visible_bounds": [6, 4.5, 2]
+      "visible_bounds": [6, 4.5, 2],
+      "animation": "animation.twilightforest.hydra_head.base"
     },
     {
       "identifier": "geometry.twilightforest.hydra_mortar",
@@ -354,7 +365,8 @@
       "texture_height": 32,
       "bones": 1,
       "cubes": 1,
-      "visible_bounds": [1.5, 1.5, 1.25]
+      "visible_bounds": [1.5, 1.5, 1.25],
+      "animation": "animation.twilightforest.hydra_mortar.base"
     },
     {
       "identifier": "geometry.twilightforest.hydra_neck",
@@ -381,7 +393,8 @@
       "texture_height": 32,
       "bones": 32,
       "cubes": 32,
-      "visible_bounds": [1.5, 2, 1.25]
+      "visible_bounds": [1.5, 2, 1.25],
+      "animation": "animation.twilightforest.ice_crystal.base"
     },
     {
       "identifier": "geometry.twilightforest.keepsake_casket",
@@ -457,7 +470,8 @@
       "texture_height": 64,
       "bones": 9,
       "cubes": 9,
-      "visible_bounds": [2.5, 3.5, 1.25]
+      "visible_bounds": [2.5, 3.5, 1.25],
+      "animation": "animation.twilightforest.lich.base"
     },
     {
       "identifier": "geometry.twilightforest.lich_minion",
@@ -470,7 +484,8 @@
       "texture_height": 32,
       "bones": 7,
       "cubes": 7,
-      "visible_bounds": [2, 3.5, 1]
+      "visible_bounds": [2, 3.5, 1],
+      "animation": "animation.twilightforest.lich_minion.base"
     },
     {
       "identifier": "geometry.twilightforest.lower_goblin_knight",
@@ -543,7 +558,8 @@
       "texture_height": 32,
       "bones": 12,
       "cubes": 11,
-      "visible_bounds": [2.5, 3.5, 1]
+      "visible_bounds": [2.5, 3.5, 1],
+      "animation": "animation.twilightforest.minotaur.base"
     },
     {
       "identifier": "geometry.wolf",
@@ -578,7 +594,8 @@
       "texture_height": 64,
       "bones": 103,
       "cubes": 103,
-      "visible_bounds": [3.5, 3, 1.75]
+      "visible_bounds": [3.5, 3, 1.75],
+      "animation": "animation.twilightforest.mosquito_swarm.base"
     },
     {
       "identifier": "geometry.twilightforest.naga",
@@ -591,7 +608,8 @@
       "texture_height": 32,
       "bones": 1,
       "cubes": 1,
-      "visible_bounds": [2, 2, 1.75]
+      "visible_bounds": [2, 2, 1.75],
+      "animation": "animation.twilightforest.naga.base"
     },
     {
       "identifier": "geometry.twilightforest.naga_body",
@@ -604,7 +622,8 @@
       "texture_height": 32,
       "bones": 1,
       "cubes": 1,
-      "visible_bounds": [2, 2, 1.75]
+      "visible_bounds": [2, 2, 1.75],
+      "animation": "animation.twilightforest.naga_body.base"
     },
     {
       "identifier": "geometry.twilightforest.penguin",
@@ -645,7 +664,8 @@
       "texture_height": 16,
       "bones": 1,
       "cubes": 1,
-      "visible_bounds": [3, 2, 1]
+      "visible_bounds": [3, 2, 1],
+      "animation": "animation.twilightforest.protection_box.base"
     },
     {
       "identifier": "geometry.twilightforest.quest_ram",
@@ -713,7 +733,8 @@
       "texture_height": 32,
       "bones": 7,
       "cubes": 7,
-      "visible_bounds": [2.5, 3.5, 1]
+      "visible_bounds": [2.5, 3.5, 1],
+      "animation": "animation.twilightforest.redcap_inner.base"
     },
     {
       "identifier": "geometry.twilightforest.redcap_outer",
@@ -726,7 +747,8 @@
       "texture_height": 32,
       "bones": 7,
       "cubes": 7,
-      "visible_bounds": [2.5, 3.5, 1]
+      "visible_bounds": [2.5, 3.5, 1],
+      "animation": "animation.twilightforest.redcap_outer.base"
     },
     {
       "identifier": "geometry.twilightforest.rising_zombie",
@@ -739,7 +761,8 @@
       "texture_height": 32,
       "bones": 7,
       "cubes": 7,
-      "visible_bounds": [2, 3.5, 1]
+      "visible_bounds": [2, 3.5, 1],
+      "animation": "animation.twilightforest.rising_zombie.base"
     },
     {
       "identifier": "geometry.twilightforest.roving_cube",
@@ -766,7 +789,8 @@
       "texture_height": 32,
       "bones": 8,
       "cubes": 8,
-      "visible_bounds": [2, 3.5, 1]
+      "visible_bounds": [2, 3.5, 1],
+      "animation": "animation.twilightforest.skeleton_druid.base"
     },
     {
       "identifier": "geometry.twilightforest.skull_chest",
@@ -820,7 +844,8 @@
       "texture_height": 32,
       "bones": 24,
       "cubes": 22,
-      "visible_bounds": [2, 3.5, 1.25]
+      "visible_bounds": [2, 3.5, 1.25],
+      "animation": "animation.twilightforest.snow_queen.base"
     },
     {
       "identifier": "geometry.twilightforest.squirrel",
@@ -847,7 +872,8 @@
       "texture_height": 32,
       "bones": 33,
       "cubes": 33,
-      "visible_bounds": [1.5, 2, 1]
+      "visible_bounds": [1.5, 2, 1],
+      "animation": "animation.twilightforest.stable_ice_core.base"
     },
     {
       "identifier": "geometry.spider.v1.8",
@@ -906,7 +932,8 @@
       "texture_height": 32,
       "bones": 33,
       "cubes": 33,
-      "visible_bounds": [1.5, 2, 1]
+      "visible_bounds": [1.5, 2, 1],
+      "animation": "animation.twilightforest.unstable_ice_core.base"
     },
     {
       "identifier": "geometry.twilightforest.upper_goblin_knight",
@@ -933,7 +960,8 @@
       "texture_height": 32,
       "bones": 37,
       "cubes": 37,
-      "visible_bounds": [4, 3, 0.5]
+      "visible_bounds": [4, 3, 0.5],
+      "animation": "animation.twilightforest.ur_ghast.base"
     },
     {
       "identifier": "geometry.wolf",
@@ -1368,7 +1396,8 @@
       "cubes": 37,
       "visible_bounds": [2.5, 2, 0.5],
       "frame": "world",
-      "block": ["twilightforest:ur_ghast_trophy"]
+      "block": ["twilightforest:ur_ghast_trophy"],
+      "animation": "animation.twilightforest.ur_ghast_trophy.base"
     },
     {
       "identifier": "geometry.twilightforest.alpha_yeti_trophy",
@@ -1522,7 +1551,8 @@
       "cubes": 37,
       "visible_bounds": [2.5, 2, 0.5],
       "frame": "world",
-      "block": ["twilightforest:ur_ghast_wall_trophy"]
+      "block": ["twilightforest:ur_ghast_wall_trophy"],
+      "animation": "animation.twilightforest.ur_ghast_wall_trophy.base"
     },
     {
       "identifier": "geometry.twilightforest.alpha_yeti_wall_trophy",
@@ -1593,6 +1623,39 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
+      "item": ["twilightforest:naga_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.naga_trophy_held",
+      "file": "models/entity/naga_trophy_held.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/nagahead"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 2,
+      "cubes": 1,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:naga_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.naga_trophy_held_left",
+      "file": "models/entity/naga_trophy_held_left.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/nagahead"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 2,
+      "cubes": 1,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
       "item": ["twilightforest:naga_trophy"]
     },
     {
@@ -1608,6 +1671,39 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
+      "item": ["twilightforest:lich_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.lich_trophy_held",
+      "file": "models/entity/lich_trophy_held.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/twilightlich64"],
+      "texture_width": 64,
+      "texture_height": 64,
+      "bones": 3,
+      "cubes": 2,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:lich_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.lich_trophy_held_left",
+      "file": "models/entity/lich_trophy_held_left.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/twilightlich64"],
+      "texture_width": 64,
+      "texture_height": 64,
+      "bones": 3,
+      "cubes": 2,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
       "item": ["twilightforest:lich_trophy"]
     },
     {
@@ -1623,6 +1719,39 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
+      "item": ["twilightforest:minoshroom_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.minoshroom_trophy_held",
+      "file": "models/entity/minoshroom_trophy_held.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/minoshroomtaur"],
+      "texture_width": 128,
+      "texture_height": 32,
+      "bones": 7,
+      "cubes": 6,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:minoshroom_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.minoshroom_trophy_held_left",
+      "file": "models/entity/minoshroom_trophy_held_left.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/minoshroomtaur"],
+      "texture_width": 128,
+      "texture_height": 32,
+      "bones": 7,
+      "cubes": 6,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
       "item": ["twilightforest:minoshroom_trophy"]
     },
     {
@@ -1638,6 +1767,39 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
+      "item": ["twilightforest:hydra_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.hydra_trophy_held",
+      "file": "models/entity/hydra_trophy_held.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/hydra4"],
+      "texture_width": 512,
+      "texture_height": 256,
+      "bones": 4,
+      "cubes": 16,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:hydra_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.hydra_trophy_held_left",
+      "file": "models/entity/hydra_trophy_held_left.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/hydra4"],
+      "texture_width": 512,
+      "texture_height": 256,
+      "bones": 4,
+      "cubes": 16,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
       "item": ["twilightforest:hydra_trophy"]
     },
     {
@@ -1653,6 +1815,7 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
       "item": ["twilightforest:knight_phantom_trophy"]
     },
     {
@@ -1668,6 +1831,71 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
+      "item": ["twilightforest:knight_phantom_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.knight_phantom_trophy_held",
+      "file": "models/entity/knight_phantom_trophy_held.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/phantomskeleton"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 2,
+      "cubes": 1,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:knight_phantom_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.knight_phantom_trophy_held_armor",
+      "file": "models/entity/knight_phantom_trophy_held_armor.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/models/armor/phantom_layer_1"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 6,
+      "cubes": 5,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:knight_phantom_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.knight_phantom_trophy_held_left",
+      "file": "models/entity/knight_phantom_trophy_held_left.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/phantomskeleton"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 2,
+      "cubes": 1,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
+      "item": ["twilightforest:knight_phantom_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.knight_phantom_trophy_held_left_armor",
+      "file": "models/entity/knight_phantom_trophy_held_left_armor.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/models/armor/phantom_layer_1"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 6,
+      "cubes": 5,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
       "item": ["twilightforest:knight_phantom_trophy"]
     },
     {
@@ -1683,7 +1911,43 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
-      "item": ["twilightforest:ur_ghast_trophy"]
+      "slot": "head",
+      "item": ["twilightforest:ur_ghast_trophy"],
+      "animation": "animation.twilightforest.ur_ghast_trophy_worn.base"
+    },
+    {
+      "identifier": "geometry.twilightforest.ur_ghast_trophy_held",
+      "file": "models/entity/ur_ghast_trophy_held.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/towerboss"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 38,
+      "cubes": 37,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:ur_ghast_trophy"],
+      "animation": "animation.twilightforest.ur_ghast_trophy_held.base"
+    },
+    {
+      "identifier": "geometry.twilightforest.ur_ghast_trophy_held_left",
+      "file": "models/entity/ur_ghast_trophy_held_left.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/towerboss"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 38,
+      "cubes": 37,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
+      "item": ["twilightforest:ur_ghast_trophy"],
+      "animation": "animation.twilightforest.ur_ghast_trophy_held_left.base"
     },
     {
       "identifier": "geometry.twilightforest.alpha_yeti_trophy_worn",
@@ -1698,6 +1962,39 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
+      "item": ["twilightforest:alpha_yeti_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.alpha_yeti_trophy_held",
+      "file": "models/entity/alpha_yeti_trophy_held.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/yetialpha"],
+      "texture_width": 256,
+      "texture_height": 128,
+      "bones": 14,
+      "cubes": 16,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:alpha_yeti_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.alpha_yeti_trophy_held_left",
+      "file": "models/entity/alpha_yeti_trophy_held_left.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/yetialpha"],
+      "texture_width": 256,
+      "texture_height": 128,
+      "bones": 14,
+      "cubes": 16,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
       "item": ["twilightforest:alpha_yeti_trophy"]
     },
     {
@@ -1713,6 +2010,39 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
+      "item": ["twilightforest:snow_queen_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.snow_queen_trophy_held",
+      "file": "models/entity/snow_queen_trophy_held.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/snowqueen"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 19,
+      "cubes": 17,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:snow_queen_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.snow_queen_trophy_held_left",
+      "file": "models/entity/snow_queen_trophy_held_left.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/snowqueen"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 19,
+      "cubes": 17,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
       "item": ["twilightforest:snow_queen_trophy"]
     },
     {
@@ -1728,6 +2058,7 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
       "item": ["twilightforest:quest_ram_trophy"]
     },
     {
@@ -1743,11 +2074,76 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
       "item": ["twilightforest:quest_ram_trophy"]
     },
     {
-      "identifier": "geometry.twilightforest.mystic_crown",
-      "file": "models/entity/mystic_crown.geo.json",
+      "identifier": "geometry.twilightforest.quest_ram_trophy_held",
+      "file": "models/entity/quest_ram_trophy_held.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/questram"],
+      "texture_width": 128,
+      "texture_height": 128,
+      "bones": 5,
+      "cubes": 16,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:quest_ram_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.quest_ram_trophy_held_lines",
+      "file": "models/entity/quest_ram_trophy_held_lines.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/questram_lines"],
+      "texture_width": 128,
+      "texture_height": 128,
+      "bones": 5,
+      "cubes": 16,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:quest_ram_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.quest_ram_trophy_held_left",
+      "file": "models/entity/quest_ram_trophy_held_left.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/questram"],
+      "texture_width": 128,
+      "texture_height": 128,
+      "bones": 5,
+      "cubes": 16,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
+      "item": ["twilightforest:quest_ram_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.quest_ram_trophy_held_left_lines",
+      "file": "models/entity/quest_ram_trophy_held_left_lines.geo.json",
+      "unit": "building",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/questram_lines"],
+      "texture_width": 128,
+      "texture_height": 128,
+      "bones": 5,
+      "cubes": 16,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
+      "item": ["twilightforest:quest_ram_trophy"]
+    },
+    {
+      "identifier": "geometry.twilightforest.mystic_crown_worn",
+      "file": "models/entity/mystic_crown_worn.geo.json",
       "unit": "artifacts",
       "kind": "worn",
       "textures": ["textures/twilightforest/entity/twilightlich64"],
@@ -1758,6 +2154,39 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "head",
       "external_parents": ["head"],
+      "slot": "head",
+      "item": ["twilightforest:mystic_crown"]
+    },
+    {
+      "identifier": "geometry.twilightforest.mystic_crown_held",
+      "file": "models/entity/mystic_crown_held.geo.json",
+      "unit": "artifacts",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/twilightlich64"],
+      "texture_width": 64,
+      "texture_height": 64,
+      "bones": 2,
+      "cubes": 1,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "rightArm",
+      "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:mystic_crown"]
+    },
+    {
+      "identifier": "geometry.twilightforest.mystic_crown_held_left",
+      "file": "models/entity/mystic_crown_held_left.geo.json",
+      "unit": "artifacts",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/twilightlich64"],
+      "texture_width": 64,
+      "texture_height": 64,
+      "bones": 2,
+      "cubes": 1,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
       "item": ["twilightforest:mystic_crown"]
     },
     {
@@ -1773,6 +2202,23 @@
       "visible_bounds": [3, 3.5, 1.25],
       "frame": "rightArm",
       "external_parents": ["rightArm"],
+      "slot": "main_hand",
+      "item": ["twilightforest:knightmetal_shield"]
+    },
+    {
+      "identifier": "geometry.twilightforest.knightmetal_shield_held_left",
+      "file": "models/entity/knightmetal_shield_held_left.geo.json",
+      "unit": "weapons",
+      "kind": "held",
+      "textures": ["textures/twilightforest/entity/knightmetal_shield"],
+      "texture_width": 64,
+      "texture_height": 32,
+      "bones": 3,
+      "cubes": 2,
+      "visible_bounds": [3, 3.5, 1.25],
+      "frame": "leftArm",
+      "external_parents": ["leftArm"],
+      "slot": "off_hand",
       "item": ["twilightforest:knightmetal_shield"]
     }
   ],
@@ -1790,10 +2236,22 @@
       "bones": ["body", "head"]
     },
     {
+      "identifier": "animation.twilightforest.bighorn_sheep.base",
+      "file": "animations/bighorn_sheep.base.json",
+      "unit": "fauna",
+      "bones": []
+    },
+    {
       "identifier": "animation.twilightforest.blockchain_goblin.base",
       "file": "animations/blockchain_goblin.base.json",
       "unit": "stronghold",
       "bones": ["leftArm", "rightArm"]
+    },
+    {
+      "identifier": "animation.twilightforest.boar.base",
+      "file": "animations/boar.base.json",
+      "unit": "fauna",
+      "bones": []
     },
     {
       "identifier": "animation.twilightforest.bunny.base",
@@ -1802,16 +2260,64 @@
       "bones": ["head", "leg0", "leg1", "leg2", "leg3"]
     },
     {
+      "identifier": "animation.twilightforest.carminite_ghastguard.base",
+      "file": "animations/carminite_ghastguard.base.json",
+      "unit": "darktower",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.carminite_ghastling.base",
+      "file": "animations/carminite_ghastling.base.json",
+      "unit": "darktower",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.carminite_golem.base",
+      "file": "animations/carminite_golem.base.json",
+      "unit": "darktower",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.chain.base",
+      "file": "animations/chain.base.json",
+      "unit": "weapons",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.chain_block.base",
+      "file": "animations/chain_block.base.json",
+      "unit": "weapons",
+      "bones": []
+    },
+    {
       "identifier": "animation.twilightforest.cube_of_annihilation.base",
       "file": "animations/cube_of_annihilation.base.json",
       "unit": "weapons",
       "bones": ["box_x", "box_y", "box_z"]
     },
     {
+      "identifier": "animation.twilightforest.death_tome.base",
+      "file": "animations/death_tome.base.json",
+      "unit": "lich",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.deer.base",
+      "file": "animations/deer.base.json",
+      "unit": "fauna",
+      "bones": []
+    },
+    {
       "identifier": "animation.twilightforest.fire_beetle.base",
       "file": "animations/fire_beetle.base.json",
       "unit": "hostiles",
       "bones": ["head"]
+    },
+    {
+      "identifier": "animation.twilightforest.harbinger_cube.base",
+      "file": "animations/harbinger_cube.base.json",
+      "unit": "finalcastle",
+      "bones": []
     },
     {
       "identifier": "animation.twilightforest.helmet_crab.base",
@@ -1826,10 +2332,28 @@
       "bones": ["leftLeg", "rightLeg"]
     },
     {
+      "identifier": "animation.twilightforest.hydra_head.base",
+      "file": "animations/hydra_head.base.json",
+      "unit": "hydra",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.hydra_mortar.base",
+      "file": "animations/hydra_mortar.base.json",
+      "unit": "hydra",
+      "bones": []
+    },
+    {
       "identifier": "animation.twilightforest.hydra_neck.base",
       "file": "animations/hydra_neck.base.json",
       "unit": "hydra",
       "bones": ["neck"]
+    },
+    {
+      "identifier": "animation.twilightforest.ice_crystal.base",
+      "file": "animations/ice_crystal.base.json",
+      "unit": "aurora",
+      "bones": []
     },
     {
       "identifier": "animation.twilightforest.knight_phantom.base",
@@ -1842,6 +2366,18 @@
       "file": "animations/kobold.base.json",
       "unit": "fauna",
       "bones": ["head", "leftArm", "leftLeg", "rightArm", "rightLeg"]
+    },
+    {
+      "identifier": "animation.twilightforest.lich.base",
+      "file": "animations/lich.base.json",
+      "unit": "lich",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.lich_minion.base",
+      "file": "animations/lich_minion.base.json",
+      "unit": "lich",
+      "bones": []
     },
     {
       "identifier": "animation.twilightforest.lower_goblin_knight.base",
@@ -1862,6 +2398,30 @@
       "bones": ["hat", "head", "leftLeg", "rightLeg"]
     },
     {
+      "identifier": "animation.twilightforest.minotaur.base",
+      "file": "animations/minotaur.base.json",
+      "unit": "labyrinth",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.mosquito_swarm.base",
+      "file": "animations/mosquito_swarm.base.json",
+      "unit": "fauna",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.naga.base",
+      "file": "animations/naga.base.json",
+      "unit": "naga",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.naga_body.base",
+      "file": "animations/naga_body.base.json",
+      "unit": "naga",
+      "bones": []
+    },
+    {
       "identifier": "animation.twilightforest.penguin.base",
       "file": "animations/penguin.base.json",
       "unit": "fauna",
@@ -1872,6 +2432,12 @@
       "file": "animations/pinch_beetle.base.json",
       "unit": "hostiles",
       "bones": ["head", "left_leg_1", "left_leg_2", "left_leg_3", "right_leg_1", "right_leg_2", "right_leg_3"]
+    },
+    {
+      "identifier": "animation.twilightforest.protection_box.base",
+      "file": "animations/protection_box.base.json",
+      "unit": "landmark",
+      "bones": []
     },
     {
       "identifier": "animation.twilightforest.quest_ram.base",
@@ -1892,10 +2458,34 @@
       "bones": ["hat", "head"]
     },
     {
+      "identifier": "animation.twilightforest.redcap_inner.base",
+      "file": "animations/redcap_inner.base.json",
+      "unit": "hostiles",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.redcap_outer.base",
+      "file": "animations/redcap_outer.base.json",
+      "unit": "hostiles",
+      "bones": []
+    },
+    {
+      "identifier": "animation.twilightforest.rising_zombie.base",
+      "file": "animations/rising_zombie.base.json",
+      "unit": "lich",
+      "bones": []
+    },
+    {
       "identifier": "animation.twilightforest.roving_cube.base",
       "file": "animations/roving_cube.base.json",
       "unit": "finalcastle",
       "bones": ["box_x", "box_y", "box_z"]
+    },
+    {
+      "identifier": "animation.twilightforest.skeleton_druid.base",
+      "file": "animations/skeleton_druid.base.json",
+      "unit": "hostiles",
+      "bones": []
     },
     {
       "identifier": "animation.twilightforest.slime_beetle.base",
@@ -1910,10 +2500,22 @@
       "bones": ["head", "left_leg_1", "left_leg_2", "left_leg_3", "right_leg_1", "right_leg_2", "right_leg_3", "slime_center", "tail_bottom", "tail_top"]
     },
     {
+      "identifier": "animation.twilightforest.snow_queen.base",
+      "file": "animations/snow_queen.base.json",
+      "unit": "aurora",
+      "bones": []
+    },
+    {
       "identifier": "animation.twilightforest.squirrel.base",
       "file": "animations/squirrel.base.json",
       "unit": "fauna",
       "bones": ["head", "leg0", "leg1", "leg2", "leg3"]
+    },
+    {
+      "identifier": "animation.twilightforest.stable_ice_core.base",
+      "file": "animations/stable_ice_core.base.json",
+      "unit": "aurora",
+      "bones": []
     },
     {
       "identifier": "animation.twilightforest.tiny_bird.base",
@@ -1928,10 +2530,22 @@
       "bones": ["hat", "head", "leftLeg", "rightLeg"]
     },
     {
+      "identifier": "animation.twilightforest.unstable_ice_core.base",
+      "file": "animations/unstable_ice_core.base.json",
+      "unit": "aurora",
+      "bones": []
+    },
+    {
       "identifier": "animation.twilightforest.upper_goblin_knight.base",
       "file": "animations/upper_goblin_knight.base.json",
       "unit": "stronghold",
       "bones": ["head"]
+    },
+    {
+      "identifier": "animation.twilightforest.ur_ghast.base",
+      "file": "animations/ur_ghast.base.json",
+      "unit": "darktower",
+      "bones": []
     },
     {
       "identifier": "animation.twilightforest.wraith.base",
@@ -1944,6 +2558,221 @@
       "file": "animations/yeti.base.json",
       "unit": "caves",
       "bones": ["head", "leftLeg", "rightLeg"]
+    },
+    {
+      "identifier": "animation.twilightforest.ur_ghast_trophy.base",
+      "file": "animations/ur_ghast_trophy.base.json",
+      "unit": "building",
+      "bones": [
+        "tentacle_0",
+        "tentacle_0_extension",
+        "tentacle_0_extension_2",
+        "tentacle_0_tip",
+        "tentacle_1",
+        "tentacle_1_extension",
+        "tentacle_1_extension_2",
+        "tentacle_1_tip",
+        "tentacle_2",
+        "tentacle_2_extension",
+        "tentacle_2_extension_2",
+        "tentacle_2_tip",
+        "tentacle_3",
+        "tentacle_3_extension",
+        "tentacle_3_extension_2",
+        "tentacle_3_tip",
+        "tentacle_4",
+        "tentacle_4_extension",
+        "tentacle_4_extension_2",
+        "tentacle_4_tip",
+        "tentacle_5",
+        "tentacle_5_extension",
+        "tentacle_5_extension_2",
+        "tentacle_5_tip",
+        "tentacle_6",
+        "tentacle_6_extension",
+        "tentacle_6_extension_2",
+        "tentacle_6_tip",
+        "tentacle_7",
+        "tentacle_7_extension",
+        "tentacle_7_extension_2",
+        "tentacle_7_tip",
+        "tentacle_8",
+        "tentacle_8_extension",
+        "tentacle_8_extension_2",
+        "tentacle_8_tip"
+      ]
+    },
+    {
+      "identifier": "animation.twilightforest.ur_ghast_wall_trophy.base",
+      "file": "animations/ur_ghast_wall_trophy.base.json",
+      "unit": "building",
+      "bones": [
+        "tentacle_0",
+        "tentacle_0_extension",
+        "tentacle_0_extension_2",
+        "tentacle_0_tip",
+        "tentacle_1",
+        "tentacle_1_extension",
+        "tentacle_1_extension_2",
+        "tentacle_1_tip",
+        "tentacle_2",
+        "tentacle_2_extension",
+        "tentacle_2_extension_2",
+        "tentacle_2_tip",
+        "tentacle_3",
+        "tentacle_3_extension",
+        "tentacle_3_extension_2",
+        "tentacle_3_tip",
+        "tentacle_4",
+        "tentacle_4_extension",
+        "tentacle_4_extension_2",
+        "tentacle_4_tip",
+        "tentacle_5",
+        "tentacle_5_extension",
+        "tentacle_5_extension_2",
+        "tentacle_5_tip",
+        "tentacle_6",
+        "tentacle_6_extension",
+        "tentacle_6_extension_2",
+        "tentacle_6_tip",
+        "tentacle_7",
+        "tentacle_7_extension",
+        "tentacle_7_extension_2",
+        "tentacle_7_tip",
+        "tentacle_8",
+        "tentacle_8_extension",
+        "tentacle_8_extension_2",
+        "tentacle_8_tip"
+      ]
+    },
+    {
+      "identifier": "animation.twilightforest.ur_ghast_trophy_worn.base",
+      "file": "animations/ur_ghast_trophy_worn.base.json",
+      "unit": "building",
+      "bones": [
+        "ur_ghast_trophy_worn_tentacle_0",
+        "ur_ghast_trophy_worn_tentacle_0_extension",
+        "ur_ghast_trophy_worn_tentacle_0_extension_2",
+        "ur_ghast_trophy_worn_tentacle_0_tip",
+        "ur_ghast_trophy_worn_tentacle_1",
+        "ur_ghast_trophy_worn_tentacle_1_extension",
+        "ur_ghast_trophy_worn_tentacle_1_extension_2",
+        "ur_ghast_trophy_worn_tentacle_1_tip",
+        "ur_ghast_trophy_worn_tentacle_2",
+        "ur_ghast_trophy_worn_tentacle_2_extension",
+        "ur_ghast_trophy_worn_tentacle_2_extension_2",
+        "ur_ghast_trophy_worn_tentacle_2_tip",
+        "ur_ghast_trophy_worn_tentacle_3",
+        "ur_ghast_trophy_worn_tentacle_3_extension",
+        "ur_ghast_trophy_worn_tentacle_3_extension_2",
+        "ur_ghast_trophy_worn_tentacle_3_tip",
+        "ur_ghast_trophy_worn_tentacle_4",
+        "ur_ghast_trophy_worn_tentacle_4_extension",
+        "ur_ghast_trophy_worn_tentacle_4_extension_2",
+        "ur_ghast_trophy_worn_tentacle_4_tip",
+        "ur_ghast_trophy_worn_tentacle_5",
+        "ur_ghast_trophy_worn_tentacle_5_extension",
+        "ur_ghast_trophy_worn_tentacle_5_extension_2",
+        "ur_ghast_trophy_worn_tentacle_5_tip",
+        "ur_ghast_trophy_worn_tentacle_6",
+        "ur_ghast_trophy_worn_tentacle_6_extension",
+        "ur_ghast_trophy_worn_tentacle_6_extension_2",
+        "ur_ghast_trophy_worn_tentacle_6_tip",
+        "ur_ghast_trophy_worn_tentacle_7",
+        "ur_ghast_trophy_worn_tentacle_7_extension",
+        "ur_ghast_trophy_worn_tentacle_7_extension_2",
+        "ur_ghast_trophy_worn_tentacle_7_tip",
+        "ur_ghast_trophy_worn_tentacle_8",
+        "ur_ghast_trophy_worn_tentacle_8_extension",
+        "ur_ghast_trophy_worn_tentacle_8_extension_2",
+        "ur_ghast_trophy_worn_tentacle_8_tip"
+      ]
+    },
+    {
+      "identifier": "animation.twilightforest.ur_ghast_trophy_held.base",
+      "file": "animations/ur_ghast_trophy_held.base.json",
+      "unit": "building",
+      "bones": [
+        "ur_ghast_trophy_held_tentacle_0",
+        "ur_ghast_trophy_held_tentacle_0_extension",
+        "ur_ghast_trophy_held_tentacle_0_extension_2",
+        "ur_ghast_trophy_held_tentacle_0_tip",
+        "ur_ghast_trophy_held_tentacle_1",
+        "ur_ghast_trophy_held_tentacle_1_extension",
+        "ur_ghast_trophy_held_tentacle_1_extension_2",
+        "ur_ghast_trophy_held_tentacle_1_tip",
+        "ur_ghast_trophy_held_tentacle_2",
+        "ur_ghast_trophy_held_tentacle_2_extension",
+        "ur_ghast_trophy_held_tentacle_2_extension_2",
+        "ur_ghast_trophy_held_tentacle_2_tip",
+        "ur_ghast_trophy_held_tentacle_3",
+        "ur_ghast_trophy_held_tentacle_3_extension",
+        "ur_ghast_trophy_held_tentacle_3_extension_2",
+        "ur_ghast_trophy_held_tentacle_3_tip",
+        "ur_ghast_trophy_held_tentacle_4",
+        "ur_ghast_trophy_held_tentacle_4_extension",
+        "ur_ghast_trophy_held_tentacle_4_extension_2",
+        "ur_ghast_trophy_held_tentacle_4_tip",
+        "ur_ghast_trophy_held_tentacle_5",
+        "ur_ghast_trophy_held_tentacle_5_extension",
+        "ur_ghast_trophy_held_tentacle_5_extension_2",
+        "ur_ghast_trophy_held_tentacle_5_tip",
+        "ur_ghast_trophy_held_tentacle_6",
+        "ur_ghast_trophy_held_tentacle_6_extension",
+        "ur_ghast_trophy_held_tentacle_6_extension_2",
+        "ur_ghast_trophy_held_tentacle_6_tip",
+        "ur_ghast_trophy_held_tentacle_7",
+        "ur_ghast_trophy_held_tentacle_7_extension",
+        "ur_ghast_trophy_held_tentacle_7_extension_2",
+        "ur_ghast_trophy_held_tentacle_7_tip",
+        "ur_ghast_trophy_held_tentacle_8",
+        "ur_ghast_trophy_held_tentacle_8_extension",
+        "ur_ghast_trophy_held_tentacle_8_extension_2",
+        "ur_ghast_trophy_held_tentacle_8_tip"
+      ]
+    },
+    {
+      "identifier": "animation.twilightforest.ur_ghast_trophy_held_left.base",
+      "file": "animations/ur_ghast_trophy_held_left.base.json",
+      "unit": "building",
+      "bones": [
+        "ur_ghast_trophy_held_left_tentacle_0",
+        "ur_ghast_trophy_held_left_tentacle_0_extension",
+        "ur_ghast_trophy_held_left_tentacle_0_extension_2",
+        "ur_ghast_trophy_held_left_tentacle_0_tip",
+        "ur_ghast_trophy_held_left_tentacle_1",
+        "ur_ghast_trophy_held_left_tentacle_1_extension",
+        "ur_ghast_trophy_held_left_tentacle_1_extension_2",
+        "ur_ghast_trophy_held_left_tentacle_1_tip",
+        "ur_ghast_trophy_held_left_tentacle_2",
+        "ur_ghast_trophy_held_left_tentacle_2_extension",
+        "ur_ghast_trophy_held_left_tentacle_2_extension_2",
+        "ur_ghast_trophy_held_left_tentacle_2_tip",
+        "ur_ghast_trophy_held_left_tentacle_3",
+        "ur_ghast_trophy_held_left_tentacle_3_extension",
+        "ur_ghast_trophy_held_left_tentacle_3_extension_2",
+        "ur_ghast_trophy_held_left_tentacle_3_tip",
+        "ur_ghast_trophy_held_left_tentacle_4",
+        "ur_ghast_trophy_held_left_tentacle_4_extension",
+        "ur_ghast_trophy_held_left_tentacle_4_extension_2",
+        "ur_ghast_trophy_held_left_tentacle_4_tip",
+        "ur_ghast_trophy_held_left_tentacle_5",
+        "ur_ghast_trophy_held_left_tentacle_5_extension",
+        "ur_ghast_trophy_held_left_tentacle_5_extension_2",
+        "ur_ghast_trophy_held_left_tentacle_5_tip",
+        "ur_ghast_trophy_held_left_tentacle_6",
+        "ur_ghast_trophy_held_left_tentacle_6_extension",
+        "ur_ghast_trophy_held_left_tentacle_6_extension_2",
+        "ur_ghast_trophy_held_left_tentacle_6_tip",
+        "ur_ghast_trophy_held_left_tentacle_7",
+        "ur_ghast_trophy_held_left_tentacle_7_extension",
+        "ur_ghast_trophy_held_left_tentacle_7_extension_2",
+        "ur_ghast_trophy_held_left_tentacle_7_tip",
+        "ur_ghast_trophy_held_left_tentacle_8",
+        "ur_ghast_trophy_held_left_tentacle_8_extension",
+        "ur_ghast_trophy_held_left_tentacle_8_extension_2",
+        "ur_ghast_trophy_held_left_tentacle_8_tip"
+      ]
     }
   ],
   "attachables": [
@@ -1952,6 +2781,7 @@
       "file": "attachables/arctic_helmet.json",
       "unit": "armory",
       "slot": "helmet",
+      "slots": ["helmet"],
       "geometry": ["geometry.twilightforest.arctic_armor.helmet"],
       "textures": ["textures/twilightforest/models/armor/arctic_layer_1"]
     },
@@ -1960,6 +2790,7 @@
       "file": "attachables/arctic_chestplate.json",
       "unit": "armory",
       "slot": "chestplate",
+      "slots": ["chestplate"],
       "geometry": ["geometry.twilightforest.arctic_armor.chestplate"],
       "textures": ["textures/twilightforest/models/armor/arctic_layer_1"]
     },
@@ -1968,6 +2799,7 @@
       "file": "attachables/arctic_leggings.json",
       "unit": "armory",
       "slot": "leggings",
+      "slots": ["leggings"],
       "geometry": ["geometry.twilightforest.arctic_armor.leggings"],
       "textures": ["textures/twilightforest/models/armor/arctic_layer_2"]
     },
@@ -1976,6 +2808,7 @@
       "file": "attachables/arctic_boots.json",
       "unit": "armory",
       "slot": "boots",
+      "slots": ["boots"],
       "geometry": ["geometry.twilightforest.arctic_armor.boots"],
       "textures": ["textures/twilightforest/models/armor/arctic_layer_1"]
     },
@@ -1984,6 +2817,7 @@
       "file": "attachables/fiery_helmet.json",
       "unit": "armory",
       "slot": "helmet",
+      "slots": ["helmet"],
       "geometry": ["geometry.twilightforest.fiery_armor.helmet"],
       "textures": ["textures/twilightforest/models/armor/fiery_layer_1"]
     },
@@ -1992,6 +2826,7 @@
       "file": "attachables/fiery_chestplate.json",
       "unit": "armory",
       "slot": "chestplate",
+      "slots": ["chestplate"],
       "geometry": ["geometry.twilightforest.fiery_armor.chestplate"],
       "textures": ["textures/twilightforest/models/armor/fiery_layer_1"]
     },
@@ -2000,6 +2835,7 @@
       "file": "attachables/fiery_leggings.json",
       "unit": "armory",
       "slot": "leggings",
+      "slots": ["leggings"],
       "geometry": ["geometry.twilightforest.fiery_armor.leggings"],
       "textures": ["textures/twilightforest/models/armor/fiery_layer_2"]
     },
@@ -2008,6 +2844,7 @@
       "file": "attachables/fiery_boots.json",
       "unit": "armory",
       "slot": "boots",
+      "slots": ["boots"],
       "geometry": ["geometry.twilightforest.fiery_armor.boots"],
       "textures": ["textures/twilightforest/models/armor/fiery_layer_1"]
     },
@@ -2016,6 +2853,7 @@
       "file": "attachables/knightmetal_helmet.json",
       "unit": "armory",
       "slot": "helmet",
+      "slots": ["helmet"],
       "geometry": ["geometry.twilightforest.knightmetal_armor.helmet"],
       "textures": ["textures/twilightforest/models/armor/knightmetal_layer_1"]
     },
@@ -2024,6 +2862,7 @@
       "file": "attachables/knightmetal_chestplate.json",
       "unit": "armory",
       "slot": "chestplate",
+      "slots": ["chestplate"],
       "geometry": ["geometry.twilightforest.knightmetal_armor.chestplate"],
       "textures": ["textures/twilightforest/models/armor/knightmetal_layer_1"]
     },
@@ -2032,6 +2871,7 @@
       "file": "attachables/knightmetal_leggings.json",
       "unit": "armory",
       "slot": "leggings",
+      "slots": ["leggings"],
       "geometry": ["geometry.twilightforest.knightmetal_armor.leggings"],
       "textures": ["textures/twilightforest/models/armor/knightmetal_layer_2"]
     },
@@ -2040,6 +2880,7 @@
       "file": "attachables/knightmetal_boots.json",
       "unit": "armory",
       "slot": "boots",
+      "slots": ["boots"],
       "geometry": ["geometry.twilightforest.knightmetal_armor.boots"],
       "textures": ["textures/twilightforest/models/armor/knightmetal_layer_1"]
     },
@@ -2048,6 +2889,7 @@
       "file": "attachables/phantom_helmet.json",
       "unit": "armory",
       "slot": "helmet",
+      "slots": ["helmet"],
       "geometry": ["geometry.twilightforest.phantom_armor.helmet"],
       "textures": ["textures/twilightforest/models/armor/phantom_layer_1"]
     },
@@ -2056,6 +2898,7 @@
       "file": "attachables/phantom_chestplate.json",
       "unit": "armory",
       "slot": "chestplate",
+      "slots": ["chestplate"],
       "geometry": ["geometry.twilightforest.phantom_armor.chestplate"],
       "textures": ["textures/twilightforest/models/armor/phantom_layer_1"]
     },
@@ -2064,6 +2907,7 @@
       "file": "attachables/yeti_helmet.json",
       "unit": "armory",
       "slot": "helmet",
+      "slots": ["helmet"],
       "geometry": ["geometry.twilightforest.yeti_armor.helmet"],
       "textures": ["textures/twilightforest/models/armor/yeti_layer_1"]
     },
@@ -2072,6 +2916,7 @@
       "file": "attachables/yeti_chestplate.json",
       "unit": "armory",
       "slot": "chestplate",
+      "slots": ["chestplate"],
       "geometry": ["geometry.twilightforest.yeti_armor.chestplate"],
       "textures": ["textures/twilightforest/models/armor/yeti_layer_1"]
     },
@@ -2080,6 +2925,7 @@
       "file": "attachables/yeti_leggings.json",
       "unit": "armory",
       "slot": "leggings",
+      "slots": ["leggings"],
       "geometry": ["geometry.twilightforest.yeti_armor.leggings"],
       "textures": ["textures/twilightforest/models/armor/yeti_layer_2"]
     },
@@ -2088,6 +2934,7 @@
       "file": "attachables/yeti_boots.json",
       "unit": "armory",
       "slot": "boots",
+      "slots": ["boots"],
       "geometry": ["geometry.twilightforest.yeti_armor.boots"],
       "textures": ["textures/twilightforest/models/armor/yeti_layer_1"]
     },
@@ -2096,6 +2943,7 @@
       "file": "attachables/ironwood_helmet.json",
       "unit": "armory",
       "slot": "helmet",
+      "slots": ["helmet"],
       "geometry": ["geometry.humanoid.armor.helmet"],
       "textures": ["textures/twilightforest/models/armor/ironwood_layer_1"]
     },
@@ -2104,6 +2952,7 @@
       "file": "attachables/ironwood_chestplate.json",
       "unit": "armory",
       "slot": "chestplate",
+      "slots": ["chestplate"],
       "geometry": ["geometry.humanoid.armor.chestplate"],
       "textures": ["textures/twilightforest/models/armor/ironwood_layer_1"]
     },
@@ -2112,6 +2961,7 @@
       "file": "attachables/ironwood_leggings.json",
       "unit": "armory",
       "slot": "leggings",
+      "slots": ["leggings"],
       "geometry": ["geometry.humanoid.armor.leggings"],
       "textures": ["textures/twilightforest/models/armor/ironwood_layer_2"]
     },
@@ -2120,6 +2970,7 @@
       "file": "attachables/ironwood_boots.json",
       "unit": "armory",
       "slot": "boots",
+      "slots": ["boots"],
       "geometry": ["geometry.humanoid.armor.boots"],
       "textures": ["textures/twilightforest/models/armor/ironwood_layer_1"]
     },
@@ -2128,6 +2979,7 @@
       "file": "attachables/steeleaf_helmet.json",
       "unit": "armory",
       "slot": "helmet",
+      "slots": ["helmet"],
       "geometry": ["geometry.humanoid.armor.helmet"],
       "textures": ["textures/twilightforest/models/armor/steeleaf_layer_1"]
     },
@@ -2136,6 +2988,7 @@
       "file": "attachables/steeleaf_chestplate.json",
       "unit": "armory",
       "slot": "chestplate",
+      "slots": ["chestplate"],
       "geometry": ["geometry.humanoid.armor.chestplate"],
       "textures": ["textures/twilightforest/models/armor/steeleaf_layer_1"]
     },
@@ -2144,6 +2997,7 @@
       "file": "attachables/steeleaf_leggings.json",
       "unit": "armory",
       "slot": "leggings",
+      "slots": ["leggings"],
       "geometry": ["geometry.humanoid.armor.leggings"],
       "textures": ["textures/twilightforest/models/armor/steeleaf_layer_2"]
     },
@@ -2152,6 +3006,7 @@
       "file": "attachables/steeleaf_boots.json",
       "unit": "armory",
       "slot": "boots",
+      "slots": ["boots"],
       "geometry": ["geometry.humanoid.armor.boots"],
       "textures": ["textures/twilightforest/models/armor/steeleaf_layer_1"]
     },
@@ -2160,6 +3015,7 @@
       "file": "attachables/naga_chestplate.json",
       "unit": "armory",
       "slot": "chestplate",
+      "slots": ["chestplate"],
       "geometry": ["geometry.humanoid.armor.chestplate"],
       "textures": ["textures/twilightforest/models/armor/naga_scale_layer_1"]
     },
@@ -2168,6 +3024,7 @@
       "file": "attachables/naga_leggings.json",
       "unit": "armory",
       "slot": "leggings",
+      "slots": ["leggings"],
       "geometry": ["geometry.humanoid.armor.leggings"],
       "textures": ["textures/twilightforest/models/armor/naga_scale_layer_2"]
     },
@@ -2176,6 +3033,7 @@
       "file": "attachables/travellers_goggles.json",
       "unit": "tgear",
       "slot": "helmet",
+      "slots": ["helmet"],
       "geometry": ["geometry.twilightforest.travellers_armor.goggles"],
       "textures": ["textures/twilightforest/models/armor/travellers_layer_1"]
     },
@@ -2184,6 +3042,7 @@
       "file": "attachables/travellers_vest.json",
       "unit": "tgear",
       "slot": "chestplate",
+      "slots": ["chestplate"],
       "geometry": ["geometry.twilightforest.travellers_armor.vest"],
       "textures": ["textures/twilightforest/models/armor/travellers_layer_1"]
     },
@@ -2192,6 +3051,7 @@
       "file": "attachables/travellers_gloves.json",
       "unit": "tgear",
       "slot": "chestplate",
+      "slots": ["chestplate"],
       "geometry": ["geometry.twilightforest.travellers_armor.gloves"],
       "textures": ["textures/twilightforest/models/armor/travellers_layer_1"]
     },
@@ -2200,6 +3060,7 @@
       "file": "attachables/travellers_belt.json",
       "unit": "tgear",
       "slot": "leggings",
+      "slots": ["leggings"],
       "geometry": ["geometry.twilightforest.travellers_armor.belt"],
       "textures": ["textures/twilightforest/models/armor/travellers_layer_2"]
     },
@@ -2208,6 +3069,7 @@
       "file": "attachables/travellers_wings.json",
       "unit": "tgear",
       "slot": "leggings",
+      "slots": ["leggings"],
       "geometry": ["geometry.twilightforest.travellers_armor.wings"],
       "textures": ["textures/twilightforest/models/armor/travellers_layer_2"]
     },
@@ -2216,6 +3078,7 @@
       "file": "attachables/travellers_boots.json",
       "unit": "tgear",
       "slot": "boots",
+      "slots": ["boots"],
       "geometry": ["geometry.twilightforest.travellers_armor.boots"],
       "textures": ["textures/twilightforest/models/armor/travellers_layer_1"]
     },
@@ -2224,88 +3087,100 @@
       "file": "attachables/naga_trophy.json",
       "unit": "building",
       "slot": "head",
-      "geometry": ["geometry.twilightforest.naga_trophy_worn"],
-      "textures": ["textures/twilightforest/entity/nagahead"]
+      "slots": ["head", "main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.naga_trophy_worn", "geometry.twilightforest.naga_trophy_held", "geometry.twilightforest.naga_trophy_held_left"],
+      "textures": ["textures/twilightforest/entity/nagahead", "textures/twilightforest/entity/nagahead", "textures/twilightforest/entity/nagahead"]
     },
     {
       "item": "twilightforest:lich_trophy",
       "file": "attachables/lich_trophy.json",
       "unit": "building",
       "slot": "head",
-      "geometry": ["geometry.twilightforest.lich_trophy_worn"],
-      "textures": ["textures/twilightforest/entity/twilightlich64"]
+      "slots": ["head", "main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.lich_trophy_worn", "geometry.twilightforest.lich_trophy_held", "geometry.twilightforest.lich_trophy_held_left"],
+      "textures": ["textures/twilightforest/entity/twilightlich64", "textures/twilightforest/entity/twilightlich64", "textures/twilightforest/entity/twilightlich64"]
     },
     {
       "item": "twilightforest:minoshroom_trophy",
       "file": "attachables/minoshroom_trophy.json",
       "unit": "building",
       "slot": "head",
-      "geometry": ["geometry.twilightforest.minoshroom_trophy_worn"],
-      "textures": ["textures/twilightforest/entity/minoshroomtaur"]
+      "slots": ["head", "main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.minoshroom_trophy_worn", "geometry.twilightforest.minoshroom_trophy_held", "geometry.twilightforest.minoshroom_trophy_held_left"],
+      "textures": ["textures/twilightforest/entity/minoshroomtaur", "textures/twilightforest/entity/minoshroomtaur", "textures/twilightforest/entity/minoshroomtaur"]
     },
     {
       "item": "twilightforest:hydra_trophy",
       "file": "attachables/hydra_trophy.json",
       "unit": "building",
       "slot": "head",
-      "geometry": ["geometry.twilightforest.hydra_trophy_worn"],
-      "textures": ["textures/twilightforest/entity/hydra4"]
+      "slots": ["head", "main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.hydra_trophy_worn", "geometry.twilightforest.hydra_trophy_held", "geometry.twilightforest.hydra_trophy_held_left"],
+      "textures": ["textures/twilightforest/entity/hydra4", "textures/twilightforest/entity/hydra4", "textures/twilightforest/entity/hydra4"]
     },
     {
       "item": "twilightforest:knight_phantom_trophy",
       "file": "attachables/knight_phantom_trophy.json",
       "unit": "building",
       "slot": "head",
-      "geometry": ["geometry.twilightforest.knight_phantom_trophy_worn", "geometry.twilightforest.knight_phantom_trophy_worn_armor"],
-      "textures": ["textures/twilightforest/entity/phantomskeleton", "textures/twilightforest/models/armor/phantom_layer_1"]
+      "slots": ["head", "main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.knight_phantom_trophy_worn", "geometry.twilightforest.knight_phantom_trophy_worn_armor", "geometry.twilightforest.knight_phantom_trophy_held", "geometry.twilightforest.knight_phantom_trophy_held_armor", "geometry.twilightforest.knight_phantom_trophy_held_left", "geometry.twilightforest.knight_phantom_trophy_held_left_armor"],
+      "textures": ["textures/twilightforest/entity/phantomskeleton", "textures/twilightforest/models/armor/phantom_layer_1", "textures/twilightforest/entity/phantomskeleton", "textures/twilightforest/models/armor/phantom_layer_1", "textures/twilightforest/entity/phantomskeleton", "textures/twilightforest/models/armor/phantom_layer_1"]
     },
     {
       "item": "twilightforest:ur_ghast_trophy",
       "file": "attachables/ur_ghast_trophy.json",
       "unit": "building",
       "slot": "head",
-      "geometry": ["geometry.twilightforest.ur_ghast_trophy_worn"],
-      "textures": ["textures/twilightforest/entity/towerboss"]
+      "slots": ["head", "main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.ur_ghast_trophy_worn", "geometry.twilightforest.ur_ghast_trophy_held", "geometry.twilightforest.ur_ghast_trophy_held_left"],
+      "textures": ["textures/twilightforest/entity/towerboss", "textures/twilightforest/entity/towerboss", "textures/twilightforest/entity/towerboss"],
+      "animations": ["animation.twilightforest.ur_ghast_trophy_worn.base", "animation.twilightforest.ur_ghast_trophy_held.base", "animation.twilightforest.ur_ghast_trophy_held_left.base"]
     },
     {
       "item": "twilightforest:alpha_yeti_trophy",
       "file": "attachables/alpha_yeti_trophy.json",
       "unit": "building",
       "slot": "head",
-      "geometry": ["geometry.twilightforest.alpha_yeti_trophy_worn"],
-      "textures": ["textures/twilightforest/entity/yetialpha"]
+      "slots": ["head", "main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.alpha_yeti_trophy_worn", "geometry.twilightforest.alpha_yeti_trophy_held", "geometry.twilightforest.alpha_yeti_trophy_held_left"],
+      "textures": ["textures/twilightforest/entity/yetialpha", "textures/twilightforest/entity/yetialpha", "textures/twilightforest/entity/yetialpha"]
     },
     {
       "item": "twilightforest:snow_queen_trophy",
       "file": "attachables/snow_queen_trophy.json",
       "unit": "building",
       "slot": "head",
-      "geometry": ["geometry.twilightforest.snow_queen_trophy_worn"],
-      "textures": ["textures/twilightforest/entity/snowqueen"]
+      "slots": ["head", "main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.snow_queen_trophy_worn", "geometry.twilightforest.snow_queen_trophy_held", "geometry.twilightforest.snow_queen_trophy_held_left"],
+      "textures": ["textures/twilightforest/entity/snowqueen", "textures/twilightforest/entity/snowqueen", "textures/twilightforest/entity/snowqueen"]
     },
     {
       "item": "twilightforest:quest_ram_trophy",
       "file": "attachables/quest_ram_trophy.json",
       "unit": "building",
       "slot": "head",
-      "geometry": ["geometry.twilightforest.quest_ram_trophy_worn", "geometry.twilightforest.quest_ram_trophy_worn_lines"],
-      "textures": ["textures/twilightforest/entity/questram", "textures/twilightforest/entity/questram_lines"]
+      "slots": ["head", "main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.quest_ram_trophy_worn", "geometry.twilightforest.quest_ram_trophy_worn_lines", "geometry.twilightforest.quest_ram_trophy_held", "geometry.twilightforest.quest_ram_trophy_held_lines", "geometry.twilightforest.quest_ram_trophy_held_left", "geometry.twilightforest.quest_ram_trophy_held_left_lines"],
+      "textures": ["textures/twilightforest/entity/questram", "textures/twilightforest/entity/questram_lines", "textures/twilightforest/entity/questram", "textures/twilightforest/entity/questram_lines", "textures/twilightforest/entity/questram", "textures/twilightforest/entity/questram_lines"]
     },
     {
       "item": "twilightforest:mystic_crown",
       "file": "attachables/mystic_crown.json",
       "unit": "artifacts",
       "slot": "head",
-      "geometry": ["geometry.twilightforest.mystic_crown"],
-      "textures": ["textures/twilightforest/entity/twilightlich64"]
+      "slots": ["head", "main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.mystic_crown_worn", "geometry.twilightforest.mystic_crown_held", "geometry.twilightforest.mystic_crown_held_left"],
+      "textures": ["textures/twilightforest/entity/twilightlich64", "textures/twilightforest/entity/twilightlich64", "textures/twilightforest/entity/twilightlich64"]
     },
     {
       "item": "twilightforest:knightmetal_shield",
       "file": "attachables/knightmetal_shield.json",
       "unit": "weapons",
       "slot": "main_hand",
-      "geometry": ["geometry.twilightforest.knightmetal_shield_held"],
-      "textures": ["textures/twilightforest/entity/knightmetal_shield"]
+      "slots": ["main_hand", "off_hand"],
+      "geometry": ["geometry.twilightforest.knightmetal_shield_held", "geometry.twilightforest.knightmetal_shield_held_left"],
+      "textures": ["textures/twilightforest/entity/knightmetal_shield", "textures/twilightforest/entity/knightmetal_shield"]
     }
   ]
 }

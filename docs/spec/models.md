@@ -10,7 +10,7 @@ controllers on top of this output.
 ```powershell
 pwsh tools/models/convert.ps1                        # every partition
 pwsh tools/models/convert.ps1 -Unit hydra            # one unit's partition (a W1 unit after a catalog change)
-pwsh tools/models/convert.ps1 -Java HydraModel -Unit hydra
+pwsh tools/models/convert.ps1 -Java HydraModel -Unit hydra  # one model class's files in one partition
 pwsh tools/models/attachable.ps1 -Item twilightforest:fiery_helmet
 pwsh tools/models/convert.ps1 -Check                 # CI / review: committed files match the converter
 pwsh tools/models/convert.ps1 -Out build/geo         # outside the repository
@@ -25,8 +25,10 @@ pwsh tools/models/test.ps1                           # the converter's tests (se
   id under `assets/pack/rp/**` overrides a generated one, and the converter's input is
   `tools/models/catalog.json`. `models` holds the index and the shared render controllers.
 - Scope: every partition by default (stale files and partitions are removed); `-Unit` one partition; `-Java` /
-  `-Item` only the matching files. `-Check` regenerates in memory and fails when a file of the scope differs, is
-  missing or is stale.
+  `-Item` only the files written for that model class (layer supplier or `animClass`) or item, taken from the same
+  full run (`Generator.Select`); with `-Unit` too, only those files of that partition. `attachable.ps1 -Item`
+  writes the item's attachable with its geometries, bone maps and animations (`-Unit` keeps to one partition).
+  `-Check` regenerates in memory and fails when a file of the scope differs, is missing or is stale.
 - The output is deterministic (fixed number formatting, catalog order, a fixed seed for TF's unseeded
   `RandomSource.create()`).
 
@@ -37,10 +39,10 @@ Per unit `<u>` (the owner of the entity / block / item the layer serves, from `t
 | File | Content |
 |---|---|
 | `assets/gen/geo/<u>/rp/models/entity/<name>.geo.json` | `geometry.twilightforest.<name>`, format 1.12.0. `<name>` is the TF model layer (`TFModelLayers`, `<path>` or `<path>_<layer>` when the layer is not `main`), an armor piece (`<material>.<slot>`) or an extract. |
-| `assets/gen/geo/<u>/rp/animations/<name>.base.json` | `animation.twilightforest.<name>.base` (format 1.8.0): the setupAnim statements translated to Molang (only when at least one is). |
+| `assets/gen/geo/<u>/rp/animations/<name>.base.json` | `animation.twilightforest.<name>.base` (format 1.8.0): one per entity layer, with the setupAnim statements translated to Molang (an empty stub, `"bones": {}`, when none translates: the owning unit adds the rest by hand); also the Ur-Ghast trophy extracts' tentacle wave. |
 | `assets/gen/geo/<u>/bones/<name>.json` | The bone map: Java part path -> bone, parent, Bedrock pivot / rotation, Java offset / rotation, cube count, mirror; the layer and its supplier; the textures (Bedrock path and TF source); the setupAnim report (`translated`, `todo` with line, Java source and reason); notes. Not part of the pack. |
-| `assets/gen/geo/<u>/rp/attachables/<item>.json` | Attachables of armor, Travellers' Gear, worn trophies, the mystic crown and the knightmetal shield. |
-| `assets/gen/geo/models/rp/render_controllers/twilightforest.models.render_controllers.json` | `controller.render.twilightforest.models.part<N>`: the extra geometries of multi-part attachables (`Geometry.part1`, ...). |
+| `assets/gen/geo/<u>/rp/attachables/<item>.json` | Attachables of armor and Travellers' Gear; of the trophies and the mystic crown (worn on the head, held in the right and left hand) and of the knightmetal shield (right and left hand): one geometry per slot, drawn only in that slot. |
+| `assets/gen/geo/models/rp/render_controllers/twilightforest.models.render_controllers.json` | `controller.render.twilightforest.models.part<N>`: the extra geometries of multi-part attachables (`Geometry.part1`, ...), with the enchantment glint (`variable.is_enchanted`, `Material.enchanted`, `Texture.enchanted`) like `controller.render.item_default`. |
 | `assets/gen/geo/models/data/gf/models/index.json` | Every geometry, base animation and attachable with unit, ids, textures, bone / cube counts and visible bounds. Deployed as `<mod>/data/gf/models/index.json` (the `models.*` selftests, the e2e preview). |
 
 Texture paths are `textures/twilightforest/<path below TF's assets/twilightforest/textures/>` without the
@@ -101,9 +103,13 @@ the renderer's own PoseStack transforms (or adds an extract): `hydra_mortar` (Hy
 model at the entity position, TNT-style swell), `cube_of_annihilation` / `roving_cube` (spin about y, scale 2 for
 the roving cube), `chain` / `chain_block` (BlockChainRenderer: yaw − 90, pitch, links along the chain),
 `protection_box`, `moonworm` (also MoonwormShotRenderer), the block entities `cicada` / `firefly` / `moonworm`
-(facing, a random spin), `brazier`, `red_thread` (per face), `skull_chest` / `keepsake_casket` (facing) and the
-`knightmetal_shield` item (ISTER `scale(1, -1, -1)`; see the held extract). In the e2e preview these models float
-or sit upside down, as expected. `lich_minion`, `loyal_zombie` and `rising_zombie` declare a 64×32 texture
+(facing, a random spin), `brazier`, `red_thread` (per face), `skull_chest` / `keepsake_casket` (facing), the
+`knightmetal_shield` item (ISTER `scale(1, -1, -1)`; see the held extracts), `naga` (NagaRenderer.scale: after
+the living-entity transforms `scale(2.01)` and `translate(0, 0.75, 0)`, dazed `translate(0, 1.075, 0.175)`; the
+body does not keel over while alive) and `naga_body` (NagaSegmentRenderer, a TFPartRenderer: the segment's
+interpolated yaw and pitch, `scale(2)`, `translate(0, -1.25, 0)`, then TFPartRenderer's `scale(-1, -1, 1)`,
+`translate(0, -1.501, 0)`; no body yaw). In the e2e preview these models float or sit upside down, as expected
+(the naga head and segment float well above the ground). `lich_minion`, `loyal_zombie` and `rising_zombie` declare a 64×32 texture
 because Bedrock's vanilla zombie texture is 64×32; TF draws Java's 64×64 one with the same UVs.
 
 ## setupAnim → Molang
@@ -125,14 +131,20 @@ supplier's class) are read statement by statement. Assignments to a part's `xRot
 
 Locals are followed through reassignments (a local changed inside a condition or loop is dropped), divisions by
 a constant zero stay untranslated, and the re-parented `hat` gets only its difference to the head (nothing when
-Java copies the head's pose). The sign of the position x channel follows the geometry's x and is not yet checked
-in game.
+Java copies the head's pose). The position channel moves along the geometry's own axes: x as Java's x (the
+geometry keeps Java's x), y negated, z as is. The e2e preview checks the x sign in game: its first actor
+(`gfpreview:xsign`, shot_01) is a test model whose setupAnim sets `moved.x = 10`, converted by this translator;
+the blue cube lands on the red one at x 8..12 (and would sit on the other side of the white origin cube if
+Bedrock mirrored the channel).
 
 The quadruped walk comes out as Bedrock's own `animation.quadruped.walk` (`math.cos(query.modified_distance_moved
 * 38.1704) * query.modified_move_speed * 80.2141`) and the head look as `look_at_target`. Everything else
 (entity state, loops, conditions, visibility, other models' parts) is listed in the bone map's `setupAnim.todo`
 with its line, Java source and reason; models without their own setupAnim name the vanilla animations of their
-base class. 28 layers get a base animation; the owning units translate the rest by hand.
+base class. Every converted entity layer (56) gets `animation.twilightforest.<layer>.base`: 28 with translated
+statements, 28 empty stubs (no translatable statement, or `noAnim`: posed by its renderer); the owning units
+translate the rest by hand on top. Vanilla-model layers (spiders, wolves, slimes, silverfish, the giants' player
+model) use the vanilla Bedrock animations of that geometry.
 
 ## Armor and Travellers' Gear
 
@@ -158,23 +170,82 @@ angles of the composed rotation) that hangs from the frame:
 | Frame | Placement | Used for |
 |---|---|---|
 | `world` | world space of the block (origin = block centre on the floor, x east, z south) written as entity geometry: on an actor at yaw 0 the world axes coincide, so TF's rotation 0 trophy, which faces north, shows its face to the actor's back | `TrophyRenderer` + `renderTrophy` (floor: `<boss>_trophy`; wall, facing north: `<boss>_wall_trophy`) |
-| `head` | a bone parented to the wearer's `head` | trophies on the head (`CustomHeadLayer` + the `template_trophy` "head" display + ISTER + `TrophyRenderer.render(null, 180)`), the mystic crown (the Lich trophy's hat) |
-| `rightArm` | a bone parented to the wearer's `rightArm` | the knightmetal shield in the right hand (third person) |
+| `head` | a bone parented to the wearer's `head` | `<item>_worn`: trophies and the mystic crown on the head (`CustomHeadLayer.translateToHead` + the item's `head` display + ISTER) |
+| `rightArm` | a bone parented to the wearer's `rightArm` | `<item>_held`: trophies, the mystic crown and the knightmetal shield in the right hand (`ItemInHandLayer` + `thirdperson_righthand`) |
+| `leftArm` | a bone parented to the wearer's `leftArm` | `<item>_held_left`: the same in the left hand (`ItemInHandLayer` + `thirdperson_lefthand`, `leftHand`) |
+
+**Item forms.** An extract with `item` and `forms` is written once per form of the catalog's `itemForms`
+(`trophy`: worn, held, held_left; `builtin_item`: the same without `TrophyRenderer`; `held_item`: held, held_left)
+and gives the item one attachable with the geometries of every form, each drawn only in its slot
+(`c.item_slot == 'head'` / `'main_hand'` / `'off_hand'`; `controller.render.item_default` for the first,
+`controller.render.twilightforest.models.part<N>` for the others, all with the enchantment glint).
+
+**Display transforms come from TF's item models**, not from the catalog: the op `["display", <context>]` reads
+`models/item/<item>.json` from the TF checkout (`src/generated/resources` first, then `src/main/resources`) and
+follows its `twilightforest:item/...` parents the way `BlockModel.getTransforms()` does (a model's own entry for
+the context wins, else the parent's; a model without `thirdperson_lefthand` / `firstperson_lefthand` uses its own
+`*_righthand`, as `ItemTransforms.Deserializer` does), then applies `ItemTransform.apply(leftHand)`: translation
+/ 16 clamped to ±5 blocks, x mirrored for the left hand; `rotationXYZ` with y and z negated for the left hand;
+scale clamped to ±4. So the Alpha Yeti trophy is worn with its own `head` display (translation 0 2 0, scale 1.5),
+the Ur-Ghast trophy with translation 0 18 0 and held with its `thirdperson_righthand` (rotation 45 135 0,
+translation 0 4 3.6, scale 0.5), the other trophies and the mystic crown with `template_trophy`'s (head 0 6 0
+×1.6; thirdperson_righthand 45 135 0, 0 3 0, ×0.5) and the shield with `knightmetal_shield.json`'s
+(thirdperson_righthand 0 90 0, 10.51 6 -4; thirdperson_lefthand 0 90 0, 10.51 6 12). Each bone map lists the
+transform it used (`item_display`: model, file, context, the entry it came from, values).
 
 The nine trophies (`BossVariant` NAGA … QUEST_RAM; FINAL_BOSS has no trophy model) use the pose
-`setupRotationsForTrophy` leaves at rest (the Ur-Ghast's `waveTentacles(0, 0)`, the hydra's jaw at mouth angle 0
-on the floor and 0.5 on the wall). Extra textures become extra geometries: `knight_phantom_trophy_armor`
-(phantom armor helmet, drawn at alpha 0.0625), `quest_ram_trophy_lines` (translucent, full bright). Worn and held
-attachables render only in their slot (`c.item_slot == 'head'` / `'main_hand'`). U5 places the floor geometry
-on its 16 rotations and the wall geometry on its 4 facings.
+`setupRotationsForTrophy` leaves (the hydra's jaw at mouth angle 0 on the floor and in item form, 0.5 on the
+wall; `renderTrophy`'s item form where TF has one: the hydra's 0.9 scale and z −1, the quest ram's z 0.5, no y
+offset for the Ur-Ghast). Extra textures become extra geometries: `knight_phantom_trophy*_armor` (phantom armor
+helmet, drawn at alpha 0.0625), `quest_ram_trophy*_lines` (translucent, full bright). U5 places the floor
+geometry on its 16 rotations and the wall geometry on its 4 facings.
 
+**The Ur-Ghast trophies animate.** `TrophyBlockEntity` counts `animatedTicks` for the Ur-Ghast trophies (and only
+them), the ISTER passes `ClientGameEvents.time`; `setupRotationsForTrophy(ticks × 4.5)` calls
+`waveTentacles(x, x × 0.2)`, so the tentacles wave with `ageInTicks = 0.9 × ticks = query.life_time × 18`. The
+catalog's pose expressions use `ageInTicks` (0 in the geometry) and the extract's `animation`; the five Ur-Ghast
+extracts get `animation.twilightforest.<extract>.base` (36 tentacle bones: the difference to the pose at tick 0),
+which the attachable plays in the slot of its geometry and the preview actors play on the floor and wall ones.
+
+Not covered (the owning units add animations on top, as the record says):
+
+- First person. Bedrock draws an attachable in first person from the first-person arm bones
+  (`animation.player.first_person.*`), so the third-person geometry shows there. TF's first-person displays are
+  `firstperson_righthand` rotation 0 180 0, translation 0 2 0, scale 1 (`template_trophy`; Ur-Ghast 0 11 0) and
+  for the shield 0 180 5, −10 2 −10, ×1.25 (left: 10 0 −10): an animation on `c.is_first_person` (units building,
+  artifacts, weapons).
+- The knightmetal shield's blocking pose (`models/item/knightmetal_shield_blocking.json`, the `blocking`
+  override: thirdperson_righthand 45 135 0, 3.51 11 −2; thirdperson_lefthand 45 135 0, 13.51 3 5;
+  firstperson_righthand 0 180 −5, −15 5 −11; firstperson_lefthand 5 5 −11): an animation on `query.blocking`
+  (unit weapons).
+- Slim arms: `PlayerModel.translateToHand` moves a slim arm 0.5 px toward the body before the item.
+- `gui`, `ground` and `fixed` displays (inventory icons, dropped items, item frames) are not attachables.
+
+## Item models
+
+TF has three item models. `KnightmetalShieldModel` (layer `knightmetal_shield`) has `LayerDefinition` geometry and
+is converted (`geometry.twilightforest.knightmetal_shield`, the held extracts above). The other two, in
+`client/model/item`, are `BakedModel` / `IUnbakedGeometry` wrappers around flat item sprites and produce no
+geometry, so there is nothing to convert; their owners reproduce the behaviour with item textures:
+
+- `TrollsteinnModel` (unit caves, the `twilightforest:trollsteinn` block item): shows
+  `models/item/trollsteinn_light` (cube_all `block/trollsteinn_light`) while the raw brightness at the holder (or
+  the item entity) is above `TrollsteinnBlock.LIGHT_THRESHOLD` (7, with `calculateServerSkyDarken` on the client),
+  else the normal `trollsteinn` model.
+- `TravellersGearItemModel` (unit tgear, loader `twilightforest:travellers_gear` of the Travellers' Gear items):
+  the item's `base` sprite (`broken` when the gear is broken), one more sprite layer per inserted Travellers'
+  modifier (`item/<modifier_directory><modifier>`, the broken directory when broken; each layer scaled
+  1 + 0.001 × n so it sits in front of the previous one), and the gloves sprite when the item has
+  `TRAVELLERS_HAS_GLOVES`; drawn flat (not GUI-3D, no block light).
 ## Layers
+
+Every converted entity layer has a base animation; `+ base animation` marks the 28 with translated statements.
 
 | Layer | Unit | Serves | Output |
 |---|---|---|---|
 | `adherent` | finalcastle | twilightforest:adherent | `geometry.twilightforest.adherent` (9 bones, 8 cubes) + base animation |
 | `alpha_yeti` | caves | twilightforest:alpha_yeti | `geometry.twilightforest.alpha_yeti` (22 bones, 22 cubes) + base animation |
-| `alpha_yeti_trophy` | building |  | trophy extracts |
+| `alpha_yeti_trophy` | building |  | trophy extracts (floor, wall, worn, held) |
 | `arctic_armor_inner` / `_outer` | armory |  | per-slot armor geometry |
 | `armored_giant` | giants | twilightforest:armored_giant | vanilla `geometry.humanoid.custom` (TFGiantRenderer draws the player model with the viewer's skin) |
 | `bighorn_sheep` | fauna | twilightforest:bighorn_sheep | `geometry.twilightforest.bighorn_sheep` (8 bones, 16 cubes) |
@@ -204,36 +275,36 @@ on its 16 rotations and the wall geometry on its 4 facings.
 | `hydra_head` | hydra | twilightforest:hydra | `geometry.twilightforest.hydra_head` (3 bones, 16 cubes) |
 | `hydra_mortar` | hydra | twilightforest:hydra_mortar | `geometry.twilightforest.hydra_mortar` (1 bone, 1 cube) |
 | `hydra_neck` | hydra | twilightforest:hydra | `geometry.twilightforest.hydra_neck` (1 bone, 2 cubes) + base animation |
-| `hydra_trophy` | building |  | trophy extracts |
+| `hydra_trophy` | building |  | trophy extracts (floor, wall, worn, held) |
 | `ice_crystal` | aurora | twilightforest:ice_crystal | `geometry.twilightforest.ice_crystal` (32 bones, 32 cubes) |
 | `keepsake_casket` | artifacts | twilightforest:keepsake_casket | `geometry.twilightforest.keepsake_casket` (3 bones, 8 cubes) |
 | `king_spider` | hostiles | twilightforest:king_spider | vanilla `geometry.spider.v1.8` |
 | `knight_phantom` | stronghold | twilightforest:knight_phantom | `geometry.twilightforest.knight_phantom` (7 bones, 6 cubes) + base animation |
-| `knight_phantom_trophy` | building |  | trophy extracts |
+| `knight_phantom_trophy` | building |  | trophy extracts (floor, wall, worn, held) |
 | `knightmetal_armor_inner` / `_outer` | armory |  | per-slot armor geometry |
-| `knightmetal_shield` | weapons | twilightforest:knightmetal_shield | `geometry.twilightforest.knightmetal_shield` (2 bones, 2 cubes) + held extract |
+| `knightmetal_shield` | weapons | twilightforest:knightmetal_shield | `geometry.twilightforest.knightmetal_shield` (2 bones, 2 cubes) + held extracts (right and left hand) |
 | `kobold` | fauna | twilightforest:kobold | `geometry.twilightforest.kobold` (11 bones, 10 cubes) + base animation |
 | `lich` | lich | twilightforest:lich | `geometry.twilightforest.lich` (9 bones, 9 cubes) |
 | `lich_minion` | lich | twilightforest:lich_minion | `geometry.twilightforest.lich_minion` (7 bones, 7 cubes) |
-| `lich_trophy` | building |  | trophy extracts, mystic crown |
+| `lich_trophy` | building |  | trophy extracts (floor, wall, worn, held), mystic crown (worn, held; unit artifacts) |
 | `lower_goblin_knight` | stronghold | twilightforest:lower_goblin_knight | `geometry.twilightforest.lower_goblin_knight` (8 bones, 7 cubes) + base animation |
 | `loyal_zombie` | artifacts | twilightforest:loyal_zombie | `geometry.twilightforest.loyal_zombie` (7 bones, 7 cubes) + base animation |
 | `maze_slime` / `maze_slime_outer` | labyrinth | twilightforest:maze_slime | vanilla `geometry.slime` / `geometry.slime.armor` |
 | `minoshroom` | labyrinth | twilightforest:minoshroom | `geometry.twilightforest.minoshroom` (18 bones, 17 cubes) + base animation |
-| `minoshroom_trophy` | building |  | trophy extracts |
+| `minoshroom_trophy` | building |  | trophy extracts (floor, wall, worn, held) |
 | `minotaur` | labyrinth | twilightforest:minotaur | `geometry.twilightforest.minotaur` (12 bones, 11 cubes) |
 | `mist_wolf` | hostiles | twilightforest:mist_wolf | vanilla `geometry.wolf` (registered, unused: MistWolfRenderer bakes `hostile_wolf`) |
 | `moonworm` | flora | twilightforest:moonworm | `geometry.twilightforest.moonworm` (4 bones, 4 cubes) |
 | `mosquito_swarm` | fauna | twilightforest:mosquito_swarm | `geometry.twilightforest.mosquito_swarm` (103 bones, 103 cubes; TF's unseeded layout, fixed seed here) |
 | `naga` / `naga_body` | naga | twilightforest:naga | `geometry.twilightforest.naga` / `naga_body` (1 bone, 1 cube) |
-| `naga_trophy` | building |  | trophy extracts |
+| `naga_trophy` | building |  | trophy extracts (floor, wall, worn, held) |
 | `noop` | aurora |  | not drawn (NoopModel, 0×0 texture: the snow guardian shows only armor) |
 | `penguin` | fauna | twilightforest:penguin | `geometry.twilightforest.penguin` (8 bones, 7 cubes) + base animation |
 | `phantom_armor_inner` / `_outer` | armory |  | per-slot armor geometry |
 | `pinch_beetle` | hostiles | twilightforest:pinch_beetle | `geometry.twilightforest.pinch_beetle` (25 bones, 25 cubes) + base animation |
 | `protection_box` | landmark | twilightforest:protection_box | `geometry.twilightforest.protection_box` (1 bone, 1 cube) |
 | `quest_ram` | questcamps | twilightforest:quest_ram | `geometry.twilightforest.quest_ram` (28 bones, 43 cubes) + base animation |
-| `quest_ram_trophy` | building |  | trophy extracts |
+| `quest_ram_trophy` | building |  | trophy extracts (floor, wall, worn, held) |
 | `raven` | fauna | twilightforest:raven | `geometry.twilightforest.raven` (11 bones, 11 cubes) + base animation |
 | `red_thread` | tgear | twilightforest:red_thread | `geometry.twilightforest.red_thread` (5 bones, 5 cubes) |
 | `redcap` | hostiles | twilightforest:redcap, twilightforest:redcap_sapper | `geometry.twilightforest.redcap` (7 bones, 11 cubes) + base animation |
@@ -244,7 +315,7 @@ on its 16 rotations and the wall geometry on its 4 facings.
 | `skull_chest` | lichdecor | twilightforest:skull_chest | `geometry.twilightforest.skull_chest` (2 bones, 5 cubes) |
 | `slime_beetle` / `slime_beetle_tail` | hostiles | twilightforest:slime_beetle | `geometry.twilightforest.slime_beetle` / `slime_beetle_tail` (18 bones) + base animations |
 | `snow_queen` | aurora | twilightforest:snow_queen | `geometry.twilightforest.snow_queen` (24 bones, 22 cubes) |
-| `snow_queen_trophy` | building |  | trophy extracts |
+| `snow_queen_trophy` | building |  | trophy extracts (floor, wall, worn, held) |
 | `squirrel` | fauna | twilightforest:squirrel | `geometry.twilightforest.squirrel` (9 bones, 12 cubes) + base animation |
 | `stable_ice_core` | aurora | twilightforest:stable_ice_core | `geometry.twilightforest.stable_ice_core` (33 bones, 33 cubes) |
 | `swarm_spider` | hostiles | twilightforest:swarm_spider | vanilla `geometry.spider.v1.8` |
@@ -255,7 +326,7 @@ on its 16 rotations and the wall geometry on its 4 facings.
 | `unstable_ice_core` | aurora | twilightforest:unstable_ice_core | `geometry.twilightforest.unstable_ice_core` (33 bones, 33 cubes) |
 | `upper_goblin_knight` | stronghold | twilightforest:upper_goblin_knight | `geometry.twilightforest.upper_goblin_knight` (15 bones, 15 cubes) + base animation |
 | `ur_ghast` | darktower | twilightforest:ur_ghast | `geometry.twilightforest.ur_ghast` (37 bones, 37 cubes) |
-| `ur_ghast_trophy` | building |  | trophy extracts |
+| `ur_ghast_trophy` | building |  | trophy extracts (floor, wall, worn, held) + tentacle animations |
 | `winter_wolf` | hostiles | twilightforest:winter_wolf | vanilla `geometry.wolf` |
 | `wraith` | hostiles | twilightforest:wraith | `geometry.twilightforest.wraith` (8 bones, 8 cubes) + base animation |
 | `yeti` | caves | twilightforest:yeti | `geometry.twilightforest.yeti` (12 bones, 12 cubes) + base animation |
@@ -263,27 +334,39 @@ on its 16 rotations and the wall geometry on its 4 facings.
 
 Totals: 101 layers (every model class of `client/model/entity` but the base / interface classes
 `FixedHumanoidModel`, `TrophyBlockModel`, `HostileWolfModel`, `MistWolfModel` (vanilla wolf mesh), the 9 armor
-model classes, the block-entity and item models), 124 generated geometries (64 layer geometries, 25 armor and
+model classes, the block-entity and item models), 149 generated geometries (64 layer geometries, 25 armor and
 gear pieces, 18 floor and wall trophies plus 4 overlay geometries, 12 worn extracts (9 trophies, 2 overlays, the
-mystic crown) and 1 held extract), 12 vanilla-model layers, 28 base animations, 45 attachables. The Curios charm
-of life necklace (`CuriosCompat`) is not ported (docs/spec/README.md).
+mystic crown) and 26 held extracts (the same 12 plus the knightmetal shield, in each hand)), 12 vanilla-model
+layers, 61 base animations (56 entity layers, 28 of them with translated statements, and 5 Ur-Ghast trophy
+extracts), 45 attachables. The Curios charm of life necklace (`CuriosCompat`) is not ported (docs/spec/README.md).
 
 ## Tests
 
 - `pwsh tools/models/test.ps1`: the lexer and parser, the interpreter's Java semantics (integer division,
   float arithmetic, string concatenation, `Mth`'s sine table, `java.util.Random` values for seed 42), the
   conversion against Bedrock's vanilla pig geometry, per-face UV and mirror, unique bone names, euler
-  round trips, setupAnim → Molang, the three hard models (Hydra, Naga segment, Snow Queen) against values
-  worked out by hand from TF's code, and every generated file (structure, unique bones, parents, UVs inside
-  the texture, animation bones, attachable geometries, determinism, `-Check`). F2 owns no `tests/` path, so
-  these run in PowerShell rather than gtest.
+  round trips, setupAnim → Molang (including the position channel signs), the three hard models (Hydra, Naga
+  segment, Snow Queen) against values worked out by hand from TF's code, the item display transforms (the Alpha
+  Yeti's and Ur-Ghast's own head displays, the left-hand fallback and mirror), the per-slot attachables, the
+  Ur-Ghast tentacle animation, a base animation per entity layer, `-Java` / `-Item` selection and `-Unit`
+  intersection, and every generated file (structure, unique bones, parents, UVs inside the texture, animation
+  bones, attachable geometries, determinism, `-Check`). F2 owns no `tests/` path and the converter is C# run by
+  PowerShell, so these are not gtests: the server scenario `models` runs them first and fails on any failure
+  (CI does not run e2e; wiring `test.ps1` into `.github/` is F0's).
 - Selftests `models.*` (`src/feature/ext/models/ModelsSelfTest.cpp`, rule R18: F2 owns no source directory):
   the deployed index, and every geometry, base animation and attachable it lists is in the deployed pack and
-  well-formed (missing, unparsable or inconsistent files fail).
-- e2e scenario `models` (`tools/e2e/{server,client}/scenarios/models*.ps1`): the server runs the selftests with
-  BDS loading every converted file (any content-log error fails the run); the client's prelaunch step builds
-  a test-only preview pack (`tools/models/e2e/preview.ps1`): one actor per geometry with its TF texture and base
-  animation, armor stands with every attachable on test items, 31 screenshots of four models each. Commands
-  naming the preview items run after each shot's function (functions are parsed before data-driven items
-  exist). The server scenario `models.preview` loads the same preview packs on BDS, whose console carries the
-  content log, and runs every function and command.
+  well-formed (missing, unparsable or inconsistent files fail a check; every JSON access is checked).
+- e2e (`tools/e2e/{server,client}/scenarios/models*.ps1`):
+  - server `models`: `tools/models/test.ps1`, then the selftests. BDS loads behavior packs only, so it cannot
+    see resource-pack errors.
+  - client `models` (BeDD, local world): the prelaunch step builds a test-only preview pack
+    (`tools/models/e2e/preview.ps1`): one actor per geometry with its TF texture and base animation, the x-sign
+    actor, armor stands (facing the camera) with every attachable on test items in every slot it is drawn in
+    (head, main hand, off hand), and two broken canary files; it also turns on the game's content log file
+    (`options.txt content_log_file:1`, restored afterwards by `models.restore.ps1`). The scenario runs the
+    selftests, turns off command feedback, takes 31 screenshots of four models each, then reads the client's
+    content log (`<game data>/logs/ContentLog*.txt`): the canary geometry must be reported (the log is
+    captured), and any other error or warning fails the run (`out/models/content-log.txt`). Commands naming the
+    preview items run after each shot's function (functions are parsed before data-driven items exist).
+  - server `models.preview`: the preview behavior pack on BDS (actors, items, functions) loads without a
+    content-log error and every function and command runs.

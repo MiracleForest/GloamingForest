@@ -6,7 +6,8 @@
 // and check that every generated file is in the pack and is well-formed Bedrock content that
 // matches the index (identifiers, texture sizes, unique bones, parents, UVs inside the texture,
 // animation bones, attachable geometries). Each test logs one "present/expected" INFO line, which
-// the e2e scenario 'models' checks.
+// the e2e scenario 'models' checks. Every JSON access is checked: a malformed file (a W1 unit's
+// manual override, say) fails a check, never the server.
 //
 // Lives in src/feature/ext/models/ (rule R18): F2 owns no source directory; this adds no contract API.
 
@@ -48,20 +49,43 @@ std::string lower(std::string s) {
     return s;
 }
 
-// The index (read for every test: the deployed mod may change between runs), or a failed test.
-Json index(Context& ctx) {
-    auto doc = readJson(modDir() / "data" / "gf" / "models" / "index.json");
-    ctx.require(doc.has_value(), "data/gf/models/index.json is deployed and parses");
-    ctx.require(doc->value("format", 0) == 1, "index format 1");
-    return std::move(*doc);
-}
-
-// A member by reference (json::value() returns a copy, which must not outlive a loop over it).
+// A member by reference, or null (json::value() returns a copy, which must not outlive a loop over it;
+// operator[] on a const json is undefined behaviour for a missing key).
 Json const& member(Json const& j, char const* key) {
     static Json const empty;
     if (!j.is_object()) return empty;
     auto it = j.find(key);
     return it != j.end() ? *it : empty;
+}
+
+// An array element by reference, or null.
+Json const& at(Json const& j, std::size_t i) {
+    static Json const empty;
+    return j.is_array() && i < j.size() ? j[i] : empty;
+}
+
+std::string str(Json const& j, char const* key, std::string const& def = "") {
+    auto const& v = member(j, key);
+    return v.is_string() ? v.get<std::string>() : def;
+}
+
+double num(Json const& j, char const* key, double def) {
+    auto const& v = member(j, key);
+    return v.is_number() ? v.get<double>() : def;
+}
+
+// Two numbers [a, b] (UV, UV size); nothing when the value is not such an array.
+std::optional<std::pair<double, double>> pair2(Json const& v) {
+    if (!at(v, 0).is_number() || !at(v, 1).is_number()) return std::nullopt;
+    return std::make_pair(v[0].get<double>(), v[1].get<double>());
+}
+
+// The index (read for every test: the deployed mod may change between runs), or a failed test.
+Json index(Context& ctx) {
+    auto doc = readJson(modDir() / "data" / "gf" / "models" / "index.json");
+    ctx.require(doc.has_value() && doc->is_object(), "data/gf/models/index.json is deployed and parses");
+    ctx.require(num(*doc, "format", 0) == 1, "index format 1");
+    return std::move(*doc);
 }
 
 std::string missingOrBroken(fs::path const& file) {
@@ -70,55 +94,69 @@ std::string missingOrBroken(fs::path const& file) {
 
 // Checks one geometry file against its index entry; returns the bone names (lower case) or nothing.
 std::optional<std::set<std::string>> checkGeometry(Context& ctx, Json const& entry, Json const& doc) {
-    std::string const id   = entry.value("identifier", "");
-    std::string const file = entry.value("file", "");
+    std::string const id   = str(entry, "identifier");
+    std::string const file = str(entry, "file");
     auto fail = [&](std::string const& why) {
         ctx.check(false, file + ": " + why);
         return std::optional<std::set<std::string>>{};
     };
-    if (doc.value("format_version", "") != "1.12.0") return fail("format_version is not 1.12.0");
-    auto const& geos = doc.value("minecraft:geometry", Json::array());
-    if (!geos.is_array() || geos.size() != 1) return fail("expected one minecraft:geometry");
+    if (str(doc, "format_version") != "1.12.0") return fail("format_version is not 1.12.0");
+    auto const& geos = member(doc, "minecraft:geometry");
+    if (!geos.is_array() || geos.size() != 1 || !geos[0].is_object()) return fail("expected one minecraft:geometry");
     auto const& g    = geos[0];
-    auto const& desc = g.value("description", Json::object());
-    if (desc.value("identifier", "") != id) return fail("identifier " + desc.value("identifier", "?") + " != " + id);
-    double const w = desc.value("texture_width", 0.0), h = desc.value("texture_height", 0.0);
-    if (w != entry.value("texture_width", -1.0) || h != entry.value("texture_height", -1.0)) return fail("texture size differs from the index");
+    auto const& desc = member(g, "description");
+    if (str(desc, "identifier") != id) return fail("identifier " + str(desc, "identifier", "?") + " != " + id);
+    double const w = num(desc, "texture_width", 0), h = num(desc, "texture_height", 0);
+    if (w <= 0 || h <= 0) return fail("no texture size");
+    if (w != num(entry, "texture_width", -1) || h != num(entry, "texture_height", -1)) return fail("texture size differs from the index");
+    auto const& bones = member(g, "bones");
+    if (!bones.is_array()) return fail("no bones");
     std::set<std::string> names;
-    auto const& bones = g.value("bones", Json::array());
     for (auto const& b : bones) {
-        auto n = lower(b.value("name", ""));
+        auto n = lower(str(b, "name"));
         if (n.empty() || !names.insert(n).second) return fail("empty or duplicate bone name '" + n + "'");
     }
     std::set<std::string> external;
-    for (auto const& p : entry.value("external_parents", Json::array())) external.insert(lower(p.get<std::string>()));
+    for (auto const& p : member(entry, "external_parents"))
+        if (p.is_string()) external.insert(lower(p.get<std::string>()));
     int cubes = 0;
     for (auto const& b : bones) {
-        if (b.contains("parent")) {
-            auto p = lower(b["parent"].get<std::string>());
-            if (!names.contains(p) && !external.contains(p)) return fail("bone " + b.value("name", "") + " has an unknown parent " + p);
+        std::string const bone = str(b, "name");
+        auto const&       parent = member(b, "parent");
+        if (!parent.is_null()) {
+            if (!parent.is_string()) return fail("bone " + bone + " has a parent that is not a name");
+            auto p = lower(parent.get<std::string>());
+            if (!names.contains(p) && !external.contains(p)) return fail("bone " + bone + " has an unknown parent " + p);
         }
-        for (auto const& c : b.value("cubes", Json::array())) {
+        auto const& list = member(b, "cubes");
+        if (!list.is_null() && !list.is_array()) return fail("cubes of " + bone + " is not a list");
+        for (auto const& c : list) {
             ++cubes;
-            for (auto const& s : c.value("size", Json::array()))
-                if (s.get<double>() < 0) return fail("negative cube size in " + b.value("name", ""));
-            auto const& uv = c["uv"];
-            auto inside = [&](double u, double v) { return u >= -1e-3 && v >= -1e-3 && u <= w + 1e-3 && v <= h + 1e-3; };
+            auto const& size = member(c, "size");
+            if (!size.is_array() || size.size() != 3) return fail("cube without a size in " + bone);
+            for (auto const& s : size)
+                if (!s.is_number() || s.get<double>() < 0) return fail("negative or missing cube size in " + bone);
+            auto const& uv     = member(c, "uv");
+            auto        inside = [&](double u, double v) { return u >= -1e-3 && v >= -1e-3 && u <= w + 1e-3 && v <= h + 1e-3; };
             if (uv.is_array()) {
-                if (!inside(uv[0].get<double>(), uv[1].get<double>())) return fail("box uv outside the texture in " + b.value("name", ""));
-            } else if (uv.is_object()) {
+                auto p = pair2(uv);
+                if (!p) return fail("box uv is not [u, v] in " + bone);
+                if (!inside(p->first, p->second)) return fail("box uv outside the texture in " + bone);
+            } else if (uv.is_object() && !uv.empty()) {
                 for (auto const& [face, f] : uv.items()) {
-                    double u0 = f["uv"][0].get<double>(), v0 = f["uv"][1].get<double>();
-                    double u1 = u0 + f["uv_size"][0].get<double>(), v1 = v0 + f["uv_size"][1].get<double>();
-                    if (!inside(u0, v0) || !inside(u1, v1)) return fail(face + " uv outside the texture in " + b.value("name", ""));
+                    auto p0 = pair2(member(f, "uv"));
+                    auto ps = pair2(member(f, "uv_size"));
+                    if (!p0 || !ps) return fail(face + " uv without uv / uv_size in " + bone);
+                    if (!inside(p0->first, p0->second) || !inside(p0->first + ps->first, p0->second + ps->second))
+                        return fail(face + " uv outside the texture in " + bone);
                 }
             } else {
-                return fail("cube without uv in " + b.value("name", ""));
+                return fail("cube without uv in " + bone);
             }
         }
     }
-    if (static_cast<int>(bones.size()) != entry.value("bones", -1)) return fail("bone count differs from the index");
-    if (cubes != entry.value("cubes", -1)) return fail("cube count differs from the index");
+    if (static_cast<double>(bones.size()) != num(entry, "bones", -1)) return fail("bone count differs from the index");
+    if (static_cast<double>(cubes) != num(entry, "cubes", -1)) return fail("cube count differs from the index");
     return names;
 }
 
@@ -126,8 +164,8 @@ std::optional<std::set<std::string>> checkGeometry(Context& ctx, Json const& ent
 
 GF_REGISTER_SELFTEST("models.index", [](Context& ctx) {
     auto const idx = index(ctx);
-    int geometries = 0, vanilla = 0;
-    for (auto const& g : member(idx, "geometries")) (g.value("vanilla", false) ? vanilla : geometries)++;
+    int        geometries = 0, vanilla = 0;
+    for (auto const& g : member(idx, "geometries")) (member(g, "vanilla").is_boolean() && member(g, "vanilla").get<bool>() ? vanilla : geometries)++;
     auto animations  = member(idx, "animations").size();
     auto attachables = member(idx, "attachables").size();
     ctx.check(geometries >= 100, "the converter wrote the entity, armor and trophy geometries");
@@ -135,18 +173,23 @@ GF_REGISTER_SELFTEST("models.index", [](Context& ctx) {
     ctx.check(animations >= 1 && attachables >= 1, "base animations and attachables are listed");
     ctx.info("index: " + std::to_string(geometries) + " geometries, " + std::to_string(vanilla) + " vanilla layers, "
              + std::to_string(animations) + " base animations, " + std::to_string(attachables) + " attachables (TF "
-             + idx.value("tf", "?") + ")");
+             + str(idx, "tf", "?") + ")");
 });
 
 GF_REGISTER_SELFTEST("models.geometry", [](Context& ctx) {
-    auto const idx = index(ctx);
-    int present = 0, expected = 0;
+    auto const idx     = index(ctx);
+    int        present = 0, expected = 0;
     for (auto const& e : member(idx, "geometries")) {
-        if (e.value("vanilla", false)) continue;
+        if (member(e, "vanilla").is_boolean() && member(e, "vanilla").get<bool>()) continue;
         ++expected;
-        auto doc = readJson(rpDir() / e.value("file", ""));
+        auto const file = str(e, "file");
+        if (file.empty()) {
+            ctx.check(false, "index geometry " + str(e, "identifier", "?") + " has no file");
+            continue;
+        }
+        auto doc = readJson(rpDir() / file);
         if (!doc) {
-            ctx.check(false, e.value("file", "") + missingOrBroken(rpDir() / e.value("file", "")));
+            ctx.check(false, file + missingOrBroken(rpDir() / file));
             continue;
         }
         if (checkGeometry(ctx, e, *doc)) ++present;
@@ -155,35 +198,45 @@ GF_REGISTER_SELFTEST("models.geometry", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("models.animations", [](Context& ctx) {
-    auto const idx = index(ctx);
+    auto const                         idx = index(ctx);
     std::map<std::string, Json const*> geoById;
-    for (auto const& e : member(idx, "geometries")) geoById[e.value("identifier", "")] = &e;
+    for (auto const& e : member(idx, "geometries")) geoById[str(e, "identifier")] = &e;
     int present = 0, expected = 0;
     for (auto const& a : member(idx, "animations")) {
         ++expected;
-        std::string const id = a.value("identifier", "");
-        auto doc = readJson(rpDir() / a.value("file", ""));
+        std::string const id   = str(a, "identifier");
+        std::string const file = str(a, "file");
+        if (id.empty() || file.empty()) {
+            ctx.check(false, "index animation without an identifier or a file");
+            continue;
+        }
+        auto doc = readJson(rpDir() / file);
         if (!doc) {
-            ctx.check(false, a.value("file", "") + missingOrBroken(rpDir() / a.value("file", "")));
+            ctx.check(false, file + missingOrBroken(rpDir() / file));
             continue;
         }
         auto const& anim = member(member(*doc, "animations"), id.c_str());
         if (!anim.is_object()) {
-            ctx.check(false, a.value("file", "") + ": no " + id);
+            ctx.check(false, file + ": no " + id);
+            continue;
+        }
+        auto const& bonesOfAnim = member(anim, "bones");
+        if (!bonesOfAnim.is_null() && !bonesOfAnim.is_object()) {
+            ctx.check(false, file + ": bones of " + id + " is not an object");
             continue;
         }
         // the bones it moves exist in its geometry (when that geometry is in the pack)
-        std::string geoId = "geometry." + id.substr(std::string("animation.").size());
-        geoId             = geoId.substr(0, geoId.size() - std::string(".base").size());
-        auto it           = geoById.find(geoId);
-        if (it != geoById.end()) {
-            if (auto geo = readJson(rpDir() / it->second->value("file", ""))) {
-                std::set<std::string> bones;
-                auto const& geos = member(*geo, "minecraft:geometry");
-                if (geos.is_array() && !geos.empty())
-                    for (auto const& b : member(geos[0], "bones")) bones.insert(b.value("name", ""));
-                for (auto const& [bone, _] : member(anim, "bones").items())
-                    ctx.check(bones.contains(bone), id + " moves " + bone + ", which " + geoId + " does not have");
+        std::string const prefix = "animation.", suffix = ".base";
+        if (id.starts_with(prefix) && id.ends_with(suffix) && id.size() > prefix.size() + suffix.size()) {
+            std::string geoId = "geometry." + id.substr(prefix.size(), id.size() - prefix.size() - suffix.size());
+            auto        it    = geoById.find(geoId);
+            if (it != geoById.end()) {
+                if (auto geo = readJson(rpDir() / str(*it->second, "file"))) {
+                    std::set<std::string> bones;
+                    for (auto const& b : member(at(member(*geo, "minecraft:geometry"), 0), "bones")) bones.insert(lower(str(b, "name")));
+                    for (auto const& [bone, _] : bonesOfAnim.items())
+                        ctx.check(bones.contains(lower(bone)), id + " moves " + bone + ", which " + geoId + " does not have");
+                }
             }
         }
         ++present;
@@ -192,9 +245,11 @@ GF_REGISTER_SELFTEST("models.animations", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("models.attachables", [](Context& ctx) {
-    auto const idx = index(ctx);
+    auto const            idx = index(ctx);
     std::set<std::string> geometries;
-    for (auto const& e : member(idx, "geometries")) geometries.insert(e.value("identifier", ""));
+    for (auto const& e : member(idx, "geometries")) geometries.insert(str(e, "identifier"));
+    std::set<std::string> animations;
+    for (auto const& a : member(idx, "animations")) animations.insert(str(a, "identifier"));
     // the shared render controllers (F2's partition) must be there
     std::set<std::string> controllers{"controller.render.armor", "controller.render.item_default"};
     auto rc = readJson(rpDir() / "render_controllers" / "twilightforest.models.render_controllers.json");
@@ -203,21 +258,33 @@ GF_REGISTER_SELFTEST("models.attachables", [](Context& ctx) {
     int present = 0, expected = 0;
     for (auto const& a : member(idx, "attachables")) {
         ++expected;
-        auto doc = readJson(rpDir() / a.value("file", ""));
+        std::string const   file = str(a, "file");
+        std::optional<Json> doc;
+        if (!file.empty()) doc = readJson(rpDir() / file);
         if (!doc) {
-            ctx.check(false, a.value("file", "") + missingOrBroken(rpDir() / a.value("file", "")));
+            ctx.check(false, (file.empty() ? "index attachable without a file" : file + missingOrBroken(rpDir() / file)));
             continue;
         }
         auto const& desc = member(member(*doc, "minecraft:attachable"), "description");
-        ctx.check(desc.value("identifier", "") == a.value("item", "?"), a.value("file", "") + ": identifier is the item");
-        for (auto const& [key, geo] : member(desc, "geometry").items()) {
-            auto id = geo.get<std::string>();
-            ctx.check(geometries.contains(id) || id.starts_with("geometry.humanoid.armor."), a.value("file", "") + ": unknown geometry " + id);
-            ctx.check(member(desc, "textures").contains(key) && member(desc, "materials").contains(key), a.value("file", "") + ": " + key + " has a texture and a material");
+        ctx.check(str(desc, "identifier") == str(a, "item", "?"), file + ": identifier is the item");
+        auto const& geometry = member(desc, "geometry");
+        ctx.check(geometry.is_object() && !geometry.empty(), file + ": names a geometry");
+        for (auto const& [key, geo] : geometry.items()) {
+            auto id = geo.is_string() ? geo.get<std::string>() : std::string();
+            ctx.check(geometries.contains(id) || id.starts_with("geometry.humanoid.armor."), file + ": unknown geometry " + id);
+            ctx.check(member(desc, "textures").contains(key) && member(desc, "materials").contains(key), file + ": " + key + " has a texture and a material");
         }
-        for (auto const& r : member(desc, "render_controllers")) {
-            std::string name = r.is_string() ? r.get<std::string>() : r.items().begin().key();
-            ctx.check(controllers.contains(name), a.value("file", "") + ": unknown render controller " + name);
+        for (auto const& [key, anim] : member(desc, "animations").items()) {
+            auto id = anim.is_string() ? anim.get<std::string>() : std::string();
+            ctx.check(animations.contains(id), file + ": unknown animation " + key + " = " + id);
+        }
+        auto const& list = member(desc, "render_controllers");
+        ctx.check(list.is_array() && !list.empty(), file + ": has render controllers");
+        for (auto const& r : list) {
+            std::string name;
+            if (r.is_string()) name = r.get<std::string>();
+            else if (r.is_object() && r.size() == 1 && r.begin().value().is_string()) name = r.begin().key();
+            ctx.check(!name.empty() && controllers.contains(name), file + ": unknown or malformed render controller " + (name.empty() ? r.dump() : name));
         }
         ++present;
     }

@@ -5,10 +5,46 @@
       "geometry": "Geometry.part1",
       "materials": [
         {
-          "*": "Material.part1"
+          "*": "variable.is_enchanted ? Material.enchanted : Material.part1"
         }
       ],
-      "textures": ["Texture.part1"]
+      "textures": ["Texture.part1", "Texture.enchanted"]
+    },
+    "controller.render.twilightforest.models.part2": {
+      "geometry": "Geometry.part2",
+      "materials": [
+        {
+          "*": "variable.is_enchanted ? Material.enchanted : Material.part2"
+        }
+      ],
+      "textures": ["Texture.part2", "Texture.enchanted"]
+    },
+    "controller.render.twilightforest.models.part3": {
+      "geometry": "Geometry.part3",
+      "materials": [
+        {
+          "*": "variable.is_enchanted ? Material.enchanted : Material.part3"
+        }
+      ],
+      "textures": ["Texture.part3", "Texture.enchanted"]
+    },
+    "controller.render.twilightforest.models.part4": {
+      "geometry": "Geometry.part4",
+      "materials": [
+        {
+          "*": "variable.is_enchanted ? Material.enchanted : Material.part4"
+        }
+      ],
+      "textures": ["Texture.part4", "Texture.enchanted"]
+    },
+    "controller.render.twilightforest.models.part5": {
+      "geometry": "Geometry.part5",
+      "materials": [
+        {
+          "*": "variable.is_enchanted ? Material.enchanted : Material.part5"
+        }
+      ],
+      "textures": ["Texture.part5", "Texture.enchanted"]
     }
   }
 }

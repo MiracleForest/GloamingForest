@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.mystic_crown",
+        "identifier": "geometry.twilightforest.mystic_crown_held",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 3,
@@ -12,19 +12,20 @@
       },
       "bones": [
         {
-          "name": "mystic_crown",
-          "parent": "head",
-          "pivot": [0, 0, 0]
+          "name": "mystic_crown_held",
+          "parent": "rightArm",
+          "pivot": [0, 0, 0],
+          "rotation": [54.7356, 30, 35.2644]
         },
         {
-          "name": "mystic_crown_hat",
-          "parent": "mystic_crown",
-          "pivot": [0, 23.75, 0],
+          "name": "mystic_crown_held_hat",
+          "parent": "mystic_crown_held",
+          "pivot": [-7.74264, 8.02082, -0.74264],
           "cubes": [
             {
-              "origin": [-4.2, 27.95, -4.2],
-              "size": [8.4, 8.4, 8.4],
-              "inflate": 0.525,
+              "origin": [-9.84264, 10.12082, -2.84264],
+              "size": [4.2, 4.2, 4.2],
+              "inflate": 0.2625,
               "uv": {
                 "north": {
                   "uv": [40, 8],

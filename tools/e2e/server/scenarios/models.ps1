@@ -1,7 +1,18 @@
-# Server scenario 'models' (unit F2): every converted geometry, base animation and attachable
+# Server scenario 'models' (unit F2): the converter's own tests (tools/models/test.ps1: lexer, parser,
+# interpreter, conversion, setupAnim -> Molang, item display transforms, the committed tree and
+# convert.ps1 -Check), then every converted geometry, base animation and attachable
 # (assets/gen/geo/**, tools/models/convert.ps1) is in the deployed pack, well-formed and matching the
-# converter's index (models.* selftests), and BDS logged no content error loading them (run.ps1 fails
-# the run on any). Dot-sourced by tools/e2e/server/run.ps1.
+# converter's index (models.* selftests). BDS loads behavior packs only, so the resource-pack content
+# log (geometry, animations, attachables, render controllers) is checked by the client scenario
+# 'models'. Dot-sourced by tools/e2e/server/run.ps1.
+$gfTestLog = Join-Path $script:OutDir 'models-test.log'
+& pwsh -NoProfile -File (Join-Path $script:RepoRoot 'tools/models/test.ps1') *> $gfTestLog
+$gfTestExit = $LASTEXITCODE
+$gfTestSummary = Get-Content $gfTestLog | Select-String -Pattern '\[geo-test\] \d+ passed' | Select-Object -Last 1
+Get-Content $gfTestLog | Select-String -Pattern '^\s+(FAIL|- )' | ForEach-Object { Write-Host "  ! $($_.Line.Trim())" -ForegroundColor Red }
+if ($gfTestExit -ne 0 -or -not $gfTestSummary) { throw "tools/models/test.ps1 failed (exit $gfTestExit; see $gfTestLog)" }
+Write-Step "models: converter tests: $($gfTestSummary.Line.Trim())"
+
 $r = Invoke-SelfTest 'models.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) models selftest(s) failed" }
 if ($r.Pass -lt 4) { throw "expected 4 models selftests, got $($r.Pass)" }

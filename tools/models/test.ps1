@@ -321,8 +321,116 @@ Test 'worn extracts never reuse the wearer''s bone names' {
     $g = Geo 'building' 'naga_trophy_worn'
     Eq (($g.bones.name) -join ',') 'naga_trophy_worn,naga_trophy_worn_head'
     Eq $g.bones[0].parent 'head'
-    $crown = Geo 'artifacts' 'mystic_crown'
-    Eq (($crown.bones.name) -join ',') 'mystic_crown,mystic_crown_hat'
+    $crown = Geo 'artifacts' 'mystic_crown_worn'
+    Eq (($crown.bones.name) -join ',') 'mystic_crown_worn,mystic_crown_worn_hat'
+}
+function BoneMap([string]$unit, [string]$name) { $files["assets/gen/geo/$unit/bones/$name.json"] | ConvertFrom-Json }
+Test 'worn trophies use their own item model''s head display (alpha yeti: 0 2 0 x1.5, Ur-Ghast: 0 18 0)' {
+    $d = (BoneMap 'building' 'alpha_yeti_trophy_worn').item_display[0]
+    Eq $d.file 'src/generated/resources/assets/twilightforest/models/item/alpha_yeti_trophy.json'
+    Eq ($d.translation -join ',') '0,2,0'; Eq ($d.scale -join ',') '1.5,1.5,1.5'; Eq ($d.rotation -join ',') '180,0,180'
+    $u = (BoneMap 'building' 'ur_ghast_trophy_worn').item_display[0]
+    Eq ($u.translation -join ',') '0,18,0'; Eq ($u.scale -join ',') '1.6,1.6,1.6'
+    $n = (BoneMap 'building' 'naga_trophy_worn').item_display[0]
+    Eq $n.file 'src/main/resources/assets/twilightforest/models/item/template_trophy.json' 'naga_trophy.json has no display: its parent'
+    Eq ($n.translation -join ',') '0,6,0'
+    # CustomHeadLayer (0.625) * head display: the Ur-Ghast body pivot is 12 px * 0.625 = 7.5 px higher than with the template's 6
+    Eq ((BoneOf (Geo 'building' 'ur_ghast_trophy_worn') 'ur_ghast_trophy_worn_body').pivot -join ',') '0,27.25,0'
+    # alpha yeti: scale 1.5 instead of the template's 1.6 and 4 px lower in the display's space (was 29.75 / 9.6 wide)
+    $h = BoneOf (Geo 'building' 'alpha_yeti_trophy_worn') 'alpha_yeti_trophy_worn_head'
+    Eq ($h.pivot -join ',') '0,27.375,0'
+    Eq ($h.cubes[0].size -join ',') '9,10.125,6.75'
+}
+Test 'a missing thirdperson_lefthand falls back to the same model''s righthand (ItemTransforms)' {
+    $u = (BoneMap 'building' 'ur_ghast_trophy_held_left').item_display[0]
+    Eq $u.context 'thirdperson_lefthand'; Eq $u.from 'thirdperson_righthand'
+    Eq ($u.translation -join ',') '0,4,3.6' 'ur_ghast_trophy.json thirdperson_righthand'
+    $s = (BoneMap 'weapons' 'knightmetal_shield_held_left').item_display[0]
+    Eq $s.from 'thirdperson_lefthand'; Eq ($s.translation -join ',') '10.51,6,12'
+}
+Test 'held forms: the left hand mirrors the right one (ItemTransform leftHand, ItemInHandLayer)' {
+    $r = Geo 'building' 'naga_trophy_held'; $l = Geo 'building' 'naga_trophy_held_left'
+    Eq $r.bones[0].parent 'rightArm'; Eq $l.bones[0].parent 'leftArm'
+    Near $l.bones[0].rotation[0] $r.bones[0].rotation[0]
+    Near $l.bones[0].rotation[1] (-$r.bones[0].rotation[1]); Near $l.bones[0].rotation[2] (-$r.bones[0].rotation[2])
+    Near $l.bones[1].pivot[0] (-$r.bones[1].pivot[0]); Near $l.bones[1].pivot[1] $r.bones[1].pivot[1]; Near $l.bones[1].pivot[2] $r.bones[1].pivot[2]
+}
+Test 'one attachable per item draws each form in its slot (head, main hand, off hand)' {
+    $a = ($files['assets/gen/geo/building/rp/attachables/knight_phantom_trophy.json'] | ConvertFrom-Json).'minecraft:attachable'.description
+    Eq (@($a.geometry.PSObject.Properties.Value) -join ',') 'geometry.twilightforest.knight_phantom_trophy_worn,geometry.twilightforest.knight_phantom_trophy_worn_armor,geometry.twilightforest.knight_phantom_trophy_held,geometry.twilightforest.knight_phantom_trophy_held_armor,geometry.twilightforest.knight_phantom_trophy_held_left,geometry.twilightforest.knight_phantom_trophy_held_left_armor'
+    $cond = @($a.render_controllers | ForEach-Object { $_.PSObject.Properties.Value })
+    Eq ($cond -join '|') "c.item_slot == 'head'|c.item_slot == 'head'|c.item_slot == 'main_hand'|c.item_slot == 'main_hand'|c.item_slot == 'off_hand'|c.item_slot == 'off_hand'"
+    Eq $a.materials.enchanted 'entity_alphatest_glint'
+    $s = ($files['assets/gen/geo/weapons/rp/attachables/knightmetal_shield.json'] | ConvertFrom-Json).'minecraft:attachable'.description
+    Eq (@($s.geometry.PSObject.Properties.Value) -join ',') 'geometry.twilightforest.knightmetal_shield_held,geometry.twilightforest.knightmetal_shield_held_left'
+}
+Test 'the Ur-Ghast trophies wave their tentacles (waveTentacles on the trophy clock, 0 at tick 0)' {
+    foreach ($n in 'ur_ghast_trophy', 'ur_ghast_wall_trophy', 'ur_ghast_trophy_worn', 'ur_ghast_trophy_held', 'ur_ghast_trophy_held_left') {
+        $a = ($files["assets/gen/geo/building/rp/animations/$n.base.json"] | ConvertFrom-Json).animations."animation.twilightforest.$n.base"
+        if (-not $a) { throw "no animation for $n" }
+        Eq @($a.bones.PSObject.Properties).Count 36 "$n animates 9 tentacles x 4 parts"
+    }
+    $b = ($files['assets/gen/geo/building/rp/animations/ur_ghast_trophy.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.ur_ghast_trophy.base'.bones
+    # tentacle 0: xRot = 0.2 + cos(0.9 t / 2 * 0.3335) * 0.15 (t ticks = life_time * 20), minus the bind pose 0.35 rad
+    Eq $b.tentacle_0.rotation[0] 'math.cos(query.life_time * 171.9733) * 8.5944 - 8.5943'
+    $att = ($files['assets/gen/geo/building/rp/attachables/ur_ghast_trophy.json'] | ConvertFrom-Json).'minecraft:attachable'.description
+    Eq $att.animations.held 'animation.twilightforest.ur_ghast_trophy_held.base'
+}
+Test 'every converted entity layer has a base animation (a stub when nothing translates)' {
+    $index = $files['assets/gen/geo/models/data/gf/models/index.json'] | ConvertFrom-Json
+    $anims = @{}; foreach ($a in $index.animations) { $anims[$a.identifier] = $a }
+    $entities = @($index.geometries | Where-Object { $_.kind -eq 'entity' -and -not $_.vanilla })
+    if ($entities.Count -lt 50) { throw "only $($entities.Count) entity layers" }
+    foreach ($g in $entities) {
+        $id = $g.identifier -replace '^geometry\.', 'animation.'
+        if (-not $anims.ContainsKey("$id.base")) { throw "no base animation for $($g.identifier)" }
+        Eq $g.animation "$id.base" $g.identifier
+    }
+    $stub = ($files['assets/gen/geo/weapons/rp/animations/chain.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.chain.base'
+    Eq $stub.loop $true; Eq @($stub.bones.PSObject.Properties).Count 0 'an empty stub'
+}
+Test 'setupAnim -> Molang: part.x / part.y / part.z become position deltas (x as is, y negated)' {
+    $c = New-TestModel @'
+    private final ModelPart moved;
+    public TestPos(ModelPart root) { this.moved = root.getChild("moved"); }
+    public void setupAnim(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.moved.x = 7.0F;
+        this.moved.y = 2.0F;
+        this.moved.z = -3.0F;
+    }
+'@ 'TestPos'
+    $mesh = $interp.CallStatic((New-TestModel @'
+    public static LayerDefinition create() {
+        MeshDefinition mesh = new MeshDefinition();
+        mesh.getRoot().addOrReplaceChild("moved", CubeListBuilder.create().addBox(-1, 0, -1, 2, 2, 2), PartPose.offset(0.0F, 5.0F, 0.0F));
+        return LayerDefinition.create(mesh, 16, 16);
+    }
+'@), 'create', [System.Collections.Generic.List[object]]::new())
+    $g = Convert-Layer $mesh
+    $res = [Gf.Models.AnimTranslator]::new($cp, $interp).Translate($c, $g.Geo)
+    $json = [Gf.Models.Json]::Write([Gf.Models.AnimTranslator]::AnimationJson('animation.test', $res)) | ConvertFrom-Json
+    # Bedrock geometry x is Java's x (pig check above); the animation's position channel moves along the
+    # geometry's own axes (checked in game: the e2e preview's x-sign calibration actor)
+    Eq ($json.animations.'animation.test'.bones.moved.position -join ',') '7,3,-3' 'x as is, y = -(2 - 5), z as is'
+}
+Test 'Select: -Java / -Item pick the files of one model class / item from the full run' {
+    $hydra = @($gen.Select('HydraModel', $null))
+    if (-not ($hydra -contains 'assets/gen/geo/hydra/rp/models/entity/hydra.geo.json')) { throw 'HydraModel does not select hydra.geo.json' }
+    $other = @($hydra | Where-Object { $_ -notlike 'assets/gen/geo/hydra/*' })
+    if ($other) { throw "HydraModel selects files of other units: $($other -join ', ')" }
+    $shield = @($gen.Select($null, 'twilightforest:knightmetal_shield'))
+    Eq ($shield -join ',') 'assets/gen/geo/weapons/bones/knightmetal_shield.json,assets/gen/geo/weapons/bones/knightmetal_shield_held.json,assets/gen/geo/weapons/bones/knightmetal_shield_held_left.json,assets/gen/geo/weapons/rp/attachables/knightmetal_shield.json,assets/gen/geo/weapons/rp/models/entity/knightmetal_shield.geo.json,assets/gen/geo/weapons/rp/models/entity/knightmetal_shield_held.geo.json,assets/gen/geo/weapons/rp/models/entity/knightmetal_shield_held_left.geo.json'
+}
+Test 'Write-GfModelsFiles: -Unit with a -Java / -Item selection writes only the selected files of that partition' {
+    $tmp = Join-Path ([IO.Path]::GetTempPath()) "gf-geo-test-$PID"
+    try {
+        $r = @{ Files = [ordered]@{}; Selected = @($gen.Select($null, 'twilightforest:fiery_helmet')) }
+        foreach ($k in $files.Keys) { $r.Files[$k] = $files[$k] }
+        $w = Write-GfModelsFiles $r -Unit 'armory' -Out $tmp
+        $written = @(Get-ChildItem $tmp -Recurse -File | ForEach-Object { [IO.Path]::GetRelativePath($tmp, $_.FullName).Replace('\', '/') } | Sort-Object)
+        Eq ($written -join ',') 'assets/gen/geo/armory/bones/fiery_armor.helmet.json,assets/gen/geo/armory/rp/attachables/fiery_helmet.json,assets/gen/geo/armory/rp/models/entity/fiery_armor.helmet.geo.json'
+        Eq $w.Problems 0
+    } finally { if (Test-Path $tmp) { Remove-Item -Recurse -Force $tmp } }
 }
 Test 'trophies: the floor extract turns 180 degrees about y and sits on the floor' {
     $g = Geo 'building' 'naga_trophy'

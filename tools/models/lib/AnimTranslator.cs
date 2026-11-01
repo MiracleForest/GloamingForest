@@ -575,6 +575,14 @@ namespace Gf.Models
             return PartOf(fe.Target, fields, out path);
         }
 
+        // A Java expression with the given variables as Molang (null and the reason when it does not translate).
+        public MNode TranslateExpression(string javaSource, Dictionary<string, MNode> env, out string why)
+        {
+            var e = Parser.ParseExpression(javaSource);
+            return Tr(e, env, new Dictionary<string, MNode>(StringComparer.Ordinal), new Dictionary<string, string>(StringComparer.Ordinal),
+                      new Dictionary<string, BoneOut>(StringComparer.Ordinal), out why);
+        }
+
         MNode Tr(Expr e, Dictionary<string, MNode> env, Dictionary<string, MNode> current, Dictionary<string, string> fields, Dictionary<string, BoneOut> bones, out string why)
         {
             why = null;

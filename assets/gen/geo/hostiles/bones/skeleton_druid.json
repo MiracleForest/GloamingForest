@@ -92,7 +92,7 @@
   ],
   "setupAnim": {
     "class": "SkeletonDruidModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.skeleton_druid.base",
     "notes": ["no setupAnim / prepareMobModel in SkeletonDruidModel or its TF super classes"],
     "translated": [],
     "todo": []

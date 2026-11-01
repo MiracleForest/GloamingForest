@@ -321,7 +321,7 @@
   ],
   "setupAnim": {
     "class": "IceCrystalModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.ice_crystal.base",
     "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
     "translated": [],
     "todo": [

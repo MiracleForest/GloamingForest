@@ -46,7 +46,7 @@
   ],
   "setupAnim": {
     "class": "HydraHeadModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.hydra_head.base",
     "notes": ["vanilla base ListModel (super calls): nothing (ListModel has no default animation)"],
     "translated": [],
     "todo": [

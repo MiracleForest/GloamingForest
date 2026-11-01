@@ -91,7 +91,7 @@
   ],
   "setupAnim": {
     "class": "BighornModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.bighorn_sheep.base",
     "translated": [],
     "todo": [
       {

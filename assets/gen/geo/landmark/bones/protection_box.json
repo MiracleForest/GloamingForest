@@ -23,5 +23,12 @@
       "java_rotation": [0, 0, 0],
       "cubes": 1
     }
-  ]
+  ],
+  "setupAnim": {
+    "class": null,
+    "identifier": "animation.twilightforest.protection_box.base",
+    "notes": ["no setupAnim to translate: the layer is posed by its renderer (see the notes and docs/spec/models.md)"],
+    "translated": [],
+    "todo": []
+  }
 }

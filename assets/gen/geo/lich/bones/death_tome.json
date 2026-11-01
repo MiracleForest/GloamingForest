@@ -145,7 +145,7 @@
   ],
   "setupAnim": {
     "class": "DeathTomeModel",
-    "identifier": null,
+    "identifier": "animation.twilightforest.death_tome.base",
     "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
     "translated": [],
     "todo": [
