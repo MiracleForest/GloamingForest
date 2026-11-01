@@ -7,7 +7,7 @@ lists every id U10 owns with TF's registration and data; Appendix B the strings.
 ## 1. Scope
 
 - **Food**: `raw_venison`, `cooked_venison`, `raw_meef`, `cooked_meef`, `meef_stroganoff`, `hydra_chop`,
-  `maze_wafer`, `berry_medley`, `moss_soup`, `shika_senbei`, 13 jerkies (`beef`, `chicken`, `cod`, `fugu`, `meef`,
+  `maze_wafer`, `berry_medley`, `moss_soup`, `shika_senbei`, 12 jerkies (`beef`, `chicken`, `cod`, `fugu`, `meef`,
   `monster`, `mutton`, `pork`, `rabbit`, `salmon`, `tropical_fish`, `venison` + `_jerky`), `stale_bread` (a weapon),
   and **Experiment 115** (`experiment_115` block + item, component `e115_variant`, stat `e115_slices_eaten`).
 - **Enchantments** `twilightforest:fire_react`, `chill_aura`, `destruction`, `renewal`; enchantment effect types

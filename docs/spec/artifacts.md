@@ -150,10 +150,11 @@ Only for real, non-creative, non-spectator players; server side.
     consumed charm (`CharmStack`) shows the charm animation with `item.twilightforest.charm.keep` on respawn, stat
     `keeping_charms_activated` +1.
 - **Keepsake casket**: if the player still has any non-casket item and a casket in the inventory, one casket is
-  consumed and placed at the death position (y clamped to [minY + 2, logicalHeight - 1], first replaceable block
-  upward), multilogged with the fluid there, `damage` from the last casket (`CasketDamage`), facing = random of the
-  first three 2D directions. With chance **0.15** the casket is damaged: at damage >= 2 a `twilightforest:skull_chest`
-  is placed instead, else damage + 1. Owner = the player when `casketUUIDLocking` (default **false**), else none. Name
+  consumed and placed at the death position (y < minY + 2 -> minY + 2; else y > logicalHeight -> logicalHeight - 1,
+  so y == logicalHeight is kept; then the first replaceable block upward from that y), multilogged with the fluid
+  there, `damage` from the last casket (`CasketDamage`), facing = random of the first three 2D directions
+  (`from2DDataValue(nextInt(3))`: south, west, north). With chance **0.15** the casket is damaged: at damage >= 2 a
+  `twilightforest:skull_chest` is placed instead, else damage + 1. Owner = the player when `casketUUIDLocking` (default **false**), else none. Name
   = first 12 characters of the player name + "'s " + (1/1000 "Costco Casket" else the block name). Contents (45
   slots): armor reversed (head first), 4 empty, offhand, main inventory rows 9-35 then the hotbar. Without items to
   store, held caskets are moved to the kept inventory instead.

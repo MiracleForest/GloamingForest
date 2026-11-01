@@ -43,22 +43,24 @@ enforcement every 20 ticks), `init/TFGameRules.java`, `network/EnforceProgressio
 
 ### 3.1 Advancements
 
-- All 45 are listed in Appendix A with every field. Tree (child <- parent): `root` (tab root, background
+- All 45 are listed in Appendix A with every field. Tree, written parent -> child throughout (`a` -> `b`, `c`: `b` and
+  `c` are children of `a`; `a` -> `b` -> `c`: `c` is a child of `b`; a parenthesised group right after a node holds
+  that node's children): `root` (tab root, no parent; background
   `twilightforest:textures/block/mazestone_large_brick.png`; criteria: location in the Twilight Forest or
-  `twilightforest:make_tf_portal`) <- none; from `root`: `progress_naga`, `hill1` <- `hill2` <- `hill3`, `hedge`,
-  `twilight_hunter` -> `magic_map_focus` -> `magic_map` -> `maze_map` -> `ore_map`, `twilight_dinner`, `kill_cicada`,
-  `quest_ram`, `arborist`, `chicken_jerky`, `craft_travellers_gear` -> `modify_travellers_gear`,
-  `uncraft_uncrafting_table`; `progress_naga` -> `progress_lich`, `naga_armors`; `progress_lich` ->
-  `progress_labyrinth` (-> `progress_hydra` -> `fiery_set`, `hydra_chop`; -> `mazebreaker`), `progress_trophy_pedestal`
-  -> `progress_knights` (-> `ghast_trap` -> `progress_ur_ghast`; -> `experiment_115` -> `experiment_115_115`,
-  `experiment_115_self_replenishing`), `progress_yeti` (-> `progress_glacier`, `arctic_armor_dyed`,
-  `break_glass_sword`), `progress_merge` (-> `troll`, `beanstalk` -> `giants` -> `progress_troll` ->
-  `progression_end`), `lich_scepters`, `full_mettle_alchemist`. Frames: `goal` for the `progress_*` chain,
-  `beanstalk`, `giants`, `maze_map`, `quest_ram`, `progression_end`; `challenge` for `arborist`, `chicken_jerky`,
-  `break_glass_sword`, `experiment_115_115`, `experiment_115_self_replenishing`, `fiery_set`,
-  `full_mettle_alchemist`, `lich_scepters`, `mazebreaker`, `naga_armors`, `ore_map`, `twilight_dinner`; hidden:
-  `break_glass_sword`, `chicken_jerky`, `experiment_115_115`, `experiment_115_self_replenishing`,
-  `full_mettle_alchemist`, `kill_cicada`, `lich_scepters`, `ore_map`.
+  `twilightforest:make_tf_portal`) -> `progress_naga`, `hill1` (-> `hill2` -> `hill3`), `hedge`, `twilight_hunter`
+  (-> `magic_map_focus` -> `magic_map` -> `maze_map` -> `ore_map`), `twilight_dinner`, `kill_cicada`, `quest_ram`,
+  `arborist`, `chicken_jerky`, `craft_travellers_gear` (-> `modify_travellers_gear`), `uncraft_uncrafting_table`;
+  `progress_naga` -> `progress_lich`, `naga_armors`; `progress_lich` -> `progress_labyrinth` (-> `progress_hydra`
+  (-> `fiery_set`, `hydra_chop`), `mazebreaker`), `progress_trophy_pedestal` (-> `progress_knights` (-> `ghast_trap`
+  (-> `progress_ur_ghast`), `experiment_115` (-> `experiment_115_115`, `experiment_115_self_replenishing`))),
+  `progress_yeti` (-> `progress_glacier`, `arctic_armor_dyed`, `break_glass_sword`), `progress_merge` (-> `troll`,
+  `beanstalk` (-> `giants` -> `progress_troll` -> `progression_end`)), `lich_scepters`, `full_mettle_alchemist`.
+  Frames (task when not listed): `goal` for the 11 `progress_*`, `beanstalk`, `giants`, `maze_map`, `quest_ram`,
+  `progression_end`; `challenge` for `arborist`, `chicken_jerky`, `break_glass_sword`, `experiment_115_115`,
+  `experiment_115_self_replenishing`, `fiery_set`, `full_mettle_alchemist`, `lich_scepters`, `mazebreaker`,
+  `naga_armors`, `ore_map`, `twilight_dinner`; hidden (9): `break_glass_sword`, `chicken_jerky`, `experiment_115_115`,
+  `experiment_115_self_replenishing`, `full_mettle_alchemist`, `kill_cicada`, `lich_scepters`, `ore_map`,
+  `uncraft_uncrafting_table`.
 - Triggers referenced by criteria: vanilla `inventory_changed`, `player_killed_entity`, `consume_item`,
   `item_used_on_block`, `recipe_crafted`, `location`, `tick` (the `tick` criteria with player predicates are the
   "has the previous advancement / conquered" checks), plus TF triggers owned by other units and fired through

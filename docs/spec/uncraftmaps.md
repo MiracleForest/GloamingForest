@@ -7,7 +7,9 @@ lists every id U13 owns with TF's registration and data; Appendix B the strings.
 ## 1. Scope
 
 - **Uncrafting table**: block `uncrafting_table` (+ item), menu type `twilightforest:uncrafting`, screen, recipe type /
-  serializer `twilightforest:uncrafting` (2 recipes: tipped arrows, written book), loot condition
+  serializer `twilightforest:uncrafting` (3 recipes: `uncrafting/tipped_arrow` 8 tipped arrows -> 8 arrows, cost 4;
+  `uncrafting/written_book` written book -> book, cost 0; `relinquish_keepsakes` keepsake casket -> skull chest,
+  cost 0; an input matches by item with count >= `input_count`), loot condition
   `uncrafting_table_enabled`, stat `uncrafting_table_interactions`, trigger `uncraft_item`, sound
   `block.twilightforest.uncrafting_table.activate`, tags `#banned_uncraftables`, `#banned_uncrafting_ingredients`,
   `#uncrafting_ignores_cost`, the ten `common.Uncrafting Table.*` config keys (section `uncraftmaps`), net channels
@@ -165,8 +167,8 @@ Slot indices / positions (GUI pixels, relative to the 176x166 frame):
 ## 5. Acceptance checklist (selftests `uncraftmaps.*`, dx 1300-1399)
 
 - Uncrafting an iron pickaxe gives 3 iron + 2 sticks with cost 3 (damageable parts) and marks broken parts on a damaged
-  one; banned items show nothing; config lists filter recipes; uncrafting recipes (tipped arrow x8 cost 4, written
-  book cost 0).
+  one; banned items show nothing; config lists filter recipes; uncrafting recipes (tipped arrow x8 -> 8 arrows cost
+  4, written book -> book cost 0, keepsake casket -> skull chest cost 0 via `relinquish_keepsakes`).
 - Recrafting cost formula with enchantments; enchantment transfer; XP requirement.
 - GUI screenshot vs `guigoblintinkering.png` (buttons, costs, ghost overlays).
 - Magic map centre snapping and biome colours from the data map; landmark icons with conquered state.
