@@ -734,7 +734,8 @@ GF_REGISTER_SELFTEST("item.effect_carrier", [](Context& ctx) -> ll::coro::CoroTa
     fx::internal::forget(*p);
     ctx.check(fx::amplifier(*p, "gf_test:fixture_frosted") == 2, "the state comes back from the tag");
     ctx.check(fx::internal::activeOf(*p).front().hidden.size() == 1, "with its hidden instance");
-    co_await ctx.ticks(12);
+    // the tag is rewritten once a second: the state read back may be up to 20 ticks old
+    co_await ctx.ticks(25);
     p = ll::service::getLevel()->getPlayer(uid);
     ctx.require(p != nullptr, "the player");
     ctx.check(fx::amplifier(*p, "gf_test:fixture_frosted") == 1, "the hidden level resumes when the stronger one ends");
