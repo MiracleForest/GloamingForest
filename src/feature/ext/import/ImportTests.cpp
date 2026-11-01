@@ -327,7 +327,9 @@ GF_REGISTER_SELFTEST("import.light", [](Context& ctx) {
 // Hardness and explosion resistance TF gives (written down by hand from TFBlocks.java and the block classes'
 // getExplosionResistance / getDestroyProgress overrides, independent of the generator), read back from the game's
 // block permutations. The game's units are calibrated on twilight_oak_planks (Java strength(2.0F, 3.0F)): every
-// other value must be the same multiple of TF's.
+// other value must be the same multiple of TF's. Measured on 1.26.51: the destroy speed is the seconds_to_destroy
+// value (-1 for destructible_by_mining false), the explosion resistance a fifth of explosion_resistance
+// (FLT_MAX / 5 for destructible_by_explosion false).
 GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
     constexpr double kUnbreakable    = -1; // destroyTime -1 / getDestroyProgress -1: minecraft:destructible_by_mining false
     constexpr double kIndestructible = -2; // resistance >= 3600000 or Float.MAX_VALUE: minecraft:destructible_by_explosion false
