@@ -15,6 +15,8 @@ env:
 
 jobs:
   build:
+    # a title or description edit changes no file: only the ownership job below reruns
+    if: github.event.action != 'edited'
     strategy:
       fail-fast: false
       matrix:
@@ -101,8 +103,21 @@ jobs:
           pwsh tools/ci/arr-guard.ps1 -CommittedOnly -Range $range
           if ($LASTEXITCODE) { exit 1 }
 
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ github.event.repository.name }}-${{ github.sha }}-${{ matrix.target_type }}-windows-x64
+          path: |
+            bin/${{ matrix.target_type }}/GloamingForest/
+
+  ownership:
+    if: github.event_name == 'pull_request'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the merge base with the target branch
+
       - name: Ownership
-        if: matrix.target_type == 'server' && github.event_name == 'pull_request'
         shell: pwsh
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
@@ -112,9 +127,3 @@ jobs:
           if ($env:PR_TITLE -notmatch '^([UFA]\d+):') { Write-Host "PR title must start with U<n>:/F<n>:/A<n>: (R25), got '$env:PR_TITLE'"; exit 1 }
           pwsh tools/ci/ownership.ps1 -Unit $Matches[1] -Base "origin/$env:BASE_REF"
           if ($LASTEXITCODE) { exit 1 }
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ${{ github.event.repository.name }}-${{ github.sha }}-${{ matrix.target_type }}-windows-x64
-          path: |
-            bin/${{ matrix.target_type }}/GloamingForest/
