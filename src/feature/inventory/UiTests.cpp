@@ -12,10 +12,12 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/item/HandSlot.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
 
@@ -65,7 +67,8 @@ GF_REGISTER_SELFTEST("combat.ui_loot_chest", [](Context& ctx) {
     ctx.require(gf::loot::placeContainer(region, bp, "minecraft:chest", 4, "gf_test:chests/fixture_chest", 20261102), "a loot chest beside the player");
     auto* actor = region.getBlockEntity(bp);
     ctx.require(actor && actor->getType() == BlockActorType::Chest, "the chest block actor");
-    static_cast<ChestBlockActor*>(actor)->openBy(*p);
+    // what a right-click does: the chest block's use opens the game's chest screen (and unpacks)
+    region.getBlock(bp).use(*p, bp, 1, HandSlot::Mainhand, std::nullopt);
     gf::log().info("combat ui: loot chest opened for {}", p->getRealName());
 });
 

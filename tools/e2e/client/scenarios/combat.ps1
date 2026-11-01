@@ -21,9 +21,20 @@ function Show-ContainerTest([string]$Test, [string]$Shot, [string]$Opened) {
     $r    = Invoke-SelfTest $Test
     if ($r.Fail -gt 0) { throw "$Test failed" }
     if ($Opened) { Wait-LogLine $Opened 20 -Since $mark | Out-Null }
+    if (Test-ClientTrace) {
+        # the client mod traces the top screen: a container / form / mod screen must come up
+        $line = Wait-LogLine 'client screen: (?!hud_screen|chat_screen)\S+' 20 -Since $mark
+        Write-Step "screen: $line"
+    } else {
+        Start-Sleep -Seconds 3 # vanilla client: no trace
+    }
     Start-Sleep -Seconds 2
     Save-Screenshot $Shot | Out-Null
+    $closed = Get-LogMark
     Close-Screen
+    if (Test-ClientTrace) {
+        try { Wait-LogLine 'client screen: hud_screen' 10 -Since $closed | Out-Null } catch { Write-Step "no hud screen after closing $Shot" }
+    }
     Start-Sleep -Seconds 1
 }
 
