@@ -67,8 +67,10 @@ Component (`HollowHillComponent`, translate exactly):
   - `radius = (2s + 1) * 8 - 6` and `hdiam = (2s + 1) * 16` are ints.
   - `distSq = dx*dx + dz*dz`, with `dx = (float)(x - cx) - 0.5f` (`getDistSqFromCenter`, float); `shortenedRadiusSq =
     radius * radius * 0.85f`.
-  - `ceilingY = Mth.ceil(Mth.cos(Mth.sqrt(distSq) / hdiam * Mth.PI) * (hdiam / 4f))` and `floorY =
-    Mth.floor((2s) - Mth.cos(dist / hdiam * Mth.PI) * (hdiam / 20f) + 1 + 0.25f)`. Both use the table cosine.
+  - `ceilingY = getWorldY(Mth.ceil(Mth.cos(Mth.sqrt(distSq) / hdiam * Mth.PI) * (hdiam / 4f)))` and `floorY =
+    getWorldY(Mth.floor((2s) - Mth.cos(dist / hdiam * Mth.PI) * (hdiam / 20f) + 1 + 0.25f))`, where `dist =
+    Mth.sqrt(distSq)` and `getWorldY` is the piece-relative to world y conversion of `StructurePiece` (F7 base). Both
+    use the table cosine.
   - Chest offset: `angle = rand.nextFloat() * Mth.TWO_PI`, then `x + Math.round(Mth.cos(angle) * Mth.SQRT_OF_TWO)`
     (likewise z with `Mth.sin`). Java's float `Math.round` returns the nearest int with ties toward positive
     infinity. C's `roundf` rounds ties away from zero, so it is not a substitute.

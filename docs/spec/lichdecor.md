@@ -171,11 +171,11 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
   <pos>`, `remove_particle <particle> <pos>`, `set_loot <loot_table> <pos>` (suggests loot tables) and `clear_loot
   <pos>`. Each returns 1 on a change, 0 otherwise.
 - Ownership conflict: owners.tsv (row `subcommand spawner U22`) and AGENTS.md R14 name the subcommand `spawner`, but
-  TF registers `sinister_spawner` (`SinisterSpawnerCommand.java:31`). This spec does not decide between them. It is
-  raised with the coordinator in [issue #5](https://github.com/MiracleForest/GloamingForest/issues/5), so that
-  F0/A8 can correct owners.tsv to `sinister_spawner`. The literal command players type must be `sinister_spawner`
-  for parity. U22 registers it with `GF_REGISTER_SUBCOMMAND` under the id that owners.tsv holds once the issue is
-  resolved, and does not add a `spawner` alias, because TF has none.
+  TF registers `sinister_spawner` (`SinisterSpawnerCommand.java:31`). For parity the command players type is
+  `/twilightforest sinister_spawner`. The owners id is raised with the coordinator in
+  [issue #5](https://github.com/MiracleForest/GloamingForest/issues/5), so that F0/A8 can rename the owners.tsv row
+  to `sinister_spawner`. Until then the row `spawner` is the ownership record for this one subcommand. U22 registers
+  only the `sinister_spawner` literal with `GF_REGISTER_SUBCOMMAND` and adds no `spawner` alias, because TF has none.
 
 ### 2.6 Skull chest
 
