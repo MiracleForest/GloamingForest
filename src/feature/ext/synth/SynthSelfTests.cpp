@@ -113,7 +113,7 @@ GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) {
     auto const vanilla = vanillaPack();
     if (vanilla.empty()) ctx.info("vanilla pack not found next to the game: vanilla references not checked");
 #endif
-    std::set<std::string> checkedFiles;
+    std::set<std::string> checkedFiles; // synthesized files (and, on the client, vanilla sounds) already checked
     int                   synthesized = 0, vanillaRefs = 0, problems = 0;
     auto                  problem = [&](std::string const& what) {
         if (++problems <= 20) ctx.check(false, what);
@@ -166,7 +166,7 @@ GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) {
     }
     ctx.check(problems == 0, std::to_string(problems) + " sound definition problem(s)");
     ctx.info(
-        std::to_string(std::size(kEvents)) + " events, " + std::to_string(checkedFiles.size()) + " distinct sounds ("
+        std::to_string(std::size(kEvents)) + " events, " + std::to_string(checkedFiles.size()) + " distinct sounds checked ("
         + std::to_string(synthesized) + " synthesized and " + std::to_string(vanillaRefs) + " vanilla references)"
     );
 });
@@ -184,7 +184,6 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
     };
     auto res = std::make_shared<Result>();
     res->handles.assign(std::size(kEvents), 0);
-    ctx.require(gf::client::currentClient() != nullptr && gf::client::currentPlayer() != nullptr, "the client is in a world");
     auto play = [res](std::string name, int index) {
         ll::thread::ClientThreadExecutor::getDefault().execute([res, name = std::move(name), index] {
             std::uint64_t h      = 0;

@@ -574,6 +574,10 @@ std::vector<double> layerSource(Json const& L, std::string const& type, Scope& s
         Json const& inner = resolvePatch(L["patch"], ctx.library);
         auto        sub   = renderPatchBuffer(inner, scope, L["params"], seed, ctx.rate, ctx.library, ctx.depth + 1, true);
         for (std::size_t i = 0; i < n && i < sub.size(); ++i) buf[i] = sub[i];
+        if (sub.size() > n) { // the layer ends before the nested patch: fade out instead of a click
+            std::size_t fn = std::min<std::size_t>(n, std::size_t(0.01 * rate));
+            for (std::size_t i = 0; i < fn; ++i) buf[n - 1 - i] *= double(i) / double(fn);
+        }
     } else {
         throw PatchError("unknown layer type \"" + type + "\" (osc, noise, fm, pluck, modal, grains, patch)");
     }
@@ -619,8 +623,9 @@ void applyFormant(std::vector<double>& buf, Json const& F, Scope& scope, double 
     double qmul  = evalKey(F, "q", scope, 1);
     double mix   = evalKey(F, "mix", scope, 1);
     std::array<dsp::Svf, 3> bp;
+    std::array<double, 3>   gains{};
     for (std::size_t i = 0; i < buf.size(); ++i) {
-        if (i % 32 == 0) {
+        if (i % 32 == 0) { // coefficients and gains follow the vowel every 32 samples
             double v  = math::clamp(vow.at(double(i) / rate, len), 0.0, 4.0);
             int    a  = int(math::floor(v));
             double x  = v - a;
@@ -630,13 +635,11 @@ void applyFormant(std::vector<double>& buf, Json const& F, Scope& scope, double 
                 double f  = (fa[std::size_t(k)].f + (fb[std::size_t(k)].f - fa[std::size_t(k)].f) * x) * shift;
                 double bw = (fa[std::size_t(k)].bw + (fb[std::size_t(k)].bw - fa[std::size_t(k)].bw) * x) * shift;
                 bp[std::size_t(k)].setup(dsp::FilterType::Bandpass, f, math::clamp(f / bw * qmul, 0.5, 40), 0, rate);
+                gains[std::size_t(k)] = math::dbToGain(fa[std::size_t(k)].gainDb + (fb[std::size_t(k)].gainDb - fa[std::size_t(k)].gainDb) * x);
             }
         }
-        double v  = math::clamp(vow.at(double(i) / rate, len), 0.0, 4.0);
-        int    a  = int(math::floor(v));
-        auto   fa = vowel(a);
-        double s  = 0;
-        for (int k = 0; k < 3; ++k) s += bp[std::size_t(k)].process(buf[i]) * math::dbToGain(fa[std::size_t(k)].gainDb);
+        double s = 0;
+        for (int k = 0; k < 3; ++k) s += bp[std::size_t(k)].process(buf[i]) * gains[std::size_t(k)];
         buf[i] = mix * s * 2.0 + (1.0 - mix) * buf[i];
     }
 }

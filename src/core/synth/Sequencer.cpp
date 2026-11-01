@@ -116,7 +116,7 @@ std::vector<float> renderTrack(Json const& track, int sampleRate, PatchLibrary c
         Json const* inst = instruments.find(instName);
         if (!inst) throw PatchError("unknown instrument \"" + instName + "\"");
         auto        durSamples = std::int64_t(math::round(dur * rate));
-        std::string key        = instName + "|" + std::to_string(note) + "|" + std::to_string(int(math::round(vel * 1000)))
+        std::string key        = instName + "|" + std::to_string(note) + "|" + Json(vel).dump()
                         + "|" + std::to_string(durSamples);
         auto it = cache.find(key);
         if (it != cache.end()) return it->second;

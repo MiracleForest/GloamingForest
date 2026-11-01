@@ -225,7 +225,7 @@ function New-Job([string]$u, [string]$file, $spec, [string]$outPath) {
         $job.kind    = 'patch'
         $job.patch   = $patch
         $job.params  = Get-Prop $spec 'params' ([pscustomobject]@{})
-        $job.seed    = [long](Get-Prop $spec 'seed' (Get-NameSeed $name))
+        $job.seed    = [long](Get-Prop $spec 'seed' (Get-NameSeed $file)) # by file name: copies in two units match
         $job.rate    = [int](Get-Prop $spec 'rate' 44100)
         $job.quality = [double](Get-Prop $spec 'quality' 0.4)
     }
