@@ -81,9 +81,25 @@ pot loot: flower pot + sapling (`twilightforest:blocks/potted_*`).
 Blocks `twilightforest:time_log_core` ("Timewood Clock"), `twilightforest:transformation_log_core` ("Heart of
 Transformation"), `twilightforest:mining_log_core` ("Minewood Core"), `twilightforest:sorting_log_core` ("Sortingwood
 Engine"): rotated pillars (`axis`) with `active` (bool), strength 2.0, wood sound, light 15 when active, map colours
-of their wood. `onPlace` schedules a tick in 20 ticks. Using the block with an empty hand toggles `active` (and
-schedules a tick); when the core is disabled by config it is set inactive and the player sees
-`misc.twilightforest.core_disabled` (red, action bar). Every 20 ticks while active and enabled: play the core sound,
+of their wood. `onPlace` schedules a tick in 20 ticks.
+
+Using the block toggles `active` (activating also schedules a tick). TF implements this in `useWithoutItem`, which in
+1.21 runs when no item interaction consumes the use. It is not limited to an empty hand:
+- The block does not override `useItemOn`, so `BlockBehaviour.useItemOn` returns `PASS_TO_DEFAULT_BLOCK_INTERACTION`
+  for any held item, and `useWithoutItem` runs for the **main hand** with whatever it holds.
+- It is skipped only when the player is sneaking while holding an item in either hand, because secondary use bypasses
+  block interactions.
+- `useWithoutItem` always returns SUCCESS (its PASS branch is unreachable). The held item's own `useOn` therefore never
+  runs on a core: no block placement against it, no axe stripping. The off hand is never processed.
+- It runs on both logical sides (no `isClientSide` check).
+
+When the core is disabled by config, it is set inactive and the player gets the action-bar message
+`misc.twilightforest.core_disabled` ("%s is disabled via config"), whose argument is the block's name component
+(`this.getName()`, e.g. "Timewood Clock"), styled RED.
+
+Bedrock: register `interactions::onUseOn({.block = <core id>})` with no item filter and return `Consume`, so the
+held item is not used. Pass when the player is sneaking with an item in either hand. Debounce the repeated use-on
+events (`firstEvent`). Every 20 ticks while active and enabled: play the core sound,
 perform the effect, reschedule. Loot: the matching plain log (e.g. `twilightforest:blocks/mining_log_core` drops
 `twilightforest:mining_log`, see appendix).
 
@@ -174,15 +190,17 @@ Placed features use TF placement modifiers `twilightforest:no_structure` (avoid 
 
 Lang keys owned (47): every block / item name above (e.g. "Sickly Twilight Oak Sapling", "Robust Twilight Oak
 Sapling", "Timewood Clock", "Heart of Transformation", "Minewood Core", "Sortingwood Engine", "Leaves of
-Transformation"), `misc.twilightforest.core_disabled`, the two core subtitles and the four config keys
+Transformation"), `misc.twilightforest.core_disabled` ("%s is disabled via config", `%s` = the core block's name), the
+two core subtitles and the four config keys
 (`config.twilightforest.time_range` ... with tooltips).
 
 ## 9. Selftests (`trees.*`, dx 300-399)
 
 `trees.sapling_growers` (each sapling grows its configured feature on bone meal), `trees.mega_2x2`,
 `trees.time_core_ticks` (a crop grows faster), `trees.transformation_core_biome`, `trees.mining_core_magnet`,
-`trees.sorting_core_moves_item`, `trees.core_disabled_config`, `trees.leaf_decay`, `trees.leaf_loot`,
-`trees.snow_under_trees`, golden volume hashes of seeded `tree/canopy_tree`, `tree/mega_canopy_tree`,
+`trees.sorting_core_moves_item`, `trees.core_disabled_config` (message argument is the core's name),
+`trees.core_toggle_held_item` (using a core while holding a block toggles it and places nothing), `trees.leaf_decay`,
+`trees.leaf_loot`, `trees.snow_under_trees`, golden volume hashes of seeded `tree/canopy_tree`, `tree/mega_canopy_tree`,
 `tree/darkwood_tree` and `tree/mangrove_tree` placements.
 
 ## Appendix: TF data (compact, generated from TF 4.8 data JSON)
