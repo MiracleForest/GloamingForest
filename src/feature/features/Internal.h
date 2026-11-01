@@ -4,6 +4,7 @@
 // one-warning-per-id log. Not a contract: units use feature/features/Features.h and
 // feature/ext/worldgen/FeatureKit.h.
 
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
@@ -87,6 +88,7 @@ struct Data {
     std::map<std::string, Json> carvers;    ///< configured_carver id -> JSON
     std::map<std::string, std::unordered_set<std::string>> biomeFeatureSets; ///< biome id -> its placed feature ids
     std::map<std::string, std::vector<std::vector<std::string>>> biomeSteps;   ///< biome id -> placed feature ids per step
+    std::uint64_t generation = 0; ///< increases with every (re)load (cache keys)
 };
 /// The imported worldgen data of every namespace under <mod>/data (loaded once), plus the vanilla
 /// features TF's biomes reference.
@@ -132,5 +134,8 @@ void clearBlockCache();
 [[nodiscard]] Block const* blockFromJson(Json const& json);
 /// Java property value of `block` ("axis" -> "y"), nullopt when absent.
 [[nodiscard]] std::optional<std::string> javaProperty(Block const& block, std::string_view name);
+/// The members of block tag `tag` in the imported data (<mod>/data/<ns>/tags/block), cached per
+/// loaded data; empty when the tag has no file.
+[[nodiscard]] std::shared_ptr<std::unordered_set<std::string> const> dataBlockTag(std::string const& tag);
 
 } // namespace gf::features::detail

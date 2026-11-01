@@ -10,8 +10,8 @@
 //
 // Together with the vanilla feature types and placement modifiers of Minecraft 1.21.1 that the
 // imported worldgen JSON uses (behaviour-compatible implementations, F5): random_selector,
-// simple_random_selector, random_boolean_selector, simple_block, block_column, ore, random_patch,
-// flower, no_op, disk, freeze_top_layer, vines, seagrass, forest_rock; count,
+// simple_random_selector, random_boolean_selector, simple_block, block_column, ore, scattered_ore,
+// random_patch, flower, no_op, disk, freeze_top_layer, vines, seagrass, forest_rock; count,
 // count_on_every_layer, rarity_filter, in_square, heightmap, height_range, biome,
 // block_predicate_filter, environment_scan, surface_water_depth_filter,
 // surface_relative_threshold_filter, random_offset, noise_based_count, noise_threshold_count.
@@ -22,7 +22,9 @@
 #include <set>
 
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BrightnessPair.h"
 #include "mc/world/level/biome/Biome.h"
 
 #include "core/jrand/JavaOrder.h"
@@ -55,11 +57,36 @@ BlockPos stepOf(std::string const& d) {
 
 bool isEmptyBlock(Region& region, BlockPos const& p) { return region.getBlock(p).isAir(); }
 
-/// DoublePlantBlock / TallSeagrass: the Java id has an upper half.
+/// A DoublePlantBlock (with its subclasses TallFlowerBlock, TallSeagrassBlock, PitcherCropBlock,
+/// SmallDripleafBlock): the Java id has an upper half.
 bool isDoublePlant(std::string const& javaId) {
-    static std::set<std::string> const ids{"minecraft:tall_grass", "minecraft:large_fern", "minecraft:sunflower", "minecraft:lilac",
-                                           "minecraft:rose_bush", "minecraft:peony", "minecraft:pitcher_plant", "minecraft:small_dripleaf"};
+    static std::set<std::string> const ids{"minecraft:tall_grass", "minecraft:large_fern",   "minecraft:sunflower",      "minecraft:lilac",
+                                           "minecraft:rose_bush",  "minecraft:peony",        "minecraft:pitcher_plant",  "minecraft:small_dripleaf",
+                                           "minecraft:tall_seagrass", "minecraft:pitcher_crop"};
     return ids.contains(javaId);
+}
+
+/// Java's Math.round(float): the closest int, ties towards positive infinity.
+int javaRound(float a) { return static_cast<int>(std::floor(static_cast<double>(a) + 0.5)); }
+
+/// OreFeature#shouldSkipAirCheck.
+bool shouldSkipAirCheck(RandomSource& random, float chance) {
+    if (chance <= 0.0F) return true;
+    return chance >= 1.0F ? false : random.nextFloat() >= chance;
+}
+
+/// OreFeature#isAdjacentToAir (Direction.values(): down, up, north, south, west, east).
+bool isAdjacentToAir(Region& region, BlockPos const& p) {
+    static int const d[6][3] = {{0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}, {-1, 0, 0}, {1, 0, 0}};
+    for (auto const& s : d)
+        if (region.getBlock(at(p, s[0], s[1], s[2])).isAir()) return true;
+    return false;
+}
+
+/// OreFeature#canPlaceOre for one target of the configuration.
+bool canPlaceOre(Region& region, Block const& state, RandomSource& random, float discard, Json const& target, BlockPos const& pos) {
+    if (!testRule(fieldObj(target, "target"), state, random)) return false;
+    return shouldSkipAirCheck(random, discard) ? true : !isAdjacentToAir(region, pos);
 }
 
 // ---- features --------------------------------------------------------------------------------------
@@ -223,12 +250,6 @@ bool ore(FeatureContext const& c) {
             }
         }
     }
-    auto adjacentToAir = [&](BlockPos const& p) {
-        static int const d[6][3] = {{0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}, {-1, 0, 0}, {1, 0, 0}};
-        for (auto const& s : d)
-            if (c.region.getBlock(at(p, s[0], s[1], s[2])).isAir()) return true;
-        return false;
-    };
     for (int j4 = 0; j4 < size; ++j4) {
         double d9 = A(j4 * 4 + 3);
         if (d9 < 0.0) continue;
@@ -248,16 +269,19 @@ bool ore(FeatureContext const& c) {
                 for (int k2 = i1; k2 <= l1; ++k2) {
                     double d7 = (static_cast<double>(k2) + 0.5 - d15) / d9;
                     if (!(d5 * d5 + d6 * d6 + d7 * d7 < 1.0) || j2 < c.region.minY() || j2 >= c.region.maxY()) continue;
+                    // Java's BitSet grows: indices past width * height * width (the far side of a
+                    // large vein) are kept, not dropped; the loop bounds never give a negative one
                     int l2 = i2 - x + (j2 - y) * width + (k2 - z) * width * height;
-                    if (l2 < 0 || static_cast<std::size_t>(l2) >= bits.size() || bits[static_cast<std::size_t>(l2)]) continue;
-                    bits[static_cast<std::size_t>(l2)] = true;
+                    if (l2 < 0) continue;
+                    auto bit = static_cast<std::size_t>(l2);
+                    if (bit >= bits.size()) bits.resize(bit + 1);
+                    if (bits[bit]) continue;
+                    bits[bit] = true;
                     BlockPos m{i2, j2, k2};
-                    if (!c.region.isInside(i2, k2)) continue;
+                    if (!c.region.isInside(i2, k2)) continue; // WorldGenRegion#ensureCanWrite
                     Block const& current = c.region.getBlock(m);
                     for (auto const& target : targets) {
-                        if (!testRule(fieldObj(target, "target"), current, random)) continue;
-                        bool skipAir = discard <= 0.0F ? true : (discard >= 1.0F ? false : random.nextFloat() >= discard);
-                        if (!skipAir && adjacentToAir(m)) continue;
+                        if (!canPlaceOre(c.region, current, random, discard, target, m)) continue;
                         if (auto const* s = javaState(field(target, "state"))) {
                             c.region.setBlock(m, *s, 2);
                             ++placed;
@@ -269,6 +293,37 @@ bool ore(FeatureContext const& c) {
         }
     }
     return placed > 0;
+}
+
+/// ScatteredOreFeature: nextInt(size + 1) single blocks around the origin, each offset per axis by
+/// round((nextFloat() - nextFloat()) * min(j, 7)).
+bool scatteredOre(FeatureContext const& c) {
+    auto&       random  = c.random;
+    int         size    = c.config.value("size", 0);
+    float       discard = c.config.value("discard_chance_on_air_exposure", 0.0F);
+    auto const& targets = fieldArr(c.config, "targets");
+    int         i       = random.nextInt(size + 1);
+    for (int j = 0; j < i; ++j) {
+        // offsetTargetPos: x, y, z in that order (getRandomPlacementInOneAxisRelativeToOrigin)
+        int  range = std::min(j, 7);
+        auto axis  = [&] {
+            float a = random.nextFloat();
+            float b = random.nextFloat();
+            return javaRound((a - b) * static_cast<float>(range));
+        };
+        int         ox = axis();
+        int         oy = axis();
+        int         oz = axis();
+        BlockPos    m  = at(c.origin, ox, oy, oz);
+        Block const& state = c.region.getBlock(m);
+        for (auto const& target : targets) {
+            if (canPlaceOre(c.region, state, random, discard, target, m)) {
+                if (auto const* s = javaState(field(target, "state"))) c.region.setBlock(m, *s, 2);
+                break;
+            }
+        }
+    }
+    return true;
 }
 
 bool disk(FeatureContext const& c) {
@@ -298,9 +353,8 @@ bool disk(FeatureContext const& c) {
     return flag;
 }
 
-/// Biome#getTemperature (height adjusted) from the biome's imported JSON or the game's biome.
-float biomeTemperature(Region& region, BlockPos const& pos) {
-    auto        id = region.biome(pos);
+/// Biome#getTemperature(pos) (height adjusted) of biome `id`, from its imported JSON.
+float biomeTemperature(std::string const& id, BlockPos const& pos) {
     float       base = 0.8F;
     auto const& biomes = data().biomes;
     if (auto it = biomes.find(id); it != biomes.end()) {
@@ -321,6 +375,21 @@ float biomeTemperature(Region& region, BlockPos const& pos) {
     return base;
 }
 
+/// LevelReader#getBrightness(LightLayer.BLOCK, pos): the engine's block light through the region's
+/// BlockSource (0 for in-memory regions; during generation, as in Java, nothing is lit yet).
+int blockLight(Region& region, BlockPos const& pos) {
+    if (auto* src = blockSource(region)) return static_cast<int>(src->getBrightnessPair(pos).block->mValue);
+    return 0;
+}
+
+/// A water source block (Java: the fluid is Fluids.WATER and the block a LiquidBlock, so neither
+/// flowing water nor a waterlogged block): Bedrock water or flowing water at depth 0.
+bool isWaterSource(Block const& block) {
+    if (!isWater(block)) return false;
+    auto depth = javaProperty(block, "liquid_depth");
+    return !depth || *depth == "0";
+}
+
 bool freezeTopLayer(FeatureContext const& c) {
     static Block const* ice  = javaBlock("minecraft:ice");
     static Block const* snow = javaBlock("minecraft:snow");
@@ -330,11 +399,15 @@ bool freezeTopLayer(FeatureContext const& c) {
             int      i1 = c.region.height(H::MotionBlocking, k, l);
             BlockPos m{k, i1, l};
             BlockPos m1{k, i1 - 1, l};
-            // Biome#shouldFreeze(level, m1) / #shouldSnow(level, m): cold enough (< 0.15) at the position
-            if (ice && biomeTemperature(c.region, m1) < 0.15F && m1.y >= c.region.minY() && m1.y < c.region.maxY()
-                && c.region.getBlock(m1).getTypeName() == "minecraft:water")
+            // the biome of the top position m decides both (its temperature taken at m1 and m)
+            auto biome = c.region.biome(m);
+            // Biome#shouldFreeze(level, m1, false)
+            if (ice && biomeTemperature(biome, m1) < 0.15F && m1.y >= c.region.minY() && m1.y < c.region.maxY() && blockLight(c.region, m1) < 10
+                && isWaterSource(c.region.getBlock(m1)))
                 c.region.setBlock(m1, *ice, 2);
-            if (snow && biomeTemperature(c.region, m) < 0.15F && m.y >= c.region.minY() && m.y < c.region.maxY()) {
+            // Biome#shouldSnow(level, m); Java then sets the block below snowy, a state Bedrock's
+            // grass / podzol / mycelium do not have (they render snowy from the snow above)
+            if (snow && biomeTemperature(biome, m) < 0.15F && m.y >= c.region.minY() && m.y < c.region.maxY() && blockLight(c.region, m) < 10) {
                 auto const& here = c.region.getBlock(m);
                 if ((here.isAir() || javaId(here) == "minecraft:snow") && canSurvive(c.region, m, *snow)) c.region.setBlock(m, *snow, 2);
             }
@@ -495,7 +568,7 @@ void registerVanillaFeatures() {
     registerType("minecraft:random_boolean_selector", randomBooleanSelector);
     registerType("minecraft:no_op", [](FeatureContext const&) { return true; });
     registerType("minecraft:ore", ore);
-    registerType("minecraft:scattered_ore", ore);
+    registerType("minecraft:scattered_ore", scatteredOre);
     registerType("minecraft:disk", disk);
     registerType("minecraft:freeze_top_layer", freezeTopLayer);
     registerType("minecraft:vines", vines);

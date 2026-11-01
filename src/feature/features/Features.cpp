@@ -93,7 +93,9 @@ std::shared_ptr<Data const>& dataPtr() {
 }
 
 std::shared_ptr<Data const> loadData() {
+    static std::atomic<std::uint64_t> generations{0};
     auto        d    = std::make_shared<Data>();
+    d->generation    = ++generations;
     auto const& v    = vanillaFeatures();
     for (auto const& [id, j] : v["configured"].items()) d->configured[id] = j;
     for (auto const& [id, j] : v["placed"].items()) d->placed[id] = j;

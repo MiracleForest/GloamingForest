@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <filesystem>
+#include <fstream>
+#include <memory>
 #include <set>
 #include <unordered_map>
 
@@ -17,6 +20,7 @@
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
+#include "mod/Main.h"
 
 namespace gf::features {
 
@@ -357,7 +361,11 @@ bool hasTag(Block const& block, std::string_view tagIn) {
     std::string tag = normalizeId(std::string(tagIn));
     std::string id  = javaId(block);
     if (auto b = builtinTag(tag, id); b && *b) return true;
-    return tags::has(tags::Registry::Block, tag, id);
+    if (tags::has(tags::Registry::Block, tag, id)) return true;
+    // the imported tag JSON itself (TF's members of its own and of vanilla tags), so world
+    // generation sees them whatever gf::tags answers
+    auto members = detail::dataBlockTag(tag);
+    return members && members->contains(id);
 }
 
 bool canSurvive(Region& region, BlockPos const& pos, Block const& block) {
@@ -372,6 +380,64 @@ bool canSurvive(Region& region, BlockPos const& pos, Block const& block) {
 } // namespace kit
 
 namespace detail {
+
+namespace {
+
+struct DataTags {
+    std::mutex                                                                         mutex;
+    std::uint64_t                                                                      generation = 0;
+    std::unordered_map<std::string, std::shared_ptr<std::unordered_set<std::string> const>> sets;
+};
+DataTags& dataTags() {
+    static DataTags t;
+    return t;
+}
+
+/// <mod>/data/<ns>/tags/block/<path>.json of `tag` ("values": ids, {"id", "required"} objects and
+/// "#tag" references, expanded recursively).
+void readTag(std::filesystem::path const& root, std::string const& tag, std::unordered_set<std::string>& out, std::set<std::string>& visiting) {
+    if (!visiting.insert(tag).second) return; // a reference cycle
+    auto colon = tag.find(':');
+    auto file  = root / tag.substr(0, colon) / "tags" / "block" / (tag.substr(colon + 1) + ".json");
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(file, ec)) return;
+    Json doc;
+    try {
+        std::ifstream in(file);
+        doc = Json::parse(in);
+    } catch (std::exception const& e) {
+        warnOnce("tag file " + tag, "cannot read block tag " + tag + ": " + e.what());
+        return;
+    }
+    for (auto const& v : fieldArr(doc, "values")) {
+        std::string entry = v.is_string() ? v.get<std::string>() : (v.is_object() ? v.value("id", std::string()) : std::string());
+        if (entry.empty()) continue;
+        if (entry[0] == '#') readTag(root, normalizeId(entry), out, visiting);
+        else out.insert(normalizeId(entry));
+    }
+}
+
+} // namespace
+
+std::shared_ptr<std::unordered_set<std::string> const> dataBlockTag(std::string const& tag) {
+    auto&           t = dataTags();
+    auto            generation = data().generation;
+    std::lock_guard lock(t.mutex);
+    if (t.generation != generation) {
+        t.sets.clear();
+        t.generation = generation;
+    }
+    if (auto it = t.sets.find(tag); it != t.sets.end()) return it->second;
+    auto set = std::make_shared<std::unordered_set<std::string>>();
+    try {
+        auto                  root = Mod::getInstance().getSelf().getModDir() / "data";
+        std::set<std::string> visiting;
+        readTag(root, tag, *set, visiting);
+    } catch (std::exception const&) {
+        // no mod directory (tests): no data tags
+    }
+    return t.sets.emplace(tag, std::move(set)).first->second;
+}
 
 void clearBlockCache() {
     std::lock_guard lock(cacheMutex());

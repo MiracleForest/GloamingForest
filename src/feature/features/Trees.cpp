@@ -489,6 +489,10 @@ bool treeFeature(FeatureContext const& c) {
         warnOnce("foliage_placer " + fpType, "unknown foliage placer " + fpType);
         return false;
     }
+    if (rootConfig && !rootPlacer) {
+        auto rt = normalizeId(rootConfig->value("type", std::string()));
+        warnOnce("root_placer " + rt, "unknown root placer " + rt + " (the tree grows without roots)");
+    }
 
     // TrunkPlacer#getTreeHeight, FoliagePlacer#foliageHeight / #foliageRadius
     int i = tp.value("base_height", 0) + c.random.nextInt(tp.value("height_rand_a", 0) + 1) + c.random.nextInt(tp.value("height_rand_b", 0) + 1);
