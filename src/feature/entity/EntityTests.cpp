@@ -1,8 +1,11 @@
 // Selftests of F8's "entity" contract (rule R12: prefix entity.*, dx 5800..5899) and the spike S4
 // probes: behaviour dispatch, persisted data, entity properties read back through Molang, the
-// goal selector, linked multipart parts (follow, damage routed to the parent, never saved) and the
-// hostile mount. Fixtures: gf_test:boss and gf_test:boss_part (assets/test), vanilla mobs.
+// goal selector and TF's goals at work, the pathfinding block rules of the random positions,
+// linked multipart parts (follow, damage routed to the parent, never saved) and the hostile mount.
+// Fixtures: gf_test:boss (behaviour and boss only while a FixtureScope lives) and gf_test:boss_part
+// (assets/test), vanilla mobs.
 
+#include <algorithm>
 #include <cmath>
 
 #include "ll/api/chrono/GameChrono.h"
@@ -13,7 +16,12 @@
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/nbt/CompoundTag.h"
+#include "mc/deps/nbt/StringTag.h"
+#include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
+#include "mc/deps/vanilla_components/Hitbox.h"
+#include "mc/deps/vanilla_components/HitboxComponent.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
@@ -28,11 +36,16 @@
 #include "mc/world/phys/AABB.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 
+#include "core/Stub.h"
+#include "core/jrand/JRand.h"
+#include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
 #include "feature/entity/Entity.h"
+#include "feature/entity/EntityFixture.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::feature::entity::tests {
@@ -40,56 +53,7 @@ namespace gf::feature::entity::tests {
 using gf::selftest::Context;
 namespace ge = gf::entity;
 
-/// What the fixture behaviour of gf_test:boss saw.
-struct Probe {
-    int         spawns = 0, ticks = 0, aiSteps = 0, dies = 0, interacts = 0, loads = 0;
-    std::string lastDieType;
-};
-Probe& probe() {
-    static Probe p;
-    return p;
-}
-
 namespace {
-
-/// The fixture behaviour (gf_test:* ids only exist in development builds).
-struct FixtureRegistration {
-    FixtureRegistration() {
-        ge::registerType(
-            "gf_test:boss",
-            {
-                .onSpawn =
-                    [](Actor& a) {
-                        probe().spawns++;
-                        // `/summon gf_test:boss gf_parts`: three linked parts (client e2e screenshots)
-                        if (a.getNameTag() == "gf_parts")
-                            if (auto* m = asMob(a)) {
-                                ge::addPart(*m, "left", {0.8f, 0.8f}, [](Mob&) { return Vec3{2.0f, 0.5f, 0.0f}; });
-                                ge::addPart(*m, "right", {0.8f, 0.8f}, [](Mob&) { return Vec3{-2.0f, 0.5f, 0.0f}; });
-                                ge::addPart(*m, "head", {1.0f, 1.0f}, [](Mob&) { return Vec3{0.0f, 2.5f, 0.0f}; });
-                            }
-                    },
-                .tick    = [](Actor&) { probe().ticks++; },
-                .aiStep  = [](Actor&) { probe().aiSteps++; },
-                .die =
-                    [](Actor&, std::string const& type, Actor*) {
-                        probe().dies++;
-                        probe().lastDieType = type;
-                    },
-                .save = [](Actor&, ge::Json& out) { out["probe"] = "saved"; },
-                .load = [](Actor&, ge::Json const& in) {
-                    if (in.value("probe", "") == "saved") probe().loads++;
-                },
-                .interact =
-                    [](Actor&, Player&) {
-                        probe().interacts++;
-                        return true;
-                    },
-            }
-        );
-    }
-};
-FixtureRegistration const fixtureRegistration;
 
 using Difficulty = SharedTypes::Legacy::Difficulty;
 
@@ -102,16 +66,19 @@ struct DifficultyScope {
             level->setDifficulty(d);
         }
     }
+    void set(Difficulty d) {
+        if (auto level = ll::service::getLevel()) level->setDifficulty(d);
+    }
     ~DifficultyScope() {
         if (auto level = ll::service::getLevel()) level->setDifficulty(previous);
     }
 };
 
-Mob* spawnMob(core::GlobalPos const& at, std::string const& id, float dy = 0.0f) {
+Mob* spawnMob(core::GlobalPos const& at, std::string const& id, float dy = 0.0f, float dx = 0.5f, float dz = 0.5f) {
     auto* region = game::regionOf(at.dim);
     auto  level  = ll::service::getLevel();
     if (!region || !level) return nullptr;
-    return level->getSpawner().spawnMob(*region, ActorDefinitionIdentifier(id), nullptr, Vec3{at.x + 0.5f, at.y + dy, at.z + 0.5f}, false, false, false);
+    return level->getSpawner().spawnMob(*region, ActorDefinitionIdentifier(id), nullptr, Vec3{at.x + dx, at.y + dy, at.z + dz}, false, false, false);
 }
 
 Mob* mobById(std::int64_t uid) {
@@ -132,6 +99,12 @@ std::optional<std::variant<int, float, bool, std::string>> propertyOf(Actor& a, 
 double dist(Vec3 const& a, Vec3 const& b) {
     double dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
     return std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+/// Whether F10's combat contract is still F0's stub (the damage routing then has nothing to run on).
+bool combatStubbed() {
+    auto calls = core::stubCalls();
+    return std::find(calls.begin(), calls.end(), "combat.onIncoming") != calls.end();
 }
 
 /// A goal with scripted canUse (selector semantics).
@@ -166,9 +139,27 @@ GF_REGISTER_SELFTEST("entity.java_random", [](Context& ctx) {
         inRange &= v >= 0 && v < 10 && f >= 0.0f && f < 1.0f;
     }
     ctx.check(inRange, "nextInt(bound) and nextFloat stay in range");
+    // a RandomSource of the W0 contract: fork / forkPositional as LegacyRandomSource
+    JavaRandom f1(99), f2(99);
+    auto       k1 = f1.fork(), k2 = f2.fork();
+    ctx.check(k1->nextLong() == k2->nextLong(), "fork() is deterministic");
+    auto p1 = JavaRandom(5).forkPositional(), p2 = JavaRandom(5).forkPositional();
+    ctx.check(p1->at(1, 2, 3)->nextInt() == p2->at(1, 2, 3)->nextInt() && p1->fromHashOf("a")->nextInt() == p2->fromHashOf("a")->nextInt(), "forkPositional() is deterministic");
+    // once F5's LegacyRandom is in (main still has F0's stub), both must agree bit for bit
+    core::jrand::LegacyRandom legacy(0);
+    if (legacy.nextInt() == -1155484576) {
+        core::jrand::LegacyRandom l(1234);
+        JavaRandom                j(1234);
+        bool                      agree = true;
+        for (int i = 0; i < 100; ++i) agree &= l.nextInt(97) == j.nextInt(97) && l.nextDouble() == j.nextDouble() && l.nextLong() == j.nextLong();
+        ctx.check(agree, "JavaRandom matches gf::core::jrand::LegacyRandom");
+    } else {
+        ctx.info("gf::core::jrand::LegacyRandom is still a stub: nothing to compare");
+    }
 });
 
 GF_REGISTER_SELFTEST("entity.behaviour", [](Context& ctx) -> ll::coro::CoroTask<> {
+    FixtureScope    fixture;
     DifficultyScope easy(Difficulty::Easy);
     auto            box = co_await ctx.flatArea(5800, 8);
     auto            at  = ctx.testPos(5802, 2);
@@ -188,6 +179,16 @@ GF_REGISTER_SELFTEST("entity.behaviour", [](Context& ctx) -> ll::coro::CoroTask<
     CompoundTag tag;
     ctx.check(mob->save(tag), "the actor saves");
     ctx.check(tag.contains("GloamingForest"), "the save tag carries the GloamingForest document");
+    auto saved = [&](CompoundTag const& t) {
+        if (!t.contains("GloamingForest")) return ge::Json();
+        auto j = ge::Json::parse(std::string(t["GloamingForest"].get<StringTag>()), nullptr, false);
+        return j.is_object() && j.contains("entity:save") ? j["entity:save"] : ge::Json();
+    };
+    ctx.check(saved(tag).value("probe", "") == "saved", "Behaviour::save writes its document");
+    // a later save with nothing to save drops the earlier one (no stale load after a reload)
+    ge::data(*mob, "probe_skip_save") = true;
+    CompoundTag again;
+    ctx.check(mob->save(again) && saved(again).is_null(), "an empty Behaviour::save erases the previous save");
     // EnforcedHomePoint
     ge::setHome(*mob, at, 20);
     auto h = ge::home(*mob);
@@ -207,10 +208,21 @@ GF_REGISTER_SELFTEST("entity.behaviour", [](Context& ctx) -> ll::coro::CoroTask<
         ctx.check(gf::interactions::dispatchInteract(c) == gf::interactions::Result::Consume, "the interaction was consumed");
     }
     ctx.check(probe().interacts == 1, "Behaviour::interact ran on a right-click (" + std::to_string(probe().interacts) + ")");
-    // death
+    // a die that leaves the mob alive (gf::death::onLethal kept it) dispatches nothing
+    if ((mob = mobById(uid))) {
+        ActorDamageSource source(SharedTypes::Legacy::ActorDamageCause::Override, "");
+        dispatchDieForTest(*mob, source);
+    }
+    ctx.check(probe().dies == 0, "no Behaviour::die for a mob that is still alive");
+    // death, once
     if ((mob = mobById(uid))) mob->kill();
     co_await ctx.ticks(2);
     ctx.check(probe().dies == 1, "Behaviour::die ran (" + std::to_string(probe().dies) + ", " + probe().lastDieType + ")");
+    if ((mob = mobById(uid))) {
+        ActorDamageSource source(SharedTypes::Legacy::ActorDamageCause::Override, "");
+        dispatchDieForTest(*mob, source);
+        ctx.check(probe().dies == 1, "a second die of the same death dispatches nothing");
+    }
     co_await ctx.ticks(25);
     removeActor(uid);
     (void)box;
@@ -241,6 +253,23 @@ GF_REGISTER_SELFTEST("entity.goals", [](Context& ctx) -> ll::coro::CoroTask<> {
     high->usable = true;
     co_await ctx.ticks(4);
     ctx.check(low->stops == 1 && high->starts == 2, "the priority 1 goal interrupts the priority 2 goal again");
+    // GoalSelector#disabledFlags (a controlling mob passenger): goals with the flag stop / wait
+    {
+        GoalSelector sel;
+        auto         move = std::make_shared<ScriptGoal>(ge::Goal::Move);
+        auto         look = std::make_shared<ScriptGoal>(ge::Goal::Look);
+        sel.add(1, move);
+        sel.add(2, look);
+        sel.tick(0);
+        ctx.check(move->starts == 1 && look->starts == 1, "both goals run without disabled flags");
+        sel.tick(ge::Goal::Move);
+        ctx.check(move->stops == 1 && look->stops == 0, "a disabled MOVE stops the MOVE goal only");
+        sel.tick(ge::Goal::Move);
+        ctx.check(move->starts == 1, "a goal with a disabled flag does not start");
+        sel.tick(0);
+        ctx.check(move->starts == 2, "it starts again when the flag is back");
+    }
+    if (auto* m = mobById(uid)) ctx.check(controlFlagsDisabled(*m) == 0, "no passenger: no disabled flags (Mob#updateControlFlags)");
     // TF's shared goals and their Java flags
     if (auto* m = mobById(uid)) {
         using G = ge::Goal;
@@ -268,6 +297,151 @@ GF_REGISTER_SELFTEST("entity.goals", [](Context& ctx) -> ll::coro::CoroTask<> {
     }
     co_await ctx.ticks(2);
     removeActor(uid);
+    (void)box;
+});
+
+// ChargeAttackGoal at work: canUse between 4 and 8 blocks, a 15..44 tick windup with the charging
+// flag, then the move to the point 2.1 blocks beyond the target
+GF_REGISTER_SELFTEST("entity.goal_charge", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box = co_await ctx.flatArea(5852, 8);
+    auto            at  = ctx.testPos(5852, 2);
+    auto*           mob = spawnMob(at, "gf_test:boss");
+    ctx.require(mob != nullptr, "the charger spawns");
+    auto  uid  = uidOf(*mob);
+    auto& sp   = ctx.spawnPlayer();
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{at.x + 6.5f, float(at.y), at.z + 0.5f}, DimensionType(at.dim));
+    co_await ctx.ticks(4);
+    mob     = mobById(uid);
+    auto* p = playerById(spId);
+    ctx.require(mob && p, "charger and target present");
+    ge::seedForTest(*mob, 1234);
+    mob->setTarget(p);
+    auto goal = ge::goals::charge(*mob, {.speed = 2.0});
+    bool use  = false;
+    for (int i = 0; i < 200 && !use; ++i) use = goal->canUse();
+    ctx.require(use, "ChargeAttackGoal#canUse (1 in 10) with a target 6 blocks away on the ground");
+    auto a = mob->getFeetPos(), b = p->getFeetPos();
+    double vx = b.x - a.x, vz = b.z - a.z, d = std::sqrt(vx * vx + vz * vz);
+    Vec3   expected{float(a.x + vx / d * (d + 2.1)), b.y, float(a.z + vz / d * (d + 2.1))};
+    ctx.check(!ge::ext::wantedPosition(*mob).has_value(), "no move before the charge");
+    goal->start();
+    int windup = 0;
+    bool charging = false;
+    while (windup < 60) {
+        goal->tick();
+        ++windup;
+        mob = mobById(uid);
+        ctx.require(mob != nullptr, "the charger is still there");
+        if (ge::ext::isCharging(*mob)) charging = true;
+        if (ge::ext::wantedPosition(*mob)) break;
+        co_await ctx.ticks(1);
+    }
+    ctx.check(charging, "the charging flag is set during the windup (ITFCharger#setCharging)");
+    ctx.check(windup >= 15 && windup <= 44, "the windup lasts 15..44 ticks (" + std::to_string(windup) + ")");
+    auto wanted = ge::ext::wantedPosition(*mob);
+    ctx.require(wanted.has_value(), "the charge moves (no navigation: the NoClip wanted position)");
+    ctx.check(dist(*wanted, expected) < 0.05, "the charge point lies 2.1 blocks beyond the target (" + std::to_string(dist(*wanted, expected)) + " off)");
+    goal->stop();
+    ctx.check(!ge::ext::isCharging(*mobById(uid)), "the flag is cleared when the charge stops");
+    removeActor(uid);
+    (void)box;
+});
+
+// BreathAttackGoal at work: canUse on the last attacker within range (7 % chance), the breathing
+// flag, and the breath attack on what the head looks at after five ticks
+GF_REGISTER_SELFTEST("entity.goal_breath", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box = co_await ctx.flatArea(5852, 8);
+    auto            at  = ctx.testPos(5853, 2);
+    auto*           mob = spawnMob(at, "gf_test:boss");
+    ctx.require(mob != nullptr, "the breather spawns");
+    auto  uid  = uidOf(*mob);
+    auto& sp   = ctx.spawnPlayer();
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{at.x + 3.5f, float(at.y), at.z + 0.5f}, DimensionType(at.dim));
+    co_await ctx.ticks(4);
+    mob     = mobById(uid);
+    auto* p = playerById(spId);
+    ctx.require(mob && p, "breather and target present");
+    int          breaths = 0;
+    std::int64_t hit     = 0;
+    ge::ext::onBreathAttack("gf_test:boss", [&](Mob&, Actor& target) {
+        ++breaths;
+        hit = uidOf(target);
+    });
+    struct Unregister {
+        ~Unregister() { ge::ext::onBreathAttack("gf_test:boss", nullptr); }
+    } unregister;
+    ge::seedForTest(*mob, 4321);
+    mob->setLastHurtByMob(p);
+    auto goal = ge::goals::breath(*mob, {.range = 5.0f, .durationTicks = 40, .chance = 0.07f});
+    bool use  = false;
+    for (int i = 0; i < 400 && !use; ++i) use = goal->canUse();
+    ctx.require(use, "BreathAttackGoal#canUse with the last attacker 3 blocks away");
+    goal->start();
+    ctx.check(ge::ext::isBreathing(*mobById(uid)), "the breathing flag is set (IBreathAttacker#setBreathing)");
+    for (int i = 0; i < 5; ++i) goal->tick();
+    ctx.check(breaths == 0, "no breath damage in the first five ticks");
+    for (int i = 0; i < 5; ++i) {
+        co_await ctx.ticks(1);
+        if (!mobById(uid)) break;
+        goal->tick();
+    }
+    ctx.check(breaths > 0, "the breath attack runs on the target (" + std::to_string(breaths) + ")");
+    ctx.check(hit == spId, "the breath hits what the head looks at");
+    goal->stop();
+    if (auto* m = mobById(uid)) ctx.check(!ge::ext::isBreathing(*m), "the flag is cleared when the breath stops");
+    removeActor(uid);
+    (void)box;
+});
+
+// The block rules of DefaultRandomPos: stable destinations, path types and their maluses, the
+// legacy solid floor of the sinister spawner and the walk target values
+GF_REGISTER_SELFTEST("entity.goal_blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box = co_await ctx.flatArea(5803, 6);
+    auto            at  = ctx.testPos(5804, 1);
+    auto*           region = ctx.region();
+    ctx.require(region != nullptr, "the test dimension");
+    auto place = [&](int dx, int dy, int dz, char const* id) {
+        auto p = at.offset(dx, dy, dz);
+        ctx.require(ctx.setBlock(p, id), std::string("place ") + id);
+        return game::blockPos(p);
+    };
+    auto stone = place(0, 0, 0, "minecraft:stone");
+    auto glass = place(1, 0, 0, "minecraft:glass");
+    auto lava  = place(2, 0, 0, "minecraft:lava");
+    auto fence = place(3, 0, 0, "minecraft:oak_fence");
+    auto leaf  = place(0, 0, 2, "minecraft:oak_leaves");
+    auto cact  = place(1, 0, 2, "minecraft:cactus");
+    auto carp  = place(2, 0, 2, "minecraft:white_carpet");
+    auto slab  = place(3, 0, 2, "minecraft:smooth_stone_slab");
+    BlockPos above{stone.x, stone.y + 1, stone.z};
+    ctx.check(mobs::stableDestination(*region, above), "stone below: a stable destination (isSolidRender)");
+    ctx.check(!mobs::stableDestination(*region, BlockPos{glass.x, glass.y + 1, glass.z}), "glass below: not stable");
+    ctx.check(!mobs::stableDestination(*region, BlockPos{slab.x, slab.y + 1, slab.z}), "a slab below: not stable");
+    ctx.check(mobs::pathTypeFromState(*region, lava) == mobs::PathType::Lava, "lava: LAVA");
+    ctx.check(mobs::pathTypeFromState(*region, fence) == mobs::PathType::Fence, "a fence: FENCE");
+    ctx.check(mobs::pathTypeFromState(*region, leaf) == mobs::PathType::Leaves, "leaves: LEAVES");
+    ctx.check(mobs::pathTypeFromState(*region, cact) == mobs::PathType::DamageOther, "a cactus: DAMAGE_OTHER");
+    ctx.check(mobs::pathTypeFromState(*region, stone) == mobs::PathType::Blocked, "stone: BLOCKED");
+    ctx.check(mobs::pathTypeStatic(*region, above) == mobs::PathType::Walkable, "air on stone: WALKABLE");
+    ctx.check(mobs::pathTypeStatic(*region, BlockPos{lava.x, lava.y + 1, lava.z}) == mobs::PathType::Open, "air on lava: OPEN (and no stable floor)");
+    BlockPos nextToLava{glass.x, glass.y + 1, glass.z};
+    ctx.check(mobs::pathTypeStatic(*region, nextToLava) == mobs::PathType::DangerFire, "air on glass next to lava: DANGER_FIRE");
+    ctx.check(mobs::hasMalus(*region, nextToLava), "DANGER_FIRE has a malus (8)");
+    ctx.check(!mobs::hasMalus(*region, above), "air on stone has no malus");
+    ctx.check(mobs::hasMalus(*region, BlockPos{fence.x, fence.y, fence.z}), "a fence has a malus (-1)");
+    ctx.check(mobs::legacySolid(*region, stone) && !mobs::legacySolid(*region, carp), "legacy solid: stone yes, a carpet no");
+    ctx.check(mobs::emptyCollision(*region, BlockPos{above.x, above.y + 1, above.z}) && !mobs::emptyCollision(*region, stone), "collision: air none, stone a box");
+    if (auto* m = spawnMob(at.offset(4, 0, 4), "gf_test:boss")) {
+        ctx.check(mobs::isMonster(*m), "gf_test:boss (family monster) counts as a Monster");
+        auto v = mobs::walkTargetValue(*m, above);
+        ctx.check(v >= -0.5f && v <= 0.5f, "a Monster's walk target value is 0.5 - brightness (" + std::to_string(v) + ")");
+        m->remove();
+    }
     (void)box;
 });
 
@@ -303,6 +477,13 @@ GF_REGISTER_SELFTEST("entity.multipart", [](Context& ctx) -> ll::coro::CoroTask<
         double d = dist(p->getFeetPos(), Vec3{base.x + offs[i].x, base.y + offs[i].y, base.z + offs[i].z});
         ctx.check(d < 0.6, "part " + std::to_string(i) + " follows the parent (" + std::to_string(d) + " off)");
     }
+    // the parent turns its parts (a Naga segment's yaw / pitch)
+    ge::ext::setPartRotation(parts[0], 90.0f, 10.0f);
+    co_await ctx.ticks(2);
+    mob = mobById(uid);
+    ctx.require(mob != nullptr && ge::partActor(parts[0]) != nullptr, "parent and part still there");
+    auto rot = ge::partActor(parts[0])->getRotation();
+    ctx.check(std::abs(rot.y - 90.0f) < 0.5f && std::abs(rot.x - 10.0f) < 0.5f, "setPartRotation turns the part (" + std::to_string(rot.y) + ", " + std::to_string(rot.x) + ")");
     // a part is never written to the world (Java's parts are not)
     CompoundTag tag;
     ctx.check(!ge::partActor(parts[0])->save(tag), "a part is not saved");
@@ -332,6 +513,35 @@ GF_REGISTER_SELFTEST("entity.multipart", [](Context& ctx) -> ll::coro::CoroTask<
     (void)box;
 });
 
+// Damage other than a player's melee on a part (explosions, projectiles, magic) goes to the parent
+// through the combat pipeline; environmental damage (suffocation, fire, falls, ...) reaches neither
+GF_REGISTER_SELFTEST("entity.multipart_damage", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (combatStubbed()) {
+        ctx.info("the combat contract is still F0's stub: the damage routing has no pipeline to run in");
+        co_return;
+    }
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box = co_await ctx.flatArea(5814, 6);
+    auto            at  = ctx.testPos(5816, 2);
+    auto*           mob = spawnMob(at, "gf_test:boss");
+    ctx.require(mob != nullptr, "the fixture boss spawns");
+    auto uid  = uidOf(*mob);
+    auto part = ge::addPart(*mob, "body", {1.0f, 1.0f}, [](Mob&) { return Vec3{0.0f, 2.2f, 0.0f}; });
+    ctx.require(ge::partActor(part) != nullptr, "the part exists");
+    co_await ctx.ticks(2);
+    int before = mobById(uid)->getHealth();
+    gf::combat::hurt(*ge::partActor(part), 4.0f, "minecraft:in_wall");
+    gf::combat::hurt(*ge::partActor(part), 4.0f, "minecraft:on_fire");
+    co_await ctx.ticks(1);
+    ctx.check(mobById(uid)->getHealth() == before, "environmental damage on a part does not reach the parent");
+    gf::combat::hurt(*ge::partActor(part), 4.0f, "minecraft:explosion");
+    co_await ctx.ticks(1);
+    ctx.check(mobById(uid)->getHealth() < before, "an explosion on a part hurts the parent (" + std::to_string(before) + " -> " + std::to_string(mobById(uid)->getHealth()) + ")");
+    removeActor(uid);
+    co_await ctx.ticks(2);
+    (void)box;
+});
+
 GF_REGISTER_SELFTEST("entity.mount", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
     auto            box   = co_await ctx.flatArea(5830, 8);
@@ -351,11 +561,25 @@ GF_REGISTER_SELFTEST("entity.mount", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.check(ge::ext::isRidingUnfriendly(*p), "isRidingUnfriendly");
     // dismounting by itself is undone (HostileMountEvents#preventMountDismount)
     p->stopRiding(true, false, false, false);
+    bool back = false;
+    for (int i = 0; i < 10 && !back; ++i) {
+        co_await ctx.ticks(1);
+        p     = playerById(spId);
+        horse = mobById(hid);
+        ctx.require(p && horse, "player and mount still present");
+        back = p->getVehicle() == horse;
+    }
+    ctx.check(back, "the player is put back on the hostile mount");
+    // no teleporting away (preventTeleportingOffHostileMounts: an ender pearl, a command, ...)
+    int  blocked = blockedTeleportsForTest();
+    auto before  = p->getFeetPos();
+    p->teleportTo(Vec3{before.x + 40.0f, before.y, before.z}, true, 1 /* projectile */, 0, false);
     co_await ctx.ticks(2);
     p     = playerById(spId);
     horse = mobById(hid);
-    ctx.require(p && horse, "player and mount still present");
-    ctx.check(p->getVehicle() == horse, "the player is put back on the hostile mount");
+    ctx.require(p && horse, "player and mount still present after the teleport");
+    ctx.check(blockedTeleportsForTest() > blocked, "the teleport was cancelled");
+    ctx.check(p->getVehicle() == horse && dist(p->getFeetPos(), before) < 4.0, "the rider stayed on its mount");
     // ThrowRiderGoal#stop: thrown with YetiThrowAttachment's state
     ge::mount::throwRider(*horse, Vec3{0.0f, 0.9f, 2.0f});
     ctx.check(p->getVehicle() == nullptr, "the rider was thrown off");
@@ -371,8 +595,49 @@ GF_REGISTER_SELFTEST("entity.mount", [](Context& ctx) -> ll::coro::CoroTask<> {
     (void)box;
 });
 
+// IHostileMount as a type marker: whoever gets on a marked mob rides unfriendly
+GF_REGISTER_SELFTEST("entity.mount_type", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box   = co_await ctx.flatArea(5830, 8);
+    auto            at    = ctx.testPos(5834, 2);
+    // a pig: an untamed horse would buck its rider off by itself (vanilla taming), a pig does not
+    struct MarkScope {
+        MarkScope() { ge::ext::markHostileMount("minecraft:pig"); }
+        ~MarkScope() { unmarkHostileMountForTest("minecraft:pig"); }
+    } mark;
+    auto* mount = spawnMob(at, "minecraft:pig");
+    ctx.require(mount != nullptr, "a pig spawns");
+    auto  mid  = uidOf(*mount);
+    auto& sp   = ctx.spawnPlayer();
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{at.x + 1.5f, float(at.y), at.z + 0.5f}, DimensionType(at.dim));
+    co_await ctx.ticks(2);
+    auto* p = playerById(spId);
+    mount  = mobById(mid);
+    ctx.require(p && mount, "player and pig present");
+    ctx.check(p->startRiding(*mount, true) && p->getVehicle() == mount, "the player gets on by itself");
+    ctx.check(ge::ext::isRidingUnfriendly(*p), "a marked IHostileMount type: riding unfriendly without a grab");
+    co_await ctx.ticks(2);
+    if ((p = playerById(spId))) p->stopRiding(true, false, false, false);
+    bool back = false;
+    for (int i = 0; i < 10 && !back; ++i) {
+        co_await ctx.ticks(1);
+        p     = playerById(spId);
+        mount = mobById(mid);
+        ctx.require(p && mount, "player and pig still present");
+        back = p->getVehicle() == mount;
+    }
+    ctx.check(back, "it can't get off either");
+    ge::ext::hostileDismount(*p);
+    co_await ctx.ticks(2);
+    if ((p = playerById(spId))) ctx.check(p->getVehicle() == nullptr, "hostileDismount lets it go");
+    removeActor(mid);
+    (void)box;
+});
+
 // parts added by a behaviour inside the actor's own tick (onSpawn), as the boss units do
 GF_REGISTER_SELFTEST("entity.multipart_in_tick", [](Context& ctx) -> ll::coro::CoroTask<> {
+    FixtureScope    fixture;
     DifficultyScope easy(Difficulty::Easy);
     auto            box = co_await ctx.flatArea(5826, 6);
     auto            at  = ctx.testPos(5828, 2);
@@ -388,6 +653,34 @@ GF_REGISTER_SELFTEST("entity.multipart_in_tick", [](Context& ctx) -> ll::coro::C
     for (auto const& p : parts) ctx.check(ge::partActor(p) != nullptr, "part " + p.partId + " exists");
     removeActor(uid);
     co_await ctx.ticks(3);
+    (void)box;
+});
+
+// Spike S4, custom hit test: Bedrock's HitboxComponent (minecraft:custom_hit_test) keeps extra
+// pick boxes on one actor (the hoglin declares one), moved with it by the engine. A pick on such a
+// box reaches the server as a hit on the actor itself, without telling which box: TF's
+// attackEntityFromPart needs the part, so the parts stay linked actors (their own pick boxes).
+GF_REGISTER_SELFTEST("entity.spike_hitbox", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box = co_await ctx.flatArea(5836, 4);
+    auto            at  = ctx.testPos(5838, 2);
+    auto*           hog = spawnMob(at, "minecraft:hoglin");
+    ctx.require(hog != nullptr, "a hoglin spawns");
+    auto uid = uidOf(*hog);
+    co_await ctx.ticks(2);
+    hog = mobById(uid);
+    ctx.require(hog != nullptr, "the hoglin is still there");
+    auto hits = hog->getEntityContext().tryGetComponent<HitboxComponent>();
+    ctx.require(static_cast<bool>(hits), "the hoglin has a HitboxComponent (minecraft:custom_hit_test)");
+    auto const& list = hits->mHitboxes.get();
+    ctx.check(list.size() == 1, "one custom hit box (" + std::to_string(list.size()) + ")");
+    if (!list.empty()) {
+        auto const& aabb = list[0].mAabb.get();
+        auto        feet = hog->getFeetPos();
+        ctx.info("hoglin hit box " + std::to_string(aabb.max.x - aabb.min.x) + " x " + std::to_string(aabb.max.y - aabb.min.y) + " at y " + std::to_string(aabb.min.y - feet.y));
+        ctx.check(aabb.min.x <= feet.x && aabb.max.x >= feet.x && aabb.min.z <= feet.z && aabb.max.z >= feet.z, "the box follows the actor (world coordinates around it)");
+    }
+    removeActor(uid);
     (void)box;
 });
 
@@ -412,11 +705,39 @@ GF_REGISTER_SELFTEST("entity.multipart_generic", [](Context& ctx) -> ll::coro::C
 });
 
 // The persisted data survives a world reload (server scenario: write, Restart-Server, read).
+// entity.persist_write leaves a marker actor and a world DB record; entity.persist_read (after the
+// restart) requires the marker with the same nonce and removes both. Without a record (a plain
+// "entity.*" run sorts the read before the write) the read has nothing to check; a marker no read
+// collects (the 'full' run) is removed after two minutes.
 namespace {
 constexpr char const* kPersistTag = "gf_entity_persist";
+constexpr char const* kPersistKey = "gf:entity:persist";
+constexpr int         kPersistTtl = 2400;
 
 AABB around(core::GlobalPos const& at) {
     return AABB{Vec3{at.x - 4.0f, at.y - 8.0f, at.z - 4.0f}, Vec3{at.x + 5.0f, at.y + 8.0f, at.z + 5.0f}};
+}
+
+struct PersistExpiry {
+    std::int64_t  uid = 0;
+    long long     nonce = 0;
+    std::uint64_t until = 0;
+};
+std::vector<PersistExpiry>& expiries() {
+    static std::vector<PersistExpiry> v;
+    static bool                       once = false;
+    if (!std::exchange(once, true))
+        onLevelTick([] {
+            auto& list = v;
+            auto  now  = currentTick();
+            std::erase_if(list, [&](PersistExpiry const& e) {
+                if (now < e.until) return false;
+                if (auto* a = actorById(e.uid)) a->remove();
+                if (auto rec = game::db::get(kPersistKey); rec && rec->value("nonce", -1LL) == e.nonce) game::db::erase(kPersistKey);
+                return true;
+            });
+        });
+    return v;
 }
 } // namespace
 
@@ -434,12 +755,23 @@ GF_REGISTER_SELFTEST("entity.persist_write", [](Context& ctx) -> ll::coro::CoroT
     auto nonce = static_cast<long long>(freshSeed() & 0x7fffffff);
     ge::data(*marker, "persist") = {{"nonce", nonce}};
     ge::setHome(*marker, at, 7);
+    game::db::put(kPersistKey, {{"nonce", nonce}, {"pos", {at.dim, at.x, at.y, at.z}}});
+    expiries().push_back({uidOf(*marker), nonce, currentTick() + kPersistTtl});
     ctx.info("persist marker written nonce=" + std::to_string(nonce));
     co_await ctx.ticks(2);
 });
 
 GF_REGISTER_SELFTEST("entity.persist_read", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto at = ctx.testPos(5895, 4);
+    auto record = game::db::get(kPersistKey);
+    if (!record) {
+        ctx.info("no persist marker (entity.persist_write did not run before): nothing to check");
+        co_return;
+    }
+    game::db::erase(kPersistKey);
+    auto nonce = record->value("nonce", -1LL);
+    auto p     = record->value("pos", ge::Json::array());
+    ctx.require(nonce >= 0 && p.is_array() && p.size() == 4, "the marker record is complete");
+    core::GlobalPos at{p[0].get<int>(), p[1].get<int>(), p[2].get<int>(), p[3].get<int>()};
     ctx.require(co_await ctx.ensureLoaded(at), "test area loaded");
     std::int64_t markerId = 0;
     for (int i = 0; i < 60 && !markerId; ++i) {
@@ -449,16 +781,13 @@ GF_REGISTER_SELFTEST("entity.persist_read", [](Context& ctx) -> ll::coro::CoroTa
                 if (a && a->hasTag(kPersistTag)) markerId = uidOf(*a);
     }
     auto* marker = actorById(markerId);
-    if (!marker) {
-        ctx.info("no persist marker");
-        co_return;
-    }
-    auto nonce = ge::data(*marker, "persist").value("nonce", -1LL);
+    ctx.require(marker != nullptr, "the persist marker written before came back");
+    auto seen = ge::data(*marker, "persist").value("nonce", -1LL);
     std::optional<ge::Home> h;
     if (auto* m = asMob(*marker)) h = ge::home(*m);
-    ctx.check(nonce >= 0, "the marker's data came back from the save");
+    ctx.check(seen == nonce, "the marker's data came back from the save (" + std::to_string(seen) + ")");
     ctx.check(h && h->pos == at && h->radius == 7, "the marker's home came back from the save");
-    ctx.info("persist marker verified nonce=" + std::to_string(nonce));
+    if (seen == nonce && ctx.failures().empty()) ctx.info("persist marker verified nonce=" + std::to_string(nonce));
     marker->remove();
 });
 

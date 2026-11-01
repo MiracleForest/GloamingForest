@@ -3,6 +3,7 @@
 // ThrowableProjectile's drag and gravity, and steering replaces its velocity. The projectile
 // fixture is gf_test:boss_part (no engine physics), registered only while the test runs.
 
+#include <algorithm>
 #include <cmath>
 
 #include "ll/api/chrono/GameChrono.h"
@@ -14,19 +15,23 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/dimension/DimensionType.h"
 
+#include "core/Stub.h"
 #include "feature/entity/Entity.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/projectile/Projectile.h"
 #include "feature/projectile/ProjectileInternal.h"
 #include "game/Blocks.h"
+#include "game/Items.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::feature::projectile::tests {
@@ -190,6 +195,103 @@ GF_REGISTER_SELFTEST("entity.projectile", [](Context& ctx) -> ll::coro::CoroTask
     }
     (void)box;
     (void)liveCount();
+});
+
+// TFArrow (AbstractArrow): the default entity hit (ceil(speed * 2) arrow damage, or a deflection
+// when it does not land), gravity 0.05, sticking in a block and the pickup by a player
+GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
+    EasyScope easy;
+    struct ArrowScope {
+        ArrowScope() {
+            hits() = {};
+            gp::ext::registerArrow(
+                kFixture,
+                {.onHitEntity =
+                     [](Actor&, Actor& target) {
+                         hits().entity = target.getTypeName();
+                         return false;
+                     }},
+                {.baseDamage = 2.0}
+            );
+        }
+        ~ArrowScope() { unregisterTypeForTest(kFixture); }
+    } scope;
+    auto  box  = co_await ctx.flatArea(5875, 8);
+    auto  at   = ctx.testPos(5876, 2);
+    auto& sp   = ctx.spawnPlayer();
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f}, DimensionType(at.dim));
+    co_await ctx.ticks(2);
+    // an entity hit with a full-power shot (3.0)
+    auto* target = spawnMob(at.offset(6, 0, 0), "gf_test:boss");
+    ctx.require(target != nullptr, "a target spawns");
+    auto  targetId = fe::uidOf(*target);
+    int   health   = target->getHealth();
+    auto* shooter  = fe::playerById(spId);
+    ctx.require(shooter != nullptr, "the shooter is there");
+    auto eye  = shooter->getEyePos();
+    auto tpos = target->getFeetPos();
+    auto* p   = gp::shoot(*shooter, kFixture, Vec3{tpos.x - eye.x, tpos.y + 1.0f - eye.y, tpos.z - eye.z}, 3.0f, 0.0f);
+    ctx.require(p != nullptr, "the arrow is shot");
+    auto pid = fe::uidOf(*p);
+    ctx.check(gp::ext::pickup(*p) == gp::ext::Pickup::Allowed, "a player's arrow may be picked up");
+    ctx.check(gp::ext::baseDamage(*p) == 2.0, "AbstractArrow's base damage 2");
+    for (int i = 0; i < 20 && hits().entity.empty(); ++i) co_await ctx.ticks(1);
+    ctx.check(hits().entity == "gf_test:boss", "the arrow hit the target and the subclass hook ran after the hit (" + hits().entity + ")");
+    co_await ctx.ticks(1);
+    auto* t = fe::actorById(targetId);
+    ctx.require(t != nullptr, "the target survived");
+    auto calls = core::stubCalls();
+    if (std::find(calls.begin(), calls.end(), "combat.hurt") == calls.end()) {
+        ctx.check(health - t->getHealth() == 6, "ceil(3 * 2) = 6 arrow damage (" + std::to_string(health - t->getHealth()) + ")");
+        ctx.check(fe::actorById(pid) == nullptr, "an arrow that hit is gone");
+    } else {
+        // the combat contract is still F0's stub: the hit does not land, the arrow is deflected
+        if (auto* a = fe::actorById(pid)) ctx.check(gp::ext::velocity(*a).x < 0.0f, "an arrow whose hit did not land bounces back (REVERSE * 0.2)");
+        else ctx.check(false, "a deflected arrow keeps flying");
+    }
+    if (auto* a = fe::actorById(pid)) a->remove();
+    if (auto* a = fe::actorById(targetId)) a->remove();
+    // gravity 0.05 (AbstractArrow), not the throwable's 0.03
+    shooter = fe::playerById(spId);
+    ctx.require(shooter != nullptr, "the shooter is still there");
+    p = gp::shoot(*shooter, kFixture, Vec3{1.0f, 0.0f, 0.0f}, 0.2f, 0.0f);
+    ctx.require(p != nullptr, "a slow arrow");
+    pid      = fe::uidOf(*p);
+    float y0 = p->getPosition().y;
+    co_await ctx.ticks(2);
+    if (auto* q = fe::actorById(pid)) {
+        float dy = q->getPosition().y - y0;
+        ctx.check(dy < -0.04f && dy > -0.07f, "an arrow falls 0.05 in its second tick (" + std::to_string(dy) + ")");
+        q->remove();
+    }
+    // stuck in the ground, then picked up by the player standing on it
+    shooter = fe::playerById(spId);
+    ctx.require(shooter != nullptr, "the shooter is still there");
+    p = gp::shoot(*shooter, kFixture, Vec3{0.0f, -1.0f, 0.0f}, 0.5f, 0.0f);
+    ctx.require(p != nullptr, "an arrow into the ground");
+    pid = fe::uidOf(*p);
+    bool stuck = false;
+    for (int i = 0; i < 20 && !stuck; ++i) {
+        co_await ctx.ticks(1);
+        if (auto* a = fe::actorById(pid)) stuck = gp::ext::inGround(*a);
+    }
+    ctx.check(stuck, "the arrow sticks in the ground (AbstractArrow#inGround)");
+    bool gone = false;
+    for (int i = 0; i < 20 && !gone; ++i) {
+        co_await ctx.ticks(1);
+        gone = fe::actorById(pid) == nullptr;
+    }
+    ctx.check(gone, "the player picked the stuck arrow up");
+    int arrows = 0;
+    if (auto* pl = fe::playerById(spId)) {
+        auto& inv = pl->getInventory();
+        for (int i = 0; i < inv.getContainerSize(); ++i)
+            if (game::items::idOf(inv.getItem(i)) == "minecraft:arrow") arrows += game::items::countOf(inv.getItem(i));
+    }
+    ctx.check(arrows >= 1, "the pickup item (minecraft:arrow) is in the inventory (" + std::to_string(arrows) + ")");
+    if (auto* a = fe::actorById(pid)) a->remove();
+    (void)box;
 });
 
 } // namespace gf::feature::projectile::tests

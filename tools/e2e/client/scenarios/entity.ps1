@@ -1,57 +1,52 @@
-# F8 (entity): the boss bar on a real client (spike S4). The fixture boss gf_test:boss has an
-# orange bar (0xFF8000), a colour none of Bedrock's 8 BossBarColor values has:
-#   local / remote-mod   the client mod paints the bar in the exact RGB (TFBossBarPacket); the
-#                        client logs "client boss bar <id> coloured #FF8000" when it applies it.
+# F8 (entity): the boss bar on a real client (spike S4). The selftest entity.client_fixture shows
+# the fixture boss gf_test:boss next to the real player: an orange bar (0xFF8000), a colour none of
+# Bedrock's 8 BossBarColor values has, then a second fixture boss with 3 linked parts:
+#   local / remote-mod   the client mod paints the bar in the exact RGB (TFBossBarPacket through
+#                        ClientInstanceScreenModel::getBossBarColor); the client logs
+#                        "client boss bar <id> coloured #FF8000" when it does: required.
 #   remote-vanilla       the vanilla client shows the nearest vanilla colour (red) and never gets a
 #                        companion packet.
-# Then a second fixture boss named gf_parts: its behaviour adds 3 linked parts (spike S4: they
-# render on every client as ordinary actors). Screenshots: out/entity/boss-bar-<mode>.png and
-# boss-parts-<mode>.png. Local mode also runs the entity selftests on the integrated server (the
-# client build's hooks).
+# Screenshots: out/entity/boss-bar-<mode>.png and boss-parts-<mode>.png (the parts render on every
+# client as ordinary actors). Local mode also runs every entity selftest on the integrated server
+# (the client build's hooks).
 Save-Screenshot 'hud' | Out-Null
-$bar   = 'summon gf_test:boss ~4 ~ ~'
-$parts = 'summon gf_test:boss gf_parts ~5 ~ ~3'
-if ($script:Mode -eq 'local') {
-    Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
-    $mark = Get-LogMark
-    Invoke-Chat '/difficulty easy'
-    Invoke-Chat "/$bar"
-    Wait-LogLine 'client boss bar -?\d+ received' 30 -Since $mark | Out-Null
-    $hit = Wait-LogLine 'client boss bar -?\d+ coloured #FF8000|client boss bar colours disabled' 30 -Since $mark
-    if ($hit -match 'disabled') { Write-Step "warning: the exact-RGB bar is off on this build: $hit" }
-    Start-Sleep -Seconds 2
-    Save-Screenshot 'boss-bar-local' | Out-Null
-    $mark2 = Get-LogMark
-    Invoke-Chat "/$parts"
-    Wait-LogLine 'entity: gf_test:boss got part head' 30 -Since $mark2 | Out-Null
-    Start-Sleep -Seconds 2
-    Save-Screenshot 'boss-parts-local' | Out-Null
-    # peaceful: a boss without a home just leaves (BaseTFBoss#checkDespawn), its parts with it
-    Invoke-Chat '/difficulty peaceful'
-    Wait-LogLine 'boss: gf_test:boss left \(peaceful\)' 30 -Since $mark | Out-Null
+$remote = $script:Mode -ne 'local'
+$hostLine = if ($remote) { '\[host\].*' } else { '' }
+$clientLine = if ($remote) { '^(?!\[host\]).*' } else { '' }
+
+if ($remote) { Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null }
+else { Wait-LogLine 'GloamingForest world ready' 120 | Out-Null }
+if ($script:Mode -eq 'remote-mod') { Wait-LogLine '\[host\].*companion joined' 60 | Out-Null }
+
+# The fixture runs on the server (the integrated one in local mode, the host otherwise) and holds
+# each boss for 20 seconds; the screenshots are taken meanwhile.
+$mark = Get-LogMark
+$command = Format-SelfTestCommand 'entity.client_fixture'
+if ($remote) { Send-HostConsole $command } else { Send-SelfTestCommand $command }
+Wait-LogLine "${hostLine}entity\.client_fixture: bar boss ready" 90 -Since $mark | Out-Null
+if ($script:Mode -eq 'remote-vanilla') {
+    Start-Sleep -Seconds 4
+    if (Get-LeviLog | Select-String -Pattern '\[host\].*companion joined' -Quiet) { throw 'a vanilla client was accepted as a companion' }
+    if (Get-LeviLog -Since $mark | Select-String -Pattern '^(?!\[host\]).*client boss bar' -Quiet) { throw 'the vanilla client applied a companion colour' }
+} else {
+    Wait-LogLine "${clientLine}client boss bar -?\d+ received \(#FF8000\)" 30 -Since $mark | Out-Null
+    $hit = Wait-LogLine "${clientLine}client boss bar -?\d+ coloured #FF8000" 30 -Since $mark
+    Write-Step "exact RGB applied: $hit"
+}
+Start-Sleep -Seconds 2
+Save-Screenshot "boss-bar-$($script:Mode)" | Out-Null
+Wait-LogLine "${hostLine}entity\.client_fixture: parts boss ready" 60 -Since $mark | Out-Null
+Start-Sleep -Seconds 3
+Save-Screenshot "boss-parts-$($script:Mode)" | Out-Null
+Wait-LogLine "${hostLine}boss: gf_test:boss left \(peaceful\)" 60 -Since $mark | Out-Null
+Wait-LogLine "${hostLine}$script:SelfTestDoneRegex" 60 -Since $mark | Out-Null
+$r = ConvertFrom-SelfTestLines (Get-LeviLog -Since $mark) 'entity.client_fixture'
+if (-not (Register-SelfTestResult $r)) { throw 'entity.client_fixture failed' }
+
+if (-not $remote) {
     $r = Invoke-SelfTest 'entity.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) entity selftest(s) failed" }
-    if ($r.Pass -lt 12) { throw "expected at least 12 entity selftests to pass, got $($r.Pass)" }
-} else {
-    Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
-    $mark = Get-LogMark
-    Send-HostConsole 'difficulty easy'
-    Send-HostConsole "execute as @a at @s run $bar"
-    if ($script:Mode -eq 'remote-mod') {
-        Wait-LogLine '\[host\].*companion joined' 60 | Out-Null
-        Wait-LogLine '^(?!\[host\]).*client boss bar -?\d+ coloured #FF8000' 30 -Since $mark | Out-Null
-    } else {
-        Start-Sleep -Seconds 6
-        if (Get-LeviLog | Select-String -Pattern '\[host\].*companion joined' -Quiet) { throw 'a vanilla client was accepted as a companion' }
-        if (Get-LeviLog -Since $mark | Select-String -Pattern '^(?!\[host\]).*client boss bar' -Quiet) { throw 'the vanilla client applied a companion colour' }
-    }
-    Start-Sleep -Seconds 2
-    Save-Screenshot "boss-bar-$($script:Mode)" | Out-Null
-    Send-HostConsole "execute as @a at @s run $parts"
-    Wait-LogLine '\[host\].*entity: gf_test:boss got part head' 30 -Since $mark | Out-Null
-    Start-Sleep -Seconds 3
-    Save-Screenshot "boss-parts-$($script:Mode)" | Out-Null
-    Send-HostConsole 'difficulty peaceful'
-    Wait-LogLine '\[host\].*boss: gf_test:boss left \(peaceful\)' 30 -Since $mark | Out-Null
-    if (-not (Get-GameProcess)) { throw 'the game closed while connected to the host' }
+    if ($r.Pass -lt 22) { throw "expected at least 22 entity selftests to pass, got $($r.Pass)" }
+} elseif (-not (Get-GameProcess)) {
+    throw 'the game closed while connected to the host'
 }
