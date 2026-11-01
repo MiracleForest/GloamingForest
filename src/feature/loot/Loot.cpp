@@ -532,7 +532,12 @@ LL_TYPE_INSTANCE_HOOK(
     using namespace gf::loot;
     auto const& id = getTypeName();
     bool        tf = id.rfind("twilightforest:", 0) == 0;
-    if (region.getLevel().isClientSide() || (!tf && !hasGlobalModifiers())) return origin(region, pos, block, random, dropsContext, actorContext);
+    // vanilla blocks go through the global modifiers only when they are mined with a tool (TF's
+    // modifiers are tool effects) and keep no block actor data (shulker boxes, banners, beds keep
+    // the game's own drops)
+    bool modifiable = !tf && hasGlobalModifiers() && !static_cast<ItemStack const&>(dropsContext.mUsedItem).isNull()
+                   && region.getBlockEntity(pos) == nullptr;
+    if (region.getLevel().isClientSide() || (!tf && !modifiable)) return origin(region, pos, block, random, dropsContext, actorContext);
     std::string tableId = tf ? std::string("twilightforest:blocks/") + id.substr(15) : tableIdFor(id, "blocks");
     std::optional<float> radius;
     if (dropsContext.mCause == ResourceDropsCause::Explosion && dropsContext.mExplosionRadius > 0) radius = dropsContext.mExplosionRadius;

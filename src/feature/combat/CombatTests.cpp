@@ -18,7 +18,10 @@
 #include "mc/world/Container.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDamageSource.h"
+#include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorHurtResult.h"
+#include "mc/world/actor/Mob.h"
+#include "mc/world/level/Spawner.h"
 #include "mc/world/actor/HurtParameters.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
@@ -660,4 +663,42 @@ GF_REGISTER_SELFTEST("combat.progression", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(again != nullptr, "the player is still there");
     ctx.check(sInvFired >= 1, "onInventoryChanged fired");
     ctx.check(sTicks >= 1, "onTick fired within a second");
+});
+
+// ---- entity drops --------------------------------------------------------------------------------
+
+GF_REGISTER_SELFTEST("combat.entity_drops", [](Context& ctx) -> ll::coro::CoroTask<> {
+    static bool        registered = false;
+    static int         sFixture   = 0;
+    static bool        sKiller    = false;
+    static std::string sType;
+    if (!registered) {
+        registered = true;
+        // the death pipeline's drops: gf_test:boss rolls gf_test:entities/boss (the F0 fixture table)
+        gf::loot::onEntityDrops([](Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootContext const& lc) {
+            if (gActive == 0 || dead.getTypeName() != "gf_test:boss") return;
+            sFixture = countIn(drops, "gf_test:fixture_item");
+            sKiller  = lc.player != nullptr && lc.player->getOrCreateUniqueID().rawID == gActive;
+            sType    = lc.damageType;
+            if (auto bonus = items::make("minecraft:stick", 1)) drops.push_back(*bonus); // handlers may add
+        });
+    }
+    auto pos = ctx.testPos(6008);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    auto* region = ctx.region();
+    auto& p      = ctx.player();
+    Vec3  at{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + .5f};
+    auto* mob = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("gf_test:boss"), nullptr, at, false, false, false);
+    ctx.require(mob != nullptr, "the fixture boss spawned");
+    sFixture = 0;
+    sKiller  = false;
+    sType.clear();
+    {
+        ActiveScope active(p);
+        gf::combat::hurt(*mob, 1000.f, "twilightforest:thrown_axe", &p);
+    }
+    co_await ctx.ticks(2);
+    ctx.check(sFixture == 1, "the Java table gf_test:entities/boss dropped the fixture item (" + std::to_string(sFixture) + ")");
+    ctx.check(sKiller, "the loot context names the killing player");
+    ctx.check(sType == "twilightforest:thrown_axe", "the loot context has the damage type (" + sType + ")");
 });

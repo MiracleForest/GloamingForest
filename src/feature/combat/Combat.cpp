@@ -364,8 +364,18 @@ std::string vanillaTypeOf(Actor& victim, ActorDamageSource const& source) {
 
 float healthOf(Actor& a) { return static_cast<float>(a.getHealth()); }
 
-/// Recursion guard: gf::combat::hurt from inside a handler is applied as is.
-thread_local int tInHook = 0;
+/// Recursion guard: the victims whose handlers run now; damage to one of them from inside its
+/// own handlers is applied as is (other victims get their handlers, as Java's nested events).
+thread_local std::vector<Actor const*> tInHandlers;
+
+struct HandlerScope {
+    explicit HandlerScope(Actor const& a) { tInHandlers.push_back(&a); }
+    ~HandlerScope() { tInHandlers.pop_back(); }
+    HandlerScope(HandlerScope const&)            = delete;
+    HandlerScope& operator=(HandlerScope const&) = delete;
+};
+
+bool inHandlers(Actor const& a) { return std::find(tInHandlers.begin(), tInHandlers.end(), &a) != tInHandlers.end(); }
 
 } // namespace
 
@@ -532,7 +542,7 @@ LL_TYPE_INSTANCE_HOOK(
         gf::death::reapplySurvival(*this);
         return r;
     };
-    if (tInHook > 0) return plain(damage);
+    if (inHandlers(*this)) return plain(damage);
     std::vector<IncomingFn> incoming;
     std::vector<DealtFn>    dealt;
     {
@@ -543,23 +553,23 @@ LL_TYPE_INSTANCE_HOOK(
     }
     auto [attacker, direct] = entitiesOf(source);
     DamageInfo info{*this, typeOf(*this, source), attacker, direct, damage};
-    ++tInHook;
-    for (auto const& fn : incoming) {
-        Verdict v = Verdict::Pass;
-        try {
-            v = fn(info);
-        } catch (std::exception const& ex) {
-            gf::log().error("combat: incoming handler failed: {}", ex.what());
-        }
-        if (v == Verdict::Cancel) {
-            --tInHook;
-            ActorHurtResult cancelled{};
-            cancelled.mHurtOrDamage         = std::variant<bool, float>(false);
-            cancelled.mShouldAllowKnockback = false;
-            return cancelled;
+    {
+        HandlerScope scope(*this);
+        for (auto const& fn : incoming) {
+            Verdict v = Verdict::Pass;
+            try {
+                v = fn(info);
+            } catch (std::exception const& ex) {
+                gf::log().error("combat: incoming handler failed: {}", ex.what());
+            }
+            if (v == Verdict::Cancel) {
+                ActorHurtResult cancelled{};
+                cancelled.mHurtOrDamage         = std::variant<bool, float>(false);
+                cancelled.mShouldAllowKnockback = false;
+                return cancelled;
+            }
         }
     }
-    --tInHook;
     float before = healthOf(*this);
     auto  result = plain(info.amount);
     if (!result || dealt.empty()) return result;
@@ -567,7 +577,7 @@ LL_TYPE_INSTANCE_HOOK(
     DamageInfo applied{*this, info.type, info.attacker, info.direct, info.amount};
     if (auto const* f = std::get_if<float>(&*result.mHurtOrDamage); f && *f > 0) applied.amount = *f;
     else if (before > after) applied.amount = before - after;
-    ++tInHook;
+    HandlerScope scope(*this);
     for (auto const& fn : dealt) {
         try {
             fn(applied);
@@ -575,7 +585,6 @@ LL_TYPE_INSTANCE_HOOK(
             gf::log().error("combat: dealt handler failed: {}", ex.what());
         }
     }
-    --tInHook;
     return result;
 }
 

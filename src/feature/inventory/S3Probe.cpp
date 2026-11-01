@@ -163,8 +163,12 @@ Container* dataDrivenContainer(BlockActor* actor) {
 
 class S3ProbeModule {
 public:
+    // Everything here is spike-only: without the probe pack (or the GF_S3_* variables) nothing is
+    // hooked or logged.
     void load() {
+        if (!probeEnabled() && forcedExperiments().empty() && !std::getenv("GF_S3_UNLOCK")) return;
         S3ComponentRegistryHook::hook();
+        mRegistryHooked = true;
         // the spike's probe block with a data-driven block actor is a 27-slot container
         if (probeEnabled()) declare({.block = "gf_s3:entity", .rows = 3, .slots = 27, .title = "container.chest", .skin = ""});
         if (!forcedExperiments().empty()) {
@@ -172,24 +176,16 @@ public:
             mHooked = true;
         }
     }
-    void install() {
-        game::db::onWorldReady([] {
-            log().info(
-                "S3: component names '{}' '{}'; level experiments {}",
-                BlockContainerDescription::NameID(),
-                BlockBlockEntityDescription::NameID(),
-                experimentsText()
-            );
-        });
-    }
+    void install() {}
     void uninstall() {
-        S3ComponentRegistryHook::unhook();
+        if (mRegistryHooked) S3ComponentRegistryHook::unhook();
         if (mHooked) S3ExperimentsTagHook::unhook();
-        mHooked = false;
+        mHooked = mRegistryHooked = false;
     }
 
 private:
-    bool mHooked = false;
+    bool mHooked         = false;
+    bool mRegistryHooked = false;
 };
 
 constexpr char kProbeKey[] = "gf:inventory:s3_probe";
