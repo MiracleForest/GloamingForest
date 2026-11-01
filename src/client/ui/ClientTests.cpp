@@ -1,5 +1,6 @@
 // Selftests of F12's client frameworks ("ui.client_*", client build only). They run on the server
-// thread of the local world and check the registries the client thread reads.
+// thread of the local world and check the registries the client thread reads. Every registration a
+// test makes uses gf_test ids and is removed again (rule R12: nothing stays in the live registries).
 
 #ifdef GF_CLIENT
 
@@ -22,9 +23,9 @@
 
 namespace {
 using gf::selftest::Context;
-using Json         = nlohmann::json;
-namespace cl       = gf::client;
-namespace geo      = gf::client::render::geo;
+using Json    = nlohmann::json;
+namespace cl  = gf::client;
+namespace geo = gf::client::render::geo;
 
 GF_REGISTER_SELFTEST("ui.client_ui", [](Context& ctx) {
     // HUD layers: sorted by order, replaced by id, removable
@@ -40,21 +41,16 @@ GF_REGISTER_SELFTEST("ui.client_ui", [](Context& ctx) {
     layers = cl::ui::hudLayers();
     ctx.check(std::find(layers.begin(), layers.end(), "ui.test_a") == layers.end(), "layers can be removed");
 
-    // toasts queue up
+    // toasts queue up (shown for 1 ms)
     auto before = cl::ui::toastCount();
     cl::toast::show({.iconItem = "minecraft:map", .titleKey = "gf.ui.fixture.toast_title", .bodyKey = "gf.ui.fixture.toast_body", .ms = 1});
     ctx.check(cl::ui::toastCount() == before + 1, "a toast was queued");
 
-    // tooltips: lines of the item's providers (on the fixture item: nothing of the game's own
-    // items keeps a test provider)
-    static bool registered = false;
-    if (!registered) {
-        registered = true;
-        cl::tooltip::add("gf_test:fixture_item", [](ItemStack const& s, std::vector<std::string>& lines) {
-            if (gf::game::items::getData(s, "ui_test").is_null()) return;
-            lines.push_back("ui test line");
-        });
-    }
+    // tooltips: lines of the item's providers, removed again at the end
+    cl::tooltip::add("gf_test:fixture_item", [](ItemStack const& s, std::vector<std::string>& lines) {
+        if (gf::game::items::getData(s, "ui_test").is_null()) return;
+        lines.push_back("ui test line");
+    });
     auto stick = gf::game::items::make("gf_test:fixture_item");
     ctx.require(stick.has_value(), "the fixture item (gf_test packs)");
     ctx.check(cl::ui::tooltipLines(*stick).empty(), "no line without the data");
@@ -62,6 +58,10 @@ GF_REGISTER_SELFTEST("ui.client_ui", [](Context& ctx) {
     auto lines = cl::ui::tooltipLines(*stick);
     ctx.check(lines.size() == 1 && lines[0] == "ui test line", "the provider's line");
     ctx.check(cl::ui::tooltipLines(*gf::game::items::make("minecraft:dirt")).empty(), "other items get nothing");
+    // the whole hover text (ContainerScreen tooltips) reads the client level: the client thread's,
+    // so only the empty case here (the fixture screen's tooltip shows it in the e2e screenshots)
+    ctx.check(cl::ui::hoverLines(ItemStack::EMPTY_ITEM()).empty(), "an empty stack has no hover text");
+    ctx.check(cl::ui::removeTooltips("gf_test:fixture_item") && cl::ui::tooltipLines(*stick).empty(), "the provider is removed");
 
     // the fixture key (development builds deploy the gf_test packs)
     auto keys = cl::keys::registered();
@@ -70,20 +70,24 @@ GF_REGISTER_SELFTEST("ui.client_ui", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("ui.client_render", [](Context& ctx) {
-    static bool registered = false;
-    if (!registered) {
-        registered = true;
-        cl::render::registerBlockRenderer("gf_test:fixture_block", [](auto&, auto const&, auto const&, float) {}, {.throughWalls = true});
-        cl::tint::registerBlock("gf_test:fixture_block", [](BlockPos const& p) { return 0x102030u + static_cast<unsigned>(p.y & 0xFF); });
-        cl::render::registerEntityRenderer("gf_test:boss", [](auto&, auto&, float) {});
-        cl::render::registerItemRenderer("gf_test:fixture_item", [](auto&, auto const&, auto) {}, cl::render::Gui | cl::render::Ground);
-    }
-    ctx.check(cl::render::hasBlockRenderer("gf_test:fixture_block"), "the block renderer is registered");
-    ctx.check(!cl::render::hasBlockRenderer("minecraft:stone"), "others are not");
-    auto t = cl::render::tintOf("gf_test:fixture_block", 1, 5, 2);
+    namespace r = cl::render;
+    r::registerBlockRenderer("gf_test:ui_test_block", [](auto&, auto const&, auto const&, float) {}, {.throughWalls = true});
+    cl::tint::registerBlock("gf_test:ui_test_block", [](BlockPos const& p) { return 0x102030u + static_cast<unsigned>(p.y & 0xFF); });
+    r::registerEntityRenderer("gf_test:ui_test_entity", [](auto&, auto&, float) {});
+    r::registerItemRenderer("gf_test:ui_test_item", [](auto&, auto const&, auto) {}, r::Gui | r::Ground | r::Fixed | r::Head);
+    ctx.check(r::hasBlockRenderer("gf_test:ui_test_block"), "the block renderer is registered");
+    ctx.check(!r::hasBlockRenderer("minecraft:stone"), "others are not");
+    ctx.check(r::hasItemRenderer("gf_test:ui_test_item", r::Fixed) && r::hasItemRenderer("gf_test:ui_test_item", r::Head), "Fixed and Head item contexts are taken");
+    ctx.check(!r::hasItemRenderer("gf_test:ui_test_item", r::FirstPerson), "contexts not asked for are not");
+    auto t = r::tintOf("gf_test:ui_test_block", 1, 5, 2);
     ctx.check(t && *t == 0x102035u, "the tint resolver gets the absolute position");
-    ctx.check(!cl::render::tintOf("minecraft:grass_block", 0, 0, 0), "no tint for others");
-    ctx.info("tracked block positions: " + std::to_string(cl::render::trackedBlockCount()));
+    ctx.check(!r::tintOf("minecraft:grass_block", 0, 0, 0), "no tint for others");
+    ctx.info("tracked block positions: " + std::to_string(r::trackedBlockCount()));
+    ctx.check(r::unregisterBlockRenderer("gf_test:ui_test_block") && !r::hasBlockRenderer("gf_test:ui_test_block"), "block renderer removed");
+    ctx.check(cl::tint::unregisterBlock("gf_test:ui_test_block") && !r::tintOf("gf_test:ui_test_block", 0, 0, 0), "tint removed");
+    ctx.check(r::unregisterEntityRenderers("gf_test:ui_test_entity"), "entity renderer removed");
+    ctx.check(r::unregisterItemRenderer("gf_test:ui_test_item") && !r::hasItemRenderer("gf_test:ui_test_item", r::Gui), "item renderer removed");
+    ctx.check(!r::unregisterItemRenderer("gf_test:ui_test_item"), "only once");
 });
 
 GF_REGISTER_SELFTEST("ui.client_geo", [](Context& ctx) {
@@ -125,14 +129,11 @@ GF_REGISTER_SELFTEST("ui.client_world", [](Context& ctx) {
     ctx.check(decl.size() == 29, "29 TF particle ids declared");
     ctx.check(std::any_of(decl.begin(), decl.end(), [](auto const& d) { return d.first == "twilightforest:firefly"; }), "firefly is declared");
     static int spawned = 0;
-    static bool registered = false;
-    if (!registered) {
-        registered = true;
-        cl::particles::registerNative("gf_test:fixture_particle", [](Vec3 const&, Vec3 const& v, Json const& p) { spawned += 1 + static_cast<int>(v.y) + p.value("n", 0); });
-    }
-    spawned = 0;
-    ctx.check(cl::particles::spawn("gf_test:fixture_particle", {0, 0, 0}, {0, 2, 0}, {{"n", 4}}) && spawned == 7, "the factory got position, velocity and params");
+    spawned            = 0;
+    cl::particles::registerNative("gf_test:ui_test_particle", [](Vec3 const&, Vec3 const& v, Json const& p) { spawned += 1 + static_cast<int>(v.y) + p.value("n", 0); });
+    ctx.check(cl::particles::spawn("gf_test:ui_test_particle", {0, 0, 0}, {0, 2, 0}, {{"n", 4}}) && spawned == 7, "the factory got position, velocity and params");
     ctx.check(!cl::particles::spawn("twilightforest:not_a_particle", {}, {}), "no factory: the caller spawns the data-driven particle");
+    ctx.check(cl::particles::unregisterNative("gf_test:ui_test_particle") && !cl::particles::spawn("gf_test:ui_test_particle", {}, {}), "the factory is removed");
 
     // sky providers per dimension
     constexpr int kDim = 9999;
@@ -146,21 +147,30 @@ GF_REGISTER_SELFTEST("ui.client_world", [](Context& ctx) {
     cl::sky::clearProvider(kDim);
     ctx.check(cl::sky::providerOf(kDim) == nullptr, "providers can be removed");
 
-    // maps: icons and extra decorations
-    cl::maps::setIcon("twilightforest:lich_tower_icon", "textures/map/lich_tower_icon");
-    ctx.check(cl::maps::iconOf("twilightforest:lich_tower_icon") == "textures/map/lich_tower_icon", "map icon registered");
+    // maps: icons and extra decorations (gf_test ids, removed again)
+    cl::maps::setIcon("gf_test:ui_test_icon", "textures/gui/ui/fixture_geo");
+    ctx.check(cl::maps::iconOf("gf_test:ui_test_icon") == "textures/gui/ui/fixture_geo", "map icon registered");
     ctx.check(cl::maps::iconOf("twilightforest:unknown").empty(), "unknown icon");
+    constexpr std::int64_t kMap = -987654321;
+    cl::maps::setDecorations(kMap, {{.type = "gf_test:ui_test_icon", .x = 10, .z = -20, .rotation = 4, .name = "n"}});
+    auto decs = cl::maps::decorationsOf(kMap);
+    ctx.check(decs.size() == 1 && decs[0].x == 10 && decs[0].z == -20 && decs[0].rotation == 4, "decorations kept per map");
+    cl::maps::setDecorations(kMap, {});
+    ctx.check(cl::maps::decorationsOf(kMap).empty(), "an empty list removes them");
+    ctx.check(cl::maps::removeIcon("gf_test:ui_test_icon") && cl::maps::iconOf("gf_test:ui_test_icon").empty(), "icon removed");
     ctx.check(!cl::maps::view(-123456789).has_value(), "an unknown map has no view");
 
-    // camera: shakes count down only while the client config allows them
-    auto& cfg  = gf::config::mut<gf::client::ClientConfig>();
-    bool  keep = cfg.screenShakingEffect;
+    // camera: shakes count down only while the client config allows them; the latest call sets the
+    // strength and a longer one extends the shake (a negligible intensity: the real camera barely moves)
+    auto& cfg               = gf::config::mut<gf::client::ClientConfig>();
+    bool  keep              = cfg.screenShakingEffect;
     cfg.screenShakingEffect = false;
     cl::camera::shake(1.0f, 10);
     ctx.check(cl::camera::shaking() == 0, "no shake with screenShakingEffect off");
     cfg.screenShakingEffect = true;
-    cl::camera::shake(0.5f, 3);
-    ctx.check(cl::camera::shaking() >= 3, "a shake is pending with screenShakingEffect on");
+    cl::camera::shake(0.002f, 20);
+    cl::camera::shake(0.001f, 5);
+    ctx.check(cl::camera::shaking() > 5 && cl::camera::shakeIntensity() == 0.001f, "the latest intensity, the longer duration");
     cfg.screenShakingEffect = keep;
 });
 
