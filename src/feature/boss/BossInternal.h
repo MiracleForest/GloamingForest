@@ -60,5 +60,11 @@ void setSpawnerKindForTest(std::string const& blockId, std::optional<SpawnerKind
 [[nodiscard]] int sinisterSpawnedForTest();
 /// IBossLootBuffer#tryDeposit's rule: a piston could push or break the block (PushReaction != BLOCK).
 [[nodiscard]] bool pistonMovable(BlockSource& region, BlockPos const& pos);
+/// Engine death ticks held back so far (dying boss bodies kept past Bedrock's 20 ticks).
+[[nodiscard]] int heldDeathTicksForTest();
+/// Removes the lifecycle overrides of a type (fixture overrides live only while a test runs).
+void clearLifecycleForTest(std::string const& entityId);
+/// SpawnPlacements#checkSpawnRules (SPAWNER) as the sinister spawner applies it.
+[[nodiscard]] bool spawnRulesAllowForTest(BlockSource& region, BlockPos const& pos, bool monster);
 
 } // namespace gf::feature::boss

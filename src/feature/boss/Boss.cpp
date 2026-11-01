@@ -36,9 +36,14 @@
 //     UpdateDeathTimePacket ("boss.death_time", when a player starts seeing a dying boss).
 //   - Death (postmortem): the loot table rolls into the 27-slot buffer (IBossLootBuffer, saved
 //     with the boss), the home landmark is conquered (gf::landmark), "hurt_boss" fires for every
-//     qualified player; after the death animation the buffer goes into the death chest at
-//     EntityUtil#bossChestLocation (home.below(), replacing the floor block when a piston could
-//     move it) through gf::inventory or a vanilla container, with the chest sound and poof.
+//     qualified player. The dead body stays in the level for the boss's whole death animation
+//     (BaseTFBoss#tickDeath / #isDeathAnimationFinished; Bedrock's own death ticking system,
+//     which removes a dead mob after 20 ticks, is held back for it); then the buffer goes into
+//     the death chest at EntityUtil#bossChestLocation (home.below(), replacing the floor block
+//     when a piston could move it) through gf::inventory or a vanilla container, with the chest
+//     sound and poof, and the engine removes the body. Every step a TF boss overrides
+//     (shouldSpawnLoot, shouldCreateSpawner, postmortem, tickDeath, isDeathAnimationFinished,
+//     postRemoval, getDeathContainer, placeSpawner) is a gf::boss::ext::Lifecycle member.
 //   - Peaceful: the boss turns back into its spawner at home and disappears.
 //   - Spawners (BossSpawnerBlockEntity, SinisterSpawnerLogic): custom blocks have no block
 //     entities, so the spawner blocks around players are found with the chunk palettes
@@ -58,6 +63,7 @@
 #include <unordered_set>
 
 #include "ll/api/Config.h"
+#include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec2.h"
@@ -89,6 +95,11 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BrightnessPair.h"
+#include "mc/world/level/dimension/Dimension.h"
+#include "mc/entity/components/death/DeathTickingComponent.h"
+#include "mc/entity/systems/death/ServerMobTickDeathSystemImpl.h"
+#include "mc/entity/components/ActorUniqueIDComponent.h"
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
@@ -104,6 +115,7 @@
 #include "feature/combat/Combat.h"
 #include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
+#include "feature/dimension/World.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/fx/Fx.h"
@@ -176,7 +188,9 @@ struct Bar {
     std::set<std::int64_t>  players; ///< the players the bar was added for
 };
 
-/// A dying boss: the death animation counts on after the engine removed the actor.
+/// A dying boss (BaseTFBoss#tickDeath). Its dead body stays in the level while the animation runs
+/// (deathHold keeps Bedrock's own 20-tick removal back); if the body unloads, the record finishes
+/// the death with what was known at the death.
 struct Dying {
     std::int64_t                 uid = 0;
     std::string                  type;
@@ -189,6 +203,8 @@ struct Dying {
     bool                         loot = true;
     std::string                  chestBlock;
     std::int64_t                 seed = 0;
+    bool                         released     = false; ///< the animation finished: the engine removes the body
+    int                          releaseTicks = 0;
 };
 
 /// SinisterSpawnerLogic's runtime (the spawn buffer and scan position are not saved in Java).
@@ -233,6 +249,10 @@ struct State {
     int                              sinisterSpawned = 0; ///< mobs spawned by sinister spawners (selftests)
     std::unordered_map<std::string, SpawnerKind> kindsForTest; ///< fixture spawners with a variant's rules
     int sinisterRange = 16; ///< the longest requiredPlayerRange a sinister spawner was given (scan box)
+    std::unordered_map<std::string, gf::boss::ext::Lifecycle> lifecycles; ///< BaseTFBoss overrides per type
+    std::unordered_map<std::string, int>                      homeRadii;  ///< EnforcedHomePoint#getHomeRadius
+    int heldDeathTicks = 0; ///< engine death ticks held back (selftests)
+    std::unordered_map<std::string, bool> monsterTypes; ///< sinister spawn types: Monster category (learnt)
 };
 State& S() {
     static State s;
@@ -242,6 +262,31 @@ State& S() {
 BossSpec const* bossSpec(std::string const& type) {
     auto it = S().bosses.find(type);
     return it != S().bosses.end() ? &it->second : nullptr;
+}
+
+gf::boss::ext::Lifecycle const* lifecycleOf(std::string const& type) {
+    auto it = S().lifecycles.find(type);
+    return it != S().lifecycles.end() ? &it->second : nullptr;
+}
+
+/// Runs a unit's lifecycle callback; a throwing one is reported once per (step, type).
+template <class Fn>
+void lifecycleRun(char const* step, std::string const& type, Fn&& fn) {
+    static std::set<std::string> seen;
+    try {
+        fn();
+    } catch (std::exception const& e) {
+        if (seen.insert(std::string(step) + "|" + type).second) log().error("boss: {} of {} failed: {}", step, type, e.what());
+    } catch (...) {
+        if (seen.insert(std::string(step) + "|" + type).second) log().error("boss: {} of {} failed", step, type);
+    }
+}
+/// A lifecycle callback's answer (`fallback` when it throws).
+template <class R, class Fn>
+R lifecycleAsk(char const* step, std::string const& type, R fallback, Fn&& fn) {
+    R out = std::move(fallback);
+    lifecycleRun(step, type, [&] { out = fn(); });
+    return out;
 }
 
 std::int64_t uidOf(Actor const& a) { return fe::uidOf(a); }
@@ -488,16 +533,26 @@ void setBufferSlot(Json& buffer, int slot, ItemStack stack) {
     buffer[slot] = game::items::toJson(stack);
 }
 
+using RandomSource = core::jrand::RandomSource;
+
 /// Util#shuffle.
 template <class T>
-void shuffle(std::vector<T>& list, fe::JavaRandom& random) {
+void shuffle(std::vector<T>& list, RandomSource& random) {
     for (int i = static_cast<int>(list.size()); i > 1; --i) std::swap(list[i - 1], list[random.nextInt(i)]);
 }
 
-int nextIntBetween(fe::JavaRandom& random, int a, int b) { return a >= b ? a : random.nextInt(b - a + 1) + a; }
+int nextIntBetween(RandomSource& random, int a, int b) { return a >= b ? a : random.nextInt(b - a + 1) + a; }
+
+/// IBossLootBuffer#getAvailableSlots.
+std::vector<int> availableSlots(RandomSource& random) {
+    std::vector<int> slots;
+    for (int i = 0; i < kContainerSize; ++i) slots.push_back(i);
+    shuffle(slots, random);
+    return slots;
+}
 
 /// LootTable#shuffleAndSplitItems.
-void shuffleAndSplit(std::vector<ItemStack>& stacks, int emptySlots, fe::JavaRandom& random) {
+void shuffleAndSplit(std::vector<ItemStack>& stacks, int emptySlots, RandomSource& random) {
     std::vector<ItemStack> list;
     for (auto it = stacks.begin(); it != stacks.end();) {
         if (game::items::isEmpty(*it)) it = stacks.erase(it);
@@ -522,7 +577,8 @@ void shuffleAndSplit(std::vector<ItemStack>& stacks, int emptySlots, fe::JavaRan
     shuffle(stacks, random);
 }
 
-std::vector<ItemStack> rollLoot(Mob& boss, BossSpec const& spec, std::string const& damageType, Actor* killer) {
+/// TFLootTables#createLootParams(boss, true, cause): the boss's death context.
+std::vector<ItemStack> rollLoot(Mob& boss, std::string const& tableId, std::string const& damageType, Actor* killer) {
     gf::loot::LootContext ctx;
     ctx.region     = &boss.getDimensionBlockSource();
     ctx.origin     = boss.getFeetPos();
@@ -531,20 +587,18 @@ std::vector<ItemStack> rollLoot(Mob& boss, BossSpec const& spec, std::string con
     ctx.damageType = damageType;
     if (auto* p = fe::playerById(boss.mLastHurtByPlayerId->rawID)) ctx.player = p;
     else if (killer && killer->isPlayer()) ctx.player = static_cast<Player*>(killer);
-    return gf::loot::roll(spec.lootTable, ctx);
+    return gf::loot::roll(tableId, ctx);
 }
 
 /// IBossLootBuffer#saveDropsIntoBoss (+ #fill).
 void saveDropsIntoBoss(Mob& boss, BossSpec const& spec, std::string const& damageType, Actor* killer) {
     if (!config().bossesSpawnDropChests) return;
     auto& region = boss.getDimensionBlockSource();
-    auto  stacks = rollLoot(boss, spec, damageType, killer);
+    auto  stacks = rollLoot(boss, spec.lootTable, damageType, killer);
     auto& random = fe::randomOf(boss);
     // fill: a second roll, spread over the shuffled free slots
-    auto             items = rollLoot(boss, spec, damageType, killer);
-    std::vector<int> slots;
-    for (int i = 0; i < kContainerSize; ++i) slots.push_back(i);
-    shuffle(slots, random);
+    auto items = rollLoot(boss, spec.lootTable, damageType, killer);
+    auto slots = availableSlots(random);
     shuffleAndSplit(items, static_cast<int>(slots.size()), random);
     auto& buffer = bufferOf(boss);
     for (auto const& item : items) {
@@ -700,34 +754,59 @@ void depositDropsIntoChest(Dying const& d) {
 
 // ---- lifecycle ------------------------------------------------------------------------------------
 
-/// BaseTFBoss#postmortem (+ the conquest and the group advancement).
+/// BaseTFBoss#shouldSpawnLoot.
+bool shouldSpawnLoot(Mob& boss) {
+    auto const* lc = lifecycleOf(boss.getTypeName());
+    bool        rule = gameRule(GameRules::GameRulesIndex::DoMobLoot);
+    if (!lc || !lc->shouldSpawnLoot) return rule;
+    return lifecycleAsk("shouldSpawnLoot", boss.getTypeName(), rule, [&] { return lc->shouldSpawnLoot(boss); });
+}
+
+/// UpdateDeathTimePacket to the companions that see the boss (its bar's viewers).
+void sendDeathTime(Mob& boss, int deathTime) {
+    auto it = S().bars.find(uidOf(boss));
+    if (it == S().bars.end()) return;
+    for (auto pid : it->second.players)
+        if (auto* p = fe::playerById(pid); p && gf::net::isCompanion(*p))
+            gf::net::send(*p, "boss.death_time", {{"id", uidOf(boss)}, {"rid", static_cast<std::int64_t>(boss.getRuntimeID().rawID)}, {"deathTime", deathTime}});
+}
+
+/// BaseTFBoss#postmortem's default: the bar to 0, the loot table into the buffer, the conquest.
+void defaultPostmortem(Mob& boss, BossSpec const& spec, std::string const& damageType, Actor* killer) {
+    if (auto it = S().bars.find(uidOf(boss)); it != S().bars.end()) setProgress(boss, it->second, 0.0f);
+    saveDropsIntoBoss(boss, spec, damageType, killer);
+    // LandmarkUtil#markStructureConquered at the home point
+    auto home = gf::entity::home(boss);
+    if (home && home->pos.dim == static_cast<int>(boss.getDimensionId()) && !spec.homeStructure.empty()) {
+        BlockPos hp{home->pos.x, home->pos.y, home->pos.z};
+        gf::landmark::setConquered(home->pos.dim, hp, spec.homeStructure, true);
+        S().lastConquest = std::make_pair(home->pos, spec.homeStructure);
+        log().info("boss: {} conquered {} at {} {} {}", boss.getTypeName(), spec.homeStructure, hp.x, hp.y, hp.z);
+    }
+}
+
+/// BaseTFBoss#die: #postmortem when the boss spawns loot (BaseTFBoss#shouldDropLoot: without death
+/// chests the loot table drops as for any mob, the death pipeline's entity drops; with them those
+/// drops are suppressed, see install()), the group advancement, then the death animation.
 void onBossDie(Mob& boss, std::string const& damageType, Actor* killer) {
     auto const* spec = bossSpec(boss.getTypeName());
     if (!spec) return;
-    auto uid = uidOf(boss);
-    auto it  = S().bars.find(uid);
-    if (it != S().bars.end()) setProgress(boss, it->second, 0.0f);
-    bool loot = gameRule(GameRules::GameRulesIndex::DoMobLoot);
-    auto home = gf::entity::home(boss);
+    auto const& type = boss.getTypeName();
+    auto        uid  = uidOf(boss);
+    auto const* lc   = lifecycleOf(type);
+    bool        loot = shouldSpawnLoot(boss);
     if (loot) {
-        saveDropsIntoBoss(boss, *spec, damageType, killer);
-        // LandmarkUtil#markStructureConquered at the home point
-        if (home && home->pos.dim == static_cast<int>(boss.getDimensionId()) && !spec->homeStructure.empty()) {
-            BlockPos hp{home->pos.x, home->pos.y, home->pos.z};
-            gf::landmark::setConquered(home->pos.dim, hp, spec->homeStructure, true);
-            S().lastConquest = std::make_pair(home->pos, spec->homeStructure);
-            log().info("boss: {} conquered {} at {} {} {}", boss.getTypeName(), spec->homeStructure, hp.x, hp.y, hp.z);
-        }
-        // BaseTFBoss#shouldDropLoot: without death chests the loot table drops as for any mob (the
-        // death pipeline's entity drops, gf::loot); with them those drops are suppressed below
+        if (lc && lc->postmortem) lifecycleRun("postmortem", type, [&] { lc->postmortem(boss, damageType, killer); });
+        else defaultPostmortem(boss, *spec, damageType, killer);
     }
     // EntityEvents#grantGroupAdvancementIfNeeded
     if (auto q = S().qualified.find(uid); q != S().qualified.end())
         for (auto pid : q->second)
-            if (auto* p = fe::playerById(pid)) gf::progression::trigger(*p, "twilightforest:hurt_boss", {{"entity", boss.getTypeName()}});
+            if (auto* p = fe::playerById(pid)) gf::progression::trigger(*p, "twilightforest:hurt_boss", {{"entity", type}});
+    auto home = gf::entity::home(boss);
     Dying d;
     d.uid        = uid;
-    d.type       = boss.getTypeName();
+    d.type       = type;
     d.dim        = static_cast<int>(boss.getDimensionId());
     d.pos        = boss.getFeetPos();
     d.home       = home ? std::optional<core::GlobalPos>(home->pos) : std::nullopt;
@@ -737,26 +816,73 @@ void onBossDie(Mob& boss, std::string const& damageType, Actor* killer) {
     d.chestBlock = spec->deathChestBlock.empty() ? std::string("minecraft:chest") : spec->deathChestBlock;
     d.seed       = fe::randomOf(boss).nextLong();
     S().dying.push_back(std::move(d));
-    log().info("boss: {} died ({})", boss.getTypeName(), damageType);
+    // the client mod counts the death time on from here (Bedrock clients stop at their 20 ticks)
+    sendDeathTime(boss, 0);
+    log().info("boss: {} died ({}{})", type, damageType, loot ? "" : ", no loot");
 }
 
-/// BaseTFBoss#tickDeath for the dying bosses, then #postRemoval. The death time reaches companion
-/// clients only when they start seeing a dying boss (UpdateDeathTimePacket from
-/// #startSeenByPlayer); clients that watched the death count it themselves.
+/// Whether the engine's death tick of the actor `uid` runs: 0 yes (not a dying boss), 1 no (the
+/// boss's animation runs on: the body stays), 2 yes and it removes the body now (the animation
+/// finished).
+int deathHold(std::int64_t uid) {
+    for (auto const& d : S().dying)
+        if (d.uid == uid) {
+            if (d.released) return 2;
+            ++S().heldDeathTicks;
+            return 1;
+        }
+    return 0;
+}
+
+/// BaseTFBoss#tickDeath for the dying bosses: the death time, the unit's tickDeath, and when the
+/// animation is finished #remove(KILLED) -> #postRemoval (the death chest, onPostRemoval); the
+/// engine then removes the body. A body that unloaded finishes with the defaults.
 void tickDying() {
     auto& dying = S().dying;
     for (auto it = dying.begin(); it != dying.end();) {
-        auto& d = *it;
+        auto&  d     = *it;
+        Actor* actor = fe::actorById(d.uid);
+        Mob*   mob   = actor ? fe::asMob(*actor) : nullptr;
+        if (d.released) {
+            // the engine's next death tick removes the body; one it did not remove goes here
+            if (!actor || ++d.releaseTicks > 5) {
+                if (actor) actor->remove(); // RemovalReason.KILLED
+                S().qualified.erase(d.uid);
+                it = dying.erase(it);
+            } else ++it;
+            continue;
+        }
         d.deathTime++;
-        if (d.deathTime < d.finish) {
+        auto const* lc = lifecycleOf(d.type);
+        if (mob && lc && lc->tickDeath) lifecycleRun("tickDeath", d.type, [&] { lc->tickDeath(*mob, d.deathTime); });
+        bool finished = d.deathTime >= d.finish;
+        if (mob && lc && lc->deathAnimationFinished)
+            finished = lifecycleAsk("deathAnimationFinished", d.type, finished, [&] { return lc->deathAnimationFinished(*mob, d.deathTime); });
+        if (!finished) {
             ++it;
             continue;
         }
+        // BaseTFBoss#postRemoval
+        bool deposit = d.loot;
+        if (mob) {
+            // reason == KILLED && shouldSpawnLoot() (&& the type's own condition: IT_IS_OVER)
+            deposit = shouldSpawnLoot(*mob);
+            if (deposit && lc && lc->shouldDeposit) deposit = lifecycleAsk("shouldDeposit", d.type, true, [&] { return lc->shouldDeposit(*mob); });
+            d.buffer = bufferOf(*mob);
+            if (deposit && lc && lc->deathContainer) {
+                auto chest = lifecycleAsk("deathContainer", d.type, std::string(), [&] { return lc->deathContainer(*mob, fe::randomOf(*mob)); });
+                if (!chest.empty()) d.chestBlock = chest;
+            }
+        }
         removeBar(d.uid);
-        if (auto* actor = fe::actorById(d.uid)) actor->remove(); // RemovalReason.KILLED
-        if (d.loot) depositDropsIntoChest(d);
-        S().qualified.erase(d.uid);
-        it = dying.erase(it);
+        if (deposit) depositDropsIntoChest(d);
+        if (mob && lc && lc->onPostRemoval) lifecycleRun("onPostRemoval", d.type, [&] { lc->onPostRemoval(*mob); });
+        log().info("boss: the death animation of {} finished after {} ticks", d.type, d.deathTime);
+        d.released = true;
+        if (!actor) {
+            S().qualified.erase(d.uid);
+            it = dying.erase(it);
+        } else ++it;
     }
 }
 
@@ -767,21 +893,35 @@ std::string spawnerBlockOf(std::string const& type) {
     return {};
 }
 
-/// BaseTFBoss#checkDespawn on peaceful: back to the spawner at home, then gone.
+/// BaseTFBoss#placeSpawner's default.
+bool placeBossSpawner(Mob& boss, BlockPos const& pos) {
+    auto block = spawnerBlockOf(boss.getTypeName());
+    auto const* b = block.empty() ? nullptr : game::blockWith(block);
+    if (!b || !game::setBlock(boss.getDimensionBlockSource(), pos, *b)) return false;
+    log().info("boss: {} turned back into {} at {} {} {} (peaceful)", boss.getTypeName(), block, pos.x, pos.y, pos.z);
+    return true;
+}
+
+/// BaseTFBoss#checkDespawn on peaceful: back to the spawner at home (#shouldCreateSpawner,
+/// #placeSpawner), then gone.
 bool peacefulDespawn(Mob& boss) {
     if (!peaceful()) return false;
     if (!S().discarding.insert(uidOf(boss)).second) return true; // already on its way out
-    auto home = gf::entity::home(boss);
-    auto block = spawnerBlockOf(boss.getTypeName());
-    if (home && home->pos.dim == static_cast<int>(boss.getDimensionId()) && !block.empty()) {
-        auto&    region = boss.getDimensionBlockSource();
+    auto const& type   = boss.getTypeName();
+    auto const* lc     = lifecycleOf(type);
+    bool        create = !lc || !lc->shouldCreateSpawner || lifecycleAsk("shouldCreateSpawner", type, true, [&] { return lc->shouldCreateSpawner(boss); });
+    auto        home   = gf::entity::home(boss);
+    bool        placed = false;
+    if (create && home && home->pos.dim == static_cast<int>(boss.getDimensionId())) {
         BlockPos hp{home->pos.x, home->pos.y, home->pos.z};
-        if (region.hasChunksAt(hp, 0, false))
-            if (auto const* b = game::blockWith(block)) game::setBlock(region, hp, *b);
-        log().info("boss: {} turned back into {} at {} {} {} (peaceful)", boss.getTypeName(), block, hp.x, hp.y, hp.z);
-    } else {
-        log().info("boss: {} left (peaceful)", boss.getTypeName());
+        if (boss.getDimensionBlockSource().hasChunksAt(hp, 0, false)) {
+            if (lc && lc->placeSpawner) {
+                lifecycleRun("placeSpawner", type, [&] { lc->placeSpawner(boss, hp); });
+                placed = true; // the unit's own placement logs what it does
+            } else placed = placeBossSpawner(boss, hp);
+        }
     }
+    if (!placed) log().info("boss: {} left (peaceful{})", type, create ? "" : ", no spawner");
     removeBar(uidOf(boss));
     fe::removeLater(uidOf(boss)); // discard()
     return true;
@@ -813,13 +953,13 @@ void onBossTick(Actor& actor, fe::ActorState const& state) {
     if (!boss) return;
     auto const* spec = bossSpec(actor.getTypeName());
     if (!spec) return;
+    // a dead body keeps the bar it had until its death animation ends (then it is gone with it)
+    if (!boss->isAlive() && !S().bars.contains(uidOf(*boss))) return;
     auto& bar = barOf(*boss, *spec, state);
-    if (boss->isAlive()) {
-        if (peacefulDespawn(*boss)) return;
-        // BaseTFBoss#customServerAiStep -> tickBossBar
-        int max = boss->getMaxHealth();
-        setProgress(*boss, bar, max > 0 ? static_cast<float>(boss->getHealth()) / static_cast<float>(max) : 0.0f);
-    }
+    if (boss->isAlive() && peacefulDespawn(*boss)) return;
+    // BaseTFBoss#customServerAiStep (alive) / #tickDeath (dying) -> tickBossBar
+    int max = boss->getMaxHealth();
+    setProgress(*boss, bar, boss->isAlive() && max > 0 ? static_cast<float>(boss->getHealth()) / static_cast<float>(max) : 0.0f);
     updateAudience(*boss, bar);
     // BaseTFBoss#setCustomName: a renamed boss renames its bar
     if (auto const& tag = boss->getNameTag(); tag != bar.lastTag) {
@@ -918,8 +1058,13 @@ bool spawnMyBoss(BlockSource& region, int dim, BlockPos const& pos, SpawnerSpec 
     auto&       random = spawnerRandom();
     SpawnerKind kind   = kindOf(spec.blockId);
     if (kind == SpawnerKind::Never && !spec.spawnFn) return false; // no spawning for you
+    // EnforcedHomePoint: the home and its radius (getHomeRadius of the boss type), set before the
+    // boss's first tick (its Behaviour::onSpawn sees them)
     auto setHome = [&](Mob& mob, BlockPos const& home) {
-        if (!gf::entity::home(mob)) gf::entity::setHome(mob, core::GlobalPos{dim, home.x, home.y, home.z}, 0);
+        if (!gf::entity::home(mob)) {
+            auto r = S().homeRadii.find(mob.getTypeName());
+            gf::entity::setHome(mob, core::GlobalPos{dim, home.x, home.y, home.z}, r != S().homeRadii.end() ? r->second : 0);
+        }
         gf::entity::data(mob, "boss:spawner") = spec.blockId;
     };
     if (spec.spawnFn) {
@@ -1088,6 +1233,30 @@ bool noCollision(BlockSource& region, Vec3 const& at) {
     return true;
 }
 
+/// SpawnPlacements#checkSpawnRules for MobSpawnType.SPAWNER. A monster (Monster#
+/// checkMonsterSpawnRules) needs a difficulty and a dark spot (Monster#isDarkEnoughToSpawn with the
+/// dimension type's monster_spawn_block_light_limit / monster_spawn_light_level: the Twilight
+/// Forest 7 / uniform 0..7, the overworld and the End 0 / uniform 0..7, the Nether 15 / 7); a mob
+/// without placement rules spawns anywhere.
+bool spawnRulesAllow(BlockSource& region, BlockPos const& pos, bool monster, RandomSource& random) {
+    if (!monster) return true;
+    if (peaceful()) return false;
+    auto const light = region.getBrightnessPair(pos);
+    int        sky   = light.sky.get().mValue;
+    int        block = light.block.get().mValue;
+    if (sky > random.nextInt(32)) return false;
+    auto& dimension = region.getDimension();
+    int   id        = static_cast<int>(dimension.getDimensionId());
+    bool  nether    = id == 1;
+    int   limit     = nether ? 15 : gf::world::isTwilight(dimension) ? 7 : 0;
+    if (limit < 15 && block > limit) return false;
+    // Level#getMaxLocalRawBrightness: the block light or the sky light darkened by the time of day
+    int darken = dimension.mSkyDarken->mValue;
+    int raw    = std::max(block, sky - darken);
+    int test   = nether ? 7 : random.nextInt(8); // UniformInt 0..7
+    return raw <= test;
+}
+
 /// SinisterSpawnerLogic#serverTick.
 void tickSinister(BlockSource& region, int dim, BlockPos const& pos, SpawnerRuntime& srt) {
     auto& rt     = sinisterOf(region, pos, srt);
@@ -1096,9 +1265,13 @@ void tickSinister(BlockSource& region, int dim, BlockPos const& pos, SpawnerRunt
     Vec3  c{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f};
     // BaseSpawner#isNearPlayer: Level#hasNearbyAlivePlayer (no spectators)
     if (!nearestPlayer(dim, c, cfg.requiredPlayerRange)) return;
-    // the client's particles (SinisterSpawnerLogic#clientTick), one of each per tick
-    for (auto const& p : cfg.particles)
-        gf::fx::particle(region.getDimension(), p, Vec3{pos.x + float(random.nextDouble()), pos.y + float(random.nextDouble()), pos.z + float(random.nextDouble())}, {}, 1, cfg.particleParams.is_object() ? cfg.particleParams.value(p, Json()) : Json());
+    // the client's particles (SinisterSpawnerLogic#clientTick): one random spot per tick, one of
+    // each particle there
+    if (!cfg.particles.empty()) {
+        Vec3 spot{pos.x + float(random.nextDouble()), pos.y + float(random.nextDouble()), pos.z + float(random.nextDouble())};
+        for (auto const& p : cfg.particles)
+            gf::fx::particle(region.getDimension(), p, spot, {}, 1, cfg.particleParams.is_object() ? cfg.particleParams.value(p, Json()) : Json());
+    }
     if (rt.countNextToSpawn < 1) rt.countNextToSpawn = random.nextInt(1 + std::max(0, cfg.spawnCount));
     if (cfg.spawnDelay <= -1) sinisterDelay(cfg, random);
     scanSpawnPositions(region, pos, rt, random);
@@ -1124,24 +1297,26 @@ void tickSinister(BlockSource& region, int dim, BlockPos const& pos, SpawnerRunt
         }
         Vec3 spawnAt{at.x + 0.5f, float(at.y), at.z + 0.5f};
         if (!noCollision(region, spawnAt)) continue;
+        // SpawnPlacements#checkSpawnRules (SPAWNER) before the mob exists, for the types whose
+        // category is known (learnt from their first spawn below)
+        if (auto known = S().monsterTypes.find(entityId); known != S().monsterTypes.end() && !spawnRulesAllow(region, at, known->second, random))
+            continue;
         // the mobs of the type around the spawner (counted before the new one is added, as Java)
         AABB around{Vec3{float(pos.x - scan), float(pos.y - scan), float(pos.z - scan)}, Vec3{float(pos.x + 1 + scan), float(pos.y + 1 + scan), float(pos.z + 1 + scan)}};
         int  like = 0;
         for (auto* e : region.getEntities(around, 0.0f))
             if (e && e->isAlive() && e->getTypeName() == entityId && !(e->isPlayer() && static_cast<Player*>(e)->isSpectator())) ++like;
         if (like >= cfg.maxNearbyEntities) {
-            sinisterDelay(cfg, random);
-            rt.spawnBuffer.clear();
+            sinisterDelay(cfg, random); // delay and return: the buffer stays for the next cycle
             return;
         }
         Mob* mob = lv->getSpawner().spawnMob(region, ActorDefinitionIdentifier(entityId), nullptr, spawnAt, false, false, true);
         if (!mob) {
-            sinisterDelay(cfg, random);
-            rt.spawnBuffer.clear();
+            sinisterDelay(cfg, random); // tryAddFreshEntityWithPassengers failed: the buffer stays
             return;
         }
-        // SpawnPlacements#checkSpawnRules for SPAWNER: hostile mobs need a difficulty
-        if (peaceful() && mob->hasCategory(ActorCategory::Monster)) {
+        // the first spawn of a type: its category decides the rules from now on
+        if (auto [it, fresh] = S().monsterTypes.try_emplace(entityId, mob->hasCategory(ActorCategory::Monster)); fresh && !spawnRulesAllow(region, at, it->second, random)) {
             mob->remove();
             continue;
         }
@@ -1265,12 +1440,13 @@ void tickSpawners() {
             ++it;
             continue;
         }
+        // the waiting particles on every difficulty while a player is in range (the client side of
+        // BossSpawnerBlockEntity#tick: the final boss's spawner, which never spawns, shows them too)
+        if (!spec->second.particle.empty()) {
+            auto& r = spawnerRandom();
+            gf::fx::particle(region->getDimension(), spec->second.particle, Vec3{pos.x + r.nextFloat(), pos.y + r.nextFloat(), pos.z + r.nextFloat()}, {}, 1, particleParamsOf(id, spec->second.particle));
+        }
         if (peaceful()) {
-            // the waiting particles (client side in Java)
-            if (!spec->second.particle.empty()) {
-                auto& r = spawnerRandom();
-                gf::fx::particle(region->getDimension(), spec->second.particle, Vec3{pos.x + r.nextFloat(), pos.y + r.nextFloat(), pos.z + r.nextFloat()}, {}, 1, particleParamsOf(id, spec->second.particle));
-            }
             ++it;
             continue;
         }
@@ -1318,11 +1494,81 @@ std::vector<VariantRow> const& variants() {
     return rows;
 }
 
+} // namespace
+} // namespace gf::feature::boss
+
+// BaseTFBoss#tickDeath / #isDeathAnimationFinished: Bedrock removes a dead mob after 20 ticks of its
+// death ticking system (ServerMobTickDeathSystemImpl, which also drops the XP); a dying TF boss
+// keeps its body until its own animation finished, then the engine's tick runs from 19 and removes
+// it (with the XP and the death particles).
+LL_STATIC_HOOK(
+    BossDeathTickHook,
+    ll::memory::HookPriority::Normal,
+    &ServerMobTickDeathSystemImpl::_tick,
+    void,
+    StrictEntityContext&                                           entity,
+    AABBShapeComponent const&                                      aabbShape,
+    ActorDefinitionIdentifierComponent const&                      actorIdentifier,
+    ActorUniqueIDComponent const&                                  actorUniqueID,
+    DimensionTypeComponent const&                                  dimensionType,
+    OffsetsComponent const&                                        offsets,
+    SoundEventPlayerComponent const&                               soundEventPlayer,
+    StateVectorComponent const&                                    stateVector,
+    ActorDataFlagComponent&                                        actorFlags,
+    ActorDataDirtyFlagsComponent&                                  actorDirtyFlags,
+    ActorOwnerComponent&                                           actorOwner,
+    DeathTickingComponent&                                         deathTicking,
+    Optional<ExperienceRewardComponent>                            experienceReward,
+    Optional<PlayerComponent>                                      player,
+    Optional<SpawnOnDeathComponent>                                spawnOnDeath,
+    SpawnExperienceOrbRequestQueueComponent&                       experienceOrbRequestQueue,
+    ViewT<StrictEntityContext, SoundEventRequestQueueComponent>&   soundRequestQueueView
+) {
+    switch (gf::feature::boss::deathHold(actorUniqueID.mActorUniqueID->rawID)) {
+    case 1: return; // the boss's own animation runs on
+    case 2:
+        if (deathTicking.mTicks < 19) deathTicking.mTicks = 19; // removed on this tick
+        break;
+    default: break;
+    }
+    origin(
+        entity,
+        aabbShape,
+        actorIdentifier,
+        actorUniqueID,
+        dimensionType,
+        offsets,
+        soundEventPlayer,
+        stateVector,
+        actorFlags,
+        actorDirtyFlags,
+        actorOwner,
+        deathTicking,
+        experienceReward,
+        player,
+        spawnOnDeath,
+        experienceOrbRequestQueue,
+        soundRequestQueueView
+    );
+}
+
+namespace gf::feature::boss {
+namespace {
+
 // ---- module ------------------------------------------------------------------------------------------
 
 class BossModule {
 public:
+    // install / uninstall pair the engine hook and the interactions handler (the client enables and
+    // disables mods per world session); the internal entity hooks, level ticks and the combat, loot
+    // and blockdata registrations have no removal in their contracts and stay for the whole process
+    // (registered once).
     void install() {
+        BossDeathTickHook::hook();
+        // EntityEvents#addQualifiedGroupPlayerIfNeeded: melee hits now, every damage through combat
+        S().handlers.push_back(ia::onAttacked({}, [](ia::EntityContext const& c, bool hit) {
+            if (hit) qualify(c.entity, &c.player);
+        }));
         static bool once = false;
         if (std::exchange(once, true)) return;
         fe::addInternalHooks({
@@ -1355,10 +1601,6 @@ public:
                 std::erase_if(S().discarding, [](std::int64_t uid) { return !fe::actorById(uid); });
             }
         });
-        // EntityEvents#addQualifiedGroupPlayerIfNeeded: melee hits now, every damage through combat
-        S().handlers.push_back(ia::onAttacked({}, [](ia::EntityContext const& c, bool hit) {
-            if (hit) qualify(c.entity, &c.player);
-        }));
         gf::combat::onDealt(gf::combat::priority::Normal, [](gf::combat::DamageInfo const& d) {
             qualify(d.victim, d.attacker);
             // BaseTFBoss#lavaHurt: a boss in lava clears the lava around it
@@ -1402,7 +1644,11 @@ public:
             S().discarding.clear();
         });
     }
-    void uninstall() {}
+    void uninstall() {
+        for (auto id : S().handlers) ia::remove(id);
+        S().handlers.clear();
+        BossDeathTickHook::unhook();
+    }
 };
 
 } // namespace
@@ -1456,6 +1702,9 @@ void unregisterSinisterBlockForTest(std::string const& blockId) {
     std::erase_if(S().activeSpawners, [&](auto const& kv) { return kv.second.blockId == blockId; });
 }
 int sinisterSpawnedForTest() { return S().sinisterSpawned; }
+int heldDeathTicksForTest() { return S().heldDeathTicks; }
+void clearLifecycleForTest(std::string const& entityId) { S().lifecycles.erase(entityId); }
+bool spawnRulesAllowForTest(BlockSource& region, BlockPos const& pos, bool monster) { return spawnRulesAllow(region, pos, monster, spawnerRandom()); }
 void setSpawnerKindForTest(std::string const& blockId, std::optional<SpawnerKind> kind) {
     if (kind) S().kindsForTest[blockId] = *kind;
     else S().kindsForTest.erase(blockId);
@@ -1598,6 +1847,44 @@ int deathTime(Mob const& boss) {
     for (auto const& d : fb::S().dying)
         if (d.uid == fe::uidOf(boss)) return d.deathTime;
     return 0;
+}
+
+void setDeathTime(Mob& boss, int time) {
+    for (auto& d : fb::S().dying)
+        if (d.uid == fe::uidOf(boss) && !d.released) {
+            d.deathTime = time;
+            fb::sendDeathTime(boss, time);
+        }
+}
+
+void setLifecycle(std::string const& entityId, Lifecycle lifecycle) { fb::S().lifecycles[entityId] = std::move(lifecycle); }
+
+void defaultPostmortem(Mob& boss, std::string const& damageType, Actor* killer) {
+    if (auto const* spec = fb::bossSpec(boss.getTypeName())) fb::defaultPostmortem(boss, *spec, damageType, killer);
+}
+
+void placeBossSpawner(Mob& boss, BlockPos const& pos) { (void)fb::placeBossSpawner(boss, pos); }
+
+std::vector<ItemStack> rollLoot(Mob& boss, std::string const& tableId, std::string const& damageType, Actor* killer) {
+    std::string table = tableId;
+    if (table.empty())
+        if (auto const* spec = fb::bossSpec(boss.getTypeName())) table = spec->lootTable;
+    if (table.empty()) return {};
+    return fb::rollLoot(boss, table, damageType, killer);
+}
+
+std::vector<int> availableSlots(core::jrand::RandomSource& random) { return fb::availableSlots(random); }
+
+void shuffleAndSplitItems(std::vector<ItemStack>& items, int emptySlots, core::jrand::RandomSource& random) { fb::shuffleAndSplit(items, emptySlots, random); }
+
+void setHomeRadius(std::string const& entityId, int radius) {
+    if (radius > 0) fb::S().homeRadii[entityId] = radius;
+    else fb::S().homeRadii.erase(entityId);
+}
+
+int homeRadius(std::string const& entityId) {
+    auto it = fb::S().homeRadii.find(entityId);
+    return it != fb::S().homeRadii.end() ? it->second : 0;
 }
 
 std::vector<ItemStack> lootBuffer(Mob& boss) {

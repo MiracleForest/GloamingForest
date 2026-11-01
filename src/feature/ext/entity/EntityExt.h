@@ -10,9 +10,11 @@
 //   gf::projectile::ext the owner and velocity of a simulated projectile, TFArrow / AbstractArrow
 //                       (default hit damage, crit, pickup, water inertia), TFThrowable#makeTrail.
 //   gf::boss::ext       ServerTFBossBar#updateStyle (the Lich's colour changes), the boss bar
-//                       flags, the death time, the 27-slot loot buffer, the "bosses" config values
-//                       the multiplayer loot functions read, the alpha yeti trophy's rare roar, and
-//                       the sinister spawner block entity (SinisterSpawnerLogic).
+//                       flags, the death time, BaseTFBoss's overridable lifecycle steps (loot,
+//                       spawner, postmortem, death animation, death container, postRemoval), the
+//                       home radius of spawned bosses, the 27-slot loot buffer, the "bosses" config
+//                       values the multiplayer loot functions read, the alpha yeti trophy's rare
+//                       roar, and the sinister spawner block entity (SinisterSpawnerLogic).
 // The client mod's readers of what F8 syncs are in feature/ext/entity/EntityClientExt.h.
 
 #include <cstdint>
@@ -26,6 +28,7 @@
 
 #include "mc/deps/core/math/Vec3.h"
 
+#include "core/jrand/JRand.h"
 #include "feature/entity/Entity.h"
 #include "feature/projectile/Projectile.h"
 
@@ -53,7 +56,13 @@ void setPartRotation(PartHandle const& part, float yRot, float xRot);
 /// The parent of a part actor (nullptr: not a part, or the parent is gone).
 [[nodiscard]] Actor* parentOf(Actor const& part);
 
-/// MoveControl#setWantedPosition for the NoClip controller (Java's MoveControl.Operation.MOVE_TO).
+/// MoveControl#setWantedPosition (Java's MoveControl.Operation.MOVE_TO). The controller of the mob's
+/// gf::entity::setMoveControl kind steers it there: NoClip (NoClipMoveControl, also for a mob with
+/// an engine navigation: gf::entity goals' moveTo then uses it too), Ground (MoveControl), Flying /
+/// Hovering (FlyingMoveControl(10, hoversInPlace false / true)) and Swimming
+/// (SmoothSwimmingMoveControl(85, 10, 0.02, 0.1, true)); the position stays wanted until reached.
+/// A mob of the other kinds with an engine navigation is moved by the goals' moveTo through that
+/// navigation and the movement component of its BP (Bedrock's own controllers of those kinds).
 void setWantedPosition(Mob& mob, Vec3 const& pos, double speed);
 /// The wanted position (nullopt: the controller is idle).
 [[nodiscard]] std::optional<Vec3> wantedPosition(Mob const& mob);
@@ -118,8 +127,8 @@ struct ArrowSpec {
 /// owner; a hit that lands removes the arrow, one that does not deflects it (ProjectileDeflection
 /// REVERSE then * 0.2: velocity * -0.1, turned 170..190 degrees; gone, its item dropped when
 /// pickup is Allowed, below a speed of 1e-7). A block hit sticks it (shake 7, despawns after 1200 ticks, falls again when
-/// the block goes); players touching a stuck arrow pick it up by its Pickup rule (a player owner:
-/// Allowed). Spec::onHitEntity / onHitBlock then run as the subclass's additions (IceArrow's
+/// the block's state changes and nothing holds it); players touching a stuck arrow pick it up by its Pickup rule (a player owner:
+/// Allowed). A player's arrow passes through players while the pvp gamerule is off (Player#canHarmPlayer). Spec::onHitEntity / onHitBlock then run as the subclass's additions (IceArrow's
 /// chill); their return value is ignored for arrows.
 void registerArrow(std::string const& entityId, gf::projectile::Spec spec, ArrowSpec arrow = {});
 void   setBaseDamage(Actor& arrow, double damage);
@@ -133,6 +142,12 @@ void               setPickup(Actor& arrow, Pickup pickup);
 [[nodiscard]] bool inGround(Actor const& arrow);
 /// The firing weapon's knockback (EnchantmentHelper#modifyKnockback: punch) for #doKnockback.
 void setKnockback(Actor& arrow, double knockback);
+/// AbstractArrow#pickupItemStack: the stack the arrow was fired with (one of it comes back when it
+/// is picked up; a tipped or spectral arrow from an ice or seeker bow returns as itself). Also set
+/// by gf::projectile::shoot's init {"pickupItem": <item JSON (game::items::toJson)>}. Without one:
+/// ArrowSpec::pickupItem.
+void setPickupItem(Actor& arrow, ItemStack const& stack);
+[[nodiscard]] std::optional<ItemStack> pickupItem(Actor const& arrow);
 /// TFThrowable#makeTrail: `amount` particles around the projectile (0.5 * (r1 - r2) per axis), with
 /// the "velocity" `rgb` (the colour of dust-like particles).
 void makeTrail(Actor& projectile, std::string const& particle, int amount, Vec3 const& rgb = {});
@@ -154,6 +169,70 @@ void setBarFlags(Mob& boss, bool darken, bool fog);
 
 /// LivingEntity#deathTime of a dying boss (0: alive).
 [[nodiscard]] int deathTime(Mob const& boss);
+/// Sets the death time of a dying boss and tells the companions that see it (UpdateDeathTimePacket;
+/// KnightPhantom#postmortem restarts the other knights' animation at 1). No effect on a live boss.
+void setDeathTime(Mob& boss, int deathTime);
+
+/// The overridable steps of BaseTFBoss's lifecycle (rule R8: units never hook die; F8 calls these
+/// from its own death, death-animation and despawn handling). Every member is optional: an empty
+/// one runs BaseTFBoss's default. A boss dies like this:
+///   die:       shouldSpawnLoot ? postmortem (default: defaultPostmortem) : nothing; the "hurt_boss"
+///              trigger fires for the qualified players either way (EntityEvents).
+///   each tick: deathTime++, tickDeath(boss, deathTime) (Hydra's heads, the Knight Phantoms'
+///              hitbox); the dead body stays in the level, F8 holds Bedrock's own 20-tick removal,
+///              until deathAnimationFinished(boss, deathTime) (default: deathTime >= BossSpec::
+///              deathTicks, or 20).
+///   finished:  postRemoval: shouldSpawnLoot && shouldDeposit ? the buffer into a deathContainer chest at
+///              EntityUtil#bossChestLocation : nothing; then onPostRemoval (Lich#lightNearbyCandles);
+///              then the engine removes the body (XP, death particles).
+///   peaceful:  BaseTFBoss#checkDespawn: shouldCreateSpawner ? placeSpawner(home) : nothing; gone.
+/// If the body is unloaded while dying, the defaults run with what was known at death.
+struct Lifecycle {
+    /// BaseTFBoss#shouldSpawnLoot (default: the doMobLoot gamerule). Lich: !isShadowClone().
+    std::function<bool(Mob& boss)> shouldSpawnLoot;
+    /// BaseTFBoss#shouldCreateSpawner (default: true). Lich: !isShadowClone().
+    std::function<bool(Mob& boss)> shouldCreateSpawner;
+    /// BaseTFBoss#postmortem, replacing the default (defaultPostmortem: bar to 0, the loot table into
+    /// the buffer, the home landmark conquered). KnightPhantom: the loot to the remaining knights.
+    std::function<void(Mob& boss, std::string const& damageType, Actor* killer)> postmortem;
+    /// BaseTFBoss#tickDeath additions, every tick of the death animation (server side).
+    std::function<void(Mob& boss, int deathTime)> tickDeath;
+    /// BaseTFBoss#isDeathAnimationFinished. KnightPhantom: also no knight left alive nearby.
+    std::function<bool(Mob& boss, int deathTime)> deathAnimationFinished;
+    /// BaseTFBoss#postRemoval: the type's own condition for the death chest, on top of
+    /// shouldSpawnLoot (both asked when the animation ends). KnightPhantom: only the last knight
+    /// (IT_IS_OVER).
+    std::function<bool(Mob& boss)> shouldDeposit;
+    /// BaseTFBoss#getDeathContainer (default: BossSpec::deathChestBlock); `random` is the boss's.
+    /// Naga / Lich: twilight_oak_chest or canopy_chest at random.
+    std::function<std::string(Mob& boss, gf::core::jrand::RandomSource& random)> deathContainer;
+    /// Runs after the death chest step of postRemoval (Lich#postRemoval: lightNearbyCandles).
+    std::function<void(Mob& boss)> onPostRemoval;
+    /// BaseTFBoss#placeSpawner, replacing the default (placeBossSpawner). Lich: + lightNearbyCandles.
+    std::function<void(Mob& boss, BlockPos const& pos)> placeSpawner;
+};
+/// Sets the lifecycle overrides of a boss type (registered with gf::boss::registerBoss; a second
+/// call replaces the first).
+void setLifecycle(std::string const& entityId, Lifecycle lifecycle);
+/// BaseTFBoss#postmortem's default: the bar to 0, IBossLootBuffer#saveDropsIntoBoss with the boss's
+/// loot table, LandmarkUtil#markStructureConquered of BossSpec::homeStructure at the home point.
+void defaultPostmortem(Mob& boss, std::string const& damageType, Actor* killer);
+/// BaseTFBoss#placeSpawner's default: the boss's spawner block at `pos`.
+void placeBossSpawner(Mob& boss, BlockPos const& pos);
+/// The boss's loot table rolled with its death context (TFLootTables#createLootParams; `tableId`
+/// "" is BossSpec::lootTable).
+[[nodiscard]] std::vector<ItemStack> rollLoot(Mob& boss, std::string const& tableId, std::string const& damageType, Actor* killer);
+/// IBossLootBuffer#getAvailableSlots: the 27 slot indices shuffled (Util#shuffle).
+[[nodiscard]] std::vector<int> availableSlots(gf::core::jrand::RandomSource& random);
+/// LootTable#shuffleAndSplitItems.
+void shuffleAndSplitItems(std::vector<ItemStack>& items, int emptySlots, gf::core::jrand::RandomSource& random);
+
+/// EnforcedHomePoint#getHomeRadius of a boss type: the radius a boss spawner gives the boss it
+/// spawns (Naga 40, Lich 30, Hydra 20, ...; 0 until set). The spawner sets the home (and
+/// data(boss, "boss:spawner")) right after the spawn, before the boss's first tick: Behaviour::
+/// onSpawn already sees them.
+void setHomeRadius(std::string const& entityId, int radius);
+[[nodiscard]] int homeRadius(std::string const& entityId);
 
 /// IBossLootBuffer: the 27 slots that go into the death chest (empty stacks for free slots).
 [[nodiscard]] std::vector<ItemStack> lootBuffer(Mob& boss);
