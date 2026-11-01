@@ -1,0 +1,30 @@
+{
+  "about": "Struck metal object.",
+  "params": {
+    "freq": 600,
+    "decay": 1.0,
+    "count": 1,
+    "gap": 0.1,
+    "spread": 0.1
+  },
+  "length": 0.02,
+  "tail": 1.5,
+  "layers": [
+    {
+      "type": "modal",
+      "modes": "metal",
+      "freq": "$freq",
+      "decay": "$decay",
+      "spread": "$spread",
+      "strike": 0.003,
+      "ring": 2.0,
+      "length": 0.01,
+      "repeat": {
+        "count": "$count",
+        "every": "$gap",
+        "jitter": "$gap*0.2",
+        "decay": 0.8
+      }
+    }
+  ]
+}
