@@ -116,14 +116,15 @@ Start-Sleep -Milliseconds 800
 Click 0.5 0.5 -Relative -Right
 Start-Sleep -Milliseconds 1500
 Save-Screenshot 'anvil-screen' | Out-Null
-# the sword (hotbar 1) into the first input, the book (hotbar 2) into the second: Java's AnvilScreen
-# slots (27, 47), (76, 47), result (134, 47) in the panel the crafting table also uses
-Click-Slot (Hotbar-X 1) $hotbarY; Click-Slot 0.5398 0.4022
-Click-Slot (Hotbar-X 2) $hotbarY; Click-Slot 0.6333 0.4022
+# the sword (hotbar 1) into the first input, the book (hotbar 2) into the second; Bedrock's anvil
+# panel is centred (no recipe book): inputs at x 500 / 629 px, the result at 759 px, y 295 px of 1280 x 720
+function Anvil-HotbarX([int]$slot) { (467 + 43 * ($slot - 1)) / 1280 }
+Click-Slot (Anvil-HotbarX 1) $hotbarY; Click-Slot 0.3906 0.4097
+Click-Slot (Anvil-HotbarX 2) $hotbarY; Click-Slot 0.4914 0.4097
 Start-Sleep -Milliseconds 600
 Save-Screenshot 'anvil-inputs' | Out-Null
-Click-Slot 0.7438 0.4022
-Click-Slot (Hotbar-X 3) $hotbarY
+Click-Slot 0.5930 0.4097
+Click-Slot (Anvil-HotbarX 3) $hotbarY
 Start-Sleep -Milliseconds 800
 Save-Screenshot 'anvil-taken' | Out-Null
 Close-Screen
