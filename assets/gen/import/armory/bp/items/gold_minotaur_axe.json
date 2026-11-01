@@ -20,7 +20,21 @@
       "minecraft:durability": {
         "max_durability": 32
       },
-      "minecraft:hand_equipped": true
+      "minecraft:hand_equipped": true,
+      "minecraft:digger": {
+        "use_efficiency": true,
+        "destroy_speeds": [
+          {
+            "block": {
+              "tags": "q.any_tag('minecraft:is_axe_item_destructible') && !q.any_tag('minecraft:stone_tier_destructible', 'minecraft:iron_tier_destructible', 'minecraft:diamond_tier_destructible', 'minecraft:netherite_tier_destructible')"
+            },
+            "speed": 12
+          }
+        ]
+      },
+      "minecraft:tags": {
+        "tags": ["minecraft:is_axe", "minecraft:is_tool", "minecraft:golden_tier"]
+      }
     }
   }
 }

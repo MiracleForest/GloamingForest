@@ -12,7 +12,7 @@
         "seconds_to_destroy": 0.3
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 3
+        "explosion_resistance": 15
       },
       "minecraft:geometry": "geometry.tf.twilightforest.block.mason_jar",
       "minecraft:material_instances": {

@@ -13,9 +13,110 @@
         "item": "twilightforest:twilight_oak_trapped_chest"
       }
     ],
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "minecraft:acacia_boat"
+      },
+      {
+        "item": "minecraft:acacia_chest_boat"
+      },
+      {
+        "item": "minecraft:bamboo_chest_raft"
+      },
+      {
+        "item": "minecraft:bamboo_raft"
+      },
+      {
+        "item": "minecraft:birch_boat"
+      },
+      {
+        "item": "minecraft:birch_chest_boat"
+      },
+      {
+        "item": "minecraft:cherry_boat"
+      },
+      {
+        "item": "minecraft:cherry_chest_boat"
+      },
+      {
+        "item": "minecraft:dark_oak_boat"
+      },
+      {
+        "item": "minecraft:dark_oak_chest_boat"
+      },
+      {
+        "item": "minecraft:jungle_boat"
+      },
+      {
+        "item": "minecraft:jungle_chest_boat"
+      },
+      {
+        "item": "minecraft:mangrove_boat"
+      },
+      {
+        "item": "minecraft:mangrove_chest_boat"
+      },
+      {
+        "item": "minecraft:oak_boat"
+      },
+      {
+        "item": "minecraft:oak_chest_boat"
+      },
+      {
+        "item": "minecraft:spruce_boat"
+      },
+      {
+        "item": "minecraft:spruce_chest_boat"
+      },
+      {
+        "item": "twilightforest:canopy_boat"
+      },
+      {
+        "item": "twilightforest:canopy_chest_boat"
+      },
+      {
+        "item": "twilightforest:dark_boat"
+      },
+      {
+        "item": "twilightforest:dark_chest_boat"
+      },
+      {
+        "item": "twilightforest:mangrove_boat"
+      },
+      {
+        "item": "twilightforest:mangrove_chest_boat"
+      },
+      {
+        "item": "twilightforest:mining_boat"
+      },
+      {
+        "item": "twilightforest:mining_chest_boat"
+      },
+      {
+        "item": "twilightforest:sorting_boat"
+      },
+      {
+        "item": "twilightforest:sorting_chest_boat"
+      },
+      {
+        "item": "twilightforest:time_boat"
+      },
+      {
+        "item": "twilightforest:time_chest_boat"
+      },
+      {
+        "item": "twilightforest:transformation_boat"
+      },
+      {
+        "item": "twilightforest:transformation_chest_boat"
+      },
+      {
+        "item": "twilightforest:twilight_oak_boat"
+      },
+      {
+        "item": "twilightforest:twilight_oak_chest_boat"
+      }
+    ],
     "result": {
       "item": "twilightforest:sorting_chest_boat"
     }

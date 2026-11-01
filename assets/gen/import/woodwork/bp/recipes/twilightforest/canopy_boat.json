@@ -12,7 +12,7 @@
       }
     },
     "unlock": {
-      "context": "AlwaysUnlocked"
+      "context": "PlayerInWater"
     },
     "result": {
       "item": "twilightforest:canopy_boat"

@@ -13,8 +13,9 @@
     "components": {
       "minecraft:destructible_by_mining": false,
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 2000
+        "explosion_resistance": 10000
       },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
       "minecraft:map_color": "#707070",
       "minecraft:geometry": "geometry.tf.twilightforest.block.trophy_pedestal",
       "minecraft:material_instances": {

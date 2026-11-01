@@ -17,7 +17,7 @@
         "seconds_to_destroy": 1
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 1
+        "explosion_resistance": 5
       },
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {

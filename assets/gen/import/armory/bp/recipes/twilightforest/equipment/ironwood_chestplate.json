@@ -11,9 +11,11 @@
         "item": "twilightforest:ironwood_ingot"
       }
     },
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:ironwood_ingot"
+      }
+    ],
     "result": {
       "item": "twilightforest:ironwood_chestplate"
     }

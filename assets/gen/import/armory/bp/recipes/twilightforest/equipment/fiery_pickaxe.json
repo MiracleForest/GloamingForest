@@ -14,9 +14,11 @@
         "item": "minecraft:blaze_rod"
       }
     },
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:fiery_ingot"
+      }
+    ],
     "result": {
       "item": "twilightforest:fiery_pickaxe"
     }

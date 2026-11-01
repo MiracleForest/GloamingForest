@@ -12,8 +12,10 @@
         "seconds_to_destroy": 100
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 50
+        "explosion_resistance": 250
       },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "tag:minecraft:diamond_tier_destructible": {},
       "minecraft:map_color": "#7f3fb2",
       "minecraft:geometry": "geometry.tf.twilightforest.block.castle_rune_brick_0",
       "minecraft:material_instances": {

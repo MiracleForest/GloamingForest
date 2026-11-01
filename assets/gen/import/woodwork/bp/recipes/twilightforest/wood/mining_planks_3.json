@@ -10,9 +10,20 @@
         "item": "twilightforest:stripped_mining_wood"
       }
     ],
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:mining_log"
+      },
+      {
+        "item": "twilightforest:mining_wood"
+      },
+      {
+        "item": "twilightforest:stripped_mining_log"
+      },
+      {
+        "item": "twilightforest:stripped_mining_wood"
+      }
+    ],
     "result": {
       "item": "twilightforest:mining_planks",
       "count": 4

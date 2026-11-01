@@ -16,8 +16,12 @@
         "seconds_to_destroy": 0.2
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 0.2
+        "explosion_resistance": 1
       },
+      "tag:minecraft:is_hoe_item_destructible": {},
+      "tag:minecraft:leaves": {},
+      "tag:minecraft:is_shears_item_destructible": {},
+      "tag:minecraft:is_sword_item_destructible": {},
       "minecraft:map_color": "#007c00",
       "minecraft:flammable": {
         "catch_chance_modifier": 30,

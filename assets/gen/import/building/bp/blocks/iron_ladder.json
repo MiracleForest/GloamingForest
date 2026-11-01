@@ -17,8 +17,10 @@
         "seconds_to_destroy": 5
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 6
+        "explosion_resistance": 30
       },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "tag:minecraft:stone_tier_destructible": {},
       "minecraft:geometry": {
         "identifier": "geometry.tf.twilightforest.block.iron_ladder.multipart",
         "bone_visibility": {

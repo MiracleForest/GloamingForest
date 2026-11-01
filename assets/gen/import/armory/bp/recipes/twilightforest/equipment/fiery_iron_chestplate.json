@@ -34,9 +34,14 @@
         "tag": "twilightforest:fiery_vial"
       }
     ],
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:fiery_blood"
+      },
+      {
+        "item": "twilightforest:fiery_tears"
+      }
+    ],
     "result": {
       "item": "twilightforest:fiery_chestplate"
     }

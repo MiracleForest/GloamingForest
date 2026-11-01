@@ -15,8 +15,9 @@
         "seconds_to_destroy": 2
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 6
+        "explosion_resistance": 30
       },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
       "minecraft:map_color": "#a0a0ff",
       "minecraft:geometry": "geometry.tf.twilightforest.block.aurora_slab",
       "minecraft:material_instances": {

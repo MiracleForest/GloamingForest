@@ -17,7 +17,7 @@
         "seconds_to_destroy": 0.3
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 3
+        "explosion_resistance": 15
       },
       "minecraft:geometry": {
         "identifier": "geometry.tf.twilightforest.block.rope.multipart",

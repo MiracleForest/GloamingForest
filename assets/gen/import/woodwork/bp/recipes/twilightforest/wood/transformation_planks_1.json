@@ -10,9 +10,20 @@
         "item": "twilightforest:stripped_transformation_log"
       }
     ],
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:stripped_transformation_log"
+      },
+      {
+        "item": "twilightforest:stripped_transformation_wood"
+      },
+      {
+        "item": "twilightforest:transformation_log"
+      },
+      {
+        "item": "twilightforest:transformation_wood"
+      }
+    ],
     "result": {
       "item": "twilightforest:transformation_planks",
       "count": 4

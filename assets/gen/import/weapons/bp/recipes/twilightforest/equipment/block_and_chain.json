@@ -24,6 +24,12 @@
     ],
     "unlock": [
       {
+        "item": "twilightforest:knightmetal_block"
+      },
+      {
+        "item": "twilightforest:knightmetal_ingot"
+      },
+      {
         "item": "twilightforest:knightmetal_ring"
       }
     ],

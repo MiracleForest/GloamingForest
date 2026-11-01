@@ -15,8 +15,9 @@
         "seconds_to_destroy": 1
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 1.5
+        "explosion_resistance": 7.5
       },
+      "tag:minecraft:is_axe_item_destructible": {},
       "minecraft:map_color": "#e5e533",
       "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
       "minecraft:material_instances": {

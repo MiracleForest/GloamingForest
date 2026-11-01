@@ -20,8 +20,9 @@
         "seconds_to_destroy": 0.2
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 0.2
+        "explosion_resistance": 1
       },
+      "tag:minecraft:is_axe_item_destructible": {},
       "minecraft:light_emission": 5,
       "minecraft:map_color": "#d87f33",
       "minecraft:geometry": {

@@ -15,8 +15,9 @@
         "seconds_to_destroy": 10
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 6000
+        "explosion_resistance": 30000
       },
+      "tag:minecraft:is_axe_item_destructible": {},
       "minecraft:map_color": "#f7e9a3",
       "minecraft:geometry": "geometry.tf.twilightforest.block.vanishing_block",
       "minecraft:material_instances": {
@@ -282,7 +283,7 @@
         "condition": "q.block_state('twilightforest:active')",
         "components": {
           "minecraft:destructible_by_explosion": {
-            "explosion_resistance": 35
+            "explosion_resistance": 175
           }
         }
       }

@@ -17,9 +17,11 @@
         "item": "minecraft:dispenser"
       }
     },
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:carminite"
+      }
+    ],
     "result": {
       "item": "twilightforest:carminite_builder"
     }

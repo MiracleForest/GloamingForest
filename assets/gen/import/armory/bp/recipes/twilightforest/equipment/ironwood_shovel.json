@@ -14,9 +14,11 @@
         "item": "minecraft:stick"
       }
     },
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:ironwood_ingot"
+      }
+    ],
     "result": {
       "item": "twilightforest:ironwood_shovel"
     }

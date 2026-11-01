@@ -12,8 +12,10 @@
         "seconds_to_destroy": 5
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 40
+        "explosion_resistance": 200
       },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "tag:minecraft:iron_tier_destructible": {},
       "minecraft:map_color": "#a7a7a7",
       "minecraft:geometry": "geometry.tf.twilightforest.block.knightmetal_block",
       "minecraft:material_instances": {

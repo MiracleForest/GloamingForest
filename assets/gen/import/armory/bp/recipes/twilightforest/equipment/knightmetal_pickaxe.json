@@ -14,9 +14,11 @@
         "item": "minecraft:stick"
       }
     },
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:knightmetal_ingot"
+      }
+    ],
     "result": {
       "item": "twilightforest:knightmetal_pickaxe"
     }

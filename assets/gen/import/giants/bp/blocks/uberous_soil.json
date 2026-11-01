@@ -12,8 +12,9 @@
         "seconds_to_destroy": 0.6
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 0.6
+        "explosion_resistance": 3
       },
+      "tag:minecraft:is_shovel_item_destructible": {},
       "minecraft:map_color": "#976d4d",
       "minecraft:geometry": "geometry.tf.minecraft.block.template_farmland",
       "minecraft:material_instances": {

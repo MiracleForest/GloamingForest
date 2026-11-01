@@ -10,9 +10,11 @@
         "item": "minecraft:copper_ingot"
       }
     ],
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "minecraft:copper_ingot"
+      }
+    ],
     "result": {
       "item": "twilightforest:copper_nugget",
       "count": 9

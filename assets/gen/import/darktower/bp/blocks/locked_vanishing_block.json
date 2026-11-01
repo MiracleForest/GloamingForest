@@ -273,7 +273,7 @@
         "condition": "!q.block_state('twilightforest:locked') && !q.block_state('twilightforest:active')",
         "components": {
           "minecraft:destructible_by_explosion": {
-            "explosion_resistance": 6000
+            "explosion_resistance": 30000
           }
         }
       },
@@ -281,7 +281,7 @@
         "condition": "!q.block_state('twilightforest:locked') && q.block_state('twilightforest:active')",
         "components": {
           "minecraft:destructible_by_explosion": {
-            "explosion_resistance": 2000
+            "explosion_resistance": 10000
           }
         }
       }

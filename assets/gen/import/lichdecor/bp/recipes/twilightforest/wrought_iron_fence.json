@@ -11,9 +11,11 @@
         "item": "twilightforest:wrought_iron_bar"
       }
     },
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:wrought_iron_bar"
+      }
+    ],
     "result": {
       "item": "twilightforest:wrought_iron_fence",
       "count": 3

@@ -20,7 +20,25 @@
       "minecraft:durability": {
         "max_durability": 32
       },
-      "minecraft:hand_equipped": true
+      "minecraft:hand_equipped": true,
+      "minecraft:digger": {
+        "use_efficiency": true,
+        "destroy_speeds": [
+          {
+            "block": "minecraft:web",
+            "speed": 15
+          },
+          {
+            "block": {
+              "tags": "q.any_tag('minecraft:is_sword_item_destructible', 'minecraft:leaves')"
+            },
+            "speed": 2
+          }
+        ]
+      },
+      "minecraft:tags": {
+        "tags": ["minecraft:is_sword", "minecraft:wooden_tier"]
+      }
     }
   }
 }

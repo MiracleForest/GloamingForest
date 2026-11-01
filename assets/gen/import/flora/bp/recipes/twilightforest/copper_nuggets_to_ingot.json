@@ -34,9 +34,11 @@
         "item": "twilightforest:copper_nugget"
       }
     ],
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:copper_nugget"
+      }
+    ],
     "result": {
       "item": "minecraft:copper_ingot"
     }

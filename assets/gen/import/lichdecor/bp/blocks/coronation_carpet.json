@@ -12,7 +12,7 @@
         "seconds_to_destroy": 0.1
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 0.1
+        "explosion_resistance": 0.5
       },
       "minecraft:map_color": "#993333",
       "minecraft:geometry": "geometry.tf.minecraft.block.carpet",

@@ -10,9 +10,20 @@
         "item": "twilightforest:stripped_time_wood"
       }
     ],
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:stripped_time_log"
+      },
+      {
+        "item": "twilightforest:stripped_time_wood"
+      },
+      {
+        "item": "twilightforest:time_log"
+      },
+      {
+        "item": "twilightforest:time_wood"
+      }
+    ],
     "result": {
       "item": "twilightforest:time_planks",
       "count": 4

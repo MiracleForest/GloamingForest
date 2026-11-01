@@ -21,8 +21,9 @@
         "seconds_to_destroy": 1.5
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 6
+        "explosion_resistance": 30
       },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
       "minecraft:map_color": "#707070",
       "minecraft:geometry": {
         "identifier": "geometry.tf.twilightforest.block.twisted_stone_pillar.multipart",

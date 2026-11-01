@@ -18,6 +18,8 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0
       },
+      "tag:minecraft:is_axe_item_destructible": {},
+      "tag:minecraft:is_sword_item_destructible": {},
       "minecraft:map_color": "#007c00",
       "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
       "minecraft:material_instances": {

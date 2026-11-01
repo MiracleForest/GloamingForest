@@ -17,6 +17,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0
       },
+      "tag:minecraft:is_hoe_item_destructible": {},
       "minecraft:map_color": "#007c00",
       "minecraft:collision_box": false,
       "minecraft:geometry": "geometry.tf.minecraft.block.cross",

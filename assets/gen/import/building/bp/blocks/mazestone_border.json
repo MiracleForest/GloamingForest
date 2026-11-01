@@ -12,8 +12,10 @@
         "seconds_to_destroy": 100
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 5
+        "explosion_resistance": 25
       },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "tag:minecraft:diamond_tier_destructible": {},
       "minecraft:map_color": "#707070",
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {

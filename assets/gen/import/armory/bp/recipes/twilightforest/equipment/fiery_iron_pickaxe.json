@@ -25,9 +25,14 @@
         "item": "minecraft:blaze_rod"
       }
     ],
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:fiery_blood"
+      },
+      {
+        "item": "twilightforest:fiery_tears"
+      }
+    ],
     "result": {
       "item": "twilightforest:fiery_pickaxe"
     }

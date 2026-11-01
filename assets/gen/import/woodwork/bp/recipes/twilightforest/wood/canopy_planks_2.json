@@ -10,9 +10,20 @@
         "item": "twilightforest:canopy_wood"
       }
     ],
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:canopy_log"
+      },
+      {
+        "item": "twilightforest:canopy_wood"
+      },
+      {
+        "item": "twilightforest:stripped_canopy_log"
+      },
+      {
+        "item": "twilightforest:stripped_canopy_wood"
+      }
+    ],
     "result": {
       "item": "twilightforest:canopy_planks",
       "count": 4

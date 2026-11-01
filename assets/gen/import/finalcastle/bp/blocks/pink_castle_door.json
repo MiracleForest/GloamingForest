@@ -16,8 +16,10 @@
         "seconds_to_destroy": 100
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 100
+        "explosion_resistance": 500
       },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "tag:minecraft:diamond_tier_destructible": {},
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {

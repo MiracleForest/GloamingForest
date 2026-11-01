@@ -12,8 +12,9 @@
         "seconds_to_destroy": 1.5
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 10
+        "explosion_resistance": 50
       },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
       "minecraft:map_color": "#993333",
       "minecraft:geometry": "geometry.tf.twilightforest.block.carminite_block",
       "minecraft:material_instances": {

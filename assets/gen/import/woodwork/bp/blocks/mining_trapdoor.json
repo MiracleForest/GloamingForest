@@ -18,8 +18,9 @@
         "seconds_to_destroy": 3
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 3
+        "explosion_resistance": 15
       },
+      "tag:minecraft:is_axe_item_destructible": {},
       "minecraft:map_color": "#f7e9a3",
       "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_bottom",
       "minecraft:material_instances": {

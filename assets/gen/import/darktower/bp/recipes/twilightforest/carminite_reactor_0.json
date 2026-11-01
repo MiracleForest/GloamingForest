@@ -17,9 +17,11 @@
         "item": "twilightforest:carminite"
       }
     },
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:carminite"
+      }
+    ],
     "result": {
       "item": "twilightforest:carminite_reactor"
     }

@@ -11,9 +11,11 @@
         "item": "twilightforest:steeleaf_ingot"
       }
     },
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:steeleaf_ingot"
+      }
+    ],
     "result": {
       "item": "twilightforest:steeleaf_leggings"
     }

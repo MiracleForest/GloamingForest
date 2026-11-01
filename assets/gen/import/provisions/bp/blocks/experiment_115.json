@@ -16,7 +16,7 @@
         "seconds_to_destroy": 0.5
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 0.5
+        "explosion_resistance": 2.5
       },
       "minecraft:geometry": "geometry.tf.twilightforest.block.experiment115_8_8",
       "minecraft:material_instances": {

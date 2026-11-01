@@ -15,8 +15,9 @@
         "seconds_to_destroy": 0.75
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 0.75
+        "explosion_resistance": 3.75
       },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
       "minecraft:collision_box": false,
       "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.labyrinth",
       "minecraft:material_instances": {

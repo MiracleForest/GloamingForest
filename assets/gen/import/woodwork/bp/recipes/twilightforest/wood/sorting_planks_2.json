@@ -10,9 +10,20 @@
         "item": "twilightforest:sorting_wood"
       }
     ],
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    },
+    "unlock": [
+      {
+        "item": "twilightforest:sorting_log"
+      },
+      {
+        "item": "twilightforest:sorting_wood"
+      },
+      {
+        "item": "twilightforest:stripped_sorting_log"
+      },
+      {
+        "item": "twilightforest:stripped_sorting_wood"
+      }
+    ],
     "result": {
       "item": "twilightforest:sorting_planks",
       "count": 4

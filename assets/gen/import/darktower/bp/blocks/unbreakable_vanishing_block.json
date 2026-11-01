@@ -13,7 +13,7 @@
     "components": {
       "minecraft:destructible_by_mining": false,
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 6000
+        "explosion_resistance": 30000
       },
       "minecraft:map_color": "#f7e9a3",
       "minecraft:geometry": "geometry.tf.twilightforest.block.vanishing_block",
