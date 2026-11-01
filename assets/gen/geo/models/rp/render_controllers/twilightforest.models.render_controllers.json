@@ -1,0 +1,14 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.twilightforest.models.part1": {
+      "geometry": "Geometry.part1",
+      "materials": [
+        {
+          "*": "Material.part1"
+        }
+      ],
+      "textures": ["Texture.part1"]
+    }
+  }
+}
