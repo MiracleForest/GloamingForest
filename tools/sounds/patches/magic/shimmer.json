@@ -1,0 +1,42 @@
+{
+  "about": "Shimmer: bell partials with high sparkles in a large room.",
+  "params": {
+    "freq": 880,
+    "len": 0.8,
+    "sparkle": 0.4
+  },
+  "length": "$len",
+  "tail": 1.2,
+  "layers": [
+    {
+      "type": "modal",
+      "modes": "bell",
+      "freq": "$freq",
+      "length": 0.02,
+      "ring": 1.5,
+      "strike": 0.001
+    },
+    {
+      "type": "grains",
+      "density": 60,
+      "grain": [
+        0.01,
+        0.04
+      ],
+      "freq": [
+        "$freq*2",
+        "$freq*8"
+      ],
+      "wave": "sine",
+      "amp": "$sparkle"
+    }
+  ],
+  "fx": [
+    {
+      "type": "reverb",
+      "room": 0.7,
+      "damp": 0.2,
+      "mix": 0.3
+    }
+  ]
+}

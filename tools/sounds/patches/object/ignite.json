@@ -1,0 +1,60 @@
+{
+  "about": "Flame lighting: a soft whump, a hiss and crackles.",
+  "params": {
+    "len": 0.6
+  },
+  "length": "$len",
+  "tail": 0.2,
+  "layers": [
+    {
+      "type": "noise",
+      "color": "brown",
+      "env": {
+        "a": 0.01,
+        "d": 0.12,
+        "s": 0.2,
+        "r": 0.15
+      },
+      "filter": [
+        {
+          "type": "lp",
+          "freq": {
+            "from": 300,
+            "to": 1200
+          }
+        }
+      ]
+    },
+    {
+      "type": "noise",
+      "color": "white",
+      "amp": 0.3,
+      "env": {
+        "a": 0.03,
+        "d": "$len*0.5",
+        "s": 0.3,
+        "r": 0.1
+      },
+      "filter": [
+        {
+          "type": "hp",
+          "freq": 3000
+        }
+      ]
+    },
+    {
+      "type": "grains",
+      "density": 30,
+      "grain": [
+        0.001,
+        0.004
+      ],
+      "freq": [
+        2000,
+        8000
+      ],
+      "wave": "click",
+      "amp": 0.6
+    }
+  ]
+}
