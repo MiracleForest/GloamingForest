@@ -184,6 +184,7 @@ class OracleRcon {
         $this.Client = [System.Net.Sockets.TcpClient]::new()
         $this.Client.ReceiveTimeout = $TimeoutMs
         $this.Client.SendTimeout = 30000
+        $this.Client.NoDelay = $true
         $this.Client.Connect($HostName, $Port)
         $this.Stream = $this.Client.GetStream()
         $id = $this.Send(3, $Password)
@@ -228,18 +229,17 @@ class OracleRcon {
         return [pscustomobject]@{ Id = $id; Type = $type; Body = $body }
     }
 
-    # Runs a command and returns its output. A command's output can span several packets: an
-    # empty marker command after it delimits the reply.
+    # Runs a command and returns its output. One request at a time: Minecraft's RCON server reads
+    # one packet per socket read and drops the connection when a read holds more (or less) than
+    # exactly one packet, so nothing is pipelined. Replies longer than 4096 characters arrive in
+    # several packets; only the first is returned (the dumper's replies are one short line).
     [string] Command([string]$Cmd) {
         $id = $this.Send(2, $Cmd)
-        $marker = $this.Send(2, '')
-        $sb = [Text.StringBuilder]::new()
         while ($true) {
             $p = $this.Read()
-            if ($p.Id -eq $marker) { break }
-            if ($p.Id -eq $id) { [void]$sb.Append($p.Body) }
+            if ($p.Id -eq $id) { return $p.Body }
         }
-        return $sb.ToString()
+        return ''
     }
 
     # Sends a command without waiting for its reply (stop closes the connection first).
