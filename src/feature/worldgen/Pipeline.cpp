@@ -1,14 +1,20 @@
 // The staged pipeline of the Twilight Forest generator (F5), in Java's ChunkStatus order:
-//   loadChunk:  Biomes -> Starts -> Noise -> Surface -> Carvers
-//   decoration: Features (ChunkGenerator#applyBiomeDecoration, with the Pieces stage at the
-//               surface-structures step) -> LargeWriter -> Blanket -> Spawns
-// Deterministic for a seed: every placed feature is seeded with
-// WorldgenRandom#setFeatureSeed(decorationSeed, featureIndex, step) over FeatureSorter's order.
+//   loadChunk:  Biomes -> Starts -> Noise -> Surface -> Blanket -> Carvers
+//   decoration: for each GenerationStep.Decoration step: Pieces (the structures of the step), then
+//               the step's placed features (ChunkGenerator#applyBiomeDecoration); then Features ->
+//               LargeWriter -> Spawns
+// The Blanket stage runs at surface time because TF injects ChunkBlanketProcessors#chunkBlanketing
+// right after ChunkGenerator#buildSurface in ChunkStatusTasks#generateSurface (tf-asm
+// ChunkStatusTaskTransformer). Deterministic for a seed: every placed feature is seeded with
+// WorldgenRandom#setFeatureSeed(decorationSeed, featureIndex, step) over FeatureSorter's order, and
+// every structure step gets the same seeding through ext::decorationContext().
 #include <algorithm>
 #include <chrono>
-#include <mutex>
+#include <deque>
 #include <map>
+#include <mutex>
 #include <set>
+#include <tuple>
 #include <unordered_map>
 
 #include "mc/world/level/BlockPos.h"
@@ -101,7 +107,8 @@ public:
     int          maxY() const override { return mR.maxY(); }
     Block const& getBlock(int lx, int y, int lz) const override { return mR.getBlock(pos(lx, y, lz)); }
     void         setBlock(int lx, int y, int lz, Block const& block) override { mR.setBlock(pos(lx, y, lz), block, 2); }
-    int height(Heightmap type, int lx, int lz) const override { return mR.height(type, chunkX() * 16 + lx, chunkZ() * 16 + lz); }
+    // ChunkAccess#getHeight is WorldGenLevel#getHeight - 1
+    int height(Heightmap type, int lx, int lz) const override { return mR.height(type, chunkX() * 16 + (lx & 15), chunkZ() * 16 + (lz & 15)) - 1; }
     std::string biome(int lx, int y, int lz) const override { return mR.biome(pos(lx, y, lz)); }
     void        setBiome(int, int, int, std::string const&) override {} // biomes are final after loadChunk
 
@@ -110,7 +117,67 @@ private:
     Region&  mR;
 };
 
+// ---- thread-local stage contexts ------------------------------------------------------------------
+
+thread_local ext::CarverContext*      tCarverContext     = nullptr;
+thread_local ext::BlanketContext*     tBlanketContext    = nullptr;
+thread_local ext::DecorationContext*  tDecorationContext = nullptr;
+
+template <class T>
+struct Scope {
+    T*& slot;
+    T*  previous;
+    Scope(T*& s, T* value) : slot(s), previous(s) { slot = value; }
+    ~Scope() { slot = previous; }
+    Scope(Scope const&)            = delete;
+    Scope& operator=(Scope const&) = delete;
+};
+
+// ---- carving masks kept for the decoration (CarvingMaskPlacement) --------------------------------
+
+struct MaskStore {
+    std::mutex                                                              mutex;
+    std::map<std::tuple<int, int, int>, std::shared_ptr<ext::CarvingMask>> masks;
+    std::deque<std::tuple<int, int, int>>                                   order; ///< insertion order (bounded)
+};
+MaskStore& maskStore() {
+    static MaskStore s;
+    return s;
+}
+constexpr std::size_t kMaxKeptMasks = 2048; // chunks carved but not decorated yet
+
+void keepCarvingMask(int dim, int cx, int cz, std::shared_ptr<ext::CarvingMask> mask) {
+    auto&           s = maskStore();
+    std::lock_guard lock(s.mutex);
+    auto            key = std::make_tuple(dim, cx, cz);
+    if (s.masks.insert_or_assign(key, std::move(mask)).second) s.order.push_back(key);
+    while (s.order.size() > kMaxKeptMasks) {
+        s.masks.erase(s.order.front());
+        s.order.pop_front();
+    }
+}
+
 } // namespace
+
+std::shared_ptr<ext::CarvingMask const> carvingMaskOf(int dim, int cx, int cz) {
+    auto&           s = maskStore();
+    std::lock_guard lock(s.mutex);
+    auto            it = s.masks.find(std::make_tuple(dim, cx, cz));
+    return it == s.masks.end() ? nullptr : it->second;
+}
+
+void dropCarvingMask(int dim, int cx, int cz) {
+    auto&           s = maskStore();
+    std::lock_guard lock(s.mutex);
+    s.masks.erase(std::make_tuple(dim, cx, cz)); // the key leaves `order` when it reaches the front
+}
+
+void clearCarvingMasks() {
+    auto&           s = maskStore();
+    std::lock_guard lock(s.mutex);
+    s.masks.clear();
+    s.order.clear();
+}
 
 void addStats(bool decorate, double ms) {
     std::lock_guard lock(statsMutex());
@@ -122,6 +189,11 @@ void addStats(bool decorate, double ms) {
         ++s.chunksGenerated;
         s.generateMs += ms;
     }
+}
+
+void addBiomeWriteStats(double ms) {
+    std::lock_guard lock(statsMutex());
+    statsRef().biomeWriteMs += ms;
 }
 
 void fallbackTerrain(Chunk& chunk) {
@@ -140,54 +212,71 @@ void fallbackTerrain(Chunk& chunk) {
         }
 }
 
-void generateChunk(Chunk& chunk, Region& chunkRegion, std::int64_t seed) {
-    auto p = providers();
-    // Biomes: the biome source at quart resolution
-    if (p->biomeSource) {
-        int  qMin = chunk.minY() >> 2, qMax = (chunk.maxY() - 1) >> 2;
-        auto* lca = dynamic_cast<LevelChunkAdapter*>(&chunk);
-        for (int qx = 0; qx < 4; ++qx)
-            for (int qz = 0; qz < 4; ++qz) {
-                std::vector<std::string> column;
-                column.reserve(static_cast<std::size_t>(qMax - qMin + 1));
-                for (int qy = qMin; qy <= qMax; ++qy) column.push_back(p->biomeSource(chunk.chunkX() * 4 + qx, qy, chunk.chunkZ() * 4 + qz));
-                bool uniform = std::all_of(column.begin(), column.end(), [&](std::string const& s) { return s == column[0]; });
-                for (int dx = 0; dx < 4; ++dx)
-                    for (int dz = 0; dz < 4; ++dz) {
-                        int lx = qx * 4 + dx, lz = qz * 4 + dz;
-                        if (uniform && lca) {
-                            lca->setBiomeColumn(lx, lz, column[0]);
-                            continue;
-                        }
-                        for (int y = chunk.minY(); y < chunk.maxY(); ++y)
-                            chunk.setBiome(lx, y, lz, column[static_cast<std::size_t>((y >> 2) - qMin)]);
-                    }
+std::vector<std::string> writeBiomes(Providers const& p, Chunk& chunk) {
+    std::vector<std::string> distinct;
+    if (!p.biomeSource) return distinct;
+    auto  start  = std::chrono::steady_clock::now();
+    int   qMin   = chunk.minY() >> 2, qMax = (chunk.maxY() - 1) >> 2;
+    auto* writer = dynamic_cast<QuartBiomeWriter*>(&chunk);
+    std::vector<std::string> column;
+    column.reserve(static_cast<std::size_t>(qMax - qMin + 1));
+    for (int qx = 0; qx < 4; ++qx)
+        for (int qz = 0; qz < 4; ++qz) {
+            column.clear();
+            for (int qy = qMin; qy <= qMax; ++qy) {
+                column.push_back(p.biomeSource(chunk.chunkX() * 4 + qx, qy, chunk.chunkZ() * 4 + qz));
+                if (std::find(distinct.begin(), distinct.end(), column.back()) == distinct.end()) distinct.push_back(column.back());
             }
-    }
-    runSteps(*p, Stage::Biomes, chunk, chunkRegion);
-    runSteps(*p, Stage::Starts, chunk, chunkRegion);
-    if (p->terrain) p->terrain(chunk);
+            if (writer) {
+                writer->setQuartColumn(qx, qz, qMin, column);
+                continue;
+            }
+            for (int dx = 0; dx < 4; ++dx)
+                for (int dz = 0; dz < 4; ++dz)
+                    for (int y = chunk.minY(); y < chunk.maxY(); ++y)
+                        chunk.setBiome(qx * 4 + dx, y, qz * 4 + dz, column[static_cast<std::size_t>((y >> 2) - qMin)]);
+        }
+    addBiomeWriteStats(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count());
+    return distinct;
+}
+
+void generateChunk(Chunk& chunk, Region& chunkRegion, std::int64_t seed) { generateChunk(*providers(), chunk, chunkRegion, seed); }
+
+void generateChunk(Providers const& p, Chunk& chunk, Region& chunkRegion, std::int64_t seed) {
+    // Biomes: the biome source at quart resolution
+    auto biomes = writeBiomes(p, chunk);
+    runSteps(p, Stage::Biomes, chunk, chunkRegion);
+    runSteps(p, Stage::Starts, chunk, chunkRegion);
+    if (p.terrain) p.terrain(chunk);
     else if (config::get<WorldgenConfig>().fallbackTerrain) fallbackTerrain(chunk);
-    runSteps(*p, Stage::Noise, chunk, chunkRegion);
-    if (p->surface) p->surface(chunk, chunkRegion);
-    runSteps(*p, Stage::Surface, chunk, chunkRegion);
-    applyCarvers(*p, chunk, chunkRegion, seed);
-    runSteps(*p, Stage::Carvers, chunk, chunkRegion);
+    runSteps(p, Stage::Noise, chunk, chunkRegion);
+    if (p.surface) p.surface(chunk, chunkRegion);
+    runSteps(p, Stage::Surface, chunk, chunkRegion);
+    // Blanket: TF's ChunkBlanketProcessors#chunkBlanketing, right after buildSurface (before the
+    // carvers and every feature), with the surface step's WorldGenRegion random
+    if (!p.blankets.empty() || p.stages.contains(Stage::Blanket)) {
+        if (biomes.empty()) {
+            // no biome source: the biomes the chunk holds (every quart of every section)
+            for (int y = chunk.minY(); y < chunk.maxY(); y += 4)
+                for (int qz = 0; qz < 16; qz += 4)
+                    for (int qx = 0; qx < 16; qx += 4) {
+                        auto b = chunk.biome(qx, y, qz);
+                        if (std::find(biomes.begin(), biomes.end(), b) == biomes.end()) biomes.push_back(std::move(b));
+                    }
+        }
+        auto               regionRandom = worldGenRegionRandom(seed, chunk.chunkX(), chunk.chunkZ());
+        ext::BlanketContext ctx{regionRandom.get(), std::move(biomes)};
+        Scope              scope(tBlanketContext, &ctx);
+        for (auto const& [id, fn] : p.blankets) fn(chunk, chunkRegion);
+        runSteps(p, Stage::Blanket, chunk, chunkRegion);
+    }
+    applyCarvers(p, chunk, chunkRegion, seed);
+    runSteps(p, Stage::Carvers, chunk, chunkRegion);
 }
 
 // ==== carvers ===========================================================================================
 
 namespace {
-
-thread_local ext::CarverContext* tCarverContext = nullptr;
-
-struct CarverScope {
-    ext::CarverContext* previous;
-    explicit CarverScope(ext::CarverContext* context) : previous(tCarverContext) { tCarverContext = context; }
-    ~CarverScope() { tCarverContext = previous; }
-    CarverScope(CarverScope const&)            = delete;
-    CarverScope& operator=(CarverScope const&) = delete;
-};
 
 /// The carver biomes of source chunks (ChunkAccess#carverBiome: the biome source at the chunk's
 /// minimum block, quart y 0), shared by the generation threads: a chunk is the source of 289
@@ -278,7 +367,7 @@ void applyCarvers(Providers const& p, Chunk& chunk, Region& region, std::int64_t
         return it->second;
     };
 
-    ext::CarvingMask            mask(chunk.minY(), chunk.maxY());
+    auto                        mask = std::make_shared<ext::CarvingMask>(chunk.minY(), chunk.maxY());
     core::jrand::WorldgenRandom random(std::make_unique<core::jrand::LegacyRandom>(0)); // re-seeded per carver
     for (int j = -kCarverRange; j <= kCarverRange; ++j)
         for (int k = -kCarverRange; k <= kCarverRange; ++k) {
@@ -287,15 +376,18 @@ void applyCarvers(Providers const& p, Chunk& chunk, Region& region, std::int64_t
             for (std::size_t l = 0; l < list.size(); ++l) {
                 if (!list[l].fn) continue; // Java still counts it: the index stays the list position
                 random.setLargeFeatureSeed(core::mth::ladd(seed, static_cast<std::int64_t>(l)), sx, sz);
-                ext::CarverContext ctx{sx, sz, static_cast<int>(l), list[l].id, list[l].config, &mask};
-                CarverScope        scope(&ctx);
+                ext::CarverContext ctx{sx, sz, static_cast<int>(l), list[l].id, list[l].config, mask.get()};
+                Scope              scope(tCarverContext, &ctx);
                 (*list[l].fn)(chunk, region, random);
             }
         }
+    // ProtoChunk keeps its carving mask until the features (CarvingMaskPlacement) read it
+    if (mask->count() > 0) keepCarvingMask(region.dimension(), cx, cz, std::move(mask));
 }
 
-void decorateChunk(Chunk* chunkIn, Region& region, std::int64_t seed) {
-    auto        p = providers();
+void decorateChunk(Chunk* chunk, Region& region, std::int64_t seed) { decorateChunk(*providers(), chunk, region, seed); }
+
+void decorateChunk(Providers const& p, Chunk* chunkIn, Region& region, std::int64_t seed) {
     RegionChunk viewChunk(region);
     Chunk&      chunk = chunkIn ? *chunkIn : viewChunk;
     int         cx = region.centerChunkX(), cz = region.centerChunkZ();
@@ -311,10 +403,16 @@ void decorateChunk(Chunk* chunkIn, Region& region, std::int64_t seed) {
         auto*                    source = dynamic_cast<SourceRegionAdapter*>(&region);
         if (!source || !source->chunkBiomes(1, ids)) {
             ids.clear();
+            // the raw quart biomes (the section palettes); the region's biome() would zoom
+            auto const* noise = dynamic_cast<NoiseBiomeRegion const*>(&region);
+            auto        raw   = [&](BlockPos const& pos) {
+                if (noise) return noise->noiseBiome(pos.x >> 2, pos.y >> 2, pos.z >> 2);
+                return region.biome(pos);
+            };
             for (int x = minX - 16; x < minX + 32; x += 4)
                 for (int z = minZ - 16; z < minZ + 32; z += 4)
                     for (int y = region.minY(); y < region.maxY(); y += 4) {
-                        auto b = region.biome({x, y, z});
+                        auto b = raw({x, y, z});
                         if (std::find(ids.begin(), ids.end(), b) == ids.end()) ids.push_back(std::move(b));
                     }
         }
@@ -327,8 +425,15 @@ void decorateChunk(Chunk* chunkIn, Region& region, std::int64_t seed) {
     int                         steps          = static_cast<int>(order->steps.size());
     int                         k              = std::max(11, steps);
     auto const&                 placed         = features::detail::data().placed;
+    ext::DecorationContext      dctx{cx, cz, 0, decorationSeed};
     for (int l = 0; l < k; ++l) {
-        if (l == static_cast<int>(ext::DecorationStep::SurfaceStructures)) runSteps(*p, Stage::Pieces, chunk, region);
+        // the structures of step l (each seeded with setFeatureSeed(decorationSeed, index, l) by
+        // its owner through the context), before the step's features
+        dctx.step = l;
+        {
+            Scope scope(tDecorationContext, &dctx);
+            runSteps(p, Stage::Pieces, chunk, region);
+        }
         if (l >= steps) continue;
         std::set<int> indices;
         auto const&   stepList = order->steps[static_cast<std::size_t>(l)];
@@ -342,17 +447,39 @@ void decorateChunk(Chunk* chunkIn, Region& region, std::int64_t seed) {
             else features::detail::warnOnce("placed " + id, "unknown placed feature " + id);
         }
     }
-    runSteps(*p, Stage::Features, chunk, region);
+    runSteps(p, Stage::Features, chunk, region);
     if (region.dimension() >= 0) features::detail::drainLargeWriter(region.dimension(), region);
-    for (auto const& [id, fn] : p->blankets) fn(chunk, region);
-    runSteps(*p, Stage::Blanket, chunk, region);
+    dropCarvingMask(region.dimension(), cx, cz); // the carving mask lives until the features ran
     // Spawns: ChunkGenerator#spawnOriginalMobs (biome at the chunk origin, top of the world)
     if (region.dimension() >= 0) {
         core::jrand::WorldgenRandom spawnRandom(std::make_unique<core::jrand::LegacyRandom>(0));
         spawnRandom.setDecorationSeed(seed, minX, minZ);
         spawn::detail::spawnForChunkGeneration(region, region.biome({minX, region.maxY() - 1, minZ}), cx, cz, spawnRandom);
     }
-    runSteps(*p, Stage::Spawns, chunk, region);
+    runSteps(p, Stage::Spawns, chunk, region);
+}
+
+double runInMemory(Providers const& p, std::int64_t seed, int x0, int z0, int width, int count, std::uint64_t* hash) {
+    auto                start = std::chrono::steady_clock::now();
+    detail::MemoryWorld world(-32, 256, seed);
+    width    = std::max(1, width);
+    int rows = (count + width - 1) / width;
+    // generate the chunks plus a one-chunk border (decoration windows), then decorate
+    for (int z = z0 - 1; z <= z0 + rows; ++z)
+        for (int x = x0 - 1; x <= x0 + width; ++x) {
+            auto&           c = world.chunk(x, z);
+            ChunkOnlyRegion region(asChunk(c), seed, -1, p.biomeSource);
+            generateChunk(p, asChunk(c), region, seed);
+        }
+    std::uint64_t h = 0xcbf29ce484222325ull;
+    for (int i = 0; i < count; ++i) {
+        int  x = x0 + i % width, z = z0 + i / width;
+        auto region = world.region(x, z, 1, p.biomeSource);
+        decorateChunk(p, &asChunk(world.chunk(x, z)), *region, seed);
+    }
+    for (int i = 0; i < count; ++i) h = (h ^ world.hash(x0 + i % width, z0 + i / width)) * 0x100000001b3ull;
+    if (hash) *hash = h;
+    return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
 }
 
 } // namespace detail
@@ -381,11 +508,27 @@ void CarvingMask::set(int localX, int y, int localZ) {
     mBits[i] = true;
 }
 
+void CarvingMask::forEach(std::function<void(int, int, int)> const& fn) const {
+    // CarvingMask#stream: the set bits in ascending order, i -> (i & 15, (i >> 8) + minY, i >> 4 & 15)
+    for (std::size_t i = 0; i < mBits.size(); ++i)
+        if (mBits[i]) fn(static_cast<int>(i & 15), static_cast<int>(i >> 8) + mMinY, static_cast<int>((i >> 4) & 15));
+}
+
 CarverContext* carverContext() { return detail::tCarverContext; }
 
 bool isStartChunk(RandomSource& random, CarverContext const& context) {
     float probability = context.config ? context.config->value("probability", 0.0F) : 0.0F;
     return random.nextFloat() <= probability;
+}
+
+BlanketContext* blanketContext() { return detail::tBlanketContext; }
+
+DecorationContext const* decorationContext() { return detail::tDecorationContext; }
+
+std::unique_ptr<core::jrand::WorldgenRandom> DecorationContext::structureRandom(int index) const {
+    auto random = std::make_unique<core::jrand::WorldgenRandom>(std::make_unique<core::jrand::Xoroshiro128pp>(0));
+    random->setFeatureSeed(decorationSeed, index, step);
+    return random;
 }
 
 Stats stats() {
@@ -394,26 +537,7 @@ Stats stats() {
 }
 
 double runInMemory(std::int64_t seed, int x0, int z0, int width, int count, std::uint64_t* hash) {
-    auto                start = std::chrono::steady_clock::now();
-    detail::MemoryWorld world(-32, 256, seed);
-    width     = std::max(1, width);
-    int rows  = (count + width - 1) / width;
-    // generate the chunks plus a one-chunk border (decoration windows), then decorate
-    for (int z = z0 - 1; z <= z0 + rows; ++z)
-        for (int x = x0 - 1; x <= x0 + width; ++x) {
-            auto& c      = world.chunk(x, z);
-            auto  region = world.region(x, z, 0);
-            detail::generateChunk(detail::asChunk(c), *region, seed);
-        }
-    std::uint64_t h = 0xcbf29ce484222325ull;
-    for (int i = 0; i < count; ++i) {
-        int  x = x0 + i % width, z = z0 + i / width;
-        auto region = world.region(x, z, 1);
-        detail::decorateChunk(&detail::asChunk(world.chunk(x, z)), *region, seed);
-    }
-    for (int i = 0; i < count; ++i) h = (h ^ world.hash(x0 + i % width, z0 + i / width)) * 0x100000001b3ull;
-    if (hash) *hash = h;
-    return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+    return detail::runInMemory(*detail::providers(), seed, x0, z0, width, count, hash);
 }
 
 } // namespace ext

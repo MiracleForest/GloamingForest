@@ -11,6 +11,8 @@
 #include "feature/landmark/Landmark.h"
 #include "feature/spawn/Spawn.h"
 
+class BlockSource;
+
 namespace gf::spawn::detail {
 
 /// NaturalSpawner#spawnMobsForChunkGeneration for the center chunk of `region` (Spawns stage):
@@ -33,5 +35,12 @@ spawnOverridesOf(landmark::Start const& start, landmark::Descriptor const& descr
 
 /// The spawn table of a biome (registered, else read from its imported JSON); thread-safe.
 [[nodiscard]] Table tableOf(std::string const& biomeId);
+
+/// StructureStart#isValid: a start with pieces (or generated).
+[[nodiscard]] inline bool startValid(landmark::Start const& start) { return start.generated || !start.pieceBoxes.empty(); }
+
+/// ChunkAccess#getHeight(WORLD_SURFACE, x, z): the highest non-air block of the column (minY - 1
+/// when empty), found below the chunk's highest non-air sub-chunk.
+[[nodiscard]] int worldSurfaceY(BlockSource& region, int x, int z);
 
 } // namespace gf::spawn::detail

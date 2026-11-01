@@ -342,6 +342,11 @@ bool isWater(Block const& block) {
     return n == "minecraft:water" || n == "minecraft:flowing_water";
 }
 
+bool isLava(Block const& block) {
+    auto const& n = block.getTypeName();
+    return n == "minecraft:lava" || n == "minecraft:flowing_lava";
+}
+
 bool blocksMotion(Block const& block) {
     auto const& n = block.getTypeName();
     if (n == "minecraft:web" || n == "minecraft:bamboo_sapling") return false;

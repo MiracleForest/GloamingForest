@@ -11,7 +11,8 @@
 // runs WorldCarver#isStartChunk(random) itself (TF's highland caves override it) and carves the
 // part of S's tunnels that falls inside C. The context below says which S, k and configured carver
 // the call is for and holds C's carving mask (shared by every call for C, like Java's
-// ProtoChunk#getOrCreateCarvingMask(AIR)).
+// ProtoChunk#getOrCreateCarvingMask(AIR)). The mask is kept until the chunk is decorated, where
+// the minecraft:carving_mask placement modifier (CarvingMaskPlacement) streams its blocks.
 //
 //     gf::worldgen::registerCarver("twilightforest:tf_caves", [](Chunk& c, Region& r, RandomSource& random) {
 //         auto& ctx = *gf::worldgen::ext::carverContext();
@@ -20,6 +21,7 @@
 //     });
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -36,6 +38,10 @@ public:
     [[nodiscard]] bool get(int localX, int y, int localZ) const;
     void               set(int localX, int y, int localZ);
     [[nodiscard]] int  count() const { return mCount; }
+    [[nodiscard]] int  minY() const { return mMinY; }
+    /// Calls fn(localX, y, localZ) for every carved block in CarvingMask#stream's order (ascending
+    /// index: x, then z, then y).
+    void forEach(std::function<void(int localX, int y, int localZ)> const& fn) const;
 
 private:
     [[nodiscard]] std::size_t index(int localX, int y, int localZ) const;

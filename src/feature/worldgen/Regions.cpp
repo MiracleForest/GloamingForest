@@ -1,5 +1,7 @@
 // Chunk and region adapters of the generator pipeline (F5): the LevelChunk being generated, a
 // BlockSource window (Java's WorldGenRegion) and an in-memory world for timing / determinism runs.
+// Chunk heights follow ChunkAccess#getHeight, region heights WorldGenLevel#getHeight, and region
+// biomes LevelReader#getBiome (BiomeManager's zoom over the chunks' quart biomes).
 #include <algorithm>
 
 #include "mc/world/level/BlockPos.h"
@@ -20,6 +22,12 @@ namespace gf::worldgen::detail {
 namespace {
 ChunkBlockPos cpos(int lx, int y, int lz, int minY) {
     return ChunkBlockPos{static_cast<uchar>(lx), ChunkLocalHeight{static_cast<short>(y - minY)}, static_cast<uchar>(lz)};
+}
+/// ChunkAccess#getNoiseBiome's clamp of a quart y to the chunk's quarts.
+int clampQuartY(int qy, int minY, int maxY) {
+    int lo = core::mth::fromBlock(minY);
+    int hi = lo + core::mth::fromBlock(maxY - minY) - 1;
+    return std::clamp(qy, lo, hi);
 }
 } // namespace
 
@@ -44,9 +52,10 @@ void LevelChunkAdapter::setBlock(int lx, int y, int lz, Block const& block) {
 }
 
 int LevelChunkAdapter::height(Heightmap type, int lx, int lz) const {
+    // ChunkAccess#getHeight: the highest matching block (minY - 1 for an empty column)
     for (int y = mMaxY - 1; y >= mMinY; --y)
-        if (heightmapMatches(type, getBlock(lx, y, lz))) return y + 1;
-    return mMinY;
+        if (heightmapMatches(type, getBlock(lx, y, lz))) return y;
+    return mMinY - 1;
 }
 
 std::string LevelChunkAdapter::biome(int lx, int y, int lz) const {
@@ -57,19 +66,64 @@ std::string LevelChunkAdapter::biome(int lx, int y, int lz) const {
 
 void LevelChunkAdapter::setBiome(int lx, int y, int lz, std::string const& biomeId) {
     if (y < mMinY || y >= mMaxY) return;
-    if (auto const* b = engineBiome(mBiomes, biomeId)) mChunk._setBiome(*b, cpos(lx & 15, y, lz & 15, mMinY), false);
+    if (auto const* b = resolve(biomeId)) mChunk._setBiome(*b, cpos(lx & 15, y, lz & 15, mMinY), false);
 }
 
 void LevelChunkAdapter::setBiomeColumn(int lx, int lz, std::string const& biomeId) {
-    auto const* b = engineBiome(mBiomes, biomeId);
+    auto const* b = resolve(biomeId);
     if (!b) return;
     // one call fills the whole column (fillYDimension); worldgen.biomes checks both ends
     mChunk._setBiome(*b, cpos(lx & 15, mMinY, lz & 15, mMinY), true);
 }
 
+Biome const* LevelChunkAdapter::resolve(std::string const& id) {
+    for (auto const& [k, b] : mResolved)
+        if (k == id) return b;
+    auto const* b = engineBiome(mBiomes, id);
+    mResolved.emplace_back(id, b);
+    return b;
+}
+
+void LevelChunkAdapter::setQuartColumn(int qx, int qz, int qMin, std::vector<std::string> const& ids) {
+    if (ids.empty()) return;
+    // the engine biome of every quart, resolved once per distinct id
+    std::vector<Biome const*> quarts(ids.size());
+    for (std::size_t i = 0; i < ids.size(); ++i) quarts[i] = (i > 0 && ids[i] == ids[i - 1]) ? quarts[i - 1] : resolve(ids[i]);
+    // the most frequent biome fills the column in one call; the other quarts are written per block
+    std::vector<std::pair<Biome const*, int>> counts;
+    for (auto const* b : quarts) {
+        if (!b) continue;
+        auto it = std::find_if(counts.begin(), counts.end(), [&](auto const& c) { return c.first == b; });
+        if (it == counts.end()) counts.emplace_back(b, 1);
+        else ++it->second;
+    }
+    if (counts.empty()) return;
+    Biome const* dominant = std::max_element(counts.begin(), counts.end(), [](auto const& a, auto const& b) { return a.second < b.second; })->first;
+    for (int dx = 0; dx < 4; ++dx)
+        for (int dz = 0; dz < 4; ++dz) {
+            int lx = (qx & 3) * 4 + dx, lz = (qz & 3) * 4 + dz;
+            mChunk._setBiome(*dominant, cpos(lx, mMinY, lz, mMinY), true);
+            for (std::size_t i = 0; i < quarts.size(); ++i) {
+                if (!quarts[i] || quarts[i] == dominant) continue;
+                int y0 = std::max(mMinY, (qMin + static_cast<int>(i)) * 4), y1 = std::min(mMaxY, (qMin + static_cast<int>(i)) * 4 + 4);
+                for (int y = y0; y < y1; ++y) mChunk._setBiome(*quarts[i], cpos(lx, y, lz, mMinY), false);
+            }
+        }
+}
+
 // ==== SourceRegionAdapter ===============================================================================
 
-SourceRegionAdapter::SourceRegionAdapter(BlockSource& source, int cx, int cz, int radius, int minY, int maxY, std::int64_t seed, int dimension)
+SourceRegionAdapter::SourceRegionAdapter(
+    BlockSource&  source,
+    int           cx,
+    int           cz,
+    int           radius,
+    int           minY,
+    int           maxY,
+    std::int64_t  seed,
+    int           dimension,
+    BiomeSourceFn fallback
+)
 : mSource(source),
   mCX(cx),
   mCZ(cz),
@@ -77,7 +131,8 @@ SourceRegionAdapter::SourceRegionAdapter(BlockSource& source, int cx, int cz, in
   mMinY(minY),
   mMaxY(maxY),
   mDim(dimension),
-  mSeed(seed) {}
+  mSeed(seed),
+  mFallback(std::move(fallback)) {}
 
 bool SourceRegionAdapter::isInside(int x, int z) const {
     return std::abs((x >> 4) - mCX) <= mRadius && std::abs((z >> 4) - mCZ) <= mRadius;
@@ -114,9 +169,20 @@ int SourceRegionAdapter::height(Heightmap type, int x, int z) const {
     return h;
 }
 
-std::string SourceRegionAdapter::biome(BlockPos const& pos) const {
-    BlockPos p{pos.x, std::clamp(pos.y, static_cast<int>(mSource.getMinHeight()), mSource.getMaxHeight() - 1), pos.z};
+std::string SourceRegionAdapter::noiseBiome(int qx, int qy, int qz) const {
+    int minY = mSource.getMinHeight(), maxY = mSource.getMaxHeight();
+    if (auto const* lc = mSource.getChunk(qx >> 2, qz >> 2)) {
+        int y = clampQuartY(qy, minY, maxY) * 4;
+        return biomeIdOf(lc->getBiome(cpos((qx & 3) * 4, y, (qz & 3) * 4, minY)));
+    }
+    // LevelReader#getNoiseBiome: a chunk that is not there asks the biome source
+    if (mFallback) return mFallback(qx, qy, qz);
+    BlockPos p{qx * 4, clampQuartY(qy, minY, maxY) * 4, qz * 4};
     return biomeIdOf(mSource.getBiome(p));
+}
+
+std::string SourceRegionAdapter::biome(BlockPos const& pos) const {
+    return zoomedBiome(mSeed, pos, [this](int qx, int qy, int qz) { return noiseBiome(qx, qy, qz); });
 }
 
 bool SourceRegionAdapter::chunkBiomes(int radius, std::vector<std::string>& out) const {
@@ -141,9 +207,40 @@ bool SourceRegionAdapter::chunkBiomes(int radius, std::vector<std::string>& out)
     return true;
 }
 
+// ==== ChunkOnlyRegion ===================================================================================
+
+ChunkOnlyRegion::ChunkOnlyRegion(Chunk& chunk, std::int64_t seed, int dimension, BiomeSourceFn biomeSource)
+: mC(chunk),
+  mSeed(seed),
+  mDim(dimension),
+  mSource(std::move(biomeSource)) {}
+
+Block const& ChunkOnlyRegion::getBlock(BlockPos const& p) const {
+    if (!isInside(p.x, p.z)) return features::detail::air();
+    return mC.getBlock(p.x & 15, p.y, p.z & 15);
+}
+
+bool ChunkOnlyRegion::setBlock(BlockPos const& p, Block const& b, int) {
+    if (!isInside(p.x, p.z)) return false;
+    mC.setBlock(p.x & 15, p.y, p.z & 15, b);
+    return true;
+}
+
+int ChunkOnlyRegion::height(Heightmap type, int x, int z) const { return isInside(x, z) ? mC.height(type, x & 15, z & 15) + 1 : mC.minY(); }
+
+std::string ChunkOnlyRegion::noiseBiome(int qx, int qy, int qz) const {
+    if ((qx >> 2) == mC.chunkX() && (qz >> 2) == mC.chunkZ()) return mC.biome((qx & 3) * 4, clampQuartY(qy, mC.minY(), mC.maxY()) * 4, (qz & 3) * 4);
+    if (mSource) return mSource(qx, qy, qz);
+    return mC.biome(0, clampQuartY(qy, mC.minY(), mC.maxY()) * 4, 0); // no biome source: the single default biome
+}
+
+std::string ChunkOnlyRegion::biome(BlockPos const& pos) const {
+    return zoomedBiome(mSeed, pos, [this](int qx, int qy, int qz) { return noiseBiome(qx, qy, qz); });
+}
+
 // ==== MemoryWorld =======================================================================================
 
-class MemoryWorld::MemChunk final : public Chunk {
+class MemoryWorld::MemChunk final : public Chunk, public QuartBiomeWriter {
 public:
     MemChunk(MemoryWorld& world, int cx, int cz)
     : mWorld(world),
@@ -166,8 +263,8 @@ public:
     }
     int height(Heightmap type, int lx, int lz) const override {
         for (int y = maxY() - 1; y >= minY(); --y)
-            if (heightmapMatches(type, getBlock(lx, y, lz))) return y + 1;
-        return minY();
+            if (heightmapMatches(type, getBlock(lx, y, lz))) return y;
+        return minY() - 1;
     }
     std::string biome(int lx, int y, int lz) const override {
         y = std::clamp(y, minY(), maxY() - 1);
@@ -176,6 +273,13 @@ public:
     void setBiome(int lx, int y, int lz, std::string const& id) override {
         if (y < minY() || y >= maxY()) return;
         mBiomes[qindex(lx, y, lz)] = id;
+    }
+    void setQuartColumn(int qx, int qz, int qMin, std::vector<std::string> const& ids) override {
+        for (std::size_t i = 0; i < ids.size(); ++i) {
+            int y = (qMin + static_cast<int>(i)) * 4;
+            if (y < minY() || y >= maxY()) continue;
+            mBiomes[qindex((qx & 3) * 4, y, (qz & 3) * 4)] = ids[i];
+        }
     }
 
 private:
@@ -194,9 +298,14 @@ Chunk& asChunk(MemoryWorld::MemChunk& c) { return c; }
 
 namespace {
 
-class MemoryRegion final : public Region {
+class MemoryRegion final : public Region, public NoiseBiomeRegion {
 public:
-    MemoryRegion(MemoryWorld& w, int cx, int cz, int r) : mWorld(w), mCX(cx), mCZ(cz), mR(r) {}
+    MemoryRegion(MemoryWorld& w, int cx, int cz, int r, BiomeSourceFn fallback)
+    : mWorld(w),
+      mCX(cx),
+      mCZ(cz),
+      mR(r),
+      mFallback(std::move(fallback)) {}
     int          centerChunkX() const override { return mCX; }
     int          centerChunkZ() const override { return mCZ; }
     int          minY() const override { return mWorld.minY(); }
@@ -213,13 +322,21 @@ public:
             if (heightmapMatches(type, mWorld.getBlock({x, y, z}))) return y + 1;
         return minY();
     }
-    std::string  biome(BlockPos const& pos) const override { return mWorld.biome(pos); }
+    std::string noiseBiome(int qx, int qy, int qz) const override {
+        if (!mWorld.has(qx >> 2, qz >> 2)) return mFallback ? mFallback(qx, qy, qz) : std::string();
+        int y = clampQuartY(qy, minY(), maxY()) * 4;
+        return mWorld.biome({qx * 4, y, qz * 4});
+    }
+    std::string biome(BlockPos const& pos) const override {
+        return zoomedBiome(mWorld.seed(), pos, [this](int qx, int qy, int qz) { return noiseBiome(qx, qy, qz); });
+    }
     std::int64_t seed() const override { return mWorld.seed(); }
     int          dimension() const override { return -1; }
 
 private:
-    MemoryWorld& mWorld;
-    int          mCX, mCZ, mR;
+    MemoryWorld&  mWorld;
+    int           mCX, mCZ, mR;
+    BiomeSourceFn mFallback;
 };
 
 } // namespace
@@ -264,6 +381,8 @@ std::uint64_t MemoryWorld::hash(int cx, int cz) const {
     return h;
 }
 
-std::unique_ptr<Region> MemoryWorld::region(int cx, int cz, int radius) { return std::make_unique<MemoryRegion>(*this, cx, cz, radius); }
+std::unique_ptr<Region> MemoryWorld::region(int cx, int cz, int radius, BiomeSourceFn fallback) {
+    return std::make_unique<MemoryRegion>(*this, cx, cz, radius, std::move(fallback));
+}
 
 } // namespace gf::worldgen::detail

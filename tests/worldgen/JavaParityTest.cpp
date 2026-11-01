@@ -6,11 +6,14 @@
 // point values are compared by their raw bits).
 #include <gtest/gtest.h>
 
+#include <array>
 #include <bit>
+#include <iomanip>
 #include <map>
 #include <sstream>
 #include <string>
 
+#include "core/jrand/BiomeManager.h"
 #include "core/jrand/JRand.h"
 #include "core/jrand/JavaOrder.h"
 #include "core/jrand/Mth.h"
@@ -198,6 +201,21 @@ std::map<std::string, std::string> cppLines() {
             add(o.str());
         }
     }
+    {
+        // BiomeManager: obfuscateSeed, the quart getBiome(BlockPos) reads, getFiddledDistance
+        int zp[10][3] = {{0, 0, 0}, {1, 2, 3}, {-1, -1, -1}, {7, 64, -9}, {-123, 17, 456}, {1000, -31, -2000}, {15, 255, 15}, {-4097, 100, 8191}, {2, 2, 2}, {-30000000, -64, 29999999}};
+        for (auto s : seeds) {
+            auto               zoomSeed = biome::obfuscateSeed(s);
+            std::ostringstream o;
+            o << "biomezoom " << s << " " << zoomSeed;
+            for (auto& p : zp) {
+                auto q = biome::zoom(zoomSeed, p[0], p[1], p[2]);
+                o << " " << q.x << "," << q.y << "," << q.z;
+            }
+            o << " fiddled " << bits(biome::fiddledDistance(zoomSeed, 3, -2, 5, 0.25, 0.5, -0.75));
+            add(o.str());
+        }
+    }
     return out;
 }
 
@@ -216,7 +234,20 @@ TEST(WorldgenJavaParity, EveryOracleLineMatches) {
         EXPECT_EQ(it->second, java) << key;
         ++n;
     }
-    EXPECT_EQ(n, 103);
+    EXPECT_EQ(n, 107);
+}
+
+TEST(WorldgenJavaParity, Sha256KnownAnswers) {
+    // FIPS 180-4 examples: "abc" and the two-block message
+    auto hex = [](std::array<std::uint8_t, 32> const& d) {
+        std::ostringstream o;
+        for (auto b : d) o << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(b);
+        return o.str();
+    };
+    EXPECT_EQ(hex(biome::sha256("abc")), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+    EXPECT_EQ(hex(biome::sha256("")), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+    EXPECT_EQ(hex(biome::sha256("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq")),
+              "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1");
 }
 
 TEST(WorldgenJavaParity, WellKnownJavaUtilRandomValues) {

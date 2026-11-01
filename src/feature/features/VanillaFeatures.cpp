@@ -26,12 +26,15 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BrightnessPair.h"
 #include "mc/world/level/biome/Biome.h"
+#include "mc/world/level/dimension/Dimension.h"
 
 #include "core/jrand/JavaOrder.h"
 #include "core/jrand/Mth.h"
 #include "core/noise/PerlinSimplex.h"
 #include "feature/features/Internal.h"
 #include "feature/landmark/Landmark.h"
+#include "feature/spawn/Internal.h"
+#include "feature/worldgen/Internal.h"
 
 #pragma clang fp contract(off)
 
@@ -400,10 +403,12 @@ bool freezeTopLayer(FeatureContext const& c) {
             int      i1 = c.region.height(H::MotionBlocking, k, l);
             BlockPos m{k, i1, l};
             BlockPos m1{k, i1 - 1, l};
-            // the biome of the top position m decides both (its temperature taken at m1 and m)
+            // the biome of the top position m (LevelReader#getBiome: BiomeManager's zoom) decides
+            // both (its temperature taken at m1 and m)
             auto  biome      = c.region.biome(m);
             float engineBase = 0.8F;
-            if (auto* src = blockSource(c.region); src && m.y >= c.region.minY() && m.y < c.region.maxY()) engineBase = src->getBiome(m).mTemperature;
+            if (auto* src = blockSource(c.region))
+                if (auto const* b = worldgen::detail::engineBiome(src->getDimension().getBiomeRegistry(), biome)) engineBase = b->mTemperature;
             // Biome#shouldFreeze(level, m1, false)
             if (ice && biomeTemperature(biome, m1, engineBase) < 0.15F && m1.y >= c.region.minY() && m1.y < c.region.maxY() && blockLight(c.region, m1) < 10
                 && isWaterSource(c.region.getBlock(m1)))
@@ -495,10 +500,11 @@ bool forestRock(FeatureContext const& c) {
 
 using Positions = std::vector<BlockPos>;
 
+/// CountOnEveryLayerPlacement#isEmpty: air, Blocks.WATER or Blocks.LAVA, whose flowing levels
+/// Bedrock keeps as flowing_water / flowing_lava.
 bool isEmptyForLayer(Block const& b) {
     if (b.isAir()) return true;
-    auto const& n = b.getTypeName();
-    return n == "minecraft:water" || n == "minecraft:lava";
+    return isWater(b) || isLava(b);
 }
 
 int findOnGroundYPosition(PlacementContext const& c, int x, int y, int z, int count) {
@@ -535,7 +541,8 @@ Positions noStructure(PlacementContext const& c, BlockPos const& pos) {
     for (auto const& start : landmark::startsIntersecting(c.region.dimension(), {pos.x >> 4, pos.z >> 4})) {
         if (structureAllowed(allowed, start.key)) continue;
         auto const* d = landmark::descriptor(start.key);
-        if (!d) continue; // not a DecorationClearance structure
+        if (!d) continue;                       // not a DecorationClearance structure
+        if (!spawn::detail::startValid(start)) continue; // StructureStart#isValid
         bool surfaceClear     = !occSurface || d->surfaceDecorationsAllowed;
         bool undergroundClear = !occUnderground || d->undergroundDecorationsAllowed;
         bool vegetationClear  = !occVegetation || d->extra.value("vegetation", true);
@@ -544,8 +551,15 @@ Positions noStructure(PlacementContext const& c, BlockPos const& pos) {
         int cx = b.minX + (b.maxX - b.minX + 1) / 2, cz = b.minZ + (b.maxZ - b.minZ + 1) / 2;
         float radius = d->extra.value("chunk_clearance_radius", static_cast<float>(d->clearanceChunks));
         if (radius <= 0) {
+            // TF's UtilityPiece with allowFeatures (the start's data "allow_features": one bool per
+            // entry of pieceBoxes) does not block features
+            Json const* allowFeatures = nullptr;
+            if (start.data.is_object())
+                if (auto it = start.data.find("allow_features"); it != start.data.end() && it->is_array()) allowFeatures = &*it;
             auto pieces = start.pieceBoxes.empty() ? std::vector<core::BlockBox>{start.box} : start.pieceBoxes;
-            for (auto const& pb : pieces) {
+            for (std::size_t i = 0; i < pieces.size(); ++i) {
+                auto const& pb = pieces[i];
+                if (allowFeatures && i < allowFeatures->size() && (*allowFeatures)[i].is_boolean() && (*allowFeatures)[i].get<bool>()) continue;
                 int qx = std::clamp(pos.x, pb.minX, pb.maxX), qy = std::clamp(pos.y, pb.minY, pb.maxY), qz = std::clamp(pos.z, pb.minZ, pb.maxZ);
                 int dist = std::max({std::abs(qx - pos.x), std::abs(qy - pos.y), std::abs(qz - pos.z)});
                 if (dist <= additional) return {};
@@ -671,8 +685,14 @@ void registerVanillaPlacements() {
         int    n  = d0 < c.config.value("noise_level", 0.0) ? c.config.value("below_noise", 0) : c.config.value("above_noise", 0);
         return Positions(static_cast<std::size_t>(std::max(0, n)), pos);
     });
-    registerPlacement("minecraft:carving_mask", [](PlacementContext const&, BlockPos const&) {
-        return Positions{}; // carving masks are not kept between generation stages
+    registerPlacement("minecraft:carving_mask", [](PlacementContext const& c, BlockPos const& pos) {
+        // CarvingMaskPlacement: every block the carvers carved in the chunk of pos (the mask the
+        // pipeline keeps from the chunk's Carvers stage until its decoration)
+        Positions out;
+        int       cx = pos.x >> 4, cz = pos.z >> 4;
+        if (auto mask = worldgen::detail::carvingMaskOf(c.region.dimension(), cx, cz))
+            mask->forEach([&](int lx, int y, int lz) { out.push_back({cx * 16 + lx, y, cz * 16 + lz}); });
+        return out;
     });
     registerPlacement("twilightforest:chunk_centerer", [](PlacementContext const&, BlockPos const& pos) {
         return Positions{{(pos.x & static_cast<int>(0xfffffff0)) + 8, pos.y, (pos.z & static_cast<int>(0xfffffff0)) + 8}};

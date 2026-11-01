@@ -244,5 +244,27 @@ public class Oracle {
             for (double[] p : np) sb.append(" ").append(Double.doubleToRawLongBits((Double) call(keyed, NN, "getValue", P("double", "double", "double"), p[0] * 0.25, p[1] * 0.5, p[2] * 0.25)));
             System.out.println(sb);
         }
+
+        // BiomeManager: obfuscateSeed, getFiddledDistance and the quart getBiome(BlockPos) reads (a
+        // NoiseBiomeSource proxy records the quart it is asked for)
+        String BM = "net.minecraft.world.level.biome.BiomeManager";
+        String NBS = "net.minecraft.world.level.biome.BiomeManager$NoiseBiomeSource";
+        int[][] zp = {{0, 0, 0}, {1, 2, 3}, {-1, -1, -1}, {7, 64, -9}, {-123, 17, 456}, {1000, -31, -2000}, {15, 255, 15}, {-4097, 100, 8191}, {2, 2, 2}, {-30000000, -64, 29999999}};
+        for (long s : seeds) {
+            long zoomSeed = (Long) call(null, BM, "obfuscateSeed", P("long"), s);
+            final int[] last = new int[3];
+            Object src = Proxy.newProxyInstance(loader, new Class<?>[]{c(NBS)}, (proxy, m, args) -> {
+                if (args != null && args.length == 3) { last[0] = (Integer) args[0]; last[1] = (Integer) args[1]; last[2] = (Integer) args[2]; }
+                return null;
+            });
+            Object bm = ctor(BM, P(NBS, "long"), src, zoomSeed);
+            StringBuilder zb = new StringBuilder("biomezoom " + s + " " + zoomSeed);
+            for (int[] p : zp) {
+                call(bm, BM, "getBiome", P("net.minecraft.core.BlockPos"), ctor("net.minecraft.core.BlockPos", P("int", "int", "int"), p[0], p[1], p[2]));
+                zb.append(" ").append(last[0]).append(",").append(last[1]).append(",").append(last[2]);
+            }
+            zb.append(" fiddled ").append(Double.doubleToRawLongBits((Double) call(null, BM, "getFiddledDistance", P("long", "int", "int", "int", "double", "double", "double"), zoomSeed, 3, -2, 5, 0.25, 0.5, -0.75)));
+            System.out.println(zb);
+        }
     }
 }

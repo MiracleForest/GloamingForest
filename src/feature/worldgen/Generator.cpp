@@ -71,6 +71,7 @@ class TwilightGenerator final : public VoidGenerator {
 public:
     TwilightGenerator(Dimension& dimension, BiomeIdType defaultBiome) : VoidGenerator(dimension, defaultBiome), mDim(dimension) {
         ++gActive;
+        setTwilightHeight(minYOf(dimension), maxYOf(dimension));
     }
     ~TwilightGenerator() override { --gActive; }
 
@@ -78,9 +79,10 @@ public:
         auto start = std::chrono::steady_clock::now();
         int  minY = minYOf(mDim), maxY = maxYOf(mDim);
         try {
+            auto              p = providers();
             LevelChunkAdapter chunk(lc, mDim.getBiomeRegistry(), minY, maxY);
-            ChunkOnlyRegion   region(chunk, currentSeed(), static_cast<int>(mDim.getDimensionId()));
-            generateChunk(chunk, region, currentSeed());
+            ChunkOnlyRegion   region(chunk, currentSeed(), static_cast<int>(mDim.getDimensionId()), p->biomeSource);
+            generateChunk(*p, chunk, region, currentSeed());
         } catch (std::exception const& e) {
             features::detail::warnOnce("generate error", std::string("chunk generation failed: ") + e.what());
         }
@@ -101,10 +103,21 @@ public:
         auto lc = view.getExistingChunk(ChunkPos{center->first, center->second});
         if (!lc) return true;
         try {
+            auto                p = providers();
             BlockSource         source(*mLevel, mDim, view, false, true, false, true);
-            SourceRegionAdapter region(source, center->first, center->second, 1, minYOf(mDim), maxYOf(mDim), currentSeed(), static_cast<int>(mDim.getDimensionId()));
+            SourceRegionAdapter region(
+                source,
+                center->first,
+                center->second,
+                1,
+                minYOf(mDim),
+                maxYOf(mDim),
+                currentSeed(),
+                static_cast<int>(mDim.getDimensionId()),
+                p->biomeSource
+            );
             // stages write through the region (BlockSource, height cache), never the chunk directly
-            decorateChunk(nullptr, region, currentSeed());
+            decorateChunk(*p, nullptr, region, currentSeed());
         } catch (std::exception const& e) {
             features::detail::warnOnce("decorate error", std::string("chunk decoration failed: ") + e.what());
         }
@@ -113,39 +126,6 @@ public:
     }
 
 private:
-    /// The writable region of loadChunk: the chunk itself (Java's ProtoChunk stages).
-    class ChunkOnlyRegion final : public Region {
-    public:
-        ChunkOnlyRegion(Chunk& c, std::int64_t seed, int dim) : mC(c), mSeed(seed), mDimId(dim) {}
-        int          centerChunkX() const override { return mC.chunkX(); }
-        int          centerChunkZ() const override { return mC.chunkZ(); }
-        int          minY() const override { return mC.minY(); }
-        int          maxY() const override { return mC.maxY(); }
-        bool         isInside(int x, int z) const override { return (x >> 4) == mC.chunkX() && (z >> 4) == mC.chunkZ(); }
-        Block const& getBlock(BlockPos const& p) const override {
-            if (!isInside(p.x, p.z)) return features::detail::air();
-            return mC.getBlock(p.x & 15, p.y, p.z & 15);
-        }
-        bool setBlock(BlockPos const& p, Block const& b, int) override {
-            if (!isInside(p.x, p.z)) return false;
-            mC.setBlock(p.x & 15, p.y, p.z & 15, b);
-            return true;
-        }
-        int          height(Heightmap t, int x, int z) const override { return isInside(x, z) ? mC.height(t, x & 15, z & 15) : mC.minY(); }
-        /// Another column's biome is the biome source's (the chunk holds only its own).
-        std::string biome(BlockPos const& p) const override {
-            if (!isInside(p.x, p.z)) return gf::worldgen::biomeAt(p);
-            return mC.biome(p.x & 15, p.y, p.z & 15);
-        }
-        std::int64_t seed() const override { return mSeed; }
-        int          dimension() const override { return mDimId; }
-
-    private:
-        Chunk&       mC;
-        std::int64_t mSeed;
-        int          mDimId;
-    };
-
     Dimension& mDim;
 };
 

@@ -18,6 +18,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/material/Material.h"
 
+#include "core/jrand/BiomeManager.h"
 #include "core/jrand/Mth.h"
 #include "feature/worldgen/Internal.h"
 #include "mod/Log.h"
@@ -64,6 +65,38 @@ std::int64_t currentSeed() {
     return gSeed.load();
 }
 
+std::int64_t zoomSeedOf(std::int64_t seed) {
+    // one SHA-256 per seed and thread: region biome lookups ask for it at every position
+    thread_local std::int64_t lastSeed = 0, lastZoom = core::biome::obfuscateSeed(0);
+    if (seed != lastSeed) {
+        lastZoom = core::biome::obfuscateSeed(seed);
+        lastSeed = seed;
+    }
+    return lastZoom;
+}
+
+std::string zoomedBiome(std::int64_t seed, BlockPos const& pos, NoiseBiomeFn const& noiseBiome) {
+    auto q = core::biome::zoom(zoomSeedOf(seed), pos.x, pos.y, pos.z);
+    return noiseBiome(q.x, q.y, q.z);
+}
+
+namespace {
+std::atomic<int> gTwilightMinY{-32}, gTwilightMaxY{256}; // TF's dimension type: min_y -32, height 288
+} // namespace
+
+void setTwilightHeight(int minY, int maxY) {
+    gTwilightMinY.store(minY);
+    gTwilightMaxY.store(maxY);
+}
+int twilightMinY() { return gTwilightMinY.load(); }
+int twilightMaxY() { return gTwilightMaxY.load(); }
+
+std::unique_ptr<RandomSource> worldGenRegionRandom(std::int64_t seed, int cx, int cz) {
+    core::jrand::Xoroshiro128pp base(seed);
+    auto                        factory = base.forkPositional()->fromHashOf("minecraft:worldgen_region_random")->forkPositional();
+    return factory->at(cx * 16, 0, cz * 16);
+}
+
 namespace {
 std::mutex& biomeCacheMutex() {
     static std::mutex m;
@@ -94,6 +127,7 @@ void clearWorldCaches() {
         biomeNames().clear();
     }
     clearCarverBiomeCache();
+    clearCarvingMasks();
     features::detail::clearBlockCache();
 }
 
@@ -152,9 +186,12 @@ void setMainBiomeSource(MainBiomeFn fn) {
 }
 
 std::string biomeAt(BlockPos const& pos) {
+    // Level#getBiome over generated chunks: BiomeManager's zoom over the biome source's quarts, the
+    // quart y clamped to the dimension's range as ChunkAccess#getNoiseBiome does
     auto p = detail::providers();
     if (!p->biomeSource) return {};
-    return p->biomeSource(core::mth::fromBlock(pos.x), core::mth::fromBlock(pos.y), core::mth::fromBlock(pos.z));
+    int lo = core::mth::fromBlock(detail::twilightMinY()), hi = core::mth::fromBlock(detail::twilightMaxY() - 1);
+    return detail::zoomedBiome(detail::currentSeed(), pos, [&](int qx, int qy, int qz) { return p->biomeSource(qx, std::clamp(qy, lo, hi), qz); });
 }
 
 std::string mainBiomeAt(int blockX, int blockZ) {

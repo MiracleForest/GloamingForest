@@ -47,7 +47,9 @@ using Json = nlohmann::json;
 [[nodiscard]] bool isAir(Block const& block);
 /// Water or lava, including a waterlogged block (Bedrock's liquid layer) when `region` is given.
 [[nodiscard]] bool isFluid(Block const& block);
+/// Blocks.WATER / Blocks.LAVA: the still and the flowing ids (Java's fluid levels).
 [[nodiscard]] bool isWater(Block const& block);
+[[nodiscard]] bool isLava(Block const& block);
 [[nodiscard]] bool blocksMotion(Block const& block);
 [[nodiscard]] bool isLeaves(Block const& block);
 /// BlockState#canBeReplaced (material replaceable: air, water, grass, snow layer, ...).
