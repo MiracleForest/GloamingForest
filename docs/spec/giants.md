@@ -105,9 +105,22 @@ beanstalk leaves = evergreen foliage colour (0x619961). Render types (model JSON
 `twilightforest:magic_beans` (`item/MagicBeansItem.java`, plain item): `useOn` with `maxY = max(clickedY + 100, 175)`:
 if the clicked block is uberous soil, `y < maxY` and the block above is air: server shrinks the stack by 1, places
 `beanstalk_grower` above, plays `block.twilightforest.beanstalk.grow` (BLOCKS, volume 4, pitch 1) at the soil, awards
-the item-used stat and (fallback) the `use_beans` criterion of `twilightforest:beanstalk` (U14; fire it with
-`progression::trigger`); returns SUCCESS on both sides, else PASS. Magic beans come from troll loot (U27) and beanstalk
-leaves.
+the item-used stat (`Stats.ITEM_USED` for magic beans); returns SUCCESS on both sides, else PASS. Magic beans come from
+troll loot (U27) and beanstalk leaves.
+
+Advancement: TF's "fallback" award of the `use_beans` criterion in `useOn` is **dead code**, do not translate it: it
+awards only when `!manager.getAllAdvancements().contains(holder)`, which is always false for the holder that
+`manager.get(prefix("beanstalk"))` has just returned. The criterion `use_beans` of `twilightforest:beanstalk` (U14) is
+granted by the vanilla `minecraft:item_used_on_block` trigger (advancement `beanstalk.json`: `location_check` block
+`twilightforest:uberous_soil` + `match_tool` `twilightforest:magic_beans`), which vanilla fires in
+`ServerPlayerGameMode.useItemOn` after `useOn` returns a result that consumes the action (SUCCESS here), with the
+clicked position (the soil, still uberous soil) and a copy of the stack taken before the use. That is the generic
+item-used-on-block event of the F10 progression bus feeding U14's criteria engine: U29 fires **nothing extra** and no
+custom trigger id. Only if F10 does not raise `minecraft:item_used_on_block` for a custom item's successful use-on
+(the progression header lists no such event) does U29 fire exactly `progression::trigger(player,
+"minecraft:item_used_on_block", ...)` once after the successful use, with the clicked position and the pre-use stack
+in the data shape F10 / U14 define for that trigger, and call it out in its PR; never both, or the criterion would
+be fed twice.
 
 Beanstalk grower (block entity, `GrowingBeanstalkBlockEntity.tick`, every tick):
 
