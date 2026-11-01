@@ -132,13 +132,14 @@ foreach ($a in $index.attachables) {
     $path = "assets/gen/geo/$($a.unit)/rp/$($a.file)"
     $att = $r.Files[$path] | ConvertFrom-Json -AsHashtable
     $short = $a.item.Substring($a.item.IndexOf(':') + 1)
-    $id = "gfpreview:$short"
+    # "item_": an attachable and a client entity with one identifier replace each other (naga_trophy is both)
+    $id = "gfpreview:item_$short"
     $att['minecraft:attachable']['description']['identifier'] = $id
     foreach ($t in $att['minecraft:attachable']['description']['textures'].Values) { Copy-Texture $t }
-    Write-J (Join-Path $prp "attachables/$short.json") $att
+    Write-J (Join-Path $prp "attachables/item_$short.json") $att
     $components = [ordered]@{ 'minecraft:max_stack_size' = 1 }
     if ($a.slot -ne 'main_hand') { $components['minecraft:wearable'] = [ordered]@{ slot = $slotOf[$a.slot]; protection = 0 } }
-    Write-J (Join-Path $bp "items/$short.json") ([ordered]@{ format_version = '1.21.0'; 'minecraft:item' = [ordered]@{ description = [ordered]@{ identifier = $id; menu_category = [ordered]@{ category = 'none' } }; components = $components } })
+    Write-J (Join-Path $bp "items/item_$short.json") ([ordered]@{ format_version = '1.21.0'; 'minecraft:item' = [ordered]@{ description = [ordered]@{ identifier = $id; menu_category = [ordered]@{ category = 'none' } }; components = $components } })
     # one stand per armor material / per worn or held item
     $group = if ($a.slot -in 'helmet', 'chestplate', 'leggings', 'boots') {
         if ($short -like 'travellers_*') { if ($short -in 'travellers_gloves', 'travellers_wings') { 'travellers_gloves_wings' } else { 'travellers_goggles_vest_belt_boots' } }
@@ -169,7 +170,8 @@ function Add-Shot($entries, [string]$label) {
             $lines.Add("summon $($e.id) $pos facing $look minecraft:entity_spawned `"$($e.name)`"")
             $shown += $e.name
         } else {
-            $lines.Add("summon armor_stand $pos facing $look minecraft:entity_spawned `"$($e.group)`"")
+            # no spawn event: armor stands have no minecraft:entity_spawned, and one bad line drops the whole function
+            $lines.Add("summon armor_stand $pos facing $look")
             foreach ($it in $e.items) { $lines.Add("replaceitem entity @e[type=armor_stand,x=$x,y=-60,z=0,r=0.5] $($it.slot) 0 $($it.item)") }
             $shown += $e.group
         }

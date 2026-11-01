@@ -467,7 +467,7 @@
       "entity": ["twilightforest:lich_minion"],
       "textures": ["textures/entity/zombie/zombie"],
       "texture_width": 64,
-      "texture_height": 64,
+      "texture_height": 32,
       "bones": 7,
       "cubes": 7,
       "visible_bounds": [2, 3.5, 1]
@@ -494,7 +494,7 @@
       "entity": ["twilightforest:loyal_zombie"],
       "textures": ["textures/entity/zombie/zombie"],
       "texture_width": 64,
-      "texture_height": 64,
+      "texture_height": 32,
       "bones": 7,
       "cubes": 7,
       "visible_bounds": [2, 3.5, 1],
@@ -736,7 +736,7 @@
       "entity": ["twilightforest:rising_zombie"],
       "textures": ["textures/entity/zombie/zombie"],
       "texture_width": 64,
-      "texture_height": 64,
+      "texture_height": 32,
       "bones": 7,
       "cubes": 7,
       "visible_bounds": [2, 3.5, 1]

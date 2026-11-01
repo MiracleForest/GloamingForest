@@ -198,7 +198,14 @@ namespace Gf.Models
             var opt = new ConvertOptions { Identifier = id };
             foreach (var kv in Converter.HumanoidNames) opt.Rename[kv.Key] = kv.Value;
             foreach (var kv in Converter.QuadrupedNames) opt.Rename[kv.Key] = kv.Value;
-            var geo = Converter.Convert(info.Def, opt);
+            var def = info.Def;
+            var size = Prop(spec, "textureSize");
+            if (size.ValueKind == JsonValueKind.Array)
+            {
+                // the Bedrock texture the layer is drawn with has another size (UVs stay in pixels)
+                def = new LayerDef { Mesh = def.Mesh, TexWidth = size[0].GetInt32(), TexHeight = size[1].GetInt32() };
+            }
+            var geo = Converter.Convert(def, opt);
             string geoFile = "models/entity/" + name + ".geo.json";
             Put(UnitDir(unit) + "rp/" + geoFile, geo.ToJson());
 

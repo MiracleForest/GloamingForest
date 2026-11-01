@@ -32,3 +32,6 @@ foreach ($s in $plan.shots) {
 }
 Invoke-Chat '/function gfpreview/clear'
 Press-Key F1
+# a function with one bad command is dropped by the game: every shot must have run
+$missing = @(Get-LeviLog | Select-String -Pattern 'functionNameNotFound \[gfpreview/[^\]]+\]' | ForEach-Object { $_.Matches[0].Value } | Sort-Object -Unique)
+if ($missing) { throw "preview functions failed to load: $($missing -join ', ')" }

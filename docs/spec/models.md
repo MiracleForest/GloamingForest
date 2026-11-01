@@ -91,6 +91,19 @@ Minecraft's builder API (`MeshDefinition`, `PartDefinition`, `CubeListBuilder` w
 `JappaPackReloadListener.isJappaPackLoaded()` is false: the Jappa models belong to an optional resource pack
 that TF does not ship (not ported, docs/spec/README.md).
 
+## Renderers with their own transforms
+
+Every layer geometry uses the living-entity mapping above (`LivingEntityRenderer`: yaw, `scale(-1, -1, 1)`,
+`translate(0, -1.501, 0)`). Layers drawn by other renderers keep that mapping, and the owning unit reproduces
+the renderer's own PoseStack transforms (or adds an extract): `hydra_mortar` (HydraMortarRenderer: no flip, the
+model at the entity position, TNT-style swell), `cube_of_annihilation` / `roving_cube` (spin about y, scale 2 for
+the roving cube), `chain` / `chain_block` (BlockChainRenderer: yaw − 90, pitch, links along the chain),
+`protection_box`, `moonworm` (also MoonwormShotRenderer), the block entities `cicada` / `firefly` / `moonworm`
+(facing, a random spin), `brazier`, `red_thread` (per face), `skull_chest` / `keepsake_casket` (facing) and the
+`knightmetal_shield` item (ISTER `scale(1, -1, -1)`; see the held extract). In the e2e preview these models float
+or sit upside down, as expected. `lich_minion`, `loyal_zombie` and `rising_zombie` declare a 64×32 texture
+because Bedrock's vanilla zombie texture is 64×32; TF draws Java's 64×64 one with the same UVs.
+
 ## setupAnim → Molang
 
 Per entity layer, `prepareMobModel` then `setupAnim` of the model class (catalog `animClass`, default the
