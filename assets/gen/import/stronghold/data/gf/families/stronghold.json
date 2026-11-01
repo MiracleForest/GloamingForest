@@ -7,5 +7,15 @@
       "vanillaClass": "DirectionalBlock",
       "states": ["facing"]
     }
+  },
+  {
+    "id": "twilightforest:trophy_pedestal",
+    "family": "waterloggable",
+    "params": {
+      "class": "TrophyPedestalBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"],
+      "states": ["active"]
+    }
   }
 ]

@@ -8,6 +8,10 @@
       },
       "states": {
         "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:has_candle_1": [false, true],
+        "twilightforest:has_candle_2": [false, true],
+        "twilightforest:has_candle_3": [false, true],
+        "twilightforest:lighting": ["none", "normal", "dim", "ominous"],
         "twilightforest:on_wall": [false, true]
       }
     },
@@ -31,15 +35,15 @@
         }
       },
       "minecraft:transformation": {
-        "rotation": [0, 90, 0]
+        "rotation": [0, 180, 0]
       },
       "minecraft:collision_box": {
-        "origin": [-3, 0, -8],
-        "size": [6, 8, 16]
+        "origin": [-8, 0, -3],
+        "size": [16, 8, 6]
       },
       "minecraft:selection_box": {
-        "origin": [-3, 0, -8],
-        "size": [6, 8, 16]
+        "origin": [-8, 0, -3],
+        "size": [16, 8, 6]
       },
       "minecraft:light_dampening": 0
     },
@@ -166,6 +170,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 0, -3],
             "size": [16, 8, 6]
@@ -189,6 +196,9 @@
               "texture": "tf_block_candelabra",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 1, 1],
@@ -252,6 +262,42 @@
             "origin": [-8, 1, -8],
             "size": [7, 7, 16]
           }
+        }
+      },
+      {
+        "condition": "(q.block_state('twilightforest:lighting') == 'dim' && !q.block_state('twilightforest:has_candle_1') && !q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'dim' && !q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && !q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:has_candle_1') && !q.block_state('twilightforest:has_candle_2') && !q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'ominous' && !q.block_state('twilightforest:has_candle_1') && !q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'ominous' && !q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && !q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:has_candle_1') && !q.block_state('twilightforest:has_candle_2') && !q.block_state('twilightforest:has_candle_3'))",
+        "components": {
+          "minecraft:light_emission": 2
+        }
+      },
+      {
+        "condition": "(q.block_state('twilightforest:lighting') == 'dim' && !q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:has_candle_1') && !q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && !q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'ominous' && !q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:has_candle_1') && !q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && !q.block_state('twilightforest:has_candle_3'))",
+        "components": {
+          "minecraft:light_emission": 4
+        }
+      },
+      {
+        "condition": "(q.block_state('twilightforest:lighting') == 'normal' && !q.block_state('twilightforest:has_candle_1') && !q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'normal' && !q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && !q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:has_candle_1') && !q.block_state('twilightforest:has_candle_2') && !q.block_state('twilightforest:has_candle_3'))",
+        "components": {
+          "minecraft:light_emission": 5
+        }
+      },
+      {
+        "condition": "(q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3'))",
+        "components": {
+          "minecraft:light_emission": 6
+        }
+      },
+      {
+        "condition": "(q.block_state('twilightforest:lighting') == 'normal' && !q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:has_candle_1') && !q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')) || (q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && !q.block_state('twilightforest:has_candle_3'))",
+        "components": {
+          "minecraft:light_emission": 10
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:has_candle_1') && q.block_state('twilightforest:has_candle_2') && q.block_state('twilightforest:has_candle_3')",
+        "components": {
+          "minecraft:light_emission": 15
         }
       }
     ]

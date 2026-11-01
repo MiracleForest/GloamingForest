@@ -9,10 +9,15 @@
     },
     "components": {
       "minecraft:destructible_by_mining": {
-        "seconds_to_destroy": 1
+        "seconds_to_destroy": 2
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 1
+        "explosion_resistance": 2
+      },
+      "minecraft:map_color": "#5c191d",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 5
       },
       "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log",
       "minecraft:material_instances": {

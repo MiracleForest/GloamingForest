@@ -12,7 +12,17 @@
     "family": "slab",
     "params": {
       "class": "SlabBlock",
+      "traits": ["waterloggable"],
       "states": ["type"]
+    }
+  },
+  {
+    "id": "twilightforest:auroralized_glass",
+    "family": "connected_texture",
+    "params": {
+      "class": "AuroralizedGlassBlock",
+      "vanillaClass": "TransparentBlock",
+      "traits": ["connected_texture"]
     }
   }
 ]

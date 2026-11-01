@@ -6,7 +6,7 @@
     "sound": "stone"
   },
   "twilightforest:bamboo_banister": {
-    "sound": "wood"
+    "sound": "bamboo_wood"
   },
   "twilightforest:bamboo_drying_rack": {
     "sound": "stone"
@@ -78,13 +78,13 @@
     "sound": "wood"
   },
   "twilightforest:cherry_banister": {
-    "sound": "wood"
+    "sound": "cherry_wood"
   },
   "twilightforest:cherry_drying_rack": {
     "sound": "stone"
   },
   "twilightforest:crimson_banister": {
-    "sound": "wood"
+    "sound": "nether_wood"
   },
   "twilightforest:crimson_drying_rack": {
     "sound": "stone"
@@ -180,22 +180,22 @@
     "sound": "wood"
   },
   "twilightforest:hollow_cherry_log_climbable": {
-    "sound": "wood"
+    "sound": "cherry_wood"
   },
   "twilightforest:hollow_cherry_log_horizontal": {
-    "sound": "wood"
+    "sound": "cherry_wood"
   },
   "twilightforest:hollow_cherry_log_vertical": {
-    "sound": "wood"
+    "sound": "cherry_wood"
   },
   "twilightforest:hollow_crimson_stem_climbable": {
-    "sound": "stone"
+    "sound": "stem"
   },
   "twilightforest:hollow_crimson_stem_horizontal": {
-    "sound": "stone"
+    "sound": "stem"
   },
   "twilightforest:hollow_crimson_stem_vertical": {
-    "sound": "stone"
+    "sound": "stem"
   },
   "twilightforest:hollow_dark_log_climbable": {
     "sound": "wood"
@@ -306,13 +306,13 @@
     "sound": "wood"
   },
   "twilightforest:hollow_warped_stem_climbable": {
-    "sound": "stone"
+    "sound": "stem"
   },
   "twilightforest:hollow_warped_stem_horizontal": {
-    "sound": "stone"
+    "sound": "stem"
   },
   "twilightforest:hollow_warped_stem_vertical": {
-    "sound": "stone"
+    "sound": "stem"
   },
   "twilightforest:jungle_banister": {
     "sound": "wood"
@@ -729,7 +729,7 @@
     "sound": "stone"
   },
   "twilightforest:warped_banister": {
-    "sound": "wood"
+    "sound": "nether_wood"
   },
   "twilightforest:warped_drying_rack": {
     "sound": "stone"

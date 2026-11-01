@@ -127,24 +127,26 @@ namespace GfImport
             { "c:storage_blocks/gold", new[] { "minecraft:gold_block" } },
             { "c:storage_blocks/iron", new[] { "minecraft:iron_block" } },
             { "c:chests/wooden", new[] { "minecraft:chest", "minecraft:trapped_chest" } },
+            { "c:chests/trapped", new[] { "minecraft:trapped_chest" } },
         };
 
-        /// <summary>Every item in an item tag (nested tags resolved; unknown vanilla tags yield nothing).</summary>
-        public List<string> TagMembers(string tag, HashSet<string> seen = null)
+        /// <summary>Every member of a tag of a registry ("item" by default; nested tags resolved; unknown vanilla
+        /// tags yield nothing but the base item tags known to the import).</summary>
+        public List<string> TagMembers(string tag, HashSet<string> seen = null, string registry = "item")
         {
             seen = seen ?? new HashSet<string>(StringComparer.Ordinal);
             var res = new List<string>();
             if (!seen.Add(tag)) return res;
             string[] baseMembers;
-            if (BaseItemTags.TryGetValue(tag, out baseMembers)) res.AddRange(baseMembers);
-            var j = TagFile("item", tag);
+            if (registry == "item" && BaseItemTags.TryGetValue(tag, out baseMembers)) res.AddRange(baseMembers);
+            var j = TagFile(registry, tag);
             if (j != null && j["values"] != null)
             {
                 foreach (var v in j["values"].A)
                 {
                     string s = v.IsStr ? v.AsString() : v["id"] != null ? v["id"].AsString() : null;
                     if (s == null) continue;
-                    if (s.StartsWith("#", StringComparison.Ordinal)) res.AddRange(TagMembers(s.Substring(1), seen));
+                    if (s.StartsWith("#", StringComparison.Ordinal)) res.AddRange(TagMembers(s.Substring(1), seen, registry));
                     else res.Add(s);
                 }
             }

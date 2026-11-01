@@ -16,6 +16,10 @@
       "minecraft:display_name": {
         "value": "item.twilightforest:mazebreaker_pickaxe.name"
       },
+      "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 1561
+      },
       "minecraft:hand_equipped": true,
       "minecraft:tags": {
         "tags": ["alexscaves:ferromagnetic_items"]

@@ -12,16 +12,16 @@
     "sound": "cloth"
   },
   "twilightforest:blue_castle_rune_brick": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:bold_castle_brick_pillar": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:bold_castle_brick_stairs": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:bold_castle_brick_tile": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:bold_stone_pillar": {
     "sound": "stone"
@@ -36,19 +36,19 @@
     "sound": "metal"
   },
   "twilightforest:castle_brick": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:castle_brick_stairs": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:castle_roof_tile": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:cracked_castle_brick": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:cracked_castle_brick_stairs": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:cracked_deadrock": {
     "sound": "stone"
@@ -87,13 +87,13 @@
     "sound": "stone"
   },
   "twilightforest:encased_castle_brick_pillar": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:encased_castle_brick_stairs": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:encased_castle_brick_tile": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:encased_towerwood": {
     "sound": "wood"
@@ -171,10 +171,10 @@
     "sound": "stone"
   },
   "twilightforest:mossy_castle_brick": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:mossy_castle_brick_stairs": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:mossy_etched_nagastone": {
     "sound": "stone"
@@ -225,7 +225,7 @@
     "sound": "stone"
   },
   "twilightforest:pink_castle_rune_brick": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:quest_ram_trophy": {
     "sound": "stone"
@@ -252,7 +252,7 @@
     "sound": "netherite"
   },
   "twilightforest:thick_castle_brick": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:towerwood": {
     "sound": "wood"
@@ -282,18 +282,18 @@
     "sound": "stone"
   },
   "twilightforest:violet_castle_rune_brick": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:weathered_deadrock": {
     "sound": "stone"
   },
   "twilightforest:worn_castle_brick": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:worn_castle_brick_stairs": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:yellow_castle_rune_brick": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   }
 }

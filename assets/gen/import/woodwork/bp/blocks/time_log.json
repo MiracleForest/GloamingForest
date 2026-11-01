@@ -18,25 +18,41 @@
         "explosion_resistance": 2
       },
       "minecraft:map_color": "#976d4d",
-      "minecraft:geometry": "geometry.tf.minecraft.block.cube_column_horizontal",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 5
+      },
+      "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_time_log",
           "render_method": "opaque"
         },
-        "end": {
+        "up": {
           "texture": "tf_block_time_log_top",
           "render_method": "opaque"
         },
-        "side": {
+        "down": {
+          "texture": "tf_block_time_log_top",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "tf_block_time_log",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "tf_block_time_log",
+          "render_method": "opaque"
+        },
+        "east": {
+          "texture": "tf_block_time_log",
+          "render_method": "opaque"
+        },
+        "west": {
           "texture": "tf_block_time_log",
           "render_method": "opaque"
         }
-      },
-      "minecraft:transformation": {
-        "rotation": [270, 270, 0]
-      },
-      "minecraft:light_dampening": 0
+      }
     },
     "permutations": [
       {
@@ -97,6 +113,9 @@
               "texture": "tf_block_time_log",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true

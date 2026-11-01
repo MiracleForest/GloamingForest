@@ -13,7 +13,8 @@
         "twilightforest:slot_2_occupied": [false, true],
         "twilightforest:slot_3_occupied": [false, true],
         "twilightforest:slot_4_occupied": [false, true],
-        "twilightforest:slot_5_occupied": [false, true]
+        "twilightforest:slot_5_occupied": [false, true],
+        "twilightforest:spawner": [false, true]
       }
     },
     "components": {
@@ -25,7 +26,7 @@
       },
       "minecraft:map_color": "#664c33",
       "minecraft:flammable": {
-        "catch_chance_modifier": 5,
+        "catch_chance_modifier": 30,
         "destroy_chance_modifier": 20
       },
       "minecraft:geometry": {

@@ -5,6 +5,9 @@
       "identifier": "twilightforest:fire_jet",
       "menu_category": {
         "category": "construction"
+      },
+      "states": {
+        "twilightforest:state": ["idle", "popping", "flame", "timeout"]
       }
     },
     "components": {
@@ -46,6 +49,14 @@
           "render_method": "opaque"
         }
       }
-    }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:state') == 'flame'",
+        "components": {
+          "minecraft:light_emission": 15
+        }
+      }
+    ]
   }
 }

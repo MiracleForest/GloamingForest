@@ -17,6 +17,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0.75
       },
+      "minecraft:collision_box": false,
       "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.dark_tower",
       "minecraft:material_instances": {
         "*": {
@@ -36,16 +37,9 @@
           "render_method": "opaque"
         }
       },
-      "minecraft:transformation": {
-        "rotation": [0, 270, 0]
-      },
-      "minecraft:collision_box": {
-        "origin": [-5.01, 0, -6.01],
-        "size": [10.02, 14.511, 11.02]
-      },
       "minecraft:selection_box": {
-        "origin": [-5.01, 0, -6.01],
-        "size": [10.02, 14.511, 11.02]
+        "origin": [-6.01, 0, -5.01],
+        "size": [11.02, 14.511, 10.02]
       },
       "minecraft:light_dampening": 0
     },
@@ -75,10 +69,6 @@
           "minecraft:transformation": {
             "rotation": [0, 270, 0]
           },
-          "minecraft:collision_box": {
-            "origin": [-5.01, 0, -6.01],
-            "size": [10.02, 14.511, 11.02]
-          },
           "minecraft:selection_box": {
             "origin": [-5.01, 0, -6.01],
             "size": [10.02, 14.511, 11.02]
@@ -107,9 +97,8 @@
               "render_method": "opaque"
             }
           },
-          "minecraft:collision_box": {
-            "origin": [-6.01, 0, -5.01],
-            "size": [11.02, 14.511, 10.02]
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:selection_box": {
             "origin": [-6.01, 0, -5.01],
@@ -142,10 +131,6 @@
           "minecraft:transformation": {
             "rotation": [0, 180, 0]
           },
-          "minecraft:collision_box": {
-            "origin": [-5.01, 0, -5.01],
-            "size": [11.02, 14.511, 10.02]
-          },
           "minecraft:selection_box": {
             "origin": [-5.01, 0, -5.01],
             "size": [11.02, 14.511, 10.02]
@@ -176,10 +161,6 @@
           },
           "minecraft:transformation": {
             "rotation": [0, 90, 0]
-          },
-          "minecraft:collision_box": {
-            "origin": [-5.01, 0, -5.01],
-            "size": [10.02, 14.511, 11.02]
           },
           "minecraft:selection_box": {
             "origin": [-5.01, 0, -5.01],

@@ -5,6 +5,10 @@
       "identifier": "twilightforest:minoshroom_wall_trophy",
       "menu_category": {
         "category": "none"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:powered": [false, true]
       }
     },
     "components": {

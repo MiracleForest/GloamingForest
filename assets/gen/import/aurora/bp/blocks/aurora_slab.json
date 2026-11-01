@@ -70,6 +70,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 0, -8],
             "size": [16, 8, 16]
@@ -113,6 +116,9 @@
               "texture": "tf_block_aurora_slab_side",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true

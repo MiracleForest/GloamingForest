@@ -1,5 +1,14 @@
 [
   {
+    "id": "twilightforest:arctic_fur_block",
+    "family": "connected_texture",
+    "params": {
+      "class": "ArcticFurBlock",
+      "vanillaClass": "Block",
+      "traits": ["connected_texture"]
+    }
+  },
+  {
     "id": "twilightforest:bold_castle_brick_pillar",
     "family": "pillar",
     "params": {
@@ -13,6 +22,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:bold_castle_brick_pillar",
       "states": ["facing", "half", "shape"]
     }
@@ -30,6 +40,7 @@
     "family": "pane",
     "params": {
       "class": "IronBarsBlock",
+      "traits": ["waterloggable"],
       "states": ["east", "north", "south", "west"]
     }
   },
@@ -38,6 +49,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:castle_brick",
       "states": ["facing", "half", "shape"]
     }
@@ -47,6 +59,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:cracked_castle_brick",
       "states": ["facing", "half", "shape"]
     }
@@ -74,6 +87,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:cracked_etched_nagastone",
       "states": ["facing", "half", "shape"]
     }
@@ -83,6 +97,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:cracked_etched_nagastone",
       "states": ["facing", "half", "shape"]
     }
@@ -111,6 +126,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:encased_castle_brick_pillar",
       "states": ["facing", "half", "shape"]
     }
@@ -122,6 +138,25 @@
       "class": "EtchedNagastoneBlock",
       "vanillaClass": "DirectionalBlock",
       "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:iron_ladder",
+    "family": "climbable",
+    "params": {
+      "class": "IronLadderBlock",
+      "vanillaClass": "LadderBlock",
+      "traits": ["waterloggable", "climbable"],
+      "states": ["facing", "left", "right"]
+    }
+  },
+  {
+    "id": "twilightforest:knightmetal_block",
+    "family": "waterloggable",
+    "params": {
+      "class": "KnightmetalBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -149,6 +184,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:mossy_castle_brick",
       "states": ["facing", "half", "shape"]
     }
@@ -176,6 +212,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:mossy_etched_nagastone",
       "states": ["facing", "half", "shape"]
     }
@@ -185,6 +222,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:mossy_etched_nagastone",
       "states": ["facing", "half", "shape"]
     }
@@ -222,6 +260,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:etched_nagastone",
       "states": ["facing", "half", "shape"]
     }
@@ -231,8 +270,29 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:etched_nagastone",
       "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:rope",
+    "family": "climbable",
+    "params": {
+      "class": "RopeBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable", "climbable"],
+      "states": ["x", "y", "z"]
+    }
+  },
+  {
+    "id": "twilightforest:spiral_bricks",
+    "family": "waterloggable",
+    "params": {
+      "class": "SpiralBrickBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"],
+      "states": ["axis", "diagonal"]
     }
   },
   {
@@ -258,6 +318,7 @@
     "params": {
       "class": "WallPillarBlock",
       "vanillaClass": "RotatedPillarBlock",
+      "traits": ["waterloggable"],
       "states": ["axis", "down", "east", "north", "south", "up", "west"]
     }
   },
@@ -266,6 +327,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:worn_castle_brick",
       "states": ["facing", "half", "shape"]
     }

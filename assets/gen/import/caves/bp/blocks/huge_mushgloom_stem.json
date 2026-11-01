@@ -24,10 +24,6 @@
       },
       "minecraft:light_emission": 5,
       "minecraft:map_color": "#d87f33",
-      "minecraft:flammable": {
-        "catch_chance_modifier": 5,
-        "destroy_chance_modifier": 20
-      },
       "minecraft:geometry": {
         "identifier": "geometry.tf.twilightforest.block.huge_mushgloom_stem.multipart",
         "bone_visibility": {

@@ -7,7 +7,7 @@
         "category": "construction"
       },
       "states": {
-        "twilightforest:facing": ["north", "south", "west", "east", "up", "down"]
+        "twilightforest:facing": ["down", "north", "south", "west", "east", "up"]
       }
     },
     "components": {
@@ -247,6 +247,9 @@
               "texture": "tf_block_shield_outside",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true

@@ -261,11 +261,46 @@ namespace GfImport
             new[] { "StandingSignBlock", "sign" }, new[] { "WallSignBlock", "sign" }, new[] { "CeilingHangingSignBlock", "hanging_sign" },
             new[] { "WallHangingSignBlock", "hanging_sign" }, new[] { "TrappedChestBlock", "trapped_chest" }, new[] { "ChestBlock", "chest" },
             new[] { "RotatedPillarBlock", "pillar" }, new[] { "HorizontalDirectionalBlock", "horizontal" }, new[] { "DirectionalBlock", "directional" },
+            new[] { "LadderBlock", "climbable" },
         };
+
+        /// <summary>The trait families of a block (the contract's waterloggable, snowloggable, climbable, lightable,
+        /// connected_texture), from its Java properties, interfaces, block tags and model loaders.</summary>
+        List<string> Traits(BlockInfo bi, HashSet<string> climbable)
+        {
+            var t = new List<string>();
+            if (bi.JavaProps.Any(p => p.Name == "waterlogged")) t.Add("waterloggable");
+            if (JavaStates.Implements(this, bi.Chain, "SnowLoggable")) t.Add("snowloggable");
+            if (bi.Chain.Contains("LadderBlock") || climbable.Contains("twilightforest:" + bi.Id)) t.Add("climbable");
+            if (JavaStates.Implements(this, bi.Chain, "LightableBlock")) t.Add("lightable");
+            if (BlockModelLoaders(bi).Contains("twilightforest:connected_texture_block")) t.Add("connected_texture");
+            return t;
+        }
+
+        /// <summary>The model loaders of the models a block's blockstate uses.</summary>
+        HashSet<string> BlockModelLoaders(BlockInfo bi)
+        {
+            var res = new HashSet<string>(StringComparer.Ordinal);
+            string f = Path.Combine(GenRes, "assets", "twilightforest", "blockstates", bi.Id + ".json");
+            if (!File.Exists(f)) return res;
+            var bs = ReadJson(f);
+            var models = new List<string>();
+            if (bs["variants"] != null)
+                foreach (var k in bs["variants"].Keys) { var v = bs["variants"][k]; foreach (var x in v.IsArr ? v.A : new List<J> { v }) models.Add(x["model"].AsString()); }
+            if (bs["multipart"] != null)
+                foreach (var part in bs["multipart"].A) { var a = part["apply"]; foreach (var x in a.IsArr ? a.A : new List<J> { a }) models.Add(x["model"].AsString()); }
+            foreach (var m in models.Distinct())
+            {
+                var model = ModelLib.Get(m);
+                if (model != null && model.Loader != null) res.Add(model.Loader);
+            }
+            return res;
+        }
 
         public void ImportFamilies()
         {
             var perUnit = new SortedDictionary<string, J>(StringComparer.Ordinal);
+            var climbable = new HashSet<string>(TagMembers("minecraft:climbable", null, "block"), StringComparer.Ordinal);
             foreach (var bi in BlockInfos.Values)
             {
                 string fam = null;
@@ -277,10 +312,18 @@ namespace GfImport
                 }
                 if (fam == "pillar" && Regex.IsMatch(bi.Id, "_(log|wood|stem|hyphae)$")) fam = bi.Id.EndsWith("_wood", StringComparison.Ordinal) ? "wood" : "log";
                 if (fam == null && bi.Id.StartsWith("potted_", StringComparison.Ordinal)) fam = "potted";
+                // no shape family: the block's first trait family (climbable, lightable, snowloggable, connected_texture,
+                // waterloggable, in the contract's order of specificity)
+                var traits = Traits(bi, climbable);
+                if (fam == null)
+                    foreach (var tf in new[] { "climbable", "lightable", "snowloggable", "connected_texture", "waterloggable" })
+                        if (traits.Contains(tf)) { fam = tf; break; }
                 if (fam == null) continue;
                 bi.Family = fam;
                 var p = J.Obj().Set("class", bi.Chain[0]);
                 if (bi.Chain.Count > 1) p.Set("vanillaClass", bi.Chain.Last());
+                // every trait, whatever the primary family (stairs are waterloggable, berry bushes snowloggable, ...)
+                if (traits.Count > 0) p.Set("traits", J.Strs(traits));
                 var bm = Regex.Match(bi.J.Stmt ?? "", @"new\s+\w*Stair\w*\(\s*(\w+)\.get\(\)\.defaultBlockState\(\)");
                 if (bm.Success)
                 {
@@ -326,16 +369,33 @@ namespace GfImport
                 string first = texs.Select(t => (t.Contains(":") ? t : "minecraft:" + t)).Select(t => t.Insert(t.IndexOf(':') + 1, "particle/")).FirstOrDefault();
                 string path = null;
                 int w = 8, h = 8;
+                J uv = null;
+                bool visible = true;
                 if (first != null && first.StartsWith("twilightforest:", StringComparison.Ordinal) && TfTextures.ContainsKey(first))
                 {
                     UseTexture(first, owner, "path");
                     path = TexPath(first);
                     int pw, ph;
                     if (Png.TrySize(File.ReadAllBytes(TfTextures[first]), out pw, out ph)) { w = pw; h = Math.Min(ph, pw); }
+                    uv = J.Obj().Set("texture_width", w).Set("texture_height", h)
+                        .Set("uv", J.Arr(new[] { J.Num(0), J.Num(0) })).Set("uv_size", J.Arr(new[] { J.Num(w), J.Num(h) }));
+                }
+                else
+                {
+                    // vanilla sprites: their cell of Bedrock's legacy particle atlas (textures/particle/particles,
+                    // 128 x 128, 8 x 8 cells), animated by age like Java's setSpriteFromAge, or a random glyph
+                    uv = VanillaParticleUv(texs.Select(t => t.Contains(":") ? t.Substring(t.IndexOf(':') + 1) : t).ToList());
+                    if (uv == null)
+                    {
+                        // no Bedrock cell (e.g. Java's separate glint sprite): no visual until F12's native particle
+                        Warn("particle " + full + ": vanilla sprite " + (texs.FirstOrDefault() ?? "?") + " has no cell in Bedrock's particle atlas: emits nothing");
+                        visible = false;
+                        uv = J.Obj().Set("texture_width", 128).Set("texture_height", 128).Set("uv", J.Arr(new[] { J.Num(0), J.Num(0) })).Set("uv_size", J.Arr(new[] { J.Num(8), J.Num(8) }));
+                    }
                 }
                 var desc = J.Obj().Set("identifier", full).Set("basic_render_parameters", J.Obj().Set("material", "particles_alpha").Set("texture", path ?? "textures/particle/particles"));
                 var comps = J.Obj()
-                    .Set("minecraft:emitter_rate_instant", J.Obj().Set("num_particles", 1))
+                    .Set("minecraft:emitter_rate_instant", J.Obj().Set("num_particles", visible ? 1 : 0))
                     .Set("minecraft:emitter_lifetime_once", J.Obj().Set("active_time", 0))
                     .Set("minecraft:emitter_shape_point", J.Obj())
                     .Set("minecraft:particle_lifetime_expression", J.Obj().Set("max_lifetime", 1))
@@ -344,8 +404,7 @@ namespace GfImport
                     .Set("minecraft:particle_appearance_billboard", J.Obj()
                         .Set("size", J.Arr(new[] { J.Num(0.1), J.Num(0.1) }))
                         .Set("facing_camera_mode", "rotate_xyz")
-                        .Set("uv", J.Obj().Set("texture_width", w).Set("texture_height", h)
-                            .Set("uv", J.Arr(new[] { J.Num(0), J.Num(0) })).Set("uv_size", J.Arr(new[] { J.Num(w), J.Num(h) }))));
+                        .Set("uv", uv));
                 EmitJson("particles", owner, "rp/particles/" + id + ".json",
                     J.Obj().Set("format_version", "1.10.0").Set("particle_effect", J.Obj().Set("description", desc).Set("components", comps)));
                 // the Java description (every frame, as resource pack paths) for the native particle factory (F12) and the owner
@@ -353,6 +412,62 @@ namespace GfImport
                     .Select(t => t.StartsWith("twilightforest:", StringComparison.Ordinal) ? TexPath(t) : "minecraft:" + t.Substring(t.IndexOf(':') + 1));
                 Fragment("particles", owner, "data/gf/particles/" + NameOf(owner) + ".json", full, J.Obj().Set("textures", J.Strs(frames)));
             }
+        }
+
+        /// <summary>The atlas cell (u, v) of a Java vanilla particle sprite in Bedrock's legacy particle atlas
+        /// (textures/particle/particles.png: Java's pre-1.14 particles.png layout, 16 x 16 cells of 8 x 8), or null.</summary>
+        static int[] VanillaParticleCell(string sprite)
+        {
+            Match m;
+            if ((m = Regex.Match(sprite, @"^generic_([0-7])$")).Success) return new[] { 8 * int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), 0 };    // indices 0..7
+            if ((m = Regex.Match(sprite, @"^effect_([0-7])$")).Success) return new[] { 8 * int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), 64 };    // spell 128..135
+            if ((m = Regex.Match(sprite, @"^sga_([a-z])$")).Success)
+            {
+                int idx = 225 + (m.Groups[1].Value[0] - 'a');                                                                    // enchant glyphs 225..250
+                return new[] { 8 * (idx % 16), 8 * (idx / 16) };
+            }
+            switch (sprite)
+            {
+                case "flame": return new[] { 0, 24 };      // 48
+                case "lava": return new[] { 8, 24 };       // 49
+                case "heart": return new[] { 0, 40 };      // 80
+                case "angry": return new[] { 8, 40 };      // 81
+                case "glow": return new[] { 16, 40 };      // 82 (happy villager)
+                case "note": return new[] { 0, 32 };       // 64
+                case "critical_hit": return new[] { 8, 32 };   // 65
+                case "enchanted_hit": return new[] { 16, 32 }; // 66
+                case "bubble": return new[] { 0, 16 };     // 32
+            }
+            return null;
+        }
+
+        /// <summary>The billboard uv of a list of vanilla sprites: one cell, a flipbook over the cells in Java's
+        /// sprite order (setSpriteFromAge: first to last over the particle's lifetime), or a random enchant glyph.</summary>
+        static J VanillaParticleUv(List<string> sprites)
+        {
+            if (sprites.Count == 0) return null;
+            var cells = sprites.Select(VanillaParticleCell).ToList();
+            if (cells.Any(c => c == null)) return null;
+            var uv = J.Obj().Set("texture_width", 128).Set("texture_height", 128);
+            if (sprites.All(s => s.StartsWith("sga_", StringComparison.Ordinal)) && sprites.Count == 26)
+            {
+                // Java picks one glyph per particle (pickSprite): atlas index 225 + floor(random * 26)
+                const string idx = "(225 + math.floor(variable.particle_random_1 * 26))";
+                return uv.Set("uv", J.Arr(new[] { J.Str("math.mod(" + idx + ", 16) * 8"), J.Str("math.floor(" + idx + " / 16) * 8") }))
+                         .Set("uv_size", J.Arr(new[] { J.Num(8), J.Num(8) }));
+            }
+            if (cells.Count == 1) return uv.Set("uv", J.Arr(new[] { J.Num(cells[0][0]), J.Num(cells[0][1]) })).Set("uv_size", J.Arr(new[] { J.Num(8), J.Num(8) }));
+            // a flipbook needs a constant step
+            int du = cells[1][0] - cells[0][0], dv = cells[1][1] - cells[0][1];
+            for (int i = 1; i < cells.Count; i++)
+                if (cells[i][0] - cells[i - 1][0] != du || cells[i][1] - cells[i - 1][1] != dv) return null;
+            return uv.Set("flipbook", J.Obj()
+                .Set("base_UV", J.Arr(new[] { J.Num(cells[0][0]), J.Num(cells[0][1]) }))
+                .Set("size_UV", J.Arr(new[] { J.Num(8), J.Num(8) }))
+                .Set("step_UV", J.Arr(new[] { J.Num(du), J.Num(dv) }))
+                .Set("max_frame", cells.Count)
+                .Set("stretch_to_lifetime", true)
+                .Set("loop", false));
         }
 
         // ---- sound events -----------------------------------------------------------------------------------

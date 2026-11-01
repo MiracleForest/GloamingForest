@@ -5,6 +5,12 @@
       "identifier": "twilightforest:moss_patch",
       "menu_category": {
         "category": "construction"
+      },
+      "states": {
+        "twilightforest:east": [false, true],
+        "twilightforest:north": [false, true],
+        "twilightforest:south": [false, true],
+        "twilightforest:west": [false, true]
       }
     },
     "components": {
@@ -16,8 +22,8 @@
       },
       "minecraft:map_color": "#007c00",
       "minecraft:flammable": {
-        "catch_chance_modifier": 5,
-        "destroy_chance_modifier": 20
+        "catch_chance_modifier": 60,
+        "destroy_chance_modifier": 100
       },
       "minecraft:collision_box": false,
       "minecraft:geometry": "geometry.tf.twilightforest.block.moss_patch",

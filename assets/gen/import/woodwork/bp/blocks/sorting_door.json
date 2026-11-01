@@ -22,10 +22,6 @@
         "explosion_resistance": 3
       },
       "minecraft:map_color": "#815631",
-      "minecraft:flammable": {
-        "catch_chance_modifier": 5,
-        "destroy_chance_modifier": 20
-      },
       "minecraft:geometry": "geometry.tf.twilightforest.block.util.corrected_door_bottom_left",
       "minecraft:material_instances": {
         "*": {
@@ -41,13 +37,16 @@
           "render_method": "alpha_test"
         }
       },
+      "minecraft:transformation": {
+        "rotation": [0, 90, 0]
+      },
       "minecraft:collision_box": {
-        "origin": [-8, 0, -8],
-        "size": [3, 16, 16]
+        "origin": [-8, 0, 5],
+        "size": [16, 16, 3]
       },
       "minecraft:selection_box": {
-        "origin": [-8, 0, -8],
-        "size": [3, 16, 16]
+        "origin": [-8, 0, 5],
+        "size": [16, 16, 3]
       },
       "minecraft:light_dampening": 0
     },
@@ -69,6 +68,9 @@
               "texture": "tf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 0, -8],
@@ -129,6 +131,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 0, -8],
             "size": [3, 16, 16]
@@ -188,6 +193,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 0, -8],
             "size": [3, 16, 16]
@@ -246,6 +254,9 @@
               "texture": "tf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 0, -8],
@@ -336,6 +347,9 @@
               "texture": "tf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 0, -8],
@@ -457,6 +471,9 @@
               "texture": "tf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 0, -8],
@@ -641,6 +658,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 0, -8],
             "size": [3, 16, 16]
@@ -761,6 +781,9 @@
               "texture": "tf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 0, -8],

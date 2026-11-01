@@ -20,7 +20,7 @@
         "explosion_resistance": 6
       },
       "minecraft:map_color": "#707070",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_inner_stairs",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_etched_nagastone_left",
@@ -96,6 +96,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
@@ -151,6 +154,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
@@ -176,6 +182,9 @@
               "texture": "tf_block_etched_nagastone_left",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
@@ -638,6 +647,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
@@ -692,6 +704,9 @@
               "texture": "tf_block_etched_nagastone_left",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true

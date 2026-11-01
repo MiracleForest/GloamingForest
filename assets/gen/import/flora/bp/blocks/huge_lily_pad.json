@@ -8,7 +8,7 @@
       },
       "states": {
         "twilightforest:facing": ["north", "south", "west", "east"],
-        "twilightforest:piece": ["ne", "nw", "se", "sw"]
+        "twilightforest:piece": ["nw", "ne", "se", "sw"]
       }
     },
     "components": {
@@ -29,9 +29,6 @@
           "texture": "tf_block_huge_lily_pad_1",
           "render_method": "alpha_test"
         }
-      },
-      "minecraft:transformation": {
-        "rotation": [0, 270, 0]
       },
       "minecraft:collision_box": false,
       "minecraft:selection_box": {
@@ -151,6 +148,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": false,
           "minecraft:selection_box": {
             "origin": [-8, 0, -8],
@@ -171,6 +171,9 @@
               "texture": "tf_block_huge_lily_pad_1",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": false,
           "minecraft:selection_box": {
@@ -193,6 +196,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": false,
           "minecraft:selection_box": {
             "origin": [-8, 0, -8],
@@ -213,6 +219,9 @@
               "texture": "tf_block_huge_lily_pad_2",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": false,
           "minecraft:selection_box": {

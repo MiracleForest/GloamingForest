@@ -37,15 +37,15 @@
         }
       },
       "minecraft:transformation": {
-        "rotation": [0, 90, 0]
+        "rotation": [0, 180, 0]
       },
       "minecraft:collision_box": {
-        "origin": [-1, 5, -8],
-        "size": [2, 11, 16]
+        "origin": [-8, 5, -1],
+        "size": [16, 11, 2]
       },
       "minecraft:selection_box": {
-        "origin": [-1, 5, -8],
-        "size": [2, 11, 16]
+        "origin": [-8, 5, -1],
+        "size": [16, 11, 2]
       },
       "minecraft:light_dampening": 0
     },
@@ -280,6 +280,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 5, -1],
             "size": [16, 11, 2]
@@ -303,6 +306,9 @@
               "texture": "tf_block_wood_planks_mine_0",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 5, -1],
@@ -328,6 +334,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 2, -1],
             "size": [16, 11, 2]
@@ -351,6 +360,9 @@
               "texture": "tf_block_wood_planks_mine_0",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 2, -1],

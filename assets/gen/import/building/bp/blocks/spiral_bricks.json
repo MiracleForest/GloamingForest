@@ -7,8 +7,8 @@
         "category": "construction"
       },
       "states": {
-        "twilightforest:axis": ["y", "x", "z"],
-        "twilightforest:diagonal": ["bottom_left", "bottom_right", "top_left", "top_right"]
+        "twilightforest:axis": ["x", "y", "z"],
+        "twilightforest:diagonal": ["bottom_right", "top_right", "bottom_left", "top_left"]
       }
     },
     "components": {
@@ -19,7 +19,7 @@
         "explosion_resistance": 6
       },
       "minecraft:map_color": "#707070",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_bottom_left",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_bottom_right",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_vanilla_block_chiseled_stone_bricks",

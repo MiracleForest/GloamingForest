@@ -1,4 +1,6 @@
 {
-  "comment": "Named by TF data, not a data file (code registry id, texture, template or custom-registry tag); index for the assemble reference check only (F1, tools/import/src/Known.cs).",
+  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
+  "kind": "texture",
+  "reason": "\"texture\" of twilight/dwarf_rabbit_variant/white: a resource pack texture (src/main/resources/assets/twilightforest/textures/entity/bunnywhite.png)",
   "referencedBy": ["data/twilightforest/twilight/dwarf_rabbit_variant/white.json"]
 }

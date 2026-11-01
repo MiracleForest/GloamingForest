@@ -1,10 +1,150 @@
 [
   {
+    "id": "twilightforest:candelabra",
+    "family": "lightable",
+    "params": {
+      "class": "CandelabraBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable", "lightable"],
+      "states": ["facing", "has_candle_1", "has_candle_2", "has_candle_3", "lighting", "on_wall"]
+    }
+  },
+  {
+    "id": "twilightforest:creeper_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "SkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "lighting", "rotation"]
+    }
+  },
+  {
+    "id": "twilightforest:creeper_wall_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "WallSkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "facing", "lighting"]
+    }
+  },
+  {
+    "id": "twilightforest:piglin_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "SkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "lighting", "rotation"]
+    }
+  },
+  {
+    "id": "twilightforest:piglin_wall_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "WallSkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "facing", "lighting"]
+    }
+  },
+  {
+    "id": "twilightforest:player_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "SkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "lighting", "rotation"]
+    }
+  },
+  {
+    "id": "twilightforest:player_wall_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "WallSkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "facing", "lighting"]
+    }
+  },
+  {
+    "id": "twilightforest:skeleton_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "SkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "lighting", "rotation"]
+    }
+  },
+  {
+    "id": "twilightforest:skeleton_wall_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "WallSkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "facing", "lighting"]
+    }
+  },
+  {
     "id": "twilightforest:terrorcotta_arcs",
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",
       "states": ["axis"]
+    }
+  },
+  {
+    "id": "twilightforest:wither_skeleton_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "SkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "lighting", "rotation"]
+    }
+  },
+  {
+    "id": "twilightforest:wither_skeleton_wall_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "WallSkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "facing", "lighting"]
+    }
+  },
+  {
+    "id": "twilightforest:wrought_iron_fence",
+    "family": "waterloggable",
+    "params": {
+      "class": "WroughtIronFenceBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"],
+      "states": ["east_fence", "north_fence", "post", "south_fence", "west_fence"]
+    }
+  },
+  {
+    "id": "twilightforest:zombie_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "SkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "lighting", "rotation"]
+    }
+  },
+  {
+    "id": "twilightforest:zombie_wall_skull_candle",
+    "family": "lightable",
+    "params": {
+      "class": "WallSkullCandleBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["lightable"],
+      "states": ["candles", "facing", "lighting"]
     }
   }
 ]

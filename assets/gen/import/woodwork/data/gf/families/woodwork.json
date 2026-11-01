@@ -5,7 +5,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:acacia_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   },
   {
@@ -14,7 +25,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:bamboo_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   },
   {
@@ -23,7 +45,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:birch_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   },
   {
@@ -32,6 +65,7 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "states": ["extended", "facing", "shape"]
     }
@@ -51,6 +85,7 @@
     "family": "chest",
     "params": {
       "class": "ChestBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "states": ["facing", "type"]
     }
@@ -66,10 +101,21 @@
     }
   },
   {
+    "id": "twilightforest:canopy_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
+    }
+  },
+  {
     "id": "twilightforest:canopy_fence",
     "family": "fence",
     "params": {
       "class": "FenceBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "states": ["east", "north", "south", "west"]
     }
@@ -89,6 +135,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "CeilingHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_type",
       "states": ["attached", "rotation"]
@@ -117,6 +164,7 @@
     "family": "sign",
     "params": {
       "class": "StandingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_type",
       "states": ["rotation"]
@@ -127,6 +175,7 @@
     "family": "slab",
     "params": {
       "class": "SlabBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "states": ["type"]
     }
@@ -136,6 +185,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:canopy_planks",
       "states": ["facing", "half", "shape"]
     }
@@ -145,6 +195,7 @@
     "family": "trapdoor",
     "params": {
       "class": "TrapDoorBlock",
+      "traits": ["waterloggable"],
       "woodType": "canopy_wood_set",
       "states": ["facing", "half", "open", "powered"]
     }
@@ -154,7 +205,9 @@
     "family": "trapped_chest",
     "params": {
       "class": "TrappedChestBlock",
-      "copyOf": "twilightforest:canopy_planks"
+      "traits": ["waterloggable"],
+      "copyOf": "twilightforest:canopy_planks",
+      "states": ["facing", "type"]
     }
   },
   {
@@ -162,6 +215,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "WallHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_type",
       "states": ["facing"]
@@ -172,6 +226,7 @@
     "family": "sign",
     "params": {
       "class": "WallSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_type",
       "states": ["facing"]
@@ -191,7 +246,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:cherry_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   },
   {
@@ -200,7 +266,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:crimson_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   },
   {
@@ -209,6 +286,7 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "states": ["extended", "facing", "shape"]
     }
@@ -228,6 +306,7 @@
     "family": "chest",
     "params": {
       "class": "ChestBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "states": ["facing", "type"]
     }
@@ -243,10 +322,21 @@
     }
   },
   {
+    "id": "twilightforest:dark_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
+    }
+  },
+  {
     "id": "twilightforest:dark_fence",
     "family": "fence",
     "params": {
       "class": "FenceBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "states": ["east", "north", "south", "west"]
     }
@@ -266,6 +356,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "CeilingHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_type",
       "states": ["attached", "rotation"]
@@ -285,7 +376,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:dark_oak_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   },
   {
@@ -303,6 +405,7 @@
     "family": "sign",
     "params": {
       "class": "StandingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_type",
       "states": ["rotation"]
@@ -313,6 +416,7 @@
     "family": "slab",
     "params": {
       "class": "SlabBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "states": ["type"]
     }
@@ -322,6 +426,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:dark_planks",
       "states": ["facing", "half", "shape"]
     }
@@ -331,6 +436,7 @@
     "family": "trapdoor",
     "params": {
       "class": "TrapDoorBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_set",
       "states": ["facing", "half", "open", "powered"]
@@ -341,7 +447,9 @@
     "family": "trapped_chest",
     "params": {
       "class": "TrappedChestBlock",
-      "copyOf": "twilightforest:dark_planks"
+      "traits": ["waterloggable"],
+      "copyOf": "twilightforest:dark_planks",
+      "states": ["facing", "type"]
     }
   },
   {
@@ -349,6 +457,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "WallHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_type",
       "states": ["facing"]
@@ -359,6 +468,7 @@
     "family": "sign",
     "params": {
       "class": "WallSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_type",
       "states": ["facing"]
@@ -378,7 +488,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_acacia_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -387,7 +507,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_birch_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -396,7 +526,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_canopy_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -405,7 +545,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_cherry_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -414,7 +564,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_crimson_stem_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -423,7 +583,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_dark_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -432,7 +602,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_dark_oak_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -441,7 +621,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_jungle_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -450,7 +640,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_mangrove_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -459,7 +659,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_mining_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -468,7 +678,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_oak_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -477,7 +697,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_sorting_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -486,7 +716,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_spruce_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -495,7 +735,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_time_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -504,7 +754,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_transformation_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -513,7 +773,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_twilight_oak_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -522,7 +792,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_vangrove_log_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -531,7 +811,17 @@
     "params": {
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["climbable"],
       "states": ["facing", "variant"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_warped_stem_vertical",
+    "family": "waterloggable",
+    "params": {
+      "class": "VerticalHollowLogBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"]
     }
   },
   {
@@ -540,7 +830,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:jungle_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   },
   {
@@ -549,6 +850,7 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "states": ["extended", "facing", "shape"]
     }
@@ -568,6 +870,7 @@
     "family": "chest",
     "params": {
       "class": "ChestBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "states": ["facing", "type"]
     }
@@ -583,10 +886,21 @@
     }
   },
   {
+    "id": "twilightforest:mangrove_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
+    }
+  },
+  {
     "id": "twilightforest:mangrove_fence",
     "family": "fence",
     "params": {
       "class": "FenceBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "states": ["east", "north", "south", "west"]
     }
@@ -606,6 +920,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "CeilingHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_type",
       "states": ["attached", "rotation"]
@@ -634,6 +949,7 @@
     "family": "sign",
     "params": {
       "class": "StandingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_type",
       "states": ["rotation"]
@@ -644,6 +960,7 @@
     "family": "slab",
     "params": {
       "class": "SlabBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "states": ["type"]
     }
@@ -653,6 +970,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:mangrove_planks",
       "states": ["facing", "half", "shape"]
     }
@@ -662,6 +980,7 @@
     "family": "trapdoor",
     "params": {
       "class": "TrapDoorBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_set",
       "states": ["facing", "half", "open", "powered"]
@@ -672,7 +991,9 @@
     "family": "trapped_chest",
     "params": {
       "class": "TrappedChestBlock",
-      "copyOf": "twilightforest:mangrove_planks"
+      "traits": ["waterloggable"],
+      "copyOf": "twilightforest:mangrove_planks",
+      "states": ["facing", "type"]
     }
   },
   {
@@ -680,6 +1001,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "WallHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_type",
       "states": ["facing"]
@@ -690,6 +1012,7 @@
     "family": "sign",
     "params": {
       "class": "WallSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_type",
       "states": ["facing"]
@@ -709,6 +1032,7 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "states": ["extended", "facing", "shape"]
     }
@@ -728,6 +1052,7 @@
     "family": "chest",
     "params": {
       "class": "ChestBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "states": ["facing", "type"]
     }
@@ -743,10 +1068,21 @@
     }
   },
   {
+    "id": "twilightforest:mining_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
+    }
+  },
+  {
     "id": "twilightforest:mining_fence",
     "family": "fence",
     "params": {
       "class": "FenceBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "states": ["east", "north", "south", "west"]
     }
@@ -766,6 +1102,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "CeilingHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_type",
       "states": ["attached", "rotation"]
@@ -794,6 +1131,7 @@
     "family": "sign",
     "params": {
       "class": "StandingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_type",
       "states": ["rotation"]
@@ -804,6 +1142,7 @@
     "family": "slab",
     "params": {
       "class": "SlabBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "states": ["type"]
     }
@@ -813,6 +1152,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:mining_planks",
       "states": ["facing", "half", "shape"]
     }
@@ -822,6 +1162,7 @@
     "family": "trapdoor",
     "params": {
       "class": "TrapDoorBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_set",
       "states": ["facing", "half", "open", "powered"]
@@ -832,7 +1173,9 @@
     "family": "trapped_chest",
     "params": {
       "class": "TrappedChestBlock",
-      "copyOf": "twilightforest:mining_planks"
+      "traits": ["waterloggable"],
+      "copyOf": "twilightforest:mining_planks",
+      "states": ["facing", "type"]
     }
   },
   {
@@ -840,6 +1183,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "WallHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_type",
       "states": ["facing"]
@@ -850,6 +1194,7 @@
     "family": "sign",
     "params": {
       "class": "WallSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_type",
       "states": ["facing"]
@@ -869,7 +1214,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:oak_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   },
   {
@@ -878,6 +1234,7 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "states": ["extended", "facing", "shape"]
     }
@@ -897,6 +1254,7 @@
     "family": "chest",
     "params": {
       "class": "ChestBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "states": ["facing", "type"]
     }
@@ -912,10 +1270,21 @@
     }
   },
   {
+    "id": "twilightforest:sorting_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
+    }
+  },
+  {
     "id": "twilightforest:sorting_fence",
     "family": "fence",
     "params": {
       "class": "FenceBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "states": ["east", "north", "south", "west"]
     }
@@ -935,6 +1304,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "CeilingHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_type",
       "states": ["attached", "rotation"]
@@ -963,6 +1333,7 @@
     "family": "sign",
     "params": {
       "class": "StandingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_type",
       "states": ["rotation"]
@@ -973,6 +1344,7 @@
     "family": "slab",
     "params": {
       "class": "SlabBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "states": ["type"]
     }
@@ -982,6 +1354,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:sorting_planks",
       "states": ["facing", "half", "shape"]
     }
@@ -991,6 +1364,7 @@
     "family": "trapdoor",
     "params": {
       "class": "TrapDoorBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_set",
       "states": ["facing", "half", "open", "powered"]
@@ -1001,7 +1375,9 @@
     "family": "trapped_chest",
     "params": {
       "class": "TrappedChestBlock",
-      "copyOf": "twilightforest:sorting_planks"
+      "traits": ["waterloggable"],
+      "copyOf": "twilightforest:sorting_planks",
+      "states": ["facing", "type"]
     }
   },
   {
@@ -1009,6 +1385,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "WallHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_type",
       "states": ["facing"]
@@ -1019,6 +1396,7 @@
     "family": "sign",
     "params": {
       "class": "WallSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_type",
       "states": ["facing"]
@@ -1038,7 +1416,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:spruce_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   },
   {
@@ -1175,6 +1564,7 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "states": ["extended", "facing", "shape"]
     }
@@ -1194,6 +1584,7 @@
     "family": "chest",
     "params": {
       "class": "ChestBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "states": ["facing", "type"]
     }
@@ -1209,10 +1600,21 @@
     }
   },
   {
+    "id": "twilightforest:time_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
+    }
+  },
+  {
     "id": "twilightforest:time_fence",
     "family": "fence",
     "params": {
       "class": "FenceBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "states": ["east", "north", "south", "west"]
     }
@@ -1232,6 +1634,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "CeilingHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_type",
       "states": ["attached", "rotation"]
@@ -1260,6 +1663,7 @@
     "family": "sign",
     "params": {
       "class": "StandingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_type",
       "states": ["rotation"]
@@ -1270,6 +1674,7 @@
     "family": "slab",
     "params": {
       "class": "SlabBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "states": ["type"]
     }
@@ -1279,6 +1684,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:time_planks",
       "states": ["facing", "half", "shape"]
     }
@@ -1288,6 +1694,7 @@
     "family": "trapdoor",
     "params": {
       "class": "TrapDoorBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_set",
       "states": ["facing", "half", "open", "powered"]
@@ -1298,7 +1705,9 @@
     "family": "trapped_chest",
     "params": {
       "class": "TrappedChestBlock",
-      "copyOf": "twilightforest:time_planks"
+      "traits": ["waterloggable"],
+      "copyOf": "twilightforest:time_planks",
+      "states": ["facing", "type"]
     }
   },
   {
@@ -1306,6 +1715,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "WallHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_type",
       "states": ["facing"]
@@ -1316,6 +1726,7 @@
     "family": "sign",
     "params": {
       "class": "WallSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_type",
       "states": ["facing"]
@@ -1335,6 +1746,7 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "states": ["extended", "facing", "shape"]
     }
@@ -1354,6 +1766,7 @@
     "family": "chest",
     "params": {
       "class": "ChestBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "states": ["facing", "type"]
     }
@@ -1369,10 +1782,21 @@
     }
   },
   {
+    "id": "twilightforest:transformation_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
+    }
+  },
+  {
     "id": "twilightforest:transformation_fence",
     "family": "fence",
     "params": {
       "class": "FenceBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "states": ["east", "north", "south", "west"]
     }
@@ -1392,6 +1816,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "CeilingHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_type",
       "states": ["attached", "rotation"]
@@ -1420,6 +1845,7 @@
     "family": "sign",
     "params": {
       "class": "StandingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_type",
       "states": ["rotation"]
@@ -1430,6 +1856,7 @@
     "family": "slab",
     "params": {
       "class": "SlabBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "states": ["type"]
     }
@@ -1439,6 +1866,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:transformation_planks",
       "states": ["facing", "half", "shape"]
     }
@@ -1448,6 +1876,7 @@
     "family": "trapdoor",
     "params": {
       "class": "TrapDoorBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_set",
       "states": ["facing", "half", "open", "powered"]
@@ -1458,7 +1887,9 @@
     "family": "trapped_chest",
     "params": {
       "class": "TrappedChestBlock",
-      "copyOf": "twilightforest:transformation_planks"
+      "traits": ["waterloggable"],
+      "copyOf": "twilightforest:transformation_planks",
+      "states": ["facing", "type"]
     }
   },
   {
@@ -1466,6 +1897,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "WallHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_type",
       "states": ["facing"]
@@ -1476,6 +1908,7 @@
     "family": "sign",
     "params": {
       "class": "WallSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_type",
       "states": ["facing"]
@@ -1495,6 +1928,7 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "states": ["extended", "facing", "shape"]
     }
@@ -1514,6 +1948,7 @@
     "family": "chest",
     "params": {
       "class": "ChestBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "states": ["facing", "type"]
     }
@@ -1529,10 +1964,21 @@
     }
   },
   {
+    "id": "twilightforest:twilight_oak_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
+    }
+  },
+  {
     "id": "twilightforest:twilight_oak_fence",
     "family": "fence",
     "params": {
       "class": "FenceBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "states": ["east", "north", "south", "west"]
     }
@@ -1552,6 +1998,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "CeilingHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_wood_type",
       "states": ["attached", "rotation"]
@@ -1580,6 +2027,7 @@
     "family": "sign",
     "params": {
       "class": "StandingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_wood_type",
       "states": ["rotation"]
@@ -1590,6 +2038,7 @@
     "family": "slab",
     "params": {
       "class": "SlabBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "states": ["type"]
     }
@@ -1599,6 +2048,7 @@
     "family": "stairs",
     "params": {
       "class": "StairBlock",
+      "traits": ["waterloggable"],
       "base": "twilightforest:twilight_oak_planks",
       "states": ["facing", "half", "shape"]
     }
@@ -1608,6 +2058,7 @@
     "family": "trapdoor",
     "params": {
       "class": "TrapDoorBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_set",
       "states": ["facing", "half", "open", "powered"]
@@ -1618,7 +2069,9 @@
     "family": "trapped_chest",
     "params": {
       "class": "TrappedChestBlock",
-      "copyOf": "twilightforest:twilight_oak_planks"
+      "traits": ["waterloggable"],
+      "copyOf": "twilightforest:twilight_oak_planks",
+      "states": ["facing", "type"]
     }
   },
   {
@@ -1626,6 +2079,7 @@
     "family": "hanging_sign",
     "params": {
       "class": "WallHangingSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_wood_type",
       "states": ["facing"]
@@ -1644,6 +2098,7 @@
     "family": "sign",
     "params": {
       "class": "WallSignBlock",
+      "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_wood_type",
       "states": ["facing"]
@@ -1655,7 +2110,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:vangrove_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   },
   {
@@ -1664,7 +2130,18 @@
     "params": {
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
+      "traits": ["waterloggable"],
       "states": ["extended", "facing", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:warped_drying_rack",
+    "family": "waterloggable",
+    "params": {
+      "class": "DryingRackBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
     }
   }
 ]

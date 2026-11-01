@@ -21,6 +21,7 @@ namespace GfImport
             var sw = Stopwatch.StartNew();
             var sel = new HashSet<string>(kinds.Length == 0 ? AllKinds : kinds, StringComparer.Ordinal);
             foreach (var k in sel) if (!AllKinds.Contains(k)) { log("unknown kind '" + k + "' (kinds: " + string.Join(",", AllKinds) + ")"); return 1; }
+            Java.Reset();                 // static caches of an earlier run in the same session
             var ctx = new Ctx(root, tf);
             if (string.IsNullOrEmpty(unit)) unit = null;
             if (unit != null)
@@ -32,6 +33,7 @@ namespace GfImport
             // shared decisions (texture owners, atlas keys, geometry owners) never depend on the selection.
             ctx.ComputeItemTags();
             ctx.PrepareBlocks();
+            ctx.CheckJavaStates();        // against the hand-written golden (tools/import/expected-states.json)
             ctx.ImportBlocks();           // blockstates + models (records texture uses)
             ctx.ImportItems();            // skeleton items (records icon uses)
             ctx.ImportEntities();         // skeleton entities
@@ -45,6 +47,7 @@ namespace GfImport
             ctx.ImportFamilies();
             ctx.FlushFragments();
             ctx.ApplyOverrides();
+            ctx.CheckEmittedBlocks();     // states and variant rotations of the final BP block files
             ctx.ImportSkeletonIndex();    // the id list the import.* selftests check
             ctx.ImportKnownIndex();       // after every data file is final
             if (unit == null && sel.Contains("blockstates")) ctx.Docs["docs/spec/blockstates.md"] = ctx.BlockstatesDoc();
@@ -56,7 +59,9 @@ namespace GfImport
             int diffs = ctx.Sync(sel, unit, check);
             foreach (var l in ctx.Log) log(l);
             foreach (var w in ctx.Warnings.Distinct().OrderBy(x => x, StringComparer.Ordinal)) log("warning: " + w);
+            foreach (var e in ctx.Errors.Distinct()) log("error: " + e);
             if (check && diffs > 0) { log("the committed tree differs from the import (" + diffs + " files): run pwsh tools/import/run.ps1"); return 1; }
+            if (ctx.Errors.Count > 0) { log(ctx.Errors.Distinct().Count() + " check(s) failed"); return 1; }
             return 0;
         }
     }

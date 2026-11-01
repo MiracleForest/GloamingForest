@@ -5,6 +5,7 @@
     "params": {
       "class": "SliderBlock",
       "vanillaClass": "RotatedPillarBlock",
+      "traits": ["waterloggable"],
       "states": ["axis", "delay"]
     }
   }

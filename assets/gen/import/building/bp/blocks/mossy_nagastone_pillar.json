@@ -49,9 +49,6 @@
           "texture": "tf_block_nagastone_pillar_side_mossy",
           "render_method": "opaque"
         }
-      },
-      "minecraft:transformation": {
-        "rotation": [90, 90, 0]
       }
     },
     "permutations": [
@@ -171,6 +168,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
@@ -208,6 +208,9 @@
               "texture": "tf_block_nagastone_pillar_side_mossy_alt",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true

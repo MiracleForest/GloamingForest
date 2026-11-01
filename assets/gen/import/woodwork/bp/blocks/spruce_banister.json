@@ -9,7 +9,7 @@
       "states": {
         "twilightforest:extended": [false, true],
         "twilightforest:facing": ["north", "south", "west", "east"],
-        "twilightforest:shape": ["connected", "short", "tall"]
+        "twilightforest:shape": ["tall", "short", "connected"]
       }
     },
     "components": {
@@ -19,12 +19,12 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 3
       },
-      "minecraft:map_color": "#8f7748",
+      "minecraft:map_color": "#815631",
       "minecraft:flammable": {
         "catch_chance_modifier": 5,
         "destroy_chance_modifier": 20
       },
-      "minecraft:geometry": "geometry.tf.twilightforest.block.banister_connected",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.banister_tall",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_vanilla_block_spruce_planks",
@@ -36,15 +36,15 @@
         }
       },
       "minecraft:transformation": {
-        "rotation": [0, 90, 0]
+        "rotation": [0, 180, 0]
       },
       "minecraft:collision_box": {
-        "origin": [4.992, 0, -5.5],
-        "size": [3, 16, 11]
+        "origin": [-8, 0, -8],
+        "size": [16, 16, 4]
       },
       "minecraft:selection_box": {
-        "origin": [4.992, 0, -5.5],
-        "size": [3, 16, 11]
+        "origin": [-8, 0, -8],
+        "size": [16, 16, 4]
       },
       "minecraft:light_dampening": 0
     },
@@ -225,6 +225,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-5.5, 0, 4.992],
             "size": [11, 16, 3]
@@ -249,6 +252,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 0, 4],
             "size": [16, 8, 4]
@@ -272,6 +278,9 @@
               "texture": "tf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 0, 4],
@@ -540,6 +549,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-5.5, 0, 4.992],
             "size": [11, 16, 3]
@@ -564,6 +576,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 0, 4],
             "size": [16, 8, 4]
@@ -587,6 +602,9 @@
               "texture": "tf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 0, 4],

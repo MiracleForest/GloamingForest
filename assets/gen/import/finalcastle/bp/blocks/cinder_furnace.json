@@ -50,9 +50,6 @@
           "texture": "tf_vanilla_block_furnace_side",
           "render_method": "opaque"
         }
-      },
-      "minecraft:transformation": {
-        "rotation": [0, 270, 0]
       }
     },
     "permutations": [
@@ -172,6 +169,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
@@ -209,6 +209,9 @@
               "texture": "tf_vanilla_block_furnace_side",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true

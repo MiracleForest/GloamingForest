@@ -19,6 +19,10 @@
         "explosion_resistance": 2
       },
       "minecraft:map_color": "#815631",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 5
+      },
       "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
       "minecraft:material_instances": {
         "*": {
@@ -239,6 +243,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
@@ -272,6 +279,9 @@
               "texture": "tf_block_mangrove_log_top",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
@@ -311,6 +321,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
@@ -345,6 +358,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
@@ -370,6 +386,9 @@
               "texture": "tf_block_mangrove_log_top",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true

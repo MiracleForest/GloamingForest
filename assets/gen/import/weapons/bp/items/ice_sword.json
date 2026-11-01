@@ -17,6 +17,9 @@
         "value": "item.twilightforest:ice_sword.name"
       },
       "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 32
+      },
       "minecraft:hand_equipped": true
     }
   }

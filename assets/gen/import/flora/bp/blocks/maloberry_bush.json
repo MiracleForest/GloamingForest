@@ -18,6 +18,10 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0.4
       },
+      "minecraft:flammable": {
+        "catch_chance_modifier": 4,
+        "destroy_chance_modifier": 25
+      },
       "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_0",
       "minecraft:material_instances": {
         "*": {

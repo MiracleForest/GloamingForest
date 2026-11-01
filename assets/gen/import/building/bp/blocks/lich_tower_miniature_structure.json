@@ -17,6 +17,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0.75
       },
+      "minecraft:collision_box": false,
       "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.lich_tower",
       "minecraft:material_instances": {
         "*": {
@@ -36,16 +37,9 @@
           "render_method": "alpha_test"
         }
       },
-      "minecraft:transformation": {
-        "rotation": [0, 270, 0]
-      },
-      "minecraft:collision_box": {
-        "origin": [-5.5, 0, -5],
-        "size": [11.5, 15, 10.5]
-      },
       "minecraft:selection_box": {
-        "origin": [-5.5, 0, -5],
-        "size": [11.5, 15, 10.5]
+        "origin": [-5, 0, -6],
+        "size": [10.5, 15, 11.5]
       },
       "minecraft:light_dampening": 0
     },
@@ -75,10 +69,6 @@
           "minecraft:transformation": {
             "rotation": [0, 270, 0]
           },
-          "minecraft:collision_box": {
-            "origin": [-5.5, 0, -5],
-            "size": [11.5, 15, 10.5]
-          },
           "minecraft:selection_box": {
             "origin": [-5.5, 0, -5],
             "size": [11.5, 15, 10.5]
@@ -107,9 +97,8 @@
               "render_method": "alpha_test"
             }
           },
-          "minecraft:collision_box": {
-            "origin": [-5, 0, -6],
-            "size": [10.5, 15, 11.5]
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:selection_box": {
             "origin": [-5, 0, -6],
@@ -142,10 +131,6 @@
           "minecraft:transformation": {
             "rotation": [0, 180, 0]
           },
-          "minecraft:collision_box": {
-            "origin": [-5.5, 0, -5.5],
-            "size": [10.5, 15, 11.5]
-          },
           "minecraft:selection_box": {
             "origin": [-5.5, 0, -5.5],
             "size": [10.5, 15, 11.5]
@@ -176,10 +161,6 @@
           },
           "minecraft:transformation": {
             "rotation": [0, 90, 0]
-          },
-          "minecraft:collision_box": {
-            "origin": [-6, 0, -5.5],
-            "size": [11.5, 15, 10.5]
           },
           "minecraft:selection_box": {
             "origin": [-6, 0, -5.5],

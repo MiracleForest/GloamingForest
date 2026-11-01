@@ -271,6 +271,12 @@
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:light_emission": 4
+        }
       }
     ]
   }

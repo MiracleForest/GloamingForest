@@ -9,12 +9,13 @@
     },
     "components": {
       "minecraft:destructible_by_mining": {
-        "seconds_to_destroy": 1
+        "seconds_to_destroy": 0
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 1
+        "explosion_resistance": 0
       },
       "minecraft:map_color": "#707070",
+      "minecraft:friction": 0.2,
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
@@ -45,7 +46,8 @@
           "texture": "tf_vanilla_block_slime_block",
           "render_method": "blend"
         }
-      }
+      },
+      "minecraft:light_dampening": 0
     }
   }
 }

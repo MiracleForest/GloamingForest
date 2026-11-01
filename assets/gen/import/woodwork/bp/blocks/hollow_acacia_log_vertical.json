@@ -14,10 +14,10 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 2
       },
-      "minecraft:map_color": "#8f7748",
+      "minecraft:map_color": "#d87f33",
       "minecraft:flammable": {
         "catch_chance_modifier": 5,
-        "destroy_chance_modifier": 20
+        "destroy_chance_modifier": 5
       },
       "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log",
       "minecraft:material_instances": {

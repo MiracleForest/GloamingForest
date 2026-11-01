@@ -18,10 +18,6 @@
         "explosion_resistance": 0.5
       },
       "minecraft:map_color": "#976d4d",
-      "minecraft:flammable": {
-        "catch_chance_modifier": 5,
-        "destroy_chance_modifier": 20
-      },
       "minecraft:collision_box": false,
       "minecraft:geometry": "geometry.tf.minecraft.block.pressure_plate_up",
       "minecraft:material_instances": {

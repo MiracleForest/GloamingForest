@@ -7,7 +7,8 @@
         "category": "construction"
       },
       "states": {
-        "twilightforest:multilogged": ["air", "basalt", "lava", "obsidian", "stone", "water"]
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:multilogged": ["air", "water", "lava", "obsidian", "stone", "basalt"]
       }
     },
     "components": {
@@ -178,6 +179,12 @@
             "origin": [-7, 0, -7],
             "size": [14, 14, 14]
           }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:multilogged') == 'lava'",
+        "components": {
+          "minecraft:light_emission": 15
         }
       }
     ]

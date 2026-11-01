@@ -7,7 +7,7 @@
         "category": "construction"
       },
       "states": {
-        "twilightforest:facing": ["north", "south", "west", "east", "up", "down"]
+        "twilightforest:facing": ["down", "north", "south", "west", "east", "up"]
       }
     },
     "components": {

@@ -9,10 +9,10 @@
     },
     "components": {
       "minecraft:destructible_by_mining": {
-        "seconds_to_destroy": 1
+        "seconds_to_destroy": 0.3
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 1
+        "explosion_resistance": 0.3
       },
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
@@ -20,7 +20,8 @@
           "texture": "tf_block_auroralized_glass_ct",
           "render_method": "blend"
         }
-      }
+      },
+      "minecraft:light_dampening": 0
     }
   }
 }

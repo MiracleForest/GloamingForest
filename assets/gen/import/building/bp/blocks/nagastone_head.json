@@ -48,9 +48,6 @@
           "texture": "tf_block_nagastone_face_left",
           "render_method": "opaque"
         }
-      },
-      "minecraft:transformation": {
-        "rotation": [0, 270, 0]
       }
     },
     "permutations": [
@@ -128,6 +125,9 @@
               "texture": "tf_block_nagastone_face_left",
               "render_method": "opaque"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true

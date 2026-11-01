@@ -45,7 +45,8 @@
           "texture": "tf_block_sinister_spawner",
           "render_method": "alpha_test"
         }
-      }
+      },
+      "minecraft:light_dampening": 0
     }
   }
 }

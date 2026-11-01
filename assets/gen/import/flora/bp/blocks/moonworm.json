@@ -5,6 +5,9 @@
       "identifier": "twilightforest:moonworm",
       "menu_category": {
         "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east", "up", "down"]
       }
     },
     "components": {

@@ -1,6 +1,6 @@
 {
   "twilightforest:blue_castle_door": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:blue_force_field": {
     "sound": "stone"
@@ -30,7 +30,7 @@
     "sound": "stone"
   },
   "twilightforest:pink_castle_door": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:pink_force_field": {
     "sound": "stone"
@@ -51,12 +51,12 @@
     "sound": "grass"
   },
   "twilightforest:violet_castle_door": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   },
   "twilightforest:violet_force_field": {
     "sound": "stone"
   },
   "twilightforest:yellow_castle_door": {
-    "sound": "stone"
+    "sound": "deepslate_bricks"
   }
 }

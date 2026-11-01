@@ -7,6 +7,7 @@
         "category": "construction"
       },
       "states": {
+        "twilightforest:active": [false, true],
         "twilightforest:locked": [false, true]
       }
     },

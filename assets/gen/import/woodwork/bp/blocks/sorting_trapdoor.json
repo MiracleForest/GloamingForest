@@ -21,10 +21,6 @@
         "explosion_resistance": 3
       },
       "minecraft:map_color": "#815631",
-      "minecraft:flammable": {
-        "catch_chance_modifier": 5,
-        "destroy_chance_modifier": 20
-      },
       "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_bottom",
       "minecraft:material_instances": {
         "*": {
@@ -35,9 +31,6 @@
           "texture": "tf_block_wood_trapdoor_sort_trapdoor",
           "render_method": "alpha_test"
         }
-      },
-      "minecraft:transformation": {
-        "rotation": [0, 270, 0]
       },
       "minecraft:collision_box": {
         "origin": [-8, 0, -8],
@@ -172,6 +165,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 0, -8],
             "size": [16, 3, 16]
@@ -196,6 +192,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-8, 0, 5],
             "size": [16, 16, 3]
@@ -219,6 +218,9 @@
               "texture": "tf_block_wood_trapdoor_sort_trapdoor",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-8, 13, -8],

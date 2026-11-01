@@ -7,11 +7,11 @@
         "category": "construction"
       },
       "states": {
-        "twilightforest:east_fence": ["bottom", "full", "middle", "top"],
-        "twilightforest:north_fence": ["bottom", "full", "middle", "top"],
-        "twilightforest:post": ["capped", "post"],
-        "twilightforest:south_fence": ["bottom", "full", "middle", "top"],
-        "twilightforest:west_fence": ["bottom", "full", "middle", "top"]
+        "twilightforest:east_fence": ["none", "middle", "bottom", "top", "full"],
+        "twilightforest:north_fence": ["none", "middle", "bottom", "top", "full"],
+        "twilightforest:post": ["post", "none", "capped"],
+        "twilightforest:south_fence": ["none", "middle", "bottom", "top", "full"],
+        "twilightforest:west_fence": ["none", "middle", "bottom", "top", "full"]
       }
     },
     "components": {

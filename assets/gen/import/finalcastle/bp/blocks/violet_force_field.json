@@ -5,6 +5,14 @@
       "identifier": "twilightforest:violet_force_field",
       "menu_category": {
         "category": "construction"
+      },
+      "states": {
+        "twilightforest:down": [false, true],
+        "twilightforest:east": [false, true],
+        "twilightforest:north": [false, true],
+        "twilightforest:south": [false, true],
+        "twilightforest:up": [false, true],
+        "twilightforest:west": [false, true]
       }
     },
     "components": {

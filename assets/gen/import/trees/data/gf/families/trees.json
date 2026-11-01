@@ -4,6 +4,7 @@
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
+      "traits": ["waterloggable"],
       "states": ["distance", "persistent"]
     }
   },
@@ -21,6 +22,7 @@
     "params": {
       "class": "DarkLeavesBlock",
       "vanillaClass": "LeavesBlock",
+      "traits": ["waterloggable"],
       "states": ["distance", "persistent"]
     }
   },
@@ -45,6 +47,7 @@
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
+      "traits": ["waterloggable"],
       "states": ["distance", "persistent"]
     }
   },
@@ -54,6 +57,7 @@
     "params": {
       "class": "MangroveSaplingBlock",
       "vanillaClass": "SaplingBlock",
+      "traits": ["waterloggable"],
       "states": ["stage"]
     }
   },
@@ -62,6 +66,7 @@
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
+      "traits": ["waterloggable"],
       "states": ["distance", "persistent"]
     }
   },
@@ -157,6 +162,7 @@
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
+      "traits": ["waterloggable"],
       "states": ["distance", "persistent"]
     }
   },
@@ -173,6 +179,7 @@
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
+      "traits": ["waterloggable"],
       "states": ["distance", "persistent"]
     }
   },
@@ -198,6 +205,7 @@
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
+      "traits": ["waterloggable"],
       "states": ["distance", "persistent"]
     }
   },
@@ -224,6 +232,7 @@
     "params": {
       "class": "TransformationLeavesBlock",
       "vanillaClass": "LeavesBlock",
+      "traits": ["waterloggable"],
       "states": ["distance", "persistent"]
     }
   },
@@ -249,6 +258,7 @@
     "family": "leaves",
     "params": {
       "class": "LeavesBlock",
+      "traits": ["waterloggable"],
       "states": ["distance", "persistent"]
     }
   },

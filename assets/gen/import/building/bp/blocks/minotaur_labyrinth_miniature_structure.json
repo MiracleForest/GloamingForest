@@ -17,6 +17,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0.75
       },
+      "minecraft:collision_box": false,
       "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.labyrinth",
       "minecraft:material_instances": {
         "*": {
@@ -51,13 +52,6 @@
           "texture": "tf_vanilla_block_red_mushroom_block",
           "render_method": "opaque"
         }
-      },
-      "minecraft:transformation": {
-        "rotation": [0, 270, 0]
-      },
-      "minecraft:collision_box": {
-        "origin": [-7, 0, -7],
-        "size": [14, 5, 14]
       },
       "minecraft:selection_box": {
         "origin": [-7, 0, -7],
@@ -107,10 +101,6 @@
           "minecraft:transformation": {
             "rotation": [0, 270, 0]
           },
-          "minecraft:collision_box": {
-            "origin": [-7, 0, -7],
-            "size": [14, 5, 14]
-          },
           "minecraft:selection_box": {
             "origin": [-7, 0, -7],
             "size": [14, 5, 14]
@@ -155,9 +145,8 @@
               "render_method": "opaque"
             }
           },
-          "minecraft:collision_box": {
-            "origin": [-7, 0, -7],
-            "size": [14, 5, 14]
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:selection_box": {
             "origin": [-7, 0, -7],
@@ -206,10 +195,6 @@
           "minecraft:transformation": {
             "rotation": [0, 180, 0]
           },
-          "minecraft:collision_box": {
-            "origin": [-7, 0, -7],
-            "size": [14, 5, 14]
-          },
           "minecraft:selection_box": {
             "origin": [-7, 0, -7],
             "size": [14, 5, 14]
@@ -256,10 +241,6 @@
           },
           "minecraft:transformation": {
             "rotation": [0, 90, 0]
-          },
-          "minecraft:collision_box": {
-            "origin": [-7, 0, -7],
-            "size": [14, 5, 14]
           },
           "minecraft:selection_box": {
             "origin": [-7, 0, -7],

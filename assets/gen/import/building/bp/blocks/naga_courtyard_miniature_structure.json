@@ -17,6 +17,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0.75
       },
+      "minecraft:collision_box": false,
       "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.naga_courtyard",
       "minecraft:material_instances": {
         "*": {
@@ -55,13 +56,6 @@
           "texture": "tf_vanilla_block_stone",
           "render_method": "alpha_test"
         }
-      },
-      "minecraft:transformation": {
-        "rotation": [0, 270, 0]
-      },
-      "minecraft:collision_box": {
-        "origin": [-8, 0, -8],
-        "size": [16, 10.5, 16]
       },
       "minecraft:selection_box": {
         "origin": [-8, 0, -8],
@@ -115,10 +109,6 @@
           "minecraft:transformation": {
             "rotation": [0, 270, 0]
           },
-          "minecraft:collision_box": {
-            "origin": [-8, 0, -8],
-            "size": [16, 10.5, 16]
-          },
           "minecraft:selection_box": {
             "origin": [-8, 0, -8],
             "size": [16, 10.5, 16]
@@ -167,9 +157,8 @@
               "render_method": "alpha_test"
             }
           },
-          "minecraft:collision_box": {
-            "origin": [-8, 0, -8],
-            "size": [16, 10.5, 16]
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:selection_box": {
             "origin": [-8, 0, -8],
@@ -222,10 +211,6 @@
           "minecraft:transformation": {
             "rotation": [0, 180, 0]
           },
-          "minecraft:collision_box": {
-            "origin": [-8, 0, -8],
-            "size": [16, 10.5, 16]
-          },
           "minecraft:selection_box": {
             "origin": [-8, 0, -8],
             "size": [16, 10.5, 16]
@@ -276,10 +261,6 @@
           },
           "minecraft:transformation": {
             "rotation": [0, 90, 0]
-          },
-          "minecraft:collision_box": {
-            "origin": [-8, 0, -8],
-            "size": [16, 10.5, 16]
           },
           "minecraft:selection_box": {
             "origin": [-8, 0, -8],

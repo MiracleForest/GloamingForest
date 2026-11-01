@@ -5,6 +5,7 @@
     "params": {
       "class": "SpecialStemLeavesBlock",
       "vanillaClass": "LeavesBlock",
+      "traits": ["waterloggable"],
       "states": ["distance", "persistent"]
     }
   },

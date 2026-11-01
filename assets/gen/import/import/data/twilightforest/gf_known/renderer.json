@@ -1,4 +1,6 @@
 {
-  "comment": "Named by TF data, not a data file (code registry id, texture, template or custom-registry tag); index for the assemble reference check only (F1, tools/import/src/Known.cs).",
+  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
+  "kind": "dimension_special_effects",
+  "reason": "\"effects\" of dimension_type/twilight_forest_type; registered by the client (DimensionSpecialEffects), no data file (src/main/java/twilightforest/init/TFDimension.java (DIMENSION_RENDERER))",
   "referencedBy": ["data/twilightforest/dimension_type/twilight_forest_type.json"]
 }

@@ -17,6 +17,9 @@
         "value": "item.twilightforest:diamond_minotaur_axe.name"
       },
       "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 1561
+      },
       "minecraft:hand_equipped": true
     }
   }

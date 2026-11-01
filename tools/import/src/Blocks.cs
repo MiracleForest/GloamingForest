@@ -27,6 +27,8 @@ namespace GfImport
         public JBlock J;
         public List<string> Chain = new List<string>();
         public List<BState> States = new List<BState>();
+        public List<JProp> JavaProps = new List<JProp>();   // createBlockStateDefinition along the class chain
+        public string LightSource;                          // where a state-dependent light comes from
         public long Permutations = 1;
         public string Family;        // families kind (stairs, slab, ...)
         public bool InCatalog;
@@ -48,38 +50,6 @@ namespace GfImport
         // geometry identifier -> (file JSON, users)
         readonly SortedDictionary<string, J> geometries = new SortedDictionary<string, J>(StringComparer.Ordinal);
         readonly Dictionary<string, SortedSet<string>> geometryUsers = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
-
-        // the properties of the vanilla block classes TF blocks extend (Minecraft 1.21.1), default value first
-        static readonly Dictionary<string, string[]> ClassStates = new Dictionary<string, string[]>(StringComparer.Ordinal)
-        {
-            { "LeavesBlock", new[] { "distance:int:7", "persistent:bool" } },
-            { "SaplingBlock", new[] { "stage:int:1" } },
-            { "StairBlock", new[] { "facing:enum:north,south,west,east", "half:enum:bottom,top", "shape:enum:straight,inner_left,inner_right,outer_left,outer_right" } },
-            { "SlabBlock", new[] { "type:enum:bottom,top,double" } },
-            { "FenceBlock", new[] { "north:bool", "east:bool", "south:bool", "west:bool" } },
-            { "IronBarsBlock", new[] { "north:bool", "east:bool", "south:bool", "west:bool" } },
-            { "FenceGateBlock", new[] { "facing:enum:north,south,west,east", "open:bool", "powered:bool", "in_wall:bool" } },
-            { "WallBlock", new[] { "up:bool", "north_wall:enum:none,low,tall", "east_wall:enum:none,low,tall", "south_wall:enum:none,low,tall", "west_wall:enum:none,low,tall" } },
-            { "DoorBlock", new[] { "facing:enum:north,south,west,east", "half:enum:lower,upper", "hinge:enum:left,right", "open:bool", "powered:bool" } },
-            { "TrapDoorBlock", new[] { "facing:enum:north,south,west,east", "half:enum:bottom,top", "open:bool", "powered:bool" } },
-            { "ButtonBlock", new[] { "face:enum:wall,floor,ceiling", "facing:enum:north,south,west,east", "powered:bool" } },
-            { "PressurePlateBlock", new[] { "powered:bool" } },
-            { "WeightedPressurePlateBlock", new[] { "power:int:15" } },
-            { "RotatedPillarBlock", new[] { "axis:enum:y,x,z" } },
-            { "StandingSignBlock", new[] { "rotation:int:15" } },
-            { "WallSignBlock", new[] { "facing:enum:north,south,west,east" } },
-            { "CeilingHangingSignBlock", new[] { "rotation:int:15", "attached:bool" } },
-            { "WallHangingSignBlock", new[] { "facing:enum:north,south,west,east" } },
-            { "ChestBlock", new[] { "facing:enum:north,south,west,east", "type:enum:single,left,right" } },
-            { "HorizontalDirectionalBlock", new[] { "facing:enum:north,south,west,east" } },
-            { "DirectionalBlock", new[] { "facing:enum:north,south,west,east,up,down" } },
-            { "CandleBlock", new[] { "candles:int:4", "lit:bool" } },
-            { "LadderBlock", new[] { "facing:enum:north,south,west,east" } },
-            { "WallTorchBlock", new[] { "facing:enum:north,south,west,east" } },
-            { "DoublePlantBlock", new[] { "half:enum:lower,upper" } },
-            { "LanternBlock", new[] { "hanging:bool" } },
-            { "AbstractFurnaceBlock", new[] { "facing:enum:north,south,west,east", "lit:bool" } },
-        };
 
         static readonly Dictionary<string, string[]> PreferredOrder = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
@@ -121,58 +91,69 @@ namespace GfImport
 
         void CollectStates(BlockInfo bi, J bs)
         {
-            var values = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-            var order = new List<string>();
-            Action<string, string> add = (p, v) =>
+            // the values TF's blockstate file uses (a second, independent source: TF's datagen output)
+            var used = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            Action<string, string> use = (p, v) =>
             {
                 List<string> l;
-                if (!values.TryGetValue(p, out l)) { values[p] = l = new List<string>(); order.Add(p); }
+                if (!used.TryGetValue(p, out l)) used[p] = l = new List<string>();
                 if (!l.Contains(v)) l.Add(v);
             };
             if (bs != null && bs["variants"] != null)
             {
                 foreach (var key in bs["variants"].Keys)
-                    foreach (var kv in ParseVariantKey(key)) add(kv.Key, kv.Value);
+                    foreach (var kv in ParseVariantKey(key)) use(kv.Key, kv.Value);
             }
             if (bs != null && bs["multipart"] != null)
             {
                 foreach (var part in bs["multipart"].A)
                     foreach (var cond in WhenList(part["when"]))
                         foreach (var p in cond.Keys)
-                            foreach (var v in cond[p].ToCompact().Trim('"').Split('|')) add(p, v);
+                            foreach (var v in cond[p].ToCompact().Trim('"').Split('|')) use(p, v);
             }
-            // class-declared states the blockstate file does not list
-            var classStates = new List<string[]>();
-            foreach (var c in bi.Chain) { string[] s; if (ClassStates.TryGetValue(c, out s)) { classStates.Add(s); break; } }
-            var fromClass = new HashSet<string>();
-            foreach (var spec in classStates.SelectMany(x => x))
+            // the properties the Java class chain declares (createBlockStateDefinition)
+            bi.JavaProps = JavaStates.Collect(this, bi.Chain, m => Warn("block " + bi.Id + ": " + m));
+            var props = bi.JavaProps.ToList();
+            foreach (var kv in used)
             {
-                var p = spec.Split(':');
-                if (p[1] == "bool") { add(p[0], "false"); add(p[0], "true"); }
-                else if (p[1] == "int") { for (int i = 0; i <= int.Parse(p[2], CultureInfo.InvariantCulture); i++) add(p[0], i.ToString(CultureInfo.InvariantCulture)); }
-                else foreach (var v in p[2].Split(',')) add(p[0], v);
-                fromClass.Add(p[0]);
-            }
-            foreach (var p in order)
-            {
-                if (DroppedStates.Contains(p)) continue;
-                var vals = values[p];
-                var st = new BState { Java = p, Bedrock = "twilightforest:" + p, Source = fromClass.Contains(p) ? "class" : "blockstate" };
-                if (vals.All(v => v == "true" || v == "false")) { st.Type = "bool"; st.Values = new List<string> { "false", "true" }; }
-                else if (vals.All(v => v.All(char.IsDigit)))
+                var jp = props.FirstOrDefault(p => p.Name == kv.Key);
+                if (jp == null)
                 {
-                    st.Type = "int";
-                    int max = vals.Max(v => int.Parse(v, CultureInfo.InvariantCulture));
+                    // a blockstate property the class chain does not declare: a parser gap, kept from the blockstate file
+                    Warn("block " + bi.Id + ": blockstate property " + kv.Key + " is not declared by " + string.Join(" < ", bi.Chain));
+                    var vals = kv.Value;
+                    jp = new JProp { Name = kv.Key, Origin = "blockstate" };
+                    if (vals.All(v => v == "true" || v == "false")) { jp.Type = "bool"; jp.Values = new List<string> { "false", "true" }; }
+                    else if (vals.All(v => v.All(char.IsDigit))) { jp.Type = "int"; jp.Values = vals.OrderBy(v => int.Parse(v, CultureInfo.InvariantCulture)).ToList(); }
+                    else { jp.Type = "enum"; jp.Values = vals.ToList(); }
+                    props.Add(jp);
+                    continue;
+                }
+                foreach (var v in kv.Value)
+                    if (!jp.Values.Contains(v)) Warn("block " + bi.Id + ": blockstate value " + kv.Key + "=" + v + " is not a value of " + jp.Origin);
+            }
+            foreach (var jp in props)
+            {
+                if (DroppedStates.Contains(jp.Name)) continue;
+                var st = new BState { Java = jp.Name, Bedrock = "twilightforest:" + jp.Name, Type = jp.Type, Source = used.ContainsKey(jp.Name) ? "blockstate" : "class" };
+                if (jp.Type == "bool") st.Values = new List<string> { "false", "true" };
+                else if (jp.Type == "int")
+                {
+                    // Bedrock reads an integer state by position: 0..max (values below the Java minimum are unused)
+                    int max = jp.Values.Max(v => int.Parse(v, CultureInfo.InvariantCulture));
                     for (int i = 0; i <= max; i++) st.Values.Add(i.ToString(CultureInfo.InvariantCulture));
                 }
                 else
                 {
-                    st.Type = "enum";
+                    // the first value is the Bedrock default: TF's registerDefaultState value, else the conventional
+                    // order of the shared vanilla names (facing north, axis y, ...), else Java's declaration order
                     string[] pref;
-                    if (!PreferredOrder.TryGetValue(p, out pref)) pref = new string[0];
-                    st.Values = vals.OrderBy(v => Array.IndexOf(pref, v) < 0 ? 100 : Array.IndexOf(pref, v)).ThenBy(v => v, StringComparer.Ordinal).ToList();
+                    if (!PreferredOrder.TryGetValue(jp.Name, out pref)) pref = new string[0];
+                    st.Values = jp.Values.Select((v, i) => Tuple.Create(v, i))
+                        .OrderBy(t => t.Item1 == jp.Default ? -1 : Array.IndexOf(pref, t.Item1) < 0 ? 100 : Array.IndexOf(pref, t.Item1)).ThenBy(t => t.Item2)
+                        .Select(t => t.Item1).ToList();
                 }
-                if (st.Values.Count > 16) Warn("block " + bi.Id + ": state " + p + " has " + st.Values.Count + " values (Bedrock allows 16)");
+                if (st.Values.Count > 16) Warn("block " + bi.Id + ": state " + jp.Name + " has " + st.Values.Count + " values (Bedrock allows 16)");
                 bi.States.Add(st);
                 bi.Permutations *= st.Values.Count;
             }
@@ -326,11 +307,11 @@ namespace GfImport
                           .Set("size", J.Arr(size.Select(s => J.Num(Math.Round(s, 4)))));
         }
 
-        void SetShape(J comps, Visual v, BlockInfo bi, int x, int y, bool root)
+        void SetShape(J comps, Visual v, BlockInfo bi, int x, int y, bool root, bool explicitRotation)
         {
             comps.Set("minecraft:geometry", v.Geometry.Clone());
             comps.Set("minecraft:material_instances", v.Materials.Clone());
-            if (x != 0 || y != 0)
+            if (x != 0 || y != 0 || explicitRotation)
                 comps.Set("minecraft:transformation", J.Obj().Set("rotation", J.Arr(new[] { J.Num((360 - x) % 360), J.Num((360 - y) % 360), J.Num(0) })));
             var b = RotateBounds(v.Bounds, x, y);
             if (b != null && !(b[0] == 0 && b[1] == 0 && b[2] == 0 && b[3] == 16 && b[4] == 16 && b[5] == 16))
@@ -375,10 +356,42 @@ namespace GfImport
                 else comps.Set("minecraft:destructible_by_mining", J.Obj().Set("seconds_to_destroy", Math.Round(jb.Hardness, 4)));
                 double res = jb.Resistance < 0 ? jb.Hardness : jb.Resistance;
                 comps.Set("minecraft:destructible_by_explosion", jb.Unbreakable || res >= 3600000 ? (J)J.Bool(false) : J.Obj().Set("explosion_resistance", Math.Round(Math.Max(0, res), 4)));
-                if (jb.Light > 0) comps.Set("minecraft:light_emission", Math.Min(15, jb.Light));
+                // light: a constant, or a function of the block's states (one permutation per other light level)
+                var lightPerms = new List<J>();
+                var lf = Light.Of(this, bi, Warn);
+                if (lf != null)
+                {
+                    bi.LightSource = lf.Source;
+                    var defaults = bi.States.ToDictionary(s => s.Java, s => s.Values[0], StringComparer.Ordinal);
+                    int rootLight = lf.Eval(defaults);
+                    if (rootLight > 0) comps.Set("minecraft:light_emission", rootLight);
+                    var byLevel = new SortedDictionary<int, List<string>>();
+                    IEnumerable<Dictionary<string, string>> combos = new[] { new Dictionary<string, string>(defaults, StringComparer.Ordinal) };
+                    foreach (var p in lf.Reads)
+                    {
+                        var st = bi.States.First(s => s.Java == p.Name);
+                        combos = combos.SelectMany(c => st.Values.Select(v => { var n = new Dictionary<string, string>(c, StringComparer.Ordinal); n[p.Name] = v; return n; })).ToList();
+                    }
+                    foreach (var c in combos)
+                    {
+                        int l = lf.Eval(c);
+                        if (l == rootLight) continue;
+                        List<string> conds;
+                        if (!byLevel.TryGetValue(l, out conds)) byLevel[l] = conds = new List<string>();
+                        conds.Add(string.Join(" && ", lf.Reads.Select(p => StateExpr(bi, p.Name, c[p.Name]))));
+                    }
+                    foreach (var kv in byLevel)
+                        lightPerms.Add(J.Obj().Set("condition", kv.Value.Count == 1 ? kv.Value[0] : string.Join(" || ", kv.Value.Select(x => "(" + x + ")")))
+                            .Set("components", J.Obj().Set("minecraft:light_emission", kv.Key)));
+                }
+                else if (jb.Light > 0) comps.Set("minecraft:light_emission", Math.Min(15, jb.Light));
+                else if (jb.DynamicLight) Warn("block " + bi.Id + ": state-dependent light not translated (" + (jb.LightExpr ?? "?") + ")");
                 string hex;
                 if (jb.MapColor != null && MapColors.TryGetValue(jb.MapColor, out hex)) comps.Set("minecraft:map_color", hex);
-                if (jb.Flammable) comps.Set("minecraft:flammable", J.Obj().Set("catch_chance_modifier", 5).Set("destroy_chance_modifier", 20));
+                // flammability: only the blocks TF registers with FireBlock.setFlammable (encouragement = Bedrock's
+                // catch chance, flammability = its destroy chance)
+                if (jb.FireEncouragement >= 0)
+                    comps.Set("minecraft:flammable", J.Obj().Set("catch_chance_modifier", jb.FireEncouragement).Set("destroy_chance_modifier", jb.FireFlammability));
                 if (jb.Friction > 0 && Math.Abs(jb.Friction - 0.6) > 1e-6) comps.Set("minecraft:friction", Math.Round(Math.Max(0, Math.Min(0.9, 1 - jb.Friction)), 4));
                 if (jb.NoCollision) comps.Set("minecraft:collision_box", false);
 
@@ -388,6 +401,9 @@ namespace GfImport
                     var keys = bs["variants"].Keys.ToList();
                     var seenConds = new HashSet<string>();
                     var variantVisuals = new List<Tuple<string, Visual, int, int>>();
+                    // the default state (the first value of every state): its variant is the root visual
+                    var defaults = bi.States.ToDictionary(s => s.Java, s => s.Values[0], StringComparer.Ordinal);
+                    int defaultIndex = -1;
                     foreach (var key in keys)
                     {
                         var vj = bs["variants"][key];
@@ -395,25 +411,32 @@ namespace GfImport
                         var m = ModelLib.Get(vj["model"].AsString());
                         int x = vj["x"] != null ? (int)vj["x"].AsDouble() : 0, y = vj["y"] != null ? (int)vj["y"].AsDouble() : 0;
                         var vis = VisualOf(m, bi.Owner, bi.Id);
-                        var conds = ParseVariantKey(key).Select(kv => StateExpr(bi, kv.Key, kv.Value)).Where(c => c != null).ToList();
+                        var kvs = ParseVariantKey(key);
+                        var conds = kvs.Select(kv => StateExpr(bi, kv.Key, kv.Value)).Where(c => c != null).ToList();
                         string cond = conds.Count == 0 ? "" : string.Join(" && ", conds);
                         if (!seenConds.Add(cond)) continue;
+                        string dv;
+                        if (defaultIndex < 0 && kvs.All(kv => !defaults.TryGetValue(kv.Key, out dv) || dv == kv.Value)) defaultIndex = variantVisuals.Count;
                         variantVisuals.Add(Tuple.Create(cond, vis, x, y));
                         if (bi.Particle == null) bi.Particle = m.Particle;
                     }
                     bool uniform = variantVisuals.Select(t => t.Item2.Geometry.ToCompact() + t.Item2.Materials.ToCompact() + t.Item3 + "," + t.Item4).Distinct().Count() == 1;
                     if (variantVisuals.Count > 0)
                     {
-                        var first = variantVisuals[0];
+                        var first = variantVisuals[Math.Max(0, defaultIndex)];
                         rootVisual = first.Item2;
-                        SetShape(comps, first.Item2, bi, first.Item3, first.Item4, true);
+                        SetShape(comps, first.Item2, bi, first.Item3, first.Item4, true, false);
                         if (!uniform)
                         {
+                            // a permutation replaces only the components it names: every permutation of a block
+                            // with a rotated variant states its own rotation ([0, 0, 0] included), so no state
+                            // inherits the root's
+                            bool rotated = variantVisuals.Any(t => t.Item3 != 0 || t.Item4 != 0);
                             foreach (var t in variantVisuals)
                             {
                                 if (t.Item1 == "") continue;
                                 var pc = J.Obj();
-                                SetShape(pc, t.Item2, bi, t.Item3, t.Item4, false);
+                                SetShape(pc, t.Item2, bi, t.Item3, t.Item4, false, rotated);
                                 perms.Add(J.Obj().Set("condition", t.Item1).Set("components", pc));
                             }
                         }
@@ -472,6 +495,8 @@ namespace GfImport
                 bool isFull = rootVisual != null && rootVisual.Full && rootVisual.Bounds == null;
                 if (jb.NoOcclusion || !isFull) comps.Set("minecraft:light_dampening", 0);
 
+                // light permutations come last: they only add minecraft:light_emission to the matching visual one
+                foreach (var lp in lightPerms) perms.Add(lp);
                 var block = J.Obj().Set("description", desc).Set("components", comps);
                 if (perms.Count > 0) block.Set("permutations", perms);
                 var doc = J.Obj().Set("format_version", BlockFormat).Set("minecraft:block", block);
@@ -506,35 +531,50 @@ namespace GfImport
             sb.Append("Generated by `tools/import/run.ps1` (F1) from TF 4.8 (`9e40a757`): the Bedrock block states of every TF block. Rule R1: these\n");
             sb.Append("names and values are frozen; later units may only **add** states (or values), never rename or remove one.\n\n");
             sb.Append("Mapping rules (see [import.md](import.md)):\n\n");
-            sb.Append("- Every Java block-state property `p` becomes the Bedrock state `twilightforest:p` with the same values.\n");
+            sb.Append("- The properties are TF's own: every property the block's Java class chain declares in `createBlockStateDefinition`\n");
+            sb.Append("  (`builder.add(...)` of each TF class, following `super` calls, then the full property set of the vanilla class it\n");
+            sb.Append("  extends) becomes the Bedrock state `twilightforest:p` with the Java property's values (`IntegerProperty` ranges,\n");
+            sb.Append("  every constant of an `EnumProperty`'s enum). The import checks them against a hand-written golden\n");
+            sb.Append("  (`tools/import/expected-states.json`) and against the values TF's blockstate file uses.\n");
             sb.Append("- Booleans are `[false, true]`. Integer properties are listed as `[0, 1, ..., max]` (Bedrock reads an integer state by\n");
             sb.Append("  its position, so the list always starts at 0); the Java value equals the Bedrock value, and values below the Java\n");
             sb.Append("  minimum (for example `distance` 0, `candles` 0) are unused.\n");
-            sb.Append("- Enum values keep Java's names; the first value is the default state.\n");
+            sb.Append("- Enum values keep Java's names. The first value is the default state: TF's default (`registerDefaultState`), else\n");
+            sb.Append("  the conventional order of the shared vanilla names (`facing` north, `axis` y, ...), else Java's declaration order.\n");
+            sb.Append("- The default state of a boolean is `false` and of an integer `0` on Bedrock. Where TF's default differs (Java's\n");
+            sb.Append("  `StateDefinition.any()` makes an unset boolean `true`), the column *Java default* lists TF's value: the owner\n");
+            sb.Append("  sets it wherever TF uses `defaultBlockState()` (placement, world generation, structures).\n");
             sb.Append("- `waterlogged` is not a block state on Bedrock (water is a separate liquid layer): it is dropped.\n");
             sb.Append("- No placement traits (`minecraft:placement_direction` / `placement_position`) are used: the families kit (F11)\n");
             sb.Append("  and the owning units set the states on placement, exactly as TF's `getStateForPlacement`.\n");
-            sb.Append("- Source `blockstate`: the property appears in TF's blockstate file; `class`: declared by the vanilla block class\n");
-            sb.Append("  the TF block extends (for example `LeavesBlock`: `distance`, `persistent`).\n\n");
+            sb.Append("- Source `blockstate`: the property appears in TF's blockstate file; `class`: only the Java class declares it\n");
+            sb.Append("  (block entity renderers, vanilla bases such as `LeavesBlock`: `distance`, `persistent`).\n\n");
             long total = BlockInfos.Values.Sum(b => b.Permutations);
             sb.AppendFormat(CultureInfo.InvariantCulture, "{0} blocks, {1} with states, {2} permutations in total.\n\n", BlockInfos.Count, BlockInfos.Values.Count(b => b.States.Count > 0), total);
-            sb.Append("| Block | Owner | Java class | States | Permutations |\n|---|---|---|---|---|\n");
+            sb.Append("| Block | Owner | Java class | States | Java default | Permutations |\n|---|---|---|---|---|---|\n");
             foreach (var bi in BlockInfos.Values)
             {
                 string states = bi.States.Count == 0 ? "-" : string.Join("<br>", bi.States.Select(s =>
                     "`" + s.Bedrock + "`: " + string.Join(", ", s.Values) + (s.Source == "class" ? " (class)" : "")));
+                // TF's default where it is not the Bedrock default (the first value)
+                var differs = bi.States.Select(s => new { s, j = bi.JavaProps.FirstOrDefault(p => p.Name == s.Java) })
+                    .Where(x => x.j != null && x.j.Default != null && x.j.Default != x.s.Values[0])
+                    .Select(x => "`" + x.s.Java + "=" + x.j.Default + "`").ToList();
                 string cls = bi.Chain.Count > 1 ? bi.Chain[0] + " < " + bi.Chain.Last() : bi.Chain.FirstOrDefault() ?? "?";
-                sb.AppendFormat(CultureInfo.InvariantCulture, "| `twilightforest:{0}` | {1} | {2} | {3} | {4} |\n", bi.Id, bi.Owner, cls, states, bi.Permutations);
+                sb.AppendFormat(CultureInfo.InvariantCulture, "| `twilightforest:{0}` | {1} | {2} | {3} | {4} | {5} |\n", bi.Id, bi.Owner, cls, states,
+                    differs.Count == 0 ? "-" : string.Join("<br>", differs), bi.Permutations);
             }
             return sb.ToString();
         }
 
         // ---- tables -------------------------------------------------------------------------------------
 
-        static string BedrockSound(string javaSound)
+        string BedrockSound(string javaSound)
         {
             string s;
-            return SoundMap.TryGetValue(javaSound ?? "STONE", out s) ? s : "stone";
+            if (SoundMap.TryGetValue(javaSound ?? "STONE", out s)) return s;
+            Warn("Java sound type " + javaSound + " has no Bedrock block sound (Blocks.SoundMap): stone used");
+            return "stone";
         }
 
         static readonly Dictionary<string, string> SoundMap = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -548,7 +588,8 @@ namespace GfImport
             { "NETHER_BRICKS", "nether_brick" }, { "BONE_BLOCK", "bone_block" }, { "NETHERITE_BLOCK", "netherite" }, { "CHAIN", "chain" },
             { "CANDLE", "candle" }, { "AMETHYST", "amethyst_block" }, { "COPPER", "copper" }, { "MOSS_CARPET", "moss_carpet" }, { "MOSS", "moss_block" },
             { "HANGING_ROOTS", "hanging_roots" }, { "AZALEA_LEAVES", "azalea_leaves" }, { "AZALEA", "azalea" }, { "DEEPSLATE", "deepslate" },
-            { "DEEPSLATE_BRICKS", "deepslate_bricks" }, { "MUD", "mud" }, { "MUD_BRICKS", "mud_bricks" }, { "PACKED_MUD", "packed_mud" },
+            { "DEEPSLATE_BRICKS", "deepslate_bricks" }, { "DEEPSLATE_TILES", "deepslate_bricks" }, { "ANCIENT_DEBRIS", "ancient_debris" },
+            { "FLOWERING_AZALEA", "azalea" }, { "BAMBOO_WOOD", "bamboo_wood" }, { "MUD", "mud" }, { "MUD_BRICKS", "mud_bricks" }, { "PACKED_MUD", "packed_mud" },
             { "HANGING_SIGN", "hanging_sign" }, { "NETHER_WOOD", "nether_wood" }, { "CHERRY_WOOD", "cherry_wood" }, { "CHERRY_LEAVES", "cherry_leaves" },
             { "CHISELED_BOOKSHELF", "chiseled_bookshelf" }, { "LILY_PAD", "grass" }, { "SPONGE", "sponge" }, { "CALCITE", "calcite" }, { "TUFF", "tuff" },
             { "DRIPSTONE_BLOCK", "dripstone_block" }, { "MANGROVE_ROOTS", "mangrove_roots" }, { "FROGLIGHT", "froglight" },

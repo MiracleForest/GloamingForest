@@ -19,10 +19,10 @@
         "explosion_resistance": 10
       },
       "minecraft:map_color": "#976d4d",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.slider",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_slider_h_90",
+          "texture": "tf_block_slider_v",
           "render_method": "alpha_test"
         },
         "end": {
@@ -30,20 +30,17 @@
           "render_method": "alpha_test"
         },
         "side": {
-          "texture": "tf_block_slider_h_90",
+          "texture": "tf_block_slider_v",
           "render_method": "alpha_test"
         }
       },
-      "minecraft:transformation": {
-        "rotation": [270, 270, 0]
-      },
       "minecraft:collision_box": {
-        "origin": [-8, 5, -3],
-        "size": [16, 6, 6]
+        "origin": [-3, 0, -3],
+        "size": [6, 16, 6]
       },
       "minecraft:selection_box": {
-        "origin": [-8, 5, -3],
-        "size": [16, 6, 6]
+        "origin": [-3, 0, -3],
+        "size": [6, 16, 6]
       },
       "minecraft:light_dampening": 0
     },
@@ -190,6 +187,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-3, 0, -3],
             "size": [6, 16, 6]
@@ -217,6 +217,9 @@
               "texture": "tf_block_slider_v",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-3, 0, -3],
@@ -246,6 +249,9 @@
               "render_method": "alpha_test"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": {
             "origin": [-3, 0, -3],
             "size": [6, 16, 6]
@@ -273,6 +279,9 @@
               "texture": "tf_block_slider_v",
               "render_method": "alpha_test"
             }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
           },
           "minecraft:collision_box": {
             "origin": [-3, 0, -3],

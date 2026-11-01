@@ -5,6 +5,10 @@
       "identifier": "twilightforest:brazier",
       "menu_category": {
         "category": "none"
+      },
+      "states": {
+        "twilightforest:half": ["lower", "upper"],
+        "twilightforest:light": ["off", "dim", "half", "bright", "full"]
       }
     },
     "components": {
@@ -21,6 +25,32 @@
           "render_method": "opaque"
         }
       }
-    }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'dim'",
+        "components": {
+          "minecraft:light_emission": 4
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'half'",
+        "components": {
+          "minecraft:light_emission": 6
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'bright'",
+        "components": {
+          "minecraft:light_emission": 9
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'full'",
+        "components": {
+          "minecraft:light_emission": 12
+        }
+      }
+    ]
   }
 }

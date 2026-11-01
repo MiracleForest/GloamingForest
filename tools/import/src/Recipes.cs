@@ -29,6 +29,33 @@ namespace GfImport
             if (ing == null) return res;
             if (ing.IsArr) { foreach (var x in ing.A) res.AddRange(Alternatives(x)); return res; }
             if (ing["item"] != null) { res.Add(J.Obj().Set("item", ing["item"].AsString())); return res; }
+            string itype = ing["type"] != null ? ing["type"].AsString() : null;
+            if (itype == "neoforge:difference" || itype == "neoforge:intersection" || itype == "neoforge:compound")
+            {
+                // NeoForge's set ingredients over item lists: base minus subtracted, every child, any child
+                List<string> set;
+                if (itype == "neoforge:difference") set = IngredientItems(ing["base"]).Except(IngredientItems(ing["subtracted"])).ToList();
+                else
+                {
+                    var kids = ing["children"] != null && ing["children"].IsArr ? ing["children"].A.Select(IngredientItems).ToList() : new List<List<string>>();
+                    set = kids.Count == 0 ? new List<string>()
+                        : itype == "neoforge:compound" ? kids.SelectMany(k => k).Distinct().ToList() : kids.Aggregate((a, b) => a.Intersect(b).ToList());
+                }
+                foreach (var s in set) res.Add(J.Obj().Set("item", s));
+                return res;
+            }
+            if (itype == "neoforge:components")
+            {
+                // items with data components: Bedrock has the water bottle as potion data 0 (the only one TF uses)
+                var potion = ing["components"] != null && ing["components"]["minecraft:potion_contents"] != null ? ing["components"]["minecraft:potion_contents"]["potion"] : null;
+                string it = ing["items"] != null && ing["items"].IsStr ? ing["items"].AsString() : null;
+                if (it == "minecraft:potion" && potion != null && potion.AsString() == "minecraft:water" && ing["components"].Count == 1)
+                {
+                    res.Add(J.Obj().Set("item", "minecraft:potion").Set("data", 0));
+                    return res;
+                }
+            }
+            if (ing["tag"] == null) { Warn("recipe ingredient " + ing.ToCompact() + " has no Bedrock equivalent (custom ingredient type)"); return res; }
             if (ing["tag"] != null)
             {
                 string tag = ing["tag"].AsString();
@@ -42,6 +69,24 @@ namespace GfImport
                 if (members.Count == 0) Warn("recipe ingredient tag " + tag + " has no known members");
             }
             return res;
+        }
+
+        /// <summary>The items a Java ingredient matches (tags expanded to their members, never kept as Bedrock tags),
+        /// for NeoForge's set ingredients; a tag whose members the import does not know is a warning.</summary>
+        List<string> IngredientItems(J ing)
+        {
+            var res = new List<string>();
+            if (ing == null) return res;
+            if (ing.IsArr) { foreach (var x in ing.A) res.AddRange(IngredientItems(x)); return res.Distinct().ToList(); }
+            if (ing["item"] != null) { res.Add(ing["item"].AsString()); return res; }
+            if (ing["tag"] != null)
+            {
+                var members = TagMembers(ing["tag"].AsString());
+                if (members.Count == 0) Warn("recipe ingredient tag " + ing["tag"].AsString() + " has no known members");
+                return members;
+            }
+            // nested set ingredients
+            return Alternatives(ing).Where(a => a["item"] != null).Select(a => a["item"].AsString()).Distinct().ToList();
         }
 
         /// <summary>A TF item with its own item JSON (so it can carry minecraft:tags).</summary>
@@ -97,6 +142,15 @@ namespace GfImport
             return arr;
         }
 
+        /// <summary>The vanilla-type recipes the import could not express on Bedrock (listed in the import log).</summary>
+        public readonly SortedSet<string> DroppedRecipes = new SortedSet<string>(StringComparer.Ordinal);
+
+        void Dropped(string id, string type, string why)
+        {
+            DroppedRecipes.Add(id);
+            Warn("recipe " + id + " (" + type + ") has no Bedrock recipe: " + why);
+        }
+
         static IEnumerable<List<T>> Cartesian<T>(List<List<T>> lists)
         {
             IEnumerable<List<T>> acc = new[] { new List<T>() };
@@ -129,6 +183,8 @@ namespace GfImport
                         }
                     }
                 }
+            Log.Add(DroppedRecipes.Count == 0 ? "every vanilla-type recipe has a Bedrock recipe"
+                : DroppedRecipes.Count + " vanilla-type recipe(s) without a Bedrock recipe: " + string.Join(", ", DroppedRecipes));
         }
 
         List<J> BedrockRecipes(string ns, string path, J r, string type)
@@ -151,7 +207,7 @@ namespace GfImport
                             pattern = pattern.Select(p => p.Replace(keys[i], to)).ToList();
                             keys[i] = to;
                         }
-                        if (alts.Any(a => a.Count == 0)) return outList;
+                        if (alts.Any(a => a.Count == 0)) { Dropped(id, type, "ingredient(s) " + string.Join(", ", keys.Where((k, i) => alts[i].Count == 0)) + " have no Bedrock item"); return outList; }
                         var combos = Cartesian(alts).Take(MaxRecipeExpansion + 1).ToList();
                         if (combos.Count > MaxRecipeExpansion) { Warn("recipe " + id + ": too many ingredient combinations, using the first alternatives"); combos = new List<List<J>> { alts.Select(a => a[0]).ToList() }; }
                         int n = 0;
@@ -170,7 +226,7 @@ namespace GfImport
                 case "minecraft:crafting_shapeless":
                     {
                         var alts = r["ingredients"].A.Select(Alternatives).ToList();
-                        if (alts.Any(a => a.Count == 0)) return outList;
+                        if (alts.Any(a => a.Count == 0)) { Dropped(id, type, "ingredient(s) " + string.Join(", ", r["ingredients"].A.Where((x, i) => alts[i].Count == 0).Select(x => x.ToCompact())) + " have no Bedrock item"); return outList; }
                         var combos = Cartesian(alts).Take(MaxRecipeExpansion + 1).ToList();
                         if (combos.Count > MaxRecipeExpansion) { Warn("recipe " + id + ": too many ingredient combinations, using the first alternatives"); combos = new List<List<J>> { alts.Select(a => a[0]).ToList() }; }
                         int n = 0;
@@ -187,6 +243,7 @@ namespace GfImport
                 case "minecraft:stonecutting":
                     {
                         var alts = Alternatives(r["ingredient"]);
+                        if (alts.Count == 0) Dropped(id, type, "the ingredient has no Bedrock item");
                         int n = 0;
                         foreach (var a in alts)
                         {
@@ -207,7 +264,7 @@ namespace GfImport
                         else { tags.Add("campfire"); tags.Add("soul_campfire"); }
                         // Bedrock furnace recipes take one item: tags become one recipe per member
                         var alts = Alternatives(r["ingredient"]).Where(a => a["item"] != null).ToList();
-                        if (alts.Count == 0) Warn("recipe " + id + ": no item input for a Bedrock furnace recipe (Java ingredient " + r["ingredient"].ToCompact() + ")");
+                        if (alts.Count == 0) Dropped(id, type, "no item input for a Bedrock furnace recipe (Java ingredient " + r["ingredient"].ToCompact() + ")");
                         int n = 0;
                         foreach (var a in alts)
                         {
@@ -223,7 +280,7 @@ namespace GfImport
                 case "minecraft:smithing_transform":
                     {
                         var t = Alternatives(r["template"]); var b = Alternatives(r["base"]); var a = Alternatives(r["addition"]);
-                        if (t.Count == 0 || b.Count == 0 || a.Count == 0) return outList;
+                        if (t.Count == 0 || b.Count == 0 || a.Count == 0) { Dropped(id, type, "template, base or addition has no Bedrock item"); return outList; }
                         var body = J.Obj().Set("description", J.Obj().Set("identifier", id)).Set("tags", J.Arr().Add("smithing_table"))
                             .Set("template", t[0]["item"] != null ? t[0]["item"].AsString() : t[0]["tag"].AsString())
                             .Set("base", b[0]["item"] != null ? b[0]["item"].AsString() : b[0]["tag"].AsString())

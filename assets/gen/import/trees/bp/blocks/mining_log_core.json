@@ -8,7 +8,7 @@
       },
       "states": {
         "twilightforest:active": [false, true],
-        "twilightforest:axis": ["y", "x", "z"]
+        "twilightforest:axis": ["x", "y", "z"]
       }
     },
     "components": {
@@ -130,6 +130,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
@@ -250,6 +253,9 @@
               "render_method": "opaque"
             }
           },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
         }
@@ -293,6 +299,12 @@
           },
           "minecraft:collision_box": true,
           "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:light_emission": 15
         }
       }
     ]

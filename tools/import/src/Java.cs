@@ -19,6 +19,8 @@ namespace GfImport
         public bool DynamicLight, NoCollision, NoOcclusion, Instabreak, Unbreakable, Flammable, Replaceable;
         public string Sound = "STONE", MapColor;
         public double Friction = -1;
+        public int FireEncouragement = -1, FireFlammability = -1;   // FireBlock.setFlammable (RegistrationEvents)
+        public string LightExpr;   // the lightLevel lambda body when it is not a constant
         public string CopyOf;      // TF constant or "Blocks.X"
     }
 
@@ -26,6 +28,7 @@ namespace GfImport
     {
         public string Id, Const, Cls, Stmt;
         public int StackSize = 64, Durability = 0;
+        public List<string> Chain = new List<string>();
         public bool FireResistant;
         public string Rarity;
         public bool Food;
@@ -122,6 +125,8 @@ namespace GfImport
                     resolve(src);
                     b.Hardness = src.Hardness; b.Resistance = src.Resistance; b.Sound = src.Sound; b.MapColor = src.MapColor;
                     b.Light = src.Light; b.Flammable = src.Flammable; b.Unbreakable = src.Unbreakable; b.Instabreak = src.Instabreak;
+                    b.LightExpr = src.LightExpr; b.DynamicLight = src.DynamicLight; b.Friction = src.Friction;
+                    b.NoCollision = src.NoCollision; b.NoOcclusion = src.NoOcclusion;
                     ParseProps(b, after, false); // explicit settings after the copy win
                 }
                 else if (b.CopyOf.StartsWith("Blocks.", StringComparison.Ordinal))
@@ -131,29 +136,105 @@ namespace GfImport
                 }
             };
             foreach (var b in res.Values) resolve(b);
+            // flammability: only the blocks TF registers with FireBlock.setFlammable(block, encouragement,
+            // flammability) in events/RegistrationEvents.java burn (ignitedByLava alone does not make a block
+            // burn in Java)
+            string reg = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "events", "RegistrationEvents.java")));
+            foreach (Match fm in Regex.Matches(reg, @"\.setFlammable\(\s*TFBlocks\.(\w+)(?:\.get\(\))?\s*,\s*(\d+)\s*,\s*(\d+)\s*\)"))
+            {
+                JBlock b;
+                if (!byConst.TryGetValue(fm.Groups[1].Value, out b)) { ctx.Warn("setFlammable: unknown block constant " + fm.Groups[1].Value); continue; }
+                b.FireEncouragement = int.Parse(fm.Groups[2].Value, CultureInfo.InvariantCulture);
+                b.FireFlammability = int.Parse(fm.Groups[3].Value, CultureInfo.InvariantCulture);
+            }
+            // (HARDENED_DARK_LEAVES is registered twice, with the same values)
+            int calls = Regex.Matches(reg, @"\.setFlammable\(\s*([\w.]+)").Cast<Match>().Select(x => x.Groups[1].Value).Distinct().Count();
+            int parsed = res.Values.Count(b => b.FireEncouragement >= 0);
+            if (calls != parsed) ctx.Warn("RegistrationEvents: setFlammable registers " + calls + " blocks, " + parsed + " parsed");
+            foreach (var v in unknownVanilla) ctx.Warn("TF copies the properties of Blocks." + v + ", which Java.VanillaProps does not know");
+            foreach (var v in unparsedStrength) ctx.Warn("strength not parsed: " + v);
             return res;
         }
 
+        /// <summary>A float expression of TF's block properties: a literal, or a product / quotient of literals
+        /// ("0.2F * 64F").</summary>
+        public static bool TryFloat(string expr, out double v)
+        {
+            v = 0;
+            expr = expr.Trim();
+            var parts = Regex.Split(expr, @"\s*([*/])\s*");
+            double acc = 0;
+            for (int i = 0; i < parts.Length; i += 2)
+            {
+                double x;
+                if (!double.TryParse(parts[i].TrimEnd('F', 'f', 'D', 'd'), NumberStyles.Float, CultureInfo.InvariantCulture, out x)) return false;
+                if (i == 0) acc = x;
+                else if (parts[i - 1] == "*") acc *= x;
+                else acc /= x;
+            }
+            v = acc;
+            return true;
+        }
+
+        // Minecraft 1.21.1 map colours of the vanilla wood sets: planks (= stripped wood), wood (bark)
+        static readonly Dictionary<string, string[]> WoodColors = new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            // planks, wood (bark) / hyphae, stripped wood / hyphae
+            { "OAK", new[] { "WOOD", "WOOD", "WOOD" } }, { "SPRUCE", new[] { "PODZOL", "PODZOL", "PODZOL" } }, { "BIRCH", new[] { "SAND", "SAND", "SAND" } },
+            { "JUNGLE", new[] { "DIRT", "DIRT", "DIRT" } }, { "ACACIA", new[] { "COLOR_ORANGE", "COLOR_GRAY", "COLOR_ORANGE" } },
+            { "CHERRY", new[] { "TERRACOTTA_WHITE", "TERRACOTTA_GRAY", "TERRACOTTA_PINK" } }, { "DARK_OAK", new[] { "COLOR_BROWN", "COLOR_BROWN", "COLOR_BROWN" } },
+            { "MANGROVE", new[] { "COLOR_RED", "COLOR_RED", "COLOR_RED" } }, { "BAMBOO", new[] { "COLOR_YELLOW", "COLOR_YELLOW", "COLOR_YELLOW" } },
+            { "CRIMSON", new[] { "CRIMSON_STEM", "CRIMSON_HYPHAE", "CRIMSON_HYPHAE" } }, { "WARPED", new[] { "WARPED_STEM", "WARPED_HYPHAE", "WARPED_HYPHAE" } },
+        };
+
         static void VanillaProps(JBlock b, string v)
         {
-            // the vanilla blocks TF copies properties from (Minecraft 1.21.1 values)
-            if (v == "SPAWNER") { b.Hardness = 5; b.Resistance = 5; b.Sound = "METAL"; b.MapColor = "STONE"; }
-            else if (v == "FLOWER_POT") { b.Hardness = 0; b.Resistance = 0; b.Instabreak = true; b.Sound = "STONE"; }
-            else if (v.EndsWith("_HEAD") || v.EndsWith("_SKULL")) { b.Hardness = 1; b.Resistance = 1; b.Sound = "STONE"; }
-            else if (v.EndsWith("_CARPET")) { b.Hardness = 0.1; b.Resistance = 0.1; b.Sound = "WOOL"; b.Flammable = true; }
-            else if (v.EndsWith("_PLANKS")) { b.Hardness = 2; b.Resistance = 3; b.Sound = "WOOD"; b.Flammable = true; b.MapColor = "WOOD"; }
-            else if (v.EndsWith("_LOG") || v.EndsWith("_WOOD")) { b.Hardness = 2; b.Resistance = 2; b.Sound = "WOOD"; b.Flammable = true; b.MapColor = "WOOD"; }
-            else if (v == "OAK_SIGN" || v == "OAK_WALL_SIGN" || v.EndsWith("HANGING_SIGN")) { b.Hardness = 1; b.Resistance = 1; b.Sound = "WOOD"; b.NoCollision = true; b.Flammable = true; }
-            else if (v == "CHEST" || v == "TRAPPED_CHEST") { b.Hardness = 2.5; b.Resistance = 2.5; b.Sound = "WOOD"; b.Flammable = true; }
-            else if (v == "BOOKSHELF") { b.Hardness = 1.5; b.Resistance = 1.5; b.Sound = "WOOD"; b.Flammable = true; }
-            else if (v == "LADDER") { b.Hardness = 0.4; b.Resistance = 0.4; b.Sound = "LADDER"; }
-            else if (v == "VINE") { b.Hardness = 0.2; b.Resistance = 0.2; b.Sound = "VINE"; b.NoCollision = true; }
-            else if (v == "COBBLESTONE" || v == "STONE" || v == "STONE_BRICKS") { b.Hardness = 2; b.Resistance = 6; b.Sound = "STONE"; }
-            else if (v == "OBSIDIAN") { b.Hardness = 50; b.Resistance = 1200; b.Sound = "STONE"; }
-            else if (v == "TORCH" || v == "WALL_TORCH") { b.Hardness = 0; b.Instabreak = true; b.Light = 14; b.Sound = "WOOD"; b.NoCollision = true; }
-            else if (v == "MOSS_CARPET") { b.Hardness = 0.1; b.Sound = "MOSS_CARPET"; }
-            else if (v == "AIR") { b.Hardness = 0; b.NoCollision = true; }
+            // the vanilla blocks TF copies properties from (Minecraft 1.21.1 Blocks.java values); flammability is
+            // not a block property in Java (FireBlock.setFlammable, see Blocks())
+            b.Hardness = 0; b.Resistance = 0; b.Sound = "STONE"; b.MapColor = null; b.Friction = -1; b.Light = 0;
+            b.LightExpr = null; b.DynamicLight = false;
+            b.NoCollision = false; b.NoOcclusion = false; b.Instabreak = false; b.Unbreakable = false;
+            string wood = WoodColors.Keys.Where(k => v.StartsWith(k + "_", StringComparison.Ordinal) || v.StartsWith("STRIPPED_" + k + "_", StringComparison.Ordinal))
+                .OrderByDescending(k => k.Length).FirstOrDefault();
+            bool nether = wood == "CRIMSON" || wood == "WARPED";
+            if (v == "SPAWNER") { b.Hardness = 5; b.Resistance = 5; b.Sound = "METAL"; b.MapColor = "STONE"; b.NoOcclusion = true; }
+            else if (v == "FLOWER_POT") { b.Instabreak = true; b.NoOcclusion = true; }
+            else if (v.EndsWith("_HEAD") || v.EndsWith("_SKULL")) { b.Hardness = 1; b.Resistance = 1; }
+            else if (v.EndsWith("_CARPET") && v != "MOSS_CARPET") { b.Hardness = 0.1; b.Resistance = 0.1; b.Sound = "WOOL"; b.MapColor = "COLOR_" + v.Substring(0, v.Length - 7); }
+            else if (wood != null && v.EndsWith("_PLANKS"))
+            {
+                b.Hardness = 2; b.Resistance = 3; b.MapColor = WoodColors[wood][0];
+                b.Sound = nether ? "NETHER_WOOD" : wood == "CHERRY" ? "CHERRY_WOOD" : wood == "BAMBOO" ? "BAMBOO_WOOD" : "WOOD";
+            }
+            else if (wood != null && (v.EndsWith("_WOOD") || v.EndsWith("_LOG") || v.EndsWith("_HYPHAE") || v.EndsWith("_STEM")))
+            {
+                // logs / wood / hyphae: strength 2.0 (TF copies only wood and hyphae, logs use logProperties)
+                bool stripped = v.StartsWith("STRIPPED_", StringComparison.Ordinal);
+                bool bark = v.EndsWith("_WOOD") || v.EndsWith("_HYPHAE");
+                b.Hardness = 2; b.Resistance = 2;
+                b.MapColor = !bark ? WoodColors[wood][0] : WoodColors[wood][stripped ? 2 : 1];
+                b.Sound = nether ? "STEM" : wood == "CHERRY" ? "CHERRY_WOOD" : wood == "BAMBOO" ? "BAMBOO_WOOD" : "WOOD";
+            }
+            else if (v == "OAK_SIGN" || v == "OAK_WALL_SIGN" || v.EndsWith("HANGING_SIGN")) { b.Hardness = 1; b.Resistance = 1; b.Sound = "WOOD"; b.NoCollision = true; b.MapColor = "WOOD"; }
+            else if (v == "CHEST" || v == "TRAPPED_CHEST") { b.Hardness = 2.5; b.Resistance = 2.5; b.Sound = "WOOD"; b.MapColor = "WOOD"; }
+            else if (v == "BOOKSHELF") { b.Hardness = 1.5; b.Resistance = 1.5; b.Sound = "WOOD"; b.MapColor = "WOOD"; }
+            else if (v == "LADDER") { b.Hardness = 0.4; b.Resistance = 0.4; b.Sound = "LADDER"; b.NoOcclusion = true; }
+            else if (v == "VINE") { b.Hardness = 0.2; b.Resistance = 0.2; b.Sound = "VINE"; b.NoCollision = true; b.MapColor = "PLANT"; }
+            else if (v == "COBBLESTONE" || v == "STONE_BRICKS") { b.Hardness = 2; b.Resistance = 6; b.MapColor = "STONE"; }
+            else if (v == "STONE") { b.Hardness = 1.5; b.Resistance = 6; b.MapColor = "STONE"; }
+            else if (v == "OBSIDIAN") { b.Hardness = 50; b.Resistance = 1200; b.MapColor = "COLOR_BLACK"; }
+            else if (v == "GLASS") { b.Hardness = 0.3; b.Resistance = 0.3; b.Sound = "GLASS"; b.NoOcclusion = true; }
+            else if (v == "SLIME_BLOCK") { b.Friction = 0.8; b.Sound = "SLIME_BLOCK"; b.NoOcclusion = true; b.MapColor = "GRASS"; }
+            else if (v == "OAK_LEAVES" || v == "SPRUCE_LEAVES" || v == "BIRCH_LEAVES" || v == "JUNGLE_LEAVES" || v == "ACACIA_LEAVES" || v == "DARK_OAK_LEAVES" || v == "MANGROVE_LEAVES")
+            { b.Hardness = 0.2; b.Resistance = 0.2; b.Sound = "GRASS"; b.NoOcclusion = true; b.MapColor = "PLANT"; }
+            else if (v == "TORCH" || v == "WALL_TORCH") { b.Instabreak = true; b.Light = 14; b.Sound = "WOOD"; b.NoCollision = true; }
+            else if (v == "MOSS_CARPET") { b.Hardness = 0.1; b.Resistance = 0.1; b.Sound = "MOSS_CARPET"; b.MapColor = "COLOR_GREEN"; }
+            else if (v == "AIR") { b.NoCollision = true; }
+            else unknownVanilla.Add(v);
         }
+
+        static readonly SortedSet<string> unknownVanilla = new SortedSet<string>(StringComparer.Ordinal);
+        static readonly SortedSet<string> unparsedStrength = new SortedSet<string>(StringComparer.Ordinal);
 
         static void ParseProps(JBlock b, string s, bool resetCopy = true)
         {
@@ -163,20 +244,27 @@ namespace GfImport
                 m = Regex.Match(s, @"of(?:Full|Legacy)Copy\(\s*([\w.]+?)(?:\.get\(\))?\s*\)");
                 if (m.Success) b.CopyOf = m.Groups[1].Value.StartsWith("TFBlocks.") ? m.Groups[1].Value.Substring(9) : m.Groups[1].Value;
             }
-            foreach (Match sm in Regex.Matches(s, @"\.strength\(\s*(-?[\d.]+F?)\s*(?:,\s*(-?[\d.]+F?))?\s*\)"))
+            // strength(h[, r]) / destroyTime(h) / explosionResistance(r): literals or products of literals ("0.2F * 64.0F")
+            const string num = @"-?[\d.]+[FfDd]?(?:\s*[*/]\s*[\d.]+[FfDd]?)*";
+            foreach (Match sm in Regex.Matches(s, @"\.strength\(\s*(" + num + @")\s*(?:,\s*(" + num + @"))?\s*\)"))
             {
-                b.Hardness = F(sm.Groups[1].Value);
-                b.Resistance = sm.Groups[2].Success ? F(sm.Groups[2].Value) : b.Hardness;
+                double h, r;
+                if (!TryFloat(sm.Groups[1].Value, out h)) continue;
+                b.Hardness = h;
+                b.Resistance = sm.Groups[2].Success && TryFloat(sm.Groups[2].Value, out r) ? r : h;
             }
-            m = Regex.Match(s, @"\.destroyTime\(\s*(-?[\d.]+F?)\s*\)");
-            if (m.Success) b.Hardness = F(m.Groups[1].Value);
-            m = Regex.Match(s, @"\.explosionResistance\(\s*(-?[\d.]+F?)\s*\)");
-            if (m.Success) b.Resistance = F(m.Groups[1].Value);
+            foreach (Match sm in Regex.Matches(s, @"\.strength\(([^()]*(?:\([^()]*\))?[^()]*)\)"))
+                if (!Regex.IsMatch(sm.Groups[1].Value, @"^\s*" + num + @"\s*(?:,\s*" + num + @")?\s*$")) unparsedStrength.Add(b.Id + ": " + sm.Value);
+            m = Regex.Match(s, @"\.destroyTime\(\s*(" + num + @")\s*\)");
+            double d;
+            if (m.Success && TryFloat(m.Groups[1].Value, out d)) b.Hardness = d;
+            m = Regex.Match(s, @"\.explosionResistance\(\s*(" + num + @")\s*\)");
+            if (m.Success && TryFloat(m.Groups[1].Value, out d)) b.Resistance = d;
             if (s.Contains(".instabreak()")) { b.Hardness = 0; b.Resistance = 0; b.Instabreak = true; }
             if (b.Hardness < 0) b.Unbreakable = true;
             m = Regex.Match(s, @"\.lightLevel\(\s*\(?\s*\w+\s*\)?\s*->\s*(\d+)\s*\)");
-            if (m.Success) { b.Light = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); b.DynamicLight = false; }
-            else if (s.Contains(".lightLevel(")) b.DynamicLight = true;
+            if (m.Success) { b.Light = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); b.DynamicLight = false; b.LightExpr = null; }
+            else if (s.Contains(".lightLevel(")) { b.DynamicLight = true; b.Light = 0; b.LightExpr = Light.LambdaOf(s); }
             m = Regex.Match(s, @"\.sound\(\s*(?:SoundType|TFSoundTypes)\.(\w+)\s*\)");
             if (m.Success) b.Sound = m.Groups[1].Value;
             m = Regex.Match(s, @"(?:\.mapColor|logProperties)\(\s*(?:MapColor\.(\w+)|\(state\)[^?]*\?\s*(\w+))");
@@ -191,8 +279,49 @@ namespace GfImport
             if (m.Success) b.Friction = F(m.Groups[1].Value);
         }
 
+        // Minecraft 1.21.1 Tiers: uses
+        static readonly Dictionary<string, int> VanillaTierUses = new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            { "WOOD", 59 }, { "STONE", 131 }, { "IRON", 250 }, { "DIAMOND", 1561 }, { "GOLD", 32 }, { "NETHERITE", 2031 },
+        };
+        static readonly HashSet<string> TieredBases = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "TieredItem", "SwordItem", "DiggerItem", "PickaxeItem", "AxeItem", "ShovelItem", "HoeItem",
+        };
+        // vanilla item classes whose instances never stack (damageable or single by design)
+        static readonly HashSet<string> SingleStackBases = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "TieredItem", "SwordItem", "DiggerItem", "PickaxeItem", "AxeItem", "ShovelItem", "HoeItem", "ArmorItem", "BowItem",
+            "CrossbowItem", "ShieldItem", "TridentItem", "FishingRodItem", "ElytraItem", "ShearsItem", "FlintAndSteelItem", "MaceItem",
+        };
+        static readonly Dictionary<string, string> itemChains = new Dictionary<string, string>(StringComparer.Ordinal);
+        static Dictionary<string, int> tfTiers;
+
+        /// <summary>Forgets every per-run cache (the assembly stays loaded in a PowerShell session between runs).</summary>
+        public static void Reset()
+        {
+            itemChains.Clear();
+            tfTiers = null;
+            classFiles = null;
+            unknownVanilla.Clear();
+            unparsedStrength.Clear();
+            JavaStates.Reset();
+        }
+
+        /// <summary>The comment-stripped text of a TF class file (cached), or null for a vanilla class.</summary>
+        public static string ClassText(Ctx ctx, string cls)
+        {
+            return JavaStates.Text(ctx, cls);
+        }
+
         public static Dictionary<string, JItem> Items(Ctx ctx)
         {
+            // TFToolMaterials: new SimpleTier(incorrectBlocks, uses, speed, damage, enchantability, repair)
+            tfTiers = new Dictionary<string, int>(StringComparer.Ordinal);
+            string tiers = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "util", "TFToolMaterials.java")));
+            foreach (Match tm in Regex.Matches(tiers, @"Tier\s+(\w+)\s*=\s*new\s+SimpleTier\(\s*[\w.]+\s*,\s*(\d+)\s*,"))
+                tfTiers[tm.Groups[1].Value] = int.Parse(tm.Groups[2].Value, CultureInfo.InvariantCulture);
+            if (tfTiers.Count == 0) ctx.Warn("TFToolMaterials: no tier parsed");
             string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFItems.java")));
             var res = new Dictionary<string, JItem>(StringComparer.Ordinal);
             foreach (var f in Fields(text, @"DeferredItem<"))
@@ -215,8 +344,49 @@ namespace GfImport
                     if (tm.Success) mult = tm.Groups[1].Value == "HELMET" ? 11 : tm.Groups[1].Value == "CHESTPLATE" ? 16 : tm.Groups[1].Value == "LEGGINGS" ? 15 : 13;
                     it.Durability = mult * int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
                 }
+                // tools: a TieredItem's durability is its tier's uses (TieredItem: properties.durability(tier.getUses())),
+                // whatever the TF subclass is called (KnightmetalPickItem, MinotaurAxeItem, CustomDamageSwordItem, ...)
+                var chain = ClassChain(ctx, it.Cls, itemChains);
+                if (chain.Any(c => TieredBases.Contains(c)))
+                {
+                    var tm = Regex.Match(f.Item3, @"\b(TFToolMaterials|Tiers)\.([A-Z_]+)\b");
+                    int uses;
+                    if (tm.Success && (tm.Groups[1].Value == "Tiers" ? VanillaTierUses.TryGetValue(tm.Groups[2].Value, out uses) : tfTiers.TryGetValue(tm.Groups[2].Value, out uses)))
+                        it.Durability = uses;
+                    else ctx.Warn("item " + it.Id + ": tiered item without a known tier (" + string.Join(" < ", chain) + ")");
+                }
+                // armor whose class sets the durability: TravellersArmorItem(type, properties, slots, durability) does
+                // properties.durability(type.getDurability(durability)); the call or a subclass's super(...) gives the values
+                if (it.Durability == 0 && chain.Any(c => { var ct = ClassText(ctx, c); return ct != null && Regex.IsMatch(ct, @"\.durability\(\s*\w+\.getDurability\(\s*durability\s*\)\s*\)"); }))
+                {
+                    Match am = null;
+                    var nm = Regex.Match(f.Item3, @"new\s+" + Regex.Escape(it.Cls) + @"\s*\(");
+                    if (nm.Success)
+                    {
+                        var a = SplitArgs(f.Item3.Substring(nm.Index + nm.Length));
+                        if (a.Count == 4) am = Regex.Match(a[0].Trim() + "|" + a[3].Trim(), @"^(?:ArmorItem\.)?Type\.(\w+)\|(\d+)$");
+                    }
+                    if (am == null || !am.Success)
+                    {
+                        var ct = ClassText(ctx, it.Cls);
+                        if (ct != null) am = Regex.Match(ct, @"super\(\s*(?:ArmorItem\.)?Type\.(\w+)\s*,\s*\w+\s*,\s*\d+\s*,\s*(\d+)\s*\)");
+                    }
+                    if (am != null && am.Success)
+                    {
+                        string t = am.Groups[1].Value;
+                        int mult = t == "HELMET" ? 11 : t == "CHESTPLATE" || t == "BODY" ? 16 : t == "LEGGINGS" ? 15 : 13;
+                        it.Durability = mult * int.Parse(am.Groups[2].Value, CultureInfo.InvariantCulture);
+                    }
+                }
+                // a damageable item (durability) stacks to 1 (Item.Properties.durability sets stacksTo(1)), as do the
+                // vanilla single-item bases
                 if (it.Durability > 0) it.StackSize = 1;
-                if (Regex.IsMatch(it.Cls, "(Armor|Sword|Axe|Pickaxe|Shovel|Hoe|Bow|Scepter|Wand|Shield)Item$")) it.StackSize = 1;
+                if (chain.Any(c => SingleStackBases.Contains(c)))
+                {
+                    if (it.Durability == 0 && it.StackSize != 1) ctx.Warn("item " + it.Id + ": " + string.Join(" < ", chain) + " without a parsed durability or stacksTo(1): stack size 1 assumed");
+                    it.StackSize = 1;
+                }
+                it.Chain = chain;
                 if (f.Item3.Contains(".fireResistant()")) it.FireResistant = true;
                 m = Regex.Match(f.Item3, @"\.rarity\(\s*(?:Rarity\.|TFRarityEnumExtension\.\w*\.|tfRarityEnumExtension\.)?(\w+)");
                 if (m.Success) it.Rarity = m.Groups[1].Value;

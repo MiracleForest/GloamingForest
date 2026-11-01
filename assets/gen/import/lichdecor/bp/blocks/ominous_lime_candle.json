@@ -5,6 +5,9 @@
       "identifier": "twilightforest:ominous_lime_candle",
       "menu_category": {
         "category": "none"
+      },
+      "states": {
+        "twilightforest:candles": [0, 1, 2, 3, 4]
       }
     },
     "components": {
@@ -22,6 +25,32 @@
         }
       },
       "minecraft:light_dampening": 0
-    }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:candles') == 1",
+        "components": {
+          "minecraft:light_emission": 2
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 2",
+        "components": {
+          "minecraft:light_emission": 4
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 3",
+        "components": {
+          "minecraft:light_emission": 6
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 4",
+        "components": {
+          "minecraft:light_emission": 8
+        }
+      }
+    ]
   }
 }

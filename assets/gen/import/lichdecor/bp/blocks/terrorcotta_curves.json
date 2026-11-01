@@ -25,27 +25,27 @@
           "render_method": "opaque"
         },
         "up": {
-          "texture": "tf_block_terrorcotta_curves_d",
-          "render_method": "opaque"
-        },
-        "down": {
-          "texture": "tf_block_terrorcotta_curves_c",
-          "render_method": "opaque"
-        },
-        "north": {
-          "texture": "tf_block_terrorcotta_curves_d",
-          "render_method": "opaque"
-        },
-        "south": {
           "texture": "tf_block_terrorcotta_curves_a",
           "render_method": "opaque"
         },
+        "down": {
+          "texture": "tf_block_terrorcotta_curves_b",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "tf_block_terrorcotta_curves_a",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "tf_block_terrorcotta_curves_d",
+          "render_method": "opaque"
+        },
         "east": {
-          "texture": "tf_block_terrorcotta_curves_c",
+          "texture": "tf_block_terrorcotta_curves_a",
           "render_method": "opaque"
         },
         "west": {
-          "texture": "tf_block_terrorcotta_curves_b",
+          "texture": "tf_block_terrorcotta_curves_d",
           "render_method": "opaque"
         }
       }

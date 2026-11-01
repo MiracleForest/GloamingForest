@@ -17,6 +17,9 @@
         "value": "item.twilightforest:glass_sword.name"
       },
       "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 1
+      },
       "minecraft:hand_equipped": true,
       "minecraft:tags": {
         "tags": ["forbidden_arcanus:modifier/eternal_incompatible", "randomium:blacklist"]

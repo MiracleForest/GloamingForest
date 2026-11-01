@@ -9,8 +9,9 @@
     textures      TF textures (CC BY-NC-SA 4.0) -> rp/textures/twilightforest/**, terrain / item / flipbook
                   atlas fragments, the generated chest-boat textures
     models        Java block models -> Bedrock block geometry (rp/models/blocks/twilightforest/**)
-    blockstates   the 523 blocks -> bp/blocks/*.json (frozen states, permutations, materials),
-                  rp/blocks.d sounds, docs/spec/blockstates.md
+    blockstates   the 523 blocks -> bp/blocks/*.json (frozen states from the Java classes, permutations,
+                  materials, light per state, flammability), rp/blocks.d sounds, docs/spec/blockstates.md;
+                  checked against tools/import/expected-states.json and TF's blockstates
     lang          en_us + translations -> lang/<locale>/<unit>.json and rp/texts.d/<locale>/<unit>.lang
     tags, loot, recipes, advancements, worldgen, datamaps, registries
                   TF data -> data/<namespace>/** (Java format, kept by id); vanilla-type recipes also
@@ -20,7 +21,8 @@
                   owner, data listing data/gf/sound_events/<unit>.json (never the .ogg files)
     skeleton      items, flat block items, entities (+ placeholder visuals, spawn eggs), id index
     catalog       TFCreativeTabs -> bp/item_catalog.d/import.json + data/gf/catalog
-    families      block families from the TF block classes -> data/gf/families/<unit>.json
+    families      block families and traits from the TF block classes -> data/gf/families/<unit>.json
+  Every twilightforest: reference of the output must resolve (data, BP, owners.tsv, tools/import/known-ids.json).
 
   Overrides: tools/import/overrides/<unit>.json {"drop": [globs], "patch": {"<path>": [ops]},
   "rename": {"<path>": "<new path>"}} are applied on regeneration (docs/spec/import.md).

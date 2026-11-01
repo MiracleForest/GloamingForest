@@ -5,6 +5,9 @@
       "identifier": "twilightforest:firefly",
       "menu_category": {
         "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": ["up", "north", "south", "west", "east", "down"]
       }
     },
     "components": {

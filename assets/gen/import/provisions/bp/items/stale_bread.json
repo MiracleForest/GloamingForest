@@ -17,6 +17,9 @@
         "value": "item.twilightforest:stale_bread.name"
       },
       "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 59
+      },
       "minecraft:hand_equipped": true
     }
   }
