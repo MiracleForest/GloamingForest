@@ -38,8 +38,8 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 |---|---|---|
 | `textures` | 1197 PNG (+ `.mcmeta`) | `rp/textures/twilightforest/<tf path>.png`; atlas keys `tf_<path with _>` in `rp/terrain_texture.d`, `rp/item_texture.d`; animated block textures in `rp/flipbook_textures.d`; vanilla textures TF reuses as `tf_vanilla_<path>` keys pointing at the game's own files (never copied) |
 | `models` | 523 blockstates, 2984 generated + 123 hand models, a built-in library of the vanilla parent shapes they extend (`Models.cs`, `Vanilla`) | `rp/models/blocks/twilightforest/*.geo.json`: one geometry per element-defining model (`geometry.tf.<model id>`), shared by every block using it, material instances named after the Java texture variables; one geometry per multipart block (a bone per part, shown by Molang `bone_visibility`) |
-| `blockstates` | blockstates, `TFBlocks.java` (class, strength, light, sound, map colour, collision) | `bp/blocks/<id>.json` (format 1.21.80): states, permutations, `minecraft:geometry` / `material_instances` / `transformation`, collision and selection boxes from the model bounds, destructibility, light, map colour, flammability, friction; `rp/blocks.d` sounds; [blockstates.md](blockstates.md) |
-| `lang` | en_us (2061 keys) + 99 translations | `lang/<locale>/<unit>.json` (every TF key a locale translates; `gf::tr` falls back to en_US) and `rp/texts.d/<locale>/<unit>.lang` (the same keys for rawtext, plus the Bedrock names `tile.twilightforest:<id>.name`, `item.twilightforest:<id>.name`, `entity.twilightforest:<id>.name`, `item.spawn_egg.entity.twilightforest:<id>.name`, the creative group titles) for the 29 Bedrock locales; other TF locales (`en_ud`, ...) are dropped |
+| `blockstates` | blockstates, the TF block classes (`createBlockStateDefinition`, `registerDefaultState`, `getLightEmission`), `TFBlocks.java` (class, strength, light, sound, map colour, collision), `RegistrationEvents.java` (`setFlammable`) | `bp/blocks/<id>.json` (format 1.21.80): states, permutations, `minecraft:geometry` / `material_instances` / `transformation`, collision and selection boxes from the model bounds, destructibility, light (per state where TF computes it), map colour, flammability, friction; `rp/blocks.d` sounds; [blockstates.md](blockstates.md) |
+| `lang` | en_us (2061 keys) + 99 translations | `lang/<locale>/<unit>.json` (every TF key a locale translates; `gf::tr` falls back to en_US) and `rp/texts.d/<locale>/<unit>.lang` (the same keys for rawtext, plus the Bedrock names `tile.twilightforest:<id>.name`, `item.twilightforest:<id>.name`, `entity.twilightforest:<id>.name`, `item.spawn_egg.entity.twilightforest:<id>.name`, the creative group titles) for the 29 Bedrock locales (below); other TF locales (`en_ud`, ...) are dropped |
 | `tags` | 393 tag files (TF, minecraft, c, neoforge and compat namespaces) | `data/<ns>/tags/<registry>/<path>.json` of the tag owner (other namespaces: F1) |
 | `loot` | 634 loot tables, 2 loot modifiers, NeoForge's global modifier list | `data/<ns>/loot_table/**`, `data/<ns>/loot_modifiers/**` (TF functions and conditions kept by id for F10) |
 | `recipes` | 538 generated + 13 hand recipes (twilightforest and minecraft namespaces) | every recipe as Java data `data/<ns>/recipe/**` (the 13 custom types are loaded by their owners, rule R4); vanilla types also as Bedrock recipes `bp/recipes/<ns>/<path>.json` (below) |
@@ -47,18 +47,38 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 | `worldgen` | 306 worldgen JSON, dimension, dimension type | `data/<ns>/worldgen/**`, `data/<ns>/dimension{,_type}/**`. The 21 structure JSON carry TF's landmark descriptors (advancements_required, controlled_spawns, decoration_clearance, hint_creature, spawn_overrides, structure_icon) for F6 |
 | `datamaps` | 5 TF + NeoForge compostables, furnace_fuels, parrot_imitations | `data/<ns>/data_maps/**` (rule R7) |
 | `registries` | 290 + 9 `twilight/*` entries, banner patterns, damage types, jukebox songs, trim materials, enchantments, 6 functions | `data/<ns>/<registry>/**` |
-| `particles` | 28 particle JSON | `rp/particles/<id>.json` skeleton effects (first frame) and `data/gf/particles/<unit>.json` (every frame) |
+| `particles` | 28 particle JSON | `rp/particles/<id>.json` skeleton effects and `data/gf/particles/<unit>.json` (every frame). TF sprites: the first frame of the TF texture; vanilla sprites: their cell of Bedrock's legacy particle atlas `textures/particle/particles` (128 x 128, Java's pre-1.14 `particles.png` layout: `generic_N` row 0, `flame` (0, 24), `angry` (8, 40), `effect_N` row 8, `sga_*` from index 225), animated by age as a flipbook in Java's sprite order, a random glyph for `sga_*`. A sprite without a cell (`glint`, used by `protection`) emits nothing until F12's native particle |
 | `sounds` | `sounds.json` (328 events, 288 subtitles) | **No `sound_definitions`** (see below). Validates that every event has an owner in owners.tsv (a missing one fails the run) and writes a plain, non-merged listing `data/gf/sound_events/<unit>.json`: event -> Bedrock category, subtitle key, sound *names* (TF file paths without namespace, vanilla events). The subtitle texts come with the `lang` kind |
 | `skeleton` | TFItems, TFEntities, models/item | `bp/items/<id>.json` (254 items, and the block items whose Java item model is a flat icon: `minecraft:block_placer` with `replace_block_item`), `bp/entities/<id>.json` (80, collision box, health, type family, `is_spawnable` for the 51 with eggs), `rp/entity/<id>.entity.json` + `rp/models/entity/skeleton/<id>.geo.json` (a placeholder box of the entity's size with its TF texture, spawn egg colours), `data/gf/import/skeleton.json` (the id list the `import.*` selftests check) |
 | `catalog` | TFCreativeTabs (4 tabs) | `bp/item_catalog.d/import.json` (Bedrock creative groups: blocks -> construction, items and food -> items, equipment -> equipment) and `data/gf/catalog/import.json` (`gf::catalog` groups in TF's order) |
-| `families` | TF block classes | `data/gf/families/<unit>.json`: `[{id, family, params: {class, vanillaClass, base, copyOf, woodType, plant, states}}]` for F11 |
+| `families` | TF block classes and interfaces, block tags, model loaders | `data/gf/families/<unit>.json`: `[{id, family, params: {class, vanillaClass, traits, base, copyOf, woodType, plant, states}}]` for F11 (below) |
 
-`data/twilightforest/gf_known/**` and `data/twilightforest/tags/gf_known/**` (F1) index the TF ids that TF's data
-names but that are not data files (code-registered types such as travellers modifier and biome layer types,
-marker handlers, restrictions, damage effects, texture locations, template ids, tags of TF's custom registries,
-and Bedrock item tags). assemble's dangling-reference check only knows data files, BP definitions and owners.tsv
-rows; the index makes it accept these ids. It has no runtime meaning.
+## References and the assemble bridge
 
+Every `twilightforest:` string of the generated data and BP files must name something that exists. The import
+resolves each one (`Known.cs`) against the generated data files (tags with Java's registry paths, including the
+two-segment `tags/worldgen/<r>/` and `tags/twilight/<r>/`), the BP definitions, owners.tsv and the reviewed
+allowlist **`tools/import/known-ids.json`**: every id TF registers in code (travellers modifier types, biome layer
+types, template marker handler types, enforcements, the `pinch` damage effect, the dimension renderer, the
+`twilight_biomes` biome source, attribute modifier ids), texture locations and the `camp/rack` template pool, each
+with its kind, the reason and the TF source that registers it, plus the JSON keys whose values are tags written
+without `#` (`tag`, `tags`, `generates_on`). A reference found nowhere **fails the import**. References that are
+dangling in TF itself are listed under `tfDangling` and reported as a warning on every run: only
+`twilightforest:equipment/travellers_chest` (the `craft_vest` criterion of advancement `craft_travellers_gear` names
+the recipe's pre-rename id; TF renamed it `travellers_vest` and the criterion never triggers in TF either; kept
+verbatim for parity). An allowlist entry no data references any more is reported as stale.
+
+**Bridge (temporary, requested from F0 / A8).** assemble's dangling-reference check (`tools/xmake/assemble.lua`,
+F0) knows only data files, BP definitions and owners.tsv rows; it checks the values of `tag` / `tags` keys as plain
+ids and reads `data/<ns>/tags/twilight/<registry>/` with a one-segment registry. Until it does what the import's
+check does, the import writes one index file for each reference it resolved but assemble cannot (67:
+`data/twilightforest/gf_known/**`, `data/twilightforest/tags/gf_known/**`, each naming its kind, reason and
+referencing files). They are generated **only** from the resolutions above (never for an unresolved reference),
+nothing reads them at run time, and the `import.lang_and_data` selftest skips them. Requested change to assemble
+(F0 / A8), after which the bridge is dropped (its two `EmitJson` calls in `Known.cs`; the check stays): (1) `tag` / `tags` / `generates_on` values
+are tag references; (2) `tags/twilight/<registry>` is a two-segment registry like `tags/worldgen/<registry>`;
+(3) the ids of `tools/import/known-ids.json` (`ids`, `tfDangling`) are known, by kind; (4) a `tfDangling` reference
+is a warning, not an error.
 ## Sound events
 
 F3 (`tools/sounds/synth.ps1`) writes the resource pack's `sound_definitions` for all 328 TF sound events, one
@@ -83,12 +103,30 @@ Shared files get one owner by rule:
 
 ## Blocks
 
-- States: see [blockstates.md](blockstates.md) (frozen, rule R1). Java property `p` -> `twilightforest:p`, same
-  values; integer lists start at 0; `waterlogged` is dropped (Bedrock's liquid layer); no placement traits.
+- States: see [blockstates.md](blockstates.md) (frozen, rule R1). The properties are those the block's Java class
+  chain declares (`JavaStates.cs`): every `createBlockStateDefinition` override of the TF classes
+  (`builder.add(...)`, chained `.add(...)`, `LIST.forEach(builder::add)`, following `super` calls), then the full
+  property set of the vanilla class reached (Minecraft 1.21.1: `TrappedChestBlock`, `MultifaceBlock`,
+  `ChiseledBookShelfBlock`, ...); constants are resolved through the class, its TF superclasses and interfaces
+  (`LightableBlock.LIGHTING`, `SnowLoggable.SNOW_LAYERS`), its static imports and the vanilla constants, to their
+  `Property.create` name, integer range or enum values (serialized names in declaration order). Java property `p`
+  -> `twilightforest:p`, same values; integer lists start at 0; `waterlogged` is dropped (Bedrock's liquid layer);
+  no placement traits. The first value of an enum is TF's default (`registerDefaultState`, through local
+  `BlockState` variables and `for` loops; `StateDefinition.any()` for what it does not set). Booleans and integers
+  keep Bedrock's `false` / `0` default; blockstates.md lists TF's default where it differs (trophies `powered=true`,
+  leaves `distance=7`, candles `candles=1`, ...).
+- Checks (every run, `-Check` included; a failure fails the run): the Java properties of every block against a
+  hand-written golden, `tools/import/expected-states.json` (one entry per TF block class, read by hand from the
+  Java sources); the states of every generated BP block file (after the overrides) against the same golden; every
+  blockstate property and value TF's blockstate file uses must be a Java property value; the rotation of every
+  variant, evaluated as Bedrock does (root components, then the matching permutations in order), against TF's
+  blockstate file (3659 variants).
 - Variants: a permutation per variant key (Molang `q.block_state(...)` conditions), its model's geometry and
   material instances, and `minecraft:transformation` rotation `[-x, -y, 0]` for Java's `x` / `y` (Java rotates
-  clockwise seen from above / the axis; Bedrock follows the right-hand rule). The first variant is also the root
-  (default) visual. Weighted random variants use their first model. `uvlock` is not supported by Bedrock.
+  clockwise seen from above / the axis; Bedrock follows the right-hand rule). The default state's variant is also
+  the root visual. A permutation replaces only the components it names, so every permutation of a block with a
+  rotated variant states its rotation, `[0, 0, 0]` included (an upright `aurora_pillar` must not inherit the
+  lying one's). Weighted random variants use their first model. `uvlock` is not supported by Bedrock.
 - Multipart (fences, walls, panes, ...): one geometry per block, a bone per part rotated about the block centre (bone
   rotation `[x, y, 0]`),
   visibility from the part's `when` condition.
@@ -101,15 +139,34 @@ Shared files get one owner by rule:
 - Render method: `translucent` -> `blend`, `cutout(_mipped)` -> `alpha_test`, otherwise `alpha_test` when a face
   texture has transparent pixels, else `opaque`.
 - Behaviour values: `seconds_to_destroy` = Java hardness (`false` when unbreakable), `explosion_resistance` =
-  Java resistance, static `lightLevel`, `MapColor` RGB, `ignitedByLava` -> flammable, `friction` = 1 - Java
-  friction, no collision for `noCollission`. Dynamic light levels (lit candles, fire jets, ...) are left to the
-  owner. Blocks not listed in a creative tab get `menu_category: none`.
+  Java resistance (`false` from 3600000: giant obsidian), both evaluated from literals or products of literals
+  (`strength(0.2F * 64.0F, 15.0F)`); properties copied from vanilla blocks (`ofFullCopy(Blocks.X)`) use Minecraft
+  1.21.1's values (glass, slime block with its friction, leaves, planks / wood / hyphae with each wood's map colour
+  and sound, ...); every property of a copied TF block is copied (light function, friction, collision,
+  occlusion); `MapColor` RGB; `friction` = 1 - Java friction; no collision for `noCollission`; the Java sound type
+  -> the Bedrock block sound (an unmapped one warns). Flammability: only the 180 blocks TF registers with
+  `FireBlock.setFlammable(block, encouragement, flammability)` (`RegistrationEvents.java`) get
+  `minecraft:flammable` (`catch_chance_modifier` = encouragement, `destroy_chance_modifier` = flammability);
+  `ignitedByLava` alone does not make a block burn in Java. Blocks not listed in a creative tab get
+  `menu_category: none`.
+- Light: a constant `lightLevel` is the block's `minecraft:light_emission`. A state-dependent one (`Light.cs`: a
+  `lightLevel` lambda of `TFBlocks.java` or of a block class constructor, or a `getLightEmission` override, the
+  leaf-most of the class chain) is evaluated for every combination of the states it reads (ternaries, `==` /
+  `!=`, `*`, `switch` on an enum, `BrazierLight.getLight()`, the candelabra's candle count): the default state's
+  light on the root, one permutation per other light level (fire jets, ghast trap, carminite reactor and builder,
+  vanishing blocks, magic log cores, torchberry plant, brazier, ominous candles, skull candles, candelabra,
+  casket and skull chest with lava). The mason jar's light comes from its block entity's item and stays the
+  owner's.
 
 ## Items, entities, recipes
 
 - Item icons: the Java item model's `layer0` (`item/generated`, `item/handheld`), else `textures/item/<id>.png`,
-  else the model's particle texture. Stack size from `stacksTo`, durability from `durability` (armor:
-  `ArmorItem.Type.getDurability`), `hand_equipped` for handheld models, the TF / `c:` / compat item tags the item is in (`minecraft:tags`;
+  else the model's particle texture. Stack size from `stacksTo`; durability from `durability`, from the tier of a
+  tiered item (`TieredItem` and every subclass, whatever its name: `TFToolMaterials` or vanilla `Tiers` uses), from
+  `ArmorItem.Type.getDurability(n)` (also through `TravellersArmorItem`'s `(type, properties, slots, durability)`
+  constructor and a subclass's `super(...)`); a damageable item and every subclass of a vanilla single-stack class
+  (tools, armour, bows, shields, ...) stacks to 1 (the class chain is walked, not the class name matched).
+  `hand_equipped` for handheld models, the TF / `c:` / compat item tags the item is in (`minecraft:tags`;
   `minecraft:*` tags carry engine meaning on Bedrock and are left to the owners), display name `item.twilightforest:<id>.name` (`tile....` for items that place their block).
 - Spawn eggs are Bedrock's own (`<entity>_spawn_egg`, from the client entity's `spawn_egg` colours = TF's egg
   colours).
@@ -120,8 +177,33 @@ Shared files get one owner by rule:
   recipe's advancement (`inventory_changed`), else `AlwaysUnlocked`. Ingredients: Java item tags with a Bedrock
   equivalent (`minecraft:planks`, `logs`, `wool`, `wooden_slabs`) stay tags; tags of TF items only use the tag
   (declared on those items); other tags and ingredient lists are expanded into one recipe per combination
-  (`<id>_<n>`, at most 64; beyond that the first alternatives: fiery armor's chestplate and leggings).
+  (`<id>_<n>`, at most 64; beyond that the first alternatives: fiery armor's chestplate and leggings). NeoForge
+  ingredients: `neoforge:difference` / `intersection` / `compound` become their item sets (the travellers belt's
+  wooden chest that is not trapped), `neoforge:components` with a water potion becomes `minecraft:potion` data 0
+  (tannin). A vanilla-type recipe that still has no Bedrock recipe is a warning and listed in the import log
+  (none at 9e40a757).
 
+## Families
+
+`data/gf/families/<unit>.json` (F11 reads it; F11's contract names `assets/gen/import/<u>/data/families.json`, but
+the gen layer's `data/` root is copied to the mod's `data/` with one file per path across every unit, so a fixed
+name per unit collides: the import names the file after the unit under `data/gf/families/`, deviation). Each
+entry: `family` is the shape family of the Java class chain (stairs, slab, fence, fence_gate, wall, door,
+trapdoor, button, pressure_plate, pane, pillar, log, wood, leaves, sapling, potted, sign, hanging_sign, chest,
+trapped_chest, horizontal, directional, climbable for `LadderBlock`), else the block's first trait family;
+`params.traits` lists every trait family of the contract the block has, whatever its shape: `waterloggable` (a
+`waterlogged` Java property), `snowloggable` (implements `SnowLoggable`), `climbable` (`LadderBlock`, or in
+`#minecraft:climbable`), `lightable` (implements `LightableBlock`), `connected_texture` (a model with TF's
+`connected_texture_block` loader).
+
+## Lang
+
+17 Bedrock locales have TF translations: en_US, cs_CZ, de_DE, el_GR, es_ES, es_MX, fr_FR, it_IT, ja_JP, ko_KR,
+pl_PL, pt_BR, ru_RU, tr_TR, uk_UA, zh_CN, zh_TW. TF's bg_bg, da_dk, fi_fi, hu_hu, id_id, nb_no, nl_nl, sk_sk and
+sv_se files are empty (`{}`) and TF has no en_gb, fr_ca or pt_pt file, so the other 12 Bedrock locales (en_GB,
+fr_CA, pt_PT, nl_NL, bg_BG, da_DK, fi_FI, hu_HU, id_ID, nb_NO, sk_SK, sv_SE) get no import file: Bedrock falls
+back to en_US for a key a locale's texts lack, and so does `gf::tr`. The 29 locales therefore show TF's texts, in
+English where TF has no translation (as in Java).
 ## Chest boats
 
 TF's `TextureGeneratorReloadListener` paints the vanilla oak chest boat's chest region into TF's chest boat
@@ -149,7 +231,7 @@ generated JSON file, `rename` moves a generated file. A patch or rename target t
 
 ## Determinism
 
-The output depends only on the TF checkout, owners.tsv, owners.rules.json, merges.json and the overrides. Text
+The output depends only on the TF checkout, owners.tsv, owners.rules.json, merges.json, the overrides and the two reviewed inputs `tools/import/known-ids.json` and `tools/import/expected-states.json`. Text
 inputs are read with line endings normalised to LF (the checkout may be CRLF on CI); JSON is written by an own
 writer (order-preserving, 2-space indent, LF); generated PNGs are encoded by an own DEFLATE encoder (the
 platform zlib differs between .NET versions); every collection is sorted ordinally. `-Check` compares every
