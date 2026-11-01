@@ -75,6 +75,7 @@ function Write-MergedLock {
     $text = "{`n    __meta__ = {`n        version = `"1.0`"`n    },`n    [`"windows|x64`"] = {`n$body`n    }`n}"
     [IO.File]::WriteAllText($lockFile, $text)
 }
+if ($null -ne $lockText -and $Target -ne 'all') { $lockEntries = Read-LockEntries $lockText } # keep the other target
 
 $slot = $null
 try {

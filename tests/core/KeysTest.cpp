@@ -7,6 +7,7 @@ using namespace gf::core;
 TEST(Keys, WorldKeys) {
     EXPECT_EQ(worldKey("landmark", "starts"), "gf:landmark:starts");
     EXPECT_TRUE(validWorldKey("gf:common:bd:0:1:2"));
+    EXPECT_TRUE(validWorldKey("gf:spec-world:x"));
     EXPECT_FALSE(validWorldKey("lv:common:x"));
     EXPECT_FALSE(validWorldKey("gf::x"));
     EXPECT_FALSE(validWorldKey("gf:Unit:x"));

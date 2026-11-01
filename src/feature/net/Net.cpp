@@ -140,7 +140,8 @@ void handleHello(Player& player, Json const& payload) {
     }
     if (known) return; // a repeated hello (the welcome crossed it)
     log().info("companion joined: {} (protocol {}, client {})", player.getRealName(), protocol, mod);
-    for (auto const& fn : s.joined) fn(player);
+    auto joined = s.joined; // listeners may register more
+    for (auto const& fn : joined) fn(player);
 }
 } // namespace
 

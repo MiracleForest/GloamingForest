@@ -1,6 +1,8 @@
 // Adapted from LiteLDev/Levitate v0.1.0 (src/core/Format.cpp), LGPL-3.0-or-later.
 #include "core/Format.h"
 
+#include <limits>
+
 namespace gf::core {
 
 namespace {
@@ -78,6 +80,7 @@ std::string formatMessage(std::string_view fmt, std::span<std::string const> arg
 }
 
 std::string compactCount(long long n) {
+    if (n == std::numeric_limits<long long>::min()) ++n; // -n would overflow
     if (n < 0) return "-" + compactCount(-n);
     if (n < 1000) return std::to_string(n);
     auto fmt1 = [](long long v, long long unit, char suffix) {

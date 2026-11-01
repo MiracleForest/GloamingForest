@@ -424,7 +424,7 @@ bool running() { return gRunning; }
 
 namespace {
 /// The ticking areas of a run, relative to the spawn (`Context::testPos`: x spawn+5..+104, z rows
-/// spawn-64..+226). A Bedrock ticking area holds at most 100 chunks, so the rows are split in three.
+/// spawn-64..+255). A Bedrock ticking area holds at most 100 chunks, so the rows are split in three.
 struct TestArea {
     char const* name;
     int         x0, z0, x1, z1;
@@ -432,7 +432,7 @@ struct TestArea {
 constexpr TestArea kTestAreas[] = {
     {"gf_selftest_0", -16, -64, 120, 32 },
     {"gf_selftest_1", -16, 33,  120, 129},
-    {"gf_selftest_2", -16, 130, 120, 230},
+    {"gf_selftest_2", -16, 130, 120, 255},
 };
 
 /// Keeps the test area loaded for the whole run, so tests never race the chunk loading of freshly

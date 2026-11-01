@@ -113,18 +113,23 @@ public:
         auto& bus = ll::event::EventBus::getInstance();
         for (auto& l : mListeners) bus.removeListener(l);
         mListeners.clear();
-        if (available()) close();
+        close();
     }
 
 private:
     static void ready() {
+        gOpen = true;
         fire(readyListeners(), "ready");
         log().info("GloamingForest world ready");
     }
     static void close() {
+        if (!gOpen) return; // BDS: ServerStoppingEvent, then the mod is disabled with the level still alive
+        gOpen = false;
         fire(saveListeners(), "save");
         fire(closedListeners(), "closed");
     }
+
+    static inline bool gOpen = false;
 
     std::vector<ll::event::ListenerPtr> mListeners;
     int                                 mTicks = 0;

@@ -17,7 +17,7 @@ std::optional<nlohmann::json> decodePayload(std::string_view text) {
 bool validChannel(std::string_view channel) {
     if (channel.empty() || channel.size() > 64) return false;
     for (char c : channel) {
-        bool ok = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '.';
+        bool ok = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.';
         if (!ok) return false;
     }
     return channel.front() != '.' && channel.back() != '.' && channel.find('.') != std::string_view::npos;

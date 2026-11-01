@@ -20,7 +20,7 @@ bool validWorldKey(std::string_view key) {
     auto colon = key.find(':');
     if (colon == 0 || colon == std::string_view::npos || colon + 1 >= key.size()) return false;
     for (char c : key.substr(0, colon)) {
-        if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) return false;
+        if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-')) return false;
     }
     return true;
 }

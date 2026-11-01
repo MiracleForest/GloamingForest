@@ -16,7 +16,7 @@ inline constexpr char kWorldDbPrefix[] = "gf:";
 
 /// "gf:<unit>:<rest>".
 [[nodiscard]] std::string worldKey(std::string_view unit, std::string_view rest);
-/// Whether `key` is a well-formed world DB key ("gf:<unit>:<rest>", unit [a-z0-9_]+, rest non-empty).
+/// Whether `key` is a well-formed world DB key ("gf:<unit>:<rest>", unit [a-z0-9_-]+, rest non-empty).
 [[nodiscard]] bool validWorldKey(std::string_view key);
 /// The unit of a world DB key ("" when malformed).
 [[nodiscard]] std::string_view worldKeyUnit(std::string_view key);

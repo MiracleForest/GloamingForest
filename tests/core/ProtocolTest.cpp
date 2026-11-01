@@ -7,6 +7,7 @@ using namespace gf::core;
 TEST(Protocol, Channels) {
     EXPECT_TRUE(validChannel("net.hello"));
     EXPECT_TRUE(validChannel("uncraftmaps.recipe_page"));
+    EXPECT_TRUE(validChannel("spec-world.x"));
     EXPECT_FALSE(validChannel("nodot"));
     EXPECT_FALSE(validChannel(".start"));
     EXPECT_FALSE(validChannel("end."));

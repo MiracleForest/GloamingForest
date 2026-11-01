@@ -1,4 +1,5 @@
 // Adapted from LiteLDev/Levitate v0.1.0 (tests/core/FormatTest.cpp), LGPL-3.0-or-later.
+#include <limits>
 #include <gtest/gtest.h>
 
 #include "core/Format.h"
@@ -26,6 +27,7 @@ TEST(Format, JavaPlaceholders) {
 TEST(Format, CompactCount) {
     EXPECT_EQ(compactCount(999), "999");
     EXPECT_EQ(compactCount(1234), "1.2k");
+    EXPECT_EQ(compactCount(std::numeric_limits<long long>::min()).front(), '-');
     EXPECT_EQ(compactCount(1500000), "1.5M");
     EXPECT_EQ(compactCount(-2000), "-2k");
 }
