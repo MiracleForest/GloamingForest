@@ -16,7 +16,10 @@
 //                       packet only carries the nearest of 8 colours). The HUD asks the screen
 //                       model for each bar's colour by index (ClientInstanceScreenModel::
 //                       getBossBarColor); the hook answers with the RGB of the TF boss whose title
-//                       (and, between equal titles, progress) that bar shows.
+//                       (and, between equal titles, progress) that bar shows, matched once per
+//                       change of the index's title or of the TF bars. The bar's overlay
+//                       (BossBarOverlay NOTCHED_6/10/12/20: the Naga, the shielded Lich) is drawn
+//                       over the HUD's bar after the HUD rendered (Bedrock draws no notches).
 //   boss.death_time     UpdateDeathTimePacket (read with gf::client::entity::deathTime).
 //   entity.move_player  MovePlayerPacket: the local player is pushed.
 //   entity.hostile_mount  ClientGameEvents#removeHostileMountHealth: no mount hearts on a hostile
@@ -28,22 +31,33 @@
 
 #include "feature/ext/entity/EntityClientExt.h"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cmath>
 #include <mutex>
 #include <set>
+#include <string_view>
 #include <unordered_map>
+#include <vector>
 
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/ListenerBase.h"
+#include "ll/api/event/render/UIRenderEvent.h"
 #include "ll/api/memory/Hook.h"
 
+#include "mc/client/gui/controls/UIControl.h"
+#include "mc/client/gui/controls/VisualTree.h"
 #include "mc/client/gui/controls/renderers/HudHorseHeartRenderer.h"
+#include "mc/client/gui/screens/ScreenView.h"
 #include "mc/client/gui/screens/models/ClientInstanceScreenModel.h"
 #include "mc/client/player/LocalPlayer.h"
+#include "mc/client/renderer/screen/MinecraftUIRenderContext.h"
 #include "mc/deps/core/math/Color.h"
 #include "mc/safety/RedactableString.h"
 
 #include "client/Client.h"
+#include "client/screen/base/Screen.h"
 #include "feature/net/Net.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -60,9 +74,20 @@ struct DeathTime {
     Clock::time_point at;
 };
 
+/// The TF boss a HUD bar index shows, as last matched (by the bar's raw title).
+struct IndexMatch {
+    std::string   rawTitle;
+    std::uint64_t generation = 0; ///< ClientState::generation when matched
+    std::int64_t  boss       = 0; ///< 0: no TF boss
+    Clock::time_point seen;       ///< the last frame the HUD asked for this bar
+};
+
 struct ClientState {
     std::mutex                                       mutex; ///< everything below: net handlers vs. HUD / renderers
     std::unordered_map<std::int64_t, BossBar>        bars;
+    std::uint64_t                                    generation = 1; ///< bumped by every "boss.bar" message
+    std::unordered_map<int, IndexMatch>              matches;        ///< HUD bar index -> TF boss
+    std::set<std::int64_t>                           notchLogged;    ///< bars whose notches were drawn (one log line each)
     std::unordered_map<std::int64_t, DeathTime>      deathTimes;
     std::unordered_map<std::int64_t, std::vector<Part>> multipart;
     std::unordered_map<std::int64_t, std::int64_t>   partParents;
@@ -95,30 +120,118 @@ std::string plain(std::string const& s) {
 } // namespace
 
 /// ClientTFBossBar#renderBossBar's tint: the exact RGB of the TF boss the HUD's bar `index` shows.
+/// The bar's title is matched against the TF bars once per change (a new raw title at the index or
+/// a "boss.bar" message), not on every frame.
 std::optional<mce::Color> exactColour(ClientInstanceScreenModel const& model, int index) {
     auto& s = C();
     {
         std::scoped_lock lock(s.mutex);
         if (s.bars.empty()) return std::nullopt;
     }
-    std::string title  = plain(model.getBossName(index).mUnredactedString);
-    float       health = model.getBossHealthPercentage(index);
+    std::string raw = model.getBossName(index).mUnredactedString;
     std::scoped_lock lock(s.mutex);
-    std::int64_t     best = 0;
-    BossBar const*   bar  = nullptr;
-    float            diff = 2.0f;
-    for (auto const& [id, b] : s.bars) {
-        if (plain(b.title) != title) continue;
-        float d = std::abs(b.progress - health);
-        if (!bar || d < diff) best = id, bar = &b, diff = d;
+    auto& match = s.matches[index];
+    match.seen  = Clock::now();
+    if (match.generation != s.generation || match.rawTitle != raw) {
+        std::string title  = plain(raw);
+        float       health = model.getBossHealthPercentage(index);
+        std::int64_t best  = 0;
+        float        diff  = 2.0f;
+        for (auto const& [id, b] : s.bars) {
+            if (plain(b.title) != title) continue;
+            float d = std::abs(b.progress - health);
+            if (!best || d < diff) best = id, diff = d;
+        }
+        match.rawTitle   = std::move(raw);
+        match.generation = s.generation;
+        match.boss       = best;
+        if (!best && s.unmatched.insert(title).second) log().info("client boss bar '{}' has no TF colour", title);
     }
-    if (!bar) {
-        if (s.unmatched.insert(title).second) log().info("client boss bar '{}' has no TF colour", title);
-        return std::nullopt;
-    }
-    if (s.logged.insert(best).second) log().info("client boss bar {} coloured #{:06X}", best, bar->rgb);
-    return mce::Color(static_cast<uint>(bar->rgb));
+    auto it = s.bars.find(match.boss);
+    if (!match.boss || it == s.bars.end()) return std::nullopt;
+    if (s.logged.insert(match.boss).second) log().info("client boss bar {} coloured #{:06X}", match.boss, it->second.rgb);
+    return mce::Color(static_cast<uint>(it->second.rgb));
 }
+
+namespace {
+
+/// The boss bar controls of the HUD (hud_screen.json: boss_health_grid -> one boss_health_panel
+/// per bar, collection "boss_bars", with its progress_bar_for_collections).
+UIControl* findControl(UIControl& root, std::string_view name, int depth = 0) {
+    if (root.mName.get() == name) return &root;
+    if (depth > 40) return nullptr;
+    for (auto const& child : root.mChildren.get())
+        if (child)
+            if (auto* hit = findControl(*child, name, depth + 1)) return hit;
+    return nullptr;
+}
+
+/// BossHealthOverlay#drawBar's overlay sprites (BossBarOverlay NOTCHED_6 / 10 / 12 / 20) over the
+/// HUD's bar: Bedrock's HUD draws no notches, so the client mod adds them after the HUD rendered.
+/// Java's notch sprites are Mojang's textures (not TF's assets, not on Bedrock): the notches are
+/// drawn as 1-pixel dividers, darker over the bar's background than over its progress.
+void drawNotches(ScreenView& view, MinecraftUIRenderContext& ctx) {
+    auto& s = C();
+    struct Want {
+        int          index    = 0;
+        int          notches  = 0;
+        float        progress = 0;
+        std::int64_t boss     = 0;
+    };
+    std::vector<Want> wants;
+    {
+        std::scoped_lock lock(s.mutex);
+        auto             now = Clock::now();
+        for (auto const& [index, match] : s.matches) {
+            if (!match.boss || now - match.seen > std::chrono::milliseconds(500)) continue;
+            auto it = s.bars.find(match.boss);
+            if (it == s.bars.end() || it->second.overlay <= 0) continue;
+            static constexpr int kNotches[] = {0, 6, 10, 12, 20};
+            wants.push_back({index, kNotches[std::clamp(it->second.overlay, 0, 4)], it->second.progress, match.boss});
+        }
+    }
+    if (wants.empty() || !view.mVisualTree.get()) return;
+    // the grid control, found once per HUD tree (render thread only)
+    static std::weak_ptr<UIControl> gridCache;
+    std::shared_ptr<UIControl>      gridPtr = gridCache.lock();
+    if (!gridPtr) {
+        auto const& root = view.mVisualTree.get()->mRootControl;
+        if (!root) return;
+        UIControl* found = findControl(*root, "boss_health_grid");
+        if (!found) return;
+        // its owning pointer: the parent's child entry
+        if (auto parent = found->mParent.lock())
+            for (auto const& child : parent->mChildren.get())
+                if (child.get() == found) gridPtr = child;
+        if (!gridPtr) return;
+        gridCache = gridPtr;
+    }
+    UIControl* grid = gridPtr.get();
+    gf::client::screen::Canvas canvas(ctx);
+    for (auto const& item : grid->mChildren.get()) {
+        if (!item || !item->mIsVisibleInTree) continue;
+        int index = item->findCollectionIndex("boss_bars");
+        auto want = std::find_if(wants.begin(), wants.end(), [&](Want const& w) { return w.index == index; });
+        if (want == wants.end()) continue;
+        UIControl* bar = findControl(*item, "progress_bar_for_collections");
+        if (!bar) continue;
+        if (bar->mCachedPositionDirty) bar->_setCachedPosition();
+        auto  pos = bar->mCachedPosition.get();
+        auto  sz  = bar->mSize.get();
+        float x = pos.x, y = pos.y, w = sz.x, h = sz.y;
+        if (w <= 0 || h <= 0) continue;
+        float filled = x + w * std::clamp(want->progress, 0.0f, 1.0f);
+        for (int k = 1; k < want->notches; ++k) {
+            float nx = std::floor(x + w * static_cast<float>(k) / static_cast<float>(want->notches));
+            canvas.fill({nx, y, 1.0f, h}, nx < filled ? 0x80000000u : 0x50000000u);
+        }
+        std::scoped_lock lock(s.mutex);
+        if (s.notchLogged.insert(want->boss).second)
+            log().info("client boss bar {} notched {} at {:.0f} {:.0f} ({:.0f} x {:.0f})", want->boss, want->notches, x, y, w, h);
+    }
+}
+
+} // namespace
 
 } // namespace gf::client::entity
 
@@ -219,6 +332,9 @@ void clearState() {
     {
         std::scoped_lock lock(s.mutex);
         s.bars.clear();
+        s.matches.clear();
+        s.notchLogged.clear();
+        ++s.generation;
         s.logged.clear();
         s.unmatched.clear();
         s.deathTimes.clear();
@@ -237,6 +353,7 @@ void registerHandlers() {
         auto             id = m.value("id", std::int64_t{0});
         auto&            s  = C();
         std::scoped_lock lock(s.mutex);
+        ++s.generation; // the HUD's title matches are made again
         auto             op = m.value("op", std::string("add"));
         if (op == "remove") {
             s.bars.erase(id);
@@ -265,7 +382,9 @@ void registerHandlers() {
     nc::on("boss.death_time", [](Json const& m) {
         auto&            s = C();
         std::scoped_lock lock(s.mutex);
-        s.deathTimes[m.value("id", std::int64_t{0})] = DeathTime{m.value("deathTime", 0), Clock::now()};
+        auto             id = m.value("id", std::int64_t{0});
+        if (!s.deathTimes.contains(id)) log().info("client boss {} dying (death time {})", id, m.value("deathTime", 0));
+        s.deathTimes[id] = DeathTime{m.value("deathTime", 0), Clock::now()};
     });
     nc::on("entity.move_player", [](Json const& m) {
         auto* player = gf::client::currentPlayer();
@@ -289,9 +408,13 @@ void registerHandlers() {
     nc::on("entity.data", [](Json const& m) {
         auto&            s = C();
         std::scoped_lock lock(s.mutex);
-        auto&            d = s.data[m.value("id", std::int64_t{0})];
+        auto             id = m.value("id", std::int64_t{0});
+        auto&            d  = s.data[id];
         if (!d.is_object()) d = Json::object();
-        d[m.value("key", std::string())] = m.value("data", Json());
+        auto key = m.value("key", std::string());
+        // the selftest fixtures' keys are logged (once per key) for the client e2e
+        if (key.starts_with("gf_test:") && !d.contains(key)) log().info("client entity data {} {} = {}", id, key, m.value("data", Json()).dump());
+        d[key] = m.value("data", Json());
     });
     nc::on("projectile.thrown", [](Json const& m) {
         auto&            s = C();
@@ -302,6 +425,15 @@ void registerHandlers() {
 
 class EntityClientModule {
 public:
+    // the render listener is added at mod load, before the game's threads run (as the screen
+    // framework's: adding render listeners while the client runs can deadlock the game)
+    void load() {
+        auto& bus = ll::event::EventBus::getInstance();
+        mListener = bus.emplaceListener<ll::event::AfterUIRenderEvent>([](ll::event::AfterUIRenderEvent& ev) {
+            if (ev.screenView().getScreenName() != "hud_screen") return;
+            drawNotches(ev.screenView(), ev.uiRenderContext());
+        });
+    }
     void install() {
         static bool handlers = false;
         if (!std::exchange(handlers, true)) registerHandlers();
@@ -313,6 +445,9 @@ public:
         EntityClientBossColourHook::unhook();
         clearState();
     }
+
+private:
+    ll::event::ListenerPtr mListener;
 };
 
 } // namespace
