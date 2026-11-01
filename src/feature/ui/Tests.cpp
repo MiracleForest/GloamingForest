@@ -7,8 +7,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <fstream>
-#include <iterator>
 #include <memory>
 #include <set>
 #include <unordered_map>
@@ -26,7 +24,6 @@
 #include "game/Blocks.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
-#include "mod/Main.h"
 #include "selftest/SelfTest.h"
 
 namespace {
@@ -38,24 +35,15 @@ namespace fx  = gf::ui::fixture;
 // ---- vanilla fallbacks ---------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("ui.title_skin", [](Context& ctx) {
-    auto t = gf::ui::containerTitleSkin("GloamingForest UI fixture", "ui/fixture_container");
-    ctx.check(t == "gfskin:ui/fixture_container;GloamingForest UI fixture", "the title carries the skin marker: " + t);
-    auto back = gf::ui::parseTitleSkin(t);
+    // no JSON-UI can read a container title on 1.26.51 (spike S5): every skin keeps the plain title
+    ctx.check(gf::ui::kJsonUiSkins.empty(), "no JSON-UI container skin is listed");
+    ctx.check(gf::ui::containerTitleSkin("GloamingForest UI fixture", "ui/fixture_container") == "GloamingForest UI fixture", "an unlisted skin keeps the plain title");
+    ctx.check(gf::ui::containerTitleSkin("k", "") == "k", "no skin");
+    // the marker format a future JSON-UI reads
+    auto back = gf::ui::parseTitleSkin("gfskin:ui/fixture_container;GloamingForest UI fixture");
     ctx.check(back.skinId == "ui/fixture_container" && back.titleKey == "GloamingForest UI fixture", "the skin and the title read back");
     ctx.check(gf::ui::parseTitleSkin("container.chest").skinId.empty(), "plain titles carry no skin");
     ctx.check(gf::ui::parseTitleSkin("gfskin:no_end").skinId.empty(), "a marker without its end is no skin");
-    ctx.check(gf::ui::containerTitleSkin("k", "not_a_listed_skin") == "k", "a skin the JSON-UI does not list keeps the plain title");
-    ctx.check(gf::ui::containerTitleSkin("k", "") == "k", "no skin");
-    // the resource pack's JSON-UI matches every listed skin by its marker
-    auto jsonUi = gf::Mod::getInstance().getSelf().getModDir() / "resource_packs" / "GloamingForest_RP" / "ui" / "chest_screen.json";
-    std::ifstream in(jsonUi);
-    std::string   text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    ctx.require(!text.empty(), "the JSON-UI chest skin is deployed: " + jsonUi.string());
-    for (auto skin : gf::ui::kJsonUiSkins) {
-        auto marker = "'gfskin:" + std::string(skin) + ";'";
-        ctx.check(text.find(marker) != std::string::npos, "the JSON-UI lists " + marker);
-        ctx.check(text.find("textures/gui/" + std::string(skin)) != std::string::npos, "the JSON-UI draws textures/gui/" + std::string(skin));
-    }
 });
 
 GF_REGISTER_SELFTEST("ui.form_fallback", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -162,9 +150,9 @@ GF_REGISTER_SELFTEST("ui.fixture_fog", [](Context& ctx) {
     ctx.info("fixture fog shown to " + std::to_string(real) + " companion(s)");
 });
 
-// A vanilla chest titled with containerTitleSkin (the JSON-UI skin of vanilla container
-// screens): for every real player two blocks south of its feet (the client scenario faces south
-// and opens it), else at the test position, where only the stored name is checked.
+// The vanilla container fallback: a vanilla chest titled with containerTitleSkin (a plain title,
+// spike S5), for every real player two blocks south of its feet (the player is turned to it and
+// the client scenario opens it), else at the test position, where only the stored name is checked.
 GF_REGISTER_SELFTEST("ui.fixture_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto title = gf::ui::containerTitleSkin(gf::tr("gf.ui.fixture.title", "GloamingForest UI fixture"), "ui/fixture_container");
     int  real  = 0;

@@ -37,10 +37,11 @@ struct TitleSkin {
     std::string titleKey; ///< the title shown (translation key or text)
 };
 [[nodiscard]] TitleSkin parseTitleSkin(std::string const& title);
-/// The skins the resource pack's JSON-UI (assets/pack/rp/ui/chest_screen.json) can draw: texture
-/// paths under textures/gui/. A title is "gfskin:<id>;<title>"; the JSON-UI matches the whole
-/// marker, so a new skin needs an entry there and here.
-inline constexpr std::array<std::string_view, 1> kJsonUiSkins{"ui/fixture_container"};
+/// The skins a resource pack JSON-UI can draw (titles "gfskin:<id>;<title>"). Empty: spike S5
+/// found that the vanilla chest screen's JSON-UI cannot test or cut its `$container_title` in
+/// 1.26.51 (neither '%.Ns' slicing nor substring removal is evaluated there), so
+/// containerTitleSkin keeps plain titles until a JSON-UI route that reads the title works.
+inline constexpr std::array<std::string_view, 0> kJsonUiSkins{};
 
 } // namespace gf::ui
 

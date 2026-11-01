@@ -3,9 +3,10 @@
 // - form: a LeviLamina SimpleForm (ModalFormRequestPacket), every client shows it;
 // - ddui: a Data-Driven UI custom form (LeviLamina ll::ui::CustomForm) built from a small JSON
 //   document, for vanilla clients that support DDUI;
-// - containerTitleSkin: the title convention the resource pack's JSON-UI
-//   (assets/pack/rp/ui/chest_screen.json) reads to draw a TF GUI texture around a vanilla
-//   container screen.
+// - containerTitleSkin: the title convention ("gfskin:<id>;<title>") a resource pack JSON-UI would
+//   read to draw a TF GUI texture around a vanilla container screen. Spike S5: the vanilla chest
+//   screen's JSON-UI cannot test or cut `$container_title`, so no skin is listed
+//   (kJsonUiSkins) and titles stay plain; vanilla players see the vanilla container.
 //
 // One log line per form shown / answered (e2e scenarios wait for them).
 
@@ -213,9 +214,8 @@ constexpr std::string_view kSkinPrefix = "gfskin:";
 constexpr char             kSkinEnd    = ';';
 } // namespace
 
-// The JSON-UI matches each skin by the marker "gfskin:<id>;" (variable expressions can remove a
-// known substring but not cut at a position), so only the skins it lists can be drawn; any other
-// id keeps the plain title (no marker shows up in a vanilla client).
+// A JSON-UI would match each skin by its whole marker "gfskin:<id>;"; only listed skins get one,
+// any other id keeps the plain title (no marker ever shows up in a vanilla client).
 std::string containerTitleSkin(std::string const& titleKey, std::string const& skinId) {
     if (std::find(kJsonUiSkins.begin(), kJsonUiSkins.end(), skinId) == kJsonUiSkins.end()) {
         static std::mutex                       m;
@@ -223,7 +223,7 @@ std::string containerTitleSkin(std::string const& titleKey, std::string const& s
         std::lock_guard                         lock(m);
         if (!skinId.empty() && !warned[skinId]) {
             warned[skinId] = true;
-            log().warn("ui: no JSON-UI skin '{}' (assets/pack/rp/ui/chest_screen.json): plain title", skinId);
+            log().info("ui: no JSON-UI container skin '{}' for vanilla clients: plain title", skinId);
         }
         return titleKey;
     }

@@ -12,9 +12,9 @@
 $remote = $script:Mode -ne 'local'
 $hostRx = if ($remote) { '\[host\].*' } else { '' }
 
-# A vanilla chest titled with containerTitleSkin, two blocks south of the player (the selftest
-# turns the player towards it): the resource pack's JSON-UI draws the skin around the vanilla
-# chest screen (any client). Screenshot: out/ui/<tag>-chest-skin.png.
+# The vanilla container fallback: a vanilla chest titled with containerTitleSkin (a plain title,
+# spike S5), two blocks south of the player (the selftest turns the player towards it), opened
+# with a right click. Screenshot: out/ui/<tag>-chest-skin.png.
 function Invoke-UiChest([string]$tag) {
     $mark = Get-LogMark
     $r = Invoke-SelfTest 'ui.fixture_chest'
@@ -123,6 +123,8 @@ if (-not $remote) {
     Enter-TestWorld -Attempts 2
     Wait-HudReady
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
+    # the game was closed before the world saved the chest's removal: clear it again
+    Invoke-Chat '/setblock ~ ~ ~2 air'
     Invoke-UiFixture 'vibrant'
     $mark = Get-LogMark
     Focus-Game
