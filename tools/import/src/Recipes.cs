@@ -151,6 +151,38 @@ namespace GfImport
             Warn("recipe " + id + " (" + type + ") has no Bedrock recipe: " + why);
         }
 
+        /// <summary>Every combination of the alternatives (one recipe each), or null with an error when there are more
+        /// than MaxRecipeExpansion: a recipe is never cut down to some of its alternatives.</summary>
+        List<List<J>> Expand(string id, List<List<J>> alts)
+        {
+            var combos = Cartesian(alts).Take(MaxRecipeExpansion + 1).ToList();
+            if (combos.Count <= MaxRecipeExpansion) return combos;
+            Errors.Add("recipe " + id + ": more than " + MaxRecipeExpansion + " ingredient combinations (" + string.Join(" x ", alts.Select(a => a.Count))
+                + "); declare the tag on its members (a TF item tag) or raise Recipes.MaxRecipeExpansion");
+            return null;
+        }
+
+        /// <summary>The alternatives as single items: a Bedrock tag alternative becomes its members (furnace and smithing
+        /// recipes take one item per slot).</summary>
+        List<J> ItemsOnly(List<J> alts)
+        {
+            var res = new List<J>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var a in alts)
+            {
+                if (a["item"] != null)
+                {
+                    if (a["data"] != null || seen.Add(a["item"].AsString())) res.Add(a);
+                    continue;
+                }
+                string tag = a["tag"].AsString();
+                var members = TagMembers(tag);
+                if (members.Count == 0) Warn("recipe ingredient tag " + tag + " has no known members");
+                foreach (var m in members) if (seen.Add(m)) res.Add(J.Obj().Set("item", m));
+            }
+            return res;
+        }
+
         static IEnumerable<List<T>> Cartesian<T>(List<List<T>> lists)
         {
             IEnumerable<List<T>> acc = new[] { new List<T>() };
@@ -208,8 +240,8 @@ namespace GfImport
                             keys[i] = to;
                         }
                         if (alts.Any(a => a.Count == 0)) { Dropped(id, type, "ingredient(s) " + string.Join(", ", keys.Where((k, i) => alts[i].Count == 0)) + " have no Bedrock item"); return outList; }
-                        var combos = Cartesian(alts).Take(MaxRecipeExpansion + 1).ToList();
-                        if (combos.Count > MaxRecipeExpansion) { Warn("recipe " + id + ": too many ingredient combinations, using the first alternatives"); combos = new List<List<J>> { alts.Select(a => a[0]).ToList() }; }
+                        var combos = Expand(id, alts);
+                        if (combos == null) return outList;
                         int n = 0;
                         foreach (var combo in combos)
                         {
@@ -227,8 +259,8 @@ namespace GfImport
                     {
                         var alts = r["ingredients"].A.Select(Alternatives).ToList();
                         if (alts.Any(a => a.Count == 0)) { Dropped(id, type, "ingredient(s) " + string.Join(", ", r["ingredients"].A.Where((x, i) => alts[i].Count == 0).Select(x => x.ToCompact())) + " have no Bedrock item"); return outList; }
-                        var combos = Cartesian(alts).Take(MaxRecipeExpansion + 1).ToList();
-                        if (combos.Count > MaxRecipeExpansion) { Warn("recipe " + id + ": too many ingredient combinations, using the first alternatives"); combos = new List<List<J>> { alts.Select(a => a[0]).ToList() }; }
+                        var combos = Expand(id, alts);
+                        if (combos == null) return outList;
                         int n = 0;
                         foreach (var combo in combos)
                         {
@@ -262,8 +294,8 @@ namespace GfImport
                         else if (type == "minecraft:blasting") tags.Add("blast_furnace");
                         else if (type == "minecraft:smoking") tags.Add("smoker");
                         else { tags.Add("campfire"); tags.Add("soul_campfire"); }
-                        // Bedrock furnace recipes take one item: tags become one recipe per member
-                        var alts = Alternatives(r["ingredient"]).Where(a => a["item"] != null).ToList();
+                        // Bedrock furnace recipes take one item: tags (Bedrock-native ones included) become one recipe per member
+                        var alts = ItemsOnly(Alternatives(r["ingredient"]));
                         if (alts.Count == 0) Dropped(id, type, "no item input for a Bedrock furnace recipe (Java ingredient " + r["ingredient"].ToCompact() + ")");
                         int n = 0;
                         foreach (var a in alts)
@@ -279,14 +311,22 @@ namespace GfImport
                     }
                 case "minecraft:smithing_transform":
                     {
-                        var t = Alternatives(r["template"]); var b = Alternatives(r["base"]); var a = Alternatives(r["addition"]);
-                        if (t.Count == 0 || b.Count == 0 || a.Count == 0) { Dropped(id, type, "template, base or addition has no Bedrock item"); return outList; }
-                        var body = J.Obj().Set("description", J.Obj().Set("identifier", id)).Set("tags", J.Arr().Add("smithing_table"))
-                            .Set("template", t[0]["item"] != null ? t[0]["item"].AsString() : t[0]["tag"].AsString())
-                            .Set("base", b[0]["item"] != null ? b[0]["item"].AsString() : b[0]["tag"].AsString())
-                            .Set("addition", a[0]["item"] != null ? a[0]["item"].AsString() : a[0]["tag"].AsString())
-                            .Set("result", Result(r["result"])["item"].AsString());
-                        outList.Add(J.Obj().Set("format_version", "1.20.10").Set("minecraft:recipe_smithing_transform", body));
+                        // Bedrock's smithing recipe names one item per slot: one recipe per combination of the template,
+                        // base and addition alternatives (tags expanded to their members)
+                        var slots = new List<List<J>> { ItemsOnly(Alternatives(r["template"])), ItemsOnly(Alternatives(r["base"])), ItemsOnly(Alternatives(r["addition"])) };
+                        if (slots.Any(s => s.Count == 0)) { Dropped(id, type, "template, base or addition has no Bedrock item"); return outList; }
+                        var combos = Expand(id, slots);
+                        if (combos == null) return outList;
+                        int n = 0;
+                        foreach (var combo in combos)
+                        {
+                            string rid = id + (combos.Count > 1 ? "_" + n : "");
+                            var body = J.Obj().Set("description", J.Obj().Set("identifier", rid)).Set("tags", J.Arr().Add("smithing_table"))
+                                .Set("template", combo[0]["item"].AsString()).Set("base", combo[1]["item"].AsString()).Set("addition", combo[2]["item"].AsString())
+                                .Set("result", Result(r["result"])["item"].AsString());
+                            outList.Add(J.Obj().Set("format_version", "1.20.10").Set("minecraft:recipe_smithing_transform", body));
+                            n++;
+                        }
                         return outList;
                     }
                 default:

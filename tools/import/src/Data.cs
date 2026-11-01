@@ -105,6 +105,10 @@ namespace GfImport
             return j;
         }
 
+        // Minecraft 1.21.1's wood types (Blocks / ItemTags order) and dye colours (declared before BaseItemTags, which uses them)
+        static readonly string[] VanillaWoods = { "oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "crimson", "warped", "mangrove", "bamboo", "cherry" };
+        static readonly string[] DyeColors = { "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black" };
+
         // NeoForge / vanilla tags TF's recipes rely on, which TF's data only extends (members as on Java 1.21.1)
         public static readonly Dictionary<string, string[]> BaseItemTags = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
@@ -128,6 +132,14 @@ namespace GfImport
             { "c:storage_blocks/iron", new[] { "minecraft:iron_block" } },
             { "c:chests/wooden", new[] { "minecraft:chest", "minecraft:trapped_chest" } },
             { "c:chests/trapped", new[] { "minecraft:trapped_chest" } },
+            // the vanilla members of the tags Bedrock also has (Recipes.BedrockItemTags), for the recipes that take one
+            // item per slot (furnace, smithing); same item names on Bedrock
+            { "minecraft:planks", VanillaWoods.Select(w => "minecraft:" + w + "_planks").ToArray() },
+            { "minecraft:wooden_slabs", VanillaWoods.Select(w => "minecraft:" + w + "_slab").ToArray() },
+            { "minecraft:wool", DyeColors.Select(c => "minecraft:" + c + "_wool").ToArray() },
+            { "minecraft:logs", VanillaWoods.Where(w => w != "bamboo").SelectMany(w => w == "crimson" || w == "warped"
+                ? new[] { w + "_stem", "stripped_" + w + "_stem", w + "_hyphae", "stripped_" + w + "_hyphae" }
+                : new[] { w + "_log", w + "_wood", "stripped_" + w + "_log", "stripped_" + w + "_wood" }).Select(x => "minecraft:" + x).ToArray() },
         };
 
         /// <summary>Every member of a tag of a registry ("item" by default; nested tags resolved; unknown vanilla
