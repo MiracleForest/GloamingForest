@@ -6,6 +6,7 @@
 // companion protocol, screens, click-and-hold, flat areas, volume hashes, boss bar capture, the
 // contract stubs and the gf_test fixture pack.
 
+#include <algorithm>
 #include <random>
 
 #include "mc/network/MinecraftPacketIds.h"
@@ -64,31 +65,44 @@ GF_REGISTER_SELFTEST("core.world_db", [](Context& ctx) {
 });
 
 // ---- persistence across a world reload (tools/e2e/server/scenarios/smoke.ps1) --------------------
-// core.persist_write leaves a marker in the world: a world DB record, a stone block at testPos(5006)
-// and a block data document on it, none of them flushed by the test, so they reach the disk only
-// through the world's own save path (autosave / server stopping). core.persist_read, run after
+// core.persist_write leaves a marker in the world: a world DB record, a stone block 3 blocks below
+// testPos(5006) and a block data document on it, none of them flushed by the test, so they reach
+// the disk only through the world's own save path (autosave / server stopping). The block sits
+// under the ground layer, out of reach of the flat areas of other units' tests (they clear and
+// restore from the ground layer up, which would drop its block data). core.persist_read, run after
 // the restart, verifies all three, logs "persist marker verified nonce=<n>" (the smoke scenario
-// compares it with the nonce of the write) and removes the marker. Without a marker it has
-// nothing to check and passes (a plain "core.*" run sorts the read before the write).
+// compares it with the nonce of the write) and puts the original block back. Without a marker it
+// has nothing to check and passes (a plain "core.*" run sorts the read before the write).
 namespace {
 constexpr char kPersistKey[] = "gf:common:persist_probe";
+
+GlobalPos persistPos(Context& ctx, BlockSource const& region) {
+    auto pos = ctx.testPos(5006);
+    pos.y    = std::max(pos.y - 3, region.getMinHeight() + 1); // above the bottom bedrock layer
+    return pos;
 }
+} // namespace
 
 GF_REGISTER_SELFTEST("core.persist_write", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace bd = gf::blockdata;
-    auto pos     = up(ctx.testPos(5006), 1);
+    ctx.require(ctx.region() != nullptr, "the overworld is available");
+    auto pos = persistPos(ctx, *ctx.region());
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto* region = ctx.region();
     auto const* stone = gf::game::blockWith("minecraft:stone");
     ctx.require(region && stone, "the overworld and minecraft:stone are available");
     auto bp = gf::game::blockPos(pos);
+    // the block to put back afterwards (an earlier marker's record keeps the original one)
+    auto previous = db::get(kPersistKey);
+    auto was      = previous ? previous->value("was", std::string{}) : std::string{};
+    if (was.empty()) was = ctx.blockAt(pos);
     // not ctx.setBlock: the block must outlive the test (core.persist_read removes it). A marker
     // of an earlier write may still be there (setBlock reports no change then).
     ctx.require(&region->getBlock(bp) == stone || gf::game::setBlock(*region, bp, *stone), "place the marker block");
     std::random_device rd;
     auto nonce = std::to_string(rd()) + std::to_string(rd());
     bd::set(*region, bp, "core", {{"persist", nonce}});
-    db::put(kPersistKey, {{"nonce", nonce}, {"pos", {pos.dim, pos.x, pos.y, pos.z}}});
+    db::put(kPersistKey, {{"nonce", nonce}, {"pos", {pos.dim, pos.x, pos.y, pos.z}}, {"was", was}});
     co_await ctx.ticks(1);
     ctx.check(db::get(kPersistKey).has_value() && bd::has(pos), "the marker is in place");
     ctx.info("persist marker written nonce=" + nonce);
@@ -103,19 +117,25 @@ GF_REGISTER_SELFTEST("core.persist_read", [](Context& ctx) -> ll::coro::CoroTask
     }
     auto nonce = marker->value("nonce", std::string{});
     auto at    = marker->value("pos", JsonT::array());
+    auto was   = marker->value("was", std::string{});
+    db::erase(kPersistKey);
     ctx.require(!nonce.empty() && at.is_array() && at.size() == 4, "the marker record is complete");
     GlobalPos pos{at[0].get<int>(), at[1].get<int>(), at[2].get<int>(), at[3].get<int>()};
-    ctx.cleanupBlock(pos); // the marker block goes (and its block data with it) whatever happens
-    db::erase(kPersistKey);
     ctx.require(co_await ctx.ensureLoaded(pos), "marker area loaded");
     ctx.check(ctx.blockAt(pos) == "minecraft:stone", "the marker block survived the reload (got '" + ctx.blockAt(pos) + "')");
     auto const* doc  = bd::get(pos);
     auto        seen = doc && doc->contains("core") ? (*doc)["core"].value("persist", std::string{}) : std::string{};
     ctx.check(seen == nonce, "the block data survived the reload (got '" + seen + "')");
     if (seen == nonce && ctx.failures().empty()) ctx.info("persist marker verified nonce=" + nonce);
-    if (auto* region = ctx.region()) bd::set(*region, gf::game::blockPos(pos), "core", nullptr);
+    // remove the marker: its block data, then the original block (air when unknown)
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "the overworld is available");
+    auto bp = gf::game::blockPos(pos);
+    bd::set(*region, bp, "core", nullptr);
+    auto const* original = was.empty() ? nullptr : gf::game::blockWith(was);
+    if (original) gf::game::setBlock(*region, bp, *original);
+    else gf::game::clearBlock(*region, bp);
 });
-
 GF_REGISTER_SELFTEST("core.i18n", [](Context& ctx) {
     ctx.check(gf::tr("gf.test.missing", "Fallback {}", 1) == "Fallback 1", "missing keys use the fallback");
     ctx.check(gf::tr("gf.test.missing", "Java %s and %2$s", "a", "b") == "Java a and b", "Java placeholders are formatted");

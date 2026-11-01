@@ -43,7 +43,6 @@ namespace gf::selftest {
 namespace {
 bool gRunning       = false;
 int  gPlayerCounter = 0;
-int  gAreaCounter   = 0;
 
 BlockSource* overworld() { return game::regionOf(0); }
 
@@ -301,7 +300,8 @@ ll::coro::CoroTask<core::BlockBox> Context::flatArea(int dx, int size, int heigh
     // Keep it loaded while the test runs (it may reach outside the run's ticking areas). Bedrock
     // allows 10 ticking areas per world (the run holds 3) and refuses the add beyond that: the
     // area would then silently unload and the restore below would skip its blocks.
-    std::string area = "gf_selftest_area_" + std::to_string(++gAreaCounter);
+    // names gf_selftest_area_1..7 per test: bounded, so a run can remove what a crashed one left
+    std::string area = "gf_selftest_area_" + std::to_string(mTickingAreas.size() + 1);
     auto        added = runServerCommand(
         "tickingarea add " + std::to_string(box.minX) + " 0 " + std::to_string(box.minZ) + " " + std::to_string(box.maxX) + " 0 "
             + std::to_string(box.maxZ) + " " + area + " true",
@@ -483,6 +483,14 @@ ll::coro::CoroTask<> loadTestArea() {
     BlockPos spawn = level->getSharedSpawnPos();
     spawn.y        = 0; // y is irrelevant for the ticking area (it spans the whole height)
     auto at = [&](int dx, int dz) { return std::to_string(spawn.x + dx) + " 0 " + std::to_string(spawn.z + dz); };
+    // ticking areas persist with the world: drop the ones a crashed run left, or they would eat into
+    // Bedrock's 10 per world (failures of these removes are expected and ignored)
+    std::vector<int> dims{0};
+    if (auto tw = world::twilight()) dims.push_back(static_cast<int>(*tw));
+    for (int dim : dims) {
+        for (auto const& a : kTestAreas) runServerCommand(std::string("tickingarea remove ") + a.name, dim);
+        for (int i = 1; i <= Context::kMaxFlatAreasPerTest; ++i) runServerCommand("tickingarea remove gf_selftest_area_" + std::to_string(i), dim);
+    }
     for (auto const& a : kTestAreas) {
         auto r = runServerCommand("tickingarea add " + at(a.x0, a.z0) + " " + at(a.x1, a.z1) + " " + a.name + " true");
         if (!r.ok) log().warn("selftest: ticking area {} was refused ({}); tests in it may not stay loaded", a.name, r.messages);
