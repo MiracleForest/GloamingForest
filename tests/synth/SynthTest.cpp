@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -238,6 +239,87 @@ TEST(SynthVorbis, IsDeterministicAndChecksPages) {
     EXPECT_EQ(oggCrc(zero, 0), 0u);
 }
 
+// probeOggVorbisEnds reads the first and the last page only and agrees with the full probe: a short
+// file (one tail read), a long one, a last page larger than the first tail read, and broken ends.
+TEST(SynthVorbis, ProbesTheEnds) {
+    // a directory of this process: gf-tests may run in several worktrees at once
+    auto const dir = fs::temp_directory_path() / ("gf-synth-test-" + std::to_string(std::random_device{}()));
+    fs::create_directories(dir);
+    struct RemoveAtExit {
+        fs::path dir;
+        ~RemoveAtExit() {
+            std::error_code ec;
+            fs::remove_all(dir, ec);
+        }
+    } const cleanup{dir};
+    auto write = [&](char const* name, std::vector<std::uint8_t> const& bytes) {
+        auto          path = dir / name;
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<char const*>(bytes.data()), std::streamsize(bytes.size()));
+        return path;
+    };
+    // an Ogg page ending a stream: the given serial and granule position, one packet `body`
+    auto endPage = [](std::uint32_t serial, std::uint64_t granule, std::vector<std::uint8_t> const& body) {
+        std::vector<std::uint8_t> page{'O', 'g', 'g', 'S', 0, 0x04};
+        for (int i = 0; i < 8; ++i) page.push_back(std::uint8_t(granule >> (8 * i)));
+        for (int i = 0; i < 4; ++i) page.push_back(std::uint8_t(serial >> (8 * i)));
+        page.insert(page.end(), {0x09, 0x00, 0x00, 0x00, 0, 0, 0, 0}); // sequence, CRC (set below)
+        std::size_t const segments = body.size() / 255 + 1;
+        page.push_back(std::uint8_t(segments));
+        for (std::size_t s = 0; s + 1 < segments; ++s) page.push_back(255);
+        page.push_back(std::uint8_t(body.size() % 255));
+        page.insert(page.end(), body.begin(), body.end());
+        std::uint32_t const crc = oggCrc(page.data(), page.size());
+        for (int i = 0; i < 4; ++i) page[22 + std::size_t(i)] = std::uint8_t(crc >> (8 * i));
+        return page;
+    };
+    VorbisOptions o;
+    o.quality = 1.0;
+    for (int n : {1000, 44100 * 12}) {
+        Random             rng{std::uint64_t(n)};
+        std::vector<float> pcm(static_cast<std::size_t>(n));
+        for (auto& v : pcm) v = float(0.8 * rng.bipolar()); // noise: dense pages
+        auto const ogg  = encodeVorbis(pcm, o);
+        auto const full = probeOggVorbis(ogg);
+        ASSERT_TRUE(full.valid) << full.error;
+        auto const ends = probeOggVorbisEnds(write("ends.ogg", ogg));
+        ASSERT_TRUE(ends.valid) << n << ": " << ends.error;
+        EXPECT_EQ(ends.channels, full.channels);
+        EXPECT_EQ(ends.sampleRate, full.sampleRate);
+        EXPECT_EQ(ends.samples, full.samples);
+        EXPECT_EQ(ends.samples, std::int64_t(n));
+
+        // a last page larger than the first tail read (60 000 bytes, with a stray capture pattern
+        // near its end), after the encoder's own last page; of another stream it does not count
+        std::vector<std::uint8_t> body(60000);
+        for (std::size_t i = 0; i < body.size(); ++i) body[i] = std::uint8_t(i * 31 + 7);
+        std::copy_n("OggS", 4, body.end() - 100);
+        auto bigLast = ogg;
+        auto page    = endPage(o.serial, 123456789, body);
+        bigLast.insert(bigLast.end(), page.begin(), page.end());
+        auto const big = probeOggVorbisEnds(write("biglast.ogg", bigLast));
+        ASSERT_TRUE(big.valid) << big.error;
+        EXPECT_EQ(big.samples, 123456789);
+        auto chained = ogg;
+        page         = endPage(o.serial + 1, 42, {1, 2, 3});
+        chained.insert(chained.end(), page.begin(), page.end());
+        EXPECT_FALSE(probeOggVorbisEnds(write("chained.ogg", chained)).valid);
+
+        auto truncated = ogg;
+        truncated.resize(truncated.size() - 5); // the last page is incomplete
+        EXPECT_FALSE(probeOggVorbisEnds(write("truncated.ogg", truncated)).valid);
+        auto appended = ogg;
+        appended.insert(appended.end(), {'O', 'g', 'g', 'S', 0, 0, 0}); // no page ends the file
+        EXPECT_FALSE(probeOggVorbisEnds(write("appended.ogg", appended)).valid);
+        auto badTail                 = ogg;
+        badTail[badTail.size() - 3] ^= 0x40; // the last page fails its CRC
+        EXPECT_FALSE(probeOggVorbisEnds(write("badtail.ogg", badTail)).valid);
+        auto badHead  = ogg;
+        badHead[40]  ^= 0x40; // the identification header fails its CRC
+        EXPECT_FALSE(probeOggVorbisEnds(write("badhead.ogg", badHead)).valid);
+    }
+    EXPECT_FALSE(probeOggVorbisEnds(dir / "missing.ogg").valid);
+}
 TEST(SynthWav, RoundTrips) {
     std::vector<float> pcm{0.0f, 0.5f, -0.5f, 1.0f, -1.0f};
     int                rate = 0;
@@ -356,8 +438,9 @@ TEST(SynthPatch, NegativeStartCutsTheHead) {
 }
 
 // Every committed sound decodes with an independent decoder (stb_vorbis) to the length its last
-// granule position announces: mono, 22.05 or 44.1 kHz, finite samples near -1..1 (a lossy decode may\n// overshoot full
-// scale a little; garbage would not stay this close).
+// granule position announces: mono, 22.05 or 44.1 kHz, finite samples near -1..1 (a lossy decode may
+// overshoot full scale a little; garbage would not stay this close). probeOggVorbisEnds (the length
+// synth.play_all reads from the two ends of a file) agrees with the full probe.
 TEST(SynthAssets, EveryFileDecodes) {
     auto const root = repoRoot();
     ASSERT_FALSE(root.empty()) << "repository root not found (set GF_ROOT)";
@@ -369,6 +452,11 @@ TEST(SynthAssets, EveryFileDecodes) {
         auto const info  = probeOggVorbis(bytes);
         auto const name  = fs::relative(entry.path(), root).generic_string();
         ASSERT_TRUE(info.valid) << name << ": " << info.error;
+        auto const ends = probeOggVorbisEnds(entry.path());
+        EXPECT_TRUE(ends.valid) << name << ": " << ends.error;
+        EXPECT_EQ(ends.samples, info.samples) << name;
+        EXPECT_EQ(ends.sampleRate, info.sampleRate) << name;
+        EXPECT_EQ(ends.channels, info.channels) << name;
         int  channels = 0, rate = 0;
         auto pcm = decodeVorbis(bytes, &channels, &rate);
         EXPECT_EQ(channels, 1) << name;

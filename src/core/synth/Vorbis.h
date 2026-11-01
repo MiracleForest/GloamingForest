@@ -11,6 +11,7 @@
 // position, so the decoded stream has exactly `pcm.size()` samples.
 
 #include <cstdint>
+#include <filesystem>
 #include <span>
 #include <string>
 #include <vector>
@@ -40,5 +41,12 @@ struct OggVorbisInfo {
     std::string  error;
 };
 [[nodiscard]] OggVorbisInfo probeOggVorbis(std::span<std::uint8_t const> file);
+
+/// The same facts from the two ends of an .ogg file only: its first page (the Vorbis identification
+/// header: channels, sample rate) and its last page (whose granule position is the length in
+/// samples), so the length of a long file costs two small reads instead of the whole file. Both
+/// pages must pass their CRC and the last one must end the stream at the end of the file; the pages
+/// in between are not read (probeOggVorbis validates a whole file).
+[[nodiscard]] OggVorbisInfo probeOggVorbisEnds(std::filesystem::path const& file);
 
 } // namespace gf::core::synth

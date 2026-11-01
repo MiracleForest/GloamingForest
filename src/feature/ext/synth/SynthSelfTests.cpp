@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <future>
 #include <iterator>
 #include <map>
 #include <memory>
@@ -172,6 +173,14 @@ std::vector<std::uint8_t> readBytes(std::filesystem::path const& p) {
     return std::vector<std::uint8_t>((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 }
 
+/// Sets a worker thread's stop flag when it goes out of scope. Declared after the worker's std::future,
+/// it is destroyed first: a coroutine destroyed while it waits (an aborted run) makes the worker stop
+/// at its next file, so the future's destructor, which joins the worker, waits for one file at most.
+struct StopOnExit {
+    std::shared_ptr<std::atomic<bool>> flag;
+    ~StopOnExit() { flag->store(true); }
+};
+
 /// sound_definitions of the assembled pack; an empty object (and the reason) when it cannot be read.
 nlohmann::json loadDefinitions(std::string& error) {
     auto const file = resourcePack() / "sounds" / "sound_definitions.json";
@@ -218,15 +227,19 @@ std::vector<std::filesystem::path> vanillaPacks() {
 
 } // namespace
 
-GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) {
+GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) -> ll::coro::CoroTask<> {
     std::string error;
     auto const  defs = loadDefinitions(error);
     ctx.require(error.empty(), error);
-    auto const pack = resourcePack();
+    auto const                         pack = resourcePack();
+    std::vector<std::filesystem::path> vanilla;
 #ifdef GF_CLIENT
-    auto const vanilla = vanillaPacks();
+    vanilla = vanillaPacks();
     if (vanilla.empty()) ctx.info("vanilla packs not found next to the game: vanilla references not checked");
 #endif
+    // the files are read on a worker thread after the definitions (about 9 MB: the server thread keeps
+    // ticking); each entry is (event, sound name), a sound checked once
+    std::vector<std::pair<std::string, std::string>> synthFiles, vanillaFiles;
     std::set<std::string> checkedFiles; // synthesized files (and, on the client, vanilla sounds) already checked
     int                   synthesized = 0, vanillaRefs = 0, problems = 0, subtitles = 0;
     auto                  problem = [&](std::string const& what) {
@@ -273,35 +286,51 @@ GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) {
             auto name = soundName(s);
             if (name.rfind("sounds/twilightforest/", 0) == 0) {
                 ++synthesized;
-                if (!checkedFiles.insert(name).second) continue;
-                auto path = pack / (name + ".ogg");
-                if (!std::filesystem::exists(path)) {
-                    problem(std::string(ev.id) + ": missing file " + name + ".ogg");
-                    continue;
-                }
-                auto bytes = readBytes(path);
-                auto info  = gf::core::synth::probeOggVorbis(bytes);
-                if (!info.valid) problem(name + ".ogg is not a valid Ogg Vorbis file: " + info.error);
-                else if (info.channels != 1) problem(name + ".ogg is not mono (3D sounds must be mono)");
-                else if (info.samples <= 0) problem(name + ".ogg has no samples");
+                if (checkedFiles.insert(name).second) synthFiles.emplace_back(ev.id, name);
             } else {
                 ++vanillaRefs;
-#ifdef GF_CLIENT
-                if (!vanilla.empty() && checkedFiles.insert(name).second) {
-                    bool found = false;
-                    for (auto const& dir : vanilla) {
-                        for (char const* ext : {".fsb", ".ogg", ".wav"})
-                            found = found || std::filesystem::exists(dir / (name + ext));
-                    }
-                    if (!found)
-                        problem(
-                            std::string(ev.id) + ": vanilla sound " + name + " is in none of the game's vanilla packs"
-                        );
-                }
-#endif
+                if (!vanilla.empty() && checkedFiles.insert(name).second) vanillaFiles.emplace_back(ev.id, name);
             }
         }
     }
+    auto cancel       = std::make_shared<std::atomic<bool>>(false);
+    auto fileProblems = std::async(
+        std::launch::async,
+        [cancel, pack, vanilla, synthFiles = std::move(synthFiles), vanillaFiles = std::move(vanillaFiles)] {
+            std::vector<std::string> out;
+            std::error_code          ec; // a file system error counts as a missing file, with its reason
+            auto                     because = [&ec] { return ec ? " (" + ec.message() + ")" : std::string(); };
+            for (auto const& [event, name] : synthFiles) {
+                if (*cancel) break;
+                auto const path = pack / (name + ".ogg");
+                if (!std::filesystem::exists(path, ec)) {
+                    out.push_back(event + ": missing file " + name + ".ogg" + because());
+                    continue;
+                }
+                auto const info = gf::core::synth::probeOggVorbis(readBytes(path));
+                if (!info.valid) out.push_back(name + ".ogg is not a valid Ogg Vorbis file: " + info.error);
+                else if (info.channels != 1) out.push_back(name + ".ogg is not mono (3D sounds must be mono)");
+                else if (info.samples <= 0) out.push_back(name + ".ogg has no samples");
+            }
+            for (auto const& [event, name] : vanillaFiles) {
+                if (*cancel) break;
+                bool found = false;
+                for (auto const& dir : vanilla) {
+                    for (char const* ext : {".fsb", ".ogg", ".wav"})
+                        found = found || std::filesystem::exists(dir / (name + ext), ec);
+                }
+                if (!found)
+                    out.push_back(
+                        event + ": vanilla sound " + name + " is in none of the game's vanilla packs" + because()
+                    );
+            }
+            return out;
+        }
+    );
+    // destroyed before the future: an early exit stops the worker
+    StopOnExit const stopWorker{cancel};
+    while (fileProblems.wait_for(std::chrono::seconds(0)) != std::future_status::ready) co_await ctx.ticks(1);
+    for (auto const& what : fileProblems.get()) problem(what);
     ctx.check(problems == 0, std::to_string(problems) + " sound definition problem(s)");
     ctx.info(
         std::to_string(std::size(kEvents)) + " events (" + std::to_string(std::size(kVariants)) + " variants, "
@@ -319,27 +348,55 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
     std::string error;
     auto const  defs = loadDefinitions(error);
     ctx.require(error.empty(), error);
-    // the shortest synthesized variant of each event at its pitch (0 when a variant is vanilla: unknown)
-    std::vector<double> minSeconds(std::size(kEvents), 0.0);
+    // the shortest synthesized variant of each event at its pitch (0 when a variant is vanilla: unknown),
+    // from the two ends of each file only (probeOggVorbisEnds: the identification header and the last
+    // granule position), on a worker thread: the server thread keeps ticking meanwhile
+    struct Probe {
+        std::filesystem::path file; // empty: a vanilla sound (length unknown)
+        double                pitch;
+    };
+    std::vector<std::vector<Probe>> probes(std::size(kEvents));
+    auto const                      pack = resourcePack();
     for (std::size_t i = 0; i < std::size(kEvents); ++i) {
         auto it = defs.find(kEvents[i].id);
         if (it == defs.end() || !it->contains("sounds")) continue;
-        double shortest = 1e9;
         for (auto const& s : (*it)["sounds"]) {
-            auto name = soundName(s);
-            if (name.rfind("sounds/twilightforest/", 0) != 0) {
-                shortest = 0;
-                break;
-            }
-            auto info = gf::core::synth::probeOggVorbis(readBytes(resourcePack() / (name + ".ogg")));
-            if (!info.valid || info.sampleRate <= 0) {
-                shortest = 0;
-                break;
-            }
-            shortest = std::min(shortest, double(info.samples) / info.sampleRate / std::max(0.01, soundLevel(s).pitch));
+            auto const name        = soundName(s);
+            bool const synthesized = name.rfind("sounds/twilightforest/", 0) == 0;
+            probes[i].push_back({synthesized ? pack / (name + ".ogg") : std::filesystem::path(), soundLevel(s).pitch});
         }
-        minSeconds[i] = shortest < 1e8 ? shortest : 0;
     }
+    auto cancel = std::make_shared<std::atomic<bool>>(false); // set when the test goes away early
+
+    auto lengths = std::async(std::launch::async, [cancel, probes = std::move(probes)] {
+        std::map<std::filesystem::path, double> seconds; // a file several events play is probed once
+        std::vector<double>                     out(probes.size(), 0.0);
+        for (std::size_t i = 0; i < probes.size() && !*cancel; ++i) {
+            double shortest = 1e9;
+            for (auto const& p : probes[i]) {
+                if (p.file.empty()) {
+                    shortest = 0;
+                    break;
+                }
+                auto [at, fresh] = seconds.try_emplace(p.file, 0.0);
+                if (fresh) {
+                    auto const info = gf::core::synth::probeOggVorbisEnds(p.file);
+                    at->second      = info.valid && info.sampleRate > 0 ? double(info.samples) / info.sampleRate : 0.0;
+                }
+                if (at->second <= 0) {
+                    shortest = 0;
+                    break;
+                }
+                shortest = std::min(shortest, at->second / std::max(0.01, p.pitch));
+            }
+            out[i] = shortest < 1e8 ? shortest : 0;
+        }
+        return out;
+    });
+    // destroyed before the future: an early exit stops the worker
+    StopOnExit const stopWorker{cancel};
+    while (lengths.wait_for(std::chrono::seconds(0)) != std::future_status::ready) co_await ctx.ticks(1);
+    auto const minSeconds = lengths.get();
 
     using Clock = std::chrono::steady_clock;
     struct Play {

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <fstream>
 #include <queue>
 #include <stdexcept>
 
@@ -919,6 +920,48 @@ std::vector<std::uint8_t> encodeVorbis(std::span<float const> pcm, VorbisOptions
     return ogg.take();
 }
 
+namespace {
+
+// A little-endian field of `n` bytes.
+std::uint64_t littleEndian(std::uint8_t const* p, int n) {
+    std::uint64_t v = 0;
+    for (int i = 0; i < n; ++i) v |= std::uint64_t(p[i]) << (8 * i);
+    return v;
+}
+
+// The Ogg page at the start of `p`, which may continue past it: its size (0 when `p` does not hold
+// a whole page) and whether its CRC matches (computed over the page with the stored CRC as zeros).
+struct PageView {
+    std::size_t size  = 0;
+    bool        crcOk = false;
+};
+PageView viewPage(std::span<std::uint8_t const> p) {
+    if (p.size() < 27 || std::memcmp(p.data(), "OggS", 4) != 0) return {};
+    std::size_t const hdr = 27 + std::size_t(p[26]);
+    if (p.size() < hdr) return {};
+    std::size_t size = hdr;
+    for (std::size_t i = 27; i < hdr; ++i) size += p[i];
+    if (p.size() < size) return {};
+    auto const&   t   = crcTable();
+    std::uint32_t crc = 0;
+    for (std::size_t i = 0; i < size; ++i) crc = (crc << 8) ^ t[((crc >> 24) & 0xFF) ^ (i - 22 < 4 ? 0 : p[i])];
+    return {size, crc == std::uint32_t(littleEndian(p.data() + 22, 4))};
+}
+
+// The Vorbis identification header that must be the whole first page (`page`, `size` bytes).
+bool readIdentification(std::uint8_t const* page, std::size_t size, OggVorbisInfo& info) {
+    std::size_t const hdr = 27 + std::size_t(page[26]);
+    if (!(page[5] & 0x02) || size - hdr < 30 || page[hdr] != 1 || std::memcmp(page + hdr + 1, "vorbis", 6) != 0) {
+        info.error = "first page is not a Vorbis identification header";
+        return false;
+    }
+    info.channels   = page[hdr + 11];
+    info.sampleRate = int(littleEndian(page + hdr + 12, 4));
+    return true;
+}
+
+} // namespace
+
 OggVorbisInfo probeOggVorbis(std::span<std::uint8_t const> f) {
     OggVorbisInfo info;
     std::size_t   pos   = 0;
@@ -928,47 +971,95 @@ OggVorbisInfo probeOggVorbis(std::span<std::uint8_t const> f) {
             info.error = "bad page at byte " + std::to_string(pos);
             return info;
         }
-        int         nseg = f[pos + 26];
-        std::size_t hdr  = 27 + std::size_t(nseg);
-        if (f.size() - pos < hdr) {
+        auto const page = viewPage(f.subspan(pos));
+        if (page.size == 0) {
             info.error = "truncated page";
             return info;
         }
-        std::size_t body = 0;
-        for (int i = 0; i < nseg; ++i) body += f[pos + 27 + std::size_t(i)];
-        if (f.size() - pos < hdr + body) {
-            info.error = "truncated page";
-            return info;
-        }
-        std::vector<std::uint8_t> page(f.begin() + std::ptrdiff_t(pos), f.begin() + std::ptrdiff_t(pos + hdr + body));
-        std::uint32_t             stored = 0;
-        for (int i = 0; i < 4; ++i) stored |= std::uint32_t(page[22 + std::size_t(i)]) << (8 * i);
-        std::memset(page.data() + 22, 0, 4);
-        if (oggCrc(page.data(), page.size()) != stored) {
+        if (!page.crcOk) {
             info.error = "CRC mismatch on page " + std::to_string(pages);
             return info;
         }
-        if (pages == 0) {
-            if (!(page[5] & 0x02) || body < 30 || page[hdr] != 1
-                || std::memcmp(page.data() + hdr + 1, "vorbis", 6) != 0) {
-                info.error = "first page is not a Vorbis identification header";
-                return info;
-            }
-            info.channels = page[hdr + 11];
-            info.sampleRate =
-                int(std::uint32_t(page[hdr + 12]) | std::uint32_t(page[hdr + 13]) << 8
-                    | std::uint32_t(page[hdr + 14]) << 16 | std::uint32_t(page[hdr + 15]) << 24);
-        }
-        std::uint64_t granule = 0;
-        for (int i = 0; i < 8; ++i) granule |= std::uint64_t(page[6 + std::size_t(i)]) << (8 * i);
+        std::uint8_t const* p = f.data() + pos;
+        if (pages == 0 && !readIdentification(p, page.size, info)) return info;
+        std::uint64_t const granule = littleEndian(p + 6, 8);
         if (granule != ~std::uint64_t(0)) info.samples = std::int64_t(granule);
         ++pages;
-        pos += hdr + body;
-        if (page[5] & 0x04) break;
+        pos += page.size;
+        if (p[5] & 0x04) break;
     }
     info.valid = pages >= 3 && info.channels > 0 && info.sampleRate > 0;
     if (!info.valid && info.error.empty()) info.error = "too few pages";
     return info;
 }
 
+OggVorbisInfo probeOggVorbisEnds(std::filesystem::path const& file) {
+    OggVorbisInfo info;
+    std::ifstream in(file, std::ios::binary | std::ios::ate);
+    if (!in) {
+        info.error = "cannot open the file";
+        return info;
+    }
+    auto const size = std::uint64_t(std::streamoff(in.tellg()));
+    auto       read = [&](std::uint64_t offset, std::size_t n) {
+        std::vector<std::uint8_t> buf(n);
+        in.clear();
+        in.seekg(std::streamoff(offset));
+        in.read(reinterpret_cast<char*>(buf.data()), std::streamsize(n));
+        buf.resize(std::size_t(in.gcount()));
+        return buf;
+    };
+    constexpr std::size_t kMaxPage = 27 + 255 + 255 * 255; // the largest Ogg page
+
+    // the first page: the identification header (a page of its own, 58 bytes)
+    auto head  = read(0, std::size_t(std::min<std::uint64_t>(size, 4096)));
+    auto first = viewPage(head);
+    if (first.size == 0 && head.size() < size) {
+        head  = read(0, std::size_t(std::min<std::uint64_t>(size, kMaxPage)));
+        first = viewPage(head);
+    }
+    if (first.size == 0 || !first.crcOk) {
+        info.error = "the file does not start with a whole Ogg page with a matching CRC";
+        return info;
+    }
+    if (!readIdentification(head.data(), first.size, info)) return info;
+    std::uint64_t const serial = littleEndian(head.data() + 14, 4);
+
+    // the last page: the last "OggS" whose page ends exactly at the end of the file with a matching
+    // CRC (a capture pattern inside audio data fails it); the tail read grows until it holds the page
+    for (std::size_t chunk = std::size_t(std::min<std::uint64_t>(size, 8192));;
+         chunk             = std::size_t(std::min<std::uint64_t>(size, std::min(chunk * 8, kMaxPage)))) {
+        auto const tail = read(size - chunk, chunk);
+        if (tail.size() != chunk) {
+            info.error = "read error";
+            return info;
+        }
+        for (std::size_t at = tail.size() < 27 ? 0 : tail.size() - 26; at-- > 0;) {
+            if (tail[at] != 'O') continue;
+            auto const page = viewPage(std::span(tail).subspan(at));
+            if (page.size != tail.size() - at || !page.crcOk) continue;
+            std::uint8_t const* p = tail.data() + at;
+            if (littleEndian(p + 14, 4) != serial) {
+                info.error = "the last page belongs to another logical stream";
+                return info;
+            }
+            if (!(p[5] & 0x04)) {
+                info.error = "the last page does not end the stream";
+                return info;
+            }
+            std::uint64_t const granule = littleEndian(p + 6, 8);
+            if (granule == ~std::uint64_t(0)) {
+                info.error = "the last page has no granule position";
+                return info;
+            }
+            info.samples = std::int64_t(granule);
+            info.valid   = info.channels > 0 && info.sampleRate > 0;
+            if (!info.valid) info.error = "no channels or no sample rate";
+            return info;
+        }
+        if (chunk == size || chunk >= kMaxPage) break;
+    }
+    info.error = "no whole last page at the end of the file";
+    return info;
+}
 } // namespace gf::core::synth
