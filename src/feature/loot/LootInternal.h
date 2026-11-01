@@ -53,6 +53,9 @@ void               setTestAdjustsLoot(std::optional<bool> value);
 /// handlers; `killerId` is the killing player's ActorUniqueID (0: none).
 void onMobDied(Actor& dead, combat::DamageInfo const& damage, std::int64_t killerId);
 
+/// Rolls the Java table placeContainer left in the vanilla container at `pos` into it (the opener
+/// in the loot context); true when there was one.
+bool unpackVanilla(BlockSource& region, BlockPos const& pos, Actor* opener);
 /// The Java table and seed placeContainer left in the vanilla container at `pos` (not unpacked yet).
 [[nodiscard]] std::optional<std::pair<std::string, std::int64_t>> pendingVanilla(BlockSource& region, BlockPos const& pos);
 

@@ -16,20 +16,32 @@ foreach ($t in 'combat.loot_tf_functions', 'combat.fx', 'combat.progression') {
     if ($r.Fail -gt 0) { throw "$t failed" }
 }
 
-function Show-ContainerTest([string]$Test, [string]$Shot, [string]$Opened) {
+# Every screen is shown and photographed even when an earlier one failed; the failures are thrown
+# at the end. Esc is pressed only when a screen came up (Esc on the HUD opens the pause menu).
+$screenFailures = [System.Collections.Generic.List[string]]::new()
+function Show-ContainerTest([string]$Test, [string]$Shot, [string]$Opened, [switch]$Spike) {
     $mark = Get-LogMark
     $r    = Invoke-SelfTest $Test
-    if ($r.Fail -gt 0) { throw "$Test failed" }
-    if ($Opened) { Wait-LogLine $Opened 20 -Since $mark | Out-Null }
+    if ($r.Fail -gt 0) { $screenFailures.Add("$Test failed"); return }
+    if ($Opened) { Wait-LogLine $Opened 30 -Since $mark | Out-Null }
+    $shown = $true
     if (Test-ClientTrace) {
         # the client mod traces the top screen: a container / form / mod screen must come up
-        $line = Wait-LogLine 'client screen: (?!hud_screen|chat_screen)\S+' 20 -Since $mark
-        Write-Step "screen: $line"
+        try {
+            $line = Wait-LogLine 'client screen: (?!hud_screen|chat_screen)\S+' 20 -Since $mark
+            Write-Step "screen: $line"
+        } catch {
+            $shown = $false
+            # the spike's experiment records what the client does; it is not a failure of the unit
+            if ($Spike) { Write-Step "S3: $Test opened no screen on the client (spike evidence)" }
+            else { $screenFailures.Add("$Test opened no screen on the client") }
+        }
     } else {
         Start-Sleep -Seconds 3 # vanilla client: no trace
     }
     Start-Sleep -Seconds 2
     Save-Screenshot $Shot | Out-Null
+    if (-not $shown) { return }
     $closed = Get-LogMark
     Close-Screen
     if (Test-ClientTrace) {
@@ -38,8 +50,9 @@ function Show-ContainerTest([string]$Test, [string]$Shot, [string]$Opened) {
     Start-Sleep -Seconds 1
 }
 
-Show-ContainerTest 'combat.ui_loot_chest' 'loot-chest' 'combat ui: loot chest opened'
+Show-ContainerTest 'combat.ui_loot_chest' 'loot-chest' 'loot: unpacked gf_test:chests/fixture_chest'
 if ($script:Mode -ne 'remote-vanilla') {
-    Show-ContainerTest 'combat.ui_native_container' 'native-container' 'combat ui: native container opened'
+    Show-ContainerTest 'combat.ui_native_container' 'native-container' 'combat ui: native container opened' -Spike
 }
 Show-ContainerTest 'combat.ui_chest_screen' 'chest-screen' 'combat ui: chest screen opened'
+if ($screenFailures.Count -gt 0) { throw ($screenFailures -join '; ') }

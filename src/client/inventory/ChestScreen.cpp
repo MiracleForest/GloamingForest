@@ -26,7 +26,7 @@ constexpr float kSlot = 18;
 class ChestScreen final : public screen::Screen {
 public:
     ChestScreen(Json const& data, screen::SendFn send)
-    : Screen(data.value("title", std::string{"Chest"}), 176, 17 + 18 * static_cast<float>(rowsOf(data)) + 5),
+    : Screen(std::string{}, 176, 17 + 18 * static_cast<float>(rowsOf(data)) + 5), // the title is drawn at (8, 6) as Java's ChestScreen
       mRows(rowsOf(data)),
       mSend(std::move(send)),
       mData(data) {
@@ -34,7 +34,7 @@ public:
     }
 
     void init() override {
-        add<screen::Label>(Rect{8, 6, 160, 10}, title, screen::color::kTextDark);
+        add<screen::Label>(Rect{8, 6, 160, 10}, mData.value("title", std::string{"Chest"}), screen::color::kTextDark);
         for (int i = 0; i < mRows * 9; ++i) {
             float x = 8 + static_cast<float>(i % 9) * kSlot, y = 18 + static_cast<float>(i / 9) * kSlot;
             auto& s = add<screen::Slot>(Rect{x, y, kSlot, kSlot}, [this, i](Button b, bool shift) {

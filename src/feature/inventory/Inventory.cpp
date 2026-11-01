@@ -2,14 +2,13 @@
 //
 // Containers on custom blocks. Two backends behind one Handler:
 //   - native: a block with the `minecraft:block_entity` component gets a data-driven block actor
-//     (format_version >= 1.21.130); for a registered container block, this module gives that
-//     actor a game Container (one ContainerBlockActorComponent::tryCreateFor hook), saved with the
-//     block actor (its own NBT, "GfItems"), opened as a real container screen for every client
-//     (ServerPlayer::openUnmanagedContainer) so hoppers-free chest UI and item transactions are
-//     the game's own;
-//   - BlockData: any other block keeps its slots in its block data ("inventory": {items, loot}),
-//     shown with the client mod's native chest screen ("inventory.chest") or a form for vanilla
-//     clients.
+//     (format_version 1.26.x); for a registered container block, this module gives that actor a
+//     game Container (one ContainerBlockActorComponent::tryCreateFor hook), saved with the block
+//     actor (its own NBT, "GfItems");
+//   - BlockData: any other block keeps its slots in its block data ("inventory": {items, loot}).
+// Both are shown with the client mod's chest screen ("inventory.chest") or a form for vanilla
+// clients: the client does not show the game's screen for an injected container (S3;
+// openNativeScreen keeps the experiment).
 // Chest-like containers can be declared as data, <mod>/data/gf/containers/<u>.json:
 //     [{"block": "twilightforest:twilight_oak_chest", "rows": 3, "title": "container.chest", "skin": ""}]
 // which registers the storage, opens it on use (not while sneaking with an item) and drops the
@@ -588,6 +587,17 @@ Container* nativeContainer(BlockSource& region, BlockPos const& pos) {
     return c;
 }
 
+int openNativeScreen(Player& player, GlobalPos const& pos, int containerType) {
+    auto* region = regionFor(pos);
+    if (!region || player.isClientSide()) return -1;
+    auto bp = game::blockPos(pos);
+    auto* c = nativeContainer(*region, bp);
+    if (!c) return -1;
+    auto id = static_cast<ServerPlayer&>(player).openUnmanagedContainer(static_cast<SharedTypes::Legacy::ContainerType>(containerType), bp);
+    log().info("inventory: {} opened the native container at {} {} {} as type {} (id {})", player.getRealName(), pos.x, pos.y, pos.z, containerType, static_cast<int>(id));
+    return static_cast<int>(id);
+}
+
 std::optional<Handler> handlerFor(std::string const& blockId) {
     std::lock_guard lock(store().mutex);
     auto            it = store().handlers.find(blockId);
@@ -686,14 +696,11 @@ bool openChestLike(Player& player, GlobalPos const& pos, int rows, std::string c
     unpackLoot(pos, &player);
     rows = std::clamp(rows, 1, 6);
     auto const* d = declared(game::blockIdAt(*region, bp));
-    // a real container: every client gets the game's container screen
-    if (auto* c = nativeContainer(*region, bp); c && !player.isClientSide()) {
-        auto title = d && !d->skin.empty() ? ui::containerTitleSkin(titleKey, d->skin) : trFor(player, titleKey, "Chest");
-        c->setCustomName(Bedrock::Safety::RedactableString(title));
-        auto id = static_cast<ServerPlayer&>(player).openUnmanagedContainer(SharedTypes::Legacy::ContainerType::Container, bp);
-        log().info("inventory: {} opened the container at {} {} {} (native, id {})", player.getRealName(), pos.x, pos.y, pos.z, static_cast<int>(id));
-        return id != ContainerID::None;
-    }
+    // Both backends show the client mod's chest screen (companions) or the form (vanilla clients):
+    // the game's container screen for an injected container is opened by the server
+    // (openUnmanagedContainer) but not shown by the client (spike S3), so it stays an experiment
+    // (openNativeScreen).
+    (void)d;
     Json ctx{{"pos", {pos.dim, pos.x, pos.y, pos.z}}, {"rows", rows}, {"title", titleKey}};
     bool ok = screens::open(player, "inventory.chest", ctx);
     log().info("inventory: {} opened the container at {} {} {} ({})", player.getRealName(), pos.x, pos.y, pos.z, net::isCompanion(player) ? "client mod screen" : "form");

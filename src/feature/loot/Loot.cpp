@@ -56,12 +56,16 @@
 #include "mc/world/level/block/ResourceDropsContext.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
+#include "mc/world/level/block/actor/RandomizableBlockActorContainer.h"
 #include "mc/world/level/block/actor/RandomizableBlockActorContainerBase.h"
+#include "mc/world/level/block/actor/RandomizableBlockActorFillingContainer.h"
+#include "mc/world/inventory/FillingContainer.h"
 #include "mc/world/level/storage/GameRuleId.h"
 #include "mc/world/level/storage/GameRules.h"
 #include "mc/world/level/Tick.h"
 
 #include "feature/boss/Boss.h"
+#include "feature/common/Interactions.h"
 #include "feature/common/BlockData.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/loot/JavaRandom.h"
@@ -406,15 +410,29 @@ void onEntityDrops(EntityDropsFn fn) {
 
 namespace {
 
+/// The randomizable vanilla containers (hoppers have no loot table field).
 bool isVanillaLootContainer(BlockActor const& actor) {
     switch (actor.getType()) {
     case BlockActorType::Chest:
     case BlockActorType::BarrelBlock:
     case BlockActorType::ShulkerBox:
     case BlockActorType::Dispenser:
-    case BlockActorType::Dropper:
-    case BlockActorType::Hopper: return true;
+    case BlockActorType::Dropper: return true;
     default: return false;
+    }
+}
+
+/// The slots of a randomizable vanilla container (chests, barrels and shulker boxes are
+/// FillingContainers, dispensers and droppers plain Containers).
+Container* vanillaContainerOf(BlockActor& actor) {
+    switch (actor.getType()) {
+    case BlockActorType::Chest:
+    case BlockActorType::BarrelBlock:
+    case BlockActorType::ShulkerBox:
+        return static_cast<Container*>(static_cast<FillingContainer*>(static_cast<RandomizableBlockActorFillingContainer*>(&actor)));
+    case BlockActorType::Dispenser:
+    case BlockActorType::Dropper: return static_cast<Container*>(static_cast<RandomizableBlockActorContainer*>(&actor));
+    default: return nullptr;
     }
 }
 
@@ -477,6 +495,38 @@ std::optional<std::pair<std::string, std::int64_t>> pendingVanilla(BlockSource& 
     return parseMarker(field);
 }
 
+namespace {
+/// Rolls the marker table of a vanilla container into `container` (RandomizableContainer#unpackLootTable).
+void fillVanilla(RandomizableBlockActorContainerBase& actor, Container& container, BlockSource* region, Actor* opener) {
+    auto [tableId, seed] = parseMarker(actor.mLootTable.get());
+    actor.eraseLootTable(); // once, whatever happens (Java clears the table before filling)
+    auto        pos = actor.getPosition();
+    LootContext ctx;
+    ctx.region     = region;
+    ctx.origin     = Vec3{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y) + .5f, static_cast<float>(pos.z) + .5f};
+    ctx.thisEntity = opener;
+    ctx.player     = opener && opener->isPlayer() ? static_cast<Player*>(opener) : nullptr;
+    ctx.seed       = seed;
+    fill(
+        tableId,
+        ctx,
+        container.getContainerSize(),
+        [&](int slot) -> ItemStack const& { return container.getItem(slot); },
+        [&](int slot, ItemStack const& s) { container.setItem(slot, s); }
+    );
+    log().info("loot: unpacked {} at {} {} {}", tableId, pos.x, pos.y, pos.z);
+}
+} // namespace
+
+bool unpackVanilla(BlockSource& region, BlockPos const& pos, Actor* opener) {
+    if (!pendingVanilla(region, pos)) return false;
+    auto* actor     = region.getBlockEntity(pos);
+    auto* container = actor ? vanillaContainerOf(*actor) : nullptr;
+    if (!container) return false;
+    fillVanilla(static_cast<RandomizableBlockActorContainerBase&>(*actor), *container, &region, opener);
+    return true;
+}
+
 // ---- entity drops ----------------------------------------------------------------------------------
 
 void onMobDied(Actor& dead, combat::DamageInfo const& damage, std::int64_t killerId) {
@@ -536,26 +586,9 @@ LL_TYPE_INSTANCE_HOOK(
     DimensionType dimensionId,
     Actor*        actor
 ) {
-    std::string field = mLootTable.get();
-    if (field.rfind(gf::loot::kMarker, 0) != 0) return origin(level, container, dimensionId, actor);
-    auto [tableId, seed] = gf::loot::parseMarker(field);
-    eraseLootTable(); // once, whatever happens (Java clears the table before filling)
-    auto  pos    = getPosition();
-    auto* region = gf::game::regionOf(static_cast<int>(dimensionId));
-    gf::loot::LootContext ctx;
-    ctx.region     = region;
-    ctx.origin     = Vec3{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y) + .5f, static_cast<float>(pos.z) + .5f};
-    ctx.thisEntity = actor;
-    ctx.player     = actor && actor->isPlayer() ? static_cast<Player*>(actor) : nullptr;
-    ctx.seed       = seed;
-    gf::loot::fill(
-        tableId,
-        ctx,
-        container.getContainerSize(),
-        [&](int slot) -> ItemStack const& { return container.getItem(slot); },
-        [&](int slot, ItemStack const& s) { container.setItem(slot, s); }
-    );
-    gf::log().info("loot: unpacked {} at {} {} {}", tableId, pos.x, pos.y, pos.z);
+    if (mLootTable.get().rfind(gf::loot::kMarker, 0) != 0) return origin(level, container, dimensionId, actor);
+    (void)level;
+    gf::loot::fillVanilla(*this, container, gf::game::regionOf(static_cast<int>(dimensionId)), actor);
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -625,6 +658,17 @@ public:
                 erasedDocs()[pos] = Erased{doc, now};
             });
             config::onReload([] { invalidateAdjuster(); });
+            // The game's container screens do not go through unPackLootTable: a vanilla container
+            // placed with a Java table rolls it when a player opens or breaks it (before vanilla).
+            namespace ia = interactions;
+            ia::onUseOn({}, [](ia::UseOnContext const& c) {
+                if (auto* region = game::regionOf(c.pos.dim)) unpackVanilla(*region, game::blockPos(c.pos), &c.player);
+                return ia::Result::Pass;
+            }, ia::priority::High);
+            ia::onDestroy({}, [](ia::DestroyContext const& c) {
+                if (auto* region = game::regionOf(c.pos.dim)) unpackVanilla(*region, game::blockPos(c.pos), &c.player);
+                return ia::Result::Pass;
+            }, ia::priority::High);
             // ModExistsCondition: GloamingForest is TF and Minecraft (docs/spec deviations)
             registerCondition("twilightforest:mod_exists", [](LootContext const&, Json const& config, RandomSource&) {
                 auto mod = config.value("mod_id", std::string{});

@@ -12,6 +12,8 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/gamemode/GameMode.h"
+#include "mc/world/gamemode/InteractionResult.h"
 #include "mc/world/item/HandSlot.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -56,32 +58,41 @@ BlockPos besidePlayer(Player& p, int dx, int dz) {
 
 } // namespace
 
-GF_REGISTER_SELFTEST("combat.ui_loot_chest", [](Context& ctx) {
+// The block is placed first and opened a few ticks later: a container screen for a block the client
+// has not received yet is refused by the client.
+GF_REGISTER_SELFTEST("combat.ui_loot_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto* p = realPlayer();
     if (!p) {
         ctx.info("no real player: nothing to show");
-        return;
+        co_return;
     }
+    auto  id     = p->getOrCreateUniqueID();
     auto& region = p->getDimensionBlockSource();
     auto  bp     = besidePlayer(*p, 2, 0);
     ctx.require(gf::loot::placeContainer(region, bp, "minecraft:chest", 4, "gf_test:chests/fixture_chest", 20261102), "a loot chest beside the player");
-    auto* actor = region.getBlockEntity(bp);
+    co_await ctx.ticks(10);
+    p = ll::service::getLevel()->getPlayer(id);
+    ctx.require(p != nullptr, "the player is still there");
+    auto& r2    = p->getDimensionBlockSource();
+    auto* actor = r2.getBlockEntity(bp);
     ctx.require(actor && actor->getType() == BlockActorType::Chest, "the chest block actor");
-    // what a right-click does: the chest block's use opens the game's chest screen (and unpacks)
-    region.getBlock(bp).use(*p, bp, 1, HandSlot::Mainhand, std::nullopt);
-    gf::log().info("combat ui: loot chest opened for {}", p->getRealName());
+    // what a right-click does (the game's use-on: the chest screen, the loot unpacked)
+    auto& held   = const_cast<ItemStack&>(p->getSelectedItem());
+    auto  result = p->mGameMode->useItemOn(held, bp, 1, Vec3{.5f, 1.f, .5f}, HandSlot::Mainhand, &r2.getBlock(bp), true);
+    gf::log().info("combat ui: loot chest opened for {} (use-on {})", p->getRealName(), result.mSuccess ? "succeeded" : "refused");
 });
 
-GF_REGISTER_SELFTEST("combat.ui_native_container", [](Context& ctx) {
+GF_REGISTER_SELFTEST("combat.ui_native_container", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto* p = realPlayer();
     if (!p) {
         ctx.info("no real player: nothing to show");
-        return;
+        co_return;
     }
     if (!gf::game::blockWith("gf_s3:entity") || !gf::inventory::declared("gf_s3:entity")) {
         ctx.info("no S3 probe block in this run: nothing to show");
-        return;
+        co_return;
     }
+    auto  id     = p->getOrCreateUniqueID();
     auto& region = p->getDimensionBlockSource();
     auto  bp     = besidePlayer(*p, -2, 0);
     ctx.require(gf::game::setBlock(region, bp, *gf::game::blockWith("gf_s3:entity")), "the probe block beside the player");
@@ -92,7 +103,12 @@ GF_REGISTER_SELFTEST("combat.ui_native_container", [](Context& ctx) {
     h->set(pos, 0, *gf::game::items::make("minecraft:diamond", 7));
     h->set(pos, 4, *gf::game::items::make("minecraft:stick", 12));
     h->set(pos, 22, *gf::game::items::make("gf_test:fixture_item", 3));
-    ctx.require(gf::inventory::openChestLike(*p, pos, 3, "container.chest"), "the container screen opened");
+    co_await ctx.ticks(10);
+    p = ll::service::getLevel()->getPlayer(id);
+    ctx.require(p != nullptr, "the player is still there");
+    // spike S3: the game's own screen for the injected container (DataDrivenContainer type)
+    int containerId = gf::inventory::openNativeScreen(*p, pos, 37);
+    ctx.check(containerId >= 0, "the server opened the injected container (id " + std::to_string(containerId) + ")");
     gf::log().info("combat ui: native container opened for {}", p->getRealName());
 });
 
@@ -102,6 +118,7 @@ GF_REGISTER_SELFTEST("combat.ui_chest_screen", [](Context& ctx) {
         ctx.info("no real player: nothing to show");
         return;
     }
+    // the BlockData screen is the client mod's / a form: no block actor the client must know first
     gf::inventory::declare({.block = "gf_test:fixture_block", .rows = 3, .slots = 27, .title = "container.chest", .skin = ""});
     auto& region = p->getDimensionBlockSource();
     auto  bp     = besidePlayer(*p, 0, 2);

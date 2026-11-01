@@ -37,6 +37,9 @@ void declare(Declared const& d);
 /// The game container a data-driven block actor carries for `pos` (the native backend; nullptr
 /// when the block has no `minecraft:block_entity` or is not a registered container).
 [[nodiscard]] Container* nativeContainer(BlockSource& region, BlockPos const& pos);
+/// Spike S3: asks the server to open the game's container screen of the injected container at
+/// `pos` as ContainerType `containerType` (0 Container, 37 DataDrivenContainer); the ContainerID or -1.
+int openNativeScreen(Player& player, GlobalPos const& pos, int containerType);
 /// Every slot of the container at `pos` (empty when none).
 [[nodiscard]] std::vector<ItemStack> contents(GlobalPos const& pos);
 /// Rolls a pending loot table of the container at `pos` into it (RandomizableContainer#unpackLootTable).
