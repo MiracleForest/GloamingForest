@@ -717,12 +717,8 @@ void onBossDie(Mob& boss, std::string const& damageType, Actor* killer) {
             S().lastConquest = std::make_pair(home->pos, spec->homeStructure);
             log().info("boss: {} conquered {} at {} {} {}", boss.getTypeName(), spec->homeStructure, hp.x, hp.y, hp.z);
         }
-        // BaseTFBoss#shouldDropLoot: without death chests the loot drops as usual
-        if (!config().bossesSpawnDropChests) {
-            auto* lv = level();
-            for (auto const& s : rollLoot(boss, *spec, damageType, killer))
-                if (lv && !game::items::isEmpty(s)) lv->getSpawner().spawnItem(boss.getDimensionBlockSource(), s, nullptr, boss.getFeetPos(), 0);
-        }
+        // BaseTFBoss#shouldDropLoot: without death chests the loot table drops as for any mob (the
+        // death pipeline's entity drops, gf::loot); with them those drops are suppressed below
     }
     // EntityEvents#grantGroupAdvancementIfNeeded
     if (auto q = S().qualified.find(uid); q != S().qualified.end())
@@ -1376,6 +1372,11 @@ public:
                             if (id == "minecraft:lava" || id == "minecraft:flowing_lava") game::clearBlock(region, p);
                         }
             }
+        });
+        // BaseTFBoss#shouldDropLoot = !bossDropChests: the loot table goes into the death chest
+        // only, the death pipeline's drops of the table are dropped (equipment is not in them)
+        gf::loot::onEntityDrops([](Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootContext const&) {
+            if (config().bossesSpawnDropChests && bossSpec(dead.getTypeName())) drops.clear();
         });
         // the default spawner logic of TF's ten BossSpawnerBlockEntity types (units may replace
         // a spec with registerSpawner; the height conditions stay with the block id)
