@@ -280,7 +280,9 @@ foreach ($u in $owners) {
 
 # ---- the renderer ---------------------------------------------------------------------------------------
 function Get-Renderer {
-    $env:Path = $env:Path + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
+    # another build of tools/sounds/cli (e.g. another compiler, to verify cross-compiler determinism)
+    if ($env:GF_SYNTH_EXE) { return $env:GF_SYNTH_EXE }
+    $env:Path =$env:Path + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
     if ($env:LLVM_PATH -and (Test-Path (Join-Path $env:LLVM_PATH 'bin\clang-cl.exe'))) { $env:Path = (Join-Path $env:LLVM_PATH 'bin') + ";$env:Path" }
     $cc = Get-Command clang-cl -ErrorAction SilentlyContinue
     if (-not $cc) {
