@@ -70,10 +70,24 @@ candles have no item (pick block gives the vanilla candle / exanimate essence).
 
 ### 2.1 Candelabra
 
-- Placement: clicking a top face first tries standing (`on_wall` false, facing = player horizontal direction, needs
-  a centre-supporting block below), then wall placement against each horizontal look direction (needs the block
-  in front to support the centre); other faces try the wall first. Waterlogged from the fluid. Survives only while
-  its support stays.
+- Placement (`getStateForPlacement`): clicking a top face first tries standing (`on_wall` false, facing = the
+  player's horizontal direction), then a wall form for each horizontal direction in `getNearestLookingDirections()`
+  order (`on_wall` true, facing = the look direction tried). Clicking any other face tries the wall forms first and
+  standing last. The first candidate that passes the support test is placed; if none passes, the placement fails.
+  Waterlogged from the fluid.
+- Support test: `CandelabraBlock.canSurvive(reader, pos, onWall, facing)` is `canSupportCenter(reader, onWall ?
+  pos.relative(FACING) : pos.below(), Direction.UP)`. Both forms test the TOP face centre of the support block
+  (`SupportType.CENTER`: the support shape's top face covers the centre square `7..9 x 7..9`). This is the same test
+  as a torch standing on that block. For a wall candelabra the support is the block behind it, at
+  `pos.relative(FACING)` (for the first wall candidate after a side click, normally the clicked block). The face
+  tested is that block's top, not the side the candelabra touches. So a bottom slab as the support refuses both
+  forms (it has no top face at y = 1), while a fence post, a glass pane or iron bars accept both (a wall candelabra
+  hanging on the side of one, or a standing one on top): their post reaches the top centre, although their sides
+  are not sturdy.
+- No survival check after placement. `updateShape` only schedules the water tick and returns `super.updateShape`;
+  BlockBehaviour's default returns the state unchanged (checked with javap on vanilla 1.21.1; NeoForge 21.1.209 does
+  not patch it). There is no `neighborChanged` or tick override either. A candelabra whose support is broken or
+  replaced stays where it is, floating. Its redstone output still goes to `pos.relative(FACING)` / `pos.below()`.
 - Shapes (exact boxes in `CandelabraBlock`): wall shapes per facing, standing shapes per axis.
 - Candles: holding any `#minecraft:candles` item (or sneaking) targets a slot by hit position across the block
   (`<= 0.375` slot 0, `<= 0.6875` slot 1, else slot 2; reversed for NORTH/EAST): an empty slot takes the held candle
@@ -99,6 +113,15 @@ candles have no item (pick block gives the vanilla candle / exanimate essence).
     `RedStoneWireBlock.getConnectingSide` passes `direction` from the wire to the neighbour, so the wire would have to
     stand at `pos.relative(FACING)`, inside the support block. That never happens: redstone dust never visually
     connects to a candelabra in TF 4.8. Do not draw a dust connection on Bedrock either.
+  - `isSignalSource` is false: `CandelabraBlock` does not override it (BlockBehaviour's default, javap 1.21.1). So
+    it is never a diode side input. Vanilla `SignalGetter.getControlInputSignal` reads a side neighbour only if it is
+    a redstone block, redstone wire or `isSignalSource()` (a repeater lock reads diodes only), so a comparator never
+    takes a side input from a candelabra. That holds even where `getDirectSignal` is non-zero, e.g. a floating wall
+    candelabra whose old support was replaced by a comparator. The default dust connection (`isSignalSource() &&
+    direction != null`) would be false too; `canConnectRedstone` overrides it (above). The candelabra only powers its
+    support block, as a strongly powered conductor. A conducting support (stone and the like) is no signal source
+    either, so the candelabra's power never reaches a diode side input through it. On Bedrock the U22 extension
+    (section 9) only powers the support block as a conductor.
   - Comparator output: NONE `candles`, DIM `3 + candles`, OMINOUS `6 + candles`, NORMAL `9 + candles`.
 - Drops: the base item; with silk touch the candelabra keeps its candles (data component
   `twilightforest:candelabra_data`, a list of up to 3 candle blocks), otherwise the candles drop separately. Pick
@@ -208,20 +231,55 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
 
 ### 2.7 Ominous fire
 
-- A fire block (`BaseFireBlock`, damage 1.0) that survives only on a sturdy top face without fluid; any shape update
-  that fails the check removes it. Pick block: `twilightforest:exanimate_essence` (U9 places it with the essence and
-  plays `block.twilightforest.ominous_fire.light`).
-- Entities inside that are not `#minecraft:undead` take 1.0 `twilightforest:ominous_fire` damage per tick contact.
-- Damage type `twilightforest:ominous_fire`: message id `twilightforest.ominous`, exhaustion 0.1, effects BURNING,
-  scaling when caused by living non-player; tags `c:is_magic`, bypasses armor, wither immune to, no knockback, panic
-  environmental causes.
+`OminousFireBlock extends BaseFireBlock` (fire damage 1.0, unused) and overrides only `updateShape`, `canSurvive`,
+`canBurn` (true), `getCloneItemStack` and `entityInside` (no `super` call). Everything else is inherited from vanilla
+1.21.1 `BaseFireBlock` / `Block`. Those bodies were checked with javap on the 1.21.1 server and client jars. NeoForge
+21.1.209 only adds the `PortalSpawnEvent` hook to `onPlace` (TF does not listen to it) and lets `isPortalFrame` stand
+for obsidian.
+
+- Survival: only on a sturdy top face (`isFaceSturdy(below, UP)`, full face) with no fluid at its own position. Any
+  shape update that fails the check turns it into air (`updateShape`; otherwise it returns `defaultBlockState()`).
+  That removal is silent: `Level.destroyBlock` sends no 2001 break effect for a `BaseFireBlock`.
+- Shape: outline `DOWN_AABB` = `box(0, 0, 0, 16, 1, 16)` (`BaseFireBlock.getShape`), no collision. Model: as soul
+  fire, a floor part (2 variants) plus 4 side parts rotated 0/90/180/270 (4 variants each: `template_fire_side` /
+  `template_fire_side_alt` x textures `ominous_fire_0` / `ominous_fire_1`), cutout.
+- Entities inside (`entityInside` replaces vanilla's): an entity whose type is not in `#minecraft:undead` takes 1.0
+  `twilightforest:ominous_fire` damage on every tick of contact. For living entities the usual 10-tick hurt cooldown
+  applies, so that is 1.0 every 10 ticks. It never ignites anything: vanilla's `setRemainingFireTicks(+1)` /
+  `igniteForSeconds(8)` and its `inFire` damage are not called, and a burning entity keeps its own fire ticks. The
+  damage type is not in `#minecraft:is_fire`, so fire resistance and fire immunity (blaze, strider, ghast, magma
+  cube) do not protect against it. Item entities are hurt too: `ItemEntity.hurt` has no cooldown and health 5, so an
+  item lying in ominous fire is destroyed after 5 ticks, fire-resistant (netherite) items included
+  (`canBeHurtBy` only spares them from `is_fire`; javap 1.21.1).
+- Placement (`BaseFireBlock.onPlace`, only when the old state was another block). In the Overworld or the Nether
+  (`inPortalDimension`; never in the Twilight Forest) it first looks for an empty nether portal frame:
+  `PortalShape.findEmptyPortalShape(level, pos, Axis.X)` tries axis X, then Z; the frame is obsidian, the inside is
+  air, `#minecraft:fire` or nether portal. If it finds one, it fills the frame with nether portal blocks (the fire
+  is replaced) and stops. Otherwise, if it cannot survive, it is removed (`removeBlock`). So U9's exanimate essence
+  used on the bottom of an empty obsidian frame lights a nether portal there, like flint and steel.
+- Client animation (`BaseFireBlock.animateTick`, on each random display tick). With chance 1 in 24 it plays
+  `minecraft:block.fire.ambient` at the block centre, BLOCKS, volume `1 + r`, pitch `r * 0.7 + 0.3`, no distance
+  delay. Then it always takes the 3-particle branch, because `canBurn` (called with the state of the block below) is
+  always true: 3 `minecraft:large_smoke` at `(x + r, y + r * 0.5 + 0.5, z + r)` with zero velocity. It never takes
+  the side-smoke branch. There are no flame particles; the flame is the model.
+- Breaking (`BaseFireBlock.playerWillDestroy` / `spawnDestroyParticles`). When a player breaks it (instabreak, also
+  in creative), the server sends level event 1009 with data 0 to everyone nearby: `minecraft:block.fire.extinguish`
+  at the block, BLOCKS, volume 0.5, pitch `2.6 + (r1 - r2) * 0.8`. There are no break particles and no break sound:
+  level event 2001 is not sent, so the wool sound type is never heard on a break.
+- Pick block: `twilightforest:exanimate_essence` (U9 places it with the essence and plays
+  `block.twilightforest.ominous_fire.light`).
+- Damage type `twilightforest:ominous_fire`: message id `twilightforest.ominous`, exhaustion 0.1, effects BURNING
+  (only the player's hurt sound `entity.player.hurt_on_fire`, no ignition), scaling when caused by living
+  non-player; tags `neoforge:is_magic`, bypasses armor, wither immune to, no knockback, panic environmental causes
+  (not `is_fire`).
 - Conversion on death by this damage (`ominousFireConversion`): a server player becomes a zombie at its position
   carrying the player's profile (attachment `ZOMBIFIED_PLAYER`), custom name = player name, can pick up loot, adult,
   finalised as CONVERSION; other entities convert through the data map `twilightforest:ominous_fire`
   (`minecraft:horse` -> `minecraft:zombie_horse`, `minecraft:piglin` -> `minecraft:zombified_piglin`,
   `minecraft:villager` -> `minecraft:zombie_villager`). Zombified-player zombies deal their damage as ominous fire
   damage (`zombifiedPlayerAttacks`). Loot `twilightforest:blocks/ominous_fire`: empty.
-- Block tag: TF adds it to `#minecraft:fire` (U22 contributes the member through the tag fragment).
+- Block tag: TF adds it to `#minecraft:fire` (U22 contributes the member through the tag fragment). Because of that,
+  an ominous fire inside a nether portal frame counts as empty when the portal is lit (`PortalShape.isEmpty`).
 
 ### 2.8 Ominous candles
 
@@ -381,14 +439,45 @@ spawners also get U21's room spawner processor.
   as a strongly powered conductor of strength `3 * candles` in the circuit (for vanilla mechanisms) and in `power()`
   (for custom blocks). It is re-evaluated when the candle count, the lighting or the block changes. The selftest
   `lichdecor.candelabra_signal` checks a vanilla redstone lamp next to the support.
+- That extension only makes the support block a strongly powered conductor. It must not register the candelabra or
+  the support as a producer that comparator or repeater side inputs read: Java never takes a diode side input from
+  either (2.1, `isSignalSource` false). `lichdecor.candelabra_signal` checks a comparator whose side faces the
+  support.
+- Candelabra support (2.1): test the support block with `Block::canProvideSupport(Facing::Up,
+  BlockSupportType::Center)` (MCAPI; Bedrock's torch test) in the placement handler. The selftest pins Java's result
+  (bottom slab refused, fence post accepted); special-case any block where Bedrock's centre support differs. Do not
+  use a BP `minecraft:placement_filter` for it: Bedrock re-checks the filter on neighbour changes and pops the block
+  off, while TF's candelabra stays when its support goes.
+- Ominous fire (2.7) is a custom block, so none of `BaseFireBlock` comes with it; U22 adds each inherited part:
+  - Portal: from `blockevents::onPlaced`, in the Overworld or the Nether only, call `PortalBlock::trySpawnPortal(
+    region, pos)` (MCAPI static). Bedrock's shape test counts only its own air, fire and portal blocks as empty. If
+    it refuses the custom block at `pos`, clear `pos` before the call and put the ominous fire back when no portal
+    forms.
+  - Break: no break particles and no break sound (through the RP block settings, or the client mod suppresses
+    them). The server plays `minecraft:block.fire.extinguish` (2.7) on a player break (`interactions::onDestroyed`)
+    and nothing on other removals.
+  - Entities: damage only through `blockevents::onEntityInside`. Never set an actor on fire.
+  - Ambient sound and large smoke: the client mod (next bullet). Vanilla clients get them only as best effort.
+- Animate ticks (the candle ambience of section 1 and the ominous fire of 2.7): Java calls `animateTick` from the
+  client's random display tick. Each tick, `ClientLevel.animateTick` makes 667 picks at camera + (nextInt(16) -
+  nextInt(16)) per axis and 667 at camera + (nextInt(32) - nextInt(32)) per axis (javap 1.21.1). It calls
+  `animateTick` on the block at each pick. The client mod emulates that around the local player for these custom
+  blocks.
 - The wrought iron fence state space must be reduced for Bedrock's permutation budget (see 2.4).
 - Interactions use `interactions::onUseOn` (vanilla skull + vanilla candle -> skull candle; lead on fence).
 
 ## 10. Selftests (`lichdecor.*`, dx 2200-2299)
 
-`lichdecor.candelabra_slots`, `lichdecor.candelabra_signal` (DIM: 3 per candle into the block below a standing
+`lichdecor.candelabra_slots`, `lichdecor.candelabra_support` (a wall candelabra against a bottom slab and a
+standing one on a bottom slab are refused; against / on a fence post they are accepted; breaking the support leaves
+the candelabra in place), `lichdecor.candelabra_signal` (DIM: 3 per candle into the block below a standing
 candelabra and into the support behind a wall one, 0 into the block above and the other sides; a redstone lamp
-beside the support lights through it; comparator table),
+beside the support lights through it; a comparator whose side faces the support gets no side input; comparator
+table),
 `lichdecor.brazier_cycle`, `lichdecor.skull_candle_create` (stat + config off), `lichdecor.ominous_candle_revert`,
-`lichdecor.ominous_fire_conversion` (villager -> zombie villager), `lichdecor.skull_chest_lock`,
+`lichdecor.ominous_fire_conversion` (villager -> zombie villager), `lichdecor.ominous_fire_entity` (a mob that is
+not undead standing in it takes `twilightforest:ominous_fire` damage and never gets fire ticks, i.e. is never on
+fire; a zombie takes no damage; a dropped netherite ingot is destroyed after 5 ticks),
+`lichdecor.ominous_fire_portal` (placed on the bottom of an empty obsidian frame in the Overworld it lights a nether
+portal; in the Twilight Forest it does not), `lichdecor.skull_chest_lock`,
 `lichdecor.fence_finial`, `lichdecor.sinister_spawner_command`, `lichdecor.recipes`.

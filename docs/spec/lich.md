@@ -368,7 +368,7 @@ Bedrock: no custom attributes exist; store them as actor data (`entity::data`) w
 
 | Id | message id | exhaustion | scaling | tags (DamageTypeTagGenerator) | Source |
 |---|---|---|---|---|---|
-| `twilightforest:lich_bolt` | `twilightforest.lichBolt` | 0 | when caused by living non-player | bypasses armor, is projectile, witch resistant to, `#twilightforest:breaks_lich_shields`, `c:is_magic`, bypasses wolf armor | Lich bolt |
+| `twilightforest:lich_bolt` | `twilightforest.lichBolt` | 0 | when caused by living non-player | bypasses armor, is projectile, witch resistant to, `#twilightforest:breaks_lich_shields`, `neoforge:is_magic`, bypasses wolf armor | Lich bolt |
 | `twilightforest:lich_bomb` | `twilightforest.lichBomb` | 0 | same | bypasses armor, projectile, witch resistant, magic, bypasses wolf armor, is explosion | Lich bomb |
 | `twilightforest:lost_words` | `twilightforest.lostWords` | 0.1 | same | bypasses armor, projectile, witch resistant, magic, bypasses wolf armor | Tome bolt |
 | `twilightforest:schooled` | `twilightforest.schooled` | 0.1 | same | same as lost_words | Tome bolt |
