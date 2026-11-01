@@ -43,7 +43,7 @@
                "assets/gen/import/.gitkeep", "assets/gen/geo/.gitkeep", "assets/gen/audio/.gitkeep"
              ],
              "worlddb": ["gf:common:"],
-             "e2e": ["smoke", "full", "client-host", "common"],
+             "e2e": ["smoke", "full", "client-host"],
              "config": ["mod"],
              "subcommands": ["selftest", "reload", "config", "stubs"],
              "net": ["net.hello", "net.welcome", "screen.open", "screen.update", "screen.close", "screen.action", "screen.closed", "hold.watch", "hold.release"] },
