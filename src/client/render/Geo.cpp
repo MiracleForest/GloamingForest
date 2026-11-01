@@ -1,6 +1,8 @@
-// Bedrock geometry files as quads (F12, see Geo.h). Client build only.
-// Rotation order and box UV layout as in LiteLDev/Levitate v0.1.0 (src/core/kinetics/RotorModel.cpp),
-// LGPL-3.0-or-later, extended with bones (parents, pivots, rotations), inflate and mirror.
+// Adapted from LiteLDev/Levitate v0.1.0 (src/core/kinetics/RotorModel.cpp), LGPL-3.0-or-later.
+//
+// Bedrock geometry files as quads (F12, see Geo.h). Client build only. Rotation order and box UV
+// layout as Levitate's rotor model, extended with bones (parents, pivots, rotations), inflate and
+// mirror.
 
 #ifdef GF_CLIENT
 
