@@ -456,6 +456,8 @@ foreach ($u in $rules.units.Keys) {
         if ($unit.ContainsKey('extraPaths')) { foreach ($p in $unit.extraPaths) { Add-Path $p $u } }
         Set-Owner e2e $n $u
     }
+    # W0 units own their generated layers too (the tools write the ids a W0 unit owns there, R3)
+    if ($unit.wave -in 'W0a', 'W0b') { foreach ($p in @("assets/gen/import/$n/**", "assets/gen/geo/$n/**", "assets/gen/audio/$n/**")) { Add-Path $p $u 'gen' } }
     if ($unit.ContainsKey('contractHeaders')) { foreach ($p in $unit.contractHeaders) { Add-Path $p $u } }
     if ($unit.ContainsKey('stubs')) { foreach ($p in $unit.stubs) { Set-Owner stub $p $u } }
     # dx range and selftest prefix (R12): U<n> 100n.., F<k> 5000+100k.., W2 9000+
