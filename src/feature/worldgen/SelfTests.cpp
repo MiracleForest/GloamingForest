@@ -681,6 +681,7 @@ struct Painted {
     int                                            dim = 0;
     std::vector<std::tuple<int, int, std::string>> columns; ///< x, z, original biome
     bool                                           tickingArea = false;
+    std::vector<std::pair<BlockPos, Block const*>> blocks; ///< the water ring's original ground blocks
 };
 Painted& painted() {
     static Painted p;
@@ -781,6 +782,16 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome", [](Context& ctx) -> ll::coro::Coro
         auto* region = gf::game::regionOf(dim);
         ctx.require(region != nullptr, "the tagged player's region");
         int n = paintChunks(*region, a.x, fy, a.z, a.biome, out);
+        // around the probe's spot a ring of water in the ground (its client biome's water colour on
+        // the screenshot; the desert control keeps its plain ground for the ground tint comparison)
+        if (auto const* water = a.biome == probeId ? gf::game::blockWith("minecraft:water") : nullptr)
+            for (int dx = -5; dx <= 5; ++dx)
+                for (int dz = -5; dz <= 5; ++dz) {
+                    if (std::abs(dx) <= 1 && std::abs(dz) <= 1) continue;
+                    BlockPos p{a.x + dx, fy - 1, a.z + dz};
+                    out.blocks.emplace_back(p, &region->getBlock(p));
+                    gf::game::setBlock(*region, p, *water);
+                }
         runCommand(ctx, "tickingarea add circle " + std::to_string(a.x) + " " + std::to_string(fy) + " " + std::to_string(a.z) + " 2 gf_worldgen_paint_" + a.where);
         out.tickingArea = true;
         auto now = wg::detail::biomeIdOf(region->getBiome(BlockPos{a.x, fy, a.z}));
@@ -825,6 +836,10 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome_view", [](Context& ctx) {
 
 GF_REGISTER_SELFTEST("worldgen.custom_biome_restore", [](Context& ctx) {
     auto& p = painted();
+    if (!p.blocks.empty())
+        if (auto* region = gf::game::regionOf(p.dim))
+            for (auto const& [pos, block] : p.blocks) gf::game::setBlock(*region, pos, *block);
+    p.blocks.clear();
     if (p.tickingArea) {
         runCommand(ctx, "tickingarea remove gf_worldgen_paint_east");
         runCommand(ctx, "tickingarea remove gf_worldgen_paint_south");
