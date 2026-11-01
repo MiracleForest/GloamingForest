@@ -62,7 +62,7 @@ All saplings: PLANT, push DESTROY, instabreak, grass sound, no collision, random
 
 | Sapling | Grower (`TFTreeGrowers`) | Potted |
 |---|---|---|
-| `twilightforest:twilight_oak_sapling` ("Sickly Twilight Oak Sapling") | `twilight_oak` (vanilla `TreeGrower`, `secondaryChance 0.1`): 2x2: 90 % `twilightforest:tree/forest_mega_oak_tree`, 10 % `tree/savannah_mega_oak_tree` (the same `secondaryChance 0.1`); single: 90 % `tree/twilight_oak_tree`, 10 % `tree/large_twilight_oak_tree`. RNG order (vanilla `growTree`): every attempt first draws the mega roll (`nextFloat() < 0.1`, drawn even for a single sapling because a secondary mega tree exists), then checks the four 2x2 corners; a 2x2 whose mega tree fails to place restores the saplings and returns false (no single-tree fallback); otherwise a second `nextFloat() < 0.1` picks the single tree | `twilightforest:potted_twilight_oak_sapling` |
+| `twilightforest:twilight_oak_sapling` ("Sickly Twilight Oak Sapling") | `twilight_oak` (vanilla `TreeGrower`, `secondaryChance 0.1`): 2x2: 90 % `twilightforest:tree/forest_mega_oak_tree`, 10 % `tree/savannah_mega_oak_tree` (the same `secondaryChance 0.1`); single: 90 % `tree/twilight_oak_tree`, 10 % `tree/large_twilight_oak_tree` (RNG order below) | `twilightforest:potted_twilight_oak_sapling` |
 | `twilightforest:canopy_sapling` | `canopy`: 2x2 -> `tree/mega_canopy_tree`, else `tree/canopy_tree` | `twilightforest:potted_canopy_sapling` |
 | `twilightforest:mangrove_sapling` | `mangrove`: `tree/mangrove_tree`; MangroveSaplingBlock is waterloggable (`waterlogged` + `stage`), placed waterlogged in a full water source, unwaterlogs when no water touches it, survives on its normal soils | `twilightforest:potted_mangrove_sapling` |
 | `twilightforest:darkwood_sapling` | `dark`: `tree/homegrown_darkwood_tree` | `twilightforest:potted_darkwood_sapling` |
@@ -72,6 +72,13 @@ All saplings: PLANT, push DESTROY, instabreak, grass sound, no collision, random
 | `twilightforest:mining_sapling` | `mining`: `tree/mining_tree` | `twilightforest:potted_mining_sapling` |
 | `twilightforest:sorting_sapling` | `sorting`: `tree/sorting_tree` | `twilightforest:potted_sorting_sapling` |
 | `twilightforest:rainbow_oak_sapling` | `rainbow_oak`: `tree/rainbow_oak`, 10 % secondary `tree/large_rainbow_oak` | `twilightforest:potted_rainbow_oak_sapling` |
+
+Twilight oak RNG order (vanilla `TreeGrower.growTree`):
+1. Every attempt first draws the mega roll, `nextFloat() < 0.1`. It is drawn even for a single sapling, because a
+   secondary mega tree exists. Rainbow oak has no mega trees and draws no mega roll.
+2. Then it checks the four 2x2 corners. A 2x2 whose mega tree fails to place restores the saplings and returns false;
+   there is no single-tree fallback.
+3. Otherwise a second `nextFloat() < 0.1` picks the single tree.
 
 Pots are vanilla flower pots (copy of `minecraft:flower_pot`). Sapling loot: itself if it survives the explosion;
 pot loot: flower pot + sapling (`twilightforest:blocks/potted_*`).

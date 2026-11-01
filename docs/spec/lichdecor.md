@@ -95,8 +95,10 @@ candles have no item (pick block gives the vanilla candle / exanimate essence).
   - Standing (`on_wall=false`): `3 * candles` only when `direction == UP`, i.e. downward only: strong power into the
     supporting block below (`pos.below()`, both `getSignal` and `getDirectSignal` are `3 * candles` when queried from
     below); nothing above or beside it is powered directly.
-  - `canConnectRedstone` is true only for a DIM wall candelabra with `FACING.getOpposite() == direction` (its back
-    face, toward the support).
+  - `canConnectRedstone` is true only for a DIM wall candelabra with `FACING.getOpposite() == direction`. NeoForge's
+    `RedStoneWireBlock.getConnectingSide` passes `direction` from the wire to the neighbour, so the wire would have to
+    stand at `pos.relative(FACING)`, inside the support block. That never happens: redstone dust never visually
+    connects to a candelabra in TF 4.8. Do not draw a dust connection on Bedrock either.
   - Comparator output: NONE `candles`, DIM `3 + candles`, OMINOUS `6 + candles`, NORMAL `9 + candles`.
 - Drops: the base item; with silk touch the candelabra keeps its candles (data component
   `twilightforest:candelabra_data`, a list of up to 3 candle blocks), otherwise the candles drop separately. Pick
@@ -370,15 +372,23 @@ spawners also get U21's room spawner processor.
 - Redstone output of the candelabra and comparator values go through `redstone::registerEmitter` /
   `registerAnalog`. The contract's `EmitterFn` gets `towards`, the side from the candelabra to the neighbour, which
   is the opposite of Java's `direction`: return `3 * candles` (DIM only) for `towards == DOWN` when standing and for
-  `towards == FACING` when on a wall, 0 otherwise (2.1). The neighbour then counts as strongly powered (Java's
-  `getDirectSignal` is the same value).
+  `towards == FACING` when on a wall, 0 otherwise (2.1).
+- Strong power is not covered by that contract. `registerEmitter` only feeds `power()` / `signalFrom()` of the
+  direct neighbour (the support block); the custom block is not in Bedrock's circuit graph, so the support never
+  becomes a powered conductor. In TF the strongly powered support passes `3 * candles` on to all of its other
+  neighbours: a lamp, piston, dust or repeater beside or under the support reacts. Parity therefore needs a U22
+  contract extension under `src/feature/ext/lichdecor/` (R18, listed in the PR) that registers the support position
+  as a strongly powered conductor of strength `3 * candles` in the circuit (for vanilla mechanisms) and in `power()`
+  (for custom blocks). It is re-evaluated when the candle count, the lighting or the block changes. The selftest
+  `lichdecor.candelabra_signal` checks a vanilla redstone lamp next to the support.
 - The wrought iron fence state space must be reduced for Bedrock's permutation budget (see 2.4).
 - Interactions use `interactions::onUseOn` (vanilla skull + vanilla candle -> skull candle; lead on fence).
 
 ## 10. Selftests (`lichdecor.*`, dx 2200-2299)
 
 `lichdecor.candelabra_slots`, `lichdecor.candelabra_signal` (DIM: 3 per candle into the block below a standing
-candelabra and into the support behind a wall one, 0 into the block above and the other sides; comparator table),
+candelabra and into the support behind a wall one, 0 into the block above and the other sides; a redstone lamp
+beside the support lights through it; comparator table),
 `lichdecor.brazier_cycle`, `lichdecor.skull_candle_create` (stat + config off), `lichdecor.ominous_candle_revert`,
 `lichdecor.ominous_fire_conversion` (villager -> zombie villager), `lichdecor.skull_chest_lock`,
 `lichdecor.fence_finial`, `lichdecor.sinister_spawner_command`, `lichdecor.recipes`.
