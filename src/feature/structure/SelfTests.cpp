@@ -7,19 +7,38 @@
 // snapshotVolume must equal the in-memory hash of the same placement (rule R19 golden hashes).
 #include <algorithm>
 #include <climits>
+#include <cmath>
 #include <map>
 #include <unordered_map>
 
+#include "ll/api/service/Bedrock.h"
+
+#include "mc/deps/core/math/Vec3.h"
+#include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/world/actor/ActorType.h"
+#include "mc/world/actor/Mob.h"
+#include "mc/world/actor/Motif.h"
+#include "mc/world/actor/Painting.h"
+#include "mc/world/level/BaseMobSpawner.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/Level.h"
+#include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/BlockActorType.h"
+#include "mc/world/level/block/actor/FlowerPotBlockActor.h"
+#include "mc/world/level/block/actor/MobSpawnerBlockActor.h"
+#include "mc/world/phys/AABB.h"
 
 #include "core/VolumeHash.h"
+#include "feature/ext/structure/TemplateDefinitions.h"
 #include "feature/structure/Region.h"
 #include "feature/structure/bases/BasesInternal.h"
 #include "feature/structure/bases/HollowHill.h"
 #include "feature/structure/bases/Maze.h"
 #include "feature/structure/bases/Tower.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::structure::selftests {
@@ -32,6 +51,7 @@ using selftest::Context;
 
 class MemoryRegion final : public worldgen::Region {
 public:
+    MemoryRegion() { resetRegionRandom(); }
     [[nodiscard]] int          centerChunkX() const override { return 0; }
     [[nodiscard]] int          centerChunkZ() const override { return 0; }
     [[nodiscard]] int          minY() const override { return -64; }
@@ -202,6 +222,76 @@ std::string const& fixtureId() {
         return std::string("gf_test:structure/fixture");
     }();
     return id;
+}
+
+/// Blocks every processor acts on (template x 0..4, y 0..1, z 0..4), placed at kTargetsOrigin over
+/// the world prepareProcessorWorld builds: sandstone slabs over stone bricks / air
+/// (courtyard_terrace), smooth stone (smooth_stone_variants), grass on dirt, under stone and next to
+/// podzol / mycelium / grass (smart_grass), full and partial blocks over solid, partial and
+/// replaceable world blocks (soft_replace), a spawner without spawn data (spawner_processor) and
+/// TF's nagastone (nagastone_variants, once TF's blocks are registered).
+constexpr BlockPos kTargetsOrigin{10, 64, 0};
+
+std::string const& processorTargetsId() {
+    static std::string const id = [] {
+        std::vector<Json> palette{
+            state("minecraft:air"),
+            state("minecraft:sandstone_slab", {{"type", "bottom"}, {"waterlogged", "false"}}),
+            state("minecraft:sandstone_slab", {{"type", "double"}, {"waterlogged", "false"}}),
+            state("minecraft:smooth_stone"),
+            state("minecraft:smooth_stone_slab", {{"type", "bottom"}, {"waterlogged", "false"}}),
+            state("minecraft:grass_block", {{"snowy", "false"}}),
+            state("minecraft:spawner"),
+            state("minecraft:stone_bricks"),
+            state("twilightforest:etched_nagastone"),
+            state("twilightforest:nagastone_pillar", {{"axis", "y"}}),
+            state("minecraft:cobblestone"),
+            state("minecraft:oak_planks"),
+            state("minecraft:stone_brick_stairs", {{"facing", "north"}, {"half", "bottom"}, {"waterlogged", "false"}}),
+            state("minecraft:mossy_cobblestone"),
+        };
+        auto doc = makeTemplate("gf_test:structure/processor_targets", palette,
+                                {
+                                    {"12121", "34343", "55555", "7a6b7", "89c89"},
+                                    {"12121", "3.4.3", "5.5.5", ".....", "d...d"},
+                                });
+        std::string error;
+        templates::add(doc, &error);
+        return std::string("gf_test:structure/processor_targets");
+    }();
+    return id;
+}
+
+/// The world the processors look at: the old dirt / podzol / fence pattern under the fixture, and
+/// the cases above under the targets.
+void prepareProcessorWorld(MemoryRegion& mem) {
+    for (int x = -2; x < 8; x++)
+        for (int z = -2; z < 8; z++) {
+            (void)mem.setBlock(BlockPos{x, 63, z}, blocks::java((x + z) % 3 == 0 ? "minecraft:podzol" : "minecraft:dirt"), 3);
+            if ((x * 7 + z) % 5 == 0) (void)mem.setBlock(BlockPos{x, 64 + (x + z) % 3, z}, blocks::java("minecraft:oak_fence"), 3);
+        }
+    for (int x = 8; x <= 17; x++)
+        for (int z = -2; z < 8; z++) (void)mem.setBlock(BlockPos{x, 63, z}, blocks::java("minecraft:stone"), 3);
+    auto put = [&](int x, int y, int z, char const* id) { (void)mem.setBlock(BlockPos{x, y, z}, blocks::java(id), 3); };
+    // courtyard_terrace (row z 0)
+    put(10, 64, 0, "minecraft:stone_bricks");
+    put(12, 64, 0, "minecraft:mossy_stone_bricks");
+    put(13, 64, 0, "minecraft:stone_brick_slab");
+    put(14, 64, 0, "minecraft:cobblestone");
+    put(11, 65, 0, "minecraft:cracked_stone_bricks");
+    put(13, 65, 0, "minecraft:cobblestone");
+    // smart_grass (row z 2, neighbours in z 1)
+    put(10, 64, 2, "minecraft:dirt");
+    put(11, 64, 1, "minecraft:podzol");
+    put(12, 65, 2, "minecraft:stone");
+    put(13, 64, 1, "minecraft:mycelium");
+    put(15, 64, 2, "minecraft:grass_block");
+    // soft_replace (rows z 3, 4)
+    put(10, 64, 3, "minecraft:bricks"); // stone would be worldgen-replaceable (lush_ground_replaceable)
+    put(11, 64, 3, "minecraft:oak_fence");
+    put(13, 64, 3, "minecraft:short_grass");
+    put(14, 64, 3, "minecraft:stone_slab");
+    put(12, 64, 4, "minecraft:oak_fence");
 }
 
 /// A piece just to reach the helpers of ComponentOld in tests.
@@ -376,10 +466,24 @@ GF_REGISTER_SELFTEST("structure.template_world", [](Context& ctx) -> ll::coro::C
             }
     ctx.check(diffs.empty(), "the world and the in-memory placement match (connections aside): " + diffs);
     checkGolden(ctx, "template_world_cw90", mem.hash(memBox));
-    co_await ctx.ticks(2);
-    BlockPos spawnerPos = templates::relative(templates::Placement{origin, origin, settings, BlockPos{0, 0, 0}}, BlockPos{2, 1, 2});
-    spawnerPos          = BlockPos{spawnerPos.x + origin.x, spawnerPos.y + origin.y, spawnerPos.z + origin.z};
+    co_await ctx.ticks(8); // block actors exist a tick later; queued work runs every 5 ticks
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto worldOf = [&](BlockPos const& local) {
+        BlockPos rel = templates::relative(templates::Placement{origin, origin, settings, BlockPos{0, 0, 0}}, local);
+        return BlockPos{rel.x + origin.x, rel.y + origin.y, rel.z + origin.z};
+    };
+    BlockPos spawnerPos = worldOf(BlockPos{2, 1, 2});
     ctx.check(game::blockIdAt(*source, spawnerPos) == "minecraft:mob_spawner", "the spawner stands");
+    // the template's block entity markers ran in the world: the spawner's mob, the chest's loot table
+    std::string mob;
+    if (auto* actor = source->getBlockEntity(spawnerPos); actor && actor->getType() == BlockActorType::MobSpawner)
+        if (auto* spawner = static_cast<MobSpawnerBlockActor&>(*actor).mSpawner.get()) mob = spawner->mActorDefId->mCanonicalName->getString();
+    ctx.check(mob == "minecraft:zombie", "the spawner marker set the spawner's mob (" + mob + ")");
+    BlockPos chestPos = worldOf(BlockPos{2, 1, 0});
+    auto     record   = blockentities::lootRecord(ctx.dimension(), chestPos);
+    ctx.check(game::blockIdAt(*source, chestPos) == "minecraft:chest" && record && record->table == "gf_test:chests/fixture_chest",
+              "the loot marker gave the chest its loot table");
     co_return;
 });
 
@@ -401,6 +505,8 @@ GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
         {"spawner_processor",
          Json{{"processor_type", "twilightforest:spawner_processor"},
               {"range", 6},
+              {"start_delay_factor", 0.25},
+              {"entity_width_max", 0.8},
               {"entities", Json::array({Json{{"data", {{"entity", {{"id", "minecraft:skeleton"}}}}}, {"weight", 3}},
                                         Json{{"data", {{"entity", {{"id", "minecraft:spider"}}}}}, {"weight", 1}}})}}},
         {"state_transfiguring",
@@ -422,22 +528,89 @@ GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
         {"gravity", Json{{"processor_type", "minecraft:gravity"}, {"heightmap", "WORLD_SURFACE_WG"}, {"offset", 0}}},
         {"block_ignore", Json{{"processor_type", "minecraft:block_ignore"}, {"blocks", Json::array({state("minecraft:cobblestone")})}}},
     };
+    auto const* targets = templates::parsed(processorTargetsId());
+    ctx.require(targets != nullptr, "processor targets fixture");
+    // the fixture at kOrigin, the processor targets 10 blocks east, over a prepared world
+    struct Run {
+        std::string               hash;
+        std::vector<templates::Placed> placed; ///< the targets' placement
+    };
+    auto place = [&](std::vector<std::string> const& processors, MemoryRegion& mem) {
+        prepareProcessorWorld(mem);
+        Run run;
+        for (int i = 0; i < 2; i++) {
+            templates::Placement p;
+            p.offset              = i == 0 ? kOrigin : kTargetsOrigin;
+            p.pivotPos            = p.offset;
+            p.settings.processors = processors;
+            p.settings.seed       = 0x5eed;
+            JavaRandom random(7);
+            ctx.require(templates::placeInWorld(i == 0 ? *t : *targets, mem, p, random, nullptr, i == 1 ? &run.placed : nullptr), "placed");
+        }
+        run.hash = mem.hash(BlockBox{-2, 62, -2, 17, 70, 7});
+        return run;
+    };
+    MemoryRegion plainMem;
+    auto         plain = place({}, plainMem);
+    checkGolden(ctx, "processor_none", plain.hash);
+    std::map<std::string, std::unique_ptr<MemoryRegion>> worlds;
+    std::map<std::string, Run>                           runs;
     for (auto const& [name, config] : cases) {
-        MemoryRegion mem;
-        // a little world for the processors that look at it (soft_replace, smart_grass, gravity, courtyard)
-        for (int x = -2; x < 8; x++)
-            for (int z = -2; z < 8; z++) {
-                (void)mem.setBlock(BlockPos{x, 63, z}, blocks::java((x + z) % 3 == 0 ? "minecraft:podzol" : "minecraft:dirt"), 3);
-                if ((x * 7 + z) % 5 == 0) (void)mem.setBlock(BlockPos{x, 64 + (x + z) % 3, z}, blocks::java("minecraft:oak_fence"), 3);
-            }
-        templates::Placement p;
-        p.offset              = kOrigin;
-        p.pivotPos            = kOrigin;
-        p.settings.processors = {config.dump()};
-        p.settings.seed       = 0x5eed;
-        JavaRandom random(7);
-        ctx.require(templates::placeInWorld(*t, mem, p, random), "placed with " + name);
-        checkGolden(ctx, "processor_" + name, mem.hash(BlockBox{-2, 62, -2, 7, 70, 7}));
+        auto mem    = std::make_unique<MemoryRegion>();
+        runs[name]  = place({config.dump()}, *mem);
+        checkGolden(ctx, "processor_" + name, runs[name].hash);
+        worlds[name] = std::move(mem);
+    }
+    auto at = [&](std::string const& name, int x, int y, int z) -> Block const& { return worlds[name]->getBlock(BlockPos{x, y, z}); };
+    auto is = [&](std::string const& name, int x, int y, int z, char const* id) { return blocks::is(at(name, x, y, z), id); };
+    // each processor did its job on the targets (template x 0..4 at world x 10..14, y 64..65)
+    ctx.check(is("courtyard_terrace", 10, 64, 0, "minecraft:stone_brick_slab") && at("courtyard_terrace", 11, 64, 0).isAir() &&
+                  is("courtyard_terrace", 13, 64, 0, "minecraft:stone_brick_slab") && is("courtyard_terrace", 13, 65, 0, "minecraft:stone_bricks") &&
+                  at("courtyard_terrace", 10, 65, 0).isAir() && is("courtyard_terrace", 11, 65, 0, "minecraft:stone_brick_slab"),
+              "courtyard_terrace: sandstone slabs become stone brick slabs / bricks on stone and vanish over air");
+    ctx.check(is("smart_grass", 10, 64, 2, "minecraft:dirt") && is("smart_grass", 11, 64, 2, "minecraft:podzol") && at("smart_grass", 12, 64, 2).isAir() &&
+                  is("smart_grass", 13, 64, 2, "minecraft:mycelium") && is("smart_grass", 14, 64, 2, "minecraft:grass_block"),
+              "smart_grass: grass is dropped on dirt or under a block, takes podzol / mycelium from a neighbour, stays grass next to grass");
+    int smooth = 0, cobbled = 0;
+    for (auto const& p : runs["smooth_stone_variants"].placed) {
+        if (!p.block) continue;
+        if (blocks::is(*p.block, "minecraft:smooth_stone") || blocks::is(*p.block, "minecraft:smooth_stone_slab")) smooth++;
+        if (blocks::is(*p.block, "minecraft:cobblestone") || blocks::is(*p.block, "minecraft:cobblestone_slab")) cobbled++;
+    }
+    ctx.check(smooth > 0 && cobbled > 0, "smooth_stone_variants: some smooth stone turns to cobblestone (" + std::to_string(cobbled) + " of " +
+                                             std::to_string(smooth + cobbled) + ")");
+    auto softCheck = [&](int x, int y, int z, char const* id, char const* what) {
+        ctx.check(is("soft_replace", x, y, z, id), std::string("soft_replace: ") + what + " (" + blocks::id(at("soft_replace", x, y, z)) + ")");
+    };
+    softCheck(10, 64, 3, "minecraft:bricks", "a solid world block stays");
+    softCheck(11, 64, 3, "minecraft:cobblestone", "a full block goes over a fence");
+    softCheck(13, 64, 3, "minecraft:oak_planks", "a plant is replaced");
+    softCheck(14, 64, 3, "minecraft:stone_bricks", "a full block goes over a slab");
+    softCheck(12, 64, 4, "minecraft:oak_fence", "no stairs over a fence");
+    // spawner_processor: TF always rolls the spawn data (and the delay from MinSpawnDelay 200)
+    bool spawnerChecked = false;
+    for (auto const& p : runs["spawner_processor"].placed) {
+        if (!p.block || !blocks::is(*p.block, "minecraft:spawner")) continue;
+        spawnerChecked = true;
+        auto entity    = p.data.value("entity", std::string{});
+        ctx.check(entity == "minecraft:skeleton" || entity == "minecraft:spider", "spawner_processor rolled the entity (" + entity + ")");
+        ctx.check(p.data.value("SpawnRange", 0) == 6 && p.data.value("Delay", -1) == 50, "spawner_processor: range 6, delay round(200 * 0.25)");
+        if (entity == "minecraft:spider")
+            ctx.check(std::abs(p.data.value("entity_scale", 1.0f) - 0.8f / 1.4f) < 1e-5f, "a spider wider than 0.8 is scaled to fit");
+    }
+    ctx.check(spawnerChecked, "the targets' spawner was processed");
+    // the processors that change nothing here: update_marking (Bedrock updates shapes itself) and,
+    // without TF's block skeleton, nagastone_variants
+    ctx.check(runs["update_marking"].hash == plain.hash, "update_marking places the template unchanged");
+    if (blocks::isRegisteredBlock("twilightforest:etched_nagastone")) {
+        int variants = 0;
+        for (auto const& p : runs["nagastone_variants"].placed)
+            if (p.block && (blocks::id(*p.block).find("mossy") != std::string::npos || blocks::id(*p.block).find("cracked") != std::string::npos))
+                variants++;
+        ctx.check(variants > 0, "nagastone_variants turns some nagastone mossy or cracked (" + std::to_string(variants) + ")");
+    } else {
+        ctx.check(runs["nagastone_variants"].hash == plain.hash, "nagastone_variants leaves vanilla blocks alone");
+        ctx.info("TF's nagastone blocks are not registered (block skeleton): nagastone_variants checked on vanilla blocks only");
     }
     ctx.check(processorTypes().size() >= 24, "17 TF + 7 vanilla processor types registered (" + std::to_string(processorTypes().size()) + ")");
 });
@@ -684,6 +857,443 @@ GF_REGISTER_SELFTEST("structure.component_helpers", [](Context& ctx) {
     bases::UtilityPiece u(3, BlockBox{1, 2, 3, 4, 5, 6}, false);
     auto                back = loadPiece(u.save());
     ctx.check(back && back->save() == u.save(), "a utility piece saves and loads back");
+    // createChest: a default chest turns away from the wall, any other container keeps its facing,
+    // and nothing is placed where a chest stands
+    MemoryRegion walls;
+    TestPiece    box(BlockBox{0, 64, 0, 9, 70, 9}, std::nullopt);
+    (void)walls.setBlock(BlockPos{3, 65, 2}, blocks::java("minecraft:stone"), 3);
+    JavaRandom r(5);
+    ctx.check(box.placeChest(walls, box.bbox, r, 3, 65, 3, "", "gf_test:chests/fixture_chest"), "a chest is placed");
+    ctx.check(blocks::javaProperty(walls.getBlock(BlockPos{3, 65, 3}), "facing") == std::optional<std::string>("south"),
+              "a default chest faces away from the wall north of it");
+    ctx.check(!box.placeChest(walls, box.bbox, r, 3, 65, 3, "minecraft:trapped_chest", "gf_test:chests/fixture_chest"),
+              "no container where a chest stands");
+    ctx.check(box.placeChest(walls, box.bbox, r, 5, 65, 3, "minecraft:barrel", "gf_test:chests/fixture_chest") &&
+                  blocks::is(walls.getBlock(BlockPos{5, 65, 3}), "minecraft:barrel"),
+              "another container block is placed as given");
+    // placeSpawner: a registered block id is a boss spawner block, anything else a spawner's mob
+    ctx.check(box.placeSpawner(walls, box.bbox, 7, 65, 7, "minecraft:zombie") && blocks::is(walls.getBlock(BlockPos{7, 65, 7}), "minecraft:spawner"),
+              "a mob id makes a mob spawner");
+    ctx.check(box.placeSpawner(walls, box.bbox, 8, 65, 7, "minecraft:bedrock") && blocks::is(walls.getBlock(BlockPos{8, 65, 7}), "minecraft:bedrock"),
+              "a block id is placed as that block");
+});
+
+// ---- waterlogging -------------------------------------------------------------------------------------------------
+
+namespace {
+
+Json waterloggingTemplate() {
+    std::vector<Json> palette{
+        state("minecraft:air"),
+        state("minecraft:oak_stairs", {{"facing", "north"}, {"half", "bottom"}, {"shape", "straight"}, {"waterlogged", "false"}}),
+        state("minecraft:oak_stairs", {{"facing", "north"}, {"half", "bottom"}, {"shape", "straight"}, {"waterlogged", "true"}}),
+        state("minecraft:stone"),
+        state("minecraft:oak_slab", {{"type", "bottom"}, {"waterlogged", "false"}}),
+    };
+    // x: dry stairs over world water, waterlogged stairs over air, stone over water, a dry slab next
+    // to world water, dry stairs next to the slab (which the slab's water reaches)
+    return makeTemplate("gf_test:structure/waterlog", palette, {{"12341"}});
+}
+
+} // namespace
+
+GF_REGISTER_SELFTEST("structure.waterlogging", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto area = co_await ctx.flatArea(5715, 8, 6);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5715)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    std::string error;
+    ctx.require(templates::add(waterloggingTemplate(), &error), "the waterlogging fixture registers " + error);
+    Block const& water = blocks::java("minecraft:water");
+    auto         wet   = [&](BlockSourceRegion& region, BlockPos const& p) { return liquids::isWaterSource(region.getLiquidLayer(p)); };
+    std::vector<BlockPos> touched;
+    // the world: water at x 0 and 2 and beside x 3 (z + 1), for both rows
+    auto prepare = [&](BlockSourceRegion& region, BlockPos const& o) {
+        for (auto const& p : {BlockPos{o.x, o.y, o.z}, BlockPos{o.x + 2, o.y, o.z}, BlockPos{o.x + 3, o.y, o.z + 1}}) {
+            (void)region.setBlock(p, water, 2);
+            touched.push_back(p);
+        }
+        for (int x = 0; x < 5; x++) touched.push_back(BlockPos{o.x + x, o.y, o.z});
+    };
+    BlockPos keep{area.minX + 1, area.minY + 1, area.minZ + 1};
+    BlockPos ignore{area.minX + 1, area.minY + 1, area.minZ + 4};
+    {
+        BlockSourceRegion region(*source, keep);
+        prepare(region, keep);
+        prepare(region, ignore);
+        TemplateSettings settings;
+        ctx.require(templates::place("gf_test:structure/waterlog", region, keep, settings), "placed with the world's water");
+        settings.processors = {liquids::kIgnoreWaterlogging};
+        ctx.require(templates::place("gf_test:structure/waterlog", region, ignore, settings), "placed ignoring the world's water");
+        auto at = [](BlockPos const& o, int dx) { return BlockPos{o.x + dx, o.y, o.z}; };
+        // LiquidSettings.APPLY_WATERLOGGING
+        ctx.check(wet(region, at(keep, 0)), "dry stairs placed into water are waterlogged");
+        ctx.check(wet(region, at(keep, 1)), "waterlogged template stairs hold water");
+        ctx.check(!wet(region, at(keep, 2)) && blocks::is(region.getBlock(at(keep, 2)), "minecraft:stone"), "stone replaces the water");
+        ctx.check(wet(region, at(keep, 3)), "a dry slab next to world water is waterlogged");
+        ctx.check(wet(region, at(keep, 4)), "dry stairs next to a waterlogged slab are waterlogged in the next pass");
+        // LiquidSettings.IGNORE_WATERLOGGING
+        ctx.check(!wet(region, at(ignore, 0)), "ignoring waterlogging: dry stairs replace the water");
+        ctx.check(wet(region, at(ignore, 1)), "ignoring waterlogging: waterlogged template stairs still hold water");
+        ctx.check(!wet(region, at(ignore, 3)) && !wet(region, at(ignore, 4)), "ignoring waterlogging: no neighbour pass");
+        // code that sets WATERLOGGED (Piece::placeBlock by id, ext::setWaterlogged)
+        TestPiece piece(BlockBox{area.minX, area.minY, area.minZ, area.maxX, area.maxY, area.maxZ}, std::nullopt);
+        BlockPos  coded{area.minX + 7, area.minY + 1, area.minZ + 1};
+        piece.placeBlock(region, "minecraft:oak_fence", Json{{"waterlogged", true}}, coded.x, coded.y, coded.z, piece.bbox);
+        ctx.check(blocks::is(region.getBlock(coded), "minecraft:oak_fence") && wet(region, coded), "placeBlock with waterlogged=true holds water");
+        piece.placeBlock(region, "minecraft:oak_fence", Json::object(), coded.x, coded.y, coded.z, piece.bbox);
+        ctx.check(!wet(region, coded), "the default state carries no water");
+        touched.push_back(coded);
+        // clean up the liquid layers (the area restore puts back the blocks only)
+        for (auto const& p : touched) {
+            (void)region.setLiquidLayer(p, blocks::air(), 2);
+            (void)region.setBlock(p, blocks::air(), 2);
+        }
+    }
+    co_return;
+});
+
+// ---- flower pots -----------------------------------------------------------------------------------------------------
+
+GF_REGISTER_SELFTEST("structure.flower_pot", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto area = co_await ctx.flatArea(5725, 6, 4);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5725)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    ctx.check(blocks::pottedPlant("minecraft:potted_red_mushroom") == blocks::bedrockId("minecraft:red_mushroom"), "a potted mushroom holds the mushroom");
+    ctx.check(blocks::pottedPlant("minecraft:potted_azalea_bush") == blocks::bedrockId("minecraft:azalea"), "a potted azalea bush holds the azalea");
+    std::string error;
+    ctx.require(templates::add(makeTemplate("gf_test:structure/pot", {state("minecraft:air"), state("minecraft:potted_oak_sapling")}, {{"1"}}), &error),
+                "the pot fixture registers " + error);
+    BlockPos byPiece{area.minX + 1, area.minY, area.minZ + 1};
+    BlockPos byTemplate{area.minX + 3, area.minY, area.minZ + 1};
+    {
+        BlockSourceRegion region(*source, byPiece);
+        TestPiece         piece(BlockBox{area.minX, area.minY, area.minZ, area.maxX, area.maxY, area.maxZ}, std::nullopt);
+        piece.placeBlock(region, "minecraft:potted_red_mushroom", Json::object(), byPiece.x, byPiece.y, byPiece.z, piece.bbox);
+        ctx.require(templates::place("gf_test:structure/pot", region, byTemplate, TemplateSettings{}), "the pot template places");
+    }
+    co_await ctx.ticks(8); // the pot's block actor exists a tick later; queued work runs every 5 ticks
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto plantAt = [&](BlockPos const& p) -> std::string {
+        auto* actor = source->getBlockEntity(p);
+        if (!actor || actor->getType() != BlockActorType::FlowerPot) return "<no pot actor>";
+        auto const* plant = static_cast<FlowerPotBlockActor&>(*actor).mPlant;
+        return plant ? plant->getTypeName() : std::string("<empty>");
+    };
+    ctx.check(game::blockIdAt(*source, byPiece) == "minecraft:flower_pot", "the piece placed a flower pot");
+    ctx.check(plantAt(byPiece) == blocks::bedrockId("minecraft:red_mushroom"), "the piece's pot holds a red mushroom (" + plantAt(byPiece) + ")");
+    ctx.check(plantAt(byTemplate) == blocks::bedrockId("minecraft:oak_sapling"), "the template's pot holds an oak sapling (" + plantAt(byTemplate) + ")");
+});
+
+// ---- paintings -------------------------------------------------------------------------------------------------------
+
+namespace {
+
+std::vector<Actor*> paintingsIn(BlockSource& source, BlockBox const& box) {
+    AABB range{Vec3{static_cast<float>(box.minX), static_cast<float>(box.minY), static_cast<float>(box.minZ)},
+               Vec3{static_cast<float>(box.maxX + 1), static_cast<float>(box.maxY + 1), static_cast<float>(box.maxZ + 1)}};
+    std::vector<Actor*> out;
+    for (auto* a : source.getEntities(range, 0.0f, ActorType::Painting))
+        if (a && a->isType(ActorType::Painting)) out.push_back(a);
+    return out;
+}
+
+} // namespace
+
+GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // TF's spot check on a scratch region: blocks in the painting's box refuse it
+    {
+        MemoryRegion mem;
+        auto         kebab = paintings::byId("minecraft:kebab");
+        ctx.require(kebab.has_value(), "kebab is a painting variant");
+        double box[6];
+        paintings::boundingBox(BlockPos{0, 64, 0}, Orientation::South, *kebab, box);
+        ctx.check(box[0] == 0 && box[3] == 1 && box[1] == 64 && box[4] == 65 && box[2] == 0 && box[5] == 0.0625,
+                  "Painting#calculateBoundingBox for a 1x1 facing south");
+        auto wide = paintings::byId("minecraft:fighters");
+        paintings::boundingBox(BlockPos{0, 64, 0}, Orientation::East, *wide, box);
+        // facing east: half a block to the counter-clockwise side (north) for the even width
+        ctx.check(box[0] == 0 && box[3] == 0.0625 && box[2] == -2 && box[5] == 2 && box[1] == 64 && box[4] == 66,
+                  "a 4x2 painting facing east spans z -2..2, y 64..66");
+        ctx.check(paintings::tryHang(mem, BlockPos{0, 64, 0}, Orientation::South, kebab), "an empty spot takes a painting");
+        (void)mem.setBlock(BlockPos{0, 64, 0}, blocks::java("minecraft:stone"), 3);
+        ctx.check(!paintings::tryHang(mem, BlockPos{0, 64, 0}, Orientation::South, kebab), "a block in the painting's box refuses it");
+        ctx.check(!paintings::tryHang(mem, BlockPos{0, 64, 0}, Orientation::South, std::nullopt), "no variant: no painting");
+        auto placeable = paintings::tag("minecraft:placeable");
+        ctx.check(placeable.size() == 46 && placeable.front().id == "minecraft:kebab", "minecraft:placeable in the tag's order (" +
+                                                                                           std::to_string(placeable.size()) + ")");
+        ctx.check(paintings::ofSizeOrSmaller("twilightforest:tower_paintings", 1, 1).size() == 8, "eight 1x1 tower paintings");
+    }
+    // in the world: a wall, a painting in front of it, then the marker handler next to it
+    auto area = co_await ctx.flatArea(5735, 10, 6);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5735)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    BlockBox wallBox{area.minX + 1, area.minY, area.minZ + 1, area.minX + 8, area.minY + 3, area.minZ + 1};
+    int      before = 0;
+    {
+        BlockSourceRegion region(*source, BlockPos{area.minX, area.minY, area.minZ});
+        for (int x = wallBox.minX; x <= wallBox.maxX; x++)
+            for (int y = wallBox.minY; y <= wallBox.maxY; y++) (void)region.setBlock(BlockPos{x, y, wallBox.minZ}, blocks::java("minecraft:stone"), 2);
+        before = static_cast<int>(paintingsIn(*source, area).size());
+        BlockPos front{area.minX + 2, area.minY + 1, area.minZ + 2};
+        ctx.check(paintings::tryHang(region, front, Orientation::South, paintings::byId("minecraft:kebab")), "a painting hangs on the wall");
+        ctx.check(!paintings::tryHang(region, front, Orientation::South, paintings::byId("minecraft:aztec")), "a second painting on the same spot is refused");
+        BlockPos noWall{area.minX + 2, area.minY + 1, area.minZ + 5};
+        ctx.check(!paintings::tryHang(region, noWall, Orientation::South, paintings::byId("minecraft:kebab")), "the game refuses a painting without a wall");
+        // the camp's painting marker handler: LichBossRoom.placePainting(pos, random, 1, placeable, 1, 1, rotation.rotate(NORTH))
+        JavaRandom random(77);
+        Json       handler{{"type", "twilightforest:painting"}, {"paintings", "minecraft:placeable"}};
+        BlockPos   marker{area.minX + 5, area.minY + 1, area.minZ + 2};
+        ctx.check(markers::handle(handler, "painting", marker, region, random, area, Rotation::Clockwise180), "the painting marker hangs a 1x1 painting");
+    }
+    co_await ctx.ticks(2);
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto hung = paintingsIn(*source, area);
+    ctx.check(static_cast<int>(hung.size()) - before == 2, "two paintings hang (" + std::to_string(hung.size() - before) + ")");
+    bool kebab = false;
+    for (auto* a : hung) {
+        auto const* motif = static_cast<Painting*>(a)->mMotif;
+        if (motif && motif == &Motif::mKebab()) kebab = true;
+    }
+    ctx.check(kebab, "the hung painting shows the requested motive (kebab)");
+    for (auto* a : hung) a->despawn();
+});
+
+// ---- TF marker handlers and template markers in the world --------------------------------------------------------------
+
+GF_REGISTER_SELFTEST("structure.markers", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto area = co_await ctx.flatArea(5750, 8, 4);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5750)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    int        dim = static_cast<int>(source->getDimensionId());
+    JavaRandom random(3);
+    BlockPos   lootPos{area.minX + 1, area.minY, area.minZ + 1};
+    BlockPos   rackPos{area.minX + 3, area.minY, area.minZ + 1};
+    BlockPos   notRack{area.minX + 5, area.minY, area.minZ + 1};
+    {
+        BlockSourceRegion region(*source, lootPos);
+        // twilightforest:loot: the container, then its loot table (RandomizableContainer)
+        Json loot{{"type", "twilightforest:loot"},
+                  {"loot_block", {{"type", "minecraft:simple_state_provider"}, {"state", state("minecraft:barrel", {{"facing", "up"}})}}},
+                  {"loot_table", "gf_test:chests/fixture_chest"}};
+        ctx.check(markers::handle(loot, "", lootPos, region, random, area, Rotation::None), "the loot marker places its container");
+        ctx.check(game::blockIdAt(*source, lootPos) == "minecraft:barrel", "a barrel stands");
+        auto record = blockentities::lootRecord(dim, lootPos);
+        ctx.check(record && record->table == "gf_test:chests/fixture_chest", "the barrel got the loot table");
+        // twilightforest:drying_rack: only a DryingRackBlock is placed
+        Json notARack{{"type", "twilightforest:drying_rack"},
+                      {"drying_rack_block", {{"type", "minecraft:simple_state_provider"}, {"state", state("minecraft:oak_planks")}}},
+                      {"loot_table", "twilightforest:camp_drying_rack"}};
+        ctx.check(!markers::handle(notARack, "", notRack, region, random, area, Rotation::None) && game::blockIdAt(*source, notRack) == "minecraft:air",
+                  "the drying rack marker refuses a block that is not a drying rack");
+        if (blocks::isRegisteredBlock("twilightforest:birch_drying_rack")) {
+            Json rack{{"type", "twilightforest:drying_rack"},
+                      {"drying_rack_block",
+                       {{"type", "minecraft:simple_state_provider"}, {"state", state("twilightforest:birch_drying_rack", {{"facing", "north"}})}}},
+                      {"loot_table", "twilightforest:camp_drying_rack"}};
+            ctx.check(markers::handle(rack, "", rackPos, region, random, area, Rotation::Clockwise90) &&
+                          game::blockIdAt(*source, rackPos) == "twilightforest:birch_drying_rack",
+                      "the drying rack marker places the rack (and fills it from its loot table)");
+        } else {
+            ctx.info("twilightforest:birch_drying_rack is not registered (block skeleton): drying rack placement checked by its refusal only");
+        }
+    }
+});
+
+// ---- jigsaw over terrain, the template definitions API --------------------------------------------------------------
+
+namespace {
+
+void registerTerrainPools() {
+    static bool done = false;
+    if (done) return;
+    done = true;
+    registerJigsawFixtures();
+    // a start like the jigsaw fixture's whose DOWN jigsaw is named after its own pool (CampStructure
+    // selects the start's jigsaw by the pool's name) and whose doors lead to the terrain rooms
+    std::vector<Json> pal   = {state("minecraft:air"), state("minecraft:stone_bricks"), state("minecraft:oak_planks"), state("minecraft:glass")};
+    auto              start = makeTemplate("gf_test:structure/jig/terrain_start", pal,
+                                           {{"11111", "12221", "12221", "12221", "11111"}, {"1...1", ".....", ".....", ".....", "1...1"}, {"11111", "11111", "11111", "11111", "11111"}});
+    start["jigsaw"] = Json::array({
+        Json{{"pos", {2, 0, 2}}, {"front", "down"}, {"top", "north"}, {"name", "gf_test:structure/jig/terrain_start"}, {"pool", "minecraft:empty"}},
+        Json{{"pos", {2, 1, 0}}, {"front", "north"}, {"pool", "gf_test:structure/jig/terrain_rooms"}, {"name", "gf_test:door"}, {"target", "gf_test:door"}},
+        Json{{"pos", {0, 1, 2}}, {"front", "west"}, {"pool", "gf_test:structure/jig/terrain_rooms"}, {"name", "gf_test:door"}, {"target", "gf_test:door"}},
+        Json{{"pos", {4, 1, 2}}, {"front", "east"}, {"pool", "gf_test:structure/jig/terrain_rooms"}, {"name", "gf_test:door"}, {"target", "gf_test:door"}},
+    });
+    templates::add(start);
+    // pool entries with TemplatePoolInstance.height_adjustment (the start projects onto the terrain)
+    pools::addDefinition("gf_test:structure/jig/terrain_start",
+                         Json{{"gf_test:structure/jig/terrain_start",
+                               {{"weight", 1},
+                                {"projection", "terrain_matching"},
+                                {"height_adjustment", {{"heightmap", "WORLD_SURFACE_WG"}, {"y_offset", 1}}}}}});
+    pools::addDefinition("gf_test:structure/jig/room_a",
+                         Json{{"gf_test:structure/jig/rooms", 3},
+                              {"gf_test:structure/jig/terrain_rooms",
+                               {{"weight", 1}, {"height_adjustment", {{"heightmap", "WORLD_SURFACE_WG"}, {"ground_junction_diff_clamp", 2}}}}}});
+    pools::addDefinition("gf_test:structure/jig/room_b",
+                         Json{{"gf_test:structure/jig/rooms",
+                               {{"weight", 2},
+                                {"randomized_processors",
+                                 Json::array({Json::array({Json{{"data", {{"processor_type", "twilightforest:wood_swizzle"}, {"target_palette", "minecraft:oak"},
+                                                                          {"replacement_palette", "minecraft:birch"}}},
+                                                                {"weight", 1}},
+                                                           Json{{"data", {{"processor_type", "minecraft:nop"}}}, {"weight", 1}}})})}}},
+                              {"gf_test:structure/jig/terrain_rooms", {{"weight", 2}, {"ignore_world_waterlog", true}}}});
+}
+
+/// Uneven ground: stone up to y 60 + (x * 3 + z * 5) % 7.
+void hillyGround(MemoryRegion& mem) {
+    for (int x = -40; x <= 40; x++)
+        for (int z = -40; z <= 40; z++) {
+            int top = 60 + (((x * 3 + z * 5) % 7) + 7) % 7;
+            for (int y = 56; y <= top; y++) (void)mem.setBlock(BlockPos{x, y, z}, blocks::java("minecraft:stone"), 3);
+        }
+}
+
+} // namespace
+
+GF_REGISTER_SELFTEST("structure.template_definitions", [](Context& ctx) {
+    registerTerrainPools();
+    // getRandomTemplate / getShuffledSequence (reservoir sampling) are deterministic per seed
+    JavaRandom a(4242), b(4242);
+    auto       t1 = ext::getRandomTemplate(a, "gf_test:structure/jig/rooms");
+    auto       t2 = ext::getRandomTemplate(b, "gf_test:structure/jig/rooms");
+    ctx.check(t1 && t1 == t2, "getRandomTemplate is deterministic");
+    ctx.check(!ext::getRandomTemplate(a, "gf_test:structure/no_pool"), "an unknown pool has no template");
+    std::string order;
+    JavaRandom  sequenceRandom(1000);
+    for (int i = 0; i < 8; i++) {
+        auto seq = ext::getShuffledSequence(sequenceRandom, "gf_test:structure/jig/rooms");
+        ctx.check(seq.size() == 2, "the sequence lists every template once");
+        order += (seq.empty() ? std::string("?") : seq.front().substr(seq.front().rfind('/') + 1)) + ";";
+    }
+    checkGolden(ctx, "shuffled_sequence", order);
+    ctx.check(ext::getShuffledSequence(a, "gf_test:structure/no_pool").empty(), "an unknown pool has an empty sequence");
+    // the deprecated initializeTemplateFromPool keeps the junction height (the template's DOWN
+    // jigsaw stands on the block above the junction)
+    JavaRandom r(7);
+    auto piece = ext::initializeTemplateFromPool("gf_test:structure/jig/terrain_start", BlockPos{0, 100, 0}, ext::FrontAndTop::UpSouth,
+                                                 "gf_test:structure/jig/terrain_start", r, 0);
+    ctx.require(piece != nullptr, "a template from the pool");
+    ctx.check(piece->bbox.minY == 101, "no generation context: the junction height (" + std::to_string(piece->bbox.minY) + ")");
+    ctx.check(ext::rotate(ext::FrontAndTop::UpSouth, Rotation::Clockwise90) == ext::FrontAndTop::UpWest &&
+                  ext::rotate(ext::FrontAndTop::NorthUp, Rotation::Clockwise180) == ext::FrontAndTop::SouthUp,
+              "Rotation#rotate(FrontAndTop)");
+    // with a generation context: HeightAdjustment#adjustForTerrain
+    MemoryRegion mem;
+    hillyGround(mem);
+    JavaRandom genRandom(7);
+    auto       gen      = ext::contextOf(mem, genRandom, 0);
+    auto       adjusted = ext::initializeTemplateFromPool("gf_test:structure/jig/terrain_start", BlockPos{0, 100, 0}, ext::FrontAndTop::UpSouth,
+                                                         "gf_test:structure/jig/terrain_start", gen, 0, false);
+    ctx.require(adjusted != nullptr, "a template from the pool with a context");
+    // the expected height: WorldUtil.adjustForTerrain over the corners of the template's box (at the
+    // junction height), rank weighted, plus y_offset 1
+    BlockBox const& box = piece->bbox;
+    std::vector<int> h;
+    for (auto [x, z] : {std::pair{box.minX, box.minZ}, std::pair{box.maxX, box.minZ}, std::pair{box.minX, box.maxZ}, std::pair{box.maxX, box.maxZ}})
+        h.push_back(mem.height(worldgen::Heightmap::WorldSurfaceWg, x, z) - 1);
+    std::sort(h.begin(), h.end(), std::greater<int>());
+    int expected = static_cast<int>(std::floor((1.0 * h[0] + 2.0 * h[1] + 3.0 * h[2] + 4.0 * h[3]) / 10.0 + 0.5)) + 1;
+    ctx.check(adjusted->bbox.minY == expected, "height_adjustment moves the template to the terrain (y " + std::to_string(adjusted->bbox.minY) +
+                                                   ", expected " + std::to_string(expected) + ")");
+    // children: room_a (ground_junction_diff_clamp 2, at the parent's jigsaw as the parent
+    // projects onto the terrain) stays within 2 of its junction; room_b (no height_adjustment,
+    // ignore_world_waterlog) keeps it
+    for (int seed = 9; seed < 15; seed++) {
+        JavaRandom plainRandom(seed), childRandom(seed);
+        auto       unadjusted = ext::initializeTemplateFromPool("gf_test:structure/jig/terrain_rooms", BlockPos{0, 100, 0}, ext::FrontAndTop::NorthUp,
+                                                              "gf_test:door", plainRandom, 1);
+        auto       childGen   = ext::contextOf(mem, childRandom, 0);
+        auto       child      = ext::initializeTemplateFromPool("gf_test:structure/jig/terrain_rooms", BlockPos{0, 100, 0}, ext::FrontAndTop::NorthUp,
+                                                               "gf_test:door", childGen, 1, true);
+        ctx.require(unadjusted && child, "a room from the terrain pool");
+        auto saved = child->save();
+        int  y0    = unadjusted->bbox.minY;
+        if (saved.value("Template", std::string{}).ends_with("room_a")) {
+            BlockPos at       = unadjusted->getSourcePosition();
+            int      terrain  = mem.height(worldgen::Heightmap::WorldSurfaceWg, at.x, at.z) - 1;
+            int      expected = std::clamp(terrain, y0 - 2, y0 + 2);
+            ctx.check(child->bbox.minY == expected, "ground_junction_diff_clamp: y " + std::to_string(child->bbox.minY) + ", expected " +
+                                                        std::to_string(expected));
+        } else {
+            ctx.check(child->bbox.minY == y0, "no height_adjustment: the junction height");
+            ctx.check(saved.value("ignore_waterlog", false), "ignore_world_waterlog is saved with the piece");
+            auto back = loadPiece(saved);
+            ctx.check(back && back->save().value("ignore_waterlog", false), "and loads back");
+        }
+    }
+    // the assembly with a context is deterministic and adjusts the start
+    JavaRandom x1(20261102), x2(20261102);
+    auto& seedOverride = bases::detail::jigsawSeedOverride();
+    seedOverride       = 0;
+    auto c1            = ext::contextOf(mem, x1, 0);
+    auto c2            = ext::contextOf(mem, x2, 0);
+    auto p1            = ext::assemble("gf_test:structure/jig/terrain_start", BlockPos{0, 100, 0}, 3, c1);
+    auto p2            = ext::assemble("gf_test:structure/jig/terrain_start", BlockPos{0, 100, 0}, 3, c2);
+    seedOverride.reset();
+    ctx.require(!p1.empty(), "the terrain pool assembles");
+    ctx.check(describe(p1, kOrigin) == describe(p2, kOrigin), "the same seed assembles the same pieces");
+    ctx.check(p1.front()->bbox.minY < 80, "the start sits on the terrain, not at the junction height");
+    checkGolden(ctx, "jigsaw_terrain_layout", describe(p1, kOrigin));
+    // WorldUtil.adjustForTerrain(context, x, z, radius, gridLength) and Mth.lerpDiscrete
+    ctx.check(ext::lerpDiscrete(0.0f, 3, 9) == 3 && ext::lerpDiscrete(1.0f, 3, 9) == 9 && ext::lerpDiscrete(0.5f, 0, 15) == 8, "Mth.lerpDiscrete");
+    checkGolden(ctx, "adjust_for_terrain", std::to_string(ext::adjustForTerrain(gen, 5, 5, 12, 3)));
+});
+
+// ---- spawned mobs scaled by entity_width_max ---------------------------------------------------------------------------
+
+GF_REGISTER_SELFTEST("structure.spawner_scale", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto area = co_await ctx.flatArea(5765, 8, 6);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5765)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto level = ll::service::getLevel();
+    ctx.require(level != nullptr, "level");
+    Vec3 at{static_cast<float>(area.minX) + 4.5f, static_cast<float>(area.minY), static_cast<float>(area.minZ) + 4.5f};
+    // a cow (test worlds may be peaceful): the scale is the same for every mob
+    auto* mob = level->getSpawner().spawnMob(*source, ActorDefinitionIdentifier("minecraft:cow"), nullptr, at, false, false, false);
+    ctx.require(mob != nullptr, "a cow spawns");
+    float before = mob->getAABB().max.x - mob->getAABB().min.x;
+    float scale  = 0.8f / 1.4f;
+    ctx.check(blockentities::applyScale(*mob, scale), "the scale applies");
+    float after = mob->getAABB().max.x - mob->getAABB().min.x;
+    ctx.check(std::abs(after - before * scale) < 0.05f, "the cow's box shrinks to " + std::to_string(after) + " (from " + std::to_string(before) + ")");
+    mob->despawn();
+});
+
+// ---- queued work survives a restart (tools/e2e/server/scenarios/structure.ps1) -----------------------------------------
+
+GF_REGISTER_SELFTEST("structure.pending_read", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // `/twilightforest structure_util pending_probe` queued a job in an unloaded chunk before the
+    // restart; the job (persisted in gf:structure:pending) runs once its chunk is loaded
+    auto probe = game::db::get("gf:structure:probe");
+    if (!probe) {
+        ctx.info("no pending probe (structure_util pending_probe did not run): nothing to check");
+        co_return;
+    }
+    auto nonce = probe->value("nonce", std::string{});
+    auto pos   = probe->value("pos", Json::array());
+    game::db::erase("gf:structure:probe");
+    ctx.require(!nonce.empty() && pos.is_array() && pos.size() == 3, "the probe record is complete");
+    core::GlobalPos at{probe->value("dim", 0), pos[0].get<int>(), pos[1].get<int>(), pos[2].get<int>()};
+    ctx.check(!game::db::get("gf:structure:test_mark"), "the probe job did not run before its chunk was loaded");
+    ctx.check(blockentities::pending() > 0, "the probe job is still queued after the restart");
+    ctx.require(co_await ctx.ensureLoaded(at), "probe chunk loaded");
+    std::string seen;
+    for (int i = 0; i < 40 && seen != nonce; i++) {
+        co_await ctx.ticks(1);
+        if (auto mark = game::db::get("gf:structure:test_mark")) seen = mark->value("nonce", std::string{});
+    }
+    game::db::erase("gf:structure:test_mark");
+    ctx.check(seen == nonce, "the probe job ran once its chunk was loaded (got '" + seen + "')");
+    if (seen == nonce) ctx.info("pending probe verified nonce=" + nonce);
 });
 
 } // namespace gf::structure::selftests

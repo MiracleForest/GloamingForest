@@ -1,16 +1,16 @@
 # Structure kit (F7) on the client: the selftests pass in the local world (integrated server),
-# then a fixture template, a jigsaw assembly and a lich tower wing are placed in front of the
-# player for the one-time screenshot review of the golden hashes (rule R19).
-# Screenshots: out/structure/{hud,template,jigsaw,tower}.png
+# then a fixture template, a jigsaw assembly, an old lich tower (TowerMain and the wings, bridges,
+# roofs and beards it grows) and a small hollow hill are built in the flat world for the one-time
+# screenshot review of the golden hashes (rule R19).
+# Screenshots: out/structure/{hud,template,jigsaw,tower,tower_inside,hill,selftest}.png
 Save-Screenshot 'hud' | Out-Null
 if ($script:Mode -eq 'local') {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $r = Invoke-SelfTest 'structure.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) structure selftest(s) failed" }
-    if ($r.Pass -lt 13) { throw "expected at least 13 structure selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 20) { throw "expected at least 20 structure selftests to pass, got $($r.Pass)" }
 
     # placed at the player's feet on the flat world, then looked at from the south-east
-    $mark = Get-LogMark
     Invoke-Teleport '/tp @s 0 -60 0'
     $mark = Get-LogMark
     Invoke-Chat '/twilightforest structure_util place "gf_test:structure/fixture" 0 0'
@@ -26,6 +26,31 @@ if ($script:Mode -eq 'local') {
     Invoke-Teleport '/tp @s 52 -52 54 140 30'
     Start-Sleep -Seconds 2
     Save-Screenshot 'jigsaw' | Out-Null
+
+    # the old lich tower (the shared Tower* bases): main tower, wings, bridges, roofs, beards
+    Invoke-Teleport '/tp @s 120 -60 -80'
+    Start-Sleep -Seconds 2
+    $mark = Get-LogMark
+    Invoke-Chat '/twilightforest structure_util piece tower'
+    Wait-LogLine 'structure_util piece tower: \d+ pieces' 60 -Since $mark | Out-Null
+    Invoke-Teleport '/tp @s 160 -20 -30 135 15'
+    Start-Sleep -Seconds 4
+    Save-Screenshot 'tower' | Out-Null
+    # inside the main tower: stairs, floors, the decorated rooms
+    Invoke-Chat '/effect @s night_vision 120 1 true'
+    Invoke-Teleport '/tp @s 127 -50 -73 200 20'
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'tower_inside' | Out-Null
+
+    # a small hollow hill dug into a stone dome, looked at from inside (stalactites, spawners, chests)
+    Invoke-Teleport '/tp @s 260 -50 -80'
+    Start-Sleep -Seconds 2
+    $mark = Get-LogMark
+    Invoke-Chat '/twilightforest structure_util piece hill'
+    Wait-LogLine 'structure_util piece hill: \d+ pieces' 60 -Since $mark | Out-Null
+    Invoke-Teleport '/tp @s 260 -52 -66 180 10'
+    Start-Sleep -Seconds 3
+    Save-Screenshot 'hill' | Out-Null
 } else {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
     $r = Invoke-SelfTest 'structure.block_states'
