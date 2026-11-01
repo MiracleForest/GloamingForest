@@ -8,7 +8,7 @@
       },
       "states": {
         "twilightforest:x": [false, true],
-        "twilightforest:y": [false, true],
+        "twilightforest:y": [true, false],
         "twilightforest:z": [false, true]
       }
     },

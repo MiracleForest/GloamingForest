@@ -8,7 +8,7 @@
       },
       "states": {
         "twilightforest:facing": ["north", "south", "west", "east"],
-        "twilightforest:powered": [false, true]
+        "twilightforest:powered": [true, false]
       }
     },
     "components": {

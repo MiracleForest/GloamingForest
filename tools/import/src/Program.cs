@@ -48,6 +48,7 @@ namespace GfImport
             ctx.FlushFragments();
             ctx.ApplyOverrides();
             ctx.CheckEmittedBlocks();     // states and variant rotations of the final BP block files
+            ctx.CheckBehaviour();         // their behaviour values against tools/import/expected-behaviour.json
             ctx.ImportSkeletonIndex();    // the id list the import.* selftests check
             ctx.ImportKnownIndex();       // after every data file is final
             if (unit == null && sel.Contains("blockstates")) ctx.Docs["docs/spec/blockstates.md"] = ctx.BlockstatesDoc();

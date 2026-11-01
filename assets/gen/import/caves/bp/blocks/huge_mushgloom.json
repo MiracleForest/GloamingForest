@@ -7,12 +7,12 @@
         "category": "construction"
       },
       "states": {
-        "twilightforest:down": [false, true],
-        "twilightforest:east": [false, true],
-        "twilightforest:north": [false, true],
-        "twilightforest:south": [false, true],
-        "twilightforest:up": [false, true],
-        "twilightforest:west": [false, true]
+        "twilightforest:down": [true, false],
+        "twilightforest:east": [true, false],
+        "twilightforest:north": [true, false],
+        "twilightforest:south": [true, false],
+        "twilightforest:up": [true, false],
+        "twilightforest:west": [true, false]
       }
     },
     "components": {

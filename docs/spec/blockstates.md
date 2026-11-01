@@ -10,14 +10,17 @@ Mapping rules (see [import.md](import.md)):
   extends) becomes the Bedrock state `twilightforest:p` with the Java property's values (`IntegerProperty` ranges,
   every constant of an `EnumProperty`'s enum). The import checks them against a hand-written golden
   (`tools/import/expected-states.json`) and against the values TF's blockstate file uses.
-- Booleans are `[false, true]`. Integer properties are listed as `[0, 1, ..., max]` (Bedrock reads an integer state by
-  its position, so the list always starts at 0); the Java value equals the Bedrock value, and values below the Java
-  minimum (for example `distance` 0, `candles` 0) are unused.
+- The first listed value of a state is its Bedrock default. Booleans list TF's default first: `[false, true]`, or
+  `[true, false]` where TF's default is `true` (`registerDefaultState`, else Java's `StateDefinition.any()`, which
+  makes an unset boolean `true`: trophies `powered`, `HugeMushroomBlock` faces, rope `y`, ...); the selftest
+  `import.bool_defaults` checks in game that Bedrock 1.26.51 defaults such a state to `true`.
+- Integer properties are listed as `[0, 1, ..., max]` (Bedrock reads an integer state by its position, so the list
+  always starts at 0); the Java value equals the Bedrock value, and values below the Java minimum (for example
+  `distance` 0, `candles` 0) are unused. An integer's Bedrock default is therefore `0`: where TF's default differs,
+  the column *Java default* lists TF's value, and the owner sets it wherever TF uses `defaultBlockState()`
+  (placement, world generation, structures).
 - Enum values keep Java's names. The first value is the default state: TF's default (`registerDefaultState`), else
   the conventional order of the shared vanilla names (`facing` north, `axis` y, ...), else Java's declaration order.
-- The default state of a boolean is `false` and of an integer `0` on Bedrock. Where TF's default differs (Java's
-  `StateDefinition.any()` makes an unset boolean `true`), the column *Java default* lists TF's value: the owner
-  sets it wherever TF uses `defaultBlockState()` (placement, world generation, structures).
 - `waterlogged` is not a block state on Bedrock (water is a separate liquid layer): it is dropped.
 - No placement traits (`minecraft:placement_direction` / `placement_position`) are used: the families kit (F11)
   and the owning units set the states on placement, exactly as TF's `getStateForPlacement`.
@@ -31,8 +34,8 @@ Mapping rules (see [import.md](import.md)):
 | `twilightforest:acacia_banister` | U4 | BanisterBlock < HorizontalDirectionalBlock | `twilightforest:extended`: false, true<br>`twilightforest:facing`: north, south, west, east<br>`twilightforest:shape`: tall, short, connected | - | 24 |
 | `twilightforest:acacia_drying_rack` | U4 | DryingRackBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east | - | 4 |
 | `twilightforest:alpha_yeti_boss_spawner` | U5 | BossSpawnerBlock < BaseEntityBlock | - | - | 1 |
-| `twilightforest:alpha_yeti_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: false, true (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | `powered=true` | 32 |
-| `twilightforest:alpha_yeti_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: false, true (class) | `powered=true` | 8 |
+| `twilightforest:alpha_yeti_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: true, false (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
+| `twilightforest:alpha_yeti_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: true, false (class) | - | 8 |
 | `twilightforest:antibuilder` | U26 | AntibuilderBlock < BaseEntityBlock | - | - | 1 |
 | `twilightforest:antibuilt_block` | U26 | Block | - | - | 1 |
 | `twilightforest:arctic_fur_block` | U5 | ArcticFurBlock < Block | - | - | 1 |
@@ -230,13 +233,13 @@ Mapping rules (see [import.md](import.md)):
 | `twilightforest:hollow_warped_stem_horizontal` | U4 | HorizontalHollowLogBlock < Block | `twilightforest:axis`: x, z<br>`twilightforest:variant`: empty, moss, moss_and_grass, snow, waterlogged | - | 10 |
 | `twilightforest:hollow_warped_stem_vertical` | U4 | VerticalHollowLogBlock < Block | - | - | 1 |
 | `twilightforest:huge_lily_pad` | U6 | HugeLilyPadBlock < WaterlilyBlock | `twilightforest:facing`: north, south, west, east<br>`twilightforest:piece`: nw, ne, se, sw | - | 16 |
-| `twilightforest:huge_mushgloom` | U27 | HugeMushroomBlock | `twilightforest:down`: false, true<br>`twilightforest:east`: false, true<br>`twilightforest:north`: false, true<br>`twilightforest:south`: false, true<br>`twilightforest:up`: false, true<br>`twilightforest:west`: false, true | `down=true`<br>`east=true`<br>`north=true`<br>`south=true`<br>`up=true`<br>`west=true` | 64 |
-| `twilightforest:huge_mushgloom_stem` | U27 | HugeMushroomBlock | `twilightforest:down`: false, true<br>`twilightforest:east`: false, true<br>`twilightforest:north`: false, true<br>`twilightforest:south`: false, true<br>`twilightforest:up`: false, true<br>`twilightforest:west`: false, true | `down=true`<br>`east=true`<br>`north=true`<br>`south=true`<br>`up=true`<br>`west=true` | 64 |
+| `twilightforest:huge_mushgloom` | U27 | HugeMushroomBlock | `twilightforest:down`: true, false<br>`twilightforest:east`: true, false<br>`twilightforest:north`: true, false<br>`twilightforest:south`: true, false<br>`twilightforest:up`: true, false<br>`twilightforest:west`: true, false | - | 64 |
+| `twilightforest:huge_mushgloom_stem` | U27 | HugeMushroomBlock | `twilightforest:down`: true, false<br>`twilightforest:east`: true, false<br>`twilightforest:north`: true, false<br>`twilightforest:south`: true, false<br>`twilightforest:up`: true, false<br>`twilightforest:west`: true, false | - | 64 |
 | `twilightforest:huge_stalk` | U29 | RotatedPillarBlock | `twilightforest:axis`: y, x, z | - | 3 |
 | `twilightforest:huge_water_lily` | U6 | HugeWaterLilyBlock < WaterlilyBlock | - | - | 1 |
 | `twilightforest:hydra_boss_spawner` | U5 | BossSpawnerBlock < BaseEntityBlock | - | - | 1 |
-| `twilightforest:hydra_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: false, true (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | `powered=true` | 32 |
-| `twilightforest:hydra_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: false, true (class) | `powered=true` | 8 |
+| `twilightforest:hydra_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: true, false (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
+| `twilightforest:hydra_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: true, false (class) | - | 8 |
 | `twilightforest:infested_towerwood` | U26 | InfestedTowerwoodBlock < Block | - | - | 1 |
 | `twilightforest:iron_ladder` | U5 | IronLadderBlock < LadderBlock | `twilightforest:facing`: north, south, west, east<br>`twilightforest:left`: false, true<br>`twilightforest:right`: false, true | - | 16 |
 | `twilightforest:iron_oreberry` | U6 | OreBerryBlock < Block | `twilightforest:age`: 0, 1, 2, 3<br>`twilightforest:layers`: 0, 1, 2, 3, 4, 5, 6, 7, 8 | - | 36 |
@@ -245,15 +248,15 @@ Mapping rules (see [import.md](import.md)):
 | `twilightforest:jungle_drying_rack` | U4 | DryingRackBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east | - | 4 |
 | `twilightforest:keepsake_casket` | U9 | KeepsakeCasketBlock < BaseEntityBlock | `twilightforest:damage`: 0, 1, 2 (class)<br>`twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:multilogged`: air, water, lava, obsidian, stone, basalt | - | 72 |
 | `twilightforest:knight_phantom_boss_spawner` | U5 | BossSpawnerBlock < BaseEntityBlock | - | - | 1 |
-| `twilightforest:knight_phantom_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: false, true (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | `powered=true` | 32 |
-| `twilightforest:knight_phantom_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: false, true (class) | `powered=true` | 8 |
+| `twilightforest:knight_phantom_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: true, false (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
+| `twilightforest:knight_phantom_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: true, false (class) | - | 8 |
 | `twilightforest:knightmetal_block` | U5 | KnightmetalBlock < Block | - | - | 1 |
 | `twilightforest:lich_boss_spawner` | U5 | BossSpawnerBlock < BaseEntityBlock | - | - | 1 |
 | `twilightforest:lich_tower_miniature_structure` | U5 | MiniatureStructureBlock < HorizontalDirectionalBlock | `twilightforest:facing`: north, south, west, east | - | 4 |
-| `twilightforest:lich_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: false, true (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | `powered=true` | 32 |
-| `twilightforest:lich_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: false, true (class) | `powered=true` | 8 |
+| `twilightforest:lich_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: true, false (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
+| `twilightforest:lich_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: true, false (class) | - | 8 |
 | `twilightforest:liveroot_block` | U6 | LiverootBlock < Block | - | - | 1 |
-| `twilightforest:locked_vanishing_block` | U26 | LockedVanishingBlock < Block | `twilightforest:active`: false, true (class)<br>`twilightforest:locked`: false, true | `locked=true` | 4 |
+| `twilightforest:locked_vanishing_block` | U26 | LockedVanishingBlock < Block | `twilightforest:active`: false, true (class)<br>`twilightforest:locked`: true, false | - | 4 |
 | `twilightforest:maloberry_bush` | U6 | BerryBushBlock < Block | `twilightforest:age`: 0, 1, 2, 3<br>`twilightforest:layers`: 0, 1, 2, 3, 4, 5, 6, 7, 8 | - | 36 |
 | `twilightforest:mangrove_banister` | U4 | BanisterBlock < HorizontalDirectionalBlock | `twilightforest:extended`: false, true<br>`twilightforest:facing`: north, south, west, east<br>`twilightforest:shape`: tall, short, connected | - | 24 |
 | `twilightforest:mangrove_button` | U4 | ButtonBlock | `twilightforest:face`: wall, floor, ceiling<br>`twilightforest:facing`: north, south, west, east<br>`twilightforest:powered`: false, true | - | 24 |
@@ -307,8 +310,8 @@ Mapping rules (see [import.md](import.md)):
 | `twilightforest:mining_wall_sign` | U4 | WallSignBlock | `twilightforest:facing`: north, south, west, east (class) | - | 4 |
 | `twilightforest:mining_wood` | U4 | RotatedPillarBlock | `twilightforest:axis`: y, x, z | - | 3 |
 | `twilightforest:minoshroom_boss_spawner` | U5 | BossSpawnerBlock < BaseEntityBlock | - | - | 1 |
-| `twilightforest:minoshroom_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: false, true (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | `powered=true` | 32 |
-| `twilightforest:minoshroom_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: false, true (class) | `powered=true` | 8 |
+| `twilightforest:minoshroom_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: true, false (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
+| `twilightforest:minoshroom_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: true, false (class) | - | 8 |
 | `twilightforest:minotaur_labyrinth_miniature_structure` | U5 | MiniatureStructureBlock < HorizontalDirectionalBlock | `twilightforest:facing`: north, south, west, east | - | 4 |
 | `twilightforest:moonworm` | U6 | MoonwormBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east, up, down (class) | - | 6 |
 | `twilightforest:moss_patch` | U6 | MossPatchBlock < BushBlock | `twilightforest:east`: false, true (class)<br>`twilightforest:north`: false, true (class)<br>`twilightforest:south`: false, true (class)<br>`twilightforest:west`: false, true (class) | - | 16 |
@@ -324,8 +327,8 @@ Mapping rules (see [import.md](import.md)):
 | `twilightforest:mushgloom` | U6 | MushgloomBlock < MushroomBlock | - | - | 1 |
 | `twilightforest:naga_boss_spawner` | U5 | BossSpawnerBlock < BaseEntityBlock | - | - | 1 |
 | `twilightforest:naga_courtyard_miniature_structure` | U5 | MiniatureStructureBlock < HorizontalDirectionalBlock | `twilightforest:facing`: north, south, west, east | - | 4 |
-| `twilightforest:naga_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: false, true (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | `powered=true` | 32 |
-| `twilightforest:naga_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: false, true (class) | `powered=true` | 8 |
+| `twilightforest:naga_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: true, false (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
+| `twilightforest:naga_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: true, false (class) | - | 8 |
 | `twilightforest:nagastone` | U5 | NagastoneBlock < Block | `twilightforest:variant`: solid, north_down, south_down, west_down, east_down, north_up, south_up, east_up, west_up, axis_x, axis_y, axis_z | - | 12 |
 | `twilightforest:nagastone_head` | U5 | TFHorizontalBlock < HorizontalDirectionalBlock | `twilightforest:facing`: north, south, west, east | - | 4 |
 | `twilightforest:nagastone_pillar` | U5 | DirectionalRotatedPillarBlock < RotatedPillarBlock | `twilightforest:axis`: y, x, z<br>`twilightforest:reversed`: false, true | - | 6 |
@@ -375,8 +378,8 @@ Mapping rules (see [import.md](import.md)):
 | `twilightforest:potted_time_sapling` | U3 | FlowerPotBlock | - | - | 1 |
 | `twilightforest:potted_transformation_sapling` | U3 | FlowerPotBlock | - | - | 1 |
 | `twilightforest:potted_twilight_oak_sapling` | U3 | FlowerPotBlock | - | - | 1 |
-| `twilightforest:quest_ram_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: false, true (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | `powered=true` | 32 |
-| `twilightforest:quest_ram_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: false, true (class) | `powered=true` | 8 |
+| `twilightforest:quest_ram_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: true, false (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
+| `twilightforest:quest_ram_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: true, false (class) | - | 8 |
 | `twilightforest:rainbow_oak_leaves` | U3 | LeavesBlock | `twilightforest:distance`: 0, 1, 2, 3, 4, 5, 6, 7 (class)<br>`twilightforest:persistent`: false, true (class) | `distance=7` | 16 |
 | `twilightforest:rainbow_oak_sapling` | U3 | SaplingBlock | `twilightforest:stage`: 0, 1 (class) | - | 2 |
 | `twilightforest:rainy_cloud` | U29 | CloudBlock < Block | - | - | 1 |
@@ -386,7 +389,7 @@ Mapping rules (see [import.md](import.md)):
 | `twilightforest:red_thread` | U11 | RedThreadBlock < MultifaceBlock | `twilightforest:down`: false, true (class)<br>`twilightforest:east`: false, true (class)<br>`twilightforest:north`: false, true (class)<br>`twilightforest:south`: false, true (class)<br>`twilightforest:up`: false, true (class)<br>`twilightforest:west`: false, true (class) | - | 64 |
 | `twilightforest:root` | U6 | Block | - | - | 1 |
 | `twilightforest:root_strand` | U6 | RootStrandBlock < BushBlock | - | - | 1 |
-| `twilightforest:rope` | U5 | RopeBlock < Block | `twilightforest:x`: false, true<br>`twilightforest:y`: false, true<br>`twilightforest:z`: false, true | `y=true` | 8 |
+| `twilightforest:rope` | U5 | RopeBlock < Block | `twilightforest:x`: false, true<br>`twilightforest:y`: true, false<br>`twilightforest:z`: false, true | - | 8 |
 | `twilightforest:sinister_spawner` | U22 | SinisterSpawnerBlock < BaseEntityBlock | - | - | 1 |
 | `twilightforest:skeleton_skull_candle` | U22 | SkullCandleBlock < BaseEntityBlock | `twilightforest:candles`: 0, 1, 2, 3, 4 (class)<br>`twilightforest:lighting`: none, normal, dim, ominous (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | `candles=1` | 320 |
 | `twilightforest:skeleton_wall_skull_candle` | U22 | WallSkullCandleBlock < BaseEntityBlock | `twilightforest:candles`: 0, 1, 2, 3, 4 (class)<br>`twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:lighting`: none, normal, dim, ominous (class) | `candles=1` | 80 |
@@ -395,8 +398,8 @@ Mapping rules (see [import.md](import.md)):
 | `twilightforest:slider` | U26 | SliderBlock < RotatedPillarBlock | `twilightforest:axis`: y, x, z<br>`twilightforest:delay`: 0, 1, 2, 3 | - | 12 |
 | `twilightforest:smoker` | U24 | TFSmokerBlock < BaseEntityBlock | - | - | 1 |
 | `twilightforest:snow_queen_boss_spawner` | U5 | BossSpawnerBlock < BaseEntityBlock | - | - | 1 |
-| `twilightforest:snow_queen_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: false, true (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | `powered=true` | 32 |
-| `twilightforest:snow_queen_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: false, true (class) | `powered=true` | 8 |
+| `twilightforest:snow_queen_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: true, false (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
+| `twilightforest:snow_queen_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: true, false (class) | - | 8 |
 | `twilightforest:snowy_cloud` | U29 | CloudBlock < Block | - | - | 1 |
 | `twilightforest:sorting_banister` | U4 | BanisterBlock < HorizontalDirectionalBlock | `twilightforest:extended`: false, true<br>`twilightforest:facing`: north, south, west, east<br>`twilightforest:shape`: tall, short, connected | - | 24 |
 | `twilightforest:sorting_button` | U4 | ButtonBlock | `twilightforest:face`: wall, floor, ceiling<br>`twilightforest:facing`: north, south, west, east<br>`twilightforest:powered`: false, true | - | 24 |
@@ -444,7 +447,7 @@ Mapping rules (see [import.md](import.md)):
 | `twilightforest:stronghold_shield` | U25 | StrongholdShieldBlock < DirectionalBlock | `twilightforest:facing`: down, north, south, west, east, up | - | 6 |
 | `twilightforest:terrorcotta_arcs` | U22 | RotatedPillarBlock | `twilightforest:axis`: y, x, z | - | 3 |
 | `twilightforest:terrorcotta_curves` | U22 | GlazedTerracottaBlock | `twilightforest:facing`: north, south, west, east | - | 4 |
-| `twilightforest:terrorcotta_lines` | U22 | BinaryRotatedBlock < Block | `twilightforest:rotated`: false, true | `rotated=true` | 2 |
+| `twilightforest:terrorcotta_lines` | U22 | BinaryRotatedBlock < Block | `twilightforest:rotated`: true, false | - | 2 |
 | `twilightforest:thick_castle_brick` | U5 | Block | - | - | 1 |
 | `twilightforest:thorn_leaves` | U30 | SpecialStemLeavesBlock < LeavesBlock | `twilightforest:distance`: 0, 1, 2, 3, 4, 5, 6, 7 (class)<br>`twilightforest:persistent`: false, true (class) | `distance=7` | 16 |
 | `twilightforest:thorn_rose` | U30 | ThornRoseBlock < BushBlock | `twilightforest:facing`: up, north, south, west, east, down | - | 6 |
@@ -530,8 +533,8 @@ Mapping rules (see [import.md](import.md)):
 | `twilightforest:underbrick_floor` | U5 | Block | - | - | 1 |
 | `twilightforest:unripe_trollber` | U27 | UnripeTorchClusterBlock < Block | - | - | 1 |
 | `twilightforest:ur_ghast_boss_spawner` | U5 | BossSpawnerBlock < BaseEntityBlock | - | - | 1 |
-| `twilightforest:ur_ghast_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: false, true (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | `powered=true` | 32 |
-| `twilightforest:ur_ghast_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: false, true (class) | `powered=true` | 8 |
+| `twilightforest:ur_ghast_trophy` | U5 | TrophyBlock < BaseEntityBlock | `twilightforest:powered`: true, false (class)<br>`twilightforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
+| `twilightforest:ur_ghast_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east (class)<br>`twilightforest:powered`: true, false (class) | - | 8 |
 | `twilightforest:vangrove_banister` | U4 | BanisterBlock < HorizontalDirectionalBlock | `twilightforest:extended`: false, true<br>`twilightforest:facing`: north, south, west, east<br>`twilightforest:shape`: tall, short, connected | - | 24 |
 | `twilightforest:vangrove_drying_rack` | U4 | DryingRackBlock < BaseEntityBlock | `twilightforest:facing`: north, south, west, east | - | 4 |
 | `twilightforest:vanishing_block` | U26 | VanishingBlock < Block | `twilightforest:active`: false, true | - | 2 |

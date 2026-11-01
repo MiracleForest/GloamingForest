@@ -8,9 +8,10 @@
 // Bridge for assemble (F0, tools/xmake/assemble.lua): its dangling-reference check knows only data files,
 // BP definitions and owners.tsv rows, checks the values of "tag" / "tags" keys as plain ids, and reads
 // data/<ns>/tags/twilight/<registry>/ as the registry "tags/twilight". Until it reads the allowlist itself
-// (requested from F0 / A8, docs/spec/import.md), the import writes one index file per reference this check
+// (requested from F0 / A8: issue #21, docs/spec/import.md), the import writes one index file per reference this check
 // resolved but assemble cannot (data/twilightforest/gf_known/**, data/twilightforest/tags/gf_known/**, each
-// naming its kind and reason). Nothing reads them at run time.
+// naming its kind and reason). Nothing reads them at run time. The tfDangling reference is bridged too: assemble's check
+// has no warning level, so leaving it out would fail every build (issue #21, change 4).
 using System;
 using System.Collections.Generic;
 using System.IO;

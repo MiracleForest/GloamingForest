@@ -136,7 +136,9 @@ namespace GfImport
             {
                 if (DroppedStates.Contains(jp.Name)) continue;
                 var st = new BState { Java = jp.Name, Bedrock = "twilightforest:" + jp.Name, Type = jp.Type, Source = used.ContainsKey(jp.Name) ? "blockstate" : "class" };
-                if (jp.Type == "bool") st.Values = new List<string> { "false", "true" };
+                // a boolean lists TF's default first: Bedrock's default is the first listed value (checked in game by
+                // import.bool_defaults)
+                if (jp.Type == "bool") st.Values = jp.Default == "true" ? new List<string> { "true", "false" } : new List<string> { "false", "true" };
                 else if (jp.Type == "int")
                 {
                     // Bedrock reads an integer state by position: 0..max (values below the Java minimum are unused)
@@ -343,7 +345,7 @@ namespace GfImport
                     var states = J.Obj();
                     foreach (var st in bi.States)
                     {
-                        if (st.Type == "bool") states.Set(st.Bedrock, J.Arr(new[] { J.Bool(false), J.Bool(true) }));
+                        if (st.Type == "bool") states.Set(st.Bedrock, J.Arr(st.Values.Select(v => J.Bool(v == "true"))));
                         else if (st.Type == "int") states.Set(st.Bedrock, J.Arr(st.Values.Select(x => J.Num(long.Parse(x, CultureInfo.InvariantCulture)))));
                         else states.Set(st.Bedrock, J.Strs(st.Values));
                     }
@@ -354,8 +356,7 @@ namespace GfImport
                 var jb = bi.J;
                 if (jb.Unbreakable) comps.Set("minecraft:destructible_by_mining", false);
                 else comps.Set("minecraft:destructible_by_mining", J.Obj().Set("seconds_to_destroy", Math.Round(jb.Hardness, 4)));
-                double res = jb.Resistance < 0 ? jb.Hardness : jb.Resistance;
-                comps.Set("minecraft:destructible_by_explosion", jb.Unbreakable || res >= 3600000 ? (J)J.Bool(false) : J.Obj().Set("explosion_resistance", Math.Round(Math.Max(0, res), 4)));
+                comps.Set("minecraft:destructible_by_explosion", ExplosionComponent(jb.Resistance));
                 // light: a constant, or a function of the block's states (one permutation per other light level)
                 var lightPerms = new List<J>();
                 var lf = Light.Of(this, bi, Warn);
@@ -386,8 +387,9 @@ namespace GfImport
                 }
                 else if (jb.Light > 0) comps.Set("minecraft:light_emission", Math.Min(15, jb.Light));
                 else if (jb.DynamicLight) Warn("block " + bi.Id + ": state-dependent light not translated (" + (jb.LightExpr ?? "?") + ")");
-                string hex;
-                if (jb.MapColor != null && MapColors.TryGetValue(jb.MapColor, out hex)) comps.Set("minecraft:map_color", hex);
+                // map colour: a constant, or by state (permutations below)
+                var mapColor = MapColorOf(bi);
+                if (mapColor == null && jb.MapColor != null) comps.Set("minecraft:map_color", MapColorHex(bi, jb.MapColor));
                 // flammability: only the blocks TF registers with FireBlock.setFlammable (encouragement = Bedrock's
                 // catch chance, flammability = its destroy chance)
                 if (jb.FireEncouragement >= 0)
@@ -497,6 +499,16 @@ namespace GfImport
 
                 // light permutations come last: they only add minecraft:light_emission to the matching visual one
                 foreach (var lp in lightPerms) perms.Add(lp);
+                // state-dependent destructibility (getExplosionResistance / getDestroyProgress overrides), after the light
+                var mining = Behaviour.Mining(this, bi, Warn, RuntimeBehaviour);
+                if (mining != null)
+                    foreach (var p in StatePerms(bi, mining, comps, "minecraft:destructible_by_mining",
+                        v => v < 0 ? (J)J.Bool(false) : J.Obj().Set("seconds_to_destroy", Math.Round(v, 4)))) perms.Add(p);
+                var explosion = Behaviour.Explosion(this, bi, Warn, RuntimeBehaviour);
+                if (explosion != null)
+                    foreach (var p in StatePerms(bi, explosion, comps, "minecraft:destructible_by_explosion", ExplosionComponent)) perms.Add(p);
+                if (mapColor != null)
+                    foreach (var p in StatePerms(bi, mapColor.Item1, mapColor.Item2, comps, "minecraft:map_color")) perms.Add(p);
                 var block = J.Obj().Set("description", desc).Set("components", comps);
                 if (perms.Count > 0) block.Set("permutations", perms);
                 var doc = J.Obj().Set("format_version", BlockFormat).Set("minecraft:block", block);
@@ -509,9 +521,93 @@ namespace GfImport
                 string file = kv.Key.Substring("geometry.tf.".Length);
                 EmitJson("models", owner, "rp/models/blocks/twilightforest/" + file + ".geo.json", kv.Value);
             }
+            if (RuntimeBehaviour.Count > 0)
+                Log.Add(RuntimeBehaviour.Count + " destructibility override(s) depend on the player or the held item (left to the block owners): " + string.Join(", ", RuntimeBehaviour));
         }
 
         public const string BlockFormat = "1.21.80";
+
+        string MapColorHex(BlockInfo bi, string name)
+        {
+            string hex;
+            if (name != null && MapColors.TryGetValue(name, out hex)) return hex;
+            Warn("block " + bi.Id + ": MapColor." + name + " has no RGB value (Blocks.MapColors)");
+            return null;
+        }
+
+        /// <summary>A state-dependent map colour: logProperties(top, side) (the side colour on a lying log, axis x / z)
+        /// or a lambda of one boolean state (castle doors: VANISHED ? NONE : colour; NONE, which lets Java's map look
+        /// through the block, has no Bedrock equivalent and keeps the other colour). Null: a constant colour.</summary>
+        Tuple<List<JProp>, Func<Dictionary<string, string>, J>> MapColorOf(BlockInfo bi)
+        {
+            var jb = bi.J;
+            if (jb.MapColorSide != null && jb.MapColorSide != jb.MapColor)
+            {
+                var axis = bi.JavaProps.FirstOrDefault(p => p.Name == "axis");
+                if (axis == null || !bi.States.Any(s => s.Java == "axis")) { Warn("block " + bi.Id + ": logProperties(top, side) without an axis state"); return null; }
+                string top = MapColorHex(bi, jb.MapColor), side = MapColorHex(bi, jb.MapColorSide);
+                return Tuple.Create(new List<JProp> { axis }, (Func<Dictionary<string, string>, J>)(st => J.Str(st["axis"] == "y" ? top : side)));
+            }
+            if (jb.MapColorProp != null)
+            {
+                var r = JavaStates.Resolve(this, bi.Chain[0], jb.MapColorProp, m => Warn("block " + bi.Id + ": " + m));
+                var prop = r.Count == 1 ? bi.JavaProps.FirstOrDefault(p => p.Name == r[0].Name) : null;
+                if (prop == null || prop.Type != "bool" || !bi.States.Any(s => s.Java == prop.Name)) { Warn("block " + bi.Id + ": map colour reads " + jb.MapColorProp + ", not a boolean state"); return null; }
+                string yes = jb.MapColorIf != null ? MapColorHex(bi, jb.MapColorIf) : null, no = jb.MapColor != null ? MapColorHex(bi, jb.MapColor) : null;
+                string name = prop.Name;
+                return Tuple.Create(new List<JProp> { prop }, (Func<Dictionary<string, string>, J>)(st => { string h = st[name] == "true" ? yes : no; return h != null ? J.Str(h) : null; }));
+            }
+            return null;
+        }
+
+        /// <summary>The getExplosionResistance / getDestroyProgress overrides that depend on more than the block state
+        /// (player, held item, advancements): runtime behaviour of the owners, listed in the import log.</summary>
+        public readonly SortedSet<string> RuntimeBehaviour = new SortedSet<string>(StringComparer.Ordinal);
+
+        /// <summary>Java's explosion resistance as minecraft:destructible_by_explosion: false from 3600000 (Java's
+        /// "indestructible" value, Float.MAX_VALUE included), else the resistance (0 explodes at once). Java's explosions
+        /// do not look at the hardness, so an unbreakable block with a low resistance (twilight_portal) still explodes.</summary>
+        static J ExplosionComponent(double resistance)
+        {
+            if (resistance >= 3600000) return J.Bool(false);
+            return J.Obj().Set("explosion_resistance", Math.Round(Math.Max(0, resistance), 4));
+        }
+
+        /// <summary>A state-dependent component: the default state's value on the root components, one permutation per
+        /// other value (conditions over the states the function reads, in the order the combinations are met).</summary>
+        List<J> StatePerms(BlockInfo bi, StateValue fn, J comps, string component, Func<double, J> valueOf)
+        {
+            return StatePerms(bi, fn.Reads, st => valueOf(fn.Eval(st)), comps, component);
+        }
+
+        /// <summary>StatePerms over a J-valued function; a null value (not expressible on Bedrock) keeps the root's.</summary>
+        List<J> StatePerms(BlockInfo bi, List<JProp> reads, Func<Dictionary<string, string>, J> valueOf, J comps, string component)
+        {
+            var res = new List<J>();
+            var defaults = bi.States.ToDictionary(s => s.Java, s => s.Values[0], StringComparer.Ordinal);
+            var root = valueOf(defaults);
+            if (root != null) comps.Set(component, root);
+            IEnumerable<Dictionary<string, string>> combos = new[] { new Dictionary<string, string>(defaults, StringComparer.Ordinal) };
+            foreach (var p in reads)
+            {
+                var st = bi.States.First(s => s.Java == p.Name);
+                combos = combos.SelectMany(c => st.Values.Select(v => { var n = new Dictionary<string, string>(c, StringComparer.Ordinal); n[p.Name] = v; return n; })).ToList();
+            }
+            var byValue = new List<KeyValuePair<J, List<string>>>();
+            foreach (var c in combos)
+            {
+                var v = valueOf(c);
+                if (v == null || (root != null && v.ToCompact() == root.ToCompact())) continue;
+                string cond = string.Join(" && ", reads.Select(p => StateExpr(bi, p.Name, c[p.Name])));
+                int at = byValue.FindIndex(kv => kv.Key.ToCompact() == v.ToCompact());
+                if (at < 0) byValue.Add(new KeyValuePair<J, List<string>>(v, new List<string> { cond }));
+                else byValue[at].Value.Add(cond);
+            }
+            foreach (var kv in byValue)
+                res.Add(J.Obj().Set("condition", kv.Value.Count == 1 ? kv.Value[0] : string.Join(" || ", kv.Value.Select(x => "(" + x + ")")))
+                    .Set("components", J.Obj().Set(component, kv.Key)));
+            return res;
+        }
 
         // multipart parts carry block-specific textures: name instances after the resolved texture
         static Element RetargetForPart(Element e, Model m)
@@ -536,14 +632,17 @@ namespace GfImport
             sb.Append("  extends) becomes the Bedrock state `twilightforest:p` with the Java property's values (`IntegerProperty` ranges,\n");
             sb.Append("  every constant of an `EnumProperty`'s enum). The import checks them against a hand-written golden\n");
             sb.Append("  (`tools/import/expected-states.json`) and against the values TF's blockstate file uses.\n");
-            sb.Append("- Booleans are `[false, true]`. Integer properties are listed as `[0, 1, ..., max]` (Bedrock reads an integer state by\n");
-            sb.Append("  its position, so the list always starts at 0); the Java value equals the Bedrock value, and values below the Java\n");
-            sb.Append("  minimum (for example `distance` 0, `candles` 0) are unused.\n");
+            sb.Append("- The first listed value of a state is its Bedrock default. Booleans list TF's default first: `[false, true]`, or\n");
+            sb.Append("  `[true, false]` where TF's default is `true` (`registerDefaultState`, else Java's `StateDefinition.any()`, which\n");
+            sb.Append("  makes an unset boolean `true`: trophies `powered`, `HugeMushroomBlock` faces, rope `y`, ...); the selftest\n");
+            sb.Append("  `import.bool_defaults` checks in game that Bedrock 1.26.51 defaults such a state to `true`.\n");
+            sb.Append("- Integer properties are listed as `[0, 1, ..., max]` (Bedrock reads an integer state by its position, so the list\n");
+            sb.Append("  always starts at 0); the Java value equals the Bedrock value, and values below the Java minimum (for example\n");
+            sb.Append("  `distance` 0, `candles` 0) are unused. An integer's Bedrock default is therefore `0`: where TF's default differs,\n");
+            sb.Append("  the column *Java default* lists TF's value, and the owner sets it wherever TF uses `defaultBlockState()`\n");
+            sb.Append("  (placement, world generation, structures).\n");
             sb.Append("- Enum values keep Java's names. The first value is the default state: TF's default (`registerDefaultState`), else\n");
             sb.Append("  the conventional order of the shared vanilla names (`facing` north, `axis` y, ...), else Java's declaration order.\n");
-            sb.Append("- The default state of a boolean is `false` and of an integer `0` on Bedrock. Where TF's default differs (Java's\n");
-            sb.Append("  `StateDefinition.any()` makes an unset boolean `true`), the column *Java default* lists TF's value: the owner\n");
-            sb.Append("  sets it wherever TF uses `defaultBlockState()` (placement, world generation, structures).\n");
             sb.Append("- `waterlogged` is not a block state on Bedrock (water is a separate liquid layer): it is dropped.\n");
             sb.Append("- No placement traits (`minecraft:placement_direction` / `placement_position`) are used: the families kit (F11)\n");
             sb.Append("  and the owning units set the states on placement, exactly as TF's `getStateForPlacement`.\n");

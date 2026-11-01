@@ -3,19 +3,19 @@
     "sound": "wood"
   },
   "twilightforest:acacia_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:bamboo_banister": {
     "sound": "bamboo_wood"
   },
   "twilightforest:bamboo_drying_rack": {
-    "sound": "stone"
+    "sound": "bamboo_wood"
   },
   "twilightforest:birch_banister": {
     "sound": "wood"
   },
   "twilightforest:birch_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:canopy_banister": {
     "sound": "wood"
@@ -33,7 +33,7 @@
     "sound": "wood"
   },
   "twilightforest:canopy_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:canopy_fence": {
     "sound": "wood"
@@ -81,13 +81,13 @@
     "sound": "cherry_wood"
   },
   "twilightforest:cherry_drying_rack": {
-    "sound": "stone"
+    "sound": "cherry_wood"
   },
   "twilightforest:crimson_banister": {
     "sound": "nether_wood"
   },
   "twilightforest:crimson_drying_rack": {
-    "sound": "stone"
+    "sound": "nether_wood"
   },
   "twilightforest:dark_banister": {
     "sound": "wood"
@@ -102,7 +102,7 @@
     "sound": "wood"
   },
   "twilightforest:dark_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:dark_fence": {
     "sound": "wood"
@@ -120,7 +120,7 @@
     "sound": "wood"
   },
   "twilightforest:dark_oak_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:dark_planks": {
     "sound": "wood"
@@ -318,7 +318,7 @@
     "sound": "wood"
   },
   "twilightforest:jungle_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:mangrove_banister": {
     "sound": "wood"
@@ -333,7 +333,7 @@
     "sound": "wood"
   },
   "twilightforest:mangrove_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:mangrove_fence": {
     "sound": "wood"
@@ -390,7 +390,7 @@
     "sound": "wood"
   },
   "twilightforest:mining_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:mining_fence": {
     "sound": "wood"
@@ -438,7 +438,7 @@
     "sound": "wood"
   },
   "twilightforest:oak_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:sorting_banister": {
     "sound": "wood"
@@ -453,7 +453,7 @@
     "sound": "wood"
   },
   "twilightforest:sorting_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:sorting_fence": {
     "sound": "wood"
@@ -501,7 +501,7 @@
     "sound": "wood"
   },
   "twilightforest:spruce_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:stripped_canopy_log": {
     "sound": "wood"
@@ -564,7 +564,7 @@
     "sound": "wood"
   },
   "twilightforest:time_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:time_fence": {
     "sound": "wood"
@@ -621,7 +621,7 @@
     "sound": "wood"
   },
   "twilightforest:transformation_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:transformation_fence": {
     "sound": "wood"
@@ -678,7 +678,7 @@
     "sound": "wood"
   },
   "twilightforest:twilight_oak_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:twilight_oak_fence": {
     "sound": "wood"
@@ -726,12 +726,12 @@
     "sound": "wood"
   },
   "twilightforest:vangrove_drying_rack": {
-    "sound": "stone"
+    "sound": "wood"
   },
   "twilightforest:warped_banister": {
     "sound": "nether_wood"
   },
   "twilightforest:warped_drying_rack": {
-    "sound": "stone"
+    "sound": "nether_wood"
   }
 }

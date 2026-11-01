@@ -11,9 +11,7 @@
       }
     },
     "components": {
-      "minecraft:destructible_by_mining": {
-        "seconds_to_destroy": 2
-      },
+      "minecraft:destructible_by_mining": false,
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 2000
       },
@@ -169,6 +167,14 @@
           "minecraft:selection_box": {
             "origin": [-7, 0, -7],
             "size": [14, 16, 14]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:destructible_by_mining": {
+            "seconds_to_destroy": 2
           }
         }
       }

@@ -16,7 +16,7 @@
         "seconds_to_destroy": 0.4
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 0.4
+        "explosion_resistance": 0
       },
       "minecraft:flammable": {
         "catch_chance_modifier": 4,

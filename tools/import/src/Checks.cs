@@ -84,17 +84,30 @@ namespace GfImport
                     var vj = bs["variants"][key];
                     if (vj.IsArr) vj = vj.A[0];
                     int x = vj["x"] != null ? (int)vj["x"].AsDouble() : 0, y = vj["y"] != null ? (int)vj["y"].AsDouble() : 0;
-                    // a full state: the variant's values, the default for the others
-                    var state = bi.States.ToDictionary(s => s.Java, s => s.Values[0], StringComparer.Ordinal);
+                    // a full state over the states the file declares (after the overrides): the variant's values, the
+                    // declared default (the first listed value) for the others
+                    var state = new Dictionary<string, string>(StringComparer.Ordinal);
+                    if (states != null)
+                        foreach (var sk in states.Keys)
+                            if (sk.StartsWith("twilightforest:", StringComparison.Ordinal) && states[sk].IsArr && states[sk].A.Count > 0)
+                                state[sk.Substring("twilightforest:".Length)] = StateText(states[sk].A[0]);
                     foreach (var kv in kvs) state[kv.Key] = kv.Value;
                     var rot = Rotation(doc["components"]);
-                    if (doc["permutations"] != null)
-                        foreach (var p in doc["permutations"].A)
-                            if (Holds(p["condition"].AsString(), bi, state))
-                            {
-                                var r = Rotation(p["components"]);
-                                if (r != null || p["components"]["minecraft:transformation"] != null) rot = r;
-                            }
+                    try
+                    {
+                        if (doc["permutations"] != null)
+                            foreach (var p in doc["permutations"].A)
+                                if (Holds(p["condition"].AsString(), bi, state))
+                                {
+                                    var r = Rotation(p["components"]);
+                                    if (r != null || p["components"]["minecraft:transformation"] != null) rot = r;
+                                }
+                    }
+                    catch (Exception ex)
+                    {
+                        Errors.Add("bp/blocks/" + bi.Id + ".json: " + ex.Message);
+                        break;
+                    }
                     string want = ((360 - x) % 360) + "," + ((360 - y) % 360) + ",0";
                     string have = rot ?? "0,0,0";
                     if (have != want) Errors.Add("bp/blocks/" + bi.Id + ".json: variant '" + key + "' has rotation [" + have + "], TF's blockstate gives [" + want + "]");
@@ -102,6 +115,114 @@ namespace GfImport
                 }
             }
             Log.Add(checkedRotations + " variant rotations checked against TF's blockstates; block states checked against tools/import/expected-states.json");
+        }
+
+        /// <summary>The behaviour values of the generated BP block files (after the overrides) and their RP sounds against
+        /// the hand-written golden tools/import/expected-behaviour.json: hardness, explosion resistance and map colour (per
+        /// state where TF makes them state-dependent) and sound.</summary>
+        public void CheckBehaviour()
+        {
+            string gf = Path.Combine(Root, "tools", "import", "expected-behaviour.json");
+            if (!File.Exists(gf)) { Errors.Add("tools/import/expected-behaviour.json is missing"); return; }
+            var golden = ReadJson(gf)["blocks"];
+            int checkedValues = 0;
+            foreach (var id in golden.Keys)
+            {
+                var e = golden[id];
+                BlockInfo bi;
+                SortedDictionary<string, GenFile> files;
+                GenFile f;
+                if (!BlockInfos.TryGetValue(id, out bi) || !Out.TryGetValue(NameOf(bi.Owner), out files) || !files.TryGetValue("bp/blocks/" + id + ".json", out f))
+                {
+                    Errors.Add("tools/import/expected-behaviour.json: " + id + " has no generated bp/blocks file");
+                    continue;
+                }
+                var doc = J.Parse(Encoding.UTF8.GetString(f.Bytes))["minecraft:block"];
+                var declared = doc["description"]["states"];
+                var defaults = new Dictionary<string, string>(StringComparer.Ordinal);
+                if (declared != null)
+                    foreach (var sk in declared.Keys)
+                        if (sk.StartsWith("twilightforest:", StringComparison.Ordinal) && declared[sk].IsArr && declared[sk].A.Count > 0)
+                            defaults[sk.Substring("twilightforest:".Length)] = StateText(declared[sk].A[0]);
+                var cases = e["cases"] != null ? e["cases"].A.ToList() : new List<J> { J.Obj() };
+                foreach (var c in cases)
+                {
+                    var state = new Dictionary<string, string>(defaults, StringComparer.Ordinal);
+                    if (c["state"] != null)
+                        foreach (var k in c["state"].Keys)
+                        {
+                            if (!defaults.ContainsKey(k)) Errors.Add("tools/import/expected-behaviour.json: " + id + " has no state twilightforest:" + k);
+                            state[k] = c["state"][k].AsString();
+                        }
+                    string where = "bp/blocks/" + id + ".json" + (c["state"] != null ? " " + c["state"].ToCompact() : "");
+                    J mining, explosion, mapColor;
+                    try
+                    {
+                        mining = Effective(doc, bi, state, "minecraft:destructible_by_mining");
+                        explosion = Effective(doc, bi, state, "minecraft:destructible_by_explosion");
+                        mapColor = Effective(doc, bi, state, "minecraft:map_color");
+                    }
+                    catch (Exception ex) { Errors.Add(where + ": " + ex.Message); continue; }
+                    var h = c["hardness"] ?? e["hardness"];
+                    if (h != null)
+                    {
+                        string want = h.IsStr ? "false" : J.Obj().Set("seconds_to_destroy", Math.Round(h.AsDouble(), 4)).ToCompact();
+                        string have = mining != null ? mining.ToCompact() : "(none)";
+                        if (want != have) Errors.Add(where + ": minecraft:destructible_by_mining " + have + ", TF gives " + want + " (" + e["source"].AsString() + ")");
+                        checkedValues++;
+                    }
+                    var r = c["resistance"] ?? e["resistance"];
+                    if (r != null)
+                    {
+                        string want = r.IsStr ? "false" : J.Obj().Set("explosion_resistance", Math.Round(r.AsDouble(), 4)).ToCompact();
+                        string have = explosion != null ? explosion.ToCompact() : "(none)";
+                        if (want != have) Errors.Add(where + ": minecraft:destructible_by_explosion " + have + ", TF gives " + want + " (" + e["source"].AsString() + ")");
+                        checkedValues++;
+                    }
+                    var mc = c["mapColor"] ?? e["mapColor"];
+                    if (mc != null)
+                    {
+                        string have = mapColor != null ? mapColor.AsString() : null, want = null;
+                        if (mc.Kind != JKind.Null && !MapColors.TryGetValue(mc.AsString(), out want)) want = "?" + mc.AsString();
+                        if (have != want) Errors.Add(where + ": minecraft:map_color " + (have ?? "(none)") + ", TF gives " + (mc.Kind == JKind.Null ? "none" : mc.AsString()) + " (" + e["source"].AsString() + ")");
+                        checkedValues++;
+                    }
+                }
+                // the RP sound (rp/blocks.d fragment of the owner) and the root map colour
+                GenFile rp;
+                string sound = null;
+                if (files.TryGetValue("rp/blocks.d/import-" + NameOf(bi.Owner) + ".json", out rp))
+                {
+                    var entry = J.Parse(Encoding.UTF8.GetString(rp.Bytes))["twilightforest:" + id];
+                    if (entry != null && entry["sound"] != null) sound = entry["sound"].AsString();
+                }
+                if (e["sound"] != null)
+                {
+                    string want = BedrockSound(e["sound"].AsString());
+                    if (sound != want) Errors.Add("rp/blocks.d: twilightforest:" + id + " sound " + (sound ?? "(none)") + ", TF gives " + e["sound"].AsString() + " -> " + want);
+                    checkedValues++;
+                }
+            }
+            Log.Add(checkedValues + " behaviour values of " + golden.Keys.Count() + " blocks checked against tools/import/expected-behaviour.json");
+        }
+
+        /// <summary>A component of a block file in a state, as Bedrock resolves it: the root's, replaced by every permutation
+        /// whose condition holds (in order).</summary>
+        static J Effective(J doc, BlockInfo bi, Dictionary<string, string> state, string component)
+        {
+            var v = doc["components"][component];
+            if (doc["permutations"] != null)
+                foreach (var p in doc["permutations"].A)
+                    if (p["components"][component] != null && Holds(p["condition"].AsString(), bi, state)) v = p["components"][component];
+            return v;
+        }
+
+        /// <summary>A declared state value as the conditions name it ("true", "3", "north").</summary>
+        static string StateText(J v)
+        {
+            if (v.IsStr) return v.AsString();
+            string s = v.ToCompact();
+            return s.Trim('"');
         }
 
         static string Rotation(J comps)
@@ -125,7 +246,10 @@ namespace GfImport
             var m = System.Text.RegularExpressions.Regex.Match(cond, @"^(!?)q\.block_state\('twilightforest:([^']+)'\)(?:\s*==\s*'?([^']*)'?)?$");
             if (!m.Success) throw new Exception("cannot evaluate condition term '" + cond + "' of " + bi.Id);
             string v;
-            if (!state.TryGetValue(m.Groups[2].Value, out v)) return false;
+            // a condition on a state the file does not declare (an override renamed or dropped it) is an error, not a
+            // permutation that never applies
+            if (!state.TryGetValue(m.Groups[2].Value, out v))
+                throw new Exception("a permutation condition names twilightforest:" + m.Groups[2].Value + ", which the block does not declare ('" + cond + "')");
             if (m.Groups[3].Success && m.Groups[3].Value.Length > 0) return v == m.Groups[3].Value;
             bool b = v == "true";
             return m.Groups[1].Value == "!" ? !b : b;

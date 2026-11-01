@@ -14,14 +14,19 @@ namespace GfImport
     public sealed class JBlock
     {
         public string Id, Const, Cls, Stmt;
-        public double Hardness = 1.0, Resistance = -1;  // -1 resistance: = hardness
+        public string PropText;    // the text the properties are read from (helper body + statement + named property sets)
+        // BlockBehaviour.Properties.of(): destroyTime 0, explosionResistance 0, SoundType.STONE (Minecraft 1.21.1)
+        public double Hardness = 0, Resistance = 0;
         public int Light = 0;
         public bool DynamicLight, NoCollision, NoOcclusion, Instabreak, Unbreakable, Flammable, Replaceable;
         public string Sound = "STONE", MapColor;
+        public string MapColorSide;    // logProperties(top, side): the colour of a lying log (axis x / z)
+        public string MapColorProp, MapColorIf;   // mapColor(state -> state.getValue(P) ? IF : MapColor): P's constant, IF (null: NONE)
         public double Friction = -1;
         public int FireEncouragement = -1, FireFlammability = -1;   // FireBlock.setFlammable (RegistrationEvents)
         public string LightExpr;   // the lightLevel lambda body when it is not a constant
         public string CopyOf;      // TF constant or "Blocks.X"
+        public double CopyScale = 1;   // copyAndScaleProperties(X, scale): destroyTime and explosionResistance x scale
     }
 
     public sealed class JItem
@@ -80,8 +85,20 @@ namespace GfImport
             var props = new Dictionary<string, string>();
             foreach (var f in Fields(text, @"BlockBehaviour\.Properties")) props[f.Item2] = f.Item3;
             var helpers = new Dictionary<string, string>();
-            foreach (Match m in Regex.Matches(text, @"public static DeferredBlock<(\w+)> (\w+)\(String name[^)]*\)\s*\{(.*?)\n\t\}", RegexOptions.Singleline))
-                helpers[m.Groups[2].Value] = m.Groups[1].Value + "|" + m.Groups[3].Value;
+            var helperParams = new Dictionary<string, List<string>>();
+            foreach (Match m in Regex.Matches(text, @"public static DeferredBlock<(\w+)> (\w+)\((String name[^)]*)\)\s*\{(.*?)\n\t\}", RegexOptions.Singleline))
+            {
+                helpers[m.Groups[2].Value] = m.Groups[1].Value + "|" + m.Groups[4].Value;
+                // the parameter names, in order ("String name, MapColor mapColor, Block candle" -> name, mapColor, candle)
+                helperParams[m.Groups[2].Value] = m.Groups[3].Value.Split(',').Select(p => p.Trim().Split(' ').Last()).ToList();
+            }
+            // methods returning BlockBehaviour.Properties anywhere in TF: the import reads logProperties (map colour)
+            // and copyAndScaleProperties (a copy with scaled destroyTime / explosionResistance); a block whose
+            // properties come from any other one is a warning
+            var propHelpers = new SortedSet<string>(StringComparer.Ordinal);
+            foreach (var jf in Directory.GetFiles(ctx.JavaDir, "*.java", SearchOption.AllDirectories).OrderBy(x => x, StringComparer.Ordinal))
+                foreach (Match m in Regex.Matches(Ctx.ReadText(jf), @"\bstatic\s+(?:final\s+)?BlockBehaviour\.Properties\s+(\w+)\s*\("))
+                    if (!KnownPropHelpers.Contains(m.Groups[1].Value)) propHelpers.Add(m.Groups[1].Value);
             var byConst = new Dictionary<string, JBlock>();
             var res = new Dictionary<string, JBlock>(StringComparer.Ordinal);
             foreach (var f in Fields(text, @"DeferredBlock<"))
@@ -96,7 +113,13 @@ namespace GfImport
                 {
                     var hp = helper.Split(new[] { '|' }, 2);
                     b.Cls = hp[0];
-                    body = hp[1] + body;
+                    // the helper body with its parameters replaced by this call's arguments (ominousCandle(name, MapColor.SAND, ...))
+                    string hbody = hp[1];
+                    var args = SplitArgs(body.Substring(body.IndexOf('(') + 1));
+                    var pars = helperParams[call];
+                    for (int i = 1; i < pars.Count && i < args.Count; i++)
+                        hbody = Regex.Replace(hbody, @"(?<![\w.])" + Regex.Escape(pars[i]) + @"\b", args[i].Trim().Replace("$", "$$"));
+                    body = hbody + body;
                 }
                 var cm = Regex.Match(body, @"new\s+(\w+)\s*[(<]");
                 if (b.Cls == null) b.Cls = cm.Success ? cm.Groups[1].Value : Regex.Match(f.Item1, @"DeferredBlock<(\w+)").Groups[1].Value;
@@ -106,36 +129,54 @@ namespace GfImport
                     string p;
                     if (props.TryGetValue(pm.Groups[1].Value, out p)) body = body + " " + p;
                 }
+                b.PropText = body;
+                foreach (var h in propHelpers)
+                    if (Regex.IsMatch(body, @"\b" + h + @"\s*\(")) unknownHelpers.Add(b.Id + ": " + h);
+                if (!Regex.IsMatch(body, @"Properties\.of\(|of(?:Full|Legacy)Copy\(|\b(?:" + string.Join("|", KnownPropHelpers) + @")\s*\(")
+                    && !propHelpers.Any(h => Regex.IsMatch(body, @"\b" + h + @"\s*\(")))
+                    noProperties.Add(b.Id);
                 ParseProps(b, body);
                 res[b.Id] = b;
                 byConst[b.Const] = b;
             }
-            // property copies: ofFullCopy(OTHER.get()) / ofFullCopy(OTHER) / Blocks.X; a copied block is
-            // resolved before the blocks that copy it (chains: A copies B copies C)
+            // property copies: ofFullCopy(OTHER.get()) / ofFullCopy(OTHER) / Blocks.X, and copyAndScaleProperties(X, k)
+            // (TFBlocks: ofFullCopy(X), then destroyTime and explosionResistance x k); a copied block is resolved before
+            // the blocks that copy it (chains: A copies B copies C), then the calls chained after the copy apply
             var resolved = new HashSet<JBlock>();
             Action<JBlock> resolve = null;
             resolve = b =>
             {
                 if (b.CopyOf == null || !resolved.Add(b)) return;
                 JBlock src;
-                int at = b.Stmt.IndexOf("Copy(", StringComparison.Ordinal);
-                string after = at >= 0 ? b.Stmt.Substring(at) : "";
+                var cm = CopyCall.Match(b.PropText);
+                string after = cm.Success ? b.PropText.Substring(cm.Index + cm.Length) : "";
                 if (byConst.TryGetValue(b.CopyOf, out src) && src != b)
                 {
                     resolve(src);
                     b.Hardness = src.Hardness; b.Resistance = src.Resistance; b.Sound = src.Sound; b.MapColor = src.MapColor;
+                    b.MapColorSide = src.MapColorSide; b.MapColorProp = src.MapColorProp; b.MapColorIf = src.MapColorIf;
                     b.Light = src.Light; b.Flammable = src.Flammable; b.Unbreakable = src.Unbreakable; b.Instabreak = src.Instabreak;
                     b.LightExpr = src.LightExpr; b.DynamicLight = src.DynamicLight; b.Friction = src.Friction;
-                    b.NoCollision = src.NoCollision; b.NoOcclusion = src.NoOcclusion;
-                    ParseProps(b, after, false); // explicit settings after the copy win
+                    b.NoCollision = src.NoCollision; b.NoOcclusion = src.NoOcclusion; b.Replaceable = src.Replaceable;
                 }
-                else if (b.CopyOf.StartsWith("Blocks.", StringComparison.Ordinal))
-                {
-                    VanillaProps(b, b.CopyOf.Substring(7));
-                    ParseProps(b, after, false);
-                }
+                else if (b.CopyOf.StartsWith("Blocks.", StringComparison.Ordinal)) VanillaProps(b, b.CopyOf.Substring(7));
+                else { unknownCopies.Add(b.Id + ": " + b.CopyOf); return; }
+                b.Hardness *= b.CopyScale;
+                b.Resistance *= b.CopyScale;
+                ParseProps(b, after, false); // explicit settings after the copy win
             };
             foreach (var b in res.Values) resolve(b);
+            // calls a TF block class chains onto the properties in its constructor (SpecialMagicLogBlock:
+            // super(properties.strength(2.0F).sound(SoundType.WOOD)...)) apply after the registration's, the leaf class first
+            var chains = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var b in res.Values)
+                foreach (var cls in ClassChain(ctx, b.Cls, chains))
+                {
+                    string ct = ClassText(ctx, cls);
+                    if (ct == null) break;
+                    foreach (Match sm in Regex.Matches(ct, @"\bsuper\(\s*\w+((?:\s*\.\s*\w+\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\))+)\s*\)\s*;"))
+                        ParseProps(b, sm.Groups[1].Value, false);
+                }
             // flammability: only the blocks TF registers with FireBlock.setFlammable(block, encouragement,
             // flammability) in events/RegistrationEvents.java burn (ignitedByLava alone does not make a block
             // burn in Java)
@@ -152,9 +193,18 @@ namespace GfImport
             int parsed = res.Values.Count(b => b.FireEncouragement >= 0);
             if (calls != parsed) ctx.Warn("RegistrationEvents: setFlammable registers " + calls + " blocks, " + parsed + " parsed");
             foreach (var v in unknownVanilla) ctx.Warn("TF copies the properties of Blocks." + v + ", which Java.VanillaProps does not know");
-            foreach (var v in unparsedStrength) ctx.Warn("strength not parsed: " + v);
+            foreach (var v in unknownCopies) ctx.Warn("block " + v + ": the copied block is neither a TF block nor Blocks.X (properties not copied)");
+            foreach (var v in unknownHelpers) ctx.Warn("block " + v + ": its properties come from a helper the import does not read (BlockBehaviour.Properties)");
+            foreach (var v in noProperties) ctx.Warn("block " + v + ": no BlockBehaviour.Properties in its registration (Java defaults assumed)");
+            foreach (var v in unparsedStrength) ctx.Warn("block property not parsed: " + v);
             return res;
         }
+
+        // the helpers returning BlockBehaviour.Properties that ParseProps reads (TFBlocks.java)
+        static readonly string[] KnownPropHelpers = { "logProperties", "copyAndScaleProperties" };
+        const string Num = @"-?[\d.]+[FfDd]?(?:\s*[*/]\s*[\d.]+[FfDd]?)*";
+        // ofFullCopy(X) / ofLegacyCopy(X) / copyAndScaleProperties(X, k), X a TF constant (.get()) or Blocks.X
+        static readonly Regex CopyCall = new Regex(@"(?:of(?:Full|Legacy)Copy\(\s*([\w.]+?)(?:\.get\(\))?\s*|copyAndScaleProperties\(\s*([\w.]+?)(?:\.get\(\))?\s*,\s*(" + Num + @")\s*)\)", RegexOptions.Compiled);
 
         /// <summary>A float expression of TF's block properties: a literal, or a product / quotient of literals
         /// ("0.2F * 64F").</summary>
@@ -192,6 +242,7 @@ namespace GfImport
             // the vanilla blocks TF copies properties from (Minecraft 1.21.1 Blocks.java values); flammability is
             // not a block property in Java (FireBlock.setFlammable, see Blocks())
             b.Hardness = 0; b.Resistance = 0; b.Sound = "STONE"; b.MapColor = null; b.Friction = -1; b.Light = 0;
+            b.MapColorSide = null; b.MapColorProp = null; b.MapColorIf = null;
             b.LightExpr = null; b.DynamicLight = false;
             b.NoCollision = false; b.NoOcclusion = false; b.Instabreak = false; b.Unbreakable = false;
             string wood = WoodColors.Keys.Where(k => v.StartsWith(k + "_", StringComparison.Ordinal) || v.StartsWith("STRIPPED_" + k + "_", StringComparison.Ordinal))
@@ -200,9 +251,10 @@ namespace GfImport
             if (v == "SPAWNER") { b.Hardness = 5; b.Resistance = 5; b.Sound = "METAL"; b.MapColor = "STONE"; b.NoOcclusion = true; }
             else if (v == "FLOWER_POT") { b.Instabreak = true; b.NoOcclusion = true; }
             else if (v.EndsWith("_HEAD") || v.EndsWith("_SKULL")) { b.Hardness = 1; b.Resistance = 1; }
-            else if (v.EndsWith("_CARPET") && v != "MOSS_CARPET") { b.Hardness = 0.1; b.Resistance = 0.1; b.Sound = "WOOL"; b.MapColor = "COLOR_" + v.Substring(0, v.Length - 7); }
-            else if (wood != null && v.EndsWith("_PLANKS"))
+            else if (v.EndsWith("_CARPET") && v != "MOSS_CARPET") { b.Hardness = 0.1; b.Resistance = 0.1; b.Sound = "WOOL"; b.MapColor = DyeMapColor(v.Substring(0, v.Length - 7)); }
+            else if (wood != null && (v == wood + "_PLANKS" || v == wood + "_SLAB"))
             {
+                // planks and their slab: strength(2.0F, 3.0F), the planks' map colour and wood sound
                 b.Hardness = 2; b.Resistance = 3; b.MapColor = WoodColors[wood][0];
                 b.Sound = nether ? "NETHER_WOOD" : wood == "CHERRY" ? "CHERRY_WOOD" : wood == "BAMBOO" ? "BAMBOO_WOOD" : "WOOD";
             }
@@ -233,44 +285,76 @@ namespace GfImport
             else unknownVanilla.Add(v);
         }
 
+        /// <summary>A Java MapColor expression as a MapColor constant name (null: MapColor.NONE).</summary>
+        static string ColorName(string expr)
+        {
+            var m = Regex.Match(expr, @"^DyeColor\.(\w+)");
+            if (m.Success) return DyeMapColor(m.Groups[1].Value);
+            string c = expr.Substring(expr.IndexOf('.') + 1);
+            return c == "NONE" ? null : c;
+        }
+
+        /// <summary>DyeColor.getMapColor() (Minecraft 1.21.1): COLOR_X, except white (SNOW) and lime (COLOR_LIGHT_GREEN).</summary>
+        static string DyeMapColor(string dye)
+        {
+            return dye == "WHITE" ? "SNOW" : dye == "LIME" ? "COLOR_LIGHT_GREEN" : "COLOR_" + dye;
+        }
+
         static readonly SortedSet<string> unknownVanilla = new SortedSet<string>(StringComparer.Ordinal);
         static readonly SortedSet<string> unparsedStrength = new SortedSet<string>(StringComparer.Ordinal);
+        static readonly SortedSet<string> unknownCopies = new SortedSet<string>(StringComparer.Ordinal);
+        static readonly SortedSet<string> unknownHelpers = new SortedSet<string>(StringComparer.Ordinal);
+        static readonly SortedSet<string> noProperties = new SortedSet<string>(StringComparer.Ordinal);
 
         static void ParseProps(JBlock b, string s, bool resetCopy = true)
         {
             Match m;
             if (resetCopy)
             {
-                m = Regex.Match(s, @"of(?:Full|Legacy)Copy\(\s*([\w.]+?)(?:\.get\(\))?\s*\)");
-                if (m.Success) b.CopyOf = m.Groups[1].Value.StartsWith("TFBlocks.") ? m.Groups[1].Value.Substring(9) : m.Groups[1].Value;
+                m = CopyCall.Match(s);
+                if (m.Success)
+                {
+                    string src = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
+                    b.CopyOf = src.StartsWith("TFBlocks.", StringComparison.Ordinal) ? src.Substring(9) : src;
+                    double k;
+                    b.CopyScale = m.Groups[3].Success && TryFloat(m.Groups[3].Value, out k) ? k : 1;
+                }
             }
-            // strength(h[, r]) / destroyTime(h) / explosionResistance(r): literals or products of literals ("0.2F * 64.0F")
-            const string num = @"-?[\d.]+[FfDd]?(?:\s*[*/]\s*[\d.]+[FfDd]?)*";
-            foreach (Match sm in Regex.Matches(s, @"\.strength\(\s*(" + num + @")\s*(?:,\s*(" + num + @"))?\s*\)"))
+            // strength(h[, r]) / destroyTime(h) / explosionResistance(r) / instabreak(), in call order, as Java's
+            // BlockBehaviour.Properties does: strength(f) = strength(f, f) = destroyTime(f).explosionResistance(f),
+            // explosionResistance(r) keeps max(0, r), instabreak() = strength(0); arguments are literals or
+            // products of literals ("0.2F * 64.0F")
+            foreach (Match sm in Regex.Matches(s, @"\.(strength|destroyTime|explosionResistance)\(([^()]*(?:\([^()]*\))?[^()]*)\)|\.instabreak\(\)"))
             {
-                double h, r;
-                if (!TryFloat(sm.Groups[1].Value, out h)) continue;
-                b.Hardness = h;
-                b.Resistance = sm.Groups[2].Success && TryFloat(sm.Groups[2].Value, out r) ? r : h;
+                if (!sm.Groups[1].Success) { b.Hardness = 0; b.Resistance = 0; b.Instabreak = true; continue; }
+                var args = sm.Groups[2].Value.Split(',');
+                var vals = new List<double>();
+                foreach (var a in args) { double x; if (TryFloat(a, out x)) vals.Add(x); }
+                string fn = sm.Groups[1].Value;
+                if (vals.Count != args.Length || (fn == "strength" ? args.Length > 2 : args.Length != 1)) { unparsedStrength.Add(b.Id + ": " + sm.Value); continue; }
+                if (fn == "explosionResistance") b.Resistance = Math.Max(0, vals[0]);
+                else
+                {
+                    b.Hardness = vals[0];
+                    if (fn == "strength") b.Resistance = Math.Max(0, vals.Count > 1 ? vals[1] : vals[0]);
+                }
             }
-            foreach (Match sm in Regex.Matches(s, @"\.strength\(([^()]*(?:\([^()]*\))?[^()]*)\)"))
-                if (!Regex.IsMatch(sm.Groups[1].Value, @"^\s*" + num + @"\s*(?:,\s*" + num + @")?\s*$")) unparsedStrength.Add(b.Id + ": " + sm.Value);
-            m = Regex.Match(s, @"\.destroyTime\(\s*(" + num + @")\s*\)");
-            double d;
-            if (m.Success && TryFloat(m.Groups[1].Value, out d)) b.Hardness = d;
-            m = Regex.Match(s, @"\.explosionResistance\(\s*(" + num + @")\s*\)");
-            if (m.Success && TryFloat(m.Groups[1].Value, out d)) b.Resistance = d;
-            if (s.Contains(".instabreak()")) { b.Hardness = 0; b.Resistance = 0; b.Instabreak = true; }
-            if (b.Hardness < 0) b.Unbreakable = true;
+            b.Unbreakable = b.Hardness < 0;
             m = Regex.Match(s, @"\.lightLevel\(\s*\(?\s*\w+\s*\)?\s*->\s*(\d+)\s*\)");
             if (m.Success) { b.Light = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); b.DynamicLight = false; b.LightExpr = null; }
             else if (s.Contains(".lightLevel(")) { b.DynamicLight = true; b.Light = 0; b.LightExpr = Light.LambdaOf(s); }
             m = Regex.Match(s, @"\.sound\(\s*(?:SoundType|TFSoundTypes)\.(\w+)\s*\)");
             if (m.Success) b.Sound = m.Groups[1].Value;
-            m = Regex.Match(s, @"(?:\.mapColor|logProperties)\(\s*(?:MapColor\.(\w+)|\(state\)[^?]*\?\s*(\w+))");
-            if (m.Success) b.MapColor = m.Groups[1].Success ? m.Groups[1].Value : null;
-            m = Regex.Match(s, @"\.mapColor\(\s*DyeColor\.(\w+)\s*\)");
-            if (m.Success) b.MapColor = "COLOR_" + m.Groups[1].Value;
+            // map colour: MapColor.X, DyeColor.X (its map colour), logProperties(top[, side]) (side: a lying log's bark), or
+            // a lambda of one boolean state (the castle doors: VANISHED ? MapColor.NONE : the door's colour)
+            const string color = @"MapColor\.\w+|DyeColor\.\w+(?:\.getMapColor\(\))?";
+            m = Regex.Match(s, @"logProperties\(\s*MapColor\.(\w+)\s*(?:,\s*MapColor\.(\w+)\s*)?\)");
+            if (m.Success) { b.MapColor = m.Groups[1].Value; b.MapColorSide = m.Groups[2].Success ? m.Groups[2].Value : null; b.MapColorProp = null; }
+            m = Regex.Match(s, @"\.mapColor\(\s*(" + color + @")\s*\)");
+            if (m.Success) { b.MapColor = ColorName(m.Groups[1].Value); b.MapColorSide = null; b.MapColorProp = null; }
+            m = Regex.Match(s, @"\.mapColor\(\s*\(?\s*(\w+)\s*\)?\s*->\s*\1\.getValue\(\s*([\w.]+)\s*\)\s*\?\s*(" + color + @")\s*:\s*(" + color + @")\s*\)");
+            if (m.Success) { b.MapColorProp = m.Groups[2].Value; b.MapColorIf = ColorName(m.Groups[3].Value); b.MapColor = ColorName(m.Groups[4].Value); b.MapColorSide = null; }
+            else if (Regex.IsMatch(s, @"\.mapColor\(\s*\(?\s*\w+\s*\)?\s*->")) { b.MapColor = null; unparsedStrength.Add(b.Id + ": map colour lambda"); }
             if (s.Contains(".noCollission()")) b.NoCollision = true;
             if (s.Contains(".noOcclusion()")) b.NoOcclusion = true;
             if (s.Contains(".ignitedByLava()")) b.Flammable = true;
@@ -305,6 +389,9 @@ namespace GfImport
             classFiles = null;
             unknownVanilla.Clear();
             unparsedStrength.Clear();
+            unknownCopies.Clear();
+            unknownHelpers.Clear();
+            noProperties.Clear();
             JavaStates.Reset();
         }
 

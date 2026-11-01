@@ -68,7 +68,7 @@ dangling in TF itself are listed under `tfDangling` and reported as a warning on
 the recipe's pre-rename id; TF renamed it `travellers_vest` and the criterion never triggers in TF either; kept
 verbatim for parity). An allowlist entry no data references any more is reported as stale.
 
-**Bridge (temporary, requested from F0 / A8).** assemble's dangling-reference check (`tools/xmake/assemble.lua`,
+**Bridge (temporary, requested from F0 / A8 in [issue #21](https://github.com/MiracleForest/GloamingForest/issues/21)).** assemble's dangling-reference check (`tools/xmake/assemble.lua`,
 F0) knows only data files, BP definitions and owners.tsv rows; it checks the values of `tag` / `tags` keys as plain
 ids and reads `data/<ns>/tags/twilight/<registry>/` with a one-segment registry. Until it does what the import's
 check does, the import writes one index file for each reference it resolved but assemble cannot (67:
@@ -78,7 +78,8 @@ nothing reads them at run time, and the `import.lang_and_data` selftest skips th
 (F0 / A8), after which the bridge is dropped (its two `EmitJson` calls in `Known.cs`; the check stays): (1) `tag` / `tags` / `generates_on` values
 are tag references; (2) `tags/twilight/<registry>` is a two-segment registry like `tags/worldgen/<registry>`;
 (3) the ids of `tools/import/known-ids.json` (`ids`, `tfDangling`) are known, by kind; (4) a `tfDangling` reference
-is a warning, not an error.
+is a warning, not an error. Until (4), the `tfDangling` reference stays in the bridge: assemble's check has no warning
+level (`check_dangling` fails on every unknown reference), so leaving it out would fail every build instead of warning.
 ## Sound events
 
 F3 (`tools/sounds/synth.ps1`) writes the resource pack's `sound_definitions` for all 328 TF sound events, one
@@ -111,16 +112,22 @@ Shared files get one owner by rule:
   (`LightableBlock.LIGHTING`, `SnowLoggable.SNOW_LAYERS`), its static imports and the vanilla constants, to their
   `Property.create` name, integer range or enum values (serialized names in declaration order). Java property `p`
   -> `twilightforest:p`, same values; integer lists start at 0; `waterlogged` is dropped (Bedrock's liquid layer);
-  no placement traits. The first value of an enum is TF's default (`registerDefaultState`, through local
-  `BlockState` variables and `for` loops; `StateDefinition.any()` for what it does not set). Booleans and integers
-  keep Bedrock's `false` / `0` default; blockstates.md lists TF's default where it differs (trophies `powered=true`,
-  leaves `distance=7`, candles `candles=1`, ...).
+  no placement traits. The first listed value is the Bedrock default: an enum and a boolean list TF's default first
+  (`registerDefaultState`, through local `BlockState` variables and `for` loops; `StateDefinition.any()` for what it
+  does not set, which makes an unset boolean `true`: trophies `powered`, `HugeMushroomBlock` faces, rope `y`,
+  terrorcotta `rotated`, `locked`), so a boolean is `[true, false]` where TF's default is `true` (the selftest
+  `import.bool_defaults` checks in game that Bedrock 1.26.51 honours that order: the default permutation has the
+  state `true`, and a permutation condition on it follows the value). Integers keep Bedrock's `0` default (the list
+  must start at 0); blockstates.md lists TF's default where it differs (leaves `distance=7`, candles `candles=1`, ...).
 - Checks (every run, `-Check` included; a failure fails the run): the Java properties of every block against a
   hand-written golden, `tools/import/expected-states.json` (one entry per TF block class, read by hand from the
   Java sources); the states of every generated BP block file (after the overrides) against the same golden; every
   blockstate property and value TF's blockstate file uses must be a Java property value; the rotation of every
   variant, evaluated as Bedrock does (root components, then the matching permutations in order), against TF's
-  blockstate file (3659 variants).
+  blockstate file (3659 variants; a condition on a state the file does not declare, for example after an override
+  renamed it, is an error); the behaviour values of 55 blocks (every drying rack, the brazier, the berry and oreberry
+  bushes, the unbreakable and per-state ones, a sample of the rest) against a second hand-written golden,
+  `tools/import/expected-behaviour.json` (hardness, explosion resistance and map colour per state, sound).
 - Variants: a permutation per variant key (Molang `q.block_state(...)` conditions), its model's geometry and
   material instances, and `minecraft:transformation` rotation `[-x, -y, 0]` for Java's `x` / `y` (Java rotates
   clockwise seen from above / the axis; Bedrock follows the right-hand rule). The default state's variant is also
@@ -139,12 +146,29 @@ Shared files get one owner by rule:
 - Render method: `translucent` -> `blend`, `cutout(_mipped)` -> `alpha_test`, otherwise `alpha_test` when a face
   texture has transparent pixels, else `opaque`.
 - Behaviour values: `seconds_to_destroy` = Java hardness (`false` when unbreakable), `explosion_resistance` =
-  Java resistance (`false` from 3600000: giant obsidian), both evaluated from literals or products of literals
-  (`strength(0.2F * 64.0F, 15.0F)`); properties copied from vanilla blocks (`ofFullCopy(Blocks.X)`) use Minecraft
-  1.21.1's values (glass, slime block with its friction, leaves, planks / wood / hyphae with each wood's map colour
-  and sound, ...); every property of a copied TF block is copied (light function, friction, collision,
-  occlusion); `MapColor` RGB; `friction` = 1 - Java friction; no collision for `noCollission`; the Java sound type
-  -> the Bedrock block sound (an unmapped one warns). Flammability: only the 180 blocks TF registers with
+  Java resistance (`false` from 3600000: giant obsidian, `Float.MAX_VALUE`). They follow `BlockBehaviour.Properties`:
+  `of()` starts at destroyTime 0 / explosionResistance 0 / `SoundType.STONE` (the brazier, which sets no strength,
+  breaks at once); the calls apply in order, `strength(f)` sets both, `destroyTime` and `explosionResistance` only
+  their own (the berry bushes' `destroyTime(0.4F)` keeps resistance 0), `explosionResistance` keeps `max(0, r)`,
+  `instabreak()` = `strength(0)`; arguments are literals or products of literals (`strength(0.2F * 64.0F, 15.0F)`).
+  Java's explosions do not look at the hardness, so an unbreakable block with a low resistance still explodes
+  (`twilight_portal`: `strength(-1.0F)`, resistance 0, as the nether portal). Copies: `ofFullCopy` /
+  `ofLegacyCopy(X)` and `copyAndScaleProperties(X, k)` (the drying racks: a copy of the slab, destroyTime and
+  explosionResistance x `k`); a vanilla `X` uses Minecraft 1.21.1's values (glass, slime block with its friction,
+  leaves, planks, wooden slabs, wood / hyphae with each wood's map colour and sound, ...); every property of a copied
+  TF block is copied (light function, friction, collision, occlusion). Registration helpers are read with their
+  arguments (`ominousCandle(name, MapColor.SAND, ...)`), and calls a TF class chains onto the properties in its
+  constructor (`SpecialMagicLogBlock`) apply after the registration's; a block whose properties come from a helper
+  the import does not read, or a copy it cannot resolve, is a warning. State-dependent values become permutations
+  (the default state's value on the root): `getExplosionResistance` overrides (vanishing blocks: 6000 while
+  inactive, a locked vanishing block 6000000, skull chest and keepsake casket `Float.MAX_VALUE`), the trophy
+  pedestal's `getDestroyProgress` (unbreakable while inactive), the map colour of `logProperties(top, side)` (the
+  side colour on a lying log) and of the castle doors (their colour; `MapColor.NONE` while vanished, which lets
+  Java's map look through the block, has no Bedrock equivalent). Overrides that depend on the player or the held
+  item (shears on arctic fur and berry bushes, the aurora brick's advancement, the stronghold shield's side) are
+  the owners' runtime behaviour and listed in the import log. `MapColor` RGB (`DyeColor` through its map colour);
+  `friction` = 1 - Java friction; no collision for `noCollission`; the Java sound type -> the Bedrock block sound
+  (an unmapped one warns). Flammability: only the 180 blocks TF registers with
   `FireBlock.setFlammable(block, encouragement, flammability)` (`RegistrationEvents.java`) get
   `minecraft:flammable` (`catch_chance_modifier` = encouragement, `destroy_chance_modifier` = flammability);
   `ignitedByLava` alone does not make a block burn in Java. Blocks not listed in a creative tab get
@@ -177,7 +201,10 @@ Shared files get one owner by rule:
   recipe's advancement (`inventory_changed`), else `AlwaysUnlocked`. Ingredients: Java item tags with a Bedrock
   equivalent (`minecraft:planks`, `logs`, `wool`, `wooden_slabs`) stay tags; tags of TF items only use the tag
   (declared on those items); other tags and ingredient lists are expanded into one recipe per combination
-  (`<id>_<n>`, at most 64; beyond that the first alternatives: fiery armor's chestplate and leggings). NeoForge
+  (`<id>_<n>`); more than 64 combinations fail the import (a recipe is never cut down to some of its alternatives).
+  Furnace and smithing recipes take one item per slot: every tag alternative (Bedrock-native ones included, with
+  Minecraft 1.21.1's members of `minecraft:planks`, `wooden_slabs`, `wool`, `logs`) becomes its members, and a
+  smithing recipe is emitted per template x base x addition combination. NeoForge
   ingredients: `neoforge:difference` / `intersection` / `compound` become their item sets (the travellers belt's
   wooden chest that is not trapped), `neoforge:components` with a water potion becomes `minecraft:potion` data 0
   (tannin). A vanilla-type recipe that still has no Bedrock recipe is a warning and listed in the import log
@@ -231,7 +258,7 @@ generated JSON file, `rename` moves a generated file. A patch or rename target t
 
 ## Determinism
 
-The output depends only on the TF checkout, owners.tsv, owners.rules.json, merges.json, the overrides and the two reviewed inputs `tools/import/known-ids.json` and `tools/import/expected-states.json`. Text
+The output depends only on the TF checkout, owners.tsv, owners.rules.json, merges.json, the overrides and the reviewed inputs `tools/import/known-ids.json`, `tools/import/expected-states.json` and `tools/import/expected-behaviour.json`. Text
 inputs are read with line endings normalised to LF (the checkout may be CRLF on CI); JSON is written by an own
 writer (order-preserving, 2-space indent, LF); generated PNGs are encoded by an own DEFLATE encoder (the
 platform zlib differs between .NET versions); every collection is sorted ordinally. `-Check` compares every

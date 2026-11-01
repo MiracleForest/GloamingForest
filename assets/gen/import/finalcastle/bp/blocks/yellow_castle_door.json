@@ -24,7 +24,8 @@
           "texture": "tf_block_castle_door",
           "render_method": "alpha_test"
         }
-      }
+      },
+      "minecraft:map_color": "#e5e533"
     },
     "permutations": [
       {

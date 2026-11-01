@@ -10,12 +10,12 @@
     },
     "twilightforest:alpha_yeti_boss_spawner": {},
     "twilightforest:alpha_yeti_trophy": {
-      "twilightforest:powered": ["false", "true"],
+      "twilightforest:powered": ["true", "false"],
       "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     },
     "twilightforest:alpha_yeti_wall_trophy": {
       "twilightforest:facing": ["north", "south", "west", "east"],
-      "twilightforest:powered": ["false", "true"]
+      "twilightforest:powered": ["true", "false"]
     },
     "twilightforest:antibuilder": {},
     "twilightforest:antibuilt_block": {},
@@ -659,20 +659,20 @@
       "twilightforest:piece": ["nw", "ne", "se", "sw"]
     },
     "twilightforest:huge_mushgloom": {
-      "twilightforest:down": ["false", "true"],
-      "twilightforest:east": ["false", "true"],
-      "twilightforest:north": ["false", "true"],
-      "twilightforest:south": ["false", "true"],
-      "twilightforest:up": ["false", "true"],
-      "twilightforest:west": ["false", "true"]
+      "twilightforest:down": ["true", "false"],
+      "twilightforest:east": ["true", "false"],
+      "twilightforest:north": ["true", "false"],
+      "twilightforest:south": ["true", "false"],
+      "twilightforest:up": ["true", "false"],
+      "twilightforest:west": ["true", "false"]
     },
     "twilightforest:huge_mushgloom_stem": {
-      "twilightforest:down": ["false", "true"],
-      "twilightforest:east": ["false", "true"],
-      "twilightforest:north": ["false", "true"],
-      "twilightforest:south": ["false", "true"],
-      "twilightforest:up": ["false", "true"],
-      "twilightforest:west": ["false", "true"]
+      "twilightforest:down": ["true", "false"],
+      "twilightforest:east": ["true", "false"],
+      "twilightforest:north": ["true", "false"],
+      "twilightforest:south": ["true", "false"],
+      "twilightforest:up": ["true", "false"],
+      "twilightforest:west": ["true", "false"]
     },
     "twilightforest:huge_stalk": {
       "twilightforest:axis": ["y", "x", "z"]
@@ -680,12 +680,12 @@
     "twilightforest:huge_water_lily": {},
     "twilightforest:hydra_boss_spawner": {},
     "twilightforest:hydra_trophy": {
-      "twilightforest:powered": ["false", "true"],
+      "twilightforest:powered": ["true", "false"],
       "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     },
     "twilightforest:hydra_wall_trophy": {
       "twilightforest:facing": ["north", "south", "west", "east"],
-      "twilightforest:powered": ["false", "true"]
+      "twilightforest:powered": ["true", "false"]
     },
     "twilightforest:infested_towerwood": {},
     "twilightforest:iron_ladder": {
@@ -713,12 +713,12 @@
     },
     "twilightforest:knight_phantom_boss_spawner": {},
     "twilightforest:knight_phantom_trophy": {
-      "twilightforest:powered": ["false", "true"],
+      "twilightforest:powered": ["true", "false"],
       "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     },
     "twilightforest:knight_phantom_wall_trophy": {
       "twilightforest:facing": ["north", "south", "west", "east"],
-      "twilightforest:powered": ["false", "true"]
+      "twilightforest:powered": ["true", "false"]
     },
     "twilightforest:knightmetal_block": {},
     "twilightforest:lich_boss_spawner": {},
@@ -726,17 +726,17 @@
       "twilightforest:facing": ["north", "south", "west", "east"]
     },
     "twilightforest:lich_trophy": {
-      "twilightforest:powered": ["false", "true"],
+      "twilightforest:powered": ["true", "false"],
       "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     },
     "twilightforest:lich_wall_trophy": {
       "twilightforest:facing": ["north", "south", "west", "east"],
-      "twilightforest:powered": ["false", "true"]
+      "twilightforest:powered": ["true", "false"]
     },
     "twilightforest:liveroot_block": {},
     "twilightforest:locked_vanishing_block": {
       "twilightforest:active": ["false", "true"],
-      "twilightforest:locked": ["false", "true"]
+      "twilightforest:locked": ["true", "false"]
     },
     "twilightforest:maloberry_bush": {
       "twilightforest:age": ["0", "1", "2", "3"],
@@ -924,12 +924,12 @@
     },
     "twilightforest:minoshroom_boss_spawner": {},
     "twilightforest:minoshroom_trophy": {
-      "twilightforest:powered": ["false", "true"],
+      "twilightforest:powered": ["true", "false"],
       "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     },
     "twilightforest:minoshroom_wall_trophy": {
       "twilightforest:facing": ["north", "south", "west", "east"],
-      "twilightforest:powered": ["false", "true"]
+      "twilightforest:powered": ["true", "false"]
     },
     "twilightforest:minotaur_labyrinth_miniature_structure": {
       "twilightforest:facing": ["north", "south", "west", "east"]
@@ -975,12 +975,12 @@
       "twilightforest:facing": ["north", "south", "west", "east"]
     },
     "twilightforest:naga_trophy": {
-      "twilightforest:powered": ["false", "true"],
+      "twilightforest:powered": ["true", "false"],
       "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     },
     "twilightforest:naga_wall_trophy": {
       "twilightforest:facing": ["north", "south", "west", "east"],
-      "twilightforest:powered": ["false", "true"]
+      "twilightforest:powered": ["true", "false"]
     },
     "twilightforest:nagastone": {
       "twilightforest:variant": [
@@ -1133,12 +1133,12 @@
     "twilightforest:potted_transformation_sapling": {},
     "twilightforest:potted_twilight_oak_sapling": {},
     "twilightforest:quest_ram_trophy": {
-      "twilightforest:powered": ["false", "true"],
+      "twilightforest:powered": ["true", "false"],
       "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     },
     "twilightforest:quest_ram_wall_trophy": {
       "twilightforest:facing": ["north", "south", "west", "east"],
-      "twilightforest:powered": ["false", "true"]
+      "twilightforest:powered": ["true", "false"]
     },
     "twilightforest:rainbow_oak_leaves": {
       "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
@@ -1169,7 +1169,7 @@
     "twilightforest:root_strand": {},
     "twilightforest:rope": {
       "twilightforest:x": ["false", "true"],
-      "twilightforest:y": ["false", "true"],
+      "twilightforest:y": ["true", "false"],
       "twilightforest:z": ["false", "true"]
     },
     "twilightforest:sinister_spawner": {},
@@ -1198,12 +1198,12 @@
     "twilightforest:smoker": {},
     "twilightforest:snow_queen_boss_spawner": {},
     "twilightforest:snow_queen_trophy": {
-      "twilightforest:powered": ["false", "true"],
+      "twilightforest:powered": ["true", "false"],
       "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     },
     "twilightforest:snow_queen_wall_trophy": {
       "twilightforest:facing": ["north", "south", "west", "east"],
-      "twilightforest:powered": ["false", "true"]
+      "twilightforest:powered": ["true", "false"]
     },
     "twilightforest:snowy_cloud": {},
     "twilightforest:sorting_banister": {
@@ -1369,7 +1369,7 @@
       "twilightforest:facing": ["north", "south", "west", "east"]
     },
     "twilightforest:terrorcotta_lines": {
-      "twilightforest:rotated": ["false", "true"]
+      "twilightforest:rotated": ["true", "false"]
     },
     "twilightforest:thick_castle_brick": {},
     "twilightforest:thorn_leaves": {
@@ -1686,12 +1686,12 @@
     "twilightforest:unripe_trollber": {},
     "twilightforest:ur_ghast_boss_spawner": {},
     "twilightforest:ur_ghast_trophy": {
-      "twilightforest:powered": ["false", "true"],
+      "twilightforest:powered": ["true", "false"],
       "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     },
     "twilightforest:ur_ghast_wall_trophy": {
       "twilightforest:facing": ["north", "south", "west", "east"],
-      "twilightforest:powered": ["false", "true"]
+      "twilightforest:powered": ["true", "false"]
     },
     "twilightforest:vangrove_banister": {
       "twilightforest:extended": ["false", "true"],

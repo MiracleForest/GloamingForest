@@ -15,7 +15,7 @@
         "seconds_to_destroy": 10
       },
       "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 35
+        "explosion_resistance": 6000
       },
       "minecraft:map_color": "#f7e9a3",
       "minecraft:geometry": "geometry.tf.twilightforest.block.vanishing_block",
@@ -276,6 +276,14 @@
         "condition": "q.block_state('twilightforest:active')",
         "components": {
           "minecraft:light_emission": 4
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:destructible_by_explosion": {
+            "explosion_resistance": 35
+          }
         }
       }
     ]
