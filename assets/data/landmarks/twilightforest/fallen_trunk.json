@@ -1,0 +1,71 @@
+{
+  "key": "twilightforest:fallen_trunk",
+  "source": "src/generated/resources/data/twilightforest/worldgen/structure/fallen_trunk.json",
+  "structure": {
+    "biomes": "#twilightforest:valid_hollow_tree_biomes",
+    "spawn_overrides": {
+      "ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "axolotls": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "misc": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "monster": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "underground_water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      }
+    },
+    "step": "surface_structures",
+    "type": "twilightforest:fallen_trunk"
+  },
+  "fixed_decoration_clearance": {
+    "chunk_clearance_radius": 0,
+    "allow_biome_surface_decorations": false,
+    "allow_biome_underground_decorations": true,
+    "allow_biome_vegetation": true,
+    "adjust_structure_elevation": false
+  },
+  "structure_set": {
+    "id": "twilightforest:fallen_trunk",
+    "placement": {
+      "exclusion_zone": {
+        "chunk_count": 1,
+        "other_set": "twilightforest:hollow_tree"
+      },
+      "frequency": 0.8,
+      "salt": 1275623845,
+      "separation": 5,
+      "spacing": 7,
+      "spread_type": "triangular",
+      "type": "twilightforest:avoid_landmark_grid"
+    },
+    "structures": [
+      {
+        "structure": "twilightforest:fallen_trunk",
+        "weight": 1
+      }
+    ]
+  }
+}
