@@ -31,7 +31,7 @@ public:
     [[nodiscard]] virtual int          nextInt()                 = 0;
     /// [0, bound), bound > 0 (Java's rejection sampling).
     [[nodiscard]] virtual int          nextInt(int bound)        = 0;
-    /// [origin, bound) (RandomSource#nextIntBetweenInclusive is `nextInt(max - min + 1) + min`).
+    /// [min, max], both ends included (RandomSource#nextIntBetweenInclusive: `nextInt(max - min + 1) + min`).
     [[nodiscard]] int                  nextIntBetweenInclusive(int min, int max) { return nextInt(max - min + 1) + min; }
     [[nodiscard]] virtual std::int64_t nextLong()                = 0;
     [[nodiscard]] virtual bool         nextBoolean()             = 0;

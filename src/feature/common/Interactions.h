@@ -27,7 +27,7 @@
 // - Handlers may edit the world directly (unlike a cancelled PlayerInteractBlockEvent, nothing
 //   is rolled back), but must not keep `Player&` past the call; defer world edits that must not
 //   happen inside the click with `nextTick`.
-// - Tag matchers (`Match::tag`, `Match::itemTag`) ask gf::tags (feature/tags/Tags.h): block tags
+// - Tag matchers (`Match::tag`, `Match::itemTagged`) ask gf::tags (feature/tags/Tags.h): block tags
 //   for block events, entity type tags for entity events, item tags for the held item.
 // - `onPlace`: after vanilla placed a block from a use-on that no handler took (orienting the
 //   new block, Java's getStateForPlacement / setPlacedBy with the placer).
