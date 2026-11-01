@@ -514,8 +514,10 @@ JigsawPiece::JigsawPiece(std::string typeId, int depth, std::string templateId, 
   spareJigsaws(context.spareJigsaws) {}
 
 void JigsawPiece::addJigsaws(JigsawPiece& parent, PieceList& pieces, RandomSource& random) {
-    std::int64_t posLong = pure::blockPosAsLong(templatePosition.x, templatePosition.y, templatePosition.z);
-    auto         worldSeed = detail::jigsawSeedOverride() ? *detail::jigsawSeedOverride() : worldgen::seed();
+    // random.setSeed(random.nextLong() ^ (context.seed() * templatePosition.asLong()))
+    std::int64_t posLong   = pure::blockPosAsLong(templatePosition.x, templatePosition.y, templatePosition.z);
+    auto const*  gen       = detail::generationContext();
+    auto         worldSeed = detail::jigsawSeedOverride() ? *detail::jigsawSeedOverride() : gen ? gen->seed : worldgen::seed();
     auto         mixed     = static_cast<std::uint64_t>(worldSeed) * static_cast<std::uint64_t>(posLong);
     random.setSeed(random.nextLong() ^ static_cast<std::int64_t>(mixed));
     addChildren(parent, pieces, random);
@@ -528,8 +530,10 @@ void JigsawPiece::processJigsaw(JigsawPiece& parent, PieceList& pieces, RandomSo
     auto        alias = poolAliases.find(connection.pool);
     std::string pool  = alias != poolAliases.end() ? alias->second : connection.pool;
     BlockPos    parentJunctionPos{templatePosition.x + connection.pos.x, templatePosition.y + connection.pos.y, templatePosition.z + connection.pos.z};
-    auto        piece = detail::initializeTemplateFromPool(pool, parentJunctionPos, connection, connection.target, random, genDepth + 1);
-    (void)parent; // parent.projection == TERRAIN_MATCHING only steers terrain adjustment (none without a generation context)
+    // with the assembly's generation context (ext::addJigsaws / ext::assemble) the child's pool
+    // entry adjusts its height to the terrain, at this jigsaw when `parent` projects onto it
+    auto piece = detail::initializeTemplateFromPool(pool, parentJunctionPos, connection, connection.target, random, genDepth + 1,
+                                                    detail::generationContext(), !parent.rigidProjection);
     if (!piece) return;
     if (findCollisionPiece(pieces, piece->bbox)) return;
     auto* raw = piece.get();
@@ -583,6 +587,7 @@ Json JigsawPiece::save() const {
     if (markerHandlers) j["marker_handlers"] = *markerHandlers;
     j["ground_offset"] = beardifierGroundDelta;
     if (!poolAliases.empty()) j["pool_aliases"] = poolAliases;
+    if (liquids::ignoresWaterlogging(placeSettings.processors)) j["ignore_waterlog"] = true;
     return j;
 }
 
@@ -601,6 +606,9 @@ void JigsawPiece::load(Json const& data) {
     poolAliases.clear();
     Json aliases = data.value("pool_aliases", Json::object());
     for (auto const& [k, v] : aliases.items()) poolAliases[k] = v.get<std::string>();
+    // NBT_IGNORE_WATERLOG: setLiquidSettings(IGNORE_WATERLOGGING)
+    if (data.value("ignore_waterlog", false) && !liquids::ignoresWaterlogging(placeSettings.processors))
+        placeSettings.processors.push_back(liquids::kIgnoreWaterlogging);
 }
 
 } // namespace gf::structure::bases

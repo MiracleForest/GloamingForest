@@ -250,10 +250,8 @@ void ComponentOld::setDoubleLootChest(Region& region, int x, int y, int z, int o
     Orientation dir = facing.value_or(Orientation::North);
     BlockPos    first{worldX(x, z), worldY(y), worldZ(x, z)};
     BlockPos    second{worldX(otherX, otherZ), worldY(otherY), worldZ(otherX, otherZ)};
-    // world.getRandom().nextBoolean(): the generator's random is not exposed by the region, so the
-    // flip is drawn from a source seeded with the first chest's position
-    JavaRandom  flipRandom(pure::mthGetSeed(first.x, first.y, first.z));
-    bool        flipContents = flipRandom.nextBoolean();
+    // world.getRandom().nextBoolean(): the region's random, not the piece's
+    bool        flipContents = regionRandom(region).nextBoolean();
     char const* id           = trapped ? "minecraft:trapped_chest" : "minecraft:chest";
     placeBlock(region, blocks::java(id, Json{{"type", "left"}, {"facing", blocks::directionName(dir)}}), x, y, z, sbb);
     placeBlock(region, blocks::java(id, Json{{"type", "right"}, {"facing", blocks::directionName(dir)}}), otherX, otherY, otherZ, sbb);

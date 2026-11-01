@@ -80,6 +80,16 @@ std::unique_ptr<Parsed> parse(Template const& t) {
         std::string name = entry.value("Name", std::string{});
         if (name == "minecraft:structure_void") p->palette.push_back(nullptr);
         else p->palette.push_back(blocks::fromJavaState(entry));
+        // Java's waterlogged property (Bedrock: water in the liquid layer) and potted plants
+        // (Bedrock: one flower pot block whose block actor holds the plant)
+        auto const& props = entry.value("Properties", Json::object());
+        std::int8_t wl    = -1;
+        if (props.is_object() && props.contains("waterlogged")) {
+            auto const& v = props["waterlogged"];
+            wl            = (v.is_boolean() ? v.get<bool>() : v.is_string() && v.get<std::string>() == "true") ? 1 : 0;
+        }
+        p->paletteWaterlogged.push_back(wl);
+        p->pottedPlant.push_back(blocks::pottedPlant(name));
     }
     p->cells.reserve(static_cast<std::size_t>(p->sx) * p->sy * p->sz);
     for (auto const& run : doc["blocks"]) {
@@ -395,17 +405,67 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
                 }
                 if (dropped || !current.block) continue;
                 if (clip && !clip->contains(current.pos.x, current.pos.y, current.pos.z)) continue;
-                placed.push_back(Placed{current.pos, current.block, std::move(current.data)});
+                Placed out{current.pos, current.block, std::move(current.data)};
+                // the Java state's waterlogged survives the processors while the block can hold
+                // water (FeaturePlacers.transferAllStateKeys copies it); a pot keeps its plant
+                bool sameBlock = blocks::id(*current.block) == blocks::id(*t.palette[idx]);
+                int  wl        = t.paletteWaterlogged[idx];
+                if (sameBlock) out.waterlogged = wl;
+                else if (liquids::waterloggable(*current.block)) out.waterlogged = wl > 0 ? 1 : 0;
+                if (!t.pottedPlant[idx].empty() && blocks::id(*current.block) == "minecraft:flower_pot") out.pottedPlant = t.pottedPlant[idx];
+                placed.push_back(std::move(out));
             }
 
+    // StructureTemplate#placeInWorld with LiquidSettings.APPLY_WATERLOGGING (unless the settings
+    // ignore it): a waterloggable block put where the world holds a water source is waterlogged;
+    // afterwards, still dry ones next to a water source (above or beside) are waterlogged too,
+    // repeated while that changes anything
+    bool keepLiquids = !liquids::ignoresWaterlogging(settings.processors);
+    auto key         = [](BlockPos const& p) { return std::tuple<int, int, int>{p.x, p.y, p.z}; };
+    std::set<std::tuple<int, int, int>> sourcesPlaced; ///< list2: placed blocks whose fluid is a source
+    std::set<std::tuple<int, int, int>> wet;           ///< waterlogged by this placement
+    std::vector<BlockPos>               dry;           ///< list1: dry liquid containers
     for (auto& p : placed) {
         Block const* b = p.block;
         if (settings.mirror != Mirror::None) b = &blocks::mirror(*b, settings.mirror);
         if (settings.rotation != Rotation::None) b = &blocks::rotate(*b, settings.rotation);
         p.block = b;
         if (p.pos.y < region.minY() || p.pos.y >= region.maxY()) continue;
-        region.setBlock(p.pos, *b, placement.flags);
+        bool container  = p.waterlogged >= 0 || liquids::waterloggable(*b);
+        bool worldWater = keepLiquids && container && p.waterlogged != 1 && liquids::waterSourceAt(region, p.pos);
+        bool water      = p.waterlogged == 1 || worldWater;
+        if (!liquids::setBlock(region, p.pos, *b, placement.flags, water)) continue;
+        if (!keepLiquids) continue;
+        if (p.waterlogged == 1 || liquids::alwaysWater(*b) || liquids::isWaterSource(*b)) sourcesPlaced.insert(key(p.pos));
+        else if (container) {
+            if (water) wet.insert(key(p.pos));
+            else dry.push_back(p.pos);
+        }
     }
+    if (keepLiquids) {
+        auto waterAt = [&](BlockPos const& p) { return wet.contains(key(p)) || liquids::waterSourceAt(region, p); };
+        static constexpr int kDirs[5][3] = {{0, 1, 0}, {0, 0, -1}, {1, 0, 0}, {0, 0, 1}, {-1, 0, 0}}; // UP, NORTH, EAST, SOUTH, WEST
+        bool changed = true;
+        while (changed && !dry.empty()) {
+            changed = false;
+            for (auto it = dry.begin(); it != dry.end();) {
+                bool source = waterAt(*it);
+                for (int d = 0; d < 5 && !source; d++) {
+                    BlockPos n{it->x + kDirs[d][0], it->y + kDirs[d][1], it->z + kDirs[d][2]};
+                    if (waterAt(n) && !sourcesPlaced.contains(key(n))) source = true;
+                }
+                if (source) {
+                    liquids::setWaterlogged(region, *it, true);
+                    wet.insert(key(*it));
+                    changed = true;
+                    it = dry.erase(it);
+                } else ++it;
+            }
+        }
+    }
+    // flower pot contents (the pot block stands now)
+    for (auto const& p : placed)
+        if (!p.pottedPlant.empty() && p.pos.y >= region.minY() && p.pos.y < region.maxY()) blockentities::flowerPot(region, p.pos, p.pottedPlant);
     // block entity data after every block stands (containers need their block)
     for (auto const& p : placed) {
         if (!p.data.is_object() || !p.data.contains("marker")) continue;

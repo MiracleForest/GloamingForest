@@ -22,6 +22,7 @@
 #include "feature/structure/Structure.h"
 #include "feature/structure/pure/JavaRandom.h"
 
+class Actor;
 class Block;
 class BlockSource;
 
@@ -43,6 +44,13 @@ namespace blocks {
 [[nodiscard]] Block const* fromJava(std::string_view javaId, Json const& props = Json::object());
 /// fromJava or air.
 [[nodiscard]] Block const& java(std::string_view javaId, Json const& props = Json::object());
+/// The Bedrock plant id of a Java "minecraft:potted_<plant>" id ("" for any other id or when the
+/// plant does not exist on Bedrock).
+[[nodiscard]] std::string pottedPlant(std::string_view javaId);
+/// Whether the block stops movement (Material#blocksMotion: has a collision shape).
+[[nodiscard]] bool blocksMotion(Block const& block);
+/// Whether `id` names a block of the block registry (no warning when it does not).
+[[nodiscard]] bool isRegisteredBlock(std::string_view id);
 /// A Java block state written as {"Name": id, "Properties": {...}} (BlockState.CODEC).
 [[nodiscard]] Block const* fromJavaState(Json const& state);
 /// Whether `block` is Java block `javaId` (by Bedrock id).
@@ -144,6 +152,10 @@ struct Parsed {
     int                       sx = 0, sy = 0, sz = 0;
     std::vector<Block const*> palette;      ///< nullptr: unknown block (skipped)
     std::vector<Json>         paletteJson;  ///< the Java states
+    /// Java "waterlogged" of each palette state: -1 no such property, 0 false, 1 true.
+    std::vector<std::int8_t>  paletteWaterlogged;
+    /// The plant of a Java minecraft:potted_* state (Bedrock id; "" for every other state).
+    std::vector<std::string>  pottedPlant;
     std::vector<std::uint16_t> cells;       ///< palette index per block, y-major, then z, then x
     std::vector<Marker>       markers;
     std::vector<Connector>    connectors;
@@ -177,6 +189,8 @@ struct Placed {
     BlockPos     pos;
     Block const* block = nullptr;
     Json         data;
+    int          waterlogged = -1; ///< the Java state's waterlogged (-1: the block has no such property)
+    std::string  pottedPlant;      ///< flower pot content (Bedrock plant id)
 };
 /// StructureTemplate#placeInWorld for a GloamingForest template: processes every block, places
 /// the ones inside settings.clip, applies their block entity markers and spawns the entities.
@@ -252,14 +266,109 @@ void lootTable(Region& region, BlockPos const& pos, std::string const& tableId, 
 void spawner(Region& region, BlockPos const& pos, std::string const& entityId, Json const& data);
 /// Sign text (lines 0..3).
 void sign(Region& region, BlockPos const& pos, std::vector<std::string> const& lines);
-/// Spawns an entity at a world position (template entities, paintings); false when it could not.
+/// Spawns an entity at a world position (template entities); false when it could not (live
+/// regions) or when the id is empty. Paintings go through paintings::tryHang.
 bool entity(Region& region, double x, double y, double z, std::string const& entityId, Json const& data);
-/// Runs the deferred work whose chunks are loaded (server tick).
+/// Hangs painting `motive` ("kebab") at `pos` facing `direction`; with a BlockSource the result is
+/// the game's, during generation the painting is queued (the caller checked the spot) and true.
+bool painting(Region& region, BlockPos const& pos, Orientation direction, std::string const& motive, Json const& box);
+/// Whether a queued (not yet spawned) painting of dimension `dim` overlaps `box` ([minX, minY,
+/// minZ, maxX, maxY, maxZ] doubles): the ProtoChunk entities TF's painting check sees.
+[[nodiscard]] bool pendingPaintingIntersects(int dim, double const (&box)[6]);
+/// A flower pot's plant (FlowerPotBlockActor PlantBlock).
+void flowerPot(Region& region, BlockPos const& pos, std::string const& plantId);
+/// Water in the liquid layer at `pos` of a generation region, put there once the chunk is loaded
+/// and only while the block there is still `blockId`.
+void waterlog(Region& region, BlockPos const& pos, std::string const& blockId);
+/// DryingRackBlockEntity#fillFromLootTable: rolls `tableId` now and stores the last stack.
+void fillRack(Region& region, BlockPos const& pos, std::string const& tableId, std::int64_t seed);
+/// The loot table F7 gave the container at `pos` (count_loot unpacks it), nullopt when none.
+struct LootRecord {
+    std::string  table;
+    std::int64_t seed = 0;
+};
+[[nodiscard]] std::optional<LootRecord> lootRecord(int dim, BlockPos const& pos);
+void                                    forgetLootRecord(int dim, BlockPos const& pos);
+/// SpawnerProcessor entity_width_max: the scale spawned mobs of the spawner at `pos` get.
+void spawnerScale(int dim, BlockPos const& pos, std::string const& entityId, float scale);
+/// Applies a generic.scale-like size factor to a live mob (Bedrock bounding box data).
+bool applyScale(Actor& actor, float scale);
+/// Runs the deferred work whose chunks are loaded (server tick; every job of a chunk at once,
+/// chunks checked every few ticks).
 void flush();
 [[nodiscard]] std::size_t pending();
+/// A selftest job (kind "gf_test_mark": writes `nonce` under gf:structure:test_mark when run).
+void queueTestMark(int dim, BlockPos const& pos, std::string const& nonce);
 void load();
 void save();
+void installEvents();
+void uninstallEvents();
 } // namespace blockentities
+
+// ---- liquids (Liquids.cpp) ---------------------------------------------------------------------------
+namespace liquids {
+/// The TemplateSettings / PlaceSettings::processors entry standing for Java's
+/// setLiquidSettings(LiquidSettings.IGNORE_WATERLOGGING) (processors::expand skips it).
+inline constexpr char kIgnoreWaterlogging[] = "gf:liquid_settings/ignore_waterlogging";
+[[nodiscard]] bool ignoresWaterlogging(std::vector<std::string> const& processors);
+/// Java's SimpleWaterloggedBlock / LiquidBlockContainer, by Bedrock block (the families whose Java
+/// state has a "waterlogged" property).
+[[nodiscard]] bool waterloggable(Block const& block);
+/// Blocks whose Java fluid state is always a water source (seagrass, kelp).
+[[nodiscard]] bool alwaysWater(Block const& block);
+/// A water source block (minecraft:water / flowing_water at liquid_depth 0).
+[[nodiscard]] bool isWaterSource(Block const& block);
+/// Level#getFluidState(pos) is a water source: the block layer or the liquid layer.
+[[nodiscard]] bool waterSourceAt(Region& region, BlockPos const& pos);
+/// Puts water into / takes it out of the liquid layer at `pos` (live regions at once,
+/// generation regions when the chunk is loaded).
+void setWaterlogged(Region& region, BlockPos const& pos, bool waterlogged);
+/// Places `block` as Java places a state whose waterlogged is `waterlogged` (the liquid layer
+/// holds water exactly when it is true).
+bool setBlock(Region& region, BlockPos const& pos, Block const& block, int flags, bool waterlogged);
+} // namespace liquids
+
+// ---- paintings (Paintings.cpp) -------------------------------------------------------------------------
+namespace paintings {
+/// A painting variant of 1.21.1 (width x height in blocks).
+struct Variant {
+    std::string id; ///< "minecraft:kebab"
+    int         width = 1, height = 1;
+};
+/// The painting_variant registry (data-driven: sorted by id).
+[[nodiscard]] std::vector<Variant> const& registry();
+[[nodiscard]] std::optional<Variant>      byId(std::string_view id);
+/// The members of a painting_variant tag in the tag's order ("minecraft:placeable").
+[[nodiscard]] std::vector<Variant> tag(std::string const& tagId);
+/// Painting#calculateBoundingBox: [minX, minY, minZ, maxX, maxY, maxZ].
+void boundingBox(BlockPos const& pos, Orientation direction, Variant const& variant, double (&out)[6]);
+/// EntityUtil.tryHangPainting.
+bool tryHang(Region& region, BlockPos const& pos, Orientation direction, std::optional<Variant> const& variant);
+/// An entity (a painting so far, or any in a live world) overlaps the block at `pos`.
+[[nodiscard]] bool occupied(Region& region, BlockPos const& pos);
+/// EntityUtil.getPaintingOfSize.
+[[nodiscard]] std::optional<Variant> ofSize(RandomSource& random, int width, int height, bool exactMeasurements);
+/// EntityUtil.getPaintingsOfSizeOrSmaller.
+[[nodiscard]] std::vector<Variant> ofSizeOrSmaller(std::string const& tagId, int width, int height);
+/// LichBossRoom.placePainting(pos, random, limitTries, paintings, level, width, height, dir).
+bool place(BlockPos const& pos, RandomSource& random, int limitTries, std::string const& tagId, Region& region, int width, int height,
+           Orientation direction);
+/// LichBossRoom.placePainting(label, pos, level, random, chunkBounds, rotation, limitTries, rarityFactor, paintings).
+bool placeLabelled(std::string const& label, BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunkBounds, Rotation rotation,
+                   int limitTries, int rarityFactor, std::string const& tagId);
+} // namespace paintings
+
+/// WorldGenRegion#getRandom: a random of the region being decorated, separate from the piece's
+/// random (TF draws wall selectors, canopy trees and planter trees from it). Seeded from the
+/// region's seed and center chunk; the same region keeps drawing from the same random.
+[[nodiscard]] RandomSource& regionRandom(Region& region);
+/// Forgets the region random of this thread (a new region object starts its own).
+void resetRegionRandom();
+
+namespace outlines {
+/// Removes the outline tick listener (clear_display, module uninstall, world closed).
+void shutdown();
+} // namespace outlines
 
 // ---- data (Data.cpp) --------------------------------------------------------------------------------
 namespace data {

@@ -67,9 +67,11 @@ void Maze::copyToStructure(Region& region, int dx, int dy, int dz, ComponentOld&
     auto put = [&](Block const* b, int x, int y, int z) {
         if (b) component.placeBlock(region, *b, x, y, z, sbb);
     };
-    auto putWallBlock = [&](int x, int y, int z) {
-        // TF draws from world.getRandom() here; the region exposes no random, so the copy's own is used
-        if (wallBlocks) component.placeBlock(region, wallBlocks->next(rand, x, y, z, true), x, y, z, sbb);
+    // TF draws the wall selector and the canopy trees from world.getRandom() (the region's random),
+    // so `rand` sees only the shouldTree / shouldTorch draws, as in TF
+    RandomSource& worldRandom  = regionRandom(region);
+    auto          putWallBlock = [&](int x, int y, int z) {
+        if (wallBlocks) component.placeBlock(region, wallBlocks->next(worldRandom, x, y, z, true), x, y, z, sbb);
         else put(wallBlockState, x, y, z);
     };
     auto makeWallThing = [&](int mdx, int mdz, int even, int odd) {
@@ -94,7 +96,7 @@ void Maze::copyToStructure(Region& region, int dx, int dy, int dz, ComponentOld&
                         // putCanopyTree: only where the middle of the tree is in this chunk
                         BlockPos pos = component.getBlockPosWithOffset(mdx, dy, mdz);
                         if (sbb.contains(pos.x, pos.y, pos.z)) {
-                            if (!features::place("twilightforest:tree/canopy_tree", region, pos, rand)) makeWallThing(mdx, mdz, 0, 0);
+                            if (!features::place("twilightforest:tree/canopy_tree", region, pos, worldRandom)) makeWallThing(mdx, mdz, 0, 0);
                         }
                     } else {
                         for (int even = 0; even < evenBias; even++)

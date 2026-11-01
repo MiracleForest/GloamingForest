@@ -730,6 +730,28 @@ Block const& java(std::string_view javaId, Json const& props) {
     return b ? *b : air();
 }
 
+std::string pottedPlant(std::string_view javaId) {
+    constexpr std::string_view prefix = "minecraft:potted_";
+    if (!javaId.starts_with(prefix)) return {};
+    std::string plant(javaId.substr(prefix.size()));
+    // FlowerPotBlock's content: the pot's id minus "potted_" (azalea bushes hold the azalea)
+    if (plant == "azalea_bush") plant = "azalea";
+    else if (plant == "flowering_azalea_bush") plant = "flowering_azalea";
+    auto id = bedrockId("minecraft:" + plant);
+    if (id.empty()) warnOnce("potted:" + plant, "structure: no Bedrock block for the potted plant minecraft:" + plant + " (empty pot)");
+    return id;
+}
+
+bool isRegisteredBlock(std::string_view id) {
+    if (id.empty()) return false;
+    return !resolveId(id, Json::object()).empty();
+}
+
+bool blocksMotion(Block const& block) {
+    if (block.isAir()) return false;
+    return block.getBlockType().mMaterial.mBlocksMotion;
+}
+
 Block const* fromJavaState(Json const& state) {
     if (state.is_string()) return fromJava(state.get<std::string>());
     if (!state.is_object()) return nullptr;

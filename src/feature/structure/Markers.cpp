@@ -59,25 +59,6 @@ std::vector<std::string> split(std::string const& s, char delim, int limit = -1)
 
 bool isNumeric(std::string const& s) { return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) { return std::isdigit(c); }); }
 
-/// minecraft:placeable painting variants of 1.21.1 (id, width, height).
-struct Variant {
-    char const* id;
-    int         w, h;
-};
-std::vector<Variant> const& placeablePaintings() {
-    static std::vector<Variant> const v{
-        {"kebab", 1, 1},          {"aztec", 1, 1},       {"alban", 1, 1},       {"aztec2", 1, 1},     {"bomb", 1, 1},       {"plant", 1, 1},
-        {"wasteland", 1, 1},      {"meditative", 1, 1},  {"pool", 2, 1},        {"courbet", 2, 1},    {"sea", 2, 1},        {"sunset", 2, 1},
-        {"creebet", 2, 1},        {"wanderer", 1, 2},    {"graham", 1, 2},      {"prairie_ride", 1, 2}, {"match", 2, 2},    {"bust", 2, 2},
-        {"stage", 2, 2},          {"void", 2, 2},        {"skull_and_roses", 2, 2}, {"wither", 2, 2}, {"baroque", 2, 2},    {"humble", 2, 2},
-        {"bouquet", 3, 3},        {"cavebird", 3, 3},    {"cotan", 3, 3},       {"endboss", 3, 3},    {"fern", 3, 3},       {"owlemons", 3, 3},
-        {"sunflowers", 3, 3},     {"tides", 3, 3},       {"backyard", 3, 4},    {"pond", 3, 4},       {"fighters", 4, 2},   {"changing", 4, 2},
-        {"finding", 4, 2},        {"lowmist", 4, 2},     {"passage", 4, 2},     {"skeleton", 4, 3},   {"donkey_kong", 4, 3}, {"pointer", 4, 4},
-        {"pigscene", 4, 4},       {"burning_skull", 4, 4}, {"orb", 4, 4},       {"unpacked", 4, 4},
-    };
-    return v;
-}
-
 } // namespace
 
 int parseRange(std::string const& label, RandomSource& random, int defaultMin, int defaultMax) {
@@ -125,10 +106,12 @@ bool handle(Json const& handler, std::string const& label, BlockPos const& pos, 
     }
     if (type == "twilightforest:drying_rack") {
         auto const* b = provide(handler["drying_rack_block"], random, pos);
+        // state.getBlock() instanceof DryingRackBlock
         if (!b || !blocks::id(*b).ends_with("_drying_rack")) return false;
         if (!region.setBlock(pos, blocks::rotate(*b, rotation), 3)) return false;
-        // DryingRackBlockEntity#fillFromLootTable: the rack's storage is gf::inventory's
-        blockentities::lootTable(region, pos, handler.value("loot_table", std::string{}), random.nextLong());
+        // DryingRackBlockEntity#fillFromLootTable(table, random.nextLong()): the rack holds the
+        // rolled stack at once (its storage is gf::inventory's)
+        blockentities::fillRack(region, pos, handler.value("loot_table", std::string{}), random.nextLong());
         return true;
     }
     if (type == "twilightforest:loot") {
@@ -141,22 +124,9 @@ bool handle(Json const& handler, std::string const& label, BlockPos const& pos, 
     }
     if (type == "twilightforest:painting") {
         // LichBossRoom.placePainting(pos, random, 1, paintings, level, 1, 1, rotation.rotate(NORTH))
-        Orientation dir = rotateDir(Orientation::North, rotation);
-        int         width = 1, height = 1, maxArea = width * height, limitTries = 1;
-        std::vector<Variant> fitting;
-        for (auto const& v : placeablePaintings())
-            if (v.w <= width && v.h <= height) fitting.push_back(v);
-        // Util.shuffle (Collections-style: for i = size; i > 1; i--: swap(i - 1, nextInt(i)))
-        for (int i = static_cast<int>(fitting.size()); i > 1; i--) std::swap(fitting[static_cast<std::size_t>(i - 1)], fitting[static_cast<std::size_t>(random.nextInt(i))]);
-        for (auto const& v : fitting) {
-            int area = v.w * v.h;
-            if (random.nextInt(maxArea) <= area) {
-                Json data{{"motive", v.id}, {"direction", blocks::directionName(dir)}};
-                // EntityUtil.tryHangPainting(...) || limitTries-- <= 0
-                if (blockentities::entity(region, pos.x + 0.5, pos.y + 0.5, pos.z + 0.5, "minecraft:painting", data) || limitTries-- <= 0) return true;
-            }
-        }
-        return false;
+        auto tagId = handler.value("paintings", std::string("minecraft:placeable"));
+        if (!tagId.empty() && tagId[0] == '#') tagId = tagId.substr(1);
+        return paintings::place(pos, random, 1, tagId, region, 1, 1, rotateDir(Orientation::North, rotation));
     }
     if (type == "twilightforest:rotation") {
         std::string delimiter = handler.value("delimiter", std::string("@"));

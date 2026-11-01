@@ -53,10 +53,12 @@ Block const& birchSlab() { return B("minecraft:birch_slab", Json{{"type", "botto
 Block const& birchSlabTop() { return B("minecraft:birch_slab", Json{{"type", "top"}}); }
 Block const& birchPlanks() { return B("minecraft:birch_planks"); }
 
-Block const& randomPlant(int i) {
+/// TFStructureHelper.randomPlant (the Java id: the plant of a potted_* block lives in the Bedrock
+/// flower pot's block actor, which the id form of placeBlock fills in).
+char const* randomPlant(int i) {
     static char const* const plants[] = {"minecraft:potted_oak_sapling", "minecraft:potted_spruce_sapling", "minecraft:potted_birch_sapling",
                                          "minecraft:potted_jungle_sapling", "minecraft:potted_red_mushroom", "minecraft:potted_brown_mushroom"};
-    return B(plants[std::clamp(i, 0, 5)]);
+    return plants[std::clamp(i, 0, 5)];
 }
 char const* randomTree(int i) {
     switch (i) {
@@ -83,35 +85,6 @@ BlockBox componentBox(int x, int y, int z, int minX, int minY, int minZ, int spa
     default:
         return BlockBox::of(x + minX, y + minY, z + minZ, x + spanX + minX, y + spanY + minY, z + spanZ + minZ);
     }
-}
-
-/// The painting variants of 1.21.1's registry (data-driven: sorted by id), width x height in blocks.
-struct PaintingVariant {
-    char const* id;
-    int         w, h;
-};
-std::vector<PaintingVariant> const& paintingRegistry() {
-    static std::vector<PaintingVariant> const v{
-        {"alban", 1, 1},     {"aztec", 1, 1},      {"aztec2", 1, 1},   {"backyard", 3, 4},     {"baroque", 2, 2},  {"bomb", 1, 1},     {"bouquet", 3, 3},
-        {"burning_skull", 4, 4}, {"bust", 2, 2},   {"cavebird", 3, 3}, {"changing", 4, 2},     {"cotan", 3, 3},    {"courbet", 2, 1},  {"creebet", 2, 1},
-        {"donkey_kong", 4, 3}, {"earth", 2, 2},    {"endboss", 3, 3},  {"fern", 3, 3},         {"fighters", 4, 2}, {"finding", 4, 2},  {"fire", 2, 2},
-        {"graham", 1, 2},    {"humble", 2, 2},     {"kebab", 1, 1},    {"lowmist", 4, 2},      {"match", 2, 2},    {"meditative", 1, 1}, {"orb", 4, 4},
-        {"owlemons", 3, 3},  {"passage", 4, 2},    {"pigscene", 4, 4}, {"plant", 1, 1},        {"pointer", 4, 4},  {"pond", 3, 4},     {"pool", 2, 1},
-        {"prairie_ride", 1, 2}, {"sea", 2, 1},     {"skeleton", 4, 3}, {"skull_and_roses", 2, 2}, {"stage", 2, 2}, {"sunflowers", 3, 3}, {"sunset", 2, 1},
-        {"tides", 3, 3},     {"unpacked", 4, 4},   {"void", 2, 2},     {"wanderer", 1, 2},     {"wasteland", 1, 1}, {"water", 2, 2},   {"wind", 2, 2},
-        {"wither", 2, 2},
-    };
-    return v;
-}
-
-/// EntityUtil.getPaintingOfSize(level, rand, minSize, minSize, false). TF still passes the old pixel
-/// sizes (48, 32), so only minSize 0 finds paintings, as in TF.
-std::optional<PaintingVariant> paintingOfSize(RandomSource& rand, int minSize) {
-    std::vector<PaintingVariant> valid;
-    for (auto const& v : paintingRegistry())
-        if (v.w >= minSize || v.h >= minSize) valid.push_back(v);
-    if (valid.empty()) return std::nullopt;
-    return valid[static_cast<std::size_t>(rand.nextInt(static_cast<int>(valid.size())))];
 }
 
 /// Turns a ComponentOld's orientation for the scope (TF's setOrientation(rotation.rotate(temp)) ...
@@ -853,13 +826,13 @@ void TowerWing::decoratePlanter(Region& region, RandomSource& rand, BlockBox con
     surroundBlockCardinal(region, stoneSlab(), cx, 1, cx, sbb);
     if (size > 7) surroundBlockCorners(region, stoneSlabDouble(), cx, 1, cx, sbb);
     placeBlock(region, B("minecraft:grass_block"), cx, 1, cx, sbb);
-    int          i     = rand.nextInt(6);
-    Block const& plant = randomPlant(i);
-    BlockPos     pos   = getBlockPosWithOffset(cx, 2, cx);
-    // TF tries a vanilla tree for the brown mushroom pick (world.getRandom(): the region exposes none,
-    // so the piece's random is used); either way the plant is placed, as written in TF
-    if (i > 4) (void)features::place(randomTree(rand.nextInt(4)), region, pos, rand);
-    placeBlock(region, plant, cx, 2, cx, sbb);
+    int         i     = rand.nextInt(6);
+    char const* plant = randomPlant(i);
+    BlockPos    pos   = getBlockPosWithOffset(cx, 2, cx);
+    // TF tries a vanilla tree for the brown mushroom pick, grown with world.getRandom() (the
+    // region's random, not the piece's); either way the plant is placed, as written in TF
+    if (i > 4) (void)features::place(randomTree(rand.nextInt(4)), region, pos, regionRandom(region));
+    placeBlock(region, plant, Json::object(), cx, 2, cx, sbb);
 }
 
 void TowerWing::decorateStairWell(Region& region, RandomSource& rand, BlockBox const& sbb) {
@@ -1177,10 +1150,8 @@ void TowerWing::generatePaintingsOnWall(Region& region, RandomSource& rand, int 
     for (int i = 0; i < howMany; i++) {
         auto pCoords = getRandomWallSpot(rand, floorLevel, direction, sbb);
         if (!pCoords) continue;
-        auto painting = paintingOfSize(rand, minSize);
-        if (!painting) continue; // EntityUtil.tryHangPainting(null) is false
-        blockentities::entity(region, pCoords->x + 0.5, pCoords->y, pCoords->z + 0.5, "minecraft:painting",
-                              Json{{"motive", painting->id}, {"direction", blocks::directionName(direction)}});
+        // EntityUtil.tryHangPainting(world, pCoords, direction, EntityUtil.getPaintingOfSize(world, rand, minSize))
+        (void)paintings::tryHang(region, *pCoords, direction, paintings::ofSize(rand, minSize, minSize, false));
     }
 }
 
@@ -1470,7 +1441,7 @@ void TowerMain::decorateTorches(Region& region, RandomSource& rand, int floorLev
             auto wCoords = getRandomWallSpot(rand, floorLevel, direction, sbb);
             if (!wCoords) continue;
             BlockPos above{wCoords->x, wCoords->y + 1, wCoords->z};
-            if (region.getBlock(*wCoords).isAir() && region.getBlock(above).isAir()) {
+            if (region.getBlock(*wCoords).isAir() && region.getBlock(above).isAir() && !paintings::occupied(region, *wCoords)) {
                 region.setBlock(*wCoords, B("minecraft:oak_fence"), 2);
                 region.setBlock(above, B("minecraft:torch"), 2);
             }

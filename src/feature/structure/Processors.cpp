@@ -32,6 +32,7 @@
 #include <cmath>
 #include <mutex>
 #include <shared_mutex>
+#include <unordered_map>
 
 #include "mc/world/level/block/Block.h"
 
@@ -231,30 +232,80 @@ std::optional<BlockInfo> softReplace(Region& region, BlockInfo const&, BlockInfo
     return std::nullopt;
 }
 
+/// EntityType#getWidth of 1.21.1 (vanilla) and TF 4.8 (TFEntities) mobs, for SpawnerProcessor's
+/// entity_width_max; 0 for an unknown type (no rescale, as TF's orElse(0f)).
+float entityWidth(std::string const& id) {
+    static std::unordered_map<std::string, float> const widths{
+        // vanilla
+        {"minecraft:zombie", 0.6f}, {"minecraft:husk", 0.6f}, {"minecraft:drowned", 0.6f}, {"minecraft:zombie_villager", 0.6f},
+        {"minecraft:skeleton", 0.6f}, {"minecraft:stray", 0.6f}, {"minecraft:bogged", 0.6f}, {"minecraft:wither_skeleton", 0.7f},
+        {"minecraft:spider", 1.4f}, {"minecraft:cave_spider", 0.7f}, {"minecraft:creeper", 0.6f}, {"minecraft:blaze", 0.6f},
+        {"minecraft:silverfish", 0.4f}, {"minecraft:endermite", 0.4f}, {"minecraft:enderman", 0.6f}, {"minecraft:witch", 0.6f},
+        {"minecraft:slime", 0.52f}, {"minecraft:magma_cube", 0.52f}, {"minecraft:ghast", 4.0f}, {"minecraft:pillager", 0.6f},
+        {"minecraft:vindicator", 0.6f}, {"minecraft:evoker", 0.6f}, {"minecraft:phantom", 0.9f}, {"minecraft:piglin", 0.6f},
+        {"minecraft:zombified_piglin", 0.6f}, {"minecraft:hoglin", 1.3964844f}, {"minecraft:guardian", 0.85f}, {"minecraft:breeze", 0.6f},
+        {"minecraft:wolf", 0.6f}, {"minecraft:pig", 0.9f}, {"minecraft:cow", 0.9f}, {"minecraft:sheep", 0.9f}, {"minecraft:chicken", 0.4f},
+        {"minecraft:bat", 0.5f}, {"minecraft:iron_golem", 1.4f}, {"minecraft:snow_golem", 0.7f}, {"minecraft:villager", 0.6f},
+        // Twilight Forest
+        {"twilightforest:adherent", 0.8f}, {"twilightforest:alpha_yeti", 3.8f}, {"twilightforest:armored_giant", 2.4f},
+        {"twilightforest:bighorn_sheep", 0.9f}, {"twilightforest:blockchain_goblin", 0.9f}, {"twilightforest:boar", 0.9f},
+        {"twilightforest:boggard", 0.8f}, {"twilightforest:carminite_broodling", 0.7f}, {"twilightforest:carminite_ghastguard", 4.0f},
+        {"twilightforest:carminite_ghastling", 1.1f}, {"twilightforest:carminite_golem", 1.4f}, {"twilightforest:death_tome", 0.75f},
+        {"twilightforest:deer", 0.7f}, {"twilightforest:dwarf_rabbit", 0.4f}, {"twilightforest:fire_beetle", 1.1f},
+        {"twilightforest:giant_miner", 2.4f}, {"twilightforest:harbinger_cube", 1.9f}, {"twilightforest:hedge_spider", 1.4f},
+        {"twilightforest:helmet_crab", 0.8f}, {"twilightforest:hostile_wolf", 0.6f}, {"twilightforest:hydra", 16.0f},
+        {"twilightforest:ice_crystal", 0.6f}, {"twilightforest:king_spider", 1.6f}, {"twilightforest:knight_phantom", 1.25f},
+        {"twilightforest:kobold", 0.8f}, {"twilightforest:lich", 0.8f}, {"twilightforest:lich_minion", 0.6f},
+        {"twilightforest:lower_goblin_knight", 0.7f}, {"twilightforest:loyal_zombie", 0.6f}, {"twilightforest:maze_slime", 0.52f},
+        {"twilightforest:minoshroom", 1.49f}, {"twilightforest:minotaur", 0.6f}, {"twilightforest:mist_wolf", 1.4f},
+        {"twilightforest:mosquito_swarm", 0.7f}, {"twilightforest:naga", 2.0f}, {"twilightforest:penguin", 0.5f},
+        {"twilightforest:pinch_beetle", 1.2f}, {"twilightforest:quest_ram", 1.25f}, {"twilightforest:raven", 0.3f},
+        {"twilightforest:redcap", 0.9f}, {"twilightforest:redcap_sapper", 0.9f}, {"twilightforest:rising_zombie", 0.6f},
+        {"twilightforest:roving_cube", 1.2f}, {"twilightforest:skeleton_druid", 0.6f}, {"twilightforest:slime_beetle", 0.9f},
+        {"twilightforest:snow_guardian", 0.6f}, {"twilightforest:snow_queen", 0.7f}, {"twilightforest:squirrel", 0.3f},
+        {"twilightforest:stable_ice_core", 0.8f}, {"twilightforest:swarm_spider", 0.8f}, {"twilightforest:tiny_bird", 0.3f},
+        {"twilightforest:towerwood_borer", 0.4f}, {"twilightforest:troll", 1.4f}, {"twilightforest:unstable_ice_core", 0.8f},
+        {"twilightforest:upper_goblin_knight", 1.1f}, {"twilightforest:ur_ghast", 14.0f}, {"twilightforest:winter_wolf", 1.4f},
+        {"twilightforest:wraith", 0.6f}, {"twilightforest:yeti", 1.4f},
+    };
+    auto it = widths.find(id);
+    return it == widths.end() ? 0.0f : it->second;
+}
+
 std::optional<BlockInfo> spawnerProcessor(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const& config) {
-    if (!current.data.is_object() || !current.block) return current;
+    // a template's spawner always carries block entity data (vanilla saves it with the block)
+    if (!current.block) return current;
     if (!blocks::is(*current.block, "minecraft:spawner") && !blocks::is(*current.block, "twilightforest:sinister_spawner")) return current;
     BlockInfo out = current;
+    if (!out.data.is_object()) out.data = Json{{"marker", "spawner"}};
+    if (!out.data.contains("marker")) out.data["marker"] = "spawner";
     if (config.contains("range")) out.data["SpawnRange"] = config["range"].get<int>();
+    // nbtInfo.getShort("MinSpawnDelay"): a spawner's saved data has BaseSpawner's 200 unless set
     if (config.contains("start_delay_factor"))
-        out.data["Delay"] = static_cast<int>(std::lround(out.data.value("MinSpawnDelay", 0) * config["start_delay_factor"].get<float>()));
-    if (!out.data.contains("entity") || out.data["entity"].get<std::string>().empty()) {
-        // SimpleWeightedRandomList<SpawnData>#getRandomValue(settings.getRandom(pos))
-        auto const& entries = config.value("entities", Json::array());
-        int         total   = 0;
-        for (auto const& e : entries) total += e.value("weight", 1);
-        if (total > 0) {
-            int pick = randomAt(current.pos).nextInt(total);
-            for (auto const& e : entries) {
-                pick -= e.value("weight", 1);
-                if (pick < 0) {
-                    auto const& data = e.contains("data") ? e["data"] : e;
-                    auto const& ent  = data.contains("entity") ? data["entity"] : data;
-                    out.data["entity"] = ent.is_object() ? ent.value("id", std::string{}) : ent.get<std::string>();
-                    if (config.contains("entity_width_max")) out.data["entity_width_max"] = config["entity_width_max"];
-                    break;
-                }
+        out.data["Delay"] = pure::javaRound(static_cast<float>(out.data.value("MinSpawnDelay", 200)) * config["start_delay_factor"].get<float>());
+    // `getList("SpawnData", TAG_COMPOUND).isEmpty()` is always true for the compound SpawnData, so
+    // TF always replaces the spawn data: SimpleWeightedRandomList<SpawnData>#getRandomValue(settings.getRandom(pos))
+    auto const& entries = config.value("entities", Json::array());
+    int         total   = 0;
+    for (auto const& e : entries) total += e.value("weight", 1);
+    if (total > 0) {
+        int pick = randomAt(current.pos).nextInt(total);
+        for (auto const& e : entries) {
+            pick -= e.value("weight", 1);
+            if (pick >= 0) continue;
+            auto const& data = e.contains("data") ? e["data"] : e;
+            auto const& ent  = data.contains("entity") ? data["entity"] : data;
+            std::string id   = ent.is_object() ? ent.value("id", std::string{}) : ent.get<std::string>();
+            out.data["entity"] = id;
+            out.data.erase("entity_scale");
+            // entity_width_max: a generic.scale attribute shrinking wider mobs to the width
+            float maxWidth = config.value("entity_width_max", 0.0f);
+            if (maxWidth > 0) {
+                float width = entityWidth(id);
+                float scale = (width == 0 || width < maxWidth) ? 1.0f : maxWidth / width; // rescaleToFitWidth
+                if (std::isfinite(scale) && scale != 1.0f) out.data["entity_scale"] = scale;
             }
+            break;
         }
     }
     return out;
@@ -450,7 +501,7 @@ void appendList(Json const& list, std::vector<Instance>& out) {
 std::vector<Instance> expand(std::vector<std::string> const& entries) {
     std::vector<Instance> out;
     for (auto const& e : entries) {
-        if (e.empty()) continue;
+        if (e.empty() || e == liquids::kIgnoreWaterlogging) continue; // a liquid setting, not a processor
         if (e[0] == '{' || e[0] == '[') {
             try {
                 Json j = Json::parse(e);

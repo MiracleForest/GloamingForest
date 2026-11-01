@@ -12,7 +12,9 @@
 //
 // Template pools from TF's twilight/template_definition data (a template lists the pools it
 // belongs to with a weight or a TemplatePoolInstance), and TF's jigsaw growth over them.
+#include <algorithm>
 #include <climits>
+#include <optional>
 #include <mutex>
 #include <shared_mutex>
 
@@ -125,6 +127,8 @@ public:
             }
             rigidProjection = instance.value("projection", std::string("rigid")) != "terrain_matching";
             if (instance.contains("height_adjustment")) beardifierGroundDelta = instance["height_adjustment"].value("y_offset", 0);
+            // ignore_world_waterlog: placeSettings.setLiquidSettings(LiquidSettings.IGNORE_WATERLOGGING)
+            if (instance.value("ignore_world_waterlog", false)) placeSettings.processors.push_back(liquids::kIgnoreWaterlogging);
             if (instance.contains("marker_handlers")) {
                 auto const& m = instance["marker_handlers"];
                 if (m.is_string()) markerHandlers = m.get<std::string>();
@@ -166,17 +170,72 @@ std::unique_ptr<JigsawPiece> defaultForTemplate(int genDepth, std::string const&
     return std::make_unique<PoolJigsawPiece>(genDepth, templateId, context, instance, std::move(chosen));
 }
 
+ext::GenerationContext const*& generationContext() {
+    thread_local ext::GenerationContext const* context = nullptr;
+    return context;
+}
+
+namespace {
+
+worldgen::Heightmap parseHeightmap(std::string const& name) {
+    if (name == "WORLD_SURFACE") return worldgen::Heightmap::WorldSurface;
+    if (name == "OCEAN_FLOOR_WG") return worldgen::Heightmap::OceanFloorWg;
+    if (name == "OCEAN_FLOOR") return worldgen::Heightmap::OceanFloor;
+    if (name == "MOTION_BLOCKING") return worldgen::Heightmap::MotionBlocking;
+    if (name == "MOTION_BLOCKING_NO_LEAVES") return worldgen::Heightmap::MotionBlockingNoLeaves;
+    return worldgen::Heightmap::WorldSurfaceWg;
+}
+
+} // namespace
+
+JigsawPlaceContext adjustContextForTerrain(JigsawPlaceContext context, Json const& h, ext::GenerationContext const& gen, bool parentProjectsTerrain) {
+    if (!h.is_object()) return context;
+    auto               type  = parseHeightmap(h.value("heightmap", std::string("WORLD_SURFACE_WG")));
+    int                delta = h.value("y_offset", 0);
+    std::optional<int> limit;
+    if (h.contains("ground_junction_diff_clamp") && h["ground_junction_diff_clamp"].is_number_integer()) limit = h["ground_junction_diff_clamp"].get<int>();
+    int templateY = context.templatePos.y;
+    // clampYLevelPos / clampYLevelBox
+    auto clamp = [&](auto terrain) {
+        if (!limit) return delta + terrain();
+        if (*limit == 0) return templateY;
+        return std::clamp(delta + terrain(), templateY - *limit, templateY + *limit);
+    };
+    int y;
+    if (parentProjectsTerrain) {
+        BlockPos at{context.templatePos.x + context.seedJigsaw.pos.x, context.templatePos.y + context.seedJigsaw.pos.y,
+                    context.templatePos.z + context.seedJigsaw.pos.z};
+        y = clamp([&] { return gen.firstOccupiedHeight ? gen.firstOccupiedHeight(type, at.x, at.z) : templateY; });
+    } else {
+        BlockBox box = context.makeBoundingBox();
+        y = clamp([&] { return ext::adjustForTerrain(gen, box.minX, box.minZ, box.maxX, box.maxZ, 2, type); });
+    }
+    context.templatePos.y = y;
+    return context;
+}
+
 std::unique_ptr<JigsawPiece> initializeTemplateFromPool(std::string const& pool, BlockPos const& parentJunctionPos, JigsawRecord const& parentOrientation,
-                                                        std::string const& selectName, RandomSource& random, int genDepth) {
+                                                        std::string const& selectName, RandomSource& random, int genDepth,
+                                                        ext::GenerationContext const* gen, bool parentProjectsTerrain) {
     auto const* entries = pools::get(pool);
     if (!entries) return nullptr;
     auto const* entry = pools::random(*entries, random);
     if (!entry) return nullptr;
     auto context = JigsawPlaceContext::pickPlaceableJunction(parentJunctionPos, BlockPos{0, 0, 0}, parentOrientation, entry->templateId, selectName, random);
     if (!context) return nullptr;
-    // TemplatePoolInstance#adjustContextForTerrain needs the generator's heightmaps (a generation
-    // context); pieces assembled outside one keep the junction height.
+    // TemplatePoolInstance#adjustContextForTerrain: with a generation context, the entry's
+    // height_adjustment (absent: the junction height stays)
+    if (gen && entry->instance.is_object() && entry->instance.contains("height_adjustment"))
+        context = adjustContextForTerrain(*context, entry->instance["height_adjustment"], *gen, parentProjectsTerrain);
     return defaultForTemplate(genDepth, entry->templateId, *context, entry->instance, random);
+}
+
+bool projectsTerrain(JigsawPiece const& piece) {
+    // the protected Projection of a piece, read through a member pointer of a derived class
+    struct Peek : JigsawPiece {
+        static bool rigid(JigsawPiece const& p) { return p.*(&Peek::rigidProjection); }
+    };
+    return !Peek::rigid(piece);
 }
 
 void registerPieceTypes() {

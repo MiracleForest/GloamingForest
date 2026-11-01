@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 
+#include "feature/ext/structure/TemplateDefinitions.h"
 #include "feature/structure/Internal.h"
 #include "feature/structure/bases/TemplatePieces.h"
 
@@ -29,10 +30,20 @@ void                       setFrontAndTop(JigsawRecord& r, int ordinal);
 /// TwilightJigsawPiece.defaultForTemplate (pool instance settings and randomized processors).
 [[nodiscard]] std::unique_ptr<JigsawPiece> defaultForTemplate(int genDepth, std::string const& templateId, JigsawPlaceContext const& context,
                                                               Json const& instance, RandomSource& random);
-/// StructureTemplateDefinitions#initializeTemplateFromPool.
+/// StructureTemplateDefinitions#initializeTemplateFromPool; with a generation context the pool
+/// entry's height_adjustment applies (TemplatePoolInstance#adjustContextForTerrain).
 [[nodiscard]] std::unique_ptr<JigsawPiece> initializeTemplateFromPool(std::string const& pool, BlockPos const& parentJunctionPos,
                                                                       JigsawRecord const& parentOrientation, std::string const& selectName,
-                                                                      RandomSource& random, int genDepth);
+                                                                      RandomSource& random, int genDepth,
+                                                                      ext::GenerationContext const* context = nullptr,
+                                                                      bool parentProjectsTerrain = false);
+/// The generation context of the jigsaw assembly running on this thread (nullptr: none).
+[[nodiscard]] ext::GenerationContext const*& generationContext();
+/// TemplatePoolInstance.HeightAdjustment#adjustForTerrain.
+[[nodiscard]] JigsawPlaceContext adjustContextForTerrain(JigsawPlaceContext context, Json const& heightAdjustment, ext::GenerationContext const& gen,
+                                                         bool parentProjectsTerrain);
+/// Whether a jigsaw piece places with Projection.TERRAIN_MATCHING.
+[[nodiscard]] bool projectsTerrain(JigsawPiece const& piece);
 /// The deepest genDepth jigsaw::assemble lets processJigsaw reach (thread-local, default unlimited).
 [[nodiscard]] int& maxJigsawDepth();
 /// A world seed for TwilightJigsawPiece#addJigsaws in place of worldgen::seed() (thread-local; tests).

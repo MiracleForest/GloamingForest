@@ -69,6 +69,36 @@ Orientation reorientChest(Region& region, BlockPos const& pos, Orientation curre
 
 } // namespace
 
+// ---- the region's random ------------------------------------------------------------------------------
+
+namespace {
+struct RegionRandom {
+    Region const* region = nullptr;
+    int           cx = 0, cz = 0, dim = 0;
+    std::int64_t  seed = 0;
+    JavaRandom    random;
+};
+thread_local RegionRandom tRegionRandom;
+} // namespace
+
+RandomSource& regionRandom(Region& region) {
+    // WorldGenRegion's random is made with the region (seeded at its center chunk) and shared by
+    // everything decorating it
+    auto& c  = tRegionRandom;
+    int   cx = region.centerChunkX(), cz = region.centerChunkZ();
+    if (c.region != &region || c.cx != cx || c.cz != cz || c.dim != region.dimension() || c.seed != region.seed()) {
+        c.region = &region;
+        c.cx     = cx;
+        c.cz     = cz;
+        c.dim    = region.dimension();
+        c.seed   = region.seed();
+        c.random.setSeed(region.seed() ^ pure::mthGetSeed(cx * 16, 0, cz * 16));
+    }
+    return c.random;
+}
+
+void resetRegionRandom() { tRegionRandom.region = nullptr; }
+
 // ---- Piece --------------------------------------------------------------------------------------------
 
 void Piece::addChildren(Piece&, std::vector<std::unique_ptr<Piece>>&, RandomSource&) {}
@@ -170,6 +200,19 @@ void Piece::placeBlock(Region& region, std::string const& blockId, Json const& s
     auto const* b = blocks::fromJava(blockId, states);
     if (!b) return;
     placeBlock(region, *b, x, y, z, chunkBox);
+    // what the Bedrock block cannot carry: Java's waterlogged (the liquid layer) and the plant of
+    // a potted_* block (the flower pot's block actor)
+    bool waterlogged = false;
+    if (states.is_object() && states.contains("waterlogged")) {
+        auto const& v = states["waterlogged"];
+        waterlogged   = v.is_boolean() ? v.get<bool>() : v.is_string() && v.get<std::string>() == "true";
+    }
+    auto plant = blocks::pottedPlant(blockId);
+    if (!waterlogged && plant.empty()) return;
+    BlockPos pos = getWorldPos(x, y, z);
+    if (!chunkBox.contains(pos.x, pos.y, pos.z) || blocks::id(region.getBlock(pos)) != blocks::id(*b)) return; // not placed
+    if (waterlogged) liquids::setWaterlogged(region, pos, true);
+    if (!plant.empty()) blockentities::flowerPot(region, pos, plant);
 }
 
 Block const& Piece::getBlock(Region& region, int x, int y, int z, BlockBox const& chunkBox) const {
@@ -239,11 +282,16 @@ void Piece::fillColumnDown(Region& region, Block const& block, int x, int y, int
 
 bool Piece::placeChest(Region& region, BlockBox const& chunkBox, RandomSource& random, int x, int y, int z, std::string const& blockId,
                        std::string const& tableId) {
+    // StructurePiece#createChest(level, box, random, pos, lootTable, state): nothing when a chest
+    // stands there already; a default chest (no state given) faces away from the walls (reorient),
+    // any other block keeps its default facing
     BlockPos pos = getWorldPos(x, y, z);
     if (!chunkBox.contains(pos.x, pos.y, pos.z)) return false;
-    std::string id = blockId.empty() ? std::string("minecraft:chest") : blockId;
-    if (blocks::is(region.getBlock(pos), id)) return false;
-    Orientation facing = reorientChest(region, pos, Orientation::North);
+    if (blocks::is(region.getBlock(pos), "minecraft:chest")) return false;
+    bool                       defaultChest = blockId.empty() || blockId == "minecraft:chest";
+    std::string                id           = defaultChest ? std::string("minecraft:chest") : blockId;
+    std::optional<Orientation> facing;
+    if (defaultChest) facing = reorientChest(region, pos, Orientation::North);
     blockentities::container(region, pos, id, facing, tableId, random.nextLong());
     return true;
 }
@@ -251,8 +299,9 @@ bool Piece::placeChest(Region& region, BlockBox const& chunkBox, RandomSource& r
 bool Piece::placeSpawner(Region& region, BlockBox const& chunkBox, int x, int y, int z, std::string const& entityId) {
     BlockPos pos = getWorldPos(x, y, z);
     if (!chunkBox.contains(pos.x, pos.y, pos.z)) return false;
-    // a boss spawner (TF's *_boss_spawner blocks) is a block of its own
-    if (entityId.find("spawner") != std::string::npos) {
+    // a boss spawner is a block of its own (TF places TFBlocks.*_BOSS_SPAWNER with placeBlock): an
+    // id the block registry knows is placed as that block, any other id is the mob of a spawner
+    if (blocks::isRegisteredBlock(entityId)) {
         if (auto const* b = blocks::fromJava(entityId)) {
             region.setBlock(pos, *b, 2);
             return true;

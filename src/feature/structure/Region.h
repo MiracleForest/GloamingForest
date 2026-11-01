@@ -29,6 +29,12 @@ public:
     [[nodiscard]] std::string  biome(BlockPos const& pos) const override;
     [[nodiscard]] std::int64_t seed() const override;
     [[nodiscard]] int          dimension() const override;
+    /// setBlock with the liquid layer set to water (`water`) or emptied, as one change.
+    bool setBlockWithLiquid(BlockPos const& pos, Block const& block, int flags, bool water);
+    /// The liquid (second) layer at `pos` (air outside the loaded world).
+    [[nodiscard]] Block const& getLiquidLayer(BlockPos const& pos) const;
+    /// Sets only the liquid layer.
+    bool setLiquidLayer(BlockPos const& pos, Block const& block, int flags);
 
 private:
     BlockSource& mSource;

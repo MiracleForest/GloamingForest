@@ -34,6 +34,7 @@ public:
             });
             game::db::onWorldSave([] { s::blockentities::save(); });
             game::db::onWorldClosed([] {
+                s::outlines::shutdown();
                 s::blocks::clearCaches();
                 s::blockentities::load();
             });
@@ -43,10 +44,13 @@ public:
             s::blockentities::load();
         }
         mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { s::blockentities::flush(); });
+        s::blockentities::installEvents();
     }
     void uninstall() {
         if (mTick) ll::event::EventBus::getInstance().removeListener(mTick);
         mTick.reset();
+        s::blockentities::uninstallEvents();
+        s::outlines::shutdown();
         s::blockentities::save();
     }
 
