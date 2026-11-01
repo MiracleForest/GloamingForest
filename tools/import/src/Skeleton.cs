@@ -357,12 +357,21 @@ namespace GfImport
 
         // ---- sound events -----------------------------------------------------------------------------------
 
+        // Sound events: F3 (tools/sounds) writes the resource pack's sound_definitions for all of TF's events
+        // (assets/gen/audio/<u>/rp/sounds.d), and one event defined twice in the generated layers fails the
+        // merge, so the import emits no sounds.d fragment. It validates that every event of TF's sounds.json
+        // has an owner in owners.tsv (a missing one fails the run) and writes a plain data listing per owner
+        // (data/gf/sound_events/<unit>.json: category, subtitle key, TF's sound names) for F3 and the owners.
         public void ImportSounds()
         {
             var sj = ReadJson(Path.Combine(GenRes, "assets", "twilightforest", "sounds.json"));
+            var unowned = sj.Keys.Where(ev => OwnerOf("sound_event", ev) == null).ToList();
+            if (unowned.Count > 0)
+                throw new Exception(unowned.Count + " sound event(s) of TF's sounds.json have no owner in docs/spec/owners.tsv: " + string.Join(", ", unowned.Take(10)));
+            Log.Add(sj.Count + " sound events, every one owned in owners.tsv (no sound_definitions emitted: F3 writes them)");
             foreach (var ev in sj.Keys)
             {
-                string owner = OwnerOf("sound_event", ev) ?? ImportUnit;
+                string owner = OwnerOf("sound_event", ev);
                 var src = sj[ev];
                 var entry = J.Obj().Set("category", SoundCategory(ev));
                 if (src["subtitle"] != null) entry.Set("subtitle", src["subtitle"].AsString());

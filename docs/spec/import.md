@@ -48,7 +48,7 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 | `datamaps` | 5 TF + NeoForge compostables, furnace_fuels, parrot_imitations | `data/<ns>/data_maps/**` (rule R7) |
 | `registries` | 290 + 9 `twilight/*` entries, banner patterns, damage types, jukebox songs, trim materials, enchantments, 6 functions | `data/<ns>/<registry>/**` |
 | `particles` | 28 particle JSON | `rp/particles/<id>.json` skeleton effects (first frame) and `data/gf/particles/<unit>.json` (every frame) |
-| `sounds` | `sounds.json` (328 events, 288 subtitles) | `data/gf/sound_events/<unit>.json`: event -> Bedrock category, subtitle key, sound *names* (TF file paths without namespace, vanilla events). F3 builds the RP `sound_definitions` from this inventory |
+| `sounds` | `sounds.json` (328 events, 288 subtitles) | **No `sound_definitions`** (see below). Validates that every event has an owner in owners.tsv (a missing one fails the run) and writes a plain, non-merged listing `data/gf/sound_events/<unit>.json`: event -> Bedrock category, subtitle key, sound *names* (TF file paths without namespace, vanilla events). The subtitle texts come with the `lang` kind |
 | `skeleton` | TFItems, TFEntities, models/item | `bp/items/<id>.json` (254 items, and the block items whose Java item model is a flat icon: `minecraft:block_placer` with `replace_block_item`), `bp/entities/<id>.json` (80, collision box, health, type family, `is_spawnable` for the 51 with eggs), `rp/entity/<id>.entity.json` + `rp/models/entity/skeleton/<id>.geo.json` (a placeholder box of the entity's size with its TF texture, spawn egg colours), `data/gf/import/skeleton.json` (the id list the `import.*` selftests check) |
 | `catalog` | TFCreativeTabs (4 tabs) | `bp/item_catalog.d/import.json` (Bedrock creative groups: blocks -> construction, items and food -> items, equipment -> equipment) and `data/gf/catalog/import.json` (`gf::catalog` groups in TF's order) |
 | `families` | TF block classes | `data/gf/families/<unit>.json`: `[{id, family, params: {class, vanillaClass, base, copyOf, woodType, plant, states}}]` for F11 |
@@ -59,6 +59,16 @@ marker handlers, restrictions, damage effects, texture locations, template ids, 
 and Bedrock item tags). assemble's dangling-reference check only knows data files, BP definitions and owners.tsv
 rows; the index makes it accept these ids. It has no runtime meaning.
 
+## Sound events
+
+F3 (`tools/sounds/synth.ps1`) writes the resource pack's `sound_definitions` for all 328 TF sound events, one
+fragment per owner (`assets/gen/audio/<u>/rp/sounds.d/<u>.json`), from its synthesized audio. assemble merges every
+`rp/sounds.d/*.json` of the generated layers into one object and fails on a key defined twice, so the import emits
+**no** `sounds.d` fragment and no sound files: TF's `.ogg` files are All Rights Reserved and never opened (rule R10).
+The `sounds` kind only checks TF's `sounds.json` against owners.tsv (every event must have an owner) and leaves a
+data listing per owner (`data/gf/sound_events/<unit>.json`) that F3 and the owners may read: Bedrock category,
+subtitle key, and TF's sound names (which variants an event has, vanilla events it reuses). The subtitle keys are
+imported with the rest of the lang (`subtitles.twilightforest.*`, owned by the event's owner).
 ## Owners
 
 Every file goes to the owner of its id (owners.tsv kind): blocks, block items, items, spawn eggs, entities, lang

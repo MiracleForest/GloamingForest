@@ -16,7 +16,8 @@
                   TF data -> data/<namespace>/** (Java format, kept by id); vanilla-type recipes also
                   -> bp/recipes/** with the unlock items of their recipe advancement
     particles     particle JSON -> rp/particles/*.json skeletons + data/gf/particles
-    sounds        sounds.json event names (never the .ogg files) -> data/gf/sound_events
+    sounds        no sound_definitions (F3 writes them): checks that every event of sounds.json has an
+                  owner, data listing data/gf/sound_events/<unit>.json (never the .ogg files)
     skeleton      items, flat block items, entities (+ placeholder visuals, spawn eggs), id index
     catalog       TFCreativeTabs -> bp/item_catalog.d/import.json + data/gf/catalog
     families      block families from the TF block classes -> data/gf/families/<unit>.json
