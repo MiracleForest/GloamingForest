@@ -114,13 +114,18 @@ awards only when `!manager.getAllAdvancements().contains(holder)`, which is alwa
 granted by the vanilla `minecraft:item_used_on_block` trigger (advancement `beanstalk.json`: `location_check` block
 `twilightforest:uberous_soil` + `match_tool` `twilightforest:magic_beans`), which vanilla fires in
 `ServerPlayerGameMode.useItemOn` after `useOn` returns a result that consumes the action (SUCCESS here), with the
-clicked position (the soil, still uberous soil) and a copy of the stack taken before the use. That is the generic
-item-used-on-block event of the F10 progression bus feeding U14's criteria engine: U29 fires **nothing extra** and no
-custom trigger id. Only if F10 does not raise `minecraft:item_used_on_block` for a custom item's successful use-on
-(the progression header lists no such event) does U29 fire exactly `progression::trigger(player,
-"minecraft:item_used_on_block", ...)` once after the successful use, with the clicked position and the pre-use stack
-in the data shape F10 / U14 define for that trigger, and call it out in its PR; never both, or the criterion would
-be fed twice.
+clicked position (the soil, still uberous soil) and a copy of the stack taken before the use. It is a vanilla trigger
+type that U14's criteria engine consumes from the progression bus; U29 never fires a custom trigger id for it. The
+progression header (`src/feature/progression/Progression.h`) has no item-used-on-block event, so whether F10 already
+raises `minecraft:item_used_on_block` for a custom item's successful use-on is not fixed by the contract. U29 decides it
+with a selftest instead of guessing: `giants.beans_trigger` registers `progression::onTrigger(
+"minecraft:item_used_on_block", ...)` counting the calls whose data names `twilightforest:magic_beans`, uses one magic
+bean on uberous soil and requires **exactly one** call (it does not check `progression::done`: the criteria engine is
+U14's, and R12 lets a selftest depend only on W0 and its own unit; U14 tests the criterion). If F10 raises the trigger
+(count 1 without U29 code), U29 fires nothing. If it does not (count 0), U29 fires `progression::trigger(player,
+"minecraft:item_used_on_block", ...)` once after the successful use, with the clicked position and the pre-use stack in
+the data shape F10 / U14 define for that trigger, and calls it out in its PR. A count of 2 (both fire) fails the test,
+so the criterion is never fed twice.
 
 Beanstalk grower (block entity, `GrowingBeanstalkBlockEntity.tick`, every tick):
 
@@ -349,12 +354,13 @@ Client keys are per client (companion config file); the common key lives in the 
 
 ## 11. Acceptance (selftests `giants.*`, dx 2900-2999)
 
-Per the unit record: magic beans on uberous soil place a grower and play the rumble; the beanstalk grows a spiral of
-huge stalk with beanstalk leaves up to `max(y + 100, 175)` and the grower turns into stalk; beanstalk leaves decay away
-from stalk and drop beans with Fortune chances; uberous soil turns into farmland under a crop and bone-meals it 15 times;
-a giant pickaxe mines a full 4 x 4 x 4 cobblestone cell into one giant cobblestone, a mixed cell into normal drops;
-placing a giant block fills the cell and breaking one block removes all 64 with one drop; rain falls (random tick fills a
-cauldron, `isRainingAt` true) under a rainy cloud and snow layers form under a snowy cloud; falling on a cloud deals 10 %
-fall damage; giant miner / armored giant spawn with their gear, deal `ant` damage and drop their tool only to players;
+Per the unit record: magic beans on uberous soil place a grower and play the rumble, and `giants.beans_trigger` sees
+exactly one `minecraft:item_used_on_block` for the use (section 2.2); the beanstalk grows a spiral of huge stalk with
+beanstalk leaves up to `max(y + 100, 175)` and the grower turns into stalk; beanstalk leaves decay away from stalk and
+drop beans with Fortune chances; uberous soil turns into farmland under a crop and bone-meals it 15 times; a giant
+pickaxe mines a full 4 x 4 x 4 cobblestone cell into one giant cobblestone, a mixed cell into normal drops; placing a
+giant block fills the cell and breaking one block removes all 64 with one drop; rain falls (random tick fills a
+cauldron, `isRainingAt` true) under a rainy cloud and snow layers form under a snowy cloud; falling on a cloud deals 10
+% fall damage; giant miner / armored giant spawn with their gear, deal `ant` damage and drop their tool only to players;
 golden hash of the cloud castle (`giants.cloud_castle_hash`); client screenshots of the tiled giant block textures and
 rain under a cloud.
