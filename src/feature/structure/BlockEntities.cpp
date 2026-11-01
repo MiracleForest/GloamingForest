@@ -395,7 +395,10 @@ bool runSpawner(BlockSource& source, BlockPos const& pos, Json const& action) {
 /// neighbours (Block.updateFromNeighbourShapes in UPDATE_SHAPE_ORDER: west, east, north, south,
 /// down, up). Bedrock: what a structure block does after placing it (BlockType#onStructureBlockPlace:
 /// walls fix their connection states), then a neighbour update from each side (blocks that keep
-/// their shape in states, TF's connected blocks through gf::blockevents, recompute it).
+/// their shape in states, TF's connected blocks through gf::blockevents, recompute it). A marked
+/// block that can no longer stand breaks as a neighbour update breaks it on Bedrock (with its
+/// drop); Java's updateShape turns it into air. TF marks walls, fences and stairs, which always
+/// stand.
 void runUpdateShape(BlockSource& source, BlockPos const& pos) {
     if (source.getBlock(pos).isAir()) return;
     source.getBlock(pos).getBlockType().onStructureBlockPlace(source, pos);

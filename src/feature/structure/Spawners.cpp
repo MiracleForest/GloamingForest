@@ -89,7 +89,11 @@ std::unordered_map<std::int64_t, Scaled> gScaled;
 struct PendingScale {
     std::int64_t id    = 0;
     int          ticks = 0;
+    int          tries = 0; ///< checks while the mob was not in the level yet
 };
+/// A pending mob is looked for this many times (one tick apart) before it is given up: a loaded
+/// mob may be added to the level a while after it was read.
+constexpr int kPendingTries = 200;
 std::mutex                 gPendingMutex;
 std::vector<PendingScale>  gPending;
 int                        gTicks  = 0;
@@ -321,21 +325,34 @@ int vetoes() { return gVetoes; }
 void tick() {
     auto level = ll::service::getLevel();
     if (!level) return;
-    std::vector<std::int64_t> due;
+    std::vector<PendingScale> due;
     {
         std::lock_guard lock(gPendingMutex);
         std::erase_if(gPending, [&](PendingScale& p) {
             if (--p.ticks > 0) return false;
-            due.push_back(p.id);
+            due.push_back(p);
             return true;
         });
     }
-    for (auto id : due) {
+    std::vector<PendingScale> retry;
+    for (auto& p : due) {
         ActorUniqueID uid;
-        uid.rawID = id;
+        uid.rawID   = p.id;
         auto* actor = level->fetchEntity(uid, false);
-        if (!actor) continue;
+        if (!actor) {
+            // not in the level (yet): look again next tick, for a while
+            if (++p.tries < kPendingTries) retry.push_back(PendingScale{p.id, 1, p.tries});
+            continue;
+        }
         if (auto s = scaleOf(*actor)) rescale(*actor, *s, sizeTagOf(*actor));
+    }
+    if (!retry.empty()) {
+        std::lock_guard lock(gPendingMutex);
+        for (auto const& r : retry) {
+            bool queued = false;
+            for (auto const& q : gPending) queued = queued || q.id == r.id;
+            if (!queued) gPending.push_back(r);
+        }
     }
     if (++gTicks % kCheckInterval != 0 || gScaled.empty()) return;
     // the game sets a mob's size from its definition when it grows up or its components reload:

@@ -281,7 +281,7 @@ void outlineBox(CommandOrigin const& origin, CommandOutput& output, StructureUti
     if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
     int dim = 0;
     if (auto* player = commands::playerOf(origin)) dim = static_cast<int>(player->getDimensionId());
-    int seconds = p.seconds > 0 ? p.seconds : 60;
+    int seconds = p.seconds > 0 ? std::min(p.seconds, 3600) : 60;
     addOutline(dim, BlockBox::of(p.x1, p.y1, p.z1, p.x2, p.y2, p.z2), "minecraft:villager_happy", 2.0f, false, seconds * 20);
     log().info("structure_util outline: {} outlines for {} s", gOutlines.size(), seconds);
     output.success("outlined");
