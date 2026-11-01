@@ -1,0 +1,26 @@
+# GloamingForest Java oracle dumper (unit F13), built by tools/oracle/run.ps1. LGPL-3.0-or-later.
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "LGPL-3.0-or-later"
+
+[[mods]]
+modId = "gf_oracle"
+version = "1.0.0"
+displayName = "GloamingForest oracle dumper"
+description = '''
+Server-side /gforacle dump command: writes derived Twilight Forest facts (biome, height and landmark grids, mob attributes, loot statistics, recipes, uncrafting outputs, RNG and noise reference values) as JSON for GloamingForest's golden tests.
+'''
+
+[[dependencies.gf_oracle]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1.209,)"
+ordering = "NONE"
+side = "SERVER"
+
+[[dependencies.gf_oracle]]
+modId = "twilightforest"
+type = "required"
+versionRange = "[4.8,)"
+ordering = "AFTER"
+side = "SERVER"

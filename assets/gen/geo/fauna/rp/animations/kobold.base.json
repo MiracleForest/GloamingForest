@@ -1,0 +1,25 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.kobold.base": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
+        },
+        "leftArm": {
+          "rotation": ["math.sin(query.life_time * 305.9595) * (-14.3239) - 27", 0, "math.cos(query.life_time * 217.724) * (-8.5944) - 2.8648"]
+        },
+        "leftLeg": {
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141", 0, 0]
+        },
+        "rightArm": {
+          "rotation": ["math.sin(query.life_time * 305.9595) * 14.3239 - 27", 0, "math.cos(query.life_time * 217.724) * 8.5944 + 2.8648"]
+        },
+        "rightLeg": {
+          "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141", 0, 0]
+        }
+      }
+    }
+  }
+}

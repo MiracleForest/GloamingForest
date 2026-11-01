@@ -1,0 +1,122 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.lich",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 2.5,
+        "visible_bounds_height": 3.5,
+        "visible_bounds_offset": [0, 1.25, 0]
+      },
+      "bones": [
+        {
+          "name": "head",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-4, 24, -4],
+              "size": [8, 8, 8],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "hat",
+          "parent": "head",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-4, 28, -4],
+              "size": [8, 8, 8],
+              "inflate": 0.5,
+              "uv": [32, 0]
+            }
+          ]
+        },
+        {
+          "name": "body",
+          "pivot": [0, 28, 0],
+          "cubes": [
+            {
+              "origin": [-4, 4, -2],
+              "size": [8, 24, 4],
+              "uv": [8, 16]
+            }
+          ]
+        },
+        {
+          "name": "rightArm",
+          "pivot": [-5, 26, 0],
+          "cubes": [
+            {
+              "origin": [-6, 16, -1],
+              "size": [2, 12, 2],
+              "uv": [0, 16]
+            }
+          ]
+        },
+        {
+          "name": "leftArm",
+          "pivot": [5, 22, 0],
+          "cubes": [
+            {
+              "origin": [4, 12, -1],
+              "size": [2, 12, 2],
+              "uv": [0, 16],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "rightLeg",
+          "pivot": [-2, 12, 0],
+          "cubes": [
+            {
+              "origin": [-3, 0, -1],
+              "size": [2, 12, 2],
+              "uv": [0, 16]
+            }
+          ]
+        },
+        {
+          "name": "leftLeg",
+          "pivot": [2, 12, 0],
+          "cubes": [
+            {
+              "origin": [1, 0, -1],
+              "size": [2, 12, 2],
+              "uv": [0, 16],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "collar",
+          "pivot": [0, 27, -1],
+          "rotation": [124, 0, 0],
+          "cubes": [
+            {
+              "origin": [-6, 17, -5],
+              "size": [12, 12, 1],
+              "inflate": -0.1,
+              "uv": [32, 16]
+            }
+          ]
+        },
+        {
+          "name": "cloak",
+          "pivot": [0, 28, 2.5],
+          "cubes": [
+            {
+              "origin": [-6, 7, 2.5],
+              "size": [12, 19, 1],
+              "uv": [0, 44]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "about": "Chitin or shell clacks: short modal 'bone' strikes, repeated.",
+  "params": {
+    "freq": 1400,
+    "count": 3,
+    "gap": 0.07,
+    "decay": 1.0
+  },
+  "length": 0.03,
+  "tail": 0.3,
+  "layers": [
+    {
+      "type": "modal",
+      "modes": "bone",
+      "freq": "$freq*rand(0.85,1.15)",
+      "decay": "$decay",
+      "strike": 0.003,
+      "ring": 0.15,
+      "length": 0.02,
+      "repeat": {
+        "count": "$count",
+        "every": "$gap",
+        "jitter": "$gap*0.4",
+        "decay": 0.8
+      }
+    }
+  ]
+}
