@@ -3,10 +3,9 @@
 // - form: a LeviLamina SimpleForm (ModalFormRequestPacket), every client shows it;
 // - ddui: a Data-Driven UI custom form (LeviLamina ll::ui::CustomForm) built from a small JSON
 //   document, for vanilla clients that support DDUI;
-// - containerTitleSkin: the title convention ("gfskin:<id>;<title>") a resource pack JSON-UI would
-//   read to draw a TF GUI texture around a vanilla container screen. Spike S5: the vanilla chest
-//   screen's JSON-UI cannot test or cut `$container_title`, so no skin is listed
-//   (kJsonUiSkins) and titles stay plain; vanilla players see the vanilla container.
+// - containerTitleSkin: the title marker ("gfskin:<id padded to 40>;<title>") the resource pack's
+//   JSON-UI (ui/chest_screen.json) reads through the container screen's #title_text binding to
+//   draw the TF GUI texture textures/gui/<id> under a vanilla chest's slots (spike S5).
 //
 // One log line per form shown / answered (e2e scenarios wait for them).
 
@@ -19,6 +18,8 @@
 #include <optional>
 #include <unordered_map>
 
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/form/SimpleForm.h"
 #include "ll/api/service/Bedrock.h"
 #include "ll/api/ui/form/CustomForm.h"
@@ -29,6 +30,7 @@
 
 #include "feature/ext/ui/Server.h"
 #include "mod/Log.h"
+#include "mod/Module.h"
 
 namespace gf::ui {
 
@@ -209,32 +211,86 @@ bool ddui(Player& player, std::string const& screenId, Json const& document, std
 
 // ---- container title skins -------------------------------------------------------------------------
 
-namespace {
-constexpr std::string_view kSkinPrefix = "gfskin:";
-constexpr char             kSkinEnd    = ';';
-} // namespace
+bool validSkinId(std::string_view skinId) {
+    return !skinId.empty() && skinId.size() <= kSkinIdWidth && skinId.find(kSkinPad) == std::string_view::npos && skinId.find(kSkinEnd) == std::string_view::npos;
+}
 
-// A JSON-UI would match each skin by its whole marker "gfskin:<id>;"; only listed skins get one,
-// any other id keeps the plain title (no marker ever shows up in a vanilla client).
+// The resource pack's ui/chest_screen.json reads the fixed-width marker through #title_text (see
+// feature/ext/ui/Server.h); an id that does not fit keeps the plain title.
 std::string containerTitleSkin(std::string const& titleKey, std::string const& skinId) {
-    if (std::find(kJsonUiSkins.begin(), kJsonUiSkins.end(), skinId) == kJsonUiSkins.end()) {
-        static std::mutex                       m;
+    if (skinId.empty()) return titleKey;
+    if (!validSkinId(skinId)) {
+        static std::mutex                            m;
         static std::unordered_map<std::string, bool> warned;
-        std::lock_guard                         lock(m);
-        if (!skinId.empty() && !warned[skinId]) {
+        std::lock_guard                              lock(m);
+        if (!warned[skinId]) {
             warned[skinId] = true;
-            log().info("ui: no JSON-UI container skin '{}' for vanilla clients: plain title", skinId);
+            log().warn("ui: container skin id '{}' does not fit a title marker (1..{} characters, no '{}' or '{}'): plain title", skinId, kSkinIdWidth, kSkinPad, kSkinEnd);
         }
         return titleKey;
     }
-    return std::string(kSkinPrefix) + skinId + kSkinEnd + titleKey;
+    std::string title(kSkinPrefix);
+    title += skinId;
+    title.append(kSkinIdWidth - skinId.size(), kSkinPad);
+    title += kSkinEnd;
+    return title + titleKey;
 }
 
 TitleSkin parseTitleSkin(std::string const& title) {
-    if (!title.starts_with(kSkinPrefix)) return {"", title};
-    auto end = title.find(kSkinEnd, kSkinPrefix.size());
-    if (end == std::string::npos) return {"", title};
-    return {title.substr(kSkinPrefix.size(), end - kSkinPrefix.size()), title.substr(end + 1)};
+    if (title.size() < kSkinMarkerLength || !title.starts_with(kSkinPrefix) || title[kSkinMarkerLength - 1] != kSkinEnd) return {"", title};
+    auto id = title.substr(kSkinPrefix.size(), kSkinIdWidth);
+    if (auto pad = id.find(kSkinPad); pad != std::string::npos) {
+        if (id.find_first_not_of(kSkinPad, pad) != std::string::npos) return {"", title}; // padding inside the id
+        id.resize(pad);
+    }
+    if (!validSkinId(id)) return {"", title};
+    return {id, title.substr(kSkinMarkerLength)};
 }
 
+// ---- module: the DDUI documents of players who leave ----------------------------------------------
+
+std::size_t dduiSessions() {
+    auto&           st = ddui();
+    std::lock_guard lock(st.mutex);
+    return st.sessions.size();
+}
+
+namespace {
+class UiModule {
+public:
+    void install() {
+        if (mDisconnect) return;
+        mDisconnect = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {
+            // a player who leaves without answering: no document (and no Player-bound form) outlives it
+            auto                                      prefix = ev.self().getUuid().asString() + "|";
+            std::vector<std::shared_ptr<DduiSession>> gone;
+            {
+                auto&           st = ddui();
+                std::lock_guard lock(st.mutex);
+                for (auto it = st.sessions.begin(); it != st.sessions.end();) {
+                    if (it->first.starts_with(prefix)) {
+                        gone.push_back(std::move(it->second));
+                        it = st.sessions.erase(it);
+                    } else ++it;
+                }
+            }
+            for (auto& s : gone) s->answered = true; // no callback after this
+            if (!gone.empty()) log().info("ui ddui: {} document(s) of {} dropped (disconnected)", gone.size(), ev.self().getRealName());
+        });
+    }
+    void uninstall() {
+        if (mDisconnect) ll::event::EventBus::getInstance().removeListener(mDisconnect);
+        mDisconnect = nullptr;
+        auto&           st = ddui();
+        std::lock_guard lock(st.mutex);
+        st.sessions.clear();
+    }
+
+private:
+    ll::event::ListenerPtr mDisconnect;
+};
+} // namespace
+
 } // namespace gf::ui
+
+GF_REGISTER_MODULE_ORDERED(gf::ui::UiModule, gf::ModuleOrder::Contracts);
