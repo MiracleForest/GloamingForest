@@ -3,6 +3,8 @@ name: Build
 
 on:
   pull_request:
+    # 'edited': the ownership check reruns after a title fix (rule R25)
+    types: [opened, edited, synchronize, reopened]
   push:
     branches: [main]
   workflow_dispatch:
@@ -87,7 +89,17 @@ jobs:
       - name: ARR guard
         if: matrix.target_type == 'server'
         shell: pwsh
-        run: pwsh tools/ci/arr-guard.ps1 -CommittedOnly
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          # Every blob of every commit since the base, not only the head tree: a TF .ogg/.nbt added
+          # in one commit and deleted in a later one would otherwise reach the public history (R10/R11).
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { $range = "origin/$env:BASE_REF" }
+          elseif ($env:GITHUB_EVENT_NAME -eq 'push') { $range = $env:BEFORE_SHA } # the previous main
+          else { $range = '0' } # manual run: the whole history of HEAD
+          pwsh tools/ci/arr-guard.ps1 -CommittedOnly -Range $range
+          if ($LASTEXITCODE) { exit 1 }
 
       - name: Ownership
         if: matrix.target_type == 'server' && github.event_name == 'pull_request'
@@ -97,8 +109,9 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: |
           # PR titles are "U<n>: ..." / "F<n>: ..." / "A<n>: ..." (rule R25)
-          if ($env:PR_TITLE -notmatch '^([UFA]\d+):') { Write-Host "no unit prefix in '$env:PR_TITLE': ownership not checked"; exit 0 }
+          if ($env:PR_TITLE -notmatch '^([UFA]\d+):') { Write-Host "PR title must start with U<n>:/F<n>:/A<n>: (R25), got '$env:PR_TITLE'"; exit 1 }
           pwsh tools/ci/ownership.ps1 -Unit $Matches[1] -Base "origin/$env:BASE_REF"
+          if ($LASTEXITCODE) { exit 1 }
 
       - uses: actions/upload-artifact@v7
         with:

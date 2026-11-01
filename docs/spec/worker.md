@@ -51,7 +51,8 @@ After you finish implementing the change:
 ```
 
 - The test suite is `pwsh tools/build.ps1 -Target all -Tests` followed by `xmake run -P . gf-tests`.
-- The PR title is `U<n>: <imperative summary>` / `F<n>: ...` (rule R25); the body follows
+- The PR title is `U<n>: <imperative summary>` / `F<n>: ...` (rule R25; CI fails a PR without the prefix and
+  reruns when the title is edited); the body follows
   `.github/PULL_REQUEST_TEMPLATE.md`. No Claude or AI attribution anywhere.
 - The final message lists what remains unimplemented against the unit's content list, the `src/feature/ext/`
   contract extensions added, and (F units) the spike conclusions, with a report in `docs/spikes/S<n>.md`

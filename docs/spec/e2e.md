@@ -20,7 +20,7 @@ pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario <unit> -Mode local    #
 pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario <unit> -Mode remote-vanilla   # when the unit has a vanilla fallback
 
 pwsh tools/ci/ownership.ps1 -Unit <unit>                                       # the diff touches only owned paths
-pwsh tools/ci/arr-guard.ps1                                                    # no All Rights Reserved TF file
+pwsh tools/ci/arr-guard.ps1 -Range origin/main                                 # no All Rights Reserved TF file, in any commit
 ```
 
 A run passes when it exits 0: the scenario finished, every `Invoke-SelfTest` printed

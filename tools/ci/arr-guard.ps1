@@ -10,8 +10,14 @@
   pinned commit, taken from the tree listing (git ls-tree) of the shared checkout. The blobs
   themselves are never downloaded (tools/tf/fetch.ps1 excludes them from its blob-less clone).
 
-  Checked: every file of HEAD (committed), every staged file, and (-WorkingTree, the default
-  locally) every modified or untracked file of the working tree.
+  Checked: every file of HEAD (committed), every staged file, and (unless -CommittedOnly, so by
+  default locally) every modified or untracked file of the working tree.
+
+  -Range <base> also checks every blob that any commit in <merge-base of base and HEAD>..HEAD
+  introduced (git rev-list --objects), so a file added in one commit of a pull request and deleted
+  in a later one is still caught before it reaches the public history. CI passes the pull
+  request's base branch, or the previous main sha on a push to main. A base that does not resolve
+  (the all-zero sha of a new branch) checks the whole history of HEAD.
 
   -Refresh rewrites tools/ci/arr-blobs.txt from the local TF checkout's tree listing; without it,
   a present checkout is used to verify the committed list.
@@ -20,11 +26,13 @@
 
 .EXAMPLE
   pwsh tools/ci/arr-guard.ps1
+  pwsh tools/ci/arr-guard.ps1 -CommittedOnly -Range origin/main
   pwsh tools/ci/arr-guard.ps1 -Refresh
 #>
 param(
     [switch]$Refresh,
     [switch]$CommittedOnly,
+    [string]$Range,
     [string]$TfDir
 )
 $ErrorActionPreference = 'Stop'
@@ -80,6 +88,32 @@ if (-not $CommittedOnly) {
     if ($changed) {
         $hashes = @($changed | & git -C $root hash-object --stdin-paths)
         for ($i = 0; $i -lt $changed.Count; $i++) { $blobs["worktree:$($changed[$i])"] = $hashes[$i] }
+    }
+}
+if ($Range) {
+    # every object the commits base..HEAD introduced, deleted files included
+    $base = $null
+    if ($Range -notmatch '^0+$') {
+        $resolved = & git -C $root rev-parse --verify --quiet "$Range^{commit}" 2>$null
+        if ($LASTEXITCODE -eq 0 -and $resolved) {
+            $base = & git -C $root merge-base $resolved HEAD 2>$null
+            if ($LASTEXITCODE -ne 0) { $base = $null }
+        }
+    }
+    $revArgs = if ($base) { @('rev-list', '--objects', "$base..HEAD") } else { @('rev-list', '--objects', 'HEAD') }
+    if ($base) { Write-Host "[arr-guard] history: every blob of $($base.Substring(0, 12))..HEAD (merge base with $Range)" }
+    else { Write-Host "[arr-guard] history: '$Range' does not resolve; every blob reachable from HEAD" -ForegroundColor Yellow }
+    $objects = @(& git -C $root @revArgs)
+    if ($LASTEXITCODE -ne 0) { $failures.Add("git rev-list failed for -Range '$Range'") }
+    elseif ($objects.Count) {
+        # "<id> <path>" lines (commits have no path); the batch check gives each object's type
+        $typed = @($objects | & git -C $root cat-file '--batch-check=%(objectname) %(objecttype) %(rest)')
+        if ($LASTEXITCODE -ne 0) { $failures.Add('git cat-file --batch-check failed') }
+        $n = 0
+        foreach ($l in $typed) {
+            if ($l -match '^([0-9a-f]{40}) blob ?(.*)$') { $n++; $blobs["history:$($Matches[2]) ($($Matches[1].Substring(0, 12)))"] = $Matches[1] }
+        }
+        Write-Host "[arr-guard] history: $n blob(s) in the range"
     }
 }
 foreach ($k in $blobs.Keys) {

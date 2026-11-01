@@ -13,4 +13,4 @@
 - [ ] `pwsh -NoProfile -File tools/e2e/server/run.ps1 -Scenario <unit>`
 - [ ] `pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario <unit> -Mode local` (screenshots checked)
 - [ ] `-Mode remote-vanilla` (when the unit has a vanilla fallback)
-- [ ] `pwsh tools/ci/ownership.ps1 -Unit <unit>` and `pwsh tools/ci/arr-guard.ps1`
+- [ ] `pwsh tools/ci/ownership.ps1 -Unit <unit>` and `pwsh tools/ci/arr-guard.ps1 -Range origin/main`
