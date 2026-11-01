@@ -85,9 +85,19 @@ candles have no item (pick block gives the vanilla candle / exanimate essence).
   A scepter (`#twilightforest:scepters`) or exanimate essence on NORMAL -> OMINOUS (`block.twilightforest.candelabra.ominous`,
   ominous flame burst). Waterlogging extinguishes.
 - Light emission: NORMAL `5 * candles`; DIM and OMINOUS `2 * candles`; NONE 0.
-- Redstone: only while DIM it is a power source of strength `3 * candles` (wall: toward its back only; standing:
-  upward only) and connects redstone on its back face. Comparator output: NONE `candles`, DIM `3 + candles`, OMINOUS
-  `6 + candles`, NORMAL `9 + candles`.
+- Redstone: only while DIM it is a power source of strength `3 * candles`, weak and strong alike
+  (`getDirectSignal` returns `getSignal`), in one direction only. Vanilla's `getSignal(state, level, pos, direction)`
+  convention: `direction` points from the receiver to the emitter (the receiver is at `pos.relative(direction.getOpposite())`),
+  the same convention as `RedstoneTorchBlock` and floor levers.
+  - Wall (`on_wall=true`): `getSignal` and `getDirectSignal` are `3 * candles` only when `direction ==
+    FACING.getOpposite()`, i.e. it strongly powers only the support block at `pos.relative(FACING)` (toward its back;
+    `canSurvive` checks that same block), which then powers its own neighbours as a conductor.
+  - Standing (`on_wall=false`): `3 * candles` only when `direction == UP`, i.e. downward only: strong power into the
+    supporting block below (`pos.below()`, both `getSignal` and `getDirectSignal` are `3 * candles` when queried from
+    below); nothing above or beside it is powered directly.
+  - `canConnectRedstone` is true only for a DIM wall candelabra with `FACING.getOpposite() == direction` (its back
+    face, toward the support).
+  - Comparator output: NONE `candles`, DIM `3 + candles`, OMINOUS `6 + candles`, NORMAL `9 + candles`.
 - Drops: the base item; with silk touch the candelabra keeps its candles (data component
   `twilightforest:candelabra_data`, a list of up to 3 candle blocks), otherwise the candles drop separately. Pick
   block keeps the data. Loot `twilightforest:blocks/candelabra`: itself if it survives the explosion.
@@ -144,8 +154,10 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
 - Not pathfindable; skylight passes unless waterlogged.
 - Recipe `twilightforest:wrought_iron_fence` (shaped `###/###` of `#c:ingots/wrought_iron`) -> 3 fences; unlock
   `twilightforest:recipes/decorations/wrought_iron_fence`. Loot `twilightforest:blocks/wrought_iron_fence`: itself.
-- `twilightforest:wrought_iron_bar` ("Wrought Iron Bar"): plain item in `#c:ingots/wrought_iron`; TF 4.8 has no
-  recipe for it (loot/creative only).
+- `twilightforest:wrought_iron_bar` ("Wrought Iron Bar"): plain item, the only TF member of `#c:ingots/wrought_iron`;
+  creative/commands only: TF 4.8 has no recipe and no loot table that yields it (it appears only in `TFItems`, the
+  item model, the `c:ingots/wrought_iron` tag, the lang files and `TFCreativeTabs`). The candelabra and wrought iron
+  fence recipes are therefore effectively creative-only in TF 4.8; keep it that way (no invented recipe or loot).
 - Bedrock: post (3) x four sides of 5 values (625) x waterlogged (2) = 3750 permutations is far over budget: store the side states as BlockData or
   compute the geometry client-side (F11 connected family); keep the state names for parity.
 
@@ -356,13 +368,17 @@ spawners also get U21's room spawner processor.
   shelf books + spawner state, skull chest inventory/owner and sinister spawner settings live in BlockData and
   container entities per spike S3 (F10 inventory, F11 families).
 - Redstone output of the candelabra and comparator values go through `redstone::registerEmitter` /
-  `registerAnalog`.
+  `registerAnalog`. The contract's `EmitterFn` gets `towards`, the side from the candelabra to the neighbour, which
+  is the opposite of Java's `direction`: return `3 * candles` (DIM only) for `towards == DOWN` when standing and for
+  `towards == FACING` when on a wall, 0 otherwise (2.1). The neighbour then counts as strongly powered (Java's
+  `getDirectSignal` is the same value).
 - The wrought iron fence state space must be reduced for Bedrock's permutation budget (see 2.4).
 - Interactions use `interactions::onUseOn` (vanilla skull + vanilla candle -> skull candle; lead on fence).
 
 ## 10. Selftests (`lichdecor.*`, dx 2200-2299)
 
-`lichdecor.candelabra_slots`, `lichdecor.candelabra_signal` (DIM: 3 per candle; comparator table),
+`lichdecor.candelabra_slots`, `lichdecor.candelabra_signal` (DIM: 3 per candle into the block below a standing
+candelabra and into the support behind a wall one, 0 into the block above and the other sides; comparator table),
 `lichdecor.brazier_cycle`, `lichdecor.skull_candle_create` (stat + config off), `lichdecor.ominous_candle_revert`,
 `lichdecor.ominous_fire_conversion` (villager -> zombie villager), `lichdecor.skull_chest_lock`,
 `lichdecor.fence_finial`, `lichdecor.sinister_spawner_command`, `lichdecor.recipes`.
