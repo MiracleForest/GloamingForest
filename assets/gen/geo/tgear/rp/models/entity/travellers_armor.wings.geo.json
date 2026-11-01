@@ -1,0 +1,181 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.travellers_armor.wings",
+        "texture_width": 128,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 1.5, 0]
+      },
+      "bones": [
+        {
+          "name": "body",
+          "pivot": [0, 24, 0]
+        },
+        {
+          "name": "wingBaseLeft",
+          "parent": "body",
+          "pivot": [1, 23, 0],
+          "rotation": [30, 30, 0],
+          "cubes": [
+            {
+              "origin": [0.5, 22, 0],
+              "size": [1, 2, 10],
+              "uv": [64, 9],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "wingEdgeLeft",
+          "parent": "wingBaseLeft",
+          "pivot": [0.502, 24, 10],
+          "rotation": [30, 0, 0],
+          "cubes": [
+            {
+              "origin": [0.502, 15, 8],
+              "size": [1, 9, 2],
+              "uv": [64, 21],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "wingInsetLeft",
+          "parent": "wingBaseLeft",
+          "pivot": [0.504, 23, 7.8],
+          "rotation": [20, 0, 0],
+          "cubes": [
+            {
+              "origin": [0.504, 14, 6.8],
+              "size": [1, 9, 2],
+              "uv": [70, 21],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "wingCenterLeft",
+          "parent": "wingBaseLeft",
+          "pivot": [0.506, 22.7, 6.3],
+          "rotation": [10, 0, 0],
+          "cubes": [
+            {
+              "origin": [0.506, 13.7, 5.3],
+              "size": [1, 9, 2],
+              "uv": [76, 21],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "wingFlangeLeft",
+          "parent": "wingBaseLeft",
+          "pivot": [0.508, 22.7, 5.1],
+          "cubes": [
+            {
+              "origin": [0.508, 14.7, 4.1],
+              "size": [1, 8, 2],
+              "uv": [82, 21],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "wingAuxLeft",
+          "parent": "wingBaseLeft",
+          "pivot": [0.51, 22.9, 4],
+          "rotation": [-10, 0, 0],
+          "cubes": [
+            {
+              "origin": [0.51, 15.9, 3],
+              "size": [1, 7, 2],
+              "uv": [88, 21],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "wingBaseRight",
+          "parent": "body",
+          "pivot": [-1, 23, 0],
+          "rotation": [30, -30, 0],
+          "cubes": [
+            {
+              "origin": [-1.5, 22, 0],
+              "size": [1, 2, 10],
+              "uv": [98, 9]
+            }
+          ]
+        },
+        {
+          "name": "wingEdgeRight",
+          "parent": "wingBaseRight",
+          "pivot": [-1.502, 24, 10],
+          "rotation": [30, 0, 0],
+          "cubes": [
+            {
+              "origin": [-1.502, 15, 8],
+              "size": [1, 9, 2],
+              "uv": [98, 21]
+            }
+          ]
+        },
+        {
+          "name": "wingInsetRight",
+          "parent": "wingBaseRight",
+          "pivot": [-1.504, 23, 7.8],
+          "rotation": [20, 0, 0],
+          "cubes": [
+            {
+              "origin": [-1.504, 14, 6.8],
+              "size": [1, 9, 2],
+              "uv": [104, 21]
+            }
+          ]
+        },
+        {
+          "name": "wingCenterRight",
+          "parent": "wingBaseRight",
+          "pivot": [-1.506, 22.7, 6.3],
+          "rotation": [10, 0, 0],
+          "cubes": [
+            {
+              "origin": [-1.506, 13.7, 5.3],
+              "size": [1, 9, 2],
+              "uv": [110, 21]
+            }
+          ]
+        },
+        {
+          "name": "wingFlangeRight",
+          "parent": "wingBaseRight",
+          "pivot": [-1.508, 22.7, 5.1],
+          "cubes": [
+            {
+              "origin": [-1.508, 14.7, 4.1],
+              "size": [1, 8, 2],
+              "uv": [116, 21]
+            }
+          ]
+        },
+        {
+          "name": "wingAuxRight",
+          "parent": "wingBaseRight",
+          "pivot": [-1.51, 22.9, 4],
+          "rotation": [-10, 0, 0],
+          "cubes": [
+            {
+              "origin": [-1.51, 15.9, 3],
+              "size": [1, 7, 2],
+              "uv": [122, 21]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
