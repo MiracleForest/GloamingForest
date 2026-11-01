@@ -114,13 +114,16 @@ namespace GfImport
         string EntityTexture(string id)
         {
             string squash = id.Replace("_", "");
-            var ents = TfTextures.Keys.Where(k => k.StartsWith("twilightforest:entity/", StringComparison.Ordinal)).OrderBy(k => k, StringComparer.Ordinal).ToList();
+            var all = TfTextures.Keys.Where(k => k.StartsWith("twilightforest:entity/", StringComparison.Ordinal)).OrderBy(k => k, StringComparer.Ordinal).ToList();
+            // entity textures sit directly in textures/entity (or in a folder named after the entity);
+            // banner, boat, chest, shield and sign folders hold block / item textures
+            var top = all.Where(k => k.IndexOf('/', "twilightforest:entity/".Length) < 0).ToList();
             Func<string, string> sq = k => k.Substring(k.LastIndexOf('/') + 1).Replace("_", "").Replace("-", "");
-            var hit = ents.FirstOrDefault(k => k == "twilightforest:entity/" + id)
-                ?? ents.FirstOrDefault(k => k.StartsWith("twilightforest:entity/" + id + "/", StringComparison.Ordinal))
-                ?? ents.FirstOrDefault(k => sq(k) == squash)
-                ?? ents.FirstOrDefault(k => sq(k).StartsWith(squash, StringComparison.Ordinal))
-                ?? ents.FirstOrDefault(k => sq(k).Contains(squash));
+            var hit = all.FirstOrDefault(k => k == "twilightforest:entity/" + id)
+                ?? all.FirstOrDefault(k => k.StartsWith("twilightforest:entity/" + id + "/", StringComparison.Ordinal))
+                ?? top.FirstOrDefault(k => sq(k) == squash)
+                ?? top.FirstOrDefault(k => sq(k).StartsWith(squash, StringComparison.Ordinal))
+                ?? top.FirstOrDefault(k => sq(k).Contains(squash));
             return hit;
         }
 

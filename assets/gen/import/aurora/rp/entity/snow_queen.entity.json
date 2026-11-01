@@ -7,7 +7,7 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/banner/snow_queen"
+        "default": "textures/twilightforest/entity/snowqueen"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.snow_queen"

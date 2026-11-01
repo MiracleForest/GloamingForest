@@ -7,7 +7,7 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/banner/naga"
+        "default": "textures/twilightforest/entity/nagahead"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.naga"

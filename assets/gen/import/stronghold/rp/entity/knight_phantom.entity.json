@@ -7,7 +7,7 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/banner/knight_phantom"
+        "default": "textures/twilightforest/entity/knightphantom"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.knight_phantom"

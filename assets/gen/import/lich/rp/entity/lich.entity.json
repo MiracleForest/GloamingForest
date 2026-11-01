@@ -7,7 +7,7 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/banner/lich"
+        "default": "textures/twilightforest/entity/twilightlich64"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.lich"

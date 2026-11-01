@@ -7,7 +7,7 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/banner/quest_ram"
+        "default": "textures/twilightforest/entity/questram"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.quest_ram"

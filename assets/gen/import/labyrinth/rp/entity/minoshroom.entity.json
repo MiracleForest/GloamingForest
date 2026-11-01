@@ -7,7 +7,7 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/banner/minoshroom"
+        "default": "textures/twilightforest/entity/minoshroomtaur"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.minoshroom"

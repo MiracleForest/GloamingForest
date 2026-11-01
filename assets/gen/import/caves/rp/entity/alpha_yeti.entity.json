@@ -7,7 +7,7 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/banner/alpha_yeti"
+        "default": "textures/misc/missing_texture"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.alpha_yeti"

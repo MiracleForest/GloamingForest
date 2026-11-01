@@ -7,7 +7,7 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/twilightforest/entity/banner/hydra"
+        "default": "textures/twilightforest/entity/hydra4"
       },
       "geometry": {
         "default": "geometry.tf.skeleton.hydra"

@@ -4,8 +4,8 @@
     {
       "description": {
         "identifier": "geometry.tf.skeleton.minoshroom",
-        "texture_width": 64,
-        "texture_height": 64,
+        "texture_width": 128,
+        "texture_height": 32,
         "visible_bounds_width": 3,
         "visible_bounds_height": 4,
         "visible_bounds_offset": [0, 1.25, 0]
