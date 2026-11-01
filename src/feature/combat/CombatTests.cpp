@@ -715,8 +715,8 @@ GF_REGISTER_SELFTEST("combat.entity_drops", [](Context& ctx) -> ll::coro::CoroTa
     {
         ActiveScope active(p);
         gf::combat::hurt(*mob, 1000.f, "twilightforest:thrown_axe", &p);
+        co_await ctx.ticks(2); // the drop pass runs on the next tick, while the test is active
     }
-    co_await ctx.ticks(2);
     ctx.check(sFixture == 1, "the Java table gf_test:entities/boss dropped the fixture item (" + std::to_string(sFixture) + ")");
     ctx.check(sAdded == 1, "a handler added a stack to the drops");
     ctx.check(sKiller, "the loot context names the killing player");
@@ -755,6 +755,7 @@ GF_REGISTER_SELFTEST("combat.entity_drops_vanilla", [](Context& ctx) -> ll::coro
     {
         ActiveScope active(p);
         gf::combat::hurt(*cow, 1000.f, "twilightforest:thrown_axe", &p);
+        co_await ctx.ticks(2); // the drop pass runs on the next tick, while the test is active
     }
     co_await ctx.ticks(2);
     ctx.check(sCalls == 1, "the drops handlers ran once for the vanilla mob (" + std::to_string(sCalls) + ")");
