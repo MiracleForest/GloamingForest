@@ -14,6 +14,13 @@ relative to `src/main/java/twilightforest/`; data paths to `src/generated/resour
 Unit record note: the content line counts "4 spawn eggs"; owners.tsv gives U28 five (the Snow Queen egg included),
 all specified in section 11.
 
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
+`#neoforge:needs_wood_tool`), never `#c:`.
+
 ## 1. Structure `twilightforest:aurora_palace`
 
 Sources: `world/components/structures/type/AuroraPalaceStructure.java`, `world/components/structures/icetower/*.java`
@@ -153,10 +160,10 @@ Sources: `block/AuroraBrickBlock.java`, `block/AuroralizedGlassBlock.java`, `ini
 
 | Id | Class | Properties | Behaviour |
 |---|---|---|---|
-| `twilightforest:aurora_block` | AuroraBrickBlock | strength 10 / 6, map colour ICE, instrument CHIME, no `requiresCorrectToolForDrops`; tags `minecraft:needs_diamond_tool` (not mineable/pickaxe) | `getDestroyProgress` = **0.1 per tick** (10 ticks to break) when the player has `twilightforest:progress_glacier`, else vanilla progress for hardness 10. Model `NoiseVaryingModel`: 16 variants `aurora_block_0..15`, variant `calcVariant(pos, 16) = floor(positiveModulo(fractalNoise(3, 48, pos) x 120, 16))`. Tint: `hsvToRGB(rippleFractalNoise(2, 128, pos.above(128), 0.37, 0.67, 1.5), 1, 1)` (item / no level: hue 0.45) |
+| `twilightforest:aurora_block` | AuroraBrickBlock | strength 10 / 6, map colour ICE, instrument CHIME, no `requiresCorrectToolForDrops`; tags `#minecraft:needs_diamond_tool` (not mineable/pickaxe) | `getDestroyProgress` = **0.1 per tick** (10 ticks to break) when the player has `twilightforest:progress_glacier`, else vanilla progress for hardness 10. Model `NoiseVaryingModel`: 16 variants `aurora_block_0..15`, variant `calcVariant(pos, 16) = floor(positiveModulo(fractalNoise(3, 48, pos) x 120, 16))`. Tint: `hsvToRGB(rippleFractalNoise(2, 128, pos.above(128), 0.37, 0.67, 1.5), 1, 1)` (item / no level: hue 0.45) |
 | `twilightforest:aurora_pillar` | RotatedPillarBlock (`axis`) | strength 2 / 6, ICE, CHIME, requires correct tool; mineable/pickaxe, needs wood tool | tint = aurora tint converted to HSV, saturation x 0.5, value `min(v + 0.4, 0.9)` |
-| `twilightforest:aurora_slab` | SlabBlock (`type`, `waterlogged`) | strength 2 / 6, ICE, CHIME, requires correct tool; mineable/pickaxe, needs wood tool, `minecraft:slabs` | pale tint as the pillar |
-| `twilightforest:auroralized_glass` | AuroralizedGlassBlock (TransparentBlock) | copy of `minecraft:glass`; `c:glass_blocks`; item in `#twilightforest:wip` (not in the creative tab) | pale tint as the pillar; beacon colour multiplier = full aurora tint at the glass position |
+| `twilightforest:aurora_slab` | SlabBlock (`type`, `waterlogged`) | strength 2 / 6, ICE, CHIME, requires correct tool; mineable/pickaxe, needs wood tool, `#minecraft:slabs` | pale tint as the pillar |
+| `twilightforest:auroralized_glass` | AuroralizedGlassBlock (TransparentBlock) | copy of `minecraft:glass`; `#c:glass_blocks`; item in `#twilightforest:wip` (not in the creative tab) | pale tint as the pillar; beacon colour multiplier = full aurora tint at the glass position |
 
 Noise: `rippleFractalNoise(it, size, pos, min, max, freq) = |((fractal(it, size, pos) x freq) mod (2 x (max - min))) -
 (max - min)| + min`, `fractal(n) = n == 0 ? 0 : (simplex3((x + n x size) / size, (y + n x size) / size, (z + n x size)
@@ -195,10 +202,11 @@ Entity sizes and spawn eggs (`init/TFEntities.java`): all MONSTER category.
 | `twilightforest:ice_snowball` | 0.25 x 0.25, tracking 150, update 3, no egg | - |
 
 Entity tags (owned by U17 / vanilla, membership noted for parity): `#twilightforest:bosses` has the Snow Queen; stable /
-unstable ice core, snow guardian and ice crystal are in `minecraft:powder_snow_walkable_mobs`,
-`minecraft:freeze_immune_entity_types` and `minecraft:fall_damage_immune` (the queen is fall-damage immune too) and in
-`#twilightforest:lifedrain_drops_no_flesh`; `ice_snowball` is in `minecraft:impact_projectiles`. Snow queen, snow guardian and both ice cores (not the ice crystal) are criteria of
-`twilightforest:twilight_hunter` (U14, kill any TF mob in the Twilight Forest).
+unstable ice core, snow guardian and ice crystal are in `#minecraft:powder_snow_walkable_mobs`,
+`#minecraft:freeze_immune_entity_types` and `#minecraft:fall_damage_immune` (the queen is fall-damage immune too) and in
+`#twilightforest:lifedrain_drops_no_flesh`; `ice_snowball` is in `#minecraft:impact_projectiles`. Snow queen, snow
+guardian and both ice cores (not the ice crystal) are criteria of `twilightforest:twilight_hunter` (U14, kill any TF mob
+in the Twilight Forest).
 
 ### 5.1 Common ice mob (`entity/monster/BaseIceMob.java`)
 
@@ -242,7 +250,7 @@ Base of stable / unstable ice core and snow guardian (`IceCrystal` extends it to
 |---|---|
 | Attributes | max health 20, speed 0.23, attack 3 |
 | Goals | 0 Float, 1 MeleeAttack 1.0, 2 Stroll, 3 Look, 3 RandomLook; targets HurtBy, Player |
-| Death | `tickDeath`: the corpse stays **60 ticks** (3 s); at 60 the server explodes radius 1 (`ExplosionInteraction.MOB`) and, when mob griefing, `transformBlocks`; then the vanilla removal (deathTime faked to 19 so the loot / xp / poof run once) |
+| Death | `tickDeath`: the corpse stays **60 ticks** (3 s); at 60 the server explodes radius 1 (no fire, `ExplosionInteraction.MOB`: block damage only with mob griefing) and, when mob griefing, `transformBlocks`; then the vanilla removal (deathTime faked to 19 so the loot / xp / poof run once) |
 | transformBlocks | every offset in the 9 x 9 x 9 cube with `distance < 4 + (r - r) x 2` (a new random per offset): if explosion resistance < 8 and the block is breakable: full-cube shape and (not solid, or leaves, or `minecraft:ice`, or `twilightforest:aurora_block`) -> stained glass of the dye colour closest to the block's map colour; else, if a redstone conductor -> terracotta of that colour. Closest dye: Manhattan RGB distance to `DyeColor.getTextureDiffuseColor`, start WHITE with best 1024 |
 | Sounds | `entity.twilightforest.ice.*` (ambient / hurt / death) |
 | Cluster | max 2 |
@@ -344,8 +352,8 @@ R5: both are chest tables of the unit that places the chest (U28). Entity tables
 
 | Id | message_id | Effects | Scaling | Exhaustion | Tags | Users |
 |---|---|---|---|---|---|---|
-| `twilightforest:frozen` | `twilightforest.frozen` | freezing | when caused by living non-player | 0.1 | `c:is_magic`, `minecraft:bypasses_wolf_armor` | ice bomb (`twilightforest:thrown_ice`, U8; "%1$s was frozen by %2$s using an Ice Bomb", `.item` variant) |
-| `twilightforest:snowball_fight` | `twilightforest.snowballFight` | freezing | when caused by living non-player | 0.1 | `minecraft:is_projectile`, `c:is_magic` | ice snowball ("%1$s lost a snowball fight to %2$s", `.item` variant) |
+| `twilightforest:frozen` | `twilightforest.frozen` | freezing | when caused by living non-player | 0.1 | `#neoforge:is_magic`, `#minecraft:bypasses_wolf_armor` | ice bomb (`twilightforest:thrown_ice`, U8; "%1$s was frozen by %2$s using an Ice Bomb", `.item` variant) |
+| `twilightforest:snowball_fight` | `twilightforest.snowballFight` | freezing | when caused by living non-player | 0.1 | `#minecraft:is_projectile`, `#neoforge:is_magic` | ice snowball ("%1$s lost a snowball fight to %2$s", `.item` variant) |
 
 Death messages are F10's lang keys (R9); F10 pre-registers both types from import, U28 only uses them by id.
 

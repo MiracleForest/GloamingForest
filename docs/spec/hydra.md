@@ -11,6 +11,20 @@ relative to `src/main/java/twilightforest/`; data paths to `src/generated/resour
 | Contracts | landmark, structure, boss, entity, projectile, features, families+blockevents, fx |
 | Config | none of its own (boss drop chests and multiplayer adjuster are F8's `bosses` section) |
 
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
+`#neoforge:needs_wood_tool`), never `#c:`.
+
+NeoForge-provided common tags used in this spec (defined by NeoForge 21.1's own data pack, not by TF, so owners.tsv has
+no row for them; F1 imports their members with the vanilla tags TF references):
+
+| Tag | NeoForge 21.1 members | Bedrock equivalent | Used by |
+|---|---|---|---|
+| `item/#c:dusts/redstone` | `minecraft:redstone` | `minecraft:redstone`; expanded to the item in the Bedrock recipe | encased fire jet and encased smoker recipes |
+
 ## 1. Structure `twilightforest:hydra_lair`
 
 Sources: `world/components/structures/type/HydraLairStructure.java`, `world/components/structures/HydraLairComponent.java`,
@@ -181,7 +195,7 @@ keep hurtTime 20 (red) while DYING.
 
 | Attack | Damage / effect |
 |---|---|
-| Bite (BITING state, every tick) | every living entity (not the hydra) in the head box inflated (0, 1, 0) takes 48 `twilightforest:hydra_bite` damage (attacker = hydra); players get a motion packet `(-step.x x 0.5, 0.1, -step.z x 0.5)` of the head's facing, others vanilla knockback (step, 0.1). A player blocking with a shield not on cooldown: shatter sound (`item.twilightforest.shield.shatter` for `minecraft:shield`, else `item.twilightforest.knightmetal_shield.shatter`; other units' events, vol 1.0, player voice pitch) and 112 durability damage; then always shield cooldown 200 ticks, stop using, motion (-0.5 step, 0.15) |
+| Bite (BITING state, every tick) | every living entity (not the hydra) in the head box inflated (0, 1, 0) takes 48 `twilightforest:hydra_bite` damage (attacker = hydra); players get a motion packet `(-step.x x 0.5, 0.1, -step.z x 0.5)` of the head's facing, others `living.knockback(strength = -facing.stepX, xRatio = 0.1, zRatio = -facing.stepZ)` (TF passes the step as the strength and 0.1 as the x ratio: a TF quirk, keep it; do not write `knockback(0.1, -dx, -dz)`. With vanilla `knockback` semantics only a WEST-facing head pushes: strength 1 x (1 - knockback resistance) along -x, y `min(0.4, vy / 2 + strength)` on ground; NORTH / SOUTH give strength 0 and EAST -1, which do nothing). A player blocking with a shield not on cooldown: shatter sound (`item.twilightforest.shield.shatter` for `minecraft:shield`, else `item.twilightforest.knightmetal_shield.shatter`; other units' events, vol 1.0, player voice pitch) and 112 durability damage; then always shield cooldown 200 ticks, stop using, motion (-0.5 step, 0.15) |
 | Flame (FLAMING, every tick) | the entity the head looks at (ray 30 from head y + 1, block clip OUTLINE/ANY, entities in the head box moved along the look by the clipped distances inflated 3, excluding necks a-c and parts of the same hydra): if not fire immune and it takes 19 `twilightforest:hydra_fire` damage, ignite 3 s. Sound `entity.twilightforest.hydra.shoot_fire` every 5 head ticks (vol 0.5 + r, pitch 0.3 + r x 0.7), game event PROJECTILE_SHOOT |
 | Mortar (MORTAR_SHOOTING, every 10 ticks of progress) | spawn a `twilightforest:hydra_mortar`; blasting mode when the head cannot see its target; sound `entity.twilightforest.hydra.shoot` vol 10.0, pitch 1 +- 0.2 |
 
@@ -196,8 +210,10 @@ ambient `entity.twilightforest.hydra.growl`, hurt `entity.twilightforest.hydra.h
 2. Heads with `damageTaken > 120` that are not dead: set DYING now, respawn counter 140 for that head **and** for one
    random head that can respawn (DEAD with counter -1). Respawn: when the counter reaches 0 the head goes BORN,
    damage resets. (So each slain head brings back itself and one more, up to 7.)
-3. With chance 0.7: nearest player within 48 that is not creative becomes the target and the chase timer is set to
-   `100 + rand(20)`; otherwise a random yaw velocity `(r - 0.5) x 20`.
+3. With chance 0.7: take the nearest non-spectator player within 48 (`getNearestPlayer(this, 48)`, creative players
+   included in the search); if it exists and is not creative, it becomes the target and the chase timer is set to
+   `100 + rand(20)`; otherwise (no player, or the nearest one is creative) yaw velocity = `(r - 0.5) x 20`. A creative
+   player standing nearer hides survival players behind it: do not filter creative players out of the search.
 4. Grief (mob griefing, not dying): destroy (no drops) every destroyable block in the body, tail and living heads'
    boxes; every 20 ticks, if less than 60 % of the blocks under its box are solid, destroy the layer under it.
 5. With a target: look at it (10, 500); idle heads (not attacking or secondary) switch to it; if alive and visible,
@@ -251,7 +267,9 @@ Source: `entity/boss/HydraMortar.java`, `client/renderer/entity/HydraMortarRende
   detonates on any block.
 - Hit entity (server, with owner): detonates unless the entity is another mortar of a different owner, the owner,
   or a part of the owner hydra.
-- Detonate: explosion power 4.0 (blasting) or 0.1, block damage only with mob griefing, interaction MOB; blasting
+- Detonate: `level.explode(mortar, x, y, z, power, fire, MOB)` with explosion power 4.0 (blasting) or 0.1, **fire =
+  mob griefing allowed** (`EventHooks.canEntityGrief`: every mortar explosion starts fires while mob griefing is on),
+  interaction MOB (block damage only with the `mobGriefing` rule, drops decayed per `mobExplosionDropDecay`); blasting
   explosions cap block resistance at 0.8 except blocks in `#twilightforest:common_protections`; then every entity
   within 1 block that is not fire immune (or is the hydra / a hydra part) takes 18 `twilightforest:hydra_mortar`
   damage (indirect, direct = mortar, attacker = owner) and burns 5 s; discard.
@@ -350,8 +368,8 @@ is no lava, and stone under the whole 5 x 5 at y - 3. Returns true.
 
 | Id | message_id (en_us) | Effects | Exhaustion | Tags |
 |---|---|---|---|---|
-| `twilightforest:fire_jet` | `twilightforest.fireJet` ("%1$s accidentally walked into a Fire Jet") | burning | 0.1 | `#minecraft:is_fire`, `#c:is_environment`, `#c:is_physical`, `#minecraft:ignites_armor_stands`, `#minecraft:no_knockback` |
-| `twilightforest:hydra_bite` | `twilightforest.hydraBite` ("%1$s's skin was ripped off by the Hydra") | hurt | 0.0 | `#c:is_physical` |
+| `twilightforest:fire_jet` | `twilightforest.fireJet` ("%1$s accidentally walked into a Fire Jet") | burning | 0.1 | `#minecraft:is_fire`, `#neoforge:is_environment`, `#neoforge:is_physical`, `#minecraft:ignites_armor_stands`, `#minecraft:no_knockback` |
+| `twilightforest:hydra_bite` | `twilightforest.hydraBite` ("%1$s's skin was ripped off by the Hydra") | hurt | 0.0 | `#neoforge:is_physical` |
 | `twilightforest:hydra_fire` | `twilightforest.hydraFire` ("%1$s was roasted alive by the Hydra") | hurt | 0.0 | `#minecraft:is_fire`, `#minecraft:ignites_armor_stands`, `#minecraft:avoids_guardian_thorns` |
 | `twilightforest:hydra_mortar` | `onFire` (vanilla "%1$s burned to death") | burning | 0.0 | `#minecraft:is_fire`, `#minecraft:ignites_armor_stands`, `#minecraft:avoids_guardian_thorns` |
 

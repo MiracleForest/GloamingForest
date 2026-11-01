@@ -11,10 +11,22 @@ relative to `src/main/java/twilightforest/`; data paths to `src/generated/resour
 | Contracts | landmark, structure, boss, entity, projectile, loot, progression |
 | Config | none (boss chest / multiplayer settings are F8's) |
 
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
+`#neoforge:needs_wood_tool`), never `#c:`.
+
 ## 1. Structure `twilightforest:knight_stronghold`
 
-Sources: `world/components/structures/type/KnightStrongholdStructure.java`, `world/components/structures/stronghold/*.java`
-(26 classes), `world/components/structures/util/LandmarkStructure.java` (F6).
+Sources: `world/components/structures/type/KnightStrongholdStructure.java`,
+`world/components/structures/stronghold/*.java` (25 classes): the shared piece base `KnightStrongholdComponent.java`
+(`addNewComponent`, `addNewUpperComponent`, the `isOutOfRange` checks, the doors and the break-in logic of section 1.1),
+the weight record `StrongholdPieceWeight.java` (factory, weight, instance limit with 0 = unlimited, minimum depth,
+instances spawned), the selector `StrongholdPieces.java`, the decorator `StrongholdDecorator.java`, the 20 piece classes
+of the table below and the legacy `StrongholdShieldStructure.java`; plus
+`world/components/structures/util/LandmarkStructure.java` (F6).
 
 | Field | Value |
 |---|---|
@@ -50,7 +62,7 @@ adjust elevation; piece random `RandomSource.create(seed + chunkX x 25117 + chun
 | `twilightforest:TFSTR` | StrongholdTrainingRoomComponent | (-13, -1, 0; 18 x 7 x 18) | sand pits, anvil, carved pumpkin + oak fence dummies, birch planks; 2 corner statues; child NONE (4,1,18) |
 | `twilightforest:TFSSS` | StrongholdSmallStairsComponent | (-4, -1, 0; 9 x 14 x 9) entering bottom, or (-4, -8, 0; ...) entering top | enter bottom when y < -21, top when y > -15, else `(z & 1) == 0`; treasure 1/2 (`hasTreasure`): chest at (4,1,6) with `twilightforest:stronghold_cache`, trapped 1/3 with TNT under it; wall statue |
 | `twilightforest:TFSTC` | StrongholdTreasureCorridorComponent | (-4, -1, 0; 9 x 7 x 27) | chest at (8,2,13) in the side wall with `twilightforest:stronghold_cache`; 4 wall statues; child NONE (4,1,27) |
-| `twilightforest:TFSAt` | StrongholdAtriumComponent | (-4, -1, 0; 18 x 14 x 18) or (-13, -8, 0; ...) | grass centre and a tree at (8,1,8): rand(5) -> 1 jungle, 2 birch, 3 `twilightforest:twilight_oak_tree`, 4 `twilightforest:rainbow_oak_tree`, else oak; 4 corner statues; 4 exits |
+| `twilightforest:TFSAt` | StrongholdAtriumComponent | (-4, -1, 0; 18 x 14 x 18) or (-13, -8, 0; ...) | grass centre and a tree at (8,1,8): configured feature by piece-random rand(5) -> 1 `minecraft:jungle_tree`, 2 `minecraft:birch`, 3 `twilightforest:tree/twilight_oak_tree`, 4 `twilightforest:tree/rainbow_oak`, else `minecraft:oak` (`spawnATree`); only when (8,1,8) is inside the chunk box `sbb`; placement retried up to 100 times with the level random (`world.getRandom()`, the WorldGenRegion random, not the piece random), stopping at the first success; 4 corner statues; 4 exits |
 | `twilightforest:TFSFo` | StrongholdFoundryComponent | (-4, -20 / -6 / -13, 0; 18 x 26 x 18) by entry level | lava, ore column (coal/iron/gold/redstone/copper/diamond/emerald ores, glowstone) with rand(9)/rand(13) choices; 3 exits |
 | `twilightforest:TFTreaR` | StrongholdTreasureRoomComponent | (-4, -1, 0; 9 x 7 x 18) | `minecraft:spawner` of `twilightforest:helmet_crab` at (4,1,4) and (4,4,15); chests at (2,4,13) WEST and (6,4,13) EAST with `twilightforest:stronghold_room`; iron bars; 5 wall statues |
 | `twilightforest:TFSBR` | StrongholdBossRoomComponent | (-13, -1, 0; 27 x 7 x 27) | `spawnListIndex = Integer.MAX_VALUE` (no controlled spawns); corner pillars with stair decorations, 6 sarcophagi (torches or fence posts, rand(7)), iron-bar doorway (12,1,3)-(14,4,3); **`twilightforest:knight_phantom_boss_spawner` at (13,2,13)** |
@@ -78,7 +90,9 @@ floor/ceiling, decorator random blocks on walls, dirt walls kept); upper pieces 
 `minecraft:stone_brick_stairs`, pillar `minecraft:mossy_stone_bricks`, platform `minecraft:smooth_stone_slab[type=top]`,
 random blocks = knight stones selector. Statues (`placeCornerStatue`, `placeWallStatue`): 5-high pillar, oak fence
 antlers, stair arms and feet, cobblestone wall sword. Doors (`placeDoorwayAt`): cobblestone-wall frame 5 wide x 4
-high with a 3 x 4 opening. These are exact translations (R19), golden hash per piece.
+high with a 3 x 4 opening. These are exact translations (R19), golden hash per piece (the atrium tree grows with the
+level random, not the piece random: the golden hash seeds that random for the test, as Java derives the WorldGenRegion random
+from the world seed and the centre chunk, or masks the tree volume above (8,1,8)).
 
 Protected pieces (`isComponentProtected` true for everything except the access chamber and the upper pieces) get
 controlled-spawn index 0 and F6 protection; the upper ruins are not protected.
@@ -393,10 +407,10 @@ Chests are placed with `gf::loot::placeContainer` (F10); trapped variants use `m
 
 | Id | message_id (en_us) | Exhaustion | Tags | Used by |
 |---|---|---|---|---|
-| `twilightforest:axing` | `twilightforest.axing` ("%1$s was chopped up by %2$s") | 0.1 | `#c:is_physical` | minotaur and minoshroom melee (U23, by string) |
-| `twilightforest:spiked` | `twilightforest.spiked` ("%1$s was skewered by %2$s") | 0.1 | `#c:is_physical` | blockchain goblin melee |
-| `twilightforest:thrown_axe` | `twilightforest.thrownAxe` ("%1$s was decapitated by a thrown axe") | 0.0 | `#minecraft:is_projectile`, `#c:is_physical` | thrown weapon (axe) |
-| `twilightforest:thrown_pickaxe` | `twilightforest.thrownPickaxe` ("%1$s was decapitated by a thrown pickaxe") | 0.0 | `#minecraft:is_projectile`, `#c:is_physical` | thrown weapon (pickaxe) |
+| `twilightforest:axing` | `twilightforest.axing` ("%1$s was chopped up by %2$s") | 0.1 | `#neoforge:is_physical` | minotaur and minoshroom melee (U23, by string) |
+| `twilightforest:spiked` | `twilightforest.spiked` ("%1$s was skewered by %2$s") | 0.1 | `#neoforge:is_physical` | blockchain goblin melee |
+| `twilightforest:thrown_axe` | `twilightforest.thrownAxe` ("%1$s was decapitated by a thrown axe") | 0.0 | `#minecraft:is_projectile`, `#neoforge:is_physical` | thrown weapon (axe) |
+| `twilightforest:thrown_pickaxe` | `twilightforest.thrownPickaxe` ("%1$s was decapitated by a thrown pickaxe") | 0.0 | `#minecraft:is_projectile`, `#neoforge:is_physical` | thrown weapon (pickaxe) |
 
 All: effects hurt, scaling `when_caused_by_living_non_player`. Death messages are F10's lang (R9).
 

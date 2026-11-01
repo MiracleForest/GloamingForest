@@ -16,6 +16,20 @@ Unit record note: the content line lists "+ 4 spawn eggs", but TF 4.8 registers 
 0 / 0). owners.tsv agrees (no `spawn_egg` rows for U30); the lang keys `item.twilightforest.adherent_spawn_egg` /
 `harbinger_cube_spawn_egg` are leftovers and stay unused.
 
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
+`#neoforge:needs_wood_tool`), never `#c:`.
+
+NeoForge-provided common tags used in this spec (defined by NeoForge 21.1's own data pack, not by TF, so owners.tsv has
+no row for them; F1 imports their members with the vanilla tags TF references):
+
+| Tag | NeoForge 21.1 members | Bedrock equivalent | Used by |
+|---|---|---|---|
+| `item/#c:ores` | `#c:ores/{coal,copper,diamond,emerald,gold,iron,lapis,netherite_scrap,quartz,redstone}` = vanilla `#minecraft:{coal,copper,diamond,emerald,gold,iron,lapis,redstone}_ores`, `minecraft:ancient_debris`, `minecraft:nether_quartz_ore` (item tag copied from the block tag) | the item ids `minecraft:coal_ore`, `deepslate_coal_ore`, `copper_ore`, `deepslate_copper_ore`, `diamond_ore`, `deepslate_diamond_ore`, `emerald_ore`, `deepslate_emerald_ore`, `gold_ore`, `deepslate_gold_ore`, `nether_gold_ore`, `iron_ore`, `deepslate_iron_ore`, `lapis_ore`, `deepslate_lapis_ore`, `redstone_ore`, `deepslate_redstone_ore`, `quartz_ore` (Java `nether_quartz_ore`), `ancient_debris` (the lit redstone ores have no item) | cinder furnace `canMultiply` (`input.is(Tags.Items.ORES)`) |
+
 ## 1. Structure `twilightforest:final_castle`
 
 Sources: `world/components/structures/type/FinalCastleStructure.java`, `world/components/structures/finalcastle/*.java`
@@ -167,8 +181,8 @@ tints violet 0x5C1074, pink 0xFA057E, orange 0xFF5B02, green 0x89E701, blue 0x0D
 | `twilightforest:brown_thorns` | `ThornsBlock` (`ConnectableRotatedPillarBlock` with `axis`, 6 connection booleans, `waterlogged`; F11 connected family), PODZOL, wood sound, strength 50 / 2000, no loot, push BLOCK | see below |
 | `twilightforest:green_thorns` | same, PLANT map colour | see below |
 | `twilightforest:burnt_thorns` | `BurntThornsBlock`, instant break, STONE, sand sound, push DESTROY, no loot | a living entity or projectile inside destroys it (no drops) ("Burnt Thorns will disintegrate when stepped on"); broken by a player it becomes the fluid state (no drop); no path penalty |
-| `twilightforest:thorn_rose` | `ThornRoseBlock` (BushBlock, `facing` 6 directions, default up), PLANT, no collision, grass sound, strength 10 / 0, push DESTROY; shape centred 0.8 cube | survives when the block behind it (opposite `facing`) is brown / green thorns, or when that behind block's face toward the rose (`facing`) is sturdy (TF evaluates the behind block's state with the rose's position; shapes rarely depend on it); item in `minecraft:small_flowers`, `#twilightforest:immune_to_thorns`; mineable/hoe; drops itself |
-| `twilightforest:thorn_leaves` | `SpecialStemLeavesBlock` (stem = brown or green thorns), PLANT, azalea leaves sound, strength 0.2, random ticks, no occlusion, push DESTROY, ignited by lava | distance from thorns, decays at 7; evergreen foliage tint (0x619961); mineable/hoe; `minecraft:leaves`; item in `#twilightforest:immune_to_thorns` |
+| `twilightforest:thorn_rose` | `ThornRoseBlock` (BushBlock, `facing` 6 directions, default up), PLANT, no collision, grass sound, strength 10 / 0, push DESTROY; shape centred 0.8 cube | survives when the block behind it (opposite `facing`) is brown / green thorns, or when that behind block's face toward the rose (`facing`) is sturdy (TF evaluates the behind block's state with the rose's position; shapes rarely depend on it); item in `#minecraft:small_flowers`, `#twilightforest:immune_to_thorns`; mineable/hoe; drops itself |
+| `twilightforest:thorn_leaves` | `SpecialStemLeavesBlock` (stem = brown or green thorns), PLANT, azalea leaves sound, strength 0.2, random ticks, no occlusion, push DESTROY, ignited by lava | distance from thorns, decays at 7; evergreen foliage tint (0x619961); mineable/hoe; `#minecraft:leaves`; item in `#twilightforest:immune_to_thorns` |
 | `twilightforest:potted_thorn`, `twilightforest:potted_green_thorn`, `twilightforest:potted_dead_thorn` | `SpecialFlowerPotBlock` (F11 `potted` family) holding brown / green / burnt thorns ("Potted Thorn", "Potted Green Thorn", "Potted Burnt Thorn") | `#minecraft:flower_pots`; loot `twilightforest:blocks/potted_thorn`, `twilightforest:blocks/potted_green_thorn`, `twilightforest:blocks/potted_dead_thorn` = flower pot (the thorn item is returned by the pot interaction, vanilla) |
 
 Brown / green thorns:
@@ -206,7 +220,7 @@ Cinder furnace behaviour (`CinderFurnaceBlockEntity extends FurnaceBlockEntity`,
 - Vanilla furnace tick with `RecipeType.SMELTING` only, except: cooking progress advances by
   `getCurrentMultiplier(2)` per tick and completes at `>=` total; the output count is multiplied by
   `getCurrentMultiplier(10)` for every item (TF mutates the recipe's shared result stack here; Bedrock copies instead,
-  noted deviation); the output-space check uses `ceil(logs / 10)` for `#minecraft:logs` / `c:ores` inputs; wet sponge
+  noted deviation); the output-space check uses `ceil(logs / 10)` for `#minecraft:logs` / `#c:ores` inputs; wet sponge
   + empty bucket in fuel gives a water bucket (vanilla).
 - `getCurrentMultiplier(f)`: `logs` = cinder logs in the 3 x 3 x 3 around the furnace; `logs < f` -> 1, else `logs / f +
   (rand(f) >= logs % f ? 0 : 1)`.
@@ -282,8 +296,8 @@ only shows particles).
 ## 5. Damage type `twilightforest:thorns` (owned by U30)
 
 message_id `twilightforest.thorns` ("%1$s walked into some thorns", `.player` "... while escaping %2$s"; F10 keys),
-exhaustion 0.1, scaling `when_caused_by_living_non_player`, tags `minecraft:no_knockback`, `neoforge:is_environment`,
-`neoforge:is_physical`. Used by brown / green thorns (4 damage).
+exhaustion 0.1, scaling `when_caused_by_living_non_player`, tags `#minecraft:no_knockback`, `#neoforge:is_environment`,
+`#neoforge:is_physical`. Used by brown / green thorns (4 damage).
 
 ## 6. Item tag `item/#twilightforest:immune_to_thorns`
 

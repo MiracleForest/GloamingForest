@@ -12,6 +12,20 @@ relative to `src/main/java/twilightforest/`; data paths to `src/generated/resour
 | Contracts | entity, projectile, spawn, loot, combat, geo |
 | Config | none |
 
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
+`#neoforge:needs_wood_tool`), never `#c:`.
+
+NeoForge-provided common tags used in this spec (defined by NeoForge 21.1's own data pack, not by TF, so owners.tsv has
+no row for them; F1 imports their members with the vanilla tags TF references):
+
+| Tag | NeoForge 21.1 members | Bedrock equivalent | Used by |
+|---|---|---|---|
+| `block/#c:ores` | `#c:ores/{coal,copper,diamond,emerald,gold,iron,lapis,netherite_scrap,quartz,redstone}` = vanilla `#minecraft:{coal,copper,diamond,emerald,gold,iron,lapis,redstone}_ores`, `minecraft:ancient_debris`, `minecraft:nether_quartz_ore` | `minecraft:coal_ore`, `deepslate_coal_ore`, `copper_ore`, `deepslate_copper_ore`, `diamond_ore`, `deepslate_diamond_ore`, `emerald_ore`, `deepslate_emerald_ore`, `gold_ore`, `deepslate_gold_ore`, `nether_gold_ore`, `iron_ore`, `deepslate_iron_ore`, `lapis_ore`, `deepslate_lapis_ore`, `redstone_ore`, `deepslate_redstone_ore`, `quartz_ore` (Java `nether_quartz_ore`), `ancient_debris`, plus Bedrock's separate lit states `minecraft:lit_redstone_ore` and `minecraft:lit_deepslate_redstone_ore` | `#twilightforest:druid_projectile_replaceable` (druid bolt) |
+
 ## 1. Common rules
 
 - Registration (`init/TFEntities.java`): tracking range 80, update interval 3, velocity updates; projectiles
@@ -472,10 +486,10 @@ tags are F1 imports.
 
 | Id | message_id | Effects | Exhaustion | Scaling | Tags | Used by |
 |---|---|---|---|---|---|---|
-| `twilightforest:ant` | `twilightforest.ant` ("%1$s was squashed like an ant by %2$s") | hurt | 0.1 | when caused by living non-player | `#c:is_physical` | giant miner melee (U29) |
-| `twilightforest:chilling_breath` | `twilightforest.chillingBreath` ("%1$s was frozen to death by the Snow Queen") | freezing | 0.0 | when caused by living non-player | `#c:is_magic` | Snow Queen breath (U28) |
-| `twilightforest:clamped` | `twilightforest.clamped` ("%1$s was squeezed to death by %2$s") | `twilightforest:pinch` (hurt sound `entity.twilightforest.pinch_beetle.attack`) | 0.1 | when caused by living non-player | `#c:is_physical`, `#minecraft:no_knockback` | pinch beetle |
-| `twilightforest:haunt` | `twilightforest.haunt` ("%1$s joined the %2$s's haunt") | hurt | 0.1 | when caused by living non-player | `#c:is_magic` | wraith, knight phantom (U25) |
+| `twilightforest:ant` | `twilightforest.ant` ("%1$s was squashed like an ant by %2$s") | hurt | 0.1 | when caused by living non-player | `#neoforge:is_physical` | giant miner melee (U29) |
+| `twilightforest:chilling_breath` | `twilightforest.chillingBreath` ("%1$s was frozen to death by the Snow Queen") | freezing | 0.0 | when caused by living non-player | `#neoforge:is_magic` | Snow Queen breath (U28) |
+| `twilightforest:clamped` | `twilightforest.clamped` ("%1$s was squeezed to death by %2$s") | `twilightforest:pinch` (hurt sound `entity.twilightforest.pinch_beetle.attack`) | 0.1 | when caused by living non-player | `#neoforge:is_physical`, `#minecraft:no_knockback` | pinch beetle |
+| `twilightforest:haunt` | `twilightforest.haunt` ("%1$s joined the %2$s's haunt") | hurt | 0.1 | when caused by living non-player | `#neoforge:is_magic` | wraith, knight phantom (U25) |
 | `twilightforest:scorched` | `twilightforest.scorched` ("%1$s was scorched by %2$s") | burning | 0.1 | when caused by living non-player | `#minecraft:is_fire`, `#minecraft:ignites_armor_stands` | fire beetle |
 
 Bedrock: damage types map to the F10 combat contract (`gf::combat::hurt(victim, amount, typeId, attacker, direct)`),

@@ -13,6 +13,21 @@ checklist the U16 worker implements and the A5 audit compares against. Java path
 | Contracts | entity, spawn, loot, data, geo (F8, F5, F10, F9, F2) |
 | Config | none (TF has no fauna config key) |
 
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
+`#neoforge:needs_wood_tool`), never `#c:`.
+
+NeoForge-provided common tags used in this spec (defined by NeoForge 21.1's own data pack, not by TF, so owners.tsv has
+no row for them; F1 imports their members with the vanilla tags TF references):
+
+| Tag | NeoForge 21.1 members | Bedrock equivalent | Used by |
+|---|---|---|---|
+| `item/#c:crops/carrot`, `item/#c:crops/potato`, `item/#c:crops/beetroot`, `item/#c:crops/wheat` | `minecraft:carrot`, `minecraft:potato`, `minecraft:beetroot`, `minecraft:wheat` (one each) | the same ids on Bedrock | `#twilightforest:boar_tempt_items` (carrot, potato, beetroot), `deer_tempt_items` (wheat), `dwarf_rabbit_tempt_items` (carrot) |
+| `item/#c:seeds` | `#c:seeds/{beetroot,melon,pumpkin,torchflower,wheat}` = beetroot, melon, pumpkin, torchflower and wheat seeds (no pitcher pod in 21.1) | `minecraft:beetroot_seeds`, `minecraft:melon_seeds`, `minecraft:pumpkin_seeds`, `minecraft:torchflower_seeds`, `minecraft:wheat_seeds` (same ids); a vanilla-client `minecraft:behavior.tempt` lists these items | `#twilightforest:tiny_bird_tempt_items`, `raven_tempt_items`, `squirrel_tempt_items` |
+
 ## 1. Common rules
 
 - Every entity type below is registered by `init/TFEntities.java` `make(...)`: tracking range 80 blocks, update

@@ -16,6 +16,13 @@ live in TF's `trollcave` package) while the `twilightforest:giant_house` structu
 U29's. U27 implements and registers these piece types (F7 `registerPieceType`); U29's structure creates its first
 piece by the string id `twilightforest:TFClCa` (R2).
 
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
+`#neoforge:needs_wood_tool`), never `#c:`.
+
 ## 1. Structure `twilightforest:troll_cave`
 
 Sources: `world/components/structures/type/TrollCaveStructure.java`, `world/components/structures/trollcave/TrollCave{Main,Connect,Garden}Component.java`,
@@ -96,7 +103,7 @@ Sources: `block/TrollsteinnBlock.java`, `block/TrollRootBlock.java`, `block/Unri
 
 | Block | Properties | States | Light | Tool / tags |
 |---|---|---|---|---|
-| `twilightforest:trollsteinn` | map STONE, instrument BASEDRUM, sound STONE, strength 2.0 / 6.0, requires correct tool, random ticks | `down`, `up`, `north`, `south`, `west`, `east` (booleans: that face is lit) | 0 | pickaxe, `#c:needs_wood_tool`, `#minecraft:moss_replaceable`, `#minecraft:overworld_carver_replaceables` |
+| `twilightforest:trollsteinn` | map STONE, instrument BASEDRUM, sound STONE, strength 2.0 / 6.0, requires correct tool, random ticks | `down`, `up`, `north`, `south`, `west`, `east` (booleans: that face is lit) | 0 | pickaxe, `#neoforge:needs_wood_tool`, `#minecraft:moss_replaceable`, `#minecraft:overworld_carver_replaceables` |
 | `twilightforest:trollvidr` | map PLANT, instabreak, no collision, push DESTROY, sound FLOWERING_AZALEA | none | 0 | shears drop |
 | `twilightforest:unripe_trollber` | as trollvidr + random ticks | none | 0 | shears drop |
 | `twilightforest:trollber` | as trollvidr | none | 15 | shears drop |
@@ -314,9 +321,9 @@ Renderer: falling-block copy, shadow 0.5.
 
 | Id | message_id (en_us) | Exhaustion | Tags |
 |---|---|---|---|
-| `twilightforest:falling_ice` | `fallingBlock` (vanilla "%1$s was squashed by a falling block") | 0.1 | `#minecraft:bypasses_enchantments`, `#c:is_environment`, `#c:is_physical` |
-| `twilightforest:thrown_block` | `twilightforest.thrownBlock` ("%1$s was squashed by a thrown block") | 0.1 | `#minecraft:damages_helmet`, `#minecraft:is_projectile`, `#c:is_physical` |
-| `twilightforest:yeeted` | `twilightforest.yeeted` ("%1$s was yeeted for the last time") | 0.1 | `#minecraft:bypasses_armor`, `#minecraft:is_fall`, `#c:is_physical`, `#minecraft:avoids_guardian_thorns` |
+| `twilightforest:falling_ice` | `fallingBlock` (vanilla "%1$s was squashed by a falling block") | 0.1 | `#minecraft:bypasses_enchantments`, `#neoforge:is_environment`, `#neoforge:is_physical` |
+| `twilightforest:thrown_block` | `twilightforest.thrownBlock` ("%1$s was squashed by a thrown block") | 0.1 | `#minecraft:damages_helmet`, `#minecraft:is_projectile`, `#neoforge:is_physical` |
+| `twilightforest:yeeted` | `twilightforest.yeeted` ("%1$s was yeeted for the last time") | 0.1 | `#minecraft:bypasses_armor`, `#minecraft:is_fall`, `#neoforge:is_physical`, `#minecraft:avoids_guardian_thorns` |
 
 All effects hurt, scaling `when_caused_by_living_non_player`.
 

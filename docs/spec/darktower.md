@@ -11,6 +11,21 @@ relative to `src/main/java/twilightforest/`; data paths to `src/generated/resour
 | Contracts | landmark, structure, boss, entity, projectile, families+blockevents, blockdata+redstone, loot, progression |
 | Config | none |
 
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
+`#neoforge:needs_wood_tool`), never `#c:`.
+
+NeoForge-provided common tags used in this spec (defined by NeoForge 21.1's own data pack, not by TF, so owners.tsv has
+no row for them; F1 imports their members with the vanilla tags TF references):
+
+| Tag | NeoForge 21.1 members | Bedrock equivalent | Used by |
+|---|---|---|---|
+| `item/#c:ores/redstone` | vanilla `#minecraft:redstone_ores` = `minecraft:redstone_ore`, `minecraft:deepslate_redstone_ore` | items `minecraft:redstone_ore`, `minecraft:deepslate_redstone_ore`; Bedrock recipe ingredients cannot name a Java tag, so the recipe import expands it to these ids | carminite reactor recipe |
+| `item/#c:dusts/redstone` | `minecraft:redstone` | `minecraft:redstone`; expanded to the item in the Bedrock recipe | reappearing block and carminite recipes |
+
 ## 1. Structure `twilightforest:dark_tower`
 
 Sources: `world/components/structures/type/DarkTowerStructure.java`, `world/components/structures/darktower/*.java`
@@ -60,15 +75,22 @@ Structure strings: `structure.twilightforest.dark_tower` "Dark Tower".
 Main-tower floor decorations (`decorateFloor`): top floors rand(3): botanical / netherwart / aquarium; bottom floors
 rand(4): aquarium, botanical, netherwart (only when the floor's world y > 64, else falls through to forge), forge;
 middle floors rand(8): 0-1 reappearing-block maze (TFMaze with reappearing walls and dead-end decorations), 2 unbuilder
-(antibuilder) maze, 3 aquarium (water, squid spawns), 4 botanical (tree planters, berry bushes: blightberry,
-duskberry, skyberry, stingberry; potted plants from `#twilightforest:dark_tower_allowed_pots`), 5 netherwart (y > 64,
-else lounge), 6 lounge, 7 forge (furnaces, anvils, chipped/damaged anvils, crafting tables, fire pit, dispenser pillar).
+(antibuilder) maze, 3 aquarium (water, squid spawns), 4 botanical (tree planters, berry bushes: blightberry, duskberry,
+skyberry, stingberry; potted plants from `#twilightforest:dark_tower_allowed_pots`; the planter at (6, y + 1, 12) is a
+dirt block ringed by pillars and stairs with a tree on top: configured feature by `decoRNG.nextInt(5)` -> 1
+`twilightforest:tree/smaller_jungle_tree` (TF's custom jungle tree that does not cut through the floor), 2
+`minecraft:birch`, 3 `twilightforest:tree/twilight_oak_tree`, 4 `twilightforest:tree/rainbow_oak`, else `minecraft:oak`;
+only when the tree position is inside the chunk box, retried up to 100 times with the level random
+(`world.getRandom()`), stopping at the first success), 5 netherwart (y > 64, else lounge), 6 lounge, 7 forge (furnaces,
+anvils, chipped/damaged anvils, crafting tables, fire pit, dispenser pillar).
 Experiment room: crafting corner with item frames showing the carminite recipe (borer essence, redstone, ghast tear,
 towerwood, encased towerwood, carminite) and, below height - 13, a carminite reactor device (obsidian, netherrack,
 redstone blocks, inactive `twilightforest:carminite_reactor`). Builder platforms: `twilightforest:carminite_builder`
 with levers, lamp clusters, `minecraft:spawner` of carminite ghastling (`makeMiniGhastSpawner`: spawn range 16, max
 nearby 2, spawn count 1). Timber maze: dark log beams. Chests use `twilightforest:darktower_cache` (5 placements).
-Exact translation of every piece (R19), golden hash per piece; the decorations use `decoRNG`, so hashes are stable.
+Exact translation of every piece (R19), golden hash per piece; the decorations use `decoRNG`, so hashes are stable,
+except the planter trees, which grow with the level random: the golden hash seeds that random for the test (Java derives
+the WorldGenRegion random from the world seed and the centre chunk) or masks the tree volume above the planter.
 
 ## 2. Tower device blocks
 
@@ -287,8 +309,11 @@ Player (must see).
   `UrGhastFireball`s (power 1): one aimed at the target's centre spawned 8.5 blocks along the view vector at mid
   height + 2, two with x/z offsets `(r1 - r2) x 8` at mid height; timer -40. Out of sight the timer decays. Charging
   while timer > 10.
-- **Phases**: `damageUntilNextPhase` starts 10, resets to 18. Every effective hit (not dying, not trapped) subtracts the
-  health actually lost; at <= 0 the phase toggles. In tantrum all damage is divided by 10.
+- **Phases**: `damageUntilNextPhase` starts 10, resets to 18. After `super.hurt` (server), a hit subtracts the health
+  actually lost (`oldHealth - health`) only when it started a new hurt animation (`hurtTime == hurtDuration`, i.e. not
+  an invulnerability-window top-up: a stronger hit during the i-frames still lowers health but does not count toward
+  the switch; a second hit in the same tick as a fresh one does count), the ghast is not dying and not trapped
+  (`inTrapCounter <= 0`); at <= 0 the phase toggles. In tantrum all damage is divided by 10 before `super.hurt`.
   - **Start tantrum**: visual-only lightning near a point 18 blocks away at a random angle; `spawnGhastsAtTraps`: at 2
   random traps, a visual lightning at trap + 4 y and up to 6 attempts to spawn a `carminite_ghastling` minion
   (`makeBossMinion`: wander 0.005, max health 6) at trap + ((r1 - r2) x 4, r x 8, (r1 - r2) x 4) when its spawn rules
@@ -450,9 +475,9 @@ Sounds: `entity.twilightforest.towerwood_borer.ambient`, `entity.twilightforest.
 
 | Id | message_id (en_us) | Exhaustion | Tags |
 |---|---|---|---|
-| `twilightforest:ghast_tear` | `twilightforest.ghastTear` ("%1$s was scalded by fiery tears") | 0.0 | `#minecraft:bypasses_armor`, `#minecraft:damages_helmet`, `#c:is_physical`, `#minecraft:avoids_guardian_thorns`, `#minecraft:no_knockback` |
-| `twilightforest:reactor` | `twilightforest.reactor` ("%1$s stood too close to a Carminite Reactor") | 0.1 | `#c:is_environment`, `#c:is_magic`, `#minecraft:no_knockback` |
-| `twilightforest:slider` | `twilightforest.slider` ("%1$s was sliced up by a Sliding Trap") | 0.1 | `#c:is_environment`, `#c:is_physical` |
+| `twilightforest:ghast_tear` | `twilightforest.ghastTear` ("%1$s was scalded by fiery tears") | 0.0 | `#minecraft:bypasses_armor`, `#minecraft:damages_helmet`, `#neoforge:is_physical`, `#minecraft:avoids_guardian_thorns`, `#minecraft:no_knockback` |
+| `twilightforest:reactor` | `twilightforest.reactor` ("%1$s stood too close to a Carminite Reactor") | 0.1 | `#neoforge:is_environment`, `#neoforge:is_magic`, `#minecraft:no_knockback` |
+| `twilightforest:slider` | `twilightforest.slider` ("%1$s was sliced up by a Sliding Trap") | 0.1 | `#neoforge:is_environment`, `#neoforge:is_physical` |
 
 All effects hurt, scaling `when_caused_by_living_non_player`.
 

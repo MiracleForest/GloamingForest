@@ -11,6 +11,13 @@ relative to `src/main/java/twilightforest/`; data paths to `src/generated/resour
 | Contracts | landmark, structure, families+blockevents, item, loot, entity, client.render (+ fx, progression, combat by string) |
 | Config | section `giants` (R13), 3 keys (section 9) |
 
+**Tag namespaces.** Tags are written `#<ns>:<path>`. `#twilightforest:` tags and the `#c:` / `#neoforge:` tags that
+owners.tsv lists (`tag` rows) are TF data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
+1.21.1 tags (TF adds members to some). Bedrock has no Java tags: every tag here resolves through `gf::tags` (F9,
+`src/feature/tags/Tags.h`), and units add members only through union fragments (R6). TF's damage-type and tool-tier
+tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_magic`, `#neoforge:is_environment`,
+`#neoforge:needs_wood_tool`), never `#c:`.
+
 ## 1. Structure `twilightforest:giant_house`
 
 Sources: `world/components/structures/type/GiantHouseStructure.java`; the pieces are U27's (`twilightforest:TFClCa`
@@ -50,18 +57,18 @@ Sources: `init/TFBlocks.java`, `block/UberousSoilBlock.java`, `block/GrowingBean
 
 | Id | Class | Properties | Tags |
 |---|---|---|---|
-| `twilightforest:uberous_soil` | UberousSoilBlock (BonemealableBlock) | DIRT map colour, gravel sound, strength 0.6; shape 16 x 15 x 16 (used for light occlusion) | `minecraft:dirt`, `minecraft:mushroom_grow_block`, `minecraft:small_dripleaf_placeable`, mineable/shovel |
+| `twilightforest:uberous_soil` | UberousSoilBlock (BonemealableBlock) | DIRT map colour, gravel sound, strength 0.6; shape 16 x 15 x 16 (used for light occlusion) | `#minecraft:dirt`, `#minecraft:mushroom_grow_block`, `#minecraft:small_dripleaf_placeable`, mineable/shovel |
 | `twilightforest:huge_stalk` | RotatedPillarBlock (`axis`) | PLANT, BASS, stem sound, strength 1.5 / 3, ignited by lava | mineable/axe |
-| `twilightforest:beanstalk_leaves` | SpecialStemLeavesBlock (`distance` 1..7, `persistent`, `waterlogged`) | PLANT, azalea leaves sound, strength 0.2, random ticks, no occlusion, push DESTROY, not suffocating / view blocking / conductor, ignited by lava | `minecraft:leaves`, mineable/hoe |
-| `twilightforest:beanstalk_grower` | GrowingBeanstalkBlock + block entity | no collision, empty shape, no loot, no occlusion, no terrain particles, strength -1 / 6000000 (unbreakable) | `c:relocation_not_supported` |
-| `twilightforest:wispy_cloud` | WispyCloudBlock | SNOW map colour, HAT, wool sound, strength 0.3 / 0, no occlusion, push DESTROY, **replaceable**, force solid off; collision 16 x 14 x 16; light block 0; faces against another wispy cloud are culled; precipitation NONE; no random ticks | `#twilightforest:clouds`, `minecraft:dampens_vibrations` |
+| `twilightforest:beanstalk_leaves` | SpecialStemLeavesBlock (`distance` 1..7, `persistent`, `waterlogged`) | PLANT, azalea leaves sound, strength 0.2, random ticks, no occlusion, push DESTROY, not suffocating / view blocking / conductor, ignited by lava | `#minecraft:leaves`, mineable/hoe |
+| `twilightforest:beanstalk_grower` | GrowingBeanstalkBlock + block entity | no collision, empty shape, no loot, no occlusion, no terrain particles, strength -1 / 6000000 (unbreakable) | `#c:relocation_not_supported` |
+| `twilightforest:wispy_cloud` | WispyCloudBlock | SNOW map colour, HAT, wool sound, strength 0.3 / 0, no occlusion, push DESTROY, **replaceable**, force solid off; collision 16 x 14 x 16; light block 0; faces against another wispy cloud are culled; precipitation NONE; no random ticks | `#twilightforest:clouds`, `#minecraft:dampens_vibrations` |
 | `twilightforest:fluffy_cloud` | CloudBlock (precipitation dynamic) | ICE, HAT, wool, strength 0.8 / 0, push DESTROY, random ticks; light block 1 | same |
 | `twilightforest:rainy_cloud` | CloudBlock (RAIN) | as fluffy | same |
 | `twilightforest:snowy_cloud` | CloudBlock (SNOW) | as fluffy | same |
-| `twilightforest:giant_cobblestone` | GiantBlock | copy of cobblestone, strength 128 / 50, requires tool, push BLOCK | mineable/pickaxe, `c:relocation_not_supported`, oreberry `#twilightforest:oreberry_bushes_survive` member (U6 tag) |
+| `twilightforest:giant_cobblestone` | GiantBlock | copy of cobblestone, strength 128 / 50, requires tool, push BLOCK | mineable/pickaxe, `#c:relocation_not_supported`, oreberry `#twilightforest:oreberry_bushes_survive` member (U6 tag) |
 | `twilightforest:giant_log` | GiantBlock | copy of oak planks, strength 128 / 30, requires tool, push BLOCK | **mineable/pickaxe** (not axe), relocation not supported |
 | `twilightforest:giant_leaves` | GiantLeavesBlock | copy of oak leaves, azalea leaves sound, strength 12.8 / 15 (`0.2 x 64`), requires tool, no occlusion, push BLOCK, no mob spawning, not suffocating / view blocking / conductor; support shape empty | mineable/pickaxe, portal decoration tag member (F4), relocation not supported |
-| `twilightforest:giant_obsidian` | GiantBlock | copy of obsidian, strength 204800 / 8192000 (`50 x 64 x 64`, `2000 x 64 x 64`), requires tool, push BLOCK, no mob spawning | mineable/pickaxe, `minecraft:dragon_immune`, block-and-chain never breaks (U25 tag), relocation not supported |
+| `twilightforest:giant_obsidian` | GiantBlock | copy of obsidian, strength 204800 / 8192000 (`50 x 64 x 64`, `2000 x 64 x 64`), requires tool, push BLOCK, no mob spawning | mineable/pickaxe, `#minecraft:dragon_immune`, block-and-chain never breaks (U25 tag), relocation not supported |
 
 Block items: `twilightforest:uberous_soil`, `twilightforest:huge_stalk`, `twilightforest:beanstalk_leaves`,
 `twilightforest:wispy_cloud`, `twilightforest:fluffy_cloud`, `twilightforest:rainy_cloud`, `twilightforest:snowy_cloud`,
@@ -208,8 +215,8 @@ speed 4.0, attack bonus 1.0, enchantability 5, repair `#twilightforest:repairs_g
 
 | Id | Class | Attributes (main hand) | Behaviour |
 |---|---|---|---|
-| `twilightforest:giant_pickaxe` | GiantPickItem (PickaxeItem) | attack damage 8 + 1 (tier) -> 10 total, attack speed -3.5 (0.5 per s), block and entity interaction range +2.5 (`twilightforest:reach_modifier`, `twilightforest:range_modifier`) | destroy speed = pickaxe speed x 64 on `GiantBlock`s and x 64 again on giant obsidian; tooltip `item.twilightforest.giant_pickaxe.desc` "Breaks giant blocks" (gray); 4 x 4 x 4 mining (below); item tags `minecraft:pickaxes`, `minecraft:cluster_max_harvestables` |
-| `twilightforest:giant_sword` | GiantSwordItem (SwordItem) | attack damage 10 + 1 -> 12 total, speed -3.5, interaction ranges +2.5 | repairable with ironwood ingot or giant cobblestone; item tag `minecraft:swords` |
+| `twilightforest:giant_pickaxe` | GiantPickItem (PickaxeItem) | attack damage 8 + 1 (tier) -> 10 total, attack speed -3.5 (0.5 per s), block and entity interaction range +2.5 (`twilightforest:reach_modifier`, `twilightforest:range_modifier`) | destroy speed = pickaxe speed x 64 on `GiantBlock`s and x 64 again on giant obsidian; tooltip `item.twilightforest.giant_pickaxe.desc` "Breaks giant blocks" (gray); 4 x 4 x 4 mining (below); item tags `#minecraft:pickaxes`, `#minecraft:cluster_max_harvestables` |
+| `twilightforest:giant_sword` | GiantSwordItem (SwordItem) | attack damage 10 + 1 -> 12 total, speed -3.5, interaction ranges +2.5 | repairable with ironwood ingot or giant cobblestone; item tag `#minecraft:swords` |
 
 **Giant pickaxe mining** (attachment `twilightforest:giant_pickaxe_mining`: `mining` game time, `breaking`,
 `giantBlockConversion`; never saved):
@@ -289,7 +296,7 @@ speed`, friction 0.96, grey `1 - r x 0.3`, size x 0.875, lifetime `max(i x 2.5, 
 
 | Tag | Members | Consumers |
 |---|---|---|
-| `block/#twilightforest:clouds` | fluffy_cloud, wispy_cloud, rainy_cloud, snowy_cloud | `giants_spawnable_on`, `minecraft:dampens_vibrations` |
+| `block/#twilightforest:clouds` | fluffy_cloud, wispy_cloud, rainy_cloud, snowy_cloud | `giants_spawnable_on`, `#minecraft:dampens_vibrations` |
 | `block/#twilightforest:giants_spawnable_on` | `#twilightforest:clouds` | giant spawn placement |
 | `block/#twilightforest:incorrect_for_giant_tool` | `#minecraft:incorrect_for_stone_tool` | giant tier (stone-tier harvest level) |
 
