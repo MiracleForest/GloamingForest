@@ -6,7 +6,7 @@ if ($script:Mode -eq 'local') {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $r = Invoke-SelfTest 'core.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) core selftest(s) failed" }
-    if ($r.Pass -lt 15) { throw "expected at least 15 core selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 18) { throw "expected at least 18 core selftests to pass, got $($r.Pass)" }
 } else {
     # remote: the host runs the mod; a vanilla client (remote-vanilla) must stay connected and
     # must never receive a companion packet (the server logs every accepted companion)

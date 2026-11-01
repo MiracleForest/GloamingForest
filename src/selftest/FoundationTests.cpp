@@ -6,6 +6,8 @@
 // companion protocol, screens, click-and-hold, flat areas, volume hashes, boss bar capture, the
 // contract stubs and the gf_test fixture pack.
 
+#include <random>
+
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
 #include "mc/network/packet/BossEventPacket.h"
@@ -61,6 +63,59 @@ GF_REGISTER_SELFTEST("core.world_db", [](Context& ctx) {
     ctx.check(!gf::core::validWorldKey("lv:common:probe") && gf::core::validWorldKey(key), "keys must be gf:<unit>:...");
 });
 
+// ---- persistence across a world reload (tools/e2e/server/scenarios/smoke.ps1) --------------------
+// core.persist_write leaves a marker in the world: a world DB record, a stone block at testPos(5006)
+// and a block data document on it, none of them flushed by the test, so they reach the disk only
+// through the world's own save path (autosave / server stopping). core.persist_read, run after
+// the restart, verifies all three, logs "persist marker verified nonce=<n>" (the smoke scenario
+// compares it with the nonce of the write) and removes the marker. Without a marker it has
+// nothing to check and passes (a plain "core.*" run sorts the read before the write).
+namespace {
+constexpr char kPersistKey[] = "gf:common:persist_probe";
+}
+
+GF_REGISTER_SELFTEST("core.persist_write", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace bd = gf::blockdata;
+    auto pos     = up(ctx.testPos(5006), 1);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    auto* region = ctx.region();
+    auto const* stone = gf::game::blockWith("minecraft:stone");
+    ctx.require(region && stone, "the overworld and minecraft:stone are available");
+    auto bp = gf::game::blockPos(pos);
+    // not ctx.setBlock: the block must outlive the test (core.persist_read removes it). A marker
+    // of an earlier write may still be there (setBlock reports no change then).
+    ctx.require(&region->getBlock(bp) == stone || gf::game::setBlock(*region, bp, *stone), "place the marker block");
+    std::random_device rd;
+    auto nonce = std::to_string(rd()) + std::to_string(rd());
+    bd::set(*region, bp, "core", {{"persist", nonce}});
+    db::put(kPersistKey, {{"nonce", nonce}, {"pos", {pos.dim, pos.x, pos.y, pos.z}}});
+    co_await ctx.ticks(1);
+    ctx.check(db::get(kPersistKey).has_value() && bd::has(pos), "the marker is in place");
+    ctx.info("persist marker written nonce=" + nonce);
+});
+
+GF_REGISTER_SELFTEST("core.persist_read", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace bd = gf::blockdata;
+    auto marker  = db::get(kPersistKey);
+    if (!marker) {
+        ctx.info("no persist marker (core.persist_write did not run before): nothing to check");
+        co_return;
+    }
+    auto nonce = marker->value("nonce", std::string{});
+    auto at    = marker->value("pos", JsonT::array());
+    ctx.require(!nonce.empty() && at.is_array() && at.size() == 4, "the marker record is complete");
+    GlobalPos pos{at[0].get<int>(), at[1].get<int>(), at[2].get<int>(), at[3].get<int>()};
+    ctx.cleanupBlock(pos); // the marker block goes (and its block data with it) whatever happens
+    db::erase(kPersistKey);
+    ctx.require(co_await ctx.ensureLoaded(pos), "marker area loaded");
+    ctx.check(ctx.blockAt(pos) == "minecraft:stone", "the marker block survived the reload (got '" + ctx.blockAt(pos) + "')");
+    auto const* doc  = bd::get(pos);
+    auto        seen = doc && doc->contains("core") ? (*doc)["core"].value("persist", std::string{}) : std::string{};
+    ctx.check(seen == nonce, "the block data survived the reload (got '" + seen + "')");
+    if (seen == nonce && ctx.failures().empty()) ctx.info("persist marker verified nonce=" + nonce);
+    if (auto* region = ctx.region()) bd::set(*region, gf::game::blockPos(pos), "core", nullptr);
+});
+
 GF_REGISTER_SELFTEST("core.i18n", [](Context& ctx) {
     ctx.check(gf::tr("gf.test.missing", "Fallback {}", 1) == "Fallback 1", "missing keys use the fallback");
     ctx.check(gf::tr("gf.test.missing", "Java %s and %2$s", "a", "b") == "Java a and b", "Java placeholders are formatted");
@@ -87,10 +142,13 @@ GF_REGISTER_SELFTEST("core.blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
 });
 
 GF_REGISTER_SELFTEST("core.players", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto& a = ctx.player();
-    auto& b = ctx.spawnPlayer();
+    // R16: keep unique ids across ticks, never the Player references
+    auto aId = ctx.player().getOrCreateUniqueID();
+    auto bId = ctx.spawnPlayer().getOrCreateUniqueID();
     co_await ctx.ticks(2);
-    ctx.check(&a != static_cast<Player*>(&b), "two distinct simulated players");
+    ctx.check(aId != bId, "two distinct simulated players");
+    auto& a = ctx.player();
+    ctx.check(a.getOrCreateUniqueID() == aId, "player() is still the first player after a tick");
     ctx.check(!a.getRealName().empty(), "the simulated player has a name");
     ctx.check(ctx.give("minecraft:diamond", 3) >= 0, "give(id, n) puts the item in the inventory");
     ctx.check(ctx.give("twilightforest:no_such_item") < 0, "give refuses unknown items");
@@ -195,8 +253,9 @@ GF_REGISTER_SELFTEST("core.redstone", [](Context& ctx) -> ll::coro::CoroTask<> {
 
 GF_REGISTER_SELFTEST("core.net", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace net = gf::net;
-    auto& p       = ctx.player();
+    (void)ctx.player(); // spawn it, let it settle for a tick, then take it again (R16)
     co_await ctx.ticks(1);
+    auto& p = ctx.player();
     ctx.check(!net::isCompanion(p), "a simulated player is no companion");
     ctx.check(!net::send(p, "core.probe", {{"x", 1}}), "nothing is sent to vanilla players");
     net::setTestCompanion(p, true);
@@ -226,8 +285,9 @@ GF_REGISTER_SELFTEST("core.screens", [](Context& ctx) -> ll::coro::CoroTask<> {
         .action = [](Player&, JsonT const&, JsonT const&) { ++actions; },
         .form   = [](Player&, JsonT const&) { ++forms; },
     });
-    auto& p = ctx.player();
+    (void)ctx.player();
     co_await ctx.ticks(1);
+    auto& p = ctx.player();
     ctx.check(screens::open(p, "core.probe_screen") && forms == 1, "vanilla players get the form");
     ctx.check(!screens::open(p, "core.probe_screen", {{"open", false}}), "a refused screen does not open");
     net::setTestCompanion(p, true);
@@ -242,9 +302,10 @@ GF_REGISTER_SELFTEST("core.screens", [](Context& ctx) -> ll::coro::CoroTask<> {
 
 GF_REGISTER_SELFTEST("core.hold", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace net = gf::net;
-    auto& p       = ctx.player();
-    auto  pos     = ctx.testPos(5004);
+    auto pos      = ctx.testPos(5004);
+    (void)ctx.player();
     co_await ctx.ticks(1);
+    auto& p    = ctx.player();
     int shorts = 0, holds = 0;
     ctx.check(!gf::hold::awaitHold(p, pos, [&](Player&) { ++shorts; }, [&](Player&) { ++holds; }), "vanilla players keep their own fallback");
     net::setTestCompanion(p, true);
@@ -272,7 +333,7 @@ GF_REGISTER_SELFTEST("core.flat_area", [](Context& ctx) -> ll::coro::CoroTask<> 
 
 GF_REGISTER_SELFTEST("core.boss_capture", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto& capture = ctx.captureBossEvent();
-    auto& p       = ctx.player();
+    (void)ctx.player();
     co_await ctx.ticks(1);
     gf::selftest::BossEvent e;
     e.type    = "add";
@@ -286,11 +347,11 @@ GF_REGISTER_SELFTEST("core.boss_capture", [](Context& ctx) -> ll::coro::CoroTask
     auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::BossEvent);
     ctx.require(packet != nullptr, "a BossEventPacket can be created");
     auto& boss          = static_cast<BossEventPacket&>(*packet);
-    boss.mBossID->rawID = p.getOrCreateUniqueID().rawID;
+    boss.mBossID->rawID = ctx.player().getOrCreateUniqueID().rawID;
     boss.mEventType     = BossEventUpdateType::Add;
     boss.mName->set(std::string("core.packet"));
     boss.mHealthPercent = 0.25f;
-    packet->sendTo(p);
+    packet->sendTo(ctx.player());
     co_await ctx.ticks(1);
     events = capture.events();
     bool seen = false;
@@ -298,9 +359,9 @@ GF_REGISTER_SELFTEST("core.boss_capture", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(seen, "a BossEventPacket sent to a player is captured (" + std::to_string(events.size()) + " events)");
     auto remove        = MinecraftPackets::createPacket(MinecraftPacketIds::BossEvent);
     auto& r            = static_cast<BossEventPacket&>(*remove);
-    r.mBossID->rawID   = p.getOrCreateUniqueID().rawID;
+    r.mBossID->rawID   = ctx.player().getOrCreateUniqueID().rawID;
     r.mEventType       = BossEventUpdateType::Remove;
-    remove->sendTo(p);
+    remove->sendTo(ctx.player());
 });
 
 GF_REGISTER_SELFTEST("core.stubs", [](Context& ctx) {

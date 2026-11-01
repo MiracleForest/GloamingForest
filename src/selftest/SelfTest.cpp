@@ -12,6 +12,7 @@
 #include "ll/api/thread/ServerThreadExecutor.h"
 
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/legacy/ActorUniqueID.h"
 #include "mc/network/LoopbackPacketSender.h"
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/Packet.h"
@@ -68,12 +69,24 @@ int rowOf(int hundreds) {
     return 58 + (((hundreds % 6) + 6) % 6);
 }
 
+struct CommandResult {
+    bool        ok = false;
+    std::string messages; ///< the output message ids and parameters, for failure reports
+};
+
 /// Runs a console command with an origin in dimension `dim` (ticking areas are per dimension).
-void runServerCommand(std::string const& command, int dim = 0) {
+CommandResult runServerCommand(std::string const& command, int dim = 0) {
     auto level = ll::service::getLevel();
-    if (!level) return;
+    if (!level) return {false, "no level"};
     ServerCommandOrigin origin("gloamingforest-selftest", level->asServer(), CommandPermissionLevel::Owner, DimensionType(dim));
-    ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
+    auto          out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
+    CommandResult r{out.mSuccessCount > 0, {}};
+    for (auto const& m : out.mMessages) {
+        if (!r.messages.empty()) r.messages += "; ";
+        r.messages += m.mMessageId;
+        for (auto const& p : m.mParams) r.messages += " " + p;
+    }
+    return r;
 }
 
 std::string bossEventType(BossEventUpdateType t) {
@@ -213,9 +226,20 @@ void forEach(core::BlockBox const& b, Fn&& fn) {
 
 Context::Context(std::string name) : mName(std::move(name)) {}
 
+namespace {
+/// A simulated player of a test, looked up again by its unique id (nullptr when it left the level).
+SimulatedPlayer* findTestPlayer(std::int64_t id) {
+    auto level = ll::service::getLevel();
+    if (!level) return nullptr;
+    auto* p = level->getPlayer(ActorUniqueID{id});
+    // only simulated players are stored in mPlayers, and unique ids are never reused in a run
+    return p && p->isSimulated() ? static_cast<SimulatedPlayer*>(p) : nullptr;
+}
+} // namespace
+
 Context::~Context() {
-    for (auto* p : mPlayers) {
-        if (p) p->simulateDisconnect();
+    for (auto id : mPlayers) {
+        if (auto* p = findTestPlayer(id)) p->simulateDisconnect();
     }
     for (auto const& pos : mBlocks) {
         if (auto* r = game::regionOf(pos.dim)) game::clearBlock(*r, game::blockPos(pos));
@@ -243,13 +267,15 @@ SimulatedPlayer& Context::spawnPlayer(std::string const& name) {
     auto            n   = name.empty() ? "gf_test_" + std::to_string(++gPlayerCounter) : name;
     auto            sp  = SimulatedPlayer::create(n, pos, DimensionType(at.dim));
     if (!sp) fail("could not spawn a simulated player");
-    mPlayers.push_back(sp.as_ptr());
+    mPlayers.push_back(sp->getOrCreateUniqueID().rawID);
     return *sp;
 }
 
 Player& Context::player() {
-    if (mPlayers.empty()) return spawnPlayer();
-    return *mPlayers.front();
+    for (auto id : mPlayers) {
+        if (auto* p = findTestPlayer(id)) return *p;
+    }
+    return spawnPlayer();
 }
 
 core::GlobalPos Context::testPos(int dx, int dz) const {
@@ -264,29 +290,43 @@ core::GlobalPos Context::testPos(int dx, int dz) const {
 BlockSource* Context::region() const { return game::regionOf(mDim); }
 
 ll::coro::CoroTask<core::BlockBox> Context::flatArea(int dx, int size, int height) {
-    size   = std::clamp(size, 1, 256);
+    if (size > kMaxFlatAreaSize) {
+        info("flatArea size " + std::to_string(size) + " clamped to " + std::to_string(kMaxFlatAreaSize)
+             + " (a Bedrock ticking area holds at most 100 chunks)");
+    }
+    size   = std::clamp(size, 1, kMaxFlatAreaSize);
     height = std::clamp(height, 1, 128);
     auto           at = testPos(dx);
     core::BlockBox box{at.x, at.y, at.z, at.x + size - 1, at.y + height - 1, at.z + size - 1};
-    // keep it loaded while the test runs (it may reach outside the run's ticking areas)
+    // Keep it loaded while the test runs (it may reach outside the run's ticking areas). Bedrock
+    // allows 10 ticking areas per world (the run holds 3) and refuses the add beyond that: the
+    // area would then silently unload and the restore below would skip its blocks.
     std::string area = "gf_selftest_area_" + std::to_string(++gAreaCounter);
-    runServerCommand(
+    auto        added = runServerCommand(
         "tickingarea add " + std::to_string(box.minX) + " 0 " + std::to_string(box.minZ) + " " + std::to_string(box.maxX) + " 0 "
             + std::to_string(box.maxZ) + " " + area + " true",
         mDim
     );
+    if (!added.ok) {
+        fail(
+            "flatArea(" + std::to_string(dx) + ", " + std::to_string(size) + "): the ticking area was refused ("
+            + added.messages + "); Bedrock allows 10 per world (the run holds 3), so a test may hold at most "
+            + std::to_string(kMaxFlatAreasPerTest) + " flat areas"
+        );
+    }
     mTickingAreas.emplace_back(area, mDim);
     require(co_await ensureLoaded(at), "flat area loaded");
     auto* region = this->region();
     require(region != nullptr, "test dimension available");
-    for (int i = 0; i < 200; ++i) {
-        bool loaded = true;
+    bool loaded = false;
+    for (int i = 0; i < 200 && !loaded; ++i) {
+        loaded = true;
         for (int x = box.minX; loaded && x <= box.maxX + 15; x += 16)
             for (int z = box.minZ; loaded && z <= box.maxZ + 15; z += 16)
                 loaded = region->hasChunksAt(BlockPos{std::min(x, box.maxX), box.minY, std::min(z, box.maxZ)}, 0, false);
-        if (loaded) break;
-        co_await ll::chrono::ticks(1);
+        if (!loaded) co_await ll::chrono::ticks(1);
     }
+    require(loaded, "flatArea(" + std::to_string(dx) + ", " + std::to_string(size) + "): every chunk of the area loaded within 10 s");
     core::BlockBox full = box;
     full.minY           = box.minY - 1; // the ground layer
     auto restore        = std::make_unique<Restore>();
@@ -443,7 +483,10 @@ ll::coro::CoroTask<> loadTestArea() {
     BlockPos spawn = level->getSharedSpawnPos();
     spawn.y        = 0; // y is irrelevant for the ticking area (it spans the whole height)
     auto at = [&](int dx, int dz) { return std::to_string(spawn.x + dx) + " 0 " + std::to_string(spawn.z + dz); };
-    for (auto const& a : kTestAreas) runServerCommand("tickingarea add " + at(a.x0, a.z0) + " " + at(a.x1, a.z1) + " " + a.name + " true");
+    for (auto const& a : kTestAreas) {
+        auto r = runServerCommand("tickingarea add " + at(a.x0, a.z0) + " " + at(a.x1, a.z1) + " " + a.name + " true");
+        if (!r.ok) log().warn("selftest: ticking area {} was refused ({}); tests in it may not stay loaded", a.name, r.messages);
+    }
     for (int i = 0; i < 300; ++i) {
         auto* region = overworld();
         bool  loaded = region != nullptr;

@@ -91,20 +91,35 @@ public:
     [[nodiscard]] std::string const& name() const { return mName; }
 
     // ---- players ------------------------------------------------------------------------------
-    /// The test's simulated player (spawned on first use). Aborts the test if it can't spawn.
+    /// The test's simulated player (spawned on first use; the first of the test's players that is
+    /// still in the level, a new one when all are gone). Aborts the test if it can't spawn.
+    /// Rule R16: the reference is valid for the current tick only; call `player()` again after a
+    /// `co_await` instead of keeping it (the context itself keeps unique ids, not pointers).
     [[nodiscard]] Player& player();
-    /// Spawns an extra simulated player (removed after the test).
+    /// Spawns an extra simulated player (removed after the test). Same lifetime rule as `player()`:
+    /// keep `getOrCreateUniqueID()` and look it up again (`Level::getPlayer`) after a `co_await`.
     [[nodiscard]] SimulatedPlayer& spawnPlayer(std::string const& name = {});
 
     // ---- world --------------------------------------------------------------------------------
     /// The dimension the test works in (0 = overworld until `inTwilight()` succeeded).
     [[nodiscard]] int dimension() const { return mDim; }
-    /// A free test position for `dx` (rule R12 ranges) at the surface of the test area: one
-    /// 100-block row per hundred of dx, `dz` within the row. Distinct tests use distinct dx.
+    /// A free test position for `dx` (rule R12 ranges) at the surface of the test area:
+    /// x = spawn + 5 + dx % 100, and one z row per hundred of dx (U1..U30 rows 1..30, F0..F16 rows
+    /// 31..47, W2 rows 48..57). Rows are only 5 blocks apart in z, so `dz` must stay within 0..4:
+    /// a larger dz lands in the next unit's row. Distinct tests use distinct dx.
     [[nodiscard]] core::GlobalPos testPos(int dx, int dz = 0) const;
+    /// Largest `flatArea` side: 144 blocks span at most 10 chunks per axis whatever the alignment,
+    /// and a Bedrock ticking area holds at most 100 chunks (larger sizes are clamped, with an info line).
+    static constexpr int kMaxFlatAreaSize = 144;
+    /// Bedrock allows 10 ticking areas per world and the run keeps 3 for the test rows: a test
+    /// may hold at most 7 flat areas at once (one more fails the test with a clear message).
+    static constexpr int kMaxFlatAreasPerTest = 7;
     /// Prepares a flat `size` x `size` area whose minimum corner is `testPos(dx)` (one layer of
-    /// grass below, `height` layers of air from the surface up), keeps it loaded and returns its
-    /// box (surface layer to the top). The volume is restored after the test.
+    /// grass below, `height` layers of air from the surface up), keeps it loaded with its own
+    /// ticking area and returns its box (surface layer to the top). The volume is restored after
+    /// the test. A side larger than 5 reaches into the following units' z rows: that is safe in the
+    /// 'full' run only because tests run one at a time and each flat area is restored, so never
+    /// leave blocks behind outside dz 0..4 of your own row.
     [[nodiscard]] ll::coro::CoroTask<core::BlockBox> flatArea(int dx, int size, int height = 32);
     /// Moves the test into the Twilight Forest dimension (gf::world, feature/dimension/World.h):
     /// the player is sent there and later testPos / flatArea positions are in it. False when the
@@ -155,7 +170,7 @@ private:
     struct Restore; ///< a flat area's original blocks
     std::string                            mName;
     std::vector<std::string>               mFailures;
-    std::vector<SimulatedPlayer*>          mPlayers;
+    std::vector<std::int64_t>              mPlayers; ///< ActorUniqueIDs of the spawned players (R16)
     std::vector<core::GlobalPos>           mBlocks;
     std::vector<std::unique_ptr<Restore>>  mRestores;
     std::vector<std::pair<std::string, int>> mTickingAreas; ///< (name, dimension)
