@@ -1,8 +1,9 @@
 # Worldgen (F5, spike S2): the custom probe biome gf_test:worldgen_probe. Dot-sourced by the
 # worldgen prelaunch scripts of both harnesses; never shipped (it only goes into the deployed copy
 # of the gf_test fixture packs of this run). The behavior pack biome registers the custom id with
-# the game; the resource pack part gives it a client look that a screenshot cannot miss (magenta
-# fog and water, the hot / dry grass tint of its climate).
+# the game; the resource pack part gives it a client look that a screenshot cannot miss (a magenta
+# sky, grass, foliage, water and fog in the current client biome format, the legacy
+# biomes_client.json for comparison).
 
 function Install-WorldgenProbe([string]$ModDir) {
     $bp = Join-Path $ModDir 'behavior_packs/GloamingForest_Test_BP'
@@ -24,6 +25,25 @@ function Install-WorldgenProbe([string]$ModDir) {
     $biome | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 (Join-Path $bp 'biomes/worldgen_probe.biome.json')
 
     if (Test-Path $rp) {
+        # the current client biome format (the game's own resource pack ships its biomes as
+        # biomes/<name>.client_biome.json, format 1.21.60 / 1.21.70): magenta sky, grass, foliage,
+        # water and fog, so a screenshot shows which parts a resource pack can give a custom biome
+        $clientBiome = [ordered]@{
+            format_version          = '1.21.70'
+            'minecraft:client_biome' = [ordered]@{
+                description = @{ identifier = 'gf_test:worldgen_probe' }
+                components  = [ordered]@{
+                    'minecraft:sky_color'          = @{ sky_color = '#FF00FF' }
+                    'minecraft:grass_appearance'   = @{ color = '#FF00FF' }
+                    'minecraft:foliage_appearance' = @{ color = '#FF00FF' }
+                    'minecraft:water_appearance'   = [ordered]@{ surface_color = '#FF00FF'; surface_opacity = 0.65 }
+                    'minecraft:fog_appearance'     = @{ fog_identifier = 'gf_test:worldgen_probe_fog' }
+                }
+            }
+        }
+        New-Item -ItemType Directory -Force (Join-Path $rp 'biomes') | Out-Null
+        $clientBiome | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 (Join-Path $rp 'biomes/worldgen_probe.client_biome.json')
+        # the legacy file too (it did not apply on 1.26.51; kept as the comparison)
         $client = @{ biomes = @{ 'gf_test:worldgen_probe' = [ordered]@{
                     water_surface_color        = '#FF00FF'
                     water_surface_transparency = 0.65
