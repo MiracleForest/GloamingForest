@@ -75,7 +75,7 @@ std::unordered_set<Region const*>  gAdapters;
 } // namespace
 
 BlockSourceRegion::BlockSourceRegion(BlockSource& source, BlockPos const& center) : mSource(source), mCenter(center) {
-    resetRegionRandom();
+    resetRegionRandom(this);
     std::lock_guard lock(gAdaptersMutex);
     gAdapters.insert(this);
 }
@@ -404,7 +404,8 @@ bool run(BlockSource& source, BlockPos const& pos, Json const& action) {
         return true;
     }
     if (kind == "entity") {
-        auto   id = action.value("id", std::string{});
+        auto id = action.value("id", std::string{});
+        if (id == "minecraft:painting") return true; // (a job queued by an older build: paintings have their own job)
         double x = action.value("x", 0.0), y = action.value("y", 0.0), z = action.value("z", 0.0);
         Vec3   at{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)};
         if (spawn::spawnMob(source, id, at, spawn::SpawnReason::Structure)) return true;
@@ -479,6 +480,11 @@ void waterlog(Region& region, BlockPos const& pos, std::string const& blockId) {
 
 bool entity(Region& region, double x, double y, double z, std::string const& entityId, Json const& data) {
     if (entityId.empty()) return false;
+    if (entityId == "minecraft:painting") {
+        // not a mob: paintings hang through paintings::tryHang (TF's spot check, the motif, the facing)
+        warnOnce("entity-painting", "structure: a painting was passed as an entity; paintings hang through paintings::tryHang");
+        return false;
+    }
     BlockPos pos{pure::mthFloor(x), pure::mthFloor(y), pure::mthFloor(z)};
     return queue(region, pos, Json{{"kind", "entity"}, {"id", entityId}, {"x", x}, {"y", y}, {"z", z}, {"data", data}});
 }
@@ -491,7 +497,12 @@ bool painting(Region& region, BlockPos const& pos, Orientation direction, std::s
             warnOnce("motive:" + motive, "structure: no Bedrock painting for " + motive);
             return false;
         }
-        return spawnPainting(*source, pos, direction, *motif);
+        // EntityUtil.tryHangPainting is true once TF's spot check passed (the caller's): TF adds
+        // the painting even without a wall behind it (it drops off later), the game does not hang
+        // such a painting at all. Either way the result (and so TF's retry loop) is TF's.
+        if (!spawnPainting(*source, pos, direction, *motif))
+            warnOnce("painting-unsupported", "structure: a painting without a wall behind it was not hung (TF would hang it and let it drop)");
+        return true;
     }
     std::lock_guard lock(gJobsMutex);
     pushLocked(Job{region.dimension(), pos, Json{{"kind", "painting"}, {"motive", motive}, {"direction", blocks::directionName(direction)}, {"box", box}}});
@@ -534,12 +545,6 @@ void forgetLootRecord(int dim, BlockPos const& pos) {
     Json rest = *d;
     rest.erase("loot");
     bd::set(*source, pos, kDataKey, rest.empty() ? Json() : rest);
-}
-
-void spawnerScale(int dim, BlockPos const& pos, std::string const& entityId, float scale) {
-    auto* source = game::regionOf(dim);
-    if (!source) return;
-    bd::set(*source, pos, kDataKey, Json{{"spawner_scale", {{"entity", entityId}, {"scale", scale}}}});
 }
 
 bool applyScale(Actor& actor, float scale) {
@@ -608,10 +613,10 @@ void flush() {
         }
     }
     std::lock_guard lock(gJobsMutex);
-    for (auto& j : keep) {
-        // retried jobs keep their place before work queued meanwhile
-        auto key = chunkKey(j.dim, j.pos);
-        gJobs[key].push_front(std::move(j));
+    // retried jobs keep their order and their place before work queued meanwhile
+    for (auto it = keep.rbegin(); it != keep.rend(); ++it) {
+        auto key = chunkKey(it->dim, it->pos);
+        gJobs[key].push_front(std::move(*it));
         gJobCount++;
     }
     if (changed || !keep.empty()) gDirty = true;

@@ -433,13 +433,15 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
         if (p.pos.y < region.minY() || p.pos.y >= region.maxY()) continue;
         bool container  = p.waterlogged >= 0 || liquids::waterloggable(*b);
         bool worldWater = keepLiquids && container && p.waterlogged != 1 && liquids::waterSourceAt(region, p.pos);
-        bool water      = p.waterlogged == 1 || worldWater;
+        // any other source fluid (lava) there: placeLiquid refuses it and the block is not retried
+        bool worldSource = keepLiquids && container && !worldWater && liquids::isLavaSource(region.getBlock(p.pos));
+        bool water       = p.waterlogged == 1 || worldWater;
         if (!liquids::setBlock(region, p.pos, *b, placement.flags, water)) continue;
         if (!keepLiquids) continue;
         if (p.waterlogged == 1 || liquids::alwaysWater(*b) || liquids::isWaterSource(*b)) sourcesPlaced.insert(key(p.pos));
         else if (container) {
             if (water) wet.insert(key(p.pos));
-            else dry.push_back(p.pos);
+            else if (!worldSource) dry.push_back(p.pos);
         }
     }
     if (keepLiquids) {
@@ -509,6 +511,20 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
             double wx = rx + placement.offset.x, wy = y + placement.offset.y, wz = rz + placement.offset.z;
             BlockPos bp{pure::mthFloor(wx), pure::mthFloor(wy), pure::mthFloor(wz)};
             if (clip && !clip->contains(bp.x, bp.y, bp.z)) continue;
+            if (e.id == "minecraft:painting") {
+                // a hanging painting: its block and facing ("facing" as Direction#get2DDataValue or a
+                // name) turned with the placement (HangingEntity#rotate / #mirror), its variant
+                // hung through TF's spot check
+                Orientation dir = Orientation::South;
+                if (e.data.contains("facing") && e.data["facing"].is_number_integer()) dir = from2D(e.data["facing"].get<int>());
+                else dir = blocks::parseDirection(e.data.value("facing", e.data.value("direction", std::string("south")))).value_or(Orientation::South);
+                if (settings.mirror == Mirror::LeftRight && (dir == Orientation::North || dir == Orientation::South)) dir = opposite(dir);
+                if (settings.mirror == Mirror::FrontBack && (dir == Orientation::East || dir == Orientation::West)) dir = opposite(dir);
+                dir = rotateDir(dir, settings.rotation);
+                auto variant = e.data.value("variant", e.data.value("motive", std::string("minecraft:kebab")));
+                (void)paintings::tryHang(region, bp, dir, paintings::byId(variant));
+                continue;
+            }
             blockentities::entity(region, wx, wy, wz, e.id, e.data);
         }
     }

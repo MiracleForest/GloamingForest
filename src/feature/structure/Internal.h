@@ -269,8 +269,9 @@ void sign(Region& region, BlockPos const& pos, std::vector<std::string> const& l
 /// Spawns an entity at a world position (template entities); false when it could not (live
 /// regions) or when the id is empty. Paintings go through paintings::tryHang.
 bool entity(Region& region, double x, double y, double z, std::string const& entityId, Json const& data);
-/// Hangs painting `motive` ("kebab") at `pos` facing `direction`; with a BlockSource the result is
-/// the game's, during generation the painting is queued (the caller checked the spot) and true.
+/// Hangs painting `motive` ("kebab") at `pos` facing `direction` once the caller ran TF's spot check
+/// (true, as EntityUtil.tryHangPainting): at once in a live region (the game refuses a painting
+/// with no wall behind it), when the chunk is loaded during generation. False for an unknown motive.
 bool painting(Region& region, BlockPos const& pos, Orientation direction, std::string const& motive, Json const& box);
 /// Whether a queued (not yet spawned) painting of dimension `dim` overlaps `box` ([minX, minY,
 /// minZ, maxX, maxY, maxZ] doubles): the ProtoChunk entities TF's painting check sees.
@@ -289,8 +290,6 @@ struct LootRecord {
 };
 [[nodiscard]] std::optional<LootRecord> lootRecord(int dim, BlockPos const& pos);
 void                                    forgetLootRecord(int dim, BlockPos const& pos);
-/// SpawnerProcessor entity_width_max: the scale spawned mobs of the spawner at `pos` get.
-void spawnerScale(int dim, BlockPos const& pos, std::string const& entityId, float scale);
 /// Applies a generic.scale-like size factor to a live mob (Bedrock bounding box data).
 bool applyScale(Actor& actor, float scale);
 /// Runs the deferred work whose chunks are loaded (server tick; every job of a chunk at once,
@@ -318,6 +317,10 @@ inline constexpr char kIgnoreWaterlogging[] = "gf:liquid_settings/ignore_waterlo
 [[nodiscard]] bool alwaysWater(Block const& block);
 /// A water source block (minecraft:water / flowing_water at liquid_depth 0).
 [[nodiscard]] bool isWaterSource(Block const& block);
+/// A lava source block (minecraft:lava / flowing_lava at liquid_depth 0).
+[[nodiscard]] bool isLavaSource(Block const& block);
+/// Drops the per-block cache (block types are registered per world on the client).
+void clearCaches();
 /// Level#getFluidState(pos) is a water source: the block layer or the liquid layer.
 [[nodiscard]] bool waterSourceAt(Region& region, BlockPos const& pos);
 /// Puts water into / takes it out of the liquid layer at `pos` (live regions at once,
@@ -362,8 +365,9 @@ bool placeLabelled(std::string const& label, BlockPos const& pos, Region& region
 /// random (TF draws wall selectors, canopy trees and planter trees from it). Seeded from the
 /// region's seed and center chunk; the same region keeps drawing from the same random.
 [[nodiscard]] RandomSource& regionRandom(Region& region);
-/// Forgets the region random of this thread (a new region object starts its own).
-void resetRegionRandom();
+/// Forgets this thread's random of `region` (a new region object at that address starts its own;
+/// nullptr: all of them).
+void resetRegionRandom(Region const* region = nullptr);
 
 namespace outlines {
 /// Removes the outline tick listener (clear_display, module uninstall, world closed).

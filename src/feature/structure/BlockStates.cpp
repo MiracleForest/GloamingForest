@@ -689,10 +689,13 @@ Block const& air() {
 }
 
 void clearCaches() {
-    std::unique_lock lock(gCacheMutex);
-    gJavaCache.clear();
-    gIdCache.clear();
-    gTransformCache.clear();
+    {
+        std::unique_lock lock(gCacheMutex);
+        gJavaCache.clear();
+        gIdCache.clear();
+        gTransformCache.clear();
+    }
+    liquids::clearCaches();
 }
 
 std::string const& id(Block const& block) { return block.getTypeName(); }

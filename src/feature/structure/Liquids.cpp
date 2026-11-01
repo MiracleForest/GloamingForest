@@ -8,6 +8,9 @@
 #include "feature/structure/Region.h"
 
 #include <algorithm>
+#include <mutex>
+#include <shared_mutex>
+#include <unordered_map>
 
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockProperty.h"
@@ -35,7 +38,34 @@ bool endsWithAny(std::string const& id, std::initializer_list<char const*> suffi
 
 } // namespace
 
+namespace {
+
+std::shared_mutex                              gCacheMutex;
+std::unordered_map<Block const*, bool>         gWaterloggable; ///< per block permutation
+
+bool computeWaterloggable(Block const& block);
+
+} // namespace
+
+void clearCaches() {
+    std::unique_lock lock(gCacheMutex);
+    gWaterloggable.clear();
+}
+
 bool waterloggable(Block const& block) {
+    {
+        std::shared_lock lock(gCacheMutex);
+        if (auto it = gWaterloggable.find(&block); it != gWaterloggable.end()) return it->second;
+    }
+    bool result = computeWaterloggable(block);
+    std::unique_lock lock(gCacheMutex);
+    gWaterloggable[&block] = result;
+    return result;
+}
+
+namespace {
+
+bool computeWaterloggable(Block const& block) {
     // the Java 1.21.1 SimpleWaterloggedBlock / LiquidBlockContainer families (vanilla and TF)
     auto const& id = block.getTypeName();
     if (block.isAir() || blocks::isLiquid(block)) return false;
@@ -60,6 +90,8 @@ bool waterloggable(Block const& block) {
     return std::find(std::begin(kIds), std::end(kIds), id) != std::end(kIds);
 }
 
+} // namespace
+
 bool alwaysWater(Block const& block) {
     auto const& id = block.getTypeName();
     return id == "minecraft:seagrass" || id == "minecraft:tall_seagrass" || id == "minecraft:kelp" || id == "minecraft:kelp_plant" ||
@@ -68,6 +100,13 @@ bool alwaysWater(Block const& block) {
 
 bool isWaterSource(Block const& block) {
     if (!blocks::isWater(block)) return false;
+    auto depth = game::intState(block, "liquid_depth");
+    return !depth || *depth == 0;
+}
+
+bool isLavaSource(Block const& block) {
+    auto const& id = block.getTypeName();
+    if (id != "minecraft:lava" && id != "minecraft:flowing_lava") return false;
     auto depth = game::intState(block, "liquid_depth");
     return !depth || *depth == 0;
 }

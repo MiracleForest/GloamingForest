@@ -16,7 +16,10 @@
 #include <algorithm>
 #include <map>
 #include <mutex>
+#include <memory>
 #include <shared_mutex>
+#include <string_view>
+#include <vector>
 
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockProperty.h"
@@ -76,28 +79,33 @@ struct RegionRandom {
     Region const* region = nullptr;
     int           cx = 0, cz = 0, dim = 0;
     std::int64_t  seed = 0;
-    JavaRandom    random;
+    std::unique_ptr<JavaRandom> random;
 };
-thread_local RegionRandom tRegionRandom;
+/// The regions this thread decorates lately (a generator may interleave a few): each keeps its
+/// own random until it drops out of the list.
+thread_local std::vector<RegionRandom> tRegionRandoms;
+constexpr std::size_t                 kRegionRandoms = 8;
 } // namespace
 
 RandomSource& regionRandom(Region& region) {
     // WorldGenRegion's random is made with the region (seeded at its center chunk) and shared by
     // everything decorating it
-    auto& c  = tRegionRandom;
-    int   cx = region.centerChunkX(), cz = region.centerChunkZ();
-    if (c.region != &region || c.cx != cx || c.cz != cz || c.dim != region.dimension() || c.seed != region.seed()) {
-        c.region = &region;
-        c.cx     = cx;
-        c.cz     = cz;
-        c.dim    = region.dimension();
-        c.seed   = region.seed();
-        c.random.setSeed(region.seed() ^ pure::mthGetSeed(cx * 16, 0, cz * 16));
+    auto& list = tRegionRandoms;
+    int   cx = region.centerChunkX(), cz = region.centerChunkZ(), dim = region.dimension();
+    auto  seed = region.seed();
+    for (auto it = list.begin(); it != list.end(); ++it) {
+        if (it->region != &region || it->cx != cx || it->cz != cz || it->dim != dim || it->seed != seed) continue;
+        if (it != list.begin()) std::rotate(list.begin(), it, it + 1); // most recent first
+        return *list.front().random;
     }
-    return c.random;
+    if (list.size() >= kRegionRandoms) list.pop_back();
+    list.insert(list.begin(), RegionRandom{&region, cx, cz, dim, seed, std::make_unique<JavaRandom>(seed ^ pure::mthGetSeed(cx * 16, 0, cz * 16))});
+    return *list.front().random;
 }
 
-void resetRegionRandom() { tRegionRandom.region = nullptr; }
+void resetRegionRandom(Region const* region) {
+    std::erase_if(tRegionRandoms, [&](RegionRandom const& r) { return region == nullptr || r.region == region; });
+}
 
 // ---- Piece --------------------------------------------------------------------------------------------
 
@@ -300,8 +308,11 @@ bool Piece::placeSpawner(Region& region, BlockBox const& chunkBox, int x, int y,
     BlockPos pos = getWorldPos(x, y, z);
     if (!chunkBox.contains(pos.x, pos.y, pos.z)) return false;
     // a boss spawner is a block of its own (TF places TFBlocks.*_BOSS_SPAWNER with placeBlock): an
-    // id the block registry knows is placed as that block, any other id is the mob of a spawner
-    if (blocks::isRegisteredBlock(entityId)) {
+    // id the block registry knows is placed as that block, any other id is the mob of a spawner.
+    // Bedrock's block ids that are also mob ids stay mobs.
+    static constexpr std::string_view kMobsNamedLikeBlocks[] = {"minecraft:slime", "minecraft:tnt"};
+    bool mobId = std::find(std::begin(kMobsNamedLikeBlocks), std::end(kMobsNamedLikeBlocks), entityId) != std::end(kMobsNamedLikeBlocks);
+    if (!mobId && blocks::isRegisteredBlock(entityId)) {
         if (auto const* b = blocks::fromJava(entityId)) {
             region.setBlock(pos, *b, 2);
             return true;

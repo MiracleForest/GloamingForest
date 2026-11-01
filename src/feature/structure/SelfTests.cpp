@@ -9,6 +9,7 @@
 #include <climits>
 #include <cmath>
 #include <map>
+#include <optional>
 #include <unordered_map>
 
 #include "ll/api/service/Bedrock.h"
@@ -51,7 +52,7 @@ using selftest::Context;
 
 class MemoryRegion final : public worldgen::Region {
 public:
-    MemoryRegion() { resetRegionRandom(); }
+    MemoryRegion() { resetRegionRandom(this); }
     [[nodiscard]] int          centerChunkX() const override { return 0; }
     [[nodiscard]] int          centerChunkZ() const override { return 0; }
     [[nodiscard]] int          minY() const override { return -64; }
@@ -1042,7 +1043,9 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
         ctx.check(paintings::tryHang(region, front, Orientation::South, paintings::byId("minecraft:kebab")), "a painting hangs on the wall");
         ctx.check(!paintings::tryHang(region, front, Orientation::South, paintings::byId("minecraft:aztec")), "a second painting on the same spot is refused");
         BlockPos noWall{area.minX + 2, area.minY + 1, area.minZ + 5};
-        ctx.check(!paintings::tryHang(region, noWall, Orientation::South, paintings::byId("minecraft:kebab")), "the game refuses a painting without a wall");
+        // TF's check passes without a wall (TF hangs it and lets it drop); the game hangs nothing
+        ctx.check(paintings::tryHang(region, noWall, Orientation::South, paintings::byId("minecraft:kebab")), "TF's spot check ignores the wall");
+        ctx.check(paintingsIn(*source, BlockBox{noWall.x, noWall.y, noWall.z, noWall.x, noWall.y, noWall.z}).empty(), "no painting hangs without a wall");
         // the camp's painting marker handler: LichBossRoom.placePainting(pos, random, 1, placeable, 1, 1, rotation.rotate(NORTH))
         JavaRandom random(77);
         Json       handler{{"type", "twilightforest:painting"}, {"paintings", "minecraft:placeable"}};
@@ -1265,7 +1268,34 @@ GF_REGISTER_SELFTEST("structure.spawner_scale", [](Context& ctx) -> ll::coro::Co
     ctx.check(blockentities::applyScale(*mob, scale), "the scale applies");
     float after = mob->getAABB().max.x - mob->getAABB().min.x;
     ctx.check(std::abs(after - before * scale) < 0.05f, "the cow's box shrinks to " + std::to_string(after) + " (from " + std::to_string(before) + ")");
+    auto scaledByHand = mob->getOrCreateUniqueID().rawID;
     mob->despawn();
+    // end to end: a spawner placed with an entity_scale record scales the mobs it spawns
+    BlockPos spawnerPos{area.minX + 4, area.minY, area.minZ + 4};
+    {
+        BlockSourceRegion region(*source, spawnerPos);
+        blockentities::spawner(region, spawnerPos, "minecraft:cow",
+                               Json{{"entity_scale", 0.5f}, {"Delay", 1}, {"MinSpawnDelay", 10}, {"MaxSpawnDelay", 20}, {"SpawnCount", 1},
+                                    {"SpawnRange", 2}, {"RequiredPlayerRange", 16}, {"MaxNearbyEntities", 6}});
+    }
+    BlockBox      near{area.minX, area.minY - 1, area.minZ, area.maxX, area.minY + 4, area.maxZ};
+    AABB          range{Vec3{static_cast<float>(near.minX), static_cast<float>(near.minY), static_cast<float>(near.minZ)},
+                        Vec3{static_cast<float>(near.maxX + 1), static_cast<float>(near.maxY + 1), static_cast<float>(near.maxZ + 1)}};
+    std::optional<float> width;
+    for (int i = 0; i < 200 && !width; i += 5) {
+        co_await ctx.ticks(5);
+        (void)ctx.player(); // keep the test player near the spawner (RequiredPlayerRange)
+        source = ctx.region();
+        if (!source) break;
+        for (auto* a : source->getEntities(range, 0.0f, ActorType::Cow))
+            if (a && a->isType(ActorType::Cow) && a->getOrCreateUniqueID().rawID != scaledByHand) width = a->getAABB().max.x - a->getAABB().min.x;
+    }
+    if (width) ctx.info("a cow from the spawner: width " + std::to_string(*width));
+    if (source)
+        for (auto* a : source->getEntities(range, 0.0f, ActorType::Cow))
+            if (a) a->despawn();
+    if (!width) ctx.info("the spawner spawned no cow within 200 ticks (spawn conditions): spawned-mob scaling not observed");
+    else ctx.check(*width < 0.9f * 0.75f, "a cow from the scaled spawner is scaled (width " + std::to_string(*width) + ")");
 });
 
 // ---- queued work survives a restart (tools/e2e/server/scenarios/structure.ps1) -----------------------------------------

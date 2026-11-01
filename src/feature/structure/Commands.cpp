@@ -105,7 +105,8 @@ struct Outline {
     BlockBox    box;
     std::string particle;
     int         ticksLeft;
-    float       spacing = 2.0f; ///< blocks between two particles of an edge
+    float       spacing   = 2.0f;  ///< blocks between two particles of an edge
+    bool        floorOnly = false; ///< only the four bottom edges
 };
 /// generator_radius's chunk labels (TF's text displays): shown on the action bar of the
 /// operator while they stand in a labelled chunk.
@@ -174,14 +175,15 @@ void drawOutlines() {
         auto  x1 = static_cast<float>(b.maxX + 1), y1 = static_cast<float>(b.maxY + 1), z1 = static_cast<float>(b.maxZ + 1);
         edge(x0, y0, z0, x1, y0, z0);
         edge(x0, y0, z1, x1, y0, z1);
+        edge(x0, y0, z0, x0, y0, z1);
+        edge(x1, y0, z0, x1, y0, z1);
+        if (o.floorOnly) continue; // the bottom square only (generator_radius's 289 chunks)
         edge(x0, y1, z0, x1, y1, z0);
         edge(x0, y1, z1, x1, y1, z1);
         edge(x0, y0, z0, x0, y1, z0);
         edge(x1, y0, z0, x1, y1, z0);
         edge(x0, y0, z1, x0, y1, z1);
         edge(x1, y0, z1, x1, y1, z1);
-        edge(x0, y0, z0, x0, y0, z1);
-        edge(x1, y0, z0, x1, y0, z1);
         edge(x0, y1, z0, x0, y1, z1);
         edge(x1, y1, z0, x1, y1, z1);
     }
@@ -196,8 +198,8 @@ void startTicking() {
         gOutlineTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { drawOutlines(); });
 }
 
-void addOutline(int dim, BlockBox const& box, std::string particle, float spacing = 2.0f) {
-    gOutlines.push_back(Outline{dim, box, std::move(particle), 60 * 20, spacing});
+void addOutline(int dim, BlockBox const& box, std::string particle, float spacing = 2.0f, bool floorOnly = false) {
+    gOutlines.push_back(Outline{dim, box, std::move(particle), 60 * 20, spacing, floorOnly});
     startTicking();
 }
 
@@ -362,6 +364,7 @@ void countLoot(CommandOrigin const& origin, CommandOutput& output, std::string c
                 bool empty = true;
                 for (int slot = 0; slot < handler->slots && empty; slot++) empty = handler->get(gpos, slot).isNull();
                 if (auto record = blockentities::lootRecord(w->dim, pos)) {
+                    bool unpacked = !empty; // a container with items was opened (rolled) already
                     if (empty && !record->table.empty() && handler->set) {
                         loot::LootContext ctx;
                         ctx.region = w->source;
@@ -369,10 +372,12 @@ void countLoot(CommandOrigin const& origin, CommandOutput& output, std::string c
                         ctx.player = w->player;
                         ctx.seed   = record->seed;
                         auto items = loot::roll(record->table, ctx);
+                        // LootTable#fill: stacks beyond the container's slots are dropped, as in vanilla
                         for (int slot = 0; slot < handler->slots && slot < static_cast<int>(items.size()); slot++) handler->set(gpos, slot, items[slot]);
                         if (handler->setLootTable) handler->setLootTable(gpos, std::string{}, 0);
+                        unpacked = true;
                     }
-                    blockentities::forgetLootRecord(w->dim, pos);
+                    if (unpacked) blockentities::forgetLootRecord(w->dim, pos);
                 }
                 for (int slot = 0; slot < handler->slots; slot++) {
                     ItemStack stack = handler->get(gpos, slot);
@@ -387,7 +392,11 @@ void countLoot(CommandOrigin const& origin, CommandOutput& output, std::string c
                     if (actor) actors.push_back(actor->getPosition());
                 for (auto const& pos : actors) count(pos);
             }
-            ::gf::feature::common::blockdata::forEachInChunk(w->dim, cx, cz, [&](core::GlobalPos const& gp, Json const&) { count(game::blockPos(gp)); });
+            // (collected first: counting edits BlockData, which must not change under the iteration)
+            std::vector<BlockPos> documents;
+            ::gf::feature::common::blockdata::forEachInChunk(w->dim, cx, cz,
+                                                             [&](core::GlobalPos const& gp, Json const&) { documents.push_back(game::blockPos(gp)); });
+            for (auto const& pos : documents) count(pos);
         }
     std::vector<std::pair<std::string, int>> sorted(counts.begin(), counts.end());
     std::stable_sort(sorted.begin(), sorted.end(), [](auto const& a, auto const& b) { return a.second < b.second; });
@@ -434,8 +443,9 @@ void generatorRadius(CommandOrigin const& origin, CommandOutput& output, std::st
         for (int dz = -8; dz <= 8; dz++) {
             int      r = std::max(std::abs(dx), std::abs(dz));
             BlockBox box{(cx + dx) << 4, sectionY, (cz + dz) << 4, ((cx + dx) << 4) + 15, sectionY + 15, ((cz + dz) << 4) + 15};
-            // 289 chunks: a particle every 4 blocks keeps the outlines readable and the packets few
-            addOutline(w->dim, box, particles[r], 4.0f);
+            // 289 chunks: the bottom square of each, a particle every 8 blocks (about 3,500
+            // particles a draw; full boxes would be five times that)
+            addOutline(w->dim, box, particles[r], 8.0f, true);
         }
     gLabels = ChunkLabels{w->dim, cx, cz, 60 * 20, w->player->getOrCreateUniqueID().rawID};
     startTicking();
