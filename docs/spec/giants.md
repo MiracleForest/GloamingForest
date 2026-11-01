@@ -157,23 +157,29 @@ block-dust (`ClientRegistrationEvents` client extensions). Precipitation: `getCu
 rainLevel) when it rains, else (NONE, 0).
 
 Random tick (fluffy, rainy, snowy; skipped when the area is not loaded or `common.cloudBlockPrecipitationDistance` = 0):
-with a positive level and RAIN or SNOW, scan down from y - 1 for up to `distance` blocks until a MOTION_BLOCKING-opaque
-block; `highestRainyBlock` = that block (or the last scanned). Above the minimum build height: SNOW -> if the
+with a positive level and RAIN or SNOW, `highestRainyBlock = y - 1`; for `y'` from `y - 1` down while
+`y' > y - distance` (that is `distance - 1` blocks, y - 1 .. y - distance + 1): if the block at `y'` is not
+MOTION_BLOCKING-opaque, `highestRainyBlock = y' - 1`, else stop. So `highestRainyBlock` is the first opaque block
+below the cloud, or `y - distance` when none is found in the scanned range (one below the last scanned block; that
+block itself is not tested, so ground exactly at `y - distance` is snowed on and gets `handlePrecipitation`; with
+distance 1 nothing is scanned and it stays `y - 1`). Strictly above the minimum build height: SNOW -> if the
 `snowAccumulationHeight` gamerule > 0 and snow can be placed at `highestRainyBlock + 1` (air or snow, block light < 10,
 snow survives) add a snow layer (up to `min(rule, 8)`) or place one; then (rain and snow) call `handlePrecipitation` of
 the block at `highestRainyBlock` (cauldrons fill).
 
 `isRainingAt` hook (`BlockHooks.isRainingAt`, wraps `Level.isRainingAt`): when the level is not raining at pos and the
-common distance > 0, scan up from pos for `distance` blocks in the loaded chunk: a cloud whose current precipitation
-is RAIN -> raining (entities get wet, fire is put out, farmland is moistened, ...); an opaque motion-blocking block ->
+common distance > 0 (pos's chunk not loaded -> not raining, no chunk load), scan up y = pos.y .. pos.y + distance - 1
+in that chunk, testing each block in this order: a cloud whose current precipitation is RAIN -> raining (entities get
+wet, fire is put out, farmland is moistened, ...); an opaque motion-blocking block -> not raining; past the range ->
 not raining. Bedrock: no single hook; the effects that matter (fire extinguishing, entity wetness for enderman /
 blaze damage, farmland moisture, cauldron filling) are applied by U29 through F11 random ticks and F10 hooks on the
 blocks / entities under rainy clouds (listed deviation for anything else).
 
 Client rendering (`CloudEvents`, client config `cloudBlockPrecipitationDistance`, -1 = use the common value, 0 = off):
 every 10 game ticks collect cloud blocks within `r` = 10 (fancy) / 5 (fast) columns of the camera and y from `camY -
-r` to `camY + distance + r` whose precipitation is not NONE and that have at least one non-opaque block below
-(remember the lowest such y). Each tick: rain splash particles (`minecraft:rain`, or `minecraft:smoke` on lava, magma,
+r` to `camY + distance + r - 1` whose precipitation is not NONE and that have at least one non-opaque block below;
+the stop y is the lowest non-opaque y of the same downward scan as the random tick (`y - 1` while `> y - distance`,
+stopping at the first opaque block), i.e. one block higher than the server's `highestRainyBlock`. Each tick: rain splash particles (`minecraft:rain`, or `minecraft:smoke` on lava, magma,
 lit campfires) at up to 100 random columns (50 with decreased particles) within 10 blocks of the camera, plus the
 vanilla rain sounds (`weather.rain` 0.2 / 1.0, `weather.rain.above` 0.1 / 0.5). Each frame after weather: vanilla-style
 rain / snow sheets per column from the cloud down to the stop y (alpha `((1 - d^2) x 0.5 + 0.5) x level`, d = distance
