@@ -78,13 +78,29 @@ struct Height {
 /// Fires the portal::onTeleported listeners.
 void notifyTeleported(Player& player, int from, int to);
 /// Schedules a cross-dimension move and runs `then(player)` once the player is in `dim` and its
-/// chunk is loaded (or `then` is skipped after 10 s). Rule R16: the player is looked up again by id.
-void moveAcross(Player& player, int dim, Vec3 const& pos, float yaw, float pitch, std::function<void(Player&)> then);
+/// chunk is loaded, or `failed(player)` (the player may be gone: nullptr) when it did not get there
+/// within 10 s. Rule R16: the player is looked up again by id.
+void moveAcross(
+    Player&                      player,
+    int                          dim,
+    Vec3 const&                  pos,
+    float                        yaw,
+    float                        pitch,
+    std::function<void(Player&)> then,
+    std::function<void(Player*)> failed = {}
+);
 
 /// CapabilityEvents#newSpawnInTwilightForest (no-op unless newPlayersSpawnInTF).
 void newSpawnInTwilightForest(Player& player);
 /// ServerPlayer#getRespawnPosition() != null: the player has a bed / anchor / forced spawn point.
 [[nodiscard]] bool hasRespawnPosition(Player const& player);
+/// Forgets that a player (by UUID string) was banished to the Twilight Forest (tests).
+void unbanish(std::string const& uuid);
+
+/// Portal blocks changed at `pos` (lit, built, broken): the portal index reads that area again.
+void portalIndexTouch(int dim, BlockPos const& pos);
+/// The portal blocks the index knows in a dimension (the chunks near players; tests).
+[[nodiscard]] std::vector<BlockPos> indexedPortals(int dim);
 
 /// Per-player state kept across ticks, keyed by the unique id (rule R16).
 [[nodiscard]] std::int64_t idOf(Actor const& actor);
@@ -94,8 +110,14 @@ void newSpawnInTwilightForest(Player& player);
 
 /// Sends an action bar message (Java displayClientMessage(..., true)).
 void actionBar(Player& player, std::string const& text);
-/// TFConfig#getPortalLockingAdvancement and the "unworthy" message + missing-advancement toast:
-/// true when the player may not use / light portals.
+/// TFConfig#getPortalLockingAdvancement: the advancement that unlocks portals (nullopt: none). The
+/// configured id is checked once per value against the advancements the mod ships
+/// (data/<namespace>/advancement/<path>.json); an unknown one is logged, cleared and saved.
+[[nodiscard]] std::optional<std::string> portalLockingAdvancement(bool quiet = false);
+/// Whether advancement `id` exists (data/<namespace>/advancement/<path>.json in the mod's data).
+[[nodiscard]] bool advancementExists(std::string const& id);
+/// TFPortalBlock#entityInside / ProgressionEvents: the "unworthy" message + missing-advancement
+/// toast; true when the player may not use / light portals.
 bool unworthy(Player& player);
 /// Forgets which players saw the toast (TFPortalBlock.playersNotified).
 void resetNotified();
@@ -114,5 +136,12 @@ void registerPortalBlockEvents();
 /// The item spawn hook that remembers who dropped what.
 void installItemOwners();
 void uninstallItemOwners();
+/// Forgets the item owners of a closed world.
+void clearItemOwners();
+/// The item `from` was copied into another dimension as `to`: it keeps its owner.
+void moveItemOwner(std::int64_t from, std::int64_t to);
+/// BlockHooks#modifySoilDecisionForMushroomBlockSurvivability: a Twilight portal among the eight
+/// blocks around the one under `pos` keeps a mushroom at `pos` alive.
+[[nodiscard]] bool portalKeepsMushroom(BlockSource& region, BlockPos const& pos);
 
 } // namespace gf::feature::dimension

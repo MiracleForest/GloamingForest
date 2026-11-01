@@ -3,18 +3,24 @@
 //   src/main/java/twilightforest/block/TFPortalBlock.java
 //   src/main/java/twilightforest/events/ProgressionEvents.java (portal creation check)
 //   src/main/java/twilightforest/config/TFConfig.java (getPortalLockingAdvancement)
+//   src/main/java/twilightforest/asmhooks/BlockHooks.java (modifySoilDecisionForMushroomBlockSurvivability)
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Lighting a Twilight portal: a player's portal activator item (a diamond) thrown into a water
 // pool whose rim is dirt topped with plants; the pool turns into portal blocks under a lightning
-// bolt. Portal blocks fall back to water when their floor or rim breaks.
+// bolt. Portal blocks fall back to water when their floor or rim breaks. Mushrooms next to a portal
+// survive in any light.
 
-#include <random>
+#include <cctype>
+#include <deque>
+#include <format>
+#include <filesystem>
 #include <unordered_map>
 #include <unordered_set>
 
+#include "ll/api/Config.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
@@ -32,7 +38,9 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
+#include "mc/world/level/Tick.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/MushroomBlock.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/phys/AABB.h"
 
@@ -41,7 +49,6 @@
 #include "feature/dimension/Teleporter.h"
 #include "feature/dimension/World.h"
 #include "feature/families/BlockEvents.h"
-#include "feature/fx/Fx.h"
 #include "feature/landmark/Landmark.h"
 #include "feature/progression/Progression.h"
 #include "game/Blocks.h"
@@ -49,6 +56,7 @@
 #include "mod/Config.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
+#include "mod/Main.h"
 
 namespace gf::feature::dimension {
 
@@ -56,16 +64,31 @@ namespace {
 
 constexpr int kMinPortalSize = 4;
 
-std::mt19937& rng() {
-    static std::mt19937 r{std::random_device{}()};
-    return r;
+/// ItemEntity#getOwner: Bedrock keeps no thrower on dropped items, so the player behind every item
+/// spawn is remembered here (item unique id -> player unique id), with the spawn order for pruning.
+struct Throwers {
+    std::unordered_map<std::int64_t, std::int64_t>     owner;
+    std::deque<std::pair<std::uint64_t, std::int64_t>> order; ///< (server tick of the spawn, item id)
+};
+Throwers& throwers() {
+    static Throwers t;
+    return t;
 }
 
-/// ItemEntity#getOwner: Bedrock keeps no thrower on dropped items, so the player behind every item
-/// spawn is remembered here (item unique id -> player unique id).
-std::unordered_map<std::int64_t, std::int64_t>& throwers() {
-    static std::unordered_map<std::int64_t, std::int64_t> m;
-    return m;
+/// Items despawn after 6000 ticks; an entry is checked once it is that old: kept (queued again)
+/// while its item still exists, forgotten otherwise. A few entries per call: no spawn scans them all.
+constexpr std::uint64_t kThrowerCheckAge = 6000;
+void pruneThrowers(Level& level, int budget) {
+    auto&         t   = throwers();
+    std::uint64_t now = level.getCurrentServerTick().tickID;
+    for (int i = 0; i < budget && !t.order.empty(); ++i) {
+        auto [tick, id] = t.order.front();
+        if (now < tick + kThrowerCheckAge) break;
+        t.order.pop_front();
+        if (!t.owner.contains(id)) continue;
+        if (level.fetchEntity(ActorUniqueID{id}, false)) t.order.emplace_back(now, id);
+        else t.owner.erase(id);
+    }
 }
 
 /// TFPortalBlock.playersNotified (unique ids, for the session).
@@ -90,16 +113,12 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     auto* item = origin(region, inst, spawner, pos, throwTime);
     if (item && spawner && spawner->isPlayer()) {
-        auto& m = throwers();
-        if (m.size() > 4096) {
-            // forget the items that are gone
-            auto level = ll::service::getLevel();
-            for (auto it = m.begin(); it != m.end();) {
-                if (!level || !level->fetchEntity(ActorUniqueID{it->first}, false)) it = m.erase(it);
-                else ++it;
-            }
+        auto& level = region.getLevel();
+        pruneThrowers(level, 4);
+        auto id = idOf(*item);
+        if (throwers().owner.insert_or_assign(id, idOf(*spawner)).second) {
+            throwers().order.emplace_back(level.getCurrentServerTick().tickID, id);
         }
-        m[idOf(*item)] = idOf(*spawner);
     }
     return item;
 }
@@ -107,14 +126,59 @@ LL_TYPE_INSTANCE_HOOK(
 std::int64_t itemOwner(ItemActor const& item) {
     auto owner = item.getOwnerId().rawID;
     if (owner != -1 && owner != 0) return owner;
-    auto it = throwers().find(idOf(item));
-    return it == throwers().end() ? -1 : it->second;
+    auto it = throwers().owner.find(idOf(item));
+    return it == throwers().owner.end() ? -1 : it->second;
 }
 
-void installItemOwners() { TwilightItemThrowerHook::hook(); }
+void clearItemOwners() {
+    throwers().owner.clear();
+    throwers().order.clear();
+}
+
+void moveItemOwner(std::int64_t from, std::int64_t to) {
+    auto it = throwers().owner.find(from);
+    if (it == throwers().owner.end()) return;
+    auto owner = it->second;
+    throwers().owner.erase(it);
+    throwers().owner[to] = owner;
+    if (auto level = ll::service::getLevel()) throwers().order.emplace_back(level->getCurrentServerTick().tickID, to);
+}
+
+bool portalKeepsMushroom(BlockSource& region, BlockPos const& pos) {
+    int y = pos.y - 1;
+    if (y < region.getMinHeight() || y >= region.getMaxHeight()) return false;
+    for (int x = -1; x <= 1; x++) {
+        for (int z = -1; z <= 1; z++) {
+            if (x == 0 && z == 0) continue;
+            BlockPos p{pos.x + x, y, pos.z + z};
+            if (region.hasChunksAt(p, 0, false) && isPortal(region.getBlock(p))) return true;
+        }
+    }
+    return false;
+}
+
+/// BlockHooks#modifySoilDecisionForMushroomBlockSurvivability (MushroomBlock#canSurvive): the soil
+/// decision is "yes" when a Twilight portal is next to the block under the mushroom.
+LL_TYPE_INSTANCE_HOOK(
+    TwilightMushroomHook,
+    ll::memory::HookPriority::Normal,
+    MushroomBlock,
+    &MushroomBlock::$canSurvive,
+    bool,
+    BlockSource&    region,
+    BlockPos const& pos
+) {
+    return portalKeepsMushroom(region, pos) || origin(region, pos);
+}
+
+void installItemOwners() {
+    TwilightItemThrowerHook::hook();
+    TwilightMushroomHook::hook();
+}
 void uninstallItemOwners() {
+    TwilightMushroomHook::unhook();
     TwilightItemThrowerHook::unhook();
-    throwers().clear();
+    clearItemOwners();
 }
 
 void actionBar(Player& player, std::string const& text) {
@@ -126,15 +190,55 @@ void actionBar(Player& player, std::string const& text) {
     packet->sendTo(player);
 }
 
-std::optional<std::string> portalLockingAdvancement(Player const&) {
-    auto const& id = gf::config::get<DimensionConfig>().portalUnlockedByAdvancement;
-    if (id.empty()) return std::nullopt;
-    return id;
+bool advancementExists(std::string const& id) {
+    // ResourceLocation.tryParse: namespace:path of [a-z0-9_.-] (path also '/')
+    auto colon = id.find(':');
+    if (colon == std::string::npos || colon == 0 || colon + 1 >= id.size()) return false;
+    for (std::size_t i = 0; i < id.size(); ++i) {
+        auto c  = static_cast<unsigned char>(id[i]);
+        bool ok = std::islower(c) || std::isdigit(c) || c == '_' || c == '-' || c == '.' || (i > colon && c == '/') || i == colon;
+        if (!ok) return false;
+    }
+    auto file = Mod::getInstance().getSelf().getModDir() / "data" / id.substr(0, colon) / "advancement" / (id.substr(colon + 1) + ".json");
+    std::error_code ec;
+    return std::filesystem::is_regular_file(file, ec);
+}
+
+std::optional<std::string> portalLockingAdvancement(bool quiet) {
+    // TFConfig#getPortalLockingAdvancement: checked once per configured value
+    static std::string checked;
+    auto&              cfg = gf::config::mut<DimensionConfig>();
+    if (cfg.portalUnlockedByAdvancement.empty()) return std::nullopt;
+    if (cfg.portalUnlockedByAdvancement != checked) {
+        // a build without TF's advancement data (before the import ships it) can't tell: keep it
+        std::error_code ec;
+        auto shipped = Mod::getInstance().getSelf().getModDir() / "data" / "twilightforest" / "advancement";
+        if (!std::filesystem::is_directory(shipped, ec)) {
+            log().warn("dimension: no advancement data to check the portal locking advancement '{}' against", cfg.portalUnlockedByAdvancement);
+            checked = cfg.portalUnlockedByAdvancement;
+            return cfg.portalUnlockedByAdvancement;
+        }
+        if (!advancementExists(cfg.portalUnlockedByAdvancement)) {
+            // TF logs it as fatal; a selftest provoking it asks for a warning (e2e runs fail on errors)
+            auto line = std::format(
+                "The portal locking advancement is not a valid advancement! Setting to null! ('{}', config/dimension.json)",
+                cfg.portalUnlockedByAdvancement
+            );
+            if (quiet) log().warn("{}", line);
+            else log().error("{}", line);
+            cfg.portalUnlockedByAdvancement.clear();
+            ll::config::saveConfig(cfg, gf::config::configDir() / "dimension.json");
+            return std::nullopt;
+        }
+        checked = cfg.portalUnlockedByAdvancement;
+        log().debug("dimension: portal locking advancement reloaded: {}", checked);
+    }
+    return cfg.portalUnlockedByAdvancement;
 }
 
 bool unworthy(Player& player) {
     if (player.isCreative() || player.isSpectator()) return false;
-    auto requirement = portalLockingAdvancement(player);
+    auto requirement = portalLockingAdvancement();
     if (!requirement || progression::has(player, *requirement)) return false;
     actionBar(player, trFor(player, "misc.twilightforest.portal_unworthy", "The Portal pool is unresponsive. Perhaps something was neglected?"));
     auto id = idOf(player);
@@ -181,6 +285,11 @@ void causeLightning(BlockSource& region, BlockPos const& pos, bool destructive) 
 
 bool tryToCreatePortal(BlockSource& region, BlockPos const& pos, ItemActor* catalyst, Player* player) {
     if (pos.y < region.getMinHeight() || pos.y >= region.getMaxHeight()) return false;
+    auto const* portal = portalBlock(false);
+    if (!portal) {
+        log().error("dimension: {} is not registered; no portal", kPortalBlock);
+        return false;
+    }
     Block const& state = region.getBlock(pos);
     if (!canFormPortal(state) || !sturdyTop(region, BlockPos{pos.x, pos.y - 1, pos.z})) return false;
     PortalScan blocksChecked;
@@ -191,7 +300,8 @@ bool tryToCreatePortal(BlockSource& region, BlockPos const& pos, ItemActor* cata
     auto const& cfg = gf::config::get<DimensionConfig>();
     if (!cfg.checkPortalPlacement) {
         bool checkProgression = landmark::enforcedProgression();
-        if (!teleporter::isSafeAround(region, pos, player, checkProgression)) {
+        // TF checks around the catalyst item: the biome restrictions apply to players only, never here
+        if (!teleporter::isSafeAround(region, pos, nullptr, checkProgression)) {
             // TODO in TF: "failure" effect - particles?
             if (player) actionBar(*player, trFor(*player, "misc.twilightforest.portal_unsafe", "It doesn't seem safe here..."));
             return false;
@@ -212,13 +322,9 @@ bool tryToCreatePortal(BlockSource& region, BlockPos const& pos, ItemActor* cata
         }
     }
     causeLightning(region, pos, cfg.destructivePortalLightning);
-    auto const* portal = portalBlock(false);
-    if (!portal) {
-        log().error("dimension: {} is not registered; no portal", kPortalBlock);
-        return false;
-    }
     for (auto const& [p, isPool] : blocksChecked)
         if (isPool) game::setBlock(region, p, *portal);
+    portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
     log().info(
         "dimension: portal lit at {} {} {} in {} ({} blocks{})",
         pos.x,
@@ -255,12 +361,9 @@ void checkForPortalCreation(Player& player, BlockSource& world, float rangeToChe
     if (!qualified) return;
     if (unworthy(player)) return; // Item qualifies, but the player doesn't
 
-    Vec3                             at = qualified->getFeetPos();
-    std::normal_distribution<double> gauss(0.0, 1.0);
-    for (int i = 0; i < 2; i++) {
-        Vec3 v{static_cast<float>(gauss(rng()) * 0.02), static_cast<float>(gauss(rng()) * 0.02), static_cast<float>(gauss(rng()) * 0.02)};
-        fx::particle(world.getDimension(), "minecraft:effect", Vec3{at.x, at.y + 0.2f, at.z}, v);
-    }
+    // (TF adds two EFFECT particles here with ServerLevel#addParticle, which does nothing on a
+    // server: none)
+    Vec3 at = qualified->getFeetPos();
     if (tryToCreatePortal(world, game::blockPosOf(at), qualified, &player)) {
         progression::trigger(player, kMakePortalTrigger);
     }
@@ -284,6 +387,7 @@ void portalNeighborChanged(BlockSource& region, BlockPos const& pos) {
         nullptr
     );
     if (auto const* water = game::blockWith("minecraft:water")) game::setBlock(region, pos, *water);
+    portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
     log().info("dimension: portal block at {} {} {} broke back into water", pos.x, pos.y, pos.z);
 }
 

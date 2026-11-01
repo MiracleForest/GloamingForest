@@ -285,15 +285,22 @@ void cacheRemove(std::string const& dimension, int x, int z) {
 
 // ---- traveller ------------------------------------------------------------------------------------------------------------
 
-Traveller capture(Player& player) {
+Traveller capture(Actor& actor) {
     Traveller t;
-    t.id       = idOf(player);
-    t.name     = player.getRealName();
-    t.srcDim   = static_cast<int>(player.getDimensionId());
-    t.srcExact = player.getFeetPos();
+    t.id       = idOf(actor);
+    t.isPlayer = actor.isPlayer();
+    t.name     = t.isPlayer ? static_cast<Player&>(actor).getRealName() : actor.getTypeName();
+    t.srcDim   = static_cast<int>(actor.getDimensionId());
+    t.srcExact = actor.getFeetPos();
     t.srcPos   = game::blockPosOf(t.srcExact);
-    t.yaw      = player.getRotation().y;
-    t.pitch    = player.getRotation().x;
+    t.yaw      = actor.getRotation().y;
+    t.pitch    = actor.getRotation().x;
+    // Entity#getBbWidth / getBbHeight (safePosInColumn)
+    AABB const& box = actor.getAABB();
+    if (box.max.x > box.min.x && box.max.y > box.min.y) {
+        t.width  = box.max.x - box.min.x;
+        t.height = box.max.y - box.min.y;
+    }
     if (auto* region = game::regionOf(t.srcDim)) {
         // TFTeleporter#placeInExistingPortal (source side): the portal blocks around the entity
         PortalScan blocks;
@@ -459,13 +466,14 @@ bool isOkayForFallbackPortal(BlockSource& world, BlockPos const& pos) {
     return siteOk(world, pos, [](Block const*, BlockPos const&) { return true; });
 }
 
-Block const& randNatureBlock() {
+/// A random member of portal/generated_decoration (nullptr: none resolves, no decoration).
+Block const* randNatureBlock() {
     auto members = blockTagMembers("twilightforest:portal/generated_decoration");
     std::vector<Block const*> blocks;
     for (auto const& id : members)
         if (auto const* b = game::blockWith(id)) blocks.push_back(b);
-    if (!blocks.empty()) return *blocks[nextInt(static_cast<int>(blocks.size()))];
-    return *game::blockWith("minecraft:short_grass");
+    if (!blocks.empty()) return blocks[nextInt(static_cast<int>(blocks.size()))];
+    return game::blockWith("minecraft:short_grass");
 }
 
 void cacheNewPortalCoords(Traveller const& t, BlockPos const& pos) {
@@ -629,6 +637,12 @@ std::vector<BlockPos> portalBlocksNear(BlockSource& region, BlockPos const& cent
     return out;
 }
 
+std::vector<BlockPos> portalBlocksInChunk(BlockSource& region, int cx, int cz) {
+    std::vector<BlockPos> out;
+    forEachPortalBlock(region, cx * 16, cz * 16, cx * 16 + 15, cz * 16 + 15, [&](BlockPos const& p) { out.push_back(p); });
+    return out;
+}
+
 std::optional<BlockPos> getPortalPosition(BlockSource& region, BlockPos const& pos) {
     int const radius = 200; // scan radius up to 200
     double    best   = std::numeric_limits<double>::max();
@@ -724,18 +738,30 @@ BlockPos makePortalAt(BlockSource& world, BlockPos const& pos, bool locked) {
     }
     // portal in it
     for (auto const& p : {pos, offset(pos, 1, 0, 0), offset(pos, 0, 0, 1), offset(pos, 1, 0, 1)}) set(p, *portal);
-    // meh, let's just make a bunch of air over it for 4 squares
+    // meh, let's just make a bunch of air over it for 4 squares (Level#removeBlock: a block with a
+    // fluid leaves the fluid's own block, so water stays water)
     for (int dx = -1; dx <= 2; dx++)
         for (int dz = -1; dz <= 2; dz++)
             for (int dy = 1; dy <= 5; dy++) {
                 BlockPos p = offset(pos, dx, dy, dz);
-                if (inHeight(world, p.y) && !world.getBlock(p).isAir()) set(p, *air);
+                if (!inHeight(world, p.y)) continue;
+                Block const& b = world.getBlock(p);
+                if (b.isAir() || isLiquid(b)) continue;
+                Block const& extra = world.getExtraBlock(p);
+                if (!extra.isAir() && isLiquid(extra)) {
+                    Block const* fluid = &extra; // a waterlogged block: its water takes its place
+                    world.setExtraBlock(p, *air, 3);
+                    set(p, *fluid);
+                } else {
+                    set(p, *air);
+                }
             }
     // finally, "nature decorations"!
     for (auto const& [dx, dz] : std::initializer_list<std::pair<int, int>>{
              {-1, -1}, {0, -1}, {1, -1}, {2, -1}, {-1, 0}, {2, 0}, {-1, 1}, {2, 1}, {-1, 2}, {0, 2}, {1, 2}, {2, 2}
          })
-        set(offset(pos, dx, 1, dz), randNatureBlock());
+        if (auto const* deco = randNatureBlock()) set(offset(pos, dx, 1, dz), *deco);
+    portalIndexTouch(static_cast<int>(world.getDimensionId()), pos);
     log().info("dimension: built a {}portal at {} {} {} in {}", locked ? "one-way " : "", pos.x, pos.y, pos.z, currentDimName(world));
     return pos;
 }

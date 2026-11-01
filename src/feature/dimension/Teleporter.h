@@ -25,6 +25,7 @@
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/world/level/BlockPos.h"
 
+class Actor;
 class Block;
 class BlockSource;
 class Player;
@@ -49,10 +50,11 @@ bool recursivelyValidatePortal(BlockSource& region, BlockPos const& pos, PortalS
 namespace teleporter {
 
 /// What the teleporter needs from the travelling entity, taken at departure (the entity's level is
-/// the source dimension then).
+/// the source dimension then). Players and other entities (items, mobs, vehicles) alike.
 struct Traveller {
     std::int64_t           id = 0;
-    std::string            name;
+    bool                   isPlayer = true;
+    std::string            name;        ///< the player's name, or the entity's type
     int                    srcDim = 0;
     BlockPos               srcPos;      ///< entity.blockPosition() in the source
     Vec3                   srcExact;    ///< entity.position() in the source
@@ -60,10 +62,11 @@ struct Traveller {
     float                  width = 0.6f, height = 1.8f;
     std::vector<BlockPos>  srcPortalBlocks; ///< the source portal's blocks (TFPortalBlock.recursivelyValidatePortal)
     std::optional<BlockPos> srcExit;        ///< getPortalPosition(source, srcPos)
+    std::vector<std::int64_t> passengers;   ///< riders that travel along (Entity#changeDimension)
 };
 
-/// Captures a player at departure (source dimension loaded).
-[[nodiscard]] Traveller capture(Player& player);
+/// Captures an entity at departure (source dimension loaded).
+[[nodiscard]] Traveller capture(Actor& actor);
 
 // ---- TeleporterCache (world DB "gf:dimension:teleporter_cache") ----
 struct PortalPosition {
@@ -108,6 +111,8 @@ BlockPos makePortalAt(BlockSource& region, BlockPos const& pos, bool locked);
 [[nodiscard]] double horizontalScale(int dest);
 /// Every portal block within `radius` blocks (each axis) of `center`, in loaded chunks.
 [[nodiscard]] std::vector<BlockPos> portalBlocksNear(BlockSource& region, BlockPos const& center, int radius);
+/// Every portal block of chunk (cx, cz) (empty when it is not loaded).
+[[nodiscard]] std::vector<BlockPos> portalBlocksInChunk(BlockSource& region, int cx, int cz);
 
 } // namespace teleporter
 

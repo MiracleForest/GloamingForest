@@ -6,9 +6,11 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // /twilightforest tp (rule R14: subcommand owned by F4), and the bodies of TF's data pack
-// functions twilightforest:tp_twilight / tp_overworld ("execute in <dimension> run tp @p ~ ~ ~"),
-// which Bedrock's /execute can't express for a custom dimension: /twilightforest tp twilight and
-// /twilightforest tp overworld.
+// functions twilightforest:tp_twilight / tp_overworld ("execute in <dimension> run tp @p ~ ~ ~") as
+// /twilightforest tp twilight|overworld (the behavior pack functions
+// twilightforest/dimension/tp_* run them). A move to another dimension completes asynchronously:
+// the success message is TF's, a move that does not complete is reported to the player
+// (gf::world::teleport) and logged.
 
 #include <cstdio>
 
@@ -54,7 +56,9 @@ void teleportCommand(CommandOrigin const& origin, CommandOutput& output) {
     if (blockY < tfHeight->min || blockY >= tfHeight->max || std::abs(pos.x) >= 30000000.0f || std::abs(pos.z) >= 30000000.0f) {
         return output.error(tr("commands.teleport.invalidPosition", "Invalid position for teleport"));
     }
-    world::teleport(*player, *twilight, teleportPos, player->getRotation().y);
+    if (!world::teleport(*player, *twilight, teleportPos, player->getRotation().y)) {
+        return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable."));
+    }
     output.success(trFor(
         *player,
         "commands.tffeature.teleport.success",
@@ -73,8 +77,11 @@ void teleportSame(CommandOrigin const& origin, CommandOutput& output, bool toTwi
     std::optional<DimensionType> dest = toTwilight ? world::twilight() : std::optional<DimensionType>(DimensionType(0));
     if (!dest) return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable."));
     Vec3 pos = player->getFeetPos();
-    world::teleport(*player, *dest, pos, player->getRotation().y);
-    output.success("Teleported " + player->getRealName() + " to " + dimensionName(static_cast<int>(*dest)));
+    if (!world::teleport(*player, *dest, pos, player->getRotation().y)) {
+        return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable."));
+    }
+    // vanilla /tp's message
+    output.success(trFor(*player, "commands.tp.success", "Teleported %1$s to %2$s", player->getRealName(), dimensionName(static_cast<int>(*dest))));
 }
 
 } // namespace

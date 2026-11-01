@@ -29,6 +29,7 @@
 
 #include "feature/dimension/Internal.h"
 #include "game/Blocks.h"
+#include "mod/I18n.h"
 #include "mod/Log.h"
 
 namespace gf::feature::dimension {
@@ -58,15 +59,27 @@ void notifyTeleported(Player& player, int from, int to) {
     }
 }
 
-void moveAcross(Player& player, int dim, Vec3 const& pos, float yaw, float pitch, std::function<void(Player&)> then) {
+void moveAcross(
+    Player&                      player,
+    int                          dim,
+    Vec3 const&                  pos,
+    float                        yaw,
+    float                        pitch,
+    std::function<void(Player&)> then,
+    std::function<void(Player*)> failed
+) {
     auto id = idOf(player);
     player.teleport(pos, DimensionType(dim), Vec2{pitch, yaw});
-    ll::coro::keepThis([id, dim, pos, then = std::move(then)]() -> ll::coro::CoroTask<> {
+    ll::coro::keepThis([id, dim, pos, then = std::move(then), failed = std::move(failed)]() -> ll::coro::CoroTask<> {
         BlockPos at = game::blockPosOf(pos);
         for (int i = 0; i < 200; ++i) {
             co_await ll::chrono::ticks(1);
             auto* p = playerById(id);
-            if (!p) co_return;
+            if (!p) {
+                log().warn("dimension: player {} left before arriving in {}", id, dimensionName(dim));
+                if (failed) failed(nullptr);
+                co_return;
+            }
             if (static_cast<int>(p->getDimensionId()) != dim) continue;
             auto* region = game::regionOf(dim);
             if (!region) continue;
@@ -75,7 +88,9 @@ void moveAcross(Player& player, int dim, Vec3 const& pos, float yaw, float pitch
             if (then) then(*p);
             co_return;
         }
-        log().warn("dimension: player {} did not arrive in dimension {} within 10 s", id, dim);
+        auto* p = playerById(id);
+        log().warn("dimension: {} did not arrive in {} within 10 s", p ? p->getRealName() : std::to_string(id), dimensionName(dim));
+        if (failed) failed(p);
     }).launch(ll::thread::ServerThreadExecutor::getDefault());
 }
 
@@ -98,6 +113,10 @@ bool isTwilight(DimensionType dimension) {
     return id >= 0 && static_cast<int>(dimension) == id;
 }
 
+// Within a dimension the move is immediate. Across dimensions it is asynchronous on Bedrock (the
+// client loads the dimension): true means the move was started; listeners of portal::onTeleported
+// hear of it once the player is there, and a move that does not complete within 10 s is logged
+// and told to the player.
 bool teleport(Player& player, DimensionType dimension, Vec3 const& pos, float yaw) {
     auto level = ll::service::getLevel();
     if (!level) return false;
@@ -110,7 +129,17 @@ bool teleport(Player& player, DimensionType dimension, Vec3 const& pos, float ya
         dim::notifyTeleported(player, from, to);
         return true;
     }
-    dim::moveAcross(player, to, pos, yaw, pitch, [from, to](Player& p) { dim::notifyTeleported(p, from, to); });
+    dim::moveAcross(
+        player,
+        to,
+        pos,
+        yaw,
+        pitch,
+        [from, to](Player& p) { dim::notifyTeleported(p, from, to); },
+        [to](Player* p) {
+            if (p) p->sendMessage(trFor(*p, "gf.dimension.teleport_failed", "The teleport to {} did not complete.", dim::dimensionName(to)));
+        }
+    );
     return true;
 }
 
