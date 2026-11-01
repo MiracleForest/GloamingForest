@@ -9,6 +9,7 @@
 
 #include "feature/item/Item.h"
 
+class Item;
 class ItemStack;
 class ItemStackBase;
 class Player;
@@ -31,8 +32,10 @@ bool refreshLore(ItemStack& stack, Player const* viewer);
 
 /// The bar of a stack (setBar), nullopt when none is registered or it is hidden.
 [[nodiscard]] std::optional<Bar> bar(ItemStack const& stack);
-/// Whether an item id has a bar function (cheap; the client renderer asks per slot).
+/// Whether an item has a bar function (the client renderer asks per slot and frame: by the item's
+/// name hash, no string).
 [[nodiscard]] bool hasBar(std::string const& itemId);
+[[nodiscard]] bool hasBar(Item const* item);
 
 /// The registered behaviour of an item (nullptr: none).
 [[nodiscard]] Behaviour const* behaviourOf(std::string const& itemId);

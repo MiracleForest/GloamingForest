@@ -163,13 +163,20 @@ class CatalogModule {
 public:
     void install() {
         static bool registered = false;
-        if (registered) return;
-        registered = true;
-        game::db::onWorldReady([] {
+        if (!registered) {
+            registered = true;
+            game::db::onWorldReady([] { // client: every local world
+                internal::invalidate();
+                internal::applyDefaults();
+            });
+            game::db::onWorldClosed([] { internal::invalidate(); });
+        }
+        // BDS enables mods after the world exists: the world DB module fired "ready" before this
+        // listener was registered
+        if (game::db::available()) {
             internal::invalidate();
             internal::applyDefaults();
-        });
-        game::db::onWorldClosed([] { internal::invalidate(); });
+        }
     }
     void uninstall() {}
 };

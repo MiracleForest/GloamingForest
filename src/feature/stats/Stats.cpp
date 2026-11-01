@@ -23,6 +23,7 @@
 
 #include "core/Keys.h"
 #include "feature/net/Net.h"
+#include "feature/stats/StatsInternal.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -114,6 +115,18 @@ long long value(Player const& player, std::string const& statId) {
     auto            it = p.values.find(fullId(statId));
     return it == p.values.end() ? 0 : it->second;
 }
+
+namespace internal {
+
+void forget(Player const& player) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    auto            uuid = player.getUuid().asString();
+    s.players.erase(uuid);
+    game::db::erase(keyOf(uuid));
+}
+
+} // namespace internal
 
 namespace {
 class StatsModule {

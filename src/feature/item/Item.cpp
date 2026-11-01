@@ -106,6 +106,29 @@ Entry const* entryOf(std::string const& id) {
     return it == s.byHash.end() ? nullptr : &it->second;
 }
 
+/// A copy of one behaviour function of an item (empty when none), taken under the lock: the hooks
+/// also run on the client thread (prediction) while units and selftests register on the server
+/// thread, and a callback must never run from inside the registry (it may unregister itself).
+template <class Fn>
+Fn behaviourFn(Entry const* e, Fn Behaviour::*member, std::string* id) {
+    if (!e || !e->hasBehaviour) return {};
+    if (id) *id = e->id;
+    return e->behaviour.*member;
+}
+template <class Fn>
+Fn behaviourFn(Item const* item, Fn Behaviour::*member, std::string* id = nullptr) {
+    if (!item) return {};
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    return behaviourFn(entryOf(item), member, id);
+}
+template <class Fn>
+Fn behaviourFn(std::string const& itemId, Fn Behaviour::*member, std::string* id = nullptr) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    return behaviourFn(entryOf(itemId), member, id);
+}
+
 bool changedStack(ItemStack const& before, ItemStack const& after) {
     return game::items::countOf(before) != game::items::countOf(after) || !game::items::sameItemSameData(before, after)
         || before.getDamageValue() != after.getDamageValue();
@@ -148,13 +171,16 @@ void registerItem(std::string const& itemId, Behaviour behaviour) {
 Json getData(ItemStack const& stack, std::string const& key) { return game::items::getData(stack, key); }
 void setData(ItemStack& stack, std::string const& key, Json const& value) { game::items::setData(stack, key, value); }
 
+// The category as given: Bedrock's categories (an item's minecraft:cooldown category, vanilla's
+// "ender_pearl") have no namespace, and the client's overlay matches the item's category exactly.
 void cooldown(Player& player, std::string const& category, int ticks) {
-    if (ticks <= 0) return;
-    player.startItemCooldown(HashedString(fullId(category)), ticks, true);
+    if (ticks <= 0 || category.empty()) return;
+    player.startItemCooldown(HashedString(category), ticks, true);
 }
 
 int cooldownLeft(Player const& player, std::string const& category) {
-    return std::max(0, player.getItemCooldownLeft(HashedString(fullId(category))));
+    if (category.empty()) return 0;
+    return std::max(0, player.getItemCooldownLeft(HashedString(category)));
 }
 
 void addTooltip(std::string const& itemId, TooltipFn fn) {
@@ -265,6 +291,13 @@ bool hasBar(std::string const& itemId) {
     return e && e->bar;
 }
 
+bool hasBar(Item const* item) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    auto const*     e = entryOf(item);
+    return e && e->bar;
+}
+
 Behaviour const* behaviourOf(std::string const& itemId) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
@@ -345,32 +378,22 @@ void tickPlayer(Player& player, bool lore) {
         if (prev[a] == now[a]) continue;
         auto slot = static_cast<SharedTypes::Legacy::ArmorSlot>(a);
         if (!prev[a].empty())
-            if (auto const* b = behaviourOf(prev[a]); b && b->onUnequip) {
+            if (auto fn = behaviourFn(prev[a], &Behaviour::onUnequip)) {
                 auto removed = game::items::make(prev[a]).value_or(ItemStack::EMPTY_ITEM());
-                guarded("onUnequip", prev[a], b->onUnequip, player, removed, static_cast<int>(a));
+                guarded("onUnequip", prev[a], fn, player, removed, static_cast<int>(a));
             }
         if (!now[a].empty())
-            if (auto const* b = behaviourOf(now[a]); b && b->onEquip) guarded("onEquip", now[a], b->onEquip, player, player.getArmor(slot), static_cast<int>(a));
+            if (auto fn = behaviourFn(now[a], &Behaviour::onEquip)) guarded("onEquip", now[a], fn, player, player.getArmor(slot), static_cast<int>(a));
         prev[a] = now[a];
     }
 
     // use ticks: the item being used (Java's onUseTick with the remaining use duration)
     auto const& inUse = player.mItemInUse->mItem.get();
     if (!inUse.isNull()) {
-        Behaviour const* b = nullptr;
-        std::string      id;
-        {
-            auto&           s = store();
-            std::lock_guard lock(s.mutex);
-            if (auto const* e = entryOf(inUse); e && e->hasBehaviour && e->behaviour.useTick) {
-                b  = &e->behaviour;
-                id = e->id;
-            }
-        }
-        if (b) {
-            auto fn = b->useTick;
+        std::string id;
+        // getItemUseDuration counts down: Bedrock passes it to releaseUsing as durationLeft
+        if (auto fn = behaviourFn(inUse.mItem.get(), &Behaviour::useTick, &id))
             guarded("useTick", id, fn, player, const_cast<ItemStack&>(inUse), player.getItemUseDuration());
-        }
     }
     if (sync) player.sendInventory(false);
 }
@@ -393,11 +416,11 @@ LL_TYPE_INSTANCE_HOOK(
     Player*    player,
     int        durationLeft
 ) {
-    auto const* e = it::entryOf(this);
-    if (!e || !e->hasBehaviour || !e->behaviour.release || !player || player->isClientSide()) return origin(item, player, durationLeft);
-    auto fn   = e->behaviour.release;
-    int  used = std::max(0, getMaxUseDuration(&item) - durationLeft);
-    it::guarded("release", e->id, fn, *player, item, used);
+    std::string id;
+    auto        fn = it::behaviourFn(this, &it::Behaviour::release, &id);
+    if (!fn || !player || player->isClientSide()) return origin(item, player, durationLeft);
+    int used = std::max(0, getMaxUseDuration(&item) - durationLeft);
+    it::guarded("release", id, fn, *player, item, used);
     origin(item, player, durationLeft);
 }
 
@@ -411,12 +434,12 @@ LL_TYPE_INSTANCE_HOOK(
     Level*     level,
     Player*    player
 ) {
-    auto r = origin(item, level, player);
-    auto const* e = it::entryOf(this);
-    if (!e || !e->hasBehaviour || !e->behaviour.finishUsing || !player || player->isClientSide()) return r;
-    auto fn = e->behaviour.finishUsing;
-    it::guarded("finishUsing", e->id, fn, *player, item);
-    return r;
+    // the behaviour first, on the stack as it was used (Java's finishUsingItem; TF's overrides call
+    // super for the default part), then the item's own finish (eating, ...)
+    std::string id;
+    auto        fn = it::behaviourFn(this, &it::Behaviour::finishUsing, &id);
+    if (fn && player && !player->isClientSide()) it::guarded("finishUsing", id, fn, *player, item);
+    return origin(item, level, player);
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -429,10 +452,10 @@ LL_TYPE_INSTANCE_HOOK(
     Actor&     actor,
     Mob&       attacker
 ) {
-    auto const* e = it::entryOf(this);
-    if (!e || !e->hasBehaviour || !e->behaviour.hurtEnemy || actor.isClientSide()) return origin(item, actor, attacker);
-    auto fn = e->behaviour.hurtEnemy;
-    if (it::guarded("hurtEnemy", e->id, fn, item, actor, static_cast<Actor&>(attacker))) return; // the behaviour used the item
+    std::string id;
+    auto        fn = it::behaviourFn(this, &it::Behaviour::hurtEnemy, &id);
+    if (!fn || actor.isClientSide()) return origin(item, actor, attacker);
+    if (it::guarded("hurtEnemy", id, fn, item, actor, static_cast<Actor&>(attacker))) return; // the behaviour used the item
     origin(item, actor, attacker);
 }
 
@@ -445,11 +468,11 @@ LL_TYPE_INSTANCE_HOOK(
     ItemStackBase const& stack,
     Block const&         block
 ) {
-    auto const* e = it::entryOf(this);
-    if (!e || !e->hasBehaviour || !e->behaviour.destroySpeed) return origin(stack, block);
-    auto fn    = e->behaviour.destroySpeed;
+    std::string id;
+    auto        fn = it::behaviourFn(this, &it::Behaviour::destroySpeed, &id);
+    if (!fn) return origin(stack, block);
     auto copy  = it::internal::stackOf(stack);
-    auto speed = it::guarded("destroySpeed", e->id, fn, static_cast<ItemStack const&>(copy), block);
+    auto speed = it::guarded("destroySpeed", id, fn, static_cast<ItemStack const&>(copy), block);
     return speed ? *speed : origin(stack, block);
 }
 
@@ -463,12 +486,12 @@ LL_TYPE_INSTANCE_HOOK(
     ItemStackBase const&   repairItem,
     BaseGameVersion const& version
 ) {
-    auto const* e = it::entryOf(this);
-    if (!e || !e->hasBehaviour || !e->behaviour.repairWith) return origin(stack, repairItem, version);
-    auto fn = e->behaviour.repairWith;
-    auto a  = it::internal::stackOf(stack);
-    auto b  = it::internal::stackOf(repairItem);
-    return it::guarded("repairWith", e->id, fn, static_cast<ItemStack const&>(a), static_cast<ItemStack const&>(b));
+    std::string id;
+    auto        fn = it::behaviourFn(this, &it::Behaviour::repairWith, &id);
+    if (!fn) return origin(stack, repairItem, version);
+    auto a = it::internal::stackOf(stack);
+    auto b = it::internal::stackOf(repairItem);
+    return it::guarded("repairWith", id, fn, static_cast<ItemStack const&>(a), static_cast<ItemStack const&>(b));
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -483,8 +506,6 @@ LL_TYPE_INSTANCE_HOOK(
     Vec3 const&  pos,
     uchar        face
 ) {
-    auto const* e = it::entryOf(this);
-    if (!e || !e->dispense) return origin(region, container, slot, pos, face);
     // DispenserBlock::dispenseFrom passes the dispense position: the block centre + 0.7 * facing
     static constexpr int dx[] = {0, 0, 0, 0, -1, 1}, dy[] = {-1, 1, 0, 0, 0, 0}, dz[] = {0, 0, -1, 1, 0, 0};
     int      f = face < 6 ? face : 0;
@@ -505,12 +526,13 @@ LL_TYPE_INSTANCE_HOOK(
 LL_STATIC_HOOK(ItemMeleeBonusHook, ll::memory::HookPriority::Normal, &EnchantUtils::getMeleeDamageBonus, float, Actor const& victim, Actor const& attacker) {
     float bonus = origin(victim, attacker);
     if (!attacker.isPlayer() || attacker.isClientSide()) return bonus;
-    auto& player = const_cast<Player&>(static_cast<Player const&>(attacker));
+    auto&       player = const_cast<Player&>(static_cast<Player const&>(attacker));
     auto const& held   = player.getSelectedItem();
-    auto const* e      = it::entryOf(held);
-    if (!e || !e->hasBehaviour || !e->behaviour.attackBonus) return bonus;
-    auto fn = e->behaviour.attackBonus;
-    return bonus + it::guarded("attackBonus", e->id, fn, held, const_cast<Actor&>(victim), player);
+    if (held.isNull()) return bonus;
+    std::string id;
+    auto        fn = it::behaviourFn(held.mItem.get(), &it::Behaviour::attackBonus, &id);
+    if (!fn) return bonus;
+    return bonus + it::guarded("attackBonus", id, fn, held, const_cast<Actor&>(victim), player);
 }
 
 namespace gf::item {
@@ -535,10 +557,9 @@ public:
             ia::Match{},
             [](ia::UseContext const& ctx) {
                 if (ctx.itemId.empty()) return ia::Result::Pass;
-                Behaviour const* b = internal::behaviourOf(ctx.itemId);
-                if (!b || !b->use) return ia::Result::Pass;
-                auto fn = b->use;
-                auto r  = guarded("use", ctx.itemId, fn, ctx.player, ia::mutableItem(ctx.item));
+                auto fn = behaviourFn(ctx.itemId, &Behaviour::use);
+                if (!fn) return ia::Result::Pass;
+                auto r = guarded("use", ctx.itemId, fn, ctx.player, ia::mutableItem(ctx.item));
                 switch (r) {
                 case Result::Pass:
                     return ia::Result::Pass;
@@ -553,9 +574,8 @@ public:
         // a mined block (Java's Item#mineBlock): after vanilla broke it
         mHandlers.push_back(ia::onDestroyed(ia::Match{}, [](ia::DestroyContext const& ctx, bool destroyed) {
             if (!destroyed || ctx.itemId.empty()) return;
-            Behaviour const* b = internal::behaviourOf(ctx.itemId);
-            if (!b || !b->mineBlock) return;
-            auto  fn     = b->mineBlock;
+            auto fn = behaviourFn(ctx.itemId, &Behaviour::mineBlock);
+            if (!fn) return;
             auto& region = ctx.player.getDimensionBlockSource();
             guarded("mineBlock", ctx.itemId, fn, ia::mutableItem(ctx.item), region, BlockPos{ctx.pos.x, ctx.pos.y, ctx.pos.z}, ctx.block, ctx.player);
         }));

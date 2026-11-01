@@ -568,16 +568,20 @@ LL_TYPE_INSTANCE_HOOK(
             gf::log().info("recipes: special crafting {} refused for {}", id, player.getRealName());
             return ItemStackNetResult::Error;
         }
+        // one result and one remainder per craft: _initCraftResults multiplies the result by
+        // numCrafts (a shift-click crafts the same grid again), the remainder is given as often
         auto remainder = rc::internal::remainderOf(id, grid.grid);
         if (!remainder.empty()) {
-            auto uid = player.getOrCreateUniqueID();
-            gf::interactions::nextTick([uid, remainder] {
+            auto uid    = player.getOrCreateUniqueID();
+            int  crafts = std::max<int>(1, numCrafts);
+            gf::interactions::nextTick([uid, remainder, crafts] {
                 auto lvl = ll::service::getLevel();
                 if (!lvl) return;
                 auto* p = lvl->getPlayer(uid);
                 if (!p) return;
-                for (auto st : remainder)
-                    if (!p->add(st)) p->drop(st, false);
+                for (int n = 0; n < crafts; ++n)
+                    for (auto st : remainder)
+                        if (!p->add(st)) p->drop(st, false);
                 p->sendInventory(false);
             });
         }

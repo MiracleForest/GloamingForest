@@ -6,8 +6,9 @@
 // amplifier, particles hidden: the client predicts the slower movement itself). Java's rules of
 // MobEffectInstance#update decide how a second application combines (a higher amplifier replaces,
 // the same amplifier extends). The state survives unloads and restarts as an actor tag
-// ("gf_fx|<id>|<amplifier>|<ticks>", rewritten every second); losing the carrier (milk) ends the
-// effect, as milk ends every effect on Java. Players with the client mod get "effects.sync" for
+// ("gf_fx|<id>|<amplifier>|<ticks>", rewritten every second) and ends on death; milk and /effect
+// clear (Actor::removeAllEffects) end it as they end every effect on Java, while a carrier lost on
+// its own (an expired vanilla instance of the same id) is put back. Players with the client mod get "effects.sync" for
 // the HUD icon. Vanilla ids ("minecraft:slowness") go straight to Bedrock's effects.
 #include "feature/effects/Effects.h"
 
@@ -20,6 +21,7 @@
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/world/ServerLevelTickEvent.h"
+#include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/legacy/ActorUniqueID.h"
@@ -237,57 +239,84 @@ void forget(Actor const& actor) {
 void tickAll() {
     auto level = ll::service::getLevel();
     if (!level) return;
-    auto&           s = store();
-    std::lock_guard lock(s.mutex);
-    ++s.tick;
-    bool writeNow = s.tick % 20 == 0;
-    for (auto it = s.active.begin(); it != s.active.end();) {
-        auto& list = it->second;
-        if (list.empty()) {
-            it = s.active.erase(it);
-            continue;
-        }
-        Actor* actor = level->fetchEntity(ActorUniqueID{it->first}, false);
-        if (!actor || !actor->isAlive()) {
-            // unloaded or gone: its tags keep the state; it is read again when it comes back
-            it = s.active.erase(it);
-            continue;
-        }
-        bool changed = false;
-        for (auto& a : list) {
-            auto sp = s.specs.find(a.id);
-            if (sp == s.specs.end()) {
-                a.ticks = 0;
-                changed = true;
+    struct Call {
+        std::int64_t                     uid;
+        std::function<void(Actor&, int)> fn;
+        int                              amplifier;
+        std::string                      id;
+    };
+    std::vector<Call> calls; // the effects' ticks run after the pass: they may apply / remove effects
+    {
+        auto&           s = store();
+        std::lock_guard lock(s.mutex);
+        ++s.tick;
+        bool writeNow = s.tick % 20 == 0;
+        for (auto it = s.active.begin(); it != s.active.end();) {
+            auto& list = it->second;
+            if (list.empty()) {
+                it = s.active.erase(it);
                 continue;
             }
-            auto const& spec = sp->second;
-            // the carrier went away (milk, /effect clear): the effect ends with it
-            if (!spec.carrier.empty() && a.ticks > 1) {
-                if (auto vid = vanillaId(spec.carrier); vid && !actor->getEffect(*vid)) {
+            Actor* actor = level->fetchEntity(ActorUniqueID{it->first}, false);
+            if (!actor) {
+                // unloaded: its tags keep the state; it is read again when it comes back
+                it = s.active.erase(it);
+                continue;
+            }
+            if (!actor->isAlive()) {
+                // Java clears the effects of the dead (a respawned player keeps its tags on Bedrock)
+                writeTags(*actor, {});
+                syncCompanion(*actor, {});
+                it = s.active.erase(it);
+                continue;
+            }
+            bool changed = false;
+            for (auto& a : list) {
+                auto sp = s.specs.find(a.id);
+                if (sp == s.specs.end()) {
                     a.ticks = 0;
                     changed = true;
                     continue;
                 }
-            }
-            if (spec.tick && a.ticks % spec.tickInterval == 0) {
-                try {
-                    spec.tick(*actor, a.amplifier);
-                } catch (std::exception const& e) {
-                    log().error("effects: tick of {} failed: {}", a.id, e.what());
+                auto const& spec = sp->second;
+                // the carrier went away without the effect (an expired vanilla instance of the same
+                // id, a single /effect removal): put it back; milk and /effect clear end both
+                // (the removeAllEffects hook)
+                if (!spec.carrier.empty() && a.ticks > 1) {
+                    if (auto vid = vanillaId(spec.carrier); vid && !actor->getEffect(*vid)) applyCarrier(*actor, spec, a.ticks, a.amplifier);
                 }
+                if (spec.tick && a.ticks % spec.tickInterval == 0) calls.push_back({it->first, spec.tick, a.amplifier, a.id});
+                if (--a.ticks <= 0) changed = true;
             }
-            if (--a.ticks <= 0) changed = true;
+            if (changed) {
+                std::erase_if(list, [](Active const& a) { return a.ticks <= 0; });
+                writeTags(*actor, list);
+                syncCompanion(*actor, list);
+            } else if (writeNow) {
+                writeTags(*actor, list);
+            }
+            ++it;
         }
-        if (changed) {
-            std::erase_if(list, [](Active const& a) { return a.ticks <= 0; });
-            writeTags(*actor, list);
-            syncCompanion(*actor, list);
-        } else if (writeNow) {
-            writeTags(*actor, list);
-        }
-        ++it;
     }
+    for (auto const& c : calls) {
+        Actor* actor = level->fetchEntity(ActorUniqueID{c.uid}, false);
+        if (!actor || !actor->isAlive()) continue;
+        try {
+            c.fn(*actor, c.amplifier);
+        } catch (std::exception const& e) {
+            log().error("effects: tick of {} failed: {}", c.id, e.what());
+        }
+    }
+}
+
+void clearAll(Actor& actor) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    auto&           list = listOf(s, actor);
+    if (list.empty()) return;
+    list.clear();
+    writeTags(actor, list);
+    syncCompanion(actor, list);
 }
 
 } // namespace internal
@@ -316,9 +345,28 @@ void hydrate() {
     }
 }
 
+} // namespace
+} // namespace gf::effects
+
+// Milk and /effect clear (Actor::removeAllEffects): Java's removeAllEffects ends the custom effects too.
+LL_TYPE_INSTANCE_HOOK(EffectsRemoveAllHook, ll::memory::HookPriority::Normal, Actor, &Actor::removeAllEffects, void) {
+    if (!isClientSide()) {
+        try {
+            gf::effects::internal::clearAll(*this);
+        } catch (std::exception const& e) {
+            gf::log().error("effects: clearing custom effects failed: {}", e.what());
+        }
+    }
+    origin();
+}
+
+namespace gf::effects {
+namespace {
+
 class EffectsModule {
 public:
     void install() {
+        EffectsRemoveAllHook::hook();
         mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([this](auto&) {
             try {
                 internal::tickAll();
@@ -343,6 +391,7 @@ public:
         }
     }
     void uninstall() {
+        EffectsRemoveAllHook::unhook();
         ll::event::EventBus::getInstance().removeListener(mTick);
         auto&           s = store();
         std::lock_guard lock(s.mutex);

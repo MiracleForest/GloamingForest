@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "ll/api/service/Bedrock.h"
+
 #include "feature/item/DataFiles.h"
 #include "feature/tags/TagsInternal.h"
 #include "feature/tags/VanillaTags.h"
@@ -172,7 +174,7 @@ std::vector<std::string> members(Registry registry, std::string const& tag) {
         for (auto& id : vanilla::members(registry, b)) all.insert(std::move(id));
     auto list = std::make_shared<std::vector<std::string>>(all.begin(), all.end());
     // the bridge enumerates the game's registries: cache only once a level exists
-    if (!r->bridged.empty() && list->size() == r->sorted.size()) return *list;
+    if (!r->bridged.empty() && !ll::service::getLevel()) return *list;
     auto&           s = store();
     std::lock_guard lock(s.mutex);
     s.members[key] = list;

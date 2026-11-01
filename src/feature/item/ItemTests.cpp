@@ -50,6 +50,7 @@
 #include "feature/recipes/Recipes.h"
 #include "feature/recipes/RecipesInternal.h"
 #include "feature/stats/Stats.h"
+#include "feature/stats/StatsInternal.h"
 #include "feature/tags/Tags.h"
 #include "feature/tags/TagsInternal.h"
 #include "feature/traits/Traits.h"
@@ -513,12 +514,21 @@ GF_REGISTER_SELFTEST("item.effect_carrier", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(ticked >= 2, "the effect ticks every tickInterval (got " + std::to_string(ticked) + ")");
     fx::internal::forget(*p);
     ctx.check(fx::amplifier(*p, "gf_test:fixture_frosted") == 2, "the state comes back from the tag");
-    // losing the carrier (milk) ends it
+    // a carrier lost on its own (an expired vanilla instance of the same id) comes back
     p->removeEffect(2);
     co_await ctx.ticks(2);
     p = ll::service::getLevel()->getPlayer(uid);
     ctx.require(p != nullptr, "the player");
-    ctx.check(!fx::has(*p, "gf_test:fixture_frosted"), "the effect ends with its carrier");
+    ctx.check(fx::has(*p, "gf_test:fixture_frosted") && p->getEffect(2u) != nullptr, "the carrier is put back while the effect lasts");
+    // milk / effect clear (removeAllEffects) end it, as on Java
+    p->removeAllEffects();
+    co_await ctx.ticks(1);
+    p = ll::service::getLevel()->getPlayer(uid);
+    ctx.require(p != nullptr, "the player");
+    ctx.check(!fx::has(*p, "gf_test:fixture_frosted"), "removeAllEffects ends the custom effect");
+    bool left = false;
+    for (auto const& t : p->getTags()) left = left || t.starts_with("gf_fx|");
+    ctx.check(!left, "and its persistence tag");
     // vanilla ids
     ctx.check(fx::apply(*p, "minecraft:speed", 40, 0) && fx::amplifier(*p, "minecraft:speed") == 0, "vanilla effects by Java id");
     fx::remove(*p, "minecraft:speed");
@@ -547,6 +557,8 @@ GF_REGISTER_SELFTEST("item.stats_traits", [](Context& ctx) {
     ctx.check(traits && stats, "the companion got traits.sync and stats.sync");
     gf::traits::set(player, "gf_test:fixture_trait", false);
     ctx.check(!gf::traits::get(player, "gf_test:fixture_trait") && !gf::game::db::get("gf:traits:" + player.getUuid().asString()), "cleared");
+    gf::stats::internal::forget(player); // no record of the simulated player stays in the world DB
+    ctx.check(!gf::game::db::get("gf:stats:" + player.getUuid().asString()), "the statistics record is gone");
     gf::net::setTestCompanion(player, false);
 });
 

@@ -65,7 +65,8 @@ constexpr char kDataKey[] = "enchant"; ///< "gf:enchant" in the user data
 
 struct Entry {
     Spec spec;
-    bool fromData = false;
+    bool fromData     = false;
+    bool flagsPending = false; ///< treasure / tradeable / discoverable still to read from the tags
 };
 
 struct Store {
@@ -89,6 +90,14 @@ std::string bedrockName(std::string const& javaId) {
     if (name == "vanishing_curse") return "vanishing";
     if (name == "sweeping_edge") return "sweeping";
     return name;
+}
+
+/// The Java id of a Bedrock enchantment name (the inverse of bedrockName).
+std::string javaId(std::string const& bedrock) {
+    if (bedrock == "binding") return "minecraft:binding_curse";
+    if (bedrock == "vanishing") return "minecraft:vanishing_curse";
+    if (bedrock == "sweeping") return "minecraft:sweeping_edge";
+    return "minecraft:" + bedrock;
 }
 
 std::optional<Enchant::Type> vanillaType(std::string const& id) {
@@ -144,11 +153,20 @@ Spec specOfJson(std::string const& id, Json const& j) {
         auto ns   = id.substr(0, id.find(':'));
         s.nameKey = "enchantment." + ns + "." + id.substr(id.find(':') + 1);
     }
-    // vanilla's enchantment tags decide the rest; TF 4.8 adds its enchantments to none of them
-    s.treasure     = tags::has(tags::Registry::Enchantment, "minecraft:treasure", id);
-    s.tradeable    = tags::has(tags::Registry::Enchantment, "minecraft:tradeable", id);
-    s.discoverable = tags::has(tags::Registry::Enchantment, "minecraft:in_enchanting_table", id);
+    // treasure / tradeable / discoverable come from vanilla's enchantment tags (resolveFlags)
     return s;
+}
+
+/// Reads a data spec's flags from vanilla's enchantment tags, on first use: the tags may reload after
+/// the enchantments (reload listeners run in registration order). TF 4.8 adds its enchantments to
+/// none of #minecraft:treasure / tradeable / in_enchanting_table. Lock held.
+Entry& resolveFlags(std::string const& id, Entry& e) {
+    if (!e.flagsPending) return e;
+    e.flagsPending        = false;
+    e.spec.treasure     = tags::has(tags::Registry::Enchantment, "minecraft:treasure", id);
+    e.spec.tradeable    = tags::has(tags::Registry::Enchantment, "minecraft:tradeable", id);
+    e.spec.discoverable = tags::has(tags::Registry::Enchantment, "minecraft:in_enchanting_table", id);
+    return e;
 }
 
 void loadData() {
@@ -162,7 +180,7 @@ void loadData() {
         if (st.specs.contains(id)) continue; // an owner's registration wins
         auto doc = data::read(f.path);
         if (!doc.is_object()) continue;
-        st.specs[id] = {specOfJson(id, doc), true};
+        st.specs[id] = {specOfJson(id, doc), true, true};
         ++n;
     }
     log().info("enchant: {} custom enchantments from data", n);
@@ -254,7 +272,7 @@ std::map<std::string, int> all(ItemStack const& stack) {
         auto type = static_cast<Enchant::Type>(inst.mEnchantType);
         for (auto const& [name, t] : Enchant::mEnchantNameToType()) {
             if (t != type) continue;
-            out["minecraft:" + name.getString()] = inst.mLevel;
+            out[javaId(name.getString())] = inst.mLevel;
             break;
         }
     }
@@ -286,7 +304,7 @@ std::optional<Spec> specOf(std::string const& enchantmentId) {
     std::lock_guard lock(st.mutex);
     auto            it = st.specs.find(fullId(enchantmentId));
     if (it == st.specs.end()) return std::nullopt;
-    return it->second.spec;
+    return resolveFlags(it->first, it->second).spec;
 }
 
 bool supports(std::string const& enchantmentId, std::string const& itemId) {
@@ -472,8 +490,8 @@ std::vector<Candidate> available(std::string const& itemId, int cost) {
     }
     auto& st = store();
     std::lock_guard lock(st.mutex);
-    for (auto const& [id, entry] : st.specs) {
-        auto const& s = entry.spec;
+    for (auto& [id, entry] : st.specs) {
+        auto const& s = resolveFlags(id, entry).spec;
         if (!s.discoverable || s.treasure) continue;
         auto const& primary = s.primaryItems.empty() ? s.supportedItems : s.primaryItems;
         bool        fits    = book || primary.empty()
@@ -505,8 +523,8 @@ bool candidatesCompatible(Candidate const& a, Candidate const& b) {
 bool anyDiscoverable() {
     auto&           st = store();
     std::lock_guard lock(st.mutex);
-    for (auto const& [id, e] : st.specs)
-        if (e.spec.discoverable && !e.spec.treasure) return true;
+    for (auto& [id, e] : st.specs)
+        if (resolveFlags(id, e).spec.discoverable && !e.spec.treasure) return true;
     return false;
 }
 

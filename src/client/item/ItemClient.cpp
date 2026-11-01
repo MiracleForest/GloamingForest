@@ -132,7 +132,7 @@ LL_TYPE_INSTANCE_HOOK(
     try {
         ItemStack const& stack = *mItemInstance;
         if (stack.isNull() || !stack.mItem) return;
-        if (!gf::item::internal::hasBar(stack.mItem->mFullName->getString())) return;
+        if (!gf::item::internal::hasBar(stack.mItem.get())) return;
         auto bar = gf::item::internal::bar(stack);
         if (!bar) return;
         glm::vec2 pos  = *owner.mCachedPosition;

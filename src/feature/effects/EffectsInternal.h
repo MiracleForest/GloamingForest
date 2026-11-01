@@ -31,6 +31,6 @@ void tickAll();
 inline constexpr char kTagPrefix[] = "gf_fx|";
 /// Forgets the in-memory state of an actor (selftests: the next query reads its tags again).
 void forget(Actor const& actor);
-
-
+/// Ends every custom effect of an actor (milk, /effect clear: the removeAllEffects hook).
+void clearAll(Actor& actor);
 } // namespace gf::effects::internal
