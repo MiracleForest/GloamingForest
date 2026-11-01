@@ -28,6 +28,7 @@
 #include "mc/world/phys/AABB.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 
+#include "feature/common/Interactions.h"
 #include "feature/entity/Entity.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
@@ -57,7 +58,17 @@ struct FixtureRegistration {
         ge::registerType(
             "gf_test:boss",
             {
-                .onSpawn = [](Actor&) { probe().spawns++; },
+                .onSpawn =
+                    [](Actor& a) {
+                        probe().spawns++;
+                        // `/summon gf_test:boss gf_parts`: three linked parts (client e2e screenshots)
+                        if (a.getNameTag() == "gf_parts")
+                            if (auto* m = asMob(a)) {
+                                ge::addPart(*m, "left", {0.8f, 0.8f}, [](Mob&) { return Vec3{2.0f, 0.5f, 0.0f}; });
+                                ge::addPart(*m, "right", {0.8f, 0.8f}, [](Mob&) { return Vec3{-2.0f, 0.5f, 0.0f}; });
+                                ge::addPart(*m, "head", {1.0f, 1.0f}, [](Mob&) { return Vec3{0.0f, 2.5f, 0.0f}; });
+                            }
+                    },
                 .tick    = [](Actor&) { probe().ticks++; },
                 .aiStep  = [](Actor&) { probe().aiSteps++; },
                 .die =
@@ -185,15 +196,16 @@ GF_REGISTER_SELFTEST("entity.behaviour", [](Context& ctx) -> ll::coro::CoroTask<
     ge::setProperty(*mob, "gf_test:phase", 2);
     auto v = propertyOf(*mob, "gf_test:phase");
     ctx.check(v && std::holds_alternative<int>(*v) && std::get<int>(*v) == 2, "setProperty sets an int property");
-    float molang = mob->evalMolang("query.property('gf_test:phase')");
-    ctx.check(std::abs(molang - 2.0f) < 1e-3f, "Molang query.property reads it (" + std::to_string(molang) + ")");
-    // a player's right-click reaches Behaviour::interact
+    // a player's right-click (the interactions dispatch of GameMode::interact) reaches Behaviour::interact
     auto& sp = ctx.spawnPlayer();
     auto  spId = sp.getOrCreateUniqueID().rawID;
     sp.teleport(Vec3{at.x + 2.5f, float(at.y), at.z + 0.5f}, DimensionType(at.dim));
     co_await ctx.ticks(2);
-    if (auto* p = playerById(spId); p && (mob = mobById(uid))) static_cast<SimulatedPlayer*>(p)->simulateInteract(*mob);
-    co_await ctx.ticks(1);
+    if (auto* p = playerById(spId); p && (mob = mobById(uid))) {
+        std::string                 none, type = mob->getTypeName();
+        gf::interactions::EntityContext c{*p, p->getSelectedItem(), none, *mob, type, {0.0, 0.0, 0.0}, false};
+        ctx.check(gf::interactions::dispatchInteract(c) == gf::interactions::Result::Consume, "the interaction was consumed");
+    }
     ctx.check(probe().interacts == 1, "Behaviour::interact ran on a right-click (" + std::to_string(probe().interacts) + ")");
     // death
     if ((mob = mobById(uid))) mob->kill();

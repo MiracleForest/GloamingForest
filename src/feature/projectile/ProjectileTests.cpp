@@ -9,6 +9,7 @@
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
@@ -93,7 +94,22 @@ Mob* spawnMob(core::GlobalPos const& at, std::string const& id) {
 
 } // namespace
 
+/// The target is the fixture boss: not on peaceful (BaseTFBoss#checkDespawn).
+struct EasyScope {
+    SharedTypes::Legacy::Difficulty previous = SharedTypes::Legacy::Difficulty::Peaceful;
+    EasyScope() {
+        if (auto level = ll::service::getLevel()) {
+            previous = level->getDifficulty();
+            level->setDifficulty(SharedTypes::Legacy::Difficulty::Easy);
+        }
+    }
+    ~EasyScope() {
+        if (auto level = ll::service::getLevel()) level->setDifficulty(previous);
+    }
+};
+
 GF_REGISTER_SELFTEST("entity.projectile", [](Context& ctx) -> ll::coro::CoroTask<> {
+    EasyScope       easy;
     ProjectileScope scope;
     auto            box  = co_await ctx.flatArea(5870, 10);
     auto            at   = ctx.testPos(5871, 2);
@@ -122,6 +138,7 @@ GF_REGISTER_SELFTEST("entity.projectile", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(fe::actorById(pid) == nullptr, "a hit that returns true removes the projectile");
     if (auto* t = fe::actorById(targetId)) t->remove();
     // a block hit straight down: the top face (1)
+    hits().face = -1;
     shooter = fe::playerById(spId);
     ctx.require(shooter != nullptr, "the shooter is still there");
     p = gp::shoot(*shooter, kFixture, Vec3{0.0f, -1.0f, 0.0f}, 0.5f, 0.0f);

@@ -7,7 +7,9 @@
 # Screenshots: out/entity/boss-bar-<mode>.png. Local mode also runs the entity selftests on the
 # integrated server (the client build's hooks).
 Save-Screenshot 'hud' | Out-Null
-$summon = 'summon gf_test:boss ~4 ~ ~'
+# the name tag gf_parts makes the fixture behaviour add 3 linked parts (spike S4: they render on
+# every client as ordinary actors)
+$summon = 'summon gf_test:boss gf_parts ~4 ~ ~'
 if ($script:Mode -eq 'local') {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $mark = Get-LogMark
