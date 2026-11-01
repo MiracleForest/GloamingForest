@@ -1,8 +1,8 @@
 # F10 (combat), spike S3: the client mod gets the throw-away probe pack of combat.s3 (a block with a
 # data-driven block actor, gf_s3:entity) and the flag that makes the mod declare it a 27-slot
 # container, so combat.ui_native_container can open the injected game container for the real
-# player. Nothing ships; remote-vanilla has no mod (and so no probe).
-if ($script:Mode -ne 'remote-vanilla') {
+# player. Nothing ships; only the local world has it (a BDS host of the remote modes has no probe).
+if ($script:Mode -eq 'local') {
     $modDir = Join-Path $script:ModsDir $script:ModName
     $s3Pack = Join-Path $modDir 'behavior_packs\GloamingForest_S3_BP'
     New-Item -ItemType Directory -Force (Join-Path $s3Pack 'blocks') | Out-Null

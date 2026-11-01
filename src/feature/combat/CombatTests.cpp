@@ -14,11 +14,13 @@
 
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 #include "mc/platform/UUID.h"
+#include "mc/server/ServerPlayer.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/world/Container.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/ActorHurtResult.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/level/Spawner.h"
@@ -26,6 +28,9 @@
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
+#ifndef GF_CLIENT
+#include "mc/world/item/components/StorageItemComponentTags.h"
+#endif
 #include "mc/world/item/enchanting/Enchant.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/item/enchanting/EnchantmentInstance.h"
@@ -89,6 +94,20 @@ int countInInventory(Player& p, std::string const& id) {
     auto& inv = p.getInventory();
     for (int i = 0; i < inv.getContainerSize(); ++i)
         if (items::idOf(inv.getItem(i)) == id) n += items::countOf(inv.getItem(i));
+    return n;
+}
+
+/// Item entities within `radius` blocks of `pos` (same dimension).
+int itemEntitiesNear(GlobalPos const& pos, float radius) {
+    auto level = ll::service::getLevel();
+    if (!level) return 0;
+    int n = 0;
+    for (auto* a : level->getRuntimeActorList()) {
+        if (!a || !a->isType(ActorType::ItemEntity) || static_cast<int>(a->getDimensionId()) != pos.dim) continue;
+        auto const& at = a->getPosition();
+        float       dx = at.x - (pos.x + .5f), dy = at.y - (pos.y + .5f), dz = at.z - (pos.z + .5f);
+        if (dx * dx + dy * dy + dz * dz <= radius * radius) ++n;
+    }
     return n;
 }
 
@@ -668,6 +687,7 @@ GF_REGISTER_SELFTEST("combat.entity_drops", [](Context& ctx) -> ll::coro::CoroTa
     static int         sFixture   = 0;
     static bool        sKiller    = false;
     static std::string sType;
+    static int         sAdded     = 0;
     if (!registered) {
         registered = true;
         // the death pipeline's drops: gf_test:boss rolls gf_test:entities/boss (the F0 fixture table)
@@ -677,6 +697,8 @@ GF_REGISTER_SELFTEST("combat.entity_drops", [](Context& ctx) -> ll::coro::CoroTa
             sKiller  = lc.player != nullptr && lc.player->getOrCreateUniqueID().rawID == gActive;
             sType    = lc.damageType;
             if (auto bonus = items::make("minecraft:stick", 1)) drops.push_back(*bonus); // handlers may add
+            sAdded = countIn(drops, "minecraft:stick");
+            drops.clear(); // and take everything: nothing is left in the shared test row
         });
     }
     auto pos = ctx.testPos(6008);
@@ -687,6 +709,7 @@ GF_REGISTER_SELFTEST("combat.entity_drops", [](Context& ctx) -> ll::coro::CoroTa
     auto* mob = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("gf_test:boss"), nullptr, at, false, false, false);
     ctx.require(mob != nullptr, "the fixture boss spawned");
     sFixture = 0;
+    sAdded   = 0;
     sKiller  = false;
     sType.clear();
     {
@@ -695,6 +718,206 @@ GF_REGISTER_SELFTEST("combat.entity_drops", [](Context& ctx) -> ll::coro::CoroTa
     }
     co_await ctx.ticks(2);
     ctx.check(sFixture == 1, "the Java table gf_test:entities/boss dropped the fixture item (" + std::to_string(sFixture) + ")");
+    ctx.check(sAdded == 1, "a handler added a stack to the drops");
     ctx.check(sKiller, "the loot context names the killing player");
     ctx.check(sType == "twilightforest:thrown_axe", "the loot context has the damage type (" + sType + ")");
+    ctx.check(itemEntitiesNear(ctx.testPos(6008), 4) == 0, "the handler took every drop: no item entity is left");
+});
+
+// Vanilla mobs: the handlers see the game's own death loot (Bedrock's loot table) and may change it.
+GF_REGISTER_SELFTEST("combat.entity_drops_vanilla", [](Context& ctx) -> ll::coro::CoroTask<> {
+    static bool registered = false;
+    static int  sBeef      = 0;
+    static int  sCalls     = 0;
+    if (!registered) {
+        registered = true;
+        gf::loot::onEntityDrops([](Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootContext const&) {
+            if (gActive == 0 || dead.getTypeName() != "minecraft:cow") return;
+            ++sCalls;
+            sBeef = countIn(drops, "minecraft:beef") + countIn(drops, "minecraft:cooked_beef");
+            drops.clear(); // Java's LivingDropsEvent: the handler takes the drops
+        });
+    }
+    auto pos = ctx.testPos(6013);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    auto* region = ctx.region();
+    auto& p      = ctx.player();
+    Vec3  at{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + .5f};
+    auto* cow = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:cow"), nullptr, at, false, false, false);
+    ctx.require(cow != nullptr, "a cow spawned");
+    if (cow->isBaby()) {
+        cow->remove();
+        ctx.info("the cow was a calf (no loot): nothing to check");
+        co_return;
+    }
+    sBeef  = 0;
+    sCalls = 0;
+    {
+        ActiveScope active(p);
+        gf::combat::hurt(*cow, 1000.f, "twilightforest:thrown_axe", &p);
+    }
+    co_await ctx.ticks(2);
+    ctx.check(sCalls == 1, "the drops handlers ran once for the vanilla mob (" + std::to_string(sCalls) + ")");
+    ctx.check(sBeef >= 1, "the handler saw Bedrock's own loot (" + std::to_string(sBeef) + " beef)");
+    ctx.check(itemEntitiesNear(pos, 4) == 0, "the drops the handler took are gone from the world");
+});
+
+// ---- loot: Java's number rounding, set_contents ---------------------------------------------------
+
+GF_REGISTER_SELFTEST("combat.loot_number_rounding", [](Context& ctx) {
+    namespace loot = gf::loot;
+    // NumberProvider#getInt = Math.round(getFloat): half up
+    ctx.check(loot::javaRound(0.5f) == 1 && loot::javaRound(2.5f) == 3 && loot::javaRound(-0.5f) == 0 && loot::javaRound(-2.5f) == -2,
+              "Math.round rounds half up");
+    ctx.check(loot::javaRound(0.49999997f) == 0 && loot::javaRound(1.4f) == 1, "Math.round below one half rounds down");
+    // multiplayer_rolls with per_player_rolls 1.5 and 2 qualified players: 1 + 1.5 = 2.5 -> 3 rolls;
+    // constant rolls 1.5 -> 2; binomial n 5.5 -> 6 trials (p 1); set_count 2.5 -> 3
+    loot::registerTable("gf_test:combat/rounding", JsonT::parse(R"({
+      "pools": [
+        { "rolls": { "type": "twilightforest:multiplayer_rolls", "default_rolls": 1, "per_player_rolls": 1.5 },
+          "entries": [ { "type": "minecraft:item", "name": "minecraft:stick" } ] },
+        { "rolls": 1.5, "entries": [ { "type": "minecraft:item", "name": "minecraft:flint" } ] },
+        { "rolls": { "type": "minecraft:binomial", "n": 5.5, "p": 1.0 }, "entries": [ { "type": "minecraft:item", "name": "minecraft:clay_ball" } ] },
+        { "rolls": 1, "entries": [ { "type": "minecraft:item", "name": "minecraft:brick",
+            "functions": [ { "function": "minecraft:set_count", "count": 2.5 } ] } ] }
+      ]
+    })"));
+    loot::setTestParticipants(2);
+    loot::setTestAdjustsLoot(true);
+    loot::LootContext lc;
+    lc.seed = 99;
+    auto l  = loot::roll("gf_test:combat/rounding", lc);
+    loot::setTestParticipants(-1);
+    loot::setTestAdjustsLoot(std::nullopt);
+    loot::registerTable("gf_test:combat/rounding", nullptr);
+    ctx.check(countIn(l, "minecraft:stick") == 3, "per_player_rolls 1.5 with 2 players: 3 rolls (got " + std::to_string(countIn(l, "minecraft:stick")) + ")");
+    ctx.check(countIn(l, "minecraft:flint") == 2, "constant rolls 1.5: 2 rolls (got " + std::to_string(countIn(l, "minecraft:flint")) + ")");
+    ctx.check(countIn(l, "minecraft:clay_ball") == 6, "binomial n 5.5: 6 trials (got " + std::to_string(countIn(l, "minecraft:clay_ball")) + ")");
+    ctx.check(countIn(l, "minecraft:brick") == 3, "set_count 2.5: 3 (got " + std::to_string(countIn(l, "minecraft:brick")) + ")");
+});
+
+GF_REGISTER_SELFTEST("combat.loot_set_contents", [](Context& ctx) {
+    namespace loot = gf::loot;
+    // the shape of TF's entities/questing_ram_rewards: a bundle filled by set_contents with an item
+    // entry and a nested loot table entry (every pool of it rolls into the bundle)
+    loot::registerTable("gf_test:combat/bundle_blocks", JsonT::parse(R"({"pools":[
+        {"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:coal_block"}]},
+        {"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:iron_block"}]}]})"));
+    loot::registerTable("gf_test:combat/bundle", JsonT::parse(R"({"pools":[
+        {"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:bundle","functions":[
+          {"function":"minecraft:set_contents","component":"minecraft:bundle_contents","entries":[
+            {"type":"minecraft:item","name":"minecraft:emerald"},
+            {"type":"minecraft:loot_table","value":"gf_test:combat/bundle_blocks"}]}]}]},
+        {"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:chest","functions":[
+          {"function":"minecraft:set_contents","component":"minecraft:container","entries":[
+            {"type":"minecraft:item","name":"minecraft:apple"}]}]}]}]})"));
+    loot::LootContext lc;
+    lc.seed = 5;
+    auto l  = loot::roll("gf_test:combat/bundle", lc);
+    loot::registerTable("gf_test:combat/bundle", nullptr);
+    loot::registerTable("gf_test:combat/bundle_blocks", nullptr);
+    ItemStack const* bundle = nullptr;
+    ItemStack const* chest  = nullptr;
+    for (auto const& s : l) {
+        if (items::idOf(s) == "minecraft:bundle") bundle = &s;
+        if (items::idOf(s) == "minecraft:chest") chest = &s;
+    }
+    ctx.require(bundle != nullptr, "the bundle dropped");
+#ifndef GF_CLIENT
+    ctx.check(std::string(StorageItemComponentTags::bundleIDTag()) == loot::kBundleIdTag,
+              "the bundle id tag is the game's (" + std::string(StorageItemComponentTags::bundleIDTag()) + ")");
+#endif
+    auto inside = loot::bundleContents(*bundle);
+    ctx.require(inside.has_value(), "the bundle has a Bedrock storage container");
+    ctx.check(countIn(*inside, "minecraft:emerald") == 1 && countIn(*inside, "minecraft:coal_block") == 1 && countIn(*inside, "minecraft:iron_block") == 1,
+              "the bundle holds the item entry and every pool of the nested table (" + std::to_string(inside->size()) + " stacks)");
+    ctx.require(chest != nullptr, "the chest item dropped");
+    auto comps = items::getData(*chest, "components");
+    ctx.check(comps.is_object() && comps.value("minecraft:container", JsonT::array()).size() == 1, "other components keep their contents in the item data");
+});
+
+// ---- inventory: the server decides what a screen shows and changes ----------------------------------
+
+GF_REGISTER_SELFTEST("combat.inventory_screen_auth", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace inv = gf::inventory;
+    declareFixture();
+    auto a = ctx.testPos(6011);
+    auto b = ctx.testPos(6012);
+    ctx.require(co_await ctx.ensureLoaded(a), "test area loaded");
+    ctx.require(ctx.setBlock(a, kContainerBlock) && ctx.setBlock(b, kContainerBlock), "two containers placed");
+    auto* region = ctx.region();
+    auto  ha     = inv::find(*region, gf::game::blockPos(a));
+    auto  hb     = inv::find(*region, gf::game::blockPos(b));
+    ctx.require(ha && hb, "both are containers");
+    ha->set(a, 0, *items::make("minecraft:emerald", 3));
+    hb->set(b, 0, *items::make("minecraft:diamond", 5));
+    auto& p = ctx.player();
+    gf::net::setTestCompanion(p, true);
+    (void)gf::net::takeTestMessages(p);
+    ctx.require(inv::openChestLike(p, a, 3, "container.chest"), "the server opened container A");
+    auto ctxOf = [](GlobalPos const& pos, int rows, std::string const& title) {
+        return JsonT{{"pos", {pos.dim, pos.x, pos.y, pos.z}}, {"rows", rows}, {"title", title}};
+    };
+    auto click = JsonT{{"op", "click"}, {"slot", 0}, {"button", "left"}, {"shift", true}};
+    // a forged context: container B was never opened for this player
+    gf::net::injectFromClient(p, "screen.action", {{"type", "inventory.chest"}, {"context", ctxOf(b, 3, "container.chest")}, {"action", click}});
+    ctx.check(items::countOf(hb->get(b, 0)) == 5 && countInInventory(p, "minecraft:diamond") == 0, "an action on a container the server did not open is refused");
+    auto msgs    = gf::net::takeTestMessages(p);
+    bool refused = std::any_of(msgs.begin(), msgs.end(), [](auto const& m) { return m.channel == "screen.close"; });
+    ctx.check(refused, "the forged screen is closed");
+    // the opened container, with forged rows and title: the server's own are used
+    ctx.require(inv::openChestLike(p, a, 3, "container.chest"), "container A opened again");
+    (void)gf::net::takeTestMessages(p);
+    gf::net::injectFromClient(p, "screen.action", {{"type", "inventory.chest"}, {"context", ctxOf(a, 6, "forged.title")}, {"action", click}});
+    ctx.check(items::isEmpty(ha->get(a, 0)) && countInInventory(p, "minecraft:emerald") == 3, "the opened container's quick move works");
+    msgs             = gf::net::takeTestMessages(p);
+    JsonT updateData = nullptr;
+    for (auto const& m : msgs)
+        if (m.channel == "screen.update") updateData = m.payload.value("data", JsonT{});
+    ctx.check(updateData.is_object() && updateData.value("rows", 0) == 3 && updateData.value("title", std::string{}) != "forged.title",
+              "rows and title come from the server's record (" + (updateData.is_object() ? updateData.dump() : std::string("no update")) + ")");
+    gf::net::setTestCompanion(p, false);
+    hb->set(b, 0, ItemStack{});
+    inv::unregisterBlock(kContainerBlock);
+});
+
+// Vanilla clients' chest screen: the chest minecart proxy mirrors the storage both ways.
+GF_REGISTER_SELFTEST("combat.inventory_vanilla_proxy", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace inv = gf::inventory;
+    declareFixture();
+    auto pos = ctx.testPos(6014);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    ctx.require(ctx.setBlock(pos, kContainerBlock), "a 27-slot container placed");
+    auto* region = ctx.region();
+    auto  h      = inv::find(*region, gf::game::blockPos(pos));
+    ctx.require(h.has_value(), "the container handler");
+    h->set(pos, 0, *items::make("minecraft:emerald", 4));
+    auto& p      = ctx.player();
+    auto  id     = p.getOrCreateUniqueID();
+    int   before = inv::vanillaProxyCount();
+    ctx.require(inv::openChestLike(p, pos, 3, "container.chest"), "a vanilla player opened it");
+    ctx.check(inv::vanillaProxyCount() == before + 1, "a chest minecart proxy stands in for the container");
+    auto* proxy = inv::vanillaProxyContainer(pos);
+    ctx.require(proxy != nullptr, "the proxy's container");
+    ctx.check(items::countOf(proxy->getItem(0)) == 4, "the proxy shows the stored slots");
+    co_await ctx.ticks(6); // the screen opens after the proxy reached the client
+    proxy = inv::vanillaProxyContainer(pos);
+    ctx.require(proxy != nullptr, "the proxy is still open after the screen opened (" + std::to_string(inv::vanillaProxyCount()) + " open)");
+    proxy->setItem(5, *items::make("minecraft:gold_ingot", 7)); // as a click in the game's screen
+    h->set(pos, 6, *items::make("minecraft:apple", 2));        // other code changes the storage
+    co_await ctx.ticks(7); // the storage is read every 5 ticks
+    proxy = inv::vanillaProxyContainer(pos);
+    ctx.require(proxy != nullptr, "the proxy is still open");
+    ctx.check(items::countOf(h->get(pos, 5)) == 7, "a change in the screen reaches the storage");
+    ctx.check(items::countOf(proxy->getItem(6)) == 2, "a change of the storage reaches the screen");
+    // the player closes the screen: the proxy goes, the storage keeps everything
+    auto* again = ll::service::getLevel()->getPlayer(id);
+    ctx.require(again != nullptr, "the player is still there");
+    static_cast<ServerPlayer&>(*again).doDeleteContainerManager(false);
+    co_await ctx.ticks(3);
+    ctx.check(inv::vanillaProxyContainer(pos) == nullptr && inv::vanillaProxyCount() == before, "the proxy is removed when the screen closes");
+    ctx.check(items::countOf(h->get(pos, 0)) == 4 && items::countOf(h->get(pos, 5)) == 7 && items::countOf(h->get(pos, 6)) == 2, "the storage kept every slot");
+    ctx.check(itemEntitiesNear(pos, 4) == 0, "nothing dropped from the proxy");
+    for (int i = 0; i < h->slots; ++i) h->set(pos, i, ItemStack{});
+    inv::unregisterBlock(kContainerBlock);
 });
