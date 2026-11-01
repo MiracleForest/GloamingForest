@@ -1,0 +1,52 @@
+{
+  "comment": "Fragment merges and layers of tools/xmake/assemble.lua (contract 'assemble', AGENTS.md). Fragments live in directories ending in '.d'; 'object' merges fail on a duplicate key, 'union' merges concatenate arrays (scalars de-duplicated). Gen layer (assets/gen/<tool>/<unit>/<root>/**) is overridden per id by the manual layer (assets/pack/<root>/**, assets/lang/**, assets/data/**).",
+  "modName": "GloamingForest",
+  "resourcePackName": "gloamingforest",
+  "locales": [
+    "en_US", "en_GB", "de_DE", "es_ES", "es_MX", "fr_FR", "fr_CA", "it_IT", "ja_JP", "ko_KR",
+    "pt_BR", "pt_PT", "ru_RU", "zh_CN", "zh_TW", "nl_NL", "bg_BG", "cs_CZ", "da_DK", "el_GR",
+    "fi_FI", "hu_HU", "id_ID", "nb_NO", "pl_PL", "sk_SK", "sv_SE", "tr_TR", "uk_UA"
+  ],
+  "localeAliases": {
+    "nn_NO": "nb_NO",
+    "no_NO": "nb_NO"
+  },
+  "genLayers": ["assets/gen/import", "assets/gen/geo", "assets/gen/audio"],
+  "packs": [
+    { "name": "GloamingForest_BP", "dir": "behavior_packs", "root": "bp", "manual": "assets/pack/bp" },
+    { "name": "GloamingForest_RP", "dir": "resource_packs", "root": "rp", "manual": "assets/pack/rp" },
+    { "name": "GloamingForest_Test_BP", "dir": "behavior_packs", "root": "bp", "manual": "assets/test/bp", "test": true },
+    { "name": "GloamingForest_Test_RP", "dir": "resource_packs", "root": "rp", "manual": "assets/test/rp", "test": true }
+  ],
+  "merges": [
+    { "root": "rp", "glob": "item_texture.d/*.json", "out": "textures/item_texture.json", "mode": "object",
+      "wrapper": { "resource_pack_name": "$pack", "texture_name": "atlas.items", "texture_data": "$merged" } },
+    { "root": "rp", "glob": "terrain_texture.d/*.json", "out": "textures/terrain_texture.json", "mode": "object",
+      "wrapper": { "resource_pack_name": "$pack", "texture_name": "atlas.terrain", "padding": 8, "num_mip_levels": 4, "texture_data": "$merged" } },
+    { "root": "rp", "glob": "flipbook_textures.d/*.json", "out": "textures/flipbook_textures.json", "mode": "union" },
+    { "root": "rp", "glob": "sounds.d/*.json", "out": "sounds/sound_definitions.json", "mode": "object",
+      "wrapper": { "format_version": "1.20.20", "sound_definitions": "$merged" } },
+    { "root": "rp", "glob": "music_definitions.d/*.json", "out": "sounds/music_definitions.json", "mode": "object" },
+    { "root": "rp", "glob": "blocks.d/*.json", "out": "blocks.json", "mode": "object",
+      "wrapper": { "format_version": "1.21.40", "$spread": "$merged" } },
+    { "root": "rp", "glob": "texts.d/*/*.lang", "out": "texts/{locale}.lang", "mode": "lang" },
+    { "root": "bp", "glob": "item_catalog.d/*.json", "out": "item_catalog/crafting_item_catalog.json", "mode": "union",
+      "wrapper": { "format_version": "1.21.60", "minecraft:crafting_items_catalog": { "categories": "$merged" } } }
+  ],
+  "data": [
+    { "from": "assets/data", "to": "data/gf", "comment": "unit data: assets/data/<kind>/<unit>.json" },
+    { "from": "assets/test/data", "to": "data/gf_test", "test": true },
+    { "from": "assets/structures", "to": "structures/twilightforest" },
+    { "from": "assets/test/structures", "to": "structures/gf_test", "test": true }
+  ],
+  "tags": { "fragments": "assets/tags", "comment": "assets/tags/<registry>/<namespace>/<path>.d/<unit>.json -> data/<namespace>/tags/<registry>/<path>.json (union of 'values', over the imported tag)" },
+  "checks": {
+    "integerStates": true,
+    "permutationBudget": { "perBlock": 65536, "total": 4000000 },
+    "danglingNamespaces": ["twilightforest"],
+    "owners": "docs/spec/owners.tsv",
+    "ownedRoots": ["assets/pack", "assets/gen", "assets/data", "assets/lang", "assets/tags", "assets/structures", "assets/test"],
+    "arrBlobs": "tools/ci/arr-blobs.txt",
+    "arrScan": { "extensions": ["ogg", "nbt", "fsb", "wav", "mp3", "mcstructure"], "dirs": ["sounds", "structures", "music"] }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "gf_test:fixture_block",
+      "menu_category": { "category": "none" },
+      "states": {
+        "gf_test:level": [0, 1, 2, 3],
+        "gf_test:lit": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": { "seconds_to_destroy": 0.5 },
+      "minecraft:destructible_by_explosion": { "explosion_resistance": 1 },
+      "minecraft:material_instances": {
+        "*": { "texture": "gf_test_fixture_block", "render_method": "opaque" }
+      },
+      "minecraft:map_color": "#4a7a3a"
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('gf_test:lit')",
+        "components": { "minecraft:light_emission": 15 }
+      }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GloamingForest Test RP",
+    "description": "gf_test fixture textures and names for the W0 selftests (development builds only)",
+    "uuid": "712fdd24-beac-491b-b9e6-3fb374ac1629",
+    "version": "${version}",
+    "min_engine_version": [1, 21, 40]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "40903eb3-3d20-4fd3-b995-c99d758bcbbb",
+      "version": "${version}"
+    }
+  ]
+}

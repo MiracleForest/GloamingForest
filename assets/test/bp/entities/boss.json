@@ -1,0 +1,24 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "gf_test:boss",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "properties": {
+        "gf_test:phase": { "type": "int", "range": [0, 2], "default": 0, "client_sync": true }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["gf_test", "monster", "mob"] },
+      "minecraft:health": { "value": 100, "max": 100 },
+      "minecraft:collision_box": { "width": 1.2, "height": 2.0 },
+      "minecraft:physics": {},
+      "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": false },
+      "minecraft:movement": { "value": 0.0 },
+      "minecraft:knockback_resistance": { "value": 1.0 },
+      "minecraft:persistent": {},
+      "minecraft:nameable": {}
+    }
+  }
+}

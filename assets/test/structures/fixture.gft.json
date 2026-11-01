@@ -1,0 +1,21 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gf_test:fixture",
+  "size": [3, 2, 3],
+  "palette": [
+    { "Name": "minecraft:air" },
+    { "Name": "gf_test:fixture_block", "Properties": { "gf_test:level": "2" } },
+    { "Name": "minecraft:chest", "Properties": { "facing": "north" } }
+  ],
+  "blocks": [[1, 9], [0, 4], [2, 1], [0, 4]],
+  "markers": [
+    { "pos": [1, 1, 1], "marker": "loot", "data": { "table": "gf_test:chests/fixture_chest" } }
+  ],
+  "jigsaw": [
+    { "pos": [1, 0, 0], "facing": "north", "pool": "gf_test:fixture_pool", "name": "gf_test:entry", "target": "gf_test:entry" }
+  ],
+  "entities": [
+    { "pos": [1.5, 1.0, 0.5], "id": "gf_test:boss", "data": {} }
+  ]
+}

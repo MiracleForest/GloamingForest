@@ -1,0 +1,4 @@
+tile.gf_test:fixture_block.name=Fixture Block
+item.gf_test:fixture_item.name=Fixture Item
+entity.gf_test:boss.name=Fixture Boss
+entity.gf_test:boss_part.name=Fixture Boss Part
