@@ -396,11 +396,18 @@ Json const& resolvePatch(Json const& p, PatchLibrary const* lib) {
     return p;
 }
 
+/// Adds `src` (times `gain`) to `out` from sample `at`; a negative `at` (a layer that starts before
+/// the patch) cuts off the head of `src` instead of delaying it.
 void mixInto(std::vector<double>& out, std::vector<double> const& src, std::int64_t at, double gain) {
-    if (at < 0) at = 0;
-    std::size_t need = std::size_t(at) + src.size();
+    std::size_t skip = 0;
+    if (at < 0) {
+        skip = std::size_t(-at);
+        at   = 0;
+    }
+    if (skip >= src.size()) return;
+    std::size_t need = std::size_t(at) + (src.size() - skip);
     if (out.size() < need) out.resize(need, 0.0);
-    for (std::size_t i = 0; i < src.size(); ++i) out[std::size_t(at) + i] += src[i] * gain;
+    for (std::size_t i = skip; i < src.size(); ++i) out[std::size_t(at) + (i - skip)] += src[i] * gain;
 }
 
 std::vector<double> renderPatchBuffer(Json const& patch, Scope& parent, Json const& params, std::uint64_t seed, int rate, PatchLibrary const* lib, int depth, bool finishIt);
