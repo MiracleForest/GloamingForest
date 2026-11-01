@@ -19,11 +19,15 @@
 // Bedrock mappings: number providers round as Java's NumberProvider#getInt (Math.round); random
 // bounds and chances are evaluated before their draw, in Java's order; set_contents fills a
 // Bedrock bundle's dynamic container (minecraft:bundle_contents; other components go to the item
-// data "components"); enchant_with_levels runs Bedrock's enchanting algorithm on the loot random
-// (Bedrock's enchantment costs and weights, TF's 4 enchantments are not in its pool);
-// enchant_randomly picks from the whole registry (vanilla, sweeping_edge, TF's 4) in registry
-// order; set_name keeps a translatable name's key in the item data ("name_key") and the server
-// language's text as the custom name.
+// data "components"); enchant_with_levels runs Java's EnchantmentHelper#selectEnchantment on the
+// loot random with 1.21.1's enchantment definitions (weights, cost ranges, primary / supported
+// items, exclusive sets) and TF's 4, and #minecraft:on_random_loot as vanilla's data lists it;
+// the item sets are the enchantable item tags when gf::tags has them, else the Bedrock item's
+// enchant slots with TF's tag changes; enchant_randomly picks from the options (absent: the whole
+// registry) in registry order; set_enchantments sets the levels (0 removes); entity predicates'
+// type_specific slime size reads the Bedrock variant (1, 2, 4) of slimes, magma cubes and TF's
+// maze slime; set_name keeps a translatable name's key in the item data ("name_key") and the
+// server language's text as the custom name.
 
 #include <algorithm>
 #include <cmath>
@@ -35,8 +39,8 @@
 
 #include "ll/api/service/Bedrock.h"
 
-#include "mc/deps/core/math/IRandom.h"
 #include "mc/deps/core/string/HashedString.h"
+#include "mc/deps/shared_types/item/EnchantSlot.h"
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/deps/nbt/IntTag.h"
 #include "mc/safety/RedactableString.h"
@@ -58,6 +62,7 @@
 #include "mc/world/item/enchanting/EnchantResult.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/item/enchanting/EnchantmentInstance.h"
+#include "mc/world/item/enchanting/ItemEnchants.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -382,6 +387,15 @@ bool itemPredicate(ItemStack const* stack, Json const& p) {
     return true;
 }
 
+/// MinMaxBounds.Ints#matches: a number is exact, {min, max} a closed range (either may be missing).
+bool intInRange(Json const& range, int v) {
+    if (range.is_number()) return v == range.get<int>();
+    if (!range.is_object()) return true;
+    if (range.contains("min") && range["min"].is_number() && v < range["min"].get<int>()) return false;
+    if (range.contains("max") && range["max"].is_number() && v > range["max"].get<int>()) return false;
+    return true;
+}
+
 bool entityPredicate(Actor* a, Json const& p, Eval& e) {
     if (!p.is_object() || p.empty()) return a != nullptr;
     if (!a) return false;
@@ -410,13 +424,18 @@ bool entityPredicate(Actor* a, Json const& p, Eval& e) {
     }
     if (auto ts = p.find("type_specific"); ts != p.end() && ts->is_object()) {
         auto t = withNs(ts->value("type", std::string{}));
-        if (t == "minecraft:slime" && ts->contains("size")) {
-            // Bedrock slimes keep their size in the variant / "size" property; small = 1
-            int want = (*ts)["size"].is_number() ? (*ts)["size"].get<int>() : (*ts)["size"].value("min", 1);
-            (void)want;
-            warnOnce("entity predicate type_specific slime size is approximated (true)");
+        if (t == "minecraft:slime") {
+            // SlimePredicate: a Slime (Java's Slime class: slimes, magma cubes, TF's maze slime)
+            // whose size is in range. Bedrock keeps a slime's size in its variant (1, 2, 4), and
+            // so does TF's maze slime; a size that can't be read fails.
+            auto id = a->getTypeName();
+            if (id != "minecraft:slime" && id != "minecraft:magma_cube" && id != "twilightforest:maze_slime") return false;
+            int size = slimeSize(*a);
+            if (size <= 0) return false;
+            if (ts->contains("size") && !intInRange((*ts)["size"], size)) return false;
         } else if (!t.empty()) {
-            warnOnce("entity predicate type_specific " + t + " is not supported (true)");
+            warnOnce("entity predicate type_specific " + t + " is not supported (fails)");
+            return false;
         }
     }
     (void)e;
@@ -549,88 +568,352 @@ bool condition(Json const& c, Eval& e) {
 
 // ---- functions -----------------------------------------------------------------------------------
 
-void enchantStack(ItemStack& stack, std::string const& javaId, int level) {
-    if (level <= 0) return;
-    if (game::items::idOf(stack) == "minecraft:book") {
-        if (auto book = game::items::make("minecraft:enchanted_book", stackCount(stack))) stack = *book;
-    }
+/// A book becomes an enchanted book: SetEnchantmentsFunction's transmuteCopy keeps the count
+/// (`keepCount`), the enchanting functions' new ItemStack(Items.ENCHANTED_BOOK) is one book.
+void transmuteBook(ItemStack& stack, bool keepCount) {
+    if (game::items::idOf(stack) != "minecraft:book") return;
+    if (auto book = game::items::make("minecraft:enchanted_book", keepCount ? stackCount(stack) : 1)) stack = *book;
+}
+
+/// ItemEnchantments.Mutable#set: the level, clamped to 0..255; 0 removes the enchantment.
+void setEnchantLevel(ItemStack& stack, std::string const& javaId, int level) {
+    level = std::clamp(level, 0, 255);
     int t = bedrockEnchant(javaId);
-    if (t >= 0) {
-        EnchantmentInstance inst;
-        inst.mEnchantType = static_cast<Enchant::Type>(t);
-        inst.mLevel       = level;
-        EnchantUtils::applyEnchant(stack, inst, true);
-    } else {
-        enchant::set(stack, javaId, level); // TF's enchantments (gf::enchant, F9)
+    if (t < 0) {
+        enchant::set(stack, javaId, level); // TF's enchantments (gf::enchant, F9; 0 removes)
+        return;
+    }
+    auto type = static_cast<Enchant::Type>(t);
+    if (EnchantUtils::hasEnchant(type, stack)) {
+        // the others stay as they are
+        auto others = stack.constructItemEnchantsFromUserData().getAllEnchants();
+        EnchantUtils::removeEnchants(stack);
+        for (auto const& inst : others)
+            if (inst.mEnchantType != type) EnchantUtils::applyEnchant(stack, inst, true);
+    }
+    if (level <= 0) return;
+    EnchantmentInstance inst;
+    inst.mEnchantType = type;
+    inst.mLevel       = level;
+    EnchantUtils::applyEnchant(stack, inst, true);
+}
+
+/// ItemStack#enchant (ItemEnchantments.Mutable#upgrade): the higher of the two levels.
+void upgradeEnchant(ItemStack& stack, std::string const& javaId, int level) {
+    if (level <= 0 || enchantLevel(stack, javaId) >= level) return;
+    setEnchantLevel(stack, javaId, level);
+}
+
+// ---- Java's enchantments (1.21.1 Enchantments#bootstrap and TF's 4 data files) ---------------------
+
+/// The item sets of the enchantments (the item tags minecraft:enchantable/* and TF's).
+enum class Cat {
+    None, Armor, FootArmor, LegArmor, ChestArmor, HeadArmor, Sword, SharpWeapon, Weapon, FireAspect, Mining, MiningLoot,
+    Durability, Bow, Crossbow, Trident, Fishing, Mace, Equippable, Vanishing, BlockAndChain, Scepters
+};
+
+char const* tagOf(Cat c) {
+    switch (c) {
+    case Cat::Armor: return "minecraft:enchantable/armor";
+    case Cat::FootArmor: return "minecraft:enchantable/foot_armor";
+    case Cat::LegArmor: return "minecraft:enchantable/leg_armor";
+    case Cat::ChestArmor: return "minecraft:enchantable/chest_armor";
+    case Cat::HeadArmor: return "minecraft:enchantable/head_armor";
+    case Cat::Sword: return "minecraft:enchantable/sword";
+    case Cat::SharpWeapon: return "minecraft:enchantable/sharp_weapon";
+    case Cat::Weapon: return "minecraft:enchantable/weapon";
+    case Cat::FireAspect: return "minecraft:enchantable/fire_aspect";
+    case Cat::Mining: return "minecraft:enchantable/mining";
+    case Cat::MiningLoot: return "minecraft:enchantable/mining_loot";
+    case Cat::Durability: return "minecraft:enchantable/durability";
+    case Cat::Bow: return "minecraft:enchantable/bow";
+    case Cat::Crossbow: return "minecraft:enchantable/crossbow";
+    case Cat::Trident: return "minecraft:enchantable/trident";
+    case Cat::Fishing: return "minecraft:enchantable/fishing";
+    case Cat::Mace: return "minecraft:enchantable/mace";
+    case Cat::Equippable: return "minecraft:enchantable/equippable";
+    case Cat::Vanishing: return "minecraft:enchantable/vanishing";
+    case Cat::BlockAndChain: return "twilightforest:enchantable/block_and_chain";
+    case Cat::Scepters: return "twilightforest:scepters";
+    default: return "";
     }
 }
 
-/// TF's enchantments (data/twilightforest/enchantment/*.json: max level, supported items).
-struct TfEnchantment {
-    char const* id;
-    int         maxLevel;
-    char const* supportedTag;
+/// The item's set when the item tags are not loaded: the Bedrock enchant slots of the item (what
+/// the vanilla tags list), with TF's changes to the vanilla tags (data/minecraft/tags/item/
+/// enchantable: the block and chain mines, the fiery and ice swords take no fire aspect, the
+/// phantom armour no curse of vanishing).
+bool inCategoryBySlots(ItemStack const& stack, std::string const& id, Cat c) {
+    using S         = SharedTypes::EnchantSlot;
+    auto* item      = stack.mItem.get();
+    int   slots     = item ? item->getEnchantSlot() : 0;
+    auto  has       = [&](S s) { return (slots & static_cast<int>(s)) != 0; };
+    bool  damageable = item && item->isDamageable();
+    switch (c) {
+    case Cat::Armor: return has(S::GArmor);
+    case Cat::FootArmor: return has(S::ArmorFeet);
+    case Cat::LegArmor: return has(S::ArmorLegs);
+    case Cat::ChestArmor: return has(S::ArmorTorso);
+    case Cat::HeadArmor: return has(S::ArmorHead);
+    case Cat::Sword: return has(S::Sword);
+    case Cat::SharpWeapon: return has(S::Sword) || has(S::Axe);
+    case Cat::Weapon: return has(S::Sword) || has(S::Axe) || has(S::HeavyWeapon);
+    case Cat::FireAspect: return (has(S::Sword) || has(S::HeavyWeapon)) && id != "twilightforest:fiery_sword" && id != "twilightforest:ice_sword";
+    case Cat::Mining: return has(S::GDigging) || has(S::Shears) || id == "twilightforest:block_and_chain";
+    case Cat::MiningLoot: return has(S::GDigging) || id == "twilightforest:block_and_chain";
+    case Cat::Durability: return damageable;
+    case Cat::Bow: return has(S::Bow);
+    case Cat::Crossbow: return has(S::Crossbow);
+    case Cat::Trident: return has(S::Spear);
+    case Cat::Fishing: return has(S::FishingRod);
+    case Cat::Mace: return has(S::HeavyWeapon);
+    case Cat::Equippable: return has(S::GArmor) || has(S::Elytra) || has(S::CosmeticHead);
+    case Cat::Vanishing:
+        return (damageable || has(S::Compass) || has(S::CosmeticHead) || has(S::GArmor) || has(S::Elytra)) && id != "twilightforest:phantom_helmet"
+            && id != "twilightforest:phantom_chestplate";
+    case Cat::BlockAndChain: return id == "twilightforest:block_and_chain";
+    case Cat::Scepters:
+        return id == "twilightforest:twilight_scepter" || id == "twilightforest:lifedrain_scepter" || id == "twilightforest:zombie_scepter"
+            || id == "twilightforest:fortification_scepter";
+    default: return false;
+    }
+}
+
+/// Whether the stack is in the item set: the item tag (gf::tags) when it is loaded, else its slots.
+bool inCategory(ItemStack const& stack, Cat c) {
+    auto id = game::items::idOf(stack);
+    if (id.empty() || c == Cat::None) return false;
+    char const* tag = tagOf(c);
+    if (tags::has(tags::Registry::Item, tag, id)) return true;
+    if (!tags::members(tags::Registry::Item, tag).empty()) return false; // loaded: not a member
+    return inCategoryBySlots(stack, id, c);
+}
+
+/// An Enchantment's definition: weight, levels, costs (Enchantment.dynamicCost(base, per level);
+/// a constant cost has per level 0), supported / primary items and the exclusive set.
+struct JavaEnchantment {
+    char const*              id;
+    int                      weight;
+    int                      maxLevel;
+    int                      minBase, minPer;
+    int                      maxBase, maxPer;
+    Cat                      supported;
+    Cat                      primary; ///< Cat::None: the supported items
+    std::vector<char const*> exclusive;
+
+    [[nodiscard]] int  minCost(int level) const { return minBase + minPer * (level - 1); }
+    [[nodiscard]] int  maxCost(int level) const { return maxBase + maxPer * (level - 1); }
+    [[nodiscard]] bool canEnchant(ItemStack const& s) const { return inCategory(s, supported); }
+    /// Enchantment#isPrimaryItem: supported, and in the primary items when there are any.
+    [[nodiscard]] bool isPrimaryItem(ItemStack const& s) const { return canEnchant(s) && (primary == Cat::None || inCategory(s, primary)); }
 };
-std::vector<TfEnchantment> const& tfEnchantments() {
-    static std::vector<TfEnchantment> const v{
-        {"twilightforest:chill_aura", 3, "minecraft:enchantable/armor"},
-        {"twilightforest:destruction", 3, "twilightforest:enchantable/block_and_chain"},
-        {"twilightforest:fire_react", 3, "minecraft:enchantable/armor"},
-        {"twilightforest:renewal", 1, "twilightforest:scepters"},
-    };
+
+/// Every enchantment, in the order of the registry (data-driven registries load sorted by
+/// ResourceLocation: path, then namespace).
+std::vector<JavaEnchantment> const& javaEnchantments() {
+    static std::vector<JavaEnchantment> const v = [] {
+        std::vector<char const*> const armorX{"minecraft:protection", "minecraft:fire_protection", "minecraft:blast_protection", "minecraft:projectile_protection"};
+        std::vector<char const*> const bootsX{"minecraft:frost_walker", "minecraft:depth_strider"};
+        std::vector<char const*> const bowX{"minecraft:infinity", "minecraft:mending"};
+        std::vector<char const*> const crossbowX{"minecraft:multishot", "minecraft:piercing"};
+        std::vector<char const*> const damageX{"minecraft:sharpness", "minecraft:smite", "minecraft:bane_of_arthropods", "minecraft:impaling", "minecraft:density", "minecraft:breach"};
+        std::vector<char const*> const miningX{"minecraft:fortune", "minecraft:silk_touch"};
+        std::vector<char const*> const riptideX{"minecraft:loyalty", "minecraft:channeling"};
+        std::vector<JavaEnchantment> list{
+            {"minecraft:protection", 10, 4, 1, 11, 12, 11, Cat::Armor, Cat::None, armorX},
+            {"minecraft:fire_protection", 5, 4, 10, 8, 18, 8, Cat::Armor, Cat::None, armorX},
+            {"minecraft:feather_falling", 5, 4, 5, 6, 11, 6, Cat::FootArmor, Cat::None, {}},
+            {"minecraft:blast_protection", 2, 4, 5, 8, 13, 8, Cat::Armor, Cat::None, armorX},
+            {"minecraft:projectile_protection", 5, 4, 3, 6, 9, 6, Cat::Armor, Cat::None, armorX},
+            {"minecraft:respiration", 2, 3, 10, 10, 40, 10, Cat::HeadArmor, Cat::None, {}},
+            {"minecraft:aqua_affinity", 2, 1, 1, 0, 41, 0, Cat::HeadArmor, Cat::None, {}},
+            {"minecraft:thorns", 1, 3, 10, 20, 60, 20, Cat::Armor, Cat::ChestArmor, {}},
+            {"minecraft:depth_strider", 2, 3, 10, 10, 25, 10, Cat::FootArmor, Cat::None, bootsX},
+            {"minecraft:frost_walker", 2, 2, 10, 10, 25, 10, Cat::FootArmor, Cat::None, bootsX},
+            {"minecraft:binding_curse", 1, 1, 25, 0, 50, 0, Cat::Equippable, Cat::None, {}},
+            {"minecraft:soul_speed", 1, 3, 10, 10, 25, 10, Cat::FootArmor, Cat::None, {}},
+            {"minecraft:swift_sneak", 1, 3, 25, 25, 75, 25, Cat::LegArmor, Cat::None, {}},
+            {"minecraft:sharpness", 10, 5, 1, 11, 21, 11, Cat::SharpWeapon, Cat::Sword, damageX},
+            {"minecraft:smite", 5, 5, 5, 8, 25, 8, Cat::Weapon, Cat::Sword, damageX},
+            {"minecraft:bane_of_arthropods", 5, 5, 5, 8, 25, 8, Cat::Weapon, Cat::Sword, damageX},
+            {"minecraft:knockback", 5, 2, 5, 20, 55, 20, Cat::Sword, Cat::None, {}},
+            {"minecraft:fire_aspect", 2, 2, 10, 20, 60, 20, Cat::FireAspect, Cat::None, {}},
+            {"minecraft:looting", 2, 3, 15, 9, 65, 9, Cat::Sword, Cat::None, {}},
+            {"minecraft:sweeping_edge", 2, 3, 5, 9, 20, 9, Cat::Sword, Cat::None, {}},
+            {"minecraft:efficiency", 10, 5, 1, 10, 51, 10, Cat::Mining, Cat::None, {}},
+            {"minecraft:silk_touch", 1, 1, 15, 0, 65, 0, Cat::MiningLoot, Cat::None, miningX},
+            {"minecraft:unbreaking", 5, 3, 5, 8, 55, 8, Cat::Durability, Cat::None, {}},
+            {"minecraft:fortune", 2, 3, 15, 9, 65, 9, Cat::MiningLoot, Cat::None, miningX},
+            {"minecraft:power", 10, 5, 1, 10, 16, 10, Cat::Bow, Cat::None, {}},
+            {"minecraft:punch", 2, 2, 12, 20, 37, 20, Cat::Bow, Cat::None, {}},
+            {"minecraft:flame", 2, 1, 20, 0, 50, 0, Cat::Bow, Cat::None, {}},
+            {"minecraft:infinity", 1, 1, 20, 0, 50, 0, Cat::Bow, Cat::None, bowX},
+            {"minecraft:luck_of_the_sea", 2, 3, 15, 9, 65, 9, Cat::Fishing, Cat::None, {}},
+            {"minecraft:lure", 2, 3, 15, 9, 65, 9, Cat::Fishing, Cat::None, {}},
+            {"minecraft:loyalty", 5, 3, 12, 7, 50, 0, Cat::Trident, Cat::None, {}},
+            {"minecraft:impaling", 2, 5, 1, 8, 21, 8, Cat::Trident, Cat::None, damageX},
+            {"minecraft:riptide", 2, 3, 17, 7, 50, 0, Cat::Trident, Cat::None, riptideX},
+            {"minecraft:channeling", 1, 1, 25, 0, 50, 0, Cat::Trident, Cat::None, {}},
+            {"minecraft:multishot", 2, 1, 20, 0, 50, 0, Cat::Crossbow, Cat::None, crossbowX},
+            {"minecraft:quick_charge", 5, 3, 12, 20, 50, 0, Cat::Crossbow, Cat::None, {}},
+            {"minecraft:piercing", 10, 4, 1, 10, 50, 0, Cat::Crossbow, Cat::None, crossbowX},
+            {"minecraft:density", 5, 5, 5, 8, 25, 8, Cat::Mace, Cat::None, damageX},
+            {"minecraft:breach", 2, 4, 15, 9, 65, 9, Cat::Mace, Cat::None, damageX},
+            {"minecraft:wind_burst", 2, 3, 15, 9, 65, 9, Cat::Mace, Cat::None, {}},
+            {"minecraft:mending", 2, 1, 25, 25, 75, 25, Cat::Durability, Cat::None, {}},
+            {"minecraft:vanishing_curse", 1, 1, 25, 0, 50, 0, Cat::Vanishing, Cat::None, {}},
+            // TF's (data/twilightforest/enchantment)
+            {"twilightforest:chill_aura", 1, 3, 5, 9, 20, 9, Cat::Armor, Cat::ChestArmor, {"minecraft:thorns", "twilightforest:fire_react"}},
+            {"twilightforest:destruction", 1, 3, 5, 9, 20, 9, Cat::BlockAndChain, Cat::None, {}},
+            {"twilightforest:fire_react", 1, 3, 5, 9, 20, 9, Cat::Armor, Cat::ChestArmor, {"minecraft:thorns", "twilightforest:chill_aura"}},
+            {"twilightforest:renewal", 1, 1, 5, 9, 20, 9, Cat::Scepters, Cat::None, {}},
+        };
+        std::sort(list.begin(), list.end(), [](JavaEnchantment const& a, JavaEnchantment const& b) {
+            std::string_view x = a.id, y = b.id;
+            auto              px = x.substr(x.find(':') + 1), py = y.substr(y.find(':') + 1);
+            return px != py ? px < py : x < y;
+        });
+        return list;
+    }();
     return v;
+}
+
+JavaEnchantment const* javaEnchantment(std::string const& id) {
+    for (auto const& e : javaEnchantments())
+        if (id == e.id) return &e;
+    return nullptr;
 }
 
 /// Enchantment#getMaxLevel of a Java enchantment id (1 when unknown).
 int maxEnchantLevel(std::string const& javaId) {
-    // Bedrock Enchant::Type order: protection .. breach
-    static constexpr int maxLevels[] = {4, 4, 4, 4, 4, 3, 3, 3, 1, 5, 5, 5, 2, 2, 3, 5, 1, 3, 3, 5, 2, 1, 1, 3, 3, 2, 1, 1, 1, 5, 3, 3, 1, 1, 4, 3, 3, 3, 3, 5, 4};
-    int t = bedrockEnchant(javaId);
-    if (t >= 0 && t < static_cast<int>(std::size(maxLevels))) return maxLevels[t];
-    if (javaId == "minecraft:sweeping_edge") return 3;
-    for (auto const& tf : tfEnchantments())
-        if (javaId == tf.id) return tf.maxLevel;
-    return 1;
+    auto const* e = javaEnchantment(javaId);
+    return e ? e->maxLevel : 1;
 }
 
 /// Enchantment#canEnchant (only_compatible): the stack is one of the enchantment's supported items.
 bool canEnchantWith(ItemStack const& stack, std::string const& javaId) {
-    auto itemId = game::items::idOf(stack);
-    if (itemId.empty()) return false;
-    for (auto const& tf : tfEnchantments()) {
-        if (javaId != tf.id) continue;
-        // an item tag without members (no tag data loaded): gf::enchant decides on application
-        if (tags::members(tags::Registry::Item, tf.supportedTag).empty()) return true;
-        return tags::has(tags::Registry::Item, tf.supportedTag, itemId);
-    }
-    if (javaId == "minecraft:sweeping_edge") return tags::has(tags::Registry::Item, "minecraft:enchantable/sword", itemId) || itemId.ends_with("_sword");
-    int t = bedrockEnchant(javaId);
-    if (t < 0) return false;
-    EnchantmentInstance inst;
-    inst.mEnchantType = static_cast<Enchant::Type>(t);
-    inst.mLevel       = 1;
-    auto r            = EnchantUtils::canEnchant(stack, inst, false);
-    return r.result != EnchantResultType::Fail && r.result != EnchantResultType::Conflict;
+    auto const* e = javaEnchantment(javaId);
+    return e && e->canEnchant(stack);
 }
 
-/// Bedrock's IRandom over the loot random (Bedrock algorithms drawing from a seeded roll).
-class LootIRandom final : public IRandom {
-public:
-    explicit LootIRandom(RandomSource& random) : mRandom(random) {}
-    int    nextInt() override { return mRandom.nextInt(); }
-    int    nextInt(int bound) override { return mRandom.nextInt(bound); }
-    int64  nextLong() override { return mRandom.nextLong(); }
-    bool   nextBoolean() override { return mRandom.nextBoolean(); }
-    float  nextFloat() override { return mRandom.nextFloat(); }
-    double nextDouble() override { return mRandom.nextDouble(); }
-    double nextGaussianDouble() override { return mRandom.nextGaussian(); }
-    void   consumeCount(uint rounds) override {
-        for (uint i = 0; i < rounds; ++i) (void)mRandom.nextInt();
+/// The enchantments of a tag as vanilla 1.21.1's data lists them (TF adds none), in the tag's order.
+std::vector<std::string> builtinEnchantmentTag(std::string const& tag) {
+    static std::vector<std::string> const nonTreasure{
+        "minecraft:protection",     "minecraft:fire_protection", "minecraft:feather_falling", "minecraft:blast_protection",
+        "minecraft:projectile_protection", "minecraft:respiration", "minecraft:aqua_affinity", "minecraft:thorns",
+        "minecraft:depth_strider",  "minecraft:sharpness",       "minecraft:smite",           "minecraft:bane_of_arthropods",
+        "minecraft:knockback",      "minecraft:fire_aspect",     "minecraft:looting",         "minecraft:sweeping_edge",
+        "minecraft:efficiency",     "minecraft:silk_touch",      "minecraft:unbreaking",      "minecraft:fortune",
+        "minecraft:power",          "minecraft:punch",           "minecraft:flame",           "minecraft:infinity",
+        "minecraft:luck_of_the_sea", "minecraft:lure",           "minecraft:loyalty",         "minecraft:impaling",
+        "minecraft:riptide",        "minecraft:channeling",      "minecraft:multishot",       "minecraft:quick_charge",
+        "minecraft:piercing",       "minecraft:density",         "minecraft:breach",
+    };
+    if (tag == "minecraft:non_treasure" || tag == "minecraft:in_enchanting_table") return nonTreasure;
+    if (tag == "minecraft:on_random_loot") {
+        auto v = nonTreasure;
+        for (char const* id : {"minecraft:binding_curse", "minecraft:vanishing_curse", "minecraft:frost_walker", "minecraft:mending"}) v.emplace_back(id);
+        return v;
     }
+    return {};
+}
 
-private:
-    RandomSource& mRandom;
-};
+/// The enchantments of an `options` value (a tag, an id or a list; absent: the whole registry).
+std::vector<JavaEnchantment const*> enchantmentPool(Json const& options) {
+    std::vector<std::string> ids;
+    if (options.is_string()) {
+        auto s = options.get<std::string>();
+        if (!s.empty() && s[0] == '#') {
+            auto tag = withNs(s.substr(1));
+            ids      = tags::members(tags::Registry::Enchantment, tag);
+            if (ids.empty()) ids = builtinEnchantmentTag(tag);
+            if (ids.empty()) warnOnce("enchantment tag #" + tag + " has no members");
+        } else {
+            ids.push_back(withNs(s));
+        }
+    } else if (options.is_array()) {
+        for (auto const& o : options)
+            if (o.is_string()) ids.push_back(withNs(o.get<std::string>()));
+    } else {
+        for (auto const& e : javaEnchantments()) ids.emplace_back(e.id);
+    }
+    std::vector<JavaEnchantment const*> pool;
+    for (auto const& id : ids) {
+        if (auto const* e = javaEnchantment(id)) pool.push_back(e);
+        else warnOnce("unknown enchantment " + id);
+    }
+    return pool;
+}
+
+/// Item#getEnchantmentValue (a book: 1).
+int enchantmentValue(ItemStack const& stack) {
+    if (game::items::idOf(stack) == "minecraft:book") return 1;
+    auto* item = stack.mItem.get();
+    return item ? item->getEnchantValue() : 0;
+}
+
+/// Enchantment#areCompatible.
+bool compatible(JavaEnchantment const& a, JavaEnchantment const& b) {
+    if (&a == &b) return false;
+    auto in = [](JavaEnchantment const& x, JavaEnchantment const& y) {
+        return std::any_of(x.exclusive.begin(), x.exclusive.end(), [&](char const* id) { return std::string_view(id) == y.id; });
+    };
+    return !in(a, b) && !in(b, a);
+}
+
+using Pick = std::pair<JavaEnchantment const*, int>;
+
+/// WeightedRandom#getRandomItem.
+std::optional<Pick> weightedPick(RandomSource& random, std::vector<Pick> const& list) {
+    int total = 0;
+    for (auto const& [e, _] : list) total += e->weight;
+    if (total <= 0) return std::nullopt;
+    int i = random.nextInt(total);
+    for (auto const& p : list) {
+        i -= p.first->weight;
+        if (i < 0) return p;
+    }
+    return std::nullopt;
+}
+
+/// EnchantmentHelper#selectEnchantment (1.21.1): the enchantability bonus and the +-15 %
+/// spread, the first pick from the enchantments whose cost range holds the level (the highest
+/// such level; primary items only, a book takes all), then more picks while nextInt(50) <= level,
+/// each dropping the ones incompatible with the last pick and halving the level.
+std::vector<std::pair<std::string, int>> selectFrom(RandomSource& random, ItemStack const& stack, int level, std::vector<JavaEnchantment const*> const& pool) {
+    std::vector<std::pair<std::string, int>> out;
+    int                                      value = enchantmentValue(stack);
+    if (value <= 0) return out;
+    level += 1 + random.nextInt(value / 4 + 1) + random.nextInt(value / 4 + 1);
+    float f = (random.nextFloat() + random.nextFloat() - 1.0f) * 0.15f;
+    level   = std::max(1, javaRound(static_cast<float>(level) + static_cast<float>(level) * f));
+    // getAvailableEnchantmentResults
+    bool              book = game::items::idOf(stack) == "minecraft:book";
+    std::vector<Pick> list;
+    for (auto const* e : pool) {
+        if (!book && !e->isPrimaryItem(stack)) continue;
+        for (int l = e->maxLevel; l >= 1; --l) {
+            if (level >= e->minCost(l) && level <= e->maxCost(l)) {
+                list.emplace_back(e, l);
+                break;
+            }
+        }
+    }
+    if (list.empty()) return out;
+    std::vector<Pick> chosen;
+    if (auto p = weightedPick(random, list)) chosen.push_back(*p);
+    while (random.nextInt(50) <= level) {
+        if (!chosen.empty()) {
+            auto const* last = chosen.back().first;
+            std::erase_if(list, [&](Pick const& p) { return !compatible(*last, *p.first); });
+        }
+        if (list.empty()) break;
+        if (auto p = weightedPick(random, list)) chosen.push_back(*p);
+        level /= 2;
+    }
+    for (auto const& [e, l] : chosen) out.emplace_back(e->id, l);
+    return out;
+}
 
 ItemStack function(ItemStack stack, Json const& f, Eval& e);
 /// SetContainerContents#run (defined with the entries below).
@@ -704,56 +987,42 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         return withCount(stack, n);
     }
     if (id == "minecraft:set_enchantments") {
+        // SetEnchantmentsFunction#run: a book becomes an enchanted book first; each level is set
+        // (clamped to 0..255, 0 removes), added to the current one with `add`
+        transmuteBook(stack, true);
         bool add = f.value("add", false);
         for (auto const& [ench, lv] : f.value("enchantments", Json::object()).items()) {
             int level = numberInt(lv, e);
             if (add) level += enchantLevel(stack, withNs(ench));
-            enchantStack(stack, withNs(ench), level);
+            setEnchantLevel(stack, withNs(ench), level);
         }
         return stack;
     }
     if (id == "minecraft:enchant_randomly") {
+        // the options' enchantments (absent: the whole registry, vanilla's and TF's 4, in registry
+        // order)
         std::vector<std::string> options;
-        auto                     opt = f.value("options", Json{});
-        if (opt.is_string()) {
-            auto s = opt.get<std::string>();
-            options = (!s.empty() && s[0] == '#') ? tags::members(tags::Registry::Enchantment, withNs(s.substr(1))) : std::vector<std::string>{withNs(s)};
-        } else if (opt.is_array()) {
-            for (auto const& o : opt) options.push_back(withNs(o.get<std::string>()));
-        }
-        if (options.empty()) {
-            // the whole enchantment registry: vanilla's (Bedrock-mapped, plus sweeping_edge) and
-            // TF's 4, in registry order (data-driven registries load sorted by ResourceLocation:
-            // path, then namespace)
-            for (auto const& [javaId, _] : enchantMap()) options.push_back(javaId);
-            options.push_back("minecraft:sweeping_edge");
-            for (auto const& tf : tfEnchantments()) options.push_back(tf.id);
-            std::sort(options.begin(), options.end(), [](std::string const& a, std::string const& b) {
-                auto pa = a.substr(a.find(':') + 1), pb = b.substr(b.find(':') + 1);
-                return pa != pb ? pa < pb : a < b;
-            });
-        }
+        for (auto const* ench : enchantmentPool(f.value("options", Json{}))) options.emplace_back(ench->id);
         // only_compatible (Java's default): enchantments the item can take (a book takes any)
         if (f.value("only_compatible", true) && game::items::idOf(stack) != "minecraft:book")
             std::erase_if(options, [&](std::string const& o) { return !canEnchantWith(stack, o); });
         if (options.empty()) return stack;
-        // Util.getRandomSafe: list.get(random.nextInt(size)), then Mth.nextInt(min, max level)
-        auto pick = options[static_cast<std::size_t>(e.random.nextInt(static_cast<int>(options.size())))];
-        enchantStack(stack, pick, nextIntBetween(e.random, 1, maxEnchantLevel(pick)));
+        // Util.getRandomSafe: list.get(random.nextInt(size)), then Mth.nextInt(min, max level);
+        // EnchantRandomlyFunction#enchantItem: a book becomes an enchanted book
+        auto pick  = options[static_cast<std::size_t>(e.random.nextInt(static_cast<int>(options.size())))];
+        int  level = nextIntBetween(e.random, 1, maxEnchantLevel(pick));
+        transmuteBook(stack, false);
+        upgradeEnchant(stack, pick, level);
         return stack;
     }
     if (id == "minecraft:enchant_with_levels") {
-        int levels = numberInt(f.value("levels", Json(1)), e);
-        if (game::items::idOf(stack) == "minecraft:book")
-            if (auto book = game::items::make("minecraft:enchanted_book", stackCount(stack))) stack = *book;
-        // Bedrock's enchanting algorithm (EnchantUtils::randomlyEnchant: enchantability, cost
-        // ranges and weights, the shape of Java's EnchantmentHelper#selectEnchantment) drawing
-        // from the loot random, so seeded rolls are reproducible; #minecraft:on_random_loot allows
-        // the treasure enchantments Java's tag lists (frost walker, mending, the curses)
-        LootIRandom random(e.random);
-        auto        opt      = f.value("options", Json{});
-        bool        treasure = opt.is_string() && withNs(opt.get<std::string>()) == "minecraft:on_random_loot";
-        EnchantUtils::randomlyEnchant(random, stack, levels, 0, treasure);
+        // EnchantWithLevelsFunction#run -> EnchantmentHelper#enchantItem: Java's selection on the
+        // loot random (selectEnchantment over the options' enchantments, Java's costs and weights),
+        // then the book becomes an enchanted book and every pick is applied
+        int  levels = numberInt(f.value("levels", Json(1)), e);
+        auto picks  = selectFrom(e.random, stack, levels, enchantmentPool(f.value("options", Json{})));
+        transmuteBook(stack, false);
+        for (auto const& [ench, level] : picks) upgradeEnchant(stack, ench, level);
         return stack;
     }
     if (id == "minecraft:set_potion") {
@@ -1128,5 +1397,18 @@ std::vector<ItemStack> rollRaw(Json const& t, std::string const& tableId, LootCo
 }
 
 std::optional<std::vector<ItemStack>> bundleContents(ItemStack const& stack) { return storageItemContents(stack); }
+
+int slimeSize(Actor const& actor) { return actor.getVariant(); }
+
+std::vector<std::pair<std::string, int>> selectEnchantment(RandomSource& random, ItemStack const& stack, int level, Json const& options) {
+    return selectFrom(random, stack, level, enchantmentPool(options));
+}
+
+bool entityMatches(Actor* actor, Json const& predicate) {
+    LootContext ctx;
+    JavaRandom  random(1);
+    Eval        e{ctx, random, {}};
+    return entityPredicate(actor, predicate, e);
+}
 
 } // namespace gf::loot

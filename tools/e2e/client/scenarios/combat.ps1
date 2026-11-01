@@ -10,6 +10,7 @@
 #   chest-screen.png       a container opened as a player opens it: the client mod's chest screen
 #                          (local, remote-mod: Java's generic_54 layout) or, on a vanilla client,
 #                          the game's chest screen through the proxy (remote-vanilla)
+# combat.ui_cleanup then removes the blocks the UI tests placed beside the player.
 # Open every screenshot and compare it with TF's chest GUI (vanilla's generic_54 layout).
 $ready = if ($script:Mode -eq 'local') { 'GloamingForest world ready' } else { '\[host\].*GloamingForest world ready' }
 Wait-LogLine $ready 120 | Out-Null
@@ -72,4 +73,7 @@ if ($script:Mode -eq 'remote-vanilla') {
 } else {
     Show-ContainerTest 'combat.ui_chest_screen' 'chest-screen' 'combat ui: chest screen opened' 'inventory\.chest'
 }
+# the UI tests' blocks and the fixture's container declaration go (nothing stays for later tests)
+$r = Invoke-SelfTest 'combat.ui_cleanup'
+if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_cleanup failed') }
 if ($screenFailures.Count -gt 0) { throw ($screenFailures -join '; ') }

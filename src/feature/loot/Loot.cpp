@@ -20,11 +20,12 @@
 //   hook rolls the Java table into it with LootTable#fill's slot spreading. Custom container
 //   blocks get it through gf::inventory's setLootTable.
 // - Entity drops: a mob that dies rolls <ns>:entities/<path> when that Java table exists (TF's
-//   entities; vanilla mobs keep Bedrock's drops); the onEntityDrops handlers then see those stacks
-//   plus every item the game itself spawned for the death (Bedrock's loot of vanilla mobs,
-//   equipment; Java's captured LivingDropsEvent list) and may change them: changed drops replace
-//   the game's item entities. Bedrock spawns a mob's loot right after `die` returns, so this pass
-//   runs on the next tick.
+//   entities; vanilla mobs keep Bedrock's drops) and drops it in the death tick (Java's
+//   LivingEntity#dropFromLootTable, the dead mob in the context); the onEntityDrops handlers then
+//   see those stacks plus every item the game itself spawned for the death (Bedrock's loot of
+//   vanilla mobs, equipment; Java's captured LivingDropsEvent list) and may change them: changed
+//   drops replace the item entities. Bedrock spawns a mob's own loot right after `die` returns, so
+//   only this merge waits for the next tick.
 // - Block drops: blocks of the twilightforest namespace drop from <ns>:blocks/<path> (survives
 //   explosion, silk touch, fortune, shears ...); other blocks keep Bedrock's drops, run through the
 //   global modifiers (TF's fiery pickaxe smelting, giant pickaxe grouping) when any is registered.
@@ -51,6 +52,9 @@
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
+#include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -497,8 +501,16 @@ std::optional<std::pair<std::string, std::int64_t>> pendingVanilla(BlockSource& 
     return parseMarker(field);
 }
 
+float luckOf(Actor* actor) {
+    if (!actor || !actor->isPlayer()) return 0.f;
+    auto                     ref      = actor->getAttribute(SharedAttributes::LUCK());
+    AttributeInstance const* instance = ref.mPtr;
+    return instance ? static_cast<float>(instance->mCurrentValue) : 0.f;
+}
+
 namespace {
-/// Rolls the marker table of a vanilla container into `container` (RandomizableContainer#unpackLootTable).
+/// Rolls the marker table of a vanilla container into `container` (RandomizableContainer#unpackLootTable:
+/// THIS_ENTITY is the opener and the luck the opener's; there is no killer player).
 void fillVanilla(RandomizableBlockActorContainerBase& actor, Container& container, BlockSource* region, Actor* opener) {
     auto [tableId, seed] = parseMarker(actor.mLootTable.get());
     actor.eraseLootTable(); // once, whatever happens (Java clears the table before filling)
@@ -507,7 +519,7 @@ void fillVanilla(RandomizableBlockActorContainerBase& actor, Container& containe
     ctx.region     = region;
     ctx.origin     = Vec3{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y) + .5f, static_cast<float>(pos.z) + .5f};
     ctx.thisEntity = opener;
-    ctx.player     = opener && opener->isPlayer() ? static_cast<Player*>(opener) : nullptr;
+    ctx.luck       = luckOf(opener);
     ctx.seed       = seed;
     fill(
         tableId,
@@ -565,8 +577,28 @@ Actor* fetchActor(Level& level, std::int64_t raw, bool removedToo) {
     return level.fetchEntity(id, removedToo);
 }
 
-/// The drop pass of one death, a tick after it: the Java table (TF's entities), the game's own
-/// drops, the onEntityDrops handlers; changed drops replace the game's item entities.
+/// The loot context of a death: the dead mob, its killer (Java's LootContextParams of
+/// LivingEntity#dropFromLootTable).
+LootContext deathContext(Level& level, BlockSource* region, MobDeath const& d, Actor* dead) {
+    LootContext ctx;
+    ctx.region     = region;
+    ctx.origin     = d.origin;
+    ctx.thisEntity = dead;
+    ctx.attacker   = fetchActor(level, d.attacker, false);
+    ctx.direct     = fetchActor(level, d.direct, false);
+    ctx.damageType = d.damageType;
+    if (d.killer) {
+        ActorUniqueID id;
+        id.rawID   = d.killer;
+        ctx.player = level.getPlayer(id);
+        ctx.luck   = luckOf(ctx.player);
+    }
+    return ctx;
+}
+
+/// The merge pass of one death, a tick after it (Bedrock spawns a mob's own loot right after
+/// `die` returns): the onEntityDrops handlers see every item entity of the death (the Java table's,
+/// spawned at death, and the game's own) and may change them: changed drops replace them.
 void finishMobDeath(MobDeath const& d) {
     auto items = std::move(pendingDeaths()[d.dead]);
     pendingDeaths().erase(d.dead);
@@ -578,49 +610,27 @@ void finishMobDeath(MobDeath const& d) {
         std::lock_guard lock(registry().mutex);
         handlers = registry().entityDrops;
     }
-    auto tableId = tableIdFor(d.type, "entities");
-    // TF's entities drop from their Java table; doMobLoot off: no table (Java's
-    // dropFromLootTable), the handlers still see what the game dropped
-    bool own = d.type.rfind("minecraft:", 0) != 0 && table(tableId) != nullptr && gameRule(GameRules::GameRulesIndex::DoMobLoot, true);
     Actor* dead = fetchActor(*level, d.dead, true);
-    LootContext ctx;
-    ctx.region     = region;
-    ctx.origin     = d.origin;
-    ctx.thisEntity = dead;
-    ctx.attacker   = fetchActor(*level, d.attacker, false);
-    ctx.direct     = fetchActor(*level, d.direct, false);
-    ctx.damageType = d.damageType;
-    if (d.killer) {
-        ActorUniqueID id;
-        id.rawID   = d.killer;
-        ctx.player = level->getPlayer(id);
-    }
-    std::vector<ItemStack> javaDrops;
-    if (own) javaDrops = roll(tableId, ctx);
+    if (!dead || handlers.empty()) return;
+    auto                    ctx = deathContext(*level, region, d, dead);
     std::vector<ItemActor*> spawned;
     for (auto raw : items)
         if (auto* a = fetchActor(*level, raw, false); a && a->isType(ActorType::ItemEntity)) spawned.push_back(static_cast<ItemActor*>(a));
-    std::vector<ItemStack> drops = javaDrops;
+    std::vector<ItemStack> drops;
     for (auto* item : spawned) drops.push_back(item->item());
     auto const before = drops;
-    if (dead) {
-        for (auto const& fn : handlers) {
-            try {
-                fn(*dead, drops, ctx);
-            } catch (std::exception const& ex) {
-                log().error("loot: entity drops handler failed: {}", ex.what());
-            }
+    for (auto const& fn : handlers) {
+        try {
+            fn(*dead, drops, ctx);
+        } catch (std::exception const& ex) {
+            log().error("loot: entity drops handler failed: {}", ex.what());
         }
     }
     std::erase_if(drops, [](ItemStack const& s) { return game::items::isEmpty(s); });
-    if (sameDrops(drops, before)) {
-        for (auto const& s : javaDrops) spawnAt(*region, d.origin, s); // the game's own stay as they fell
-    } else {
-        for (auto* item : spawned) item->remove();
-        for (auto const& s : drops) spawnAt(*region, d.origin, s);
-        log().info("loot: drop handlers changed the drops of {} ({} -> {} stack(s))", d.type, before.size(), drops.size());
-    }
-    if (own) log().info("loot: {} dropped {} stack(s) from {}", d.type, javaDrops.size(), tableId);
+    if (sameDrops(drops, before)) return; // the drops stay as they fell
+    for (auto* item : spawned) item->remove();
+    for (auto const& s : drops) spawnAt(*region, d.origin, s);
+    log().info("loot: drop handlers changed the drops of {} ({} -> {} stack(s))", d.type, before.size(), drops.size());
 }
 } // namespace
 
@@ -644,9 +654,14 @@ void onMobDied(Actor& dead, combat::DamageInfo const& damage, std::int64_t kille
         std::lock_guard lock(registry().mutex);
         anyHandler = !registry().entityDrops.empty();
     }
-    auto const& type = dead.getTypeName();
-    bool        own  = type.rfind("minecraft:", 0) != 0 && table(tableIdFor(type, "entities")) != nullptr;
+    auto const& type    = dead.getTypeName();
+    auto        tableId = tableIdFor(type, "entities");
+    // TF's entities drop from their Java table (doMobLoot off: none, Java's dropAllDeathLoot)
+    bool own = type.rfind("minecraft:", 0) != 0 && table(tableId) != nullptr && gameRule(GameRules::GameRulesIndex::DoMobLoot, true);
     if (!own && !anyHandler) return;
+    auto level  = ll::service::getLevel();
+    auto region = game::regionOf(static_cast<int>(dead.getDimensionId()));
+    if (!level || !region) return;
     MobDeath d;
     d.dead       = dead.getOrCreateUniqueID().rawID;
     d.attacker   = damage.attacker ? damage.attacker->getOrCreateUniqueID().rawID : 0;
@@ -656,9 +671,27 @@ void onMobDied(Actor& dead, combat::DamageInfo const& damage, std::int64_t kille
     d.damageType = damage.type;
     d.origin     = dead.getPosition();
     d.dim        = static_cast<int>(dead.getDimensionId());
-    pendingDeaths()[d.dead] = gameDrops; // the game's later spawns for this mob join them
+    // LivingEntity#dropFromLootTable: the Java table rolls and drops in the death tick, with the
+    // dead mob still in the context
+    std::vector<std::int64_t> ids;
+    if (own) {
+        auto ctx   = deathContext(*level, region, d, &dead);
+        auto drops = roll(tableId, ctx);
+        for (auto const& s : drops) {
+            if (game::items::isEmpty(s)) continue;
+            if (auto* item = region->getLevel().getSpawner().spawnItem(*region, s, nullptr, d.origin, 0)) ids.push_back(item->getOrCreateUniqueID().rawID);
+        }
+        log().info("loot: {} dropped {} stack(s) from {}", type, drops.size(), tableId);
+    }
+    if (!anyHandler) return;
+    // the merge with the game's own drops waits for them (the next tick); the game's later spawns
+    // for this mob join the list (captureSpawnedItem)
+    ids.insert(ids.end(), gameDrops.begin(), gameDrops.end());
+    pendingDeaths()[d.dead] = std::move(ids);
     interactions::nextTick([d] { finishMobDeath(d); });
 }
+
+std::size_t pendingDeathCount() { return pendingDeaths().size(); }
 
 } // namespace gf::loot
 
@@ -769,7 +802,10 @@ public:
         if (!registered) {
             registered = true;
             game::db::onWorldReady([] { clearCache(); });
-            game::db::onWorldClosed([] { erasedDocs().clear(); });
+            game::db::onWorldClosed([] {
+                erasedDocs().clear();
+                pendingDeaths().clear(); // the client loads many worlds in one process
+            });
             // a block's data as it goes: copy_components reads it when the drops roll
             blockdata::onErase([](core::GlobalPos const& pos, Json const& doc, std::string const& previous) {
                 if (previous.empty()) return;

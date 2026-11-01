@@ -15,8 +15,10 @@
 //   Actor::hurtByCause, game code calling the virtual directly), once per damage (a guard lets the
 //   inner _hurt of a hurt in progress through). Non-mob actors (boats, item entities, hanging
 //   entities) are only seen through Actor::hurt.
-// - A player hurt by a type whose DamageEffects are not "hurt" plays the effect's sound
-//   (Player#getHurtSound: burning, freezing, TF's pinch) through gf::fx.
+// - A player hurt by a type whose DamageEffects are not "hurt" hears the effect's sound in place
+//   of the hurt sound (Player#getHurtSound: burning, freezing, TF's pinch): the game's hurt sound
+//   for that hurt (Player::getCustomHurtSound) becomes Bedrock's matching player hurt sound, or
+//   silence for TF's pinch, which gf::fx plays.
 // - Damage types: TF's 40 (TFDamageTypes#bootstrap: message id, exhaustion, effects) are built
 //   in; <mod>/data/<ns>/damage_type/*.json (F1's import) override and add. Vanilla damage is
 //   named by Java's ids ("minecraft:player_attack", "minecraft:fall", ...) from the Bedrock cause.
@@ -30,10 +32,12 @@
 #include "feature/combat/Combat.h"
 
 #include <algorithm>
+#include <atomic>
 #include <filesystem>
 #include <fstream>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <random>
 #include <set>
 #include <unordered_map>
@@ -398,30 +402,81 @@ struct PipelineScope {
 
 bool inPipeline(Actor const& a) { return std::find(tInPipeline.begin(), tInPipeline.end(), &a) != tInPipeline.end(); }
 
-/// Player#getHurtSound: the damage type's DamageEffects sound (TF's types: burning, freezing and
-/// TF's pinch). Bedrock plays its own hurt sound for the cause: an effect the cause already
-/// sounds like (fire, freezing, drowning, thorns) is not played twice.
-void playDamageEffect(Actor& victim, std::string const& typeId, Cause cause) {
-    if (!victim.isPlayer()) return;
+/// A player's hurt in progress with a damage type whose DamageEffects are not "hurt": the game's
+/// hurt sound for it is replaced (Player::getCustomHurtSound hook).
+struct EffectHurt {
+    Actor const* victim;
+    std::string  effects;
+    bool         replaced = false;
+};
+thread_local std::vector<EffectHurt> tEffectHurts;
+
+struct EffectHurtScope {
+    EffectHurtScope(Actor const& victim, std::string effects) { tEffectHurts.push_back({&victim, std::move(effects)}); }
+    ~EffectHurtScope() { tEffectHurts.pop_back(); }
+    EffectHurtScope(EffectHurtScope const&)            = delete;
+    EffectHurtScope& operator=(EffectHurtScope const&) = delete;
+    [[nodiscard]] bool replaced() const { return tEffectHurts.back().replaced; }
+};
+
+/// The damage type's effects of `victim` when they replace its hurt sound ("" for none).
+std::string effectsFor(Actor const& victim, std::string const& typeId) {
+    if (!victim.isPlayer()) return {};
     auto const* spec = damageType(typeId);
-    if (!spec || spec->effects.empty() || spec->effects == "hurt") return;
+    if (!spec || spec->effects.empty() || spec->effects == "hurt") return {};
+    return spec->effects;
+}
+
+std::atomic<int> gHurtSoundsReplaced{0};
+
+/// Player#getHurtSound: the damage type's DamageEffects sound in place of the game's hurt sound
+/// (TF's types: burning, freezing and TF's pinch). The game asks Player::getCustomHurtSound during
+/// the hurt; the vanilla effects map to Bedrock's own player hurt sounds, TF's pinch silences the
+/// game's sound and plays the pinch beetle's attack through gf::fx (playDamageEffect).
+std::optional<SharedTypes::Legacy::LevelSoundEvent> replacedHurtSound(Mob const& mob) {
+    using E = SharedTypes::Legacy::LevelSoundEvent;
+    for (auto it = tEffectHurts.rbegin(); it != tEffectHurts.rend(); ++it) {
+        if (it->victim != &mob) continue;
+        auto const& fx = it->effects;
+        std::optional<E> event;
+        if (fx == "burning") event = E::PlayerHurtOnFire;
+        else if (fx == "freezing") event = E::PlayerHurtFreeze;
+        else if (fx == "drowning") event = E::PlayerHurtDrown;
+        else if (fx == "thorns") event = E::Thorns;
+        else if (fx == "poking") event = E::SweetBerryBushHurt;
+        else if (fx == "twilightforest:pinch") event = E::Undefined; // silent: the pinch is played by gf::fx
+        if (event) {
+            it->replaced = true;
+            ++gHurtSoundsReplaced;
+        }
+        return event;
+    }
+    return std::nullopt;
+}
+
+/// The damage effect's sound through gf::fx: TF's pinch always (it has no Bedrock sound event), the
+/// vanilla effects only when the game did not ask for the hurt sound during the hurt (then its own
+/// hurt sound could not be replaced). An effect the cause already sounds like (fire, freezing,
+/// drowning, thorns) is not played twice.
+void playDamageEffect(Actor& victim, std::string const& typeId, Cause cause, bool replaced) {
+    auto effects = effectsFor(victim, typeId);
+    if (effects.empty() || (replaced && effects != "twilightforest:pinch")) return;
     std::string event;
-    auto const& fx = spec->effects;
-    if (fx == "burning") {
+    if (effects == "burning") {
         if (cause == Cause::Fire || cause == Cause::FireTick || cause == Cause::Lava || cause == Cause::Magma) return;
         event = "minecraft:entity.player.hurt_on_fire";
-    } else if (fx == "freezing") {
+    } else if (effects == "freezing") {
         if (cause == Cause::Freezing) return;
         event = "minecraft:entity.player.hurt_freeze";
-    } else if (fx == "drowning") {
+    } else if (effects == "drowning") {
         if (cause == Cause::Drowning) return;
         event = "minecraft:entity.player.hurt_drown";
-    } else if (fx == "thorns") {
+    } else if (effects == "thorns") {
         if (cause == Cause::Thorns) return;
         event = "minecraft:enchant.thorns.hit";
-    } else if (fx == "poking") {
+    } else if (effects == "poking") {
         event = "minecraft:entity.player.hurt_sweet_berry_bush";
-    } else if (fx == "twilightforest:pinch") {
+    } else if (effects == "twilightforest:pinch") {
         event = "twilightforest:entity.twilightforest.pinch_beetle.attack"; // TFSounds.PINCH_BEETLE_ATTACK
     } else {
         return;
@@ -436,6 +491,10 @@ void playDamageEffect(Actor& victim, std::string const& typeId, Cause cause) {
 } // namespace
 
 // ---- internal API --------------------------------------------------------------------------------
+
+std::optional<SharedTypes::Legacy::LevelSoundEvent> hurtSoundOverride(Mob const& mob) { return replacedHurtSound(mob); }
+
+int hurtSoundsReplaced() { return gHurtSoundsReplaced.load(); }
 
 DamageTypeSpec const* damageType(std::string const& id) {
     auto&           t = types();
@@ -628,10 +687,18 @@ ActorHurtResult runPipeline(Actor& self, ActorDamageSource const& source, float 
             }
         }
     }
-    float before = healthOf(self);
-    auto  result = plain(info.amount);
+    float before   = healthOf(self);
+    bool  replaced = false;
+    auto  result   = [&] {
+        auto effects = effectsFor(self, info.type);
+        if (effects.empty()) return plain(info.amount);
+        EffectHurtScope scope(self, std::move(effects)); // the game's hurt sound asks during the hurt
+        auto            r = plain(info.amount);
+        replaced          = scope.replaced();
+        return r;
+    }();
     if (!result) return result;
-    playDamageEffect(self, info.type, source.mCause);
+    playDamageEffect(self, info.type, source.mCause, replaced);
     if (dealt.empty()) return result;
     float after = healthOf(self);
     DamageInfo applied{self, info.type, info.attacker, info.direct, info.amount};
@@ -698,6 +765,19 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(deadName, dead);
 }
 
+// The hurt sound of a player (a LevelSoundEvent): a damage type's DamageEffects replace it.
+LL_STATIC_HOOK(
+    CombatHurtSoundHook,
+    ll::memory::HookPriority::Normal,
+    &Player::getCustomHurtSound,
+    std::optional<SharedTypes::Legacy::LevelSoundEvent>,
+    Mob const&                            mob,
+    SharedTypes::Legacy::ActorDamageCause cause
+) {
+    if (auto replaced = gf::combat::hurtSoundOverride(mob)) return replaced;
+    return origin(mob, cause);
+}
+
 namespace gf::combat {
 namespace {
 class CombatModule {
@@ -706,8 +786,10 @@ public:
         CombatHurtHook::hook();
         CombatMobDirectHurtHook::hook();
         CombatDeathMessageHook::hook();
+        CombatHurtSoundHook::hook();
     }
     void uninstall() {
+        CombatHurtSoundHook::unhook();
         CombatDeathMessageHook::unhook();
         CombatMobDirectHurtHook::unhook();
         CombatHurtHook::unhook();

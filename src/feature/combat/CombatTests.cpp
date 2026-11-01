@@ -8,7 +8,9 @@
 
 #include <algorithm>
 #include <map>
+#include <optional>
 #include <random>
+#include <set>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -20,7 +22,11 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/world/actor/ActorFlags.h"
 #include "mc/world/actor/ActorType.h"
+#include "mc/world/actor/item/ItemActor.h"
+#include "mc/world/actor/provider/SynchedActorDataAccess.h"
+#include "mc/world/phys/AABB.h"
 #include "mc/world/actor/ActorHurtResult.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/level/Spawner.h"
@@ -45,6 +51,7 @@
 #include "feature/combat/CombatInternal.h"
 #include "feature/death/Death.h"
 #include "feature/death/DeathInternal.h"
+#include "feature/ext/combat/InventoryViewers.h"
 #include "feature/fx/Fx.h"
 #include "feature/fx/FxInternal.h"
 #include "feature/gamerules/GameRules.h"
@@ -57,6 +64,7 @@
 #include "feature/loot/LootRegistry.h"
 #include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
+#include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
@@ -715,8 +723,12 @@ GF_REGISTER_SELFTEST("combat.entity_drops", [](Context& ctx) -> ll::coro::CoroTa
     {
         ActiveScope active(p);
         gf::combat::hurt(*mob, 1000.f, "twilightforest:thrown_axe", &p);
-        co_await ctx.ticks(2); // the drop pass runs on the next tick, while the test is active
+        // LivingEntity#dropFromLootTable: the Java table's drops are in the world in the death tick
+        ctx.check(itemEntitiesNear(pos, 4) >= 1, "the Java table dropped in the death tick");
+        ctx.check(gf::loot::pendingDeathCount() >= 1, "the merge with the game's drops waits for the next tick");
+        co_await ctx.ticks(2); // the merge runs on the next tick, while the test is active
     }
+    ctx.check(gf::loot::pendingDeathCount() == 0, "no death waits any more");
     ctx.check(sFixture == 1, "the Java table gf_test:entities/boss dropped the fixture item (" + std::to_string(sFixture) + ")");
     ctx.check(sAdded == 1, "a handler added a stack to the drops");
     ctx.check(sKiller, "the loot context names the killing player");
@@ -882,7 +894,36 @@ GF_REGISTER_SELFTEST("combat.inventory_screen_auth", [](Context& ctx) -> ll::cor
     inv::unregisterBlock(kContainerBlock);
 });
 
-// Vanilla clients' chest screen: the chest minecart proxy mirrors the storage both ways.
+
+// ---- inventory: the vanilla chest screen proxy holds no second copy of the slots ---------------------
+
+namespace {
+
+/// The item entities within `radius` of `pos`: their stacks, and they are removed (no leftovers in
+/// the shared test row).
+std::vector<ItemStack> takeItemEntitiesNear(GlobalPos const& pos, float radius) {
+    std::vector<ItemStack> out;
+    auto                   level = ll::service::getLevel();
+    if (!level) return out;
+    for (auto* a : level->getRuntimeActorList()) {
+        if (!a || !a->isType(ActorType::ItemEntity) || static_cast<int>(a->getDimensionId()) != pos.dim) continue;
+        auto const& at = a->getPosition();
+        float       dx = at.x - (pos.x + .5f), dy = at.y - (pos.y + .5f), dz = at.z - (pos.z + .5f);
+        if (dx * dx + dy * dy + dz * dz > radius * radius) continue;
+        out.push_back(static_cast<ItemActor*>(a)->item());
+        a->remove();
+    }
+    return out;
+}
+
+int countAt(std::optional<gf::inventory::Handler> const& h, GlobalPos const& pos, int slot) { return items::countOf(h->get(pos, slot)); }
+
+} // namespace
+
+// While a vanilla player has the game's chest screen open through the proxy, the proxy and the
+// storage are one copy: a change on either side shows on the other at once, the same slot changed
+// through the storage and the screen in one tick yields its items once, and a block broken in the
+// tick of a take drops only what the storage still holds.
 GF_REGISTER_SELFTEST("combat.inventory_vanilla_proxy", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace inv = gf::inventory;
     declareFixture();
@@ -901,24 +942,442 @@ GF_REGISTER_SELFTEST("combat.inventory_vanilla_proxy", [](Context& ctx) -> ll::c
     auto* proxy = inv::vanillaProxyContainer(pos);
     ctx.require(proxy != nullptr, "the proxy's container");
     ctx.check(items::countOf(proxy->getItem(0)) == 4, "the proxy shows the stored slots");
+    if (auto* actor = inv::vanillaProxyActor(pos)) {
+        auto const& box = actor->getAABB();
+        ctx.check(box.max.x - box.min.x < .05f && box.max.y - box.min.y < .05f, "the proxy has no hitbox (other players reach the block)");
+    }
     co_await ctx.ticks(6); // the screen opens after the proxy reached the client
     proxy = inv::vanillaProxyContainer(pos);
     ctx.require(proxy != nullptr, "the proxy is still open after the screen opened (" + std::to_string(inv::vanillaProxyCount()) + " open)");
-    proxy->setItem(5, *items::make("minecraft:gold_ingot", 7)); // as a click in the game's screen
-    h->set(pos, 6, *items::make("minecraft:apple", 2));        // other code changes the storage
-    co_await ctx.ticks(7); // the storage is read every 5 ticks
+    ctx.check(inv::viewerCount(pos) == 1, "the vanilla screen counts as an opener");
+    // one copy: a click in the screen reaches the storage at once, a write through the handler the screen
+    proxy->setItem(5, *items::make("minecraft:gold_ingot", 7));
+    ctx.check(countAt(h, pos, 5) == 7, "a change in the screen reaches the storage in the same tick");
+    h->set(pos, 6, *items::make("minecraft:apple", 2));
+    ctx.check(items::countOf(proxy->getItem(6)) == 2, "a write through the handler reaches the screen in the same tick");
+    // the same slot through the storage (the client mod's screen, a unit) and the screen in one
+    // tick: the items exist once
+    h->set(pos, 1, *items::make("minecraft:diamond", 64));
+    auto takenByCompanion = h->extract(pos, 1, 64, false);
+    auto inScreen         = proxy->getItem(1); // what the vanilla player could still take
+    proxy->setItem(1, ItemStack{});
+    int total = items::countOf(takenByCompanion) + items::countOf(inScreen) + countAt(h, pos, 1) + items::countOf(proxy->getItem(1));
+    ctx.check(total == 64, "storage first, then the screen: 64 diamonds in all (" + std::to_string(total) + ")");
+    h->set(pos, 2, *items::make("minecraft:diamond", 64));
+    auto takenInScreen = proxy->getItem(2);
+    proxy->setItem(2, ItemStack{}); // the vanilla player takes the stack
+    auto takenAfter = h->extract(pos, 2, 64, false);
+    total           = items::countOf(takenInScreen) + items::countOf(takenAfter) + countAt(h, pos, 2) + items::countOf(proxy->getItem(2));
+    ctx.check(total == 64, "the screen first, then the storage: 64 diamonds in all (" + std::to_string(total) + ")");
+    // code that writes the storage behind the handler: the screen follows within a tick
+    auto raw = inv::rawHandlerFor(kContainerBlock);
+    ctx.require(raw.has_value(), "the raw handler");
+    raw->set(pos, 7, *items::make("minecraft:stick", 3));
+    co_await ctx.ticks(2);
     proxy = inv::vanillaProxyContainer(pos);
     ctx.require(proxy != nullptr, "the proxy is still open");
-    ctx.check(items::countOf(h->get(pos, 5)) == 7, "a change in the screen reaches the storage");
-    ctx.check(items::countOf(proxy->getItem(6)) == 2, "a change of the storage reaches the screen");
-    // the player closes the screen: the proxy goes, the storage keeps everything
+    ctx.check(items::countOf(proxy->getItem(7)) == 3, "a write behind the handler reaches the screen within a tick");
+    // the block breaks in the tick a stack is taken in the screen: only the storage's copy drops
+    h->set(pos, 3, *items::make("minecraft:iron_ingot", 10));
+    auto taken = proxy->getItem(3);
+    proxy->setItem(3, ItemStack{}); // the vanilla player takes the iron
+    ctx.require(gf::game::clearBlock(*region, gf::game::blockPos(pos)), "the container is broken");
+    ctx.check(inv::vanillaProxyContainer(pos) == nullptr && inv::vanillaProxyCount() == before, "the proxy goes with the block at once");
+    auto dropped = takeItemEntitiesNear(pos, 4);
+    int  iron = countIn(dropped, "minecraft:iron_ingot"), emeralds = countIn(dropped, "minecraft:emerald");
+    ctx.check(items::countOf(taken) == 10 && iron == 0, "the taken iron did not drop again (" + std::to_string(iron) + " dropped)");
+    ctx.check(emeralds == 4 && countIn(dropped, "minecraft:gold_ingot") == 7 && countIn(dropped, "minecraft:stick") == 3, "the rest of the storage dropped once");
+    co_await ctx.ticks(1);
     auto* again = ll::service::getLevel()->getPlayer(id);
-    ctx.require(again != nullptr, "the player is still there");
-    static_cast<ServerPlayer&>(*again).doDeleteContainerManager(false);
-    co_await ctx.ticks(3);
-    ctx.check(inv::vanillaProxyContainer(pos) == nullptr && inv::vanillaProxyCount() == before, "the proxy is removed when the screen closes");
-    ctx.check(items::countOf(h->get(pos, 0)) == 4 && items::countOf(h->get(pos, 5)) == 7 && items::countOf(h->get(pos, 6)) == 2, "the storage kept every slot");
-    ctx.check(itemEntitiesNear(pos, 4) == 0, "nothing dropped from the proxy");
+    if (again) static_cast<ServerPlayer&>(*again).doDeleteContainerManager(false);
+    (void)takeItemEntitiesNear(pos, 4);
+    inv::unregisterBlock(kContainerBlock);
+});
+
+// ---- inventory: Java's ChestMenu clicks on the client mod's screen -----------------------------------
+
+namespace {
+
+/// Sends a click of the client mod's chest screen as the client does.
+void clickScreen(Player& p, GlobalPos const& pos, JsonT action) {
+    action["op"] = "click";
+    gf::net::injectFromClient(p, "screen.action", {{"type", "inventory.chest"}, {"context", {{"pos", {pos.dim, pos.x, pos.y, pos.z}}, {"rows", 3}, {"title", "container.chest"}}}, {"action", action}});
+}
+
+void clearInventory(Player& p) {
+    auto& inv = p.getInventory();
+    for (int i = 0; i < inv.getContainerSize(); ++i) inv.setItem(i, ItemStack{});
+    p.setOffhandSlot(ItemStack{});
+}
+
+} // namespace
+
+GF_REGISTER_SELFTEST("combat.inventory_clicks", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace inv = gf::inventory;
+    declareFixture();
+    auto pos = ctx.testPos(6015);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    ctx.require(ctx.setBlock(pos, kContainerBlock), "a 27-slot container placed");
+    auto* region = ctx.region();
+    auto  h      = inv::find(*region, gf::game::blockPos(pos));
+    ctx.require(h.has_value(), "the container handler");
+    auto& p = ctx.player();
+    clearInventory(p);
+    gf::net::setTestCompanion(p, true);
+    ctx.require(inv::openChestLike(p, pos, 3, "container.chest"), "the client mod's screen opened");
+    auto carried = [&] { return inv::carriedOf(p); };
+    // QUICK_MOVE: ChestMenu#quickMoveStack fills the inventory from its end (the last hotbar slot)
+    h->set(pos, 0, *items::make("minecraft:stick", 10));
+    clickScreen(p, pos, {{"slot", 0}, {"button", 0}, {"type", "quick_move"}});
+    ctx.check(items::countOf(p.getInventory().getItem(8)) == 10 && countAt(h, pos, 0) == 0, "quick move puts the stack in the last hotbar slot");
+    // QUICK_MOVE back: into the container from its start
+    clickScreen(p, pos, {{"slot", 27 + 27 + 8}, {"button", 0}, {"type", "quick_move"}});
+    ctx.check(countAt(h, pos, 0) == 10 && items::isEmpty(p.getInventory().getItem(8)), "quick move from the hotbar fills the container from its start");
+    h->set(pos, 0, ItemStack{});
+    // PICKUP right: half (rounded up) on the cursor
+    h->set(pos, 1, *items::make("minecraft:apple", 5));
+    clickScreen(p, pos, {{"slot", 1}, {"button", 1}, {"type", "pickup"}});
+    ctx.check(items::countOf(carried()) == 3 && countAt(h, pos, 1) == 2, "a right click picks up half");
+    // QUICK_CRAFT left over three slots: 3 / 3 each
+    clickScreen(p, pos, {{"slot", -999}, {"button", 0}, {"type", "quick_craft"}, {"slots", {2, 3, 4}}});
+    ctx.check(items::isEmpty(carried()) && countAt(h, pos, 2) == 1 && countAt(h, pos, 3) == 1 && countAt(h, pos, 4) == 1, "dragging splits the stack evenly");
+    // PICKUP_ALL: pick one up, double-click: every apple joins it
+    clickScreen(p, pos, {{"slot", 2}, {"button", 0}, {"type", "pickup"}});
+    clickScreen(p, pos, {{"slot", 2}, {"button", 0}, {"type", "pickup_all"}});
+    ctx.check(items::countOf(carried()) == 5 && countAt(h, pos, 1) == 0 && countAt(h, pos, 3) == 0 && countAt(h, pos, 4) == 0, "a double click collects the same items (" + std::to_string(items::countOf(carried())) + ")");
+    // QUICK_CRAFT right: one each
+    clickScreen(p, pos, {{"slot", -999}, {"button", 1}, {"type", "quick_craft"}, {"slots", {10, 11}}});
+    ctx.check(items::countOf(carried()) == 3 && countAt(h, pos, 10) == 1 && countAt(h, pos, 11) == 1, "a right drag puts one in each slot");
+    // a click outside the panel drops the cursor stack (right: one)
+    clickScreen(p, pos, {{"slot", -999}, {"button", 1}, {"type", "pickup"}});
+    ctx.check(items::countOf(carried()) == 2, "a right click outside drops one");
+    clickScreen(p, pos, {{"slot", -999}, {"button", 0}, {"type", "pickup"}});
+    ctx.check(items::isEmpty(carried()), "a left click outside drops the stack");
+    // SWAP with a hotbar key and the off-hand key
+    h->set(pos, 5, *items::make("minecraft:gold_ingot", 7));
+    clickScreen(p, pos, {{"slot", 5}, {"button", 0}, {"type", "swap"}});
+    ctx.check(items::countOf(p.getInventory().getItem(0)) == 7 && countAt(h, pos, 5) == 0, "key 1 swaps the slot with the first hotbar slot");
+    clickScreen(p, pos, {{"slot", 6}, {"button", 0}, {"type", "swap"}});
+    ctx.check(countAt(h, pos, 6) == 7 && items::isEmpty(p.getInventory().getItem(0)), "key 1 on an empty slot puts the hotbar stack in");
+    clickScreen(p, pos, {{"slot", 6}, {"button", 40}, {"type", "swap"}});
+    ctx.check(items::countOf(p.getOffhandSlot()) == 7 && countAt(h, pos, 6) == 0, "F swaps with the off-hand");
+    // THROW: Q one, Ctrl+Q the rest
+    h->set(pos, 7, *items::make("minecraft:flint", 4));
+    clickScreen(p, pos, {{"slot", 7}, {"button", 0}, {"type", "throw"}});
+    ctx.check(countAt(h, pos, 7) == 3, "Q throws one");
+    clickScreen(p, pos, {{"slot", 7}, {"button", 1}, {"type", "throw"}});
+    ctx.check(countAt(h, pos, 7) == 0, "Ctrl+Q throws the stack");
+    // CLONE needs creative
+    h->set(pos, 8, *items::make("minecraft:coal", 1));
+    clickScreen(p, pos, {{"slot", 8}, {"button", 2}, {"type", "clone"}});
+    ctx.check(items::isEmpty(carried()), "clone does nothing outside creative");
+    co_await ctx.ticks(2);
+    auto  again   = ll::service::getLevel()->getPlayer(p.getOrCreateUniqueID());
+    auto  dropped = takeItemEntitiesNear(gf::game::globalPos(*region, gf::game::blockPosOf(again ? again->getPosition() : Vec3{})), 8);
+    ctx.check(countIn(dropped, "minecraft:apple") == 3 && countIn(dropped, "minecraft:flint") == 4, "the dropped and thrown items are in the world (" + std::to_string(countIn(dropped, "minecraft:apple")) + " apples, " + std::to_string(countIn(dropped, "minecraft:flint")) + " flint)");
+    if (again) {
+        clearInventory(*again);
+        gf::net::setTestCompanion(*again, false);
+    }
     for (int i = 0; i < h->slots; ++i) h->set(pos, i, ItemStack{});
     inv::unregisterBlock(kContainerBlock);
+});
+
+// ---- inventory: ChestBlock's rules for declared chests ----------------------------------------------
+
+GF_REGISTER_SELFTEST("combat.inventory_chest_rules", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace inv = gf::inventory;
+    static int  sViewerCalls = 0;
+    static int  sLastCount   = -1;
+    static bool registered   = false;
+    if (!registered) {
+        registered = true;
+        inv::onViewersChanged(kContainerBlock, [](GlobalPos const&, int n) {
+            ++sViewerCalls;
+            sLastCount = n;
+        });
+    }
+    declareFixture();
+    auto pos = ctx.testPos(6016);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    ctx.require(ctx.setBlock(pos, kContainerBlock), "a chest placed");
+    auto above = pos;
+    above.y += 1;
+    auto& p = ctx.player();
+    gf::net::setTestCompanion(p, true);
+    // ChestBlock#isChestBlockedAt: a redstone conductor above
+    ctx.require(ctx.setBlock(above, "minecraft:stone"), "stone above the chest");
+    ctx.check(inv::chestBlocked(pos) && !inv::openChestLike(p, pos, 3, "container.chest"), "a chest under stone does not open");
+    ctx.require(ctx.setBlock(above, "minecraft:glass"), "glass above the chest");
+    ctx.check(!inv::chestBlocked(pos), "glass is no conductor: the chest is free");
+    ctx.require(ctx.setBlock(above, "minecraft:air"), "nothing above the chest");
+    // a sitting cat above
+    auto* region = ctx.region();
+    Vec3  catAt{static_cast<float>(above.x) + .5f, static_cast<float>(above.y), static_cast<float>(above.z) + .5f};
+    auto* cat = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:cat"), nullptr, catAt, false, false, false);
+    if (cat) {
+        SynchedActorDataAccess::setActorFlag(cat->getEntityContext(), ActorFlags::Sitting, true);
+        ctx.check(inv::chestBlocked(pos), "a sitting cat on the chest blocks it");
+        cat->remove();
+    } else {
+        ctx.info("no cat could be spawned: the cat rule is not checked");
+    }
+    // the openers: the open sound at the first, the close sound after the last
+    auto sounds = inv::soundCounters();
+    sViewerCalls = 0;
+    ctx.require(inv::openChestLike(p, pos, 3, "container.chest"), "the free chest opens");
+    ctx.check(inv::viewerCount(pos) == 1 && inv::viewers(pos) == 1, "one opener");
+    ctx.check(inv::soundCounters().opened == sounds.opened + 1, "the open sound played");
+    ctx.check(sViewerCalls >= 1 && sLastCount == 1, "the viewers listener heard the opener");
+    gf::net::injectFromClient(p, "screen.closed", {{"type", "inventory.chest"}});
+    ctx.check(inv::viewerCount(pos) == 0 && inv::soundCounters().closed == sounds.closed + 1, "closing played the close sound");
+    ctx.check(sLastCount == 0, "the viewers listener heard the last opener leave");
+    // double chests (the probe chest of the combat scenario: gf_combat:chest with type / facing)
+    if (gf::game::blockWithStates("gf_combat:chest", {{"gf_combat:type", "right"}, {"gf_combat:facing", "north"}})) {
+        inv::declare({.block = "gf_combat:chest", .rows = 3, .slots = 27, .title = "container.chest", .skin = "", .pairs = true});
+        auto right = ctx.testPos(6018);
+        auto left  = ctx.testPos(6017);
+        ctx.require(ctx.setBlock(right, "gf_combat:chest", {{"gf_combat:type", "right"}, {"gf_combat:facing", "north"}}), "the right half");
+        ctx.require(ctx.setBlock(left, "gf_combat:chest", {{"gf_combat:type", "left"}, {"gf_combat:facing", "north"}}), "the left half");
+        auto parts = inv::partsOf(left);
+        ctx.check(parts.size() == 2 && parts[0] == right && parts[1] == left, "the halves pair, the right one first");
+        auto hr = inv::find(*region, gf::game::blockPos(right));
+        auto hl = inv::find(*region, gf::game::blockPos(left));
+        ctx.require(hr && hl, "both halves are containers");
+        hr->set(right, 0, *items::make("minecraft:redstone", 2));
+        hl->set(left, 0, *items::make("minecraft:lapis_lazuli", 3));
+        (void)gf::net::takeTestMessages(p);
+        ctx.require(inv::openChestLike(p, left, 3, "container.chest"), "the double chest opens");
+        auto  msgs = gf::net::takeTestMessages(p);
+        JsonT data;
+        for (auto const& m : msgs)
+            if (m.channel == "screen.open") data = m.payload.value("data", JsonT{});
+        ctx.check(data.value("rows", 0) == 6 && data.value("slots", 0) == 54, "a six-row screen of 54 slots");
+        auto shown = data.value("items", JsonT::array());
+        ctx.check(shown.size() == 54 && shown[0].is_object() && shown[0].value("id", std::string{}) == "minecraft:redstone" && shown[27].is_object()
+                      && shown[27].value("id", std::string{}) == "minecraft:lapis_lazuli",
+                  "the right half's slots first, then the left half's");
+        ctx.check(inv::viewerCount(right) == 1 && inv::viewerCount(left) == 1, "both halves count the opener");
+        // a click on slot 27 is the left half's slot 0
+        auto pctx = JsonT{{"pos", {left.dim, left.x, left.y, left.z}}, {"rows", 6}, {"title", "container.chestDouble"}};
+        gf::net::injectFromClient(p, "screen.action", {{"type", "inventory.chest"}, {"context", pctx}, {"action", {{"op", "click"}, {"slot", 27}, {"button", 0}, {"type", "quick_move"}}}});
+        ctx.check(items::isEmpty(hl->get(left, 0)) && countInInventory(p, "minecraft:lapis_lazuli") == 3, "slot 27 is the left half's first slot");
+        gf::net::injectFromClient(p, "screen.closed", {{"type", "inventory.chest"}});
+        hr->set(right, 0, ItemStack{});
+        inv::unregisterBlock("gf_combat:chest");
+    } else {
+        ctx.info("no gf_combat:chest probe block in this run (the combat scenario adds it): pairing is not checked");
+    }
+    clearInventory(p);
+    gf::net::setTestCompanion(p, false);
+    inv::unregisterBlock(kContainerBlock);
+});
+
+// ---- death: the kept_on_death tag keeper, stale kept records -------------------------------------------
+
+GF_REGISTER_SELFTEST("combat.keepers_tag", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace tags = gf::tags;
+    auto pos = ctx.testPos(6020);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    // a real member when F9's tag data is loaded, else the test lookup names the stick a member
+    auto        members = tags::members(tags::Registry::Item, "twilightforest:kept_on_death");
+    std::string kept    = "minecraft:stick";
+    for (auto const& m : members)
+        if (items::make(m, 1)) {
+            kept = m;
+            break;
+        }
+    if (members.empty()) {
+        ctx.info("no kept_on_death tag data (F9): the built-in keeper is checked with a test member");
+        gf::death::setTestKeptOnDeath([kept](std::string const& id) { return id == kept; });
+    }
+    auto& sp = ctx.spawnPlayer("gf_combat_tag_keeper");
+    auto  id = sp.getOrCreateUniqueID();
+    auto  stack = items::make(kept, 1);
+    ctx.require(stack.has_value(), "the kept item exists");
+    ctx.give(sp, *stack);
+    gf::combat::hurt(sp, 1000.f, "twilightforest:expired");
+    co_await ctx.ticks(2);
+    gf::death::setTestKeptOnDeath({});
+    auto* p = ll::service::getLevel()->getPlayer(id);
+    ctx.require(p != nullptr, "the player is still in the level");
+    auto record = db::get("gf:combat:kept:" + p->getUuid().asString());
+    bool kept1  = record && record->is_array() && std::any_of(record->begin(), record->end(), [&](JsonT const& e) {
+        return e.value("item", JsonT::object()).value("id", std::string{}) == kept;
+    });
+    ctx.check(kept1, "the twilightforest:kept_on_death keeper kept " + kept);
+    ctx.check(itemEntitiesNear(pos, 6) == 0, "the kept item did not drop");
+    static_cast<SimulatedPlayer&>(*p).simulateRespawn();
+    co_await ctx.ticks(10);
+    p = ll::service::getLevel()->getPlayer(id);
+    ctx.require(p != nullptr, "the player respawned");
+    ctx.check(countInInventory(*p, kept) == 1, "the respawn returned it");
+});
+
+// A kept record whose stacks are still in the inventory (the server stopped between the death and
+// the player's next save) is a stale copy: it is dropped, never returned (no duplicate).
+GF_REGISTER_SELFTEST("combat.keepers_stale", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto pos = ctx.testPos(6021);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    auto& sp = ctx.spawnPlayer("gf_combat_stale");
+    clearInventory(sp);
+    auto stack = items::make("gf_test:fixture_item", 5);
+    ctx.require(stack.has_value(), "the fixture item");
+    sp.getInventory().setItem(3, *stack);
+    auto key = "gf:combat:kept:" + sp.getUuid().asString();
+    db::put(key, JsonT::array({{{"slot", "inv:3"}, {"item", items::toJson(*stack)}}}));
+    ctx.check(!gf::death::returnKeptItems(sp), "a record of stacks still in their slots is not returned");
+    ctx.check(countInInventory(sp, "gf_test:fixture_item") == 5, "no duplicate (" + std::to_string(countInInventory(sp, "gf_test:fixture_item")) + ")");
+    ctx.check(!db::get(key), "the stale record is gone");
+    // a real record (the slot is empty after the death) comes back
+    sp.getInventory().setItem(3, ItemStack{});
+    db::put(key, JsonT::array({{{"slot", "inv:3"}, {"item", items::toJson(*stack)}}}));
+    ctx.check(gf::death::returnKeptItems(sp) && countInInventory(sp, "gf_test:fixture_item") == 5, "a record of emptied slots is returned");
+    clearInventory(sp);
+});
+
+// ---- loot: slime size, enchanting, container luck --------------------------------------------------
+
+GF_REGISTER_SELFTEST("combat.loot_slime_size", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace loot = gf::loot;
+    auto pos = ctx.testPos(6019);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    auto* region = ctx.region();
+    Vec3  at{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + .5f};
+    auto* small  = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:slime<minecraft:spawn_small>"), nullptr, at, false, false, false);
+    auto* medium = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:slime<minecraft:spawn_medium>"), nullptr, at, false, false, false);
+    auto* cow    = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:cow"), nullptr, at, false, false, false);
+    ctx.require(small && medium && cow, "a small and a medium slime and a cow");
+    ctx.check(loot::slimeSize(*small) == 1 && loot::slimeSize(*medium) == 2, "the slime sizes are read from the variant (" + std::to_string(loot::slimeSize(*small)) + ", " + std::to_string(loot::slimeSize(*medium)) + ")");
+    auto sizeOne = JsonT::parse(R"({"type_specific": {"type": "minecraft:slime", "size": 1}})");
+    auto range   = JsonT::parse(R"({"type_specific": {"type": "minecraft:slime", "size": {"min": 2, "max": 4}}})");
+    ctx.check(loot::entityMatches(small, sizeOne) && !loot::entityMatches(medium, sizeOne), "maze_slime's size 1 condition: only the small slime");
+    ctx.check(!loot::entityMatches(small, range) && loot::entityMatches(medium, range), "a size range");
+    ctx.check(!loot::entityMatches(cow, sizeOne), "a cow is no slime");
+    small->remove();
+    medium->remove();
+    cow->remove();
+});
+
+GF_REGISTER_SELFTEST("combat.loot_enchant", [](Context& ctx) {
+    namespace loot = gf::loot;
+    // set_enchantments: 0 removes; a book turns into an enchanted book first
+    loot::registerTable("gf_test:combat/unenchant", JsonT::parse(R"({"pools":[
+        {"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:book","functions":[
+          {"function":"minecraft:set_enchantments","enchantments":{"minecraft:sharpness":0}}]}]},
+        {"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:iron_sword","functions":[
+          {"function":"minecraft:set_enchantments","enchantments":{"minecraft:sharpness":3,"minecraft:looting":2}},
+          {"function":"minecraft:set_enchantments","enchantments":{"minecraft:sharpness":0}}]}]}]})"));
+    loot::LootContext lc;
+    lc.seed = 11;
+    auto l  = loot::roll("gf_test:combat/unenchant", lc);
+    loot::registerTable("gf_test:combat/unenchant", nullptr);
+    ItemStack const* book  = nullptr;
+    ItemStack const* sword = nullptr;
+    for (auto const& s : l) {
+        if (items::idOf(s) == "minecraft:enchanted_book") book = &s;
+        if (items::idOf(s) == "minecraft:iron_sword") sword = &s;
+    }
+    ctx.check(book != nullptr, "set_enchantments turns a book into an enchanted book even with level 0");
+    ctx.require(sword != nullptr, "the sword dropped");
+    ctx.check(loot::enchantLevel(*sword, "minecraft:sharpness") == 0 && loot::enchantLevel(*sword, "minecraft:looting") == 2, "level 0 removes sharpness and keeps looting");
+    // enchant_with_levels / #minecraft:on_random_loot: Java's selection
+    auto ironSword = items::make("minecraft:iron_sword", 1);
+    auto bookStack = items::make("minecraft:book", 1);
+    ctx.require(ironSword && bookStack, "an iron sword and a book");
+    std::set<std::string> const pool{"minecraft:sharpness", "minecraft:smite", "minecraft:bane_of_arthropods", "minecraft:knockback", "minecraft:fire_aspect",
+                                     "minecraft:looting", "minecraft:sweeping_edge", "minecraft:unbreaking", "minecraft:mending", "minecraft:vanishing_curse"};
+    int  picks = 0, outside = 0, unseeded = 0;
+    bool same  = true;
+    for (int seed = 1; seed <= 200; ++seed) {
+        gf::loot::JavaRandom r1(seed), r2(seed);
+        auto                 a = loot::selectEnchantment(r1, *ironSword, 30, "#minecraft:on_random_loot");
+        auto                 b = loot::selectEnchantment(r2, *ironSword, 30, "#minecraft:on_random_loot");
+        same = same && a == b;
+        if (a.empty()) ++unseeded;
+        for (auto const& [id, level] : a) {
+            ++picks;
+            if (!pool.contains(id) || level < 1) ++outside;
+        }
+    }
+    ctx.check(outside == 0, "an iron sword only gets the sword's on_random_loot enchantments (" + std::to_string(outside) + " outside)");
+    ctx.check(unseeded == 0 && picks >= 200, "level 30 always enchants (" + std::to_string(picks) + " picks)");
+    ctx.check(same, "a seeded selection is reproducible");
+    std::set<std::string> bookPicks;
+    for (int seed = 1; seed <= 300; ++seed) {
+        gf::loot::JavaRandom r(seed);
+        for (auto const& [id, _] : loot::selectEnchantment(r, *bookStack, 30, "#minecraft:on_random_loot")) bookPicks.insert(id);
+    }
+    ctx.check(!bookPicks.contains("minecraft:soul_speed") && !bookPicks.contains("minecraft:swift_sneak") && !bookPicks.contains("minecraft:wind_burst"),
+              "soul speed, swift sneak and wind burst are not in #on_random_loot");
+    ctx.check(bookPicks.contains("minecraft:mending") || bookPicks.contains("minecraft:frost_walker"), "a book can get the treasure enchantments the tag lists");
+    // Java's numbers: a book at level 0 (enchantability 1: 0 + 1 + nextInt(1) + nextInt(1) = 1, the
+    // +-15 % spread rounds back to 1): only enchantments with a level-1 cost range holding 1
+    for (int seed = 1; seed <= 50; ++seed) {
+        gf::loot::JavaRandom low(seed);
+        for (auto const& [id, level] : loot::selectEnchantment(low, *bookStack, 0, "#minecraft:on_random_loot"))
+            ctx.check(level == 1 && (id == "minecraft:protection" || id == "minecraft:efficiency" || id == "minecraft:power" || id == "minecraft:piercing"
+                                     || id == "minecraft:impaling" || id == "minecraft:sharpness" || id == "minecraft:aqua_affinity"),
+                      "a level-1 selection only has cost ranges holding 1 (" + id + " " + std::to_string(level) + ")");
+    }
+    // the function on a table
+    loot::registerTable("gf_test:combat/enchanted", JsonT::parse(R"({"pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:iron_sword","functions":[
+        {"function":"minecraft:enchant_with_levels","levels":30,"options":"#minecraft:on_random_loot"}]}]}]})"));
+    lc.seed     = 77;
+    auto rolled = loot::roll("gf_test:combat/enchanted", lc);
+    loot::registerTable("gf_test:combat/enchanted", nullptr);
+    ctx.check(rolled.size() == 1 && const_cast<ItemStack&>(rolled.front()).isEnchanted(), "enchant_with_levels enchants the sword");
+});
+
+GF_REGISTER_SELFTEST("combat.loot_container_luck", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace loot = gf::loot;
+    // RandomizableContainer#unpackLootTable: no killer player in the context
+    loot::registerTable("gf_test:combat/opened", JsonT::parse(R"({"type":"minecraft:chest","pools":[
+        {"rolls":1,"conditions":[{"condition":"minecraft:killed_by_player"}],"entries":[{"type":"minecraft:item","name":"minecraft:stick"}]},
+        {"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:dirt"}]}]})"));
+    auto pos = ctx.testPos(6022);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    auto* region = ctx.region();
+    auto  bp     = gf::game::blockPos(pos);
+    ctx.cleanupBlock(pos);
+    ctx.require(loot::placeContainer(*region, bp, "minecraft:chest", 2, "gf_test:combat/opened", 5), "a chest with the table");
+    auto& p = ctx.player();
+    ctx.check(loot::luckOf(&p) == 0.f, "a player's luck is the luck attribute (0)");
+    ctx.require(loot::unpackVanilla(*region, bp, &p), "the opener unpacks it");
+    auto* actor = region->getBlockEntity(bp);
+    auto* c     = actor ? static_cast<ChestBlockActor*>(actor)->getContainer() : nullptr;
+    ctx.require(c != nullptr, "the chest's container");
+    int sticks = 0, dirt = 0;
+    for (int i = 0; i < c->getContainerSize(); ++i) {
+        sticks += items::idOf(c->getItem(i)) == "minecraft:stick" ? items::countOf(c->getItem(i)) : 0;
+        dirt += items::idOf(c->getItem(i)) == "minecraft:dirt" ? items::countOf(c->getItem(i)) : 0;
+        c->setItem(i, ItemStack{});
+    }
+    ctx.check(sticks == 0 && dirt == 1, "killed_by_player fails for a chest opener");
+    loot::registerTable("gf_test:combat/opened", nullptr);
+});
+
+// ---- combat: a damage type's effect sound replaces the hurt sound ---------------------------------------
+
+GF_REGISTER_SELFTEST("combat.hurt_sound", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto pos = ctx.testPos(6023);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    auto& sp     = ctx.spawnPlayer("gf_combat_hurt_sound");
+    int   before = gf::combat::hurtSoundsReplaced();
+    gf::combat::hurt(sp, 1.f, "twilightforest:fiery"); // burning
+    ctx.check(gf::combat::hurtSoundsReplaced() == before + 1, "the game asked for the hurt sound and got the burning one");
+    co_await ctx.ticks(11); // the hurt cooldown
+    auto* again = ll::service::getLevel()->getPlayer(sp.getOrCreateUniqueID());
+    ctx.require(again != nullptr, "the player is still there");
+    auto packets = gf::fx::counters().soundPackets;
+    gf::combat::hurt(*again, 1.f, "twilightforest:clamped"); // TF's pinch
+    ctx.check(gf::combat::hurtSoundsReplaced() == before + 2, "the pinch silences the game's hurt sound");
+    if (!gf::fx::resolveSound("twilightforest:entity.twilightforest.pinch_beetle.attack").empty())
+        ctx.check(gf::fx::counters().soundPackets > packets, "the pinch beetle's sound plays through fx");
+    else ctx.info("the pinch beetle's sound is not in this build's resource pack (F3's audio): its packet is not checked");
+    co_await ctx.ticks(11);
+    again = ll::service::getLevel()->getPlayer(sp.getOrCreateUniqueID());
+    ctx.require(again != nullptr, "the player is still there");
+    gf::combat::hurt(*again, 1.f, "twilightforest:hydra_bite"); // "hurt": the game's own sound
+    ctx.check(gf::combat::hurtSoundsReplaced() == before + 2, "plain damage keeps the game's hurt sound");
 });

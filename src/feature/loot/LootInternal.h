@@ -68,12 +68,16 @@ private:
 /// or for a mob that died this tick when `spawner` is that mob.
 void captureSpawnedItem(Actor const& item, Actor const* spawner);
 
-/// A mob died (the death pipeline, right after the game's `die`). On the next tick, once the game
-/// has spawned the mob's own loot: its Java loot table (TF entities) and the onEntityDrops
-/// handlers, which also see the item entities the game spawned for the death (`gameDrops` from
+/// A mob died (the death pipeline, right after the game's `die`): its Java loot table (TF
+/// entities) drops now; on the next tick, once the game has spawned the mob's own loot, the
+/// onEntityDrops handlers see every item entity of the death (the Java table's, `gameDrops` from
 /// `die`, and the later ones with the mob as the spawner); `killerId` is the killing player's
 /// ActorUniqueID (0: none).
 void onMobDied(Actor& dead, combat::DamageInfo const& damage, std::int64_t killerId, std::vector<std::int64_t> const& gameDrops = {});
+/// Deaths whose drop merge waits for the next tick (selftests).
+[[nodiscard]] std::size_t pendingDeathCount();
+/// Player#getLuck (the luck attribute; 0 for anything else or nullptr).
+[[nodiscard]] float luckOf(Actor* actor);
 
 /// Rolls the Java table placeContainer left in the vanilla container at `pos` into it (the opener
 /// in the loot context); true when there was one.
@@ -91,6 +95,15 @@ inline constexpr char kBundleIdTag[] = "bundle_id";
 /// The stacks a set_contents function put into a Bedrock storage item (a bundle), nullopt when
 /// the stack has no bundle id (selftests).
 [[nodiscard]] std::optional<std::vector<ItemStack>> bundleContents(ItemStack const& stack);
+
+/// The size of a slime-like entity (Java's Slime#getSize): Bedrock keeps it in the variant (1, 2,
+/// 4) of slimes and magma cubes, and TF's maze slime does the same; <= 0 when unknown.
+[[nodiscard]] int slimeSize(Actor const& actor);
+/// EnchantmentHelper#selectEnchantment over the enchantments of `options` (a tag "#...", an id, a
+/// list; null: the registry): the Java ids and levels picked (selftests).
+[[nodiscard]] std::vector<std::pair<std::string, int>> selectEnchantment(RandomSource& random, ItemStack const& stack, int level, Json const& options);
+/// EntityPredicate#matches as the interpreter evaluates it (selftests).
+[[nodiscard]] bool entityMatches(Actor* actor, Json const& predicate);
 
 /// Java enchantment id -> Bedrock Enchant::Type value (-1 unknown).
 [[nodiscard]] int bedrockEnchant(std::string const& javaId);

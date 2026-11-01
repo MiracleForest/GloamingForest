@@ -28,11 +28,14 @@
 #include "feature/death/Death.h"
 
 #include <algorithm>
+#include <functional>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
 #include "ll/api/event/EventBus.h"
+#include "ll/api/event/player/PlayerJoinEvent.h"
 #include "ll/api/event/player/PlayerRespawnEvent.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
@@ -137,6 +140,44 @@ void setAt(Player& p, SlotRef const& s, ItemStack const& stack) {
     }
 }
 
+std::optional<SlotRef> refOf(std::string const& slot) {
+    if (slot.rfind("inv:", 0) == 0) return SlotRef{SlotRef::Kind::Inventory, std::atoi(slot.c_str() + 4)};
+    if (slot.rfind("armor:", 0) == 0) return SlotRef{SlotRef::Kind::Armor, std::atoi(slot.c_str() + 6)};
+    if (slot == "offhand") return SlotRef{SlotRef::Kind::Offhand, 0};
+    return std::nullopt;
+}
+
+/// A kept record whose stacks all still sit in their slots: the player's inventory as it was before
+/// the death came back (the server stopped after the record was written and before the player was
+/// saved without the stacks). Returning it would duplicate the stacks.
+bool staleRecord(Player& player, nlohmann::json const& doc) {
+    if (!doc.is_array() || doc.empty()) return false;
+    for (auto const& e : doc) {
+        auto ref   = refOf(e.value("slot", std::string{}));
+        auto stack = game::items::fromJson(e.value("item", nlohmann::json{}));
+        if (!ref || ref->index < 0 || game::items::isEmpty(stack)) return false; // can't tell: trust it
+        if (ref->kind == SlotRef::Kind::Inventory && ref->index >= player.getInventory().getContainerSize()) return false;
+        auto const& cur = stackAt(player, *ref);
+        if (!game::items::sameItemSameData(cur, stack) || game::items::countOf(cur) != game::items::countOf(stack)) return false;
+    }
+    return true;
+}
+
+/// Forgets a stale kept record (staleRecord); true when it was one.
+bool dropStaleRecord(Player& player) {
+    auto doc = game::db::get(keptKey(player));
+    if (!doc || !staleRecord(player, *doc)) return false;
+    game::db::erase(keptKey(player));
+    log().warn("death: ignored the kept items of {}: they are still in the inventory (restored from before the death)", player.getRealName());
+    return true;
+}
+
+/// Selftests: an extra kept_on_death membership (F9's gf::tags may not have the tag data).
+std::function<bool(std::string const& itemId)>& testKeptOnDeath() {
+    static std::function<bool(std::string const& itemId)> fn;
+    return fn;
+}
+
 std::vector<SlotRef> allSlots(Player& p) {
     std::vector<SlotRef> out;
     int                  n = std::min(p.getInventory().getContainerSize(), 36);
@@ -158,7 +199,8 @@ void keepAndOffer(Player& player) {
     }
     auto           slots = allSlots(player);
     nlohmann::json kept  = nlohmann::json::array();
-    if (auto previous = game::db::get(keptKey(player)); previous && previous->is_array()) kept = *previous;
+    // a record not returned yet joins this one (unless it is a stale copy of what the player holds)
+    if (auto previous = game::db::get(keptKey(player)); previous && previous->is_array() && !dropStaleRecord(player)) kept = *previous;
     int keptCount = 0;
     for (auto const& slot : slots) {
         ItemStack& stack = stackAt(player, slot);
@@ -325,17 +367,14 @@ bool runLethal(Actor& victim, combat::DamageInfo const& damage) {
 bool returnKeptItems(Player& player) {
     auto doc = game::db::get(keptKey(player));
     if (!doc || !doc->is_array()) return false;
+    if (dropStaleRecord(player)) return false;
     game::db::erase(keptKey(player));
     int returned = 0;
     for (auto const& e : *doc) {
-        ItemStack   stack = game::items::fromJson(e.value("item", nlohmann::json{}));
+        ItemStack stack = game::items::fromJson(e.value("item", nlohmann::json{}));
         if (game::items::isEmpty(stack)) continue;
-        auto        slot = e.value("slot", std::string{});
-        SlotRef     ref{SlotRef::Kind::Inventory, -1};
-        if (slot.rfind("inv:", 0) == 0) ref = {SlotRef::Kind::Inventory, std::atoi(slot.c_str() + 4)};
-        else if (slot.rfind("armor:", 0) == 0) ref = {SlotRef::Kind::Armor, std::atoi(slot.c_str() + 6)};
-        else if (slot == "offhand") ref = {SlotRef::Kind::Offhand, 0};
-        bool placed = false;
+        SlotRef ref    = refOf(e.value("slot", std::string{})).value_or(SlotRef{SlotRef::Kind::Inventory, -1});
+        bool    placed = false;
         if (ref.index >= 0 && game::items::isEmpty(stackAt(player, ref))) {
             setAt(player, ref, stack);
             placed = true;
@@ -394,6 +433,8 @@ void handleDeath(Actor& self, ActorDamageSource const& source, std::function<voi
 
 void forgetDeath(Player const& player) { handledDeaths().erase(const_cast<Player&>(player).getOrCreateUniqueID().rawID); }
 
+void setTestKeptOnDeath(std::function<bool(std::string const& itemId)> fn) { testKeptOnDeath() = std::move(fn); }
+
 } // namespace gf::death
 
 // ---- hooks (the outermost one runs the pipeline) --------------------------------------------------
@@ -437,6 +478,11 @@ public:
                 }
             }
         });
+        // a player that comes back alive with the stacks of a kept record still in its slots: the
+        // record is a stale copy (the server stopped before the player was saved after its death)
+        mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerJoinEvent>([](ll::event::PlayerJoinEvent& ev) {
+            if (!ev.self().isClientSide()) dropStaleRecord(ev.self());
+        });
         static bool registered = false;
         if (!registered) {
             registered = true;
@@ -444,12 +490,16 @@ public:
             // TF: items in twilightforest:kept_on_death are always kept (lowest keeper)
             registerKeeper(-100000, [](Player&, ItemStack& stack) {
                 auto id = game::items::idOf(stack);
-                return !id.empty() && tags::has(tags::Registry::Item, "twilightforest:kept_on_death", id);
+                if (id.empty()) return false;
+                if (tags::has(tags::Registry::Item, "twilightforest:kept_on_death", id)) return true;
+                auto const& test = testKeptOnDeath();
+                return test && test(id);
             });
         }
     }
     void uninstall() {
         ll::event::EventBus::getInstance().removeListener(mRespawn);
+        ll::event::EventBus::getInstance().removeListener(mJoin);
         DeathServerPlayerDieHook::unhook();
         DeathPlayerDieHook::unhook();
         DeathMobDieHook::unhook();
@@ -457,6 +507,7 @@ public:
 
 private:
     ll::event::ListenerPtr mRespawn;
+    ll::event::ListenerPtr mJoin;
 };
 
 } // namespace

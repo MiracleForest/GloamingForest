@@ -18,7 +18,9 @@ Send-Console 'tf gamerule playersTfPortalDefaultDelay 60'
 
 $r = Invoke-SelfTest 'combat.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) combat selftest(s) failed" }
-if ($r.Pass -lt 15) { throw "expected at least 15 combat selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 30) { throw "expected at least 30 combat selftests to pass, got $($r.Pass)" }
+# the double chest probe of combat.prelaunch.ps1 was there (pairing checked, not skipped)
+if (Get-ServerLog | Select-String -Pattern 'no gf_combat:chest probe block' -Quiet) { throw 'the gf_combat:chest probe block was not loaded' }
 
 # A container keeps its items over a world reload.
 $mark = Get-LogMark
