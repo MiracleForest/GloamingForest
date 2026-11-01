@@ -395,23 +395,53 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
     constexpr double kControlSec = 5.0; // mob.enderdragon.death plays for longer
     play("mob.enderdragon.death", -1);           // a long vanilla event: the engine knows it and plays it for seconds
     play("gf.synth.selftest.no_such_sound", -2); // an unknown event
-    for (int i = 0; i < int(std::size(kEvents)) + kLagTicks; ++i) {
-        if (i < int(std::size(kEvents))) play(kEvents[i].id, i);
-        for (int back : {1, 2, 4}) {
-            if (i - back >= 0 && i - back < int(std::size(kEvents))) levelLater(i - back);
+    // streamed events (music, discs) one at a time: the engine keeps only a few streams playing and
+    // stops the oldest, so overlapping them would look like a file that does not play
+    auto streamed = [](std::size_t i) {
+        for (auto const& v : variantsOf(i)) {
+            if (v.stream) return true;
         }
-        if (i >= kLagTicks && i <= kLagTicks * 4) checkLater(-1, kControlSec);
-        int const j = i - kLagTicks;
-        if (j >= 0 && minSeconds[std::size_t(j)] >= kLongSec) checkLater(j, minSeconds[std::size_t(j)]);
-        // a second chance for the checks whose task ran too early
-        int const k = i - 2 * kLagTicks;
-        if (k >= 0 && minSeconds[std::size_t(k)] >= kLongSec) checkLater(k, minSeconds[std::size_t(k)]);
+        return false;
+    };
+    auto stop = [res, slot](int index) {
+        ll::thread::ClientThreadExecutor::getDefault().execute([res, slot, index] {
+            auto*           client = gf::client::currentClient();
+            std::lock_guard lock(res->lock);
+            auto const      h = slot(index).handle;
+            if (client && h != 0 && h != ~std::uint64_t(0)) client->getSoundEngine()->stop(h);
+        });
+    };
+    std::vector<int> order, streams;
+    for (int i = 0; i < int(std::size(kEvents)); ++i) (streamed(std::size_t(i)) ? streams : order).push_back(i);
+    int const n = int(order.size());
+    for (int t = 0; t < n + kLagTicks; ++t) {
+        if (t < n) play(kEvents[order[std::size_t(t)]].id, order[std::size_t(t)]);
+        for (int back : {1, 2, 4}) {
+            if (t - back >= 0 && t - back < n) levelLater(order[std::size_t(t - back)]);
+        }
+        if (t >= kLagTicks && t <= kLagTicks * 4) checkLater(-1, kControlSec);
+        // the check, and a second chance for the checks whose task ran too early
+        for (int lag : {kLagTicks, 2 * kLagTicks}) {
+            int const j = t - lag;
+            if (j >= 0 && j < n && minSeconds[std::size_t(order[std::size_t(j)])] >= kLongSec) {
+                checkLater(order[std::size_t(j)], minSeconds[std::size_t(order[std::size_t(j)])]);
+            }
+        }
         co_await ctx.ticks(1);
     }
-    for (int k = int(std::size(kEvents)) - kLagTicks; k < int(std::size(kEvents)); ++k) {
-        if (k >= 0 && minSeconds[std::size_t(k)] >= kLongSec) checkLater(k, minSeconds[std::size_t(k)]);
+    for (int j = std::max(0, n - kLagTicks); j < n; ++j) {
+        if (minSeconds[std::size_t(order[std::size_t(j)])] >= kLongSec) checkLater(order[std::size_t(j)], minSeconds[std::size_t(order[std::size_t(j)])]);
     }
-    for (int wait = 0; wait < 100 && res->done.load() < int(std::size(kEvents)) + 2; ++wait) co_await ctx.ticks(1);
+    for (int i : streams) {
+        play(kEvents[i].id, i);
+        co_await ctx.ticks(1);
+        levelLater(i);
+        co_await ctx.ticks(kLagTicks);
+        if (minSeconds[std::size_t(i)] >= kLongSec) checkLater(i, minSeconds[std::size_t(i)]);
+        co_await ctx.ticks(kLagTicks);
+        if (minSeconds[std::size_t(i)] >= kLongSec) checkLater(i, minSeconds[std::size_t(i)]);
+        stop(i);
+    }    for (int wait = 0; wait < 100 && res->done.load() < int(std::size(kEvents)) + 2; ++wait) co_await ctx.ticks(1);
     co_await ctx.ticks(2); // the last checks
     ctx.require(res->done.load() == int(std::size(kEvents)) + 2, "the client thread played every event");
 
