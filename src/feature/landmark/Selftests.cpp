@@ -36,6 +36,7 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/phys/AABB.h"
+#include "mc/deps/shared_types/legacy/Difficulty.h"
 
 #include "core/landmark/Grid.h"
 #include "core/landmark/Landmark.h"
@@ -114,6 +115,25 @@ ia::Result useOnAs(Player& p, GlobalPos const& pos, std::string const& itemId, I
     ia::UseOnContext c{p, item, itemId, block, blockId, pos, 1, {0.5, 1.0, 0.5}, false, first};
     return ia::dispatchUseOn(c);
 }
+
+/// Lifts a peaceful world to easy while a test needs a hostile mob (TF's hint kobold is a Monster:
+/// peaceful discards it, as Java does), and puts the difficulty back afterwards, also on abort.
+struct HostileMobsAllowed {
+    using Difficulty = SharedTypes::Legacy::Difficulty;
+    std::optional<Difficulty> restore;
+    HostileMobsAllowed() {
+        auto level = ll::service::getLevel();
+        if (level && level->getDifficulty() == Difficulty::Peaceful) {
+            restore = Difficulty::Peaceful;
+            level->setDifficulty(Difficulty::Easy);
+        }
+    }
+    HostileMobsAllowed(HostileMobsAllowed const&)            = delete;
+    HostileMobsAllowed& operator=(HostileMobsAllowed const&) = delete;
+    ~HostileMobsAllowed() {
+        if (auto level = ll::service::getLevel(); level && restore) level->setDifficulty(*restore);
+    }
+};
 
 bool hasChannel(std::vector<gf::core::Envelope> const& msgs, std::string const& channel) {
     return std::any_of(msgs.begin(), msgs.end(), [&](auto const& m) { return m.channel == channel; });
@@ -390,8 +410,10 @@ GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTas
     carrier.hintMob  = "minecraft:zombie";
     auto* region     = ctx.region();
     ctx.require(region != nullptr, "the test region");
+    HostileMobsAllowed hostile; // the e2e worlds are peaceful
     (void)ctx.player();
     co_await ctx.ticks(1);
+    region   = ctx.region();
     auto* mob = fl::spawnHintCarrier(carrier, *region, static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + 0.5f, &ctx.player());
     ctx.require(mob != nullptr, "the hint mob spawned");
     ctx.check(gf::game::items::idOf(mob->getCarriedItem()) == "minecraft:written_book", "it holds the hint book");
