@@ -33,8 +33,14 @@ oreberry plants (U6/U5), the `#twilightforest:antibuilder_ignores` consumers (U2
 | surface rule | `TFSurfaceRules.tfSurface()` (2) | same |
 | spawn target | none | none |
 
-Bedrock: F5's `TerrainProvider` evaluates the density graph (F5 `noise` density evaluator) per 4 x 8 cell (size 2 / 2)
-and interpolates like `NoiseChunk`; the dimension is -32..256 (S1). The skylight variant is chosen by the `terrain`
+Bedrock: F5's `TerrainProvider` evaluates the density graph (F5 `noise` density evaluator) per 8 x 8 cell:
+`cellWidth = QuartPos.toBlock(size_horizontal) = 2 << 2 = 8`, `cellHeight = QuartPos.toBlock(size_vertical) = 2 << 2 =
+8`. This is not vanilla overworld's 4 x 8 (`size_horizontal 1`). Interpolation follows `NoiseChunk` with those cell sizes:
+`cellCountXZ = 16 / 8 = 2` cells per chunk axis and `cellCountY = 256 / 8 = 32` cells from `cellNoiseMinY = -32 / 8 =
+-4`. `interpolated` inputs are evaluated at the 3 x 33 x 3 cell corners of the chunk and interpolated trilinearly
+across each 8 x 8 x 8 cell. `flat_cache` stays at quart (4-block) resolution, and `cache_2d` / `cache_once` keep their
+vanilla semantics. A 4 x 8 grid changes every terrain height, and the F13 height goldens would not match. The dimension
+is -32..256 (S1). The skylight variant is chosen by the `terrain`
 config option at world creation and stored in `gf:terrain:skylight`.
 
 ## 2. Density functions (owned, data)
@@ -57,14 +63,38 @@ config option at world creation and stored in `gf:terrain:skylight`.
 |---|---|---|
 | `twilightforest:biome_driven_terrain` | TerrainDensityRouter | `d = BiomeDensitySource.sampleTerrain(x, z)` (U1 blending); returns `baseOffset + d.depth * baseFactor + d.depth`; min/max = lower/upper bound |
 | `twilightforest:biome_driven_noise` | NoiseDensityRouter | returns `d.scale`; a chunk-cached variant (16 x 16 column cache) replaces it in `mapAll` |
-| `twilightforest:focused` | FocusedDensityFunction(centerX, bottomY, centerZ, radius, nearValue, farValue) | `clampedMap(dist3D(center - pos), 0, radius, near, far)` (centre at block + 0.5) |
-| `twilightforest:hollow_hill` | HollowHillFunction(centerX, bottomY, centerZ, radius, heightScale) | horizontal `dist`; `height = cos(dist / radius * PI) * radius / 3`; outside radius 0; else `clamp(height * heightScale - dY, -1, 1)` |
+| `twilightforest:focused` | FocusedDensityFunction(centerX, bottomY, centerZ, radius, nearValue, farValue), all `float` | all `float`: `dX = centerX - (float) blockX` (same for y, z); `dist = Mth.sqrt(dX*dX + dY*dY + dZ*dZ)`; returns the float overload `Mth.clampedMap(dist, 0f, radius, near, far)`, widened to double. Centre at block + 0.5f (`fromPos`) |
+| `twilightforest:hollow_hill` | HollowHillFunction(centerX, bottomY, centerZ, radius, heightScale), all `float` | all `float`: `dX = (float) blockX - centerX`, `dY = (float) blockY - bottomY`, `dZ = (float) blockZ - centerZ`; `dist = Mth.sqrt(dX*dX + dZ*dZ)`; `height = Mth.cos(dist / radius * Mth.PI) * radius * 0.3333333334f` (table cosine, not `/ 3`); `n = Mth.clamp(dist / Mth.abs(radius), 0f, 1f)`; `n >= 1` -> 0; else `Mth.clamp(height * heightScale - dY, -1f, 1f)`, widened to double. A negative radius gives the bowl-shaped floor. Centre at block + 0.5f (`fromPos`) |
 | `twilightforest:coord_min` | AbsoluteDifferenceFunction.Min(max, cx, cz) | `min(min(|x - cx|, |z - cz|), max)` |
 | `twilightforest:coord_max` | AbsoluteDifferenceFunction.Max(max, cx, cz) | `min(max(|x - cx|, |z - cz|), max)` |
 | `twilightforest:sqrt` | SqrtDensityFunction(input) | `sqrt(input)`; bounds = input bounds |
 
 Also used by landmark terraformers (hollow hills, labyrinth, lich tower, courtyard): `BoxDensityFunction` and
 `TanhHillFunction` (no registry ids; F6/F7 helpers).
+- `BoxDensityFunction` (int box, double min/max -4 / 4) is vanilla `Beardifier` arithmetic in double. BEARD_THIN / BURY
+  use `yDist = blockY - minY`; BEARD_BOX / ENCAPSULATE use the distance outside `[minY, maxY]`. The density is
+  BEARD_THIN / BEARD_BOX `getBeardContribution(xDist, yDist, zDist, blockY - minY) * 0.8`, BURY
+  `getBuryContribution(xDist, yDist * 0.5, zDist)`, or ENCAPSULATE `getBuryContribution(xDist * 0.5, yDist * 0.5,
+  zDist * 0.5) * 0.8`. It is then clamped to [-4, 4].
+- `TanhHillFunction` has `float` deltas. The perpendicular axis is scaled by `1.3F`. The constructor stores
+  `Mth.cos(angle)` / `Mth.sin(angle)` (table values).
+  - `double distSquared = dX * dX + dZ * dZ` is summed in float and then widened, and `9 * radius * radius` is float.
+  - The rest is `double` with `Math.sqrt` / `Math.exp`.
+
+`Mth` arithmetic (bit-exact parity for the hollow hill, labyrinth mound and fallen-trunk volume hashes). Where TF calls
+`Mth`, translate the 1.21.1 definitions, not `<cmath>`:
+- `SIN[i] = (float) Math.sin(i * Math.PI * 2.0 / 65536.0)` for `i` in 0..65535, built in double and stored as float.
+- `Mth.sin(float v) = SIN[(int)(v * 10430.378f) & 65535]` and `Mth.cos(float v) = SIN[(int)(v * 10430.378f + 16384.0f) &
+  65535]`, with float multiply and add. Java `f2i` truncates toward zero and saturates; NaN becomes 0. The C++
+  translation must clamp before the cast, because an out-of-range cast is undefined behaviour.
+- `Mth.PI = 3.1415927f`; `Mth.sqrt(float v) = (float) Math.sqrt((double) v)`; `Mth.abs(float)`.
+- `Mth.clamp(float v, float lo, float hi) = v < lo ? lo : Math.min(v, hi)`. The double overload is the same in double.
+  Integer literals are promoted to the overload's type.
+- `Mth.clampedMap(float...) = clampedLerp(outMin, outMax, inverseLerp(v, inMin, inMax))`, all in float. `clampedLerp`
+  returns `outMin` when `t < 0`, `outMax` when `t > 1`, else `outMin + t * (outMax - outMin)`.
+- Keep Java's float/double split exactly as the source declares it. Do not evaluate a `float` expression in double,
+  keep float temporaries, and do not let the compiler fuse `a * b + c` into an FMA, because Java never contracts. Build
+  these translation units without `-ffast-math` and with `-ffp-contract=off` (or `#pragma clang fp contract(off)`).
 
 Structure terraforming hook (`WorldgenHooks.getCustomDensity`): the Beardifier's value gets the sum of every
 intersecting structure's custom density function (F6 `landmark::addTerraformer`); U2's terrain provider must add it

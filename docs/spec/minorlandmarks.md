@@ -63,6 +63,15 @@ Component (`HollowHillComponent`, translate exactly):
   `ceilingY = ceil(cos(d / hdiam * PI) * hdiam / 4)`, floor feature at `floorY = floor(2s - cos(d/hdiam*PI) *
   hdiam/20 + 1 + 0.25)`: 2.5 % spawner, 2.5 % treasure chest (moved by `sqrt(2)` in a random direction, on two
   cobblestone blocks), else a stalagmite capped to `ceilingY - floorY + 4`.
+- These formulas are `float` with `Mth` (definitions in terrain.md section 3; bit-exact for the volume-hash goldens).
+  - `radius = (2s + 1) * 8 - 6` and `hdiam = (2s + 1) * 16` are ints.
+  - `distSq = dx*dx + dz*dz`, with `dx = (float)(x - cx) - 0.5f` (`getDistSqFromCenter`, float); `shortenedRadiusSq =
+    radius * radius * 0.85f`.
+  - `ceilingY = Mth.ceil(Mth.cos(Mth.sqrt(distSq) / hdiam * Mth.PI) * (hdiam / 4f))` and `floorY =
+    Mth.floor((2s) - Mth.cos(dist / hdiam * Mth.PI) * (hdiam / 20f) + 1 + 0.25f)`. Both use the table cosine.
+  - Chest offset: `angle = rand.nextFloat() * Mth.TWO_PI`, then `x + Math.round(Mth.cos(angle) * Mth.SQRT_OF_TWO)`
+    (likewise z with `Mth.sin`). Java's float `Math.round` returns the nearest int with ties toward positive
+    infinity. C's `roundf` rounds ties away from zero, so it is not a substitute.
 - Terraformer (`getStructureTerraformer`): `radius = (4s + 0.8) * 8`, inner `radius - 8`; mound
   `HollowHillFunction(centre at minY + 10, radius, 0.7).clamp(0,1)`; inner ceiling `-HollowHill(minY + 6, inner,
   0.675)`; inner floor `HollowHill(minY + s + s/2, 2 - inner, 0.1)`; interior `max(ceiling, floor)` masked by

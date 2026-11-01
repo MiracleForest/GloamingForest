@@ -206,6 +206,10 @@ Terraformer (hollow-hill style mound, translate exactly): radius 35; `HollowHill
 AbsoluteDifference.Max(32, cx + 1.5, cz + 1.5)`; entrances `max(ceiling, AbsoluteDifference.Min(32, ...) - 2)`;
 interior `max(entrances, innerFloor).clamp(0, 1)` masked by `Focused(centre, 24.5, 35)`; result
 `min(mound, maskedInterior)` (density function types from U2/F5).
+The mound centre is `(float)(cx + 1), (float)(cy + 7), cz + 2f`, not `fromPos`, so there is no +0.5. Both
+`HollowHillFunction` and `FocusedDensityFunction` compute in `float` with `Mth.sqrt` and the table `Mth.cos`
+(terrain.md section 3 gives the exact definitions). The volume-hash golden depends on reproducing that float
+arithmetic.
 
 ### 7.1 Pieces (all `TFStructureComponentOld`, translate exactly)
 
