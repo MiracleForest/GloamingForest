@@ -155,7 +155,7 @@ angles of the composed rotation) that hangs from the frame:
 
 | Frame | Placement | Used for |
 |---|---|---|
-| `world` | entity geometry facing south at yaw 0, origin = block centre on the floor | `TrophyRenderer` + `renderTrophy` (floor: `<boss>_trophy`; wall, facing north: `<boss>_wall_trophy`) |
+| `world` | world space of the block (origin = block centre on the floor, x east, z south) written as entity geometry: on an actor at yaw 0 the world axes coincide, so TF's rotation 0 trophy, which faces north, shows its face to the actor's back | `TrophyRenderer` + `renderTrophy` (floor: `<boss>_trophy`; wall, facing north: `<boss>_wall_trophy`) |
 | `head` | a bone parented to the wearer's `head` | trophies on the head (`CustomHeadLayer` + the `template_trophy` "head" display + ISTER + `TrophyRenderer.render(null, 180)`), the mystic crown (the Lich trophy's hat) |
 | `rightArm` | a bone parented to the wearer's `rightArm` | the knightmetal shield in the right hand (third person) |
 
