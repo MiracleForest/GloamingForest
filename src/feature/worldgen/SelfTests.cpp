@@ -49,6 +49,11 @@
 #include "mod/Main.h"
 #include "selftest/SelfTest.h"
 
+#ifdef GF_CLIENT
+#include "client/Client.h"
+#include "mc/client/player/LocalPlayer.h"
+#endif
+
 namespace {
 
 using gf::selftest::Context;
@@ -580,23 +585,25 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome", [](Context& ctx) -> ll::coro::Coro
         ctx.info(std::string("the probe biome ") + kProbeBiome + " is not installed (the worldgen e2e scenario installs it): nothing to write");
         co_return;
     }
-    auto* lc = bs->getChunkAt(BlockPos{box.minX, box.minY, box.minZ});
-    ctx.require(lc != nullptr, "test chunk");
-    wg::detail::LevelChunkAdapter chunk(*lc, registry, bs->getMinHeight(), bs->getMaxHeight());
-    int                           lx = box.minX & 15, lz = box.minZ & 15;
-    std::string                   original = chunk.biome(lx, box.minY, lz);
-    struct Restore {
-        wg::detail::LevelChunkAdapter& c;
-        int                            x, z;
-        std::string                    biome;
-        ~Restore() { c.setBiomeColumn(x, z, biome); }
-    } restore{chunk, lx, lz, original};
     std::string probeId = wg::detail::biomeIdOf(*probe);
-    chunk.setBiomeColumn(lx, lz, probeId);
-    ctx.check(chunk.biome(lx, box.minY, lz) == probeId, "the chunk reads back the custom biome " + probeId);
-    auto viaSource = wg::detail::biomeIdOf(bs->getBiome(BlockPos{box.minX, box.minY + 1, box.minZ}));
-    ctx.check(viaSource == probeId, "the block source sees the custom biome (" + viaSource + ")");
-    gf::log().info("worldgen custom biome: {} written and read back (was {})", probeId, original);
+    {
+        auto* lc = bs->getChunkAt(BlockPos{box.minX, box.minY, box.minZ});
+        ctx.require(lc != nullptr, "test chunk");
+        wg::detail::LevelChunkAdapter chunk(*lc, registry, bs->getMinHeight(), bs->getMaxHeight());
+        int                           lx = box.minX & 15, lz = box.minZ & 15;
+        std::string                   original = chunk.biome(lx, box.minY, lz);
+        struct Restore { // restored this tick, also when a check aborts
+            wg::detail::LevelChunkAdapter& c;
+            int                            x, z;
+            std::string                    biome;
+            ~Restore() { c.setBiomeColumn(x, z, biome); }
+        } restore{chunk, lx, lz, original};
+        chunk.setBiomeColumn(lx, lz, probeId);
+        ctx.check(chunk.biome(lx, box.minY, lz) == probeId, "the chunk reads back the custom biome " + probeId);
+        auto viaSource = wg::detail::biomeIdOf(bs->getBiome(BlockPos{box.minX, box.minY + 1, box.minZ}));
+        ctx.check(viaSource == probeId, "the block source sees the custom biome (" + viaSource + ")");
+        gf::log().info("worldgen custom biome: {} written and read back (was {})", probeId, original);
+    }
 
     // client view: paint the chunks around a tagged player
     Player* shown = nullptr;
@@ -605,12 +612,20 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome", [](Context& ctx) -> ll::coro::Coro
         return shown == nullptr;
     });
     if (!shown) co_return;
-    auto* region = gf::game::regionOf(static_cast<int>(shown->getDimensionId()));
+    // chunks the client has never received: 3000 blocks east of it, loaded on the server by the
+    // test's simulated player, painted, then sent to the client when it travels there
+    shown->removeTag("gf_worldgen_biome_show");
+    std::string         shownName = shown->getRealName();
+    int                 dim       = static_cast<int>(shown->getDimensionId());
+    auto                feet      = shown->getFeetPos();
+    gf::core::GlobalPos far{dim, gf::core::mth::floor(feet.x) + 3000, gf::core::mth::floor(feet.y), gf::core::mth::floor(feet.z)};
+    ctx.require(co_await ctx.ensureLoaded(far), "the chunks 3000 blocks away load on the server");
+    auto* region = gf::game::regionOf(dim);
     ctx.require(region != nullptr, "the tagged player's region");
-    auto pos  = shown->getFeetPos();
-    int  pcx  = gf::core::mth::floor(pos.x) >> 4, pcz = gf::core::mth::floor(pos.z) >> 4;
+    Vec3  pos{static_cast<float>(far.x), static_cast<float>(far.y), static_cast<float>(far.z)};
+    int   pcx = far.x >> 4, pcz = far.z >> 4;
     auto& out = painted();
-    out       = {static_cast<int>(shown->getDimensionId()), {}};
+    out       = {dim, {}};
     for (int dx = -2; dx <= 2; ++dx)
         for (int dz = -2; dz <= 2; ++dz) {
             auto* c = region->getChunk(pcx + dx, pcz + dz);
@@ -622,8 +637,7 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome", [](Context& ctx) -> ll::coro::Coro
                     a.setBiomeColumn(x, z, probeId);
                 }
         }
-    shown->removeTag("gf_worldgen_biome_show");
-    gf::log().info("worldgen custom biome: painted {} columns around {}", out.columns.size(), shown->getRealName());
+    gf::log().info("worldgen custom biome: painted {} columns 3000 blocks east of {}", out.columns.size(), shownName);
 });
 
 GF_REGISTER_SELFTEST("worldgen.custom_biome_restore", [](Context& ctx) {
@@ -634,6 +648,18 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome_restore", [](Context& ctx) {
     }
     auto* region = gf::game::regionOf(p.dim);
     ctx.require(region != nullptr, "the painted region");
+#ifdef GF_CLIENT
+    // what the client's own level holds under its player (the chunks it received after the trip)
+    if (auto const* local = gf::client::currentPlayer()) {
+        auto        feet = local->getFeetPos();
+        BlockPos    at{gf::core::mth::floor(feet.x), gf::core::mth::floor(feet.y), gf::core::mth::floor(feet.z)};
+        auto const& source = local->getDimensionBlockSourceConst();
+        auto const& seen   = wg::detail::biomeIdOf(source.getBiome(at));
+        bool        known  = probeBiome(source.getDimensionConst().getBiomeRegistry()) != nullptr;
+        gf::log().info("worldgen custom biome: the client level has {} under its player (probe in the client registry: {})", seen, known);
+        ctx.info("the client level has " + seen + " under its player (probe in the client registry: " + (known ? "yes" : "no") + ")");
+    }
+#endif
     for (auto const& [x, z, biome] : p.columns) {
         auto* c = region->getChunk(x >> 4, z >> 4);
         if (!c) continue;

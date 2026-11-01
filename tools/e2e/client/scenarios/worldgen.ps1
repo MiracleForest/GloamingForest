@@ -1,8 +1,9 @@
 # Worldgen (F5) on the client build: the same selftests as the server (the fixture feature and the
 # in-memory pipeline hash identically on both builds), the 200-chunk timing logged by the client's
 # integrated server, and the client's view of a custom biome (spike S2): the probe biome of
-# worldgen.prelaunch.ps1 is painted around the player, the chunks are sent again (a trip away and
-# back) and the client draws them with the probe's magenta fog and hot / dry grass tint.
+# worldgen.prelaunch.ps1 is painted into chunks 3000 blocks away that the client has not received,
+# the player travels there, a screenshot is taken and the biome the client's own level holds under
+# the player is logged (the probe's resource pack look is magenta fog and water).
 # Screenshots: out/worldgen/{world,custom_biome,selftest}.png
 Save-Screenshot 'world' | Out-Null
 if ($script:Mode -eq 'local') {
@@ -21,15 +22,18 @@ if ($script:Mode -eq 'local') {
     $p = Invoke-SelfTest 'worldgen.custom_biome'
     if ($p.Fail -gt 0) { throw 'worldgen.custom_biome failed while painting' }
     $painted = Get-LeviLog -Since $paintMark | Select-String -Pattern 'worldgen custom biome: painted (\d+) columns' | Select-Object -Last 1
-    if (-not $painted) { throw 'the probe biome was not painted around the player' }
-    Write-Step "painted $($painted.Matches[0].Groups[1].Value) columns with the probe biome"
+    if (-not $painted) { throw 'the probe biome was not painted' }
+    Write-Step "painted $($painted.Matches[0].Groups[1].Value) columns 3000 blocks away with the probe biome"
+    # the first visit: the server sends those chunks with the custom biome
     Invoke-Teleport '/tp @s ~3000 ~ ~'
-    Start-Sleep -Seconds 4
-    Invoke-Teleport '/tp @s ~-3000 ~ ~'
-    Start-Sleep -Seconds 8
+    Start-Sleep -Seconds 10
     Save-Screenshot 'custom_biome' | Out-Null
+    $seenMark = Get-LogMark
     $restore = Invoke-SelfTest 'worldgen.custom_biome_restore'
     if ($restore.Fail -gt 0) { throw 'worldgen.custom_biome_restore failed' }
+    $seen = Get-LeviLog -Since $seenMark | Select-String -Pattern 'the client level has (\S+) under its player' | Select-Object -Last 1
+    if ($seen) { Write-Step "client level biome under the player: $($seen.Matches[0].Groups[1].Value)" }
+    Invoke-Teleport '/tp @s ~-3000 ~ ~'
 } else {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
     $r = Invoke-SelfTest 'worldgen.*'
