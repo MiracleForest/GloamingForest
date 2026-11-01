@@ -26,8 +26,9 @@ namespace gf::enchant::internal {
 /// Whether a custom enchantment can go on an item id (supportedItems; books take anything).
 [[nodiscard]] bool supports(std::string const& enchantmentId, std::string const& itemId);
 /// Java's anvil merge of the custom enchantments of `second` into `out` (the copy of `first` the
-/// anvil made): returns the extra anvil cost. The anvil hook's path.
-int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, bool bookEnchant);
+/// anvil made, the vanilla enchantments merged by the engine): returns the extra anvil cost. The
+/// anvil hook's path; `creative`: the player builds instantly (no supported-items check).
+int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, bool bookEnchant, bool creative = false);
 /// The grindstone: removes every custom enchantment (none of TF's is a curse). True when any was.
 bool grind(ItemStack& stack);
 /// The experience the grindstone gives for the custom enchantments (Java: the min cost of each).
@@ -35,6 +36,8 @@ bool grind(ItemStack& stack);
 /// The enchanting table: the custom enchantments Java's selectEnchantment would add for an option
 /// of `cost` on `itemId` (seeded like the table), vanilla candidates of the item included.
 [[nodiscard]] std::map<std::string, int> rollTable(std::string const& itemId, int enchantValue, int cost, int seed, int option);
+/// Removes a registered enchantment spec (selftests).
+void unregisterType(std::string const& enchantmentId);
 /// Roman numerals as Java's enchantment.level.N ("I" .. "X", then digits).
 [[nodiscard]] std::string levelName(int level);
 /// The glint marker: an empty vanilla enchantment list makes clients draw the glint without a

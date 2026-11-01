@@ -42,10 +42,14 @@ bool refreshLore(ItemStack& stack, Player const* viewer);
 /// Runs the per-tick item work for one player now (inventory / armour ticks, equip changes,
 /// use ticks, the lore refresh when `lore`); the module does it every tick.
 void tickPlayer(Player& player, bool lore);
+/// Forgets the armour a player wore (its next tick equips what it wears again): a disconnect.
+void forgetWorn(Player const& player);
 /// Dispenses through the registered DispenseFn (the hook's path); nullopt when none is registered.
 [[nodiscard]] std::optional<bool> dispense(BlockSource& region, BlockPos const& dispenser, int facing, ItemStack& stack);
 /// Removes a registration (selftests): behaviour, tooltips, dispenser and bar of `itemId`.
 void unregister(std::string const& itemId);
+/// Removes the display transforms of an item (selftests).
+void clearDisplayTransforms(std::string const& itemId);
 
 /// The lore data key ("gf:lore" in the user data): the lines GloamingForest wrote.
 inline constexpr char kLoreKey[] = "lore";

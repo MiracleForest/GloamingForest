@@ -13,6 +13,10 @@
 #include <map>
 #include <mutex>
 
+#include "mc/deps/core/string/HashedString.h"
+#include "mc/world/item/Item.h"
+#include "mc/world/item/ItemStack.h"
+
 #include "feature/ext/item/Item.h"
 
 namespace gf::item::ext {
@@ -62,6 +66,23 @@ Rarity rarityOf(std::string const& itemId) {
     std::lock_guard lock(mutex());
     auto            it = table().find(itemId);
     return it == table().end() ? Rarity::Common : it->second;
+}
+
+// ItemStack#getRarity: an enchanted stack shows COMMON / UNCOMMON as RARE and RARE as EPIC; EPIC and
+// the extensions (TWILIGHT) keep theirs.
+Rarity rarityOf(ItemStackBase const& stack) {
+    if (stack.isNull() || !stack.mItem) return Rarity::Common;
+    auto rarity = rarityOf(stack.mItem->mFullName->getString());
+    if (!stack.isEnchanted()) return rarity;
+    switch (rarity) {
+    case Rarity::Common:
+    case Rarity::Uncommon:
+        return Rarity::Rare;
+    case Rarity::Rare:
+        return Rarity::Epic;
+    default:
+        return rarity;
+    }
 }
 
 } // namespace gf::item::ext

@@ -31,8 +31,11 @@
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/deps/nbt/ListTag.h"
+#include "mc/world/actor/player/AbilitiesIndex.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/containers/managers/models/EnchantingContainerManagerModel.h"
+#include "mc/world/inventory/network/ItemStackNetManagerServer.h"
+#include "mc/world/inventory/network/ItemStackRequestActionHandler.h"
 #include "mc/world/inventory/network/ItemStackNetResult.h"
 #include "mc/world/inventory/network/crafting/CraftHandlerEnchant.h"
 #include "mc/world/inventory/network/crafting/CraftHandlerGrindstone.h"
@@ -317,6 +320,12 @@ bool supports(std::string const& enchantmentId, std::string const& itemId) {
     return fullId(s) == fullId(itemId);
 }
 
+void unregisterType(std::string const& enchantmentId) {
+    auto&           st = store();
+    std::lock_guard lock(st.mutex);
+    st.specs.erase(fullId(enchantmentId));
+}
+
 std::string levelName(int lvl) {
     static constexpr char const* names[] = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
     if (lvl >= 1 && lvl <= 10) return names[lvl - 1];
@@ -358,22 +367,43 @@ void updateGlint(ItemStack& stack) {
     }
 }
 
-int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, bool bookEnchant) {
+int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, bool bookEnchant, bool creative) {
     if (game::items::isEmpty(out)) return 0;
-    auto outId  = game::items::idOf(out);
-    auto mine   = custom(first);
+    auto outId = game::items::idOf(out);
+    auto mine  = custom(first);
     auto theirs = custom(second);
-    // the anvil's copy of the first item keeps the first item's custom enchantments
+    // Java's AnvilMenu works on one mutable set: the first item's enchantments, then each of the
+    // second item's joins it when it fits the item (or the player builds instantly / the first item
+    // is a book) and is compatible with everything in the set so far (the ones joined before it
+    // included). Bedrock's engine merged the vanilla ones into `out` already.
+    std::map<std::string, int> held = all(out);
+    for (auto const& [id, lvl] : custom(out)) held.erase(id);
+    int cost = 0;
+    // a vanilla enchantment the engine brought over from the second item must not conflict with
+    // the first item's custom ones: Java leaves it out (and counts the conflict)
+    auto firstAll = all(first);
+    for (auto const& [vid, lvl] : std::map<std::string, int>(held)) {
+        auto before = firstAll.find(vid);
+        if (before != firstAll.end() && before->second == lvl) continue; // the first item's own
+        for (auto const& [cid, clvl] : mine) {
+            if (compatible(vid, cid)) continue;
+            ++cost;
+            int keep = before == firstAll.end() ? 0 : before->second;
+            enchant::set(out, vid, keep);
+            if (keep > 0) held[vid] = keep;
+            else held.erase(vid);
+            break;
+        }
+    }
+    for (auto const& [id, lvl] : mine) held[id] = lvl;
     auto stored = Json::object();
     for (auto const& [id, lvl] : mine) stored[id] = lvl;
-    int cost = 0;
     for (auto const& [id, lvl2] : theirs) {
         auto spec = specOf(id);
-        int  lvl1 = mine.contains(id) ? mine[id] : 0;
+        int  lvl1 = held.contains(id) ? held[id] : 0;
         int  lvl  = lvl1 == lvl2 ? lvl2 + 1 : std::max(lvl1, lvl2);
-        bool ok   = supports(id, outId);
-        // conflicts with the first item's other enchantments (custom and vanilla)
-        for (auto const& [other, l] : all(first)) {
+        bool ok   = creative || game::items::idOf(first) == "minecraft:enchanted_book" || supports(id, outId);
+        for (auto const& [other, l] : held) {
             if (other == id) continue;
             if (!compatible(id, other)) {
                 ok = false;
@@ -383,9 +413,11 @@ int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, 
         if (!ok) continue;
         if (spec) lvl = std::min(lvl, spec->maxLevel);
         stored[id] = lvl;
+        held[id]   = lvl;
         int anvil  = spec ? spec->anvilCost : 1;
         if (bookEnchant) anvil = std::max(1, anvil / 2);
         cost += anvil * lvl;
+        if (game::items::countOf(first) > 1) cost = 40;
     }
     writeStored(out, stored);
     updateGlint(out);
@@ -572,8 +604,9 @@ std::map<std::int64_t, Rolled>& rolled() {
     static std::map<std::int64_t, Rolled> m;
     return m;
 }
-thread_local Player* gEnchanting = nullptr;
-thread_local bool    gWriting    = false;
+thread_local Player* gEnchanting    = nullptr;
+thread_local bool    gWriting       = false;
+thread_local Player* gRequestPlayer = nullptr; ///< the player whose item stack requests are being processed
 
 std::vector<std::pair<int, int>> vanillaOf(ItemEnchants const& e) {
     std::vector<std::pair<int, int>> out;
@@ -675,6 +708,17 @@ LL_TYPE_INSTANCE_HOOK(
     }
 }
 
+// The player of the item stack requests being processed (the anvil's result is computed inside).
+LL_TYPE_INSTANCE_HOOK(EnchantRequestQueueHook, ll::memory::HookPriority::Normal, ItemStackNetManagerServer, &ItemStackNetManagerServer::_processQueue, void) {
+    struct Restore {
+        Player* prev;
+        ~Restore() { en::gRequestPlayer = prev; }
+    } restore{en::gRequestPlayer};
+    auto const& handler = mRequestActionHandler;
+    en::gRequestPlayer  = handler ? &static_cast<Player&>(handler->mPlayer) : nullptr;
+    origin();
+}
+
 // Java's anvil for the custom enchantments (see the top of the file).
 LL_STATIC_HOOK(
     EnchantAnvilHook,
@@ -689,7 +733,10 @@ LL_STATIC_HOOK(
     int cost = origin(first, second, out, bookEnchant);
     try {
         if (en::internal::custom(first).empty() && en::internal::custom(second).empty()) return cost;
-        return cost + en::internal::mergeAnvil(first, second, out, bookEnchant);
+        // Java's player.getAbilities().instabuild: the player whose item stack request is running
+        auto* player   = en::gRequestPlayer;
+        bool  creative = player && player->canUseAbility(AbilitiesIndex::Instabuild);
+        return cost + en::internal::mergeAnvil(first, second, out, bookEnchant, creative);
     } catch (std::exception const& e) {
         gf::log().error("enchant: anvil merge failed: {}", e.what());
         return cost;
@@ -729,6 +776,7 @@ public:
         EnchantOptionsHook::hook();
         EnchantCraftHook::hook();
         EnchantSaveHook::hook();
+        EnchantRequestQueueHook::hook();
         EnchantAnvilHook::hook();
         EnchantGrindHook::hook();
         EnchantGrindXpHook::hook();
@@ -737,6 +785,7 @@ public:
         EnchantGrindXpHook::unhook();
         EnchantGrindHook::unhook();
         EnchantAnvilHook::unhook();
+        EnchantRequestQueueHook::unhook();
         EnchantSaveHook::unhook();
         EnchantCraftHook::unhook();
         EnchantOptionsHook::unhook();

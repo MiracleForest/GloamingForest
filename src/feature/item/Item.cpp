@@ -9,6 +9,9 @@
 // - extra melee damage: EnchantUtils::getMeleeDamageBonus (where Bedrock adds Sharpness & co.);
 // - inventory / armour ticks, equip changes, use ticks and the lore refresh: one server tick pass
 //   over the players.
+// hurtEnemy returning true lets the item's own post-hit handling run (Java's postHurtEnemy: the
+// durability loss); a registered dispense function is the item's only dispense behaviour (false:
+// the item stays and the fail sound plays, TF's OptionalDispenseItemBehavior). See ext/item/Item.h.
 // Tooltips become lore written by the server (in the holder's language): vanilla clients and the
 // client mod show the same lines. Bars (setBar) are drawn by the client mod (client/item).
 #include "feature/item/Item.h"
@@ -20,6 +23,7 @@
 #include <unordered_map>
 
 #include "ll/api/event/EventBus.h"
+#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
@@ -27,8 +31,11 @@
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/nbt/CompoundTag.h"
+#include "mc/deps/shared_types/legacy/LevelEvent.h"
+#include "mc/server/ServerPlayer.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/world/Container.h"
+#include "mc/world/ContainerID.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Inventory.h"
@@ -49,6 +56,7 @@
 
 #include "feature/common/Interactions.h"
 #include "feature/enchant/EnchantInternal.h"
+#include "feature/ext/item/Item.h"
 #include "feature/item/ItemInternal.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
@@ -318,8 +326,11 @@ std::optional<bool> dispense(BlockSource& region, BlockPos const& dispenser, int
     }
     bool used = guarded("dispense", id, fn, region, dispenser, facing, stack);
     if (used) log().info("item: dispensed {} at {} {} {}", id, dispenser.x, dispenser.y, dispenser.z);
+    else log().info("item: dispensing {} at {} {} {} failed (kept)", id, dispenser.x, dispenser.y, dispenser.z);
     return used;
 }
+
+void forgetWorn(Player const& player) { worn().erase(const_cast<Player&>(player).getOrCreateUniqueID().rawID); }
 
 void unregister(std::string const& itemId) {
     auto&           s = store();
@@ -357,6 +368,9 @@ void tickPlayer(Player& player, bool lore) {
         }
     };
 
+    // Java's Inventory#tick: every compartment (items, armor, offhand) with the stack's index in it
+    // and `selected == index` (so armour slot i and the offhand count as selected when the hotbar
+    // selection is i / 0); Java's armour list runs feet (0) .. head (3)
     auto& inv      = player.getInventory();
     int   size     = inv.getContainerSize();
     int   selected = player.getSelectedItemSlot();
@@ -365,11 +379,12 @@ void tickPlayer(Player& player, bool lore) {
     }
     std::array<std::string, 4> now;
     for (int a = 0; a < 4; ++a) {
-        auto slot = static_cast<SharedTypes::Legacy::ArmorSlot>(a);
-        process(player.getArmor(slot), [&](ItemStack const& n) { player.setArmor(slot, n); }, a, false, a);
+        auto slot      = static_cast<SharedTypes::Legacy::ArmorSlot>(a);
+        int  javaIndex = 3 - a;
+        process(player.getArmor(slot), [&](ItemStack const& n) { player.setArmor(slot, n); }, javaIndex, selected == javaIndex, a);
         now[static_cast<std::size_t>(a)] = game::items::idOf(player.getArmor(slot));
     }
-    process(player.getOffhandSlot(), [&](ItemStack const& n) { player.setOffhandSlot(n); }, 0, false, -1);
+    process(player.getOffhandSlot(), [&](ItemStack const& n) { player.setOffhandSlot(n); }, 0, selected == 0, -1);
 
     // equip / unequip: armour ids that changed since the last tick
     auto  uid  = player.getOrCreateUniqueID().rawID;
@@ -387,18 +402,80 @@ void tickPlayer(Player& player, bool lore) {
         prev[a] = now[a];
     }
 
-    // use ticks: the item being used (Java's onUseTick with the remaining use duration)
-    auto const& inUse = player.mItemInUse->mItem.get();
-    if (!inUse.isNull()) {
+    // use ticks: the item being used (Java's onUseTick with the remaining use duration), on the
+    // stack in the hand it is used from: a change goes back to that slot and to the item in use
+    auto& itemInUse = player.mItemInUse.get();
+    if (!itemInUse.mItem->isNull()) {
         std::string id;
         // getItemUseDuration counts down: Bedrock passes it to releaseUsing as durationLeft
-        if (auto fn = behaviourFn(inUse.mItem.get(), &Behaviour::useTick, &id))
-            guarded("useTick", id, fn, player, const_cast<ItemStack&>(inUse), player.getItemUseDuration());
+        if (auto fn = behaviourFn(itemInUse.mItem->mItem.get(), &Behaviour::useTick, &id)) {
+            ItemStack before = itemInUse.mItem.get();
+            ItemStack copy   = before;
+            guarded("useTick", id, fn, player, copy, player.getItemUseDuration());
+            if (changedStack(before, copy)) {
+                itemInUse.mItem.get() = copy;
+                if (itemInUse.mSlot->mContainerId == ContainerID::Offhand) {
+                    player.setOffhandSlot(copy);
+                } else {
+                    int at = itemInUse.mSlot->mSlot;
+                    if (at < 0 || at >= size || game::items::idOf(inv.getItem(at)) != game::items::idOf(before)) at = selected;
+                    if (game::items::idOf(inv.getItem(at)) == game::items::idOf(before)) inv.setItem(at, copy);
+                }
+                sync = true;
+            }
+        }
     }
     if (sync) player.sendInventory(false);
 }
 
 } // namespace internal
+
+// ---- extension (ext/item/Item.h) ---------------------------------------------------------------------
+
+namespace ext {
+
+std::optional<Bar>       barOf(ItemStack const& stack) { return internal::bar(stack); }
+std::vector<std::string> tooltipLines(ItemStack const& stack, Player const* viewer) { return internal::tooltipLines(stack, viewer); }
+bool                     refreshTooltip(ItemStack& stack, Player const* viewer) { return internal::refreshLore(stack, viewer); }
+
+namespace {
+struct Transforms {
+    std::mutex                                                     mutex;
+    std::map<std::string, std::map<std::string, DisplayTransform>> byItem; ///< item -> context -> transform
+};
+Transforms& transforms() {
+    static Transforms t;
+    return t;
+}
+} // namespace
+
+void setDisplayTransform(std::string const& itemId, std::string const& context, DisplayTransform const& transform) {
+    auto&           t = transforms();
+    std::lock_guard lock(t.mutex);
+    t.byItem[fullId(itemId)][context] = transform;
+}
+
+void clearTransforms(std::string const& itemId) {
+    auto&           t = transforms();
+    std::lock_guard lock(t.mutex);
+    t.byItem.erase(fullId(itemId));
+}
+
+std::optional<DisplayTransform> displayTransform(std::string const& itemId, std::string const& context) {
+    auto&           t = transforms();
+    std::lock_guard lock(t.mutex);
+    auto            it = t.byItem.find(fullId(itemId));
+    if (it == t.byItem.end()) return std::nullopt;
+    // ItemDisplayContext's fallback chain: JARRED (TFEnumExtensions#ItemDisplayContext_JARRED) -> FIXED
+    for (std::string c = context; !c.empty(); c = c == kJarred ? "fixed" : "") {
+        if (auto d = it->second.find(c); d != it->second.end()) return d->second;
+    }
+    return std::nullopt;
+}
+
+} // namespace ext
+
+void internal::clearDisplayTransforms(std::string const& itemId) { ext::clearTransforms(itemId); }
 
 } // namespace gf::item
 
@@ -452,11 +529,12 @@ LL_TYPE_INSTANCE_HOOK(
     Actor&     actor,
     Mob&       attacker
 ) {
+    // Java's Player#attack: hurtEnemy, and when it returns true postHurtEnemy, where the item loses
+    // its durability (Bedrock: ComponentItem's own hurtActor)
     std::string id;
     auto        fn = it::behaviourFn(this, &it::Behaviour::hurtEnemy, &id);
     if (!fn || actor.isClientSide()) return origin(item, actor, attacker);
-    if (it::guarded("hurtEnemy", id, fn, item, actor, static_cast<Actor&>(attacker))) return; // the behaviour used the item
-    origin(item, actor, attacker);
+    if (it::guarded("hurtEnemy", id, fn, item, actor, static_cast<Actor&>(attacker))) origin(item, actor, attacker);
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -517,8 +595,17 @@ LL_TYPE_INSTANCE_HOOK(
     ItemStack stack = container.getItem(slot);
     auto      used  = it::internal::dispense(region, dispenser, f, stack);
     if (!used) return origin(region, container, slot, pos, face);
-    if (*used) container.setItem(slot, stack);
-    return *used || origin(region, container, slot, pos, face);
+    container.setItem(slot, stack); // the behaviour's stack either way (Java returns it from execute)
+    if (*used) return true;
+    // TF's OptionalDispenseItemBehavior: an unsuccessful dispense keeps the item and plays the
+    // dispenser's fail sound (level event 1001) instead of the default ejection
+    region.getLevel().broadcastLevelEvent(
+        SharedTypes::Legacy::LevelEvent::SoundClickFail,
+        Vec3{static_cast<float>(dispenser.x) + 0.5f, static_cast<float>(dispenser.y) + 0.5f, static_cast<float>(dispenser.z) + 0.5f},
+        0,
+        nullptr
+    );
+    return true;
 }
 
 // Extra melee damage of the held item (knightmetal against armoured targets, ...): where Bedrock adds
@@ -596,6 +683,11 @@ public:
                 return true;
             });
         });
+        // a player who leaves forgets the armour it wore: when it comes back, its worn armour is
+        // equipped again (Java compares with the empty equipment of a new player entity)
+        mLeave = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {
+            internal::forgetWorn(ev.self());
+        });
         static bool registered = false;
         if (!registered) {
             registered = true;
@@ -604,6 +696,7 @@ public:
     }
     void uninstall() {
         ll::event::EventBus::getInstance().removeListener(mTick);
+        ll::event::EventBus::getInstance().removeListener(mLeave);
         for (auto id : mHandlers) ia::remove(id);
         mHandlers.clear();
         ItemMeleeBonusHook::unhook();
@@ -618,6 +711,7 @@ public:
 
 private:
     ll::event::ListenerPtr     mTick;
+    ll::event::ListenerPtr     mLeave;
     std::vector<ia::HandlerId> mHandlers;
 };
 

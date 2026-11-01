@@ -4,22 +4,33 @@
 //
 // - Rarity: TF's TFRarityEnumExtension adds the TWILIGHT rarity (dark green names: the boss
 //   trophies and banner patterns). Bedrock's Rarity enum has no such entry, so names are coloured
-//   by id. TF's own TWILIGHT items are built in; units may add more.
+//   by id. TF's own TWILIGHT items are built in; units may add more. Enchanted stacks get Java's
+//   bump (common / uncommon -> rare, rare -> epic; TWILIGHT and epic stay).
 // - Bars: the durability / dose bar a unit gave with item::setBar, as the client mod's renderer
-//   draws it (client/item).
+//   draws it (client/item: from the slot's real stack, its item data included).
 // - Tooltips: the lines the server writes as lore, and a refresh after a unit changed a stack's
 //   data outside the inventory tick (a chest, an item frame).
-// - Display contexts: TFItemDisplayContextEnumExtension's JARRED context (items drawn inside a jar,
-//   falling back to FIXED) as a flag next to client/render/Render.h's ItemContext values.
+// - Display contexts: TFItemDisplayContextEnumExtension's JARRED context ("twilightforest:jarred",
+//   items drawn inside a mason jar; Java falls back to FIXED): the display transforms of an item's
+//   model by context with that fallback, and (client) a renderer registry the jar renderer
+//   dispatches through.
+//
+// Semantics of contract callbacks the header leaves open (Java's):
+// - Behaviour::hurtEnemy returns Java's hurtEnemy result: true runs the item's post-hit handling
+//   (Java's postHurtEnemy: the durability loss of ComponentItem::hurtActor); false skips it.
+// - DispenseFn: a registered item is always dispensed by its function (never Bedrock's default
+//   ejection); false is TF's OptionalDispenseItemBehavior failing: the item stays and the
+//   dispenser's fail sound (level event 1001) plays.
 
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "feature/item/Item.h"
-#include "feature/item/ItemInternal.h"
 
 class ItemStack;
+class ItemStackBase;
 class Player;
 
 namespace gf::item::ext {
@@ -32,19 +43,32 @@ enum class Rarity { Common, Uncommon, Rare, Epic, Twilight };
 void setRarity(std::string const& itemId, Rarity rarity);
 /// The rarity of an item (Common when none was set).
 [[nodiscard]] Rarity rarityOf(std::string const& itemId);
+/// The rarity a stack shows (ItemStack#getRarity: the item's, bumped when enchanted).
+[[nodiscard]] Rarity rarityOf(ItemStackBase const& stack);
 
 /// The bar of a stack as setBar's function gives it (nullopt: hidden / none).
-[[nodiscard]] inline std::optional<Bar> barOf(ItemStack const& stack) { return internal::bar(stack); }
+[[nodiscard]] std::optional<Bar> barOf(ItemStack const& stack);
 
 /// The tooltip lines the server writes as lore for `viewer` (null: the server's language).
-[[nodiscard]] inline std::vector<std::string> tooltipLines(ItemStack const& stack, Player const* viewer) {
-    return internal::tooltipLines(stack, viewer);
-}
+[[nodiscard]] std::vector<std::string> tooltipLines(ItemStack const& stack, Player const* viewer);
 /// Rewrites a stack's tooltip lore now (true when it changed).
-inline bool refreshTooltip(ItemStack& stack, Player const* viewer) { return internal::refreshLore(stack, viewer); }
+bool refreshTooltip(ItemStack& stack, Player const* viewer);
 
-/// TFItemDisplayContextEnumExtension#JARRED as a client/render ItemContext flag (after Head = 32):
-/// renderers registered for it draw items inside jars; without one, Fixed is used.
+/// Java's ItemTransform of a model's "display" entry: degrees, 1/16 block, factors.
+struct DisplayTransform {
+    std::array<float, 3> rotation{0, 0, 0};
+    std::array<float, 3> translation{0, 0, 0};
+    std::array<float, 3> scale{1, 1, 1};
+};
+/// The JARRED context's name in item models ("display": {"twilightforest:jarred": {...}}).
+inline constexpr char kJarred[] = "twilightforest:jarred";
+/// TFItemDisplayContextEnumExtension#JARRED as a client/render ItemContext flag (after Head = 32).
 inline constexpr unsigned kJarredContext = 64;
+/// Sets an item's display transform for a context ("fixed", "gui", "ground", kJarred, ...): the
+/// owner of the item gives its model's numbers.
+void setDisplayTransform(std::string const& itemId, std::string const& context, DisplayTransform const& transform);
+/// The transform an item is drawn with in `context`: its own, else the context's fallback (Java's
+/// ItemDisplayContext fallback: JARRED -> FIXED), else nullopt (identity).
+[[nodiscard]] std::optional<DisplayTransform> displayTransform(std::string const& itemId, std::string const& context);
 
 } // namespace gf::item::ext

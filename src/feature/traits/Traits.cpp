@@ -1,7 +1,7 @@
 // The traits part of contract "data" (F9): boolean per-player flags both sides need (TF's data
 // attachments of that kind), stored in the world DB ("gf:traits:<player uuid>" {trait: true}) and
 // sent to the player's client mod ("traits.sync" {traits: {id: bool}}) on every change and when
-// it joins. The client side reads them through ext/item/Traits.h.
+// it joins. The client side reads them through ext/item/Client.h (gf::traits::ext::client::get).
 #include "feature/traits/Traits.h"
 
 #include <map>
