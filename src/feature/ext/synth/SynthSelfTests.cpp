@@ -208,11 +208,13 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
     for (int wait = 0; wait < 100 && res->done.load() < int(std::size(kEvents)) + 2; ++wait) co_await ctx.ticks(1);
     ctx.require(res->done.load() == int(std::size(kEvents)) + 2, "the client thread played every event");
     std::lock_guard lock(res->lock);
-    if (res->control != 0 && res->bogus == 0) {
+    // the engine returns ~0 (or 0) for an event it cannot resolve
+    auto known = [](std::uint64_t h) { return h != 0 && h != ~std::uint64_t(0); };
+    if (known(res->control) && !known(res->bogus)) {
         // the engine tells known from unknown events: every TF event must be known
         int missing = 0;
         for (std::size_t i = 0; i < std::size(kEvents); ++i) {
-            if (res->handles[i] == 0 && ++missing <= 20) ctx.check(false, std::string("the client does not know ") + kEvents[i].id);
+            if (!known(res->handles[i]) && ++missing <= 20) ctx.check(false, std::string("the client does not know ") + kEvents[i].id);
         }
         ctx.check(missing == 0, std::to_string(missing) + " event(s) unknown to the client");
     } else {
@@ -224,7 +226,7 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
         auto* client = gf::client::currentClient();
         if (!client) return;
         for (auto h : handles) {
-            if (h != 0) client->getSoundEngine()->stop(h);
+            if (h != 0 && h != ~std::uint64_t(0)) client->getSoundEngine()->stop(h);
         }
     });
     gf::log().info("synth: played {} sound events on the client", std::size(kEvents));
