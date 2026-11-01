@@ -156,25 +156,41 @@ registry of active positions; redstone via `gf::redstone::watch` / `power` (no n
   activates neighbouring built blocks. Active: redstone sparkle client-side. Ticker only while active.
 - `CarminiteBuilderBlockEntity` (server tick while making blocks): track the nearest non-spectator player within 16;
   next direction from the player's pitch `floor(pitch x 4 / 360 + 1.5) & 3`: 0 = UP, 2 = DOWN, else the player's
-  horizontal facing; every 10 ticks place `twilightforest:built_block[active=false]` at the cursor + direction if
-  air and fewer than 16 blocks made (+ `block.twilightforest.builder.create` at the builder, vol 0.75, pitch 1.2),
-  advance the cursor; blocked -> stop making blocks. Not making blocks: after 60 ticks set `builder_timeout` and
-  schedule 4.
+  horizontal facing; every 10 ticks (`ticksRunning % 10 == 0`, with a tracked player and a cursor) place
+  `twilightforest:built_block[active=false]` at the cursor + direction while `blocksMade <= 16` (TF `<= RANGE` with
+  `RANGE = 16`, so one run builds up to **17** blocks) and that position is air (`isEmptyBlock`), with
+  `block.twilightforest.builder.create` at the builder (vol 0.75, pitch 1.2), then advance the cursor and count the
+  block; otherwise (17 blocks made or the position not air) the run is blocked -> stop making blocks (forget the
+  player, reset the stop timer). Not making blocks: after 60 ticks set `builder_timeout` and schedule 4.
 - `activateBuiltBlocks(pos)`: an inactive built block becomes active, plays `block.twilightforest.builder.replace`
   ("Built Block expires", 0.3, 0.6) and schedules 10 ticks; its tick removes it (sound 0.3, 0.5) and activates its 6
   neighbours (chain).
 
 ### 2.3 Antibuilder (`AntibuilderBlockEntity`)
 
-Ticks only while a living player is within 16 blocks (else drops its snapshot): client draws redstone dust in the
-block and, 1/10, three outline lines of the 9 x 9 x 9 region (one of 12 edges; 16 particles per line). Server: first
-tick with the area loaded snapshots the 9 x 9 x 9 block states around it (radius 4) and enters slow scan; scans every
-tick (fast) or every 20 ticks (slow); each changed position (different block) is reverted with chance 1/10 per scan
-unless the current state is unbreakable or either state is in `#twilightforest:antibuilder_ignores` (U2's tag:
-redstone lamp, TNT, water, the tower devices, common protections, ...) or the new state is air where the snapshot was
-non-solid (then the snapshot just updates); a revert places `twilightforest:antibuilt_block` where the snapshot had
-a block (air stays air), with block-break particles when the position was air; any revert keeps fast scanning, 20
-ticks without changes returns to slow scan.
+Ticks only while a living non-spectator player is within 16 blocks of its centre (else drops its snapshot): client
+draws redstone dust in the block and, 1/10, three outline lines of the 9 x 9 x 9 region (one of 12 edges; 16
+particles per line). Server (`tickCount` + 1 per tick while a player is in range, reset to 0 with the snapshot):
+
+- The first tick with the area loaded (radius 4) snapshots the 9 x 9 x 9 block states around it (x, then y, then z
+  from -4 to 4) and enters slow scan. A scan runs every tick in fast scan, or when `tickCount % 20 == 0` in slow scan.
+- A scan compares each position's current block with the snapshot (by block, not state). For a changed position
+  (`revertBlock(current, snapshot)`):
+  - not revertible -> the snapshot takes the current state and the position does not count: the current state is air
+    and the snapshot does not block motion (`!blocksMotion()`), or the current state is unbreakable (destroy speed
+    < 0), or either state is in `#twilightforest:antibuilder_ignores` (U2's tag: redstone lamp, TNT, water, the tower
+    devices, common protections, ...);
+  - revertible -> the position counts as a **detected change** whether or not it is reverted this scan, and the
+    snapshot keeps its old state. It is reverted only with chance 1/10 (`REVERT_CHANCE`, the block entity's own
+    random): the replacement is `twilightforest:antibuilt_block` when the snapshot was not air, else air; when the
+    current state is air, level event 2001 (`PARTICLES_DESTROY_BLOCK`: break particles and break sound) of the
+    replacement plays first; then `Block.updateOrDestroy(current, replacement, flags 2)`: a replacement of air
+    **destroys the placed block with drops** (`destroyBlock(pos, true)`, with its break effects), an antibuilt block
+    is set with flag 2 (clients updated, no neighbour updates).
+- A scan with at least one detected change switches to fast scan and resets `ticksSinceChange` to 0; a scan without
+  one increments it, and once it is **more than 20** (`ticksSinceChange > 20`, the 21st consecutive change-free scan)
+  slow scan resumes. A block placed during slow scan is found by the next 20-tick scan; from then on it is rolled
+  every tick (about 10 scans on average until its revert), not every 20 ticks.
 
 ### 2.4 Carminite reactor (`CarminiteReactorBlock`, `CarminiteReactorBlockEntity`)
 
@@ -226,7 +242,8 @@ box with those textures (client mod; vanilla clients see a fixed debris texture)
 
 - POI `twilightforest:ghast_trap`: all states of the block, max tickets 0, valid range 1 (used by the Ur-Ghast to
   find traps; Bedrock: U26 keeps its own index of ghast trap positions per dimension in BlockData / world data).
-- Inactive tick: every dying (deathTime > 0) `carminite_ghastling` within the box inflated (10, 16, 10) is added to
+- Inactive tick: every dying (deathTime > 0) `carminite_ghastling` within the trap's block box inflated (10, 16, 10)
+  (`new AABB(pos).inflate(10, 16, 10)`: x - 10 .. x + 11, y - 16 .. y + 17, z - 10 .. z + 11) is added to
   the charge list (and gets 5 `twilightforest:ghast_trap` particles from the trap top to its eye); charge level =
   min(3, count). Client effects: every 20 ticks a particle line to a random nearby ghastling; level >= 1 every 10
   ticks sparkle + `block.twilightforest.ghast_trap.ambient` (vol 1, pitch 1); level >= 2 smoke and the ambient sound
@@ -235,7 +252,10 @@ box with those textures (client mod; vanilla clients see a fixed debris texture)
   player within 6 gets trigger `twilightforest:activate_ghast_trap`; set `active`, sound `block.twilightforest.jet.start`
   (U24's event, 0.3, 0.6), block event 0 (clears counter and charge list).
 - Active tick: counter + 1. Server: every `Ghast` (vanilla ghasts, ghastguards, ghastlings) or Ur-Ghast in the box
-  around the point 16 above the trap inflated (6, 16, 6) is pulled with motion `(trap + (0.5, 1.5 or 2.5, 0.5) -
+  `new AABB(pos.above(16).getCenter(), pos.above(16).offset(1, 1, 1).getCenter()).inflate(6, 16, 6)`, i.e. the unit
+  box min (x + 0.5, y + 16.5, z + 0.5), max (x + 1.5, y + 17.5, z + 1.5) inflated (6, 16, 6): x in [x - 5.5, x + 7.5],
+  y in [y + 0.5, y + 33.5], z in [z - 5.5, z + 7.5] (offset half a block towards +x / +z, not centred on the trap
+  column), is pulled with motion `(trap + (0.5, 1.5 or 2.5, 0.5) -
   pos) x 0.1`; the Ur-Ghast additionally loses tantrum, gets 20 trapped ticks, noPhysics, and with chance 1/10 takes
   7 generic damage and resets its phase damage; other ghasts take 10 generic damage with chance 1/10. At counter 120:
   deactivate and block event 1. Client: before 100 ticks six ghast-trap particles spiralling upward (dx = cos(c/10) x
@@ -553,9 +573,11 @@ ghastguard `ghastSpawnHandler`, ghastling `canSpawnHere`, golem / broodling / bo
 
 Per the unit record: golden hash of the dark tower (seeded); devices: vanishing chain reaction, reappearing cycle
 (2-6 ticks, 80 vanished, 15 warning), locked door refuses (click sound) until a tower key unlocks it, carminite
-builder builds up to 16 blocks along the player's look and they expire in a chain after deactivation, antibuilder
-reverts a placed block to antibuilt within its 9 x 9 x 9 region, reactor turns its shell into fake gold/diamond and
-explodes at tick 350 with 6 ghastlings, slider spawns a moving slide block that damages 5 and returns; ghast trap
+builder builds up to 17 blocks (`blocksMade <= 16`) along the player's look, stops at the 18th, and they expire in a
+chain after deactivation, antibuilder (within its 9 x 9 x 9 region) refills a broken motion-blocking block with an
+antibuilt block and destroys a block placed into snapshot air with its drop (fast scan after the first detected
+change, slow scan again after 21 change-free scans), reactor turns its shell into fake gold/diamond and explodes at
+tick 350 with 6 ghastlings, slider spawns a moving slide block that damages 5 and returns; ghast trap
 charges from 3 dying ghastlings and, powered, pulls a scripted Ur-Ghast down (tantrum off, 7 damage chance) and fires
 `activate_ghast_trap`; Ur-Ghast phases toggle after 10/18 damage, tantrum divides damage by 10 and spawns minions at
 traps; death places the dark chest.
