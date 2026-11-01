@@ -1,0 +1,44 @@
+{
+  "namespace": "chest",
+
+  "gf_skin": {
+    "type": "image",
+    "layer": 0,
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "offset": "$gf_skin_offset",
+    "size": "$gf_skin_size",
+    "uv": [0, 0],
+    "uv_size": "$gf_skin_size",
+    "texture": "$container_title",
+    "allow_debug_missing_texture": false
+  },
+
+  "chest_label": {
+    "localize": true
+  },
+
+  "small_chest_panel_top_half": {
+    "modifications": [
+      {
+        "array_name": "controls",
+        "operation": "insert_front",
+        "value": [
+          { "gf_skin@chest.gf_skin": { "$gf_skin_offset": [0, -12], "$gf_skin_size": [176, 166] } }
+        ]
+      }
+    ]
+  },
+
+  "large_chest_panel_top_half": {
+    "modifications": [
+      {
+        "array_name": "controls",
+        "operation": "insert_front",
+        "value": [
+          { "gf_skin@chest.gf_skin": { "$gf_skin_offset": [0, -11], "$gf_skin_size": [176, 220] } }
+        ]
+      }
+    ]
+  }
+}
