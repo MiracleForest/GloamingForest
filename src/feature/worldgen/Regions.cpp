@@ -98,11 +98,13 @@ void LevelChunkAdapter::setQuartColumn(int qx, int qz, int qMin, std::vector<std
         else ++it->second;
     }
     if (counts.empty()) return;
-    Biome const* dominant = std::max_element(counts.begin(), counts.end(), [](auto const& a, auto const& b) { return a.second < b.second; })->first;
+    // an unknown id keeps what the chunk had there (as a per-block write would): no column fill then
+    bool         fill     = std::none_of(quarts.begin(), quarts.end(), [](Biome const* b) { return b == nullptr; });
+    Biome const* dominant = fill ? std::max_element(counts.begin(), counts.end(), [](auto const& a, auto const& b) { return a.second < b.second; })->first : nullptr;
     for (int dx = 0; dx < 4; ++dx)
         for (int dz = 0; dz < 4; ++dz) {
             int lx = (qx & 3) * 4 + dx, lz = (qz & 3) * 4 + dz;
-            mChunk._setBiome(*dominant, cpos(lx, mMinY, lz, mMinY), true);
+            if (dominant) mChunk._setBiome(*dominant, cpos(lx, mMinY, lz, mMinY), true);
             for (std::size_t i = 0; i < quarts.size(); ++i) {
                 if (!quarts[i] || quarts[i] == dominant) continue;
                 int y0 = std::max(mMinY, (qMin + static_cast<int>(i)) * 4), y1 = std::min(mMaxY, (qMin + static_cast<int>(i)) * 4 + 4);

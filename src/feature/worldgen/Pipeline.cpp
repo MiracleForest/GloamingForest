@@ -150,7 +150,10 @@ void keepCarvingMask(int dim, int cx, int cz, std::shared_ptr<ext::CarvingMask> 
     auto&           s = maskStore();
     std::lock_guard lock(s.mutex);
     auto            key = std::make_tuple(dim, cx, cz);
-    if (s.masks.insert_or_assign(key, std::move(mask)).second) s.order.push_back(key);
+    // a key dropped and kept again moves to the back (no stale entry may evict the live mask)
+    s.masks.insert_or_assign(key, std::move(mask));
+    std::erase(s.order, key);
+    s.order.push_back(key);
     while (s.order.size() > kMaxKeptMasks) {
         s.masks.erase(s.order.front());
         s.order.pop_front();
@@ -169,7 +172,8 @@ std::shared_ptr<ext::CarvingMask const> carvingMaskOf(int dim, int cx, int cz) {
 void dropCarvingMask(int dim, int cx, int cz) {
     auto&           s = maskStore();
     std::lock_guard lock(s.mutex);
-    s.masks.erase(std::make_tuple(dim, cx, cz)); // the key leaves `order` when it reaches the front
+    auto            key = std::make_tuple(dim, cx, cz);
+    if (s.masks.erase(key)) std::erase(s.order, key);
 }
 
 void clearCarvingMasks() {
