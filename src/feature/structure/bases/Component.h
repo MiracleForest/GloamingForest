@@ -70,7 +70,8 @@ public:
     std::unique_ptr<Decorator> deco;           ///< saved as "deco" (decoString)
     int                        spawnListIndex = 0; ///< saved as "si"
 
-    /// SpawnIndexProvider#getSpawnIndex: the controlled-spawn list of this piece (-1: none).
+    /// SpawnIndexProvider#getSpawnIndex: the controlled-spawn list of this piece (-1: none; a piece
+    /// translating SpawnIndexProvider.Deny overrides it to return -1).
     [[nodiscard]] virtual int getSpawnIndex() const { return spawnListIndex; }
     /// ProgressionPiece#isComponentProtected: under block protection while progression is locked.
     [[nodiscard]] virtual bool isComponentProtected() const { return true; }
@@ -87,12 +88,6 @@ protected:
     void setInvisibleTextEntity(Region& region, int x, int y, int z, BlockBox const& sbb, std::string const& text, bool forcePlace, float yOffset);
 };
 
-/// SpawnIndexProvider.Deny: a piece without controlled spawns.
-class NoSpawnIndex {
-public:
-    virtual ~NoSpawnIndex() = default;
-    [[nodiscard]] virtual int getSpawnIndex() const { return -1; }
-};
 
 /// SortablePiece: 0 is the default; lower keys generate sooner, so later pieces overwrite them.
 class SortablePiece {
