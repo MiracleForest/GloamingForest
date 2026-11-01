@@ -249,8 +249,10 @@ for obsidian.
   `igniteForSeconds(8)` and its `inFire` damage are not called, and a burning entity keeps its own fire ticks. The
   damage type is not in `#minecraft:is_fire`, so fire resistance and fire immunity (blaze, strider, ghast, magma
   cube) do not protect against it. Item entities are hurt too: `ItemEntity.hurt` has no cooldown and health 5, so an
-  item lying in ominous fire is destroyed after 5 ticks, fire-resistant (netherite) items included
-  (`canBeHurtBy` only spares them from `is_fire`; javap 1.21.1).
+  item in ominous fire is destroyed by the 5th hit, fire-resistant (netherite) items included (`canBeHurtBy` only
+  spares them from `is_fire`). An item resting on the ground only runs `move` (which checks the blocks it is inside)
+  on ticks where `(tickCount + id) % 4 == 0`, so it gets one hit every 4 ticks and is gone after about 20 ticks; a
+  moving item is hit every tick (javap 1.21.1).
 - Placement (`BaseFireBlock.onPlace`, only when the old state was another block). In the Overworld or the Nether
   (`inPortalDimension`; never in the Twilight Forest) it first looks for an empty nether portal frame:
   `PortalShape.findEmptyPortalShape(level, pos, Axis.X)` tries axis X, then Z; the frame is obsidian, the inside is
@@ -450,17 +452,18 @@ spawners also get U21's room spawner processor.
   off, while TF's candelabra stays when its support goes.
 - Ominous fire (2.7) is a custom block, so none of `BaseFireBlock` comes with it; U22 adds each inherited part:
   - Portal: from `blockevents::onPlaced`, in the Overworld or the Nether only, call `PortalBlock::trySpawnPortal(
-    region, pos)` (MCAPI static). Bedrock's shape test counts only its own air, fire and portal blocks as empty. If
-    it refuses the custom block at `pos`, clear `pos` before the call and put the ominous fire back when no portal
-    forms.
+    region, pos)` (MCAPI static). Check in `lichdecor.ominous_fire_portal` whether Bedrock's frame test accepts the
+    custom block at `pos` as empty (it is written for its own air, fire and portal blocks). If it does not, clear
+    `pos` before the call and put the ominous fire back when no portal forms.
   - Break: no break particles and no break sound (through the RP block settings, or the client mod suppresses
     them). The server plays `minecraft:block.fire.extinguish` (2.7) on a player break (`interactions::onDestroyed`)
     and nothing on other removals.
   - Entities: damage only through `blockevents::onEntityInside`. Never set an actor on fire.
   - Ambient sound and large smoke: the client mod (next bullet). Vanilla clients get them only as best effort.
 - Animate ticks (the candle ambience of section 1 and the ominous fire of 2.7): Java calls `animateTick` from the
-  client's random display tick. Each tick, `ClientLevel.animateTick` makes 667 picks at camera + (nextInt(16) -
-  nextInt(16)) per axis and 667 at camera + (nextInt(32) - nextInt(32)) per axis (javap 1.21.1). It calls
+  client's random display tick. Each tick, `Minecraft.tick` calls `ClientLevel.animateTick` with the local player's
+  block position (not the camera's), which makes 667 picks at that position + (nextInt(16) - nextInt(16)) per axis
+  and 667 at that position + (nextInt(32) - nextInt(32)) per axis (javap 1.21.1 client). It calls
   `animateTick` on the block at each pick. The client mod emulates that around the local player for these custom
   blocks.
 - The wrought iron fence state space must be reduced for Bedrock's permutation budget (see 2.4).
@@ -477,7 +480,7 @@ table),
 `lichdecor.brazier_cycle`, `lichdecor.skull_candle_create` (stat + config off), `lichdecor.ominous_candle_revert`,
 `lichdecor.ominous_fire_conversion` (villager -> zombie villager), `lichdecor.ominous_fire_entity` (a mob that is
 not undead standing in it takes `twilightforest:ominous_fire` damage and never gets fire ticks, i.e. is never on
-fire; a zombie takes no damage; a dropped netherite ingot is destroyed after 5 ticks),
+fire; a zombie takes no damage; a netherite ingot resting in it is gone after 5 hits, about 20 ticks),
 `lichdecor.ominous_fire_portal` (placed on the bottom of an empty obsidian frame in the Overworld it lights a nether
 portal; in the Twilight Forest it does not), `lichdecor.skull_chest_lock`,
 `lichdecor.fence_finial`, `lichdecor.sinister_spawner_command`, `lichdecor.recipes`.
