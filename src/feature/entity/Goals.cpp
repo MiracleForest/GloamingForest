@@ -25,12 +25,17 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <limits>
 #include <numbers>
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
+#include "mc/world/actor/ActorCategory.h"
+#include "mc/world/level/block/components/BlockComponentDirectData.h"
 #include "mc/entity/components/LookControlComponent.h"
 #include "mc/entity/components_json_legacy/NavigationComponent.h"
 #include "mc/legacy/ActorRuntimeID.h"
@@ -59,7 +64,9 @@
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/tags/Tags.h"
+#include "game/Blocks.h"
 #include "game/Items.h"
+#include "mod/Log.h"
 
 namespace gf::feature::entity {
 
@@ -87,10 +94,10 @@ bool GoalSelector::running(ge::Goal const* goal) const {
     return false;
 }
 
-void GoalSelector::tick() {
-    // goalCleanup: stop goals that can't continue (no disabled flags: no controlling mob passenger)
+void GoalSelector::tick(unsigned disabled) {
+    // goalCleanup: stop goals with a disabled flag (a controlling mob passenger) or that can't continue
     for (std::size_t i = 0; i < mGoals.size(); ++i) {
-        if (mGoals[i].isRunning && !mGoals[i].goal->canContinueToUse()) {
+        if (mGoals[i].isRunning && ((mGoals[i].goal->flags & disabled) || !mGoals[i].goal->canContinueToUse())) {
             mGoals[i].isRunning = false;
             mGoals[i].goal->stop();
         }
@@ -99,7 +106,7 @@ void GoalSelector::tick() {
         if (locked >= 0 && (locked >= static_cast<int>(mGoals.size()) || !mGoals[locked].isRunning)) locked = -1;
     // goalUpdate (availableGoals keeps insertion order); indices, so a goal may add goals
     for (std::size_t i = 0; i < mGoals.size(); ++i) {
-        if (mGoals[i].isRunning) continue;
+        if (mGoals[i].isRunning || (mGoals[i].goal->flags & disabled)) continue;
         bool replaceable = true;
         for (unsigned f : kFlags) {
             if (!(mGoals[i].goal->flags & f)) continue;
@@ -188,6 +195,16 @@ bool moveTo(Mob& mob, Vec3 const& pos, double speed) {
     return nav->mNavigation.get()->moveTo(*nav, mob, pos, static_cast<float>(speed));
 }
 
+// PathNavigation#createPath returns null below the world or when !canUpdatePath() (not on the
+// ground, in a liquid or riding: GroundPathNavigation); otherwise the pathfinder's best partial
+// path. Bedrock's Path has no callable destructor, so the path itself is not built here.
+bool canCreatePath(Mob& mob, Vec3 const&) {
+    auto* nav = navOf(mob);
+    if (!nav || !nav->mNavigation.get()) return true;
+    if (mob.getFeetPos().y < mob.getDimensionBlockSource().getMinHeight()) return false;
+    return nav->mNavigation.get()->canUpdatePath(mob);
+}
+
 bool navigationDone(Mob& mob) {
     auto* nav = navOf(mob);
     if (!nav) {
@@ -260,19 +277,188 @@ BlockPos containing(double x, double y, double z) {
     return BlockPos{static_cast<int>(std::floor(x)), static_cast<int>(std::floor(y)), static_cast<int>(std::floor(z))};
 }
 
-/// PathNavigation#isStableDestination: something solid below.
-bool stable(BlockSource& region, BlockPos const& pos) {
-    BlockPos below{pos.x, pos.y - 1, pos.z};
-    return region.getBlock(below)._isSolid();
+/// The block's collision box at `pos` (world coordinates; no volume: no collision).
+AABB collisionOf(BlockSource& region, BlockPos const& pos) {
+    Block const& block = region.getBlock(pos);
+    return block.getBlockType().getCollisionShape(block, region, pos, nullptr);
 }
 
-/// GoalUtils#hasMalus: a path node with a malus (liquids, fire, damaging blocks).
-bool hasMalus(BlockSource& region, BlockPos const& pos) {
-    std::string const& id = region.getBlock(pos).getTypeName();
-    for (char const* bad : {"water", "lava", "fire", "magma", "cactus", "sweet_berry", "powder_snow", "wither_rose"})
-        if (id.find(bad) != std::string::npos) return true;
+/// BlockComponentDirectData#mIsOpaqueFullBlock (BlockState#isSolidRender), checked once against
+/// stone / glass / air; the engine's _isSolid() if that layout does not hold.
+bool opaqueFullBlock(Block const& block) {
+    static int layout = -1;
+    auto       read   = [](Block const& b) -> bool { return b.mDirectData->mIsOpaqueFullBlock; };
+    if (layout < 0) {
+        auto const* stone = game::blockWith("minecraft:stone");
+        auto const* glass = game::blockWith("minecraft:glass");
+        auto const* air   = game::blockWith("minecraft:air");
+        layout            = stone && glass && air && read(*stone) && !read(*glass) && !read(*air) ? 1 : 0;
+        if (!layout) log().warn("entity: the opaque-full-block flag of the block data does not hold; isSolidRender uses _isSolid");
+    }
+    return layout ? read(block) : block._isSolid();
+}
+
+bool idIs(std::string const& id, std::initializer_list<char const*> ids) {
+    for (auto const* i : ids)
+        if (id == i) return true;
     return false;
 }
+
+/// WalkNodeEvaluator#isBurningBlock: fire, magma, a lit campfire, a lava cauldron.
+bool burning(Block const& block, std::string const& id) {
+    if (idIs(id, {"minecraft:fire", "minecraft:soul_fire", "minecraft:magma"})) return true;
+    auto states = game::statesOf(block);
+    if (idIs(id, {"minecraft:campfire", "minecraft:soul_campfire"})) {
+        auto it = states.find("extinguished");
+        return it == states.end() || (it->second != "true" && it->second != "1");
+    }
+    if (id == "minecraft:cauldron" || id == "minecraft:lava_cauldron") {
+        auto it = states.find("cauldron_liquid");
+        return id == "minecraft:lava_cauldron" || (it != states.end() && it->second == "lava");
+    }
+    return false;
+}
+
+bool stateTrue(Block const& block, char const* name) {
+    auto states = game::statesOf(block);
+    auto it     = states.find(name);
+    return it != states.end() && (it->second == "true" || it->second == "1");
+}
+} // namespace
+
+bool emptyCollision(BlockSource& region, BlockPos const& pos) {
+    AABB b = collisionOf(region, pos);
+    return b.max.x - b.min.x <= 1e-6f || b.max.y - b.min.y <= 1e-6f || b.max.z - b.min.z <= 1e-6f;
+}
+
+bool legacySolid(BlockSource& region, BlockPos const& pos) {
+    if (emptyCollision(region, pos)) return false;
+    AABB   b    = collisionOf(region, pos);
+    double size = ((b.max.x - b.min.x) + (b.max.y - b.min.y) + (b.max.z - b.min.z)) / 3.0;
+    return size >= 0.7291666666666666 || (b.max.y - b.min.y) >= 1.0;
+}
+
+bool stableDestination(BlockSource& region, BlockPos const& pos) { return opaqueFullBlock(region.getBlock(BlockPos{pos.x, pos.y - 1, pos.z})); }
+
+PathType pathTypeFromState(BlockSource& region, BlockPos const& pos) {
+    Block const& block = region.getBlock(pos);
+    if (block.isAir()) return PathType::Open;
+    std::string id   = game::blockId(block);
+    auto const& type = block.getBlockType();
+    if (id.ends_with("trapdoor") || idIs(id, {"minecraft:waterlily", "minecraft:big_dripleaf"})) return PathType::Trapdoor;
+    if (id == "minecraft:powder_snow") return PathType::PowderSnow;
+    if (idIs(id, {"minecraft:cactus", "minecraft:sweet_berry_bush"})) return PathType::DamageOther;
+    if (id == "minecraft:honey_block") return PathType::StickyHoney;
+    if (id == "minecraft:cocoa") return PathType::Cocoa;
+    if (idIs(id, {"minecraft:wither_rose", "minecraft:pointed_dripstone"})) return PathType::DamageCautious;
+    if (idIs(id, {"minecraft:lava", "minecraft:flowing_lava"})) return PathType::Lava;
+    if (burning(block, id)) return PathType::DamageFire;
+    if (id.ends_with("_door") || id == "minecraft:wooden_door") {
+        if (stateTrue(block, "open_bit")) return PathType::DoorOpen;
+        return id == "minecraft:iron_door" ? PathType::DoorIronClosed : PathType::DoorWoodClosed;
+    }
+    if (type.isRailBlock()) return PathType::Rail;
+    if (id.find("leaves") != std::string::npos) return PathType::Leaves;
+    if (id.ends_with("fence_gate")) {
+        // FenceGateBlock: closed is FENCE, open falls through to the pathfindable check
+        if (!stateTrue(block, "open_bit")) return PathType::Fence;
+    } else if (type.isFenceBlock() || type.isWallBlock()) {
+        return PathType::Fence;
+    }
+    // BlockBehaviour#isPathfindable(LAND): no full collision cube (stairs and slabs refuse it)
+    bool pathfindable = emptyCollision(region, pos);
+    if (!pathfindable) {
+        AABB b = collisionOf(region, pos);
+        bool full = b.max.x - b.min.x >= 1.0f && b.max.y - b.min.y >= 1.0f && b.max.z - b.min.z >= 1.0f;
+        pathfindable = !full && !type.isSlabBlock() && id.find("stairs") == std::string::npos;
+        if (id == "minecraft:snow_layer") {
+            auto st = game::statesOf(block);
+            auto it = st.find("height");
+            pathfindable = it != st.end() && std::atoi(it->second.c_str()) + 1 < 5; // LAYERS < 5
+        }
+    }
+    if (!pathfindable) return PathType::Blocked;
+    bool water = idIs(id, {"minecraft:water", "minecraft:flowing_water"}) || idIs(game::blockId(region.getLiquidBlock(pos)), {"minecraft:water", "minecraft:flowing_water"});
+    return water ? PathType::Water : PathType::Open;
+}
+
+PathType pathTypeStatic(BlockSource& region, BlockPos const& pos) {
+    PathType type = pathTypeFromState(region, pos);
+    if (type != PathType::Open || pos.y < region.getMinHeight() + 1) return type;
+    switch (pathTypeFromState(region, BlockPos{pos.x, pos.y - 1, pos.z})) {
+    case PathType::Open:
+    case PathType::Water:
+    case PathType::Lava:
+    case PathType::Walkable: return PathType::Open;
+    case PathType::DamageFire: return PathType::DamageFire;
+    case PathType::DamageOther: return PathType::DamageOther;
+    case PathType::StickyHoney: return PathType::StickyHoney;
+    case PathType::PowderSnow: return PathType::DangerPowderSnow;
+    case PathType::DamageCautious: return PathType::DamageCautious;
+    case PathType::Trapdoor: return PathType::DangerTrapdoor;
+    default: break;
+    }
+    // WalkNodeEvaluator#checkNeighbourBlocks
+    for (int i = -1; i <= 1; ++i)
+        for (int j = -1; j <= 1; ++j)
+            for (int k = -1; k <= 1; ++k) {
+                if (i == 0 && k == 0) continue;
+                PathType n = pathTypeFromState(region, BlockPos{pos.x + i, pos.y + j, pos.z + k});
+                if (n == PathType::DamageOther) return PathType::DangerOther;
+                if (n == PathType::DamageFire || n == PathType::Lava) return PathType::DangerFire;
+                if (n == PathType::Water) return PathType::WaterBorder;
+                if (n == PathType::DamageCautious) return PathType::DamageCautious;
+            }
+    return PathType::Walkable;
+}
+
+float pathMalus(PathType type) {
+    switch (type) {
+    case PathType::Blocked:
+    case PathType::PowderSnow:
+    case PathType::Fence:
+    case PathType::Lava:
+    case PathType::DamageOther:
+    case PathType::DoorWoodClosed:
+    case PathType::DoorIronClosed:
+    case PathType::Leaves: return -1.0F;
+    case PathType::Water:
+    case PathType::WaterBorder:
+    case PathType::DangerFire:
+    case PathType::DangerOther:
+    case PathType::StickyHoney: return 8.0F;
+    case PathType::DamageFire: return 16.0F;
+    default: return 0.0F;
+    }
+}
+
+bool hasMalus(BlockSource& region, BlockPos const& pos) { return pathMalus(pathTypeStatic(region, pos)) != 0.0F; }
+
+bool isMonster(Actor const& actor) {
+    static HashedString const monster("monster");
+    return actor.hasCategory(ActorCategory::Monster) || actor.hasFamily(monster);
+}
+
+bool isAnimal(Actor const& actor) {
+    static HashedString const animal("animal");
+    return actor.hasCategory(ActorCategory::Animal) || actor.hasFamily(animal);
+}
+
+// LevelReader#getPathfindingCostFromLightLevels = brightness - 0.5, where Java's brightness rises
+// with the light level (DimensionType#brightness); the engine's brightness at the position (night
+// included) rises with it too, and only the order of the ten candidates matters.
+float walkTargetValue(Mob& mob, BlockPos const& pos) {
+    auto& region = mob.getDimensionBlockSource();
+    if (isMonster(mob)) return 0.5F - region.getBrightness(pos); // Monster#getWalkTargetValue
+    if (isAnimal(mob)) {
+        auto below = game::blockIdAt(region, BlockPos{pos.x, pos.y - 1, pos.z});
+        if (below == "minecraft:grass_block" || below == "minecraft:grass") return 10.0F; // Animal#getWalkTargetValue
+        return region.getBrightness(pos) - 0.5F;
+    }
+    return 0.0F;
+}
+
+namespace {
 
 /// DefaultRandomPos#generateRandomPosTowardDirection (no restriction: TF's homes are goals).
 std::optional<BlockPos> towardDirection(Mob& mob, BlockPos const& offset) {
@@ -280,19 +466,21 @@ std::optional<BlockPos> towardDirection(Mob& mob, BlockPos const& offset) {
     BlockPos pos    = containing(offset.x + m.x, offset.y + m.y, offset.z + m.z);
     auto&    region = mob.getDimensionBlockSource();
     if (pos.y < region.getMinHeight() || pos.y > region.getMaxHeight()) return std::nullopt; // GoalUtils#isOutsideLimits
-    if (!region.hasChunksAt(pos, 0, false)) return std::nullopt;
-    if (!stable(region, pos) || hasMalus(region, pos)) return std::nullopt;
+    if (!region.hasChunksAt(pos, 1, false)) return std::nullopt;
+    if (!stableDestination(region, pos) || hasMalus(region, pos)) return std::nullopt;
     return pos;
 }
 
-/// RandomPos#generateRandomPos: ten tries, the best walk target value (PathfinderMob: 0, so the
-/// first valid position).
+/// RandomPos#generateRandomPos: ten tries, the one with the best walk target value.
 template <class Supplier>
-std::optional<Vec3> generate(Supplier&& supplier) {
+std::optional<Vec3> generate(Mob& mob, Supplier&& supplier) {
     std::optional<BlockPos> best;
+    double                  bestValue = -std::numeric_limits<double>::infinity();
     for (int i = 0; i < 10; ++i) {
         auto p = supplier();
-        if (p && !best) best = p;
+        if (!p) continue;
+        double v = walkTargetValue(mob, *p);
+        if (v > bestValue) bestValue = v, best = p;
     }
     if (!best) return std::nullopt;
     return Vec3{best->x + 0.5f, static_cast<float>(best->y), best->z + 0.5f};
@@ -313,7 +501,7 @@ std::optional<BlockPos> directionWithinRadians(JavaRandom& r, int h, int v, doub
 
 std::optional<Vec3> randomPos(Mob& mob, int radius, int vertical) {
     auto& r = randomOf(mob);
-    return generate([&]() -> std::optional<BlockPos> {
+    return generate(mob, [&]() -> std::optional<BlockPos> {
         // RandomPos#generateRandomDirection
         int x = r.nextInt(2 * radius + 1) - radius;
         int y = r.nextInt(2 * vertical + 1) - vertical;
@@ -326,7 +514,7 @@ std::optional<Vec3> randomPosAway(Mob& mob, int radius, int vertical, Vec3 const
     auto&  r  = randomOf(mob);
     auto   m  = mob.getFeetPos();
     double vx = m.x - away.x, vz = m.z - away.z;
-    return generate([&]() -> std::optional<BlockPos> {
+    return generate(mob, [&]() -> std::optional<BlockPos> {
         auto dir = directionWithinRadians(r, radius, vertical, vx, vz, static_cast<float>(std::numbers::pi / 2));
         return dir ? towardDirection(mob, *dir) : std::nullopt;
     });
@@ -336,7 +524,7 @@ std::optional<Vec3> randomPosTowards(Mob& mob, int radius, int vertical, Vec3 co
     auto&  r  = randomOf(mob);
     auto   m  = mob.getFeetPos();
     double vx = towards.x - m.x, vz = towards.z - m.z;
-    return generate([&]() -> std::optional<BlockPos> {
+    return generate(mob, [&]() -> std::optional<BlockPos> {
         auto dir = directionWithinRadians(r, radius, vertical, vx, vz, maxAngle);
         return dir ? towardDirection(mob, *dir) : std::nullopt;
     });
@@ -552,7 +740,7 @@ private:
         Actor* pointed = nullptr;
         double hitDist = 0;
         auto   self    = uidOf(m);
-        for (auto* e : m.getDimensionBlockSource().getEntities(search, 0.0f)) {
+        for (auto* e : actorsIn(m.getDimensionBlockSource(), static_cast<int>(m.getDimensionId()), search)) {
             if (!e || e == &m || !e->isAlive() || !mobs::attackable(*e)) continue;
             if (parentOfPart(*e) == self) continue; // our own parts
             if (!e->hasCategory(ActorCategory::Mob) && !e->isPlayer() && !parentOfPart(*e)) continue; // isPickable
@@ -749,21 +937,24 @@ public:
         auto const& bb = m->getAABB();
         AABB        box{Vec3{bb.min.x - mDistance, bb.min.y - 3.0f, bb.min.z - mDistance}, Vec3{bb.max.x + mDistance, bb.max.y + 3.0f, bb.max.z + mDistance}};
         Actor*      first = nullptr;
-        for (auto* e : m->getDimensionBlockSource().getEntities(box, 0.0f)) {
+        for (auto* e : actorsIn(m->getDimensionBlockSource(), static_cast<int>(m->getDimensionId()), box)) {
             if (!e || e == m || !e->isAlive()) continue;
             if (!mobs::attackable(*e) && e->isPlayer()) continue; // NO_CREATIVE_OR_SPECTATOR
             if (!mobs::hasLineOfSight(*m, *e)) continue;
+            if (auto* other = asMob(*e); other && m->isAlliedTo(other)) continue; // !isAlliedTo
             if (mAvoid && !mAvoid(*e)) continue;
             first = e;
             break;
         }
         if (!first) return false;
         mAvoidTarget = uidOf(*first);
-        auto pos     = mobs::randomPosAway(*m, 16, 7, m->getFeetPos());
+        // TF's AvoidAnyEntityGoal: away from the mob's own position (sic)
+        auto pos = mobs::randomPosAway(*m, 16, 7, m->getFeetPos());
         if (!pos) return false;
         if (mobs::distanceSqr(*first, *pos) < mobs::distanceSqr(*first, *m)) return false;
         mPos = *pos;
-        return true;
+        // this.path = navigation.createPath(...); return this.path != null
+        return mobs::canCreatePath(*m, mPos);
     }
     bool canContinueToUse() override {
         auto* m = mob();
@@ -931,13 +1122,28 @@ void noClipMove(Mob& m, ActorState& s) {
 
 } // namespace
 
+unsigned controlFlagsDisabled(Mob& mob) {
+    // !(getControllingPassenger() instanceof Mob): the first passenger steers; a player is no Mob
+    // on Java (Bedrock's Player is: players are excluded)
+    Actor* controller = mob.getFirstPassenger();
+    bool   mobDriven  = controller && !controller->isPlayer() && asMob(*controller);
+    auto*  vehicle    = mob.getVehicle();
+    bool   inBoat     = vehicle && (vehicle->getTypeName() == "minecraft:boat" || vehicle->getTypeName() == "minecraft:chest_boat");
+    unsigned disabled = 0;
+    if (mobDriven) disabled |= ge::Goal::Move | ge::Goal::Look | ge::Goal::Jump;
+    if (inBoat) disabled |= ge::Goal::Jump;
+    return disabled;
+}
+
 void tickGoals(Mob& mob, ActorState& s) {
+    // Mob#tick: updateControlFlags every 5 ticks (GoalSelector#setControlFlag for MOVE, JUMP, LOOK)
+    if (mob.mTickCount % 5 == 0) s.disabledFlags = controlFlagsDisabled(mob);
     // Mob#serverAiStep: full selector ticks every other tick, the running goals in between
     int  tickCount = mob.mTickCount;
     auto rid       = static_cast<std::int64_t>(mob.getRuntimeID().rawID);
     bool full      = !((tickCount + rid) % 2 != 0 && tickCount > 1);
-    if (s.targets) full ? s.targets->tick() : s.targets->tickRunning(false);
-    if (s.goals) full ? s.goals->tick() : s.goals->tickRunning(false);
+    if (s.targets) full ? s.targets->tick(s.disabledFlags) : s.targets->tickRunning(false);
+    if (s.goals) full ? s.goals->tick(s.disabledFlags) : s.goals->tickRunning(false);
     // the movement controller
     if (s.moveFn) s.moveFn(mob);
     else if (s.moveKind && *s.moveKind == ge::MoveKind::NoClip) noClipMove(mob, s);
