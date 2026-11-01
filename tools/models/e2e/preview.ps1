@@ -59,7 +59,8 @@ function Write-J([string]$path, $obj) {
     New-Item -ItemType Directory -Force (Split-Path -Parent $path) | Out-Null
     [IO.File]::WriteAllText($path, ($obj | ConvertTo-Json -Depth 32), [Text.UTF8Encoding]::new($false))
 }
-$stamp = [int](([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() / 60) % 30000) + 2
+# a new version every run (a cached copy of an older preview pack must never be used)
+$stamp = [int]([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() % 30000) + 2
 $bpUuid = '6f1c1d52-7a5b-4c51-9a0e-2f4d6a3c8b01'; $bpMod = '6f1c1d52-7a5b-4c51-9a0e-2f4d6a3c8b02'
 $rpUuid = '6f1c1d52-7a5b-4c51-9a0e-2f4d6a3c8b03'; $rpMod = '6f1c1d52-7a5b-4c51-9a0e-2f4d6a3c8b04'
 Write-J (Join-Path $bp 'manifest.json') ([ordered]@{ format_version = 2; header = [ordered]@{ name = 'GloamingForest model preview (test)'; description = 'F2 e2e: converted models on test actors'; uuid = $bpUuid; version = @(1, 0, $stamp); min_engine_version = @(1, 21, 0) }; modules = @([ordered]@{ type = 'data'; uuid = $bpMod; version = @(1, 0, $stamp) }) })

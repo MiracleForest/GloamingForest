@@ -50,16 +50,20 @@ std::string lower(std::string s) {
     return s;
 }
 
-// The index, or a failed test.
-Json const& index(Context& ctx) {
-    static Json cached;
-    if (cached.is_null()) {
-        auto doc = readJson(modDir() / "data" / "gf" / "models" / "index.json");
-        ctx.require(doc.has_value(), "data/gf/models/index.json is deployed and parses");
-        cached = std::move(*doc);
-    }
-    ctx.require(cached.value("format", 0) == 1, "index format 1");
-    return cached;
+// The index (read for every test: the deployed mod may change between runs), or a failed test.
+Json index(Context& ctx) {
+    auto doc = readJson(modDir() / "data" / "gf" / "models" / "index.json");
+    ctx.require(doc.has_value(), "data/gf/models/index.json is deployed and parses");
+    ctx.require(doc->value("format", 0) == 1, "index format 1");
+    return std::move(*doc);
+}
+
+// A member by reference (json::value() returns a copy, which must not outlive a loop over it).
+Json const& member(Json const& j, char const* key) {
+    static Json const empty;
+    if (!j.is_object()) return empty;
+    auto it = j.find(key);
+    return it != j.end() ? *it : empty;
 }
 
 // The partitions F2 commits itself: they must always be complete.
@@ -122,11 +126,11 @@ std::optional<std::set<std::string>> checkGeometry(Context& ctx, Json const& ent
 } // namespace
 
 GF_REGISTER_SELFTEST("models.index", [](Context& ctx) {
-    auto const& idx = index(ctx);
+    auto const idx = index(ctx);
     int geometries = 0, vanilla = 0;
-    for (auto const& g : idx.value("geometries", Json::array())) (g.value("vanilla", false) ? vanilla : geometries)++;
-    auto animations  = idx.value("animations", Json::array()).size();
-    auto attachables = idx.value("attachables", Json::array()).size();
+    for (auto const& g : member(idx, "geometries")) (g.value("vanilla", false) ? vanilla : geometries)++;
+    auto animations  = member(idx, "animations").size();
+    auto attachables = member(idx, "attachables").size();
     ctx.check(geometries >= 100, "the converter wrote the entity, armor and trophy geometries");
     ctx.check(vanilla >= 1, "vanilla-model layers are listed");
     ctx.check(animations >= 1 && attachables >= 1, "base animations and attachables are listed");
@@ -136,10 +140,10 @@ GF_REGISTER_SELFTEST("models.index", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("models.geometry", [](Context& ctx) {
-    auto const& idx = index(ctx);
+    auto const idx = index(ctx);
     int present = 0, expected = 0;
     std::map<std::string, int> missingByUnit;
-    for (auto const& e : idx.value("geometries", Json::array())) {
+    for (auto const& e : member(idx, "geometries")) {
         if (e.value("vanilla", false)) continue;
         ++expected;
         std::string const unit = e.value("unit", "");
@@ -159,11 +163,11 @@ GF_REGISTER_SELFTEST("models.geometry", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("models.animations", [](Context& ctx) {
-    auto const& idx = index(ctx);
+    auto const idx = index(ctx);
     std::map<std::string, Json const*> geoById;
-    for (auto const& e : idx.value("geometries", Json::array())) geoById[e.value("identifier", "")] = &e;
+    for (auto const& e : member(idx, "geometries")) geoById[e.value("identifier", "")] = &e;
     int present = 0, expected = 0;
-    for (auto const& a : idx.value("animations", Json::array())) {
+    for (auto const& a : member(idx, "animations")) {
         ++expected;
         std::string const id = a.value("identifier", "");
         auto doc = readJson(rpDir() / a.value("file", ""));
@@ -171,7 +175,7 @@ GF_REGISTER_SELFTEST("models.animations", [](Context& ctx) {
             ctx.check(!fs::exists(rpDir() / a.value("file", "")), a.value("file", "") + " does not parse");
             continue;
         }
-        auto const& anim = (*doc)["animations"][id];
+        auto const& anim = member(member(*doc, "animations"), id.c_str());
         if (!anim.is_object()) {
             ctx.check(false, a.value("file", "") + ": no " + id);
             continue;
@@ -183,8 +187,10 @@ GF_REGISTER_SELFTEST("models.animations", [](Context& ctx) {
         if (it != geoById.end()) {
             if (auto geo = readJson(rpDir() / it->second->value("file", ""))) {
                 std::set<std::string> bones;
-                for (auto const& b : (*geo)["minecraft:geometry"][0]["bones"]) bones.insert(b.value("name", ""));
-                for (auto const& [bone, _] : anim.value("bones", Json::object()).items())
+                auto const& geos = member(*geo, "minecraft:geometry");
+                if (geos.is_array() && !geos.empty())
+                    for (auto const& b : member(geos[0], "bones")) bones.insert(b.value("name", ""));
+                for (auto const& [bone, _] : member(anim, "bones").items())
                     ctx.check(bones.contains(bone), id + " moves " + bone + ", which " + geoId + " does not have");
             }
         }
@@ -194,30 +200,30 @@ GF_REGISTER_SELFTEST("models.animations", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("models.attachables", [](Context& ctx) {
-    auto const& idx = index(ctx);
+    auto const idx = index(ctx);
     std::set<std::string> geometries;
-    for (auto const& e : idx.value("geometries", Json::array())) geometries.insert(e.value("identifier", ""));
+    for (auto const& e : member(idx, "geometries")) geometries.insert(e.value("identifier", ""));
     // the shared render controllers (F2's partition) must be there
     std::set<std::string> controllers{"controller.render.armor", "controller.render.item_default"};
     auto rc = readJson(rpDir() / "render_controllers" / "twilightforest.models.render_controllers.json");
     ctx.require(rc.has_value(), "render_controllers/twilightforest.models.render_controllers.json is in the pack");
-    for (auto const& [name, _] : rc->value("render_controllers", Json::object()).items()) controllers.insert(name);
+    for (auto const& [name, _] : member(*rc, "render_controllers").items()) controllers.insert(name);
     int present = 0, expected = 0;
-    for (auto const& a : idx.value("attachables", Json::array())) {
+    for (auto const& a : member(idx, "attachables")) {
         ++expected;
         auto doc = readJson(rpDir() / a.value("file", ""));
         if (!doc) {
             ctx.check(!fs::exists(rpDir() / a.value("file", "")), a.value("file", "") + " does not parse");
             continue;
         }
-        auto const& desc = (*doc)["minecraft:attachable"]["description"];
+        auto const& desc = member(member(*doc, "minecraft:attachable"), "description");
         ctx.check(desc.value("identifier", "") == a.value("item", "?"), a.value("file", "") + ": identifier is the item");
-        for (auto const& [key, geo] : desc.value("geometry", Json::object()).items()) {
+        for (auto const& [key, geo] : member(desc, "geometry").items()) {
             auto id = geo.get<std::string>();
             ctx.check(geometries.contains(id) || id.starts_with("geometry.humanoid.armor."), a.value("file", "") + ": unknown geometry " + id);
-            ctx.check(desc["textures"].contains(key) && desc["materials"].contains(key), a.value("file", "") + ": " + key + " has a texture and a material");
+            ctx.check(member(desc, "textures").contains(key) && member(desc, "materials").contains(key), a.value("file", "") + ": " + key + " has a texture and a material");
         }
-        for (auto const& r : desc.value("render_controllers", Json::array())) {
+        for (auto const& r : member(desc, "render_controllers")) {
             std::string name = r.is_string() ? r.get<std::string>() : r.items().begin().key();
             ctx.check(controllers.contains(name), a.value("file", "") + ": unknown render controller " + name);
         }

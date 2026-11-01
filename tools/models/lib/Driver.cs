@@ -112,6 +112,10 @@ namespace Gf.Models
                 }
                 catch (JavaEvalException ex) { info.Error = ex.Message; }
                 catch (JavaSyntaxException ex) { info.Error = "syntax: " + ex.Message; }
+                catch (Exception ex) when (ex is InvalidCastException || ex is NullReferenceException || ex is ArgumentException || ex is IndexOutOfRangeException || ex is KeyNotFoundException)
+                {
+                    info.Error = ex.GetType().Name + " (a builtin got arguments it does not expect): " + ex.Message;
+                }
                 Layers[info.Name] = info;
             }
         }
@@ -335,6 +339,7 @@ namespace Gf.Models
             var slots = StrList(a, "slots");
             if (slots.Count == 0) slots = new List<string> { "helmet", "chestplate", "leggings", "boots" };
             bool vanilla = Bool(a, "vanilla");
+            if (vanilla && onlyClass != null) return; // vanilla-model armor has no TF model class
             var pieces = Prop(a, "pieces");
             if (pieces.ValueKind == JsonValueKind.Object && StrList(a, "slots").Count == 0) slots = pieces.EnumerateObject().Select(x => x.Name).ToList();
             foreach (var key in slots)
@@ -554,7 +559,11 @@ namespace Gf.Models
                     if (Math.Abs(eul.X) > 1e-4 || Math.Abs(eul.Y) > 1e-4 || Math.Abs(eul.Z) > 1e-4) wb.Add("rotation", Json.Vec(eul.X, eul.Y, eul.Z));
                     bonesJson.Add(wb);
                     boneCount++;
-                    var opt = new ConvertOptions { Identifier = geoPrefix + gname, RootFilter = new HashSet<string>(StrList(g, "parts")), BoneParentOfRoots = wrapper, RotOverride = overrides };
+                    var opt = new ConvertOptions
+                    {
+                        Identifier = geoPrefix + gname, RootFilter = new HashSet<string>(StrList(g, "parts")), BoneParentOfRoots = wrapper, RotOverride = overrides,
+                        BonePrefix = frame.Parent != null ? wrapper + "_" : null,
+                    };
                     double sc = s;
                     Func<V3, V3> map = p => new V3(sc * p.X + d.X, -sc * p.Y + d.Y, sc * p.Z + d.Z);
                     var geo = ConvertWith(info.Def, opt, map, sc, used);

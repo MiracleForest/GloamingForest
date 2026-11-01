@@ -116,8 +116,16 @@ function Write-GfModelsFiles($result, [string]$Unit, [switch]$All, [switch]$Chec
     $po = Get-GfGeoPartitionOwners
     $generatedParts = @($result.Files.Keys | ForEach-Object { Get-GfModelsPartition $_ } | Sort-Object -Unique)
     $ownedByF2 = { param($p) -not $po.Partitions.ContainsKey($p) -or $po.Partitions[$p] -eq 'F2' }
+    if ($Unit -and $generatedParts -notcontains $Unit) {
+        Write-Host "[geo] no partition '$Unit' (the converter writes: $($generatedParts -join ', '))" -ForegroundColor Red
+        return @{ Problems = 1; Files = 0; Partitions = @($Unit) }
+    }
     if ($All) { $parts = $generatedParts }
     elseif ($Unit) { $parts = @($Unit) }
+    elseif ($null -ne $result.Selected) {
+        # -Java / -Item: the partitions of what they matched
+        $parts = @($result.Selected | ForEach-Object { Get-GfModelsPartition $_ } | Sort-Object -Unique)
+    }
     else {
         $parts = @($generatedParts | Where-Object { & $ownedByF2 $_ })
         if ($Check) { $parts += @($generatedParts | Where-Object { -not (& $ownedByF2 $_) -and (Test-Path (Join-Path $base "$script:GenRoot/$_")) }) }

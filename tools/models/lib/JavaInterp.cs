@@ -621,6 +621,8 @@ namespace Gf.Models
         static bool CaseEquals(object sel, object label)
         {
             if (sel is DirectionObj d) return label is string s ? string.Equals(s, d.Name, StringComparison.OrdinalIgnoreCase) : ReferenceEquals(sel, label);
+            // a TF enum constant ("BossVariant.NAGA") against a case label ("NAGA")
+            if (sel is OpaqueObj o) return label is string ls2 ? o.Type == ls2 || o.Type.EndsWith("." + ls2, StringComparison.Ordinal) : label is OpaqueObj lo && lo.Type == o.Type;
             if (sel is string ss) return label is string ls && ss == ls;
             if (IsNumeric(sel) && IsNumeric(label)) return Convert.ToInt64(sel) == Convert.ToInt64(label);
             return Equals(sel, label);

@@ -65,6 +65,6 @@ if ($Check) {
     Write-Host "[geo] -Check OK ($($w.Files) files match in $scope)" -ForegroundColor Green
     exit 0
 }
-if ($r.Errors.Count) { Write-Host "[geo] $($w.Files) file(s) written with $($r.Errors.Count) error(s)" -ForegroundColor Red; exit 1 }
+if ($r.Errors.Count -or $w.Problems) { Write-Host "[geo] $($w.Files) file(s) written with $($r.Errors.Count + $w.Problems) error(s)" -ForegroundColor Red; exit 1 }
 Write-Host "[geo] $($w.Files) file(s) up to date in $scope" -ForegroundColor Green
 exit 0

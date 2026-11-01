@@ -327,6 +327,15 @@ namespace Gf.Models
                     case "z": channel = "position"; axis = 2; def = bone.Pose.Z; break;
                     default: continue;
                 }
+                // a bone the converter re-parented (the hat under the head) already turns with its new
+                // parent: its own channel is the difference to the parent's (nothing when Java copies it)
+                var newParent = bone.Parent != null ? geo.Bones.FirstOrDefault(b => b.Name == bone.Parent) : null;
+                if (channel == "rotation" && newParent != null && !bone.JavaPath.StartsWith(newParent.JavaPath + "/", StringComparison.Ordinal))
+                {
+                    var parentValue = CurrentValue(newParent.JavaPath + "." + prop, newParent, prop, current);
+                    if (ReferenceEquals(parentValue, value)) continue;
+                    value = M.Add(value, parentValue, -1);
+                }
                 MNode rel;
                 if (channel == "rotation") rel = M.Add(M.Mul(value, M.Num(180.0 / Math.PI)), M.Num(GeometryOut.Deg(def)), -1);
                 else
@@ -361,6 +370,31 @@ namespace Gf.Models
                 }
                 return;
             }
+            // a local assigned again: follow it when the new value translates, forget it otherwise
+            if (s is ExprStmt ls && top && ls.E is AssignExpr la && la.Target is NameExpr ln)
+            {
+                string why = null;
+                MNode rhs = Tr(la.Value, env, current, fields, bones, out why), old, val = null;
+                if (rhs != null)
+                {
+                    if (la.Op == "=") val = rhs;
+                    else if (env.TryGetValue(ln.Name, out old))
+                    {
+                        switch (la.Op)
+                        {
+                            case "+=": val = M.Add(old, rhs); break;
+                            case "-=": val = M.Add(old, rhs, -1); break;
+                            case "*=": val = M.Mul(old, rhs); break;
+                            case "/=": val = IsZero(rhs) ? null : M.Mul(old, rhs, true); break;
+                        }
+                    }
+                    else why = "'" + ln.Name + "' (entity state or a field)";
+                }
+                if (val != null) { env[ln.Name] = val; return; }
+                env.Remove(ln.Name);
+                res.Statements.Add(new AnimStatement { Java = src, Line = s.Line, Reason = "local '" + ln.Name + "': " + (why ?? "operator " + la.Op) });
+                return;
+            }
             if (s is ExprStmt es && es.E is AssignExpr a && top)
             {
                 string path, prop;
@@ -390,8 +424,11 @@ namespace Gf.Models
                         case "+=": val = M.Add(old, rhs); break;
                         case "-=": val = M.Add(old, rhs, -1); break;
                         case "*=": val = M.Mul(old, rhs); break;
-                        case "/=": val = M.Mul(old, rhs, true); break;
-                        default: st.Reason = "operator " + a.Op; res.Statements.Add(st); return;
+                        case "/=":
+                            if (IsZero(rhs)) { st.Reason = "division by zero"; res.Statements.Add(st); current.Remove(key); return; }
+                            val = M.Mul(old, rhs, true);
+                            break;
+                        default: st.Reason = "operator " + a.Op; res.Statements.Add(st); current.Remove(key); return;
                     }
                     current[key] = val;
                     st.Translated = true;
@@ -425,6 +462,47 @@ namespace Gf.Models
             res.Statements.Add(new AnimStatement { Java = src, Line = s.Line, Reason = top ? "not a bone assignment" : "inside a block / loop / condition" });
             // assignments inside untranslated control flow invalidate what we know about their targets
             Invalidate(s, current, fields);
+            foreach (var name in MutatedLocals(s)) env.Remove(name);
+        }
+
+        static bool IsZero(MNode n) { double v; return M.IsNum(n, out v) && v == 0; }
+
+        // Locals a statement assigns or increments (at any depth).
+        static IEnumerable<string> MutatedLocals(Stmt s)
+        {
+            foreach (var e in Expressions(s))
+            {
+                if (e is AssignExpr a && a.Target is NameExpr n) yield return n.Name;
+                if (e is UnaryExpr u && (u.Op == "++" || u.Op == "--") && u.Operand is NameExpr un) yield return un.Name;
+            }
+        }
+
+        static IEnumerable<Expr> Expressions(Stmt s)
+        {
+            switch (s)
+            {
+                case ExprStmt es: yield return es.E; break;
+                case BlockStmt b: foreach (var x in b.Stmts) foreach (var y in Expressions(x)) yield return y; break;
+                case IfStmt i:
+                    foreach (var y in Expressions(i.Then)) yield return y;
+                    if (i.Else != null) foreach (var y in Expressions(i.Else)) yield return y;
+                    break;
+                case ForStmt f:
+                    foreach (var x in f.Init) foreach (var y in Expressions(x)) yield return y;
+                    foreach (var u in f.Update) yield return u;
+                    foreach (var y in Expressions(f.Body)) yield return y;
+                    break;
+                case ForEachStmt fe: foreach (var y in Expressions(fe.Body)) yield return y; break;
+                case WhileStmt w: foreach (var y in Expressions(w.Body)) yield return y; break;
+                case SwitchStmt sw:
+                    foreach (var c in sw.Cases)
+                    {
+                        foreach (var st in c.Body) foreach (var y in Expressions(st)) yield return y;
+                        if (c.ArrowStmt != null) foreach (var y in Expressions(c.ArrowStmt)) yield return y;
+                        if (c.ArrowExpr != null) yield return c.ArrowExpr;
+                    }
+                    break;
+            }
         }
 
         static MNode CurrentValue(string key, BoneOut b, string prop, Dictionary<string, MNode> current)
@@ -563,7 +641,9 @@ namespace Gf.Models
                         case "+": return M.Add(l, r);
                         case "-": return M.Add(l, r, -1);
                         case "*": return M.Mul(l, r);
-                        case "/": return M.Mul(l, r, true);
+                        case "/":
+                            if (IsZero(r)) { why = "division by zero"; return null; }
+                            return M.Mul(l, r, true);
                         case "%": return M.Call("math.mod", l, r);
                         case "<": case ">": case "<=": case ">=": case "==": case "!=": return new MCmp { Op = bi.Op, L = l, R = r };
                         case "&&": return new MCmp { Op = "&&", L = l, R = r };

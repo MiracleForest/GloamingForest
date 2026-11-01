@@ -1931,7 +1931,7 @@
       "identifier": "animation.twilightforest.upper_goblin_knight.base",
       "file": "animations/upper_goblin_knight.base.json",
       "unit": "stronghold",
-      "bones": ["hat", "head"]
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.wraith.base",
@@ -1943,7 +1943,7 @@
       "identifier": "animation.twilightforest.yeti.base",
       "file": "animations/yeti.base.json",
       "unit": "caves",
-      "bones": ["hat", "head", "leftLeg", "rightLeg"]
+      "bones": ["head", "leftLeg", "rightLeg"]
     }
   ],
   "attachables": [

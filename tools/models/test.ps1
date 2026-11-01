@@ -282,6 +282,48 @@ Test 'setupAnim -> Molang: head look and the quadruped walk' {
     Eq ($bones.head.rotation -join '|') 'query.target_x_rotation|query.target_y_rotation|0'
     Eq $bones.leg1.rotation[0] 'math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141'
 }
+Test 'setupAnim -> Molang: the hat under the head is not turned a second time' {
+    $a = $files['assets/gen/geo/caves/rp/animations/yeti.base.json'] | ConvertFrom-Json
+    $bones = $a.animations.'animation.twilightforest.yeti.base'.bones
+    Eq ($bones.head.rotation -join '|') 'query.target_x_rotation|query.target_y_rotation|0'
+    if ($bones.PSObject.Properties.Name -contains 'hat') { throw 'the hat (a child of the head) has its own copy of the head rotation' }
+}
+Test 'setupAnim -> Molang: reassigned locals follow the last value, unknown ones are dropped' {
+    $c = New-TestModel @'
+    private final ModelPart head;
+    public TestAnim(ModelPart root) { this.head = root.getChild("head"); }
+    public void setupAnim(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float f = ageInTicks * 0.1F;
+        f += 1.0F;
+        this.head.xRot = f;
+        float g = 2.0F;
+        if (entity.isAngry()) { g = 3.0F; }
+        this.head.yRot = g;
+        this.head.zRot = 1.0F / 0.0F;
+    }
+'@ 'TestAnim'
+    $mesh = $interp.CallStatic((New-TestModel @'
+    public static LayerDefinition create() {
+        MeshDefinition mesh = new MeshDefinition();
+        mesh.getRoot().addOrReplaceChild("head", CubeListBuilder.create().addBox(0, 0, 0, 1, 1, 1), PartPose.ZERO);
+        return LayerDefinition.create(mesh, 16, 16);
+    }
+'@), 'create', [System.Collections.Generic.List[object]]::new())
+    $g = Convert-Layer $mesh
+    $res = [Gf.Models.AnimTranslator]::new($cp, $interp).Translate($c, $g.Geo)
+    $json = [Gf.Models.Json]::Write([Gf.Models.AnimTranslator]::AnimationJson('animation.test', $res)) | ConvertFrom-Json
+    $rot = $json.animations.'animation.test'.bones.head.rotation
+    Eq $rot[0] 'query.life_time * 114.5916 + 57.2958' 'f = ageInTicks * 0.1 + 1 (radians -> degrees)'
+    Eq $rot[1] 0 'g is unknown after the conditional reassignment'
+    Eq $rot[2] 0 'division by zero is left untranslated'
+}
+Test 'worn extracts never reuse the wearer''s bone names' {
+    $g = Geo 'building' 'naga_trophy_worn'
+    Eq (($g.bones.name) -join ',') 'naga_trophy_worn,naga_trophy_worn_head'
+    Eq $g.bones[0].parent 'head'
+    $crown = Geo 'artifacts' 'mystic_crown'
+    Eq (($crown.bones.name) -join ',') 'mystic_crown,mystic_crown_hat'
+}
 Test 'trophies: the floor extract turns 180 degrees about y and sits on the floor' {
     $g = Geo 'building' 'naga_trophy'
     Eq ($g.bones[0].rotation -join ',') '0,180,0'

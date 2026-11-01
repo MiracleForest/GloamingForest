@@ -224,6 +224,9 @@ namespace Gf.Models
         // Pose overrides by Java part path ("head", "head/jaw"): radians, absolute like Java's setupAnim
         public Dictionary<string, double[]> RotOverride = new Dictionary<string, double[]>();
         public string BoneParentOfRoots; // armor: none; extracts: wrapper bone name
+        // Prepended to every bone name (worn / held extracts: never reuse the wearer's bone names,
+        // which Bedrock binds attachable bones to)
+        public string BonePrefix;
     }
 
     public sealed class BoneOut
@@ -334,6 +337,7 @@ namespace Gf.Models
             string name;
             if (isRoot && opt.Rename.TryGetValue(javaName, out name)) { }
             else name = javaName;
+            if (opt.BonePrefix != null) name = opt.BonePrefix + name;
             if (used.Contains(name))
             {
                 string prefixed = (parent != null ? parent.Name : "root") + "_" + javaName;
