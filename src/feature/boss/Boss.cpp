@@ -99,6 +99,7 @@
 #include "mc/world/level/storage/GameRules.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
+#include "mc/deps/shared_types/legacy/EquipmentSlot.h"
 
 #include "feature/combat/Combat.h"
 #include "feature/common/BlockData.h"
@@ -1376,7 +1377,13 @@ public:
         // BaseTFBoss#shouldDropLoot = !bossDropChests: the loot table goes into the death chest
         // only, the death pipeline's drops of the table are dropped (equipment is not in them)
         gf::loot::onEntityDrops([](Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootContext const&) {
-            if (config().bossesSpawnDropChests && bossSpec(dead.getTypeName())) drops.clear();
+            if (!config().bossesSpawnDropChests || !bossSpec(dead.getTypeName())) return;
+            // LivingEntity#dropEquipment still runs: what the boss wears or holds stays
+            std::unordered_set<std::string> worn;
+            using Slot = SharedTypes::Legacy::EquipmentSlot;
+            for (auto slot : {Slot::Mainhand, Slot::Offhand, Slot::Head, Slot::Torso, Slot::Legs, Slot::Feet})
+                if (auto const& s = dead.getEquippedSlot(slot); !game::items::isEmpty(s)) worn.insert(game::items::idOf(s));
+            std::erase_if(drops, [&](ItemStack const& s) { return !worn.contains(game::items::idOf(s)); });
         });
         // the default spawner logic of TF's ten BossSpawnerBlockEntity types (units may replace
         // a spec with registerSpawner; the height conditions stay with the block id)
