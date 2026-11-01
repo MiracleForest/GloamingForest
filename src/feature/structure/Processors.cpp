@@ -272,6 +272,22 @@ float entityWidth(std::string const& id) {
     return it == widths.end() ? 0.0f : it->second;
 }
 
+/// InclusiveRange<Integer> of SpawnData.CustomSpawnRules (ExtraCodecs.intervalCodec: [min, max]
+/// or {min_inclusive, max_inclusive}; a single number is both ends), clamped to 0..15; the
+/// default is the whole light range.
+Json lightRange(Json const& v) {
+    int lo = 0, hi = 15;
+    if (v.is_number_integer()) lo = hi = v.get<int>();
+    else if (v.is_array() && v.size() == 2 && v[0].is_number_integer() && v[1].is_number_integer()) {
+        lo = v[0].get<int>();
+        hi = v[1].get<int>();
+    } else if (v.is_object()) {
+        lo = v.value("min_inclusive", 0);
+        hi = v.value("max_inclusive", 15);
+    }
+    return Json::array({std::clamp(lo, 0, 15), std::clamp(hi, 0, 15)});
+}
+
 std::optional<BlockInfo> spawnerProcessor(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const& config) {
     // a template's spawner always carries block entity data (vanilla saves it with the block)
     if (!current.block) return current;
@@ -298,6 +314,14 @@ std::optional<BlockInfo> spawnerProcessor(Region&, BlockInfo const&, BlockInfo c
             std::string id   = ent.is_object() ? ent.value("id", std::string{}) : ent.get<std::string>();
             out.data["entity"] = id;
             out.data.erase("entity_scale");
+            out.data.erase("spawn_rules");
+            // SpawnData.custom_spawn_rules (SpawnerProcessor.compile always gives block light
+            // 0..7, sky light 0..15): BaseSpawner checks them instead of the mob's spawn rules
+            if (data.is_object() && data.contains("custom_spawn_rules") && data["custom_spawn_rules"].is_object()) {
+                auto const& rules         = data["custom_spawn_rules"];
+                out.data["spawn_rules"] = Json{{"block_light", lightRange(rules.value("block_light_limit", Json()))},
+                                               {"sky_light", lightRange(rules.value("sky_light_limit", Json()))}};
+            }
             // entity_width_max: a generic.scale attribute shrinking wider mobs to the width
             float maxWidth = config.value("entity_width_max", 0.0f);
             if (maxWidth > 0) {
@@ -355,8 +379,12 @@ std::optional<BlockInfo> targetedRot(Region&, BlockInfo const&, BlockInfo const&
     return randomAt(current.pos).nextFloat() <= integrity ? std::optional<BlockInfo>(current) : std::nullopt;
 }
 
-std::optional<BlockInfo> updateMarking(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const&) {
-    // markPosForPostprocessing: Bedrock updates shapes of placed blocks by itself
+std::optional<BlockInfo> updateMarking(Region& region, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const& config) {
+    // level.getChunk(pos).markPosForPostprocessing(pos): once the chunk is complete (Java: FULL
+    // status, LevelChunk#postProcessGeneration) the block there takes its shape from its
+    // neighbours (Block.updateFromNeighbourShapes); here a queued job runs once the chunk is
+    // loaded, after the whole structure stands
+    if (current.block && listHasBlock(config.value("mark_updates", Json::array()), *current.block)) blockentities::updateShape(region, current.pos);
     return current;
 }
 

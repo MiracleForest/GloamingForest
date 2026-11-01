@@ -12,16 +12,19 @@
 //
 // /twilightforest structure_util (operators):
 //   display_pieces <structure>       outlines the start and its pieces around you (TF: block
-//                                    displays; Bedrock: particle outlines for a minute, piece list in chat)
+//                                    displays; Bedrock has no display entities: particle outlines
+//                                    for a minute, piece list in chat)
 //   clear_display                    stops the outlines
 //   count_loot <structure> [common]  counts the items in the start's containers
 //   count_template <structure>       counts the templates of the start's pieces
 //   generator_radius <structure>     outlines the chunks 0..8 around the start's chunk
 // GloamingForest development additions:
 //   place <template> [rotation] [mirror]  places a template at your feet
-//   capture <id> <x1> <y1> <z1> <x2> <y2> <z2>  saves a box as a .gft.json template (original builds)
+//   capture <id> <x1> <y1> <z1> <x2> <y2> <z2>  saves a box with its entities as a .gft.json
+//                                    template (original builds; paintings by the block they cover)
 //   jigsaw <pool> [depth]            assembles a template pool at your feet
 //   templates                        lists the known templates, pools and data counts
+//   outline <x1> <y1> <z1> <x2> <y2> <z2> [seconds]  outlines a box (server e2e)
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -34,15 +37,15 @@
 #include <unordered_map>
 
 #include "ll/api/command/CommandHandle.h"
-#include "ll/api/event/EventBus.h"
-#include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/network/packet/TextPacket.h"
 #include "mc/network/packet/TextPacketType.h"
 #include "mc/server/commands/CommandOrigin.h"
 #include "mc/server/commands/CommandOutput.h"
+#include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockSource.h"
@@ -52,6 +55,7 @@
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/chunk/LevelChunkBlockActorStorage.h"
 #include "mc/world/level/dimension/Dimension.h"
+#include "mc/world/phys/AABB.h"
 
 #include "core/Keys.h"
 #include "feature/common/BlockData.h"
@@ -96,6 +100,10 @@ struct StructureUtilCaptureParams {
     std::string id;
     int         x1 = 0, y1 = 0, z1 = 0, x2 = 0, y2 = 0, z2 = 0;
 };
+struct StructureUtilOutlineParams {
+    int x1 = 0, y1 = 0, z1 = 0, x2 = 0, y2 = 0, z2 = 0;
+    int seconds = 60;
+};
 
 namespace {
 
@@ -118,13 +126,7 @@ struct ChunkLabels {
 };
 std::vector<Outline>       gOutlines;
 std::optional<ChunkLabels> gLabels;
-ll::event::ListenerPtr     gOutlineTick;
 int                        gTickCounter = 0;
-
-void stopTicking() {
-    if (gOutlineTick) ll::event::EventBus::getInstance().removeListener(gOutlineTick);
-    gOutlineTick.reset();
-}
 
 void showLabels(Level& level) {
     if (!gLabels) return;
@@ -154,6 +156,7 @@ void showLabels(Level& level) {
 }
 
 void drawOutlines() {
+    // (called from the kit's one tick listener: nothing to do while nothing is displayed)
     if ((gOutlines.empty() && !gLabels) || (++gTickCounter % 10) != 0) return;
     auto level = ll::service::getLevel();
     if (!level) return;
@@ -190,17 +193,13 @@ void drawOutlines() {
     std::erase_if(gOutlines, [](Outline const& o) { return o.ticksLeft <= 0; });
     showLabels(*level);
     if (gLabels && gLabels->ticksLeft <= 0) gLabels.reset();
-    if (gOutlines.empty() && !gLabels) stopTicking();
+    if (gOutlines.empty() && !gLabels) log().info("structure_util outlines expired");
 }
 
-void startTicking() {
-    if (!gOutlineTick)
-        gOutlineTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { drawOutlines(); });
-}
-
-void addOutline(int dim, BlockBox const& box, std::string particle, float spacing = 2.0f, bool floorOnly = false) {
-    gOutlines.push_back(Outline{dim, box, std::move(particle), 60 * 20, spacing, floorOnly});
-    startTicking();
+/// TF's block and text displays (DisplayUtil) stay until clear_display; particles must be sent
+/// again and again, so an outline is drawn for a minute unless `ticks` says otherwise.
+void addOutline(int dim, BlockBox const& box, std::string particle, float spacing = 2.0f, bool floorOnly = false, int ticks = 60 * 20) {
+    gOutlines.push_back(Outline{dim, box, std::move(particle), ticks, spacing, floorOnly});
 }
 
 struct Where {
@@ -273,12 +272,24 @@ void clearDisplay(CommandOrigin const& origin, CommandOutput& output) {
     if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
     gOutlines.clear();
     gLabels.reset();
-    stopTicking();
     output.success("cleared");
 }
 
+/// Development (server e2e): outlines a box for `seconds` (the display_pieces outline without a
+/// structure start), so the scenario can watch an outline expire.
+void outlineBox(CommandOrigin const& origin, CommandOutput& output, StructureUtilOutlineParams const& p) {
+    if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
+    int dim = 0;
+    if (auto* player = commands::playerOf(origin)) dim = static_cast<int>(player->getDimensionId());
+    int seconds = p.seconds > 0 ? p.seconds : 60;
+    addOutline(dim, BlockBox::of(p.x1, p.y1, p.z1, p.x2, p.y2, p.z2), "minecraft:villager_happy", 2.0f, false, seconds * 20);
+    log().info("structure_util outline: {} outlines for {} s", gOutlines.size(), seconds);
+    output.success("outlined");
+}
+
 /// Item#getRarity of 1.21.1 (vanilla Items and TF's TFItems / TFBlocks rarities): 0 common,
-/// 1 uncommon, 2 rare, 3 epic.
+/// 1 uncommon, 2 rare, 3 epic. (The item and catalog contracts of F9 carry no rarity yet; once
+/// they do, this table gives way to them.)
 int baseRarity(std::string const& id) {
     static std::unordered_map<std::string, int> const table = [] {
         std::unordered_map<std::string, int> t;
@@ -369,7 +380,7 @@ void countLoot(CommandOrigin const& origin, CommandOutput& output, std::string c
                         loot::LootContext ctx;
                         ctx.region = w->source;
                         ctx.origin = Vec3{static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y) + 0.5f, static_cast<float>(pos.z) + 0.5f};
-                        ctx.player = w->player;
+                        ctx.player = nullptr; // unpackLootTable(null): no player, so no luck
                         ctx.seed   = record->seed;
                         auto items = loot::roll(record->table, ctx);
                         // LootTable#fill: stacks beyond the container's slots are dropped, as in vanilla
@@ -448,7 +459,6 @@ void generatorRadius(CommandOrigin const& origin, CommandOutput& output, std::st
             addOutline(w->dim, box, particles[r], 8.0f, true);
         }
     gLabels = ChunkLabels{w->dim, cx, cz, 60 * 20, w->player->getOrCreateUniqueID().rawID};
-    startTicking();
     w->player->sendMessage(tr("commands.tffeature.generator_radius.center_chunk", "Structure start's center chunk") + ": " + std::to_string(cx) + ", " +
                            std::to_string(cz));
     log().info("structure_util generator_radius {}: 289 chunks around {}, {}", start->key, cx, cz);
@@ -474,48 +484,18 @@ void capture(CommandOrigin const& origin, CommandOutput& output, StructureUtilCa
     if (!w) return;
     BlockBox box = BlockBox::of(p.x1, p.y1, p.z1, p.x2, p.y2, p.z2);
     if (box.volume() > 4'000'000) return output.error("box too large");
-    // palette of Java states: Bedrock blocks are written by their Bedrock id and states (an
-    // original build captured in game; tools/structures reads both)
-    std::map<std::string, int> paletteIndex;
-    Json                       palette = Json::array();
-    std::vector<int>           cells;
-    for (int y = box.minY; y <= box.maxY; y++)
-        for (int z = box.minZ; z <= box.maxZ; z++)
-            for (int x = box.minX; x <= box.maxX; x++) {
-                auto const& b     = w->source->getBlock(BlockPos{x, y, z});
-                Json        entry = Json{{"Name", b.getTypeName()}};
-                auto        st    = game::statesOf(b);
-                if (!st.empty()) entry["Properties"] = st;
-                auto key = entry.dump();
-                auto it  = paletteIndex.find(key);
-                if (it == paletteIndex.end()) {
-                    it = paletteIndex.emplace(key, static_cast<int>(palette.size())).first;
-                    palette.push_back(entry);
-                }
-                cells.push_back(it->second);
-            }
-    Json blocksRle = Json::array();
-    for (std::size_t i = 0; i < cells.size();) {
-        std::size_t j = i;
-        while (j < cells.size() && cells[j] == cells[i]) j++;
-        blocksRle.push_back(Json::array({cells[i], static_cast<int>(j - i)}));
-        i = j;
-    }
-    Json doc{{"format", "gloamingforest:template"},
-             {"format_version", 1},
-             {"id", p.id},
-             {"size", Json::array({box.maxX - box.minX + 1, box.maxY - box.minY + 1, box.maxZ - box.minZ + 1})},
-             {"palette", palette},
-             {"blocks", blocksRle}};
+    int  skipped = 0;
+    Json doc     = templates::capture(*w->source, box, p.id, skipped);
     std::string error;
     if (!templates::add(doc, &error)) return output.error("invalid capture: " + error);
+    if (skipped > 0) output.success(std::to_string(skipped) + " entities reach outside the box and were left out");
     auto colon = p.id.find(':');
     auto file  = Mod::getInstance().getSelf().getModDir() / "structures" / "captured" /
                 (p.id.substr(0, colon) + "_" + p.id.substr(colon + 1) + ".gft.json");
     std::error_code ec;
     std::filesystem::create_directories(file.parent_path(), ec);
     std::ofstream(file) << doc.dump(1);
-    log().info("structure_util capture {} -> {}", p.id, file.string());
+    log().info("structure_util capture {} -> {} ({} entities)", p.id, file.string(), doc.value("entities", Json::array()).size());
     output.success("captured " + p.id);
 }
 
@@ -616,10 +596,75 @@ void listTemplates(CommandOrigin const& origin, CommandOutput& output) {
 
 } // namespace
 
+Json templates::capture(BlockSource& source, BlockBox const& box, std::string const& id, int& skipped) {
+    // palette of Java states: Bedrock blocks are written by their Bedrock id and states (an
+    // original build captured in game; tools/structures reads both)
+    std::map<std::string, int> paletteIndex;
+    Json                       palette = Json::array();
+    std::vector<int>           cells;
+    for (int y = box.minY; y <= box.maxY; y++)
+        for (int z = box.minZ; z <= box.maxZ; z++)
+            for (int x = box.minX; x <= box.maxX; x++) {
+                auto const& b     = source.getBlock(BlockPos{x, y, z});
+                Json        entry = Json{{"Name", b.getTypeName()}};
+                auto        st    = game::statesOf(b);
+                if (!st.empty()) entry["Properties"] = st;
+                auto key = entry.dump();
+                auto it  = paletteIndex.find(key);
+                if (it == paletteIndex.end()) {
+                    it = paletteIndex.emplace(key, static_cast<int>(palette.size())).first;
+                    palette.push_back(entry);
+                }
+                cells.push_back(it->second);
+            }
+    Json blocksRle = Json::array();
+    for (std::size_t i = 0; i < cells.size();) {
+        std::size_t j = i;
+        while (j < cells.size() && cells[j] == cells[i]) j++;
+        blocksRle.push_back(Json::array({cells[i], static_cast<int>(j - i)}));
+        i = j;
+    }
+    int  sx = box.maxX - box.minX + 1, sy = box.maxY - box.minY + 1, sz = box.maxZ - box.minZ + 1;
+    Json doc{{"format", "gloamingforest:template"}, {"format_version", 1}, {"id", id}, {"size", Json::array({sx, sy, sz})},
+             {"palette", palette},              {"blocks", blocksRle}};
+    // StructureTemplate#fillEntityList (includeEntities): the entities in the box but players, a
+    // painting by the block it covers (HangingEntity#pos), every other entity by its position
+    Json entities = Json::array();
+    skipped       = 0;
+    AABB range{Vec3{static_cast<float>(box.minX), static_cast<float>(box.minY), static_cast<float>(box.minZ)},
+               Vec3{static_cast<float>(box.maxX + 1), static_cast<float>(box.maxY + 1), static_cast<float>(box.maxZ + 1)}};
+    for (auto* actor : source.getEntities(range, 0.0f)) {
+        if (!actor || actor->isType(ActorType::Player)) continue;
+        if (actor->isType(ActorType::Painting)) {
+            auto hung = blockentities::describePainting(*actor);
+            if (!hung || !box.contains(hung->block.x, hung->block.y, hung->block.z)) {
+                skipped++;
+                continue;
+            }
+            Json at = Json::array({hung->block.x - box.minX, hung->block.y - box.minY, hung->block.z - box.minZ});
+            entities.push_back(Json{{"pos", at},
+                                    {"id", "minecraft:painting"},
+                                    {"data", {{"block_pos", at}, {"facing", blocks::directionName(hung->facing)}, {"variant", hung->variant}}}});
+            continue;
+        }
+        Vec3   feet = actor->getFeetPos();
+        double x = feet.x - box.minX, y = feet.y - box.minY, z = feet.z - box.minZ;
+        if (x < 0 || y < 0 || z < 0 || x > sx || y > sy || z > sz) {
+            skipped++;
+            continue;
+        }
+        Vec2 const& rot = actor->getRotation();
+        entities.push_back(Json{{"pos", Json::array({x, y, z})}, {"id", actor->getTypeName()}, {"data", {{"Rotation", Json::array({rot.y, rot.x})}}}});
+    }
+    if (!entities.empty()) doc["entities"] = entities;
+    return doc;
+}
+
+void outlines::tick() { drawOutlines(); }
+
 void outlines::shutdown() {
     gOutlines.clear();
     gLabels.reset();
-    stopTicking();
 }
 
 GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
@@ -661,6 +706,17 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
         [](CommandOrigin const& o, CommandOutput& out, StructureUtilPieceParams const& p) { pieceCmd(o, out, p); }
     );
     cmd.overload().text("structure_util").text("pending_probe").execute([](CommandOrigin const& o, CommandOutput& out) { pendingProbe(o, out); });
+    cmd.overload<StructureUtilOutlineParams>()
+        .text("structure_util")
+        .text("outline")
+        .required("x1")
+        .required("y1")
+        .required("z1")
+        .required("x2")
+        .required("y2")
+        .required("z2")
+        .optional("seconds")
+        .execute([](CommandOrigin const& o, CommandOutput& out, StructureUtilOutlineParams const& p) { outlineBox(o, out, p); });
 });
 
 } // namespace gf::structure

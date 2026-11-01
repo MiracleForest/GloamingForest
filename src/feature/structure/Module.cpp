@@ -35,6 +35,7 @@ public:
             game::db::onWorldSave([] { s::blockentities::save(); });
             game::db::onWorldClosed([] {
                 s::outlines::shutdown();
+                s::spawners::clear();
                 s::blocks::clearCaches();
                 s::blockentities::load();
             });
@@ -43,13 +44,19 @@ public:
             s::data::reload();
             s::blockentities::load();
         }
-        mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { s::blockentities::flush(); });
-        s::blockentities::installEvents();
+        // one tick listener for the kit: queued block entity work, spawner mob sizes and the dev
+        // command outlines (which return at once while nothing is displayed)
+        mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) {
+            s::blockentities::flush();
+            s::spawners::tick();
+            s::outlines::tick();
+        });
+        s::spawners::install();
     }
     void uninstall() {
         if (mTick) ll::event::EventBus::getInstance().removeListener(mTick);
         mTick.reset();
-        s::blockentities::uninstallEvents();
+        s::spawners::uninstall();
         s::outlines::shutdown();
         s::blockentities::save();
     }

@@ -611,9 +611,20 @@ std::map<std::string, StateValue> mapProperties(Block const& block, Json const& 
             out["vine_direction_bits"] = iv(v == "true" ? (cur | bit) : (cur & ~bit));
             continue;
         }
+        // walls keep their shape in states on both editions: WallSide none / low / tall ->
+        // wall_connection_type_<side> none / short / tall, "up" -> wall_post_bit (Bedrock does not
+        // recompute them for blocks set by structures: update_marking does, WallBlock#tryFixWallStates)
+        if ((name == "north" || name == "east" || name == "south" || name == "west") && has("wall_connection_type_" + name)) {
+            out["wall_connection_type_" + name] = sv(v == "low" ? "short" : v == "tall" ? "tall" : "none");
+            continue;
+        }
+        if (name == "up" && has("wall_post_bit")) {
+            out["wall_post_bit"] = bv(v == "true");
+            continue;
+        }
         if (name == "north" || name == "east" || name == "south" || name == "west" || name == "up" || name == "down") {
             if (has(ns + ":" + name)) out[ns + ":" + name] = bv(v == "true");
-            continue; // fences, walls, panes connect by themselves on Bedrock
+            continue; // vanilla fences and panes connect by themselves on Bedrock (no states)
         }
         // generic: "<ns>:<name>" then "<name>"
         for (auto const& candidate : {ns + ":" + name, std::string(name)}) {
@@ -879,6 +890,10 @@ Block const& transform(Block const& block, Rotation rotation, Mirror mirrorMode)
             }
         } else if (name == "door_hinge_bit" && mirrorMode != Mirror::None) {
             changes[name] = bv(value.i == 0);
+        } else if (name.starts_with("wall_connection_type_")) {
+            // WallBlock#rotate / #mirror: the side's connection moves with the side
+            if (auto o = horizontal(name.substr(std::string_view("wall_connection_type_").size())))
+                changes[std::string("wall_connection_type_") + horizontalName(turn(*o))] = value;
         } else if (value.kind == StateValue::Kind::String) {
             if (auto o = horizontal(value.s)) changes[name] = sv(horizontalName(turn(*o)));
         }

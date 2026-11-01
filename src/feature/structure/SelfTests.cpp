@@ -8,18 +8,26 @@
 #include <algorithm>
 #include <climits>
 #include <cmath>
+#include <cstdio>
 #include <map>
 #include <optional>
 #include <unordered_map>
 
+#include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/legacy/ActorUniqueID.h"
+#include "mc/server/commands/CommandPermissionLevel.h"
+#include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/Motif.h"
 #include "mc/world/actor/Painting.h"
+#include "mc/world/actor/item/ItemActor.h"
+#include "mc/world/item/ItemStack.h"
+#include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/level/BaseMobSpawner.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -32,6 +40,8 @@
 #include "mc/world/phys/AABB.h"
 
 #include "core/VolumeHash.h"
+#include "feature/ext/structure/Placement.h"
+#include "feature/ext/structure/Processors.h"
 #include "feature/ext/structure/TemplateDefinitions.h"
 #include "feature/structure/Region.h"
 #include "feature/structure/bases/BasesInternal.h"
@@ -1001,6 +1011,47 @@ std::vector<Actor*> paintingsIn(BlockSource& source, BlockBox const& box) {
     return out;
 }
 
+std::vector<Actor*> itemsIn(BlockSource& source, BlockBox const& box, std::string const& itemId) {
+    AABB range{Vec3{static_cast<float>(box.minX), static_cast<float>(box.minY), static_cast<float>(box.minZ)},
+               Vec3{static_cast<float>(box.maxX + 1), static_cast<float>(box.maxY + 1), static_cast<float>(box.maxZ + 1)}};
+    std::vector<Actor*> out;
+    for (auto* a : source.getEntities(range, 0.0f, ActorType::ItemEntity))
+        if (a && a->isType(ActorType::ItemEntity) && static_cast<ItemActor*>(a)->mItem->getTypeName() == itemId) out.push_back(a);
+    return out;
+}
+
+std::string boxText(double const* b) {
+    char buf[160];
+    std::snprintf(buf, sizeof(buf), "[%.4f %.4f %.4f .. %.4f %.4f %.4f]", b[0], b[1], b[2], b[3], b[4], b[5]);
+    return buf;
+}
+
+/// The box of a painting is TF's box for its block and facing: the same center and the same width
+/// and height (Bedrock insets a painting's box by 1/32 at each edge).
+bool sameBox(double const* actual, double const* tf, Orientation facing) {
+    for (int i = 0; i < 3; i++)
+        if (std::abs((actual[i] + actual[i + 3]) / 2 - (tf[i] + tf[i + 3]) / 2) > 0.05) return false;
+    bool alongX = facing == Orientation::East || facing == Orientation::West;
+    int  wide   = alongX ? 2 : 0; // the axis the painting's width lies along
+    return std::abs((actual[wide + 3] - actual[wide]) - (tf[wide + 3] - tf[wide])) < 0.07 && std::abs((actual[4] - actual[1]) - (tf[4] - tf[1])) < 0.07;
+}
+
+/// A painting template: a 3 x 3 stone wall at z 0, air in front at z 1, a 2 x 2 painting (baroque)
+/// covering block (0, 0, 1) and facing south (block_pos names the block).
+std::string const& paintingTemplateId() {
+    static std::string const id = [] {
+        auto doc = makeTemplate("gf_test:structure/painting_wall", {state("minecraft:air"), state("minecraft:stone")},
+                                {{"111", "000"}, {"111", "000"}, {"111", "000"}});
+        doc["entities"] = Json::array({Json{{"pos", {0, 0, 1}},
+                                            {"id", "minecraft:painting"},
+                                            {"data", {{"block_pos", {0, 0, 1}}, {"facing", "south"}, {"variant", "minecraft:baroque"}}}}});
+        std::string error;
+        templates::add(doc, &error);
+        return std::string("gf_test:structure/painting_wall");
+    }();
+    return id;
+}
+
 } // namespace
 
 GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -1026,6 +1077,13 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
         ctx.check(placeable.size() == 46 && placeable.front().id == "minecraft:kebab", "minecraft:placeable in the tag's order (" +
                                                                                            std::to_string(placeable.size()) + ")");
         ctx.check(paintings::ofSizeOrSmaller("twilightforest:tower_paintings", 1, 1).size() == 8, "eight 1x1 tower paintings");
+        // a painting entity of a template is placed on its block: pos as a center (Java's saved
+        // entity position) without block_pos is refused, block_pos is the block
+        auto bad = makeTemplate("gf_test:structure/bad_painting", {state("minecraft:air")}, {{"..", ".."}, {"..", ".."}});
+        bad["entities"] = Json::array({Json{{"pos", {1.0, 1.0, 0.96875}}, {"id", "minecraft:painting"}, {"data", {{"facing", "north"}, {"variant", "minecraft:baroque"}}}}});
+        ctx.check(!templates::validate(bad).empty(), "a painting at its center position without block_pos is refused");
+        bad["entities"][0]["data"]["block_pos"] = Json::array({0, 0, 1});
+        ctx.check(templates::validate(bad).empty(), "with block_pos the painting entry is valid");
     }
     // in the world: a wall, a painting in front of it, then the marker handler next to it
     auto area = co_await ctx.flatArea(5735, 10, 6);
@@ -1033,36 +1091,94 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
     auto* source = ctx.region();
     ctx.require(source != nullptr, "block source");
     BlockBox wallBox{area.minX + 1, area.minY, area.minZ + 1, area.minX + 8, area.minY + 3, area.minZ + 1};
-    int      before = 0;
+    BlockPos front{area.minX + 2, area.minY + 1, area.minZ + 2};
+    BlockPos noWall{area.minX + 2, area.minY + 1, area.minZ + 5};
+    // the 2 x 2 template painting, rotated: the wall (template z 0) ends up at x = origin.x, the
+    // painting's block (0, 0, 1) at origin + (-1, 0, 0), facing west
+    BlockPos origin{area.minX + 6, area.minY, area.minZ + 6};
+    BlockPos templatePainting{origin.x - 1, origin.y, origin.z};
+    auto     kebabVariant   = *paintings::byId("minecraft:kebab");
+    auto     baroqueVariant = *paintings::byId("minecraft:baroque");
+    // which block Bedrock's placement position is: the box the game gives a painting placed from
+    // the covered block and from the wall block, against TF's box for the covered block
+    {
+        double tf[6];
+        paintings::boundingBox(front, Orientation::South, kebabVariant, tf);
+        auto covered = blockentities::paintingBoxFor(front, Orientation::South, "kebab");
+        auto wall    = blockentities::paintingBoxFor(BlockPos{front.x, front.y, front.z - 1}, Orientation::South, "kebab");
+        ctx.info("TF box " + boxText(tf) + "; placed from the covered block " + (covered ? boxText(covered->data()) : std::string("-")) +
+                 ", from the wall " + (wall ? boxText(wall->data()) : std::string("-")));
+        auto used = blockentities::paintingBoxFor(blockentities::paintingPlacement(front, Orientation::South), Orientation::South, "kebab");
+        ctx.check(used && sameBox(used->data(), tf, Orientation::South), "the placement position F7 gives the game yields TF's box");
+    }
+    int before = 0;
     {
         BlockSourceRegion region(*source, BlockPos{area.minX, area.minY, area.minZ});
         for (int x = wallBox.minX; x <= wallBox.maxX; x++)
             for (int y = wallBox.minY; y <= wallBox.maxY; y++) (void)region.setBlock(BlockPos{x, y, wallBox.minZ}, blocks::java("minecraft:stone"), 2);
         before = static_cast<int>(paintingsIn(*source, area).size());
-        BlockPos front{area.minX + 2, area.minY + 1, area.minZ + 2};
-        ctx.check(paintings::tryHang(region, front, Orientation::South, paintings::byId("minecraft:kebab")), "a painting hangs on the wall");
+        ctx.check(paintings::tryHang(region, front, Orientation::South, kebabVariant), "a painting hangs on the wall");
         ctx.check(!paintings::tryHang(region, front, Orientation::South, paintings::byId("minecraft:aztec")), "a second painting on the same spot is refused");
-        BlockPos noWall{area.minX + 2, area.minY + 1, area.minZ + 5};
-        // TF's check passes without a wall (TF hangs it and lets it drop); the game hangs nothing
-        ctx.check(paintings::tryHang(region, noWall, Orientation::South, paintings::byId("minecraft:kebab")), "TF's spot check ignores the wall");
+        // TF's check passes without a wall (TF hangs it and it drops off as an item); the game
+        // hangs nothing, so the item drops at once
+        ctx.check(paintings::tryHang(region, noWall, Orientation::South, kebabVariant), "TF's spot check ignores the wall");
         ctx.check(paintingsIn(*source, BlockBox{noWall.x, noWall.y, noWall.z, noWall.x, noWall.y, noWall.z}).empty(), "no painting hangs without a wall");
         // the camp's painting marker handler: LichBossRoom.placePainting(pos, random, 1, placeable, 1, 1, rotation.rotate(NORTH))
         JavaRandom random(77);
         Json       handler{{"type", "twilightforest:painting"}, {"paintings", "minecraft:placeable"}};
         BlockPos   marker{area.minX + 5, area.minY + 1, area.minZ + 2};
         ctx.check(markers::handle(handler, "painting", marker, region, random, area, Rotation::Clockwise180), "the painting marker hangs a 1x1 painting");
+        // a 2 x 2 painting of a template placed with a rotation hangs on the template's wall
+        TemplateSettings settings;
+        settings.rotation = Rotation::Clockwise90;
+        ctx.check(templates::place(paintingTemplateId(), region, origin, settings), "the painting template places");
     }
     co_await ctx.ticks(2);
     source = ctx.region();
     ctx.require(source != nullptr, "block source");
     auto hung = paintingsIn(*source, area);
-    ctx.check(static_cast<int>(hung.size()) - before == 2, "two paintings hang (" + std::to_string(hung.size() - before) + ")");
-    bool kebab = false;
+    ctx.check(static_cast<int>(hung.size()) - before == 3, "three paintings hang (" + std::to_string(hung.size() - before) + ")");
+    Actor* kebab   = nullptr;
+    Actor* baroque = nullptr;
     for (auto* a : hung) {
         auto const* motif = static_cast<Painting*>(a)->mMotif;
-        if (motif && motif == &Motif::mKebab()) kebab = true;
+        BlockPos    at    = game::blockPosOf(a->getPosition());
+        if (motif == &Motif::mKebab() && at.x == front.x && at.y == front.y) kebab = a;
+        if (motif == &Motif::mBaroque()) baroque = a;
     }
-    ctx.check(kebab, "the hung painting shows the requested motive (kebab)");
+    ctx.check(kebab != nullptr, "the hung painting shows the requested motive (kebab)");
+    if (kebab) {
+        // where it hangs: TF's box for the requested block
+        double tf[6];
+        paintings::boundingBox(front, Orientation::South, kebabVariant, tf);
+        AABB const& b = kebab->getAABB();
+        double      actual[6]{b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z};
+        ctx.check(sameBox(actual, tf, Orientation::South), "the kebab hangs where TF hangs it: " + boxText(actual) + ", TF " + boxText(tf));
+        auto d = blockentities::describePainting(*kebab);
+        ctx.check(d && d->block == front && d->facing == Orientation::South && d->variant == "minecraft:kebab", "the painting reads back as its block, facing and variant");
+        // structure_util capture keeps it: the template's painting entity names the block it covers
+        int      skipped = 0;
+        BlockBox captured{front.x - 1, front.y - 1, front.z - 1, front.x + 1, front.y + 1, front.z};
+        auto     doc     = templates::capture(*source, captured, "gf_test:structure/captured", skipped);
+        Json     entry;
+        for (auto const& e : doc.value("entities", Json::array()))
+            if (e.value("id", std::string{}) == "minecraft:painting") entry = e;
+        ctx.check(entry.is_object() && entry["data"].value("block_pos", Json()) == Json::array({1, 1, 1}) &&
+                      entry["data"].value("facing", std::string{}) == "south" && entry["data"].value("variant", std::string{}) == "minecraft:kebab",
+                  "capture keeps the painting by its block, facing and variant (" + entry.dump() + ")");
+        ctx.check(templates::validate(doc).empty(), "the captured template is valid");
+    }
+    ctx.check(baroque != nullptr, "the template's 2 x 2 painting hangs (baroque)");
+    if (baroque) {
+        double tf[6];
+        paintings::boundingBox(templatePainting, Orientation::West, baroqueVariant, tf);
+        AABB const& b = baroque->getAABB();
+        double      actual[6]{b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z};
+        ctx.check(sameBox(actual, tf, Orientation::West), "the rotated template painting covers its block, facing west: " + boxText(actual) + ", TF " + boxText(tf));
+    }
+    auto dropped = itemsIn(*source, BlockBox{noWall.x - 1, noWall.y - 1, noWall.z - 1, noWall.x + 1, noWall.y + 1, noWall.z + 1}, "minecraft:painting");
+    ctx.check(!dropped.empty(), "the painting the game refused dropped as a painting item");
+    for (auto* a : dropped) a->despawn();
     for (auto* a : hung) a->despawn();
 });
 
@@ -1248,9 +1364,82 @@ GF_REGISTER_SELFTEST("structure.template_definitions", [](Context& ctx) {
     // WorldUtil.adjustForTerrain(context, x, z, radius, gridLength) and Mth.lerpDiscrete
     ctx.check(ext::lerpDiscrete(0.0f, 3, 9) == 3 && ext::lerpDiscrete(1.0f, 3, 9) == 9 && ext::lerpDiscrete(0.5f, 0, 15) == 8, "Mth.lerpDiscrete");
     checkGolden(ctx, "adjust_for_terrain", std::to_string(ext::adjustForTerrain(gen, 5, 5, 12, 3)));
+    // WorldGenRegion#getRandom: Minecraft 1.21.1's region random (Xoroshiro, "minecraft:worldgen_region_random"
+    // at the center chunk); a memory region has seed 1234567 and center chunk 0, 0 (the value is
+    // Minecraft's own, tests/structure/XoroshiroGolden.inc)
+    {
+        MemoryRegion region;
+        ext::regionStarted(region);
+        int first  = ext::worldRandom(region).nextInt();
+        int second = ext::worldRandom(region).nextInt();
+        ctx.check(first == 1186928939, "the region random is Minecraft's (" + std::to_string(first) + ")");
+        ext::regionStarted(region);
+        ctx.check(ext::worldRandom(region).nextInt() == first && second != first, "the region keeps drawing from its random; a new region starts over");
+    }
 });
 
-// ---- spawned mobs scaled by entity_width_max ---------------------------------------------------------------------------
+// ---- spawners: mobs scaled by entity_width_max, custom spawn rules ---------------------------------------------------
+
+namespace {
+
+/// Runs a command as the server (selftests only).
+bool runCommand(std::string const& command) {
+    auto level = ll::service::getLevel();
+    if (!level) return false;
+    ServerCommandOrigin origin("gloamingforest-structure-selftest", level->asServer(), CommandPermissionLevel::Owner, DimensionType(0));
+    auto out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
+    return out.mSuccessCount > 0;
+}
+
+AABB aabbOf(BlockBox const& b) {
+    return AABB{Vec3{static_cast<float>(b.minX), static_cast<float>(b.minY), static_cast<float>(b.minZ)},
+                Vec3{static_cast<float>(b.maxX + 1), static_cast<float>(b.maxY + 1), static_cast<float>(b.maxZ + 1)}};
+}
+
+std::vector<Actor*> cowsIn(BlockSource& source, BlockBox const& box) {
+    std::vector<Actor*> out;
+    for (auto* a : source.getEntities(aabbOf(box), 0.0f, ActorType::Cow))
+        if (a && a->isType(ActorType::Cow)) out.push_back(a);
+    return out;
+}
+
+float widthOf(Actor const& a) { return a.getAABB().max.x - a.getAABB().min.x; }
+
+/// Waits up to `ticks` for a cow in `box` that is not in `ignore`; its unique id.
+ll::coro::CoroTask<std::optional<std::int64_t>> awaitCow(Context& ctx, BlockBox box, std::vector<std::int64_t> ignore, int ticks) {
+    for (int i = 0; i < ticks; i += 5) {
+        co_await ctx.ticks(5);
+        (void)ctx.player(); // keep the test player near the spawner (RequiredPlayerRange)
+        auto* source = ctx.region();
+        if (!source) co_return std::nullopt;
+        for (auto* a : cowsIn(*source, box)) {
+            auto id = a->getOrCreateUniqueID().rawID;
+            if (std::find(ignore.begin(), ignore.end(), id) == ignore.end()) co_return id;
+        }
+    }
+    co_return std::nullopt;
+}
+
+Actor* fetch(std::int64_t raw) {
+    auto level = ll::service::getLevel();
+    if (!level) return nullptr;
+    ActorUniqueID id;
+    id.rawID = raw;
+    return level->fetchEntity(id, false);
+}
+
+void despawnCows(Context& ctx, BlockBox const& box) {
+    if (auto* source = ctx.region())
+        for (auto* a : cowsIn(*source, box)) a->despawn();
+}
+
+Json spawnerData(Json extra) {
+    Json d{{"Delay", 1}, {"MinSpawnDelay", 10}, {"MaxSpawnDelay", 20}, {"SpawnCount", 1}, {"SpawnRange", 2}, {"RequiredPlayerRange", 16}, {"MaxNearbyEntities", 6}};
+    d.update(extra);
+    return d;
+}
+
+} // namespace
 
 GF_REGISTER_SELFTEST("structure.spawner_scale", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto area = co_await ctx.flatArea(5765, 8, 6);
@@ -1259,52 +1448,243 @@ GF_REGISTER_SELFTEST("structure.spawner_scale", [](Context& ctx) -> ll::coro::Co
     ctx.require(source != nullptr, "block source");
     auto level = ll::service::getLevel();
     ctx.require(level != nullptr, "level");
-    Vec3 at{static_cast<float>(area.minX) + 4.5f, static_cast<float>(area.minY), static_cast<float>(area.minZ) + 4.5f};
+    BlockBox near{area.minX - 2, area.minY - 1, area.minZ - 2, area.maxX + 2, area.minY + 4, area.maxZ + 2};
+    Vec3     at{static_cast<float>(area.minX) + 4.5f, static_cast<float>(area.minY), static_cast<float>(area.minZ) + 4.5f};
     // a cow (test worlds may be peaceful): the scale is the same for every mob
     auto* mob = level->getSpawner().spawnMob(*source, ActorDefinitionIdentifier("minecraft:cow"), nullptr, at, false, false, false);
     ctx.require(mob != nullptr, "a cow spawns");
-    float before = mob->getAABB().max.x - mob->getAABB().min.x;
+    float before = widthOf(*mob);
     float scale  = 0.8f / 1.4f;
-    ctx.check(blockentities::applyScale(*mob, scale), "the scale applies");
-    float after = mob->getAABB().max.x - mob->getAABB().min.x;
+    ctx.check(spawners::applyScale(*mob, scale), "the scale applies");
+    float after = widthOf(*mob);
     ctx.check(std::abs(after - before * scale) < 0.05f, "the cow's box shrinks to " + std::to_string(after) + " (from " + std::to_string(before) + ")");
-    auto scaledByHand = mob->getOrCreateUniqueID().rawID;
     mob->despawn();
-    // end to end: a spawner placed with an entity_scale record scales the mobs it spawns
+
+    // growing up: a calf given the factor keeps it as an adult (the game sets the adult size from
+    // the cow's definition, the kit puts the factor on top again)
+    ctx.require(runCommand("summon minecraft:cow " + std::to_string(area.minX + 2) + " " + std::to_string(area.minY) + " " + std::to_string(area.minZ + 2) +
+                           " 0 0 minecraft:entity_born gf_scale_calf"),
+                "a calf is summoned");
+    co_await ctx.ticks(2);
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    std::optional<std::int64_t> calfId;
+    for (auto* a : cowsIn(*source, near))
+        if (a->getNameTag() == "gf_scale_calf") calfId = a->getOrCreateUniqueID().rawID;
+    ctx.require(calfId.has_value(), "the calf is there");
+    auto* calf = fetch(*calfId);
+    ctx.require(calf != nullptr, "the calf can be fetched");
+    float calfWidth = widthOf(*calf);
+    spawners::scaleMob(*calf, 0.5f);
+    co_await ctx.ticks(5);
+    calf = fetch(*calfId);
+    ctx.require(calf != nullptr, "the calf is still there");
+    ctx.check(std::abs(widthOf(*calf) - calfWidth * 0.5f) < 0.02f, "the calf is scaled to 0.5 (width " + std::to_string(widthOf(*calf)) + ", unscaled " +
+                                                                        std::to_string(calfWidth) + ")");
+    ctx.check(spawners::scaleOf(*calf) == 0.5f, "the factor is kept on the mob");
+    ctx.require(runCommand("event entity @e[name=gf_scale_calf] minecraft:ageable_grow_up"), "the calf grows up");
+    co_await ctx.ticks(25);
+    calf = fetch(*calfId);
+    ctx.require(calf != nullptr, "the grown cow is there");
+    ctx.check(std::abs(widthOf(*calf) - 0.9f * 0.5f) < 0.03f, "the grown cow keeps the factor (width " + std::to_string(widthOf(*calf)) + ", 0.45 expected)");
+    calf->despawn();
+
+    // end to end: a spawner placed with an entity_scale record scales the mobs it spawns, and a
+    // spawner of the same mob next to it without one does not (the record of the spawner that
+    // spawns counts, not any record nearby)
+    BlockPos scaledPos{area.minX + 4, area.minY, area.minZ + 4};
+    BlockPos plainPos{area.minX + 1, area.minY, area.minZ + 1};
+    {
+        BlockSourceRegion region(*source, scaledPos);
+        // the scaled spawner waits (a long delay): only the plain one spawns at first
+        blockentities::spawner(region, scaledPos, "minecraft:cow", spawnerData(Json{{"entity_scale", 0.4f}, {"Delay", 100000}, {"MinSpawnDelay", 100000},
+                                                                                   {"MaxSpawnDelay", 100000}}));
+        blockentities::spawner(region, plainPos, "minecraft:cow", spawnerData(Json::object()));
+    }
+    auto plainCow = co_await awaitCow(ctx, near, {}, 200);
+    std::optional<float> plainWidth;
+    if (plainCow) {
+        co_await ctx.ticks(5);
+        if (auto* a = fetch(*plainCow)) plainWidth = widthOf(*a);
+    }
+    ctx.check(plainWidth && (std::abs(*plainWidth - 0.9f) < 0.03f || std::abs(*plainWidth - 0.45f) < 0.03f),
+              "a cow from the plain spawner next to a scaled one keeps its size (width " + (plainWidth ? std::to_string(*plainWidth) : std::string("-")) + ")");
+    despawnCows(ctx, near);
+    // now the scaled spawner spawns (the plain one is gone)
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    (void)game::setBlock(*source, plainPos, blocks::air());
+    if (auto* actor = source->getBlockEntity(scaledPos); actor && actor->getType() == BlockActorType::MobSpawner)
+        if (auto* sp = static_cast<MobSpawnerBlockActor&>(*actor).mSpawner.get()) sp->mSpawnDelay = 1;
+    auto scaledCow = co_await awaitCow(ctx, near, {}, 200);
+    std::optional<float> width;
+    if (scaledCow) {
+        co_await ctx.ticks(5); // the scale applies once the mob is set up in the level
+        if (auto* a = fetch(*scaledCow)) width = widthOf(*a);
+    }
+    if (width) ctx.info("a cow from the scaled spawner: width " + std::to_string(*width));
+    despawnCows(ctx, near);
+    if (!width) ctx.check(false, "the scaled spawner spawned a cow within 200 ticks");
+    // 0.4 of an adult (0.9) or of a calf (0.45); unscaled they are 0.9 / 0.45
+    else ctx.check(std::abs(*width - 0.36f) < 0.03f || std::abs(*width - 0.18f) < 0.03f, "a cow from the scaled spawner is scaled to 0.4 (width " + std::to_string(*width) + ")");
+});
+
+GF_REGISTER_SELFTEST("structure.spawner_rules", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // SpawnerProcessor.compile's custom spawn rules (block light 0..7, sky light 0..15) go with
+    // the spawner: under a glowstone ceiling (block light 12 at the floor) its mobs do not spawn,
+    // without the ceiling they do
+    auto area = co_await ctx.flatArea(5785, 8, 6);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5785)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    // the processor carries the rules from the spawn data into the spawner data
+    {
+        auto entry = Json::parse(ext::compileSpawnerProcessor(2, 0.8f, {{"minecraft:cow", 1}}));
+        ctx.check(entry.value("start_delay_factor", 0.0f) == 0.25f && entry.value("range", 0) == 2 && entry.value("entity_width_max", 0.0f) == 0.8f,
+                  "SpawnerProcessor.compile: range, start delay factor and entity_width_max");
+        processors::Instance p{"twilightforest:spawner_processor", entry};
+        MemoryRegion         mem;
+        BlockInfo            info{BlockPos{0, 64, 0}, &blocks::java("minecraft:spawner"), Json{{"marker", "spawner"}}};
+        TemplateSettings     settings;
+        auto                 out = processors::run(p, mem, info, info, settings, BlockPos{0, 64, 0});
+        ctx.check(out && out->data.value("entity", std::string{}) == "minecraft:cow", "the spawner gets the cow");
+        ctx.check(out && out->data.contains("spawn_rules") && out->data["spawn_rules"] == Json{{"block_light", {0, 7}}, {"sky_light", {0, 15}}},
+                  "the custom spawn rules go into the spawner data (" + (out ? out->data.dump() : std::string("-")) + ")");
+    }
+    BlockBox near{area.minX - 2, area.minY - 1, area.minZ - 2, area.maxX + 2, area.minY + 4, area.maxZ + 2};
     BlockPos spawnerPos{area.minX + 4, area.minY, area.minZ + 4};
     {
         BlockSourceRegion region(*source, spawnerPos);
+        for (int x = area.minX; x <= area.maxX; x++)
+            for (int z = area.minZ; z <= area.maxZ; z++) (void)region.setBlock(BlockPos{x, area.minY + 3, z}, blocks::java("minecraft:glowstone"), 3);
         blockentities::spawner(region, spawnerPos, "minecraft:cow",
-                               Json{{"entity_scale", 0.4f}, {"Delay", 1}, {"MinSpawnDelay", 10}, {"MaxSpawnDelay", 20}, {"SpawnCount", 1},
-                                    {"SpawnRange", 2}, {"RequiredPlayerRange", 16}, {"MaxNearbyEntities", 6}});
+                               spawnerData(Json{{"SpawnCount", 2}, {"spawn_rules", {{"block_light", {0, 7}}, {"sky_light", {0, 15}}}}}));
     }
-    BlockBox      near{area.minX, area.minY - 1, area.minZ, area.maxX, area.minY + 4, area.maxZ};
-    AABB          range{Vec3{static_cast<float>(near.minX), static_cast<float>(near.minY), static_cast<float>(near.minZ)},
-                        Vec3{static_cast<float>(near.maxX + 1), static_cast<float>(near.maxY + 1), static_cast<float>(near.maxZ + 1)}};
-    std::optional<std::int64_t> spawned;
-    for (int i = 0; i < 200 && !spawned; i += 5) {
+    int vetoesBefore = spawners::vetoes();
+    auto lit = co_await awaitCow(ctx, near, {}, 80);
+    ctx.check(!lit, "no cow spawns where the block light is above 7");
+    ctx.check(spawners::vetoes() > vetoesBefore, "the spawner tried and its spawns were refused (" + std::to_string(spawners::vetoes() - vetoesBefore) + ")");
+    despawnCows(ctx, near);
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    {
+        BlockSourceRegion region(*source, spawnerPos);
+        for (int x = area.minX; x <= area.maxX; x++)
+            for (int z = area.minZ; z <= area.maxZ; z++) (void)region.setBlock(BlockPos{x, area.minY + 3, z}, blocks::air(), 3);
+    }
+    auto dark = co_await awaitCow(ctx, near, {}, 200);
+    ctx.check(dark.has_value(), "without the glowstone (block light 0) the spawner spawns");
+    despawnCows(ctx, near);
+});
+
+// ---- a scaled mob keeps its size across a save and load (tools/e2e/server/scenarios/structure.ps1) ---------------------
+
+GF_REGISTER_SELFTEST("structure.scale_probe", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // without a record: a scaled mob (an armor stand: it stays where it is) is left in the world and
+    // recorded; the server scenario restarts the server and runs this test again, which loads the
+    // mob and measures it (Bedrock sets a loaded mob's size from its definition: the kit scales it
+    // again)
+    auto probe = game::db::get("gf:structure:scale_probe");
+    if (!probe) {
+        auto area = co_await ctx.flatArea(5793, 6, 4);
+        ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5793)), "test area loaded");
+        auto* source = ctx.region();
+        auto  level  = ll::service::getLevel();
+        ctx.require(source != nullptr && level != nullptr, "block source");
+        Vec3  at{static_cast<float>(area.minX) + 3.5f, static_cast<float>(area.minY), static_cast<float>(area.minZ) + 2.5f};
+        auto* mob = level->getSpawner().spawnMob(*source, ActorDefinitionIdentifier("minecraft:armor_stand"), nullptr, at, false, false, false);
+        ctx.require(mob != nullptr, "an armor stand spawns");
+        auto  id       = mob->getOrCreateUniqueID().rawID;
+        float unscaled = widthOf(*mob);
+        spawners::scaleMob(*mob, 0.5f);
         co_await ctx.ticks(5);
-        (void)ctx.player(); // keep the test player near the spawner (RequiredPlayerRange)
-        source = ctx.region();
-        if (!source) break;
-        for (auto* a : source->getEntities(range, 0.0f, ActorType::Cow))
-            if (a && a->isType(ActorType::Cow) && a->getOrCreateUniqueID().rawID != scaledByHand) spawned = a->getOrCreateUniqueID().rawID;
+        auto* scaled = fetch(id);
+        ctx.require(scaled != nullptr, "the armor stand is there");
+        ctx.check(std::abs(widthOf(*scaled) - unscaled * 0.5f) < 0.02f, "the armor stand is scaled to 0.5 (width " + std::to_string(widthOf(*scaled)) + ")");
+        auto pos = game::blockPosOf(scaled->getPosition());
+        game::db::put("gf:structure:scale_probe", Json{{"id", id}, {"pos", {pos.x, pos.y, pos.z}}, {"width", unscaled * 0.5f}});
+        ctx.info("scale probe written id=" + std::to_string(id));
+        co_return;
     }
-    std::optional<float> width;
-    if (spawned) {
-        co_await ctx.ticks(5); // the scale applies once the mob is set up in the level
-        ActorUniqueID id;
-        id.rawID = *spawned;
-        if (auto* a = level->fetchEntity(id, false)) width = a->getAABB().max.x - a->getAABB().min.x;
-        source = ctx.region();
+    game::db::erase("gf:structure:scale_probe");
+    auto id    = probe->value("id", std::int64_t{0});
+    auto pos   = probe->value("pos", Json::array());
+    auto width = probe->value("width", 0.0f);
+    ctx.require(pos.is_array() && pos.size() == 3, "the probe record is complete");
+    ctx.require(co_await ctx.ensureLoaded(core::GlobalPos{0, pos[0].get<int>(), pos[1].get<int>(), pos[2].get<int>()}), "probe chunk loaded");
+    Actor* mob = nullptr;
+    for (int i = 0; i < 40 && !mob; i++) {
+        co_await ctx.ticks(1);
+        mob = fetch(id);
     }
-    if (width) ctx.info("a cow from the spawner: width " + std::to_string(*width));
-    if (source)
-        for (auto* a : source->getEntities(range, 0.0f, ActorType::Cow))
-            if (a) a->despawn();
-    if (!width) ctx.check(false, "the spawner spawned a cow within 200 ticks");
-    // 0.4 of an adult (0.9) or of a calf (0.45); unscaled they are 0.9 / 0.45
-    else ctx.check(std::abs(*width - 0.36f) < 0.03f || std::abs(*width - 0.18f) < 0.03f, "a cow from the scaled spawner is scaled to 0.4 (width " + std::to_string(*width) + ")");
+    ctx.require(mob != nullptr, "the probe mob loaded");
+    ctx.info("the probe mob as it loaded: width " + std::to_string(widthOf(*mob)) + " (Bedrock keeps part of a mob's size)");
+    co_await ctx.ticks(5); // the kit scales a loaded mob once it is set up
+    mob = fetch(id);
+    ctx.require(mob != nullptr, "the probe mob is still there");
+    float now = widthOf(*mob);
+    ctx.check(std::abs(now - width) < 0.02f, "the loaded mob keeps its scale (width " + std::to_string(now) + ", " + std::to_string(width) + " expected)");
+    if (std::abs(now - width) < 0.02f) ctx.info("scale probe verified width=" + std::to_string(now));
+    mob->despawn();
+});
+
+// ---- update_marking: walls take their shape from their neighbours after decay ------------------------------------------
+
+GF_REGISTER_SELFTEST("structure.update_marking", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // three walls in a row (the third a mossy one that vertical_decay removes): the middle wall's
+    // east arm (from the template) points at nothing. With update_marking the wall takes its shape
+    // from its neighbours once the structure stands; without it, it keeps the stale arm.
+    static std::string const id = [] {
+        auto doc = makeTemplate("gf_test:structure/walls", {state("minecraft:air"),
+                                                            state("minecraft:cobblestone_wall", {{"east", "low"}, {"west", "none"}, {"north", "none"}, {"south", "none"}, {"up", "true"}, {"waterlogged", "false"}}),
+                                                            state("minecraft:cobblestone_wall", {{"east", "low"}, {"west", "low"}, {"north", "none"}, {"south", "none"}, {"up", "false"}, {"waterlogged", "false"}}),
+                                                            state("minecraft:mossy_cobblestone_wall", {{"east", "none"}, {"west", "low"}, {"north", "none"}, {"south", "none"}, {"up", "true"}, {"waterlogged", "false"}})},
+                                {{"123"}});
+        templates::add(doc);
+        return std::string("gf_test:structure/walls");
+    }();
+    auto area = co_await ctx.flatArea(5775, 8, 4);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5775)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    std::string const decay = R"({"processor_type":"twilightforest:vertical_decay","decay_blocks":["minecraft:mossy_cobblestone_wall"],"decay_chance":1.0})";
+    std::string const mark  = R"({"processor_type":"twilightforest:update_marking","mark_updates":["minecraft:cobblestone_wall"]})";
+    BlockPos          marked{area.minX + 1, area.minY, area.minZ + 1};
+    BlockPos          plain{area.minX + 1, area.minY, area.minZ + 3};
+    std::size_t       before = blockentities::pending();
+    std::size_t       afterMarked = 0, afterPlain = 0;
+    {
+        BlockSourceRegion region(*source, marked);
+        TemplateSettings  withMark;
+        withMark.processors = {decay, mark};
+        TemplateSettings onlyDecay;
+        onlyDecay.processors = {decay};
+        ctx.require(templates::place(id, region, marked, withMark), "the walls place (update_marking)");
+        afterMarked = blockentities::pending();
+        ctx.require(templates::place(id, region, plain, onlyDecay), "the walls place (no update_marking)");
+        afterPlain = blockentities::pending();
+    }
+    // markPosForPostprocessing: one queued shape update per marked block (the two cobblestone
+    // walls; the decayed mossy wall is marked by nothing), none without the processor
+    ctx.check(afterMarked - before == 2, "update_marking queued a shape update for each marked wall (" + std::to_string(afterMarked - before) + ")");
+    ctx.check(afterPlain == afterMarked, "no shape updates without update_marking");
+    auto eastOf = [&](BlockPos const& p) {
+        auto* s = ctx.region();
+        if (!s) return std::string("?");
+        auto states = game::statesOf(s->getBlock(p));
+        auto it     = states.find("wall_connection_type_east");
+        return it == states.end() ? std::string("-") : it->second;
+    };
+    BlockPos markedMiddle{marked.x + 1, marked.y, marked.z};
+    BlockPos plainMiddle{plain.x + 1, plain.y, plain.z};
+    ctx.check(game::blockIdAt(*source, BlockPos{marked.x + 2, marked.y, marked.z}) == "minecraft:air", "vertical_decay removed the mossy wall");
+    ctx.check(eastOf(markedMiddle) == "short", "the template's east arm is placed as it is (" + eastOf(markedMiddle) + ")");
+    co_await ctx.ticks(15);
+    ctx.check(blockentities::pending() <= before, "the shape updates ran once the structure stood");
+    ctx.check(eastOf(markedMiddle) == "none", "update_marking: the wall dropped the arm to the removed wall (" + eastOf(markedMiddle) + ")");
+    // (a wall set in a loaded world also fixes its own connections a tick later on Bedrock, marked
+    // or not; generation writes keep the template's states unless update_marking marks them)
+    ctx.info("unmarked wall after placement in a loaded world: east " + eastOf(plainMiddle));
 });
 
 // ---- queued work survives a restart (tools/e2e/server/scenarios/structure.ps1) -----------------------------------------

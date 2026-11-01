@@ -2,47 +2,39 @@
 // Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
 //   src/main/java/twilightforest/util/entities/EntityUtil.java (tryHangPainting: the spawn)
 //   src/main/java/twilightforest/block/entity/DryingRackBlockEntity.java (fillFromLootTable)
-//   src/main/java/twilightforest/world/components/processors/SpawnerProcessor.java (generic.scale of spawned mobs)
+//   src/main/java/twilightforest/world/components/processors/UpdateMarkingProcessor.java (the post-processing it marks)
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Block entity work of structure placement (loot containers, drying racks, spawners, signs, flower
-// pots, paintings, entities, water in the liquid layer) and the BlockSource-backed region. During
-// world generation the region is the generator's window without a BlockSource: the work is queued
-// per chunk with its dimension and position, persisted in the world DB (gf:structure:pending) and
-// done on the server thread once the chunk is loaded.
+// pots, paintings, entities, water in the liquid layer, shape updates) and the BlockSource-backed
+// region. During world generation the region is the generator's window without a BlockSource: the
+// work is queued per chunk with its dimension and position, persisted in the world DB
+// (gf:structure:pending) and done on the server thread once the chunk is loaded.
 #include "feature/structure/Region.h"
 
+#include <atomic>
 #include <cmath>
 #include <deque>
 #include <mutex>
+#include <shared_mutex>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 
-#include "ll/api/event/EventBus.h"
-#include "ll/api/event/ListenerBase.h"
-#include "ll/api/event/world/SpawnMobEvent.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
-#include "mc/deps/vanilla_components/AABBShapeComponent.h"
-#include "mc/deps/vanilla_components/ActorDataBoundingBoxComponent.h"
-#include "mc/deps/vanilla_components/ActorDataDirtyFlagsComponent.h"
-#include "mc/world/actor/ActorDataIDs.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorFactory.h"
-#include "mc/legacy/ActorUniqueID.h"
 #include "mc/world/actor/ActorType.h"
-#include "mc/world/actor/BuiltInActorComponents.h"
-#include "mc/world/actor/Mob.h"
 #include "mc/world/actor/Motif.h"
 #include "mc/world/actor/Painting.h"
-#include "mc/world/actor/SynchedActorDataEntityWrapper.h"
+#include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BaseMobSpawner.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -50,12 +42,16 @@
 #include "mc/world/level/biome/Biome.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockChangeContext.h"
+#include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
 #include "mc/world/level/block/actor/FlowerPotBlockActor.h"
 #include "mc/world/level/block/actor/MobSpawnerBlockActor.h"
 #include "mc/world/level/block/actor/SignBlockActor.h"
 #include "mc/world/level/block/actor/SignTextSide.h"
+#include "mc/world/level/storage/GameRuleId.h"
+#include "mc/world/level/storage/GameRules.h"
+#include "mc/world/phys/AABB.h"
 
 #include "core/Keys.h"
 #include "feature/common/BlockData.h"
@@ -63,6 +59,7 @@
 #include "feature/loot/Loot.h"
 #include "feature/spawn/Spawn.h"
 #include "game/Blocks.h"
+#include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
 
@@ -176,14 +173,15 @@ namespace bd = ::gf::feature::common::blockdata;
 
 constexpr char kPendingKey[]  = "gf:structure:pending";
 constexpr char kTestMarkKey[] = "gf:structure:test_mark";
-constexpr char kDataKey[]     = "structure"; ///< BlockData key: {"loot": {table, seed}, "spawner_scale": {entity, scale}}
+/// BlockData key: {"loot": {table, seed}, "spawner": {entity, scale?, spawn_rules?}}
+constexpr char kDataKey[]     = "structure";
 /// Chunks with queued work are checked this often (ticks); a chunk's jobs run together.
 constexpr int kFlushInterval = 5;
 
 struct Job {
     int      dim = 0;
     BlockPos pos{0, 0, 0};
-    Json     action; ///< {"kind": "container" | "loot" | "spawner" | "sign" | "entity" | "painting" | "flower_pot" | "waterlog" | "rack" | "gf_test_mark", ...}
+    Json     action; ///< {"kind": "container" | "loot" | "spawner" | "sign" | "entity" | "painting" | "flower_pot" | "waterlog" | "rack" | "update_shape" | "gf_test_mark", ...}
 };
 using ChunkKey = std::tuple<int, int, int>; ///< dimension, chunk x, chunk z
 std::mutex                         gJobsMutex;
@@ -191,22 +189,54 @@ std::map<ChunkKey, std::deque<Job>> gJobs;
 std::size_t                        gJobCount = 0;
 bool                               gDirty    = false;
 int                                gTicks    = 0;
-ll::event::ListenerPtr             gSpawnListener;
-/// Spawner mobs waiting for their entity_width_max scale (server thread).
-struct PendingScale {
-    std::int64_t mobId = 0; ///< ActorUniqueID
-    float        scale = 1.0f;
-    int          ticks = 0; ///< ticks to wait
-};
-std::vector<PendingScale> gPendingScales;
 
 ChunkKey chunkKey(int dim, BlockPos const& pos) { return {dim, core::chunkOf(pos.x), core::chunkOf(pos.z)}; }
+
+// ---- queued paintings (the ProtoChunk entities TF's painting check sees) ----------------------------------
+
+/// A painting job's box, indexed by the chunk of its block apart from the job queue: generation
+/// threads check them for every painting they try to hang.
+struct PendingPainting {
+    std::uint64_t id = 0;
+    double        box[6]{};
+};
+std::shared_mutex                                   gPaintingsMutex;
+std::map<ChunkKey, std::vector<PendingPainting>>    gPendingPaintings;
+std::atomic<std::uint64_t>                          gNextPaintingId{1};
+
+/// Adds a painting job's box to the index; returns its id (0 when the box is unusable).
+std::uint64_t indexPainting(int dim, BlockPos const& pos, Json const& box) {
+    if (!box.is_array() || box.size() != 6) return 0;
+    PendingPainting p;
+    p.id = gNextPaintingId++;
+    for (std::size_t i = 0; i < 6; i++) p.box[i] = box[i].get<double>();
+    std::unique_lock lock(gPaintingsMutex);
+    gPendingPaintings[chunkKey(dim, pos)].push_back(p);
+    return p.id;
+}
+
+void unindexPainting(int dim, BlockPos const& pos, Json const& action) {
+    auto id = action.value("pid", std::uint64_t{0});
+    if (id == 0) return;
+    std::unique_lock lock(gPaintingsMutex);
+    auto             it = gPendingPaintings.find(chunkKey(dim, pos));
+    if (it == gPendingPaintings.end()) return;
+    std::erase_if(it->second, [&](PendingPainting const& p) { return p.id == id; });
+    if (it->second.empty()) gPendingPaintings.erase(it);
+}
 
 void pushLocked(Job job) {
     auto key = chunkKey(job.dim, job.pos);
     gJobs[key].push_back(std::move(job));
     gJobCount++;
     gDirty = true;
+}
+
+/// Queues a painting job (its box indexed first, the job carrying the index id).
+void pushPainting(Job job) {
+    if (auto id = indexPainting(job.dim, job.pos, job.action.value("box", Json::array()))) job.action["pid"] = id;
+    std::lock_guard lock(gJobsMutex);
+    pushLocked(std::move(job));
 }
 
 int facingIndex(std::optional<Orientation> facing) {
@@ -249,13 +279,32 @@ Motif const* motifFor(std::string id) {
     return it == table.end() ? nullptr : &it->second();
 }
 
-/// Spawns a painting of `motif` hanging at `pos` (the block it covers) facing `direction` (Java
-/// 2D data value, which Bedrock's HangingActor direction shares). False when Bedrock's own survival
-/// check (wall behind, nothing in the way) refuses the spot.
-bool spawnPainting(BlockSource& source, BlockPos const& pos, Orientation direction, Motif const& motif) {
+/// The Java painting variant id of a Bedrock Motif ("minecraft:kebab"), "" when unknown.
+std::string variantOf(Motif const* motif) {
+    if (!motif) return {};
+    for (auto const& v : paintings::registry())
+        if (motifFor(v.id) == motif) return v.id;
+    return {};
+}
+
+/// Bedrock's HangingActor places a painting from the block it hangs on (the wall behind the block
+/// it covers, as the painting item's clicked block), not from the covered block of Java's
+/// HangingEntity#pos: HangingActor::_calculateActorPositionFromPlacementPosition(wall) gives the
+/// box Painting#calculateBoundingBox gives the covered block (inset by 1/32 at the edges), the
+/// covered block gives a box one block further out. Measured by the selftest structure.paintings,
+/// which hangs paintings and compares their boxes with TF's.
+BlockPos placementPosition(BlockPos const& covered, Orientation direction) {
+    return BlockPos{covered.x - stepX(direction), covered.y, covered.z - stepZ(direction)};
+}
+
+/// Calls `fn(painting, owner)` with a painting actor of `motif` facing `direction`, set up for the
+/// placement block `placement` (not added to the level; `owner` can be moved into the level). False
+/// when the game cannot make one, else what `fn` returns.
+template <class Fn>
+bool withPainting(BlockPos const& placement, Orientation direction, Motif const& motif, Fn&& fn) {
     auto level = ll::service::getLevel();
     if (!level) return false;
-    Vec3 center{static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y) + 0.5f, static_cast<float>(pos.z) + 0.5f};
+    Vec3 center{static_cast<float>(placement.x) + 0.5f, static_cast<float>(placement.y) + 0.5f, static_cast<float>(placement.z) + 0.5f};
     auto owner = level->getActorFactory().createSpawnedActor(ActorDefinitionIdentifier("minecraft:painting"), nullptr, center, Vec2{0, 0});
     if (!owner) return false;
     auto* actor = Actor::tryGetFromEntity(*owner, false);
@@ -263,24 +312,40 @@ bool spawnPainting(BlockSource& source, BlockPos const& pos, Orientation directi
     auto& painting      = static_cast<Painting&>(*actor);
     painting.mDirection = data2D(direction);
     painting.mMotif     = &motif;
-    // the placement block of a hanging actor is the block it covers (as Java's HangingEntity#pos);
-    // the wall behind it is the other candidate the engine might mean
-    BlockPos wall{pos.x - stepX(direction), pos.y, pos.z - stepZ(direction)};
-    bool     placed = false;
-    for (auto const& at : {pos, wall}) {
-        painting._calculateActorPositionFromPlacementPosition(at);
-        painting._calculateAABB();
-        if (painting._wouldSurvive(source, at, true)) {
-            placed = true;
-            break;
-        }
-    }
-    if (!placed) return false;
-    auto* added = level->addEntity(source, std::move(owner));
-    if (!added) return false;
-    auto& hung = static_cast<Painting&>(*added);
-    if (hung.mMotif != &motif) hung.mMotif = &motif; // adding may re-run the definition's setup
-    return true;
+    painting._calculateActorPositionFromPlacementPosition(placement);
+    painting._calculateAABB();
+    return fn(painting, owner);
+}
+
+/// Spawns a painting of `motif` hanging at `pos` (the block it covers) facing `direction` (Java
+/// 2D data value, which Bedrock's HangingActor direction shares). False when Bedrock's own survival
+/// check (wall behind, nothing in the way) refuses the spot.
+bool spawnPainting(BlockSource& source, BlockPos const& pos, Orientation direction, Motif const& motif) {
+    BlockPos at = placementPosition(pos, direction);
+    return withPainting(at, direction, motif, [&](Painting& painting, auto& owner) {
+        if (!painting._wouldSurvive(source, at, true)) return false;
+        auto level = ll::service::getLevel();
+        auto* added = level ? level->addEntity(source, std::move(owner)) : nullptr;
+        if (!added) return false;
+        auto& hung = static_cast<Painting&>(*added);
+        if (hung.mMotif != &motif) hung.mMotif = &motif; // adding may re-run the definition's setup
+        return true;
+    });
+}
+
+/// Painting#dropItem when a painting cannot stay (TF hangs it anyway and it drops off): a painting
+/// item at the painting's center, if entities drop items (doEntityDrops).
+void dropPaintingItem(BlockSource& source, Json const& box) {
+    auto level = ll::service::getLevel();
+    if (!level || !box.is_array() || box.size() != 6) return;
+    GameRuleId rule;
+    rule.mValue = static_cast<int>(GameRules::GameRulesIndex::DoEntityDrops);
+    if (!level->getGameRules().getBool(rule, true)) return;
+    auto stack = game::items::make("minecraft:painting", 1, 0);
+    if (!stack) return;
+    Vec3 at{static_cast<float>((box[0].get<double>() + box[3].get<double>()) / 2), static_cast<float>((box[1].get<double>() + box[4].get<double>()) / 2),
+            static_cast<float>((box[2].get<double>() + box[5].get<double>()) / 2)};
+    (void)level->getSpawner().spawnItem(source, *stack, nullptr, at, 0);
 }
 
 // ---- running a job ------------------------------------------------------------------------------------
@@ -305,14 +370,41 @@ bool runSpawner(BlockSource& source, BlockPos const& pos, Json const& action) {
         if (data.contains("RequiredPlayerRange")) spawner->mRequiredPlayerRange = data["RequiredPlayerRange"].get<int>();
         if (data.contains("SpawnRange")) spawner->mSpawnRange = data["SpawnRange"].get<int>();
     }
-    // SpawnerProcessor entity_width_max: the generic.scale its spawn data gives the mob
-    if (data.contains("entity_scale") && !entityId.empty()) {
+    // what Bedrock's spawner does not keep, for the spawner events (Spawners.cpp): SpawnerProcessor
+    // entity_width_max (the generic.scale its spawn data gives the mob) and SpawnData's custom
+    // spawn rules (the light ranges BaseSpawner checks instead of the mob's spawn rules)
+    Json record = Json::object();
+    if (data.contains("entity_scale") && data["entity_scale"].is_number()) {
         float scale = data["entity_scale"].get<float>();
-        if (std::isfinite(scale) && scale != 1.0f)
-            bd::set(source, pos, kDataKey, Json{{"spawner_scale", {{"entity", entityId}, {"scale", scale}}}});
+        if (std::isfinite(scale) && scale > 0 && scale != 1.0f) record["scale"] = scale;
     }
+    if (data.contains("spawn_rules") && data["spawn_rules"].is_object()) record["spawn_rules"] = data["spawn_rules"];
+    Json doc = Json::object();
+    if (auto const* old = bd::get(source, pos, kDataKey); old && old->is_object()) doc = *old;
+    doc.erase("spawner");
+    if (!record.empty() && !entityId.empty()) {
+        record["entity"] = entityId;
+        doc["spawner"]   = record;
+    }
+    bd::set(source, pos, kDataKey, doc.empty() ? Json() : doc);
     actor->refresh(source);
     return true;
+}
+
+/// LevelChunk#postProcessGeneration for one marked position: the block takes its shape from its
+/// neighbours (Block.updateFromNeighbourShapes in UPDATE_SHAPE_ORDER: west, east, north, south,
+/// down, up). Bedrock: what a structure block does after placing it (BlockType#onStructureBlockPlace:
+/// walls fix their connection states), then a neighbour update from each side (blocks that keep
+/// their shape in states, TF's connected blocks through gf::blockevents, recompute it).
+void runUpdateShape(BlockSource& source, BlockPos const& pos) {
+    if (source.getBlock(pos).isAir()) return;
+    source.getBlock(pos).getBlockType().onStructureBlockPlace(source, pos);
+    static constexpr int kOrder[6][3] = {{-1, 0, 0}, {1, 0, 0}, {0, 0, -1}, {0, 0, 1}, {0, -1, 0}, {0, 1, 0}};
+    for (auto const& d : kOrder) {
+        Block const& block = source.getBlock(pos);
+        if (block.isAir()) return;
+        block.neighborChanged(source, pos, BlockPos{pos.x + d[0], pos.y + d[1], pos.z + d[2]});
+    }
 }
 
 bool runFlowerPot(BlockSource& source, BlockPos const& pos, Json const& action) {
@@ -395,9 +487,13 @@ bool run(BlockSource& source, BlockPos const& pos, Json const& action) {
             return true;
         }
         auto dir = blocks::parseDirection(action.value("direction", std::string("north"))).value_or(Orientation::North);
-        // a queued painting the game refuses now (the wall changed since) is dropped
-        if (!spawnPainting(source, pos, dir, *motif))
-            warnOnce("painting-refused", "structure: the game refused a queued painting (no wall behind it any more)");
+        // TF hangs a painting once its spot check passed; one the game refuses (no wall behind it)
+        // drops off as an item, as TF's painting does on its next survival check
+        if (!spawnPainting(source, pos, dir, *motif)) dropPaintingItem(source, action.value("box", Json::array()));
+        return true;
+    }
+    if (kind == "update_shape") {
+        runUpdateShape(source, pos);
         return true;
     }
     if (kind == "flower_pot") return runFlowerPot(source, pos, action);
@@ -506,36 +602,74 @@ bool painting(Region& region, BlockPos const& pos, Orientation direction, std::s
             return false;
         }
         // EntityUtil.tryHangPainting is true once TF's spot check passed (the caller's): TF adds
-        // the painting even without a wall behind it (it drops off later), the game does not hang
-        // such a painting at all. Either way the result (and so TF's retry loop) is TF's.
-        if (!spawnPainting(*source, pos, direction, *motif))
-            warnOnce("painting-unsupported", "structure: a painting without a wall behind it was not hung (TF would hang it and let it drop)");
+        // the painting even without a wall behind it and it drops off as an item on its next
+        // survival check; the game does not hang such a painting at all, so the item drops now.
+        // Either way the result (and so TF's retry loop) is TF's.
+        if (!spawnPainting(*source, pos, direction, *motif)) dropPaintingItem(*source, box);
         return true;
     }
-    std::lock_guard lock(gJobsMutex);
-    pushLocked(Job{region.dimension(), pos, Json{{"kind", "painting"}, {"motive", motive}, {"direction", blocks::directionName(direction)}, {"box", box}}});
+    pushPainting(Job{region.dimension(), pos, Json{{"kind", "painting"}, {"motive", motive}, {"direction", blocks::directionName(direction)}, {"box", box}}});
     return true;
 }
 
 bool pendingPaintingIntersects(int dim, double const (&box)[6]) {
-    std::lock_guard lock(gJobsMutex);
+    std::shared_lock lock(gPaintingsMutex);
+    if (gPendingPaintings.empty()) return false;
     // only the chunks the box can reach (a painting is at most 4 blocks wide)
     for (int cx = core::chunkOf(pure::mthFloor(box[0])) - 1; cx <= core::chunkOf(pure::mthFloor(box[3])) + 1; cx++)
         for (int cz = core::chunkOf(pure::mthFloor(box[2])) - 1; cz <= core::chunkOf(pure::mthFloor(box[5])) + 1; cz++) {
-            auto it = gJobs.find(ChunkKey{dim, cx, cz});
-            if (it == gJobs.end()) continue;
-            for (auto const& job : it->second) {
-                if (job.action.value("kind", std::string{}) != "painting") continue;
-                auto const& b = job.action.value("box", Json::array());
-                if (!b.is_array() || b.size() != 6) continue;
+            auto it = gPendingPaintings.find(ChunkKey{dim, cx, cz});
+            if (it == gPendingPaintings.end()) continue;
+            for (auto const& p : it->second) {
+                double const* b = p.box;
                 // AABB#intersects: strictly overlapping
-                if (box[0] < b[3].get<double>() && box[3] > b[0].get<double>() && box[1] < b[4].get<double>() && box[4] > b[1].get<double>() &&
-                    box[2] < b[5].get<double>() && box[5] > b[2].get<double>())
-                    return true;
+                if (box[0] < b[3] && box[3] > b[0] && box[1] < b[4] && box[4] > b[1] && box[2] < b[5] && box[5] > b[2]) return true;
             }
         }
     return false;
 }
+
+void updateShape(Region& region, BlockPos const& pos) {
+    if (region.dimension() < 0) return; // scratch regions keep no world
+    // always queued, live regions too: Java post-processes once the chunk is complete, after every
+    // piece of the structure stands
+    int dim = region.dimension();
+    if (auto* source = sourceOf(region)) dim = static_cast<int>(source->getDimensionId());
+    std::lock_guard lock(gJobsMutex);
+    pushLocked(Job{dim, pos, Json{{"kind", "update_shape"}}});
+}
+
+std::optional<HungPainting> describePainting(Actor& actor) {
+    if (!actor.isType(ActorType::Painting)) return std::nullopt;
+    auto& painting = static_cast<Painting&>(actor);
+    auto  id       = variantOf(painting.mMotif);
+    auto  variant  = paintings::byId(id);
+    if (!variant) return std::nullopt;
+    Orientation facing = from2D(painting.mDirection);
+    // the covered block from the box center (Painting#calculateBoundingBox backwards)
+    AABB const& b      = actor.getAABB();
+    double      cx     = (b.min.x + b.max.x) / 2.0, cy = (b.min.y + b.max.y) / 2.0, cz = (b.min.z + b.max.z) / 2.0;
+    auto        offset = [](int size) { return size % 2 == 0 ? 0.5 : 0.0; };
+    Orientation ccw    = static_cast<Orientation>((static_cast<int>(facing) + 3) & 3);
+    cx += stepX(facing) * 0.46875 - stepX(ccw) * offset(variant->width);
+    cz += stepZ(facing) * 0.46875 - stepZ(ccw) * offset(variant->width);
+    cy -= offset(variant->height);
+    return HungPainting{id, facing, BlockPos{pure::mthFloor(cx), pure::mthFloor(cy), pure::mthFloor(cz)}};
+}
+
+std::optional<std::array<double, 6>> paintingBoxFor(BlockPos const& placement, Orientation direction, std::string const& motive) {
+    auto const* motif = motifFor(motive);
+    if (!motif) return std::nullopt;
+    std::optional<std::array<double, 6>> out;
+    (void)withPainting(placement, direction, *motif, [&](Painting& painting, auto&) {
+        AABB const& b = painting.getAABB();
+        out           = std::array<double, 6>{b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z};
+        return true;
+    });
+    return out;
+}
+
+BlockPos paintingPlacement(BlockPos const& covered, Orientation direction) { return placementPosition(covered, direction); }
 
 std::optional<LootRecord> lootRecord(int dim, BlockPos const& pos) {
     auto const* doc = bd::get(game::globalPos(dim, pos));
@@ -555,37 +689,13 @@ void forgetLootRecord(int dim, BlockPos const& pos) {
     bd::set(*source, pos, kDataKey, rest.empty() ? Json() : rest);
 }
 
-bool applyScale(Actor& actor, float scale) {
-    // generic.scale: the entity's size factor (Bedrock: the scale / width / height data of the
-    // bounding box component, synced to clients, and the collision box)
-    if (!std::isfinite(scale) || scale <= 0) return false;
-    auto bb = actor.getEntityContext().tryGetComponent<ActorDataBoundingBoxComponent>();
-    if (!bb) return false;
-    // generic.scale multiplies the mob's own scale (a baby's included)
-    auto& value = bb->mValue;
-    float ratio = scale;
-    value[0]    = (value[0] > 0 ? value[0] : 1.0f) * scale;
-    value[1] *= ratio;
-    value[2] *= ratio;
-    auto& dirty = actor.mEntityData.get().mDirtyFlags.get()->mDirtyFlags.get();
-    for (auto id : {ActorDataIDs::Reserved038, ActorDataIDs::Reserved053, ActorDataIDs::Reserved054}) dirty.set(static_cast<std::size_t>(id));
-    auto& shape  = *actor.mBuiltInComponents->mAABBShapeComponent;
-    shape.mBBDim = Vec2{shape.mBBDim->x * ratio, shape.mBBDim->y * ratio};
-    actor._refreshAABB();
-    return true;
+std::optional<Json> spawnerRecord(BlockSource& source, BlockPos const& pos) {
+    auto const* d = bd::get(source, pos, kDataKey);
+    if (!d || !d->is_object() || !d->contains("spawner") || !(*d)["spawner"].is_object()) return std::nullopt;
+    return (*d)["spawner"];
 }
 
 void flush() {
-    if (!gPendingScales.empty()) {
-        auto level = ll::service::getLevel();
-        std::erase_if(gPendingScales, [&](PendingScale& p) {
-            if (--p.ticks > 0) return false;
-            ActorUniqueID id;
-            id.rawID = p.mobId;
-            if (auto* mob = level ? level->fetchEntity(id, false) : nullptr) applyScale(*mob, p.scale);
-            return true;
-        });
-    }
     if (++gTicks % kFlushInterval != 0) return;
     // the chunks with work whose chunk is loaded now
     std::vector<std::pair<ChunkKey, std::deque<Job>>> ready;
@@ -616,6 +726,7 @@ void flush() {
             }
             if (run(*source, job.pos, job.action)) {
                 changed = true;
+                if (job.action.contains("pid")) unindexPainting(job.dim, job.pos, job.action);
                 continue;
             }
             int tries = job.action.value("tries", 0);
@@ -624,6 +735,7 @@ void flush() {
                 keep.push_back(std::move(job));
             } else {
                 changed = true;
+                if (job.action.contains("pid")) unindexPainting(job.dim, job.pos, job.action);
                 warnOnce("job-dropped:" + job.action.value("kind", std::string{}),
                          "structure: gave up a queued " + job.action.value("kind", std::string{}) + " at " + std::to_string(job.pos.x) + " " +
                              std::to_string(job.pos.y) + " " + std::to_string(job.pos.z));
@@ -651,11 +763,21 @@ void queueTestMark(int dim, BlockPos const& pos, std::string const& nonce) {
 }
 
 void load() {
+    {
+        std::unique_lock lock(gPaintingsMutex);
+        gPendingPaintings.clear();
+    }
     std::lock_guard lock(gJobsMutex);
     gJobs.clear();
     gJobCount = 0;
     if (auto doc = game::db::get(kPendingKey); doc && doc->is_array()) {
-        for (auto const& j : *doc) pushLocked(Job{j.value("dim", 0), BlockPos{j.value("x", 0), j.value("y", 0), j.value("z", 0)}, j.value("action", Json::object())});
+        for (auto const& j : *doc) {
+            Job job{j.value("dim", 0), BlockPos{j.value("x", 0), j.value("y", 0), j.value("z", 0)}, j.value("action", Json::object())};
+            job.action.erase("pid"); // index ids are per session
+            if (job.action.value("kind", std::string{}) == "painting")
+                if (auto id = indexPainting(job.dim, job.pos, job.action.value("box", Json::array()))) job.action["pid"] = id;
+            pushLocked(std::move(job));
+        }
     }
     gDirty = false;
 }
@@ -671,39 +793,6 @@ void save() {
     }
     if (doc.empty()) game::db::erase(kPendingKey);
     else game::db::put(kPendingKey, doc);
-}
-
-void installEvents() {
-    if (gSpawnListener) return;
-    // SpawnerProcessor's entity_width_max: mobs from a spawner that recorded a scale get it
-    gSpawnListener = ll::event::EventBus::getInstance().emplaceListener<ll::event::SpawnedMobEvent>([](ll::event::SpawnedMobEvent& ev) {
-        if (!ev.fromSpawner() || !ev.mob()) return;
-        auto&       mob    = *ev.mob();
-        auto&       source = ev.blockSource();
-        int         dim    = static_cast<int>(source.getDimensionId());
-        auto const& at     = ev.pos();
-        std::string id     = ev.identifier().mCanonicalName->getString();
-        BlockPos    p{pure::mthFloor(at.x), pure::mthFloor(at.y), pure::mthFloor(at.z)};
-        // BaseMobSpawner spawns within SpawnRange (+-1 vertically) of the spawner
-        constexpr int kReach = 9;
-        std::optional<float> scale;
-        for (int cx = core::chunkOf(p.x - kReach); cx <= core::chunkOf(p.x + kReach) && !scale; cx++)
-            for (int cz = core::chunkOf(p.z - kReach); cz <= core::chunkOf(p.z + kReach) && !scale; cz++)
-                bd::forEachInChunk(dim, cx, cz, [&](core::GlobalPos const& gp, Json const& doc) {
-                    if (scale || !doc.contains(kDataKey) || !doc[kDataKey].contains("spawner_scale")) return;
-                    auto const& s = doc[kDataKey]["spawner_scale"];
-                    if (s.value("entity", std::string{}) != id) return;
-                    if (std::abs(gp.x - p.x) > kReach || std::abs(gp.z - p.z) > kReach || std::abs(gp.y - p.y) > 3) return;
-                    scale = s.value("scale", 1.0f);
-                });
-        // the mob is set up from its entity definition once it is in the level: scale it a tick later
-        if (scale) gPendingScales.push_back(PendingScale{mob.getOrCreateUniqueID().rawID, *scale, 2});
-    });
-}
-
-void uninstallEvents() {
-    if (gSpawnListener) ll::event::EventBus::getInstance().removeListener(gSpawnListener);
-    gSpawnListener.reset();
 }
 
 } // namespace blockentities

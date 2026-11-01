@@ -6,6 +6,7 @@
 // placement code from worker threads, so the registries are filled at load / world ready and
 // read-only afterwards.
 
+#include <array>
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -25,6 +26,7 @@
 class Actor;
 class Block;
 class BlockSource;
+class Vec3;
 
 namespace gf::structure {
 
@@ -199,6 +201,11 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
                   std::vector<std::pair<BlockPos, std::string>>* dataMarkers = nullptr, std::vector<Placed>* placedOut = nullptr);
 /// StructureTemplate.calculateRelativePosition(settings, pos) (rotation, mirror, pivot).
 [[nodiscard]] BlockPos relative(Placement const& placement, BlockPos const& local);
+/// StructureTemplate#fillFromWorld with entities: the blocks of `box` (Bedrock ids and states) and
+/// its entities but players (paintings by the block they cover, facing and variant; the others
+/// by position and rotation) as a template document `id`. `skipped` counts the entities that
+/// reach outside the box (left out). (Commands.cpp, /twilightforest structure_util capture.)
+[[nodiscard]] Json capture(BlockSource& source, BlockBox const& box, std::string const& id, int& skipped);
 
 } // namespace templates
 
@@ -269,13 +276,34 @@ void sign(Region& region, BlockPos const& pos, std::vector<std::string> const& l
 /// Spawns an entity at a world position (template entities); false when it could not (live
 /// regions) or when the id is empty. Paintings go through paintings::tryHang.
 bool entity(Region& region, double x, double y, double z, std::string const& entityId, Json const& data);
-/// Hangs painting `motive` ("kebab") at `pos` facing `direction` once the caller ran TF's spot check
-/// (true, as EntityUtil.tryHangPainting): at once in a live region (the game refuses a painting
-/// with no wall behind it), when the chunk is loaded during generation. False for an unknown motive.
+/// Hangs painting `motive` ("kebab") at `pos` (the block it covers) facing `direction` once the
+/// caller ran TF's spot check (true, as EntityUtil.tryHangPainting): at once in a live region, when
+/// the chunk is loaded during generation. A painting the game refuses (no wall behind it) drops as
+/// a painting item at the painting's center, as TF's does on its next survival check. False for an
+/// unknown motive.
 bool painting(Region& region, BlockPos const& pos, Orientation direction, std::string const& motive, Json const& box);
 /// Whether a queued (not yet spawned) painting of dimension `dim` overlaps `box` ([minX, minY,
-/// minZ, maxX, maxY, maxZ] doubles): the ProtoChunk entities TF's painting check sees.
+/// minZ, maxX, maxY, maxZ] doubles): the ProtoChunk entities TF's painting check sees. Thread safe
+/// (a per-chunk index of the queued paintings' boxes behind a shared lock).
 [[nodiscard]] bool pendingPaintingIntersects(int dim, double const (&box)[6]);
+/// A painting hanging in the world, as a template stores it.
+struct HungPainting {
+    std::string variant; ///< "minecraft:kebab"
+    Orientation facing = Orientation::South;
+    BlockPos    block{0, 0, 0}; ///< the block it covers (Java's HangingEntity#pos)
+};
+[[nodiscard]] std::optional<HungPainting> describePainting(Actor& actor);
+/// The box Bedrock gives a painting of `motive` facing `direction` placed from `placement`
+/// (selftests: which block the engine's placement position is).
+[[nodiscard]] std::optional<std::array<double, 6>> paintingBoxFor(BlockPos const& placement, Orientation direction, std::string const& motive);
+/// The placement position spawnPainting hands Bedrock for a painting covering `covered`.
+[[nodiscard]] BlockPos paintingPlacement(BlockPos const& covered, Orientation direction);
+/// UpdateMarkingProcessor / ProtoChunk#markPosForPostprocessing: the block at `pos` takes its shape
+/// from its neighbours once its chunk is loaded and the structure stands (a queued job, live
+/// regions included; nothing for scratch regions).
+void updateShape(Region& region, BlockPos const& pos);
+/// The spawner data F7 keeps for the spawner at `pos` ({"entity", "scale"?, "spawn_rules"?}).
+[[nodiscard]] std::optional<Json> spawnerRecord(BlockSource& source, BlockPos const& pos);
 /// A flower pot's plant (FlowerPotBlockActor PlantBlock).
 void flowerPot(Region& region, BlockPos const& pos, std::string const& plantId);
 /// Water in the liquid layer at `pos` of a generation region, put there once the chunk is loaded
@@ -290,8 +318,6 @@ struct LootRecord {
 };
 [[nodiscard]] std::optional<LootRecord> lootRecord(int dim, BlockPos const& pos);
 void                                    forgetLootRecord(int dim, BlockPos const& pos);
-/// Applies a generic.scale-like size factor to a live mob (Bedrock bounding box data).
-bool applyScale(Actor& actor, float scale);
 /// Runs the deferred work whose chunks are loaded (server tick; every job of a chunk at once,
 /// chunks checked every few ticks).
 void flush();
@@ -300,9 +326,34 @@ void flush();
 void queueTestMark(int dim, BlockPos const& pos, std::string const& nonce);
 void load();
 void save();
-void installEvents();
-void uninstallEvents();
 } // namespace blockentities
+
+// ---- spawners placed by structures (Spawners.cpp) ------------------------------------------------------
+namespace spawners {
+/// The spawner block whose spawn is under way at `at` for mob `entityId`: the nearest vanilla
+/// spawner around `at` (within its SpawnRange, one block up or down) whose mob is `entityId`,
+/// preferring the one whose delay ran out (the one spawning now).
+[[nodiscard]] std::optional<BlockPos> firingSpawner(BlockSource& source, Vec3 const& at, std::string const& entityId);
+/// Applies a generic.scale-like size factor to a live mob now (Bedrock bounding box data).
+bool applyScale(Actor& actor, float scale);
+/// Gives a mob the generic.scale `scale` for good: the factor and the size it gave are kept on the
+/// mob (actor tags, saved with it) and the factor goes back on every part of the size the game sets
+/// from the mob's definition again (loading, growing up). The first application waits a couple of
+/// ticks (the mob is set up in the level first).
+void scaleMob(Actor& mob, float scale);
+/// The generic.scale scaleMob gave `mob` (nullopt: none).
+[[nodiscard]] std::optional<float> scaleOf(Actor const& mob);
+/// Spawns the SpawningMobEvent veto (custom spawn rules) and SpawnedMobEvent scale listeners, the
+/// actor-load hook and the size checks run from tick().
+void install();
+void uninstall();
+/// Server tick: pending scales, size checks of scaled mobs.
+void tick();
+/// Forgets the watched mobs (world closed; the client opens many worlds in one process).
+void clear();
+/// Spawns vetoed by custom spawn rules so far (selftests).
+[[nodiscard]] int vetoes();
+} // namespace spawners
 
 // ---- liquids (Liquids.cpp) ---------------------------------------------------------------------------
 namespace liquids {
@@ -370,7 +421,10 @@ bool placeLabelled(std::string const& label, BlockPos const& pos, Region& region
 void resetRegionRandom(Region const* region = nullptr);
 
 namespace outlines {
-/// Removes the outline tick listener (clear_display, module uninstall, world closed).
+/// Draws the dev command outlines and chunk labels (server tick, from the module's tick listener;
+/// returns at once while nothing is displayed) and drops the expired ones.
+void tick();
+/// Clears every outline and label (clear_display, module uninstall, world closed).
 void shutdown();
 } // namespace outlines
 
