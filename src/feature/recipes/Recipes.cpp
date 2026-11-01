@@ -20,7 +20,10 @@
 //   recipes of the packs), converted once per world for `producing` (the uncrafting table
 //   uncrafts vanilla items too);
 // - special (code-driven) crafting: the crafting hook asks the matcher / assembler of the recipe
-//   id the client crafted (a BP recipe with that identifier shows the shape to vanilla clients).
+//   id the client crafted (a BP recipe with that identifier shows the shape to vanilla clients;
+//   variable layouts: ext/item/Recipes.h), and puts the remainders back into the grid.
+// The recipe pointers the queries return stay valid for the process: a data reload or a new world
+// keeps the previous generation of recipes alive instead of freeing it.
 #include "feature/recipes/Recipes.h"
 
 #include <algorithm>
@@ -35,6 +38,9 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/string/HashedString.h"
+#include "mc/network/packet/InventorySlotPacket.h"
+#include "mc/network/packet/InventorySlotPacketPayload.h"
+#include "mc/world/ContainerID.h"
 #include "mc/world/PlayerUIContainer.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/player/PlayerUISlot.h"
@@ -51,6 +57,7 @@
 #include "mc/world/level/Level.h"
 
 #include "feature/common/Interactions.h"
+#include "feature/ext/item/Recipes.h"
 #include "feature/item/DataFiles.h"
 #include "feature/recipes/RecipesInternal.h"
 #include "feature/tags/Tags.h"
@@ -76,6 +83,10 @@ struct Store {
     std::map<std::string, Loader>                              loaders;   ///< registered by owners
     std::deque<CraftingRecipe>                                 dataRecipes;
     std::deque<CraftingRecipe>                                 nativeRecipes;
+    /// Earlier generations (a data reload, a new world): the recipe pointers the queries handed
+    /// out stay valid for the process (a deque's move keeps its elements where they are).
+    std::vector<std::unique_ptr<std::deque<CraftingRecipe>>>   retired;
+    std::map<std::string, std::string>                         layouts; ///< BP recipe id -> special id (ext::addSpecialLayout)
     std::unordered_map<std::string, CraftingRecipe const*>     byId;
     std::unordered_map<std::string, std::vector<CraftingRecipe const*>> byResult;
     std::unordered_map<std::string, std::vector<CraftingRecipe const*>> byType;
@@ -88,6 +99,12 @@ struct Store {
 Store& store() {
     static Store s;
     return s;
+}
+
+/// Keeps a generation of recipes alive (lock held) and empties `list` for the next one.
+void retire(Store& s, std::deque<CraftingRecipe>& list) {
+    if (!list.empty()) s.retired.push_back(std::make_unique<std::deque<CraftingRecipe>>(std::move(list)));
+    list.clear();
 }
 
 // ---- Java data ---------------------------------------------------------------------------------------
@@ -213,11 +230,13 @@ std::optional<CraftingRecipe> builtIn(std::string const& id, Json const& j) {
         r.resultItem  = input.items.empty() ? std::string() : input.items.front();
         r.resultCount = j.value("input_count", 1);
     } else if (t == "twilightforest:travellers_gear_modifier_shaped_recipe") {
+        // a CustomRecipe: getResultItem is EMPTY on Java (the uncrafting table never sees it); the
+        // gear the modifier goes on is data["gear_item"]
         if (!parsePattern(j.value("pattern", Json::object()), r)) return std::nullopt;
-        r.resultItem = travellersItemOf(r.ingredients);
+        r.data["gear_item"] = travellersItemOf(r.ingredients);
     } else if (t == "twilightforest:travellers_gear_modifier_shapeless_recipe") {
-        r.ingredients = parseList(j.value("ingredients", Json::array()));
-        r.resultItem  = travellersItemOf(r.ingredients);
+        r.ingredients       = parseList(j.value("ingredients", Json::array()));
+        r.data["gear_item"] = travellersItemOf(r.ingredients);
     } else if (t == "twilightforest:scepter_repair") {
         // ScepterRepairRecipe: the scepter plus its repair ingredients restore `durability`
         auto scepter = data::withNamespace(j.value("scepter", std::string()));
@@ -288,7 +307,7 @@ std::optional<CraftingRecipe> loadOne(Store& s, std::string const& id, Json cons
 void loadData() {
     auto&                     s = store();
     std::lock_guard           lock(s.mutex);
-    s.dataRecipes.clear();
+    retire(s, s.dataRecipes);
     auto add = [&](std::string const& id, Json const& j) {
         if (auto r = loadOne(s, id, j)) s.dataRecipes.push_back(std::move(*r));
     };
@@ -341,7 +360,7 @@ Ingredient ingredientOf(RecipeIngredient const& ri) {
 }
 
 void convertNative(Store& s) {
-    s.nativeRecipes.clear();
+    retire(s, s.nativeRecipes);
     s.nativeDirty = false;
     auto level    = ll::service::getLevel();
     if (!level) return;
@@ -396,6 +415,14 @@ void registerSpecialCrafting(std::string const& id, Matcher matcher, Assembler a
     s.specials[data::withNamespace(id)] = Special{std::move(matcher), std::move(assembler), std::move(remainder)};
 }
 
+namespace ext {
+void addSpecialLayout(std::string const& specialId, std::string const& bpRecipeId) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    s.layouts[data::withNamespace(bpRecipeId)] = data::withNamespace(specialId);
+}
+} // namespace ext
+
 std::vector<CraftingRecipe const*> producing(std::string const& itemId) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
@@ -449,14 +476,26 @@ PlayerGrid gridOf(Player& player, bool workbench) {
     for (int i = 0; i < size * size; ++i) out.stacks.push_back(ui.getItem(first + i));
     out.grid.width  = size;
     out.grid.height = size;
+    out.firstSlot   = first;
     for (auto const& st : out.stacks) out.grid.slots.push_back(&st);
     return out;
 }
 
+namespace {
+/// The special recipe of a BP recipe id (its own id or a layout of ext::addSpecialLayout), lock held.
+Special const* specialOf(Store& s, std::string const& recipeId) {
+    auto id = data::withNamespace(recipeId);
+    if (auto it = s.specials.find(id); it != s.specials.end()) return &it->second;
+    if (auto l = s.layouts.find(id); l != s.layouts.end())
+        if (auto it = s.specials.find(l->second); it != s.specials.end()) return &it->second;
+    return nullptr;
+}
+} // namespace
+
 bool isSpecial(std::string const& recipeId) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
-    return s.specials.contains(data::withNamespace(recipeId));
+    return specialOf(s, recipeId) != nullptr;
 }
 
 std::optional<ItemStack> assembleSpecial(std::string const& recipeId, CraftingGrid const& grid) {
@@ -464,33 +503,69 @@ std::optional<ItemStack> assembleSpecial(std::string const& recipeId, CraftingGr
     {
         auto&           s = store();
         std::lock_guard lock(s.mutex);
-        auto            it = s.specials.find(data::withNamespace(recipeId));
-        if (it == s.specials.end()) return std::nullopt;
-        sp = it->second;
+        auto const*     found = specialOf(s, recipeId);
+        if (!found) return std::nullopt;
+        sp = *found;
     }
     if (sp.matcher && !sp.matcher(grid)) return std::nullopt;
     if (!sp.assembler) return std::nullopt;
     return sp.assembler(grid);
 }
 
-std::vector<ItemStack> remainderOf(std::string const& recipeId, CraftingGrid const& grid) {
+std::vector<ItemStack> remaindersBySlot(std::string const& recipeId, CraftingGrid const& grid) {
     Remainder rem;
     {
         auto&           s = store();
         std::lock_guard lock(s.mutex);
-        auto            it = s.specials.find(data::withNamespace(recipeId));
-        if (it == s.specials.end() || !it->second.remainder) return {};
-        rem = it->second.remainder;
+        auto const*     found = specialOf(s, recipeId);
+        if (!found || !found->remainder) return {};
+        rem = found->remainder;
     }
     auto out = rem(grid);
+    out.resize(grid.slots.size(), ItemStack::EMPTY_ITEM());
+    return out;
+}
+
+std::vector<ItemStack> remainderOf(std::string const& recipeId, CraftingGrid const& grid) {
+    auto out = remaindersBySlot(recipeId, grid);
     std::erase_if(out, [](ItemStack const& st) { return game::items::isEmpty(st); });
     return out;
+}
+
+void placeRemainders(Player& player, int firstSlot, std::vector<ItemStack> const& remainders) {
+    auto& ui      = player.mPlayerUIContainer.get();
+    bool  changed = false;
+    for (std::size_t i = 0; i < remainders.size(); ++i) {
+        auto rem = remainders[i];
+        if (game::items::isEmpty(rem)) continue;
+        int  slot = firstSlot + static_cast<int>(i);
+        auto cur  = ui.getItem(slot);
+        if (game::items::isEmpty(cur)) {
+            rem.serverInitNetId();
+            ui.setItem(slot, rem);
+        } else if (game::items::sameItemSameData(cur, rem)) {
+            auto grown = game::items::withCount(cur, game::items::countOf(cur) + game::items::countOf(rem));
+            grown.serverInitNetId();
+            ui.setItem(slot, grown);
+        } else {
+            if (!player.add(rem)) player.drop(rem, false);
+            continue;
+        }
+        changed = true;
+        if (!player.isSimulatedPlayer()) {
+            InventorySlotPacket packet(InventorySlotPacketPayload(ContainerID::PlayerOnlyUi, slot, ui.getItem(slot)));
+            packet.sendTo(player);
+        }
+    }
+    if (changed) player.sendInventory(false);
 }
 
 void unregisterSpecial(std::string const& recipeId) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
-    s.specials.erase(data::withNamespace(recipeId));
+    auto            id = data::withNamespace(recipeId);
+    s.specials.erase(id);
+    std::erase_if(s.layouts, [&](auto const& l) { return l.second == id || l.first == id; });
 }
 
 std::size_t dataRecipeCount() {
@@ -568,21 +643,28 @@ LL_TYPE_INSTANCE_HOOK(
             gf::log().info("recipes: special crafting {} refused for {}", id, player.getRealName());
             return ItemStackNetResult::Error;
         }
-        // one result and one remainder per craft: _initCraftResults multiplies the result by
-        // numCrafts (a shift-click crafts the same grid again), the remainder is given as often
-        auto remainder = rc::internal::remainderOf(id, grid.grid);
-        if (!remainder.empty()) {
+        // Java's ResultSlot#onTake: each slot's remainder (getRemainingItems) goes back into its
+        // grid slot when the craft emptied it (or onto the same item there), else into the
+        // inventory or onto the ground. The request consumes the grid after this point: the
+        // remainders are placed on the next tick and sent to the client. A shift-click
+        // (numCrafts > 1) gives one remainder per craft; the grid takes the first.
+        auto remainders = rc::internal::remaindersBySlot(id, grid.grid);
+        bool any        = std::any_of(remainders.begin(), remainders.end(), [](ItemStack const& st) { return !gf::game::items::isEmpty(st); });
+        if (any) {
             auto uid    = player.getOrCreateUniqueID();
             int  crafts = std::max<int>(1, numCrafts);
-            gf::interactions::nextTick([uid, remainder, crafts] {
+            int  first  = grid.firstSlot;
+            gf::interactions::nextTick([uid, remainders, crafts, first] {
                 auto lvl = ll::service::getLevel();
                 if (!lvl) return;
                 auto* p = lvl->getPlayer(uid);
                 if (!p) return;
-                for (int n = 0; n < crafts; ++n)
-                    for (auto st : remainder)
-                        if (!p->add(st)) p->drop(st, false);
+                rc::internal::placeRemainders(*p, first, remainders);
+                for (int n = 1; n < crafts; ++n)
+                    for (auto st : remainders)
+                        if (!gf::game::items::isEmpty(st) && !p->add(st)) p->drop(st, false);
                 p->sendInventory(false);
+                gf::log().info("recipes: special crafting remainder placed for {}", p->getRealName());
             });
         }
         gf::log().info("recipes: special crafting {} for {}", id, player.getRealName());
@@ -612,7 +694,7 @@ public:
             game::db::onWorldClosed([] {
                 auto&           s = store();
                 std::lock_guard lock(s.mutex);
-                s.nativeRecipes.clear();
+                retire(s, s.nativeRecipes);
                 s.nativeDirty = true;
                 reindex(s);
             });
