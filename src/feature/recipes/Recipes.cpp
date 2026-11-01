@@ -492,6 +492,12 @@ Special const* specialOf(Store& s, std::string const& recipeId) {
 }
 } // namespace
 
+bool anySpecial() {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    return !s.specials.empty();
+}
+
 std::string specialFor(std::string const& resultItemId) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
@@ -653,23 +659,30 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     try {
         Player& player = mPlayer;
-        if (player.isClientSide() || results.size() != 1 || results.front().isNull()) return origin(results, numCrafts);
+        if (player.isClientSide() || results.size() != 1 || results.front().isNull() || !rc::internal::anySpecial()) return origin(results, numCrafts);
         auto level = ll::service::getLevel();
         if (!level) return origin(results, numCrafts);
         std::string id;
-        bool        workbench = false;
+        bool        workbench = false, byLookup = false;
         auto*       handler   = mCraftHandler.get();
         if (handler && static_cast<CraftHandlerBase*>(rc::gCrafting) == handler) {
-            // the crafting table's handler of this request: its recipe
+            // the crafting table's handler of this request (the results are set up inside its craft
+            // action): its recipe when it already stored the net id, its grid size
             auto* crafting = rc::gCrafting;
             if (auto const* recipe = level->getRecipes().getRecipeByNetId(crafting->mRecipeNetId)) id = *recipe->mRecipeId;
             workbench = crafting->mWorkbench;
         } else {
-            // otherwise the special recipe (or layout) whose BP recipe gives this result
-            id        = rc::internal::specialFor(results.front().getTypeName());
-            auto& ui  = player.mPlayerUIContainer.get();
+            auto& ui = player.mPlayerUIContainer.get();
             for (int i = static_cast<int>(PlayerUISlot::Crafting3x3Input1); i <= static_cast<int>(PlayerUISlot::Crafting3x3Input9); ++i)
                 workbench = workbench || !ui.getItem(i).isNull();
+        }
+        if (id.empty() || !rc::internal::isSpecial(id)) {
+            // the special recipe (or layout) whose BP recipe gives this result (on 1.26.51 the
+            // handler's recipe net id is not set yet when the results are)
+            if (auto found = rc::internal::specialFor(results.front().getTypeName()); !found.empty()) {
+                id       = found;
+                byLookup = true;
+            }
         }
         if (id.empty()) return origin(results, numCrafts);
         if (id.find(':') == std::string::npos) id = "minecraft:" + id;
@@ -677,6 +690,8 @@ LL_TYPE_INSTANCE_HOOK(
         auto grid   = rc::internal::gridOf(player, workbench);
         auto result = rc::internal::assembleSpecial(id, grid.grid);
         if (!result || gf::game::items::isEmpty(*result)) {
+            // found by its result only: another recipe of the same item may be the one crafted
+            if (byLookup) return origin(results, numCrafts);
             gf::log().info("recipes: special crafting {} refused for {}", id, player.getRealName());
             return ItemStackNetResult::Error;
         }
@@ -723,8 +738,8 @@ namespace {
 class RecipesModule {
 public:
     void install() {
-        RecipesCraftActionHook::hook();
-        RecipesInitResultsHook::hook();
+        if (int r = RecipesCraftActionHook::hook(); r != 0) log().error("recipes: the crafting table hook failed ({})", r);
+        if (int r = RecipesInitResultsHook::hook(); r != 0) log().error("recipes: the craft results hook failed ({})", r);
         static bool registered = false;
         if (!registered) {
             registered = true;
