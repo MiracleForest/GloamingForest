@@ -1,0 +1,32 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:knightmetal_block",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 40
+      },
+      "minecraft:map_color": "#a7a7a7",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.knightmetal_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_knightmetal_block",
+          "render_method": "alpha_test"
+        },
+        "all": {
+          "texture": "tf_block_knightmetal_block",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

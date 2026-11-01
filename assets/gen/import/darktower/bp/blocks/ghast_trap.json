@@ -1,0 +1,145 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:ghast_trap",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:active": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 10
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 6
+      },
+      "minecraft:map_color": "#f7e9a3",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.ghast_trap",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_encased_towerwood",
+          "render_method": "alpha_test"
+        },
+        "bottom": {
+          "texture": "tf_block_encased_towerwood",
+          "render_method": "alpha_test"
+        },
+        "side": {
+          "texture": "tf_block_towerdev_ghasttrap_off",
+          "render_method": "alpha_test"
+        },
+        "side2": {
+          "texture": "tf_block_tower_device_level_1_towerdev_ghasttrap_off_1",
+          "render_method": "alpha_test"
+        },
+        "side3": {
+          "texture": "tf_block_tower_device_level_2_towerdev_ghasttrap_off_2",
+          "render_method": "alpha_test"
+        },
+        "top": {
+          "texture": "tf_block_towerdev_ghasttraplid_off",
+          "render_method": "alpha_test"
+        },
+        "top2": {
+          "texture": "tf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
+          "render_method": "alpha_test"
+        },
+        "top3": {
+          "texture": "tf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.ghast_trap",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_encased_towerwood",
+              "render_method": "alpha_test"
+            },
+            "bottom": {
+              "texture": "tf_block_encased_towerwood",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_towerdev_ghasttrap_off",
+              "render_method": "alpha_test"
+            },
+            "side2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_ghasttrap_off_1",
+              "render_method": "alpha_test"
+            },
+            "side3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_ghasttrap_off_2",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_towerdev_ghasttraplid_off",
+              "render_method": "alpha_test"
+            },
+            "top2": {
+              "texture": "tf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
+              "render_method": "alpha_test"
+            },
+            "top3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.ghast_trap_active",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_encased_towerwood",
+              "render_method": "alpha_test"
+            },
+            "bottom": {
+              "texture": "tf_block_encased_towerwood",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_towerdev_ghasttrap_on",
+              "render_method": "alpha_test"
+            },
+            "side2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_ghasttrap_on_1",
+              "render_method": "alpha_test"
+            },
+            "side3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_ghasttrap_on_2",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_towerdev_ghasttraplid_on",
+              "render_method": "alpha_test"
+            },
+            "top2": {
+              "texture": "tf_block_tower_device_level_2_towerdev_ghasttraplid_on_1",
+              "render_method": "alpha_test"
+            },
+            "top3": {
+              "texture": "tf_block_tower_device_level_3_towerdev_ghasttraplid_on_2",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

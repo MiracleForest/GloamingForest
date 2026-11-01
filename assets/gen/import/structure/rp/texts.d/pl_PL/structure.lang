@@ -1,0 +1,5 @@
+commands.tffeature.structure.boundaries=Granice struktury: %s
+commands.tffeature.structure.conquer.status=Flaga podbicia struktur: %s
+commands.tffeature.structure.conquer.update=Flaga podbicia struktury była %s, zmieniono na %s
+commands.tffeature.structure.spawn_info=%s, Waży %s
+commands.tffeature.structure.spawn_list=Lista spawnów dla tego obszaru to:

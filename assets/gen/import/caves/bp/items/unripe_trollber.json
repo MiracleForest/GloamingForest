@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:unripe_trollber",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_unripe_trollber"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:unripe_trollber.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:unripe_trollber",
+        "replace_block_item": true
+      }
+    }
+  }
+}

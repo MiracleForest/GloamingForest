@@ -1,0 +1,60 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:trollsteinn",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:down": [false, true],
+        "twilightforest:east": [false, true],
+        "twilightforest:north": [false, true],
+        "twilightforest:south": [false, true],
+        "twilightforest:up": [false, true],
+        "twilightforest:west": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 6
+      },
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": {
+        "identifier": "geometry.tf.twilightforest.block.trollsteinn.multipart",
+        "bone_visibility": {
+          "part0": "!q.block_state('twilightforest:north')",
+          "part1": "q.block_state('twilightforest:north')",
+          "part2": "!q.block_state('twilightforest:south')",
+          "part3": "q.block_state('twilightforest:south')",
+          "part4": "!q.block_state('twilightforest:west')",
+          "part5": "q.block_state('twilightforest:west')",
+          "part6": "!q.block_state('twilightforest:east')",
+          "part7": "q.block_state('twilightforest:east')",
+          "part8": "!q.block_state('twilightforest:up')",
+          "part9": "q.block_state('twilightforest:up')",
+          "part10": "!q.block_state('twilightforest:down')",
+          "part11": "q.block_state('twilightforest:down')"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_trollsteinn",
+          "render_method": "opaque"
+        },
+        "t_twilightforest_block_trollsteinn": {
+          "texture": "tf_block_trollsteinn",
+          "render_method": "opaque"
+        },
+        "t_twilightforest_block_trollsteinn_light": {
+          "texture": "tf_block_trollsteinn_light",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

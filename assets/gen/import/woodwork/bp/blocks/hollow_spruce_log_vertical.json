@@ -1,0 +1,44 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:hollow_spruce_log_vertical",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 2
+      },
+      "minecraft:map_color": "#8f7748",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_spruce_log",
+          "render_method": "opaque"
+        },
+        "inner": {
+          "texture": "tf_vanilla_block_stripped_spruce_log",
+          "render_method": "opaque"
+        },
+        "side": {
+          "texture": "tf_vanilla_block_spruce_log",
+          "render_method": "opaque"
+        },
+        "top": {
+          "texture": "tf_vanilla_block_spruce_log_top",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

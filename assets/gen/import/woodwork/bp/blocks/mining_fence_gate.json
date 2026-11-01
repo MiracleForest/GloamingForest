@@ -1,0 +1,475 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:mining_fence_gate",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:in_wall": [false, true],
+        "twilightforest:open": [false, true],
+        "twilightforest:powered": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 3
+      },
+      "minecraft:map_color": "#f7e9a3",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_wood_planks_mine_0",
+          "render_method": "opaque"
+        },
+        "texture": {
+          "texture": "tf_block_wood_planks_mine_0",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 90, 0]
+      },
+      "minecraft:collision_box": {
+        "origin": [-1, 5, -8],
+        "size": [2, 11, 16]
+      },
+      "minecraft:selection_box": {
+        "origin": [-1, 5, -8],
+        "size": [2, 11, 16]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && !q.block_state('twilightforest:in_wall') && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-1, 5, -8],
+            "size": [2, 11, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-1, 5, -8],
+            "size": [2, 11, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && !q.block_state('twilightforest:in_wall') && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-1, 5, -8],
+            "size": [8, 11, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-1, 5, -8],
+            "size": [8, 11, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:in_wall') && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-1, 2, -8],
+            "size": [2, 11, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-1, 2, -8],
+            "size": [2, 11, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:in_wall') && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-1, 2, -8],
+            "size": [8, 11, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-1, 2, -8],
+            "size": [8, 11, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && !q.block_state('twilightforest:in_wall') && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 5, -1],
+            "size": [16, 11, 2]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 5, -1],
+            "size": [16, 11, 2]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && !q.block_state('twilightforest:in_wall') && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 5, -7],
+            "size": [16, 11, 8]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 5, -7],
+            "size": [16, 11, 8]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:in_wall') && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 2, -1],
+            "size": [16, 11, 2]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 2, -1],
+            "size": [16, 11, 2]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:in_wall') && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 2, -7],
+            "size": [16, 11, 8]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 2, -7],
+            "size": [16, 11, 8]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && !q.block_state('twilightforest:in_wall') && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 5, -1],
+            "size": [16, 11, 2]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 5, -1],
+            "size": [16, 11, 2]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && !q.block_state('twilightforest:in_wall') && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 5, -1],
+            "size": [16, 11, 8]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 5, -1],
+            "size": [16, 11, 8]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:in_wall') && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 2, -1],
+            "size": [16, 11, 2]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 2, -1],
+            "size": [16, 11, 2]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:in_wall') && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 2, -1],
+            "size": [16, 11, 8]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 2, -1],
+            "size": [16, 11, 8]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && !q.block_state('twilightforest:in_wall') && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-1, 5, -8],
+            "size": [2, 11, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-1, 5, -8],
+            "size": [2, 11, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && !q.block_state('twilightforest:in_wall') && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-7, 5, -8],
+            "size": [8, 11, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-7, 5, -8],
+            "size": [8, 11, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:in_wall') && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-1, 2, -8],
+            "size": [2, 11, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-1, 2, -8],
+            "size": [2, 11, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:in_wall') && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_mine_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-7, 2, -8],
+            "size": [8, 11, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-7, 2, -8],
+            "size": [8, 11, 16]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.minecraft.block.pressure_plate_down",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-7, 0, -7],
+              "size": [14, 0.5, 14],
+              "uv": {
+                "north": {
+                  "uv": [1, 15.5],
+                  "uv_size": [14, 0.5],
+                  "material_instance": "texture"
+                },
+                "east": {
+                  "uv": [1, 15.5],
+                  "uv_size": [14, 0.5],
+                  "material_instance": "texture"
+                },
+                "south": {
+                  "uv": [1, 15.5],
+                  "uv_size": [14, 0.5],
+                  "material_instance": "texture"
+                },
+                "west": {
+                  "uv": [1, 15.5],
+                  "uv_size": [14, 0.5],
+                  "material_instance": "texture"
+                },
+                "up": {
+                  "uv": [15, 15],
+                  "uv_size": [-14, -14],
+                  "material_instance": "texture"
+                },
+                "down": {
+                  "uv": [15, 15],
+                  "uv_size": [-14, -14],
+                  "material_instance": "texture"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

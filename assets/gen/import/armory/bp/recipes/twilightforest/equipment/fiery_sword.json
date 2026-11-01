@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:equipment/fiery_sword"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#", "#", "X"],
+    "key": {
+      "#": {
+        "item": "twilightforest:fiery_ingot"
+      },
+      "X": {
+        "item": "minecraft:blaze_rod"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:fiery_sword"
+    }
+  }
+}

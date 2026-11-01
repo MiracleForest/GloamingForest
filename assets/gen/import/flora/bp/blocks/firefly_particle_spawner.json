@@ -1,0 +1,56 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:firefly_particle_spawner",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.3
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 3
+      },
+      "minecraft:light_emission": 15,
+      "minecraft:geometry": "geometry.tf.twilightforest.block.firefly_particle_spawner",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_jar_side",
+          "render_method": "alpha_test"
+        },
+        "bottom": {
+          "texture": "tf_block_jar_bottom",
+          "render_method": "alpha_test"
+        },
+        "dirt": {
+          "texture": "tf_vanilla_block_composter_compost",
+          "render_method": "alpha_test"
+        },
+        "poppy": {
+          "texture": "tf_vanilla_block_poppy",
+          "render_method": "alpha_test"
+        },
+        "side": {
+          "texture": "tf_block_jar_side",
+          "render_method": "alpha_test"
+        },
+        "top": {
+          "texture": "tf_block_jar_top",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-7, 0, -8],
+        "size": [15, 16, 14]
+      },
+      "minecraft:selection_box": {
+        "origin": [-7, 0, -8],
+        "size": [15, 16, 14]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

@@ -1,0 +1,19 @@
+[
+  {
+    "id": "twilightforest:beanstalk_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "SpecialStemLeavesBlock",
+      "vanillaClass": "LeavesBlock",
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:huge_stalk",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "states": ["axis"]
+    }
+  }
+]

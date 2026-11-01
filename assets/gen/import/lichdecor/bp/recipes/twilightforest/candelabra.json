@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:candelabra"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", " # "],
+    "key": {
+      "#": {
+        "item": "twilightforest:wrought_iron_bar"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:candelabra",
+      "count": 2
+    }
+  }
+}

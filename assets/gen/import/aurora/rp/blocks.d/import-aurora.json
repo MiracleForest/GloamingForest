@@ -1,0 +1,14 @@
+{
+  "twilightforest:aurora_block": {
+    "sound": "stone"
+  },
+  "twilightforest:aurora_pillar": {
+    "sound": "stone"
+  },
+  "twilightforest:aurora_slab": {
+    "sound": "stone"
+  },
+  "twilightforest:auroralized_glass": {
+    "sound": "stone"
+  }
+}

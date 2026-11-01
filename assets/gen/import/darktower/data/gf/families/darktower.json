@@ -1,0 +1,11 @@
+[
+  {
+    "id": "twilightforest:slider",
+    "family": "pillar",
+    "params": {
+      "class": "SliderBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["axis", "delay"]
+    }
+  }
+]

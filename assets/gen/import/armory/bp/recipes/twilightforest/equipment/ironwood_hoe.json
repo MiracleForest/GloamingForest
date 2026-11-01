@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:equipment/ironwood_hoe"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##", " X", " X"],
+    "key": {
+      "#": {
+        "item": "twilightforest:ironwood_ingot"
+      },
+      "X": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:ironwood_hoe"
+    }
+  }
+}

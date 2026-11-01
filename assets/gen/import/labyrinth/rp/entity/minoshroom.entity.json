@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:minoshroom",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/banner/minoshroom"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.minoshroom"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#a81012",
+        "overlay_color": "#aa7d66"
+      }
+    }
+  }
+}

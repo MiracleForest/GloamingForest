@@ -1,0 +1,20 @@
+{
+  "tf_block_blank": {
+    "textures": "textures/twilightforest/block/blank"
+  },
+  "tf_block_towerwood": {
+    "textures": "textures/twilightforest/block/towerwood"
+  },
+  "tf_vanilla_block_netherite_block": {
+    "textures": "textures/blocks/netherite_block"
+  },
+  "tf_vanilla_block_oak_leaves": {
+    "textures": "textures/blocks/leaves_oak_carried"
+  },
+  "tf_vanilla_block_oak_log": {
+    "textures": "textures/blocks/log_oak"
+  },
+  "tf_vanilla_block_soul_sand": {
+    "textures": "textures/blocks/soul_sand"
+  }
+}

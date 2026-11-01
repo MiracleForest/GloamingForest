@@ -1,0 +1,11 @@
+[
+  {
+    "id": "twilightforest:stronghold_shield",
+    "family": "directional",
+    "params": {
+      "class": "StrongholdShieldBlock",
+      "vanillaClass": "DirectionalBlock",
+      "states": ["facing"]
+    }
+  }
+]

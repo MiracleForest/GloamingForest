@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:fire_beetle",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/firebeetle"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.fire_beetle"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#1d0b00",
+        "overlay_color": "#cb6f25"
+      }
+    }
+  }
+}

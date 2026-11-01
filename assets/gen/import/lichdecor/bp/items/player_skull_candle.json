@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:player_skull_candle",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_vanilla_block_soul_sand"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:player_skull_candle.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:player_skull_candle",
+        "replace_block_item": true
+      }
+    }
+  }
+}

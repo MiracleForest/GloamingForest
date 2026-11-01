@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:swarm_spider",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/swarmspider"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.swarm_spider"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#32022e",
+        "overlay_color": "#17251e"
+      }
+    }
+  }
+}

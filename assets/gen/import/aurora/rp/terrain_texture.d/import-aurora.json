@@ -1,0 +1,14 @@
+{
+  "tf_block_aurora_pillar": {
+    "textures": "textures/twilightforest/block/aurora_pillar"
+  },
+  "tf_block_aurora_pillar_top": {
+    "textures": "textures/twilightforest/block/aurora_pillar_top"
+  },
+  "tf_block_aurora_slab_side": {
+    "textures": "textures/twilightforest/block/aurora_slab_side"
+  },
+  "tf_block_auroralized_glass_ct": {
+    "textures": "textures/twilightforest/block/auroralized_glass_ct"
+  }
+}

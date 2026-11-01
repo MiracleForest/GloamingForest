@@ -1,0 +1,51 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:maze_slime_block",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 1
+      },
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_maze_slime_block",
+          "render_method": "blend"
+        },
+        "up": {
+          "texture": "tf_vanilla_block_slime_block",
+          "render_method": "blend"
+        },
+        "down": {
+          "texture": "tf_vanilla_block_slime_block",
+          "render_method": "blend"
+        },
+        "north": {
+          "texture": "tf_vanilla_block_slime_block",
+          "render_method": "blend"
+        },
+        "south": {
+          "texture": "tf_vanilla_block_slime_block",
+          "render_method": "blend"
+        },
+        "east": {
+          "texture": "tf_vanilla_block_slime_block",
+          "render_method": "blend"
+        },
+        "west": {
+          "texture": "tf_vanilla_block_slime_block",
+          "render_method": "blend"
+        }
+      }
+    }
+  }
+}

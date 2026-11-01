@@ -1,0 +1,10 @@
+{
+  "comment": "Named by TF data, not a data file (code registry id, texture, template or custom-registry tag); index for the assemble reference check only (F1, tools/import/src/Known.cs).",
+  "referencedBy": [
+    "data/twilightforest/twilight/magic_paintings/castaway_paradise.json",
+    "data/twilightforest/twilight/magic_paintings/darkness.json",
+    "data/twilightforest/twilight/magic_paintings/lucid_lands.json",
+    "data/twilightforest/twilight/magic_paintings/music_in_the_mire.json",
+    "data/twilightforest/twilight/magic_paintings/the_hostile_paradise.json"
+  ]
+}

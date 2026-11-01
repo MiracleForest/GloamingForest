@@ -1,0 +1,380 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:hollow_sorting_log_horizontal",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:axis": ["x", "z"],
+        "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 2
+      },
+      "minecraft:map_color": "#664c33",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_sorting_log",
+          "render_method": "alpha_test"
+        },
+        "inner": {
+          "texture": "tf_block_stripped_sorting_log",
+          "render_method": "alpha_test"
+        },
+        "side": {
+          "texture": "tf_block_sorting_log",
+          "render_method": "alpha_test"
+        },
+        "top": {
+          "texture": "tf_block_sorting_log_top",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 270, 0]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:variant') == 'empty'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_sorting_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:variant') == 'moss'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_carpet",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "carpet": {
+              "texture": "tf_block_mosspatch",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "overhang": {
+              "texture": "tf_block_moss_overhang",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_sorting_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:variant') == 'moss_and_grass'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_plant",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "carpet": {
+              "texture": "tf_block_mosspatch",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "overhang": {
+              "texture": "tf_block_moss_overhang",
+              "render_method": "alpha_test"
+            },
+            "plant": {
+              "texture": "tf_vanilla_block_short_grass",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_sorting_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:variant') == 'snow'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_carpet",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "carpet": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "overhang": {
+              "texture": "tf_block_snow_overhang",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_sorting_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:variant') == 'waterlogged'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_sorting_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:variant') == 'empty'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_sorting_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:variant') == 'moss'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_carpet",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "carpet": {
+              "texture": "tf_block_mosspatch",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "overhang": {
+              "texture": "tf_block_moss_overhang",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_sorting_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:variant') == 'moss_and_grass'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_plant",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "carpet": {
+              "texture": "tf_block_mosspatch",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "overhang": {
+              "texture": "tf_block_moss_overhang",
+              "render_method": "alpha_test"
+            },
+            "plant": {
+              "texture": "tf_vanilla_block_short_grass",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_sorting_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:variant') == 'snow'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log_carpet",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "carpet": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "overhang": {
+              "texture": "tf_block_snow_overhang",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_sorting_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:variant') == 'waterlogged'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.horizontal_hollow_log",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_sorting_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_sorting_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

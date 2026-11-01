@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:naga",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/banner/naga"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.naga"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#a4d316",
+        "overlay_color": "#1b380b"
+      }
+    }
+  }
+}

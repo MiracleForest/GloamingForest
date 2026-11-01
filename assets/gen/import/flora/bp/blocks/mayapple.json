@@ -1,0 +1,45 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:mayapple",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:map_color": "#007c00",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:collision_box": false,
+      "minecraft:geometry": "geometry.tf.twilightforest.block.mayapple",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_cloverpatch",
+          "render_method": "alpha_test"
+        },
+        "leaf": {
+          "texture": "tf_block_mayapple",
+          "render_method": "alpha_test"
+        },
+        "stem": {
+          "texture": "tf_block_mayapple_side",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:selection_box": {
+        "origin": [-8, 0, -8],
+        "size": [16, 6, 16]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

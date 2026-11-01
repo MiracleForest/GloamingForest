@@ -1,0 +1,192 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:dark_tower_miniature_structure",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.75
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.75
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.dark_tower",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_wood_planks_darkwood_3",
+          "render_method": "opaque"
+        },
+        "encased": {
+          "texture": "tf_block_encased_towerwood",
+          "render_method": "opaque"
+        },
+        "netherrack": {
+          "texture": "tf_vanilla_block_netherrack",
+          "render_method": "opaque"
+        },
+        "planks": {
+          "texture": "tf_block_wood_planks_darkwood_3",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 270, 0]
+      },
+      "minecraft:collision_box": {
+        "origin": [-5.01, 0, -6.01],
+        "size": [10.02, 14.511, 11.02]
+      },
+      "minecraft:selection_box": {
+        "origin": [-5.01, 0, -6.01],
+        "size": [10.02, 14.511, 11.02]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.dark_tower",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_darkwood_3",
+              "render_method": "opaque"
+            },
+            "encased": {
+              "texture": "tf_block_encased_towerwood",
+              "render_method": "opaque"
+            },
+            "netherrack": {
+              "texture": "tf_vanilla_block_netherrack",
+              "render_method": "opaque"
+            },
+            "planks": {
+              "texture": "tf_block_wood_planks_darkwood_3",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-5.01, 0, -6.01],
+            "size": [10.02, 14.511, 11.02]
+          },
+          "minecraft:selection_box": {
+            "origin": [-5.01, 0, -6.01],
+            "size": [10.02, 14.511, 11.02]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.dark_tower",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_darkwood_3",
+              "render_method": "opaque"
+            },
+            "encased": {
+              "texture": "tf_block_encased_towerwood",
+              "render_method": "opaque"
+            },
+            "netherrack": {
+              "texture": "tf_vanilla_block_netherrack",
+              "render_method": "opaque"
+            },
+            "planks": {
+              "texture": "tf_block_wood_planks_darkwood_3",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-6.01, 0, -5.01],
+            "size": [11.02, 14.511, 10.02]
+          },
+          "minecraft:selection_box": {
+            "origin": [-6.01, 0, -5.01],
+            "size": [11.02, 14.511, 10.02]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.dark_tower",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_darkwood_3",
+              "render_method": "opaque"
+            },
+            "encased": {
+              "texture": "tf_block_encased_towerwood",
+              "render_method": "opaque"
+            },
+            "netherrack": {
+              "texture": "tf_vanilla_block_netherrack",
+              "render_method": "opaque"
+            },
+            "planks": {
+              "texture": "tf_block_wood_planks_darkwood_3",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-5.01, 0, -5.01],
+            "size": [11.02, 14.511, 10.02]
+          },
+          "minecraft:selection_box": {
+            "origin": [-5.01, 0, -5.01],
+            "size": [11.02, 14.511, 10.02]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.dark_tower",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_darkwood_3",
+              "render_method": "opaque"
+            },
+            "encased": {
+              "texture": "tf_block_encased_towerwood",
+              "render_method": "opaque"
+            },
+            "netherrack": {
+              "texture": "tf_vanilla_block_netherrack",
+              "render_method": "opaque"
+            },
+            "planks": {
+              "texture": "tf_block_wood_planks_darkwood_3",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-5.01, 0, -5.01],
+            "size": [10.02, 14.511, 11.02]
+          },
+          "minecraft:selection_box": {
+            "origin": [-5.01, 0, -5.01],
+            "size": [10.02, 14.511, 11.02]
+          }
+        }
+      }
+    ]
+  }
+}

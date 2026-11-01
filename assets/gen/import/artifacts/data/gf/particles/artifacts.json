@@ -1,0 +1,20 @@
+{
+  "twilightforest:magic_effect": {
+    "textures": [
+      "minecraft:particle/effect_7",
+      "minecraft:particle/effect_6",
+      "minecraft:particle/effect_5",
+      "minecraft:particle/effect_4",
+      "minecraft:particle/effect_3",
+      "minecraft:particle/effect_2",
+      "minecraft:particle/effect_1",
+      "minecraft:particle/effect_0"
+    ]
+  },
+  "twilightforest:shield_break": {
+    "textures": ["textures/twilightforest/particle/shield_break"]
+  },
+  "twilightforest:twilight_orb": {
+    "textures": ["textures/twilightforest/particle/twilight_orb"]
+  }
+}

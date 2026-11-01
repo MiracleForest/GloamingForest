@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/mangrove_trapped_chest"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#C#", "###"],
+    "key": {
+      "#": {
+        "item": "twilightforest:mangrove_planks"
+      },
+      "C": {
+        "item": "minecraft:trapped_chest"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:mangrove_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:mangrove_trapped_chest",
+      "count": 2
+    }
+  }
+}

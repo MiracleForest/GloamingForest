@@ -1,0 +1,20 @@
+{
+  "block.twilightforest.aurora_block": "Bloque de Aurora",
+  "block.twilightforest.aurora_pillar": "Pilar de Aurora",
+  "block.twilightforest.aurora_slab": "Losa de Aurora",
+  "block.twilightforest.auroralized_glass": "Vidrio Auroralizado [NYI]",
+  "entity.twilightforest.ice_crystal": "Cristal de Hielo",
+  "entity.twilightforest.ice_snowball": "Bola de Nieve de Hielo",
+  "entity.twilightforest.snow_guardian": "Guardián de Nieve",
+  "entity.twilightforest.snow_queen": "Reina de las Nieves",
+  "entity.twilightforest.stable_ice_core": "Núcleo de Hielo Estable",
+  "entity.twilightforest.unstable_ice_core": "Núcleo de Hielo Inestable",
+  "item.twilightforest.ice_crystal_spawn_egg": "Generar Cristal de Hielo",
+  "item.twilightforest.snow_guardian_spawn_egg": "Generar Guardián de Nieve",
+  "item.twilightforest.snow_queen_spawn_egg": "Generar Reina de las Nieves",
+  "item.twilightforest.stable_ice_core_spawn_egg": "Generar Núcleo de Hielo Estable",
+  "item.twilightforest.unstable_ice_core_spawn_egg": "Generar Núcleo de Hielo Inestable",
+  "subtitles.twilightforest.entity.ice.death": "Núcleo de hielo muerto",
+  "subtitles.twilightforest.entity.ice.hurt": "Núcleo de hielo herido",
+  "subtitles.twilightforest.entity.ice.shoot": "Núcleo de hielo dispara una bola de nieve"
+}

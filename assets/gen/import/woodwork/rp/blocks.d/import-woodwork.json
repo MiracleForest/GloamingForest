@@ -1,0 +1,737 @@
+{
+  "twilightforest:acacia_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:acacia_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:bamboo_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:bamboo_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:birch_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:birch_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:canopy_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_bookshelf": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_button": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_door": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:canopy_fence": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_fence_gate": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_log": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_planks": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_pressure_plate": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_slab": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_stairs": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_trapdoor": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_trapped_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_wall_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_wall_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:canopy_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:cherry_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:cherry_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:crimson_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:crimson_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:dark_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_button": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_door": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:dark_fence": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_fence_gate": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_log": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_oak_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_oak_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:dark_planks": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_pressure_plate": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_slab": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_stairs": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_trapdoor": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_trapped_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_wall_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_wall_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:dark_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_acacia_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_acacia_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_acacia_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_birch_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_birch_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_birch_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_canopy_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_canopy_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_canopy_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_cherry_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_cherry_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_cherry_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_crimson_stem_climbable": {
+    "sound": "stone"
+  },
+  "twilightforest:hollow_crimson_stem_horizontal": {
+    "sound": "stone"
+  },
+  "twilightforest:hollow_crimson_stem_vertical": {
+    "sound": "stone"
+  },
+  "twilightforest:hollow_dark_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_dark_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_dark_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_dark_oak_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_dark_oak_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_dark_oak_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_jungle_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_jungle_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_jungle_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_mangrove_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_mangrove_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_mangrove_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_mining_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_mining_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_mining_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_oak_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_oak_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_oak_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_sorting_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_sorting_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_sorting_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_spruce_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_spruce_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_spruce_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_time_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_time_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_time_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_transformation_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_transformation_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_transformation_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_twilight_oak_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_twilight_oak_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_twilight_oak_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_vangrove_log_climbable": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_vangrove_log_horizontal": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_vangrove_log_vertical": {
+    "sound": "wood"
+  },
+  "twilightforest:hollow_warped_stem_climbable": {
+    "sound": "stone"
+  },
+  "twilightforest:hollow_warped_stem_horizontal": {
+    "sound": "stone"
+  },
+  "twilightforest:hollow_warped_stem_vertical": {
+    "sound": "stone"
+  },
+  "twilightforest:jungle_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:jungle_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:mangrove_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_button": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_door": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:mangrove_fence": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_fence_gate": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_log": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_planks": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_pressure_plate": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_slab": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_stairs": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_trapdoor": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_trapped_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_wall_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_wall_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:mangrove_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_button": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_door": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:mining_fence": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_fence_gate": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_log": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_planks": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_pressure_plate": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_slab": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_stairs": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_trapdoor": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_trapped_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_wall_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_wall_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:mining_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:oak_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:oak_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:sorting_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_button": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_door": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:sorting_fence": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_fence_gate": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_log": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_planks": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_pressure_plate": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_slab": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_stairs": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_trapdoor": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_trapped_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_wall_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_wall_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:sorting_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:spruce_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:spruce_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:stripped_canopy_log": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_canopy_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_dark_log": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_dark_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_mangrove_log": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_mangrove_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_mining_log": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_mining_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_sorting_log": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_sorting_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_time_log": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_time_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_transformation_log": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_transformation_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_twilight_oak_log": {
+    "sound": "wood"
+  },
+  "twilightforest:stripped_twilight_oak_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:time_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:time_button": {
+    "sound": "wood"
+  },
+  "twilightforest:time_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:time_door": {
+    "sound": "wood"
+  },
+  "twilightforest:time_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:time_fence": {
+    "sound": "wood"
+  },
+  "twilightforest:time_fence_gate": {
+    "sound": "wood"
+  },
+  "twilightforest:time_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:time_log": {
+    "sound": "wood"
+  },
+  "twilightforest:time_planks": {
+    "sound": "wood"
+  },
+  "twilightforest:time_pressure_plate": {
+    "sound": "wood"
+  },
+  "twilightforest:time_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:time_slab": {
+    "sound": "wood"
+  },
+  "twilightforest:time_stairs": {
+    "sound": "wood"
+  },
+  "twilightforest:time_trapdoor": {
+    "sound": "wood"
+  },
+  "twilightforest:time_trapped_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:time_wall_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:time_wall_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:time_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_button": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_door": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:transformation_fence": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_fence_gate": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_log": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_planks": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_pressure_plate": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_slab": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_stairs": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_trapdoor": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_trapped_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_wall_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_wall_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:transformation_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_button": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_door": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:twilight_oak_fence": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_fence_gate": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_log": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_planks": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_pressure_plate": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_slab": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_stairs": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_trapdoor": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_trapped_chest": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_wall_hanging_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_oak_wood": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_wall_sign": {
+    "sound": "wood"
+  },
+  "twilightforest:vangrove_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:vangrove_drying_rack": {
+    "sound": "stone"
+  },
+  "twilightforest:warped_banister": {
+    "sound": "wood"
+  },
+  "twilightforest:warped_drying_rack": {
+    "sound": "stone"
+  }
+}

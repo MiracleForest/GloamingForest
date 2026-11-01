@@ -1,0 +1,68 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:twisted_stone_pillar",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:axis": ["y", "x", "z"],
+        "twilightforest:down": [false, true],
+        "twilightforest:east": [false, true],
+        "twilightforest:north": [false, true],
+        "twilightforest:south": [false, true],
+        "twilightforest:up": [false, true],
+        "twilightforest:west": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 6
+      },
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": {
+        "identifier": "geometry.tf.twilightforest.block.twisted_stone_pillar.multipart",
+        "bone_visibility": {
+          "part0": "q.block_state('twilightforest:axis') == 'x'",
+          "part1": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:east')",
+          "part2": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:west')",
+          "part3": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'z') && q.block_state('twilightforest:east')",
+          "part4": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'z') && q.block_state('twilightforest:west')",
+          "part5": "q.block_state('twilightforest:axis') == 'y'",
+          "part6": "q.block_state('twilightforest:axis') == 'y' && !q.block_state('twilightforest:up')",
+          "part7": "q.block_state('twilightforest:axis') == 'y' && !q.block_state('twilightforest:down')",
+          "part8": "(q.block_state('twilightforest:axis') == 'x' || q.block_state('twilightforest:axis') == 'z') && q.block_state('twilightforest:up')",
+          "part9": "(q.block_state('twilightforest:axis') == 'x' || q.block_state('twilightforest:axis') == 'z') && q.block_state('twilightforest:down')",
+          "part10": "q.block_state('twilightforest:axis') == 'z'",
+          "part11": "q.block_state('twilightforest:axis') == 'z' && !q.block_state('twilightforest:north')",
+          "part12": "q.block_state('twilightforest:axis') == 'z' && !q.block_state('twilightforest:south')",
+          "part13": "(q.block_state('twilightforest:axis') == 'x' || q.block_state('twilightforest:axis') == 'y') && q.block_state('twilightforest:north')",
+          "part14": "(q.block_state('twilightforest:axis') == 'x' || q.block_state('twilightforest:axis') == 'y') && q.block_state('twilightforest:south')"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_twisted_stone_pillar",
+          "render_method": "alpha_test"
+        },
+        "t_twilightforest_block_twisted_stone_cap_end": {
+          "texture": "tf_block_twisted_stone_cap_end",
+          "render_method": "alpha_test"
+        },
+        "t_twilightforest_block_twisted_stone_cap_side": {
+          "texture": "tf_block_twisted_stone_cap_side",
+          "render_method": "alpha_test"
+        },
+        "t_twilightforest_block_twisted_stone_pillar": {
+          "texture": "tf_block_twisted_stone_pillar",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

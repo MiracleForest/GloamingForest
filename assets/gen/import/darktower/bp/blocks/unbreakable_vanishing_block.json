@@ -1,0 +1,273 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:unbreakable_vanishing_block",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:active": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": false,
+      "minecraft:destructible_by_explosion": false,
+      "minecraft:map_color": "#f7e9a3",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.vanishing_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_towerdev_vanish_off",
+          "render_method": "alpha_test"
+        },
+        "bottom": {
+          "texture": "tf_block_towerdev_vanish_off",
+          "render_method": "alpha_test"
+        },
+        "bottom2": {
+          "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+          "render_method": "alpha_test"
+        },
+        "bottom3": {
+          "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+          "render_method": "alpha_test"
+        },
+        "east": {
+          "texture": "tf_block_towerdev_vanish_off",
+          "render_method": "alpha_test"
+        },
+        "east2": {
+          "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+          "render_method": "alpha_test"
+        },
+        "east3": {
+          "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+          "render_method": "alpha_test"
+        },
+        "north": {
+          "texture": "tf_block_towerdev_vanish_off",
+          "render_method": "alpha_test"
+        },
+        "north2": {
+          "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+          "render_method": "alpha_test"
+        },
+        "north3": {
+          "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+          "render_method": "alpha_test"
+        },
+        "south": {
+          "texture": "tf_block_towerdev_vanish_off",
+          "render_method": "alpha_test"
+        },
+        "south2": {
+          "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+          "render_method": "alpha_test"
+        },
+        "south3": {
+          "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+          "render_method": "alpha_test"
+        },
+        "top": {
+          "texture": "tf_block_towerdev_vanish_off",
+          "render_method": "alpha_test"
+        },
+        "top2": {
+          "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+          "render_method": "alpha_test"
+        },
+        "top3": {
+          "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+          "render_method": "alpha_test"
+        },
+        "west": {
+          "texture": "tf_block_towerdev_vanish_off",
+          "render_method": "alpha_test"
+        },
+        "west2": {
+          "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+          "render_method": "alpha_test"
+        },
+        "west3": {
+          "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vanishing_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_towerdev_vanish_off",
+              "render_method": "alpha_test"
+            },
+            "bottom": {
+              "texture": "tf_block_towerdev_vanish_off",
+              "render_method": "alpha_test"
+            },
+            "bottom2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+              "render_method": "alpha_test"
+            },
+            "bottom3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+              "render_method": "alpha_test"
+            },
+            "east": {
+              "texture": "tf_block_towerdev_vanish_off",
+              "render_method": "alpha_test"
+            },
+            "east2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+              "render_method": "alpha_test"
+            },
+            "east3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+              "render_method": "alpha_test"
+            },
+            "north": {
+              "texture": "tf_block_towerdev_vanish_off",
+              "render_method": "alpha_test"
+            },
+            "north2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+              "render_method": "alpha_test"
+            },
+            "north3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+              "render_method": "alpha_test"
+            },
+            "south": {
+              "texture": "tf_block_towerdev_vanish_off",
+              "render_method": "alpha_test"
+            },
+            "south2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+              "render_method": "alpha_test"
+            },
+            "south3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_towerdev_vanish_off",
+              "render_method": "alpha_test"
+            },
+            "top2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+              "render_method": "alpha_test"
+            },
+            "top3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+              "render_method": "alpha_test"
+            },
+            "west": {
+              "texture": "tf_block_towerdev_vanish_off",
+              "render_method": "alpha_test"
+            },
+            "west2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_off_1",
+              "render_method": "alpha_test"
+            },
+            "west3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_off_2",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vanishing_block_active",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_towerdev_vanish_on",
+              "render_method": "alpha_test"
+            },
+            "bottom": {
+              "texture": "tf_block_towerdev_vanish_on",
+              "render_method": "alpha_test"
+            },
+            "bottom2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_on_1",
+              "render_method": "alpha_test"
+            },
+            "bottom3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_on_2",
+              "render_method": "alpha_test"
+            },
+            "east": {
+              "texture": "tf_block_towerdev_vanish_on",
+              "render_method": "alpha_test"
+            },
+            "east2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_on_1",
+              "render_method": "alpha_test"
+            },
+            "east3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_on_2",
+              "render_method": "alpha_test"
+            },
+            "north": {
+              "texture": "tf_block_towerdev_vanish_on",
+              "render_method": "alpha_test"
+            },
+            "north2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_on_1",
+              "render_method": "alpha_test"
+            },
+            "north3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_on_2",
+              "render_method": "alpha_test"
+            },
+            "south": {
+              "texture": "tf_block_towerdev_vanish_on",
+              "render_method": "alpha_test"
+            },
+            "south2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_on_1",
+              "render_method": "alpha_test"
+            },
+            "south3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_on_2",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_towerdev_vanish_on",
+              "render_method": "alpha_test"
+            },
+            "top2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_on_1",
+              "render_method": "alpha_test"
+            },
+            "top3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_on_2",
+              "render_method": "alpha_test"
+            },
+            "west": {
+              "texture": "tf_block_towerdev_vanish_on",
+              "render_method": "alpha_test"
+            },
+            "west2": {
+              "texture": "tf_block_tower_device_level_1_towerdev_vanish_on_1",
+              "render_method": "alpha_test"
+            },
+            "west3": {
+              "texture": "tf_block_tower_device_level_2_towerdev_vanish_on_2",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

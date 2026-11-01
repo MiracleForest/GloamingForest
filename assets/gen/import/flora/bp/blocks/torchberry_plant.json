@@ -1,0 +1,90 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:torchberry_plant",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:has_torchberries": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:map_color": "#007c00",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:collision_box": false,
+      "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_torchberry_plant",
+          "render_method": "alpha_test"
+        },
+        "cross": {
+          "texture": "tf_block_torchberry_plant",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:selection_box": {
+        "origin": [-7.2, 0, -7.2],
+        "size": [14.4, 16, 14.4]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:has_torchberries')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_torchberry_plant",
+              "render_method": "alpha_test"
+            },
+            "cross": {
+              "texture": "tf_block_torchberry_plant",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-7.2, 0, -7.2],
+            "size": [14.4, 16, 14.4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:has_torchberries')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.torchberry_plant",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_torchberry_plant",
+              "render_method": "alpha_test"
+            },
+            "cross": {
+              "texture": "tf_block_torchberry_plant",
+              "render_method": "alpha_test"
+            },
+            "cross2": {
+              "texture": "tf_block_torchberry_plant_glow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-7.2, 0, -7.2],
+            "size": [14.4, 16, 14.4]
+          }
+        }
+      }
+    ]
+  }
+}

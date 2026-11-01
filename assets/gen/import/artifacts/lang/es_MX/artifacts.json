@@ -1,0 +1,23 @@
+{
+  "block.twilightforest.casket.locked": "¡Este Ataúd sólo puede ser abierto por %s!",
+  "block.twilightforest.keepsake_casket": "Ataúd del recuerdo [WIP]",
+  "entity.twilightforest.charm_effect": "Efecto de Talisman",
+  "entity.twilightforest.loyal_zombie": "Zombi Leal",
+  "entity.twilightforest.wand_bolt": "Perno de Cetro Crepuscular",
+  "item.twilightforest.charm_of_keeping_1": "Talisman de conservación I",
+  "item.twilightforest.charm_of_keeping_2": "Talisman de conservación II",
+  "item.twilightforest.charm_of_keeping_3": "Talisman de conservación III",
+  "item.twilightforest.charm_of_life_1": "Talisman de Vida I",
+  "item.twilightforest.charm_of_life_2": "Talisman de Vida II",
+  "item.twilightforest.lifedrain_scepter": "Cetro de Robo de Vida",
+  "item.twilightforest.moon_dial": "Dial lunar",
+  "item.twilightforest.ore_meter": "Medidor de Minerales [NYI]",
+  "item.twilightforest.twilight_scepter": "Cetro Crepuscular",
+  "item.twilightforest.zombie_scepter": "Cetro Zombie",
+  "subtitles.twilightforest.block.casket.close": "Se se cierra el ataúd del recuerdo",
+  "subtitles.twilightforest.block.casket.locked": "Clics en el ataúd de recuerdo",
+  "subtitles.twilightforest.block.casket.open": "Se abre el ataúd del recuerdo",
+  "subtitles.twilightforest.block.casket.repair": "El jugador repara el ataúd",
+  "subtitles.twilightforest.item.charm.keep": "Talisman de conservación devuelve los objetos",
+  "subtitles.twilightforest.item.charm.life": "Talisman de Vida regenera al jugador"
+}

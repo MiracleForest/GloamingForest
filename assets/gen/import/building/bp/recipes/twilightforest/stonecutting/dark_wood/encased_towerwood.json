@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:stonecutting/dark_wood/encased_towerwood"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "twilightforest:dark_wood"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:dark_wood"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:encased_towerwood"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:transformation_boat"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["P P", "PPP"],
+    "key": {
+      "P": {
+        "item": "twilightforest:transformation_planks"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:transformation_boat"
+    }
+  }
+}

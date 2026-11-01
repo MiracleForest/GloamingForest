@@ -1,0 +1,59 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:twilight_oak_fence",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:east": [false, true],
+        "twilightforest:north": [false, true],
+        "twilightforest:south": [false, true],
+        "twilightforest:west": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 3
+      },
+      "minecraft:map_color": "#8f7748",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:geometry": {
+        "identifier": "geometry.tf.twilightforest.block.twilight_oak_fence.multipart",
+        "bone_visibility": {
+          "part0": true,
+          "part1": "q.block_state('twilightforest:north')",
+          "part2": "q.block_state('twilightforest:south')",
+          "part3": "q.block_state('twilightforest:west')",
+          "part4": "q.block_state('twilightforest:east')"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_wood_planks_twilight_oak_0",
+          "render_method": "opaque"
+        },
+        "t_twilightforest_block_wood_planks_twilight_oak_0": {
+          "texture": "tf_block_wood_planks_twilight_oak_0",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-2, 0, -2],
+        "size": [4, 16, 4]
+      },
+      "minecraft:selection_box": {
+        "origin": [-2, 0, -2],
+        "size": [4, 16, 4]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

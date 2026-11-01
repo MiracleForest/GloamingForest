@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:quest_ram",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/banner/quest_ram"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.quest_ram"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#fefeee",
+        "overlay_color": "#33aadd"
+      }
+    }
+  }
+}

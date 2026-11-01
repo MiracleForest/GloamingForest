@@ -1,0 +1,73 @@
+[
+  {
+    "id": "twilightforest:brown_thorns",
+    "family": "pillar",
+    "params": {
+      "class": "ThornsBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["axis", "down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:burnt_thorns",
+    "family": "pillar",
+    "params": {
+      "class": "BurntThornsBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["axis", "down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:cinder_log",
+    "family": "log",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "states": ["axis"]
+    }
+  },
+  {
+    "id": "twilightforest:green_thorns",
+    "family": "pillar",
+    "params": {
+      "class": "ThornsBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["axis", "down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:potted_dead_thorn",
+    "family": "potted",
+    "params": {
+      "class": "SpecialFlowerPotBlock",
+      "vanillaClass": "FlowerPotBlock",
+      "plant": "twilightforest:burnt_thorns"
+    }
+  },
+  {
+    "id": "twilightforest:potted_green_thorn",
+    "family": "potted",
+    "params": {
+      "class": "SpecialFlowerPotBlock",
+      "vanillaClass": "FlowerPotBlock",
+      "plant": "twilightforest:green_thorns"
+    }
+  },
+  {
+    "id": "twilightforest:potted_thorn",
+    "family": "potted",
+    "params": {
+      "class": "SpecialFlowerPotBlock",
+      "vanillaClass": "FlowerPotBlock",
+      "plant": "twilightforest:brown_thorns"
+    }
+  },
+  {
+    "id": "twilightforest:thorn_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "SpecialStemLeavesBlock",
+      "vanillaClass": "LeavesBlock",
+      "states": ["distance", "persistent"]
+    }
+  }
+]

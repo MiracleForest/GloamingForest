@@ -1,0 +1,70 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:green_thorns",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:axis": ["y", "x", "z"],
+        "twilightforest:down": [false, true],
+        "twilightforest:east": [false, true],
+        "twilightforest:north": [false, true],
+        "twilightforest:south": [false, true],
+        "twilightforest:up": [false, true],
+        "twilightforest:west": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 50
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 2000
+      },
+      "minecraft:map_color": "#007c00",
+      "minecraft:geometry": {
+        "identifier": "geometry.tf.twilightforest.block.green_thorns.multipart",
+        "bone_visibility": {
+          "part0": "q.block_state('twilightforest:axis') == 'y'",
+          "part1": "q.block_state('twilightforest:axis') == 'z'",
+          "part2": "q.block_state('twilightforest:axis') == 'x'",
+          "part3": "q.block_state('twilightforest:up')",
+          "part4": "(q.block_state('twilightforest:axis') == 'z' || q.block_state('twilightforest:axis') == 'y') && !q.block_state('twilightforest:up')",
+          "part5": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:up')",
+          "part6": "q.block_state('twilightforest:down')",
+          "part7": "(q.block_state('twilightforest:axis') == 'z' || q.block_state('twilightforest:axis') == 'y') && !q.block_state('twilightforest:down')",
+          "part8": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:down')",
+          "part9": "q.block_state('twilightforest:east')",
+          "part10": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'x') && !q.block_state('twilightforest:east')",
+          "part11": "q.block_state('twilightforest:axis') == 'z' && !q.block_state('twilightforest:east')",
+          "part12": "q.block_state('twilightforest:west')",
+          "part13": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'x') && !q.block_state('twilightforest:west')",
+          "part14": "q.block_state('twilightforest:axis') == 'z' && !q.block_state('twilightforest:west')",
+          "part15": "q.block_state('twilightforest:south')",
+          "part16": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'z') && !q.block_state('twilightforest:south')",
+          "part17": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:south')",
+          "part18": "q.block_state('twilightforest:north')",
+          "part19": "(q.block_state('twilightforest:axis') == 'y' || q.block_state('twilightforest:axis') == 'z') && !q.block_state('twilightforest:north')",
+          "part20": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:north')"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_green_thorns_side",
+          "render_method": "alpha_test"
+        },
+        "t_twilightforest_block_green_thorns_side": {
+          "texture": "tf_block_green_thorns_side",
+          "render_method": "alpha_test"
+        },
+        "t_twilightforest_block_green_thorns_top": {
+          "texture": "tf_block_green_thorns_top",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

@@ -1,0 +1,413 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:slider",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:axis": ["y", "x", "z"],
+        "twilightforest:delay": [0, 1, 2, 3]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 10
+      },
+      "minecraft:map_color": "#976d4d",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_slider_h_90",
+          "render_method": "alpha_test"
+        },
+        "end": {
+          "texture": "tf_block_slider_top",
+          "render_method": "alpha_test"
+        },
+        "side": {
+          "texture": "tf_block_slider_h_90",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [270, 270, 0]
+      },
+      "minecraft:collision_box": {
+        "origin": [-8, 5, -3],
+        "size": [16, 6, 6]
+      },
+      "minecraft:selection_box": {
+        "origin": [-8, 5, -3],
+        "size": [16, 6, 6]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:delay') == 0",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 5, -3],
+            "size": [16, 6, 6]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 5, -3],
+            "size": [16, 6, 6]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:delay') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 5, -3],
+            "size": [16, 6, 6]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 5, -3],
+            "size": [16, 6, 6]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:delay') == 2",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 5, -3],
+            "size": [16, 6, 6]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 5, -3],
+            "size": [16, 6, 6]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:delay') == 3",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 5, -3],
+            "size": [16, 6, 6]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 5, -3],
+            "size": [16, 6, 6]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:delay') == 0",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_v",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_v",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-3, 0, -3],
+            "size": [6, 16, 6]
+          },
+          "minecraft:selection_box": {
+            "origin": [-3, 0, -3],
+            "size": [6, 16, 6]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:delay') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_v",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_v",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-3, 0, -3],
+            "size": [6, 16, 6]
+          },
+          "minecraft:selection_box": {
+            "origin": [-3, 0, -3],
+            "size": [6, 16, 6]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:delay') == 2",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_v",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_v",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-3, 0, -3],
+            "size": [6, 16, 6]
+          },
+          "minecraft:selection_box": {
+            "origin": [-3, 0, -3],
+            "size": [6, 16, 6]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:delay') == 3",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_v",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_v",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-3, 0, -3],
+            "size": [6, 16, 6]
+          },
+          "minecraft:selection_box": {
+            "origin": [-3, 0, -3],
+            "size": [6, 16, 6]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:delay') == 0",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-3, 5, -8],
+            "size": [6, 6, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-3, 5, -8],
+            "size": [6, 6, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:delay') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-3, 5, -8],
+            "size": [6, 6, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-3, 5, -8],
+            "size": [6, 6, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:delay') == 2",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-3, 5, -8],
+            "size": [6, 6, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-3, 5, -8],
+            "size": [6, 6, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:delay') == 3",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.slider_horiz",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            },
+            "end": {
+              "texture": "tf_block_slider_top",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_slider_h_90",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-3, 5, -8],
+            "size": [6, 6, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-3, 5, -8],
+            "size": [6, 6, 16]
+          }
+        }
+      }
+    ]
+  }
+}

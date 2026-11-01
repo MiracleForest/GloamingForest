@@ -1,0 +1,10 @@
+[
+  {
+    "id": "twilightforest:terrorcotta_arcs",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "states": ["axis"]
+    }
+  }
+]

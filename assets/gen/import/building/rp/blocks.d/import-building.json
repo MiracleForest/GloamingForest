@@ -1,0 +1,299 @@
+{
+  "twilightforest:alpha_yeti_boss_spawner": {
+    "sound": "metal"
+  },
+  "twilightforest:alpha_yeti_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:alpha_yeti_wall_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:arctic_fur_block": {
+    "sound": "cloth"
+  },
+  "twilightforest:blue_castle_rune_brick": {
+    "sound": "stone"
+  },
+  "twilightforest:bold_castle_brick_pillar": {
+    "sound": "stone"
+  },
+  "twilightforest:bold_castle_brick_stairs": {
+    "sound": "stone"
+  },
+  "twilightforest:bold_castle_brick_tile": {
+    "sound": "stone"
+  },
+  "twilightforest:bold_stone_pillar": {
+    "sound": "stone"
+  },
+  "twilightforest:canopy_window": {
+    "sound": "glass"
+  },
+  "twilightforest:canopy_window_pane": {
+    "sound": "glass"
+  },
+  "twilightforest:carminite_block": {
+    "sound": "metal"
+  },
+  "twilightforest:castle_brick": {
+    "sound": "stone"
+  },
+  "twilightforest:castle_brick_stairs": {
+    "sound": "stone"
+  },
+  "twilightforest:castle_roof_tile": {
+    "sound": "stone"
+  },
+  "twilightforest:cracked_castle_brick": {
+    "sound": "stone"
+  },
+  "twilightforest:cracked_castle_brick_stairs": {
+    "sound": "stone"
+  },
+  "twilightforest:cracked_deadrock": {
+    "sound": "stone"
+  },
+  "twilightforest:cracked_etched_nagastone": {
+    "sound": "stone"
+  },
+  "twilightforest:cracked_mazestone": {
+    "sound": "stone"
+  },
+  "twilightforest:cracked_nagastone_pillar": {
+    "sound": "stone"
+  },
+  "twilightforest:cracked_nagastone_stairs_left": {
+    "sound": "stone"
+  },
+  "twilightforest:cracked_nagastone_stairs_right": {
+    "sound": "stone"
+  },
+  "twilightforest:cracked_towerwood": {
+    "sound": "wood"
+  },
+  "twilightforest:cracked_underbrick": {
+    "sound": "deepslate_bricks"
+  },
+  "twilightforest:cut_mazestone": {
+    "sound": "stone"
+  },
+  "twilightforest:dark_tower_miniature_structure": {
+    "sound": "stone"
+  },
+  "twilightforest:deadrock": {
+    "sound": "stone"
+  },
+  "twilightforest:decorative_mazestone": {
+    "sound": "stone"
+  },
+  "twilightforest:encased_castle_brick_pillar": {
+    "sound": "stone"
+  },
+  "twilightforest:encased_castle_brick_stairs": {
+    "sound": "stone"
+  },
+  "twilightforest:encased_castle_brick_tile": {
+    "sound": "stone"
+  },
+  "twilightforest:encased_towerwood": {
+    "sound": "wood"
+  },
+  "twilightforest:etched_nagastone": {
+    "sound": "stone"
+  },
+  "twilightforest:fiery_block": {
+    "sound": "metal"
+  },
+  "twilightforest:final_boss_boss_spawner": {
+    "sound": "metal"
+  },
+  "twilightforest:hydra_boss_spawner": {
+    "sound": "metal"
+  },
+  "twilightforest:hydra_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:hydra_wall_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:iron_ladder": {
+    "sound": "metal"
+  },
+  "twilightforest:ironwood_block": {
+    "sound": "wood"
+  },
+  "twilightforest:knight_phantom_boss_spawner": {
+    "sound": "metal"
+  },
+  "twilightforest:knight_phantom_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:knight_phantom_wall_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:knightmetal_block": {
+    "sound": "netherite"
+  },
+  "twilightforest:lich_boss_spawner": {
+    "sound": "metal"
+  },
+  "twilightforest:lich_tower_miniature_structure": {
+    "sound": "stone"
+  },
+  "twilightforest:lich_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:lich_wall_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:mazestone": {
+    "sound": "stone"
+  },
+  "twilightforest:mazestone_border": {
+    "sound": "stone"
+  },
+  "twilightforest:mazestone_brick": {
+    "sound": "stone"
+  },
+  "twilightforest:mazestone_mosaic": {
+    "sound": "stone"
+  },
+  "twilightforest:minoshroom_boss_spawner": {
+    "sound": "metal"
+  },
+  "twilightforest:minoshroom_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:minoshroom_wall_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:minotaur_labyrinth_miniature_structure": {
+    "sound": "stone"
+  },
+  "twilightforest:mossy_castle_brick": {
+    "sound": "stone"
+  },
+  "twilightforest:mossy_castle_brick_stairs": {
+    "sound": "stone"
+  },
+  "twilightforest:mossy_etched_nagastone": {
+    "sound": "stone"
+  },
+  "twilightforest:mossy_mazestone": {
+    "sound": "stone"
+  },
+  "twilightforest:mossy_nagastone_pillar": {
+    "sound": "stone"
+  },
+  "twilightforest:mossy_nagastone_stairs_left": {
+    "sound": "stone"
+  },
+  "twilightforest:mossy_nagastone_stairs_right": {
+    "sound": "stone"
+  },
+  "twilightforest:mossy_towerwood": {
+    "sound": "wood"
+  },
+  "twilightforest:mossy_underbrick": {
+    "sound": "deepslate_bricks"
+  },
+  "twilightforest:naga_boss_spawner": {
+    "sound": "metal"
+  },
+  "twilightforest:naga_courtyard_miniature_structure": {
+    "sound": "stone"
+  },
+  "twilightforest:naga_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:naga_wall_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:nagastone": {
+    "sound": "stone"
+  },
+  "twilightforest:nagastone_head": {
+    "sound": "stone"
+  },
+  "twilightforest:nagastone_pillar": {
+    "sound": "stone"
+  },
+  "twilightforest:nagastone_stairs_left": {
+    "sound": "stone"
+  },
+  "twilightforest:nagastone_stairs_right": {
+    "sound": "stone"
+  },
+  "twilightforest:pink_castle_rune_brick": {
+    "sound": "stone"
+  },
+  "twilightforest:quest_ram_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:quest_ram_wall_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:rope": {
+    "sound": "cloth"
+  },
+  "twilightforest:snow_queen_boss_spawner": {
+    "sound": "metal"
+  },
+  "twilightforest:snow_queen_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:snow_queen_wall_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:spiral_bricks": {
+    "sound": "stone"
+  },
+  "twilightforest:steeleaf_block": {
+    "sound": "netherite"
+  },
+  "twilightforest:thick_castle_brick": {
+    "sound": "stone"
+  },
+  "twilightforest:towerwood": {
+    "sound": "wood"
+  },
+  "twilightforest:twilight_portal_miniature_structure": {
+    "sound": "stone"
+  },
+  "twilightforest:twisted_stone": {
+    "sound": "stone"
+  },
+  "twilightforest:twisted_stone_pillar": {
+    "sound": "stone"
+  },
+  "twilightforest:underbrick": {
+    "sound": "deepslate_bricks"
+  },
+  "twilightforest:underbrick_floor": {
+    "sound": "deepslate_bricks"
+  },
+  "twilightforest:ur_ghast_boss_spawner": {
+    "sound": "metal"
+  },
+  "twilightforest:ur_ghast_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:ur_ghast_wall_trophy": {
+    "sound": "stone"
+  },
+  "twilightforest:violet_castle_rune_brick": {
+    "sound": "stone"
+  },
+  "twilightforest:weathered_deadrock": {
+    "sound": "stone"
+  },
+  "twilightforest:worn_castle_brick": {
+    "sound": "stone"
+  },
+  "twilightforest:worn_castle_brick_stairs": {
+    "sound": "stone"
+  },
+  "twilightforest:yellow_castle_rune_brick": {
+    "sound": "stone"
+  }
+}

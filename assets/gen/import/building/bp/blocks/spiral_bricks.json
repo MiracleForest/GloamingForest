@@ -1,0 +1,410 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:spiral_bricks",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:axis": ["y", "x", "z"],
+        "twilightforest:diagonal": ["bottom_left", "bottom_right", "top_left", "top_right"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 6
+      },
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_bottom_left",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_chiseled_stone_bricks",
+          "render_method": "opaque"
+        },
+        "border": {
+          "texture": "tf_vanilla_block_chiseled_stone_bricks",
+          "render_method": "opaque"
+        },
+        "inner_a": {
+          "texture": "tf_block_spiral_inner_down",
+          "render_method": "opaque"
+        },
+        "pattern": {
+          "texture": "tf_block_stone_spiral_large",
+          "render_method": "opaque"
+        },
+        "shadow_y": {
+          "texture": "tf_block_spiral_shadow_x",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:diagonal') == 'bottom_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:diagonal') == 'bottom_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:diagonal') == 'top_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:diagonal') == 'top_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.x_spiral_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:diagonal') == 'bottom_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.y_spiral_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:diagonal') == 'bottom_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.y_spiral_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:diagonal') == 'top_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.y_spiral_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:diagonal') == 'top_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.y_spiral_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:diagonal') == 'bottom_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.z_spiral_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:diagonal') == 'bottom_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.z_spiral_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:diagonal') == 'top_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.z_spiral_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:diagonal') == 'top_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.spiral_bricks.z_spiral_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "border": {
+              "texture": "tf_vanilla_block_chiseled_stone_bricks",
+              "render_method": "opaque"
+            },
+            "inner_a": {
+              "texture": "tf_block_spiral_inner_down",
+              "render_method": "opaque"
+            },
+            "pattern": {
+              "texture": "tf_block_stone_spiral_large",
+              "render_method": "opaque"
+            },
+            "shadow_y": {
+              "texture": "tf_block_spiral_shadow_x",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

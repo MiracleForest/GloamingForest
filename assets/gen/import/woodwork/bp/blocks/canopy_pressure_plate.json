@@ -1,0 +1,86 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:canopy_pressure_plate",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:powered": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.5
+      },
+      "minecraft:map_color": "#815631",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:collision_box": false,
+      "minecraft:geometry": "geometry.tf.minecraft.block.pressure_plate_up",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_wood_planks_canopy_0",
+          "render_method": "opaque"
+        },
+        "texture": {
+          "texture": "tf_block_wood_planks_canopy_0",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:selection_box": {
+        "origin": [-7, 0, -7],
+        "size": [14, 1, 14]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:powered')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.pressure_plate_up",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-7, 0, -7],
+            "size": [14, 1, 14]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:powered')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.pressure_plate_down",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-7, 0, -7],
+            "size": [14, 1, 14]
+          }
+        }
+      }
+    ]
+  }
+}

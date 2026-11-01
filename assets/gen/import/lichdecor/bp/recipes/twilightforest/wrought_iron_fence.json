@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wrought_iron_fence"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "###"],
+    "key": {
+      "#": {
+        "item": "twilightforest:wrought_iron_bar"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:wrought_iron_fence",
+      "count": 3
+    }
+  }
+}

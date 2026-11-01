@@ -1,0 +1,29 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:violet_force_field",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": false,
+      "minecraft:destructible_by_explosion": false,
+      "minecraft:light_emission": 2,
+      "minecraft:map_color": "#7f3fb2",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.violet_force_field",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_violet_force_field",
+          "render_method": "blend"
+        },
+        "pane": {
+          "texture": "tf_block_violet_force_field",
+          "render_method": "blend"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

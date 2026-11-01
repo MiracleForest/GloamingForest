@@ -1,0 +1,22 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:time_chest_boat",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_vanilla_item_oak_chest_boat"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:time_chest_boat.name"
+      },
+      "minecraft:max_stack_size": 1
+    }
+  }
+}

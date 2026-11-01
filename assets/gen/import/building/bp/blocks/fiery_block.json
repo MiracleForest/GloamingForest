@@ -1,0 +1,44 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:fiery_block",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 6
+      },
+      "minecraft:map_color": "#251610",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.fiery_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_fiery_block",
+          "render_method": "alpha_test"
+        },
+        "all": {
+          "texture": "tf_block_fiery_block_inner",
+          "render_method": "alpha_test"
+        },
+        "over": {
+          "texture": "tf_block_fiery_pattern",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-7.99, 0.01, -7.99],
+        "size": [15.98, 15.98, 15.98]
+      },
+      "minecraft:selection_box": {
+        "origin": [-7.99, 0.01, -7.99],
+        "size": [15.98, 15.98, 15.98]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

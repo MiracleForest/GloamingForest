@@ -1,0 +1,38 @@
+{
+  "tf_block_firejet_side": {
+    "textures": "textures/twilightforest/block/firejet_side"
+  },
+  "tf_block_firejet_top": {
+    "textures": "textures/twilightforest/block/firejet_top"
+  },
+  "tf_block_tower_device_level_1_towerdev_firejet_1": {
+    "textures": "textures/twilightforest/block/tower_device_level_1/towerdev_firejet_1"
+  },
+  "tf_block_tower_device_level_1_towerdev_smoker_1": {
+    "textures": "textures/twilightforest/block/tower_device_level_1/towerdev_smoker_1"
+  },
+  "tf_block_tower_device_level_2_towerdev_firejet_off_1": {
+    "textures": "textures/twilightforest/block/tower_device_level_2/towerdev_firejet_off_1"
+  },
+  "tf_block_tower_device_level_2_towerdev_firejet_on_1": {
+    "textures": "textures/twilightforest/block/tower_device_level_2/towerdev_firejet_on_1"
+  },
+  "tf_block_tower_device_level_2_towerdev_smoker_off_1": {
+    "textures": "textures/twilightforest/block/tower_device_level_2/towerdev_smoker_off_1"
+  },
+  "tf_block_tower_device_level_2_towerdev_smoker_on_1": {
+    "textures": "textures/twilightforest/block/tower_device_level_2/towerdev_smoker_on_1"
+  },
+  "tf_block_towerdev_firejet_off": {
+    "textures": "textures/twilightforest/block/towerdev_firejet_off"
+  },
+  "tf_block_towerdev_firejet_on": {
+    "textures": "textures/twilightforest/block/towerdev_firejet_on"
+  },
+  "tf_block_towerdev_smoker_off": {
+    "textures": "textures/twilightforest/block/towerdev_smoker_off"
+  },
+  "tf_vanilla_block_black_concrete_powder": {
+    "textures": "textures/blocks/concrete_powder_black"
+  }
+}

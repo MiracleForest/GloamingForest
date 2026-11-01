@@ -1,0 +1,165 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:uncrafting_table",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:powered": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 2.5
+      },
+      "minecraft:map_color": "#ff0000",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.uncrafting_table",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_jungle_planks",
+          "render_method": "blend"
+        },
+        "bottom": {
+          "texture": "tf_vanilla_block_jungle_planks",
+          "render_method": "blend"
+        },
+        "east": {
+          "texture": "tf_block_uncrafting_side",
+          "render_method": "blend"
+        },
+        "north": {
+          "texture": "tf_block_uncrafting_side",
+          "render_method": "blend"
+        },
+        "south": {
+          "texture": "tf_block_uncrafting_side",
+          "render_method": "blend"
+        },
+        "top": {
+          "texture": "tf_block_uncrafting_top",
+          "render_method": "blend"
+        },
+        "top2": {
+          "texture": "tf_block_uncrafting_glow",
+          "render_method": "blend"
+        },
+        "west": {
+          "texture": "tf_block_uncrafting_side",
+          "render_method": "blend"
+        }
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:powered')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.uncrafting_table",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_jungle_planks",
+              "render_method": "blend"
+            },
+            "bottom": {
+              "texture": "tf_vanilla_block_jungle_planks",
+              "render_method": "blend"
+            },
+            "east": {
+              "texture": "tf_block_uncrafting_side",
+              "render_method": "blend"
+            },
+            "north": {
+              "texture": "tf_block_uncrafting_side",
+              "render_method": "blend"
+            },
+            "south": {
+              "texture": "tf_block_uncrafting_side",
+              "render_method": "blend"
+            },
+            "top": {
+              "texture": "tf_block_uncrafting_top",
+              "render_method": "blend"
+            },
+            "top2": {
+              "texture": "tf_block_uncrafting_glow",
+              "render_method": "blend"
+            },
+            "west": {
+              "texture": "tf_block_uncrafting_side",
+              "render_method": "blend"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:powered')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.uncrafting_table_glowing",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_jungle_planks",
+              "render_method": "blend"
+            },
+            "bottom": {
+              "texture": "tf_vanilla_block_jungle_planks",
+              "render_method": "blend"
+            },
+            "east": {
+              "texture": "tf_block_uncrafting_side",
+              "render_method": "blend"
+            },
+            "east2": {
+              "texture": "tf_block_uncrafting_glow_side",
+              "render_method": "blend"
+            },
+            "north": {
+              "texture": "tf_block_uncrafting_side",
+              "render_method": "blend"
+            },
+            "north2": {
+              "texture": "tf_block_uncrafting_glow_side",
+              "render_method": "blend"
+            },
+            "south": {
+              "texture": "tf_block_uncrafting_side",
+              "render_method": "blend"
+            },
+            "south2": {
+              "texture": "tf_block_uncrafting_glow_side",
+              "render_method": "blend"
+            },
+            "top": {
+              "texture": "tf_block_uncrafting_top",
+              "render_method": "blend"
+            },
+            "top2": {
+              "texture": "tf_block_uncrafting_glow",
+              "render_method": "blend"
+            },
+            "west": {
+              "texture": "tf_block_uncrafting_side",
+              "render_method": "blend"
+            },
+            "west2": {
+              "texture": "tf_block_uncrafting_glow_side",
+              "render_method": "blend"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "block.twilightforest.encased_fire_jet": "Knallendes Feuer-jet",
+  "block.twilightforest.encased_smoker": "Eingehüllter Raucher",
+  "block.twilightforest.fire_jet": "Feuer-jet",
+  "block.twilightforest.smoker": "Rauchblock",
+  "entity.twilightforest.hydra": "Hydra",
+  "entity.twilightforest.hydra_mortar": "Hydramörtel",
+  "item.twilightforest.hydra_spawn_egg": "Hydra-Spawn-Ei",
+  "subtitles.twilightforest.block.jet.active": "Feuer-jet flackert",
+  "subtitles.twilightforest.block.jet.pop": "Feuer-jet knallt",
+  "subtitles.twilightforest.block.jet.start": "Feuer-jet aktiviert",
+  "subtitles.twilightforest.block.smoker.start": "Räucherer aktiviert",
+  "subtitles.twilightforest.entity.hydra.death": "Hydra brüllt im Tod",
+  "subtitles.twilightforest.entity.hydra.growl": "Hydra knurrt",
+  "subtitles.twilightforest.entity.hydra.hurt": "Hydra nimmt Schaden",
+  "subtitles.twilightforest.entity.hydra.roar": "Hydra brüllt",
+  "subtitles.twilightforest.entity.hydra.shoot": "Hydra feuert Mörser",
+  "subtitles.twilightforest.entity.hydra.shoot_fire": "Hydra speit Feuer",
+  "subtitles.twilightforest.entity.hydra.warn": "Hydra bereitet sich auf den Biss vor"
+}

@@ -1,0 +1,44 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:equipment/fiery_iron_chestplate"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:iron_chestplate"
+      },
+      {
+        "tag": "twilightforest:fiery_vial"
+      },
+      {
+        "tag": "twilightforest:fiery_vial"
+      },
+      {
+        "tag": "twilightforest:fiery_vial"
+      },
+      {
+        "tag": "twilightforest:fiery_vial"
+      },
+      {
+        "tag": "twilightforest:fiery_vial"
+      },
+      {
+        "tag": "twilightforest:fiery_vial"
+      },
+      {
+        "tag": "twilightforest:fiery_vial"
+      },
+      {
+        "tag": "twilightforest:fiery_vial"
+      }
+    ],
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:fiery_chestplate"
+    }
+  }
+}

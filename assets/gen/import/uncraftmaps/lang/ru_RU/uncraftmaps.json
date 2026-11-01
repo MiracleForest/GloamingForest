@@ -1,0 +1,19 @@
+{
+  "block.twilightforest.uncrafting_table": "Разборочный стол",
+  "block.twilightforest.uncrafting_table.disabled": "Этот блок отключен.",
+  "container.twilightforest.uncrafting_table": "Разборочный верстак",
+  "container.twilightforest.uncrafting_table.cycle_back_recipe": "Предыдущий рецепт создания",
+  "container.twilightforest.uncrafting_table.disabled_item": "Разбирание этого предмета отключено.",
+  "container.twilightforest.uncrafting_table.uncrafting_disabled": "Разбирание отключено через конфигурацию",
+  "gui.twilightforest.uncrafting_jei": "Разбирание",
+  "item.twilightforest.filled_magic_map": "Волшебная карта",
+  "item.twilightforest.filled_maze_map": "Карта лабиринта",
+  "item.twilightforest.filled_ore_map": "Карта лабиринта и руд",
+  "item.twilightforest.magic_map": "Пустая волшебная карта",
+  "item.twilightforest.magic_map_focus": "Фокус для волшебной карты",
+  "item.twilightforest.maze_map": "Пустая карта лабиринта",
+  "item.twilightforest.maze_map_focus": "Фокус для карты лабиринта",
+  "item.twilightforest.ore_map": "Пустая карта лабиринта и руд",
+  "misc.twilightforest.magic_map_fail": "Магия пошатнулась. Возможно, здесь это не работает?",
+  "stat.twilightforest.uncrafting_table_interactions": "Взаимодействий с разборочным столом"
+}

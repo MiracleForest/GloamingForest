@@ -1,0 +1,220 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:nagastone_head",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 6
+      },
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_nagastone_bottom_tip",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "tf_block_nagastone_top_tip",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "tf_block_nagastone_bottom_tip",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "tf_block_nagastone_face_front",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "tf_block_nagastone_cross_section",
+          "render_method": "opaque"
+        },
+        "east": {
+          "texture": "tf_block_nagastone_face_right",
+          "render_method": "opaque"
+        },
+        "west": {
+          "texture": "tf_block_nagastone_face_left",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 270, 0]
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_nagastone_bottom_tip",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_nagastone_top_tip",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_nagastone_bottom_tip",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_nagastone_face_front",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_nagastone_cross_section",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_nagastone_face_right",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_nagastone_face_left",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_nagastone_bottom_tip",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_nagastone_top_tip",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_nagastone_bottom_tip",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_nagastone_face_front",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_nagastone_cross_section",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_nagastone_face_right",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_nagastone_face_left",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_nagastone_bottom_tip",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_nagastone_top_tip",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_nagastone_bottom_tip",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_nagastone_face_front",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_nagastone_cross_section",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_nagastone_face_right",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_nagastone_face_left",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_nagastone_bottom_tip",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_nagastone_top_tip",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_nagastone_bottom_tip",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_nagastone_face_front",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_nagastone_cross_section",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_nagastone_face_right",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_nagastone_face_left",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

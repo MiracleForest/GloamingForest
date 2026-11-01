@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:fiddlehead",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_fiddlehead"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:fiddlehead.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:fiddlehead",
+        "replace_block_item": true
+      }
+    }
+  }
+}

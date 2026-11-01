@@ -1,0 +1,4 @@
+{
+  "comment": "Named by TF data, not a data file (code registry id, texture, template or custom-registry tag); index for the assemble reference check only (F1, tools/import/src/Known.cs).",
+  "referencedBy": ["data/twilightforest/twilight/template_marker_handler_list/camp_marker_handlers.json"]
+}

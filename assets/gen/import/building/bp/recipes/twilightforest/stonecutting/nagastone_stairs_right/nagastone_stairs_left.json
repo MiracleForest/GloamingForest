@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:stonecutting/nagastone_stairs_right/nagastone_stairs_left"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "twilightforest:nagastone_stairs_right"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:nagastone_stairs_right"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:nagastone_stairs_left"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:equipment/steeleaf_hoe"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##", " X", " X"],
+    "key": {
+      "#": {
+        "item": "twilightforest:steeleaf_ingot"
+      },
+      "X": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:steeleaf_hoe"
+    }
+  }
+}

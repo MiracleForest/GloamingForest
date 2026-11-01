@@ -1,0 +1,44 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:uberous_soil",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.6
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.6
+      },
+      "minecraft:map_color": "#976d4d",
+      "minecraft:geometry": "geometry.tf.minecraft.block.template_farmland",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_uberous_soil",
+          "render_method": "opaque"
+        },
+        "dirt": {
+          "texture": "tf_block_uberous_soil",
+          "render_method": "opaque"
+        },
+        "top": {
+          "texture": "tf_block_uberous_soil",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-8, 0, -8],
+        "size": [16, 15, 16]
+      },
+      "minecraft:selection_box": {
+        "origin": [-8, 0, -8],
+        "size": [16, 15, 16]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

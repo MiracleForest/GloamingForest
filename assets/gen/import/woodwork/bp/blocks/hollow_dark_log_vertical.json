@@ -1,0 +1,40 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:hollow_dark_log_vertical",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 2
+      },
+      "minecraft:map_color": "#664c33",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_dark_log",
+          "render_method": "opaque"
+        },
+        "inner": {
+          "texture": "tf_block_stripped_dark_log",
+          "render_method": "opaque"
+        },
+        "side": {
+          "texture": "tf_block_dark_log",
+          "render_method": "opaque"
+        },
+        "top": {
+          "texture": "tf_block_dark_log_top",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

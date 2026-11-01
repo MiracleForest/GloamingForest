@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:firefly_jar",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_jar_side"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:firefly_jar.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:firefly_jar",
+        "replace_block_item": true
+      }
+    }
+  }
+}

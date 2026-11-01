@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:knightmetal_pickaxe",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_knightmetal_pickaxe"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:knightmetal_pickaxe.name"
+      },
+      "minecraft:hand_equipped": true,
+      "minecraft:tags": {
+        "tags": ["alexscaves:ferromagnetic_items"]
+      }
+    }
+  }
+}

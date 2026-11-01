@@ -1,0 +1,18 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:ice_snowball",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/misc/missing_texture"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.ice_snowball"
+      },
+      "render_controllers": ["controller.render.default"]
+    }
+  }
+}

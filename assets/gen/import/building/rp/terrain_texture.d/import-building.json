@@ -1,0 +1,341 @@
+{
+  "tf_block_arctic_fur_block_ctm": {
+    "textures": "textures/twilightforest/block/arctic_fur_block_ctm"
+  },
+  "tf_block_bold_castle_brick_pillar_end": {
+    "textures": "textures/twilightforest/block/bold_castle_brick_pillar_end"
+  },
+  "tf_block_bold_castle_brick_pillar_side": {
+    "textures": "textures/twilightforest/block/bold_castle_brick_pillar_side"
+  },
+  "tf_block_bold_castle_brick_tile": {
+    "textures": "textures/twilightforest/block/bold_castle_brick_tile"
+  },
+  "tf_block_boss_spawner": {
+    "textures": "textures/twilightforest/block/boss_spawner"
+  },
+  "tf_block_canopy_window": {
+    "textures": "textures/twilightforest/block/canopy_window"
+  },
+  "tf_block_carminite_block": {
+    "textures": "textures/twilightforest/block/carminite_block"
+  },
+  "tf_block_carminite_block_overlay": {
+    "textures": "textures/twilightforest/block/carminite_block_overlay"
+  },
+  "tf_block_castle_brick": {
+    "textures": "textures/twilightforest/block/castle_brick"
+  },
+  "tf_block_castle_brick_stairs": {
+    "textures": "textures/twilightforest/block/castle_brick_stairs"
+  },
+  "tf_block_castle_roof_tile": {
+    "textures": "textures/twilightforest/block/castle_roof_tile"
+  },
+  "tf_block_castleblock_tile": {
+    "textures": "textures/twilightforest/block/castleblock_tile"
+  },
+  "tf_block_cracked_castle_brick": {
+    "textures": "textures/twilightforest/block/cracked_castle_brick"
+  },
+  "tf_block_cracked_castle_brick_stairs": {
+    "textures": "textures/twilightforest/block/cracked_castle_brick_stairs"
+  },
+  "tf_block_cracked_deadrock": {
+    "textures": "textures/twilightforest/block/cracked_deadrock"
+  },
+  "tf_block_cracked_mazestone": {
+    "textures": "textures/twilightforest/block/cracked_mazestone"
+  },
+  "tf_block_cracked_towerwood": {
+    "textures": "textures/twilightforest/block/cracked_towerwood"
+  },
+  "tf_block_cracked_underbrick": {
+    "textures": "textures/twilightforest/block/cracked_underbrick"
+  },
+  "tf_block_cut_mazestone": {
+    "textures": "textures/twilightforest/block/cut_mazestone"
+  },
+  "tf_block_deadrock": {
+    "textures": "textures/twilightforest/block/deadrock"
+  },
+  "tf_block_decorative_mazestone": {
+    "textures": "textures/twilightforest/block/decorative_mazestone"
+  },
+  "tf_block_encased_castle_brick_pillar_end": {
+    "textures": "textures/twilightforest/block/encased_castle_brick_pillar_end"
+  },
+  "tf_block_encased_castle_brick_pillar_h": {
+    "textures": "textures/twilightforest/block/encased_castle_brick_pillar_h"
+  },
+  "tf_block_encased_castle_brick_pillar_side": {
+    "textures": "textures/twilightforest/block/encased_castle_brick_pillar_side"
+  },
+  "tf_block_etched_nagastone_down": {
+    "textures": "textures/twilightforest/block/etched_nagastone_down"
+  },
+  "tf_block_etched_nagastone_down_mossy": {
+    "textures": "textures/twilightforest/block/etched_nagastone_down_mossy"
+  },
+  "tf_block_etched_nagastone_down_weathered": {
+    "textures": "textures/twilightforest/block/etched_nagastone_down_weathered"
+  },
+  "tf_block_etched_nagastone_left": {
+    "textures": "textures/twilightforest/block/etched_nagastone_left"
+  },
+  "tf_block_etched_nagastone_left_mossy": {
+    "textures": "textures/twilightforest/block/etched_nagastone_left_mossy"
+  },
+  "tf_block_etched_nagastone_left_weathered": {
+    "textures": "textures/twilightforest/block/etched_nagastone_left_weathered"
+  },
+  "tf_block_etched_nagastone_right": {
+    "textures": "textures/twilightforest/block/etched_nagastone_right"
+  },
+  "tf_block_etched_nagastone_right_mossy": {
+    "textures": "textures/twilightforest/block/etched_nagastone_right_mossy"
+  },
+  "tf_block_etched_nagastone_right_weathered": {
+    "textures": "textures/twilightforest/block/etched_nagastone_right_weathered"
+  },
+  "tf_block_etched_nagastone_up": {
+    "textures": "textures/twilightforest/block/etched_nagastone_up"
+  },
+  "tf_block_etched_nagastone_up_mossy": {
+    "textures": "textures/twilightforest/block/etched_nagastone_up_mossy"
+  },
+  "tf_block_etched_nagastone_up_weathered": {
+    "textures": "textures/twilightforest/block/etched_nagastone_up_weathered"
+  },
+  "tf_block_fiery_block": {
+    "textures": "textures/twilightforest/block/fiery_block"
+  },
+  "tf_block_fiery_block_inner": {
+    "textures": "textures/twilightforest/block/fiery_block_inner"
+  },
+  "tf_block_fiery_pattern": {
+    "textures": "textures/twilightforest/block/fiery_pattern"
+  },
+  "tf_block_ironwood_block": {
+    "textures": "textures/twilightforest/block/ironwood_block"
+  },
+  "tf_block_knightmetal_block": {
+    "textures": "textures/twilightforest/block/knightmetal_block"
+  },
+  "tf_block_ladder_iron": {
+    "textures": "textures/twilightforest/block/ladder_iron"
+  },
+  "tf_block_mazestone": {
+    "textures": "textures/twilightforest/block/mazestone"
+  },
+  "tf_block_mazestone_border": {
+    "textures": "textures/twilightforest/block/mazestone_border"
+  },
+  "tf_block_mazestone_brick": {
+    "textures": "textures/twilightforest/block/mazestone_brick"
+  },
+  "tf_block_mazestone_mosaic": {
+    "textures": "textures/twilightforest/block/mazestone_mosaic"
+  },
+  "tf_block_mossy_castle_brick": {
+    "textures": "textures/twilightforest/block/mossy_castle_brick"
+  },
+  "tf_block_mossy_castle_brick_stairs": {
+    "textures": "textures/twilightforest/block/mossy_castle_brick_stairs"
+  },
+  "tf_block_mossy_mazestone": {
+    "textures": "textures/twilightforest/block/mossy_mazestone"
+  },
+  "tf_block_mossy_towerwood": {
+    "textures": "textures/twilightforest/block/mossy_towerwood"
+  },
+  "tf_block_mossy_underbrick": {
+    "textures": "textures/twilightforest/block/mossy_underbrick"
+  },
+  "tf_block_nagastone_bare": {
+    "textures": "textures/twilightforest/block/nagastone_bare"
+  },
+  "tf_block_nagastone_bare_mossy": {
+    "textures": "textures/twilightforest/block/nagastone_bare_mossy"
+  },
+  "tf_block_nagastone_bare_weathered": {
+    "textures": "textures/twilightforest/block/nagastone_bare_weathered"
+  },
+  "tf_block_nagastone_bottom_long": {
+    "textures": "textures/twilightforest/block/nagastone_bottom_long"
+  },
+  "tf_block_nagastone_bottom_tip": {
+    "textures": "textures/twilightforest/block/nagastone_bottom_tip"
+  },
+  "tf_block_nagastone_cross_section": {
+    "textures": "textures/twilightforest/block/nagastone_cross_section"
+  },
+  "tf_block_nagastone_face_front": {
+    "textures": "textures/twilightforest/block/nagastone_face_front"
+  },
+  "tf_block_nagastone_face_left": {
+    "textures": "textures/twilightforest/block/nagastone_face_left"
+  },
+  "tf_block_nagastone_face_right": {
+    "textures": "textures/twilightforest/block/nagastone_face_right"
+  },
+  "tf_block_nagastone_left_down": {
+    "textures": "textures/twilightforest/block/nagastone_left_down"
+  },
+  "tf_block_nagastone_left_up": {
+    "textures": "textures/twilightforest/block/nagastone_left_up"
+  },
+  "tf_block_nagastone_long_side": {
+    "textures": "textures/twilightforest/block/nagastone_long_side"
+  },
+  "tf_block_nagastone_long_vertical": {
+    "textures": "textures/twilightforest/block/nagastone_long_vertical"
+  },
+  "tf_block_nagastone_pillar_end": {
+    "textures": "textures/twilightforest/block/nagastone_pillar_end"
+  },
+  "tf_block_nagastone_pillar_end_mossy": {
+    "textures": "textures/twilightforest/block/nagastone_pillar_end_mossy"
+  },
+  "tf_block_nagastone_pillar_end_weathered": {
+    "textures": "textures/twilightforest/block/nagastone_pillar_end_weathered"
+  },
+  "tf_block_nagastone_pillar_side": {
+    "textures": "textures/twilightforest/block/nagastone_pillar_side"
+  },
+  "tf_block_nagastone_pillar_side_alt": {
+    "textures": "textures/twilightforest/block/nagastone_pillar_side_alt"
+  },
+  "tf_block_nagastone_pillar_side_mossy": {
+    "textures": "textures/twilightforest/block/nagastone_pillar_side_mossy"
+  },
+  "tf_block_nagastone_pillar_side_mossy_alt": {
+    "textures": "textures/twilightforest/block/nagastone_pillar_side_mossy_alt"
+  },
+  "tf_block_nagastone_pillar_side_weathered": {
+    "textures": "textures/twilightforest/block/nagastone_pillar_side_weathered"
+  },
+  "tf_block_nagastone_pillar_side_weathered_alt": {
+    "textures": "textures/twilightforest/block/nagastone_pillar_side_weathered_alt"
+  },
+  "tf_block_nagastone_right_down": {
+    "textures": "textures/twilightforest/block/nagastone_right_down"
+  },
+  "tf_block_nagastone_right_up": {
+    "textures": "textures/twilightforest/block/nagastone_right_up"
+  },
+  "tf_block_nagastone_tip_down": {
+    "textures": "textures/twilightforest/block/nagastone_tip_down"
+  },
+  "tf_block_nagastone_tip_long": {
+    "textures": "textures/twilightforest/block/nagastone_tip_long"
+  },
+  "tf_block_nagastone_tip_up": {
+    "textures": "textures/twilightforest/block/nagastone_tip_up"
+  },
+  "tf_block_nagastone_top_tip": {
+    "textures": "textures/twilightforest/block/nagastone_top_tip"
+  },
+  "tf_block_nagastone_turn_top": {
+    "textures": "textures/twilightforest/block/nagastone_turn_top"
+  },
+  "tf_block_rope": {
+    "textures": "textures/twilightforest/block/rope"
+  },
+  "tf_block_rope_knot": {
+    "textures": "textures/twilightforest/block/rope_knot"
+  },
+  "tf_block_spiral_inner_down": {
+    "textures": "textures/twilightforest/block/spiral_inner_down"
+  },
+  "tf_block_spiral_shadow_x": {
+    "textures": "textures/twilightforest/block/spiral_shadow_x"
+  },
+  "tf_block_steeleaf_block": {
+    "textures": "textures/twilightforest/block/steeleaf_block"
+  },
+  "tf_block_stone_pillar_end": {
+    "textures": "textures/twilightforest/block/stone_pillar_end"
+  },
+  "tf_block_stone_pillar_side": {
+    "textures": "textures/twilightforest/block/stone_pillar_side"
+  },
+  "tf_block_stone_spiral_large": {
+    "textures": "textures/twilightforest/block/stone_spiral_large"
+  },
+  "tf_block_stone_tiles": {
+    "textures": "textures/twilightforest/block/stone_tiles"
+  },
+  "tf_block_stone_tiles_mossy": {
+    "textures": "textures/twilightforest/block/stone_tiles_mossy"
+  },
+  "tf_block_stone_tiles_weathered": {
+    "textures": "textures/twilightforest/block/stone_tiles_weathered"
+  },
+  "tf_block_thick_castle_brick": {
+    "textures": "textures/twilightforest/block/thick_castle_brick"
+  },
+  "tf_block_twisted_stone_cap_end": {
+    "textures": "textures/twilightforest/block/twisted_stone_cap_end"
+  },
+  "tf_block_twisted_stone_cap_side": {
+    "textures": "textures/twilightforest/block/twisted_stone_cap_side"
+  },
+  "tf_block_twisted_stone_end": {
+    "textures": "textures/twilightforest/block/twisted_stone_end"
+  },
+  "tf_block_twisted_stone_pillar": {
+    "textures": "textures/twilightforest/block/twisted_stone_pillar"
+  },
+  "tf_block_twisted_stone_side": {
+    "textures": "textures/twilightforest/block/twisted_stone_side"
+  },
+  "tf_block_underbrick": {
+    "textures": "textures/twilightforest/block/underbrick"
+  },
+  "tf_block_underbrick_floor": {
+    "textures": "textures/twilightforest/block/underbrick_floor"
+  },
+  "tf_block_weathered_deadrock": {
+    "textures": "textures/twilightforest/block/weathered_deadrock"
+  },
+  "tf_block_wood_planks_darkwood_3": {
+    "textures": "textures/twilightforest/block/wood/planks_darkwood_3"
+  },
+  "tf_block_worn_castle_brick": {
+    "textures": "textures/twilightforest/block/worn_castle_brick"
+  },
+  "tf_vanilla_block_brown_mushroom_block": {
+    "textures": "textures/blocks/mushroom_block_skin_brown"
+  },
+  "tf_vanilla_block_chiseled_stone_bricks": {
+    "textures": "textures/blocks/stonebrick_carved"
+  },
+  "tf_vanilla_block_grass_block_side_overlay": {
+    "textures": "textures/blocks/grass_side_carried"
+  },
+  "tf_vanilla_block_grass_block_top": {
+    "textures": "textures/blocks/grass_top"
+  },
+  "tf_vanilla_block_mossy_stone_bricks": {
+    "textures": "textures/blocks/stonebrick_mossy"
+  },
+  "tf_vanilla_block_mycelium_top": {
+    "textures": "textures/blocks/mycelium_top"
+  },
+  "tf_vanilla_block_netherrack": {
+    "textures": "textures/blocks/netherrack"
+  },
+  "tf_vanilla_block_red_mushroom_block": {
+    "textures": "textures/blocks/mushroom_block_skin_red"
+  },
+  "tf_vanilla_block_smooth_stone": {
+    "textures": "textures/blocks/stone_slab_top"
+  },
+  "tf_vanilla_block_smooth_stone_slab_side": {
+    "textures": "textures/blocks/stone_slab_side"
+  },
+  "tf_vanilla_block_stone_bricks": {
+    "textures": "textures/blocks/stonebrick"
+  }
+}

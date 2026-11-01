@@ -1,0 +1,21 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:equipment/steeleaf_boots"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["# #", "# #"],
+    "key": {
+      "#": {
+        "item": "twilightforest:steeleaf_ingot"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:steeleaf_boots"
+    }
+  }
+}

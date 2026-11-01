@@ -1,0 +1,12 @@
+commands.tffeature.usage=/%s <info | reactivate | conquer | center>
+misc.twilightforest.advancement_hidden=<Приховане досягнення>
+misc.twilightforest.advancement_required=Потрібне досягнення:
+misc.twilightforest.core_disabled=%s вимкнено у налаштуваннях
+misc.twilightforest.firefly_spawner_radius=Радіус частинок світляка: %s блоків
+misc.twilightforest.pedestal_ineligible=Ви негідні.
+misc.twilightforest.wip=Над цією функцією іще працюють і вона може мати помилки або небажані ефекти, які можуть пошкодити ваш світ
+twilightforest.configuration.section.twilightforest.client.toml=Налаштування клієнта
+twilightforest.configuration.section.twilightforest.client.toml.title=Налаштування клієнта
+twilightforest.configuration.section.twilightforest.common.toml=Звичайні налаштування
+twilightforest.configuration.section.twilightforest.common.toml.title=Звичайні налаштування
+twilightforest.configuration.title=Налаштування Сутінкового Лісу

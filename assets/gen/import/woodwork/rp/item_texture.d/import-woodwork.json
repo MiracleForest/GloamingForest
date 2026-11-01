@@ -1,0 +1,167 @@
+{
+  "tf_block_canopy_log": {
+    "textures": "textures/twilightforest/block/canopy_log"
+  },
+  "tf_block_dark_log": {
+    "textures": "textures/twilightforest/block/dark_log"
+  },
+  "tf_block_mangrove_log": {
+    "textures": "textures/twilightforest/block/mangrove_log"
+  },
+  "tf_block_mining_log": {
+    "textures": "textures/twilightforest/block/mining_log"
+  },
+  "tf_block_sorting_log": {
+    "textures": "textures/twilightforest/block/sorting_log"
+  },
+  "tf_block_time_log": {
+    "textures": "textures/twilightforest/block/time_log"
+  },
+  "tf_block_transformation_log": {
+    "textures": "textures/twilightforest/block/transformation_log"
+  },
+  "tf_block_twilight_oak_log": {
+    "textures": "textures/twilightforest/block/twilight_oak_log"
+  },
+  "tf_item_canopy_boat": {
+    "textures": "textures/twilightforest/item/canopy_boat"
+  },
+  "tf_item_canopy_door": {
+    "textures": "textures/twilightforest/item/canopy_door"
+  },
+  "tf_item_canopy_hanging_sign": {
+    "textures": "textures/twilightforest/item/canopy_hanging_sign"
+  },
+  "tf_item_canopy_sign": {
+    "textures": "textures/twilightforest/item/canopy_sign"
+  },
+  "tf_item_dark_boat": {
+    "textures": "textures/twilightforest/item/dark_boat"
+  },
+  "tf_item_dark_door": {
+    "textures": "textures/twilightforest/item/dark_door"
+  },
+  "tf_item_dark_hanging_sign": {
+    "textures": "textures/twilightforest/item/dark_hanging_sign"
+  },
+  "tf_item_dark_sign": {
+    "textures": "textures/twilightforest/item/dark_sign"
+  },
+  "tf_item_gelatinous_maze_slime_drop": {
+    "textures": "textures/twilightforest/item/gelatinous_maze_slime_drop"
+  },
+  "tf_item_gelatinous_slime_drop": {
+    "textures": "textures/twilightforest/item/gelatinous_slime_drop"
+  },
+  "tf_item_mangrove_boat": {
+    "textures": "textures/twilightforest/item/mangrove_boat"
+  },
+  "tf_item_mangrove_door": {
+    "textures": "textures/twilightforest/item/mangrove_door"
+  },
+  "tf_item_mangrove_hanging_sign": {
+    "textures": "textures/twilightforest/item/mangrove_hanging_sign"
+  },
+  "tf_item_mangrove_sign": {
+    "textures": "textures/twilightforest/item/mangrove_sign"
+  },
+  "tf_item_mining_boat": {
+    "textures": "textures/twilightforest/item/mining_boat"
+  },
+  "tf_item_mining_door": {
+    "textures": "textures/twilightforest/item/mining_door"
+  },
+  "tf_item_mining_hanging_sign": {
+    "textures": "textures/twilightforest/item/mining_hanging_sign"
+  },
+  "tf_item_mining_sign": {
+    "textures": "textures/twilightforest/item/mining_sign"
+  },
+  "tf_item_sorting_boat": {
+    "textures": "textures/twilightforest/item/sorting_boat"
+  },
+  "tf_item_sorting_door": {
+    "textures": "textures/twilightforest/item/sorting_door"
+  },
+  "tf_item_sorting_hanging_sign": {
+    "textures": "textures/twilightforest/item/sorting_hanging_sign"
+  },
+  "tf_item_sorting_sign": {
+    "textures": "textures/twilightforest/item/sorting_sign"
+  },
+  "tf_item_tanned_leather": {
+    "textures": "textures/twilightforest/item/tanned_leather"
+  },
+  "tf_item_tannin": {
+    "textures": "textures/twilightforest/item/tannin"
+  },
+  "tf_item_time_boat": {
+    "textures": "textures/twilightforest/item/time_boat"
+  },
+  "tf_item_time_door": {
+    "textures": "textures/twilightforest/item/time_door"
+  },
+  "tf_item_time_hanging_sign": {
+    "textures": "textures/twilightforest/item/time_hanging_sign"
+  },
+  "tf_item_time_sign": {
+    "textures": "textures/twilightforest/item/time_sign"
+  },
+  "tf_item_transformation_boat": {
+    "textures": "textures/twilightforest/item/transformation_boat"
+  },
+  "tf_item_transformation_door": {
+    "textures": "textures/twilightforest/item/transformation_door"
+  },
+  "tf_item_transformation_hanging_sign": {
+    "textures": "textures/twilightforest/item/transformation_hanging_sign"
+  },
+  "tf_item_transformation_sign": {
+    "textures": "textures/twilightforest/item/transformation_sign"
+  },
+  "tf_item_treated_leather": {
+    "textures": "textures/twilightforest/item/treated_leather"
+  },
+  "tf_item_twilight_oak_boat": {
+    "textures": "textures/twilightforest/item/twilight_oak_boat"
+  },
+  "tf_item_twilight_oak_door": {
+    "textures": "textures/twilightforest/item/twilight_oak_door"
+  },
+  "tf_item_twilight_oak_hanging_sign": {
+    "textures": "textures/twilightforest/item/twilight_oak_hanging_sign"
+  },
+  "tf_item_twilight_oak_sign": {
+    "textures": "textures/twilightforest/item/twilight_oak_sign"
+  },
+  "tf_vanilla_block_acacia_log": {
+    "textures": "textures/blocks/log_acacia"
+  },
+  "tf_vanilla_block_birch_log": {
+    "textures": "textures/blocks/log_birch"
+  },
+  "tf_vanilla_block_cherry_log": {
+    "textures": "textures/blocks/cherry_log_side"
+  },
+  "tf_vanilla_block_crimson_stem": {
+    "textures": "textures/blocks/huge_fungus/crimson_log_side"
+  },
+  "tf_vanilla_block_dark_oak_log": {
+    "textures": "textures/blocks/log_big_oak"
+  },
+  "tf_vanilla_block_jungle_log": {
+    "textures": "textures/blocks/log_jungle"
+  },
+  "tf_vanilla_block_mangrove_log": {
+    "textures": "textures/blocks/mangrove_log_side"
+  },
+  "tf_vanilla_block_spruce_log": {
+    "textures": "textures/blocks/log_spruce"
+  },
+  "tf_vanilla_block_warped_stem": {
+    "textures": "textures/blocks/huge_fungus/warped_stem_side"
+  },
+  "tf_vanilla_item_oak_chest_boat": {
+    "textures": "textures/items/chest_boat_oak"
+  }
+}

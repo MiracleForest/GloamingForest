@@ -1,0 +1,22 @@
+{
+  "comment": "Named by TF data, not a data file (code registry id, texture, template or custom-registry tag); index for the assemble reference check only (F1, tools/import/src/Known.cs).",
+  "referencedBy": [
+    "data/twilightforest/twilight/travellers_modifiers/agile_ranger.json",
+    "data/twilightforest/twilight/travellers_modifiers/all_night_goggles.json",
+    "data/twilightforest/twilight/travellers_modifiers/arrow_magnetism.json",
+    "data/twilightforest/twilight/travellers_modifiers/auto_repair.json",
+    "data/twilightforest/twilight/travellers_modifiers/double_jump.json",
+    "data/twilightforest/twilight/travellers_modifiers/efficient_eater.json",
+    "data/twilightforest/twilight/travellers_modifiers/gradual_glide.json",
+    "data/twilightforest/twilight/travellers_modifiers/haste.json",
+    "data/twilightforest/twilight/travellers_modifiers/item_display.json",
+    "data/twilightforest/twilight/travellers_modifiers/perfect_dodge.json",
+    "data/twilightforest/twilight/travellers_modifiers/red_thread_vision.json",
+    "data/twilightforest/twilight/travellers_modifiers/side_step.json",
+    "data/twilightforest/twilight/travellers_modifiers/slimy_soles.json",
+    "data/twilightforest/twilight/travellers_modifiers/stealth.json",
+    "data/twilightforest/twilight/travellers_modifiers/straight_ahead.json",
+    "data/twilightforest/twilight/travellers_modifiers/unrestrained.json",
+    "data/twilightforest/twilight/travellers_modifiers/water_walk.json"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:fiery_helmet",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_fiery_helmet"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:fiery_helmet.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 275
+      },
+      "minecraft:tags": {
+        "tags": ["alexscaves:ferromagnetic_items"]
+      }
+    }
+  }
+}

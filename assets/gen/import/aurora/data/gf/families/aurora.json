@@ -1,0 +1,18 @@
+[
+  {
+    "id": "twilightforest:aurora_pillar",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "states": ["axis"]
+    }
+  },
+  {
+    "id": "twilightforest:aurora_slab",
+    "family": "slab",
+    "params": {
+      "class": "SlabBlock",
+      "states": ["type"]
+    }
+  }
+]

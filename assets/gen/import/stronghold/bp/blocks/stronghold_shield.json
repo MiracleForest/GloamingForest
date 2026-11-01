@@ -1,0 +1,298 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:stronghold_shield",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east", "up", "down"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": false,
+      "minecraft:destructible_by_explosion": false,
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_shield_outside",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "tf_block_shield_inside",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "tf_block_shield_outside",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "tf_block_shield_outside",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "tf_block_shield_outside",
+          "render_method": "opaque"
+        },
+        "east": {
+          "texture": "tf_block_shield_outside",
+          "render_method": "opaque"
+        },
+        "west": {
+          "texture": "tf_block_shield_outside",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [180, 0, 0]
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'down'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_shield_inside",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_shield_inside",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_shield_inside",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_shield_inside",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'up'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_shield_inside",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_shield_inside",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_shield_outside",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

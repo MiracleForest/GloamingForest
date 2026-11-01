@@ -1,0 +1,23 @@
+[
+  {
+    "id": "twilightforest:potted_fiddlehead",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_mayapple",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_mushgloom",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  }
+]

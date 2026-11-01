@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:ur_ghast",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/banner/ur_ghast"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.ur_ghast"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#bcbcbc",
+        "overlay_color": "#b77878"
+      }
+    }
+  }
+}

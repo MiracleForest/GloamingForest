@@ -1,0 +1,21 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:equipment/arctic_leggings"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "# #", "# #"],
+    "key": {
+      "#": {
+        "item": "twilightforest:arctic_fur"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:arctic_leggings"
+    }
+  }
+}

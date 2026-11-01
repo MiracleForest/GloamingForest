@@ -1,0 +1,1971 @@
+{
+  "blocks": {
+    "twilightforest:acacia_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:acacia_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:alpha_yeti_boss_spawner": {},
+    "twilightforest:alpha_yeti_trophy": {},
+    "twilightforest:alpha_yeti_wall_trophy": {},
+    "twilightforest:antibuilder": {},
+    "twilightforest:antibuilt_block": {},
+    "twilightforest:arctic_fur_block": {},
+    "twilightforest:aurora_block": {},
+    "twilightforest:aurora_pillar": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:aurora_slab": {
+      "twilightforest:type": ["bottom", "top", "double"]
+    },
+    "twilightforest:auroralized_glass": {},
+    "twilightforest:bamboo_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:bamboo_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:beanstalk_grower": {},
+    "twilightforest:beanstalk_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:birch_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:birch_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:blackberry_bush": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:blightberry_bush": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:blue_castle_door": {
+      "twilightforest:active": ["false", "true"],
+      "twilightforest:vanish": ["false", "true"]
+    },
+    "twilightforest:blue_castle_rune_brick": {},
+    "twilightforest:blue_force_field": {},
+    "twilightforest:blueberry_bush": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:bold_castle_brick_pillar": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:bold_castle_brick_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:bold_castle_brick_tile": {},
+    "twilightforest:bold_stone_pillar": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:brazier": {},
+    "twilightforest:brown_thorns": {
+      "twilightforest:axis": ["y", "x", "z"],
+      "twilightforest:down": ["false", "true"],
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:up": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:built_block": {
+      "twilightforest:active": ["false", "true"]
+    },
+    "twilightforest:burnt_thorns": {
+      "twilightforest:axis": ["y", "x", "z"],
+      "twilightforest:down": ["false", "true"],
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:up": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:candelabra": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:on_wall": ["false", "true"]
+    },
+    "twilightforest:canopy_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:canopy_bookshelf": {},
+    "twilightforest:canopy_button": {
+      "twilightforest:face": ["wall", "floor", "ceiling"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:canopy_chest": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:type": ["single", "left", "right"]
+    },
+    "twilightforest:canopy_door": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["lower", "upper"],
+      "twilightforest:hinge": ["left", "right"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:canopy_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:canopy_fence": {
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:canopy_fence_gate": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:in_wall": ["false", "true"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:canopy_hanging_sign": {
+      "twilightforest:attached": ["false", "true"],
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:canopy_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:canopy_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:canopy_planks": {},
+    "twilightforest:canopy_pressure_plate": {
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:canopy_sapling": {
+      "twilightforest:stage": ["0", "1"]
+    },
+    "twilightforest:canopy_sign": {
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:canopy_slab": {
+      "twilightforest:type": ["bottom", "top", "double"]
+    },
+    "twilightforest:canopy_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:canopy_trapdoor": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:canopy_trapped_chest": {},
+    "twilightforest:canopy_wall_hanging_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:canopy_wall_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:canopy_window": {},
+    "twilightforest:canopy_window_pane": {
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:canopy_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:carminite_block": {},
+    "twilightforest:carminite_builder": {
+      "twilightforest:state": ["builder_active", "builder_inactive", "builder_timeout"]
+    },
+    "twilightforest:carminite_reactor": {
+      "twilightforest:active": ["false", "true"]
+    },
+    "twilightforest:castle_brick": {},
+    "twilightforest:castle_brick_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:castle_roof_tile": {},
+    "twilightforest:cherry_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:cherry_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:chiseled_canopy_bookshelf": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:slot_0_occupied": ["false", "true"],
+      "twilightforest:slot_1_occupied": ["false", "true"],
+      "twilightforest:slot_2_occupied": ["false", "true"],
+      "twilightforest:slot_3_occupied": ["false", "true"],
+      "twilightforest:slot_4_occupied": ["false", "true"],
+      "twilightforest:slot_5_occupied": ["false", "true"]
+    },
+    "twilightforest:cicada": {},
+    "twilightforest:cicada_jar": {},
+    "twilightforest:cinder_furnace": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:lit": ["false", "true"]
+    },
+    "twilightforest:cinder_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:cinder_wood": {},
+    "twilightforest:clover_patch": {},
+    "twilightforest:copper_oreberry": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:coronation_carpet": {},
+    "twilightforest:cracked_castle_brick": {},
+    "twilightforest:cracked_castle_brick_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:cracked_deadrock": {},
+    "twilightforest:cracked_etched_nagastone": {
+      "twilightforest:facing": ["north", "south", "west", "east", "up", "down"]
+    },
+    "twilightforest:cracked_mazestone": {},
+    "twilightforest:cracked_nagastone_pillar": {
+      "twilightforest:axis": ["y", "x", "z"],
+      "twilightforest:reversed": ["false", "true"]
+    },
+    "twilightforest:cracked_nagastone_stairs_left": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:cracked_nagastone_stairs_right": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:cracked_towerwood": {},
+    "twilightforest:cracked_underbrick": {},
+    "twilightforest:creeper_skull_candle": {},
+    "twilightforest:creeper_wall_skull_candle": {},
+    "twilightforest:crimson_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:crimson_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:cut_mazestone": {},
+    "twilightforest:dark_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:dark_button": {
+      "twilightforest:face": ["wall", "floor", "ceiling"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:dark_chest": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:type": ["single", "left", "right"]
+    },
+    "twilightforest:dark_door": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["lower", "upper"],
+      "twilightforest:hinge": ["left", "right"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:dark_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:dark_fence": {
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:dark_fence_gate": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:in_wall": ["false", "true"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:dark_hanging_sign": {
+      "twilightforest:attached": ["false", "true"],
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:dark_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:dark_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:dark_oak_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:dark_oak_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:dark_planks": {},
+    "twilightforest:dark_pressure_plate": {
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:dark_sign": {
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:dark_slab": {
+      "twilightforest:type": ["bottom", "top", "double"]
+    },
+    "twilightforest:dark_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:dark_tower_miniature_structure": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:dark_trapdoor": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:dark_trapped_chest": {},
+    "twilightforest:dark_wall_hanging_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:dark_wall_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:dark_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:darkwood_sapling": {
+      "twilightforest:stage": ["0", "1"]
+    },
+    "twilightforest:deadrock": {},
+    "twilightforest:decorative_mazestone": {},
+    "twilightforest:duskberry_bush": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:encased_castle_brick_pillar": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:encased_castle_brick_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:encased_castle_brick_tile": {},
+    "twilightforest:encased_fire_jet": {
+      "twilightforest:state": ["flame", "idle", "popping", "timeout"]
+    },
+    "twilightforest:encased_smoker": {
+      "twilightforest:active": ["false", "true"]
+    },
+    "twilightforest:encased_towerwood": {},
+    "twilightforest:essence_oreberry": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:etched_nagastone": {
+      "twilightforest:facing": ["north", "south", "west", "east", "up", "down"]
+    },
+    "twilightforest:experiment_115": {
+      "twilightforest:omnomnom": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:regenerate": ["false", "true"]
+    },
+    "twilightforest:fake_diamond": {},
+    "twilightforest:fake_gold": {},
+    "twilightforest:fallen_leaves": {
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:fiddlehead": {},
+    "twilightforest:fiery_block": {},
+    "twilightforest:final_boss_boss_spawner": {},
+    "twilightforest:fire_jet": {},
+    "twilightforest:firefly": {},
+    "twilightforest:firefly_jar": {},
+    "twilightforest:firefly_particle_spawner": {},
+    "twilightforest:fluffy_cloud": {},
+    "twilightforest:ghast_trap": {
+      "twilightforest:active": ["false", "true"]
+    },
+    "twilightforest:giant_cobblestone": {},
+    "twilightforest:giant_leaves": {},
+    "twilightforest:giant_log": {},
+    "twilightforest:giant_obsidian": {},
+    "twilightforest:gold_oreberry": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:green_force_field": {},
+    "twilightforest:green_thorns": {
+      "twilightforest:axis": ["y", "x", "z"],
+      "twilightforest:down": ["false", "true"],
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:up": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:hardened_dark_leaves": {},
+    "twilightforest:hedge": {},
+    "twilightforest:hollow_acacia_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_acacia_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_acacia_log_vertical": {},
+    "twilightforest:hollow_birch_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_birch_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_birch_log_vertical": {},
+    "twilightforest:hollow_canopy_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_canopy_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_canopy_log_vertical": {},
+    "twilightforest:hollow_cherry_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_cherry_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_cherry_log_vertical": {},
+    "twilightforest:hollow_crimson_stem_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_crimson_stem_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_crimson_stem_vertical": {},
+    "twilightforest:hollow_dark_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_dark_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_dark_log_vertical": {},
+    "twilightforest:hollow_dark_oak_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_dark_oak_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_dark_oak_log_vertical": {},
+    "twilightforest:hollow_jungle_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_jungle_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_jungle_log_vertical": {},
+    "twilightforest:hollow_mangrove_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_mangrove_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_mangrove_log_vertical": {},
+    "twilightforest:hollow_mining_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_mining_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_mining_log_vertical": {},
+    "twilightforest:hollow_oak_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_oak_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_oak_log_vertical": {},
+    "twilightforest:hollow_oak_sapling": {
+      "twilightforest:stage": ["0", "1"]
+    },
+    "twilightforest:hollow_sorting_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_sorting_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_sorting_log_vertical": {},
+    "twilightforest:hollow_spruce_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_spruce_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_spruce_log_vertical": {},
+    "twilightforest:hollow_time_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_time_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_time_log_vertical": {},
+    "twilightforest:hollow_transformation_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_transformation_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_transformation_log_vertical": {},
+    "twilightforest:hollow_twilight_oak_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_twilight_oak_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_twilight_oak_log_vertical": {},
+    "twilightforest:hollow_vangrove_log_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_vangrove_log_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_vangrove_log_vertical": {},
+    "twilightforest:hollow_warped_stem_climbable": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:variant": ["ladder", "ladder_waterlogged", "vine"]
+    },
+    "twilightforest:hollow_warped_stem_horizontal": {
+      "twilightforest:axis": ["x", "z"],
+      "twilightforest:variant": ["empty", "moss", "moss_and_grass", "snow", "waterlogged"]
+    },
+    "twilightforest:hollow_warped_stem_vertical": {},
+    "twilightforest:huge_lily_pad": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:piece": ["ne", "nw", "se", "sw"]
+    },
+    "twilightforest:huge_mushgloom": {
+      "twilightforest:down": ["false", "true"],
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:up": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:huge_mushgloom_stem": {
+      "twilightforest:down": ["false", "true"],
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:up": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:huge_stalk": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:huge_water_lily": {},
+    "twilightforest:hydra_boss_spawner": {},
+    "twilightforest:hydra_trophy": {},
+    "twilightforest:hydra_wall_trophy": {},
+    "twilightforest:infested_towerwood": {},
+    "twilightforest:iron_ladder": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:left": ["false", "true"],
+      "twilightforest:right": ["false", "true"]
+    },
+    "twilightforest:iron_oreberry": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:ironwood_block": {},
+    "twilightforest:jungle_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:jungle_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:keepsake_casket": {
+      "twilightforest:multilogged": ["air", "basalt", "lava", "obsidian", "stone", "water"]
+    },
+    "twilightforest:knight_phantom_boss_spawner": {},
+    "twilightforest:knight_phantom_trophy": {},
+    "twilightforest:knight_phantom_wall_trophy": {},
+    "twilightforest:knightmetal_block": {},
+    "twilightforest:lich_boss_spawner": {},
+    "twilightforest:lich_tower_miniature_structure": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:lich_trophy": {},
+    "twilightforest:lich_wall_trophy": {},
+    "twilightforest:liveroot_block": {},
+    "twilightforest:locked_vanishing_block": {
+      "twilightforest:locked": ["false", "true"]
+    },
+    "twilightforest:maloberry_bush": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:mangrove_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:mangrove_button": {
+      "twilightforest:face": ["wall", "floor", "ceiling"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:mangrove_chest": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:type": ["single", "left", "right"]
+    },
+    "twilightforest:mangrove_door": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["lower", "upper"],
+      "twilightforest:hinge": ["left", "right"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:mangrove_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:mangrove_fence": {
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:mangrove_fence_gate": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:in_wall": ["false", "true"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:mangrove_hanging_sign": {
+      "twilightforest:attached": ["false", "true"],
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:mangrove_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:mangrove_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:mangrove_planks": {},
+    "twilightforest:mangrove_pressure_plate": {
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:mangrove_root": {},
+    "twilightforest:mangrove_sapling": {
+      "twilightforest:stage": ["0", "1"]
+    },
+    "twilightforest:mangrove_sign": {
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:mangrove_slab": {
+      "twilightforest:type": ["bottom", "top", "double"]
+    },
+    "twilightforest:mangrove_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:mangrove_trapdoor": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:mangrove_trapped_chest": {},
+    "twilightforest:mangrove_wall_hanging_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:mangrove_wall_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:mangrove_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:mason_jar": {},
+    "twilightforest:mayapple": {},
+    "twilightforest:maze_slime_block": {},
+    "twilightforest:mazestone": {},
+    "twilightforest:mazestone_border": {},
+    "twilightforest:mazestone_brick": {},
+    "twilightforest:mazestone_mosaic": {},
+    "twilightforest:mining_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:mining_button": {
+      "twilightforest:face": ["wall", "floor", "ceiling"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:mining_chest": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:type": ["single", "left", "right"]
+    },
+    "twilightforest:mining_door": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["lower", "upper"],
+      "twilightforest:hinge": ["left", "right"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:mining_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:mining_fence": {
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:mining_fence_gate": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:in_wall": ["false", "true"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:mining_hanging_sign": {
+      "twilightforest:attached": ["false", "true"],
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:mining_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:mining_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:mining_log_core": {
+      "twilightforest:active": ["false", "true"],
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:mining_planks": {},
+    "twilightforest:mining_pressure_plate": {
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:mining_sapling": {
+      "twilightforest:stage": ["0", "1"]
+    },
+    "twilightforest:mining_sign": {
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:mining_slab": {
+      "twilightforest:type": ["bottom", "top", "double"]
+    },
+    "twilightforest:mining_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:mining_trapdoor": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:mining_trapped_chest": {},
+    "twilightforest:mining_wall_hanging_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:mining_wall_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:mining_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:minoshroom_boss_spawner": {},
+    "twilightforest:minoshroom_trophy": {},
+    "twilightforest:minoshroom_wall_trophy": {},
+    "twilightforest:minotaur_labyrinth_miniature_structure": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:moonworm": {},
+    "twilightforest:moss_patch": {},
+    "twilightforest:mossy_castle_brick": {},
+    "twilightforest:mossy_castle_brick_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:mossy_etched_nagastone": {
+      "twilightforest:facing": ["north", "south", "west", "east", "up", "down"]
+    },
+    "twilightforest:mossy_mazestone": {},
+    "twilightforest:mossy_nagastone_pillar": {
+      "twilightforest:axis": ["y", "x", "z"],
+      "twilightforest:reversed": ["false", "true"]
+    },
+    "twilightforest:mossy_nagastone_stairs_left": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:mossy_nagastone_stairs_right": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:mossy_towerwood": {},
+    "twilightforest:mossy_underbrick": {},
+    "twilightforest:mushgloom": {},
+    "twilightforest:naga_boss_spawner": {},
+    "twilightforest:naga_courtyard_miniature_structure": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:naga_trophy": {},
+    "twilightforest:naga_wall_trophy": {},
+    "twilightforest:nagastone": {
+      "twilightforest:variant": [
+        "axis_x",
+        "axis_y",
+        "axis_z",
+        "east_down",
+        "east_up",
+        "north_down",
+        "north_up",
+        "solid",
+        "south_down",
+        "south_up",
+        "west_down",
+        "west_up"
+      ]
+    },
+    "twilightforest:nagastone_head": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:nagastone_pillar": {
+      "twilightforest:axis": ["y", "x", "z"],
+      "twilightforest:reversed": ["false", "true"]
+    },
+    "twilightforest:nagastone_stairs_left": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:nagastone_stairs_right": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:oak_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:oak_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:ominous_black_candle": {},
+    "twilightforest:ominous_blue_candle": {},
+    "twilightforest:ominous_brown_candle": {},
+    "twilightforest:ominous_candle": {},
+    "twilightforest:ominous_cyan_candle": {},
+    "twilightforest:ominous_fire": {},
+    "twilightforest:ominous_gray_candle": {},
+    "twilightforest:ominous_green_candle": {},
+    "twilightforest:ominous_light_blue_candle": {},
+    "twilightforest:ominous_light_gray_candle": {},
+    "twilightforest:ominous_lime_candle": {},
+    "twilightforest:ominous_magenta_candle": {},
+    "twilightforest:ominous_orange_candle": {},
+    "twilightforest:ominous_pink_candle": {},
+    "twilightforest:ominous_purple_candle": {},
+    "twilightforest:ominous_red_candle": {},
+    "twilightforest:ominous_white_candle": {},
+    "twilightforest:ominous_yellow_candle": {},
+    "twilightforest:orange_force_field": {},
+    "twilightforest:piglin_skull_candle": {},
+    "twilightforest:piglin_wall_skull_candle": {},
+    "twilightforest:pink_castle_door": {
+      "twilightforest:active": ["false", "true"],
+      "twilightforest:vanish": ["false", "true"]
+    },
+    "twilightforest:pink_castle_rune_brick": {},
+    "twilightforest:pink_force_field": {},
+    "twilightforest:player_skull_candle": {},
+    "twilightforest:player_wall_skull_candle": {},
+    "twilightforest:potted_canopy_sapling": {},
+    "twilightforest:potted_darkwood_sapling": {},
+    "twilightforest:potted_dead_thorn": {},
+    "twilightforest:potted_fiddlehead": {},
+    "twilightforest:potted_green_thorn": {},
+    "twilightforest:potted_hollow_oak_sapling": {},
+    "twilightforest:potted_mangrove_sapling": {},
+    "twilightforest:potted_mayapple": {},
+    "twilightforest:potted_mining_sapling": {},
+    "twilightforest:potted_mushgloom": {},
+    "twilightforest:potted_rainbow_oak_sapling": {},
+    "twilightforest:potted_sorting_sapling": {},
+    "twilightforest:potted_thorn": {},
+    "twilightforest:potted_time_sapling": {},
+    "twilightforest:potted_transformation_sapling": {},
+    "twilightforest:potted_twilight_oak_sapling": {},
+    "twilightforest:quest_ram_trophy": {},
+    "twilightforest:quest_ram_wall_trophy": {},
+    "twilightforest:rainbow_oak_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:rainbow_oak_sapling": {
+      "twilightforest:stage": ["0", "1"]
+    },
+    "twilightforest:rainy_cloud": {},
+    "twilightforest:raspberry_bush": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:reactor_debris": {},
+    "twilightforest:reappearing_block": {
+      "twilightforest:active": ["false", "true"],
+      "twilightforest:vanished": ["false", "true"]
+    },
+    "twilightforest:red_thread": {},
+    "twilightforest:root": {},
+    "twilightforest:root_strand": {},
+    "twilightforest:rope": {
+      "twilightforest:x": ["false", "true"],
+      "twilightforest:y": ["false", "true"],
+      "twilightforest:z": ["false", "true"]
+    },
+    "twilightforest:sinister_spawner": {},
+    "twilightforest:skeleton_skull_candle": {},
+    "twilightforest:skeleton_wall_skull_candle": {},
+    "twilightforest:skull_chest": {
+      "twilightforest:multilogged": ["air", "basalt", "lava", "obsidian", "stone", "water"]
+    },
+    "twilightforest:skyberry_bush": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:slider": {
+      "twilightforest:axis": ["y", "x", "z"],
+      "twilightforest:delay": ["0", "1", "2", "3"]
+    },
+    "twilightforest:smoker": {},
+    "twilightforest:snow_queen_boss_spawner": {},
+    "twilightforest:snow_queen_trophy": {},
+    "twilightforest:snow_queen_wall_trophy": {},
+    "twilightforest:snowy_cloud": {},
+    "twilightforest:sorting_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:sorting_button": {
+      "twilightforest:face": ["wall", "floor", "ceiling"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:sorting_chest": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:type": ["single", "left", "right"]
+    },
+    "twilightforest:sorting_door": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["lower", "upper"],
+      "twilightforest:hinge": ["left", "right"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:sorting_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:sorting_fence": {
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:sorting_fence_gate": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:in_wall": ["false", "true"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:sorting_hanging_sign": {
+      "twilightforest:attached": ["false", "true"],
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:sorting_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:sorting_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:sorting_log_core": {
+      "twilightforest:active": ["false", "true"],
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:sorting_planks": {},
+    "twilightforest:sorting_pressure_plate": {
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:sorting_sapling": {
+      "twilightforest:stage": ["0", "1"]
+    },
+    "twilightforest:sorting_sign": {
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:sorting_slab": {
+      "twilightforest:type": ["bottom", "top", "double"]
+    },
+    "twilightforest:sorting_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:sorting_trapdoor": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:sorting_trapped_chest": {},
+    "twilightforest:sorting_wall_hanging_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:sorting_wall_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:sorting_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:spiral_bricks": {
+      "twilightforest:axis": ["y", "x", "z"],
+      "twilightforest:diagonal": ["bottom_left", "bottom_right", "top_left", "top_right"]
+    },
+    "twilightforest:spruce_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:spruce_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:steeleaf_block": {},
+    "twilightforest:stingberry_bush": {
+      "twilightforest:age": ["0", "1", "2", "3"],
+      "twilightforest:layers": ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    },
+    "twilightforest:stripped_canopy_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_canopy_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_dark_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_dark_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_mangrove_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_mangrove_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_mining_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_mining_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_sorting_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_sorting_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_time_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_time_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_transformation_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_transformation_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_twilight_oak_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stripped_twilight_oak_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:stronghold_shield": {
+      "twilightforest:facing": ["north", "south", "west", "east", "up", "down"]
+    },
+    "twilightforest:terrorcotta_arcs": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:terrorcotta_curves": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:terrorcotta_lines": {
+      "twilightforest:rotated": ["false", "true"]
+    },
+    "twilightforest:thick_castle_brick": {},
+    "twilightforest:thorn_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:thorn_rose": {
+      "twilightforest:facing": ["north", "south", "west", "east", "up", "down"]
+    },
+    "twilightforest:time_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:time_button": {
+      "twilightforest:face": ["wall", "floor", "ceiling"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:time_chest": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:type": ["single", "left", "right"]
+    },
+    "twilightforest:time_door": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["lower", "upper"],
+      "twilightforest:hinge": ["left", "right"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:time_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:time_fence": {
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:time_fence_gate": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:in_wall": ["false", "true"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:time_hanging_sign": {
+      "twilightforest:attached": ["false", "true"],
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:time_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:time_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:time_log_core": {
+      "twilightforest:active": ["false", "true"],
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:time_planks": {},
+    "twilightforest:time_pressure_plate": {
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:time_sapling": {
+      "twilightforest:stage": ["0", "1"]
+    },
+    "twilightforest:time_sign": {
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:time_slab": {
+      "twilightforest:type": ["bottom", "top", "double"]
+    },
+    "twilightforest:time_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:time_trapdoor": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:time_trapped_chest": {},
+    "twilightforest:time_wall_hanging_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:time_wall_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:time_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:torchberry_plant": {
+      "twilightforest:has_torchberries": ["false", "true"]
+    },
+    "twilightforest:towerwood": {},
+    "twilightforest:transformation_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:transformation_button": {
+      "twilightforest:face": ["wall", "floor", "ceiling"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:transformation_chest": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:type": ["single", "left", "right"]
+    },
+    "twilightforest:transformation_door": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["lower", "upper"],
+      "twilightforest:hinge": ["left", "right"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:transformation_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:transformation_fence": {
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:transformation_fence_gate": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:in_wall": ["false", "true"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:transformation_hanging_sign": {
+      "twilightforest:attached": ["false", "true"],
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:transformation_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:transformation_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:transformation_log_core": {
+      "twilightforest:active": ["false", "true"],
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:transformation_planks": {},
+    "twilightforest:transformation_pressure_plate": {
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:transformation_sapling": {
+      "twilightforest:stage": ["0", "1"]
+    },
+    "twilightforest:transformation_sign": {
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:transformation_slab": {
+      "twilightforest:type": ["bottom", "top", "double"]
+    },
+    "twilightforest:transformation_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:transformation_trapdoor": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:transformation_trapped_chest": {},
+    "twilightforest:transformation_wall_hanging_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:transformation_wall_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:transformation_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:trollber": {},
+    "twilightforest:trollsteinn": {
+      "twilightforest:down": ["false", "true"],
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:up": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:trollvidr": {},
+    "twilightforest:trophy_pedestal": {
+      "twilightforest:active": ["false", "true"]
+    },
+    "twilightforest:twilight_oak_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:twilight_oak_button": {
+      "twilightforest:face": ["wall", "floor", "ceiling"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:twilight_oak_chest": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:type": ["single", "left", "right"]
+    },
+    "twilightforest:twilight_oak_door": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["lower", "upper"],
+      "twilightforest:hinge": ["left", "right"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:twilight_oak_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:twilight_oak_fence": {
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:twilight_oak_fence_gate": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:in_wall": ["false", "true"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:twilight_oak_hanging_sign": {
+      "twilightforest:attached": ["false", "true"],
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:twilight_oak_leaves": {
+      "twilightforest:distance": ["0", "1", "2", "3", "4", "5", "6", "7"],
+      "twilightforest:persistent": ["false", "true"]
+    },
+    "twilightforest:twilight_oak_log": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:twilight_oak_planks": {},
+    "twilightforest:twilight_oak_pressure_plate": {
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:twilight_oak_sapling": {
+      "twilightforest:stage": ["0", "1"]
+    },
+    "twilightforest:twilight_oak_sign": {
+      "twilightforest:rotation": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    },
+    "twilightforest:twilight_oak_slab": {
+      "twilightforest:type": ["bottom", "top", "double"]
+    },
+    "twilightforest:twilight_oak_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:twilight_oak_trapdoor": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:open": ["false", "true"],
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:twilight_oak_trapped_chest": {},
+    "twilightforest:twilight_oak_wall_hanging_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:twilight_oak_wood": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:twilight_portal": {
+      "twilightforest:is_one_way": ["false", "true"]
+    },
+    "twilightforest:twilight_portal_miniature_structure": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:twilight_wall_sign": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:twisted_stone": {
+      "twilightforest:axis": ["y", "x", "z"]
+    },
+    "twilightforest:twisted_stone_pillar": {
+      "twilightforest:axis": ["y", "x", "z"],
+      "twilightforest:down": ["false", "true"],
+      "twilightforest:east": ["false", "true"],
+      "twilightforest:north": ["false", "true"],
+      "twilightforest:south": ["false", "true"],
+      "twilightforest:up": ["false", "true"],
+      "twilightforest:west": ["false", "true"]
+    },
+    "twilightforest:uberous_soil": {},
+    "twilightforest:unbreakable_vanishing_block": {
+      "twilightforest:active": ["false", "true"]
+    },
+    "twilightforest:uncrafting_table": {
+      "twilightforest:powered": ["false", "true"]
+    },
+    "twilightforest:underbrick": {},
+    "twilightforest:underbrick_floor": {},
+    "twilightforest:unripe_trollber": {},
+    "twilightforest:ur_ghast_boss_spawner": {},
+    "twilightforest:ur_ghast_trophy": {},
+    "twilightforest:ur_ghast_wall_trophy": {},
+    "twilightforest:vangrove_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:vangrove_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:vanishing_block": {
+      "twilightforest:active": ["false", "true"]
+    },
+    "twilightforest:violet_castle_door": {
+      "twilightforest:active": ["false", "true"],
+      "twilightforest:vanish": ["false", "true"]
+    },
+    "twilightforest:violet_castle_rune_brick": {},
+    "twilightforest:violet_force_field": {},
+    "twilightforest:warped_banister": {
+      "twilightforest:extended": ["false", "true"],
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:shape": ["connected", "short", "tall"]
+    },
+    "twilightforest:warped_drying_rack": {
+      "twilightforest:facing": ["north", "south", "west", "east"]
+    },
+    "twilightforest:weathered_deadrock": {},
+    "twilightforest:wispy_cloud": {},
+    "twilightforest:wither_skeleton_skull_candle": {},
+    "twilightforest:wither_skeleton_wall_skull_candle": {},
+    "twilightforest:worn_castle_brick": {},
+    "twilightforest:worn_castle_brick_stairs": {
+      "twilightforest:facing": ["north", "south", "west", "east"],
+      "twilightforest:half": ["bottom", "top"],
+      "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+    },
+    "twilightforest:wrought_iron_fence": {
+      "twilightforest:east_fence": ["bottom", "full", "middle", "top"],
+      "twilightforest:north_fence": ["bottom", "full", "middle", "top"],
+      "twilightforest:post": ["capped", "post"],
+      "twilightforest:south_fence": ["bottom", "full", "middle", "top"],
+      "twilightforest:west_fence": ["bottom", "full", "middle", "top"]
+    },
+    "twilightforest:yellow_castle_door": {
+      "twilightforest:active": ["false", "true"],
+      "twilightforest:vanish": ["false", "true"]
+    },
+    "twilightforest:yellow_castle_rune_brick": {},
+    "twilightforest:zombie_skull_candle": {},
+    "twilightforest:zombie_wall_skull_candle": {}
+  },
+  "data": {
+    "twilightforest/loot_table": 634,
+    "twilightforest/recipe": 538,
+    "twilightforest/advancement": 530,
+    "twilightforest/tags": 154,
+    "twilightforest/worldgen": 306,
+    "twilightforest/twilight": 290,
+    "twilightforest/data_maps": 5
+  },
+  "items": [
+    "twilightforest:alpha_yeti_banner_pattern",
+    "twilightforest:alpha_yeti_fur",
+    "twilightforest:alpha_yeti_trophy",
+    "twilightforest:arctic_boots",
+    "twilightforest:arctic_chestplate",
+    "twilightforest:arctic_fur",
+    "twilightforest:arctic_helmet",
+    "twilightforest:arctic_leggings",
+    "twilightforest:armor_shard",
+    "twilightforest:armor_shard_cluster",
+    "twilightforest:beef_jerky",
+    "twilightforest:berry_medley",
+    "twilightforest:blackberry",
+    "twilightforest:blightberry",
+    "twilightforest:block_and_chain",
+    "twilightforest:blue_force_field",
+    "twilightforest:blueberry",
+    "twilightforest:borer_essence",
+    "twilightforest:brittle_potion_flask",
+    "twilightforest:canopy_boat",
+    "twilightforest:canopy_chest_boat",
+    "twilightforest:canopy_door",
+    "twilightforest:canopy_hanging_sign",
+    "twilightforest:canopy_sapling",
+    "twilightforest:canopy_sign",
+    "twilightforest:canopy_window_pane",
+    "twilightforest:carminite",
+    "twilightforest:charm_of_keeping_1",
+    "twilightforest:charm_of_keeping_2",
+    "twilightforest:charm_of_keeping_3",
+    "twilightforest:charm_of_life_1",
+    "twilightforest:charm_of_life_2",
+    "twilightforest:chicken_jerky",
+    "twilightforest:cicada_jar",
+    "twilightforest:clover_patch",
+    "twilightforest:cod_jerky",
+    "twilightforest:cooked_meef",
+    "twilightforest:cooked_venison",
+    "twilightforest:copper_berry",
+    "twilightforest:copper_nugget",
+    "twilightforest:creeper_skull_candle",
+    "twilightforest:crown_splinter",
+    "twilightforest:crumble_horn",
+    "twilightforest:cube_of_annihilation",
+    "twilightforest:cube_talisman",
+    "twilightforest:dark_boat",
+    "twilightforest:dark_chest_boat",
+    "twilightforest:dark_door",
+    "twilightforest:dark_hanging_sign",
+    "twilightforest:dark_sign",
+    "twilightforest:darkwood_sapling",
+    "twilightforest:diamond_minotaur_axe",
+    "twilightforest:duskberry",
+    "twilightforest:emperors_cloth",
+    "twilightforest:ender_bow",
+    "twilightforest:essence_berry",
+    "twilightforest:exanimate_essence",
+    "twilightforest:experiment_115",
+    "twilightforest:fallen_leaves",
+    "twilightforest:fiddlehead",
+    "twilightforest:fiery_blood",
+    "twilightforest:fiery_boots",
+    "twilightforest:fiery_chestplate",
+    "twilightforest:fiery_helmet",
+    "twilightforest:fiery_ingot",
+    "twilightforest:fiery_leggings",
+    "twilightforest:fiery_pickaxe",
+    "twilightforest:fiery_sword",
+    "twilightforest:fiery_tears",
+    "twilightforest:filled_magic_map",
+    "twilightforest:filled_maze_map",
+    "twilightforest:filled_ore_map",
+    "twilightforest:firefly_jar",
+    "twilightforest:fortification_scepter",
+    "twilightforest:four_leaf_clover",
+    "twilightforest:fugu_jerky",
+    "twilightforest:gelatinous_maze_slime_drop",
+    "twilightforest:gelatinous_slime_drop",
+    "twilightforest:giant_pickaxe",
+    "twilightforest:giant_sword",
+    "twilightforest:glass_sword",
+    "twilightforest:gold_berry",
+    "twilightforest:gold_minotaur_axe",
+    "twilightforest:greater_potion_flask",
+    "twilightforest:green_force_field",
+    "twilightforest:hollow_acacia_log",
+    "twilightforest:hollow_birch_log",
+    "twilightforest:hollow_canopy_log",
+    "twilightforest:hollow_cherry_log",
+    "twilightforest:hollow_crimson_stem",
+    "twilightforest:hollow_dark_log",
+    "twilightforest:hollow_dark_oak_log",
+    "twilightforest:hollow_jungle_log",
+    "twilightforest:hollow_mangrove_log",
+    "twilightforest:hollow_mining_log",
+    "twilightforest:hollow_oak_log",
+    "twilightforest:hollow_oak_sapling",
+    "twilightforest:hollow_sorting_log",
+    "twilightforest:hollow_spruce_log",
+    "twilightforest:hollow_time_log",
+    "twilightforest:hollow_transformation_log",
+    "twilightforest:hollow_twilight_oak_log",
+    "twilightforest:hollow_vangrove_log",
+    "twilightforest:hollow_warped_stem",
+    "twilightforest:huge_lily_pad",
+    "twilightforest:huge_water_lily",
+    "twilightforest:hydra_banner_pattern",
+    "twilightforest:hydra_chop",
+    "twilightforest:hydra_trophy",
+    "twilightforest:ice_bomb",
+    "twilightforest:ice_bow",
+    "twilightforest:ice_sword",
+    "twilightforest:iron_berry",
+    "twilightforest:ironwood_axe",
+    "twilightforest:ironwood_boots",
+    "twilightforest:ironwood_chestplate",
+    "twilightforest:ironwood_helmet",
+    "twilightforest:ironwood_hoe",
+    "twilightforest:ironwood_ingot",
+    "twilightforest:ironwood_leggings",
+    "twilightforest:ironwood_pickaxe",
+    "twilightforest:ironwood_shovel",
+    "twilightforest:ironwood_sword",
+    "twilightforest:keepsake_casket",
+    "twilightforest:knight_phantom_banner_pattern",
+    "twilightforest:knight_phantom_trophy",
+    "twilightforest:knightmetal_axe",
+    "twilightforest:knightmetal_boots",
+    "twilightforest:knightmetal_chestplate",
+    "twilightforest:knightmetal_helmet",
+    "twilightforest:knightmetal_ingot",
+    "twilightforest:knightmetal_leggings",
+    "twilightforest:knightmetal_pickaxe",
+    "twilightforest:knightmetal_ring",
+    "twilightforest:knightmetal_shield",
+    "twilightforest:knightmetal_sword",
+    "twilightforest:lamp_of_cinders",
+    "twilightforest:lich_banner_pattern",
+    "twilightforest:lich_trophy",
+    "twilightforest:lifedrain_scepter",
+    "twilightforest:liveroot",
+    "twilightforest:magic_beans",
+    "twilightforest:magic_map",
+    "twilightforest:magic_map_focus",
+    "twilightforest:magic_painting",
+    "twilightforest:maloberry",
+    "twilightforest:mangrove_boat",
+    "twilightforest:mangrove_chest_boat",
+    "twilightforest:mangrove_door",
+    "twilightforest:mangrove_hanging_sign",
+    "twilightforest:mangrove_sapling",
+    "twilightforest:mangrove_sign",
+    "twilightforest:mason_jar",
+    "twilightforest:mayapple",
+    "twilightforest:maze_map",
+    "twilightforest:maze_map_focus",
+    "twilightforest:maze_slime_ball",
+    "twilightforest:maze_wafer",
+    "twilightforest:mazebreaker_pickaxe",
+    "twilightforest:meef_jerky",
+    "twilightforest:meef_stroganoff",
+    "twilightforest:mining_boat",
+    "twilightforest:mining_chest_boat",
+    "twilightforest:mining_door",
+    "twilightforest:mining_hanging_sign",
+    "twilightforest:mining_sapling",
+    "twilightforest:mining_sign",
+    "twilightforest:minoshroom_banner_pattern",
+    "twilightforest:minoshroom_trophy",
+    "twilightforest:monster_jerky",
+    "twilightforest:moon_dial",
+    "twilightforest:moonworm_queen",
+    "twilightforest:moss_patch",
+    "twilightforest:moss_soup",
+    "twilightforest:mushgloom",
+    "twilightforest:music_disc_findings",
+    "twilightforest:music_disc_home",
+    "twilightforest:music_disc_maker",
+    "twilightforest:music_disc_motion",
+    "twilightforest:music_disc_radiance",
+    "twilightforest:music_disc_steps",
+    "twilightforest:music_disc_superstitious",
+    "twilightforest:music_disc_thread",
+    "twilightforest:music_disc_wayfarer",
+    "twilightforest:mutton_jerky",
+    "twilightforest:mystic_crown",
+    "twilightforest:naga_banner_pattern",
+    "twilightforest:naga_chestplate",
+    "twilightforest:naga_leggings",
+    "twilightforest:naga_scale",
+    "twilightforest:naga_trophy",
+    "twilightforest:orange_force_field",
+    "twilightforest:ore_magnet",
+    "twilightforest:ore_map",
+    "twilightforest:ore_meter",
+    "twilightforest:peacock_feather_fan",
+    "twilightforest:phantom_chestplate",
+    "twilightforest:phantom_helmet",
+    "twilightforest:piglin_skull_candle",
+    "twilightforest:pink_force_field",
+    "twilightforest:player_skull_candle",
+    "twilightforest:pocket_watch",
+    "twilightforest:pork_jerky",
+    "twilightforest:quest_ram_banner_pattern",
+    "twilightforest:quest_ram_trophy",
+    "twilightforest:rabbit_jerky",
+    "twilightforest:rainbow_oak_sapling",
+    "twilightforest:raspberry",
+    "twilightforest:raven_feather",
+    "twilightforest:raw_ironwood",
+    "twilightforest:raw_meef",
+    "twilightforest:raw_venison",
+    "twilightforest:red_thread",
+    "twilightforest:root_strand",
+    "twilightforest:rope",
+    "twilightforest:salmon_jerky",
+    "twilightforest:seeker_bow",
+    "twilightforest:shika_senbei",
+    "twilightforest:skeleton_skull_candle",
+    "twilightforest:skyberry",
+    "twilightforest:snow_queen_banner_pattern",
+    "twilightforest:snow_queen_trophy",
+    "twilightforest:sorting_boat",
+    "twilightforest:sorting_chest_boat",
+    "twilightforest:sorting_door",
+    "twilightforest:sorting_hanging_sign",
+    "twilightforest:sorting_sapling",
+    "twilightforest:sorting_sign",
+    "twilightforest:stale_bread",
+    "twilightforest:steeleaf_axe",
+    "twilightforest:steeleaf_boots",
+    "twilightforest:steeleaf_chestplate",
+    "twilightforest:steeleaf_helmet",
+    "twilightforest:steeleaf_hoe",
+    "twilightforest:steeleaf_ingot",
+    "twilightforest:steeleaf_leggings",
+    "twilightforest:steeleaf_pickaxe",
+    "twilightforest:steeleaf_shovel",
+    "twilightforest:steeleaf_sword",
+    "twilightforest:stingberry",
+    "twilightforest:tanned_leather",
+    "twilightforest:tannin",
+    "twilightforest:thorn_rose",
+    "twilightforest:time_boat",
+    "twilightforest:time_chest_boat",
+    "twilightforest:time_door",
+    "twilightforest:time_hanging_sign",
+    "twilightforest:time_sapling",
+    "twilightforest:time_sign",
+    "twilightforest:torchberries",
+    "twilightforest:torchberry_plant",
+    "twilightforest:tower_key",
+    "twilightforest:transformation_boat",
+    "twilightforest:transformation_chest_boat",
+    "twilightforest:transformation_door",
+    "twilightforest:transformation_hanging_sign",
+    "twilightforest:transformation_powder",
+    "twilightforest:transformation_sapling",
+    "twilightforest:transformation_sign",
+    "twilightforest:travellers_belt",
+    "twilightforest:travellers_boots",
+    "twilightforest:travellers_gloves",
+    "twilightforest:travellers_goggles",
+    "twilightforest:travellers_vest",
+    "twilightforest:travellers_wings",
+    "twilightforest:treated_leather",
+    "twilightforest:triple_bow",
+    "twilightforest:trollber",
+    "twilightforest:trollvidr",
+    "twilightforest:tropical_fish_jerky",
+    "twilightforest:twilight_oak_boat",
+    "twilightforest:twilight_oak_chest_boat",
+    "twilightforest:twilight_oak_door",
+    "twilightforest:twilight_oak_hanging_sign",
+    "twilightforest:twilight_oak_sapling",
+    "twilightforest:twilight_oak_sign",
+    "twilightforest:twilight_scepter",
+    "twilightforest:unripe_trollber",
+    "twilightforest:ur_ghast_banner_pattern",
+    "twilightforest:ur_ghast_trophy",
+    "twilightforest:venison_jerky",
+    "twilightforest:violet_force_field",
+    "twilightforest:wither_skeleton_skull_candle",
+    "twilightforest:wrought_iron_bar",
+    "twilightforest:yeti_boots",
+    "twilightforest:yeti_chestplate",
+    "twilightforest:yeti_helmet",
+    "twilightforest:yeti_leggings",
+    "twilightforest:zombie_scepter",
+    "twilightforest:zombie_skull_candle"
+  ],
+  "entities": [
+    "twilightforest:adherent",
+    "twilightforest:alpha_yeti",
+    "twilightforest:armored_giant",
+    "twilightforest:bighorn_sheep",
+    "twilightforest:blockchain_goblin",
+    "twilightforest:boar",
+    "twilightforest:carminite_broodling",
+    "twilightforest:carminite_ghastguard",
+    "twilightforest:carminite_ghastling",
+    "twilightforest:carminite_golem",
+    "twilightforest:chain_block",
+    "twilightforest:charm_effect",
+    "twilightforest:cube_of_annihilation",
+    "twilightforest:death_tome",
+    "twilightforest:deer",
+    "twilightforest:dwarf_rabbit",
+    "twilightforest:falling_ice",
+    "twilightforest:fire_beetle",
+    "twilightforest:giant_miner",
+    "twilightforest:harbinger_cube",
+    "twilightforest:hedge_spider",
+    "twilightforest:helmet_crab",
+    "twilightforest:hostile_wolf",
+    "twilightforest:hydra",
+    "twilightforest:hydra_mortar",
+    "twilightforest:ice_arrow",
+    "twilightforest:ice_crystal",
+    "twilightforest:ice_snowball",
+    "twilightforest:king_spider",
+    "twilightforest:knight_phantom",
+    "twilightforest:kobold",
+    "twilightforest:lich",
+    "twilightforest:lich_bolt",
+    "twilightforest:lich_bomb",
+    "twilightforest:lich_minion",
+    "twilightforest:lower_goblin_knight",
+    "twilightforest:loyal_zombie",
+    "twilightforest:magic_painting",
+    "twilightforest:maze_slime",
+    "twilightforest:minoshroom",
+    "twilightforest:minotaur",
+    "twilightforest:mist_wolf",
+    "twilightforest:moonworm_shot",
+    "twilightforest:mosquito_swarm",
+    "twilightforest:naga",
+    "twilightforest:nature_bolt",
+    "twilightforest:penguin",
+    "twilightforest:pinch_beetle",
+    "twilightforest:plateau_boss",
+    "twilightforest:protection_box",
+    "twilightforest:quest_ram",
+    "twilightforest:raven",
+    "twilightforest:redcap",
+    "twilightforest:redcap_sapper",
+    "twilightforest:rising_zombie",
+    "twilightforest:roving_cube",
+    "twilightforest:seeker_arrow",
+    "twilightforest:skeleton_druid",
+    "twilightforest:slider",
+    "twilightforest:slime_beetle",
+    "twilightforest:slime_blob",
+    "twilightforest:snow_guardian",
+    "twilightforest:snow_queen",
+    "twilightforest:squirrel",
+    "twilightforest:stable_ice_core",
+    "twilightforest:swarm_spider",
+    "twilightforest:thrown_block",
+    "twilightforest:thrown_ice",
+    "twilightforest:thrown_wep",
+    "twilightforest:tiny_bird",
+    "twilightforest:tome_bolt",
+    "twilightforest:towerwood_borer",
+    "twilightforest:troll",
+    "twilightforest:unstable_ice_core",
+    "twilightforest:upper_goblin_knight",
+    "twilightforest:ur_ghast",
+    "twilightforest:wand_bolt",
+    "twilightforest:winter_wolf",
+    "twilightforest:wraith",
+    "twilightforest:yeti"
+  ],
+  "spawnEggs": [
+    "twilightforest:alpha_yeti_spawn_egg",
+    "twilightforest:armored_giant_spawn_egg",
+    "twilightforest:bighorn_sheep_spawn_egg",
+    "twilightforest:blockchain_goblin_spawn_egg",
+    "twilightforest:boar_spawn_egg",
+    "twilightforest:carminite_broodling_spawn_egg",
+    "twilightforest:carminite_ghastguard_spawn_egg",
+    "twilightforest:carminite_ghastling_spawn_egg",
+    "twilightforest:carminite_golem_spawn_egg",
+    "twilightforest:death_tome_spawn_egg",
+    "twilightforest:deer_spawn_egg",
+    "twilightforest:dwarf_rabbit_spawn_egg",
+    "twilightforest:fire_beetle_spawn_egg",
+    "twilightforest:giant_miner_spawn_egg",
+    "twilightforest:hedge_spider_spawn_egg",
+    "twilightforest:helmet_crab_spawn_egg",
+    "twilightforest:hostile_wolf_spawn_egg",
+    "twilightforest:hydra_spawn_egg",
+    "twilightforest:ice_crystal_spawn_egg",
+    "twilightforest:king_spider_spawn_egg",
+    "twilightforest:knight_phantom_spawn_egg",
+    "twilightforest:kobold_spawn_egg",
+    "twilightforest:lich_spawn_egg",
+    "twilightforest:lower_goblin_knight_spawn_egg",
+    "twilightforest:maze_slime_spawn_egg",
+    "twilightforest:minoshroom_spawn_egg",
+    "twilightforest:minotaur_spawn_egg",
+    "twilightforest:mist_wolf_spawn_egg",
+    "twilightforest:mosquito_swarm_spawn_egg",
+    "twilightforest:naga_spawn_egg",
+    "twilightforest:penguin_spawn_egg",
+    "twilightforest:pinch_beetle_spawn_egg",
+    "twilightforest:quest_ram_spawn_egg",
+    "twilightforest:raven_spawn_egg",
+    "twilightforest:redcap_sapper_spawn_egg",
+    "twilightforest:redcap_spawn_egg",
+    "twilightforest:skeleton_druid_spawn_egg",
+    "twilightforest:slime_beetle_spawn_egg",
+    "twilightforest:snow_guardian_spawn_egg",
+    "twilightforest:snow_queen_spawn_egg",
+    "twilightforest:squirrel_spawn_egg",
+    "twilightforest:stable_ice_core_spawn_egg",
+    "twilightforest:swarm_spider_spawn_egg",
+    "twilightforest:tiny_bird_spawn_egg",
+    "twilightforest:towerwood_borer_spawn_egg",
+    "twilightforest:troll_spawn_egg",
+    "twilightforest:unstable_ice_core_spawn_egg",
+    "twilightforest:ur_ghast_spawn_egg",
+    "twilightforest:winter_wolf_spawn_egg",
+    "twilightforest:wraith_spawn_egg",
+    "twilightforest:yeti_spawn_egg"
+  ]
+}

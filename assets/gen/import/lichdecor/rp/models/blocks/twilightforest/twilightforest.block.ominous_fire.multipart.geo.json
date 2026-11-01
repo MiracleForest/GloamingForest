@@ -1,0 +1,166 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.twilightforest.block.ominous_fire.multipart",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "part0",
+          "pivot": [0, 8, 0],
+          "cubes": [
+            {
+              "origin": [-8, -0.6591, 0.8659],
+              "size": [16, 24.2456, 0],
+              "pivot": [0, 8, 0],
+              "rotation": [-22.5, 0, 0],
+              "uv": {
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                }
+              }
+            },
+            {
+              "origin": [-8, -0.6591, -0.8659],
+              "size": [16, 24.2456, 0],
+              "pivot": [0, 8, 0],
+              "rotation": [22.5, 0, 0],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                }
+              }
+            },
+            {
+              "origin": [-0.8659, -0.6591, -8],
+              "size": [0, 24.2456, 16],
+              "pivot": [0, 8, 0],
+              "rotation": [0, 0, 22.5],
+              "uv": {
+                "west": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                }
+              }
+            },
+            {
+              "origin": [0.8659, -0.6591, -8],
+              "size": [0, 24.2456, 16],
+              "pivot": [0, 8, 0],
+              "rotation": [0, 0, -22.5],
+              "uv": {
+                "east": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "part1",
+          "pivot": [0, 8, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -7.99],
+              "size": [16, 22.4, 0],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "part2",
+          "pivot": [0, 8, 0],
+          "rotation": [0, 90, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -7.99],
+              "size": [16, 22.4, 0],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "part3",
+          "pivot": [0, 8, 0],
+          "rotation": [0, 180, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -7.99],
+              "size": [16, 22.4, 0],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "part4",
+          "pivot": [0, 8, 0],
+          "rotation": [0, 270, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -7.99],
+              "size": [16, 22.4, 0],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "t_twilightforest_block_ominous_fire_0"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

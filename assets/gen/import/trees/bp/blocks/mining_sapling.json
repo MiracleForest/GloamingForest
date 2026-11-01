@@ -1,0 +1,40 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:mining_sapling",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:stage": [0, 1]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:map_color": "#007c00",
+      "minecraft:collision_box": false,
+      "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_mining_sapling",
+          "render_method": "alpha_test"
+        },
+        "cross": {
+          "texture": "tf_block_mining_sapling",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:selection_box": {
+        "origin": [-7.2, 0, -7.2],
+        "size": [14.4, 16, 14.4]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

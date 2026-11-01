@@ -1,0 +1,76 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:carminite_block",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 10
+      },
+      "minecraft:map_color": "#993333",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.carminite_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_carminite_block",
+          "render_method": "alpha_test"
+        },
+        "bottom": {
+          "texture": "tf_block_carminite_block",
+          "render_method": "alpha_test"
+        },
+        "bottom2": {
+          "texture": "tf_block_carminite_block_overlay",
+          "render_method": "alpha_test"
+        },
+        "east": {
+          "texture": "tf_block_carminite_block",
+          "render_method": "alpha_test"
+        },
+        "east2": {
+          "texture": "tf_block_carminite_block_overlay",
+          "render_method": "alpha_test"
+        },
+        "north": {
+          "texture": "tf_block_carminite_block",
+          "render_method": "alpha_test"
+        },
+        "north2": {
+          "texture": "tf_block_carminite_block_overlay",
+          "render_method": "alpha_test"
+        },
+        "south": {
+          "texture": "tf_block_carminite_block",
+          "render_method": "alpha_test"
+        },
+        "south2": {
+          "texture": "tf_block_carminite_block_overlay",
+          "render_method": "alpha_test"
+        },
+        "top": {
+          "texture": "tf_block_carminite_block",
+          "render_method": "alpha_test"
+        },
+        "top2": {
+          "texture": "tf_block_carminite_block_overlay",
+          "render_method": "alpha_test"
+        },
+        "west": {
+          "texture": "tf_block_carminite_block",
+          "render_method": "alpha_test"
+        },
+        "west2": {
+          "texture": "tf_block_carminite_block_overlay",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

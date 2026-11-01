@@ -1,0 +1,22 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:travellers_vest",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_travellers_vest"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:travellers_vest.name"
+      },
+      "minecraft:max_stack_size": 1
+    }
+  }
+}

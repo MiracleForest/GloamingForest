@@ -1,0 +1,273 @@
+[
+  {
+    "id": "twilightforest:bold_castle_brick_pillar",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "copyOf": "twilightforest:castle_brick",
+      "states": ["axis"]
+    }
+  },
+  {
+    "id": "twilightforest:bold_castle_brick_stairs",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:bold_castle_brick_pillar",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:bold_stone_pillar",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "states": ["axis"]
+    }
+  },
+  {
+    "id": "twilightforest:canopy_window_pane",
+    "family": "pane",
+    "params": {
+      "class": "IronBarsBlock",
+      "states": ["east", "north", "south", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:castle_brick_stairs",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:castle_brick",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:cracked_castle_brick_stairs",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:cracked_castle_brick",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:cracked_etched_nagastone",
+    "family": "directional",
+    "params": {
+      "class": "EtchedNagastoneBlock",
+      "vanillaClass": "DirectionalBlock",
+      "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:cracked_nagastone_pillar",
+    "family": "pillar",
+    "params": {
+      "class": "DirectionalRotatedPillarBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["axis", "reversed"]
+    }
+  },
+  {
+    "id": "twilightforest:cracked_nagastone_stairs_left",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:cracked_etched_nagastone",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:cracked_nagastone_stairs_right",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:cracked_etched_nagastone",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:dark_tower_miniature_structure",
+    "family": "horizontal",
+    "params": {
+      "class": "MiniatureStructureBlock",
+      "vanillaClass": "HorizontalDirectionalBlock",
+      "copyOf": "twilightforest:twilight_portal_miniature_structure",
+      "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:encased_castle_brick_pillar",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "copyOf": "twilightforest:castle_brick",
+      "states": ["axis"]
+    }
+  },
+  {
+    "id": "twilightforest:encased_castle_brick_stairs",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:encased_castle_brick_pillar",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:etched_nagastone",
+    "family": "directional",
+    "params": {
+      "class": "EtchedNagastoneBlock",
+      "vanillaClass": "DirectionalBlock",
+      "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:lich_tower_miniature_structure",
+    "family": "horizontal",
+    "params": {
+      "class": "MiniatureStructureBlock",
+      "vanillaClass": "HorizontalDirectionalBlock",
+      "copyOf": "twilightforest:twilight_portal_miniature_structure",
+      "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:minotaur_labyrinth_miniature_structure",
+    "family": "horizontal",
+    "params": {
+      "class": "MiniatureStructureBlock",
+      "vanillaClass": "HorizontalDirectionalBlock",
+      "copyOf": "twilightforest:twilight_portal_miniature_structure",
+      "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:mossy_castle_brick_stairs",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:mossy_castle_brick",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:mossy_etched_nagastone",
+    "family": "directional",
+    "params": {
+      "class": "EtchedNagastoneBlock",
+      "vanillaClass": "DirectionalBlock",
+      "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:mossy_nagastone_pillar",
+    "family": "pillar",
+    "params": {
+      "class": "DirectionalRotatedPillarBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["axis", "reversed"]
+    }
+  },
+  {
+    "id": "twilightforest:mossy_nagastone_stairs_left",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:mossy_etched_nagastone",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:mossy_nagastone_stairs_right",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:mossy_etched_nagastone",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:naga_courtyard_miniature_structure",
+    "family": "horizontal",
+    "params": {
+      "class": "MiniatureStructureBlock",
+      "vanillaClass": "HorizontalDirectionalBlock",
+      "copyOf": "twilightforest:twilight_portal_miniature_structure",
+      "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:nagastone_head",
+    "family": "horizontal",
+    "params": {
+      "class": "TFHorizontalBlock",
+      "vanillaClass": "HorizontalDirectionalBlock",
+      "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:nagastone_pillar",
+    "family": "pillar",
+    "params": {
+      "class": "DirectionalRotatedPillarBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["axis", "reversed"]
+    }
+  },
+  {
+    "id": "twilightforest:nagastone_stairs_left",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:etched_nagastone",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:nagastone_stairs_right",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:etched_nagastone",
+      "states": ["facing", "half", "shape"]
+    }
+  },
+  {
+    "id": "twilightforest:twilight_portal_miniature_structure",
+    "family": "horizontal",
+    "params": {
+      "class": "MiniatureStructureBlock",
+      "vanillaClass": "HorizontalDirectionalBlock",
+      "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:twisted_stone",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "states": ["axis"]
+    }
+  },
+  {
+    "id": "twilightforest:twisted_stone_pillar",
+    "family": "pillar",
+    "params": {
+      "class": "WallPillarBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["axis", "down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:worn_castle_brick_stairs",
+    "family": "stairs",
+    "params": {
+      "class": "StairBlock",
+      "base": "twilightforest:worn_castle_brick",
+      "states": ["facing", "half", "shape"]
+    }
+  }
+]

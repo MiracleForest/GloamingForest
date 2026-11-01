@@ -1,0 +1,893 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:mangrove_door",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:half": ["lower", "upper"],
+        "twilightforest:hinge": ["left", "right"],
+        "twilightforest:open": [false, true],
+        "twilightforest:powered": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 3
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 3
+      },
+      "minecraft:map_color": "#976d4d",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_wood_door_mangrove_lower",
+          "render_method": "opaque"
+        },
+        "bottom": {
+          "texture": "tf_block_wood_door_mangrove_lower",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-8, 0, -8],
+        "size": [3, 16, 16]
+      },
+      "minecraft:selection_box": {
+        "origin": [-8, 0, -8],
+        "size": [3, 16, 16]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'lower' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_bottom_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_door_mangrove_lower",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'left' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_left_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 5],
+            "size": [16, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && !q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [5, 0, -8],
+            "size": [3, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:hinge') == 'right' && q.block_state('twilightforest:open')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.door_top_right_open",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_door_mangrove_upper",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 3]
+          }
+        }
+      }
+    ]
+  }
+}

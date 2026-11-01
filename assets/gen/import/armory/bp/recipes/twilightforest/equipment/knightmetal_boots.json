@@ -1,0 +1,21 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:equipment/knightmetal_boots"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["# #", "# #"],
+    "key": {
+      "#": {
+        "item": "twilightforest:knightmetal_ingot"
+      }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:knightmetal_boots"
+    }
+  }
+}

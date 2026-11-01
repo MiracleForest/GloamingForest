@@ -1,0 +1,259 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:candelabra",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:on_wall": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 1.5
+      },
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.candelabra",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_candelabra",
+          "render_method": "alpha_test"
+        },
+        "candelabra": {
+          "texture": "tf_block_candelabra",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 90, 0]
+      },
+      "minecraft:collision_box": {
+        "origin": [-3, 0, -8],
+        "size": [6, 8, 16]
+      },
+      "minecraft:selection_box": {
+        "origin": [-3, 0, -8],
+        "size": [6, 8, 16]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && !q.block_state('twilightforest:on_wall')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.candelabra",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            },
+            "candelabra": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-3, 0, -8],
+            "size": [6, 8, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-3, 0, -8],
+            "size": [6, 8, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:on_wall')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.wall_candelabra",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            },
+            "candelabra": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [1, 1, -8],
+            "size": [7, 7, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [1, 1, -8],
+            "size": [7, 7, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && !q.block_state('twilightforest:on_wall')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.candelabra",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            },
+            "candelabra": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -3],
+            "size": [16, 8, 6]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -3],
+            "size": [16, 8, 6]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:on_wall')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.wall_candelabra",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            },
+            "candelabra": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 1, -8],
+            "size": [16, 7, 7]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 1, -8],
+            "size": [16, 7, 7]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && !q.block_state('twilightforest:on_wall')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.candelabra",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            },
+            "candelabra": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -3],
+            "size": [16, 8, 6]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -3],
+            "size": [16, 8, 6]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:on_wall')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.wall_candelabra",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            },
+            "candelabra": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 1, 1],
+            "size": [16, 7, 7]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 1, 1],
+            "size": [16, 7, 7]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && !q.block_state('twilightforest:on_wall')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.candelabra",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            },
+            "candelabra": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-3, 0, -8],
+            "size": [6, 8, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-3, 0, -8],
+            "size": [6, 8, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:on_wall')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.wall_candelabra",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            },
+            "candelabra": {
+              "texture": "tf_block_candelabra",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 1, -8],
+            "size": [7, 7, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 1, -8],
+            "size": [7, 7, 16]
+          }
+        }
+      }
+    ]
+  }
+}
