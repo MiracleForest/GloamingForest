@@ -45,6 +45,8 @@ void setTestParticipants(int n);
 /// The `bosses` config's multiplayerFightAdjuster adds loot (MORE_LOOT / MORE_LOOT_AND_HEALTH);
 /// selftests may force it.
 [[nodiscard]] bool adjustsLootRolls();
+/// Forgets the cached adjuster (the configs were reloaded).
+void invalidateAdjuster();
 void               setTestAdjustsLoot(std::optional<bool> value);
 
 /// A mob died (the death pipeline): its Java loot table (TF entities) and the onEntityDrops

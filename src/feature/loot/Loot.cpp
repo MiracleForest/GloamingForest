@@ -59,8 +59,10 @@
 #include "mc/world/level/block/actor/RandomizableBlockActorContainerBase.h"
 #include "mc/world/level/storage/GameRuleId.h"
 #include "mc/world/level/storage/GameRules.h"
+#include "mc/world/level/Tick.h"
 
 #include "feature/boss/Boss.h"
+#include "feature/common/BlockData.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/loot/JavaRandom.h"
 #include "feature/loot/LootInternal.h"
@@ -229,6 +231,27 @@ std::optional<FunctionFn> customFunction(std::string const& id) {
 }
 
 std::optional<float> currentExplosionRadius() { return tExplosion; }
+
+namespace {
+struct Erased {
+    Json          doc;
+    std::uint64_t tick = 0;
+};
+std::map<core::GlobalPos, Erased>& erasedDocs() {
+    static std::map<core::GlobalPos, Erased> m;
+    return m;
+}
+std::uint64_t currentTick() {
+    auto level = ll::service::getLevel();
+    return level ? static_cast<std::uint64_t>(level->getCurrentTick().tickID) : 0;
+}
+} // namespace
+
+Json const* recentlyErased(core::GlobalPos const& pos) {
+    auto it = erasedDocs().find(pos);
+    if (it == erasedDocs().end() || it->second.tick != currentTick()) return nullptr;
+    return &it->second.doc;
+}
 ExplosionScope::ExplosionScope(std::optional<float> radius) : mPrevious(tExplosion) { tExplosion = radius; }
 ExplosionScope::~ExplosionScope() { tExplosion = mPrevious; }
 
@@ -246,11 +269,29 @@ void setTestParticipants(int n) {
     registry().testParticipants = n;
 }
 
+namespace {
+/// The `bosses` section's adjuster, read once per config load (nullopt: not read yet).
+std::optional<bool>& adjusterCache() {
+    static std::optional<bool> v;
+    return v;
+}
+bool readAdjuster();
+} // namespace
+
+void invalidateAdjuster() {
+    std::lock_guard lock(registry().mutex);
+    adjusterCache().reset();
+}
+
 bool adjustsLootRolls() {
-    {
-        std::lock_guard lock(registry().mutex);
-        if (registry().testAdjusts) return *registry().testAdjusts;
-    }
+    std::lock_guard lock(registry().mutex);
+    if (registry().testAdjusts) return *registry().testAdjusts;
+    if (!adjusterCache()) adjusterCache() = readAdjuster();
+    return *adjusterCache();
+}
+
+namespace {
+bool readAdjuster() {
     // TFConfig.multiplayerFightAdjuster lives in the `bosses` section (F8): MORE_LOOT and
     // MORE_LOOT_AND_HEALTH add loot
     for (auto const& entry : config::ConfigRegistry::entries()) {
@@ -266,6 +307,7 @@ bool adjustsLootRolls() {
     }
     return false; // TF's default NONE
 }
+} // namespace
 
 void setTestAdjustsLoot(std::optional<bool> value) {
     std::lock_guard lock(registry().mutex);
@@ -280,8 +322,8 @@ std::vector<ItemStack> rollWith(std::string const& tableId, LootContext const& c
         warnOnce("unknown loot table " + tableId);
         return {};
     }
-    Json copy = *t; // the cache may change while rolling (nested tables load lazily)
-    return applyModifiers(rollRaw(copy, tableId, ctx, random), ctx, tableId);
+    // the caches are node-based maps: nested tables loading during the roll keep `t` valid
+    return applyModifiers(rollRaw(*t, tableId, ctx, random), ctx, tableId);
 }
 
 std::vector<ItemStack> roll(std::string const& tableId, LootContext const& ctx) {
@@ -574,6 +616,15 @@ public:
         if (!registered) {
             registered = true;
             game::db::onWorldReady([] { clearCache(); });
+            game::db::onWorldClosed([] { erasedDocs().clear(); });
+            // a block's data as it goes: copy_components reads it when the drops roll
+            blockdata::onErase([](core::GlobalPos const& pos, Json const& doc, std::string const& previous) {
+                if (previous.empty()) return;
+                auto now = currentTick();
+                std::erase_if(erasedDocs(), [now](auto const& e) { return e.second.tick != now; });
+                erasedDocs()[pos] = Erased{doc, now};
+            });
+            config::onReload([] { invalidateAdjuster(); });
             // ModExistsCondition: GloamingForest is TF and Minecraft (docs/spec deviations)
             registerCondition("twilightforest:mod_exists", [](LootContext const&, Json const& config, RandomSource&) {
                 auto mod = config.value("mod_id", std::string{});

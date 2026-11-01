@@ -181,6 +181,14 @@ bool set(std::string const& id, Value value) {
     return true;
 }
 
+void unregisterRule(std::string const& id) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    s.rules.erase(id);
+    ensureLoaded();
+    if (s.values.erase(id) && game::db::available()) saveValues();
+}
+
 std::vector<std::string> ids() {
     std::lock_guard          lock(store().mutex);
     std::vector<std::string> out;

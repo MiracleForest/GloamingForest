@@ -3,6 +3,7 @@
 // F10-internal parts of gf::combat (the death pipeline, loot and selftests use them).
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -42,7 +43,8 @@ struct DamageTypeSpec {
 /// The TF death message of `victim` (Java's DamageSource#getLocalizedDeathMessage for the last
 /// gf::combat::hurt that hit it this tick or the previous one): {key, params} with params[0] the
 /// victim's name; an empty key when the last damage was not a TF one.
-[[nodiscard]] std::pair<std::string, std::vector<std::string>> deathMessageFor(Actor& victim, std::string const& deadName);
+[[nodiscard]] std::pair<std::string, std::vector<std::string>>
+deathMessageFor(Actor& victim, std::string const& deadName, std::optional<SharedTypes::Legacy::ActorDamageCause> killingCause = std::nullopt);
 /// The Bedrock display name of an entity for a death message ("Steve", "%entity.zombie.name").
 [[nodiscard]] std::string nameParam(Actor& actor);
 

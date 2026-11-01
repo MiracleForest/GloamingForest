@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "core/GlobalPos.h"
 #include "feature/loot/Loot.h"
 
 namespace gf::loot {
@@ -19,6 +20,10 @@ namespace gf::loot {
 [[nodiscard]] bool hasGlobalModifiers();
 /// Runs the global modifiers over `loot` (Bedrock's own drops of vanilla blocks).
 [[nodiscard]] std::vector<ItemStack> applyGlobalModifiers(std::vector<ItemStack> loot, LootContext const& ctx, std::string const& tableId);
+
+/// The block data document erased at `pos` this tick (the block's drops roll after it went),
+/// nullptr when none.
+[[nodiscard]] Json const* recentlyErased(core::GlobalPos const& pos);
 
 /// Java's EXPLOSION_RADIUS loot parameter while block drops of an explosion roll.
 [[nodiscard]] std::optional<float> currentExplosionRadius();

@@ -442,18 +442,21 @@ std::string nameParam(Actor& actor) {
     return "%entity." + type + ".name";
 }
 
-std::pair<std::string, std::vector<std::string>> deathMessageFor(Actor& victim, std::string const& deadName) {
+std::pair<std::string, std::vector<std::string>> deathMessageFor(Actor& victim, std::string const& deadName, std::optional<Cause> killingCause) {
     auto m = markOf(victim);
     if (!m) return {};
+    // the killing damage must be the TF one (not other damage in the same tick)
+    if (killingCause && *killingCause != causeFor(m->type, m->attacker != 0)) return {};
     auto const* spec = damageType(m->type);
     if (!spec) return {};
     std::string key      = "death.attack." + spec->messageId;
     Actor*      attacker = fetch(m->attacker);
     Actor*      direct   = fetch(m->direct);
     if (!m->attacker && !m->direct) {
-        // Java: the kill credit (last player / mob that hurt the victim) -> ".player"
-        Actor* killer = fetch(victim.mLastHurtByPlayerId->rawID);
-        if (!killer) killer = fetch(victim.mLastHurtByMobId->rawID);
+        // Java: the kill credit (LivingEntity#getKillCredit: the player within 100 ticks of its
+        // hit, else the last mob) -> ".player"
+        Actor* killer = victim.mLastHurtByPlayerTime > 0 ? fetch(victim.mLastHurtByPlayerId->rawID) : nullptr;
+        if (!killer && victim.mLastHurtByMobTime > 0) killer = fetch(victim.mLastHurtByMobId->rawID);
         if (killer && killer != &victim) return {key + ".player", {deadName, nameParam(*killer)}};
         return {key, {deadName}};
     }
@@ -599,7 +602,7 @@ LL_TYPE_INSTANCE_HOOK(
     Actor*             dead
 ) {
     if (dead) {
-        auto tf = gf::combat::deathMessageFor(*dead, deadName);
+        auto tf = gf::combat::deathMessageFor(*dead, deadName, mCause);
         if (!tf.first.empty()) return tf;
     }
     return origin(deadName, dead);

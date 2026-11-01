@@ -26,6 +26,8 @@
 #include <random>
 #include <set>
 
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/form/SimpleForm.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
@@ -48,13 +50,13 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/DataDrivenBlockActor.h"
 #include "mc/world/level/block/actor/component/ContainerBlockActorComponent.h"
 #include "mc/world/level/block/actor/component/IBlockActorComponent.h"
 
 #include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
 #include "feature/common/Screens.h"
-#include "feature/families/BlockEvents.h"
 #include "feature/inventory/InventoryInternal.h"
 #include "feature/loot/LootInternal.h"
 #include "feature/net/Net.h"
@@ -90,6 +92,12 @@ public:
         if (slot < 0 || slot >= static_cast<int>(mItems.size())) return;
         mItems[static_cast<std::size_t>(slot)] = item;
         setContainerChanged(slot);
+        // the chunk saves changed block actors: tell it this one changed (screen edits included)
+        if (where) {
+            if (auto* region = game::regionOf(where->dim); region && region->hasChunksAt(game::blockPos(*where), 0, false)) {
+                if (auto* actor = region->getBlockEntity(game::blockPos(*where))) region->fireBlockEntityChanged(*actor);
+            }
+        }
     }
     int  getContainerSize() const override { return static_cast<int>(mItems.size()); }
     int  getMaxStackSize() const override { return 64; }
@@ -104,7 +112,8 @@ public:
         }
     }
 
-    std::vector<ItemStack> mItems;
+    std::vector<ItemStack>   mItems;
+    std::optional<GlobalPos> where; ///< the block, once looked up (nativeContainer)
 };
 
 struct GfContainerComponent;
@@ -228,7 +237,8 @@ void writeSlot(GlobalPos const& pos, int slot, ItemStack const& stack, int size)
 
 /// Fills in the default backend for the members a registration left empty.
 Handler withDefaults(Handler h) {
-    int size = h.slots;
+    int  size       = h.slots;
+    bool defaultGet = !h.get;
     if (!h.get)
         h.get = [size](GlobalPos const& pos, int slot) {
             unpackLoot(pos, nullptr);
@@ -242,23 +252,36 @@ Handler withDefaults(Handler h) {
         };
     auto get = h.get;
     auto set = h.set;
+    // every slot at once: one read of the storage for the default backend
+    auto getAll = [size, get, defaultGet](GlobalPos const& pos) {
+        if (defaultGet) {
+            unpackLoot(pos, nullptr);
+            return readSlots(pos, size);
+        }
+        std::vector<ItemStack> all;
+        for (int i = 0; i < size; ++i) all.push_back(get(pos, i));
+        return all;
+    };
     if (!h.insert)
-        h.insert = [size, get, set](GlobalPos const& pos, ItemStack const& stack, bool simulate) {
+        h.insert = [size, getAll, set](GlobalPos const& pos, ItemStack const& stack, bool simulate) {
             ItemStack rest = stack;
+            auto      all  = getAll(pos);
             // merge into matching stacks first, then empty slots (Java's ItemHandlerHelper order)
             for (int pass = 0; pass < 2 && !game::items::isEmpty(rest); ++pass) {
                 for (int i = 0; i < size && !game::items::isEmpty(rest); ++i) {
-                    auto cur = get(pos, i);
+                    auto& cur = all[static_cast<std::size_t>(i)];
                     int  max = std::min(64, static_cast<int>(rest.getMaxStackSize()));
                     if (pass == 0 && !game::items::isEmpty(cur) && game::items::sameItemSameData(cur, rest)) {
                         int room = max - game::items::countOf(cur);
                         if (room <= 0) continue;
                         int move = std::min(room, game::items::countOf(rest));
-                        if (!simulate) set(pos, i, game::items::withCount(cur, game::items::countOf(cur) + move));
+                        cur      = game::items::withCount(cur, game::items::countOf(cur) + move);
+                        if (!simulate) set(pos, i, cur);
                         rest = game::items::withCount(rest, game::items::countOf(rest) - move);
                     } else if (pass == 1 && game::items::isEmpty(cur)) {
                         int move = std::min(max, game::items::countOf(rest));
-                        if (!simulate) set(pos, i, game::items::withCount(rest, move));
+                        cur      = game::items::withCount(rest, move);
+                        if (!simulate) set(pos, i, cur);
                         rest = game::items::withCount(rest, game::items::countOf(rest) - move);
                     }
                 }
@@ -453,10 +476,7 @@ void screenForm(Player& player, Json const& ctx) {
 
 // ---- data-declared containers ------------------------------------------------------------------------
 
-void dropAll(BlockSource& region, BlockPos const& bp) {
-    auto pos   = game::globalPos(region, bp);
-    auto stuff = contents(pos);
-    if (stuff.empty()) return;
+void spawnAll(BlockSource& region, BlockPos const& bp, std::vector<ItemStack> const& stuff) {
     Vec3 at{static_cast<float>(bp.x) + .5f, static_cast<float>(bp.y) + .5f, static_cast<float>(bp.z) + .5f};
     int  n = 0;
     for (auto const& s : stuff)
@@ -464,8 +484,28 @@ void dropAll(BlockSource& region, BlockPos const& bp) {
             region.getLevel().getSpawner().spawnItem(region, s, nullptr, at, 10);
             ++n;
         }
-    if (nativeContainer(region, bp) == nullptr) blockdata::set(region, bp, kDataKey, nullptr);
     if (n) log().info("inventory: dropped {} stack(s) of the container at {} {} {}", n, bp.x, bp.y, bp.z);
+}
+
+/// A declared BlockData container's document is erased because its block changed (broken,
+/// exploded, replaced): Java's Containers#dropContents in onRemove, a pending table rolled first.
+void dropErased(GlobalPos const& pos, Json const& doc, std::string const& previousBlockId) {
+    if (previousBlockId.empty() || !declared(previousBlockId) || !doc.is_object()) return;
+    auto const& data = doc.contains(kDataKey) ? doc[kDataKey] : Json{};
+    if (!data.is_object()) return;
+    auto* region = regionFor(pos);
+    if (!region) return;
+    std::vector<ItemStack> stuff;
+    for (auto const& item : data.value("items", Json::array())) stuff.push_back(game::items::fromJson(item));
+    auto loot = data.value("loot", Json{});
+    if (loot.is_object() && !loot.value("table", std::string{}).empty()) {
+        loot::LootContext ctx;
+        ctx.region = region;
+        ctx.origin = Vec3{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y) + .5f, static_cast<float>(pos.z) + .5f};
+        ctx.seed   = loot.value("seed", std::int64_t{0});
+        for (auto& s : loot::roll(loot.value("table", std::string{}), ctx)) stuff.push_back(std::move(s));
+    }
+    spawnAll(*region, game::blockPos(pos), stuff);
 }
 
 void ensureInteractions(std::string const& blockId) {
@@ -482,15 +522,12 @@ void ensureInteractions(std::string const& blockId) {
         if (h && h->open) h->open(c.player, c.pos);
         return ia::Result::Consume;
     });
+    // Java: breaking unpacks the loot with the breaker first; the contents drop when the block
+    // goes (dropErased for BlockData, the block actor's onRemoved for native containers)
     ia::onDestroy({.block = blockId}, [](ia::DestroyContext const& c) {
-        if (!declared(c.blockId)) return ia::Result::Pass;
-        if (auto* region = regionFor(c.pos)) {
-            unpackLoot(c.pos, &c.player); // Java: breaking unpacks the loot first
-            if (!nativeContainer(*region, game::blockPos(c.pos))) dropAll(*region, game::blockPos(c.pos));
-        }
+        if (declared(c.blockId)) unpackLoot(c.pos, &c.player);
         return ia::Result::Pass;
     });
-    blockevents::onRemoved(blockId, [](BlockSource& region, BlockPos const& pos, Block const&) { dropAll(region, pos); });
 }
 
 void loadDeclared() {
@@ -546,7 +583,9 @@ Container* nativeContainer(BlockSource& region, BlockPos const& pos) {
         actor->mContainer.reset(reinterpret_cast<ContainerBlockActorComponent*>(new GfContainerComponent(slots)));
         log().warn("inventory: the container at {} {} {} was created late (its saved slots were not read)", pos.x, pos.y, pos.z);
     }
-    return gfContainer(actor);
+    auto* c = gfContainer(actor);
+    if (c && !c->where) c->where = game::globalPos(region, pos);
+    return c;
 }
 
 std::optional<Handler> handlerFor(std::string const& blockId) {
@@ -686,8 +725,31 @@ LL_STATIC_HOOK(
     return std::unique_ptr<ContainerBlockActorComponent>(reinterpret_cast<ContainerBlockActorComponent*>(comp));
 }
 
+// A native container's block is removed: its slots drop (Java's Containers#dropContents). The slots
+// are emptied before the game's own removal runs, so nothing can drop twice.
+LL_TYPE_INSTANCE_HOOK(
+    InventoryNativeRemovedHook,
+    ll::memory::HookPriority::Normal,
+    DataDrivenBlockActor,
+    &DataDrivenBlockActor::$onRemoved,
+    void,
+    BlockSource& region
+) {
+    auto* c = gf::inventory::gfContainer(this);
+    if (!c || region.getLevel().isClientSide()) return origin(region);
+    std::vector<ItemStack> stuff;
+    for (auto& s : c->mItems) {
+        if (!gf::game::items::isEmpty(s)) stuff.push_back(s);
+        s = ItemStack{};
+    }
+    origin(region);
+    gf::inventory::spawnAll(region, getPosition(), stuff);
+}
+
 namespace gf::inventory {
 namespace {
+
+void onDisconnect(Player& player) { screenClosed(player, Json::object()); }
 
 class InventoryModule {
 public:
@@ -700,7 +762,12 @@ public:
     }
     void install() {
         if (!mHooked) InventoryNativeContainerHook::hook();
-        mHooked                = true;
+        mHooked = true;
+        InventoryNativeRemovedHook::hook();
+        // a player who leaves with a stack on the chest screen's cursor gets it back first
+        mDisconnect = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerDisconnectEvent>(
+            [](ll::event::PlayerDisconnectEvent& ev) { onDisconnect(ev.self()); }
+        );
         static bool registered = false;
         if (registered) return;
         registered = true;
@@ -711,15 +778,19 @@ public:
             .form   = screenForm,
             .closed = screenClosed,
         });
+        blockdata::onErase(dropErased);
         game::db::onWorldClosed([] { openScreens().clear(); });
     }
     void uninstall() {
+        ll::event::EventBus::getInstance().removeListener(mDisconnect);
+        InventoryNativeRemovedHook::unhook();
         if (mHooked) InventoryNativeContainerHook::unhook();
         mHooked = false;
     }
 
 private:
-    bool mHooked = false;
+    bool                   mHooked = false;
+    ll::event::ListenerPtr mDisconnect;
 };
 
 } // namespace

@@ -36,6 +36,7 @@
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/item/crafting/Recipes.h"
 #include "mc/world/item/enchanting/Enchant.h"
+#include "mc/world/item/enchanting/EnchantResult.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/item/enchanting/EnchantmentInstance.h"
 #include "mc/world/level/BlockPos.h"
@@ -550,6 +551,9 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         return stack;
     }
     if (id == "minecraft:apply_bonus") {
+        // ApplyBonusCount#run: only with a tool; the formulas draw as Java's do (uniform and
+        // binomial draw even at level 0)
+        if (!e.ctx.tool) return stack;
         int  lvl     = toolLevel(e, f.value("enchantment", std::string{}));
         auto formula = withNs(f.value("formula", std::string{}));
         auto params  = f.value("parameters", Json::object());
@@ -561,7 +565,7 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
                 n *= i + 1;
             }
         } else if (formula == "minecraft:uniform_bonus_count") {
-            if (lvl > 0) n += e.random.nextInt(params.value("bonusMultiplier", 1) * lvl + 1);
+            n += e.random.nextInt(params.value("bonusMultiplier", 1) * lvl + 1);
         } else if (formula == "minecraft:binomial_with_bonus_count") {
             for (int i = 0; i < lvl + params.value("extra", 0); ++i)
                 if (e.random.nextFloat() < params.value("probability", 0.f)) ++n;
@@ -598,6 +602,19 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         }
         if (options.empty())
             for (auto const& [javaId, _] : enchantMap()) options.push_back(javaId);
+        // only_compatible (Java's default): enchantments the item can take
+        if (f.value("only_compatible", true) && game::items::idOf(stack) != "minecraft:book") {
+            std::erase_if(options, [&](std::string const& o) {
+                int t = bedrockEnchant(o);
+                if (t < 0) return false; // TF's own (gf::enchant decides)
+                EnchantmentInstance inst;
+                inst.mEnchantType = static_cast<Enchant::Type>(t);
+                inst.mLevel       = 1;
+                auto r            = EnchantUtils::canEnchant(stack, inst, false);
+                return r.result == EnchantResultType::Fail || r.result == EnchantResultType::Conflict;
+            });
+        }
+        if (options.empty()) return stack;
         std::sort(options.begin(), options.end());
         auto pick = options[static_cast<std::size_t>(e.random.nextInt(static_cast<int>(options.size())))];
         int  t    = bedrockEnchant(pick);
@@ -670,20 +687,26 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         // item's GloamingForest data "components" (block owners read them back on placement).
         if (f.value("source", std::string{}) != "block_entity" || !e.ctx.region) return stack;
         BlockPos pos{static_cast<int>(std::floor(e.ctx.origin.x)), static_cast<int>(std::floor(e.ctx.origin.y)), static_cast<int>(std::floor(e.ctx.origin.z))};
-        auto const* doc   = blockdata::get(*e.ctx.region, pos, "components");
-        Json        comps = game::items::getData(stack, "components");
+        // the block is usually gone when its drops roll: its block data document as it was erased
+        auto        gpos   = game::globalPos(*e.ctx.region, pos);
+        auto const* whole  = blockdata::get(gpos);
+        Json const* erased = whole ? nullptr : recentlyErased(gpos);
+        Json const& src    = whole ? *whole : erased ? *erased : Json::object();
+        Json const  doc    = src.is_object() ? src.value("components", Json::object()) : Json::object();
+        Json        comps  = game::items::getData(stack, "components");
         if (!comps.is_object()) comps = Json::object();
         for (auto const& inc : f.value("include", Json::array())) {
             auto key = withNs(inc.get<std::string>());
             if (key == "minecraft:container") {
                 if (auto h = inventory::find(*e.ctx.region, pos); h && h->get) {
                     Json items = Json::array();
-                    auto gpos  = game::globalPos(*e.ctx.region, pos);
                     for (int i = 0; i < h->slots; ++i) items.push_back(game::items::toJson(h->get(gpos, i)));
                     comps[key] = items;
+                } else if (src.is_object() && src.contains("inventory") && src["inventory"].is_object()) {
+                    comps[key] = src["inventory"].value("items", Json::array()); // a removed BlockData container
                 }
-            } else if (doc && doc->contains(key)) {
-                comps[key] = (*doc)[key];
+            } else if (doc.is_object() && doc.contains(key)) {
+                comps[key] = doc[key];
             }
         }
         if (!comps.empty()) game::items::setData(stack, "components", comps);

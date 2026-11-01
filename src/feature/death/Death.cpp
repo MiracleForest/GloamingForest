@@ -50,6 +50,7 @@
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/Tick.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/storage/GameRuleId.h"
 #include "mc/world/level/storage/GameRules.h"
@@ -218,6 +219,8 @@ Player* killerPlayer(Actor& victim, Actor* attacker) {
     if (attacker && attacker->isPlayer() && attacker != &victim) return static_cast<Player*>(attacker);
     auto level = ll::service::getLevel();
     if (!level) return nullptr;
+    // Java's lastHurtByPlayer only counts for 100 ticks after the hit (lastHurtByPlayerTime)
+    if (victim.mLastHurtByPlayerTime <= 0) return nullptr;
     if (auto* p = level->getPlayer(*victim.mLastHurtByPlayerId); p && p != &victim) return p;
     return nullptr;
 }
@@ -249,15 +252,29 @@ void onRespawn(RespawnFn fn) {
 // ---- internal --------------------------------------------------------------------------------------
 
 namespace {
-/// Victims kept alive during the current hurt -> the health their handler left.
-thread_local std::unordered_map<Actor const*, float> tSurvived;
+std::uint64_t nowTick() {
+    auto level = ll::service::getLevel();
+    return level ? static_cast<std::uint64_t>(level->getCurrentTick().tickID) : 0;
+}
+
+/// Victims kept alive this tick (ActorUniqueID) -> the health their handler left and the tick.
+thread_local std::unordered_map<std::int64_t, std::pair<float, std::uint64_t>> tSurvived;
+
+/// Entities whose death the pipeline handled (ActorUniqueID -> tick): a second `die` for the same
+/// death (the game may call it again) must not drop the loot or fire the kill again.
+std::unordered_map<std::int64_t, std::uint64_t>& handledDeaths() {
+    static std::unordered_map<std::int64_t, std::uint64_t> m;
+    return m;
+}
 } // namespace
 
 void reapplySurvival(Actor& victim) {
-    auto it = tSurvived.find(&victim);
+    if (tSurvived.empty()) return;
+    auto it = tSurvived.find(victim.getOrCreateUniqueID().rawID);
     if (it == tSurvived.end()) return;
-    float health = it->second;
+    auto [health, tick] = it->second;
     tSurvived.erase(it);
+    if (tick != nowTick()) return; // a survival of an earlier tick (a die outside a hurt)
     if (static_cast<float>(victim.getHealth()) != health) setHealth(victim, health);
 }
 
@@ -282,7 +299,8 @@ bool runLethal(Actor& victim, combat::DamageInfo const& damage) {
         }
         if (survive) {
             if (victim.getHealth() <= 0) setHealth(victim, 1.f);
-            tSurvived[&victim] = static_cast<float>(std::max(1, victim.getHealth()));
+            if (tSurvived.size() > 64) std::erase_if(tSurvived, [now = nowTick()](auto const& e) { return e.second.second != now; });
+            tSurvived[victim.getOrCreateUniqueID().rawID] = {static_cast<float>(std::max(1, victim.getHealth())), nowTick()};
             log().info("death: {} survived lethal {} damage", victim.isPlayer() ? static_cast<Player&>(victim).getRealName() : victim.getTypeName(), damage.type);
             return true;
         }
@@ -325,9 +343,19 @@ void handleDeath(Actor& self, ActorDamageSource const& source, std::function<voi
     struct Pop {
         ~Pop() { tDying.pop_back(); }
     } pop;
+    auto selfId = self.getOrCreateUniqueID().rawID;
+    {
+        // a second die for a death already handled (mobs never die twice; a player may die again
+        // only after a respawn, so a few ticks later)
+        auto& handled = handledDeaths();
+        auto  now     = nowTick();
+        if (auto it = handled.find(selfId); it != handled.end() && (!self.isPlayer() || now - it->second < 5)) return die();
+        if (handled.size() > 1024) std::erase_if(handled, [now](auto const& e) { return now - e.second > 200; });
+    }
     auto [attacker, direct] = combat::entitiesOf(source);
     combat::DamageInfo info{self, combat::typeOf(self, source), attacker, direct, 0.f};
     if (runLethal(self, info)) return;
+    handledDeaths()[selfId] = nowTick();
     Player*     killer   = killerPlayer(self, attacker);
     std::int64_t killerId = killer ? killer->getOrCreateUniqueID().rawID : 0;
     if (self.isPlayer() && !static_cast<Player&>(self).isClientSide()) keepAndOffer(static_cast<Player&>(self));
@@ -388,6 +416,7 @@ public:
         static bool registered = false;
         if (!registered) {
             registered = true;
+            game::db::onWorldClosed([] { handledDeaths().clear(); }); // ticks restart per world
             // TF: items in twilightforest:kept_on_death are always kept (lowest keeper)
             registerKeeper(-100000, [](Player&, ItemStack& stack) {
                 auto id = game::items::idOf(stack);

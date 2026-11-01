@@ -111,9 +111,10 @@ GF_REGISTER_SELFTEST("combat.gamerules", [](Context& ctx) {
     ctx.check(stored && stored->value("gfTestIntRule", 0) == 12, "values are stored in the world DB");
     ctx.check(gr::parse("gfTestIntRule", "34").has_value() && !gr::parse("gfTestIntRule", "3x").has_value(), "command values parse");
     ctx.check(gr::snapshot().contains("tfEnforcedProgression"), "the snapshot lists TF's rules");
-    // back to the defaults (the stored values only matter to this test)
-    gr::set("gfTestIntRule", 7);
-    gr::set("gfTestBoolRule", true);
+    // the test rules leave no trace (registry and stored values)
+    gr::unregisterRule("gfTestIntRule");
+    gr::unregisterRule("gfTestBoolRule");
+    ctx.check(!gr::snapshot().contains("gfTestIntRule") && !db::get("gf:gamerules:values")->contains("gfTestIntRule"), "the test rules are gone again");
 });
 
 // ---- fx ------------------------------------------------------------------------------------------
@@ -310,12 +311,7 @@ GF_REGISTER_SELFTEST("combat.keepers", [](Context& ctx) -> ll::coro::CoroTask<> 
     co_await ctx.ticks(10);
     p = level->getPlayer(id);
     ctx.require(p != nullptr, "the player respawned");
-    if (countInInventory(*p, "gf_test:fixture_item") == 0) {
-        ActiveScope active(*p);
-        gf::death::returnKeptItems(*p); // no respawn event for this simulated player: the handler's work
-        ++respawns;
-    }
-    ctx.check(countInInventory(*p, "gf_test:fixture_item") == 5, "the kept stack came back (" + std::to_string(countInInventory(*p, "gf_test:fixture_item")) + ")");
+    ctx.check(countInInventory(*p, "gf_test:fixture_item") == 5, "the respawn returned the kept stack (" + std::to_string(countInInventory(*p, "gf_test:fixture_item")) + ")");
     ctx.check(!db::get("gf:combat:kept:" + p->getUuid().asString()), "the kept record is gone");
     ctx.check(respawns >= 1, "onRespawn ran");
 });

@@ -19,6 +19,8 @@ namespace gf::gamerules {
 void onChanged(std::function<void(std::string const& id, Value const& value)> fn);
 /// The known rule ids, sorted.
 [[nodiscard]] std::vector<std::string> ids();
+/// Removes a rule and its stored value (selftests' own rules).
+void unregisterRule(std::string const& id);
 /// A command value for rule `id`: "true" / "false" for booleans, an integer otherwise.
 [[nodiscard]] std::optional<Value> parse(std::string const& id, std::string const& text);
 
