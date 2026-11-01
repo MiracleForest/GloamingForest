@@ -13,19 +13,27 @@
 // IHostileMount: a mob grabs a player as its rider (alpha yeti, pinch beetle, yeti); the player
 // can't dismount, crouch off or teleport away, takes no suffocation damage while held, and is
 // thrown with YetiThrowAttachment's state (fall damage while thrown becomes "yeeted" damage by
-// the thrower). Bedrock has no dismount event to cancel: a held player that left the seat is put
-// back on the next tick (teleports within 32 blocks included), unless the mob let go
-// (hostileDismount) or the player is invulnerable (creative / spectator, as Java's
-// `!player.getAbilities().invulnerable`).
+// the thrower). A mob is a hostile mount when its type is marked (ext::markHostileMount, Java's
+// IHostileMount marker) or when it grabbed its rider (mount::grab).
+//   - preventTeleportingOffHostileMounts (EntityTeleportEvent: ender pearl, chorus fruit,
+//     commands, ender teleports): Player::teleportTo is cancelled for a rider of a hostile mount
+//     (every cause but the engine's internal "unknown" moves).
+//   - preventMountDismount: Bedrock has no dismount event to cancel, so a rider that left the
+//     seat is put back on the next tick, unless the mob let go (hostileDismount) or the player is
+//     invulnerable (creative / spectator, as Java's `!player.getAbilities().invulnerable`).
+//   - preventHostilMountCrouching: every passenger of a hostile mount stops sneaking each tick.
 
 #include <unordered_map>
 
+#include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/phys/AABB.h"
 
 #include "feature/combat/Combat.h"
 #include "feature/entity/EntityInternal.h"
@@ -38,8 +46,7 @@ namespace gf::feature::entity {
 
 namespace {
 
-constexpr int    kThrowCooldown = 200; ///< YetiThrowAttachment.THROW_COOLDOWN
-constexpr double kRegrabRange   = 32.0;
+constexpr int kThrowCooldown = 200; ///< YetiThrowAttachment.THROW_COOLDOWN
 
 struct ThrowState {
     bool         thrown   = false;
@@ -51,6 +58,7 @@ struct ThrowState {
 struct MountState {
     std::unordered_map<std::int64_t, ThrowState> throws; ///< player -> YetiThrowAttachment
     bool                                         allowDismount = false;
+    int                                          blockedTeleports = 0; ///< selftests
 };
 MountState& S() {
     static MountState s;
@@ -115,18 +123,57 @@ void tickThrows() {
     }
 }
 
+/// The passengers of `vehicle` (Bedrock keeps them in a component: the actors around it whose
+/// vehicle it is).
+std::vector<Actor*> passengersOf(Actor& vehicle) {
+    std::vector<Actor*> out;
+    if (!vehicle.hasPassenger()) return out;
+    auto const& bb = vehicle.getAABB();
+    AABB        box{Vec3{bb.min.x - 4.0f, bb.min.y - 4.0f, bb.min.z - 4.0f}, Vec3{bb.max.x + 4.0f, bb.max.y + 4.0f, bb.max.z + 4.0f}};
+    for (auto* a : actorsIn(vehicle.getDimensionBlockSource(), static_cast<int>(vehicle.getDimensionId()), box))
+        if (a && a != &vehicle && a->getVehicle() == &vehicle) out.push_back(a);
+    return out;
+}
+
+bool hostileMount(Actor const& vehicle) {
+    if (hostileMountType(vehicle.getTypeName())) return true;
+    auto* s = findState(uidOf(vehicle));
+    return s && s->hostileMount;
+}
+
 } // namespace
 
 bool ridingUnfriendly(Actor const& actor) {
     auto* vehicle = actor.getVehicle();
-    if (!vehicle) return false;
-    auto* s = findState(uidOf(*vehicle));
-    return s && s->hostileMount;
+    return vehicle && hostileMount(*vehicle);
 }
 
+/// The mount itself is being teleported: its passengers go with it (Java moves riders with their
+/// vehicle; only the vehicle's own teleport is an event).
+int gMountTeleports = 0;
+
+/// HostileMountEvents#preventTeleportingOffHostileMounts for Player::teleportTo.
+bool blocksTeleport(Player& player, int cause) {
+    if (player.isClientSide() || cause == 0 || S().allowDismount || gMountTeleports > 0 || !ridingUnfriendly(player)) return false;
+    ++S().blockedTeleports;
+    log().info("entity: the teleport of {} was cancelled (riding {})", player.getRealName(), player.getVehicle()->getTypeName());
+    return true;
+}
+
+int blockedTeleportsForTest() { return S().blockedTeleports; }
+
 void tickMount(Mob& mob, ActorState& s) {
-    // HostileMountEvents#preventHostilMountCrouching
-    for (auto* rider = mob.getFirstPassenger(); rider; rider = nullptr) rider->setSneaking(false);
+    // HostileMountEvents#preventHostilMountCrouching: every passenger
+    auto riders = passengersOf(mob);
+    for (auto* rider : riders) rider->setSneaking(false);
+    // a player that got on by itself rides unfriendly too (IHostileMount): it is held from now on
+    if (!s.grabbed)
+        for (auto* rider : riders)
+            if (rider->isPlayer()) {
+                s.grabbed = uidOf(*rider);
+                setRidingUnfriendly(static_cast<Player&>(*rider), uidOf(mob), true);
+                break;
+            }
     if (!s.grabbed) return;
     auto* player = playerById(s.grabbed);
     if (!player) {
@@ -134,10 +181,9 @@ void tickMount(Mob& mob, ActorState& s) {
         return;
     }
     if (player->getVehicle() == &mob) return;
-    // the player left the seat (sneak, teleport): preventMountDismount / preventTeleporting
+    // the player left the seat: HostileMountEvents#preventMountDismount puts it back
     bool invulnerable = player->isCreative() || player->isSpectator();
-    if (player->isAlive() && mob.isAlive() && !invulnerable && !S().allowDismount
-        && mobs::distanceSqr(*player, mob) < kRegrabRange * kRegrabRange) {
+    if (player->isAlive() && mob.isAlive() && !invulnerable && !S().allowDismount && player->getDimensionId() == mob.getDimensionId()) {
         player->startRiding(mob, true);
         if (player->getVehicle() == &mob) return;
     }
@@ -145,7 +191,44 @@ void tickMount(Mob& mob, ActorState& s) {
     setRidingUnfriendly(*player, uidOf(mob), false);
 }
 
+} // namespace gf::feature::entity
+
+LL_TYPE_INSTANCE_HOOK(
+    EntityRiderTeleportHook,
+    ll::memory::HookPriority::Normal,
+    Player,
+    &Player::$teleportTo,
+    void,
+    Vec3 const& pos,
+    bool        shouldStopRiding,
+    int         cause,
+    int         sourceEntityType,
+    bool        keepVelocity
+) {
+    if (gf::feature::entity::blocksTeleport(*this, cause)) return;
+    origin(pos, shouldStopRiding, cause, sourceEntityType, keepVelocity);
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    EntityMountTeleportHook,
+    ll::memory::HookPriority::Normal,
+    Actor,
+    &Actor::teleportPassengersTo,
+    void,
+    Vec3 const& pos,
+    int         cause,
+    int         entityType
+) {
+    ++gf::feature::entity::gMountTeleports;
+    origin(pos, cause, entityType);
+    --gf::feature::entity::gMountTeleports;
+}
+
+namespace gf::feature::entity {
+
 void installMounts() {
+    EntityRiderTeleportHook::hook();
+    EntityMountTeleportHook::hook();
     static bool once = false;
     if (std::exchange(once, true)) return;
     onLevelTick(tickThrows);
@@ -165,7 +248,10 @@ void installMounts() {
     game::db::onWorldClosed([] { S().throws.clear(); });
 }
 
-void uninstallMounts() {}
+void uninstallMounts() {
+    EntityMountTeleportHook::unhook();
+    EntityRiderTeleportHook::unhook();
+}
 
 } // namespace gf::feature::entity
 
