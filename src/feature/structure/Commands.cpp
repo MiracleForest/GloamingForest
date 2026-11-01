@@ -526,7 +526,9 @@ void jigsawCmd(CommandOrigin const& origin, CommandOutput& output, StructureUtil
     BlockSourceRegion region(*w->source, w->pos);
     // the world's terrain is the generation context: height_adjustment puts pieces on the ground
     auto context = ext::contextOf(region, random, region.seed());
-    auto pieces  = ext::assemble(p.pool, w->pos, p.depth, context);
+    // the junction is the ground block (CampStructure: the first occupied height), the start's
+    // DOWN jigsaw stands on it
+    auto pieces = ext::assemble(p.pool, BlockPos{w->pos.x, w->pos.y - 1, w->pos.z}, p.depth, context);
     if (pieces.empty()) return output.error("pool " + p.pool + " produced no pieces");
     for (auto& piece : pieces) {
         JavaRandom pr(pure::mthGetSeed(piece->bbox.minX, piece->bbox.minY, piece->bbox.minZ));
@@ -566,7 +568,11 @@ void pieceCmd(CommandOrigin const& origin, CommandOutput& output, StructureUtilP
         JavaRandom pr(pure::mthGetSeed(piece->bbox.minX, piece->bbox.minY, piece->bbox.minZ));
         piece->postProcess(region, pr, piece->bbox, w->pos);
     }
-    log().info("structure_util piece {}: {} pieces", p.kind, pieces.size());
+    BlockBox all = pieces.front()->bbox;
+    for (auto const& piece : pieces)
+        all = BlockBox::of(std::min(all.minX, piece->bbox.minX), std::min(all.minY, piece->bbox.minY), std::min(all.minZ, piece->bbox.minZ),
+                           std::max(all.maxX, piece->bbox.maxX), std::max(all.maxY, piece->bbox.maxY), std::max(all.maxZ, piece->bbox.maxZ));
+    log().info("structure_util piece {}: {} pieces in {}", p.kind, pieces.size(), boxToJson(all).dump());
     output.success(std::to_string(pieces.size()) + " pieces");
 }
 

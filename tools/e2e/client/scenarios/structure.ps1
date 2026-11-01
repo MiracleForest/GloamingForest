@@ -23,22 +23,24 @@ if ($script:Mode -eq 'local') {
     $mark = Get-LogMark
     Invoke-Chat '/twilightforest structure_util jigsaw "gf_test:structure/jig/start" 4'
     Wait-LogLine 'structure_util jigsaw gf_test:structure/jig/start: \d+ pieces' 30 -Since $mark | Out-Null
-    Invoke-Teleport '/tp @s 52 -52 54 140 30'
+    Invoke-Teleport '/tp @s 56 -53 58 140 18'
     Start-Sleep -Seconds 2
     Save-Screenshot 'jigsaw' | Out-Null
 
-    # the old lich tower (the shared Tower* bases): main tower, wings, bridges, roofs, beards
+    # the old lich tower (the shared Tower* bases): main tower, wings, bridges, roofs, beards; the
+    # camera floats (spectator) so the views from the air and inside the walls do not fall or choke
     Invoke-Teleport '/tp @s 120 -60 -80'
     Start-Sleep -Seconds 2
     $mark = Get-LogMark
     Invoke-Chat '/twilightforest structure_util piece tower'
     Wait-LogLine 'structure_util piece tower: \d+ pieces' 60 -Since $mark | Out-Null
-    Invoke-Teleport '/tp @s 160 -20 -30 135 15'
+    Invoke-Chat '/gamemode spectator'
+    Invoke-Chat '/effect @s night_vision 300 1 true'
+    Invoke-Teleport '/tp @s 180 -35 -15 135 -8'
     Start-Sleep -Seconds 4
     Save-Screenshot 'tower' | Out-Null
     # inside the main tower: stairs, floors, the decorated rooms
-    Invoke-Chat '/effect @s night_vision 120 1 true'
-    Invoke-Teleport '/tp @s 127 -50 -73 200 20'
+    Invoke-Teleport '/tp @s 127 -52 -73 200 25'
     Start-Sleep -Seconds 2
     Save-Screenshot 'tower_inside' | Out-Null
 
@@ -48,7 +50,7 @@ if ($script:Mode -eq 'local') {
     $mark = Get-LogMark
     Invoke-Chat '/twilightforest structure_util piece hill'
     Wait-LogLine 'structure_util piece hill: \d+ pieces' 60 -Since $mark | Out-Null
-    Invoke-Teleport '/tp @s 260 -52 -66 180 10'
+    Invoke-Teleport '/tp @s 260 -49 -68 180 15'
     Start-Sleep -Seconds 3
     Save-Screenshot 'hill' | Out-Null
 } else {
