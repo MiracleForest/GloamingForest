@@ -73,7 +73,9 @@ Names: Java part names stay, except the vanilla skeleton names at the root (`rig
 the vanilla humanoid / quadruped animations apply. A name used twice (Snow Queen's `spike_4` under each crown
 piece) becomes `<parent bone>_<name>`. A root `hat` with the head's pivot and rotation is parented to `head`
 (Java copies the head pose to the hat every frame). `addOrReplaceChild` keeps the replaced part's children,
-as Minecraft 1.21.1 does.
+as Minecraft 1.21.1 does. Worn and held extracts prefix every bone with their wrapper's name
+(`naga_trophy_worn_head`): Bedrock binds an attachable bone that has a wearer's bone name (`head`, `hat`, ...)
+to that bone.
 
 ## The interpreter
 
@@ -104,12 +106,18 @@ supplier's class) are read statement by statement. Assignments to a part's `xRot
 | `Mth.cos(x)` / `Mth.sin(x)` (radians) | `math.cos(x * 57.2958)` / `math.sin(...)` (degrees) |
 | `part.xRot = e` (absolute radians) | `rotation[0] = e * 57.2958 − default` (Molang adds to the geometry) |
 | `part.y = e` (pixels, y down) | `position[1] = −(e − default)` |
+| `this.attackTime`, `this.young`, `this.riding` | `variable.attack_time`, `query.is_baby`, `query.is_riding` |
+
+Locals are followed through reassignments (a local changed inside a condition or loop is dropped), divisions by
+a constant zero stay untranslated, and the re-parented `hat` gets only its difference to the head (nothing when
+Java copies the head's pose). The sign of the position x channel follows the geometry's x and is not yet checked
+in game.
 
 The quadruped walk comes out as Bedrock's own `animation.quadruped.walk` (`math.cos(query.modified_distance_moved
 * 38.1704) * query.modified_move_speed * 80.2141`) and the head look as `look_at_target`. Everything else
 (entity state, loops, conditions, visibility, other models' parts) is listed in the bone map's `setupAnim.todo`
 with its line, Java source and reason; models without their own setupAnim name the vanilla animations of their
-base class. 26 layers get a base animation; the owning units translate the rest by hand.
+base class. 28 layers get a base animation; the owning units translate the rest by hand.
 
 ## Armor and Travellers' Gear
 
@@ -194,7 +202,7 @@ on its 16 rotations and the wall geometry on its 4 facings.
 | `lich_minion` | lich | twilightforest:lich_minion | `geometry.twilightforest.lich_minion` (7 bones, 7 cubes) |
 | `lich_trophy` | building |  | trophy extracts, mystic crown |
 | `lower_goblin_knight` | stronghold | twilightforest:lower_goblin_knight | `geometry.twilightforest.lower_goblin_knight` (8 bones, 7 cubes) + base animation |
-| `loyal_zombie` | artifacts | twilightforest:loyal_zombie | `geometry.twilightforest.loyal_zombie` (7 bones, 7 cubes) |
+| `loyal_zombie` | artifacts | twilightforest:loyal_zombie | `geometry.twilightforest.loyal_zombie` (7 bones, 7 cubes) + base animation |
 | `maze_slime` / `maze_slime_outer` | labyrinth | twilightforest:maze_slime | vanilla `geometry.slime` / `geometry.slime.armor` |
 | `minoshroom` | labyrinth | twilightforest:minoshroom | `geometry.twilightforest.minoshroom` (18 bones, 17 cubes) + base animation |
 | `minoshroom_trophy` | building |  | trophy extracts |
@@ -234,7 +242,7 @@ on its 16 rotations and the wall geometry on its 4 facings.
 | `ur_ghast` | darktower | twilightforest:ur_ghast | `geometry.twilightforest.ur_ghast` (37 bones, 37 cubes) |
 | `ur_ghast_trophy` | building |  | trophy extracts |
 | `winter_wolf` | hostiles | twilightforest:winter_wolf | vanilla `geometry.wolf` |
-| `wraith` | hostiles | twilightforest:wraith | `geometry.twilightforest.wraith` (8 bones, 8 cubes) |
+| `wraith` | hostiles | twilightforest:wraith | `geometry.twilightforest.wraith` (8 bones, 8 cubes) + base animation |
 | `yeti` | caves | twilightforest:yeti | `geometry.twilightforest.yeti` (12 bones, 12 cubes) + base animation |
 | `yeti_armor_inner` / `_outer` | armory |  | per-slot armor geometry |
 
@@ -242,7 +250,7 @@ Totals: 101 layers (every model class of `client/model/entity` but the base / in
 `FixedHumanoidModel`, `TrophyBlockModel`, `HostileWolfModel`, `MistWolfModel` (vanilla wolf mesh), the 9 armor
 model classes, the block-entity and item models), 124 generated geometries (64 layer geometries, 25 armor and
 gear pieces, 18 floor and wall trophies plus 4 overlay geometries, 12 worn extracts (9 trophies, 2 overlays, the
-mystic crown) and 1 held extract), 12 vanilla-model layers, 26 base animations, 45 attachables. The Curios charm
+mystic crown) and 1 held extract), 12 vanilla-model layers, 28 base animations, 45 attachables. The Curios charm
 of life necklace (`CuriosCompat`) is not ported (docs/spec/README.md).
 
 ## Tests
