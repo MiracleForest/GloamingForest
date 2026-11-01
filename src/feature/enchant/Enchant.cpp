@@ -269,7 +269,8 @@ namespace internal {
 std::map<std::string, int> custom(ItemStack const& stack) {
     std::map<std::string, int> out;
     if (game::items::isEmpty(stack)) return out;
-    for (auto& [id, v] : storedOf(stack).items())
+    auto stored = storedOf(stack); // a named copy: items() of a temporary would dangle
+    for (auto& [id, v] : stored.items())
         if (v.is_number_integer() && v.get<int>() > 0) out[id] = v.get<int>();
     return out;
 }
