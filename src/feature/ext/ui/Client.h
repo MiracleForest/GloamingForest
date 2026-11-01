@@ -68,6 +68,10 @@ namespace gf::client::ui {
 /// canvas (canvas origin applies), source (u, v, w, h) in texture pixels of a `texW` x `texH`
 /// texture. Returns false when the texture can't be loaded.
 bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float u, float v, float w, float h, float texW = 256, float texH = 256);
+/// How blit draws: 0 the UI image batch flushed with "ui_flush", 1 flushed with
+/// "ui_textured_and_glcolor", 2 a textured mesh with the "ui_textured" material (default; spike S5).
+[[nodiscard]] int blitMethod();
+void              setBlitMethod(int method);
 /// The size of a texture in pixels (nullopt when it can't be loaded).
 [[nodiscard]] std::optional<std::pair<int, int>> textureSize(std::string const& texture);
 

@@ -86,6 +86,17 @@ void drawHud(screen::Canvas& c, float) {
     c.text(panel.x + 26, panel.y + 20, ctr("gf.ui.fixture.hud_line", "HUD layer"), 0xFF3B6E3B, screen::Align::Left, false);
     c.text(panel.x + 26, panel.y + 30, graphicsModeName(), screen::color::kTextDark, screen::Align::Left, false);
     if (st().hudItem) c.item(*st().hudItem, panel.x + 6, panel.y + 20);
+    // the three ways ui::blit can draw a texture, side by side (spike S5): the top-left 88 x 83
+    // of the fixture skin at half size, labelled with the method
+    int keep = ui::blitMethod();
+    for (int m = 0; m < 3; ++m) {
+        screen::Rect r{panel.x + static_cast<float>(m) * 50, panel.y + panel.h + 4, 44, 41};
+        c.fill(r, 0xFF202020);
+        ui::setBlitMethod(m);
+        bool ok = ui::blit(c, kSkin, r, 0, 0, 88, 83);
+        c.text(r.x + 2, r.y + r.h + 2, std::to_string(m) + (ok ? "" : " -"), 0xFFFFFFFF);
+    }
+    ui::setBlitMethod(keep);
     if (!st().loggedHud.exchange(true)) log().info("ui fixture: hud layer drawn ({})", graphicsModeName());
 }
 

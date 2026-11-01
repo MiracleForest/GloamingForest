@@ -25,6 +25,8 @@
 #include "client/ui/Ui.h"
 
 #include <algorithm>
+#include <atomic>
+#include <variant>
 #include <chrono>
 #include <deque>
 #include <map>
@@ -39,9 +41,20 @@
 #include "mc/client/game/ClientInstance.h"
 #include "mc/client/gui/screens/ScreenView.h"
 #include "mc/client/player/LocalPlayer.h"
+#include "mc/client/gui/screens/ScreenContext.h"
+#include "mc/client/renderer/RenderMaterialGroup.h"
+#include "mc/client/renderer/Tessellator.h"
 #include "mc/client/renderer/TextureGroup.h"
 #include "mc/client/renderer/screen/MinecraftUIRenderContext.h"
+#include "mc/common/client/renderer/helpers/MeshHelpers.h"
 #include "mc/deps/core/file/PathView.h"
+#include "mc/deps/core/math/Vec2.h"
+#include "mc/deps/core/math/Vec3.h"
+#include "mc/deps/core_graphics/enums/PrimitiveMode.h"
+#include "mc/deps/minecraft_renderer/renderer/MaterialPtr.h"
+#include "mc/deps/minecraft_renderer/renderer/TextureLoadState.h"
+#include "mc/deps/minecraft_renderer/resources/OffscreenCaptureDescription.h"
+#include "mc/deps/minecraft_renderer/resources/ServerTexture.h"
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/resource/ResourceLocation.h"
 #include "mc/deps/core/string/HashedString.h"
@@ -121,6 +134,27 @@ bool loaded(BedrockTextureData const& d) {
     return (static_cast<unsigned>(d.mTextureLoadState) & static_cast<unsigned>(TextureLoadState::LoadedBit)) != 0;
 }
 
+/// How blit draws (spike S5 compares them in the fixture HUD): the UI's image batch flushed with
+/// "ui_flush" or "ui_textured_and_glcolor", or a textured mesh with the "ui_textured" material.
+[[maybe_unused]] constexpr int kBlitFlush = 0; // the default flush of the image batch
+constexpr int    kBlitFlushGlColor = 1;
+constexpr int    kBlitMesh         = 2;
+std::atomic<int> gBlitMethod{kBlitMesh};
+
+/// A UI material (common group first, then the switchable one), kept for the process.
+mce::MaterialPtr const* uiMaterial(char const* name) {
+    static std::mutex                               m;
+    static std::map<std::string, mce::MaterialPtr*> cache;
+    std::lock_guard                                 lock(m);
+    auto&                                           slot = cache[name];
+    if (!slot) {
+        slot = new mce::MaterialPtr(mce::RenderMaterialGroup::common(), HashedString(name));
+        if (!slot->mRenderMaterialInfoPtr.get()) slot = new mce::MaterialPtr(mce::RenderMaterialGroup::switchable(), HashedString(name));
+        if (!slot->mRenderMaterialInfoPtr.get()) log().warn("ui: no material {}", name);
+    }
+    return slot->mRenderMaterialInfoPtr.get() ? slot : nullptr;
+}
+
 std::optional<std::pair<int, int>> sizeOf(mce::TexturePtr const* t) {
     if (!t) return std::nullopt;
     auto const* data = dataOf(*t);
@@ -149,15 +183,33 @@ bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const
         return false;
     }
     auto& ctx = canvas.context();
-    glm::vec2 pos{canvas.originX() + dst.x, canvas.originY() + dst.y};
-    glm::vec2 size{dst.w, dst.h};
-    glm::vec2 uv{u / texW, v / texH};
-    glm::vec2 uvSize{w / texW, h / texH};
-    ctx.drawImage(data->mClientTexture.get(), pos, size, uv, uvSize, false);
+    float x0 = canvas.originX() + dst.x, y0 = canvas.originY() + dst.y, x1 = x0 + dst.w, y1 = y0 + dst.h;
+    float u0 = u / texW, v0 = v / texH, u1 = (u + w) / texW, v1 = (v + h) / texH;
+    int   method = gBlitMethod.load();
+    if (method == kBlitMesh) {
+        // a textured quad in GUI pixels with a UI material (the UI's matrices map GUI pixels)
+        auto const* material = uiMaterial("ui_textured");
+        if (!material) return false;
+        ScreenContext& sc   = ctx.mScreenContext;
+        Tessellator&   tess = sc.tessellator;
+        tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 8, false);
+        tess.color(1.f, 1.f, 1.f, 1.f);
+        // both windings: whichever way the UI's projection turns them
+        tess.simpleQuad(Vec3{x0, y1, 0}, Vec2{u0, v1}, Vec3{x1, y1, 0}, Vec2{u1, v1}, Vec3{x1, y0, 0}, Vec2{u1, v0}, Vec3{x0, y0, 0}, Vec2{u0, v0});
+        tess.simpleQuad(Vec3{x0, y0, 0}, Vec2{u0, v0}, Vec3{x1, y0, 0}, Vec2{u1, v0}, Vec3{x1, y1, 0}, Vec2{u1, v1}, Vec3{x0, y1, 0}, Vec2{u0, v1});
+        std::variant<std::monostate, mce::TexturePtr, mce::ClientTexture, mce::ServerTexture> tex{*t};
+        MeshHelpers::renderMeshImmediately(sc, tess, *material, tex, OffscreenCaptureDescription{});
+        return true;
+    }
+    ctx.drawImage(data->mClientTexture.get(), glm::vec2{x0, y0}, glm::vec2{dst.w, dst.h}, glm::vec2{u0, v0}, glm::vec2{u1 - u0, v1 - v0}, false);
     static HashedString const flush("ui_flush");
-    ctx.flushImages(mce::Color{1, 1, 1, 1}, 1.0f, flush);
+    static HashedString const glcolor("ui_textured_and_glcolor");
+    ctx.flushImages(mce::Color{1, 1, 1, 1}, 1.0f, method == kBlitFlushGlColor ? glcolor : flush);
     return true;
 }
+
+int blitMethod() { return gBlitMethod.load(); }
+void setBlitMethod(int method) { gBlitMethod = method; }
 
 std::optional<std::pair<int, int>> textureSize(std::string const& texture) { return sizeOf(textureOf(texture, nullptr)); }
 
