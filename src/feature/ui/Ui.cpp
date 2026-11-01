@@ -3,9 +3,9 @@
 // - form: a LeviLamina SimpleForm (ModalFormRequestPacket), every client shows it;
 // - ddui: a Data-Driven UI custom form (LeviLamina ll::ui::CustomForm) built from a small JSON
 //   document, for vanilla clients that support DDUI;
-// - containerTitleSkin: the title marker ("gfskin:<id padded to 40>;<title>") the resource pack's
-//   JSON-UI (ui/chest_screen.json) reads through the container screen's #title_text binding to
-//   draw the TF GUI texture textures/gui/<id> under a vanilla chest's slots (spike S5).
+// - containerTitleSkin: the title "textures/gui/<id>": the resource pack's JSON-UI
+//   (ui/chest_screen.json) draws that texture under a vanilla chest's slots and the chest title is
+//   localised through the resource pack's texts (spike S5).
 //
 // One log line per form shown / answered (e2e scenarios wait for them).
 
@@ -212,11 +212,12 @@ bool ddui(Player& player, std::string const& screenId, Json const& document, std
 // ---- container title skins -------------------------------------------------------------------------
 
 bool validSkinId(std::string_view skinId) {
-    return !skinId.empty() && skinId.size() <= kSkinIdWidth && skinId.find(kSkinPad) == std::string_view::npos && skinId.find(kSkinEnd) == std::string_view::npos;
+    if (skinId.empty() || skinId.front() == '/' || skinId.back() == '/') return false;
+    return std::all_of(skinId.begin(), skinId.end(), [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '/'; });
 }
 
-// The resource pack's ui/chest_screen.json reads the fixed-width marker through #title_text (see
-// feature/ext/ui/Server.h); an id that does not fit keeps the plain title.
+// The resource pack's ui/chest_screen.json draws the texture the title names and localises the
+// title (see feature/ext/ui/Server.h); an id that is no texture path keeps the plain title.
 std::string containerTitleSkin(std::string const& titleKey, std::string const& skinId) {
     if (skinId.empty()) return titleKey;
     if (!validSkinId(skinId)) {
@@ -225,26 +226,18 @@ std::string containerTitleSkin(std::string const& titleKey, std::string const& s
         std::lock_guard                              lock(m);
         if (!warned[skinId]) {
             warned[skinId] = true;
-            log().warn("ui: container skin id '{}' does not fit a title marker (1..{} characters, no '{}' or '{}'): plain title", skinId, kSkinIdWidth, kSkinPad, kSkinEnd);
+            log().warn("ui: container skin id '{}' is not a texture path below textures/gui ([a-z0-9_/]): plain title", skinId);
         }
         return titleKey;
     }
-    std::string title(kSkinPrefix);
-    title += skinId;
-    title.append(kSkinIdWidth - skinId.size(), kSkinPad);
-    title += kSkinEnd;
-    return title + titleKey;
+    return std::string(kSkinPrefix) + skinId;
 }
 
 TitleSkin parseTitleSkin(std::string const& title) {
-    if (title.size() < kSkinMarkerLength || !title.starts_with(kSkinPrefix) || title[kSkinMarkerLength - 1] != kSkinEnd) return {"", title};
-    auto id = title.substr(kSkinPrefix.size(), kSkinIdWidth);
-    if (auto pad = id.find(kSkinPad); pad != std::string::npos) {
-        if (id.find_first_not_of(kSkinPad, pad) != std::string::npos) return {"", title}; // padding inside the id
-        id.resize(pad);
-    }
+    if (!title.starts_with(kSkinPrefix)) return {"", title};
+    auto id = title.substr(kSkinPrefix.size());
     if (!validSkinId(id)) return {"", title};
-    return {id, title.substr(kSkinMarkerLength)};
+    return {id, title};
 }
 
 // ---- module: the DDUI documents of players who leave ----------------------------------------------

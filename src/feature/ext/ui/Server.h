@@ -33,32 +33,27 @@ void dispatchKey(Player& player, std::string const& id, bool down);
 
 namespace gf::ui {
 
-/// Container title skins for vanilla clients (spike S5). The resource pack's `ui/chest_screen.json`
-/// reads the chest title through the container screen's `#title_text` binding (the `$container_title`
-/// variable only names that binding, so expressions on it see no title). A title made by
-/// containerTitleSkin starts with a fixed-width marker:
-///
-///     "gfskin:" + <skin id, padded with '.' to kSkinIdWidth> + ";" + <title or translation key>
-///
-/// and the JSON-UI then draws `textures/gui/<skin id>` (texture pixels 0, 0 to 176 x 166 on the small
-/// chest, 176 x 220 on the large one) under the slots, hides the vanilla title and shows the rest of
-/// the title (localised) at the vanilla title position. TF's GUI textures are 256 x 256 with the
-/// panel at the top left, as the skins of client::screen::ContainerScreen.
-inline constexpr std::string_view kSkinPrefix  = "gfskin:";
-inline constexpr std::size_t      kSkinIdWidth = 40;
-inline constexpr char             kSkinPad     = '.';
-inline constexpr char             kSkinEnd     = ';';
-/// The marker's length (prefix, padded id, end).
-inline constexpr std::size_t kSkinMarkerLength = kSkinPrefix.size() + kSkinIdWidth + 1;
+/// Container title skins for vanilla clients (spike S5). The vanilla chest screen gets its title as
+/// the `$container_title` variable: property values may use it, but `requires` expressions, view
+/// bindings and the `#title_text` binding see no title there on 1.26.51. So the title of a skinned
+/// container is the skin's texture path itself, "textures/gui/<skin id>" (kSkinPrefix + id):
+/// - the resource pack's `ui/chest_screen.json` draws an image whose texture is `$container_title`
+///   under the slots (texture pixels 0, 0 to 176 x 166 on the small chest, 176 x 220 on the large
+///   one; TF's GUI textures are 256 x 256 with the panel at the top left, as the skins of
+///   client::screen::ContainerScreen); any other title names no texture and draws nothing;
+/// - the chest title is always localised, so the resource pack's texts map the path to the shown
+///   title: the unit that owns a skin adds `textures/gui/<skin id>=<title>` to its
+///   `assets/pack/rp/texts.d/<locale>/<unit>.lang` (the text of the titleKey it passes).
+inline constexpr std::string_view kSkinPrefix = "textures/gui/";
 
-/// Whether `skinId` fits in a title marker: 1..kSkinIdWidth characters, no '.' or ';' (a texture
-/// path below textures/gui without extension, e.g. "guigoblintinkering" or "ui/fixture_container").
+/// Whether `skinId` can be a skin: a texture path below textures/gui without extension, made of
+/// [a-z0-9_/] (e.g. "guigoblintinkering" or "ui/fixture_chest").
 [[nodiscard]] bool validSkinId(std::string_view skinId);
 
 /// What the resource pack's JSON-UI reads from a container title made by containerTitleSkin.
 struct TitleSkin {
-    std::string skinId;   ///< "" when the title carries no skin
-    std::string titleKey; ///< the title shown (translation key or text)
+    std::string skinId; ///< "" when the title carries no skin
+    std::string title;  ///< the title as the client shows it before localisation (the whole title)
 };
 [[nodiscard]] TitleSkin parseTitleSkin(std::string const& title);
 

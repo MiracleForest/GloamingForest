@@ -4,12 +4,14 @@
 // Client build only.
 //
 // - render::RenderContext, declared opaque in client/render/Render.h, is defined here so renderers
-//   can reach the engine's contexts (tessellator, matrices, camera) beyond Lines / drawGeo.
-// - ui: textures in GUI pixels (TF's GUI skins), the item stacks of a ContainerScreen's slots and
-//   the hit tests of its slots and of the player inventory drawn inside a TF skin.
-// - particles::spawn: runs a native particle factory (the client handler of fx.particle uses it).
+//   can reach the engine's contexts (tessellator, matrices, camera) beyond Lines / drawGeo; the
+//   threads and spaces every registry runs in; removal of registrations (fixtures, selftests).
+// - ui: textures in GUI pixels (TF's GUI skins), the item stacks of a ContainerScreen's slots, the
+//   hit tests of its slots and of the player inventory drawn inside a TF skin, an item's hover text.
+// - particles::spawn: runs a native particle factory (the client handler of fx.particle uses it);
+//   what a factory gets when the engine spawns the particle (molang variables).
 // - maps::setDecorations: TF map decorations drawn over a map (MagicMapPacket / MazeMapPacket data).
-// - camera::shaking: the remaining shake ticks (tests).
+// - camera: what camera::shake does (TF's degrees) and its state (tests).
 
 #ifdef GF_CLIENT
 
@@ -35,6 +37,24 @@ class MinecraftUIRenderContext;
 namespace gf::client::render {
 
 /// The per-frame render context handed to renderers (valid during the callback only).
+///
+/// Threads: block, item and entity renderers, onWorld callbacks and sky providers run on the
+/// render thread, one at a time. Tint functions (gf::client::tint) run on the chunk builder
+/// threads, several at once, while chunks are meshed: they must be thread-safe, must not read the
+/// world through the level (only their position) and should be cheap (one call per tinted block per
+/// mesh). The game asks for a position-dependent tint only for blocks whose resource pack geometry
+/// has a tint method (`minecraft:material_instances` "tint_method", e.g. "default_foliage" or
+/// "grass"); other blocks never reach a registered tint function.
+///
+/// Item spaces (`itemSpace` true; drawGeo's translation and Lines' points are in that space):
+/// - FirstPerson / ThirdPerson: ItemInHandRenderer::renderItem's matrix after the game drew the item;
+/// - Ground: the item entity's position (no rotation);
+/// - Fixed (item frames): Java's ItemFrameRenderer before ItemRenderer.render with FIXED: the frame
+///   block's centre turned to the frame (xRot, 180 - yRot), 7/16 towards the wall, the item rotation
+///   (45 degree steps about z) and scale 0.5;
+/// - Head (items on the head slot of humanoids): Java's CustomHeadLayer after translateToHead: the
+///   head's pose, at the head's centre (a quarter block above the neck), y up, facing forward,
+///   1 unit = 0.625 block (times the entity's scale).
 class RenderContext {
 public:
     explicit RenderContext(ScreenContext& screenContext) : screen(screenContext) {}
@@ -44,9 +64,11 @@ public:
     Vec3                    camera{};         ///< camera position, world coordinates
     float                   partialTicks = 0;
     bool                    throughWalls = false; ///< Lines / drawGeo skip the depth test
-    /// Item contexts (FirstPerson, ThirdPerson, Ground): the world matrix is the item's own
-    /// space; drawGeo's translation is then relative to the item origin.
+    /// Item contexts other than Gui: the world matrix is the item's own space (see above); drawGeo's
+    /// translation and Lines' points are then relative to the item origin.
     bool                    itemSpace = false;
+    /// Half the width of Lines' bars in units of the current space (1/64 block in the world).
+    float                   lineHalfWidth = 1.0f / 64;
     /// ItemContext::Gui: the UI context and the slot's rectangle in GUI pixels.
     MinecraftUIRenderContext* ui = nullptr;
     float                     guiX = 0, guiY = 0, guiSize = 16;
@@ -56,10 +78,21 @@ public:
 [[nodiscard]] std::size_t trackedBlockCount();
 /// Whether a block renderer is registered for `blockId` (tests).
 [[nodiscard]] bool hasBlockRenderer(std::string const& blockId);
+/// Whether an item renderer of `itemId` draws in `where`.
+[[nodiscard]] bool hasItemRenderer(std::string const& itemId, ItemContext where);
 /// The tint of `blockId` at `pos` from the registry (0xRRGGBB; nullopt: none registered).
 [[nodiscard]] std::optional<unsigned> tintOf(std::string const& blockId, int x, int y, int z);
+/// Removals (fixtures and selftests); false when nothing was registered.
+bool unregisterBlockRenderer(std::string const& blockId);
+bool unregisterItemRenderer(std::string const& itemId);
+bool unregisterEntityRenderers(std::string const& entityId);
 
 } // namespace gf::client::render
+
+namespace gf::client::tint {
+/// Removes the tint of `blockId` (fixtures and selftests); false when none was registered.
+bool unregisterBlock(std::string const& blockId);
+} // namespace gf::client::tint
 
 namespace gf::client::ui {
 
@@ -82,6 +115,10 @@ void setContainerItems(screen::ContainerScreen& screen, nlohmann::json const& it
 /// The player inventory slot (0..8 hotbar, 9..35 main) drawn inside the skin at panel pixels
 /// (mx, my), -1 for none. TF skins put the inventory at Java's (8, height - 82).
 [[nodiscard]] int skinInventorySlotAt(screen::ContainerScreen const& screen, float mx, float my);
+/// An item's full hover text as lines, as Java's getTooltipFromItem (name, then the game's lines:
+/// enchantments, lore, the lines of tooltip::add and of gf::item::addTooltip); empty for an empty
+/// stack. ContainerScreen's hover tooltips show it.
+[[nodiscard]] std::vector<std::string> hoverLines(ItemStack const& stack);
 
 /// Toasts waiting or shown (tests).
 [[nodiscard]] std::size_t toastCount();
@@ -91,6 +128,8 @@ void setContainerItems(screen::ContainerScreen& screen, nlohmann::json const& it
 void removeHudLayer(std::string const& id);
 /// The tooltip lines the registry adds for `stack` (tests).
 [[nodiscard]] std::vector<std::string> tooltipLines(ItemStack const& stack);
+/// Removes the tooltip providers of `itemId` (fixtures and selftests); false when there were none.
+bool removeTooltips(std::string const& itemId);
 
 } // namespace gf::client::ui
 
@@ -100,19 +139,44 @@ namespace gf::client::particles {
 bool spawn(std::string const& particleId, Vec3 const& pos, Vec3 const& velocity, nlohmann::json const& params = {});
 /// TF's 29 particle ids (declared at load) and whether each has a factory.
 [[nodiscard]] std::vector<std::pair<std::string, bool>> declared();
+/// Removes the factory of `particleId` (fixtures and selftests); false when there was none.
+bool unregisterNative(std::string const& particleId);
+// When the client level spawns a particle effect with a native factory (Level::addParticleEffect:
+// the server's SpawnParticleEffectPacket, data-driven emitters), the factory gets the emitter
+// position, the velocity `variable.velocity` (x, y, z), else `variable.direction` (x, y, z) times
+// `variable.speed` (default 1), else zero, and as params every molang variable of the effect by
+// name without "variable." (numbers; structs as objects of their members: {"color": {"r", "g",
+// "b", "a"}, "direction": {"x", "y", "z"}}). Senders (F10's fx for vanilla clients) use these names.
 } // namespace gf::client::particles
 
 namespace gf::client::maps {
 /// Extra (TF) decorations drawn over map `mapId` with the icons of `setIcon`; replaces the
-/// previous list. Map pixels -128..127 as MapItemSavedData.
+/// previous list (an empty list removes it). Map pixels -128..127 as MapItemSavedData. Drawn after
+/// the game's map on held maps and maps in item frames (MapRenderer::render), as Java's MapRenderer:
+/// an 8 x 8 map pixel quad at (x / 2 + 64, z / 2 + 64) turned by rotation * 22.5 degrees; names
+/// below their icon.
 void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations);
+/// The TF decorations of `mapId` (empty: none).
+[[nodiscard]] std::vector<Decoration> decorationsOf(std::int64_t mapId);
 /// The texture registered for a decoration type ("" for none).
 [[nodiscard]] std::string iconOf(std::string const& decorationType);
+/// Removes the icon of a decoration type (fixtures and selftests); false when there was none.
+bool removeIcon(std::string const& decorationType);
 } // namespace gf::client::maps
 
 namespace gf::client::camera {
+// camera::shake(intensity, ticks) is TF's visible screen shake (ClientGameEvents, beanstalk
+// rumbling): for `ticks` client ticks the local player's yaw moves by (r - 0.5) * intensity and
+// its pitch by (r * 2.5 - 1.25) * intensity degrees (r uniform 0..1, a new r each), so intensity is
+// in TF's units (the beanstalk passes 1 - distance^2 / 256). TF's ComputeCameraAngles jitter never
+// runs: its tick handler zeroes shakeIntensity right after moving the player. A call while a shake
+// runs keeps it going for max(remaining, ticks) ticks at the latest intensity. Off with the client
+// config's screenShakingEffect.
+
 /// Remaining shake ticks (0: not shaking).
 [[nodiscard]] int shaking();
+/// The intensity of the running shake (0: none).
+[[nodiscard]] float shakeIntensity();
 /// The combined FOV factor of the registered modifiers for `fovFactor`.
 [[nodiscard]] float applyFovModifiers(float fovFactor);
 } // namespace gf::client::camera
@@ -122,6 +186,11 @@ namespace gf::client::sky {
 [[nodiscard]] std::shared_ptr<SkyProvider const> providerOf(int dimension);
 /// Removes the provider of `dimension` (fixtures).
 void clearProvider(int dimension);
+// Graphics modes (spike S5): sky and stars draw in Classic and Vibrant Visuals. Fog sets the
+// distance fog (Classic) and the volumetric air fog (Vibrant Visuals: density from `end`, the colour
+// as scattering). Clouds set the cloud height of the level renderer (both modes) and nullopt hides
+// the clouds. A weather provider that draws hides the vanilla rain / snow (no weather pass, no
+// splashes, no rain sounds) and leaves the rain and lightning levels alone (the sky still darkens).
 } // namespace gf::client::sky
 
 namespace gf::client::keys {
