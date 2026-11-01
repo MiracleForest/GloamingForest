@@ -159,9 +159,13 @@ if ($script:Mode -ne 'remote-vanilla') {
     Wait-LogLine 'edited the sign at 60 .*\(1 of 4 lines written\)' 20 -Since $mark | Out-Null
     Start-Sleep -Seconds 2
     Save-Screenshot 'families-6-sign-text' | Out-Null
-    # the text is a name tag, and the harness plays with the HUD hidden (gfx_hidehud), which hides
-    # name tags too: one more with the HUD on (F1), then off again
-    Press-Key F1; Start-Sleep -Milliseconds 800
+    # the text is a name tag, and a hidden HUD (gfx_hidehud, some client instances) hides name tags
+    # too: one more with the HUD on (F1 when it is hidden, then F1 again: the option stays as it was)
+    $hudHidden = $false
+    foreach ($o in Get-ChildItem -Recurse -Path (Get-GameDataDir) -Filter 'options.txt' -ErrorAction SilentlyContinue) {
+        if ((Get-Content $o.FullName) -match '^gfx_hidehud:1') { $hudHidden = $true }
+    }
+    if ($hudHidden) { Press-Key F1; Start-Sleep -Milliseconds 800 }
     Save-Screenshot 'families-7-sign-text-hud' | Out-Null
-    Press-Key F1; Start-Sleep -Milliseconds 800
+    if ($hudHidden) { Press-Key F1; Start-Sleep -Milliseconds 800 }
 }
