@@ -13,17 +13,24 @@
 //
 // The client mod's side of F8's channels:
 //   boss.bar            ClientTFBossBar: the HUD's boss bar takes the boss's exact RGB (the vanilla
-//                       packet only carries the nearest of 8 colours). The HUD reads each bar's
-//                       colour from ClientInstanceScreenModel's boss table; after each HUD
-//                       controller tick the RGB is written into the entries of TF bosses.
-//   boss.death_time     UpdateDeathTimePacket (kept for renderers of TF's death animations).
+//                       packet only carries the nearest of 8 colours). The HUD asks the screen
+//                       model for each bar's colour by index (ClientInstanceScreenModel::
+//                       getBossBarColor); the hook answers with the RGB of the TF boss whose title
+//                       (and, between equal titles, progress) that bar shows.
+//   boss.death_time     UpdateDeathTimePacket (read with gf::client::entity::deathTime).
 //   entity.move_player  MovePlayerPacket: the local player is pushed.
 //   entity.hostile_mount  ClientGameEvents#removeHostileMountHealth: no mount hearts on a hostile
 //                       mount (HudHorseHeartRenderer).
-//   entity.multipart, entity.data, projectile.thrown: kept per entity for client renderers.
+//   entity.multipart, entity.data, projectile.thrown: kept per entity for client renderers
+//                       (feature/ext/entity/EntityClientExt.h).
 
 #ifdef GF_CLIENT
 
+#include "feature/ext/entity/EntityClientExt.h"
+
+#include <atomic>
+#include <chrono>
+#include <cmath>
 #include <mutex>
 #include <set>
 #include <unordered_map>
@@ -31,12 +38,10 @@
 #include "ll/api/memory/Hook.h"
 
 #include "mc/client/gui/controls/renderers/HudHorseHeartRenderer.h"
-#include "mc/client/gui/screens/controllers/HudScreenController.h"
-#include "mc/client/gui/screens/models/BossInfo.h"
 #include "mc/client/gui/screens/models/ClientInstanceScreenModel.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/deps/core/math/Color.h"
-#include "mc/legacy/ActorUniqueID.h"
+#include "mc/safety/RedactableString.h"
 
 #include "client/Client.h"
 #include "feature/net/Net.h"
@@ -47,72 +52,88 @@ namespace gf::client::entity {
 
 namespace {
 
-using Json = nlohmann::json;
+using Json  = nlohmann::json;
+using Clock = std::chrono::steady_clock;
 
-struct ClientBar {
-    unsigned rgb     = 0xFFFFFF;
-    int      overlay = 0;
-    bool     darken  = false;
-    bool     fog     = false;
+struct DeathTime {
+    int               value = 0;
+    Clock::time_point at;
 };
 
 struct ClientState {
-    std::unordered_map<std::int64_t, ClientBar> bars;
-    std::unordered_map<std::int64_t, int>       deathTimes;
-    std::unordered_map<std::int64_t, Json>      multipart;
-    std::unordered_map<std::int64_t, Json>      data;
-    std::unordered_map<std::int64_t, Json>      thrown;
-    std::set<std::int64_t>                      logged; ///< bars whose colour was applied (one log line each)
-    bool                                        ridingUnfriendly = false;
-    std::mutex                                  barsMutex; ///< bars / logged: the HUD may read them on another thread
-    bool                                        disabled = false; ///< the HUD's table did not look as expected
+    std::mutex                                       mutex; ///< everything below: net handlers vs. HUD / renderers
+    std::unordered_map<std::int64_t, BossBar>        bars;
+    std::unordered_map<std::int64_t, DeathTime>      deathTimes;
+    std::unordered_map<std::int64_t, std::vector<Part>> multipart;
+    std::unordered_map<std::int64_t, std::int64_t>   partParents;
+    std::unordered_map<std::int64_t, Json>           data;
+    std::unordered_map<std::int64_t, Thrown>         thrown;
+    std::set<std::int64_t>                           logged;   ///< bars whose colour was applied (one log line each)
+    std::set<std::string>                            unmatched; ///< bar titles without a companion bar (one line each)
+    std::atomic<bool>                                ridingUnfriendly{false};
 };
 ClientState& C() {
     static ClientState s;
     return s;
 }
 
-/// Writes the exact colours into the HUD's boss table (ClientTFBossBar#renderBossBar's tint).
-bool plausible(mce::Color const& c) {
-    auto ok = [](float v) { return v >= 0.0f && v <= 1.0f; };
-    return ok(c.r) && ok(c.g) && ok(c.b) && c.a > 0.99f && c.a < 1.01f;
-}
-
-void applyColours(ClientInstanceScreenModel const& model) {
-    auto&            s = C();
-    std::scoped_lock lock(s.barsMutex);
-    if (s.bars.empty() || s.disabled) return;
-    auto& infos = const_cast<std::unordered_map<ActorUniqueID, BossInfo>&>(model.mBossInfo.get());
-    // the table's layout comes from generated headers: check it before writing into it
-    if (infos.size() > 64) {
-        s.disabled = true;
-        log().warn("client boss bar colours disabled: the HUD's boss table looks wrong ({} entries)", infos.size());
-        return;
-    }
-    for (auto& [id, info] : infos) {
-        auto it = s.bars.find(id.rawID);
-        if (it == s.bars.end()) continue;
-        mce::Color const& have = info.mBarColor.get();
-        if (!plausible(have)) {
-            s.disabled = true;
-            log().warn("client boss bar colours disabled: unexpected colour layout ({} {} {} {})", have.r, have.g, have.b, have.a);
-            return;
+/// The text of a bar title without formatting codes.
+std::string plain(std::string const& s) {
+    std::string out;
+    out.reserve(s.size());
+    for (std::size_t i = 0; i < s.size(); ++i) {
+        // "§" is 0xC2 0xA7 in UTF-8, followed by the code character
+        if (static_cast<unsigned char>(s[i]) == 0xC2 && i + 1 < s.size() && static_cast<unsigned char>(s[i + 1]) == 0xA7) {
+            i += 2;
+            continue;
         }
-        info.mBarColor = mce::Color(static_cast<uint>(it->second.rgb));
-        if (s.logged.insert(id.rawID).second) log().info("client boss bar {} coloured #{:06X}", id.rawID, it->second.rgb);
+        out.push_back(s[i]);
     }
+    return out;
 }
 
 } // namespace
 
+/// ClientTFBossBar#renderBossBar's tint: the exact RGB of the TF boss the HUD's bar `index` shows.
+std::optional<mce::Color> exactColour(ClientInstanceScreenModel const& model, int index) {
+    auto& s = C();
+    {
+        std::scoped_lock lock(s.mutex);
+        if (s.bars.empty()) return std::nullopt;
+    }
+    std::string title  = plain(model.getBossName(index).mUnredactedString);
+    float       health = model.getBossHealthPercentage(index);
+    std::scoped_lock lock(s.mutex);
+    std::int64_t     best = 0;
+    BossBar const*   bar  = nullptr;
+    float            diff = 2.0f;
+    for (auto const& [id, b] : s.bars) {
+        if (plain(b.title) != title) continue;
+        float d = std::abs(b.progress - health);
+        if (!bar || d < diff) best = id, bar = &b, diff = d;
+    }
+    if (!bar) {
+        if (s.unmatched.insert(title).second) log().info("client boss bar '{}' has no TF colour", title);
+        return std::nullopt;
+    }
+    if (s.logged.insert(best).second) log().info("client boss bar {} coloured #{:06X}", best, bar->rgb);
+    return mce::Color(static_cast<uint>(bar->rgb));
+}
+
 } // namespace gf::client::entity
 
-// After the HUD controller's tick (UI thread) the exact colours go into its model's boss table,
-// before the bar is drawn from it.
-LL_TYPE_INSTANCE_HOOK(EntityClientHudTickHook, ll::memory::HookPriority::Normal, HudScreenController, &HudScreenController::$tick, ui::DirtyFlag) {
-    auto flag = origin();
-    if (auto* model = mClientInstanceScreenModel.get()) gf::client::entity::applyColours(*model);
-    return flag;
+// The HUD reads each bar's colour through the screen model: the TF bosses' bars get their RGB.
+LL_TYPE_INSTANCE_HOOK(
+    EntityClientBossColourHook,
+    ll::memory::HookPriority::Normal,
+    ClientInstanceScreenModel,
+    &ClientInstanceScreenModel::getBossBarColor,
+    mce::Color,
+    int index
+) {
+    auto colour = origin(index);
+    if (auto exact = gf::client::entity::exactColour(*this, index)) return *exact;
+    return colour;
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -126,49 +147,157 @@ LL_TYPE_INSTANCE_HOOK(
     UIControl&                owner,
     int                       pass
 ) {
-    if (gf::client::entity::C().ridingUnfriendly) return; // removeHostileMountHealth
+    if (gf::client::entity::ridingUnfriendly()) return; // removeHostileMountHealth
     origin(renderContext, client, owner, pass);
 }
 
 namespace gf::client::entity {
+
+// ---- readers (EntityClientExt.h) ----------------------------------------------------------------
+
+Json data(std::int64_t uid, std::string const& key) {
+    auto&            s = C();
+    std::scoped_lock lock(s.mutex);
+    auto             it = s.data.find(uid);
+    if (it == s.data.end() || !it->second.is_object() || !it->second.contains(key)) return Json();
+    return it->second[key];
+}
+
+std::vector<std::string> stringList(std::int64_t uid, std::string const& key) {
+    std::vector<std::string> out;
+    auto                     v = data(uid, key);
+    if (v.is_array())
+        for (auto const& e : v)
+            if (e.is_string()) out.push_back(e.get<std::string>());
+    return out;
+}
+
+std::vector<Part> parts(std::int64_t parentUid) {
+    auto&            s = C();
+    std::scoped_lock lock(s.mutex);
+    auto             it = s.multipart.find(parentUid);
+    return it != s.multipart.end() ? it->second : std::vector<Part>{};
+}
+
+std::int64_t partParent(std::int64_t partUid) {
+    auto&            s = C();
+    std::scoped_lock lock(s.mutex);
+    auto             it = s.partParents.find(partUid);
+    return it != s.partParents.end() ? it->second : 0;
+}
+
+int deathTime(std::int64_t uid) {
+    auto&            s = C();
+    std::scoped_lock lock(s.mutex);
+    auto             it = s.deathTimes.find(uid);
+    if (it == s.deathTimes.end()) return 0;
+    auto ticks = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - it->second.at).count() / 50;
+    return it->second.value + static_cast<int>(ticks);
+}
+
+std::optional<Thrown> thrown(std::int64_t playerUid) {
+    auto&            s = C();
+    std::scoped_lock lock(s.mutex);
+    auto             it = s.thrown.find(playerUid);
+    return it != s.thrown.end() ? std::optional<Thrown>(it->second) : std::nullopt;
+}
+
+bool ridingUnfriendly() { return C().ridingUnfriendly.load(); }
+
+std::optional<BossBar> bossBar(std::int64_t uid) {
+    auto&            s = C();
+    std::scoped_lock lock(s.mutex);
+    auto             it = s.bars.find(uid);
+    return it != s.bars.end() ? std::optional<BossBar>(it->second) : std::nullopt;
+}
+
 namespace {
+
+/// Forgets everything the previous server sent (a new world or server: its bosses and parts).
+void clearState() {
+    auto& s = C();
+    {
+        std::scoped_lock lock(s.mutex);
+        s.bars.clear();
+        s.logged.clear();
+        s.unmatched.clear();
+        s.deathTimes.clear();
+        s.multipart.clear();
+        s.partParents.clear();
+        s.data.clear();
+        s.thrown.clear();
+    }
+    s.ridingUnfriendly.store(false);
+}
 
 void registerHandlers() {
     namespace nc = gf::net::client;
+    nc::onConnected(clearState);
     nc::on("boss.bar", [](Json const& m) {
         auto             id = m.value("id", std::int64_t{0});
         auto&            s  = C();
-        std::scoped_lock lock(s.barsMutex);
-        auto  op = m.value("op", std::string("add"));
+        std::scoped_lock lock(s.mutex);
+        auto             op = m.value("op", std::string("add"));
         if (op == "remove") {
             s.bars.erase(id);
             s.logged.erase(id);
             s.deathTimes.erase(id);
             return;
         }
-        if (!s.bars.contains(id)) log().info("client boss bar {} received (#{:06X})", id, m.value("rgb", 0u));
-        auto& bar   = s.bars[id];
-        bar.rgb     = m.value("rgb", bar.rgb);
-        bar.overlay = m.value("overlay", bar.overlay);
-        bar.darken  = m.value("darken", bar.darken);
-        bar.fog     = m.value("fog", bar.fog);
+        if (!s.bars.contains(id) && op == "add") log().info("client boss bar {} received (#{:06X})", id, m.value("rgb", 0u));
+        auto& bar = s.bars[id];
+        if (op == "progress") {
+            bar.progress = m.value("progress", bar.progress);
+            return;
+        }
+        if (op == "name") {
+            bar.title = m.value("title", bar.title);
+            return;
+        }
+        bar.rgb      = m.value("rgb", bar.rgb);
+        bar.overlay  = m.value("overlay", bar.overlay);
+        bar.darken   = m.value("darken", bar.darken);
+        bar.fog      = m.value("fog", bar.fog);
+        bar.progress = m.value("progress", bar.progress);
+        bar.title    = m.value("title", bar.title);
         if (op == "style") s.logged.erase(id);
     });
-    nc::on("boss.death_time", [](Json const& m) { C().deathTimes[m.value("id", std::int64_t{0})] = m.value("deathTime", 0); });
+    nc::on("boss.death_time", [](Json const& m) {
+        auto&            s = C();
+        std::scoped_lock lock(s.mutex);
+        s.deathTimes[m.value("id", std::int64_t{0})] = DeathTime{m.value("deathTime", 0), Clock::now()};
+    });
     nc::on("entity.move_player", [](Json const& m) {
         auto* player = gf::client::currentPlayer();
         if (!player) return;
         auto v = player->getPosDelta();
         const_cast<Vec3&>(player->getPosDelta()) = Vec3{v.x + m.value("x", 0.0f), v.y + m.value("y", 0.0f), v.z + m.value("z", 0.0f)};
     });
-    nc::on("entity.hostile_mount", [](Json const& m) { C().ridingUnfriendly = m.value("riding", false); });
-    nc::on("entity.multipart", [](Json const& m) { C().multipart[m.value("parent", std::int64_t{0})] = m; });
+    nc::on("entity.hostile_mount", [](Json const& m) { C().ridingUnfriendly.store(m.value("riding", false)); });
+    nc::on("entity.multipart", [](Json const& m) {
+        auto&             s      = C();
+        std::scoped_lock  lock(s.mutex);
+        auto              parent = m.value("parent", std::int64_t{0});
+        std::vector<Part> list;
+        if (auto ps = m.find("parts"); ps != m.end() && ps->is_array())
+            for (auto const& p : *ps)
+                list.push_back(Part{p.value("id", std::string()), p.value("uid", std::int64_t{0}), p.value("rid", std::int64_t{0}), p.value("index", 0), p.value("width", 1.0f), p.value("height", 1.0f)});
+        std::erase_if(s.partParents, [&](auto const& kv) { return kv.second == parent; });
+        for (auto const& p : list) s.partParents[p.uid] = parent;
+        s.multipart[parent] = std::move(list);
+    });
     nc::on("entity.data", [](Json const& m) {
-        auto& d = C().data[m.value("id", std::int64_t{0})];
+        auto&            s = C();
+        std::scoped_lock lock(s.mutex);
+        auto&            d = s.data[m.value("id", std::int64_t{0})];
         if (!d.is_object()) d = Json::object();
         d[m.value("key", std::string())] = m.value("data", Json());
     });
-    nc::on("projectile.thrown", [](Json const& m) { C().thrown[m.value("id", std::int64_t{0})] = m; });
+    nc::on("projectile.thrown", [](Json const& m) {
+        auto&            s = C();
+        std::scoped_lock lock(s.mutex);
+        s.thrown[m.value("id", std::int64_t{0})] = Thrown{m.value("thrown", false), m.value("thrower", std::int64_t{0}), m.value("cooldown", 0)};
+    });
 }
 
 class EntityClientModule {
@@ -176,23 +305,13 @@ public:
     void install() {
         static bool handlers = false;
         if (!std::exchange(handlers, true)) registerHandlers();
-        EntityClientHudTickHook::hook();
+        EntityClientBossColourHook::hook();
         EntityClientMountHeartsHook::hook();
     }
     void uninstall() {
         EntityClientMountHeartsHook::unhook();
-        EntityClientHudTickHook::unhook();
-        auto& s = C();
-        {
-            std::scoped_lock lock(s.barsMutex);
-            s.bars.clear();
-            s.logged.clear();
-        }
-        s.deathTimes.clear();
-        s.multipart.clear();
-        s.data.clear();
-        s.thrown.clear();
-        s.ridingUnfriendly = false;
+        EntityClientBossColourHook::unhook();
+        clearState();
     }
 };
 
