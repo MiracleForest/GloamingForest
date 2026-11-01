@@ -6,8 +6,10 @@
 //   - companions (client mod) get "fx.particle" {id, pos, vel, count, params}: the client mod
 //     spawns the native particle (F12's particles, through feature/ext/combat/FxNative.h) or, when
 //     none is registered, the resource pack's effect;
-//   - vanilla clients get a SpawnParticleEffectPacket of the resource pack's particle effect with
-//     the same identifier (vanilla particle types are mapped to Bedrock's effects).
+//   - vanilla clients get SpawnParticleEffectPackets of the resource pack's particle effect with
+//     the same identifier (vanilla particle types are mapped to Bedrock's effects): one per
+//     particle up to 8 per call, offset by params "spread" (Java's gaussian x distance); the
+//     effect's own motion replaces the velocity (the server cannot build molang variables).
 // Sounds: TF's sound events ("entity.twilightforest.naga.hiss", the sound_definitions names F3
 // generates) and the vanilla events TF plays ("minecraft:entity.ghast.shoot", mapped to Bedrock's
 // names) go out as PlaySoundPacket to the players in range (16 blocks, more for volume > 1, as
@@ -16,14 +18,17 @@
 
 #include "feature/fx/Fx.h"
 
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
+#include <random>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -160,6 +165,9 @@ std::unordered_map<std::string, std::string> const& vanillaSounds() {
         {"entity.pig.step", "mob.pig.step"},
         {"entity.player.attack.crit", "game.player.attack.strong"},
         {"entity.player.hurt", "game.player.hurt"},
+        {"entity.player.hurt_drown", "mob.player.hurt_drown"},
+        {"entity.player.hurt_freeze", "mob.player.hurt_freeze"},
+        {"entity.player.hurt_on_fire", "mob.player.hurt_on_fire"},
         {"entity.player.levelup", "random.levelup"},
         {"block.portal.ambient", "portal.portal"},
         {"entity.rabbit.ambient", "mob.rabbit.idle"},
@@ -369,8 +377,23 @@ void particle(Dimension& dimension, std::string const& particleId, Vec3 const& p
     if (r.effect.empty() && !r.native) return;
     nlohmann::json msg;
     if (r.native) msg = {{"id", particleId}, {"pos", vecJson(pos)}, {"vel", vecJson(velocity)}, {"count", count}, {"params", params}, {"effect", r.effect}};
-    int  n     = std::max(1, std::min(count, 64));
-    auto dimId = static_cast<uchar>(static_cast<int>(dimension.getDimensionId()));
+    // Vanilla clients: one SpawnParticleEffectPacket per effect instance (the packet has no
+    // count, and the server cannot build its molang variables), at most kMaxVanillaParticles per
+    // call; with params "spread" [dx, dy, dz] each one is offset as ServerLevel#sendParticles
+    // offsets them (gaussian x distance). The velocity is the effect's own.
+    constexpr int kMaxVanillaParticles = 8;
+    int           n     = std::clamp(count, 1, kMaxVanillaParticles);
+    auto          dimId = static_cast<uchar>(static_cast<int>(dimension.getDimensionId()));
+    std::vector<Vec3> at(static_cast<std::size_t>(n), pos);
+    if (auto spread = params.is_object() ? params.value("spread", nlohmann::json{}) : nlohmann::json{}; spread.is_array() && spread.size() == 3 && n > 1) {
+        static thread_local std::mt19937 rng{std::random_device{}()};
+        std::normal_distribution<float>  gauss(0.f, 1.f);
+        for (auto& v : at) {
+            v.x += gauss(rng) * spread[0].get<float>();
+            v.y += gauss(rng) * spread[1].get<float>();
+            v.z += gauss(rng) * spread[2].get<float>();
+        }
+    }
     forPlayersNear(dimension, pos, 32.f, [&](Player& p) {
         if (r.native && net::isCompanion(p)) {
             net::send(p, "fx.particle", msg);
@@ -378,8 +401,8 @@ void particle(Dimension& dimension, std::string const& particleId, Vec3 const& p
             return;
         }
         if (r.effect.empty()) return;
-        for (int i = 0; i < n; ++i) {
-            SpawnParticleEffectPacket pkt(SpawnParticleEffectPacketPayload(pos, r.effect, dimId, std::nullopt));
+        for (auto const& v : at) {
+            SpawnParticleEffectPacket pkt(SpawnParticleEffectPacketPayload(v, r.effect, dimId, std::nullopt));
             pkt.sendTo(p);
             ++gParticlePackets;
         }

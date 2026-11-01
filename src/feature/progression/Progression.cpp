@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "ll/api/event/EventBus.h"
+#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
@@ -393,8 +394,13 @@ void fireKilled(Player& killer, Actor& victim, std::string const& damageType) {
 }
 
 void forgetPlayer(Player const& player) {
+    auto            id = const_cast<Player&>(player).getOrCreateUniqueID().rawID;
     std::lock_guard lock(state().mutex);
-    state().players.erase(uuidOf(player));
+    auto&           s = state();
+    s.players.erase(uuidOf(player)); // saved on every change: read back on the next use
+    s.lastDim.erase(id);
+    s.lastBiome.erase(id);
+    s.inventoryDirty.erase(id);
 }
 
 std::string biomeIdAt(Player& player) {
@@ -535,6 +541,10 @@ public:
         ProgressionInventoryChangedHook::hook();
         ProgressionCompleteUsingHook::hook();
         mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { onLevelTick(); });
+        // a player who leaves: its cached progress and polling state go
+        mDisconnect = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {
+            if (!ev.self().isClientSide()) forgetPlayer(ev.self());
+        });
         static bool registered = false;
         if (!registered) {
             registered = true;
@@ -555,12 +565,14 @@ public:
     }
     void uninstall() {
         ll::event::EventBus::getInstance().removeListener(mTick);
+        ll::event::EventBus::getInstance().removeListener(mDisconnect);
         ProgressionCompleteUsingHook::unhook();
         ProgressionInventoryChangedHook::unhook();
     }
 
 private:
     ll::event::ListenerPtr mTick;
+    ll::event::ListenerPtr mDisconnect;
 };
 
 } // namespace

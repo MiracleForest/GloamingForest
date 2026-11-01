@@ -8,9 +8,15 @@
 //
 // Contract "combat" (F10): the single hurt hook of the mod (rule R8) and TF's damage types.
 //
-// - Actor::hurt is hooked once: `onIncoming` handlers (higher priority first) see every damage
-//   before it applies (armour not applied yet) and may change the amount or cancel it; `onDealt`
-//   handlers hear about damage that was applied, with the health it took.
+// - One damage pipeline: `onIncoming` handlers (higher priority first) see every damage before it
+//   applies (armour not applied yet) and may change the amount or cancel it; `onDealt` handlers
+//   hear about damage that was applied, with the health it took. It runs from Actor::hurt (every
+//   normal damage path) and from Mob::_hurt when that is called without Actor::hurt (LeviLamina's
+//   Actor::hurtByCause, game code calling the virtual directly), once per damage (a guard lets the
+//   inner _hurt of a hurt in progress through). Non-mob actors (boats, item entities, hanging
+//   entities) are only seen through Actor::hurt.
+// - A player hurt by a type whose DamageEffects are not "hurt" plays the effect's sound
+//   (Player#getHurtSound: burning, freezing, TF's pinch) through gf::fx.
 // - Damage types: TF's 40 (TFDamageTypes#bootstrap: message id, exhaustion, effects) are built
 //   in; <mod>/data/<ns>/damage_type/*.json (F1's import) override and add. Vanilla damage is
 //   named by Java's ids ("minecraft:player_attack", "minecraft:fall", ...) from the Bedrock cause.
@@ -28,6 +34,7 @@
 #include <fstream>
 #include <map>
 #include <mutex>
+#include <random>
 #include <set>
 #include <unordered_map>
 #include <variant>
@@ -52,6 +59,7 @@
 
 #include "feature/combat/CombatInternal.h"
 #include "feature/death/DeathInternal.h"
+#include "feature/fx/Fx.h"
 #include "feature/tags/Tags.h"
 #include "mod/Log.h"
 #include "mod/Main.h"
@@ -377,6 +385,54 @@ struct HandlerScope {
 
 bool inHandlers(Actor const& a) { return std::find(tInHandlers.begin(), tInHandlers.end(), &a) != tInHandlers.end(); }
 
+/// The victims inside a hook's damage pipeline (Actor::hurt or a direct Mob::_hurt): the inner
+/// Mob::_hurt of a hurt the pipeline already runs passes straight through.
+thread_local std::vector<Actor const*> tInPipeline;
+
+struct PipelineScope {
+    explicit PipelineScope(Actor const& a) { tInPipeline.push_back(&a); }
+    ~PipelineScope() { tInPipeline.pop_back(); }
+    PipelineScope(PipelineScope const&)            = delete;
+    PipelineScope& operator=(PipelineScope const&) = delete;
+};
+
+bool inPipeline(Actor const& a) { return std::find(tInPipeline.begin(), tInPipeline.end(), &a) != tInPipeline.end(); }
+
+/// Player#getHurtSound: the damage type's DamageEffects sound (TF's types: burning, freezing and
+/// TF's pinch). Bedrock plays its own hurt sound for the cause: an effect the cause already
+/// sounds like (fire, freezing, drowning, thorns) is not played twice.
+void playDamageEffect(Actor& victim, std::string const& typeId, Cause cause) {
+    if (!victim.isPlayer()) return;
+    auto const* spec = damageType(typeId);
+    if (!spec || spec->effects.empty() || spec->effects == "hurt") return;
+    std::string event;
+    auto const& fx = spec->effects;
+    if (fx == "burning") {
+        if (cause == Cause::Fire || cause == Cause::FireTick || cause == Cause::Lava || cause == Cause::Magma) return;
+        event = "minecraft:entity.player.hurt_on_fire";
+    } else if (fx == "freezing") {
+        if (cause == Cause::Freezing) return;
+        event = "minecraft:entity.player.hurt_freeze";
+    } else if (fx == "drowning") {
+        if (cause == Cause::Drowning) return;
+        event = "minecraft:entity.player.hurt_drown";
+    } else if (fx == "thorns") {
+        if (cause == Cause::Thorns) return;
+        event = "minecraft:enchant.thorns.hit";
+    } else if (fx == "poking") {
+        event = "minecraft:entity.player.hurt_sweet_berry_bush";
+    } else if (fx == "twilightforest:pinch") {
+        event = "twilightforest:entity.twilightforest.pinch_beetle.attack"; // TFSounds.PINCH_BEETLE_ATTACK
+    } else {
+        return;
+    }
+    // LivingEntity#playHurtSound: the sound volume (1) and the voice pitch of an adult
+    static thread_local std::mt19937 rng{std::random_device{}()};
+    std::uniform_real_distribution<float> unit(0.f, 1.f);
+    float pitch = (unit(rng) - unit(rng)) * 0.2f + 1.0f;
+    fx::sound(victim.getDimension(), event, victim.getPosition(), 1.f, pitch);
+}
+
 } // namespace
 
 // ---- internal API --------------------------------------------------------------------------------
@@ -526,38 +582,37 @@ bool hurt(Actor& victim, float amount, std::string const& typeId, Actor* attacke
 
 // ---- hooks ---------------------------------------------------------------------------------------
 
-LL_TYPE_INSTANCE_HOOK(
-    CombatHurtHook,
-    ll::memory::HookPriority::Normal,
-    Actor,
-    &Actor::hurt,
-    ActorHurtResult,
-    ActorDamageSource const& source,
-    float                    damage,
-    HurtParameters const&    params
-) {
-    using namespace gf::combat;
-    if (isClientSide()) return origin(source, damage, params);
+namespace gf::combat {
+namespace {
+
+/// The damage pipeline around the game's hurt (`origin(amount)`): the onIncoming handlers, the
+/// hurt, the survivor's health of a cancelled death, the damage effect sound and the onDealt
+/// handlers. Runs once per damage: Actor::hurt (every normal path) and Mob::_hurt when something
+/// calls it directly (LeviLamina's hurtByCause, game code skipping Actor::hurt).
+template <class Origin>
+ActorHurtResult runPipeline(Actor& self, ActorDamageSource const& source, float damage, Origin&& origin) {
+    PipelineScope pipeline(self);
     // the game writes the lethal health after `die`: a death the pipeline cancelled gets the
     // survivor's health back once the hurt returns
     auto plain = [&](float amount) {
-        auto r = origin(source, amount, params);
-        gf::death::reapplySurvival(*this);
+        auto r = origin(amount);
+        gf::death::reapplySurvival(self);
         return r;
     };
-    if (inHandlers(*this)) return plain(damage);
+    if (inHandlers(self)) return plain(damage);
     std::vector<IncomingFn> incoming;
     std::vector<DealtFn>    dealt;
     {
         std::lock_guard lock(handlers().mutex);
-        if (handlers().incoming.empty() && handlers().dealt.empty()) return plain(damage);
         for (auto const& e : handlers().incoming) incoming.push_back(e.fn);
         for (auto const& e : handlers().dealt) dealt.push_back(e.fn);
     }
+    // nothing to tell and no effect sound (players only): the game's hurt as is
+    if (incoming.empty() && dealt.empty() && !self.isPlayer()) return plain(damage);
     auto [attacker, direct] = entitiesOf(source);
-    DamageInfo info{*this, typeOf(*this, source), attacker, direct, damage};
-    {
-        HandlerScope scope(*this);
+    DamageInfo info{self, typeOf(self, source), attacker, direct, damage};
+    if (!incoming.empty()) {
+        HandlerScope scope(self);
         for (auto const& fn : incoming) {
             Verdict v = Verdict::Pass;
             try {
@@ -573,14 +628,16 @@ LL_TYPE_INSTANCE_HOOK(
             }
         }
     }
-    float before = healthOf(*this);
+    float before = healthOf(self);
     auto  result = plain(info.amount);
-    if (!result || dealt.empty()) return result;
-    float after = healthOf(*this);
-    DamageInfo applied{*this, info.type, info.attacker, info.direct, info.amount};
+    if (!result) return result;
+    playDamageEffect(self, info.type, source.mCause);
+    if (dealt.empty()) return result;
+    float after = healthOf(self);
+    DamageInfo applied{self, info.type, info.attacker, info.direct, info.amount};
     if (auto const* f = std::get_if<float>(&*result.mHurtOrDamage); f && *f > 0) applied.amount = *f;
     else if (before > after) applied.amount = before - after;
-    HandlerScope scope(*this);
+    HandlerScope scope(self);
     for (auto const& fn : dealt) {
         try {
             fn(applied);
@@ -589,6 +646,39 @@ LL_TYPE_INSTANCE_HOOK(
         }
     }
     return result;
+}
+
+} // namespace
+} // namespace gf::combat
+
+LL_TYPE_INSTANCE_HOOK(
+    CombatHurtHook,
+    ll::memory::HookPriority::Normal,
+    Actor,
+    &Actor::hurt,
+    ActorHurtResult,
+    ActorDamageSource const& source,
+    float                    damage,
+    HurtParameters const&    params
+) {
+    if (isClientSide()) return origin(source, damage, params);
+    return gf::combat::runPipeline(*this, source, damage, [&](float amount) { return origin(source, amount, params); });
+}
+
+// Damage that reaches a mob's (or player's) _hurt without Actor::hurt: the same pipeline. The
+// _hurt inside a hurt the pipeline already runs passes through.
+LL_TYPE_INSTANCE_HOOK(
+    CombatMobDirectHurtHook,
+    ll::memory::HookPriority::Normal,
+    Mob,
+    &Mob::$_hurt,
+    ActorHurtResult,
+    ActorDamageSource const& source,
+    float                    damage,
+    HurtParameters const&    params
+) {
+    if (isClientSide() || gf::combat::inPipeline(*this)) return origin(source, damage, params);
+    return gf::combat::runPipeline(*this, source, damage, [&](float amount) { return origin(source, amount, params); });
 }
 
 using GfDeathMessage = std::pair<std::string, std::vector<std::string>>;
@@ -614,10 +704,12 @@ class CombatModule {
 public:
     void install() {
         CombatHurtHook::hook();
+        CombatMobDirectHurtHook::hook();
         CombatDeathMessageHook::hook();
     }
     void uninstall() {
         CombatDeathMessageHook::unhook();
+        CombatMobDirectHurtHook::unhook();
         CombatHurtHook::unhook();
     }
 };
