@@ -32,6 +32,8 @@ struct PlayerGrid {
 /// (nullopt: not special, or the matcher refused). The same path as the crafting hook.
 [[nodiscard]] std::optional<ItemStack> assembleSpecial(std::string const& recipeId, CraftingGrid const& grid);
 [[nodiscard]] bool                     isSpecial(std::string const& recipeId);
+/// The special recipe (or layout) whose BP recipe gives `resultItemId` ("" for none).
+[[nodiscard]] std::string specialFor(std::string const& resultItemId);
 /// The remainder of a special recipe for `grid` (empty stacks dropped).
 [[nodiscard]] std::vector<ItemStack> remainderOf(std::string const& recipeId, CraftingGrid const& grid);
 /// The remainder of each grid slot (getRemainingItems; empty stacks kept, one per slot).

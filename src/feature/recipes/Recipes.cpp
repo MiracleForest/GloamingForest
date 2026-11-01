@@ -492,6 +492,22 @@ Special const* specialOf(Store& s, std::string const& recipeId) {
 }
 } // namespace
 
+std::string specialFor(std::string const& resultItemId) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    ensureNative();
+    auto result = data::withNamespace(resultItemId);
+    auto gives  = [&](std::string const& bpId) {
+        auto it = s.byId.find(bpId);
+        return it != s.byId.end() && it->second->resultItem == result;
+    };
+    for (auto const& [id, sp] : s.specials)
+        if (gives(id)) return id;
+    for (auto const& [bp, id] : s.layouts)
+        if (s.specials.contains(id) && gives(bp)) return bp;
+    return {};
+}
+
 bool isSpecial(std::string const& recipeId) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
@@ -603,7 +619,9 @@ void refreshNative() {
 } // namespace internal
 
 namespace {
-/// The crafting handler of the craft being processed (set around CraftHandlerCrafting::_handleCraftAction).
+/// The last crafting handler that handled a craft action on this thread. The results are set up
+/// later in the same request (the CraftResults action after the CraftRecipe one), by the request's
+/// craft handler: a handler is the crafting table's when it is this one (compared, never followed).
 thread_local CraftHandlerCrafting* gCrafting = nullptr;
 } // namespace
 
@@ -619,10 +637,6 @@ LL_TYPE_INSTANCE_HOOK(
     ItemStackNetResult,
     ItemStackRequestActionCraftBase const& action
 ) {
-    struct Restore {
-        CraftHandlerCrafting* prev;
-        ~Restore() { rc::gCrafting = prev; }
-    } restore{rc::gCrafting};
     rc::gCrafting = this;
     return origin(action);
 }
@@ -637,19 +651,30 @@ LL_TYPE_INSTANCE_HOOK(
     std::vector<ItemInstance> const& results,
     uchar                            numCrafts
 ) {
-    auto* crafting = rc::gCrafting;
-    if (!crafting) return origin(results, numCrafts);
     try {
-        Player& player = crafting->mPlayer;
-        if (player.isClientSide()) return origin(results, numCrafts);
+        Player& player = mPlayer;
+        if (player.isClientSide() || results.size() != 1 || results.front().isNull()) return origin(results, numCrafts);
         auto level = ll::service::getLevel();
         if (!level) return origin(results, numCrafts);
-        auto const* recipe = level->getRecipes().getRecipeByNetId(crafting->mRecipeNetId);
-        if (!recipe) return origin(results, numCrafts);
-        std::string id = *recipe->mRecipeId;
+        std::string id;
+        bool        workbench = false;
+        auto*       handler   = mCraftHandler.get();
+        if (handler && static_cast<CraftHandlerBase*>(rc::gCrafting) == handler) {
+            // the crafting table's handler of this request: its recipe
+            auto* crafting = rc::gCrafting;
+            if (auto const* recipe = level->getRecipes().getRecipeByNetId(crafting->mRecipeNetId)) id = *recipe->mRecipeId;
+            workbench = crafting->mWorkbench;
+        } else {
+            // otherwise the special recipe (or layout) whose BP recipe gives this result
+            id        = rc::internal::specialFor(results.front().getTypeName());
+            auto& ui  = player.mPlayerUIContainer.get();
+            for (int i = static_cast<int>(PlayerUISlot::Crafting3x3Input1); i <= static_cast<int>(PlayerUISlot::Crafting3x3Input9); ++i)
+                workbench = workbench || !ui.getItem(i).isNull();
+        }
+        if (id.empty()) return origin(results, numCrafts);
         if (id.find(':') == std::string::npos) id = "minecraft:" + id;
         if (!rc::internal::isSpecial(id)) return origin(results, numCrafts);
-        auto grid   = rc::internal::gridOf(player, crafting->mWorkbench);
+        auto grid   = rc::internal::gridOf(player, workbench);
         auto result = rc::internal::assembleSpecial(id, grid.grid);
         if (!result || gf::game::items::isEmpty(*result)) {
             gf::log().info("recipes: special crafting {} refused for {}", id, player.getRealName());
