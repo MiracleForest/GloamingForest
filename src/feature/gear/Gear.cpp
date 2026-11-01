@@ -131,18 +131,26 @@ std::map<std::string, int> modifiers(ItemStack const& stack) {
     return out;
 }
 
+// TravellersModifiersManager#isModifierActive: an unknown modifier is never active; the stack is
+// getStackForGroup's, the single armour slot of the modifier's equipment_slots group. A group of
+// several armour slots ("armor", "any") matches more than one slot, for which Java returns EMPTY:
+// such a modifier is active only through the stack-taking overload (gear::modifiers of that stack).
 int level(Player const& player, std::string const& modifierId) {
     auto id  = fullId(modifierId);
     auto mod = modifierOf(id);
-    int  best = 0;
+    if (!mod) return 0;
+    int slot = -1;
     for (int a = 0; a < 4; ++a) {
-        if (mod && !groupCovers(mod->group, a)) continue;
-        auto const& stack = player.getArmor(static_cast<SharedTypes::Legacy::ArmorSlot>(a));
-        if (game::items::isEmpty(stack)) continue;
-        auto m = modifiers(stack);
-        if (auto it = m.find(id); it != m.end()) best = std::max(best, it->second);
+        if (!groupCovers(mod->group, a)) continue;
+        if (slot >= 0) return 0; // getStackForGroup: a second armour slot -> EMPTY
+        slot = a;
     }
-    return best;
+    if (slot < 0) return 0;
+    auto const& stack = player.getArmor(static_cast<SharedTypes::Legacy::ArmorSlot>(slot));
+    if (game::items::isEmpty(stack)) return 0;
+    auto m  = modifiers(stack);
+    auto it = m.find(id);
+    return it == m.end() ? 0 : it->second;
 }
 
 bool add(ItemStack& stack, std::string const& modifierId, int lvl) {

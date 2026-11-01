@@ -8,12 +8,14 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
 
 #include "ll/api/service/Bedrock.h"
 
+#include "feature/ext/item/Tags.h"
 #include "feature/item/DataFiles.h"
 #include "feature/tags/TagsInternal.h"
 #include "feature/tags/VanillaTags.h"
@@ -107,9 +109,16 @@ void load() {
 
 [[maybe_unused]] bool const kRegistered = (data::onReload(&load), true);
 
+/// The cache key of a resolution: the registry decides which bridge applies (none for TF's own
+/// registries), so it is part of the key.
+std::string keyOf(std::optional<Registry> registry, std::string const& dir, std::string const& tag) {
+    return std::to_string(registry ? static_cast<int>(*registry) : -1) + "|" + dir + "|" + tag;
+}
+
 /// Resolves a tag (lock held). `stack` guards against cycles.
-std::shared_ptr<Resolved const> resolveLocked(Store& s, Registry registry, std::string const& dir, std::string const& tag, std::vector<std::string>& stack) {
-    auto key = dir + "|" + tag;
+std::shared_ptr<Resolved const>
+resolveLocked(Store& s, std::optional<Registry> registry, std::string const& dir, std::string const& tag, std::vector<std::string>& stack) {
+    auto key = keyOf(registry, dir, tag);
     if (auto it = s.resolved.find(key); it != s.resolved.end()) return it->second;
     auto out = std::make_shared<Resolved>();
     if (std::find(stack.begin(), stack.end(), tag) != stack.end()) {
@@ -117,7 +126,7 @@ std::shared_ptr<Resolved const> resolveLocked(Store& s, Registry registry, std::
         return out;
     }
     stack.push_back(tag);
-    if (vanilla::known(registry, tag)) out->bridged.push_back(tag);
+    if (registry && vanilla::known(*registry, tag)) out->bridged.push_back(tag);
     if (auto d = s.raw.find(dir); d != s.raw.end()) {
         if (auto t = d->second.find(tag); t != d->second.end()) {
             for (auto const& v : t->second.values) {
@@ -139,7 +148,7 @@ std::shared_ptr<Resolved const> resolveLocked(Store& s, Registry registry, std::
     return out;
 }
 
-std::shared_ptr<Resolved const> resolve(Registry registry, std::string const& dir, std::string const& tag) {
+std::shared_ptr<Resolved const> resolve(std::optional<Registry> registry, std::string const& dir, std::string const& tag) {
     auto&                    s = store();
     std::lock_guard          lock(s.mutex);
     std::vector<std::string> stack;
@@ -162,7 +171,7 @@ bool has(Registry registry, std::string const& tag, std::string const& id) {
 std::vector<std::string> members(Registry registry, std::string const& tag) {
     auto t   = stripHash(tag);
     auto dir = std::string(registryName(registry));
-    auto key = dir + "|" + t;
+    auto key = keyOf(registry, dir, t);
     {
         auto&           s = store();
         std::lock_guard lock(s.mutex);
@@ -232,13 +241,27 @@ std::vector<std::string> tagsOf(std::string const& dir) {
     return out;
 }
 
+std::optional<Registry> registryOfDir(std::string const& dir) {
+    static constexpr Registry all[] = {Registry::Block,         Registry::Item,            Registry::EntityType, Registry::Biome,
+                                       Registry::Fluid,         Registry::DamageType,      Registry::Enchantment, Registry::Structure,
+                                       Registry::BannerPattern, Registry::PaintingVariant, Registry::GameEvent,  Registry::Instrument};
+    auto d = normalizeDir(dir);
+    for (auto r : all)
+        if (d == registryName(r)) return r;
+    return std::nullopt;
+}
+
+// A directory of a `tags::Registry` goes through has / members (the vanilla bridge included, the
+// same cache entries); TF's own registries ("twilight", ...) have data members only.
 bool hasIn(std::string const& dir, std::string const& tag, std::string const& id) {
-    auto r = resolve(Registry::Instrument, dir, stripHash(tag)); // no bridge outside the enum's registries
-    return r->set.contains(data::withNamespace(id));
+    if (auto r = registryOfDir(dir)) return has(*r, tag, id);
+    auto res = resolve(std::nullopt, normalizeDir(dir), stripHash(tag));
+    return res->set.contains(data::withNamespace(id));
 }
 
 std::vector<std::string> membersIn(std::string const& dir, std::string const& tag) {
-    return resolve(Registry::Instrument, dir, stripHash(tag))->sorted;
+    if (auto r = registryOfDir(dir)) return members(*r, tag);
+    return resolve(std::nullopt, normalizeDir(dir), stripHash(tag))->sorted;
 }
 
 std::size_t fileCount() {
@@ -250,5 +273,10 @@ std::size_t fileCount() {
 void reload() { load(); }
 
 } // namespace internal
+
+namespace ext {
+bool                     hasIn(std::string const& dir, std::string const& tag, std::string const& id) { return internal::hasIn(dir, tag, id); }
+std::vector<std::string> membersIn(std::string const& dir, std::string const& tag) { return internal::membersIn(dir, tag); }
+} // namespace ext
 
 } // namespace gf::tags

@@ -4,11 +4,12 @@
 // (`minecraft:logs` holds TF's logs, `replace: false`); the vanilla members themselves are
 // Mojang's data, which Bedrock does not have in that form. This bridge answers the vanilla tags TF
 // and its data reference (the 52 `#minecraft:` references of TF's data and the BlockTags / ItemTags
-// / EntityTypeTags / FluidTags of its code) for Bedrock ids, from Bedrock's own block and item tags
-// (`log`, `minecraft:is_sword`, `minecraft:is_pickaxe_item_destructible`, ...), the item's armour
-// slot and durability, and id lists / name patterns of the vanilla content. Pattern rules apply to
-// `minecraft:` ids only; Bedrock's native tags apply to any id. Tags without a bridge have only
-// their data members.
+// / EntityTypeTags / FluidTags of its code) and the NeoForge common tags (`c:seeds`, `c:ores`,
+// `c:rods/wooden`, ... with NeoForge 21.1's vanilla members: TF's data adds only TF entries to them)
+// for Bedrock ids, from Bedrock's own block and item tags (`log`, `minecraft:is_sword`,
+// `minecraft:is_pickaxe_item_destructible`, ...), the item's armour slot and durability, and id
+// lists / name patterns of the vanilla content. Pattern rules apply to `minecraft:` ids only;
+// Bedrock's native tags apply to any id. Tags without a bridge have only their data members.
 
 #include <string>
 #include <vector>

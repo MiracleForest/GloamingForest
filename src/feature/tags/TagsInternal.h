@@ -12,8 +12,8 @@ namespace gf::tags::internal {
 [[nodiscard]] std::vector<std::string> registryDirs();
 /// The tags of one directory.
 [[nodiscard]] std::vector<std::string> tagsOf(std::string const& dir);
-/// Membership / members by directory name, for registries outside `tags::Registry` (TF's
-/// "twilight" registries: wood palettes, ...); no vanilla bridge there.
+/// Membership / members by directory name: a `tags::Registry` directory answers as has / members
+/// (bridge included); TF's own registries ("twilight": wood palettes, ...) have no vanilla bridge.
 [[nodiscard]] bool                     hasIn(std::string const& dir, std::string const& tag, std::string const& id);
 [[nodiscard]] std::vector<std::string> membersIn(std::string const& dir, std::string const& tag);
 [[nodiscard]] std::size_t              fileCount();
