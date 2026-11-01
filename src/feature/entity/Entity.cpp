@@ -31,6 +31,7 @@
 
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/entity/components/IsDeadFlagComponent.h"
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/deps/nbt/StringTag.h"
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
@@ -46,8 +47,10 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/state/ActorPropertyUtils.h"
 #include "mc/world/actor/state/PropertyComponent.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Tick.h"
+#include "mc/world/phys/AABB.h"
 
 #include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
@@ -103,6 +106,35 @@ double JavaRandom::nextGaussian() {
     mNextGaussian     = v2 * multiplier;
     mHaveGaussian     = true;
     return v1 * multiplier;
+}
+
+namespace {
+/// LegacyRandomSource.LegacyPositionalRandomFactory.
+class JavaPositionalFactory final : public core::jrand::PositionalRandomFactory {
+public:
+    explicit JavaPositionalFactory(std::int64_t seed) : mSeed(seed) {}
+    std::unique_ptr<core::jrand::RandomSource> at(int x, int y, int z) override {
+        // Mth#getSeed(x, y, z), in Java's wrapping long arithmetic
+        auto          mul = [](std::int64_t a, std::int64_t b) { return static_cast<std::int64_t>(static_cast<std::uint64_t>(a) * static_cast<std::uint64_t>(b)); };
+        std::int64_t  i   = static_cast<std::int64_t>(static_cast<std::int32_t>(static_cast<std::uint32_t>(x) * 3129871u)) ^ mul(z, 116129781LL) ^ y;
+        i                 = static_cast<std::int64_t>(static_cast<std::uint64_t>(mul(mul(i, i), 42317861LL)) + static_cast<std::uint64_t>(mul(i, 11LL)));
+        return std::make_unique<JavaRandom>((i >> 16) ^ mSeed);
+    }
+    std::unique_ptr<core::jrand::RandomSource> fromHashOf(std::string_view name) override {
+        // String#hashCode over the UTF-16 units (the names are ASCII resource locations)
+        std::int32_t h = 0;
+        for (unsigned char c : name) h = static_cast<std::int32_t>(static_cast<std::uint32_t>(h) * 31u + c);
+        return std::make_unique<JavaRandom>(static_cast<std::int64_t>(h) ^ mSeed);
+    }
+
+private:
+    std::int64_t mSeed;
+};
+} // namespace
+
+std::unique_ptr<core::jrand::RandomSource> JavaRandom::fork() { return std::make_unique<JavaRandom>(nextLong()); }
+std::unique_ptr<core::jrand::PositionalRandomFactory> JavaRandom::forkPositional() {
+    return std::make_unique<JavaPositionalFactory>(nextLong());
 }
 
 std::int64_t freshSeed() {
@@ -172,6 +204,20 @@ std::vector<Player*> playersNear(int dim, Vec3 const& center, double radius) {
     return out;
 }
 
+std::vector<Actor*> actorsIn(BlockSource& region, int dim, AABB const& box) {
+    auto out   = region.getEntities(box, 0.0f);
+    auto level = ll::service::getLevel();
+    if (!level) return out;
+    level->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
+        if (static_cast<int>(p.getDimensionId()) != dim || !p.isAlive()) return true;
+        auto const& b = p.getAABB();
+        bool        hit = b.min.x < box.max.x && b.max.x > box.min.x && b.min.y < box.max.y && b.max.y > box.min.y && b.min.z < box.max.z && b.max.z > box.min.z;
+        if (hit && std::find(out.begin(), out.end(), &p) == out.end()) out.push_back(&p);
+        return true;
+    }));
+    return out;
+}
+
 std::string damageTypeOf(int cause, bool byPlayer) {
     using C = SharedTypes::Legacy::ActorDamageCause;
     switch (static_cast<C>(cause)) {
@@ -223,18 +269,30 @@ struct Registry {
     std::vector<std::function<void()>>                           levelTicks;
     std::unordered_map<std::int64_t, std::unique_ptr<ActorState>> states;
     std::vector<std::int64_t>                                    removals;
+    std::unordered_set<std::string>                              hostileMounts; ///< IHostileMount types
+    /// Whether the tick hook looks at a type (one lookup per actor and tick instead of asking
+    /// every registry); cleared when a registration changes.
+    std::unordered_map<std::string, bool>                        interest;
 };
 Registry& reg() {
     static Registry r;
     return r;
 }
 
-bool interesting(std::string const& type) {
+bool computeInterest(std::string const& type) {
     auto& r = reg();
-    if (r.behaviours.contains(type)) return true;
+    if (r.behaviours.contains(type) || r.hostileMounts.contains(type)) return true;
     for (auto const& h : r.internal)
         if (h.interesting && h.interesting(type)) return true;
     return false;
+}
+
+bool interesting(std::string const& type) {
+    auto& cache = reg().interest;
+    if (auto it = cache.find(type); it != cache.end()) return it->second;
+    bool yes = computeInterest(type);
+    cache.emplace(type, yes);
+    return yes;
 }
 
 /// One error line per (place, type): a failing unit callback must not flood the log.
@@ -265,6 +323,7 @@ void onActorTick(Actor& actor) {
     ActorState& s = it != r.states.end() ? *it->second : stateOf(actor);
     s.lastSeen    = currentTick();
     if (s.typeId.empty()) s.typeId = type;
+    if (s.died && actor.isAlive() && actor.getHealth() > 0) s.died = false; // a respawned player
     auto bit                       = r.behaviours.find(type);
     gf::entity::Behaviour const* b = bit != r.behaviours.end() ? &bit->second : nullptr;
     if (!s.spawned) {
@@ -279,10 +338,16 @@ void onActorTick(Actor& actor) {
         if (mob->isAlive()) guarded("goals", type, [&] { tickGoals(*mob, s); });
         if (b && b->aiStep) guarded("aiStep", type, [&] { b->aiStep(actor); });
         if (!s.parts.empty()) guarded("parts", type, [&] { followParts(*mob, s); });
-        if (s.hostileMount) guarded("mount", type, [&] { tickMount(*mob, s); });
+        if (s.hostileMount || r.hostileMounts.contains(type)) guarded("mount", type, [&] { tickMount(*mob, s); });
     }
     for (auto const& h : r.internal)
         if (h.tick) guarded("internal tick", type, [&] { h.tick(actor, s); });
+}
+
+/// Whether `mob` really died: the engine's death ran (dead flag, no health). A death the death
+/// pipeline cancelled (gf::death::onLethal, F10's die hook inside this one) leaves it alive.
+bool reallyDead(Mob& mob) {
+    return mob.getEntityContext().hasComponent<IsDeadFlagComponent>() || mob.getHealth() <= 0 || !mob.isAlive();
 }
 
 void onActorDie(Mob& mob, ActorDamageSource const& source) {
@@ -290,6 +355,10 @@ void onActorDie(Mob& mob, ActorDamageSource const& source) {
     auto&       r    = reg();
     auto const& type = mob.getTypeName();
     if (!r.states.contains(uidOf(mob)) && !interesting(type)) return;
+    // once per life: the engine may call die again for a death already handled
+    auto& state = stateOf(mob);
+    if (state.died || !reallyDead(mob)) return;
+    state.died    = true;
     Actor* killer = nullptr;
     if (source.isEntitySource() || source.isChildEntitySource()) killer = actorById(source.getEntityUniqueID().rawID);
     bool        byPlayer = killer && killer->isPlayer();
@@ -314,8 +383,15 @@ void writeSave(Actor const& actor, CompoundTag& tag) {
     auto  ty = actor.getTypeName();
     if (auto bit = r.behaviours.find(ty); bit != r.behaviours.end() && bit->second.save) {
         Json extra = Json::object();
-        guarded("save", ty, [&] { bit->second.save(const_cast<Actor&>(actor), extra); });
-        if (!extra.is_null() && !extra.empty()) s.data["entity:save"] = std::move(extra);
+        bool ok    = false;
+        guarded("save", ty, [&] {
+            bit->second.save(const_cast<Actor&>(actor), extra);
+            ok = true;
+        });
+        // the save replaces the previous one: nothing saved now means nothing loaded later (a save
+        // that failed keeps the last good one)
+        if (ok && !extra.is_null() && !extra.empty()) s.data["entity:save"] = std::move(extra);
+        else if (ok && s.data.is_object()) s.data.erase("entity:save");
     }
     for (auto const& h : r.internal)
         if (h.persist) guarded("persist", ty, [&] { h.persist(actor, s); });
@@ -390,10 +466,23 @@ JavaRandom& randomOf(Actor& actor) {
     return *s.random;
 }
 
-void addInternalHooks(InternalHooks hooks) { reg().internal.push_back(std::move(hooks)); }
+void addInternalHooks(InternalHooks hooks) {
+    reg().internal.push_back(std::move(hooks));
+    invalidateInterest();
+}
+void invalidateInterest() { reg().interest.clear(); }
 void onLevelTick(std::function<void()> fn) { reg().levelTicks.push_back(std::move(fn)); }
 void removeLater(std::int64_t uid) { reg().removals.push_back(uid); }
 bool hasBehaviour(std::string const& typeId) { return reg().behaviours.contains(typeId); }
+void unregisterTypeForTest(std::string const& typeId) {
+    reg().behaviours.erase(typeId);
+    invalidateInterest();
+}
+bool hostileMountType(std::string const& typeId) { return reg().hostileMounts.contains(typeId); }
+void unmarkHostileMountForTest(std::string const& typeId) {
+    reg().hostileMounts.erase(typeId);
+    invalidateInterest();
+}
 
 bool dispatchHurt(Actor& actor, float& amount, std::string const& damageType, Actor* attacker) {
     auto& r  = reg();
@@ -414,6 +503,10 @@ LL_TYPE_INSTANCE_HOOK(EntityTickHook, ll::memory::HookPriority::Normal, Actor, &
     return r;
 }
 
+// Mob::$die is also hooked by F10's death pipeline (gf::death, src/feature/death): whichever hook
+// is outermost, F8 dispatches only after the engine's death really ran (a death that onLethal
+// cancelled leaves the mob alive and dispatches nothing), once per life. A8 folds the two into one
+// die hook (rule R8), F8 then dispatching from the death pipeline's post-death step.
 LL_TYPE_INSTANCE_HOOK(EntityDieHook, ll::memory::HookPriority::Normal, Mob, &Mob::$die, void, ActorDamageSource const& source) {
     origin(source);
     gf::feature::entity::onActorDie(*this, source);
@@ -459,6 +552,7 @@ void registerType(std::string const& entityId, Behaviour behaviour) {
     if (slot.onSpawn || slot.tick || slot.aiStep || slot.hurt || slot.die || slot.save || slot.load || slot.interact)
         log().warn("entity: behaviour of {} registered twice (the later one replaces it)", entityId);
     slot = std::move(behaviour);
+    fe::invalidateInterest();
 }
 
 Json& data(Actor& actor, std::string const& key) {
@@ -556,7 +650,20 @@ void seedForTest(Actor& actor, std::int64_t seed) {
     else s.random->setSeed(seed);
 }
 
+namespace ext {
+
+void markHostileMount(std::string const& entityId) {
+    fe::reg().hostileMounts.insert(entityId);
+    fe::invalidateInterest();
+}
+
+} // namespace ext
+
 } // namespace gf::entity
+
+namespace gf::feature::entity {
+void dispatchDieForTest(Mob& mob, ActorDamageSource const& source) { onActorDie(mob, source); }
+} // namespace gf::feature::entity
 
 // ---- module ---------------------------------------------------------------------------------------
 

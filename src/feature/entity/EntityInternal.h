@@ -15,9 +15,13 @@
 
 #include "mc/deps/core/math/Vec3.h"
 
+#include "core/jrand/JRand.h"
 #include "feature/entity/Entity.h"
 
+class AABB;
 class Actor;
+class ActorDamageSource;
+class BlockPos;
 class BlockSource;
 class Mob;
 class Player;
@@ -26,22 +30,27 @@ namespace gf::feature::entity {
 
 using Json = nlohmann::json;
 
-/// java.util.Random (Minecraft's LegacyRandomSource): the random source of a mob's goals, so the
-/// goal code consumes random numbers the way TF does (seedable for deterministic selftests).
-class JavaRandom {
+/// Minecraft's LegacyRandomSource (java.util.Random's LCG): the random source of a mob's goals, so
+/// the goal code consumes random numbers the way TF does (seedable for deterministic selftests).
+/// It is a gf::core::jrand::RandomSource with the member names of the W0 contract's LegacyRandom:
+/// while F5's implementation is not on main (the file there is F0's stub) F8 keeps this copy;
+/// A8 replaces it with `using JavaRandom = gf::core::jrand::LegacyRandom;` (entity.java_random
+/// compares the two once F5's is in).
+class JavaRandom final : public core::jrand::RandomSource {
 public:
     explicit JavaRandom(std::int64_t seed = 0) { setSeed(seed); }
-    void         setSeed(std::int64_t seed);
-    int          next(int bits);
-    int          nextInt();
-    int          nextInt(int bound);
-    std::int64_t nextLong();
-    bool         nextBoolean();
-    float        nextFloat();
-    double       nextDouble();
-    double       nextGaussian();
-    /// RandomSource#triangle.
-    double triangle(double mode, double spread) { return mode + spread * (nextDouble() - nextDouble()); }
+    void                       setSeed(std::int64_t seed) override;
+    [[nodiscard]] int          next(int bits);
+    [[nodiscard]] int          nextInt() override;
+    [[nodiscard]] int          nextInt(int bound) override;
+    [[nodiscard]] std::int64_t nextLong() override;
+    [[nodiscard]] bool         nextBoolean() override;
+    [[nodiscard]] float        nextFloat() override;
+    [[nodiscard]] double       nextDouble() override;
+    [[nodiscard]] double       nextGaussian() override;
+    /// LegacyRandomSource#fork / #forkPositional (LegacyPositionalRandomFactory).
+    [[nodiscard]] std::unique_ptr<core::jrand::RandomSource>            fork() override;
+    [[nodiscard]] std::unique_ptr<core::jrand::PositionalRandomFactory> forkPositional() override;
 
 private:
     std::int64_t mSeed         = 0;
@@ -70,6 +79,9 @@ void setMotion(Actor& actor, Vec3 const& motion);
 void push(Actor& actor, Vec3 const& delta);
 /// The players of dimension `dim` within `radius` of `center` (alive ones).
 [[nodiscard]] std::vector<Player*> playersNear(int dim, Vec3 const& center, double radius);
+/// Java's Level#getEntities(box): the actors whose box intersects `box` in `region`, players
+/// included (BlockSource::getEntities walks the chunks' actor lists, which hold no players).
+[[nodiscard]] std::vector<Actor*> actorsIn(BlockSource& region, int dim, AABB const& box);
 /// Java's damage type id of a Bedrock damage source ("minecraft:player_attack", "minecraft:fall", ...).
 [[nodiscard]] std::string damageTypeOf(int cause, bool byPlayer);
 /// The actor's eye position (Entity#getEyePosition).
@@ -84,6 +96,7 @@ struct PartRecord {
     gf::entity::PartSize             size;
     std::function<Vec3(Mob& parent)> offset;
     int                              index = 0;
+    std::optional<std::pair<float, float>> rotation; ///< TFPart's yRot / xRot set by the parent
 };
 
 /// Everything F8 keeps about one actor while it is loaded (keyed by ActorUniqueID, rule R16).
@@ -91,6 +104,7 @@ struct ActorState {
     std::string                   typeId;
     bool                          spawned = false;     ///< onSpawn ran this session
     bool                          loaded  = false;     ///< read from a save
+    bool                          died    = false;     ///< the die hooks ran (once per life)
     Json                          data    = Json::object(); ///< data(actor, key) documents (persisted)
     std::unique_ptr<JavaRandom>   random;
     std::unique_ptr<GoalSelector> goals;
@@ -108,7 +122,8 @@ struct ActorState {
     std::string             partId;
     // hostile mount
     std::int64_t grabbed = 0; ///< the player this mob holds as a rider
-    bool         hostileMount = false;
+    bool         hostileMount = false; ///< grabbed a rider (mount::grab) or an IHostileMount type
+    unsigned     disabledFlags = 0;    ///< GoalSelector#disabledFlags (Mob#updateControlFlags, every 5 ticks)
     // the last time anything touched the state (sweep)
     std::uint64_t lastSeen = 0;
 };
@@ -133,6 +148,9 @@ struct InternalHooks {
     std::function<void(Actor const& actor, ActorState& state)>                        persist;
 };
 void addInternalHooks(InternalHooks hooks);
+/// Forgets which actor types the tick hook looks at (call after a registration changed what an
+/// `interesting` callback answers).
+void invalidateInterest();
 
 /// Runs `fn` once on every server tick (level tick), after the actors ticked.
 void onLevelTick(std::function<void()> fn);
@@ -143,6 +161,15 @@ void removeLater(std::int64_t uid);
 [[nodiscard]] bool hasBehaviour(std::string const& typeId);
 /// Calls the registered Behaviour::hurt of `actor`'s type (true: the damage goes on).
 bool dispatchHurt(Actor& actor, float& amount, std::string const& damageType, Actor* attacker);
+/// Removes a behaviour registration (fixture behaviours live only while their tests run).
+void unregisterTypeForTest(std::string const& typeId);
+/// The die hook's dispatch (Behaviour::die and the internal die hooks) for a selftest.
+void dispatchDieForTest(Mob& mob, ActorDamageSource const& source);
+
+/// IHostileMount types (ext::markHostileMount): their riders are riding unfriendly.
+[[nodiscard]] bool hostileMountType(std::string const& typeId);
+/// Undoes ext::markHostileMount (a vanilla mob marked by a selftest).
+void unmarkHostileMountForTest(std::string const& typeId);
 
 // ---- goals (Goals.cpp) -----------------------------------------------------------------------
 
@@ -150,8 +177,9 @@ bool dispatchHurt(Actor& actor, float& amount, std::string const& damageType, Ac
 class GoalSelector {
 public:
     void add(int priority, gf::entity::GoalPtr goal);
-    /// GoalSelector#tick (stop, start) followed by tickRunningGoals(true).
-    void tick();
+    /// GoalSelector#tick (stop, start) followed by tickRunningGoals(true). Goals with a flag in
+    /// `disabled` (GoalSelector#disabledFlags) stop and do not start.
+    void tick(unsigned disabled = 0);
     /// GoalSelector#tickRunningGoals(force).
     void tickRunning(bool force);
     void stopAll();
@@ -168,6 +196,9 @@ private:
     int                  mLocked[4]{-1, -1, -1, -1}; ///< the goal holding Move, Look, Jump, Target
 };
 
+/// Mob#updateControlFlags: the goal flags a controlling mob passenger / a boat take away.
+[[nodiscard]] unsigned controlFlagsDisabled(Mob& mob);
+
 /// Runs the goal selectors and the movement controller of a mob (from the tick hook).
 void tickGoals(Mob& mob, ActorState& state);
 
@@ -180,6 +211,10 @@ namespace mobs {
 [[nodiscard]] double distanceSqr(Actor const& a, Vec3 const& p);
 /// PathNavigation#moveTo(x, y, z, speed); false when the mob has no navigation or no path.
 bool moveTo(Mob& mob, Vec3 const& pos, double speed);
+/// Whether PathNavigation#createPath would give a path (null when the mob is below the world or
+/// its navigation can't update a path: not on the ground / in a liquid / riding). No navigation
+/// (a no-clip flyer): true.
+[[nodiscard]] bool canCreatePath(Mob& mob, Vec3 const& pos);
 [[nodiscard]] bool navigationDone(Mob& mob);
 void               stopNavigation(Mob& mob);
 void               setSpeedModifier(Mob& mob, double speed);
@@ -190,6 +225,31 @@ void               lookAt(Mob& mob, Actor& target, float yMax, float xMax);
 bool               doHurtTarget(Mob& mob, Actor& target);
 /// EntitySelector.NO_CREATIVE_OR_SPECTATOR and LIVING_ENTITY_STILL_ALIVE.
 [[nodiscard]] bool attackable(Actor& actor);
+/// Java's Monster / Animal classes: Bedrock's Monster / Animal category or type family.
+[[nodiscard]] bool isMonster(Actor const& actor);
+[[nodiscard]] bool isAnimal(Actor const& actor);
+/// PathfinderMob#getWalkTargetValue: Monster (darker is better), Animal (grass, then brighter),
+/// any other mob 0.
+[[nodiscard]] float walkTargetValue(Mob& mob, BlockPos const& pos);
+/// WalkNodeEvaluator.PathType of the vanilla pathfinder (the cases GoalUtils needs).
+enum class PathType {
+    Blocked, Open, Walkable, Trapdoor, PowderSnow, DangerPowderSnow, Fence, Lava, Water, WaterBorder, Rail,
+    DangerFire, DamageFire, DangerOther, DamageOther, DoorOpen, DoorWoodClosed, DoorIronClosed, Leaves,
+    StickyHoney, Cocoa, DamageCautious, DangerTrapdoor
+};
+/// WalkNodeEvaluator#getPathTypeFromState / #getPathTypeStatic.
+[[nodiscard]] PathType pathTypeFromState(BlockSource& region, BlockPos const& pos);
+[[nodiscard]] PathType pathTypeStatic(BlockSource& region, BlockPos const& pos);
+/// PathType#getMalus (the defaults; TF's mobs set no others for these goals).
+[[nodiscard]] float pathMalus(PathType type);
+/// GoalUtils#hasMalus.
+[[nodiscard]] bool hasMalus(BlockSource& region, BlockPos const& pos);
+/// PathNavigation#isStableDestination: the block below renders solid (BlockState#isSolidRender).
+[[nodiscard]] bool stableDestination(BlockSource& region, BlockPos const& pos);
+/// BlockStateBase#isSolid (legacy solid: a collision box of average size >= 0.729 or 1 high).
+[[nodiscard]] bool legacySolid(BlockSource& region, BlockPos const& pos);
+/// The block's collision box at `pos` has no volume (BlockState#getCollisionShape().isEmpty()).
+[[nodiscard]] bool emptyCollision(BlockSource& region, BlockPos const& pos);
 /// DefaultRandomPos#getPos / getPosAway / getPosTowards (nullopt: none found).
 [[nodiscard]] std::optional<Vec3> randomPos(Mob& mob, int radius, int vertical);
 [[nodiscard]] std::optional<Vec3> randomPosAway(Mob& mob, int radius, int vertical, Vec3 const& away);
@@ -209,6 +269,12 @@ void installMounts();
 void uninstallMounts();
 /// The hostile mount tick of a mob that holds a rider.
 void tickMount(Mob& mob, ActorState& state);
+/// HostileMountEvents#isRidingUnfriendly.
+[[nodiscard]] bool ridingUnfriendly(Actor const& actor);
+/// Whether Player::teleportTo with `cause` is cancelled for `player` (riding a hostile mount).
+[[nodiscard]] bool blocksTeleport(Player& player, int cause);
+/// Teleports cancelled so far (selftests).
+[[nodiscard]] int blockedTeleportsForTest();
 
 /// The part id of the hit being forwarded to its parent right now ("" outside such a hit).
 [[nodiscard]] std::string const& currentPartHit();
