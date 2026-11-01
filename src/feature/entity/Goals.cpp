@@ -43,8 +43,12 @@
 #include "mc/world/actor/ActorHurtResult.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorSwingSource.h"
+#include "mc/world/actor/ActorFlags.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/ai/navigation/PathNavigation.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
+#include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/HandSlot.h"
 #include "mc/world/item/ItemStack.h"
@@ -185,13 +189,23 @@ NavigationComponent* navOf(Mob& mob) {
 }
 } // namespace
 
-bool moveTo(Mob& mob, Vec3 const& pos, double speed) {
+/// Whether F8 steers the mob itself (MoveControl#setWantedPosition): a NoClip mob always (its
+/// NoClipMoveControl ignores the world, the engine's navigation would path around it), any mob
+/// without an engine navigation.
+bool steeredByWanted(Mob& mob) {
+    auto* s = findState(uidOf(mob));
+    if (s && s->moveKind && *s->moveKind == ge::MoveKind::NoClip) return true;
     auto* nav = navOf(mob);
-    if (!nav || !nav->mNavigation.get()) {
-        // no navigation (a no-clip flyer): steer with the NoClipMoveControl's wanted position
+    return !nav || !nav->mNavigation.get();
+}
+
+bool moveTo(Mob& mob, Vec3 const& pos, double speed) {
+    if (steeredByWanted(mob)) {
+        if (auto* nav = navOf(mob); nav && nav->mNavigation.get()) nav->mNavigation.get()->stop(*nav, mob);
         ge::ext::setWantedPosition(mob, pos, speed);
         return true;
     }
+    auto* nav = navOf(mob);
     return nav->mNavigation.get()->moveTo(*nav, mob, pos, static_cast<float>(speed));
 }
 
@@ -200,14 +214,14 @@ bool moveTo(Mob& mob, Vec3 const& pos, double speed) {
 // path. Bedrock's Path has no callable destructor, so the path itself is not built here.
 bool canCreatePath(Mob& mob, Vec3 const&) {
     auto* nav = navOf(mob);
-    if (!nav || !nav->mNavigation.get()) return true;
+    if (!nav || !nav->mNavigation.get() || steeredByWanted(mob)) return true;
     if (mob.getFeetPos().y < mob.getDimensionBlockSource().getMinHeight()) return false;
     return nav->mNavigation.get()->canUpdatePath(mob);
 }
 
 bool navigationDone(Mob& mob) {
     auto* nav = navOf(mob);
-    if (!nav) {
+    if (!nav || steeredByWanted(mob)) {
         auto* s = findState(uidOf(mob));
         return !s || !s->hasWanted;
     }
@@ -739,11 +753,12 @@ private:
         };
         Actor* pointed = nullptr;
         double hitDist = 0;
-        auto   self    = uidOf(m);
         for (auto* e : actorsIn(m.getDimensionBlockSource(), static_cast<int>(m.getDimensionId()), search)) {
             if (!e || e == &m || !e->isAlive() || !mobs::attackable(*e)) continue;
-            if (parentOfPart(*e) == self) continue; // our own parts
-            if (!e->hasCategory(ActorCategory::Mob) && !e->isPlayer() && !parentOfPart(*e)) continue; // isPickable
+            // EntitySelector.LIVING_ENTITY_STILL_ALIVE: living entities only, so no TFPart (a
+            // multipart mob is breathed on through its main box), ours or another mob's
+            if (parentOfPart(*e) != 0) continue;
+            if (!e->hasCategory(ActorCategory::Mob) && !e->isPlayer()) continue;
             auto const& b = e->getAABB();
             if (b.contains(src)) {
                 if (0.0 < hitDist || hitDist == 0.0) {
@@ -1103,6 +1118,112 @@ private:
     int mAttackTick = 0;
 };
 
+/// Mth#wrapDegrees.
+float wrapDegrees(float v) {
+    float f = std::fmod(v, 360.0F);
+    if (f >= 180.0F) f -= 360.0F;
+    if (f < -180.0F) f += 360.0F;
+    return f;
+}
+
+/// MoveControl#rotlerp.
+float rotlerp(float from, float to, float max) {
+    float f = std::clamp(wrapDegrees(to - from), -max, max);
+    float g = from + f;
+    if (g < 0.0F) g += 360.0F;
+    else if (g > 360.0F) g -= 360.0F;
+    return g;
+}
+
+/// Entity#setNoGravity(true) while the engine keeps its gravity flag: the engine's gravity (0.08
+/// a tick for mobs, LivingEntity#getDefaultGravity) is given back, so only the 0.98 drag stays.
+void counterGravity(Mob& m) {
+    if (m.isOnGround() || !m.getStatusFlag(ActorFlags::HasGravity)) return;
+    push(m, Vec3{0.0f, 0.08f, 0.0f});
+}
+
+/// LivingEntity#travel's moveRelative for the controller's (xxa = 0, yya, zza): onGround the
+/// friction-influenced speed (the zza's speed itself on normal blocks: 0.216 / 0.6^3 = 1), in the
+/// air 0.02 (LivingEntity#getFlyingSpeed); the engine adds friction and gravity.
+void moveRelative(Mob& m, float yya, float zza, float amount) {
+    double len = std::sqrt(double(yya) * yya + double(zza) * zza);
+    if (len < 1.0E-7) return;
+    double scale = (len > 1.0 ? 1.0 / len : 1.0) * amount;
+    double yaw   = m.getRotation().y * std::numbers::pi / 180.0;
+    double fz    = zza * scale;
+    push(m, Vec3{float(-std::sin(yaw) * fz), float(yya * scale), float(std::cos(yaw) * fz)});
+}
+
+/// Turns the body towards the wanted position (MoveControl: setYRot(rotlerp(yRot, f, 90))).
+void turnTowards(Mob& m, double dx, double dz, float maxTurn) {
+    float target = static_cast<float>(std::atan2(dz, dx) * 180.0 / std::numbers::pi) - 90.0F;
+    auto  rot    = m.getRotation();
+    float yaw    = rotlerp(rot.y, target, maxTurn);
+    const_cast<Vec2&>(m.getRotation()) = Vec2{rot.x, yaw};
+    m.setYBodyRotation(yaw);
+}
+
+float movementSpeed(Mob& m) {
+    auto attr = m.getAttribute(SharedAttributes::MOVEMENT_SPEED());
+    return attr.mPtr ? attr.mPtr->mCurrentValue : 0.25F;
+}
+
+/// The MOVE_TO step of vanilla's controllers for a mob F8 steers (no engine navigation, or the
+/// unit's goal set the wanted position): MoveControl (Ground: turn, walk, jump up a step),
+/// FlyingMoveControl(maxTurn 10, hoversInPlace) (Flying / Hovering: no gravity while moving,
+/// Hovering also while idle; climb or sink with yya) and SmoothSwimmingMoveControl(85, 10, 0.02,
+/// 0.1, true) (Swimming: in water 0.02 of the speed along the pitch plus 0.005 buoyancy, on land
+/// 0.1 of it). The wanted position stays until reached or stopNavigation (the path follower that
+/// sets it every tick in Java has no counterpart on a mob without navigation).
+void wantedMove(Mob& m, ActorState& s, ge::MoveKind kind) {
+    bool flying = kind == ge::MoveKind::Flying || kind == ge::MoveKind::Hovering;
+    if (kind == ge::MoveKind::Swimming && m.isInWater()) push(m, Vec3{0.0f, 0.005f, 0.0f});
+    if (!s.hasWanted) {
+        if (kind == ge::MoveKind::Hovering) counterGravity(m); // hoversInPlace: setNoGravity stays
+        return;
+    }
+    auto   p  = m.getFeetPos();
+    double dx = s.wanted.x - p.x, dy = s.wanted.y - p.y, dz = s.wanted.z - p.z;
+    double horizontal = std::sqrt(dx * dx + dz * dz);
+    if (dx * dx + dy * dy + dz * dz < 2.5000003E-7 || (horizontal < 0.5 && std::abs(dy) < (flying ? 0.5 : 1.0))) {
+        s.hasWanted = false; // reached
+        return;
+    }
+    float speed = static_cast<float>(s.wantedSpeed) * movementSpeed(m);
+    if (flying) {
+        counterGravity(m);
+        turnTowards(m, dx, dz, 90.0F);
+        if (std::abs(dy) > 1.0E-5 || horizontal > 1.0E-5) {
+            float pitch = static_cast<float>(-(std::atan2(dy, horizontal) * 180.0 / std::numbers::pi));
+            auto  rot   = m.getRotation();
+            const_cast<Vec2&>(m.getRotation()) = Vec2{rotlerp(rot.x, pitch, 10.0F), rot.y};
+            moveRelative(m, dy > 0.0 ? speed : -speed, speed, m.isOnGround() ? speed : 0.02F);
+        }
+        return;
+    }
+    if (kind == ge::MoveKind::Swimming) {
+        turnTowards(m, dx, dz, 10.0F);
+        if (m.isInWater()) {
+            float pitch = std::clamp(wrapDegrees(static_cast<float>(-(std::atan2(dy, horizontal) * 180.0 / std::numbers::pi))), -85.0F, 85.0F);
+            auto  rot   = m.getRotation();
+            float xRot  = rotlerp(rot.x, pitch, 5.0F);
+            const_cast<Vec2&>(m.getRotation()) = Vec2{xRot, rot.y};
+            float f1 = speed * 0.02F;
+            float rx = xRot * static_cast<float>(std::numbers::pi) / 180.0F;
+            moveRelative(m, -std::sin(rx) * f1, std::cos(rx) * f1, 0.02F);
+        } else {
+            moveRelative(m, 0.0F, speed * 0.1F, m.isOnGround() ? speed * 0.1F : 0.02F);
+        }
+        return;
+    }
+    // MoveControl
+    turnTowards(m, dx, dz, 90.0F);
+    moveRelative(m, 0.0F, speed, m.isOnGround() ? speed : 0.02F);
+    auto const& bb    = m.getAABB();
+    float       width = bb.max.x - bb.min.x;
+    if (m.isOnGround() && dy > 0.6 && dx * dx + dz * dz < std::max(1.0F, width)) m.jumpFromGround(); // maxUpStep 0.6
+}
+
 /// NoClipMoveControl#tick.
 void noClipMove(Mob& m, ActorState& s) {
     if (!s.hasWanted) return;
@@ -1136,17 +1257,28 @@ unsigned controlFlagsDisabled(Mob& mob) {
 }
 
 void tickGoals(Mob& mob, ActorState& s) {
-    // Mob#tick: updateControlFlags every 5 ticks (GoalSelector#setControlFlag for MOVE, JUMP, LOOK)
+    // Mob#tick: updateControlFlags every 5 ticks (the goal selector's MOVE, JUMP, LOOK flags only)
     if (mob.mTickCount % 5 == 0) s.disabledFlags = controlFlagsDisabled(mob);
-    // Mob#serverAiStep: full selector ticks every other tick, the running goals in between
+    // Mob#serverAiStep: full selector ticks every other tick, the running goals in between; the
+    // parity is the server's tick count + Entity#getId (the network id: Bedrock's runtime id)
     int  tickCount = mob.mTickCount;
-    auto rid       = static_cast<std::int64_t>(mob.getRuntimeID().rawID);
-    bool full      = !((tickCount + rid) % 2 != 0 && tickCount > 1);
-    if (s.targets) full ? s.targets->tick(s.disabledFlags) : s.targets->tickRunning(false);
+    auto id        = static_cast<std::int64_t>(mob.getRuntimeID().rawID);
+    auto parity    = static_cast<std::int64_t>(currentTick()) + id;
+    bool full      = !(parity % 2 != 0 && tickCount > 1);
+    if (s.targets) full ? s.targets->tick(0) : s.targets->tickRunning(false);
     if (s.goals) full ? s.goals->tick(s.disabledFlags) : s.goals->tickRunning(false);
-    // the movement controller
+    // the movement controller: a custom one, the NoClipMoveControl, or vanilla's controller of the
+    // kind for a mob F8 steers (an engine navigation drives a mob of the other kinds with the
+    // movement component of its BP: movement.basic / fly / hover / amphibious, Bedrock's own
+    // MoveControl / FlyingMoveControl / SmoothSwimmingMoveControl)
     if (s.moveFn) s.moveFn(mob);
     else if (s.moveKind && *s.moveKind == ge::MoveKind::NoClip) noClipMove(mob, s);
+    else if (s.moveKind) {
+        // idle, a hovering / swimming mob F8 steers keeps its no-gravity / buoyancy; one the engine
+        // steers has them from its own controller
+        bool idleForces = (*s.moveKind == ge::MoveKind::Hovering || *s.moveKind == ge::MoveKind::Swimming) && mobs::steeredByWanted(mob);
+        if (s.hasWanted || idleForces) wantedMove(mob, s, *s.moveKind);
+    }
 }
 
 } // namespace gf::feature::entity

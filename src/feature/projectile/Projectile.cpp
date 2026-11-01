@@ -53,6 +53,8 @@
 #include "mc/world/level/ShapeType.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/storage/GameRuleId.h"
+#include "mc/world/level/storage/GameRules.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/phys/HitResult.h"
 
@@ -92,8 +94,18 @@ struct Sim {
     int          pickup     = 0; ///< pe::Pickup
     int          shake      = 0;
     double       knockback  = 0.0; ///< the firing weapon's knockback (punch)
-    std::string  groundBlock;       ///< AbstractArrow#lastState (the block it is stuck in)
+    std::string  groundBlock;       ///< AbstractArrow#lastState (the full state of the block it is stuck in)
+    nlohmann::json pickupStack;     ///< AbstractArrow#pickupItemStack (null: ArrowSpec::pickupItem)
+    std::uint32_t  groundNetworkId = 0; ///< the block permutation of groundBlock this session (0: unknown; not saved)
 };
+
+/// A block's full state (id and every state value) as AbstractArrow#lastState compares it: an
+/// opened door or trapdoor is another state.
+std::string fullState(Block const& block) {
+    std::string out = game::blockId(block);
+    for (auto const& [name, value] : game::statesOf(block)) out += "|" + name + "=" + value;
+    return out;
+}
 
 struct State {
     std::unordered_map<std::string, Spec>         specs;
@@ -142,6 +154,7 @@ nlohmann::json toJson(Sim const& s) {
         {"shake",     s.shake        },
         {"knockback", s.knockback    },
         {"block",     s.groundBlock  },
+        {"pickupStack", s.pickupStack},
     };
 }
 
@@ -161,7 +174,37 @@ Sim fromJson(nlohmann::json const& j, std::string const& type) {
     s.shake         = j.value("shake", 0);
     s.knockback     = j.value("knockback", 0.0);
     s.groundBlock   = j.value("block", std::string());
+    s.pickupStack   = j.value("pickupStack", nlohmann::json());
     return s;
+}
+
+/// AbstractArrow#getPickupItem: the stack the arrow was fired with, else the type's default item.
+std::optional<ItemStack> pickupItemOf(Sim const& s, pe::ArrowSpec const& arrow) {
+    if (s.pickupStack.is_object()) {
+        auto stack = game::items::fromJson(s.pickupStack);
+        if (!game::items::isEmpty(stack)) return game::items::withCount(stack, 1);
+    }
+    return game::items::make(arrow.pickupItem, 1);
+}
+
+/// Entity#getRootVehicle.
+Actor const* rootVehicle(Actor const& actor) {
+    Actor const* root = &actor;
+    for (int i = 0; i < 16; ++i) {
+        auto* v = root->getVehicle();
+        if (!v) break;
+        root = v;
+    }
+    return root;
+}
+
+/// Player#canHarmPlayer: Bedrock has no teams; players harm players when the pvp gamerule allows.
+bool canHarmPlayer() {
+    auto level = ll::service::getLevel();
+    if (!level) return true;
+    GameRuleId pvp;
+    pvp.mValue = static_cast<int>(GameRules::GameRulesIndex::Pvp);
+    return level->getGameRules().getBool(pvp, true);
 }
 
 /// Ray / box slab test: the parameter of the first hit of segment a -> b with the box (0..1).
@@ -189,14 +232,19 @@ bool intersects(AABB const& a, AABB const& b) {
     return a.min.x < b.max.x && a.max.x > b.min.x && a.min.y < b.max.y && a.max.y > b.min.y && a.min.z < b.max.z && a.max.z > b.min.z;
 }
 
-/// Projectile#canHitEntity (living things, players, multipart parts; never another projectile).
+/// Projectile#canHitEntity (living things, players, multipart parts; never another projectile):
+/// until the projectile left its owner, nothing of the owner's vehicle stack
+/// (Entity#isPassengerOfSameVehicle: the owner itself, its mount, the mount's other riders); an
+/// arrow (AbstractArrow#tick) passes through players its player owner may not harm.
 bool canHit(Actor& projectile, Sim const& s, Actor& target) {
     if (&target == &projectile || !target.isAlive()) return false;
     if (target.isPlayer() && static_cast<Player&>(target).isSpectator()) return false;
     if (S().live.contains(fe::uidOf(target))) return false;
     bool pickable = target.hasCategory(ActorCategory::Mob) || target.isPlayer() || fe::parentOfPart(target) != 0;
     if (!pickable) return false;
-    if (!s.leftOwner && s.owner && fe::uidOf(target) == s.owner) return false;
+    Actor* owner = s.owner ? fe::actorById(s.owner) : nullptr;
+    if (!s.leftOwner && owner && rootVehicle(*owner) == rootVehicle(target)) return false;
+    if (arrowOf(s.type) && owner && owner->isPlayer() && target.isPlayer() && owner != &target && !canHarmPlayer()) return false;
     return true;
 }
 
@@ -248,7 +296,7 @@ bool arrowHitEntity(Actor& p, Sim& s, pe::ArrowSpec const& arrow, Actor& target)
     const_cast<Vec2&>(p.getRotation()) = Vec2{rot.x, rot.y + turn};
     if (double(s.vel.x) * s.vel.x + double(s.vel.y) * s.vel.y + double(s.vel.z) * s.vel.z < 1.0E-7) {
         if (s.pickup == static_cast<int>(pe::Pickup::Allowed)) {
-            if (auto item = game::items::make(arrow.pickupItem, 1)) {
+            if (auto item = pickupItemOf(s, arrow)) {
                 if (auto* lv = ll::service::getLevel().as_ptr()) {
                     auto pos = p.getPosition();
                     lv->getSpawner().spawnItem(p.getDimensionBlockSource(), *item, nullptr, Vec3{pos.x, pos.y + 0.1f, pos.z}, 0);
@@ -271,7 +319,7 @@ void arrowPickup(Actor& p, Sim& s, pe::ArrowSpec const& arrow) {
         if (!intersects(reach, bb)) continue;
         bool taken = false;
         if (s.pickup == static_cast<int>(pe::Pickup::CreativeOnly)) taken = player->isCreative();
-        else if (auto item = game::items::make(arrow.pickupItem, 1)) {
+        else if (auto item = pickupItemOf(s, arrow)) {
             taken = player->add(*item);
             if (taken) player->sendInventory(false);
         }
@@ -310,9 +358,18 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
     if (s.shake > 0) --s.shake;
     if (s.inGround) {
         if (arrow) {
-            // AbstractArrow: falls again when its block went (shouldFall: no collision around it)
-            BlockPos at = game::blockPosOf(pos);
-            if (game::blockIdAt(region, at) != s.groundBlock) {
+            // AbstractArrow: falls again when its block changed state (lastState != the block
+            // state there: broken, or a door / trapdoor opened) and nothing holds it (shouldFall:
+            // no collision around it)
+            BlockPos     at    = game::blockPosOf(pos);
+            Block const& there = region.getBlock(at);
+            // the full state string only when the permutation differs from the one last seen
+            bool changed = false;
+            if (s.groundNetworkId == 0 || there.mNetworkId != s.groundNetworkId) {
+                changed = fullState(there) != s.groundBlock;
+                if (!changed) s.groundNetworkId = there.mNetworkId;
+            }
+            if (changed) {
                 std::vector<AABB> shapes;
                 AABB              box{Vec3{pos.x - 0.06f, pos.y - 0.06f, pos.z - 0.06f}, Vec3{pos.x + 0.06f, pos.y + 0.06f, pos.z + 0.06f}};
                 region.fetchAABBs(shapes, box, false);
@@ -396,14 +453,19 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
             double dl = lengthOf(d);
             Vec3   back = dl > 1e-9 ? Vec3{float(d.x / dl * 0.05), float(d.y / dl * 0.05), float(d.z / dl * 0.05)} : Vec3{0, 0, 0};
             gf::fx::sound(p.getDimension(), arrow->hitSound, p.getPosition(), 1.0F, hitPitch(p));
-            s.vel           = d;
             s.inGround      = true;
             s.inGroundTicks = 0;
             s.shake         = 7;
             s.crit          = false;
             Vec3 at{hr.mPos.x - back.x, hr.mPos.y - back.y, hr.mPos.z - back.z};
-            s.groundBlock = game::blockIdAt(region, hr.mBlock); // lastState: the block that was hit
-            p.moveTo(at, p.getRotation());
+            s.groundBlock     = fullState(region.getBlock(hr.mBlock)); // lastState: the block that was hit
+            s.groundNetworkId = region.getBlock(hr.mBlock).mNetworkId;
+            // the rest of AbstractArrow#tick still runs on the hit vector (setDeltaMovement(hit -
+            // pos)): drag (0.99, in water the water inertia) and gravity, so a falling arrow
+            // (startFalling) starts from that
+            float f = p.isInWater() ? arrow->waterInertia : spec.drag;
+            s.vel   = Vec3{d.x * f, d.y * f - arrow->gravity, d.z * f};
+            p.moveTo(at, rotationOf(d));
             return;
         }
         if (spec.onHitBlock) {
@@ -490,6 +552,10 @@ Actor* shoot(Actor& shooter, std::string const& entityId, Vec3 const& direction,
         s.baseDamage = arrow->baseDamage;
         // AbstractArrow(type, owner, ...): a player's arrow may be picked up
         s.pickup = static_cast<int>(shooter.isPlayer() ? ext::Pickup::Allowed : ext::Pickup::Disallowed);
+        // AbstractArrow(..., pickupItemStack, firedFromWeapon): init {"pickupItem": <item JSON>} is
+        // the stack the arrow was fired with (a tipped or spectral arrow comes back as itself)
+        if (init.is_object())
+            if (auto it = init.find("pickupItem"); it != init.end() && it->is_object()) s.pickupStack = *it;
     }
     fp::S().live[fe::uidOf(*added)] = s;
     if (!init.is_null()) gf::entity::data(*added, "init") = init;
@@ -562,6 +628,15 @@ bool inGround(Actor const& arrow) {
 void setKnockback(Actor& arrow, double knockback) {
     if (auto* s = simOf(arrow)) s->knockback = knockback;
 }
+void setPickupItem(Actor& arrow, ItemStack const& stack) {
+    if (auto* s = simOf(arrow)) s->pickupStack = game::items::isEmpty(stack) ? nlohmann::json() : game::items::toJson(game::items::withCount(stack, 1));
+}
+std::optional<ItemStack> pickupItem(Actor const& arrow) {
+    auto* s = simOf(arrow);
+    if (!s) return std::nullopt;
+    auto const* a = fp::arrowOf(s->type);
+    return a ? fp::pickupItemOf(*s, *a) : std::nullopt;
+}
 
 void makeTrail(Actor& projectile, std::string const& particle, int amount, Vec3 const& rgb) {
     auto& random = fe::randomOf(projectile);
@@ -583,6 +658,10 @@ namespace {
 
 class ProjectileModule {
 public:
+    // The projectile kit hooks nothing of its own: it runs inside F8's entity hooks (internal tick
+    // and persist hooks) and level tick, whose registries have no removal, so those are registered
+    // once per process and stay (the entity module's uninstall unhooks the engine, which stops
+    // them); the world lifecycle clears the flights of a closed world.
     void install() {
         static bool once = false;
         if (std::exchange(once, true)) return;
