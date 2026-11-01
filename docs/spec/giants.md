@@ -33,7 +33,7 @@ by piece-type id through F7 (R2).
 
 Start position: `x = chunkX x 16`, `z = chunkZ x 16` (not centred), y = sea level (0); piece random
 `RandomSource.create(seed + chunkX x 25117 + chunkZ x 151121)`. First piece: `CloudCastleComponent(1, x, y + 168, z)`
-(type id `twilightforest:TFClCa`, U27), so the castle floor sits at y 168 and its `TFCloud` at y 171 plus the two
+(type id `twilightforest:TFClCa`, U27), rounded to multiples of 4; its box starts 4 lower (minY 164): fluffy cloud slab y 164..167, castle walls from y 168, the `TFCloud` at minY + 3 = 167, plus the two
 `TFClTr` cloud trees (all U27 pieces). The castle places one giant miner and one armored giant (persistent). The
 structure is conquerable (`ConquerableStructure`) but has no boss; F6 handles the lock and hint.
 
