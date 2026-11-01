@@ -210,26 +210,31 @@ bool ddui(Player& player, std::string const& screenId, Json const& document, std
 
 namespace {
 constexpr std::string_view kSkinPrefix = "gfskin:";
-constexpr char             kSkinPad    = '~'; // never part of an id: the JSON-UI strips it
+constexpr char             kSkinEnd    = ';';
 } // namespace
 
+// The JSON-UI matches each skin by the marker "gfskin:<id>;" (variable expressions can remove a
+// known substring but not cut at a position), so only the skins it lists can be drawn; any other
+// id keeps the plain title (no marker shows up in a vanilla client).
 std::string containerTitleSkin(std::string const& titleKey, std::string const& skinId) {
-    if (skinId.empty() || skinId.size() > kTitleSkinWidth || skinId.find(kSkinPad) != std::string::npos) {
-        if (!skinId.empty()) log().warn("ui: skin id '{}' is longer than {} characters or contains '{}': no skin", skinId, kTitleSkinWidth, kSkinPad);
+    if (std::find(kJsonUiSkins.begin(), kJsonUiSkins.end(), skinId) == kJsonUiSkins.end()) {
+        static std::mutex                       m;
+        static std::unordered_map<std::string, bool> warned;
+        std::lock_guard                         lock(m);
+        if (!skinId.empty() && !warned[skinId]) {
+            warned[skinId] = true;
+            log().warn("ui: no JSON-UI skin '{}' (assets/pack/rp/ui/chest_screen.json): plain title", skinId);
+        }
         return titleKey;
     }
-    std::string out(kSkinPrefix);
-    out += skinId;
-    out.append(kTitleSkinWidth - skinId.size(), kSkinPad);
-    out += titleKey;
-    return out;
+    return std::string(kSkinPrefix) + skinId + kSkinEnd + titleKey;
 }
 
 TitleSkin parseTitleSkin(std::string const& title) {
-    if (!title.starts_with(kSkinPrefix) || title.size() < kSkinPrefix.size() + kTitleSkinWidth) return {"", title};
-    auto field = title.substr(kSkinPrefix.size(), kTitleSkinWidth);
-    field.erase(std::remove(field.begin(), field.end(), kSkinPad), field.end());
-    return {field, title.substr(kSkinPrefix.size() + kTitleSkinWidth)};
+    if (!title.starts_with(kSkinPrefix)) return {"", title};
+    auto end = title.find(kSkinEnd, kSkinPrefix.size());
+    if (end == std::string::npos) return {"", title};
+    return {title.substr(kSkinPrefix.size(), end - kSkinPrefix.size()), title.substr(end + 1)};
 }
 
 } // namespace gf::ui

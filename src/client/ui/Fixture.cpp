@@ -200,15 +200,14 @@ bool testPacksDeployed() {
 
 class FixtureModule {
 public:
+    // keys at mod load: LeviLamina binds them when the game builds its input handler
+    void load() { registerFixtureKey(); }
     void install() {
         hud::addLayer("ui.fixture", 1000, drawHud);
         render::onWorld(drawWorld);
         screen::registerScreen("ui.fixture", [](Json const& data, screen::SendFn send) { return std::make_unique<FixtureScreen>(data, std::move(send)); });
         net::client::on("ui.fixture", onMessage);
-        if (testPacksDeployed() && !mKey) {
-            mKey = true;
-            keys::registerKey("ui.fixture", kFixtureKey, "key.categories.gloamingforest.fixture", [] { log().info("ui fixture: key pressed (client)"); });
-        }
+        registerFixtureKey();
         if (!mExit) {
             mExit = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) {
                 st().hud   = false;
@@ -223,6 +222,12 @@ public:
     }
 
 private:
+    void registerFixtureKey() {
+        if (mKey || !testPacksDeployed()) return;
+        mKey = true;
+        keys::registerKey("ui.fixture", kFixtureKey, "key.categories.gloamingforest.fixture", [] { log().info("ui fixture: key pressed (client)"); });
+    }
+
     bool                   mKey = false;
     ll::event::ListenerPtr mExit;
 };

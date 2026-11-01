@@ -38,24 +38,24 @@ namespace fx  = gf::ui::fixture;
 // ---- vanilla fallbacks ---------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("ui.title_skin", [](Context& ctx) {
-    auto t = gf::ui::containerTitleSkin("container.twilightforest.uncrafting_table", "guigoblintinkering");
-    ctx.check(t.starts_with("gfskin:guigoblintinkering~"), "the title starts with the padded skin field: " + t);
-    ctx.check(t.size() == 7 + gf::ui::kTitleSkinWidth + std::string("container.twilightforest.uncrafting_table").size(), "fixed-width skin field");
+    auto t = gf::ui::containerTitleSkin("GloamingForest UI fixture", "ui/fixture_container");
+    ctx.check(t == "gfskin:ui/fixture_container;GloamingForest UI fixture", "the title carries the skin marker: " + t);
     auto back = gf::ui::parseTitleSkin(t);
-    ctx.check(back.skinId == "guigoblintinkering" && back.titleKey == "container.twilightforest.uncrafting_table", "the JSON-UI reads the skin and the title back");
+    ctx.check(back.skinId == "ui/fixture_container" && back.titleKey == "GloamingForest UI fixture", "the skin and the title read back");
     ctx.check(gf::ui::parseTitleSkin("container.chest").skinId.empty(), "plain titles carry no skin");
-    ctx.check(gf::ui::containerTitleSkin("k", std::string(gf::ui::kTitleSkinWidth + 1, 'a')) == "k", "a too long skin id leaves the title plain");
-    ctx.check(gf::ui::containerTitleSkin("k", "a~b") == "k", "the padding character is refused in ids");
-    auto sub = gf::ui::parseTitleSkin(gf::ui::containerTitleSkin("Name", "sub/dir"));
-    ctx.check(sub.skinId == "sub/dir" && sub.titleKey == "Name", "skin paths with folders");
-    // the resource pack's JSON-UI reads the same field: '%.<width>s' and '%.<7 + width>s'
+    ctx.check(gf::ui::parseTitleSkin("gfskin:no_end").skinId.empty(), "a marker without its end is no skin");
+    ctx.check(gf::ui::containerTitleSkin("k", "not_a_listed_skin") == "k", "a skin the JSON-UI does not list keeps the plain title");
+    ctx.check(gf::ui::containerTitleSkin("k", "") == "k", "no skin");
+    // the resource pack's JSON-UI matches every listed skin by its marker
     auto jsonUi = gf::Mod::getInstance().getSelf().getModDir() / "resource_packs" / "GloamingForest_RP" / "ui" / "chest_screen.json";
     std::ifstream in(jsonUi);
     std::string   text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     ctx.require(!text.empty(), "the JSON-UI chest skin is deployed: " + jsonUi.string());
-    auto field = "'%." + std::to_string(gf::ui::kTitleSkinWidth) + "s'";
-    auto whole = "'%." + std::to_string(7 + gf::ui::kTitleSkinWidth) + "s'";
-    ctx.check(text.find(field) != std::string::npos && text.find(whole) != std::string::npos, "the JSON-UI uses the skin field width " + field + " / " + whole);
+    for (auto skin : gf::ui::kJsonUiSkins) {
+        auto marker = "'gfskin:" + std::string(skin) + ";'";
+        ctx.check(text.find(marker) != std::string::npos, "the JSON-UI lists " + marker);
+        ctx.check(text.find("textures/gui/" + std::string(skin)) != std::string::npos, "the JSON-UI draws textures/gui/" + std::string(skin));
+    }
 });
 
 GF_REGISTER_SELFTEST("ui.form_fallback", [](Context& ctx) -> ll::coro::CoroTask<> {

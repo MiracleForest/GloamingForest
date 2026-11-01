@@ -47,7 +47,8 @@ namespace {
 struct Key {
     std::string           category;
     std::function<void()> onPress, onRelease;
-    bool                  down = false;
+    bool                  down   = false;
+    bool                  logged = false; ///< first press logged (e2e, spike S5)
 };
 struct State {
     std::mutex                 mutex;
@@ -62,9 +63,7 @@ State& st() {
 bool inGame() {
     auto* c = currentClient();
     if (!c || !c->getLocalPlayer()) return false;
-    ISceneStack* stack = c->getClientSceneStack().get();
-    if (!stack) return false;
-    return stack->getScreenName() == "hud_screen";
+    return c->getScreenName() == "hud_screen";
 }
 
 void forward(std::string const& id, bool down) {
@@ -78,8 +77,13 @@ void handle(std::string const& id, bool down) {
         std::lock_guard lock(s.mutex);
         auto            it = s.keys.find(id);
         if (it == s.keys.end()) return;
-        if (it->second.down == down) return; // key repeat
-        if (down && !inGame()) return;       // not while a screen is open
+        if (it->second.down == down) return; // key repeat (or a handler bound twice)
+        bool game = inGame();
+        if (down && !it->second.logged) {
+            it->second.logged = true;
+            log().info("keys: {} pressed ({})", id, game ? "in game" : "a screen is open");
+        }
+        if (down && !game) return; // not while a screen is open
         it->second.down = down;
         fn              = down ? it->second.onPress : it->second.onRelease;
     }
@@ -108,9 +112,13 @@ void registerKey(std::string const& id, int defaultKey, std::string const& categ
     try {
         std::vector<int> codes;
         if (defaultKey > 0) codes.push_back(defaultKey);
-        auto& handle = ll::input::KeyRegistry::getInstance().getOrCreateKey(id, codes, true);
+        auto& registry = ll::input::KeyRegistry::getInstance();
+        auto& handle   = registry.getOrCreateKey(id, codes, true);
         handle.registerButtonDownHandler([id](FocusImpact, IClientInstance&) { keys::handle(id, true); });
         handle.registerButtonUpHandler([id](FocusImpact, IClientInstance&) { keys::handle(id, false); });
+        // LeviLamina binds the keys when the game builds its input handler: register them from a
+        // module's load() (mod load), as the fixture does
+        if (currentClient() && currentClient()->getLocalPlayer()) log().warn("keys: {} registered in a running game may stay unbound until restart", id);
     } catch (std::exception const& e) {
         log().error("keys: could not register {}: {}", id, e.what());
     }

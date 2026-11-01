@@ -9,9 +9,11 @@
 // - ui::parseTitleSkin: the inverse of containerTitleSkin (the JSON-UI's view of a title).
 // - movement::Input: one auth-input sample, the edge detector's input (selftests feed samples).
 
+#include <array>
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "mc/deps/core/math/Vec3.h"
 
@@ -35,8 +37,10 @@ struct TitleSkin {
     std::string titleKey; ///< the title shown (translation key or text)
 };
 [[nodiscard]] TitleSkin parseTitleSkin(std::string const& title);
-/// Width of the padded skin field of a skinned title (skin ids are at most this long).
-inline constexpr std::size_t kTitleSkinWidth = 40;
+/// The skins the resource pack's JSON-UI (assets/pack/rp/ui/chest_screen.json) can draw: texture
+/// paths under textures/gui/. A title is "gfskin:<id>;<title>"; the JSON-UI matches the whole
+/// marker, so a new skin needs an entry there and here.
+inline constexpr std::array<std::string_view, 1> kJsonUiSkins{"ui/fixture_container"};
 
 } // namespace gf::ui
 
