@@ -316,7 +316,8 @@ GF_REGISTER_SELFTEST("import.light", [](Context& ctx) {
             ctx.check(false, std::string(c.id) + " " + c.states.dump() + " is not a registered state");
             continue;
         }
-        int light = static_cast<int>(block->getBlockType().getLightEmission(*block).mValue);
+        // the light emission of this permutation (its minecraft:light_emission component, per block state)
+        int light = static_cast<int>(block->mDirectData->mLightEmission->mValue);
         ctx.check(light == c.light, std::string(c.id) + " " + c.states.dump() + ": light " + std::to_string(light) + ", TF gives " + std::to_string(c.light));
     }
 });
