@@ -33,6 +33,7 @@
 #include "mc/network/LoopbackPacketSender.h"
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
+#include "mc/network/NetworkIdentifierWithSubId.h"
 #include "mc/network/Packet.h"
 #include "mc/network/packet/GameRulesChangedPacket.h"
 #include "mc/network/packet/SetTimePacket.h"
@@ -296,8 +297,9 @@ std::unordered_set<std::int64_t>& inTwilightClock() {
     return s;
 }
 
-/// After the server sent its time to some players, corrects it for the ones in the Twilight Forest.
-void correctTimeAfterSend(Packet const& packet, Player* only) {
+/// After the server sent its time to some players, corrects it for the ones in the Twilight Forest
+/// (`only`: that player; else every player but `except`).
+void correctTimeAfterSend(Packet const& packet, Player* only, Player const* except = nullptr) {
     if (gSendingTime) return;
     bool time  = packet.getId() == MinecraftPacketIds::SetTime;
     bool rules = !time && setsDaylightCycle(packet);
@@ -317,9 +319,27 @@ void correctTimeAfterSend(Packet const& packet, Player* only) {
     auto level = ll::service::getLevel();
     if (!level) return;
     level->forEachPlayer([&](Player& p) {
-        fix(p);
+        if (&p != except) fix(p);
         return true;
     });
+}
+
+bool isTimePacket(Packet const& packet) {
+    return packet.getId() == MinecraftPacketIds::SetTime || packet.getId() == MinecraftPacketIds::GameRulesChanged;
+}
+
+Player* playerOfNetwork(NetworkIdentifier const& id, SubClientId sub) {
+    auto level = ll::service::getLevel();
+    if (!level) return nullptr;
+    Player* found = nullptr;
+    level->forEachPlayer([&](Player& p) {
+        if (p.getNetworkIdentifier() == id && p.getClientSubId() == sub) {
+            found = &p;
+            return false;
+        }
+        return true;
+    });
+    return found;
 }
 
 Player* playerOfUser(UserEntityIdentifierComponent const* user) {
@@ -366,11 +386,60 @@ LL_TYPE_INSTANCE_HOOK(
     }
 }
 
+LL_TYPE_INSTANCE_HOOK(
+    TwilightTimeToNetworkHook,
+    ll::memory::HookPriority::Normal,
+    LoopbackPacketSender,
+    static_cast<void (LoopbackPacketSender::*)(NetworkIdentifier const&, Packet const&, SubClientId)>(&LoopbackPacketSender::$sendToClient),
+    void,
+    NetworkIdentifier const& id,
+    Packet const&            packet,
+    SubClientId              sub
+) {
+    origin(id, packet, sub);
+    if (!gSendingTime && isTimePacket(packet)) {
+        if (auto* p = playerOfNetwork(id, sub)) correctTimeAfterSend(packet, p);
+    }
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    TwilightTimeToClientsHook,
+    ll::memory::HookPriority::Normal,
+    LoopbackPacketSender,
+    &LoopbackPacketSender::$sendToClients,
+    void,
+    std::vector<NetworkIdentifierWithSubId> const& ids,
+    Packet const&                                  packet
+) {
+    origin(ids, packet);
+    if (!gSendingTime && isTimePacket(packet)) {
+        for (auto const& target : ids)
+            if (auto* p = playerOfNetwork(target.id, target.subClientId)) correctTimeAfterSend(packet, p);
+    }
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    TwilightTimeBroadcastExceptHook,
+    ll::memory::HookPriority::Normal,
+    LoopbackPacketSender,
+    static_cast<void (LoopbackPacketSender::*)(NetworkIdentifier const&, SubClientId, Packet const&)>(&LoopbackPacketSender::$sendBroadcast),
+    void,
+    NetworkIdentifier const& exceptId,
+    SubClientId              exceptSub,
+    Packet const&            packet
+) {
+    origin(exceptId, exceptSub, packet);
+    if (!gSendingTime && isTimePacket(packet)) correctTimeAfterSend(packet, nullptr, playerOfNetwork(exceptId, exceptSub));
+}
+
 namespace {
 
 /// Every tick: players who entered the Twilight Forest get its clock, players who left get the
-/// world's clock back.
+/// world's clock back; every 5 s the clock of the players inside is sent again (a time packet the
+/// hooks above don't see costs at most that long).
 void syncClocks(Level& level) {
+    static int ticks = 0;
+    bool       renew = ++ticks % 100 == 0;
     int tf = gTwilightId.load(std::memory_order_relaxed);
     std::vector<std::pair<std::int64_t, bool>> changes;
     level.forEachPlayer([&](Player& p) {
@@ -381,7 +450,7 @@ void syncClocks(Level& level) {
             std::lock_guard lock(timeMutex());
             was = inTwilightClock().contains(id);
         }
-        if (inTf != was) changes.emplace_back(id, inTf);
+        if (inTf != was || (inTf && renew)) changes.emplace_back(id, inTf);
         return true;
     });
     for (auto [id, inTf] : changes) {
@@ -433,6 +502,9 @@ public:
         TwilightTakeBlockGoalHook::hook();
         TwilightTimeBroadcastHook::hook();
         TwilightTimeToClientHook::hook();
+        TwilightTimeToNetworkHook::hook();
+        TwilightTimeToClientsHook::hook();
+        TwilightTimeBroadcastExceptHook::hook();
         auto& bus = ll::event::EventBus::getInstance();
         mTick     = bus.emplaceListener<ll::event::ServerLevelTickEvent>([](ll::event::ServerLevelTickEvent& ev) { syncClocks(ev.level()); });
         // a player who comes back still in the Twilight Forest gets its clock again (StartGame
@@ -446,6 +518,9 @@ public:
     void uninstall() {
         ll::event::EventBus::getInstance().removeListener(mTick);
         ll::event::EventBus::getInstance().removeListener(mLeave);
+        TwilightTimeBroadcastExceptHook::unhook();
+        TwilightTimeToClientsHook::unhook();
+        TwilightTimeToNetworkHook::unhook();
         TwilightTimeToClientHook::unhook();
         TwilightTimeBroadcastHook::unhook();
         TwilightTakeBlockGoalHook::unhook();

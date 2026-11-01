@@ -153,9 +153,12 @@ void sendFade(Player& player, bool clearFirst, float in, float hold, float out) 
     packet->sendTo(player);
 }
 
-/// How long a fade holds once opaque: the client drops camera instructions while it loads a
-/// dimension, so a fade must also end on its own; it is renewed while the player stays inside.
-constexpr float kFadeHold = 4.0f;
+/// TF's overlay grows over the 60 ticks before the trip and runs out over 30 ticks after it. The
+/// fade does the same on its own: in over the remaining ticks, a short hold that covers the
+/// dimension loading (the client drops camera instructions while it loads), out over 1.5 s. It is
+/// renewed while the player stays inside (a portal on cooldown).
+constexpr float kFadeHold = 1.0f;
+constexpr float kFadeOut  = 1.5f;
 
 /// Takes a camera fade down: the overlay runs out over the timer's remaining ticks (2 a tick).
 void endFade(Player& player, State& st) {
@@ -167,15 +170,17 @@ void endFade(Player& player, State& st) {
 /// client mod's overlay.
 void updateFade(Player& player, State& st, bool wasInside) {
     if (st.nativeOverlay) return;
-    if (st.attachInside && !st.fading && !st.travelling) {
-        float in = static_cast<float>(kMaxTicks - st.portalTimer) / 20.0f;
-        sendFade(player, false, std::max(in, 0.05f), kFadeHold, 1.5f);
+    // a fade always ends opaque: with a short transition time (creative) TF's overlay hardly
+    // shows before the trip, so there is none
+    if (st.attachInside && !st.fading && !st.travelling && portalDelay(player) >= 20) {
+        float in = std::max(static_cast<float>(kMaxTicks - st.portalTimer) / 20.0f, 0.05f);
+        sendFade(player, false, in, kFadeHold, kFadeOut);
         st.fading   = true;
-        st.fadeTick = st.tickCount;
+        st.fadeTick = st.tickCount + static_cast<int>((in + kFadeHold) * 20.0f); // when it starts to go
         log().info("dimension: portal fade shown to {}", player.getRealName());
-    } else if (st.attachInside && st.fading && !st.travelling && st.tickCount - st.fadeTick >= 60) {
-        sendFade(player, false, 0.05f, kFadeHold, 1.5f);
-        st.fadeTick = st.tickCount;
+    } else if (st.attachInside && st.fading && !st.travelling && st.tickCount >= st.fadeTick) {
+        sendFade(player, false, 0.05f, kFadeHold, kFadeOut);
+        st.fadeTick = st.tickCount + static_cast<int>(kFadeHold * 20.0f);
     } else if (!st.attachInside && wasInside && st.fading && !st.travelling) {
         endFade(player, st);
     }
@@ -235,18 +240,7 @@ void finishTrip(std::int64_t id, int from, int to, Vec3 const& at, float yaw, fl
     p->setFallDistance(0.0f); // waiting for the destination may have dropped it from the top of the world
     auto& st      = states()[id];
     st.travelling = false;
-    if (st.fading) {
-        // the client is still loading the dimension and would drop the instruction: fade out
-        // once it is in (the fade's own hold ends it anyway)
-        interactions::nextTick([id] {
-            ll::coro::keepThis([id]() -> ll::coro::CoroTask<> {
-                co_await ll::chrono::ticks(20);
-                auto it = states().find(id);
-                if (it == states().end() || !it->second.fading || it->second.attachInside) co_return;
-                if (auto* pl = playerById(id)) endFade(*pl, it->second);
-            }).launch(ll::thread::ServerThreadExecutor::getDefault());
-        });
-    }
+    st.fading     = false; // the fade runs out by itself after the trip, as TF's overlay does
     log().info(
         "dimension: {} travelled from {} to {} at {:.1f} {:.1f} {:.1f}",
         p->getRealName(),
