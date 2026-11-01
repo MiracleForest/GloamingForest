@@ -130,6 +130,19 @@ struct ActorState {
 
 /// The state of `actor` (created on demand).
 [[nodiscard]] ActorState& stateOf(Actor& actor);
+
+// ---- companion sync (Entity.cpp) ---------------------------------------------------------------
+
+/// The "entity.data" message of data(actor, key).
+[[nodiscard]] Json dataMessage(Actor& actor, ActorState const& s, std::string const& key);
+/// The "entity.multipart" message of a parent's parts (UpdateTFMultipartPacket, Multipart.cpp).
+[[nodiscard]] Json partsMessage(Mob& parent, ActorState const& s);
+/// The companions within the tracking range of `actor`: one that did not see it yet gets every
+/// synced value and the part list (Java's startSeenByPlayer), the others `change` (when given).
+/// A companion out of range is forgotten, so it gets everything again when it comes back.
+void updateViewers(Actor& actor, ActorState& s, std::function<void(Player&)> const& change);
+/// The number of companions that got the synced state of the actor `uid` (selftests).
+[[nodiscard]] std::size_t viewerCountForTest(std::int64_t uid);
 /// The state of the actor with id `uid` (nullptr: none).
 [[nodiscard]] ActorState* findState(std::int64_t uid);
 /// The goal random source of `actor`.

@@ -139,6 +139,8 @@ Actor* spawnPart(Mob& parent, PartRecord& rec) {
     return added;
 }
 
+} // namespace
+
 nlohmann::json partsMessage(Mob& parent, ActorState const& s) {
     nlohmann::json parts = nlohmann::json::array();
     for (auto const& rec : s.parts) {
@@ -159,11 +161,13 @@ nlohmann::json partsMessage(Mob& parent, ActorState const& s) {
     };
 }
 
-/// UpdateTFMultipartPacket: the parent's parts to the companions that see it.
-void syncParts(Mob& parent, ActorState const& s) {
+namespace {
+
+/// UpdateTFMultipartPacket: the parent's parts to the companions that see it (a companion that
+/// starts seeing it later gets them then: updateViewers).
+void syncParts(Mob& parent, ActorState& s) {
     auto msg = partsMessage(parent, s);
-    for (auto* p : playersNear(static_cast<int>(parent.getDimensionId()), parent.getFeetPos(), 160.0))
-        if (gf::net::isCompanion(*p)) gf::net::send(*p, "entity.multipart", msg);
+    updateViewers(parent, s, [&](Player& p) { gf::net::send(p, "entity.multipart", msg); });
 }
 
 PartRecord* recordOf(ge::PartHandle const& h, ActorState** owner = nullptr) {
@@ -199,6 +203,9 @@ void followParts(Mob& parent, ActorState& s) {
         // Actor rotation is (pitch, yaw): TFPart's xRot / yRot as the parent set them
         Vec2 rot = rec.rotation ? Vec2{rec.rotation->second, rec.rotation->first} : a->getRotation();
         a->moveTo(Vec3{p.x + off.x, p.y + off.y, p.z + off.z}, rot);
+        // TFPart#isInvisible: the parent's (an invisible Naga's segments do not render). Glowing
+        // (TFPart#isCurrentlyGlowing) has no Bedrock counterpart: nothing glows on Bedrock.
+        if (bool hidden = parent.isInvisible(); a->isInvisible() != hidden) a->setInvisible(hidden);
     }
     if (respawned) syncParts(parent, s);
 }
@@ -254,8 +261,10 @@ void installMultipart() {
         .tick =
             [](Actor& actor, ActorState& s) {
                 if (!s.parentId) return;
+                // TFPart lives as long as its parent entity: a dying boss keeps its parts through
+                // its death animation (the Hydra's heads die one by one)
                 auto*             parent = actorById(s.parentId);
-                bool              keep   = parent && parent->isAlive();
+                bool              keep   = parent != nullptr;
                 PartRecord const* rec    = nullptr;
                 if (keep)
                     if (auto* ps = findState(s.parentId))
@@ -290,21 +299,8 @@ void installMultipart() {
         for (auto id : ids)
             if (auto* a = actorById(id)) a->remove();
     });
-    // the part lists for a companion that just joined
-    {
-        gf::net::onCompanionJoined([](Player& player) {
-            auto level = ll::service::getLevel();
-            if (!level) return;
-            for (auto* a : level->getRuntimeActorList()) {
-                if (!a) continue;
-                auto* s  = findState(uidOf(*a));
-                auto* mb = asMob(*a);
-                if (!s || !mb || s->parts.empty()) continue;
-                if (mobs::distanceSqr(*a, player.getFeetPos()) > 160.0 * 160.0) continue;
-                gf::net::send(player, "entity.multipart", partsMessage(*mb, *s));
-            }
-        });
-    }
+    // the part lists reach companions that join or come into range later through the entity
+    // tracker (updateViewers, Entity.cpp)
     gf::game::db::onWorldClosed([] {
         M().known.clear();
         M().knownLoaded = false;

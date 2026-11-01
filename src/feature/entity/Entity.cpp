@@ -466,6 +466,81 @@ JavaRandom& randomOf(Actor& actor) {
     return *s.random;
 }
 
+// ---- companion sync (SynchedEntityData: every value again on startSeenByPlayer) -----------------
+
+namespace {
+
+constexpr char const* kSyncedKey   = "entity:synced"; ///< data(): the keys gf::entity::sync sent (persisted)
+constexpr double      kTrackRange  = 160.0;           ///< Java's tracking range of the bosses (10 chunks)
+constexpr int         kTrackPeriod = 10;              ///< ticks between two looks for new viewers
+
+/// The companions that got an actor's synced state, by actor unique id.
+std::unordered_map<std::int64_t, std::set<std::int64_t>>& viewers() {
+    static std::unordered_map<std::int64_t, std::set<std::int64_t>> v;
+    return v;
+}
+
+bool hasSyncedState(ActorState const& s) {
+    if (!s.parts.empty()) return true;
+    if (!s.data.is_object()) return false;
+    auto it = s.data.find(kSyncedKey);
+    return it != s.data.end() && it->is_array() && !it->empty();
+}
+
+/// Every synced value of `actor` and its part list, for a companion that starts seeing it.
+void sendAll(Player& player, Actor& actor, ActorState& s) {
+    if (s.data.is_object())
+        if (auto it = s.data.find(kSyncedKey); it != s.data.end() && it->is_array())
+            for (auto const& key : *it)
+                if (key.is_string()) gf::net::send(player, "entity.data", dataMessage(actor, s, key.get<std::string>()));
+    if (!s.parts.empty())
+        if (auto* mob = asMob(actor)) gf::net::send(player, "entity.multipart", partsMessage(*mob, s));
+}
+
+/// Looks for the companions that started seeing an actor with synced state (every kTrackPeriod
+/// ticks, and at once for a companion that just joined).
+void trackAll() {
+    auto& v = viewers();
+    for (auto& [uid, state] : reg().states) {
+        if (!state || !hasSyncedState(*state)) continue;
+        if (auto* actor = actorById(uid)) updateViewers(*actor, *state, nullptr);
+    }
+    std::erase_if(v, [](auto const& kv) { return !actorById(kv.first); });
+}
+
+} // namespace
+
+Json dataMessage(Actor& actor, ActorState const& s, std::string const& key) {
+    Json value;
+    if (s.data.is_object())
+        if (auto it = s.data.find(key); it != s.data.end()) value = *it;
+    return {
+        {"id",   uidOf(actor)                                         },
+        {"rid",  static_cast<std::int64_t>(actor.getRuntimeID().rawID)},
+        {"key",  key                                                  },
+        {"data", std::move(value)                                     },
+    };
+}
+
+void updateViewers(Actor& actor, ActorState& s, std::function<void(Player&)> const& change) {
+    auto&                  seen = viewers()[uidOf(actor)];
+    std::set<std::int64_t> now;
+    for (auto* p : playersNear(static_cast<int>(actor.getDimensionId()), actor.getFeetPos(), kTrackRange)) {
+        if (!gf::net::isCompanion(*p)) continue;
+        auto pid = uidOf(*p);
+        now.insert(pid);
+        if (!seen.contains(pid)) sendAll(*p, actor, s); // startSeenByPlayer: everything (the change included)
+        else if (change) change(*p);
+    }
+    // a companion that left the range gets everything again when it comes back
+    seen = std::move(now);
+}
+
+std::size_t viewerCountForTest(std::int64_t uid) {
+    auto it = viewers().find(uid);
+    return it != viewers().end() ? it->second.size() : 0;
+}
+
 void addInternalHooks(InternalHooks hooks) {
     reg().internal.push_back(std::move(hooks));
     invalidateInterest();
@@ -561,17 +636,17 @@ Json& data(Actor& actor, std::string const& key) {
     return s.data[key];
 }
 
+// SynchedEntityData#set: the change to the companions that see the actor (Java's tracking: the
+// server view distance, 10 chunks); the key stays synced, so a companion that starts seeing the
+// actor later (or joins later) gets its value then (startSeenByPlayer, fe::updateViewers).
 void sync(Actor& actor, std::string const& key) {
     auto& s = fe::stateOf(actor);
-    Json  msg{
-        {"id",   fe::uidOf(actor)                                     },
-        {"rid",  static_cast<std::int64_t>(actor.getRuntimeID().rawID)},
-        {"key",  key                                                  },
-        {"data", s.data.contains(key) ? s.data[key] : Json()          },
-    };
-    // the players that see the actor (Java's tracking: the server view distance, 10 chunks)
-    for (auto* p : fe::playersNear(static_cast<int>(actor.getDimensionId()), actor.getFeetPos(), 160.0))
-        if (gf::net::isCompanion(*p)) gf::net::send(*p, "entity.data", msg);
+    if (!s.data.is_object()) s.data = Json::object();
+    auto& keys = s.data[fe::kSyncedKey];
+    if (!keys.is_array()) keys = Json::array();
+    if (std::find(keys.begin(), keys.end(), key) == keys.end()) keys.push_back(key);
+    auto msg = fe::dataMessage(actor, s, key);
+    fe::updateViewers(actor, s, [&](Player& p) { gf::net::send(p, "entity.data", msg); });
 }
 
 void setProperty(Actor& actor, std::string const& name, PropertyValue const& value) {
@@ -709,9 +784,24 @@ public:
         });
         installMultipart();
         installMounts();
+        // the level tick listeners, the companion join listener and the world lifecycle have no
+        // removal: registered once per process
         static bool lifecycle = false;
         if (!std::exchange(lifecycle, true)) {
-            game::db::onWorldClosed([] { reg().states.clear(); });
+            game::db::onWorldClosed([] {
+                reg().states.clear();
+                viewers().clear();
+            });
+            // startSeenByPlayer for the companions that came into range
+            onLevelTick([] {
+                if (currentTick() % kTrackPeriod == 0) trackAll();
+            });
+            // a companion that just joined gets everything it sees now
+            gf::net::onCompanionJoined([](Player& player) {
+                auto pid = uidOf(player);
+                for (auto& [uid, seen] : viewers()) seen.erase(pid);
+                trackAll();
+            });
         }
     }
     void uninstall() {
