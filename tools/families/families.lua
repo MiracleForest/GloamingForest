@@ -694,6 +694,8 @@ builders.button = function (doc, e, t, ctx)
     comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "side"), e.params.render_method)}
     comps(doc)["minecraft:collision_box"] = false
     comps(doc)["minecraft:redstone_conductivity"] = {redstone_conductor = false, allows_wire_to_step_down = true}
+    -- every permutation is a producer (0 unpressed) so the circuit follows the press and release
+    comps(doc)["minecraft:redstone_producer"] = {power = 0}
 end
 
 -- pressure plate (Java PressurePlateBlock): twilightforest:powered; 15 while pressed.
@@ -706,6 +708,8 @@ builders.pressure_plate = function (doc, e, t, ctx)
     comps(doc)["minecraft:collision_box"] = false
     comps(doc)["minecraft:selection_box"] = cbox({1, 0, 1, 15, 1, 15})
     comps(doc)["minecraft:redstone_conductivity"] = {redstone_conductor = false, allows_wire_to_step_down = true}
+    -- every permutation is a producer (0 unpressed) so the circuit follows the press and release
+    comps(doc)["minecraft:redstone_producer"] = {power = 0}
     perm(doc, is(NS .. "powered", 1), {["minecraft:selection_box"] = cbox({1, 0, 1, 15, 1, 15}),
         ["minecraft:redstone_producer"] = {power = 15, strongly_powered_face = "down"}})
 end
@@ -783,7 +787,8 @@ builders.potted = function (doc, e, t, ctx)
     geometry(doc, g)
     comps(doc)["minecraft:material_instances"] = {
         ["*"] = mat(tex(t, "pot"), "alpha_test"), pot = mat(tex(t, "pot"), "alpha_test"),
-        soil = mat(tex(t, "soil"), "opaque"), plant = mat(tex(t, "plant", "*"), "alpha_test", {ambient_occlusion = false, face_dimming = false}),
+        -- (one render method per block: Bedrock refuses opaque and transparent instances together)
+        soil = mat(tex(t, "soil"), "alpha_test"), plant = mat(tex(t, "plant", "*"), "alpha_test", {ambient_occlusion = false, face_dimming = false}),
     }
     comps(doc)["minecraft:collision_box"] = cbox({5, 0, 5, 11, 6, 11})
     comps(doc)["minecraft:selection_box"] = cbox({5, 0, 5, 11, 6, 11})
@@ -1027,12 +1032,104 @@ end
 builders.connectable_pillar = function (doc, e, t, ctx) pillar_conn(doc, e, t, ctx, "connectable_pillar") end
 builders.wall_pillar = function (doc, e, t, ctx) pillar_conn(doc, e, t, ctx, "wall_pillar") end
 
--- connected texture (TF ConnectedTextureModel): the six neighbour connections
--- (twilightforest:<direction>, kept by the runtime) pick the overlay of each face; a face shows
--- `textures.connected` where it continues into a connected neighbour.
-builders.connected_texture = function (doc, e, t)
-    full_block(doc, t, e.params.render_method)
+-- connected texture (TF ConnectedTextureModel / ConnectionLogic): every face is four 8x8
+-- quadrants; each quadrant draws the overlay (textures.overlay, TF's overlay_texture) or a piece
+-- of the connected sheet (textures.connected, overlay_connected: cornerless / vertical /
+-- horizontal / corner quarters) by the connections to its two sides (twilightforest:<direction>,
+-- kept by the runtime). Bedrock's state budget leaves out TF's diagonal check: two connected
+-- sides count as a filled corner (cornerless), as in a flat wall.
+local CT_PLANE = { -- ConnectionLogic.AXIS_PLANE_DIRECTIONS by the face's axis
+    x = {"up", "north", "down", "south"}, y = {"north", "east", "south", "west"}, z = {"up", "east", "down", "west"},
+}
+local FACE_AXIS = {down = "y", up = "y", north = "z", south = "z", west = "x", east = "x"}
+local NORMAL = {down = {0, -1, 0}, up = {0, 1, 0}, north = {0, 0, -1}, south = {0, 0, 1}, west = {-1, 0, 0}, east = {1, 0, 0}}
+local CT_LOGIC = { -- name, sheet (overlay / connected), u0, v0, u1, v1
+    none = {"overlay", 0, 0, 16, 16}, cornerless = {"connected", 0, 0, 8, 8}, vertical = {"connected", 0, 8, 8, 16},
+    horizontal = {"connected", 8, 0, 16, 8}, corner = {"connected", 8, 8, 16, 16},
+}
+local function ct_of(horizontal, vertical, corner) -- ConnectionLogic.of
+    if corner then return "cornerless" end
+    if horizontal then return vertical and "corner" or "horizontal" end
+    return vertical and "vertical" or "none"
+end
+
+-- The overlay quad of quadrant i (1..4) of face f drawn with `logic`.
+local function ct_quad(f, i, logic)
+    local dirs = CT_PLANE[FACE_AXIS[f]]
+    local a, b, n = NORMAL[dirs[i]], NORMAL[dirs[i % 4 + 1]], NORMAL[f]
+    local corner, box = {}, {}
+    for k = 1, 3 do corner[k] = (n[k] + a[k] + b[k] + 1) * 8 end
+    for k = 1, 3 do box[k] = math.min(8, corner[k]); box[k + 3] = math.max(8, corner[k]) end
+    -- the quadrant on the face plane, lifted 0.01 px off the base
+    local k     = n[1] ~= 0 and 1 or (n[2] ~= 0 and 2 or 3)
+    local plane = (n[k] > 0 and 16 or 0) + n[k] * 0.01
+    box[k], box[k + 3] = plane, plane
+    local l  = CT_LOGIC[logic]
+    local c  = cube(box, l[1], {[f] = true})
+    local uv = c.uv[f]
+    -- TF remapUVs: the quadrant's own UV scaled into the logic's piece of the sheet
+    local function ru(u) return l[2] + (l[4] - l[2]) * u / 16 end
+    local function rv(v) return l[3] + (l[5] - l[3]) * v / 16 end
+    local u0, v0 = ru(uv.uv[1]), rv(uv.uv[2])
+    local u1, v1 = ru(uv.uv[1] + uv.uv_size[1]), rv(uv.uv[2] + uv.uv_size[2])
+    uv.uv, uv.uv_size = {u0, v0}, {u1 - u0, v1 - v0}
+    return c
+end
+
+-- One geometry per connection mask (bit d of FACES6 order: the connection on that side), each
+-- holding the base cube and the 24 quadrant overlays that mask shows: no bone visibility (Bedrock
+-- caps its entries) and one permutation per mask.
+local function ct_geos(ctx, faces, disabled_overlay)
+    local key = {}
+    for _, f in ipairs(FACES6) do table.insert(key, faces[f] and "1" or "0") end
+    local suffix = table.concat(key) .. (disabled_overlay and "o" or "")
+    local ids = {}
+    for mask = 0, 63 do
+        local g = "geometry.gf_families.ct_" .. suffix .. "_" .. mask
+        ids[mask] = g
+        if not ctx.geos[g] then
+            local conn = {}
+            for d, f in ipairs(FACES6) do conn[f] = (mask >> (d - 1)) & 1 == 1 end
+            local cubes = {}
+            for _, f in ipairs(FACES6) do
+                local dirs = CT_PLANE[FACE_AXIS[f]]
+                for i = 1, 4 do
+                    local logic
+                    if faces[f] then
+                        local side1, side2 = conn[dirs[i]], conn[dirs[i % 4 + 1]]
+                        local corner = side1 and side2 -- see above: a filled corner
+                        logic = (i - 1) % 2 == 0 and ct_of(side1, side2, corner) or ct_of(side2, side1, corner)
+                    elseif disabled_overlay then
+                        logic = "none"
+                    end
+                    if logic then table.insert(cubes, ct_quad(f, i, logic)) end
+                end
+            end
+            ctx.geos[g] = geo_doc(g, {bone("base", {cube({0, 0, 0, 16, 16, 16})}), bone("overlay", cubes)})
+        end
+    end
+    return ids
+end
+
+builders.connected_texture = function (doc, e, t, ctx)
     for _, f in ipairs(FACES6) do add_state(doc, NS .. f, ints(1)) end
+    local method = e.params.render_method or "alpha_test"
+    if not (t.overlay and t.connected) then
+        full_block(doc, t, e.params.render_method) -- no overlay sheets: the plain block
+        return
+    end
+    local faces = {}
+    for _, f in ipairs(e.params.faces or FACES6) do faces[f] = true end
+    local ids = ct_geos(ctx, faces, e.params.render_on_disabled_faces ~= false)
+    geometry(doc, ids[0])
+    comps(doc)["minecraft:material_instances"] = {
+        ["*"] = mat(tex(t, "base", "*"), method), overlay = mat(t.overlay, method), connected = mat(t.connected, method),
+    }
+    for mask = 1, 63 do
+        local cond = {}
+        for d, f in ipairs(FACES6) do table.insert(cond, is(NS .. f, (mask >> (d - 1)) & 1)) end
+        perm(doc, all(table.unpack(cond)), {["minecraft:geometry"] = ids[mask]})
+    end
 end
 
 -- ---- modifiers -----------------------------------------------------------------------------------
@@ -1064,7 +1161,9 @@ modifiers.snowloggable = function (doc, e, t, ctx)
         local vis = type(g) == "table" and copy(g.bone_visibility) or {}
         for n = 1, 8 do vis["snow_" .. n] = is(NS .. "layers", n) end
         comps(doc)["minecraft:geometry"] = {identifier = sid, bone_visibility = vis}
-        comps(doc)["minecraft:material_instances"].snow = mat(e.params.snow_texture or "snow", "opaque")
+        -- the snow takes the block's render method (Bedrock refuses opaque and transparent together)
+        local base = comps(doc)["minecraft:material_instances"]["*"]
+        comps(doc)["minecraft:material_instances"].snow = mat(e.params.snow_texture or "snow", base and base.render_method or "opaque")
         for _, p in ipairs(block_of(doc).permutations) do
             local pg = p.components["minecraft:geometry"]
             if type(pg) == "table" and pg.identifier == id then

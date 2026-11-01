@@ -283,7 +283,6 @@ ia::Result slabUseOn(ia::UseOnContext const& c) {
     if (c.itemId.empty()) return ia::Result::Pass;
     auto const* itemEntry = entryOf(c.itemId);
     if (!itemEntry || itemEntry->family != Family::Slab) return ia::Result::Pass;
-    if (!c.firstEvent) return ia::Result::Pass;
     auto&                   player  = c.player;
     auto&                   region  = player.getDimensionBlockSource();
     Block const&            clicked = c.block;

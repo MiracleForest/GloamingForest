@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <list>
+#include <map>
 #include <numbers>
 
 #include "ll/api/service/Bedrock.h"
@@ -32,6 +33,7 @@
 #include "mc/world/level/block/CachedComponentData.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/dimension/DimensionType.h"
+#include "mc/world/phys/AABB.h"
 
 #include "feature/common/Redstone.h"
 #include "feature/families/Families.h"
@@ -225,6 +227,17 @@ bool exceptionForConnection(Block const& block) {
 
 bool hasNeighborSignal(BlockSource& region, BlockPos const& pos) { return redstone::powered(region, pos); }
 
+std::vector<Actor*> entitiesIn(BlockSource& region, AABB const& box) {
+    auto out = region.getEntities(box, 0.0f);
+    auto dim = region.getDimensionId();
+    region.getLevel().forEachPlayer([&](Player& p) {
+        if (p.getDimensionId() != dim || std::find(out.begin(), out.end(), &p) != out.end()) return true;
+        if (p.getAABB().intersects(box)) out.push_back(&p);
+        return true;
+    });
+    return out;
+}
+
 void sound(BlockSource& region, BlockPos const& pos, std::string const& event, float volume, float pitch) {
     auto level = ll::service::getLevel();
     if (!level) return;
@@ -292,6 +305,21 @@ std::int64_t& tickCounter() {
     return t;
 }
 } // namespace
+
+bool repeatedUse(Player& player, GlobalPos const& pos, bool firstEvent) {
+    struct LastUse {
+        GlobalPos    pos;
+        std::int64_t tick;
+    };
+    static std::map<std::int64_t, LastUse> last;
+    auto  uid  = player.getOrCreateUniqueID().rawID;
+    auto  now  = tickCounter();
+    auto  it   = last.find(uid);
+    bool  held = !firstEvent && it != last.end() && it->second.pos == pos && now - it->second.tick < 5;
+    last[uid]  = {pos, now};
+    if (last.size() > 256) last.clear();
+    return held;
+}
 
 void defer(std::function<void()> fn) { deferred().push_back(std::move(fn)); }
 

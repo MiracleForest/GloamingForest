@@ -256,6 +256,10 @@ std::map<core::GlobalPos, PendingPlace>& pendingPlaces() {
     static std::map<core::GlobalPos, PendingPlace> m;
     return m;
 }
+std::set<core::GlobalPos>& pendingRemovals() {
+    static std::set<core::GlobalPos> s;
+    return s;
+}
 std::set<std::pair<core::GlobalPos, core::GlobalPos>>& pendingNeighbors() {
     static std::set<std::pair<core::GlobalPos, core::GlobalPos>> s;
     return s;
@@ -275,13 +279,15 @@ void onBlockChanged(BlockSource& region, BlockPos const& pos, Block const& previ
     int  dim         = static_cast<int>(region.getDimensionId());
     auto gp          = game::globalPos(dim, pos);
     bool typeChanged = &previous.getBlockType() != &now.getBlockType();
-    if (typeChanged && has<RemovedFn>(RemovedK, previous)) {
+    // (the game reports some changes twice: one dispatch per position and tick)
+    if (typeChanged && has<RemovedFn>(RemovedK, previous) && pendingRemovals().insert(gp).second) {
         Block const* prev = &previous;
-        fam::defer([dim, pos, prev] {
+        fam::defer([dim, pos, prev, gp] {
+            pendingRemovals().erase(gp);
             if (auto* r = fam::regionOf(dim)) call<RemovedFn>(RemovedK, *prev, "removed", *r, pos, *prev);
         });
     }
-    if (typeChanged && has<PlacedFn>(PlacedK, now)) {
+    if (typeChanged && has<PlacedFn>(PlacedK, now) && !pendingPlaces().contains(gp)) {
         pendingPlaces()[gp] = {};
         fam::defer([dim, pos, gp] {
             auto it     = pendingPlaces().find(gp);
@@ -318,7 +324,14 @@ void entityTick() {
     if (!any(InsideK) && !any(StepK)) return;
     auto level = ll::service::getLevel();
     if (!level) return;
-    for (Actor* actor : level->getRuntimeActorList()) {
+    // every runtime actor and every player (simulated players included)
+    std::vector<Actor*>             actors = level->getRuntimeActorList();
+    std::unordered_set<Actor const*> seen(actors.begin(), actors.end());
+    level->forEachPlayer([&](Player& p) {
+        if (seen.insert(&p).second) actors.push_back(&p);
+        return true;
+    });
+    for (Actor* actor : actors) {
         if (!actor || !actor->isAlive()) continue;
         auto& region = actor->getDimensionBlockSource();
         AABB  box    = actor->getAABB();
@@ -459,6 +472,7 @@ void randomTickAt(BlockSource& region, BlockPos const& pos) {
 void resetBlockEvents() {
     for (auto& c : gf::blockevents::handlers().cache) c.clear();
     gf::blockevents::pendingPlaces().clear();
+    gf::blockevents::pendingRemovals().clear();
     gf::blockevents::pendingNeighbors().clear();
 }
 

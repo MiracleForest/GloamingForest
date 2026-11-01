@@ -196,7 +196,7 @@ void installSigns() {
             }));
             handlerIds().push_back(ia::onUseOn(m, [](ia::UseOnContext const& c) {
                 if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass;
-                if (!c.firstEvent) return ia::Result::Consume;
+                if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
                 auto const* e = entryOf(c.block);
                 if (!e) return ia::Result::Pass;
                 bool front = facingFront(c.block, *e, c.pos, c.player);

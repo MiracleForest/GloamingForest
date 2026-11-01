@@ -10,6 +10,7 @@
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/server/SimulatedPlayer.h"
+#include "mc/server/sim/LookDuration.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -62,9 +63,21 @@ std::string sst(GlobalPos const& p, char const* name) {
 
 SimulatedPlayer& simPlayer(Context& ctx) { return static_cast<SimulatedPlayer&>(ctx.player()); }
 
-/// Clicks face `face` of `p` with `itemId` (hotbar slot 0; "" = empty hand) at face-local `hit`.
+/// Clicks face `face` of `p` with `itemId` (hotbar slot 0; "" = empty hand) at face-local `hit`,
+/// standing two blocks off that face (or south of the block for its top / bottom) and looking at it.
 bool click(Context& ctx, GlobalPos const& p, Facing face, Vec3 hit, std::string const& itemId) {
     auto& sp = simPlayer(ctx);
+    int   f  = static_cast<int>(face);
+    Vec3  stand{p.x + 0.5f, float(p.y), p.z + 0.5f};
+    if (f >= 2) {
+        stand.x += fam::kDx[f] * 2.0f;
+        stand.z += fam::kDz[f] * 2.0f;
+    } else {
+        stand.z += 2.0f;
+        if (f == 1) stand.y += 1.0f; // the top of a ground block: stand on the ground
+    }
+    sp.teleport(stand, sp.getDimensionId());
+    sp.simulateLookAt(gf::game::blockPos(p), sim::LookDuration::Instant);
     if (itemId.empty()) {
         sp.simulateSetItem(ItemStack::EMPTY_ITEM(), true, 0);
     } else {
@@ -72,7 +85,19 @@ bool click(Context& ctx, GlobalPos const& p, Facing face, Vec3 hit, std::string 
         if (!item) return false;
         sp.simulateSetItem(*item, true, 0);
     }
-    return sp.simulateUseItemInSlotOnBlock(0, gf::game::blockPos(p), face, hit);
+    auto&        region = *ctx.region();
+    BlockPos     bp     = gf::game::blockPos(p);
+    Block const* before = &region.getBlock(bp);
+    // the game's own click (GameMode::useItemOn through the interactions hook); a simulated
+    // player's empty hand and some items don't get there: then the same dispatch directly
+    bool ok = itemId.empty() ? sp.simulateInteract(bp, face) : sp.simulateUseItemInSlotOnBlock(0, bp, face, hit);
+    if (ok || &region.getBlock(bp) != before) return true;
+    auto const&      held    = sp.getSelectedItem();
+    std::string      heldId  = held.isNull() ? std::string() : held.getTypeName();
+    Block const&     block   = region.getBlock(bp);
+    std::string      blockId = block.getTypeName();
+    gf::interactions::UseOnContext c{sp, held, heldId, block, blockId, p, f, {hit.x, hit.y, hit.z}, false, true};
+    return gf::interactions::dispatchUseOn(c) != gf::interactions::Result::Pass;
 }
 
 std::string where(GlobalPos const& p) { return std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z); }
@@ -219,7 +244,11 @@ GF_REGISTER_SELFTEST("families.button_redstone", [](Context& ctx) -> ll::coro::C
     ctx.require(ctx.setBlock(plate, "gf_test:family_pressure_plate"), "a pressure plate");
     simPlayer(ctx).teleport(Vec3{plate.x + 0.5f, float(plate.y), plate.z + 0.5f}, simPlayer(ctx).getDimensionId());
     co_await ctx.ticks(4);
-    ctx.check(st(plate, fam::state::Powered) == 1, "the plate is pressed under the player");
+    {
+        auto const& bb = simPlayer(ctx).getAABB();
+        ctx.check(st(plate, fam::state::Powered) == 1, "the plate is pressed under the player (player box " + std::to_string(bb.min.x) + " " + std::to_string(bb.min.y) + " "
+                                                           + std::to_string(bb.min.z) + ", plate " + where(plate) + ")");
+    }
     simPlayer(ctx).teleport(Vec3{plate.x + 3.5f, float(plate.y), plate.z + 0.5f}, simPlayer(ctx).getDimensionId());
     co_await ctx.ticks(24);
     ctx.check(st(plate, fam::state::Powered) == 0, "and released after the player left (20 ticks)");

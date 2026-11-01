@@ -62,13 +62,14 @@ void checkButton(GlobalPos const& gp) {
     bool arrow = false;
     if (e->flag("arrows", e->str("wood_type", "oak") != "stone")) {
         AABB box{Vec3{float(pos.x), float(pos.y), float(pos.z)}, Vec3{pos.x + 1.f, pos.y + 1.f, pos.z + 1.f}};
-        for (auto* a : region->getEntities(box, 0.0f))
+        for (auto* a : entitiesIn(*region, box))
             if (a && isArrow(*a)) arrow = true;
     }
     bool powered = intState(*b, state::Powered).value_or(0) != 0;
     if (arrow != powered) {
         setStates(gp, {{state::Powered, arrow ? 1 : 0}});
         clickSound(*region, pos, *e, arrow);
+        log().info("families: {} at {} {} {} {}", e->id, gp.x, gp.y, gp.z, arrow ? "pressed by an arrow" : "released");
     }
     if (arrow) schedule(e->integer("ticks", 30), [gp] { checkButton(gp); });
 }
@@ -77,7 +78,7 @@ void checkButton(GlobalPos const& gp) {
 int plateSignal(BlockSource& region, BlockPos const& pos, Entry const& e) {
     AABB box{Vec3{pos.x + 1 / 16.f, float(pos.y), pos.z + 1 / 16.f}, Vec3{pos.x + 15 / 16.f, pos.y + 4 / 16.f, pos.z + 15 / 16.f}};
     bool mobsOnly = e.str("sensitivity", "everything") == "mobs";
-    for (auto* a : region.getEntities(box, 0.0f)) {
+    for (auto* a : entitiesIn(region, box)) {
         if (!a || !a->isAlive()) continue;
         if (a->isPlayer() && static_cast<Player*>(a)->isSpectator()) continue;
         if (mobsOnly && !a->hasCategory(ActorCategory::Mob)) continue;
@@ -99,6 +100,7 @@ void checkPlate(GlobalPos const& gp) {
     if (was != now) {
         setStates(gp, {{state::Powered, now ? 1 : 0}});
         clickSound(*region, pos, *e, now);
+        log().info("families: {} at {} {} {} {}", e->id, gp.x, gp.y, gp.z, now ? "pressed" : "released");
     }
     if (now) schedule(20, [gp] { checkPlate(gp); }); // Java getPressedTime
 }
@@ -146,7 +148,7 @@ void installSwitches() {
         m.block = e->id;
         handlerIds().push_back(ia::onUseOn(m, [](ia::UseOnContext const& c) {
             if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass;
-            if (!c.firstEvent) return ia::Result::Consume;
+            if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
             pressButton(c.pos);
             return ia::Result::Consume; // Java: a pressed button consumes the click too
         }));

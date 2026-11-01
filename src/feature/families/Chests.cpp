@@ -130,7 +130,7 @@ void installChests() {
             }));
             handlerIds().push_back(ia::onUseOn(m, [](ia::UseOnContext const& c) {
                 if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass;
-                if (!c.firstEvent) return ia::Result::Consume;
+                if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
                 openChest(c.player, c.pos);
                 return ia::Result::Consume;
             }));

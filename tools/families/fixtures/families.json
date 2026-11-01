@@ -93,7 +93,7 @@
     {"id": "gf_test:family_binary", "family": "binary_rotated", "params": {"textures": {"*": "gf_test_family_lines", "up": "gf_test_family_lines_top", "down": "gf_test_family_lines_top"}, "sound": "stone", "hardness": 1.5, "resistance": 6}},
     {"id": "gf_test:family_wall_pillar", "family": "wall_pillar", "params": {"textures": {"side": "gf_test_family_stone", "end": "gf_test_family_stone_top"}, "sound": "stone", "hardness": 1.5, "resistance": 6, "waterlogged": true}},
     {"id": "gf_test:family_connectable_pillar", "family": "connectable_pillar", "params": {"textures": {"side": "gf_test_family_log", "end": "gf_test_family_log_top"}, "width": 10, "sound": "wood", "hardness": 2, "resistance": 2}},
-    {"id": "gf_test:family_ct", "family": "connected_texture", "params": {"textures": "gf_test_family_glass", "render_method": "blend", "sound": "glass", "hardness": 0.3, "resistance": 0.3}},
+    {"id": "gf_test:family_ct", "family": "connected_texture", "params": {"textures": {"*": "gf_test_family_planks", "overlay": "gf_test_family_glass", "connected": "gf_test_family_stone"}, "sound": "glass", "hardness": 0.3, "resistance": 0.3}},
     {"id": "gf_test:family_lightable", "family": "cube", "params": {"textures": "gf_test_family_lamp", "sound": "stone", "hardness": 0.3, "resistance": 0.3}},
     {"id": "gf_test:family_lightable", "family": "lightable"},
     {"id": "gf_test:family_snowloggable", "family": "cross", "params": {"textures": "gf_test_family_sapling", "hardness": 0, "resistance": 0}},

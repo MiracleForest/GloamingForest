@@ -26,6 +26,7 @@
 
 #include "core/GlobalPos.h"
 
+class AABB;
 class Actor;
 class Block;
 class BlockPos;
@@ -187,6 +188,8 @@ bool setStates(GlobalPos const& p, Json const& states);
 [[nodiscard]] bool solidBlock(BlockSource& region, BlockPos const& pos);
 /// Java Block.isExceptionForConnection: leaves, barriers, pumpkins, melons, shulker boxes.
 [[nodiscard]] bool exceptionForConnection(Block const& block);
+/// The entities whose box intersects `box` (players too: the game keeps them outside the chunks).
+[[nodiscard]] std::vector<Actor*> entitiesIn(BlockSource& region, AABB const& box);
 /// Redstone signal reaching the block (vanilla sources and gf::redstone emitters).
 [[nodiscard]] bool hasNeighborSignal(BlockSource& region, BlockPos const& pos);
 
@@ -200,6 +203,11 @@ void                    drop(BlockSource& region, BlockPos const& pos, ItemStack
 void                    give(Player& player, ItemStack const& item);
 /// Uses one of the player's held item (not in creative).
 void consumeHeld(Player& player, ItemStack const& contextItem);
+
+/// Bedrock repeats a use-on while the button is held, and simulated players report every use as
+/// a repeat: true when `player` used `pos` less than 5 ticks ago (a held button), so a click acts
+/// once. Every call counts as a use.
+[[nodiscard]] bool repeatedUse(Player& player, GlobalPos const& pos, bool firstEvent);
 
 /// Runs `fn` at the end of the current server tick (after the block change that asked).
 void defer(std::function<void()> fn);

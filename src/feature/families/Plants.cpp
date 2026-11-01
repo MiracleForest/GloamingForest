@@ -255,7 +255,6 @@ void installPlants() {
         m.block = e->id;
         m.item  = "minecraft:bone_meal";
         handlerIds().push_back(ia::onUseOn(m, [](ia::UseOnContext const& c) {
-            if (!c.firstEvent) return ia::Result::Consume;
             auto& region = c.player.getDimensionBlockSource();
             BlockPos bp  = game::blockPos(c.pos);
             consumeHeld(c.player, c.item);
@@ -269,7 +268,6 @@ void installPlants() {
         if (c.itemId.empty()) return ia::Result::Pass;
         auto const* potted = pottedFor(c.itemId);
         if (!potted || !emptyVanillaPot(c.block)) return ia::Result::Pass;
-        if (!c.firstEvent) return ia::Result::Consume;
         auto const* block = game::blockWith(potted->id);
         if (!block) return ia::Result::Pass;
         set(c.pos, *block);
@@ -281,7 +279,6 @@ void installPlants() {
         ia::Match m;
         m.block = e->id;
         handlerIds().push_back(ia::onUseOn(m, [](ia::UseOnContext const& c) {
-            if (!c.firstEvent) return ia::Result::Consume;
             auto const* e = entryOf(c.block);
             if (!e) return ia::Result::Pass;
             // Java FlowerPotBlock.useItemOn: another plant does nothing on a full pot
@@ -302,7 +299,6 @@ void installPlants() {
             m.block = e->id;
             handlerIds().push_back(ia::onUseOn(m, [](ia::UseOnContext const& c) {
                 if (!isAxe(c.itemId)) return ia::Result::Pass;
-                if (!c.firstEvent) return ia::Result::Consume;
                 auto const* e = entryOf(c.block);
                 if (!e) return ia::Result::Pass;
                 auto const* stripped = game::blockWith(e->str("stripped"));
@@ -335,7 +331,6 @@ void installPlants() {
             BlockPos bp  = game::blockPos(c.pos);
             int layers   = intState(c.block, state::Layers).value_or(0);
             if (layers >= 8 || !snowCanSurvive(region, bp)) return ia::Result::Pass;
-            if (!c.firstEvent) return ia::Result::Consume;
             setStates(c.pos, {{state::Layers, layers + 1}});
             consumeHeld(c.player, c.item);
             bedrockSound(region, bp, "dig.snow");
@@ -370,7 +365,7 @@ void installPlants() {
             BlockPos bp   = game::blockPos(c.pos);
             if (c.itemId.empty()) {
                 if (lighting == "none" || lighting.empty()) return ia::Result::Pass;
-                if (!c.firstEvent) return ia::Result::Consume;
+                if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
                 setStates(c.pos, {{state::Lighting, "none"}});
                 particle(region, bp, "minecraft:basic_smoke_particle");
                 bedrockSound(region, bp, "extinguish.candle");
@@ -378,7 +373,6 @@ void installPlants() {
             }
             bool flint = c.itemId == "minecraft:flint_and_steel", charge = c.itemId == "minecraft:fire_charge";
             if ((!flint && !charge) || lighting != "none") return ia::Result::Pass;
-            if (!c.firstEvent) return ia::Result::Consume;
             setStates(c.pos, {{state::Lighting, "normal"}});
             if (flint) {
                 bedrockSound(region, bp, "fire.ignite");

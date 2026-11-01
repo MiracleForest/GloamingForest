@@ -111,7 +111,7 @@ void redstoneTick() {
 
 ia::Result useOn(ia::UseOnContext const& c) {
     if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass; // Java: sneaking with an item uses the item
-    if (!c.firstEvent) return ia::Result::Consume;
+    if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
     auto const* e = entryOf(c.block);
     if (!e) return ia::Result::Pass;
     bool done = false;
