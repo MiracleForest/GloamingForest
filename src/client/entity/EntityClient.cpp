@@ -14,8 +14,8 @@
 // The client mod's side of F8's channels:
 //   boss.bar            ClientTFBossBar: the HUD's boss bar takes the boss's exact RGB (the vanilla
 //                       packet only carries the nearest of 8 colours). The HUD reads each bar's
-//                       colour from ClientInstanceScreenModel's boss table; the hook writes the RGB
-//                       into the entries of TF bosses before the HUD reads them.
+//                       colour from ClientInstanceScreenModel's boss table; after each HUD
+//                       controller tick the RGB is written into the entries of TF bosses.
 //   boss.death_time     UpdateDeathTimePacket (kept for renderers of TF's death animations).
 //   entity.move_player  MovePlayerPacket: the local player is pushed.
 //   entity.hostile_mount  ClientGameEvents#removeHostileMountHealth: no mount hearts on a hostile
@@ -31,6 +31,7 @@
 #include "ll/api/memory/Hook.h"
 
 #include "mc/client/gui/controls/renderers/HudHorseHeartRenderer.h"
+#include "mc/client/gui/screens/controllers/HudScreenController.h"
 #include "mc/client/gui/screens/models/BossInfo.h"
 #include "mc/client/gui/screens/models/ClientInstanceScreenModel.h"
 #include "mc/client/player/LocalPlayer.h"
@@ -88,28 +89,12 @@ void applyColours(ClientInstanceScreenModel const& model) {
 
 } // namespace gf::client::entity
 
-LL_TYPE_INSTANCE_HOOK(
-    EntityClientBossColourHook,
-    ll::memory::HookPriority::Normal,
-    ClientInstanceScreenModel,
-    &ClientInstanceScreenModel::getBossBarColor,
-    mce::Color,
-    int index
-) {
-    gf::client::entity::applyColours(*this);
-    return origin(index);
-}
-
-LL_TYPE_INSTANCE_HOOK(
-    EntityClientBossHealthHook,
-    ll::memory::HookPriority::Normal,
-    ClientInstanceScreenModel,
-    &ClientInstanceScreenModel::getBossHealthPercentage,
-    float,
-    int index
-) {
-    gf::client::entity::applyColours(*this);
-    return origin(index);
+// After the HUD controller's tick (UI thread) the exact colours go into its model's boss table,
+// before the bar is drawn from it.
+LL_TYPE_INSTANCE_HOOK(EntityClientHudTickHook, ll::memory::HookPriority::Normal, HudScreenController, &HudScreenController::$tick, ui::DirtyFlag) {
+    auto flag = origin();
+    if (auto* model = mClientInstanceScreenModel.get()) gf::client::entity::applyColours(*model);
+    return flag;
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -173,14 +158,12 @@ public:
     void install() {
         static bool handlers = false;
         if (!std::exchange(handlers, true)) registerHandlers();
-        EntityClientBossColourHook::hook();
-        EntityClientBossHealthHook::hook();
+        EntityClientHudTickHook::hook();
         EntityClientMountHeartsHook::hook();
     }
     void uninstall() {
         EntityClientMountHeartsHook::unhook();
-        EntityClientBossHealthHook::unhook();
-        EntityClientBossColourHook::unhook();
+        EntityClientHudTickHook::unhook();
         auto& s = C();
         {
             std::scoped_lock lock(s.barsMutex);
