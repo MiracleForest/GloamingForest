@@ -14,11 +14,13 @@
 //   at their Java positions and, as TF's textures include it, the player's inventory at
 //   (8, height - 82) with its label at (8, height - 94).
 // - hud: layers drawn after the vanilla HUD (ll AfterUIRenderEvent on "hud_screen").
-// - toast: TF's toasts (LockedBiomeToast, MissingAdvancementToast): Java's ToastComponent layout
-//   (160 x 32, top right, 600 ms slide in / out, at most 5 at once, item at (6, 8), title at
-//   (25, 7) in -256, body at (25, 18) in white). The background is a redraw of the advancement
-//   frame (Mojang's sprite is not reused).
-// - tooltip: lines under the item name of every hover text (ItemStackBase::getFormattedHovertext).
+// - toast: TF's toasts (LockedBiomeToast, MissingAdvancementToast) in Java's ToastComponent: 160 x
+//   32 at the top right over every screen, 5 slots (a toast keeps the slot it got; more wait in a
+//   queue), 600 ms slide in / out with the in / out sound (Bedrock's UI toast sound), item at
+//   (6, 8), title at (25, 7) in -256, body at (25, 18) in white, hidden after `ms` shown. The
+//   background is a redraw of the advancement frame (Mojang's sprite is not reused).
+// - tooltip: lines under the item name of every hover text (ItemStackBase::getFormattedHovertext);
+//   ContainerScreen's hover tooltips show that whole hover text (Java's getTooltipFromItem).
 
 #ifdef GF_CLIENT
 
@@ -40,6 +42,7 @@
 
 #include "mc/client/game/ClientInstance.h"
 #include "mc/client/gui/screens/ScreenView.h"
+#include "mc/client/multiplayer/ClientLevel.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/client/gui/screens/ScreenContext.h"
 #include "mc/client/renderer/RenderMaterialGroup.h"
@@ -291,7 +294,7 @@ void ContainerScreen::renderExtra(Canvas& c, float mx, float my) {
             if (it != ci.items.end()) {
                 if (auto s = it->second.items.find(sp.index); s != it->second.items.end() && s->second && !s->second->isNull()) {
                     c.item(*s->second, r.x, r.y, true);
-                    if (r.contains(mx, my)) tip = {s->second->getName()};
+                    if (r.contains(mx, my)) tip = ui::hoverLines(*s->second);
                 }
             }
             if (r.contains(mx, my)) c.fill(r, kSlotHover);
@@ -305,7 +308,7 @@ void ContainerScreen::renderExtra(Canvas& c, float mx, float my) {
                 auto const& s = inv.getItem(slot);
                 if (!s.isNull() && s.mCount > 0) {
                     c.item(s, r.x, r.y, true);
-                    if (r.contains(mx, my)) tip = {s.getName()};
+                    if (r.contains(mx, my)) tip = ui::hoverLines(s);
                 }
                 if (r.contains(mx, my)) c.fill(r, kSlotHover);
             }
@@ -404,27 +407,48 @@ void removeHudLayer(std::string const& id) {
 
 namespace toast {
 namespace {
-using Clock                   = std::chrono::steady_clock;
-constexpr float kToastWidth   = 160;
-constexpr float kToastHeight  = 32;
-constexpr int   kSlideMs      = 600; // ToastInstance: SLIDE_ANIMATION_DURATION_MS
-constexpr int   kMaxVisible   = 5;   // ToastComponent: 5 slots of 32 pixels
+using Clock                  = std::chrono::steady_clock;
+constexpr float kToastWidth  = 160;
+constexpr float kToastHeight = 32;   // one slot
+constexpr long  kSlideMs     = 600;  // ToastInstance: the slide in / out
+constexpr int   kSlots       = 5;    // ToastComponent.occupiedSlots
+/// Bedrock's UI toast sound (Java's ui.toast.in / ui.toast.out have no Bedrock counterpart; the
+/// hide plays it lower).
+constexpr char  kToastSound[] = "random.toast";
 
+/// A toast on screen (Java's ToastInstance): it keeps its slot until it has slid out.
 struct Shown {
     ToastSpec                  spec;
     std::shared_ptr<ItemStack> icon;
     std::string                title, body;
-    Clock::time_point          start{};
-    bool                       started = false;
+    int                        index         = 0;
+    long                       animationTime = -1; ///< ms on the toast clock; -1 before the first frame
+    long                       visibleTime   = 0;
+    bool                       show          = true; ///< Visibility.SHOW / HIDE
 };
 struct Toasts {
-    std::mutex        mutex;
-    std::deque<Shown> queue; ///< the first kMaxVisible are on screen
-    bool              logged = false;
+    std::mutex            mutex;
+    std::vector<Shown>    visible;
+    std::deque<ToastSpec> queued;
+    bool                  occupied[kSlots]{};
+    bool                  logged = false;
 };
 Toasts& toasts() {
     static Toasts t;
     return t;
+}
+
+long nowMs() {
+    static auto const start = Clock::now();
+    return static_cast<long>(std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - start).count());
+}
+
+void playSound(bool show) {
+    if (auto* c = currentClient()) {
+        try {
+            c->playUI(kToastSound, 1.0f, show ? 1.0f : 0.8f);
+        } catch (...) {}
+    }
 }
 
 void drawBackground(screen::Canvas& c, float x, float y) {
@@ -435,47 +459,70 @@ void drawBackground(screen::Canvas& c, float x, float y) {
     c.frame({x + 2, y + 2, kToastWidth - 4, kToastHeight - 4}, 0xFF0F0F0F);
 }
 
+/// ToastInstance.getVisibility: f = clamp(t / 600)², 1 - f while hiding.
+float visibility(Shown const& s, long now) {
+    float f = std::clamp(static_cast<float>(now - s.animationTime) / static_cast<float>(kSlideMs), 0.0f, 1.0f);
+    f *= f;
+    return s.show ? f : 1 - f;
+}
+
+/// ToastInstance.render; true when the toast has slid out.
+bool renderOne(screen::Canvas& c, float guiWidth, Shown& s, long now) {
+    if (s.animationTime == -1) {
+        s.animationTime = now;
+        playSound(true);
+    }
+    if (s.show && now - s.animationTime <= kSlideMs) s.visibleTime = now;
+    float x = guiWidth - kToastWidth * visibility(s, now);
+    float y = static_cast<float>(s.index) * kToastHeight;
+    drawBackground(c, x, y);
+    if (s.icon) c.item(*s.icon, x + 6, y + 8);
+    c.text(x + 25, y + 7, s.title, 0xFFFFFF00, screen::Align::Left, false);
+    c.text(x + 25, y + 18, s.body, 0xFFFFFFFF, screen::Align::Left, false);
+    // the toast's own render: hidden once it was shown `ms` (LockedBiomeToast: timer >= 10000)
+    bool show = now - s.visibleTime < std::max(0, s.spec.ms);
+    if (show != s.show) {
+        s.animationTime = now - static_cast<long>((1.0f - visibility(s, now)) * static_cast<float>(kSlideMs));
+        s.show          = show;
+        playSound(show);
+    }
+    return !s.show && now - s.animationTime > kSlideMs;
+}
+
+/// ToastComponent.render: draws the visible toasts, frees the slots of those gone, then moves
+/// queued toasts into free slots (drawn from the next frame).
 void render(screen::Canvas& c, float guiWidth) {
     auto&           t = toasts();
     std::lock_guard lock(t.mutex);
-    auto            now = Clock::now();
-    int             slot = 0;
-    for (auto it = t.queue.begin(); it != t.queue.end() && slot < kMaxVisible;) {
-        auto& s = *it;
-        if (!s.started) {
-            s.started = true;
-            s.start   = now;
-            if (!s.spec.iconItem.empty()) {
-                if (auto st = game::items::make(s.spec.iconItem)) s.icon = std::make_shared<ItemStack>(std::move(*st));
-            }
-            s.title = translateAny(s.spec.titleKey);
-            s.body  = translateAny(s.spec.bodyKey);
-        }
-        auto  ms   = std::chrono::duration_cast<std::chrono::milliseconds>(now - s.start).count();
-        int   show = std::max(0, s.spec.ms);
-        if (ms >= kSlideMs + show + kSlideMs) {
-            it = t.queue.erase(it);
+    long const      now = nowMs();
+    for (auto it = t.visible.begin(); it != t.visible.end();) {
+        if (renderOne(c, guiWidth, *it, now)) {
+            t.occupied[it->index] = false;
+            it                    = t.visible.erase(it);
             continue;
         }
-        // ToastInstance.getVisibility: f = clamp(t / 600)², 1 - f while hiding
-        float f;
-        if (ms < kSlideMs) f = static_cast<float>(ms) / kSlideMs;
-        else if (ms < kSlideMs + show) f = 1;
-        else f = 1 - static_cast<float>(ms - kSlideMs - show) / kSlideMs;
-        f      = std::clamp(f, 0.0f, 1.0f);
-        f      = ms < kSlideMs + show ? f * f : 1 - (1 - f) * (1 - f);
-        float x = guiWidth - kToastWidth * f;
-        float y = static_cast<float>(slot) * kToastHeight;
-        drawBackground(c, x, y);
-        if (s.icon) c.item(*s.icon, x + 6, y + 8);
-        c.text(x + 25, y + 7, s.title, 0xFFFFFF00, screen::Align::Left, false);
-        c.text(x + 25, y + 18, s.body, 0xFFFFFFFF, screen::Align::Left, false);
         if (!t.logged) {
             t.logged = true;
-            log().info("ui: toast drawn: {}", s.title);
+            log().info("ui: toast drawn: {}", it->title);
         }
-        ++slot;
         ++it;
+    }
+    while (!t.queued.empty()) {
+        int free = -1;
+        for (int i = 0; i < kSlots && free < 0; ++i)
+            if (!t.occupied[i]) free = i;
+        if (free < 0) break;
+        Shown s;
+        s.spec  = std::move(t.queued.front());
+        s.index = free;
+        t.queued.pop_front();
+        if (!s.spec.iconItem.empty()) {
+            if (auto st = game::items::make(s.spec.iconItem)) s.icon = std::make_shared<ItemStack>(std::move(*st));
+        }
+        s.title          = translateAny(s.spec.titleKey);
+        s.body           = translateAny(s.spec.bodyKey);
+        t.occupied[free] = true;
+        t.visible.push_back(std::move(s));
     }
 }
 } // namespace
@@ -483,7 +530,7 @@ void render(screen::Canvas& c, float guiWidth) {
 void show(ToastSpec const& spec) {
     auto&           t = toasts();
     std::lock_guard lock(t.mutex);
-    t.queue.push_back(Shown{spec, nullptr, {}, {}, {}, false});
+    t.queued.push_back(spec);
     t.logged = false;
 }
 } // namespace toast
@@ -492,7 +539,7 @@ namespace ui {
 std::size_t toastCount() {
     auto&           t = toast::toasts();
     std::lock_guard lock(t.mutex);
-    return t.queue.size();
+    return t.visible.size() + t.queued.size();
 }
 } // namespace ui
 
@@ -536,6 +583,35 @@ std::vector<std::string> tooltipLines(ItemStack const& stack) {
             log().error("ui: tooltip of {} failed: {}", stack.getTypeName(), e.what());
         }
     }
+    return lines;
+}
+
+bool removeTooltips(std::string const& itemId) {
+    auto&           t = tooltip::tips();
+    std::lock_guard lock(t.mutex);
+    return t.fns.erase(itemId) > 0;
+}
+
+std::vector<std::string> hoverLines(ItemStack const& stack) {
+    std::vector<std::string> lines;
+    if (stack.isNull()) return lines;
+    auto* c     = currentClient();
+    auto* level = c ? c->getLevel() : nullptr;
+    std::string text;
+    if (level) {
+        try {
+            text = stack.getFormattedHovertext(*level, false).mUnredactedString; // the hook adds the providers' lines
+        } catch (...) {}
+    }
+    if (text.empty()) text = stack.getName();
+    std::size_t start = 0;
+    while (start <= text.size()) {
+        auto end = text.find('\n', start);
+        if (end == std::string::npos) end = text.size();
+        lines.push_back(text.substr(start, end - start));
+        start = end + 1;
+    }
+    while (!lines.empty() && lines.back().empty()) lines.pop_back();
     return lines;
 }
 } // namespace ui
@@ -594,9 +670,9 @@ void renderHud(MinecraftUIRenderContext& ctx) {
         std::lock_guard lock(l.mutex);
         list = l.list;
     }
-    auto* c       = currentClient();
-    float partial = c ? c->getFrameAlpha() : 0.0f;
-    auto [gw, gh] = screen::guiSize();
+    if (list.empty()) return;
+    auto*          c       = currentClient();
+    float          partial = c ? c->getFrameAlpha() : 0.0f;
     screen::Canvas canvas(ctx);
     for (auto& layer : list) {
         canvas.setOrigin(0, 0);
@@ -606,26 +682,65 @@ void renderHud(MinecraftUIRenderContext& ctx) {
             log().error("ui: HUD layer {} failed: {}", layer.id, e.what());
         }
     }
-    canvas.setOrigin(0, 0);
+}
+
+/// Toasts over every screen (Java draws them after the screen): on the top scene only.
+void renderToasts(MinecraftUIRenderContext& ctx) {
+    auto [gw, gh] = screen::guiSize();
+    screen::Canvas canvas(ctx);
     toast::render(canvas, gw);
+}
+
+/// The scene whose cancelled BeforeUIRenderEvent drew the toasts this frame (UI thread).
+ScreenView const*& toastsDrawnFor() {
+    static ScreenView const* view = nullptr;
+    return view;
+}
+
+bool isTopScene(ScreenView& view) {
+    auto* c = currentClient();
+    return c && view.getScreenName() == c->getScreenName();
 }
 
 class UiModule {
 public:
-    // render listeners at mod load, before the game's threads run (see screen::ScreenModule)
+    // render listeners at mod load, before the game's threads run (see screen::ScreenModule);
+    // lowest priority: drawn after everything else draws on the scene
     void load() {
         if (!mListeners.empty()) return;
         auto& bus = ll::event::EventBus::getInstance();
-        mListeners.push_back(bus.emplaceListener<ll::event::AfterUIRenderEvent>([](ll::event::AfterUIRenderEvent& ev) {
-            if (ev.screenView().getScreenName() != "hud_screen") return;
-            try {
-                renderHud(ev.uiRenderContext());
-            } catch (...) {}
-        }));
+        mListeners.push_back(bus.emplaceListener<ll::event::AfterUIRenderEvent>(
+            [](ll::event::AfterUIRenderEvent& ev) {
+                try {
+                    if (ev.screenView().getScreenName() == "hud_screen") renderHud(ev.uiRenderContext());
+                    // not twice when the cancelled BeforeUIRenderEvent of this scene drew them
+                    bool drawn          = toastsDrawnFor() == &ev.screenView();
+                    toastsDrawnFor()    = nullptr;
+                    if (!drawn && isTopScene(ev.screenView())) renderToasts(ev.uiRenderContext());
+                } catch (...) {}
+            },
+            ll::event::EventPriority::Lowest
+        ));
+        // a screen of the client screen framework draws in the host scene's BeforeUIRenderEvent and
+        // cancels the scene: the toasts then go on top of it there
+        mListeners.push_back(bus.emplaceListener<ll::event::BeforeUIRenderEvent>(
+            [](ll::event::BeforeUIRenderEvent& ev) {
+                toastsDrawnFor() = nullptr;
+                try {
+                    if (ev.isCancelled() && isTopScene(ev.screenView())) {
+                        renderToasts(ev.uiRenderContext());
+                        toastsDrawnFor() = &ev.screenView();
+                    }
+                } catch (...) {}
+            },
+            ll::event::EventPriority::Lowest
+        ));
         mListeners.push_back(bus.emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) {
             auto&           t = toast::toasts();
             std::lock_guard lock(t.mutex);
-            t.queue.clear();
+            t.visible.clear();
+            t.queued.clear();
+            std::fill(std::begin(t.occupied), std::end(t.occupied), false);
         }));
         UiTooltipHook::hook();
     }
