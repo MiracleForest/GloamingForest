@@ -143,6 +143,12 @@ namespace GfImport
                     }
                 case 2:
                     r = Sample(row, x * 3, depth); g = Sample(row, x * 3 + 1, depth); b = Sample(row, x * 3 + 2, depth);
+                    // tRNS: the one RGB colour (16-bit samples, compared at the image depth) that is transparent
+                    if (trns != null && trns.Length >= 6)
+                    {
+                        int tr = (trns[0] << 8) | trns[1], tg = (trns[2] << 8) | trns[3], tb = (trns[4] << 8) | trns[5];
+                        if (depth == 16 ? (r == tr >> 8 && g == tg >> 8 && b == tb >> 8) : (r == tr && g == tg && b == tb)) a = 0;
+                    }
                     break;
                 case 3:
                     {

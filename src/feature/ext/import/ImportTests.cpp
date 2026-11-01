@@ -142,7 +142,7 @@ GF_REGISTER_SELFTEST("import.lang_and_data", [](Context& ctx) {
     ctx.check(gf::translate("block.twilightforest.twilight_oak_planks", "?", "en_US") == "Twilight Oak Planks", "en_US TF block name");
     ctx.check(gf::translate("advancement.twilightforest.root", "?", "en_US") != "?", "en_US TF advancement title");
     ctx.check(gf::translate("item.twilightforest.naga_scale", "?", "de_DE") == "Nagaschuppe", "de_DE TF item name");
-    // the imported data, file by file, as the import counted it
+    // the imported data, file by file, as the import counted it (at least: W1 tag fragments may add tag files)
     namespace fs = std::filesystem;
     for (auto const& [dir, expected] : skeleton()["data"].items()) {
         auto root  = modDir() / "data" / fs::path(dir);
@@ -156,7 +156,7 @@ GF_REGISTER_SELFTEST("import.lang_and_data", [](Context& ctx) {
                 }
                 ++count;
             }
-        ctx.check(count == expected.get<int>(), "data/" + dir + ": " + std::to_string(count) + " files, expected " + std::to_string(expected.get<int>()));
+        ctx.check(count >= expected.get<int>(), "data/" + dir + ": " + std::to_string(count) + " files, expected at least " + std::to_string(expected.get<int>()));
     }
 });
 

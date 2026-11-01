@@ -167,6 +167,25 @@ namespace GfImport
             var parts = path.Split('/');
             string name = parts.Last();
             // textures/entity/<entity>[/...] and textures/item|block/<id>
+            if (parts[0] == "entity" && parts.Length > 2)
+            {
+                // entity/<folder>/<wood or variant>[/...]: the item or block that renders it
+                string sub = parts[2];
+                var byFolder = new Dictionary<string, string[]>
+                {
+                    { "boat", new[] { sub + "_boat" } }, { "chest_boat", new[] { sub + "_chest_boat" } },
+                    { "chest", new[] { sub + "_chest", sub + "_oak_chest", sub.Replace("wood", "") + "_chest", sub.Replace("ing", "") + "_chest", sub.Replace("ation", "") + "_chest" } },
+                    { "signs", new[] { sub + "_sign", sub + "_hanging_sign" } }, { "banner", new[] { name + "_banner_pattern" } },
+                    { "shield", new[] { name + "_shield", name } }, { "casket", new[] { "keepsake_casket" } }, { "brazier", new[] { "brazier" } },
+                };
+                string[] cands;
+                if (byFolder.TryGetValue(parts[1], out cands))
+                    foreach (var cand in cands)
+                    {
+                        var o = ItemOwner("twilightforest:" + cand);
+                        if (o != null) return o;
+                    }
+            }
             if (parts[0] == "entity" && parts.Length > 1)
             {
                 foreach (var cand in new[] { parts[1], name, StripSuffixes(name) })
@@ -177,6 +196,13 @@ namespace GfImport
             }
             foreach (var cand in new[] { name, StripSuffixes(name) })
             {
+                var o = ItemOwner("twilightforest:" + cand);
+                if (o != null) return o;
+            }
+            // variants of an item / block texture: ender_bow_pulling_0 -> ender_bow, mining_log_top -> mining_log
+            for (string cand = name; cand.Contains("_"); )
+            {
+                cand = cand.Substring(0, cand.LastIndexOf('_'));
                 var o = ItemOwner("twilightforest:" + cand);
                 if (o != null) return o;
             }

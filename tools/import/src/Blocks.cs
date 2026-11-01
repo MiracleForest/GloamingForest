@@ -440,7 +440,8 @@ namespace GfImport
                         var els = m.Elements.Select(e => RetargetForPart(e, m)).ToList();
                         string name = "part" + i;
                         var bone = J.Obj().Set("name", name).Set("pivot", J.Arr(new[] { J.Num(0), J.Num(8), J.Num(0) }));
-                        if (x != 0 || y != 0) bone.Set("rotation", J.Arr(new[] { J.Num(-x), J.Num(y), J.Num(0) }));
+                        // the part's model rotation as a bone rotation (Bedrock geometry convention, see Models.Cubes)
+                        if (x != 0 || y != 0) bone.Set("rotation", J.Arr(new[] { J.Num(x), J.Num(y), J.Num(0) }));
                         bone.Set("cubes", J.Arr(Models.Cubes(els, "")));
                         bones.Add(bone);
                         string when = WhenExpr(bi, part["when"]);

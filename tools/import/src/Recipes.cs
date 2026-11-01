@@ -205,7 +205,9 @@ namespace GfImport
                         else if (type == "minecraft:blasting") tags.Add("blast_furnace");
                         else if (type == "minecraft:smoking") tags.Add("smoker");
                         else { tags.Add("campfire"); tags.Add("soul_campfire"); }
+                        // Bedrock furnace recipes take one item: tags become one recipe per member
                         var alts = Alternatives(r["ingredient"]).Where(a => a["item"] != null).ToList();
+                        if (alts.Count == 0) Warn("recipe " + id + ": no item input for a Bedrock furnace recipe (Java ingredient " + r["ingredient"].ToCompact() + ")");
                         int n = 0;
                         foreach (var a in alts)
                         {

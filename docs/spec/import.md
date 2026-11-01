@@ -98,8 +98,8 @@ Shared files get one owner by rule:
 
 - Item icons: the Java item model's `layer0` (`item/generated`, `item/handheld`), else `textures/item/<id>.png`,
   else the model's particle texture. Stack size from `stacksTo`, durability from `durability` (armor:
-  `ArmorItem.Type.getDurability`), `hand_equipped` for handheld models, the item tags the item is in
-  (`minecraft:tags`), display name `item.twilightforest:<id>.name` (`tile....` for items that place their block).
+  `ArmorItem.Type.getDurability`), `hand_equipped` for handheld models, the TF / `c:` / compat item tags the item is in (`minecraft:tags`;
+  `minecraft:*` tags carry engine meaning on Bedrock and are left to the owners), display name `item.twilightforest:<id>.name` (`tile....` for items that place their block).
 - Spawn eggs are Bedrock's own (`<entity>_spawn_egg`, from the client entity's `spawn_egg` colours = TF's egg
   colours).
 - Bedrock recipes: `crafting_shaped` / `crafting_shapeless` -> `recipe_shaped` / `recipe_shapeless` (tag

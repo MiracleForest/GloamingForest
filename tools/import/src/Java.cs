@@ -107,27 +107,30 @@ namespace GfImport
                 res[b.Id] = b;
                 byConst[b.Const] = b;
             }
-            // property copies: ofFullCopy(OTHER.get()) / ofFullCopy(OTHER) / Blocks.X
-            foreach (var b in res.Values)
+            // property copies: ofFullCopy(OTHER.get()) / ofFullCopy(OTHER) / Blocks.X; a copied block is
+            // resolved before the blocks that copy it (chains: A copies B copies C)
+            var resolved = new HashSet<JBlock>();
+            Action<JBlock> resolve = null;
+            resolve = b =>
             {
-                if (b.CopyOf == null) continue;
+                if (b.CopyOf == null || !resolved.Add(b)) return;
                 JBlock src;
+                int at = b.Stmt.IndexOf("Copy(", StringComparison.Ordinal);
+                string after = at >= 0 ? b.Stmt.Substring(at) : "";
                 if (byConst.TryGetValue(b.CopyOf, out src) && src != b)
                 {
-                    var own = b.Stmt;
+                    resolve(src);
                     b.Hardness = src.Hardness; b.Resistance = src.Resistance; b.Sound = src.Sound; b.MapColor = src.MapColor;
                     b.Light = src.Light; b.Flammable = src.Flammable; b.Unbreakable = src.Unbreakable; b.Instabreak = src.Instabreak;
-                    // explicit settings after the copy win
-                    var after = own.Substring(own.IndexOf("Copy(", StringComparison.Ordinal));
-                    ParseProps(b, after, false);
+                    ParseProps(b, after, false); // explicit settings after the copy win
                 }
                 else if (b.CopyOf.StartsWith("Blocks.", StringComparison.Ordinal))
                 {
                     VanillaProps(b, b.CopyOf.Substring(7));
-                    var own = b.Stmt;
-                    ParseProps(b, own.Substring(own.IndexOf("Copy(", StringComparison.Ordinal)), false);
+                    ParseProps(b, after, false);
                 }
-            }
+            };
+            foreach (var b in res.Values) resolve(b);
             return res;
         }
 

@@ -22,32 +22,32 @@
                 "north": {
                   "uv": [0, 0],
                   "uv_size": [16, 16],
-                  "material_instance": "north"
+                  "material_instance": "t_twilightforest_block_castle_brick"
                 },
                 "east": {
                   "uv": [0, 0],
                   "uv_size": [16, 16],
-                  "material_instance": "east"
+                  "material_instance": "t_twilightforest_block_castle_brick"
                 },
                 "south": {
                   "uv": [0, 0],
                   "uv_size": [16, 16],
-                  "material_instance": "south"
+                  "material_instance": "t_twilightforest_block_castle_brick"
                 },
                 "west": {
                   "uv": [0, 0],
                   "uv_size": [16, 16],
-                  "material_instance": "west"
+                  "material_instance": "t_twilightforest_block_castle_brick"
                 },
                 "up": {
                   "uv": [16, 16],
                   "uv_size": [-16, -16],
-                  "material_instance": "up"
+                  "material_instance": "t_twilightforest_block_castle_brick"
                 },
                 "down": {
                   "uv": [16, 16],
                   "uv_size": [-16, -16],
-                  "material_instance": "down"
+                  "material_instance": "t_twilightforest_block_castle_brick"
                 }
               }
             },

@@ -249,15 +249,16 @@ namespace GfImport
         public static Regex GlobRegex(string glob)
         {
             var sb = new StringBuilder("^");
+            int braces = 0;
             for (int i = 0; i < glob.Length; i++)
             {
                 char c = glob[i];
                 if (c == '*' && i + 1 < glob.Length && glob[i + 1] == '*') { sb.Append(".*"); i++; }
                 else if (c == '*') sb.Append("[^/]*");
                 else if (c == '?') sb.Append("[^/]");
-                else if (c == '{') sb.Append("(?:");
-                else if (c == '}') sb.Append(")");
-                else if (c == ',') sb.Append("|");
+                else if (c == '{') { sb.Append("(?:"); braces++; }
+                else if (c == '}' && braces > 0) { sb.Append(")"); braces--; }
+                else if (c == ',' && braces > 0) sb.Append("|");
                 else sb.Append(Regex.Escape(c.ToString()));
             }
             sb.Append("$");

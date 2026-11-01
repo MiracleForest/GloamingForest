@@ -5,9 +5,6 @@
   "tf_block_towerwood": {
     "textures": "textures/twilightforest/block/towerwood"
   },
-  "tf_vanilla_block_netherite_block": {
-    "textures": "textures/blocks/netherite_block"
-  },
   "tf_vanilla_block_oak_leaves": {
     "textures": "textures/blocks/leaves_oak_carried"
   },

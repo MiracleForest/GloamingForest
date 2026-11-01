@@ -26,11 +26,21 @@ foreach ($b in $blocks) {
     Invoke-Chat "/setblock $x -60 306 $b"
     $x++
 }
-Invoke-Chat '/setblock 309 -60 306 air'
 Start-Sleep -Seconds 3
 Save-Screenshot 'blocks-row' | Out-Null
 
-# Creative inventory: the construction category ends with TF's "blocks" group; search "twilight".
+# Creative inventory (opens on "All items"): search "twilight" (TF's names), then the construction
+# category, whose last group is TF's "blocks" tab (bp/item_catalog.d/import.json).
 Open-Inventory
 Save-Screenshot 'creative-open' | Out-Null
+Click 0.5 0.311 -Relative          # the search field
+Type-Text 'twilight'
+Start-Sleep -Seconds 2
+Save-Screenshot 'creative-search-twilight' | Out-Null
+Click 0.217 0.1875 -Relative       # the construction tab
+Start-Sleep -Seconds 1
+Move-Mouse 0.5 0.6 -Relative
+Scroll -400
+Start-Sleep -Seconds 2
+Save-Screenshot 'creative-construction-tf' | Out-Null
 Close-Screen

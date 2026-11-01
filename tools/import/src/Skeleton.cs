@@ -70,8 +70,11 @@ namespace GfImport
                 JItems.TryGetValue(id, out ji);
                 bool isBlock = BlockInfos.ContainsKey(id);
                 var m = ItemModel(id);
-                EmitJson("skeleton", owner, "bp/items/" + id + ".json", ItemDoc(id, owner, m, ji, isBlock, inTabs.Contains(full), (isBlock ? "tile." : "item.") + full + ".name"));
                 skeletonItems.Add(full);
+                // an item with its block's id replaces the block's own item only for a flat (2D) icon;
+                // otherwise Bedrock's block item (the block geometry) is the item
+                if (isBlock && (m == null || !m.ItemGenerated || m.Resolve("#layer0") == null)) continue;
+                EmitJson("skeleton", owner, "bp/items/" + id + ".json", ItemDoc(id, owner, m, ji, isBlock, inTabs.Contains(full), (isBlock ? "tile." : "item.") + full + ".name"));
             }
             // block items whose Java item model is a flat icon get an item with the block's id (block_placer)
             foreach (var full in Ids("block_item"))
@@ -111,13 +114,20 @@ namespace GfImport
             return 0;
         }
 
+        List<string> entityTextures, topEntityTextures;
+
         string EntityTexture(string id)
         {
             string squash = id.Replace("_", "");
-            var all = TfTextures.Keys.Where(k => k.StartsWith("twilightforest:entity/", StringComparison.Ordinal)).OrderBy(k => k, StringComparer.Ordinal).ToList();
-            // entity textures sit directly in textures/entity (or in a folder named after the entity);
-            // banner, boat, chest, shield and sign folders hold block / item textures
-            var top = all.Where(k => k.IndexOf('/', "twilightforest:entity/".Length) < 0).ToList();
+            if (entityTextures == null)
+            {
+                entityTextures = TfTextures.Keys.Where(k => k.StartsWith("twilightforest:entity/", StringComparison.Ordinal)).OrderBy(k => k, StringComparer.Ordinal).ToList();
+                // entity textures sit directly in textures/entity (or in a folder named after the entity);
+                // banner, boat, chest, shield and sign folders hold block / item textures
+                topEntityTextures = entityTextures.Where(k => k.IndexOf('/', "twilightforest:entity/".Length) < 0).ToList();
+            }
+            var all = entityTextures;
+            var top = topEntityTextures;
             Func<string, string> sq = k => k.Substring(k.LastIndexOf('/') + 1).Replace("_", "").Replace("-", "");
             var hit = all.FirstOrDefault(k => k == "twilightforest:entity/" + id)
                 ?? all.FirstOrDefault(k => k.StartsWith("twilightforest:entity/" + id + "/", StringComparison.Ordinal))

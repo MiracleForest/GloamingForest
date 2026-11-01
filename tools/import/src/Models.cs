@@ -148,10 +148,12 @@ namespace GfImport
                     foreach (var ck in j["children"].Keys.OrderBy(x => x, StringComparer.Ordinal))
                     {
                         var child = j["children"][ck];
-                        J cj = child;
                         if (child["parent"] != null && child["elements"] == null)
                         {
-                            var cm = Get(child["parent"].AsString());
+                            // the child as a model of its own, so its "textures" override its parent's
+                            string childId = kv.Key.Split('#')[0] + "#child/" + ck;
+                            if (!Raw.ContainsKey(childId)) Raw[childId] = child;
+                            var cm = Get(childId);
                             if (cm.Elements != null) els.AddRange(cm.Elements.Select(e => RetargetTextures(e, cm)));
                         }
                         else if (child["elements"] != null) els.AddRange(child["elements"].A.Select(ParseElement));
@@ -281,7 +283,8 @@ namespace GfImport
                 {
                     cube.Set("pivot", V(8 - e.RotOrigin[0], e.RotOrigin[1], e.RotOrigin[2] - 8));
                     double a = e.RotAngle;
-                    cube.Set("rotation", e.RotAxis == "x" ? V(a, 0, 0) : e.RotAxis == "y" ? V(0, -a, 0) : V(0, 0, -a));
+                    // Bedrock geometry rotations are [-x, -y, z] of Java's (the mirrored x axis; as Blockbench exports them)
+                    cube.Set("rotation", e.RotAxis == "x" ? V(-a, 0, 0) : e.RotAxis == "y" ? V(0, -a, 0) : V(0, 0, a));
                 }
                 var uv = J.Obj();
                 foreach (var face in e.Faces.OrderBy(x => DirOrder(x.Dir)))

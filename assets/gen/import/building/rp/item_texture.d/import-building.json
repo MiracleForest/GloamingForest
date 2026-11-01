@@ -5,22 +5,7 @@
   "tf_block_rope": {
     "textures": "textures/twilightforest/block/rope"
   },
-  "tf_item_hydra_trophy": {
-    "textures": "textures/twilightforest/item/hydra_trophy"
-  },
-  "tf_item_lich_trophy": {
-    "textures": "textures/twilightforest/item/lich_trophy"
-  },
-  "tf_item_naga_trophy": {
-    "textures": "textures/twilightforest/item/naga_trophy"
-  },
-  "tf_item_snow_queen_trophy": {
-    "textures": "textures/twilightforest/item/snow_queen_trophy"
-  },
   "tf_item_tf_banner_pattern": {
     "textures": "textures/twilightforest/item/tf_banner_pattern"
-  },
-  "tf_item_ur_ghast_trophy": {
-    "textures": "textures/twilightforest/item/ur_ghast_trophy"
   }
 }

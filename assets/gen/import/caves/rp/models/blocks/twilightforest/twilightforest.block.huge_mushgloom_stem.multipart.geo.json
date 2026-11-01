@@ -156,7 +156,7 @@
         {
           "name": "part8",
           "pivot": [0, 8, 0],
-          "rotation": [-270, 0, 0],
+          "rotation": [270, 0, 0],
           "cubes": [
             {
               "origin": [-8, 0, -8],
@@ -174,7 +174,7 @@
         {
           "name": "part9",
           "pivot": [0, 8, 0],
-          "rotation": [-270, 0, 0],
+          "rotation": [270, 0, 0],
           "cubes": [
             {
               "origin": [-8, 0, -8],
@@ -192,7 +192,7 @@
         {
           "name": "part10",
           "pivot": [0, 8, 0],
-          "rotation": [-90, 0, 0],
+          "rotation": [90, 0, 0],
           "cubes": [
             {
               "origin": [-8, 0, -8],
@@ -210,7 +210,7 @@
         {
           "name": "part11",
           "pivot": [0, 8, 0],
-          "rotation": [-90, 0, 0],
+          "rotation": [90, 0, 0],
           "cubes": [
             {
               "origin": [-8, 0, -8],

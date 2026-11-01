@@ -37,6 +37,10 @@
           "texture": "tf_block_castle_brick",
           "render_method": "opaque"
         },
+        "t_twilightforest_block_castle_brick": {
+          "texture": "tf_block_castle_brick",
+          "render_method": "opaque"
+        },
         "up": {
           "texture": "tf_block_castle_brick",
           "render_method": "opaque"

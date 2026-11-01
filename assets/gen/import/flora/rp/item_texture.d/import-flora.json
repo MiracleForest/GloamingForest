@@ -8,9 +8,6 @@
   "tf_block_huge_water_lily": {
     "textures": "textures/twilightforest/block/huge_water_lily"
   },
-  "tf_block_jar_side": {
-    "textures": "textures/twilightforest/block/jar_side"
-  },
   "tf_block_mayapple": {
     "textures": "textures/twilightforest/block/mayapple"
   },
