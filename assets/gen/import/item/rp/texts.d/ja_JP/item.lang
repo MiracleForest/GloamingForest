@@ -200,3 +200,7 @@ tag.item.twilightforest.transwood_logs=変化の木の原木
 tag.item.twilightforest.twilight_oak_logs=トワイライトオークの原木
 tag.item.twilightforest.uncrafting_ignores_cost=解体作業台がコストを無視するアイテム
 tag.item.twilightforest.wip=制作中のアイテム
+twilightforest:itemGroup.twilightforest.blocks=黄昏の森：ブロック
+twilightforest:itemGroup.twilightforest.equipment=黄昏の森：装備品
+twilightforest:itemGroup.twilightforest.food=黄昏の森：食べ物
+twilightforest:itemGroup.twilightforest.items=黄昏の森：アイテム

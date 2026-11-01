@@ -170,3 +170,6 @@ tag.item.twilightforest.towerwood=Blocchi di torrelegno
 tag.item.twilightforest.twilight_oak_logs=Tronchi di quercia crepuscolare
 tag.item.twilightforest.uncrafting_ignores_cost=Il tavolo da de-fabbricazione ignora i costi
 tag.item.twilightforest.wip=Oggetti in corso di lavorazione (WIP)
+twilightforest:itemGroup.twilightforest.blocks=Foresta del Crepuscolo: Blocchi
+twilightforest:itemGroup.twilightforest.equipment=Foresta del Crepuscolo: Equipaggiamento
+twilightforest:itemGroup.twilightforest.items=Foresta del Crepuscolo: Oggetti

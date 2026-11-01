@@ -22,7 +22,12 @@ namespace GfImport
         string ItemIcon(string id, Model m, string owner)
         {
             string tex = null;
-            if (m != null && m.ItemGenerated) tex = m.Resolve("#layer0");
+            if (m != null && m.ItemGenerated)
+            {
+                // one icon per item: layer0, or TF's own layer when layer0 is a vanilla base (chest boats)
+                var layers = Enumerable.Range(0, 5).Select(i => m.Resolve("#layer" + i)).Where(x => x != null).ToList();
+                tex = layers.FirstOrDefault(l => l.StartsWith("twilightforest:", StringComparison.Ordinal)) ?? layers.FirstOrDefault();
+            }
             if (tex == null && TfTextures.ContainsKey("twilightforest:item/" + id)) tex = "twilightforest:item/" + id;
             if (tex == null && m != null) tex = m.Particle;
             return tex == null ? null : UseTexture(tex, owner, "item");

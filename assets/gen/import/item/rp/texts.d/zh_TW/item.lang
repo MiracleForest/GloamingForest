@@ -194,3 +194,6 @@ tag.item.twilightforest.transwood_logs=變化樹原木
 tag.item.twilightforest.twilight_oak_logs=暮色橡木原木
 tag.item.twilightforest.uncrafting_ignores_cost=拆解台忽略費用
 tag.item.twilightforest.wip=正在實現的物品
+twilightforest:itemGroup.twilightforest.blocks=暮色森林：方塊
+twilightforest:itemGroup.twilightforest.equipment=暮色森林：裝備
+twilightforest:itemGroup.twilightforest.items=暮色森林：物品

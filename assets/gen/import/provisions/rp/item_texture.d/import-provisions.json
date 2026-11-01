@@ -2,6 +2,9 @@
   "tf_item_beef_jerky": {
     "textures": "textures/twilightforest/item/beef_jerky"
   },
+  "tf_item_berry_medley": {
+    "textures": "textures/twilightforest/item/berry_medley"
+  },
   "tf_item_chicken_jerky": {
     "textures": "textures/twilightforest/item/chicken_jerky"
   },
@@ -34,6 +37,9 @@
   },
   "tf_item_monster_jerky": {
     "textures": "textures/twilightforest/item/monster_jerky"
+  },
+  "tf_item_moss_soup": {
+    "textures": "textures/twilightforest/item/moss_soup"
   },
   "tf_item_music_disc_findings": {
     "textures": "textures/twilightforest/item/music_disc_findings"
@@ -88,9 +94,6 @@
   },
   "tf_item_venison_jerky": {
     "textures": "textures/twilightforest/item/venison_jerky"
-  },
-  "tf_vanilla_item_bowl": {
-    "textures": "textures/items/bowl"
   },
   "tf_vanilla_item_bread": {
     "textures": "textures/items/bread"

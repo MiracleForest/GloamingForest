@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_vanilla_item_bowl"
+          "default": "tf_item_berry_medley"
         }
       },
       "minecraft:display_name": {

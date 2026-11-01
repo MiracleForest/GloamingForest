@@ -155,3 +155,6 @@ tag.item.twilightforest.timewood_logs=Брёвна времени
 tag.item.twilightforest.towerwood=Блоки тёмной башни
 tag.item.twilightforest.twilight_oak_logs=Брёвна из сумеречного дуба
 tag.item.twilightforest.wip=Предметы в стадии разработки
+twilightforest:itemGroup.twilightforest.blocks=Twilight Forest: Блоки
+twilightforest:itemGroup.twilightforest.equipment=Twilight Forest: Экипировка
+twilightforest:itemGroup.twilightforest.items=Twilight Forest: Предметы

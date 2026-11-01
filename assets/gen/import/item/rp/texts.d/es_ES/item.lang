@@ -95,3 +95,6 @@ block.minecraft.banner.twilightforest.ur_ghast.yellow=Borde de Carminita Amarill
 itemGroup.twilightforest.blocks=Bosque crepuscular: Bloques
 itemGroup.twilightforest.equipment=Bosque crepuscular: Equipamiento
 itemGroup.twilightforest.items=Bosque crepuscular: Objetos
+twilightforest:itemGroup.twilightforest.blocks=Bosque crepuscular: Bloques
+twilightforest:itemGroup.twilightforest.equipment=Bosque crepuscular: Equipamiento
+twilightforest:itemGroup.twilightforest.items=Bosque crepuscular: Objetos

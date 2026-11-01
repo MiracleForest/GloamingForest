@@ -194,3 +194,6 @@ tag.item.twilightforest.transwood_logs=Verwandlungsholzstamm
 tag.item.twilightforest.twilight_oak_logs=Dämmerungseichenstamm
 tag.item.twilightforest.uncrafting_ignores_cost=Zerlegetisch ignoriert Kosten
 tag.item.twilightforest.wip=In Arbeit befindliche Gegenstände
+twilightforest:itemGroup.twilightforest.blocks=Dämmerwald: Blöcke
+twilightforest:itemGroup.twilightforest.equipment=Dämmerwald: Ausrüstung
+twilightforest:itemGroup.twilightforest.items=Dämmerwald: Items

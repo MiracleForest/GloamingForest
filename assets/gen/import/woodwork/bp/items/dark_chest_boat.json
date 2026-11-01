@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_vanilla_item_oak_chest_boat"
+          "default": "tf_item_dark_chest_boat"
         }
       },
       "minecraft:display_name": {

@@ -196,3 +196,6 @@ tag.item.twilightforest.transwood_logs=Troncos de transformação
 tag.item.twilightforest.twilight_oak_logs=Troncos de Carvalho Crepuscular
 tag.item.twilightforest.uncrafting_ignores_cost=A bancada de desfabricação ignora o custo
 tag.item.twilightforest.wip=Itens de Trabalho em Andamento
+twilightforest:itemGroup.twilightforest.blocks=Twilight Forest: Blocos
+twilightforest:itemGroup.twilightforest.equipment=Twilight Forest: Equipamento
+twilightforest:itemGroup.twilightforest.items=Twilight Forest: Itens

@@ -26,6 +26,9 @@
   "tf_item_canopy_boat": {
     "textures": "textures/twilightforest/item/canopy_boat"
   },
+  "tf_item_canopy_chest_boat": {
+    "textures": "textures/twilightforest/item/canopy_chest_boat"
+  },
   "tf_item_canopy_door": {
     "textures": "textures/twilightforest/item/canopy_door"
   },
@@ -37,6 +40,9 @@
   },
   "tf_item_dark_boat": {
     "textures": "textures/twilightforest/item/dark_boat"
+  },
+  "tf_item_dark_chest_boat": {
+    "textures": "textures/twilightforest/item/dark_chest_boat"
   },
   "tf_item_dark_door": {
     "textures": "textures/twilightforest/item/dark_door"
@@ -56,6 +62,9 @@
   "tf_item_mangrove_boat": {
     "textures": "textures/twilightforest/item/mangrove_boat"
   },
+  "tf_item_mangrove_chest_boat": {
+    "textures": "textures/twilightforest/item/mangrove_chest_boat"
+  },
   "tf_item_mangrove_door": {
     "textures": "textures/twilightforest/item/mangrove_door"
   },
@@ -68,6 +77,9 @@
   "tf_item_mining_boat": {
     "textures": "textures/twilightforest/item/mining_boat"
   },
+  "tf_item_mining_chest_boat": {
+    "textures": "textures/twilightforest/item/mining_chest_boat"
+  },
   "tf_item_mining_door": {
     "textures": "textures/twilightforest/item/mining_door"
   },
@@ -79,6 +91,9 @@
   },
   "tf_item_sorting_boat": {
     "textures": "textures/twilightforest/item/sorting_boat"
+  },
+  "tf_item_sorting_chest_boat": {
+    "textures": "textures/twilightforest/item/sorting_chest_boat"
   },
   "tf_item_sorting_door": {
     "textures": "textures/twilightforest/item/sorting_door"
@@ -98,6 +113,9 @@
   "tf_item_time_boat": {
     "textures": "textures/twilightforest/item/time_boat"
   },
+  "tf_item_time_chest_boat": {
+    "textures": "textures/twilightforest/item/time_chest_boat"
+  },
   "tf_item_time_door": {
     "textures": "textures/twilightforest/item/time_door"
   },
@@ -109,6 +127,9 @@
   },
   "tf_item_transformation_boat": {
     "textures": "textures/twilightforest/item/transformation_boat"
+  },
+  "tf_item_transformation_chest_boat": {
+    "textures": "textures/twilightforest/item/transformation_chest_boat"
   },
   "tf_item_transformation_door": {
     "textures": "textures/twilightforest/item/transformation_door"
@@ -124,6 +145,9 @@
   },
   "tf_item_twilight_oak_boat": {
     "textures": "textures/twilightforest/item/twilight_oak_boat"
+  },
+  "tf_item_twilight_oak_chest_boat": {
+    "textures": "textures/twilightforest/item/twilight_oak_chest_boat"
   },
   "tf_item_twilight_oak_door": {
     "textures": "textures/twilightforest/item/twilight_oak_door"
@@ -160,8 +184,5 @@
   },
   "tf_vanilla_block_warped_stem": {
     "textures": "textures/blocks/huge_fungus/warped_stem_side"
-  },
-  "tf_vanilla_item_oak_chest_boat": {
-    "textures": "textures/items/chest_boat_oak"
   }
 }

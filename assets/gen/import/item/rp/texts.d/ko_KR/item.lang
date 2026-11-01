@@ -196,3 +196,6 @@ tag.item.twilightforest.transwood_logs=변화나무 원목
 tag.item.twilightforest.twilight_oak_logs=황혼 참나무 원목
 tag.item.twilightforest.uncrafting_ignores_cost=역제작대 비용 무시
 tag.item.twilightforest.wip=작업 중인 아이템
+twilightforest:itemGroup.twilightforest.blocks=황혼의 숲: 블록
+twilightforest:itemGroup.twilightforest.equipment=황혼의 숲: 장비
+twilightforest:itemGroup.twilightforest.items=황혼의 숲: 아이템

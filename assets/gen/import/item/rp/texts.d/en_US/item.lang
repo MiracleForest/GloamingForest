@@ -200,3 +200,7 @@ tag.item.twilightforest.transwood_logs=Transformation Logs
 tag.item.twilightforest.twilight_oak_logs=Twilight Oak Logs
 tag.item.twilightforest.uncrafting_ignores_cost=Uncrafting Table Ignores Cost
 tag.item.twilightforest.wip=Work In Progress Items
+twilightforest:itemGroup.twilightforest.blocks=Twilight Forest: Blocks
+twilightforest:itemGroup.twilightforest.equipment=Twilight Forest: Equipment
+twilightforest:itemGroup.twilightforest.food=Twilight Forest: Food
+twilightforest:itemGroup.twilightforest.items=Twilight Forest: Items

@@ -200,3 +200,7 @@ tag.item.twilightforest.transwood_logs=Перетворні колоди
 tag.item.twilightforest.twilight_oak_logs=Сутінково-дубові колоди
 tag.item.twilightforest.uncrafting_ignores_cost=Стіл розбирання ігнорує вартість
 tag.item.twilightforest.wip=Предмети у розробці
+twilightforest:itemGroup.twilightforest.blocks=Сутінковий Ліс: Блоки
+twilightforest:itemGroup.twilightforest.equipment=Сутінковий Ліс: Спорядження
+twilightforest:itemGroup.twilightforest.food=Сутінковий Ліс: Їжа
+twilightforest:itemGroup.twilightforest.items=Сутінковий Ліс: Предмети

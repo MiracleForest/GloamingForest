@@ -85,8 +85,9 @@ namespace GfImport
                 string ent = "twilightforest:" + id.Substring(0, id.Length - "_spawn_egg".Length);
                 nameKeys.Add(Tuple.Create("item.spawn_egg.entity." + ent + ".name", "item.twilightforest." + id, OwnerOf("spawn_egg", full)));
             }
+            // creative group titles: the catalog shows the group name ("twilightforest:<title key>") through the texts
             foreach (var tab in Tabs)
-                if (tab.TitleKey != null) nameKeys.Add(Tuple.Create(tab.TitleKey, (string)null, OwnerOf("lang", tab.TitleKey) ?? ImportUnit));
+                if (tab.TitleKey != null) nameKeys.Add(Tuple.Create("twilightforest:" + tab.TitleKey, tab.TitleKey, OwnerOf("lang", tab.TitleKey) ?? ImportUnit));
 
             foreach (var loc in byLocale.Keys)
             {
