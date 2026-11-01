@@ -1,0 +1,76 @@
+{
+  "about": "Wet squish: low sine blorp with a falling pitch and a burst of muffled noise.",
+  "params": {
+    "pitch": 180,
+    "len": 0.25,
+    "wet": 0.6
+  },
+  "length": "$len",
+  "tail": 0.1,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch*2"
+          ],
+          [
+            "$len*0.3",
+            "$pitch"
+          ],
+          [
+            "$len",
+            "$pitch*0.6"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "env": {
+        "a": 0.003,
+        "d": "$len*0.6",
+        "s": 0.2,
+        "r": "$len*0.3"
+      },
+      "drive": 1.5
+    },
+    {
+      "type": "noise",
+      "color": "brown",
+      "amp": "$wet",
+      "env": {
+        "a": 0.003,
+        "d": "$len*0.5",
+        "s": 0.1,
+        "r": "$len*0.2"
+      },
+      "filter": [
+        {
+          "type": "lp",
+          "freq": {
+            "from": 2500,
+            "to": 400
+          },
+          "q": 2
+        }
+      ]
+    },
+    {
+      "type": "grains",
+      "density": 120,
+      "grain": [
+        0.004,
+        0.012
+      ],
+      "freq": [
+        300,
+        1200
+      ],
+      "wave": "sine",
+      "amp": 0.3,
+      "length": "$len*0.7"
+    }
+  ]
+}

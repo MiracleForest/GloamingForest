@@ -1,0 +1,124 @@
+{
+  "about": "Ghostly moan: soft triangle voice with slow vibrato and a gliding pitch, whispered noise, chorus and a big room.",
+  "params": {
+    "pitch": 220,
+    "len": 1.4,
+    "glide": -5,
+    "whisper": 0.25,
+    "room": 0.75,
+    "vowelA": 4,
+    "vowelB": 0
+  },
+  "length": "$len",
+  "tail": 0.9,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "triangle",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch"
+          ],
+          [
+            "$len",
+            "$pitch*semi($glide)"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "vibrato": {
+        "rate": 4.5,
+        "depth": 0.4
+      },
+      "env": {
+        "a": "$len*0.3",
+        "d": "$len*0.3",
+        "s": 0.8,
+        "r": "$len*0.4"
+      },
+      "formant": {
+        "vowel": {
+          "env": [
+            [
+              0,
+              "$vowelA"
+            ],
+            [
+              "$len",
+              "$vowelB"
+            ]
+          ]
+        },
+        "shift": 1.1,
+        "mix": 0.5
+      }
+    },
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch*1.5"
+          ],
+          [
+            "$len",
+            "$pitch*1.5*semi($glide)"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "amp": 0.3,
+      "vibrato": {
+        "rate": 5.2,
+        "depth": 0.5
+      },
+      "env": {
+        "a": "$len*0.4",
+        "d": "$len*0.3",
+        "s": 0.7,
+        "r": "$len*0.4"
+      }
+    },
+    {
+      "type": "noise",
+      "color": "white",
+      "amp": "$whisper",
+      "env": {
+        "a": "$len*0.2",
+        "d": "$len*0.5",
+        "s": 0.5,
+        "r": "$len*0.3"
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": {
+            "lfo": "smooth",
+            "rate": 3,
+            "depth": 1200,
+            "center": 3000
+          },
+          "q": 1.5
+        }
+      ]
+    }
+  ],
+  "fx": [
+    {
+      "type": "chorus",
+      "rate": 0.6,
+      "depth": 0.006,
+      "mix": 0.6
+    },
+    {
+      "type": "reverb",
+      "room": "$room",
+      "damp": 0.3,
+      "mix": 0.35
+    }
+  ]
+}

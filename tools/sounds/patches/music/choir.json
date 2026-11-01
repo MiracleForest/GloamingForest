@@ -1,0 +1,45 @@
+{
+  "about": "Soft 'ah' choir voice.",
+  "params": {
+    "freq": 330,
+    "dur": 2,
+    "vel": 1
+  },
+  "length": "$dur",
+  "tail": 1.5,
+  "normalize": -6,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "saw",
+      "freq": "$freq",
+      "unison": {
+        "voices": 3,
+        "detune": 14
+      },
+      "vibrato": {
+        "rate": 5,
+        "depth": 0.12,
+        "delay": 0.3
+      },
+      "env": {
+        "a": "min(0.6,$dur*0.4)",
+        "d": 0.5,
+        "s": 0.8,
+        "r": 1.0
+      },
+      "formant": {
+        "vowel": 0,
+        "shift": 1.0,
+        "mix": 0.9
+      }
+    }
+  ],
+  "fx": [
+    {
+      "type": "filter",
+      "filter": "lp",
+      "freq": 3500
+    }
+  ]
+}

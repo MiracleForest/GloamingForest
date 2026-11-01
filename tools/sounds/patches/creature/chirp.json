@@ -1,0 +1,85 @@
+{
+  "about": "Bird or rodent chirps: quick sine sweeps, repeated with random pitch.",
+  "params": {
+    "f0": 3000,
+    "f1": 4500,
+    "len": 0.08,
+    "count": 3,
+    "gap": 0.11,
+    "spread": 2
+  },
+  "length": "$len",
+  "tail": 0.05,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$f0*semi(rand(-$spread,$spread))"
+          ],
+          [
+            "$len*0.6",
+            "$f1*semi(rand(-$spread,$spread))"
+          ],
+          [
+            "$len",
+            "$f0*0.9"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "env": {
+        "a": 0.004,
+        "d": "$len*0.5",
+        "s": 0.5,
+        "r": "$len*0.3"
+      },
+      "repeat": {
+        "count": "$count",
+        "every": "$gap",
+        "jitter": "$gap*0.3",
+        "decay": 0.9
+      }
+    },
+    {
+      "type": "osc",
+      "wave": "sine",
+      "amp": 0.15,
+      "freq": {
+        "env": [
+          [
+            0,
+            "$f0*2"
+          ],
+          [
+            "$len",
+            "$f1*2"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "env": {
+        "a": 0.004,
+        "d": "$len*0.4",
+        "s": 0.3,
+        "r": "$len*0.3"
+      },
+      "repeat": {
+        "count": "$count",
+        "every": "$gap",
+        "jitter": "$gap*0.3",
+        "decay": 0.9
+      }
+    }
+  ],
+  "fx": [
+    {
+      "type": "reverb",
+      "room": 0.2,
+      "mix": 0.08
+    }
+  ]
+}

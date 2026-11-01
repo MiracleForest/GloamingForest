@@ -1,0 +1,391 @@
+{
+  "about": "Sounds of other owners that fauna's events play ({\"event\": id} variants), copied under sounds/twilightforest/fauna/alias/ as rendered from their recipes at fauna's last render, by tools/sounds/synth.ps1: do not edit. synth.ps1 -Check renders the copies from here and warns when an owner changed its event since: pwsh tools/sounds/synth.ps1 -Unit fauna refreshes them.",
+  "events": {
+    "entity.twilightforest.alpha_yeti.growl": {
+      "owner": "caves",
+      "variants": [
+        {
+          "copy": "alias/caves/mob/alpha_yeti/growl1",
+          "spec": {
+            "patch": "creature/growl",
+            "params": {
+              "len": 1,
+              "pitch": 66.85,
+              "size": 0.6
+            },
+            "seed": 649953475
+          }
+        },
+        {
+          "copy": "alias/caves/mob/alpha_yeti/growl2",
+          "spec": {
+            "patch": "creature/growl",
+            "params": {
+              "len": 1,
+              "pitch": 70,
+              "size": 0.6
+            },
+            "seed": 666731094
+          }
+        },
+        {
+          "copy": "alias/caves/mob/alpha_yeti/growl3",
+          "spec": {
+            "patch": "creature/growl",
+            "params": {
+              "len": 1,
+              "pitch": 73.15,
+              "size": 0.6
+            },
+            "seed": 683508713
+          }
+        }
+      ]
+    },
+    "entity.twilightforest.carminite_golem.hurt": {
+      "owner": "darktower",
+      "variants": [
+        {
+          "vanilla": "sounds/mob/irongolem/hit1"
+        },
+        {
+          "vanilla": "sounds/mob/irongolem/hit2"
+        },
+        {
+          "vanilla": "sounds/mob/irongolem/hit3"
+        },
+        {
+          "vanilla": "sounds/mob/irongolem/hit4"
+        }
+      ]
+    },
+    "entity.twilightforest.death_tome.ambient": {
+      "owner": "lich",
+      "variants": [
+        {
+          "copy": "alias/lich/mob/tome/idle1",
+          "spec": {
+            "patch": "object/rustle",
+            "params": {
+              "density": 180,
+              "f0": 2000,
+              "f1": 8000,
+              "len": 0.573
+            },
+            "seed": 3984727379
+          }
+        },
+        {
+          "copy": "alias/lich/mob/tome/idle2",
+          "spec": {
+            "patch": "object/rustle",
+            "params": {
+              "density": 180,
+              "f0": 2000,
+              "f1": 8000,
+              "len": 0.6
+            },
+            "seed": 4001504998
+          }
+        }
+      ]
+    },
+    "entity.twilightforest.hostile_wolf.ambient": {
+      "owner": "hostiles",
+      "variants": [
+        {
+          "copy": "alias/hostiles/mob/mist_wolf/idle1",
+          "spec": {
+            "patch": "creature/growl",
+            "params": {
+              "len": 0.8,
+              "pitch": 114.6,
+              "rasp": 0.3,
+              "size": 0.9
+            },
+            "seed": 3222998934
+          }
+        },
+        {
+          "copy": "alias/hostiles/mob/mist_wolf/idle2",
+          "spec": {
+            "patch": "creature/growl",
+            "params": {
+              "len": 0.8,
+              "pitch": 120,
+              "rasp": 0.3,
+              "size": 0.9
+            },
+            "seed": 3206221315
+          }
+        },
+        {
+          "copy": "alias/hostiles/mob/mist_wolf/idle3",
+          "spec": {
+            "patch": "creature/growl",
+            "params": {
+              "len": 0.8,
+              "pitch": 125.4,
+              "rasp": 0.3,
+              "size": 0.9
+            },
+            "seed": 3189443696
+          }
+        }
+      ]
+    },
+    "entity.twilightforest.hydra.growl": {
+      "owner": "hydra",
+      "variants": [
+        {
+          "copy": "alias/hydra/mob/hydra/growl1",
+          "spec": {
+            "patch": "creature/growl",
+            "params": {
+              "len": 1.4,
+              "pitch": 52.52,
+              "size": 0.55
+            },
+            "seed": 1166072427
+          }
+        },
+        {
+          "copy": "alias/hydra/mob/hydra/growl2",
+          "spec": {
+            "patch": "creature/growl",
+            "params": {
+              "len": 1.4,
+              "pitch": 55,
+              "size": 0.55
+            },
+            "seed": 1182850046
+          }
+        },
+        {
+          "copy": "alias/hydra/mob/hydra/growl3",
+          "spec": {
+            "patch": "creature/growl",
+            "params": {
+              "len": 1.4,
+              "pitch": 57.47,
+              "size": 0.55
+            },
+            "seed": 1199627665
+          }
+        }
+      ]
+    },
+    "entity.twilightforest.ice.ambient": {
+      "owner": "aurora",
+      "variants": [
+        {
+          "copy": "alias/aurora/mob/ice/crackle1",
+          "spec": {
+            "patch": "ambient/crackle",
+            "params": {
+              "density": 28,
+              "len": 0.764
+            },
+            "seed": 1646180918
+          }
+        },
+        {
+          "copy": "alias/aurora/mob/ice/crackle2",
+          "spec": {
+            "patch": "ambient/crackle",
+            "params": {
+              "density": 28,
+              "len": 0.8
+            },
+            "seed": 1629403299
+          }
+        }
+      ]
+    },
+    "entity.twilightforest.minotaur.ambient": {
+      "owner": "labyrinth",
+      "variants": [
+        {
+          "vanilla": "sounds/mob/cow/say1"
+        },
+        {
+          "vanilla": "sounds/mob/cow/say2"
+        },
+        {
+          "vanilla": "sounds/mob/cow/say3"
+        },
+        {
+          "vanilla": "sounds/mob/cow/say4"
+        }
+      ]
+    },
+    "entity.twilightforest.naga.hiss": {
+      "owner": "naga",
+      "variants": [
+        {
+          "copy": "alias/naga/mob/naga/hiss1",
+          "spec": {
+            "patch": "creature/hiss",
+            "params": {
+              "bright": 0.955,
+              "len": 0.764
+            },
+            "seed": 2376495360
+          }
+        },
+        {
+          "copy": "alias/naga/mob/naga/hiss2",
+          "spec": {
+            "patch": "creature/hiss",
+            "params": {
+              "bright": 1,
+              "len": 0.8
+            },
+            "seed": 2426828217
+          }
+        },
+        {
+          "copy": "alias/naga/mob/naga/hiss3",
+          "spec": {
+            "patch": "creature/hiss",
+            "params": {
+              "bright": 1.045,
+              "len": 0.836
+            },
+            "seed": 2410050598
+          }
+        }
+      ]
+    },
+    "entity.twilightforest.redcap.ambient": {
+      "owner": "hostiles",
+      "variants": [
+        {
+          "copy": "alias/hostiles/mob/redcap/redcap1",
+          "spec": {
+            "patch": "creature/chatter",
+            "params": {
+              "count": 4,
+              "pitch": 229.2,
+              "size": 1.3
+            },
+            "seed": 1205848400
+          }
+        },
+        {
+          "copy": "alias/hostiles/mob/redcap/redcap2",
+          "spec": {
+            "patch": "creature/chatter",
+            "params": {
+              "count": 5,
+              "pitch": 240,
+              "size": 1.3
+            },
+            "seed": 1256181257
+          }
+        },
+        {
+          "copy": "alias/hostiles/mob/redcap/redcap3",
+          "spec": {
+            "patch": "creature/chatter",
+            "params": {
+              "count": 3,
+              "pitch": 250.8,
+              "size": 1.3
+            },
+            "seed": 1239403638
+          }
+        },
+        {
+          "copy": "alias/hostiles/mob/redcap/redcap4",
+          "spec": {
+            "patch": "creature/chatter",
+            "params": {
+              "count": 4,
+              "pitch": 261.6,
+              "size": 1.3
+            },
+            "seed": 1289736495
+          }
+        },
+        {
+          "copy": "alias/hostiles/mob/redcap/redcap5",
+          "spec": {
+            "patch": "creature/chatter",
+            "params": {
+              "count": 5,
+              "pitch": 272.4,
+              "size": 1.3
+            },
+            "seed": 1272958876
+          }
+        },
+        {
+          "copy": "alias/hostiles/mob/redcap/redcap6",
+          "spec": {
+            "patch": "creature/chatter",
+            "params": {
+              "count": 3,
+              "pitch": 283.2,
+              "size": 1.3
+            },
+            "seed": 1323291733
+          }
+        }
+      ]
+    },
+    "entity.twilightforest.wraith.ambient": {
+      "owner": "hostiles",
+      "variants": [
+        {
+          "copy": "alias/hostiles/mob/wraith/wraith1",
+          "spec": {
+            "patch": "creature/ghost",
+            "params": {
+              "glide": -5,
+              "len": 1.5,
+              "pitch": 191
+            },
+            "seed": 2473292404
+          }
+        },
+        {
+          "copy": "alias/hostiles/mob/wraith/wraith2",
+          "spec": {
+            "patch": "creature/ghost",
+            "params": {
+              "glide": -6,
+              "len": 1.5,
+              "pitch": 200
+            },
+            "seed": 2523625261
+          }
+        },
+        {
+          "copy": "alias/hostiles/mob/wraith/wraith3",
+          "spec": {
+            "patch": "creature/ghost",
+            "params": {
+              "glide": -7,
+              "len": 1.5,
+              "pitch": 209
+            },
+            "seed": 2506847642
+          }
+        },
+        {
+          "copy": "alias/hostiles/mob/wraith/wraith4",
+          "spec": {
+            "patch": "creature/ghost",
+            "params": {
+              "glide": -8,
+              "len": 1.5,
+              "pitch": 218
+            },
+            "seed": 2422959547
+          }
+        }
+      ]
+    }
+  }
+}
