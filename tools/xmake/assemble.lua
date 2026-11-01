@@ -782,7 +782,7 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
     local jsons = {}
     -- Hand-made files derived from TF's CC BY-NC-SA assets live under a "tf-derived/" directory
     -- next to a SOURCES.json naming their TF source files (AGENTS.md, assets/LICENSE). They stay
-    -- CC BY-NC-SA 4.0: the pack lists them in tf-derived-sources.json beside LICENSE-ASSETS.txt.
+    -- CC BY-NC-SA 4.0: the pack lists them in tf-derived-sources.txt beside LICENSE-ASSETS.txt.
     local derived = {}
     for _, r in ipairs(table.keys(files)) do
         local file = files[r]
@@ -840,7 +840,14 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
             if os.isfile(src) then os.cp(src, path.join(dst, l.to)) else fail("licence file %s is missing", l.from) end
         end
     end
-    if not table.empty(derived) then save_json(path.join(dst, "tf-derived-sources.json"), derived) end
+    if not table.empty(derived) then
+        -- plain text: the game would try to read a JSON file at the pack root
+        local lines = {"# TF-derived files of this pack (CC BY-NC-SA 4.0, see LICENSE-ASSETS.txt): <file> <- <TF source files>"}
+        local rels = table.keys(derived)
+        table.sort(rels)
+        for _, r in ipairs(rels) do table.insert(lines, r .. " <- " .. table.concat(derived[r], ", ")) end
+        io.writefile(path.join(dst, "tf-derived-sources.txt"), table.concat(lines, "\n") .. "\n")
+    end
     return dst, jsons
 end
 
@@ -961,10 +968,17 @@ local function known_ids(bpdirs, outdir, owners)
     local known = {["*"] = {}, tag = {}}
     for _, bpdir in ipairs(bpdirs) do
         for _, file in ipairs(os.files(path.join(bpdir, "**.json"))) do
-            local typed = bp_identifier(file)
-            if typed then
-                local key, id = typed:match("^([^|]+)|(.+)$")
-                for _, kind in ipairs(BP_KINDS[key] or {}) do add_known(known, kind, id) end
+            -- every BP definition ({"minecraft:<type>": {"description": {"identifier": id}}}): blocks,
+            -- items and entities by kind, the rest (features, feature rules, ...) as "bp:<type>"
+            local doc = try_json(file)
+            if type(doc) == "table" then
+                for key, def in pairs(doc) do
+                    local id = type(key) == "string" and key:match("^minecraft:") and type(def) == "table" and type(def.description) == "table"
+                        and def.description.identifier or nil
+                    if type(id) == "string" then
+                        for _, kind in ipairs(BP_KINDS[key] or {"bp:" .. key:sub(11)}) do add_known(known, kind, id) end
+                    end
+                end
             end
         end
     end

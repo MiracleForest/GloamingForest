@@ -13,7 +13,7 @@ licence reproduced below (ShareAlike: a derivative stays under this licence). Th
   - the textures, geometry, atlases and texts of the released resource packs built from them.
 They are converted to Minecraft: Bedrock Edition formats; see NOTICE for the attribution. Each
 released pack carries this file (LICENSE-ASSETS.txt), NOTICE (NOTICE.txt) and, when it contains
-TF-derived hand-made files, tf-derived-sources.json listing them with their TF sources.
+TF-derived hand-made files, tf-derived-sources.txt listing them with their TF sources.
 
 Not covered by this licence:
   - GloamingForest's own original assets (assets/pack/** outside tf-derived/ directories,
