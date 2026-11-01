@@ -193,6 +193,11 @@ int& maxJigsawDepth() {
     return depth;
 }
 
+std::optional<std::int64_t>& jigsawSeedOverride() {
+    thread_local std::optional<std::int64_t> seed;
+    return seed;
+}
+
 } // namespace detail
 
 // ---- settings ----------------------------------------------------------------------------------------------
@@ -510,7 +515,8 @@ JigsawPiece::JigsawPiece(std::string typeId, int depth, std::string templateId, 
 
 void JigsawPiece::addJigsaws(JigsawPiece& parent, PieceList& pieces, RandomSource& random) {
     std::int64_t posLong = pure::blockPosAsLong(templatePosition.x, templatePosition.y, templatePosition.z);
-    auto         mixed   = static_cast<std::uint64_t>(worldgen::seed()) * static_cast<std::uint64_t>(posLong);
+    auto         worldSeed = detail::jigsawSeedOverride() ? *detail::jigsawSeedOverride() : worldgen::seed();
+    auto         mixed     = static_cast<std::uint64_t>(worldSeed) * static_cast<std::uint64_t>(posLong);
     random.setSeed(random.nextLong() ^ static_cast<std::int64_t>(mixed));
     addChildren(parent, pieces, random);
     auto jigsaws = spareJigsaws;
@@ -593,7 +599,8 @@ void JigsawPiece::load(Json const& data) {
     if (data.contains("marker_handlers")) markerHandlers = data["marker_handlers"].get<std::string>();
     beardifierGroundDelta = data.value("ground_offset", 0);
     poolAliases.clear();
-    for (auto const& [k, v] : data.value("pool_aliases", Json::object()).items()) poolAliases[k] = v.get<std::string>();
+    Json aliases = data.value("pool_aliases", Json::object());
+    for (auto const& [k, v] : aliases.items()) poolAliases[k] = v.get<std::string>();
 }
 
 } // namespace gf::structure::bases

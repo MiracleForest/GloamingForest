@@ -35,6 +35,8 @@ void                       setFrontAndTop(JigsawRecord& r, int ordinal);
                                                                       RandomSource& random, int genDepth);
 /// The deepest genDepth jigsaw::assemble lets processJigsaw reach (thread-local, default unlimited).
 [[nodiscard]] int& maxJigsawDepth();
+/// A world seed for TwilightJigsawPiece#addJigsaws in place of worldgen::seed() (thread-local; tests).
+[[nodiscard]] std::optional<std::int64_t>& jigsawSeedOverride();
 
 [[nodiscard]] TerrainAdjustment parseTerrainAdjustment(std::string const& name);
 [[nodiscard]] char const*       terrainAdjustmentName(TerrainAdjustment t);

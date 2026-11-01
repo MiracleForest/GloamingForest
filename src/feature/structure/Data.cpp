@@ -79,7 +79,8 @@ constexpr char kFallbackSpeleothemSettings[] = R"({
 
 std::map<std::string, Json> fallback(char const* text) {
     std::map<std::string, Json> out;
-    for (auto const& [k, v] : Json::parse(text).items()) out[k] = v;
+    Json doc = Json::parse(text); // items() must not outlive the document
+    for (auto const& [k, v] : doc.items()) out[k] = v;
     return out;
 }
 

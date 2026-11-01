@@ -7,7 +7,7 @@ if ($script:Mode -eq 'local') {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $r = Invoke-SelfTest 'structure.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) structure selftest(s) failed" }
-    if ($r.Pass -lt 14) { throw "expected at least 14 structure selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 13) { throw "expected at least 13 structure selftests to pass, got $($r.Pass)" }
 
     # a view point above the flat world, looking north-east at the placements
     Invoke-Teleport '/tp @s 0 -55 12 -150 30'

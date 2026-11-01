@@ -49,6 +49,9 @@ struct Store {
     std::map<std::string, std::unique_ptr<Template>>     raw;
     std::map<std::string, std::unique_ptr<Parsed>>       parsedById;
     std::set<std::string>                                invalid;
+    /// replaced parsed templates stay alive: generation threads may still be placing them
+    std::vector<std::unique_ptr<Parsed>>                 retired;
+    std::vector<std::unique_ptr<Template>>               retiredRaw;
     bool                                                 scanned = false;
 };
 Store& store() {
@@ -249,7 +252,11 @@ bool add(Json const& doc, std::string* error) {
     auto& s = store();
     std::unique_lock lock(s.mutex);
     auto             id = t->id;
-    s.parsedById.erase(id);
+    if (auto it = s.parsedById.find(id); it != s.parsedById.end()) {
+        s.retired.push_back(std::move(it->second));
+        s.parsedById.erase(it);
+    }
+    if (auto it = s.raw.find(id); it != s.raw.end()) s.retiredRaw.push_back(std::move(it->second));
     s.invalid.erase(id);
     s.files.erase(id);
     s.raw[id] = std::move(t);
@@ -322,7 +329,10 @@ void scan() {
     std::map<std::string, std::unique_ptr<Template>> keep;
     for (auto& [id, t] : s.raw)
         if (!s.files.contains(id)) keep[id] = std::move(t);
+    for (auto& [id, t] : s.raw)
+        if (t) s.retiredRaw.push_back(std::move(t));
     s.raw = std::move(keep);
+    for (auto& [id, p] : s.parsedById) s.retired.push_back(std::move(p));
     s.parsedById.clear();
     s.invalid.clear();
     scanLocked(s);

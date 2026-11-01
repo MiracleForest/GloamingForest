@@ -165,14 +165,12 @@ bool handle(Json const& handler, std::string const& label, BlockPos const& pos, 
             parts.size() == 1 ? Rotation::Clockwise180
                               : relativeRotation(Orientation::North, blocks::parseDirection(parts[1]).value_or(Orientation::South));
         auto const& rotated = handler["rotated"];
-        Json const* inner   = &rotated;
-        Json        resolved;
         if (rotated.is_string()) {
             // a registry reference to a template_marker_handler; not shipped by TF
             warnOnce("marker-ref:" + rotated.get<std::string>(), "structure: unknown template marker handler " + rotated.get<std::string>());
             return false;
         }
-        return handle(*inner, parts[0], pos, region, random, chunkBounds, addRotation(rotation, dataRotation));
+        return handle(rotated, parts[0], pos, region, random, chunkBounds, addRotation(rotation, dataRotation));
     }
     if (type == "twilightforest:handler_switch") {
         std::string g      = handler.value("group_character_delimiter", std::string("|"));

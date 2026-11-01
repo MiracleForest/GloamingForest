@@ -96,7 +96,7 @@ public:
     }
     [[nodiscard]] int nextInt() override { return next(32); }
     [[nodiscard]] int nextInt(int bound) override {
-        if (bound <= 0) return 0;
+        if (bound <= 0) return 0; // Java throws IllegalArgumentException; callers translate TF code that never passes it
         if ((bound & (bound - 1)) == 0) return static_cast<int>((static_cast<std::int64_t>(bound) * static_cast<std::int64_t>(next(31))) >> 31);
         int bits = 0, val = 0;
         do {

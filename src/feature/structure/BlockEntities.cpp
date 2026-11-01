@@ -306,9 +306,15 @@ void flush() {
             continue;
         }
         int tries = job.action.value("tries", 0);
-        if (!run(*source, job.pos, job.action) && tries < 20) {
-            job.action["tries"] = tries + 1;
-            keep.push_back(std::move(job));
+        if (!run(*source, job.pos, job.action)) {
+            if (tries < 20) {
+                job.action["tries"] = tries + 1;
+                keep.push_back(std::move(job));
+            } else {
+                warnOnce("job-dropped:" + job.action.value("kind", std::string{}),
+                         "structure: gave up a queued " + job.action.value("kind", std::string{}) + " at " + std::to_string(job.pos.x) + " " +
+                             std::to_string(job.pos.y) + " " + std::to_string(job.pos.z));
+            }
         }
     }
     std::lock_guard lock(gJobsMutex);

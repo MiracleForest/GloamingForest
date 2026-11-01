@@ -134,7 +134,8 @@ public:
                     markerHandlers = id;
                 }
             }
-            for (auto const& [k, v] : instance.value("pool_aliases", Json::object()).items()) poolAliases[k] = v.get<std::string>();
+            Json aliases = instance.value("pool_aliases", Json::object());
+            for (auto const& [k, v] : aliases.items()) poolAliases[k] = v.get<std::string>();
         }
         if (processors) placeSettings.processors.push_back(*processors);
         for (auto& c : chosen) placeSettings.processors.push_back(std::move(c));
