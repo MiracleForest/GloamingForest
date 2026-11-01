@@ -33,6 +33,7 @@ namespace GfImport
             // shared decisions (texture owners, atlas keys, geometry owners) never depend on the selection.
             ctx.ComputeItemTags();
             ctx.PrepareBlocks();
+            ctx.ComputeHarvest();         // tools, tier and drop rule of every block (TF's tool tags)
             ctx.CheckJavaStates();        // against the hand-written golden (tools/import/expected-states.json)
             ctx.ImportBlocks();           // blockstates + models (records texture uses)
             ctx.ImportItems();            // skeleton items (records icon uses)
@@ -50,6 +51,7 @@ namespace GfImport
             ctx.CheckEmittedBlocks();     // states and variant rotations of the final BP block files
             ctx.CheckBehaviour();         // their behaviour values against tools/import/expected-behaviour.json
             ctx.ImportSkeletonIndex();    // the id list the import.* selftests check
+            ctx.ImportHarvestIndex();     // the drop rule the runtime applies, tools and tiers for the selftests
             ctx.ImportKnownIndex();       // after every data file is final
             if (unit == null && sel.Contains("blockstates")) ctx.Docs["docs/spec/blockstates.md"] = ctx.BlockstatesDoc();
 

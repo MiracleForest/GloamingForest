@@ -18,7 +18,10 @@ namespace GfImport
         // BlockBehaviour.Properties.of(): destroyTime 0, explosionResistance 0, SoundType.STONE (Minecraft 1.21.1)
         public double Hardness = 0, Resistance = 0;
         public int Light = 0;
-        public bool DynamicLight, NoCollision, NoOcclusion, Instabreak, Unbreakable, Flammable, Replaceable;
+        public bool DynamicLight, NoCollision, NoOcclusion, Unbreakable, Flammable, Replaceable;
+        public bool RequiresTool;      // requiresCorrectToolForDrops(): only a correct tool (TF's / vanilla's tool tags) drops it
+        /// <summary>instabreak() = strength(0): from the final values, whatever call set them.</summary>
+        public bool Instabreak { get { return Hardness == 0 && Resistance == 0; } }
         public string Sound = "STONE", MapColor;
         public string MapColorSide;    // logProperties(top, side): the colour of a lying log (axis x / z)
         public string MapColorProp, MapColorIf;   // mapColor(state -> state.getValue(P) ? IF : MapColor): P's constant, IF (null: NONE)
@@ -34,6 +37,9 @@ namespace GfImport
         public string Id, Const, Cls, Stmt;
         public int StackSize = 64, Durability = 0;
         public List<string> Chain = new List<string>();
+        public string ToolKind;            // pickaxe | axe | shovel | hoe | sword (the vanilla tool class reached), or null
+        public Java.TierInfo Tier;         // the tool tier (TFToolMaterials / Tiers), or null
+        public string TierName;            // "TFToolMaterials.IRONWOOD"
         public bool FireResistant;
         public string Rarity;
         public bool Food;
@@ -94,10 +100,10 @@ namespace GfImport
             }
             // methods returning BlockBehaviour.Properties anywhere in TF: the import reads logProperties (map colour)
             // and copyAndScaleProperties (a copy with scaled destroyTime / explosionResistance); a block whose
-            // properties come from any other one is a warning
+            // properties come from any other one is a warning (one pass over the class-file index's texts)
             var propHelpers = new SortedSet<string>(StringComparer.Ordinal);
-            foreach (var jf in Directory.GetFiles(ctx.JavaDir, "*.java", SearchOption.AllDirectories).OrderBy(x => x, StringComparer.Ordinal))
-                foreach (Match m in Regex.Matches(Ctx.ReadText(jf), @"\bstatic\s+(?:final\s+)?BlockBehaviour\.Properties\s+(\w+)\s*\("))
+            foreach (var jf in AllClassFiles(ctx))
+                foreach (Match m in Regex.Matches(SourceText(jf), @"\bstatic\s+(?:final\s+)?BlockBehaviour\.Properties\s+(\w+)\s*\("))
                     if (!KnownPropHelpers.Contains(m.Groups[1].Value)) propHelpers.Add(m.Groups[1].Value);
             var byConst = new Dictionary<string, JBlock>();
             var res = new Dictionary<string, JBlock>(StringComparer.Ordinal);
@@ -136,36 +142,41 @@ namespace GfImport
                 byConst[b.Const] = b;
             }
             // property copies: ofFullCopy(OTHER.get()) / ofFullCopy(OTHER) / Blocks.X, and copyAndScaleProperties(X, k)
-            // (TFBlocks: ofFullCopy(X), then destroyTime and explosionResistance x k); a copied block is resolved before
-            // the blocks that copy it (chains: A copies B copies C), then the calls chained after the copy apply
+            // (TFBlocks: ofFullCopy(X), then destroyTime and explosionResistance x k), then the calls chained after the
+            // copy; then the calls a TF block class chains onto the properties in its constructor (SpecialMagicLogBlock:
+            // super(properties.strength(2.0F).sound(SoundType.WOOD)...)), the leaf class first. A block is resolved
+            // completely (its own copy and its class's calls) before a block copies it: Java's ofFullCopy reads the
+            // Properties the source block's constructor has already changed (chains: A copies B copies C)
             var resolved = new HashSet<JBlock>();
+            var chains = new Dictionary<string, string>(StringComparer.Ordinal);
             Action<JBlock> resolve = null;
             resolve = b =>
             {
-                if (b.CopyOf == null || !resolved.Add(b)) return;
-                JBlock src;
-                var cm = CopyCall.Match(b.PropText);
-                string after = cm.Success ? b.PropText.Substring(cm.Index + cm.Length) : "";
-                if (byConst.TryGetValue(b.CopyOf, out src) && src != b)
+                if (!resolved.Add(b)) return;
+                if (b.CopyOf != null)
                 {
-                    resolve(src);
-                    b.Hardness = src.Hardness; b.Resistance = src.Resistance; b.Sound = src.Sound; b.MapColor = src.MapColor;
-                    b.MapColorSide = src.MapColorSide; b.MapColorProp = src.MapColorProp; b.MapColorIf = src.MapColorIf;
-                    b.Light = src.Light; b.Flammable = src.Flammable; b.Unbreakable = src.Unbreakable; b.Instabreak = src.Instabreak;
-                    b.LightExpr = src.LightExpr; b.DynamicLight = src.DynamicLight; b.Friction = src.Friction;
-                    b.NoCollision = src.NoCollision; b.NoOcclusion = src.NoOcclusion; b.Replaceable = src.Replaceable;
+                    JBlock src;
+                    var cm = CopyCall.Match(b.PropText);
+                    string after = cm.Success ? b.PropText.Substring(cm.Index + cm.Length) : "";
+                    bool copied = true;
+                    if (byConst.TryGetValue(b.CopyOf, out src) && src != b)
+                    {
+                        resolve(src);
+                        b.Hardness = src.Hardness; b.Resistance = src.Resistance; b.Sound = src.Sound; b.MapColor = src.MapColor;
+                        b.MapColorSide = src.MapColorSide; b.MapColorProp = src.MapColorProp; b.MapColorIf = src.MapColorIf;
+                        b.Light = src.Light; b.Flammable = src.Flammable; b.Unbreakable = src.Unbreakable; b.RequiresTool = src.RequiresTool;
+                        b.LightExpr = src.LightExpr; b.DynamicLight = src.DynamicLight; b.Friction = src.Friction;
+                        b.NoCollision = src.NoCollision; b.NoOcclusion = src.NoOcclusion; b.Replaceable = src.Replaceable;
+                    }
+                    else if (b.CopyOf.StartsWith("Blocks.", StringComparison.Ordinal)) VanillaProps(b, b.CopyOf.Substring(7));
+                    else { unknownCopies.Add(b.Id + ": " + b.CopyOf); copied = false; }
+                    if (copied)
+                    {
+                        b.Hardness *= b.CopyScale;
+                        b.Resistance *= b.CopyScale;
+                        ParseProps(b, after, false); // explicit settings after the copy win
+                    }
                 }
-                else if (b.CopyOf.StartsWith("Blocks.", StringComparison.Ordinal)) VanillaProps(b, b.CopyOf.Substring(7));
-                else { unknownCopies.Add(b.Id + ": " + b.CopyOf); return; }
-                b.Hardness *= b.CopyScale;
-                b.Resistance *= b.CopyScale;
-                ParseProps(b, after, false); // explicit settings after the copy win
-            };
-            foreach (var b in res.Values) resolve(b);
-            // calls a TF block class chains onto the properties in its constructor (SpecialMagicLogBlock:
-            // super(properties.strength(2.0F).sound(SoundType.WOOD)...)) apply after the registration's, the leaf class first
-            var chains = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (var b in res.Values)
                 foreach (var cls in ClassChain(ctx, b.Cls, chains))
                 {
                     string ct = ClassText(ctx, cls);
@@ -173,6 +184,8 @@ namespace GfImport
                     foreach (Match sm in Regex.Matches(ct, @"\bsuper\(\s*\w+((?:\s*\.\s*\w+\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\))+)\s*\)\s*;"))
                         ParseProps(b, sm.Groups[1].Value, false);
                 }
+            };
+            foreach (var b in res.Values) resolve(b);
             // flammability: only the blocks TF registers with FireBlock.setFlammable(block, encouragement,
             // flammability) in events/RegistrationEvents.java burn (ignitedByLava alone does not make a block
             // burn in Java)
@@ -240,12 +253,12 @@ namespace GfImport
             b.Hardness = 0; b.Resistance = 0; b.Sound = "STONE"; b.MapColor = null; b.Friction = -1; b.Light = 0;
             b.MapColorSide = null; b.MapColorProp = null; b.MapColorIf = null;
             b.LightExpr = null; b.DynamicLight = false;
-            b.NoCollision = false; b.NoOcclusion = false; b.Instabreak = false; b.Unbreakable = false;
+            b.NoCollision = false; b.NoOcclusion = false; b.Unbreakable = false; b.RequiresTool = false;
             string wood = WoodColors.Keys.Where(k => v.StartsWith(k + "_", StringComparison.Ordinal) || v.StartsWith("STRIPPED_" + k + "_", StringComparison.Ordinal))
                 .OrderByDescending(k => k.Length).FirstOrDefault();
             bool nether = wood == "CRIMSON" || wood == "WARPED";
-            if (v == "SPAWNER") { b.Hardness = 5; b.Resistance = 5; b.Sound = "METAL"; b.MapColor = "STONE"; b.NoOcclusion = true; }
-            else if (v == "FLOWER_POT") { b.Instabreak = true; b.NoOcclusion = true; }
+            if (v == "SPAWNER") { b.Hardness = 5; b.Resistance = 5; b.Sound = "METAL"; b.MapColor = "STONE"; b.NoOcclusion = true; b.RequiresTool = true; }
+            else if (v == "FLOWER_POT") { b.NoOcclusion = true; }   // instabreak(): strength 0
             else if (v.EndsWith("_HEAD") || v.EndsWith("_SKULL")) { b.Hardness = 1; b.Resistance = 1; }
             else if (v.EndsWith("_CARPET") && v != "MOSS_CARPET") { b.Hardness = 0.1; b.Resistance = 0.1; b.Sound = "WOOL"; b.MapColor = DyeMapColor(v.Substring(0, v.Length - 7)); }
             else if (wood != null && (v == wood + "_PLANKS" || v == wood + "_SLAB"))
@@ -268,14 +281,14 @@ namespace GfImport
             else if (v == "BOOKSHELF") { b.Hardness = 1.5; b.Resistance = 1.5; b.Sound = "WOOD"; b.MapColor = "WOOD"; }
             else if (v == "LADDER") { b.Hardness = 0.4; b.Resistance = 0.4; b.Sound = "LADDER"; b.NoOcclusion = true; }
             else if (v == "VINE") { b.Hardness = 0.2; b.Resistance = 0.2; b.Sound = "VINE"; b.NoCollision = true; b.MapColor = "PLANT"; }
-            else if (v == "COBBLESTONE" || v == "STONE_BRICKS") { b.Hardness = 2; b.Resistance = 6; b.MapColor = "STONE"; }
-            else if (v == "STONE") { b.Hardness = 1.5; b.Resistance = 6; b.MapColor = "STONE"; }
-            else if (v == "OBSIDIAN") { b.Hardness = 50; b.Resistance = 1200; b.MapColor = "COLOR_BLACK"; }
+            else if (v == "COBBLESTONE" || v == "STONE_BRICKS") { b.Hardness = 2; b.Resistance = 6; b.MapColor = "STONE"; b.RequiresTool = true; }
+            else if (v == "STONE") { b.Hardness = 1.5; b.Resistance = 6; b.MapColor = "STONE"; b.RequiresTool = true; }
+            else if (v == "OBSIDIAN") { b.Hardness = 50; b.Resistance = 1200; b.MapColor = "COLOR_BLACK"; b.RequiresTool = true; }
             else if (v == "GLASS") { b.Hardness = 0.3; b.Resistance = 0.3; b.Sound = "GLASS"; b.NoOcclusion = true; }
             else if (v == "SLIME_BLOCK") { b.Friction = 0.8; b.Sound = "SLIME_BLOCK"; b.NoOcclusion = true; b.MapColor = "GRASS"; }
             else if (v == "OAK_LEAVES" || v == "SPRUCE_LEAVES" || v == "BIRCH_LEAVES" || v == "JUNGLE_LEAVES" || v == "ACACIA_LEAVES" || v == "DARK_OAK_LEAVES" || v == "MANGROVE_LEAVES")
             { b.Hardness = 0.2; b.Resistance = 0.2; b.Sound = "GRASS"; b.NoOcclusion = true; b.MapColor = "PLANT"; }
-            else if (v == "TORCH" || v == "WALL_TORCH") { b.Instabreak = true; b.Light = 14; b.Sound = "WOOD"; b.NoCollision = true; }
+            else if (v == "TORCH" || v == "WALL_TORCH") { b.Light = 14; b.Sound = "WOOD"; b.NoCollision = true; }   // instabreak()
             else if (v == "MOSS_CARPET") { b.Hardness = 0.1; b.Resistance = 0.1; b.Sound = "MOSS_CARPET"; b.MapColor = "COLOR_GREEN"; }
             else if (v == "AIR") { b.NoCollision = true; }
             else unknownVanilla.Add(v);
@@ -322,7 +335,7 @@ namespace GfImport
             // products of literals ("0.2F * 64.0F")
             foreach (Match sm in Regex.Matches(s, @"\.(strength|destroyTime|explosionResistance)\(([^()]*(?:\([^()]*\))?[^()]*)\)|\.instabreak\(\)"))
             {
-                if (!sm.Groups[1].Success) { b.Hardness = 0; b.Resistance = 0; b.Instabreak = true; continue; }
+                if (!sm.Groups[1].Success) { b.Hardness = 0; b.Resistance = 0; continue; }
                 var args = sm.Groups[2].Value.Split(',');
                 var vals = new List<double>();
                 foreach (var a in args) { double x; if (TryFloat(a, out x)) vals.Add(x); }
@@ -355,14 +368,31 @@ namespace GfImport
             if (s.Contains(".noOcclusion()")) b.NoOcclusion = true;
             if (s.Contains(".ignitedByLava()")) b.Flammable = true;
             if (s.Contains(".replaceable()")) b.Replaceable = true;
+            if (Regex.IsMatch(s, @"\.requiresCorrectToolForDrops\(\s*\)")) b.RequiresTool = true;
             m = Regex.Match(s, @"\.friction\(\s*([\d.]+F?)\s*\)");
             if (m.Success) b.Friction = F(m.Groups[1].Value);
         }
 
-        // Minecraft 1.21.1 Tiers: uses
-        static readonly Dictionary<string, int> VanillaTierUses = new Dictionary<string, int>(StringComparer.Ordinal)
+        /// <summary>A tool tier: its uses, mining speed and the vanilla tier whose blocks it drops (Tier.getIncorrectBlocksForDrops:
+        /// wooden, stone, iron, diamond, gold or netherite).</summary>
+        public sealed class TierInfo
         {
-            { "WOOD", 59 }, { "STONE", 131 }, { "IRON", 250 }, { "DIAMOND", 1561 }, { "GOLD", 32 }, { "NETHERITE", 2031 },
+            public int Uses;
+            public double Speed;
+            public string Drops;
+        }
+
+        // Minecraft 1.21.1 Tiers: uses, speed, incorrect_for_<x>_tool
+        static readonly Dictionary<string, TierInfo> VanillaTiers = new Dictionary<string, TierInfo>(StringComparer.Ordinal)
+        {
+            { "WOOD", new TierInfo { Uses = 59, Speed = 2, Drops = "wooden" } }, { "STONE", new TierInfo { Uses = 131, Speed = 4, Drops = "stone" } },
+            { "IRON", new TierInfo { Uses = 250, Speed = 6, Drops = "iron" } }, { "DIAMOND", new TierInfo { Uses = 1561, Speed = 8, Drops = "diamond" } },
+            { "GOLD", new TierInfo { Uses = 32, Speed = 12, Drops = "gold" } }, { "NETHERITE", new TierInfo { Uses = 2031, Speed = 9, Drops = "netherite" } },
+        };
+        // the tool kinds of the vanilla tool classes (Minecraft 1.21.1: DiggerItem's mineable tag, SwordItem's own rules)
+        static readonly string[][] ToolKinds =
+        {
+            new[] { "PickaxeItem", "pickaxe" }, new[] { "AxeItem", "axe" }, new[] { "ShovelItem", "shovel" }, new[] { "HoeItem", "hoe" }, new[] { "SwordItem", "sword" },
         };
         static readonly HashSet<string> TieredBases = new HashSet<string>(StringComparer.Ordinal)
         {
@@ -375,7 +405,7 @@ namespace GfImport
             "CrossbowItem", "ShieldItem", "TridentItem", "FishingRodItem", "ElytraItem", "ShearsItem", "FlintAndSteelItem", "MaceItem",
         };
         static readonly Dictionary<string, string> itemChains = new Dictionary<string, string>(StringComparer.Ordinal);
-        static Dictionary<string, int> tfTiers;
+        static Dictionary<string, TierInfo> tfTiers;
 
         /// <summary>Forgets every per-run cache (the assembly stays loaded in a PowerShell session between runs).</summary>
         public static void Reset()
@@ -383,6 +413,8 @@ namespace GfImport
             itemChains.Clear();
             tfTiers = null;
             classFiles = null;
+            allJavaFiles = null;
+            sourceTexts.Clear();
             unknownVanilla.Clear();
             unparsedStrength.Clear();
             unknownCopies.Clear();
@@ -399,11 +431,21 @@ namespace GfImport
 
         public static Dictionary<string, JItem> Items(Ctx ctx)
         {
-            // TFToolMaterials: new SimpleTier(incorrectBlocks, uses, speed, damage, enchantability, repair)
-            tfTiers = new Dictionary<string, int>(StringComparer.Ordinal);
+            // TFToolMaterials: new SimpleTier(incorrectBlocks, uses, speed, damage, enchantability, repair); the incorrect-blocks
+            // tag (BlockTagGenerator.INCORRECT_FOR_X_TOOL = twilightforest:incorrect_for_x_tool) includes the vanilla
+            // #minecraft:incorrect_for_<tier>_tool whose blocks the tier does not drop
+            tfTiers = new Dictionary<string, TierInfo>(StringComparer.Ordinal);
             string tiers = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "util", "TFToolMaterials.java")));
-            foreach (Match tm in Regex.Matches(tiers, @"Tier\s+(\w+)\s*=\s*new\s+SimpleTier\(\s*[\w.]+\s*,\s*(\d+)\s*,"))
-                tfTiers[tm.Groups[1].Value] = int.Parse(tm.Groups[2].Value, CultureInfo.InvariantCulture);
+            foreach (Match tm in Regex.Matches(tiers, @"Tier\s+(\w+)\s*=\s*new\s+SimpleTier\(\s*(?:\w+\.)?(\w+)\s*,\s*(\d+)\s*,\s*([\d.]+)[Ff]?\s*,"))
+            {
+                var ti = new TierInfo { Uses = int.Parse(tm.Groups[3].Value, CultureInfo.InvariantCulture), Speed = F(tm.Groups[4].Value) };
+                var tag = ctx.TagFile("block", "twilightforest:" + tm.Groups[2].Value.ToLowerInvariant());
+                var vref = tag != null && tag["values"] != null ? tag["values"].A.Select(v => v.IsStr ? v.AsString() : null)
+                    .Select(v => v == null ? null : Regex.Match(v, @"^#minecraft:incorrect_for_(\w+)_tool$")).FirstOrDefault(x => x != null && x.Success) : null;
+                if (vref != null) ti.Drops = vref.Groups[1].Value;
+                else ctx.Warn("TFToolMaterials." + tm.Groups[1].Value + ": " + tm.Groups[2].Value + " does not include a vanilla incorrect_for_<tier>_tool tag");
+                tfTiers[tm.Groups[1].Value] = ti;
+            }
             if (tfTiers.Count == 0) ctx.Warn("TFToolMaterials: no tier parsed");
             string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFItems.java")));
             var res = new Dictionary<string, JItem>(StringComparer.Ordinal);
@@ -433,10 +475,17 @@ namespace GfImport
                 if (chain.Any(c => TieredBases.Contains(c)))
                 {
                     var tm = Regex.Match(f.Item3, @"\b(TFToolMaterials|Tiers)\.([A-Z_]+)\b");
-                    int uses;
-                    if (tm.Success && (tm.Groups[1].Value == "Tiers" ? VanillaTierUses.TryGetValue(tm.Groups[2].Value, out uses) : tfTiers.TryGetValue(tm.Groups[2].Value, out uses)))
-                        it.Durability = uses;
+                    TierInfo ti;
+                    if (tm.Success && (tm.Groups[1].Value == "Tiers" ? VanillaTiers.TryGetValue(tm.Groups[2].Value, out ti) : tfTiers.TryGetValue(tm.Groups[2].Value, out ti)))
+                    {
+                        it.Durability = ti.Uses;
+                        it.Tier = ti;
+                        it.TierName = tm.Groups[1].Value + "." + tm.Groups[2].Value;
+                    }
                     else ctx.Warn("item " + it.Id + ": tiered item without a known tier (" + string.Join(" < ", chain) + ")");
+                    // the tool kind: the vanilla class reached (DiggerItem's mineable tag; SwordItem's cobweb / sword_efficient rules)
+                    var kind = ToolKinds.FirstOrDefault(k => chain.Contains(k[0]));
+                    if (kind != null) it.ToolKind = kind[1];
                 }
                 // armor whose class sets the durability: TravellersArmorItem(type, properties, slots, durability) does
                 // properties.durability(type.getDurability(durability)); the call or a subclass's super(...) gives the values
@@ -605,13 +654,32 @@ namespace GfImport
         /// <summary>The superclass chain of a TF block class (TF classes from block/*.java, then the vanilla base).</summary>
         static Dictionary<string, string> classFiles;
 
+        static List<string> allJavaFiles;
+        static readonly Dictionary<string, string> sourceTexts = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        /// <summary>Every TF Java source file, in ordinal order (listed once per run, with the class-file index).</summary>
+        public static List<string> AllClassFiles(Ctx ctx)
+        {
+            ClassFile(ctx, "");
+            return allJavaFiles;
+        }
+
+        /// <summary>The text of a TF Java source file, read once per run (line endings normalised).</summary>
+        public static string SourceText(string file)
+        {
+            string t;
+            if (!sourceTexts.TryGetValue(file, out t)) sourceTexts[file] = t = Ctx.ReadText(file);
+            return t;
+        }
+
         /// <summary>The source file of a TF class by simple name (null for vanilla classes).</summary>
         public static string ClassFile(Ctx ctx, string cls)
         {
             if (classFiles == null)
             {
                 classFiles = new Dictionary<string, string>(StringComparer.Ordinal);
-                foreach (var f in Directory.GetFiles(ctx.JavaDir, "*.java", SearchOption.AllDirectories).OrderBy(x => x, StringComparer.Ordinal))
+                allJavaFiles = Directory.GetFiles(ctx.JavaDir, "*.java", SearchOption.AllDirectories).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                foreach (var f in allJavaFiles)
                 {
                     var n = Path.GetFileNameWithoutExtension(f);
                     if (!classFiles.ContainsKey(n)) classFiles[n] = f;
@@ -636,7 +704,7 @@ namespace GfImport
                     string file;
                     if (classFiles.TryGetValue(c, out file))
                     {
-                        var m = Regex.Match(Ctx.ReadText(file), @"class\s+" + c + @"\b[^{]*?\bextends\s+([\w.]+)");
+                        var m = Regex.Match(SourceText(file), @"class\s+" + c + @"\b[^{]*?\bextends\s+([\w.]+)");
                         if (m.Success) sup = m.Groups[1].Value.Split('.').Last();
                     }
                     extendsCache[c] = sup;

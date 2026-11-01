@@ -52,14 +52,17 @@ namespace GfImport
             if (ji != null && ji.Durability > 0) comps.Set("minecraft:durability", J.Obj().Set("max_durability", ji.Durability));
             if (m != null && m.Chain.Contains("minecraft:item/handheld")) comps.Set("minecraft:hand_equipped", true);
             if (blockPlacer) comps.Set("minecraft:block_placer", J.Obj().Set("block", "twilightforest:" + id).Set("replace_block_item", true));
+            // a tiered tool: Bedrock's tool tags (kind, tool, the tier whose blocks it drops) and its minecraft:digger (Harvest.cs)
+            var toolTags = new List<string>();
+            var digger = blockPlacer ? null : Digger(ji, toolTags);
+            if (digger != null) comps.Set("minecraft:digger", digger);
             // the TF item tags it is in (recipes use them: only TF items can carry tags on Bedrock)
             SortedSet<string> tags;
-            // (minecraft-namespace tags carry engine meaning on Bedrock, e.g. trim materials: left to the owners)
-            if (!blockPlacer && ItemTags.TryGetValue(id, out tags))
-            {
-                var own = tags.Where(t => !t.StartsWith("minecraft:", StringComparison.Ordinal)).ToList();
-                if (own.Count > 0) comps.Set("minecraft:tags", J.Obj().Set("tags", J.Strs(own)));
-            }
+            // (Java's minecraft-namespace tags carry engine meaning on Bedrock, e.g. trim materials: left to the owners;
+            // the tool tags above are Bedrock's own)
+            var own = new List<string>(toolTags);
+            if (!blockPlacer && ItemTags.TryGetValue(id, out tags)) own.AddRange(tags.Where(t => !t.StartsWith("minecraft:", StringComparison.Ordinal)));
+            if (own.Count > 0) comps.Set("minecraft:tags", J.Obj().Set("tags", J.Strs(own)));
             return J.Obj().Set("format_version", ItemFormat).Set("minecraft:item", J.Obj().Set("description", desc).Set("components", comps));
         }
 
@@ -96,6 +99,10 @@ namespace GfImport
                 EmitJson("skeleton", bi.Owner, "bp/items/" + id + ".json", ItemDoc(id, bi.Owner, m, ji, true, bi.InCatalog, "tile." + full + ".name"));
                 skeletonItems.Add(full);
             }
+            if (RuntimeDigger.Count > 0)
+                Log.Add(RuntimeDigger.Count + " tool(s) change their mining speed by block in their TF class (left to the item owners, on top of the digger): " + string.Join(", ", RuntimeDigger));
+            if (RoundedDigger.Count > 0)
+                Log.Add(RoundedDigger.Count + " digger speed(s) rounded to Bedrock's integer speeds (the owner refines them with item::Behaviour::destroySpeed): " + string.Join(", ", RoundedDigger));
         }
 
         // ---- entities ------------------------------------------------------------------------------------
@@ -107,7 +114,7 @@ namespace GfImport
             {
                 var file = GfImport.Java.ClassFile(this, cls);
                 if (file == null) continue;
-                var text = Java.StripComments(ReadText(file));
+                var text = Java.StripComments(Java.SourceText(file));
                 var m = Regex.Match(text, @"Attributes\.MAX_HEALTH,\s*([\w.]+)");
                 if (!m.Success) continue;
                 double v;

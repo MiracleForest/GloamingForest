@@ -174,7 +174,8 @@ namespace GfImport
                     var r = c["resistance"] ?? e["resistance"];
                     if (r != null)
                     {
-                        string want = r.IsStr ? "false" : J.Obj().Set("explosion_resistance", Math.Round(r.AsDouble(), 4)).ToCompact();
+                        // the golden is in Java units; the JSON value is Java's x ExplosionJsonPerJava (Blocks.ExplosionComponent)
+                        string want = r.IsStr ? "false" : J.Obj().Set("explosion_resistance", Math.Round(r.AsDouble() * ExplosionJsonPerJava, 4)).ToCompact();
                         string have = explosion != null ? explosion.ToCompact() : "(none)";
                         if (want != have) Errors.Add(where + ": minecraft:destructible_by_explosion " + have + ", TF gives " + want + " (" + e["source"].AsString() + ")");
                         checkedValues++;
@@ -187,6 +188,29 @@ namespace GfImport
                         if (have != want) Errors.Add(where + ": minecraft:map_color " + (have ?? "(none)") + ", TF gives " + (mc.Kind == JKind.Null ? "none" : mc.AsString()) + " (" + e["source"].AsString() + ")");
                         checkedValues++;
                     }
+                }
+                // the tools that mine it (Bedrock tool tags), the tier a tool needs (Bedrock tier tag) and the drop rule
+                if (e["tools"] != null)
+                {
+                    var comps = doc["components"];
+                    var wantTools = e["tools"].A.Select(t => "tag:" + BedrockToolTag[t.AsString()]).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    var haveTools = comps.Keys.Where(k => BedrockToolTag.Values.Any(v => k == "tag:" + v)).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    if (!wantTools.SequenceEqual(haveTools))
+                        Errors.Add("bp/blocks/" + id + ".json: tool tags [" + string.Join(", ", haveTools) + "], TF gives [" + string.Join(", ", wantTools) + "] (" + e["source"].AsString() + ")");
+                    string wantTier = e["tier"] != null ? "tag:" + BedrockTierTag[e["tier"].AsString()] : "(none)";
+                    var haveTiers = comps.Keys.Where(k => BedrockTierTag.Values.Any(v => k == "tag:" + v)).ToList();
+                    string haveTier = haveTiers.Count == 0 ? "(none)" : string.Join(", ", haveTiers);
+                    if (wantTier != haveTier) Errors.Add("bp/blocks/" + id + ".json: tier tag " + haveTier + ", TF gives " + wantTier + " (" + e["source"].AsString() + ")");
+                    checkedValues += 2;
+                }
+                if (e["requiresTool"] != null)
+                {
+                    Harvest hv;
+                    bool have = Harvests.TryGetValue(id, out hv) && hv.RequiresTool;
+                    bool want = e["requiresTool"].Kind == JKind.Bool && e["requiresTool"].B;
+                    if (have != want)
+                        Errors.Add("data/gf/import/harvest.json: twilightforest:" + id + " requiresTool " + have + ", TF gives " + want + " (" + e["source"].AsString() + ")");
+                    checkedValues++;
                 }
                 // the RP sound (rp/blocks.d fragment of the owner) and the root map colour
                 GenFile rp;

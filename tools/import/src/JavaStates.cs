@@ -183,7 +183,7 @@ namespace GfImport
             string file = Java.ClassFile(ctx, cls);
             if (file != null)
             {
-                ci = new ClassInfo { Name = cls, File = file, Text = Java.StripComments(Ctx.ReadText(file)) };
+                ci = new ClassInfo { Name = cls, File = file, Text = Java.StripComments(Java.SourceText(file)) };
                 var m = Regex.Match(ci.Text, @"\b(?:class|interface|enum|record)\s+" + Regex.Escape(cls) + @"\b(?:\s*<[^{]*?>)?([^{]*)\{");
                 if (m.Success)
                 {

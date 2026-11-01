@@ -357,6 +357,8 @@ namespace GfImport
                 if (jb.Unbreakable) comps.Set("minecraft:destructible_by_mining", false);
                 else comps.Set("minecraft:destructible_by_mining", J.Obj().Set("seconds_to_destroy", Math.Round(jb.Hardness, 4)));
                 comps.Set("minecraft:destructible_by_explosion", ExplosionComponent(jb.Resistance));
+                // the tools that mine it faster and the tier a tool needs (Harvest.cs)
+                HarvestTags(bi, comps);
                 // light: a constant, or a function of the block's states (one permutation per other light level)
                 var lightPerms = new List<J>();
                 var lf = Light.Of(this, bi, Warn);
@@ -566,13 +568,19 @@ namespace GfImport
         /// (player, held item, advancements): runtime behaviour of the owners, listed in the import log.</summary>
         public readonly SortedSet<string> RuntimeBehaviour = new SortedSet<string>(StringComparer.Ordinal);
 
+        /// <summary>Bedrock stores a fifth of a JSON block's explosion_resistance (measured on 1.26.51: 3 -> 0.6, 50 -> 10,
+        /// 6000 -> 1200), and its vanilla blocks at Java's values (stone 6, oak planks 3, obsidian 1200): the JSON value
+        /// is Java's resistance x 5, so a TF block resists as the vanilla block of the same Java resistance.</summary>
+        public const double ExplosionJsonPerJava = 5;
+
         /// <summary>Java's explosion resistance as minecraft:destructible_by_explosion: false from 3600000 (Java's
-        /// "indestructible" value, Float.MAX_VALUE included), else the resistance (0 explodes at once). Java's explosions
-        /// do not look at the hardness, so an unbreakable block with a low resistance (twilight_portal) still explodes.</summary>
-        static J ExplosionComponent(double resistance)
+        /// "indestructible" value, Float.MAX_VALUE included), else the resistance x ExplosionJsonPerJava (0 explodes at
+        /// once). Java's explosions do not look at the hardness, so an unbreakable block with a low resistance
+        /// (twilight_portal) still explodes.</summary>
+        public static J ExplosionComponent(double resistance)
         {
             if (resistance >= 3600000) return J.Bool(false);
-            return J.Obj().Set("explosion_resistance", Math.Round(Math.Max(0, resistance), 4));
+            return J.Obj().Set("explosion_resistance", Math.Round(Math.Max(0, resistance) * ExplosionJsonPerJava, 4));
         }
 
         /// <summary>A state-dependent component: the default state's value on the root components, one permutation per

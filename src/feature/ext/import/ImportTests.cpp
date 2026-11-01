@@ -17,6 +17,7 @@
 #include <optional>
 #include <regex>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "ll/api/service/Bedrock.h"
@@ -326,10 +327,11 @@ GF_REGISTER_SELFTEST("import.light", [](Context& ctx) {
 
 // Hardness and explosion resistance TF gives (written down by hand from TFBlocks.java and the block classes'
 // getExplosionResistance / getDestroyProgress overrides, independent of the generator), read back from the game's
-// block permutations. The game's units are calibrated on twilight_oak_planks (Java strength(2.0F, 3.0F)): every
-// other value must be the same multiple of TF's. Measured on 1.26.51: the destroy speed is the seconds_to_destroy
-// value (-1 for destructible_by_mining false), the explosion resistance a fifth of explosion_resistance
-// (FLT_MAX / 5 for destructible_by_explosion false).
+// block permutations. The game's units are calibrated on vanilla blocks, which the game stores at Java's values
+// (minecraft:oak_planks strength(2.0F, 3.0F), stone (1.5F, 6.0F), obsidian (50.0F, 1200.0F)): a TF block must hold
+// the value of the vanilla block with the same Java value (twilight_oak_planks = oak_planks). Measured on 1.26.51: a
+// JSON block's destroy speed is its seconds_to_destroy value (-1 for destructible_by_mining false), its explosion
+// resistance a fifth of explosion_resistance (the import writes Java's x 5; FLT_MAX / 5 for false).
 GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
     constexpr double kUnbreakable    = -1; // destroyTime -1 / getDestroyProgress -1: minecraft:destructible_by_mining false
     constexpr double kIndestructible = -2; // resistance >= 3600000 or Float.MAX_VALUE: minecraft:destructible_by_explosion false
@@ -340,7 +342,9 @@ GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
         double      resistance;
     };
     std::vector<Case> const cases{
-        {"twilight_oak_planks", JDoc::object(), 2.0, 3.0},                 // strength(2.0F, 3.0F): the calibration
+        {"twilight_oak_planks", JDoc::object(), 2.0, 3.0},                 // strength(2.0F, 3.0F): as minecraft:oak_planks
+        {"castle_brick", JDoc::object(), 100.0, 50.0},                     // strength(100.0F, 50.0F)
+        {"underbrick", JDoc::object(), 1.5, 6.0},                          // strength(1.5F, 6.0F): as minecraft:stone
         {"oak_drying_rack", JDoc::object(), 1.0, 1.5},                     // copyAndScaleProperties(Blocks.OAK_SLAB, 0.5F)
         {"crimson_drying_rack", JDoc::object(), 1.0, 1.5},                 // copyAndScaleProperties(Blocks.CRIMSON_SLAB, 0.5F)
         {"twilight_oak_drying_rack", JDoc::object(), 1.0, 1.5},            // copyAndScaleProperties(TWILIGHT_OAK_SLAB, 0.5F)
@@ -360,18 +364,37 @@ GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
         {"trophy_pedestal", {{"twilightforest:active", false}}, kUnbreakable, 2000.0}, // getDestroyProgress: ACTIVE ? super : -1
         {"trophy_pedestal", {{"twilightforest:active", true}}, 2.0, 2000.0},
     };
-    auto valuesOf = [&](Case const& c, double& h, double& r) {
-        auto const* block = gf::game::blockWithStates(std::string("twilightforest:") + c.id, c.states);
+    auto stored = [](Block const* block, double& h, double& r) {
         if (!block) return false;
         h = block->mDirectData->mDestroySpeed;
         r = block->mDirectData->mExplosionResistance;
         return true;
     };
-    double h0 = 0, r0 = 0;
-    ctx.require(valuesOf(cases.front(), h0, r0) && h0 > 0 && r0 > 0, "twilight_oak_planks is registered with a hardness and a resistance");
-    double const hs = h0 / 2.0, rs = r0 / 3.0; // game units per TF unit
-    ctx.info("calibration (twilight_oak_planks): destroy speed " + std::to_string(h0) + ", explosion resistance " + std::to_string(r0));
+    auto valuesOf = [&](Case const& c, double& h, double& r) {
+        return stored(gf::game::blockWithStates(std::string("twilightforest:") + c.id, c.states), h, r);
+    };
     auto near = [](double a, double b) { return std::abs(a - b) <= 1e-4 * std::max(1.0, std::abs(b)); };
+    // the calibration: vanilla blocks of known Java values (game units per Java unit, 1 when the game stores Java's)
+    double h0 = 0, r0 = 0;
+    ctx.require(stored(gf::game::blockWith("minecraft:oak_planks"), h0, r0) && h0 > 0 && r0 > 0, "minecraft:oak_planks is registered with a hardness and a resistance");
+    double const hs = h0 / 2.0, rs = r0 / 3.0;
+    ctx.info("calibration (minecraft:oak_planks, Java 2.0 / 3.0): destroy speed " + std::to_string(h0) + ", explosion resistance " + std::to_string(r0));
+    // (Bedrock's obsidian is its own: hardness 35 where Java has 50, so only its resistance calibrates)
+    for (auto const& [id, jh, jr] : std::vector<std::tuple<char const*, double, double>>{{"minecraft:stone", 1.5, 6.0}, {"minecraft:obsidian", -1.0, 1200.0}}) {
+        double h = 0, r = 0;
+        ctx.require(stored(gf::game::blockWith(id), h, r), std::string(id) + " is registered");
+        ctx.check((jh < 0 || near(h, jh * hs)) && near(r, jr * rs), std::string(id) + ": destroy speed " + std::to_string(h) + ", explosion resistance " + std::to_string(r) + " (Java " + (jh < 0 ? std::string("resistance") : std::to_string(jh) + " /") + " " + std::to_string(jr) + ": the calibration holds)");
+    }
+    // a TF block holds what the vanilla block of the same Java values holds
+    {
+        double th = 0, tr = 0, vh = 0, vr = 0;
+        ctx.check(stored(gf::game::blockWith("twilightforest:twilight_oak_planks"), th, tr) && stored(gf::game::blockWith("minecraft:oak_planks"), vh, vr) && near(th, vh) && near(tr, vr),
+                  "twilight_oak_planks (strength(2.0F, 3.0F)) holds destroy speed " + std::to_string(th) + " / explosion resistance " + std::to_string(tr) + ", minecraft:oak_planks "
+                      + std::to_string(vh) + " / " + std::to_string(vr));
+        ctx.check(stored(gf::game::blockWith("twilightforest:underbrick"), th, tr) && stored(gf::game::blockWith("minecraft:stone"), vh, vr) && near(th, vh) && near(tr, vr),
+                  "underbrick (strength(1.5F, 6.0F)) holds destroy speed " + std::to_string(th) + " / explosion resistance " + std::to_string(tr) + ", minecraft:stone "
+                      + std::to_string(vh) + " / " + std::to_string(vr));
+    }
     for (auto const& c : cases) {
         std::string what = std::string(c.id) + " " + c.states.dump();
         double      h = 0, r = 0;

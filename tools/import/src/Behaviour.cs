@@ -82,6 +82,19 @@ namespace GfImport
                     runtime.Add(bi.Id + ": " + cls + "." + method);
                     return null;
                 }
+                // getDestroyProgress returns progress per tick, not a hardness: only -1 (cannot be mined in that state) and
+                // super (the registration's hardness) are block values; another constant is the owner's runtime behaviour
+                if (method == "getDestroyProgress")
+                {
+                    var consts = new[] { rm.Groups[3], rm.Groups[4], rm.Groups[5] }.Where(g => g.Success).Select(g => g.Value.Trim())
+                        .Where(t => !t.StartsWith("super.", StringComparison.Ordinal) && !IsMinusOne(t)).ToList();
+                    if (consts.Count > 0)
+                    {
+                        warn("block " + bi.Id + ": " + cls + ".getDestroyProgress returns the progress " + string.Join(", ", consts) + " per tick (not a hardness): left to the owner");
+                        runtime.Add(bi.Id + ": " + cls + "." + method);
+                        return null;
+                    }
+                }
                 sources.Add(cls + "." + method);
                 Func<string, Func<Dictionary<string, string>, double>> term = t =>
                 {
@@ -112,5 +125,10 @@ namespace GfImport
             return null;
         }
 
+        static bool IsMinusOne(string t)
+        {
+            double v;
+            return double.TryParse(t.TrimEnd('F', 'f', 'D', 'd'), NumberStyles.Float, CultureInfo.InvariantCulture, out v) && v == -1;
+        }
     }
 }

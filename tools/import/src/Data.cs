@@ -132,6 +132,14 @@ namespace GfImport
             { "c:storage_blocks/iron", new[] { "minecraft:iron_block" } },
             { "c:chests/wooden", new[] { "minecraft:chest", "minecraft:trapped_chest" } },
             { "c:chests/trapped", new[] { "minecraft:trapped_chest" } },
+            // vanilla item tags TF's recipe advancements unlock by (same item names on Bedrock); "#x" includes tag x
+            { "minecraft:boats", new[] { "minecraft:oak_boat", "minecraft:spruce_boat", "minecraft:birch_boat", "minecraft:jungle_boat", "minecraft:acacia_boat",
+                "minecraft:dark_oak_boat", "minecraft:mangrove_boat", "minecraft:bamboo_raft", "minecraft:cherry_boat", "#minecraft:chest_boats" } },
+            { "minecraft:chest_boats", new[] { "minecraft:oak_chest_boat", "minecraft:spruce_chest_boat", "minecraft:birch_chest_boat", "minecraft:jungle_chest_boat",
+                "minecraft:acacia_chest_boat", "minecraft:dark_oak_chest_boat", "minecraft:mangrove_chest_boat", "minecraft:bamboo_chest_raft", "minecraft:cherry_chest_boat" } },
+            { "minecraft:saplings", new[] { "minecraft:oak_sapling", "minecraft:spruce_sapling", "minecraft:birch_sapling", "minecraft:jungle_sapling",
+                "minecraft:acacia_sapling", "minecraft:dark_oak_sapling", "minecraft:azalea", "minecraft:flowering_azalea", "minecraft:mangrove_propagule",
+                "minecraft:cherry_sapling" } },
             // the vanilla members of the tags Bedrock also has (Recipes.BedrockItemTags), for the recipes that take one
             // item per slot (furnace, smithing); same item names on Bedrock
             { "minecraft:planks", VanillaWoods.Select(w => "minecraft:" + w + "_planks").ToArray() },
@@ -142,15 +150,44 @@ namespace GfImport
                 : new[] { w + "_log", w + "_wood", "stripped_" + w + "_log", "stripped_" + w + "_wood" }).Select(x => "minecraft:" + x).ToArray() },
         };
 
+        // The vanilla block tags (Minecraft 1.21.1, data/minecraft/tags/block) the tool tags reach through other tags,
+        // with only their tag references: TF's blocks join them through TF's own files for the referenced tags
+        // (TF adds its planks to #minecraft:planks, which #minecraft:mineable/axe includes, ...). Vanilla blocks are
+        // not listed (the import only places TF blocks).
+        public static readonly Dictionary<string, string[]> BaseBlockTagRefs = new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            { "minecraft:mineable/axe", new[] { "minecraft:banners", "minecraft:fence_gates", "minecraft:logs", "minecraft:planks", "minecraft:saplings",
+                "minecraft:signs", "minecraft:wooden_buttons", "minecraft:wooden_doors", "minecraft:wooden_fences", "minecraft:wooden_pressure_plates",
+                "minecraft:wooden_slabs", "minecraft:wooden_stairs", "minecraft:wooden_trapdoors", "minecraft:all_hanging_signs", "minecraft:bamboo_blocks" } },
+            { "minecraft:mineable/pickaxe", new[] { "minecraft:stone_buttons", "minecraft:walls", "minecraft:shulker_boxes", "minecraft:anvil",
+                "minecraft:cauldrons", "minecraft:rails" } },
+            { "minecraft:mineable/shovel", new[] { "minecraft:concrete_powder" } },
+            { "minecraft:sword_efficient", new[] { "minecraft:leaves", "minecraft:saplings", "minecraft:small_flowers", "minecraft:crops" } },
+            { "minecraft:signs", new[] { "minecraft:standing_signs", "minecraft:wall_signs" } },
+            { "minecraft:all_hanging_signs", new[] { "minecraft:ceiling_hanging_signs", "minecraft:wall_hanging_signs" } },
+            { "minecraft:logs", new[] { "minecraft:logs_that_burn", "minecraft:crimson_stems", "minecraft:warped_stems" } },
+            { "minecraft:logs_that_burn", new[] { "minecraft:dark_oak_logs", "minecraft:oak_logs", "minecraft:acacia_logs", "minecraft:birch_logs",
+                "minecraft:jungle_logs", "minecraft:spruce_logs", "minecraft:mangrove_logs", "minecraft:cherry_logs" } },
+            { "minecraft:incorrect_for_wooden_tool", new[] { "minecraft:needs_diamond_tool", "minecraft:needs_iron_tool", "minecraft:needs_stone_tool" } },
+            { "minecraft:incorrect_for_gold_tool", new[] { "minecraft:needs_diamond_tool", "minecraft:needs_iron_tool", "minecraft:needs_stone_tool" } },
+            { "minecraft:incorrect_for_stone_tool", new[] { "minecraft:needs_diamond_tool", "minecraft:needs_iron_tool" } },
+            { "minecraft:incorrect_for_iron_tool", new[] { "minecraft:needs_diamond_tool" } },
+            { "minecraft:incorrect_for_diamond_tool", new string[0] },
+            { "minecraft:incorrect_for_netherite_tool", new string[0] },
+        };
+
         /// <summary>Every member of a tag of a registry ("item" by default; nested tags resolved; unknown vanilla
-        /// tags yield nothing but the base item tags known to the import).</summary>
+        /// tags yield nothing but the base item tags and the base block tag references known to the import).</summary>
         public List<string> TagMembers(string tag, HashSet<string> seen = null, string registry = "item")
         {
             seen = seen ?? new HashSet<string>(StringComparer.Ordinal);
             var res = new List<string>();
             if (!seen.Add(tag)) return res;
             string[] baseMembers;
-            if (registry == "item" && BaseItemTags.TryGetValue(tag, out baseMembers)) res.AddRange(baseMembers);
+            if (registry == "item" && BaseItemTags.TryGetValue(tag, out baseMembers))
+                foreach (var m in baseMembers) { if (m.StartsWith("#", StringComparison.Ordinal)) res.AddRange(TagMembers(m.Substring(1), seen, registry)); else res.Add(m); }
+            if (registry == "block" && BaseBlockTagRefs.TryGetValue(tag, out baseMembers))
+                foreach (var r in baseMembers) res.AddRange(TagMembers(r, seen, registry));
             var j = TagFile(registry, tag);
             if (j != null && j["values"] != null)
             {
