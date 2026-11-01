@@ -150,10 +150,12 @@ return (originalColor & 0xFFFF00) + c                                 // replace
   with truncating division (C++ `int / int` truncates the same way). It is NOT `x >> 4` and not a floor division:
   for negative `x` or `z` that is not a multiple of 16 those give a chunk one lower. Near a region border that
   chunk belongs to the next landmark region, so the colour bands would be centred on another grid cell than in TF.
-- The squared distance is an `int` sum. `|cx - x|` and `|cz - z|` are at most 201: the truncated chunk reaches one
-  chunk past the region in negative regions, whose centres are offset by +9. So nothing overflows and the sum is
-  converted to `float` exactly (below 2^24). The square root is taken in double and rounded to float before
-  truncation.
+- The squared distance is an `int` sum. `|cx - x|` and `|cz - z|` are at most 200 (the truncated chunk reaches one
+  chunk past the region in negative regions, whose centres are offset by +9). Per region R: blocks span
+  `[256R - 143, 256R + 112]` and centres `[256R - 39, 256R + 57]` for R < 0 (max 200); blocks `[-143, 127]` and
+  centres `[-40, 56]` for R = 0 (max 199); blocks `[256R - 128, 256R + 127]` and centres `[256R - 40, 256R + 56]`
+  for R > 0 (max 184). So nothing overflows and the sum (at most 80000) is converted to `float` exactly (below
+  2^24). The square root is taken in double and rounded to float before truncation.
 
 All other biomes use the JSON grass/foliage colours (or the vanilla climate colour maps). Vanilla clients see the
 static `grass_color` / `foliage_color` from the client biome JSON.
