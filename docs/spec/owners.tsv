@@ -7051,7 +7051,6 @@ sound_event	block.twilightforest.door.vanish	U30	gen
 sound_event	block.twilightforest.drying_rack.add_item	U4	gen
 sound_event	block.twilightforest.drying_rack.remove_item	U4	gen
 sound_event	block.twilightforest.generic.annihilation	U8	gen
-sound_event	block.twilightforest.ghast_trap.active	U26	gen
 sound_event	block.twilightforest.ghast_trap.ambient	U26	gen
 sound_event	block.twilightforest.ghast_trap.on	U26	gen
 sound_event	block.twilightforest.ghast_trap.spindown	U26	gen

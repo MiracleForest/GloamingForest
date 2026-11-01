@@ -82,7 +82,7 @@ has an owner.
 | `registry_entry` | 299 |
 | `selftest` | 48 |
 | `selftest_dx` | 48 |
-| `sound_event` | 329 |
+| `sound_event` | 328 |
 | `spawn_egg` | 51 |
 | `stat` | 10 |
 | `structure` | 25 |
@@ -101,9 +101,9 @@ has an owner.
 Counts against the plan: TF 4.8 registers **523** blocks (the plan's 533 counted ten `*_miniature_structure` blocks
 that are commented out in `TFBlocks.java`), 254 items plus 357 block items and 51 spawn eggs, 80 entity types,
 22 biomes, 25 structure keys, 129 configured and 107 placed features, 634 loot tables, 553 recipes (twilightforest and
-minecraft namespaces, generated and hand-written), 545 advancements (45 plus the recipe unlocks), 329 sound events,
+minecraft namespaces, generated and hand-written), 545 advancements (45 plus the recipe unlocks), 328 sound events (`GHAST_TRAP_ACTIVE` is commented out in `TFSounds.java`; `sounds.json` has 328),
 29 particles, 40 damage types, 1 effect, 4 enchantments, 393 tags (154 in the twilightforest namespace), 8 data maps,
-2061 en_us keys, 53 TF config keys.
+2061 en_us keys, 53 TF config keys, 10 stats (`TFStats` registers 10; the plan says 9), 18 subcommands (TF's 14 plus F0's `selftest`, `reload`, `config` and `stubs`; the plan says 15), 14 custom registries (every directory of TF's `data/twilightforest/twilight/`; the plan says 9).
 
 Ids no unit record claims: none.
 

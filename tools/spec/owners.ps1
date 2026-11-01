@@ -172,7 +172,7 @@ Add-Ids jukebox_song (Get-DataIds (Join-Path $GenRes 'data/twilightforest/jukebo
 Add-Ids trim_material (Get-DataIds (Join-Path $GenRes 'data/twilightforest/trim_material'))
 Add-Ids function (Get-DataIds (Join-Path $MainRes 'data/twilightforest/function') '*.mcfunction') manual
 Add-Ids particle (Get-JavaIds 'init/TFParticleType.java')
-$soundText = Read-Text (Join-Path $JavaDir 'init/TFSounds.java')
+$soundText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/TFSounds.java')) # GHAST_TRAP_ACTIVE is commented out: 328 events
 $sounds = @([regex]::Matches($soundText, 'createEvent\("([^"]+)"\)') | ForEach-Object { $_.Groups[1].Value })
 $soundsJson = Get-Content (Join-Path $GenRes 'assets/twilightforest/sounds.json') -Raw | ConvertFrom-Json -AsHashtable
 Add-Ids sound_event (@($sounds) + @($soundsJson.Keys) | Sort-Object -Unique)
