@@ -16,7 +16,7 @@ function Install-WorldgenProbe([string]$ModDir) {
             components  = [ordered]@{
                 'minecraft:climate'   = [ordered]@{ downfall = 0.0; snow_accumulation = @(0.0, 0.125); temperature = 2.0 }
                 # the server's map colours of its grass and foliage (worldgen.custom_biome_map)
-                'minecraft:map_tints' = [ordered]@{ foliage = '#FF00FF'; grass = '#FF00FF' }
+                'minecraft:map_tints' = [ordered]@{ foliage = '#FF00FF'; grass = [ordered]@{ type = 'tint'; tint = '#FF00FF' } }
             }
         }
     }

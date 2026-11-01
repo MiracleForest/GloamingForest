@@ -6,6 +6,7 @@
 #include <chrono>
 #include <filesystem>
 #include <iomanip>
+#include <map>
 #include <sstream>
 #include <thread>
 #include <variant>
@@ -27,6 +28,7 @@
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/dimension/DimensionType.h"
+#include "mc/world/item/MapItem.h"
 #include "mc/world/level/saveddata/maps/MapItemSavedData.h"
 #include "mc/world/level/storage/GameRule.h"
 #include "mc/world/level/storage/GameRules.h"
@@ -886,12 +888,18 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome_map", [](Context& ctx) -> ll::coro::
     }
     std::string probeId = wg::detail::biomeIdOf(*probe);
     int         dim     = ctx.dimension();
-    // far from everything else: chunk column -2..-1 probe, 0 as it is, 1..2 desert
-    int cx = (box.minX + 6000) >> 4, cz = box.minZ >> 4;
-    int x0 = cx * 16 + 8, z0 = cz * 16 + 8;
-    ctx.require(co_await ctx.ensureLoaded({dim, x0, box.minY, z0}), "the map area loads");
+    auto        level   = ll::service::getLevel();
+    // a map far from everything else; Bedrock centers it on its 128-block grid
+    gf::core::GlobalPos far{dim, box.minX + 6000, box.minY, box.minZ};
+    ctx.require(co_await ctx.ensureLoaded(far), "the map area loads");
+    auto&    map    = level->createMapSavedData(level->getNewUniqueID(), BlockPos{far.x, far.y, far.z}, DimensionType(dim), 0);
+    BlockPos origin = *map.mOrigin;
+    if (std::abs(origin.x - far.x) > 16 || std::abs(origin.z - far.z) > 16)
+        ctx.require(co_await ctx.ensureLoaded({dim, origin.x, box.minY, origin.z}), "the map's center loads");
     bs = ctx.region();
     ctx.require(bs != nullptr, "test region");
+    // chunk columns -2..-1 of the map's center: the probe, 0: as they are, 1..2: minecraft:desert
+    int     cx = origin.x >> 4, cz = origin.z >> 4;
     Painted saved{dim, {}, false};
     struct RestoreMap {
         Painted& p;
@@ -904,40 +912,32 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome_map", [](Context& ctx) -> ll::coro::
                     }
         }
     } restoreMap{saved};
+    int painted = 0;
     auto paintColumns = [&](int chunkX, std::string const& id) {
-        for (int dz = -2; dz <= 2; ++dz)
+        for (int dz = -1; dz <= 1; ++dz)
             if (auto* c = bs->getChunk(chunkX, cz + dz)) {
                 wg::detail::LevelChunkAdapter a(*c, bs->getDimension().getBiomeRegistry(), bs->getMinHeight(), bs->getMaxHeight());
                 for (int lx = 0; lx < 16; ++lx)
                     for (int lz = 0; lz < 16; ++lz) {
                         saved.columns.emplace_back(chunkX * 16 + lx, (cz + dz) * 16 + lz, a.biome(lx, box.minY, lz));
                         a.setBiomeColumn(lx, lz, id);
+                        ++painted;
                     }
             }
     };
-    paintColumns(cx - 2, probeId);
     paintColumns(cx - 1, probeId);
     paintColumns(cx + 1, "minecraft:desert");
-    paintColumns(cx + 2, "minecraft:desert");
+    ctx.check(painted == 2 * 3 * 256, "the map's chunks are loaded and painted (" + std::to_string(painted) + " columns)");
     // a lapis marker on the ground fixes the map's pixel order
-    int ground = gf::spawn::detail::worldSurfaceY(*bs, x0 + 3, z0 + 5);
-    ctx.require(ctx.setBlock({dim, x0 + 3, ground + 1, z0 + 5}, "minecraft:lapis_block"), "the marker");
+    int mx = origin.x + 3, mz = origin.z + 5;
+    int ground = gf::spawn::detail::worldSurfaceY(*bs, mx, mz);
+    ctx.require(ctx.setBlock({dim, mx, ground + 1, mz}, "minecraft:lapis_block"), "the marker");
 
-    auto  level = ll::service::getLevel();
-    auto  id    = level->getNewUniqueID();
-    auto& map   = level->createMapSavedData(id, BlockPos{x0, box.minY, z0}, DimensionType(dim), 0);
-    // the server renders the map around the position it is ticked at (a map on display)
-    std::vector<unsigned> pixels;
-    BlockPos              origin{};
-    for (int i = 0; i < 200; ++i) {
-        bs = ctx.region();
-        if (!bs) break;
-        map.tickByBlock(BlockPos{x0, box.minY, z0}, *bs);
-        co_await ctx.ticks(1);
-        pixels = *map.mPixels;
-        origin = *map.mOrigin;
-        if (pixels.size() == 128 * 128 && pixels[64 * 128 + 64] != 0 && pixels[64 * 128 + 20] != 0 && pixels[64 * 128 + 110] != 0) break;
-    }
+    // MapItem::sampleMapData renders the whole map (128 x 128 texels around its center, texel
+    // (i, j) = column (x - 64 + i, z - 64 + j), stored row by row in z) into the saved data, as the
+    // server does for a map being updated
+    bool sampled = MapItem::sampleMapData(*bs, 1, origin, origin, 128, 128, nullptr, &map, nullptr);
+    std::vector<unsigned> pixels = *map.mPixels;
     ctx.require(pixels.size() == 128 * 128, "the map has 128 x 128 pixels");
     // pixel of a world column: (x - originX) + 64 per axis (scale 0), row-major in z or in x
     auto colourAt = [&](int x, int z, bool zRows) -> unsigned {
@@ -945,28 +945,40 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome_map", [](Context& ctx) -> ll::coro::
         if (px < 0 || px >= 128 || pz < 0 || pz >= 128) return 0;
         return pixels[static_cast<std::size_t>(zRows ? pz * 128 + px : px * 128 + pz)];
     };
-    bool zRows = colourAt(x0 + 3, z0 + 5, true) != colourAt(x0 + 2, z0 + 5, true);
-    if (!zRows && colourAt(x0 + 3, z0 + 5, false) == colourAt(x0 + 2, z0 + 5, false)) ctx.info("the marker is not visible on the map");
-    unsigned probeColour  = colourAt((cx - 2) * 16 + 8, z0, zRows);
-    unsigned plainsColour = colourAt(cx * 16 + 2, z0 - 3, zRows);
-    unsigned desertColour = colourAt((cx + 2) * 16 + 8, z0, zRows);
+    bool zRows  = colourAt(mx, mz, true) != colourAt(mx - 1, mz, true) && colourAt(mx, mz, true) != colourAt(mx + 1, mz, true);
+    bool xRows  = colourAt(mx, mz, false) != colourAt(mx - 1, mz, false) && colourAt(mx, mz, false) != colourAt(mx + 1, mz, false);
+    bool marker = zRows || xRows;
+    unsigned probeColour  = colourAt((cx - 1) * 16 + 8, origin.z - 8, zRows || !xRows);
+    unsigned plainsColour = colourAt(cx * 16 + 8, origin.z - 8, zRows || !xRows);
+    unsigned desertColour = colourAt((cx + 1) * 16 + 8, origin.z - 8, zRows || !xRows);
     auto hex32 = [](unsigned v) {
         std::ostringstream o;
         o << std::hex << std::setw(8) << std::setfill('0') << v;
         return o.str();
     };
+    // the map's colours: count and first texel of each (diagnostics of the layout)
+    std::map<unsigned, std::pair<int, std::size_t>> histogram;
+    for (std::size_t i = 0; i < pixels.size(); ++i) {
+        auto& h = histogram.try_emplace(pixels[i], 0, i).first->second;
+        ++h.first;
+    }
+    std::ostringstream colours;
+    for (auto const& [c, h] : histogram) colours << " " << hex32(c) << " x" << h.first << " @" << (h.second % 128) << "," << (h.second / 128);
+    gf::log().info("worldgen custom biome map: {} colours:{}", histogram.size(), colours.str());
     gf::log().info(
-        "worldgen custom biome map: origin {} {}, grass map colours probe {} plains {} desert {} (ABGR, {} rows)",
+        "worldgen custom biome map: sampleMapData {}, origin {} {}, marker {}, grass map colours probe {} plains {} desert {} (ABGR)",
+        sampled,
         origin.x,
         origin.z,
+        marker ? (zRows ? "found (z rows)" : "found (x rows)") : "not found",
         hex32(probeColour),
         hex32(plainsColour),
-        hex32(desertColour),
-        zRows ? "z" : "x"
+        hex32(desertColour)
     );
+    ctx.check(marker, "the lapis marker is on the map at its column");
     ctx.check(probeColour != 0 && plainsColour != 0 && desertColour != 0, "the three columns are rendered");
     ctx.check(desertColour != plainsColour, "a painted vanilla biome changes the map colour (control)");
-    ctx.check(probeColour != plainsColour, "the custom biome has its own map colour");
+    ctx.check(probeColour != plainsColour && probeColour != desertColour, "the custom biome has its own map colour");
 });
 
 // ScatteredOreFeature in memory: single blocks within 7 of the origin, only on its targets.

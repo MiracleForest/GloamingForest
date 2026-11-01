@@ -732,10 +732,11 @@ struct Spawner {
         if (filtered.empty()) return;
         std::vector<std::pair<int, int>> order(chunks.begin(), chunks.end());
         for (std::size_t i = order.size(); i > 1; --i) std::swap(order[i - 1], order[static_cast<std::size_t>(random.nextInt(static_cast<int>(i)))]);
+        auto biomeSource = worldgen::detail::providers()->biomeSource;
         for (auto const& [cx, cz] : order) {
             // NaturalSpawner#spawnForChunk: SpawnState#canSpawnForCategoryLocal per category
             for (auto const* cat : filtered)
-                if (canSpawnLocal(*cat, cx, cz)) spawnCategoryForChunk(*region, *cat, cx, cz);
+                if (canSpawnLocal(*cat, cx, cz)) spawnCategoryForChunk(*region, *cat, cx, cz, biomeSource);
         }
     }
 
@@ -746,7 +747,8 @@ struct Spawner {
         if (level) {
             // the shared spawn of the world (the Twilight Forest's level data derives the overworld's)
             auto const& spawn = level->getSharedSpawnPos();
-            double      sx = spawn.x + 0.5 - (pos.x + 0.5), sy = spawn.y + 0.5 - pos.y, sz = spawn.z + 0.5 - (pos.z + 0.5);
+            // Bedrock keeps y 32767 while the spawn height is not resolved: compare horizontally then
+            double sx = spawn.x + 0.5 - (pos.x + 0.5), sy = spawn.y >= 32767 ? 0.0 : spawn.y + 0.5 - pos.y, sz = spawn.z + 0.5 - (pos.z + 0.5);
             if (sx * sx + sy * sy + sz * sz < 576.0) return false; // closerToCenterThan(.., 24.0)
         }
         if ((pos.x >> 4) == cx && (pos.z >> 4) == cz) return true;
@@ -755,8 +757,7 @@ struct Spawner {
     }
 
     /// NaturalSpawner#spawnCategoryForChunk / #spawnCategoryForPosition.
-    void spawnCategoryForChunk(BlockSource& region, Category const& cat, int cx, int cz) {
-        auto p = worldgen::detail::providers();
+    void spawnCategoryForChunk(BlockSource& region, Category const& cat, int cx, int cz, worldgen::BiomeSourceFn const& biomeSource) {
         worldgen::detail::SourceRegionAdapter view(
             region,
             cx,
@@ -766,7 +767,7 @@ struct Spawner {
             region.getMaxHeight(),
             worldgen::seed(),
             static_cast<int>(region.getDimensionId()),
-            p->biomeSource
+            biomeSource
         );
         // getRandomPosWithin: up to ChunkAccess#getHeight(WORLD_SURFACE) + 1
         int x = cx * 16 + random.nextInt(16), z = cz * 16 + random.nextInt(16);
@@ -774,7 +775,9 @@ struct Spawner {
         int y   = random.nextInt(top - region.getMinHeight() + 1) + region.getMinHeight(); // Mth.randomBetweenInclusive
         if (y < region.getMinHeight() + 1) return;
         BlockPos start{x, y, z};
-        if (fullCube(view, start, view.getBlock(start))) return; // BlockState#isRedstoneConductor
+        // BlockState#isRedstoneConductor: a full collision cube, except glass and leaves (never)
+        auto const& startBlock = view.getBlock(start);
+        if (fullCube(view, start, startBlock) && !kit::isLeaves(startBlock) && kit::javaId(startBlock).find("glass") == std::string::npos) return;
         int j = 0;
         for (int k = 0; k < 3; ++k) {
             int               l = x, i1 = z;
