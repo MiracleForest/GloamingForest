@@ -58,7 +58,8 @@ F8 `entity` (`block.twilightforest.boss_chest.appear`) and F4 `dimension`
 For them `recipes/<unit>.json` would fall under F3's `tools/sounds/**`, so they keep their
 refinements in `tools/sounds/recipes.d/<unit>.json`, which rule R3 gives every unit as a
 `*.d/<unit>.json` fragment (`**/*.d/{entity,boss}.json` F8, `**/*.d/dimension.json` F4); `synth.ps1`
-reads either path and fails when a unit has both. A8 may add `recipes/<unit>.json` rows for every
+reads either path, fails when a unit has both and refuses `recipes.d` for a W1 unit (for a short
+name such as `naga` the path ties with `tools/sounds/**` and `tools/ci/ownership.ps1` rejects it). A8 may add `recipes/<unit>.json` rows for every
 sound-event owner in `tools/spec/owners.rules.json` and fold the two (rule R18).
 
 **Keep TF's variants.** Every definition must match TF's inventory

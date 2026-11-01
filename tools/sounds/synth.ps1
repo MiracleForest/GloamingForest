@@ -91,7 +91,8 @@ function Get-Prop($obj, [string]$name, $default = $null) {
 # ---- units, owners, events ----------------------------------------------------------------------------
 $rules = Get-Content (Join-Path $root 'tools/spec/owners.rules.json') -Raw | ConvertFrom-Json -AsHashtable
 $unitName = @{}
-foreach ($k in $rules.units.Keys) { $unitName[$k] = $rules.units[$k].name }
+$unitWave = @{} # by name
+foreach ($k in $rules.units.Keys) { $unitName[$k] = $rules.units[$k].name; $unitWave[$rules.units[$k].name] = $rules.units[$k].wave }
 $eventOwner = [ordered]@{}
 foreach ($line in Get-Content (Join-Path $root 'docs/spec/owners.tsv')) {
     $c = $line -split "`t"
@@ -141,6 +142,11 @@ function Merge-Section($into, $from) {
 function Get-RefinementPath([string]$u) {
     $found = @("tools/sounds/recipes/$u.json", "tools/sounds/recipes.d/$u.json" | Where-Object { Test-Path (Join-Path $root $_) })
     if ($found.Count -gt 1) { Fail "$u has two recipes ($($found -join ', ')): keep one" }
+    # a W1 unit owns recipes/<u>.json; its recipes.d path can tie with tools/sounds/** in owners.tsv
+    # (a short name such as naga), which tools/ci/ownership.ps1 rejects as ambiguous
+    if ($found.Count -and $found[0] -like 'tools/sounds/recipes.d/*' -and $unitWave[$u] -eq 'W1') {
+        Fail "$($found[0]): $u is a W1 unit, its recipe is tools/sounds/recipes/$u.json"
+    }
     return $(if ($found.Count) { $found[0] } else { $null })
 }
 
