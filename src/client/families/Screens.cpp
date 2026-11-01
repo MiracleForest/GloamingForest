@@ -82,16 +82,27 @@ public:
             f.maxLength         = 384;
             f.onChange          = [this](std::string const&) { sendLines("lines"); };
             f.onSubmit          = [this](std::string const&) { sendLines("lines"); };
+            // Java SignEditScreen: Esc closes the editor and keeps the typed lines (removed() sends
+            // them); the field's own Esc put back the text it had when focused: last frame's again
+            f.onCancel = [this, i] {
+                if (i < static_cast<int>(mShadow.size())) mFields[i]->text = mShadow[i];
+                sendLines("done");
+            };
             // SignEditScreen: no character past the line width
             f.filter = [this, i](char32_t c) {
                 std::string s = mFields[i]->text;
                 return lineWidth(s) + charWidth(c) <= mMaxWidth;
             };
             mFields.push_back(&f);
+            mShadow.push_back(current);
         }
         add<TextButton>(Rect{50, 100, 100, 20}, "Done", [this] { sendLines("done"); });
         if (!mFields.empty()) mFields[0]->focus();
         log().info("client screen: families.sign");
+    }
+
+    void tick() override {
+        for (std::size_t i = 0; i < mFields.size() && i < mShadow.size(); ++i) mShadow[i] = mFields[i]->text;
     }
 
 private:
@@ -105,6 +116,7 @@ private:
     Json                            mData;
     int                             mMaxWidth;
     std::vector<screen::TextField*> mFields;
+    std::vector<std::string>        mShadow; ///< the lines as of the last frame (Esc keeps them)
 };
 
 constexpr float kSlot = 18;

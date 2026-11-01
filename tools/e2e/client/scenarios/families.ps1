@@ -15,6 +15,7 @@
 #   out/families/families-5-close.png       the signs and chests close up
 #   out/families/families-6-sign-text.png   a sign written through the editor (client mod: the native
 #                                           editor screen; the text shows on its display entity)
+#   out/families/families-7-sign-text-hud.png  the same with the HUD on (the text's name tag shows)
 # Local mode also runs the families selftests on the integrated server; remote modes build through
 # the host console (the vanilla client sees the downloaded resource pack).
 
@@ -154,7 +155,13 @@ if ($script:Mode -ne 'remote-vanilla') {
     Type-Text 'Twilight'
     Start-Sleep -Seconds 1
     Close-Screen
-    Wait-LogLine 'edited the sign at' 20 -Since $mark | Out-Null
+    # the typed line reached the server (Esc keeps it, as Java's SignEditScreen)
+    Wait-LogLine 'edited the sign at 60 .*\(1 of 4 lines written\)' 20 -Since $mark | Out-Null
     Start-Sleep -Seconds 2
     Save-Screenshot 'families-6-sign-text' | Out-Null
+    # the text is a name tag, and the harness plays with the HUD hidden (gfx_hidehud), which hides
+    # name tags too: one more with the HUD on (F1), then off again
+    Press-Key F1; Start-Sleep -Milliseconds 800
+    Save-Screenshot 'families-7-sign-text-hud' | Out-Null
+    Press-Key F1; Start-Sleep -Milliseconds 800
 }

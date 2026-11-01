@@ -22,6 +22,8 @@
 #include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorFlags.h"
+#include "mc/world/actor/provider/SynchedActorDataAccess.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/gamemode/InteractionResult.h"
@@ -608,6 +610,10 @@ GF_REGISTER_SELFTEST("families.sign_edit", [](Context& ctx) -> ll::coro::CoroTas
     co_await ctx.ticks(2);
     auto* display = fam::detail::signDisplay(p, true);
     ctx.check(display && display->getNameTag().find("WWW") != std::string::npos, "the front text shows on its display entity");
+    // the name shows without looking at it: CanShowName (set by the kit) and the nameable
+    // component's always_show (the NametagAlwaysShow data item)
+    ctx.check(display && display->getStatusFlag(ActorFlags::CanShowName) && display->mEntityData->getInt8(static_cast<ushort>(ActorDataIDs::NametagAlwaysShow)) != 0,
+              "its name tag is always shown");
     ctx.check(!fam::detail::signDisplay(p, false), "an empty back has none");
     // an empty hand opens the editor, a dye colours the side facing the player, honeycomb waxes it
     ctx.check(co_await click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:red_dye"), "a dye click");

@@ -290,10 +290,13 @@ void fillDefaults(std::map<std::string, Entry, std::less<>>& all) {
     }
 }
 
-std::unique_ptr<Snapshot> build(std::map<std::string, Entry, std::less<>> byId) {
+/// A snapshot of `byId`; `resolve`: with the game's block types looked up (only once the game's
+/// block registry exists: the client loads mods before it does, and reading it then crashes the
+/// load).
+std::unique_ptr<Snapshot> build(std::map<std::string, Entry, std::less<>> byId, bool resolve) {
     auto s  = std::make_unique<Snapshot>();
     s->byId = std::move(byId);
-    resolveTypes(*s);
+    if (resolve) resolveTypes(*s);
     return s;
 }
 
@@ -359,11 +362,11 @@ void loadRegistry() {
     std::sort(files.begin(), files.end());
     for (auto const& f : files) readFile(f, loaded);
     fillDefaults(loaded);
-    auto s     = build(std::move(loaded));
+    // the block types are looked up when a world is ready (detail::refreshTypes)
+    auto s     = build(std::move(loaded), false);
     auto count = s->byId.size();
-    auto found = s->byType.size();
     publish(std::move(s));
-    log().info("families: {} family blocks ({} registered in the game)", count, found);
+    log().info("families: {} family blocks loaded", count);
 }
 
 Entry const* entryOf(std::string_view id) {
@@ -393,7 +396,7 @@ namespace detail {
 /// new snapshot with the types looked up again. Any thread.
 void refreshTypes() {
     auto const& s     = snapshot();
-    auto        fresh = build(s.byId);
+    auto        fresh = build(s.byId, true);
     auto        found = fresh->byType.size();
     auto        count = fresh->byId.size();
     publish(std::move(fresh));

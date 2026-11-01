@@ -40,6 +40,8 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorFactory.h"
+#include "mc/world/actor/ActorFlags.h"
+#include "mc/world/actor/provider/SynchedActorDataAccess.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -245,6 +247,9 @@ void reconcileDisplay(GlobalPos const& pos) {
         }
         auto tag = nameTagOf(side);
         if (a->getNameTag() != tag) a->setNameTag(tag);
+        // a name set by code leaves CanShowName off (a name tag item sets it): without it the
+        // client draws no name; the nameable component's always_show shows it without looking at it
+        if (!a->getStatusFlag(ActorFlags::CanShowName)) SynchedActorDataAccess::setActorFlag(a->getEntityContext(), ActorFlags::CanShowName, true);
         Vec3 want{at.x, at.y - 0.25f, at.z};
         auto const& now = a->getPosition();
         if (std::fabs(now.x - want.x) + std::fabs(now.y - want.y) + std::fabs(now.z - want.z) > 0.01f) a->teleportTo(want, true, 0, 1, false);
@@ -395,9 +400,13 @@ bool editText(Player& player, GlobalPos const& pos, bool front, std::vector<std:
     auto const* b = blockAt(pos);
     auto const* e = b ? entryOf(*b) : nullptr;
     if (!isSign(e) || docAt(pos).value("waxed", false) || !mayBuild(player) || tooFar(player, pos)) return false;
-    for (auto& l : lines) l = fitLine(l, maxWidthOf(e));
+    int written = 0;
+    for (auto& l : lines) {
+        l = fitLine(l, maxWidthOf(e));
+        if (!l.empty()) ++written;
+    }
     signs::setText(pos, lines, front);
-    log().info("families: {} edited the sign at {} {} {}", player.getRealName(), pos.x, pos.y, pos.z);
+    log().info("families: {} edited the sign at {} {} {} ({} of 4 lines written)", player.getRealName(), pos.x, pos.y, pos.z, written);
     return true;
 }
 
