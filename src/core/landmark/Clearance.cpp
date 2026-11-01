@@ -6,12 +6,13 @@
 //   src/main/java/twilightforest/world/components/chunkgenerators/AbsoluteDifferenceFunction.java
 //   src/main/java/twilightforest/world/components/structures/CustomDensitySource.java
 //   src/main/java/twilightforest/util/BoundingBoxUtils.java
+//   src/main/java/twilightforest/util/WorldUtil.java
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The vanilla helpers (Beardifier kernels, Mth#fastInvSqrt, Mth#clampedMap, DensityFunctions
-// y_clamped_gradient) follow Minecraft 1.21.1.
+// y_clamped_gradient, Mth#lerpDiscrete, Math#round) follow Minecraft 1.21.1 and Java.
 #include "core/landmark/Clearance.h"
 
 #include <algorithm>
@@ -20,6 +21,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
+#include <limits>
 
 namespace gf::core::landmark {
 
@@ -195,6 +198,78 @@ double InvertedPyramid::compute(int x, int y, int z) const {
     double invertedPyramid = yClampedGradient(y, y0 - 1, y0 + squareHorizontalSpan, 1.0, -1.0 - squareHorizontalSpan) + absDiff;
     double shifted         = static_cast<double>(-(squareHorizontalSpan >> 1) - horizontalPadding) + invertedPyramid;
     return std::min(0.0, std::max(yClampedGradient(y, y0 - 1, y0, 1.0, -1.0), shifted));
+}
+
+// ---- WorldUtil#adjustForTerrain ---------------------------------------------------------------------
+
+namespace {
+
+/// Java's (int) cast of a float: NaN is 0, out of range saturates.
+int javaF2I(float f) {
+    if (std::isnan(f)) return 0;
+    if (f >= 2147483647.0f) return std::numeric_limits<int>::max();
+    if (f <= -2147483648.0f) return std::numeric_limits<int>::min();
+    return static_cast<int>(f);
+}
+
+/// Mth#floor(float).
+int mthFloor(float f) {
+    int i = javaF2I(f);
+    return f < static_cast<float>(i) ? i - 1 : i;
+}
+
+} // namespace
+
+int lerpDiscrete(float delta, int start, int end) {
+    int i = end - start;
+    return start + mthFloor(delta * static_cast<float>(i - 1)) + (delta > 0.0f ? 1 : 0);
+}
+
+std::vector<std::pair<int, int>> terrainSampleColumns(int xMin, int zMin, int xMax, int zMax, int gridLength) {
+    std::vector<std::pair<int, int>> out;
+    int                              subDivisions = gridLength - 1;
+    for (int zStep = 0; zStep <= subDivisions; ++zStep) {
+        int zPos = lerpDiscrete(static_cast<float>(zStep) / static_cast<float>(subDivisions), zMin, zMax);
+        for (int xStep = 0; xStep <= subDivisions; ++xStep) {
+            int xPos = lerpDiscrete(static_cast<float>(xStep) / static_cast<float>(subDivisions), xMin, xMax);
+            out.emplace_back(xPos, zPos);
+        }
+    }
+    return out;
+}
+
+int weightedTerrainHeight(std::vector<int> heights) {
+    if (heights.empty()) return 0; // Java: Math.round(NaN) = 0
+    std::sort(heights.begin(), heights.end(), std::greater<>()); // highest to lowest
+    double weightedSum = 0, totalWeight = 0;
+    for (std::size_t i = 0; i < heights.size(); ++i) {
+        double weight = static_cast<double>(i + 1);
+        weightedSum += weight * heights[i];
+        totalWeight += weight;
+    }
+    // (int) Math.round(double): half up
+    double mean    = weightedSum / totalWeight;
+    double rounded = std::floor(mean);
+    if (mean - rounded >= 0.5) rounded += 1.0;
+    return static_cast<int>(static_cast<std::int64_t>(rounded));
+}
+
+std::optional<int> adjustForTerrain(int xMin, int zMin, int xMax, int zMax, int gridLength, ColumnHeightFn const& height) {
+    if (!height) return std::nullopt;
+    std::vector<int> heights;
+    for (auto const& [x, z] : terrainSampleColumns(xMin, zMin, xMax, zMax, gridLength)) {
+        auto h = height(x, z);
+        if (!h) return std::nullopt;
+        heights.push_back(*h);
+    }
+    return weightedTerrainHeight(std::move(heights));
+}
+
+std::optional<int> adjustForTerrainAroundChunk(int xInCenterChunk, int zInCenterChunk, int radiusFromCenterChunk, int gridLength, ColumnHeightFn const& height) {
+    int chunkOriginX = xInCenterChunk & ~0b1111;
+    int chunkOriginZ = zInCenterChunk & ~0b1111;
+    return adjustForTerrain(chunkOriginX - radiusFromCenterChunk, chunkOriginZ - radiusFromCenterChunk, chunkOriginX + 15 + radiusFromCenterChunk,
+                            chunkOriginZ + 15 + radiusFromCenterChunk, gridLength, height);
 }
 
 } // namespace gf::core::landmark

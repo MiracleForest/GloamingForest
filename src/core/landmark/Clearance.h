@@ -6,6 +6,7 @@
 //   src/main/java/twilightforest/world/components/chunkgenerators/AbsoluteDifferenceFunction.java
 //   src/main/java/twilightforest/world/components/structures/CustomDensitySource.java
 //   src/main/java/twilightforest/util/BoundingBoxUtils.java
+//   src/main/java/twilightforest/util/WorldUtil.java
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -16,8 +17,10 @@
 // the beardifier (BoxDensityFunction with vanilla's bury / beard kernels, the inverted pyramid of
 // CustomDensitySource). Positions are block coordinates; boxes are inclusive (BlockBox).
 
+#include <functional>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "nlohmann/json.hpp"
@@ -93,5 +96,24 @@ struct InvertedPyramid {
     int      horizontalPadding = 0;
     [[nodiscard]] double compute(int x, int y, int z) const;
 };
+
+// ---- terrain height for a structure's elevation (WorldUtil#adjustForTerrain) ----------------------------
+
+/// net.minecraft.util.Mth#lerpDiscrete(delta, start, end).
+[[nodiscard]] int lerpDiscrete(float delta, int start, int end);
+/// WorldUtil#adjustForTerrain(context, xMin, zMin, xMax, zMax, gridLength, type)'s sample columns, in
+/// Java's order (z rows outer, x inner): a gridLength x gridLength grid spanning the area.
+[[nodiscard]] std::vector<std::pair<int, int>> terrainSampleColumns(int xMin, int zMin, int xMax, int zMax, int gridLength);
+/// WorldUtil#adjustForTerrain's height from the sampled first occupied heights: sorted from highest to
+/// lowest and weighted 1, 2, 3, ... (the lower ones weigh more), Math.round of the weighted mean.
+[[nodiscard]] int weightedTerrainHeight(std::vector<int> heights);
+/// The first occupied height of column (x, z) for the heightmap the caller chose (nullopt: unknown).
+using ColumnHeightFn = std::function<std::optional<int>(int x, int z)>;
+/// WorldUtil#adjustForTerrain(context, xMin, zMin, xMax, zMax, gridLength, type) over `height`
+/// (nullopt when a sample is unknown).
+[[nodiscard]] std::optional<int> adjustForTerrain(int xMin, int zMin, int xMax, int zMax, int gridLength, ColumnHeightFn const& height);
+/// WorldUtil#adjustForTerrain(context, xInCenterChunk, zInCenterChunk, radiusFromCenterChunk,
+/// gridLength): the chunk holding (x, z) widened by the radius (WORLD_SURFACE_WG in Java).
+[[nodiscard]] std::optional<int> adjustForTerrainAroundChunk(int xInCenterChunk, int zInCenterChunk, int radiusFromCenterChunk, int gridLength, ColumnHeightFn const& height);
 
 } // namespace gf::core::landmark

@@ -1,10 +1,13 @@
 // GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
 // Tests of TF's decoration clearance and structure terraforming (F6): DecorationClearance,
-// AvoidLandmarkModifier, BoxDensityFunction, CustomDensitySource (TeamTwilight/twilightforest @
-// 9e40a757, LGPL-2.1-or-later).
+// AvoidLandmarkModifier, BoxDensityFunction, CustomDensitySource, WorldUtil#adjustForTerrain
+// (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
+#include <optional>
+#include <utility>
 
 #include "core/landmark/Clearance.h"
 
@@ -99,4 +102,56 @@ TEST(LandmarkClearance, InvertedPyramid) {
     // never positive
     for (int y = -30; y < 60; y += 7)
         for (int x = -40; x < 60; x += 9) EXPECT_LE(pyramid.compute(x, y, 8), 0.0);
+}
+
+TEST(LandmarkClearance, LerpDiscreteIsMths) {
+    // Mth#lerpDiscrete: start + floor(delta * (span - 1)) + (delta > 0 ? 1 : 0)
+    EXPECT_EQ(lerpDiscrete(0.0f, 10, 20), 10);
+    EXPECT_EQ(lerpDiscrete(1.0f, 10, 20), 20);
+    EXPECT_EQ(lerpDiscrete(0.5f, 0, 15), 8);
+    EXPECT_EQ(lerpDiscrete(1.0f / 3.0f, 0, 15), 5);
+    EXPECT_EQ(lerpDiscrete(2.0f / 3.0f, 0, 15), 10);
+    EXPECT_EQ(lerpDiscrete(1.0f / 3.0f, -24, 39), -3);
+}
+
+TEST(LandmarkClearance, AdjustForTerrainSamplesAndWeights) {
+    // WorldUtil#adjustForTerrain: a 4x4 grid over the area, z rows outer
+    auto cols = terrainSampleColumns(0, 0, 15, 15, 4);
+    ASSERT_EQ(cols.size(), 16u);
+    EXPECT_EQ(cols[0], (std::pair<int, int>{0, 0}));
+    EXPECT_EQ(cols[1], (std::pair<int, int>{5, 0}));
+    EXPECT_EQ(cols[3], (std::pair<int, int>{15, 0}));
+    EXPECT_EQ(cols[4], (std::pair<int, int>{0, 5}));
+    EXPECT_EQ(cols[15], (std::pair<int, int>{15, 15}));
+    // heights x + z: sorted 30, 25, 25, 20, ... weighted 1..16 -> 1470 / 136 = 10.81 -> 11
+    auto h = adjustForTerrain(0, 0, 15, 15, 4, [](int x, int z) -> std::optional<int> { return x + z; });
+    ASSERT_TRUE(h.has_value());
+    EXPECT_EQ(*h, 11);
+    // Math.round: half up, also below zero
+    EXPECT_EQ(weightedTerrainHeight({0, 3, 0}), 1);   // 3 / 6 = 0.5
+    EXPECT_EQ(weightedTerrainHeight({-3, 0, 0}), -1); // -9 / 6 = -1.5
+    EXPECT_EQ(weightedTerrainHeight({}), 0);
+    // an unknown sample makes the whole height unknown
+    auto partial = adjustForTerrain(0, 0, 15, 15, 4, [](int x, int) -> std::optional<int> {
+        if (x == 15) return std::nullopt;
+        return 4;
+    });
+    EXPECT_FALSE(partial.has_value());
+    EXPECT_FALSE(adjustForTerrain(0, 0, 15, 15, 4, nullptr).has_value());
+    // the center-chunk overload: the chunk of (x, z) widened by the radius (the lich tower's 32, 4)
+    int  minX = 1 << 30, maxX = -(1 << 30), minZ = 1 << 30, maxZ = -(1 << 30), n = 0;
+    auto flat = adjustForTerrainAroundChunk(-1, -17, 32, 4, [&](int x, int z) -> std::optional<int> {
+        minX = std::min(minX, x);
+        maxX = std::max(maxX, x);
+        minZ = std::min(minZ, z);
+        maxZ = std::max(maxZ, z);
+        ++n;
+        return 7;
+    });
+    EXPECT_EQ(flat, std::optional<int>(7));
+    EXPECT_EQ(n, 16);
+    EXPECT_EQ(minX, -16 - 32);
+    EXPECT_EQ(maxX, -1 + 32);
+    EXPECT_EQ(minZ, -32 - 32);
+    EXPECT_EQ(maxZ, -17 + 32);
 }
