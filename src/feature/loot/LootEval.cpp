@@ -679,14 +679,30 @@ bool inCategoryBySlots(ItemStack const& stack, std::string const& id, Cat c) {
     }
 }
 
+/// The item sets already asked during one enchanting function (CategoryMemo): the stack is the same
+/// for the whole call, so each set is decided once.
+thread_local std::map<Cat, bool>* tCategoryMemo = nullptr;
+struct CategoryMemo {
+    CategoryMemo() : mPrevious(tCategoryMemo) { tCategoryMemo = &mMemo; }
+    ~CategoryMemo() { tCategoryMemo = mPrevious; }
+    CategoryMemo(CategoryMemo const&)            = delete;
+    CategoryMemo& operator=(CategoryMemo const&) = delete;
+
+private:
+    std::map<Cat, bool>  mMemo;
+    std::map<Cat, bool>* mPrevious;
+};
+
 /// Whether the stack is in the item set: the item tag (gf::tags) when it is loaded, else its slots.
 bool inCategory(ItemStack const& stack, Cat c) {
     auto id = game::items::idOf(stack);
     if (id.empty() || c == Cat::None) return false;
+    if (tCategoryMemo)
+        if (auto it = tCategoryMemo->find(c); it != tCategoryMemo->end()) return it->second;
     char const* tag = tagOf(c);
-    if (tags::has(tags::Registry::Item, tag, id)) return true;
-    if (!tags::members(tags::Registry::Item, tag).empty()) return false; // loaded: not a member
-    return inCategoryBySlots(stack, id, c);
+    bool        in  = tags::has(tags::Registry::Item, tag, id) || (tags::members(tags::Registry::Item, tag).empty() && inCategoryBySlots(stack, id, c));
+    if (tCategoryMemo) (*tCategoryMemo)[c] = in;
+    return in;
 }
 
 /// An Enchantment's definition: weight, levels, costs (Enchantment.dynamicCost(base, per level);
@@ -824,9 +840,11 @@ std::vector<JavaEnchantment const*> enchantmentPool(Json const& options) {
     if (options.is_string()) {
         auto s = options.get<std::string>();
         if (!s.empty() && s[0] == '#') {
+            // vanilla's tags in their own order (gf::tags lists members sorted, and the weighted
+            // pick walks the list in order); other tags from gf::tags
             auto tag = withNs(s.substr(1));
-            ids      = tags::members(tags::Registry::Enchantment, tag);
-            if (ids.empty()) ids = builtinEnchantmentTag(tag);
+            ids      = builtinEnchantmentTag(tag);
+            if (ids.empty()) ids = tags::members(tags::Registry::Enchantment, tag);
             if (ids.empty()) warnOnce("enchantment tag #" + tag + " has no members");
         } else {
             ids.push_back(withNs(s));
@@ -884,6 +902,7 @@ std::vector<std::pair<std::string, int>> selectFrom(RandomSource& random, ItemSt
     std::vector<std::pair<std::string, int>> out;
     int                                      value = enchantmentValue(stack);
     if (value <= 0) return out;
+    CategoryMemo memo;
     level += 1 + random.nextInt(value / 4 + 1) + random.nextInt(value / 4 + 1);
     float f = (random.nextFloat() + random.nextFloat() - 1.0f) * 0.15f;
     level   = std::max(1, javaRound(static_cast<float>(level) + static_cast<float>(level) * f));
@@ -1004,8 +1023,10 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         std::vector<std::string> options;
         for (auto const* ench : enchantmentPool(f.value("options", Json{}))) options.emplace_back(ench->id);
         // only_compatible (Java's default): enchantments the item can take (a book takes any)
-        if (f.value("only_compatible", true) && game::items::idOf(stack) != "minecraft:book")
+        if (f.value("only_compatible", true) && game::items::idOf(stack) != "minecraft:book") {
+            CategoryMemo memo;
             std::erase_if(options, [&](std::string const& o) { return !canEnchantWith(stack, o); });
+        }
         if (options.empty()) return stack;
         // Util.getRandomSafe: list.get(random.nextInt(size)), then Mth.nextInt(min, max level);
         // EnchantRandomlyFunction#enchantItem: a book becomes an enchanted book

@@ -335,7 +335,8 @@ public:
             if (auto pos = sessionOf(c.entity)) {
                 auto* region = game::regionOf(pos->dim);
                 auto  h      = region ? find(*region, game::blockPos(*pos)) : std::nullopt;
-                if (h && h->open) h->open(c.player, *pos); // joins the session (or the client mod's screen)
+                // joins the session (or the client mod's screen), as a use of the block would
+                if (h && h->open && h->open(c.player, *pos)) awardOpenStat(c.player, *pos);
             }
             return ia::Result::Deny;
         }, ia::priority::Highest);
@@ -364,12 +365,9 @@ bool openVanillaContainer(Player& player, GlobalPos const& pos, std::string cons
     auto bp = game::blockPos(pos);
     auto h  = find(*region, bp);
     if (!h || h->slots != kProxySlots) return false;
-    // the client must have the proxy's chunk: only next to the player (Java's stillValid, 8
-    // blocks); farther away the caller falls back to the form
-    if (static_cast<int>(player.getDimensionId()) != pos.dim) return false;
-    auto const& here = player.getPosition();
-    float       dx = here.x - (pos.x + .5f), dy = here.y - (pos.y + .5f), dz = here.z - (pos.z + .5f);
-    if (dx * dx + dy * dy + dz * dz > 64.f) return false;
+    // the client must have the proxy's chunk: only within the reach every screen route uses
+    // (Java's stillValid); farther away the caller falls back to the form
+    if (!withinReach(player, pos)) return false;
     auto uid = player.getOrCreateUniqueID().rawID;
     if (auto it = sessions().find(pos); it != sessions().end() && fetch(it->second.proxy)) {
         if (!it->second.viewers.contains(uid)) it->second.viewers[uid] = Viewer{nowTick() + 1};

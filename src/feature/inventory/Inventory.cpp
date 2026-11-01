@@ -357,7 +357,8 @@ Handler routed(Handler raw) {
     Handler h = raw;
     h.set     = [raw](GlobalPos const& pos, int slot, ItemStack const& stack) {
         raw.set(pos, slot, stack);
-        if (proxyOpen(pos)) proxyMirror(pos, slot, raw.get(pos, slot));
+        // the stack written (a handler that stores something else is reconciled next tick)
+        if (proxyOpen(pos)) proxyMirror(pos, slot, stack);
     };
     h.insert = [raw](GlobalPos const& pos, ItemStack const& stack, bool simulate) {
         auto rest = raw.insert(pos, stack, simulate);
@@ -1121,7 +1122,7 @@ void ensureInteractions(std::string const& blockId) {
         if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass; // Java: sneaking with an item places
         if (!c.firstEvent) return ia::Result::Consume;
         auto h = handlerFor(c.blockId);
-        if (h && h->open && h->open(c.player, c.pos) && d->chest && !d->stat.empty()) stats::award(c.player, d->stat);
+        if (h && h->open && h->open(c.player, c.pos)) awardOpenStat(c.player, c.pos);
         return ia::Result::Consume;
     });
     // Java: breaking unpacks the loot with the breaker first; the contents drop when the block
@@ -1322,6 +1323,14 @@ std::vector<GlobalPos> partsOf(GlobalPos const& pos) {
     auto otherPos = game::globalPos(*region, other);
     // DoubleBlockCombiner: the right half is FIRST (the upper 27 slots)
     return half.type == ChestType::Right ? std::vector<GlobalPos>{pos, otherPos} : std::vector<GlobalPos>{otherPos, pos};
+}
+
+bool withinReach(Player& player, GlobalPos const& pos) { return inReach(player, pos); }
+
+void awardOpenStat(Player& player, GlobalPos const& pos) {
+    auto* region = regionFor(pos);
+    auto  d      = region ? declared(game::blockIdAt(*region, game::blockPos(pos))) : std::nullopt;
+    if (d && d->chest && !d->stat.empty()) stats::award(player, d->stat);
 }
 
 bool chestBlocked(GlobalPos const& pos) {

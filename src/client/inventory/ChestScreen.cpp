@@ -251,6 +251,9 @@ private:
         int  button = b == Button::Left ? 0 : b == Button::Right ? 1 : 2;
         bool pick   = b == Button::Middle; // the pick block key
         auto now    = millis();
+        // a press during a drag: its release never arrived (released outside the window), the
+        // drag is over
+        if (mQuickCrafting) endQuickCraft();
         mDoubleClick     = slot >= 0 && mLastClickSlot == slot && now - mLastClickTime < 250 && mLastClickButton == button;
         mSkipNextRelease = false;
         if (slot != -1 && !mQuickCrafting) {

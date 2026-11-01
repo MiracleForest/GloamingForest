@@ -76,6 +76,11 @@ bool unpackLoot(GlobalPos const& pos, Player* opener);
 /// ChestBlock#isChestBlockedAt for every part of a declared chest: a redstone conductor or a
 /// sitting cat right above.
 [[nodiscard]] bool chestBlocked(GlobalPos const& pos);
+/// Container#stillValidBlockEntity's reach: the player's eye within its block interaction range + 4
+/// of the block (every screen route uses it).
+[[nodiscard]] bool withinReach(Player& player, GlobalPos const& pos);
+/// Awards the declared container's opening stat to `player` (ChestBlock#useWithoutItem).
+void awardOpenStat(Player& player, GlobalPos const& pos);
 
 // ---- vanilla clients: the game's chest screen through a chest minecart (VanillaContainer.cpp) ------
 
