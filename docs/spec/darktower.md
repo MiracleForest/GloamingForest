@@ -173,7 +173,8 @@ draws redstone dust in the block and, 1/10, three outline lines of the 9 x 9 x 9
 particles per line). Server (`tickCount` + 1 per tick while a player is in range, reset to 0 with the snapshot):
 
 - The first tick with the area loaded (radius 4) snapshots the 9 x 9 x 9 block states around it (x, then y, then z
-  from -4 to 4) and enters slow scan. A scan runs every tick in fast scan, or when `tickCount % 20 == 0` in slow scan.
+  from -4 to 4) and enters slow scan. A scan runs every tick in fast scan, or when `tickCount % 20 == 0` in slow scan;
+  the capture tick itself also scans when its `tickCount % 20 == 0` (capture and scan run in the same tick).
 - A scan compares each position's current block with the snapshot (by block, not state). For a changed position
   (`revertBlock(current, snapshot)`):
   - not revertible -> the snapshot takes the current state and the position does not count: the current state is air

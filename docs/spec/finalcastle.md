@@ -118,9 +118,10 @@ Reserved, never opened). U30 owns the template-pool entries (registry `twilightf
 
 **Gazebo WIP texts** (`FinalCastleBossGazeboComponent.willBeAddingFinalBossSoon`, LGPL). In TF 4.8 the gazebo's
 procedural `postProcess` is commented out ("Placed by Template"): walls, roof and these entities come from the ARR
-`gazebo.nbt`, while `EntityEvents.removeCastleTextIfAttacked` stays live and the 4.8 castle shows the texts. U30's
-original gazebo therefore **includes them**, built from the data of `willBeAddingFinalBossSoon` (the template file is
-never read, R10):
+`gazebo.nbt`. The template cannot be inspected (ARR, R10), so the inclusion rests on the LGPL evidence: the
+"Placed by Template" note covers this call, `EntityEvents.removeCastleTextIfAttacked` (registered in 4.8) only makes
+sense if the tagged interaction exists in generated castles, and the texts are seen in 4.8 castles in game (review
+observation). U30's original gazebo therefore **includes them**, built from the data of `willBeAddingFinalBossSoon`:
 
 - Four `minecraft:text_display` entities, each placed by TF's base call
   `TFStructureComponent.setInvisibleTextEntity(world, 10, 0, 10, sbb, text, forcePlace = true, yOffset,
@@ -154,8 +155,10 @@ never read, R10):
   `final_boss` connector's position instead of entities; U30's F7 marker handler (`structure::registerMarkerHandler`)
   does at that block what `willBeAddingFinalBossSoon` does: four persistent text carriers at the line positions and one
   punch carrier with the computed box. The carriers are U30 helper actors in its BP folder
-  (`assets/pack/bp/entities/finalcastle/`, ids outside TF's id space, e.g. `gloamingforest:final_castle_text` and
-  `gloamingforest:final_castle_punch`, so they are not owners.tsv id rows): invisible, no gravity, no physics
+  (`assets/pack/bp/entities/finalcastle/`). They are not TF content, so they get no `twilightforest:` id (R1 covers
+  TF's ids only) and no owners.tsv row; the names `gloamingforest:final_castle_text` and
+  `gloamingforest:final_castle_punch` are placeholders: U30 calls the helper namespace out in its PR as a contract
+  extension (R18) and A8 settles one namespace for all units' helper actors. They are invisible, no gravity, no physics
   collision, not pushable, immune to damage, no loot, no spawn egg, persistent. A text carrier shows its line as an
   always-shown name tag (`minecraft:nameable` `always_show`, renaming off); the punch carrier has a 2.0 x 3.6
   `minecraft:collision_box` (the hit box). `interactions::onAttack({.block = <punch carrier id>})` (`Match::block`

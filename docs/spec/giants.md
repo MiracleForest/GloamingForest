@@ -179,8 +179,8 @@ Client rendering (`CloudEvents`, client config `cloudBlockPrecipitationDistance`
 every 10 game ticks collect cloud blocks within `r` = 10 (fancy) / 5 (fast) columns of the camera and y from `camY -
 r` to `camY + distance + r - 1` whose precipitation is not NONE and that have at least one non-opaque block below;
 the stop y is the lowest non-opaque y of the same downward scan as the random tick (`y - 1` while `> y - distance`,
-stopping at the first opaque block), i.e. one block higher than the server's `highestRainyBlock`. Each tick: rain splash particles (`minecraft:rain`, or `minecraft:smoke` on lava, magma,
-lit campfires) at up to 100 random columns (50 with decreased particles) within 10 blocks of the camera, plus the
+stopping at the first opaque block), i.e. one block higher than the server's `highestRainyBlock`. Each tick: rain
+splash particles (`minecraft:rain`, or `minecraft:smoke` on lava, magma, lit campfires) at up to 100 random columns (50 with decreased particles) within 10 blocks of the camera, plus the
 vanilla rain sounds (`weather.rain` 0.2 / 1.0, `weather.rain.above` 0.1 / 0.5). Each frame after weather: vanilla-style
 rain / snow sheets per column from the cloud down to the stop y (alpha `((1 - d^2) x 0.5 + 0.5) x level`, d = distance
 / r), rain texture scrolling, snow texture drifting as vanilla. Bedrock: client mod draws the sheets with F12
