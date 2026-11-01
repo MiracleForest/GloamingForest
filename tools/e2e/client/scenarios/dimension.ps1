@@ -1,7 +1,7 @@
 # F4 (dimension): a real player lights a Twilight portal with a thrown diamond, travels into the
 # Twilight Forest (portal overlay with the client mod, camera fade on a vanilla client), sees the
 # dimension render from y -32 to 255 under its fixed night (time 13000), and comes back.
-# Screenshots: out/dimension/{start,portal-lit,portal-overlay,twilight-arrival,twilight-up,twilight-down,back-home}.png
+# Screenshots: out/dimension/{start,portal-lit,portal-overlay-1s,portal-overlay-2s,twilight-arrival,twilight-up,twilight-down,back-home}.png
 $hostPrefix = if ($script:Mode -eq 'local') { '' } else { '\[host\].*' }
 Wait-LogLine "${hostPrefix}GloamingForest world ready" 120 | Out-Null
 if ($script:Mode -eq 'local') {
@@ -48,8 +48,10 @@ Save-Screenshot 'portal-lit' | Out-Null
 # stand in the portal: the overlay / fade grows over 3 s, then the trip
 $mark = Get-LogMark
 Invoke-Teleport '/tp @s 101.6 -61 103.6 0 20'
-Start-Sleep -Milliseconds 1800
-Save-Screenshot 'portal-overlay' | Out-Null
+Start-Sleep -Milliseconds 1000
+Save-Screenshot 'portal-overlay-1s' | Out-Null
+Start-Sleep -Milliseconds 1300
+Save-Screenshot 'portal-overlay-2s' | Out-Null
 if ($script:Mode -eq 'local') {
     Wait-LogLine 'client portal overlay: ' 10 -Since $mark | Out-Null
 } else {
