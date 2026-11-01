@@ -160,7 +160,7 @@ void raise(Actor& actor, std::string const& event) {
 }
 
 /// Spawns a protection box entity for `box`, or refreshes the living one (ProtectionBox#matches /
-/// resetLifetime). The entity stands on the box's bottom center; its geometry is scaled by the
+/// resetLifetime). The entity stands on the box's top center; its geometry hangs below and is scaled by the
 /// size properties (sizeX * 16 + 2 pixels as ProtectionBoxModel).
 void spawnOrRefreshBox(int dim, BlockBox const& box) {
     auto level = ll::service::getLevel();
@@ -195,7 +195,7 @@ void spawnOrRefreshBox(int dim, BlockBox const& box) {
     if (!region) return;
     int   sx = box.maxX - box.minX + 1, sy = box.maxY - box.minY + 1, sz = box.maxZ - box.minZ + 1;
     float x  = static_cast<float>(box.minX) + static_cast<float>(sx) / 2.0f;
-    float y  = static_cast<float>(box.minY) - 1.0f / 16.0f;
+    float y  = static_cast<float>(box.maxY + 1) + 1.0f / 16.0f; // the geometry hangs below the entity
     float z  = static_cast<float>(box.minZ) + static_cast<float>(sz) / 2.0f;
     auto* actor = spawnEntity(*region, kProtectionBox, x, y, z, [sx, sy, sz](Actor& a) {
         // the size properties gf:size_x / _y / _z (declared in the BP entity, synced to every client)
