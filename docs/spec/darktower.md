@@ -192,6 +192,20 @@ particles per line). Server (`tickCount` + 1 per tick while a player is in range
   one increments it, and once it is **more than 20** (`ticksSinceChange > 20`, the 21st consecutive change-free scan)
   slow scan resumes. A block placed during slow scan is found by the next 20-tick scan; from then on it is rolled
   every tick (about 10 scans on average until its revert), not every 20 ticks.
+- Consequence of these rules (TF behaviour, translate as is; do not "fix" it): a revert to an antibuilt block never
+  makes the position match its snapshot again. The snapshot keeps the original block (towerwood, say), and
+  `twilightforest:antibuilt_block` is not in `#twilightforest:antibuilder_ignores` (BlockTagGenerator.java:517-530),
+  is breakable (destroy speed 0.3) and is not air, so `revertBlock(antibuilt, original)` returns true on **every**
+  scan: the position counts as a detected change each time (its 1/10 roll still consumes a `nextInt(10)`; a won
+  roll calls `updateOrDestroy(antibuilt, antibuilt)`, a no-op because the states are equal). So once any antibuilt
+  block exists in the region, the antibuilder scans every tick and never returns to slow scan while a player stays
+  within 16 blocks. Breaking the antibuilt block changes nothing (air over a motion-blocking snapshot is revertible,
+  and the next won roll refills it). Slow scan resumes only when every changed position is settled: reverted to air
+  (a block placed into snapshot air and destroyed now matches its snapshot again) or absorbed by a non-revertible
+  change (the snapshot takes the current state, e.g. an `antibuilder_ignores` block placed over the antibuilt block).
+  When every player leaves the 16-block range the snapshot is dropped (`blockData = null`, `tickCount = 0`); the next
+  capture includes the antibuilt blocks, which then match, so slow scan returns 21 change-free scans after the
+  capture.
 
 ### 2.4 Carminite reactor (`CarminiteReactorBlock`, `CarminiteReactorBlockEntity`)
 
@@ -440,7 +454,9 @@ particles 1/5 while moving. Sounds: hurt `entity.twilightforest.carminite_golem.
 Render: iron-golem-style sway (`6.5 x ((|f % 13 - 6.5| - 3.25) / 3.25)` degrees on Z), `carminitegolem.png`, shadow
 0.75; arms swing by the attack timer.
 
-Loot `twilightforest:entities/carminite_golem`: `minecraft:iron_ingot` 0..2 + looting 0..1; 1 `twilightforest:towerwood`.
+Loot `twilightforest:entities/carminite_golem`: pool 1 `minecraft:iron_ingot` 0..2 + looting 0..1 (entry functions);
+pool 2 `twilightforest:towerwood` 0..2 + looting 0..1 (pool-level `set_count` uniform 0..2 and
+`enchanted_count_increase` looting 0..1, which apply to the towerwood entry: not a fixed 1).
 
 ### 6.4 `twilightforest:carminite_broodling` (TowerBroodling extends SwarmSpider)
 
@@ -572,13 +588,15 @@ ghastguard `ghastSpawnHandler`, ghastling `canSpawnHere`, golem / broodling / bo
 
 ## 15. Acceptance (selftests `darktower.*`, dx 2600-2699)
 
-Per the unit record: golden hash of the dark tower (seeded); devices: vanishing chain reaction, reappearing cycle
-(2-6 ticks, 80 vanished, 15 warning), locked door refuses (click sound) until a tower key unlocks it, carminite
-builder builds up to 17 blocks (`blocksMade <= 16`) along the player's look, stops at the 18th, and they expire in a
-chain after deactivation, antibuilder (within its 9 x 9 x 9 region) refills a broken motion-blocking block with an
-antibuilt block and destroys a block placed into snapshot air with its drop (fast scan after the first detected
-change, slow scan again after 21 change-free scans), reactor turns its shell into fake gold/diamond and explodes at
-tick 350 with 6 ghastlings, slider spawns a moving slide block that damages 5 and returns; ghast trap
-charges from 3 dying ghastlings and, powered, pulls a scripted Ur-Ghast down (tantrum off, 7 damage chance) and fires
-`activate_ghast_trap`; Ur-Ghast phases toggle after 10/18 damage, tantrum divides damage by 10 and spawns minions at
-traps; death places the dark chest.
+Per the unit record: golden hash of the dark tower (seeded); devices: vanishing chain reaction, reappearing cycle (2-6
+ticks, 80 vanished, 15 warning), locked door refuses (click sound) until a tower key unlocks it, carminite builder
+builds up to 17 blocks (`blocksMade <= 16`) along the player's look, stops at the 18th, and they expire in a chain after
+deactivation, antibuilder (within its 9 x 9 x 9 region) refills a broken motion-blocking block with an antibuilt block
+and destroys a block placed into snapshot air with its drop (fast scan after the first detected change; slow scan again
+after 21 change-free scans only when every change was reverted to air or was not revertible: once an antibuilt block
+exists in the region the antibuilder scans every tick while a player is within 16 blocks, and a selftest must expect
+that; a fresh capture after all players left range absorbs the antibuilt blocks), reactor turns its shell into fake
+gold/diamond and explodes at tick 350 with 6 ghastlings, slider spawns a moving slide block that damages 5 and returns;
+ghast trap charges from 3 dying ghastlings and, powered, pulls a scripted Ur-Ghast down (tantrum off, 7 damage chance)
+and fires `activate_ghast_trap`; Ur-Ghast phases toggle after 10/18 damage, tantrum divides damage by 10 and spawns
+minions at traps; death places the dark chest.
