@@ -371,6 +371,26 @@ GF_REGISTER_SELFTEST("entity.mount", [](Context& ctx) -> ll::coro::CoroTask<> {
     (void)box;
 });
 
+// parts added by a behaviour inside the actor's own tick (onSpawn), as the boss units do
+GF_REGISTER_SELFTEST("entity.multipart_in_tick", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box = co_await ctx.flatArea(5826, 6);
+    auto            at  = ctx.testPos(5828, 2);
+    auto*           mob = spawnMob(at, "gf_test:boss");
+    ctx.require(mob != nullptr, "the fixture boss spawns");
+    mob->setNameTag("gf_parts");
+    auto uid = uidOf(*mob);
+    co_await ctx.ticks(4);
+    mob = mobById(uid);
+    ctx.require(mob != nullptr, "the boss is still there");
+    auto parts = ge::ext::parts(*mob);
+    ctx.check(parts.size() == 3, "onSpawn added 3 parts inside the tick (" + std::to_string(parts.size()) + ")");
+    for (auto const& p : parts) ctx.check(ge::partActor(p) != nullptr, "part " + p.partId + " exists");
+    removeActor(uid);
+    co_await ctx.ticks(3);
+    (void)box;
+});
+
 // a parent without its own `<id>_part` type gets F8's invisible hitbox part
 GF_REGISTER_SELFTEST("entity.multipart_generic", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);

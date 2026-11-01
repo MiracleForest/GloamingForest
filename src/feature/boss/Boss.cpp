@@ -153,6 +153,7 @@ struct Bar {
     bool                    visible  = true;
     float                   progress = 1.0f;
     std::optional<std::string> name;
+    std::string             lastTag; ///< the name tag the bar's title was made from
     std::set<std::int64_t>  players; ///< the players the bar was added for
 };
 
@@ -695,29 +696,16 @@ bool peacefulDespawn(Mob& boss) {
     return true;
 }
 
-void onBossTick(Actor& actor) {
-    auto* boss = fe::asMob(actor);
-    if (!boss) return;
-    auto const* spec = bossSpec(actor.getTypeName());
-    if (!spec) return;
-    auto& bar = S().bars[uidOf(actor)];
-    if (boss->isAlive()) {
-        if (peacefulDespawn(*boss)) return;
-        // BaseTFBoss#customServerAiStep -> tickBossBar
-        int max = boss->getMaxHealth();
-        setProgress(*boss, bar, max > 0 ? static_cast<float>(boss->getHealth()) / static_cast<float>(max) : 0.0f);
-    }
-    updateAudience(*boss, bar);
-}
-
-void onBossSpawn(Actor& actor, fe::ActorState& state) {
-    auto* boss = fe::asMob(actor);
-    auto const* spec = bossSpec(actor.getTypeName());
-    if (!boss || !spec) return;
-    auto& bar = S().bars[uidOf(actor)];
-    bar.rgb   = spec->bar.rgb;
-    bar.darken = spec->bar.darken;
-    bar.fog    = spec->bar.fog;
+/// The bar of a boss, made from its spec and the persisted style when it has none yet (a boss that
+/// spawned, or came back with its chunk after its bar was dropped).
+Bar& barOf(Mob& boss, BossSpec const& spec, fe::ActorState const& state) {
+    auto [it, fresh] = S().bars.try_emplace(uidOf(boss));
+    auto& bar        = it->second;
+    if (!fresh) return bar;
+    bar.lastTag = boss.getNameTag();
+    bar.rgb     = spec.bar.rgb;
+    bar.darken  = spec.bar.darken;
+    bar.fog     = spec.bar.fog;
     // persisted style changes (Lich phases)
     if (state.data.is_object() && state.data.contains("boss:bar")) {
         auto const& b = state.data["boss:bar"];
@@ -726,6 +714,38 @@ void onBossSpawn(Actor& actor, fe::ActorState& state) {
         bar.darken    = b.value("darken", bar.darken);
         bar.fog       = b.value("fog", bar.fog);
     }
+    return bar;
+}
+
+void onBossTick(Actor& actor, fe::ActorState const& state) {
+    auto* boss = fe::asMob(actor);
+    if (!boss) return;
+    auto const* spec = bossSpec(actor.getTypeName());
+    if (!spec) return;
+    auto& bar = barOf(*boss, *spec, state);
+    if (boss->isAlive()) {
+        if (peacefulDespawn(*boss)) return;
+        // BaseTFBoss#customServerAiStep -> tickBossBar
+        int max = boss->getMaxHealth();
+        setProgress(*boss, bar, max > 0 ? static_cast<float>(boss->getHealth()) / static_cast<float>(max) : 0.0f);
+    }
+    updateAudience(*boss, bar);
+    // BaseTFBoss#setCustomName: a renamed boss renames its bar
+    if (auto const& tag = boss->getNameTag(); tag != bar.lastTag) {
+        bar.lastTag = tag;
+        if (!bar.name)
+            forEachViewer(bar, [&](Player& p) {
+                sendBossEvent(p, uidOf(*boss), BossEventUpdateType::UpdateName, barTitle(*boss, p), bar.progress, nearest(bar.rgb), bar.overlay);
+            });
+    }
+}
+
+void onBossSpawn(Actor& actor, fe::ActorState& state) {
+    auto* boss = fe::asMob(actor);
+    auto const* spec = bossSpec(actor.getTypeName());
+    if (!boss || !spec) return;
+    (void)barOf(*boss, *spec, state);
+    // EntityEvents#adjustEntityHealthInMultiplayerFights runs once, on the boss's first spawn
     if (!state.loaded && !(state.data.is_object() && state.data.contains("boss:adjusted"))) {
         adjustHealth(*boss);
         gf::entity::data(actor, "boss:adjusted") = true;
@@ -960,7 +980,7 @@ public:
         if (std::exchange(once, true)) return;
         fe::addInternalHooks({
             .interesting = [](std::string const& type) { return S().bosses.contains(type); },
-            .tick        = [](Actor& actor, fe::ActorState&) { onBossTick(actor); },
+            .tick        = [](Actor& actor, fe::ActorState& state) { onBossTick(actor, state); },
             .die =
                 [](Actor& actor, std::string const& damageType, Actor* killer) {
                     if (auto* mob = fe::asMob(actor)) onBossDie(*mob, damageType, killer);
@@ -1138,9 +1158,9 @@ std::optional<TrophyVariant> trophyVariant(std::string const& blockId) {
 namespace ext {
 
 void setBarStyle(Mob& boss, unsigned rgb, Overlay overlay, bool allowLerp) {
-    auto it = fb::S().bars.find(fe::uidOf(boss));
-    if (it == fb::S().bars.end()) return;
-    auto& bar    = it->second;
+    auto const* spec = fb::bossSpec(boss.getTypeName());
+    if (!spec) return;
+    auto& bar    = fb::barOf(boss, *spec, fe::stateOf(boss));
     int   ov     = static_cast<int>(overlay);
     bool  change = bar.rgb != rgb || bar.overlay != ov;
     if (!change) return;
@@ -1154,9 +1174,9 @@ void setBarStyle(Mob& boss, unsigned rgb, Overlay overlay, bool allowLerp) {
 }
 
 void setBarFlags(Mob& boss, bool darken, bool fog) {
-    auto it = fb::S().bars.find(fe::uidOf(boss));
-    if (it == fb::S().bars.end()) return;
-    auto& bar = it->second;
+    auto const* spec = fb::bossSpec(boss.getTypeName());
+    if (!spec) return;
+    auto& bar = fb::barOf(boss, *spec, fe::stateOf(boss));
     if (bar.darken == darken && bar.fog == fog) return;
     bar.darken                          = darken;
     bar.fog                             = fog;
@@ -1165,9 +1185,9 @@ void setBarFlags(Mob& boss, bool darken, bool fog) {
 }
 
 std::optional<unsigned> barColor(Mob& boss) {
-    auto it = fb::S().bars.find(fe::uidOf(boss));
-    if (it == fb::S().bars.end()) return std::nullopt;
-    return it->second.rgb;
+    auto const* spec = fb::bossSpec(boss.getTypeName());
+    if (!spec) return std::nullopt;
+    return fb::barOf(boss, *spec, fe::stateOf(boss)).rgb;
 }
 
 int nearestBarColor(unsigned rgb) { return fb::nearest(rgb); }

@@ -436,7 +436,7 @@ LL_TYPE_INSTANCE_HOOK(
     DataLoadHelper&    helper
 ) {
     bool ok = origin(tag, helper);
-    if (ok) gf::feature::entity::readSave(*this, tag);
+    if (ok && gf::feature::entity::isServerActor(*this)) gf::feature::entity::readSave(*this, tag);
     return ok;
 }
 
