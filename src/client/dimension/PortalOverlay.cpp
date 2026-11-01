@@ -49,6 +49,7 @@ struct ClientState {
     int  portalTimer = 0;
     bool inside      = false;
     bool native      = false; ///< the HUD layer framework draws our layer
+    std::string popped;       ///< the screen a pop was scheduled for (until the HUD is on top again)
 };
 ClientState& state() {
     static ClientState s;
@@ -78,16 +79,23 @@ void tick() {
     bool     before = s.portalTimer > 0;
     if (inside) {
         s.portalTimer = std::min(s.portalTimer + 1, kMaxTicks);
-        // close any open screen but the pause and death screens
+        // close any open screen but the pause and death screens; a pop takes effect a few frames
+        // later, so each screen is popped once (popping again while it closes would take the HUD)
         if (auto* c = currentClient()) {
             if (ISceneStack* stack = c->getClientSceneStack().get()) {
                 auto name = stack->getScreenName();
-                if (name != "hud_screen" && name != "pause_screen" && name != "death_screen" && !name.empty()) stack->schedulePopScreen(1);
+                if (name == "hud_screen" || name.empty()) {
+                    s.popped.clear();
+                } else if (name != "pause_screen" && name != "death_screen" && name != s.popped) {
+                    stack->schedulePopScreen(1);
+                    s.popped = name;
+                }
             }
         }
     } else if (s.portalTimer > 0) {
         s.portalTimer = std::max(s.portalTimer - 2, 0);
     }
+    if (!inside) s.popped.clear();
     if (!before && s.portalTimer > 0) log().info("client portal overlay: {}", s.native ? "native" : "camera fade");
     s.inside = inside;
 }
