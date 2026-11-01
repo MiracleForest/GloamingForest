@@ -1,24 +1,31 @@
+// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
+//   src/main/java/twilightforest/init/TFParticleType.java
+//   src/main/java/twilightforest/config/TFClientConfig.java
+//   src/main/java/twilightforest/client/event/ClientGameEvents.java
+// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
+// of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
+//
 // "client.world" (F12). Client build only.
 //
 // Providers and hooks for the dimension's atmosphere (rule R8: units register here):
 // - sky / stars: LevelRendererCamera::renderSky (a provider may replace the vanilla sky);
-// - fog: LevelRendererPlayer::setupFog (distance fog of the camera's biome: colour, start, end);
-// - clouds: Dimension::getCloudHeight of the client's dimension (nullopt: no clouds);
-// - weather: drawn in the world pass; when a provider draws it, the vanilla rain / snow of the
-//   client's dimension is held at 0 (LevelRendererPlayer::tickRain, no splashes or rain sounds);
+// - fog: LevelRendererPlayer::setupFog: the distance fog of the camera's biome (Classic) and the
+//   volumetric air fog (Vibrant Visuals), plus the frame's fog colour (LevelRendererCamera::render);
+// - clouds: the level renderer's cloud height each frame and Dimension::getCloudHeight of the client's
+//   dimension; nullopt hides the clouds (ViewRenderData::mDrawClouds);
+// - weather: drawn in the world pass; when a provider draws it, the frame skips the vanilla weather
+//   pass (ViewRenderData::mDrawWeather) and LevelRendererPlayer::tickRain (splashes, rain sounds);
+//   the rain and lightning levels are left alone, as TF's DimensionSpecialEffects;
 // - music: MusicManager::getSituationalMusic (TF's setMusicInDimension);
-// - particles: native factories for TF's 29 particle ids, run instead of the data-driven particle
-//   when the client level spawns that effect (Level::addParticleEffect);
-// - maps: the client's MapItemSavedData as a MapView, TF's decoration icons;
-// - camera: LocalPlayer::getFieldOfViewModifier modifiers, camera shake (TF's shakeCamera through
-//   the game's CameraShakeComponent, config "client".screenShakingEffect).
-//
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/init/TFParticleType.java (the particle ids)
-//   src/main/java/twilightforest/config/TFClientConfig.java (screenShakingEffect)
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
-// Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
-// of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
+// - particles: native factories for TF's 29 particle ids (TFParticleType), run instead of the
+//   data-driven particle when the client level spawns that effect (Level::addParticleEffect), with
+//   the effect's molang variables;
+// - maps: the client's MapItemSavedData as a MapView, TF's decoration icons (drawn by Render.cpp);
+// - camera: LocalPlayer::getFieldOfViewModifier modifiers, the screen shake of
+//   ClientGameEvents (beanstalk rumbling: the local player's yaw / pitch jitter per tick, config
+//   "client".screenShakingEffect = TFClientConfig.screenShakingEffect).
 
 #ifdef GF_CLIENT
 
@@ -29,7 +36,9 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <random>
 #include <unordered_map>
+#include <variant>
 
 #include "glm/gtc/matrix_transform.hpp"
 
@@ -39,28 +48,33 @@
 #include "ll/api/memory/Hook.h"
 
 #include "mc/client/game/ClientInstance.h"
-#include "mc/client/multiplayer/ClientLevel.h"
 #include "mc/client/gui/screens/ScreenContext.h"
+#include "mc/client/multiplayer/ClientLevel.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/client/renderer/BaseActorRenderContext.h"
-#include "mc/client/renderer/actor/MapRenderer.h"
 #include "mc/client/renderer/game/LevelRendererCamera.h"
 #include "mc/client/renderer/game/LevelRendererPlayer.h"
 #include "mc/client/sound/Music.h"
 #include "mc/client/sound/MusicManager.h"
 #include "mc/client/world/level/fog/FogDistanceSetting.h"
+#include "mc/client/world/level/fog/ResolvedFogVolumetricCoefficientSetting.h"
+#include "mc/client/world/level/fog/ResolvedFogVolumetricDensitySetting.h"
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
-#include "mc/deps/minecraft_camera/CameraShakeType.h"
 #include "mc/deps/minecraft_renderer/objects/ViewRenderData.h"
 #include "mc/deps/minecraft_renderer/objects/ViewRenderObject.h"
-#include "mc/entity/components/CameraShakeComponent.h"
+#include "mc/entity/components/ActorRotationComponent.h"
+#include "mc/util/MolangMemberArray.h"
+#include "mc/util/MolangMemberVariable.h"
+#include "mc/util/MolangScriptArg.h"
+#include "mc/util/MolangVariable.h"
+#include "mc/util/MolangVariableMap.h"
+#include "mc/world/actor/BuiltInActorComponents.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/ILevel.h"
 #include "mc/world/level/Level.h"
-#include "mc/world/level/Weather.h"
 #include "mc/world/level/biome/Biome.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/dimension/OverworldDimension.h"
@@ -99,7 +113,7 @@ std::string clientBiome() {
 
 /// One log line per kind of activity per level (the e2e scenarios wait for them).
 struct Once {
-    std::mutex                       mutex;
+    std::mutex                            mutex;
     std::unordered_map<std::string, bool> done;
 };
 Once& once() {
@@ -136,7 +150,7 @@ std::atomic<bool> gReplaceWeather{false};
 /// A new provider reports its hooks again (one log line per hook and provider).
 void forgetProviderLines() {
     std::lock_guard lock(once().mutex);
-    for (char const* k : {"sky", "fog", "clouds", "weather"}) once().done.erase(k);
+    for (char const* k : {"sky", "fog", "fog_volumetric", "clouds", "clouds_hidden", "weather"}) once().done.erase(k);
 }
 } // namespace
 
@@ -235,10 +249,14 @@ constexpr Declared kDeclared[] = {
 };
 static_assert(std::size(kDeclared) == 29, "TF 4.8 registers 29 particle types");
 
+/// The factories as an immutable snapshot: the particle hook (every particle the game spawns)
+/// reads it without a lock.
+using FactoryMap = std::unordered_map<std::string, Factory>;
 struct Factories {
-    std::mutex                               mutex;
-    std::unordered_map<std::string, Factory> byId;
-    std::unordered_map<std::string, bool>    warned;
+    std::mutex                                     write;
+    std::atomic<std::shared_ptr<FactoryMap const>> map{std::make_shared<FactoryMap const>()};
+    std::atomic<bool>                              any{false};
+    std::unordered_map<std::string, bool>          warned; ///< under `write`
 };
 Factories& factories() {
     static Factories f;
@@ -247,30 +265,41 @@ Factories& factories() {
 bool isDeclared(std::string const& id) {
     return std::any_of(std::begin(kDeclared), std::end(kDeclared), [&id](Declared const& d) { return id == d.id; });
 }
+template <class F>
+void edit(F&& change) {
+    auto&           f = factories();
+    std::lock_guard lock(f.write);
+    auto            next = std::make_shared<FactoryMap>(*f.map.load());
+    change(*next);
+    f.any = !next->empty();
+    f.map.store(std::move(next));
+}
 } // namespace
 
 void registerNative(std::string const& particleId, Factory factory) {
     if (!factory) return;
-    auto&           f = factories();
-    std::lock_guard lock(f.mutex);
     if (!isDeclared(particleId) && !particleId.starts_with("gf_test:")) {
+        auto&           f = factories();
+        std::lock_guard lock(f.write);
         if (!f.warned[particleId]) log().warn("particles: {} is not a TF particle id", particleId);
         f.warned[particleId] = true;
     }
-    f.byId[particleId] = std::move(factory);
+    edit([&](FactoryMap& m) { m[particleId] = std::move(factory); });
+}
+
+bool unregisterNative(std::string const& particleId) {
+    bool had = false;
+    edit([&](FactoryMap& m) { had = m.erase(particleId) > 0; });
+    return had;
 }
 
 bool spawn(std::string const& particleId, Vec3 const& pos, Vec3 const& velocity, nlohmann::json const& params) {
-    Factory fn;
-    {
-        auto&           f = factories();
-        std::lock_guard lock(f.mutex);
-        auto            it = f.byId.find(particleId);
-        if (it == f.byId.end()) return false;
-        fn = it->second;
-    }
+    if (!factories().any.load(std::memory_order_relaxed)) return false;
+    auto map = factories().map.load();
+    auto it  = map->find(particleId);
+    if (it == map->end()) return false;
     try {
-        fn(pos, velocity, params);
+        it->second(pos, velocity, params);
     } catch (std::exception const& e) {
         log().error("particles: factory of {} failed: {}", particleId, e.what());
     }
@@ -279,17 +308,56 @@ bool spawn(std::string const& particleId, Vec3 const& pos, Vec3 const& velocity,
 
 std::vector<std::pair<std::string, bool>> declared() {
     std::vector<std::pair<std::string, bool>> out;
-    auto&                                     f = factories();
-    std::lock_guard                           lock(f.mutex);
-    for (auto const& d : kDeclared) out.emplace_back(d.id, f.byId.contains(d.id));
+    auto                                      map = factories().map.load();
+    for (auto const& d : kDeclared) out.emplace_back(d.id, map->contains(d.id));
     return out;
 }
 
 namespace {
-bool hasFactory(std::string const& id) {
-    auto&           f = factories();
-    std::lock_guard lock(f.mutex);
-    return !f.byId.empty() && f.byId.contains(id);
+/// A molang value as JSON: numbers, structs as objects of their members (names without '.').
+nlohmann::json molangValue(MolangScriptArg const& arg) {
+    if (arg.mType == MolangScriptArgType::Float) return arg.mPOD.mFloat;
+    if (arg.mType != MolangScriptArgType::Variant) return nullptr;
+    auto const* members = std::get_if<MolangMemberArray>(&arg.mData);
+    if (!members) return nullptr;
+    nlohmann::json out = nlohmann::json::object();
+    for (auto const& m : *members->mMembers) {
+        std::string name = m.mName->getString();
+        if (name.starts_with('.')) name.erase(0, 1);
+        out[name] = molangValue(*m.mData);
+    }
+    return out;
+}
+
+/// The params and velocity a native factory gets for an engine-spawned effect (see ext/ui/Client.h).
+std::pair<nlohmann::json, Vec3> fromMolang(MolangVariableMap const& vars) {
+    nlohmann::json params = nlohmann::json::object();
+    auto const&    offsets = *vars.mMapFromVariableIndexToVariableArrayOffset;
+    auto const&    values  = *vars.mVariables;
+    auto const&    names   = MolangVariable::mIndexToVariableNameMap();
+    for (std::size_t i = 0; i < offsets.size(); ++i) {
+        short off = offsets[i];
+        if (off < 0 || static_cast<std::size_t>(off) >= values.size() || !values[static_cast<std::size_t>(off)]) continue;
+        auto name = names.find(static_cast<MolangVariableIndex>(i));
+        if (name == names.end()) continue;
+        std::string key = name->second.getString();
+        if (key.starts_with("variable.")) key.erase(0, 9);
+        else if (key.starts_with("v.")) key.erase(0, 2);
+        auto value = molangValue(*values[static_cast<std::size_t>(off)]->mValue);
+        if (!value.is_null()) params[key] = std::move(value);
+    }
+    auto vec = [&params](char const* key) -> std::optional<Vec3> {
+        auto it = params.find(key);
+        if (it == params.end() || !it->is_object()) return std::nullopt;
+        return Vec3{it->value("x", 0.f), it->value("y", 0.f), it->value("z", 0.f)};
+    };
+    Vec3 velocity{};
+    if (auto v = vec("velocity")) velocity = *v;
+    else if (auto d = vec("direction")) {
+        float speed = params.contains("speed") && params["speed"].is_number() ? params["speed"].get<float>() : 1.f;
+        velocity    = Vec3{d->x * speed, d->y * speed, d->z * speed};
+    }
+    return {std::move(params), velocity};
 }
 } // namespace
 } // namespace particles
@@ -299,8 +367,8 @@ bool hasFactory(std::string const& id) {
 namespace maps {
 namespace {
 struct MapState {
-    std::mutex                                           mutex;
-    std::unordered_map<std::string, std::string>         icons;
+    std::mutex                                                mutex;
+    std::unordered_map<std::string, std::string>              icons;
     std::unordered_map<std::int64_t, std::vector<Decoration>> extra;
 };
 MapState& mapState() {
@@ -315,7 +383,7 @@ std::optional<MapView> view(std::int64_t mapId) {
     if (!level) return std::nullopt;
     auto* data = level->getMapSavedData(ActorUniqueID{mapId});
     if (!data) return std::nullopt;
-    MapView v;
+    MapView     v;
     auto const& pixels = data->mPixels.get();
     v.size             = 128;
     v.pixels.resize(static_cast<std::size_t>(v.size * v.size), 0);
@@ -333,10 +401,8 @@ std::optional<MapView> view(std::int64_t mapId) {
         d.name     = dec->mLabel.get();
         v.decorations.push_back(std::move(d));
     }
-    {
-        std::lock_guard lock(mapState().mutex);
-        if (auto it = mapState().extra.find(mapId); it != mapState().extra.end()) v.decorations.insert(v.decorations.end(), it->second.begin(), it->second.end());
-    }
+    auto extra = decorationsOf(mapId);
+    v.decorations.insert(v.decorations.end(), extra.begin(), extra.end());
     return v;
 }
 
@@ -345,10 +411,21 @@ void setIcon(std::string const& decorationType, std::string const& texture) {
     mapState().icons[decorationType] = texture;
 }
 
+bool removeIcon(std::string const& decorationType) {
+    std::lock_guard lock(mapState().mutex);
+    return mapState().icons.erase(decorationType) > 0;
+}
+
 void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations) {
     std::lock_guard lock(mapState().mutex);
     if (decorations.empty()) mapState().extra.erase(mapId);
     else mapState().extra[mapId] = std::move(decorations);
+}
+
+std::vector<Decoration> decorationsOf(std::int64_t mapId) {
+    std::lock_guard lock(mapState().mutex);
+    auto            it = mapState().extra.find(mapId);
+    return it == mapState().extra.end() ? std::vector<Decoration>{} : it->second;
 }
 
 std::string iconOf(std::string const& decorationType) {
@@ -367,7 +444,6 @@ struct CameraState {
     std::vector<FovFn> fov;
     float              intensity = 0;
     int                ticks     = 0;
-    bool               queued    = false;
 };
 CameraState& cam() {
     static CameraState s;
@@ -399,9 +475,8 @@ float applyFovModifiers(float fovFactor) {
 void shake(float intensity, int ticks) {
     if (!config::get<ClientConfig>().screenShakingEffect || intensity <= 0 || ticks <= 0) return;
     std::lock_guard lock(cam().mutex);
-    cam().intensity = std::max(cam().intensity, intensity);
+    cam().intensity = intensity; // the latest call decides the strength
     cam().ticks     = std::max(cam().ticks, ticks);
-    cam().queued    = false;
 }
 
 int shaking() {
@@ -409,36 +484,34 @@ int shaking() {
     return cam().ticks;
 }
 
+float shakeIntensity() {
+    std::lock_guard lock(cam().mutex);
+    return cam().ticks > 0 ? cam().intensity : 0.f;
+}
+
 namespace {
-/// Client tick: hands a pending shake to the game's camera shake (rotational, like TF's jitter
-/// of yaw / pitch / roll) and counts it down.
+/// Client tick: ClientGameEvents' rumble on the local player's rotation (Entity.moveTo: the old
+/// rotation is set too, so the view jumps instead of easing).
 void tickShake() {
     float intensity = 0;
-    int   ticks     = 0;
-    bool  start     = false;
     {
         std::lock_guard lock(cam().mutex);
         if (cam().ticks <= 0) return;
-        if (!cam().queued) {
-            cam().queued = true;
-            start        = true;
-            intensity    = cam().intensity;
-            ticks        = cam().ticks;
-        }
-        if (--cam().ticks <= 0) {
-            cam().intensity = 0;
-            cam().queued    = false;
-        }
+        intensity = cam().intensity;
+        if (--cam().ticks <= 0) cam().intensity = 0;
     }
-    if (!start) return;
+    if (!config::get<ClientConfig>().screenShakingEffect) return;
     auto* p = currentPlayer();
     if (!p) return;
-    if (auto c = p->getEntityContext().tryGetComponent<CameraShakeComponent>()) {
-        c->queueShakeEvent(CameraShakeType::Rotational, intensity, static_cast<float>(ticks) / 20.0f);
-        logOnce("camera_shake", "camera: shake started");
-    } else {
-        logOnce("camera_shake_missing", "camera: the local player has no camera shake component");
-    }
+    thread_local std::mt19937                    rng{std::random_device{}()};
+    std::uniform_real_distribution<float>        r(0.f, 1.f);
+    Vec2 const                                   rot   = p->getRotation(); // x pitch, y yaw
+    float const                                  yaw   = rot.y + (r(rng) - 0.5f) * intensity;
+    float const                                  pitch = std::clamp(rot.x + (r(rng) * 2.5f - 1.25f) * intensity, -90.f, 90.f);
+    p->setRotationWrapped(Vec2{pitch, yaw});
+    auto& rc    = *p->mBuiltInComponents->mActorRotationComponent;
+    rc.mRotPrev = rc.mRot;
+    logOnce("camera_shake", fmt::format("camera: shake applied (intensity {:.2f})", intensity));
 }
 } // namespace
 } // namespace camera
@@ -448,8 +521,8 @@ void tickShake() {
 // ---- hooks (one per engine event, rule R8) ----------------------------------------------------------------------------
 
 namespace world_hooks {
-namespace sky  = gf::client::sky;
-namespace cl   = gf::client;
+namespace sky = gf::client::sky;
+namespace cl  = gf::client;
 
 LL_TYPE_INSTANCE_HOOK(
     SkyRenderHook,
@@ -470,11 +543,11 @@ LL_TYPE_INSTANCE_HOOK(
         return;
     }
     gf::client::render::RenderContext ctx(screenContext);
-    glm::vec3 cam    = renderObj.mViewData->mCameraPos;
-    ctx.camera       = Vec3{cam.x, cam.y, cam.z};
-    auto* c          = cl::currentClient();
-    ctx.partialTicks = c ? c->getFrameAlpha() : 0.0f;
-    bool replaced    = false;
+    glm::vec3                         cam = renderObj.mViewData->mCameraPos;
+    ctx.camera                            = Vec3{cam.x, cam.y, cam.z};
+    auto* c                               = cl::currentClient();
+    ctx.partialTicks                      = c ? c->getFrameAlpha() : 0.0f;
+    bool replaced                         = false;
     try {
         if (p->sky) replaced = p->sky(ctx, ctx.partialTicks);
     } catch (...) {}
@@ -500,16 +573,43 @@ LL_TYPE_INSTANCE_HOOK(
         if (!p || !p->fog) return;
         auto spec = p->fog(cl::clientBiome());
         if (!spec) return;
-        auto& fog = mCurrentDistanceFog.get();
+        // Classic: the distance fog
+        auto& fog  = mCurrentDistanceFog.get();
         fog.mColor = mce::Color{spec->color.r, spec->color.g, spec->color.b, 1.0f};
         fog.mStart = spec->start;
         fog.mEnd   = spec->end;
         fog.mType  = FogDistanceSetting::DistanceType::Fixed;
         cl::logOnce("fog", "sky: provider fog applied");
+        // Vibrant Visuals: a uniform air fog that lets about 5 % of the light through at `end`
+        // (extinction 3 / end per block), scattering the fog colour and absorbing the rest
+        float const extinction = 3.0f / std::max(spec->end, 1.0f);
+        auto&       density    = mCurrentFogDensity.get();
+        density.mMaxDensity        = 1.0f;
+        density.mMaxDensityHeight  = 1000.0f;
+        density.mZeroDensityHeight = 1001.0f;
+        auto& air                  = mAirFogCoefficient.get();
+        auto  channel              = [extinction](float c) { return std::clamp(c, 0.0f, 1.0f) * extinction; };
+        air.mScattering->r         = channel(spec->color.r);
+        air.mScattering->g         = channel(spec->color.g);
+        air.mScattering->b         = channel(spec->color.b);
+        air.mAbsorption->r         = extinction - channel(spec->color.r);
+        air.mAbsorption->g         = extinction - channel(spec->color.g);
+        air.mAbsorption->b         = extinction - channel(spec->color.b);
+        cl::logOnce("fog_volumetric", fmt::format("sky: provider volumetric fog applied (extinction {:.3f})", extinction));
     } catch (...) {}
 }
 
-// The fog colour the frame is drawn with (the view data of the frame).
+/// Cloud heights of the level renderers while a provider overrides them (cleared with the level).
+struct SavedClouds {
+    std::mutex                                           mutex;
+    std::unordered_map<LevelRendererCamera const*, short> heights;
+};
+SavedClouds& savedClouds() {
+    static SavedClouds s;
+    return s;
+}
+
+// The frame's fog colour, the clouds and the weather pass (the view data of the frame).
 LL_TYPE_INSTANCE_HOOK(
     SkyViewFogHook,
     ll::memory::HookPriority::Normal,
@@ -521,11 +621,32 @@ LL_TYPE_INSTANCE_HOOK(
     IClientInstance&        ci
 ) {
     try {
-        auto p = sky::current();
-        if (p && p->fog) {
-            if (auto spec = p->fog(cl::clientBiome())) {
-                auto& view     = const_cast<ViewRenderObject&>(renderObj).mViewData.get();
-                view.mFogColor = mce::Color{spec->color.r, spec->color.g, spec->color.b, 1.0f};
+        auto& view = const_cast<ViewRenderObject&>(renderObj).mViewData.get();
+        if (sky::gReplaceWeather) view.mDrawWeather = false;
+        // the renderer's own cloud height while a provider sets it, put back after
+        std::lock_guard lock(savedClouds().mutex);
+        auto&           savedCloud = savedClouds().heights;
+        bool            ownClouds  = false;
+        if (auto p = sky::current()) {
+            if (p->fog) {
+                if (auto spec = p->fog(cl::clientBiome())) view.mFogColor = mce::Color{spec->color.r, spec->color.g, spec->color.b, 1.0f};
+            }
+            if (p->clouds) {
+                ownClouds = true;
+                savedCloud.try_emplace(this, mCloudHeight);
+                if (auto h = p->clouds()) {
+                    mCloudHeight = static_cast<short>(std::clamp(*h, -2048.f, 30000.f));
+                    cl::logOnce("clouds", "sky: provider cloud height applied");
+                } else {
+                    view.mDrawClouds = false;
+                    cl::logOnce("clouds_hidden", "sky: provider clouds hidden");
+                }
+            }
+        }
+        if (!ownClouds) {
+            if (auto it = savedCloud.find(this); it != savedCloud.end()) {
+                mCloudHeight = it->second;
+                savedCloud.erase(it);
             }
         }
     } catch (...) {}
@@ -538,7 +659,6 @@ std::optional<short> cloudHeight(Dimension const& dim) {
     auto p = sky::providerOf(static_cast<int>(dim.getDimensionId()));
     if (!p || !p->clouds) return std::nullopt;
     auto h = p->clouds();
-    cl::logOnce("clouds", "sky: provider cloud height applied");
     return h ? static_cast<short>(std::clamp(*h, -2048.f, 30000.f)) : static_cast<short>(30000); // no clouds: far above the sky
 }
 
@@ -556,23 +676,11 @@ LL_TYPE_INSTANCE_HOOK(SkyOverworldCloudHook, ll::memory::HookPriority::Normal, O
     return origin();
 }
 
-// While a provider draws the weather: no vanilla rain / snow (visuals, splashes, sounds).
+// While a provider draws the weather: no vanilla rain ticking (splashes, rain sounds). The rain and
+// lightning levels stay: the sky still darkens and lightning still flashes.
 LL_TYPE_INSTANCE_HOOK(SkyRainHook, ll::memory::HookPriority::Normal, LevelRendererPlayer, &LevelRendererPlayer::$tickRain, void) {
-    if (!sky::gReplaceWeather) {
-        origin();
-        return;
-    }
-    try {
-        if (auto* p = cl::currentPlayer()) {
-            auto& dim = p->getDimension();
-            if (auto& w = dim.mWeather; w) {
-                w->mRainLevel      = 0;
-                w->mOldRainLevel   = 0;
-                w->mLightningLevel = 0;
-                w->mOldLightningLevel = 0;
-            }
-        }
-    } catch (...) {}
+    if (sky::gReplaceWeather) return;
+    origin();
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -614,12 +722,18 @@ LL_TYPE_INSTANCE_HOOK(
     Vec3 const&              emitterPosition,
     MolangVariableMap const& molangVariables
 ) {
-    try {
-        if (isClientSide() && gf::client::particles::hasFactory(effect.getString())) {
-            gf::client::particles::spawn(effect.getString(), emitterPosition, Vec3{0, 0, 0}, nlohmann::json::object());
-            return;
-        }
-    } catch (...) {}
+    // every particle the game spawns comes through here: one relaxed load while no factory exists
+    if (gf::client::particles::factories().any.load(std::memory_order_relaxed) && isClientSide()) {
+        try {
+            auto map = gf::client::particles::factories().map.load();
+            if (map->contains(effect.getString())) {
+                auto [params, velocity] = gf::client::particles::fromMolang(molangVariables);
+                gf::client::particles::spawn(effect.getString(), emitterPosition, velocity, params);
+                cl::logOnce("particle:" + effect.getString(), "particles: native factory of " + effect.getString() + " ran (engine)");
+                return;
+            }
+        } catch (...) {}
+    }
     origin(effect, emitterPosition, molangVariables);
 }
 
@@ -659,9 +773,18 @@ public:
         auto& bus = ll::event::EventBus::getInstance();
         mListeners.push_back(bus.emplaceListener<ll::event::ClientLevelTickEvent>([](auto&) { camera::tickShake(); }));
         mListeners.push_back(bus.emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) {
-            std::lock_guard lock(once().mutex);
-            once().done.clear();
+            {
+                std::lock_guard lock(once().mutex);
+                once().done.clear();
+            }
             sky::gReplaceWeather = false;
+            {
+                std::lock_guard lock(world_hooks::savedClouds().mutex);
+                world_hooks::savedClouds().heights.clear();
+            }
+            std::lock_guard lock(camera::cam().mutex);
+            camera::cam().ticks     = 0;
+            camera::cam().intensity = 0;
         }));
     }
     void install() {
