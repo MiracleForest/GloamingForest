@@ -39,8 +39,7 @@
                "src/feature/families/BlockEvents.cpp", "src/feature/families/Signs.cpp",
                "src/client/ui/Ui.cpp", "src/feature/ui/Ui.cpp", "src/client/render/Render.cpp", "src/client/world/Sky.cpp",
                "src/client/input/Input.cpp", "src/feature/movement/Movement.cpp",
-               "tools/import/run.ps1", "tools/models/convert.ps1", "tools/models/attachable.ps1", "tools/sounds/synth.ps1", "tools/structures/build.ps1",
-               "assets/gen/import/.gitkeep", "assets/gen/geo/.gitkeep", "assets/gen/audio/.gitkeep"
+               "tools/import/run.ps1", "tools/models/convert.ps1", "tools/models/attachable.ps1", "tools/sounds/synth.ps1", "tools/structures/build.ps1"
              ],
              "worlddb": ["gf:common:"],
              "e2e": ["smoke", "full", "client-host"],
@@ -94,8 +93,8 @@
     "U2":  { "name": "terrain", "wave": "W1", "title": "Terrain, carvers and chunk blankets", "config": ["terrain"] },
     "U3":  { "name": "trees", "wave": "W1", "title": "Trees, leaves, saplings and magic cores", "config": ["trees"] },
     "U4":  { "name": "woodwork", "wave": "W1", "title": "Wood sets and wooden furniture" },
-    "U5":  { "name": "building", "wave": "W1", "title": "Building blocks and boss collectibles" },
-    "U6":  { "name": "flora", "wave": "W1", "title": "Flora, critters and berries" },
+    "U5":  { "name": "building", "wave": "W1", "title": "Building blocks and boss collectibles", "config": ["building"] },
+    "U6":  { "name": "flora", "wave": "W1", "title": "Flora, critters and berries", "config": ["flora"] },
     "U7":  { "name": "armory", "wave": "W1", "title": "Armor and tool tiers" },
     "U8":  { "name": "weapons", "wave": "W1", "title": "Weapons and throwables", "config": ["weapons"] },
     "U9":  { "name": "artifacts", "wave": "W1", "title": "Scepters, charms, artifacts and death keeping", "config": ["artifacts"], "subcommands": ["shield"] },

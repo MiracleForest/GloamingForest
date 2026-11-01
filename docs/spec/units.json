@@ -1,0 +1,1389 @@
+{
+  "waves": [
+    {
+      "id": "W0a",
+      "title": "Scaffold, contract headers and ownership manifest",
+      "purpose": "Land the build, the Levitate-derived foundation, every W0 contract header (with neutral stubs), the ownership manifest and the guard rails, so that all W0b units can run in parallel against fixed headers and merge in any order.",
+      "sequential": true,
+      "units": [
+        {
+          "id": "F0",
+          "title": "Scaffold (Levitate port renamed to gf) + all contract headers + owners.tsv",
+          "paths": [
+            "xmake.lua, xmake-requires.lock, .clang-format, .github/workflows/**",
+            "AGENTS.md, CONTRIBUTING.md, LICENSE (LGPL-3.0), NOTICE (TF attribution), assets/LICENSE (CC BY-NC-SA 4.0)",
+            "src/mod/**, src/game/**, src/selftest/**, src/pack/**, src/core/{Format,Glob,GlobalPos,Holiday}*, src/feature/common/** (Interactions, BlockData, Redstone, ValueBox-style hold), src/feature/net/**, src/client/Client.h, src/client/screen/base/**",
+            "every W0 contract header (*.h) plus stub .cpp in the W0b directories listed in the W0b units (headers stay owned by F0; W0b replaces the stubs)",
+            "tools/build.ps1, tools/lib/Throttle.psm1, tools/xmake/{assemble.lua,merges.json}, tools/ci/** (ownership.ps1, arr-guard.ps1), tools/e2e/** (harness only), tools/tf/fetch.ps1, tools/spec/owners.ps1 + rules",
+            "assets/test/** (fixture pack, ids gf_test:*), docs/spec/{README.md,owners.tsv,e2e.md,worker.md,config.md}, docs/spikes/TEMPLATE.md, tests/core/**"
+          ],
+          "content": "Foundation: Levitate v0.1.0 layout renamed (namespace gf::, GF_CLIENT/GF_SERVER, GF_REGISTER_MODULE/CONFIG/SUBCOMMAND/SELFTEST, root command /twilightforest with aliases /tf and /tffeature as TF, log lines 'GloamingForest enabled' / 'GloamingForest world ready'), WorldDb (keys gf:<unit>:...), PackDeployer, companion net (channels <unit>.<name>), Interactions (extended with tag matchers), BlockData, Redstone, config screen, selftest framework (+ flatArea, inTwilight, captureBossEvent, snapshotVolume), e2e harness (BDS pool 5 slots, client through BeDD), CI matrix server/client + release. Generalised assemble.lua driven by merges.json (object mode = duplicate key fails, union mode for tags), layering assets/gen/{import,geo,audio}/** under manual assets/pack/**, lang merge to the 29 Bedrock locales, integer-state check, dangling twilightforest: reference check, 'every pack file has an owner' check, block-permutation budget check. tools/tf/fetch.ps1: read-only sparse checkout of TF 9e40a757 into %LOCALAPPDATA%/gf-tf (patterns exclude *.ogg and *.nbt; sha verified) shared by all worktrees; tools/ci/arr-guard.ps1 rejects any .ogg/.nbt whose hash matches the TF tree. owners.tsv generated from id-glob rules over the pinned TF registries: 533 blocks, 254 items, 80 entity types + spawn eggs, 22 biomes, 25 structure keys, 129 configured + 107 placed features, 634 loot tables, 525 + 15 recipes, 530 advancements, 328 sound events, 29 particles, 40 damage types, 1 effect, 4 enchantments, 154 tags, 8 data maps, 2061 en_us key prefixes, net channels, config sections and TF config keys, 15 subcommands, 6 functions, 3 gamerules, 9 stats, 3 attributes, 4 keybinds, 9 custom twilight/* registries, selftest prefix + dx range, e2e scenario names. All 35 contracts of the contracts table as documented headers with neutral stubs. AGENTS.md carrying every cross-unit rule, licences, the LGPL attribution header template (names the TF source file), the unit table and the worker template.",
+          "description": "One agent ports the Levitate foundation from GitHub (the local Levitate checkout is gone), renames it, and writes the contract headers designed backend-neutral (e.g. gf::inventory hides whether S3 yields data-driven block actors or BlockData + container entity) so spike outcomes in W0b change implementations, not APIs. It also generates owners.tsv (so F1/F2/F3 can partition outputs without waiting for another W0b unit) and the test fixture pack so W0b selftests never depend on F1's skeleton. Merged before anything else.",
+          "contracts": [
+            "mod",
+            "db+net",
+            "interactions",
+            "blockdata+redstone",
+            "selftest",
+            "assemble",
+            "owners"
+          ],
+          "e2e": "tools/e2e/server smoke (BDS loads, 'GloamingForest enabled', /tf selftest 'core.*' all PASS, world reload), client smoke via BeDD (local world, selftest), both builds + gtest in CI; arr-guard and ownership checks run green on the scaffold itself.",
+          "size": "XL (sequential; mostly porting)"
+        }
+      ]
+    },
+    {
+      "id": "W0b",
+      "title": "Parallel contract implementations, toolchains, spikes and specification",
+      "purpose": "Implement every contract behind the W0a headers, build the asset toolchains (import, models, audio, templates), run the Bedrock feasibility spikes S1-S7 as each unit's first task, write the per-unit behaviour spec, and create the content skeleton so every TF id exists before W1. Units edit disjoint directories and use only W0a headers and fixtures, so they merge in any order.",
+      "sequential": false,
+      "units": [
+        {
+          "id": "F1",
+          "title": "Import tool and content skeleton (spike S7)",
+          "paths": [
+            "tools/import/**",
+            "assets/gen/import/**",
+            "docs/spec/blockstates.md, docs/spec/import.md, docs/spikes/S7.md"
+          ],
+          "content": "From the local TF checkout: 1197 textures (CC BY-NC-SA) -> RP textures + terrain/item texture fragments; 523 blockstates + 2984 generated + 123 hand models -> Bedrock block geometry/material instances; 99 + 2 lang files (2061 en_us keys) -> 29 Bedrock locales, split per key owner into texts.d/lang fragments; 154 tags; 634 loot tables (TF functions/conditions kept by id); 525 twilightforest + 15 minecraft-namespace recipes -> Bedrock recipes for vanilla types (with 'unlock' from the 485 recipe advancements) and assets/data/recipes for the 13 custom types; 45 advancements -> data; 306 worldgen JSON (22 biomes, 129 configured / 107 placed features, 2 carvers, 4 density functions, 2 noise settings, 21 structures, 19 structure sets -> landmark descriptors); 290 twilight/* registry JSON (biome_layer_stack 2, biome_terrain_data 1, chunk_blanket_processors 2, dwarf_rabbit_variant 3, tiny_bird_variant 4, magic_paintings 5, quests 1, restrictions 9, stalactites 19, structure_speleothem_settings 6, template_definition 205, template_marker_handler_list 1, travellers_modifiers 24, wood_palettes 8); 5 data maps (+ NeoForge compostables, furnace_fuels, parrot_imitations); 9 banner patterns, 40 damage types (70 death strings), 9 jukebox songs, 6 trim materials, 4 enchantments, dimension + dimension_type; 28 particle JSON; sounds.json event names only (328 events, 288 subtitles) -> sound_definitions skeleton (never opens .ogg); skeleton BP/RP stubs for all 533 blocks (frozen state names/values written to docs/spec/blockstates.md), 254 items, 80 entities + spawn eggs; families data assets/gen/import/<u>/data/families.json mapped from TF block classes; creative catalog from TFCreativeTabs (4 tabs); generated chest-boat textures (replaces TextureGeneratorReloadListener). Everything partitioned by owners.tsv, deterministic, -Unit and -Check modes.",
+          "description": "Runs spike S7 (asset tooling) first. The licence of src/generated/resources/data/** (LGPL datagen output) is recorded in docs/spec/import.md. Overrides live in tools/import/overrides/<u>.json and are applied on regeneration; units never hand-edit assets/gen.",
+          "contracts": [
+            "import",
+            "owners",
+            "assemble"
+          ],
+          "e2e": "run.ps1 -Check reproduces the committed tree byte-for-byte; assemble passes the dangling-reference and owner checks with only skeletons; BDS content log has 0 errors with the full skeleton pack; client screenshot of a creative inventory page.",
+          "size": "L"
+        },
+        {
+          "id": "F2",
+          "title": "Java model converter and geometry import",
+          "paths": [
+            "tools/models/**",
+            "assets/gen/geo/**",
+            "docs/spec/models.md"
+          ],
+          "content": "Converter from Java LayerDefinition/createBodyLayer code (LGPL) to Bedrock geometry: 61 entity model classes (client/model/entity), 9 armor models (Arctic, Fiery, Knightmetal, Phantom, Yeti, TFArmorModel, TravellersGearModels, TravellersWingsModel), 3 item models, boss head extracts for the 10 trophy variants; bone map files (Java part -> bone, pivots, mirror) and a base animation stub per entity for hand translation of setupAnim to Molang; attachables for armor and Travellers' Gear. Output partitioned per owning unit.",
+          "description": "Regex/AST translation of PartDefinition.addOrReplaceChild/CubeListBuilder/PartPose calls; validated on 3 hard models first (Hydra, Naga segment, Snow Queen). Units only add animations/render controllers on top.",
+          "contracts": [
+            "geo",
+            "owners"
+          ],
+          "e2e": "gtest on the parser; client screenshot of each converted model on a test actor (BeDD) reviewed once; geometry JSON passes Bedrock content log.",
+          "size": "M"
+        },
+        {
+          "id": "F3",
+          "title": "Sound synthesis toolkit and baseline audio",
+          "paths": [
+            "tools/sounds/** (toolkit, music sequencer, baseline recipes tools/sounds/recipes/<u>.json created here and handed to their owners)",
+            "assets/gen/audio/**",
+            "src/core/synth/** + tests/synth/** (if the synth is C++)"
+          ],
+          "content": "Procedural synthesizer (oscillators, noise, filters, envelopes, FM, granular, Vorbis encoding) and a tracker-style sequencer; baseline synthesized sound for every one of the 328 sound events (entity 227, block 56, item 34, music_disc 9, environment.acid_rain) with variant counts matching the event inventory (229 TF files) and the dimension music event; sound_definitions fragments per unit; never reads TF audio.",
+          "description": "Guarantees nothing is silent before W1; W1 units then refine their own recipes and composition (U10 composes music).",
+          "contracts": [
+            "synth",
+            "owners"
+          ],
+          "e2e": "synth.ps1 -Check deterministic; BDS/client content log clean; client plays every event once (selftest list) without missing-sound warnings.",
+          "size": "M"
+        },
+        {
+          "id": "F4",
+          "title": "Dimension, time, teleport and Twilight portal (spike S1)",
+          "paths": [
+            "src/feature/dimension/**, src/client/dimension/**",
+            "assets/pack/{bp,rp}/**/dimension/** + *.d/dimension.json",
+            "tools/e2e/*/scenarios/dimension.ps1, docs/spikes/S1.md"
+          ],
+          "content": "twilightforest:twilight_forest via native DimensionDefinition (min_y -32, height 288) or vendored MoreDimensions route (S1 decides; vanilla clients must render it), dimension_type values (fixed_time 13000, coordinate scale, bed/respawn rules), per-player time for vanilla clients; block twilight_portal (1) with TFPortalBlock rules: activator item (portal/activator tag) thrown into a water pool ringed by portal/decoration blocks, lightning, portal shape and max size, destination search/creation (TFTeleporter), checkPortalDestination, shouldReturnPortalBeUsable, portalLockingAdvancement, TFPortalAttachment, portal sounds/particles, PortalOverlay (client) + vanilla CameraInstruction fade; new-player spawn in TF and banish data (CapabilityEvents.spawnInTFIfNecessary); gamerules playersTfPortalDefaultDelay and playersTfPortalCreativeDelay; /tf tp; functions tp_twilight, tp_overworld; make_tf_portal trigger; stopEndermenFromGrabbingBlocksInTF; config section 'dimension' (TF portal/dimension keys).",
+          "description": "Portal is in W0 because every W1 selftest and the vanilla-client matrix need dimension entry. Spike S1 also covers a remote vanilla client joining and seeing chunks from y -32 to 256.",
+          "contracts": [
+            "world",
+            "rules+fx",
+            "progression",
+            "mod",
+            "selftest"
+          ],
+          "e2e": "server: diamond into ringed pool -> portal lights -> SimulatedPlayer teleports, return portal exists; client (mod) and remote vanilla client: travel, chunks render at y -32..256, time fixed, overlay/fade shown.",
+          "size": "L"
+        },
+        {
+          "id": "F5",
+          "title": "Generator pipeline, feature interpreter, spawn engine, Java-parity core (spike S2)",
+          "paths": [
+            "src/feature/worldgen/**, src/feature/features/**, src/feature/spawn/**",
+            "src/core/jrand/**, src/core/noise/**, tests/worldgen/**",
+            "docs/spikes/S2.md"
+          ],
+          "content": "WorldGenerator subclass with stages (Biomes, Starts, Noise, Surface, Carvers, Features, Pieces, Blanket, Spawns), thread-safe deterministic; provider slots for biome source, terrain, surface, carvers, blankets; Java-parity core (Xoroshiro128++, legacy Random, WorldgenRandom seeds, Perlin/Simplex/Normal noise, density evaluator, BlockPos/ChunkPos math) with gtests; feature interpreter for imported worldgen JSON with built-in vanilla types (tree incl. vanilla trunk/foliage placers and decorators, random_selector, ore, random_patch, flower, random_boolean_selector, simple_block, block_column, no_op) + weighted_list + placement modifiers (count, rarity, heightmap, biome, in_square, avoid_landmark, chunk_center) + state providers; LargeWriter for features crossing the 3x3 chunk window (canopy/dark trees); spawn engine (biome tables from U1 data, landmark controlled spawns, per-entity placement rules, structureSpecialSpawns); custom biomes inside the custom dimension (S2: server biomes, client biome visuals, spawn rules, map colours); functions dev_new_world, dev_powerwash_chunk.",
+          "description": "Owns no TF content ids beyond the functions; units register types by string.",
+          "contracts": [
+            "worldgen",
+            "features",
+            "spawn",
+            "selftest"
+          ],
+          "e2e": "gtest goldens for RNG/noise vs Java values; selftest: fixture feature JSON placed identically on server and client builds; 200-chunk generation timing budget logged; S2 report.",
+          "size": "L"
+        },
+        {
+          "id": "F6",
+          "title": "Landmarks: grid, placement, descriptors, conquest, protection, hints",
+          "paths": [
+            "src/core/landmark/** + tests/landmark/**",
+            "src/feature/landmark/**, src/client/landmark/**",
+            "assets/data/landmarks/**"
+          ],
+          "content": "LegacyLandmarkPlacements grid (centre every 256 blocks, biome-at-centre pick, variety seeded by overworld seed), LandmarkGridPlacement / AvoidLandmarkGridPlacement (avoid_additional_structures, exclusion_zone, lock), DecorationClearance, descriptors for the 21 implemented structure keys (icon, lock advancements, hint, clearance, controlled_spawns incl. dark tower floors, spawn_overrides, conquerable); quest_island, druid_grove, floating_ruins, world_tree get no descriptor; persistent starts (TFStructureStart, StructureStartLoadStatic), terraformer registry (CustomDensitySource/BoxDensityFunction/beardifier equivalent), setConquered firing structure_cleared within 32 blocks, ProgressionEvents protection (break, place, interact, multi-place, entity damage; Kobold exempt) at highest dispatch priority, AreaProtectionPacket/StructureProtectionPacket boxes + protection particle + protection_box entity (1), hint system (written books built per player with trFor from the 41 twilightforest.book.* keys; ModifyWrittenBookName, translateBookAuthor; kobold spawned by string), /tf center, /tf info, /tf conquer, /tf generatebook, /twilightforest locate|place, function setup_structure_hunt, ResolveNearestNonRandomSpreadMapStructure equivalent.",
+          "description": "Placement reserves sites even if a generator is missing so avoidance is exact before W1 lands.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "progression",
+            "interactions",
+            "client.render"
+          ],
+          "e2e": "gtest grid vs oracle golden positions; selftest forceStart + protection denies break for a non-qualified player and allows after grant; client screenshot of protection boxes; remote vanilla client gets particles instead.",
+          "size": "L"
+        },
+        {
+          "id": "F7",
+          "title": "Structure kit, template toolkit and shared piece libraries",
+          "paths": [
+            "src/feature/structure/**, tests/structure/**",
+            "tools/structures/** (toolkit only; per-unit DSL scripts live in tools/structures/<u>/)",
+            "assets/data/structure/**"
+          ],
+          "content": "Piece framework (TFStructureComponent, TFStructureComponentOld, TFStructureComponentTemplate, TwilightTemplate/DoubleTemplate/Jigsaw pieces, UtilityPiece, TFStructureDecorator, SortablePiece, ProgressionPiece) with per-chunk clipping; shared bases: TFMaze, HollowHillComponent, the 16 old lichtower Tower* classes (base of dark tower, aurora palace, mushroom tower); 16 processors, 8 marker handlers (incl. DryingRack, Loot, Painting, Rotation, Switch, BlockPlace), 6 random block selectors, 8 wood palettes, speleothems (19 stalactites, 6 configs), template_marker_handler_list, jigsaw assembly over the 205 template definitions; GloamingForest template format (.gft.json) + DSL builder + validator against template definitions; /tf structure_util displaypieces|cleardisplay|countloot|counttemplate|structuredistance + place/capture (dev).",
+          "description": "Removes every shared structure class from W1 so landmark units never edit the same files.",
+          "contracts": [
+            "structure",
+            "template",
+            "loot",
+            "spawn"
+          ],
+          "e2e": "gtest TFMaze generation vs Java; selftest places a fixture template with each processor/marker and compares a golden volume hash; jigsaw fixture assembles deterministically.",
+          "size": "L"
+        },
+        {
+          "id": "F8",
+          "title": "Entities, AI, multipart, projectiles and boss kit (spike S4)",
+          "paths": [
+            "src/feature/entity/**, src/feature/projectile/**, src/feature/boss/**",
+            "src/client/entity/**",
+            "docs/spikes/S4.md"
+          ],
+          "content": "Behaviour registry on BP entities, persisted data + sync, entity properties, goal adapter (BaseGoal/GoalSelectorComponent) and the shared goals from entity/ai (charge ITFCharger, breath IBreathAttacker, flock to same kind, panic on flock death, avoid any, attempt to go home, always watch target, random look when bored, simplified attack, ...), EnforcedHomePoint, move controls, TFPart multipart as linked actors + HitboxComponent (3 multipart ASM equivalents), IHostileMount (grab, throw rider, removeHostileMountHealth, HostileMountEvents), TFThrowable/TFArrow bases, BaseTFBoss lifecycle (home, conquest on death, 27-slot loot buffer IBossLootBuffer deposited into a death chest via inventory, peaceful -> spawner), boss bar (TFBossBarPacket: RGB, darken, fog; exact RGB hook for the client mod, 8-colour fallback), BossSpawnerBlockEntity generic (range 9, particles, self-destroy, peaceful), minion flag, multiplayer health adjuster (adjustEntityHealthInMultiplayerFights, multiplayerFightAdjuster) and participants, trophy variant table (10 BossVariant rows: sound, volume, pitch, particle, comparator), boss death-time; config section 'bosses' (bossesSpawnDropChests, multiplayerFightAdjuster).",
+          "description": "S4 first: converter output on 3 models, Molang translation, linked multipart, boss-bar colour on a vanilla client, custom hit test.",
+          "contracts": [
+            "entity",
+            "projectile",
+            "boss",
+            "combat",
+            "loot",
+            "inventory",
+            "landmark"
+          ],
+          "e2e": "selftest fixture boss (gf_test:boss) with 3 parts: parts follow, damage routes to parent, BossEventPacket captured, death chest filled, conquest set; client screenshot of RGB boss bar; remote vanilla shows nearest colour.",
+          "size": "L"
+        },
+        {
+          "id": "F9",
+          "title": "Items, enchantments, effects, recipes, tags, data maps, stats, gear query (spike S6)",
+          "paths": [
+            "src/feature/{item,enchant,effects,recipes,tags,datamaps,stats,traits,gear,catalog}/**",
+            "src/client/item/**",
+            "docs/spikes/S6.md"
+          ],
+          "content": "Item behaviour registry, item user data, cooldowns, tooltips/lore, dispense registry, durability/dose bar colour hook; enchantment storage for 4 custom ids (user data + lore, glint, enchanting table / anvil / grindstone / book interplay, showEnchantmentsOnItems), effect runtime with carriers (frosted), TFRarityEnumExtension name colours, TFItemDisplayContextEnumExtension; recipe type registry with loaders for the 13 custom serializers (drying, uncrafting, travellers shaped/shapeless, vest/gloves merge, casket_repair, emperors_cloth, essence_repair, magic/maze map cloning, moonworm_queen_repair, scepter_repair, no_template_smithing), special crafting, producing(item); tags runtime (154 TF + vanilla), data maps runtime (8 maps), stats store (9 stats), synced traits, Travellers' Gear modifier query, creative catalog groups (4 tabs); S6: enchant/effect carriers, RecordItemComponent custom sound names, BannerPatternRegistry extension and vanilla safety, trim materials, catalog groups, attachables.",
+          "description": "Pure infrastructure; content belongs to W1 owners.",
+          "contracts": [
+            "item",
+            "enchant+effects",
+            "recipes",
+            "data"
+          ],
+          "e2e": "selftests with fixture items: tooltip lines, enchant level round-trip through anvil, effect carrier on a vanilla client, special crafting fixture, dispense fixture; S6 report.",
+          "size": "L"
+        },
+        {
+          "id": "F10",
+          "title": "Combat, death, loot, inventories/containers, progression bus, gamerules, fx (spike S3)",
+          "paths": [
+            "src/feature/{combat,death,loot,inventory,progression,gamerules,fx}/**",
+            "src/client/inventory/**",
+            "docs/spikes/S3.md"
+          ],
+          "content": "Single hurt hook (onIncoming/onDealt; DamageSources ASM equivalent), 40 damage types + 70 death messages, death pipeline (lethal, keepers, drops remaining, respawn: CharmEvents host), loot interpreter for 634 tables with TF functions multiplayer_addition, multiplayer_rolls, looting_rolls, condition mod_exists, slots for TF conditions/modifiers registered by owners, placeContainer (native loot field / setLootTable), data-declared generic chest-like container + native/vanilla screen; S3 (data-driven block actors / container component gated by experiments, level-data flag, persistence, JSON-UI title skin) deciding the inventory backend; progression store (has/grant/revoke), trigger bus, central events (inventory changed, killed, consumed, dimension changed, biome entered, tick), MissingAdvancementToast request API; gamerule store (+ /tf gamerule) for tfEnforcedProgression and portal delays; fx particle/sound by id.",
+          "description": "All engine-wide hooks that several units need live here, one hook per engine event (rule R5).",
+          "contracts": [
+            "combat",
+            "death",
+            "loot",
+            "inventory",
+            "progression",
+            "rules+fx",
+            "interactions"
+          ],
+          "e2e": "selftests: lethal hook keeps a fixture player alive, keeper keeps tagged items, fixture loot table with every TF function rolls expected counts, container persists across reload, trigger reaches a fixture listener; S3 report with vanilla container UI screenshot.",
+          "size": "L"
+        },
+        {
+          "id": "F11",
+          "title": "Block families kit and block event dispatch",
+          "paths": [
+            "src/feature/families/**, src/client/families/**",
+            "tools/families/** (assemble-time BP generator)"
+          ],
+          "content": "Generic behaviours driven by assets/data/families/<u>.json: stairs, slab (double), fence, fence_gate, wall, door, trapdoor, button, pressure_plate, pane (IronBarsBlock), pillar/log (axis, stripping), wood, leaves (decay, persistent), sapling (growth hook), potted (SpecialFlowerPot), sign and hanging sign (text edit + render per S3), chest and trapped chest (double, lid, redstone), horizontal/directional/binary-rotated/wall-pillar/connectable pillar, waterloggable, snowloggable (snowy grass under snowloggables ASM), climbable (BlockProperty::Climbable, client mod), lightable, connected texture (ConnectedTextureModel), block sound types (TFSoundTypes); central block event dispatch (random tick, neighbour change, entity inside, stepped on, projectile hit, placed, removed) by id or tag.",
+          "description": "Turns ~400 TF blocks into data so W1 units only code real behaviour.",
+          "contracts": [
+            "families+blockevents",
+            "blockdata+redstone",
+            "interactions",
+            "inventory"
+          ],
+          "e2e": "selftests on fixture families: slab doubling, door pair, fence connections, button powers redstone, leaves decay, sign text persists, double chest; client screenshots of each family.",
+          "size": "L"
+        },
+        {
+          "id": "F12",
+          "title": "Client frameworks and vanilla UI fallbacks (spike S5)",
+          "paths": [
+            "src/client/{ui,render,world,input}/**",
+            "src/feature/{ui,movement}/** (server halves)",
+            "docs/spikes/S5.md"
+          ],
+          "content": "Screens (Levitate Screen/ContainerScreen + TF GUI skinning), HUD layers via UI render event, toasts, tooltips, key registry wrapper (ll KeyRegistry), world render hook (LevelRendererCamera renderBlockEntities), Lines, drawGeo, block/item/entity renderer registries, position tint resolver hook (PositionDependentTintResolver), sky/fog/cloud/weather provider hooks (renderSky, setupFog, doRainUpdate/tickRain, SkyRenderObject), music provider, native particle factory with all 29 TF particle ids declared, map view + custom map icons (MapRenderer), FOV modifiers and camera shake (shakeCamera, GetFieldOfViewModifier), local movement hook + server input-edge/motion fallback, vanilla UI fallbacks (forms, DDUI, JSON-UI container title skin); S5 under Classic and Vibrant Visuals.",
+          "description": "Frameworks only; every TF renderer, overlay and screen is owned by a W1 unit.",
+          "contracts": [
+            "client.ui",
+            "client.render",
+            "client.world",
+            "client.input+movement"
+          ],
+          "e2e": "BeDD client: fixture HUD layer, toast, screen and world-space line drawn under Classic and Vibrant Visuals (screenshots); fixture key press reaches the server; remote vanilla client receives the form fallback.",
+          "size": "L"
+        },
+        {
+          "id": "F13",
+          "title": "Java oracle (derived goldens only)",
+          "paths": [
+            "tools/oracle/**",
+            "tests/golden/**"
+          ],
+          "content": "Local NeoForge 1.21.1 dedicated server with the TF 4.8 jar downloaded at run time (never committed), driven over RCON; dumps derived facts only: biome and main-biome grids, height grids, landmark centres and picks for fixed seeds, mob attributes (health, speed, damage, armor), loot roll statistics, recipe/uncrafting outputs. Never exports templates, audio, or other assets.",
+          "description": "Gives U1, U2, F6, U16/U17 and W2 audits objective parity data.",
+          "contracts": [
+            "selftest"
+          ],
+          "e2e": "dump scripts reproducible; golden files reviewed; a gtest reads them.",
+          "size": "M"
+        },
+        {
+          "id": "F14",
+          "title": "Spec: world and landmarks",
+          "paths": [
+            "docs/spec/{biomes,terrain,trees,minorlandmarks,questcamps,naga,lich,lichdecor,labyrinth}.md"
+          ],
+          "content": "Behaviour specs translated from TF source for U1, U2, U3, U18-U23: generation rules, piece lists, template slot lists (from the 205 template definitions: sizes, connectors, markers, required spawners/chests/loot), boss AI/phases, spawn tables, loot, sounds, strings, config keys, commands.",
+          "description": "Specs describe footprint and mechanics so template re-designs stay faithful without ARR data.",
+          "contracts": [
+            "owners"
+          ],
+          "e2e": "none (doc lint: every owned id of the unit appears in its spec).",
+          "size": "M"
+        },
+        {
+          "id": "F15",
+          "title": "Spec: mobs and late landmarks",
+          "paths": [
+            "docs/spec/{fauna,hostiles,hydra,stronghold,darktower,caves,aurora,giants,finalcastle}.md"
+          ],
+          "content": "Specs for U16, U17, U24-U30: every mob (attributes, AI goals, animations, sounds, drops, spawn rules), bosses (phases, parts, projectiles), structures, blocks and items of those units.",
+          "description": "Same format as F14.",
+          "contracts": [
+            "owners"
+          ],
+          "e2e": "doc lint as F14.",
+          "size": "M"
+        },
+        {
+          "id": "F16",
+          "title": "Spec: blocks, items, player systems, client; not-ported list",
+          "paths": [
+            "docs/spec/{woodwork,building,flora,armory,weapons,artifacts,provisions,tgear,tgmove,uncraftmaps,progression,atmosphere}.md",
+            "docs/spec/not-ported.md"
+          ],
+          "content": "Specs for U4-U15: blocks, items, screens (pixel geometry of TF GUIs), overlays, keybinds, config keys, commands, advancements, restrictions; the not-ported list with workarounds.",
+          "description": "Same format as F14.",
+          "contracts": [
+            "owners"
+          ],
+          "e2e": "doc lint as F14.",
+          "size": "M"
+        }
+      ]
+    },
+    {
+      "id": "W1",
+      "title": "Feature units",
+      "purpose": "Implement all TF 4.8 content on top of W0. 30 units, each owning disjoint ids and files (owners.tsv), integrating only through W0 contracts by string id, mergeable in any order. Run as two batches of 15 under the machine throttle.",
+      "sequential": false,
+      "units": [
+        {
+          "id": "U1",
+          "title": "Biomes and biome layers (biomes)",
+          "paths": [
+            "src/feature/biomes/**, src/client/biomes/**, src/core/biomes/** + tests/biomes/**",
+            "assets/pack/**/biomes/**, *.d/biomes.json, assets/data/*/biomes.json",
+            "tools/{import/overrides,sounds/recipes}/biomes.json, tools/e2e/*/scenarios/biomes.ps1",
+            "assets/gen/*/biomes/** (regenerate only)"
+          ],
+          "content": "22 biomes (forest, dense_forest, firefly_forest, clearing, oak_savannah, stream, lake, mushroom_forest, dense_mushroom_forest, enchanted_forest, spooky_forest, swamp, fire_swamp, dark_forest, dark_forest_center, snowy_forest, glacier, highlands, highlands_underground, thornlands, final_plateau, underground) as BP biome + RP client_biome JSON (water/grass/foliage colours, ambient particles and sounds, fog id refs to U15 fog definitions); biome layer stack (32 world/components/layer classes, biome_layer_stack x2, biome_terrain_data) and TFBiomeProvider incl. main-biome lookup; BiomeColorAlgorithms, FoliageColorHandler and biome parts of ColorHandler (spooky, enchanted rainbow, dark forest, swamp tints), TFGrassColorModifierEnumExtension, FoliageColorResolver ASM; per-biome placed-feature lists and BiomeMaker spawn tables; 17 valid_*_biomes tag members; biome ambient sound events; config section 'biomes'.",
+          "description": "Registers the biome source with worldgen::setBiomeSource and the tables with features/spawn; client tints through tint::registerBlock for grass/foliage-tinted TF blocks owned elsewhere (by tag).",
+          "contracts": [
+            "worldgen",
+            "features",
+            "spawn",
+            "client.render",
+            "client.world",
+            "data",
+            "import"
+          ],
+          "e2e": "server: fixed seeds -> biome and main-biome grids equal F13 goldens, identical across worker threads; client (mod + remote vanilla): screenshot set per biome for colours/fog; selftest dx 100..199.",
+          "size": "L"
+        },
+        {
+          "id": "U2",
+          "title": "Terrain, carvers and chunk blankets (terrain)",
+          "paths": [
+            "src/feature/terrain/**, src/core/terrain/** + tests/terrain/**",
+            "assets/**/terrain/**, *.d/terrain.json, assets/data/*/terrain.json",
+            "tools/e2e/*/scenarios/terrain.ps1"
+          ],
+          "content": "TerrainDensityRouter, NoiseDensityRouter, TerrainColumn, density functions forested_terrain, raw_biome_noise, raw_biome_terrain, skylight_terrain and classes Box/Focused/AbsoluteDifference/Sqrt/TanhHill/HollowHill; noise settings twilight_noise_gen and skylight_noise_gen (Skylight variant as config); surface rules incl. highlands, thornlands, final plateau heights and the underground biomes; TFCavesCarver + configured carvers tf_caves and highland_caves; chunk blanketing canopy and glacier (ChunkBlanketProcessor/Type, ChunkBlanketingModifier, WorldgenHooks.chunkBlanketing ASM); the dimension's 10 ore features; consumption of landmark terraformers; per-chunk timing budget; config section 'terrain'.",
+          "description": "Implements worldgen terrain/surface/carver/blanket providers; deterministic and thread-safe.",
+          "contracts": [
+            "worldgen",
+            "features",
+            "landmark"
+          ],
+          "e2e": "server: height and surface fingerprint grid for 3 seeds equals F13 goldens; chunk generation p95 within budget; client screenshot of highlands, canopy blanket, glacier; dx 200..299.",
+          "size": "L"
+        },
+        {
+          "id": "U3",
+          "title": "Trees, leaves, saplings and magic cores (trees)",
+          "paths": [
+            "src/feature/trees/**, src/client/trees/**",
+            "assets/**/trees/**, *.d/trees.json, assets/data/*/trees.json",
+            "tools/e2e/*/scenarios/trees.ps1"
+          ],
+          "content": "35 blocks: 10 leaves (twilight_oak, canopy, mangrove, dark, hardened_dark, rainbow_oak, time, transformation, mining, sorting), 10 saplings (twilight_oak, canopy, mangrove, darkwood, hollow_oak, time, transformation, mining, sorting, rainbow_oak) + 10 potted saplings, 4 magic cores (time, transformation, mining, sorting log cores), mangrove_root; 28 tree feature classes (TFTree, Canopy, DarkCanopy, MegaCanopy, MegaOak, HollowTree feature, HollowStump, LargeWinterTree, SnowTree, SnowUnderTree, MiningTree, TimeTree, Canopy/Brown/Red canopy mushrooms, growers, treeplacers BranchingTrunkPlacer, LeafSpheroidFoliagePlacer, TreeCorePlacer, TreeRootsDecorator, TrunkRiser, TrunkSideDecorator, DangleFromTreeDecorator) and ~48 tree configured/placed features; sapling growth (hollow_oak_sapling calls landmark::generateAt hollow_tree); core behaviours (time tick acceleration, transformation biome rewrite + chunk resend, mining ore swap, sorting via inventory) with magic tree range config; particles leaf_rune, log_core_particle, sorting_particle, transformation_particle; magic leaves position tints; 35 block loot tables.",
+          "description": "Logs/wood of the 8 TF woods are U4; trees place them by frozen state names.",
+          "contracts": [
+            "features",
+            "worldgen",
+            "landmark",
+            "families+blockevents",
+            "inventory",
+            "client.render",
+            "fx"
+          ],
+          "e2e": "selftest grows each sapling in a flat area and compares a volume hash; each core acts on a fixture setup; client screenshots of every tree type; dx 300..399.",
+          "size": "L"
+        },
+        {
+          "id": "U4",
+          "title": "Wood sets and wooden furniture (woodwork)",
+          "paths": [
+            "src/feature/woodwork/**, src/client/woodwork/**",
+            "assets/**/woodwork/**, *.d/woodwork.json, assets/data/*/woodwork.json",
+            "tools/e2e/*/scenarios/woodwork.ps1"
+          ],
+          "content": "245 blocks / 55 items. 8 TF woods (twilight_oak, canopy, mangrove, dark, time, transformation, mining, sorting): logs, stripped logs, wood, stripped wood (32); planks, stairs, slab, button, fence, fence_gate, pressure_plate, door, trapdoor (72, families); sign, wall_sign, hanging_sign, wall_hanging_sign (32 blocks, 16 items); canopy_bookshelf (enchanting power); chests 8 + trapped chests 8 (TFChestRenderer); boats 8 + chest boats 8 (custom rideable boat entities with variant property); hollow logs 54 (18 woods incl. 10 vanilla: horizontal, vertical, climbable) + 18 hollow log items (placement), vine/ladder conversion and climbing; banisters 19 (8 TF + 11 vanilla, BanisterShape); drying racks 19 (display, DryingRackRenderer, drying_rack particle) + drying recipe type (19 + 15 coral recipes); drying products tannin, treated_leather, tanned_leather, gelatinous_slime_drop, gelatinous_maze_slime_drop; ~180 recipes, ~245 block loot tables, wood/log tags, fuel and compost entries.",
+          "description": "Bulk is family data (F11); native work is signs, chests, boats, hollow logs, banisters, drying racks.",
+          "contracts": [
+            "families+blockevents",
+            "inventory",
+            "recipes",
+            "entity",
+            "client.render",
+            "interactions"
+          ],
+          "e2e": "selftests: strip log, place hollow log by facing, climb climbable variant (client), drying rack converts items after the TF time, chest pairs; client screenshots of every block family and a boat ride; vanilla client boat ride; dx 400..499.",
+          "size": "L"
+        },
+        {
+          "id": "U5",
+          "title": "Building blocks and boss collectibles (building)",
+          "paths": [
+            "src/feature/building/**, src/client/building/**",
+            "assets/**/building/**, *.d/building.json, assets/data/*/building.json",
+            "tools/e2e/*/scenarios/building.ps1"
+          ],
+          "content": "109 blocks / 19 items: nagastone family 15 (nagastone_head, nagastone, spiral_bricks, etched/mossy etched/cracked etched, 3 pillars, 6 left/right stairs), twisted_stone, twisted_stone_pillar, bold_stone_pillar, mazestone 8, underbrick 4, towerwood/encased/cracked/mossy towerwood 4, deadrock 3, castle bricks 10 + castle stairs 6, castle rune bricks 4, storage blocks 6 (knightmetal, ironwood, fiery, steeleaf, arctic_fur, carminite), canopy_window + pane, iron_ladder, rope (+ rope item hanging placement); 18 trophies (naga, lich, hydra, ur_ghast, knight_phantom, snow_queen, minoshroom, alpha_yeti, quest_ram; floor + wall) + 9 wearable trophy items (variant sound/particle, comparator, powered sound; unrenderHeadWithTrophies); 9 boss spawner blocks (definitions + particles; spawn logic registered by boss units); 15 *_miniature_structure blocks; 9 banner patterns + 9 pattern items + recipes + shield_patterns atlas + banner_pattern tags; ~70 stonecutting/crafting recipes; ConnectedTextureModel and ConditionalMippedModel users.",
+          "description": "Trophy geometry composed from F2 boss-head extracts; trophy variant data read through boss::trophyVariant so U25's pedestal never includes U5.",
+          "contracts": [
+            "families+blockevents",
+            "boss",
+            "geo",
+            "recipes",
+            "client.render",
+            "enchant+effects"
+          ],
+          "e2e": "selftests: trophy comparator values per variant, powered trophy plays sound, banner pattern loom result, stonecutting set; client screenshots of all trophies/miniatures (mod) and banner on vanilla client; dx 500..599.",
+          "size": "L"
+        },
+        {
+          "id": "U6",
+          "title": "Flora, critters and berries (flora)",
+          "paths": [
+            "src/feature/flora/**, src/client/flora/**",
+            "assets/**/flora/**, *.d/flora.json, assets/data/*/flora.json",
+            "tools/e2e/*/scenarios/flora.ps1"
+          ],
+          "content": "34 blocks / 21 items: moss_patch, clover_patch (PatchModel), mayapple, fiddlehead, mushgloom, torchberry_plant (+ torchberries, torchberries_harvested stat), root_strand, fallen_leaves (+ item, SpawnFallenLeafFromPacket, fallen_leaf particle), root, liveroot_block (+ liveroot), potted mayapple/fiddlehead/mushgloom; critters firefly, cicada (looping sound, MovingCicadaSoundInstance, silent cicadas client config), moonworm; jars mason_jar (shows an item, SetMasonJarItemPacket), firefly_jar, cicada_jar, firefly_particle_spawner; Firefly/Cicada/Moonworm/Jar renderers, BugModelAnimationHelper, kill_bug trigger, bugs_squished stat, particles firefly, wandering_firefly, particle_spawner_firefly; huge_lily_pad (2x2) + huge_water_lily (+ items); 8 berry bushes (raspberry, blueberry, blackberry, maloberry, blightberry, duskberry, skyberry, stingberry; incl. dark-tower variant) + 8 berries; 4 oreberry bushes (iron, gold, copper, essence) + iron/gold/copper/essence_berry + copper_nugget; feature types berry_bush, oreberry, check_above_patch, fallen_leaves, underground_plant, huge_lilypad, huge_water_lily, enchanted_forest_vines and ~25 flora configured/placed features; mushroom soil survivability rule; compost entries; 34 block loot tables.",
+          "description": "All small plants and critters; features registered by string so U1's biome lists resolve.",
+          "contracts": [
+            "families+blockevents",
+            "features",
+            "inventory",
+            "progression",
+            "data",
+            "client.render",
+            "fx"
+          ],
+          "e2e": "selftests: harvest torchberries, squish bug fires trigger + stat, berry bush growth/harvest, jar holds item; client screenshots of critters animating and jars; dx 600..699.",
+          "size": "L"
+        },
+        {
+          "id": "U7",
+          "title": "Armor and tool tiers (armory)",
+          "paths": [
+            "src/feature/armory/**, src/client/armory/**",
+            "assets/**/armory/**, *.d/armory.json, assets/data/*/armory.json",
+            "tools/e2e/*/scenarios/armory.ps1"
+          ],
+          "content": "59 items: naga_scale, naga_chestplate, naga_leggings; ironwood (raw_ironwood, ingot, 4 armor, sword, shovel, pickaxe, axe, hoe); fiery (fiery_blood, fiery_tears, ingot, 4 armor, sword, pickaxe); steeleaf (ingot, 4 armor, 5 tools); knightmetal (armor_shard, armor_shard_cluster, ingot, 4 armor, sword, pickaxe, axe, knightmetal_ring); phantom_helmet, phantom_chestplate; arctic_fur + 4 dyeable arctic armor; alpha_yeti_fur + 4 yeti armor; gold/diamond minotaur axes; mazebreaker_pickaxe. 6 trim materials (palettes, armor_trims atlas); attachables from F2 for 5 armor models, TFArmorRenderer/TFSimpleArmorRenderer, ArmorVisibility/CancelArmor; tool/armor effects from ToolEvents (fiery ignite + fire immunity, fiery_pick_smelting loot modifier, steeleaf/ironwood default enchantments, knightmetal bonus vs armoured, minotaur axe charge crits); phantom armor in kept_on_death; no_template_smithing recipe type; ~75 recipes; armor/tool tags.",
+          "description": "Owns every material tier, including boss-derived ones; bosses drop them by string through loot.",
+          "contracts": [
+            "item",
+            "loot",
+            "enchant+effects",
+            "combat",
+            "recipes",
+            "geo",
+            "client.render"
+          ],
+          "e2e": "selftests: fiery pick smelts drop, knightmetal bonus damage, phantom armor kept on death, dyed arctic armor; client screenshots of all armor on a player; dx 700..799.",
+          "size": "L"
+        },
+        {
+          "id": "U8",
+          "title": "Weapons and throwables (weapons)",
+          "paths": [
+            "src/feature/weapons/**, src/client/weapons/**",
+            "assets/**/weapons/**, *.d/weapons.json, assets/data/*/weapons.json",
+            "tools/e2e/*/scenarios/weapons.ps1"
+          ],
+          "content": "17 items + 6 entities: triple_bow, seeker_bow (+ seeker_arrow homing via projectile steering), ice_bow (+ ice_arrow, frosted), ender_bow (position swap), ice_sword, glass_sword (broke_glass_sword trigger), block_and_chain (+ chain_block entity, chain render), knightmetal_shield (blocking, shield parrying config / onParryProjectile), ice_bomb (+ thrown_ice, also used by U27 by string), cube_of_annihilation (+ entity, annihilation_inclusions tag, annihilate particle, generic.annihilation) + cube_talisman, moonworm_queen (+ moonworm_shot, moonworm_queen_repair recipe), lamp_of_cinders (burns thorns by tag), peacock_feather_fan (+ dispenser), crumble_horn (crumble_horn data map, blocks_crumbled stat, dispenser), ore_magnet, transformation_powder (transformation_powder data map, dispenser); bow FOV (updateBowFOV); CustomDamageSwordItem damage types.",
+          "description": "Combat items and their projectiles.",
+          "contracts": [
+            "item",
+            "projectile",
+            "combat",
+            "effects",
+            "data",
+            "client.world",
+            "fx"
+          ],
+          "e2e": "selftests per item with SimulatedPlayer simulateUseItem (homing hits target, glass sword breaks, crumble horn crumbles fixture blocks, transformation powder converts mob); client screenshot of chain and cube; dx 800..899.",
+          "size": "L"
+        },
+        {
+          "id": "U9",
+          "title": "Scepters, charms, artifacts and death keeping (artifacts)",
+          "paths": [
+            "src/feature/artifacts/**, src/client/artifacts/**",
+            "assets/**/artifacts/**, *.d/artifacts.json, assets/data/*/artifacts.json",
+            "tools/e2e/*/scenarios/artifacts.ps1"
+          ],
+          "content": "20 items + keepsake_casket block + 3 entities: twilight_scepter (+ wand_bolt), lifedrain_scepter (beam, LifedrainParticlePacket), zombie_scepter (+ loyal_zombie), fortification_scepter (shields: max_shield_strength attribute, FortificationShieldAttachment, ShieldLayer, ShieldOverlay HUD, shield_break particle, tf_shields_broken stat, /tf shield, function give_3_shields), exanimate_essence (+ scepter_repair, essence_repair recipes); charm_of_life_1/2 (lethal hook, charm_effect entity, SpawnCharmPacket, life_charms_activated), charm_of_keeping_1/2/3 (keepers, keeping_charms_activated, kept_on_death tag), keepsake_casket (owner-locked container, casketUUIDLocking, casket_repair recipe, chests/casket_loot, lid renderer); brittle/greater potion flasks (doses, PotionFlaskComponent, PotionFlaskTrackingAttachment, tooltip, dose bar, drink_from_flask trigger); ore_meter (ore scanner, reads ore_map_color); moon_dial, pocket_watch; emperors_cloth (+ recipe, washOffCloth); mystic_crown, crown_splinter, four_leaf_clover; damageable-stack dispenser; particles magic_effect, twilight_orb.",
+          "description": "Owns the death-keeping behaviour (F10 hosts the pipeline).",
+          "contracts": [
+            "item",
+            "projectile",
+            "entity",
+            "death",
+            "inventory",
+            "recipes",
+            "data",
+            "client.ui",
+            "client.render"
+          ],
+          "e2e": "selftests: charm of life saves at lethal damage, keeping charm keeps hotbar, casket receives drops and only owner opens, shields absorb hits, flask doses; client screenshots of shield overlay and casket; dx 900..999.",
+          "size": "L"
+        },
+        {
+          "id": "U10",
+          "title": "Provisions, enchantments, effects, music discs and soundscape (provisions)",
+          "paths": [
+            "src/feature/provisions/**, src/client/provisions/**",
+            "assets/**/provisions/**, *.d/provisions.json, assets/data/*/provisions.json",
+            "tools/sounds/music/**, tools/e2e/*/scenarios/provisions.ps1"
+          ],
+          "content": "33 items + experiment_115 block: raw/cooked venison, hydra_chop (consume_hydra_chop_on_low_hunger trigger), raw/cooked meef, meef_stroganoff, maze_wafer, berry_medley, moss_soup, shika_senbei, stale_bread, 12 jerky (monster, beef, chicken, pork, mutton, rabbit, cod, salmon, tropical_fish, fugu, venison, meef); experiment_115 (bite block, its 3 advancement criteria); frosted effect (carrier, IceLayer render); 4 enchantments fire_react, chill_aura, destruction, renewal + effect types ApplyFrostedEffect, RechargeScepterEffect, SmashBlocksEffect (SmashBlocksEnchantmentAttachment); 9 music discs (radiance, steps, superstitious, home, wayfarer, findings, maker, thread, motion) + 9 jukebox songs + 9 original compositions; dimension music music.twilight_forest and per-biome music selection (setMusicInDimension); biome ambience events.",
+          "description": "Composes all music with the F3 sequencer; discs play through the record component or the jukebox hook decided by S6.",
+          "contracts": [
+            "item",
+            "enchant+effects",
+            "combat",
+            "client.world",
+            "synth",
+            "progression"
+          ],
+          "e2e": "selftests: food values, frosted slows, each enchantment effect, disc in jukebox emits redstone and plays; client: music plays in the dimension, screenshot of frosted overlay; dx 1000..1099.",
+          "size": "L"
+        },
+        {
+          "id": "U11",
+          "title": "Travellers' Gear: equipment, goggles and red thread (tgear)",
+          "paths": [
+            "src/feature/tgear/**, src/client/tgear/**",
+            "assets/**/tgear/**, *.d/tgear.json, assets/data/*/tgear.json",
+            "tools/e2e/*/scenarios/tgear.ps1"
+          ],
+          "content": "6 items (travellers_goggles, vest, gloves, wings, belt, boots) + red_thread block; modifier storage via gear contract over the 24 travellers_modifiers; 12 modifiers: all_night_goggles, zoom (GogglesZoomPacket), item_display (5 displays clock/compass/map/moon dial/simple text, ItemDisplayOverlay, ItemDisplayTooltipComponent, map cycle CycleMapSlotPacket, UpdateMapsInGoggles), red_thread_vision (red thread through walls; red_thread shader as line renderer), swap_hotbar and swap_hotbar_ability (SwapHotbarPacket), auto_repair, haste, efficient_eater, arrow_magnetism, stealth, perfect_dodge (+ particle); 4 keybinds red_thread_vision, item_display_map_cycle, zoom, swap_hotbar; recipe types travellers modifier shaped/shapeless, vest/gloves merge, grindstone removal (~32 recipes); gear item models + wing visuals/flap (CancelElytra, FixCape); TravellersBeltTooltipComponent; /tf travellersgear; add_modifier trigger.",
+          "description": "Movement modifiers are U12; both read modifiers through gear::level.",
+          "contracts": [
+            "item",
+            "gear (data)",
+            "recipes",
+            "combat",
+            "entity",
+            "projectile",
+            "client.ui",
+            "client.render",
+            "client.input+movement",
+            "client.world"
+          ],
+          "e2e": "selftests: apply/remove modifiers by recipe, efficient eater, stealth target filter; client: keybinds via BeDD (zoom, swap hotbar, map cycle), screenshots of item displays and red thread; dx 1100..1199.",
+          "size": "L"
+        },
+        {
+          "id": "U12",
+          "title": "Travellers' Gear: movement (tgmove)",
+          "paths": [
+            "src/feature/tgmove/**, src/client/tgmove/**",
+            "assets/**/tgmove/**, *.d/tgmove.json",
+            "tools/e2e/*/scenarios/tgmove.ps1"
+          ],
+          "content": "12 movement modifiers: agile_ranger, aquatic_agility, double_jump (PerformDoubleJumpPacket, double_jump particle), gradual_glide (wings physics: TravellersWingsAttachment/AnimAttachment, TravellersWingsStatePacket, GradualGlidePacket), high_jump, side_step (PerformSidestepPacket), slimy_soles (SlimySolesAttachment; SlimeBlockBounceUp/Momentum), step_up, straight_ahead (PlayerHooks), swift_swim, unrestrained (UnrestrainedFriction, UnrestrainedBlockSpeedAndJumpFactor, ResetStuckUnrestrained, PathFinderUnrestrainedByLeash), water_walk (WaterWalk, WaterSprint); ReduceMovementFoodExhaustion; client movement hooks + server validation; vanilla fallbacks (input-edge detection -> SetActorMotionPacket, Slow Falling glide).",
+          "description": "Highest-risk player-physics unit; isolated so its iteration does not block U11.",
+          "contracts": [
+            "gear (data)",
+            "client.input+movement",
+            "rules+fx",
+            "combat"
+          ],
+          "e2e": "client (BeDD key presses): double jump height, sidestep distance, glide sink rate, water walk, step-up measured against spec; remote vanilla: double jump fallback works without disconnect; dx 1200..1299.",
+          "size": "L"
+        },
+        {
+          "id": "U13",
+          "title": "Uncrafting table and maps (uncraftmaps)",
+          "paths": [
+            "src/feature/uncraftmaps/**, src/client/uncraftmaps/**",
+            "assets/**/uncraftmaps/**, *.d/uncraftmaps.json, assets/data/*/uncraftmaps.json",
+            "tools/e2e/*/scenarios/uncraftmaps.ps1"
+          ],
+          "content": "uncrafting_table block; UncraftingMenu/Container/slots, native UncraftingScreen (guigoblintinkering) + UncraftingRecipeBookComponent, vanilla DDUI/form fallback; uncrafting recipe type + reverse of crafting recipes via recipes::producing, banned_uncraftables tag, 12 uncrafting config keys (+ SyncUncraftingTableConfigPacket), enchantment transfer, uncraft_item trigger, uncrafting_table_interactions stat, uncrafting_table_enabled loot condition; maps: magic_map, maze_map, ore_map, filled_magic_map, filled_maze_map, filled_ore_map, magic_map_focus, maze_map_focus (8 items), magic/maze map cloning recipe types, magic_map_color and ore_map_color data maps, MagicMapPacket, MazeMapPacket, 15 map decorations + ConqueredMapIconRenderer + MagicMapPlayerIconRenderer (vanilla mapped to MapDecoration types), /tf mapbiomes, /tf maplocator.",
+          "description": "Map pixels written server-side so vanilla clients see them; icons exact only with the client mod.",
+          "contracts": [
+            "recipes",
+            "inventory",
+            "client.ui",
+            "client.world",
+            "landmark",
+            "data",
+            "progression"
+          ],
+          "e2e": "selftests: uncraft a fixture recipe, config bans honoured, magic map pixels match biome colours at a forced landmark, maze map in labyrinth fixture; client: screenshot of the uncrafting screen compared pixel-exact to the TF GUI PNG, map icons; dx 1300..1399.",
+          "size": "L"
+        },
+        {
+          "id": "U14",
+          "title": "Progression and advancements (progression)",
+          "paths": [
+            "src/feature/progression_content/**, src/client/progression/**",
+            "assets/**/progression/**, *.d/progression.json, assets/data/advancements/**, assets/data/restrictions/**",
+            "tools/e2e/*/scenarios/progression.ps1"
+          ],
+          "content": "45 advancements (root, arborist, arctic_armor_dyed, beanstalk, break_glass_sword, chicken_jerky, craft_travellers_gear, experiment_115 x3, fiery_set, full_mettle_alchemist, ghast_trap, giants, hedge, hill1-3, hydra_chop, kill_cicada, lich_scepters, magic_map, magic_map_focus, maze_map, mazebreaker, modify_travellers_gear, naga_armors, ore_map, 11 progress_* (glacier, hydra, knights, labyrinth, lich, merge, naga, troll, trophy_pedestal, ur_ghast, yeti), progression_end, quest_ram, troll, twilight_dinner, twilight_hunter, uncraft_uncrafting_table) with the criteria engine (vanilla trigger types + 13 TF triggers + ItemColorPredicate); group advancements; native advancement tree screen (redrawn frames) + vanilla form list; advancement toasts, MissingAdvancementToast, LockedBiomeToast; 9 restrictions (dark_forest, dark_forest_center, final_plateau, fire_swamp, glacier, highlands, snowy_forest, swamp, thornlands) + Enforcements (locked-biome effects) + EnforceProgressionStatusPacket; tfEnforcedProgression semantics; validation that the 485 recipe unlocks resolve.",
+          "description": "Consumes triggers fired by other units through the F10 bus; landmark locks query progression::has.",
+          "contracts": [
+            "progression",
+            "rules+fx",
+            "client.ui",
+            "landmark",
+            "data"
+          ],
+          "e2e": "server: scripted playthrough grants (kill fixtures by entity id) unlock the next biome; locked biome applies its enforcement; client: tree screen screenshot, toasts; vanilla: toast packets and form; dx 1400..1499.",
+          "size": "L"
+        },
+        {
+          "id": "U15",
+          "title": "Sky, fog, weather and aurora (atmosphere)",
+          "paths": [
+            "src/client/atmosphere/**, src/feature/atmosphere/**",
+            "assets/**/atmosphere/** (incl. RP fog definitions), *.d/atmosphere.json",
+            "tools/e2e/*/scenarios/atmosphere.ps1"
+          ],
+          "content": "TwilightForestRenderInfo (dimension effects), TFSkyRenderer (no sun/moon, star field), client fixed time, FogHandler (biome, locked-biome and boss fog), CloudEvents (cloud height/locked biomes), TFWeatherRenderer + 6 environment textures (locked-biome weather incl. blizzard and acid rain, environment.acid_rain sound), aurora sky (aurora shader as CPU mesh; auroraBiomes config), killVignette, title-screen splash; client config for sky/fog/weather/aurora; vanilla fallbacks (RP fog definitions referenced by U1 client biomes, PlayerFogPacket, per-player time).",
+          "description": "Must work under Classic and Vibrant Visuals.",
+          "contracts": [
+            "client.world",
+            "client.render",
+            "progression",
+            "world"
+          ],
+          "e2e": "BeDD screenshots of sky, fog per biome, locked-biome weather and aurora under Classic and Vibrant Visuals compared to reviewed goldens; remote vanilla: fog packets applied; dx 1500..1599.",
+          "size": "L"
+        },
+        {
+          "id": "U16",
+          "title": "Passive and ambient fauna (fauna)",
+          "paths": [
+            "src/feature/fauna/**, src/client/fauna/**",
+            "assets/**/fauna/**, *.d/fauna.json, assets/data/*/fauna.json",
+            "tools/e2e/*/scenarios/fauna.ps1"
+          ],
+          "content": "10 mobs: boar, bighorn_sheep (shearing, dyeing), deer, penguin, tiny_bird (4 variants), squirrel, dwarf_rabbit (3 variants), raven, kobold (hint mob behaviour), mosquito_swarm; Bird/FlyingBird navigation; raven_feather; 10 spawn eggs; 10 entity loot tables; spawn placements; parrot_imitations data map (12 entity.parrot.* events); addPrey; animations from F2 geometry.",
+          "description": "Kobold is spawned by the F6 hint system by string.",
+          "contracts": [
+            "entity",
+            "spawn",
+            "loot",
+            "data",
+            "geo"
+          ],
+          "e2e": "selftests: spawn each mob, shear bighorn, variants persist; client screenshot of each mob animating; F13 attribute goldens; dx 1600..1699.",
+          "size": "M"
+        },
+        {
+          "id": "U17",
+          "title": "Forest and hollow-hill hostiles (hostiles)",
+          "paths": [
+            "src/feature/hostiles/**, src/client/hostiles/**",
+            "assets/**/hostiles/**, *.d/hostiles.json, assets/data/*/hostiles.json",
+            "tools/e2e/*/scenarios/hostiles.ps1"
+          ],
+          "content": "13 mobs + 2 projectiles: hostile_wolf, mist_wolf (blinding bite), winter_wolf (frost breath), king_spider, hedge_spider, swarm_spider, skeleton_druid (+ nature_bolt), redcap (TNT), redcap_sapper, wraith (flying), fire_beetle (fire breath), slime_beetle (+ slime_blob), pinch_beetle (hostile mount); 13 spawn eggs; 13 entity loot tables; spawn placements; AI from shared goals.",
+          "description": "Structures place their spawners by string id.",
+          "contracts": [
+            "entity",
+            "projectile",
+            "spawn",
+            "loot",
+            "combat",
+            "geo"
+          ],
+          "e2e": "selftests: each mob attacks a SimulatedPlayer with its special (blindness, breath, grab, TNT); F13 attribute goldens; client screenshots; dx 1700..1799.",
+          "size": "L"
+        },
+        {
+          "id": "U18",
+          "title": "Minor landmarks and decorative features (minorlandmarks)",
+          "paths": [
+            "src/feature/minorlandmarks/**, src/client/minorlandmarks/**",
+            "assets/**/minorlandmarks/**, *.d/minorlandmarks.json, assets/data/*/minorlandmarks.json",
+            "tools/e2e/*/scenarios/minorlandmarks.ps1"
+          ],
+          "content": "Structures hedge_maze (HedgeMazeComponent), small/medium/large_hollow_hill (HollowHillComponent configs, speleothem settings, spawners), hollow_tree and swamp_hollow_tree (8 hollowtree classes), fallen_trunk (3 fallentrunk classes, TrunkUnderDensityFunction terraformer, exclusion zone); hedge block (contact damage); feature types foundation (ruined, basement), monolith, lamppost, block_spike, small lake, web, wood_root, small_fallen_log, fallen_hollow_log, dark_forest feature, hollow stump placement; loot hedge_maze, hedge_cloth, hill_1..3, tree_cache, fallen_trunk_loot, foundation_basement, chests/basement.",
+          "description": "All procedural (LGPL) translations; no ARR templates.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "features",
+            "loot",
+            "spawn"
+          ],
+          "e2e": "place structure each key in a flat area -> golden volume hash; locate + teleport + spawner/chest ids at key offsets; dx 1800..1899.",
+          "size": "L"
+        },
+        {
+          "id": "U19",
+          "title": "Quest grove, camps and template features (questcamps)",
+          "paths": [
+            "src/feature/questcamps/**, src/client/questcamps/**",
+            "assets/**/questcamps/**, assets/structures/questcamps/**, tools/structures/questcamps/**, *.d/questcamps.json",
+            "tools/e2e/*/scenarios/questcamps.ps1"
+          ],
+          "content": "quest_grove (QuestGrove piece, 1 template) + quest_ram entity (wool-colour quest from twilight/quests/questing_ram, quest_grove_dropper loot, SyncQuestsPacket, QuestingRamIndicatorOverlay, complete_quest_ram trigger, spawn egg, loot); camp (CampStructure + CampPieces jigsaw, 35 templates: start 3, deco 19, path 9, tent 4; loot camp_armor_rack, camp_drying_rack, camp_pot, camp_tent); template features druid_hut (9 templates, hut_junk loot), graveyard (5, graveyard loot), grove ruins grove_arch + grove_pillar, stone_circle, simple and fancy wells (4, well and fancy_well loot): 57 templates authored originally.",
+          "description": "Templates are written with the F7 DSL against TF template definitions and the F14 spec; never derived from TF .nbt.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "template",
+            "features",
+            "entity",
+            "loot",
+            "client.ui"
+          ],
+          "e2e": "template validator passes; golden hashes of each feature and camp layout; quest ram completes with the 4 wool colours (selftest) and indicator overlay screenshot; dx 1900..1999.",
+          "size": "L"
+        },
+        {
+          "id": "U20",
+          "title": "Naga courtyard and Naga (naga)",
+          "paths": [
+            "src/feature/naga/**, src/client/naga/**",
+            "assets/**/naga/**, assets/structures/naga/**, tools/structures/naga/**, *.d/naga.json",
+            "tools/e2e/*/scenarios/naga.ps1"
+          ],
+          "content": "naga_courtyard (19 courtyard classes incl. StructureMazeGenerator and CourtyardTerraceTemplateProcessor; 32 templates: 8 walls, 14 hedge pieces, 7 terraces, statue, path, spawner); Naga boss (NagaSegment chain as entity parts, move control, charge/daze/phases), naga spawner logic, naga entity loot.",
+          "description": "Boss via F8 boss kit; trophy and spawner block are U5 by string.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "template",
+            "boss",
+            "entity",
+            "loot"
+          ],
+          "e2e": "structure golden hash; boss fight with seeded RNG: segments follow, phases, death chest + trophy drop + progress_naga; client screenshot of the Naga; dx 2000..2099.",
+          "size": "L"
+        },
+        {
+          "id": "U21",
+          "title": "Lich tower and Lich (lich)",
+          "paths": [
+            "src/feature/lich/**, src/client/lich/**",
+            "assets/**/lich/**, assets/structures/lich/{root,gallery}/**, tools/structures/lich/**, *.d/lich.json",
+            "tools/e2e/*/scenarios/lich.ps1"
+          ],
+          "content": "lich_tower (LichTowerStructure + 21 lichtowerrevamp classes) + 48 templates (root 37, gallery 11); 8 chest loot tables (tower_enchanting, tower_foyer, tower_grave_lower, tower_grave_upper, tower_jars, tower_library, tower_potion, tower_room); lectern tomes (addTomesToLecterns); Lich (phases, shadow clones with clone_count, minions with minion_count, teleport, lich_bolt, lich_bomb with lichBombsDontBlowUpItems), lich_minion, death_tome (+ tome_bolt), rising_zombie; is_minion loot condition; lich spawner logic; angry_lich particle.",
+          "description": "Room interiors (134 templates) are U22 at the slot ids defined by the imported template definitions.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "template",
+            "boss",
+            "entity",
+            "projectile",
+            "loot"
+          ],
+          "e2e": "tower assembles with placeholder rooms when U22 is absent and with U22 present (golden layout hash of piece boxes); boss fight phases and clones; dx 2100..2199.",
+          "size": "L"
+        },
+        {
+          "id": "U22",
+          "title": "Lich tower interiors and decor (lichdecor)",
+          "paths": [
+            "src/feature/lichdecor/**, src/client/lichdecor/**",
+            "assets/**/lichdecor/**, assets/structures/lich/rooms/**, tools/structures/lichdecor/**, *.d/lichdecor.json",
+            "tools/e2e/*/scenarios/lichdecor.ps1"
+          ],
+          "content": "134 room templates (3x3 18, 5x5 35, 7x7 43, 9x9 38); 40 blocks: candelabra, 12 skull candles (6 floor + 6 wall; created by using a candle on a skull, disableSkullCandleCreation, skull_candles_made stat), ominous_fire + 17 ominous candles (ominous_fire data map, ominousFireConversion, candle dispenser, dim_flame and ominous_flame particles), brazier, sinister_spawner (+ /tf spawner), chiseled_canopy_bookshelf (BookshelfSpawner), skull_chest, wrought_iron_fence (+ wrought_iron_bar, leash knot), terrorcotta arcs/curves/lines, coronation_carpet (RoyalRags model); items wrought_iron_bar, magic_painting, 6 skull candle items; magic_painting entity (5 variants, 59 layer textures, renderer) + painting_variant tags tower_paintings and tower_boss_paintings; renderers Brazier, Candelabra, OminousCandle, SinisterSpawner, SkullCandle, SkullChest.",
+          "description": "Pure content + decor behaviour; validated against template definitions so U21's code never needs to change.",
+          "contracts": [
+            "template",
+            "families+blockevents",
+            "inventory",
+            "entity",
+            "data",
+            "client.render"
+          ],
+          "e2e": "validator over all 134 templates; selftests: skull candle creation, ominous fire conversion, sinister spawner, bookshelf spawner; client screenshots of decor and paintings; dx 2200..2299.",
+          "size": "L"
+        },
+        {
+          "id": "U23",
+          "title": "Labyrinth and Minoshroom (labyrinth)",
+          "paths": [
+            "src/feature/labyrinth/**, src/client/labyrinth/**",
+            "assets/**/labyrinth/**, *.d/labyrinth.json",
+            "tools/e2e/*/scenarios/labyrinth.ps1"
+          ],
+          "content": "labyrinth (28 minotaurmaze classes on the F7 TFMaze); maze_slime_block, maze_slime_ball; minotaur, minoshroom (charge, ground pound), maze_slime + 3 spawn eggs; loot labyrinth_dead_end, labyrinth_room, labyrinth_vault, labyrinth_vault_jackpot; mazebreaker rule (damageNonMazebreakerToolsMore on the mazestone tag); minoshroom spawner logic.",
+          "description": "Procedural (LGPL) translation.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "boss",
+            "entity",
+            "loot",
+            "interactions"
+          ],
+          "e2e": "golden hash; boss fight; mazestone tool-damage rule; dx 2300..2399.",
+          "size": "M"
+        },
+        {
+          "id": "U24",
+          "title": "Hydra lair, Hydra and fire swamp (hydra)",
+          "paths": [
+            "src/feature/hydra/**, src/client/hydra/**",
+            "assets/**/hydra/**, *.d/hydra.json",
+            "tools/e2e/*/scenarios/hydra.ps1"
+          ],
+          "content": "hydra_lair (HydraLairComponent on HollowHillComponent); Hydra (HydraHeadContainer heads with regrowth, HydraNeck, HydraPart, HydraSmallPart as entity parts; bite, fire breath, mortar) + hydra_mortar; hydra spawner logic; fire_jet, smoker, encased_fire_jet, encased_smoker (4 blocks, jet.* sounds, large_flame and huge_smoke particles) + fire-jet feature types and their placed features.",
+          "description": "Hardest multipart boss; encased jets are placed by U26 by string.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "boss",
+            "entity",
+            "projectile",
+            "features",
+            "families+blockevents",
+            "fx"
+          ],
+          "e2e": "boss fight with seeded RNG: head loss/regrow, parts follow, mortar; jets fire on redstone; dx 2400..2499.",
+          "size": "L"
+        },
+        {
+          "id": "U25",
+          "title": "Knight stronghold and Knight Phantoms (stronghold)",
+          "paths": [
+            "src/feature/stronghold/**, src/client/stronghold/**",
+            "assets/**/stronghold/**, *.d/stronghold.json",
+            "tools/e2e/*/scenarios/stronghold.ps1"
+          ],
+          "content": "knight_stronghold (26 stronghold classes), loot stronghold_cache and stronghold_room; knight_phantom x6 (formations, kill_all_phantoms trigger, conquest after last death) + thrown_wep; upper/lower goblin knight (rider and mount, armour shedding), blockchain_goblin (spike-ball part), helmet_crab; 5 spawn eggs; trophy_pedestal (trophy_pedestal_activation_blocks tag + progress_lich, removes stronghold_shield within 5, placed_on_trophy_pedestal trigger, trophy_pedestals_activated stat, comparator via boss::trophyVariant) + stronghold_shield; knight phantom spawner logic.",
+          "description": "Procedural translation plus the pedestal unlock.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "boss",
+            "entity",
+            "projectile",
+            "loot",
+            "progression"
+          ],
+          "e2e": "golden hash; pedestal + trophy opens shields; phantom fight conquers; dx 2500..2599.",
+          "size": "L"
+        },
+        {
+          "id": "U26",
+          "title": "Dark tower, Ur-Ghast and tower devices (darktower)",
+          "paths": [
+            "src/feature/darktower/**, src/client/darktower/**",
+            "assets/**/darktower/**, *.d/darktower.json",
+            "tools/e2e/*/scenarios/darktower.ps1"
+          ],
+          "content": "dark_tower (18 darktower classes on the F7 tower base); infested_towerwood; tower devices reappearing_block, vanishing_block, unbreakable_vanishing_block, locked_vanishing_block, carminite_builder, built_block, antibuilder, antibuilt_block, carminite_reactor, reactor_debris (renderer), fake_gold, fake_diamond, slider (+ slider entity), ghast_trap (POI, activate_ghast_trap trigger, ghast_trap particle): 15 blocks; items tower_key, borer_essence, carminite; Ur-Ghast (tears, fireballs, trap phases, boss_tear particle), carminite_ghastling, carminite_ghastguard, carminite_golem, carminite_broodling, towerwood_borer + 6 spawn eggs; loot darktower_boss, darktower_cache, darktower_key; ur-ghast spawner logic.",
+          "description": "Largest unit; ghasts reuse vanilla ghast runtime behaviour where TF does.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "boss",
+            "entity",
+            "projectile",
+            "families+blockevents",
+            "blockdata+redstone",
+            "loot",
+            "progression"
+          ],
+          "e2e": "golden hash; device redstone selftests (vanish/reappear, builder bridges, key unlock); ghast trap downs Ur-Ghast in a scripted fight; dx 2600..2699.",
+          "size": "XL"
+        },
+        {
+          "id": "U27",
+          "title": "Troll caves and yeti cave (caves)",
+          "paths": [
+            "src/feature/caves/**, src/client/caves/**",
+            "assets/**/caves/**, *.d/caves.json",
+            "tools/e2e/*/scenarios/caves.ps1"
+          ],
+          "content": "troll_cave (TrollCaveMain, Connect, Garden, Vault components; speleothems), features TrollBigMushgloom, TrollHugeBrownMushroom, TrollHugeRedMushroom + BigMushgloomFeature; blocks trollsteinn (light-reactive, TrollsteinnModel), trollvidr, unripe_trollber, trollber, huge_mushgloom, huge_mushgloom_stem; troll (+ thrown_block); loot troll_garden, troll_vault, troll_vault_with_lamp; yeti_cave (YetiCaveComponent on HollowHillComponent); alpha_yeti (grab/throw via hostile mount, ground pound with falling_ice, thrown_ice by string), yeti, falling_ice; 3 spawn eggs; alpha yeti spawner logic.",
+          "description": "Two cave landmarks sharing the hollow-hill and speleothem kit.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "features",
+            "boss",
+            "entity",
+            "projectile",
+            "client.render"
+          ],
+          "e2e": "golden hashes; trollsteinn texture by light (client); alpha yeti throw moves a SimulatedPlayer (motion packet); dx 2700..2799.",
+          "size": "L"
+        },
+        {
+          "id": "U28",
+          "title": "Aurora palace, Snow Queen and mushroom tower (aurora)",
+          "paths": [
+            "src/feature/aurora/**, src/client/aurora/**",
+            "assets/**/aurora/**, *.d/aurora.json",
+            "tools/e2e/*/scenarios/aurora.ps1"
+          ],
+          "content": "aurora_palace (23 icetower classes incl. floor decorators, on the F7 tower base), loot aurora_cache and aurora_room; aurora_block, aurora_pillar, aurora_slab, auroralized_glass (NoiseVaryingModel as position tint); Snow Queen (phases, ice beam, SnowQueenIceShield parts, summons), snow_guardian, stable_ice_core, unstable_ice_core, ice_crystal, ice_snowball + 4 spawn eggs; particles snow, snow_warning, extended_snow_warning, snow_guardian, ice_beam; snow queen spawner logic; mushroom_tower (7 mushroomtower classes; no structure set, reachable with /place only).",
+          "description": "Both remaining tower-base structures.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "boss",
+            "entity",
+            "projectile",
+            "client.render",
+            "fx"
+          ],
+          "e2e": "golden hashes (palace, mushroom tower); Snow Queen fight with shields; aurora tint screenshot; dx 2800..2899.",
+          "size": "L"
+        },
+        {
+          "id": "U29",
+          "title": "Beanstalk, cloud castle and giants (giants)",
+          "paths": [
+            "src/feature/giants/**, src/client/giants/**",
+            "assets/**/giants/**, *.d/giants.json",
+            "tools/e2e/*/scenarios/giants.ps1"
+          ],
+          "content": "12 blocks / 3 items: uberous_soil, huge_stalk, beanstalk_grower (growth), beanstalk_leaves, wispy/fluffy/rainy/snowy cloud (precipitation below clouds, IsRainingAt, cloudBlockPrecipitationDistance, cloud_puff particle), giant_cobblestone, giant_log, giant_leaves, giant_obsidian (4x4x4 tiling, GiantBlockModel, giant block outlines); magic_beans, giant_pickaxe (4x4x4 mining, GiantPickaxeMiningAttachment, giant_pick_used condition, giant_block_grouping modifier), giant_sword (reach); giant_house (GiantHouseStructure: CloudCastleComponent, CloudComponent, CloudTreeComponent, TrollCloudComponent); giant_miner, armored_giant (viewer-skin render, giantSkinUUIDs) + 2 spawn eggs.",
+          "description": "Owns every giant-scale mechanic.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "families+blockevents",
+            "item",
+            "loot",
+            "entity",
+            "client.render"
+          ],
+          "e2e": "magic beans grow a beanstalk to cloud height; giant pick mines a 4x4x4 and groups drops; rain under rainy cloud; golden hash of the cloud castle; dx 2900..2999.",
+          "size": "L"
+        },
+        {
+          "id": "U30",
+          "title": "Final castle and thornlands (finalcastle)",
+          "paths": [
+            "src/feature/finalcastle/**, src/client/finalcastle/**",
+            "assets/**/finalcastle/**, assets/structures/finalcastle/**, tools/structures/finalcastle/**, *.d/finalcastle.json",
+            "tools/e2e/*/scenarios/finalcastle.ps1"
+          ],
+          "content": "final_castle (32 finalcastle classes; 3 templates bell_tower, gazebo, large_tower authored originally); 20 blocks: castle doors yellow/violet/pink/blue (rune colour, vanish open, door.* sounds), force fields violet/pink/orange/green/blue (ForceFieldModel connections), cinder_furnace (smelting + charring nearby logs), cinder_log, cinder_wood, brown_thorns, green_thorns, burnt_thorns, thorn_rose, thorn_leaves, potted thorn/green_thorn/dead_thorn; ThornFeature + thorn configured features; adherent, harbinger_cube, roving_cube, plateau_boss (placeholder as TF) + 4 spawn eggs; final_boss_boss_spawner logic; alertPlayerCastleIsWIP; progression_end.",
+          "description": "End of the progression chain.",
+          "contracts": [
+            "landmark",
+            "structure",
+            "template",
+            "features",
+            "families+blockevents",
+            "entity",
+            "boss"
+          ],
+          "e2e": "golden hash; castle door opens with matching rune flow; thorns damage and burn (lamp of cinders by tag); dx 3000..3099.",
+          "size": "L"
+        }
+      ]
+    },
+    {
+      "id": "W2a",
+      "title": "Parity audit (per subsystem, parallel)",
+      "purpose": "After all W1 PRs merged: compare against TF source, specs and F13 goldens, fix gaps inside the audited files, run full selftests and screenshot reviews; repeat W2a+W2b rounds until a round finds nothing.",
+      "sequential": false,
+      "units": [
+        {
+          "id": "A1",
+          "title": "World and minor landmarks audit",
+          "paths": [
+            "files of U1, U2, U3, U18, U19 and F4, F5, F6, F7",
+            "docs/audit/world/**"
+          ],
+          "content": "22 biomes, terrain, carvers, blankets, trees, features (129/107), landmark grid and placement for all 21 keys, minor landmarks and template features.",
+          "description": "Diff behaviour vs TF and goldens; fix; report.",
+          "contracts": [
+            "worldgen",
+            "features",
+            "landmark",
+            "structure"
+          ],
+          "e2e": "server 'world' scenario: 3 seeds x 64 chunks fingerprints + landmark positions vs F13; timing soak.",
+          "size": "L"
+        },
+        {
+          "id": "A2",
+          "title": "Blocks, items, recipes and loot audit",
+          "paths": [
+            "files of U4-U10, U13 and F9, F10, F11",
+            "docs/audit/items/**"
+          ],
+          "content": "533 blocks, 254 items, 540 recipes, 634 loot tables, tags, data maps, dispensers, durability, tooltips, creative catalog.",
+          "description": "Registered-but-unimplemented report must be empty.",
+          "contracts": [
+            "item",
+            "recipes",
+            "loot",
+            "families+blockevents",
+            "data"
+          ],
+          "e2e": "selftest sweep: every block placed/broken with expected drops; every recipe crafts; loot statistics vs F13.",
+          "size": "L"
+        },
+        {
+          "id": "A3",
+          "title": "Landmarks and bosses I audit",
+          "paths": [
+            "files of U20-U25",
+            "docs/audit/bosses1/**"
+          ],
+          "content": "Naga, Lich tower (+ interiors), Labyrinth, Hydra, Knight stronghold: structures, spawners, chests, boss phases, drops, conquest, hints.",
+          "description": "Seeded boss fights + structure walk-throughs.",
+          "contracts": [
+            "boss",
+            "landmark",
+            "structure"
+          ],
+          "e2e": "boss gauntlet scenario I + client screenshots.",
+          "size": "L"
+        },
+        {
+          "id": "A4",
+          "title": "Landmarks and bosses II audit",
+          "paths": [
+            "files of U26-U30",
+            "docs/audit/bosses2/**"
+          ],
+          "content": "Dark tower, troll and yeti caves, aurora palace, mushroom tower, cloud castle, final castle.",
+          "description": "As A3.",
+          "contracts": [
+            "boss",
+            "landmark",
+            "structure"
+          ],
+          "e2e": "boss gauntlet scenario II + client screenshots.",
+          "size": "L"
+        },
+        {
+          "id": "A5",
+          "title": "Mobs audit",
+          "paths": [
+            "files of U16, U17 and F8",
+            "docs/audit/mobs/**"
+          ],
+          "content": "All 80 entity types: attributes vs F13, AI, animations, sounds, spawn rules, multipart sync, projectiles.",
+          "description": "Includes multiplayer (2 SimulatedPlayers) checks.",
+          "contracts": [
+            "entity",
+            "projectile",
+            "spawn"
+          ],
+          "e2e": "spawn sweep + client animation review.",
+          "size": "M"
+        },
+        {
+          "id": "A6",
+          "title": "Player systems and client audit",
+          "paths": [
+            "files of U11, U12, U14, U15 and F12",
+            "docs/audit/client/**"
+          ],
+          "content": "Travellers' Gear, movement, advancements/restrictions, sky/fog/weather/aurora, every screen/overlay/toast/keybind under Classic and Vibrant Visuals.",
+          "description": "Pixel comparison of GUIs against TF PNGs; movement measurements.",
+          "contracts": [
+            "client.ui",
+            "client.render",
+            "client.world",
+            "client.input+movement",
+            "progression"
+          ],
+          "e2e": "BeDD screenshot suite + key-driven movement scenario.",
+          "size": "L"
+        },
+        {
+          "id": "A7",
+          "title": "Assets, audio, lang, licence and vanilla-client matrix audit",
+          "paths": [
+            "tools/import/**, tools/models/**, tools/sounds/** (toolkits), assets/gen/**, docs/spec/not-ported.md, NOTICE, assets/LICENSE",
+            "docs/audit/assets/**"
+          ],
+          "content": "328 sound events non-placeholder, 9 tracks, 29 locales coverage of 2061 keys, texture/model completeness, CC BY-NC-SA attribution, ARR guard, remote-vanilla e2e across all units (no disconnects, no companion packets to vanilla, degraded paths work).",
+          "description": "Fixes toolkit issues; files per-unit findings for the next round's group audits.",
+          "contracts": [
+            "import",
+            "geo",
+            "synth",
+            "assemble"
+          ],
+          "e2e": "remote-vanilla matrix scenario + lang/sound lint.",
+          "size": "M"
+        }
+      ]
+    },
+    {
+      "id": "W2b",
+      "title": "Integration and consistency (sequential, closes each audit round)",
+      "purpose": "Fold W1 contract extensions into W0, enforce one definition per string, and run the full suites before the next audit round.",
+      "sequential": true,
+      "units": [
+        {
+          "id": "A8",
+          "title": "Integration and consistency",
+          "paths": [
+            "src/feature/ext/**, all W0 contract headers, src/mod/**, src/feature/common/**, tools/xmake/**, tools/ci/**",
+            "docs/audit/integration/**"
+          ],
+          "content": "Fold src/feature/ext/<u>/ extensions into the contracts, delete duplicates, dangling-id and unimplemented reports, config/command/doc consistency, performance soak (tick time with 4 players across landmarks), memory.",
+          "description": "Runs after A1-A7 of the same round; then the next round starts until a round is clean.",
+          "contracts": [
+            "mod",
+            "assemble",
+            "owners"
+          ],
+          "e2e": "server 'full' selftest run + 30-minute multiplayer soak + client smoke on both visual modes.",
+          "size": "M"
+        }
+      ]
+    }
+  ],
+  "rules": [
+    "R1 Ids: every id is TF's own twilightforest:<path> and exists from W0 (F1 skeleton). docs/spec/owners.tsv lists the owner of every id of every kind; a unit edits only files of ids it owns. Block-state names/values are frozen in docs/spec/blockstates.md; later changes may only add.",
+    "R2 Cross-unit references are strings only (block/item/entity/loot/feature/structure/sound/particle/tag ids). No W1 unit includes another W1 unit's headers; integration goes only through W0 contracts and the trigger bus.",
+    "R3 Owned paths per unit <u>: src/feature/<u>/**, src/client/<u>/** (#ifdef GF_CLIENT), src/core/<u>/** + tests/<u>/**, assets/pack/{bp,rp}/**/<u>/**, every *.d/<u>.json fragment and texts.d/<locale>/<u>.lang, assets/data/<kind>/<u>.json, assets/structures/<u>/**, assets/lang/<locale>/<u>.json, tools/{import/overrides,sounds/recipes}/<u>.json, tools/structures/<u>/**, tools/e2e/{server,client}/scenarios/<u>*.ps1, docs/units/<u>.md. assets/gen/{import,geo,audio}/<u>/** may only be regenerated by the tools (-Unit <u>), never hand-edited; a manual file with the same id overrides the generated one.",
+    "R4 Recipes: vanilla-type recipes (crafting, smelting, stonecutting, smithing) belong to the owner of the output item; custom-type recipes belong to the machine/type owner (drying U4, uncrafting U13, travellers U11, map cloning U13, casket/scepter/essence/emperors cloth U9, moonworm queen U8, no_template_smithing U7).",
+    "R5 Loot: block loot to the block owner, entity loot to the entity owner, chest loot to the unit that places the chest; shared tables (useless, just_bones, suspicious_stew, items/*) are W0 (F10).",
+    "R6 Tags live with the member: TF tag JSON is imported W0 data; a unit adds members only through union fragments assets/tags/<registry>/<tag>.d/<u>.json. Behaviour on another unit's blocks is attached only by tag matchers (e.g. mazestone tag for the mazebreaker rule, thorns tag for the lamp of cinders).",
+    "R7 Data maps belong to their consumer (crumble_horn and transformation_powder U8, ore_map_color and magic_map_color U13, ominous_fire U22, parrot_imitations U16); compostables/furnace_fuels rows follow the item owner.",
+    "R8 One hook per engine event, owned by W0: no unit hooks GameMode, interact/use/destroy events, Mob::hurt, die, dropAllItems, block ticks, LocalPlayer movement, LevelRenderer or sky/fog functions directly; register with interactions, blockevents, combat, death, loot, entity, client.* instead.",
+    "R9 Translation keys belong to the feature owner (import partitions the 2061 en_us keys; book keys F6, death messages F10); others use tr(key, 'English fallback'). Duplicate keys in any merged fragment fail the build; the 29 Bedrock locales are generated from TF's lang files.",
+    "R10 Sound events and particles: each event/particle has exactly one owner in owners.tsv and is played/emitted by id through fx (a missing one is silent). Owners refine audio only through tools/sounds/recipes/<u>.json; nobody opens TF .ogg or .nbt (the shared checkout excludes them; CI arr-guard rejects matching hashes).",
+    "R11 Licensing: translated TF code keeps the LGPL attribution header naming the TF source file; textures/models/lang only via tools/import (CC BY-NC-SA 4.0, attribution in assets/LICENSE and NOTICE); sounds, music and structure templates are original (synth toolkit, template DSL) and may follow TF's footprint, slots, spawners, chests and loot from the spec and the LGPL template definitions.",
+    "R12 Selftests: prefix <u>.*; unit U<n> owns testPos dx 100n..100n+99, W0b unit F<k> owns 5000+100k..5000+100k+99, W2 9000+; tests depend only on W0 plus the unit itself (progression::grant, landmark::forceStart, skeleton ids, fixtures) and must pass inside the 'full' run.",
+    "R13 Config: one GF_REGISTER_CONFIG section per unit named after it; every TF config key (TFCommonConfig ~35, TFClientConfig ~21) is mapped to exactly one section in docs/spec/config.md; shared values (boss drop chests, multiplayer adjuster, portal) live in W0 sections.",
+    "R14 Commands and functions: every /twilightforest subcommand and datapack function has one owner in owners.tsv (tp F4, center/info/conquer/generatebook/locate/place F6, structure_util F7, gamerule F10, maplocator/mapbiomes U13, shield U9, spawner U22, travellersgear U11).",
+    "R15 Net: channels are <u>.<name>, one client handler per channel; server-to-client data goes only over the companion protocol; vanilla clients must never receive companion packets.",
+    "R16 World data keys gf:<u>:...; never keep Player* or block pointers across ticks; defer world edits from cancelled interactions to the next tick.",
+    "R17 Unknown ids at runtime are skipped with one warning per id; assemble fails on dangling twilightforest: references in BP/data; W2 runs a registered-but-unimplemented report.",
+    "R18 W0 headers are immutable in W1. A needed extension goes into src/feature/ext/<u>/ (new files only), is called out in the PR, and is folded by A8 in W2b.",
+    "R19 Structures: procedural pieces are translated exactly; template-backed pieces use original .gft templates validated by tools/structures/build.ps1 -Check against the imported template definitions; every structure has a golden volume hash selftest reviewed once with screenshots.",
+    "R20 Bosses and trophies: boss lifecycle, bar, death chest, conquest and generic spawner come from the F8 boss kit; U5 owns all trophy/spawner/banner-pattern/miniature blocks; each boss unit registers boss::registerSpawner for its spawner block id and drops trophies through its loot table.",
+    "R21 Advancements: U14 owns all 45 advancement JSONs and their criteria; units fire their TF triggers by string (progression::trigger) and never award advancements directly; recipe unlocks are generated into recipe JSON by F1.",
+    "R22 Both builds must pass (pwsh tools/build.ps1 -Target all -Tests) and the unit's server + client e2e scenario must pass before the PR; every e2e also runs the remote-vanilla variant when the unit has a vanilla fallback.",
+    "R23 Builds and e2e only through tools/build.ps1 and tools/e2e/*/run.ps1, which take Throttle slots; never run xmake or BDS directly outside a slot.",
+    "R24 Read TF only from the shared local checkout (tools/tf/fetch.ps1), not through the GitHub API (rate limits).",
+    "R25 PR title 'U<n>: <imperative summary>'; tools/ci/ownership.ps1 -Unit <u> must pass (the diff touches only owned paths plus src/feature/ext/<u>/)."
+  ],
+  "contracts": [
+    {
+      "name": "mod",
+      "owner": "F0 (W0a)",
+      "api": "GF_REGISTER_MODULE(T) / GF_REGISTER_MODULE_ORDERED(T,n); GF_REGISTER_CONFIG(\"<u>\", T) -> config/<u>.json, gf::config::get<T>(), /twilightforest config; GF_REGISTER_SUBCOMMAND(fn) under /twilightforest (aliases /tf, /tffeature); GF_REGISTER_SELFTEST(\"<u>.<case>\", fn); gf::tr(key, fallback, args...), gf::trFor(player, ...), gf::client::ctr(...); gf::log(); gf::core::holiday::isHalloweenWeek()."
+    },
+    {
+      "name": "db+net",
+      "owner": "F0 (W0a)",
+      "api": "gf::game::db::{get,put,erase}(\"gf:<u>:...\"), db::onWorldReady/onWorldSave/onWorldClosed; gf::net::send(Player&, \"<u>.<name>\", json), net::on(channel, fn), net::onCompanionJoined(fn), net::isCompanion(Player const&), net::client::on(channel, fn)."
+    },
+    {
+      "name": "interactions",
+      "owner": "F0 (W0a)",
+      "api": "interactions::onUseOn/onUse/onDestroy/onStartDestroy/onPlace/onUnusedUseOn/onDestroyed/onInteract/onAttack(Match{block|item|entity id or Match::tag(id)}, fn, priority) -> Pass|Consume|Deny (first non-Pass by priority wins; F6 protection at Highest); nextTick(fn); mutableItem(ctx.item)."
+    },
+    {
+      "name": "blockdata+redstone",
+      "owner": "F0 (W0a)",
+      "api": "blockdata::get/set(region, pos, key, json), onRotate(key, fn); redstone::power(region, pos) 0..15, watch(pos, fn), registerEmitter(blockId, fn), registerAnalog(blockId, fn -> optional<int>)."
+    },
+    {
+      "name": "selftest",
+      "owner": "F0 (W0a)",
+      "api": "ctx.player(), spawnPlayer(), testPos(dx), flatArea(dx, size), inTwilight(), setBlock(pos, id, states), cleanupBlock, give(id, n), co_await ticks(n), co_await ensureLoaded(pos), check/require/fail/info, captureBossEvent(), snapshotVolume(box) -> hash; fixture ids gf_test:* in assets/test."
+    },
+    {
+      "name": "assemble",
+      "owner": "F0 (W0a)",
+      "api": "tools/xmake/merges.json entries {glob, out, wrapper, mode: object|union}; layers assets/gen/{import,geo,audio}/** then assets/pack/** (manual wins per id; duplicates inside a layer fail); checks: integer block states, permutation budget, dangling twilightforest: references, every pack file has an owner, ARR hash guard; lang -> 29 Bedrock locales."
+    },
+    {
+      "name": "owners",
+      "owner": "F0 (W0a)",
+      "api": "docs/spec/owners.tsv columns kind, id-or-glob, owner, mode(gen|manual); generated by tools/spec/owners.ps1; tools/ci/ownership.ps1 -Unit <u> [-Base main] fails if the diff touches unowned paths."
+    },
+    {
+      "name": "import",
+      "owner": "F1",
+      "api": "pwsh tools/import/run.ps1 -Kinds textures,models,blockstates,lang,tags,loot,recipes,advancements,worldgen,datamaps,registries,particles,sounds,skeleton,catalog,families [-Unit <u>] [-Check]; overrides tools/import/overrides/<u>.json (drop, rename, JSON-pointer patch); output assets/gen/import/<u>/**; docs/spec/blockstates.md."
+    },
+    {
+      "name": "geo",
+      "owner": "F2",
+      "api": "pwsh tools/models/convert.ps1 -Java <ModelClass> [-Unit <u>] -> assets/gen/geo/<u>/{models/entity/<id>.geo.json, bones/<id>.json, animations/<id>.base.json}; tools/models/attachable.ps1 -Item <id> for armor/gear/trophy heads."
+    },
+    {
+      "name": "synth",
+      "owner": "F3",
+      "api": "pwsh tools/sounds/synth.ps1 -Unit <u> [-Check]: tools/sounds/recipes/<u>.json {event: {category, subtitle, variants:[{patch, params, seed, volume, pitch}]}} -> assets/gen/audio/<u>/sounds/**.ogg + sound_definitions fragment; tools/sounds/music/<track>.json (tracker) -> .ogg; never reads TF audio."
+    },
+    {
+      "name": "template",
+      "owner": "F7",
+      "api": "Template file assets/structures/<u>/<path>.gft.json {size, palette, blocks (RLE), markers, jigsaw connectors, entities}; pwsh tools/structures/build.ps1 -Unit <u> builds *.gfs.ps1 DSL scripts and -Check validates against the 205 imported template definitions; /tf structure_util place <id> <pos> <rot>."
+    },
+    {
+      "name": "world",
+      "owner": "F4",
+      "api": "gf::world::{twilight(), isTwilight(Dimension const&), teleport(Player&, DimensionType, Vec3, float yaw), coordinateScale(), fixedTime()}; gf::portal::{tryActivate(BlockSource&, BlockPos), onTeleported(fn), destinationFor(Player const&)}; gamerules playersTfPortalDefaultDelay / playersTfPortalCreativeDelay."
+    },
+    {
+      "name": "worldgen",
+      "owner": "F5",
+      "api": "gf::worldgen::{setBiomeSource(BiomeSourceFn), biomeAt(BlockPos), mainBiomeAt(int bx, int bz), setTerrain(TerrainProvider), setSurface(SurfaceProvider), registerCarver(id, CarverFn), registerBlanket(id, BlanketFn), addStage(Stage, id, order, ChunkFn), seed()}; gf::core::jrand / gf::core::noise (Xoroshiro128++, LegacyRandom, WorldgenRandom, Perlin/Simplex/Normal noise, density evaluator)."
+    },
+    {
+      "name": "features",
+      "owner": "F5",
+      "api": "gf::features::{registerType(id, FeatureFn), registerPlacement(id, PlacementFn), registerTrunkPlacer/registerFoliagePlacer/registerTreeDecorator/registerRootPlacer/registerStateProvider(id, fn), place(id, WorldGenRegion&, BlockPos, Random&) -> bool, placeJson(json, ...), LargeWriter (cross-chunk queue)}; built-in vanilla types + weighted_list, avoid_landmark, chunk_center."
+    },
+    {
+      "name": "spawn",
+      "owner": "F5",
+      "api": "gf::spawn::{registerPlacement(entityId, PlacementRule, PredicateFn = {}), spawnMob(BlockSource&, entityId, Vec3, SpawnReason, InitFn = {}) -> Actor*, setBiomeSpawns(biomeId, Table), onSpecialSpawn(fn)}; controlled spawns read from landmark descriptors."
+    },
+    {
+      "name": "landmark",
+      "owner": "F6",
+      "api": "gf::core::landmark::{nearestCenter(cx, cz), chunkHasCenter(cx, cz), pickVariety(seed, cx, cz), pickForChunk(seed, cx, cz, BiomeAtFn)} (pure); gf::landmark::{descriptor(key), registerGenerator(key, Generator{layout, terraform?, spawnIndex?, pieceProtected?}), startAt(dim, pos), startsIntersecting(dim, ChunkPos), isConquered(Start const&), setConquered(dim, pos, key, bool) (fires structure_cleared), isProtectedFor(Player const&, pos), trySpawnHint(Player&, Start const&, pos), generateAt(key, BlockSource&, pos), forceStart(key, GlobalPos), enforcedProgression(), addTerraformer(key, fn), decorationAllowed(ChunkPos, DecoKind)}."
+    },
+    {
+      "name": "structure",
+      "owner": "F7",
+      "api": "gf::structure::Piece {bbox, orientation, mirror, placeBlock(x, y, z, state-by-name), getBlock, fill, fillAir, randomFill(selector), placeChest(blockId, tableId), placeSpawner(entityId), placeTemplate(id, origin, Settings)}; registerPieceType(id, Factory); bases TFMaze, HollowHillComponent, TowerWing family (16 classes), TFStructureComponentOld/Template, TwilightTemplate/DoubleTemplate/Jigsaw pieces; templates::{get, place}; registerProcessor(id, fn); registerMarkerHandler(id, fn); palettes::apply; selectors::get(id); jigsaw::assemble(pool, origin, depth, rng); speleothems::place(region, pos, configId, rng, hanging)."
+    },
+    {
+      "name": "entity",
+      "owner": "F8",
+      "api": "gf::entity::{registerType(id, Behaviour{onSpawn, tick, aiStep, hurt, die, save, load, interact}), data(Actor&, key) -> json&, sync(Actor&, key), setProperty(Actor&, name, value), addGoal(Mob&, prio, Goal), addTargetGoal(...), goals::{charge, breath, flockToSameKind, panicOnFlockDeath, avoidAny, goHome, alwaysWatchTarget, randomLookIfBored, simplifiedAttack}, setMoveControl(Mob&, kind|fn), setHome(Mob&, GlobalPos, radius), home(Mob const&), addPart(Mob&, partId, size, offsetFn) -> PartHandle, mount::{grab(Mob&, Player&), throwRider(Mob&, Vec3)}, addTargetFilter(fn), seedForTest(Actor&, seed)}."
+    },
+    {
+      "name": "projectile",
+      "owner": "F8",
+      "api": "gf::projectile::{registerType(id, Spec{gravity, drag, onHitEntity, onHitBlock, tick}), shoot(Actor& shooter, id, Vec3 dir, speed, inaccuracy, json init = {}) -> Actor*, addSteering(SteeringFn)}."
+    },
+    {
+      "name": "boss",
+      "owner": "F8",
+      "api": "gf::boss::{registerBoss(BossSpec{entityId, homeStructure, lootTable, deathChestBlock, bar{rgb, darken, fog}, deathTicks}), registerSpawner(SpawnerSpec{blockId, entityId, range = 9, particle, spawnFn}), bar(Mob&), setMinion(Actor&, bool), isMinion(Actor const&), participants(Mob const&), trophyVariant(blockId) -> {sound, volume, pitch, particle, comparator}}; config section 'bosses'."
+    },
+    {
+      "name": "item",
+      "owner": "F9",
+      "api": "gf::item::{registerItem(id, Behaviour{use, useTick, release, finishUsing, hurtEnemy, mineBlock, destroySpeed, inventoryTick, armorTick, onEquip, onUnequip, attackBonus, repairWith}), getData/setData(ItemStack, key, json), cooldown(Player&, category, ticks), addTooltip(id, fn), registerDispense(id, fn), setBar(id, fn)}."
+    },
+    {
+      "name": "enchant+effects",
+      "owner": "F9",
+      "api": "gf::enchant::{registerType(id, Spec), level(ItemStack const&, id), set(ItemStack&, id, lvl), all(ItemStack const&)} (user data + lore + glint; table/anvil/grindstone/book hooks); gf::effects::{registerType(id, Spec{carrier}), apply(Actor&, id, ticks, amp), has, amplifier, remove}."
+    },
+    {
+      "name": "recipes",
+      "owner": "F9",
+      "api": "gf::recipes::{registerType(typeId, Loader), registerSpecialCrafting(id, Matcher, Assembler, Remainder), producing(itemId) -> vector<CraftingRecipe const*>, ofType(typeId), findFirst(...)}."
+    },
+    {
+      "name": "data",
+      "owner": "F9",
+      "api": "gf::tags::{has(Registry, tag, id), members(Registry, tag)}; gf::datamaps::get(mapId, key) -> json const*; gf::stats::award(Player&, id, n = 1); gf::traits::{set(Player&, id, bool), get(Player const&, id)} (synced); gf::gear::{level(Player const&, modifierId), modifiers(ItemStack const&), add/remove(ItemStack&, modifierId)}; gf::catalog (creative groups)."
+    },
+    {
+      "name": "combat",
+      "owner": "F10",
+      "api": "gf::combat::{onIncoming(prio, fn(DamageInfo&{type, attacker, direct, amount}) -> Pass|Cancel), onDealt(prio, fn), hurt(Actor& victim, float amount, typeId, Actor* attacker = nullptr, Actor* direct = nullptr)}; 40 damage types and death messages pre-registered from import."
+    },
+    {
+      "name": "death",
+      "owner": "F10",
+      "api": "gf::death::{onLethal(prio, fn) -> bool survive, registerKeeper(prio, fn(Player&, ItemStack&) -> bool keep), onDropsRemaining(fn), onRespawn(fn)}."
+    },
+    {
+      "name": "loot",
+      "owner": "F10",
+      "api": "gf::loot::{roll(tableId, LootContext const&) -> vector<ItemStack>, registerFunction(id, fn), registerCondition(id, fn), addGlobalModifier(id, fn), placeContainer(BlockSource&, pos, blockId, facing, tableId, seed), onEntityDrops(fn)}."
+    },
+    {
+      "name": "inventory",
+      "owner": "F10",
+      "api": "gf::inventory::{registerBlock(blockId, Handler{slots, get, set, insert, extract, setLootTable, open}), find(BlockSource&, pos) -> optional<Handler>, openChestLike(Player&, GlobalPos, rows, titleKey)}; data-declared containers assets/data/containers/<u>.json; backend chosen by spike S3."
+    },
+    {
+      "name": "progression",
+      "owner": "F10",
+      "api": "gf::progression::{has(Player const&, adv), grant, revoke, done, trigger(Player&, triggerId, json = {}), onTrigger(triggerId, fn), onGranted(fn), showMissing(Player&, adv), events::{onInventoryChanged, onKilled, onConsumed, onDimensionChanged, onBiomeEntered, onTick}}; progression::client::{has(adv), enforced(), biomeLocked(BiomeId)}."
+    },
+    {
+      "name": "rules+fx",
+      "owner": "F10",
+      "api": "gf::gamerules::{registerBool/registerInt(id, default), get, set} (+ /tf gamerule; tfEnforcedProgression, portal delays); gf::fx::{particle(Dimension&, id, Vec3 pos, Vec3 vel = {}, count = 1, json params = {}), sound(Dimension&, event, Vec3, vol, pitch), soundTo(Player&, event, vol, pitch)}."
+    },
+    {
+      "name": "families+blockevents",
+      "owner": "F11",
+      "api": "assets/data/families/<u>.json [{id, family: stairs|slab|fence|fence_gate|wall|door|trapdoor|button|pressure_plate|pane|pillar|log|wood|leaves|sapling|potted|sign|hanging_sign|chest|trapped_chest|horizontal|directional|waterloggable|snowloggable|climbable|lightable|connected_texture, params}] -> BP JSON at assemble when no manual file; gf::blockevents::{onRandomTick, onNeighborChanged, onEntityInside, onSteppedOn, onProjectileHit, onPlaced, onRemoved}(id or tag, fn); gf::signs::{text(pos), setText(pos, lines)}."
+    },
+    {
+      "name": "client.ui",
+      "owner": "F12",
+      "api": "gf::client::screen::registerScreen(type, Factory) (ContainerScreen base, TF GUI skin); hud::addLayer(id, order, DrawFn); toast::show(ToastSpec{iconItem, titleKey, bodyKey, ms}); tooltip::add(itemId, fn); server side gf::ui::{form(...), ddui(...), containerTitleSkin(titleKey, skinId)} for vanilla clients."
+    },
+    {
+      "name": "client.render",
+      "owner": "F12",
+      "api": "gf::client::render::{registerBlockRenderer(blockId, fn, Flags{throughWalls}), registerItemRenderer(itemId, fn, Contexts), registerEntityRenderer(entityId, fn), onWorld(fn), Lines, drawGeo(ctx, geoId, texture, Transform)}; tint::registerBlock(blockId, fn(BlockPos) -> rgb); bar colours from item::setBar."
+    },
+    {
+      "name": "client.world",
+      "owner": "F12",
+      "api": "gf::client::sky::setProvider(dim, SkyProvider{sky, stars, fog(biome), clouds, weather}); music::setProvider(fn); particles::registerNative(id, Factory) (29 TF ids pre-declared); maps::{view(MapId) -> MapView{pixels, decorations}, setIcon(decoType, texture)}; camera::{addFovModifier(fn), shake(intensity, ticks)}."
+    },
+    {
+      "name": "client.input+movement",
+      "owner": "F12",
+      "api": "gf::client::keys::{registerKey(id, defaultKey, category, onPress, onRelease), down(id)}; gf::client::movement::onLocalTick(prio, fn(MoveState&)); server gf::movement::{onInputEdge(fn(Player&, Edge)), applyMotion(Player&, Vec3), validate(id, fn)} for vanilla fallbacks and anti-desync."
+    }
+  ],
+  "deviations": [
+    "Sounds and music (229 TF files for 328 events, 9 discs) are All Rights Reserved: every event is re-synthesized (F3 baseline, owners refine, U10 composes the 9 tracks and dimension music). They cannot be identical; A7 reviews quality.",
+    "274 structure templates (.nbt) are All Rights Reserved: lich tower 182, courtyard 32, camp 35, features 21, final castle 3, quest grove 1 are re-designed in the GloamingForest template format with TF's footprint, slots/connectors (LGPL template definitions), rooms, spawners, chests and loot; procedural structures are exact translations.",
+    "Compat not ported: JEI/REI/EMI (75 files), Jade/TOP, Curios charm rendering, CosmeticArmor, Museum Curator exhibits (66), the Tips mod (99 tips), OptifineWarningScreen, JappaPackReloadListener (Jappa textures toggle), ModUpdateURLInterceptor. Workaround: tooltips and in-game screens; tips may later become loading tips.",
+    "Structure keys quest_island, druid_grove, floating_ruins and world_tree have no implementation in TF 4.8 and Boggard is commented out: not ported.",
+    "Locales: TF ships 99 lang files; Bedrock supports 29 locales, so the rest (including en_ud) are dropped.",
+    "No new enchantment or effect ids for vanilla clients (Enchant::Type has 42 fixed, MobEffect 38): fire_react, chill_aura, destruction, renewal live in item user data with server-written lore and glint; frosted uses a hidden Slowness carrier. The client mod shows exact tooltips and HUD icons.",
+    "Custom dimension height (-32..256) and fixed time 13000 rely on S1; vanilla clients get per-player SetTimePacket and doDaylightCycle packets. If the native definition fails for vanilla clients, they may render below y 0 incorrectly.",
+    "Sky, aurora and weather shaders: there is no GLSL in RenderDragon, so they become CPU meshes with built-in materials (client mod). Vanilla clients get client-biome sky and fog colours and PlayerFogPacket only.",
+    "Client-authoritative movement (12 Travellers' Gear movement modifiers, yeti throw, custom knockback) is exact only with the client mod. Vanilla clients get approximations: motion packets on input edges, Slow Falling for glide, and no step-up or water walk.",
+    "Climbable custom blocks (climbable hollow logs and similar) can be climbed only with the client mod. On vanilla they are not climbable.",
+    "Custom screens (uncrafting table, advancement tree, item displays) fall back to DDUI, forms or a JSON-UI container skin on vanilla. The Java advancement frame textures are Mojang's (All Rights Reserved) and are redrawn.",
+    "Boss bars use exact RGB with the client mod and the nearest of 8 BossBarColor values on vanilla. The 15 TF map decorations are mapped to the 30 vanilla MapDecoration types on vanilla.",
+    "Giants render with the viewer's skin (giantSkinUUIDs) only with the client mod. Vanilla clients see the default skin.",
+    "Banner patterns, trim materials and record items for vanilla clients depend on spike S6. If unknown ids crash a vanilla client, the server strips them for vanilla clients. If RecordItemComponent cannot take custom sounds, discs play through a jukebox hook and PlaySoundPacket, keeping comparator output.",
+    "Block entities depend on spike S3. If data-driven block actors are not usable, signs, chests, casket, drying racks, jars and candles use BlockData plus display entities or container entities, and vanilla clients see static geometry.",
+    "Creative tabs become Bedrock creative catalog groups (there are no top-level tabs). Durability and dose bar colours, the title splash and the Halloween visuals are client-mod only.",
+    "NeoForge config files and screen become per-unit JSON plus /twilightforest config. The Skylight world type becomes a config option, because Bedrock has no world-preset choice for custom dimensions. Java data-pack overrides of TF registries are baked into the packs.",
+    "The mod_exists loot condition only recognises twilightforest and minecraft. PlateauBoss stays a placeholder, as in TF.",
+    "Keybinds get keyboard defaults only. Touch and controller players use item-use fallbacks."
+  ],
+  "risks": [
+    "S1 custom dimension for vanilla clients (height, chunk sync, map dimension id). Mitigation: F4 runs the spike first and tries both the native DimensionDefinition and the vendored MoreDimensions route; the remote-vanilla e2e gates W1.",
+    "Worldgen parity, determinism and speed on worker threads, cross-chunk trees and terraforming before noise. Mitigation: Java-parity core with gtests, F13 oracle goldens, LargeWriter, per-chunk timing budget in U2 and A1.",
+    "RenderDragon hooks (sky, world render, tint, HUD) are fragile and differ under Vibrant Visuals. Mitigation: one F12 client contract, spike S5, screenshot goldens in both modes; units never hook rendering directly.",
+    "Client-authoritative movement: rubber-banding or anti-cheat kicks for double jump, glide and yeti throw. Mitigation: U12 is isolated, has server validation, and has a vanilla fallback path.",
+    "Custom block entities (S3) are uncertain and affect chests, signs, casket, drying racks, jars, candles and spawners. Mitigation: backend-neutral inventory and families contracts, with a BlockData + entity fallback.",
+    "Content volume: 533 blocks and 80 entities mean long pack load times, Bedrock block permutation limits and client memory. Mitigation: a permutation budget check in assemble, and integer states declared as lists.",
+    "Volume and fidelity of the ARR template re-designs (274), and agents accidentally deriving from TF .nbt. Mitigation: the sparse checkout excludes them, CI hash guard, the DSL plus validator against the LGPL template definitions, and golden screenshots.",
+    "Model converter fidelity and Molang animation limits (about 32 actor properties): multipart bosses (Hydra up to 7 heads, Naga segments, Snow Queen shields) built as linked actors can desync. Mitigation: spike S4 on the hardest models, seeded boss selftests, a multiplayer soak in A8.",
+    "W0 contract gaps found mid-W1. Mitigation: the src/feature/ext/<u>/ escape hatch, coordinator triage, A8 folding.",
+    "Hidden coupling through tags, data maps, sound events and shared loot tables. Mitigation: owners.tsv covers every kind, the ownership CI check, the dangling-reference check, and union-only tag fragments.",
+    "Machine contention: 47 GB RAM, 20 CPUs, 5 BDS and 2 client e2e slots for up to 16 agents. Mitigation: Throttle slots with a memory gate, two W1 batches, server-only iteration builds.",
+    "Symbols missing or different between the server and client header sets (MCNAPI, client-only classes). Mitigation: check headers before use, every spike compiles both targets, CI matrix.",
+    "Licensing: the CC BY-NC-SA ShareAlike and NonCommercial terms apply to the released packs, and no All Rights Reserved file may ever land in the repo. Mitigation: NOTICE/assets/LICENSE in W0a, the A7 licence audit, arr-guard.",
+    "GitHub API rate limits (hit during this review) would stall agents that read TF online. Mitigation: the shared local checkout via tools/tf/fetch.ps1.",
+    "Synthesized audio and music quality may feel far from TF. Mitigation: per-event recipes owned by feature units and an A7 review loop.",
+    "Vanilla clients crashing on unknown ids (banner patterns, map decorations, entity properties, custom items in packets). Mitigation: spike S6, a per-unit remote-vanilla e2e, the A7 matrix."
+  ],
+  "buildThrottle": "Implement tools/lib/Throttle.psm1 in W0a: Enter-GfSlot -Pool build|bds|client takes a lock file %LOCALAPPDATA%/gf-throttle/<pool>/<n>.lock opened with FileShare.None, so the OS releases it if the process crashes. The holder writes its PID, worktree and unit for diagnostics, and waiters poll every 10 s. tools/build.ps1 and tools/e2e/*/run.ps1 are the only entry points (rule R23).\n\nBuild pool: 3 slots, each running xmake -j6 (18 compile jobs on 20 CPUs). A slot is granted only when at least 10 GB of physical memory is free. '-Target all' builds server then client inside one slot, and gtest runs in the slot. A separate mutex guards 'xmake require' and the shared package cache. Precompile the mc/ and ll/ headers per target type, and evaluate a shared xmake build cache so fresh worktrees do not start cold.\n\nBDS pool: 5 slots, reusing Levitate's lv-e2e slot directory so both projects share it, with server max-threads=2. Client pool: 2 BeDD slots on the same bei-e2e.lock / hiN-e2e.lock files as Levitate.\n\nMemory budget: about 27 GB for builds, 7 GB for BDS, 7 GB for clients and 6 GB for agents, roughly 47 GB in total. That is why builds have a memory gate.\n\nAgent discipline: iterate with '-Target server' and the unit's selftest glob. Build the client only when client code changed. Run '-Target all -Tests' plus the unit's server, client and remote-vanilla scenarios once before opening the PR. At merge, the coordinator runs the 'full' selftest scenario and the client smoke test.\n\nConcurrency: at most 16 agents. W0a uses 1 agent; W0b's 16 units run as one batch. W1 runs in two batches of 15. Batch 1 holds the highest-risk and most-referenced units: U1, U2, U3, U4, U5, U11, U12, U13, U14, U15, U20, U21, U24, U26, U28. Batch 2 holds the rest. W2a runs 7 audits in parallel, then A8 alone, repeated until a round is clean.\n\nCI (GitHub Actions): server/client matrix, gtest, 'assemble -Check', import/synth/template '-Check', ownership and arr-guard. E2E runs only locally on the coordinator."
+}

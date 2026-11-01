@@ -1590,8 +1590,10 @@ config_section	artifacts	U9	manual
 config_section	atmosphere	U15	manual
 config_section	biomes	U1	manual
 config_section	bosses	F8	manual
+config_section	building	U5	manual
 config_section	client	F12	manual
 config_section	dimension	F4	manual
+config_section	flora	U6	manual
 config_section	giants	U29	manual
 config_section	items	F9	manual
 config_section	landmark	F6	manual
@@ -7655,9 +7657,6 @@ structure_type	twilightforest:progression	F6	manual
 structure_type	twilightforest:quest_grove	U19	manual
 structure_type	twilightforest:troll_cave	U27	manual
 structure_type	twilightforest:yeti_cave	U27	manual
-stub	assets/gen/audio/.gitkeep	F0	manual
-stub	assets/gen/geo/.gitkeep	F0	manual
-stub	assets/gen/import/.gitkeep	F0	manual
 stub	src/client/input/Input.cpp	F0	manual
 stub	src/client/render/Render.cpp	F0	manual
 stub	src/client/ui/Ui.cpp	F0	manual
