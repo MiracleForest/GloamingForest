@@ -278,6 +278,11 @@ bool openVanillaContainer(Player& player, GlobalPos const& pos, std::string cons
     SynchedActorDataAccess::setActorFlag(proxy->getEntityContext(), ActorFlags::HasGravity, false);
     SynchedActorDataAccess::setActorFlag(proxy->getEntityContext(), ActorFlags::HasCollision, false);
     SynchedActorDataAccess::setActorFlag(proxy->getEntityContext(), ActorFlags::Noai, true);
+    // the screen title is the entity's name (the container's custom name is not shown); the name
+    // itself is never drawn above the hidden proxy
+    proxy->setNameTag(title);
+    SynchedActorDataAccess::setActorFlag(proxy->getEntityContext(), ActorFlags::CanShowName, false);
+    SynchedActorDataAccess::setActorFlag(proxy->getEntityContext(), ActorFlags::AlwaysShowName, false);
     if (auto comp = proxy->getEntityContext().tryGetComponent<ContainerComponent>()) comp->setCustomName(title);
     Session s;
     s.proxy    = proxy->getOrCreateUniqueID().rawID;
