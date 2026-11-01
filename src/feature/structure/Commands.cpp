@@ -554,12 +554,22 @@ void pieceCmd(CommandOrigin const& origin, CommandOutput& output, StructureUtilP
         raw->addChildren(*raw, pieces, random);
     } else if (p.kind == "hill") {
         auto hill = std::make_unique<bases::HollowHill>("twilightforest:TFHill", 0, 1, w->pos.x, w->pos.y, w->pos.z, "twilightforest:small_hollow_hill");
-        // the hill digs into the ground: a stone dome over it first
-        BlockBox const& b = hill->bbox;
-        Block const&    stone = blocks::java("minecraft:stone");
+        // the hollow the terrain (U2) digs for the hill: a stone shell around the cave between the
+        // component's floor and ceiling heights (HollowHillComponent's floorY / ceilingY curves)
+        BlockBox const& b      = hill->bbox;
+        BlockPos        center = boxCenter(b);
+        Block const&    stone  = blocks::java("minecraft:stone");
+        int const       radius = 18, hdiam = 48, hillSize = 1;
         for (int x = b.minX; x <= b.maxX; x++)
-            for (int z = b.minZ; z <= b.maxZ; z++)
-                for (int y = b.minY; y <= b.maxY; y++) region.setBlock(BlockPos{x, y, z}, stone, 2);
+            for (int z = b.minZ; z <= b.maxZ; z++) {
+                float d = static_cast<float>((x - center.x) * (x - center.x) + (z - center.z) * (z - center.z));
+                if (d > static_cast<float>(radius * radius)) continue;
+                float c       = pure::mthCos(std::sqrt(d) / static_cast<float>(hdiam) * pure::kMthPi);
+                int   ceiling = b.minY + pure::mthCeilF(c * (static_cast<float>(hdiam) / 4.0f));
+                int   floor   = b.minY + pure::mthFloorF(static_cast<float>(hillSize * 2) - c * (static_cast<float>(hdiam) / 20.0f) + 1 + 0.25f);
+                for (int y = b.minY - 1; y <= ceiling + 2; y++)
+                    region.setBlock(BlockPos{x, y, z}, y <= floor || y >= ceiling ? stone : blocks::air(), 2);
+            }
         pieces.push_back(std::move(hill));
     } else {
         return output.error("unknown piece kind " + p.kind + " (tower | hill)");

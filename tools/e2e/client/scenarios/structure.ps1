@@ -50,7 +50,8 @@ if ($script:Mode -eq 'local') {
     $mark = Get-LogMark
     Invoke-Chat '/twilightforest structure_util piece hill'
     Wait-LogLine 'structure_util piece hill: \d+ pieces' 60 -Since $mark | Out-Null
-    Invoke-Teleport '/tp @s 260 -49 -68 180 15'
+    # (the hill's box is [246,-53,-94 .. 282,-44,-58]: the cave is around its center)
+    Invoke-Teleport '/tp @s 264 -48 -64 180 12'
     Start-Sleep -Seconds 3
     Save-Screenshot 'hill' | Out-Null
 } else {
