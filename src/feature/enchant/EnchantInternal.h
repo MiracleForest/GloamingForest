@@ -36,6 +36,9 @@ bool grind(ItemStack& stack);
 /// The enchanting table: the custom enchantments Java's selectEnchantment would add for an option
 /// of `cost` on `itemId` (seeded like the table), vanilla candidates of the item included.
 [[nodiscard]] std::map<std::string, int> rollTable(std::string const& itemId, int enchantValue, int cost, int seed, int option);
+/// Anvil merges with custom enchantments a player made through item stack requests (selftests).
+void              countAnvilMerge(Player& player);
+[[nodiscard]] int anvilMergeCount(Player& player);
 /// Removes a registered enchantment spec (selftests).
 void unregisterType(std::string const& enchantmentId);
 /// Roman numerals as Java's enchantment.level.N ("I" .. "X", then digits).

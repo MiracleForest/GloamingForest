@@ -2,6 +2,7 @@
 
 // Internals of the recipe runtime shared with F9's selftests.
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -39,6 +40,8 @@ struct PlayerGrid {
 /// container): into the emptied grid slot, onto the same item, else the inventory / the ground;
 /// the client gets the grid slots.
 void placeRemainders(Player& player, int firstSlot, std::vector<ItemStack> const& remainders);
+/// How many special crafts a player made through the crafting hook this session (selftests).
+[[nodiscard]] int specialCraftCount(std::int64_t playerUid);
 /// Removes a special crafting registration (selftests).
 void unregisterSpecial(std::string const& recipeId);
 

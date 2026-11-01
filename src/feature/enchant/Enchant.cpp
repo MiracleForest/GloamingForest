@@ -320,6 +320,26 @@ bool supports(std::string const& enchantmentId, std::string const& itemId) {
     return fullId(s) == fullId(itemId);
 }
 
+namespace {
+std::map<std::int64_t, int>& anvilMerges() {
+    static std::map<std::int64_t, int> m;
+    return m;
+}
+} // namespace
+
+void countAnvilMerge(Player& player) {
+    auto&           st = store();
+    std::lock_guard lock(st.mutex);
+    ++anvilMerges()[player.getOrCreateUniqueID().rawID];
+}
+
+int anvilMergeCount(Player& player) {
+    auto&           st = store();
+    std::lock_guard lock(st.mutex);
+    auto            it = anvilMerges().find(player.getOrCreateUniqueID().rawID);
+    return it == anvilMerges().end() ? 0 : it->second;
+}
+
 void unregisterType(std::string const& enchantmentId) {
     auto&           st = store();
     std::lock_guard lock(st.mutex);
@@ -736,7 +756,12 @@ LL_STATIC_HOOK(
         // Java's player.getAbilities().instabuild: the player whose item stack request is running
         auto* player   = en::gRequestPlayer;
         bool  creative = player && player->canUseAbility(AbilitiesIndex::Instabuild);
-        return cost + en::internal::mergeAnvil(first, second, out, bookEnchant, creative);
+        int   extra    = en::internal::mergeAnvil(first, second, out, bookEnchant, creative);
+        if (player && !player->isClientSide()) {
+            en::internal::countAnvilMerge(*player);
+            gf::log().info("enchant: anvil merge of custom enchantments for {}", player->getRealName());
+        }
+        return cost + extra;
     } catch (std::exception const& e) {
         gf::log().error("enchant: anvil merge failed: {}", e.what());
         return cost;

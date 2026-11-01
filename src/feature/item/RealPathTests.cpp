@@ -13,6 +13,7 @@
 //   combined in a real anvil: the sword must come out at level II.
 
 #include <algorithm>
+#include <map>
 #include <vector>
 
 #include "ll/api/service/Bedrock.h"
@@ -71,6 +72,12 @@ int countOf(Player& p, std::string const& id, bool (*pred)(ItemStack const&) = n
     return n;
 }
 
+/// The special craft count of each player when item.real_craft_arm ran.
+std::map<std::int64_t, int>& armedAt() {
+    static std::map<std::int64_t, int> m;
+    return m;
+}
+
 void clearOf(Player& p, std::string const& id) {
     auto& inv = p.getInventory();
     for (int i = 0; i < inv.getContainerSize(); ++i)
@@ -115,6 +122,7 @@ GF_REGISTER_SELFTEST("item.real_craft_arm", [](Context& ctx) {
         inv.setItem(1, items::make("minecraft:stick").value_or(ItemStack::EMPTY_ITEM()));
         inv.setItem(2, ItemStack::EMPTY_ITEM());
         p.sendInventory(false);
+        armedAt()[p.getOrCreateUniqueID().rawID] = rc::internal::specialCraftCount(p.getOrCreateUniqueID().rawID);
         gf::log().info("item: real craft armed for {}", p.getRealName());
     });
     ctx.info("real players armed for the crafting table: " + std::to_string(n));
@@ -122,11 +130,17 @@ GF_REGISTER_SELFTEST("item.real_craft_arm", [](Context& ctx) {
 
 GF_REGISTER_SELFTEST("item.real_craft_check", [](Context& ctx) {
     int n = forRealPlayers([&](Player& p) {
-        int special = countOf(p, kFixture, [](ItemStack const& s) { return gf::item::getData(s, "special") == true; });
-        int sticks  = countOf(p, "minecraft:stick");
-        ctx.check(special == 2, p.getRealName() + " crafted two fixture items with the assembler's item data (got " + std::to_string(special) + ")");
-        ctx.check(sticks == 1, p.getRealName() + " kept the remainder stick (got " + std::to_string(sticks) + ")");
-        gf::log().info("item: real craft checked for {}: {} special items, {} remainder", p.getRealName(), special, sticks);
+        auto uid = p.getOrCreateUniqueID().rawID;
+        if (rc::internal::specialCraftCount(uid) == armedAt()[uid]) {
+            // a glob run ('item.*'): nothing was crafted since item.real_craft_arm
+            ctx.info(p.getRealName() + " made no special craft since the arm test");
+        } else {
+            int special = countOf(p, kFixture, [](ItemStack const& s) { return gf::item::getData(s, "special") == true; });
+            int sticks  = countOf(p, "minecraft:stick");
+            ctx.check(special == 2, p.getRealName() + " crafted two fixture items with the assembler's item data (got " + std::to_string(special) + ")");
+            ctx.check(sticks == 1, p.getRealName() + " kept the remainder stick (got " + std::to_string(sticks) + ")");
+            gf::log().info("item: real craft checked for {}: {} special items, {} remainder", p.getRealName(), special, sticks);
+        }
         clearOf(p, kFixture);
         clearOf(p, "minecraft:stick");
     });
@@ -155,12 +169,19 @@ GF_REGISTER_SELFTEST("item.real_anvil_arm", [](Context& ctx) {
 
 GF_REGISTER_SELFTEST("item.real_anvil_check", [](Context& ctx) {
     int n = forRealPlayers([&](Player& p) {
-        int   best = 0;
+        int   best = 0, books = 0;
         auto& inv  = p.getInventory();
-        for (int i = 0; i < inv.getContainerSize(); ++i)
+        for (int i = 0; i < inv.getContainerSize(); ++i) {
             if (items::idOf(inv.getItem(i)) == "minecraft:iron_sword") best = std::max(best, gf::enchant::level(inv.getItem(i), "gf_test:fixture_react"));
-        ctx.check(best == 2, p.getRealName() + "'s sword came out of the anvil with the custom enchantment at II (got " + std::to_string(best) + ")");
-        gf::log().info("item: real anvil checked for {}: fixture_react {}", p.getRealName(), best);
+            if (items::idOf(inv.getItem(i)) == "minecraft:enchanted_book") ++books;
+        }
+        if (best == 1 && books == 1) {
+            // a glob run ('item.*'): the sword and the book were never combined
+            ctx.info(p.getRealName() + " combined nothing since the arm test");
+        } else {
+            ctx.check(best == 2, p.getRealName() + "'s sword came out of the anvil with the custom enchantment at II (got " + std::to_string(best) + ")");
+        }
+        gf::log().info("item: real anvil checked for {}: fixture_react {} ({} engine merges)", p.getRealName(), best, gf::enchant::internal::anvilMergeCount(p));
         clearOf(p, "minecraft:iron_sword");
         clearOf(p, "minecraft:enchanted_book");
     });

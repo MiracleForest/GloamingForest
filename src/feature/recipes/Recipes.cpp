@@ -560,6 +560,18 @@ void placeRemainders(Player& player, int firstSlot, std::vector<ItemStack> const
     if (changed) player.sendInventory(false);
 }
 
+std::map<std::int64_t, int>& craftCounts() {
+    static std::map<std::int64_t, int> m;
+    return m;
+}
+
+int specialCraftCount(std::int64_t playerUid) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    auto            it = craftCounts().find(playerUid);
+    return it == craftCounts().end() ? 0 : it->second;
+}
+
 void unregisterSpecial(std::string const& recipeId) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
@@ -666,6 +678,11 @@ LL_TYPE_INSTANCE_HOOK(
                 p->sendInventory(false);
                 gf::log().info("recipes: special crafting remainder placed for {}", p->getRealName());
             });
+        }
+        {
+            auto&           s = rc::store();
+            std::lock_guard lock(s.mutex);
+            ++rc::internal::craftCounts()[player.getOrCreateUniqueID().rawID];
         }
         gf::log().info("recipes: special crafting {} for {}", id, player.getRealName());
         std::vector<ItemInstance> replaced{ItemInstance(*result)};

@@ -88,10 +88,11 @@ Click-Slot (Hotbar-X 1) $hotbarY; Click-Slot 0.5805 0.305
 Click-Slot (Hotbar-X 2) $hotbarY; Click-Slot 0.5805 0.365
 Start-Sleep -Milliseconds 400
 Save-Screenshot 'craft-grid' | Out-Null
+# the result goes onto the cursor and into hotbar 3: the craft request is sent when it is placed
 $mark = Get-LogMark
 Click-Slot 0.730 0.365
-Wait-LogLine 'recipes: special crafting gf_test:fixture_item for' 15 -Since $mark | Out-Null
 Click-Slot (Hotbar-X 3) $hotbarY
+Wait-LogLine 'recipes: special crafting gf_test:fixture_item for' 15 -Since $mark | Out-Null
 Wait-LogLine 'recipes: special crafting remainder placed' 15 -Since $mark | Out-Null
 Start-Sleep -Milliseconds 800
 Save-Screenshot 'craft-taken' | Out-Null
@@ -99,8 +100,10 @@ Move-Mouse (Hotbar-X 3) $hotbarY -Relative
 Start-Sleep -Milliseconds 800
 Save-Screenshot 'craft-result-tooltip' | Out-Null
 Close-Screen
+$mark = Get-LogMark
 $r = Invoke-SelfTest 'item.real_craft_check'
 if ($r.Fail -gt 0) { throw "the real special craft failed: $($r.Failed -join ', ')" }
+Wait-LogLine 'real craft checked for .*: 2 special items, 1 remainder' 15 -Since $mark | Out-Null
 Invoke-Chat '/setblock ~3 ~ ~ air'
 
 # ---- 3. an anvil merge ---------------------------------------------------------------------------------
@@ -124,8 +127,12 @@ Click-Slot (Hotbar-X 3) $hotbarY
 Start-Sleep -Milliseconds 800
 Save-Screenshot 'anvil-taken' | Out-Null
 Close-Screen
+$mark = Get-LogMark
 $r = Invoke-SelfTest 'item.real_anvil_check'
 if ($r.Fail -gt 0) { throw "the real anvil merge failed: $($r.Failed -join ', ')" }
+$line = Wait-LogLine 'real anvil checked for .*: fixture_react \d' 15 -Since $mark
+Write-Step "anvil: $line"
+if ($line -notmatch 'fixture_react 2') { throw "the real anvil merge did not give fixture_react II: $line" }
 Invoke-Chat '/setblock ~3 ~ ~ air'
 
 if (-not $script:IsLocal) {
