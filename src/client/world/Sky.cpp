@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <atomic>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <unordered_map>
 
@@ -67,6 +68,7 @@
 #include "mc/world/level/saveddata/maps/MapItemSavedData.h"
 
 #include "client/Client.h"
+#include "client/world/ClientConfig.h"
 #include "feature/ext/ui/Client.h"
 #include "mod/Config.h"
 #include "mod/Log.h"
@@ -74,13 +76,6 @@
 
 namespace gf::client {
 
-/// Config section "client" (rule R13; docs/spec/config.md): TF's client keys owned by F12.
-struct ClientConfig {
-    int version = 1;
-    /// TFClientConfig "screenShakingEffect" (config.twilightforest.screen_shake): the beanstalk
-    /// screen shake and every camera::shake.
-    bool screenShakingEffect = true;
-};
 GF_REGISTER_CONFIG("client", ClientConfig);
 
 namespace {
@@ -126,43 +121,54 @@ void logOnce(std::string const& key, std::string const& line) {
 
 namespace sky {
 namespace {
+/// Providers are immutable once set (shared, so a frame keeps the one it started with while
+/// another thread replaces or removes it).
 struct Providers {
-    std::mutex                       mutex;
-    std::map<int, SkyProvider>       byDim;
+    std::mutex                                        mutex;
+    std::map<int, std::shared_ptr<SkyProvider const>> byDim;
 };
 Providers& providers() {
     static Providers p;
     return p;
 }
 std::atomic<bool> gReplaceWeather{false};
+
+/// A new provider reports its hooks again (one log line per hook and provider).
+void forgetProviderLines() {
+    std::lock_guard lock(once().mutex);
+    for (char const* k : {"sky", "fog", "clouds", "weather"}) once().done.erase(k);
+}
 } // namespace
 
 void setProvider(int dimension, SkyProvider provider) {
-    std::lock_guard lock(providers().mutex);
-    providers().byDim[dimension] = std::move(provider);
+    {
+        std::lock_guard lock(providers().mutex);
+        providers().byDim[dimension] = std::make_shared<SkyProvider const>(std::move(provider));
+    }
+    forgetProviderLines();
 }
 
-SkyProvider const* providerOf(int dimension) {
+std::shared_ptr<SkyProvider const> providerOf(int dimension) {
     std::lock_guard lock(providers().mutex);
     auto            it = providers().byDim.find(dimension);
-    return it == providers().byDim.end() ? nullptr : &it->second;
+    return it == providers().byDim.end() ? nullptr : it->second;
 }
 
 void clearProvider(int dimension) {
-    std::lock_guard lock(providers().mutex);
-    providers().byDim.erase(dimension);
+    {
+        std::lock_guard lock(providers().mutex);
+        providers().byDim.erase(dimension);
+    }
     gReplaceWeather = false;
+    forgetProviderLines();
 }
 
 namespace {
-/// A copy of the provider of the client's dimension (providers may be replaced meanwhile).
-std::optional<SkyProvider> current() {
+/// The provider of the client's dimension (nullptr: vanilla).
+std::shared_ptr<SkyProvider const> current() {
     int dim = clientDimension();
-    if (dim < 0) return std::nullopt;
-    std::lock_guard lock(providers().mutex);
-    auto            it = providers().byDim.find(dim);
-    if (it == providers().byDim.end()) return std::nullopt;
-    return it->second;
+    if (dim < 0) return nullptr;
+    return providerOf(dim);
 }
 } // namespace
 } // namespace sky
@@ -455,7 +461,7 @@ LL_TYPE_INSTANCE_HOOK(
     ViewRenderObject const&                    renderObj,
     BaseSceneDirectionalLightRenderData const& sceneDirectionalLightRenderData
 ) {
-    std::optional<sky::SkyProvider> p;
+    std::shared_ptr<sky::SkyProvider const> p;
     try {
         p = sky::current();
     } catch (...) {}
@@ -529,12 +535,9 @@ LL_TYPE_INSTANCE_HOOK(
 /// The client's cloud height from the provider of a dimension (nullopt: none).
 std::optional<short> cloudHeight(Dimension const& dim) {
     if (!dim.mLevel.isClientSide()) return std::nullopt;
-    std::optional<std::function<std::optional<float>()>> fn;
-    if (auto const* p = sky::providerOf(static_cast<int>(dim.getDimensionId()))) {
-        if (p->clouds) fn = p->clouds;
-    }
-    if (!fn) return std::nullopt;
-    auto h = (*fn)();
+    auto p = sky::providerOf(static_cast<int>(dim.getDimensionId()));
+    if (!p || !p->clouds) return std::nullopt;
+    auto h = p->clouds();
     cl::logOnce("clouds", "sky: provider cloud height applied");
     return h ? static_cast<short>(std::clamp(*h, -2048.f, 30000.f)) : static_cast<short>(30000); // no clouds: far above the sky
 }

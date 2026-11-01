@@ -149,7 +149,7 @@ LL_TYPE_INSTANCE_HOOK(
     try {
         player = thisFor<NetEventCallback>()->_getServerPlayer(source, packet.mSenderSubId);
         if (player && !st().validators.empty()) {
-            from      = player->getPosition();
+            from      = player->getFeetPos(); // validators and the correction work with feet positions
             checkMove = true;
         }
     } catch (...) {
@@ -166,8 +166,10 @@ LL_TYPE_INSTANCE_HOOK(
         sample.onGround = player->isOnGround();
         feedInput(*player, sample);
         if (checkMove) {
-            Vec3 to = player->getPosition();
-            if (!validateMove(*player, from, to)) player->teleportTo(from, false, 0, 1, true);
+            Vec3 to = player->getFeetPos();
+            // the correction: back to where the server last saw the feet (LeviLamina's teleport
+            // takes feet positions, as /tp)
+            if (!validateMove(*player, from, to)) player->teleport(from, player->getDimensionId(), player->getRotation());
         }
     } catch (std::exception const& e) {
         log().error("movement: auth input handling failed: {}", e.what());

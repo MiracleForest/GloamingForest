@@ -21,6 +21,7 @@
 #include <atomic>
 #include <cmath>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <unordered_map>
 #include <unordered_set>
@@ -180,8 +181,9 @@ struct Registry {
     std::unordered_map<std::string, ItemEntry>              items;
     std::unordered_map<std::string, std::vector<EntityRenderFn>> entities;
     std::vector<WorldFn>                                    world;
-    std::unordered_map<std::string, tint::TintFn>           tints;
-    std::unordered_map<Block const*, bool>                  blockHasTint;
+    using SharedTint = std::shared_ptr<tint::TintFn const>; ///< shared: a builder thread keeps the one it took
+    std::unordered_map<std::string, SharedTint>             tints;
+    std::unordered_map<Block const*, SharedTint>            blockTint; ///< per block state (chunk builders)
     bool                                                    loggedWorld = false;
     std::atomic<bool>                                       anyBlocks{false}; ///< lock-free checks on chunk builder threads
     std::atomic<bool>                                       anyTints{false};
@@ -242,8 +244,8 @@ Lines::~Lines() {
     if (im.segs.empty()) return;
     try {
         auto& ctx  = im.ctx;
-        Tessellator& tess = ctx.screen.tessellator;
-        tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 0, false);
+        Tessellator& tess  = ctx.screen.tessellator;
+        bool         begun = false;
         // each segment is a thin square bar (Java draws 1 px lines; a bar shows at every distance)
         constexpr float kHalf = 1.0f / 64;
         for (auto const& s : im.segs) {
@@ -253,6 +255,8 @@ Lines::~Lines() {
             Vec3  d{p1.x - p0.x, p1.y - p0.y, p1.z - p0.z};
             float len = std::sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
             if (len < 1e-6f) continue;
+            if (!begun) tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 0, false);
+            begun = true;
             Vec3  u{d.x / len, d.y / len, d.z / len};
             Vec3  ref = std::abs(u.y) < .9f ? Vec3{0, 1, 0} : Vec3{1, 0, 0};
             Vec3  pv{u.y * ref.z - u.z * ref.y, u.z * ref.x - u.x * ref.z, u.x * ref.y - u.y * ref.x};
@@ -269,7 +273,7 @@ Lines::~Lines() {
                     tess.vertex(v.x, v.y, v.z);
             }
         }
-        MeshHelpers::renderMeshImmediately(ctx.screen, tess, lineMaterial(ctx.throughWalls), OffscreenCaptureDescription{});
+        if (begun) MeshHelpers::renderMeshImmediately(ctx.screen, tess, lineMaterial(ctx.throughWalls), OffscreenCaptureDescription{});
     } catch (...) {}
 }
 
@@ -355,14 +359,14 @@ bool hasBlockRenderer(std::string const& blockId) {
 }
 
 std::optional<unsigned> tintOf(std::string const& blockId, int x, int y, int z) {
-    tint::TintFn fn;
+    Registry::SharedTint fn;
     {
         std::lock_guard lock(reg().mutex);
         auto            it = reg().tints.find(blockId);
-        if (it == reg().tints.end()) return std::nullopt;
+        if (it == reg().tints.end() || !it->second) return std::nullopt;
         fn = it->second;
     }
-    return fn(BlockPos{x, y, z});
+    return (*fn)(BlockPos{x, y, z});
 }
 
 // ---- per-frame work --------------------------------------------------------------------------------------
@@ -438,8 +442,8 @@ std::optional<ItemEntry> itemEntry(ItemStack const& stack, ItemContext where) {
 }
 
 struct PendingGui {
-    ItemStack stack;
-    float     x, y, size;
+    ItemStack const* stack; ///< the slot renderer's own stack: alive until its batch ends (never copied)
+    float            x, y, size;
 };
 std::vector<PendingGui>& pendingGui() {
     static std::vector<PendingGui> v; // client (UI) thread only
@@ -455,9 +459,9 @@ void registerBlock(std::string const& blockId, TintFn fn) {
     if (!fn) return;
     auto&           r = render::reg();
     std::lock_guard lock(r.mutex);
-    r.tints[blockId] = std::move(fn);
+    r.tints[blockId] = std::make_shared<TintFn const>(std::move(fn));
     r.anyTints       = true;
-    r.blockHasTint.clear();
+    r.blockTint.clear();
 }
 } // namespace gf::client::tint
 
@@ -610,7 +614,7 @@ LL_TYPE_INSTANCE_HOOK(
         glm::vec2 pos  = *owner.mCachedPosition;
         glm::vec2 size = *owner.mSize;
         // items are drawn in a shared mesh batch: the renderer runs once the batch is done
-        r::pendingGui().push_back({stack, pos.x, pos.y, std::min(size.x, size.y)});
+        r::pendingGui().push_back({&stack, pos.x, pos.y, std::min(size.x, size.y)});
     } catch (...) {}
 }
 
@@ -628,14 +632,14 @@ LL_TYPE_INSTANCE_HOOK(
     r::pendingGui().clear();
     try {
         for (auto const& g : list) {
-            auto e = r::itemEntry(g.stack, ItemContext::Gui);
+            auto e = r::itemEntry(*g.stack, ItemContext::Gui);
             if (!e) continue;
             RenderContext ctx(mScreenContext);
             ctx.ui      = this;
             ctx.guiX    = g.x;
             ctx.guiY    = g.y;
             ctx.guiSize = g.size;
-            e->fn(ctx, g.stack, ItemContext::Gui);
+            e->fn(ctx, *g.stack, ItemContext::Gui);
         }
     } catch (...) {}
 }
@@ -654,19 +658,20 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     if (!r::reg().anyTints) return origin(block, blockPos, tintMethod, biomeTintCache);
     try {
-        gf::client::tint::TintFn fn;
+        r::Registry::SharedTint fn;
         {
             auto&           rg = r::reg();
             std::lock_guard lock(rg.mutex);
-            if (!rg.tints.empty()) {
-                auto [it, fresh] = rg.blockHasTint.try_emplace(&block, false);
-                if (fresh) it->second = rg.tints.contains(gf::game::blockId(block));
-                if (it->second) fn = rg.tints[gf::game::blockId(block)];
+            auto [it, fresh] = rg.blockTint.try_emplace(&block, nullptr);
+            if (fresh) {
+                auto t     = rg.tints.find(gf::game::blockId(block));
+                it->second = t == rg.tints.end() ? nullptr : t->second;
             }
+            fn = it->second;
         }
         if (fn) {
             BlockPos const& min = mMinPos;
-            unsigned        rgb = fn(BlockPos{min.x + blockPos.x, min.y + blockPos.y, min.z + blockPos.z});
+            unsigned        rgb = (*fn)(BlockPos{min.x + blockPos.x, min.y + blockPos.y, min.z + blockPos.z});
             return mce::Color{static_cast<float>((rgb >> 16) & 0xFF) / 255.f, static_cast<float>((rgb >> 8) & 0xFF) / 255.f, static_cast<float>(rgb & 0xFF) / 255.f, 1.f};
         }
     } catch (...) {}

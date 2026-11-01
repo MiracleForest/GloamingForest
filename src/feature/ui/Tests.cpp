@@ -7,6 +7,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <iterator>
 #include <memory>
 #include <set>
 #include <unordered_map>
@@ -24,6 +26,7 @@
 #include "game/Blocks.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
+#include "mod/Main.h"
 #include "selftest/SelfTest.h"
 
 namespace {
@@ -45,6 +48,14 @@ GF_REGISTER_SELFTEST("ui.title_skin", [](Context& ctx) {
     ctx.check(gf::ui::containerTitleSkin("k", "a~b") == "k", "the padding character is refused in ids");
     auto sub = gf::ui::parseTitleSkin(gf::ui::containerTitleSkin("Name", "sub/dir"));
     ctx.check(sub.skinId == "sub/dir" && sub.titleKey == "Name", "skin paths with folders");
+    // the resource pack's JSON-UI reads the same field: '%.<width>s' and '%.<7 + width>s'
+    auto jsonUi = gf::Mod::getInstance().getSelf().getModDir() / "resource_packs" / "GloamingForest_RP" / "ui" / "chest_screen.json";
+    std::ifstream in(jsonUi);
+    std::string   text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    ctx.require(!text.empty(), "the JSON-UI chest skin is deployed: " + jsonUi.string());
+    auto field = "'%." + std::to_string(gf::ui::kTitleSkinWidth) + "s'";
+    auto whole = "'%." + std::to_string(7 + gf::ui::kTitleSkinWidth) + "s'";
+    ctx.check(text.find(field) != std::string::npos && text.find(whole) != std::string::npos, "the JSON-UI uses the skin field width " + field + " / " + whole);
 });
 
 GF_REGISTER_SELFTEST("ui.form_fallback", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -160,7 +171,12 @@ GF_REGISTER_SELFTEST("ui.fixture_chest", [](Context& ctx) -> ll::coro::CoroTask<
     for (auto* rp : fx::realPlayers()) {
         auto const& at = rp->getPosition();
         BlockPos    feet{static_cast<int>(std::floor(at.x)), static_cast<int>(std::floor(at.y - 1.62f)), static_cast<int>(std::floor(at.z))};
-        if (fx::placeNamedChest(rp->getDimensionBlockSource(), {feet.x, feet.y, feet.z + 2}, title)) ++real;
+        if (!fx::placeNamedChest(rp->getDimensionBlockSource(), {feet.x, feet.y, feet.z + 2}, title)) continue;
+        ++real;
+        // stand on the block centre and look at the chest (south, down to its middle: the eye is
+        // 1.62 above the feet, the chest centre 0.5 above them and 2 blocks away)
+        float pitch = static_cast<float>(std::atan2(1.62 - 0.5, 2.0) * 180.0 / 3.14159265358979);
+        rp->teleport(Vec3{static_cast<float>(feet.x) + .5f, static_cast<float>(feet.y), static_cast<float>(feet.z) + .5f}, rp->getDimensionId(), Vec2{pitch, 0.f});
     }
     ctx.info("skinned chest placed for " + std::to_string(real) + " real player(s)");
     auto pos = ctx.testPos(6220);

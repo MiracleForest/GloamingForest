@@ -12,12 +12,10 @@
 $remote = $script:Mode -ne 'local'
 $hostRx = if ($remote) { '\[host\].*' } else { '' }
 
-# A vanilla chest titled with containerTitleSkin, two blocks south of the player: the resource
-# pack's JSON-UI draws the skin around the vanilla chest screen (any client). Screenshot:
-# out/ui/<tag>-chest-skin.png.
+# A vanilla chest titled with containerTitleSkin, two blocks south of the player (the selftest
+# turns the player towards it): the resource pack's JSON-UI draws the skin around the vanilla
+# chest screen (any client). Screenshot: out/ui/<tag>-chest-skin.png.
 function Invoke-UiChest([string]$tag) {
-    Invoke-Chat '/tp @s ~ ~ ~ facing ~ ~ ~5'
-    Start-Sleep -Seconds 2
     $mark = Get-LogMark
     $r = Invoke-SelfTest 'ui.fixture_chest'
     if ($r.Fail -gt 0) { throw 'ui.fixture_chest failed' }
@@ -27,7 +25,9 @@ function Invoke-UiChest([string]$tag) {
     Click 0.5 0.5 -Relative -Right
     Start-Sleep -Seconds 3
     Save-Screenshot "$tag-chest-skin" | Out-Null
-    Close-Screen
+    # the chest screen is open (traced by the client mod; a vanilla client is assumed to have it)
+    $open = if (Test-ClientTrace) { (Get-ClientScreen) -match 'chest' } else { $true }
+    if ($open) { Close-Screen } else { Write-Step "${tag}: the chest did not open (screen: $(Get-ClientScreen))" }
     Invoke-SelfTest 'ui.fixture_chest_clear' | Out-Null
 }
 
@@ -68,7 +68,7 @@ function Invoke-UiFixture([string]$tag) {
     if ($r.Fail -gt 0) { throw 'ui.fixture_fog failed' }
     foreach ($line in 'sky: provider fog applied', 'sky: provider drawn', 'sky: provider cloud height applied') {
         try { Wait-LogLine $line 15 -Since $mark | Out-Null; Write-Step "$tag ok: $line" }
-        catch { Write-Step "$tag: no '$line' line (recorded for S5)" }
+        catch { Write-Step "${tag}: no '$line' line (recorded for S5)" }
     }
     Start-Sleep -Seconds 2
     Save-Screenshot "$tag-fog" | Out-Null

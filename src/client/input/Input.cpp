@@ -8,8 +8,8 @@
 //
 // Movement: one hook on LocalPlayer::normalTick (rule R8). Before the player's tick the local
 // player's state is read into a MoveState, the handlers change it (by descending priority) and
-// the changed velocity / step height are written back, so the game's own movement integrates
-// them in the same tick (client-authoritative movement).
+// the changed velocity, step height, fall distance and sprinting are written back, so the
+// game's own movement integrates them in the same tick (client-authoritative movement).
 
 #ifdef GF_CLIENT
 
@@ -192,6 +192,9 @@ void runHandlers(LocalPlayer& player) {
     if (s.stepHeight != before.stepHeight) {
         if (auto step = ctx.tryGetComponent<MaxAutoStepComponent>()) step->mValue = s.stepHeight;
     }
+    if (s.fallDistance != before.fallDistance) player.setFallDistance(s.fallDistance); // e.g. a glide cancels fall damage
+    if (s.sprinting != before.sprinting) player.setSprinting(s.sprinting);
+    // onGround, inWater, jump / sneak input and gliding describe the tick: changing them has no effect
     if (!reg().logged) {
         reg().logged = true;
         log().info("movement: local tick handlers active ({})", handlers.size());
@@ -207,7 +210,6 @@ void onLocalTick(int priority, std::function<void(MoveState&)> fn) {
     std::stable_sort(v.begin(), v.end(), [](Handler const& a, Handler const& b) { return a.priority > b.priority; });
 }
 
-namespace {
 LL_TYPE_INSTANCE_HOOK(MovementLocalTickHook, ll::memory::HookPriority::Normal, LocalPlayer, &LocalPlayer::$normalTick, void) {
     try {
         runHandlers(*this);
@@ -215,6 +217,7 @@ LL_TYPE_INSTANCE_HOOK(MovementLocalTickHook, ll::memory::HookPriority::Normal, L
     origin();
 }
 
+namespace {
 class InputModule {
 public:
     // the hook at mod load, before the game's threads run (see screen::ScreenModule)

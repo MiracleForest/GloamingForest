@@ -14,6 +14,7 @@
 #ifdef GF_CLIENT
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -114,7 +115,7 @@ namespace gf::client::camera {
 
 namespace gf::client::sky {
 /// The provider of `dimension` (nullptr: vanilla).
-[[nodiscard]] SkyProvider const* providerOf(int dimension);
+[[nodiscard]] std::shared_ptr<SkyProvider const> providerOf(int dimension);
 /// Removes the provider of `dimension` (fixtures).
 void clearProvider(int dimension);
 } // namespace gf::client::sky

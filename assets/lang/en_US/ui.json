@@ -6,5 +6,5 @@
   "gf.ui.fixture.clicks": "Clicks: {}",
   "gf.ui.fixture.hud_line": "HUD layer",
   "gf.ui.fixture.toast_title": "UI fixture",
-  "gf.ui.fixture.toast_body": "A toast of the client frameworks"
+  "gf.ui.fixture.toast_body": "Client frameworks"
 }

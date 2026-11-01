@@ -13,6 +13,7 @@
 #include "client/render/Geo.h"
 #include "client/render/Render.h"
 #include "client/ui/Ui.h"
+#include "client/world/ClientConfig.h"
 #include "client/world/Sky.h"
 #include "feature/ext/ui/Client.h"
 #include "game/Items.h"
@@ -44,17 +45,18 @@ GF_REGISTER_SELFTEST("ui.client_ui", [](Context& ctx) {
     cl::toast::show({.iconItem = "minecraft:map", .titleKey = "gf.ui.fixture.toast_title", .bodyKey = "gf.ui.fixture.toast_body", .ms = 1});
     ctx.check(cl::ui::toastCount() == before + 1, "a toast was queued");
 
-    // tooltips: lines of the item's providers
+    // tooltips: lines of the item's providers (on the fixture item: nothing of the game's own
+    // items keeps a test provider)
     static bool registered = false;
     if (!registered) {
         registered = true;
-        cl::tooltip::add("minecraft:stick", [](ItemStack const& s, std::vector<std::string>& lines) {
+        cl::tooltip::add("gf_test:fixture_item", [](ItemStack const& s, std::vector<std::string>& lines) {
             if (gf::game::items::getData(s, "ui_test").is_null()) return;
             lines.push_back("ui test line");
         });
     }
-    auto stick = gf::game::items::make("minecraft:stick");
-    ctx.require(stick.has_value(), "a stick");
+    auto stick = gf::game::items::make("gf_test:fixture_item");
+    ctx.require(stick.has_value(), "the fixture item (gf_test packs)");
     ctx.check(cl::ui::tooltipLines(*stick).empty(), "no line without the data");
     gf::game::items::setData(*stick, "ui_test", true);
     auto lines = cl::ui::tooltipLines(*stick);
@@ -139,7 +141,7 @@ GF_REGISTER_SELFTEST("ui.client_world", [](Context& ctx) {
                               if (biome == "twilightforest:spooky_forest") return cl::sky::FogSpec{{1, 0, 0}, 0, 8};
                               return std::nullopt;
                           }});
-    auto const* p = cl::sky::providerOf(kDim);
+    auto p = cl::sky::providerOf(kDim);
     ctx.check(p && p->fog && p->fog("twilightforest:spooky_forest")->end == 8 && !p->fog("plains"), "the fog provider answers per biome");
     cl::sky::clearProvider(kDim);
     ctx.check(cl::sky::providerOf(kDim) == nullptr, "providers can be removed");
@@ -150,13 +152,16 @@ GF_REGISTER_SELFTEST("ui.client_world", [](Context& ctx) {
     ctx.check(cl::maps::iconOf("twilightforest:unknown").empty(), "unknown icon");
     ctx.check(!cl::maps::view(-123456789).has_value(), "an unknown map has no view");
 
-    // camera: FOV modifiers compose in order; shakes follow the client config
-    static bool fovRegistered = false;
-    if (!fovRegistered) {
-        fovRegistered = true;
-        cl::camera::addFovModifier([](float f) { return f; }); // a neutral modifier stays harmless
-    }
-    ctx.check(std::abs(cl::camera::applyFovModifiers(1.0f) - 1.0f) < 1e-6f, "neutral modifiers keep the FOV");
+    // camera: shakes count down only while the client config allows them
+    auto& cfg  = gf::config::mut<gf::client::ClientConfig>();
+    bool  keep = cfg.screenShakingEffect;
+    cfg.screenShakingEffect = false;
+    cl::camera::shake(1.0f, 10);
+    ctx.check(cl::camera::shaking() == 0, "no shake with screenShakingEffect off");
+    cfg.screenShakingEffect = true;
+    cl::camera::shake(0.5f, 3);
+    ctx.check(cl::camera::shaking() >= 3, "a shake is pending with screenShakingEffect on");
+    cfg.screenShakingEffect = keep;
 });
 
 } // namespace

@@ -1,3 +1,12 @@
+// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
+//   src/main/java/twilightforest/client/LockedBiomeToast.java
+//   src/main/java/twilightforest/client/MissingAdvancementToast.java
+//   src/main/java/twilightforest/client/UncraftingScreen.java (container screen layout)
+// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
+// of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
+//
 // Client half of "client.ui" (F12). Client build only.
 //
 // - ContainerScreen: TF's container GUIs (AbstractContainerScreen): the GUI texture ("skin") drawn
@@ -85,29 +94,51 @@ TextureCache& textures() {
     return *c;
 }
 
-mce::TexturePtr* textureOf(std::string const& path) {
+/// The texture as the UI loads it (`ui`: the UI render context of this frame, which owns the
+/// textures image controls draw with; without one, the client's texture group).
+mce::TexturePtr* textureOf(std::string const& path, MinecraftUIRenderContext* ui) {
     auto&           cache = textures();
     std::lock_guard lock(cache.mutex);
-    if (auto it = cache.textures.find(path); it != cache.textures.end()) return it->second;
-    auto* c = currentClient();
-    if (!c) return nullptr;
-    auto group = c->getTextureGroup();
-    if (!group) return nullptr;
-    auto* t = new mce::TexturePtr(group->getTexture(ResourceLocation(Core::PathView(path)), false, std::nullopt, cg::TextureSetLayerType::Color));
-    cache.textures.emplace(path, t);
+    auto            key = (ui ? "ui|" : "group|") + path; // each loader keeps its own handle
+    if (auto it = cache.textures.find(key); it != cache.textures.end()) return it->second;
+    mce::TexturePtr* t = nullptr;
+    if (ui) {
+        t = new mce::TexturePtr(ui->getTexture(ResourceLocation(Core::PathView(path)), false));
+    } else {
+        auto* c = currentClient();
+        if (!c) return nullptr;
+        auto group = c->getTextureGroup();
+        if (!group) return nullptr;
+        t = new mce::TexturePtr(group->getTexture(ResourceLocation(Core::PathView(path)), false, std::nullopt, cg::TextureSetLayerType::Color));
+    }
+    cache.textures.emplace(key, t);
     return t;
 }
 
 BedrockTextureData const* dataOf(mce::TexturePtr const& t) { return t.mClientTexture.get(); }
+
+bool loaded(BedrockTextureData const& d) {
+    return (static_cast<unsigned>(d.mTextureLoadState) & static_cast<unsigned>(TextureLoadState::LoadedBit)) != 0;
+}
+
+std::optional<std::pair<int, int>> sizeOf(mce::TexturePtr const* t) {
+    if (!t) return std::nullopt;
+    auto const* data = dataOf(*t);
+    if (!data || data->mIsMissingTexture == IsMissingTexture::Yes) return std::nullopt;
+    auto const& d = data->mTextureDescription.get();
+    if (d.mWidth == 0 || d.mHeight == 0) return std::nullopt;
+    return std::pair{static_cast<int>(d.mWidth), static_cast<int>(d.mHeight)};
+}
 
 } // namespace
 
 namespace ui {
 
 bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float u, float v, float w, float h, float texW, float texH) {
-    auto* t = textureOf(texture);
+    auto* t = textureOf(texture, &canvas.context());
     if (!t) return false;
     auto const* data = dataOf(*t);
+    if (data && data->mIsMissingTexture != IsMissingTexture::Yes && !loaded(*data)) return false; // still loading
     if (!data || data->mIsMissingTexture == IsMissingTexture::Yes) {
         auto&           cache = textures();
         std::lock_guard lock(cache.mutex);
@@ -128,15 +159,7 @@ bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const
     return true;
 }
 
-std::optional<std::pair<int, int>> textureSize(std::string const& texture) {
-    auto* t = textureOf(texture);
-    if (!t) return std::nullopt;
-    auto const* data = dataOf(*t);
-    if (!data || data->mIsMissingTexture == IsMissingTexture::Yes) return std::nullopt;
-    auto const& d = data->mTextureDescription.get();
-    if (d.mWidth == 0 || d.mHeight == 0) return std::nullopt;
-    return std::pair{static_cast<int>(d.mWidth), static_cast<int>(d.mHeight)};
-}
+std::optional<std::pair<int, int>> textureSize(std::string const& texture) { return sizeOf(textureOf(texture, nullptr)); }
 
 } // namespace ui
 
@@ -147,9 +170,15 @@ namespace screen {
 namespace {
 constexpr unsigned kTitleColour = 0xFF404040; // Java's 4210752
 constexpr unsigned kSlotHover   = 0x80FFFFFF; // AbstractContainerScreen.renderSlotHighlight
+/// Per-screen state the (immutable) ContainerScreen header has no room for: the slot stacks and
+/// the title once the skin draws it at Java's place (the framework's centred title is then off).
+struct ScreenSide {
+    std::map<int, std::shared_ptr<ItemStack>> items;
+    std::string                               title;
+};
 struct ContainerItems {
-    std::mutex                                                                        mutex;
-    std::unordered_map<ContainerScreen const*, std::map<int, std::shared_ptr<ItemStack>>> items;
+    std::mutex                                             mutex;
+    std::unordered_map<ContainerScreen const*, ScreenSide> items;
 };
 ContainerItems& containerItems() {
     static ContainerItems c;
@@ -170,18 +199,32 @@ bool skinHasInventory(ContainerScreen const& s) { return !s.showInventory && s.h
 
 ContainerScreen::ContainerScreen(std::string title, std::string skin, float width, float height)
 : Screen(std::move(title), width, height),
-  skin(std::move(skin)) {}
+  skin(std::move(skin)) {
+    // a closed screen may have lived at this address: start without its state
+    auto&           ci = containerItems();
+    std::lock_guard lock(ci.mutex);
+    ci.items.erase(this);
+}
 
 void ContainerScreen::renderExtra(Canvas& c, float mx, float my) {
     std::vector<std::string> tip;
     bool                     skinned = false;
     if (!skin.empty()) {
-        auto size = ui::textureSize(skin).value_or(std::pair{256, 256});
+        auto size = sizeOf(textureOf(skin, &c.context())).value_or(std::pair{256, 256});
         skinned   = ui::blit(c, skin, {0, 0, width, height}, 0, 0, width, height, static_cast<float>(size.first), static_cast<float>(size.second));
+    }
+    std::string shownTitle;
+    {
+        auto&           ci   = containerItems();
+        std::lock_guard lock(ci.mutex);
+        auto&           side = ci.items[this];
+        if (skinned && !title.empty()) side.title = std::exchange(title, std::string{}); // drawn here from now on
+        if (!skinned && title.empty() && !side.title.empty()) title = side.title;        // skin gone: the framework's title
+        shownTitle = side.title.empty() ? title : side.title;
     }
     if (skinned) {
         // the skin covers the framework's panel: title and widgets again on top of it (Java order)
-        c.text(8, 6, title, kTitleColour, Align::Left, false);
+        c.text(8, 6, shownTitle, kTitleColour, Align::Left, false);
         if (skinHasInventory(*this)) c.text(8, height - 94, translateAny("container.inventory"), kTitleColour, Align::Left, false);
         for (auto const& w : widgets) {
             if (w->visible) w->render(c, mx, my);
@@ -194,7 +237,7 @@ void ContainerScreen::renderExtra(Canvas& c, float mx, float my) {
         for (auto const& sp : slots) {
             auto r = slotRect(sp.x, sp.y);
             if (it != ci.items.end()) {
-                if (auto s = it->second.find(sp.index); s != it->second.end() && s->second && !s->second->isNull()) {
+                if (auto s = it->second.items.find(sp.index); s != it->second.items.end() && s->second && !s->second->isNull()) {
                     c.item(*s->second, r.x, r.y, true);
                     if (r.contains(mx, my)) tip = {s->second->getName()};
                 }
@@ -234,7 +277,7 @@ void setContainerItems(screen::ContainerScreen& s, nlohmann::json const& items) 
         if (it->first != &s && it->first != now) it = ci.items.erase(it);
         else ++it;
     }
-    auto& map = ci.items[&s];
+    auto& map = ci.items[&s].items;
     map.clear();
     if (!items.is_object()) return;
     for (auto const& [k, v] : items.items()) {
