@@ -1312,7 +1312,9 @@ GF_REGISTER_SELFTEST("structure.painting_rules", [](Context& ctx) -> ll::coro::C
         auto  java  = blockentities::javaSurvives(*painting);
         bool  kept  = painting->wouldSurvive(*source);
         bool  own   = painting->_wouldSurvive(*source, placement, false);
-        ctx.info(std::string(c.name) + ": Java " + (java && *java ? "keeps" : "drops") + " the painting, the game's own rule " + (own ? "keeps" : "drops") + " it");
+        bool  place = painting->_wouldSurvive(*source, placement, true);
+        ctx.info(std::string(c.name) + ": Java " + (java && *java ? "keeps" : "drops") + " the painting, the game's own rule " + (own ? "keeps" : "drops") +
+                 " it and " + (place ? "would" : "would not") + " let it be placed");
         ctx.check(java && *java == c.java, std::string(c.name) + ": HangingEntity#survives is " + (c.java ? "true" : "false"));
         ctx.check(kept == c.java, std::string(c.name) + ": the game's survival check of the kit's painting follows Java");
         if (item) item->despawn();
