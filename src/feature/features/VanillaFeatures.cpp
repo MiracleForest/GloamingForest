@@ -686,10 +686,18 @@ void registerVanillaPlacements() {
         return Positions(static_cast<std::size_t>(std::max(0, n)), pos);
     });
     registerPlacement("minecraft:carving_mask", [](PlacementContext const& c, BlockPos const& pos) {
-        // CarvingMaskPlacement: every block the carvers carved in the chunk of pos (the mask the
-        // pipeline keeps from the chunk's Carvers stage until its decoration)
+        // CarvingMaskPlacement: every block the carvers of `step` carved in the chunk of pos (the
+        // mask the pipeline keeps from the chunk's Carvers stage until its decoration). 1.21.1
+        // carves only the "air" step (ChunkStatusTasks#generateCarvers): the "liquid" mask
+        // (ProtoChunk#getOrCreateCarvingMask(LIQUID)) is always empty
         Positions out;
-        int       cx = pos.x >> 4, cz = pos.z >> 4;
+        auto const& stepJson = field(c.config, "step");
+        std::string step     = stepJson.is_string() ? stepJson.get<std::string>() : std::string();
+        if (step != "air") {
+            if (step != "liquid") warnOnce("carving_mask step " + step, "minecraft:carving_mask without a valid step (\"" + step + "\"; Java refuses it)");
+            return out;
+        }
+        int cx = pos.x >> 4, cz = pos.z >> 4;
         if (auto mask = worldgen::detail::carvingMaskOf(c.region.dimension(), cx, cz))
             mask->forEach([&](int lx, int y, int lz) { out.push_back({cx * 16 + lx, y, cz * 16 + lz}); });
         return out;
