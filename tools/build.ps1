@@ -28,7 +28,7 @@ param(
     [int]$Jobs = 6,
     [string]$Unit = $env:GF_UNIT,
     [int]$SlotTimeoutMinutes = 180,
-    # Re-resolve the packages and rewrite xmake-requires.lock with the entries of every target type.
+    # Re-resolve the packages and rewrite xmake-requires.lock with the entries of every target type (-Target all only).
     [switch]$UpdateLock
 )
 $ErrorActionPreference = 'Stop'
@@ -75,10 +75,20 @@ function Write-MergedLock {
     $text = "{`n    __meta__ = {`n        version = `"1.0`"`n    },`n    [`"windows|x64`"] = {`n$body`n    }`n}"
     [IO.File]::WriteAllText($lockFile, $text)
 }
-if ($null -ne $lockText -and $Target -ne 'all') { $lockEntries = Read-LockEntries $lockText } # keep the other target
+# -UpdateLock re-resolves both target types from scratch: a lock entry does not record its target
+# type (only the package hash differs), so the stale entries of one target could not be told apart
+# from the other target's after a version bump.
+if ($UpdateLock -and $Target -ne 'all') {
+    Write-Host '==> -UpdateLock needs -Target all (it rewrites the entries of both target types)' -ForegroundColor Red
+    exit 1
+}
 
 $slot = $null
 try {
+    # xmake and its clang-cl children die with this process: a killed build never leaves compiles
+    # running after its slot was released (tools/lib/Throttle.psm1, Enable-GfKillOnExit). Only when
+    # this script is the process's own script (`pwsh tools/build.ps1`), never an interactive shell.
+    if ([Environment]::GetCommandLineArgs() | Where-Object { $_ -like '*build.ps1' }) { Enable-GfKillOnExit | Out-Null }
     if ($env:GF_NO_THROTTLE -ne '1') {
         try {
             $slot = Enter-GfSlot -Pool build -Unit $Unit -TimeoutMinutes $SlotTimeoutMinutes

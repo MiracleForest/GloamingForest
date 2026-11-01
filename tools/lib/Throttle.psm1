@@ -73,12 +73,90 @@ function Get-GfLockOwner([string]$Path) {
     try { return (Get-Content "$Path.owner" -Raw -ErrorAction Stop).Trim() } catch { return '?' }
 }
 
-# Free physical memory in GB.
+# Free physical memory in GB, or $null when it cannot be read (CIM failed twice): callers treat
+# that as a closed gate and poll again, never as "plenty free".
 function Get-GfFreeMemoryGB {
-    try {
-        $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
-        return [Math]::Round($os.FreePhysicalMemory / 1MB, 1)
-    } catch { return [double]::MaxValue }
+    for ($attempt = 1; $attempt -le 2; $attempt++) {
+        try {
+            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+            return [Math]::Round($os.FreePhysicalMemory / 1MB, 1)
+        } catch {
+            if ($attempt -eq 1) { Start-Sleep -Seconds 1 }
+        }
+    }
+    return $null
+}
+
+$script:GfJobHandle = [IntPtr]::Zero
+
+<#
+.SYNOPSIS
+  Puts the current process into a Windows Job Object with JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE, so
+  every process it starts afterwards (xmake, clang-cl, BDS, ...) is killed when it dies. A slot is
+  released by the OS when its holder dies; without the job, a killed tools/build.ps1 would free its
+  build slot while its xmake -j6 compiles keep running and oversubscribe the machine.
+
+  The handle stays open for the life of the process (closing it kills the job). Call it only from a
+  script that runs as its own process (`pwsh tools/build.ps1`), never from an interactive shell.
+  Returns $true when the job is in place.
+#>
+function Enable-GfKillOnExit {
+    if ($script:GfJobHandle -ne [IntPtr]::Zero) { return $true }
+    if (-not $IsWindows) { return $false }
+    if (-not ('GfJobNative' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class GfJobNative {
+    [StructLayout(LayoutKind.Sequential)]
+    struct BasicLimits {
+        public long PerProcessUserTimeLimit; public long PerJobUserTimeLimit; public uint LimitFlags;
+        public UIntPtr MinimumWorkingSetSize; public UIntPtr MaximumWorkingSetSize; public uint ActiveProcessLimit;
+        public UIntPtr Affinity; public uint PriorityClass; public uint SchedulingClass;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    struct IoCounters { public ulong R, W, O, RB, WB, OB; }
+    [StructLayout(LayoutKind.Sequential)]
+    struct ExtendedLimits {
+        public BasicLimits Basic; public IoCounters Io; public UIntPtr ProcessMemoryLimit; public UIntPtr JobMemoryLimit;
+        public UIntPtr PeakProcessMemoryUsed; public UIntPtr PeakJobMemoryUsed;
+    }
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    static extern IntPtr CreateJobObjectW(IntPtr attributes, string name);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern bool SetInformationJobObject(IntPtr job, int infoClass, ref ExtendedLimits info, uint length);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+    [DllImport("kernel32.dll")]
+    static extern IntPtr GetCurrentProcess();
+    [DllImport("kernel32.dll")]
+    static extern bool CloseHandle(IntPtr handle);
+    // A job with KILL_ON_JOB_CLOSE (0x2000) holding the current process; IntPtr.Zero on failure.
+    public static IntPtr KillOnClose(out int error) {
+        error = 0;
+        IntPtr job = CreateJobObjectW(IntPtr.Zero, null);
+        if (job == IntPtr.Zero) { error = Marshal.GetLastWin32Error(); return IntPtr.Zero; }
+        var info = new ExtendedLimits();
+        info.Basic.LimitFlags = 0x2000;
+        if (!SetInformationJobObject(job, 9, ref info, (uint)Marshal.SizeOf(typeof(ExtendedLimits)))
+            || !AssignProcessToJobObject(job, GetCurrentProcess())) {
+            error = Marshal.GetLastWin32Error();
+            CloseHandle(job);
+            return IntPtr.Zero;
+        }
+        return job;
+    }
+}
+'@
+    }
+    $err = 0
+    $h = [GfJobNative]::KillOnClose([ref]$err)
+    if ($h -eq [IntPtr]::Zero) {
+        Write-Host "[throttle] warning: could not create the kill-on-exit job (Win32 error $err); child processes may outlive this one" -ForegroundColor Yellow
+        return $false
+    }
+    $script:GfJobHandle = $h
+    return $true
 }
 
 <#
@@ -153,7 +231,8 @@ function Enter-GfSlot {
         $gateOk = $true
         if ($Pool -eq 'build') {
             $free = Get-GfFreeMemoryGB
-            if ($free -lt $minFree) { $gateOk = $false; $why = "only $free GB of memory free (gate: $minFree GB)" }
+            if ($null -eq $free) { $gateOk = $false; $why = 'free memory unknown (CIM query failed; retrying)' }
+            elseif ($free -lt $minFree) { $gateOk = $false; $why = "only $free GB of memory free (gate: $minFree GB)" }
         }
         if ($gateOk) {
             foreach ($n in $candidates) {
@@ -209,4 +288,4 @@ function Get-GfSlotStatus {
 }
 
 Export-ModuleMember -Function Get-GfThrottleHome, Get-LvE2EHome, Get-GfPoolSize, Get-GfFreeMemoryGB, Enter-GfLock, Exit-GfLock,
-    Enter-GfSlot, Exit-GfSlot, Get-GfSlotStatus, Get-GfBdsSharedLockPath, Get-GfHolderInfo
+    Enter-GfSlot, Exit-GfSlot, Get-GfSlotStatus, Get-GfBdsSharedLockPath, Get-GfHolderInfo, Enable-GfKillOnExit
