@@ -213,7 +213,9 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
   entity only stores the renderer's per-flame heights.
 - Use with an empty hand (may build): becomes the lit-off vanilla candle with the same count (extinguish sound and
   smoke). Using the matching vanilla candle item adds a candle (max 4, place sound `(volume + 1) / 2`, pitch * 0.8).
-- `eruptFlameParticles`: 5 ominous flames per candle with small random velocity (used on conversion).
+- `eruptFlameParticles`: 5 ominous flames per candle with small random velocity (horizontal +-0.025, up 0.015), shown
+  when U9's exanimate essence converts a lit vanilla candle into its ominous twin (sound
+  `block.twilightforest.ominous_fire.light` 1.5, `(r1 - r2) * 0.2 + 0.75`; the essence is consumed).
 - Loot: the vanilla candle of the same colour, count = candles (2-4 via block-state conditions), explosion decay
   (`twilightforest:blocks/ominous_candle` and `twilightforest:blocks/ominous_<colour>_candle`).
 

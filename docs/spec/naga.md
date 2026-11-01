@@ -27,7 +27,7 @@ Registered in `TFEntities.NAGA`: category MONSTER, size 2.0 x 3.0, eye height 2.
 80, update interval 3, receives velocity updates. Spawn egg `twilightforest:naga_spawn_egg` (primary `0xa4d316`,
 secondary `0x1b380b`, name "Naga Spawn Egg"). Spawn placement ON_GROUND / MOTION_BLOCKING_NO_LEAVES /
 `Monster::checkMonsterSpawnRules` (only matters for the egg and commands; the boss comes from its spawner).
-Display name `entity.twilightforest.naga` = "Naga". Tags: `#twilightforest:bosses` (`c:bosses`),
+Display name `entity.twilightforest.naga` = "Naga". Tags: `#twilightforest:bosses` (itself a member of `#c:bosses`),
 `minecraft:fall_damage_immune`, `minecraft:freeze_immune_entity_types` (through bosses).
 
 ### 1.1 Attributes and constants

@@ -30,7 +30,7 @@ the Kobold hint mob (U17), the `tower_paintings` / `tower_boss_paintings` painti
 `TFEntities.LICH`: MONSTER, 0.8 x 2.5, eye height 1.95, not fire immune, tracking 80, interval 3. Spawn egg
 `twilightforest:lich_spawn_egg` (`0xaca489` / `0x360472`, "Twilight Lich Spawn Egg"). Placement ON_GROUND /
 MOTION_BLOCKING_NO_LEAVES / `checkMonsterSpawnRules`. Name `entity.twilightforest.lich` "Twilight Lich". Entity tags:
-`minecraft:skeletons`, `#twilightforest:bosses`; `#twilightforest:lich_poppables` excludes it (bosses removed).
+`minecraft:skeletons`, `#twilightforest:bosses`; `#twilightforest:lich_poppables` excludes it (the tag removes `#c:bosses`, which contains `#twilightforest:bosses`).
 
 ### 1.1 Attributes and constants
 
