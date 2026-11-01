@@ -1,0 +1,21 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "gloamingforest:part",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["gloamingforest_part", "inanimate"] },
+      "minecraft:health": { "value": 1000, "max": 1000 },
+      "minecraft:collision_box": { "width": 1.0, "height": 1.0 },
+      "minecraft:physics": { "has_gravity": false, "has_collision": false },
+      "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": false },
+      "minecraft:knockback_resistance": { "value": 1.0 },
+      "minecraft:fire_immune": {},
+      "minecraft:damage_sensor": { "triggers": [ { "cause": "all", "deals_damage": "no" } ] }
+    }
+  }
+}
