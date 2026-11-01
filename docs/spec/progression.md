@@ -95,26 +95,40 @@ applies to a player in that biome until they have **all** listed advancements.
 - Server, every **20** ticks per player when `tfEnforcedProgression` is true and the player is not creative /
   spectator: if the biome at the player has an unmet restriction, run its enforcement and try a structure hint for
   the hint structure (F6's `StructureHints.tryHintForStructure`, by string).
-- Enforcements (each checks the player's own tick counter and that the tick rate runs normally):
-  - `darkness`: every 60 ticks Darkness for 200 ticks, amplifier = (int) multiplier, not ambient, particles and
-    icon visible (`MobEffectInstance(DARKNESS, 200, m, false, true)`);
+- Enforcements (each checks the player's own tick counter again and that the tick rate runs normally). The two gates
+  nest: the outer `tickCount % 20 == 0` (`ProgressionEvents`) and the enforcement's own inner check
+  (`Enforcements.java`) must both pass, so the effective period is lcm(20, inner):
+  - `darkness`: inner `tickCount % 60`, so every 60 ticks: Darkness for 200 ticks, amplifier = (int) multiplier, not
+    ambient, particles and icon visible (`MobEffectInstance(DARKNESS, 200, m, false, true)`);
   - `hunger`: every 60 ticks Hunger 100 ticks, amplifier = current amplifier + m (or m);
   - `fire`: every 60 ticks set on fire for (int) m seconds;
   - `frost`: every 60 ticks `twilightforest:frosted` 100 ticks, amplifier (int) m;
-  - `acid_rain`: every **5** ticks `twilightforest:acid_rain` damage of m; if it hurts, play
+  - `acid_rain`: inner `tickCount % 5`, but it runs only on the outer 20-tick ticks, so the effective period is
+    **20** ticks (not 5): `twilightforest:acid_rain` damage of m; if it hurts, play
     `environment.twilightforest.acid_rain` (U15's event, by id) at the player (1, 1).
+  - For all five, the Bedrock implementation mirrors both nested gates (outer 20-tick check in the dispatcher, inner
+    check in each enforcement) rather than hard-coding the effective periods.
 - Gamerule `tfEnforcedProgression` (boolean, default **true**, category UPDATES): on change the server sends
   `EnforceProgressionStatusPacket(value)` to all players, which sets the client copy of the rule (used by client
   checks: locked toasts, sky/fog effects of other units through `progression::client::enforced()`).
 
 ### 3.3 Toasts (client)
 
-- **Locked biome toast** (`LockedBiomeToastHandler`): every 5 client ticks, when progression is enforced, the player
-  is not creative/spectator and `disableLockedBiomeToasts` (default **false**) is off: inside a restricted biome with a
-  toast icon, a countdown from 60 (5-tick steps, ~15 s) shows one `LockedBiomeToast` (vanilla advancement toast
-  background, the restriction's icon at (6, 8), title `misc.twilightforest.biome_locked` at (25, 7) yellow -256,
-  description `misc.twilightforest.biome_locked_2` at (25, 18) white; 10 s). Leaving resets the countdown and allows a
-  new toast.
+- **Locked biome toast** (`LockedBiomeToastHandler`): checked on every client tick, acting only when the local
+  player's `tickCount % 5 == 0`, progression is enforced, the player is not creative/spectator and
+  `disableLockedBiomeToasts` (default **false**) is off. The state is two **static** fields, `timeUntilToast` (starts
+  at 60) and `shownToast` (false), shared by every visit (and every world of the client process; never reset on
+  world change). On such a tick:
+  - inside a restricted biome whose restriction has a toast icon: `timeUntilToast--`; if `!shownToast` and
+    `timeUntilToast <= 0`, show one `LockedBiomeToast` (vanilla advancement toast background, the restriction's icon at
+    (6, 8), title `misc.twilightforest.biome_locked` at (25, 7) yellow -256, description
+    `misc.twilightforest.biome_locked_2` at (25, 18) white; 10 s) and set `shownToast`. The counter keeps decrementing
+    (below 0) while the player stays; a fresh countdown is 60 steps x 5 ticks = 300 ticks (~15 s);
+  - anywhere else (no restriction, or one without a toast icon): only if `shownToast`, reset `timeUntilToast = 60`
+    and `shownToast = false`. Without a shown toast nothing resets, so a partial countdown carries over to the next
+    visit of any locked biome.
+  - Ticks where the outer conditions fail (not on a 5-tick, not enforced, creative/spectator, toasts disabled) change
+    nothing.
 - **Missing advancement toast** (`MissingAdvancementToastPacket(title, icon)`, sent e.g. by the portal when the
   portal-locking advancement is missing, F4 by string): advancement toast background, icon at (6, 8),
   `misc.twilightforest.advancement_required` at (25, 7) white, the advancement title at (25, 18); 10 s; fallback title
@@ -137,9 +151,11 @@ applies to a player in that biome until they have **all** listed advancements.
 
 - All 45 advancements load with the parents/criteria of Appendix A; granting the chain in order unlocks the tab.
 - Restriction table: each biome applies its enforcement until the listed advancement is granted (selftests with
-  `progression::grant`), timing 60 ticks (5 for acid rain), multipliers.
+  `progression::grant`), timing 60 ticks (20 for acid rain: the inner 5-tick check inside the outer 20-tick gate),
+  multipliers.
 - Gamerule false disables enforcement and toasts; packet sync.
-- Locked biome toast appears once after the countdown and again after leaving and re-entering (client screenshot).
+- Locked biome toast appears once after the 60-step countdown and again (after a fresh countdown) when leaving and
+  re-entering after it was shown; leaving before it was shown keeps the partial countdown (client screenshot).
 - `progression_end` message; `arctic_armor_dyed` with the color predicate.
 
 ## Appendix A: Owned ids (generated inventory)

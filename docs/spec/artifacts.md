@@ -71,16 +71,17 @@ chance to summon a baby zombie.
   plays `...twilight_scepter.pearl_hit`; any hit removes it with 8 `twilight_orb` particles. Hitting the bolt
   reflects it along the attacker's look (speed 1.5, inaccuracy 0.1, new owner). It ignores lich bolts/bombs.
   1 charge per shot. Dispenser fires a bolt (1 charge, inaccuracy 6.0).
-- **Lifedrain scepter**: hold-use (BOW animation, 72000). Every 5 use ticks: target = the closest pickable entity
-  within 20 blocks along the look (ray against boxes inflated by their pick radius). Living, non armor-stand target:
-  server sends `LifedrainParticlePacket(user id, target eye)` (red `magic_effect` trail from the hand, client) and
-  plays `item.twilightforest.life_scepter.drain`; deals **1** `twilightforest:lifedrain` damage. On success: if the
-  target's health <= 1 and it is not a boss: (players attacking non-`#lifedrain_drops_no_flesh` targets) roll the
-  `twilightforest:items/lifedrain_scepter_kill_bonus` loot table (F10's shared table) at the target and shatter it into 50 + width*25 (1/100:
-  width*75, power 1.0) rotten flesh item particles; spawn animation, its death sound, then kill it (players: max
-  damage; others: `die` + discard). Otherwise Slowness III (amplifier 2) for 20 ticks; every 10 ticks the user heals
-  1 and (player) gains food 1 / saturation 0.1. 1 charge per successful tick. A target with health <= the user's is
-  lifted (motion y 0.15).
+- **Lifedrain scepter**: hold-use (BOW animation, 72000). Every 5 use ticks: target = the closest pickable entity within
+  20 blocks along the look (ray against boxes inflated by their pick radius). Living, non armor-stand target: server
+  sends `LifedrainParticlePacket(user id, target eye)` (red `magic_effect` trail from the hand, client) and plays
+  `item.twilightforest.life_scepter.drain`; deals **1** `twilightforest:lifedrain` damage. On success: if the target's
+  health <= 1 and it is not a boss: (players attacking non-`#lifedrain_drops_no_flesh` targets) roll the
+  `twilightforest:items/lifedrain_scepter_kill_bonus` loot table (F10's shared table) at the target and shatter it into
+  50 + (int)width x 25 (1/100: 50 + (int)width x 75, power 1.0 instead of 0.3) rotten flesh item particles (the int cast
+  truncates the width before the multiply: width 0.6 gives 50, width 1.4 gives 75); spawn animation, its death sound,
+  then kill it (players: max damage; others: `die` + discard). Otherwise Slowness III (amplifier 2) for 20 ticks; every
+  10 ticks the user heals 1 and (player) gains food 1 / saturation 0.1. 1 charge per successful tick. A target with
+  health <= the user's is lifted (motion y 0.15).
 - **Zombie scepter**: ray (no fluids) to a block; spawns a `loyal_zombie` at the hit point if it fits: spawn animation,
   tamed by the player, Strength II (amplifier 1) for 1200 ticks, sound `item.twilightforest.zombie_scepter.use`, game
   event entity_place, 1 charge.
@@ -124,13 +125,30 @@ Only for real, non-creative, non-spectator players; server side.
   Regeneration IV 600 t, Resistance I 600 t, Fire Resistance 600 t; else charm I -> cancel death, health 8,
   Regeneration I 100 t. Sends `SpawnCharmPacket(charm stack, item.twilightforest.charm.life)`, stat
   `life_charms_activated` +1.
-- **Charm of keeping** (high priority, only without keepInventory): III keeps the whole inventory, II the hotbar,
-  I the selected hotbar slot; armor and offhand are always kept when a charm applies; at most one keepsake casket is
-  kept in the kept slots unless charm III (others stay to be placed). Items in `#twilightforest:kept_on_death` (phantom
-  helmet / chestplate, tower key) are always kept. Kept items are stored in the player's persisted NBT
-  (`TFCharmInventory`) and returned on respawn (not after the End credits); the consumed charm is remembered
-  (`CharmStack`) and on respawn shows the charm animation with `item.twilightforest.charm.keep`, stat
-  `keeping_charms_activated` +1.
+- **Charm of keeping** (high priority, only without keepInventory; `handleCharmOfKeeping` / `applyCharm`): the tiers
+  are tried III, then II, then I, and the first that applies wins. Scopes, exactly as TF 4.8 computes them:
+  - **III**: the whole main inventory (slots 0-35), with **every** keepsake casket kept (`skipCasketCheck`).
+  - **II**: the hotbar (slots 0-8).
+  - **I**: **no** main-inventory slot. TF passes `NonNullList.of(items.get(selected))`, and
+    `NonNullList.of(default, elements...)` with one argument builds an *empty* list (the argument is only the
+    default value), so the selected slot is not kept. **TF quirk, keep it** (like the casket-break `!op || !owner`
+    test below): charm I keeps only armor and offhand, and only when the selected slot is a hotbar slot.
+  - Every tier also keeps the 4 armor slots and the offhand.
+  - A tier applies only when its slots (scope + armor + offhand), ignoring every stack of that charm item, hold at
+    least one non-empty stack; otherwise it returns false without consuming anything and the next tier is tried (so
+    charm I is not consumed when armor and offhand are empty). Then one charm is consumed (searched armor, then main
+    inventory, then offhand; one item of the first matching stack) and remembered (`CharmStack`); without a charm the
+    tier does not apply.
+  - Caskets (`keepWholeListAndCheckCasket`, tiers II and I): walking the kept slots in order (main slots, then armor,
+    then offhand), the **first** keepsake casket stack found leaves exactly one casket in its slot (the rest of that
+    stack, count - 1, is kept; a stack of 1 is not kept at all) so `stockKeepsakeCasket` can place it; every later
+    casket stack is kept whole. Once a casket was left in the main slots, armor and offhand are kept whole. Caskets
+    outside the scope stay in the inventory as any other unkept item.
+  - With or without a charm: items in `#twilightforest:kept_on_death` (phantom helmet / chestplate, tower key) are
+    always kept (checked after the charm, in main, armor and offhand slots). Kept items are stored in the player's
+    persisted NBT (`TFCharmInventory`, only when not empty) and returned on respawn (not after the End credits); the
+    consumed charm (`CharmStack`) shows the charm animation with `item.twilightforest.charm.keep` on respawn, stat
+    `keeping_charms_activated` +1.
 - **Keepsake casket**: if the player still has any non-casket item and a casket in the inventory, one casket is
   consumed and placed at the death position (y clamped to [minY + 2, logicalHeight - 1], first replaceable block
   upward), multilogged with the fluid there, `damage` from the last casket (`CasketDamage`), facing = random of the
@@ -241,7 +259,9 @@ Only for real, non-creative, non-spectator players; server side.
 - Scepter durabilities, no-break rule, crown bonuses (seeded), renewal recharge from essence / ingredients.
 - Twilight bolt 6 damage; lifedrain 1 damage per 5 ticks, heal per 10, execution at <= 1 HP with loot; loyal zombie
   stats, expiry damage, rotten-flesh renewal; fortification 5 temp shields, 240-tick expiry, absorption and stat.
-- Charm of life I/II outcomes; keeping I/II/III scopes; kept-on-death items; casket placement, contents layout, 15%
+- Charm of life I/II outcomes; keeping scopes: III whole inventory with every casket kept, II hotbar, I armor and
+  offhand only (the selected slot is dropped: TF quirk) and not consumed when armor and offhand are empty; one casket
+  of the first casket stack left behind for placing (II/I); kept-on-death items; casket placement, contents layout, 15%
   damage / skull chest at damage 2, UUID locking, repair by charm III (block and recipe).
 - Flask fill / drink / crack / break, harm-dose damage, `drink_from_flask` data.
 - Pocket watch effects and fatigue immunity; moon dial phase keys; emperor's cloth recipe and washing.
