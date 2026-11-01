@@ -124,9 +124,9 @@ namespace GfImport
                 var sm = Regex.Match(code, @"return\s+switch\s*\(\s*state\.getValue\(\s*([\w.]+)\s*\)\s*\)\s*\{(.*)\}\s*;", RegexOptions.Singleline);
                 if (!sm.Success) { warn("block " + bi.Id + ": unsupported getLightEmission in " + source); return null; }
                 var swProp = env.Props[sm.Groups[1].Value];
-                var arms = new List<Tuple<List<string>, string>>();
+                var arms = new List<Tuple<List<string>, List<string>>>();   // case constants (null: default), tokens
                 foreach (Match am in Regex.Matches(sm.Groups[2].Value, @"(case\s+([\w\s,]+?)|default)\s*->\s*([^;]+);"))
-                    arms.Add(Tuple.Create(am.Groups[2].Success ? am.Groups[2].Value.Split(',').Select(x => x.Trim()).ToList() : null, am.Groups[3].Value.Trim()));
+                    arms.Add(Tuple.Create(am.Groups[2].Success ? am.Groups[2].Value.Split(',').Select(x => x.Trim()).ToList() : null, Tokenize(am.Groups[3].Value.Trim())));
                 bool counts = Regex.IsMatch(code, @"int\s+candleCount\s*=\s*getCandleCount\(\s*state\s*\)\s*;");
                 eval = st =>
                 {
@@ -141,7 +141,11 @@ namespace GfImport
                     return V.Int(0);
                 };
             }
-            else eval = st => new Parser(env, code, st, new Dictionary<string, V>(StringComparer.Ordinal)).Parse();
+            else
+            {
+                var tokens = Tokenize(code);   // once per expression, not per evaluated state
+                eval = st => new Parser(env, tokens, st, new Dictionary<string, V>(StringComparer.Ordinal)).Parse();
+            }
             // check it once on the default state
             try
             {
@@ -153,6 +157,12 @@ namespace GfImport
             catch (Exception e) { warn("block " + bi.Id + ": cannot evaluate the light expression of " + source + " (" + e.Message + ")"); return null; }
             fn.Eval = st => Math.Max(0, Math.Min(15, eval(st).I));
             return fn;
+        }
+
+        /// <summary>The tokens of an expression (the parser only reads them).</summary>
+        static List<string> Tokenize(string code)
+        {
+            return Regex.Matches(code, @"\d+|\.[A-Za-z_]\w*|[A-Za-z_][\w.]*|==|!=|[?:*+\-()]").Cast<Match>().Select(m => m.Value).ToList();
         }
 
         static JProp Prop(Env env, BlockInfo bi, string expr)
@@ -178,10 +188,10 @@ namespace GfImport
             readonly Dictionary<string, V> locals;
             int i;
 
-            public Parser(Env env, string code, Dictionary<string, string> st, Dictionary<string, V> locals)
+            public Parser(Env env, List<string> tokens, Dictionary<string, string> st, Dictionary<string, V> locals)
             {
                 this.env = env; this.st = st; this.locals = locals;
-                t = Regex.Matches(code, @"\d+|\.[A-Za-z_]\w*|[A-Za-z_][\w.]*|==|!=|[?:*+\-()]").Cast<Match>().Select(m => m.Value).ToList();
+                t = tokens;
             }
 
             string Peek { get { return i < t.Count ? t[i] : null; } }
