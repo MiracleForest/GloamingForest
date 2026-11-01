@@ -199,13 +199,21 @@ particles per line). Server (`tickCount` + 1 per tick while a player is in range
   scan: the position counts as a detected change each time (its 1/10 roll still consumes a `nextInt(10)`; a won
   roll calls `updateOrDestroy(antibuilt, antibuilt)`, a no-op because the states are equal). So once any antibuilt
   block exists in the region, the antibuilder scans every tick and never returns to slow scan while a player stays
-  within 16 blocks. Breaking the antibuilt block changes nothing (air over a motion-blocking snapshot is revertible,
-  and the next won roll refills it). Slow scan resumes only when every changed position is settled: reverted to air
-  (a block placed into snapshot air and destroyed now matches its snapshot again) or absorbed by a non-revertible
-  change (the snapshot takes the current state, e.g. an `antibuilder_ignores` block placed over the antibuilt block).
-  When every player leaves the 16-block range the snapshot is dropped (`blockData = null`, `tickCount = 0`); the next
-  capture includes the antibuilt blocks, which then match, so slow scan returns 21 change-free scans after the
-  capture.
+  within 16 blocks. Breaking an antibuilt block whose snapshot blocks motion changes nothing (air over a
+  motion-blocking snapshot is revertible, and the next won roll refills it); breaking one whose snapshot is a non-air
+  block that does not block motion (a torch, flower or carpet that was replaced by a solid block, then reverted)
+  settles the position (`stateThere.isAir() && !replaceWith.blocksMotion()`: not revertible, the snapshot becomes
+  air). Slow scan resumes only when every changed position is settled: reverted to air (a block placed into snapshot
+  air and destroyed now matches its snapshot again) or absorbed by a non-revertible change (the snapshot takes the
+  current state, e.g. an `antibuilder_ignores` block put where the antibuilt block was, or the air left by breaking an
+  antibuilt block over a non-motion-blocking snapshot as above), after which 21 change-free scans switch it back.
+- The snapshot is transient: TF never saves `blockData` (no `saveAdditional`), so it is lost when every player leaves
+  the 16-block range (`blockData = null`, `tickCount = 0`) and also whenever the block entity is recreated (chunk
+  unload / reload, server restart). The next capture includes the antibuilt blocks, which then match, and the capture
+  itself sets `slowScan = true` (as the first bullet says): slow scan is immediate after a recapture, not 21 scans
+  later (`ticksSinceChange` is neither saved nor reset by the capture; it only matters again after the next detected
+  change resets it). U26 keeps the snapshot in memory only (not BlockData, not the world DB), so a reload behaves the
+  same way.
 
 ### 2.4 Carminite reactor (`CarminiteReactorBlock`, `CarminiteReactorBlockEntity`)
 
@@ -595,8 +603,8 @@ deactivation, antibuilder (within its 9 x 9 x 9 region) refills a broken motion-
 and destroys a block placed into snapshot air with its drop (fast scan after the first detected change; slow scan again
 after 21 change-free scans only when every change was reverted to air or was not revertible: once an antibuilt block
 exists in the region the antibuilder scans every tick while a player is within 16 blocks, and a selftest must expect
-that; a fresh capture after all players left range absorbs the antibuilt blocks), reactor turns its shell into fake
-gold/diamond and explodes at tick 350 with 6 ghastlings, slider spawns a moving slide block that damages 5 and returns;
-ghast trap charges from 3 dying ghastlings and, powered, pulls a scripted Ur-Ghast down (tantrum off, 7 damage chance)
-and fires `activate_ghast_trap`; Ur-Ghast phases toggle after 10/18 damage, tantrum divides damage by 10 and spawns
-minions at traps; death places the dark chest.
+that; a fresh capture after all players left range or a reload absorbs the antibuilt blocks and starts in slow scan at
+once), reactor turns its shell into fake gold/diamond and explodes at tick 350 with 6 ghastlings, slider spawns a moving
+slide block that damages 5 and returns; ghast trap charges from 3 dying ghastlings and, powered, pulls a scripted
+Ur-Ghast down (tantrum off, 7 damage chance) and fires `activate_ghast_trap`; Ur-Ghast phases toggle after 10/18 damage,
+tantrum divides damage by 10 and spawns minions at traps; death places the dark chest.
