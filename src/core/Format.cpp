@@ -84,7 +84,7 @@ std::string compactCount(long long n) {
     if (n < 0) return "-" + compactCount(-n);
     if (n < 1000) return std::to_string(n);
     auto fmt1 = [](long long v, long long unit, char suffix) {
-        long long   tenths = v * 10 / unit;
+        long long   tenths = v / (unit / 10); // unit is a multiple of 10: no v * 10 (overflows near LLONG_MAX)
         std::string s      = std::to_string(tenths / 10);
         if (tenths < 100 && tenths % 10 != 0) s += "." + std::to_string(tenths % 10);
         return s + suffix;

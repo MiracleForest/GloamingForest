@@ -26,12 +26,13 @@ namespace gf::game::db {
 [[nodiscard]] bool available();
 
 /// The document stored under `key` (nullopt: missing, unreadable or no world).
+/// Every function here refuses malformed keys (not "gf:<unit>:...", core::validWorldKey) with an
+/// error line, so no unit can read or delete vanilla LevelDB records.
 [[nodiscard]] std::optional<nlohmann::json> get(std::string const& key);
-/// Stores `value` under `key` (no-op without a world). Malformed keys (not "gf:<unit>:...") are
-/// refused with an error line.
+/// Stores `value` under `key` (no-op without a world).
 void put(std::string const& key, nlohmann::json const& value);
 void erase(std::string const& key);
-/// Calls `fn(keySuffix)` for every stored key starting with `prefix`.
+/// Calls `fn(keySuffix)` for every stored key starting with `prefix` (which must start with "gf:").
 void forEachKey(std::string const& prefix, std::function<void(std::string_view suffix)> const& fn);
 
 /// World lifecycle (server thread). Listeners registered at static init or in `install()`.

@@ -27,7 +27,15 @@ TEST(Format, JavaPlaceholders) {
 TEST(Format, CompactCount) {
     EXPECT_EQ(compactCount(999), "999");
     EXPECT_EQ(compactCount(1234), "1.2k");
-    EXPECT_EQ(compactCount(std::numeric_limits<long long>::min()).front(), '-');
     EXPECT_EQ(compactCount(1500000), "1.5M");
     EXPECT_EQ(compactCount(-2000), "-2k");
+    EXPECT_EQ(compactCount(1'999'999'999), "1.9G");
+}
+
+TEST(Format, CompactCountExtremes) {
+    // no intermediate value may overflow (signed overflow is undefined behaviour)
+    EXPECT_EQ(compactCount(std::numeric_limits<long long>::max()), "9223372036G");
+    EXPECT_EQ(compactCount(std::numeric_limits<long long>::min()), "-9223372036G");
+    EXPECT_EQ(compactCount(999'999'999'999'999'999), "999999999G");
+    EXPECT_EQ(compactCount(922'337'203'685'477'581), "922337203G"); // just above LLONG_MAX / 10
 }
