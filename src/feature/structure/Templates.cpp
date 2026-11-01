@@ -20,13 +20,19 @@
 //   jigsaw    [{"pos": [x, y, z], "front": dir, "top": dir (or "facing": dir), "pool", "name",
 //               "target", "priority"}] (JigsawBlock orientation + nbt; FrontAndTop)
 //   entities  [{"pos": [x, y, z] (doubles), "id": entity id, "data": {...}}]
+//             data of an entity (StructureEntityInfo#nbt): "Rotation" [yaw, pitch] (degrees,
+//             turned with the placement as Entity#rotate / #mirror turn it) and "nbt" (the
+//             entity's saved Bedrock actor tag in SNBT, as structure_util capture writes it: the
+//             entity is loaded from it, its position, rotation and identity replaced; without it a
+//             new entity of the type is spawned). No other field is read (validate refuses them).
 //             paintings ("id": "minecraft:painting") hang on a block, not at a point: "pos" is
 //             the block the painting covers (integers; for a wider or taller painting the block
 //             Painting#calculateBoundingBox starts from, as Java's HangingEntity#pos), or
 //             data.block_pos [x, y, z] / data.TileX..TileZ names it (then "pos" may be Java's
 //             entity position, the painting's center). data.facing: the direction the picture
 //             faces (name or Direction#get2DDataValue), data.variant: the painting variant
-//             ("minecraft:kebab"). Block, facing and pos turn with the placement.
+//             ("minecraft:kebab"). Block and pos turn with the placement, the facing as
+//             HangingEntity#rotate then #mirror turn it.
 #include "feature/structure/Internal.h"
 
 #include <algorithm>
@@ -38,6 +44,7 @@
 #include <shared_mutex>
 #include <tuple>
 
+#include "mc/deps/nbt/CompoundTag.h"
 #include "mc/world/level/block/Block.h"
 
 #include "mod/Log.h"
@@ -96,6 +103,56 @@ std::optional<BlockPos> paintingBlockPos(Json const& data) {
                         static_cast<int>(data["TileZ"].get<double>())};
     return std::nullopt;
 }
+
+/// The entity data fields a template may give (see the format above).
+bool isPaintingField(std::string const& key) {
+    return key == "block_pos" || key == "TileX" || key == "TileY" || key == "TileZ" || key == "facing" || key == "direction" || key == "variant" ||
+           key == "motive";
+}
+
+/// Mth.wrapDegrees(float).
+float wrapDegrees(float degrees) {
+    float f = std::fmod(degrees, 360.0f);
+    if (f >= 180.0f) f -= 360.0f;
+    if (f < -180.0f) f += 360.0f;
+    return f;
+}
+
+} // namespace
+
+float turnedYaw(float yaw, Rotation rotation, Mirror mirror) {
+    // StructureTemplate#placeEntities: f = entity.rotate(rotation) + entity.mirror(mirror) - getYRot()
+    float w      = wrapDegrees(yaw);
+    float rotate = w;
+    switch (rotation) {
+    case Rotation::Clockwise180:
+        rotate = w + 180.0f;
+        break;
+    case Rotation::Counterclockwise90:
+        rotate = w + 270.0f;
+        break;
+    case Rotation::Clockwise90:
+        rotate = w + 90.0f;
+        break;
+    default:
+        break;
+    }
+    float mirrored = w;
+    if (mirror == Mirror::FrontBack) mirrored = -w;
+    else if (mirror == Mirror::LeftRight) mirrored = 180.0f - w;
+    return rotate + mirrored - yaw;
+}
+
+Orientation turnedPaintingFacing(Orientation facing, Rotation rotation, Mirror mirror) {
+    // HangingEntity#rotate turns the direction, then HangingEntity#mirror turns the turned
+    // direction by Mirror#getRotation(direction): half a turn when the mirror flips its axis
+    Orientation dir   = rotateDir(facing, rotation);
+    bool        zAxis = dir == Orientation::North || dir == Orientation::South;
+    if ((mirror == Mirror::LeftRight && zAxis) || (mirror == Mirror::FrontBack && !zAxis)) dir = opposite(dir);
+    return dir;
+}
+
+namespace {
 
 std::unique_ptr<Parsed> parse(Template const& t) {
     auto        p   = std::make_unique<Parsed>();
@@ -277,7 +334,26 @@ std::vector<std::string> validate(Json const& doc) {
                  p[1].get<double>() > sz->y || p[2].get<double>() > sz->z)
             err("entity outside the template: " + e.dump());
         if (!e.contains("id") || !e["id"].is_string()) err("entity without id: " + e.dump());
-        if (e.value("id", std::string{}) == "minecraft:painting") {
+        bool painting = e.value("id", std::string{}) == "minecraft:painting";
+        if (e.contains("data")) {
+            // the fields the kit applies (anything else would be silently lost)
+            auto const& data = e["data"];
+            if (!data.is_object()) err("entity data must be an object: " + e.dump());
+            else
+                for (auto const& [key, value] : data.items()) {
+                    if (painting) {
+                        if (!isPaintingField(key)) err("painting data field '" + key + "' is not supported (block_pos, TileX..TileZ, facing, variant): " + e.dump());
+                    } else if (key == "Rotation") {
+                        if (!value.is_array() || value.size() != 2 || !value[0].is_number() || !value[1].is_number())
+                            err("entity Rotation must be [yaw, pitch]: " + e.dump());
+                    } else if (key == "nbt") {
+                        if (!value.is_string() || !CompoundTag::fromSnbt(value.get<std::string>())) err("entity nbt must be an SNBT compound: " + e.dump());
+                    } else {
+                        err("entity data field '" + key + "' is not supported (Rotation, nbt): " + e.dump());
+                    }
+                }
+        }
+        if (painting) {
             // a painting hangs on a block: data.block_pos (or TileX..Z) names it, otherwise "pos"
             // is that block (integers; Java's saved entity position is the painting's center,
             // half a block off for even sizes, so it cannot stand in for the block)
@@ -569,19 +645,21 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
             if (clip && !clip->contains(bp.x, bp.y, bp.z)) continue;
             if (isPainting) {
                 // a hanging painting: the block it covers (bp) and its facing ("facing" as
-                // Direction#get2DDataValue or a name) turned with the placement (HangingEntity#rotate
-                // / #mirror), its variant hung through TF's spot check
+                // Direction#get2DDataValue or a name) turned with the placement (HangingEntity#rotate,
+                // then #mirror), its variant hung through TF's spot check
                 Orientation dir = Orientation::South;
                 if (e.data.contains("facing") && e.data["facing"].is_number_integer()) dir = from2D(e.data["facing"].get<int>());
                 else dir = blocks::parseDirection(e.data.value("facing", e.data.value("direction", std::string("south")))).value_or(Orientation::South);
-                if (settings.mirror == Mirror::LeftRight && (dir == Orientation::North || dir == Orientation::South)) dir = opposite(dir);
-                if (settings.mirror == Mirror::FrontBack && (dir == Orientation::East || dir == Orientation::West)) dir = opposite(dir);
-                dir = rotateDir(dir, settings.rotation);
+                dir          = turnedPaintingFacing(dir, settings.rotation, settings.mirror);
                 auto variant = e.data.value("variant", e.data.value("motive", std::string("minecraft:kebab")));
                 (void)paintings::tryHang(region, bp, dir, paintings::byId(variant));
                 continue;
             }
-            blockentities::entity(region, wx, wy, wz, e.id, e.data);
+            // the entity's facing turned with the placement (Entity#rotate / #mirror)
+            Json data = e.data.is_object() ? e.data : Json::object();
+            if (data.contains("Rotation") && data["Rotation"].is_array() && data["Rotation"].size() == 2 && data["Rotation"][0].is_number())
+                data["Rotation"][0] = turnedYaw(data["Rotation"][0].get<float>(), settings.rotation, settings.mirror);
+            blockentities::entity(region, wx, wy, wz, e.id, data);
         }
     }
     if (placedOut) *placedOut = std::move(placed);

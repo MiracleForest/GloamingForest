@@ -13,9 +13,15 @@
 #   markers   [{"pos": [x, y, z], "marker": name, "data": {...}}]
 #               "data" with data.metadata: a TF data marker (handled by the piece / its
 #               template_marker_handler_list); any other name: block entity data of the block at
-#               pos ("loot" {table}, "spawner" {entity, Delay, MinSpawnDelay, ...}, "sign" {lines})
+#               pos ("loot" {table}, "spawner" {entity, Delay, MinSpawnDelay, ...}, "sign" {lines});
+#               a spawner's data goes to the block the template puts there (a vanilla spawner, or
+#               TF's sinister spawner, which keeps its block)
 #   jigsaw    [{"pos": [x, y, z], "front": dir, "top": dir, "pool", "name", "target", "priority"}]
 #   entities  [{"pos": [x, y, z], "id": entity id, "data": {...}}]
+#             data: "Rotation" [yaw, pitch] (turned with the placement as Entity#rotate / #mirror
+#             turn it) and "nbt" (the entity's saved Bedrock actor tag in SNBT, as
+#             /twilightforest structure_util capture writes it); no other field is applied, so
+#             the validator refuses them
 #             a painting ("minecraft:painting") hangs on a block: "pos" is the block it covers
 #             (integers; Java's HangingEntity#pos, the block Painting#calculateBoundingBox starts
 #             from for wider / taller variants), or data.block_pos [x, y, z] (or data.TileX..TileZ)

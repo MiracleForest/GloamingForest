@@ -60,11 +60,39 @@ function Test-GftDocument {
             $errors.Add("entity outside the template: $($e | ConvertTo-Json -Compress -Depth 5)")
         }
         if ($e['id'] -isnot [string]) { $errors.Add("entity without id: $($e | ConvertTo-Json -Compress -Depth 5)") }
+        foreach ($problem in (Test-GftEntityData $e)) { $errors.Add("$problem`: $($e | ConvertTo-Json -Compress -Depth 5)") }
         if ($e['id'] -eq 'minecraft:painting') {
             foreach ($problem in (Test-GftPainting $e $size)) { $errors.Add("$problem`: $($e | ConvertTo-Json -Compress -Depth 5)") }
         }
     }
     return , $errors.ToArray()
+}
+
+# The entity data fields the kit applies (structure::templates::validate): a painting's block_pos,
+# TileX..TileZ, facing (direction) and variant (motive); any other entity's Rotation [yaw, pitch]
+# and nbt (its saved Bedrock actor tag in SNBT, as structure_util capture writes it). Anything
+# else would be lost silently, so it is refused.
+$script:PaintingFields = @('block_pos', 'TileX', 'TileY', 'TileZ', 'facing', 'direction', 'variant', 'motive')
+function Test-GftEntityData($e) {
+    $problems = [System.Collections.Generic.List[string]]::new()
+    if (-not $e.Contains('data')) { return , $problems.ToArray() }
+    $d = $e['data']
+    if ($d -isnot [System.Collections.IDictionary]) { $problems.Add('entity data must be an object'); return , $problems.ToArray() }
+    foreach ($key in @($d.Keys)) {
+        if ($e['id'] -eq 'minecraft:painting') {
+            if ($key -cnotin $script:PaintingFields) { $problems.Add("painting data field '$key' is not supported (block_pos, TileX..TileZ, facing, variant)") }
+        } elseif ($key -ceq 'Rotation') {
+            $r = $d[$key]
+            $numeric = { param($v) $v -is [int] -or $v -is [long] -or $v -is [double] -or $v -is [decimal] }
+            if ($r -isnot [System.Collections.IList] -or $r.Count -ne 2 -or -not (& $numeric $r[0]) -or -not (& $numeric $r[1])) { $problems.Add('entity Rotation must be [yaw, pitch]') }
+        } elseif ($key -ceq 'nbt') {
+            $n = $d[$key]
+            if ($n -isnot [string] -or -not $n.TrimStart().StartsWith('{') -or -not $n.TrimEnd().EndsWith('}')) { $problems.Add('entity nbt must be an SNBT compound') }
+        } else {
+            $problems.Add("entity data field '$key' is not supported (Rotation, nbt)")
+        }
+    }
+    return , $problems.ToArray()
 }
 
 # minecraft:painting_variant of 1.21.1
