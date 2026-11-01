@@ -73,7 +73,7 @@ their tool unit (F1 import, F2 geo, F3 audio) may also write them: the tools gen
 | `net` | 110 |
 | `noise_settings` | 2 |
 | `particle` | 29 |
-| `path` | 774 |
+| `path` | 825 |
 | `placed_feature` | 107 |
 | `placement_modifier` | 10 |
 | `poi` | 1 |
