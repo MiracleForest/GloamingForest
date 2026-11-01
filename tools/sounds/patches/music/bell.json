@@ -1,0 +1,41 @@
+{
+  "about": "Glassy bell.",
+  "params": {
+    "freq": 660,
+    "dur": 0.5,
+    "vel": 1
+  },
+  "length": 0.02,
+  "tail": 2.5,
+  "normalize": -4,
+  "layers": [
+    {
+      "type": "modal",
+      "modes": [
+        [
+          1,
+          2.2,
+          1
+        ],
+        [
+          2.0,
+          1.4,
+          0.4
+        ],
+        [
+          2.76,
+          1.0,
+          0.3
+        ],
+        [
+          5.4,
+          0.6,
+          0.15
+        ]
+      ],
+      "freq": "$freq",
+      "strike": 0.001,
+      "ring": 2.4
+    }
+  ]
+}

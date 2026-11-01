@@ -1,0 +1,57 @@
+{
+  "about": "Snake or cat hiss: band-limited white noise with a soft attack.",
+  "params": {
+    "len": 0.7,
+    "bright": 1.0,
+    "attack": 0.05,
+    "flutter": 0
+  },
+  "length": "$len",
+  "tail": 0.1,
+  "layers": [
+    {
+      "type": "noise",
+      "color": "white",
+      "env": {
+        "a": "$attack",
+        "d": "$len*0.5",
+        "s": 0.6,
+        "r": "$len*0.3"
+      },
+      "tremolo": {
+        "rate": 23,
+        "depth": "$flutter"
+      },
+      "filter": [
+        {
+          "type": "hp",
+          "freq": "2600*$bright",
+          "q": 0.7
+        },
+        {
+          "type": "peak",
+          "freq": "6000*$bright",
+          "q": 1.2
+        }
+      ]
+    },
+    {
+      "type": "noise",
+      "color": "pink",
+      "amp": 0.25,
+      "env": {
+        "a": "$attack",
+        "d": "$len*0.4",
+        "s": 0.3,
+        "r": "$len*0.2"
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "3200*$bright",
+          "q": 2
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "block.twilightforest.jet.active": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jet.active",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/fireball4"
+      }
+    ]
+  },
+  "block.twilightforest.jet.pop": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jet.pop",
+    "sounds": [
+      {
+        "name": "sounds/liquid/lavapop"
+      }
+    ]
+  },
+  "block.twilightforest.jet.start": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jet.start",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "block.twilightforest.smoker.start": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.smoker.start",
+    "sounds": [
+      {
+        "name": "sounds/random/click"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.death": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hydra.death",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/death"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.growl": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hydra.growl",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/growl1"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/growl2"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/growl3"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.hurt": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hydra.hurt",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/hurt1"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/hurt2"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/hurt3"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/hurt4"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.roar": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hydra.roar",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/roar1"
+      },
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/roar2"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.shoot": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hydra.shoot",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/fireball4"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.shoot_fire": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hydra.shoot_fire",
+    "sounds": [
+      {
+        "name": "sounds/mob/ghast/fireball4"
+      }
+    ]
+  },
+  "entity.twilightforest.hydra.warn": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hydra.warn",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/hydra/mob/hydra/warn"
+      }
+    ]
+  }
+}

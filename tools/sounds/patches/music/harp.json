@@ -1,0 +1,38 @@
+{
+  "about": "Bright harp-like pluck with a soft octave.",
+  "params": {
+    "freq": 440,
+    "dur": 0.5,
+    "vel": 1
+  },
+  "length": "$dur",
+  "tail": 1.2,
+  "normalize": -3,
+  "layers": [
+    {
+      "type": "pluck",
+      "freq": "$freq",
+      "decay": 2.5,
+      "bright": 0.8,
+      "ring": 1.2,
+      "env": {
+        "a": 0.001,
+        "d": 0,
+        "s": 1,
+        "r": 1.0
+      }
+    },
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": "$freq*2",
+      "amp": 0.15,
+      "env": {
+        "a": 0.002,
+        "d": 0.4,
+        "s": 0.0,
+        "r": 0.3
+      }
+    }
+  ]
+}
