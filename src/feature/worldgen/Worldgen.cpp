@@ -128,6 +128,7 @@ void clearWorldCaches() {
     }
     clearCarverBiomeCache();
     clearCarvingMasks();
+    clearKeptChunkBiomes();
     features::detail::clearBlockCache();
 }
 
@@ -214,15 +215,18 @@ void registerBlanket(std::string const& id, BlanketFn fn) {
     update([&](detail::Providers& p) { p.blankets[features::detail::normalizeId(id)] = std::move(fn); });
 }
 
+namespace detail {
+namespace {
+void addStep(std::vector<Step>& steps, std::string const& id, int order, ChunkFn fn) {
+    std::erase_if(steps, [&](Step const& s) { return s.id == id; });
+    steps.push_back({id, order, stepSeq()++, std::move(fn)});
+    std::stable_sort(steps.begin(), steps.end(), [](Step const& a, Step const& b) { return a.order != b.order ? a.order < b.order : a.seq < b.seq; });
+}
+} // namespace
+} // namespace detail
+
 void addStage(Stage stage, std::string const& id, int order, ChunkFn fn) {
-    update([&](detail::Providers& p) {
-        auto& steps = p.stages[stage];
-        std::erase_if(steps, [&](detail::Step const& s) { return s.id == id; });
-        steps.push_back({id, order, detail::stepSeq()++, std::move(fn)});
-        std::stable_sort(steps.begin(), steps.end(), [](detail::Step const& a, detail::Step const& b) {
-            return a.order != b.order ? a.order < b.order : a.seq < b.seq;
-        });
-    });
+    update([&](detail::Providers& p) { detail::addStep(p.stages[stage], id, order, std::move(fn)); });
 }
 
 std::int64_t seed() { return detail::currentSeed(); }
@@ -230,6 +234,10 @@ std::int64_t seed() { return detail::currentSeed(); }
 // ==== extension ======================================================================================
 
 namespace ext {
+
+void addStructureStep(std::string const& id, int order, ChunkFn fn) {
+    update([&](detail::Providers& p) { detail::addStep(p.structureSteps, id, order, std::move(fn)); });
+}
 
 void setPossibleBiomes(std::vector<std::string> biomeIds) {
     for (auto& id : biomeIds) id = features::detail::normalizeId(id);

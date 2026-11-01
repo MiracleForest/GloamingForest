@@ -60,6 +60,7 @@ struct Providers {
     std::map<std::string, CarverFn>  carvers;
     std::map<std::string, BlanketFn> blankets;
     std::map<Stage, std::vector<Step>> stages; ///< sorted by (order, seq)
+    std::vector<Step>                structureSteps; ///< ext::addStructureStep (every decoration step), sorted by (order, seq)
     std::vector<std::string>         possibleBiomes;
     std::uint64_t                    biomeSourceGeneration = 0; ///< increases with every setBiomeSource
 };
@@ -94,7 +95,7 @@ void clearWorldCaches();
 [[nodiscard]] bool heightmapMatches(Heightmap type, Block const& block);
 
 // ---- adapters ---------------------------------------------------------------------------------------
-/// A chunk that takes a whole quart column of biomes at once (the generator's own biome writes).
+/// A chunk that keeps quart biomes and takes a whole quart column at once (the in-memory chunks).
 class QuartBiomeWriter {
 public:
     virtual ~QuartBiomeWriter() = default;
@@ -102,8 +103,23 @@ public:
     virtual void setQuartColumn(int qx, int qz, int qMin, std::vector<std::string> const& ids) = 0;
 };
 
+/// A chunk that stores a biome per block (the game's LevelChunk). The generator writes into it the
+/// biome BiomeManager's zoom picks for every block (Java's LevelReader#getBiome: what Java's client
+/// and gameplay read per block), so Bedrock's own per-block readers (grass, foliage and water
+/// colours, precipitation, snow, the client) see Java's biome borders, not 4 x 4 x 4 steps; while the
+/// chunk generates, Chunk::biome keeps answering the raw quarts.
+class BlockBiomeWriter {
+public:
+    virtual ~BlockBiomeWriter() = default;
+    /// `quarts`: the raw quart biomes of quart x chunkX * 4 - 1 .. chunkX * 4 + 4 and z likewise
+    /// (the chunk and the one-quart ring the zoom reaches), quart y qMin .. qMin + nq - 1, at index
+    /// ((dx * 6) + dz) * nq + (qy - qMin) with dx, dz in 0..5. The zoom's quart y is clamped to them
+    /// (ChunkAccess#getNoiseBiome).
+    virtual void writeZoomedBiomes(std::int64_t zoomSeed, int qMin, int nq, std::vector<std::string> const& quarts) = 0;
+};
+
 /// A chunk of the game being generated (loadChunk). Writes go straight into the LevelChunk.
-class LevelChunkAdapter final : public Chunk, public QuartBiomeWriter {
+class LevelChunkAdapter final : public Chunk, public BlockBiomeWriter {
 public:
     LevelChunkAdapter(LevelChunk& chunk, BiomeRegistry const& biomes, int minY, int maxY);
     int          chunkX() const override { return mX; }
@@ -113,13 +129,18 @@ public:
     Block const& getBlock(int lx, int y, int lz) const override;
     void         setBlock(int lx, int y, int lz, Block const& block) override;
     int          height(Heightmap type, int lx, int lz) const override;
+    /// The raw quart biome after writeZoomedBiomes (the generation), else the biome the chunk stores
+    /// at the block.
     std::string  biome(int lx, int y, int lz) const override;
+    /// Sets the block's biome (and, during the generation, its quart's raw biome). The zoomed biomes
+    /// already written around it are not recomputed: change biomes through the biome source.
     void         setBiome(int lx, int y, int lz, std::string const& biomeId) override;
     /// Sets the biome of a whole column (faster than per block).
     void setBiomeColumn(int lx, int lz, std::string const& biomeId);
-    /// The engine biomes are resolved once per id and chunk; each block column takes the most
-    /// frequent biome of the quart column in one call and the other quarts block by block.
-    void setQuartColumn(int qx, int qz, int qMin, std::vector<std::string> const& ids) override;
+    /// The engine biomes are resolved once per id and chunk; a block column whose candidate quarts
+    /// all agree takes their biome without the zoom, each column's most frequent biome is written in
+    /// one call and the others block by block. An unknown id keeps what the chunk had there.
+    void writeZoomedBiomes(std::int64_t zoomSeed, int qMin, int nq, std::vector<std::string> const& quarts) override;
     [[nodiscard]] LevelChunk& levelChunk() { return mChunk; }
 
 private:
@@ -128,6 +149,8 @@ private:
     BiomeRegistry const&                              mBiomes;
     int                                               mX, mZ, mMinY, mMaxY;
     std::vector<std::pair<std::string, Biome const*>> mResolved; ///< id -> engine biome (this chunk's few ids)
+    std::vector<std::string>                          mRawQuarts; ///< (qx * 4 + qz) * mRawNq + (qy - mRawQMin), during the generation
+    int                                               mRawQMin = 0, mRawNq = 0;
 };
 
 /// A region that answers the raw quart biomes (Java's NoiseBiomeSource of a WorldGenRegion:
@@ -141,6 +164,11 @@ public:
 
 /// A window of the world through a BlockSource (decoration: the 3x3 chunks around the center;
 /// selftests: any box). Heightmaps are computed by scanning, cached per column until a write.
+/// Over chunks this generator wrote (the Twilight Forest while the generator is installed, decided
+/// by the constructor; setZoomedChunks overrides it): they store the zoomed biome per block, so
+/// biome(pos) reads the chunk's block biome, noiseBiome() the biome source and chunkBiomes() the
+/// raw biomes kept at generation (keptChunkBiomes); over other chunks (Bedrock's own quart biomes)
+/// it zooms over the stored quarts.
 class SourceRegionAdapter final : public features::detail::SourceRegion, public NoiseBiomeRegion {
 public:
     /// Writable chunks: center +- `radius`; heights scan [minY, maxY). `fallback` answers the quart
@@ -177,6 +205,8 @@ public:
     /// The biome ids in the section palettes of the chunks within `radius` of the center (the set
     /// Java's applyBiomeDecoration collects); false when one of the chunks is not available.
     bool chunkBiomes(int radius, std::vector<std::string>& out) const;
+    /// The chunks were written by this generator (zoomed biomes per block); see above.
+    void setZoomedChunks(bool zoomed) { mZoomed = zoomed; }
 
 private:
     BlockSource&                                      mSource;
@@ -184,6 +214,7 @@ private:
     std::int64_t                                      mSeed;
     BiomeSourceFn                                     mFallback;
     int                                               mWrites = 0;
+    bool                                              mZoomed = false;
     mutable std::unordered_map<std::int64_t, std::array<int, 6>> mHeights; ///< column -> height per Heightmap
 };
 
@@ -246,9 +277,15 @@ private:
 /// Biomes, Starts, Noise, Surface, Blanket and Carvers of one chunk (Bedrock's loadChunk).
 void generateChunk(Chunk& chunk, Region& chunkRegion, std::int64_t seed);
 void generateChunk(Providers const& providers, Chunk& chunk, Region& chunkRegion, std::int64_t seed);
-/// Writes the biome source's quart biomes into `chunk`; returns the distinct biome ids written
-/// (empty without a biome source).
-std::vector<std::string> writeBiomes(Providers const& providers, Chunk& chunk);
+/// Writes the biome source's biomes into `chunk` (a BlockBiomeWriter: the zoomed biome of every
+/// block for world seed `seed`; a QuartBiomeWriter / other chunk: the quarts); returns the distinct
+/// raw biome ids of the chunk's quarts (empty without a biome source).
+std::vector<std::string> writeBiomes(Providers const& providers, Chunk& chunk, std::int64_t seed);
+/// The distinct raw biomes of the game chunks the generator wrote, kept for the decoration of their
+/// 3 x 3 neighbourhoods (the chunks themselves store zoomed biomes). Bounded; nullopt: not kept.
+void keepChunkBiomes(int dimension, int chunkX, int chunkZ, std::vector<std::string> biomes);
+[[nodiscard]] std::optional<std::vector<std::string>> keptChunkBiomes(int dimension, int chunkX, int chunkZ);
+void clearKeptChunkBiomes();
 /// Per decoration step the Pieces and the placed features, then Features, LargeWriter and Spawns of
 /// the center chunk of `region` (Bedrock's decoration post-processing).
 void decorateChunk(Chunk* chunk, Region& region, std::int64_t seed);

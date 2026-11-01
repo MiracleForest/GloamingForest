@@ -1,7 +1,8 @@
 // The staged pipeline of the Twilight Forest generator (F5), in Java's ChunkStatus order:
 //   loadChunk:  Biomes -> Starts -> Noise -> Surface -> Blanket -> Carvers
-//   decoration: for each GenerationStep.Decoration step: Pieces (the structures of the step), then
-//               the step's placed features (ChunkGenerator#applyBiomeDecoration); then Features ->
+//   decoration: for each GenerationStep.Decoration step: the structure steps (ext::
+//               addStructureStep; the plain Pieces steps once, at SurfaceStructures), then the
+//               step's placed features (ChunkGenerator#applyBiomeDecoration); then Features ->
 //               LargeWriter -> Spawns
 // The Blanket stage runs at surface time because TF injects ChunkBlanketProcessors#chunkBlanketing
 // right after ChunkGenerator#buildSurface in ChunkStatusTasks#generateSurface (tf-asm
@@ -183,6 +184,50 @@ void clearCarvingMasks() {
     s.order.clear();
 }
 
+// ---- the raw biomes of generated game chunks (decoration's biome set) ------------------------------
+
+namespace {
+struct ChunkBiomeStore {
+    std::mutex                                                          mutex;
+    std::map<std::tuple<int, int, int>, std::vector<std::string>>      biomes;
+    std::deque<std::tuple<int, int, int>>                               order; ///< insertion order (bounded)
+};
+ChunkBiomeStore& chunkBiomeStore() {
+    static ChunkBiomeStore s;
+    return s;
+}
+constexpr std::size_t kMaxKeptChunkBiomes = 16384; // a few ids per chunk
+} // namespace
+
+void keepChunkBiomes(int dim, int cx, int cz, std::vector<std::string> biomes) {
+    auto&           s = chunkBiomeStore();
+    std::lock_guard lock(s.mutex);
+    auto            key   = std::make_tuple(dim, cx, cz);
+    bool            fresh = !s.biomes.contains(key);
+    s.biomes.insert_or_assign(key, std::move(biomes));
+    if (!fresh) return; // a chunk generated again keeps its place
+    s.order.push_back(key);
+    while (s.order.size() > kMaxKeptChunkBiomes) {
+        s.biomes.erase(s.order.front());
+        s.order.pop_front();
+    }
+}
+
+std::optional<std::vector<std::string>> keptChunkBiomes(int dim, int cx, int cz) {
+    auto&           s = chunkBiomeStore();
+    std::lock_guard lock(s.mutex);
+    auto            it = s.biomes.find(std::make_tuple(dim, cx, cz));
+    if (it == s.biomes.end()) return std::nullopt;
+    return it->second;
+}
+
+void clearKeptChunkBiomes() {
+    auto&           s = chunkBiomeStore();
+    std::lock_guard lock(s.mutex);
+    s.biomes.clear();
+    s.order.clear();
+}
+
 void addStats(bool decorate, double ms) {
     std::lock_guard lock(statsMutex());
     auto&           s = statsRef();
@@ -216,12 +261,29 @@ void fallbackTerrain(Chunk& chunk) {
         }
 }
 
-std::vector<std::string> writeBiomes(Providers const& p, Chunk& chunk) {
+std::vector<std::string> writeBiomes(Providers const& p, Chunk& chunk, std::int64_t seed) {
     std::vector<std::string> distinct;
     if (!p.biomeSource) return distinct;
-    auto  start  = std::chrono::steady_clock::now();
-    int   qMin   = chunk.minY() >> 2, qMax = (chunk.maxY() - 1) >> 2;
-    auto* writer = dynamic_cast<QuartBiomeWriter*>(&chunk);
+    auto start = std::chrono::steady_clock::now();
+    int  qMin = chunk.minY() >> 2, qMax = (chunk.maxY() - 1) >> 2;
+    if (auto* blocks = dynamic_cast<BlockBiomeWriter*>(&chunk)) {
+        // a game chunk: the quarts of the chunk and of the ring the zoom reaches (the neighbours'
+        // quarts are the biome source's too), then the zoomed biome of every block
+        int                      nq  = qMax - qMin + 1;
+        int                      qx0 = chunk.chunkX() * 4 - 1, qz0 = chunk.chunkZ() * 4 - 1;
+        std::vector<std::string> quarts(static_cast<std::size_t>(36 * nq));
+        for (int dx = 0; dx < 6; ++dx)
+            for (int dz = 0; dz < 6; ++dz)
+                for (int i = 0; i < nq; ++i) {
+                    auto& id = quarts[static_cast<std::size_t>((dx * 6 + dz) * nq + i)];
+                    id       = p.biomeSource(qx0 + dx, qMin + i, qz0 + dz);
+                    if (dx >= 1 && dx <= 4 && dz >= 1 && dz <= 4 && std::find(distinct.begin(), distinct.end(), id) == distinct.end()) distinct.push_back(id);
+                }
+        blocks->writeZoomedBiomes(zoomSeedOf(seed), qMin, nq, quarts);
+        addBiomeWriteStats(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count());
+        return distinct;
+    }
+    auto*                    writer = dynamic_cast<QuartBiomeWriter*>(&chunk);
     std::vector<std::string> column;
     column.reserve(static_cast<std::size_t>(qMax - qMin + 1));
     for (int qx = 0; qx < 4; ++qx)
@@ -247,8 +309,11 @@ std::vector<std::string> writeBiomes(Providers const& p, Chunk& chunk) {
 void generateChunk(Chunk& chunk, Region& chunkRegion, std::int64_t seed) { generateChunk(*providers(), chunk, chunkRegion, seed); }
 
 void generateChunk(Providers const& p, Chunk& chunk, Region& chunkRegion, std::int64_t seed) {
-    // Biomes: the biome source at quart resolution
-    auto biomes = writeBiomes(p, chunk);
+    // Biomes: the biome source at quart resolution (game chunks: zoomed per block, the raw biomes
+    // kept for the decoration of the neighbourhood)
+    auto biomes = writeBiomes(p, chunk, seed);
+    if (!biomes.empty() && chunkRegion.dimension() >= 0 && dynamic_cast<BlockBiomeWriter*>(&chunk))
+        keepChunkBiomes(chunkRegion.dimension(), chunk.chunkX(), chunk.chunkZ(), biomes);
     runSteps(p, Stage::Biomes, chunk, chunkRegion);
     runSteps(p, Stage::Starts, chunk, chunkRegion);
     if (p.terrain) p.terrain(chunk);
@@ -430,13 +495,29 @@ void decorateChunk(Providers const& p, Chunk* chunkIn, Region& region, std::int6
     int                         k              = std::max(11, steps);
     auto const&                 placed         = features::detail::data().placed;
     ext::DecorationContext      dctx{cx, cz, 0, decorationSeed};
+    constexpr int kPiecesStep = static_cast<int>(ext::DecorationStep::SurfaceStructures);
+    auto const*   pieces      = [&]() -> std::vector<Step> const* {
+        auto it = p.stages.find(Stage::Pieces);
+        return it == p.stages.end() || it->second.empty() ? nullptr : &it->second;
+    }();
     for (int l = 0; l < k; ++l) {
         // the structures of step l (each seeded with setFeatureSeed(decorationSeed, index, l) by
-        // its owner through the context), before the step's features
+        // its owner through the context), before the step's features: the structure steps at
+        // every step, the plain Pieces steps once (at SurfaceStructures), merged by (order, seq)
         dctx.step = l;
-        {
+        if (!p.structureSteps.empty() || (l == kPiecesStep && pieces)) {
             Scope scope(tDecorationContext, &dctx);
-            runSteps(p, Stage::Pieces, chunk, region);
+            if (l == kPiecesStep && pieces) {
+                std::vector<Step const*> merged;
+                for (auto const& s : p.structureSteps) merged.push_back(&s);
+                for (auto const& s : *pieces) merged.push_back(&s);
+                std::stable_sort(merged.begin(), merged.end(), [](Step const* a, Step const* b) {
+                    return a->order != b->order ? a->order < b->order : a->seq < b->seq;
+                });
+                for (auto const* s : merged) s->fn(chunk, region);
+            } else {
+                for (auto const& s : p.structureSteps) s.fn(chunk, region);
+            }
         }
         if (l >= steps) continue;
         std::set<int> indices;

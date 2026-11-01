@@ -1,8 +1,10 @@
 // Chunk and region adapters of the generator pipeline (F5): the LevelChunk being generated, a
 // BlockSource window (Java's WorldGenRegion) and an in-memory world for timing / determinism runs.
 // Chunk heights follow ChunkAccess#getHeight, region heights WorldGenLevel#getHeight, and region
-// biomes LevelReader#getBiome (BiomeManager's zoom over the chunks' quart biomes).
+// biomes LevelReader#getBiome (BiomeManager's zoom over the chunks' quart biomes). The game's
+// chunks store a biome per block: the generator writes the zoomed biome of every block into them.
 #include <algorithm>
+#include <cstdint>
 
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -14,7 +16,9 @@
 #include "mc/world/level/chunk/LevelChunk.h"
 
 #include "core/VolumeHash.h"
+#include "core/jrand/BiomeManager.h"
 #include "core/jrand/Mth.h"
+#include "feature/dimension/World.h"
 #include "feature/worldgen/Internal.h"
 
 namespace gf::worldgen::detail {
@@ -61,12 +65,20 @@ int LevelChunkAdapter::height(Heightmap type, int lx, int lz) const {
 std::string LevelChunkAdapter::biome(int lx, int y, int lz) const {
     if (y < mMinY) y = mMinY;
     if (y >= mMaxY) y = mMaxY - 1;
+    if (!mRawQuarts.empty()) {
+        int qy = std::clamp(y >> 2, mRawQMin, mRawQMin + mRawNq - 1);
+        return mRawQuarts[static_cast<std::size_t>((((lx & 15) >> 2) * 4 + ((lz & 15) >> 2)) * mRawNq + (qy - mRawQMin))];
+    }
     return biomeIdOf(mChunk.getBiome(cpos(lx & 15, y, lz & 15, mMinY)));
 }
 
 void LevelChunkAdapter::setBiome(int lx, int y, int lz, std::string const& biomeId) {
     if (y < mMinY || y >= mMaxY) return;
     if (auto const* b = resolve(biomeId)) mChunk._setBiome(*b, cpos(lx & 15, y, lz & 15, mMinY), false);
+    if (!mRawQuarts.empty()) {
+        int qy = std::clamp(y >> 2, mRawQMin, mRawQMin + mRawNq - 1);
+        mRawQuarts[static_cast<std::size_t>((((lx & 15) >> 2) * 4 + ((lz & 15) >> 2)) * mRawNq + (qy - mRawQMin))] = biomeId;
+    }
 }
 
 void LevelChunkAdapter::setBiomeColumn(int lx, int lz, std::string const& biomeId) {
@@ -84,31 +96,75 @@ Biome const* LevelChunkAdapter::resolve(std::string const& id) {
     return b;
 }
 
-void LevelChunkAdapter::setQuartColumn(int qx, int qz, int qMin, std::vector<std::string> const& ids) {
-    if (ids.empty()) return;
-    // the engine biome of every quart, resolved once per distinct id
-    std::vector<Biome const*> quarts(ids.size());
-    for (std::size_t i = 0; i < ids.size(); ++i) quarts[i] = (i > 0 && ids[i] == ids[i - 1]) ? quarts[i - 1] : resolve(ids[i]);
-    // the most frequent biome fills the column in one call; the other quarts are written per block
-    std::vector<std::pair<Biome const*, int>> counts;
-    for (auto const* b : quarts) {
-        if (!b) continue;
-        auto it = std::find_if(counts.begin(), counts.end(), [&](auto const& c) { return c.first == b; });
-        if (it == counts.end()) counts.emplace_back(b, 1);
-        else ++it->second;
+void LevelChunkAdapter::writeZoomedBiomes(std::int64_t zoomSeed, int qMin, int nq, std::vector<std::string> const& quarts) {
+    if (nq <= 0 || quarts.size() != static_cast<std::size_t>(36 * nq)) return;
+    // the distinct ids (a chunk has a few), each resolved once; the quarts as indices into them
+    std::vector<std::string const*> names;
+    std::vector<Biome const*>       engine;
+    std::vector<std::uint16_t>      index(quarts.size());
+    for (std::size_t i = 0; i < quarts.size(); ++i) {
+        std::size_t k = 0;
+        if (i > 0 && quarts[i] == quarts[i - 1]) k = index[i - 1];
+        else {
+            while (k < names.size() && *names[k] != quarts[i]) ++k;
+            if (k == names.size()) {
+                names.push_back(&quarts[i]);
+                engine.push_back(resolve(quarts[i]));
+            }
+        }
+        index[i] = static_cast<std::uint16_t>(k);
     }
-    if (counts.empty()) return;
-    // an unknown id keeps what the chunk had there (as a per-block write would): no column fill then
-    bool         fill     = std::none_of(quarts.begin(), quarts.end(), [](Biome const* b) { return b == nullptr; });
-    Biome const* dominant = fill ? std::max_element(counts.begin(), counts.end(), [](auto const& a, auto const& b) { return a.second < b.second; })->first : nullptr;
-    for (int dx = 0; dx < 4; ++dx)
-        for (int dz = 0; dz < 4; ++dz) {
-            int lx = (qx & 3) * 4 + dx, lz = (qz & 3) * 4 + dz;
-            if (dominant) mChunk._setBiome(*dominant, cpos(lx, mMinY, lz, mMinY), true);
-            for (std::size_t i = 0; i < quarts.size(); ++i) {
-                if (!quarts[i] || quarts[i] == dominant) continue;
-                int y0 = std::max(mMinY, (qMin + static_cast<int>(i)) * 4), y1 = std::min(mMaxY, (qMin + static_cast<int>(i)) * 4 + 4);
-                for (int y = y0; y < y1; ++y) mChunk._setBiome(*quarts[i], cpos(lx, y, lz, mMinY), false);
+    // the chunk's own raw quarts answer Chunk::biome for the rest of the generation
+    mRawQMin = qMin;
+    mRawNq   = nq;
+    mRawQuarts.assign(static_cast<std::size_t>(16 * nq), std::string());
+    for (int qx = 0; qx < 4; ++qx)
+        for (int qz = 0; qz < 4; ++qz)
+            for (int i = 0; i < nq; ++i)
+                mRawQuarts[static_cast<std::size_t>((qx * 4 + qz) * nq + i)] = quarts[static_cast<std::size_t>(((qx + 1) * 6 + (qz + 1)) * nq + i)];
+
+    int  qx0 = mX * 4 - 1, qz0 = mZ * 4 - 1, qMax = qMin + nq - 1;
+    auto at  = [&](int qx, int qy, int qz) {
+        return index[static_cast<std::size_t>(((qx - qx0) * 6 + (qz - qz0)) * nq + (std::clamp(qy, qMin, qMax) - qMin))];
+    };
+    if (engine.size() == 1) { // one biome around the chunk: every block has it
+        if (engine[0])
+            for (int lx = 0; lx < 16; ++lx)
+                for (int lz = 0; lz < 16; ++lz) mChunk._setBiome(*engine[0], cpos(lx, mMinY, lz, mMinY), true);
+        return;
+    }
+    std::vector<std::uint16_t> column(static_cast<std::size_t>(mMaxY - mMinY));
+    std::vector<int>           counts(engine.size());
+    for (int lx = 0; lx < 16; ++lx)
+        for (int lz = 0; lz < 16; ++lz) {
+            int x = mX * 16 + lx, z = mZ * 16 + lz;
+            int l = (x - 2) >> 2, j1 = (z - 2) >> 2; // BiomeManager#getBiome's cell
+            std::fill(counts.begin(), counts.end(), 0);
+            for (int y = mMinY; y < mMaxY; ++y) {
+                int           i1 = (y - 2) >> 2;
+                std::uint16_t a  = at(l, i1, j1);
+                bool          same = true;
+                for (int c = 1; c < 8 && same; ++c) same = at(l + ((c >> 2) & 1), i1 + ((c >> 1) & 1), j1 + (c & 1)) == a;
+                if (!same) {
+                    // the 8 candidate quarts differ: Java's jittered nearest corner decides
+                    auto q = core::biome::zoom(zoomSeed, x, y, z);
+                    a      = at(q.x, q.y, q.z);
+                }
+                column[static_cast<std::size_t>(y - mMinY)] = a;
+                ++counts[a];
+            }
+            // an unknown id keeps what the chunk had there (as a per-block write would): no fill then
+            bool          fill     = true;
+            std::uint16_t dominant = 0;
+            for (std::size_t k = 0; k < engine.size(); ++k) {
+                if (counts[k] > 0 && !engine[k]) fill = false;
+                if (counts[k] > counts[dominant]) dominant = static_cast<std::uint16_t>(k);
+            }
+            if (fill) mChunk._setBiome(*engine[dominant], cpos(lx, mMinY, lz, mMinY), true);
+            for (int y = mMinY; y < mMaxY; ++y) {
+                auto k = column[static_cast<std::size_t>(y - mMinY)];
+                if ((fill && k == dominant) || !engine[k]) continue;
+                mChunk._setBiome(*engine[k], cpos(lx, y, lz, mMinY), false);
             }
         }
 }
@@ -134,7 +190,12 @@ SourceRegionAdapter::SourceRegionAdapter(
   mMaxY(maxY),
   mDim(dimension),
   mSeed(seed),
-  mFallback(std::move(fallback)) {}
+  mFallback(std::move(fallback)) {
+    // the Twilight Forest's chunks come from this generator while it is installed: they hold the
+    // zoomed biome of every block (whoever builds the region)
+    auto twilight = world::twilight();
+    mZoomed       = twilight && static_cast<int>(*twilight) == dimension && ext::generatorActive();
+}
 
 bool SourceRegionAdapter::isInside(int x, int z) const {
     return std::abs((x >> 4) - mCX) <= mRadius && std::abs((z >> 4) - mCZ) <= mRadius;
@@ -174,6 +235,9 @@ int SourceRegionAdapter::height(Heightmap type, int x, int z) const {
 std::string SourceRegionAdapter::noiseBiome(int qx, int qy, int qz) const {
     int minY = mSource.getMinHeight(), maxY = mSource.getMaxHeight();
     if (auto const* lc = mSource.getChunk(qx >> 2, qz >> 2)) {
+        // chunks of this generator hold zoomed biomes: their raw quarts are the biome source's
+        // (ChunkAccess#getNoiseBiome: y clamped to the chunk)
+        if (mZoomed && mFallback) return mFallback(qx, clampQuartY(qy, minY, maxY), qz);
         int y = clampQuartY(qy, minY, maxY) * 4;
         return biomeIdOf(lc->getBiome(cpos((qx & 3) * 4, y, (qz & 3) * 4, minY)));
     }
@@ -184,15 +248,40 @@ std::string SourceRegionAdapter::noiseBiome(int qx, int qy, int qz) const {
 }
 
 std::string SourceRegionAdapter::biome(BlockPos const& pos) const {
+    // chunks of this generator store the zoomed biome of every block (what the zoom below gives)
+    if (mZoomed && pos.y >= mSource.getMinHeight() && pos.y < mSource.getMaxHeight())
+        if (auto const* lc = mSource.getChunk(pos.x >> 4, pos.z >> 4))
+            return biomeIdOf(lc->getBiome(cpos(pos.x & 15, pos.y, pos.z & 15, mSource.getMinHeight())));
     return zoomedBiome(mSeed, pos, [this](int qx, int qy, int qz) { return noiseBiome(qx, qy, qz); });
 }
 
 bool SourceRegionAdapter::chunkBiomes(int radius, std::vector<std::string>& out) const {
     std::vector<Biome const*> seen;
+    std::vector<std::string>  raw; // chunks of this generator: their raw quart biomes
+    int                       minY = mSource.getMinHeight(), maxY = mSource.getMaxHeight();
     for (int dx = -radius; dx <= radius; ++dx)
         for (int dz = -radius; dz <= radius; ++dz) {
             auto const* lc = mSource.getChunk(mCX + dx, mCZ + dz);
             if (!lc) return false;
+            if (mZoomed) {
+                auto kept = keptChunkBiomes(mDim, mCX + dx, mCZ + dz);
+                if (!kept && mFallback) {
+                    // not kept (generated before a restart): the biome source over the chunk's quarts
+                    kept.emplace();
+                    for (int qx = 0; qx < 4; ++qx)
+                        for (int qz = 0; qz < 4; ++qz)
+                            for (int qy = minY >> 2; qy <= (maxY - 1) >> 2; ++qy) {
+                                auto b = mFallback((mCX + dx) * 4 + qx, qy, (mCZ + dz) * 4 + qz);
+                                if (std::find(kept->begin(), kept->end(), b) == kept->end()) kept->push_back(std::move(b));
+                            }
+                    keepChunkBiomes(mDim, mCX + dx, mCZ + dz, *kept); // once per chunk
+                }
+                if (kept) {
+                    for (auto& b : *kept)
+                        if (std::find(raw.begin(), raw.end(), b) == raw.end()) raw.push_back(std::move(b));
+                    continue;
+                }
+            }
             // every quart of every section (Java collects each section's biome palette); biomes
             // are compared by pointer and named once
             Biome const* last = nullptr;
@@ -205,7 +294,11 @@ bool SourceRegionAdapter::chunkBiomes(int radius, std::vector<std::string>& out)
                         if (std::find(seen.begin(), seen.end(), b) == seen.end()) seen.push_back(b);
                     }
         }
-    for (auto const* b : seen) out.push_back(biomeIdOf(*b));
+    for (auto const* b : seen) {
+        auto id = biomeIdOf(*b);
+        if (std::find(raw.begin(), raw.end(), id) == raw.end()) out.push_back(std::move(id));
+    }
+    for (auto& b : raw) out.push_back(std::move(b));
     return true;
 }
 
