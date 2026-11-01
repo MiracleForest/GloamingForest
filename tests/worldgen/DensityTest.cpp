@@ -3,6 +3,7 @@
 
 #include <cmath>
 
+#include "core/jrand/JavaOrder.h"
 #include "core/jrand/Mth.h"
 #include "core/noise/Noise.h"
 #include "core/noise/NoiseChunk.h"
@@ -141,4 +142,18 @@ TEST(WorldgenMth, JavaPositionPacking) {
     EXPECT_EQ(mth::fromBlock(-1), -1);
     EXPECT_EQ(mth::chunkMiddleBlock(-1), -9);
     EXPECT_EQ(mth::binarySearch(0, 4, [](int k) { return k >= 2; }), 2);
+}
+
+TEST(WorldgenOrder, FeatureSorterTopologicalOrder) {
+    // biome A: step 0 [a, b], step 1 [c]; biome B: step 0 [b, d]
+    std::vector<jrand::StepFeatures> sources{{{"a", "b"}, {"c"}}, {{"b", "d"}}};
+    bool cycle = true;
+    auto out   = jrand::featureOrder(sources, &cycle);
+    EXPECT_FALSE(cycle);
+    ASSERT_EQ(out.size(), 2u);
+    EXPECT_EQ(out[0], (std::vector<std::string>{"a", "b", "d"}));
+    EXPECT_EQ(out[1], (std::vector<std::string>{"c"}));
+    // a feature listed after another in one biome and before it in another is a cycle
+    (void)jrand::featureOrder({{{"x", "y"}}, {{"y", "x"}}}, &cycle);
+    EXPECT_TRUE(cycle);
 }

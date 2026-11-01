@@ -151,8 +151,42 @@ public class Oracle {
         for (double d : new double[]{0.5, 1e-300, 0.999999, 1.0000001, 0.123456789, 4.9e-324, 0.25}) sb.append(" ").append(Double.doubleToRawLongBits(StrictMath.log(d)));
         System.out.println(sb);
 
+        // HashSet<BlockPos> iteration order (insertion indices), BlockPos#hashCode values
+        {
+            List<int[]> ps = new ArrayList<>();
+            for (int y = 0; y < 6; y++) for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz += 2) ps.add(new int[]{100 + dx, 64 + y, -37 + dz});
+            String BP = "net.minecraft.core.BlockPos";
+            Constructor<?> bpc = c(BP).getDeclaredConstructor(int.class, int.class, int.class);
+            Map<Object, Integer> idx = new HashMap<>();
+            Set<Object> set = new HashSet<>();
+            sb = new StringBuilder("hashset");
+            for (int i = 0; i < ps.size(); i++) { Object p = bpc.newInstance(ps.get(i)[0], ps.get(i)[1], ps.get(i)[2]); idx.put(p, i); set.add(p); }
+            for (Object p : set) sb.append(" ").append(idx.get(p));
+            System.out.println(sb);
+        }
+        sb = new StringBuilder("mthsin");
+        for (float f : new float[]{0f, 0.5f, 1.25f, -2.7f, 3.14159f, 100.75f, -1234.5f}) {
+            sb.append(" ").append(Float.floatToRawIntBits((Float) call(null, MTH, "sin", P("float"), f)));
+            sb.append(" ").append(Float.floatToRawIntBits((Float) call(null, MTH, "cos", P("float"), f)));
+        }
+        System.out.println(sb);
+        {
+            String PSN = "net.minecraft.world.level.levelgen.synth.PerlinSimplexNoise";
+            Object rs = ctor(WGR, P(RS), ctor(LRS, P("long"), 1234L));
+            Object psn = c(PSN).getDeclaredConstructor(c(RS), List.class).newInstance(rs, List.of(0));
+            Object rs2 = ctor(WGR, P(RS), ctor(LRS, P("long"), 3456L));
+            Object psn2 = c(PSN).getDeclaredConstructor(c(RS), List.class).newInstance(rs2, List.of(-2, -1, 0));
+            sb = new StringBuilder("perlinsimplex");
+            double[][] q = {{0, 0}, {12.5, -3.25}, {-1000.125, 77.75}, {31.0, 5.0}};
+            for (double[] p : q) {
+                sb.append(" ").append(Double.doubleToRawLongBits((Double) call(psn, PSN, "getValue", P("double", "double", "boolean"), p[0], p[1], false)));
+                sb.append(" ").append(Double.doubleToRawLongBits((Double) call(psn2, PSN, "getValue", P("double", "double", "boolean"), p[0], p[1], false)));
+            }
+            System.out.println(sb);
+        }
+
         // noises
-        String IN = "net.minecraft.world.level.levelgen.synth.ImprovedNoise";
+        String IN ="net.minecraft.world.level.levelgen.synth.ImprovedNoise";
         String SN = "net.minecraft.world.level.levelgen.synth.SimplexNoise";
         String PN = "net.minecraft.world.level.levelgen.synth.PerlinNoise";
         String NN = "net.minecraft.world.level.levelgen.synth.NormalNoise";

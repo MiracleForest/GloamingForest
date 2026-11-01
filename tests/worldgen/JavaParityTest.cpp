@@ -12,8 +12,10 @@
 #include <string>
 
 #include "core/jrand/JRand.h"
+#include "core/jrand/JavaOrder.h"
 #include "core/jrand/Mth.h"
 #include "core/noise/Noise.h"
+#include "core/noise/PerlinSimplex.h"
 
 #include "JavaGoldens.inc"
 
@@ -114,6 +116,30 @@ std::map<std::string, std::string> cppLines() {
         for (double d : {0.5, 1e-300, 0.999999, 1.0000001, 0.123456789, 4.9e-324, 0.25}) lg << " " << bits(mth::strictLog(d));
         add(lg.str());
     }
+    {
+        // HashSet<BlockPos> iteration order of a 5 x 6 x 3 block of positions
+        std::vector<int> hashes;
+        for (int y = 0; y < 6; y++)
+            for (int dx = -2; dx <= 2; dx++)
+                for (int dz = -2; dz <= 2; dz += 2) hashes.push_back(jrand::blockPosHash(100 + dx, 64 + y, -37 + dz));
+        std::ostringstream o;
+        o << "hashset";
+        for (auto i : jrand::hashSetOrder(hashes)) o << " " << i;
+        add(o.str());
+        std::ostringstream s;
+        s << "mthsin";
+        for (float f : {0.f, 0.5f, 1.25f, -2.7f, 3.14159f, 100.75f, -1234.5f})
+            s << " " << std::bit_cast<std::int32_t>(jrand::mthSin(f)) << " " << std::bit_cast<std::int32_t>(jrand::mthCos(f));
+        add(s.str());
+        std::ostringstream p;
+        p << "perlinsimplex";
+        double q[4][2] = {{0, 0}, {12.5, -3.25}, {-1000.125, 77.75}, {31.0, 5.0}};
+        for (auto& v : q) {
+            p << " " << bits(noise::PerlinSimplexNoise::temperatureNoise().getValue(v[0], v[1], false));
+            p << " " << bits(noise::PerlinSimplexNoise::frozenTemperatureNoise().getValue(v[0], v[1], false));
+        }
+        add(p.str());
+    }
     double np[5][3] = {{0, 0, 0}, {0.5, 1.25, -3.75}, {1234.567, -89.01, 2345.678}, {-0.001, 100.5, 7.25}, {1e6, 3.3, -1e6}};
     for (auto s : seeds) {
         auto str = std::to_string(s);
@@ -190,7 +216,7 @@ TEST(WorldgenJavaParity, EveryOracleLineMatches) {
         EXPECT_EQ(it->second, java) << key;
         ++n;
     }
-    EXPECT_EQ(n, 100);
+    EXPECT_EQ(n, 103);
 }
 
 TEST(WorldgenJavaParity, WellKnownJavaUtilRandomValues) {
