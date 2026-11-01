@@ -1,0 +1,16 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.blockchain_goblin.base": {
+      "loop": true,
+      "bones": {
+        "leftArm": {
+          "rotation": [180, 0, 0]
+        },
+        "rightArm": {
+          "rotation": [180, 0, 0]
+        }
+      }
+    }
+  }
+}

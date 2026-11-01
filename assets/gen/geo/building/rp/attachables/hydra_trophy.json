@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "twilightforest:hydra_trophy",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/hydra4"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.hydra_trophy_worn"
+      },
+      "render_controllers": [
+        {
+          "controller.render.item_default": "c.item_slot == 'head'"
+        }
+      ]
+    }
+  }
+}

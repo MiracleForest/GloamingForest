@@ -3,10 +3,9 @@
 # (tools/models/lib/*.cs), runs it against the shared TF checkout and writes or checks
 # assets/gen/geo/**. Part of GloamingForest, LGPL-3.0-or-later.
 #
-# Partitions. assets/gen/geo/<unit>/** belongs to <unit> (docs/spec/owners.tsv, rule R3): a W1 unit
-# regenerates its own partition (convert.ps1 -Unit <unit>) and commits it in its pull request. F2
-# owns the partitions no unit claims (models: the index and the shared render controllers;
-# landmark). -Check compares F2's partitions and every unit partition that is committed.
+# Partitions. assets/gen/geo/<unit>/** holds the files of the ids <unit> owns (docs/spec/owners.tsv,
+# rows of mode gen). Only the tool writes them (rule R3): F2, as the tool unit of the geo layer,
+# commits every partition, and a W1 unit regenerates its own with convert.ps1 -Unit <unit>.
 
 $script:Root = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $script:GenRoot = 'assets/gen/geo'
@@ -28,17 +27,12 @@ function Get-GfTfJavaRoot {
     return $java
 }
 
-# The unit names of tools/spec/owners.rules.json by unit id, and the owner of each geo partition.
-function Get-GfGeoPartitionOwners {
+# The unit names of tools/spec/owners.rules.json by unit id.
+function Get-GfUnitNames {
     $rules = Get-Content (Join-Path $script:Root 'tools/spec/owners.rules.json') -Raw | ConvertFrom-Json -AsHashtable
     $names = @{}
     foreach ($k in $rules.units.Keys) { $names[$k] = $rules.units[$k].name }
-    $owners = @{}
-    foreach ($line in Get-Content (Join-Path $script:Root 'docs/spec/owners.tsv')) {
-        $c = $line -split "`t"
-        if ($c.Count -ge 3 -and $c[0] -eq 'path' -and $c[1] -match '^assets/gen/geo/([^/*{}]+)/\*\*$') { $owners[$Matches[1]] = $c[2] }
-    }
-    return @{ Names = $names; Partitions = $owners }
+    return $names
 }
 
 # Runs the generator. Returns @{ Files = [ordered] path -> text (every partition); Selected = paths
@@ -64,11 +58,11 @@ function Invoke-GfModelsGenerator([string]$Java, [string]$Item) {
 
 # Every id an output names must belong to the unit whose partition holds it (owners.tsv, rule R3).
 function Test-GfModelsOwners($generator) {
-    $po = Get-GfGeoPartitionOwners
+    $names = Get-GfUnitNames
     $owner = @{}
     foreach ($line in Get-Content (Join-Path $script:Root 'docs/spec/owners.tsv')) {
         $c = $line -split "`t"
-        if ($c.Count -ge 3 -and $c[0] -in 'entity', 'block', 'item', 'block_item', 'spawn_egg') { $owner["$($c[0])|$($c[1])"] = $po.Names[$c[2]] }
+        if ($c.Count -ge 3 -and $c[0] -in 'entity', 'block', 'item', 'block_item', 'spawn_egg') { $owner["$($c[0])|$($c[1])"] = $names[$c[2]] }
     }
     $index = $generator.Files["$script:GenRoot/models/data/gf/models/index.json"] | ConvertFrom-Json
     $errors = [System.Collections.Generic.List[string]]::new()
@@ -106,33 +100,30 @@ function Get-GfModelsPartition([string]$path) {
 }
 
 # Writes (or with -Check compares) the generated files of a scope:
-#   default   the partitions F2 owns (+ with -Check every committed unit partition)
+#   default   every partition (stale files and partitions are removed / reported)
 #   -Unit u   the partition of unit u
-#   -All      every partition
-# -Out writes below another root (the e2e harness materializes every partition into a deployed mod).
-# Returns the number of problems.
-function Write-GfModelsFiles($result, [string]$Unit, [switch]$All, [switch]$Check, [string]$Out) {
+#   -Java / -Item (result.Selected)   only the matched files (+ the shared models partition)
+# -Out writes below another root. Returns @{ Problems; Files; Partitions }.
+function Write-GfModelsFiles($result, [string]$Unit, [switch]$Check, [string]$Out) {
     $base = if ($Out) { $Out } else { $script:Root }
-    $po = Get-GfGeoPartitionOwners
     $generatedParts = @($result.Files.Keys | ForEach-Object { Get-GfModelsPartition $_ } | Sort-Object -Unique)
-    $ownedByF2 = { param($p) -not $po.Partitions.ContainsKey($p) -or $po.Partitions[$p] -eq 'F2' }
     if ($Unit -and $generatedParts -notcontains $Unit) {
         Write-Host "[geo] no partition '$Unit' (the converter writes: $($generatedParts -join ', '))" -ForegroundColor Red
         return @{ Problems = 1; Files = 0; Partitions = @($Unit) }
     }
-    if ($All) { $parts = $generatedParts }
-    elseif ($Unit) { $parts = @($Unit) }
+    $selected = $null
+    if ($Unit) { $parts = @($Unit) }
     elseif ($null -ne $result.Selected) {
-        # -Java / -Item: the partitions of what they matched
-        $parts = @($result.Selected | ForEach-Object { Get-GfModelsPartition $_ } | Sort-Object -Unique)
+        $selected = @{}
+        foreach ($s in $result.Selected) { $selected[$s] = $true }
+        $parts = @(@($result.Selected | ForEach-Object { Get-GfModelsPartition $_ }) + 'models' | Sort-Object -Unique)
+    } else {
+        # every generated partition and every partition directory on disk (a removed one is stale)
+        $onDisk = @()
+        $root = Join-Path $base $script:GenRoot
+        if (Test-Path $root) { $onDisk = @(Get-ChildItem $root -Directory | ForEach-Object Name) }
+        $parts = @($generatedParts + $onDisk | Sort-Object -Unique)
     }
-    else {
-        $parts = @($generatedParts | Where-Object { & $ownedByF2 $_ })
-        if ($Check) { $parts += @($generatedParts | Where-Object { -not (& $ownedByF2 $_) -and (Test-Path (Join-Path $base "$script:GenRoot/$_")) }) }
-    }
-    $parts = @($parts | Sort-Object -Unique)
-    $selected = if ($null -ne $result.Selected) { @{} } else { $null }
-    if ($selected) { foreach ($s in $result.Selected) { $selected[$s] = $true } }
     $problems = 0
     $written = 0
     $generated = @{}
@@ -167,10 +158,11 @@ function Write-GfModelsFiles($result, [string]$Unit, [switch]$All, [switch]$Chec
                 if (-not (Test-Path $dir)) { continue }
                 Get-ChildItem $dir -Recurse -Directory | Sort-Object { $_.FullName.Length } -Descending |
                     Where-Object { -not (Get-ChildItem $_.FullName -Force) } | ForEach-Object { Remove-Item $_.FullName -Force }
+                if (-not (Get-ChildItem $dir -Force)) { Remove-Item $dir -Force }
             }
         }
     }
     return @{ Problems = $problems; Files = $written; Partitions = $parts }
 }
 
-Export-ModuleMember -Function Import-GfModelsAssembly, Get-GfTfJavaRoot, Invoke-GfModelsGenerator, Write-GfModelsFiles, Test-GfModelsOwners, Get-GfGeoPartitionOwners
+Export-ModuleMember -Function Import-GfModelsAssembly, Get-GfTfJavaRoot, Invoke-GfModelsGenerator, Write-GfModelsFiles, Test-GfModelsOwners, Get-GfUnitNames

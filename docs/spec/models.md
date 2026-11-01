@@ -8,23 +8,25 @@ controllers on top of this output.
 ## Workflow
 
 ```powershell
-pwsh tools/models/convert.ps1 -Unit hydra            # a W1 unit regenerates its partition and commits it
+pwsh tools/models/convert.ps1                        # every partition
+pwsh tools/models/convert.ps1 -Unit hydra            # one unit's partition (a W1 unit after a catalog change)
 pwsh tools/models/convert.ps1 -Java HydraModel -Unit hydra
 pwsh tools/models/attachable.ps1 -Item twilightforest:fiery_helmet
 pwsh tools/models/convert.ps1 -Check                 # CI / review: committed files match the converter
-pwsh tools/models/convert.ps1 -All -Out build/geo    # every partition, outside the repository
+pwsh tools/models/convert.ps1 -Out build/geo         # outside the repository
 pwsh tools/models/test.ps1                           # the converter's tests (see Tests)
 ```
 
 - The TF source comes from the shared checkout (`tools/tf/fetch.ps1`, rule R24); the converter runs it and
   never reads `.ogg` / `.nbt` files.
-- **Partitions.** `assets/gen/geo/<unit>/**` belongs to `<unit>` (owners.tsv, rule R3): each W1 unit runs
-  `convert.ps1 -Unit <unit>` in its own pull request and commits the result; nobody edits these files by hand
-  (a manual file with the same id under `assets/pack/rp/**` overrides a generated one). F2 commits the
-  partitions no unit claims: `models` (the index and the shared render controllers) and `landmark`
-  (`protection_box`, F6). Without `-Unit` the converter writes only F2's partitions; `-All` writes all.
-- `-Check` regenerates in memory and fails when a committed file differs, is missing or is stale: F2's
-  partitions and every unit partition that is committed (or only the `-Unit` partition).
+- **Partitions.** `assets/gen/geo/<unit>/**` holds the files of the ids `<unit>` owns (owners.tsv rows of mode
+  `gen`). Only the tool writes them (rule R3): F2, the tool unit of the geo layer, commits every partition, and a
+  W1 unit regenerates its own with `-Unit <unit>`. Nobody edits these files by hand: a manual file with the same
+  id under `assets/pack/rp/**` overrides a generated one, and the converter's input is
+  `tools/models/catalog.json`. `models` holds the index and the shared render controllers.
+- Scope: every partition by default (stale files and partitions are removed); `-Unit` one partition; `-Java` /
+  `-Item` only the matching files. `-Check` regenerates in memory and fails when a file of the scope differs, is
+  missing or is stale.
 - The output is deterministic (fixed number formatting, catalog order, a fixed seed for TF's unseeded
   `RandomSource.create()`).
 
@@ -276,10 +278,9 @@ of life necklace (`CuriosCompat`) is not ported (docs/spec/README.md).
   the texture, animation bones, attachable geometries, determinism, `-Check`). F2 owns no `tests/` path, so
   these run in PowerShell rather than gtest.
 - Selftests `models.*` (`src/feature/ext/models/ModelsSelfTest.cpp`, rule R18: F2 owns no source directory):
-  the deployed index and every generated file present in the deployed pack; a unit partition not regenerated
-  yet is reported, F2's own partitions must be complete.
-- e2e (`pwsh -NoProfile -File tools/models/e2e/run.ps1 server` / `client -Mode local`): the scenario files live
-  in `tools/models/e2e/{server,client}/` (F2 owns no `tools/e2e/**` path) and are copied into the harness for
-  one run. The prelaunch step puts every partition into the deployed mod (as after W1) and, on the client,
-  builds a test-only preview pack: one actor per geometry with its TF texture and base animation, armor stands
-  with every attachable on test items, 31 screenshots of four models each. Every content-log error fails the run.
+  the deployed index, and every geometry, base animation and attachable it lists is in the deployed pack and
+  well-formed (missing, unparsable or inconsistent files fail).
+- e2e scenario `models` (`tools/e2e/{server,client}/scenarios/models*.ps1`): the server runs the selftests with
+  BDS loading every converted file (any content-log error fails the run); the client's prelaunch step builds
+  a test-only preview pack (`tools/models/e2e/preview.ps1`): one actor per geometry with its TF texture and base
+  animation, armor stands with every attachable on test items, 31 screenshots of four models each.

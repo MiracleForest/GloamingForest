@@ -1,0 +1,16 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.wraith.base": {
+      "loop": true,
+      "bones": {
+        "leftArm": {
+          "rotation": ["math.sin(variable.attack_time * 180) * (-68.7549) + math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 22.9183 - 90", "math.sin(variable.attack_time * 180) * (-34.3775) + 5.7296", 0]
+        },
+        "rightArm": {
+          "rotation": ["math.sin(variable.attack_time * 180) * (-68.7549) + math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 22.9183 - 90", "math.sin(variable.attack_time * 180) * 34.3775 - 5.7296", 0]
+        }
+      }
+    }
+  }
+}

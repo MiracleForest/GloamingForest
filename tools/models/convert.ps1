@@ -19,27 +19,26 @@
     assets/gen/geo/models/data/gf/models/index.json          every output (selftests, e2e preview)
     assets/gen/geo/models/rp/render_controllers/...          shared render controllers of attachables
 
-  Scope: a W1 unit regenerates its own partition with -Unit <unit> and commits it (the partition
-  is the unit's, docs/spec/owners.tsv). Without -Unit only the partitions F2 owns are written;
-  -All writes every partition; -Out <dir> writes below another root (the e2e harness). -Java and
-  -Item narrow the run to one model class or attachable item. -Check regenerates in memory and
-  fails when a committed file differs, is missing or is stale (F2's partitions and every committed
-  unit partition, or the -Unit partition). The output is deterministic. Format and coordinate
-  conversion: docs/spec/models.md.
+  Scope: every partition by default (stale files and partitions are removed); -Unit <unit> only
+  that unit's partition (a W1 unit regenerates its own); -Java / -Item only the files of one model
+  class or attachable item; -Out <dir> writes below another root. Only this tool writes
+  assets/gen/geo (rule R3; F2, the tool unit of the layer, commits every partition). -Check
+  regenerates in memory and fails when a committed file of the scope differs, is missing or is
+  stale. The output is deterministic. Format and coordinate conversion: docs/spec/models.md.
 
   Exit code 0 = OK, 1 = an error or (with -Check) a difference.
 
 .EXAMPLE
+  pwsh tools/models/convert.ps1                                # every partition
   pwsh tools/models/convert.ps1 -Unit hydra                    # unit U24 regenerates its partition
   pwsh tools/models/convert.ps1 -Java HydraModel -Unit hydra
   pwsh tools/models/convert.ps1 -Check                         # CI / review
-  pwsh tools/models/convert.ps1 -All -Out build/geo            # everything, outside the repository
+  pwsh tools/models/convert.ps1 -Out build/geo                 # outside the repository
 #>
 param(
     [string]$Java,
     [string]$Unit,
     [string]$Item,
-    [switch]$All,
     [string]$Out,
     [switch]$Check,
     [switch]$Quiet
@@ -58,7 +57,7 @@ if (-not $Quiet) { $r.Log | ForEach-Object { Write-Host "[geo] $_" } }
 foreach ($e in $r.Errors) { Write-Host "[geo] ERROR $e" -ForegroundColor Red }
 if ($null -ne $r.Selected -and $r.Selected.Count -eq 0) { Write-Host '[geo] nothing matched -Java / -Item' -ForegroundColor Yellow; exit 1 }
 if ($Out) { New-Item -ItemType Directory -Force $Out | Out-Null; $Out = (Resolve-Path $Out).Path }
-$w = Write-GfModelsFiles $r -Unit $Unit -All:$All -Check:$Check -Out $Out
+$w = Write-GfModelsFiles $r -Unit $Unit -Check:$Check -Out $Out
 $scope = $w.Partitions -join ', '
 if ($Check) {
     if ($w.Problems -or $r.Errors.Count) { Write-Host "[geo] -Check FAILED: $($w.Problems) difference(s), $($r.Errors.Count) error(s) in $scope (regenerate: pwsh tools/models/convert.ps1 [-Unit <unit>])" -ForegroundColor Red; exit 1 }

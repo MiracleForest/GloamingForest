@@ -1,0 +1,28 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.helmet_crab.base": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": ["query.target_x_rotation", 0, 0]
+        },
+        "crab": {
+          "rotation": [0, "query.target_y_rotation", 0]
+        },
+        "left_leg_1": {
+          "rotation": [0, "math.cos(query.modified_distance_moved * 76.3409 + 180) * query.modified_move_speed * 22.9183 - 6.5", "math.abs(math.sin(query.modified_distance_moved * 38.1704 + 180) * 0.4) * query.modified_move_speed * (-57.2958) + 22.3"]
+        },
+        "left_leg_2": {
+          "rotation": [0, "math.cos(query.modified_distance_moved * 76.3409 + 90) * query.modified_move_speed * 22.9183 + 6.5", "math.abs(math.sin(query.modified_distance_moved * 38.1704 + 90) * 0.4) * query.modified_move_speed * (-57.2958) + 22.3"]
+        },
+        "right_leg_1": {
+          "rotation": [0, "math.cos(query.modified_distance_moved * 76.3409 + 180) * query.modified_move_speed * (-22.9183) + 6.5", "math.abs(math.sin(query.modified_distance_moved * 38.1704 + 180) * 0.4) * query.modified_move_speed * 57.2958 - 22.3"]
+        },
+        "right_leg_2": {
+          "rotation": [0, "math.cos(query.modified_distance_moved * 76.3409 + 90) * query.modified_move_speed * (-22.9183) - 6.5", "math.abs(math.sin(query.modified_distance_moved * 38.1704 + 90) * 0.4) * query.modified_move_speed * 57.2958 - 22.3"]
+        }
+      }
+    }
+  }
+}

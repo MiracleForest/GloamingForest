@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "twilightforest:mystic_crown",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/twilightlich64"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.mystic_crown"
+      },
+      "render_controllers": [
+        {
+          "controller.render.item_default": "c.item_slot == 'head'"
+        }
+      ]
+    }
+  }
+}

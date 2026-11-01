@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "twilightforest:knightmetal_shield",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/knightmetal_shield"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.knightmetal_shield_held"
+      },
+      "render_controllers": [
+        {
+          "controller.render.item_default": "c.item_slot == 'main_hand'"
+        }
+      ]
+    }
+  }
+}

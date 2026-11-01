@@ -1,0 +1,19 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.cube_of_annihilation.base": {
+      "loop": true,
+      "bones": {
+        "box_x": {
+          "rotation": ["math.sin(query.life_time * 1145.9156 + query.target_x_rotation * 57.2958) * 11.4592", 0, 0]
+        },
+        "box_y": {
+          "rotation": [0, "math.sin(query.life_time * 1145.9156 + query.target_x_rotation * 57.2958) * 11.4592", 0]
+        },
+        "box_z": {
+          "rotation": [0, 0, "math.sin(query.life_time * 1145.9156 + query.target_x_rotation * 57.2958) * 11.4592"]
+        }
+      }
+    }
+  }
+}

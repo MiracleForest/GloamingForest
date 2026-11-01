@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "twilightforest:minoshroom_trophy",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/minoshroomtaur"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.minoshroom_trophy_worn"
+      },
+      "render_controllers": [
+        {
+          "controller.render.item_default": "c.item_slot == 'head'"
+        }
+      ]
+    }
+  }
+}

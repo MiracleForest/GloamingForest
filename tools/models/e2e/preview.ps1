@@ -1,31 +1,25 @@
 <#
 .SYNOPSIS
-  E2E helper of the model converter (unit F2): puts every converted model into a deployed mod and
-  builds a preview pack that shows each one on a test actor.
+  E2E helper of the model converter (unit F2): builds the test-only packs that show every converted
+  model on a test actor (client scenario 'models').
 
 .DESCRIPTION
-  Runs tools/models/convert.ps1 for every partition in memory and, below -ModDir (a deployed
-  GloamingForest folder, never the repository):
-
-  - copies every partition's rp/** into resource_packs/GloamingForest_RP/ and data/** into data/
-    (what the pack holds once every W1 unit regenerated its partition), so the game loads all
-    geometry, base animations and attachables (content log) and the models.* selftests see them;
-  - with -Preview, writes the test-only packs GloamingForest_ModelPreview_BP / _RP: one actor
-    gfpreview:<geometry> per converted model (its TF texture, its base animation, scaled to about
-    1.6 blocks, name tag), test items gfpreview:<item> with copies of the generated attachables
-    (armor, Travellers' Gear, worn trophies, mystic crown, knightmetal shield) for armor stands,
-    and functions gfpreview:shot_NN that summon one screenshot's actors in front of a fixed
-    camera. The TF textures are copied from the shared checkout (CC BY-NC-SA 4.0) into the
-    deployed test pack only; nothing is written to the repository.
+  Below -ModDir (a deployed GloamingForest folder, never the repository), whose pack already holds
+  every converted geometry, base animation and attachable (assets/gen/geo/**), writes the packs
+  GloamingForest_ModelPreview_BP / _RP: one actor gfpreview:<geometry> per converted model (its TF
+  texture, its base animation, scaled to about 1.6 blocks, name tag), test items gfpreview:item_<item>
+  with copies of the generated attachables (armor, Travellers' Gear, worn trophies, mystic crown,
+  knightmetal shield) for armor stands, and functions gfpreview:shot_NN that summon one screenshot's
+  actors in front of a fixed camera. The TF textures are copied from the shared checkout
+  (CC BY-NC-SA 4.0) into the deployed test pack only; nothing is written to the repository.
 
   Writes <OutDir>/preview-shots.json (the shots and what they show) for the scenario.
 
 .EXAMPLE
-  pwsh tools/models/e2e/preview.ps1 -ModDir $env:APPDATA\...\mods\GloamingForest -Preview -OutDir tools/e2e/client/out/models
+  pwsh tools/models/e2e/preview.ps1 -ModDir $env:APPDATA\...\mods\GloamingForest -OutDir tools/e2e/client/out/models
 #>
 param(
     [Parameter(Mandatory)][string]$ModDir,
-    [switch]$Preview,
     [string]$OutDir
 )
 $ErrorActionPreference = 'Stop'
@@ -35,19 +29,6 @@ Import-Module (Join-Path $root 'tools/models/lib/Models.psm1') -Force
 if (-not (Test-Path (Join-Path $ModDir 'resource_packs/GloamingForest_RP/manifest.json'))) { throw "not a deployed GloamingForest folder: $ModDir" }
 $r = Invoke-GfModelsGenerator
 if ($r.Errors.Count) { throw "converter errors: $($r.Errors -join '; ')" }
-
-# ---- every partition into the deployed mod --------------------------------------------------------
-$rp = Join-Path $ModDir 'resource_packs/GloamingForest_RP'
-$copied = 0
-foreach ($path in $r.Files.Keys) {
-    if ($path -notmatch '^assets/gen/geo/[^/]+/(rp|data)/(.+)$') { continue }
-    $dest = if ($Matches[1] -eq 'rp') { Join-Path $rp $Matches[2] } else { Join-Path $ModDir "data/$($Matches[2])" }
-    New-Item -ItemType Directory -Force (Split-Path -Parent $dest) | Out-Null
-    [IO.File]::WriteAllText($dest, $r.Files[$path], [Text.UTF8Encoding]::new($false))
-    $copied++
-}
-Write-Host "[geo-e2e] $copied generated file(s) put into $ModDir"
-if (-not $Preview) { exit 0 }
 
 # ---- the preview packs ---------------------------------------------------------------------------
 $index = $r.Files['assets/gen/geo/models/data/gf/models/index.json'] | ConvertFrom-Json

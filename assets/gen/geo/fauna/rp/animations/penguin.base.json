@@ -1,0 +1,25 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.penguin.base": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
+        },
+        "leftArm": {
+          "rotation": [0, 0, "query.life_time * (-1145.9156)"]
+        },
+        "leftLeg": {
+          "rotation": ["math.cos(query.modified_distance_moved * 57.2958 + 180) * query.modified_move_speed * 40.107", 0, 0]
+        },
+        "rightArm": {
+          "rotation": [0, 0, "query.life_time * 1145.9156"]
+        },
+        "rightLeg": {
+          "rotation": ["math.cos(query.modified_distance_moved * 57.2958) * query.modified_move_speed * 40.107", 0, 0]
+        }
+      }
+    }
+  }
+}

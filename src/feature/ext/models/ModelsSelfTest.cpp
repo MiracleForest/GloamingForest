@@ -3,12 +3,10 @@
 //   data/gf/models/index.json   every geometry, base animation and attachable tools/models/convert.ps1
 //                               generates (assets/gen/geo/models/data/...)
 //   resource_packs/GloamingForest_RP/{models/entity,animations,attachables,render_controllers}/...
-// and check that every generated file present in the pack is well-formed Bedrock content that
+// and check that every generated file is in the pack and is well-formed Bedrock content that
 // matches the index (identifiers, texture sizes, unique bones, parents, UVs inside the texture,
-// animation bones, attachable geometries). A unit partition that its W1 unit has not regenerated
-// yet is reported, not failed; F2's own partitions must be complete. Each test logs one
-// "present/expected" INFO line, which the e2e scenario (tools/models/e2e) checks after it put every
-// partition into the deployed mod.
+// animation bones, attachable geometries). Each test logs one "present/expected" INFO line, which
+// the e2e scenario 'models' checks.
 //
 // Lives in src/feature/ext/models/ (rule R18): F2 owns no source directory; this adds no contract API.
 
@@ -66,8 +64,9 @@ Json const& member(Json const& j, char const* key) {
     return it != j.end() ? *it : empty;
 }
 
-// The partitions F2 commits itself: they must always be complete.
-bool ownedByF2(std::string const& unit) { return unit == "models" || unit == "landmark"; }
+std::string missingOrBroken(fs::path const& file) {
+    return fs::exists(file) ? " does not parse" : " is missing from the pack";
+}
 
 // Checks one geometry file against its index entry; returns the bone names (lower case) or nothing.
 std::optional<std::set<std::string>> checkGeometry(Context& ctx, Json const& entry, Json const& doc) {
@@ -142,24 +141,17 @@ GF_REGISTER_SELFTEST("models.index", [](Context& ctx) {
 GF_REGISTER_SELFTEST("models.geometry", [](Context& ctx) {
     auto const idx = index(ctx);
     int present = 0, expected = 0;
-    std::map<std::string, int> missingByUnit;
     for (auto const& e : member(idx, "geometries")) {
         if (e.value("vanilla", false)) continue;
         ++expected;
-        std::string const unit = e.value("unit", "");
         auto doc = readJson(rpDir() / e.value("file", ""));
         if (!doc) {
-            if (fs::exists(rpDir() / e.value("file", ""))) ctx.check(false, e.value("file", "") + " does not parse");
-            else if (ownedByF2(unit)) ctx.check(false, e.value("file", "") + " (F2's partition) is missing from the pack");
-            else missingByUnit[unit]++;
+            ctx.check(false, e.value("file", "") + missingOrBroken(rpDir() / e.value("file", "")));
             continue;
         }
         if (checkGeometry(ctx, e, *doc)) ++present;
     }
-    std::string missing;
-    for (auto const& [unit, n] : missingByUnit) missing += " " + unit + ":" + std::to_string(n);
-    ctx.info("geometries present " + std::to_string(present) + "/" + std::to_string(expected)
-             + (missing.empty() ? "" : "; not regenerated yet by their units:" + missing));
+    ctx.info("geometries present " + std::to_string(present) + "/" + std::to_string(expected));
 });
 
 GF_REGISTER_SELFTEST("models.animations", [](Context& ctx) {
@@ -172,7 +164,7 @@ GF_REGISTER_SELFTEST("models.animations", [](Context& ctx) {
         std::string const id = a.value("identifier", "");
         auto doc = readJson(rpDir() / a.value("file", ""));
         if (!doc) {
-            ctx.check(!fs::exists(rpDir() / a.value("file", "")), a.value("file", "") + " does not parse");
+            ctx.check(false, a.value("file", "") + missingOrBroken(rpDir() / a.value("file", "")));
             continue;
         }
         auto const& anim = member(member(*doc, "animations"), id.c_str());
@@ -213,7 +205,7 @@ GF_REGISTER_SELFTEST("models.attachables", [](Context& ctx) {
         ++expected;
         auto doc = readJson(rpDir() / a.value("file", ""));
         if (!doc) {
-            ctx.check(!fs::exists(rpDir() / a.value("file", "")), a.value("file", "") + " does not parse");
+            ctx.check(false, a.value("file", "") + missingOrBroken(rpDir() / a.value("file", "")));
             continue;
         }
         auto const& desc = member(member(*doc, "minecraft:attachable"), "description");

@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "twilightforest:ur_ghast_trophy",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/towerboss"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.ur_ghast_trophy_worn"
+      },
+      "render_controllers": [
+        {
+          "controller.render.item_default": "c.item_slot == 'head'"
+        }
+      ]
+    }
+  }
+}
