@@ -49,6 +49,10 @@
 
 namespace gf::spawn {
 
+using features::detail::field;
+using features::detail::fieldArr;
+using features::detail::fieldObj;
+
 using Json = nlohmann::json;
 namespace kit = features::kit;
 
@@ -100,7 +104,7 @@ Table tableOf(std::string const& biomeId) {
     auto        it     = biomes.find(biomeId);
     if (it == biomes.end()) return t;
     t.creatureProbability = it->second.value("creature_spawn_probability", 0.1F);
-    for (auto const& [category, list] : it->second.value("spawners", Json::object()).items()) {
+    for (auto const& [category, list] : fieldObj(it->second, "spawners").items()) {
         auto& out = t.byCategory[category];
         for (auto const& e : list)
             out.push_back({features::detail::normalizeId(e.value("type", std::string())), e.value("weight", 1), e.value("minCount", 1), e.value("maxCount", 1)});
@@ -273,8 +277,8 @@ std::optional<std::vector<SpawnEntry>> controlledSpawns(int dimension, BlockPos 
         if (!d || !d->controlledSpawns.is_object() || d->controlledSpawns.empty()) continue;
         auto const& c = d->controlledSpawns;
         if (category != "monster") {
-            if (category == "ambient") return entriesOf(c.value("ambient_spawns", Json::array()));
-            if (category == "water_creature") return entriesOf(c.value("water_spawns", Json::array()));
+            if (category == "ambient") return entriesOf(fieldArr(c, "ambient_spawns"));
+            if (category == "water_creature") return entriesOf(fieldArr(c, "water_spawns"));
             return std::vector<SpawnEntry>{};
         }
         if (start.conquered) return std::nullopt;
@@ -282,7 +286,7 @@ std::optional<std::vector<SpawnEntry>> controlledSpawns(int dimension, BlockPos 
         for (auto const& b : start.pieceBoxes.empty() ? std::vector<core::BlockBox>{start.box} : start.pieceBoxes)
             if (b.contains(pos.x, pos.y, pos.z)) inside = true;
         if (!inside) return std::nullopt;
-        return entriesOf(c.value("labelled_monster_spawns", Json::object()).value("0", Json::array()));
+        return entriesOf(fieldObj(c, "labelled_monster_spawns").value("0", Json::array()));
     }
     return std::nullopt;
 }

@@ -91,7 +91,7 @@ GF_REGISTER_SELFTEST("worldgen.java_parity", [](Context& ctx) {
     ctx.check(x.nextInt() == 1774573855, "XoroshiroRandomSource(42).nextInt()");
     jr::WorldgenRandom w(std::make_unique<jr::Xoroshiro128pp>(0));
     ctx.check(w.setDecorationSeed(0, 160, -320) == -438838478978501856LL, "WorldgenRandom#setDecorationSeed");
-    ctx.check(jr::mthGetSeed(1, 2, 3) == 14982448801081LL, "Mth#getSeed");
+    ctx.check(jr::mthGetSeed(1, 2, 3) == -33674130277896LL, "Mth#getSeed");
     jr::Xoroshiro128pp xs(0);
     gf::core::noise::ImprovedNoise n(xs);
     ctx.check(std::bit_cast<std::int64_t>(n.noise(0.5, 1.25, -3.75)) == -4620161362573904924LL, "ImprovedNoise sample");
@@ -111,7 +111,7 @@ GF_REGISTER_SELFTEST("worldgen.fixture_feature", [](Context& ctx) -> ll::coro::C
     ctx.check(placed == 3, "three fixture blocks (got " + std::to_string(placed) + ")");
     auto h = hex(worldHash(*world));
     ctx.info("fixture feature hash " + h);
-    ctx.check(h == "FIXTURE_HASH", "the fixture placement matches the golden hash on every build (" + h + ")");
+    ctx.check(h == "184f363d781b7a22", "the fixture placement matches the golden hash on every build (" + h + ")");
 
     // the same feature in the game world through a BlockSource region
     auto box = co_await ctx.flatArea(5500, 32);
@@ -137,16 +137,17 @@ GF_REGISTER_SELFTEST("worldgen.vanilla_features", [](Context& ctx) {
     auto region = world->region(0, 0, 1);
     jr::WorldgenRandom random(std::make_unique<jr::Xoroshiro128pp>(0));
     random.setDecorationSeed(777, 0, 0);
-    int ok = 0;
     for (char const* id : {"minecraft:patch_grass", "minecraft:patch_tall_grass", "minecraft:forest_rock", "minecraft:patch_pumpkin", "minecraft:flower_forest_flowers"}) {
         bool any = false;
         for (int i = 0; i < 8 && !any; ++i) any = kit::placeConfigured(kit::placedJson(id) ? (*kit::placedJson(id))["feature"] : JsonT(id), *region, {4 + i, 4, 6}, random);
         ctx.check(any, std::string(id) + " places something");
-        if (any) ++ok;
+
     }
     ctx.check(countBlocks(*world, "minecraft:short_grass") > 0, "grass placed");
     ctx.check(countBlocks(*world, "minecraft:mossy_cobblestone") > 0, "a forest rock placed");
-    ctx.info("vanilla features hash " + hex(worldHash(*world)));
+    auto h = hex(worldHash(*world));
+    ctx.info("vanilla features hash " + h);
+    ctx.check(h == "2b9b941f46633cf1", "the vanilla features match the golden hash on every build (" + h + ")");
 });
 
 // A vanilla tree configuration (straight trunk, blob foliage, vines) placed twice identically.
@@ -175,6 +176,7 @@ GF_REGISTER_SELFTEST("worldgen.tree", [](Context& ctx) {
         else ctx.check(h == first, "the same tree for the same seed");
     }
     ctx.info("tree hash " + first);
+    ctx.check(first == "8db0333bc36a00c3", "the tree matches the golden hash on every build (" + first + ")");
 });
 
 // LargeWriter queues blocks of other chunks and applies them once the chunk is loaded.

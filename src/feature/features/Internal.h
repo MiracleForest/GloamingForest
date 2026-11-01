@@ -29,6 +29,28 @@ void warnOnce(std::string const& key, std::string const& message);
 /// "id" -> "minecraft:id".
 [[nodiscard]] std::string normalizeId(std::string id);
 
+/// A member of a JSON object by reference (no copy, unlike json::value): null / an empty object /
+/// an empty array when `j` is not an object or has no such member. Keep pointers into config JSON
+/// only through these, never through json::value(), which returns a temporary copy.
+[[nodiscard]] inline Json const& field(Json const& j, char const* key) {
+    static Json const null;
+    if (!j.is_object()) return null;
+    auto it = j.find(key);
+    return it == j.end() ? null : *it;
+}
+[[nodiscard]] inline Json const& fieldObj(Json const& j, char const* key) {
+    static Json const empty = Json::object();
+    if (!j.is_object()) return empty;
+    auto it = j.find(key);
+    return it == j.end() ? empty : *it;
+}
+[[nodiscard]] inline Json const& fieldArr(Json const& j, char const* key) {
+    static Json const empty = Json::array();
+    if (!j.is_object()) return empty;
+    auto it = j.find(key);
+    return it == j.end() ? empty : *it;
+}
+
 // ---- registries (written at install, read on worker threads) --------------------------------------
 struct Registries {
     std::map<std::string, FeatureFn>       types;

@@ -19,6 +19,10 @@
 
 namespace gf::features {
 
+using detail::field;
+using detail::fieldArr;
+using detail::fieldObj;
+
 using detail::normalizeId;
 using detail::packPos;
 using detail::TreeState;
@@ -71,7 +75,7 @@ bool isFree(Region& region, BlockPos const& pos) {
 
 bool placeLog(TreeContext& tree, BlockPos const& pos, char axis) {
     if (!validTreePos(tree.region, pos)) return false;
-    Block const* b = sampleState(tree.config.value("trunk_provider", Json()), tree.random, pos);
+    Block const* b = sampleState(field(tree.config, "trunk_provider"), tree.random, pos);
     if (!b) return false;
     if (axis) b = &withProperty(*b, "axis", std::string(1, axis));
     tree.region.setBlock(pos, *b, 19);
@@ -84,7 +88,7 @@ void setDirtAt(TreeContext& tree, BlockPos const& pos) {
     auto const& b       = tree.region.getBlock(pos);
     bool        isDirt  = hasTag(b, "minecraft:dirt") && javaId(b) != "minecraft:grass_block" && javaId(b) != "minecraft:mycelium";
     if (tree.config.value("force_dirt", false) || !isDirt) {
-        if (auto const* d = sampleState(tree.config.value("dirt_provider", Json()), tree.random, pos)) {
+        if (auto const* d = sampleState(field(tree.config, "dirt_provider"), tree.random, pos)) {
             tree.region.setBlock(pos, *d, 19);
             auto* s = stateOf(tree);
             addUnique(tree.logs, s ? &s->logSet : nullptr, pos); // Java sets the dirt through the trunk setter
@@ -96,7 +100,7 @@ bool tryPlaceLeaf(TreeContext& tree, BlockPos const& pos) {
     auto const& current = tree.region.getBlock(pos);
     if (detail::javaProperty(current, "persistent").value_or("false") == "true") return false;
     if (!validTreePos(tree.region, pos)) return false;
-    Block const* b = sampleState(tree.config.value("foliage_provider", Json()), tree.random, pos);
+    Block const* b = sampleState(field(tree.config, "foliage_provider"), tree.random, pos);
     if (!b) return false;
     tree.region.setBlock(pos, *b, 19);
     auto* s = stateOf(tree);
@@ -444,7 +448,7 @@ void javaOrder(std::vector<BlockPos>& v) {
 // ---- TreeFeature ---------------------------------------------------------------------------------------
 
 int maxFreeTreeHeight(Region& region, int trunkHeight, BlockPos const& top, Json const& config, bool ignoreVines) {
-    auto const& size = config.value("minimum_size", Json::object());
+    auto const& size = fieldObj(config, "minimum_size");
     for (int i = 0; i <= trunkHeight + 1; ++i) {
         int j = sizeAtHeight(size, trunkHeight, i);
         for (int k = -j; k <= j; ++k)
@@ -458,8 +462,8 @@ int maxFreeTreeHeight(Region& region, int trunkHeight, BlockPos const& top, Json
 
 bool treeFeature(FeatureContext const& c) {
     Json const& config = c.config;
-    auto const& tp     = config.value("trunk_placer", Json::object());
-    auto const& fp     = config.value("foliage_placer", Json::object());
+    auto const& tp     = fieldObj(config, "trunk_placer");
+    auto const& fp     = fieldObj(config, "foliage_placer");
     auto        tpType = normalizeId(tp.value("type", std::string()));
     auto        fpType = normalizeId(fp.value("type", std::string()));
 
@@ -501,7 +505,7 @@ bool treeFeature(FeatureContext const& c) {
     int i1 = std::min(c.origin.y, trunkOrigin.y);
     int j1 = std::max(c.origin.y, trunkOrigin.y) + i + 1;
     if (i1 < c.region.minY() + 1 || j1 > c.region.maxY()) return false;
-    auto const& size     = config.value("minimum_size", Json::object());
+    auto const& size     = fieldObj(config, "minimum_size");
     bool        hasClip  = size.contains("min_clipped_height");
     int         clip     = hasClip ? size["min_clipped_height"].get<int>() : 0;
     int         k1       = maxFreeTreeHeight(c.region, i, trunkOrigin, config, config.value("ignore_vines", false));
@@ -511,7 +515,7 @@ bool treeFeature(FeatureContext const& c) {
     for (auto const& a : attachments) foliage(t, a, j, l, fp);
     if (t.logs.empty() && t.leaves.empty()) return false;
 
-    auto const& decorators = config.value("decorators", Json::array());
+    auto const& decorators = fieldArr(config, "decorators");
     if (!decorators.empty()) {
         javaOrder(t.logs);
         javaOrder(t.leaves);

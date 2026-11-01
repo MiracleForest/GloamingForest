@@ -65,7 +65,7 @@ bool isDoublePlant(std::string const& javaId) {
 // ---- features --------------------------------------------------------------------------------------
 
 bool simpleBlock(FeatureContext const& c) {
-    Block const* state = sampleState(c.config.value("to_place", Json()), c.random, c.origin);
+    Block const* state = sampleState(field(c.config, "to_place"), c.random, c.origin);
     if (!state || !canSurvive(c.region, c.origin, *state)) return false;
     auto id = javaId(*state);
     if (isDoublePlant(id)) {
@@ -80,7 +80,7 @@ bool simpleBlock(FeatureContext const& c) {
 }
 
 bool blockColumn(FeatureContext const& c) {
-    auto const&      layers = c.config.value("layers", Json::array());
+    auto const&      layers = fieldArr(c.config, "layers");
     std::size_t      n      = layers.size();
     std::vector<int> heights(n);
     int              total = 0;
@@ -91,7 +91,7 @@ bool blockColumn(FeatureContext const& c) {
     if (total == 0) return false;
     BlockPos dir  = stepOf(c.config.value("direction", std::string("up")));
     bool     tip  = c.config.value("prioritize_tip", false);
-    auto     allowed = c.config.value("allowed_placement", Json::object());
+    auto     allowed = fieldObj(c.config, "allowed_placement");
     BlockPos check = at(c.origin, dir.x, dir.y, dir.z);
     for (int l = 0; l < total; ++l) {
         if (!testPredicate(allowed, c.region, check)) {
@@ -112,7 +112,7 @@ bool blockColumn(FeatureContext const& c) {
     BlockPos m = c.origin;
     for (std::size_t i1 = 0; i1 < n; ++i1) {
         for (int k1 = 0; k1 < heights[i1]; ++k1) {
-            if (auto const* b = sampleState(layers[i1].value("provider", Json()), c.random, m)) c.region.setBlock(m, *b, 2);
+            if (auto const* b = sampleState(field(layers[i1], "provider"), c.random, m)) c.region.setBlock(m, *b, 2);
             m = at(m, dir.x, dir.y, dir.z);
         }
     }
@@ -124,7 +124,7 @@ bool randomPatch(FeatureContext const& c) {
     int  j      = c.config.value("xz_spread", 7) + 1;
     int  k      = c.config.value("y_spread", 3) + 1;
     int  tries  = c.config.value("tries", 128);
-    auto const& feature = c.config.value("feature", Json());
+    auto const& feature = field(c.config, "feature");
     for (int l = 0; l < tries; ++l) {
         int dx0 = c.random.nextInt(j);
         int dx1 = c.random.nextInt(j);
@@ -138,14 +138,14 @@ bool randomPatch(FeatureContext const& c) {
 }
 
 bool randomSelector(FeatureContext const& c) {
-    for (auto const& w : c.config.value("features", Json::array())) {
-        if (c.random.nextFloat() < w.value("chance", 0.0F)) return placePlaced(w.value("feature", Json()), c.region, c.origin, c.random);
+    for (auto const& w : fieldArr(c.config, "features")) {
+        if (c.random.nextFloat() < w.value("chance", 0.0F)) return placePlaced(field(w, "feature"), c.region, c.origin, c.random);
     }
-    return placePlaced(c.config.value("default", Json()), c.region, c.origin, c.random);
+    return placePlaced(field(c.config, "default"), c.region, c.origin, c.random);
 }
 
 bool simpleRandomSelector(FeatureContext const& c) {
-    auto const& fs = c.config.value("features", Json::array());
+    auto const& fs = fieldArr(c.config, "features");
     if (fs.is_string()) return placePlaced(fs, c.region, c.origin, c.random); // a tag of placed features is not used by TF
     if (!fs.is_array() || fs.empty()) return false;
     int i = c.random.nextInt(static_cast<int>(fs.size()));
@@ -160,7 +160,7 @@ bool randomBooleanSelector(FeatureContext const& c) {
 /// TF's WeightedListFeature: one weighted pick of a placed feature, placed at the origin.
 bool weightedList(FeatureContext const& c) {
     // the config is the SimpleWeightedRandomList itself: [{data: placed feature, weight}]
-    auto const* f = weightedPick(c.config.is_array() ? c.config : c.config.value("features", Json::array()), c.random);
+    auto const* f = weightedPick(c.config.is_array() ? c.config : fieldArr(c.config, "features"), c.random);
     if (!f) return false;
     return placePlaced(*f, c.region, c.origin, c.random);
 }
@@ -168,7 +168,7 @@ bool weightedList(FeatureContext const& c) {
 bool ore(FeatureContext const& c) {
     int   size = c.config.value("size", 0);
     float discard = c.config.value("discard_chance_on_air_exposure", 0.0F);
-    auto const& targets = c.config.value("targets", Json::array());
+    auto const& targets = fieldArr(c.config, "targets");
     auto& random = c.random;
     BlockPos const& o = c.origin;
     float  f  = random.nextFloat() * static_cast<float>(std::numbers::pi);
@@ -255,10 +255,10 @@ bool ore(FeatureContext const& c) {
                     if (!c.region.isInside(i2, k2)) continue;
                     Block const& current = c.region.getBlock(m);
                     for (auto const& target : targets) {
-                        if (!testRule(target.value("target", Json::object()), current, random)) continue;
+                        if (!testRule(fieldObj(target, "target"), current, random)) continue;
                         bool skipAir = discard <= 0.0F ? true : (discard >= 1.0F ? false : random.nextFloat() >= discard);
                         if (!skipAir && adjacentToAir(m)) continue;
-                        if (auto const* s = javaState(target.value("state", Json()))) {
+                        if (auto const* s = javaState(field(target, "state"))) {
                             c.region.setBlock(m, *s, 2);
                             ++placed;
                         }
@@ -278,8 +278,8 @@ bool disk(FeatureContext const& c) {
     int         maxY  = o.y + half;
     int         minY  = o.y - half - 1;
     int         l     = sampleInt(c.config.value("radius", Json(0)), c.random);
-    auto const& target   = c.config.value("target", Json::object());
-    auto const& provider = c.config.value("state_provider", Json::object());
+    auto const& target   = fieldObj(c.config, "target");
+    auto const& provider = fieldObj(c.config, "state_provider");
     for (int bz = o.z - l; bz <= o.z + l; ++bz) {
         for (int bx = o.x - l; bx <= o.x + l; ++bx) {
             int i1 = bx - o.x, j1 = bz - o.z;
@@ -386,7 +386,7 @@ bool seagrass(FeatureContext const& c) {
 }
 
 bool forestRock(FeatureContext const& c) {
-    auto const* state = javaState(c.config.value("state", Json()));
+    auto const* state = javaState(field(c.config, "state"));
     if (!state) return false;
     BlockPos p = c.origin;
     while (p.y > c.region.minY() + 3) {
@@ -455,7 +455,7 @@ Positions noStructure(PlacementContext const& c, BlockPos const& pos) {
     bool occUnderground = c.config.value("occupies_underground", false);
     bool occVegetation  = c.config.value("occupies_vegetation", false);
     int  additional     = c.config.value("additional_clearance", 0);
-    auto const& allowed = c.config.value("structures_allowed", Json::array());
+    auto const& allowed = fieldArr(c.config, "structures_allowed");
     for (auto const& start : landmark::startsIntersecting(c.region.dimension(), {pos.x >> 4, pos.z >> 4})) {
         if (structureAllowed(allowed, start.key)) continue;
         auto const* d = landmark::descriptor(start.key);
@@ -543,18 +543,18 @@ void registerVanillaPlacements() {
         return k > c.region.minY() ? Positions{{pos.x, k, pos.z}} : Positions{};
     });
     registerPlacement("minecraft:height_range", [](PlacementContext const& c, BlockPos const& pos) {
-        return Positions{{pos.x, sampleHeight(c.config.value("height", Json()), c.random, c.region), pos.z}};
+        return Positions{{pos.x, sampleHeight(field(c.config, "height"), c.random, c.region), pos.z}};
     });
     registerPlacement("minecraft:biome", [](PlacementContext const& c, BlockPos const& pos) {
         if (c.placedFeatureId.empty()) return Positions{pos}; // placed directly: no biome restriction
         return biomeHasFeature(c.region.biome(pos), c.placedFeatureId) ? Positions{pos} : Positions{};
     });
     registerPlacement("minecraft:block_predicate_filter", [](PlacementContext const& c, BlockPos const& pos) {
-        return testPredicate(c.config.value("predicate", Json()), c.region, pos) ? Positions{pos} : Positions{};
+        return testPredicate(field(c.config, "predicate"), c.region, pos) ? Positions{pos} : Positions{};
     });
     registerPlacement("minecraft:environment_scan", [](PlacementContext const& c, BlockPos const& pos) {
         BlockPos    dir     = stepOf(c.config.value("direction_of_search", std::string("down")));
-        auto const& target  = c.config.value("target_condition", Json());
+        auto const& target  = field(c.config, "target_condition");
         auto const& allowed = c.config.value("allowed_search_condition", Json{{"type", "minecraft:true"}});
         int         steps   = c.config.value("max_steps", 0);
         BlockPos    m       = pos;

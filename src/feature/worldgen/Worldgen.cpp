@@ -169,7 +169,7 @@ std::vector<std::vector<std::string>> biomeFeatures(std::string const& biomeId) 
     auto const& biomes = features::detail::data().biomes;
     auto        it     = biomes.find(features::detail::normalizeId(biomeId));
     if (it == biomes.end()) return out;
-    for (auto const& step : it->second.value("features", nlohmann::json::array())) {
+    for (auto const& step : features::detail::fieldArr(it->second, "features")) {
         auto& list = out.emplace_back();
         for (auto const& f : step)
             if (f.is_string()) list.push_back(features::detail::normalizeId(f.get<std::string>()));

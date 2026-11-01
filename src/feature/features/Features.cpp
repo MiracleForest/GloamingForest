@@ -30,6 +30,10 @@
 
 namespace gf::features {
 
+using detail::field;
+using detail::fieldArr;
+using detail::fieldObj;
+
 using detail::normalizeId;
 using detail::warnOnce;
 using Json = nlohmann::json;
@@ -132,7 +136,7 @@ std::shared_ptr<Data const> loadData() {
     }
     for (auto const& [id, biome] : d->biomes) {
         auto& set = d->biomeFeatureSets[id];
-        for (auto const& step : biome.value("features", Json::array()))
+        for (auto const& step : fieldArr(biome, "features"))
             for (auto const& f : step)
                 if (f.is_string()) set.insert(normalizeId(f.get<std::string>()));
     }
@@ -214,7 +218,7 @@ struct PlacedRun {
 bool placePlacedObject(Json const& placed, std::string const& topFeature, Region& region, BlockPos const& pos, RandomSource& random) {
     if (!placed.is_object()) return false;
     PlacedRun run{region, random, topFeature, {}, {}};
-    auto const& feature = placed.value("feature", Json());
+    auto const& feature = field(placed, "feature");
     if (feature.is_string()) {
         run.configuredId = normalizeId(feature.get<std::string>());
         auto const& cf   = data().configured;
@@ -227,7 +231,7 @@ bool placePlacedObject(Json const& placed, std::string const& topFeature, Region
     } else {
         run.configured = &feature;
     }
-    for (auto const& m : placed.value("placement", Json::array())) {
+    for (auto const& m : fieldArr(placed, "placement")) {
         auto        type = normalizeId(m.value("type", std::string()));
         PlacementFn fn   = withRegistries([&](Registries const& r) -> PlacementFn {
             auto it = r.placements.find(type);

@@ -18,6 +18,10 @@
 
 namespace gf::features {
 
+using detail::field;
+using detail::fieldArr;
+using detail::fieldObj;
+
 using detail::normalizeId;
 using detail::warnOnce;
 using Json = nlohmann::json;
@@ -61,7 +65,7 @@ int sampleInt(Json const& p, RandomSource& random) {
         return static_cast<int>(mth::clampf(n, static_cast<float>(p.value("min_inclusive", 0)), static_cast<float>(p.value("max_inclusive", 0))));
     }
     if (type == "minecraft:weighted_list") {
-        if (auto const* d = weightedPick(p.value("distribution", Json::array()), random)) return sampleInt(*d, random);
+        if (auto const* d = weightedPick(fieldArr(p, "distribution"), random)) return sampleInt(*d, random);
         return 0;
     }
     warnOnce("int_provider " + type, "unknown int provider " + type);
@@ -107,9 +111,9 @@ int sampleHeight(Json const& p, RandomSource& random, Region const& region) {
     if (!p.is_object()) return resolveAnchor(p, region);
     if (!p.contains("type")) return resolveAnchor(p, region); // a bare anchor is a constant height
     auto type = normalizeId(p["type"].get<std::string>());
-    if (type == "minecraft:constant") return resolveAnchor(p.value("value", Json()), region);
-    int  i      = resolveAnchor(p.value("min_inclusive", Json()), region);
-    int  j      = resolveAnchor(p.value("max_inclusive", Json()), region);
+    if (type == "minecraft:constant") return resolveAnchor(field(p, "value"), region);
+    int  i      = resolveAnchor(field(p, "min_inclusive"), region);
+    int  j      = resolveAnchor(field(p, "max_inclusive"), region);
     auto nextInt = [&](int min, int max) { return min >= max ? min : random.nextInt(max - min + 1) + min; }; // Mth.nextInt
     if (type == "minecraft:uniform") {
         if (i > j) return i;
@@ -140,7 +144,7 @@ int sampleHeight(Json const& p, RandomSource& random, Region const& region) {
         return i + a + b;
     }
     if (type == "minecraft:weighted_list") {
-        if (auto const* d = weightedPick(p.value("distribution", Json::array()), random)) return sampleHeight(*d, random, region);
+        if (auto const* d = weightedPick(fieldArr(p, "distribution"), random)) return sampleHeight(*d, random, region);
         return i;
     }
     warnOnce("height_provider " + type, "unknown height provider " + type);
@@ -165,10 +169,10 @@ Block const* sampleState(Json const& provider, RandomSource& random, BlockPos co
 Block const* sampleRuleState(Json const& provider, Region& region, RandomSource& random, BlockPos const& pos) {
     if (provider.contains("rules")) {
         for (auto const& rule : provider["rules"]) {
-            if (testPredicate(rule.value("if_true", Json()), region, pos)) return sampleState(rule.value("then", Json()), random, pos);
+            if (testPredicate(field(rule, "if_true"), region, pos)) return sampleState(field(rule, "then"), random, pos);
         }
     }
-    return sampleState(provider.value("fallback", Json()), random, pos);
+    return sampleState(field(provider, "fallback"), random, pos);
 }
 
 namespace {
@@ -234,27 +238,27 @@ bool testPredicate(Json const& p, Region& region, BlockPos const& pos) {
     if (!p.is_object()) return true;
     auto type = normalizeId(p.value("type", std::string("true")));
     if (type == "minecraft:true") return true;
-    if (type == "minecraft:not") return !testPredicate(p.value("predicate", Json()), region, pos);
+    if (type == "minecraft:not") return !testPredicate(field(p, "predicate"), region, pos);
     if (type == "minecraft:all_of") {
-        for (auto const& q : p.value("predicates", Json::array()))
+        for (auto const& q : fieldArr(p, "predicates"))
             if (!testPredicate(q, region, pos)) return false;
         return true;
     }
     if (type == "minecraft:any_of") {
-        for (auto const& q : p.value("predicates", Json::array()))
+        for (auto const& q : fieldArr(p, "predicates"))
             if (testPredicate(q, region, pos)) return true;
         return false;
     }
     BlockPos at = offsetOf(p, pos);
     if (type == "minecraft:inside_world_bounds") return at.y >= region.minY() && at.y < region.maxY();
     Block const& block = region.getBlock(at);
-    if (type == "minecraft:matching_blocks") return matchesBlocks(p.value("blocks", Json()), block);
+    if (type == "minecraft:matching_blocks") return matchesBlocks(field(p, "blocks"), block);
     if (type == "minecraft:matching_block_tag") return hasTag(block, p.value("tag", std::string()));
-    if (type == "minecraft:matching_fluids") return matchesFluids(p.value("fluids", Json()), block);
+    if (type == "minecraft:matching_fluids") return matchesFluids(field(p, "fluids"), block);
     if (type == "minecraft:solid") return block.getMaterial().mSolid;
     if (type == "minecraft:replaceable") return isReplaceable(block);
     if (type == "minecraft:would_survive") {
-        auto const* state = javaState(p.value("state", Json()));
+        auto const* state = javaState(field(p, "state"));
         return state && canSurvive(region, at, *state);
     }
     if (type == "minecraft:has_sturdy_face") {
@@ -270,7 +274,7 @@ bool testRule(Json const& rule, Block const& block, RandomSource& random) {
     if (type == "minecraft:always_true") return true;
     if (type == "minecraft:block_match") return javaId(block) == normalizeId(rule.value("block", std::string()));
     if (type == "minecraft:blockstate_match") {
-        auto const* s = javaState(rule.value("block_state", Json()));
+        auto const* s = javaState(field(rule, "block_state"));
         return s && *s == block;
     }
     if (type == "minecraft:tag_match") return hasTag(block, rule.value("tag", std::string()));
@@ -278,7 +282,7 @@ bool testRule(Json const& rule, Block const& block, RandomSource& random) {
         return javaId(block) == normalizeId(rule.value("block", std::string())) && random.nextFloat() < rule.value("probability", 0.0F);
     }
     if (type == "minecraft:random_blockstate_match") {
-        auto const* s = javaState(rule.value("block_state", Json()));
+        auto const* s = javaState(field(rule, "block_state"));
         return s && *s == block && random.nextFloat() < rule.value("probability", 0.0F);
     }
     warnOnce("rule_test " + type, "unknown rule test " + type);
@@ -305,13 +309,13 @@ namespace {
 core::noise::NormalNoise const& providerNoise(Json const& p) {
     static std::mutex                                               m;
     static std::unordered_map<std::string, core::noise::NormalNoise> cache;
-    std::string                                                     key = std::to_string(p.value("seed", std::int64_t{0})) + p.value("noise", Json()).dump();
+    std::string                                                     key = std::to_string(p.value("seed", std::int64_t{0})) + field(p, "noise").dump();
     std::lock_guard                                                 lock(m);
     if (auto it = cache.find(key); it != cache.end()) return it->second;
     core::noise::NoiseParameters params;
-    auto const&                  n = p.value("noise", Json::object());
+    auto const&                  n = fieldObj(p, "noise");
     params.firstOctave             = n.value("firstOctave", 0);
-    for (auto const& a : n.value("amplitudes", Json::array())) params.amplitudes.push_back(a.get<double>());
+    for (auto const& a : fieldArr(n, "amplitudes")) params.amplitudes.push_back(a.get<double>());
     core::jrand::WorldgenRandom r(std::make_unique<core::jrand::LegacyRandom>(p.value("seed", std::int64_t{0})));
     return cache.emplace(key, core::noise::NormalNoise::create(r, params)).first->second;
 }
@@ -329,35 +333,35 @@ Block const* randomState(Json const& states, RandomSource& random) {
 
 void registerVanillaProviders() {
     registerStateProvider("minecraft:simple_state_provider", [](RandomSource&, BlockPos const&, Json const& c) {
-        return kit::javaState(c.value("state", Json()));
+        return kit::javaState(field(c, "state"));
     });
     registerStateProvider("minecraft:weighted_state_provider", [](RandomSource& random, BlockPos const&, Json const& c) -> Block const* {
-        auto const* e = kit::weightedPick(c.value("entries", Json::array()), random);
+        auto const* e = kit::weightedPick(fieldArr(c, "entries"), random);
         return e ? kit::javaState(*e) : nullptr;
     });
     registerStateProvider("minecraft:rotated_block_provider", [](RandomSource& random, BlockPos const&, Json const& c) -> Block const* {
-        auto const* b = kit::javaState(c.value("state", Json()));
+        auto const* b = kit::javaState(field(c, "state"));
         if (!b) return nullptr;
         static char const* const axes[] = {"x", "y", "z"};
         return &kit::withProperty(*b, "axis", axes[random.nextInt(3)]);
     });
     registerStateProvider("minecraft:randomized_int_state_provider", [](RandomSource& random, BlockPos const& pos, Json const& c) -> Block const* {
-        auto const* b = kit::sampleState(c.value("source", Json()), random, pos);
+        auto const* b = kit::sampleState(field(c, "source"), random, pos);
         if (!b) return nullptr;
         int v = kit::sampleInt(c.value("values", Json(0)), random);
         return &kit::withProperty(*b, c.value("property", std::string()), std::to_string(v));
     });
     registerStateProvider("minecraft:noise_provider", [](RandomSource&, BlockPos const& pos, Json const& c) -> Block const* {
-        auto const& states = c.value("states", Json::array());
+        auto const& states = fieldArr(c, "states");
         if (states.empty()) return nullptr;
         double d0 = mth::clamp((1.0 + noiseValue(c, pos, c.value("scale", 1.0F))) / 2.0, 0.0, 0.9999);
         return kit::javaState(states[static_cast<std::size_t>(static_cast<int>(d0 * static_cast<double>(states.size())))]);
     });
     registerStateProvider("minecraft:noise_threshold_provider", [](RandomSource& random, BlockPos const& pos, Json const& c) -> Block const* {
         double d0 = noiseValue(c, pos, c.value("scale", 1.0F));
-        if (d0 < static_cast<double>(c.value("threshold", 0.0F))) return randomState(c.value("low_states", Json::array()), random);
-        if (random.nextFloat() < c.value("high_chance", 0.0F)) return randomState(c.value("high_states", Json::array()), random);
-        return kit::javaState(c.value("default_state", Json()));
+        if (d0 < static_cast<double>(c.value("threshold", 0.0F))) return randomState(fieldArr(c, "low_states"), random);
+        if (random.nextFloat() < c.value("high_chance", 0.0F)) return randomState(fieldArr(c, "high_states"), random);
+        return kit::javaState(field(c, "default_state"));
     });
 }
 
