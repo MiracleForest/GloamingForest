@@ -1,8 +1,0 @@
-[
-  {
-    "flipbook_texture": "textures/blocks/dimension/tf-derived/portal_barrier",
-    "atlas_tile": "gf_dimension_portal_barrier",
-    "ticks_per_frame": 2,
-    "blend_frames": true
-  }
-]

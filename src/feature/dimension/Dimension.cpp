@@ -13,41 +13,31 @@
 // sends its height to every client (DimensionDataPacket), so vanilla clients render it natively.
 // This file adds TF's dimension_type values the definition can't express:
 //   - fixed_time 13000: Dimension::getTimeOfDay of the dimension always reads time 13000 (server and
-//     client mod), and players inside it get the time 13000 with the daylight cycle stopped through
-//     their own SetTimePacket / GameRulesChangedPacket (vanilla clients: per-player time);
+//     client mod); vanilla clients get a per-player clock (Clock.cpp);
+//   - has_raids false: villages in the dimension never start a raid;
 //   - EntityEvents#stopEndermenFromGrabbingBlocksInTF: the take_block goal never starts there.
+// The other values need no code: coordinate_scale 0.125 (World.cpp, the teleporter), bed_works
+// (custom dimensions allow beds), respawn_anchor_works false and piglin_safe false (Bedrock anchors
+// only work and piglins only stay unconverted in the Nether), infiniburn #infiniburn_overworld
+// (netherrack and magma burn forever in every Bedrock dimension), ultrawarm false, has_ceiling
+// false, has_skylight true, natural true (the definition's defaults), min_y / height /
+// logical_height (the definition). ambient_light, monster spawn light and effects belong to the
+// sky / spawning units (U15, F5).
 
-#include <algorithm>
 #include <atomic>
-#include <cctype>
-#include <mutex>
-#include <unordered_map>
-#include <unordered_set>
+#include <string>
 
-#include "ll/api/event/EventBus.h"
-#include "ll/api/event/player/PlayerDisconnectEvent.h"
-#include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
-#include "mc/network/LoopbackPacketSender.h"
-#include "mc/network/MinecraftPacketIds.h"
-#include "mc/network/MinecraftPackets.h"
-#include "mc/network/NetworkIdentifierWithSubId.h"
-#include "mc/network/Packet.h"
-#include "mc/network/packet/GameRulesChangedPacket.h"
-#include "mc/network/packet/SetTimePacket.h"
 #include "mc/scripting/modules/minecraft/dimension/ScriptCustomDimensionRegistry.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/ai/goal/TakeBlockGoal.h"
-#include "mc/world/actor/player/Player.h"
+#include "mc/world/actor/ai/village/Village.h"
 #include "mc/world/level/DimensionManager.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/dimension/DimensionDefinitionGroup.h"
-#include "mc/world/level/storage/GameRule.h"
-#include "mc/world/level/storage/GameRuleId.h"
-#include "mc/world/level/storage/GameRules.h"
 
 #include "feature/dimension/DimensionConfig.h"
 #include "feature/dimension/Internal.h"
@@ -213,6 +203,7 @@ LL_TYPE_INSTANCE_HOOK(
 
 /// TF's fixed_time: the dimension's time of day never moves (server lighting / spawning and the
 /// client mod's sky). Runs on any thread: no level access, only the dimension's own identifier.
+/// Vanilla clients get the same through their own clock (Clock.cpp).
 LL_TYPE_INSTANCE_HOOK(
     TwilightTimeOfDayHook,
     ll::memory::HookPriority::Normal,
@@ -237,239 +228,19 @@ LL_TYPE_INSTANCE_HOOK(TwilightTakeBlockGoalHook, ll::memory::HookPriority::Norma
     return tf < 0 || static_cast<int>(mob.getDimensionId()) != tf;
 }
 
-// ---- per-player time (vanilla clients) ------------------------------------------------------------------------
+// ---- raids --------------------------------------------------------------------------------------------------------
 
-namespace {
-
-thread_local bool gSendingTime = false;
-
-/// The player's clock as it should read: the level time with the time of day 13000 in the Twilight
-/// Forest (the day count is kept for the "days played" display), the level time elsewhere.
-int clockFor(Player const& player, int levelTime) {
-    if (!world::isTwilight(player.getDimensionId())) return levelTime;
-    return levelTime - (levelTime % 24000) + kFixedTime;
-}
-
-void sendTime(Player& player, int time) {
-    auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::SetTime);
-    if (!packet) return;
-    static_cast<SetTimePacket&>(*packet).mTime = time;
-    gSendingTime = true;
-    packet->sendTo(player);
-    gSendingTime = false;
-}
-
-/// Tells the player's client whether its clock runs (doDaylightCycle), without touching the world.
-void sendDaylightCycle(Player& player, bool cycle) {
-    auto level = ll::service::getLevel();
-    if (!level) return;
-    auto& rules = *level->getGameRules().mGameRules;
-    auto  index = static_cast<std::size_t>(GameRules::GameRulesIndex::DoDaylightCycle);
-    if (index >= rules.size()) return;
-    auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::GameRulesChanged);
-    if (!packet) return;
-    GameRule rule(rules[index]);
-    rule.mValue = GameRule::Value(cycle);
-    static_cast<GameRulesChangedPacket&>(*packet).mRuleData->mRules->push_back(rule);
-    gSendingTime = true;
-    packet->sendTo(player);
-    gSendingTime = false;
-}
-
-/// A rules packet that sets doDaylightCycle (it would restart the clock of a Twilight player).
-bool setsDaylightCycle(Packet const& packet) {
-    if (packet.getId() != MinecraftPacketIds::GameRulesChanged) return false;
-    for (auto const& rule : *static_cast<GameRulesChangedPacket const&>(packet).mRuleData->mRules) {
-        std::string name = *rule.mName;
-        std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-        if (name == "dodaylightcycle") return true;
-    }
-    return false;
-}
-
-std::mutex&                       timeMutex() {
-    static std::mutex m;
-    return m;
-}
-/// Players whose client currently runs the Twilight clock (unique ids, rule R16).
-std::unordered_set<std::int64_t>& inTwilightClock() {
-    static std::unordered_set<std::int64_t> s;
-    return s;
-}
-
-/// After the server sent its time to some players, corrects it for the ones in the Twilight Forest
-/// (`only`: that player; else every player but `except`).
-void correctTimeAfterSend(Packet const& packet, Player* only, Player const* except = nullptr) {
-    if (gSendingTime) return;
-    bool time  = packet.getId() == MinecraftPacketIds::SetTime;
-    bool rules = !time && setsDaylightCycle(packet);
-    if (!time && !rules) return;
-    int tf = gTwilightId.load(std::memory_order_relaxed);
-    if (tf < 0) return;
-    int  levelTime = time ? static_cast<SetTimePacket const&>(packet).mTime : 0;
-    auto fix       = [&](Player& p) {
-        if (static_cast<int>(p.getDimensionId()) != tf) return;
-        if (time) sendTime(p, clockFor(p, levelTime));
-        else sendDaylightCycle(p, false);
-    };
-    if (only) {
-        fix(*only);
+/// dimension_type has_raids false (Raids#createOrExtendRaid returns null when the dimension type has
+/// no raids): a village in the Twilight Forest never starts a raid.
+LL_TYPE_INSTANCE_HOOK(TwilightRaidHook, ll::memory::HookPriority::Normal, Village, &Village::triggerRaid, void) {
+    Dimension& dimension = mDimension;
+    if (isTwilightDimension(dimension)) {
+        static std::atomic<bool> told{false}; // the engine may ask again every tick
+        if (!told.exchange(true)) log().info("dimension: no raid in the Twilight Forest (has_raids false)");
         return;
     }
-    auto level = ll::service::getLevel();
-    if (!level) return;
-    level->forEachPlayer([&](Player& p) {
-        if (&p != except) fix(p);
-        return true;
-    });
+    origin();
 }
-
-bool isTimePacket(Packet const& packet) {
-    return packet.getId() == MinecraftPacketIds::SetTime || packet.getId() == MinecraftPacketIds::GameRulesChanged;
-}
-
-Player* playerOfNetwork(NetworkIdentifier const& id, SubClientId sub) {
-    auto level = ll::service::getLevel();
-    if (!level) return nullptr;
-    Player* found = nullptr;
-    level->forEachPlayer([&](Player& p) {
-        if (p.getNetworkIdentifier() == id && p.getClientSubId() == sub) {
-            found = &p;
-            return false;
-        }
-        return true;
-    });
-    return found;
-}
-
-Player* playerOfUser(UserEntityIdentifierComponent const* user) {
-    if (!user) return nullptr;
-    auto level = ll::service::getLevel();
-    if (!level) return nullptr;
-    Player* found = nullptr;
-    level->forEachPlayer([&](Player& p) {
-        if (&p.getUserEntityIdentifier() == user) {
-            found = &p;
-            return false;
-        }
-        return true;
-    });
-    return found;
-}
-
-} // namespace
-
-LL_TYPE_INSTANCE_HOOK(
-    TwilightTimeBroadcastHook,
-    ll::memory::HookPriority::Normal,
-    LoopbackPacketSender,
-    static_cast<void (LoopbackPacketSender::*)(Packet const&)>(&LoopbackPacketSender::$sendBroadcast),
-    void,
-    Packet const& packet
-) {
-    origin(packet);
-    correctTimeAfterSend(packet, nullptr);
-}
-
-LL_TYPE_INSTANCE_HOOK(
-    TwilightTimeToClientHook,
-    ll::memory::HookPriority::Normal,
-    LoopbackPacketSender,
-    static_cast<void (LoopbackPacketSender::*)(UserEntityIdentifierComponent const*, Packet const&)>(&LoopbackPacketSender::$sendToClient),
-    void,
-    UserEntityIdentifierComponent const* user,
-    Packet const&                        packet
-) {
-    origin(user, packet);
-    if (!gSendingTime && (packet.getId() == MinecraftPacketIds::SetTime || packet.getId() == MinecraftPacketIds::GameRulesChanged)) {
-        if (auto* p = playerOfUser(user)) correctTimeAfterSend(packet, p);
-    }
-}
-
-LL_TYPE_INSTANCE_HOOK(
-    TwilightTimeToNetworkHook,
-    ll::memory::HookPriority::Normal,
-    LoopbackPacketSender,
-    static_cast<void (LoopbackPacketSender::*)(NetworkIdentifier const&, Packet const&, SubClientId)>(&LoopbackPacketSender::$sendToClient),
-    void,
-    NetworkIdentifier const& id,
-    Packet const&            packet,
-    SubClientId              sub
-) {
-    origin(id, packet, sub);
-    if (!gSendingTime && isTimePacket(packet)) {
-        if (auto* p = playerOfNetwork(id, sub)) correctTimeAfterSend(packet, p);
-    }
-}
-
-LL_TYPE_INSTANCE_HOOK(
-    TwilightTimeToClientsHook,
-    ll::memory::HookPriority::Normal,
-    LoopbackPacketSender,
-    &LoopbackPacketSender::$sendToClients,
-    void,
-    std::vector<NetworkIdentifierWithSubId> const& ids,
-    Packet const&                                  packet
-) {
-    origin(ids, packet);
-    if (!gSendingTime && isTimePacket(packet)) {
-        for (auto const& target : ids)
-            if (auto* p = playerOfNetwork(target.id, target.subClientId)) correctTimeAfterSend(packet, p);
-    }
-}
-
-LL_TYPE_INSTANCE_HOOK(
-    TwilightTimeBroadcastExceptHook,
-    ll::memory::HookPriority::Normal,
-    LoopbackPacketSender,
-    static_cast<void (LoopbackPacketSender::*)(NetworkIdentifier const&, SubClientId, Packet const&)>(&LoopbackPacketSender::$sendBroadcast),
-    void,
-    NetworkIdentifier const& exceptId,
-    SubClientId              exceptSub,
-    Packet const&            packet
-) {
-    origin(exceptId, exceptSub, packet);
-    if (!gSendingTime && isTimePacket(packet)) correctTimeAfterSend(packet, nullptr, playerOfNetwork(exceptId, exceptSub));
-}
-
-namespace {
-
-/// Every tick: players who entered the Twilight Forest get its clock, players who left get the
-/// world's clock back; every 5 s the clock of the players inside is sent again (a time packet the
-/// hooks above don't see costs at most that long).
-void syncClocks(Level& level) {
-    static int ticks = 0;
-    bool       renew = ++ticks % 100 == 0;
-    int tf = gTwilightId.load(std::memory_order_relaxed);
-    std::vector<std::pair<std::int64_t, bool>> changes;
-    level.forEachPlayer([&](Player& p) {
-        auto id   = idOf(p);
-        bool inTf = tf >= 0 && static_cast<int>(p.getDimensionId()) == tf;
-        bool was;
-        {
-            std::lock_guard lock(timeMutex());
-            was = inTwilightClock().contains(id);
-        }
-        if (inTf != was || (inTf && renew)) changes.emplace_back(id, inTf);
-        return true;
-    });
-    for (auto [id, inTf] : changes) {
-        auto* p = playerById(id);
-        if (!p) continue;
-        {
-            std::lock_guard lock(timeMutex());
-            if (inTf) inTwilightClock().insert(id);
-            else inTwilightClock().erase(id);
-        }
-        GameRuleId daylight;
-        daylight.mValue = static_cast<int>(GameRules::GameRulesIndex::DoDaylightCycle);
-        bool cycle      = level.getGameRules().getBool(daylight, true);
-        sendDaylightCycle(*p, inTf ? false : cycle);
-        sendTime(*p, clockFor(*p, level.getTime()));
-    }
-}
-
-} // namespace
 
 // ---- module --------------------------------------------------------------------------------------------------
 
@@ -485,51 +256,21 @@ public:
         // ready during its own install, ahead of this module's
         game::db::onWorldReady([] {
             resetTwilightId();
-            {
-                std::lock_guard lock(timeMutex());
-                inTwilightClock().clear();
-            }
             logRegistration("world ready");
         });
-        game::db::onWorldClosed([] {
-            resetTwilightId();
-            std::lock_guard lock(timeMutex());
-            inTwilightClock().clear();
-        });
+        game::db::onWorldClosed([] { resetTwilightId(); });
     }
 
     void install() {
         TwilightTakeBlockGoalHook::hook();
-        TwilightTimeBroadcastHook::hook();
-        TwilightTimeToClientHook::hook();
-        TwilightTimeToNetworkHook::hook();
-        TwilightTimeToClientsHook::hook();
-        TwilightTimeBroadcastExceptHook::hook();
-        auto& bus = ll::event::EventBus::getInstance();
-        mTick     = bus.emplaceListener<ll::event::ServerLevelTickEvent>([](ll::event::ServerLevelTickEvent& ev) { syncClocks(ev.level()); });
-        // a player who comes back still in the Twilight Forest gets its clock again (StartGame
-        // carries the level time)
-        mLeave = bus.emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {
-            std::lock_guard lock(timeMutex());
-            inTwilightClock().erase(idOf(ev.self()));
-        });
+        TwilightRaidHook::hook();
     }
 
     void uninstall() {
-        ll::event::EventBus::getInstance().removeListener(mTick);
-        ll::event::EventBus::getInstance().removeListener(mLeave);
-        TwilightTimeBroadcastExceptHook::unhook();
-        TwilightTimeToClientsHook::unhook();
-        TwilightTimeToNetworkHook::unhook();
-        TwilightTimeToClientHook::unhook();
-        TwilightTimeBroadcastHook::unhook();
+        TwilightRaidHook::unhook();
         TwilightTakeBlockGoalHook::unhook();
         // the load() hooks stay for the life of the process (registration happens per world)
     }
-
-private:
-    ll::event::ListenerPtr mTick;
-    ll::event::ListenerPtr mLeave;
 };
 
 } // namespace gf::feature::dimension
