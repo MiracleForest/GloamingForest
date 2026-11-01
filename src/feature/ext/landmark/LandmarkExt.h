@@ -4,6 +4,8 @@
 //   src/main/java/twilightforest/world/components/placements/AvoidLandmarkModifier.java
 //   src/main/java/twilightforest/events/EntityEvents.java
 //   src/main/java/twilightforest/util/WorldUtil.java
+//   src/main/java/twilightforest/world/components/structures/util/LandmarkStructure.java
+//   src/main/java/twilightforest/world/components/structures/CustomDensitySource.java
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -13,8 +15,10 @@
 // (feature/landmark/Landmark.h) has no entry point for these, which other units need:
 //
 //   - terrain (U2): the structure terraformers summed into the density, like TF's beardifier hook
-//     (WorldgenHooks#gatherCustomTerrain / getCustomDensity), and the surface height a landmark
-//     uses to adjust its elevation (DecorationClearance#adjustForTerrain);
+//     (WorldgenHooks#gatherCustomTerrain / getCustomDensity), and the column heights a landmark
+//     uses to adjust its elevation (DecorationClearance#adjustForTerrain, WorldUtil#adjustForTerrain);
+//   - structure layouts (U18-U30): Structure.GenerationContext#random() and the terrain height
+//     queries of the findGenerationPoint / adjustForTerrain overrides;
 //   - features (F5): AvoidLandmarkModifier at block precision (DecorationKind has no vegetation and
 //     no additional clearance);
 //   - structure units (U18-U30): the terraformer shapes TF's structures use (inverted pyramid,
@@ -29,26 +33,69 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "core/GlobalPos.h"
+#include "core/jrand/JRand.h"
 #include "feature/landmark/Landmark.h"
+#include "feature/worldgen/Worldgen.h"
 
 namespace gf::landmark::ext {
 
 // ---- terrain -----------------------------------------------------------------------------------------
 
-/// The sum of the terraformers (Generator::terraform and addTerraformer) of every start whose box
-/// covers column (x, z) of `dimension`: add it to the terrain density (beardifier equivalent).
+/// WorldgenHooks#gatherCustomTerrain + getCustomDensity for one chunk: the terraformers
+/// (Generator::terraform and addTerraformer) of every start referencing chunk (chunkX, chunkZ) of
+/// `dimension` (its box intersects the chunk: ChunkGenerator#createReferences), gathered once; the
+/// function returns their sum at a position of that chunk, the whole chunk included (TF evaluates
+/// a start's terraformer everywhere in the chunks it references, not only inside its box). Add it
+/// to the terrain density (beardifier equivalent). Empty function: no terraformer reaches the chunk.
+using ChunkTerraformer = std::function<double(int x, int y, int z)>;
+[[nodiscard]] ChunkTerraformer chunkTerraformer(int dimension, int chunkX, int chunkZ);
+/// chunkTerraformer(dimension, x >> 4, z >> 4) at one position (prefer chunkTerraformer per chunk).
 [[nodiscard]] double terraformDensity(int dimension, int x, int y, int z);
-/// Whether any start with a terraformer covers chunk (chunkX, chunkZ) (skip terraformDensity when not).
+/// Whether any start with a terraformer references chunk (chunkX, chunkZ) (skip the terraformers when not).
 [[nodiscard]] bool hasTerraformers(int dimension, int chunkX, int chunkZ);
-/// The first occupied height of a column for landmark elevation (ChunkGenerator#getFirstOccupiedHeight
-/// with WORLD_SURFACE_WG). Registered by the terrain provider; until then landmarks sit at sea level.
-using HeightFn = std::function<std::optional<int>(int dimension, int x, int z)>;
+
+/// The first occupied height of a column (ChunkGenerator#getFirstOccupiedHeight: the heightmap's
+/// base height - 1) for heightmap `type`. Registered by the terrain provider (U2); until then the
+/// height queries below answer nullopt and landmarks sit at sea level.
+using HeightFn = std::function<std::optional<int>(int dimension, int x, int z, worldgen::Heightmap type)>;
 void setHeightProvider(HeightFn fn);
+/// ChunkGenerator#getFirstOccupiedHeight(x, z, type, ...) through the registered provider.
+[[nodiscard]] std::optional<int> firstOccupiedHeight(int dimension, int x, int z, worldgen::Heightmap type = worldgen::Heightmap::WorldSurfaceWg);
+/// WorldUtil#adjustForTerrain(context, xMin, zMin, xMax, zMax, gridLength, type): the weighted height
+/// of a gridLength x gridLength sample grid over the area (FallenTrunkStructure, TemplatePoolInstance).
+[[nodiscard]] std::optional<int> adjustForTerrain(int dimension, int xMin, int zMin, int xMax, int zMax, int gridLength, worldgen::Heightmap type);
+/// WorldUtil#adjustForTerrain(context, xInCenterChunk, zInCenterChunk, radiusFromCenterChunk,
+/// gridLength): the chunk of (x, z) widened by the radius, WORLD_SURFACE_WG (CampStructure 12, 3; the
+/// lich tower 32, 4, hedge maze 24, 4 and naga courtyard 40, 4 (+2) are applied by F6 itself).
+[[nodiscard]] std::optional<int> adjustForTerrain(int dimension, int xInCenterChunk, int zInCenterChunk, int radiusFromCenterChunk, int gridLength);
+/// ChunkGenerator#getSeaLevel of a dimension (0 in the Twilight Forest).
+[[nodiscard]] int seaLevel(int dimension);
+
+// ---- layouts -----------------------------------------------------------------------------------------
+//
+// A Generator::layout runs Java's Structure#findGenerationPoint and the GenerationStub's piece
+// generator in one call. Its LayoutContext::random is LandmarkStructure#findGenerationPoint's
+// getFirstPiece random, RandomSource.create(seed + chunkX * 25117L + chunkZ * 151121L). Everything
+// Java draws from Structure.GenerationContext#random() instead (LandmarkStructure
+// #generateFromStartingPiece's addChildren, the lich tower's jigsaws and yard, the
+// findGenerationPoint overrides of CampStructure, HollowTreeStructure and FallenTrunkStructure)
+// comes from contextRandom(ctx.start): create it once at the start of the layout and use that one
+// source for both parts, as Java shares one GenerationContext. LayoutContext::start arrives with
+// center (x, y, z) set the way LandmarkStructure#findGenerationPoint sets it (the chunk origin + 7
+// with center_in_chunk, y by the structure's adjustForTerrain); a layout that finds its own point
+// (camps, hollow trees, fallen trunks) writes it to start.center, which is then the position
+// Structure#findValidGenerationPoint checks the biome at.
+
+/// Structure.GenerationContext#makeRandom(seed, chunkPos): WorldgenRandom(LegacyRandomSource(0))
+/// with setLargeFeatureSeed(seed, chunkX, chunkZ), for the start's seed and start chunk
+/// (start.data["chunk"]; else the chunk of start.center).
+[[nodiscard]] std::unique_ptr<core::jrand::WorldgenRandom> contextRandom(Start const& start);
 
 /// CustomDensitySource#getInvertedPyramidTerraformer for `start` at a position.
 [[nodiscard]] double invertedPyramid(Start const& start, int yOffset, int horizontalPadding, int x, int y, int z);

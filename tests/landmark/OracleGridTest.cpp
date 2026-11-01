@@ -221,6 +221,92 @@ TEST(LandmarkOracle, GridStartsFollowLandmarkGridPlacement) {
     EXPECT_GT(refused, 0);
 }
 
+namespace {
+
+/// The members of TF's structure biome tags (BiomeTagGenerator#addTags, TF 4.8 @ 9e40a757,
+/// LGPL-2.1-or-later; data/twilightforest/tags/worldgen/biome/valid_*_biomes.json).
+std::map<std::string, std::set<std::string>> const& validBiomeTags() {
+    static std::map<std::string, std::set<std::string>> const tags = [] {
+        std::set<std::string> const landmarkForests = {
+            "twilightforest:clearing",        "twilightforest:dense_forest", "twilightforest:dense_mushroom_forest", "twilightforest:firefly_forest",
+            "twilightforest:forest",          "twilightforest:mushroom_forest", "twilightforest:oak_savannah",      "twilightforest:spooky_forest",
+        };
+        return std::map<std::string, std::set<std::string>>{
+            {"#twilightforest:valid_quest_grove_biomes", {"twilightforest:enchanted_forest"}},
+            {"#twilightforest:valid_mushroom_tower_biomes", {"twilightforest:dense_mushroom_forest"}},
+            {"#twilightforest:valid_hedge_maze_biomes", landmarkForests},
+            {"#twilightforest:valid_hollow_hill_biomes", landmarkForests},
+            {"#twilightforest:valid_naga_courtyard_biomes", landmarkForests},
+            {"#twilightforest:valid_lich_tower_biomes", landmarkForests},
+            {"#twilightforest:valid_labyrinth_biomes", {"twilightforest:swamp"}},
+            {"#twilightforest:valid_hydra_lair_biomes", {"twilightforest:fire_swamp"}},
+            {"#twilightforest:valid_knight_stronghold_biomes", {"twilightforest:dark_forest"}},
+            {"#twilightforest:valid_dark_tower_biomes", {"twilightforest:dark_forest_center"}},
+            {"#twilightforest:valid_yeti_cave_biomes", {"twilightforest:snowy_forest"}},
+            {"#twilightforest:valid_aurora_palace_biomes", {"twilightforest:glacier"}},
+            {"#twilightforest:valid_troll_cave_biomes", {"twilightforest:highlands"}},
+            {"#twilightforest:valid_giant_house_biomes", {"twilightforest:highlands"}},
+            {"#twilightforest:valid_final_castle_biomes", {"twilightforest:final_plateau"}},
+        };
+    }();
+    return tags;
+}
+
+/// The "biomes" of each landmark grid structure (assets/data/landmarks): structure key -> tag.
+std::map<std::string, std::string> gridBiomes() {
+    std::map<std::string, std::string> out;
+    std::error_code                    ec;
+    for (auto const& e : fs::directory_iterator(repoDir() / "assets/data/landmarks/twilightforest", ec)) {
+        if (e.path().extension() != ".json") continue;
+        auto j = readJson(e.path());
+        if (!j.is_object() || !j.contains("structure") || !j.contains("structure_set")) continue;
+        auto p = plc::Placement::fromJson(j["structure_set"].value("placement", json::object()));
+        if (p.kind != plc::Kind::LandmarkGrid) continue;
+        for (auto const& s : j["structure_set"].value("structures", json::array()))
+            out[s.value("structure", std::string{})] = j["structure"].value("biomes", std::string{});
+    }
+    return out;
+}
+
+} // namespace
+
+TEST(LandmarkOracle, AcceptedGridStartsWithAValidBiomeStarted) {
+    // the converse: where a landmark grid set accepts the center chunk and the structure's biome tag
+    // holds for the tile's main biome (LandmarkStructure#findValidGenerationPoint), Java started it.
+    // The biome counts as known where the oracle read the same biome at the biome-grid tile's sample
+    // column (pickBiome) and at the center (mainBiome)
+    REQUIRE_ORACLE();
+    auto sets   = gridSets();
+    auto biomes = gridBiomes();
+    ASSERT_EQ(biomes.size(), sets.size());
+    for (auto const& [key, tag] : biomes) ASSERT_TRUE(validBiomeTags().contains(tag)) << key << ": " << tag;
+    int checked = 0, unknown = 0;
+    for (auto const& file : landmarkGoldens()) {
+        SCOPED_TRACE(file.filename().string());
+        auto         g       = readJson(file);
+        std::int64_t seed    = g.at("seed").get<std::int64_t>();
+        auto         variety = [seed](int x, int z) { return cl::pickVariety(seed, x, z); };
+        plc::SetLookup none  = [](std::string const&) -> plc::Placement const* { return nullptr; };
+        for (auto const& c : g.at("centers")) {
+            int  cx = c.at("chunkX"), cz = c.at("chunkZ");
+            auto main = c.value("mainBiome", std::string{});
+            if (main.empty() || main != c.value("pickBiome", std::string{})) {
+                ++unknown;
+                continue;
+            }
+            auto started = startsOf(c);
+            for (auto const& [key, placement] : sets) {
+                if (!plc::isStructureChunk(placement, seed, cx, cz, variety, none)) continue;
+                bool valid = validBiomeTags().at(biomes.at(key)).contains(main);
+                EXPECT_EQ(started.contains(key), valid) << key << " (accepted, biome " << main << ") at " << c.dump();
+                ++checked;
+            }
+        }
+    }
+    EXPECT_GT(checked, 3 * 200);
+    EXPECT_LT(unknown, 3 * 16);
+}
+
 TEST(LandmarkOracle, JavaRandomMatchesJrandLegacyRandom) {
     // the grid's JavaRandom and F5's jrand::LegacyRandom are the same source: once jrand is real (not
     // F0's stub), they must agree draw for draw, so the grid can switch to it (Grid.h)

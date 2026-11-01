@@ -93,7 +93,8 @@ void center(CommandOrigin const& origin, CommandOutput& output) {
     auto  closest = cl::pickForChunk(levelSeed(), cc.x >> 4, cc.z >> 4, [dim](int x, int z) { return biomeAt(dim, x, 0, z); });
     bool  fc      = cl::blockIsInCenter(dx, dz);
     auto* player  = commands::playerOf(origin);
-    auto  name    = "§2" + structureName(closest, player) + "§r"; // ChatFormatting.DARK_GREEN
+    // Component#withStyle(DARK_GREEN)#getString(): the plain text, the style is dropped
+    auto  name    = structureName(closest, player);
     output.success(say(origin, "commands.tffeature.nearest", "The nearest feature is: %s", name));
     output.success(say(origin, "commands.tffeature.center", "Center of feature: %s", shortString(cc.x, 0, cc.z)));
     output.success(say(origin, "commands.tffeature.chunk", "Located in feature chunk: %s", fc ? "true" : "false"));
@@ -129,13 +130,8 @@ void infoCommand(CommandOrigin const& origin, CommandOutput& output) {
         output.success("§n" + say(origin, "commands.tffeature.structure.spawn_list", "Spawn list for this area is:"));
         if (auto spawns = gf::landmark::ext::potentialSpawns(dim, "monster", pos.x, pos.y, pos.z)) {
             for (auto const& e : *spawns) {
-                auto type   = e.value("type", std::string{});
-                auto colon  = type.find(':');
-                auto entity = colon == std::string::npos ? type : type.substr(colon + 1);
-                auto ns     = colon == std::string::npos ? std::string("minecraft") : type.substr(0, colon);
-                // EntityType#getDescription: Java's "entity.<namespace>.<path>" key
-                auto key    = "entity." + ns + "." + entity;
-                auto name   = player ? trFor(*player, key, entity) : tr(key, entity);
+                // EntityType#getDescription().getString(): the entity's name in the reader's language
+                auto name = entityName(e.value("type", std::string{}), player);
                 output.success(say(origin, "commands.tffeature.structure.spawn_info", "%s, Weight %s", name, std::to_string(e.value("weight", 0))));
             }
         }
@@ -281,16 +277,21 @@ struct SetTargets {
     std::vector<std::string> keys;
 };
 
-/// StructureCheck#checkStart for a random spread placement: a start known for the chunk (its sets
-/// were evaluated), else the frequency reduction and the structure's biome at the generation point.
+/// ChunkGenerator#getStructureGeneratingAt for a random spread placement. StructureCheck#checkStart:
+/// a chunk whose starts are known answers START_PRESENT / START_NOT_PRESENT; else the frequency
+/// reduction may say START_NOT_PRESENT, and otherwise (CHUNK_LOAD_NEEDED) the chunk is brought to
+/// STRUCTURE_STARTS and its real start decides: findGenerationPoint and the biome check at the
+/// generation point, as the worldgen Starts stage makes it.
 bool structureAt(int dimension, std::string const& key, plc::Placement const& p, std::int64_t seed, int chunkX, int chunkZ, bool skipKnownStructures) {
     if (fl::startsEvaluated(dimension, chunkX, chunkZ)) {
         auto rec = fl::findRecord(dimension, chunkX, chunkZ, key);
         return rec && !rec->placed && !skipKnownStructures;
     }
     if (!plc::applyAdditionalChunkRestrictions(p, seed, chunkX, chunkZ)) return false;
-    auto const* inf = fl::info(key);
-    return inf && fl::biomeMatches(inf->biomes, fl::biomeAt(dimension, chunkX * 16 + 8, fl::seaLevelOf(dimension), chunkZ * 16 + 8));
+    fl::ensureStartsIn(dimension, chunkX, chunkZ);
+    auto rec = fl::findRecord(dimension, chunkX, chunkZ, key);
+    // a new start has no reference yet: StructureStart#canBeReferenced, so skipKnownStructures takes it
+    return rec && !rec->placed;
 }
 
 } // namespace

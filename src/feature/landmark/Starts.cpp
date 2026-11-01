@@ -42,6 +42,7 @@
 #include "mc/world/level/LevelSeed64.h"
 #include "mc/world/level/biome/Biome.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/phys/AABB.h"
 
 #include "core/Keys.h"
 #include "core/jrand/JRand.h"
@@ -249,6 +250,21 @@ private:
     std::int64_t mSeed;
 };
 
+} // namespace
+
+std::optional<int> occupiedHeight(int dim, int x, int z, worldgen::Heightmap type) {
+    auto fn = heightProvider();
+    if (!fn) return std::nullopt;
+    return fn(dim, x, z, type);
+}
+
+ext::HeightFn heightProvider() {
+    std::lock_guard lock(generators().mutex);
+    return generators().height;
+}
+
+namespace {
+
 /// GenerationStep.Decoration ordinals.
 int stepIndex(std::string const& step) {
     static char const* const steps[] = {"raw_generation",  "lakes",           "local_modifications", "underground_structures",
@@ -334,18 +350,33 @@ void placeInChunk(Record const& rec, worldgen::Region& region, int chunkX, int c
     }
 }
 
-/// The surface height for a landmark's elevation (DecorationClearance#adjustForTerrain).
+/// LandmarkStructure#findGenerationPoint's y: the structure's adjustForTerrain. LichTowerStructure,
+/// HedgeMazeStructure and NagaCourtyardStructure override it with WorldUtil#adjustForTerrain over the
+/// center chunk widened by a margin (no clamp, adjust_structure_elevation not consulted); the others
+/// use DecorationClearance#adjustForTerrain. Without a terrain provider: sea level.
 int heightFor(Info const& info, int dim, int x, int z) {
-    int sea = seaLevelOf(dim);
-    if (!info.decoration.adjustElevation) return sea;
-    ext::HeightFn fn;
-    {
-        std::lock_guard lock(generators().mutex);
-        fn = generators().height;
+    struct Override {
+        char const* type;
+        int         radius, gridLength, offset;
+    };
+    static constexpr Override kOverrides[] = {
+        {"twilightforest:lich_tower", 32, 4, 0},     // LichTowerStructure#adjustForTerrain
+        {"twilightforest:hedge_maze", 24, 4, 0},     // HedgeMazeStructure#adjustForTerrain
+        {"twilightforest:naga_courtyard", 40, 4, 2}, // NagaCourtyardStructure#adjustForTerrain: + 2
+    };
+    int  sea      = seaLevelOf(dim);
+    auto provider = heightProvider(); // once: the samples below need no lock
+    for (auto const& o : kOverrides) {
+        if (info.type != o.type) continue;
+        if (!provider) return sea; // no terrain provider yet: every landmark at sea level
+        auto h = cl::adjustForTerrainAroundChunk(x, z, o.radius, o.gridLength, [&](int cx, int cz) {
+            return provider(dim, cx, cz, worldgen::Heightmap::WorldSurfaceWg);
+        });
+        return h ? *h + o.offset : sea;
     }
-    std::optional<int> h;
-    if (fn) h = fn(dim, x, z);
-    if (!h) return sea; // no terrain provider yet
+    if (!info.decoration.adjustElevation || !provider) return sea; // no terrain provider yet: sea level
+    auto h = provider(dim, x, z, worldgen::Heightmap::WorldSurfaceWg);
+    if (!h) return sea;
     return std::clamp(*h, sea + 1, sea + 7);
 }
 
@@ -671,7 +702,8 @@ RecordPtr createStart(Info const& info, int dim, int chunkX, int chunkZ, std::op
 
     auto gen = generatorFor(info.d.key);
     if (gen && gen->layout) {
-        // RandomSource.create(seed + chunkX * 25117L + chunkZ * 151121L)
+        // getFirstPiece's RandomSource.create(seed + chunkX * 25117L + chunkZ * 151121L); what Java
+        // draws from Structure.GenerationContext#random() the layout takes from ext::contextRandom
         core::jrand::LegacyRandom    random(core::landmark::java::chunkSeed(rec->start.seed, chunkX, chunkZ));
         gf::landmark::LayoutContext  ctx{rec->start, random, {}};
         bool                         ok = false;
@@ -753,20 +785,24 @@ bool tryGenerateStructure(Info const& info, int dim, int chunkX, int chunkZ) {
         reviveRecord(existing);
         return true;
     }
-    // LandmarkStructure#findValidGenerationPoint: the main biome at the center of the biome-grid
-    // tile; other structures: the biome at the start position. Only the worldgen biome source here:
-    // this runs on generation threads, where the level's BlockSource must not be touched.
-    std::string biome;
+    // Only the worldgen biome source here: this runs on generation threads, where the level's
+    // BlockSource must not be touched.
     if (info.traits.landmark) {
-        auto col = cl::biomeSampleColumn(chunkX, chunkZ);
-        biome    = worldgen::mainBiomeAt(col.x, col.z);
+        // LandmarkStructure#findValidGenerationPoint: the main biome at the center of the
+        // biome-grid tile decides before the generation point is looked for
+        auto col   = cl::biomeSampleColumn(chunkX, chunkZ);
+        auto biome = worldgen::mainBiomeAt(col.x, col.z);
         if (biome.empty()) biome = worldgen::biomeAt(BlockPos{col.x, seaLevelOf(dim), col.z});
-    } else {
-        biome = worldgen::biomeAt(BlockPos{chunkX * 16 + 8, seaLevelOf(dim), chunkZ * 16 + 8});
+        if (!biomeMatches(info.biomes, biome)) return false;
     }
-    if (!biomeMatches(info.biomes, biome)) return false;
     auto rec = createStart(info, dim, chunkX, chunkZ, std::nullopt, false);
     if (!rec) return false;
+    if (!info.traits.landmark) {
+        // Structure#findValidGenerationPoint: findGenerationPoint, then isValidBiome at the stub's
+        // position (the noise biome at the generation point, its y included)
+        auto const& c = rec->start.center;
+        if (!biomeMatches(info.biomes, worldgen::biomeAt(BlockPos{c.x, c.y, c.z}))) return false;
+    }
     putRecord(rec);
     return true;
 }
@@ -890,9 +926,20 @@ RecordPtr nearestLandmarkOf(int dim, std::string const& key, int blockX, int blo
     // the starts of `key` referencing the center chunk (ChunkAccess#getReferencesForStructure)
     for (auto const& rec : recordsIntersecting(dim, ccx, ccz))
         if (rec->start.key == key && !rec->placed) return rec;
+    // TF reads the grid center chunk only; forceStart's starts (the selftests' stand-in for a grid
+    // start, off the grid) count where their box covers the column. Natural and placed ones never do
     for (auto const& rec : recordsIntersecting(dim, blockX >> 4, blockZ >> 4))
-        if (rec->start.key == key && !rec->placed && rec->start.box.minX <= blockX && blockX <= rec->start.box.maxX && rec->start.box.minZ <= blockZ && blockZ <= rec->start.box.maxZ) return rec;
+        if (rec->forced && !rec->placed && rec->start.key == key && rec->start.box.minX <= blockX && blockX <= rec->start.box.maxX && rec->start.box.minZ <= blockZ
+            && blockZ <= rec->start.box.maxZ)
+            return rec;
     return nullptr;
+}
+
+bool playerBoxReaches(AABB const& box, int x, int y, int z, double inflate) {
+    // AABB(BlockPos).inflate(r): [pos - r, pos + 1 + r]; AABB#intersects is strict on both sides
+    double minX = x - inflate, minY = y - inflate, minZ = z - inflate;
+    double maxX = x + 1.0 + inflate, maxY = y + 1.0 + inflate, maxZ = z + 1.0 + inflate;
+    return box.min.x < maxX && box.max.x > minX && box.min.y < maxY && box.max.y > minY && box.min.z < maxZ && box.max.z > minZ;
 }
 
 std::vector<BlockBox> pieceBoxesAt(Record const& r, int x, int y, int z) {
@@ -970,15 +1017,14 @@ void setConquered(int dimension, BlockPos const& pos, std::string const& key, bo
         fl::markDirty(*rec);
     }
     gf::log().info("landmark: {} at {} {} {} conquered={}", k, rec->start.center.x, rec->start.center.y, rec->start.center.z, conquered);
-    // TFAdvancements.STRUCTURE_CLEARED for the players within 32 blocks (AABB(pos).inflate(32))
+    // TFAdvancements.STRUCTURE_CLEARED for the players within 32 blocks: Level#getEntitiesOfClass(
+    // ServerPlayer, AABB(pos).inflate(32)) takes every player whose bounding box intersects the area
     auto level = ll::service::getLevel();
     if (!level) return;
     std::vector<ActorUniqueID> near;
     level->forEachPlayer([&](Player& p) {
         if (static_cast<int>(p.getDimensionId()) != dimension) return true;
-        auto f = p.getFeetPos();
-        if (f.x >= pos.x - 32.0 && f.x <= pos.x + 33.0 && f.y >= pos.y - 32.0 && f.y <= pos.y + 33.0 && f.z >= pos.z - 32.0 && f.z <= pos.z + 33.0)
-            near.push_back(p.getOrCreateUniqueID());
+        if (fl::playerBoxReaches(p.getAABB(), pos.x, pos.y, pos.z, 32.0)) near.push_back(p.getOrCreateUniqueID());
         return true;
     });
     for (auto id : near)
@@ -1063,28 +1109,77 @@ namespace gf::landmark::ext {
 
 namespace fl = gf::feature::landmark;
 
-double terraformDensity(int dimension, int x, int y, int z) {
-    double sum = 0.0;
-    for (auto const& rec : fl::recordsIntersecting(dimension, x >> 4, z >> 4)) {
-        if (rec->placed) continue; // /place stores no start: no terraforming
-        // WorldgenHooks#gatherCustomTerrain: only within the start's X-Z boundaries
-        if (x < rec->start.box.minX || x > rec->start.box.maxX || z < rec->start.box.minZ || z > rec->start.box.maxZ) continue;
-        if (auto list = fl::terraformersFor(rec->start.key))
-            for (auto const& fn : *list) sum += fn(rec->start, x, y, z);
+namespace {
+/// The starts referencing a chunk (the byChunk index: their box intersects it, as
+/// ChunkGenerator#createReferences records) that terraform, with their terraformers.
+std::vector<std::pair<Start, fl::TerraformerList>> terraformingStarts(int dimension, int chunkX, int chunkZ) {
+    fl::ensureStartsAround(dimension, chunkX, chunkZ);
+    std::vector<std::pair<Start, fl::TerraformerList>> out;
+    for (auto const& rec : fl::recordsIntersecting(dimension, chunkX, chunkZ)) {
+        // /place stores no start, and a reserved site (no generator yet) is no valid start: neither
+        // is among StructureManager#startsForStructure's results
+        if (rec->placed || rec->pieces.empty()) continue;
+        if (auto list = fl::terraformersFor(rec->start.key)) out.emplace_back(rec->start, std::move(list));
     }
-    return sum;
+    return out;
+}
+} // namespace
+
+ChunkTerraformer chunkTerraformer(int dimension, int chunkX, int chunkZ) {
+    // WorldgenHooks#gatherCustomTerrain: every CustomDensitySource start of the chunk, once per chunk;
+    // getCustomDensity adds them up at each position, anywhere in the chunk (no per-block box test)
+    auto starts = terraformingStarts(dimension, chunkX, chunkZ);
+    if (starts.empty()) return {};
+    return [starts = std::move(starts)](int x, int y, int z) {
+        double sum = 0.0;
+        for (auto const& [start, list] : starts)
+            for (auto const& fn : *list) sum += fn(start, x, y, z);
+        return sum;
+    };
 }
 
-bool hasTerraformers(int dimension, int chunkX, int chunkZ) {
-    fl::ensureStartsAround(dimension, chunkX, chunkZ);
-    for (auto const& rec : fl::recordsIntersecting(dimension, chunkX, chunkZ))
-        if (!rec->placed && fl::terraformersFor(rec->start.key)) return true;
-    return false;
+double terraformDensity(int dimension, int x, int y, int z) {
+    auto fn = chunkTerraformer(dimension, x >> 4, z >> 4);
+    return fn ? fn(x, y, z) : 0.0;
 }
+
+bool hasTerraformers(int dimension, int chunkX, int chunkZ) { return !terraformingStarts(dimension, chunkX, chunkZ).empty(); }
 
 void setHeightProvider(HeightFn fn) {
     std::lock_guard lock(fl::generators().mutex);
     fl::generators().height = std::move(fn);
+}
+
+std::optional<int> firstOccupiedHeight(int dimension, int x, int z, worldgen::Heightmap type) { return fl::occupiedHeight(dimension, x, z, type); }
+
+std::optional<int> adjustForTerrain(int dimension, int xMin, int zMin, int xMax, int zMax, int gridLength, worldgen::Heightmap type) {
+    auto provider = fl::heightProvider();
+    if (!provider) return std::nullopt;
+    return core::landmark::adjustForTerrain(xMin, zMin, xMax, zMax, gridLength, [&](int x, int z) { return provider(dimension, x, z, type); });
+}
+
+std::optional<int> adjustForTerrain(int dimension, int xInCenterChunk, int zInCenterChunk, int radiusFromCenterChunk, int gridLength) {
+    auto provider = fl::heightProvider();
+    if (!provider) return std::nullopt;
+    return core::landmark::adjustForTerrainAroundChunk(xInCenterChunk, zInCenterChunk, radiusFromCenterChunk, gridLength, [&](int x, int z) {
+        return provider(dimension, x, z, worldgen::Heightmap::WorldSurfaceWg);
+    });
+}
+
+int seaLevel(int dimension) { return fl::seaLevelOf(dimension); }
+
+std::unique_ptr<core::jrand::WorldgenRandom> contextRandom(Start const& start) {
+    int  chunkX = start.center.x >> 4, chunkZ = start.center.z >> 4;
+    auto chunk  = start.data.is_object() ? start.data.value("chunk", Json::array()) : Json::array();
+    if (chunk.is_array() && chunk.size() == 2 && chunk[0].is_number_integer() && chunk[1].is_number_integer()) {
+        chunkX = chunk[0].get<int>();
+        chunkZ = chunk[1].get<int>();
+    }
+    // Structure.GenerationContext#makeRandom: new WorldgenRandom(new LegacyRandomSource(0L)),
+    // setLargeFeatureSeed(seed, chunkPos.x, chunkPos.z)
+    auto random = std::make_unique<core::jrand::WorldgenRandom>(std::make_unique<core::jrand::LegacyRandom>(0));
+    random->setLargeFeatureSeed(start.seed, chunkX, chunkZ);
+    return random;
 }
 
 double invertedPyramid(Start const& start, int yOffset, int horizontalPadding, int x, int y, int z) {

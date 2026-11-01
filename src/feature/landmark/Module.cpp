@@ -1,7 +1,6 @@
 // GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
 // Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
 //   src/main/java/twilightforest/events/EntityEvents.java (structureSpecialSpawns)
-//   src/main/java/twilightforest/command/TFTeleportCommand.java (setup_structure_hunt's teleport)
 //   src/main/resources/data/twilightforest/function/setup_structure_hunt.mcfunction
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -12,9 +11,10 @@
 //
 // The function twilightforest:setup_structure_hunt is the BP function landmark/setup_structure_hunt
 // (functions are parsed before mods add commands, so it cannot call /twilightforest): it tags the
-// nearest player, switches it to spectator with night vision, and this module sends the tagged
-// player to the Twilight Forest at the same x / z (TF: `execute in twilightforest:twilight_forest
-// run tp @p ~ ~ ~`, with TFTeleportCommand's height scaling).
+// nearest player, switches it to spectator with night vision (particles shown, as TF's `effect give
+// @p minecraft:night_vision infinite`), and this module sends the tagged player to the Twilight
+// Forest at the same x / y / z (TF: `execute in twilightforest:twilight_forest run tp @p ~ ~ ~`).
+#include <algorithm>
 #include <atomic>
 
 #include "ll/api/event/EventBus.h"
@@ -31,7 +31,6 @@
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/landmark/Internal.h"
 #include "feature/spawn/Spawn.h"
-#include "game/Blocks.h"
 #include "game/WorldDb.h"
 #include "mod/Config.h"
 #include "mod/I18n.h"
@@ -83,17 +82,17 @@ void structureHunt(Level& level) {
         if (!p) continue;
         p->removeTag(kStructureHuntTag);
         auto tf = gf::world::twilight();
-        auto* from = game::regionOf(static_cast<int>(p->getDimensionId()));
-        if (!tf || !from) {
+        if (!tf) {
             p->sendMessage(trFor(*p, "commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable."));
             continue;
         }
-        auto   pos = p->getFeetPos();
-        double minY = from->getMinHeight(), maxY = from->getMaxHeight();
-        double tfMin = gf::world::kMinY, tfMax = gf::world::kMinY + gf::world::kHeight;
-        double y     = (pos.y - minY) / (maxY - minY) * (tfMax - tfMin) + tfMin;
-        gf::world::teleport(*p, *tf, Vec3{pos.x, static_cast<float>(y), pos.z}, 0.0f);
-        log().info("landmark: setup_structure_hunt sent {} to the Twilight Forest", p->getRealName());
+        // `execute in twilightforest:twilight_forest run tp @p ~ ~ ~`: the same x / y / z (and facing)
+        // in the Twilight Forest; only a position below its floor is lifted onto the lowest layer, so
+        // the player does not start in the void
+        auto pos = p->getFeetPos();
+        pos.y    = std::max(pos.y, static_cast<float>(gf::world::kMinY));
+        gf::world::teleport(*p, *tf, pos, p->getRotation().y);
+        log().info("landmark: setup_structure_hunt sent {} to the Twilight Forest at {} {} {}", p->getRealName(), pos.x, pos.y, pos.z);
     }
 }
 
@@ -153,4 +152,5 @@ private:
 } // namespace gf::feature::landmark
 
 GF_REGISTER_CONFIG("landmark", gf::feature::landmark::LandmarkConfig);
-GF_REGISTER_MODULE(gf::feature::landmark::LandmarkModule);
+// a W0b contract implementation: installed before every W1 unit (their install may read descriptors)
+GF_REGISTER_MODULE_ORDERED(gf::feature::landmark::LandmarkModule, gf::ModuleOrder::Contracts);

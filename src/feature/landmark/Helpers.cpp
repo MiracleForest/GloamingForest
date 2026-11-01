@@ -12,6 +12,8 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/locale/I18n.h"
+#include "mc/locale/Localization.h"
 #include "mc/network/packet/SpawnParticleEffectPacket.h"
 #include "mc/network/packet/SpawnParticleEffectPacketPayload.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
@@ -42,9 +44,9 @@ bool stubHit(std::string const& name) {
     return false;
 }
 
-std::string structureName(std::string const& key, Player const* player) {
-    auto [ns, path] = splitKey(key);
-    // fallback: "lich_tower" -> "Lich Tower"
+namespace {
+/// "lich_tower" -> "Lich Tower".
+std::string prettyPath(std::string const& path) {
     std::string pretty;
     bool        up = true;
     for (char c : path) {
@@ -56,8 +58,36 @@ std::string structureName(std::string const& key, Player const* player) {
             up = false;
         }
     }
-    auto langKey = "structure." + ns + "." + path;
+    return pretty;
+}
+} // namespace
+
+std::string structureName(std::string const& key, Player const* player) {
+    auto [ns, path] = splitKey(key);
+    auto langKey    = "structure." + ns + "." + path;
+    auto pretty     = prettyPath(path);
     return player ? trFor(*player, langKey, pretty) : tr(langKey, pretty);
+}
+
+std::string entityName(std::string const& id, Player const* player) {
+    auto [ns, path] = splitKey(id);
+    auto locale     = player ? localeOf(*player) : std::string{};
+    // Java's key (EntityType#getDescriptionId): TF's names, imported from TF's lang files per locale
+    auto javaKey = "entity." + ns + "." + path;
+    if (hasTranslation(javaKey, locale)) return std::string(translate(javaKey, path, locale));
+    // Bedrock's key: entity.<path>.name for vanilla entities, entity.<ns>:<path>.name otherwise, in the
+    // game's language (vanilla's texts plus the resource packs' names PackDeployer appends on BDS)
+    auto bedrockKey = "entity." + (ns == "minecraft" ? path : ns + ":" + path) + ".name";
+    if (hasTranslation(bedrockKey, locale)) return std::string(translate(bedrockKey, path, locale));
+    try {
+        auto&                                i18n = getI18n();
+        std::shared_ptr<Localization const> loc;
+        if (!locale.empty()) loc = i18n.getLocaleFor(locale);
+        if (!loc) loc = i18n.getCurrentLanguage();
+        auto name = i18n.get(bedrockKey, loc);
+        if (!name.empty() && name != bedrockKey) return name;
+    } catch (...) {}
+    return prettyPath(path);
 }
 
 Actor* spawnEntity(BlockSource& region, std::string const& id, float x, float y, float z, std::function<void(Actor&)> init) {

@@ -4,21 +4,25 @@
 // twilightforest:progress_naga, hint book "lichtower") stands in for the W1 structures.
 //
 //   landmark.grid             the grid and TF's structure records (descriptors with every TF field,
-//                             structure sets, the decoration step indexes)
+//                             structure sets, the decoration step indexes, stable over a reload),
+//                             entity names, the layouts' context random
 //   landmark.protection       forceStart + protection: break / use / multi-place refused for a
 //                             non-qualified survival player, boxes + packets shown, allowed after
 //                             the grant (the advancement seam now, the progression store once F10
 //                             lands), creative bypass, /place'd structures never protected
-//   landmark.conquer          setConquered on a forced start, the conquered flag persisted
+//   landmark.conquer          setConquered on a forced start, the conquered flag persisted; an
+//                             off-grid natural start untouched; structure_cleared's player boxes
 //   landmark.persistence      a start written to the world DB reads back (pieces, flags)
 //   landmark.hint_book        the hint book written for a player, rewritten for another language
 //   landmark.hint_drop        the hint mob carries the book and always drops it (drop chance 2.0)
-//   landmark.clearance        decorationAllowed / featureBlocked / startsIntersecting / spawns
+//   landmark.clearance        decorationAllowed / featureBlocked / startsIntersecting / spawns, and
+//                             the terraformers over every chunk a start references
 //   landmark.persist_1_write  (server scenario, before a restart) a forced, conquered start
 //   landmark.persist_2_read   (after the restart) that start, then removed; in a 'full' run the
 //                             two run back to back and leave nothing behind
 //   landmark.display          (client scenario) keeps protection boxes on show for a screenshot
 #include <algorithm>
+#include <atomic>
 #include <optional>
 #include <vector>
 
@@ -158,6 +162,7 @@ GF_REGISTER_SELFTEST("landmark.grid", [](Context& ctx) {
         ctx.check(lm::descriptor(std::string("twilightforest:") + k) == nullptr, std::string("no descriptor for ") + k);
     auto const* lich = lm::descriptor("twilightforest:lich_tower");
     ctx.require(lich != nullptr, "lich tower descriptor");
+    auto const* lichInfoBefore = fl::info("twilightforest:lich_tower");
     ctx.check(lich->lockAdvancements == std::vector<std::string>{kLock}, "the lich tower is locked by progress_naga");
     ctx.check(lich->hintBookKey == "twilightforest.book.lichtower", "its hint book is the lich tower's");
     ctx.check(lich->conquerable && lich->icon == "twilightforest:lich_tower", "conquerable, with its map icon");
@@ -204,6 +209,36 @@ GF_REGISTER_SELFTEST("landmark.grid", [](Context& ctx) {
     }
     auto const* swampTree = lm::descriptor("twilightforest:swamp_hollow_tree");
     ctx.check(swampTree && swampTree->extra.contains("allow_in_water"), "swamp hollow tree: allow_in_water");
+    // CampStructure / FallenTrunkStructure hard-code their clearance in Java: it applies, but it is no
+    // field of TF's record (extra keeps the record as it is; the fixed one sits under extra.gf)
+    for (auto const* k : {"camp", "fallen_trunk"}) {
+        auto const* d = lm::descriptor(std::string("twilightforest:") + k);
+        ctx.check(d && !d->extra.contains("decoration_clearance") && d->extra["gf"].contains("fixed_decoration_clearance") && !d->surfaceDecorationsAllowed
+                      && d->undergroundDecorationsAllowed,
+                  std::string(k) + ": the Java clearance applies, outside the TF record");
+    }
+    // the descriptors load once: a second install keeps every pointer handed out
+    fl::loadDescriptors();
+    ctx.check(lm::descriptor("twilightforest:lich_tower") == lich && fl::info("twilightforest:lich_tower") == lichInfoBefore,
+              "loading the descriptors again keeps their addresses");
+    // EntityType#getDescription for /tf info's spawn list: names, not ids
+    ctx.check(fl::entityName("minecraft:zombie", nullptr) == "Zombie", "minecraft:zombie is \"" + fl::entityName("minecraft:zombie", nullptr) + "\"");
+    ctx.check(fl::entityName("minecraft:wither_skeleton", nullptr) == "Wither Skeleton",
+              "minecraft:wither_skeleton is \"" + fl::entityName("minecraft:wither_skeleton", nullptr) + "\"");
+    ctx.check(fl::entityName("twilightforest:death_tome", nullptr) == "Death Tome",
+              "twilightforest:death_tome is \"" + fl::entityName("twilightforest:death_tome", nullptr) + "\"");
+    // Structure.GenerationContext#random() for layouts: one deterministic source per start chunk
+    {
+        lm::Start s;
+        s.key    = "twilightforest:lich_tower";
+        s.seed   = 1234;
+        s.center = {0, 100, 0, 200};
+        s.data   = JsonT{{"chunk", JsonT::array({6, 12})}};
+        auto a = gf::landmark::ext::contextRandom(s), b = gf::landmark::ext::contextRandom(s);
+        bool same = a && b;
+        for (int i = 0; same && i < 4; ++i) same = a->nextLong() == b->nextLong();
+        ctx.check(same, "contextRandom: the same start gives the same sequence");
+    }
     // ChunkGenerator#applyBiomeDecoration's index: every structure of the step before it in registry
     // order (path, then namespace), vanilla's included: lich_tower follows 5 vanilla and 9 TF
     // surface structures, labyrinth buried_treasure and knight_stronghold
@@ -342,6 +377,21 @@ GF_REGISTER_SELFTEST("landmark.conquer", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.check(doc && (*doc)[kFixture].value("conquered", false), "the flag is in the world DB");
     lm::setConquered(center.dim, gf::game::blockPos(at(center, 0, 40, 0)), kFixture, false);
     ctx.check(!lm::isConquered(rec->start), "and can be reactivated");
+    // LandmarkUtil#locateNearestLandmarkStart reads the grid center chunk only: a start off the grid
+    // that is no selftest stand-in (not forced) is never conquered from its own position
+    {
+        auto natural = fl::createStart(*fixture, center.dim, center.x >> 4, center.z >> 4, at(center, 0, 40, 0), false);
+        ctx.require(natural != nullptr, "a natural fixture start");
+        fl::putRecord(natural);
+        lm::setConquered(center.dim, gf::game::blockPos(at(center, 0, 40, 0)), kFixture, true);
+        ctx.check(!lm::isConquered(natural->start), "an off-grid natural start is not conquered");
+    }
+    // structure_cleared goes to the players whose bounding box meets AABB(pos).inflate(32)
+    auto box = [](float x, float y, float z) { return AABB{Vec3{x - 0.3f, y, z - 0.3f}, Vec3{x + 0.3f, y + 1.8f, z + 0.3f}}; };
+    ctx.check(fl::playerBoxReaches(box(0.5f, -33.5f, 0.5f), 0, 0, 0, 32.0), "a player whose head reaches into the area counts (feet 33.5 below)");
+    ctx.check(fl::playerBoxReaches(box(33.2f, 0.0f, 0.5f), 0, 0, 0, 32.0), "a player 0.3 beyond the side counts");
+    ctx.check(!fl::playerBoxReaches(box(0.5f, -34.0f, 0.5f), 0, 0, 0, 32.0), "a player entirely below does not (head at -32.2)");
+    ctx.check(!fl::playerBoxReaches(box(33.4f, 0.0f, 0.5f), 0, 0, 0, 32.0), "nor one beyond the side");
 });
 
 GF_REGISTER_SELFTEST("landmark.persistence", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -459,6 +509,36 @@ GF_REGISTER_SELFTEST("landmark.clearance", [](Context& ctx) -> ll::coro::CoroTas
     // controlled spawns: list 0 inside, nothing outside, nothing once conquered
     auto spawns = gf::landmark::ext::potentialSpawns(center.dim, "monster", center.x, center.y + 1, center.z);
     ctx.check(!spawns.has_value(), "the fixture's pieces have no spawn index (no list)");
+    // terraforming (WorldgenHooks#gatherCustomTerrain): a start's terraformer counts everywhere in the
+    // chunks it references, outside its box too, and nowhere else
+    static std::atomic<int> terraformCalls{0};
+    static std::atomic<bool> terraformActive{false};
+    static bool              terraformRegistered = false;
+    if (!terraformRegistered) {
+        terraformRegistered = true;
+        lm::addTerraformer(kFixture, [](lm::Start const&, int, int, int) {
+            if (!terraformActive.load()) return 0.0;
+            ++terraformCalls;
+            return 1.0;
+        });
+    }
+    terraformActive = true;
+    struct Off {
+        ~Off() { terraformActive = false; }
+    } off;
+    auto const& box   = rec->start.box;
+    int         cx    = center.x >> 4, cz = center.z >> 4;
+    int         edgeX = (cx << 4) < box.minX ? (cx << 4) : (cx << 4) + 15; // a column of the chunk outside the box
+    ctx.require(edgeX < box.minX || edgeX > box.maxX, "a column of the start chunk lies outside the box");
+    ctx.check(gf::landmark::ext::hasTerraformers(center.dim, cx, cz), "the start chunk has a terraformer");
+    ctx.check(gf::landmark::ext::terraformDensity(center.dim, center.x, center.y, center.z) == 1.0, "inside the box it applies");
+    ctx.check(gf::landmark::ext::terraformDensity(center.dim, edgeX, center.y, center.z) == 1.0, "outside the box, in a referenced chunk, it applies too");
+    auto chunkFn = gf::landmark::ext::chunkTerraformer(center.dim, cx, cz);
+    ctx.check(chunkFn && chunkFn(edgeX, center.y - 30, (cz << 4) + 15) == 1.0, "chunkTerraformer: the whole chunk, any height");
+    int farCx = ((box.maxX + 1) >> 4) + 2; // two chunks past the box: no reference
+    ctx.check(!gf::landmark::ext::hasTerraformers(center.dim, farCx, cz) && gf::landmark::ext::terraformDensity(center.dim, farCx << 4, center.y, center.z) == 0.0,
+              "a chunk the box does not reach has none");
+    ctx.check(terraformCalls.load() >= 3, "the terraformer was evaluated");
 });
 
 GF_REGISTER_SELFTEST("landmark.persist_1_write", [](Context& ctx) -> ll::coro::CoroTask<> {

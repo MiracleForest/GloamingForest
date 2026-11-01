@@ -39,7 +39,9 @@
 #include "core/landmark/Clearance.h"
 #include "core/landmark/Placement.h"
 #include "feature/landmark/Landmark.h"
+#include "feature/worldgen/Worldgen.h"
 
+class AABB;
 class Actor;
 class BlockPos;
 class BlockSource;
@@ -112,7 +114,8 @@ struct StructureSet {
     std::vector<std::pair<std::string, int>> structures; ///< (structure key, weight)
 };
 
-/// Loads every descriptor and structure set (mod data dir), replacing the current ones.
+/// Loads every descriptor and structure set (mod data dir), once per process; the lookups below load
+/// them on first use too. Entries are only ever added, so their pointers stay valid.
 void loadDescriptors();
 [[nodiscard]] Info const* info(std::string const& key);
 /// Every descriptor key, sorted.
@@ -122,8 +125,10 @@ void loadDescriptors();
 /// Adds a descriptor at run time (selftest fixtures; an existing key is kept, info() pointers stay
 /// valid). Not for W1 units.
 void registerInfo(Info info);
-/// Fills `info.d` and the parsed fields from a TF structure record (+ its structure set).
-[[nodiscard]] Info parseRecord(std::string const& key, Json const& record);
+/// Fills `info.d` and the parsed fields from a TF structure record. `fixedClearance`: the
+/// DecorationConfig a Java class hard-codes (CampStructure, FallenTrunkStructure), used when the
+/// record has no decoration_clearance; it stays out of the record (Descriptor::extra.gf only).
+[[nodiscard]] Info parseRecord(std::string const& key, Json const& record, Json const* fixedClearance = nullptr);
 /// "twilightforest:lich_tower" from "lich_tower" or the full id.
 [[nodiscard]] std::string normalizeKey(std::string const& id);
 /// A resource location's (namespace, path); "minecraft" without a namespace, as ResourceLocation.
@@ -201,7 +206,9 @@ void clearRecords();
 /// (the selftests' stand-in for a grid start; never a /twilightforest place one) whose box contains
 /// it.
 [[nodiscard]] RecordPtr nearestLandmark(int dim, int chunkX, int chunkZ, std::optional<GlobalPos> pos = std::nullopt);
-/// LandmarkUtil#locateNearestLandmarkStart(level, structureKey, pos) for a structure key.
+/// LandmarkUtil#locateNearestLandmarkStart(level, structureKey, pos) for a structure key: the start of
+/// `key` referencing the nearest landmark center chunk; besides, only a forceStart start of `key`
+/// (selftests) whose box covers the column.
 [[nodiscard]] RecordPtr nearestLandmarkOf(int dim, std::string const& key, int blockX, int blockZ);
 
 /// The world seed the grid and placements use (the overworld seed, as TF).
@@ -221,6 +228,11 @@ void ensureStartsIn(int dim, int chunkX, int chunkZ);
 void ensureStartsAround(int dim, int chunkX, int chunkZ);
 /// Whether the structure sets of start chunk (cx, cz) were evaluated (StructureCheck's "known").
 [[nodiscard]] bool startsEvaluated(int dim, int chunkX, int chunkZ);
+/// ChunkGenerator#getFirstOccupiedHeight through the terrain provider of ext::setHeightProvider
+/// (nullopt: none registered yet).
+[[nodiscard]] std::optional<int> occupiedHeight(int dim, int x, int z, worldgen::Heightmap type);
+/// The registered terrain height provider, copied (empty: none); fetch it once for many samples.
+[[nodiscard]] std::function<std::optional<int>(int dim, int x, int z, worldgen::Heightmap type)> heightProvider();
 /// The index of a structure inside its decoration step: ChunkGenerator#applyBiomeDecoration counts
 /// every Structure registry entry of the step, vanilla's 34 included, in registry order (resource
 /// locations sorted path first, then namespace).
@@ -237,6 +249,10 @@ int placeLoaded(Record const& record, BlockSource& region);
 
 /// Adds the Starts and Pieces stages to the worldgen pipeline (once).
 void registerWorldgenStages();
+
+/// Whether an entity bounding box intersects AABB(block (x, y, z)).inflate(inflate): Level
+/// #getEntitiesOfClass's test (LandmarkUtil#markStructureConquered's players within 32 blocks).
+[[nodiscard]] bool playerBoxReaches(AABB const& box, int x, int y, int z, double inflate);
 
 /// The start's protected piece boxes containing pos (TF: pieces whose box contains pos).
 [[nodiscard]] std::vector<BlockBox> pieceBoxesAt(Record const& r, int x, int y, int z);
@@ -308,6 +324,10 @@ void resetHints();
 /// "Lich Tower": the structure's name (structure.<ns>.<path>) in the player's language (or the
 /// default language without a player).
 [[nodiscard]] std::string structureName(std::string const& key, Player const* player);
+/// EntityType#getDescription().getString(): an entity's name ("minecraft:zombie" -> "Zombie") in the
+/// player's language: TF's names from the mod language (entity.<ns>.<path>), else the game's own
+/// (Bedrock's entity.<id>.name: vanilla's and the resource packs'), else the id's path, capitalized.
+[[nodiscard]] std::string entityName(std::string const& id, Player const* player);
 /// Spawns an entity by id: the spawn contract, or the engine's spawner while that is a stub.
 Actor* spawnEntity(BlockSource& region, std::string const& id, float x, float y, float z, std::function<void(Actor&)> init = {});
 /// Emits particle `id` at each point for the players near them (the fx contract, or the particle
