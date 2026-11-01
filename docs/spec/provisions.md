@@ -61,8 +61,9 @@ Nutrition / saturation modifier (TF FoodProperties; saturation = nutrition x mod
 | `tropical_fish_jerky`, `fugu_jerky` | 2 | 0.6 | |
 | `experiment_115` (item) | 4 | 0.3 | eating awards `e115_slices_eaten` |
 
-Jerkies are made on drying racks / campfires per the recipes in Appendix A and the drying recipe list of U4 (by
-string). Cooking recipes for venison and meef (furnace, smoker, campfire) are in Appendix A with their unlock
+Jerkies and stale bread are made only on drying racks: the `twilightforest:drying` recipes `<x>_jerky` and
+`stale_bread` belong to U4 (R4) and are referenced here by string; there are no furnace or campfire recipes for
+them. Cooking recipes for venison and meef (furnace, smoker, campfire) are in Appendix A with their unlock
 advancements.
 
 `stale_bread`: a `CustomDamageSwordItem` (wood tier, +3 attack, -2.4 speed, attribute tooltip hidden, stack 1) whose
@@ -77,9 +78,11 @@ attacks use damage type `twilightforest:stale_sandwich` (death message from F10'
   and it is food, eats it instead; sneaking passes.
 - Using the item on the block (not sneaking): adds a slice (bites - 1, fail at 0), block place sound, consumes it,
   placed-block trigger. Redstone on a full, non-regenerating block: sets `regenerate`, consumes it, stat used.
-- Sneak-use (non-regenerating): takes a slice back (bites + 1 or removes the last), `entity.item.pickup` (0.5, 1),
+- Sneak-use with both hands empty (sneaking with any held item skips block use; non-regenerating): takes a slice
+  back (bites + 1 or removes the last), `entity.item.pickup` (0.5, 1),
   gives an item (not in creative).
-- Empty use (player can eat): eat 4 / 0.3, stat `e115_slices_eaten`, `entity.generic.eat` (0.5, 0.9 + rand*0.1),
+- Otherwise (empty hand, any other item, redstone that does not apply, sneaking on a regenerating block) and the
+  player can eat: eat 4 / 0.3, stat `e115_slices_eaten`, `entity.generic.eat` (0.5, 0.9 + rand*0.1),
   bites + 1 or removes the last slice, consume-item trigger with a stack of (8 - bites) items, stat used.
 - Random tick: a regenerating block regrows one slice (bites - 1) until full.
 - Comparator: (8 - bites) + 7 if regenerating; a regenerating block is a redstone source of 15 - 2*bites.

@@ -149,11 +149,15 @@ vanilla logs) can be used as a **jar lid** (`JarBlockEntity.addLid`, consumed by
 - Loot fill: `fillFromLootTable(table, seed)` sets the held item from a chest-type loot roll (used by camp
   structures through the structure marker handler; U19 owns the table, U4 provides the fill hook).
 - Drying recipes (`twilightforest:drying`, JSON `{input, result, filter_time}`; not shown in the recipe book,
-  `isSpecial`), 22 in total: `drying/kelp` (kelp -> dried kelp, 3600 t), `drying/mud_to_clay` (mud -> clay, 7200 t),
-  `drying/sapling_to_dead_bush` (`#minecraft:saplings` -> dead bush, 7200 t), `drying/sponge` (wet sponge -> sponge,
-  2400 t), `tanned_leather` (treated leather, 6000 t), `gelatinous_slime_drop` (slime ball, 6000 t),
-  `gelatinous_maze_slime_drop` (`twilightforest:maze_slime_ball`, 6000 t) and the 15 `minecraft:dead_*_coral*`
-  recipes (live coral, coral block or fan -> its dead form in 40 t). Full list in the Recipes table of Appendix A.
+  `isSpecial`), 20 TF recipes plus 15 coral recipes: `drying/kelp` (kelp -> dried kelp, 3600 t),
+  `drying/mud_to_clay` (mud -> clay, 7200 t), `drying/sapling_to_dead_bush` (`#minecraft:saplings` -> dead bush,
+  7200 t), `drying/sponge` (wet sponge -> sponge, 2400 t), `tanned_leather` (treated leather, 6000 t),
+  `gelatinous_slime_drop` (slime ball, 6000 t), `gelatinous_maze_slime_drop` (`twilightforest:maze_slime_ball`,
+  6000 t), `stale_bread` (bread -> stale bread, 6000 t) and the 12 jerkies `<x>_jerky` (6000 t each): beef,
+  chicken, cod, fugu (pufferfish), meef (raw meef), monster (rotten flesh), mutton, pork (porkchop), rabbit, salmon,
+  tropical_fish, venison (raw venison) -> the U10 jerky item; plus the 15 `minecraft:dead_*_coral*` recipes (live
+  coral, coral block or fan -> its dead form in 40 t). Inputs, results and times of every one are in the Recipes
+  table of Appendix A (all owned by U4, R4).
 
 ### 3.4 Hollow logs (54 blocks, 18 items)
 
@@ -186,8 +190,9 @@ climbable block has no item of its own (picks the hollow log item).
 - Loot (all three): Silk Touch -> the hollow log item, otherwise **2-4 sticks** (+ Fortune uniform bonus 1); plus the
   content: moss/moss_and_grass/snow/vine only with Silk Touch (moss patch, short grass, snowball, vine), ladders
   always drop the ladder.
-- Vanilla-wood hollow logs: `hollow_vangrove_log_*` use explicit properties (`ignitedByLava`, COLOR_RED,
-  `strength(2.0)`, WOOD) instead of copying mangrove wood.
+- Vanilla-wood hollow logs: `hollow_vangrove_log_vertical` and `hollow_vangrove_log_climbable` use explicit
+  properties (`ignitedByLava`, COLOR_RED, `strength(2.0)`, WOOD) instead of copying stripped mangrove wood;
+  `hollow_vangrove_log_horizontal` copies `Blocks.MANGROVE_WOOD` (`ofFullCopy`).
 
 ### 3.5 Leather, tannin and slime drops
 
@@ -621,7 +626,7 @@ Block states come from TF's blockstate JSON (`multipart:` lists only the propert
 
 | Tag | Members (TF generated JSON) |
 |---|---|
-| `block/#twilightforest:banisters` | oak_banister, spruce_banister, birch_banister, jungle_banister, acacia_banister, dark_oak_banister, crimson_banister, warped_banister, vangrove_banister, bamboo_banister, cherry_banister, twilight_oak_banister, canopy_banister, mangrove_banister, dark_banister, time_banister, transformation_banister, mining_banister, sorting_banister (furnace fuel 300 t) |
+| `block/#twilightforest:banisters` | oak_banister, spruce_banister, birch_banister, jungle_banister, acacia_banister, dark_oak_banister, crimson_banister, warped_banister, vangrove_banister, bamboo_banister, cherry_banister, twilight_oak_banister, canopy_banister, mangrove_banister, dark_banister, time_banister, transformation_banister, mining_banister, sorting_banister |
 | `block/#twilightforest:canopy_logs` | canopy_log, stripped_canopy_log, canopy_wood, stripped_canopy_wood |
 | `block/#twilightforest:chests` | twilight_oak_chest, canopy_chest, mangrove_chest, dark_chest, time_chest, transformation_chest, mining_chest, sorting_chest |
 | `block/#twilightforest:darkwood_logs` | dark_log, stripped_dark_log, dark_wood, stripped_dark_wood |

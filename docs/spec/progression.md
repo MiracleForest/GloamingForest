@@ -9,7 +9,8 @@ flags, criteria, requirements, rewards); Appendix B the strings.
 
 - The 45 TF advancements (`twilightforest:<id>`, R21: U14 owns every advancement JSON and its criteria; other units
   fire their triggers by string through `progression::trigger`, recipe-unlock advancements belong to their recipe's
-  unit) and their presentation: the advancement tab (root `twilightforest:root`... see the parent chain in Appendix A),
+  unit) and their presentation: the advancement tab (root `twilightforest:root`, earned by `in_tf` or `make_portal`; the parent chain
+  of the other 44 is in Appendix A),
   advancement toasts, the "advancement required" toast and the locked-biome toast.
 - **Biome progression enforcement**: registry `twilightforest:restrictions` (9 entries `restrictions/<biome>`), the
   enforcement types (darkness, hunger, fire, frost, acid_rain), the gamerule `tfEnforcedProgression` and its client
@@ -95,8 +96,8 @@ applies to a player in that biome until they have **all** listed advancements.
   spectator: if the biome at the player has an unmet restriction, run its enforcement and try a structure hint for
   the hint structure (F6's `StructureHints.tryHintForStructure`, by string).
 - Enforcements (each checks the player's own tick counter and that the tick rate runs normally):
-  - `darkness`: every 60 ticks Darkness for 200 ticks, amplifier = (int) multiplier, visible particles off/ambient
-    (`MobEffectInstance(DARKNESS, 200, m, false, true)`);
+  - `darkness`: every 60 ticks Darkness for 200 ticks, amplifier = (int) multiplier, not ambient, particles and
+    icon visible (`MobEffectInstance(DARKNESS, 200, m, false, true)`);
   - `hunger`: every 60 ticks Hunger 100 ticks, amplifier = current amplifier + m (or m);
   - `fire`: every 60 ticks set on fire for (int) m seconds;
   - `frost`: every 60 ticks `twilightforest:frosted` 100 ticks, amplifier (int) m;

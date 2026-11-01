@@ -58,8 +58,9 @@ EnchantedForestVines,FallenLeaves,HugeLilypad,HugeWaterLily,UndergroundPlant}Fea
 
 States: `age` 0..3 (`AGE_3`, default 0) and `layers` 0..8 (`SnowLoggable.SNOW_LAYERS`, default 0). Properties
 (Appendix A): sound GRASS (oreberries METAL), `destroyTime(0.4)`, random ticks, dynamic shape, `noOcclusion`; shade
-brightness 1.0. Shapes: age 0 box(4,0,4, 12,10,12); age 1 box(2,0,2, 14,14,14); age 2-3 full block; each plus the
-snow layer box(0,0,0, 16, 2*layers, 16). Push reaction DESTROY while age < 2.
+brightness 1.0. Shapes: age 0 box(4,0,4, 12,8,12) without snow, box(4,0,4, 12,10,12) plus the snow layer box
+(0,0,0, 16, 2*layers, 16) with snow; age 1 box(2,0,2, 14,12,14) without snow, box(2,0,2, 14,14,14) plus the snow
+layer box with snow; age 2-3 full block (`SMALL_BUSH_SHAPES` / `MEDIUM_BUSH_SHAPES`). Push reaction DESTROY while age < 2.
 
 - Survival: the block below must match the bush's "placed on" tag, or be the same bush at age >= 2 (bushes stack).
   Tags: overworld bushes `#twilightforest:tf_berry_bushes_survive`; dark tower bushes
@@ -78,7 +79,8 @@ snow layer box(0,0,0, 16, 2*layers, 16). Push reaction DESTROY while age < 2.
   age >= 2 entities collide with box(0.001,0,0.001, 15.999,15.999,15.999); path type DANGER_OTHER, not pathfindable.
   Non-essence oreberries survive only below raw brightness **13** and grow only below **10**; `essence_oreberry`
   ignores light.
-- Harvest: right-click (no item) on age 3 -> rolls the bush's berry loot table
+- Harvest: use on age 3 with an empty hand or any main-hand item other than snow layers (`useItemOn` passes to
+  `useWithoutItem`; snow layers add a layer instead; sneaking with an item skips the block) -> rolls the bush's berry loot table
   (`twilightforest:blocks/<bush>_berries`, e.g. `blocks/raspberry_bush_berries`, `blocks/iron_oreberry_bush_berries`,
   `blocks/essence_berry_bush_berries`; Appendix A; block loot context with an empty tool) straight into the player's inventory, sound
   `block.sweet_berry_bush.pick_berries` (volume 1, pitch 0.8 + rand*0.4), age -> 2, game event block_change.

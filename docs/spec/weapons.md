@@ -67,7 +67,9 @@ fall), `dispenser/{TFDispenserBehaviors,FeatherFanDispenseBehavior,CrumbleDispen
 ### 3.2 Crumble horn (`CrumbleHornItem`)
 
 Durability 1024, RARE, TOOT_HORN animation, use duration 72000; use plays `entity.twilightforest.quest_ram.ambient`
-(1, 0.8). While held, every 5th use tick after the first 10: plays the sound again and crumbles a 4x4x4 box
+(1, 0.8). While held, on every use tick whose remaining-tick count is a multiple of 5 and above 10 (`onUseTick`
+count = remaining ticks, 72000 at the start, so from the first tick on, every 5 ticks): plays the sound again and
+crumbles a 4x4x4 box
 (center = eye + look*3, from center-2 to center+1). For each block with a `twilightforest:crumble_horn` data-map entry
 (`{result, chance_to_crumble}`, Appendix A): break event must pass; if result is air: with the chance, players break
 it as if harvested (only if they can harvest it, drops via playerDestroy, destroy particles), non-players destroy it

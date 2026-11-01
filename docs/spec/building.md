@@ -169,7 +169,10 @@ particle per tick at a random point in the block. Server, difficulty not peacefu
 the block below when its collision shape is empty, else on the spawner; random yaw; `finalizeSpawn` with reason
 SPAWNER; home/restriction point = the spawner position) and, if it was added, destroy the spawner without drops.
 Per-boss rules (the boss units implement them through `registerSpawner`): naga `crit`, range 50; lich
-`twilightforest:ominous_flame`, player must be above y-4, spawns on the first solid block below, attack cooldown 40;
+`twilightforest:ominous_flame`, player must be above y-4; from the spawner it walks down while the block below is
+air (stops at the minimum build height), then moves up one, so the lich spawns two blocks above the first non-air
+block below (one above the spawner when it stands on a block); restriction point there, attack cooldown 40,
+extinguish timer set;
 hydra `flame`, range 50; ur-ghast redstone dust, player above y-4; knight phantoms `ominous_flame`, 6 phantoms in a
 circle, player above y-2; snow queen `twilightforest:snow`, player above y-4; minoshroom `crimson_spore`, player below
 y+4; alpha yeti `falling_water`, player above y-4; final boss `twilightforest:annihilate`, never spawns (PlateauBoss

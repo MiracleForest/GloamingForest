@@ -146,8 +146,11 @@ Only for real, non-creative, non-spectator players; server side.
   (`GENERIC_9x5`), comparator = container fill. Using a charm of keeping III on a damaged casket repairs one level
   (sound `block.twilightforest.casket.repair` 0.5, 0.9 + rand*0.1, consumes the charm); otherwise opens the menu (not
   when solidly logged). Open / close sounds `...casket.open` / `...casket.close` (0.5, 0.9 + rand*0.1). Locked
-  caskets (owner set, not empty) can be opened or broken only by the owner or permission level 3; others get
-  `block.twilightforest.casket.locked` (red, action bar) and `...casket.locked` (0.5, 0.5). Breaking (survival, block
+  caskets (owner set, `SkullChestBlockEntity.canOpen`, empty or not) open only for the owner or permission level
+  3; others get `block.twilightforest.casket.locked` (red, action bar) and `...casket.locked` (0.5, 0.5).
+  Breaking an owned casket that is not empty is cancelled (`EntityEvents.onCasketBreak`, no message) unless the
+  player has permission level 3 **and** is the owner (TF's `!op || !owner` test; keep it); an empty one breaks
+  normally. Breaking (survival, block
   drops on) drops the casket item with its damage (`casket_damage`) and custom name, plus the logged block; contents
   spill. Item names: `chipped_keepsake_casket` (1), `damaged_keepsake_casket` (2). Placing restores the damage.
   Renderer (`KeepsakeCasketRenderer` < `SkullChestRenderer`, layer `TFModelLayers.KEEPSAKE_CASKET`): textures

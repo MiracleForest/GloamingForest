@@ -65,8 +65,10 @@ layer `twilightforest:travellers`. All pieces carry `twilightforest:travellers_a
   `entity.item.break` to the wearer. At max damage - 1 the piece is **broken**: name gets `travellers_gear.broken`,
   its attribute modifiers are moved to `stored_broken_attributes` and cleared (restored when repaired), and every
   modifier except `auto_repair` is inactive.
-- Not enchantable at a table, but any book enchants it on an anvil (`isBookEnchantable` true, `supportsEnchantment`
-  false, `isPrimaryItemFor` false); two travellers' pieces cannot be combined on an anvil. A grindstone with one piece
+- Not enchantable at a table (`isEnchantable` false) and, in survival, not on an anvil either: `isBookEnchantable`
+  true lets a book pass the first check, but `supportsEnchantment` false for every enchantment makes the anvil drop
+  each book enchantment (only creative players, for whom every enchantment counts as supported, can apply books);
+  `isPrimaryItemFor` false; two travellers' pieces cannot be combined on an anvil. A grindstone with one piece
   that has insertable modifiers removes all of them (output = the piece without them; contents of `swap_hotbar` /
   `item_display` are given back to the player on take); two pieces or no modifiers -> refused.
 - Goggles and wings make piglins neutral; boots walk on powder snow.
