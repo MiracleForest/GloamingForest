@@ -4,6 +4,7 @@
 // data maps, statistics, traits, Travellers' Gear modifiers and the creative catalog. They use the
 // gf_test fixtures (assets/test) and synthetic data trees, and remove every registration they add.
 
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <random>
@@ -16,7 +17,9 @@
 #include "mc/platform/UUID.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/world/Container.h"
+#include "mc/world/ContainerID.h"
 #include "mc/world/PlayerUIContainer.h"
+#include "mc/world/actor/player/PlayerItemInUse.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/player/PlayerUISlot.h"
@@ -28,8 +31,10 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/ComposterBlock.h"
 #include "mc/world/level/block/DispenserBlock.h"
 #include "mc/world/level/block/actor/DispenserBlockActor.h"
+#include "mc/world/level/block/actor/FurnaceBlockActor.h"
 
 #include "feature/catalog/Catalog.h"
 #include "feature/catalog/CatalogInternal.h"
@@ -40,6 +45,7 @@
 #include "feature/enchant/Enchant.h"
 #include "feature/enchant/EnchantInternal.h"
 #include "feature/ext/item/Item.h"
+#include "feature/ext/item/Recipes.h"
 #include "feature/ext/item/Tags.h"
 #include "feature/gear/Gear.h"
 #include "feature/gear/GearInternal.h"
@@ -148,6 +154,60 @@ GF_REGISTER_SELFTEST("item.tags_vanilla_bridge", [](Context& ctx) {
     ctx.info("minecraft:planks has " + std::to_string(planks.size()) + " members");
 });
 
+// The NeoForge common tags (c:) TF's data nests: their vanilla members come from the bridge.
+GF_REGISTER_SELFTEST("item.tags_common", [](Context& ctx) {
+    using gf::tags::Registry;
+    // TF's own tags, when F1's import is in the data tree
+    auto itemTags = gf::tags::internal::tagsOf("item");
+    if (std::find(itemTags.begin(), itemTags.end(), "twilightforest:squirrel_tempt_items") != itemTags.end()) {
+        ctx.check(gf::tags::has(Registry::Item, "twilightforest:squirrel_tempt_items", "minecraft:wheat_seeds"), "TF's squirrel_tempt_items (#c:seeds) holds wheat seeds");
+        ctx.check(gf::tags::has(Registry::Item, "twilightforest:boar_tempt_items", "minecraft:carrot"), "TF's boar_tempt_items (#c:crops/carrot) holds carrots");
+    } else {
+        ctx.info("TF's tag data is not in this build (F1's import): the synthetic tree stands in");
+    }
+    ScopedTree tree({
+        {"gf_test/tags/item/tempt.json", {{"values", {"#c:seeds"}}}},
+        {"gf_test/tags/item/boar.json", {{"values", {"#c:crops/carrot", "#c:crops/potato", "#c:crops/beetroot"}}}},
+        {"gf_test/tags/block/ore_safe.json",
+         {{"values", {"#minecraft:dirt", "#c:gravels", "#c:sands", "#c:end_stones", "#c:ore_bearing_ground/root", "#minecraft:base_stone_nether"}}}},
+        {"c/tags/block/ore_bearing_ground/root.json", {{"values", {"gf_test:root"}}}},
+        {"gf_test/tags/block/druid.json", {{"values", {"#minecraft:leaves", "#c:ores"}}}},
+        {"gf_test/tags/entity_type/no_throw.json", {{"values", {"#c:bosses", "gf_test:boss"}}}},
+    });
+    ctx.check(gf::tags::has(Registry::Item, "gf_test:tempt", "minecraft:wheat_seeds") && gf::tags::has(Registry::Item, "gf_test:tempt", "minecraft:pitcher_pod"),
+              "#c:seeds: wheat seeds and the pitcher pod");
+    ctx.check(!gf::tags::has(Registry::Item, "gf_test:tempt", "minecraft:wheat"), "wheat is no seed");
+    ctx.check(gf::tags::has(Registry::Item, "gf_test:boar", "minecraft:carrot") && gf::tags::has(Registry::Item, "gf_test:boar", "minecraft:potato")
+                  && gf::tags::has(Registry::Item, "gf_test:boar", "minecraft:beetroot"),
+              "#c:crops/carrot, potato, beetroot");
+    auto tempt = gf::tags::members(Registry::Item, "gf_test:tempt");
+    ctx.check(std::find(tempt.begin(), tempt.end(), "minecraft:melon_seeds") != tempt.end(), "members enumerates c: members (" + std::to_string(tempt.size()) + ")");
+    for (auto const* id : {"minecraft:gravel", "minecraft:sand", "minecraft:end_stone", "minecraft:netherrack", "minecraft:podzol", "gf_test:root"})
+        ctx.check(gf::tags::has(Registry::Block, "gf_test:ore_safe", id), std::string("ore_safe_replace_block style tag holds ") + id);
+    ctx.check(!gf::tags::has(Registry::Block, "gf_test:ore_safe", "minecraft:diamond_block"), "but no diamond block");
+    for (auto const* id : {"minecraft:iron_ore", "minecraft:deepslate_diamond_ore", "minecraft:nether_gold_ore", "minecraft:ancient_debris", "minecraft:lit_redstone_ore"})
+        ctx.check(gf::tags::has(Registry::Block, "gf_test:druid", id), std::string("#c:ores holds ") + id);
+    ctx.check(gf::tags::has(Registry::EntityType, "gf_test:no_throw", "minecraft:ender_dragon"), "#c:bosses holds the ender dragon");
+    // recipe ingredients by c: tag
+    namespace rc = gf::recipes;
+    ctx.check(rc::internal::matches(rc::internal::parseIngredient(JsonDoc{{"tag", "c:rods/wooden"}}), "minecraft:stick"), "c:rods/wooden takes a stick");
+    ctx.check(rc::internal::matches(rc::internal::parseIngredient(JsonDoc{{"tag", "c:ender_pearls"}}), "minecraft:ender_pearl"), "c:ender_pearls takes an ender pearl");
+    ctx.check(rc::internal::matches(rc::internal::parseIngredient(JsonDoc{{"tag", "c:ingots/iron"}}), "minecraft:iron_ingot"), "c:ingots/iron takes an iron ingot");
+    ctx.check(gf::tags::has(Registry::Item, "c:dusts/redstone", "minecraft:redstone") && gf::tags::has(Registry::Item, "c:tools/shield", "minecraft:shield"),
+              "the c: tags TF's code reads (dusts/redstone, tools/shield)");
+});
+
+// ext::hasIn on a vanilla registry directory answers as gf::tags (bridge and cache shared).
+GF_REGISTER_SELFTEST("item.tags_ext_dirs", [](Context& ctx) {
+    using gf::tags::Registry;
+    gf::tags::internal::reload();
+    ctx.check(gf::tags::ext::hasIn("block", "minecraft:logs", "minecraft:oak_log"), "ext::hasIn(\"block\", minecraft:logs) uses the bridge");
+    ctx.check(gf::tags::has(Registry::Block, "minecraft:logs", "minecraft:oak_log"), "tags::has afterwards still answers through the bridge");
+    ctx.check(gf::tags::ext::hasIn("blocks", "minecraft:planks", "minecraft:oak_planks"), "the plural directory too");
+    auto planks = gf::tags::ext::membersIn("block", "minecraft:planks");
+    ctx.check(std::find(planks.begin(), planks.end(), "minecraft:oak_planks") != planks.end(), "membersIn of a vanilla directory lists the bridge's members");
+});
+
 // ---- synthetic data: tags, data maps, recipes, enchantments, travellers modifiers --------------------
 
 GF_REGISTER_SELFTEST("item.data_reload", [](Context& ctx) {
@@ -160,6 +220,8 @@ GF_REGISTER_SELFTEST("item.data_reload", [](Context& ctx) {
             {"gf_test/tags/twilight/wood_palettes/common.json", {{"values", {"gf_test:palette"}}}},
             {"gf_test/data_maps/block/crumble.json",
              {{"values", {{"gf_test:a", {{"crumble_chance", 0.5}}}, {"#gf_test:inner", {{"crumble_chance", 0.2}}}, {"gf_test:gone", 1}}}, {"remove", {"gf_test:gone"}}}},
+            {"neoforge/data_maps/item/compostables.json", {{"values", {{kFixture, {{"chance", 0.65}}}}}}},
+            {"neoforge/data_maps/item/furnace_fuels.json", {{"values", {{kFixture, {{"burn_time", 800}}}}}}},
             {"gf_test/recipe/shaped.json",
              {{"type", "minecraft:crafting_shaped"}, {"pattern", {"ab", " a"}}, {"key", {{"a", {{"item", "minecraft:stick"}}}, {"b", {{"tag", "minecraft:planks"}}}}}, {"result", {{"id", "minecraft:ladder"}, {"count", 3}}}}},
             {"gf_test/recipe/uncraft.json",
@@ -189,16 +251,34 @@ GF_REGISTER_SELFTEST("item.data_reload", [](Context& ctx) {
         ctx.check(b && b->value("crumble_chance", 0.0) == 0.2, "data map value through a tag key");
         ctx.check(gf::datamaps::get("gf_test:crumble", "gf_test:gone") == nullptr, "removed entries are gone");
         ctx.check(gf::datamaps::keys("gf_test:crumble").size() == 2, "keys lists ids and tag members");
+        // the NeoForge maps the game applies: the composter's chance, the furnace's fuel value
+        ctx.check(ComposterBlock::getFillChance(items::make(kFixture).value_or(ItemStack::EMPTY_ITEM())) == 65, "compostables: the composter takes the item at 65 %");
+        auto coal    = FurnaceBlockActor::getBurnDuration(items::make("minecraft:coal").value_or(ItemStack::EMPTY_ITEM()), 200.f);
+        auto fixture = FurnaceBlockActor::getBurnDuration(items::make(kFixture).value_or(ItemStack::EMPTY_ITEM()), 200.f);
+        ctx.check(coal > 0 && std::abs(fixture - coal / 2) < 0.01f * coal, "furnace_fuels: 800 ticks burn half as long as coal (" + std::to_string(fixture) + " / " + std::to_string(coal) + ")");
+        ctx.check(ComposterBlock::getFillChance(items::make("minecraft:stone").value_or(ItemStack::EMPTY_ITEM())) == 0, "vanilla items keep Bedrock's (stone: none)");
+        // a value handed out survives a reload (the old snapshot is kept)
+        auto const* kept = gf::datamaps::get("gf_test:crumble", "gf_test:a");
+        data::reloadAll();
+        ctx.check(kept && kept->value("crumble_chance", 0.0) == 0.5, "a data map value stays valid across a reload");
         // recipes
         auto const* shaped = gf::recipes::byId("gf_test:shaped");
         ctx.require(shaped != nullptr, "a shaped data recipe is loaded");
+        // a pointer handed out survives a reload (the previous generation is kept)
+        data::reloadAll();
+        ctx.check(shaped->id == "gf_test:shaped" && shaped->resultItem == "minecraft:ladder", "a recipe pointer stays valid across a data reload");
+        ctx.check(gf::recipes::byId("gf_test:shaped") != shaped, "the reload made a new generation");
         ctx.check(shaped->width == 2 && shaped->height == 2 && shaped->ingredients.size() == 4, "the pattern is 2x2 row-major");
         ctx.check(shaped->ingredients[1].tag == "minecraft:planks" && shaped->ingredients[2].empty(), "keys map to ingredients, spaces to empty");
         ctx.check(shaped->resultItem == "minecraft:ladder" && shaped->resultCount == 3, "the result and its count");
         auto const* uncraft = gf::recipes::byId("gf_test:uncraft");
         ctx.check(uncraft && uncraft->type == "twilightforest:uncrafting" && uncraft->resultItem == "gf_test:box", "uncrafting: the input is the recipe's item");
         auto const* mod = gf::recipes::byId("gf_test:modifier");
-        ctx.check(mod && mod->resultItem == "twilightforest:travellers_vest" && mod->ingredients.size() == 2, "travellers modifier recipe: the gear is the result");
+        ctx.check(mod && mod->resultItem.empty() && mod->data.value("gear_item", std::string()) == "twilightforest:travellers_vest" && mod->ingredients.size() == 2,
+                  "travellers modifier recipe: no result (Java's EMPTY), the gear in data");
+        bool listed = false;
+        for (auto const* r : gf::recipes::producing("twilightforest:travellers_vest")) listed = listed || r->id == "gf_test:modifier";
+        ctx.check(!listed, "producing (the uncrafting table) does not list a modifier recipe");
         auto const* scepter = gf::recipes::byId("gf_test:scepter");
         ctx.check(scepter && scepter->resultItem == "gf_test:scepter" && scepter->ingredients.size() == 2, "scepter repair: scepter + repair ingredients");
         ctx.check(gf::recipes::byId("gf_test:cloth") != nullptr, "code-only TF recipes are indexed");
@@ -285,12 +365,42 @@ GF_REGISTER_SELFTEST("item.special_crafting", [](Context& ctx) {
     ctx.check(out && gf::item::getData(*out, "special") == true, "with its item data");
     ctx.check(assembled == 1, "the assembler ran once");
     ctx.check(rc::internal::remainderOf(kFixture, grid.grid).size() == 1, "the remainder is one stick");
+    auto bySlot = rc::internal::remaindersBySlot(kFixture, grid.grid);
+    ctx.check(bySlot.size() == 4 && items::idOf(bySlot[0]) == "minecraft:stick" && items::isEmpty(bySlot[1]), "one remainder per grid slot");
+    // ResultSlot#onTake: the craft consumed the grid, the remainder goes back into its slot
+    ui.setItem(first, ItemStack::EMPTY_ITEM());
+    ui.setItem(first + 2, ItemStack::EMPTY_ITEM());
+    rc::internal::placeRemainders(player, grid.firstSlot, bySlot);
+    ctx.check(items::idOf(ui.getItem(first)) == "minecraft:stick" && items::isEmpty(ui.getItem(first + 1)), "the remainder is back in the emptied grid slot");
+    // a slot still holding something else: the remainder goes to the inventory
+    ui.setItem(first, *items::make("minecraft:dirt"));
+    int sticksBefore = 0;
+    for (int i = 0; i < player.getInventory().getContainerSize(); ++i)
+        if (items::idOf(player.getInventory().getItem(i)) == "minecraft:stick") sticksBefore += items::countOf(player.getInventory().getItem(i));
+    rc::internal::placeRemainders(player, grid.firstSlot, bySlot);
+    int sticksAfter = 0;
+    for (int i = 0; i < player.getInventory().getContainerSize(); ++i)
+        if (items::idOf(player.getInventory().getItem(i)) == "minecraft:stick") sticksAfter += items::countOf(player.getInventory().getItem(i));
+    ctx.check(sticksAfter == sticksBefore + 1 && items::idOf(ui.getItem(first)) == "minecraft:dirt", "a full slot sends the remainder to the inventory");
+    ui.setItem(first, *stick);
+    ui.setItem(first + 2, *stick);
+    for (int i = 0; i < player.getInventory().getContainerSize(); ++i)
+        if (items::idOf(player.getInventory().getItem(i)) == "minecraft:stick") player.getInventory().setItem(i, ItemStack::EMPTY_ITEM());
     ui.setItem(first + 2, ItemStack::EMPTY_ITEM());
     auto refused = rc::internal::assembleSpecial(kFixture, rc::internal::gridOf(player, false).grid);
     ctx.check(!refused, "the matcher refuses a grid with one stick");
     ui.setItem(first, ItemStack::EMPTY_ITEM());
     rc::internal::unregisterSpecial(kFixture);
     ctx.check(!rc::internal::isSpecial(kFixture), "unregistered");
+    // a variable layout: another BP recipe id runs the same special recipe
+    rc::registerSpecialCrafting("gf_test:layouts", [](rc::CraftingGrid const&) { return true; }, [](rc::CraftingGrid const&) {
+        return items::make(kFixture).value_or(ItemStack::EMPTY_ITEM());
+    });
+    gf::recipes::ext::addSpecialLayout("gf_test:layouts", "gf_test:layouts_3");
+    ctx.check(rc::internal::isSpecial("gf_test:layouts_3") && rc::internal::assembleSpecial("gf_test:layouts_3", grid.grid).has_value(),
+              "a layout's BP recipe id reaches the special recipe");
+    rc::internal::unregisterSpecial("gf_test:layouts");
+    ctx.check(!rc::internal::isSpecial("gf_test:layouts_3"), "its layouts go with it");
 });
 
 // ---- items -------------------------------------------------------------------------------------------
@@ -366,6 +476,69 @@ GF_REGISTER_SELFTEST("item.behaviour", [](Context& ctx) -> ll::coro::CoroTask<> 
     co_return;
 });
 
+// Java's details of the item hooks: Inventory#tick's armour indices, use ticks written back, the
+// post-hit durability after hurtEnemy, equipment seen again after a rejoin.
+GF_REGISTER_SELFTEST("item.behaviour_java", [](Context& ctx) {
+    static std::vector<std::pair<int, bool>> armorTicks;
+    static int                               hits = 0, equips = 0;
+    static bool                              hitResult = true;
+    armorTicks.clear();
+    hits = equips = 0;
+    auto& player   = ctx.player();
+    int   selected = player.getSelectedItemSlot();
+    // Inventory#tick: the boots are index 0 of the armour list, "selected" when the hotbar selection is 0
+    gf::item::registerItem("minecraft:iron_boots", {.inventoryTick = [](ItemStack&, Player&, int slot, bool sel) { armorTicks.emplace_back(slot, sel); }});
+    player.setArmor(SharedTypes::Legacy::ArmorSlot::Feet, *items::make("minecraft:iron_boots"));
+    gf::item::internal::tickPlayer(player, false);
+    ctx.check(armorTicks.size() == 1 && armorTicks[0].first == 0 && armorTicks[0].second == (selected == 0), "worn boots tick as Java's armour index 0, selected iff the hotbar selection is 0");
+    player.setArmor(SharedTypes::Legacy::ArmorSlot::Feet, ItemStack::EMPTY_ITEM());
+    gf::item::internal::unregister("minecraft:iron_boots");
+    // equipment seen again after the player left (the worn list is forgotten on disconnect)
+    gf::item::registerItem("minecraft:iron_helmet", {.onEquip = [](Player&, ItemStack const&, int) { ++equips; }});
+    player.setArmor(SharedTypes::Legacy::ArmorSlot::Head, *items::make("minecraft:iron_helmet"));
+    gf::item::internal::tickPlayer(player, false);
+    gf::item::internal::tickPlayer(player, false);
+    ctx.check(equips == 1, "onEquip once while worn");
+    gf::item::internal::forgetWorn(player);
+    gf::item::internal::tickPlayer(player, false);
+    ctx.check(equips == 2, "and again after a rejoin");
+    player.setArmor(SharedTypes::Legacy::ArmorSlot::Head, ItemStack::EMPTY_ITEM());
+    gf::item::internal::tickPlayer(player, false);
+    gf::item::internal::unregister("minecraft:iron_helmet");
+    // use ticks: the change goes back to the slot the item is used from
+    gf::item::registerItem(kFixture, {.useTick = [](Player&, ItemStack& s, int) { gf::item::setData(s, "charged", true); }});
+    auto& inv = player.getInventory();
+    inv.setItem(selected, *items::make(kFixture));
+    auto& inUse            = player.mItemInUse.get();
+    inUse.mItem.get()      = inv.getItem(selected);
+    inUse.mSlot->mContainerId = ContainerID::Inventory;
+    inUse.mSlot->mSlot        = selected;
+    gf::item::internal::tickPlayer(player, false);
+    ctx.check(gf::item::getData(inv.getItem(selected), "charged") == true, "a useTick change reaches the hand slot");
+    inUse.mItem.get() = ItemStack::EMPTY_ITEM();
+    inv.setItem(selected, ItemStack::EMPTY_ITEM());
+    gf::item::internal::unregister(kFixture);
+    // hurtEnemy true: the item's own post-hit handling (its durability) runs; false: it does not
+    gf::item::registerItem("minecraft:iron_sword", {.hurtEnemy = [](ItemStack&, Actor&, Actor&) {
+                                                        ++hits;
+                                                        return hitResult;
+                                                    }});
+    auto& victim = ctx.spawnPlayer("item_java_victim");
+    auto  sword  = *items::make("minecraft:iron_sword");
+    hitResult    = true;
+    sword.mItem->hurtActor(sword, victim, player);
+    if (hits == 1) {
+        int afterTrue = sword.getDamageValue();
+        ctx.check(afterTrue > 0, "hurtEnemy true: the sword lost durability (" + std::to_string(afterTrue) + ")");
+        hitResult = false;
+        sword.mItem->hurtActor(sword, victim, player);
+        ctx.check(sword.getDamageValue() == afterTrue, "hurtEnemy false: no durability lost");
+    } else {
+        ctx.info("minecraft:iron_sword is not a component item here (the hook serves TF's data-driven items)");
+    }
+    gf::item::internal::unregister("minecraft:iron_sword");
+});
+
 GF_REGISTER_SELFTEST("item.cooldown", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto uid = ctx.player().getOrCreateUniqueID();
     gf::item::cooldown(ctx.player(), kFixture, 40);
@@ -408,6 +581,7 @@ GF_REGISTER_SELFTEST("item.tooltip_lines", [](Context& ctx) {
     gf::item::internal::refreshLore(enchanted, &player);
     ctx.check(enchanted.getCustomLore().size() == 1, "without tooltips and enchantments only the foreign line stays");
     inv.setItem(1, ItemStack::EMPTY_ITEM());
+    gf::enchant::internal::unregisterType("gf_test:fixture_react");
 });
 
 GF_REGISTER_SELFTEST("item.dispense_fixture", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -440,6 +614,14 @@ GF_REGISTER_SELFTEST("item.dispense_fixture", [](Context& ctx) -> ll::coro::Coro
     ctx.check(seenPos == pos, "it got the dispenser's position");
     ctx.check(seenFacing == 1, "and its facing (up)");
     ctx.check(items::countOf(container->getItem(0)) == 2, "the changed stack went back into the dispenser");
+    // OptionalDispenseItemBehavior failing: the item stays (no default ejection), the fail sound plays
+    gf::item::registerDispense(kFixture, [](BlockSource&, BlockPos const&, int, ItemStack&) {
+        ++calls;
+        return false;
+    });
+    static_cast<DispenserBlock const&>(region->getBlock(bp).getBlockType()).dispenseFrom(*region, bp);
+    ctx.check(calls == 2, "the failing behaviour ran");
+    ctx.check(items::countOf(container->getItem(0)) == 2, "a failed dispense keeps the item in the dispenser (not ejected)");
     container->setItem(0, ItemStack::EMPTY_ITEM());
     gf::item::internal::unregister(kFixture);
 });
@@ -483,6 +665,37 @@ GF_REGISTER_SELFTEST("item.enchant_anvil", [](Context& ctx) {
     EnchantUtils::removeEnchants(out);
     ctx.check(en::level(out, "gf_test:fixture_react") == 0 && en::level(out, "minecraft:sharpness") == 0, "the grindstone removed both");
     ctx.check(!gf::enchant::internal::custom(out).size(), "no custom data left");
+    // AnvilMenu's mutable set: two mutually exclusive enchantments of one book, the first joins and
+    // the second conflicts with it (checked against the set so far, not the first item only)
+    ItemStack both = *book;
+    en::set(both, "gf_test:fixture_react", 0);
+    en::set(both, "gf_test:fixture_chill", 1);
+    en::set(both, "gf_test:fixture_react", 2);
+    auto      plain   = items::make("minecraft:iron_sword").value_or(ItemStack::EMPTY_ITEM());
+    ItemStack outBoth = plain;
+    en::internal::mergeAnvil(plain, both, outBoth, true);
+    int joined = (en::level(outBoth, "gf_test:fixture_chill") > 0 ? 1 : 0) + (en::level(outBoth, "gf_test:fixture_react") > 0 ? 1 : 0);
+    ctx.check(joined == 1, "of two exclusive enchantments on one book only one joins (got " + std::to_string(joined) + ")");
+    // a vanilla enchantment the engine merged that conflicts with a custom one is left out
+    en::registerType("gf_test:fixture_react", {.maxLevel = 3, .anvilCost = 8, .minCost = {5, 9}, .exclusiveWith = {"minecraft:sharpness"}});
+    ItemStack sharpBook = items::make("minecraft:enchanted_book").value_or(ItemStack::EMPTY_ITEM());
+    en::set(sharpBook, "minecraft:sharpness", 2);
+    ItemStack reactSword = plain;
+    en::set(reactSword, "gf_test:fixture_react", 1);
+    ItemStack outSharp = reactSword;
+    EnchantUtils::combineEnchantedItems(reactSword, sharpBook, outSharp, true);
+    ctx.check(en::level(outSharp, "minecraft:sharpness") == 0 && en::level(outSharp, "gf_test:fixture_react") == 1,
+              "a vanilla enchantment exclusive with a custom one does not join (got sharpness " + std::to_string(en::level(outSharp, "minecraft:sharpness")) + ")");
+    // creative players (instabuild) skip the supported-items check, as Java's AnvilMenu
+    en::registerType("gf_test:fixture_boots", {.maxLevel = 1, .anvilCost = 2, .supportedItems = "#minecraft:foot_armor"});
+    ItemStack bootsBook = items::make("minecraft:enchanted_book").value_or(ItemStack::EMPTY_ITEM());
+    en::set(bootsBook, "gf_test:fixture_boots", 1);
+    ItemStack survivalOut = plain, creativeOut = plain;
+    en::internal::mergeAnvil(plain, bootsBook, survivalOut, true, false);
+    en::internal::mergeAnvil(plain, bootsBook, creativeOut, true, true);
+    ctx.check(en::level(survivalOut, "gf_test:fixture_boots") == 0, "an enchantment for boots does not go on a sword in survival");
+    ctx.check(en::level(creativeOut, "gf_test:fixture_boots") == 1, "but does for a creative player");
+    for (auto const* id : {"gf_test:fixture_react", "gf_test:fixture_chill", "gf_test:fixture_boots"}) en::internal::unregisterType(id);
 });
 
 // ---- effects -----------------------------------------------------------------------------------------
@@ -508,12 +721,25 @@ GF_REGISTER_SELFTEST("item.effect_carrier", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(synced, "a companion gets effects.sync");
     ctx.check(!fx::apply(ctx.player(), "gf_test:fixture_frosted", 50, 1), "a shorter one of the same level changes nothing (Java's update)");
     ctx.check(fx::apply(ctx.player(), "gf_test:fixture_frosted", 20, 2), "a higher level replaces it");
+    {
+        auto const* c2 = ctx.player().getEffect(2u);
+        ctx.check(c2 && c2->mAmplifier == 2, "the carrier follows the stronger level");
+        auto list = fx::internal::activeOf(ctx.player());
+        ctx.check(list.size() == 1 && list[0].hidden.size() == 1 && list[0].hidden[0].first == 1, "the longer, weaker one waits hidden (MobEffectInstance#hiddenEffect)");
+    }
     co_await ctx.ticks(11);
     auto* p = ll::service::getLevel()->getPlayer(uid);
     ctx.require(p != nullptr, "the player");
     ctx.check(ticked >= 2, "the effect ticks every tickInterval (got " + std::to_string(ticked) + ")");
     fx::internal::forget(*p);
     ctx.check(fx::amplifier(*p, "gf_test:fixture_frosted") == 2, "the state comes back from the tag");
+    ctx.check(fx::internal::activeOf(*p).front().hidden.size() == 1, "with its hidden instance");
+    co_await ctx.ticks(12);
+    p = ll::service::getLevel()->getPlayer(uid);
+    ctx.require(p != nullptr, "the player");
+    ctx.check(fx::amplifier(*p, "gf_test:fixture_frosted") == 1, "the hidden level resumes when the stronger one ends");
+    auto const* resumed = p->getEffect(2u);
+    ctx.check(resumed && resumed->mAmplifier == 1, "and the carrier with it");
     // a carrier lost on its own (an expired vanilla instance of the same id) comes back
     p->removeEffect(2);
     co_await ctx.ticks(2);
@@ -534,6 +760,39 @@ GF_REGISTER_SELFTEST("item.effect_carrier", [](Context& ctx) -> ll::coro::CoroTa
     fx::remove(*p, "minecraft:speed");
     ctx.check(!fx::has(*p, "minecraft:speed"), "removed");
     gf::net::setTestCompanion(*p, false);
+    fx::internal::unregisterType("gf_test:fixture_frosted");
+});
+
+// A vanilla instance of the carrier's effect (a Slowness potion) is never lost to a custom effect.
+GF_REGISTER_SELFTEST("item.effect_carrier_vanilla", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace fx = gf::effects;
+    fx::registerType("gf_test:fixture_frosted", {.carrier = "minecraft:slowness", .color = 0x56CBFD});
+    auto uid = ctx.player().getOrCreateUniqueID();
+    auto get = [&]() -> Player* { return ll::service::getLevel()->getPlayer(uid); };
+    // a weaker potion is replaced while the custom effect lasts and comes back after it
+    ctx.require(fx::apply(*get(), "minecraft:slowness", 3600, 0), "a Slowness I potion (3 min)");
+    ctx.require(fx::apply(*get(), "gf_test:fixture_frosted", 20, 1), "frosted II over it");
+    auto const* c = get()->getEffect(2u);
+    ctx.check(c && c->mAmplifier == 1 && !c->mEffectVisible, "the carrier (Slowness II, hidden particles) replaced the potion meanwhile");
+    fx::remove(*get(), "gf_test:fixture_frosted");
+    c = get()->getEffect(2u);
+    ctx.check(c && c->mAmplifier == 0 && c->mDuration->mValue > 3000 && c->mEffectVisible, "removing frosted puts the potion back with its time and particles");
+    // the same when the custom effect runs out
+    ctx.require(fx::apply(*get(), "gf_test:fixture_frosted", 5, 1), "a short frosted II over the potion");
+    co_await ctx.ticks(8);
+    c = get()->getEffect(2u);
+    ctx.check(!fx::has(*get(), "gf_test:fixture_frosted") && c && c->mAmplifier == 0 && c->mDuration->mValue > 3000, "the potion is back when frosted expires");
+    get()->removeEffect(2);
+    // a stronger potion is left alone and survives the custom effect's removal
+    ctx.require(fx::apply(*get(), "minecraft:slowness", 600, 2), "a Slowness III potion");
+    ctx.require(fx::apply(*get(), "gf_test:fixture_frosted", 100, 1), "frosted II under it");
+    c = get()->getEffect(2u);
+    ctx.check(c && c->mAmplifier == 2 && c->mEffectVisible, "the stronger potion stays the instance (it carries the slowness)");
+    fx::remove(*get(), "gf_test:fixture_frosted");
+    c = get()->getEffect(2u);
+    ctx.check(c && c->mAmplifier == 2 && c->mDuration->mValue > 500, "and removing frosted does not remove the potion");
+    get()->removeEffect(2);
+    fx::internal::unregisterType("gf_test:fixture_frosted");
 });
 
 // ---- player data -------------------------------------------------------------------------------------
@@ -577,8 +836,18 @@ GF_REGISTER_SELFTEST("item.gear_modifiers", [](Context& ctx) {
     ctx.check(gf::gear::remove(*helmet, "gf_test:fixture_head") && gf::gear::modifiers(*helmet).empty(), "removed");
     player.setArmor(SharedTypes::Legacy::ArmorSlot::Head, ItemStack::EMPTY_ITEM());
     ctx.check(gf::gear::level(player, "gf_test:fixture_head") == 0, "nothing worn, level 0");
+    // getStackForGroup: a group of several armour slots finds no stack (Java returns EMPTY)
+    gf::gear::internal::registerModifier("gf_test:fixture_armor", "armor");
+    auto boots = items::make("minecraft:iron_boots");
+    ctx.require(boots.has_value(), "iron boots");
+    ctx.check(gf::gear::add(*boots, "gf_test:fixture_armor") && gf::gear::modifiers(*boots).contains("gf_test:fixture_armor"), "an armor-group modifier goes on boots");
+    player.setArmor(SharedTypes::Legacy::ArmorSlot::Feet, *boots);
+    ctx.check(gf::gear::level(player, "gf_test:fixture_armor") == 0, "but is not active through the player (Java's getStackForGroup)");
+    player.setArmor(SharedTypes::Legacy::ArmorSlot::Feet, ItemStack::EMPTY_ITEM());
+    ctx.check(gf::gear::level(player, "gf_test:unknown") == 0, "an unknown modifier is never active");
     gf::gear::internal::unregisterModifier("gf_test:fixture_head");
     gf::gear::internal::unregisterModifier("gf_test:fixture_feet");
+    gf::gear::internal::unregisterModifier("gf_test:fixture_armor");
 });
 
 // ---- catalog and rarity ------------------------------------------------------------------------------
@@ -609,6 +878,43 @@ GF_REGISTER_SELFTEST("item.rarity", [](Context& ctx) {
     ctx.require(stack.has_value(), "the fixture item");
     auto bar = ex::barOf(*stack);
     ctx.check(bar && bar->fraction == 1.0f && bar->rgb == 0x123456, "setBar's bar, fraction clamped to 1");
+    // a bar from the stack's item data (BrittleFlaskItem's doses): two stacks of one item differ
+    gf::item::setBar(kFixture, [](ItemStack const& s) -> std::optional<gf::item::Bar> {
+        auto doses = gf::item::getData(s, "doses");
+        if (!doses.is_number_integer()) return std::nullopt;
+        return gf::item::Bar{static_cast<float>(doses.get<int>()) / 4.0f, 0xFF8000};
+    });
+    auto one = *stack, three = *stack;
+    gf::item::setData(one, "doses", 1);
+    gf::item::setData(three, "doses", 3);
+    ctx.check(ex::barOf(one) && ex::barOf(one)->fraction == 0.25f && ex::barOf(three)->fraction == 0.75f, "the bar follows the stack's data");
+    ctx.check(!ex::barOf(*stack), "and hides without it");
     gf::item::internal::unregister(kFixture);
     ctx.check(!ex::barOf(*stack), "no bar once unregistered");
+    // ItemStack#getRarity: an enchanted UNCOMMON stack shows RARE, RARE shows EPIC, TWILIGHT stays
+    ex::setRarity(kFixture, ex::Rarity::Uncommon);
+    ItemStack enchanted = *stack;
+    gf::enchant::set(enchanted, "minecraft:unbreaking", 1);
+    ctx.check(ex::rarityOf(*stack) == ex::Rarity::Uncommon && ex::rarityOf(enchanted) == ex::Rarity::Rare, "enchanted uncommon -> rare");
+    ex::setRarity(kFixture, ex::Rarity::Rare);
+    ctx.check(ex::rarityOf(enchanted) == ex::Rarity::Epic, "enchanted rare -> epic");
+    ex::setRarity(kFixture, ex::Rarity::Twilight);
+    ctx.check(ex::rarityOf(enchanted) == ex::Rarity::Twilight, "TWILIGHT stays");
+    ex::setRarity(kFixture, ex::Rarity::Common);
+});
+
+// TFItemDisplayContextEnumExtension#JARRED: its own display transform, else FIXED's.
+GF_REGISTER_SELFTEST("item.display_jarred", [](Context& ctx) {
+    namespace ex = gf::item::ext;
+    gf::item::internal::clearDisplayTransforms(kFixture);
+    ctx.check(!ex::displayTransform(kFixture, ex::kJarred), "no transform without a model's numbers");
+    ex::setDisplayTransform(kFixture, "fixed", {.rotation = {0, 180, 0}, .translation = {0, 4, -2}});
+    auto t = ex::displayTransform(kFixture, ex::kJarred);
+    ctx.check(t && t->rotation[1] == 180 && t->translation[2] == -2, "JARRED falls back to FIXED");
+    ex::setDisplayTransform(kFixture, ex::kJarred, {.rotation = {90, 0, 180}});
+    t = ex::displayTransform(kFixture, ex::kJarred);
+    ctx.check(t && t->rotation[0] == 90 && t->translation[1] == 0, "an item's own JARRED transform wins");
+    ctx.check(!ex::displayTransform(kFixture, "gui"), "other contexts have no fallback to FIXED");
+    ctx.check(ex::kJarredContext == 64, "the ItemContext flag after Head (32)");
+    gf::item::internal::clearDisplayTransforms(kFixture);
 });
