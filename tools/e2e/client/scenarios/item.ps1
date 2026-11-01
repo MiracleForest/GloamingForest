@@ -19,7 +19,7 @@ $mark = Get-LogMark
 $r = Invoke-SelfTest 'item.spike_client'
 if ($r.Fail -gt 0) { throw 'item.spike_client failed' }
 Wait-LogLine 'S6 carriers given to' 30 -Since $mark | Out-Null
-Start-Sleep -Seconds 3   # the inventory and the lore refresh reach the client
+Start-Sleep -Seconds 12  # the inventory and the lore refresh reach the client; the chat lines fade
 
 Save-Screenshot 'hud-carriers' | Out-Null
 foreach ($slot in 1, 2, 3) {
@@ -32,13 +32,16 @@ Press-Key '1'
 
 Open-Inventory
 Save-Screenshot 'inventory' | Out-Null
-# the hotbar row of the inventory screen: hover the first slot for the hover text
-Move-Mouse 0.3755 0.735 -Relative
-Start-Sleep -Milliseconds 600
+# the hotbar row of the inventory screen (slots 34 px apart at 1280 x 720): hover for the hover text
+Move-Mouse 0.506 0.729 -Relative
+Start-Sleep -Milliseconds 800
 Save-Screenshot 'tooltip-fixture' | Out-Null
-Move-Mouse 0.4055 0.735 -Relative
-Start-Sleep -Milliseconds 600
+Move-Mouse 0.540 0.729 -Relative
+Start-Sleep -Milliseconds 800
 Save-Screenshot 'tooltip-sword' | Out-Null
+Move-Mouse 0.574 0.729 -Relative
+Start-Sleep -Milliseconds 800
+Save-Screenshot 'tooltip-banner' | Out-Null
 Close-Screen
 
 if ($script:Mode -ne 'local') {

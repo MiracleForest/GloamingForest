@@ -26,6 +26,7 @@
 #include "feature/catalog/CatalogInternal.h"
 #include "feature/effects/Effects.h"
 #include "feature/enchant/Enchant.h"
+#include "feature/ext/item/Item.h"
 #include "feature/item/Item.h"
 #include "feature/item/ItemInternal.h"
 #include "game/Items.h"
@@ -59,6 +60,9 @@ void registerFixtures(bool tooltip) {
         // stays registered for the client's screenshots (the other item tests clear the fixture's)
         gf::item::internal::unregister(kFixture);
         gf::item::addTooltip(kFixture, [](ItemStack const&, std::vector<std::string>& lines, Player const*) { lines.push_back("S6 tooltip line"); });
+        // the client mod draws this bar over the slot (60 %, orange) and names the item in TWILIGHT green
+        gf::item::setBar(kFixture, [](ItemStack const&) -> std::optional<gf::item::Bar> { return gf::item::Bar{0.6f, 0xFF8000}; });
+        gf::item::ext::setRarity(kFixture, gf::item::ext::Rarity::Twilight);
     }
 }
 
