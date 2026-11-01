@@ -9,18 +9,21 @@ if ($script:Mode -eq 'local') {
     if ($r.Fail -gt 0) { throw "$($r.Fail) structure selftest(s) failed" }
     if ($r.Pass -lt 13) { throw "expected at least 13 structure selftests to pass, got $($r.Pass)" }
 
-    # a view point above the flat world, looking north-east at the placements
-    Invoke-Teleport '/tp @s 0 -55 12 -150 30'
+    # placed at the player's feet on the flat world, then looked at from the south-east
     $mark = Get-LogMark
-    Invoke-Chat '/twilightforest structure_util place gf_test:structure/fixture 0 0'
+    Invoke-Teleport '/tp @s 0 -60 0'
+    $mark = Get-LogMark
+    Invoke-Chat '/twilightforest structure_util place "gf_test:structure/fixture" 0 0'
     Wait-LogLine 'structure_util place gf_test:structure/fixture' 30 -Since $mark | Out-Null
+    Invoke-Teleport '/tp @s 6 -56 10 149 25'
     Start-Sleep -Seconds 2
     Save-Screenshot 'template' | Out-Null
 
-    Invoke-Teleport '/tp @s 40 -50 30 -150 35'
+    Invoke-Teleport '/tp @s 40 -60 40'
     $mark = Get-LogMark
-    Invoke-Chat '/twilightforest structure_util jigsaw gf_test:structure/jig/start 4'
+    Invoke-Chat '/twilightforest structure_util jigsaw "gf_test:structure/jig/start" 4'
     Wait-LogLine 'structure_util jigsaw gf_test:structure/jig/start: \d+ pieces' 30 -Since $mark | Out-Null
+    Invoke-Teleport '/tp @s 52 -52 54 140 30'
     Start-Sleep -Seconds 2
     Save-Screenshot 'jigsaw' | Out-Null
 } else {
