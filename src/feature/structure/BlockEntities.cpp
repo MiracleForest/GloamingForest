@@ -36,6 +36,7 @@
 #include "mc/world/actor/ActorDataIDs.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorFactory.h"
+#include "mc/legacy/ActorUniqueID.h"
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/BuiltInActorComponents.h"
 #include "mc/world/actor/Mob.h"
@@ -191,6 +192,13 @@ std::size_t                        gJobCount = 0;
 bool                               gDirty    = false;
 int                                gTicks    = 0;
 ll::event::ListenerPtr             gSpawnListener;
+/// Spawner mobs waiting for their entity_width_max scale (server thread).
+struct PendingScale {
+    std::int64_t mobId = 0; ///< ActorUniqueID
+    float        scale = 1.0f;
+    int          ticks = 0; ///< ticks to wait
+};
+std::vector<PendingScale> gPendingScales;
 
 ChunkKey chunkKey(int dim, BlockPos const& pos) { return {dim, core::chunkOf(pos.x), core::chunkOf(pos.z)}; }
 
@@ -553,10 +561,10 @@ bool applyScale(Actor& actor, float scale) {
     if (!std::isfinite(scale) || scale <= 0) return false;
     auto bb = actor.getEntityContext().tryGetComponent<ActorDataBoundingBoxComponent>();
     if (!bb) return false;
+    // generic.scale multiplies the mob's own scale (a baby's included)
     auto& value = bb->mValue;
-    float old   = value[0] > 0 ? value[0] : 1.0f;
-    float ratio = scale / old;
-    value[0]    = scale;
+    float ratio = scale;
+    value[0]    = (value[0] > 0 ? value[0] : 1.0f) * scale;
     value[1] *= ratio;
     value[2] *= ratio;
     auto& dirty = actor.mEntityData.get().mDirtyFlags.get()->mDirtyFlags.get();
@@ -568,6 +576,16 @@ bool applyScale(Actor& actor, float scale) {
 }
 
 void flush() {
+    if (!gPendingScales.empty()) {
+        auto level = ll::service::getLevel();
+        std::erase_if(gPendingScales, [&](PendingScale& p) {
+            if (--p.ticks > 0) return false;
+            ActorUniqueID id;
+            id.rawID = p.mobId;
+            if (auto* mob = level ? level->fetchEntity(id, false) : nullptr) applyScale(*mob, p.scale);
+            return true;
+        });
+    }
     if (++gTicks % kFlushInterval != 0) return;
     // the chunks with work whose chunk is loaded now
     std::vector<std::pair<ChunkKey, std::deque<Job>>> ready;
@@ -678,7 +696,8 @@ void installEvents() {
                     if (std::abs(gp.x - p.x) > kReach || std::abs(gp.z - p.z) > kReach || std::abs(gp.y - p.y) > 3) return;
                     scale = s.value("scale", 1.0f);
                 });
-        if (scale) applyScale(mob, *scale);
+        // the mob is set up from its entity definition once it is in the level: scale it a tick later
+        if (scale) gPendingScales.push_back(PendingScale{mob.getOrCreateUniqueID().rawID, *scale, 2});
     });
 }
 

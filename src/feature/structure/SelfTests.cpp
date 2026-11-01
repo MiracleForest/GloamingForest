@@ -1275,27 +1275,36 @@ GF_REGISTER_SELFTEST("structure.spawner_scale", [](Context& ctx) -> ll::coro::Co
     {
         BlockSourceRegion region(*source, spawnerPos);
         blockentities::spawner(region, spawnerPos, "minecraft:cow",
-                               Json{{"entity_scale", 0.5f}, {"Delay", 1}, {"MinSpawnDelay", 10}, {"MaxSpawnDelay", 20}, {"SpawnCount", 1},
+                               Json{{"entity_scale", 0.4f}, {"Delay", 1}, {"MinSpawnDelay", 10}, {"MaxSpawnDelay", 20}, {"SpawnCount", 1},
                                     {"SpawnRange", 2}, {"RequiredPlayerRange", 16}, {"MaxNearbyEntities", 6}});
     }
     BlockBox      near{area.minX, area.minY - 1, area.minZ, area.maxX, area.minY + 4, area.maxZ};
     AABB          range{Vec3{static_cast<float>(near.minX), static_cast<float>(near.minY), static_cast<float>(near.minZ)},
                         Vec3{static_cast<float>(near.maxX + 1), static_cast<float>(near.maxY + 1), static_cast<float>(near.maxZ + 1)}};
-    std::optional<float> width;
-    for (int i = 0; i < 200 && !width; i += 5) {
+    std::optional<std::int64_t> spawned;
+    for (int i = 0; i < 200 && !spawned; i += 5) {
         co_await ctx.ticks(5);
         (void)ctx.player(); // keep the test player near the spawner (RequiredPlayerRange)
         source = ctx.region();
         if (!source) break;
         for (auto* a : source->getEntities(range, 0.0f, ActorType::Cow))
-            if (a && a->isType(ActorType::Cow) && a->getOrCreateUniqueID().rawID != scaledByHand) width = a->getAABB().max.x - a->getAABB().min.x;
+            if (a && a->isType(ActorType::Cow) && a->getOrCreateUniqueID().rawID != scaledByHand) spawned = a->getOrCreateUniqueID().rawID;
+    }
+    std::optional<float> width;
+    if (spawned) {
+        co_await ctx.ticks(5); // the scale applies once the mob is set up in the level
+        ActorUniqueID id;
+        id.rawID = *spawned;
+        if (auto* a = level->fetchEntity(id, false)) width = a->getAABB().max.x - a->getAABB().min.x;
+        source = ctx.region();
     }
     if (width) ctx.info("a cow from the spawner: width " + std::to_string(*width));
     if (source)
         for (auto* a : source->getEntities(range, 0.0f, ActorType::Cow))
             if (a) a->despawn();
-    if (!width) ctx.info("the spawner spawned no cow within 200 ticks (spawn conditions): spawned-mob scaling not observed");
-    else ctx.check(*width < 0.9f * 0.75f, "a cow from the scaled spawner is scaled (width " + std::to_string(*width) + ")");
+    if (!width) ctx.check(false, "the spawner spawned a cow within 200 ticks");
+    // 0.4 of an adult (0.9) or of a calf (0.45); unscaled they are 0.9 / 0.45
+    else ctx.check(std::abs(*width - 0.36f) < 0.03f || std::abs(*width - 0.18f) < 0.03f, "a cow from the scaled spawner is scaled to 0.4 (width " + std::to_string(*width) + ")");
 });
 
 // ---- queued work survives a restart (tools/e2e/server/scenarios/structure.ps1) -----------------------------------------
