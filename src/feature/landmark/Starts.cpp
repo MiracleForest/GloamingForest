@@ -68,7 +68,10 @@ namespace {
 struct Generators {
     std::mutex                                                                             mutex;
     std::map<std::string, Generator>                                                       gens;
-    std::map<std::string, std::vector<std::function<double(Start const&, int, int, int)>>> terraformers;
+    /// addTerraformer's functions per key
+    std::map<std::string, std::vector<std::function<double(Start const&, int, int, int)>>> extraTerraformers;
+    /// copy-on-write lists of every terraformer per key: per-block readers only copy the pointer
+    std::map<std::string, TerraformerList> terraformers;
     ext::HeightFn                                                                          height;
 };
 Generators& generators() {
@@ -96,6 +99,7 @@ struct Records {
     std::unordered_map<ChunkKey, std::vector<RecordPtr>, ChunkKeyHash>      byStartChunk;
     std::unordered_map<ChunkKey, std::vector<RecordPtr>, ChunkKeyHash>      byChunk; ///< chunks a box covers
     std::unordered_set<ChunkKey, ChunkKeyHash>                              evaluated;
+    std::unordered_set<ChunkKey, ChunkKeyHash>                              aroundDone; ///< ensureStartsAround ran
     std::set<std::tuple<int, int, int>>                                     dirty; ///< start chunks to write
     std::atomic<std::int64_t>                                               seed{0};
     std::atomic<bool>                                                       haveSeed{false};
@@ -304,28 +308,49 @@ Generator const* generatorFor(std::string const& key) {
     return it == generators().gens.end() ? nullptr : &it->second;
 }
 
+namespace {
+void rebuildTerraformers(Generators& g, std::string const& key, std::function<double(Start const&, int, int, int)> added);
+}
+
 void setGenerator(std::string const& key, Generator generator) {
     std::lock_guard lock(generators().mutex);
-    generators().gens[normalizeKey(key)] = std::move(generator);
+    auto            k = normalizeKey(key);
+    generators().gens[k] = std::move(generator);
+    rebuildTerraformers(generators(), k, {});
 }
 
 void removeGenerator(std::string const& key) {
     std::lock_guard lock(generators().mutex);
-    generators().gens.erase(normalizeKey(key));
+    auto            k = normalizeKey(key);
+    generators().gens.erase(k);
+    rebuildTerraformers(generators(), k, {});
 }
 
-std::vector<std::function<double(Start const&, int, int, int)>> terraformersFor(std::string const& key) {
-    std::lock_guard                                                  lock(generators().mutex);
-    std::vector<std::function<double(Start const&, int, int, int)>> out;
-    if (auto it = generators().gens.find(key); it != generators().gens.end() && it->second.terraform) out.push_back(it->second.terraform);
-    if (auto it = generators().terraformers.find(key); it != generators().terraformers.end())
-        out.insert(out.end(), it->second.begin(), it->second.end());
-    return out;
+TerraformerList terraformersFor(std::string const& key) {
+    std::lock_guard lock(generators().mutex);
+    auto            it = generators().terraformers.find(key);
+    return it == generators().terraformers.end() ? nullptr : it->second;
 }
+
+namespace {
+/// Rebuilds the copy-on-write terraformer list of `key` (Generator::terraform first, then the
+/// addTerraformer ones). Called with the generators lock held.
+void rebuildTerraformers(Generators& g, std::string const& key, std::function<double(Start const&, int, int, int)> added = {}) {
+    std::vector<std::function<double(Start const&, int, int, int)>> list;
+    if (auto it = g.gens.find(key); it != g.gens.end() && it->second.terraform) list.push_back(it->second.terraform);
+    if (auto it = g.extraTerraformers.find(key); it != g.extraTerraformers.end()) list.insert(list.end(), it->second.begin(), it->second.end());
+    if (added) {
+        g.extraTerraformers[key].push_back(added);
+        list.push_back(std::move(added));
+    }
+    if (list.empty()) g.terraformers.erase(key);
+    else g.terraformers[key] = std::make_shared<std::vector<std::function<double(Start const&, int, int, int)>> const>(std::move(list));
+}
+} // namespace
 
 void addTerraformer(std::string const& key, std::function<double(Start const&, int, int, int)> fn) {
     std::lock_guard lock(generators().mutex);
-    generators().terraformers[normalizeKey(key)].push_back(std::move(fn));
+    rebuildTerraformers(generators(), normalizeKey(key), std::move(fn));
 }
 
 // ---- world facts -------------------------------------------------------------------------------------
@@ -525,7 +550,13 @@ void loadRecords() {
         auto doc = game::db::get(core::worldKey(kUnit, "start:" + suffix));
         if (!doc || !doc->is_object()) continue;
         for (auto const& [key, value] : doc->items()) {
-            if (auto rec = recordFromJson(value)) {
+            RecordPtr rec;
+            try {
+                rec = recordFromJson(value);
+            } catch (std::exception const& e) {
+                log().warn("landmark: unreadable start {} in {}: {}", key, suffix, e.what());
+            }
+            if (rec) {
                 auto&            r = records();
                 std::unique_lock lock(r.mutex);
                 rec->start.data["chunk"] = Json::array({rec->chunkX, rec->chunkZ});
@@ -543,6 +574,7 @@ void clearRecords() {
     r.byStartChunk.clear();
     r.byChunk.clear();
     r.evaluated.clear();
+    r.aroundDone.clear();
     r.dirty.clear();
     r.haveSeed.store(false);
 }
@@ -631,30 +663,43 @@ int placeLoaded(Record const& rec, BlockSource& region) {
     return placed;
 }
 
+void reviveRecord(RecordPtr const& existing) {
+    // a start whose pieces are not in memory (reserved before its generator existed, or read back
+    // from the world DB with pieces the structure kit cannot rebuild) gets them again from its
+    // deterministic layout, at its recorded center; chunks generated from then on show them
+    if (!existing || !existing->livePieces.empty() || existing->reviveTried.exchange(true)) return;
+    auto const* inf = info(existing->start.key);
+    if (!inf || !generatorFor(existing->start.key)) {
+        existing->reviveTried = false; // try again once a generator registers
+        return;
+    }
+    std::optional<GlobalPos> at;
+    if (existing->forced || existing->start.generated) at = existing->start.center;
+    auto rec = createStart(*inf, existing->start.dimension, existing->chunkX, existing->chunkZ, at, existing->forced);
+    if (!rec) return;
+    rec->start.conquered = existing->start.conquered;
+    putRecord(rec);
+}
+
 // ---- worldgen: structure sets ------------------------------------------------------------------------
 
 namespace {
 
 bool tryGenerateStructure(Info const& info, int dim, int chunkX, int chunkZ) {
     if (auto existing = findRecord(dim, chunkX, chunkZ, info.d.key)) {
-        // a site reserved before its generator existed gets its pieces once the generator is there
-        // (chunks generated from then on show them)
-        if (existing->start.generated || existing->forced || !generatorFor(info.d.key)) return true;
-        auto rec = createStart(info, dim, chunkX, chunkZ, std::nullopt, false);
-        if (!rec) return true;
-        rec->start.conquered = existing->start.conquered;
-        putRecord(rec);
+        reviveRecord(existing);
         return true;
     }
     // LandmarkStructure#findValidGenerationPoint: the main biome at the center of the biome-grid
-    // tile; other structures: the biome at the start position
+    // tile; other structures: the biome at the start position. Only the worldgen biome source here:
+    // this runs on generation threads, where the level's BlockSource must not be touched.
     std::string biome;
     if (info.traits.landmark) {
         auto col = cl::biomeSampleColumn(chunkX, chunkZ);
         biome    = worldgen::mainBiomeAt(col.x, col.z);
-        if (biome.empty()) biome = biomeAt(dim, col.x, seaLevelOf(dim), col.z);
+        if (biome.empty()) biome = worldgen::biomeAt(BlockPos{col.x, seaLevelOf(dim), col.z});
     } else {
-        biome = biomeAt(dim, chunkX * 16 + 8, seaLevelOf(dim), chunkZ * 16 + 8);
+        biome = worldgen::biomeAt(BlockPos{chunkX * 16 + 8, seaLevelOf(dim), chunkZ * 16 + 8});
     }
     if (!biomeMatches(info.biomes, biome)) return false;
     auto rec = createStart(info, dim, chunkX, chunkZ, std::nullopt, false);
@@ -676,7 +721,11 @@ void ensureStartsIn(int dim, int chunkX, int chunkZ) {
     auto tf = twilightDim();
     if (!tf || *tf != dim) return; // TF's structure sets only place in the Twilight Forest
     {
-        auto&            r = records();
+        auto& r = records();
+        {
+            std::shared_lock lock(r.mutex);
+            if (r.evaluated.contains({dim, chunkX, chunkZ})) return;
+        }
         std::unique_lock lock(r.mutex);
         if (!r.evaluated.insert({dim, chunkX, chunkZ}).second) return;
     }
@@ -698,8 +747,16 @@ void ensureStartsIn(int dim, int chunkX, int chunkZ) {
 void ensureStartsAround(int dim, int chunkX, int chunkZ) {
     auto tf = twilightDim();
     if (!tf || *tf != dim) return;
+    auto& r = records();
+    {
+        // fast path for the hot queries (feature clearance, terraforming): one shared lock
+        std::shared_lock lock(r.mutex);
+        if (r.aroundDone.contains({dim, chunkX, chunkZ})) return;
+    }
     for (int dx = -kReferenceRange; dx <= kReferenceRange; ++dx)
         for (int dz = -kReferenceRange; dz <= kReferenceRange; ++dz) ensureStartsIn(dim, chunkX + dx, chunkZ + dz);
+    std::unique_lock lock(r.mutex);
+    r.aroundDone.insert({dim, chunkX, chunkZ});
 }
 
 RecordPtr nearestLandmark(int dim, int chunkX, int chunkZ, std::optional<GlobalPos> pos) {
@@ -758,6 +815,8 @@ void registerWorldgenStages() {
     worldgen::addStage(worldgen::Stage::Pieces, "landmark.pieces", 0, [](worldgen::Chunk& chunk, worldgen::Region& region) {
         int dim = region.dimension();
         ensureStartsAround(dim, chunk.chunkX(), chunk.chunkZ());
+        for (auto const& rec : recordsIntersecting(dim, chunk.chunkX(), chunk.chunkZ()))
+            if (rec->livePieces.empty()) reviveRecord(rec);
         for (auto const& rec : recordsIntersecting(dim, chunk.chunkX(), chunk.chunkZ())) placeInChunk(*rec, region, chunk.chunkX(), chunk.chunkZ());
     });
 }
@@ -828,6 +887,8 @@ bool generateAt(std::string const& key, BlockSource& region, BlockPos const& pos
     int  dim = static_cast<int>(region.getDimensionId());
     auto rec = fl::createStart(*inf, dim, pos.x >> 4, pos.z >> 4, GlobalPos{dim, pos.x, pos.y, pos.z}, true);
     if (!rec || !rec->start.generated) return false;
+    // a start of the same key in that chunk is replaced: keep its conquest
+    if (auto old = fl::findRecord(dim, pos.x >> 4, pos.z >> 4, inf->d.key)) rec->start.conquered = old->start.conquered;
     fl::putRecord(rec);
     fl::placeLoaded(*rec, region);
     fl::flushRecords();
@@ -842,6 +903,7 @@ std::optional<Start> forceStart(std::string const& key, GlobalPos const& pos) {
     }
     auto rec = fl::createStart(*inf, pos.dim, pos.x >> 4, pos.z >> 4, pos, true);
     if (!rec) return std::nullopt;
+    if (auto old = fl::findRecord(pos.dim, pos.x >> 4, pos.z >> 4, inf->d.key)) rec->start.conquered = old->start.conquered;
     fl::putRecord(rec);
     if (auto* region = game::regionOf(pos.dim)) fl::placeLoaded(*rec, *region);
     fl::flushRecords();
@@ -892,7 +954,8 @@ double terraformDensity(int dimension, int x, int y, int z) {
     for (auto const& rec : fl::recordsIntersecting(dimension, x >> 4, z >> 4)) {
         // WorldgenHooks#gatherCustomTerrain: only within the start's X-Z boundaries
         if (x < rec->start.box.minX || x > rec->start.box.maxX || z < rec->start.box.minZ || z > rec->start.box.maxZ) continue;
-        for (auto const& fn : fl::terraformersFor(rec->start.key)) sum += fn(rec->start, x, y, z);
+        if (auto list = fl::terraformersFor(rec->start.key))
+            for (auto const& fn : *list) sum += fn(rec->start, x, y, z);
     }
     return sum;
 }
@@ -900,7 +963,7 @@ double terraformDensity(int dimension, int x, int y, int z) {
 bool hasTerraformers(int dimension, int chunkX, int chunkZ) {
     fl::ensureStartsAround(dimension, chunkX, chunkZ);
     for (auto const& rec : fl::recordsIntersecting(dimension, chunkX, chunkZ))
-        if (!fl::terraformersFor(rec->start.key).empty()) return true;
+        if (fl::terraformersFor(rec->start.key)) return true;
     return false;
 }
 
@@ -936,9 +999,11 @@ bool featureBlocked(int dimension, int x, int y, int z, Occupancy const& occupan
 
 std::optional<std::vector<nlohmann::json>> potentialSpawns(int dimension, std::string const& category, int x, int y, int z) {
     fl::ensureStartsAround(dimension, x >> 4, z >> 4);
+    // StructureManager#startsForStructure(new ChunkPos(pos), ControlledSpawns): every start that
+    // references the position's chunk, whether or not its box holds the position
     for (auto const& rec : fl::recordsIntersecting(dimension, x >> 4, z >> 4)) {
         auto const* inf = fl::info(rec->start.key);
-        if (!inf || !inf->traits.controlledSpawns || !rec->start.box.contains(x, y, z)) continue;
+        if (!inf || !inf->traits.controlledSpawns || rec->pieces.empty()) continue; // a reserved site is no valid start yet
         auto const& cs   = inf->d.controlledSpawns;
         auto        list = [](Json const& arr) {
             std::vector<Json> out;

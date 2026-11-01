@@ -16,8 +16,8 @@ Invoke-Chat '/twilightforest selftest "landmark.display"'
 $area = Wait-LogLine 'landmark\.display: area at (-?\d+) (-?\d+) (-?\d+)' 90 -Since $mark
 if ($area -notmatch 'area at (-?\d+) (-?\d+) (-?\d+)') { throw "no display area in '$area'" }
 $x = [int]$Matches[1]; $y = [int]$Matches[2]; $z = [int]$Matches[3]
-# stand south-west of the shell, a little above it, looking at its middle
-Invoke-Teleport "/tp @s $($x - 7) $($y + 5) $($z - 11) facing $x $($y + 3) $z"
+# stand north-east of the shell, a little above it, looking at the refused east wall
+Invoke-Teleport "/tp @s $($x + 12) $($y + 6) $($z - 9) facing $($x + 3) $($y + 2) $z"
 Wait-LogLine 'landmark\.display: protection shown' 60 -Since $mark | Out-Null
 Start-Sleep -Milliseconds 700
 Save-Screenshot 'protection-boxes' | Out-Null

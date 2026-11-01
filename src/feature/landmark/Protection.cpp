@@ -26,6 +26,7 @@
 #include <mutex>
 #include <optional>
 #include <unordered_map>
+#include <variant>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -36,7 +37,11 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/deps/nbt/CompoundTag.h"
 #include "mc/util/VariantParameterList.h"
+#include "mc/world/actor/state/ActorPropertyUtils.h"
+#include "mc/world/actor/state/PropertyComponent.h"
 
 #include "core/Stub.h"
 #include "core/landmark/Grid.h"
@@ -161,16 +166,30 @@ void spawnOrRefreshBox(int dim, BlockBox const& box) {
     auto level = ll::service::getLevel();
     if (!level) return;
     auto& s = state();
-    std::lock_guard lock(s.mutex);
-    for (auto& live : s.boxes) {
-        if (live.dim != dim || !(live.box == box)) continue;
+    // the lock is never held while the game runs entity code (spawning, BP events): a listener
+    // there may call back into the landmark unit
+    std::vector<std::int64_t> matching;
+    {
+        std::lock_guard lock(s.mutex);
+        for (auto const& live : s.boxes)
+            if (live.dim == dim && live.box == box) matching.push_back(live.actor);
+    }
+    for (auto actorId : matching) {
         ActorUniqueID id;
-        id.rawID = live.actor;
+        id.rawID = actorId;
         if (auto* a = level->fetchEntity(id, false); a && a->isAlive()) {
             raise(*a, "gf:refresh");
-            live.expires = now() + kBoxLifetime;
+            auto            expires = now() + kBoxLifetime;
+            std::lock_guard lock(s.mutex);
+            for (auto& live : s.boxes)
+                if (live.actor == actorId) live.expires = expires;
             return;
         }
+    }
+    if (!matching.empty()) {
+        // the BP timer despawned them: forget the entries
+        std::lock_guard lock(s.mutex);
+        std::erase_if(s.boxes, [&](LiveBox const& b) { return b.dim == dim && b.box == box; });
     }
     auto* region = game::regionOf(dim);
     if (!region) return;
@@ -179,18 +198,25 @@ void spawnOrRefreshBox(int dim, BlockBox const& box) {
     float y  = static_cast<float>(box.minY) - 1.0f / 16.0f;
     float z  = static_cast<float>(box.minZ) + static_cast<float>(sz) / 2.0f;
     auto* actor = spawnEntity(*region, kProtectionBox, x, y, z, [sx, sy, sz](Actor& a) {
-        // binary size events: gf:size_<axis>_<bit> add the bit to the size property gf:size_<axis>
-        auto set = [&a](char axis, int value) {
-            value = std::clamp(value, 1, 1023);
-            for (int bit = 1; bit <= 512; bit <<= 1)
-                if (value & bit) raise(a, std::string("gf:size_") + axis + "_" + std::to_string(bit));
-        };
-        set('x', sx);
-        set('y', sy);
-        set('z', sz);
+        // the size properties gf:size_x / _y / _z (declared in the BP entity, synced to every client)
+        auto props = a.getEntityContext().tryGetComponent<PropertyComponent>();
+        if (!props) {
+            log().warn("landmark: the protection box has no entity properties");
+            return;
+        }
+        bool ok = true;
+        for (auto [name, value] : {std::pair{"gf:size_x", sx}, std::pair{"gf:size_y", sy}, std::pair{"gf:size_z", sz}})
+            ok = ActorPropertyUtils::tryQueueIntValue(*props, a, HashedString(name).getHash(), std::clamp(value, 1, 1023)) && ok;
+        static bool warned = false;
+        if (!ok && !warned) {
+            warned = true;
+            log().warn("landmark: the protection box size properties were refused");
+        }
     });
     if (!actor) return;
-    s.boxes.push_back({dim, box, actor->getOrCreateUniqueID().rawID, now() + kBoxLifetime});
+    LiveBox         entry{dim, box, actor->getOrCreateUniqueID().rawID, now() + kBoxLifetime};
+    std::lock_guard lock(s.mutex);
+    s.boxes.push_back(entry);
 }
 
 void sendStructureProtection(Player& player, Json const& payload) {
@@ -293,18 +319,40 @@ void showAreaProtection(int dim, int x, int y, int z, std::vector<BlockBox> cons
     if (!cfg.protectionParticles) return;
     // 20 protection particles around the block (AreaProtectionPacket#handle)
     static thread_local core::landmark::JavaRandom random(static_cast<std::int64_t>(now() * 31 + 7));
+    std::vector<std::array<float, 3>>             points;
     for (int i = 0; i < 20; i++) {
         float px = static_cast<float>(x) + 0.5f + random.nextFloat() - random.nextFloat();
         float py = static_cast<float>(y) + 0.5f + random.nextFloat() - random.nextFloat();
         float pz = static_cast<float>(z) + 0.5f + random.nextFloat() - random.nextFloat();
-        emitParticle(dim, kProtectionParticle, px, py, pz, false);
+        points.push_back({px, py, pz});
     }
+    emitParticles(dim, kProtectionParticle, points);
 }
 
 std::vector<BlockBox> liveProtectionBoxes() {
     std::lock_guard       lock(state().mutex);
     std::vector<BlockBox> out;
     for (auto const& b : state().boxes) out.push_back(b.box);
+    return out;
+}
+
+std::string describeProtectionBoxes() {
+    auto level = ll::service::getLevel();
+    if (!level) return {};
+    std::vector<std::int64_t> ids;
+    {
+        std::lock_guard lock(state().mutex);
+        for (auto const& b : state().boxes) ids.push_back(b.actor);
+    }
+    std::string out;
+    for (auto raw : ids) {
+        ActorUniqueID id;
+        id.rawID = raw;
+        auto* a  = level->fetchEntity(id, false);
+        if (!a) continue;
+        auto p = a->getFeetPos();
+        out += "[" + a->getTypeName() + " at " + std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z) + "] ";
+    }
     return out;
 }
 

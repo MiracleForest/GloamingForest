@@ -23,6 +23,8 @@
 //   Commands.cpp     /twilightforest center | info | conquer | genbook | locate | place
 //   Module.cpp       install / uninstall, world lifecycle, the server tick
 
+#include <array>
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -115,9 +117,9 @@ void loadDescriptors();
 [[nodiscard]] std::vector<std::string> descriptorKeys();
 [[nodiscard]] StructureSet const* structureSet(std::string const& id);
 [[nodiscard]] std::vector<StructureSet const*> structureSets();
-/// Adds or replaces a descriptor at run time (selftest fixtures). Not for W1 units.
+/// Adds a descriptor at run time (selftest fixtures; an existing key is kept, info() pointers stay
+/// valid). Not for W1 units.
 void registerInfo(Info info);
-void unregisterInfo(std::string const& key);
 /// Fills `info.d` and the parsed fields from a TF structure record (+ its structure set).
 [[nodiscard]] Info parseRecord(std::string const& key, Json const& record);
 /// "twilightforest:lich_tower" from "lich_tower" or the full id.
@@ -128,8 +130,10 @@ void unregisterInfo(std::string const& key);
 [[nodiscard]] Generator const* generatorFor(std::string const& key);
 void setGenerator(std::string const& key, Generator generator);
 void removeGenerator(std::string const& key);
-/// Terraformers added with addTerraformer (besides Generator::terraform).
-[[nodiscard]] std::vector<std::function<double(Start const&, int, int, int)>> terraformersFor(std::string const& key);
+/// Every terraformer of a structure (Generator::terraform, then addTerraformer's), immutable.
+using TerraformerList = std::shared_ptr<std::vector<std::function<double(Start const&, int, int, int)>> const>;
+/// The terraformers of `key` (nullptr: none).
+[[nodiscard]] TerraformerList terraformersFor(std::string const& key);
 void addTerraformer(std::string const& key, std::function<double(Start const&, int, int, int)> fn);
 
 // ---- starts (Starts.cpp) -----------------------------------------------------------------------------
@@ -151,6 +155,7 @@ struct Record {
     bool                                           forced = false;         ///< made by forceStart / place
     std::vector<PieceInfo>                         pieces;
     std::vector<std::shared_ptr<structure::Piece>> livePieces; ///< empty when not loadable / reserved
+    std::atomic<bool>                              reviveTried{false}; ///< reviveRecord ran (once per record)
 };
 using RecordPtr = std::shared_ptr<Record>;
 
@@ -202,6 +207,9 @@ void ensureStartsAround(int dim, int chunkX, int chunkZ);
 /// Creates a start of `key` with its center at block (x, y, z) (y: nullopt = TF's height rule)
 /// for start chunk (cx, cz); nullptr when the generator made no pieces.
 [[nodiscard]] RecordPtr createStart(Info const& info, int dim, int chunkX, int chunkZ, std::optional<GlobalPos> at, bool forced);
+/// Rebuilds the pieces of a start that has none in memory (reserved before its generator, or read
+/// back without loadable pieces) from its generator's deterministic layout; once per record.
+void reviveRecord(RecordPtr const& record);
 /// Places the parts of a record inside the loaded chunks of `region` (commands, saplings,
 /// forceStart); returns the number of chunks placed.
 int placeLoaded(Record const& record, BlockSource& region);
@@ -239,6 +247,8 @@ void setEnforcedOverride(std::optional<bool> value);
 [[nodiscard]] std::vector<BlockBox> liveProtectionBoxes();
 /// Ids of the protection box entities alive (tests).
 [[nodiscard]] std::size_t protectionBoxEntities();
+/// The protection box entities with their positions (test diagnostics).
+[[nodiscard]] std::string describeProtectionBoxes();
 
 // ---- hints (Hints.cpp) -------------------------------------------------------------------------------
 
@@ -258,9 +268,9 @@ void resetHints();
 [[nodiscard]] std::string structureName(std::string const& key, Player const* player);
 /// Spawns an entity by id: the spawn contract, or the engine's spawner while that is a stub.
 Actor* spawnEntity(BlockSource& region, std::string const& id, float x, float y, float z, std::function<void(Actor&)> init = {});
-/// Emits particle `id` at a position for the players near it (the fx contract, or the
-/// particle packet while that is a stub). `onlyVanilla`: skip companion clients.
-void emitParticle(int dim, std::string const& id, float x, float y, float z, bool onlyVanilla);
+/// Emits particle `id` at each point for the players near them (the fx contract, or the particle
+/// packet while that is a stub).
+void emitParticles(int dim, std::string const& id, std::vector<std::array<float, 3>> const& points);
 /// Whether a contract stub was hit (core/Stub.h) since start.
 [[nodiscard]] bool stubHit(std::string const& name);
 

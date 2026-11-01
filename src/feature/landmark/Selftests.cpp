@@ -15,7 +15,8 @@
 //   landmark.persist_read   (after the restart) that start, then removed
 //   landmark.display        (client scenario) keeps protection boxes on show for a screenshot
 #include <algorithm>
-#include <random>
+#include <optional>
+#include <vector>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -57,11 +58,35 @@ constexpr char kLock[]    = "twilightforest:progress_naga";
 
 GlobalPos at(GlobalPos p, int dx, int dy, int dz) { return {p.dim, p.x + dx, p.y + dy, p.z + dz}; }
 
+/// The unlocked fixture (conquerable, no protection): the persistence tests leave it in the world.
+constexpr char kOpenFixture[] = "gf_test:landmark_fixture_open";
+
 /// Removes a forced start made by a test (memory and world DB).
-void dropStart(GlobalPos const& center) {
-    fl::eraseRecord(center.dim, center.x >> 4, center.z >> 4, kFixture);
+void dropStart(GlobalPos const& center, char const* key = kFixture) {
+    fl::eraseRecord(center.dim, center.x >> 4, center.z >> 4, key);
     fl::flushRecords();
 }
+
+/// Undoes what a test changed, also when it aborts (require / fail throw): the enforcement
+/// override, the test companion flag and the forced starts.
+struct Cleanup {
+    std::vector<GlobalPos>      starts;
+    std::optional<std::int64_t> companion;
+    Cleanup() = default;
+    Cleanup(Cleanup const&)            = delete;
+    Cleanup& operator=(Cleanup const&) = delete;
+    ~Cleanup() {
+        fl::setEnforcedOverride(std::nullopt);
+        if (companion) {
+            if (auto level = ll::service::getLevel()) {
+                ActorUniqueID id;
+                id.rawID = *companion;
+                if (auto* p = level->getPlayer(id)) gf::net::setTestCompanion(*p, false);
+            }
+        }
+        for (auto const& s : starts) dropStart(s);
+    }
+};
 
 ia::Result destroyAs(Player& p, GlobalPos const& pos) {
     auto&       region  = *gf::game::regionOf(pos.dim);
@@ -130,7 +155,9 @@ GF_REGISTER_SELFTEST("landmark.grid", [](Context& ctx) {
 GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto area   = co_await ctx.flatArea(5600, 16);
     auto origin = ctx.testPos(5600);
-    auto center = at(origin, 8, 0, 8);
+    auto    center = at(origin, 8, 0, 8);
+    Cleanup cleanup;
+    cleanup.starts.push_back(center);
     fl::setEnforcedOverride(true);
     auto start = lm::forceStart(kFixture, center);
     ctx.require(start.has_value() && start->generated, "forceStart made the fixture landmark");
@@ -146,6 +173,7 @@ GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTa
     auto& p = ctx.player();
     p.setPlayerGameType(GameType::Survival);
     gf::net::setTestCompanion(p, true);
+    cleanup.companion = p.getOrCreateUniqueID().rawID;
     (void)gf::net::takeTestMessages(p);
     ctx.check(lm::isProtectedFor(p, gf::game::blockPos(wall)), "the shell is protected for a player without progress_naga");
     ctx.check(!lm::isProtectedFor(p, gf::game::blockPos(porch)), "the porch piece is not protected");
@@ -196,9 +224,6 @@ GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTa
         ctx.check(destroyAs(p, wall) == ia::Result::Pass, "with progress_naga breaking passes");
         gf::progression::revoke(p, kLock);
     }
-    gf::net::setTestCompanion(p, false);
-    fl::setEnforcedOverride(std::nullopt);
-    dropStart(center);
     (void)area;
 });
 
@@ -210,6 +235,8 @@ GF_REGISTER_SELFTEST("landmark.conquer", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.require(fixture != nullptr, "the fixture descriptor");
     auto rec = fl::createStart(*fixture, center.dim, center.x >> 4, center.z >> 4, at(center, 0, 40, 0), true);
     ctx.require(rec != nullptr, "the fixture start");
+    Cleanup cleanup;
+    cleanup.starts.push_back(at(center, 0, 40, 0));
     fl::putRecord(rec);
     ctx.check(!lm::isConquered(rec->start), "a new start is not conquered");
     lm::setConquered(center.dim, gf::game::blockPos(at(center, 0, 40, 0)), kFixture, true);
@@ -219,7 +246,6 @@ GF_REGISTER_SELFTEST("landmark.conquer", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.check(doc && (*doc)[kFixture].value("conquered", false), "the flag is in the world DB");
     lm::setConquered(center.dim, gf::game::blockPos(at(center, 0, 40, 0)), kFixture, false);
     ctx.check(!lm::isConquered(rec->start), "and can be reactivated");
-    dropStart(at(center, 0, 40, 0));
 });
 
 GF_REGISTER_SELFTEST("landmark.persistence", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -268,6 +294,8 @@ GF_REGISTER_SELFTEST("landmark.clearance", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(fixture != nullptr, "the fixture descriptor");
     auto rec = fl::createStart(*fixture, center.dim, center.x >> 4, center.z >> 4, center, true);
     ctx.require(rec != nullptr, "the fixture start");
+    Cleanup cleanup;
+    cleanup.starts.push_back(center);
     fl::putRecord(rec);
     auto starts = lm::startsIntersecting(center.dim, lm::ChunkPos{center.x >> 4, center.z >> 4});
     ctx.check(std::any_of(starts.begin(), starts.end(), [](auto const& s) { return s.key == kFixture; }), "startsIntersecting lists it");
@@ -282,14 +310,15 @@ GF_REGISTER_SELFTEST("landmark.clearance", [](Context& ctx) -> ll::coro::CoroTas
     // controlled spawns: list 0 inside, nothing outside, nothing once conquered
     auto spawns = gf::landmark::ext::potentialSpawns(center.dim, "monster", center.x, center.y + 1, center.z);
     ctx.check(!spawns.has_value(), "the fixture's pieces have no spawn index (no list)");
-    dropStart(center);
 });
 
 GF_REGISTER_SELFTEST("landmark.persist_write", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto center = at(ctx.testPos(5660, 2), 0, 60, 0);
     ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5660, 2)), "test area loaded");
-    auto const* fixture = fl::info(kFixture);
-    ctx.require(fixture != nullptr, "the fixture descriptor");
+    // the unlocked fixture: when nothing reads it back (a "full" run sorts persist_read first) the
+    // record it leaves protects nothing
+    auto const* fixture = fl::info(kOpenFixture);
+    ctx.require(fixture != nullptr, "the open fixture descriptor");
     auto rec = fl::createStart(*fixture, center.dim, center.x >> 4, center.z >> 4, center, true);
     ctx.require(rec != nullptr, "the fixture start");
     rec->start.conquered = true;
@@ -301,14 +330,14 @@ GF_REGISTER_SELFTEST("landmark.persist_write", [](Context& ctx) -> ll::coro::Cor
 GF_REGISTER_SELFTEST("landmark.persist_read", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto center = at(ctx.testPos(5660, 2), 0, 60, 0);
     co_await ctx.ticks(1);
-    auto rec = fl::findRecord(center.dim, center.x >> 4, center.z >> 4, kFixture);
+    auto rec = fl::findRecord(center.dim, center.x >> 4, center.z >> 4, kOpenFixture);
     if (!rec) {
         gf::log().info("landmark.persist_read: no start");
         co_return;
     }
     ctx.check(rec->start.conquered && rec->forced && rec->pieces.size() == 2, "the start came back with its flag and pieces");
     gf::log().info("landmark.persist_read: start verified at {} {} {}", center.x, center.y, center.z);
-    dropStart(center);
+    dropStart(center, kOpenFixture);
 });
 
 GF_REGISTER_SELFTEST("landmark.display", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -316,7 +345,9 @@ GF_REGISTER_SELFTEST("landmark.display", [](Context& ctx) -> ll::coro::CoroTask<
     // for 12 seconds (every 2 s the simulated player tries the wall again, as a player would)
     auto area   = co_await ctx.flatArea(5680, 16);
     auto origin = ctx.testPos(5680);
-    auto center = at(origin, 8, 0, 8);
+    auto    center = at(origin, 8, 0, 8);
+    Cleanup cleanup;
+    cleanup.starts.push_back(center);
     fl::setEnforcedOverride(true);
     auto start = lm::forceStart(kFixture, center);
     ctx.require(start.has_value() && start->generated, "the fixture landmark");
@@ -330,11 +361,9 @@ GF_REGISTER_SELFTEST("landmark.display", [](Context& ctx) -> ll::coro::CoroTask<
         ctx.check(destroyAs(p, at(center, 3, 2, 0)) == ia::Result::Deny, "the wall is protected");
         if (i == 0) {
             co_await ctx.ticks(2);
-            gf::log().info("landmark.display: protection shown ({} boxes, {} entities)", fl::liveProtectionBoxes().size(), fl::protectionBoxEntities());
+            gf::log().info("landmark.display: protection shown ({} boxes, {} entities) {}", fl::liveProtectionBoxes().size(), fl::protectionBoxEntities(), fl::describeProtectionBoxes());
         }
         co_await ctx.ticks(40);
     }
-    fl::setEnforcedOverride(std::nullopt);
-    dropStart(center);
     (void)area;
 });

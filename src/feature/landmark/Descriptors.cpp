@@ -279,12 +279,8 @@ void registerInfo(Info i) {
     i.raw["gf_runtime"] = true;
     std::unique_lock lock(store().mutex);
     auto             key = i.d.key;
-    store().infos[key]   = std::move(i);
-}
-
-void unregisterInfo(std::string const& key) {
-    std::unique_lock lock(store().mutex);
-    store().infos.erase(key);
+    // never overwrite or erase: info() hands out pointers into the map
+    store().infos.try_emplace(key, std::move(i));
 }
 
 } // namespace gf::feature::landmark

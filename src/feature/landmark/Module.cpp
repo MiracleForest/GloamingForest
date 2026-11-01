@@ -57,7 +57,7 @@ std::optional<std::vector<spawn::SpawnEntry>> specialSpawns(BlockSource& region,
     // Structure#spawnOverrides (StructureSpawnOverride: "full" = the start box, "piece" = a piece)
     for (auto const& rec : recordsIntersecting(dim, pos.x >> 4, pos.z >> 4)) {
         auto const* inf = info(rec->start.key);
-        if (!inf || !inf->d.spawnOverrides.is_object() || !inf->d.spawnOverrides.contains(category)) continue;
+        if (!inf || rec->pieces.empty() || !inf->d.spawnOverrides.is_object() || !inf->d.spawnOverrides.contains(category)) continue;
         auto const& o      = inf->d.spawnOverrides[category];
         bool        inside = false;
         if (o.value("bounding_box", std::string{"piece"}) == "full") inside = rec->start.box.contains(pos.x, pos.y, pos.z);

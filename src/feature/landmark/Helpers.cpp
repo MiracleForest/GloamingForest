@@ -80,32 +80,34 @@ Actor* spawnEntity(BlockSource& region, std::string const& id, float x, float y,
     return mob;
 }
 
-void emitParticle(int dim, std::string const& id, float x, float y, float z, bool onlyVanilla) {
+void emitParticles(int dim, std::string const& id, std::vector<std::array<float, 3>> const& points) {
+    if (points.empty()) return;
     auto level = ll::service::getLevel();
     if (!level) return;
     auto dimension = level->getDimension(DimensionType(dim)).lock();
     if (!dimension) return;
-    if (!onlyVanilla) {
-        fx::particle(*dimension, id, Vec3{x, y, z});
-        static bool const fxIsStub = stubHit("fx.particle");
-        if (!fxIsStub) return;
-    }
-    // the fx contract is still the F0 stub (or only vanilla clients are wanted): the particle packet
+    for (auto const& p : points) fx::particle(*dimension, id, Vec3{p[0], p[1], p[2]});
+    static bool const fxIsStub = stubHit("fx.particle");
+    if (!fxIsStub) return;
+    // the fx contract is still the F0 stub: the particle packets, to the players near the burst
+    Vec3                  first{points[0][0], points[0][1], points[0][2]};
+    std::vector<Player*>  near; // this call only (R16)
     level->forEachPlayer([&](Player& p) {
-        if (static_cast<int>(p.getDimensionId()) != dim) return true;
-        if (onlyVanilla && net::isCompanion(p)) return true;
-        if (p.distanceToSqr(Vec3{x, y, z}) > 64.0f * 64.0f) return true;
-        SpawnParticleEffectPacket packet(SpawnParticleEffectPacketPayload(Vec3{x, y, z}, id, static_cast<uchar>(dim), std::nullopt));
-        packet.sendTo(p);
+        if (static_cast<int>(p.getDimensionId()) == dim && p.distanceToSqr(first) <= 64.0f * 64.0f) near.push_back(&p);
         return true;
     });
+    for (auto const& p : points) {
+        SpawnParticleEffectPacket packet(SpawnParticleEffectPacketPayload(Vec3{p[0], p[1], p[2]}, id, static_cast<uchar>(dim), std::nullopt));
+        for (auto* player : near) packet.sendTo(*player);
+    }
 }
 
 // ---- the test fixture landmark -----------------------------------------------------------------------
 
 namespace {
 
-constexpr char kFixtureKey[] = "gf_test:landmark_fixture";
+constexpr char kFixtureKey[]     = "gf_test:landmark_fixture";
+constexpr char kOpenFixtureKey[] = "gf_test:landmark_fixture_open";
 
 /// A 7x7x7 stone brick shell (the protected main piece) and a 7x1x3 porch in front of it (not
 /// protected, through Generator::pieceProtected).
@@ -154,17 +156,22 @@ void registerFixture() {
     fixture.traits.landmarkTag      = true;
     fixture.traits.controlledSpawns = true;
     registerInfo(std::move(fixture));
+    // the same shape, conquerable without a lock (like TF's quest grove): never protects anything
+    Info open = parseRecord(kOpenFixtureKey, Json::parse(R"({"type": "twilightforest:quest_grove", "step": "surface_structures"})"));
+    open.traits.landmarkTag = true;
+    registerInfo(std::move(open));
+    auto layout = [](gf::landmark::LayoutContext& ctx) {
+        ctx.pieces.push_back(std::make_unique<FixturePiece>(shellBox(ctx.start), true));
+        ctx.pieces.push_back(std::make_unique<FixturePiece>(porchBox(ctx.start), false));
+        return true;
+    };
     setGenerator(kFixtureKey, Generator{
-        .layout =
-            [](gf::landmark::LayoutContext& ctx) {
-                ctx.pieces.push_back(std::make_unique<FixturePiece>(shellBox(ctx.start), true));
-                ctx.pieces.push_back(std::make_unique<FixturePiece>(porchBox(ctx.start), false));
-                return true;
-            },
+        .layout         = layout,
         .terraform      = {},
         .spawnIndex     = {},
         .pieceProtected = [](Start const& s, BlockPos const& pos) { return shellBox(s).contains(pos.x, pos.y, pos.z); },
     });
+    setGenerator(kOpenFixtureKey, Generator{.layout = layout});
 }
 
 } // namespace gf::feature::landmark

@@ -128,7 +128,9 @@ void infoCommand(CommandOrigin const& origin, CommandOutput& output) {
                 auto colon  = type.find(':');
                 auto entity = colon == std::string::npos ? type : type.substr(colon + 1);
                 auto ns     = colon == std::string::npos ? std::string("minecraft") : type.substr(0, colon);
-                auto name   = player ? trFor(*player, "entity." + ns + "." + entity + ".name", entity) : tr("entity." + ns + "." + entity + ".name", entity);
+                // EntityType#getDescription: Java's "entity.<namespace>.<path>" key
+                auto key    = "entity." + ns + "." + entity;
+                auto name   = player ? trFor(*player, key, entity) : tr(key, entity);
                 output.success(say(origin, "commands.tffeature.structure.spawn_info", "%s, Weight %s", name, std::to_string(e.value("weight", 0))));
             }
         }
