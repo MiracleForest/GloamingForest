@@ -38,7 +38,7 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 |---|---|---|
 | `textures` | 1197 PNG (+ `.mcmeta`) | `rp/textures/twilightforest/<tf path>.png`; atlas keys `tf_<path with _>` in `rp/terrain_texture.d`, `rp/item_texture.d`; animated block textures in `rp/flipbook_textures.d`; vanilla textures TF reuses as `tf_vanilla_<path>` keys pointing at the game's own files (never copied) |
 | `models` | 523 blockstates, 2984 generated + 123 hand models, a built-in library of the vanilla parent shapes they extend (`Models.cs`, `Vanilla`) | `rp/models/blocks/twilightforest/*.geo.json`: one geometry per element-defining model (`geometry.tf.<model id>`), shared by every block using it, material instances named after the Java texture variables; one geometry per multipart block (a bone per part, shown by Molang `bone_visibility`) |
-| `blockstates` | blockstates, the TF block classes (`createBlockStateDefinition`, `registerDefaultState`, `getLightEmission`), `TFBlocks.java` (class, strength, light, sound, map colour, collision), `RegistrationEvents.java` (`setFlammable`) | `bp/blocks/<id>.json` (format 1.21.80): states, permutations, `minecraft:geometry` / `material_instances` / `transformation`, collision and selection boxes from the model bounds, destructibility, light (per state where TF computes it), map colour, flammability, friction; `rp/blocks.d` sounds; [blockstates.md](blockstates.md) |
+| `blockstates` | blockstates, the TF block classes (`createBlockStateDefinition`, `registerDefaultState`, `getLightEmission`), `TFBlocks.java` (class, strength, light, sound, map colour, collision, `requiresCorrectToolForDrops`), `RegistrationEvents.java` (`setFlammable`), the tool tags (`#minecraft:mineable/*`, `#minecraft:needs_*_tool`, `#minecraft:sword_efficient`, `#minecraft:leaves`) | `bp/blocks/<id>.json` (format 1.21.80): states, permutations, `minecraft:geometry` / `material_instances` / `transformation`, collision and selection boxes from the model bounds, destructibility, tool and tier tags, light (per state where TF computes it), map colour, flammability, friction; `rp/blocks.d` sounds; [blockstates.md](blockstates.md) |
 | `lang` | en_us (2061 keys) + 99 translations | `lang/<locale>/<unit>.json` (every TF key a locale translates; `gf::tr` falls back to en_US) and `rp/texts.d/<locale>/<unit>.lang` (the same keys for rawtext, plus the Bedrock names `tile.twilightforest:<id>.name`, `item.twilightforest:<id>.name`, `entity.twilightforest:<id>.name`, `item.spawn_egg.entity.twilightforest:<id>.name`, the creative group titles) for the 29 Bedrock locales (below); other TF locales (`en_ud`, ...) are dropped |
 | `tags` | 393 tag files (TF, minecraft, c, neoforge and compat namespaces) | `data/<ns>/tags/<registry>/<path>.json` of the tag owner (other namespaces: F1) |
 | `loot` | 634 loot tables, 2 loot modifiers, NeoForge's global modifier list | `data/<ns>/loot_table/**`, `data/<ns>/loot_modifiers/**` (TF functions and conditions kept by id for F10) |
@@ -49,7 +49,7 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 | `registries` | 290 + 9 `twilight/*` entries, banner patterns, damage types, jukebox songs, trim materials, enchantments, 6 functions | `data/<ns>/<registry>/**` |
 | `particles` | 28 particle JSON | `rp/particles/<id>.json` skeleton effects and `data/gf/particles/<unit>.json` (every frame). TF sprites: the first frame of the TF texture; vanilla sprites: their cell of Bedrock's legacy particle atlas `textures/particle/particles` (128 x 128, Java's pre-1.14 `particles.png` layout: `generic_N` row 0, `flame` (0, 24), `angry` (8, 40), `effect_N` row 8, `sga_*` from index 225), animated by age as a flipbook in Java's sprite order, a random glyph for `sga_*`. A sprite without a cell (`glint`, used by `protection`) emits nothing until F12's native particle |
 | `sounds` | `sounds.json` (328 events, 288 subtitles) | **No `sound_definitions`** (see below). Validates that every event has an owner in owners.tsv (a missing one fails the run) and writes a plain, non-merged listing `data/gf/sound_events/<unit>.json`: event -> Bedrock category, subtitle key, sound *names* (TF file paths without namespace, vanilla events). The subtitle texts come with the `lang` kind |
-| `skeleton` | TFItems, TFEntities, models/item | `bp/items/<id>.json` (254 items, and the block items whose Java item model is a flat icon: `minecraft:block_placer` with `replace_block_item`), `bp/entities/<id>.json` (80, collision box, health, type family, `is_spawnable` for the 51 with eggs), `rp/entity/<id>.entity.json` + `rp/models/entity/skeleton/<id>.geo.json` (a placeholder box of the entity's size with its TF texture, spawn egg colours), `data/gf/import/skeleton.json` (the id list the `import.*` selftests check) |
+| `skeleton` | TFItems, TFToolMaterials, TFEntities, models/item | `bp/items/<id>.json` (254 items, the tiered tools with `minecraft:digger` and Bedrock's tool tags, and the block items whose Java item model is a flat icon: `minecraft:block_placer` with `replace_block_item`), `bp/entities/<id>.json` (80, collision box, health, type family, `is_spawnable` for the 51 with eggs), `rp/entity/<id>.entity.json` + `rp/models/entity/skeleton/<id>.geo.json` (a placeholder box of the entity's size with its TF texture, spawn egg colours), `data/gf/import/skeleton.json` (the id list the `import.*` selftests check), `data/gf/import/harvest.json` (every block's tools, tier and drop rule: read by the runtime, below, and the selftests) |
 | `catalog` | TFCreativeTabs (4 tabs) | `bp/item_catalog.d/import.json` (Bedrock creative groups: blocks -> construction, items and food -> items, equipment -> equipment) and `data/gf/catalog/import.json` (`gf::catalog` groups in TF's order) |
 | `families` | TF block classes and interfaces, block tags, model loaders | `data/gf/families/<unit>.json`: `[{id, family, params: {class, vanillaClass, traits, base, copyOf, woodType, plant, states}}]` for F11 (below) |
 
@@ -125,9 +125,10 @@ Shared files get one owner by rule:
   blockstate property and value TF's blockstate file uses must be a Java property value; the rotation of every
   variant, evaluated as Bedrock does (root components, then the matching permutations in order), against TF's
   blockstate file (3659 variants; a condition on a state the file does not declare, for example after an override
-  renamed it, is an error); the behaviour values of 55 blocks (every drying rack, the brazier, the berry and oreberry
-  bushes, the unbreakable and per-state ones, a sample of the rest) against a second hand-written golden,
-  `tools/import/expected-behaviour.json` (hardness, explosion resistance and map colour per state, sound).
+  renamed it, is an error); the behaviour values of 77 blocks (every drying rack, the brazier, the berry and oreberry
+  bushes, the unbreakable and per-state ones, a block of every tool, tier and drop rule, a sample of the rest)
+  against a second hand-written golden, `tools/import/expected-behaviour.json` (hardness, explosion resistance in
+  Java units and map colour per state, sound, tool and tier tags, `requiresCorrectToolForDrops`).
 - Variants: a permutation per variant key (Molang `q.block_state(...)` conditions), its model's geometry and
   material instances, and `minecraft:transformation` rotation `[-x, -y, 0]` for Java's `x` / `y` (Java rotates
   clockwise seen from above / the axis; Bedrock follows the right-hand rule). The default state's variant is also
@@ -146,33 +147,105 @@ Shared files get one owner by rule:
 - Render method: `translucent` -> `blend`, `cutout(_mipped)` -> `alpha_test`, otherwise `alpha_test` when a face
   texture has transparent pixels, else `opaque`.
 - Behaviour values: `seconds_to_destroy` = Java hardness (`false` when unbreakable), `explosion_resistance` =
-  Java resistance (`false` from 3600000: giant obsidian, `Float.MAX_VALUE`). They follow `BlockBehaviour.Properties`:
+  Java resistance **x 5** (`false` from 3600000: giant obsidian, `Float.MAX_VALUE`): the game stores a fifth of a
+  JSON block's `explosion_resistance` (measured on 1.26.51: 3 -> 0.6, 50 -> 10, 6000 -> 1200) and its vanilla blocks
+  at Java's values (stone 6, oak planks 3, obsidian 1200, bedrock 3600000), so the factor makes a TF block resist
+  as the vanilla block of the same Java resistance (`import.behaviour` calibrates on the vanilla blocks:
+  `twilight_oak_planks` holds what `minecraft:oak_planks` holds, `underbrick` what `minecraft:stone` holds; the
+  hardness needs no factor). They follow `BlockBehaviour.Properties`:
   `of()` starts at destroyTime 0 / explosionResistance 0 / `SoundType.STONE` (the brazier, which sets no strength,
   breaks at once); the calls apply in order, `strength(f)` sets both, `destroyTime` and `explosionResistance` only
   their own (the berry bushes' `destroyTime(0.4F)` keeps resistance 0), `explosionResistance` keeps `max(0, r)`,
-  `instabreak()` = `strength(0)`; arguments are literals or products of literals (`strength(0.2F * 64.0F, 15.0F)`).
+  `instabreak()` = `strength(0)` (a block is instabreak when its final values are 0, whatever call set them);
+  arguments are literals or products of literals (`strength(0.2F * 64.0F, 15.0F)`).
   Java's explosions do not look at the hardness, so an unbreakable block with a low resistance still explodes
   (`twilight_portal`: `strength(-1.0F)`, resistance 0, as the nether portal). Copies: `ofFullCopy` /
   `ofLegacyCopy(X)` and `copyAndScaleProperties(X, k)` (the drying racks: a copy of the slab, destroyTime and
   explosionResistance x `k`); a vanilla `X` uses Minecraft 1.21.1's values (glass, slime block with its friction,
   leaves, planks, wooden slabs, wood / hyphae with each wood's map colour and sound, ...); every property of a copied
-  TF block is copied (light function, friction, collision, occlusion). Registration helpers are read with their
+  TF block is copied (light function, friction, collision, occlusion, `requiresCorrectToolForDrops`; the vanilla
+  stone, cobblestone, stone bricks, obsidian and spawner require it). Registration helpers are read with their
   arguments (`ominousCandle(name, MapColor.SAND, ...)`), and calls a TF class chains onto the properties in its
-  constructor (`SpecialMagicLogBlock`) apply after the registration's; a block whose properties come from a helper
-  the import does not read, or a copy it cannot resolve, is a warning. State-dependent values become permutations
+  constructor (`SpecialMagicLogBlock`) apply after the registration's; a block is resolved completely (its copy, then
+  its class's calls) before another block copies it, as Java's `ofFullCopy` reads the Properties the source's
+  constructor already changed. A block whose properties come from a helper the import does not read, or a copy it
+  cannot resolve, is a warning. State-dependent values become permutations
   (the default state's value on the root): `getExplosionResistance` overrides (vanishing blocks: 6000 while
   inactive, a locked vanishing block 6000000, skull chest and keepsake casket `Float.MAX_VALUE`), the trophy
   pedestal's `getDestroyProgress` (unbreakable while inactive), the map colour of `logProperties(top, side)` (the
   side colour on a lying log) and of the castle doors (their colour; `MapColor.NONE` while vanished, which lets
   Java's map look through the block, has no Bedrock equivalent). Overrides that depend on the player or the held
   item (shears on arctic fur and berry bushes, the aurora brick's advancement, the stronghold shield's side) are
-  the owners' runtime behaviour and listed in the import log. `MapColor` RGB (`DyeColor` through its map colour);
+  the owners' runtime behaviour and listed in the import log. A `getDestroyProgress` override returns progress per
+  tick, not a hardness: only `-1` (cannot be mined in that state) and `super` are block values; any other constant
+  is reported (a warning) and left to the owner. `MapColor` RGB (`DyeColor` through its map colour);
   `friction` = 1 - Java friction; no collision for `noCollission`; the Java sound type -> the Bedrock block sound
-  (an unmapped one warns). Flammability: only the 180 blocks TF registers with
+  (an unmapped one warns). Bedrock's `blocks.json` names a block sound *type* of the engine (or of a pack's
+  `sounds.json` `block_sounds`), not sound events, so the closest one stands in where the Java type has none:
+  `LILY_PAD` -> `grass` (Bedrock's own `waterlily` uses `grass`, vanilla `blocks.json` 1.26.51; Java's lily pad
+  differs only in its place sound), `FLOWERING_AZALEA` -> `azalea` (the vanilla `blocks.json` names no flowering
+  azalea type; the three troll roots use it), and TF's `TFSoundTypes.JAR` (mason / firefly / cicada jar: TF's own
+  `block.twilightforest.jar.*` events, which F3 defines in `sound_definitions`) -> `glass`. A `block_sounds` entry
+  `twilightforest:jar` pointing at F3's events would need a merged RP `sounds.json`, which assemble does not have
+  (`tools/xmake/merges.json`, F0 / A8; requested in issue #21); until then the jar owners (U6) play the jar events
+  through `fx` on placement and breaking, and the blocks use the glass type. Flammability: only the 180 blocks TF registers with
   `FireBlock.setFlammable(block, encouragement, flammability)` (`RegistrationEvents.java`) get
   `minecraft:flammable` (`catch_chance_modifier` = encouragement, `destroy_chance_modifier` = flammability);
   `ignitedByLava` alone does not make a block burn in Java. Blocks not listed in a creative tab get
   `menu_category: none`.
+- Tools and drops (`Harvest.cs`): Minecraft 1.21.1's tools mine a block faster when it is in their tag
+  (`DiggerItem`: `#minecraft:mineable/<pickaxe|axe|shovel|hoe>` at the tier's speed; `SwordItem`: cobwebs at 15,
+  `#minecraft:sword_efficient` at 1.5; `ShearsItem`: `#minecraft:leaves` at 15, `#minecraft:wool` at 5), and drop a
+  `requiresCorrectToolForDrops()` block only when the tool is correct for it (in its mineable tag and not in its
+  tier's `#minecraft:incorrect_for_<tier>_tool`, i.e. not in a `#minecraft:needs_<higher tier>_tool`). The import
+  resolves TF's tag JSONs together with the vanilla 1.21.1 tags they reach (`#minecraft:mineable/axe` includes
+  `#minecraft:planks`, `#minecraft:logs`, `#minecraft:signs`, `#minecraft:wooden_slabs`, ...; `Data.BaseBlockTagRefs`)
+  and gives every TF block the Bedrock block tags the game gives its own blocks (measured on 1.26.51: stone
+  `minecraft:is_pickaxe_item_destructible`; iron ore also `minecraft:stone_tier_destructible`, diamond block
+  `minecraft:iron_tier_destructible`, obsidian `minecraft:diamond_tier_destructible`; oak leaves `minecraft:leaves` +
+  `minecraft:is_hoe_item_destructible`; cobweb `minecraft:is_shears_item_destructible` +
+  `minecraft:is_sword_item_destructible`): `minecraft:is_{pickaxe,axe,shovel,hoe}_item_destructible` for the
+  mineable tags, `minecraft:is_sword_item_destructible` for `#minecraft:sword_efficient`, `minecraft:leaves` and
+  `minecraft:is_shears_item_destructible` for `#minecraft:leaves`, `minecraft:is_shears_item_destructible` for
+  `#minecraft:wool`, and, for a block a tool mines, `minecraft:{stone,iron,diamond}_tier_destructible` for
+  `#minecraft:needs_<tier>_tool` (`aurora_block` is in `needs_diamond_tool` but no mineable tag: no tier tag, as the
+  tier changes nothing in Java). With these, the vanilla pickaxes, axes, shovels and hoes mine and harvest a TF
+  block exactly as the vanilla block of the same Java values (measured, `import.harvest_mining`). Bedrock's vanilla
+  shears and swords single out their own leaves and cobwebs by block type, not by a tag a JSON block can carry:
+  on TF's leaves the vanilla shears mine at 5 (the speed they give `minecraft:is_shears_item_destructible`; Java
+  15) and a vanilla sword at 1 (Java 1.5) - a gap of the engine, left to the leaves' owner (U3) and the sword
+  owners, who can correct it at run time through F9's item contract.
+  A JSON block cannot declare Java's `requiresCorrectToolForDrops` (vanilla blocks carry it in their vanilla
+  block data), so the import lists those blocks in `data/gf/import/harvest.json` and the runtime
+  (`src/feature/ext/import/Harvest.cpp`, extension of this contract) sets the engine's flag on their block types
+  when a world is ready and, on a client, when a GloamingForest server accepts the companion handshake: the game
+  then drops such a block only for a tool that harvests it and mines it at its slower no-harvest speed otherwise,
+  exactly as vanilla stone and obsidian (`import.harvest_tags`, `import.harvest_mining`, `import.harvest_drops`
+  measure this against vanilla blocks and tools). The block's own loot (F10's `gf::loot` for TF's loot tables) is
+  rolled by the owner only for a harvest the game allowed; a vanilla client on a BDS host does not have the flag
+  on its own block types (its mining prediction for such a block is the faster one; the server decides the drop).
+- Tools (`Skeleton.cs`, `Harvest.Digger`): every tiered TF tool (`TieredItem` subclasses by class chain:
+  `PickaxeItem`, `AxeItem`, `ShovelItem`, `HoeItem`, `SwordItem`, whatever the TF class is called) gets Bedrock's
+  item tags `minecraft:is_<kind>` (+ `minecraft:is_tool` for diggers) and the tier whose blocks it drops
+  (`minecraft:{wooden,stone,iron,diamond,golden,netherite}_tier`, from the vanilla `incorrect_for_<tier>_tool` its
+  `TFToolMaterials` tag includes: ironwood iron, steeleaf and knightmetal diamond, fiery netherite, giant stone, ice
+  and glass wooden; `Tiers.X` for the minotaur axes, the mazebreaker and stale bread), and a `minecraft:digger`:
+  a digger mines blocks with its kind's block tag at the tier's speed (`TFToolMaterials`: ironwood 6.5, steeleaf 8,
+  knightmetal 8, fiery 9, giant 4), a sword cobwebs at 15 and `minecraft:is_sword_item_destructible` /
+  `minecraft:leaves` blocks at 1.5, `use_efficiency` on (Java's efficiency). The game lets a custom item harvest
+  every block its digger lists, whatever its tier tags (measured: an ironwood pickaxe with `minecraft:iron_tier`
+  harvested obsidian), so a digger's condition leaves out the blocks of the tiers above the tool's
+  (`!q.any_tag('minecraft:diamond_tier_destructible', 'minecraft:netherite_tier_destructible')` for an iron tool;
+  the legacy `<tier>_pick_diggable` tags of vanilla blocks list the pickaxes that can dig them, no requirement, and
+  are not read): those blocks drop nothing for the tool, as in Java, but mine at speed 1 where Java keeps the
+  tier's speed (a digger entry always harvests, so Bedrock cannot express speed without drop). Bedrock's digger
+  speed is an integer (1.26.51 rejects 6.5 and 1.5 with "invalid numeric value"), so a fractional speed is rounded
+  half up, the mining time closest to Java's (ironwood 7, the swords' 1.5 -> 2), and the 12 tools are listed in the
+  import log for their owners (U7 / U8), who can give the exact speed through F9's `item::Behaviour::destroySpeed`.
+  TF classes that change the speed by block (`GiantPickItem` x64 on giant blocks, `MazebreakerPickItem` x16 on
+  `#twilightforest:mazebreaker_accelerated`) are listed in the import log and stay their owners' runtime behaviour
+  (U7 / U29, `item::Behaviour::destroySpeed`). Armour's `minecraft:wearable` and the attack damage are the owners'
+  (U7 armory, F9's item contract).
 - Light: a constant `lightLevel` is the block's `minecraft:light_emission`. A state-dependent one (`Light.cs`: a
   `lightLevel` lambda of `TFBlocks.java` or of a block class constructor, or a `getLightEmission` override, the
   leaf-most of the class chain) is evaluated for every combination of the states it reads (ternaries, `==` /
@@ -191,20 +264,27 @@ Shared files get one owner by rule:
   constructor and a subclass's `super(...)`); a damageable item and every subclass of a vanilla single-stack class
   (tools, armour, bows, shields, ...) stacks to 1 (the class chain is walked, not the class name matched).
   `hand_equipped` for handheld models, the TF / `c:` / compat item tags the item is in (`minecraft:tags`;
-  `minecraft:*` tags carry engine meaning on Bedrock and are left to the owners), display name `item.twilightforest:<id>.name` (`tile....` for items that place their block).
+  Java's `minecraft:*` tags carry engine meaning on Bedrock and are left to the owners, except the tiered tools'
+  Bedrock tool tags and `minecraft:digger`, see *Tools* above), display name `item.twilightforest:<id>.name` (`tile....` for items that place their block).
 - Spawn eggs are Bedrock's own (`<entity>_spawn_egg`, from the client entity's `spawn_egg` colours = TF's egg
   colours).
 - Bedrock recipes: `crafting_shaped` / `crafting_shapeless` -> `recipe_shaped` / `recipe_shapeless` (tag
   `crafting_table`), `stonecutting` -> `recipe_shapeless` (tag `stonecutter`), `smelting` / `blasting` /
   `smoking` / `campfire_cooking` -> `recipe_furnace` (`furnace` / `blast_furnace` / `smoker` / `campfire` +
   `soul_campfire`), `smithing_transform` -> `recipe_smithing_transform`. `unlock` lists the items of the
-  recipe's advancement (`inventory_changed`), else `AlwaysUnlocked`. Ingredients: Java item tags with a Bedrock
+  recipe's advancement (`inventory_changed`; an item tag such as `#c:ingots/ironwood` or `#twilightforest:arctic_fur`
+  as its members, Minecraft 1.21.1's vanilla members included for `#minecraft:boats` / `#minecraft:saplings`, other
+  mods' optional entries left out); an advancement without item criteria that unlocks on entering water (TF's 8
+  boats) gets Bedrock's `PlayerInWater` context, as Bedrock's own boat recipes; only one with neither is
+  `AlwaysUnlocked` (none at 9e40a757). Ingredients: Java item tags with a Bedrock
   equivalent (`minecraft:planks`, `logs`, `wool`, `wooden_slabs`) stay tags; tags of TF items only use the tag
   (declared on those items); other tags and ingredient lists are expanded into one recipe per combination
   (`<id>_<n>`); more than 64 combinations fail the import (a recipe is never cut down to some of its alternatives).
   Furnace and smithing recipes take one item per slot: every tag alternative (Bedrock-native ones included, with
   Minecraft 1.21.1's members of `minecraft:planks`, `wooden_slabs`, `wool`, `logs`) becomes its members, and a
-  smithing recipe is emitted per template x base x addition combination. NeoForge
+  smithing recipe is emitted per template x base x addition combination. Their slots are plain item names, so an
+  alternative with a data value (the water bottle) fails the import there instead of losing its data (none at
+  9e40a757). NeoForge
   ingredients: `neoforge:difference` / `intersection` / `compound` become their item sets (the travellers belt's
   wooden chest that is not trapped), `neoforge:components` with a water potion becomes `minecraft:potion` data 0
   (tannin). A vanilla-type recipe that still has no Bedrock recipe is a warning and listed in the import log
