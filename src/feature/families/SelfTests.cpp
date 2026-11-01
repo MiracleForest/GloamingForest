@@ -4,8 +4,10 @@
 // Development builds have the gf_test packs: there every test fails when the fixture families are
 // missing (the generator did not run), so a run cannot pass without checking anything. Builds
 // without test packs skip with an info line.
-// Clicks go through the game (SimulatedPlayer use / destroy -> GameMode -> interactions); a click
-// the interactions dispatch never saw fails the test.
+// Clicks go through the game as the network handler runs a player's: GameMode::useItemOn /
+// destroyBlock (-> the interactions hooks -> vanilla placement); a click the interactions dispatch
+// never saw fails the test. (SimulatedPlayer's own use / interact calls drop uses inside Bedrock's
+// build delay and empty-hand interactions, so they are not used.)
 
 #include <cmath>
 #include <random>
@@ -21,6 +23,9 @@
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/gamemode/GameMode.h"
+#include "mc/world/gamemode/InteractionResult.h"
+#include "mc/world/item/HandSlot.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -140,31 +145,48 @@ void stand(Context& ctx, GlobalPos const& p, int face, std::string const& itemId
     }
 }
 
+/// Every click waits this long after the player is placed: SimulatedPlayer applies a look on its
+/// next tick, and Bedrock drops a player's use of an item on a block a few ticks after the last one.
+constexpr int kClickGap = 8;
+
+/// The player's right click on face `face` of `p` at face-local `hit` with the held item (hotbar
+/// slot 0, maybe empty), as the network handler runs one (ItemUseInventoryTransaction):
+/// GameMode::useItemOn with the absolute click position, a first event.
+void useOn(Context& ctx, GlobalPos const& p, Facing face, Vec3 hit) {
+    auto&    sp   = simPlayer(ctx);
+    BlockPos bp   = gf::game::blockPos(p);
+    auto&    held = const_cast<ItemStack&>(sp.getSelectedItem());
+    sp.mGameMode->useItemOn(held, bp, static_cast<uchar>(face), Vec3{bp.x + hit.x, bp.y + hit.y, bp.z + hit.z}, HandSlot::Mainhand, nullptr, true);
+}
+
+/// The player breaks the block at `p` (hit on face `face`) as the server does at the end of a
+/// player's mining: GameMode::destroyBlock.
+void destroy(Context& ctx, GlobalPos const& p, Facing face) { simPlayer(ctx).mGameMode->destroyBlock(gf::game::blockPos(p), static_cast<uchar>(face)); }
+
 /// Clicks face `face` of `p` at face-local `hit` through the game. True when the interactions
 /// dispatch saw the click (the real path, no shortcut).
-bool click(Context& ctx, GlobalPos const& p, Facing face, Vec3 hit, std::string const& itemId) {
+ll::coro::CoroTask<bool> click(Context& ctx, GlobalPos p, Facing face, Vec3 hit, std::string itemId) {
     stand(ctx, p, static_cast<int>(face), itemId);
+    co_await ctx.ticks(kClickGap); // the look is applied on the player's next tick
     bool seen = false;
     auto id   = ia::onUseOn({}, [&seen, p](ia::UseOnContext const& c) {
         if (c.pos == p) seen = true;
         return ia::Result::Pass;
     }, ia::priority::Highest + 1000);
-    auto& sp = simPlayer(ctx);
-    BlockPos bp = gf::game::blockPos(p);
-    if (itemId.empty()) sp.simulateInteract(bp, face);
-    else sp.simulateUseItemInSlotOnBlock(0, bp, face, hit);
+    useOn(ctx, p, face, hit);
     ia::remove(id);
-    return seen;
+    co_return seen;
 }
 
 /// Places `itemId` against face `face` of `against`; the position the game placed it at.
-std::optional<GlobalPos> place(Context& ctx, GlobalPos const& against, Facing face, Vec3 hit, std::string const& itemId, std::optional<Vec3> look = std::nullopt) {
+ll::coro::CoroTask<std::optional<GlobalPos>> place(Context& ctx, GlobalPos against, Facing face, Vec3 hit, std::string itemId, std::optional<Vec3> look = std::nullopt) {
     stand(ctx, against, static_cast<int>(face), itemId, look);
+    co_await ctx.ticks(kClickGap);
     std::optional<GlobalPos> placed;
     auto id = ia::onPlace({}, [&placed](ia::PlaceContext const& c) { placed = c.pos; }, ia::priority::Highest + 1000);
-    simPlayer(ctx).simulateUseItemInSlotOnBlock(0, gf::game::blockPos(against), face, hit);
+    useOn(ctx, against, face, hit);
     ia::remove(id);
-    return placed;
+    co_return placed;
 }
 
 int dustSignal(GlobalPos const& p) {
@@ -236,7 +258,7 @@ GF_REGISTER_SELFTEST("families.slab_doubling", [](Context& ctx) -> ll::coro::Cor
     ctx.require(ctx.setBlock(at(p, 1, 0, 0), "gf_test:family_slab", {{fam::state::Type, "bottom"}}), "bottom slab placed");
     co_await ctx.ticks(1);
     // a second slab clicked onto the top of a bottom slab merges into a double slab
-    ctx.check(click(ctx, at(p, 1, 0, 0), Facing::Up, Vec3{0.5f, 0.5f, 0.5f}, "gf_test:family_slab"), "the click went through the game");
+    ctx.check(co_await click(ctx, at(p, 1, 0, 0), Facing::Up, Vec3{0.5f, 0.5f, 0.5f}, "gf_test:family_slab"), "the click went through the game");
     co_await ctx.ticks(2);
     ctx.check(sst(at(p, 1, 0, 0), fam::state::Type) == "double", "the slab is double after a second slab on its top (" + sst(at(p, 1, 0, 0), fam::state::Type) + ")");
     // a top slab takes a slab from below
@@ -247,7 +269,8 @@ GF_REGISTER_SELFTEST("families.slab_doubling", [](Context& ctx) -> ll::coro::Cor
     ctx.check(sst(at(p, 3, 1, 0), fam::state::Type) == "double", "the top slab is double");
     ctx.check(!fam::mergeSlab(region, gf::game::blockPos(at(p, 3, 1, 0))), "a double slab takes no more");
     // placing a slab against the upper half of a block's side makes a top slab
-    auto placed = place(ctx, at(p, 0, 0, 2), Facing::East, Vec3{1.0f, 0.8f, 0.5f}, "gf_test:family_slab");
+    ctx.require(ctx.setBlock(at(p, 0, 0, 2), "minecraft:stone"), "a stone to place against");
+    auto placed = co_await place(ctx, at(p, 0, 0, 2), Facing::East, Vec3{1.0f, 0.8f, 0.5f}, "gf_test:family_slab");
     co_await ctx.ticks(2);
     ctx.check(placed && sst(*placed, fam::state::Type) == "top", "a slab placed on the upper half of a side is a top slab (" + (placed ? sst(*placed, fam::state::Type) : "not placed") + ")");
     (void)box;
@@ -260,7 +283,7 @@ GF_REGISTER_SELFTEST("families.door_pair", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto door = at(p, 2, 0, 0);
     // a player places the door on the ground: the lower half, then the upper half on top
-    ctx.check(click(ctx, at(door, 0, -1, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gf_test:family_door"), "the click went through the game");
+    ctx.check(co_await click(ctx, at(door, 0, -1, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gf_test:family_door"), "the click went through the game");
     co_await ctx.ticks(3);
     ctx.require(ctx.blockAt(door) == "gf_test:family_door", "the lower half is placed (got " + ctx.blockAt(door) + ")");
     ctx.check(ctx.blockAt(at(door, 0, 1, 0)) == "gf_test:family_door", "the upper half is placed above it");
@@ -271,7 +294,7 @@ GF_REGISTER_SELFTEST("families.door_pair", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(fam::useDoor(at(door, 0, 1, 0), nullptr), "the upper half can be used");
     co_await ctx.ticks(2);
     ctx.check(flag(door, fam::state::Open) && flag(at(door, 0, 1, 0), fam::state::Open), "both halves are open");
-    ctx.check(click(ctx, door, Facing::North, Vec3{0.5f, 0.5f, 0.0f}, ""), "a click on the door");
+    ctx.check(co_await click(ctx, door, Facing::North, Vec3{0.5f, 0.5f, 0.0f}, ""), "a click on the door");
     co_await ctx.ticks(2);
     ctx.check(!flag(door, fam::state::Open) && !flag(at(door, 0, 1, 0), fam::state::Open), "a player's click closes both halves");
     // redstone opens it (the lower half's neighbour), and it closes when the power goes
@@ -374,7 +397,7 @@ GF_REGISTER_SELFTEST("families.button_redstone", [](Context& ctx) -> ll::coro::C
     ctx.require(ctx.setBlock(at(button, 1, 0, 0), "minecraft:redstone_wire"), "redstone dust beside it");
     co_await ctx.ticks(2);
     ctx.check(dustSignal(at(button, 1, 0, 0)) == 0, "no power before the press");
-    ctx.check(click(ctx, button, Facing::Up, Vec3{0.5f, 0.1f, 0.5f}, ""), "the click went through the game");
+    ctx.check(co_await click(ctx, button, Facing::Up, Vec3{0.5f, 0.1f, 0.5f}, ""), "the click went through the game");
     co_await ctx.ticks(4);
     ctx.check(flag(button, fam::state::Powered), "the button is pressed");
     ctx.check(dustSignal(at(button, 1, 0, 0)) == 15, "the pressed button powers the dust with 15 (got " + std::to_string(dustSignal(at(button, 1, 0, 0))) + ")");
@@ -397,7 +420,7 @@ GF_REGISTER_SELFTEST("families.button_redstone", [](Context& ctx) -> ll::coro::C
     // BasePressurePlateBlock.canSurvive: a plate stands on a fence's top centre
     auto fence = at(p, 4, 0, 2);
     ctx.require(ctx.setBlock(fence, "minecraft:oak_fence"), "a fence");
-    auto placed = place(ctx, fence, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gf_test:family_pressure_plate");
+    auto placed = co_await place(ctx, fence, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gf_test:family_pressure_plate");
     co_await ctx.ticks(3);
     ctx.check(placed && ctx.blockAt(*placed) == "gf_test:family_pressure_plate", "a plate stays on a fence (canSupportCenter)");
     (void)box;
@@ -408,9 +431,16 @@ GF_REGISTER_SELFTEST("families.switch_a_save", [](Context& ctx) -> ll::coro::Cor
     if (!fixturesReady(ctx)) co_return;
     auto p = ctx.testPos(6160, 1);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
-    ctx.require(ctx.setBlock(at(p, 0, -1, 0), "minecraft:stone") && ctx.setBlock(at(p, 2, -1, 0), "minecraft:stone"), "the ground");
-    ctx.require(ctx.setBlock(p, "gf_test:family_button", {{fam::state::Face, "floor"}, {fam::state::Powered, true}}), "a pressed button");
-    ctx.require(ctx.setBlock(at(p, 2, 0, 0), "gf_test:family_pressure_plate", {{fam::state::Powered, true}}), "a pressed plate");
+    // set without ctx.setBlock (which restores air after the test): they stay for the reader; the
+    // flat world's ground carries them
+    auto& region = *ctx.region();
+    auto const* button = gf::game::blockWithStates("gf_test:family_button", {{fam::state::Face, "floor"}, {fam::state::Powered, true}});
+    auto const* plate  = gf::game::blockWithStates("gf_test:family_pressure_plate", {{fam::state::Powered, true}});
+    ctx.require(button && plate, "pressed switch states");
+    gf::game::setBlock(region, gf::game::blockPos(p), *button);
+    gf::game::setBlock(region, gf::game::blockPos(at(p, 2, 0, 0)), *plate);
+    co_await ctx.ticks(1);
+    ctx.require(flag(p, fam::state::Powered) && flag(at(p, 2, 0, 0), fam::state::Powered), "a pressed button and a pressed plate");
     gf::game::db::put("gf:families:selftest_switches", {{"session", sessionId()}});
     ctx.info("pressed switches written at " + where(p));
     co_return;
@@ -426,7 +456,7 @@ GF_REGISTER_SELFTEST("families.switch_b_reload", [](Context& ctx) -> ll::coro::C
         // written in this session (no reload in between): the button pressed by a command has no
         // release scheduled, as in Java; nothing to check
         ctx.info("no switches saved before a reload: nothing to check");
-        for (auto const& q : {p, at(p, 2, 0, 0), at(p, 0, -1, 0), at(p, 2, -1, 0)}) ctx.cleanupBlock(q);
+        for (auto const& q : {p, at(p, 2, 0, 0)}) ctx.cleanupBlock(q);
         co_return;
     }
     // the chunk's first tick after the load re-arms the releases (Java keeps them with the chunk)
@@ -434,7 +464,7 @@ GF_REGISTER_SELFTEST("families.switch_b_reload", [](Context& ctx) -> ll::coro::C
     ctx.check(!flag(p, fam::state::Powered), "the button saved while pressed is released after the reload");
     ctx.check(!flag(at(p, 2, 0, 0), fam::state::Powered), "the plate saved while pressed is released after the reload");
     ctx.info("switches released after the reload at " + where(p));
-    for (auto const& q : {p, at(p, 2, 0, 0), at(p, 0, -1, 0), at(p, 2, -1, 0)}) ctx.cleanupBlock(q);
+    for (auto const& q : {p, at(p, 2, 0, 0)}) ctx.cleanupBlock(q);
 });
 
 GF_REGISTER_SELFTEST("families.leaves_decay", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -510,7 +540,7 @@ GF_REGISTER_SELFTEST("families.sign_b_read", [](Context& ctx) -> ll::coro::CoroT
     auto* display = fam::detail::signDisplay(p, true);
     ctx.check(display && display->getNameTag().find("Here lies") != std::string::npos, "the text shows on its display entity after the reload");
     ctx.info("sign text verified at " + where(p));
-    ctx.cleanupBlock(p);
+    ctx.setBlock(p, "minecraft:air"); // the sign broken (cleanupBlock only clears after the test)
     co_await ctx.ticks(2);
     ctx.check(!fam::detail::signDisplay(p, true), "the display entity goes with the sign");
 });
@@ -541,10 +571,10 @@ GF_REGISTER_SELFTEST("families.sign_edit", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(display && display->getNameTag().find("WWW") != std::string::npos, "the front text shows on its display entity");
     ctx.check(!fam::detail::signDisplay(p, false), "an empty back has none");
     // an empty hand opens the editor, a dye colours the side facing the player, honeycomb waxes it
-    ctx.check(click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:red_dye"), "a dye click");
+    ctx.check(co_await click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:red_dye"), "a dye click");
     co_await ctx.ticks(2);
     ctx.check(gf::blockdata::get(p) && (*gf::blockdata::get(p))["sign"]["front"].value("color", "") == "red", "the dye colours the front");
-    ctx.check(click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:honeycomb"), "a honeycomb click");
+    ctx.check(co_await click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:honeycomb"), "a honeycomb click");
     co_await ctx.ticks(2);
     fam::detail::signEditorFor(ctx.player(), p, true);
     ctx.check(!fam::detail::signEdit(ctx.player(), p, true, {"waxed"}), "a waxed sign takes no edit");
@@ -683,40 +713,40 @@ GF_REGISTER_SELFTEST("families.placement", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto ground = at(p, 0, -1, 0);
     // stairs on the ground, the player south of them looking north: facing north, bottom half
-    auto s = place(ctx, ground, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gf_test:family_stairs");
+    auto s = co_await place(ctx, ground, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gf_test:family_stairs");
     co_await ctx.ticks(2);
     ctx.check(s && sst(*s, kFacing) == "north" && sst(*s, fam::state::Half) == "bottom" && sst(*s, fam::state::Shape) == "straight",
               "stairs face the player's look, bottom half (" + (s ? sst(*s, kFacing) + " " + sst(*s, fam::state::Half) : "not placed") + ")");
     // a log against a block's south side lies along z
     auto stone = at(p, 2, 0, 0);
     ctx.require(ctx.setBlock(stone, "minecraft:stone"), "a stone");
-    auto l = place(ctx, stone, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gf_test:family_log");
+    auto l = co_await place(ctx, stone, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gf_test:family_log");
     co_await ctx.ticks(2);
     ctx.check(l && sst(*l, fam::state::Axis) == "z", "a log on a side takes that axis (" + (l ? sst(*l, fam::state::Axis) : "not placed") + ")");
-    if (l) ctx.cleanupBlock(*l);
+    if (l) ctx.setBlock(*l, "minecraft:air"); // cleanupBlock only clears after the test
     // a button on a block's side is a wall button facing out; on top a floor button
-    auto b1 = place(ctx, stone, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gf_test:family_button");
+    auto b1 = co_await place(ctx, stone, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gf_test:family_button");
     co_await ctx.ticks(2);
     ctx.check(b1 && sst(*b1, fam::state::Face) == "wall" && sst(*b1, kFacing) == "south", "a wall button faces out of the wall (" + (b1 ? sst(*b1, fam::state::Face) + " " + sst(*b1, kFacing) : "not placed") + ")");
-    if (b1) ctx.cleanupBlock(*b1);
+    if (b1) ctx.setBlock(*b1, "minecraft:air");
     // a wall sign on the side; a wall hanging sign stands across the wall (WallHangingSignBlock)
-    auto ws = place(ctx, stone, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gf_test:family_sign");
+    auto ws = co_await place(ctx, stone, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gf_test:family_sign");
     co_await ctx.ticks(2);
     ctx.check(ws && ctx.blockAt(*ws) == "gf_test:family_wall_sign" && sst(*ws, kFacing) == "south", "a sign on a side becomes the wall sign facing out (" + (ws ? ctx.blockAt(*ws) : "not placed") + ")");
-    if (ws) ctx.cleanupBlock(*ws);
-    auto hs = place(ctx, stone, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gf_test:family_hanging_sign", Vec3{stone.x + 0.6f, stone.y + 0.5f, stone.z + 1.0f});
+    if (ws) ctx.setBlock(*ws, "minecraft:air");
+    auto hs = co_await place(ctx, stone, Facing::South, Vec3{0.5f, 0.5f, 1.0f}, "gf_test:family_hanging_sign", Vec3{stone.x + 0.6f, stone.y + 0.5f, stone.z + 1.0f});
     co_await ctx.ticks(2);
     ctx.check(hs && ctx.blockAt(*hs) == "gf_test:family_wall_hanging_sign" && (sst(*hs, kFacing) == "east" || sst(*hs, kFacing) == "west"),
               "a hanging sign on a side hangs across the wall (" + (hs ? ctx.blockAt(*hs) + " " + sst(*hs, kFacing) : "not placed") + ")");
-    if (hs) ctx.cleanupBlock(*hs);
+    if (hs) ctx.setBlock(*hs, "minecraft:air");
     // a horizontal block faces the player, a directional one the other way of the look
-    auto hz = place(ctx, at(p, 4, -1, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gf_test:family_horizontal");
+    auto hz = co_await place(ctx, at(p, 4, -1, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gf_test:family_horizontal");
     co_await ctx.ticks(2);
     ctx.check(hz && sst(*hz, kFacing) == "south", "a horizontal block faces the player (" + (hz ? sst(*hz, kFacing) : "not placed") + ")");
     // a button with nothing to hang on is not placed (a fence top is no sturdy face)
     auto fence = at(p, 0, 0, 3);
     ctx.require(ctx.setBlock(fence, "minecraft:oak_fence"), "a fence");
-    auto none = place(ctx, fence, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gf_test:family_button");
+    auto none = co_await place(ctx, fence, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "gf_test:family_button");
     co_await ctx.ticks(2);
     ctx.check(!none || ctx.blockAt(*none) != "gf_test:family_button", "a button on a fence top is refused");
     (void)box;
@@ -731,7 +761,7 @@ GF_REGISTER_SELFTEST("families.interactions", [](Context& ctx) -> ll::coro::Coro
     auto lg = at(p, 0, 0, 0);
     ctx.require(ctx.setBlock(lg, "gf_test:family_log", {{fam::state::Axis, "x"}}), "a log on its side");
     co_await ctx.ticks(1);
-    ctx.check(click(ctx, lg, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "minecraft:iron_axe"), "an axe click");
+    ctx.check(co_await click(ctx, lg, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "minecraft:iron_axe"), "an axe click");
     co_await ctx.ticks(2);
     ctx.check(ctx.blockAt(lg) == "gf_test:family_stripped_log", "the axe strips the log (" + ctx.blockAt(lg) + ")");
     ctx.check(sst(lg, fam::state::Axis) == "x", "the stripped log keeps its axis");
@@ -739,20 +769,20 @@ GF_REGISTER_SELFTEST("families.interactions", [](Context& ctx) -> ll::coro::Coro
     auto pot = at(p, 2, 0, 0);
     ctx.require(ctx.setBlock(pot, "minecraft:flower_pot"), "an empty flower pot");
     co_await ctx.ticks(1);
-    ctx.check(click(ctx, pot, Facing::Up, Vec3{0.5f, 0.4f, 0.5f}, "gf_test:family_sapling"), "a sapling click on the pot");
+    ctx.check(co_await click(ctx, pot, Facing::Up, Vec3{0.5f, 0.4f, 0.5f}, "gf_test:family_sapling"), "a sapling click on the pot");
     co_await ctx.ticks(2);
     ctx.check(ctx.blockAt(pot) == "gf_test:family_potted", "the sapling goes into the pot (" + ctx.blockAt(pot) + ")");
-    ctx.check(click(ctx, pot, Facing::Up, Vec3{0.5f, 0.4f, 0.5f}, ""), "an empty hand on the potted sapling");
+    ctx.check(co_await click(ctx, pot, Facing::Up, Vec3{0.5f, 0.4f, 0.5f}, ""), "an empty hand on the potted sapling");
     co_await ctx.ticks(2);
     ctx.check(ctx.blockAt(pot) == "minecraft:flower_pot", "the plant comes out again");
     // lightable
     auto lamp = at(p, 4, 0, 0);
     ctx.require(ctx.setBlock(lamp, "gf_test:family_lightable"), "a lightable block");
     co_await ctx.ticks(1);
-    ctx.check(click(ctx, lamp, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "minecraft:flint_and_steel"), "flint and steel");
+    ctx.check(co_await click(ctx, lamp, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "minecraft:flint_and_steel"), "flint and steel");
     co_await ctx.ticks(2);
     ctx.check(sst(lamp, fam::state::Lighting) == "normal", "flint and steel lights it (" + sst(lamp, fam::state::Lighting) + ")");
-    ctx.check(click(ctx, lamp, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, ""), "an empty hand");
+    ctx.check(co_await click(ctx, lamp, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, ""), "an empty hand");
     co_await ctx.ticks(2);
     ctx.check(sst(lamp, fam::state::Lighting) == "none", "an empty hand puts it out");
     // snowloggable: snow in, then breaking the snow part or the plant part (SnowLoggable.clip)
@@ -760,18 +790,20 @@ GF_REGISTER_SELFTEST("families.interactions", [](Context& ctx) -> ll::coro::Coro
     ctx.require(ctx.setBlock(bush, "gf_test:family_snowloggable"), "a snowloggable plant");
     co_await ctx.ticks(1);
     for (int i = 0; i < 3; ++i) {
-        ctx.check(click(ctx, bush, Facing::Up, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:snow_layer"), "snow on the plant");
+        ctx.check(co_await click(ctx, bush, Facing::Up, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:snow_layer"), "snow on the plant");
         co_await ctx.ticks(6);
     }
     ctx.check(st(bush, fam::state::Layers) == 3, "three snow layers inside the plant (" + std::to_string(st(bush, fam::state::Layers)) + ")");
     stand(ctx, bush, fam::South, "", Vec3{bush.x + 0.5f, bush.y + 0.1f, bush.z + 0.5f});
-    simPlayer(ctx).simulateDestroyBlock(gf::game::blockPos(bush), Facing::South);
+    co_await ctx.ticks(2); // the look is applied on the player's next tick
+    destroy(ctx, bush, Facing::South);
     co_await ctx.ticks(3);
     ctx.check(ctx.blockAt(bush) == "gf_test:family_snowloggable" && st(bush, fam::state::Layers) == 0, "hitting the snow takes the snow, the plant stays");
     ctx.setBlock(bush, "gf_test:family_snowloggable", {{fam::state::Layers, 3}});
     co_await ctx.ticks(1);
     stand(ctx, bush, fam::South, "", Vec3{bush.x + 0.5f, bush.y + 0.8f, bush.z + 0.5f});
-    simPlayer(ctx).simulateDestroyBlock(gf::game::blockPos(bush), Facing::South);
+    co_await ctx.ticks(2); // the look is applied on the player's next tick
+    destroy(ctx, bush, Facing::South);
     co_await ctx.ticks(3);
     ctx.check(ctx.blockAt(bush) == "minecraft:snow_layer", "hitting the plant takes the plant, its snow stays (" + ctx.blockAt(bush) + ")");
     // climbable blocks are climbable for the game's movement
