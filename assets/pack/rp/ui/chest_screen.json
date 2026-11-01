@@ -1,0 +1,45 @@
+{
+  "namespace": "chest",
+
+  "gf_skin_image": {
+    "type": "image",
+    "layer": 0,
+    "size": [176, 166],
+    "offset": [0, -12],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "uv": [0, 0],
+    "uv_size": [176, 166],
+    "$gf_skin_field": "('%.40s' * ($container_title - 'gfskin:'))",
+    "$gf_skin_texture": "('textures/gui/' + ($gf_skin_field - '~'))",
+    "texture": "$gf_skin_texture",
+    "ignored": "(not (('%.7s' * $container_title) = 'gfskin:'))"
+  },
+
+  "small_chest_panel_top_half": {
+    "modifications": [
+      {
+        "array_name": "controls",
+        "operation": "insert_front",
+        "value": [
+          { "gf_skin@chest.gf_skin_image": {} }
+        ]
+      }
+    ]
+  },
+
+  "chest_label": {
+    "$gf_label_text|default": "$container_title",
+    "variables": [
+      {
+        "requires": "(('%.7s' * $container_title) = 'gfskin:')",
+        "$gf_label_text": "($container_title - ('%.47s' * $container_title))"
+      },
+      {
+        "requires": "(not (('%.7s' * $container_title) = 'gfskin:'))",
+        "$gf_label_text": "$container_title"
+      }
+    ],
+    "text": "$gf_label_text"
+  }
+}

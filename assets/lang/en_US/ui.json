@@ -1,0 +1,10 @@
+{
+  "gf.ui.fixture.title": "GloamingForest UI fixture",
+  "gf.ui.fixture.form_body": "The form fallback of a TF screen for vanilla clients.",
+  "gf.ui.fixture.button_click": "Click",
+  "gf.ui.fixture.button_close": "Close",
+  "gf.ui.fixture.clicks": "Clicks: {}",
+  "gf.ui.fixture.hud_line": "HUD layer",
+  "gf.ui.fixture.toast_title": "UI fixture",
+  "gf.ui.fixture.toast_body": "A toast of the client frameworks"
+}

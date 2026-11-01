@@ -1,0 +1,10 @@
+{
+  "gf.ui.fixture.title": "GloamingForest 界面测试件",
+  "gf.ui.fixture.form_body": "原版客户端看到的 TF 界面表单替代。",
+  "gf.ui.fixture.button_click": "点击",
+  "gf.ui.fixture.button_close": "关闭",
+  "gf.ui.fixture.clicks": "点击次数：{}",
+  "gf.ui.fixture.hud_line": "HUD 图层",
+  "gf.ui.fixture.toast_title": "界面测试件",
+  "gf.ui.fixture.toast_body": "客户端框架的提示框"
+}
