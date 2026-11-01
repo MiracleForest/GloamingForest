@@ -456,12 +456,31 @@ std::map<std::string, std::string> const& biomeLandmarks() {
     return m;
 }
 
-// owners.tsv ids of one kind (empty when docs/spec/owners.tsv is not next to tests/golden)
+// docs/spec/owners.tsv: $GF_OWNERS_TSV, or found walking up from tests/golden, then from the
+// working directory (empty when not found: the coverage tests then fail).
+fs::path ownersTsv() {
+    static fs::path const file = [] {
+        if (char const* env = std::getenv("GF_OWNERS_TSV"); env && *env) return fs::path(env);
+        std::error_code ec;
+        for (fs::path start : {goldenDir(), fs::current_path(ec)}) {
+            if (start.empty()) continue;
+            start = fs::absolute(start, ec);
+            for (fs::path p = start; !p.empty(); p = p.parent_path()) {
+                if (fs::exists(p / "docs/spec/owners.tsv", ec)) return p / "docs/spec/owners.tsv";
+                if (p == p.root_path()) break;
+            }
+        }
+        return fs::path();
+    }();
+    return file;
+}
+
+// owners.tsv ids of one kind (empty when owners.tsv is not found or lists no id of the kind)
 std::set<std::string> ownedIds(std::string const& kind) {
     std::set<std::string> out;
-    fs::path              p = goldenDir().parent_path().parent_path() / "docs/spec/owners.tsv";
-    std::ifstream         in(p);
-    std::string           line;
+    if (ownersTsv().empty()) return out;
+    std::ifstream in(ownersTsv());
+    std::string   line;
     while (std::getline(in, line)) {
         auto t1 = line.find('\t');
         if (t1 == std::string::npos || line.compare(0, t1, kind) != 0 || t1 != kind.size()) continue;
@@ -840,6 +859,91 @@ TEST(OracleGolden, HeightGridsAreConsistent) {
     }
 }
 
+// surface/seed-*.json "samples": whole chunks for every main biome of the search grid
+TEST(OracleGolden, SurfaceSamplesCoverEveryBiome) {
+    REQUIRE_GOLDENS();
+    std::set<std::string> blocksSeen;
+    for (std::string const& rel : filesOfKind("surface")) {
+        SCOPED_TRACE(rel);
+        json const&              g       = golden(rel);
+        std::vector<std::string> palette = g.at("palette");
+        std::string              chars   = g.at("paletteChars");
+        ASSERT_EQ(chars.size(), palette.size());
+        json const&              s           = g.at("samples");
+        std::vector<std::string> biomes      = s.at("biomePalette");
+        std::string              biomeChars  = s.at("biomePaletteChars");
+        std::size_t              depth       = s.at("depth");
+        int                      minY        = g.at("minY");
+        ASSERT_EQ(biomeChars.size(), biomes.size());
+        ASSERT_GT(depth, 0u);
+        ASSERT_FALSE(s.at("chunks").empty());
+        std::map<std::string, int> perBiome;
+        std::size_t                inside = 0;
+        for (json const& c : s.at("chunks")) {
+            std::string biome = c.at("biome");
+            SCOPED_TRACE(biome);
+            ++perBiome[biome];
+            EXPECT_EQ(c.at("x0").get<int>(), c.at("chunkX").get<int>() * 16);
+            EXPECT_EQ(c.at("z0").get<int>(), c.at("chunkZ").get<int>() * 16);
+            ASSERT_EQ(c.at("worldSurfaceWg").size(), 16u);
+            ASSERT_EQ(c.at("oceanFloorWg").size(), 16u);
+            ASSERT_EQ(c.at("top").size(), 16u);
+            ASSERT_EQ(c.at("biomes").size(), 16u);
+            ASSERT_EQ(c.at("profile").size(), 16u);
+            int sameBiome = 0;
+            for (std::size_t z = 0; z < 16; ++z) {
+                std::string top = c.at("top").at(z), bio = c.at("biomes").at(z), prof = c.at("profile").at(z);
+                ASSERT_EQ(top.size(), 16u);
+                ASSERT_EQ(bio.size(), 16u);
+                ASSERT_EQ(prof.size(), 16 * depth + 15); // 16 columns of depth characters, space separated
+                for (std::size_t x = 0; x < 16; ++x) {
+                    int ws = c.at("worldSurfaceWg").at(z).at(x), of = c.at("oceanFloorWg").at(z).at(x);
+                    EXPECT_LE(of, ws);
+                    EXPECT_GT(of, minY);
+                    ASSERT_NE(chars.find(top[x]), std::string::npos);
+                    blocksSeen.insert(palette.at(chars.find(top[x])));
+                    ASSERT_NE(biomeChars.find(bio[x]), std::string::npos);
+                    sameBiome += biomes.at(biomeChars.find(bio[x])) == biome;
+                    for (std::size_t d = 0; d < depth; ++d) {
+                        char p = prof.at(x * (depth + 1) + d);
+                        ASSERT_NE(chars.find(p), std::string::npos) << prof;
+                        blocksSeen.insert(palette.at(chars.find(p)));
+                    }
+                    if (x < 15) EXPECT_EQ(prof.at(x * (depth + 1) + depth), ' ');
+                }
+            }
+            // inside its biome: the quart biome under most columns (lake and stream floors can sit in
+            // the underground layer of their terrain column, so this is counted, not required)
+            inside += sameBiome > 128;
+        }
+        EXPECT_GT(inside * 2, s.at("chunks").size()) << "most samples should lie inside their main biome";
+        // every main biome of the biome golden's wide grid (the same search grid) has a sample, and
+        // every key biome (one with a terrain column) is sampled or listed as unsampled
+        std::string biomesRel = "biomes/" + fs::path(rel).filename().generic_string();
+        json const& b         = golden(biomesRel);
+        ASSERT_TRUE(b.is_object()) << biomesRel;
+        std::set<std::string> unsampled;
+        for (json const& id : s.at("unsampled")) unsampled.insert(id.get<std::string>());
+        for (auto const& [id, layers] : b.at("columns").items()) {
+            EXPECT_TRUE(perBiome.contains(id) || unsampled.contains(id)) << id << " is neither sampled nor unsampled";
+        }
+        for (char const* key : {"x0", "z0", "width", "height", "step"}) ASSERT_EQ(b.at("wide").at(key), s.at("grid").at(key)) << key;
+        std::vector<std::string> bp = b.at("palette");
+        std::string              bc = b.at("paletteChars");
+        std::set<std::string>    onGrid;
+        for (json const& row : b.at("wide").at("rows")) {
+            for (char ch : row.get<std::string>()) onGrid.insert(bp.at(bc.find(ch)));
+        }
+        for (std::string const& id : onGrid) EXPECT_TRUE(perBiome.contains(id)) << id << " is on the search grid but has no surface sample";
+        for (auto const& [id, n] : perBiome) {
+            EXPECT_TRUE(onGrid.contains(id)) << id;
+            EXPECT_LE(n, s.at("perBiome").get<int>()) << id;
+        }
+    }
+    // the samples reach more than the grass, stone and water of the grid around the origin
+    EXPECT_GT(blocksSeen.size(), 6u);
+}
+
 TEST(OracleGolden, DensityRouterSamples) {
     REQUIRE_GOLDENS();
     for (std::string const& rel : filesOfKind("density")) {
@@ -932,11 +1036,32 @@ TEST(OracleGolden, MobsCoverEveryTfEntity) {
     }
     EXPECT_GT(living, 50);
     std::set<std::string> const owned = ownedIds("entity");
+    ASSERT_FALSE(owned.empty()) << "docs/spec/owners.tsv not found (" << ownersTsv() << ") or it lists no entity: set GF_OWNERS_TSV";
     for (std::string const& id : owned) EXPECT_TRUE(entities.contains(id)) << id << " (owners.tsv) has no mob golden";
-    if (!owned.empty()) {
-        for (auto const& [id, e] : entities.items()) EXPECT_TRUE(owned.contains(id)) << id << " is not in owners.tsv";
-    }
+    for (auto const& [id, e] : entities.items()) EXPECT_TRUE(owned.contains(id)) << id << " is not in owners.tsv";
 }
+
+namespace {
+
+// one roll statistics object of loot.json: {emptyRolls, stacks, items}
+void checkLootStats(json const& t, std::int64_t rolls, std::string const& what) {
+    EXPECT_GE(t.at("emptyRolls").get<std::int64_t>(), 0) << what;
+    EXPECT_LE(t.at("emptyRolls").get<std::int64_t>(), rolls) << what;
+    std::int64_t totals = 0;
+    for (auto const& [item, s] : t.at("items").items()) {
+        std::int64_t present = s.at("present"), total = s.at("total"), lo = s.at("min"), hi = s.at("max");
+        EXPECT_GT(present, 0) << what << " " << item;
+        EXPECT_LE(present, rolls - t.at("emptyRolls").get<std::int64_t>()) << what << " " << item;
+        EXPECT_LE(lo, hi) << what << " " << item;
+        EXPECT_GE(total, present * lo) << what << " " << item;
+        EXPECT_LE(total, present * hi) << what << " " << item;
+        totals += present;
+    }
+    // every non-empty roll holds at least one item
+    EXPECT_GE(totals, rolls - t.at("emptyRolls").get<std::int64_t>()) << what;
+}
+
+} // namespace
 
 TEST(OracleGolden, LootStatisticsAreConsistent) {
     REQUIRE_GOLDENS();
@@ -944,50 +1069,155 @@ TEST(OracleGolden, LootStatisticsAreConsistent) {
     std::int64_t rolls = g.at("rolls");
     ASSERT_GT(rolls, 0);
     json const& tables = g.at("tables");
-    int         rolled = 0;
+    std::set<std::string> const blockVariants  = {"shears", "silk_touch", "fortune_3"};
+    std::set<std::string> const entityVariants = {"looting_3"};
+    for (std::string const& v : blockVariants) EXPECT_TRUE(g.at("variantStacks").contains(v)) << v;
+    for (std::string const& v : entityVariants) EXPECT_TRUE(g.at("variantStacks").contains(v)) << v;
+    int                        rolled = 0, alwaysEmptyBlocks = 0;
+    std::map<std::string, int> differing;
     for (auto const& [id, t] : tables.items()) {
         if (t.contains("skipped")) continue;
         ++rolled;
-        EXPECT_LE(t.at("emptyRolls").get<std::int64_t>(), rolls) << id;
-        for (auto const& [item, s] : t.at("items").items()) {
-            std::int64_t present = s.at("present"), total = s.at("total"), lo = s.at("min"), hi = s.at("max");
-            EXPECT_GT(present, 0) << id << " " << item;
-            EXPECT_LE(present, rolls) << id << " " << item;
-            EXPECT_LE(lo, hi) << id << " " << item;
-            EXPECT_GE(total, present * lo) << id << " " << item;
-            EXPECT_LE(total, present * hi) << id << " " << item;
+        checkLootStats(t, rolls, id);
+        std::string path = id.substr(id.find(':') + 1);
+        bool        isBlock = path.starts_with("blocks/"), isEntity = path.starts_with("entities/");
+        if (!isBlock && !isEntity) {
+            EXPECT_FALSE(t.contains("variants")) << id;
+            continue;
+        }
+        // every variant is either rolled or listed as equal to the default
+        std::set<std::string> seen;
+        for (auto const& [name, v] : t.at("variants").items()) {
+            seen.insert(name);
+            ++differing[name];
+            checkLootStats(v, rolls, id + " " + name);
+            EXPECT_NE(v.dump(), json({{"emptyRolls", t.at("emptyRolls")}, {"stacks", t.at("stacks")}, {"items", t.at("items")}}).dump()) << id << " " << name;
+        }
+        for (json const& name : t.at("variantsSameAsDefault")) EXPECT_TRUE(seen.insert(name.get<std::string>()).second) << id << " " << name;
+        EXPECT_EQ(seen, isBlock ? blockVariants : entityVariants) << id;
+        if (isBlock) {
+            bool empty = t.at("emptyRolls").get<std::int64_t>() == rolls;
+            for (auto const& [name, v] : t.at("variants").items()) empty = empty && v.at("emptyRolls").get<std::int64_t>() == rolls;
+            alwaysEmptyBlocks += empty;
         }
     }
     EXPECT_GT(rolled, 500);
-    for (std::string const& id : ownedIds("loot_table")) EXPECT_TRUE(tables.contains(id)) << id << " (owners.tsv) has no loot golden";
+    // shears, silk touch, fortune and looting each change some tables (leaves, grass, ores, mob drops)
+    for (std::string const& v : blockVariants) EXPECT_GT(differing[v], 0) << v;
+    for (std::string const& v : entityVariants) EXPECT_GT(differing[v], 0) << v;
+    // the block tables that still drop nothing hold only empty pools (portal, technical blocks)
+    EXPECT_LT(alwaysEmptyBlocks, 20);
+    std::set<std::string> const owned = ownedIds("loot_table");
+    ASSERT_FALSE(owned.empty()) << "docs/spec/owners.tsv not found (" << ownersTsv() << ") or it lists no loot table: set GF_OWNERS_TSV";
+    for (std::string const& id : owned) EXPECT_TRUE(tables.contains(id)) << id << " (owners.tsv) has no loot golden";
 }
+
+namespace {
+
+// a stack of recipes.json / uncrafting.json: "" (empty), an item id, or {count, components?, id}
+bool isStack(json const& s) {
+    if (s.is_string()) return true;
+    return s.is_object() && s.contains("id") && s.at("id").is_string() && s.contains("count") && s.at("count").is_number_integer();
+}
+
+} // namespace
 
 TEST(OracleGolden, RecipesCoverTfRecipes) {
     REQUIRE_GOLDENS();
-    json const& recipes = golden("recipes.json").at("recipes");
+    json const& g       = golden("recipes.json");
+    json const& recipes = g.at("recipes");
     ASSERT_FALSE(recipes.empty());
+    std::set<std::string> probed;
+    for (json const& p : g.at("probes")) {
+        std::string id = p.at("recipe");
+        ASSERT_TRUE(recipes.contains(id)) << id;
+        probed.insert(id);
+        EXPECT_FALSE(p.at("why").get<std::string>().empty()) << id;
+        for (json const& s : p.at("input")) EXPECT_TRUE(isStack(s)) << id;
+        EXPECT_EQ(p.at("input").size(), p.at("width").get<std::size_t>() * p.at("height").get<std::size_t>()) << id;
+        if (p.at("matches").get<bool>()) {
+            EXPECT_TRUE(isStack(p.at("result"))) << id;
+            EXPECT_NE(p.at("result"), "") << id << " matches but makes nothing";
+        } else {
+            EXPECT_FALSE(p.contains("result")) << id;
+        }
+    }
+    int cooking = 0, modifiers = 0;
     for (auto const& [id, r] : recipes.items()) {
         EXPECT_FALSE(r.at("type").get<std::string>().empty()) << id;
         if (r.contains("width")) EXPECT_EQ(r.at("ingredients").size(), r.at("width").get<std::size_t>() * r.at("height").get<std::size_t>()) << id;
+        // the codec's view of every recipe (an object; a string is a codec error)
+        ASSERT_TRUE(r.at("data").is_object()) << id << ": " << r.at("data").dump();
+        if (r.contains("cookingTime")) {
+            ++cooking;
+            EXPECT_GT(r.at("cookingTime").get<int>(), 0) << id;
+            EXPECT_GE(r.at("experience").get<double>(), 0.0) << id;
+            EXPECT_EQ(r.at("data").at("cookingtime"), r.at("cookingTime")) << id;
+        }
+        if (r.at("serializer") == "twilightforest:drying") EXPECT_GT(r.at("data").at("filter_time").get<int>(), 0) << id;
+        if (r.at("result").is_null() && r.at("type") != "twilightforest:uncrafting") {
+            // a recipe whose result is code: crafted by its probe or by the probes of spec.json
+            if (r.contains("probe")) {
+                ++modifiers;
+                json const& p = r.at("probe");
+                ASSERT_TRUE(p.at("matches").get<bool>()) << id << ": its own ingredients do not craft";
+                ASSERT_TRUE(p.at("result").is_object()) << id;
+                EXPECT_FALSE(p.at("result").value("components", json::object()).empty()) << id << " adds no component";
+                EXPECT_TRUE(r.at("data").contains("modifier_key")) << id;
+            } else {
+                EXPECT_TRUE(probed.contains(id)) << id << " has a code result but no probe in tools/oracle/spec.json";
+            }
+        }
     }
+    EXPECT_GT(cooking, 0);
+    EXPECT_GT(modifiers, 0);
     // recipe files whose load conditions failed on the oracle (compat recipes of absent mods)
     std::set<std::string> notLoaded;
-    for (json const& id : golden("recipes.json").at("notLoaded")) notLoaded.insert(id.get<std::string>());
-    for (std::string const& id : ownedIds("recipe")) {
+    for (json const& id : g.at("notLoaded")) notLoaded.insert(id.get<std::string>());
+    std::set<std::string> const owned = ownedIds("recipe");
+    ASSERT_FALSE(owned.empty()) << "docs/spec/owners.tsv not found (" << ownersTsv() << ") or it lists no recipe: set GF_OWNERS_TSV";
+    for (std::string const& id : owned) {
         EXPECT_TRUE(recipes.contains(id) || notLoaded.contains(id)) << id << " (owners.tsv) has no recipe golden";
     }
 }
+
+namespace {
+
+// a 3x3 uncrafting grid: 9 cells, "" or an item id with an optional "!" (marked) prefix
+int markedCells(json const& grid, std::string const& what) {
+    EXPECT_EQ(grid.size(), 9u) << what;
+    int marked = 0;
+    for (json const& c : grid) {
+        std::string s = c;
+        if (s.starts_with("!")) {
+            ++marked;
+            s = s.substr(1);
+        }
+        EXPECT_TRUE(s.empty() || s.find(':') != std::string::npos) << what << ": " << c;
+    }
+    return marked;
+}
+
+} // namespace
 
 TEST(OracleGolden, UncraftingOptionsAreWellFormed) {
     REQUIRE_GOLDENS();
     json const& g     = golden("uncrafting.json");
     json const& items = g.at("items");
     ASSERT_FALSE(items.empty());
-    int tf = 0;
+    // every UNCRAFTING_STUFFS value of TF's config
+    for (char const* key : {"uncraftingXpCostMultiplier", "repairingXpCostMultiplier", "allowShapelessUncrafting", "disableIngredientSwitching",
+                            "disableUncraftingRecipes", "reverseRecipeBlacklist", "blacklistedUncraftingModIds", "flipUncraftingModIdList",
+                            "disableUncraftingOnly", "disableEntireTable"}) {
+        EXPECT_TRUE(g.at("config").contains(key)) << key;
+    }
+    int const maxCycles = g.at("maxCycles");
+    int       tf        = 0;
     for (auto const& [id, options] : items.items()) {
         if (id.starts_with("twilightforest:")) ++tf;
+        EXPECT_LE(options.size(), std::size_t(maxCycles)) << id;
         for (json const& o : options) {
-            ASSERT_EQ(o.at("grid").size(), 9u) << id;
+            markedCells(o.at("grid"), id);
             EXPECT_GE(o.at("inputCount").get<int>(), 1) << id;
             EXPECT_GE(o.at("cost").get<int>(), 0) << id;
             int filled = 0;
@@ -996,4 +1226,52 @@ TEST(OracleGolden, UncraftingOptionsAreWellFormed) {
         }
     }
     EXPECT_GT(tf, 50);
+    for (json const& id : g.at("truncated")) EXPECT_EQ(items.at(id.get<std::string>()).size(), std::size_t(maxCycles)) << id;
+
+    // ingredient switching: alternatives grids in order, the same recipe as the option
+    ASSERT_FALSE(g.at("ingredientCycles").empty());
+    for (auto const& [id, per] : g.at("ingredientCycles").items()) {
+        ASSERT_TRUE(items.contains(id)) << id;
+        for (json const& o : per) {
+            int u = o.at("unrecipeInCycle"), alternatives = o.at("alternatives");
+            EXPECT_EQ(o.at("recipe"), items.at(id).at(u).at("recipe")) << id;
+            EXPECT_GT(alternatives, 1) << id;
+            EXPECT_EQ(o.at("truncated").get<bool>(), alternatives > maxCycles) << id;
+            ASSERT_EQ(o.at("cycles").size(), std::size_t(std::min(alternatives, maxCycles))) << id;
+            EXPECT_EQ(o.at("cycles").at(0).at("grid"), items.at(id).at(u).at("grid")) << id << ": cycle 0 is the option itself";
+            for (std::size_t c = 0; c < o.at("cycles").size(); ++c) {
+                EXPECT_EQ(o.at("cycles").at(c).at("ingredientsInCycle").get<std::size_t>(), c) << id;
+                markedCells(o.at("cycles").at(c).at("grid"), id);
+            }
+        }
+    }
+
+    // damaged inputs: some parts marked, never more than the grid holds
+    ASSERT_FALSE(g.at("damaged").empty());
+    int withMarks = 0;
+    for (auto const& [id, list] : g.at("damaged").items()) {
+        ASSERT_TRUE(items.contains(id)) << id;
+        for (json const& d : list) {
+            int damage = d.at("damage"), max = d.at("maxDamage");
+            EXPECT_GT(damage, 0) << id;
+            EXPECT_LT(damage, max) << id;
+            withMarks += markedCells(d.at("grid"), id) > 0;
+        }
+    }
+    EXPECT_GT(withMarks, 0);
+    for (json const& id : g.at("damagedTruncated")) EXPECT_TRUE(g.at("damaged").contains(id.get<std::string>())) << id;
+
+    // repair and recraft through the assembly matrix
+    ASSERT_FALSE(g.at("recraft").empty());
+    int crafted = 0;
+    for (json const& r : g.at("recraft")) {
+        std::string why = r.at("why");
+        EXPECT_TRUE(isStack(r.at("input"))) << why;
+        EXPECT_TRUE(isStack(r.at("result"))) << why;
+        EXPECT_EQ(r.at("assembly").size(), 9u) << why;
+        markedCells(r.at("grid"), why);
+        EXPECT_GE(r.at("recraftingCost").get<int>(), 0) << why;
+        crafted += r.at("result") != "" && r.at("recraftingCost").get<int>() > 0;
+    }
+    EXPECT_GT(crafted, 0);
 }

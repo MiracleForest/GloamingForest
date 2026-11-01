@@ -151,9 +151,9 @@
     },
     "uncrafting.json": {
       "kind": "uncrafting",
-      "bytes": 402038,
-      "fnv1a64": "f3924816c6e2ff86",
-      "sha256": "1769121dee0307cdb27f4125d1822dcfd61bab63ffaa6e84beede6bf0c7deee6"
+      "bytes": 402115,
+      "fnv1a64": "e1100854f68e46e3",
+      "sha256": "ac03218166172294e8202ddaf0c8e7bdae9e8897c9807163c11e87808a5b3c84"
     }
   }
 }

@@ -254,7 +254,7 @@ final class WorldDumps {
 			return BuiltInRegistries.BLOCK.getKey(c.getBlockState(this.pos.set(x, y, z)).getBlock()).toString();
 		}
 
-		/** The column at (x, z): heights, top block, depth blocks from the floor down, the floor's quart biome. */
+		/** The column at (x, z): heights, top block, depth blocks from the floor down, the floor's quart biome (depth > 0). */
 		Column column(int x, int z, int depth) {
 			ChunkAccess c = this.chunk(x >> 4, z >> 4);
 			int ws = this.minY, of = this.minY;
@@ -272,8 +272,11 @@ final class WorldDumps {
 			}
 			String[] profile = new String[depth];
 			for (int d = 0; d < depth; d++) profile[d] = this.block(c, x, of - 1 - d, z);
-			int by = Math.max(this.minY, of - 1);
-			String biome = Ctx.id(c.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(by), QuartPos.fromBlock(z)));
+			String biome = null; // only the sampled chunks record it (depth > 0)
+			if (depth > 0) {
+				int by = Math.max(this.minY, of - 1);
+				biome = Ctx.id(c.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(by), QuartPos.fromBlock(z)));
+			}
 			return new Column(ws, of, topId, profile, biome);
 		}
 	}

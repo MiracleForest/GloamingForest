@@ -540,6 +540,7 @@ final class DataDumps {
 		Map<String, Object> results = Json.obj();
 		List<Object> truncated = Json.arr();
 		Map<String, Object> damaged = Json.obj();
+		List<Object> damagedTruncated = Json.arr();
 		Map<String, Object> cycles = Json.obj();
 		for (Map.Entry<String, Item> e : items.entrySet()) {
 			String id = e.getKey();
@@ -589,17 +590,23 @@ final class DataDumps {
 				TreeSet<Integer> values = new TreeSet<>(List.of(max / 4, max / 2, max - 1));
 				values.removeIf(d -> d <= 0);
 				List<Object> list = Json.arr();
+				boolean damagedCut = false;
 				for (int d : values) {
 					ItemStack st = new ItemStack(item);
 					st.setDamageValue(d);
 					Map<String, Object> head = Json.obj();
 					head.put("damage", d);
 					head.put("maxDamage", max);
-					optionsOf(menu, st, maxCycles, recipeIds, new ArrayList<>(), list, head);
+					damagedCut |= optionsOf(menu, st, maxCycles, recipeIds, new ArrayList<>(), list, head);
 				}
 				if (!list.isEmpty()) damaged.put(id, list);
+				if (damagedCut) damagedTruncated.add(id);
 			}
 			menu.tinkerInput.setItem(0, ItemStack.EMPTY);
+		}
+		// every example of spec.json must show ingredient switching (a typo would drop it silently)
+		for (String example : cycleExamples) {
+			if (!cycles.containsKey(example)) throw new IllegalArgumentException("spec.json uncrafting.ingredientCycleItems: " + example + " has no option with ingredient switching");
 		}
 
 		// repairing and recrafting through the assembly matrix (spec.json "uncrafting.recraft")
@@ -653,7 +660,8 @@ final class DataDumps {
 			+ "3x3 uncrafting grid row by row (\"\" empty, \"!\" prefix = marked: damaged or problematic, cannot be taken); items without options are omitted; truncated lists the "
 			+ "items whose options did not wrap around within maxCycles. ingredientCycles: for TF's items and ingredientCycleItems, every option whose ingredients have more than one "
 			+ "alternative (after twilightforest:banned_uncrafting_ingredients), ingredientsInCycle 0 .. alternatives-1 (at most maxCycles; truncated otherwise). damaged: every "
-			+ "damageable item with options, one item damaged by maxDamage/4, /2 and maxDamage-1, every option. recraft: the cases of tools/oracle/spec.json: the input, its uncrafting "
+			+ "damageable item with options, one item damaged by maxDamage/4, /2 and maxDamage-1, every option (damagedTruncated: items cut at maxCycles options). "
+			+ "recraft: the cases of tools/oracle/spec.json: the input, its uncrafting "
 			+ "grid and cost, the items put into the assembly matrix, the result slot (tinkerResult), getRecraftingCost and getUncraftingCost after. "
 			+ "Stacks: \"\" = empty, an item id = one item without components, else ItemStack's codec {count, components, id}.");
 		out.put("config", config);
@@ -662,6 +670,7 @@ final class DataDumps {
 		out.put("truncated", truncated);
 		out.put("ingredientCycles", cycles);
 		out.put("damaged", damaged);
+		out.put("damagedTruncated", damagedTruncated);
 		out.put("recraft", recraft);
 		return out;
 	}
