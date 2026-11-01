@@ -49,15 +49,48 @@ void setTestParticipants(int n);
 void invalidateAdjuster();
 void               setTestAdjustsLoot(std::optional<bool> value);
 
-/// A mob died (the death pipeline): its Java loot table (TF entities) and the onEntityDrops
-/// handlers; `killerId` is the killing player's ActorUniqueID (0: none).
-void onMobDied(Actor& dead, combat::DamageInfo const& damage, std::int64_t killerId);
+/// Collects the item entities the game spawns on this thread while it lives (the death
+/// pipeline wraps a mob's `die` in one): Java's Entity#captureDrops.
+class DropCapture {
+public:
+    DropCapture();
+    ~DropCapture();
+    DropCapture(DropCapture const&)            = delete;
+    DropCapture& operator=(DropCapture const&) = delete;
+    /// ActorUniqueIDs of the item entities spawned so far.
+    [[nodiscard]] std::vector<std::int64_t> const& ids() const { return mIds; }
+
+private:
+    std::vector<std::int64_t>  mIds;
+    std::vector<std::int64_t>* mPrevious;
+};
+/// An item entity was spawned (the Spawner::spawnItem hook): recorded by the active DropCapture,
+/// or for a mob that died this tick when `spawner` is that mob.
+void captureSpawnedItem(Actor const& item, Actor const* spawner);
+
+/// A mob died (the death pipeline, right after the game's `die`). On the next tick, once the game
+/// has spawned the mob's own loot: its Java loot table (TF entities) and the onEntityDrops
+/// handlers, which also see the item entities the game spawned for the death (`gameDrops` from
+/// `die`, and the later ones with the mob as the spawner); `killerId` is the killing player's
+/// ActorUniqueID (0: none).
+void onMobDied(Actor& dead, combat::DamageInfo const& damage, std::int64_t killerId, std::vector<std::int64_t> const& gameDrops = {});
 
 /// Rolls the Java table placeContainer left in the vanilla container at `pos` into it (the opener
 /// in the loot context); true when there was one.
 bool unpackVanilla(BlockSource& region, BlockPos const& pos, Actor* opener);
 /// The Java table and seed placeContainer left in the vanilla container at `pos` (not unpacked yet).
 [[nodiscard]] std::optional<std::pair<std::string, std::int64_t>> pendingVanilla(BlockSource& region, BlockPos const& pos);
+
+/// The user data tag of a Bedrock storage item naming its dynamic container
+/// (StorageItemComponentTags::bundleIDTag(), exported by the server binary only: the selftest
+/// combat.loot_set_contents checks the value on BDS).
+inline constexpr char kBundleIdTag[] = "bundle_id";
+
+/// Java's Math.round(float) (NumberProvider#getInt): half up, saturated, NaN -> 0.
+[[nodiscard]] int javaRound(float value);
+/// The stacks a set_contents function put into a Bedrock storage item (a bundle), nullopt when
+/// the stack has no bundle id (selftests).
+[[nodiscard]] std::optional<std::vector<ItemStack>> bundleContents(ItemStack const& stack);
 
 /// Java enchantment id -> Bedrock Enchant::Type value (-1 unknown).
 [[nodiscard]] int bedrockEnchant(std::string const& javaId);

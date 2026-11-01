@@ -56,6 +56,7 @@
 #include "mc/world/level/storage/GameRules.h"
 
 #include "feature/combat/CombatInternal.h"
+#include "feature/common/Interactions.h"
 #include "feature/death/DeathInternal.h"
 #include "feature/loot/LootInternal.h"
 #include "feature/progression/ProgressionInternal.h"
@@ -300,7 +301,20 @@ bool runLethal(Actor& victim, combat::DamageInfo const& damage) {
         if (survive) {
             if (victim.getHealth() <= 0) setHealth(victim, 1.f);
             if (tSurvived.size() > 64) std::erase_if(tSurvived, [now = nowTick()](auto const& e) { return e.second.second != now; });
-            tSurvived[victim.getOrCreateUniqueID().rawID] = {static_cast<float>(std::max(1, victim.getHealth())), nowTick()};
+            auto  id     = victim.getOrCreateUniqueID().rawID;
+            float health = static_cast<float>(std::max(1, victim.getHealth()));
+            tSurvived[id] = {health, nowTick()};
+            // a die outside a hurt (a command, a game path that kills directly) gets no
+            // reapplySurvival from the hurt hook: the next tick puts the survivor's health back
+            // if the game left the lethal one (not when it really died since: a later death of the
+            // same tick is handled and keeps its 0)
+            interactions::nextTick([id, health] {
+                auto level = ll::service::getLevel();
+                if (!level || handledDeaths().contains(id)) return;
+                ActorUniqueID uid;
+                uid.rawID = id;
+                if (auto* a = level->fetchEntity(uid, false); a && a->getHealth() <= 0) setHealth(*a, health);
+            });
             log().info("death: {} survived lethal {} damage", victim.isPlayer() ? static_cast<Player&>(victim).getRealName() : victim.getTypeName(), damage.type);
             return true;
         }
@@ -345,12 +359,12 @@ void handleDeath(Actor& self, ActorDamageSource const& source, std::function<voi
     } pop;
     auto selfId = self.getOrCreateUniqueID().rawID;
     {
-        // a second die for a death already handled (mobs never die twice; a player may die again
-        // only after a respawn, so a few ticks later)
+        // a second die for a death already handled (the game may call it again): one entry per
+        // life (mobs never come back; a player's entry goes when it respawns)
         auto& handled = handledDeaths();
-        auto  now     = nowTick();
-        if (auto it = handled.find(selfId); it != handled.end() && (!self.isPlayer() || now - it->second < 5)) return die();
-        if (handled.size() > 1024) std::erase_if(handled, [now](auto const& e) { return now - e.second > 200; });
+        if (handled.contains(selfId)) return die();
+        auto now = nowTick();
+        if (handled.size() > 1024) std::erase_if(handled, [now](auto const& e) { return now - e.second > 6000; });
     }
     auto [attacker, direct] = combat::entitiesOf(source);
     combat::DamageInfo info{self, combat::typeOf(self, source), attacker, direct, 0.f};
@@ -360,7 +374,14 @@ void handleDeath(Actor& self, ActorDamageSource const& source, std::function<voi
     std::int64_t killerId = killer ? killer->getOrCreateUniqueID().rawID : 0;
     if (self.isPlayer() && !static_cast<Player&>(self).isClientSide()) keepAndOffer(static_cast<Player&>(self));
     bool wasPlayer = self.isPlayer();
-    die();
+    // a mob's own drops (Bedrock's loot, equipment) are collected for the onEntityDrops handlers
+    std::vector<std::int64_t> gameDrops;
+    if (wasPlayer) die();
+    else {
+        loot::DropCapture capture;
+        die();
+        gameDrops = capture.ids();
+    }
     // the victim and the killer may be gone now: look the killer up again (R16)
     if (killerId) {
         ActorUniqueID id;
@@ -368,8 +389,10 @@ void handleDeath(Actor& self, ActorDamageSource const& source, std::function<voi
         auto level = ll::service::getLevel();
         if (auto* k = level ? level->getPlayer(id) : nullptr) progression::fireKilled(*k, self, info.type);
     }
-    if (!wasPlayer) loot::onMobDied(self, info, killerId);
+    if (!wasPlayer) loot::onMobDied(self, info, killerId, gameDrops);
 }
+
+void forgetDeath(Player const& player) { handledDeaths().erase(const_cast<Player&>(player).getOrCreateUniqueID().rawID); }
 
 } // namespace gf::death
 
@@ -399,6 +422,7 @@ public:
         mRespawn = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerRespawnEvent>([](ll::event::PlayerRespawnEvent& ev) {
             auto& player = ev.self();
             if (player.isClientSide()) return;
+            forgetDeath(player); // a new life: its death is handled again
             returnKeptItems(player);
             std::vector<RespawnFn> respawn;
             {

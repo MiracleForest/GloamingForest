@@ -20,7 +20,11 @@
 //   hook rolls the Java table into it with LootTable#fill's slot spreading. Custom container
 //   blocks get it through gf::inventory's setLootTable.
 // - Entity drops: a mob that dies rolls <ns>:entities/<path> when that Java table exists (TF's
-//   entities; vanilla mobs keep Bedrock's drops), then the onEntityDrops handlers change the drops.
+//   entities; vanilla mobs keep Bedrock's drops); the onEntityDrops handlers then see those stacks
+//   plus every item the game itself spawned for the death (Bedrock's loot of vanilla mobs,
+//   equipment; Java's captured LivingDropsEvent list) and may change them: changed drops replace
+//   the game's item entities. Bedrock spawns a mob's loot right after `die` returns, so this pass
+//   runs on the next tick.
 // - Block drops: blocks of the twilightforest namespace drop from <ns>:blocks/<path> (survives
 //   explosion, silk touch, fortune, shears ...); other blocks keep Bedrock's drops, run through the
 //   global modifiers (TF's fiery pickaxe smelting, giant pickaxe grouping) when any is registered.
@@ -43,7 +47,9 @@
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/world/Container.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -130,10 +136,6 @@ std::int64_t randomSeed() {
     std::int64_t           s = 0;
     while (s == 0) s = static_cast<std::int64_t>(gen());
     return s;
-}
-
-BlockPos floorPos(Vec3 const& v) {
-    return BlockPos{static_cast<int>(std::floor(v.x)), static_cast<int>(std::floor(v.y)), static_cast<int>(std::floor(v.z))};
 }
 
 void spawnAt(BlockSource& region, Vec3 const& pos, ItemStack const& stack) {
@@ -529,46 +531,133 @@ bool unpackVanilla(BlockSource& region, BlockPos const& pos, Actor* opener) {
 
 // ---- entity drops ----------------------------------------------------------------------------------
 
-void onMobDied(Actor& dead, combat::DamageInfo const& damage, std::int64_t killerId) {
-    if (dead.isClientSide()) return;
+namespace {
+/// The item entities the game spawns for a dying mob, as Java's Entity#captureDrops collects them
+/// for LivingDropsEvent: everything spawned during its `die` (DropCapture), then, until the
+/// next tick, every item entity spawned with the dead mob as the spawner (Bedrock spawns a mob's
+/// loot right after `die` returns).
+thread_local std::vector<std::int64_t>* tCaptured = nullptr;
+
+std::unordered_map<std::int64_t, std::vector<std::int64_t>>& pendingDeaths() {
+    static std::unordered_map<std::int64_t, std::vector<std::int64_t>> m;
+    return m;
+}
+
+bool sameDrops(std::vector<ItemStack> const& a, std::vector<ItemStack> const& b) {
+    if (a.size() != b.size()) return false;
+    for (std::size_t i = 0; i < a.size(); ++i)
+        if (!game::items::sameItemSameData(a[i], b[i]) || game::items::countOf(a[i]) != game::items::countOf(b[i])) return false;
+    return true;
+}
+
+/// What the deferred drop pass needs of a death (ids, no pointers across ticks: R16).
+struct MobDeath {
+    std::int64_t dead = 0, attacker = 0, direct = 0, killer = 0;
+    std::string  type, damageType;
+    Vec3         origin{};
+    int          dim = 0;
+};
+
+Actor* fetchActor(Level& level, std::int64_t raw, bool removedToo) {
+    if (!raw) return nullptr;
+    ActorUniqueID id;
+    id.rawID = raw;
+    return level.fetchEntity(id, removedToo);
+}
+
+/// The drop pass of one death, a tick after it: the Java table (TF's entities), the game's own
+/// drops, the onEntityDrops handlers; changed drops replace the game's item entities.
+void finishMobDeath(MobDeath const& d) {
+    auto items = std::move(pendingDeaths()[d.dead]);
+    pendingDeaths().erase(d.dead);
+    auto level  = ll::service::getLevel();
+    auto region = game::regionOf(d.dim);
+    if (!level || !region) return;
     std::vector<EntityDropsFn> handlers;
     {
         std::lock_guard lock(registry().mutex);
         handlers = registry().entityDrops;
     }
-    auto const& type    = dead.getTypeName();
-    auto        tableId = tableIdFor(type, "entities");
-    bool        own     = type.rfind("minecraft:", 0) != 0 && table(tableId) != nullptr;
-    if (!own && handlers.empty()) return;
-    if (!gameRule(GameRules::GameRulesIndex::DoMobLoot, true)) return;
-    auto level = ll::service::getLevel();
-    if (!level) return;
-    Player* killer = nullptr;
-    if (killerId) {
-        ActorUniqueID id;
-        id.rawID = killerId;
-        killer   = level->getPlayer(id);
-    }
-    auto&       region = dead.getDimensionBlockSource();
+    auto tableId = tableIdFor(d.type, "entities");
+    // TF's entities drop from their Java table; doMobLoot off: no table (Java's
+    // dropFromLootTable), the handlers still see what the game dropped
+    bool own = d.type.rfind("minecraft:", 0) != 0 && table(tableId) != nullptr && gameRule(GameRules::GameRulesIndex::DoMobLoot, true);
+    Actor* dead = fetchActor(*level, d.dead, true);
     LootContext ctx;
-    ctx.region     = &region;
-    ctx.origin     = dead.getPosition();
-    ctx.thisEntity = &dead;
-    ctx.player     = killer;
-    ctx.attacker   = damage.attacker;
-    ctx.direct     = damage.direct;
-    ctx.damageType = damage.type;
-    std::vector<ItemStack> drops;
-    if (own) drops = roll(tableId, ctx);
-    for (auto const& fn : handlers) {
-        try {
-            fn(dead, drops, ctx);
-        } catch (std::exception const& ex) {
-            log().error("loot: entity drops handler failed: {}", ex.what());
+    ctx.region     = region;
+    ctx.origin     = d.origin;
+    ctx.thisEntity = dead;
+    ctx.attacker   = fetchActor(*level, d.attacker, false);
+    ctx.direct     = fetchActor(*level, d.direct, false);
+    ctx.damageType = d.damageType;
+    if (d.killer) {
+        ActorUniqueID id;
+        id.rawID   = d.killer;
+        ctx.player = level->getPlayer(id);
+    }
+    std::vector<ItemStack> javaDrops;
+    if (own) javaDrops = roll(tableId, ctx);
+    std::vector<ItemActor*> spawned;
+    for (auto raw : items)
+        if (auto* a = fetchActor(*level, raw, false); a && a->isType(ActorType::ItemEntity)) spawned.push_back(static_cast<ItemActor*>(a));
+    std::vector<ItemStack> drops = javaDrops;
+    for (auto* item : spawned) drops.push_back(item->item());
+    auto const before = drops;
+    if (dead) {
+        for (auto const& fn : handlers) {
+            try {
+                fn(*dead, drops, ctx);
+            } catch (std::exception const& ex) {
+                log().error("loot: entity drops handler failed: {}", ex.what());
+            }
         }
     }
-    for (auto const& s : drops) spawnAt(region, ctx.origin, s);
-    if (own) log().info("loot: {} dropped {} stack(s) from {}", type, drops.size(), tableId);
+    std::erase_if(drops, [](ItemStack const& s) { return game::items::isEmpty(s); });
+    if (sameDrops(drops, before)) {
+        for (auto const& s : javaDrops) spawnAt(*region, d.origin, s); // the game's own stay as they fell
+    } else {
+        for (auto* item : spawned) item->remove();
+        for (auto const& s : drops) spawnAt(*region, d.origin, s);
+        log().info("loot: drop handlers changed the drops of {} ({} -> {} stack(s))", d.type, before.size(), drops.size());
+    }
+    if (own) log().info("loot: {} dropped {} stack(s) from {}", d.type, javaDrops.size(), tableId);
+}
+} // namespace
+
+DropCapture::DropCapture() : mPrevious(tCaptured) { tCaptured = &mIds; }
+DropCapture::~DropCapture() { tCaptured = mPrevious; }
+
+void captureSpawnedItem(Actor const& item, Actor const* spawner) {
+    auto id = const_cast<Actor&>(item).getOrCreateUniqueID().rawID;
+    if (tCaptured) {
+        tCaptured->push_back(id);
+        return;
+    }
+    if (!spawner || pendingDeaths().empty()) return;
+    if (auto it = pendingDeaths().find(const_cast<Actor*>(spawner)->getOrCreateUniqueID().rawID); it != pendingDeaths().end()) it->second.push_back(id);
+}
+
+void onMobDied(Actor& dead, combat::DamageInfo const& damage, std::int64_t killerId, std::vector<std::int64_t> const& gameDrops) {
+    if (dead.isClientSide()) return;
+    bool anyHandler;
+    {
+        std::lock_guard lock(registry().mutex);
+        anyHandler = !registry().entityDrops.empty();
+    }
+    auto const& type = dead.getTypeName();
+    bool        own  = type.rfind("minecraft:", 0) != 0 && table(tableIdFor(type, "entities")) != nullptr;
+    if (!own && !anyHandler) return;
+    MobDeath d;
+    d.dead       = dead.getOrCreateUniqueID().rawID;
+    d.attacker   = damage.attacker ? damage.attacker->getOrCreateUniqueID().rawID : 0;
+    d.direct     = damage.direct ? damage.direct->getOrCreateUniqueID().rawID : 0;
+    d.killer     = killerId;
+    d.type       = type;
+    d.damageType = damage.type;
+    d.origin     = dead.getPosition();
+    d.dim        = static_cast<int>(dead.getDimensionId());
+    pendingDeaths()[d.dead] = gameDrops; // the game's later spawns for this mob join them
+    interactions::nextTick([d] { finishMobDeath(d); });
 }
 
 } // namespace gf::loot
@@ -636,15 +725,46 @@ LL_TYPE_INSTANCE_HOOK(
     for (auto const& s : drops) BlockType::popResource(region, pos, s, actorContext);
 }
 
+// Item entities spawned while a mob dies (gf::loot::DropCapture, the death pipeline): the game's
+// own death drops for the onEntityDrops handlers.
+LL_TYPE_INSTANCE_HOOK(
+    LootSpawnItemHook,
+    ll::memory::HookPriority::Normal,
+    Spawner,
+    &Spawner::$spawnItem,
+    ItemActor*,
+    BlockSource&     region,
+    ItemStack const& inst,
+    Actor*           spawner,
+    Vec3 const&      pos,
+    int              throwTime
+) {
+    auto* item = origin(region, inst, spawner, pos, throwTime);
+    if (item) gf::loot::captureSpawnedItem(*item, spawner);
+    return item;
+}
+
 namespace gf::loot {
 
 namespace {
+
+/// The randomizable vanilla container blocks (placeContainer's native loot field).
+std::vector<std::string> const& vanillaContainerBlocks() {
+    static std::vector<std::string> const v = [] {
+        std::vector<std::string> out{"minecraft:chest", "minecraft:trapped_chest", "minecraft:barrel", "minecraft:dispenser", "minecraft:dropper", "minecraft:undyed_shulker_box"};
+        for (char const* c : {"white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"})
+            out.push_back(std::string("minecraft:") + c + "_shulker_box");
+        return out;
+    }();
+    return v;
+}
 
 class LootModule {
 public:
     void install() {
         LootUnpackHook::hook();
         LootBlockDropsHook::hook();
+        LootSpawnItemHook::hook();
         static bool registered = false;
         if (!registered) {
             registered = true;
@@ -659,16 +779,21 @@ public:
             });
             config::onReload([] { invalidateAdjuster(); });
             // The game's container screens do not go through unPackLootTable: a vanilla container
-            // placed with a Java table rolls it when a player opens or breaks it (before vanilla).
+            // placed with a Java table rolls it when a player opens it (a right-click that opens:
+            // the first event, not sneaking with an item, which places instead) or breaks it,
+            // before vanilla.
             namespace ia = interactions;
-            ia::onUseOn({}, [](ia::UseOnContext const& c) {
-                if (auto* region = game::regionOf(c.pos.dim)) unpackVanilla(*region, game::blockPos(c.pos), &c.player);
-                return ia::Result::Pass;
-            }, ia::priority::High);
-            ia::onDestroy({}, [](ia::DestroyContext const& c) {
-                if (auto* region = game::regionOf(c.pos.dim)) unpackVanilla(*region, game::blockPos(c.pos), &c.player);
-                return ia::Result::Pass;
-            }, ia::priority::High);
+            for (auto const& block : vanillaContainerBlocks()) {
+                ia::onUseOn({.block = block}, [](ia::UseOnContext const& c) {
+                    if (!c.firstEvent || (c.sneaking && !c.itemId.empty())) return ia::Result::Pass;
+                    if (auto* region = game::regionOf(c.pos.dim)) unpackVanilla(*region, game::blockPos(c.pos), &c.player);
+                    return ia::Result::Pass;
+                }, ia::priority::High);
+                ia::onDestroy({.block = block}, [](ia::DestroyContext const& c) {
+                    if (auto* region = game::regionOf(c.pos.dim)) unpackVanilla(*region, game::blockPos(c.pos), &c.player);
+                    return ia::Result::Pass;
+                }, ia::priority::High);
+            }
             // ModExistsCondition: GloamingForest is TF and Minecraft (docs/spec deviations)
             registerCondition("twilightforest:mod_exists", [](LootContext const&, Json const& config, RandomSource&) {
                 auto mod = config.value("mod_id", std::string{});
@@ -677,6 +802,7 @@ public:
         }
     }
     void uninstall() {
+        LootSpawnItemHook::unhook();
         LootBlockDropsHook::unhook();
         LootUnpackHook::unhook();
     }

@@ -28,14 +28,21 @@ public:
     int nextInt(int bound) override {
         if (bound <= 0) return 0;
         if ((bound & -bound) == bound) return static_cast<int>((static_cast<std::int64_t>(bound) * next(31)) >> 31);
+        // Java: `bits - val + (bound - 1) < 0` with int wraparound; computed in 32-bit unsigned
+        // arithmetic (no signed overflow): the sign bit of the wrapped sum
         int bits, val;
         do {
             bits = next(31);
             val  = bits % bound;
-        } while (bits - val + (bound - 1) < 0);
+        } while (((static_cast<std::uint32_t>(bits) - static_cast<std::uint32_t>(val) + static_cast<std::uint32_t>(bound - 1)) & 0x80000000u) != 0);
         return val;
     }
-    std::int64_t nextLong() override { return (static_cast<std::int64_t>(next(32)) << 32) + next(32); }
+    std::int64_t nextLong() override {
+        // ((long) next(32) << 32) + next(32) with Java's wraparound (unsigned arithmetic)
+        auto hi = static_cast<std::uint64_t>(static_cast<std::int64_t>(next(32))) << 32;
+        auto lo = static_cast<std::uint64_t>(static_cast<std::int64_t>(next(32)));
+        return static_cast<std::int64_t>(hi + lo);
+    }
     bool         nextBoolean() override { return next(1) != 0; }
     float        nextFloat() override { return static_cast<float>(next(24)) * 5.9604645E-8F; }
     double       nextDouble() override {

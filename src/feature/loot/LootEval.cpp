@@ -16,9 +16,18 @@
 // Conditions and functions of other units (is_minion, giant_pick_used, uncrafting_table_enabled,
 // ...) come from gf::loot::registerCondition / registerFunction; an unknown one warns once and
 // fails (conditions) or does nothing (functions).
+// Bedrock mappings: number providers round as Java's NumberProvider#getInt (Math.round); random
+// bounds and chances are evaluated before their draw, in Java's order; set_contents fills a
+// Bedrock bundle's dynamic container (minecraft:bundle_contents; other components go to the item
+// data "components"); enchant_with_levels runs Bedrock's enchanting algorithm on the loot random
+// (Bedrock's enchantment costs and weights, TF's 4 enchantments are not in its pool);
+// enchant_randomly picks from the whole registry (vanilla, sweeping_edge, TF's 4) in registry
+// order; set_name keeps a translatable name's key in the item data ("name_key") and the server
+// language's text as the custom name.
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <map>
 #include <mutex>
 #include <set>
@@ -26,8 +35,18 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/math/IRandom.h"
 #include "mc/deps/core/string/HashedString.h"
+#include "mc/deps/nbt/CompoundTag.h"
+#include "mc/deps/nbt/IntTag.h"
 #include "mc/safety/RedactableString.h"
+#include "mc/world/containers/ContainerEnumName.h"
+#include "mc/world/containers/FullContainerName.h"
+#include "mc/world/containers/IContainerRegistryAccess.h"
+#include "mc/world/containers/IContainerRegistryTracker.h"
+#include "mc/world/inventory/FillingContainer.h"
+#include "mc/world/item/components/StorageItemComponent.h"
+#include "mc/world/item/components/StorageWeightLimitItemComponent.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
@@ -44,9 +63,11 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 
+#include "feature/combat/CombatInternal.h"
 #include "feature/common/BlockData.h"
 #include "feature/enchant/Enchant.h"
 #include "feature/inventory/Inventory.h"
+#include "feature/inventory/InventoryInternal.h"
 #include "feature/loot/JavaRandom.h"
 #include "feature/loot/LootInternal.h"
 #include "feature/loot/LootRegistry.h"
@@ -213,7 +234,12 @@ float numberFloat(Json const& n, Eval& e) {
     if (!n.is_object()) return 0.f;
     auto t = typeOf(n);
     if (t == "minecraft:constant") return n.value("value", 0.f);
-    if (t == "minecraft:uniform") return nextFloatBetween(e.random, numberFloat(n.value("min", Json(0)), e), numberFloat(n.value("max", Json(0)), e));
+    if (t == "minecraft:uniform") {
+        // UniformGenerator#getFloat: min, then max, then the draw (Java's evaluation order)
+        float min = numberFloat(n.value("min", Json(0)), e);
+        float max = numberFloat(n.value("max", Json(0)), e);
+        return nextFloatBetween(e.random, min, max);
+    }
     if (t == "minecraft:binomial") return static_cast<float>(binomial(n, e));
     if (t == "twilightforest:multiplayer_rolls") {
         Json def = n.contains("default_rolls") ? n["default_rolls"] : Json{{"type", "minecraft:uniform"}, {"min", n.value("min", 0)}, {"max", n.value("max", 0)}};
@@ -244,16 +270,37 @@ float numberFloat(Json const& n, Eval& e) {
     return 0.f;
 }
 
+} // namespace
+
+int javaRound(float value) {
+    // Math.round(float): floor(value + 1/2), exact in double (a float plus 0.5 has no rounding
+    // error there), saturated to the int range; NaN -> 0
+    if (std::isnan(value)) return 0;
+    double r = std::floor(static_cast<double>(value) + 0.5);
+    if (r <= static_cast<double>(std::numeric_limits<int>::min())) return std::numeric_limits<int>::min();
+    if (r >= static_cast<double>(std::numeric_limits<int>::max())) return std::numeric_limits<int>::max();
+    return static_cast<int>(r);
+}
+
+namespace {
+
 int numberInt(Json const& n, Eval& e) {
-    if (n.is_number()) return static_cast<int>(std::floor(n.get<double>()));
+    // NumberProvider#getInt is Math.round(getFloat) unless overridden: ConstantValue (plain numbers
+    // too), TF's MultiplayerBasedNumberProvider and LootingEnchantNumberProvider inherit it
+    if (n.is_number()) return javaRound(n.get<float>());
     if (n.is_object()) {
         auto t = typeOf(n);
-        // UniformGenerator#getInt: Mth.nextInt over the int bounds; BinomialDistributionGenerator#getInt
-        if (t == "minecraft:uniform") return nextIntBetween(e.random, numberInt(n.value("min", Json(0)), e), numberInt(n.value("max", Json(0)), e));
+        // UniformGenerator#getInt: Mth.nextInt over the int bounds (min, then max, then the draw);
+        // BinomialDistributionGenerator#getInt
+        if (t == "minecraft:uniform") {
+            int min = numberInt(n.value("min", Json(0)), e);
+            int max = numberInt(n.value("max", Json(0)), e);
+            return nextIntBetween(e.random, min, max);
+        }
         if (t == "minecraft:binomial") return binomial(n, e);
-        if (t == "minecraft:constant") return static_cast<int>(std::floor(n.value("value", 0.0)));
+        if (t == "minecraft:constant") return javaRound(n.value("value", 0.f));
     }
-    return static_cast<int>(std::floor(numberFloat(n, e))); // NumberProvider#getInt
+    return javaRound(numberFloat(n, e)); // NumberProvider#getInt
 }
 
 /// LevelBasedValue#calculate.
@@ -438,7 +485,11 @@ bool condition(Json const& c, Eval& e) {
         if (auto r = explosionRadius(e); r && *r > 0) return e.random.nextFloat() <= 1.f / *r;
         return true;
     }
-    if (id == "minecraft:random_chance") return e.random.nextFloat() < numberFloat(c.value("chance", Json(1)), e);
+    if (id == "minecraft:random_chance") {
+        // LootItemRandomChanceCondition#test: the chance first, then the draw
+        float chance = numberFloat(c.value("chance", Json(1)), e);
+        return e.random.nextFloat() < chance;
+    }
     if (id == "minecraft:random_chance_with_enchanted_bonus") {
         int lvl = 0;
         if (auto const* held = mainhandOf(e.ctx.attacker)) lvl = enchantLevel(*held, withNs(c.value("enchantment", std::string{"minecraft:looting"})));
@@ -465,7 +516,8 @@ bool condition(Json const& c, Eval& e) {
         if (p.contains("direct_entity") && !entityPredicate(e.ctx.direct, p["direct_entity"], e)) return false;
         if (auto tagsList = p.find("tags"); tagsList != p.end() && tagsList->is_array()) {
             for (auto const& t : *tagsList) {
-                bool in = tags::has(tags::Registry::DamageType, withNs(t.value("id", std::string{})), e.ctx.damageType);
+                // gf::combat's damage type tags (TF's memberships built in, then gf::tags)
+                bool in = !e.ctx.damageType.empty() && combat::damageTypeHasTag(e.ctx.damageType, withNs(t.value("id", std::string{})));
                 if (in != t.value("expected", true)) return false;
             }
         }
@@ -513,7 +565,76 @@ void enchantStack(ItemStack& stack, std::string const& javaId, int level) {
     }
 }
 
+/// TF's enchantments (data/twilightforest/enchantment/*.json: max level, supported items).
+struct TfEnchantment {
+    char const* id;
+    int         maxLevel;
+    char const* supportedTag;
+};
+std::vector<TfEnchantment> const& tfEnchantments() {
+    static std::vector<TfEnchantment> const v{
+        {"twilightforest:chill_aura", 3, "minecraft:enchantable/armor"},
+        {"twilightforest:destruction", 3, "twilightforest:enchantable/block_and_chain"},
+        {"twilightforest:fire_react", 3, "minecraft:enchantable/armor"},
+        {"twilightforest:renewal", 1, "twilightforest:scepters"},
+    };
+    return v;
+}
+
+/// Enchantment#getMaxLevel of a Java enchantment id (1 when unknown).
+int maxEnchantLevel(std::string const& javaId) {
+    // Bedrock Enchant::Type order: protection .. breach
+    static constexpr int maxLevels[] = {4, 4, 4, 4, 4, 3, 3, 3, 1, 5, 5, 5, 2, 2, 3, 5, 1, 3, 3, 5, 2, 1, 1, 3, 3, 2, 1, 1, 1, 5, 3, 3, 1, 1, 4, 3, 3, 3, 3, 5, 4};
+    int t = bedrockEnchant(javaId);
+    if (t >= 0 && t < static_cast<int>(std::size(maxLevels))) return maxLevels[t];
+    if (javaId == "minecraft:sweeping_edge") return 3;
+    for (auto const& tf : tfEnchantments())
+        if (javaId == tf.id) return tf.maxLevel;
+    return 1;
+}
+
+/// Enchantment#canEnchant (only_compatible): the stack is one of the enchantment's supported items.
+bool canEnchantWith(ItemStack const& stack, std::string const& javaId) {
+    auto itemId = game::items::idOf(stack);
+    if (itemId.empty()) return false;
+    for (auto const& tf : tfEnchantments()) {
+        if (javaId != tf.id) continue;
+        // an item tag without members (no tag data loaded): gf::enchant decides on application
+        if (tags::members(tags::Registry::Item, tf.supportedTag).empty()) return true;
+        return tags::has(tags::Registry::Item, tf.supportedTag, itemId);
+    }
+    if (javaId == "minecraft:sweeping_edge") return tags::has(tags::Registry::Item, "minecraft:enchantable/sword", itemId) || itemId.ends_with("_sword");
+    int t = bedrockEnchant(javaId);
+    if (t < 0) return false;
+    EnchantmentInstance inst;
+    inst.mEnchantType = static_cast<Enchant::Type>(t);
+    inst.mLevel       = 1;
+    auto r            = EnchantUtils::canEnchant(stack, inst, false);
+    return r.result != EnchantResultType::Fail && r.result != EnchantResultType::Conflict;
+}
+
+/// Bedrock's IRandom over the loot random (Bedrock algorithms drawing from a seeded roll).
+class LootIRandom final : public IRandom {
+public:
+    explicit LootIRandom(RandomSource& random) : mRandom(random) {}
+    int    nextInt() override { return mRandom.nextInt(); }
+    int    nextInt(int bound) override { return mRandom.nextInt(bound); }
+    int64  nextLong() override { return mRandom.nextLong(); }
+    bool   nextBoolean() override { return mRandom.nextBoolean(); }
+    float  nextFloat() override { return mRandom.nextFloat(); }
+    double nextDouble() override { return mRandom.nextDouble(); }
+    double nextGaussianDouble() override { return mRandom.nextGaussian(); }
+    void   consumeCount(uint rounds) override {
+        for (uint i = 0; i < rounds; ++i) (void)mRandom.nextInt();
+    }
+
+private:
+    RandomSource& mRandom;
+};
+
 ItemStack function(ItemStack stack, Json const& f, Eval& e);
+/// SetContainerContents#run (defined with the entries below).
+ItemStack setContents(ItemStack stack, Json const& f, Eval& e);
 
 ItemStack functions(ItemStack stack, Json const& list, Eval& e) {
     if (!list.is_array()) return stack;
@@ -535,7 +656,7 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
     if (id == "minecraft:limit_count") {
         auto limit = f.value("limit", Json::object());
         int  n     = stackCount(stack);
-        if (limit.is_number()) return withCount(stack, std::min(n, limit.get<int>()));
+        if (limit.is_number()) return withCount(stack, limit.get<int>()); // IntRange.exactly(n): clamp(v, n, n)
         if (limit.contains("min")) n = std::max(n, numberInt(limit["min"], e));
         if (limit.contains("max")) n = std::min(n, numberInt(limit["max"], e));
         return withCount(stack, n);
@@ -577,7 +698,7 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         if (auto const* held = mainhandOf(e.ctx.attacker)) lvl = enchantLevel(*held, withNs(f.value("enchantment", std::string{"minecraft:looting"})));
         if (lvl == 0) return stack;
         float add = static_cast<float>(lvl) * numberFloat(f.value("count", Json(1)), e);
-        int   n   = stackCount(stack) + static_cast<int>(std::lround(add));
+        int   n   = stackCount(stack) + javaRound(add); // stack.grow(Math.round(f))
         int   lim = f.value("limit", 0);
         if (lim > 0 && n > lim) n = lim;
         return withCount(stack, n);
@@ -600,37 +721,39 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         } else if (opt.is_array()) {
             for (auto const& o : opt) options.push_back(withNs(o.get<std::string>()));
         }
-        if (options.empty())
+        if (options.empty()) {
+            // the whole enchantment registry: vanilla's (Bedrock-mapped, plus sweeping_edge) and
+            // TF's 4, in registry order (data-driven registries load sorted by ResourceLocation:
+            // path, then namespace)
             for (auto const& [javaId, _] : enchantMap()) options.push_back(javaId);
-        // only_compatible (Java's default): enchantments the item can take
-        if (f.value("only_compatible", true) && game::items::idOf(stack) != "minecraft:book") {
-            std::erase_if(options, [&](std::string const& o) {
-                int t = bedrockEnchant(o);
-                if (t < 0) return false; // TF's own (gf::enchant decides)
-                EnchantmentInstance inst;
-                inst.mEnchantType = static_cast<Enchant::Type>(t);
-                inst.mLevel       = 1;
-                auto r            = EnchantUtils::canEnchant(stack, inst, false);
-                return r.result == EnchantResultType::Fail || r.result == EnchantResultType::Conflict;
+            options.push_back("minecraft:sweeping_edge");
+            for (auto const& tf : tfEnchantments()) options.push_back(tf.id);
+            std::sort(options.begin(), options.end(), [](std::string const& a, std::string const& b) {
+                auto pa = a.substr(a.find(':') + 1), pb = b.substr(b.find(':') + 1);
+                return pa != pb ? pa < pb : a < b;
             });
         }
+        // only_compatible (Java's default): enchantments the item can take (a book takes any)
+        if (f.value("only_compatible", true) && game::items::idOf(stack) != "minecraft:book")
+            std::erase_if(options, [&](std::string const& o) { return !canEnchantWith(stack, o); });
         if (options.empty()) return stack;
-        std::sort(options.begin(), options.end());
+        // Util.getRandomSafe: list.get(random.nextInt(size)), then Mth.nextInt(min, max level)
         auto pick = options[static_cast<std::size_t>(e.random.nextInt(static_cast<int>(options.size())))];
-        int  t    = bedrockEnchant(pick);
-        int  max  = 1;
-        if (t >= 0) {
-            static constexpr int maxLevels[] = {4, 4, 4, 4, 4, 3, 3, 3, 1, 5, 5, 5, 2, 2, 3, 5, 1, 3, 3, 5, 2, 1, 1, 3, 3, 2, 1, 1, 1, 5, 3, 3, 1, 1, 4, 3, 3, 3, 3, 5, 4, 3};
-            if (t < static_cast<int>(std::size(maxLevels))) max = maxLevels[t];
-        }
-        enchantStack(stack, pick, nextIntBetween(e.random, 1, max));
+        enchantStack(stack, pick, nextIntBetween(e.random, 1, maxEnchantLevel(pick)));
         return stack;
     }
     if (id == "minecraft:enchant_with_levels") {
         int levels = numberInt(f.value("levels", Json(1)), e);
         if (game::items::idOf(stack) == "minecraft:book")
             if (auto book = game::items::make("minecraft:enchanted_book", stackCount(stack))) stack = *book;
-        if (auto level = ll::service::getLevel()) EnchantUtils::randomlyEnchant(level->getIRandom(), stack, levels, 0, false);
+        // Bedrock's enchanting algorithm (EnchantUtils::randomlyEnchant: enchantability, cost
+        // ranges and weights, the shape of Java's EnchantmentHelper#selectEnchantment) drawing
+        // from the loot random, so seeded rolls are reproducible; #minecraft:on_random_loot allows
+        // the treasure enchantments Java's tag lists (frost walker, mending, the curses)
+        LootIRandom random(e.random);
+        auto        opt      = f.value("options", Json{});
+        bool        treasure = opt.is_string() && withNs(opt.get<std::string>()) == "minecraft:on_random_loot";
+        EnchantUtils::randomlyEnchant(random, stack, levels, 0, treasure);
         return stack;
     }
     if (id == "minecraft:set_potion") {
@@ -664,12 +787,16 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         return stack;
     }
     if (id == "minecraft:set_name") {
+        // Bedrock item names are plain text: a translatable name keeps its key in the item data
+        // ("name_key", for the viewer's own language in the client mod's tooltips) and the
+        // server language's text as the custom name every client shows
         auto name = f.value("name", Json{});
         std::string text;
         if (name.is_string()) text = name.get<std::string>();
         else if (name.is_object() && name.contains("translate")) {
             auto key = name.value("translate", std::string{});
             text     = std::string(gf::translate(key, key));
+            game::items::setData(stack, "name_key", key);
         } else if (name.is_object()) text = name.value("text", std::string{});
         if (!text.empty()) stack.setCustomName(Bedrock::Safety::RedactableString(text));
         return stack;
@@ -700,7 +827,7 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
             if (key == "minecraft:container") {
                 if (auto h = inventory::find(*e.ctx.region, pos); h && h->get) {
                     Json items = Json::array();
-                    for (int i = 0; i < h->slots; ++i) items.push_back(game::items::toJson(h->get(gpos, i)));
+                    for (auto const& s : inventory::contents(gpos)) items.push_back(game::items::toJson(s)); // one read
                     comps[key] = items;
                 } else if (src.is_object() && src.contains("inventory") && src["inventory"].is_object()) {
                     comps[key] = src["inventory"].value("items", Json::array()); // a removed BlockData container
@@ -740,10 +867,7 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         }
         return stack;
     }
-    if (id == "minecraft:set_contents") {
-        warnOnce("set_contents is not supported (the item keeps no contents)");
-        return stack;
-    }
+    if (id == "minecraft:set_contents") return setContents(std::move(stack), f, e);
     warnOnce("unknown loot function " + id + " (skipped)");
     return stack;
 }
@@ -803,10 +927,17 @@ bool expand(Json const& entry, Eval& e, std::vector<Leaf>& out) {
 void create(Leaf const& leaf, Eval& e, Sink const& out) {
     Json const& entry = *leaf.entry;
     auto        type  = withNs(entry.value("type", std::string{"minecraft:item"}));
+    if (type == "minecraft:tag" && !leaf.itemId.empty()) {
+        // TagEntry#expandTag: an EntryBase that emits new ItemStack(holder) without the entry's
+        // functions (only the pool's and the table's apply)
+        if (auto s = game::items::make(leaf.itemId, 1)) out(*s);
+        else warnOnce("unknown item " + leaf.itemId);
+        return;
+    }
     Json const  fns   = entry.value("functions", Json::array());
     Sink        decorated = [&](ItemStack s) { out(functions(std::move(s), fns, e)); };
-    if (type == "minecraft:item" || (type == "minecraft:tag" && !leaf.itemId.empty())) {
-        auto id = leaf.itemId.empty() ? withNs(entry.value("name", std::string{})) : leaf.itemId;
+    if (type == "minecraft:item") {
+        auto id = withNs(entry.value("name", std::string{}));
         if (auto s = game::items::make(id, 1)) decorated(*s);
         else warnOnce("unknown item " + id);
         return;
@@ -833,6 +964,97 @@ void create(Leaf const& leaf, Eval& e, Sink const& out) {
         return;
     }
     warnOnce("unknown loot entry type " + type);
+}
+
+/// LootTable.createStackSplitter: stacks above the max stack size are split.
+Sink splitter(Sink const& out) {
+    return [out](ItemStack s) {
+        if (game::items::isEmpty(s)) return;
+        int n = stackCount(s), max = maxStack(s);
+        if (n <= max) {
+            out(std::move(s));
+            return;
+        }
+        while (n > 0) {
+            int part = std::min(n, max);
+            out(withCount(s, part));
+            n -= part;
+        }
+    };
+}
+
+/// Puts `contents` into a Bedrock storage item (the bundle): what the game does for a bundle
+/// that gets its first item, a new dynamic container in the level's container registry named by
+/// the item's bundle id tag. The game tracks it once a player holds the bundle and saves the
+/// contents with the item. False when the item has no storage component.
+bool fillStorageItem(ItemStack& stack, std::vector<ItemStack> const& contents) {
+    auto  level = ll::service::getLevel();
+    auto* item  = stack.mItem.get();
+    if (!level || !item) return false;
+    auto* storage = static_cast<StorageItemComponent*>(item->getComponent(HashedString("minecraft:storage_item")));
+    if (!storage) return false;
+    auto* weight = static_cast<StorageWeightLimitItemComponent*>(item->getComponent(HashedString("minecraft:storage_weight_limit")));
+    auto  id     = level->getContainerRegistryTracker()->generateNewID();
+    FullContainerName name;
+    name.mName      = ContainerEnumName::DynamicContainer;
+    name.mDynamicId = std::optional<uint>(id);
+    auto access     = level->getContainerRegistryAccess();
+    access->tryCreateEntry(storage, weight, name);
+    auto backing = access->getBackingContainer(name);
+    if (!backing) return false;
+    int slot = 0;
+    for (auto const& s : contents) {
+        if (game::items::isEmpty(s)) continue;
+        if (slot >= backing->getContainerSize()) {
+            warnOnce("set_contents: more stacks than the storage item's slots (the rest is dropped)");
+            break;
+        }
+        backing->setItem(slot++, s);
+    }
+    auto tag = stack.mUserData ? stack.mUserData->clone() : std::make_unique<CompoundTag>();
+    tag->putInt(std::string(kBundleIdTag), static_cast<int>(id));
+    stack.setUserData(std::move(tag));
+    return true;
+}
+
+/// The dynamic container of a storage item (selftests): its stacks, nullopt without a bundle id.
+std::optional<std::vector<ItemStack>> storageItemContents(ItemStack const& stack) {
+    auto level = ll::service::getLevel();
+    auto key   = std::string(kBundleIdTag);
+    if (!level || !stack.mUserData || !stack.mUserData->contains(key)) return std::nullopt;
+    FullContainerName name;
+    name.mName      = ContainerEnumName::DynamicContainer;
+    name.mDynamicId = std::optional<uint>(static_cast<uint>(static_cast<int>((*stack.mUserData)[key].get<IntTag>())));
+    auto backing    = level->getContainerRegistryAccess()->getBackingContainer(name);
+    if (!backing) return std::nullopt;
+    std::vector<ItemStack> out;
+    for (int i = 0; i < backing->getContainerSize(); ++i)
+        if (!game::items::isEmpty(backing->getItem(i))) out.push_back(backing->getItem(i));
+    return out;
+}
+
+ItemStack setContents(ItemStack stack, Json const& f, Eval& e) {
+    // SetContainerContents#run: every entry is expanded (conditions, alternatives, groups) and
+    // every leaf creates its stacks (no weighted pick), through the stack splitter
+    std::vector<ItemStack> contents;
+    Sink                   add = splitter([&](ItemStack s) { contents.push_back(std::move(s)); });
+    for (auto const& entry : listOf(f, "entries")) {
+        std::vector<Leaf> leaves;
+        expand(entry, e, leaves);
+        for (auto const& leaf : leaves) create(leaf, e, add);
+    }
+    auto component = withNs(f.value("component", std::string{}));
+    if (component == "minecraft:bundle_contents" && fillStorageItem(stack, contents)) return stack;
+    // other components (minecraft:container, minecraft:charged_projectiles) and items without a
+    // Bedrock storage: GloamingForest's item data "components", as copy_components keeps them
+    Json items = Json::array();
+    for (auto const& s : contents) items.push_back(game::items::toJson(s));
+    Json comps = game::items::getData(stack, "components");
+    if (!comps.is_object()) comps = Json::object();
+    comps[component] = items;
+    game::items::setData(stack, "components", comps);
+    if (component == "minecraft:bundle_contents") warnOnce("set_contents: " + game::items::idOf(stack) + " has no Bedrock storage (contents kept in the item data)");
+    return stack;
 }
 
 /// LootPool#addRandomItem.
@@ -901,20 +1123,10 @@ std::vector<ItemStack> rollRaw(Json const& t, std::string const& tableId, LootCo
     Eval                   e{ctx, random, {}};
     std::vector<ItemStack> out;
     // LootTable.createStackSplitter: stacks above the max stack size are split
-    rollTable(t, tableId, e, [&](ItemStack s) {
-        if (game::items::isEmpty(s)) return;
-        int n = stackCount(s), max = maxStack(s);
-        if (n <= max) {
-            out.push_back(std::move(s));
-            return;
-        }
-        while (n > 0) {
-            int part = std::min(n, max);
-            out.push_back(withCount(s, part));
-            n -= part;
-        }
-    });
+    rollTable(t, tableId, e, splitter([&](ItemStack s) { out.push_back(std::move(s)); }));
     return out;
 }
+
+std::optional<std::vector<ItemStack>> bundleContents(ItemStack const& stack) { return storageItemContents(stack); }
 
 } // namespace gf::loot

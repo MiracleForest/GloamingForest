@@ -21,5 +21,7 @@ void reapplySurvival(Actor& victim);
 bool returnKeptItems(Player& player);
 /// The death pipeline around the game's `die` (the hooks call it).
 void handleDeath(Actor& self, ActorDamageSource const& source, std::function<void()> const& die);
+/// A player respawned: its next death runs the pipeline again (one handled death per life).
+void forgetDeath(Player const& player);
 
 } // namespace gf::death
