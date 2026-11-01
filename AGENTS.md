@@ -20,7 +20,7 @@ and the contract headers before you code. The plan's unit records are in
 | What | Licence | How GloamingForest uses it |
 |---|---|---|
 | TF code (Java) | LGPL-2.1-or-later | May be **translated** to C++ (keep the attribution header below). Behaviour reference for everything. |
-| TF textures, models, blockstates, lang | CC BY-NC-SA 4.0 | Reused **only through `tools/import`** (F1) into `assets/gen/import/**`; attribution in [NOTICE](NOTICE) and [assets/LICENSE](assets/LICENSE). |
+| TF textures, models, blockstates, lang | CC BY-NC-SA 4.0 | Reused **only through `tools/import`** (F1) into `assets/gen/import/**`; attribution in [NOTICE](NOTICE) and [assets/LICENSE](assets/LICENSE). A hand-made file derived from one (an edited texture, model, blockstate or text overriding the generated one, R3) stays CC BY-NC-SA 4.0 (ShareAlike): put it under a `tf-derived/` directory of your pack folder (`assets/pack/rp/textures/blocks/<unit>/tf-derived/x.png`) with a `tf-derived/SOURCES.json` mapping each file name to the TF file(s) it derives from (`{"x.png": "src/main/resources/assets/twilightforest/textures/block/x.png"}`). Assemble fails without the entry and lists the files in the pack's `tf-derived-sources.json` next to `LICENSE-ASSETS.txt`. |
 | TF sounds, music (229 `.ogg`) and structure templates (274 `.nbt`) | **All Rights Reserved** | Never opened, decoded or copied. Sounds come from the synth toolkit (`tools/sounds`, F3), templates are original `.gft` designs (`tools/structures`, F7). The TF checkout excludes them; `tools/ci/arr-guard.ps1` rejects matching blobs. |
 | Levitate v0.1.0 | LGPL-3.0-or-later | The foundation; adapted files say so in their first line. |
 | MoreDimensions | LGPL-3.0-or-later | Reference for the custom dimension (spike S1). |
@@ -140,7 +140,7 @@ F0's and is immutable from W1 on (R18). `/twilightforest stubs` lists the stubs 
 | features | F5 | `src/feature/features/Features.h` | gf::features::{registerType(id, FeatureFn), registerPlacement(id, PlacementFn), registerTrunkPlacer/registerFoliagePlacer/registerTreeDecorator/registerRootPlacer/registerStateProvider(id, fn), place(id, WorldGenRegion&, BlockPos, Random&) -> bool, placeJson(json, ...), LargeWriter (cross-chunk queue)}; built-in vanilla types + weighted_list, avoid_landmark, chunk_center. |
 | spawn | F5 | `src/feature/spawn/Spawn.h` | gf::spawn::{registerPlacement(entityId, PlacementRule, PredicateFn = {}), spawnMob(BlockSource&, entityId, Vec3, SpawnReason, InitFn = {}) -> Actor*, setBiomeSpawns(biomeId, Table), onSpecialSpawn(fn)}; controlled spawns read from landmark descriptors. |
 | landmark | F6 | `src/core/landmark/Landmark.h, src/feature/landmark/Landmark.h` | gf::core::landmark::{nearestCenter(cx, cz), chunkHasCenter(cx, cz), pickVariety(seed, cx, cz), pickForChunk(seed, cx, cz, BiomeAtFn)} (pure); gf::landmark::{descriptor(key), registerGenerator(key, Generator{layout, terraform?, spawnIndex?, pieceProtected?}), startAt(dim, pos), startsIntersecting(dim, ChunkPos), isConquered(Start const&), setConquered(dim, pos, key, bool) (fires structure_cleared), isProtectedFor(Player const&, pos), trySpawnHint(Player&, Start const&, pos), generateAt(key, BlockSource&, pos), forceStart(key, GlobalPos), enforcedProgression(), addTerraformer(key, fn), decorationAllowed(ChunkPos, DecoKind)}. |
-| structure | F7 | `src/feature/structure/Structure.h` | gf::structure::Piece {bbox, orientation, mirror, placeBlock(x, y, z, state-by-name), getBlock, fill, fillAir, randomFill(selector), placeChest(blockId, tableId), placeSpawner(entityId), placeTemplate(id, origin, Settings)}; registerPieceType(id, Factory); bases TFMaze, HollowHillComponent, TowerWing family (16 classes), TFStructureComponentOld/Template, TwilightTemplate/DoubleTemplate/Jigsaw pieces; templates::{get, place}; registerProcessor(id, fn); registerMarkerHandler(id, fn); palettes::apply; selectors::get(id); jigsaw::assemble(pool, origin, depth, rng); speleothems::place(region, pos, configId, rng, hanging). |
+| structure | F7 | `src/feature/structure/Structure.h`, `src/feature/structure/bases/{Component,ComponentOld,TemplatePieces,Maze,HollowHill,Tower}.h` | gf::structure::Piece {bbox, orientation, mirror, placeBlock(x, y, z, state-by-name), getBlock, fill, fillAir, randomFill(selector), placeChest(blockId, tableId), placeSpawner(entityId), placeTemplate(id, origin, Settings)}; registerPieceType(id, Factory); bases TFMaze, HollowHillComponent, TowerWing family (16 classes), TFStructureComponentOld/Template, TwilightTemplate/DoubleTemplate/Jigsaw pieces; templates::{get, place}; registerProcessor(id, fn); registerMarkerHandler(id, fn); palettes::apply; selectors::get(id); jigsaw::assemble(pool, origin, depth, rng); speleothems::place(region, pos, configId, rng, hanging). |
 | entity | F8 | `src/feature/entity/Entity.h` | gf::entity::{registerType(id, Behaviour{onSpawn, tick, aiStep, hurt, die, save, load, interact}), data(Actor&, key) -> json&, sync(Actor&, key), setProperty(Actor&, name, value), addGoal(Mob&, prio, Goal), addTargetGoal(...), goals::{charge, breath, flockToSameKind, panicOnFlockDeath, avoidAny, goHome, alwaysWatchTarget, randomLookIfBored, simplifiedAttack}, setMoveControl(Mob&, kind\|fn), setHome(Mob&, GlobalPos, radius), home(Mob const&), addPart(Mob&, partId, size, offsetFn) -> PartHandle, mount::{grab(Mob&, Player&), throwRider(Mob&, Vec3)}, addTargetFilter(fn), seedForTest(Actor&, seed)}. |
 | projectile | F8 | `src/feature/projectile/Projectile.h` | gf::projectile::{registerType(id, Spec{gravity, drag, onHitEntity, onHitBlock, tick}), shoot(Actor& shooter, id, Vec3 dir, speed, inaccuracy, json init = {}) -> Actor*, addSteering(SteeringFn)}. |
 | boss | F8 | `src/feature/boss/Boss.h` | gf::boss::{registerBoss(BossSpec{entityId, homeStructure, lootTable, deathChestBlock, bar{rgb, darken, fog}, deathTicks}), registerSpawner(SpawnerSpec{blockId, entityId, range = 9, particle, spawnFn}), bar(Mob&), setMinion(Actor&, bool), isMinion(Actor const&), participants(Mob const&), trophyVariant(blockId) -> {sound, volume, pitch, particle, comparator}}; config section 'bosses'. |
@@ -194,7 +194,12 @@ Registrations live in `.cpp` files linked directly into the DLL, so they are nev
   {{"state", value}})`, `cleanupBlock`, `give(id, n)`, `co_await ticks(n)`, `co_await ensureLoaded(pos)`,
   `captureBossEvent()` (records BossEventPackets), `snapshotVolume(box)` (golden volume hash),
   `check / require / fail / info`. `/twilightforest selftest` and the server scenario `full` run every
-  unit's tests together: keep yours passing there.
+  unit's tests together: keep yours passing there. Rows are 5 blocks apart in z: keep `testPos(dx, dz)`
+  within dz 0..4 and leave no blocks behind outside it (a larger `flatArea` reaches into the next
+  units' rows and is safe only because it is restored). A flat area is at most
+  `Context::kMaxFlatAreaSize` (144) wide and a test holds at most 7 at once (Bedrock: 10 ticking areas
+  per world, 100 chunks each). `ctx.player()` is valid for the current tick only: call it again
+  after a `co_await` (R16).
 - **Interactions** (`feature/common/Interactions.h`, R8): never hook `GameMode::$useItemOn / $useItem
   / baseUseItem / $destroyBlock / $startDestroyBlock / $interact / $attack` or the LeviLamina
   interact / use / destroy events. Register `interactions::onUseOn({.block = id, .item = id}, fn,
@@ -243,7 +248,9 @@ pwsh tools/ci/arr-guard.ps1
   slots of `tools/lib/Throttle.psm1` (build 3 with a 10 GB free-memory gate, bds 5, client 2). Exit
   code 2 means **NOT RUN** (no slot in time): retry, never count it as a pass.
 - `xmake-requires.lock` holds the package entries of both target types; `tools/build.ps1` keeps it
-  as committed (xmake would rewrite it per configure). `-UpdateLock` re-resolves both.
+  as committed (xmake would rewrite it per configure). `-UpdateLock` (with `-Target all`) re-resolves
+  both. A build runs in a kill-on-exit job: killing `tools/build.ps1` also stops its xmake and
+  clang-cl processes, so a released slot never leaves compiles running.
 - In game: `/twilightforest selftest ["glob"]` (op or console; quote globs). Output lines:
   `SELFTEST PASS <name>`, `SELFTEST FAIL <name>: <reason>`, `SELFTEST DONE pass=<N> fail=<M>`.
   `/twilightforest stubs` lists the contract stubs that were called.
