@@ -226,11 +226,19 @@ void installSigns() {
             for (auto const& l : p["lines"]) lines.push_back(l.is_string() ? l.get<std::string>() : "");
         signs::setText(pos, lines, p.value("front", true));
     });
-    // companions get the signs of the world when they join
+    // companions get the signs around them when they join (the chunks within 8 of theirs; later
+    // changes reach them through store())
     net::onCompanionJoined([](Player& player) {
-        bd::forEach([&player](GlobalPos const& pos, Json const& doc) {
-            if (doc.contains(kKey)) net::send(player, "signs.text", {{"dim", pos.dim}, {"x", pos.x}, {"y", pos.y}, {"z", pos.z}, {"sign", doc[kKey]}});
-        });
+        int  dim = static_cast<int>(player.getDimensionId());
+        auto at  = player.getPosition();
+        int  pcx = static_cast<int>(std::floor(at.x)) >> 4, pcz = static_cast<int>(std::floor(at.z)) >> 4;
+        for (int cx = pcx - 8; cx <= pcx + 8; ++cx) {
+            for (int cz = pcz - 8; cz <= pcz + 8; ++cz) {
+                bd::forEachInChunk(dim, cx, cz, [&player](GlobalPos const& pos, Json const& doc) {
+                    if (doc.contains(kKey)) net::send(player, "signs.text", {{"dim", pos.dim}, {"x", pos.x}, {"y", pos.y}, {"z", pos.z}, {"sign", doc[kKey]}});
+                });
+            }
+        }
     });
 }
 

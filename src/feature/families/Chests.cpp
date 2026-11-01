@@ -31,6 +31,11 @@ std::vector<ia::HandlerId>& handlerIds() {
 bool isChest(Entry const* e) { return e && (e->family == Family::Chest || e->family == Family::TrappedChest); }
 
 int facingOf(Block const& b) { return dirOf(strState(b, state::Cardinal)).value_or(North); }
+/// The chest type at `pos` ("" when nothing is there), for log lines.
+std::string sst(BlockSource& region, BlockPos const& pos) {
+    Block const* b = blockAt(region, pos);
+    return b ? strState(*b, state::Type) : std::string();
+}
 std::string typeOf(Block const& b) {
     auto t = strState(b, state::Type);
     return t.empty() ? "single" : t;
@@ -126,7 +131,7 @@ void installChests() {
                 if (!region) return;
                 // Java: the chest faces the player; sneaking against a chest's side joins that one
                 pairChest(*region, game::blockPos(c.pos), opposite(lookDir(c.player)), c.sneaking, c.face);
-                log().info("families: {} placed at {} {} {} ({})", c.blockId, c.pos.x, c.pos.y, c.pos.z, strState(*blockAt(*region, game::blockPos(c.pos)), state::Type));
+                log().info("families: {} placed at {} {} {} ({})", c.blockId, c.pos.x, c.pos.y, c.pos.z, sst(*region, game::blockPos(c.pos)));
             }));
             handlerIds().push_back(ia::onUseOn(m, [](ia::UseOnContext const& c) {
                 if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass;

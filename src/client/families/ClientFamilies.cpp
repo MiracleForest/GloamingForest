@@ -27,6 +27,12 @@ namespace gf::client::families {
 
 namespace fam = gf::feature::families;
 
+} // namespace gf::client::families
+namespace gf::feature::families::detail {
+void refreshTypes();
+} // namespace gf::feature::families::detail
+namespace gf::client::families {
+
 namespace {
 
 /// Sign text per position, as the server sent it ({"front": {...}, "back": {...}, "waxed"}).
@@ -48,6 +54,7 @@ public:
     void install() {
         mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientJoinLevelEvent>([](ll::event::ClientJoinLevelEvent&) {
             signTexts().clear();
+            fam::detail::refreshTypes(); // the joined world's own block types
             fam::applyClimbable();
         });
     }
