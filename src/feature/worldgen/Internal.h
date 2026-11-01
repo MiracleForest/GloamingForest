@@ -66,6 +66,8 @@ struct Providers {
 void         setSeed(std::int64_t seed);
 [[nodiscard]] std::int64_t currentSeed();
 
+/// Drops the per-world caches (engine biomes, block permutations); on world close.
+void clearWorldCaches();
 /// Biome id <-> engine biome ("minecraft:plains" <-> "plains"); thread-safe, cached per registry.
 [[nodiscard]] Biome const* engineBiome(BiomeRegistry const& registry, std::string const& id);
 [[nodiscard]] std::string  biomeIdOf(Biome const& biome);

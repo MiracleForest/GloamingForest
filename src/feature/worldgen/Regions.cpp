@@ -230,15 +230,13 @@ std::uint64_t MemoryWorld::hash(int cx, int cz) const {
     std::uint64_t h  = 0xcbf29ce484222325ull;
     auto          it = mChunks.find({cx, cz});
     if (it == mChunks.end()) return h;
+    // every block's id and permutation (states) in a fixed order, through core::fnv1a64
     for (int y = mMinY; y < mMaxY; ++y)
         for (int z = 0; z < 16; ++z)
             for (int x = 0; x < 16; ++x) {
-                for (char ch : it->second->getBlock(x, y, z).getTypeName()) {
-                    h ^= static_cast<unsigned char>(ch);
-                    h *= 0x100000001b3ull;
-                }
-                h ^= 0xff;
-                h *= 0x100000001b3ull;
+                auto const& b = it->second->getBlock(x, y, z);
+                h             = (h ^ core::fnv1a64(b.getTypeName())) * 0x100000001b3ull;
+                h             = (h ^ b.getData()) * 0x100000001b3ull;
             }
     return h;
 }

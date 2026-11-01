@@ -27,6 +27,7 @@
 #include "core/jrand/Mth.h"
 #include "feature/dimension/World.h"
 #include "feature/worldgen/Internal.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
@@ -36,7 +37,7 @@ namespace detail {
 
 namespace {
 
-std::atomic<bool> gActive{false};
+std::atomic<int> gActive{0}; ///< live Twilight generators (server and client levels)
 
 int minYOf(Dimension const& d) { return d.mHeightRange->mMin; }
 int maxYOf(Dimension const& d) { return d.mHeightRange->mMax; }
@@ -44,31 +45,34 @@ int maxYOf(Dimension const& d) { return d.mHeightRange->mMax; }
 /// The chunk a decoration neighbourhood is centered on: the middle of the view's bounds, checked
 /// against the chunk states (the center is the one being decorated).
 std::optional<std::pair<int, int>> centerOf(ChunkViewSource& view) {
-    int minX, minZ, maxX, maxZ;
+    int minX, minY, minZ, maxX, maxY, maxZ;
     {
-        auto&             area = *view.mArea;
-        std::shared_lock  lock(area.mChunkDataBox.mMutex);
-        auto const&       b = area.mChunkDataBox.mContent.mBounds;
-        minX = b.mMin->x, minZ = b.mMin->z, maxX = b.mMax->x, maxZ = b.mMax->z;
+        auto&            area = *view.mArea;
+        std::shared_lock lock(area.mChunkDataBox.mMutex);
+        auto const&      b = area.mChunkDataBox.mContent.mBounds;
+        minX = b.mMin->x, minY = b.mMin->y, minZ = b.mMin->z, maxX = b.mMax->x, maxY = b.mMax->y, maxZ = b.mMax->z;
     }
     auto decorating = [&](int x, int z) {
         auto lc = view.getExistingChunk(ChunkPos{x, z});
         return lc && lc->mLoadState->load() == ChunkState::DecorationPostProcessing;
     };
-    int cx = core::mth::floorDiv(minX + maxX, 2), cz = core::mth::floorDiv(minZ + maxZ, 2);
-    if (decorating(cx, cz)) return std::make_pair(cx, cz);
-    for (int x = minX; x <= maxX; ++x)
-        for (int z = minZ; z <= maxZ; ++z)
-            if (decorating(x, z)) return std::make_pair(x, z);
+    // a chunk grid may keep its second axis in Pos::z or in Pos::y: try both
+    for (auto [lo, hi] : {std::pair{minZ, maxZ}, std::pair{minY, maxY}}) {
+        int cx = core::mth::floorDiv(minX + maxX, 2), cz = core::mth::floorDiv(lo + hi, 2);
+        if (decorating(cx, cz)) return std::make_pair(cx, cz);
+        for (int x = minX; x <= maxX; ++x)
+            for (int z = lo; z <= hi; ++z)
+                if (decorating(x, z)) return std::make_pair(x, z);
+    }
     return std::nullopt;
 }
 
 class TwilightGenerator final : public VoidGenerator {
 public:
     TwilightGenerator(Dimension& dimension, BiomeIdType defaultBiome) : VoidGenerator(dimension, defaultBiome), mDim(dimension) {
-        gActive = true;
+        ++gActive;
     }
-    ~TwilightGenerator() override { gActive = false; }
+    ~TwilightGenerator() override { --gActive; }
 
     void loadChunk(LevelChunk& lc, bool) override {
         auto start = std::chrono::steady_clock::now();
@@ -99,8 +103,8 @@ public:
         try {
             BlockSource         source(*mLevel, mDim, view, false, true, false, true);
             SourceRegionAdapter region(source, center->first, center->second, 1, minYOf(mDim), maxYOf(mDim), currentSeed(), static_cast<int>(mDim.getDimensionId()));
-            LevelChunkAdapter   chunk(*lc, mDim.getBiomeRegistry(), minYOf(mDim), maxYOf(mDim));
-            decorateChunk(&chunk, region, currentSeed());
+            // stages write through the region (BlockSource, height cache), never the chunk directly
+            decorateChunk(nullptr, region, currentSeed());
         } catch (std::exception const& e) {
             features::detail::warnOnce("decorate error", std::string("chunk decoration failed: ") + e.what());
         }
@@ -155,7 +159,7 @@ std::unique_ptr<WorldGenerator> createGenerator(Dimension& dimension) {
     return std::make_unique<detail::TwilightGenerator>(dimension, dimension.getDefaultBiomeId());
 }
 
-bool generatorActive() { return detail::gActive.load(); }
+bool generatorActive() { return detail::gActive.load() > 0; }
 
 } // namespace ext
 
@@ -179,7 +183,14 @@ LL_TYPE_INSTANCE_HOOK(
 class GeneratorModule {
 public:
     void load() { hook(); }
-    void install() { hook(); }
+    void install() {
+        hook();
+        static bool once = false;
+        if (!once) {
+            once = true;
+            game::db::onWorldClosed([] { clearWorldCaches(); });
+        }
+    }
     void uninstall() {
         if (mHooked) TwilightGeneratorHook::unhook();
         mHooked = false;

@@ -15,9 +15,7 @@ Write-Step "200-chunk pipeline: $($timing.Matches[0].Groups[1].Value) ms ($($tim
 $fixture = Get-ServerLog -Since $mark | Select-String -Pattern 'fixture feature hash ([0-9a-f]{16})' | Select-Object -Last 1
 if ($fixture) { Write-Step "fixture feature hash $($fixture.Matches[0].Groups[1].Value)" }
 
-# The data the interpreter loaded (configured / placed features, biomes) and the dev functions.
+# The data the interpreter loaded (configured / placed features, biomes). The dev functions are only
+# checked for presence (worldgen.functions): running them would change the shared test world
+# (gamerules, cleared ground). The pack loaded them without a content-log error (run.ps1 fails on one).
 if (-not (Get-ServerLog | Select-String -Pattern 'worldgen data: \d+ configured features' -Quiet)) { throw 'the worldgen data was not loaded' }
-$mark = Get-LogMark
-Send-Console 'function twilightforest/dev_powerwash_chunk'
-Start-Sleep -Seconds 2
-if (Get-ServerLog -Since $mark | Select-String -Pattern 'Unknown function|ERR' -Quiet) { throw 'the dev_powerwash_chunk function failed' }

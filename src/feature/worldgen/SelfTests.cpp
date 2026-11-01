@@ -111,7 +111,7 @@ GF_REGISTER_SELFTEST("worldgen.fixture_feature", [](Context& ctx) -> ll::coro::C
     ctx.check(placed == 3, "three fixture blocks (got " + std::to_string(placed) + ")");
     auto h = hex(worldHash(*world));
     ctx.info("fixture feature hash " + h);
-    ctx.check(h == "184f363d781b7a22", "the fixture placement matches the golden hash on every build (" + h + ")");
+    ctx.check(h == "f3df82a014e6dc38", "the fixture placement matches the golden hash on every build (" + h + ")");
 
     // the same feature in the game world through a BlockSource region
     auto box = co_await ctx.flatArea(5500, 32);
@@ -147,7 +147,7 @@ GF_REGISTER_SELFTEST("worldgen.vanilla_features", [](Context& ctx) {
     ctx.check(countBlocks(*world, "minecraft:mossy_cobblestone") > 0, "a forest rock placed");
     auto h = hex(worldHash(*world));
     ctx.info("vanilla features hash " + h);
-    ctx.check(h == "2b9b941f46633cf1", "the vanilla features match the golden hash on every build (" + h + ")");
+    ctx.check(h == "172b5e4895dfc424", "the vanilla features match the golden hash on every build (" + h + ")");
 });
 
 // A vanilla tree configuration (straight trunk, blob foliage, vines) placed twice identically.
@@ -176,7 +176,7 @@ GF_REGISTER_SELFTEST("worldgen.tree", [](Context& ctx) {
         else ctx.check(h == first, "the same tree for the same seed");
     }
     ctx.info("tree hash " + first);
-    ctx.check(first == "8db0333bc36a00c3", "the tree matches the golden hash on every build (" + first + ")");
+    ctx.check(first == "e7cec96b2660fb67", "the tree matches the golden hash on every build (" + first + ")");
 });
 
 // LargeWriter queues blocks of other chunks and applies them once the chunk is loaded.
@@ -190,7 +190,8 @@ GF_REGISTER_SELFTEST("worldgen.large_writer", [](Context& ctx) -> ll::coro::Coro
     gf::features::LargeWriter::setBlock(ctx.dimension(), gf::game::blockPos(pos), *block);
     ctx.check(gf::features::LargeWriter::pending(ctx.dimension()) == before + 1, "the block is queued");
     ctx.cleanupBlock(pos);
-    for (int i = 0; i < 10 && ctx.blockAt(pos) != "gf_test:fixture_block"; ++i) co_await ctx.ticks(10);
+    // the drain runs every 20 ticks; wait for it so no queued block outlives the flat area
+    for (int i = 0; i < 30 && gf::features::LargeWriter::pending(ctx.dimension()) > before; ++i) co_await ctx.ticks(10);
     ctx.check(ctx.blockAt(pos) == "gf_test:fixture_block", "the queued block is set in the loaded chunk");
     ctx.check(gf::features::LargeWriter::pending(ctx.dimension()) == before, "the queue is drained");
 });
@@ -207,6 +208,12 @@ GF_REGISTER_SELFTEST("worldgen.biomes", [](Context& ctx) -> ll::coro::CoroTask<>
     int                                lx = box.minX & 15, lz = box.minZ & 15;
     std::string                        original = chunk.biome(lx, box.minY, lz);
     std::string                        other    = original == "minecraft:desert" ? "minecraft:plains" : "minecraft:desert";
+    struct Restore { // the live chunk gets its biome back even when a check aborts the test
+        wg::detail::LevelChunkAdapter& c;
+        int                            x, z;
+        std::string                    biome;
+        ~Restore() { c.setBiomeColumn(x, z, biome); }
+    } restore{chunk, lx, lz, original};
     chunk.setBiomeColumn(lx, lz, other);
     ctx.check(chunk.biome(lx, box.minY, lz) == other, "the column reads back " + other);
     ctx.check(chunk.biome(lx, bs->getMaxHeight() - 1, lz) == other, "the whole column is set");

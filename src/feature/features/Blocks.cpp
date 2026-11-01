@@ -373,6 +373,11 @@ bool canSurvive(Region& region, BlockPos const& pos, Block const& block) {
 
 namespace detail {
 
+void clearBlockCache() {
+    std::lock_guard lock(cacheMutex());
+    cache().clear();
+}
+
 Json blockToJson(Block const& block) {
     auto slots  = slotsOf(block);
     Json states = Json::object();

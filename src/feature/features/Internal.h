@@ -86,6 +86,7 @@ struct Data {
     std::map<std::string, Json> biomes;     ///< biome id -> JSON
     std::map<std::string, Json> carvers;    ///< configured_carver id -> JSON
     std::map<std::string, std::unordered_set<std::string>> biomeFeatureSets; ///< biome id -> its placed feature ids
+    std::map<std::string, std::vector<std::vector<std::string>>> biomeSteps;   ///< biome id -> placed feature ids per step
 };
 /// The imported worldgen data of every namespace under <mod>/data (loaded once), plus the vanilla
 /// features TF's biomes reference.
@@ -124,6 +125,8 @@ struct SourceRegion : worldgen::Region {
 // ---- blocks ------------------------------------------------------------------------------------------
 /// The Bedrock air block.
 [[nodiscard]] Block const& air();
+/// Forgets the Java state -> permutation cache (pack blocks are registered per world).
+void clearBlockCache();
 /// A block as {"name", "states"} (LargeWriter persistence) and back.
 [[nodiscard]] Json        blockToJson(Block const& block);
 [[nodiscard]] Block const* blockFromJson(Json const& json);

@@ -66,7 +66,8 @@ struct Placement {
 struct State {
     std::shared_mutex                              mutex;
     std::unordered_map<std::string, Placement>     placements;
-    std::unordered_map<std::string, Table>         tables;
+    std::unordered_map<std::string, Table>         tables;    ///< registered by units (setBiomeSpawns)
+    std::unordered_map<std::string, Table>         jsonTables; ///< read from the imported biome JSON (per world)
     std::vector<SpecialSpawnFn>                    special;
 };
 State& state() {
@@ -96,7 +97,8 @@ constexpr Category kCategories[] = {
 /// creature_spawn_probability).
 Table tableOf(std::string const& biomeId) {
     {
-        std::shared_lock lock(state().mutex);
+        if (auto it = state().tables.find(biomeId); it != state().tables.end()) return it->second;
+        if (auto it = state().jsonTables.find(biomeId); it != state().jsonTables.end()) return it->second;
         if (auto it = state().tables.find(biomeId); it != state().tables.end()) return it->second;
     }
     Table       t;
@@ -110,7 +112,7 @@ Table tableOf(std::string const& biomeId) {
             out.push_back({features::detail::normalizeId(e.value("type", std::string())), e.value("weight", 1), e.value("minCount", 1), e.value("maxCount", 1)});
     }
     std::unique_lock lock(state().mutex);
-    state().tables.emplace(biomeId, t);
+    state().jsonTables.emplace(biomeId, t);
     return t;
 }
 
@@ -236,6 +238,13 @@ void spawnForChunkGeneration(worldgen::Region& region, std::string const& biomeI
                     float  f  = 0.6F; // EntityType#getWidth: the common mob width
                     double d0 = core::mth::clamp(static_cast<double>(l), static_cast<double>(i) + f, static_cast<double>(i) + 16.0 - f);
                     double d1 = core::mth::clamp(static_cast<double>(i1), static_cast<double>(j) + f, static_cast<double>(j) + 16.0 - f);
+                    // SpawnPlacements#checkSpawnRules(CHUNK_GENERATION) at the clamped position
+                    if (placement.predicate) {
+                        auto* src = kit::blockSource(region);
+                        BlockPos at{core::mth::floor(d0), top, core::mth::floor(d1)};
+                        // Java's `continue` skips the position update: the next try reuses (l, i1)
+                        if (!src || !placement.predicate(*src, data->entityId, at, SpawnReason::ChunkGeneration, random)) continue;
+                    }
                     (void)random.nextFloat(); // the yaw (Entity#moveTo)
                     out.push_back({region.dimension(), static_cast<float>(d0), static_cast<float>(top), static_cast<float>(d1), data->entityId, chunkX, chunkZ});
                     flag = true;
@@ -354,11 +363,12 @@ struct Spawner {
 
         // NaturalSpawner#createState: the mobs per category in those chunks
         std::map<std::string, int> counts;
+        std::set<Actor const*>     seen; // an entity near several players counts once
         auto                       possible = worldgen::ext::possibleBiomes();
         for (auto const& p : players) {
             AABB box{Vec3{p.x - 128, static_cast<float>(region->getMinHeight()), p.z - 128}, Vec3{p.x + 128, static_cast<float>(region->getMaxHeight()), p.z + 128}};
             for (Actor* a : region->fetchEntities(static_cast<Actor const*>(nullptr), box, false, false)) {
-                if (a->isPlayer()) continue;
+                if (a->isPlayer() || !seen.insert(a).second) continue;
                 auto cat = categoryOf(a->getTypeName(), possible);
                 if (!cat.empty()) ++counts[cat];
             }
@@ -465,7 +475,7 @@ public:
                 queue().clear();
                 spawner().categories.clear();
                 std::unique_lock tables(state().mutex);
-                state().tables.clear();
+                state().jsonTables.clear();
             });
         }
     }

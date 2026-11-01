@@ -7,7 +7,9 @@
 #include <algorithm>
 #include <chrono>
 #include <mutex>
+#include <map>
 #include <set>
+#include <unordered_map>
 
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/block/Block.h"
@@ -39,21 +41,44 @@ ext::Stats& statsRef() {
     return s;
 }
 
-/// FeatureSorter's per-step order over the possible biomes (cached per biome list).
-std::shared_ptr<std::vector<std::vector<std::string>> const> featureOrder() {
-    static std::mutex                                                     m;
-    static std::vector<std::string>                                       key;
-    static std::shared_ptr<std::vector<std::vector<std::string>> const> cached;
-    auto                                                                  biomes = ext::possibleBiomes();
-    std::lock_guard                                                       lock(m);
-    if (cached && biomes == key) return cached;
+/// FeatureSorter's per-step order over the possible biomes, with each biome's feature indices per
+/// step (cached per biome list).
+struct FeatureOrder {
+    std::vector<std::string>                       biomes;
+    std::set<std::string>                          possible;
+    std::vector<std::vector<std::string>>          steps;        ///< step -> sorted placed feature ids
+    std::map<std::string, std::vector<std::vector<int>>> indices; ///< biome -> step -> feature indices
+};
+
+std::shared_ptr<FeatureOrder const> featureOrder() {
+    static std::mutex                          m;
+    static std::shared_ptr<FeatureOrder const> cached;
+    auto                                       biomes = ext::possibleBiomes();
+    std::lock_guard                            lock(m);
+    if (cached && biomes == cached->biomes) return cached;
+    auto const&                            biomeSteps = features::detail::data().biomeSteps;
     std::vector<core::jrand::StepFeatures> sources;
-    for (auto const& b : biomes) sources.push_back(ext::biomeFeatures(b));
+    for (auto const& b : biomes) {
+        auto it = biomeSteps.find(b);
+        sources.push_back(it == biomeSteps.end() ? core::jrand::StepFeatures{} : it->second);
+    }
     bool cycle = false;
-    auto order = core::jrand::featureOrder(sources, &cycle);
+    auto out   = std::make_shared<FeatureOrder>();
+    out->steps = core::jrand::featureOrder(sources, &cycle);
     if (cycle) features::detail::warnOnce("feature order cycle", "the biomes' feature lists order features in a cycle (Java refuses such data)");
-    key    = biomes;
-    cached = std::make_shared<std::vector<std::vector<std::string>> const>(std::move(order));
+    std::vector<std::unordered_map<std::string, int>> index(out->steps.size());
+    for (std::size_t l = 0; l < out->steps.size(); ++l)
+        for (std::size_t i = 0; i < out->steps[l].size(); ++i) index[l].emplace(out->steps[l][i], static_cast<int>(i));
+    for (std::size_t b = 0; b < biomes.size(); ++b) {
+        auto& per = out->indices[biomes[b]];
+        per.resize(out->steps.size());
+        for (std::size_t l = 0; l < sources[b].size() && l < index.size(); ++l)
+            for (auto const& f : sources[b][l])
+                if (auto it = index[l].find(f); it != index[l].end()) per[l].push_back(it->second);
+    }
+    out->biomes   = std::move(biomes);
+    out->possible = std::set<std::string>(out->biomes.begin(), out->biomes.end());
+    cached        = out;
     return cached;
 }
 
@@ -172,35 +197,30 @@ void decorateChunk(Chunk* chunkIn, Region& region, std::int64_t seed) {
     BlockPos    origin{minX, region.minY(), minZ}; // SectionPos.of(chunk, minSection).origin()
 
     // the biomes of the 3x3 chunks (every section), restricted to the possible biomes
-    auto                  possible = ext::possibleBiomes();
-    std::set<std::string> possibleSet(possible.begin(), possible.end());
+    auto                  order = featureOrder();
     std::set<std::string> present;
-    for (int x = minX - 16; x < minX + 32; x += 4)
-        for (int z = minZ - 16; z < minZ + 32; z += 4)
-            for (int y = region.minY(); y < region.maxY(); y += 4) {
-                auto b = region.biome({x, y, z});
-                if (possibleSet.contains(b)) present.insert(b);
-            }
+    if (!order->possible.empty()) {
+        for (int x = minX - 16; x < minX + 32; x += 4)
+            for (int z = minZ - 16; z < minZ + 32; z += 4)
+                for (int y = region.minY(); y < region.maxY(); y += 4) {
+                    auto b = region.biome({x, y, z});
+                    if (order->possible.contains(b)) present.insert(std::move(b));
+                }
+    }
 
     core::jrand::WorldgenRandom random(std::make_unique<core::jrand::Xoroshiro128pp>(0));
     std::int64_t                decorationSeed = random.setDecorationSeed(seed, minX, minZ);
-    auto                        order          = featureOrder();
-    int                         steps          = static_cast<int>(order->size());
+    int                         steps          = static_cast<int>(order->steps.size());
     int                         k              = std::max(11, steps);
     auto const&                 placed         = features::detail::data().placed;
     for (int l = 0; l < k; ++l) {
         if (l == static_cast<int>(ext::DecorationStep::SurfaceStructures)) runSteps(*p, Stage::Pieces, chunk, region);
         if (l >= steps) continue;
         std::set<int> indices;
-        auto const&   stepList = (*order)[static_cast<std::size_t>(l)];
-        for (auto const& b : present) {
-            auto bf = ext::biomeFeatures(b);
-            if (l >= static_cast<int>(bf.size())) continue;
-            for (auto const& f : bf[static_cast<std::size_t>(l)]) {
-                auto it = std::find(stepList.begin(), stepList.end(), f);
-                if (it != stepList.end()) indices.insert(static_cast<int>(it - stepList.begin()));
-            }
-        }
+        auto const&   stepList = order->steps[static_cast<std::size_t>(l)];
+        for (auto const& b : present)
+            if (auto it = order->indices.find(b); it != order->indices.end())
+                indices.insert(it->second[static_cast<std::size_t>(l)].begin(), it->second[static_cast<std::size_t>(l)].end());
         for (int index : indices) {
             auto const& id = stepList[static_cast<std::size_t>(index)];
             random.setFeatureSeed(decorationSeed, index, l);

@@ -62,11 +62,29 @@ std::int64_t currentSeed() {
     return gSeed.load();
 }
 
+namespace {
+std::mutex& biomeCacheMutex() {
+    static std::mutex m;
+    return m;
+}
+std::map<std::pair<BiomeRegistry const*, std::string>, Biome const*>& biomeCache() {
+    static std::map<std::pair<BiomeRegistry const*, std::string>, Biome const*> c;
+    return c;
+}
+} // namespace
+
+void clearWorldCaches() {
+    {
+        std::lock_guard lock(biomeCacheMutex());
+        biomeCache().clear(); // a later world's registry may reuse the address
+    }
+    features::detail::clearBlockCache();
+}
+
 Biome const* engineBiome(BiomeRegistry const& registry, std::string const& id) {
-    static std::mutex                                                     m;
-    static std::map<std::pair<BiomeRegistry const*, std::string>, Biome const*> cache;
-    std::lock_guard                                                       lock(m);
-    auto key = std::make_pair(&registry, id);
+    std::lock_guard lock(biomeCacheMutex());
+    auto&           cache = biomeCache();
+    auto            key   = std::make_pair(&registry, id);
     if (auto it = cache.find(key); it != cache.end()) return it->second;
     std::string  name = id.starts_with("minecraft:") ? id.substr(10) : id;
     Biome const* b    = registry.lookupByName(name);
@@ -165,16 +183,9 @@ std::vector<std::string> possibleBiomes() {
 }
 
 std::vector<std::vector<std::string>> biomeFeatures(std::string const& biomeId) {
-    std::vector<std::vector<std::string>> out;
-    auto const& biomes = features::detail::data().biomes;
-    auto        it     = biomes.find(features::detail::normalizeId(biomeId));
-    if (it == biomes.end()) return out;
-    for (auto const& step : features::detail::fieldArr(it->second, "features")) {
-        auto& list = out.emplace_back();
-        for (auto const& f : step)
-            if (f.is_string()) list.push_back(features::detail::normalizeId(f.get<std::string>()));
-    }
-    return out;
+    auto const& steps = features::detail::data().biomeSteps;
+    auto        it    = steps.find(features::detail::normalizeId(biomeId));
+    return it == steps.end() ? std::vector<std::vector<std::string>>{} : it->second;
 }
 
 std::vector<std::string> biomeCarvers(std::string const& biomeId) {

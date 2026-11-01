@@ -4,6 +4,7 @@
 // add their types to, the imported data and LargeWriter.
 #include "feature/features/Features.h"
 
+#include <atomic>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -135,10 +136,16 @@ std::shared_ptr<Data const> loadData() {
         }
     }
     for (auto const& [id, biome] : d->biomes) {
-        auto& set = d->biomeFeatureSets[id];
-        for (auto const& step : fieldArr(biome, "features"))
-            for (auto const& f : step)
-                if (f.is_string()) set.insert(normalizeId(f.get<std::string>()));
+        auto& set   = d->biomeFeatureSets[id];
+        auto& steps = d->biomeSteps[id];
+        for (auto const& step : fieldArr(biome, "features")) {
+            auto& list = steps.emplace_back();
+            for (auto const& f : step) {
+                if (!f.is_string()) continue;
+                list.push_back(normalizeId(f.get<std::string>()));
+                set.insert(list.back());
+            }
+        }
     }
     gf::log().info(
         "worldgen data: {} configured features, {} placed features, {} biomes, {} carvers ({} files)",
@@ -153,16 +160,35 @@ std::shared_ptr<Data const> loadData() {
 
 } // namespace
 
+namespace {
+/// Lock-free read path once loaded (every placement asks); replaced data is kept alive so that
+/// references handed out earlier stay valid.
+std::atomic<Data const*>&                gData() {
+    static std::atomic<Data const*> d{nullptr};
+    return d;
+}
+std::vector<std::shared_ptr<Data const>>& retired() {
+    static std::vector<std::shared_ptr<Data const>> r;
+    return r;
+}
+} // namespace
+
 Data const& data() {
+    if (auto const* d = gData().load(std::memory_order_acquire)) return *d;
     std::lock_guard lock(dataMutex());
-    if (!dataPtr()) dataPtr() = loadData();
+    if (!dataPtr()) {
+        dataPtr() = loadData();
+        gData().store(dataPtr().get(), std::memory_order_release);
+    }
     return *dataPtr();
 }
 
 void reloadData() {
     auto            d = loadData();
     std::lock_guard lock(dataMutex());
+    if (dataPtr()) retired().push_back(dataPtr());
     dataPtr() = std::move(d);
+    gData().store(dataPtr().get(), std::memory_order_release);
 }
 
 bool biomeHasFeature(std::string const& biomeId, std::string const& placedId) {
