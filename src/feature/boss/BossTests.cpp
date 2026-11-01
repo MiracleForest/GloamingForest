@@ -437,15 +437,26 @@ GF_REGISTER_SELFTEST("entity.client_fixture", [](Context& ctx) -> ll::coro::Coro
             return real == nullptr;
         }));
     core::GlobalPos at;
+    core::GlobalPos partsAt;
     int             hold = 10;
     if (real) {
-        auto f = real->getFeetPos();
-        at     = core::GlobalPos{static_cast<int>(real->getDimensionId()), static_cast<int>(std::floor(f.x)) + 4, static_cast<int>(std::floor(f.y)), static_cast<int>(std::floor(f.z))};
-        hold   = 400;
+        // in front of the player (in the screenshots): the bar boss 6 ahead and 2 to one side, the
+        // parts boss 7 ahead and 3 to the other
+        auto   f   = real->getFeetPos();
+        auto   v   = real->getViewVector(1.0f);
+        double len = std::sqrt(double(v.x) * v.x + double(v.z) * v.z);
+        double fx = len > 1e-6 ? v.x / len : 0.0, fz = len > 1e-6 ? v.z / len : 1.0;
+        auto   spot = [&](double ahead, double side) {
+            return core::GlobalPos{static_cast<int>(real->getDimensionId()), static_cast<int>(std::floor(f.x + fx * ahead - fz * side)), static_cast<int>(std::floor(f.y)), static_cast<int>(std::floor(f.z + fz * ahead + fx * side))};
+        };
+        at      = spot(6.0, 2.0);
+        partsAt = spot(7.0, -3.0);
+        hold    = 400;
         ctx.info("showing the fixture bosses to " + real->getRealName());
     } else {
         auto box = co_await ctx.flatArea(5890, 4);
         at       = ctx.testPos(5891, 2);
+        partsAt  = at.offset(1, 0, 2);
         auto& sp = ctx.spawnPlayer();
         sp.teleport(Vec3{at.x - 2.5f, float(at.y), at.z + 0.5f}, DimensionType(at.dim));
         (void)box;
@@ -458,7 +469,7 @@ GF_REGISTER_SELFTEST("entity.client_fixture", [](Context& ctx) -> ll::coro::Coro
         co_await ctx.ticks(1);
         ctx.require(mobById(barId) != nullptr, "the bar boss stays");
     }
-    auto* parted = spawnMob(at.offset(1, 0, 3), "gf_test:boss");
+    auto* parted = spawnMob(partsAt, "gf_test:boss");
     ctx.require(parted != nullptr, "the parts boss spawns");
     parted->setNameTag("gf_parts");
     auto partsId = fe::uidOf(*parted);
