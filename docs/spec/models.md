@@ -283,4 +283,7 @@ of life necklace (`CuriosCompat`) is not ported (docs/spec/README.md).
 - e2e scenario `models` (`tools/e2e/{server,client}/scenarios/models*.ps1`): the server runs the selftests with
   BDS loading every converted file (any content-log error fails the run); the client's prelaunch step builds
   a test-only preview pack (`tools/models/e2e/preview.ps1`): one actor per geometry with its TF texture and base
-  animation, armor stands with every attachable on test items, 31 screenshots of four models each.
+  animation, armor stands with every attachable on test items, 31 screenshots of four models each. Commands
+  naming the preview items run after each shot's function (functions are parsed before data-driven items
+  exist). The server scenario `models.preview` loads the same preview packs on BDS, whose console carries the
+  content log, and runs every function and command.
