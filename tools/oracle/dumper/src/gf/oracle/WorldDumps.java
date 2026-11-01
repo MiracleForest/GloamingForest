@@ -5,6 +5,7 @@ package gf.oracle;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -217,63 +218,238 @@ final class WorldDumps {
 	// -----------------------------------------------------------------------------------------
 	// surface (generated chunks at minecraft:surface: noise + structure terraforming + surface rules)
 
+	/** One column of a chunk generated to minecraft:surface. */
+	private record Column(int worldSurface, int oceanFloor, String top, String[] profile, String biome) {
+	}
+
+	/**
+	 * Generated chunks at minecraft:surface, read without generating them further: every chunk must
+	 * still be before minecraft:carvers (nothing generated features into it before the dump).
+	 */
+	private static final class SurfaceChunks {
+		final ServerLevel level;
+		final Map<Long, ChunkAccess> chunks = new HashMap<>();
+		final int minY, maxY;
+		final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+
+		SurfaceChunks(ServerLevel level) {
+			this.level = level;
+			this.minY = level.getMinBuildHeight();
+			this.maxY = level.getMaxBuildHeight();
+		}
+
+		ChunkAccess chunk(int cx, int cz) {
+			return this.chunks.computeIfAbsent(ChunkPos.asLong(cx, cz), k -> {
+				ChunkAccess got = this.level.getChunkSource().getChunk(cx, cz, ChunkStatus.SURFACE, true);
+				if (got == null || got.getPersistedStatus().isOrAfter(ChunkStatus.CARVERS)) {
+					throw new IllegalStateException("chunk " + cx + ", " + cz + " is past minecraft:surface ("
+						+ (got == null ? "missing" : got.getPersistedStatus()) + "): something generated it further before the surface dump");
+				}
+				return got;
+			});
+		}
+
+		String block(ChunkAccess c, int x, int y, int z) {
+			if (y < this.minY || y >= this.maxY) return "minecraft:void_air";
+			return BuiltInRegistries.BLOCK.getKey(c.getBlockState(this.pos.set(x, y, z)).getBlock()).toString();
+		}
+
+		/** The column at (x, z): heights, top block, depth blocks from the floor down, the floor's quart biome. */
+		Column column(int x, int z, int depth) {
+			ChunkAccess c = this.chunk(x >> 4, z >> 4);
+			int ws = this.minY, of = this.minY;
+			String topId = "minecraft:air";
+			for (int y = this.maxY - 1; y >= this.minY; y--) {
+				BlockState st = c.getBlockState(this.pos.set(x, y, z));
+				if (ws == this.minY && Heightmap.Types.WORLD_SURFACE_WG.isOpaque().test(st)) {
+					ws = y + 1;
+					topId = BuiltInRegistries.BLOCK.getKey(st.getBlock()).toString();
+				}
+				if (Heightmap.Types.OCEAN_FLOOR_WG.isOpaque().test(st)) {
+					of = y + 1;
+					break;
+				}
+			}
+			String[] profile = new String[depth];
+			for (int d = 0; d < depth; d++) profile[d] = this.block(c, x, of - 1 - d, z);
+			int by = Math.max(this.minY, of - 1);
+			String biome = Ctx.id(c.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(by), QuartPos.fromBlock(z)));
+			return new Column(ws, of, topId, profile, biome);
+		}
+	}
+
 	static Object surface(Ctx ctx) {
 		ServerLevel level = ctx.twilight();
-		Grid g = Grid.of(ctx.section(), -128, -128, 128, 128, 2);
-		Map<Long, ChunkAccess> chunks = new HashMap<>();
-		int minY = level.getMinBuildHeight();
-		int maxY = level.getMaxBuildHeight();
-		String[][] top = new String[g.height][g.width];
+		JsonObject s = ctx.section();
+		Grid g = Grid.of(s, -128, -128, 128, 128, 2);
+		SurfaceChunks sc = new SurfaceChunks(level);
 		TreeSet<String> ids = new TreeSet<>();
+		String[][] top = new String[g.height][g.width];
 		List<Object> surface = Json.arr();
 		List<Object> floor = Json.arr();
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		for (int j = 0; j < g.height; j++) {
 			int[] a = new int[g.width];
 			int[] b = new int[g.width];
 			for (int i = 0; i < g.width; i++) {
-				int x = g.x(i), z = g.z(j);
-				ChunkAccess c = chunks.computeIfAbsent(ChunkPos.asLong(x >> 4, z >> 4), k -> {
-					ChunkAccess got = level.getChunkSource().getChunk(x >> 4, z >> 4, ChunkStatus.SURFACE, true);
-					if (got == null || got.getPersistedStatus().isOrAfter(ChunkStatus.CARVERS)) {
-						throw new IllegalStateException("chunk " + (x >> 4) + ", " + (z >> 4) + " is past minecraft:surface ("
-							+ (got == null ? "missing" : got.getPersistedStatus()) + "): something generated it further before the surface dump");
-					}
-					return got;
-				});
-				int ws = minY, of = minY;
-				String topId = "minecraft:air";
-				for (int y = maxY - 1; y >= minY; y--) {
-					BlockState st = c.getBlockState(pos.set(x, y, z));
-					if (ws == minY && Heightmap.Types.WORLD_SURFACE_WG.isOpaque().test(st)) {
-						ws = y + 1;
-						topId = BuiltInRegistries.BLOCK.getKey(st.getBlock()).toString();
-					}
-					if (Heightmap.Types.OCEAN_FLOOR_WG.isOpaque().test(st)) {
-						of = y + 1;
-						break;
-					}
-				}
-				a[i] = ws;
-				b[i] = of;
-				top[j][i] = topId;
-				ids.add(topId);
+				Column col = sc.column(g.x(i), g.z(j), 0);
+				a[i] = col.worldSurface();
+				b[i] = col.oceanFloor();
+				top[j][i] = col.top();
+				ids.add(col.top());
 			}
 			surface.add(a);
 			floor.add(b);
 		}
+
+		// sparse samples: whole chunks inside each main biome of the biome search grid
+		JsonObject ss = Ctx.getObj(s, "samples");
+		Grid search = Grid.of(Ctx.getObj(ss, "grid"), -1024, -1024, 256, 256, 8);
+		int perBiome = Ctx.getInt(ss, "perBiome", 2);
+		int minApart = Ctx.getInt(ss, "minApart", 512);
+		int depth = Ctx.getInt(ss, "depth", 8);
+		TFBiomeProvider src = biomeSource(level);
+		String[][] biomeGrid = mainBiomes(src, search, new TreeSet<>());
+		TreeMap<String, List<int[]>> candidates = new TreeMap<>(); // biome -> [i, j, score]
+		for (int j = 0; j < search.height; j++) {
+			for (int i = 0; i < search.width; i++) {
+				String b = biomeGrid[j][i];
+				int score = 0;
+				for (int dj = -1; dj <= 1; dj++) {
+					for (int di = -1; di <= 1; di++) {
+						if (di == 0 && dj == 0) continue;
+						int ni = i + di, nj = j + dj;
+						if (ni >= 0 && nj >= 0 && ni < search.width && nj < search.height && biomeGrid[nj][ni].equals(b)) score++;
+					}
+				}
+				candidates.computeIfAbsent(b, k -> new ArrayList<>()).add(new int[]{i, j, score});
+			}
+		}
+		TreeSet<String> biomeIds = new TreeSet<>();
+		List<Map<String, Object>> samples = new ArrayList<>();
+		List<Column[][]> sampleColumns = new ArrayList<>();
+		for (Map.Entry<String, List<int[]>> e : candidates.entrySet()) {
+			List<int[]> cells = e.getValue();
+			// the most interior cells first, then the nearest to the origin, then by z and x
+			cells.sort((p, q) -> {
+				if (p[2] != q[2]) return Integer.compare(q[2], p[2]);
+				long dp = dist2(search, p), dq = dist2(search, q);
+				if (dp != dq) return Long.compare(dp, dq);
+				if (p[1] != q[1]) return Integer.compare(p[1], q[1]);
+				return Integer.compare(p[0], q[0]);
+			});
+			List<int[]> picked = new ArrayList<>();
+			for (int[] cell : cells) {
+				if (picked.size() >= perBiome) break;
+				int bx = search.x(cell[0]) << 2, bz = search.z(cell[1]) << 2;
+				boolean apart = true;
+				for (int[] p : picked) {
+					long dx = bx - (search.x(p[0]) << 2), dz = bz - (search.z(p[1]) << 2);
+					if (dx * dx + dz * dz < (long) minApart * minApart) apart = false;
+				}
+				if (apart) picked.add(cell);
+			}
+			for (int[] cell : picked) {
+				int bx = search.x(cell[0]) << 2, bz = search.z(cell[1]) << 2;
+				int cx = bx >> 4, cz = bz >> 4;
+				Column[][] cols = new Column[16][16];
+				for (int dz = 0; dz < 16; dz++) {
+					for (int dx = 0; dx < 16; dx++) {
+						Column col = sc.column((cx << 4) + dx, (cz << 4) + dz, depth);
+						cols[dz][dx] = col;
+						ids.add(col.top());
+						for (String p : col.profile()) ids.add(p);
+						biomeIds.add(col.biome());
+					}
+				}
+				Map<String, Object> m = Json.obj();
+				m.put("biome", e.getKey());
+				m.put("score", cell[2]);
+				m.put("cellX", search.x(cell[0]));
+				m.put("cellZ", search.z(cell[1]));
+				m.put("chunkX", cx);
+				m.put("chunkZ", cz);
+				m.put("x0", cx << 4);
+				m.put("z0", cz << 4);
+				samples.add(m);
+				sampleColumns.add(cols);
+			}
+		}
+		// encode once every palette is known
+		List<String> palette = new ArrayList<>(ids);
+		List<String> biomePalette = new ArrayList<>(biomeIds);
+		if (palette.size() > PALETTE_CHARS.length() || biomePalette.size() > PALETTE_CHARS.length()) throw new IllegalStateException("palette too large");
+		List<Object> chunkList = Json.arr();
+		for (int n = 0; n < samples.size(); n++) {
+			Map<String, Object> m = samples.get(n);
+			Column[][] cols = sampleColumns.get(n);
+			List<Object> ws = Json.arr(), of = Json.arr(), topRows = Json.arr(), biomeRows = Json.arr(), profileRows = Json.arr();
+			for (Column[] row : cols) {
+				int[] a = new int[16], b = new int[16];
+				StringBuilder t = new StringBuilder(), bi = new StringBuilder(), pr = new StringBuilder();
+				for (int dx = 0; dx < 16; dx++) {
+					Column col = row[dx];
+					a[dx] = col.worldSurface();
+					b[dx] = col.oceanFloor();
+					t.append(PALETTE_CHARS.charAt(palette.indexOf(col.top())));
+					bi.append(PALETTE_CHARS.charAt(biomePalette.indexOf(col.biome())));
+					if (dx > 0) pr.append(' ');
+					for (String p : col.profile()) pr.append(PALETTE_CHARS.charAt(palette.indexOf(p)));
+				}
+				ws.add(a);
+				of.add(b);
+				topRows.add(t.toString());
+				biomeRows.add(bi.toString());
+				profileRows.add(pr.toString());
+			}
+			m.put("worldSurfaceWg", ws);
+			m.put("oceanFloorWg", of);
+			m.put("top", topRows);
+			m.put("biomes", biomeRows);
+			m.put("profile", profileRows);
+			chunkList.add(m);
+		}
+		// key biomes (with a terrain column) that the search grid never reaches
+		List<Object> unsampled = Json.arr();
+		Registry<Biome> biomes = level.registryAccess().registryOrThrow(Registries.BIOME);
+		TreeSet<String> keyBiomes = new TreeSet<>();
+		for (ResourceKey<Biome> k : biomes.registryKeySet()) {
+			if (src.getBiomeTerrain().getTerrainColumn(k).isPresent()) keyBiomes.add(Ctx.id(k));
+		}
+		for (String b : keyBiomes) if (!candidates.containsKey(b)) unsampled.add(b);
+
 		Map<String, Object> out = Json.obj();
 		out.put("note", "Block coordinates of chunks generated to minecraft:surface (noise terrain with landmark terraforming and surface rules; no carvers or features). "
-			+ "worldSurfaceWg / oceanFloorWg are the y above the highest block matching the heightmap predicate; top is the block below worldSurfaceWg (palette characters).");
+			+ "worldSurfaceWg / oceanFloorWg are the y above the highest block matching the heightmap predicate; top is the block below worldSurfaceWg (palette characters). "
+			+ "Grid: x0/z0/width/height/step around the origin. samples.chunks: whole 16x16 chunks (rows = z, columns = x from x0/z0) picked per main biome of the search grid "
+			+ "(quart units, TFBiomeProvider#getMainBiome): the cells with the most same-biome neighbours (score, of 8) first, then the nearest to the origin; at most perBiome per biome, "
+			+ "minApart blocks apart. profile: per column the depth blocks from the block below oceanFloorWg downwards (one palette character each, columns separated by spaces); "
+			+ "biomes: the column's quart biome (ChunkAccess#getNoiseBiome) at that block (biomePalette characters). unsampled: key biomes the search grid never reaches.");
 		out.put("status", "minecraft:surface");
-		out.put("minY", minY);
-		out.put("maxY", maxY);
+		out.put("minY", sc.minY);
+		out.put("maxY", sc.maxY);
 		out.putAll(g.head());
-		out.put("palette", new ArrayList<>(ids));
+		out.put("palette", palette);
+		out.put("paletteChars", PALETTE_CHARS.substring(0, palette.size()));
 		out.put("worldSurfaceWg", surface);
 		out.put("oceanFloorWg", floor);
 		out.put("top", encodeRows(top, ids));
+		Map<String, Object> sm = Json.obj();
+		sm.put("grid", search.head());
+		sm.put("perBiome", perBiome);
+		sm.put("minApart", minApart);
+		sm.put("depth", depth);
+		sm.put("biomePalette", biomePalette);
+		sm.put("biomePaletteChars", PALETTE_CHARS.substring(0, biomePalette.size()));
+		sm.put("unsampled", unsampled);
+		sm.put("chunks", chunkList);
+		out.put("samples", sm);
 		return out;
+	}
+
+	/** Squared block distance of a search grid cell from the origin. */
+	private static long dist2(Grid g, int[] cell) {
+		long x = (long) g.x(cell[0]) << 2, z = (long) g.z(cell[1]) << 2;
+		return x * x + z * z;
 	}
 
 	// -----------------------------------------------------------------------------------------

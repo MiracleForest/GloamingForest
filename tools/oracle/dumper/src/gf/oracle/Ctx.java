@@ -2,6 +2,7 @@
 // Java oracle dumper (unit F13): original code, LGPL-3.0-or-later (see COPYING.LESSER).
 package gf.oracle;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -68,6 +69,16 @@ public final class Ctx {
 	public static JsonObject getObj(JsonObject o, String key) {
 		JsonElement e = o.get(key);
 		return e != null && e.isJsonObject() ? e.getAsJsonObject() : new JsonObject();
+	}
+
+	public static JsonArray getArr(JsonObject o, String key) {
+		JsonElement e = o.get(key);
+		return e != null && e.isJsonArray() ? e.getAsJsonArray() : new JsonArray();
+	}
+
+	public static String getString(JsonObject o, String key, String def) {
+		JsonElement e = o.get(key);
+		return e != null && e.isJsonPrimitive() ? e.getAsString() : def;
 	}
 
 	/** Whether the dump depends on the world seed (spec.json "seedKinds"; the seed is then recorded in the header). */

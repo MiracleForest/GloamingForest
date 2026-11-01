@@ -100,9 +100,9 @@
     },
     "loot.json": {
       "kind": "loot",
-      "bytes": 291743,
-      "fnv1a64": "4951f48549f6e0ba",
-      "sha256": "181070f7c4e010e164336daab7bfd7550c173695f8eeca8abbcec2460ecc82ca"
+      "bytes": 399811,
+      "fnv1a64": "fe5107f28f594aa4",
+      "sha256": "b9097d47d1a0e566a21f2c06d8761748909bf6e4bdf9464d74257a69dc7c72ca"
     },
     "mobs.json": {
       "kind": "mobs",
@@ -118,9 +118,9 @@
     },
     "recipes.json": {
       "kind": "recipes",
-      "bytes": 242215,
-      "fnv1a64": "01894a0e9881ccf9",
-      "sha256": "6a2789ec42c23f11d17f74b33c523cd6a9eb15e5610d7b523229754904bf34e2"
+      "bytes": 388467,
+      "fnv1a64": "38ae101dc98caaff",
+      "sha256": "8c4a25ef86c467b0703d095a0c3c43d1f89b2177d3654f9d1ce20ca3e975c1d4"
     },
     "rng.json": {
       "kind": "rng",
@@ -131,29 +131,29 @@
     "surface/seed-0.json": {
       "kind": "surface",
       "seed": 0,
-      "bytes": 121611,
-      "fnv1a64": "311dcc91a6d37d43",
-      "sha256": "bf0d0b91bc478973beaa54cf6c236ff78b6a6344f65914d5b2b79c0fa405bde9"
+      "bytes": 363314,
+      "fnv1a64": "0faeb59a0e7056f1",
+      "sha256": "8e77a34caf8989346fb57e8e05f63a10c999ac1481c8c0844785ff581de2dc4e"
     },
     "surface/seed-123456789.json": {
       "kind": "surface",
       "seed": 123456789,
-      "bytes": 119165,
-      "fnv1a64": "4d58aabbb3f547cb",
-      "sha256": "bed4a22ec76780ca2412dd675c52a2341b7b6463c2cc65c71ef398b74d5fa458"
+      "bytes": 360953,
+      "fnv1a64": "1431cb239367f8a2",
+      "sha256": "28615ec07daaaf9aa481ec5dfdd967f44c37dda136f1b51c54750441c2085243"
     },
     "surface/seed-m8346138912345678901.json": {
       "kind": "surface",
       "seed": -8346138912345678901,
-      "bytes": 123636,
-      "fnv1a64": "91bf1c02d4fb7bb3",
-      "sha256": "9f149f92bcd1c46aef8af1779212ec0308cf49d07243e76a6349d96ea1ff29e5"
+      "bytes": 365915,
+      "fnv1a64": "af98e8f61e0a5a8a",
+      "sha256": "c4b81e126b4a555cf7a77909ecab2e5d86607a3545fa349b2c0e8ccdc106a219"
     },
     "uncrafting.json": {
       "kind": "uncrafting",
-      "bytes": 263360,
-      "fnv1a64": "ffae8973692ac3c6",
-      "sha256": "cd76fd9d7fadea843c856b8d20bbb3d3d8e10ac978ac4ae81d39023c9f732ced"
+      "bytes": 402038,
+      "fnv1a64": "f3924816c6e2ff86",
+      "sha256": "1769121dee0307cdb27f4125d1822dcfd61bab63ffaa6e84beede6bf0c7deee6"
     }
   }
 }

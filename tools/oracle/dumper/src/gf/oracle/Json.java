@@ -2,6 +2,9 @@
 // Java oracle dumper (unit F13): original code, LGPL-3.0-or-later (see COPYING.LESSER).
 package gf.oracle;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -11,6 +14,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * A tiny deterministic JSON writer for the golden files: objects keep insertion order, LF line
@@ -38,6 +42,38 @@ public final class Json {
 	public static <T> List<Object> arr(T... values) {
 		List<Object> out = new ArrayList<>(values.length);
 		for (T v : values) out.add(v);
+		return out;
+	}
+
+	/** A value written on one line wherever it appears (a record of a list, codec output). */
+	public record Inline(Object value) {
+	}
+
+	/**
+	 * A Gson tree (codec output) as plain maps and lists. Object keys are sorted, so the result does
+	 * not depend on the iteration order of the map an encoder read; numbers keep their Java type.
+	 */
+	public static Object fromGson(JsonElement e) {
+		if (e == null || e.isJsonNull()) return null;
+		if (e.isJsonPrimitive()) {
+			JsonPrimitive p = e.getAsJsonPrimitive();
+			if (p.isBoolean()) return p.getAsBoolean();
+			if (p.isString()) return p.getAsString();
+			Number n = p.getAsNumber();
+			if (n instanceof Integer || n instanceof Long || n instanceof Short || n instanceof Byte || n instanceof Double || n instanceof Float) return n;
+			// a number Gson parsed from text (LazilyParsedNumber)
+			String s = n.toString();
+			return s.contains(".") || s.contains("e") || s.contains("E") ? (Object) Double.parseDouble(s) : (Object) Long.parseLong(s);
+		}
+		if (e.isJsonArray()) {
+			List<Object> out = arr();
+			for (JsonElement x : e.getAsJsonArray()) out.add(fromGson(x));
+			return out;
+		}
+		TreeMap<String, Object> sorted = new TreeMap<>();
+		for (Map.Entry<String, JsonElement> x : e.getAsJsonObject().entrySet()) sorted.put(x.getKey(), fromGson(x.getValue()));
+		Map<String, Object> out = obj();
+		out.putAll(sorted);
 		return out;
 	}
 
@@ -80,7 +116,9 @@ public final class Json {
 	}
 
 	private static void write(StringBuilder sb, Object v, int level, boolean inline) {
-		if (isScalar(v)) {
+		if (v instanceof Inline in) {
+			write(sb, in.value(), level, true);
+		} else if (isScalar(v)) {
 			scalar(sb, v);
 		} else if (v instanceof Map<?, ?> m) {
 			if (m.isEmpty()) {

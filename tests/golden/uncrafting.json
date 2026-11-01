@@ -2,8 +2,9 @@
   "format": 1,
   "kind": "uncrafting",
   "source": {"twilightforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
-  "note": "For every item, a stack of 64 put into TF's UncraftingMenu (default config), cycling unrecipeInCycle through every recipe it offers (ingredientsInCycle 0): the recipe, inputCount (items consumed), cost (XP levels, getUncraftingCost) and the 3x3 grid row by row (\"\" empty, \"!\" prefix = marked: damaged or problematic, cannot be taken). Items without options are omitted.",
-  "config": {"uncraftingXpCostMultiplier": 1.0, "allowShapelessUncrafting": false, "disableUncraftingOnly": false, "flipUncraftingModIdList": false, "disableUncraftingRecipes": ["twilightforest:giant_log_to_oak_planks"], "blacklistedUncraftingModIds": []},
+  "note": "TF's UncraftingMenu itself (default config, every UNCRAFTING_STUFFS value in config). items: for every item, a stack of 64 in the input slot, unrecipeInCycle cycled through every recipe it offers (ingredientsInCycle 0): the recipe, inputCount (items consumed), cost (XP levels, getUncraftingCost) and the 3x3 uncrafting grid row by row (\"\" empty, \"!\" prefix = marked: damaged or problematic, cannot be taken); items without options are omitted; truncated lists the items whose options did not wrap around within maxCycles. ingredientCycles: for TF's items and ingredientCycleItems, every option whose ingredients have more than one alternative (after twilightforest:banned_uncrafting_ingredients), ingredientsInCycle 0 .. alternatives-1 (at most maxCycles; truncated otherwise). damaged: every damageable item with options, one item damaged by maxDamage/4, /2 and maxDamage-1, every option. recraft: the cases of tools/oracle/spec.json: the input, its uncrafting grid and cost, the items put into the assembly matrix, the result slot (tinkerResult), getRecraftingCost and getUncraftingCost after. Stacks: \"\" = empty, an item id = one item without components, else ItemStack's codec {count, components, id}.",
+  "config": {"uncraftingXpCostMultiplier": 1.0, "repairingXpCostMultiplier": 1.0, "allowShapelessUncrafting": false, "disableIngredientSwitching": false, "disableUncraftingRecipes": ["twilightforest:giant_log_to_oak_planks"], "reverseRecipeBlacklist": false, "blacklistedUncraftingModIds": [], "flipUncraftingModIdList": false, "disableUncraftingOnly": false, "disableEntireTable": false},
+  "maxCycles": 64,
   "items": {
     "minecraft:acacia_boat": [
       {"recipe": "minecraft:acacia_boat", "inputCount": 1, "cost": 5, "grid": ["minecraft:acacia_planks", "", "minecraft:acacia_planks", "minecraft:acacia_planks", "minecraft:acacia_planks", "minecraft:acacia_planks", "", "", ""]}
@@ -2628,5 +2629,949 @@
     "twilightforest:yeti_leggings": [
       {"recipe": "twilightforest:equipment/yeti_leggings", "inputCount": 1, "cost": 7, "grid": ["twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur"]}
     ]
-  }
+  },
+  "truncated": [],
+  "ingredientCycles": {
+    "minecraft:chest": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "minecraft:chest",
+        "alternatives": 22,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 8, "grid": ["minecraft:oak_planks", "minecraft:oak_planks", "minecraft:oak_planks", "minecraft:oak_planks", "", "minecraft:oak_planks", "minecraft:oak_planks", "minecraft:oak_planks", "minecraft:oak_planks"]},
+          {"ingredientsInCycle": 1, "cost": 8, "grid": ["minecraft:spruce_planks", "minecraft:spruce_planks", "minecraft:spruce_planks", "minecraft:spruce_planks", "", "minecraft:spruce_planks", "minecraft:spruce_planks", "minecraft:spruce_planks", "minecraft:spruce_planks"]},
+          {"ingredientsInCycle": 2, "cost": 8, "grid": ["minecraft:birch_planks", "minecraft:birch_planks", "minecraft:birch_planks", "minecraft:birch_planks", "", "minecraft:birch_planks", "minecraft:birch_planks", "minecraft:birch_planks", "minecraft:birch_planks"]},
+          {"ingredientsInCycle": 3, "cost": 8, "grid": ["minecraft:jungle_planks", "minecraft:jungle_planks", "minecraft:jungle_planks", "minecraft:jungle_planks", "", "minecraft:jungle_planks", "minecraft:jungle_planks", "minecraft:jungle_planks", "minecraft:jungle_planks"]},
+          {"ingredientsInCycle": 4, "cost": 8, "grid": ["minecraft:acacia_planks", "minecraft:acacia_planks", "minecraft:acacia_planks", "minecraft:acacia_planks", "", "minecraft:acacia_planks", "minecraft:acacia_planks", "minecraft:acacia_planks", "minecraft:acacia_planks"]},
+          {"ingredientsInCycle": 5, "cost": 8, "grid": ["minecraft:dark_oak_planks", "minecraft:dark_oak_planks", "minecraft:dark_oak_planks", "minecraft:dark_oak_planks", "", "minecraft:dark_oak_planks", "minecraft:dark_oak_planks", "minecraft:dark_oak_planks", "minecraft:dark_oak_planks"]},
+          {"ingredientsInCycle": 6, "cost": 8, "grid": ["minecraft:crimson_planks", "minecraft:crimson_planks", "minecraft:crimson_planks", "minecraft:crimson_planks", "", "minecraft:crimson_planks", "minecraft:crimson_planks", "minecraft:crimson_planks", "minecraft:crimson_planks"]},
+          {"ingredientsInCycle": 7, "cost": 8, "grid": ["minecraft:warped_planks", "minecraft:warped_planks", "minecraft:warped_planks", "minecraft:warped_planks", "", "minecraft:warped_planks", "minecraft:warped_planks", "minecraft:warped_planks", "minecraft:warped_planks"]},
+          {"ingredientsInCycle": 8, "cost": 8, "grid": ["minecraft:mangrove_planks", "minecraft:mangrove_planks", "minecraft:mangrove_planks", "minecraft:mangrove_planks", "", "minecraft:mangrove_planks", "minecraft:mangrove_planks", "minecraft:mangrove_planks", "minecraft:mangrove_planks"]},
+          {"ingredientsInCycle": 9, "cost": 8, "grid": ["minecraft:bamboo_planks", "minecraft:bamboo_planks", "minecraft:bamboo_planks", "minecraft:bamboo_planks", "", "minecraft:bamboo_planks", "minecraft:bamboo_planks", "minecraft:bamboo_planks", "minecraft:bamboo_planks"]},
+          {"ingredientsInCycle": 10, "cost": 8, "grid": ["minecraft:cherry_planks", "minecraft:cherry_planks", "minecraft:cherry_planks", "minecraft:cherry_planks", "", "minecraft:cherry_planks", "minecraft:cherry_planks", "minecraft:cherry_planks", "minecraft:cherry_planks"]},
+          {"ingredientsInCycle": 11, "cost": 8, "grid": ["twilightforest:twilight_oak_planks", "twilightforest:twilight_oak_planks", "twilightforest:twilight_oak_planks", "twilightforest:twilight_oak_planks", "", "twilightforest:twilight_oak_planks", "twilightforest:twilight_oak_planks", "twilightforest:twilight_oak_planks", "twilightforest:twilight_oak_planks"]},
+          {"ingredientsInCycle": 12, "cost": 8, "grid": ["twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks"]},
+          {"ingredientsInCycle": 13, "cost": 8, "grid": ["twilightforest:mangrove_planks", "twilightforest:mangrove_planks", "twilightforest:mangrove_planks", "twilightforest:mangrove_planks", "", "twilightforest:mangrove_planks", "twilightforest:mangrove_planks", "twilightforest:mangrove_planks", "twilightforest:mangrove_planks"]},
+          {"ingredientsInCycle": 14, "cost": 8, "grid": ["twilightforest:dark_planks", "twilightforest:dark_planks", "twilightforest:dark_planks", "twilightforest:dark_planks", "", "twilightforest:dark_planks", "twilightforest:dark_planks", "twilightforest:dark_planks", "twilightforest:dark_planks"]},
+          {"ingredientsInCycle": 15, "cost": 8, "grid": ["twilightforest:time_planks", "twilightforest:time_planks", "twilightforest:time_planks", "twilightforest:time_planks", "", "twilightforest:time_planks", "twilightforest:time_planks", "twilightforest:time_planks", "twilightforest:time_planks"]},
+          {"ingredientsInCycle": 16, "cost": 8, "grid": ["twilightforest:transformation_planks", "twilightforest:transformation_planks", "twilightforest:transformation_planks", "twilightforest:transformation_planks", "", "twilightforest:transformation_planks", "twilightforest:transformation_planks", "twilightforest:transformation_planks", "twilightforest:transformation_planks"]},
+          {"ingredientsInCycle": 17, "cost": 8, "grid": ["twilightforest:mining_planks", "twilightforest:mining_planks", "twilightforest:mining_planks", "twilightforest:mining_planks", "", "twilightforest:mining_planks", "twilightforest:mining_planks", "twilightforest:mining_planks", "twilightforest:mining_planks"]},
+          {"ingredientsInCycle": 18, "cost": 8, "grid": ["twilightforest:sorting_planks", "twilightforest:sorting_planks", "twilightforest:sorting_planks", "twilightforest:sorting_planks", "", "twilightforest:sorting_planks", "twilightforest:sorting_planks", "twilightforest:sorting_planks", "twilightforest:sorting_planks"]},
+          {"ingredientsInCycle": 19, "cost": 8, "grid": ["twilightforest:towerwood", "twilightforest:towerwood", "twilightforest:towerwood", "twilightforest:towerwood", "", "twilightforest:towerwood", "twilightforest:towerwood", "twilightforest:towerwood", "twilightforest:towerwood"]},
+          {"ingredientsInCycle": 20, "cost": 8, "grid": ["twilightforest:mossy_towerwood", "twilightforest:mossy_towerwood", "twilightforest:mossy_towerwood", "twilightforest:mossy_towerwood", "", "twilightforest:mossy_towerwood", "twilightforest:mossy_towerwood", "twilightforest:mossy_towerwood", "twilightforest:mossy_towerwood"]},
+          {"ingredientsInCycle": 21, "cost": 8, "grid": ["twilightforest:cracked_towerwood", "twilightforest:cracked_towerwood", "twilightforest:cracked_towerwood", "twilightforest:cracked_towerwood", "", "twilightforest:cracked_towerwood", "twilightforest:cracked_towerwood", "twilightforest:cracked_towerwood", "twilightforest:cracked_towerwood"]}
+        ]
+      }
+    ],
+    "minecraft:crafting_table": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "minecraft:crafting_table",
+        "alternatives": 22,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 4, "grid": ["minecraft:oak_planks", "minecraft:oak_planks", "", "minecraft:oak_planks", "minecraft:oak_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 1, "cost": 4, "grid": ["minecraft:spruce_planks", "minecraft:spruce_planks", "", "minecraft:spruce_planks", "minecraft:spruce_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 2, "cost": 4, "grid": ["minecraft:birch_planks", "minecraft:birch_planks", "", "minecraft:birch_planks", "minecraft:birch_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 3, "cost": 4, "grid": ["minecraft:jungle_planks", "minecraft:jungle_planks", "", "minecraft:jungle_planks", "minecraft:jungle_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 4, "cost": 4, "grid": ["minecraft:acacia_planks", "minecraft:acacia_planks", "", "minecraft:acacia_planks", "minecraft:acacia_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 5, "cost": 4, "grid": ["minecraft:dark_oak_planks", "minecraft:dark_oak_planks", "", "minecraft:dark_oak_planks", "minecraft:dark_oak_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 6, "cost": 4, "grid": ["minecraft:crimson_planks", "minecraft:crimson_planks", "", "minecraft:crimson_planks", "minecraft:crimson_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 7, "cost": 4, "grid": ["minecraft:warped_planks", "minecraft:warped_planks", "", "minecraft:warped_planks", "minecraft:warped_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 8, "cost": 4, "grid": ["minecraft:mangrove_planks", "minecraft:mangrove_planks", "", "minecraft:mangrove_planks", "minecraft:mangrove_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 9, "cost": 4, "grid": ["minecraft:bamboo_planks", "minecraft:bamboo_planks", "", "minecraft:bamboo_planks", "minecraft:bamboo_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 10, "cost": 4, "grid": ["minecraft:cherry_planks", "minecraft:cherry_planks", "", "minecraft:cherry_planks", "minecraft:cherry_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 11, "cost": 4, "grid": ["twilightforest:twilight_oak_planks", "twilightforest:twilight_oak_planks", "", "twilightforest:twilight_oak_planks", "twilightforest:twilight_oak_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 12, "cost": 4, "grid": ["twilightforest:canopy_planks", "twilightforest:canopy_planks", "", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 13, "cost": 4, "grid": ["twilightforest:mangrove_planks", "twilightforest:mangrove_planks", "", "twilightforest:mangrove_planks", "twilightforest:mangrove_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 14, "cost": 4, "grid": ["twilightforest:dark_planks", "twilightforest:dark_planks", "", "twilightforest:dark_planks", "twilightforest:dark_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 15, "cost": 4, "grid": ["twilightforest:time_planks", "twilightforest:time_planks", "", "twilightforest:time_planks", "twilightforest:time_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 16, "cost": 4, "grid": ["twilightforest:transformation_planks", "twilightforest:transformation_planks", "", "twilightforest:transformation_planks", "twilightforest:transformation_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 17, "cost": 4, "grid": ["twilightforest:mining_planks", "twilightforest:mining_planks", "", "twilightforest:mining_planks", "twilightforest:mining_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 18, "cost": 4, "grid": ["twilightforest:sorting_planks", "twilightforest:sorting_planks", "", "twilightforest:sorting_planks", "twilightforest:sorting_planks", "", "", "", ""]},
+          {"ingredientsInCycle": 19, "cost": 4, "grid": ["twilightforest:towerwood", "twilightforest:towerwood", "", "twilightforest:towerwood", "twilightforest:towerwood", "", "", "", ""]},
+          {"ingredientsInCycle": 20, "cost": 4, "grid": ["twilightforest:mossy_towerwood", "twilightforest:mossy_towerwood", "", "twilightforest:mossy_towerwood", "twilightforest:mossy_towerwood", "", "", "", ""]},
+          {"ingredientsInCycle": 21, "cost": 4, "grid": ["twilightforest:cracked_towerwood", "twilightforest:cracked_towerwood", "", "twilightforest:cracked_towerwood", "twilightforest:cracked_towerwood", "", "", "", ""]}
+        ]
+      }
+    ],
+    "minecraft:stick": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "minecraft:stick",
+        "alternatives": 22,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 2, "grid": ["minecraft:oak_planks", "", "", "minecraft:oak_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 1, "cost": 2, "grid": ["minecraft:spruce_planks", "", "", "minecraft:spruce_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 2, "cost": 2, "grid": ["minecraft:birch_planks", "", "", "minecraft:birch_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 3, "cost": 2, "grid": ["minecraft:jungle_planks", "", "", "minecraft:jungle_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 4, "cost": 2, "grid": ["minecraft:acacia_planks", "", "", "minecraft:acacia_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 5, "cost": 2, "grid": ["minecraft:dark_oak_planks", "", "", "minecraft:dark_oak_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 6, "cost": 2, "grid": ["minecraft:crimson_planks", "", "", "minecraft:crimson_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 7, "cost": 2, "grid": ["minecraft:warped_planks", "", "", "minecraft:warped_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 8, "cost": 2, "grid": ["minecraft:mangrove_planks", "", "", "minecraft:mangrove_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 9, "cost": 2, "grid": ["minecraft:bamboo_planks", "", "", "minecraft:bamboo_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 10, "cost": 2, "grid": ["minecraft:cherry_planks", "", "", "minecraft:cherry_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 11, "cost": 2, "grid": ["twilightforest:twilight_oak_planks", "", "", "twilightforest:twilight_oak_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 12, "cost": 2, "grid": ["twilightforest:canopy_planks", "", "", "twilightforest:canopy_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 13, "cost": 2, "grid": ["twilightforest:mangrove_planks", "", "", "twilightforest:mangrove_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 14, "cost": 2, "grid": ["twilightforest:dark_planks", "", "", "twilightforest:dark_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 15, "cost": 2, "grid": ["twilightforest:time_planks", "", "", "twilightforest:time_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 16, "cost": 2, "grid": ["twilightforest:transformation_planks", "", "", "twilightforest:transformation_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 17, "cost": 2, "grid": ["twilightforest:mining_planks", "", "", "twilightforest:mining_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 18, "cost": 2, "grid": ["twilightforest:sorting_planks", "", "", "twilightforest:sorting_planks", "", "", "", "", ""]},
+          {"ingredientsInCycle": 19, "cost": 2, "grid": ["twilightforest:towerwood", "", "", "twilightforest:towerwood", "", "", "", "", ""]},
+          {"ingredientsInCycle": 20, "cost": 2, "grid": ["twilightforest:mossy_towerwood", "", "", "twilightforest:mossy_towerwood", "", "", "", "", ""]},
+          {"ingredientsInCycle": 21, "cost": 2, "grid": ["twilightforest:cracked_towerwood", "", "", "twilightforest:cracked_towerwood", "", "", "", "", ""]}
+        ]
+      }
+    ],
+    "minecraft:stone_pickaxe": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "minecraft:stone_pickaxe",
+        "alternatives": 3,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 3, "grid": ["minecraft:cobblestone", "minecraft:cobblestone", "minecraft:cobblestone", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+          {"ingredientsInCycle": 1, "cost": 3, "grid": ["minecraft:blackstone", "minecraft:blackstone", "minecraft:blackstone", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+          {"ingredientsInCycle": 2, "cost": 3, "grid": ["minecraft:cobbled_deepslate", "minecraft:cobbled_deepslate", "minecraft:cobbled_deepslate", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+        ]
+      }
+    ],
+    "minecraft:torch": [
+      {
+        "unrecipeInCycle": 1,
+        "recipe": "minecraft:torch",
+        "alternatives": 2,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 1, "grid": ["minecraft:coal", "", "", "minecraft:stick", "", "", "", "", ""]},
+          {"ingredientsInCycle": 1, "cost": 1, "grid": ["minecraft:charcoal", "", "", "minecraft:stick", "", "", "", "", ""]}
+        ]
+      }
+    ],
+    "minecraft:wooden_sword": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "minecraft:wooden_sword",
+        "alternatives": 22,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 2, "grid": ["minecraft:oak_planks", "", "", "minecraft:oak_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 1, "cost": 2, "grid": ["minecraft:spruce_planks", "", "", "minecraft:spruce_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 2, "cost": 2, "grid": ["minecraft:birch_planks", "", "", "minecraft:birch_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 3, "cost": 2, "grid": ["minecraft:jungle_planks", "", "", "minecraft:jungle_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 4, "cost": 2, "grid": ["minecraft:acacia_planks", "", "", "minecraft:acacia_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 5, "cost": 2, "grid": ["minecraft:dark_oak_planks", "", "", "minecraft:dark_oak_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 6, "cost": 2, "grid": ["minecraft:crimson_planks", "", "", "minecraft:crimson_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 7, "cost": 2, "grid": ["minecraft:warped_planks", "", "", "minecraft:warped_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 8, "cost": 2, "grid": ["minecraft:mangrove_planks", "", "", "minecraft:mangrove_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 9, "cost": 2, "grid": ["minecraft:bamboo_planks", "", "", "minecraft:bamboo_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 10, "cost": 2, "grid": ["minecraft:cherry_planks", "", "", "minecraft:cherry_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 11, "cost": 2, "grid": ["twilightforest:twilight_oak_planks", "", "", "twilightforest:twilight_oak_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 12, "cost": 2, "grid": ["twilightforest:canopy_planks", "", "", "twilightforest:canopy_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 13, "cost": 2, "grid": ["twilightforest:mangrove_planks", "", "", "twilightforest:mangrove_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 14, "cost": 2, "grid": ["twilightforest:dark_planks", "", "", "twilightforest:dark_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 15, "cost": 2, "grid": ["twilightforest:time_planks", "", "", "twilightforest:time_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 16, "cost": 2, "grid": ["twilightforest:transformation_planks", "", "", "twilightforest:transformation_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 17, "cost": 2, "grid": ["twilightforest:mining_planks", "", "", "twilightforest:mining_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 18, "cost": 2, "grid": ["twilightforest:sorting_planks", "", "", "twilightforest:sorting_planks", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 19, "cost": 2, "grid": ["twilightforest:towerwood", "", "", "twilightforest:towerwood", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 20, "cost": 2, "grid": ["twilightforest:mossy_towerwood", "", "", "twilightforest:mossy_towerwood", "", "", "minecraft:stick", "", ""]},
+          {"ingredientsInCycle": 21, "cost": 2, "grid": ["twilightforest:cracked_towerwood", "", "", "twilightforest:cracked_towerwood", "", "", "minecraft:stick", "", ""]}
+        ]
+      }
+    ],
+    "twilightforest:bold_castle_brick_stairs": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:castleblock/bold_castle_brick_stairs",
+        "alternatives": 2,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 6, "grid": ["twilightforest:bold_castle_brick_pillar", "", "", "twilightforest:bold_castle_brick_pillar", "twilightforest:bold_castle_brick_pillar", "", "twilightforest:bold_castle_brick_pillar", "twilightforest:bold_castle_brick_pillar", "twilightforest:bold_castle_brick_pillar"]},
+          {"ingredientsInCycle": 1, "cost": 6, "grid": ["twilightforest:bold_castle_brick_tile", "", "", "twilightforest:bold_castle_brick_tile", "twilightforest:bold_castle_brick_tile", "", "twilightforest:bold_castle_brick_tile", "twilightforest:bold_castle_brick_tile", "twilightforest:bold_castle_brick_tile"]}
+        ]
+      }
+    ],
+    "twilightforest:canopy_window": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:canopy_window",
+        "alternatives": 18,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 9, "grid": ["minecraft:glass", "twilightforest:canopy_planks", "minecraft:glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:glass", "twilightforest:canopy_planks", "minecraft:glass"]},
+          {"ingredientsInCycle": 1, "cost": 9, "grid": ["minecraft:white_stained_glass", "twilightforest:canopy_planks", "minecraft:white_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:white_stained_glass", "twilightforest:canopy_planks", "minecraft:white_stained_glass"]},
+          {"ingredientsInCycle": 2, "cost": 9, "grid": ["minecraft:orange_stained_glass", "twilightforest:canopy_planks", "minecraft:orange_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:orange_stained_glass", "twilightforest:canopy_planks", "minecraft:orange_stained_glass"]},
+          {"ingredientsInCycle": 3, "cost": 9, "grid": ["minecraft:magenta_stained_glass", "twilightforest:canopy_planks", "minecraft:magenta_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:magenta_stained_glass", "twilightforest:canopy_planks", "minecraft:magenta_stained_glass"]},
+          {"ingredientsInCycle": 4, "cost": 9, "grid": ["minecraft:light_blue_stained_glass", "twilightforest:canopy_planks", "minecraft:light_blue_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:light_blue_stained_glass", "twilightforest:canopy_planks", "minecraft:light_blue_stained_glass"]},
+          {"ingredientsInCycle": 5, "cost": 9, "grid": ["minecraft:yellow_stained_glass", "twilightforest:canopy_planks", "minecraft:yellow_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:yellow_stained_glass", "twilightforest:canopy_planks", "minecraft:yellow_stained_glass"]},
+          {"ingredientsInCycle": 6, "cost": 9, "grid": ["minecraft:lime_stained_glass", "twilightforest:canopy_planks", "minecraft:lime_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:lime_stained_glass", "twilightforest:canopy_planks", "minecraft:lime_stained_glass"]},
+          {"ingredientsInCycle": 7, "cost": 9, "grid": ["minecraft:pink_stained_glass", "twilightforest:canopy_planks", "minecraft:pink_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:pink_stained_glass", "twilightforest:canopy_planks", "minecraft:pink_stained_glass"]},
+          {"ingredientsInCycle": 8, "cost": 9, "grid": ["minecraft:gray_stained_glass", "twilightforest:canopy_planks", "minecraft:gray_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:gray_stained_glass", "twilightforest:canopy_planks", "minecraft:gray_stained_glass"]},
+          {"ingredientsInCycle": 9, "cost": 9, "grid": ["minecraft:light_gray_stained_glass", "twilightforest:canopy_planks", "minecraft:light_gray_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:light_gray_stained_glass", "twilightforest:canopy_planks", "minecraft:light_gray_stained_glass"]},
+          {"ingredientsInCycle": 10, "cost": 9, "grid": ["minecraft:cyan_stained_glass", "twilightforest:canopy_planks", "minecraft:cyan_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:cyan_stained_glass", "twilightforest:canopy_planks", "minecraft:cyan_stained_glass"]},
+          {"ingredientsInCycle": 11, "cost": 9, "grid": ["minecraft:purple_stained_glass", "twilightforest:canopy_planks", "minecraft:purple_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:purple_stained_glass", "twilightforest:canopy_planks", "minecraft:purple_stained_glass"]},
+          {"ingredientsInCycle": 12, "cost": 9, "grid": ["minecraft:blue_stained_glass", "twilightforest:canopy_planks", "minecraft:blue_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:blue_stained_glass", "twilightforest:canopy_planks", "minecraft:blue_stained_glass"]},
+          {"ingredientsInCycle": 13, "cost": 9, "grid": ["minecraft:brown_stained_glass", "twilightforest:canopy_planks", "minecraft:brown_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:brown_stained_glass", "twilightforest:canopy_planks", "minecraft:brown_stained_glass"]},
+          {"ingredientsInCycle": 14, "cost": 9, "grid": ["minecraft:green_stained_glass", "twilightforest:canopy_planks", "minecraft:green_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:green_stained_glass", "twilightforest:canopy_planks", "minecraft:green_stained_glass"]},
+          {"ingredientsInCycle": 15, "cost": 9, "grid": ["minecraft:red_stained_glass", "twilightforest:canopy_planks", "minecraft:red_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:red_stained_glass", "twilightforest:canopy_planks", "minecraft:red_stained_glass"]},
+          {"ingredientsInCycle": 16, "cost": 9, "grid": ["minecraft:black_stained_glass", "twilightforest:canopy_planks", "minecraft:black_stained_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:black_stained_glass", "twilightforest:canopy_planks", "minecraft:black_stained_glass"]},
+          {"ingredientsInCycle": 17, "cost": 9, "grid": ["minecraft:tinted_glass", "twilightforest:canopy_planks", "minecraft:tinted_glass", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "twilightforest:canopy_planks", "minecraft:tinted_glass", "twilightforest:canopy_planks", "minecraft:tinted_glass"]}
+        ]
+      }
+    ],
+    "twilightforest:carminite_reactor": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:carminite_reactor",
+        "alternatives": 2,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 9, "grid": ["twilightforest:encased_towerwood", "twilightforest:carminite", "twilightforest:encased_towerwood", "twilightforest:carminite", "minecraft:redstone_ore", "twilightforest:carminite", "twilightforest:encased_towerwood", "twilightforest:carminite", "twilightforest:encased_towerwood"]},
+          {"ingredientsInCycle": 1, "cost": 9, "grid": ["twilightforest:encased_towerwood", "twilightforest:carminite", "twilightforest:encased_towerwood", "twilightforest:carminite", "minecraft:deepslate_redstone_ore", "twilightforest:carminite", "twilightforest:encased_towerwood", "twilightforest:carminite", "twilightforest:encased_towerwood"]}
+        ]
+      }
+    ],
+    "twilightforest:encased_castle_brick_pillar": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:castleblock/encased_castle_pillar",
+        "alternatives": 5,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 6, "grid": ["twilightforest:castle_brick", "twilightforest:encased_castle_brick_pillar", "twilightforest:castle_brick", "twilightforest:castle_brick", "twilightforest:encased_castle_brick_pillar", "twilightforest:castle_brick", "", "", ""]},
+          {"ingredientsInCycle": 1, "cost": 6, "grid": ["twilightforest:worn_castle_brick", "twilightforest:encased_castle_brick_tile", "twilightforest:worn_castle_brick", "twilightforest:worn_castle_brick", "twilightforest:encased_castle_brick_tile", "twilightforest:worn_castle_brick", "", "", ""]},
+          {"ingredientsInCycle": 2, "cost": 6, "grid": ["twilightforest:cracked_castle_brick", "twilightforest:bold_castle_brick_pillar", "twilightforest:cracked_castle_brick", "twilightforest:cracked_castle_brick", "twilightforest:bold_castle_brick_pillar", "twilightforest:cracked_castle_brick", "", "", ""]},
+          {"ingredientsInCycle": 3, "cost": 6, "grid": ["twilightforest:mossy_castle_brick", "twilightforest:bold_castle_brick_tile", "twilightforest:mossy_castle_brick", "twilightforest:mossy_castle_brick", "twilightforest:bold_castle_brick_tile", "twilightforest:mossy_castle_brick", "", "", ""]},
+          {"ingredientsInCycle": 4, "cost": 6, "grid": ["twilightforest:thick_castle_brick", "twilightforest:encased_castle_brick_pillar", "twilightforest:thick_castle_brick", "twilightforest:thick_castle_brick", "twilightforest:encased_castle_brick_pillar", "twilightforest:thick_castle_brick", "", "", ""]}
+        ]
+      }
+    ],
+    "twilightforest:encased_castle_brick_stairs": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:castleblock/encased_castle_brick_stairs",
+        "alternatives": 2,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 6, "grid": ["twilightforest:encased_castle_brick_pillar", "", "", "twilightforest:encased_castle_brick_pillar", "twilightforest:encased_castle_brick_pillar", "", "twilightforest:encased_castle_brick_pillar", "twilightforest:encased_castle_brick_pillar", "twilightforest:encased_castle_brick_pillar"]},
+          {"ingredientsInCycle": 1, "cost": 6, "grid": ["twilightforest:encased_castle_brick_tile", "", "", "twilightforest:encased_castle_brick_tile", "twilightforest:encased_castle_brick_tile", "", "twilightforest:encased_castle_brick_tile", "twilightforest:encased_castle_brick_tile", "twilightforest:encased_castle_brick_tile"]}
+        ]
+      }
+    ],
+    "twilightforest:knightmetal_shield": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:equipment/knightmetal_shield",
+        "alternatives": 3,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 6, "grid": ["twilightforest:knightmetal_ingot", "twilightforest:towerwood", "", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ring", "", "twilightforest:knightmetal_ingot", "twilightforest:towerwood", ""]},
+          {"ingredientsInCycle": 1, "cost": 6, "grid": ["twilightforest:knightmetal_ingot", "twilightforest:mossy_towerwood", "", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ring", "", "twilightforest:knightmetal_ingot", "twilightforest:mossy_towerwood", ""]},
+          {"ingredientsInCycle": 2, "cost": 6, "grid": ["twilightforest:knightmetal_ingot", "twilightforest:cracked_towerwood", "", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ring", "", "twilightforest:knightmetal_ingot", "twilightforest:cracked_towerwood", ""]}
+        ]
+      }
+    ],
+    "twilightforest:spiral_bricks": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:nagastone/nagastone_spiral",
+        "alternatives": 4,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 9, "grid": ["minecraft:stone_bricks", "minecraft:stone_slab", "minecraft:stone_slab", "minecraft:stone_bricks", "minecraft:stone_slab", "minecraft:stone_slab", "minecraft:stone_bricks", "minecraft:stone_bricks", "minecraft:stone_bricks"]},
+          {"ingredientsInCycle": 1, "cost": 9, "grid": ["minecraft:mossy_stone_bricks", "minecraft:stone_brick_slab", "minecraft:stone_brick_slab", "minecraft:mossy_stone_bricks", "minecraft:stone_brick_slab", "minecraft:stone_brick_slab", "minecraft:mossy_stone_bricks", "minecraft:mossy_stone_bricks", "minecraft:mossy_stone_bricks"]},
+          {"ingredientsInCycle": 2, "cost": 9, "grid": ["minecraft:cracked_stone_bricks", "minecraft:stone_slab", "minecraft:stone_slab", "minecraft:cracked_stone_bricks", "minecraft:stone_slab", "minecraft:stone_slab", "minecraft:cracked_stone_bricks", "minecraft:cracked_stone_bricks", "minecraft:cracked_stone_bricks"]},
+          {"ingredientsInCycle": 3, "cost": 9, "grid": ["minecraft:chiseled_stone_bricks", "minecraft:stone_brick_slab", "minecraft:stone_brick_slab", "minecraft:chiseled_stone_bricks", "minecraft:stone_brick_slab", "minecraft:stone_brick_slab", "minecraft:chiseled_stone_bricks", "minecraft:chiseled_stone_bricks", "minecraft:chiseled_stone_bricks"]}
+        ]
+      }
+    ],
+    "twilightforest:thick_castle_brick": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:castleblock/thick_castle_brick",
+        "alternatives": 4,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 4, "grid": ["twilightforest:castle_brick", "twilightforest:castle_brick", "", "twilightforest:castle_brick", "twilightforest:castle_brick", "", "", "", ""]},
+          {"ingredientsInCycle": 1, "cost": 4, "grid": ["twilightforest:worn_castle_brick", "twilightforest:worn_castle_brick", "", "twilightforest:worn_castle_brick", "twilightforest:worn_castle_brick", "", "", "", ""]},
+          {"ingredientsInCycle": 2, "cost": 4, "grid": ["twilightforest:cracked_castle_brick", "twilightforest:cracked_castle_brick", "", "twilightforest:cracked_castle_brick", "twilightforest:cracked_castle_brick", "", "", "", ""]},
+          {"ingredientsInCycle": 3, "cost": 4, "grid": ["twilightforest:mossy_castle_brick", "twilightforest:mossy_castle_brick", "", "twilightforest:mossy_castle_brick", "twilightforest:mossy_castle_brick", "", "", "", ""]}
+        ]
+      }
+    ],
+    "twilightforest:travellers_belt": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:equipment/travellers_belt",
+        "alternatives": 9,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 9, "grid": ["twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:iron_nugget", "twilightforest:twilight_oak_chest", "minecraft:iron_nugget", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 1, "cost": 9, "grid": ["twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:iron_nugget", "twilightforest:canopy_chest", "minecraft:iron_nugget", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 2, "cost": 9, "grid": ["twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:iron_nugget", "twilightforest:mangrove_chest", "minecraft:iron_nugget", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 3, "cost": 9, "grid": ["twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:iron_nugget", "twilightforest:dark_chest", "minecraft:iron_nugget", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 4, "cost": 9, "grid": ["twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:iron_nugget", "twilightforest:time_chest", "minecraft:iron_nugget", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 5, "cost": 9, "grid": ["twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:iron_nugget", "twilightforest:transformation_chest", "minecraft:iron_nugget", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 6, "cost": 9, "grid": ["twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:iron_nugget", "twilightforest:mining_chest", "minecraft:iron_nugget", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 7, "cost": 9, "grid": ["twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:iron_nugget", "twilightforest:sorting_chest", "minecraft:iron_nugget", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 8, "cost": 9, "grid": ["twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:iron_nugget", "minecraft:chest", "minecraft:iron_nugget", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "twilightforest:tanned_leather"]}
+        ]
+      }
+    ],
+    "twilightforest:travellers_vest": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:equipment/travellers_vest",
+        "alternatives": 16,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:white_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:white_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 1, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:orange_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:orange_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 2, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:magenta_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:magenta_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 3, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:light_blue_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:light_blue_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 4, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:yellow_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:yellow_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 5, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:lime_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:lime_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 6, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:pink_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:pink_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 7, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:gray_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:gray_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 8, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:light_gray_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:light_gray_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 9, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:cyan_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:cyan_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 10, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:purple_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:purple_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 11, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:blue_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:blue_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 12, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:brown_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:brown_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 13, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:green_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:green_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 14, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:red_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:red_wool", "twilightforest:tanned_leather"]},
+          {"ingredientsInCycle": 15, "cost": 8, "grid": ["twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:black_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:black_wool", "twilightforest:tanned_leather"]}
+        ]
+      }
+    ],
+    "twilightforest:vanishing_block": [
+      {
+        "unrecipeInCycle": 0,
+        "recipe": "twilightforest:vanishing_block",
+        "alternatives": 3,
+        "truncated": false,
+        "cycles": [
+          {"ingredientsInCycle": 0, "cost": 9, "grid": ["twilightforest:encased_towerwood", "twilightforest:towerwood", "twilightforest:encased_towerwood", "twilightforest:towerwood", "twilightforest:carminite", "twilightforest:towerwood", "twilightforest:encased_towerwood", "twilightforest:towerwood", "twilightforest:encased_towerwood"]},
+          {"ingredientsInCycle": 1, "cost": 9, "grid": ["twilightforest:encased_towerwood", "twilightforest:mossy_towerwood", "twilightforest:encased_towerwood", "twilightforest:mossy_towerwood", "twilightforest:carminite", "twilightforest:mossy_towerwood", "twilightforest:encased_towerwood", "twilightforest:mossy_towerwood", "twilightforest:encased_towerwood"]},
+          {"ingredientsInCycle": 2, "cost": 9, "grid": ["twilightforest:encased_towerwood", "twilightforest:cracked_towerwood", "twilightforest:encased_towerwood", "twilightforest:cracked_towerwood", "twilightforest:carminite", "twilightforest:cracked_towerwood", "twilightforest:encased_towerwood", "twilightforest:cracked_towerwood", "twilightforest:encased_towerwood"]}
+        ]
+      }
+    ]
+  },
+  "damaged": {
+    "minecraft:bow": [
+      {"damage": 96, "maxDamage": 384, "recipe": "minecraft:bow", "inputCount": 1, "cost": 2, "grid": ["", "minecraft:stick", "!minecraft:string", "minecraft:stick", "", "minecraft:string", "", "minecraft:stick", "minecraft:string"]},
+      {"damage": 192, "maxDamage": 384, "recipe": "minecraft:bow", "inputCount": 1, "cost": 1, "grid": ["", "minecraft:stick", "!minecraft:string", "minecraft:stick", "", "!minecraft:string", "", "minecraft:stick", "minecraft:string"]},
+      {"damage": 383, "maxDamage": 384, "recipe": "minecraft:bow", "inputCount": 1, "cost": 0, "grid": ["", "minecraft:stick", "!minecraft:string", "minecraft:stick", "", "!minecraft:string", "", "minecraft:stick", "!minecraft:string"]}
+    ],
+    "minecraft:brush": [
+      {"damage": 16, "maxDamage": 64, "recipe": "minecraft:brush", "inputCount": 1, "cost": 1, "grid": ["!minecraft:feather", "", "", "minecraft:copper_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 32, "maxDamage": 64, "recipe": "minecraft:brush", "inputCount": 1, "cost": 0, "grid": ["!minecraft:feather", "", "", "!minecraft:copper_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 63, "maxDamage": 64, "recipe": "minecraft:brush", "inputCount": 1, "cost": 0, "grid": ["!minecraft:feather", "", "", "!minecraft:copper_ingot", "", "", "minecraft:stick", "", ""]}
+    ],
+    "minecraft:carrot_on_a_stick": [
+      {"damage": 6, "maxDamage": 25, "recipe": "minecraft:carrot_on_a_stick", "inputCount": 1, "cost": 1, "grid": ["!minecraft:fishing_rod", "", "", "", "minecraft:carrot", "", "", "", ""]},
+      {"damage": 12, "maxDamage": 25, "recipe": "minecraft:carrot_on_a_stick", "inputCount": 1, "cost": 0, "grid": ["!minecraft:fishing_rod", "", "", "", "!minecraft:carrot", "", "", "", ""]},
+      {"damage": 24, "maxDamage": 25, "recipe": "minecraft:carrot_on_a_stick", "inputCount": 1, "cost": 0, "grid": ["!minecraft:fishing_rod", "", "", "", "!minecraft:carrot", "", "", "", ""]}
+    ],
+    "minecraft:crossbow": [
+      {"damage": 116, "maxDamage": 465, "recipe": "minecraft:crossbow", "inputCount": 1, "cost": 3, "grid": ["minecraft:stick", "!minecraft:iron_ingot", "minecraft:stick", "minecraft:string", "minecraft:tripwire_hook", "minecraft:string", "", "minecraft:stick", ""]},
+      {"damage": 232, "maxDamage": 465, "recipe": "minecraft:crossbow", "inputCount": 1, "cost": 2, "grid": ["minecraft:stick", "!minecraft:iron_ingot", "minecraft:stick", "!minecraft:string", "minecraft:tripwire_hook", "minecraft:string", "", "minecraft:stick", ""]},
+      {"damage": 464, "maxDamage": 465, "recipe": "minecraft:crossbow", "inputCount": 1, "cost": 0, "grid": ["minecraft:stick", "!minecraft:iron_ingot", "minecraft:stick", "!minecraft:string", "!minecraft:tripwire_hook", "!minecraft:string", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:diamond_axe": [
+      {"damage": 390, "maxDamage": 1561, "recipe": "minecraft:diamond_axe", "inputCount": 1, "cost": 2, "grid": ["!minecraft:diamond", "minecraft:diamond", "", "minecraft:diamond", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 780, "maxDamage": 1561, "recipe": "minecraft:diamond_axe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:diamond", "!minecraft:diamond", "", "minecraft:diamond", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 1560, "maxDamage": 1561, "recipe": "minecraft:diamond_axe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "!minecraft:diamond", "", "!minecraft:diamond", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:diamond_boots": [
+      {"damage": 107, "maxDamage": 429, "recipe": "minecraft:diamond_boots", "inputCount": 1, "cost": 3, "grid": ["!minecraft:diamond", "", "minecraft:diamond", "minecraft:diamond", "", "minecraft:diamond", "", "", ""]},
+      {"damage": 214, "maxDamage": 429, "recipe": "minecraft:diamond_boots", "inputCount": 1, "cost": 2, "grid": ["!minecraft:diamond", "", "!minecraft:diamond", "minecraft:diamond", "", "minecraft:diamond", "", "", ""]},
+      {"damage": 428, "maxDamage": 429, "recipe": "minecraft:diamond_boots", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "", "!minecraft:diamond", "!minecraft:diamond", "", "!minecraft:diamond", "", "", ""]}
+    ],
+    "minecraft:diamond_chestplate": [
+      {"damage": 132, "maxDamage": 528, "recipe": "minecraft:diamond_chestplate", "inputCount": 1, "cost": 6, "grid": ["!minecraft:diamond", "", "!minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond"]},
+      {"damage": 264, "maxDamage": 528, "recipe": "minecraft:diamond_chestplate", "inputCount": 1, "cost": 4, "grid": ["!minecraft:diamond", "", "!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond"]},
+      {"damage": 527, "maxDamage": 528, "recipe": "minecraft:diamond_chestplate", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "", "!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond"]}
+    ],
+    "minecraft:diamond_helmet": [
+      {"damage": 90, "maxDamage": 363, "recipe": "minecraft:diamond_helmet", "inputCount": 1, "cost": 3, "grid": ["!minecraft:diamond", "!minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "", "minecraft:diamond", "", "", ""]},
+      {"damage": 181, "maxDamage": 363, "recipe": "minecraft:diamond_helmet", "inputCount": 1, "cost": 2, "grid": ["!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "minecraft:diamond", "", "minecraft:diamond", "", "", ""]},
+      {"damage": 362, "maxDamage": 363, "recipe": "minecraft:diamond_helmet", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "", "!minecraft:diamond", "", "", ""]}
+    ],
+    "minecraft:diamond_hoe": [
+      {"damage": 390, "maxDamage": 1561, "recipe": "minecraft:diamond_hoe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:diamond", "minecraft:diamond", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 780, "maxDamage": 1561, "recipe": "minecraft:diamond_hoe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "!minecraft:diamond", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 1560, "maxDamage": 1561, "recipe": "minecraft:diamond_hoe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "!minecraft:diamond", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:diamond_leggings": [
+      {"damage": 123, "maxDamage": 495, "recipe": "minecraft:diamond_leggings", "inputCount": 1, "cost": 5, "grid": ["!minecraft:diamond", "!minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "", "minecraft:diamond", "minecraft:diamond", "", "minecraft:diamond"]},
+      {"damage": 247, "maxDamage": 495, "recipe": "minecraft:diamond_leggings", "inputCount": 1, "cost": 3, "grid": ["!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "", "minecraft:diamond", "minecraft:diamond", "", "minecraft:diamond"]},
+      {"damage": 494, "maxDamage": 495, "recipe": "minecraft:diamond_leggings", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "", "!minecraft:diamond", "!minecraft:diamond", "", "!minecraft:diamond"]}
+    ],
+    "minecraft:diamond_pickaxe": [
+      {"damage": 390, "maxDamage": 1561, "recipe": "minecraft:diamond_pickaxe", "inputCount": 1, "cost": 2, "grid": ["!minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 780, "maxDamage": 1561, "recipe": "minecraft:diamond_pickaxe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:diamond", "!minecraft:diamond", "minecraft:diamond", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 1560, "maxDamage": 1561, "recipe": "minecraft:diamond_pickaxe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "!minecraft:diamond", "!minecraft:diamond", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:diamond_shovel": [
+      {"damage": 390, "maxDamage": 1561, "recipe": "minecraft:diamond_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 780, "maxDamage": 1561, "recipe": "minecraft:diamond_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 1560, "maxDamage": 1561, "recipe": "minecraft:diamond_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]}
+    ],
+    "minecraft:diamond_sword": [
+      {"damage": 390, "maxDamage": 1561, "recipe": "minecraft:diamond_sword", "inputCount": 1, "cost": 1, "grid": ["!minecraft:diamond", "", "", "minecraft:diamond", "", "", "minecraft:stick", "", ""]},
+      {"damage": 780, "maxDamage": 1561, "recipe": "minecraft:diamond_sword", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "", "", "!minecraft:diamond", "", "", "minecraft:stick", "", ""]},
+      {"damage": 1560, "maxDamage": 1561, "recipe": "minecraft:diamond_sword", "inputCount": 1, "cost": 0, "grid": ["!minecraft:diamond", "", "", "!minecraft:diamond", "", "", "minecraft:stick", "", ""]}
+    ],
+    "minecraft:fishing_rod": [
+      {"damage": 16, "maxDamage": 64, "recipe": "minecraft:fishing_rod", "inputCount": 1, "cost": 1, "grid": ["", "", "minecraft:stick", "", "minecraft:stick", "!minecraft:string", "minecraft:stick", "", "minecraft:string"]},
+      {"damage": 32, "maxDamage": 64, "recipe": "minecraft:fishing_rod", "inputCount": 1, "cost": 0, "grid": ["", "", "minecraft:stick", "", "minecraft:stick", "!minecraft:string", "minecraft:stick", "", "!minecraft:string"]},
+      {"damage": 63, "maxDamage": 64, "recipe": "minecraft:fishing_rod", "inputCount": 1, "cost": 0, "grid": ["", "", "minecraft:stick", "", "minecraft:stick", "!minecraft:string", "minecraft:stick", "", "!minecraft:string"]}
+    ],
+    "minecraft:golden_axe": [
+      {"damage": 8, "maxDamage": 32, "recipe": "minecraft:golden_axe", "inputCount": 1, "cost": 2, "grid": ["!minecraft:gold_ingot", "minecraft:gold_ingot", "", "minecraft:gold_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 16, "maxDamage": 32, "recipe": "minecraft:golden_axe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "", "minecraft:gold_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 31, "maxDamage": 32, "recipe": "minecraft:golden_axe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:golden_boots": [
+      {"damage": 22, "maxDamage": 91, "recipe": "minecraft:golden_boots", "inputCount": 1, "cost": 3, "grid": ["!minecraft:gold_ingot", "", "minecraft:gold_ingot", "minecraft:gold_ingot", "", "minecraft:gold_ingot", "", "", ""]},
+      {"damage": 45, "maxDamage": 91, "recipe": "minecraft:golden_boots", "inputCount": 1, "cost": 2, "grid": ["!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "minecraft:gold_ingot", "", "minecraft:gold_ingot", "", "", ""]},
+      {"damage": 90, "maxDamage": 91, "recipe": "minecraft:golden_boots", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "", "", ""]}
+    ],
+    "minecraft:golden_chestplate": [
+      {"damage": 28, "maxDamage": 112, "recipe": "minecraft:golden_chestplate", "inputCount": 1, "cost": 6, "grid": ["!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot"]},
+      {"damage": 56, "maxDamage": 112, "recipe": "minecraft:golden_chestplate", "inputCount": 1, "cost": 4, "grid": ["!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot"]},
+      {"damage": 111, "maxDamage": 112, "recipe": "minecraft:golden_chestplate", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot"]}
+    ],
+    "minecraft:golden_helmet": [
+      {"damage": 19, "maxDamage": 77, "recipe": "minecraft:golden_helmet", "inputCount": 1, "cost": 3, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot", "", "minecraft:gold_ingot", "", "", ""]},
+      {"damage": 38, "maxDamage": 77, "recipe": "minecraft:golden_helmet", "inputCount": 1, "cost": 2, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "minecraft:gold_ingot", "", "minecraft:gold_ingot", "", "", ""]},
+      {"damage": 76, "maxDamage": 77, "recipe": "minecraft:golden_helmet", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "", "", ""]}
+    ],
+    "minecraft:golden_hoe": [
+      {"damage": 8, "maxDamage": 32, "recipe": "minecraft:golden_hoe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:gold_ingot", "minecraft:gold_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 16, "maxDamage": 32, "recipe": "minecraft:golden_hoe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 31, "maxDamage": 32, "recipe": "minecraft:golden_hoe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:golden_leggings": [
+      {"damage": 26, "maxDamage": 105, "recipe": "minecraft:golden_leggings", "inputCount": 1, "cost": 5, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot", "", "minecraft:gold_ingot", "minecraft:gold_ingot", "", "minecraft:gold_ingot"]},
+      {"damage": 52, "maxDamage": 105, "recipe": "minecraft:golden_leggings", "inputCount": 1, "cost": 3, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "", "minecraft:gold_ingot", "minecraft:gold_ingot", "", "minecraft:gold_ingot"]},
+      {"damage": 104, "maxDamage": 105, "recipe": "minecraft:golden_leggings", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "", "!minecraft:gold_ingot"]}
+    ],
+    "minecraft:golden_pickaxe": [
+      {"damage": 8, "maxDamage": 32, "recipe": "minecraft:golden_pickaxe", "inputCount": 1, "cost": 2, "grid": ["!minecraft:gold_ingot", "minecraft:gold_ingot", "minecraft:gold_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 16, "maxDamage": 32, "recipe": "minecraft:golden_pickaxe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "minecraft:gold_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 31, "maxDamage": 32, "recipe": "minecraft:golden_pickaxe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "!minecraft:gold_ingot", "!minecraft:gold_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:golden_shovel": [
+      {"damage": 8, "maxDamage": 32, "recipe": "minecraft:golden_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 16, "maxDamage": 32, "recipe": "minecraft:golden_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 31, "maxDamage": 32, "recipe": "minecraft:golden_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]}
+    ],
+    "minecraft:golden_sword": [
+      {"damage": 8, "maxDamage": 32, "recipe": "minecraft:golden_sword", "inputCount": 1, "cost": 1, "grid": ["!minecraft:gold_ingot", "", "", "minecraft:gold_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 16, "maxDamage": 32, "recipe": "minecraft:golden_sword", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "", "", "!minecraft:gold_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 31, "maxDamage": 32, "recipe": "minecraft:golden_sword", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "", "", "!minecraft:gold_ingot", "", "", "minecraft:stick", "", ""]}
+    ],
+    "minecraft:iron_axe": [
+      {"damage": 62, "maxDamage": 250, "recipe": "minecraft:iron_axe", "inputCount": 1, "cost": 2, "grid": ["!minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:iron_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 125, "maxDamage": 250, "recipe": "minecraft:iron_axe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "", "minecraft:iron_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 249, "maxDamage": 250, "recipe": "minecraft:iron_axe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:iron_boots": [
+      {"damage": 48, "maxDamage": 195, "recipe": "minecraft:iron_boots", "inputCount": 1, "cost": 3, "grid": ["!minecraft:iron_ingot", "", "minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:iron_ingot", "", "", ""]},
+      {"damage": 97, "maxDamage": 195, "recipe": "minecraft:iron_boots", "inputCount": 1, "cost": 2, "grid": ["!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:iron_ingot", "", "", ""]},
+      {"damage": 194, "maxDamage": 195, "recipe": "minecraft:iron_boots", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "", "", ""]}
+    ],
+    "minecraft:iron_chestplate": [
+      {"damage": 60, "maxDamage": 240, "recipe": "minecraft:iron_chestplate", "inputCount": 1, "cost": 6, "grid": ["!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot"]},
+      {"damage": 120, "maxDamage": 240, "recipe": "minecraft:iron_chestplate", "inputCount": 1, "cost": 4, "grid": ["!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot"]},
+      {"damage": 239, "maxDamage": 240, "recipe": "minecraft:iron_chestplate", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot"]}
+    ],
+    "minecraft:iron_helmet": [
+      {"damage": 41, "maxDamage": 165, "recipe": "minecraft:iron_helmet", "inputCount": 1, "cost": 3, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:iron_ingot", "", "", ""]},
+      {"damage": 82, "maxDamage": 165, "recipe": "minecraft:iron_helmet", "inputCount": 1, "cost": 2, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:iron_ingot", "", "", ""]},
+      {"damage": 164, "maxDamage": 165, "recipe": "minecraft:iron_helmet", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "", "", ""]}
+    ],
+    "minecraft:iron_hoe": [
+      {"damage": 62, "maxDamage": 250, "recipe": "minecraft:iron_hoe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:iron_ingot", "minecraft:iron_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 125, "maxDamage": 250, "recipe": "minecraft:iron_hoe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 249, "maxDamage": 250, "recipe": "minecraft:iron_hoe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:iron_leggings": [
+      {"damage": 56, "maxDamage": 225, "recipe": "minecraft:iron_leggings", "inputCount": 1, "cost": 5, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:iron_ingot"]},
+      {"damage": 112, "maxDamage": 225, "recipe": "minecraft:iron_leggings", "inputCount": 1, "cost": 3, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "", "minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:iron_ingot"]},
+      {"damage": 224, "maxDamage": 225, "recipe": "minecraft:iron_leggings", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "", "!minecraft:iron_ingot"]}
+    ],
+    "minecraft:iron_pickaxe": [
+      {"damage": 62, "maxDamage": 250, "recipe": "minecraft:iron_pickaxe", "inputCount": 1, "cost": 2, "grid": ["!minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 125, "maxDamage": 250, "recipe": "minecraft:iron_pickaxe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 249, "maxDamage": 250, "recipe": "minecraft:iron_pickaxe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "!minecraft:iron_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:iron_shovel": [
+      {"damage": 62, "maxDamage": 250, "recipe": "minecraft:iron_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 125, "maxDamage": 250, "recipe": "minecraft:iron_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 249, "maxDamage": 250, "recipe": "minecraft:iron_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]}
+    ],
+    "minecraft:iron_sword": [
+      {"damage": 62, "maxDamage": 250, "recipe": "minecraft:iron_sword", "inputCount": 1, "cost": 1, "grid": ["!minecraft:iron_ingot", "", "", "minecraft:iron_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 125, "maxDamage": 250, "recipe": "minecraft:iron_sword", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "", "", "!minecraft:iron_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 249, "maxDamage": 250, "recipe": "minecraft:iron_sword", "inputCount": 1, "cost": 0, "grid": ["!minecraft:iron_ingot", "", "", "!minecraft:iron_ingot", "", "", "minecraft:stick", "", ""]}
+    ],
+    "minecraft:leather_boots": [
+      {"damage": 16, "maxDamage": 65, "recipe": "minecraft:leather_boots", "inputCount": 1, "cost": 3, "grid": ["!minecraft:leather", "", "minecraft:leather", "minecraft:leather", "", "minecraft:leather", "", "", ""]},
+      {"damage": 32, "maxDamage": 65, "recipe": "minecraft:leather_boots", "inputCount": 1, "cost": 2, "grid": ["!minecraft:leather", "", "!minecraft:leather", "minecraft:leather", "", "minecraft:leather", "", "", ""]},
+      {"damage": 64, "maxDamage": 65, "recipe": "minecraft:leather_boots", "inputCount": 1, "cost": 0, "grid": ["!minecraft:leather", "", "!minecraft:leather", "!minecraft:leather", "", "!minecraft:leather", "", "", ""]}
+    ],
+    "minecraft:leather_chestplate": [
+      {"damage": 20, "maxDamage": 80, "recipe": "minecraft:leather_chestplate", "inputCount": 1, "cost": 6, "grid": ["!minecraft:leather", "", "!minecraft:leather", "minecraft:leather", "minecraft:leather", "minecraft:leather", "minecraft:leather", "minecraft:leather", "minecraft:leather"]},
+      {"damage": 40, "maxDamage": 80, "recipe": "minecraft:leather_chestplate", "inputCount": 1, "cost": 4, "grid": ["!minecraft:leather", "", "!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "minecraft:leather", "minecraft:leather", "minecraft:leather", "minecraft:leather"]},
+      {"damage": 79, "maxDamage": 80, "recipe": "minecraft:leather_chestplate", "inputCount": 1, "cost": 0, "grid": ["!minecraft:leather", "", "!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "!minecraft:leather"]}
+    ],
+    "minecraft:leather_helmet": [
+      {"damage": 13, "maxDamage": 55, "recipe": "minecraft:leather_helmet", "inputCount": 1, "cost": 3, "grid": ["!minecraft:leather", "!minecraft:leather", "minecraft:leather", "minecraft:leather", "", "minecraft:leather", "", "", ""]},
+      {"damage": 27, "maxDamage": 55, "recipe": "minecraft:leather_helmet", "inputCount": 1, "cost": 2, "grid": ["!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "minecraft:leather", "", "minecraft:leather", "", "", ""]},
+      {"damage": 54, "maxDamage": 55, "recipe": "minecraft:leather_helmet", "inputCount": 1, "cost": 0, "grid": ["!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "", "!minecraft:leather", "", "", ""]}
+    ],
+    "minecraft:leather_leggings": [
+      {"damage": 18, "maxDamage": 75, "recipe": "minecraft:leather_leggings", "inputCount": 1, "cost": 5, "grid": ["!minecraft:leather", "!minecraft:leather", "minecraft:leather", "minecraft:leather", "", "minecraft:leather", "minecraft:leather", "", "minecraft:leather"]},
+      {"damage": 37, "maxDamage": 75, "recipe": "minecraft:leather_leggings", "inputCount": 1, "cost": 3, "grid": ["!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "", "minecraft:leather", "minecraft:leather", "", "minecraft:leather"]},
+      {"damage": 74, "maxDamage": 75, "recipe": "minecraft:leather_leggings", "inputCount": 1, "cost": 0, "grid": ["!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "!minecraft:leather", "", "!minecraft:leather", "!minecraft:leather", "", "!minecraft:leather"]}
+    ],
+    "minecraft:mace": [
+      {"damage": 125, "maxDamage": 500, "recipe": "minecraft:mace", "inputCount": 1, "cost": 1, "grid": ["!minecraft:heavy_core", "", "", "minecraft:breeze_rod", "", "", "", "", ""]},
+      {"damage": 250, "maxDamage": 500, "recipe": "minecraft:mace", "inputCount": 1, "cost": 0, "grid": ["!minecraft:heavy_core", "", "", "!minecraft:breeze_rod", "", "", "", "", ""]},
+      {"damage": 499, "maxDamage": 500, "recipe": "minecraft:mace", "inputCount": 1, "cost": 0, "grid": ["!minecraft:heavy_core", "", "", "!minecraft:breeze_rod", "", "", "", "", ""]}
+    ],
+    "minecraft:shears": [
+      {"damage": 59, "maxDamage": 238, "recipe": "minecraft:shears", "inputCount": 1, "cost": 1, "grid": ["", "!minecraft:iron_ingot", "", "minecraft:iron_ingot", "", "", "", "", ""]},
+      {"damage": 119, "maxDamage": 238, "recipe": "minecraft:shears", "inputCount": 1, "cost": 0, "grid": ["", "!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "", "", "", "", ""]},
+      {"damage": 237, "maxDamage": 238, "recipe": "minecraft:shears", "inputCount": 1, "cost": 0, "grid": ["", "!minecraft:iron_ingot", "", "!minecraft:iron_ingot", "", "", "", "", ""]}
+    ],
+    "minecraft:shield": [
+      {"damage": 84, "maxDamage": 336, "recipe": "minecraft:shield", "inputCount": 1, "cost": 5, "grid": ["!minecraft:oak_planks", "!minecraft:iron_ingot", "minecraft:oak_planks", "minecraft:oak_planks", "minecraft:oak_planks", "minecraft:oak_planks", "", "minecraft:oak_planks", ""]},
+      {"damage": 168, "maxDamage": 336, "recipe": "minecraft:shield", "inputCount": 1, "cost": 3, "grid": ["!minecraft:oak_planks", "!minecraft:iron_ingot", "!minecraft:oak_planks", "!minecraft:oak_planks", "minecraft:oak_planks", "minecraft:oak_planks", "", "minecraft:oak_planks", ""]},
+      {"damage": 335, "maxDamage": 336, "recipe": "minecraft:shield", "inputCount": 1, "cost": 0, "grid": ["!minecraft:oak_planks", "!minecraft:iron_ingot", "!minecraft:oak_planks", "!minecraft:oak_planks", "!minecraft:oak_planks", "!minecraft:oak_planks", "", "!minecraft:oak_planks", ""]}
+    ],
+    "minecraft:stone_axe": [
+      {"damage": 32, "maxDamage": 131, "recipe": "minecraft:stone_axe", "inputCount": 1, "cost": 2, "grid": ["!minecraft:cobblestone", "minecraft:cobblestone", "", "minecraft:cobblestone", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 65, "maxDamage": 131, "recipe": "minecraft:stone_axe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:cobblestone", "!minecraft:cobblestone", "", "minecraft:cobblestone", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 130, "maxDamage": 131, "recipe": "minecraft:stone_axe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:cobblestone", "!minecraft:cobblestone", "", "!minecraft:cobblestone", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:stone_hoe": [
+      {"damage": 32, "maxDamage": 131, "recipe": "minecraft:stone_hoe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:cobblestone", "minecraft:cobblestone", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 65, "maxDamage": 131, "recipe": "minecraft:stone_hoe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:cobblestone", "!minecraft:cobblestone", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 130, "maxDamage": 131, "recipe": "minecraft:stone_hoe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:cobblestone", "!minecraft:cobblestone", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:stone_pickaxe": [
+      {"damage": 32, "maxDamage": 131, "recipe": "minecraft:stone_pickaxe", "inputCount": 1, "cost": 2, "grid": ["!minecraft:cobblestone", "minecraft:cobblestone", "minecraft:cobblestone", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 65, "maxDamage": 131, "recipe": "minecraft:stone_pickaxe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:cobblestone", "!minecraft:cobblestone", "minecraft:cobblestone", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 130, "maxDamage": 131, "recipe": "minecraft:stone_pickaxe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:cobblestone", "!minecraft:cobblestone", "!minecraft:cobblestone", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:stone_shovel": [
+      {"damage": 32, "maxDamage": 131, "recipe": "minecraft:stone_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:cobblestone", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 65, "maxDamage": 131, "recipe": "minecraft:stone_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:cobblestone", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 130, "maxDamage": 131, "recipe": "minecraft:stone_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:cobblestone", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]}
+    ],
+    "minecraft:stone_sword": [
+      {"damage": 32, "maxDamage": 131, "recipe": "minecraft:stone_sword", "inputCount": 1, "cost": 1, "grid": ["!minecraft:cobblestone", "", "", "minecraft:cobblestone", "", "", "minecraft:stick", "", ""]},
+      {"damage": 65, "maxDamage": 131, "recipe": "minecraft:stone_sword", "inputCount": 1, "cost": 0, "grid": ["!minecraft:cobblestone", "", "", "!minecraft:cobblestone", "", "", "minecraft:stick", "", ""]},
+      {"damage": 130, "maxDamage": 131, "recipe": "minecraft:stone_sword", "inputCount": 1, "cost": 0, "grid": ["!minecraft:cobblestone", "", "", "!minecraft:cobblestone", "", "", "minecraft:stick", "", ""]}
+    ],
+    "minecraft:turtle_helmet": [
+      {"damage": 68, "maxDamage": 275, "recipe": "minecraft:turtle_helmet", "inputCount": 1, "cost": 3, "grid": ["!minecraft:turtle_scute", "!minecraft:turtle_scute", "minecraft:turtle_scute", "minecraft:turtle_scute", "", "minecraft:turtle_scute", "", "", ""]},
+      {"damage": 137, "maxDamage": 275, "recipe": "minecraft:turtle_helmet", "inputCount": 1, "cost": 2, "grid": ["!minecraft:turtle_scute", "!minecraft:turtle_scute", "!minecraft:turtle_scute", "minecraft:turtle_scute", "", "minecraft:turtle_scute", "", "", ""]},
+      {"damage": 274, "maxDamage": 275, "recipe": "minecraft:turtle_helmet", "inputCount": 1, "cost": 0, "grid": ["!minecraft:turtle_scute", "!minecraft:turtle_scute", "!minecraft:turtle_scute", "!minecraft:turtle_scute", "", "!minecraft:turtle_scute", "", "", ""]}
+    ],
+    "minecraft:warped_fungus_on_a_stick": [
+      {"damage": 25, "maxDamage": 100, "recipe": "minecraft:warped_fungus_on_a_stick", "inputCount": 1, "cost": 1, "grid": ["!minecraft:fishing_rod", "", "", "", "minecraft:warped_fungus", "", "", "", ""]},
+      {"damage": 50, "maxDamage": 100, "recipe": "minecraft:warped_fungus_on_a_stick", "inputCount": 1, "cost": 0, "grid": ["!minecraft:fishing_rod", "", "", "", "!minecraft:warped_fungus", "", "", "", ""]},
+      {"damage": 99, "maxDamage": 100, "recipe": "minecraft:warped_fungus_on_a_stick", "inputCount": 1, "cost": 0, "grid": ["!minecraft:fishing_rod", "", "", "", "!minecraft:warped_fungus", "", "", "", ""]}
+    ],
+    "minecraft:wolf_armor": [
+      {"damage": 16, "maxDamage": 64, "recipe": "minecraft:wolf_armor", "inputCount": 1, "cost": 4, "grid": ["!minecraft:armadillo_scute", "", "", "!minecraft:armadillo_scute", "minecraft:armadillo_scute", "minecraft:armadillo_scute", "minecraft:armadillo_scute", "", "minecraft:armadillo_scute"]},
+      {"damage": 32, "maxDamage": 64, "recipe": "minecraft:wolf_armor", "inputCount": 1, "cost": 3, "grid": ["!minecraft:armadillo_scute", "", "", "!minecraft:armadillo_scute", "!minecraft:armadillo_scute", "minecraft:armadillo_scute", "minecraft:armadillo_scute", "", "minecraft:armadillo_scute"]},
+      {"damage": 63, "maxDamage": 64, "recipe": "minecraft:wolf_armor", "inputCount": 1, "cost": 0, "grid": ["!minecraft:armadillo_scute", "", "", "!minecraft:armadillo_scute", "!minecraft:armadillo_scute", "!minecraft:armadillo_scute", "!minecraft:armadillo_scute", "", "!minecraft:armadillo_scute"]}
+    ],
+    "minecraft:wooden_axe": [
+      {"damage": 14, "maxDamage": 59, "recipe": "minecraft:wooden_axe", "inputCount": 1, "cost": 2, "grid": ["!minecraft:oak_planks", "minecraft:oak_planks", "", "minecraft:oak_planks", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 29, "maxDamage": 59, "recipe": "minecraft:wooden_axe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:oak_planks", "!minecraft:oak_planks", "", "minecraft:oak_planks", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 58, "maxDamage": 59, "recipe": "minecraft:wooden_axe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:oak_planks", "!minecraft:oak_planks", "", "!minecraft:oak_planks", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:wooden_hoe": [
+      {"damage": 14, "maxDamage": 59, "recipe": "minecraft:wooden_hoe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:oak_planks", "minecraft:oak_planks", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 29, "maxDamage": 59, "recipe": "minecraft:wooden_hoe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:oak_planks", "!minecraft:oak_planks", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 58, "maxDamage": 59, "recipe": "minecraft:wooden_hoe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:oak_planks", "!minecraft:oak_planks", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:wooden_pickaxe": [
+      {"damage": 14, "maxDamage": 59, "recipe": "minecraft:wooden_pickaxe", "inputCount": 1, "cost": 2, "grid": ["!minecraft:oak_planks", "minecraft:oak_planks", "minecraft:oak_planks", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 29, "maxDamage": 59, "recipe": "minecraft:wooden_pickaxe", "inputCount": 1, "cost": 1, "grid": ["!minecraft:oak_planks", "!minecraft:oak_planks", "minecraft:oak_planks", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 58, "maxDamage": 59, "recipe": "minecraft:wooden_pickaxe", "inputCount": 1, "cost": 0, "grid": ["!minecraft:oak_planks", "!minecraft:oak_planks", "!minecraft:oak_planks", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "minecraft:wooden_shovel": [
+      {"damage": 14, "maxDamage": 59, "recipe": "minecraft:wooden_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:oak_planks", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 29, "maxDamage": 59, "recipe": "minecraft:wooden_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:oak_planks", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 58, "maxDamage": 59, "recipe": "minecraft:wooden_shovel", "inputCount": 1, "cost": 0, "grid": ["!minecraft:oak_planks", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]}
+    ],
+    "minecraft:wooden_sword": [
+      {"damage": 14, "maxDamage": 59, "recipe": "minecraft:wooden_sword", "inputCount": 1, "cost": 1, "grid": ["!minecraft:oak_planks", "", "", "minecraft:oak_planks", "", "", "minecraft:stick", "", ""]},
+      {"damage": 29, "maxDamage": 59, "recipe": "minecraft:wooden_sword", "inputCount": 1, "cost": 0, "grid": ["!minecraft:oak_planks", "", "", "!minecraft:oak_planks", "", "", "minecraft:stick", "", ""]},
+      {"damage": 58, "maxDamage": 59, "recipe": "minecraft:wooden_sword", "inputCount": 1, "cost": 0, "grid": ["!minecraft:oak_planks", "", "", "!minecraft:oak_planks", "", "", "minecraft:stick", "", ""]}
+    ],
+    "twilightforest:arctic_boots": [
+      {"damage": 32, "maxDamage": 130, "recipe": "twilightforest:equipment/arctic_boots", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:arctic_fur", "", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "", "twilightforest:arctic_fur", "", "", ""]},
+      {"damage": 65, "maxDamage": 130, "recipe": "twilightforest:equipment/arctic_boots", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:arctic_fur", "", "!twilightforest:arctic_fur", "twilightforest:arctic_fur", "", "twilightforest:arctic_fur", "", "", ""]},
+      {"damage": 129, "maxDamage": 130, "recipe": "twilightforest:equipment/arctic_boots", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:arctic_fur", "", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "", "!twilightforest:arctic_fur", "", "", ""]}
+    ],
+    "twilightforest:arctic_chestplate": [
+      {"damage": 40, "maxDamage": 160, "recipe": "twilightforest:equipment/arctic_chestplate", "inputCount": 1, "cost": 6, "grid": ["!twilightforest:arctic_fur", "", "!twilightforest:arctic_fur", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "twilightforest:arctic_fur"]},
+      {"damage": 80, "maxDamage": 160, "recipe": "twilightforest:equipment/arctic_chestplate", "inputCount": 1, "cost": 4, "grid": ["!twilightforest:arctic_fur", "", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "twilightforest:arctic_fur"]},
+      {"damage": 159, "maxDamage": 160, "recipe": "twilightforest:equipment/arctic_chestplate", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:arctic_fur", "", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur"]}
+    ],
+    "twilightforest:arctic_helmet": [
+      {"damage": 27, "maxDamage": 110, "recipe": "twilightforest:equipment/arctic_helmet", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "", "twilightforest:arctic_fur", "", "", ""]},
+      {"damage": 55, "maxDamage": 110, "recipe": "twilightforest:equipment/arctic_helmet", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "twilightforest:arctic_fur", "", "twilightforest:arctic_fur", "", "", ""]},
+      {"damage": 109, "maxDamage": 110, "recipe": "twilightforest:equipment/arctic_helmet", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "", "!twilightforest:arctic_fur", "", "", ""]}
+    ],
+    "twilightforest:arctic_leggings": [
+      {"damage": 37, "maxDamage": 150, "recipe": "twilightforest:equipment/arctic_leggings", "inputCount": 1, "cost": 5, "grid": ["!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "", "twilightforest:arctic_fur"]},
+      {"damage": 75, "maxDamage": 150, "recipe": "twilightforest:equipment/arctic_leggings", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "", "twilightforest:arctic_fur", "twilightforest:arctic_fur", "", "twilightforest:arctic_fur"]},
+      {"damage": 149, "maxDamage": 150, "recipe": "twilightforest:equipment/arctic_leggings", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "", "!twilightforest:arctic_fur", "!twilightforest:arctic_fur", "", "!twilightforest:arctic_fur"]}
+    ],
+    "twilightforest:fiery_boots": [
+      {"damage": 81, "maxDamage": 325, "recipe": "twilightforest:equipment/fiery_boots", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:fiery_ingot", "", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "", "twilightforest:fiery_ingot", "", "", ""]},
+      {"damage": 162, "maxDamage": 325, "recipe": "twilightforest:equipment/fiery_boots", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:fiery_ingot", "", "!twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "", "twilightforest:fiery_ingot", "", "", ""]},
+      {"damage": 324, "maxDamage": 325, "recipe": "twilightforest:equipment/fiery_boots", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:fiery_ingot", "", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "", "!twilightforest:fiery_ingot", "", "", ""]}
+    ],
+    "twilightforest:fiery_chestplate": [
+      {"damage": 100, "maxDamage": 400, "recipe": "twilightforest:equipment/fiery_chestplate", "inputCount": 1, "cost": 6, "grid": ["!twilightforest:fiery_ingot", "", "!twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot"]},
+      {"damage": 200, "maxDamage": 400, "recipe": "twilightforest:equipment/fiery_chestplate", "inputCount": 1, "cost": 4, "grid": ["!twilightforest:fiery_ingot", "", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot"]},
+      {"damage": 399, "maxDamage": 400, "recipe": "twilightforest:equipment/fiery_chestplate", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:fiery_ingot", "", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot"]}
+    ],
+    "twilightforest:fiery_helmet": [
+      {"damage": 68, "maxDamage": 275, "recipe": "twilightforest:equipment/fiery_helmet", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "", "twilightforest:fiery_ingot", "", "", ""]},
+      {"damage": 137, "maxDamage": 275, "recipe": "twilightforest:equipment/fiery_helmet", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "", "twilightforest:fiery_ingot", "", "", ""]},
+      {"damage": 274, "maxDamage": 275, "recipe": "twilightforest:equipment/fiery_helmet", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "", "!twilightforest:fiery_ingot", "", "", ""]}
+    ],
+    "twilightforest:fiery_leggings": [
+      {"damage": 93, "maxDamage": 375, "recipe": "twilightforest:equipment/fiery_leggings", "inputCount": 1, "cost": 5, "grid": ["!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "", "twilightforest:fiery_ingot"]},
+      {"damage": 187, "maxDamage": 375, "recipe": "twilightforest:equipment/fiery_leggings", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "", "twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "", "twilightforest:fiery_ingot"]},
+      {"damage": 374, "maxDamage": 375, "recipe": "twilightforest:equipment/fiery_leggings", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "", "!twilightforest:fiery_ingot"]}
+    ],
+    "twilightforest:fiery_pickaxe": [
+      {"damage": 256, "maxDamage": 1024, "recipe": "twilightforest:equipment/fiery_pickaxe", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "twilightforest:fiery_ingot", "", "minecraft:blaze_rod", "", "", "minecraft:blaze_rod", ""]},
+      {"damage": 512, "maxDamage": 1024, "recipe": "twilightforest:equipment/fiery_pickaxe", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "", "minecraft:blaze_rod", "", "", "minecraft:blaze_rod", ""]},
+      {"damage": 1023, "maxDamage": 1024, "recipe": "twilightforest:equipment/fiery_pickaxe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "!twilightforest:fiery_ingot", "", "!minecraft:blaze_rod", "", "", "!minecraft:blaze_rod", ""]}
+    ],
+    "twilightforest:fiery_sword": [
+      {"damage": 256, "maxDamage": 1024, "recipe": "twilightforest:equipment/fiery_sword", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:fiery_ingot", "", "", "twilightforest:fiery_ingot", "", "", "minecraft:blaze_rod", "", ""]},
+      {"damage": 512, "maxDamage": 1024, "recipe": "twilightforest:equipment/fiery_sword", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:fiery_ingot", "", "", "!twilightforest:fiery_ingot", "", "", "minecraft:blaze_rod", "", ""]},
+      {"damage": 1023, "maxDamage": 1024, "recipe": "twilightforest:equipment/fiery_sword", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:fiery_ingot", "", "", "!twilightforest:fiery_ingot", "", "", "!minecraft:blaze_rod", "", ""]}
+    ],
+    "twilightforest:giant_pickaxe": [
+      {"damage": 256, "maxDamage": 1024, "recipe": "twilightforest:equipment/giant_pickaxe", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:giant_cobblestone", "!twilightforest:giant_cobblestone", "twilightforest:giant_cobblestone", "", "twilightforest:giant_log", "", "", "twilightforest:giant_log", ""]},
+      {"damage": 512, "maxDamage": 1024, "recipe": "twilightforest:equipment/giant_pickaxe", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:giant_cobblestone", "!twilightforest:giant_cobblestone", "!twilightforest:giant_cobblestone", "", "twilightforest:giant_log", "", "", "twilightforest:giant_log", ""]},
+      {"damage": 1023, "maxDamage": 1024, "recipe": "twilightforest:equipment/giant_pickaxe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:giant_cobblestone", "!twilightforest:giant_cobblestone", "!twilightforest:giant_cobblestone", "", "!twilightforest:giant_log", "", "", "!twilightforest:giant_log", ""]}
+    ],
+    "twilightforest:giant_sword": [
+      {"damage": 256, "maxDamage": 1024, "recipe": "twilightforest:equipment/giant_sword", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:giant_cobblestone", "", "", "twilightforest:giant_cobblestone", "", "", "twilightforest:giant_log", "", ""]},
+      {"damage": 512, "maxDamage": 1024, "recipe": "twilightforest:equipment/giant_sword", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:giant_cobblestone", "", "", "!twilightforest:giant_cobblestone", "", "", "twilightforest:giant_log", "", ""]},
+      {"damage": 1023, "maxDamage": 1024, "recipe": "twilightforest:equipment/giant_sword", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:giant_cobblestone", "", "", "!twilightforest:giant_cobblestone", "", "", "!twilightforest:giant_log", "", ""]}
+    ],
+    "twilightforest:ironwood_axe": [
+      {"damage": 128, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_axe", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 256, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_axe", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 511, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_axe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "", "!twilightforest:ironwood_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "twilightforest:ironwood_boots": [
+      {"damage": 65, "maxDamage": 260, "recipe": "twilightforest:equipment/ironwood_boots", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot", "", "", ""]},
+      {"damage": 130, "maxDamage": 260, "recipe": "twilightforest:equipment/ironwood_boots", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:ironwood_ingot", "", "!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot", "", "", ""]},
+      {"damage": 259, "maxDamage": 260, "recipe": "twilightforest:equipment/ironwood_boots", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "", "!twilightforest:ironwood_ingot", "", "", ""]}
+    ],
+    "twilightforest:ironwood_chestplate": [
+      {"damage": 80, "maxDamage": 320, "recipe": "twilightforest:equipment/ironwood_chestplate", "inputCount": 1, "cost": 6, "grid": ["!twilightforest:ironwood_ingot", "", "!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot"]},
+      {"damage": 160, "maxDamage": 320, "recipe": "twilightforest:equipment/ironwood_chestplate", "inputCount": 1, "cost": 4, "grid": ["!twilightforest:ironwood_ingot", "", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot"]},
+      {"damage": 319, "maxDamage": 320, "recipe": "twilightforest:equipment/ironwood_chestplate", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot"]}
+    ],
+    "twilightforest:ironwood_helmet": [
+      {"damage": 55, "maxDamage": 220, "recipe": "twilightforest:equipment/ironwood_helmet", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot", "", "", ""]},
+      {"damage": 110, "maxDamage": 220, "recipe": "twilightforest:equipment/ironwood_helmet", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot", "", "", ""]},
+      {"damage": 219, "maxDamage": 220, "recipe": "twilightforest:equipment/ironwood_helmet", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "", "!twilightforest:ironwood_ingot", "", "", ""]}
+    ],
+    "twilightforest:ironwood_hoe": [
+      {"damage": 128, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_hoe", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 256, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_hoe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 511, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_hoe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "twilightforest:ironwood_leggings": [
+      {"damage": 75, "maxDamage": 300, "recipe": "twilightforest:equipment/ironwood_leggings", "inputCount": 1, "cost": 5, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot"]},
+      {"damage": 150, "maxDamage": 300, "recipe": "twilightforest:equipment/ironwood_leggings", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "twilightforest:ironwood_ingot"]},
+      {"damage": 299, "maxDamage": 300, "recipe": "twilightforest:equipment/ironwood_leggings", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "", "!twilightforest:ironwood_ingot"]}
+    ],
+    "twilightforest:ironwood_pickaxe": [
+      {"damage": 128, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_pickaxe", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 256, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_pickaxe", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 511, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_pickaxe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "!twilightforest:ironwood_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "twilightforest:ironwood_shovel": [
+      {"damage": 128, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_shovel", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 256, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_shovel", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 511, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_shovel", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]}
+    ],
+    "twilightforest:ironwood_sword": [
+      {"damage": 128, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_sword", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:ironwood_ingot", "", "", "twilightforest:ironwood_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 256, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_sword", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "", "", "!twilightforest:ironwood_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 511, "maxDamage": 512, "recipe": "twilightforest:equipment/ironwood_sword", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:ironwood_ingot", "", "", "!twilightforest:ironwood_ingot", "", "", "minecraft:stick", "", ""]}
+    ],
+    "twilightforest:knightmetal_axe": [
+      {"damage": 128, "maxDamage": 512, "recipe": "twilightforest:equipment/knightmetal_axe", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 256, "maxDamage": 512, "recipe": "twilightforest:equipment/knightmetal_axe", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 511, "maxDamage": 512, "recipe": "twilightforest:equipment/knightmetal_axe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "", "!twilightforest:knightmetal_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "twilightforest:knightmetal_boots": [
+      {"damage": 65, "maxDamage": 260, "recipe": "twilightforest:equipment/knightmetal_boots", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot", "", "", ""]},
+      {"damage": 130, "maxDamage": 260, "recipe": "twilightforest:equipment/knightmetal_boots", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:knightmetal_ingot", "", "!twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot", "", "", ""]},
+      {"damage": 259, "maxDamage": 260, "recipe": "twilightforest:equipment/knightmetal_boots", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:knightmetal_ingot", "", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "", "!twilightforest:knightmetal_ingot", "", "", ""]}
+    ],
+    "twilightforest:knightmetal_chestplate": [
+      {"damage": 80, "maxDamage": 320, "recipe": "twilightforest:equipment/knightmetal_chestplate", "inputCount": 1, "cost": 6, "grid": ["!twilightforest:knightmetal_ingot", "", "!twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot"]},
+      {"damage": 160, "maxDamage": 320, "recipe": "twilightforest:equipment/knightmetal_chestplate", "inputCount": 1, "cost": 4, "grid": ["!twilightforest:knightmetal_ingot", "", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot"]},
+      {"damage": 319, "maxDamage": 320, "recipe": "twilightforest:equipment/knightmetal_chestplate", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:knightmetal_ingot", "", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot"]}
+    ],
+    "twilightforest:knightmetal_helmet": [
+      {"damage": 55, "maxDamage": 220, "recipe": "twilightforest:equipment/knightmetal_helmet", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot", "", "", ""]},
+      {"damage": 110, "maxDamage": 220, "recipe": "twilightforest:equipment/knightmetal_helmet", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot", "", "", ""]},
+      {"damage": 219, "maxDamage": 220, "recipe": "twilightforest:equipment/knightmetal_helmet", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "", "!twilightforest:knightmetal_ingot", "", "", ""]}
+    ],
+    "twilightforest:knightmetal_leggings": [
+      {"damage": 75, "maxDamage": 300, "recipe": "twilightforest:equipment/knightmetal_leggings", "inputCount": 1, "cost": 5, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot"]},
+      {"damage": 150, "maxDamage": 300, "recipe": "twilightforest:equipment/knightmetal_leggings", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "", "twilightforest:knightmetal_ingot"]},
+      {"damage": 299, "maxDamage": 300, "recipe": "twilightforest:equipment/knightmetal_leggings", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "", "!twilightforest:knightmetal_ingot"]}
+    ],
+    "twilightforest:knightmetal_pickaxe": [
+      {"damage": 128, "maxDamage": 512, "recipe": "twilightforest:equipment/knightmetal_pickaxe", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 256, "maxDamage": 512, "recipe": "twilightforest:equipment/knightmetal_pickaxe", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 511, "maxDamage": 512, "recipe": "twilightforest:equipment/knightmetal_pickaxe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "twilightforest:knightmetal_shield": [
+      {"damage": 256, "maxDamage": 1024, "recipe": "twilightforest:equipment/knightmetal_shield", "inputCount": 1, "cost": 4, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:towerwood", "", "twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ring", "", "twilightforest:knightmetal_ingot", "twilightforest:towerwood", ""]},
+      {"damage": 512, "maxDamage": 1024, "recipe": "twilightforest:equipment/knightmetal_shield", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:towerwood", "", "!twilightforest:knightmetal_ingot", "twilightforest:knightmetal_ring", "", "twilightforest:knightmetal_ingot", "twilightforest:towerwood", ""]},
+      {"damage": 1023, "maxDamage": 1024, "recipe": "twilightforest:equipment/knightmetal_shield", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:knightmetal_ingot", "!twilightforest:towerwood", "", "!twilightforest:knightmetal_ingot", "!twilightforest:knightmetal_ring", "", "!twilightforest:knightmetal_ingot", "!twilightforest:towerwood", ""]}
+    ],
+    "twilightforest:knightmetal_sword": [
+      {"damage": 128, "maxDamage": 512, "recipe": "twilightforest:equipment/knightmetal_sword", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:knightmetal_ingot", "", "", "twilightforest:knightmetal_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 256, "maxDamage": 512, "recipe": "twilightforest:equipment/knightmetal_sword", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:knightmetal_ingot", "", "", "!twilightforest:knightmetal_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 511, "maxDamage": 512, "recipe": "twilightforest:equipment/knightmetal_sword", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:knightmetal_ingot", "", "", "!twilightforest:knightmetal_ingot", "", "", "minecraft:stick", "", ""]}
+    ],
+    "twilightforest:naga_chestplate": [
+      {"damage": 84, "maxDamage": 336, "recipe": "twilightforest:equipment/naga_chestplate", "inputCount": 1, "cost": 6, "grid": ["!twilightforest:naga_scale", "", "!twilightforest:naga_scale", "twilightforest:naga_scale", "twilightforest:naga_scale", "twilightforest:naga_scale", "twilightforest:naga_scale", "twilightforest:naga_scale", "twilightforest:naga_scale"]},
+      {"damage": 168, "maxDamage": 336, "recipe": "twilightforest:equipment/naga_chestplate", "inputCount": 1, "cost": 4, "grid": ["!twilightforest:naga_scale", "", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "twilightforest:naga_scale", "twilightforest:naga_scale", "twilightforest:naga_scale", "twilightforest:naga_scale"]},
+      {"damage": 335, "maxDamage": 336, "recipe": "twilightforest:equipment/naga_chestplate", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:naga_scale", "", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "!twilightforest:naga_scale"]}
+    ],
+    "twilightforest:naga_leggings": [
+      {"damage": 78, "maxDamage": 315, "recipe": "twilightforest:equipment/naga_leggings", "inputCount": 1, "cost": 5, "grid": ["!twilightforest:naga_scale", "!twilightforest:naga_scale", "twilightforest:naga_scale", "twilightforest:naga_scale", "", "twilightforest:naga_scale", "twilightforest:naga_scale", "", "twilightforest:naga_scale"]},
+      {"damage": 157, "maxDamage": 315, "recipe": "twilightforest:equipment/naga_leggings", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:naga_scale", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "", "twilightforest:naga_scale", "twilightforest:naga_scale", "", "twilightforest:naga_scale"]},
+      {"damage": 314, "maxDamage": 315, "recipe": "twilightforest:equipment/naga_leggings", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:naga_scale", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "", "!twilightforest:naga_scale", "!twilightforest:naga_scale", "", "!twilightforest:naga_scale"]}
+    ],
+    "twilightforest:steeleaf_axe": [
+      {"damage": 32, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_axe", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 65, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_axe", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 130, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_axe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "", "!twilightforest:steeleaf_ingot", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "twilightforest:steeleaf_boots": [
+      {"damage": 32, "maxDamage": 130, "recipe": "twilightforest:equipment/steeleaf_boots", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot", "", "", ""]},
+      {"damage": 65, "maxDamage": 130, "recipe": "twilightforest:equipment/steeleaf_boots", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:steeleaf_ingot", "", "!twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot", "", "", ""]},
+      {"damage": 129, "maxDamage": 130, "recipe": "twilightforest:equipment/steeleaf_boots", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "", "!twilightforest:steeleaf_ingot", "", "", ""]}
+    ],
+    "twilightforest:steeleaf_chestplate": [
+      {"damage": 40, "maxDamage": 160, "recipe": "twilightforest:equipment/steeleaf_chestplate", "inputCount": 1, "cost": 6, "grid": ["!twilightforest:steeleaf_ingot", "", "!twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot"]},
+      {"damage": 80, "maxDamage": 160, "recipe": "twilightforest:equipment/steeleaf_chestplate", "inputCount": 1, "cost": 4, "grid": ["!twilightforest:steeleaf_ingot", "", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot"]},
+      {"damage": 159, "maxDamage": 160, "recipe": "twilightforest:equipment/steeleaf_chestplate", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot"]}
+    ],
+    "twilightforest:steeleaf_helmet": [
+      {"damage": 27, "maxDamage": 110, "recipe": "twilightforest:equipment/steeleaf_helmet", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot", "", "", ""]},
+      {"damage": 55, "maxDamage": 110, "recipe": "twilightforest:equipment/steeleaf_helmet", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot", "", "", ""]},
+      {"damage": 109, "maxDamage": 110, "recipe": "twilightforest:equipment/steeleaf_helmet", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "", "!twilightforest:steeleaf_ingot", "", "", ""]}
+    ],
+    "twilightforest:steeleaf_hoe": [
+      {"damage": 32, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_hoe", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 65, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_hoe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 130, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_hoe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "twilightforest:steeleaf_leggings": [
+      {"damage": 37, "maxDamage": 150, "recipe": "twilightforest:equipment/steeleaf_leggings", "inputCount": 1, "cost": 5, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot"]},
+      {"damage": 75, "maxDamage": 150, "recipe": "twilightforest:equipment/steeleaf_leggings", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "twilightforest:steeleaf_ingot"]},
+      {"damage": 149, "maxDamage": 150, "recipe": "twilightforest:equipment/steeleaf_leggings", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "", "!twilightforest:steeleaf_ingot"]}
+    ],
+    "twilightforest:steeleaf_pickaxe": [
+      {"damage": 32, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_pickaxe", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 65, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_pickaxe", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]},
+      {"damage": 130, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_pickaxe", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "!twilightforest:steeleaf_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""]}
+    ],
+    "twilightforest:steeleaf_shovel": [
+      {"damage": 32, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_shovel", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 65, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_shovel", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]},
+      {"damage": 130, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_shovel", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""]}
+    ],
+    "twilightforest:steeleaf_sword": [
+      {"damage": 32, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_sword", "inputCount": 1, "cost": 1, "grid": ["!twilightforest:steeleaf_ingot", "", "", "twilightforest:steeleaf_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 65, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_sword", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "", "", "!twilightforest:steeleaf_ingot", "", "", "minecraft:stick", "", ""]},
+      {"damage": 130, "maxDamage": 131, "recipe": "twilightforest:equipment/steeleaf_sword", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:steeleaf_ingot", "", "", "!twilightforest:steeleaf_ingot", "", "", "minecraft:stick", "", ""]}
+    ],
+    "twilightforest:travellers_boots": [
+      {"damage": 39, "maxDamage": 156, "recipe": "twilightforest:equipment/travellers_boots", "inputCount": 1, "cost": 4, "grid": ["!minecraft:string", "", "!minecraft:string", "twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "", "twilightforest:tanned_leather"]},
+      {"damage": 78, "maxDamage": 156, "recipe": "twilightforest:equipment/travellers_boots", "inputCount": 1, "cost": 3, "grid": ["!minecraft:string", "", "!minecraft:string", "!twilightforest:tanned_leather", "", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "", "twilightforest:tanned_leather"]},
+      {"damage": 155, "maxDamage": 156, "recipe": "twilightforest:equipment/travellers_boots", "inputCount": 1, "cost": 0, "grid": ["!minecraft:string", "", "!minecraft:string", "!twilightforest:tanned_leather", "", "!twilightforest:tanned_leather", "!twilightforest:tanned_leather", "", "!twilightforest:tanned_leather"]}
+    ],
+    "twilightforest:travellers_goggles": [
+      {"damage": 33, "maxDamage": 132, "recipe": "twilightforest:equipment/travellers_goggles", "inputCount": 1, "cost": 5, "grid": ["!twilightforest:tanned_leather", "", "!twilightforest:tanned_leather", "minecraft:glass_pane", "twilightforest:tanned_leather", "minecraft:glass_pane", "minecraft:gold_ingot", "", "minecraft:gold_ingot"]},
+      {"damage": 66, "maxDamage": 132, "recipe": "twilightforest:equipment/travellers_goggles", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:tanned_leather", "", "!twilightforest:tanned_leather", "!minecraft:glass_pane", "!twilightforest:tanned_leather", "minecraft:glass_pane", "minecraft:gold_ingot", "", "minecraft:gold_ingot"]},
+      {"damage": 131, "maxDamage": 132, "recipe": "twilightforest:equipment/travellers_goggles", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:tanned_leather", "", "!twilightforest:tanned_leather", "!minecraft:glass_pane", "!twilightforest:tanned_leather", "!minecraft:glass_pane", "!minecraft:gold_ingot", "", "!minecraft:gold_ingot"]}
+    ],
+    "twilightforest:travellers_vest": [
+      {"damage": 48, "maxDamage": 192, "recipe": "twilightforest:equipment/travellers_vest", "inputCount": 1, "cost": 6, "grid": ["!twilightforest:tanned_leather", "", "!twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:white_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:white_wool", "twilightforest:tanned_leather"]},
+      {"damage": 96, "maxDamage": 192, "recipe": "twilightforest:equipment/travellers_vest", "inputCount": 1, "cost": 4, "grid": ["!twilightforest:tanned_leather", "", "!twilightforest:tanned_leather", "!twilightforest:tanned_leather", "!minecraft:white_wool", "twilightforest:tanned_leather", "twilightforest:tanned_leather", "minecraft:white_wool", "twilightforest:tanned_leather"]},
+      {"damage": 191, "maxDamage": 192, "recipe": "twilightforest:equipment/travellers_vest", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:tanned_leather", "", "!twilightforest:tanned_leather", "!twilightforest:tanned_leather", "!minecraft:white_wool", "!twilightforest:tanned_leather", "!twilightforest:tanned_leather", "!minecraft:white_wool", "!twilightforest:tanned_leather"]}
+    ],
+    "twilightforest:travellers_wings": [
+      {"damage": 45, "maxDamage": 180, "recipe": "twilightforest:equipment/travellers_wings", "inputCount": 1, "cost": 6, "grid": ["!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "minecraft:copper_ingot", "twilightforest:tanned_leather", "minecraft:copper_ingot", "minecraft:copper_ingot", "twilightforest:carminite", "minecraft:copper_ingot"]},
+      {"damage": 90, "maxDamage": 180, "recipe": "twilightforest:equipment/travellers_wings", "inputCount": 1, "cost": 4, "grid": ["!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "!minecraft:copper_ingot", "!twilightforest:tanned_leather", "minecraft:copper_ingot", "minecraft:copper_ingot", "twilightforest:carminite", "minecraft:copper_ingot"]},
+      {"damage": 179, "maxDamage": 180, "recipe": "twilightforest:equipment/travellers_wings", "inputCount": 1, "cost": 0, "grid": ["!minecraft:gold_ingot", "", "!minecraft:gold_ingot", "!minecraft:copper_ingot", "!twilightforest:tanned_leather", "!minecraft:copper_ingot", "!minecraft:copper_ingot", "!twilightforest:carminite", "!minecraft:copper_ingot"]}
+    ],
+    "twilightforest:yeti_boots": [
+      {"damage": 65, "maxDamage": 260, "recipe": "twilightforest:equipment/yeti_boots", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur", "", "", ""]},
+      {"damage": 130, "maxDamage": 260, "recipe": "twilightforest:equipment/yeti_boots", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:alpha_yeti_fur", "", "!twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur", "", "", ""]},
+      {"damage": 259, "maxDamage": 260, "recipe": "twilightforest:equipment/yeti_boots", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:alpha_yeti_fur", "", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "", "!twilightforest:alpha_yeti_fur", "", "", ""]}
+    ],
+    "twilightforest:yeti_chestplate": [
+      {"damage": 80, "maxDamage": 320, "recipe": "twilightforest:equipment/yeti_chestplate", "inputCount": 1, "cost": 6, "grid": ["!twilightforest:alpha_yeti_fur", "", "!twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur"]},
+      {"damage": 160, "maxDamage": 320, "recipe": "twilightforest:equipment/yeti_chestplate", "inputCount": 1, "cost": 4, "grid": ["!twilightforest:alpha_yeti_fur", "", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur"]},
+      {"damage": 319, "maxDamage": 320, "recipe": "twilightforest:equipment/yeti_chestplate", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:alpha_yeti_fur", "", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur"]}
+    ],
+    "twilightforest:yeti_helmet": [
+      {"damage": 55, "maxDamage": 220, "recipe": "twilightforest:equipment/yeti_helmet", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur", "", "", ""]},
+      {"damage": 110, "maxDamage": 220, "recipe": "twilightforest:equipment/yeti_helmet", "inputCount": 1, "cost": 2, "grid": ["!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur", "", "", ""]},
+      {"damage": 219, "maxDamage": 220, "recipe": "twilightforest:equipment/yeti_helmet", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "", "!twilightforest:alpha_yeti_fur", "", "", ""]}
+    ],
+    "twilightforest:yeti_leggings": [
+      {"damage": 75, "maxDamage": 300, "recipe": "twilightforest:equipment/yeti_leggings", "inputCount": 1, "cost": 5, "grid": ["!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur"]},
+      {"damage": 150, "maxDamage": 300, "recipe": "twilightforest:equipment/yeti_leggings", "inputCount": 1, "cost": 3, "grid": ["!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur", "twilightforest:alpha_yeti_fur", "", "twilightforest:alpha_yeti_fur"]},
+      {"damage": 299, "maxDamage": 300, "recipe": "twilightforest:equipment/yeti_leggings", "inputCount": 1, "cost": 0, "grid": ["!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "", "!twilightforest:alpha_yeti_fur", "!twilightforest:alpha_yeti_fur", "", "!twilightforest:alpha_yeti_fur"]}
+    ]
+  },
+  "recraft": [
+    {
+      "why": "repair: a half-damaged enchanted iron pickaxe, iron ingots where the marked (damaged) ingots are",
+      "input": {"components": {"minecraft:damage": 125, "minecraft:enchantments": {"levels": {"minecraft:efficiency": 3, "minecraft:unbreaking": 2}}}, "count": 1, "id": "minecraft:iron_pickaxe"},
+      "unrecipeInCycle": 0,
+      "recipe": "minecraft:iron_pickaxe",
+      "grid": ["!minecraft:iron_ingot", "!minecraft:iron_ingot", "minecraft:iron_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""],
+      "uncraftingCost": 1,
+      "assembly": ["minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "", "", "", "", "", ""],
+      "result": {"components": {"minecraft:enchantments": {"levels": {"minecraft:efficiency": 3, "minecraft:unbreaking": 2}}}, "count": 1, "id": "minecraft:iron_pickaxe"},
+      "recraftingCost": 15,
+      "uncraftingCostAfter": 0
+    },
+    {
+      "why": "repair of an almost broken sword (more damaged parts than damageable components)",
+      "input": {"components": {"minecraft:damage": 249, "minecraft:enchantments": {"levels": {"minecraft:unbreaking": 3}}}, "count": 1, "id": "minecraft:iron_sword"},
+      "unrecipeInCycle": 0,
+      "recipe": "minecraft:iron_sword",
+      "grid": ["!minecraft:iron_ingot", "", "", "!minecraft:iron_ingot", "", "", "minecraft:stick", "", ""],
+      "uncraftingCost": 0,
+      "assembly": ["minecraft:iron_ingot", "", "", "minecraft:iron_ingot", "", "", "", "", ""],
+      "result": {"components": {"minecraft:enchantments": {"levels": {"minecraft:unbreaking": 3}}}, "count": 1, "id": "minecraft:iron_sword"},
+      "recraftingCost": 12,
+      "uncraftingCostAfter": 0
+    },
+    {
+      "why": "recraft: an enchanted iron sword into a diamond sword",
+      "input": {"components": {"minecraft:enchantments": {"levels": {"minecraft:sharpness": 3}}}, "count": 1, "id": "minecraft:iron_sword"},
+      "unrecipeInCycle": 0,
+      "recipe": "minecraft:iron_sword",
+      "grid": ["minecraft:iron_ingot", "", "", "minecraft:iron_ingot", "", "", "minecraft:stick", "", ""],
+      "uncraftingCost": 2,
+      "assembly": ["minecraft:diamond", "", "", "minecraft:diamond", "", "", "", "", ""],
+      "result": {"components": {"minecraft:enchantments": {"levels": {"minecraft:sharpness": 3}}}, "count": 1, "id": "minecraft:diamond_sword"},
+      "recraftingCost": 7,
+      "uncraftingCostAfter": 0
+    },
+    {
+      "why": "recraft without enchantments",
+      "input": "minecraft:iron_sword",
+      "unrecipeInCycle": 0,
+      "recipe": "minecraft:iron_sword",
+      "grid": ["minecraft:iron_ingot", "", "", "minecraft:iron_ingot", "", "", "minecraft:stick", "", ""],
+      "uncraftingCost": 2,
+      "assembly": ["minecraft:diamond", "", "", "minecraft:diamond", "", "", "", "", ""],
+      "result": "minecraft:diamond_sword",
+      "recraftingCost": 2,
+      "uncraftingCostAfter": 0
+    },
+    {
+      "why": "recraft armour: a damaged iron chestplate with protection II into a diamond chestplate",
+      "input": {"components": {"minecraft:damage": 120, "minecraft:enchantments": {"levels": {"minecraft:protection": 2}}}, "count": 1, "id": "minecraft:iron_chestplate"},
+      "unrecipeInCycle": 0,
+      "recipe": "minecraft:iron_chestplate",
+      "grid": [
+        "!minecraft:iron_ingot",
+        "",
+        "!minecraft:iron_ingot",
+        "!minecraft:iron_ingot",
+        "!minecraft:iron_ingot",
+        "minecraft:iron_ingot",
+        "minecraft:iron_ingot",
+        "minecraft:iron_ingot",
+        "minecraft:iron_ingot"
+      ],
+      "uncraftingCost": 4,
+      "assembly": ["minecraft:diamond", "", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond", "minecraft:diamond"],
+      "result": {"components": {"minecraft:enchantments": {"levels": {"minecraft:protection": 2}}}, "count": 1, "id": "minecraft:diamond_chestplate"},
+      "recraftingCost": 14,
+      "uncraftingCostAfter": 0
+    },
+    {
+      "why": "TF tools: a damaged ironwood pickaxe with efficiency II into a steeleaf pickaxe",
+      "input": {"components": {"minecraft:damage": 100, "minecraft:enchantments": {"levels": {"minecraft:efficiency": 2}}}, "count": 1, "id": "twilightforest:ironwood_pickaxe"},
+      "unrecipeInCycle": 0,
+      "recipe": "twilightforest:equipment/ironwood_pickaxe",
+      "grid": ["!twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "twilightforest:ironwood_ingot", "", "minecraft:stick", "", "", "minecraft:stick", ""],
+      "uncraftingCost": 2,
+      "assembly": ["twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "twilightforest:steeleaf_ingot", "", "", "", "", "", ""],
+      "result": {"components": {"minecraft:enchantments": {"levels": {"minecraft:efficiency": 2, "minecraft:fortune": 2}}}, "count": 1, "id": "twilightforest:steeleaf_pickaxe"},
+      "recraftingCost": 10,
+      "uncraftingCostAfter": 0
+    },
+    {
+      "why": "a partial assembly that crafts nothing",
+      "input": {"components": {"minecraft:enchantments": {"levels": {"minecraft:sharpness": 1}}}, "count": 1, "id": "minecraft:iron_sword"},
+      "unrecipeInCycle": 0,
+      "recipe": "minecraft:iron_sword",
+      "grid": ["minecraft:iron_ingot", "", "", "minecraft:iron_ingot", "", "", "minecraft:stick", "", ""],
+      "uncraftingCost": 2,
+      "assembly": ["minecraft:diamond", "", "", "", "", "", "", "", ""],
+      "result": "",
+      "recraftingCost": 0,
+      "uncraftingCostAfter": 0
+    },
+    {
+      "why": "another tool type: the shovel's grid plus an ingot crafts an iron hoe",
+      "input": {"components": {"minecraft:enchantments": {"levels": {"minecraft:efficiency": 1}}}, "count": 1, "id": "minecraft:iron_shovel"},
+      "unrecipeInCycle": 0,
+      "recipe": "minecraft:iron_shovel",
+      "grid": ["minecraft:iron_ingot", "", "", "minecraft:stick", "", "", "minecraft:stick", "", ""],
+      "uncraftingCost": 1,
+      "assembly": ["", "minecraft:iron_ingot", "", "", "", "", "", "", ""],
+      "result": "minecraft:iron_hoe",
+      "recraftingCost": 0,
+      "uncraftingCostAfter": 0
+    }
+  ]
 }
