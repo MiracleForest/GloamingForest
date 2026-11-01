@@ -20,9 +20,17 @@
 //   jigsaw    [{"pos": [x, y, z], "front": dir, "top": dir (or "facing": dir), "pool", "name",
 //               "target", "priority"}] (JigsawBlock orientation + nbt; FrontAndTop)
 //   entities  [{"pos": [x, y, z] (doubles), "id": entity id, "data": {...}}]
+//             paintings ("id": "minecraft:painting") hang on a block, not at a point: "pos" is
+//             the block the painting covers (integers; for a wider or taller painting the block
+//             Painting#calculateBoundingBox starts from, as Java's HangingEntity#pos), or
+//             data.block_pos [x, y, z] / data.TileX..TileZ names it (then "pos" may be Java's
+//             entity position, the painting's center). data.facing: the direction the picture
+//             faces (name or Direction#get2DDataValue), data.variant: the painting variant
+//             ("minecraft:kebab"). Block, facing and pos turn with the placement.
 #include "feature/structure/Internal.h"
 
 #include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
@@ -66,6 +74,27 @@ std::optional<BlockPos> pos3(Json const& j) {
 
 bool isDirection(std::string const& s) {
     return s == "north" || s == "south" || s == "east" || s == "west" || s == "up" || s == "down";
+}
+
+bool isIntegral(Json const& v) { return v.is_number_integer() || (v.is_number_float() && std::floor(v.get<double>()) == v.get<double>()); }
+
+/// The block a painting entity covers, template-local, when its data names it: "block_pos"
+/// ([x, y, z] or {"X", "Y", "Z"}) or TileX / TileY / TileZ (Java's saved HangingEntity#pos).
+std::optional<BlockPos> paintingBlockPos(Json const& data) {
+    if (!data.is_object()) return std::nullopt;
+    if (data.contains("block_pos")) {
+        auto const& b = data["block_pos"];
+        if (b.is_array() && b.size() == 3 && isIntegral(b[0]) && isIntegral(b[1]) && isIntegral(b[2]))
+            return BlockPos{static_cast<int>(b[0].get<double>()), static_cast<int>(b[1].get<double>()), static_cast<int>(b[2].get<double>())};
+        if (b.is_object() && b.contains("X") && b.contains("Y") && b.contains("Z") && isIntegral(b["X"]) && isIntegral(b["Y"]) && isIntegral(b["Z"]))
+            return BlockPos{static_cast<int>(b["X"].get<double>()), static_cast<int>(b["Y"].get<double>()), static_cast<int>(b["Z"].get<double>())};
+        return std::nullopt;
+    }
+    if (data.contains("TileX") && data.contains("TileY") && data.contains("TileZ") && isIntegral(data["TileX"]) && isIntegral(data["TileY"]) &&
+        isIntegral(data["TileZ"]))
+        return BlockPos{static_cast<int>(data["TileX"].get<double>()), static_cast<int>(data["TileY"].get<double>()),
+                        static_cast<int>(data["TileZ"].get<double>())};
+    return std::nullopt;
 }
 
 std::unique_ptr<Parsed> parse(Template const& t) {
@@ -248,6 +277,26 @@ std::vector<std::string> validate(Json const& doc) {
                  p[1].get<double>() > sz->y || p[2].get<double>() > sz->z)
             err("entity outside the template: " + e.dump());
         if (!e.contains("id") || !e["id"].is_string()) err("entity without id: " + e.dump());
+        if (e.value("id", std::string{}) == "minecraft:painting") {
+            // a painting hangs on a block: data.block_pos (or TileX..Z) names it, otherwise "pos"
+            // is that block (integers; Java's saved entity position is the painting's center,
+            // half a block off for even sizes, so it cannot stand in for the block)
+            auto const& data = e.value("data", Json::object());
+            if (auto bp = paintingBlockPos(data)) {
+                if (!inside(*bp)) err("painting block_pos outside the template: " + e.dump());
+            } else if (data.is_object() && (data.contains("block_pos") || data.contains("TileX"))) {
+                err("painting block_pos / TileX..Z must be three integers: " + e.dump());
+            } else if (p.is_array() && p.size() == 3 && !(isIntegral(p[0]) && isIntegral(p[1]) && isIntegral(p[2]))) {
+                err("a painting's pos is the block it covers (integers), or give data.block_pos: " + e.dump());
+            }
+            auto variant = data.is_object() ? data.value("variant", data.value("motive", std::string("minecraft:kebab"))) : std::string("minecraft:kebab");
+            if (!paintings::byId(variant)) err("unknown painting variant " + variant + ": " + e.dump());
+            if (data.is_object() && data.contains("facing")) {
+                auto const& f = data["facing"];
+                bool ok = f.is_number_integer() ? (f.get<int>() >= 0 && f.get<int>() <= 3) : (f.is_string() && blocks::parseDirection(f.get<std::string>()).has_value());
+                if (!ok) err("painting facing must be a horizontal direction (name or 2D data value): " + e.dump());
+            }
+        }
     }
     return errors;
 }
@@ -509,12 +558,19 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
                 break;
             }
             double wx = rx + placement.offset.x, wy = y + placement.offset.y, wz = rz + placement.offset.z;
-            BlockPos bp{pure::mthFloor(wx), pure::mthFloor(wy), pure::mthFloor(wz)};
+            // StructureEntityInfo#blockPos (BlockPos.containing(pos); a painting's own block) turned
+            // as a block position, then clipped (StructureTemplate#placeEntities)
+            BlockPos local{pure::mthFloor(e.x), pure::mthFloor(e.y), pure::mthFloor(e.z)};
+            bool     isPainting = e.id == "minecraft:painting";
+            if (isPainting)
+                if (auto covered = paintingBlockPos(e.data)) local = *covered;
+            BlockPos rel = relative(placement, local);
+            BlockPos bp{rel.x + placement.offset.x, rel.y + placement.offset.y, rel.z + placement.offset.z};
             if (clip && !clip->contains(bp.x, bp.y, bp.z)) continue;
-            if (e.id == "minecraft:painting") {
-                // a hanging painting: its block and facing ("facing" as Direction#get2DDataValue or a
-                // name) turned with the placement (HangingEntity#rotate / #mirror), its variant
-                // hung through TF's spot check
+            if (isPainting) {
+                // a hanging painting: the block it covers (bp) and its facing ("facing" as
+                // Direction#get2DDataValue or a name) turned with the placement (HangingEntity#rotate
+                // / #mirror), its variant hung through TF's spot check
                 Orientation dir = Orientation::South;
                 if (e.data.contains("facing") && e.data["facing"].is_number_integer()) dir = from2D(e.data["facing"].get<int>());
                 else dir = blocks::parseDirection(e.data.value("facing", e.data.value("direction", std::string("south")))).value_or(Orientation::South);

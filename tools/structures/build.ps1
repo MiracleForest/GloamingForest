@@ -57,10 +57,17 @@ if ($SelfTest) {
     Add-GftDataMarker $t 1 1 1 'seat@north'
     Add-GftJigsaw $t 2 0 0 -Front north -Pool 'minecraft:empty' -Name 'gf_test:door'
     Add-GftEntity $t 2.5 1 2.5 'minecraft:armor_stand'
+    Add-GftPainting $t 1 1 2 -Facing south -Variant 'minecraft:baroque'
     $text = ConvertTo-GftJson $t
     $doc  = $text | ConvertFrom-Json -AsHashtable
     $errs = Test-GftDocument $doc
     if ($errs.Count) { $errs | ForEach-Object { Write-Host "[template] selftest: $_" -ForegroundColor Red }; exit 1 }
+    # a painting at Java's entity position (its center) without block_pos is refused, as are unknown variants
+    $bad = $text | ConvertFrom-Json -AsHashtable
+    $bad.entities = @(@{ pos = @(2.0, 2.0, 2.96875); id = 'minecraft:painting'; data = @{ facing = 'north'; variant = 'minecraft:baroque' } },
+        @{ pos = @(1, 1, 1); id = 'minecraft:painting'; data = @{ variant = 'minecraft:no_such_painting' } })
+    $badErrors = Test-GftDocument $bad
+    if ($badErrors.Count -ne 2) { Write-Host "[template] selftest: expected 2 painting errors, got $($badErrors.Count): $($badErrors -join '; ')" -ForegroundColor Red; exit 1 }
     if ($doc.palette.Count -ne 6) { Write-Host "[template] selftest: expected 6 palette entries (void, bricks, cobble, air, stairs, planks), got $($doc.palette.Count)" -ForegroundColor Red; exit 1 }
     if ((ConvertTo-GftJson $t) -ne $text) { Write-Host '[template] selftest: the output is not stable' -ForegroundColor Red; exit 1 }
     $total = ($doc.blocks | ForEach-Object { $_[1] } | Measure-Object -Sum).Sum

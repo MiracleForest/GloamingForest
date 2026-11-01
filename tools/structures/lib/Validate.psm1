@@ -60,8 +60,55 @@ function Test-GftDocument {
             $errors.Add("entity outside the template: $($e | ConvertTo-Json -Compress -Depth 5)")
         }
         if ($e['id'] -isnot [string]) { $errors.Add("entity without id: $($e | ConvertTo-Json -Compress -Depth 5)") }
+        if ($e['id'] -eq 'minecraft:painting') {
+            foreach ($problem in (Test-GftPainting $e $size)) { $errors.Add("$problem`: $($e | ConvertTo-Json -Compress -Depth 5)") }
+        }
     }
     return , $errors.ToArray()
+}
+
+# minecraft:painting_variant of 1.21.1
+$script:PaintingVariants = @('alban', 'aztec', 'aztec2', 'backyard', 'baroque', 'bomb', 'bouquet', 'burning_skull', 'bust', 'cavebird', 'changing',
+    'cotan', 'courbet', 'creebet', 'donkey_kong', 'earth', 'endboss', 'fern', 'fighters', 'finding', 'fire', 'graham', 'humble', 'kebab', 'lowmist',
+    'match', 'meditative', 'orb', 'owlemons', 'passage', 'pigscene', 'plant', 'pointer', 'pond', 'pool', 'prairie_ride', 'sea', 'skeleton',
+    'skull_and_roses', 'stage', 'sunflowers', 'sunset', 'tides', 'unpacked', 'void', 'wanderer', 'wasteland', 'water', 'wind', 'wither')
+
+function Test-GftIntegral($v) { return ($v -is [int] -or $v -is [long] -or ($v -is [double] -and [math]::Floor($v) -eq $v)) }
+
+# A painting hangs on a block (structure::templates::validate): data.block_pos / TileX..TileZ name it
+# (integers inside the template), otherwise "pos" is that block and must be integers (Java's saved
+# entity position is the painting's center, half a block off for even sizes).
+function Test-GftPainting($e, $size) {
+    $problems = [System.Collections.Generic.List[string]]::new()
+    $d = if ($e['data'] -is [System.Collections.IDictionary]) { $e['data'] } else { @{} }
+    $block = $null
+    if ($d.Contains('block_pos')) {
+        $b = $d['block_pos']
+        if ($b -is [System.Collections.IList] -and $b.Count -eq 3 -and (Test-GftIntegral $b[0]) -and (Test-GftIntegral $b[1]) -and (Test-GftIntegral $b[2])) {
+            $block = @([int]$b[0], [int]$b[1], [int]$b[2])
+        } elseif ($b -is [System.Collections.IDictionary] -and $b.Contains('X') -and (Test-GftIntegral $b['X']) -and (Test-GftIntegral $b['Y']) -and (Test-GftIntegral $b['Z'])) {
+            $block = @([int]$b['X'], [int]$b['Y'], [int]$b['Z'])
+        } else { $problems.Add('painting block_pos must be three integers') }
+    } elseif ($d.Contains('TileX')) {
+        if ((Test-GftIntegral $d['TileX']) -and (Test-GftIntegral $d['TileY']) -and (Test-GftIntegral $d['TileZ'])) { $block = @([int]$d['TileX'], [int]$d['TileY'], [int]$d['TileZ']) }
+        else { $problems.Add('painting TileX / TileY / TileZ must be integers') }
+    } else {
+        $p = $e['pos']
+        if ($p -is [System.Collections.IList] -and $p.Count -eq 3 -and -not ((Test-GftIntegral $p[0]) -and (Test-GftIntegral $p[1]) -and (Test-GftIntegral $p[2]))) {
+            $problems.Add("a painting's pos is the block it covers (integers), or give data.block_pos")
+        }
+    }
+    if ($block -and ($block[0] -lt 0 -or $block[1] -lt 0 -or $block[2] -lt 0 -or $block[0] -ge $size[0] -or $block[1] -ge $size[1] -or $block[2] -ge $size[2])) {
+        $problems.Add('painting block_pos outside the template')
+    }
+    $variant = if ($d.Contains('variant')) { $d['variant'] } elseif ($d.Contains('motive')) { $d['motive'] } else { 'minecraft:kebab' }
+    if ("$variant" -notmatch '^(minecraft:)?([a-z0-9_]+)$' -or $Matches[2] -notin $script:PaintingVariants) { $problems.Add("unknown painting variant $variant") }
+    if ($d.Contains('facing')) {
+        $f = $d['facing']
+        $ok = if ($f -is [string]) { $f -in 'north', 'south', 'east', 'west' } else { (Test-GftIntegral $f) -and $f -ge 0 -and $f -le 3 }
+        if (-not $ok) { $problems.Add('painting facing must be a horizontal direction (name or 2D data value)') }
+    }
+    return , $problems.ToArray()
 }
 
 # owners.tsv: kind -> set of ids

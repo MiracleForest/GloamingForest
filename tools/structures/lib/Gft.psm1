@@ -16,6 +16,11 @@
 #               pos ("loot" {table}, "spawner" {entity, Delay, MinSpawnDelay, ...}, "sign" {lines})
 #   jigsaw    [{"pos": [x, y, z], "front": dir, "top": dir, "pool", "name", "target", "priority"}]
 #   entities  [{"pos": [x, y, z], "id": entity id, "data": {...}}]
+#             a painting ("minecraft:painting") hangs on a block: "pos" is the block it covers
+#             (integers; Java's HangingEntity#pos, the block Painting#calculateBoundingBox starts
+#             from for wider / taller variants), or data.block_pos [x, y, z] (or data.TileX..TileZ)
+#             names it; data.facing is the direction the picture faces, data.variant the painting
+#             variant ("minecraft:kebab"). Add-GftPainting writes both pos and block_pos.
 #
 # A script:
 #   $t = New-Gft -Id 'twilightforest:camp/tent/solo_tent' -Size 7, 5, 7
@@ -164,6 +169,17 @@ function Add-GftEntity {
     $Template.Entities.Add([ordered]@{ pos = @($X, $Y, $Z); id = $Entity; data = $Data })
 }
 
+# A painting covering block (X, Y, Z), its picture facing $Facing (north / south / east / west).
+function Add-GftPainting {
+    param($Template, [int]$X, [int]$Y, [int]$Z, [ValidateSet('north', 'south', 'east', 'west')][string]$Facing, [string]$Variant = 'minecraft:kebab')
+    if (-not (Test-GftInside $Template $X $Y $Z)) { throw "Add-GftPainting $($Template.Id): ($X, $Y, $Z) is outside the template" }
+    $Template.Entities.Add([ordered]@{
+            pos  = @($X, $Y, $Z)
+            id   = 'minecraft:painting'
+            data = [ordered]@{ block_pos = @($X, $Y, $Z); facing = $Facing; variant = $Variant }
+        })
+}
+
 function Save-Gft {
     param($Template)
     $script:Saved.Add($Template)
@@ -216,5 +232,5 @@ function ConvertTo-GftJson {
     return $sb.ToString()
 }
 
-Export-ModuleMember -Function New-Gft, Set-GftBlock, Set-GftBox, Set-GftLayer, Add-GftMarker, Add-GftDataMarker, Add-GftJigsaw, Add-GftEntity, Save-Gft,
+Export-ModuleMember -Function New-Gft, Set-GftBlock, Set-GftBox, Set-GftLayer, Add-GftMarker, Add-GftDataMarker, Add-GftJigsaw, Add-GftEntity, Add-GftPainting, Save-Gft,
     Get-GftSaved, Clear-GftSaved, ConvertTo-GftJson
