@@ -44,10 +44,32 @@ max 12000 ticks) and the cave mood sound (6000 ticks, extent 8, offset 2.0).
   layers -> the key biome). E.g. clearing (keys -3, -1): quart y >= -1 -> clearing, quart y <= -2 -> underground
   (block y < -4); the highlands use `twilightforest:highlands_underground`; final plateau and thornlands have one
   layer. Keys are in the grid table (section 5).
-- Terrain blending (`sampleTerrain`, used by U2's `biome_driven_terrain` / `biome_driven_noise`): blend radius 8.75
-  (int 9) blocks, block offset 2 (quart centre); for every quart cell within the radius:
-  `falloff = 8.75^2 * weight * exp((distSq * 2 + depth) * -0.4)` for depth and the same with `scale` for scale; result
-  = weighted means of depth and scale. Translate exactly (F5/U2 call it through `worldgen::setBiomeSource`).
+- Terrain blending (`BiomeDensitySource.sampleTerrain(blockX, blockZ, ctx)`, used by U2's `biome_driven_terrain` /
+  `biome_driven_noise`). Translate exactly; F5/U2 call it through `worldgen::setBiomeSource`. All arithmetic is in
+  `double` unless marked:
+  - Constants: `BLEND_RADIUS = 8.75`, `BLEND_RADIUS_INT = Mth.floor(8.75 + 1.0) = 9` (blocks), `BLOCK_XYZ_OFFSET =
+    QuartPos.SIZE / 2 = 2`.
+  - `bxo = blockX - 2` and `bzo = blockZ - 2` (ints). `xQuartStart = (bxo - 9) >> 2`, `xQuartEnd = (bxo + 9) >> 2`,
+    likewise for z (arithmetic shifts). `xCount = xQuartEnd - xQuartStart + 1` (5 or 6), likewise `zCount`.
+  - `xQuartDelta = (bxo - (xQuartStart << 2)) * 0.25` and `zQuartDelta` likewise. These are in **quart units**, and
+    so is everything after them.
+  - Loop order (x outer, z inner; it matters for the floating-point sums): `cx = 0..xCount-1`, `cz = 0..zCount-1`.
+    `dX = xQuartDelta - cx`, `dZ = zQuartDelta - cz`, `distSq = dX*dX + dZ*dZ` (quart units).
+  - A cell counts only if `distSq < 8.75 * 8.75` (= 76.5625, compared in quart units). With these bounds `|dX|, |dZ|
+    <= 3`, so `distSq <= 18` and the test never rejects a cell; keep it anyway. The column is
+    `getTerrainColumn(cx + xQuartStart, cz + zQuartStart)` at quart coordinates; skip the cell if absent.
+  - With `w = column.weight(ctx)`, `d = column.depth(ctx)` and `s = column.scale(ctx)` (density functions evaluated
+    at the caller's context, not at the cell):
+    `falloff = 76.5625 * w * Math.exp((distSq * 2f + d) * -0.4f)` and `scaleFalloff = 76.5625 * w *
+    Math.exp((distSq * 2f + s) * -0.4f)`.
+    The literals are Java floats: `2f` is exactly 2.0, but `-0.4f` widens to `-0.4000000059604645`, not `-0.4`. Use
+    `(double) -0.4f` for bit-exact parity. `Math.exp` is HotSpot's x64 intrinsic, which is not guaranteed to match the
+    C runtime's `exp` in the last ulp. Check against the F13 height goldens; if they differ, use an `exp` that
+    reproduces HotSpot's.
+  - The multiplication order is `76.5625 * w`, then `*= exp(...)`.
+  - Accumulate `totalDepth += d * falloff`, `totalContribution += falloff`, `totalScale += s * scaleFalloff` and
+    `totalScaleContribution += scaleFalloff`.
+  - Result: `DensityData(totalDepth / totalContribution, totalScale / totalScaleContribution)`.
 
 Bedrock: implement as F5's `BiomeSourceFn` returning TF biome ids per 4x4x4 cell; vanilla clients receive the biome
 ids through Bedrock biome definitions shipped in the BP/RP (client biome JSON for colours and fog).
@@ -62,11 +84,17 @@ Two registry entries (both owned): `biome_layer_stack/twilightforest:random_fore
 1. `random_biomes` [1]: per pixel `nextRandom(15) == 0` -> rare biome (uniform from lake, dense mushroom forest,
    enchanted forest, clearing, spooky forest) else common (uniform from forest, dense forest, mushroom forest, oak
    savannah, firefly forest).
-2. `key_biomes` [1000]: key biomes glacier, fire swamp, dark forest center, final plateau. The parent is sampled at
-   `(x, z)` (TF's `AreaTransformer1.run` seeds the pixel RNG at `(x, z)`; `getParentX/Y = x | 3` is not used for
-   sampling); per 4x4 block a fixed RNG `overworldSeed + (x & -4) * 25117 + (z & -4) * 151121` picks the key cell
-   `(1..2, 1..2)`; a second RNG `overworldSeed + (x / 8) * 25117 + (z / 8) * 151121` picks `offset = nextInt(3)`; the key
-   cell of each 8x8 quadrant gets key biome `(offset + quadrant) & 3` (quadrant 0..3 from `x & 4`, `z & 4`).
+2. `key_biomes` [1000]: key biomes in list order `[0] glacier, [1] fire swamp, [2] dark forest center, [3] final
+   plateau`. The parent is sampled at `(x, z)`: TF's `AreaTransformer1.run` seeds the pixel RNG at `(x, z)`, and
+   `getParentX/Y = x | 3` is not used for sampling. Per pixel, with a `java.util.Random`, not the layer context:
+   - `rand = new Random(overworldSeed + (x & -4) * 25117L + (z & -4) * 151121L)`; `ox = nextInt(2) + 1`, then `oz =
+     nextInt(2) + 1`.
+   - `rand.setSeed(overworldSeed + (x / 8) * 25117L + (z / 8) * 151121L)`; `offset = nextInt(3)`. Here `x / 8` and
+     `z / 8` are Java int division, which truncates toward zero (`-1 / 8 == 0`, `-9 / 8 == -1`). It is not floor or
+     `>> 3`, so the quadrants next to the axes differ for negative coordinates. Products are in 64-bit.
+   - If `(x & 3) == ox && (z & 3) == oz`: return `keyBiomes[(offset + quadrant) & 3]` with `quadrant = ((x & 4) != 0 ?
+     2 : 0) + ((z & 4) != 0 ? 1 : 0)`. So (x&4 = 0, z&4 = 0) gets `offset`, (0, 4) gets `offset + 1`, (4, 0) gets
+     `offset + 2` and (4, 4) gets `offset + 3`. Otherwise return the parent biome at `(x, z)`.
 3. `companion_biomes` [1000]: a pixel not itself the key but touching it (4-neighbours) becomes the companion: fire
    swamp -> swamp, glacier -> snowy forest, dark forest center -> dark forest, final plateau -> highlands.
 4. `zoom` [1000], `zoom` [1001] (not fuzzy; vanilla legacy zoom).
@@ -82,8 +110,12 @@ Two registry entries (both owned): `biome_layer_stack/twilightforest:random_fore
   when any 4-neighbour differs, unless either side is lake, thornlands, clearing or oak savannah, or the pair is one of
   (snowy forest, glacier), (mushroom forest, dense mushroom forest), (swamp, fire swamp), (dark forest, dark forest
   center), (highlands, final plateau).
-- `median` (unused by the shipped stacks): the most common of the 3x3 sampled at `(x + pos % 3, z + pos / 3)` (5 of 9 wins;
-  ties prefer index 5, i.e. `(x + 2, z + 1)`, else 50 % random).
+- `median` (`MedianLayer`, a registered layer type that the shipped stacks do not use): sample `biomes[pos] =
+  parent(x + pos % 3, z + pos / 3)` for `pos` 0..8. Return the first biome, in index order, that occurs at least 5
+  times of 9; otherwise return `biomes[0] = parent(x, z)`. The code's tie branch ("prefer index 5, else
+  `nextRandom(2)`") never runs, because `biomeRecordCount` starts at 0 and every count is at least 1, so both
+  comparisons are always false. The layer therefore consumes **no** context RNG. Translate this behaviour, not the
+  intent of the comments.
 - Vanilla legacy layer RNG (`LazyAreaContext`): world-seed mixing as Java's `LinearCongruentialGenerator`; keep it
   bit-exact (F5 `jrand` provides it) so biome maps match Java seeds.
 
