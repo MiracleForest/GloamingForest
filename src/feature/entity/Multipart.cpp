@@ -309,6 +309,7 @@ PartHandle addPart(Mob& mob, std::string const& partId, PartSize size, std::func
         log().warn("entity: could not spawn part {} of {}", partId, mob.getTypeName());
         return {};
     }
+    log().info("entity: {} got part {} ({})", mob.getTypeName(), partId, fe::actorById(rec.actorId) ? fe::actorById(rec.actorId)->getTypeName() : std::string("?"));
     s.parts.push_back(std::move(rec));
     fe::syncParts(mob, s);
     return {fe::uidOf(mob), partId};

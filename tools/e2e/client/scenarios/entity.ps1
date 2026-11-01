@@ -4,21 +4,27 @@
 #                        client logs "client boss bar <id> coloured #FF8000" when it applies it.
 #   remote-vanilla       the vanilla client shows the nearest vanilla colour (red) and never gets a
 #                        companion packet.
-# Screenshots: out/entity/boss-bar-<mode>.png. Local mode also runs the entity selftests on the
-# integrated server (the client build's hooks).
+# Then a second fixture boss named gf_parts: its behaviour adds 3 linked parts (spike S4: they
+# render on every client as ordinary actors). Screenshots: out/entity/boss-bar-<mode>.png and
+# boss-parts-<mode>.png. Local mode also runs the entity selftests on the integrated server (the
+# client build's hooks).
 Save-Screenshot 'hud' | Out-Null
-# the name tag gf_parts makes the fixture behaviour add 3 linked parts (spike S4: they render on
-# every client as ordinary actors)
-$summon = 'summon gf_test:boss gf_parts ~4 ~ ~'
+$bar   = 'summon gf_test:boss ~4 ~ ~'
+$parts = 'summon gf_test:boss gf_parts ~5 ~ ~3'
 if ($script:Mode -eq 'local') {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $mark = Get-LogMark
     Invoke-Chat '/difficulty easy'
-    Invoke-Chat "/$summon"
+    Invoke-Chat "/$bar"
     Wait-LogLine 'client boss bar -?\d+ coloured #FF8000' 30 -Since $mark | Out-Null
     Start-Sleep -Seconds 2
     Save-Screenshot 'boss-bar-local' | Out-Null
-    # peaceful: a boss without a home just leaves (BaseTFBoss#checkDespawn)
+    $mark2 = Get-LogMark
+    Invoke-Chat "/$parts"
+    Wait-LogLine 'entity: gf_test:boss got part head' 30 -Since $mark2 | Out-Null
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'boss-parts-local' | Out-Null
+    # peaceful: a boss without a home just leaves (BaseTFBoss#checkDespawn), its parts with it
     Invoke-Chat '/difficulty peaceful'
     Wait-LogLine 'boss: gf_test:boss left \(peaceful\)' 30 -Since $mark | Out-Null
     $r = Invoke-SelfTest 'entity.*'
@@ -28,7 +34,7 @@ if ($script:Mode -eq 'local') {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
     $mark = Get-LogMark
     Send-HostConsole 'difficulty easy'
-    Send-HostConsole "execute as @a at @s run $summon"
+    Send-HostConsole "execute as @a at @s run $bar"
     if ($script:Mode -eq 'remote-mod') {
         Wait-LogLine '\[host\].*companion joined' 60 | Out-Null
         Wait-LogLine '^(?!\[host\]).*client boss bar -?\d+ coloured #FF8000' 30 -Since $mark | Out-Null
@@ -39,6 +45,10 @@ if ($script:Mode -eq 'local') {
     }
     Start-Sleep -Seconds 2
     Save-Screenshot "boss-bar-$($script:Mode)" | Out-Null
+    Send-HostConsole "execute as @a at @s run $parts"
+    Wait-LogLine '\[host\].*entity: gf_test:boss got part head' 30 -Since $mark | Out-Null
+    Start-Sleep -Seconds 3
+    Save-Screenshot "boss-parts-$($script:Mode)" | Out-Null
     Send-HostConsole 'difficulty peaceful'
     Wait-LogLine '\[host\].*boss: gf_test:boss left \(peaceful\)' 30 -Since $mark | Out-Null
     if (-not (Get-GameProcess)) { throw 'the game closed while connected to the host' }

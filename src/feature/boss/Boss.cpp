@@ -196,6 +196,8 @@ struct State {
         std::string            type;
     };
     std::vector<PendingFill> pendingFills;
+    std::unordered_set<std::int64_t> discarding; ///< bosses removed on peaceful (removal pending)
+    int                              spawnerVersion = 0;
     std::optional<std::pair<core::GlobalPos, std::string>> lastConquest;
 };
 State& S() {
@@ -382,6 +384,7 @@ void removeBar(std::int64_t bossId) {
     for (auto pid : it->second.players)
         if (auto* p = fe::playerById(pid)) removeViewer(bossId, *p);
     S().bars.erase(it);
+    S().qualified.erase(bossId);
 }
 
 void forEachViewer(Bar const& bar, std::function<void(Player&)> const& fn) {
@@ -680,6 +683,7 @@ std::string spawnerBlockOf(std::string const& type) {
 /// BaseTFBoss#checkDespawn on peaceful: back to the spawner at home, then gone.
 bool peacefulDespawn(Mob& boss) {
     if (!peaceful()) return false;
+    if (!S().discarding.insert(uidOf(boss)).second) return true; // already on its way out
     auto home = gf::entity::home(boss);
     auto block = spawnerBlockOf(boss.getTypeName());
     if (home && home->pos.dim == static_cast<int>(boss.getDimensionId()) && !block.empty()) {
@@ -874,11 +878,17 @@ bool spawnMyBoss(BlockSource& region, int dim, BlockPos const& pos, SpawnerSpec 
 void scanSpawners() {
     auto& s = S();
     if (s.spawners.empty()) return;
-    std::unordered_set<BlockType const*> types;
-    int                                  range = 0;
-    for (auto const& [id, spec] : s.spawners) {
-        if (auto const* b = game::blockWith(id)) types.insert(&b->getBlockType());
-        range = std::max(range, spec.range);
+    // the registered spawner block types, rebuilt only when a registration changed
+    static std::unordered_set<BlockType const*> types;
+    static int                                  range = 0, version = -1;
+    if (version != s.spawnerVersion) {
+        types.clear();
+        range = 0;
+        for (auto const& [id, spec] : s.spawners) {
+            if (auto const* b = game::blockWith(id)) types.insert(&b->getBlockType());
+            range = std::max(range, spec.range);
+        }
+        version = s.spawnerVersion;
     }
     if (types.empty()) return;
     auto* lv = level();
@@ -1005,6 +1015,7 @@ public:
                     if (!fe::actorById(uid) && std::none_of(S().dying.begin(), S().dying.end(), [&](Dying const& d) { return d.uid == uid; }))
                         gone.push_back(uid);
                 for (auto uid : gone) removeBar(uid);
+                std::erase_if(S().discarding, [](std::int64_t uid) { return !fe::actorById(uid); });
             }
         });
         // EntityEvents#addQualifiedGroupPlayerIfNeeded: melee hits now, every damage through combat
@@ -1038,6 +1049,7 @@ public:
             S().dying.clear();
             S().activeSpawners.clear();
             S().pendingFills.clear();
+            S().discarding.clear();
         });
     }
     void uninstall() {}
@@ -1056,6 +1068,7 @@ void resetTestRecords() {
 bool hasBar(std::int64_t uid) { return S().bars.contains(uid); }
 void unregisterSpawnerForTest(std::string const& blockId) {
     S().spawners.erase(blockId);
+    S().spawnerVersion++;
     std::erase_if(S().activeSpawners, [&](auto const& kv) { return kv.second.blockId == blockId; });
 }
 
@@ -1076,6 +1089,7 @@ void registerBoss(BossSpec spec) {
 void registerSpawner(SpawnerSpec spec) {
     auto id               = spec.blockId;
     fb::S().spawners[id] = std::move(spec);
+    fb::S().spawnerVersion++;
 }
 
 void BossBar::setProgress(float fraction) const {

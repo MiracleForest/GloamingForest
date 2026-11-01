@@ -63,6 +63,7 @@ struct ClientState {
     std::unordered_map<std::int64_t, Json>      thrown;
     std::set<std::int64_t>                      logged; ///< bars whose colour was applied (one log line each)
     bool                                        ridingUnfriendly = false;
+    std::mutex                                  barsMutex; ///< bars / logged: the HUD may read them on another thread
 };
 ClientState& C() {
     static ClientState s;
@@ -71,7 +72,8 @@ ClientState& C() {
 
 /// Writes the exact colours into the HUD's boss table (ClientTFBossBar#renderBossBar's tint).
 void applyColours(ClientInstanceScreenModel const& model) {
-    auto& s = C();
+    auto&            s = C();
+    std::scoped_lock lock(s.barsMutex);
     if (s.bars.empty()) return;
     auto& infos = const_cast<std::unordered_map<ActorUniqueID, BossInfo>&>(model.mBossInfo.get());
     for (auto& [id, info] : infos) {
@@ -131,8 +133,9 @@ namespace {
 void registerHandlers() {
     namespace nc = gf::net::client;
     nc::on("boss.bar", [](Json const& m) {
-        auto  id = m.value("id", std::int64_t{0});
-        auto& s  = C();
+        auto             id = m.value("id", std::int64_t{0});
+        auto&            s  = C();
+        std::scoped_lock lock(s.barsMutex);
         auto  op = m.value("op", std::string("add"));
         if (op == "remove") {
             s.bars.erase(id);
@@ -140,6 +143,7 @@ void registerHandlers() {
             s.deathTimes.erase(id);
             return;
         }
+        if (!s.bars.contains(id)) log().info("client boss bar {} received (#{:06X})", id, m.value("rgb", 0u));
         auto& bar   = s.bars[id];
         bar.rgb     = m.value("rgb", bar.rgb);
         bar.overlay = m.value("overlay", bar.overlay);
@@ -177,7 +181,17 @@ public:
         EntityClientMountHeartsHook::unhook();
         EntityClientBossHealthHook::unhook();
         EntityClientBossColourHook::unhook();
-        C() = {};
+        auto& s = C();
+        {
+            std::scoped_lock lock(s.barsMutex);
+            s.bars.clear();
+            s.logged.clear();
+        }
+        s.deathTimes.clear();
+        s.multipart.clear();
+        s.data.clear();
+        s.thrown.clear();
+        s.ridingUnfriendly = false;
     }
 };
 

@@ -166,7 +166,7 @@ std::vector<Player*> playersNear(int dim, Vec3 const& center, double radius) {
         if (static_cast<int>(p.getDimensionId()) != dim || !p.isAlive()) return true;
         auto   pos = p.getFeetPos();
         double dx  = pos.x - center.x, dy = pos.y - center.y, dz = pos.z - center.z;
-        if (dx * dx + dy * dy + dz * dz <= r2) out.push_back(&p);
+        if (dx * dx + dy * dy + dz * dz < r2) out.push_back(&p); // Java's strict distance checks
         return true;
     }));
     return out;

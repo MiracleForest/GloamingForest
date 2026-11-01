@@ -96,7 +96,9 @@ void tickThrows() {
             continue;
         }
         auto& t = it->second;
-        if (t.thrown && (player->isOnGround() || player->isInWater())) {
+        // the throw has to lift the player first: the two pushes land on the first ticks
+        bool launching = t.cooldown >= kThrowCooldown - 2;
+        if (t.thrown && !launching && (player->isOnGround() || player->isInWater())) {
             t.thrown  = false;
             t.thrower = 0;
             sendThrown(*player, t);
