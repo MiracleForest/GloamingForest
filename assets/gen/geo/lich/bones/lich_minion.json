@@ -84,6 +84,7 @@
   "setupAnim": {
     "class": "LichMinionModel",
     "identifier": "animation.twilightforest.lich_minion.base",
+    "notes": ["stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {

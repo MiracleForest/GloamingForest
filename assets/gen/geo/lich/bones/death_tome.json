@@ -146,7 +146,7 @@
   "setupAnim": {
     "class": "DeathTomeModel",
     "identifier": "animation.twilightforest.death_tome.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
+    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)", "stub: a zero rotation on book (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {

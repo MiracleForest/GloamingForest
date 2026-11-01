@@ -3,7 +3,11 @@
   "animations": {
     "animation.twilightforest.snow_queen.base": {
       "loop": true,
-      "bones": {}
+      "bones": {
+        "head": {
+          "rotation": [0, 0, 0]
+        }
+      }
     }
   }
 }

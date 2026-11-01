@@ -102,7 +102,7 @@
   "setupAnim": {
     "class": "DeerModel",
     "identifier": "animation.twilightforest.deer.base",
-    "notes": ["vanilla base QuadrupedModel (super calls): animation.quadruped.walk and animation.common.look_at_target (Bedrock vanilla) on head / leg0 (right hind) / leg1 (left hind) / leg2 (right front) / leg3 (left front)"],
+    "notes": ["vanilla base QuadrupedModel (super calls): animation.quadruped.walk and animation.common.look_at_target (Bedrock vanilla) on head / leg0 (right hind) / leg1 (left hind) / leg2 (right front) / leg3 (left front)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {

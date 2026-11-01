@@ -387,7 +387,8 @@ Test 'every converted entity layer has a base animation (a stub when nothing tra
         Eq $g.animation "$id.base" $g.identifier
     }
     $stub = ($files['assets/gen/geo/weapons/rp/animations/chain.base.json'] | ConvertFrom-Json).animations.'animation.twilightforest.chain.base'
-    Eq $stub.loop $true; Eq @($stub.bones.PSObject.Properties).Count 0 'an empty stub'
+    Eq $stub.loop $true; Eq (@($stub.bones.PSObject.Properties.Name) -join ',') 'chain' 'a stub (Bedrock rejects an empty bones object)'
+    Eq ($stub.bones.chain.rotation -join ',') '0,0,0'
 }
 Test 'setupAnim -> Molang: part.x / part.y / part.z become position deltas (x as is, y negated)' {
     $c = New-TestModel @'
@@ -490,6 +491,7 @@ if (-not $SkipTree) {
             $d = Read-Gen ($unitDir + $a.file)
             $anim = $d.animations.($a.identifier)
             if (-not $anim) { throw "$($a.file): no $($a.identifier)" }
+            if (-not @($anim.bones.PSObject.Properties).Count) { throw "$($a.file): no bones (Bedrock rejects an empty bones object)" }
             $geoId = $a.identifier -replace '^animation\.', 'geometry.' -replace '\.base$', ''
             $g = $geoIds[$geoId]
             foreach ($b in $anim.bones.PSObject.Properties.Name) { if (-not ($g.bones.name -contains $b)) { throw "$($a.file): bone $b is not in $geoId" } }

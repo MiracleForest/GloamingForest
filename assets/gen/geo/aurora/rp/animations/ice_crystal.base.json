@@ -3,7 +3,11 @@
   "animations": {
     "animation.twilightforest.ice_crystal.base": {
       "loop": true,
-      "bones": {}
+      "bones": {
+        "spike_0": {
+          "rotation": [0, 0, 0]
+        }
+      }
     }
   }
 }

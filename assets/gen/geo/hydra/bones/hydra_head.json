@@ -47,7 +47,7 @@
   "setupAnim": {
     "class": "HydraHeadModel",
     "identifier": "animation.twilightforest.hydra_head.base",
-    "notes": ["vanilla base ListModel (super calls): nothing (ListModel has no default animation)"],
+    "notes": ["vanilla base ListModel (super calls): nothing (ListModel has no default animation)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {

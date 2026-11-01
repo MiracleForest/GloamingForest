@@ -3,7 +3,11 @@
   "animations": {
     "animation.twilightforest.chain_block.base": {
       "loop": true,
-      "bones": {}
+      "bones": {
+        "block": {
+          "rotation": [0, 0, 0]
+        }
+      }
     }
   }
 }

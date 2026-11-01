@@ -106,7 +106,7 @@
   "setupAnim": {
     "class": "LichModel",
     "identifier": "animation.twilightforest.lich.base",
-    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg"],
+    "notes": ["vanilla base HumanoidModel (super calls): the vanilla Bedrock humanoid animations (animation.humanoid.base_pose, animation.humanoid.move, animation.humanoid.look_at_target.default, animation.humanoid.attack.rotations, animation.humanoid.riding.*) on the renamed bones head / body / rightArm / leftArm / rightLeg / leftLeg", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {

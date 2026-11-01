@@ -3,7 +3,11 @@
   "animations": {
     "animation.twilightforest.death_tome.base": {
       "loop": true,
-      "bones": {}
+      "bones": {
+        "book": {
+          "rotation": [0, 0, 0]
+        }
+      }
     }
   }
 }

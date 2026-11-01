@@ -221,8 +221,8 @@ GF_REGISTER_SELFTEST("models.animations", [](Context& ctx) {
             continue;
         }
         auto const& bonesOfAnim = member(anim, "bones");
-        if (!bonesOfAnim.is_null() && !bonesOfAnim.is_object()) {
-            ctx.check(false, file + ": bones of " + id + " is not an object");
+        if (!bonesOfAnim.is_object() || bonesOfAnim.empty()) {
+            ctx.check(false, file + ": " + id + " has no bones (Bedrock rejects an empty bones object)");
             continue;
         }
         // the bones it moves exist in its geometry (when that geometry is in the pack)

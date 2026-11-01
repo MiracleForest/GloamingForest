@@ -39,7 +39,7 @@ Per unit `<u>` (the owner of the entity / block / item the layer serves, from `t
 | File | Content |
 |---|---|
 | `assets/gen/geo/<u>/rp/models/entity/<name>.geo.json` | `geometry.twilightforest.<name>`, format 1.12.0. `<name>` is the TF model layer (`TFModelLayers`, `<path>` or `<path>_<layer>` when the layer is not `main`), an armor piece (`<material>.<slot>`) or an extract. |
-| `assets/gen/geo/<u>/rp/animations/<name>.base.json` | `animation.twilightforest.<name>.base` (format 1.8.0): one per entity layer, with the setupAnim statements translated to Molang (an empty stub, `"bones": {}`, when none translates: the owning unit adds the rest by hand); also the Ur-Ghast trophy extracts' tentacle wave. |
+| `assets/gen/geo/<u>/rp/animations/<name>.base.json` | `animation.twilightforest.<name>.base` (format 1.8.0): one per entity layer, with the setupAnim statements translated to Molang (a stub with a zero rotation on the first bone when none translates: the owning unit adds the rest by hand); also the Ur-Ghast trophy extracts' tentacle wave. |
 | `assets/gen/geo/<u>/bones/<name>.json` | The bone map: Java part path -> bone, parent, Bedrock pivot / rotation, Java offset / rotation, cube count, mirror; the layer and its supplier; the textures (Bedrock path and TF source); the setupAnim report (`translated`, `todo` with line, Java source and reason); notes. Not part of the pack. |
 | `assets/gen/geo/<u>/rp/attachables/<item>.json` | Attachables of armor and Travellers' Gear; of the trophies and the mystic crown (worn on the head, held in the right and left hand) and of the knightmetal shield (right and left hand): one geometry per slot, drawn only in that slot. |
 | `assets/gen/geo/models/rp/render_controllers/twilightforest.models.render_controllers.json` | `controller.render.twilightforest.models.part<N>`: the extra geometries of multi-part attachables (`Geometry.part1`, ...), with the enchantment glint (`variable.is_enchanted`, `Material.enchanted`, `Texture.enchanted`) like `controller.render.item_default`. |
@@ -134,15 +134,17 @@ a constant zero stay untranslated, and the re-parented `hat` gets only its diffe
 Java copies the head's pose). The position channel moves along the geometry's own axes: x as Java's x (the
 geometry keeps Java's x), y negated, z as is. The e2e preview checks the x sign in game: its first actor
 (`gfpreview:xsign`, shot_01) is a test model whose setupAnim sets `moved.x = 10`, converted by this translator;
-the blue cube lands on the red one at x 8..12 (and would sit on the other side of the white origin cube if
-Bedrock mirrored the channel).
+the blue cube lands on the red one at x 8..12 (it would sit on the other side of the white origin cube if
+Bedrock mirrored the channel). Checked on the 1.26.51 client: blue sits on red.
 
 The quadruped walk comes out as Bedrock's own `animation.quadruped.walk` (`math.cos(query.modified_distance_moved
 * 38.1704) * query.modified_move_speed * 80.2141`) and the head look as `look_at_target`. Everything else
 (entity state, loops, conditions, visibility, other models' parts) is listed in the bone map's `setupAnim.todo`
 with its line, Java source and reason; models without their own setupAnim name the vanilla animations of their
 base class. Every converted entity layer (56) gets `animation.twilightforest.<layer>.base`: 28 with translated
-statements, 28 empty stubs (no translatable statement, or `noAnim`: posed by its renderer); the owning units
+statements, 28 stubs (no translatable statement, or `noAnim`: posed by its renderer) that hold a zero rotation on
+the first bone, because the client rejects an animation with an empty `bones` object (`Required child ... not
+found`, found by the content-log check); the owning units
 translate the rest by hand on top. Vanilla-model layers (spiders, wolves, slimes, silverfish, the giants' player
 model) use the vanilla Bedrock animations of that geometry.
 
@@ -218,6 +220,11 @@ Not covered (the owning units add animations on top, as the record says):
   override: thirdperson_righthand 45 135 0, 3.51 11 −2; thirdperson_lefthand 45 135 0, 13.51 3 5;
   firstperson_righthand 0 180 −5, −15 5 −11; firstperson_lefthand 5 5 −11): an animation on `query.blocking`
   (unit weapons).
+- An item with `minecraft:wearable` is drawn in the hands as its icon, not through its attachable (seen on the
+  1.26.51 client: the preview's wearable test trophies show their icon in the hands; non-wearable copies show the
+  held geometry in both hands). The attachables are complete for every slot; how the trophies (unit building) and
+  the mystic crown (unit artifacts) go on the head without `minecraft:wearable` (or whether they accept the icon in
+  the hands) is the owning unit's item definition.
 - Slim arms: `PlayerModel.translateToHand` moves a slim arm 0.5 px toward the body before the item.
 - `gui`, `ground` and `fixed` displays (inventory icons, dropped items, item frames) are not attachables.
 

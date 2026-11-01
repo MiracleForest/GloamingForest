@@ -46,7 +46,10 @@ $missing = @(Get-LeviLog | Select-String -Pattern 'functionNameNotFound \[gfprev
 if ($missing) { throw "preview commands failed: $($missing -join ', ')" }
 
 # ---- the client's content log -------------------------------------------------------------------
-Start-Sleep -Seconds 3
+# The game buffers the file and writes it out when it closes: close it first (run.ps1's own Stop-Game
+# then finds nothing to stop; its log checks read LeviLamina's log, which stays on disk).
+Stop-Game
+Start-Sleep -Seconds 2
 $gfState = Get-Content (Join-Path $gfOut 'content-log.json') -Raw | ConvertFrom-Json
 $gfSince = [datetime]::Parse($gfState.since)
 $gfLogs = @(Get-ChildItem $gfState.logs -Filter 'ContentLog*.txt' -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -ge $gfSince } | Sort-Object Name)
@@ -74,8 +77,8 @@ $gfBad = @($gfEntries | Where-Object { $_.Level -in 'error', 'warning' })
 $gfCanary = @($gfBad | Where-Object { "$($_.Text) $($_.More)" -match 'gfpreview_canary' })
 $gfProblems = @($gfBad | Where-Object { "$($_.Text) $($_.More)" -notmatch 'gfpreview_canary' -and $_.Text -notmatch $gfNoise })
 foreach ($c in $gfCanary) { Write-Step "content log canary: [$($c.Category)][$($c.Level)] $($c.Text)" }
-if (-not ($gfCanary | Where-Object { "$($_.Text) $($_.More)" -match 'gfpreview_canary\.geo\.json|geometry\.gfpreview_canary' })) {
-    throw "the content log does not report the broken canary geometry (models/entity/gfpreview_canary.geo.json): the check cannot see geometry errors"
+foreach ($want in @(@{ re = 'gfpreview_canary\.geo\.json'; what = 'geometry (models/entity/gfpreview_canary.geo.json)' }, @{ re = 'gfpreview_canary\.animation\.json'; what = 'animation Molang (animations/gfpreview_canary.animation.json)' })) {
+    if (-not ($gfCanary | Where-Object { "$($_.Text) $($_.More)" -match $want.re })) { throw "the content log does not report the broken canary $($want.what): the check cannot see those errors" }
 }
 if ($gfProblems) {
     $gfProblems | Select-Object -First 30 | ForEach-Object { Write-Host "  ! [$($_.Category)][$($_.Level)] $($_.Text)" -ForegroundColor Red }

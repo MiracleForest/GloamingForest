@@ -1047,7 +1047,7 @@
   "setupAnim": {
     "class": "MosquitoSwarmModel",
     "identifier": "animation.twilightforest.mosquito_swarm.base",
-    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
+    "notes": ["vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)", "stub: a zero rotation on core (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {

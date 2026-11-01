@@ -92,6 +92,7 @@
   "setupAnim": {
     "class": "BighornModel",
     "identifier": "animation.twilightforest.bighorn_sheep.base",
+    "notes": ["stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {

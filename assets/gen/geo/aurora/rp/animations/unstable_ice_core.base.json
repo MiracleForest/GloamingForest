@@ -3,7 +3,11 @@
   "animations": {
     "animation.twilightforest.unstable_ice_core.base": {
       "loop": true,
-      "bones": {}
+      "bones": {
+        "head": {
+          "rotation": [0, 0, 0]
+        }
+      }
     }
   }
 }

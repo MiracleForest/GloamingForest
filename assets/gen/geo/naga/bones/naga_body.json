@@ -27,7 +27,7 @@
   "setupAnim": {
     "class": "NagaModel",
     "identifier": "animation.twilightforest.naga_body.base",
-    "notes": ["vanilla base ListModel (super calls): nothing (ListModel has no default animation)"],
+    "notes": ["vanilla base ListModel (super calls): nothing (ListModel has no default animation)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {

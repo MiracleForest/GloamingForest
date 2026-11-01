@@ -3,7 +3,11 @@
   "animations": {
     "animation.twilightforest.lich_minion.base": {
       "loop": true,
-      "bones": {}
+      "bones": {
+        "head": {
+          "rotation": [0, 0, 0]
+        }
+      }
     }
   }
 }

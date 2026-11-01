@@ -271,6 +271,13 @@ namespace Gf.Models
                         ? "no setupAnim to translate: the layer is posed by its renderer (see the notes and docs/spec/models.md)"
                         : "no model class with a setupAnim");
                 }
+                if (anim.Bones.Count == 0 && geo.Bones.Count > 0)
+                {
+                    // a stub: Bedrock rejects an animation whose "bones" is empty ("Required child ... not
+                    // found"), so it holds a zero rotation on the first bone (no visible effect)
+                    anim.Bones[geo.Bones[0].Name] = new Dictionary<string, MNode[]> { { "rotation", new MNode[] { M.Num(0), M.Num(0), M.Num(0) } } };
+                    anim.Notes.Add("stub: a zero rotation on " + geo.Bones[0].Name + " (Bedrock needs at least one bone in an animation)");
+                }
                 animId = animPrefix + name + ".base";
                 Put(UnitDir(unit) + "rp/animations/" + name + ".base.json", AnimTranslator.AnimationJson(animId, anim));
                 indexAnimations.Add(new JObj().Add("identifier", animId).Add("file", "animations/" + name + ".base.json").Add("unit", unit)

@@ -181,13 +181,23 @@ foreach ($a in $index.attachables) {
     if ($worn) { $components['minecraft:wearable'] = [ordered]@{ slot = $slotOf[$worn[0]]; protection = 0 } }
     if ($slots -contains 'off_hand') { $components['minecraft:allow_off_hand'] = $true }
     Write-J (Join-Path $bp "items/item_$short.json") ([ordered]@{ format_version = '1.21.70'; 'minecraft:item' = [ordered]@{ description = [ordered]@{ identifier = $id; menu_category = [ordered]@{ category = 'equipment' } }; components = $components } })
+    # Bedrock draws a minecraft:wearable item in the hands as its icon, not through the attachable:
+    # the hand slots of an item that is also worn get a copy without wearable (same attachable)
+    $handId = $id
+    if ($worn -and ($slots -contains 'main_hand' -or $slots -contains 'off_hand')) {
+        $handId = "$($id)_in_hand"
+        $att['minecraft:attachable']['description']['identifier'] = $handId
+        Write-J (Join-Path $prp "attachables/item_$($short)_in_hand.json") $att
+        $hand = [ordered]@{ 'minecraft:icon' = 'apple'; 'minecraft:max_stack_size' = 1; 'minecraft:allow_off_hand' = $true }
+        Write-J (Join-Path $bp "items/item_$($short)_in_hand.json") ([ordered]@{ format_version = '1.21.70'; 'minecraft:item' = [ordered]@{ description = [ordered]@{ identifier = $handId; menu_category = [ordered]@{ category = 'equipment' } }; components = $hand } })
+    }
     # one stand per armor material / per worn or held item
     $group = if ($a.slot -in 'helmet', 'chestplate', 'leggings', 'boots') {
         if ($short -like 'travellers_*') { if ($short -in 'travellers_gloves', 'travellers_wings') { 'travellers_gloves_wings' } else { 'travellers_goggles_vest_belt_boots' } }
         else { $short -replace '_(helmet|chestplate|leggings|boots)$', '' }
     } else { $short }
     if (-not $stands.Contains($group)) { $stands[$group] = [System.Collections.Generic.List[object]]::new() }
-    foreach ($s in $slots) { $stands[$group].Add([pscustomobject]@{ item = $id; slot = $slotOf[$s] }) }
+    foreach ($s in $slots) { $stands[$group].Add([pscustomobject]@{ item = $(if ($s -in 'main_hand', 'off_hand') { $handId } else { $id }); slot = $slotOf[$s] }) }
 }
 
 # shots: actors four at a time on x = -3, -1, 1, 3 (z = 0, facing the camera at z = 6), then stands

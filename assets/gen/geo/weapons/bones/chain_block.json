@@ -297,7 +297,7 @@
   "setupAnim": {
     "class": "SpikeBlockModel",
     "identifier": "animation.twilightforest.chain_block.base",
-    "notes": ["no setupAnim to translate: the layer is posed by its renderer (see the notes and docs/spec/models.md)"],
+    "notes": ["no setupAnim to translate: the layer is posed by its renderer (see the notes and docs/spec/models.md)", "stub: a zero rotation on block (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": []
   }

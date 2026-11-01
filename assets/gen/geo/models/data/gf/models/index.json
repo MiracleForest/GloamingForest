@@ -2239,7 +2239,7 @@
       "identifier": "animation.twilightforest.bighorn_sheep.base",
       "file": "animations/bighorn_sheep.base.json",
       "unit": "fauna",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.blockchain_goblin.base",
@@ -2251,7 +2251,7 @@
       "identifier": "animation.twilightforest.boar.base",
       "file": "animations/boar.base.json",
       "unit": "fauna",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.bunny.base",
@@ -2263,31 +2263,31 @@
       "identifier": "animation.twilightforest.carminite_ghastguard.base",
       "file": "animations/carminite_ghastguard.base.json",
       "unit": "darktower",
-      "bones": []
+      "bones": ["body"]
     },
     {
       "identifier": "animation.twilightforest.carminite_ghastling.base",
       "file": "animations/carminite_ghastling.base.json",
       "unit": "darktower",
-      "bones": []
+      "bones": ["body"]
     },
     {
       "identifier": "animation.twilightforest.carminite_golem.base",
       "file": "animations/carminite_golem.base.json",
       "unit": "darktower",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.chain.base",
       "file": "animations/chain.base.json",
       "unit": "weapons",
-      "bones": []
+      "bones": ["chain"]
     },
     {
       "identifier": "animation.twilightforest.chain_block.base",
       "file": "animations/chain_block.base.json",
       "unit": "weapons",
-      "bones": []
+      "bones": ["block"]
     },
     {
       "identifier": "animation.twilightforest.cube_of_annihilation.base",
@@ -2299,13 +2299,13 @@
       "identifier": "animation.twilightforest.death_tome.base",
       "file": "animations/death_tome.base.json",
       "unit": "lich",
-      "bones": []
+      "bones": ["book"]
     },
     {
       "identifier": "animation.twilightforest.deer.base",
       "file": "animations/deer.base.json",
       "unit": "fauna",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.fire_beetle.base",
@@ -2317,7 +2317,7 @@
       "identifier": "animation.twilightforest.harbinger_cube.base",
       "file": "animations/harbinger_cube.base.json",
       "unit": "finalcastle",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.helmet_crab.base",
@@ -2335,13 +2335,13 @@
       "identifier": "animation.twilightforest.hydra_head.base",
       "file": "animations/hydra_head.base.json",
       "unit": "hydra",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.hydra_mortar.base",
       "file": "animations/hydra_mortar.base.json",
       "unit": "hydra",
-      "bones": []
+      "bones": ["mortar"]
     },
     {
       "identifier": "animation.twilightforest.hydra_neck.base",
@@ -2353,7 +2353,7 @@
       "identifier": "animation.twilightforest.ice_crystal.base",
       "file": "animations/ice_crystal.base.json",
       "unit": "aurora",
-      "bones": []
+      "bones": ["spike_0"]
     },
     {
       "identifier": "animation.twilightforest.knight_phantom.base",
@@ -2371,13 +2371,13 @@
       "identifier": "animation.twilightforest.lich.base",
       "file": "animations/lich.base.json",
       "unit": "lich",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.lich_minion.base",
       "file": "animations/lich_minion.base.json",
       "unit": "lich",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.lower_goblin_knight.base",
@@ -2401,25 +2401,25 @@
       "identifier": "animation.twilightforest.minotaur.base",
       "file": "animations/minotaur.base.json",
       "unit": "labyrinth",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.mosquito_swarm.base",
       "file": "animations/mosquito_swarm.base.json",
       "unit": "fauna",
-      "bones": []
+      "bones": ["core"]
     },
     {
       "identifier": "animation.twilightforest.naga.base",
       "file": "animations/naga.base.json",
       "unit": "naga",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.naga_body.base",
       "file": "animations/naga_body.base.json",
       "unit": "naga",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.penguin.base",
@@ -2437,7 +2437,7 @@
       "identifier": "animation.twilightforest.protection_box.base",
       "file": "animations/protection_box.base.json",
       "unit": "landmark",
-      "bones": []
+      "bones": ["box"]
     },
     {
       "identifier": "animation.twilightforest.quest_ram.base",
@@ -2461,19 +2461,19 @@
       "identifier": "animation.twilightforest.redcap_inner.base",
       "file": "animations/redcap_inner.base.json",
       "unit": "hostiles",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.redcap_outer.base",
       "file": "animations/redcap_outer.base.json",
       "unit": "hostiles",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.rising_zombie.base",
       "file": "animations/rising_zombie.base.json",
       "unit": "lich",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.roving_cube.base",
@@ -2485,7 +2485,7 @@
       "identifier": "animation.twilightforest.skeleton_druid.base",
       "file": "animations/skeleton_druid.base.json",
       "unit": "hostiles",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.slime_beetle.base",
@@ -2503,7 +2503,7 @@
       "identifier": "animation.twilightforest.snow_queen.base",
       "file": "animations/snow_queen.base.json",
       "unit": "aurora",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.squirrel.base",
@@ -2515,7 +2515,7 @@
       "identifier": "animation.twilightforest.stable_ice_core.base",
       "file": "animations/stable_ice_core.base.json",
       "unit": "aurora",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.tiny_bird.base",
@@ -2533,7 +2533,7 @@
       "identifier": "animation.twilightforest.unstable_ice_core.base",
       "file": "animations/unstable_ice_core.base.json",
       "unit": "aurora",
-      "bones": []
+      "bones": ["head"]
     },
     {
       "identifier": "animation.twilightforest.upper_goblin_knight.base",
@@ -2545,7 +2545,7 @@
       "identifier": "animation.twilightforest.ur_ghast.base",
       "file": "animations/ur_ghast.base.json",
       "unit": "darktower",
-      "bones": []
+      "bones": ["body"]
     },
     {
       "identifier": "animation.twilightforest.wraith.base",

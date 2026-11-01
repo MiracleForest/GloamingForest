@@ -72,7 +72,7 @@
   "setupAnim": {
     "class": "BoarModel",
     "identifier": "animation.twilightforest.boar.base",
-    "notes": ["no setupAnim / prepareMobModel in BoarModel or its TF super classes"],
+    "notes": ["no setupAnim / prepareMobModel in BoarModel or its TF super classes", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": []
   }

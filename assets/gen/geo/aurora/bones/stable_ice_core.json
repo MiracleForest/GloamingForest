@@ -331,7 +331,7 @@
   "setupAnim": {
     "class": "StableIceCoreModel",
     "identifier": "animation.twilightforest.stable_ice_core.base",
-    "notes": ["setupAnim is inherited from UnstableIceCoreModel", "vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)"],
+    "notes": ["setupAnim is inherited from UnstableIceCoreModel", "vanilla base HierarchicalModel (super calls): nothing (HierarchicalModel has no default animation)", "stub: a zero rotation on head (Bedrock needs at least one bone in an animation)"],
     "translated": [],
     "todo": [
       {
