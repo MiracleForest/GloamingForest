@@ -127,11 +127,31 @@ Grass colour modifiers (`BiomeSpecialEffects.GrassColorModifier` extensions) and
 
 | Biome | Grass | Foliage |
 |---|---|---|
-| `twilightforest:enchanted_forest` | `enchanted(color, x, z)`: distance `d` to the nearest landmark centre (the quest grove), `c = (d * 16) % 512`, mirrored above 255, `c = 255 - c`, result `(color & 0xFFFF00) + c` | same |
+| `twilightforest:enchanted_forest` | `enchanted(color, x, z)`: bands by the distance to the nearest landmark centre (the quest grove); exact formula below the table | same (`enchanted(foliageColor, x, z)`) |
 | `twilightforest:swamp` | `((GrassColor.get(0.8, 0.9) & 0xFEFEFE) + 0x4E0E4E) / 2` | same with FoliageColor |
 | `twilightforest:dark_forest` | `((GrassColor.get(0.7, 0.8) & 0xFEFEFE) + 0x1E0E4E) / 2` | same with FoliageColor |
 | `twilightforest:dark_forest_center` | temperature noise `n = TEMPERATURE_NOISE(x * 0.0225, z * 0.0225)`: `n < -0.2 ? 0x667540 : 0x554114` | `(n + 1) / 2 < -0.1 ? 0xF9821E : 0xE94E14` |
 | `twilightforest:spooky_forest` | `blend(0xC43323, 0x5BC423, n' > 0.6 ? n' * 0.1 : n')` with `n' = (n + 1) / 2` | `blend(0xFF0101, 0x49FF01, n' > 0.6 ? n' * 0.2 : n')` |
+
+Enchanted forest, exactly (`BiomeColorAlgorithms.enchanted(originalColor, x, z)`; both the grass colour modifier and
+the foliage handler pass `(int) x`, `(int) z` of the block position, and the original grass or foliage colour):
+
+```
+center = LegacyLandmarkPlacements.getNearestCenterXZ(x / 16, z / 16)  // Java int division: truncates toward zero
+dist   = (int) Mth.sqrt((float) ((cx - x) * (cx - x) + (cz - z) * (cz - z)))  // int sum -> float; Mth.sqrt =
+                                                                      // (float) Math.sqrt(double); (int) truncates
+c = dist * 16 % 512
+if (c > 255) c = 511 - c
+c = 255 - c
+return (originalColor & 0xFFFF00) + c                                 // replaces the blue byte
+```
+
+- `getNearestCenterXZ` is F6's pure `gf::core::landmark::nearestCenter(chunkX, chunkZ)`. Its argument is `x / 16`
+  with truncating division (C++ `int / int` truncates the same way). It is NOT `x >> 4` and not a floor division:
+  for negative `x` or `z` that is not a multiple of 16 those give a chunk one lower. Near a region border that
+  chunk belongs to the next landmark region, so the colour bands would be centred on another grid cell than in TF.
+- The squared distance is an `int` sum (`|cx - x|` and `|cz - z|` stay below 200, so no overflow). It is converted
+  to `float` exactly (below 2^24), and the square root is taken in double and rounded to float before truncation.
 
 All other biomes use the JSON grass/foliage colours (or the vanilla climate colour maps). Vanilla clients see the
 static `grass_color` / `foliage_color` from the client biome JSON.

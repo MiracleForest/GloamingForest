@@ -92,6 +92,11 @@ Also used by landmark terraformers (hollow hills, labyrinth, lich tower, courtya
   Integer literals are promoted to the overload's type.
 - `Mth.clampedMap(float...) = clampedLerp(outMin, outMax, inverseLerp(v, inMin, inMax))`, all in float. `clampedLerp`
   returns `outMin` when `t < 0`, `outMax` when `t > 1`, else `outMin + t * (outMax - outMin)`.
+- Overloads resolve as in Java (most specific applicable method). `FocusedDensityFunction.compute` calls
+  `Mth.clampedMap(dist, 0, this.radius, this.nearValue, this.farValue)` with `float` arguments and the `int` literal
+  `0`. Both the float and the double overload apply (int widens to either), and the float one is more specific, so
+  the whole map runs in float and only the returned value is widened to double. Translate it as the float overload
+  with `0.0f`, never with a double `0.0`.
 - Keep Java's float/double split exactly as the source declares it. Do not evaluate a `float` expression in double,
   keep float temporaries, and do not let the compiler fuse `a * b + c` into an FMA, because Java never contracts. Build
   these translation units without `-ffast-math` and with `-ffp-contract=off` (or `#pragma clang fp contract(off)`).

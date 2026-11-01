@@ -260,6 +260,30 @@ is vanilla's: CW_90 `(-z, y, x)`, CW_180 `(-x, y, -z)`, CCW_90 `(z, y, -x)`.
 9. Every collected data marker (mode DATA) named `spawner` is removed; then `nextInt(4) == 0` places a
    `minecraft:spawner` with `twilightforest:rising_zombie` (UPDATE_ALL). The feature returns true.
 
+RNG drawn inside the vanilla template calls. The settings carry `rand` (`setRandom(rand)`), so
+`settings.getRandom(pos)` returns the shared feature random:
+- Every `placeInWorld` and every `filterBlocks` call starts with `settings.getRandomPalette(palettes, pos)`, which
+  draws one `nextInt(palettes.size())`. For a single-palette template that is `nextInt(1)`: always 0, but it still
+  advances `rand`.
+- `placeInWorld` then runs the processors (the web processor's `nextInt(5)` per stored non-grass block, step 6). For
+  every placed block with NBT whose block entity is a `RandomizableContainer`, it draws `rand.nextLong()` for the
+  `LootTableSeed`.
+- No draws come from `SpawnerBlockEntity.setEntityId(rising_zombie, rand)` in step 9 (a new spawner has no spawn
+  potentials, so nothing is rolled) or from the trapped chest, whose loot seed is `level.getSeed() * x + y ^ z`
+  (`TFLootTables.generateChestContents`).
+
+The draws on `rand` therefore come in this order:
+1. rotation, then mirror;
+2. base `placeInWorld` (palette, webs, container seeds), then base `filterBlocks` (palette);
+3. the floor cobwebs, then `chestloc`;
+4. per grave cell: the grave choice, grave `placeInWorld`, grave `filterBlocks`; for a `Full` grave, `nextBoolean`,
+   and only when it is true: `nextInt(3)`, then trap `placeInWorld` when that roll is 0, then trap `filterBlocks`;
+5. `nextInt(4)` per `spawner` marker.
+
+When F7's `templates::place` mirrors vanilla (a settings random), keep these palette draws and this order, so the
+grave and trap rolls follow the same sequence as in TF. Bit-exact RNG parity is impossible anyway with re-designed
+templates, because their block counts change the number of web draws. The distributions above are what must hold.
+
 Re-design constraints: the base may be wider than 15, since its snap is not limited. The three graves must share one
 footprint. Graves are placed relative to the base's floor line as above. `spawner` markers may sit in the base and the
 graves.
