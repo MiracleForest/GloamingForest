@@ -17,11 +17,14 @@ measured against TF's behaviour, textures and screens.
 
 - Code is LGPL-3.0-or-later. Code translated from TF (LGPL-2.1-or-later) starts with the attribution header
   in AGENTS.md naming the TF source file.
-- TF textures, models, blockstates and lang (CC BY-NC-SA 4.0) enter the repository **only** through
-  `tools/import`, never by hand.
+- TF textures, models, blockstates and lang (CC BY-NC-SA 4.0) enter the repository through `tools/import`;
+  never copy them by hand.
 - TF sounds, music (`.ogg`) and structure templates (`.nbt`) are All Rights Reserved: never open, decode,
   copy or convert them. Sounds are synthesised (`tools/sounds`), templates are original `.gft` designs
-  (`tools/structures`). `tools/ci/arr-guard.ps1` rejects any matching file.
+  (`tools/structures`). `tools/ci/arr-guard.ps1` rejects any matching file, in any commit of a pull request
+  (a file added and deleted again would still reach the public history).
+- A hand-edited file derived from a TF texture, model, blockstate or text stays CC BY-NC-SA 4.0: keep it under a
+  `tf-derived/` directory with a `tf-derived/SOURCES.json` naming its TF source (AGENTS.md, assets/LICENSE).
 - Do not add AI attribution (for example `Co-Authored-By` lines naming an AI) to commits, pull requests or code.
 
 ## Workflow
@@ -33,7 +36,7 @@ xmake run -P . gf-tests
 pwsh -NoProfile -File tools/e2e/server/run.ps1 -Scenario <unit>
 pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario <unit> -Mode local
 pwsh tools/ci/ownership.ps1 -Unit <unit>
-pwsh tools/ci/arr-guard.ps1
+pwsh tools/ci/arr-guard.ps1 -Range origin/main      # every commit of the branch, not only its tip
 ```
 
 - Builds and test runs go only through `tools/build.ps1` and `tools/e2e/*/run.ps1`: they take the machine-wide

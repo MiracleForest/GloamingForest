@@ -32,9 +32,11 @@ from (see AGENTS.md, "Licences and attribution").
 The Twilight Forest (assets)
 -------------------------------------------------------------------------------------------------
 The textures, models, blockstates and language files of The Twilight Forest that GloamingForest
-reuses (imported by tools/import into assets/gen/import and the released resource packs) are
-licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
-(CC BY-NC-SA 4.0, https://creativecommons.org/licenses/by-nc-sa/4.0/); see assets/LICENSE.
+reuses (imported by tools/import into assets/gen/import, hand-edited derivatives under the
+tf-derived/ directories of assets/pack with their sources in tf-derived/SOURCES.json, and the
+released resource packs) are licensed under Creative Commons Attribution-NonCommercial-ShareAlike
+4.0 International (CC BY-NC-SA 4.0, https://creativecommons.org/licenses/by-nc-sa/4.0/); see
+assets/LICENSE.
 
   Original assets: The Twilight Forest by TeamTwilight (https://github.com/TeamTwilight/twilightforest).
   Changes: converted to Minecraft: Bedrock Edition formats (block geometry, entity geometry, texture

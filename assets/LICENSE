@@ -3,16 +3,22 @@ Assets of The Twilight Forest in GloamingForest
 
 The textures, models, blockstates and language files that GloamingForest imports from
 The Twilight Forest 4.8 (https://github.com/TeamTwilight/twilightforest, commit
-9e40a75721c716b2fdf80c16d1058fe718825e9f) by TeamTwilight, and every file derived from them
-(assets/gen/import/**, and the textures, geometry, atlases and texts of the released resource
-packs), are licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0
-International licence reproduced below. They are converted to Minecraft: Bedrock Edition formats;
-see NOTICE for the attribution.
+9e40a75721c716b2fdf80c16d1058fe718825e9f) by TeamTwilight, and every file derived from them,
+are licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+licence reproduced below (ShareAlike: a derivative stays under this licence). That covers
+  - assets/gen/import/** (written by tools/import),
+  - every hand-made file derived from a TF asset (an edited texture, model, blockstate or text),
+    which lives under a "tf-derived/" directory of assets/pack (assets/pack/**/tf-derived/**)
+    next to a tf-derived/SOURCES.json naming the TF file(s) it derives from, and
+  - the textures, geometry, atlases and texts of the released resource packs built from them.
+They are converted to Minecraft: Bedrock Edition formats; see NOTICE for the attribution. Each
+released pack carries this file (LICENSE-ASSETS.txt), NOTICE (NOTICE.txt) and, when it contains
+TF-derived hand-made files, tf-derived-sources.json listing them with their TF sources.
 
 Not covered by this licence:
-  - GloamingForest's own assets (assets/pack/**, assets/test/**, original textures, the
-    synthesized sounds and music of assets/gen/audio, the original structure templates of
-    assets/structures): LGPL-3.0-or-later, see COPYING.LESSER.
+  - GloamingForest's own original assets (assets/pack/** outside tf-derived/ directories,
+    assets/test/**, original textures, the synthesized sounds and music of assets/gen/audio, the
+    original structure templates of assets/structures): LGPL-3.0-or-later, see COPYING.LESSER.
   - The Twilight Forest's sounds, music and .nbt structure templates are All Rights Reserved and
     are not part of GloamingForest.
 

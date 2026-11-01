@@ -18,8 +18,9 @@
 --   Tags     assets/tags/<registry>/<ns>/<path>.d/<unit>.json are unioned into the imported tag
 --            data/<ns>/tags/<registry>/<path>.json (rule R6).
 --   Checks   integer block states 0..n, block permutation budget, dangling twilightforest:
---            references in BP / data, every asset file has an owner (docs/spec/owners.tsv), and the
---            ARR hash guard (no TF .ogg / .nbt content, tools/ci/arr-blobs.txt).
+--            references in BP / data (per kind: a `block` key must name a block), every asset
+--            file has an owner (docs/spec/owners.tsv), and the ARR hash guard (no TF .ogg / .nbt
+--            content, tools/ci/arr-blobs.txt).
 --
 -- "${version}" in pack manifests is replaced by the mod version as a JSON array [major, minor, patch]
 -- (untagged builds: [0, 0, <stamp of the pack sources>], so games never reuse a stale cached pack).
@@ -553,28 +554,153 @@ local function check_owners(projectdir, cfg, owners)
     return count
 end
 
--- Every "twilightforest:..." string value in BP / data JSON must name something that exists: a BP
--- identifier, a data file (loot table, recipe, worldgen, ...), a tag, or an id of owners.tsv.
-local function check_dangling(jsonfiles, known, cfg)
+-- ---- dangling references -----------------------------------------------------------------------------
+--
+-- Known ids are kept per kind: known[kind][id]. Kinds: block, item (blocks, block items and spawn
+-- eggs count as items), entity, the data registries by their directory below data/<ns>/ without a
+-- "worldgen/" prefix (loot_table, recipe, advancement, configured_feature, placed_feature, biome,
+-- structure, template_pool, ..., "twilight/<registry>"), "tag:<registry>" for tags, the owners.tsv
+-- kinds (sound_event, particle, damage_type, ...) and "*" (every id of every kind) for references
+-- whose kind the key does not tell.
+
+-- The kinds a reference may name, by the JSON key it is the value of (Bedrock BP and Java data keys).
+local REF_KEY_KINDS = {
+    block = {"block"}, blocks = {"block"}, Name = {"block"},
+    item = {"item"}, items = {"item"}, spawn_item = {"item"},
+    entity = {"entity"}, entity_type = {"entity"}, entity_types = {"entity"},
+    loot_table = {"loot_table"},
+    feature = {"configured_feature", "placed_feature"}, features = {"configured_feature", "placed_feature"},
+    biome = {"biome"}, biomes = {"biome"},
+    structure = {"structure"}, structures = {"structure"},
+    sound = {"sound_event"}, sound_event = {"sound_event"},
+    particle = {"particle"},
+    enchantment = {"enchantment"}, enchantments = {"enchantment"},
+    damage_type = {"damage_type"},
+    recipe = {"recipe"}, recipes = {"recipe"},
+}
+-- Keys that define an id instead of referring to one.
+local DEFINING_KEYS = {identifier = true}
+-- Loot pool entries {"type": T, "name" | "value": id}: the kind follows the entry type.
+local LOOT_ENTRY_KINDS = {
+    ["minecraft:item"] = {"item"},
+    ["minecraft:loot_table"] = {"loot_table"},
+    ["minecraft:tag"] = {"tag:item"},
+}
+-- The tag registry a "#tag" reference of a kind names.
+local TAG_REGISTRY = {
+    block = "block", item = "item", entity = "entity_type", biome = "worldgen/biome", structure = "worldgen/structure",
+    damage_type = "damage_type", enchantment = "enchantment", configured_feature = "worldgen/configured_feature",
+    placed_feature = "worldgen/placed_feature",
+}
+-- The kind of the values of a tag registry (data/<ns>/tags/<registry>/...).
+local REGISTRY_KIND = {
+    block = "block", item = "item", entity_type = "entity", ["worldgen/biome"] = "biome", ["worldgen/structure"] = "structure",
+    damage_type = "damage_type", enchantment = "enchantment", ["worldgen/configured_feature"] = "configured_feature",
+    ["worldgen/placed_feature"] = "placed_feature", banner_pattern = "banner_pattern", painting_variant = "painting_variant",
+}
+-- The owners.tsv kinds that are also known as another kind.
+local OWNER_KIND_ALIASES = {block = {"block", "item"}, block_item = {"item"}, spawn_egg = {"item"}}
+
+local function add_known(known, kind, id)
+    known[kind] = known[kind] or {}
+    known[kind][id] = true
+    if kind:match("^tag:") then known.tag[id] = true else known["*"][id] = true end
+end
+
+-- data/<ns>/<rest>.json -> registry ("loot_table", "worldgen/biome", "tags/block", ...) and "<ns>:<path>"
+-- with the path below the registry directory only.
+local function data_registry(r)
+    local ns, rest = r:match("^([^/]+)/(.+)%.json$")
+    if not ns then return nil end
+    local parts = {}
+    for p in rest:gmatch("[^/]+") do table.insert(parts, p) end
+    local depth = 1
+    if parts[1] == "tags" then
+        depth = parts[2] == "worldgen" and 3 or 2
+    elseif parts[1] == "worldgen" or parts[1] == "twilight" or parts[1] == "data_maps" then
+        depth = 2
+    end
+    if #parts <= depth then return nil end
+    return table.concat(parts, "/", 1, depth), ns .. ":" .. table.concat(parts, "/", depth + 1)
+end
+
+-- The kind name of a data registry directory ("worldgen/biome" -> "biome", "tags/block" -> "tag:block").
+local function registry_kind(registry)
+    local tag = registry:match("^tags/(.+)$")
+    if tag then return "tag:" .. tag end
+    return (registry:gsub("^worldgen/", ""))
+end
+
+-- Every "twilightforest:..." string value in BP / data JSON must name something that exists, of the
+-- kind its key implies: `"block": "twilightforest:naga"` fails when naga is only an entity.
+local function check_dangling(jsonfiles, known, cfg, datadir)
     local nss = cfg.checks.danglingNamespaces or {}
     local count = 0
-    local function visit(v, file)
+    local function exists(id, istag, kinds)
+        if not kinds then
+            return (istag and known.tag or known["*"])[id] ~= nil
+        end
+        for _, k in ipairs(kinds) do
+            local set
+            if istag then
+                local reg = k:match("^tag:") and k:sub(5) or TAG_REGISTRY[k]
+                set = reg and known["tag:" .. reg] or known.tag
+            else
+                set = known[k]
+            end
+            if set and set[id] then return true end
+        end
+        return false
+    end
+    local function kinds_text(kinds, istag)
+        if not kinds then return istag and "tag" or "id of any kind" end
+        return (istag and "tag of " or "") .. table.concat(kinds, " / ")
+    end
+    -- ctx: {file, values = kinds of tag "values", id = kinds of "id" keys, parent = kinds of "parent"}
+    local function visit(v, ctx, kinds)
         if type(v) == "string" then
-            local s = v:gsub("^#", "")
+            local istag = v:sub(1, 1) == "#"
+            local s = istag and v:sub(2) or v
             for _, ns in ipairs(nss) do
                 local id = s:match("^(" .. ns .. ":[a-z0-9_/%.%-]+)$")
-                if id and not known[id] then
-                    fail("dangling reference '%s' in %s", v, file)
+                if id then
+                    count = count + 1
+                    if not exists(id, istag, kinds) then
+                        fail("dangling reference '%s' (not a known %s) in %s", v, kinds_text(kinds, istag), ctx.file)
+                    end
                 end
-                if id then count = count + 1 end
             end
         elseif type(v) == "table" then
-            for _, x in pairs(v) do visit(x, file) end
+            local entry = type(v.type) == "string" and LOOT_ENTRY_KINDS[v.type] or nil
+            for k, x in pairs(v) do
+                if type(k) == "number" then
+                    visit(x, ctx, kinds) -- list elements keep the list's kinds
+                elseif not DEFINING_KEYS[k] then
+                    local sub = REF_KEY_KINDS[k]
+                    if entry and (k == "name" or k == "value") then sub = entry
+                    elseif k == "values" and ctx.values then sub = ctx.values
+                    elseif k == "id" and (ctx.id or kinds) then sub = ctx.id or kinds -- {"id": ...} of a typed list
+                    elseif k == "parent" and ctx.parent then sub = ctx.parent end
+                    visit(x, ctx, sub)
+                end
+            end
         end
     end
     for _, file in ipairs(jsonfiles) do
         local doc = try_json(file)
-        if doc then visit(doc, file) end
+        if doc then
+            local ctx = {file = file}
+            local indata = datadir and norm(file):find(norm(datadir) .. "/", 1, true) == 1
+            local registry = indata and data_registry(rel(file, datadir)) or nil
+            if registry then
+                local tagreg = registry:match("^tags/(.+)$")
+                -- values of a tag registry without a kind here are checked against every kind
+                if tagreg and REGISTRY_KIND[tagreg] then ctx.values = {REGISTRY_KIND[tagreg]} end
+                if registry == "recipe" then ctx.id = {"item"} end
+                if registry == "advancement" then ctx.parent = {"advancement"} end
+            end
+            visit(doc, ctx, nil)
+        end
     end
     return count
 end
@@ -654,6 +780,27 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
     local manual = manual_files(path.join(projectdir, pack.manual))
     local files = layered_files(gen, manual, pack.root)
     local jsons = {}
+    -- Hand-made files derived from TF's CC BY-NC-SA assets live under a "tf-derived/" directory
+    -- next to a SOURCES.json naming their TF source files (AGENTS.md, assets/LICENSE). They stay
+    -- CC BY-NC-SA 4.0: the pack lists them in tf-derived-sources.json beside LICENSE-ASSETS.txt.
+    local derived = {}
+    for _, r in ipairs(table.keys(files)) do
+        local file = files[r]
+        local prefix, sub = r:match("^(.-tf%-derived)/(.+)$")
+        if prefix and sub == "SOURCES.json" then
+            files[r] = nil -- attribution data, not pack content
+        elseif prefix then
+            local srcfile = path.join(projectdir, pack.manual, prefix, "SOURCES.json")
+            local sources = os.isfile(srcfile) and load_json(srcfile) or nil
+            local from = type(sources) == "table" and sources[sub] or nil
+            if type(from) == "string" then from = {from} end
+            if type(from) ~= "table" or #from == 0 then
+                fail("%s is TF-derived but %s does not name its TF source file(s)", rel(file, projectdir), rel(srcfile, projectdir))
+            else
+                derived[r] = from
+            end
+        end
+    end
     for r, file in pairs(files) do
         local target = path.join(dst, r)
         if path.filename(file) == "manifest.json" and not r:find("/") then
@@ -686,6 +833,14 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
         table.sort(locales)
         if #locales > 0 then save_json(path.join(dst, "texts", "languages.json"), locales) end
     end
+    -- attribution: the licences of the pack's content (TF-derived assets are CC BY-NC-SA 4.0)
+    if not pack.test then
+        for _, l in ipairs(cfg.packLicenseFiles or {}) do
+            local src = path.join(projectdir, l.from)
+            if os.isfile(src) then os.cp(src, path.join(dst, l.to)) else fail("licence file %s is missing", l.from) end
+        end
+    end
+    if not table.empty(derived) then save_json(path.join(dst, "tf-derived-sources.json"), derived) end
     return dst, jsons
 end
 
@@ -799,33 +954,46 @@ local function copy_data(projectdir, cfg, outdir, with_tests)
     return jsons
 end
 
--- Ids that exist: BP identifiers, data files by id, tags, owners.tsv ids.
+-- Ids that exist, per kind (see check_dangling): BP identifiers, data files by registry, tags,
+-- owners.tsv ids.
+local BP_KINDS = {["minecraft:block"] = {"block", "item"}, ["minecraft:item"] = {"item"}, ["minecraft:entity"] = {"entity"}}
 local function known_ids(bpdirs, outdir, owners)
-    local known = {}
+    local known = {["*"] = {}, tag = {}}
     for _, bpdir in ipairs(bpdirs) do
         for _, file in ipairs(os.files(path.join(bpdir, "**.json"))) do
-            local id = bp_identifier(file)
-            if id then known[id:match("|(.+)$")] = true end
+            local typed = bp_identifier(file)
+            if typed then
+                local key, id = typed:match("^([^|]+)|(.+)$")
+                for _, kind in ipairs(BP_KINDS[key] or {}) do add_known(known, kind, id) end
+            end
         end
     end
     local datadir = path.join(outdir, "data")
     if os.isdir(datadir) then
         for _, file in ipairs(os.files(path.join(datadir, "**.json"))) do
-            local r = rel(file, datadir)
-            -- data/<ns>/<kind...>/<path>.json -> <ns>:<path> for every kind prefix
-            local ns, rest = r:match("^([^/]+)/(.+)%.json$")
-            if ns and rest then
-                local parts = {}
-                for p in rest:gmatch("[^/]+") do table.insert(parts, p) end
-                for i = 1, #parts do
-                    known[ns .. ":" .. table.concat(parts, "/", i)] = true
-                end
-            end
+            -- data/<ns>/<registry>/<path>.json -> <ns>:<path> of that registry's kind (the path below
+            -- the registry directory only: loot_table/entities/naga.json is twilightforest:entities/naga)
+            local registry, id = data_registry(rel(file, datadir))
+            if registry then add_known(known, registry_kind(registry), id) end
         end
     end
-    for _, ids in pairs(owners.kinds) do
+    for kind, ids in pairs(owners.kinds) do
         for id, _ in pairs(ids) do
-            if id:find(":") and not id:find("[%*%?{]") then known[id] = true end
+            if not id:find("[%*%?{]") then
+                local reg, tagid = id:match("^(.+)/#(.+)$") -- tag rows: "<registry>/#<ns>:<path>"
+                if reg then
+                    if kind == "tag" then add_known(known, "tag:" .. reg, tagid) end
+                else
+                    local entryreg, entryid = id:match("^([^:]+)/([^/]+:.+)$") -- "<registry>/<ns>:<path>"
+                    if kind == "registry_entry" and entryreg then
+                        add_known(known, "twilight/" .. entryreg, entryid)
+                    elseif id:find(":") then
+                        for _, k in ipairs(OWNER_KIND_ALIASES[kind] or {kind}) do add_known(known, k, id) end
+                    elseif kind == "sound_event" then
+                        add_known(known, kind, "twilightforest:" .. id) -- registered as twilightforest:<event>
+                    end
+                end
+            end
         end
     end
     return known
@@ -872,7 +1040,7 @@ local function assemble_content(projectdir, outdir, version)
     local permutations = check_blocks(bpdirs, cfg)
     local owners = load_owners(projectdir, cfg)
     local owned = check_owners(projectdir, cfg, owners)
-    local refs = check_dangling(alljsons, known_ids(bpdirs, outdir, owners), cfg)
+    local refs = check_dangling(alljsons, known_ids(bpdirs, outdir, owners), cfg, path.join(outdir, "data"))
     local scanned = check_arr(projectdir, cfg)
     report(outdir)
     return string.format("%d block permutations, %d owned files, %d references, %d files hash-checked", permutations, owned, refs, scanned)
