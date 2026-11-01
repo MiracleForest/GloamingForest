@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <map>
+#include <set>
 #include <sstream>
 #include <thread>
 #include <variant>
@@ -21,6 +22,8 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/ChunkBlockPos.h"
+#include "mc/world/level/ChunkLocalHeight.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/biome/Biome.h"
 #include "mc/world/level/biome/registry/BiomeRegistry.h"
@@ -29,7 +32,10 @@
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/item/MapItem.h"
+#include "mc/world/level/MapDataManager.h"
 #include "mc/world/level/saveddata/maps/MapItemSavedData.h"
+#include "mc/world/level/storage/LevelStorage.h"
+#include "mc/world/level/storage/db_helpers/Category.h"
 #include "mc/world/level/storage/GameRule.h"
 #include "mc/world/level/storage/GameRules.h"
 
@@ -265,51 +271,69 @@ GF_REGISTER_SELFTEST("worldgen.biomes", [](Context& ctx) -> ll::coro::CoroTask<>
     ctx.check(chunk.biome(lx, box.minY, lz) == original, "restored");
 
     // the generator's own writes: a biome source that varies with height (TF's underground
-    // biomes) over the whole chunk, through setQuartColumn (each block column takes the most
-    // frequent biome in one call, the other quarts per block), read back at both ends of every
-    // quart of every column, timed, then the chunk restored block column by block column
+    // biomes) and across the chunk's borders, through writeBiomes: every block gets the biome
+    // BiomeManager's zoom picks (Java's per-block getBiome), the generation reads the raw quarts
+    // back through Chunk::biome; timed, then every block's biome restored
     int  minY = bs->getMinHeight(), maxY = bs->getMaxHeight();
     int  qMin = minY >> 2, qMax = (maxY - 1) >> 2;
-    auto layered = [&](int qx, int qz, int qy) {
+    auto layered = [original](int qx, int qy, int qz) {
         if (qy < 0) return std::string("minecraft:desert");
         return ((qx + qz + qy) % 7 == 0) ? std::string("minecraft:forest") : original;
     };
-    std::vector<std::vector<std::string>> saved(256);
-    for (int x = 0; x < 16; ++x)
+    struct RestoreBlocks { // every block's biome as it was, also when a check aborts
+        LevelChunk&               lc;
+        int                       minY, maxY;
+        std::vector<Biome const*> saved;
+        ~RestoreBlocks() {
+            std::size_t i = 0;
+            for (int y = minY; y < maxY; ++y)
+                for (int z = 0; z < 16; ++z)
+                    for (int x = 0; x < 16; ++x, ++i) {
+                        ChunkBlockPos p{static_cast<uchar>(x), ChunkLocalHeight{static_cast<short>(y - minY)}, static_cast<uchar>(z)};
+                        if (&lc.getBiome(p) != saved[i]) lc._setBiome(*saved[i], p, false);
+                    }
+        }
+    } restoreBlocks{*lc, minY, maxY, {}};
+    for (int y = minY; y < maxY; ++y)
         for (int z = 0; z < 16; ++z)
-            for (int qy = qMin; qy <= qMax; ++qy) saved[static_cast<std::size_t>(x * 16 + z)].push_back(chunk.biome(x, qy * 4, z));
-    struct RestoreChunk {
-        wg::detail::LevelChunkAdapter&          c;
-        std::vector<std::vector<std::string>>&  saved;
-        int                                     qMin;
-        ~RestoreChunk() {
             for (int x = 0; x < 16; ++x)
-                for (int z = 0; z < 16; ++z) {
-                    auto const& col = saved[static_cast<std::size_t>(x * 16 + z)];
-                    for (std::size_t i = 0; i < col.size(); ++i)
-                        if (c.biome(x, (qMin + static_cast<int>(i)) * 4, z) != col[i])
-                            for (int y = (qMin + static_cast<int>(i)) * 4; y < (qMin + static_cast<int>(i)) * 4 + 4; ++y) c.setBiome(x, y, z, col[i]);
-                }
-        }
-    } restoreChunk{chunk, saved, qMin};
-    auto start = std::chrono::steady_clock::now();
-    for (int qx = 0; qx < 4; ++qx)
-        for (int qz = 0; qz < 4; ++qz) {
-            std::vector<std::string> ids;
-            for (int qy = qMin; qy <= qMax; ++qy) ids.push_back(layered(qx, qz, qy));
-            chunk.setQuartColumn(qx, qz, qMin, ids);
-        }
-    double ms   = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
-    bool   same = true;
-    for (int x = 0; x < 16 && same; ++x)
-        for (int z = 0; z < 16 && same; ++z)
-            for (int qy = qMin; qy <= qMax && same; ++qy) {
-                auto want = layered(x >> 2, z >> 2, qy);
-                if (chunk.biome(x, qy * 4, z) != want || chunk.biome(x, std::min(qy * 4 + 3, maxY - 1), z) != want) same = false;
+                restoreBlocks.saved.push_back(&lc->getBiome(ChunkBlockPos{static_cast<uchar>(x), ChunkLocalHeight{static_cast<short>(y - minY)}, static_cast<uchar>(z)}));
+    constexpr std::int64_t seed = 20241102;
+    wg::detail::Providers  p;
+    p.biomeSource = [&](int qx, int qy, int qz) { return layered(qx, qy, qz); };
+    wg::detail::LevelChunkAdapter generating(*lc, dim.getBiomeRegistry(), minY, maxY);
+    auto                          start = std::chrono::steady_clock::now();
+    auto                          distinct = wg::detail::writeBiomes(p, generating, seed);
+    double                        ms    = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+    std::set<std::string> layers{"minecraft:desert", "minecraft:forest", original};
+    ctx.check(std::set<std::string>(distinct.begin(), distinct.end()) == layers, "the chunk's distinct raw biomes (" + std::to_string(distinct.size()) + ")");
+    bool raw = true;
+    for (int x = 0; x < 16 && raw; ++x)
+        for (int z = 0; z < 16 && raw; ++z)
+            for (int qy = qMin; qy <= qMax && raw; ++qy) {
+                auto want = layered((lc->mPosition->x * 16 + x) >> 2, qy, (lc->mPosition->z * 16 + z) >> 2);
+                if (generating.biome(x, qy * 4, z) != want || generating.biome(x, std::min(qy * 4 + 3, maxY - 1), z) != want) raw = false;
             }
-    ctx.check(same, "a height-varying biome layout reads back at every quart of every column");
+    ctx.check(raw, "during the generation Chunk::biome reads the raw quart of every block");
+    auto zoomSeed = gf::core::biome::obfuscateSeed(seed);
+    bool zoomed   = true;
+    int  moved = 0, total = 0;
+    for (int y = minY; y < maxY && zoomed; ++y)
+        for (int z = 0; z < 16 && zoomed; ++z)
+            for (int x = 0; x < 16 && zoomed; ++x) {
+                int  bx = lc->mPosition->x * 16 + x, bz = lc->mPosition->z * 16 + z;
+                auto q  = gf::core::biome::zoom(zoomSeed, bx, y, bz);
+                auto want = layered(q.x, std::clamp(q.y, qMin, qMax), q.z);
+                auto have = wg::detail::biomeIdOf(lc->getBiome(ChunkBlockPos{static_cast<uchar>(x), ChunkLocalHeight{static_cast<short>(y - minY)}, static_cast<uchar>(z)}));
+                if (have != want) zoomed = false;
+                if (want != layered(bx >> 2, y >> 2, bz >> 2)) ++moved;
+                ++total;
+            }
+    ctx.check(zoomed, "the chunk stores BiomeManager's zoomed biome at every block");
+    ctx.check(moved > 0, "the zoom moves blocks to a neighbouring quart (" + std::to_string(moved) + " of " + std::to_string(total) + ")");
     std::ostringstream o;
-    o << "worldgen biomes: height-varying biomes written into a live chunk in " << std::fixed << std::setprecision(3) << ms << " ms";
+    o << "worldgen biomes: height-varying biomes written into a live chunk in " << std::fixed << std::setprecision(3) << ms << " ms (zoomed per block, "
+      << moved << " of " << total << " blocks read a neighbouring quart)";
     gf::log().info("{}", o.str());
     ctx.info(o.str());
 });
@@ -711,13 +735,11 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome", [](Context& ctx) -> ll::coro::Coro
     ctx.require(bs != nullptr, "test region");
     auto&       registry = bs->getDimension().getBiomeRegistry();
     auto const* probe    = probeBiome(registry);
+    std::string probeId  = probe ? wg::detail::biomeIdOf(*probe) : std::string();
     if (!probe) {
         gf::log().info("worldgen custom biome: probe {} not installed", kProbeBiome);
-        ctx.info(std::string("the probe biome ") + kProbeBiome + " is not installed (the worldgen e2e scenario installs it): nothing to write");
-        co_return;
-    }
-    std::string probeId = wg::detail::biomeIdOf(*probe);
-    {
+        ctx.info(std::string("the probe biome ") + kProbeBiome + " is not installed (the worldgen e2e scenario installs it): only the vanilla control is painted");
+    } else {
         auto* lc = bs->getChunkAt(BlockPos{box.minX, box.minY, box.minZ});
         ctx.require(lc != nullptr, "test chunk");
         wg::detail::LevelChunkAdapter chunk(*lc, registry, bs->getMinHeight(), bs->getMaxHeight());
@@ -752,6 +774,7 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome", [](Context& ctx) -> ll::coro::Coro
     };
     Area areas[] = {{fx + 3000, fz, probeId, "east"}, {fx, fz + 3000, "minecraft:desert", "south"}};
     for (auto const& a : areas) {
+        if (a.biome.empty()) continue; // no probe: the vanilla control only (remote clients)
         // loaded by the test's simulated player, then kept loaded by a ticking area until the
         // restore test (the painted chunks must not be reloaded from disk before the client comes)
         ctx.require(co_await ctx.ensureLoaded({dim, a.x, fy, a.z}), std::string("the chunks 3000 blocks ") + a.where + " load on the server");
@@ -892,7 +915,19 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome_map", [](Context& ctx) -> ll::coro::
     // a map far from everything else; Bedrock centers it on its 128-block grid
     gf::core::GlobalPos far{dim, box.minX + 6000, box.minY, box.minZ};
     ctx.require(co_await ctx.ensureLoaded(far), "the map area loads");
-    auto&    map    = level->createMapSavedData(level->getNewUniqueID(), BlockPos{far.x, far.y, far.z}, DimensionType(dim), 0);
+    auto& map = level->createMapSavedData(level->getNewUniqueID(), BlockPos{far.x, far.y, far.z}, DimensionType(dim), 0);
+    // the map is only a sampling buffer: never saved, removed from the map manager at the end of the
+    // test (also when a check aborts it), so no map record is left in the world
+    map.mDirtyForSave = false;
+    struct DropMap {
+        ActorUniqueID id;
+        ~DropMap() {
+            auto level = ll::service::getLevel();
+            if (!level) return;
+            if (auto* manager = level->getMapDataManager().get().get()) manager->mMapData->erase(id);
+            (void)level->getLevelStorage().deleteData(MapItemSavedData::getSerializationKey(id), DBHelpers::Category::Item);
+        }
+    } dropMap{*map.mMapId};
     BlockPos origin = *map.mOrigin;
     if (std::abs(origin.x - far.x) > 16 || std::abs(origin.z - far.z) > 16)
         ctx.require(co_await ctx.ensureLoaded({dim, origin.x, box.minY, origin.z}), "the map's center loads");
@@ -937,6 +972,7 @@ GF_REGISTER_SELFTEST("worldgen.custom_biome_map", [](Context& ctx) -> ll::coro::
     // (i, j) = column (x - 64 + i, z - 64 + j), stored row by row in z) into the saved data, as the
     // server does for a map being updated
     bool sampled = MapItem::sampleMapData(*bs, 1, origin, origin, 128, 128, nullptr, &map, nullptr);
+    map.mDirtyForSave = false;
     std::vector<unsigned> pixels = *map.mPixels;
     ctx.require(pixels.size() == 128 * 128, "the map has 128 x 128 pixels");
     // pixel of a world column: (x - originX) + 64 per axis (scale 0), row-major in z or in x
@@ -1054,6 +1090,73 @@ GF_REGISTER_SELFTEST("worldgen.spawn", [](Context& ctx) -> ll::coro::CoroTask<> 
     );
 });
 
+// The spawners' default mob answers (Java's base classes): Mob#checkSpawnObstruction's liquid
+// check over the spawn box (WaterAnimal's without it), no entity check during chunk generation
+// (WorldGenRegion#getEntities is empty: a group's members may overlap), the walk target values,
+// and the biome tags the natural spawner reads.
+GF_REGISTER_SELFTEST("worldgen.spawn_checks", [](Context& ctx) {
+    namespace sd = gf::spawn::detail;
+    namespace se = gf::spawn::ext;
+    auto        world  = flatMemoryWorld(7);
+    auto const* water  = gf::game::blockWith("minecraft:water");
+    auto const* stone  = gf::game::blockWith("minecraft:stone");
+    ctx.require(water && stone, "blocks");
+    world->setBlock({5, 4, 5}, *water); // a water block on the grass (top y 3)
+    auto region = world->region(0, 0, 1);
+
+    // the box of a 0.6 wide mob at x 6.0 covers columns 5 and 6 (Java's chunk-generation spawns
+    // stand on integer x / z): the water next to it obstructs a land mob, not a water animal
+    se::SpawnBehaviour land;
+    ctx.check(!sd::obstructionDefault(*region, nullptr, land, "creature", 6.0, 4.0, 5.5), "a land mob beside water: Mob#checkSpawnObstruction refuses (containsAnyLiquid)");
+    ctx.check(sd::obstructionDefault(*region, nullptr, land, "creature", 7.0, 4.0, 5.5), "one column further: no liquid in the box");
+    ctx.check(sd::obstructionDefault(*region, nullptr, land, "water_creature", 6.0, 4.0, 5.5), "the water categories: WaterAnimal's check (entities only)");
+    se::SpawnBehaviour drowned{.obstruction = se::Obstruction::EntitiesOnly};
+    ctx.check(sd::obstructionDefault(*region, nullptr, drowned, "monster", 6.0, 4.0, 5.5), "Obstruction::EntitiesOnly ignores the liquid");
+    se::SpawnBehaviour wide{.width = 2.0};
+    ctx.check(sd::obstructionDefault(*region, nullptr, land, "creature", 6.9, 4.0, 5.5)
+                  && !sd::obstructionDefault(*region, nullptr, wide, "creature", 6.9, 4.0, 5.5),
+              "at x 6.9 a 0.6-wide box misses the water, a 2-wide one covers it");
+
+    // walk target values: Animal (grass below or light), Zero (a creature that is not an Animal),
+    // Monster (dark enough); generation light estimated from the blocks above
+    for (int x = 8; x <= 10; ++x)
+        for (int z = 8; z <= 10; ++z) world->setBlock({x, 8, z}, *stone); // a roof: dark below
+    world->setBlock({9, 3, 9}, *stone); // no grass below the dark spot
+    BlockPos dark{9, 4, 9}, open{12, 4, 12};
+    ctx.check(sd::spawnRulesDefault(*region, open, se::WalkTarget::ByCategory, "creature", true), "an Animal on grass");
+    ctx.check(!sd::spawnRulesDefault(*region, dark, se::WalkTarget::ByCategory, "creature", true), "an Animal in the dark, off grass: refused");
+    ctx.check(sd::spawnRulesDefault(*region, dark, se::WalkTarget::Zero, "creature", true), "a creature that is not an Animal (walk target 0): allowed");
+    ctx.check(sd::spawnRulesDefault(*region, dark, se::WalkTarget::ByCategory, "monster", true)
+                  && !sd::spawnRulesDefault(*region, open, se::WalkTarget::ByCategory, "monster", true),
+              "a Monster: in the dark only");
+
+    // chunk generation: every member of a group is placed (the members never obstruct each other):
+    // on open grass every try succeeds, so the mobs come in whole groups of 4
+    gf::spawn::Table table;
+    table.creatureProbability   = 0.5F;
+    table.byCategory["creature"] = {{"gf_test:spawn_checks_mob", 1, 4, 4}};
+    gf::spawn::setBiomeSpawns("gf_test:spawn_checks", table);
+    auto open3 = flatMemoryWorld(11);
+    auto view  = open3->region(0, 0, 1);
+    int  whole = 0, mobs = 0;
+    for (int s = 0; s < 64; ++s) {
+        // (decoration seeds of scattered chunks: java.util.Random's first float barely moves over
+        // consecutive small seeds)
+        jr::WorldgenRandom random(std::make_unique<jr::LegacyRandom>(0));
+        random.setDecorationSeed(20241102, s * 160 - 4000, 3000 - s * 112);
+        int n = sd::spawnForChunkGeneration(*view, "gf_test:spawn_checks", 0, 0, random);
+        mobs += n;
+        if (n % 4 == 0) ++whole;
+    }
+    gf::spawn::setBiomeSpawns("gf_test:spawn_checks", gf::spawn::Table{}); // no test spawns left registered
+    ctx.check(whole == 64 && mobs > 0, "every group of 4 is placed whole (" + std::to_string(mobs) + " mobs over 64 chunks)");
+
+    // biome tags: minecraft:reduce_water_ambient_spawns (= #minecraft:is_river) without F9's tags
+    ctx.check(sd::biomeHasTag("minecraft:river", "minecraft:reduce_water_ambient_spawns") && sd::biomeHasTag("minecraft:frozen_river", "minecraft:reduce_water_ambient_spawns")
+                  && !sd::biomeHasTag("twilightforest:forest", "minecraft:reduce_water_ambient_spawns"),
+              "minecraft:reduce_water_ambient_spawns: the rivers");
+});
+
 // The Blanket stage runs at surface time (TF's chunkBlanketing after buildSurface): the blanket
 // sees the bare ground's WORLD_SURFACE_WG height, runs before the carvers and every feature (which
 // see its blocks), gets the WorldGenRegion random and the chunk's biomes.
@@ -1121,27 +1224,42 @@ GF_REGISTER_SELFTEST("worldgen.blanket", [](Context& ctx) {
     gf::log().info("worldgen blanket: {} at surface time, height {}", seq, seenHeight);
 });
 
-// Every decoration step runs the Pieces stage before its features, with the decoration context:
-// step, decoration seed and the structure randoms of Java's setFeatureSeed(decorationSeed, index, step).
+// Structures during the decoration: a plain Pieces step runs once (Worldgen.h's single stage, at
+// SurfaceStructures); an ext::addStructureStep step runs at every decoration step 0..10, both
+// before the step's features, with the decoration context: step, decoration seed and the structure
+// randoms of Java's setFeatureSeed(decorationSeed, index, step), the index counting every structure
+// of the step in Java's registry order (Minecraft's own included).
 GF_REGISTER_SELFTEST("worldgen.pieces", [](Context& ctx) {
     constexpr std::int64_t seed = 8675309;
     wg::detail::Providers  p;
     p.terrain = [](wg::Chunk& c) { wg::detail::fallbackTerrain(c); };
-    std::vector<int>          steps;
+    std::vector<int>          steps;     ///< the structure step's calls (step), the plain Pieces' (200 + step), Features (100)
     std::vector<std::int64_t> firsts;
     std::int64_t              decoSeed = 0;
     bool                      context  = true;
-    p.stages[wg::Stage::Pieces].push_back({"gf_test.pieces", 0, 0, [&](wg::Chunk& c, wg::Region&) {
-                                              auto const* d = wg::ext::decorationContext();
-                                              if (!d || d->chunkX != c.chunkX() || d->chunkZ != c.chunkZ()) {
-                                                  context = false;
-                                                  return;
-                                              }
-                                              steps.push_back(d->step);
-                                              decoSeed = d->decorationSeed;
-                                              firsts.push_back(d->structureRandom(2)->nextLong());
-                                          }});
-    p.stages[wg::Stage::Features].push_back({"gf_test.features", 0, 1, [&](wg::Chunk&, wg::Region&) { steps.push_back(100); }});
+    bool                      labyrinthSeed = false, otherStepNull = true;
+    p.structureSteps.push_back({"gf_test.structures", 0, 1, [&](wg::Chunk& c, wg::Region&) {
+                                    auto const* d = wg::ext::decorationContext();
+                                    if (!d || d->chunkX != c.chunkX() || d->chunkZ != c.chunkZ()) {
+                                        context = false;
+                                        return;
+                                    }
+                                    steps.push_back(d->step);
+                                    decoSeed = d->decorationSeed;
+                                    firsts.push_back(d->structureRandom(2)->nextLong());
+                                    if (d->step == static_cast<int>(wg::ext::DecorationStep::UndergroundStructures)) {
+                                        auto r = d->structureRandomOf("twilightforest:labyrinth");
+                                        labyrinthSeed = r && r->nextLong() == d->structureRandom(2)->nextLong();
+                                    } else if (d->structureRandomOf("twilightforest:labyrinth")) {
+                                        otherStepNull = false;
+                                    }
+                                }});
+    // a plain Pieces step registered earlier with a later order: after the structure step
+    p.stages[wg::Stage::Pieces].push_back({"gf_test.pieces", 1, 0, [&](wg::Chunk&, wg::Region&) {
+                                               auto const* d = wg::ext::decorationContext();
+                                               steps.push_back(200 + (d ? d->step : -100));
+                                           }});
+    p.stages[wg::Stage::Features].push_back({"gf_test.features", 0, 2, [&](wg::Chunk&, wg::Region&) { steps.push_back(100); }});
     wg::detail::MemoryWorld world(-32, 64, seed);
     for (int cx = 4; cx <= 6; ++cx)
         for (int cz = -6; cz <= -4; ++cz) {
@@ -1151,9 +1269,11 @@ GF_REGISTER_SELFTEST("worldgen.pieces", [](Context& ctx) {
         }
     auto region = world.region(5, -5, 1);
     wg::detail::decorateChunk(p, &wg::detail::asChunk(world.chunk(5, -5)), *region, seed);
-    ctx.check(context && wg::ext::decorationContext() == nullptr, "the context is set during the Pieces calls only");
-    std::vector<int> want{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
-    ctx.check(steps == want, "Pieces at every step 0..10, then the Features stage");
+    ctx.check(context && wg::ext::decorationContext() == nullptr, "the context is set during the structure calls only");
+    std::vector<int> want{0, 1, 2, 3, 4, 204, 5, 6, 7, 8, 9, 10, 100};
+    std::string      seq;
+    for (int s : steps) seq += (seq.empty() ? "" : " ") + std::to_string(s);
+    ctx.check(steps == want, "structure steps at every step 0..10, the plain Pieces once at SurfaceStructures, then Features (" + seq + ")");
     jr::WorldgenRandom w(std::make_unique<jr::Xoroshiro128pp>(0));
     ctx.check(decoSeed == w.setDecorationSeed(seed, 80, -80), "the decoration seed of the chunk");
     bool seeds = firsts.size() == 11;
@@ -1163,6 +1283,25 @@ GF_REGISTER_SELFTEST("worldgen.pieces", [](Context& ctx) {
         if (s.nextLong() != firsts[static_cast<std::size_t>(l)]) seeds = false;
     }
     ctx.check(seeds, "structureRandom(index) is setFeatureSeed(decorationSeed, index, step)");
+    ctx.check(labyrinthSeed && otherStepNull, "structureRandomOf(labyrinth) is index 2 of underground_structures, nullptr at other steps");
+
+    // Java's structure registry: the file paths sorted, every structure of a step counted
+    auto slotIs = [](char const* id, int step, int index) {
+        auto s = wg::ext::structureSlot(id);
+        return s && s->step == step && s->index == index;
+    };
+    auto by = wg::ext::structuresByStep();
+    ctx.check(by.size() == 11 && by[3].size() == 8 && by[4].size() == 43 && by[7].size() == 3 && by[10].size() == 1,
+              "34 vanilla and 21 TF structures: 8 underground_structures, 43 surface_structures, 3 underground_decoration, 1 top_layer_modification");
+    ctx.check(slotIs("minecraft:buried_treasure", 3, 0) && slotIs("twilightforest:knight_stronghold", 3, 1) && slotIs("twilightforest:labyrinth", 3, 2)
+                  && slotIs("minecraft:trail_ruins", 3, 5) && slotIs("minecraft:trial_chambers", 3, 6) && slotIs("twilightforest:troll_cave", 3, 7),
+              "underground_structures in registry order");
+    ctx.check(slotIs("twilightforest:aurora_palace", 4, 0) && slotIs("twilightforest:dark_tower", 4, 3) && slotIs("twilightforest:hedge_maze", 4, 8)
+                  && slotIs("twilightforest:large_hollow_hill", 4, 13) && slotIs("twilightforest:lich_tower", 4, 14)
+                  && slotIs("minecraft:shipwreck", 4, 31) && slotIs("minecraft:shipwreck_beached", 4, 32) && slotIs("minecraft:stronghold", 4, 34)
+                  && slotIs("twilightforest:yeti_cave", 4, 42),
+              "surface_structures in registry order, vanilla structures counted");
+    ctx.check(slotIs("twilightforest:giant_house", 10, 0) && !wg::ext::structureSlot("twilightforest:no_such_structure"), "giant house alone at top_layer_modification");
 });
 
 // CarvingMaskPlacement: the blocks the carvers carved, kept from the Carvers stage until the
@@ -1192,12 +1331,14 @@ GF_REGISTER_SELFTEST("worldgen.carving_mask", [](Context& ctx) {
     });
     ctx.require(static_cast<bool>(fn), "minecraft:carving_mask is registered");
     jr::Xoroshiro128pp       random(1);
-    JsonT                    config = {{"type", "minecraft:carving_mask"}};
+    JsonT                    config = {{"type", "minecraft:carving_mask"}, {"step", "air"}};
     auto                     out    = fn({*region, random, config, ""}, BlockPos{cx * 16, 0, cz * 16});
     std::vector<BlockPos>    want{{cx * 16, 3, cz * 16}, {cx * 16 + 1, 5, cz * 16 + 2}, {cx * 16 + 15, 7, cz * 16 + 15}};
     bool                     same = out.size() == want.size();
     for (std::size_t i = 0; same && i < want.size(); ++i) same = out[i].x == want[i].x && out[i].y == want[i].y && out[i].z == want[i].z;
     ctx.check(same, "the carved blocks in ascending mask index (" + std::to_string(out.size()) + " positions)");
+    JsonT liquid = {{"type", "minecraft:carving_mask"}, {"step", "liquid"}};
+    ctx.check(fn({*region, random, liquid, ""}, BlockPos{cx * 16, 0, cz * 16}).empty(), "the liquid step's mask is empty (no liquid carvers in 1.21.1)");
     wg::detail::dropCarvingMask(-1, cx, cz);
     ctx.check(fn({*region, random, config, ""}, BlockPos{cx * 16, 0, cz * 16}).empty(), "nothing once the chunk's decoration dropped the mask");
 });
