@@ -6,16 +6,19 @@
 # properties read back through Molang, the goal selector and TF's goals at work (charge, breath),
 # the pathfinding block rules, the hostile mount (no dismount, no teleport), the projectile and
 # arrow simulation, peaceful turning the boss back into its spawner, the spawner variants and the
-# sinister spawner. The harness adds what only it can do: the entity data survives a world reload.
+# sinister spawner, the BaseTFBoss lifecycle overrides (clone, long death animation, shared knight
+# loot), the synced data reaching companions that join or come into range later, the move
+# controls. The harness adds what only it can do: the entity data survives a world reload.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'entity.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) entity selftest(s) failed" }
-if ($r.Pass -lt 22) { throw "expected at least 22 entity selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 27) { throw "expected at least 27 entity selftests to pass, got $($r.Pass)" }
 foreach ($line in 'boss: gf_test:boss died', 'boss: death chest of gf_test:boss at', 'boss: gf_test:boss conquered gf_test:fixture',
                   'boss: gf_test:boss turned back into gf_test:fixture_block', 'boss: gf_test:fixture_block spawned gf_test:boss',
                   'boss: sinister spawner at', 'entity: minecraft:horse grabbed', 'entity: minecraft:horse threw',
-                  'entity: the teleport of', 'picked up gf_test:boss_part') {
+                  'entity: the teleport of', 'picked up gf_test:boss_part',
+                  'boss: the death animation of gf_test:boss finished after 60 ticks', 'SELFTEST PASS entity.sync_late') {
     if (-not (Get-ServerLog | Select-String -SimpleMatch $line -Quiet)) { throw "missing log line: $line" }
 }
 

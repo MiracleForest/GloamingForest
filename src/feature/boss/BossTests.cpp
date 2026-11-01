@@ -212,6 +212,11 @@ GF_REGISTER_SELFTEST("entity.boss_peaceful", [](Context& ctx) -> ll::coro::CoroT
     DifficultyScope scope(Difficulty::Easy);
     // the fixture spawner exists only while this test runs (other tests place fixture blocks)
     SpawnerScope spawner;
+    // EnforcedHomePoint#getHomeRadius of the type: the spawner gives it to the boss it spawns
+    struct RadiusScope {
+        RadiusScope() { gf::boss::ext::setHomeRadius("gf_test:boss", 20); }
+        ~RadiusScope() { gf::boss::ext::setHomeRadius("gf_test:boss", 0); }
+    } radius;
     auto box  = co_await ctx.flatArea(5860, 12);
     auto home = ctx.testPos(5863, 2);
     // peaceful: the boss turns back into its spawner at home (BaseTFBoss#checkDespawn)
@@ -242,9 +247,167 @@ GF_REGISTER_SELFTEST("entity.boss_peaceful", [](Context& ctx) -> ll::coro::CoroT
     if (auto* b = mobById(spawned)) {
         auto h = ge::home(*b);
         ctx.check(h && h->pos == home, "the spawned boss's home is the spawner");
+        ctx.check(h && h->radius == 20, "with the type's home radius (" + (h ? std::to_string(h->radius) : std::string("none")) + ")");
         ctx.check(ge::data(*b, "boss:spawner") == "gf_test:fixture_block", "the boss knows its spawner block");
         b->remove();
     }
+    (void)box;
+});
+
+// BaseTFBoss's overridable lifecycle (gf::boss::ext::Lifecycle), with the overrides TF's bosses use:
+// a shadow clone (Lich#shouldSpawnLoot / #shouldCreateSpawner false) leaves no chest, no conquest
+// and no spawner; a longer death animation (Naga, Lich, Ur-Ghast, Hydra) keeps the dead body past
+// Bedrock's 20 ticks with tickDeath running, then the death container of the type takes the loot
+// and onPostRemoval runs; the Knight Phantoms' postmortem gives a knight's loot to another one and
+// only the last knight deposits the chest; placeSpawner replaces the peaceful spawner placement.
+namespace {
+struct HookProbe {
+    int          tickDeaths = 0, maxDeathTime = 0, postRemovals = 0, spawnersPlaced = 0;
+    std::int64_t otherKnight = 0;
+};
+HookProbe& hookProbe() {
+    static HookProbe p;
+    return p;
+}
+bool flagged(Mob& m, char const* key) { return ge::data(m, key).is_boolean() && ge::data(m, key).get<bool>(); }
+
+/// Empties the death chest at `chest` and puts the floor block back.
+void restoreFloor(core::GlobalPos const& chest, std::string const& floor) {
+    if (auto* c = chestAt(chest))
+        for (int i = 0; i < c->getContainerSize(); ++i) c->setItem(i, game::items::empty());
+    if (auto* region = game::regionOf(chest.dim))
+        if (auto const* b = game::blockWith(floor.empty() ? "minecraft:grass_block" : floor)) game::setBlock(*region, game::blockPos(chest), *b);
+}
+} // namespace
+
+GF_REGISTER_SELFTEST("entity.boss_lifecycle_hooks", [](Context& ctx) -> ll::coro::CoroTask<> {
+    FixtureScope    fixture;
+    DifficultyScope scope(Difficulty::Easy);
+    SpawnerScope    spawner; // the fixture boss's spawner block for the peaceful steps
+    struct LifecycleScope {
+        ~LifecycleScope() { clearLifecycleForTest("gf_test:boss"); }
+    } lifecycleScope;
+    hookProbe() = {};
+    gf::boss::ext::Lifecycle lc;
+    lc.shouldSpawnLoot     = [](Mob& m) { return !flagged(m, "gf_clone"); };
+    lc.shouldCreateSpawner = [](Mob& m) { return !flagged(m, "gf_clone"); };
+    lc.tickDeath           = [](Mob& m, int t) {
+        if (!flagged(m, "gf_long")) return;
+        hookProbe().tickDeaths++;
+        hookProbe().maxDeathTime = std::max(hookProbe().maxDeathTime, t);
+    };
+    lc.deathAnimationFinished = [](Mob& m, int t) { return t >= (flagged(m, "gf_long") ? 60 : 20); };
+    lc.deathContainer         = [](Mob& m, core::jrand::RandomSource&) { return std::string(flagged(m, "gf_long") ? "minecraft:trapped_chest" : "minecraft:chest"); };
+    lc.onPostRemoval          = [](Mob&) { hookProbe().postRemovals++; };
+    lc.placeSpawner           = [](Mob& m, BlockPos const& pos) {
+        hookProbe().spawnersPlaced++;
+        gf::boss::ext::placeBossSpawner(m, pos);
+    };
+    // KnightPhantom#postmortem: while another knight lives it gets the loot, the last one deposits
+    lc.postmortem = [](Mob& m, std::string const& type, Actor* killer) {
+        if (!flagged(m, "gf_knight")) return gf::boss::ext::defaultPostmortem(m, type, killer);
+        auto* other = mobById(hookProbe().otherKnight);
+        if (other && other != &m && other->isAlive()) {
+            auto item = game::items::make("gf_test:fixture_item", 2);
+            if (item) gf::boss::ext::setLootBufferSlot(*other, 0, *item);
+            return;
+        }
+        gf::boss::ext::defaultPostmortem(m, type, killer);
+        ge::data(m, "gf_over") = true; // IT_IS_OVER
+    };
+    lc.shouldDeposit = [](Mob& m) { return !flagged(m, "gf_knight") || flagged(m, "gf_over"); };
+    gf::boss::ext::setLifecycle("gf_test:boss", lc);
+    resetTestRecords();
+    auto box = co_await ctx.flatArea(5866, 12);
+    // (1) a shadow clone dies: no loot, no conquest, no chest
+    auto homeA = ctx.testPos(5867, 1);
+    auto floor = ctx.blockAt(homeA.offset(0, -1, 0));
+    auto* a     = spawnMob(homeA, "gf_test:boss");
+    ctx.require(a != nullptr, "the clone spawns");
+    auto aId = fe::uidOf(*a);
+    ge::setHome(*a, homeA, 20);
+    ge::data(*a, "gf_clone") = true;
+    co_await ctx.ticks(2);
+    if ((a = mobById(aId))) a->kill();
+    co_await ctx.ticks(32);
+    ctx.check(!lastDeathChest().has_value(), "a clone's death places no chest (shouldSpawnLoot false)");
+    ctx.check(!lastConquest().has_value(), "and conquers nothing");
+    ctx.check(ctx.blockAt(homeA.offset(0, -1, 0)) == floor, "the floor under its home is untouched");
+    ctx.check(mobById(aId) == nullptr, "the clone is gone");
+    // (2) peaceful: a clone puts no spawner back, the real boss does (through placeSpawner)
+    auto homeC = ctx.testPos(5869, 3);
+    auto homeD = ctx.testPos(5871, 3);
+    ctx.cleanupBlock(homeC);
+    ctx.cleanupBlock(homeD);
+    auto* c = spawnMob(homeC.offset(1, 0, 0), "gf_test:boss");
+    auto* d = spawnMob(homeD.offset(1, 0, 0), "gf_test:boss");
+    ctx.require(c && d, "the peaceful probes spawn");
+    auto cId = fe::uidOf(*c), dId = fe::uidOf(*d);
+    ge::setHome(*c, homeC, 20);
+    ge::setHome(*d, homeD, 20);
+    ge::data(*c, "gf_clone") = true;
+    co_await ctx.ticks(2);
+    scope.set(Difficulty::Peaceful);
+    co_await ctx.ticks(3);
+    ctx.check(ctx.blockAt(homeC) != "gf_test:fixture_block", "a clone leaves no spawner on peaceful (shouldCreateSpawner false)");
+    ctx.check(ctx.blockAt(homeD) == "gf_test:fixture_block" && hookProbe().spawnersPlaced == 1, "the boss turns back into its spawner through placeSpawner");
+    ctx.check(!mobById(cId) && !mobById(dId), "both are gone");
+    scope.set(Difficulty::Easy);
+    ctx.require(ctx.setBlock(homeD, "minecraft:air"), "clear the placed spawner");
+    // (3) a long death animation: the body stays past 20 ticks, then the type's container
+    resetTestRecords();
+    auto homeB = ctx.testPos(5872, 1);
+    auto floorB = ctx.blockAt(homeB.offset(0, -1, 0));
+    auto* b     = spawnMob(homeB, "gf_test:boss");
+    ctx.require(b != nullptr, "the long-dying boss spawns");
+    auto bId = fe::uidOf(*b);
+    ge::setHome(*b, homeB, 20);
+    ge::data(*b, "gf_long") = true;
+    co_await ctx.ticks(2);
+    int held = heldDeathTicksForTest();
+    if ((b = mobById(bId))) b->kill();
+    co_await ctx.ticks(40);
+    b = mobById(bId);
+    ctx.check(b != nullptr, "the dead body is still there after 40 ticks (Bedrock removes it after 20)");
+    if (b) ctx.check(gf::boss::ext::deathTime(*b) >= 35 && !b->isAlive(), "dying, deathTime " + std::to_string(gf::boss::ext::deathTime(*b)));
+    ctx.check(heldDeathTicksForTest() > held, "the engine's death ticks were held (" + std::to_string(heldDeathTicksForTest() - held) + ")");
+    ctx.check(!lastDeathChest().has_value(), "no chest before the animation finished");
+    for (int i = 0; i < 40 && mobById(bId); ++i) co_await ctx.ticks(1);
+    ctx.check(mobById(bId) == nullptr, "the body is removed once the animation finished");
+    ctx.check(hookProbe().tickDeaths >= 59 && hookProbe().maxDeathTime >= 60, "tickDeath ran every dying tick (" + std::to_string(hookProbe().tickDeaths) + ", up to " + std::to_string(hookProbe().maxDeathTime) + ")");
+    auto chestB = lastDeathChest();
+    ctx.check(chestB && chestB->x == homeB.x && chestB->y == homeB.y - 1 && chestB->z == homeB.z, "the death chest is at the home point");
+    if (chestB) ctx.check(ctx.blockAt(*chestB) == "minecraft:trapped_chest", "of the type's deathContainer (" + ctx.blockAt(*chestB) + ")");
+    ctx.check(hookProbe().postRemovals >= 1, "onPostRemoval ran");
+    if (chestB) restoreFloor(*chestB, floorB);
+    // (4) the Knight Phantoms: the first knight's loot goes to the other, only the last deposits
+    resetTestRecords();
+    auto homeK = ctx.testPos(5875, 1);
+    auto floorK = ctx.blockAt(homeK.offset(0, -1, 0));
+    auto* k1    = spawnMob(homeK.offset(-2, 0, 2), "gf_test:boss");
+    auto* k2    = spawnMob(homeK.offset(2, 0, 2), "gf_test:boss");
+    ctx.require(k1 && k2, "two knights spawn");
+    auto k1Id = fe::uidOf(*k1), k2Id = fe::uidOf(*k2);
+    for (auto* k : {k1, k2}) {
+        ge::setHome(*k, homeK, 20);
+        ge::data(*k, "gf_knight") = true;
+    }
+    hookProbe().otherKnight = k2Id;
+    co_await ctx.ticks(2);
+    if ((k1 = mobById(k1Id))) k1->kill();
+    co_await ctx.ticks(30);
+    ctx.check(!lastDeathChest().has_value(), "a knight that is not the last leaves no chest (shouldDeposit)");
+    ctx.check(!lastConquest().has_value(), "and conquers nothing yet");
+    k2 = mobById(k2Id);
+    ctx.require(k2 != nullptr, "the other knight lives");
+    ctx.check(game::items::idOf(gf::boss::ext::lootBuffer(*k2)[0]) == "gf_test:fixture_item", "it got the dead knight's loot");
+    k2->kill();
+    co_await ctx.ticks(30);
+    auto chestK = lastDeathChest();
+    ctx.require(chestK.has_value(), "the last knight deposits the chest");
+    ctx.check(lastConquest().has_value(), "and the stronghold is conquered");
+    if (auto* container = chestAt(*chestK)) ctx.check(countOf(*container, "gf_test:fixture_item") == 2, "the chest holds the shared loot");
+    restoreFloor(*chestK, floorK);
     (void)box;
 });
 
@@ -397,9 +560,20 @@ GF_REGISTER_SELFTEST("entity.sinister_spawner", [](Context& ctx) -> ll::coro::Co
     ctx.check(s0->spawnDelay == 20 && s0->minSpawnDelay == 200 && s0->maxSpawnDelay == 800 && s0->spawnCount == 4 && s0->maxNearbyEntities == 6
                   && s0->requiredPlayerRange == 16 && s0->spawnRange == 4,
               "BaseSpawner's defaults (delay 20, 200..800, count 4, max 6, player range 16, range 4)");
+    // SpawnPlacements#checkSpawnRules (SPAWNER): a monster needs a dark spot and a difficulty, a
+    // mob without placement rules spawns anywhere
+    {
+        auto probe = at.offset(-2, 1, 2);
+        ctx.require(ctx.setBlock(at.offset(-1, 1, 2), "minecraft:glowstone"), "place a light next to the rule probe");
+        co_await ctx.ticks(3); // the light spreads
+        ctx.check(!spawnRulesAllowForTest(*region, game::blockPos(probe), true), "no monster next to a light (block light above the dimension's limit)");
+        ctx.check(spawnRulesAllowForTest(*region, game::blockPos(probe), false), "a mob without spawn rules spawns there");
+        ctx.require(ctx.setBlock(at.offset(-1, 1, 2), "minecraft:air"), "remove the light");
+    }
     gf::boss::ext::SinisterSpawner cfg;
-    cfg.potentials = {{"gf_test:boss_part", 1}};
-    cfg.spawnDelay = 5;
+    // a pig: no monster light rule in the daylight test area (TF's spawners spawn monsters in dark rooms)
+    cfg.potentials = {{"minecraft:pig", 1}};
+    cfg.spawnDelay = 40; // the lazy scan (one step a tick) finds its spots meanwhile
     cfg.particles  = {"minecraft:flame"};
     ctx.require(gf::boss::ext::setSinisterSpawner(*region, bp, cfg), "configure the spawner");
     ctx.check(gf::boss::ext::addSinisterParticle(*region, bp, "minecraft:smoke") && !gf::boss::ext::addSinisterParticle(*region, bp, "minecraft:smoke"), "addParticle adds once");
@@ -409,9 +583,9 @@ GF_REGISTER_SELFTEST("entity.sinister_spawner", [](Context& ctx) -> ll::coro::Co
     int before = sinisterSpawnedForTest();
     auto& sp = ctx.spawnPlayer();
     sp.teleport(Vec3{at.x + 3.5f, float(at.y), at.z + 0.5f}, DimensionType(at.dim));
-    for (int i = 0; i < 200 && sinisterSpawnedForTest() == before; ++i) co_await ctx.ticks(1);
+    for (int i = 0; i < 300 && sinisterSpawnedForTest() == before; ++i) co_await ctx.ticks(1);
     ctx.check(sinisterSpawnedForTest() > before, "the spawner spawned (" + std::to_string(sinisterSpawnedForTest() - before) + ")");
-    auto mobs = actorsAround(at, "gf_test:boss_part", 6.0f);
+    auto mobs = actorsAround(at, "minecraft:pig", 6.0f);
     ctx.check(!mobs.empty(), "its mobs stand around it");
     for (auto* m : mobs) {
         auto f = m->getFeetPos();
@@ -419,7 +593,7 @@ GF_REGISTER_SELFTEST("entity.sinister_spawner", [](Context& ctx) -> ll::coro::Co
     }
     if (auto s1 = gf::boss::ext::sinisterSpawner(*region, bp))
         ctx.check(s1->spawnDelay >= 190 && s1->spawnDelay < 800, "the delay reset to 200..800 after spawning (" + std::to_string(s1->spawnDelay) + ")");
-    for (auto* m : actorsAround(at, "gf_test:boss_part", 8.0f)) m->remove();
+    for (auto* m : actorsAround(at, "minecraft:pig", 8.0f)) m->remove();
     (void)box;
 });
 
@@ -464,6 +638,10 @@ GF_REGISTER_SELFTEST("entity.client_fixture", [](Context& ctx) -> ll::coro::Coro
     auto* bar = spawnMob(at, "gf_test:boss");
     ctx.require(bar != nullptr, "the bar boss spawns");
     auto barId = fe::uidOf(*bar);
+    // the Naga's bar overlay (BossBarOverlay.NOTCHED_10): the client mod draws the notches
+    gf::boss::ext::setBarStyle(*bar, kFixtureRgb, gf::boss::ext::Overlay::Notched10);
+    // a synced string list (Hydra#HEAD_NAMES) for the client mod's readers
+    ge::ext::setStringList(*bar, "gf_test:heads", {"left", "center", "right"});
     ctx.info("bar boss ready");
     for (int i = 0; i < hold; ++i) {
         co_await ctx.ticks(1);
@@ -481,6 +659,37 @@ GF_REGISTER_SELFTEST("entity.client_fixture", [](Context& ctx) -> ll::coro::Coro
     ctx.require(three, "the parts boss has 3 parts");
     ctx.info("parts boss ready");
     for (int i = 0; i < hold; ++i) co_await ctx.ticks(1);
+    // a boss with a 100-tick death animation (the Naga's, the Lich's): its body stays in the level
+    // past Bedrock's 20 ticks; no loot (a clone-like lifecycle: no death chest in the client world)
+    {
+        gf::boss::ext::Lifecycle lc;
+        lc.shouldSpawnLoot        = [](Mob&) { return false; };
+        lc.deathAnimationFinished = [](Mob&, int t) { return t >= 100; };
+        gf::boss::ext::setLifecycle("gf_test:boss", lc);
+        struct Clear {
+            ~Clear() { clearLifecycleForTest("gf_test:boss"); }
+        } clear;
+        core::GlobalPos dyingAt = at.offset(1, 0, 1);
+        if (real) {
+            // between the two other bosses, 5 ahead of the player
+            auto f = real->getFeetPos();
+            auto v = real->getViewVector(1.0f);
+            double len = std::sqrt(double(v.x) * v.x + double(v.z) * v.z);
+            double fx = len > 1e-6 ? v.x / len : 0.0, fz = len > 1e-6 ? v.z / len : 1.0;
+            dyingAt = core::GlobalPos{at.dim, static_cast<int>(std::floor(f.x + fx * 5.0)), static_cast<int>(std::floor(f.y)), static_cast<int>(std::floor(f.z + fz * 5.0))};
+        }
+        auto* dying = spawnMob(dyingAt, "gf_test:boss");
+        ctx.require(dying != nullptr, "the dying boss spawns");
+        dying->setNameTag("gf_dying");
+        auto dyingId = fe::uidOf(*dying);
+        co_await ctx.ticks(10);
+        if ((dying = mobById(dyingId))) dying->kill();
+        co_await ctx.ticks(40);
+        ctx.check(mobById(dyingId) != nullptr, "the dying boss's body is still there 2 seconds after its death");
+        ctx.info("dying boss ready");
+        for (int i = 0; i < 80 && mobById(dyingId); ++i) co_await ctx.ticks(1);
+        ctx.check(mobById(dyingId) == nullptr, "the body is gone once its animation finished");
+    }
     scope.set(Difficulty::Peaceful);
     co_await ctx.ticks(5);
     ctx.check(!mobById(barId) && !mobById(partsId), "on peaceful both fixture bosses left");

@@ -44,8 +44,10 @@
 #include "feature/entity/EntityFixture.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "game/WorldDb.h"
+#include "mod/Log.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::feature::entity::tests {
@@ -353,8 +355,8 @@ GF_REGISTER_SELFTEST("entity.goal_charge", [](Context& ctx) -> ll::coro::CoroTas
 // flag, and the breath attack on what the head looks at after five ticks
 GF_REGISTER_SELFTEST("entity.goal_breath", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
-    auto            box = co_await ctx.flatArea(5852, 8);
-    auto            at  = ctx.testPos(5853, 2);
+    auto            box = co_await ctx.flatArea(5854, 8);
+    auto            at  = ctx.testPos(5855, 2);
     auto*           mob = spawnMob(at, "gf_test:boss");
     ctx.require(mob != nullptr, "the breather spawns");
     auto  uid  = uidOf(*mob);
@@ -517,7 +519,9 @@ GF_REGISTER_SELFTEST("entity.multipart", [](Context& ctx) -> ll::coro::CoroTask<
 // through the combat pipeline; environmental damage (suffocation, fire, falls, ...) reaches neither
 GF_REGISTER_SELFTEST("entity.multipart_damage", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (combatStubbed()) {
-        ctx.info("the combat contract is still F0's stub: the damage routing has no pipeline to run in");
+        // skipped, not passed: it runs again (and must pass) once F10's combat pipeline is in
+        ctx.info("SKIP: the combat contract is still F0's stub, the damage routing has no pipeline to run in");
+        log().info("SELFTEST SKIP entity.multipart_damage: the combat contract is F0's stub (runs once F10 lands)");
         co_return;
     }
     DifficultyScope easy(Difficulty::Easy);
@@ -598,8 +602,8 @@ GF_REGISTER_SELFTEST("entity.mount", [](Context& ctx) -> ll::coro::CoroTask<> {
 // IHostileMount as a type marker: whoever gets on a marked mob rides unfriendly
 GF_REGISTER_SELFTEST("entity.mount_type", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
-    auto            box   = co_await ctx.flatArea(5830, 8);
-    auto            at    = ctx.testPos(5834, 2);
+    auto            box   = co_await ctx.flatArea(5833, 8);
+    auto            at    = ctx.testPos(5835, 2);
     // a pig: an untamed horse would buck its rider off by itself (vanilla taming), a pig does not
     struct MarkScope {
         MarkScope() { ge::ext::markHostileMount("minecraft:pig"); }
@@ -663,7 +667,7 @@ GF_REGISTER_SELFTEST("entity.multipart_in_tick", [](Context& ctx) -> ll::coro::C
 GF_REGISTER_SELFTEST("entity.spike_hitbox", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
     auto            box = co_await ctx.flatArea(5836, 4);
-    auto            at  = ctx.testPos(5838, 2);
+    auto            at  = ctx.testPos(5837, 2);
     auto*           hog = spawnMob(at, "minecraft:hoglin");
     ctx.require(hog != nullptr, "a hoglin spawns");
     auto uid = uidOf(*hog);
@@ -687,8 +691,8 @@ GF_REGISTER_SELFTEST("entity.spike_hitbox", [](Context& ctx) -> ll::coro::CoroTa
 // a parent without its own `<id>_part` type gets F8's invisible hitbox part
 GF_REGISTER_SELFTEST("entity.multipart_generic", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
-    auto            box   = co_await ctx.flatArea(5836, 4);
-    auto            at    = ctx.testPos(5837, 2);
+    auto            box   = co_await ctx.flatArea(5839, 4);
+    auto            at    = ctx.testPos(5839, 2);
     auto*           horse = spawnMob(at, "minecraft:horse");
     ctx.require(horse != nullptr, "a horse spawns");
     auto  hid    = uidOf(*horse);
@@ -702,6 +706,130 @@ GF_REGISTER_SELFTEST("entity.multipart_generic", [](Context& ctx) -> ll::coro::C
     co_await ctx.ticks(3);
     ctx.check(actorById(partId) == nullptr, "the generic part went with its parent");
     (void)box;
+});
+
+// The move controllers: NoClip steers a mob that has an engine navigation too (its goals' moveTo
+// sets the wanted position instead of a path), and FlyingMoveControl moves a mob F8 steers
+// towards its wanted position, climbing without gravity
+GF_REGISTER_SELFTEST("entity.move_controls", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box = co_await ctx.flatArea(5848, 6);
+    auto            at  = ctx.testPos(5849, 2);
+    // NoClip on a pig (a mob with a NavigationComponent)
+    auto* pig = spawnMob(at, "minecraft:pig");
+    ctx.require(pig != nullptr, "a pig spawns");
+    auto pigId = uidOf(*pig);
+    ge::setMoveControl(*pig, ge::MoveKind::NoClip);
+    Vec3 goal{at.x + 3.5f, at.y + 2.0f, at.z + 0.5f};
+    mobs::moveTo(*pig, goal, 1.0);
+    auto wanted = ge::ext::wantedPosition(*pig);
+    ctx.check(wanted && dist(*wanted, goal) < 0.01, "moveTo of a NoClip mob sets the NoClipMoveControl's wanted position");
+    ctx.check(!mobs::navigationDone(*pig), "and the move is under way");
+    removeActor(pigId);
+    // FlyingMoveControl on actors without navigation: the engine integrates their motion by type
+    // (a no-gravity fixture moves along the ground plane, an armor stand only vertically), so the
+    // horizontal steering is read on the fixture and the climb against gravity on the armor stand
+    struct Flight {
+        std::int64_t id = 0;
+        Vec3         start{}, goal{};
+    };
+    auto launch = [&](char const* type, core::GlobalPos const& p, float dy) -> Flight {
+        auto* m = spawnMob(p, type, dy);
+        if (!m) return {};
+        ge::setMoveControl(*m, ge::MoveKind::Flying);
+        auto s = m->getFeetPos();
+        Vec3 g{s.x + 3.0f, s.y + 2.0f, s.z};
+        ge::ext::setWantedPosition(*m, g, 1.0);
+        return {uidOf(*m), s, g};
+    };
+    auto glide = launch("gf_test:boss_part", at.offset(0, 0, 2), 1.0f);
+    auto climb = launch("minecraft:armor_stand", at.offset(2, 0, 4), 0.0f);
+    ctx.require(glide.id && climb.id, "the flyers spawn");
+    for (int i = 0; i < 60; ++i) co_await ctx.ticks(1);
+    auto* g = mobById(glide.id);
+    auto* c = mobById(climb.id);
+    ctx.require(g && c, "the flyers are still there");
+    auto gp = g->getFeetPos(), cp = c->getFeetPos();
+    double gx0 = std::abs(glide.goal.x - glide.start.x), gx1 = std::abs(glide.goal.x - gp.x);
+    ctx.check(gx1 < gx0 - 1.0, "it flew towards the wanted position (" + std::to_string(gx0) + " -> " + std::to_string(gx1) + " blocks)");
+    ctx.check(cp.y > climb.start.y + 0.3f, "climbing against gravity (" + std::to_string(cp.y - climb.start.y) + ")");
+    removeActor(glide.id);
+    removeActor(climb.id);
+    (void)box;
+});
+
+// SynchedEntityData#startSeenByPlayer: every synced value (a string list here) and the part list
+// reach a companion that joins after they were set, and one that comes into range later; a change
+// reaches the companions that already see the actor
+namespace {
+bool hasList(std::vector<core::Envelope> const& msgs, std::int64_t uid, std::string const& key, std::vector<std::string> const& list) {
+    for (auto const& m : msgs)
+        if (m.channel == "entity.data" && m.payload.value("id", std::int64_t{0}) == uid && m.payload.value("key", std::string()) == key && m.payload.value("data", ge::Json()) == ge::Json(list))
+            return true;
+    return false;
+}
+bool hasParts(std::vector<core::Envelope> const& msgs, std::int64_t uid, std::size_t count) {
+    for (auto const& m : msgs)
+        if (m.channel == "entity.multipart" && m.payload.value("parent", std::int64_t{0}) == uid && m.payload.value("parts", ge::Json::array()).size() == count) return true;
+    return false;
+}
+} // namespace
+
+GF_REGISTER_SELFTEST("entity.sync_late", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto at = ctx.testPos(5884, 2);
+    ctx.require(co_await ctx.ensureLoaded(at), "test area loaded");
+    auto* mob = spawnMob(at, "gf_test:boss_part");
+    ctx.require(mob != nullptr, "the synced actor spawns");
+    auto              uid = uidOf(*mob);
+    std::string const key = "gf_test:heads";
+    ge::ext::setStringList(*mob, key, {"left", "center", "right"});
+    ctx.require(ge::addPart(*mob, "probe", {0.5f, 0.5f}, [](Mob&) { return Vec3{0.0f, 2.0f, 0.0f}; }).valid(), "the actor gets a part");
+    std::vector<std::int64_t> companions;
+    struct CompanionScope {
+        std::vector<std::int64_t>& ids;
+        ~CompanionScope() {
+            for (auto id : ids)
+                if (auto* p = playerById(id)) gf::net::setTestCompanion(*p, false);
+        }
+    } scope{companions};
+    // a companion that joins after the list was set
+    auto& near   = ctx.spawnPlayer("gf_sync_near");
+    auto  nearId = near.getOrCreateUniqueID().rawID;
+    near.teleport(Vec3{at.x + 3.5f, float(at.y), at.z + 0.5f}, DimensionType(at.dim));
+    co_await ctx.ticks(2);
+    auto* p = playerById(nearId);
+    ctx.require(p != nullptr, "the joining player is there");
+    companions.push_back(nearId);
+    gf::net::joinTestCompanion(*p);
+    auto msgs = gf::net::takeTestMessages(*p);
+    ctx.check(hasList(msgs, uid, key, {"left", "center", "right"}), "a companion that joins after setStringList gets the list");
+    ctx.check(hasParts(msgs, uid, 1), "and the part list");
+    // a change reaches it once
+    if (auto* m = mobById(uid)) ge::ext::setStringList(*m, key, {"left"});
+    if ((p = playerById(nearId))) {
+        msgs = gf::net::takeTestMessages(*p);
+        ctx.check(hasList(msgs, uid, key, {"left"}) && !hasParts(msgs, uid, 1), "a change reaches a companion that sees the actor (the change only)");
+    }
+    // a companion out of range gets the state when it comes into range
+    auto& far   = ctx.spawnPlayer("gf_sync_far");
+    auto  farId = far.getOrCreateUniqueID().rawID;
+    far.teleport(Vec3{at.x + 200.5f, float(at.y), at.z + 0.5f}, DimensionType(at.dim));
+    co_await ctx.ticks(2);
+    ctx.require((p = playerById(farId)) != nullptr, "the far player is there");
+    companions.push_back(farId);
+    gf::net::setTestCompanion(*p, true);
+    co_await ctx.ticks(25);
+    ctx.require((p = playerById(farId)) != nullptr, "the far player is still there");
+    msgs = gf::net::takeTestMessages(*p);
+    ctx.check(!hasList(msgs, uid, key, {"left"}), "nothing for a companion 200 blocks away");
+    p->teleport(Vec3{at.x + 4.5f, float(at.y), at.z + 1.5f}, DimensionType(at.dim));
+    co_await ctx.ticks(25);
+    ctx.require((p = playerById(farId)) != nullptr, "the far player came near");
+    msgs = gf::net::takeTestMessages(*p);
+    ctx.check(hasList(msgs, uid, key, {"left"}) && hasParts(msgs, uid, 1), "a companion that comes into range gets the list and the parts (startSeenByPlayer)");
+    ctx.check(viewerCountForTest(uid) == 2, "both companions see the actor (" + std::to_string(viewerCountForTest(uid)) + ")");
+    removeActor(uid);
+    co_await ctx.ticks(2);
 });
 
 // The persisted data survives a world reload (server scenario: write, Restart-Server, read).
