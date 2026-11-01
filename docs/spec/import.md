@@ -79,11 +79,12 @@ Shared files get one owner by rule:
   material instances, and `minecraft:transformation` rotation `[-x, -y, 0]` for Java's `x` / `y` (Java rotates
   clockwise seen from above / the axis; Bedrock follows the right-hand rule). The first variant is also the root
   (default) visual. Weighted random variants use their first model. `uvlock` is not supported by Bedrock.
-- Multipart (fences, walls, panes, ...): one geometry per block, a bone per part rotated about the block centre,
+- Multipart (fences, walls, panes, ...): one geometry per block, a bone per part rotated about the block centre (bone
+  rotation `[x, y, 0]`),
   visibility from the part's `when` condition.
 - Geometry: Java elements `from`/`to` (0..16) become Bedrock cubes with `origin = [8 - to.x, from.y, from.z - 8]`
   (Bedrock's model x axis is mirrored), per-face UVs (up / down faces flipped as Bedrock maps them), face
-  `rotation` -> `uv_rotation`, element rotation -> cube `pivot` / `rotation` (`rescale` applied to the size),
+  `rotation` -> `uv_rotation`, element rotation -> cube `pivot` / `rotation` `[-x, -y, z]` (`rescale` applied to the size),
   clamped to Bedrock's 30x30x30 limit. A single full cube with default UVs uses `minecraft:geometry.full_block`.
   Models without elements (block entity renderers, custom loaders) render as a cube with their particle
   texture until the owner adds its renderer.
