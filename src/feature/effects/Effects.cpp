@@ -3,17 +3,28 @@
 // Bedrock's mob effects are a closed enum (MobEffectIds, the 38 vanilla clients know), so a custom
 // effect (TF's frosted) is native state of the actor with a vanilla *carrier* effect that clients
 // see and that does the vanilla part of the work on their side (frosted: Slowness of the same
-// amplifier, particles hidden: the client predicts the slower movement itself). Java's rules of
-// MobEffectInstance#update decide how a second application combines (a higher amplifier replaces,
-// the same amplifier extends). The state survives unloads and restarts as an actor tag
-// ("gf_fx|<id>|<amplifier>|<ticks>", rewritten every second) and ends on death; milk and /effect
-// clear (Actor::removeAllEffects) end it as they end every effect on Java, while a carrier lost on
-// its own (an expired vanilla instance of the same id) is put back. Players with the client mod get "effects.sync" for
-// the HUD icon. Vanilla ids ("minecraft:slowness") go straight to Bedrock's effects.
+// amplifier, particles hidden: the client predicts the slower movement itself).
+//
+// Java's MobEffectInstance rules decide how applications combine (#update: a higher amplifier
+// replaces and keeps the old one hidden when it lasts longer; the same amplifier extends; a lower,
+// longer one waits hidden and resumes when the stronger one ends; #tick counts the hidden ones down
+// too). The state survives unloads and restarts as an actor tag ("gf_fx|<id>|<amplifier>|<ticks>|
+// <hidden>|<displaced>", rewritten every second) and ends on death; milk and /effect clear
+// (Actor::removeAllEffects) end it as they end every effect on Java.
+//
+// The carrier is the custom effect's own instance only while it is: a vanilla instance of the same
+// effect (a Slowness potion, a stray's arrow) that is as strong and lasts as long is left alone (it
+// carries the movement effect meanwhile); a weaker one is replaced and remembered, and put back with
+// its remaining time when the custom effect ends; removing the custom effect removes the carrier
+// only while the actor's instance is still the one the custom effect put there. A carrier lost on
+// its own (an expired vanilla instance of the same id, a single /effect removal) is put back.
+// Players with the client mod get "effects.sync" (the HUD row, client/item). Vanilla ids
+// ("minecraft:slowness") go straight to Bedrock's effects.
 #include "feature/effects/Effects.h"
 
 #include <algorithm>
 #include <charconv>
+#include <cstdlib>
 #include <map>
 #include <mutex>
 #include <set>
@@ -33,6 +44,7 @@
 #include "mc/world/level/Level.h"
 
 #include "feature/effects/EffectsInternal.h"
+#include "feature/ext/item/Effects.h"
 #include "feature/net/Net.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
@@ -43,12 +55,14 @@ namespace gf::effects {
 namespace {
 
 using internal::Active;
+using internal::Displaced;
 
 struct Store {
-    std::recursive_mutex                                    mutex;
-    std::map<std::string, Spec>                             specs;
-    std::unordered_map<std::int64_t, std::vector<Active>>   active; ///< by ActorUniqueID
-    std::uint64_t                                           tick = 0;
+    std::recursive_mutex                                  mutex;
+    std::map<std::string, Spec>                           specs;
+    std::map<std::string, std::string>                    icons;  ///< ext::setIcon
+    std::unordered_map<std::int64_t, std::vector<Active>> active; ///< by ActorUniqueID
+    std::uint64_t                                         tick = 0;
 };
 
 Store& store() {
@@ -60,20 +74,55 @@ std::string fullId(std::string const& id) { return id.find(':') == std::string::
 
 std::int64_t uidOf(Actor const& actor) { return const_cast<Actor&>(actor).getOrCreateUniqueID().rawID; }
 
-std::string tagOf(Active const& a) { return std::string(internal::kTagPrefix) + a.id + "|" + std::to_string(a.amplifier) + "|" + std::to_string(a.ticks); }
+// ---- persistence -------------------------------------------------------------------------------------
+
+std::string tagOf(Active const& a) {
+    std::string out = std::string(internal::kTagPrefix) + a.id + "|" + std::to_string(a.amplifier) + "|" + std::to_string(a.ticks) + "|";
+    for (std::size_t i = 0; i < a.hidden.size(); ++i)
+        out += (i ? "," : "") + std::to_string(a.hidden[i].first) + ":" + std::to_string(a.hidden[i].second);
+    out += "|";
+    if (a.displaced)
+        out += std::to_string(a.displaced->amplifier) + ":" + std::to_string(a.displaced->ticks) + ":" + (a.displaced->visible ? "1" : "0") + ":"
+             + (a.displaced->ambient ? "1" : "0");
+    return out;
+}
+
+std::vector<std::string_view> split(std::string_view s, char sep) {
+    std::vector<std::string_view> out;
+    std::size_t                   start = 0;
+    while (true) {
+        auto p = s.find(sep, start);
+        out.push_back(s.substr(start, p == std::string_view::npos ? std::string_view::npos : p - start));
+        if (p == std::string_view::npos) break;
+        start = p + 1;
+    }
+    return out;
+}
+
+bool toInt(std::string_view s, int& out) { return !s.empty() && std::from_chars(s.data(), s.data() + s.size(), out).ec == std::errc{}; }
 
 std::optional<Active> parseTag(std::string const& tag) {
     if (!tag.starts_with(internal::kTagPrefix)) return std::nullopt;
-    auto rest = std::string_view(tag).substr(std::string_view(internal::kTagPrefix).size());
-    auto p1   = rest.find('|');
-    auto p2   = p1 == std::string_view::npos ? p1 : rest.find('|', p1 + 1);
-    if (p2 == std::string_view::npos) return std::nullopt;
+    auto parts = split(std::string_view(tag).substr(std::string_view(internal::kTagPrefix).size()), '|');
+    if (parts.size() < 3) return std::nullopt;
     Active a;
-    a.id      = std::string(rest.substr(0, p1));
-    auto amp  = rest.substr(p1 + 1, p2 - p1 - 1);
-    auto left = rest.substr(p2 + 1);
-    if (std::from_chars(amp.data(), amp.data() + amp.size(), a.amplifier).ec != std::errc{}) return std::nullopt;
-    if (std::from_chars(left.data(), left.data() + left.size(), a.ticks).ec != std::errc{}) return std::nullopt;
+    a.id = std::string(parts[0]);
+    if (!toInt(parts[1], a.amplifier) || !toInt(parts[2], a.ticks)) return std::nullopt;
+    if (parts.size() > 3 && !parts[3].empty())
+        for (auto h : split(parts[3], ',')) {
+            auto f = split(h, ':');
+            int  amp = 0, ticks = 0;
+            if (f.size() == 2 && toInt(f[0], amp) && toInt(f[1], ticks) && ticks > 0) a.hidden.emplace_back(amp, ticks);
+        }
+    if (parts.size() > 4 && !parts[4].empty()) {
+        auto      f = split(parts[4], ':');
+        Displaced d;
+        if (f.size() == 4 && toInt(f[0], d.amplifier) && toInt(f[1], d.ticks)) {
+            d.visible   = f[2] == "1";
+            d.ambient   = f[3] == "1";
+            a.displaced = d;
+        }
+    }
     return a;
 }
 
@@ -106,21 +155,75 @@ void syncCompanion(Actor& actor, std::vector<Active> const& list) {
     net::send(player, "effects.sync", {{"effects", effects}});
 }
 
-/// Adds / refreshes the carrier of a custom effect.
-void applyCarrier(Actor& actor, Spec const& spec, int ticks, int amplifier) {
-    if (spec.carrier.empty()) return;
-    auto vid = internal::vanillaId(spec.carrier);
-    if (!vid) return;
-    MobEffectInstance inst(*vid, EffectDuration{ticks});
+// ---- Java's MobEffectInstance rules ---------------------------------------------------------------------
+
+/// MobEffectInstance#update of level `i` of a chain (0 = the active instance) with another
+/// application; true when the active instance changed.
+bool updateChain(std::vector<std::pair<int, int>>& chain, std::size_t i, int amplifier, int ticks) {
+    if (i >= chain.size()) {
+        chain.emplace_back(amplifier, ticks); // hiddenEffect = new MobEffectInstance(other)
+        return false;
+    }
+    auto& cur = chain[i];
+    if (amplifier > cur.first) {
+        // a stronger, shorter one: this one waits behind it with its own hidden chain
+        if (ticks < cur.second) chain.insert(chain.begin() + static_cast<std::ptrdiff_t>(i) + 1, cur);
+        chain[i] = {amplifier, ticks};
+        return i == 0;
+    }
+    if (cur.second < ticks) {
+        if (amplifier == cur.first) {
+            cur.second = ticks;
+            return i == 0;
+        }
+        updateChain(chain, i + 1, amplifier, ticks);
+    }
+    return false;
+}
+
+// ---- carriers ----------------------------------------------------------------------------------------
+
+bool sameInstance(MobEffectInstance const& inst, Spec const& spec, int amplifier, int ticks) {
+    return inst.mAmplifier == amplifier && inst.mEffectVisible == !spec.hideCarrierParticles && std::abs(inst.mDuration->mValue - ticks) <= 2;
+}
+
+void addCarrierInstance(Actor& actor, unsigned vid, int ticks, int amplifier, bool visible, bool ambient) {
+    MobEffectInstance inst(vid, EffectDuration{ticks});
     inst.mAmplifier     = amplifier;
-    inst.mEffectVisible = !spec.hideCarrierParticles;
-    inst.mAmbient       = false;
+    inst.mEffectVisible = visible;
+    inst.mAmbient       = ambient;
     actor.addEffect(inst);
 }
 
-void removeCarrier(Actor& actor, Spec const& spec) {
+/// Puts the carrier of `a` on the actor: over its own previous carrier (`prevAmp` / `prevTicks`,
+/// -1: none), never over a vanilla instance that is as strong and lasts as long; a weaker vanilla
+/// instance is replaced and remembered in `a.displaced`.
+void applyCarrier(Actor& actor, Spec const& spec, Active& a, int prevAmp = -1, int prevTicks = 0) {
     if (spec.carrier.empty()) return;
-    if (auto vid = internal::vanillaId(spec.carrier)) actor.removeEffect(static_cast<int>(*vid));
+    auto vid = internal::vanillaId(spec.carrier);
+    if (!vid) return;
+    if (auto const* cur = actor.getEffect(*vid)) {
+        bool ours = prevAmp >= 0 && sameInstance(*cur, spec, prevAmp, prevTicks);
+        if (!ours) {
+            int curTicks = cur->mDuration->mValue;
+            if (cur->mAmplifier > a.amplifier || (cur->mAmplifier == a.amplifier && (curTicks < 0 || curTicks >= a.ticks))) return;
+            if (!a.displaced) a.displaced = Displaced{cur->mAmplifier, curTicks, cur->mEffectVisible, cur->mAmbient};
+        }
+        // Bedrock keeps a stronger instance on addEffect: our own previous carrier goes first
+        actor.removeEffect(static_cast<int>(*vid));
+    }
+    addCarrierInstance(actor, *vid, a.ticks, a.amplifier, !spec.hideCarrierParticles, false);
+}
+
+/// Takes the carrier of `a` off the actor (only while it is still its own) and puts back the
+/// vanilla instance it displaced, with its remaining time.
+void removeCarrier(Actor& actor, Spec const& spec, Active const& a) {
+    if (spec.carrier.empty()) return;
+    auto vid = internal::vanillaId(spec.carrier);
+    if (!vid) return;
+    if (auto const* cur = actor.getEffect(*vid); cur && sameInstance(*cur, spec, a.amplifier, a.ticks)) actor.removeEffect(static_cast<int>(*vid));
+    if (a.displaced && a.displaced->ticks > 0 && !actor.getEffect(*vid))
+        addCarrierInstance(actor, *vid, a.displaced->ticks, a.displaced->amplifier, a.displaced->visible, a.displaced->ambient);
 }
 
 } // namespace
@@ -154,21 +257,24 @@ bool apply(Actor& actor, std::string const& effectId, int ticks, int amplifier) 
     amplifier  = std::clamp(amplifier, 0, 255);
     auto& list = listOf(s, actor);
     auto  it   = std::find_if(list.begin(), list.end(), [&](Active const& a) { return a.id == id; });
-    bool  changed = false;
     if (it == list.end()) {
-        list.push_back({id, amplifier, ticks});
-        changed = true;
-    } else if (amplifier > it->amplifier) { // MobEffectInstance#update
-        it->amplifier = amplifier;
-        it->ticks     = ticks;
-        changed       = true;
-    } else if (amplifier == it->amplifier && ticks > it->ticks) {
-        it->ticks = ticks;
-        changed   = true;
+        list.push_back({id, amplifier, ticks, {}, std::nullopt});
+        applyCarrier(actor, sp->second, list.back());
+    } else {
+        // MobEffectInstance#update over the active instance and its hidden chain
+        std::vector<std::pair<int, int>> chain{{it->amplifier, it->ticks}};
+        chain.insert(chain.end(), it->hidden.begin(), it->hidden.end());
+        int  prevAmp = it->amplifier, prevTicks = it->ticks;
+        bool changed = updateChain(chain, 0, amplifier, ticks);
+        it->amplifier = chain.front().first;
+        it->ticks     = chain.front().second;
+        it->hidden.assign(chain.begin() + 1, chain.end());
+        if (!changed) {
+            writeTags(actor, list); // a hidden application still persists
+            return false;
+        }
+        applyCarrier(actor, sp->second, *it, prevAmp, prevTicks);
     }
-    if (!changed) return false;
-    auto const& now = *std::find_if(list.begin(), list.end(), [&](Active const& a) { return a.id == id; });
-    applyCarrier(actor, sp->second, now.ticks, now.amplifier);
     writeTags(actor, list);
     syncCompanion(actor, list);
     return true;
@@ -198,12 +304,22 @@ void remove(Actor& actor, std::string const& effectId) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
     auto&           list = listOf(s, actor);
-    auto            n    = std::erase_if(list, [&](Active const& a) { return a.id == id; });
-    if (n == 0) return;
-    if (auto sp = s.specs.find(id); sp != s.specs.end()) removeCarrier(actor, sp->second);
+    auto            it   = std::find_if(list.begin(), list.end(), [&](Active const& a) { return a.id == id; });
+    if (it == list.end()) return;
+    Active removed = *it;
+    list.erase(it);
+    if (auto sp = s.specs.find(id); sp != s.specs.end()) removeCarrier(actor, sp->second, removed);
     writeTags(actor, list);
     syncCompanion(actor, list);
 }
+
+namespace ext {
+void setIcon(std::string const& effectId, std::string const& texture) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    s.icons[fullId(effectId)] = texture;
+}
+} // namespace ext
 
 namespace internal {
 
@@ -228,6 +344,32 @@ std::optional<unsigned> vanillaId(std::string const& effectId) {
     if (name == "hero_of_the_village") name = "village_hero";
     if (auto const* e = MobEffect::getByName(name)) return static_cast<unsigned>(e->mId);
     return std::nullopt;
+}
+
+bool carrierIsOurs(Actor const& actor, Spec const& spec, Active const& active) {
+    if (spec.carrier.empty()) return false;
+    auto vid = vanillaId(spec.carrier);
+    if (!vid) return false;
+    auto const* cur = actor.getEffect(*vid);
+    return cur && sameInstance(*cur, spec, active.amplifier, active.ticks);
+}
+
+std::string iconOf(std::string const& effectId) {
+    auto id = fullId(effectId);
+    {
+        auto&           s = store();
+        std::lock_guard lock(s.mutex);
+        if (auto it = s.icons.find(id); it != s.icons.end()) return it->second;
+    }
+    auto colon = id.find(':');
+    return "textures/" + id.substr(0, colon) + "/mob_effect/" + id.substr(colon + 1);
+}
+
+void unregisterType(std::string const& effectId) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    s.specs.erase(fullId(effectId));
+    s.icons.erase(fullId(effectId));
 }
 
 void forget(Actor const& actor) {
@@ -279,14 +421,30 @@ void tickAll() {
                     continue;
                 }
                 auto const& spec = sp->second;
-                // the carrier went away without the effect (an expired vanilla instance of the same
-                // id, a single /effect removal): put it back; milk and /effect clear end both
-                // (the removeAllEffects hook)
+                // the carrier went away without the effect (an expired vanilla instance that carried
+                // it meanwhile, a single /effect removal): put it back; milk and /effect clear end both
                 if (!spec.carrier.empty() && a.ticks > 1) {
-                    if (auto vid = vanillaId(spec.carrier); vid && !actor->getEffect(*vid)) applyCarrier(*actor, spec, a.ticks, a.amplifier);
+                    if (auto vid = vanillaId(spec.carrier); vid && !actor->getEffect(*vid)) applyCarrier(*actor, spec, a);
                 }
+                // MobEffectInstance#tick: the effect tick with the remaining duration, then the
+                // countdown of this instance, its hidden ones and the vanilla instance it displaced
                 if (spec.tick && a.ticks % spec.tickInterval == 0) calls.push_back({it->first, spec.tick, a.amplifier, a.id});
-                if (--a.ticks <= 0) changed = true;
+                for (auto& h : a.hidden) --h.second;
+                std::erase_if(a.hidden, [](auto const& h) { return h.second <= 0; });
+                if (a.displaced && --a.displaced->ticks <= 0) a.displaced.reset();
+                if (--a.ticks <= 0) {
+                    changed = true;
+                    if (!a.hidden.empty()) {
+                        // the hidden instance takes over (setDetailsFrom(hiddenEffect))
+                        int prevAmp = a.amplifier, prevTicks = a.ticks;
+                        a.amplifier = a.hidden.front().first;
+                        a.ticks     = a.hidden.front().second;
+                        a.hidden.erase(a.hidden.begin());
+                        applyCarrier(*actor, spec, a, prevAmp, prevTicks);
+                    } else {
+                        removeCarrier(*actor, spec, a);
+                    }
+                }
             }
             if (changed) {
                 std::erase_if(list, [](Active const& a) { return a.ticks <= 0; });
@@ -314,6 +472,7 @@ void clearAll(Actor& actor) {
     std::lock_guard lock(s.mutex);
     auto&           list = listOf(s, actor);
     if (list.empty()) return;
+    // milk / effect clear end every vanilla effect too: nothing displaced comes back
     list.clear();
     writeTags(actor, list);
     syncCompanion(actor, list);
