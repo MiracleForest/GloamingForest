@@ -12,6 +12,9 @@
   Recipes, per owning unit <u> (the unit's name, e.g. fauna):
     tools/sounds/baseline/<u>.json   F3's baseline (generated once from TF's event inventory)
     tools/sounds/recipes/<u>.json    the owner's refinements (optional; wins per event, file and patch)
+    tools/sounds/recipes.d/<u>.json  the same for owners without a recipes/ row in owners.tsv (the W0b
+                                     units F4 dimension and F8 entity own it as a *.d/<u>.json
+                                     fragment, rule R3); a unit keeps one of the two
   Shared patches: tools/sounds/patches/**/*.json ("creature/growl"). Music: tracker tracks
   tools/sounds/music/<track>.json (U10) or tools/sounds/baseline/music/<track>.json.
 
@@ -132,11 +135,20 @@ function Merge-Section($into, $from) {
     foreach ($p in $from.PSObject.Properties) { $into[$p.Name] = $p.Value }
 }
 
+# The owner's refinements: tools/sounds/recipes/<u>.json (the W1 units' row in owners.tsv) or the
+# fragment path tools/sounds/recipes.d/<u>.json, which rule R3 gives every unit ("every *.d/<u>.json
+# fragment"): the W0b owners of sound events (F4 dimension, F8 entity) have no recipes/ row.
+function Get-RefinementPath([string]$u) {
+    $found = @("tools/sounds/recipes/$u.json", "tools/sounds/recipes.d/$u.json" | Where-Object { Test-Path (Join-Path $root $_) })
+    if ($found.Count -gt 1) { Fail "$u has two recipes ($($found -join ', ')): keep one" }
+    return $(if ($found.Count) { $found[0] } else { $null })
+}
+
 $recipes = @{}
 function Get-Recipe([string]$u) {
     if ($recipes.ContainsKey($u)) { return $recipes[$u] }
     $r = @{ patches = [ordered]@{}; files = [ordered]@{}; events = [ordered]@{}; sources = @() }
-    foreach ($rel in "tools/sounds/baseline/$u.json", "tools/sounds/recipes/$u.json") {
+    foreach ($rel in @("tools/sounds/baseline/$u.json", (Get-RefinementPath $u) | Where-Object { $_ })) {
         $p = Join-Path $root $rel
         if (-not (Test-Path $p)) { continue }
         $doc = Read-JsonFile $p

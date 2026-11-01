@@ -31,6 +31,7 @@ the synthesizer uses its own math functions (no C runtime transcendental) and se
 | `tools/sounds/vanilla.json` | F3 | Java vanilla events/files TF plays -> Bedrock vanilla sound paths (packs `vanilla`, `vanilla_music`), or synthesized stand-ins where Bedrock has none |
 | `tools/sounds/categories.json` | F3 | the Bedrock category of each event, from the `SoundSource` of TF's call sites |
 | `tools/sounds/recipes/<unit>.json` | the unit | **your refinements**: wins over the baseline per event, file and patch |
+| `tools/sounds/recipes.d/<unit>.json` | the unit | the same, for the W0b owners F4 `dimension` and F8 `entity` (see Recipes) |
 | `tools/sounds/music/<track>.json` | U10 | the real soundtrack: wins over the baseline track |
 | `assets/gen/audio/<unit>/rp/sounds/twilightforest/<unit>/**.ogg` | generated | rendered sounds (never edit); `alias/<owner>/**` are copies of other owners' sounds |
 | `assets/gen/audio/<unit>/rp/sounds.d/<unit>.json` | generated | the unit's `sound_definitions` fragment |
@@ -49,6 +50,16 @@ else changes: a unit's output depends only on its own recipes, the shared patche
 so `pwsh tools/sounds/synth.ps1 -Check` (CI) passes after a `-Unit` render. Look at
 `tools/sounds/baseline/<unit>.json` for the current definitions; copy an event or a file and change
 it.
+
+**Where the recipe lives.** `docs/spec/owners.tsv` gives each W1 unit `tools/sounds/recipes/<unit>.json`
+(`tools/spec/owners.ps1` writes that row for W1 units only). Two W0b units own sound events as well:
+F8 `entity` (`block.twilightforest.boss_chest.appear`) and F4 `dimension`
+(`block.twilightforest.portal.whoosh`).
+For them `recipes/<unit>.json` would fall under F3's `tools/sounds/**`, so they keep their
+refinements in `tools/sounds/recipes.d/<unit>.json`, which rule R3 gives every unit as a
+`*.d/<unit>.json` fragment (`**/*.d/{entity,boss}.json` F8, `**/*.d/dimension.json` F4); `synth.ps1`
+reads either path and fails when a unit has both. A8 may add `recipes/<unit>.json` rows for every
+sound-event owner in `tools/spec/owners.rules.json` and fold the two (rule R18).
 
 **Keep TF's variants.** Every definition must match TF's inventory
 (`tools/sounds/baseline/inventory.json`): as many variants as TF's event plays, each with TF's
@@ -180,10 +191,21 @@ baseline recipes, `baseline/inventory.json` and `src/feature/ext/synth/SoundEven
 and `ur_ghast/trap_active` belong to no event); TF's per-entry volume, pitch and stream flags are
 kept on every variant, including event references (the parrot imitations: pitch 1.8, volume 0.6)
 and each Bedrock file of a vanilla event (the fortification shield's blocked hit: volume 0.5);
-vanilla references map through `vanilla.json` (Bedrock's own file where it has one, otherwise a
-synthesized stand-in, e.g. the zombie's iron-door bang `mob/zombie/metal1-3`); the subtitle key is
-TF's; the category is the Bedrock counterpart of the `SoundSource` TF plays the event with
+vanilla references map through `vanilla.json` (Bedrock's own file of the same Java sound where it
+has one, otherwise a synthesized stand-in under `vanilla/`, never another sound: Bedrock 1.26.51 has
+no file for the zombie's iron-door bang `entity.zombie.attack_iron_door` -> `mob/zombie/metal1-3`
+(the knightmetal and fortification shields), its villager infection `entity.zombie.infect` ->
+`mob/zombie/infect` (the trophy pedestal; Bedrock's `mob/zombie/unfect` is Java's
+`entity.zombie_villager.converted`, the charm of keeping) or Java's file `random/breath` (the
+peacock fan)); the subtitle key is TF's; the category is the Bedrock counterpart of the
+`SoundSource` TF plays the event with
 (`categories.json`: explicit call sites, then `block.*` block, `item.*` player, mob sounds the mob's
 own source from its class: HOSTILE for monsters, NEUTRAL otherwise). The inventory is a separate
 flattening of TF's `sounds.json`, not of the recipes. `baseline/compose.ps1` writes the placeholder
 tracks. Both have `-Check`.
+
+The generated tables (`baseline/inventory.json`, `baseline/<unit>.json`, `SoundEvents.inc`) carry
+TF's event ids, subtitle keys, volumes, pitches and stream flags, from The Twilight Forest 4.8
+(TeamTwilight/twilightforest @ 9e40a757), Copyright (c) 2012-2017 Ben Mazur / Benimatic and the
+TeamTwilight contributors, LGPL-2.1-or-later; each says so in its header (`about`), and they are
+distributed as part of GloamingForest under LGPL-3.0-or-later (`COPYING.LESSER`, `NOTICE`).
