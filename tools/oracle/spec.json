@@ -1,0 +1,17 @@
+{
+  "comment": "What tools/oracle/run.ps1 dumps (unit F13). Grids of 'biomes' are in quart (4-block) units, the others in blocks. Changing a value changes the goldens: rerun the oracle and review the diff.",
+  "seeds": [0, 123456789, -8346138912345678901],
+  "globalKinds": ["rng", "noise", "mobs", "loot", "recipes", "uncrafting"],
+  "seedKinds": ["biomes", "heights", "density", "landmarks", "surface"],
+  "biomes": {
+    "main": { "x0": -128, "z0": -128, "width": 256, "height": 256, "step": 1 },
+    "wide": { "x0": -1024, "z0": -1024, "width": 256, "height": 256, "step": 8 },
+    "noiseSamples": 512,
+    "zoomSamples": 256
+  },
+  "heights": { "x0": -512, "z0": -512, "width": 128, "height": 128, "step": 8 },
+  "surface": { "x0": -128, "z0": -128, "width": 128, "height": 128, "step": 2 },
+  "density": { "samples": 256, "range": 4096 },
+  "landmarks": { "regionMin": -8, "regionMax": 7, "chunkSamples": 1024, "chunkRange": 1875000 },
+  "loot": { "rolls": 2048, "seed": 20121220 }
+}
