@@ -9,11 +9,35 @@
         "size": 1
       },
       "seed": 2993804153
+    },
+    "vanilla/mob/zombie/metal1": {
+      "patch": "impact/clang",
+      "params": {
+        "freq": 380,
+        "pitch": 75
+      },
+      "seed": 2382597275
+    },
+    "vanilla/mob/zombie/metal2": {
+      "patch": "impact/clang",
+      "params": {
+        "freq": 430,
+        "pitch": 80
+      },
+      "seed": 2399374894
+    },
+    "vanilla/mob/zombie/metal3": {
+      "patch": "impact/clang",
+      "params": {
+        "freq": 340,
+        "pitch": 70
+      },
+      "seed": 2416152513
     }
   },
   "events": {
     "block.twilightforest.generic.annihilation": {
-      "category": "block",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.block.generic.annihilation",
       "variants": [
         {
@@ -22,7 +46,7 @@
       ]
     },
     "item.twilightforest.block_and_chain.collide": {
-      "category": "player",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.item.block_and_chain.collide",
       "variants": [
         {
@@ -40,7 +64,7 @@
       ]
     },
     "item.twilightforest.block_and_chain.hit": {
-      "category": "player",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.item.block_and_chain.hit",
       "variants": [
         {
@@ -86,13 +110,13 @@
       "subtitle": "subtitles.twilightforest.item.knightmetal_shield.shatter",
       "variants": [
         {
-          "vanilla": "sounds/mob/irongolem/hit1"
+          "file": "vanilla/mob/zombie/metal1"
         },
         {
-          "vanilla": "sounds/mob/irongolem/hit2"
+          "file": "vanilla/mob/zombie/metal2"
         },
         {
-          "vanilla": "sounds/mob/irongolem/hit3"
+          "file": "vanilla/mob/zombie/metal3"
         }
       ]
     },
@@ -139,7 +163,7 @@
       ]
     },
     "item.twilightforest.transformation_powder.use": {
-      "category": "player",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.item.transformation_powder.use",
       "variants": [
         {

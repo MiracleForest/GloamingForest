@@ -1,6 +1,7 @@
 {
   "entity.twilightforest.quest_ram.ambient": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.quest_ram.ambient",
     "sounds": [
       {
         "name": "sounds/mob/sheep/say1"
@@ -15,6 +16,7 @@
   },
   "entity.twilightforest.quest_ram.death": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.quest_ram.death",
     "sounds": [
       {
         "name": "sounds/mob/sheep/say1"
@@ -29,6 +31,7 @@
   },
   "entity.twilightforest.quest_ram.hurt": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.quest_ram.hurt",
     "sounds": [
       {
         "name": "sounds/mob/sheep/say1"
@@ -43,6 +46,7 @@
   },
   "entity.twilightforest.quest_ram.step": {
     "category": "neutral",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/mob/sheep/step1"

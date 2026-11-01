@@ -1,6 +1,7 @@
 {
   "block.twilightforest.bug.squish": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.bug.squish",
     "sounds": [
       {
         "name": "sounds/mob/slime/small1"
@@ -20,7 +21,8 @@
     ]
   },
   "block.twilightforest.cicada": {
-    "category": "block",
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.block.cicada",
     "sounds": [
       {
         "name": "sounds/twilightforest/flora/mob/cicada1"
@@ -32,6 +34,7 @@
   },
   "block.twilightforest.jar.break": {
     "category": "block",
+    "subtitle": "subtitles.block.generic.break",
     "sounds": [
       {
         "name": "sounds/twilightforest/flora/random/jar/jar1"
@@ -60,6 +63,7 @@
   },
   "block.twilightforest.jar.hit": {
     "category": "block",
+    "subtitle": "subtitles.block.generic.hit",
     "sounds": [
       {
         "name": "sounds/twilightforest/flora/random/jar/jar1"
@@ -74,6 +78,7 @@
   },
   "block.twilightforest.jar.insert": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jar.insert",
     "sounds": [
       {
         "name": "sounds/twilightforest/flora/random/jar/jar_in"
@@ -82,6 +87,7 @@
   },
   "block.twilightforest.jar.lid_swap": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jar.lid_swap",
     "sounds": [
       {
         "name": "sounds/twilightforest/flora/random/jar/jar_swap"
@@ -90,6 +96,7 @@
   },
   "block.twilightforest.jar.place": {
     "category": "block",
+    "subtitle": "subtitles.block.generic.place",
     "sounds": [
       {
         "name": "sounds/twilightforest/flora/random/jar/jar_place"
@@ -98,6 +105,7 @@
   },
   "block.twilightforest.jar.remove": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jar.remove",
     "sounds": [
       {
         "name": "sounds/twilightforest/flora/random/jar/jar_out"
@@ -106,6 +114,7 @@
   },
   "block.twilightforest.jar.step": {
     "category": "block",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/twilightforest/flora/random/jar/jar1"
@@ -120,6 +129,7 @@
   },
   "block.twilightforest.jar.wiggle": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jar.wiggle",
     "sounds": [
       {
         "name": "sounds/twilightforest/flora/random/jar/jar_wiggle1"
@@ -134,6 +144,7 @@
   },
   "block.twilightforest.torchberry.harvest": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.torchberry.harvest",
     "sounds": [
       {
         "name": "sounds/block/sweet_berry_bush/pick_from_bush1"

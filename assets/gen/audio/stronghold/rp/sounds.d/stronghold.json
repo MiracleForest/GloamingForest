@@ -1,6 +1,7 @@
 {
   "block.twilightforest.trophy_pedestal.activate": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.trophy_pedestal.activate",
     "sounds": [
       {
         "name": "sounds/mob/zombie/unfect"
@@ -9,6 +10,7 @@
   },
   "entity.twilightforest.blockchain_goblin.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.blockchain_goblin.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/redcap/redcap1"
@@ -32,6 +34,7 @@
   },
   "entity.twilightforest.blockchain_goblin.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.blockchain_goblin.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/redcap/die1"
@@ -46,6 +49,7 @@
   },
   "entity.twilightforest.blockchain_goblin.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.blockchain_goblin.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/redcap/hurt1"
@@ -63,6 +67,7 @@
   },
   "entity.twilightforest.goblin_knight.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/redcap/redcap1"
@@ -86,6 +91,7 @@
   },
   "entity.twilightforest.goblin_knight.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/redcap/die1"
@@ -100,6 +106,7 @@
   },
   "entity.twilightforest.goblin_knight.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/redcap/hurt1"
@@ -117,6 +124,7 @@
   },
   "entity.twilightforest.goblin_knight.muffled.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.muffled.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/redcap1"
@@ -140,6 +148,7 @@
   },
   "entity.twilightforest.goblin_knight.muffled.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.muffled.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/die1"
@@ -154,6 +163,7 @@
   },
   "entity.twilightforest.goblin_knight.muffled.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.muffled.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/redcap/muffled/hurt1"
@@ -171,6 +181,7 @@
   },
   "entity.twilightforest.helmet_crab.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.helmet_crab.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/helmet_crab/idle1"
@@ -185,6 +196,7 @@
   },
   "entity.twilightforest.helmet_crab.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.helmet_crab.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/helmet_crab/hurt1"
@@ -199,6 +211,7 @@
   },
   "entity.twilightforest.helmet_crab.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.helmet_crab.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/helmet_crab/hurt1"
@@ -213,6 +226,7 @@
   },
   "entity.twilightforest.helmet_crab.step": {
     "category": "hostile",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/helmet_crab/step1"
@@ -236,6 +250,7 @@
   },
   "entity.twilightforest.knight_phantom.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.knight_phantom.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/wraith/wraith1"
@@ -253,6 +268,7 @@
   },
   "entity.twilightforest.knight_phantom.axe": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.knight_phantom.axe",
     "sounds": [
       {
         "name": "sounds/random/bow"
@@ -261,6 +277,7 @@
   },
   "entity.twilightforest.knight_phantom.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.knight_phantom.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/wraith/wraith1"
@@ -278,6 +295,7 @@
   },
   "entity.twilightforest.knight_phantom.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.knight_phantom.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/stronghold/mob/wraith/wraith1"
@@ -295,6 +313,7 @@
   },
   "entity.twilightforest.knight_phantom.pickaxe": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.knight_phantom.pickaxe",
     "sounds": [
       {
         "name": "sounds/random/bow"

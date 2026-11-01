@@ -1,6 +1,7 @@
 {
   "block.twilightforest.door.activate": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.door.activate",
     "sounds": [
       {
         "name": "sounds/random/click"
@@ -9,6 +10,7 @@
   },
   "block.twilightforest.door.reappear": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.door.reappear",
     "sounds": [
       {
         "name": "sounds/random/fizz"
@@ -17,6 +19,7 @@
   },
   "block.twilightforest.door.vanish": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.door.vanish",
     "sounds": [
       {
         "name": "sounds/random/fizz"

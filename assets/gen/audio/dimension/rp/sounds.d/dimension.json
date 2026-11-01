@@ -1,6 +1,7 @@
 {
   "block.twilightforest.portal.whoosh": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.portal.whoosh",
     "sounds": [
       {
         "name": "sounds/portal/portal"

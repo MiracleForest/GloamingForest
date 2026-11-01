@@ -131,7 +131,7 @@
       ]
     },
     "block.twilightforest.cicada": {
-      "category": "block",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.block.cicada",
       "variants": [
         {

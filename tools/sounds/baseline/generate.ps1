@@ -1,20 +1,31 @@
 <#
 .SYNOPSIS
-  Contract "synth" (F3): generates the baseline recipes tools/sounds/baseline/<unit>.json.
+  Contract "synth" (F3): generates the baseline recipes tools/sounds/baseline/<unit>.json and TF's
+  sound event inventory (tools/sounds/baseline/inventory.json, src/feature/ext/synth/SoundEvents.inc).
 
 .DESCRIPTION
   Reads TF's event inventory - the event names and the structure of
   src/generated/resources/assets/twilightforest/sounds.json in the shared checkout
-  (%LOCALAPPDATA%\gf-tf, tools/tf/fetch.ps1; LGPL datagen output) - and writes one recipe per
-  owning unit (docs/spec/owners.tsv) with exactly TF's variants:
+  (%LOCALAPPDATA%\gf-tf, tools/tf/fetch.ps1; LGPL datagen output) and TF's entity classes - and
+  writes one recipe per owning unit (docs/spec/owners.tsv) with exactly TF's variants:
     - each TF sound file becomes a synthesized file ("files") designed below from its name
       (never from its audio: TF's .ogg files are All Rights Reserved and absent from the checkout);
     - a vanilla event or file that TF plays becomes the Bedrock vanilla sound of the same name
-      (tools/sounds/vanilla.json), or a synthesized stand-in where Bedrock has none;
+      (tools/sounds/vanilla.json), or synthesized stand-ins where Bedrock has none;
     - a reference to another TF event stays an alias ({"event": id});
-    - TF's per-entry volume, pitch and stream flags are kept.
+    - TF's per-entry volume, pitch and stream flags are kept on every kind of variant (a file, an
+      alias, each Bedrock file of a vanilla event), as Java multiplies them into the sounds an
+      event reference picks;
+    - the category is the Bedrock counterpart of the SoundSource TF plays the event with
+      (tools/sounds/categories.json, entity classes for mob sounds);
+    - TF's subtitle key is kept.
   The owning units refine their events in tools/sounds/recipes/<unit>.json (rule R3); this
-  baseline guarantees nothing is silent. -Check verifies that the committed baseline matches.
+  baseline guarantees nothing is silent.
+
+  The inventory is derived from TF's sounds.json alone (a separate flattening, not the recipes):
+  tools/sounds/synth.ps1 fails when a rendered definition differs from it (variant count, volume,
+  pitch, stream, subtitle, category), and the synth.definitions selftest checks the assembled
+  resource pack against SoundEvents.inc. -Check verifies that the committed files match.
 
 .EXAMPLE
   pwsh tools/sounds/baseline/generate.ps1
@@ -25,12 +36,14 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 3.0
 $root = (Resolve-Path "$PSScriptRoot/../../..").Path
 . (Join-Path $root 'tools/sounds/lib/SynthJson.ps1')
+. (Join-Path $root 'tools/sounds/lib/Inventory.ps1')
 
 $tf = if ($env:GF_TF_DIR) { $env:GF_TF_DIR } else { Join-Path $env:LOCALAPPDATA 'gf-tf' }
 $soundsJson = Join-Path $tf 'src/generated/resources/assets/twilightforest/sounds.json'
 if (-not (Test-Path $soundsJson)) { Write-Host "[baseline] TF checkout missing: pwsh tools/tf/fetch.ps1" -ForegroundColor Red; exit 1 }
-$tfSounds = Get-Content $soundsJson -Raw | ConvertFrom-Json -AsHashtable
-$vanilla  = Get-Content (Join-Path $root 'tools/sounds/vanilla.json') -Raw | ConvertFrom-Json -AsHashtable
+$tfSounds   = Get-Content $soundsJson -Raw | ConvertFrom-Json -AsHashtable
+$vanilla    = Get-Content (Join-Path $root 'tools/sounds/vanilla.json') -Raw | ConvertFrom-Json -AsHashtable
+$categories = Get-Content (Join-Path $root 'tools/sounds/categories.json') -Raw | ConvertFrom-Json -AsHashtable
 
 # owners
 $rules = Get-Content (Join-Path $root 'tools/spec/owners.rules.json') -Raw | ConvertFrom-Json -AsHashtable
@@ -40,31 +53,55 @@ foreach ($line in Get-Content (Join-Path $root 'docs/spec/owners.tsv')) {
     if ($c.Count -ge 3 -and $c[0] -eq 'sound_event') { $owner[$c[1]] = $rules.units[$c[2]].name }
 }
 
-# hostile entities: MobCategory.MONSTER in TFEntities.java
-$hostile = @{}
-foreach ($line in Get-Content (Join-Path $tf 'src/main/java/twilightforest/init/TFEntities.java')) {
-    if ($line -match '^\s*public static final .*?\s([A-Z_]+)\s*=\s*make\(.*MobCategory\.([A-Z_]+)') { $hostile[$Matches[1].ToLower()] = $Matches[2] -eq 'MONSTER' }
+# ---- categories: the SoundSource of TF's call sites ------------------------------------------------------
+# Mob sounds play with the mob's getSoundSource(): no TF class overrides it, so it is the one of the
+# first vanilla class up the hierarchy (Monster and the vanilla monsters TF extends: HOSTILE; every
+# other Mob: NEUTRAL).
+$javaRoot = Join-Path $tf 'src/main/java/twilightforest'
+$super = @{}
+foreach ($f in Get-ChildItem $javaRoot -Recurse -Filter *.java) {
+    $text = Get-Content -LiteralPath $f.FullName -Raw
+    foreach ($m in [regex]::Matches($text, '(?m)^public\s+(?:abstract\s+|final\s+)*class\s+(\w+)(?:<[^>{]*>)?\s+extends\s+([\w.]+)')) {
+        $super[$m.Groups[1].Value] = $m.Groups[2].Value
+    }
+}
+$entityClass = @{}
+foreach ($line in Get-Content (Join-Path $javaRoot 'init/TFEntities.java')) {
+    if ($line -match '^\s*public static final .*?\s([A-Z_]+)\s*=\s*make\(\w+\.\w+,\s*(\w+)::new') { $entityClass[$Matches[1].ToLower()] = $Matches[2] }
+}
+$vanillaHostile = 'Monster', 'Spider', 'CaveSpider', 'Zombie', 'AbstractSkeleton', 'Skeleton', 'Ghast', 'Slime', 'MagmaCube', 'Phantom', 'Shulker', 'Blaze', 'Silverfish'
+$vanillaNeutral = 'Mob', 'PathfinderMob', 'AgeableMob', 'Animal', 'Sheep', 'TamableAnimal', 'FlyingMob', 'AmbientCreature', 'WaterAnimal', 'Entity'
+
+function Get-EntityCategory([string]$id) {
+    $cls = $entityClass[$id]
+    if (-not $cls) { return $null }
+    $chain = @($cls)
+    while ($super.ContainsKey($cls)) { $cls = $super[$cls]; $chain += $cls }
+    if ($vanillaHostile -contains $cls) { return 'hostile' }
+    if ($vanillaNeutral -contains $cls) { return 'neutral' }
+    throw "entity $id ($($chain -join ' < ')): add the SoundSource of vanilla class $cls to tools/sounds/baseline/generate.ps1"
 }
 
 function Get-Category([string]$e) {
+    if ($categories.events.Contains($e)) { return $categories.events[$e].category }
+    foreach ($k in ($categories.events.Keys | Where-Object { $_.Contains('*') } | Sort-Object)) { if ($e -like $k) { return $categories.events[$k].category } }
     switch -Regex ($e) {
         '^music_disc\.' { return 'record' }
         '^music\.' { return 'music' }
-        '^environment\.' { return 'weather' }
         '^block\.' { return 'block' }
         '^item\.' { return 'player' }
-        '^entity\.twilightforest\.(parrot|loyal_zombie)\.' { return 'neutral' } # parrots imitating TF mobs; the tamed zombie
         '^entity\.twilightforest\.([a-z_]+)\.' {
-            $m = $Matches[1]
-            if ($hostile.ContainsKey($m)) { return $(if ($hostile[$m]) { 'hostile' } else { 'neutral' }) }
-            return 'hostile'
+            $m  = $Matches[1]
+            $id = if ($categories.entities.Contains($m)) { $categories.entities[$m] } else { $m }
+            $c  = Get-EntityCategory $id
+            if ($c) { return $c }
         }
-        default { return 'neutral' }
     }
+    throw "no category for ${e}: add it to tools/sounds/categories.json"
 }
 
 # ---- sound design per TF file name (the baseline's creative part) ---------------------------------------
-function P($patch, [hashtable]$params) {
+function P($patch, $params) {
     $sorted = [ordered]@{}
     foreach ($k in ($params.Keys | Sort-Object)) { $sorted[$k] = $params[$k] } # stable order (hash order varies per process)
     return [ordered]@{ patch = $patch; params = $sorted }
@@ -177,7 +214,58 @@ function Get-Design([string]$path) {
     throw "no baseline design for TF sound file '$path': add one to tools/sounds/baseline/generate.ps1"
 }
 
-function Get-Synth($spec) { return P $spec.patch $spec.params }
+# The synthesized stand-ins of a vanilla.json entry: [{file, spec}] ("synth" is one spec or a list
+# of specs naming the Java file each stands in for).
+function Get-StandIns([string]$name, $map) {
+    $specs = @($map.synth)
+    $out = @()
+    for ($i = 0; $i -lt $specs.Count; $i++) {
+        $s    = $specs[$i]
+        $file = if ($s.Contains('file')) { "vanilla/$($s.file)" } elseif ($specs.Count -gt 1) { "vanilla/$name$($i + 1)" } else { "vanilla/$name" }
+        $out += @{ file = $file; spec = (P $s.patch $s.params) }
+    }
+    return $out
+}
+
+# Number of Bedrock sounds a vanilla.json entry maps to.
+function Get-VanillaCount($map) {
+    if ($map -is [Collections.IDictionary]) { return @($map.synth).Count }
+    return @($map).Count
+}
+
+# ---- TF's inventory: sounds.json flattened through event references (independent of the recipes) --------
+function Get-Attrs($s) {
+    return @{
+        volume = $(if ($s.Contains('volume')) { [double]$s.volume } else { 1.0 })
+        pitch  = $(if ($s.Contains('pitch')) { [double]$s.pitch } else { 1.0 })
+        stream = [bool]($s.Contains('stream') -and $s.stream)
+    }
+}
+
+function Get-TfVariants([string]$e, [int]$depth = 0) {
+    if ($depth -gt 8) { throw "event reference loop at $e" }
+    $out = @()
+    foreach ($s in $tfSounds[$e].sounds) {
+        if ($s -is [string]) { $s = @{ name = $s } }
+        $a = Get-Attrs $s
+        if ($s.Contains('type') -and $s.type -eq 'event') {
+            $name = [string]$s.name
+            if ($name -like 'twilightforest:*') {
+                # Java: the referenced event's sound, volume and pitch multiplied, stream if either streams
+                foreach ($x in Get-TfVariants $name.Substring(15) ($depth + 1)) {
+                    $out += [ordered]@{ volume = $x.volume * $a.volume; pitch = $x.pitch * $a.pitch; stream = ($x.stream -or $a.stream) }
+                }
+            } else {
+                $map = $vanilla.events[$name]
+                if ($null -eq $map) { throw "vanilla event $name (in $e) is not mapped in tools/sounds/vanilla.json" }
+                for ($i = 0; $i -lt (Get-VanillaCount $map); $i++) { $out += [ordered]@{ volume = $a.volume; pitch = $a.pitch; stream = $a.stream } }
+            }
+        } else {
+            $out += [ordered]@{ volume = $a.volume; pitch = $a.pitch; stream = $a.stream }
+        }
+    }
+    return $out
+}
 
 # ---- recipes per owner -----------------------------------------------------------------------------------
 $recipes = [ordered]@{}
@@ -197,6 +285,18 @@ function Add-File([string]$u, [string]$file, $spec) {
     }
 }
 
+# TF's volume, pitch and stream of an entry onto a variant
+function Add-Attrs($variant, $s) {
+    foreach ($k in 'volume', 'pitch') { if ($s.Contains($k)) { $variant[$k] = [double]$s[$k] } }
+    if ($s.Contains('stream')) { $variant.stream = [bool]$s.stream }
+    return $variant
+}
+
+$inventory = [ordered]@{
+    about  = "TF's sound events (src/generated/resources/assets/twilightforest/sounds.json at 9e40a757), generated by tools/sounds/baseline/generate.ps1: do not edit. Per event: the owning unit, the Bedrock category of the SoundSource TF plays it with (tools/sounds/categories.json), TF's subtitle key and TF's variants flattened through event references (volume and pitch multiplied, stream if either streams; a vanilla event counts the Bedrock sounds it maps to in tools/sounds/vanilla.json). tools/sounds/synth.ps1 fails when a rendered definition differs."
+    events = [ordered]@{}
+}
+
 foreach ($e in ($tfSounds.Keys | Sort-Object)) {
     if (-not $owner.ContainsKey($e)) { throw "TF event $e has no owner in docs/spec/owners.tsv" }
     $u   = $owner[$e]
@@ -205,62 +305,78 @@ foreach ($e in ($tfSounds.Keys | Sort-Object)) {
     foreach ($s in $def.sounds) {
         if ($s -is [string]) { $s = @{ name = $s } }
         $name = [string]$s.name
-        if ($s.ContainsKey('type') -and $s.type -eq 'event') {
-            if ($name -like 'twilightforest:*') { $variants += [ordered]@{ event = $name.Substring(15) }; continue }
+        if ($s.Contains('type') -and $s.type -eq 'event') {
+            if ($name -like 'twilightforest:*') { $variants += Add-Attrs ([ordered]@{ event = $name.Substring(15) }) $s; continue }
             $map = $vanilla.events[$name]
             if ($null -eq $map) { throw "vanilla event $name (in $e) is not mapped in tools/sounds/vanilla.json" }
             if ($map -is [Collections.IDictionary]) {
-                $file = "vanilla/$name"
-                Add-File $u $file (Get-Synth $map.synth)
-                $variants += [ordered]@{ file = $file }
+                foreach ($x in Get-StandIns $name $map) {
+                    Add-File $u $x.file $x.spec
+                    $variants += Add-Attrs ([ordered]@{ file = $x.file }) $s
+                }
             } else {
-                foreach ($p in $map) { $variants += [ordered]@{ vanilla = $p } }
+                foreach ($p in $map) { $variants += Add-Attrs ([ordered]@{ vanilla = $p }) $s }
             }
             continue
         }
-        $entry = [ordered]@{}
         if ($name -like 'twilightforest:*') {
             $file = $name.Substring(15)
             Add-File $u $file (Get-Design $file)
-            $entry.file = $file
+            $variants += Add-Attrs ([ordered]@{ file = $file }) $s
         } else {
             $path = $name -replace '^minecraft:', ''
             $map  = $vanilla.files[$path]
             if ($null -eq $map) { throw "vanilla file $path (in $e) is not mapped in tools/sounds/vanilla.json" }
             if ($map -is [Collections.IDictionary]) {
-                $file = "vanilla/$path"
-                Add-File $u $file (Get-Synth $map.synth)
-                $entry.file = $file
+                $x = @(Get-StandIns $path $map)
+                if ($x.Count -ne 1) { throw "vanilla file $path stands for one sound: give it one synth spec in tools/sounds/vanilla.json" }
+                Add-File $u $x[0].file $x[0].spec
+                $variants += Add-Attrs ([ordered]@{ file = $x[0].file }) $s
             } else {
-                $entry.vanilla = $map[0]
+                if (@($map).Count -ne 1) { throw "vanilla file $path stands for one sound: map it to one Bedrock file in tools/sounds/vanilla.json" }
+                $variants += Add-Attrs ([ordered]@{ vanilla = @($map)[0] }) $s
             }
         }
-        foreach ($k in 'volume', 'pitch') { if ($s.ContainsKey($k)) { $entry[$k] = [double]$s[$k] } }
-        if ($s.ContainsKey('stream')) { $entry.stream = [bool]$s.stream }
-        $variants += $entry
     }
-    $ev = [ordered]@{ category = Get-Category $e }
-    if ($def.ContainsKey('subtitle')) { $ev.subtitle = $def.subtitle }
+    $cat = Get-Category $e
+    $ev  = [ordered]@{ category = $cat }
+    if ($def.Contains('subtitle')) { $ev.subtitle = $def.subtitle }
     if ($e -like 'music_disc.*') { $ev.max_distance = 64.0 } # jukebox songs carry 64 blocks (Java: volume 4 x 16)
     $ev.variants = $variants
     $recipes[$u].events[$e] = $ev
+
+    $inv = [ordered]@{ owner = $u; category = $cat }
+    if ($def.Contains('subtitle')) { $inv.subtitle = $def.subtitle }
+    $inv.variants = @(Get-TfVariants $e | ForEach-Object {
+        $x = [ordered]@{ volume = $_.volume; pitch = $_.pitch }
+        if ($_.stream) { $x.stream = $true }
+        $x
+    })
+    $inventory.events[$e] = $inv
 }
 
+# ---- write or check -------------------------------------------------------------------------------------
+$outputs = [ordered]@{}
+foreach ($u in $recipes.Keys) { $outputs["tools/sounds/baseline/$u.json"] = (Format-Json $recipes[$u]) + "`n" }
+$outputs['tools/sounds/baseline/inventory.json'] = Format-Inventory $inventory
+$outputs['src/feature/ext/synth/SoundEvents.inc'] = Format-SoundEventsInc $inventory
+
 $diffs = 0
-foreach ($u in $recipes.Keys) {
-    $path = Join-Path $PSScriptRoot "$u.json"
-    $text = (Format-Json $recipes[$u]) + "`n"
+foreach ($rel in $outputs.Keys) {
+    $path = Join-Path $root $rel
     if ($Check) {
         $cur = if (Test-Path $path) { (Get-Content $path -Raw) -replace "`r`n", "`n" } else { '' }
-        if ($cur -ne $text) { Write-Host "[baseline] differs: tools/sounds/baseline/$u.json" -ForegroundColor Red; $diffs++ }
+        if ($cur -ne $outputs[$rel]) { Write-Host "[baseline] differs: $rel" -ForegroundColor Red; $diffs++ }
     } else {
-        [IO.File]::WriteAllText($path, $text, [Text.UTF8Encoding]::new($false))
+        New-Item -ItemType Directory -Force (Split-Path $path) | Out-Null
+        [IO.File]::WriteAllText($path, $outputs[$rel], [Text.UTF8Encoding]::new($false))
     }
 }
 if ($Check) {
     if ($diffs) { exit 1 }
-    Write-Host "[baseline] -Check OK: $($recipes.Count) baseline recipes match TF's inventory" -ForegroundColor Green
+    Write-Host "[baseline] -Check OK: $($recipes.Count) baseline recipes, the inventory and SoundEvents.inc match TF's sounds.json" -ForegroundColor Green
     exit 0
 }
 $files = ($recipes.Values | ForEach-Object { $_.files.Count } | Measure-Object -Sum).Sum
-Write-Host "[baseline] $($recipes.Count) recipes, $($tfSounds.Count) events, $files files" -ForegroundColor Green
+$vars  = ($inventory.events.Values | ForEach-Object { @($_.variants).Count } | Measure-Object -Sum).Sum
+Write-Host "[baseline] $($recipes.Count) recipes, $($tfSounds.Count) events ($vars variants), $files files" -ForegroundColor Green

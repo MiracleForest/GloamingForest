@@ -3,7 +3,7 @@
   "files": {},
   "events": {
     "block.twilightforest.boss_chest.appear": {
-      "category": "block",
+      "category": "hostile",
       "subtitle": "subtitles.twilightforest.block.boss_chest.appear",
       "variants": [
         {

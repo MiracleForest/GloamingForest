@@ -1,6 +1,7 @@
 {
   "entity.twilightforest.alpha_yeti.alert": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.alert",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/alert"
@@ -9,6 +10,7 @@
   },
   "entity.twilightforest.alpha_yeti.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/death"
@@ -17,6 +19,7 @@
   },
   "entity.twilightforest.alpha_yeti.grab": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.grab",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/grab"
@@ -25,6 +28,7 @@
   },
   "entity.twilightforest.alpha_yeti.growl": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.growl",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/growl1"
@@ -39,6 +43,7 @@
   },
   "entity.twilightforest.alpha_yeti.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/hurt1"
@@ -53,6 +58,7 @@
   },
   "entity.twilightforest.alpha_yeti.ice": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.ice",
     "sounds": [
       {
         "name": "sounds/random/bow"
@@ -61,6 +67,7 @@
   },
   "entity.twilightforest.alpha_yeti.pant": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.pant",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/pant1"
@@ -75,6 +82,7 @@
   },
   "entity.twilightforest.alpha_yeti.roar": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.roar",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/roar"
@@ -83,6 +91,7 @@
   },
   "entity.twilightforest.alpha_yeti.throw": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.throw",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/throw"
@@ -91,6 +100,7 @@
   },
   "entity.twilightforest.troll.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.troll.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/troll/idle1"
@@ -108,6 +118,7 @@
   },
   "entity.twilightforest.troll.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.troll.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/troll/death"
@@ -116,6 +127,7 @@
   },
   "entity.twilightforest.troll.grab_rock": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.troll.grab_rock",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/troll/grab"
@@ -124,6 +136,7 @@
   },
   "entity.twilightforest.troll.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.troll.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/troll/hurt"
@@ -132,6 +145,7 @@
   },
   "entity.twilightforest.troll.throw_rock": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.troll.throw_rock",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/troll/throw"
@@ -140,6 +154,7 @@
   },
   "entity.twilightforest.yeti.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.yeti.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/death"
@@ -148,6 +163,7 @@
   },
   "entity.twilightforest.yeti.grab": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.yeti.grab",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/grab"
@@ -156,6 +172,7 @@
   },
   "entity.twilightforest.yeti.growl": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.yeti.growl",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/growl1"
@@ -170,6 +187,7 @@
   },
   "entity.twilightforest.yeti.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.yeti.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/hurt1"
@@ -184,6 +202,7 @@
   },
   "entity.twilightforest.yeti.throw": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.yeti.throw",
     "sounds": [
       {
         "name": "sounds/twilightforest/caves/mob/alpha_yeti/throw"

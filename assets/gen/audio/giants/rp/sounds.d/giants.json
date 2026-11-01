@@ -1,6 +1,7 @@
 {
   "block.twilightforest.beanstalk.grow": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.beanstalk.grow",
     "sounds": [
       {
         "name": "sounds/twilightforest/giants/random/beanstalk_grow"

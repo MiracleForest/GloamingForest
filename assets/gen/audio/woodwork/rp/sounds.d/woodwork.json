@@ -1,6 +1,7 @@
 {
   "block.twilightforest.drying_rack.add_item": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.drying_rack.add_item",
     "sounds": [
       {
         "name": "sounds/block/itemframe/add_item1"
@@ -18,6 +19,7 @@
   },
   "block.twilightforest.drying_rack.remove_item": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.drying_rack.remove_item",
     "sounds": [
       {
         "name": "sounds/block/itemframe/add_item1"

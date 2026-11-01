@@ -15,10 +15,16 @@
   Shared patches: tools/sounds/patches/**/*.json ("creature/growl"). Music: tracker tracks
   tools/sounds/music/<track>.json (U10) or tools/sounds/baseline/music/<track>.json.
 
-  Output (generated layer, never edit by hand, rule R3):
+  Output (generated layer, never edit by hand, rule R3), per owner <u>, only from <u>'s recipes
+  (plus the shared patches and tracks):
     assets/gen/audio/<u>/rp/sounds/twilightforest/<u>/<file>.ogg
     assets/gen/audio/<u>/rp/sounds.d/<u>.json          sound_definitions fragment
-  and src/feature/ext/synth/SoundEvents.inc (the event list of the synth.* selftests).
+    assets/gen/audio/<u>/aliases.json                  snapshot of the other owners' sounds that <u>'s
+                                                       events play ({"event": id} variants), rendered
+                                                       as copies under sounds/twilightforest/<u>/alias/
+
+  Every definition must match TF's inventory (tools/sounds/baseline/inventory.json, generated
+  from TF's sounds.json): variant count, volume, pitch, stream, subtitle and category.
 
   The recipe format, the patch language and the tracker format are documented in
   tools/sounds/README.md.
@@ -31,16 +37,19 @@
   Only this owner (unit id or name: U16, fauna). Default: every owner.
 .PARAMETER Check
   Renders everything into a temporary directory and fails unless the committed tree is
-  byte-identical (deterministic output) and every event is covered.
+  byte-identical (deterministic output), every event is covered and matches TF's inventory, and
+  src/feature/ext/synth/SoundEvents.inc matches the inventory. Alias copies are rendered from the
+  owner's snapshot (aliases.json); a snapshot older than the aliased owner's current recipe is a
+  warning (the aliasing owner refreshes it with -Unit, A8 with a full render), not a failure.
 .PARAMETER Event
   With -Preview: only this event (or a wildcard).
 .PARAMETER Preview
   Renders .wav previews into %TEMP%\gf-synth-preview\ instead of writing the tree.
 
 .EXAMPLE
-  pwsh tools/sounds/synth.ps1                       # every owner
+  pwsh tools/sounds/synth.ps1                       # every owner (refreshes every alias snapshot)
   pwsh tools/sounds/synth.ps1 -Unit fauna           # one owner
-  pwsh tools/sounds/synth.ps1 -Check                # CI: deterministic and complete
+  pwsh tools/sounds/synth.ps1 -Check                # CI: deterministic, complete, TF's inventory
   pwsh tools/sounds/synth.ps1 -Preview -Event 'entity.twilightforest.naga.*'
 #>
 param(
@@ -55,8 +64,13 @@ Set-StrictMode -Version 3.0
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
 
 function Fail([string]$msg) { Write-Host "[synth] $msg" -ForegroundColor Red; exit 1 }
+function Warn([string]$msg) {
+    Write-Host "[synth] warning: $msg" -ForegroundColor Yellow
+    if ($env:GITHUB_ACTIONS) { Write-Host "::warning title=synth::$msg" }
+}
 
 . (Join-Path $PSScriptRoot 'lib/SynthJson.ps1')
+. (Join-Path $PSScriptRoot 'lib/Inventory.ps1')
 
 function Read-JsonFile([string]$path) {
     try { return Get-Content -LiteralPath $path -Raw | ConvertFrom-Json -Depth 100 }
@@ -65,6 +79,7 @@ function Read-JsonFile([string]$path) {
 
 function Get-Prop($obj, [string]$name, $default = $null) {
     if ($null -eq $obj) { return $default }
+    if ($obj -is [Collections.IDictionary]) { if ($obj.Contains($name)) { return $obj[$name] } return $default }
     $p = $obj.PSObject.Properties[$name]
     if ($p) { return $p.Value }
     return $default
@@ -89,6 +104,9 @@ if ($Unit) {
     if ($owners -notcontains $u) { Fail "unit '$u' owns no sound event" }
     $owners = @($u)
 }
+
+$inventoryPath = Join-Path $root 'tools/sounds/baseline/inventory.json'
+try { $inventory = Read-Inventory $inventoryPath } catch { Fail $_.Exception.Message }
 
 # ---- patch library --------------------------------------------------------------------------------------
 $library = [ordered]@{}
@@ -141,13 +159,35 @@ foreach ($u in @($eventOwner.Values | Sort-Object -Unique)) {
         if (-not $eventOwner.Contains($e)) { $problems.Add("$($r.sources -join ', '): '$e' is not a TF sound event") }
         elseif ($eventOwner[$e] -ne $u) { $problems.Add("$($r.sources -join ', '): '$e' belongs to $($eventOwner[$e])") }
     }
+    foreach ($file in $r.files.Keys) {
+        if ($file -like 'alias/*') { $problems.Add("$($r.sources -join ', '): file '$file': alias/ is reserved for copies of other owners' sounds") }
+    }
 }
 foreach ($e in $eventOwner.Keys) {
     if (-not (Get-Recipe $eventOwner[$e]).events.Contains($e)) { $problems.Add("no recipe for $e (owner $($eventOwner[$e]))") }
 }
 
-# variants of an event, aliases ({"event": id}) resolved; returns objects with kind/name/fields
-function Resolve-Variants([string]$e, [int]$depth = 0) {
+# ---- alias snapshots ----------------------------------------------------------------------------------------
+# An event of owner <u> may play another owner's event ({"event": id}). Its sounds are copied into
+# <u>'s own tree (sounds/twilightforest/<u>/alias/<owner>/<file>), so <u>'s output never depends on
+# what another unit commits. assets/gen/audio/<u>/aliases.json records what was copied: -Check
+# reproduces <u>'s tree from it and warns when the aliased owner changed since.
+$aliasDir = Join-Path $root 'assets/gen/audio'
+$snapshots = @{}
+function Get-Snapshot([string]$u) {
+    if (-not $snapshots.ContainsKey($u)) {
+        $p = Join-Path $aliasDir "$u/aliases.json"
+        $snapshots[$u] = if (Test-Path $p) { Read-JsonFile $p } else { $null }
+    }
+    return $snapshots[$u]
+}
+$aliasLive = @{}   # owner -> event -> live copy (ordered)
+$aliasUsed = @{}   # owner -> event -> copy written to the owner's aliases.json
+
+# variants of an event, aliases ({"event": id}) resolved; returns hashtables with kind/name/fields:
+#   kind vanilla (name), file (file of the root owner), inline (file inline/<e>/<i>, spec),
+#   copy (file alias/<owner>/<file>, a self-contained spec)
+function Resolve-Variants([string]$e, [string]$rootOwner, [int]$depth = 0, [bool]$crossed = $false) {
     if ($depth -gt 8) { $problems.Add("alias loop at $e"); return @() }
     $u   = $eventOwner[$e]
     $def = (Get-Recipe $u).events[$e]
@@ -159,12 +199,16 @@ function Resolve-Variants([string]$e, [int]$depth = 0) {
         if ($alias) {
             $alias = $alias -replace '^twilightforest:', ''
             if (-not $eventOwner.Contains($alias)) { $problems.Add("${e}: alias to unknown event $alias"); continue }
-            foreach ($x in Resolve-Variants $alias ($depth + 1)) {
+            $sub = if (-not $crossed -and $eventOwner[$alias] -ne $rootOwner) { Get-AliasCopy $rootOwner $alias ($depth + 1) }
+                   else { Resolve-Variants $alias $rootOwner ($depth + 1) $crossed }
+            foreach ($x in @($sub | Where-Object { $null -ne $_ })) {
                 $y = $x.Clone()
+                # Java: the referenced sound's volume and pitch multiplied, stream if either streams
                 foreach ($k in 'volume', 'pitch', 'weight') {
                     $m = Get-Prop $v $k
-                    if ($null -ne $m) { $y[$k] = [double]$(if ($null -ne $y[$k]) { $y[$k] * $m } else { $m }) }
+                    if ($null -ne $m) { $y[$k] = [double]$(if ($y.ContainsKey($k) -and $null -ne $y[$k]) { $y[$k] * $m } else { $m }) }
                 }
+                if ([bool](Get-Prop $v 'stream' $false)) { $y.stream = $true }
                 $out += $y
             }
             continue
@@ -191,8 +235,96 @@ function Resolve-Variants([string]$e, [int]$depth = 0) {
     return $out
 }
 
+# A patch with the unit-local patches its "patch" layers name inlined (the renderer only knows the
+# shared library).
+function Expand-LocalPatches($patch, $locals, [int]$depth = 0) {
+    if ($depth -gt 8 -or $null -eq $patch -or $patch -is [string]) { return $patch }
+    $layers = Get-Prop $patch 'layers'
+    if ($null -eq $layers) { return $patch }
+    $changed = $false
+    $newLayers = foreach ($L in @($layers)) {
+        $inner = Get-Prop $L 'patch'
+        if ((Get-Prop $L 'type') -eq 'patch' -and $null -ne $inner) {
+            $resolved = if ($inner -is [string] -and $locals.Contains($inner)) { $locals[$inner] } else { $inner }
+            $expanded = Expand-LocalPatches $resolved $locals ($depth + 1)
+            if (-not [object]::ReferenceEquals($expanded, $inner)) {
+                $o = [ordered]@{}
+                foreach ($q in $L.PSObject.Properties) { $o[$q.Name] = $q.Value }
+                $o.patch = $expanded
+                $changed = $true
+                [pscustomobject]$o
+                continue
+            }
+        }
+        $L
+    }
+    if (-not $changed) { return $patch }
+    $out = [ordered]@{}
+    foreach ($q in $patch.PSObject.Properties) { $out[$q.Name] = $q.Value }
+    $out.layers = @($newLayers)
+    return [pscustomobject]$out
+}
+
+# A self-contained render spec of another owner's file: its unit-local patch and its track inlined,
+# its seed fixed (the default seed comes from the file name, which the copy changes).
+function Get-CopySpec([string]$u, $x) {
+    $spec = if ($x.kind -eq 'inline') { $x.spec } else { (Get-Recipe $u).files[$x.file] }
+    $out  = [ordered]@{}
+    foreach ($p in $spec.PSObject.Properties) { $out[$p.Name] = $p.Value }
+    $patch = Get-Prop $spec 'patch'
+    $locals = (Get-Recipe $u).patches
+    if ($patch -is [string] -and $locals.Contains($patch)) { $out.patch = Expand-LocalPatches $locals[$patch] $locals }
+    elseif ($null -ne $patch -and $patch -isnot [string]) { $out.patch = Expand-LocalPatches $patch $locals }
+    $track = Get-Prop $spec 'track'
+    if ($track -is [string]) { $out.track = Get-Track $track }
+    if (-not $track -and $null -eq (Get-Prop $spec 'seed')) { $out.seed = Get-NameSeed $x.file }
+    return [pscustomobject]$out
+}
+
+# A variant of a snapshot ([ordered], as written to aliases.json) from a resolved entry.
+function ConvertTo-CopyVariant([string]$rootOwner, $x) {
+    $v = [ordered]@{}
+    switch ($x.kind) {
+        'vanilla' { $v.vanilla = $x.name }
+        'copy' { $v.copy = $x.file; $v.spec = $x.spec }
+        default {
+            if ($x.owner -eq $rootOwner) { $v.file = $x.file; if ($x.kind -eq 'inline') { $v.spec = $x.spec } }
+            else { $v.copy = "alias/$($x.owner)/$($x.file)"; $v.spec = Get-CopySpec $x.owner $x }
+        }
+    }
+    foreach ($k in 'volume', 'pitch', 'weight', 'stream', 'is3D', 'load_on_low_memory') { if ($x.ContainsKey($k) -and $null -ne $x[$k]) { $v[$k] = $x[$k] } }
+    return $v
+}
+
+# A resolved entry from a snapshot variant.
+function ConvertFrom-CopyVariant([string]$rootOwner, [string]$e, $v) {
+    $entry = @{ owner = $rootOwner; event = $e }
+    if (Get-Prop $v 'vanilla') { $entry.kind = 'vanilla'; $entry.name = Get-Prop $v 'vanilla' }
+    elseif (Get-Prop $v 'copy') { $entry.kind = 'copy'; $entry.file = Get-Prop $v 'copy'; $entry.spec = Get-Prop $v 'spec' }
+    elseif (Get-Prop $v 'spec') { $entry.kind = 'inline'; $entry.file = Get-Prop $v 'file'; $entry.spec = Get-Prop $v 'spec' }
+    else { $entry.kind = 'file'; $entry.file = Get-Prop $v 'file' }
+    foreach ($k in 'volume', 'pitch', 'weight') { $val = Get-Prop $v $k; if ($null -ne $val) { $entry[$k] = [double]$val } }
+    foreach ($k in 'stream', 'is3D', 'load_on_low_memory') { $val = Get-Prop $v $k; if ($null -ne $val) { $entry[$k] = [bool]$val } }
+    return $entry
+}
+
+function Get-AliasCopy([string]$rootOwner, [string]$a, [int]$depth) {
+    if (-not $aliasLive.ContainsKey($rootOwner)) { $aliasLive[$rootOwner] = @{}; $aliasUsed[$rootOwner] = @{} }
+    if (-not $aliasLive[$rootOwner].ContainsKey($a)) {
+        $live = [ordered]@{ owner = $eventOwner[$a]; variants = @(Resolve-Variants $a $rootOwner $depth $true | ForEach-Object { ConvertTo-CopyVariant $rootOwner $_ }) }
+        $aliasLive[$rootOwner][$a] = $live
+        $used = $live
+        $snap = if ($Check) { Get-Snapshot $rootOwner } else { $null }
+        $snapEvent = if ($snap) { Get-Prop (Get-Prop $snap 'events') $a } else { $null }
+        if ($snapEvent) { $used = [ordered]@{ owner = Get-Prop $snapEvent 'owner'; variants = @(Get-Prop $snapEvent 'variants' @()) } }
+        $aliasUsed[$rootOwner][$a] = $used
+    }
+    $used = $aliasUsed[$rootOwner][$a]
+    return @($used.variants | ForEach-Object { ConvertFrom-CopyVariant $rootOwner $a $_ })
+}
+
 $resolved = [ordered]@{}
-foreach ($e in $eventOwner.Keys) { if ((Get-Recipe $eventOwner[$e]).events.Contains($e)) { $resolved[$e] = @(Resolve-Variants $e) } }
+foreach ($e in $eventOwner.Keys) { if ((Get-Recipe $eventOwner[$e]).events.Contains($e)) { $resolved[$e] = @(Resolve-Variants $e $eventOwner[$e]) } }
 
 if ($problems.Count) {
     $problems | Select-Object -First 50 | ForEach-Object { Write-Host "[synth] $_" -ForegroundColor Red }
@@ -200,12 +332,12 @@ if ($problems.Count) {
 }
 
 # ---- render jobs ----------------------------------------------------------------------------------------
-function Get-RenderSpec([string]$u, [string]$file, $entry) {
-    if ($entry.kind -eq 'inline') { return $entry.spec }
-    return (Get-Recipe $u).files[$file]
+function Get-RenderSpec([string]$u, $entry) {
+    if ($entry.kind -in 'inline', 'copy') { return $entry.spec }
+    return (Get-Recipe $u).files[$entry.file]
 }
 
-function New-Job([string]$u, [string]$file, $spec, [string]$outPath) {
+function New-Job([string]$u, [string]$file, $spec, [string]$outPath, [bool]$copy = $false) {
     $name  = "$u/$file"
     $track = Get-Prop $spec 'track'
     $job   = [ordered]@{ name = $name; out = $outPath }
@@ -219,9 +351,9 @@ function New-Job([string]$u, [string]$file, $spec, [string]$outPath) {
         $patch = Get-Prop $spec 'patch'
         if ($patch -is [string]) {
             $local = (Get-Recipe $u).patches
-            if ($local.Contains($patch)) { $patch = $local[$patch] }
+            if (-not $copy -and $local.Contains($patch)) { $patch = Expand-LocalPatches $local[$patch] $local } # a copy's own unit-local patch is inlined
             elseif (-not $library.Contains($patch)) { Fail "${name}: unknown patch '$patch'" }
-        }
+        } elseif (-not $copy -and $null -ne $patch) { $patch = Expand-LocalPatches $patch (Get-Recipe $u).patches }
         $job.kind    = 'patch'
         $job.patch   = $patch
         $job.params  = Get-Prop $spec 'params' ([pscustomobject]@{})
@@ -258,12 +390,9 @@ foreach ($u in $owners) {
             if ($x.kind -eq 'vanilla') {
                 $s.name = $x.name
             } else {
-                $s.name = "sounds/twilightforest/$($x.owner)/$($x.file)"
-                if ($x.owner -eq $u -and -not $files.Contains($x.file)) { $files[$x.file] = Get-RenderSpec $u $x.file $x }
-                elseif ($x.owner -ne $u) {
-                    # an alias to another owner's file plays that owner's rendered file
-                    $s.name = "sounds/twilightforest/$($x.owner)/$($x.file)"
-                }
+                if ($x.owner -ne $u) { Fail "${e}: internal error, $($x.owner)'s file $($x.file) outside a copy" }
+                $s.name = "sounds/twilightforest/$u/$($x.file)"
+                if (-not $files.Contains($x.file)) { $files[$x.file] = @{ spec = Get-RenderSpec $u $x; copy = ($x.kind -eq 'copy') } }
             }
             foreach ($k in 'volume', 'pitch') { if ($x.ContainsKey($k) -and $x[$k] -ne 1.0) { $s[$k] = $x[$k] } }
             if ($x.ContainsKey('weight') -and $x.weight -ne 1.0) { $s.weight = [int][math]::Round($x.weight) }
@@ -271,11 +400,36 @@ foreach ($u in $owners) {
             $sounds += $s
         }
         $d = [ordered]@{ category = $cat }
+        $sub = Get-Prop $def 'subtitle'
+        if ($sub) { $d.subtitle = [string]$sub }
         foreach ($k in 'min_distance', 'max_distance') { $val = Get-Prop $def $k; if ($null -ne $val) { $d[$k] = [double]$val } }
         $d.sounds = $sounds
         $defs[$e] = $d
     }
     $plans[$u] = @{ files = $files; defs = $defs }
+}
+
+# ---- TF's inventory: every definition has TF's variants, subtitle and category ---------------------------
+$parity = [Collections.Generic.List[string]]::new()
+foreach ($u in $owners) {
+    foreach ($e in $plans[$u].defs.Keys) {
+        $d = $plans[$u].defs[$e]
+        if (-not $inventory.events.Contains($e)) { $parity.Add("${e} ($u): not in TF's inventory (tools/sounds/baseline/inventory.json; run tools/sounds/baseline/generate.ps1)"); continue }
+        $exp = $inventory.events[$e]
+        if ($exp.owner -ne $u) { $parity.Add("${e}: owned by $u in docs/spec/owners.tsv but by $($exp.owner) in tools/sounds/baseline/inventory.json (run tools/sounds/baseline/generate.ps1)") }
+        $expSub = if ($exp.Contains('subtitle')) { [string]$exp.subtitle } else { '' }
+        $gotSub = if ($d.Contains('subtitle')) { [string]$d.subtitle } else { '' }
+        if ($gotSub -ne $expSub) { $parity.Add("${e} ($u): subtitle '$gotSub', TF has '$expSub'") }
+        if ($d.category -ne $exp.category) { $parity.Add("${e} ($u): category '$($d.category)', TF plays it as '$($exp.category)' (tools/sounds/categories.json)") }
+        $got  = @(Get-VariantKeys $resolved[$e])
+        $want = @(Get-VariantKeys $exp.variants)
+        if ($got.Count -ne $want.Count) { $parity.Add("${e} ($u): $($got.Count) variants, TF has $($want.Count)") }
+        elseif (($got -join ';') -ne ($want -join ';')) { $parity.Add("${e} ($u): variants (volume|pitch|stream) $($got -join ', ') differ from TF's $($want -join ', ')") }
+    }
+}
+if ($parity.Count) {
+    $parity | Select-Object -First 50 | ForEach-Object { Write-Host "[synth] $_" -ForegroundColor Red }
+    Fail "$($parity.Count) definition(s) differ from TF's inventory: refine the sounds, keep TF's variants (tools/sounds/README.md)"
 }
 
 # ---- the renderer ---------------------------------------------------------------------------------------
@@ -333,16 +487,18 @@ if ($Preview) {
     $dir = Join-Path ([IO.Path]::GetTempPath()) 'gf-synth-preview'
     New-Item -ItemType Directory -Force $dir | Out-Null
     $jobs = @()
+    $seen = @{}
     foreach ($u in $owners) {
         foreach ($e in $plans[$u].defs.Keys) {
             if ($Event -and $e -notlike $Event) { continue }
             foreach ($x in $resolved[$e]) {
-                if ($x.kind -eq 'vanilla' -or $x.owner -ne $u) { continue }
-                $spec = Get-RenderSpec $u $x.file $x
+                if ($x.kind -eq 'vanilla' -or $seen.ContainsKey("$u/$($x.file)")) { continue }
+                $seen["$u/$($x.file)"] = $true
+                $f    = $plans[$u].files[$x.file]
                 $base = Join-Path $dir (($u + '_' + $x.file) -replace '[\\/]', '_')
-                $job  = New-Job $u $x.file $spec "$base.ogg"
+                $job  = New-Job $u $x.file $f.spec "$base.ogg" $f.copy
                 $job.wav = "$base.wav"
-                if (-not ($jobs | Where-Object { $_.name -eq $job.name })) { $jobs += $job }
+                $jobs += $job
             }
         }
     }
@@ -363,6 +519,19 @@ foreach ($u in $owners) {
     New-Item -ItemType Directory -Force (Join-Path $unitDir 'sounds.d') | Out-Null
     $fragment = Format-Json $plans[$u].defs
     [IO.File]::WriteAllText((Join-Path $unitDir "sounds.d/$u.json"), $fragment + "`n", [Text.UTF8Encoding]::new($false))
+    # the alias snapshot (outside rp/: not packed)
+    $snapPath = Join-Path $target "$u/aliases.json"
+    if ($aliasUsed.ContainsKey($u) -and $aliasUsed[$u].Count) {
+        $events = [ordered]@{}
+        foreach ($a in ($aliasUsed[$u].Keys | Sort-Object)) { $events[$a] = $aliasUsed[$u][$a] }
+        $snap = [ordered]@{
+            about  = "Sounds of other owners that $u's events play ({""event"": id} variants), copied under sounds/twilightforest/$u/alias/ as rendered from their recipes at $u's last render, by tools/sounds/synth.ps1: do not edit. synth.ps1 -Check renders the copies from here and warns when an owner changed its event since: pwsh tools/sounds/synth.ps1 -Unit $u refreshes them."
+            events = $events
+        }
+        [IO.File]::WriteAllText($snapPath, (Format-Json $snap) + "`n", [Text.UTF8Encoding]::new($false))
+    } elseif (-not $Check -and (Test-Path $snapPath)) {
+        Remove-Item -Force $snapPath
+    }
     $wanted = @{}
     foreach ($file in $plans[$u].files.Keys) { $wanted[[IO.Path]::GetFullPath((Join-Path $sndDir "$file.ogg"))] = $true }
     if (-not $Check -and (Test-Path $sndDir)) {
@@ -374,18 +543,36 @@ foreach ($u in $owners) {
     foreach ($file in $plans[$u].files.Keys) {
         $out = Join-Path $sndDir "$file.ogg"
         New-Item -ItemType Directory -Force (Split-Path $out) | Out-Null
-        $jobs += New-Job $u $file $plans[$u].files[$file] $out
+        $f = $plans[$u].files[$file]
+        $jobs += New-Job $u $file $f.spec $out $f.copy
     }
 }
 Invoke-Render $jobs
 
-# the selftests' event list (src/feature/ext/synth/SoundEvents.inc)
-$incLines = @('// Generated by tools/sounds/synth.ps1 from docs/spec/owners.tsv (kind sound_event): do not edit.',
-    '// GF_SOUND_EVENT(event, owner unit, variants)')
-foreach ($e in ($eventOwner.Keys | Sort-Object)) { $incLines += "GF_SOUND_EVENT(""$e"", ""$($eventOwner[$e])"", $(@($resolved[$e]).Count))" }
-$incText = ($incLines -join "`n") + "`n"
-$incPath = Join-Path $root 'src/feature/ext/synth/SoundEvents.inc'
+# alias copies older than the aliased owner's current recipe (a -Check renders them from the snapshot)
+$stale = [Collections.Generic.List[string]]::new()
+foreach ($u in $owners) {
+    if (-not $aliasUsed.ContainsKey($u)) { continue }
+    foreach ($a in ($aliasUsed[$u].Keys | Sort-Object)) {
+        if ((Format-Json $aliasUsed[$u][$a]) -ne (Format-Json $aliasLive[$u][$a])) {
+            $stale.Add("$u's copy of $a ($($aliasLive[$u][$a].owner)) predates $($aliasLive[$u][$a].owner)'s current recipe: pwsh tools/sounds/synth.ps1 -Unit $u refreshes it (A8 refreshes all with a full render)")
+        }
+    }
+}
 
+# events of other owners that play this unit's events keep their copies until they render again
+function Show-Dependents([string]$u) {
+    foreach ($w in @($eventOwner.Values | Sort-Object -Unique)) {
+        if ($w -eq $u) { continue }
+        $snap = Get-Snapshot $w
+        if (-not $snap) { continue }
+        foreach ($p in (Get-Prop $snap 'events').PSObject.Properties) {
+            if ((Get-Prop $p.Value 'owner') -eq $u) { Write-Host "[synth] note: $w plays a copy of $($p.Name); it follows this change at its next render (pwsh tools/sounds/synth.ps1 -Unit $w, or A8's full render)" }
+        }
+    }
+}
+
+$incPath = Join-Path $root 'src/feature/ext/synth/SoundEvents.inc'
 if ($Check) {
     $diffs = [Collections.Generic.List[string]]::new()
     foreach ($u in $owners) {
@@ -406,20 +593,19 @@ if ($Check) {
         foreach ($d in Get-ChildItem $audioRoot -Directory) {
             if ($owners -notcontains $d.Name) { $diffs.Add("stale    assets/gen/audio/$($d.Name)/ (owns no sound event)") }
         }
-        $cur = if (Test-Path $incPath) { (Get-Content $incPath -Raw) -replace "`r`n", "`n" } else { '' }
-        if ($cur -ne $incText) { $diffs.Add('differs  src/feature/ext/synth/SoundEvents.inc') }
     }
+    # the selftests' C++ inventory is the JSON inventory's
+    $cur = if (Test-Path $incPath) { (Get-Content $incPath -Raw) -replace "`r`n", "`n" } else { '' }
+    if ($cur -ne (Format-SoundEventsInc $inventory)) { $diffs.Add('differs  src/feature/ext/synth/SoundEvents.inc (run tools/sounds/baseline/generate.ps1)') }
     Remove-Item -Recurse -Force $target -ErrorAction SilentlyContinue
     if ($diffs.Count) {
         $diffs | Select-Object -First 40 | ForEach-Object { Write-Host "[synth] $_" -ForegroundColor Red }
-        Fail "$($diffs.Count) difference(s): run pwsh tools/sounds/synth.ps1 and commit the result"
+        Fail "$($diffs.Count) difference(s): run pwsh tools/sounds/synth.ps1 -Unit <owner> and commit the result"
     }
-    Write-Host "[synth] -Check OK: $($resolved.Count) events, $($jobs.Count) rendered files reproduce the committed tree" -ForegroundColor Green
+    foreach ($s in $stale) { Warn $s }
+    Write-Host "[synth] -Check OK: $($resolved.Count) events match TF's inventory, $($jobs.Count) rendered files reproduce the committed tree$(if ($stale.Count) { " ($($stale.Count) stale alias cop$(if ($stale.Count -eq 1) { 'y' } else { 'ies' }))" })" -ForegroundColor Green
     exit 0
 }
 
-if (-not $Unit) {
-    New-Item -ItemType Directory -Force (Split-Path $incPath) | Out-Null
-    [IO.File]::WriteAllText($incPath, $incText, [Text.UTF8Encoding]::new($false))
-}
+if ($Unit) { Show-Dependents $owners[0] }
 Write-Host "[synth] $($owners.Count) owner(s), $($resolved.Count) events, $($jobs.Count) files rendered into assets/gen/audio" -ForegroundColor Green

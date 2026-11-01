@@ -1,24 +1,34 @@
 // GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
 // Selftests of the synthesized sounds (unit F3 "synth", prefix "synth.", testPos dx 5300..5399).
 //
-// synth.definitions  the assembled resource pack defines every TF sound event (328, the list
-//                    tools/sounds/synth.ps1 generates into SoundEvents.inc) with the expected
-//                    number of variants; every synthesized file exists and is a mono Ogg Vorbis
-//                    stream; vanilla references exist in the game's vanilla pack (client only).
-// synth.play_all     plays every event once, one per tick, to the players of the world: through
-//                    PlaySoundPacket on the server (the path of gf::fx::sound), through the game's
-//                    own sound engine on the client, where an event the engine does not know fails.
+// synth.definitions  the assembled resource pack defines every TF sound event (328) as TF's inventory
+//                    says (SoundEvents.inc, generated from TF's sounds.json by
+//                    tools/sounds/baseline/generate.ps1, never from the recipes): the category of
+//                    TF's SoundSource, TF's subtitle key and TF's variants (count, volume, pitch,
+//                    stream); every synthesized file exists and is a mono Ogg Vorbis stream; vanilla
+//                    references exist in the game's vanilla packs (client only).
+// synth.play_all     plays every event once, one per tick. On the client through the game's own sound
+//                    engine: an event it does not know fails, its subtitle must be TF's, a long
+//                    synthesized sound must still be playing a quarter second later (a file the
+//                    engine cannot decode does not play) and the engine's volume and pitch must be
+//                    TF's. On the server through PlaySoundPacket (the path of gf::fx::sound) to every
+//                    real player; with none (a BDS without clients) it is skipped and says so.
 //
 // F3 owns no feature directory (docs/spec/owners.tsv): these tests live in the unit's extension
 // directory (rule R18) and use only W0 headers plus src/core/synth.
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
+#include <cmath>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <string>
 #include <string_view>
@@ -45,7 +55,10 @@
 #include "mc/client/game/ClientInstance.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/client/sound/SoundEngine.h"
+#include "mc/deps/audio/PlayingSoundAttributes.h"
 #include "mc/deps/audio/ServerSoundHandle.h"
+#include "mc/locale/I18n.h"
+#include "mc/locale/Localization.h"
 
 #include "client/Client.h"
 #endif
@@ -59,19 +72,92 @@ namespace {
 
 using gf::selftest::Context;
 
+// ---- TF's inventory (SoundEvents.inc) ---------------------------------------------------------------------
+
 struct SoundEvent {
     char const* id;
     char const* owner;
-    int         variants;
+    char const* category;
+    char const* subtitle; // "" when TF gives none
+    int         count;    // variants
+};
+
+struct SoundVariant {
+    double volume;
+    double pitch;
+    bool   stream;
 };
 
 constexpr SoundEvent kEvents[] = {
-#define GF_SOUND_EVENT(id, owner, variants) {id, owner, variants},
+#define GF_SOUND_EVENT(id, owner, category, subtitle, count) {id, owner, category, subtitle, count},
+#define GF_SOUND_VARIANT(volume, pitch, stream)
 #include "feature/ext/synth/SoundEvents.inc"
 #undef GF_SOUND_EVENT
+#undef GF_SOUND_VARIANT
 };
 
+constexpr SoundVariant kVariants[] = {
+#define GF_SOUND_EVENT(id, owner, category, subtitle, count)
+#define GF_SOUND_VARIANT(volume, pitch, stream) {volume, pitch, stream},
+#include "feature/ext/synth/SoundEvents.inc"
+#undef GF_SOUND_EVENT
+#undef GF_SOUND_VARIANT
+};
+
+constexpr std::size_t variantTotal() {
+    std::size_t n = 0;
+    for (auto const& e : kEvents) n += std::size_t(e.count);
+    return n;
+}
+static_assert(variantTotal() == std::size(kVariants), "SoundEvents.inc: variant counts and variant lines disagree");
+
+/// The variants of event i in kVariants.
+std::vector<SoundVariant> variantsOf(std::size_t index) {
+    std::size_t first = 0;
+    for (std::size_t i = 0; i < index; ++i) first += std::size_t(kEvents[i].count);
+    return {std::begin(kVariants) + std::ptrdiff_t(first), std::begin(kVariants) + std::ptrdiff_t(first + std::size_t(kEvents[index].count))};
+}
+
+/// "volume|pitch|stream" keys, sorted (a play picks one of a definition's sounds at random: the order
+/// does not matter).
+std::vector<std::string> variantKeys(std::vector<SoundVariant> const& vs) {
+    std::vector<std::string> out;
+    for (auto const& v : vs) {
+        char buf[96];
+        std::snprintf(buf, sizeof(buf), "%.4f|%.4f|%d", v.volume, v.pitch, v.stream ? 1 : 0);
+        out.emplace_back(buf);
+    }
+    std::sort(out.begin(), out.end());
+    return out;
+}
+
+std::string joined(std::vector<std::string> const& v) {
+    std::string s;
+    for (auto const& x : v) s += (s.empty() ? "" : ", ") + x;
+    return s;
+}
+
+#ifdef GF_CLIENT
+/// The (volume, pitch) every variant of an event shares, if they all do.
+std::optional<std::pair<double, double>> uniformLevel(std::vector<SoundVariant> const& vs) {
+    if (vs.empty()) return std::nullopt;
+    for (auto const& v : vs) {
+        if (std::fabs(v.volume - vs[0].volume) > 1e-9 || std::fabs(v.pitch - vs[0].pitch) > 1e-9) return std::nullopt;
+    }
+    return std::make_pair(vs[0].volume, vs[0].pitch);
+}
+
+// synth.play_all on the client
+constexpr float  kPlayVolume = 0.25f; // requested volume and pitch of every play
+constexpr float  kPlayPitch  = 1.0f;
+constexpr double kLongSec    = 1.0;  // a sound this long (at its pitch) must still be playing at the check
+constexpr double kCheckSec   = 0.25; // seconds after the play
+constexpr int    kLagTicks   = 6;    // the check is queued this many ticks after the play
+#endif
+
 constexpr char const* kCategories[] = {"ambient", "block", "bottle", "bucket", "hostile", "music", "neutral", "player", "record", "ui", "weather"};
+
+// ---- the assembled resource pack ----------------------------------------------------------------------
 
 std::filesystem::path resourcePack() {
     return gf::Mod::getInstance().getSelf().getModDir() / "resource_packs" / "GloamingForest_RP";
@@ -82,44 +168,67 @@ std::vector<std::uint8_t> readBytes(std::filesystem::path const& p) {
     return std::vector<std::uint8_t>((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 }
 
+/// sound_definitions of the assembled pack; an empty object (and the reason) when it cannot be read.
+nlohmann::json loadDefinitions(std::string& error) {
+    auto const file = resourcePack() / "sounds" / "sound_definitions.json";
+    if (!std::filesystem::exists(file)) {
+        error = "the resource pack has no sounds/sound_definitions.json";
+        return nlohmann::json::object();
+    }
+    try {
+        std::ifstream in(file);
+        auto          doc = nlohmann::json::parse(in);
+        if (doc.contains("sound_definitions") && doc["sound_definitions"].is_object()) return doc["sound_definitions"];
+        error = "sound_definitions.json has no sound_definitions object";
+    } catch (std::exception const& e) {
+        error = std::string("sound_definitions.json does not parse: ") + e.what();
+    }
+    return nlohmann::json::object();
+}
+
+std::string soundName(nlohmann::json const& s) { return s.is_string() ? s.get<std::string>() : s.value("name", std::string{}); }
+
+SoundVariant soundLevel(nlohmann::json const& s) {
+    if (!s.is_object()) return {1.0, 1.0, false};
+    return {s.value("volume", 1.0), s.value("pitch", 1.0), s.value("stream", false)};
+}
+
 #ifdef GF_CLIENT
-/// The game's vanilla resource pack (next to the game executable), empty when not found.
-std::filesystem::path vanillaPack() {
+/// The game's vanilla resource packs whose sounds a definition may name (vanilla, vanilla_music),
+/// next to the game executable; empty when not found.
+std::vector<std::filesystem::path> vanillaPacks() {
     wchar_t buf[MAX_PATH * 4];
     DWORD   n = GetModuleFileNameW(nullptr, buf, DWORD(std::size(buf)));
     if (n == 0) return {};
-    auto dir = std::filesystem::path(std::wstring(buf, n)).parent_path() / "data" / "resource_packs" / "vanilla";
-    std::error_code ec;
-    return std::filesystem::is_directory(dir, ec) ? dir : std::filesystem::path{};
+    auto const                         dir = std::filesystem::path(std::wstring(buf, n)).parent_path() / "data" / "resource_packs";
+    std::vector<std::filesystem::path> out;
+    std::error_code                    ec;
+    for (char const* name : {"vanilla", "vanilla_music"}) {
+        if (std::filesystem::is_directory(dir / name, ec)) out.push_back(dir / name);
+    }
+    return out;
 }
 #endif
 
 } // namespace
 
 GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) {
+    std::string error;
+    auto const  defs = loadDefinitions(error);
+    ctx.require(error.empty(), error);
     auto const pack = resourcePack();
-    auto const file = pack / "sounds" / "sound_definitions.json";
-    ctx.require(std::filesystem::exists(file), "the resource pack has sounds/sound_definitions.json");
-    nlohmann::json doc;
-    try {
-        std::ifstream in(file);
-        doc = nlohmann::json::parse(in);
-    } catch (std::exception const& e) {
-        ctx.fail(std::string("sound_definitions.json does not parse: ") + e.what());
-    }
-    ctx.require(doc.contains("sound_definitions") && doc["sound_definitions"].is_object(), "sound_definitions is an object");
-    auto const& defs = doc["sound_definitions"];
 #ifdef GF_CLIENT
-    auto const vanilla = vanillaPack();
-    if (vanilla.empty()) ctx.info("vanilla pack not found next to the game: vanilla references not checked");
+    auto const vanilla = vanillaPacks();
+    if (vanilla.empty()) ctx.info("vanilla packs not found next to the game: vanilla references not checked");
 #endif
     std::set<std::string> checkedFiles; // synthesized files (and, on the client, vanilla sounds) already checked
-    int                   synthesized = 0, vanillaRefs = 0, problems = 0;
+    int                   synthesized = 0, vanillaRefs = 0, problems = 0, subtitles = 0;
     auto                  problem = [&](std::string const& what) {
         if (++problems <= 20) ctx.check(false, what);
     };
-    for (auto const& ev : kEvents) {
-        auto it = defs.find(ev.id);
+    for (std::size_t i = 0; i < std::size(kEvents); ++i) {
+        auto const& ev = kEvents[i];
+        auto        it = defs.find(ev.id);
         if (it == defs.end()) {
             problem(std::string("no sound definition for ") + ev.id + " (owner " + ev.owner + ")");
             continue;
@@ -128,17 +237,28 @@ GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) {
         auto        cat = def.value("category", std::string{});
         if (std::find(std::begin(kCategories), std::end(kCategories), cat) == std::end(kCategories)) {
             problem(std::string(ev.id) + ": bad category '" + cat + "'");
+        } else if (cat != ev.category) {
+            problem(std::string(ev.id) + ": category '" + cat + "', TF plays it as '" + ev.category + "'");
         }
+        auto sub = def.value("subtitle", std::string{});
+        if (sub != ev.subtitle) problem(std::string(ev.id) + ": subtitle '" + sub + "', TF's is '" + ev.subtitle + "'");
+        if (!sub.empty()) ++subtitles;
         auto const& sounds = def.contains("sounds") ? def["sounds"] : nlohmann::json::array();
         if (!sounds.is_array() || sounds.empty()) {
             problem(std::string(ev.id) + " has no sounds");
             continue;
         }
-        if (int(sounds.size()) != ev.variants) {
-            problem(std::string(ev.id) + ": " + std::to_string(sounds.size()) + " variants, expected " + std::to_string(ev.variants));
+        std::vector<SoundVariant> got;
+        for (auto const& s : sounds) got.push_back(soundLevel(s));
+        auto const gotKeys  = variantKeys(got);
+        auto const wantKeys = variantKeys(variantsOf(i));
+        if (gotKeys.size() != wantKeys.size()) {
+            problem(std::string(ev.id) + ": " + std::to_string(gotKeys.size()) + " variants, TF has " + std::to_string(wantKeys.size()));
+        } else if (gotKeys != wantKeys) {
+            problem(std::string(ev.id) + ": variants (volume|pitch|stream) " + joined(gotKeys) + ", TF's are " + joined(wantKeys));
         }
         for (auto const& s : sounds) {
-            auto name = s.is_string() ? s.get<std::string>() : s.value("name", std::string{});
+            auto name = soundName(s);
             if (name.rfind("sounds/twilightforest/", 0) == 0) {
                 ++synthesized;
                 if (!checkedFiles.insert(name).second) continue;
@@ -157,8 +277,10 @@ GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) {
 #ifdef GF_CLIENT
                 if (!vanilla.empty() && checkedFiles.insert(name).second) {
                     bool found = false;
-                    for (char const* ext : {".fsb", ".ogg", ".wav"}) found = found || std::filesystem::exists(vanilla / (name + ext));
-                    if (!found) problem(std::string(ev.id) + ": vanilla sound " + name + " is not in the game's vanilla pack");
+                    for (auto const& dir : vanilla) {
+                        for (char const* ext : {".fsb", ".ogg", ".wav"}) found = found || std::filesystem::exists(dir / (name + ext));
+                    }
+                    if (!found) problem(std::string(ev.id) + ": vanilla sound " + name + " is in none of the game's vanilla packs");
                 }
 #endif
             }
@@ -166,7 +288,8 @@ GF_REGISTER_SELFTEST("synth.definitions", [](Context& ctx) {
     }
     ctx.check(problems == 0, std::to_string(problems) + " sound definition problem(s)");
     ctx.info(
-        std::to_string(std::size(kEvents)) + " events, " + std::to_string(checkedFiles.size()) + " distinct sounds checked ("
+        std::to_string(std::size(kEvents)) + " events (" + std::to_string(std::size(kVariants)) + " variants, " + std::to_string(subtitles)
+        + " subtitles) as in TF's inventory, " + std::to_string(checkedFiles.size()) + " distinct sounds checked ("
         + std::to_string(synthesized) + " synthesized and " + std::to_string(vanillaRefs) + " vanilla references)"
     );
 });
@@ -175,53 +298,117 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
     auto level = ll::service::getLevel();
     ctx.require(level.has_value(), "a level is loaded");
 #ifdef GF_CLIENT
-    // the client's own sound engine: an event it cannot resolve returns no sound handle
+    // ---- the client's own sound engine ----
+    std::string error;
+    auto const  defs = loadDefinitions(error);
+    ctx.require(error.empty(), error);
+    // the shortest synthesized variant of each event at its pitch (0 when a variant is vanilla: unknown)
+    std::vector<double> minSeconds(std::size(kEvents), 0.0);
+    for (std::size_t i = 0; i < std::size(kEvents); ++i) {
+        auto it = defs.find(kEvents[i].id);
+        if (it == defs.end() || !it->contains("sounds")) continue;
+        double shortest = 1e9;
+        for (auto const& s : (*it)["sounds"]) {
+            auto name = soundName(s);
+            if (name.rfind("sounds/twilightforest/", 0) != 0) {
+                shortest = 0;
+                break;
+            }
+            auto info = gf::core::synth::probeOggVorbis(readBytes(resourcePack() / (name + ".ogg")));
+            if (!info.valid || info.sampleRate <= 0) {
+                shortest = 0;
+                break;
+            }
+            shortest = std::min(shortest, double(info.samples) / info.sampleRate / std::max(0.01, soundLevel(s).pitch));
+        }
+        minSeconds[i] = shortest < 1e8 ? shortest : 0;
+    }
+
+    using Clock = std::chrono::steady_clock;
+    struct Play {
+        std::uint64_t              handle = 0;
+        Clock::time_point          at{};
+        bool                       played = false;
+        std::optional<std::string> subtitle, subtitleText; // the engine's, TF's key in the current language
+        std::optional<float>       volume, pitch;
+        int                        later = -1; // -1 not measured, 0 stopped, 1 still playing
+    };
     struct Result {
-        std::mutex                 lock;
-        std::vector<std::uint64_t> handles;
-        std::uint64_t              control = 0, bogus = 0;
-        std::atomic<int>           done{0};
+        std::mutex        lock;
+        std::vector<Play> plays;
+        Play              control, bogus;
+        std::atomic<int>  done{0};
     };
     auto res = std::make_shared<Result>();
-    res->handles.assign(std::size(kEvents), 0);
-    auto play = [res](std::string name, int index) {
-        ll::thread::ClientThreadExecutor::getDefault().execute([res, name = std::move(name), index] {
-            std::uint64_t h      = 0;
-            auto*         client = gf::client::currentClient();
-            auto*         player = gf::client::currentPlayer();
+    res->plays.resize(std::size(kEvents));
+    auto slot = [res](int index) -> Play& { return index >= 0 ? res->plays[std::size_t(index)] : (index == -1 ? res->control : res->bogus); };
+    auto play = [res, slot](std::string name, int index) {
+        ll::thread::ClientThreadExecutor::getDefault().execute([res, slot, name = std::move(name), index] {
+            Play p;
+            auto* client = gf::client::currentClient();
+            auto* player = gf::client::currentPlayer();
             if (client && player) {
-                h = client->getSoundEngine()->play(name, player->getPosition(), 0.25f, 1.0f, std::nullopt);
+                auto engine  = client->getSoundEngine();
+                p.handle     = engine->play(name, player->getPosition(), kPlayVolume, kPlayPitch, std::nullopt);
+                p.at         = Clock::now();
+                p.played     = true;
+                p.subtitle   = engine->getSubtitle(name);
+                if (index >= 0 && *kEvents[index].subtitle) p.subtitleText = getI18n().get(kEvents[index].subtitle, getI18n().getCurrentLanguage());
+                if (auto attr = engine->tryGetPlayingSoundAttributes(p.handle)) {
+                    p.volume = attr->mVolume;
+                    p.pitch  = attr->mPitch;
+                }
             }
             std::lock_guard lock(res->lock);
-            if (index >= 0) res->handles[std::size_t(index)] = h;
-            else if (index == -1) res->control = h;
-            else res->bogus = h;
+            slot(index) = p;
             ++res->done;
         });
     };
-    play("random.click", -1);              // a vanilla event: the engine knows it
+    // still playing kCheckSec after the play (measured on the client thread: its tasks may run late)
+    // (within [kCheckSec, the sound's length - 0.15 s]; a task that runs outside it measures nothing and
+    // a later pass asks again)
+    auto checkLater = [res, slot](int index, double seconds) {
+        ll::thread::ClientThreadExecutor::getDefault().execute([res, slot, index, seconds] {
+            auto* client = gf::client::currentClient();
+            std::lock_guard lock(res->lock);
+            auto&           p = slot(index);
+            if (!client || !p.played || p.later >= 0) return;
+            double const elapsed = std::chrono::duration<double>(Clock::now() - p.at).count();
+            if (elapsed < kCheckSec || elapsed > seconds - 0.15) return;
+            p.later = client->getSoundEngine()->isPlayingSound(p.handle) ? 1 : 0;
+        });
+    };
+    constexpr double kControlSec = 5.0; // mob.enderdragon.death plays for longer
+    play("mob.enderdragon.death", -1);           // a long vanilla event: the engine knows it and plays it for seconds
     play("gf.synth.selftest.no_such_sound", -2); // an unknown event
-    for (int i = 0; i < int(std::size(kEvents)); ++i) {
-        play(kEvents[i].id, i);
+    for (int i = 0; i < int(std::size(kEvents)) + kLagTicks; ++i) {
+        if (i < int(std::size(kEvents))) play(kEvents[i].id, i);
+        if (i >= kLagTicks && i <= kLagTicks * 4) checkLater(-1, kControlSec);
+        int const j = i - kLagTicks;
+        if (j >= 0 && minSeconds[std::size_t(j)] >= kLongSec) checkLater(j, minSeconds[std::size_t(j)]);
+        // a second chance for the checks whose task ran too early
+        int const k = i - 2 * kLagTicks;
+        if (k >= 0 && minSeconds[std::size_t(k)] >= kLongSec) checkLater(k, minSeconds[std::size_t(k)]);
         co_await ctx.ticks(1);
     }
-    for (int wait = 0; wait < 100 && res->done.load() < int(std::size(kEvents)) + 2; ++wait) co_await ctx.ticks(1);
-    ctx.require(res->done.load() == int(std::size(kEvents)) + 2, "the client thread played every event");
-    std::lock_guard lock(res->lock);
-    // the engine returns ~0 (or 0) for an event it cannot resolve
-    auto known = [](std::uint64_t h) { return h != 0 && h != ~std::uint64_t(0); };
-    if (known(res->control) && !known(res->bogus)) {
-        // the engine tells known from unknown events: every TF event must be known
-        int missing = 0;
-        for (std::size_t i = 0; i < std::size(kEvents); ++i) {
-            if (!known(res->handles[i]) && ++missing <= 20) ctx.check(false, std::string("the client does not know ") + kEvents[i].id);
-        }
-        ctx.check(missing == 0, std::to_string(missing) + " event(s) unknown to the client");
-    } else {
-        ctx.info("the sound engine does not report unknown events (control " + std::to_string(res->control) + ", bogus " + std::to_string(res->bogus) + ")");
+    for (int k = int(std::size(kEvents)) - kLagTicks; k < int(std::size(kEvents)); ++k) {
+        if (k >= 0 && minSeconds[std::size_t(k)] >= kLongSec) checkLater(k, minSeconds[std::size_t(k)]);
     }
-    // stop what still plays (the music tracks run for minutes)
-    std::vector<std::uint64_t> handles = res->handles;
+    for (int wait = 0; wait < 100 && res->done.load() < int(std::size(kEvents)) + 2; ++wait) co_await ctx.ticks(1);
+    co_await ctx.ticks(2); // the last checks
+    ctx.require(res->done.load() == int(std::size(kEvents)) + 2, "the client thread played every event");
+
+    // the results, then stop what still plays (the music tracks run for minutes)
+    std::vector<Play> plays;
+    Play              control, bogus;
+    {
+        std::lock_guard lock(res->lock);
+        plays   = res->plays;
+        control = res->control;
+        bogus   = res->bogus;
+    }
+    std::vector<std::uint64_t> handles{control.handle};
+    for (auto const& p : plays) handles.push_back(p.handle);
     ll::thread::ClientThreadExecutor::getDefault().execute([handles = std::move(handles)] {
         auto* client = gf::client::currentClient();
         if (!client) return;
@@ -229,20 +416,120 @@ GF_REGISTER_SELFTEST("synth.play_all", [](Context& ctx) -> ll::coro::CoroTask<> 
             if (h != 0 && h != ~std::uint64_t(0)) client->getSoundEngine()->stop(h);
         }
     });
-    gf::log().info("synth: played {} sound events on the client", std::size(kEvents));
+    auto known = [](std::uint64_t h) { return h != 0 && h != ~std::uint64_t(0); }; // the engine returns ~0 (or 0) for an unknown event
+    auto index = [](std::string_view id) {
+        for (std::size_t i = 0; i < std::size(kEvents); ++i) {
+            if (id == kEvents[i].id) return i;
+        }
+        return std::size(kEvents);
+    };
+    auto describe = [&](std::size_t i) {
+        auto const& p = plays[i];
+        return std::string(kEvents[i].id) + " handle " + std::to_string(p.handle) + " volume " + (p.volume ? std::to_string(*p.volume) : "-") + " pitch "
+             + (p.pitch ? std::to_string(*p.pitch) : "-") + " later " + std::to_string(p.later) + " subtitle '" + p.subtitle.value_or("<none>") + "'";
+    };
+    // what the engine reports, for the log (a level change of the engine shows up here first)
+    for (auto id : {"entity.twilightforest.parrot.imitate.alpha_yeti", "entity.twilightforest.naga.hiss", "music.twilightforest.twilight_forest", "item.twilightforest.ore_meter.crackle"}) {
+        if (auto i = index(id); i < std::size(kEvents)) ctx.info("engine: " + describe(i));
+    }
+    ctx.info("engine: control mob.enderdragon.death handle " + std::to_string(control.handle) + " later " + std::to_string(control.later) + ", unknown event handle " + std::to_string(bogus.handle));
+
+    // 1. every TF event is known to the engine
+    if (!known(control.handle) || known(bogus.handle)) {
+        ctx.fail("the sound engine does not tell known from unknown events (control " + std::to_string(control.handle) + ", unknown " + std::to_string(bogus.handle) + ")");
+    }
+    int missing = 0;
+    for (std::size_t i = 0; i < std::size(kEvents); ++i) {
+        if (!known(plays[i].handle) && ++missing <= 20) ctx.check(false, std::string("the client does not know ") + kEvents[i].id);
+    }
+    ctx.check(missing == 0, std::to_string(missing) + " event(s) unknown to the client");
+
+    // 2. TF's subtitles (the engine may give the key or its text)
+    int badSubtitles = 0;
+    for (std::size_t i = 0; i < std::size(kEvents); ++i) {
+        std::string const want = kEvents[i].subtitle;
+        auto const&       got  = plays[i].subtitle;
+        bool ok = want.empty() ? (!got || got->empty()) : (got && (*got == want || (plays[i].subtitleText && *got == *plays[i].subtitleText)));
+        if (!ok && ++badSubtitles <= 20) ctx.check(false, std::string(kEvents[i].id) + ": the engine's subtitle is '" + got.value_or("<none>") + "', TF's is '" + want + "'");
+    }
+    ctx.check(badSubtitles == 0, std::to_string(badSubtitles) + " event(s) without TF's subtitle in the engine");
+
+    // 3. long synthesized sounds still play a quarter second later (a file the engine cannot load or
+    // decode does not play); measured when the engine reports the long vanilla control still playing
+    int measured = 0, stopped = 0;
+    if (control.later == 1) {
+        for (std::size_t i = 0; i < std::size(kEvents); ++i) {
+            if (plays[i].later < 0) continue;
+            ++measured;
+            if (plays[i].later == 0 && ++stopped <= 20) ctx.check(false, std::string(kEvents[i].id) + " is not playing " + std::to_string(kCheckSec) + "s after the play (its file did not load?)");
+        }
+        ctx.check(stopped == 0, std::to_string(stopped) + " synthesized sound(s) not playing");
+        ctx.check(measured > 0, "long synthesized sounds were measured");
+    } else {
+        ctx.info("the engine does not report the long vanilla control as playing (" + std::to_string(control.later) + "): playing check not possible here");
+    }
+
+    // 4. the engine's volume and pitch of a play: calibrated on the events TF plays at 1.0 / 1.0 (the
+    // requested level when the engine applies the definition's), then checked on every event whose
+    // variants share another level (the parrot imitations' 0.6 / 1.8, the music's 0.5, ...)
+    int  calVol = 0, calPitch = 0, calVolOk = 0, calPitchOk = 0;
+    auto approx = [](float a, double b) { return std::fabs(double(a) - b) < 1e-3; };
+    for (std::size_t i = 0; i < std::size(kEvents); ++i) {
+        auto lvl = uniformLevel(variantsOf(i));
+        if (!lvl || lvl->first != 1.0 || lvl->second != 1.0) continue;
+        if (plays[i].volume) {
+            ++calVol;
+            if (approx(*plays[i].volume, kPlayVolume)) ++calVolOk;
+        }
+        if (plays[i].pitch) {
+            ++calPitch;
+            if (approx(*plays[i].pitch, kPlayPitch)) ++calPitchOk;
+        }
+    }
+    bool const checkVol = calVol > 0 && calVolOk == calVol, checkPitch = calPitch > 0 && calPitchOk == calPitch;
+    int        levels = 0, badLevels = 0;
+    for (std::size_t i = 0; i < std::size(kEvents) && (checkVol || checkPitch); ++i) {
+        auto lvl = uniformLevel(variantsOf(i));
+        if (!lvl || (lvl->first == 1.0 && lvl->second == 1.0)) continue;
+        auto const& p   = plays[i];
+        bool        bad = false;
+        if (checkVol && p.volume && !approx(*p.volume, kPlayVolume * lvl->first)) bad = true;
+        if (checkPitch && p.pitch && !approx(*p.pitch, kPlayPitch * lvl->second)) bad = true;
+        ++levels;
+        if (bad && ++badLevels <= 20) ctx.check(false, describe(i) + ": TF's level is volume " + std::to_string(lvl->first) + " pitch " + std::to_string(lvl->second));
+    }
+    ctx.check(badLevels == 0, std::to_string(badLevels) + " event(s) not at TF's volume and pitch");
+    ctx.info(
+        "engine levels: volume " + std::string(checkVol ? "checked" : "not checked") + " (" + std::to_string(calVolOk) + "/" + std::to_string(calVol)
+        + " calibration plays at the requested volume), pitch " + (checkPitch ? "checked" : "not checked") + " (" + std::to_string(calPitchOk) + "/"
+        + std::to_string(calPitch) + "), " + std::to_string(levels) + " events at another level; " + std::to_string(measured) + " long sounds measured playing"
+    );
+    gf::log().info(
+        "synth: played {} sound events on the client ({} long sounds still playing after {}s; levels checked: volume {}, pitch {})",
+        std::size(kEvents),
+        measured - stopped,
+        kCheckSec,
+        checkVol,
+        checkPitch
+    );
 #else
-    // the server: PlaySoundPacket to every real player (simulated players receive nothing)
-    std::vector<Player*> players;
-    level->forEachPlayer([&players](Player& p) {
-        if (!p.isSimulated()) players.push_back(&p);
+    // ---- the server: PlaySoundPacket to every real player (simulated players receive nothing) ----
+    int targets = 0;
+    level->forEachPlayer([&targets](Player& p) {
+        if (!p.isSimulated()) ++targets;
         return true;
     });
-    int const targets = int(players.size());
-    players.clear(); // never kept across ticks (R16): looked up again every tick
+    if (targets == 0) {
+        // nothing would be played to anybody: say so instead of a silent pass (the client scenario's
+        // remote modes run this test with a real player on the BDS)
+        ctx.info("SKIPPED: no real player on this server (simulated players receive no packets); tools/e2e/client/run.ps1 -Scenario synth -Mode remote-vanilla runs it with one");
+        gf::log().info("synth: play_all skipped: no real player");
+        co_return;
+    }
     for (auto const& ev : kEvents) {
         auto lvl = ll::service::getLevel();
         if (!lvl) break;
-        lvl->forEachPlayer([&ev](Player& p) {
+        lvl->forEachPlayer([&ev](Player& p) { // looked up again every tick (R16)
             if (p.isSimulated()) return true;
             auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::PlaySound);
             if (!packet) return true;

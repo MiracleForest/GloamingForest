@@ -1,6 +1,7 @@
 {
   "entity.twilightforest.fire_beetle.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.fire_beetle.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/fire_beetle/idle1"
@@ -18,6 +19,7 @@
   },
   "entity.twilightforest.fire_beetle.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.fire_beetle.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/fire_beetle/death"
@@ -26,6 +28,7 @@
   },
   "entity.twilightforest.fire_beetle.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.fire_beetle.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/fire_beetle/hurt1"
@@ -40,6 +43,7 @@
   },
   "entity.twilightforest.fire_beetle.shoot": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.fire_beetle.shoot",
     "sounds": [
       {
         "name": "sounds/mob/ghast/fireball4"
@@ -48,6 +52,7 @@
   },
   "entity.twilightforest.fire_beetle.step": {
     "category": "hostile",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/mob/spider/step1"
@@ -65,6 +70,7 @@
   },
   "entity.twilightforest.hedge_spider.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hedge_spider.ambient",
     "sounds": [
       {
         "name": "sounds/mob/spider/say1"
@@ -82,6 +88,7 @@
   },
   "entity.twilightforest.hedge_spider.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hedge_spider.death",
     "sounds": [
       {
         "name": "sounds/mob/spider/death"
@@ -90,6 +97,7 @@
   },
   "entity.twilightforest.hedge_spider.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hedge_spider.hurt",
     "sounds": [
       {
         "name": "sounds/mob/spider/say1"
@@ -107,6 +115,7 @@
   },
   "entity.twilightforest.hedge_spider.step": {
     "category": "hostile",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/mob/spider/step1"
@@ -124,6 +133,7 @@
   },
   "entity.twilightforest.hostile_wolf.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hostile_wolf.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/mist_wolf/idle1"
@@ -138,6 +148,7 @@
   },
   "entity.twilightforest.hostile_wolf.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hostile_wolf.death",
     "sounds": [
       {
         "name": "sounds/mob/wolf/death"
@@ -146,6 +157,7 @@
   },
   "entity.twilightforest.hostile_wolf.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hostile_wolf.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/mist_wolf/hurt1"
@@ -157,6 +169,7 @@
   },
   "entity.twilightforest.hostile_wolf.target": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.hostile_wolf.target",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/mist_wolf/target"
@@ -165,6 +178,7 @@
   },
   "entity.twilightforest.king_spider.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.king_spider.ambient",
     "sounds": [
       {
         "name": "sounds/mob/spider/say1"
@@ -182,6 +196,7 @@
   },
   "entity.twilightforest.king_spider.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.king_spider.death",
     "sounds": [
       {
         "name": "sounds/mob/spider/death"
@@ -190,6 +205,7 @@
   },
   "entity.twilightforest.king_spider.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.king_spider.hurt",
     "sounds": [
       {
         "name": "sounds/mob/spider/say1"
@@ -207,6 +223,7 @@
   },
   "entity.twilightforest.king_spider.step": {
     "category": "hostile",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/mob/spider/step1"
@@ -224,6 +241,7 @@
   },
   "entity.twilightforest.mist_wolf.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.mist_wolf.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/mist_wolf/idle1"
@@ -238,6 +256,7 @@
   },
   "entity.twilightforest.mist_wolf.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.mist_wolf.death",
     "sounds": [
       {
         "name": "sounds/mob/wolf/death"
@@ -246,6 +265,7 @@
   },
   "entity.twilightforest.mist_wolf.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.mist_wolf.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/mist_wolf/hurt1"
@@ -257,6 +277,7 @@
   },
   "entity.twilightforest.mist_wolf.target": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.mist_wolf.target",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/mist_wolf/target"
@@ -265,6 +286,7 @@
   },
   "entity.twilightforest.pinch_beetle.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.pinch_beetle.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/pinch_beetle/idle1"
@@ -282,6 +304,7 @@
   },
   "entity.twilightforest.pinch_beetle.attack": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.pinch_beetle.attack",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/pinch_beetle/attack1"
@@ -296,6 +319,7 @@
   },
   "entity.twilightforest.pinch_beetle.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.pinch_beetle.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/pinch_beetle/death"
@@ -304,6 +328,7 @@
   },
   "entity.twilightforest.pinch_beetle.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.pinch_beetle.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/pinch_beetle/hurt1"
@@ -318,6 +343,7 @@
   },
   "entity.twilightforest.pinch_beetle.step": {
     "category": "hostile",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/mob/spider/step1"
@@ -335,6 +361,7 @@
   },
   "entity.twilightforest.redcap.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.redcap.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/redcap/redcap1"
@@ -358,6 +385,7 @@
   },
   "entity.twilightforest.redcap.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.redcap.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/redcap/die1"
@@ -372,6 +400,7 @@
   },
   "entity.twilightforest.redcap.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.redcap.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/redcap/hurt1"
@@ -389,6 +418,7 @@
   },
   "entity.twilightforest.skeleton_druid.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.skeleton_druid.ambient",
     "sounds": [
       {
         "name": "sounds/mob/stray/idle1"
@@ -406,6 +436,7 @@
   },
   "entity.twilightforest.skeleton_druid.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.skeleton_druid.death",
     "sounds": [
       {
         "name": "sounds/mob/stray/death1"
@@ -417,6 +448,7 @@
   },
   "entity.twilightforest.skeleton_druid.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.skeleton_druid.hurt",
     "sounds": [
       {
         "name": "sounds/mob/stray/hurt1"
@@ -434,6 +466,7 @@
   },
   "entity.twilightforest.skeleton_druid.shoot": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.skeleton_druid.shoot",
     "sounds": [
       {
         "name": "sounds/mob/ghast/fireball4"
@@ -442,6 +475,7 @@
   },
   "entity.twilightforest.skeleton_druid.step": {
     "category": "hostile",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/mob/skeleton/step1"
@@ -459,6 +493,7 @@
   },
   "entity.twilightforest.slime_beetle.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.slime_beetle.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/slime_beetle/idle1"
@@ -476,6 +511,7 @@
   },
   "entity.twilightforest.slime_beetle.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.slime_beetle.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/slime_beetle/death"
@@ -484,6 +520,7 @@
   },
   "entity.twilightforest.slime_beetle.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.slime_beetle.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/slime_beetle/hurt1"
@@ -498,6 +535,7 @@
   },
   "entity.twilightforest.slime_beetle.squish": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.slime_beetle.squish",
     "sounds": [
       {
         "name": "sounds/mob/slime/small1"
@@ -518,6 +556,7 @@
   },
   "entity.twilightforest.slime_beetle.step": {
     "category": "hostile",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/mob/spider/step1"
@@ -535,6 +574,7 @@
   },
   "entity.twilightforest.swarm_spider.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.swarm_spider.ambient",
     "sounds": [
       {
         "name": "sounds/mob/spider/say1"
@@ -552,6 +592,7 @@
   },
   "entity.twilightforest.swarm_spider.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.swarm_spider.death",
     "sounds": [
       {
         "name": "sounds/mob/spider/death"
@@ -560,6 +601,7 @@
   },
   "entity.twilightforest.swarm_spider.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.swarm_spider.hurt",
     "sounds": [
       {
         "name": "sounds/mob/spider/say1"
@@ -577,6 +619,7 @@
   },
   "entity.twilightforest.swarm_spider.step": {
     "category": "hostile",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/mob/spider/step1"
@@ -594,6 +637,7 @@
   },
   "entity.twilightforest.winter_wolf.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.winter_wolf.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/mist_wolf/idle1"
@@ -608,6 +652,7 @@
   },
   "entity.twilightforest.winter_wolf.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.winter_wolf.death",
     "sounds": [
       {
         "name": "sounds/mob/wolf/death"
@@ -616,6 +661,7 @@
   },
   "entity.twilightforest.winter_wolf.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.winter_wolf.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/mist_wolf/hurt1"
@@ -627,6 +673,7 @@
   },
   "entity.twilightforest.winter_wolf.shoot": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.winter_wolf.shoot",
     "sounds": [
       {
         "name": "sounds/mob/ghast/fireball4"
@@ -635,6 +682,7 @@
   },
   "entity.twilightforest.winter_wolf.target": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.winter_wolf.target",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/mist_wolf/target"
@@ -642,7 +690,8 @@
     ]
   },
   "entity.twilightforest.wraith.ambient": {
-    "category": "hostile",
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.wraith.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/wraith/wraith1"
@@ -659,7 +708,8 @@
     ]
   },
   "entity.twilightforest.wraith.death": {
-    "category": "hostile",
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.wraith.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/wraith/wraith1"
@@ -676,7 +726,8 @@
     ]
   },
   "entity.twilightforest.wraith.hurt": {
-    "category": "hostile",
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.wraith.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/hostiles/mob/wraith/wraith1"

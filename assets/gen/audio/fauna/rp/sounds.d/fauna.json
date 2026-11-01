@@ -1,6 +1,7 @@
 {
   "entity.twilightforest.bighorn_sheep.ambient": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.bighorn_sheep.ambient",
     "sounds": [
       {
         "name": "sounds/mob/sheep/say1"
@@ -15,6 +16,7 @@
   },
   "entity.twilightforest.bighorn_sheep.death": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.bighorn_sheep.death",
     "sounds": [
       {
         "name": "sounds/mob/sheep/say1"
@@ -29,6 +31,7 @@
   },
   "entity.twilightforest.bighorn_sheep.hurt": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.bighorn_sheep.hurt",
     "sounds": [
       {
         "name": "sounds/mob/sheep/say1"
@@ -43,6 +46,7 @@
   },
   "entity.twilightforest.bighorn_sheep.step": {
     "category": "neutral",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/mob/sheep/step1"
@@ -63,6 +67,7 @@
   },
   "entity.twilightforest.boar.ambient": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.boar.ambient",
     "sounds": [
       {
         "name": "sounds/mob/pig/say1"
@@ -77,6 +82,7 @@
   },
   "entity.twilightforest.boar.death": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.boar.death",
     "sounds": [
       {
         "name": "sounds/mob/pig/death"
@@ -85,6 +91,7 @@
   },
   "entity.twilightforest.boar.hurt": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.boar.hurt",
     "sounds": [
       {
         "name": "sounds/mob/pig/say1"
@@ -99,6 +106,7 @@
   },
   "entity.twilightforest.boar.step": {
     "category": "neutral",
+    "subtitle": "subtitles.block.generic.footsteps",
     "sounds": [
       {
         "name": "sounds/mob/pig/step1"
@@ -119,6 +127,7 @@
   },
   "entity.twilightforest.deer.ambient": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.deer.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/deer/idle1"
@@ -133,6 +142,7 @@
   },
   "entity.twilightforest.deer.death": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.deer.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/deer/death"
@@ -141,6 +151,7 @@
   },
   "entity.twilightforest.deer.eat": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.deer.eat",
     "sounds": [
       {
         "name": "sounds/mob/horse/eat1"
@@ -161,6 +172,7 @@
   },
   "entity.twilightforest.deer.hurt": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.deer.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/deer/hurt1"
@@ -172,6 +184,7 @@
   },
   "entity.twilightforest.dwarf_rabbit.ambient": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.dwarf_rabbit.ambient",
     "sounds": [
       {
         "name": "sounds/mob/rabbit/idle1"
@@ -189,6 +202,7 @@
   },
   "entity.twilightforest.dwarf_rabbit.death": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.dwarf_rabbit.death",
     "sounds": [
       {
         "name": "sounds/mob/rabbit/bunnymurder"
@@ -197,6 +211,7 @@
   },
   "entity.twilightforest.dwarf_rabbit.hurt": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.dwarf_rabbit.hurt",
     "sounds": [
       {
         "name": "sounds/mob/rabbit/hurt1"
@@ -214,6 +229,7 @@
   },
   "entity.twilightforest.kobold.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.kobold.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/kobold/ambient1"
@@ -237,6 +253,7 @@
   },
   "entity.twilightforest.kobold.death": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.kobold.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/kobold/death1"
@@ -251,6 +268,7 @@
   },
   "entity.twilightforest.kobold.hurt": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.kobold.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/kobold/hurt1"
@@ -265,6 +283,7 @@
   },
   "entity.twilightforest.kobold.munch": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.kobold.munch",
     "sounds": [
       {
         "name": "sounds/random/eat1"
@@ -279,6 +298,7 @@
   },
   "entity.twilightforest.mosquito.ambient": {
     "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.mosquito.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/mosquito/animals132"
@@ -287,189 +307,284 @@
   },
   "entity.twilightforest.parrot.imitate.alpha_yeti": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.alpha_yeti",
     "sounds": [
       {
-        "name": "sounds/twilightforest/caves/mob/alpha_yeti/growl1"
+        "name": "sounds/twilightforest/fauna/alias/caves/mob/alpha_yeti/growl1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/caves/mob/alpha_yeti/growl2"
+        "name": "sounds/twilightforest/fauna/alias/caves/mob/alpha_yeti/growl2",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/caves/mob/alpha_yeti/growl3"
+        "name": "sounds/twilightforest/fauna/alias/caves/mob/alpha_yeti/growl3",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.carminite_golem": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.carminite_golem",
     "sounds": [
       {
-        "name": "sounds/mob/irongolem/hit1"
+        "name": "sounds/mob/irongolem/hit1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/mob/irongolem/hit2"
+        "name": "sounds/mob/irongolem/hit2",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/mob/irongolem/hit3"
+        "name": "sounds/mob/irongolem/hit3",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/mob/irongolem/hit4"
+        "name": "sounds/mob/irongolem/hit4",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.death_tome": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.death_tome",
     "sounds": [
       {
-        "name": "sounds/twilightforest/lich/mob/tome/idle1"
+        "name": "sounds/twilightforest/fauna/alias/lich/mob/tome/idle1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/lich/mob/tome/idle2"
+        "name": "sounds/twilightforest/fauna/alias/lich/mob/tome/idle2",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.hostile_wolf": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.hostile_wolf",
     "sounds": [
       {
-        "name": "sounds/twilightforest/hostiles/mob/mist_wolf/idle1"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/mist_wolf/idle1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hostiles/mob/mist_wolf/idle2"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/mist_wolf/idle2",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hostiles/mob/mist_wolf/idle3"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/mist_wolf/idle3",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.hydra": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.hydra",
     "sounds": [
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/growl1"
+        "name": "sounds/twilightforest/fauna/alias/hydra/mob/hydra/growl1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/growl2"
+        "name": "sounds/twilightforest/fauna/alias/hydra/mob/hydra/growl2",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hydra/mob/hydra/growl3"
+        "name": "sounds/twilightforest/fauna/alias/hydra/mob/hydra/growl3",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.ice_core": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.ice_core",
     "sounds": [
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/crackle1"
+        "name": "sounds/twilightforest/fauna/alias/aurora/mob/ice/crackle1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/aurora/mob/ice/crackle2"
+        "name": "sounds/twilightforest/fauna/alias/aurora/mob/ice/crackle2",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.kobold": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.kobold",
     "sounds": [
       {
-        "name": "sounds/twilightforest/fauna/mob/kobold/ambient1"
+        "name": "sounds/twilightforest/fauna/mob/kobold/ambient1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/fauna/mob/kobold/ambient2"
+        "name": "sounds/twilightforest/fauna/mob/kobold/ambient2",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/fauna/mob/kobold/ambient3"
+        "name": "sounds/twilightforest/fauna/mob/kobold/ambient3",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/fauna/mob/kobold/ambient4"
+        "name": "sounds/twilightforest/fauna/mob/kobold/ambient4",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/fauna/mob/kobold/ambient5"
+        "name": "sounds/twilightforest/fauna/mob/kobold/ambient5",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/fauna/mob/kobold/ambient6"
+        "name": "sounds/twilightforest/fauna/mob/kobold/ambient6",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.minotaur": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.minotaur",
     "sounds": [
       {
-        "name": "sounds/mob/cow/say1"
+        "name": "sounds/mob/cow/say1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/mob/cow/say2"
+        "name": "sounds/mob/cow/say2",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/mob/cow/say3"
+        "name": "sounds/mob/cow/say3",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/mob/cow/say4"
+        "name": "sounds/mob/cow/say4",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.mosquito": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.mosquito",
     "sounds": [
       {
-        "name": "sounds/twilightforest/fauna/mob/mosquito/animals132"
+        "name": "sounds/twilightforest/fauna/mob/mosquito/animals132",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.naga": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.naga",
     "sounds": [
       {
-        "name": "sounds/twilightforest/naga/mob/naga/hiss1"
+        "name": "sounds/twilightforest/fauna/alias/naga/mob/naga/hiss1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/naga/mob/naga/hiss2"
+        "name": "sounds/twilightforest/fauna/alias/naga/mob/naga/hiss2",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/naga/mob/naga/hiss3"
+        "name": "sounds/twilightforest/fauna/alias/naga/mob/naga/hiss3",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.redcap": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.redcap",
     "sounds": [
       {
-        "name": "sounds/twilightforest/hostiles/mob/redcap/redcap1"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/redcap/redcap1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hostiles/mob/redcap/redcap2"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/redcap/redcap2",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hostiles/mob/redcap/redcap3"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/redcap/redcap3",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hostiles/mob/redcap/redcap4"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/redcap/redcap4",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hostiles/mob/redcap/redcap5"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/redcap/redcap5",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hostiles/mob/redcap/redcap6"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/redcap/redcap6",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.parrot.imitate.wraith": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.wraith",
     "sounds": [
       {
-        "name": "sounds/twilightforest/hostiles/mob/wraith/wraith1"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/wraith/wraith1",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hostiles/mob/wraith/wraith2"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/wraith/wraith2",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hostiles/mob/wraith/wraith3"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/wraith/wraith3",
+        "volume": 0.6,
+        "pitch": 1.8
       },
       {
-        "name": "sounds/twilightforest/hostiles/mob/wraith/wraith4"
+        "name": "sounds/twilightforest/fauna/alias/hostiles/mob/wraith/wraith4",
+        "volume": 0.6,
+        "pitch": 1.8
       }
     ]
   },
   "entity.twilightforest.penguin.ambient": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.penguin.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/penguin/idle1"
@@ -496,6 +611,7 @@
   },
   "entity.twilightforest.penguin.death": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.penguin.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/penguin/death"
@@ -504,6 +620,7 @@
   },
   "entity.twilightforest.penguin.hurt": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.penguin.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/penguin/hurt"
@@ -512,6 +629,7 @@
   },
   "entity.twilightforest.raven.caw": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.raven.caw",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/raven/caw1"
@@ -523,6 +641,7 @@
   },
   "entity.twilightforest.raven.squawk": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.raven.squawk",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/raven/squawk1"
@@ -534,6 +653,7 @@
   },
   "entity.twilightforest.squirrel.ambient": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.squirrel.ambient",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/squirrel/idle1"
@@ -554,6 +674,7 @@
   },
   "entity.twilightforest.squirrel.death": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.squirrel.death",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/squirrel/death"
@@ -562,6 +683,7 @@
   },
   "entity.twilightforest.squirrel.hurt": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.squirrel.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/squirrel/hurt"
@@ -570,6 +692,7 @@
   },
   "entity.twilightforest.tiny_bird.chirp": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.tiny_bird.chirp",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/tiny_bird/chirp1"
@@ -584,6 +707,7 @@
   },
   "entity.twilightforest.tiny_bird.hurt": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.tiny_bird.hurt",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/tiny_bird/hurt1"
@@ -595,6 +719,7 @@
   },
   "entity.twilightforest.tiny_bird.song": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.tiny_bird.song",
     "sounds": [
       {
         "name": "sounds/twilightforest/fauna/mob/tiny_bird/song1"
@@ -606,6 +731,7 @@
   },
   "entity.twilightforest.tiny_bird.takeoff": {
     "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.tiny_bird.takeoff",
     "sounds": [
       {
         "name": "sounds/mob/bat/takeoff"

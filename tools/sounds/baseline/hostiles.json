@@ -1178,7 +1178,7 @@
       ]
     },
     "entity.twilightforest.wraith.ambient": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.wraith.ambient",
       "variants": [
         {
@@ -1196,7 +1196,7 @@
       ]
     },
     "entity.twilightforest.wraith.death": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.wraith.death",
       "variants": [
         {
@@ -1214,7 +1214,7 @@
       ]
     },
     "entity.twilightforest.wraith.hurt": {
-      "category": "hostile",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.entity.wraith.hurt",
       "variants": [
         {

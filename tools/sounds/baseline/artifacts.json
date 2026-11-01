@@ -36,6 +36,30 @@
       },
       "seed": 1421807849
     },
+    "vanilla/mob/zombie/metal1": {
+      "patch": "impact/clang",
+      "params": {
+        "freq": 380,
+        "pitch": 75
+      },
+      "seed": 2382597275
+    },
+    "vanilla/mob/zombie/metal2": {
+      "patch": "impact/clang",
+      "params": {
+        "freq": 430,
+        "pitch": 80
+      },
+      "seed": 2399374894
+    },
+    "vanilla/mob/zombie/metal3": {
+      "patch": "impact/clang",
+      "params": {
+        "freq": 340,
+        "pitch": 70
+      },
+      "seed": 2416152513
+    },
     "random/scepter/shield_break": {
       "patch": "impact/knock_glass",
       "params": {
@@ -77,54 +101,6 @@
         "pitch": 313.5
       },
       "seed": 1803664487
-    },
-    "vanilla/ambient/nether/basalt_deltas/click1": {
-      "patch": "impact/knock_stone",
-      "params": {
-        "decay": 0.5,
-        "freq": 1700
-      },
-      "seed": 247442950
-    },
-    "vanilla/ambient/nether/basalt_deltas/click2": {
-      "patch": "impact/knock_stone",
-      "params": {
-        "decay": 0.5,
-        "freq": 1500
-      },
-      "seed": 230665331
-    },
-    "vanilla/ambient/nether/basalt_deltas/click3": {
-      "patch": "impact/knock_stone",
-      "params": {
-        "decay": 0.5,
-        "freq": 1900
-      },
-      "seed": 213887712
-    },
-    "vanilla/ambient/nether/basalt_deltas/click4": {
-      "patch": "impact/knock_stone",
-      "params": {
-        "decay": 0.5,
-        "freq": 1300
-      },
-      "seed": 331331045
-    },
-    "vanilla/ambient/nether/basalt_deltas/click5": {
-      "patch": "impact/knock_stone",
-      "params": {
-        "decay": 0.5,
-        "freq": 2100
-      },
-      "seed": 314553426
-    },
-    "vanilla/item.lodestone_compass.lock": {
-      "patch": "impact/knock_metal",
-      "params": {
-        "decay": 0.4,
-        "freq": 1500
-      },
-      "seed": 487631169
     },
     "random/scepter/twilight_hit1": {
       "patch": "magic/zap",
@@ -228,7 +204,7 @@
       ]
     },
     "entity.twilightforest.fortification_shield.add": {
-      "category": "hostile",
+      "category": "player",
       "subtitle": "subtitles.twilightforest.entity.fortification_shield.add",
       "variants": [
         {
@@ -241,18 +217,21 @@
       "subtitle": "subtitles.twilightforest.entity.fortification_shield.block",
       "variants": [
         {
-          "vanilla": "sounds/mob/irongolem/hit1"
+          "file": "vanilla/mob/zombie/metal1",
+          "volume": 0.5
         },
         {
-          "vanilla": "sounds/mob/irongolem/hit2"
+          "file": "vanilla/mob/zombie/metal2",
+          "volume": 0.5
         },
         {
-          "vanilla": "sounds/mob/irongolem/hit3"
+          "file": "vanilla/mob/zombie/metal3",
+          "volume": 0.5
         }
       ]
     },
     "entity.twilightforest.fortification_shield.break": {
-      "category": "hostile",
+      "category": "player",
       "subtitle": "subtitles.twilightforest.entity.fortification_shield.break",
       "variants": [
         {
@@ -261,7 +240,7 @@
       ]
     },
     "entity.twilightforest.fortification_shield.expire": {
-      "category": "hostile",
+      "category": "player",
       "subtitle": "subtitles.twilightforest.entity.fortification_shield.expire",
       "variants": [
         {
@@ -415,19 +394,19 @@
       "subtitle": "subtitles.twilightforest.item.ore_meter.crackle",
       "variants": [
         {
-          "file": "vanilla/ambient/nether/basalt_deltas/click1"
+          "vanilla": "sounds/ambient/nether/basalt_deltas/click1"
         },
         {
-          "file": "vanilla/ambient/nether/basalt_deltas/click2"
+          "vanilla": "sounds/ambient/nether/basalt_deltas/click2"
         },
         {
-          "file": "vanilla/ambient/nether/basalt_deltas/click3"
+          "vanilla": "sounds/ambient/nether/basalt_deltas/click3"
         },
         {
-          "file": "vanilla/ambient/nether/basalt_deltas/click4"
+          "vanilla": "sounds/ambient/nether/basalt_deltas/click4"
         },
         {
-          "file": "vanilla/ambient/nether/basalt_deltas/click5"
+          "vanilla": "sounds/ambient/nether/basalt_deltas/click5"
         }
       ]
     },
@@ -436,7 +415,10 @@
       "subtitle": "subtitles.twilightforest.item.ore_meter.target_block",
       "variants": [
         {
-          "file": "vanilla/item.lodestone_compass.lock"
+          "vanilla": "sounds/item/lock_compass1"
+        },
+        {
+          "vanilla": "sounds/item/lock_compass2"
         }
       ]
     },
@@ -480,7 +462,7 @@
       ]
     },
     "item.twilightforest.zombie_scepter.use": {
-      "category": "player",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.item.zombie_scepter.use",
       "variants": [
         {

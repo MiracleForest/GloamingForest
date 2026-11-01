@@ -3,7 +3,7 @@
   "files": {},
   "events": {
     "environment.twilightforest.acid_rain": {
-      "category": "weather",
+      "category": "player",
       "subtitle": "subtitles.twilightforest.environment.acid_rain",
       "variants": [
         {

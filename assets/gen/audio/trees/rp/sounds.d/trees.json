@@ -1,6 +1,7 @@
 {
   "block.twilightforest.core.time": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.core.time",
     "sounds": [
       {
         "name": "sounds/random/click"
@@ -9,6 +10,7 @@
   },
   "block.twilightforest.core.transformation": {
     "category": "block",
+    "subtitle": "subtitles.twilightforest.block.core.transformation",
     "sounds": [
       {
         "name": "sounds/note/harp"

@@ -774,7 +774,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.alpha_yeti",
       "variants": [
         {
-          "event": "entity.twilightforest.alpha_yeti.growl"
+          "event": "entity.twilightforest.alpha_yeti.growl",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -783,7 +785,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.carminite_golem",
       "variants": [
         {
-          "event": "entity.twilightforest.carminite_golem.hurt"
+          "event": "entity.twilightforest.carminite_golem.hurt",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -792,7 +796,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.death_tome",
       "variants": [
         {
-          "event": "entity.twilightforest.death_tome.ambient"
+          "event": "entity.twilightforest.death_tome.ambient",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -801,7 +807,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.hostile_wolf",
       "variants": [
         {
-          "event": "entity.twilightforest.hostile_wolf.ambient"
+          "event": "entity.twilightforest.hostile_wolf.ambient",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -810,7 +818,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.hydra",
       "variants": [
         {
-          "event": "entity.twilightforest.hydra.growl"
+          "event": "entity.twilightforest.hydra.growl",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -819,7 +829,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.ice_core",
       "variants": [
         {
-          "event": "entity.twilightforest.ice.ambient"
+          "event": "entity.twilightforest.ice.ambient",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -828,7 +840,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.kobold",
       "variants": [
         {
-          "event": "entity.twilightforest.kobold.ambient"
+          "event": "entity.twilightforest.kobold.ambient",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -837,7 +851,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.minotaur",
       "variants": [
         {
-          "event": "entity.twilightforest.minotaur.ambient"
+          "event": "entity.twilightforest.minotaur.ambient",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -846,7 +862,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.mosquito",
       "variants": [
         {
-          "event": "entity.twilightforest.mosquito.ambient"
+          "event": "entity.twilightforest.mosquito.ambient",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -855,7 +873,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.naga",
       "variants": [
         {
-          "event": "entity.twilightforest.naga.hiss"
+          "event": "entity.twilightforest.naga.hiss",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -864,7 +884,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.redcap",
       "variants": [
         {
-          "event": "entity.twilightforest.redcap.ambient"
+          "event": "entity.twilightforest.redcap.ambient",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },
@@ -873,7 +895,9 @@
       "subtitle": "subtitles.twilightforest.entity.parrot.imitate.wraith",
       "variants": [
         {
-          "event": "entity.twilightforest.wraith.ambient"
+          "event": "entity.twilightforest.wraith.ambient",
+          "volume": 0.6,
+          "pitch": 1.8
         }
       ]
     },

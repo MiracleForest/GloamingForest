@@ -186,7 +186,7 @@
       ]
     },
     "block.twilightforest.slider.move": {
-      "category": "block",
+      "category": "neutral",
       "subtitle": "subtitles.twilightforest.block.slider.move",
       "variants": [
         {
@@ -489,7 +489,7 @@
       ]
     },
     "entity.twilightforest.tear.break": {
-      "category": "hostile",
+      "category": "ambient",
       "subtitle": "subtitles.twilightforest.entity.tear.break",
       "variants": [
         {

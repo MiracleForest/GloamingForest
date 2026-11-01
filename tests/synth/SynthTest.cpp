@@ -1,8 +1,16 @@
 // GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
 // Tests of the sound synthesizer (contract "synth", F3): deterministic math, JSON, expressions,
-// the MDCT, the Vorbis encoder against an independent decoder (stb_vorbis), patches and tracks.
+// the MDCT, the Vorbis encoder against an independent decoder (stb_vorbis), patches and tracks, and
+// the committed audio (assets/gen/audio): every file decodes, every definition is TF's.
+#include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -41,6 +49,49 @@ std::vector<float> testSignal(int rate, int n) {
                                     + 0.05 * rng.bipolar());
     }
     return pcm;
+}
+
+namespace fs = std::filesystem;
+
+fs::path envPath(char const* name) {
+    char*       value = nullptr;
+    std::size_t size  = 0;
+    if (_dupenv_s(&value, &size, name) != 0 || !value) return {};
+    fs::path p(value);
+    std::free(value);
+    return p;
+}
+
+// The repository root: $GF_ROOT, or found walking up from this source file or the working directory
+// (xmake runs the tests from the build directory).
+fs::path repoRoot() {
+    static fs::path const dir = [] {
+        if (fs::path env = envPath("GF_ROOT"); !env.empty()) return env;
+        std::error_code ec;
+        auto const      isRoot = [&](fs::path const& p) { return fs::exists(p / "tools/sounds/baseline/inventory.json", ec); };
+        fs::path        here   = fs::path(__FILE__).parent_path();
+        for (fs::path start : {here, fs::current_path(ec)}) {
+            if (!start.is_absolute()) start = fs::current_path(ec) / start;
+            for (fs::path p = start; !p.empty(); p = p.parent_path()) {
+                if (isRoot(p)) return p;
+                if (p == p.root_path()) break;
+            }
+        }
+        return fs::path();
+    }();
+    return dir;
+}
+
+std::vector<std::uint8_t> readFile(fs::path const& p) {
+    std::ifstream f(p, std::ios::binary);
+    return std::vector<std::uint8_t>((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+}
+
+std::string readText(fs::path const& p) {
+    std::ifstream      f(p, std::ios::binary);
+    std::ostringstream s;
+    s << f.rdbuf();
+    return s.str();
 }
 
 } // namespace
@@ -261,4 +312,108 @@ TEST(SynthSequencer, RendersExactLength) {
     EXPECT_GT(peak, 0.5f);
     auto bad = Json::parse(R"json({"bpm": 120, "instruments": {}, "patterns": {"A": {"rows": 4, "channels": [{"inst": "x", "notes": "C4"}]}}, "order": ["A"]})json");
     EXPECT_THROW((void)renderTrack(bad, 16000, &lib), PatchError);
+}
+
+TEST(SynthPatch, NegativeStartCutsTheHead) {
+    // the same layer starting 0.1 s before the patch: its first 0.1 s is cut off, not delayed
+    auto patch = [](double start) {
+        return Json::parse(
+            R"json({"length": 0.5, "tail": 0, "normalize": false, "fade": 0, "layers": [
+                {"type": "osc", "wave": "sine", "freq": 100, "amp": 0.5, "length": 0.4, "env": {"a": 0.0001, "d": 0, "s": 1, "r": 0.0001},
+                 "start": )json"
+            + std::to_string(start) + "}]}"
+        );
+    };
+    int const rate = 8000;
+    auto      a    = renderPatch(patch(-0.1), Json(), 1, rate);
+    auto      b    = renderPatch(patch(0.0), Json(), 1, rate);
+    ASSERT_GT(b.size(), std::size_t(0.35 * rate));
+    ASSERT_LT(a.size(), b.size());
+    std::size_t const shift = std::size_t(0.1 * rate);
+    for (std::size_t i = 0; i < std::size_t(0.25 * rate); ++i) ASSERT_FLOAT_EQ(a[i], b[i + shift]) << i;
+}
+
+// Every committed sound decodes with an independent decoder (stb_vorbis) to the length its last
+// granule position announces: mono, 22.05 or 44.1 kHz, finite samples near -1..1 (a lossy decode may\n// overshoot full scale a little; garbage would not stay this close).
+TEST(SynthAssets, EveryFileDecodes) {
+    auto const root = repoRoot();
+    ASSERT_FALSE(root.empty()) << "repository root not found (set GF_ROOT)";
+    int files = 0;
+    for (auto const& entry : fs::recursive_directory_iterator(root / "assets/gen/audio")) {
+        if (!entry.is_regular_file() || entry.path().extension() != ".ogg") continue;
+        ++files;
+        auto const bytes = readFile(entry.path());
+        auto const info  = probeOggVorbis(bytes);
+        auto const name  = fs::relative(entry.path(), root).generic_string();
+        ASSERT_TRUE(info.valid) << name << ": " << info.error;
+        int  channels = 0, rate = 0;
+        auto pcm = decodeVorbis(bytes, &channels, &rate);
+        EXPECT_EQ(channels, 1) << name;
+        EXPECT_TRUE(rate == 22050 || rate == 44100) << name << ": " << rate << " Hz";
+        EXPECT_EQ(std::int64_t(pcm.size()), info.samples) << name;
+        EXPECT_GT(pcm.size(), std::size_t(0)) << name;
+        bool finite = std::all_of(pcm.begin(), pcm.end(), [](float x) { return std::isfinite(x) && std::fabs(x) <= 1.5f; });
+        EXPECT_TRUE(finite) << name << ": a sample is not finite or far outside -1..1";
+    }
+    EXPECT_GT(files, 200);
+}
+
+// Every committed sound_definitions fragment has TF's variants (count, volume, pitch, stream),
+// subtitle and category (tools/sounds/baseline/inventory.json, generated from TF's sounds.json), and
+// every file it names exists.
+TEST(SynthAssets, DefinitionsMatchTheInventory) {
+    auto const root = repoRoot();
+    ASSERT_FALSE(root.empty()) << "repository root not found (set GF_ROOT)";
+    auto const inventory = Json::parse(readText(root / "tools/sounds/baseline/inventory.json"))["events"];
+    ASSERT_TRUE(inventory.isObject());
+    std::map<std::string, Json> defs;
+    for (auto const& unit : fs::directory_iterator(root / "assets/gen/audio")) {
+        auto const fragment = unit.path() / "rp/sounds.d" / (unit.path().filename().string() + ".json");
+        if (!fs::exists(fragment)) continue;
+        auto const doc = Json::parse(readText(fragment));
+        for (auto const& [id, def] : doc.members()) {
+            EXPECT_EQ(defs.count(id), 0u) << id << " defined twice";
+            defs[id] = def;
+            for (auto const& s : def["sounds"].items()) {
+                auto const name = s.isString() ? s.string() : s.str("name", "");
+                if (name.rfind("sounds/twilightforest/", 0) == 0) EXPECT_TRUE(fs::exists(unit.path() / "rp" / (name + ".ogg"))) << id << ": " << name;
+            }
+        }
+    }
+    auto keys = [](Json const& variants) {
+        std::vector<std::string> out;
+        for (auto const& v : variants.items()) {
+            double vol = 1, pitch = 1;
+            bool   stream = false;
+            if (v.isObject()) {
+                vol    = v["volume"].isNull() ? 1.0 : v["volume"].number();
+                pitch  = v["pitch"].isNull() ? 1.0 : v["pitch"].number();
+                stream = v["stream"].isBool() && v["stream"].boolean();
+            }
+            char buf[96];
+            std::snprintf(buf, sizeof(buf), "%.4f|%.4f|%d", vol, pitch, stream ? 1 : 0);
+            out.emplace_back(buf);
+        }
+        std::sort(out.begin(), out.end());
+        return out;
+    };
+    EXPECT_EQ(defs.size(), inventory.members().size());
+    for (auto const& [id, want] : inventory.members()) {
+        auto it = defs.find(id);
+        if (it == defs.end()) {
+            ADD_FAILURE() << id << ": no definition";
+            continue;
+        }
+        auto const& def = it->second;
+        EXPECT_EQ(def.str("category", ""), want.str("category", "")) << id;
+        EXPECT_EQ(def.str("subtitle", ""), want.str("subtitle", "")) << id;
+        EXPECT_EQ(keys(def["sounds"]), keys(want["variants"])) << id;
+    }
+    // TF's parrot imitations: the imitated mob's sounds at pitch 1.8, volume 0.6
+    auto const& parrot = defs["entity.twilightforest.parrot.imitate.alpha_yeti"];
+    ASSERT_TRUE(parrot["sounds"].isArray());
+    for (auto const& s : parrot["sounds"].items()) {
+        EXPECT_DOUBLE_EQ(s["pitch"].number(), 1.8);
+        EXPECT_DOUBLE_EQ(s["volume"].number(), 0.6);
+    }
 }
