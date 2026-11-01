@@ -77,7 +77,9 @@
     "entity.zombie.break_wooden_door": ["sounds/mob/zombie/woodbreak"],
     "entity.zombie.death": ["sounds/mob/zombie/death"],
     "entity.zombie.hurt": ["sounds/mob/zombie/hurt1", "sounds/mob/zombie/hurt2"],
-    "entity.zombie.infect": ["sounds/mob/zombie/unfect"],
+    "entity.zombie.infect": {"synth": [
+      {"file": "mob/zombie/infect", "patch": "creature/growl", "params": {"pitch": 125, "len": 1.1, "size": 0.85, "rough": 4, "rasp": 0.6, "wobble": 1.0, "vowelA": 0, "vowelB": 3}}
+    ]},
     "entity.zombie.step": ["sounds/mob/zombie/step1", "sounds/mob/zombie/step2", "sounds/mob/zombie/step3", "sounds/mob/zombie/step4", "sounds/mob/zombie/step5"],
     "entity.zombie_villager.converted": ["sounds/mob/zombie/unfect"],
     "entity.zombie_villager.cure": ["sounds/mob/zombie/remedy"],

@@ -4,7 +4,7 @@
     "subtitle": "subtitles.twilightforest.block.trophy_pedestal.activate",
     "sounds": [
       {
-        "name": "sounds/mob/zombie/unfect"
+        "name": "sounds/twilightforest/stronghold/vanilla/mob/zombie/infect"
       }
     ]
   },
