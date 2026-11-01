@@ -96,6 +96,20 @@ std::optional<Json> readJson(std::filesystem::path const& file) {
     return j;
 }
 
+/// Descriptor::extra["gf"]: what GloamingForest derives from the record (type traits, defaults).
+constexpr char kDerivedKey[] = "gf";
+/// The TF record keys parsed into Descriptor's own fields (left out of Descriptor::extra).
+constexpr char const* kDescriptorFields[] = {"structure_icon", "advancements_required", "controlled_spawns", "spawn_overrides"};
+
+/// Merges a landmark descriptor's record over the imported TF record of the same key (top-level
+/// keys of the descriptor win), so no TF field is lost when both exist.
+Json mergeRecord(Json const* imported, Json const& own) {
+    Json merged = imported && imported->is_object() ? *imported : Json::object();
+    if (own.is_object())
+        for (auto const& [k, v] : own.items()) merged[k] = v;
+    return merged;
+}
+
 StructureSet parseSet(std::string const& id, Json const& j) {
     StructureSet s;
     s.id        = id;
@@ -155,7 +169,14 @@ Info parseRecord(std::string const& key, Json const& record) {
         if (!i.hintBook.empty()) i.d.hintBookKey = std::string(prefix) + i.hintBook;
     }
 
-    i.d.extra = Json{
+    // Descriptor::extra: everything of the TF record the descriptor fields do not carry, verbatim
+    // (type-specific codec fields: hill_size, speleothem_config, the fallen trunk and hollow tree
+    // parameters, decoration_clearance, hint_creature, biomes, step, terrain_adaptation, ...), plus
+    // what GloamingForest derives from the record under the separate key "gf"
+    i.d.extra = record.is_object() ? record : Json::object();
+    for (auto const* parsed : kDescriptorFields) i.d.extra.erase(parsed);
+    i.d.extra.erase("gf_runtime");
+    i.d.extra[kDerivedKey] = Json{
         {"type", i.type},
         {"biomes", i.biomes},
         {"step", i.step},
@@ -214,8 +235,9 @@ void loadDescriptors() {
                 log().warn("landmark: unreadable descriptor {}", e.path().filename().string());
                 continue;
             }
-            auto key    = normalizeKey(j->value("key", e.path().parent_path().filename().string() + ":" + e.path().stem().string()));
-            auto record = j->value("structure", Json::object());
+            auto key      = normalizeKey(j->value("key", e.path().parent_path().filename().string() + ":" + e.path().stem().string()));
+            auto imported = infos.find(key);
+            auto record   = mergeRecord(imported != infos.end() ? &imported->second.raw : nullptr, j->value("structure", Json::object()));
             if (auto fixed = j->find("fixed_decoration_clearance"); fixed != j->end() && !record.contains("decoration_clearance"))
                 record["decoration_clearance"] = *fixed;
             infos[key] = parseRecord(key, record);

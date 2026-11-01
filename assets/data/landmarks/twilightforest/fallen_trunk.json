@@ -2,7 +2,27 @@
   "key": "twilightforest:fallen_trunk",
   "source": "src/generated/resources/data/twilightforest/worldgen/structure/fallen_trunk.json",
   "structure": {
+    "big_trunk_length": {
+      "max_inclusive": 28,
+      "min_inclusive": 22,
+      "type": "minecraft:uniform"
+    },
     "biomes": "#twilightforest:valid_hollow_tree_biomes",
+    "chest_loot_table": "twilightforest:fallen_trunk_loot",
+    "length": {
+      "max_inclusive": 24,
+      "min_inclusive": 17,
+      "type": "minecraft:uniform"
+    },
+    "log": {
+      "state": {
+        "Name": "twilightforest:twilight_oak_log",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "type": "minecraft:simple_state_provider"
+    },
     "spawn_overrides": {
       "ambient": {
         "bounding_box": "full",

@@ -91,6 +91,7 @@
         "spawns": []
       }
     },
+    "speleothem_config": "twilightforest:yeti_cave",
     "step": "surface_structures",
     "structure_icon": "twilightforest:yeti_lair",
     "type": "twilightforest:yeti_cave"

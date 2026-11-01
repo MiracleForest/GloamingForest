@@ -78,6 +78,7 @@
       "allow_biome_vegetation": true,
       "chunk_clearance_radius": 2
     },
+    "hill_size": 2,
     "spawn_overrides": {
       "ambient": {
         "bounding_box": "full",
@@ -112,6 +113,7 @@
         "spawns": []
       }
     },
+    "speleothem_config": "twilightforest:medium_hollow_hill",
     "step": "surface_structures",
     "structure_icon": "twilightforest:medium_hollow_hill",
     "type": "twilightforest:hollow_hill"

@@ -79,6 +79,7 @@
         "spawns": []
       }
     },
+    "speleothem_config": "twilightforest:hydra_lair",
     "step": "surface_structures",
     "structure_icon": "twilightforest:hydra_lair",
     "type": "twilightforest:hydra_lair"
