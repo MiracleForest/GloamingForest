@@ -25,6 +25,7 @@ foreach ($what in 'geometries', 'base animations', 'attachables') {
 # no command feedback in the chat (F1 hides the HUD, not the chat), then let the chat fade
 Invoke-Chat '/gamerule sendcommandfeedback false'
 Invoke-Chat '/gamerule commandblockoutput false'
+Invoke-Chat '/gamerule showcoordinates false'   # no 'Position: x, y, z' overlay in the shots
 Invoke-Chat '/gamemode spectator'
 Invoke-Chat '/time set noon'
 Invoke-Chat '/weather clear'

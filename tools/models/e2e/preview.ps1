@@ -67,6 +67,8 @@ $actors = [System.Collections.Generic.List[object]]::new()
 foreach ($g in $index.geometries) {
     if ($g.kind -in 'armor', 'worn', 'held') { continue }
     $tex = @($g.textures)[0]
+    # an armor layer is drawn with the wearer's armor texture: the catalog's preview texture (vanilla iron)
+    if (-not $tex -and $g.preview -and $g.preview.texture) { $tex = $g.preview.texture }
     if (-not $tex) { $tex = 'textures/entity/steve' }
     Copy-Texture $tex
     $name = if ($g.vanilla) { $g.layer } else { $g.identifier -replace '^geometry\.twilightforest\.', '' }
