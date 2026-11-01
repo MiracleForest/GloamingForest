@@ -3,8 +3,8 @@
   "minecraft:client_entity": {
     "description": {
       "identifier": "gloamingforest:part",
-      "materials": { "default": "entity_alphatest" },
-      "textures": { "default": "textures/entity/zombie/zombie" },
+      "materials": {},
+      "textures": {},
       "geometry": {}
     }
   }

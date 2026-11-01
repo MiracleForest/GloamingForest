@@ -22,6 +22,8 @@
 // Companion clients get the part list on "entity.multipart" (UpdateTFMultipartPacket).
 
 #include <algorithm>
+#include <cmath>
+#include <numbers>
 #include <unordered_set>
 
 #include "ll/api/service/Bedrock.h"
@@ -194,7 +196,9 @@ void followParts(Mob& parent, ActorState& s) {
         }
         auto p   = parent.getFeetPos();
         Vec3 off = rec.offset ? rec.offset(parent) : Vec3{0, 0, 0};
-        a->moveTo(Vec3{p.x + off.x, p.y + off.y, p.z + off.z}, a->getRotation());
+        // Actor rotation is (pitch, yaw): TFPart's xRot / yRot as the parent set them
+        Vec2 rot = rec.rotation ? Vec2{rec.rotation->second, rec.rotation->first} : a->getRotation();
+        a->moveTo(Vec3{p.x + off.x, p.y + off.y, p.z + off.z}, rot);
     }
     if (respawned) syncParts(parent, s);
 }
@@ -219,11 +223,23 @@ void installMultipart() {
     // the registrations below have no removal: once per process
     static bool once = false;
     if (std::exchange(once, true)) return;
-    // every other damage (projectiles, explosions, ...) through the combat pipeline
+    // every other damage (projectiles, explosions, ...) through the combat pipeline. Java's parts
+    // are no living entities in the level's tick: nothing environmental (suffocation, drowning,
+    // falls, fire, contact, freezing, the void, /kill) reaches them, so none of it reaches the
+    // parent either (the generic part's damage sensor also refuses those causes, so attacks,
+    // projectiles, explosions and magic reach Actor::hurt and this handler without a sensor).
     {
         gf::combat::onIncoming(gf::combat::priority::High, [](gf::combat::DamageInfo& d) {
             auto parentId = parentOfPart(d.victim);
             if (!parentId) return gf::combat::Verdict::Pass;
+            static std::unordered_set<std::string> const environmental{
+                "minecraft:in_wall",  "minecraft:drown",         "minecraft:fall",          "minecraft:on_fire",
+                "minecraft:in_fire",  "minecraft:lava",          "minecraft:hot_floor",     "minecraft:cactus",
+                "minecraft:sweet_berry_bush", "minecraft:freeze", "minecraft:starve",       "minecraft:out_of_world",
+                "minecraft:fly_into_wall",    "minecraft:campfire", "minecraft:dry_out",    "minecraft:outside_border",
+                "minecraft:generic_kill",     "minecraft:stalagmite",
+            };
+            if (environmental.contains(d.type)) return gf::combat::Verdict::Cancel;
             auto* parent = actorById(parentId);
             if (parent && parent->isAlive() && M().forwarding < 4) {
                 auto*        ps = findState(uidOf(d.victim));
@@ -238,12 +254,31 @@ void installMultipart() {
         .tick =
             [](Actor& actor, ActorState& s) {
                 if (!s.parentId) return;
-                auto* parent = actorById(s.parentId);
-                bool  keep   = parent && parent->isAlive();
+                auto*             parent = actorById(s.parentId);
+                bool              keep   = parent && parent->isAlive();
+                PartRecord const* rec    = nullptr;
                 if (keep)
                     if (auto* ps = findState(s.parentId))
-                        keep = std::any_of(ps->parts.begin(), ps->parts.end(), [&](PartRecord const& r) { return r.actorId == uidOf(actor); });
-                if (!keep) M().toRemove.push_back(uidOf(actor));
+                        for (auto const& r : ps->parts)
+                            if (r.actorId == uidOf(actor)) rec = &r;
+                if (!keep || !rec) {
+                    M().toRemove.push_back(uidOf(actor));
+                    return;
+                }
+                // the part's own engine tick (body control) ran just before: the parent's rotation
+                // goes back on (TFPart's yRot / xRot are the parent's to set); the engine's look
+                // control turns a mob's pitch towards its look target, so it is aimed along the
+                // part's own direction
+                if (rec->rotation) {
+                    float yaw = rec->rotation->first, pitch = rec->rotation->second;
+                    const_cast<Vec2&>(actor.getRotation()) = Vec2{pitch, yaw};
+                    if (auto* m = asMob(actor)) {
+                        double ry = yaw * std::numbers::pi / 180.0, rx = pitch * std::numbers::pi / 180.0;
+                        auto   eye = m->getEyePos();
+                        Vec3   at{float(eye.x - std::sin(ry) * std::cos(rx) * 8.0), float(eye.y - std::sin(rx) * 8.0), float(eye.z + std::cos(ry) * std::cos(rx) * 8.0)};
+                        mobs::lookAt(*m, at, 180.0F, 180.0F);
+                    }
+                }
             },
         .save = [](Actor const& actor) { return parentOfPart(actor) == 0 && actor.getTypeName() != kGenericPart; },
     });
@@ -339,6 +374,12 @@ void removePart(PartHandle const& part) {
     std::erase_if(s->parts, [&](fe::PartRecord const& r) { return r.partId == part.partId; });
     if (auto* parent = fe::actorById(part.parentId))
         if (auto* mob = fe::asMob(*parent)) fe::syncParts(*mob, *s);
+}
+
+void setPartRotation(PartHandle const& part, float yRot, float xRot) {
+    auto* rec = fe::recordOf(part);
+    if (!rec) return;
+    rec->rotation = std::make_pair(yRot, xRot);
 }
 
 void setPartSize(PartHandle const& part, PartSize size) {
