@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:block_column",
+  "config": {
+    "allowed_placement": { "type": "minecraft:matching_blocks", "blocks": "minecraft:air" },
+    "direction": "up",
+    "layers": [
+      { "height": 3, "provider": { "type": "minecraft:simple_state_provider", "state": { "Name": "gf_test:fixture_block", "Properties": { "gf_test:level": "1" } } } }
+    ],
+    "prioritize_tip": false
+  }
+}

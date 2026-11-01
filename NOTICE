@@ -1,0 +1,76 @@
+GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition
+Copyright (c) 2026 MiracleForest and the GloamingForest contributors
+
+GloamingForest is an unofficial, fan-made port of The Twilight Forest to Minecraft: Bedrock Edition,
+built as a LeviLamina native mod. It is not affiliated with or endorsed by TeamTwilight, Mojang
+Studios or Microsoft. "Minecraft" is a trademark of Mojang Studios.
+
+GloamingForest is free software: you can redistribute it and/or modify it under the terms of the
+GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of
+the License, or (at your option) any later version (COPYING.LESSER, COPYING).
+
+-------------------------------------------------------------------------------------------------
+The Twilight Forest (code)
+-------------------------------------------------------------------------------------------------
+GloamingForest reproduces The Twilight Forest 4.8 for Minecraft 1.21.1
+(https://github.com/TeamTwilight/twilightforest, branch 1.21.1, commit
+9e40a75721c716b2fdf80c16d1058fe718825e9f).
+
+  The Twilight Forest
+  Copyright (c) 2012-2017 Ben Mazur / Benimatic, and the TeamTwilight contributors
+
+  This library is free software; you can redistribute it and/or modify it under the terms of the
+  GNU Lesser General Public License as published by the Free Software Foundation; either version
+  2.1 of the License, or (at your option) any later version.
+
+Parts of GloamingForest are translations of The Twilight Forest's Java source code into C++, made
+under that licence's "or any later version" option and distributed under LGPL-3.0-or-later. Every
+translated file starts with an attribution header naming the TF source file(s) it was translated
+from (see AGENTS.md, "Licences and attribution").
+
+-------------------------------------------------------------------------------------------------
+The Twilight Forest (assets)
+-------------------------------------------------------------------------------------------------
+The textures, models, blockstates and language files of The Twilight Forest that GloamingForest
+reuses (imported by tools/import into assets/gen/import, hand-edited derivatives under the
+tf-derived/ directories of assets/pack with their sources in tf-derived/SOURCES.json, and the
+released resource packs) are licensed under Creative Commons Attribution-NonCommercial-ShareAlike
+4.0 International (CC BY-NC-SA 4.0, https://creativecommons.org/licenses/by-nc-sa/4.0/); see
+assets/LICENSE.
+
+  Original assets: The Twilight Forest by TeamTwilight (https://github.com/TeamTwilight/twilightforest).
+  Changes: converted to Minecraft: Bedrock Edition formats (block geometry, entity geometry, texture
+  atlases, .lang files for the Bedrock locales), partitioned per feature.
+
+These assets, and any resource pack that contains them, may be shared and adapted only for
+non-commercial purposes, with attribution, and under the same licence.
+
+The sounds, music and structure templates (.nbt) of The Twilight Forest are All Rights Reserved.
+GloamingForest does not contain, open, decode or derive from them: every sound and music track is
+an original synthesized work (tools/sounds) and every structure template is an original design in
+GloamingForest's template format (tools/structures). A CI guard (tools/ci/arr-guard.ps1) rejects
+any file identical to one of them.
+
+-------------------------------------------------------------------------------------------------
+Levitate
+-------------------------------------------------------------------------------------------------
+The foundation of GloamingForest (module system, configs and config screen, commands, selftests,
+world storage, pack deployment, companion protocol, interactions, block data, redstone, screens,
+build scripts, assemble, e2e harnesses and CI) is adapted from Levitate v0.1.0
+(https://github.com/LiteLDev/Levitate), Copyright (c) LiteLDev and the Levitate contributors,
+licensed under LGPL-3.0-or-later. Adapted files say so in their first line. The e2e client world
+fixture (tools/e2e/client/fixtures/GF-Test/level.dat) was built from Levitate's fixture.
+
+-------------------------------------------------------------------------------------------------
+MoreDimensions
+-------------------------------------------------------------------------------------------------
+GloamingForest's custom dimension work (spike S1) refers to MoreDimensions
+(https://github.com/LiteLDev/MoreDimensions), Copyright (c) LiteLDev, licensed under
+LGPL-3.0-or-later. Any code adapted from it carries its own attribution line.
+
+-------------------------------------------------------------------------------------------------
+Tools and runtime
+-------------------------------------------------------------------------------------------------
+LeviLamina (https://github.com/LiteLDev/LeviLamina, LGPL-3.0) is the mod loader GloamingForest
+builds against. BeDD (https://github.com/LiteLDev/BeDD, LGPL-3.0) drives the game client in the
+end-to-end tests; it is downloaded by the test harness and not distributed with GloamingForest.

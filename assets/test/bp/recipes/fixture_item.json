@@ -1,0 +1,11 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:recipe_shaped": {
+    "description": { "identifier": "gf_test:fixture_item" },
+    "tags": ["crafting_table"],
+    "pattern": ["#", "#"],
+    "key": { "#": { "item": "minecraft:stick" } },
+    "unlock": [ { "item": "minecraft:stick" } ],
+    "result": { "item": "gf_test:fixture_item", "count": 2 }
+  }
+}

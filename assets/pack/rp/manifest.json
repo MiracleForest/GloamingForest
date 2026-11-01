@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GloamingForest RP",
+    "description": "The Twilight Forest for Bedrock (GloamingForest): textures, models, sounds and names. Contains assets of The Twilight Forest under CC BY-NC-SA 4.0 (see LICENSE)",
+    "uuid": "e74b226e-d7b6-446f-add6-793da2bdbf78",
+    "version": "${version}",
+    "min_engine_version": [1, 21, 40]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "b32fad98-bfe9-4d07-aeaf-8b39c1334d19",
+      "version": "${version}"
+    }
+  ]
+}

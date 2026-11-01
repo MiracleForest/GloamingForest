@@ -1,0 +1,4 @@
+tile.gf_test:fixture_block.name=测试方块
+item.gf_test:fixture_item.name=测试物品
+entity.gf_test:boss.name=测试首领
+entity.gf_test:boss_part.name=测试首领部件

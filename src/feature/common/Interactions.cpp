@@ -1,0 +1,562 @@
+// Adapted from LiteLDev/Levitate v0.1.0 (src/feature/common/Interactions.cpp), LGPL-3.0-or-later.
+// Shared interaction dispatch (see Interactions.h): one hook per GameMode action.
+
+#include "feature/common/Interactions.h"
+
+#include <algorithm>
+#include <optional>
+#include <variant>
+#include <vector>
+
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/world/ServerLevelTickEvent.h"
+#include "ll/api/memory/Hook.h"
+#include "ll/api/service/Bedrock.h"
+
+#include "mc/deps/core/math/Vec3.h"
+#include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
+#include "mc/network/MinecraftPacketIds.h"
+#include "mc/network/MinecraftPackets.h"
+#include "mc/network/packet/UpdateBlockPacket.h"
+#include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorHurtResult.h"
+#include "mc/world/actor/player/Player.h"
+#include "mc/world/gamemode/GameMode.h"
+#include "mc/world/gamemode/InteractionResult.h"
+#include "mc/world/item/HandSlot.h"
+#include "mc/world/item/ItemStack.h"
+#include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
+#include "mc/world/level/Level.h"
+#include "mc/world/level/block/Block.h"
+
+#include "feature/tags/Tags.h"
+#include "game/Blocks.h"
+#include "game/WorldDb.h"
+#include "mod/Log.h"
+#include "mod/Module.h"
+
+namespace gf::feature::common::interactions {
+
+namespace {
+
+template <class Fn>
+struct Entry {
+    HandlerId id;
+    int       priority;
+    Match     match;
+    Fn        fn;
+};
+
+struct Registry {
+    std::vector<Entry<UseOnHandler>>     useOn;
+    std::vector<Entry<UseHandler>>       use;
+    std::vector<Entry<DestroyHandler>>   destroy;
+    std::vector<Entry<PlaceHandler>>     place;
+    std::vector<Entry<DestroyHandler>>   startDestroy;
+    std::vector<Entry<EntityHandler>>    interact;
+    std::vector<Entry<EntityHandler>>    attack;
+    std::vector<Entry<UseOnHandler>>     unusedUseOn;
+    std::vector<Entry<DestroyedHandler>> destroyed;
+    std::vector<Entry<AttackedHandler>>  attacked;
+    std::vector<std::function<void()>>   deferred;
+    HandlerId                            next     = 0;
+    int                                  inUseOn  = 0; ///< depth of the use-on hook (UseContext::onBlock)
+    int                                  inUse    = 0; ///< depth of GameMode::useItem (baseUseItem below it)
+    int                                  inAttack = 0; ///< depth of GameMode::attack (Player::attack below it)
+};
+Registry& registry() {
+    static Registry r;
+    return r;
+}
+
+template <class Fn>
+HandlerId add(std::vector<Entry<Fn>>& list, Match match, Fn fn, int priority) {
+    auto id = ++registry().next;
+    list.push_back({id, priority, std::move(match), std::move(fn)});
+    // higher priority first; equal priorities keep the registration order
+    std::stable_sort(list.begin(), list.end(), [](auto const& a, auto const& b) { return a.priority > b.priority; });
+    return id;
+}
+
+template <class Fn, class Ctx>
+Result run(std::vector<Entry<Fn>> const& list, std::string const& blockId, std::string const& itemId, Ctx const& ctx, char const* what, bool entity = false) {
+    // only the matching handlers are copied (handlers may register or remove handlers)
+    std::vector<Fn const*> hits;
+    for (auto const& e : list)
+        if (matches(e.match, blockId, itemId, entity)) hits.push_back(&e.fn);
+    if (hits.empty()) return Result::Pass;
+    std::vector<Fn> snapshot;
+    snapshot.reserve(hits.size());
+    for (auto const* fn : hits) snapshot.push_back(*fn);
+    for (auto const& fn : snapshot) {
+        try {
+            auto r = fn(ctx);
+            if (r != Result::Pass) return r;
+        } catch (std::exception const& ex) {
+            log().error("interactions: {} handler failed: {}", what, ex.what());
+        }
+    }
+    return Result::Pass;
+}
+
+/// Calls every matching after-handler (no result).
+template <class Fn, class Ctx>
+void notify(std::vector<Entry<Fn>> const& list, std::string const& blockId, std::string const& itemId, Ctx const& ctx, bool outcome, char const* what, bool entity = false) {
+    std::vector<Fn> snapshot;
+    for (auto const& e : list)
+        if (matches(e.match, blockId, itemId, entity)) snapshot.push_back(e.fn);
+    for (auto const& fn : snapshot) {
+        try {
+            fn(ctx, outcome);
+        } catch (std::exception const& ex) {
+            log().error("interactions: {} handler failed: {}", what, ex.what());
+        }
+    }
+}
+
+std::string idOf(ItemStack const& item) { return item.isNull() ? std::string{} : item.getTypeName(); }
+
+/// Block-local hit position (the game passes it absolute or relative depending on the source).
+Vec localHit(BlockPos const& pos, Vec3 const& click) {
+    auto in = [](double v) { return v >= -0.01 && v <= 1.01; };
+    if (in(click.x) && in(click.y) && in(click.z)) return {click.x, click.y, click.z};
+    return {click.x - pos.x, click.y - pos.y, click.z - pos.z};
+}
+
+Vec vecOf(Vec3 const& v) { return {v.x, v.y, v.z}; }
+
+} // namespace
+
+bool matches(Match const& m, std::string const& blockId, std::string const& itemId, bool entity) {
+    if (!m.block.empty() && m.block != blockId) return false;
+    if (!m.blockTag.empty()) {
+        if (blockId.empty()) return false;
+        if (!tags::has(entity ? tags::Registry::EntityType : tags::Registry::Block, m.blockTag, blockId)) return false;
+    }
+    if (m.emptyHand) return itemId.empty();
+    if (!m.itemTag.empty() && (itemId.empty() || !tags::has(tags::Registry::Item, m.itemTag, itemId))) return false;
+    return m.item.empty() || m.item == itemId;
+}
+
+/// A player of the server level. `isClientSide()` alone is not enough: the client's own
+/// LocalPlayer goes through GameMode too (prediction) and was seen passing it, which ran handlers
+/// twice in local worlds and on the client of a remote server.
+bool isServerPlayer(Player& p) {
+    if (p.isClientSide()) return false;
+    auto level = ll::service::getLevel();
+    return level && &p.getLevel() == level.as_ptr();
+}
+
+HandlerId onUseOn(Match match, UseOnHandler fn, int prio) { return add(registry().useOn, std::move(match), std::move(fn), prio); }
+
+HandlerId onUse(Match match, UseHandler fn, int prio) {
+    match.block.clear(); // item uses have no block
+    match.blockTag.clear();
+    return add(registry().use, std::move(match), std::move(fn), prio);
+}
+
+HandlerId onUse(std::string itemId, UseHandler fn, int prio) {
+    Match m;
+    m.item = std::move(itemId);
+    return onUse(std::move(m), std::move(fn), prio);
+}
+
+HandlerId onDestroy(Match match, DestroyHandler fn, int prio) { return add(registry().destroy, std::move(match), std::move(fn), prio); }
+
+HandlerId onPlace(Match match, PlaceHandler fn, int prio) { return add(registry().place, std::move(match), std::move(fn), prio); }
+
+HandlerId onStartDestroy(Match match, DestroyHandler fn, int prio) {
+    return add(registry().startDestroy, std::move(match), std::move(fn), prio);
+}
+
+HandlerId onInteract(Match match, EntityHandler fn, int prio) { return add(registry().interact, std::move(match), std::move(fn), prio); }
+
+HandlerId onAttack(Match match, EntityHandler fn, int prio) { return add(registry().attack, std::move(match), std::move(fn), prio); }
+
+HandlerId onUnusedUseOn(Match match, UseOnHandler fn, int prio) {
+    return add(registry().unusedUseOn, std::move(match), std::move(fn), prio);
+}
+
+HandlerId onDestroyed(Match match, DestroyedHandler fn, int prio) {
+    return add(registry().destroyed, std::move(match), std::move(fn), prio);
+}
+
+HandlerId onAttacked(Match match, AttackedHandler fn, int prio) {
+    return add(registry().attacked, std::move(match), std::move(fn), prio);
+}
+
+void nextTick(std::function<void()> fn) { registry().deferred.push_back(std::move(fn)); }
+
+void remove(HandlerId id) {
+    auto& r    = registry();
+    auto  gone = [id](auto const& e) { return e.id == id; };
+    std::erase_if(r.unusedUseOn, gone);
+    std::erase_if(r.destroyed, gone);
+    std::erase_if(r.attacked, gone);
+    std::erase_if(r.useOn, gone);
+    std::erase_if(r.use, gone);
+    std::erase_if(r.destroy, gone);
+    std::erase_if(r.place, gone);
+    std::erase_if(r.startDestroy, gone);
+    std::erase_if(r.interact, gone);
+    std::erase_if(r.attack, gone);
+}
+
+Result dispatchUseOn(UseOnContext const& ctx) { return run(registry().useOn, ctx.blockId, ctx.itemId, ctx, "use-on"); }
+Result dispatchUse(UseContext const& ctx) { return run(registry().use, std::string{}, ctx.itemId, ctx, "use"); }
+Result dispatchDestroy(DestroyContext const& ctx) { return run(registry().destroy, ctx.blockId, ctx.itemId, ctx, "destroy"); }
+Result dispatchStartDestroy(DestroyContext const& ctx) {
+    return run(registry().startDestroy, ctx.blockId, ctx.itemId, ctx, "start-destroy");
+}
+Result dispatchInteract(EntityContext const& ctx) { return run(registry().interact, ctx.entityId, ctx.itemId, ctx, "interact", true); }
+Result dispatchAttack(EntityContext const& ctx) { return run(registry().attack, ctx.entityId, ctx.itemId, ctx, "attack", true); }
+
+void dispatchPlace(PlaceContext const& ctx) {
+    auto snapshot = registry().place;
+    for (auto const& e : snapshot) {
+        if (!matches(e.match, ctx.blockId, ctx.itemId)) continue;
+        try {
+            e.fn(ctx);
+        } catch (std::exception const& ex) {
+            log().error("interactions: place handler failed: {}", ex.what());
+        }
+    }
+}
+
+namespace {
+void runDeferred() {
+    auto& r = registry();
+    if (r.deferred.empty()) return;
+    auto list = std::move(r.deferred);
+    r.deferred.clear();
+    for (auto& fn : list) {
+        try {
+            fn();
+        } catch (std::exception const& ex) {
+            log().error("interactions: deferred action failed: {}", ex.what());
+        }
+    }
+}
+
+BlockPos stepOf(BlockPos const& p, int face) {
+    static constexpr int dx[] = {0, 0, 0, 0, -1, 1}, dy[] = {-1, 1, 0, 0, 0, 0}, dz[] = {0, 0, -1, 1, 0, 0};
+    if (face < 0 || face > 5) return p;
+    return {p.x + dx[face], p.y + dy[face], p.z + dz[face]};
+}
+
+/// The client predicted a placement (a block, a bucket's fluid) next to the clicked block: send it
+/// the real blocks there once a handler took the click.
+void resendBlock(Player& player, BlockSource& region, BlockPos const& pos) {
+    if (pos.y < region.getMinHeight() || pos.y >= region.getMaxHeight() || !region.hasChunksAt(pos, 0, false)) return;
+    auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::UpdateBlock);
+    if (!packet) return;
+    auto& pkt        = static_cast<UpdateBlockPacket&>(*packet);
+    pkt.mPos         = pos;
+    pkt.mLayer       = 0;
+    pkt.mUpdateFlags = 0b1011; // neighbours | network | priority
+    pkt.mRuntimeId   = region.getBlock(pos).mNetworkId;
+    pkt.sendTo(player);
+}
+
+struct UseOnDepth {
+    UseOnDepth() { ++registry().inUseOn; }
+    ~UseOnDepth() { --registry().inUseOn; }
+    UseOnDepth(UseOnDepth const&)            = delete;
+    UseOnDepth& operator=(UseOnDepth const&) = delete;
+};
+} // namespace
+
+// ---- hooks -------------------------------------------------------------------------------------
+
+LL_TYPE_INSTANCE_HOOK(
+    InteractionsUseItemOnHook,
+    ll::memory::HookPriority::Normal,
+    GameMode,
+    &GameMode::$useItemOn,
+    InteractionResult,
+    ItemStack&      item,
+    BlockPos const& at,
+    uchar           face,
+    Vec3 const&     hit,
+    HandSlot        handSlot,
+    Block const*    targetBlock,
+    bool            isFirstEvent
+) {
+    Player& player = mPlayer;
+    if (!isServerPlayer(player)) return origin(item, at, face, hit, handSlot, targetBlock, isFirstEvent);
+    UseOnDepth   depth;
+    auto&        region  = player.getDimensionBlockSource();
+    Block const& block   = targetBlock ? *targetBlock : region.getBlock(at);
+    std::string  blockId = block.getTypeName();
+    std::string  itemId  = idOf(item);
+    UseOnContext ctx{
+        player,
+        item,
+        itemId,
+        block,
+        blockId,
+        game::globalPos(region, at),
+        static_cast<int>(face),
+        localHit(at, hit),
+        player.isSneaking(),
+        isFirstEvent,
+        handSlot == HandSlot::Offhand,
+    };
+    auto r = registry().useOn.empty() ? Result::Pass : dispatchUseOn(ctx);
+    if (r == Result::Pass) {
+        bool watchPlace  = !registry().place.empty() && !item.isNull();
+        bool watchUnused = !registry().unusedUseOn.empty();
+        if (!watchPlace && !watchUnused) return origin(item, at, face, hit, handSlot, targetBlock, isFirstEvent);
+        // a placement: the block lands in the clicked block when that is replaceable
+        BlockPos                 dest = at;
+        std::string              before;
+        std::optional<ItemStack> held;
+        if (watchPlace) {
+            dest   = game::replaceable(region, at) ? at : stepOf(at, face);
+            before = region.getBlock(dest).getTypeName();
+            held   = item;
+        }
+        auto result = origin(item, at, face, hit, handSlot, targetBlock, isFirstEvent);
+        if (watchPlace) {
+            Block const& now   = region.getBlock(dest);
+            std::string  after = now.getTypeName();
+            if (after != before && !now.isAir()) {
+                PlaceContext pc{player, itemId, now, after, game::globalPos(region, dest), ctx.pos, ctx.face, ctx.hit, ctx.sneaking, &*held};
+                dispatchPlace(pc);
+            }
+        }
+        if (watchUnused && !result.mSuccess) {
+            // Java's Item#useOn after the block's use passed
+            auto u = run(registry().unusedUseOn, blockId, itemId, ctx, "unused use-on");
+            if (u != Result::Pass) {
+                if (isFirstEvent) player.sendInventory(false);
+                result          = InteractionResult{};
+                result.mSuccess = u == Result::Consume;
+                result.mSwing   = u == Result::Consume;
+            }
+        }
+        return result;
+    }
+    if (isFirstEvent) {
+        player.sendInventory(false); // undo the client's predicted use (once per click)
+        if (!item.isNull()) {
+            resendBlock(player, region, at);
+            resendBlock(player, region, stepOf(at, face));
+        }
+    }
+    InteractionResult result{};
+    if (r == Result::Consume) {
+        result.mSuccess = true;
+        result.mSwing   = true;
+    }
+    return result;
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    InteractionsUseItemHook,
+    ll::memory::HookPriority::Normal,
+    GameMode,
+    &GameMode::baseUseItem, // in the air, and after a block that did not take a use-on
+    bool,
+    ItemStack const& item,
+    HandSlot         handSlot
+) {
+    Player& player = mPlayer;
+    if (registry().inUse > 0 || !isServerPlayer(player) || registry().use.empty()) return origin(item, handSlot);
+    std::string itemId = idOf(item);
+    auto        r      = dispatchUse(UseContext{player, item, itemId, player.isSneaking(), registry().inUseOn > 0});
+    if (r == Result::Pass) return origin(item, handSlot);
+    player.sendInventory(false);
+    return r == Result::Consume;
+}
+
+// GameMode::useItem: not every item use reaches baseUseItem (SimulatedPlayer::simulateUseItem and
+// items with their own use go through here only); dispatched once, baseUseItem below skips it.
+LL_TYPE_INSTANCE_HOOK(
+    InteractionsUseItemVirtualHook,
+    ll::memory::HookPriority::Normal,
+    GameMode,
+    &GameMode::$useItem,
+    bool,
+    ItemStack& item,
+    HandSlot   handSlot
+) {
+    Player& player = mPlayer;
+    if (registry().inUse > 0 || !isServerPlayer(player) || registry().use.empty()) return origin(item, handSlot);
+    std::string itemId = idOf(item);
+    auto        r      = dispatchUse(UseContext{player, item, itemId, player.isSneaking(), registry().inUseOn > 0});
+    if (r != Result::Pass) {
+        player.sendInventory(false);
+        return r == Result::Consume;
+    }
+    ++registry().inUse;
+    bool ok = origin(item, handSlot);
+    --registry().inUse;
+    return ok;
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    InteractionsDestroyBlockHook,
+    ll::memory::HookPriority::Normal,
+    GameMode,
+    &GameMode::$destroyBlock,
+    bool,
+    BlockPos const& pos,
+    uchar           face
+) {
+    Player& player = mPlayer;
+    if (!isServerPlayer(player) || (registry().destroy.empty() && registry().destroyed.empty())) return origin(pos, face);
+    auto&          region  = player.getDimensionBlockSource();
+    Block const&   block   = region.getBlock(pos);
+    std::string    blockId = block.getTypeName();
+    auto const&    item    = player.getSelectedItem();
+    std::string    itemId  = idOf(item);
+    DestroyContext ctx{player, item, itemId, block, blockId, game::globalPos(region, pos), static_cast<int>(face), player.isSneaking()};
+    if (!registry().destroy.empty() && dispatchDestroy(ctx) != Result::Pass) {
+        // a handler took the break: vanilla does not run, but the "after" handlers still hear about
+        // it, with whether the block is gone now
+        bool gone = region.getBlock(pos).getTypeName() != blockId;
+        notify(registry().destroyed, blockId, itemId, ctx, gone, "destroyed");
+        return false;
+    }
+    bool ok = origin(pos, face);
+    notify(registry().destroyed, blockId, itemId, ctx, ok, "destroyed");
+    return ok;
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    InteractionsStartDestroyHook,
+    ll::memory::HookPriority::Normal,
+    GameMode,
+    &GameMode::$startDestroyBlock,
+    bool,
+    BlockPos const& pos,
+    uchar           face,
+    bool&           hasDestroyedBlock
+) {
+    Player& player = mPlayer;
+    if (!isServerPlayer(player) || registry().startDestroy.empty()) return origin(pos, face, hasDestroyedBlock);
+    auto&          region  = player.getDimensionBlockSource();
+    Block const&   block   = region.getBlock(pos);
+    std::string    blockId = block.getTypeName();
+    auto const&    item    = player.getSelectedItem();
+    std::string    itemId  = idOf(item);
+    DestroyContext ctx{player, item, itemId, block, blockId, game::globalPos(region, pos), static_cast<int>(face), player.isSneaking()};
+    if (dispatchStartDestroy(ctx) == Result::Pass) return origin(pos, face, hasDestroyedBlock);
+    hasDestroyedBlock = false;
+    return false;
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    InteractionsInteractHook,
+    ll::memory::HookPriority::Normal,
+    GameMode,
+    &GameMode::$interact,
+    bool,
+    Actor&      entity,
+    Vec3 const& location,
+    HandSlot    handSlot
+) {
+    Player& player = mPlayer;
+    if (!isServerPlayer(player) || registry().interact.empty()) return origin(entity, location, handSlot);
+    auto const&   item     = player.getSelectedItem();
+    std::string   itemId   = idOf(item);
+    std::string   entityId = entity.getTypeName();
+    EntityContext ctx{player, item, itemId, entity, entityId, vecOf(location), player.isSneaking()};
+    auto          r = dispatchInteract(ctx);
+    if (r == Result::Pass) return origin(entity, location, handSlot);
+    player.sendInventory(false);
+    return r == Result::Consume;
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    InteractionsAttackHook,
+    ll::memory::HookPriority::Normal,
+    GameMode,
+    &GameMode::$attack,
+    bool,
+    Actor&      entity,
+    Vec3 const& hitPosition
+) {
+    Player& player = mPlayer;
+    if (!isServerPlayer(player) || (registry().attack.empty() && registry().attacked.empty())) return origin(entity, hitPosition);
+    auto const&   item     = player.getSelectedItem();
+    std::string   itemId   = idOf(item);
+    std::string   entityId = entity.getTypeName();
+    EntityContext ctx{player, item, itemId, entity, entityId, vecOf(hitPosition), player.isSneaking()};
+    auto          r = registry().attack.empty() ? Result::Pass : dispatchAttack(ctx);
+    if (r != Result::Pass) return r == Result::Consume;
+    ++registry().inAttack;
+    bool ok = origin(entity, hitPosition);
+    --registry().inAttack;
+    notify(registry().attacked, entityId, itemId, ctx, ok, "attacked", true);
+    return ok;
+}
+
+// SimulatedPlayer::simulateAttack calls Player::attack directly (not through GameMode::attack):
+// the same dispatch for those calls.
+LL_TYPE_INSTANCE_HOOK(
+    InteractionsPlayerAttackHook,
+    ll::memory::HookPriority::Normal,
+    Player,
+    &Player::$attack,
+    ActorHurtResult,
+    Actor&                                       entity,
+    SharedTypes::Legacy::ActorDamageCause const& cause
+) {
+    if (registry().inAttack > 0 || !isServerPlayer(*this) || (registry().attack.empty() && registry().attacked.empty()))
+        return origin(entity, cause);
+    auto const&   item     = getSelectedItem();
+    std::string   itemId   = idOf(item);
+    std::string   entityId = entity.getTypeName();
+    EntityContext ctx{*this, item, itemId, entity, entityId, vecOf(entity.getPosition()), isSneaking()};
+    auto          r = registry().attack.empty() ? Result::Pass : dispatchAttack(ctx);
+    if (r != Result::Pass) {
+        ActorHurtResult res{};
+        res.mHurtOrDamage         = std::variant<bool, float>(r == Result::Consume);
+        res.mShouldAllowKnockback = false;
+        return res;
+    }
+    auto res = origin(entity, cause);
+    notify(registry().attacked, entityId, itemId, ctx, static_cast<bool>(res), "attacked", true);
+    return res;
+}
+
+class InteractionsModule {
+public:
+    void install() {
+        InteractionsUseItemOnHook::hook();
+        InteractionsUseItemHook::hook();
+        InteractionsUseItemVirtualHook::hook();
+        InteractionsDestroyBlockHook::hook();
+        InteractionsStartDestroyHook::hook();
+        InteractionsInteractHook::hook();
+        InteractionsAttackHook::hook();
+        InteractionsPlayerAttackHook::hook();
+        mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { runDeferred(); });
+        static bool registered = false;
+        if (!registered) {
+            registered = true;
+            game::db::onWorldClosed([] { registry().deferred.clear(); });
+        }
+    }
+    void uninstall() {
+        ll::event::EventBus::getInstance().removeListener(mTick);
+        InteractionsPlayerAttackHook::unhook();
+        InteractionsAttackHook::unhook();
+        InteractionsInteractHook::unhook();
+        InteractionsStartDestroyHook::unhook();
+        InteractionsDestroyBlockHook::unhook();
+        InteractionsUseItemVirtualHook::unhook();
+        InteractionsUseItemHook::unhook();
+        InteractionsUseItemOnHook::unhook();
+    }
+
+private:
+    ll::event::ListenerPtr mTick;
+};
+
+} // namespace gf::feature::common::interactions
+
+GF_REGISTER_MODULE_ORDERED(gf::feature::common::interactions::InteractionsModule, gf::ModuleOrder::Services);

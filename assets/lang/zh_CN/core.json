@@ -1,0 +1,14 @@
+{
+  "gf.mod.name": "GloamingForest",
+  "gf.common.config.title": "GloamingForest 配置",
+  "gf.common.config.pick": "选择一个分类",
+  "gf.common.config.back": "返回",
+  "gf.common.config.default": "默认值：{}",
+  "gf.common.config.invalid": "{} 的值无效",
+  "gf.common.config.need_op": "只有管理员可以修改配置。",
+  "gf.common.config.need_player": "请以玩家身份执行此命令。",
+  "gf.common.config.off": "关",
+  "gf.common.config.on": "开",
+  "gf.common.config.reset": "恢复默认值",
+  "gf.common.config.unknown": "未知的配置分类 {}"
+}

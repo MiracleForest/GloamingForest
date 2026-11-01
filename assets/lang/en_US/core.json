@@ -1,0 +1,14 @@
+{
+  "gf.mod.name": "GloamingForest",
+  "gf.common.config.title": "GloamingForest Configuration",
+  "gf.common.config.pick": "Choose a section",
+  "gf.common.config.back": "Back",
+  "gf.common.config.default": "Default: {}",
+  "gf.common.config.invalid": "Invalid value for {}",
+  "gf.common.config.need_op": "Only operators can change the configuration.",
+  "gf.common.config.need_player": "Run this as a player.",
+  "gf.common.config.off": "Off",
+  "gf.common.config.on": "On",
+  "gf.common.config.reset": "Reset to default",
+  "gf.common.config.unknown": "Unknown config section {}"
+}

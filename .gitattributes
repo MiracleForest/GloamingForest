@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.zip binary
+*.png binary
+*.tga binary
+*.ogg binary
+*.nbt binary
+*.dat binary
+*.mcworld binary

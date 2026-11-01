@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GloamingForest Test BP",
+    "description": "gf_test fixture content for the W0 selftests (development builds only)",
+    "uuid": "686dae96-3ee1-49ce-928e-7adf47ff5a35",
+    "version": "${version}",
+    "min_engine_version": [1, 21, 40]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "8ff0f3d7-a9a3-4da7-a404-e3e3008fb8bb",
+      "version": "${version}"
+    }
+  ]
+}
