@@ -14,7 +14,9 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
+#include "mc/legacy/ActorUniqueID.h"
 #include "mc/platform/UUID.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/server/SimulatedPlayer.h"
@@ -26,6 +28,7 @@
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/provider/SynchedActorDataAccess.h"
+#include "mc/util/VariantParameterList.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/actor/ActorHurtResult.h"
 #include "mc/world/actor/Mob.h"
@@ -1244,19 +1247,53 @@ GF_REGISTER_SELFTEST("combat.loot_slime_size", [](Context& ctx) -> ll::coro::Cor
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto* region = ctx.region();
     Vec3  at{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + .5f};
-    auto* small  = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:slime<minecraft:spawn_small>"), nullptr, at, false, false, false);
-    auto* medium = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:slime<minecraft:spawn_medium>"), nullptr, at, false, false, false);
-    auto* cow    = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:cow"), nullptr, at, false, false, false);
-    ctx.require(small && medium && cow, "a small and a medium slime and a cow");
+    // slimes are hostile: no spawning on peaceful (the difficulty comes back right after)
+    auto& level      = region->getLevel();
+    auto  difficulty = level.getDifficulty();
+    if (difficulty == SharedTypes::Legacy::Difficulty::Peaceful) level.setDifficulty(SharedTypes::Legacy::Difficulty::Easy);
+    auto* small  = level.getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft", "slime", "minecraft:spawn_small"), nullptr, at, false, false, false);
+    auto* medium = level.getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft", "slime", "minecraft:spawn_medium"), nullptr, at, false, false, false);
+    auto* cow    = level.getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:cow"), nullptr, at, false, false, false);
+    // the mobs go and the difficulty comes back at the end, whatever happens (a peaceful world
+    // removes hostile mobs: they are looked up by id)
+    auto idOf = [](Actor* a) { return a ? a->getOrCreateUniqueID().rawID : std::int64_t{0}; };
+    struct Restore {
+        Level&                          level;
+        SharedTypes::Legacy::Difficulty difficulty;
+        std::vector<std::int64_t>       ids;
+        ~Restore() {
+            for (auto raw : ids) {
+                ActorUniqueID id;
+                id.rawID = raw;
+                if (auto* a = raw ? level.fetchEntity(id, false) : nullptr) a->remove();
+            }
+            if (level.getDifficulty() != difficulty) level.setDifficulty(difficulty);
+        }
+    } restore{level, difficulty, {idOf(small), idOf(medium), idOf(cow)}};
+    ctx.require(small && medium && cow, std::string("a small and a medium slime and a cow (") + (small ? "small " : "") + (medium ? "medium " : "") + (cow ? "cow" : "") + ")");
+    // the slime's own size events (what its splitting runs)
+    auto sizeEvent = [](Actor& a, std::string const& size) {
+        VariantParameterList params{};
+        params.mSelf = &a;
+        return a.executeEvent("minecraft:spawn_" + size, params) || a.executeEvent("spawn_" + size, params);
+    };
+    ctx.require(sizeEvent(*small, "small") && sizeEvent(*medium, "medium"), "the slimes took their size events");
+    co_await ctx.ticks(2);
+    auto fetch = [&](std::int64_t raw) {
+        ActorUniqueID id;
+        id.rawID = raw;
+        return level.fetchEntity(id, false);
+    };
+    small  = static_cast<Mob*>(fetch(restore.ids[0]));
+    medium = static_cast<Mob*>(fetch(restore.ids[1]));
+    cow    = static_cast<Mob*>(fetch(restore.ids[2]));
+    ctx.require(small && medium && cow, "the mobs are still there");
     ctx.check(loot::slimeSize(*small) == 1 && loot::slimeSize(*medium) == 2, "the slime sizes are read from the variant (" + std::to_string(loot::slimeSize(*small)) + ", " + std::to_string(loot::slimeSize(*medium)) + ")");
     auto sizeOne = JsonT::parse(R"({"type_specific": {"type": "minecraft:slime", "size": 1}})");
     auto range   = JsonT::parse(R"({"type_specific": {"type": "minecraft:slime", "size": {"min": 2, "max": 4}}})");
     ctx.check(loot::entityMatches(small, sizeOne) && !loot::entityMatches(medium, sizeOne), "maze_slime's size 1 condition: only the small slime");
     ctx.check(!loot::entityMatches(small, range) && loot::entityMatches(medium, range), "a size range");
     ctx.check(!loot::entityMatches(cow, sizeOne), "a cow is no slime");
-    small->remove();
-    medium->remove();
-    cow->remove();
 });
 
 GF_REGISTER_SELFTEST("combat.loot_enchant", [](Context& ctx) {
@@ -1280,7 +1317,16 @@ GF_REGISTER_SELFTEST("combat.loot_enchant", [](Context& ctx) {
     }
     ctx.check(book != nullptr, "set_enchantments turns a book into an enchanted book even with level 0");
     ctx.require(sword != nullptr, "the sword dropped");
-    ctx.check(loot::enchantLevel(*sword, "minecraft:sharpness") == 0 && loot::enchantLevel(*sword, "minecraft:looting") == 2, "level 0 removes sharpness and keeps looting");
+    // the levels set first (before the removal)
+    loot::registerTable("gf_test:combat/enchant_set", JsonT::parse(R"({"pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:iron_sword","functions":[
+          {"function":"minecraft:set_enchantments","enchantments":{"minecraft:sharpness":3,"minecraft:looting":2}}]}]}]})"));
+    auto set = loot::roll("gf_test:combat/enchant_set", lc);
+    loot::registerTable("gf_test:combat/enchant_set", nullptr);
+    ctx.check(set.size() == 1 && loot::enchantLevel(set.front(), "minecraft:sharpness") == 3 && loot::enchantLevel(set.front(), "minecraft:looting") == 2,
+              "set_enchantments sets the levels (sharpness " + std::to_string(set.empty() ? -1 : loot::enchantLevel(set.front(), "minecraft:sharpness")) + ")");
+    ctx.check(loot::enchantLevel(*sword, "minecraft:sharpness") == 0 && loot::enchantLevel(*sword, "minecraft:looting") == 2,
+              "level 0 removes sharpness and keeps looting (sharpness " + std::to_string(loot::enchantLevel(*sword, "minecraft:sharpness")) + ", looting "
+                  + std::to_string(loot::enchantLevel(*sword, "minecraft:looting")) + ")");
     // enchant_with_levels / #minecraft:on_random_loot: Java's selection
     auto ironSword = items::make("minecraft:iron_sword", 1);
     auto bookStack = items::make("minecraft:book", 1);
@@ -1364,14 +1410,14 @@ GF_REGISTER_SELFTEST("combat.hurt_sound", [](Context& ctx) -> ll::coro::CoroTask
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto& sp     = ctx.spawnPlayer("gf_combat_hurt_sound");
     int   before = gf::combat::hurtSoundsReplaced();
-    gf::combat::hurt(sp, 1.f, "twilightforest:fiery"); // burning
-    ctx.check(gf::combat::hurtSoundsReplaced() == before + 1, "the game asked for the hurt sound and got the burning one");
+    gf::combat::hurt(sp, 1.f, "twilightforest:chilling_breath"); // freezing
+    ctx.check(gf::combat::hurtSoundsReplaced() == before + 1, "the Hurt event of the freezing damage carries the freezing cause (the client's freezing hurt sound)");
     co_await ctx.ticks(11); // the hurt cooldown
     auto* again = ll::service::getLevel()->getPlayer(sp.getOrCreateUniqueID());
     ctx.require(again != nullptr, "the player is still there");
     auto packets = gf::fx::counters().soundPackets;
     gf::combat::hurt(*again, 1.f, "twilightforest:clamped"); // TF's pinch
-    ctx.check(gf::combat::hurtSoundsReplaced() == before + 2, "the pinch silences the game's hurt sound");
+    ctx.check(gf::combat::hurtSoundsReplaced() == before + 1, "the pinch has no cause of its own: the event stays");
     if (!gf::fx::resolveSound("twilightforest:entity.twilightforest.pinch_beetle.attack").empty())
         ctx.check(gf::fx::counters().soundPackets > packets, "the pinch beetle's sound plays through fx");
     else ctx.info("the pinch beetle's sound is not in this build's resource pack (F3's audio): its packet is not checked");
@@ -1379,5 +1425,5 @@ GF_REGISTER_SELFTEST("combat.hurt_sound", [](Context& ctx) -> ll::coro::CoroTask
     again = ll::service::getLevel()->getPlayer(sp.getOrCreateUniqueID());
     ctx.require(again != nullptr, "the player is still there");
     gf::combat::hurt(*again, 1.f, "twilightforest:hydra_bite"); // "hurt": the game's own sound
-    ctx.check(gf::combat::hurtSoundsReplaced() == before + 2, "plain damage keeps the game's hurt sound");
+    ctx.check(gf::combat::hurtSoundsReplaced() == before + 1, "plain damage keeps the game's hurt sound");
 });

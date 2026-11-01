@@ -8,13 +8,13 @@
 #include <utility>
 #include <vector>
 
-#include "mc/deps/shared_types/legacy/LevelSoundEvent.h"
+
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 
 #include "feature/combat/Combat.h"
 
 class ActorDamageSource;
-class Mob;
+
 
 namespace gf::combat {
 
@@ -49,10 +49,11 @@ struct DamageTypeSpec {
 deathMessageFor(Actor& victim, std::string const& deadName, std::optional<SharedTypes::Legacy::ActorDamageCause> killingCause = std::nullopt);
 /// The Bedrock display name of an entity for a death message ("Steve", "%entity.zombie.name").
 [[nodiscard]] std::string nameParam(Actor& actor);
-/// The hurt sound that replaces the game's for the hurt of `mob` in progress (Player#getHurtSound
-/// of a damage type's DamageEffects), nullopt for the game's own.
-[[nodiscard]] std::optional<SharedTypes::Legacy::LevelSoundEvent> hurtSoundOverride(Mob const& mob);
-/// Hurt sounds replaced so far (selftests).
+/// The damage cause the Hurt actor event of `actor` carries instead of `data` (its hurt's cause)
+/// while a hurt with DamageEffects runs: the client plays that cause's player hurt sound
+/// (Player#getHurtSound); nullopt keeps the event as it is.
+[[nodiscard]] std::optional<int> hurtEventOverride(Actor const& actor, int data);
+/// Hurt events whose cause was set for a damage effect so far (selftests).
 [[nodiscard]] int hurtSoundsReplaced();
 
 } // namespace gf::combat

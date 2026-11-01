@@ -584,12 +584,20 @@ void setEnchantLevel(ItemStack& stack, std::string const& javaId, int level) {
         return;
     }
     auto type = static_cast<Enchant::Type>(t);
-    if (EnchantUtils::hasEnchant(type, stack)) {
-        // the others stay as they are
-        auto others = stack.constructItemEnchantsFromUserData().getAllEnchants();
+    if (EnchantUtils::getEnchantLevel(type, stack) > 0) {
+        // that enchantment leaves the stack, the others come back as they were
+        std::vector<EnchantmentInstance> others;
+        for (auto const& [javaId, other] : enchantMap()) {
+            if (other == type) continue;
+            if (int l = EnchantUtils::getEnchantLevel(other, stack); l > 0) {
+                EnchantmentInstance inst;
+                inst.mEnchantType = other;
+                inst.mLevel       = l;
+                others.push_back(inst);
+            }
+        }
         EnchantUtils::removeEnchants(stack);
-        for (auto const& inst : others)
-            if (inst.mEnchantType != type) EnchantUtils::applyEnchant(stack, inst, true);
+        for (auto const& inst : others) EnchantUtils::applyEnchant(stack, inst, true);
     }
     if (level <= 0) return;
     EnchantmentInstance inst;
@@ -1010,7 +1018,8 @@ ItemStack function(ItemStack stack, Json const& f, Eval& e) {
         // (clamped to 0..255, 0 removes), added to the current one with `add`
         transmuteBook(stack, true);
         bool add = f.value("add", false);
-        for (auto const& [ench, lv] : f.value("enchantments", Json::object()).items()) {
+        Json const enchantments = f.value("enchantments", Json::object()); // (items() of a temporary dangles)
+        for (auto const& [ench, lv] : enchantments.items()) {
             int level = numberInt(lv, e);
             if (add) level += enchantLevel(stack, withNs(ench));
             setEnchantLevel(stack, withNs(ench), level);
