@@ -1,7 +1,7 @@
 # Landmark (F6), client: the protection boxes and particles of a refused landmark interaction.
 # The selftest landmark.display builds the fixture landmark (a stone brick shell, protected like
 # TF's lich tower) in its test area and lets a simulated survival player without progress_naga try
-# its wall every 2 s for 12 s; this scenario brings the camera there and takes the screenshots.
+# its wall every 2 s for 24 s; this scenario brings the camera there and takes the screenshots.
 #   local          the client mod: twilightforest:protection_box entities (60 ticks, refreshed) and
 #                  the protection particles; the client also logs landmark.area_protection
 #   remote-mod     the same against BDS, the companion packet travels over the network

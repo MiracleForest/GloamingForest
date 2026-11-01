@@ -491,7 +491,8 @@ GF_REGISTER_SELFTEST("landmark.persist_2_read", [](Context& ctx) -> ll::coro::Co
 
 GF_REGISTER_SELFTEST("landmark.display", [](Context& ctx) -> ll::coro::CoroTask<> {
     // the client scenario looks at this area: the fixture landmark with its protection boxes shown
-    // for 12 seconds (every 2 s the simulated player tries the wall again, as a player would)
+    // for 24 seconds (every 2 s the simulated player tries the wall again, as a player would; the
+    // scenario needs two teleports and a platform before its two screenshots, slower on vanilla clients)
     auto area   = co_await ctx.flatArea(5680, 16);
     auto origin = ctx.testPos(5680);
     auto    center = at(origin, 8, 0, 8);
@@ -502,7 +503,7 @@ GF_REGISTER_SELFTEST("landmark.display", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.require(start.has_value() && start->generated, "the fixture landmark");
     gf::log().info("landmark.display: area at {} {} {}", center.x, center.y, center.z);
     co_await ctx.ticks(60); // time for the scenario to bring the camera
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 12; ++i) {
         (void)ctx.player();
         co_await ctx.ticks(1);
         auto& p = ctx.player();
