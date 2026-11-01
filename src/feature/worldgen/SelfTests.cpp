@@ -246,6 +246,9 @@ GF_REGISTER_SELFTEST("worldgen.biomes", [](Context& ctx) -> ll::coro::CoroTask<>
     chunk.setBiomeColumn(lx, lz, other);
     ctx.check(chunk.biome(lx, box.minY, lz) == other, "the column reads back " + other);
     ctx.check(chunk.biome(lx, bs->getMaxHeight() - 1, lz) == other, "the whole column is set");
+    ctx.check(chunk.biome(lx, bs->getMinHeight(), lz) == other && chunk.biome(lx, (bs->getMinHeight() + bs->getMaxHeight()) / 2, lz) == other,
+              "the bottom and the middle of the column too");
+    ctx.check(chunk.biome((lx + 1) & 15, box.minY, lz) == original, "the next column keeps its biome");
     chunk.setBiome(lx, box.minY + 4, lz, original);
     ctx.check(chunk.biome(lx, box.minY + 4, lz) == original, "a single block reads back");
     chunk.setBiomeColumn(lx, lz, original);
@@ -527,6 +530,8 @@ GF_REGISTER_SELFTEST("worldgen.spawn_rules", [](Context& ctx) {
     ctx.check(upper && upper->size() == 1 && (*upper)[0].entityId == "minecraft:zombie", "index 1 picks labelled list 1");
     gf::spawn::ext::registerSpawnIndex("gf_test:towers", [](gf::landmark::Start const&, BlockPos const&) { return -1; });
     ctx.check(!sd::controlledSpawnsOf(tower, td, BlockPos{5, 15, 5}, "monster"), "a registered index lookup wins (-1: no list)");
+    gf::spawn::ext::registerSpawnIndex("gf_test:towers", {}); // an empty function: back to the default lookup
+    ctx.check(sd::spawnIndexAt(tower, BlockPos{5, 7, 5}) == 1, "the default lookup again");
 
     // tableOf from several threads while tables are registered (no data race, the same result)
     std::atomic<int>         mismatches{0};

@@ -353,9 +353,10 @@ bool disk(FeatureContext const& c) {
     return flag;
 }
 
-/// Biome#getTemperature(pos) (height adjusted) of biome `id`, from its imported JSON.
-float biomeTemperature(std::string const& id, BlockPos const& pos) {
-    float       base = 0.8F;
+/// Biome#getTemperature(pos) (height adjusted) of biome `id`, from its imported JSON; a biome
+/// without JSON (vanilla) uses `engineBase`, the engine biome's own temperature.
+float biomeTemperature(std::string const& id, BlockPos const& pos, float engineBase) {
+    float       base = engineBase;
     auto const& biomes = data().biomes;
     if (auto it = biomes.find(id); it != biomes.end()) {
         base = it->second.value("temperature", 0.8F);
@@ -400,14 +401,16 @@ bool freezeTopLayer(FeatureContext const& c) {
             BlockPos m{k, i1, l};
             BlockPos m1{k, i1 - 1, l};
             // the biome of the top position m decides both (its temperature taken at m1 and m)
-            auto biome = c.region.biome(m);
+            auto  biome      = c.region.biome(m);
+            float engineBase = 0.8F;
+            if (auto* src = blockSource(c.region); src && m.y >= c.region.minY() && m.y < c.region.maxY()) engineBase = src->getBiome(m).mTemperature;
             // Biome#shouldFreeze(level, m1, false)
-            if (ice && biomeTemperature(biome, m1) < 0.15F && m1.y >= c.region.minY() && m1.y < c.region.maxY() && blockLight(c.region, m1) < 10
+            if (ice && biomeTemperature(biome, m1, engineBase) < 0.15F && m1.y >= c.region.minY() && m1.y < c.region.maxY() && blockLight(c.region, m1) < 10
                 && isWaterSource(c.region.getBlock(m1)))
                 c.region.setBlock(m1, *ice, 2);
             // Biome#shouldSnow(level, m); Java then sets the block below snowy, a state Bedrock's
             // grass / podzol / mycelium do not have (they render snowy from the snow above)
-            if (snow && biomeTemperature(biome, m) < 0.15F && m.y >= c.region.minY() && m.y < c.region.maxY() && blockLight(c.region, m) < 10) {
+            if (snow && biomeTemperature(biome, m, engineBase) < 0.15F && m.y >= c.region.minY() && m.y < c.region.maxY() && blockLight(c.region, m) < 10) {
                 auto const& here = c.region.getBlock(m);
                 if ((here.isAir() || javaId(here) == "minecraft:snow") && canSurvive(c.region, m, *snow)) c.region.setBlock(m, *snow, 2);
             }

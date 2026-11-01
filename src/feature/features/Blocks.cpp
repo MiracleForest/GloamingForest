@@ -8,6 +8,7 @@
 #include <fstream>
 #include <memory>
 #include <set>
+#include <shared_mutex>
 #include <unordered_map>
 
 #include "mc/world/level/BlockPos.h"
@@ -384,7 +385,7 @@ namespace detail {
 namespace {
 
 struct DataTags {
-    std::mutex                                                                         mutex;
+    std::shared_mutex                                                                  mutex; ///< shared: lookups, unique: loads
     std::uint64_t                                                                      generation = 0;
     std::unordered_map<std::string, std::shared_ptr<std::unordered_set<std::string> const>> sets;
 };
@@ -420,9 +421,15 @@ void readTag(std::filesystem::path const& root, std::string const& tag, std::uno
 } // namespace
 
 std::shared_ptr<std::unordered_set<std::string> const> dataBlockTag(std::string const& tag) {
-    auto&           t = dataTags();
-    auto            generation = data().generation;
-    std::lock_guard lock(t.mutex);
+    auto& t          = dataTags();
+    auto  generation = data().generation;
+    {
+        // the hot path (every tag query of every worker thread): a shared lock
+        std::shared_lock lock(t.mutex);
+        if (t.generation == generation)
+            if (auto it = t.sets.find(tag); it != t.sets.end()) return it->second;
+    }
+    std::unique_lock lock(t.mutex);
     if (t.generation != generation) {
         t.sets.clear();
         t.generation = generation;

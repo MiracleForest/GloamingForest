@@ -63,7 +63,8 @@ void LevelChunkAdapter::setBiome(int lx, int y, int lz, std::string const& biome
 void LevelChunkAdapter::setBiomeColumn(int lx, int lz, std::string const& biomeId) {
     auto const* b = engineBiome(mBiomes, biomeId);
     if (!b) return;
-    for (int y = mMinY; y < mMaxY; ++y) mChunk._setBiome(*b, cpos(lx & 15, y, lz & 15, mMinY), false);
+    // one call fills the whole column (fillYDimension); worldgen.biomes checks both ends
+    mChunk._setBiome(*b, cpos(lx & 15, mMinY, lz & 15, mMinY), true);
 }
 
 // ==== SourceRegionAdapter ===============================================================================

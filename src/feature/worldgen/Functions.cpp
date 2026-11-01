@@ -113,6 +113,7 @@ void runDevNewWorld(CommandOrigin const& origin, CommandOutput& output) {
     bool rule = gamerules::set("tfEnforcedProgression", false);
     gf::log().info("worldgen: dev_new_world: tfEnforcedProgression false ({})", rule ? "set" : "rule not registered");
     Actor* entity = origin.getEntity();
+    if (!rule) output.success("dev_new_world: the tfEnforcedProgression gamerule is not registered (not changed)");
     if (!entity) {
         // Java: `teleport ~ 128 ~` needs an entity; from the console only the rules change
         output.success("dev_new_world: no entity to teleport");
