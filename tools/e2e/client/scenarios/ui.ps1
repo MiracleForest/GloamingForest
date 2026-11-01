@@ -10,7 +10,7 @@
 #   <mode>-chest-skin.png, <mode>-chest-plain.png, <mode>-frame.png, <mode>-map.png,
 #   <mode>-map-frame.png, <mode>-head.png.
 # remote-vanilla: a vanilla client gets the form and the DDUI fallback of the fixture screen (no
-#   companion packets) and the skinned vanilla chest. Screenshots: out/ui/vanilla-form.png,
+#   companion packets) and the vanilla chests (plain titles). Screenshots: out/ui/vanilla-form.png,
 #   vanilla-ddui.png, vanilla-chest-skin.png, vanilla-chest-plain.png.
 # $env:GF_UI_SOFT = '1' turns the waits of the item, map and head steps into warnings (calibration
 # runs that should collect every screenshot).
@@ -37,10 +37,10 @@ function Invoke-UiTest([string]$name) {
     return $r
 }
 
-# The vanilla container skin: a vanilla chest titled with containerTitleSkin (the skin's texture
-# path, which the resource pack's chest JSON-UI draws), two blocks south of the player (the
-# selftest turns the player towards it), opened with a right click; then a plain chest at the same
-# place, which must keep the vanilla look. Screenshots: out/ui/<tag>-chest-skin.png,
+# The vanilla container fallback: a vanilla chest titled with containerTitleSkin (a plain title:
+# no JSON-UI route can skin one container on 1.26.51, spike S5), two blocks south of the player
+# (the selftest turns the player towards it), opened with a right click; then an unnamed chest at
+# the same place. Both keep the vanilla look. Screenshots: out/ui/<tag>-chest-skin.png,
 # <tag>-chest-plain.png.
 function Open-UiChest([string]$test, [string]$placed, [string]$shot) {
     $mark = Get-LogMark

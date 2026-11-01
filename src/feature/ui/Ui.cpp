@@ -3,9 +3,8 @@
 // - form: a LeviLamina SimpleForm (ModalFormRequestPacket), every client shows it;
 // - ddui: a Data-Driven UI custom form (LeviLamina ll::ui::CustomForm) built from a small JSON
 //   document, for vanilla clients that support DDUI;
-// - containerTitleSkin: the title "textures/gui/<id>": the resource pack's JSON-UI
-//   (ui/chest_screen.json) draws that texture under a vanilla chest's slots and the chest title is
-//   localised through the resource pack's texts (spike S5).
+// - containerTitleSkin: the plain title; the vanilla chest JSON-UI cannot pick a skin from a
+//   container title on 1.26.51 (spike S5, feature/ext/ui/Server.h).
 //
 // One log line per form shown / answered (e2e scenarios wait for them).
 
@@ -211,33 +210,19 @@ bool ddui(Player& player, std::string const& screenId, Json const& document, std
 
 // ---- container title skins -------------------------------------------------------------------------
 
-bool validSkinId(std::string_view skinId) {
-    if (skinId.empty() || skinId.front() == '/' || skinId.back() == '/') return false;
-    return std::all_of(skinId.begin(), skinId.end(), [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '/'; });
-}
-
-// The resource pack's ui/chest_screen.json draws the texture the title names and localises the
-// title (see feature/ext/ui/Server.h); an id that is no texture path keeps the plain title.
+// No JSON-UI route can skin one vanilla container on 1.26.51 (feature/ext/ui/Server.h, spike S5):
+// the plain title, one line per skin id for the record.
 std::string containerTitleSkin(std::string const& titleKey, std::string const& skinId) {
-    if (skinId.empty()) return titleKey;
-    if (!validSkinId(skinId)) {
+    if (!skinId.empty()) {
         static std::mutex                            m;
-        static std::unordered_map<std::string, bool> warned;
+        static std::unordered_map<std::string, bool> logged;
         std::lock_guard                              lock(m);
-        if (!warned[skinId]) {
-            warned[skinId] = true;
-            log().warn("ui: container skin id '{}' is not a texture path below textures/gui ([a-z0-9_/]): plain title", skinId);
+        if (!logged[skinId]) {
+            logged[skinId] = true;
+            log().info("ui: no JSON-UI container skin '{}' for vanilla clients (spike S5): plain title", skinId);
         }
-        return titleKey;
     }
-    return std::string(kSkinPrefix) + skinId;
-}
-
-TitleSkin parseTitleSkin(std::string const& title) {
-    if (!title.starts_with(kSkinPrefix)) return {"", title};
-    auto id = title.substr(kSkinPrefix.size());
-    if (!validSkinId(id)) return {"", title};
-    return {id, title};
+    return titleKey;
 }
 
 // ---- module: the DDUI documents of players who leave ----------------------------------------------

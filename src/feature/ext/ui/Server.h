@@ -33,29 +33,15 @@ void dispatchKey(Player& player, std::string const& id, bool down);
 
 namespace gf::ui {
 
-/// Container title skins for vanilla clients (spike S5). The vanilla chest screen gets its title as
-/// the `$container_title` variable: property values may use it, but `requires` expressions, view
-/// bindings and the `#title_text` binding see no title there on 1.26.51. So the title of a skinned
-/// container is the skin's texture path itself, "textures/gui/<skin id>" (kSkinPrefix + id):
-/// - the resource pack's `ui/chest_screen.json` draws an image whose texture is `$container_title`
-///   under the slots (texture pixels 0, 0 to 176 x 166 on the small chest, 176 x 220 on the large
-///   one; TF's GUI textures are 256 x 256 with the panel at the top left, as the skins of
-///   client::screen::ContainerScreen); any other title names no texture and draws nothing;
-/// - the chest title is always localised, so the resource pack's texts map the path to the shown
-///   title: the unit that owns a skin adds `textures/gui/<skin id>=<title>` to its
-///   `assets/pack/rp/texts.d/<locale>/<unit>.lang` (the text of the titleKey it passes).
-inline constexpr std::string_view kSkinPrefix = "textures/gui/";
-
-/// Whether `skinId` can be a skin: a texture path below textures/gui without extension, made of
-/// [a-z0-9_/] (e.g. "guigoblintinkering" or "ui/fixture_chest").
-[[nodiscard]] bool validSkinId(std::string_view skinId);
-
-/// What the resource pack's JSON-UI reads from a container title made by containerTitleSkin.
-struct TitleSkin {
-    std::string skinId; ///< "" when the title carries no skin
-    std::string title;  ///< the title as the client shows it before localisation (the whole title)
-};
-[[nodiscard]] TitleSkin parseTitleSkin(std::string const& title);
+/// Container title skins for vanilla clients do not exist on 1.26.51 (spike S5): containerTitleSkin
+/// returns `titleKey` and vanilla players see the vanilla container. The vanilla chest screen gets
+/// its title only as the `$container_title` variable, and only property values see it: `requires`
+/// expressions (on the panel and on the screen element: prefix, equality and substring tests are all
+/// false), view bindings (even ones over literals) and the `#title_text` binding see no title, and
+/// `ignored` does not take the screen's variables. An image whose texture is `$container_title`
+/// does draw a skin named by the title, but every other chest then shows the missing-texture
+/// colour, so no title can switch a skin on for one container only.
+inline constexpr bool kJsonUiSkins = false;
 
 /// DDUI documents waiting for an answer (tests). A document ends with its answer, when a newer
 /// document of the same screen replaces it or when its player disconnects.

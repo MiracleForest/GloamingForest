@@ -68,16 +68,10 @@ void standAndFace(Player& p, Facing const& f) {
 
 GF_REGISTER_SELFTEST("ui.title_skin", [](Context& ctx) {
     namespace ui = gf::ui;
-    // the title is the skin's texture path; the chest JSON-UI draws it and the RP texts name it (spike S5)
-    auto title = ui::containerTitleSkin("gf.ui.fixture.title", "ui/fixture_chest");
-    ctx.check(title == "textures/gui/ui/fixture_chest", "the title is the skin texture: " + title);
-    auto back = ui::parseTitleSkin(title);
-    ctx.check(back.skinId == "ui/fixture_chest" && back.title == title, "the skin reads back");
-    ctx.check(ui::containerTitleSkin("k", "") == "k", "no skin: the plain title");
-    ctx.check(ui::containerTitleSkin("k", "Bad Id") == "k" && ui::containerTitleSkin("k", "a.png") == "k" && ui::containerTitleSkin("k", "/abs") == "k", "ids that are no texture path keep the plain title");
-    ctx.check(ui::validSkinId("guigoblintinkering") && ui::validSkinId("ui/fixture_chest") && !ui::validSkinId(""), "texture paths below textures/gui");
-    ctx.check(ui::parseTitleSkin("container.chest").skinId.empty(), "plain titles carry no skin");
-    ctx.check(ui::parseTitleSkin("textures/gui/").skinId.empty() && ui::parseTitleSkin("textures/gui/A B").skinId.empty(), "no skin without a valid id");
+    // no JSON-UI route can skin a single vanilla container on 1.26.51 (spike S5): plain titles
+    static_assert(!ui::kJsonUiSkins);
+    ctx.check(ui::containerTitleSkin("GloamingForest UI fixture", "ui/fixture_container") == "GloamingForest UI fixture", "a skin keeps the plain title");
+    ctx.check(ui::containerTitleSkin("container.chest", "") == "container.chest", "no skin: the plain title");
 });
 
 GF_REGISTER_SELFTEST("ui.form_fallback", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -209,12 +203,12 @@ GF_REGISTER_SELFTEST("ui.fixture_fog", [](Context& ctx) {
     ctx.info("fixture fog shown to " + std::to_string(real) + " companion(s)");
 });
 
-// The vanilla container skin: a vanilla chest titled with containerTitleSkin, for every real player
-// two blocks south of its feet (the player is turned to it and the client scenario opens it), else
-// at the test position, where only the stored name is checked.
+// The vanilla container fallback: a vanilla chest titled with containerTitleSkin (the plain title,
+// spike S5), for every real player two blocks south of its feet (the player is turned to it and
+// the client scenario opens it), else at the test position, where only the stored name is checked.
 GF_REGISTER_SELFTEST("ui.fixture_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
-    auto title = gf::ui::containerTitleSkin(gf::tr("gf.ui.fixture.title", "GloamingForest UI fixture"), "ui/fixture_chest");
+    auto title = gf::ui::containerTitleSkin(gf::tr("gf.ui.fixture.title", "GloamingForest UI fixture"), "ui/fixture_container");
     int  real  = 0;
     for (auto* rp : fx::realPlayers()) {
         auto f = faceSouth(*rp, 0.5f); // the chest's middle
@@ -222,18 +216,17 @@ GF_REGISTER_SELFTEST("ui.fixture_chest", [](Context& ctx) -> ll::coro::CoroTask<
         ++real;
         standAndFace(*rp, f);
     }
-    ctx.info("skinned chest placed for " + std::to_string(real) + " real player(s)");
+    ctx.info("named chest placed for " + std::to_string(real) + " real player(s)");
     auto pos = ctx.testPos(6220);
     co_await ctx.ensureLoaded(pos);
     auto* region = ctx.region();
     ctx.require(region != nullptr, "a region");
     ctx.cleanupBlock(pos);
     ctx.require(fx::placeNamedChest(*region, gf::game::blockPos(pos), title), "the chest is placed and named");
-    ctx.check(fx::chestName(*region, gf::game::blockPos(pos)) == title, "the chest keeps the skinned title");
-    ctx.check(gf::ui::parseTitleSkin(fx::chestName(*region, gf::game::blockPos(pos))).skinId == "ui/fixture_chest", "the stored title carries the skin");
+    ctx.check(fx::chestName(*region, gf::game::blockPos(pos)) == title, "the chest keeps its title");
 });
 
-// A chest without a skin at the same place: the vanilla look stays (the skin image finds no texture).
+// A chest without a custom name at the same place (the client scenario compares the two).
 GF_REGISTER_SELFTEST("ui.fixture_chest_plain", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
     int real = 0;
@@ -250,7 +243,7 @@ GF_REGISTER_SELFTEST("ui.fixture_chest_plain", [](Context& ctx) -> ll::coro::Cor
     ctx.require(region != nullptr, "a region");
     ctx.cleanupBlock(pos);
     ctx.require(fx::placeNamedChest(*region, gf::game::blockPos(pos), ""), "the chest is placed");
-    ctx.check(gf::ui::parseTitleSkin(fx::chestName(*region, gf::game::blockPos(pos))).skinId.empty(), "a plain chest carries no skin");
+    ctx.check(fx::chestName(*region, gf::game::blockPos(pos)).empty(), "a plain chest has no custom name");
 });
 
 // ItemContext::Fixed: an item frame with the fixture item one block above a real player's feet, two

@@ -151,10 +151,13 @@ bool unregisterNative(std::string const& particleId);
 
 namespace gf::client::maps {
 /// Extra (TF) decorations drawn over map `mapId` with the icons of `setIcon`; replaces the
-/// previous list (an empty list removes it). Map pixels -128..127 as MapItemSavedData. Drawn after
-/// the game's map on held maps and maps in item frames (MapRenderer::render), as Java's MapRenderer:
-/// an 8 x 8 map pixel quad at (x / 2 + 64, z / 2 + 64) turned by rotation * 22.5 degrees; names
-/// below their icon.
+/// previous list (an empty list removes it). Map pixels -128..127 as MapItemSavedData. Drawn on top
+/// of held maps (first person) and maps in item frames, as Java's MapRenderer: an 8 x 8 map pixel
+/// quad at (x / 2 + 64, z / 2 + 64) turned by rotation * 22.5 degrees, in the map space the game
+/// uses when it looks the map up (MapRenderer::_getMapInstance inside the first-person pass, an
+/// item in hand or an item frame; MapRenderer::render itself cannot be hooked, spike S5).
+/// `Decoration::name` is kept (view()) but not drawn on the map: TF's map decorations
+/// (TFMagicMapData, TFMazeMapData) carry no names.
 void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations);
 /// The TF decorations of `mapId` (empty: none).
 [[nodiscard]] std::vector<Decoration> decorationsOf(std::int64_t mapId);
