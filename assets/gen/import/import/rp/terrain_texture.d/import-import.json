@@ -8,6 +8,9 @@
   "tf_block_mining_log_top": {
     "textures": "textures/twilightforest/block/mining_log_top"
   },
+  "tf_block_mosspatch": {
+    "textures": "textures/twilightforest/block/mosspatch"
+  },
   "tf_block_sorting_log_top": {
     "textures": "textures/twilightforest/block/sorting_log_top"
   },

@@ -145,6 +145,8 @@ namespace GfImport
                 string owner = OwnerOf("entity", full);
                 JEntity e;
                 if (!JEntities.TryGetValue(id, out e)) { Warn("entity " + id + " not found in TFEntities.java"); e = new JEntity { Id = id }; }
+                // TF registers a spawn egg only for the entities owners.tsv lists one for (make(..., 0, 0) has none)
+                e.HasEgg = OwnerOf("spawn_egg", full + "_spawn_egg") != null;
                 var comps = J.Obj();
                 var fam = J.Arr().Add("twilightforest").Add(id);
                 string cat = (e.Category ?? "MISC").ToLowerInvariant();

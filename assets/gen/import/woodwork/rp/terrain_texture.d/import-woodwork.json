@@ -23,9 +23,6 @@
   "tf_block_moss_overhang": {
     "textures": "textures/twilightforest/block/moss_overhang"
   },
-  "tf_block_mosspatch": {
-    "textures": "textures/twilightforest/block/mosspatch"
-  },
   "tf_block_snow_overhang": {
     "textures": "textures/twilightforest/block/snow_overhang"
   },

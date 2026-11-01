@@ -1,4 +1,7 @@
 {
+  "tf_block_aurora_block_0": {
+    "textures": "textures/twilightforest/block/aurora_block_0"
+  },
   "tf_block_aurora_pillar": {
     "textures": "textures/twilightforest/block/aurora_pillar"
   },

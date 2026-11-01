@@ -116,6 +116,15 @@ namespace GfImport
                 }
                 chain.Add(new KeyValuePair<string, J>(cur, j));
                 if (cur == "minecraft:item/generated" || cur == "minecraft:item/handheld") m.ItemGenerated = true;
+                string loader = j["loader"] != null ? j["loader"].AsString() : null;
+                // twilightforest:noise_varying picks one of its variant models per position: the first one stands for all
+                if (loader == "twilightforest:noise_varying" && j["variants"] != null && j["variants"].Count > 0) { cur = Norm(j["variants"].A[0].AsString()); continue; }
+                // twilightforest:patch draws a flat, randomly shaped patch of its texture on the ground: a 1-pixel layer
+                if (loader == "twilightforest:patch" && j["texture"] != null)
+                {
+                    chain.Add(new KeyValuePair<string, J>(cur + "#patch", J.Parse("{\"textures\": {\"texture\": \"" + j["texture"].AsString() + "\", \"particle\": \"#texture\"}, \"render_type\": \"minecraft:cutout\", \"elements\": [{\"from\": [0, 0, 0], \"to\": [16, 1, 16], \"faces\": {\"up\": {\"texture\": \"#texture\"}, \"down\": {\"texture\": \"#texture\"}}}]}")));
+                    break;
+                }
                 // separate_transforms: the base model carries the shape
                 if (j["loader"] != null && j["loader"].AsString() == "neoforge:separate_transforms" && j["base"] != null)
                 {

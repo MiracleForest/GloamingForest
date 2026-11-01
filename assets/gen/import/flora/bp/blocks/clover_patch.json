@@ -20,12 +20,20 @@
         "destroy_chance_modifier": 20
       },
       "minecraft:collision_box": false,
-      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.clover_patch",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_missing",
-          "render_method": "opaque"
+          "texture": "tf_block_cloverpatch",
+          "render_method": "alpha_test"
+        },
+        "texture": {
+          "texture": "tf_block_cloverpatch",
+          "render_method": "alpha_test"
         }
+      },
+      "minecraft:selection_box": {
+        "origin": [-8, 0, -8],
+        "size": [16, 1, 16]
       },
       "minecraft:light_dampening": 0
     }

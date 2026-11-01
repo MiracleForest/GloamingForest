@@ -12,11 +12,7 @@
       "geometry": {
         "default": "geometry.tf.skeleton.falling_ice"
       },
-      "render_controllers": ["controller.render.default"],
-      "spawn_egg": {
-        "base_color": "#000000",
-        "overlay_color": "#000000"
-      }
+      "render_controllers": ["controller.render.default"]
     }
   }
 }
