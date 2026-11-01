@@ -1,12 +1,13 @@
 // Block families (F11), client mod: the client side of the families.
 //
+// - The family registry for the client's own block types: the client builds its block types per
+//   world it joins (a remote server's blocks), so the registry publishes a new snapshot of them on
+//   every join (the server thread of a local world reads the snapshot it has meanwhile).
 // - Climbable family blocks (TF's climbable hollow logs, rope, iron ladder: BlockProperty::Climbable,
-//   like vanilla ladders) for the client's own movement: the client builds its block types per
-//   world it joins (a remote server's blocks), so the flag is set again on every join. Local worlds
-//   share the server's block types (src/feature/families/Module.cpp sets them too).
-// - Sign text: the server sends every sign's text to companions ("signs.text"); the client keeps
-//   it per position for the sign renderer (TF's SignRenderer / HangingSignRenderer equivalent),
-//   which needs world-space text drawing from the client render contract (client.render, F12).
+//   like vanilla ladders) for the client's own movement, set again on every join.
+// - Sign text: the server sends the signs of the chunks around the player ("signs.text"); the
+//   client keeps it per position (the text shows through the display entities every client sees;
+//   the native sign editor shows it, src/client/families/Screens.cpp).
 
 #ifdef GF_CLIENT
 
@@ -23,29 +24,32 @@
 #include "mod/Log.h"
 #include "mod/Module.h"
 
+namespace gf::feature::families::detail {
+void refreshTypes();
+} // namespace gf::feature::families::detail
+
 namespace gf::client::families {
 
 namespace fam = gf::feature::families;
 
-} // namespace gf::client::families
-namespace gf::feature::families::detail {
-void refreshTypes();
-} // namespace gf::feature::families::detail
-namespace gf::client::families {
-
-namespace {
-
+std::mutex& signMutex() {
+    static std::mutex m;
+    return m;
+}
 /// Sign text per position, as the server sent it ({"front": {...}, "back": {...}, "waxed"}).
 std::map<core::GlobalPos, nlohmann::json>& signTexts() {
     static std::map<core::GlobalPos, nlohmann::json> m;
     return m;
 }
 
+namespace {
+
 class ClientFamiliesModule {
 public:
     void load() {
         net::client::on("signs.text", [](nlohmann::json const& p) {
             core::GlobalPos pos{p.value("dim", 0), p.value("x", 0), p.value("y", 0), p.value("z", 0)};
+            std::lock_guard lock(signMutex());
             if (p.contains("sign") && p["sign"].is_object()) signTexts()[pos] = p["sign"];
             else signTexts().erase(pos);
         });
@@ -53,8 +57,11 @@ public:
 
     void install() {
         mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientJoinLevelEvent>([](ll::event::ClientJoinLevelEvent&) {
-            signTexts().clear();
-            fam::detail::refreshTypes(); // the joined world's own block types
+            {
+                std::lock_guard lock(signMutex());
+                signTexts().clear();
+            }
+            fam::detail::refreshTypes(); // the joined world's own block types (a new snapshot)
             fam::applyClimbable();
         });
     }

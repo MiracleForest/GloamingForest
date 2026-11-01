@@ -1,29 +1,45 @@
 -- GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+-- Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
+--   src/main/java/twilightforest/client/model/block/connected/ConnectionLogic.java
+--   src/main/java/twilightforest/client/model/block/connected/ConnectedTextureModel.java
+--   src/main/java/twilightforest/client/model/block/connected/UnbakedConnectedTextureModel.java
+--   src/main/java/twilightforest/block/WallPillarBlock.java
+--   src/main/java/twilightforest/block/ConnectableRotatedPillarBlock.java
+--   src/main/java/twilightforest/block/SnowLoggable.java
+--   src/main/java/twilightforest/client/renderer/block/TFChestRenderer.java
+--   src/main/java/twilightforest/client/event/ColorHandler.java
+--   src/main/java/twilightforest/util/woods/TFWoodTypes.java
+--   src/main/java/twilightforest/init/TFSoundTypes.java
+--   src/main/java/twilightforest/init/TFSounds.java
+--   src/main/java/twilightforest/init/TFBlocks.java
+-- Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+-- Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
+-- of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
+--
 -- Contract "families+blockevents" (F11): the assemble-time block family generator.
 --
--- About 400 TF blocks are plain variations of vanilla shapes (stairs, slabs, fences, doors, logs,
--- leaves, signs, chests, ...). Units declare them as data in assets/data/families/<u>.json
--- (assembled into data/gf/families/) and this module turns every entry into a Bedrock block
--- definition, after the packs are assembled:
+-- About 400 TF blocks are variations of vanilla shapes (stairs, slabs, fences, doors, logs,
+-- leaves, signs, chests, ...). Units declare them as data (assets/data/families/<u>.json; F1
+-- imports TF's as data/gf/families/<u>.json) and this module completes their Bedrock block
+-- definitions after the packs are assembled (the data schema: tools/families/README.md):
 --
---     [{"id": "twilightforest:canopy_stairs", "family": "stairs",
---       "params": {"base": "twilightforest:canopy_planks", "textures": "twilightforest_canopy_planks"}}]
---
--- * The BP definition of an id that a hand-made file defines (assets/pack/bp/**, assets/test/bp/**)
---   is kept: the manual layer wins. A generated skeleton (F1, assets/gen/import/<u>/bp/**) is
---   reshaped in place: its identifier, menu category and base components (mining, explosion,
---   map colour, loot, display name, flammability, light) are kept, the family adds the geometry,
---   material instances, collision, states, traits and permutations.
--- * Shared family geometries go to the RP (models/blocks/gf_families/*.geo.json), block sounds to
---   blocks.json (only ids without an entry), double slab loot tables to the BP.
--- * The fixture families of the selftests (tools/families/fixtures/*.json, gf_test:* ids) go to
---   the gf_test packs of development builds, with their fixture data in data/gf_test/families/.
---
--- The block state names are the schema the runtime (src/feature/families/Families.h) reads:
---   traits     minecraft:cardinal_direction, minecraft:block_face, minecraft:vertical_half,
---              minecraft:corner (stairs), minecraft:facing_direction
---   custom     twilightforest:<java property> as integers 0..n (rule: integer states list 0..n),
---              except the string enums type (chests) and lighting (lightable)
+-- * A hand-made BP file (assets/pack/bp/**, assets/test/bp/**) is kept: the manual layer wins.
+-- * An F1 skeleton (assets/gen/import/<u>/bp/blocks/<id>.json) keeps its states (frozen,
+--   docs/spec/blockstates.md: Java's properties as twilightforest:<p> with Java's values) and, for
+--   the families Java draws with block models, its geometry and permutations (F1 converts TF's
+--   models). The kit adds what the block does: collision and selection boxes per state (Java's
+--   getShape / getCollisionShape), redstone output, connection rules, liquid detection, light,
+--   tint, snow, block sounds, and the states it adds (rule R1: additions only).
+-- * The families Java draws with block entity renderers (signs, hanging signs, chests: F1 has a
+--   placeholder cube) and blocks without a skeleton (the gf_test fixtures, units' own blocks) get
+--   their model from here: block models converted as F1 does (Java block space, x mirrored into
+--   Bedrock's geometry), entity models (Java's ModelPart layouts, SignRenderer, HangingSignRenderer,
+--   ChestRenderer) turned into per-face UVs.
+-- * No placement traits: the runtime (src/feature/families) sets the states on placement as Java's
+--   getStateForPlacement does.
+-- * Extras: shared geometries (RP models/blocks/gf_families/), the sign text display entity,
+--   entity textures in terrain_texture.json, block sounds (blocks.json; TF's sound types as
+--   sounds.json block_sounds), double slab loot tables.
 --
 -- Entry points: generate(projectdir, outdir, opts) (tools/xmake/assemble.lua after the packs are
 -- built, or tools/families/run.lua on an assembled directory); families() for the checks.
@@ -33,14 +49,21 @@ import("core.base.json")
 local NS = "twilightforest:"
 local GEO_DIR = "models/blocks/gf_families"
 local FORMAT = "1.26.0"
+local GEO_FORMAT = "1.21.0"
+local SIGN_TEXT_ENTITY = "gloamingforest:sign_text"
 
-local DIRS = {"north", "east", "south", "west"}
+local FACES6 = {"down", "up", "north", "south", "west", "east"}
+local DIRS4 = {"north", "east", "south", "west"}
 local DX = {north = 0, east = 1, south = 0, west = -1, up = 0, down = 0}
+local DY = {north = 0, east = 0, south = 0, west = 0, up = 1, down = -1}
 local DZ = {north = -1, east = 0, south = 1, west = 0, up = 0, down = 0}
 local OPP = {north = "south", south = "north", east = "west", west = "east", up = "down", down = "up"}
-local CW = {north = "east", east = "south", south = "west", west = "north"}
 local CCW = {north = "west", west = "south", south = "east", east = "north"}
-local FACES6 = {"down", "up", "north", "south", "west", "east"}
+local D2 = {south = 0, west = 1, north = 2, east = 3} -- Java Direction.get2DDataValue
+-- Java blockstate y rotations (clockwise quarter turns) of a model that faces south, and the
+-- Bedrock transformation (counter-clockwise degrees) doing the same
+local QUARTERS = {south = 0, west = 1, north = 2, east = 3}
+local TURN = {south = 0, west = -90, north = 180, east = 90}
 
 -- ---- small helpers -------------------------------------------------------------------------------
 
@@ -70,22 +93,27 @@ local function ints(n) -- [0, 1, ..., n]
     return out
 end
 
+local function list(...) return arr({...}) end
+local function BOOL() return list(false, true) end
+
 local function q(state) return "q.block_state('" .. state .. "')" end
+-- one state value as Molang (booleans q / !q, strings == 'v', integers == n)
 local function is(state, v)
+    if type(v) == "boolean" then return v and q(state) or ("!" .. q(state)) end
     if type(v) == "string" then return q(state) .. " == '" .. v .. "'" end
-    if type(v) == "boolean" then v = v and 1 or 0 end
     return q(state) .. " == " .. tostring(v)
 end
 local function all(...)
     local parts = {}
-    for _, p in ipairs({...}) do if p and p ~= "" then table.insert(parts, "(" .. p .. ")") end end
+    for _, p in ipairs({...}) do if p and p ~= "" and p ~= true then table.insert(parts, "(" .. p .. ")") end end
     if #parts == 0 then return "1" end
     return table.concat(parts, " && ")
 end
-local function any(list)
+local function any(items)
     local parts = {}
-    for _, p in ipairs(list) do table.insert(parts, "(" .. p .. ")") end
+    for _, p in ipairs(items) do table.insert(parts, "(" .. p .. ")") end
     if #parts == 0 then return "0" end
+    if #parts == 1 then return items[1] end
     return table.concat(parts, " || ")
 end
 
@@ -93,67 +121,109 @@ local function try_json(file)
     return try { function () return json.loadfile(file) end }
 end
 
-local function norm(p) return (p:gsub("\\", "/")) end
+local function contains(t, v)
+    for _, x in ipairs(t or {}) do if x == v then return true end end
+    return false
+end
 
--- ---- geometry ------------------------------------------------------------------------------------
+-- ---- Java block space -> Bedrock geometry --------------------------------------------------------
+--
+-- Boxes are {x0, y0, z0, x1, y1, z1} in block pixels in Java's frame (x east, y up, z south).
+-- Bedrock's block geometry has x mirrored (its +x is west): a cube's origin is 8 - x1 (Blockbench
+-- and F1's converter do the same), face keys stay the world directions, the per-face UVs are Java's
+-- (up and down are flipped by Bedrock: their uv and uv_size are reversed), rotations become
+-- [-x, -y, z] about the mirrored pivot. Collision and selection boxes are not mirrored (x - 8).
 
--- Per-face UVs of a box (x0..x1, y0..y1, z0..z1 in block pixels) on a 16x16 texture: every face
--- shows the part of the texture it covers in the world (Java's default element UVs).
-local function face_uvs(b, mat, only)
+-- Java's default UV of a face of an element (BlockElement.uvsByFace): {u0, v0, u1, v1}
+local function face_rect(b, face)
     local x0, y0, z0, x1, y1, z1 = b[1], b[2], b[3], b[4], b[5], b[6]
-    local f = {
-        north = {uv = {16 - x1, 16 - y1}, uv_size = {x1 - x0, y1 - y0}},
-        south = {uv = {x0, 16 - y1}, uv_size = {x1 - x0, y1 - y0}},
-        east = {uv = {16 - z1, 16 - y1}, uv_size = {z1 - z0, y1 - y0}},
-        west = {uv = {z0, 16 - y1}, uv_size = {z1 - z0, y1 - y0}},
-        up = {uv = {x0, z0}, uv_size = {x1 - x0, z1 - z0}},
-        down = {uv = {x0, 16 - z1}, uv_size = {x1 - x0, z1 - z0}},
-    }
-    local out = {}
-    for name, uv in pairs(f) do
-        if not only or only[name] then
-            if mat then uv.material_instance = mat end
-            out[name] = uv
+    if face == "down" then return {x0, 16 - z1, x1, 16 - z0} end
+    if face == "up" then return {x0, z0, x1, z1} end
+    if face == "north" then return {16 - x1, 16 - y1, 16 - x0, 16 - y0} end
+    if face == "south" then return {x0, 16 - y1, x1, 16 - y0} end
+    if face == "west" then return {z0, 16 - y1, z1, 16 - y0} end
+    return {16 - z1, 16 - y1, 16 - z0, 16 - y0} -- east
+end
+
+local function bedrock_uv(face, r)
+    if face == "up" or face == "down" then
+        return {uv = {r[3], r[4]}, uv_size = {r[1] - r[3], r[2] - r[4]}}
+    end
+    return {uv = {r[1], r[2]}, uv_size = {r[3] - r[1], r[4] - r[2]}}
+end
+
+local function bedrock_rotation(axis, angle)
+    if axis == "x" then return {-angle, 0, 0} end
+    if axis == "y" then return {0, -angle, 0} end
+    return {0, 0, angle}
+end
+
+-- A Bedrock cube of the Java box b. opts: mat (material instance of every face), only (set of
+-- faces), faces ({face = {rect = {u0, v0, u1, v1}, mat = name}}: explicit UVs; with
+-- faces_only, the other faces are left out), rot ({axis, angle, origin, rescale}: Java's element
+-- rotation, angle in degrees counter-clockwise about the axis).
+local function cube(b, opts)
+    opts = opts or {}
+    local box = {b[1], b[2], b[3], b[4], b[5], b[6]}
+    local r = opts.rot
+    if r and r.rescale then
+        -- Java BlockElementRotation.rescale: stretch the two other axes by 1 / cos(angle)
+        local s = 1 / math.cos(math.rad(math.abs(r.angle)))
+        for k, ax in ipairs({"x", "y", "z"}) do
+            if ax ~= r.axis then
+                box[k] = r.origin[k] + (box[k] - r.origin[k]) * s
+                box[k + 3] = r.origin[k] + (box[k + 3] - r.origin[k]) * s
+            end
         end
     end
-    return out
-end
-
--- A cube of the box b = {x0, y0, z0, x1, y1, z1} (pixels, world aligned).
-local function cube(b, mat, only)
-    return {origin = {b[1] - 8, b[2], b[3] - 8}, size = {b[4] - b[1], b[5] - b[2], b[6] - b[3]}, uv = face_uvs(b, mat, only)}
-end
-
--- A cube with Java's box UV layout (entity textures: chests, signs) at texture offset (u, v).
-local function box_cube(b, u, v, mirror)
-    local c = {origin = {b[1] - 8, b[2], b[3] - 8}, size = {b[4] - b[1], b[5] - b[2], b[6] - b[3]}, uv = {u, v}}
-    if mirror then c.mirror = true end
+    local c = {origin = {8 - box[4], box[2], box[3] - 8}, size = {box[4] - box[1], box[5] - box[2], box[6] - box[3]}, uv = {}}
+    for _, f in ipairs(FACES6) do
+        local spec = opts.faces and opts.faces[f]
+        if (not opts.only or opts.only[f]) and (spec or not opts.faces_only) then
+            local u = bedrock_uv(f, spec and spec.rect or face_rect(b, f))
+            local m = spec and spec.mat or opts.mat
+            if m then u.material_instance = m end
+            c.uv[f] = u
+        end
+    end
+    if r then
+        c.pivot = {8 - r.origin[1], r.origin[2], r.origin[3] - 8}
+        c.rotation = bedrock_rotation(r.axis, r.angle)
+    end
     return c
 end
 
-local function bone(name, cubes, pivot)
-    return {name = name, pivot = pivot or {0, 0, 0}, cubes = arr(cubes)}
+local function bone(name, cubes, opts)
+    opts = opts or {}
+    local b = {name = name, pivot = opts.pivot or {0, 0, 0}, cubes = arr(cubes)}
+    if opts.rotation then b.rotation = opts.rotation end
+    return b
 end
 
 local function geo_doc(id, bones, tw, th)
     return {
-        format_version = "1.16.0",
+        format_version = GEO_FORMAT,
         ["minecraft:geometry"] = arr({{
             description = {
                 identifier = id, texture_width = tw or 16, texture_height = th or 16,
-                visible_bounds_width = 3, visible_bounds_height = 3, visible_bounds_offset = {0, 0.5, 0},
+                visible_bounds_width = 3, visible_bounds_height = 3, visible_bounds_offset = {0, 0.75, 0},
             },
             bones = arr(bones),
         }}),
     }
 end
 
--- A box as a collision / selection box component.
+-- A box as a collision / selection box component (world aligned; Bedrock caps the height at 16).
 local function cbox(b)
     return {origin = {b[1] - 8, b[2], b[3] - 8}, size = {b[4] - b[1], math.min(b[5], 16) - b[2], b[6] - b[3]}}
 end
-
--- the bounding box of several boxes
+local function cboxes(boxes)
+    if #boxes == 0 then return false end
+    if #boxes == 1 then return cbox(boxes[1]) end
+    local out = arr({})
+    for _, b in ipairs(boxes) do table.insert(out, cbox(b)) end
+    return out
+end
 local function bounds(boxes)
     local o = {16, 16, 16, 0, 0, 0}
     for _, b in ipairs(boxes) do
@@ -163,30 +233,296 @@ local function bounds(boxes)
     return o
 end
 
--- rotate a box (pixels) clockwise about the vertical axis seen from above, `n` quarter turns:
--- north -> east -> south -> west
+-- rotate a Java box clockwise (seen from above) about the block centre, n quarter turns:
+-- north -> east -> south -> west (Java blockstate "y": 90)
 local function rot_y(b, n)
     n = n % 4
-    for _ = 1, n do
-        -- (x, z) -> (16 - z, x)
-        b = {16 - b[6], b[2], b[1], 16 - b[3], b[5], b[4]}
-    end
+    for _ = 1, n do b = {16 - b[6], b[2], b[1], 16 - b[3], b[5], b[4]} end
     return b
 end
-local QUARTERS = {north = 0, east = 1, south = 2, west = 3}
 
--- ---- textures ------------------------------------------------------------------------------------
+-- ---- Java ModelPart (block entity renderers) -----------------------------------------------------
+--
+-- Affine maps of block pixels: {m11, m12, m13, m21, m22, m23, m31, m32, m33, tx, ty, tz}.
 
--- params.textures (string or {"*", up, down, north, south, east, west, side, end, top, bottom, ...})
--- merged over the textures of the skeleton definition (its material instances).
+local function mat3(a, b, c, d, e, f, g, h, i, tx, ty, tz) return {a, b, c, d, e, f, g, h, i, tx or 0, ty or 0, tz or 0} end
+local function mmul(A, B)
+    local r = {}
+    for i = 0, 2 do
+        for j = 0, 2 do
+            local s = 0
+            for k = 0, 2 do s = s + A[i * 3 + k + 1] * B[k * 3 + j + 1] end
+            r[i * 3 + j + 1] = s
+        end
+    end
+    for i = 0, 2 do
+        local s = A[10 + i]
+        for k = 0, 2 do s = s + A[i * 3 + k + 1] * B[10 + k] end
+        r[10 + i] = s
+    end
+    return r
+end
+local function mapply(A, p)
+    return {A[1] * p[1] + A[2] * p[2] + A[3] * p[3] + A[10], A[4] * p[1] + A[5] * p[2] + A[6] * p[3] + A[11], A[7] * p[1] + A[8] * p[2] + A[9] * p[3] + A[12]}
+end
+local function mtrans(x, y, z) return mat3(1, 0, 0, 0, 1, 0, 0, 0, 1, x, y, z) end
+local function mscale(x, y, z) return mat3(x, 0, 0, 0, y, 0, 0, 0, z) end
+local function cos_sin(deg)
+    local r = deg % 360
+    if r == 0 then return 1, 0 elseif r == 90 then return 0, 1 elseif r == 180 then return -1, 0 elseif r == 270 then return 0, -1 end
+    return math.cos(math.rad(deg)), math.sin(math.rad(deg))
+end
+-- right-handed rotation (Java Axis.XP / YP / ZP.rotationDegrees)
+local function mrot(axis, deg)
+    local c, s = cos_sin(deg)
+    if axis == "x" then return mat3(1, 0, 0, 0, c, -s, 0, s, c) end
+    if axis == "y" then return mat3(c, 0, s, 0, 1, 0, -s, 0, c) end
+    return mat3(c, -s, 0, s, c, 0, 0, 0, 1)
+end
+local function mdet(A)
+    return A[1] * (A[5] * A[9] - A[6] * A[8]) - A[2] * (A[4] * A[9] - A[6] * A[7]) + A[3] * (A[4] * A[8] - A[5] * A[7])
+end
+local function mmulall(...)
+    local out = mat3(1, 0, 0, 0, 1, 0, 0, 0, 1)
+    for _, m in ipairs({...}) do out = mmul(out, m) end
+    return out
+end
+
+-- Java ModelPart.Cube: the faces of a box (origin x0 y0 z0, size dx dy dz) with the texture at
+-- (u, v), each a quad of {p = vertex, uv = {u, v}} (Polygon: vertex 1 gets (u2, v1), 2 (u1, v1),
+-- 3 (u1, v2), 4 (u2, v2)).
+local function modelpart_faces(x0, y0, z0, dx, dy, dz, u, v)
+    local x1, y1, z1 = x0 + dx, y0 + dy, z0 + dz
+    local v7, v0, v1, v2 = {x0, y0, z0}, {x1, y0, z0}, {x1, y1, z0}, {x0, y1, z0}
+    local v3, v4, v5, v6 = {x0, y0, z1}, {x1, y0, z1}, {x1, y1, z1}, {x0, y1, z1}
+    local f4, f5, f6, f7 = u, u + dz, u + dz + dx, u + dz + dx + dx
+    local f8, f9 = u + dz + dx + dz, u + dz + dx + dz + dx
+    local f10, f11, f12 = v, v + dz, v + dz + dy
+    local function poly(normal, vs, u1, vv1, u2, vv2)
+        return {normal = normal, {p = vs[1], uv = {u2, vv1}}, {p = vs[2], uv = {u1, vv1}}, {p = vs[3], uv = {u1, vv2}}, {p = vs[4], uv = {u2, vv2}}}
+    end
+    return {
+        poly({0, -1, 0}, {v4, v3, v7, v0}, f5, f10, f6, f11),
+        poly({0, 1, 0}, {v1, v2, v6, v5}, f6, f11, f7, f10),
+        poly({-1, 0, 0}, {v7, v3, v6, v2}, f4, f11, f5, f12),
+        poly({0, 0, -1}, {v0, v7, v2, v1}, f5, f11, f6, f12),
+        poly({1, 0, 0}, {v4, v0, v1, v5}, f6, f11, f8, f12),
+        poly({0, 0, 1}, {v3, v4, v5, v6}, f8, f11, f9, f12),
+    }
+end
+
+-- The block-model corners of a world face: {left / top selector}: for each world face, which
+-- vertex is the top-left (u0, v0) and which the bottom-right (u1, v1) of Java's face UVs.
+local function face_corners(face, lo, hi)
+    -- returns predicates on a vertex p for top-left and bottom-right
+    local function eq(a, b) return math.abs(a - b) < 1e-6 end
+    if face == "north" then return function (p) return eq(p[1], hi[1]) and eq(p[2], hi[2]) end, function (p) return eq(p[1], lo[1]) and eq(p[2], lo[2]) end end
+    if face == "south" then return function (p) return eq(p[1], lo[1]) and eq(p[2], hi[2]) end, function (p) return eq(p[1], hi[1]) and eq(p[2], lo[2]) end end
+    if face == "west" then return function (p) return eq(p[3], lo[3]) and eq(p[2], hi[2]) end, function (p) return eq(p[3], hi[3]) and eq(p[2], lo[2]) end end
+    if face == "east" then return function (p) return eq(p[3], hi[3]) and eq(p[2], hi[2]) end, function (p) return eq(p[3], lo[3]) and eq(p[2], lo[2]) end end
+    if face == "up" then return function (p) return eq(p[1], lo[1]) and eq(p[3], lo[3]) end, function (p) return eq(p[1], hi[1]) and eq(p[3], hi[3]) end end
+    return function (p) return eq(p[1], lo[1]) and eq(p[3], hi[3]) end, function (p) return eq(p[1], hi[1]) and eq(p[3], lo[3]) end -- down
+end
+
+-- Bedrock cubes of ModelPart parts drawn through `static` (block pixels; it must keep the axes,
+-- e.g. Java's scale(f, -f, -f)). A part: {box = {x0, y0, z0, dx, dy, dz}, uv = {u, v}, offset =
+-- {x, y, z}, rot = {axis, degrees}} (Java's PartPose: offset and one rotation, which becomes the
+-- cube's rotation about the part's pivot).
+local function part_cubes(parts, static, mat)
+    local out = {}
+    for _, part in ipairs(parts) do
+        local o = part.offset or {0, 0, 0}
+        local m = mmul(static, mtrans(o[1], o[2], o[3]))
+        local b = part.box
+        local polys = modelpart_faces(b[1], b[2], b[3], b[4], b[5], b[6], part.uv[1], part.uv[2])
+        -- world corners
+        local lo, hi = {math.huge, math.huge, math.huge}, {-math.huge, -math.huge, -math.huge}
+        local world = {}
+        for i, poly in ipairs(polys) do
+            -- the world face: the polygon's normal through the map (Java's Polygon.normal)
+            local n = poly.normal
+            local w = {m[1] * n[1] + m[2] * n[2] + m[3] * n[3], m[4] * n[1] + m[5] * n[2] + m[6] * n[3], m[7] * n[1] + m[8] * n[2] + m[9] * n[3]}
+            local face
+            for k, names in ipairs({{"west", "east"}, {"down", "up"}, {"north", "south"}}) do
+                if math.abs(w[k]) > 1e-6 then face = w[k] < 0 and names[1] or names[2] end
+            end
+            world[i] = {face = face}
+            for j, vx in ipairs(poly) do
+                local p = mapply(m, vx.p)
+                world[i][j] = {p = p, uv = vx.uv}
+                for k = 1, 3 do lo[k] = math.min(lo[k], p[k]); hi[k] = math.max(hi[k], p[k]) end
+            end
+        end
+        local faces = {}
+        for _, quad in ipairs(world) do
+            local face = quad.face
+            -- a face without area (the sides of a flat chain) is not drawn
+            local area = true
+            if face == "west" or face == "east" then area = hi[2] - lo[2] > 1e-6 and hi[3] - lo[3] > 1e-6
+            elseif face == "down" or face == "up" then area = hi[1] - lo[1] > 1e-6 and hi[3] - lo[3] > 1e-6
+            else area = hi[1] - lo[1] > 1e-6 and hi[2] - lo[2] > 1e-6 end
+            if face and area and not faces[face] then
+                local tl, br = face_corners(face, lo, hi)
+                local a, z
+                for _, vx in ipairs(quad) do
+                    if tl(vx.p) then a = vx end
+                    if br(vx.p) then z = vx end
+                end
+                if a and z then faces[face] = {rect = {a.uv[1], a.uv[2], z.uv[1], z.uv[2]}, mat = mat} end
+            end
+        end
+        local opts = {faces = faces, faces_only = true}
+        if part.rot then
+            -- the part's rotation in the world: conjugated by the static map (axis and handedness)
+            local ax = ({x = {1, 0, 0}, y = {0, 1, 0}, z = {0, 0, 1}})[part.rot[1]]
+            local w = {m[1] * ax[1] + m[2] * ax[2] + m[3] * ax[3], m[4] * ax[1] + m[5] * ax[2] + m[6] * ax[3], m[7] * ax[1] + m[8] * ax[2] + m[9] * ax[3]}
+            local k, s = 1, 1
+            for i = 1, 3 do if math.abs(w[i]) > 1e-6 then k, s = i, (w[i] > 0 and 1 or -1) end end
+            local det = mdet(m) > 0 and 1 or -1
+            local pivot = mapply(m, {0, 0, 0})
+            opts.rot = {axis = ({"x", "y", "z"})[k], angle = part.rot[2] * s * det, origin = pivot}
+        end
+        table.insert(out, cube({lo[1], lo[2], lo[3], hi[1], hi[2], hi[3]}, opts))
+    end
+    return out
+end
+
+-- ---- TF's data (generator side) ------------------------------------------------------------------
+
+-- TFChestRenderer: the chest texture folder of each chest block
+local CHEST_TEXTURE_DIRS = {
+    twilight_oak = "twilight", canopy = "canopy", mangrove = "mangrove", dark = "darkwood",
+    time = "time", transformation = "transformation", mining = "mining", sorting = "sorting",
+}
+
+-- TFSoundTypes.JAR (TFSounds block.twilightforest.jar.*) and the blocks of that type (TFBlocks)
+local SOUND_TYPES = {
+    ["twilightforest.jar"] = {volume = 1.0, pitch = 1.0, prefix = "block.twilightforest.jar."},
+}
+local SOUND_TYPE_BLOCKS = {
+    ["twilightforest:mason_jar"] = "twilightforest.jar", ["twilightforest:firefly_jar"] = "twilightforest.jar",
+    ["twilightforest:firefly_particle_spawner"] = "twilightforest.jar", ["twilightforest:cicada_jar"] = "twilightforest.jar",
+}
+
+-- ColorHandler: the leaves Bedrock can tint (biome foliage, the fixed evergreen colour); time,
+-- transformation, mining and sorting leaves get per-position colours (the client mod's tint)
+local LEAF_TINTS = {
+    ["twilightforest:twilight_oak_leaves"] = "default_foliage", ["twilightforest:dark_leaves"] = "default_foliage",
+    ["twilightforest:canopy_leaves"] = "default_foliage", ["twilightforest:mangrove_leaves"] = "default_foliage",
+    ["twilightforest:rainbow_oak_leaves"] = "default_foliage", ["twilightforest:beanstalk_leaves"] = "evergreen_foliage",
+    ["twilightforest:thorn_leaves"] = "evergreen_foliage",
+}
+
+-- The wood of a sign / chest (TFWoodTypes names: twilight_oak, canopy, mangrove, dark, time,
+-- transformation, mining, sorting): params.wood, F1's woodType ("canopy_wood_type"), or the id.
+local function wood_of(e)
+    local p = e.params
+    if type(p.wood) == "string" then return p.wood end
+    if type(p.woodType) == "string" then
+        local w = p.woodType:gsub("_wood_type$", ""):gsub("_wood_set$", ""):gsub("_set$", "")
+        return w
+    end
+    local name = e.id:match(":(.+)$") or e.id
+    for _, suffix in ipairs({"_wall_hanging_sign", "_hanging_sign", "_wall_sign", "_sign", "_trapped_chest", "_chest"}) do
+        if name:sub(-#suffix) == suffix then return name:sub(1, #name - #suffix) end
+    end
+    return name
+end
+
+-- ---- families: states, visuals, behaviour --------------------------------------------------------
+
+local WALL_SIDE = {"none", "low", "tall"}
+local STAIR_SHAPES = {"straight", "inner_left", "inner_right", "outer_left", "outer_right"}
+local FACING4 = {"north", "south", "west", "east"}
+local FACING6 = {"north", "south", "west", "east", "up", "down"}
+local AXES = {"y", "x", "z"}
+
+local function sides(values) -- the four horizontal sides as states
+    return {{"east", values}, {"north", values}, {"south", values}, {"west", values}}
+end
+
+-- Java's properties of each family (docs/spec/blockstates.md), plus the states the kit adds.
+local FAMILY_STATES = {
+    stairs = {{"facing", FACING4}, {"half", {"bottom", "top"}}, {"shape", STAIR_SHAPES}},
+    slab = {{"type", {"bottom", "top", "double"}}},
+    fence = sides("bool"), pane = sides("bool"),
+    wall = {{"east", WALL_SIDE}, {"north", WALL_SIDE}, {"south", WALL_SIDE}, {"up", "bool"}, {"west", WALL_SIDE}},
+    fence_gate = {{"facing", FACING4}, {"in_wall", "bool"}, {"open", "bool"}, {"powered", "bool"}},
+    door = {{"facing", FACING4}, {"half", {"lower", "upper"}}, {"hinge", {"left", "right"}}, {"open", "bool"}, {"powered", "bool"}},
+    trapdoor = {{"facing", FACING4}, {"half", {"bottom", "top"}}, {"open", "bool"}, {"powered", "bool"}},
+    button = {{"face", {"wall", "floor", "ceiling"}}, {"facing", FACING4}, {"powered", "bool"}},
+    pressure_plate = {{"powered", "bool"}},
+    pillar = {{"axis", AXES}}, log = {{"axis", AXES}}, wood = {{"axis", AXES}},
+    leaves = {{"distance", 7}, {"persistent", "bool"}},
+    sapling = {{"stage", 1}},
+    sign = {{"rotation", 15}},
+    wall_sign = {{"facing", FACING4}},
+    hanging_sign = {{"attached", "bool"}, {"rotation", 15}},
+    wall_hanging_sign = {{"facing", FACING4}},
+    chest = {{"facing", FACING4}, {"type", {"single", "left", "right"}}, {"open_count", 15}},
+    trapped_chest = {{"facing", FACING4}, {"type", {"single", "left", "right"}}, {"open_count", 15}},
+    horizontal = {{"facing", FACING4}},
+    directional = {{"facing", FACING6}},
+    binary_rotated = {{"rotated", "bool"}},
+    wall_pillar = {{"axis", AXES}, {"down", "bool"}, {"east", "bool"}, {"north", "bool"}, {"south", "bool"}, {"up", "bool"}, {"west", "bool"}},
+    connectable_pillar = {{"axis", AXES}, {"down", "bool"}, {"east", "bool"}, {"north", "bool"}, {"south", "bool"}, {"up", "bool"}, {"west", "bool"}},
+    connected_texture = {{"down", "bool"}, {"east", "bool"}, {"north", "bool"}, {"south", "bool"}, {"up", "bool"}, {"west", "bool"}},
+}
+
+-- Families Java draws with block entity renderers: the kit makes their model even over a skeleton.
+local ENTITY_MODEL = {sign = true, wall_sign = true, hanging_sign = true, wall_hanging_sign = true, chest = true, trapped_chest = true, connected_texture = true}
+
+local function state_values(spec)
+    if spec == "bool" then return BOOL() end
+    if type(spec) == "number" then return ints(spec) end
+    return arr(copy(spec))
+end
+
+local function block_of(doc) return doc["minecraft:block"] end
+local function comps(doc) return block_of(doc).components end
+local function states_of(doc) return block_of(doc).description.states or {} end
+
+-- adds a state unless the block has it (a skeleton's states are frozen)
+local function ensure_state(doc, name, values)
+    local d = block_of(doc).description
+    d.states = d.states or {}
+    if d.states[name] == nil then d.states[name] = values end
+end
+local function has_state(doc, name) return states_of(doc)[name] ~= nil end
+
+local function perm(doc, condition, components)
+    block_of(doc).permutations = block_of(doc).permutations or arr({})
+    table.insert(block_of(doc).permutations, {condition = condition, components = components})
+end
+
+local function geometry(doc, id, vis)
+    if vis then
+        comps(doc)["minecraft:geometry"] = {identifier = id, bone_visibility = vis}
+    else
+        comps(doc)["minecraft:geometry"] = id
+    end
+end
+
+local function mat(texture, method, extra)
+    local m = {texture = texture, render_method = method or "opaque"}
+    if extra then for k, v in pairs(extra) do m[k] = v end end
+    return m
+end
+
+-- The textures of an entry: params.textures (string or {key = texture}) over the skeleton's
+-- material instances (base and permutations: F1 names them after Java's texture variables).
 local function textures_of(entry, skeleton)
     local t = {}
-    local mi = skeleton and skeleton["minecraft:block"] and skeleton["minecraft:block"].components
-        and skeleton["minecraft:block"].components["minecraft:material_instances"]
-    if type(mi) == "table" then
+    local function scan(mi)
+        if type(mi) ~= "table" then return end
         for k, v in pairs(mi) do
-            if type(v) == "table" and type(v.texture) == "string" then t[k] = v.texture end
+            if type(v) == "table" and type(v.texture) == "string" and t[k] == nil then t[k] = v.texture end
         end
+    end
+    local b = skeleton and skeleton["minecraft:block"]
+    if b then
+        scan(b.components and b.components["minecraft:material_instances"])
+        for _, p in ipairs(b.permutations or {}) do scan(p.components and p.components["minecraft:material_instances"]) end
     end
     local p = entry.params.textures
     if type(p) == "string" then
@@ -201,83 +537,8 @@ local function tex(t, ...)
     for _, k in ipairs({...}) do
         if t[k] then return t[k] end
     end
-    return t["*"] or t.side or t.up or "missing"
+    return t["*"] or t.side or t.texture or t.up or "missing"
 end
-
-local function mat(texture, method, extra)
-    local m = {texture = texture, render_method = method or "opaque"}
-    if extra then for k, v in pairs(extra) do m[k] = v end end
-    return m
-end
-
--- ---- block documents -----------------------------------------------------------------------------
-
-local KEEP = {
-    "minecraft:destructible_by_mining", "minecraft:destructible_by_explosion", "minecraft:map_color",
-    "minecraft:loot", "minecraft:display_name", "minecraft:flammable", "minecraft:light_emission",
-    "minecraft:friction", "minecraft:crafting_table", "minecraft:destruction_particles",
-}
-
--- The starting document of `entry`: the skeleton's base components, or the params / defaults.
-local function base_doc(entry, skeleton, basedoc)
-    local id = entry.id
-    local p = entry.params
-    local comps = {}
-    local src = skeleton or basedoc
-    local scomps = src and src["minecraft:block"] and src["minecraft:block"].components or {}
-    for _, k in ipairs(KEEP) do
-        if scomps[k] ~= nil then comps[k] = copy(scomps[k]) end
-    end
-    for k, v in pairs(scomps) do
-        if type(k) == "string" and k:match("^tag:") then comps[k] = copy(v) end
-    end
-    if skeleton == nil and basedoc ~= nil then comps["minecraft:loot"] = nil end -- the base block's loot is not ours
-    if p.hardness then comps["minecraft:destructible_by_mining"] = {seconds_to_destroy = p.hardness} end
-    if p.resistance then comps["minecraft:destructible_by_explosion"] = {explosion_resistance = p.resistance} end
-    if p.map_color then comps["minecraft:map_color"] = p.map_color end
-    if p.light then comps["minecraft:light_emission"] = p.light end
-    if p.loot then comps["minecraft:loot"] = p.loot end
-    if p.tool then comps["tag:minecraft:is_" .. p.tool .. "_item_destructible"] = {} end
-    if comps["minecraft:destructible_by_mining"] == nil then comps["minecraft:destructible_by_mining"] = {seconds_to_destroy = 1} end
-    local desc = {identifier = id}
-    local sdesc = skeleton and skeleton["minecraft:block"] and skeleton["minecraft:block"].description
-    desc.menu_category = (sdesc and copy(sdesc.menu_category)) or p.menu_category or {category = "construction"}
-    return {
-        format_version = FORMAT,
-        ["minecraft:block"] = {description = desc, components = comps, permutations = arr({})},
-    }
-end
-
-local function block_of(doc) return doc["minecraft:block"] end
-local function add_state(doc, name, values)
-    local d = block_of(doc).description
-    d.states = d.states or {}
-    d.states[name] = values
-end
-local function add_trait(doc, name, value)
-    local d = block_of(doc).description
-    d.traits = d.traits or {}
-    d.traits[name] = value
-end
-local function perm(doc, condition, components)
-    table.insert(block_of(doc).permutations, {condition = condition, components = components})
-end
-local function comps(doc) return block_of(doc).components end
-
-local function geometry(doc, id, vis)
-    if vis then
-        comps(doc)["minecraft:geometry"] = {identifier = id, bone_visibility = vis}
-    else
-        comps(doc)["minecraft:geometry"] = id
-    end
-end
-
--- ---- families ------------------------------------------------------------------------------------
---
--- Each builder fills `doc` for `entry` (textures `t`) and registers the geometries it needs in
--- `ctx.geos`. `ctx.all` lists every entry by family (stairs corner with each other).
-
-local builders = {}
 
 local function full_block(doc, t, method, extra)
     geometry(doc, "minecraft:geometry.full_block")
@@ -292,758 +553,821 @@ local function full_block(doc, t, method, extra)
     }
 end
 
-builders.cube = function (doc, e, t) full_block(doc, t, e.params.render_method) end
-
--- stairs (Java StairBlock): minecraft:vertical_half + minecraft:corner_and_cardinal_direction; the
--- game keeps the corner shape. Geometry: two slab halves and eight quarters (Levitate's layout).
-local QUARTER_POS = {nw = {0, 0}, ne = {8, 0}, sw = {0, 8}, se = {8, 8}}
-local CORNERS = {
-    none = {{1, 1}, {1, -1}}, inner_left = {{1, 1}, {1, -1}, {-1, 1}}, inner_right = {{1, 1}, {1, -1}, {-1, -1}},
-    outer_left = {{1, 1}}, outer_right = {{1, -1}},
-}
-local function quarter(dir, back, left)
-    local x = back * DX[dir] + left * DX[CCW[dir]]
-    local z = back * DZ[dir] + left * DZ[CCW[dir]]
-    return (z < 0 and "n" or "s") .. (x < 0 and "w" or "e")
-end
-
-local function stairs_geo(ctx)
-    local id = "geometry.gf_families.stairs"
-    if not ctx.geos[id] then
-        local bones = {bone("slab_bottom", {cube({0, 0, 0, 16, 8, 16})}), bone("slab_top", {cube({0, 8, 0, 16, 16, 16})})}
-        for _, qn in ipairs({"nw", "ne", "sw", "se"}) do
-            local p = QUARTER_POS[qn]
-            table.insert(bones, bone("upper_" .. qn, {cube({p[1], 8, p[2], p[1] + 8, 16, p[2] + 8})}))
-            table.insert(bones, bone("lower_" .. qn, {cube({p[1], 0, p[2], p[1] + 8, 8, p[2] + 8})}))
-        end
-        ctx.geos[id] = geo_doc(id, bones)
-    end
+-- shared geometries
+local function geo(ctx, id, make)
+    if not ctx.geos[id] then ctx.geos[id] = make() end
     return id
 end
 
-builders.stairs = function (doc, e, t, ctx)
-    local g = stairs_geo(ctx)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "side"), e.params.render_method)}
-    geometry(doc, g)
-    comps(doc)["minecraft:selection_box"] = cbox({0, 0, 0, 16, 16, 16})
-    local corner_with = arr({})
-    for _, other in ipairs(ctx.all.stairs or {}) do table.insert(corner_with, other) end
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:corner_and_cardinal_direction"}), blocks_to_corner_with = corner_with})
-    add_trait(doc, "minecraft:placement_position", {enabled_states = arr({"minecraft:vertical_half"})})
+-- box faces with top / bottom / side material instances (stairs, slabs)
+local function tbs(b) return cube(b, {faces = {
+    up = {rect = face_rect(b, "up"), mat = "top"}, down = {rect = face_rect(b, "down"), mat = "bottom"},
+    north = {rect = face_rect(b, "north"), mat = "side"}, south = {rect = face_rect(b, "south"), mat = "side"},
+    west = {rect = face_rect(b, "west"), mat = "side"}, east = {rect = face_rect(b, "east"), mat = "side"}}}) end
+
+local function tbs_materials(t, method)
+    return {
+        ["*"] = mat(tex(t, "side", "*"), method), side = mat(tex(t, "side", "*"), method),
+        top = mat(tex(t, "top", "up", "end", "*"), method), bottom = mat(tex(t, "bottom", "down", "end", "top", "*"), method),
+    }
+end
+
+local visual, behaviour = {}, {}
+
+-- stairs (Java StairBlock): facing / half / shape; the runtime keeps the shape (getStairsShape).
+-- Shapes: the half slab and quarters, StairBlock.SHAPE_BY_STATE (bits nw 1, ne 2, sw 4, se 8 by
+-- shape * 4 + facing.get2DDataValue).
+local STAIR_BITS = {12, 5, 3, 10, 14, 13, 7, 11, 13, 7, 11, 14, 8, 4, 1, 2, 4, 1, 2, 8}
+local QUARTER = {nw = {1, 0, 0}, ne = {2, 8, 0}, sw = {4, 0, 8}, se = {8, 8, 8}}
+local function stair_pairs(bit) -- the (facing, shape) pairs whose step has quarter `bit`
+    local out = {}
+    for si, shape in ipairs(STAIR_SHAPES) do
+        for _, f in ipairs(FACING4) do
+            if (STAIR_BITS[(si - 1) * 4 + D2[f] + 1] & bit) ~= 0 then table.insert(out, {f, shape}) end
+        end
+    end
+    return out
+end
+local function stair_cond(pairs)
+    local parts = {}
+    for _, p in ipairs(pairs) do table.insert(parts, all(is(NS .. "facing", p[1]), is(NS .. "shape", p[2]))) end
+    return any(parts)
+end
+visual.stairs = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.stairs", function ()
+        local bones = {bone("slab_bottom", {tbs({0, 0, 0, 16, 8, 16})}), bone("slab_top", {tbs({0, 8, 0, 16, 16, 16})})}
+        for _, qn in ipairs({"nw", "ne", "sw", "se"}) do
+            local p = QUARTER[qn]
+            table.insert(bones, bone("upper_" .. qn, {tbs({p[2], 8, p[3], p[2] + 8, 16, p[3] + 8})}))
+            table.insert(bones, bone("lower_" .. qn, {tbs({p[2], 0, p[3], p[2] + 8, 8, p[3] + 8})}))
+        end
+        return geo_doc("geometry.gf_families.stairs", bones)
+    end)
+    local vis = {slab_bottom = is(NS .. "half", "bottom"), slab_top = is(NS .. "half", "top")}
+    for qn, p in pairs(QUARTER) do
+        local c = stair_cond(stair_pairs(p[1]))
+        vis["upper_" .. qn] = all(is(NS .. "half", "bottom"), c)
+        vis["lower_" .. qn] = all(is(NS .. "half", "top"), c)
+    end
+    geometry(doc, g, vis)
+    comps(doc)["minecraft:material_instances"] = tbs_materials(t, e.params.render_method)
+end
+behaviour.stairs = function (doc)
     for _, half in ipairs({"bottom", "top"}) do
-        for _, dir in ipairs(DIRS) do
-            for _, corner in ipairs({"none", "inner_left", "inner_right", "outer_left", "outer_right"}) do
-                local vis = {slab_bottom = half == "bottom", slab_top = half == "top"}
-                for qn, _ in pairs(QUARTER_POS) do vis["upper_" .. qn] = false; vis["lower_" .. qn] = false end
-                local boxes = {half == "bottom" and {0, 0, 0, 16, 8, 16} or {0, 8, 0, 16, 16, 16}}
-                for _, bl in ipairs(CORNERS[corner]) do
-                    local qn = quarter(dir, bl[1], bl[2])
-                    local level = half == "bottom" and "upper" or "lower"
-                    vis[level .. "_" .. qn] = true
-                    local p = QUARTER_POS[qn]
+        local by_mask = {}
+        for si, shape in ipairs(STAIR_SHAPES) do
+            for _, f in ipairs(FACING4) do
+                local m = STAIR_BITS[(si - 1) * 4 + D2[f] + 1]
+                by_mask[m] = by_mask[m] or {}
+                table.insert(by_mask[m], {f, shape})
+            end
+        end
+        for _, m in ipairs(sorted_keys(by_mask)) do
+            local boxes = {half == "bottom" and {0, 0, 0, 16, 8, 16} or {0, 8, 0, 16, 16, 16}}
+            for _, p in pairs(QUARTER) do
+                if (m & p[1]) ~= 0 then
                     local y0 = half == "bottom" and 8 or 0
-                    table.insert(boxes, {p[1], y0, p[2], p[1] + 8, y0 + 8, p[2] + 8})
+                    table.insert(boxes, {p[2], y0, p[3], p[2] + 8, y0 + 8, p[3] + 8})
                 end
-                local cboxes = arr({})
-                for _, b in ipairs(boxes) do table.insert(cboxes, cbox(b)) end
-                perm(doc, all(is("minecraft:vertical_half", half), is("minecraft:cardinal_direction", dir), is("minecraft:corner", corner)),
-                    {["minecraft:geometry"] = {identifier = g, bone_visibility = vis}, ["minecraft:collision_box"] = cboxes})
             end
+            perm(doc, all(is(NS .. "half", half), stair_cond(by_mask[m])),
+                {["minecraft:collision_box"] = cboxes(boxes), ["minecraft:selection_box"] = true})
         end
     end
 end
 
--- slab (Java SlabBlock): minecraft:vertical_half + twilightforest:double; the double slab is a
--- full block that drops two (its own loot table).
-builders.slab = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.slab"
-    ctx.geos[g] = ctx.geos[g] or geo_doc(g, {bone("bottom", {cube({0, 0, 0, 16, 8, 16})}), bone("top", {cube({0, 8, 0, 16, 16, 16})})})
-    local side, top = tex(t, "side", "*"), tex(t, "up", "top", "end", "*")
-    local m = e.params.render_method
-    geometry(doc, g, {bottom = is("minecraft:vertical_half", "bottom"), top = is("minecraft:vertical_half", "top")})
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(side, m), up = mat(top, m), down = mat(tex(t, "down", "bottom", "end", "up", "*"), m)}
-    comps(doc)["minecraft:collision_box"] = cbox({0, 0, 0, 16, 8, 16})
-    comps(doc)["minecraft:selection_box"] = cbox({0, 0, 0, 16, 8, 16})
-    add_state(doc, NS .. "double", ints(1))
-    add_trait(doc, "minecraft:placement_position", {enabled_states = arr({"minecraft:vertical_half"})})
-    perm(doc, all(is("minecraft:vertical_half", "top"), is(NS .. "double", 0)),
-        {["minecraft:collision_box"] = cbox({0, 8, 0, 16, 16, 16}), ["minecraft:selection_box"] = cbox({0, 8, 0, 16, 16, 16})})
-    local double = {
-        ["minecraft:geometry"] = "minecraft:geometry.full_block",
-        ["minecraft:collision_box"] = true, ["minecraft:selection_box"] = true,
-        ["minecraft:material_instances"] = {["*"] = mat(tex(t, "double_side", "side", "*"), m), up = mat(top, m), down = mat(tex(t, "down", "bottom", "end", "up", "*"), m)},
-    }
+-- slab (Java SlabBlock): type bottom / top / double; the double slab drops two.
+visual.slab = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.slab", function ()
+        return geo_doc("geometry.gf_families.slab", {bone("bottom", {tbs({0, 0, 0, 16, 8, 16})}), bone("top", {tbs({0, 8, 0, 16, 16, 16})})})
+    end)
+    geometry(doc, g, {bottom = any({is(NS .. "type", "bottom"), is(NS .. "type", "double")}), top = any({is(NS .. "type", "top"), is(NS .. "type", "double")})})
+    comps(doc)["minecraft:material_instances"] = tbs_materials(t, e.params.render_method)
+end
+behaviour.slab = function (doc, e, ctx)
+    perm(doc, is(NS .. "type", "bottom"), {["minecraft:collision_box"] = cbox({0, 0, 0, 16, 8, 16}), ["minecraft:selection_box"] = cbox({0, 0, 0, 16, 8, 16})})
+    perm(doc, is(NS .. "type", "top"), {["minecraft:collision_box"] = cbox({0, 8, 0, 16, 16, 16}), ["minecraft:selection_box"] = cbox({0, 8, 0, 16, 16, 16})})
+    local double = {["minecraft:collision_box"] = true, ["minecraft:selection_box"] = true}
     if ctx.loot_double then double["minecraft:loot"] = ctx.loot_double(e) end
-    perm(doc, is(NS .. "double", 1), double)
+    perm(doc, is(NS .. "type", "double"), double)
 end
 
--- fence (Java FenceBlock): twilightforest:north/east/south/west, kept by the runtime with Java's
--- connection rules (src/feature/families/Shapes.cpp).
-builders.fence = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.fence"
-    if not ctx.geos[g] then
-        ctx.geos[g] = geo_doc(g, {
-            bone("post", {cube({6, 0, 6, 10, 16, 10})}),
-            bone("north", {cube({7, 12, 0, 9, 15, 6}), cube({7, 6, 0, 9, 9, 6})}),
-            bone("south", {cube({7, 12, 10, 9, 15, 16}), cube({7, 6, 10, 9, 9, 16})}),
-            bone("west", {cube({0, 12, 7, 6, 15, 9}), cube({0, 6, 7, 6, 9, 9})}),
-            bone("east", {cube({10, 12, 7, 16, 15, 9}), cube({10, 6, 7, 16, 9, 9})}),
-        })
-    end
-    local vis = {post = true}
-    for _, d in ipairs(DIRS) do
-        add_state(doc, NS .. d, ints(1))
-        vis[d] = is(NS .. d, 1)
-    end
-    geometry(doc, g, vis)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "side"), e.params.render_method)}
-    -- Java's collision: the post and arms, 4 px wide (24 px high: the runtime's collision hook)
+-- fence (Java FenceBlock / CrossCollisionBlock(2, 2, 16, 16, 24)) and pane (IronBarsBlock(1, 1,
+-- 16, 16, 16)): north / east / south / west connections, kept by the runtime.
+local function cross_shapes(node, ext, height)
+    local f, f1, f2, f3 = 8 - node, 8 + node, 8 - ext, 8 + ext
+    return {f, 0, f, f1, height, f1}, {
+        north = {f2, 0, 0, f3, height, f3}, south = {f2, 0, f2, f3, height, 16},
+        west = {0, 0, f2, f3, height, f3}, east = {f2, 0, f2, 16, height, f3},
+    }
+end
+local function cross_behaviour(doc, node, ext)
+    local post, arms = cross_shapes(node, ext, 16)
     for mask = 0, 15 do
-        local boxes = {{6, 0, 6, 10, 16, 10}}
-        local cond = {}
-        for i, d in ipairs(DIRS) do
+        local boxes, cond = {post}, {}
+        for i, d in ipairs(DIRS4) do
             local on = (mask >> (i - 1)) & 1 == 1
-            table.insert(cond, is(NS .. d, on and 1 or 0))
-            if on then
-                local arm = ({north = {6, 0, 0, 10, 16, 6}, south = {6, 0, 10, 10, 16, 16}, west = {0, 0, 6, 6, 16, 10}, east = {10, 0, 6, 16, 16, 10}})[d]
-                table.insert(boxes, arm)
-            end
+            table.insert(cond, is(NS .. d, on))
+            if on then table.insert(boxes, arms[d]) end
         end
-        local cb = arr({})
-        for _, b in ipairs(boxes) do table.insert(cb, cbox(b)) end
-        perm(doc, all(table.unpack(cond)), {["minecraft:collision_box"] = cb, ["minecraft:selection_box"] = cbox(bounds(boxes))})
+        perm(doc, all(table.unpack(cond)), {["minecraft:collision_box"] = cboxes(boxes), ["minecraft:selection_box"] = cbox(bounds(boxes))})
     end
+    -- vanilla fences, walls and panes connect to these (Bedrock's connection rule)
+    comps(doc)["minecraft:connection_rule"] = {accepts_connections_from = node == 2 and "only_fences" or "all", enabled_directions = arr({"north", "east", "south", "west"})}
 end
-
--- pane (Java IronBarsBlock): post and arms 2 px thick.
-builders.pane = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.pane"
-    if not ctx.geos[g] then
-        ctx.geos[g] = geo_doc(g, {
-            bone("post", {cube({7, 0, 7, 9, 16, 9})}),
-            bone("north", {cube({7, 0, 0, 9, 16, 7})}),
-            bone("south", {cube({7, 0, 9, 9, 16, 16})}),
-            bone("west", {cube({0, 0, 7, 7, 16, 9})}),
-            bone("east", {cube({9, 0, 7, 16, 16, 9})}),
-        })
-    end
+visual.fence = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.fence", function ()
+        -- Java fence_post and fence_side (north, turned with uvlock for the others)
+        local bones = {bone("post", {cube({6, 0, 6, 10, 16, 10})})}
+        for _, d in ipairs(DIRS4) do
+            local n = ({north = 0, east = 1, south = 2, west = 3})[d]
+            table.insert(bones, bone(d, {cube(rot_y({7, 12, 0, 9, 15, 9}, n)), cube(rot_y({7, 6, 0, 9, 9, 9}, n))}))
+        end
+        return geo_doc("geometry.gf_families.fence", bones)
+    end)
     local vis = {post = true}
-    for _, d in ipairs(DIRS) do
-        add_state(doc, NS .. d, ints(1))
-        vis[d] = is(NS .. d, 1)
-    end
+    for _, d in ipairs(DIRS4) do vis[d] = is(NS .. d, true) end
     geometry(doc, g, vis)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "side"), e.params.render_method or "blend")}
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "texture", "side"), e.params.render_method)}
+end
+behaviour.fence = function (doc) cross_behaviour(doc, 2, 2) end
+visual.pane = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.pane", function ()
+        local bones = {bone("post", {cube({7, 0, 7, 9, 16, 9})})}
+        for _, d in ipairs(DIRS4) do
+            local n = ({north = 0, east = 1, south = 2, west = 3})[d]
+            table.insert(bones, bone(d, {cube(rot_y({7, 0, 0, 9, 16, 7}, n))}))
+        end
+        return geo_doc("geometry.gf_families.pane", bones)
+    end)
+    local vis = {post = true}
+    for _, d in ipairs(DIRS4) do vis[d] = is(NS .. d, true) end
+    geometry(doc, g, vis)
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "pane", "side"), e.params.render_method or "blend")}
+end
+behaviour.pane = function (doc)
+    cross_behaviour(doc, 1, 1)
     comps(doc)["minecraft:light_dampening"] = 0
-    for mask = 0, 15 do
-        local boxes = {{7, 0, 7, 9, 16, 9}}
-        local cond = {}
-        for i, d in ipairs(DIRS) do
-            local on = (mask >> (i - 1)) & 1 == 1
-            table.insert(cond, is(NS .. d, on and 1 or 0))
-            if on then
-                table.insert(boxes, ({north = {7, 0, 0, 9, 16, 9}, south = {7, 0, 7, 9, 16, 16}, west = {0, 0, 7, 9, 16, 9}, east = {7, 0, 7, 16, 16, 9}})[d])
-            end
-        end
-        local cb = arr({})
-        for _, b in ipairs(boxes) do table.insert(cb, cbox(b)) end
-        perm(doc, all(table.unpack(cond)), {["minecraft:collision_box"] = cb, ["minecraft:selection_box"] = cbox(bounds(boxes))})
-    end
 end
 
--- wall (Java WallBlock): twilightforest:up and twilightforest:<dir>_wall (0 none, 1 low, 2 tall),
--- kept by the runtime.
-builders.wall = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.wall"
-    local sides = {north = {5, 0, 0, 11, 14, 8}, south = {5, 0, 8, 11, 14, 16}, west = {0, 0, 5, 8, 14, 11}, east = {8, 0, 5, 16, 14, 11}}
-    if not ctx.geos[g] then
+-- wall (Java WallBlock: makeShapes(4, 3, 16, 0, 14, 16), collision 24): up, and north / east /
+-- south / west none / low / tall, kept by the runtime.
+local WALL_LOW = {north = {5, 0, 0, 11, 14, 11}, south = {5, 0, 5, 11, 14, 16}, west = {0, 0, 5, 11, 14, 11}, east = {5, 0, 5, 16, 14, 11}}
+visual.wall = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.wall", function ()
         local bones = {bone("post", {cube({4, 0, 4, 12, 16, 12})})}
-        for _, d in ipairs(DIRS) do
-            local b = sides[d]
-            table.insert(bones, bone(d .. "_low", {cube(b)}))
-            table.insert(bones, bone(d .. "_tall", {cube({b[1], b[2], b[3], b[4], 16, b[6]})}))
+        for _, d in ipairs(DIRS4) do
+            local n = ({north = 0, east = 1, south = 2, west = 3})[d]
+            -- Java template_wall_side / template_wall_side_tall
+            table.insert(bones, bone(d .. "_low", {cube(rot_y({5, 0, 0, 11, 14, 8}, n))}))
+            table.insert(bones, bone(d .. "_tall", {cube(rot_y({5, 0, 0, 11, 16, 8}, n))}))
         end
-        ctx.geos[g] = geo_doc(g, bones)
-    end
-    add_state(doc, NS .. "up", ints(1))
-    local vis = {post = is(NS .. "up", 1)}
-    for _, d in ipairs(DIRS) do
-        add_state(doc, NS .. d .. "_wall", ints(2))
-        vis[d .. "_low"] = is(NS .. d .. "_wall", 1)
-        vis[d .. "_tall"] = is(NS .. d .. "_wall", 2)
+        return geo_doc("geometry.gf_families.wall", bones)
+    end)
+    local vis = {post = is(NS .. "up", true)}
+    for _, d in ipairs(DIRS4) do
+        vis[d .. "_low"] = is(NS .. d, "low")
+        vis[d .. "_tall"] = is(NS .. d, "tall")
     end
     geometry(doc, g, vis)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "side"), e.params.render_method)}
-    -- collision (Java: 24 px high, the runtime's collision hook; the JSON boxes cap at 16)
-    for up = 0, 1 do
-        for mask = 0, 15 do
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "wall", "side"), e.params.render_method)}
+end
+behaviour.wall = function (doc)
+    for _, up in ipairs({false, true}) do
+        for mask = 0, 80 do
             local boxes, cond = {}, {is(NS .. "up", up)}
-            if up == 1 or mask == 0 then table.insert(boxes, {4, 0, 4, 12, 16, 12}) end
-            local conn = {}
-            for i, d in ipairs(DIRS) do
-                local on = (mask >> (i - 1)) & 1 == 1
-                conn[d] = on
-                table.insert(cond, on and (q(NS .. d .. "_wall") .. " > 0") or is(NS .. d .. "_wall", 0))
-                if on then
-                    local b = sides[d]
-                    table.insert(boxes, {b[1], 0, b[3], b[4], 16, b[6]})
+            if up then table.insert(boxes, {4, 0, 4, 12, 16, 12}) end
+            local m = mask
+            for _, d in ipairs(DIRS4) do
+                local v = WALL_SIDE[m % 3 + 1]
+                m = m // 3
+                table.insert(cond, is(NS .. d, v))
+                if v ~= "none" then
+                    local b = WALL_LOW[d]
+                    table.insert(boxes, {b[1], b[2], b[3], b[4], v == "tall" and 16 or 14, b[6]})
                 end
             end
-            local cb = arr({})
-            for _, b in ipairs(boxes) do table.insert(cb, cbox(b)) end
-            perm(doc, all(table.unpack(cond)), {["minecraft:collision_box"] = cb, ["minecraft:selection_box"] = cbox(bounds(boxes))})
+            local sel = #boxes > 0 and cbox(bounds(boxes)) or cbox({4, 0, 4, 12, 16, 12})
+            perm(doc, all(table.unpack(cond)), {["minecraft:collision_box"] = cboxes(boxes), ["minecraft:selection_box"] = sel})
         end
     end
+    comps(doc)["minecraft:connection_rule"] = {accepts_connections_from = "all", enabled_directions = arr({"north", "east", "south", "west"})}
 end
 
--- fence gate (Java FenceGateBlock): minecraft:cardinal_direction (Java's facing), twilightforest:
--- open / in_wall / powered. Bones per orientation (world aligned, so the collision matches).
-local function gate_bones(suffix, dy)
-    local function sh(b) return {b[1], b[2] - dy, b[3], b[4], b[5] - dy, b[6]} end
-    -- facing north / south: posts on x, the leaves across x when closed
-    local posts_z = {cube(sh({0, 5, 7, 2, 16, 9})), cube(sh({14, 5, 7, 16, 16, 9}))}
-    local closed_z = {cube(sh({6, 6, 7, 8, 15, 9})), cube(sh({2, 6, 7, 6, 9, 9})), cube(sh({2, 12, 7, 6, 15, 9})),
-        cube(sh({8, 6, 7, 10, 15, 9})), cube(sh({10, 6, 7, 14, 9, 9})), cube(sh({10, 12, 7, 14, 15, 9}))}
-    local function open_leaves(towards) -- leaves swung towards +z (south) or -z (north)
-        local function l(x0, x1)
-            if towards == "south" then
-                return {cube(sh({x0, 6, 13, x1, 15, 15})), cube(sh({x0, 6, 9, x1, 9, 13})), cube(sh({x0, 12, 9, x1, 15, 13}))}
+-- fence gate (Java FenceGateBlock): facing / open / in_wall / powered. Java's template_fence_gate
+-- and its open / wall variants, turned by the facing (blockstate y with uvlock).
+local GATE_CLOSED = {{0, 5, 7, 2, 16, 9}, {14, 5, 7, 16, 16, 9}, {6, 6, 7, 8, 15, 9}, {8, 6, 7, 10, 15, 9},
+    {2, 6, 7, 6, 9, 9}, {2, 12, 7, 6, 15, 9}, {10, 6, 7, 14, 9, 9}, {10, 12, 7, 14, 15, 9}}
+local GATE_OPEN = {{0, 5, 7, 2, 16, 9}, {14, 5, 7, 16, 16, 9}, {0, 6, 13, 2, 15, 15}, {14, 6, 13, 16, 15, 15},
+    {0, 6, 9, 2, 9, 13}, {0, 12, 9, 2, 15, 13}, {14, 6, 9, 16, 9, 13}, {14, 12, 9, 16, 15, 13}}
+visual.fence_gate = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.fence_gate", function ()
+        local bones = {}
+        for _, low in ipairs({false, true}) do
+            local dy = low and 3 or 0
+            for _, f in ipairs(FACING4) do
+                for _, open in ipairs({false, true}) do
+                    local cubes = {}
+                    for _, b in ipairs(open and GATE_OPEN or GATE_CLOSED) do
+                        table.insert(cubes, cube(rot_y({b[1], b[2] - dy, b[3], b[4], b[5] - dy, b[6]}, QUARTERS[f])))
+                    end
+                    table.insert(bones, bone(f .. (open and "_open" or "_closed") .. (low and "_low" or ""), cubes))
+                end
             end
-            return {cube(sh({x0, 6, 1, x1, 15, 3})), cube(sh({x0, 6, 3, x1, 9, 7})), cube(sh({x0, 12, 3, x1, 15, 7}))}
         end
-        local out = {}
-        for _, c in ipairs(l(0, 2)) do table.insert(out, c) end
-        for _, c in ipairs(l(14, 16)) do table.insert(out, c) end
-        return out
-    end
-    local function turn(cubes) -- the same cubes for facing east / west (swap x and z)
-        local out = {}
-        for _, c in ipairs(cubes) do
-            local o, s = c.origin, c.size
-            local x0, z0 = o[1] + 8, o[3] + 8
-            table.insert(out, cube({z0, o[2], x0, z0 + s[3], o[2] + s[2], x0 + s[1]}))
-        end
-        return out
-    end
-    local bones = {
-        bone("posts_z" .. suffix, posts_z), bone("posts_x" .. suffix, turn(posts_z)),
-        bone("closed_z" .. suffix, closed_z), bone("closed_x" .. suffix, turn(closed_z)),
-        bone("open_south" .. suffix, open_leaves("south")), bone("open_north" .. suffix, open_leaves("north")),
-        bone("open_east" .. suffix, turn(open_leaves("south"))), bone("open_west" .. suffix, turn(open_leaves("north"))),
-    }
-    return bones
-end
-
-builders.fence_gate = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.fence_gate"
-    if not ctx.geos[g] then
-        local bones = gate_bones("", 0)
-        for _, b in ipairs(gate_bones("_low", 3)) do table.insert(bones, b) end
-        ctx.geos[g] = geo_doc(g, bones)
-    end
-    for _, s in ipairs({"open", "in_wall", "powered"}) do add_state(doc, NS .. s, ints(1)) end
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:cardinal_direction"})})
-    local axis_z = any({is("minecraft:cardinal_direction", "north"), is("minecraft:cardinal_direction", "south")})
-    local axis_x = any({is("minecraft:cardinal_direction", "east"), is("minecraft:cardinal_direction", "west")})
+        return geo_doc("geometry.gf_families.fence_gate", bones)
+    end)
     local vis = {}
     for _, low in ipairs({false, true}) do
-        local sfx = low and "_low" or ""
-        local w = is(NS .. "in_wall", low and 1 or 0)
-        vis["posts_z" .. sfx] = all(axis_z, w)
-        vis["posts_x" .. sfx] = all(axis_x, w)
-        vis["closed_z" .. sfx] = all(axis_z, w, is(NS .. "open", 0))
-        vis["closed_x" .. sfx] = all(axis_x, w, is(NS .. "open", 0))
-        for _, d in ipairs(DIRS) do
-            vis["open_" .. d .. sfx] = all(is("minecraft:cardinal_direction", d), w, is(NS .. "open", 1))
+        for _, f in ipairs(FACING4) do
+            for _, open in ipairs({false, true}) do
+                vis[f .. (open and "_open" or "_closed") .. (low and "_low" or "")] = all(is(NS .. "facing", f), is(NS .. "open", open), is(NS .. "in_wall", low))
+            end
         end
     end
     geometry(doc, g, vis)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "side"), e.params.render_method)}
-    -- Java: closed 4 px across the gate (24 px high: the runtime), open no collision
-    perm(doc, all(axis_z, is(NS .. "open", 0)), {["minecraft:collision_box"] = cbox({0, 0, 6, 16, 16, 10}), ["minecraft:selection_box"] = cbox({0, 0, 6, 16, 16, 10})})
-    perm(doc, all(axis_x, is(NS .. "open", 0)), {["minecraft:collision_box"] = cbox({6, 0, 0, 10, 16, 16}), ["minecraft:selection_box"] = cbox({6, 0, 0, 10, 16, 16})})
-    perm(doc, all(axis_z, is(NS .. "open", 1)), {["minecraft:collision_box"] = false, ["minecraft:selection_box"] = cbox({0, 0, 6, 16, 16, 10})})
-    perm(doc, all(axis_x, is(NS .. "open", 1)), {["minecraft:collision_box"] = false, ["minecraft:selection_box"] = cbox({6, 0, 0, 10, 16, 16})})
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "texture", "side"), e.params.render_method)}
+end
+behaviour.fence_gate = function (doc)
+    local axis_z = any({is(NS .. "facing", "north"), is(NS .. "facing", "south")})
+    local axis_x = any({is(NS .. "facing", "east"), is(NS .. "facing", "west")})
+    for _, a in ipairs({{axis_z, {0, 0, 6, 16, 16, 10}}, {axis_x, {6, 0, 0, 10, 16, 16}}}) do
+        for _, wall in ipairs({false, true}) do
+            local b = a[2]
+            local sel = {b[1], b[2], b[3], b[4], wall and 13 or 16, b[6]} -- Java X_SHAPE_LOW / Z_SHAPE_LOW
+            for _, open in ipairs({false, true}) do
+                perm(doc, all(a[1], is(NS .. "in_wall", wall), is(NS .. "open", open)),
+                    {["minecraft:collision_box"] = (not open) and cbox(b) or false, ["minecraft:selection_box"] = cbox(sel)})
+            end
+        end
+    end
 end
 
--- door (Java DoorBlock): minecraft:cardinal_direction (Java facing), twilightforest:upper / open /
--- hinge (1 = right) / powered. The runtime places the upper half and keeps both halves together.
+-- door (Java DoorBlock): facing / half / hinge / open / powered; the runtime places the upper half
+-- and keeps both together.
 local DOOR_AABB = {SOUTH = {0, 0, 0, 16, 16, 3}, NORTH = {0, 0, 13, 16, 16, 16}, WEST = {13, 0, 0, 16, 16, 16}, EAST = {0, 0, 0, 3, 16, 16}}
-local function door_box(facing, open, right)
+local function door_box(facing, open, right) -- DoorBlock.getShape
     if facing == "east" then return open and (right and "NORTH" or "SOUTH") or "EAST" end
     if facing == "south" then return open and (right and "EAST" or "WEST") or "SOUTH" end
     if facing == "west" then return open and (right and "SOUTH" or "NORTH") or "WEST" end
     return open and (right and "WEST" or "EAST") or "NORTH"
 end
-
-builders.door = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.door"
-    if not ctx.geos[g] then
+visual.door = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.door", function ()
         local bones = {}
         for name, b in pairs(DOOR_AABB) do
-            local c = cube(b)
-            table.insert(bones, bone(name:lower(), {c}))
-            local m = cube(b)
-            for _, f in pairs(m.uv) do f.uv = {f.uv[1] + f.uv_size[1], f.uv[2]}; f.uv_size = {-f.uv_size[1], f.uv_size[2]} end
-            table.insert(bones, bone(name:lower() .. "_mirrored", {m}))
+            table.insert(bones, bone(name:lower(), {cube(b)}))
+            -- the other hinge shows the texture mirrored (Java door_*_right / *_open models)
+            local faces = {}
+            for _, f in ipairs(FACES6) do
+                local r = face_rect(b, f)
+                faces[f] = {rect = {r[3], r[2], r[1], r[4]}}
+            end
+            table.insert(bones, bone(name:lower() .. "_mirrored", {cube(b, {faces = faces})}))
         end
-        ctx.geos[g] = geo_doc(g, bones)
-    end
-    for _, s in ipairs({"upper", "open", "hinge", "powered"}) do add_state(doc, NS .. s, ints(1)) end
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:cardinal_direction"})})
-    local vis = {}
-    for name, _ in pairs(DOOR_AABB) do vis[name:lower()] = false; vis[name:lower() .. "_mirrored"] = false end
+        return geo_doc("geometry.gf_families.door", bones)
+    end)
     local by_box = {}
-    for _, facing in ipairs(DIRS) do
+    for _, f in ipairs(FACING4) do
         for _, open in ipairs({false, true}) do
             for _, right in ipairs({false, true}) do
-                local key = door_box(facing, open, right):lower() .. ((right ~= open) and "_mirrored" or "")
+                local key = door_box(f, open, right):lower() .. ((right ~= open) and "_mirrored" or "")
                 by_box[key] = by_box[key] or {}
-                table.insert(by_box[key], all(is("minecraft:cardinal_direction", facing), is(NS .. "open", open), is(NS .. "hinge", right)))
-                local b = DOOR_AABB[door_box(facing, open, right)]
-                perm(doc, all(is("minecraft:cardinal_direction", facing), is(NS .. "open", open), is(NS .. "hinge", right)),
-                    {["minecraft:collision_box"] = cbox(b), ["minecraft:selection_box"] = cbox(b)})
+                table.insert(by_box[key], all(is(NS .. "facing", f), is(NS .. "open", open), is(NS .. "hinge", right and "right" or "left")))
             end
         end
     end
+    local vis = {}
+    for name, _ in pairs(DOOR_AABB) do vis[name:lower()] = false; vis[name:lower() .. "_mirrored"] = false end
     for key, conds in pairs(by_box) do vis[key] = any(conds) end
     geometry(doc, g, vis)
     local m = e.params.render_method or "alpha_test"
     comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "bottom", "lower", "*"), m)}
-    perm(doc, is(NS .. "upper", 1), {["minecraft:material_instances"] = {["*"] = mat(tex(t, "top", "upper", "*"), m)}})
+    -- the upper half's texture: a separate permutation (Bedrock applies every matching one)
+    perm(doc, is(NS .. "half", "upper"), {["minecraft:material_instances"] = {["*"] = mat(tex(t, "top", "upper", "*"), m)}})
+end
+behaviour.door = function (doc)
+    for _, f in ipairs(FACING4) do
+        for _, open in ipairs({false, true}) do
+            for _, right in ipairs({false, true}) do
+                local b = DOOR_AABB[door_box(f, open, right)]
+                perm(doc, all(is(NS .. "facing", f), is(NS .. "open", open), is(NS .. "hinge", right and "right" or "left")),
+                    {["minecraft:collision_box"] = cbox(b), ["minecraft:selection_box"] = cbox(b)})
+            end
+        end
+    end
 end
 
--- trapdoor (Java TrapDoorBlock): facing from the clicked face (horizontal) or the player
--- (vertical clicks), half from the click; twilightforest:open / powered. The runtime sets
--- minecraft:cardinal_direction to Java's facing on placement.
-local TRAP = {EAST = {0, 0, 0, 3, 16, 16}, WEST = {13, 0, 0, 16, 16, 16}, SOUTH = {0, 0, 0, 16, 16, 3}, NORTH = {0, 0, 13, 16, 16, 16}, BOTTOM = {0, 0, 0, 16, 3, 16}, TOP = {0, 13, 0, 16, 16, 16}}
-builders.trapdoor = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.trapdoor"
-    if not ctx.geos[g] then
+-- trapdoor (Java TrapDoorBlock): facing / half / open / powered.
+local TRAP = {east = {0, 0, 0, 3, 16, 16}, west = {13, 0, 0, 16, 16, 16}, south = {0, 0, 0, 16, 16, 3}, north = {0, 0, 13, 16, 16, 16}, bottom = {0, 0, 0, 16, 3, 16}, top = {0, 13, 0, 16, 16, 16}}
+visual.trapdoor = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.trapdoor", function ()
         local bones = {}
-        for name, b in pairs(TRAP) do table.insert(bones, bone(name:lower(), {cube(b)})) end
-        ctx.geos[g] = geo_doc(g, bones)
-    end
-    for _, s in ipairs({"open", "powered"}) do add_state(doc, NS .. s, ints(1)) end
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:cardinal_direction"})})
-    add_trait(doc, "minecraft:placement_position", {enabled_states = arr({"minecraft:vertical_half"})})
-    local vis = {
-        bottom = all(is(NS .. "open", 0), is("minecraft:vertical_half", "bottom")),
-        top = all(is(NS .. "open", 0), is("minecraft:vertical_half", "top")),
-    }
-    for _, d in ipairs(DIRS) do vis[d] = all(is(NS .. "open", 1), is("minecraft:cardinal_direction", d)) end
+        for name, b in pairs(TRAP) do table.insert(bones, bone(name, {cube(b)})) end
+        return geo_doc("geometry.gf_families.trapdoor", bones)
+    end)
+    local vis = {bottom = all(is(NS .. "open", false), is(NS .. "half", "bottom")), top = all(is(NS .. "open", false), is(NS .. "half", "top"))}
+    for _, d in ipairs(DIRS4) do vis[d] = all(is(NS .. "open", true), is(NS .. "facing", d)) end
     geometry(doc, g, vis)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "side"), e.params.render_method or "alpha_test")}
-    perm(doc, all(is(NS .. "open", 0), is("minecraft:vertical_half", "bottom")), {["minecraft:collision_box"] = cbox(TRAP.BOTTOM), ["minecraft:selection_box"] = cbox(TRAP.BOTTOM)})
-    perm(doc, all(is(NS .. "open", 0), is("minecraft:vertical_half", "top")), {["minecraft:collision_box"] = cbox(TRAP.TOP), ["minecraft:selection_box"] = cbox(TRAP.TOP)})
-    for _, d in ipairs(DIRS) do
-        local b = TRAP[d:upper()]
-        perm(doc, all(is(NS .. "open", 1), is("minecraft:cardinal_direction", d)), {["minecraft:collision_box"] = cbox(b), ["minecraft:selection_box"] = cbox(b)})
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "texture", "side"), e.params.render_method or "alpha_test")}
+end
+behaviour.trapdoor = function (doc)
+    for _, half in ipairs({"bottom", "top"}) do
+        perm(doc, all(is(NS .. "open", false), is(NS .. "half", half)), {["minecraft:collision_box"] = cbox(TRAP[half]), ["minecraft:selection_box"] = cbox(TRAP[half])})
+    end
+    for _, d in ipairs(DIRS4) do
+        perm(doc, all(is(NS .. "open", true), is(NS .. "facing", d)), {["minecraft:collision_box"] = cbox(TRAP[d]), ["minecraft:selection_box"] = cbox(TRAP[d])})
     end
 end
 
--- button (Java ButtonBlock): minecraft:block_face is the clicked face (up = floor, down = ceiling,
--- otherwise a wall button facing that way), minecraft:cardinal_direction the player's direction
--- (floor / ceiling axis); twilightforest:powered. Pressed buttons power vanilla redstone through
--- minecraft:redstone_producer (15, strongly the block they hang on).
-local function button_box(face, axis_or_dir, pressed)
+-- button (Java ButtonBlock): face wall / floor / ceiling, facing, powered. Pressed buttons power
+-- vanilla redstone through minecraft:redstone_producer (15, strongly the block they hang on).
+local function button_box(face, facing, pressed)
     local d = pressed and 1 or 2
-    if face == "up" then -- floor
-        return axis_or_dir == "x" and {6, 0, 5, 10, d, 11} or {5, 0, 6, 11, d, 10}
-    elseif face == "down" then -- ceiling
-        return axis_or_dir == "x" and {6, 16 - d, 5, 10, 16, 11} or {5, 16 - d, 6, 11, 16, 10}
-    end
-    return ({north = {5, 6, 16 - d, 11, 10, 16}, south = {5, 6, 0, 11, 10, d}, west = {16 - d, 6, 5, 16, 10, 11}, east = {0, 6, 5, d, 10, 11}})[face]
+    local x = facing == "east" or facing == "west"
+    if face == "floor" then return x and {6, 0, 5, 10, d, 11} or {5, 0, 6, 11, d, 10} end
+    if face == "ceiling" then return x and {6, 16 - d, 5, 10, 16, 11} or {5, 16 - d, 6, 11, 16, 10} end
+    return ({north = {5, 6, 16 - d, 11, 10, 16}, south = {5, 6, 0, 11, 10, d}, west = {16 - d, 6, 5, 16, 10, 11}, east = {0, 6, 5, d, 10, 11}})[facing]
 end
-builders.button = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.button"
-    local variants = {}
-    for _, pressed in ipairs({false, true}) do
-        for _, face in ipairs({"up", "down"}) do
-            for _, axis in ipairs({"x", "z"}) do table.insert(variants, {face = face, sub = axis, pressed = pressed}) end
+local function button_variants()
+    local out = {}
+    for _, face in ipairs({"floor", "ceiling", "wall"}) do
+        for _, f in ipairs(FACING4) do
+            for _, pressed in ipairs({false, true}) do table.insert(out, {face = face, facing = f, pressed = pressed}) end
         end
-        for _, d in ipairs(DIRS) do table.insert(variants, {face = d, sub = d, pressed = pressed}) end
     end
-    local function vname(v) return v.face .. "_" .. v.sub .. (v.pressed and "_pressed" or "") end
-    if not ctx.geos[g] then
+    return out
+end
+visual.button = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.button", function ()
         local bones = {}
-        for _, v in ipairs(variants) do table.insert(bones, bone(vname(v), {cube(button_box(v.face, v.sub, v.pressed))})) end
-        ctx.geos[g] = geo_doc(g, bones)
-    end
-    add_state(doc, NS .. "powered", ints(1))
-    add_trait(doc, "minecraft:placement_position", {enabled_states = arr({"minecraft:block_face"})})
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:cardinal_direction"})})
-    local axis = {
-        x = any({is("minecraft:cardinal_direction", "east"), is("minecraft:cardinal_direction", "west")}),
-        z = any({is("minecraft:cardinal_direction", "north"), is("minecraft:cardinal_direction", "south")}),
-    }
-    local vis = {}
-    for _, v in ipairs(variants) do
-        local c = {is("minecraft:block_face", v.face), is(NS .. "powered", v.pressed)}
-        if v.face == "up" or v.face == "down" then table.insert(c, axis[v.sub]) end
-        vis[vname(v)] = all(table.unpack(c))
-        local b = button_box(v.face, v.sub, v.pressed)
-        local components = {["minecraft:selection_box"] = cbox(b), ["minecraft:collision_box"] = false}
-        if v.pressed then
-            local attached = v.face == "up" and "down" or (v.face == "down" and "up" or OPP[v.face])
-            components["minecraft:redstone_producer"] = {power = 15, strongly_powered_face = attached}
+        for _, v in ipairs(button_variants()) do
+            table.insert(bones, bone(v.face .. "_" .. v.facing .. (v.pressed and "_pressed" or ""), {cube(button_box(v.face, v.facing, v.pressed))}))
         end
-        perm(doc, all(table.unpack(c)), components)
+        return geo_doc("geometry.gf_families.button", bones)
+    end)
+    local vis = {}
+    for _, v in ipairs(button_variants()) do
+        vis[v.face .. "_" .. v.facing .. (v.pressed and "_pressed" or "")] = all(is(NS .. "face", v.face), is(NS .. "facing", v.facing), is(NS .. "powered", v.pressed))
     end
     geometry(doc, g, vis)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "side"), e.params.render_method)}
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "texture", "side"), e.params.render_method)}
+end
+behaviour.button = function (doc)
     comps(doc)["minecraft:collision_box"] = false
     comps(doc)["minecraft:redstone_conductivity"] = {redstone_conductor = false, allows_wire_to_step_down = true}
     -- every permutation is a producer (0 unpressed) so the circuit follows the press and release
     comps(doc)["minecraft:redstone_producer"] = {power = 0}
+    for _, v in ipairs(button_variants()) do
+        local c = {["minecraft:selection_box"] = cbox(button_box(v.face, v.facing, v.pressed)), ["minecraft:collision_box"] = false}
+        if v.pressed then
+            -- ButtonBlock.getDirectSignal: the block it hangs on (getConnectedDirection)
+            local attached = v.face == "floor" and "down" or (v.face == "ceiling" and "up" or OPP[v.facing])
+            c["minecraft:redstone_producer"] = {power = 15, strongly_powered_face = attached}
+        end
+        perm(doc, all(is(NS .. "face", v.face), is(NS .. "facing", v.facing), is(NS .. "powered", v.pressed)), c)
+    end
 end
 
--- pressure plate (Java PressurePlateBlock): twilightforest:powered; 15 while pressed.
-builders.pressure_plate = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.pressure_plate"
-    ctx.geos[g] = ctx.geos[g] or geo_doc(g, {bone("up", {cube({1, 0, 1, 15, 1, 15})}), bone("down", {cube({1, 0, 1, 15, 0.5, 15})})})
-    add_state(doc, NS .. "powered", ints(1))
-    geometry(doc, g, {up = is(NS .. "powered", 0), down = is(NS .. "powered", 1)})
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "side"), e.params.render_method)}
+-- pressure plate (Java PressurePlateBlock): powered; 15 while pressed, strongly into the block below.
+visual.pressure_plate = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.pressure_plate", function ()
+        return geo_doc("geometry.gf_families.pressure_plate", {bone("up", {cube({1, 0, 1, 15, 1, 15})}), bone("down", {cube({1, 0, 1, 15, 0.5, 15})})})
+    end)
+    geometry(doc, g, {up = is(NS .. "powered", false), down = is(NS .. "powered", true)})
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "texture", "side"), e.params.render_method)}
+end
+behaviour.pressure_plate = function (doc)
     comps(doc)["minecraft:collision_box"] = false
-    comps(doc)["minecraft:selection_box"] = cbox({1, 0, 1, 15, 1, 15})
     comps(doc)["minecraft:redstone_conductivity"] = {redstone_conductor = false, allows_wire_to_step_down = true}
-    -- every permutation is a producer (0 unpressed) so the circuit follows the press and release
     comps(doc)["minecraft:redstone_producer"] = {power = 0}
-    perm(doc, is(NS .. "powered", 1), {["minecraft:selection_box"] = cbox({1, 0, 1, 15, 1, 15}),
+    perm(doc, is(NS .. "powered", false), {["minecraft:selection_box"] = cbox({1, 0, 1, 15, 1, 15})})
+    perm(doc, is(NS .. "powered", true), {["minecraft:selection_box"] = cbox({1, 0, 1, 15, 0.5, 15}),
         ["minecraft:redstone_producer"] = {power = 15, strongly_powered_face = "down"}})
 end
 
--- pillar / log / wood (Java RotatedPillarBlock): the axis from the clicked face.
-local AXIS_TURN = {
-    {cond = any({is("minecraft:block_face", "north"), is("minecraft:block_face", "south")}), rot = {90, 0, 0}},
-    {cond = any({is("minecraft:block_face", "east"), is("minecraft:block_face", "west")}), rot = {0, 0, 90}},
-}
-local function pillar(doc, e, t, ends_too)
+-- pillar / log / wood (Java RotatedPillarBlock): axis (Java cube_column, turned x = 90 / z).
+local function pillar_visual(doc, e, t, ends_too)
     full_block(doc, {["*"] = tex(t, "side", "*"), up = ends_too and tex(t, "side", "*") or tex(t, "end", "up", "top", "*"),
         down = ends_too and tex(t, "side", "*") or tex(t, "end", "down", "bottom", "up", "*")}, e.params.render_method)
-    add_trait(doc, "minecraft:placement_position", {enabled_states = arr({"minecraft:block_face"})})
-    for _, a in ipairs(AXIS_TURN) do perm(doc, a.cond, {["minecraft:transformation"] = {rotation = a.rot}}) end
+    perm(doc, is(NS .. "axis", "z"), {["minecraft:transformation"] = {rotation = {90, 0, 0}}})
+    perm(doc, is(NS .. "axis", "x"), {["minecraft:transformation"] = {rotation = {0, 0, 90}}})
 end
-builders.pillar = function (doc, e, t) pillar(doc, e, t, false) end
-builders.log = builders.pillar
-builders.wood = function (doc, e, t) pillar(doc, e, t, true) end
+visual.pillar = function (doc, e, t) pillar_visual(doc, e, t, false) end
+visual.log = visual.pillar
+visual.wood = function (doc, e, t) pillar_visual(doc, e, t, true) end
 
--- leaves (Java LeavesBlock): twilightforest:distance 1..7 (0: not computed yet) and persistent.
-builders.leaves = function (doc, e, t)
-    local extra = e.params.tint and {tint_method = e.params.tint} or nil
-    full_block(doc, t, e.params.render_method or "alpha_test", extra)
-    add_state(doc, NS .. "distance", ints(7))
-    add_state(doc, NS .. "persistent", ints(1))
+-- leaves (Java LeavesBlock): distance 1..7 (0: not computed yet) and persistent.
+visual.leaves = function (doc, e, t) full_block(doc, t, e.params.render_method or "alpha_test") end
+behaviour.leaves = function (doc, e)
     comps(doc)["minecraft:light_dampening"] = 1
-end
-
--- cross plants (sapling, potted plant)
-local function cross_cubes(b, mat_name)
-    local cx = (b[1] + b[4]) / 2
-    local cz = (b[3] + b[6]) / 2
-    local w = (b[4] - b[1])
-    local h = b[5] - b[2]
-    local c1 = {origin = {cx - w / 2 - 8, b[2], cz - 8}, size = {w, h, 0}, pivot = {cx - 8, b[2], cz - 8}, rotation = {0, 45, 0},
-        uv = {north = {uv = {0, 16 - h}, uv_size = {16, h}}, south = {uv = {0, 16 - h}, uv_size = {16, h}}}}
-    local c2 = {origin = {cx - w / 2 - 8, b[2], cz - 8}, size = {w, h, 0}, pivot = {cx - 8, b[2], cz - 8}, rotation = {0, -45, 0},
-        uv = {north = {uv = {0, 16 - h}, uv_size = {16, h}}, south = {uv = {0, 16 - h}, uv_size = {16, h}}}}
-    if mat_name then
-        for _, c in ipairs({c1, c2}) do for _, f in pairs(c.uv) do f.material_instance = mat_name end end
+    local tint = e.params.tint or LEAF_TINTS[e.id]
+    if tint then
+        local function tinted(mi)
+            if type(mi) ~= "table" then return end
+            for _, m in pairs(mi) do if type(m) == "table" then m.tint_method = tint end end
+        end
+        tinted(comps(doc)["minecraft:material_instances"])
+        for _, p in ipairs(block_of(doc).permutations or {}) do tinted(p.components["minecraft:material_instances"]) end
     end
-    return {c1, c2}
 end
 
--- a cross plant (TF bushes, plants): no collision.
-builders.cross = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.cross"
-    ctx.geos[g] = ctx.geos[g] or geo_doc(g, {bone("cross", cross_cubes({0, 0, 0, 16, 16, 16}))})
+-- cross plants (sapling, TF bushes): Java's block/cross model (two planes, rescaled at 45 degrees).
+local function cross_cubes(x0, x1, y0, y1, material)
+    local rot = {axis = "y", angle = 45, origin = {8, 8, 8}, rescale = true}
+    local faces1 = {north = {rect = {0, 16 - (y1 - y0), 16, 16}, mat = material}, south = {rect = {0, 16 - (y1 - y0), 16, 16}, mat = material}}
+    local faces2 = {west = {rect = {0, 16 - (y1 - y0), 16, 16}, mat = material}, east = {rect = {0, 16 - (y1 - y0), 16, 16}, mat = material}}
+    return {cube({x0, y0, 8, x1, y1, 8}, {faces = faces1, faces_only = true, rot = rot}), cube({8, y0, x0, 8, y1, x1}, {faces = faces2, faces_only = true, rot = rot})}
+end
+visual.cross = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.cross", function ()
+        return geo_doc("geometry.gf_families.cross", {bone("cross", cross_cubes(0.8, 15.2, 0, 16, nil))})
+    end)
     geometry(doc, g)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*"), "alpha_test", {ambient_occlusion = false, face_dimming = false})}
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*", "cross"), "alpha_test", {ambient_occlusion = false, face_dimming = false})}
+end
+behaviour.cross = function (doc, e)
     comps(doc)["minecraft:collision_box"] = false
     comps(doc)["minecraft:selection_box"] = cbox(e.params.shape or {2, 0, 2, 14, 13, 14})
     comps(doc)["minecraft:light_dampening"] = 0
 end
-
--- sapling (Java SaplingBlock): twilightforest:stage; the runtime grows params.feature.
-builders.sapling = function (doc, e, t, ctx)
-    builders.cross(doc, e, t, ctx)
-    comps(doc)["minecraft:selection_box"] = cbox({2, 0, 2, 14, 12, 14})
-    add_state(doc, NS .. "stage", ints(1))
+visual.sapling = visual.cross
+behaviour.sapling = function (doc)
+    comps(doc)["minecraft:collision_box"] = false
+    comps(doc)["minecraft:selection_box"] = cbox({2, 0, 2, 14, 12, 14}) -- SaplingBlock.SHAPE
+    comps(doc)["minecraft:light_dampening"] = 0
 end
 
--- potted plant (Java FlowerPotBlock / TF SpecialFlowerPotBlock): pot, soil and the plant.
-builders.potted = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.potted"
-    if not ctx.geos[g] then
+-- potted plant (Java FlowerPotBlock / TF SpecialFlowerPotBlock): block/flower_pot_cross.
+visual.potted = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.potted", function ()
         local pot = {
-            cube({5, 0, 5, 6, 6, 11}, "pot"), cube({10, 0, 5, 11, 6, 11}, "pot"),
-            cube({6, 0, 5, 10, 6, 6}, "pot"), cube({6, 0, 10, 10, 6, 11}, "pot"),
-            cube({6, 0, 6, 10, 4, 10}, "soil", {up = true}),
+            cube({5, 0, 5, 6, 6, 11}, {mat = "pot"}), cube({10, 0, 5, 11, 6, 11}, {mat = "pot"}),
+            cube({6, 0, 5, 10, 6, 6}, {mat = "pot"}), cube({6, 0, 10, 10, 6, 11}, {mat = "pot"}),
+            cube({6, 0, 6, 10, 4, 10}, {faces = {up = {rect = {6, 6, 10, 10}, mat = "soil"}, down = {rect = {6, 12, 10, 16}, mat = "pot"}}, faces_only = true}),
         }
-        local plant = cross_cubes({4, 4, 4, 12, 20, 12}, "plant")
-        ctx.geos[g] = geo_doc(g, {bone("pot", pot), bone("plant", plant)})
-    end
+        return geo_doc("geometry.gf_families.potted", {bone("pot", pot), bone("plant", cross_cubes(2.6, 13.4, 4, 16, "plant"))})
+    end)
     geometry(doc, g)
     comps(doc)["minecraft:material_instances"] = {
-        ["*"] = mat(tex(t, "pot"), "alpha_test"), pot = mat(tex(t, "pot"), "alpha_test"),
         -- (one render method per block: Bedrock refuses opaque and transparent instances together)
-        soil = mat(tex(t, "soil"), "alpha_test"), plant = mat(tex(t, "plant", "*"), "alpha_test", {ambient_occlusion = false, face_dimming = false}),
+        ["*"] = mat(tex(t, "pot", "flowerpot"), "alpha_test"), pot = mat(tex(t, "pot", "flowerpot"), "alpha_test"),
+        soil = mat(tex(t, "soil", "dirt"), "alpha_test"), plant = mat(tex(t, "plant", "*"), "alpha_test", {ambient_occlusion = false, face_dimming = false}),
     }
-    comps(doc)["minecraft:collision_box"] = cbox({5, 0, 5, 11, 6, 11})
+end
+behaviour.potted = function (doc)
+    comps(doc)["minecraft:collision_box"] = cbox({5, 0, 5, 11, 6, 11}) -- FlowerPotBlock.SHAPE
     comps(doc)["minecraft:selection_box"] = cbox({5, 0, 5, 11, 6, 11})
     comps(doc)["minecraft:light_dampening"] = 0
 end
 
--- signs (Java StandingSignBlock / WallSignBlock / CeilingHangingSignBlock / WallHangingSignBlock):
--- entity-texture models (64x32, Java's SignRenderer / HangingSignRenderer layout). Standing and
--- hanging signs turn in 16 steps (twilightforest:rotation, set by the runtime), wall signs face
--- minecraft:cardinal_direction. The text lives in block data (gf::signs).
--- Java's 16 sign rotations (22.5 degrees each): a quarter-turn transformation (Bedrock turns blocks
--- by multiples of 90 only) plus a model variant turned by 0, -22.5, -45 or 22.5 degrees.
-local SIGN_STEPS = {{name = "r0", angle = 0}, {name = "r1", angle = -22.5}, {name = "r2", angle = -45}, {name = "r3", angle = 22.5}}
-local function rotation_split(r) -- quarter turns and the step variant (1..4) of rotation r
-    local quarter, rest = r // 4, r % 4
-    if rest == 3 then return (quarter + 1) % 4, 4 end
-    return quarter, rest + 1
+-- signs (Java StandingSignBlock / WallSignBlock / CeilingHangingSignBlock / WallHangingSignBlock),
+-- drawn by SignRenderer / HangingSignRenderer: their ModelPart models (64 x 32 entity textures)
+-- through the renderers' transforms. Standing and hanging signs turn in 16 steps (rotation):
+-- Bedrock turns blocks by quarter turns, so four model variants turned 0 / 22.5 / 45 / 67.5
+-- degrees clockwise, and the quarter turns as a transformation. The text lives in block data
+-- (gf::signs) and shows through the display entity.
+local SIGN_SCALE = 2 / 3
+local SIGN_PARTS = {
+    board = {box = {-12, -14, -1, 24, 12, 2}, uv = {0, 0}},
+    stick = {box = {-1, -2, -1, 2, 14, 2}, uv = {0, 14}},
+}
+local HANGING_PARTS = {
+    board = {{box = {-7, 0, -1, 14, 10, 2}, uv = {0, 12}}},
+    plank = {{box = {-8, -6, -2, 16, 2, 4}, uv = {0, 0}}},
+    chains = {
+        {box = {-1.5, 0, 0, 3, 6, 0}, uv = {0, 6}, offset = {-5, -6, 0}, rot = {"y", -45}},
+        {box = {-1.5, 0, 0, 3, 6, 0}, uv = {6, 6}, offset = {-5, -6, 0}, rot = {"y", 45}},
+        {box = {-1.5, 0, 0, 3, 6, 0}, uv = {0, 6}, offset = {5, -6, 0}, rot = {"y", -45}},
+        {box = {-1.5, 0, 0, 3, 6, 0}, uv = {6, 6}, offset = {5, -6, 0}, rot = {"y", 45}},
+    },
+    vchains = {{box = {-6, -6, 0, 12, 6, 0}, uv = {14, 6}}},
+}
+-- SignRenderer.translateSign (standing: y 0.75 * scale) and renderSign's scale(f, -f, -f)
+local function sign_static(wall)
+    local f = SIGN_SCALE
+    local m = mtrans(8, 12 * f, 8)
+    if wall then m = mmul(m, mtrans(0, -5, -7)) end -- (0, -0.3125, -0.4375) blocks
+    return mmul(m, mscale(f, -f, -f))
 end
-local function rotated(cubes, angle)
+-- HangingSignRenderer.translateSign (0.5, 0.9375, 0.5) then (0, -0.3125, 0), scale(1, -1, -1)
+local HANGING_STATIC = mmul(mtrans(8, 10, 8), mscale(1, -1, -1))
+
+local function variant_bones(name, cubes)
+    -- one bone per 22.5 degree step (clockwise in the world: Bedrock's y rotation of the
+    -- mirrored geometry, about the block centre)
     local out = {}
-    for _, c in ipairs(cubes) do
-        local d = copy(c)
-        if angle ~= 0 then d.pivot = {0, 0, 0}; d.rotation = {0, angle, 0} end
-        table.insert(out, d)
-    end
+    for k = 0, 3 do table.insert(out, bone(name .. "_r" .. k, copy(cubes), {pivot = {0, 0, 0}, rotation = {0, k * 22.5, 0}})) end
     return out
 end
-local function rotation_bones(parts)
-    local bones = {}
-    for _, step in ipairs(SIGN_STEPS) do
-        for _, part in ipairs(parts) do table.insert(bones, bone(part.name .. "_" .. step.name, rotated(part.cubes, step.angle))) end
+-- the visibility of each step's bones (bones not listed are visible: every one is listed)
+local function step_visibility(parts, step, cond_of)
+    local v = {}
+    for _, part in ipairs(parts) do
+        for k = 0, 3 do v[part .. "_r" .. k] = k == step and (cond_of and cond_of(part) or true) or false end
     end
-    return bones
+    return v
 end
-local function rotation_perms(doc, g, parts)
+-- per rotation r: the step's bones and the quarter turns
+local function rotation_perms(doc, g, parts, cond_of)
     for r = 0, 15 do
-        local quarter, variant = rotation_split(r)
-        local v = {}
-        for i, step in ipairs(SIGN_STEPS) do
-            for _, part in ipairs(parts) do v[part.name .. "_" .. step.name] = i == variant and (part.cond or true) or false end
-        end
-        perm(doc, is(NS .. "rotation", r), {["minecraft:geometry"] = {identifier = g, bone_visibility = v},
+        local quarter, step = r // 4, r % 4
+        perm(doc, is(NS .. "rotation", r), {["minecraft:geometry"] = {identifier = g, bone_visibility = step_visibility(parts, step, cond_of)},
             ["minecraft:transformation"] = {rotation = {0, -90 * quarter, 0}}})
     end
 end
 local function facing_perms(doc)
-    local turns = {north = 0, east = -90, south = 180, west = 90}
-    for _, d in ipairs(DIRS) do
-        perm(doc, is("minecraft:cardinal_direction", d), {["minecraft:transformation"] = {rotation = {0, turns[d], 0}}})
+    for _, d in ipairs(FACING4) do
+        perm(doc, is(NS .. "facing", d), {["minecraft:transformation"] = {rotation = {0, TURN[d], 0}}})
     end
-end
-builders.sign = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.sign"
-    -- Java SignRenderer: the board 24x12x2 over a 2x14x2 stick, scaled 2/3
-    local s = 2 / 3
-    local function sc(b) return {8 + (b[1] - 8) * s, b[2] * s, 8 + (b[3] - 8) * s, 8 + (b[4] - 8) * s, b[5] * s, 8 + (b[6] - 8) * s} end
-    local parts = {
-        {name = "board", cubes = {box_cube(sc({-4, 14, 7, 20, 26, 9}), 0, 0)}},
-        {name = "stick", cubes = {box_cube(sc({7, 0, 7, 9, 14, 9}), 0, 14)}},
-    }
-    ctx.geos[g] = ctx.geos[g] or geo_doc(g, rotation_bones(parts), 64, 32)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*"), "alpha_test")}
-    comps(doc)["minecraft:collision_box"] = false
-    comps(doc)["minecraft:selection_box"] = cbox({4, 0, 4, 12, 16, 12})
-    add_state(doc, NS .. "rotation", ints(15))
-    geometry(doc, g, {board_r0 = true, stick_r0 = true})
-    rotation_perms(doc, g, parts)
-end
-builders.wall_sign = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.wall_sign"
-    if not ctx.geos[g] then
-        local s = 2 / 3
-        -- the board against the south side of the block, facing north (Java: y offset -0.3125)
-        local b = {8 - 12 * s, 8 - 6 * s + 1.0, 16 - 2 * s, 8 + 12 * s, 8 + 6 * s + 1.0, 16}
-        ctx.geos[g] = geo_doc(g, {bone("board", {box_cube(b, 0, 0)})}, 64, 32)
-    end
-    geometry(doc, g)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*"), "alpha_test")}
-    comps(doc)["minecraft:collision_box"] = false
-    comps(doc)["minecraft:selection_box"] = cbox({0, 4.5, 14, 16, 12.5, 16})
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:cardinal_direction"})})
-    facing_perms(doc)
-end
-builders.hanging_sign = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.hanging_sign"
-    -- Java HangingSignRenderer: board 14x10x2 (uv 0,12), chains (uv 0,6 / 6,6), V chains (14,6)
-    local parts = {
-        {name = "board", cubes = {box_cube({1, 0, 7, 15, 10, 9}, 0, 12)}},
-        {name = "chains", cubes = {box_cube({2, 10, 8, 5, 16, 8}, 0, 6), box_cube({11, 10, 8, 14, 16, 8}, 6, 6)}, cond = is(NS .. "attached", 0)},
-        {name = "vchains", cubes = {box_cube({4.5, 10, 8, 11.5, 16, 8}, 14, 6)}, cond = is(NS .. "attached", 1)},
-    }
-    ctx.geos[g] = ctx.geos[g] or geo_doc(g, rotation_bones(parts), 64, 32)
-    add_state(doc, NS .. "rotation", ints(15))
-    add_state(doc, NS .. "attached", ints(1))
-    geometry(doc, g, {board_r0 = true, chains_r0 = is(NS .. "attached", 0), vchains_r0 = is(NS .. "attached", 1)})
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*"), "alpha_test")}
-    comps(doc)["minecraft:collision_box"] = false
-    comps(doc)["minecraft:selection_box"] = cbox({3, 0, 3, 13, 16, 13})
-    rotation_perms(doc, g, parts)
-end
-builders.wall_hanging_sign = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.wall_hanging_sign"
-    if not ctx.geos[g] then
-        ctx.geos[g] = geo_doc(g, {
-            bone("plank", {box_cube({0, 14, 6, 16, 16, 10}, 0, 0)}),
-            bone("board", {box_cube({1, 0, 7, 15, 10, 9}, 0, 12)}),
-            bone("chains", {box_cube({2, 10, 8, 5, 14, 8}, 0, 6), box_cube({11, 10, 8, 14, 14, 8}, 6, 6)}),
-        }, 64, 32)
-    end
-    geometry(doc, g)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "*"), "alpha_test")}
-    comps(doc)["minecraft:collision_box"] = cbox({0, 14, 6, 16, 16, 10})
-    comps(doc)["minecraft:selection_box"] = cbox({0, 0, 6, 16, 16, 10})
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:cardinal_direction"})})
-    facing_perms(doc)
 end
 
--- chest / trapped chest (Java ChestBlock): minecraft:cardinal_direction (Java facing) and
--- twilightforest:type single / left / right; the runtime pairs neighbours into double chests.
--- Models on Java's chest texture layout (64x64: single.png, left.png, right.png).
-local function chest_bones(kind)
-    -- facing north, the latch on the north side (Java ChestRenderer, block pixels)
-    local x0, x1 = 1, 15
-    if kind == "left" then x0, x1 = 1, 16 elseif kind == "right" then x0, x1 = 0, 15 end
-    local w = x1 - x0
-    local bones = {
-        bone(kind .. "_bottom", {box_cube({x0, 0, 1, x1, 10, 15}, 0, 19)}),
-        bone(kind .. "_lid", {box_cube({x0, 9, 1, x1, 14, 15}, 0, 0)}),
-    }
-    if kind == "single" then
-        table.insert(bones, bone(kind .. "_lock", {box_cube({7, 7, 0, 9, 11, 1}, 0, 0)}))
-    elseif kind == "left" then
-        table.insert(bones, bone(kind .. "_lock", {box_cube({15, 7, 0, 16, 11, 1}, 0, 0)}))
-    else
-        table.insert(bones, bone(kind .. "_lock", {box_cube({0, 7, 0, 1, 11, 1}, 0, 0)}))
-    end
-    return bones
-end
-builders.chest = function (doc, e, t, ctx)
-    local g = "geometry.gf_families.chest"
-    if not ctx.geos[g] then
+visual.sign = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.sign", function ()
         local bones = {}
-        for _, k in ipairs({"single", "left", "right"}) do for _, b in ipairs(chest_bones(k)) do table.insert(bones, b) end end
-        ctx.geos[g] = geo_doc(g, bones, 64, 64)
+        for _, part in ipairs({"board", "stick"}) do
+            for _, b in ipairs(variant_bones(part, part_cubes({SIGN_PARTS[part]}, sign_static(false)))) do table.insert(bones, b) end
+        end
+        return geo_doc("geometry.gf_families.sign", bones, 64, 32)
+    end)
+    geometry(doc, g, step_visibility({"board", "stick"}, 0))
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(t.entity or tex(t, "*"), "alpha_test")}
+    rotation_perms(doc, g, {"board", "stick"})
+end
+behaviour.sign = function (doc)
+    comps(doc)["minecraft:collision_box"] = false
+    comps(doc)["minecraft:selection_box"] = cbox({4, 0, 4, 12, 16, 12}) -- SignBlock.SHAPE
+end
+visual.wall_sign = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.wall_sign", function ()
+        return geo_doc("geometry.gf_families.wall_sign", {bone("board", part_cubes({SIGN_PARTS.board}, sign_static(true)))}, 64, 32)
+    end)
+    geometry(doc, g)
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(t.entity or tex(t, "*"), "alpha_test")}
+    facing_perms(doc)
+end
+-- WallSignBlock.AABBS
+local WALL_SIGN_AABB = {north = {0, 4.5, 14, 16, 12.5, 16}, south = {0, 4.5, 0, 16, 12.5, 2}, east = {0, 4.5, 0, 2, 12.5, 16}, west = {14, 4.5, 0, 16, 12.5, 16}}
+behaviour.wall_sign = function (doc)
+    comps(doc)["minecraft:collision_box"] = false
+    for _, d in ipairs(FACING4) do perm(doc, is(NS .. "facing", d), {["minecraft:selection_box"] = cbox(WALL_SIGN_AABB[d])}) end
+end
+visual.hanging_sign = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.hanging_sign", function ()
+        local bones = {}
+        for _, part in ipairs({"board", "chains", "vchains"}) do
+            for _, b in ipairs(variant_bones(part, part_cubes(HANGING_PARTS[part], HANGING_STATIC))) do table.insert(bones, b) end
+        end
+        return geo_doc("geometry.gf_families.hanging_sign", bones, 64, 32)
+    end)
+    -- HangingSignModel.evaluateVisibleParts: attached ceiling signs hang on V chains
+    local function chains(part)
+        if part == "chains" then return is(NS .. "attached", false) end
+        if part == "vchains" then return is(NS .. "attached", true) end
+        return true
     end
-    add_state(doc, NS .. "type", arr({"single", "left", "right"}))
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:cardinal_direction"})})
+    geometry(doc, g, step_visibility({"board", "chains", "vchains"}, 0, chains))
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(t.entity or tex(t, "*"), "alpha_test")}
+    rotation_perms(doc, g, {"board", "chains", "vchains"}, chains)
+end
+behaviour.hanging_sign = function (doc)
+    comps(doc)["minecraft:collision_box"] = false
+    comps(doc)["minecraft:selection_box"] = cbox({3, 0, 3, 13, 16, 13}) -- CeilingHangingSignBlock.SHAPE
+    -- CeilingHangingSignBlock.AABBS for the four straight rotations
+    for r, b in pairs({[0] = {1, 0, 7, 15, 10, 9}, [4] = {7, 0, 1, 9, 10, 15}, [8] = {1, 0, 7, 15, 10, 9}, [12] = {7, 0, 1, 9, 10, 15}}) do
+        perm(doc, is(NS .. "rotation", r), {["minecraft:selection_box"] = cbox(b)})
+    end
+end
+visual.wall_hanging_sign = function (doc, e, t, ctx)
+    local g = geo(ctx, "geometry.gf_families.wall_hanging_sign", function ()
+        local cubes = part_cubes(HANGING_PARTS.board, HANGING_STATIC)
+        for _, c in ipairs(part_cubes(HANGING_PARTS.plank, HANGING_STATIC)) do table.insert(cubes, c) end
+        for _, c in ipairs(part_cubes(HANGING_PARTS.chains, HANGING_STATIC)) do table.insert(cubes, c) end
+        return geo_doc("geometry.gf_families.wall_hanging_sign", {bone("sign", cubes)}, 64, 32)
+    end)
+    geometry(doc, g)
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(t.entity or tex(t, "*"), "alpha_test")}
+    facing_perms(doc)
+end
+behaviour.wall_hanging_sign = function (doc)
+    -- WallHangingSignBlock: the plank collides, the plank and board are selected
+    for _, d in ipairs(FACING4) do
+        local ns = d == "north" or d == "south"
+        local plank = ns and {0, 14, 6, 16, 16, 10} or {6, 14, 0, 10, 16, 16}
+        local board = ns and {1, 0, 7, 15, 10, 9} or {7, 0, 1, 9, 10, 15}
+        perm(doc, is(NS .. "facing", d), {["minecraft:collision_box"] = cbox(plank), ["minecraft:selection_box"] = cbox(bounds({plank, board}))})
+    end
+end
+
+-- chest / trapped chest (Java ChestBlock, ChestRenderer's single / left / right models, 64 x 64):
+-- facing / type, and open_count (the players inside: the lid opens; trapped chests send it as
+-- their signal). params.layout "legacy": the pre-1.15 texture layout (Bedrock's own chest
+-- textures, used by the fixtures).
+local CHEST_PARTS = {
+    single = {bottom = {1, 0, 1, 14, 10, 14}, lid = {1, 0, 0, 14, 5, 14}, lock = {7, -2, 14, 2, 4, 1}},
+    right = {bottom = {1, 0, 1, 15, 10, 14}, lid = {1, 0, 0, 15, 5, 14}, lock = {15, -2, 14, 1, 4, 1}},
+    left = {bottom = {0, 0, 1, 15, 10, 14}, lid = {0, 0, 0, 15, 5, 14}, lock = {0, -2, 14, 1, 4, 1}},
+}
+local function chest_part_list(kind, open, legacy)
+    local p = CHEST_PARTS[kind]
+    local rot = open and {"x", -90} or nil -- ChestRenderer: lid.xRot = -(openness * PI / 2), fully open
+    local parts = {
+        {box = p.bottom, uv = {0, 19}},
+        {box = p.lid, uv = {0, 0}, offset = {0, 9, 1}, rot = rot},
+        {box = p.lock, uv = {0, 0}, offset = {0, 9, 1}, rot = rot},
+    }
+    if legacy then
+        -- the pre-1.15 renderer drew the same boxes through scale(1, -1, -1) (y down): mirror the
+        -- parts into that frame, the static map turns them back
+        for _, part in ipairs(parts) do
+            local o = part.offset or {0, 0, 0}
+            local b = part.box
+            part.offset = {o[1], 16 - o[2], 16 - o[3]}
+            part.box = {b[1], -b[2] - b[5], -b[3] - b[6], b[4], b[5], b[6]}
+        end
+    end
+    return parts
+end
+local function chest_visual(doc, e, t, ctx)
+    local legacy = e.params.layout == "legacy"
+    local g = "geometry.gf_families.chest" .. (legacy and "_legacy" or "")
+    geo(ctx, g, function ()
+        local static = legacy and mmul(mtrans(0, 16, 16), mscale(1, -1, -1)) or mat3(1, 0, 0, 0, 1, 0, 0, 0, 1)
+        local bones = {}
+        for _, kind in ipairs({"single", "left", "right"}) do
+            local closed = part_cubes(chest_part_list(kind, false, legacy), static)
+            local opened = part_cubes(chest_part_list(kind, true, legacy), static)
+            table.insert(bones, bone(kind .. "_bottom", {closed[1]}))
+            table.insert(bones, bone(kind .. "_lid", {closed[2], closed[3]}))
+            table.insert(bones, bone(kind .. "_lid_open", {opened[2], opened[3]}))
+        end
+        return geo_doc(g, bones, 64, 64)
+    end)
     local vis = {}
-    for _, k in ipairs({"single", "left", "right"}) do
-        for _, part in ipairs({"bottom", "lid", "lock"}) do vis[k .. "_" .. part] = is(NS .. "type", k) end
+    for _, kind in ipairs({"single", "left", "right"}) do
+        vis[kind .. "_bottom"] = is(NS .. "type", kind)
+        vis[kind .. "_lid"] = all(is(NS .. "type", kind), is(NS .. "open_count", 0))
+        vis[kind .. "_lid_open"] = all(is(NS .. "type", kind), q(NS .. "open_count") .. " > 0")
     end
     geometry(doc, g, vis)
     local m = e.params.render_method or "alpha_test"
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "single", "*"), m)}
-    perm(doc, is(NS .. "type", "left"), {["minecraft:material_instances"] = {["*"] = mat(tex(t, "left", "single", "*"), m)}})
-    perm(doc, is(NS .. "type", "right"), {["minecraft:material_instances"] = {["*"] = mat(tex(t, "right", "single", "*"), m)}})
-    local turns = {north = 0, east = -90, south = 180, west = 90}
-    for _, d in ipairs(DIRS) do
-        perm(doc, is("minecraft:cardinal_direction", d), {["minecraft:transformation"] = {rotation = {0, turns[d], 0}}})
-    end
-    comps(doc)["minecraft:collision_box"] = cbox({1, 0, 1, 15, 14, 15})
-    comps(doc)["minecraft:selection_box"] = cbox({1, 0, 1, 15, 14, 15})
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(t.single or tex(t, "*"), m)}
+    perm(doc, is(NS .. "type", "left"), {["minecraft:material_instances"] = {["*"] = mat(t.left or t.single or tex(t, "*"), m)}})
+    perm(doc, is(NS .. "type", "right"), {["minecraft:material_instances"] = {["*"] = mat(t.right or t.single or tex(t, "*"), m)}})
+    facing_perms(doc)
 end
-builders.trapped_chest = builders.chest
+visual.chest = chest_visual
+visual.trapped_chest = chest_visual
+-- ChestBlock.getShape: single AABB, a double chest reaches its partner
+local CHEST_AABB = {single = {1, 0, 1, 15, 14, 15}, north = {1, 0, 0, 15, 14, 15}, south = {1, 0, 1, 15, 14, 16}, west = {0, 0, 1, 15, 14, 15}, east = {1, 0, 1, 16, 14, 15}}
+local function chest_behaviour(doc, e)
+    for _, f in ipairs(FACING4) do
+        for _, kind in ipairs({"single", "left", "right"}) do
+            local b = CHEST_AABB.single
+            if kind ~= "single" then
+                -- ChestBlock.getConnectedDirection: LEFT -> clockwise, RIGHT -> counter-clockwise
+                local cw = ({north = "east", east = "south", south = "west", west = "north"})[f]
+                b = CHEST_AABB[kind == "left" and cw or CCW[f]]
+            end
+            perm(doc, all(is(NS .. "facing", f), is(NS .. "type", kind)), {["minecraft:collision_box"] = cbox(b), ["minecraft:selection_box"] = cbox(b)})
+        end
+    end
+end
+behaviour.chest = chest_behaviour
+behaviour.trapped_chest = function (doc, e)
+    chest_behaviour(doc, e)
+    -- TrappedChestBlock.getSignal: the players inside (0..15), strongly into the block below
+    comps(doc)["minecraft:redstone_conductivity"] = {redstone_conductor = false}
+    comps(doc)["minecraft:redstone_producer"] = {power = 0}
+    for n = 1, 15 do perm(doc, is(NS .. "open_count", n), {["minecraft:redstone_producer"] = {power = n, strongly_powered_face = "down"}}) end
+end
 
--- horizontal (TF TFHorizontalBlock): the front faces the player (minecraft:cardinal_direction is
--- Java's facing, set by the runtime); binary rotated (TF BinaryRotatedBlock): turned when the
--- player looked along z; directional (Java DirectionalBlock): minecraft:facing_direction.
-builders.horizontal = function (doc, e, t)
+-- horizontal (TF TFHorizontalBlock, HorizontalDirectionalBlock): facing; the front (params
+-- textures.front) faces the facing. binary rotated (TF BinaryRotatedBlock): rotated turns the
+-- model a quarter. directional (Java DirectionalBlock): facing of six; the front is up.
+visual.horizontal = function (doc, e, t)
     full_block(doc, {["*"] = tex(t, "side", "*"), up = tex(t, "up", "top", "*"), down = tex(t, "down", "bottom", "up", "*"),
-        north = tex(t, "front", "north", "*"), south = tex(t, "back", "south", "side", "*"), east = tex(t, "side", "*"), west = tex(t, "side", "*")}, e.params.render_method)
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:cardinal_direction"})})
-    local turns = {north = 0, east = -90, south = 180, west = 90}
-    for _, d in ipairs(DIRS) do
-        if turns[d] ~= 0 then perm(doc, is("minecraft:cardinal_direction", d), {["minecraft:transformation"] = {rotation = {0, turns[d], 0}}}) end
-    end
+        south = tex(t, "front", "south", "*"), north = tex(t, "back", "north", "side", "*"), east = tex(t, "side", "*"), west = tex(t, "side", "*")}, e.params.render_method)
+    facing_perms(doc)
 end
-builders.binary_rotated = function (doc, e, t)
+visual.binary_rotated = function (doc, e, t)
     full_block(doc, t, e.params.render_method)
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:cardinal_direction"})})
-    perm(doc, any({is("minecraft:cardinal_direction", "north"), is("minecraft:cardinal_direction", "south")}),
-        {["minecraft:transformation"] = {rotation = {0, 90, 0}}})
+    perm(doc, is(NS .. "rotated", true), {["minecraft:transformation"] = {rotation = {0, 90, 0}}})
 end
-builders.directional = function (doc, e, t)
+visual.directional = function (doc, e, t)
     full_block(doc, {["*"] = tex(t, "side", "*"), up = tex(t, "front", "up", "*"), down = tex(t, "back", "down", "side", "*"),
         north = tex(t, "side", "*"), south = tex(t, "side", "*"), east = tex(t, "side", "*"), west = tex(t, "side", "*")}, e.params.render_method)
-    add_trait(doc, "minecraft:placement_direction", {enabled_states = arr({"minecraft:facing_direction"})})
     local rots = {down = {180, 0, 0}, north = {-90, 0, 0}, south = {90, 0, 0}, west = {0, 0, 90}, east = {0, 0, -90}}
-    for f, r in pairs(rots) do perm(doc, is("minecraft:facing_direction", f), {["minecraft:transformation"] = {rotation = r}}) end
+    for f, r in pairs(rots) do perm(doc, is(NS .. "facing", f), {["minecraft:transformation"] = {rotation = r}}) end
 end
 
--- connectable pillar (TF ConnectableRotatedPillarBlock, e.g. thorns) and wall pillar (TF
--- WallPillarBlock): an axis and six connections (twilightforest:<direction>, kept by the runtime).
-local function pillar_conn(doc, e, t, ctx, kind)
-    local width = e.params.width or (kind == "wall_pillar" and 12 or 16)
-    local lo = width >= 16 and 0 or 8 - width / 2
-    local hi = 16 - lo
-    local g = "geometry.gf_families." .. kind .. "_" .. tostring(width):gsub("%.", "_")
-    if not ctx.geos[g] then
-        local bones
+-- connectable pillar (TF ConnectableRotatedPillarBlock, e.g. thorns: one box per state from
+-- getShape) and wall pillar (TF WallPillarBlock: the 12 px core, 2 px arms, 3 px flats on the axis
+-- ends). axis and six connections, kept by the runtime.
+-- ConnectableRotatedPillarBlock's width: params.width, TF's ThornsBlock(properties, 10)
+local function pillar_width(e)
+    if e.params.width then return e.params.width end
+    local c = e.params.class
+    if c == "ThornsBlock" or c == "BurntThornsBlock" then return 10 end
+    return 16
+end
+local function pillar_bounds(width)
+    if width >= 16 then return 0, 16 end
+    local lo = 8 - width / 2
+    return lo, 16 - lo
+end
+local function connectable_shape(axis, c, lo, hi)
+    -- ConnectableRotatedPillarBlock.getShape (TF's mapping of the connections, as written)
+    if axis == "x" then
+        return {0, c.north and 0 or lo, c.west and 0 or lo, 16, c.south and 16 or hi, c.east and 16 or hi}
+    elseif axis == "z" then
+        return {c.east and 0 or lo, c.south and 0 or lo, 0, c.west and 16 or hi, c.north and 16 or hi, 16}
+    end
+    return {c.west and 0 or lo, 0, c.north and 0 or lo, c.east and 16 or hi, 16, c.south and 16 or hi}
+end
+local WALL_PILLAR = {
+    base = {2, 2, 2, 14, 14, 14},
+    arm = {west = {0, 2, 2, 2, 14, 14}, east = {14, 2, 2, 16, 14, 14}, down = {2, 0, 2, 14, 2, 14}, up = {2, 14, 2, 14, 16, 14}, north = {2, 2, 0, 14, 14, 2}, south = {2, 2, 14, 14, 14, 16}},
+    flat = {west = {0, 0, 0, 3, 16, 16}, east = {13, 0, 0, 16, 16, 16}, down = {0, 0, 0, 16, 3, 16}, up = {0, 13, 0, 16, 16, 16}, north = {0, 0, 0, 16, 16, 3}, south = {0, 0, 13, 16, 16, 16}},
+}
+local AXIS_OF = {up = "y", down = "y", north = "z", south = "z", west = "x", east = "x"}
+local function wall_pillar_boxes(axis, c)
+    -- WallPillarBlock.getShape
+    local boxes = {WALL_PILLAR.base}
+    for _, d in ipairs({"down", "up", "north", "south", "west", "east"}) do
+        if c[d] then table.insert(boxes, WALL_PILLAR.arm[d]) elseif AXIS_OF[d] == axis then table.insert(boxes, WALL_PILLAR.flat[d]) end
+    end
+    return boxes
+end
+local function pillar_conn_visual(doc, e, t, ctx, kind)
+    local width = pillar_width(e)
+    local lo, hi = pillar_bounds(width)
+    local g = "geometry.gf_families." .. kind .. (kind == "connectable_pillar" and ("_" .. tostring(width):gsub("%.", "_")) or "")
+    geo(ctx, g, function ()
+        local bones = {}
         if kind == "wall_pillar" then
-            -- TF WallPillarBlock shapes: the 12 px core, 2 px arms, 3 px flats on the axis ends
-            bones = {
-                bone("core", {cube({2, 2, 2, 14, 14, 14})}),
-                bone("down", {cube({2, 0, 2, 14, 2, 14})}), bone("up", {cube({2, 14, 2, 14, 16, 14})}),
-                bone("north", {cube({2, 2, 0, 14, 14, 2})}), bone("south", {cube({2, 2, 14, 14, 14, 16})}),
-                bone("west", {cube({0, 2, 2, 2, 14, 14})}), bone("east", {cube({14, 2, 2, 16, 14, 14})}),
-                bone("down_flat", {cube({0, 0, 0, 16, 3, 16})}), bone("up_flat", {cube({0, 13, 0, 16, 16, 16})}),
-                bone("north_flat", {cube({0, 0, 0, 16, 16, 3})}), bone("south_flat", {cube({0, 0, 13, 16, 16, 16})}),
-                bone("west_flat", {cube({0, 0, 0, 3, 16, 16})}), bone("east_flat", {cube({13, 0, 0, 16, 16, 16})}),
-            }
+            table.insert(bones, bone("core", {cube(WALL_PILLAR.base)}))
+            for d, b in pairs(WALL_PILLAR.arm) do table.insert(bones, bone(d, {cube(b)})) end
+            for d, b in pairs(WALL_PILLAR.flat) do table.insert(bones, bone(d .. "_flat", {cube(b)})) end
         else
-            bones = {
-                bone("core", {cube({lo, lo, lo, hi, hi, hi})}),
-                bone("down", {cube({lo, 0, lo, hi, lo, hi})}), bone("up", {cube({lo, hi, lo, hi, 16, hi})}),
-                bone("north", {cube({lo, lo, 0, hi, hi, lo})}), bone("south", {cube({lo, lo, hi, hi, hi, 16})}),
-                bone("west", {cube({0, lo, lo, lo, hi, hi})}), bone("east", {cube({hi, lo, lo, 16, hi, hi})}),
-                bone("axis_y", {cube({lo, 0, lo, hi, 16, hi})}), bone("axis_z", {cube({lo, lo, 0, hi, hi, 16})}), bone("axis_x", {cube({0, lo, lo, 16, hi, hi})}),
-            }
+            table.insert(bones, bone("axis_y", {cube({lo, 0, lo, hi, 16, hi})}))
+            table.insert(bones, bone("axis_z", {cube({lo, lo, 0, hi, hi, 16})}))
+            table.insert(bones, bone("axis_x", {cube({0, lo, lo, 16, hi, hi})}))
+            local stubs = {down = {lo, 0, lo, hi, lo, hi}, up = {lo, hi, lo, hi, 16, hi}, north = {lo, lo, 0, hi, hi, lo},
+                south = {lo, lo, hi, hi, hi, 16}, west = {0, lo, lo, lo, hi, hi}, east = {hi, lo, lo, 16, hi, hi}}
+            for d, b in pairs(stubs) do table.insert(bones, bone(d, {cube(b)})) end
         end
-        ctx.geos[g] = geo_doc(g, bones)
+        return geo_doc(g, bones)
+    end)
+    local vis = {}
+    if kind == "wall_pillar" then
+        vis.core = true
+        for _, d in ipairs(FACES6) do
+            vis[d] = is(NS .. d, true)
+            vis[d .. "_flat"] = all(is(NS .. d, false), is(NS .. "axis", AXIS_OF[d]))
+        end
+    else
+        for _, a in ipairs(AXES) do vis["axis_" .. a] = is(NS .. "axis", a) end
+        for _, d in ipairs(FACES6) do vis[d] = all(is(NS .. d, true), "!(" .. is(NS .. "axis", AXIS_OF[d]) .. ")") end
     end
-    add_trait(doc, "minecraft:placement_position", {enabled_states = arr({"minecraft:block_face"})})
-    local axis = {
-        y = any({is("minecraft:block_face", "up"), is("minecraft:block_face", "down")}),
-        z = any({is("minecraft:block_face", "north"), is("minecraft:block_face", "south")}),
-        x = any({is("minecraft:block_face", "east"), is("minecraft:block_face", "west")}),
-    }
-    local axis_of = {up = "y", down = "y", north = "z", south = "z", west = "x", east = "x"}
-    local vis = {core = true}
-    for _, f in ipairs(FACES6) do
-        add_state(doc, NS .. f, ints(1))
-        vis[f] = is(NS .. f, 1)
-        if kind == "wall_pillar" then vis[f .. "_flat"] = all(is(NS .. f, 0), axis[axis_of[f]]) end
-    end
-    if kind ~= "wall_pillar" then for a, c in pairs(axis) do vis["axis_" .. a] = c end end
     geometry(doc, g, vis)
-    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "side", "*"), e.params.render_method), up = mat(tex(t, "end", "up", "*"), e.params.render_method), down = mat(tex(t, "end", "down", "*"), e.params.render_method)}
+    comps(doc)["minecraft:material_instances"] = {["*"] = mat(tex(t, "side", "*"), e.params.render_method), up = mat(tex(t, "end", "up", "*"), e.params.render_method),
+        down = mat(tex(t, "end", "down", "*"), e.params.render_method)}
+end
+local function pillar_conn_behaviour(doc, e, kind)
+    local width = pillar_width(e)
+    local lo, hi = pillar_bounds(width)
+    for _, axis in ipairs(AXES) do
+        for mask = 0, 63 do
+            local c, cond = {}, {is(NS .. "axis", axis)}
+            for i, d in ipairs(FACES6) do
+                c[d] = (mask >> (i - 1)) & 1 == 1
+                table.insert(cond, is(NS .. d, c[d]))
+            end
+            local boxes = kind == "wall_pillar" and wall_pillar_boxes(axis, c) or {connectable_shape(axis, c, lo, hi)}
+            perm(doc, all(table.unpack(cond)), {["minecraft:collision_box"] = cboxes(boxes), ["minecraft:selection_box"] = cbox(bounds(boxes))})
+        end
+    end
     if kind == "wall_pillar" then comps(doc)["minecraft:light_dampening"] = 0 end
 end
-builders.connectable_pillar = function (doc, e, t, ctx) pillar_conn(doc, e, t, ctx, "connectable_pillar") end
-builders.wall_pillar = function (doc, e, t, ctx) pillar_conn(doc, e, t, ctx, "wall_pillar") end
+visual.connectable_pillar = function (doc, e, t, ctx) pillar_conn_visual(doc, e, t, ctx, "connectable_pillar") end
+visual.wall_pillar = function (doc, e, t, ctx) pillar_conn_visual(doc, e, t, ctx, "wall_pillar") end
+behaviour.connectable_pillar = function (doc, e) pillar_conn_behaviour(doc, e, "connectable_pillar") end
+behaviour.wall_pillar = function (doc, e) pillar_conn_behaviour(doc, e, "wall_pillar") end
 
--- connected texture (TF ConnectedTextureModel / ConnectionLogic): every face is four 8x8
--- quadrants; each quadrant draws the overlay (textures.overlay, TF's overlay_texture) or a piece
--- of the connected sheet (textures.connected, overlay_connected: cornerless / vertical /
--- horizontal / corner quarters) by the connections to its two sides (twilightforest:<direction>,
--- kept by the runtime). Bedrock's state budget leaves out TF's diagonal check: two connected
--- sides count as a filled corner (cornerless), as in a flat wall.
+-- connected texture (TF ConnectedTextureModel / UnbakedConnectedTextureModel / ConnectionLogic):
+-- every face is four 8 x 8 quadrants; each quadrant draws the overlay (TF's overlay_texture) or a
+-- piece of the connected sheet (overlay_connected: cornerless / vertical / horizontal / corner) by
+-- the connections to its two sides and the block in their corner (twilightforest:<direction> and
+-- twilightforest:corner_<a>_<b>, kept by the runtime). Bedrock's per-block budget (65536 states)
+-- holds the corners only for blocks whose enabled faces need few of them (six sides and twelve
+-- corners are 2^18): otherwise two connected sides count as a filled corner (cornerless), as in a
+-- flat wall.
 local CT_PLANE = { -- ConnectionLogic.AXIS_PLANE_DIRECTIONS by the face's axis
     x = {"up", "north", "down", "south"}, y = {"north", "east", "south", "west"}, z = {"up", "east", "down", "west"},
 }
-local FACE_AXIS = {down = "y", up = "y", north = "z", south = "z", west = "x", east = "x"}
 local NORMAL = {down = {0, -1, 0}, up = {0, 1, 0}, north = {0, 0, -1}, south = {0, 0, 1}, west = {-1, 0, 0}, east = {1, 0, 0}}
-local CT_LOGIC = { -- name, sheet (overlay / connected), u0, v0, u1, v1
+local CT_LOGIC = { -- ConnectionLogic: sheet (overlay / connected), u0, v0, u1, v1
     none = {"overlay", 0, 0, 16, 16}, cornerless = {"connected", 0, 0, 8, 8}, vertical = {"connected", 0, 8, 8, 16},
     horizontal = {"connected", 8, 0, 16, 8}, corner = {"connected", 8, 8, 16, 16},
 }
@@ -1052,67 +1376,61 @@ local function ct_of(horizontal, vertical, corner) -- ConnectionLogic.of
     if horizontal then return vertical and "corner" or "horizontal" end
     return vertical and "vertical" or "none"
 end
+local function corner_key(a, b) -- the state of the diagonal of sides a and b (sorted names)
+    if a > b then a, b = b, a end
+    return "corner_" .. a .. "_" .. b
+end
 
--- The overlay quad of quadrant i (1..4) of face f drawn with `logic`.
+-- The overlay quad of quadrant i (1..4) of face f drawn with `logic` (UnbakedConnectedTextureModel:
+-- the octant from the centre to the face's corner, its face UVs remapped by the logic).
 local function ct_quad(f, i, logic)
-    local dirs = CT_PLANE[FACE_AXIS[f]]
+    local dirs = CT_PLANE[AXIS_OF[f]]
     local a, b, n = NORMAL[dirs[i]], NORMAL[dirs[i % 4 + 1]], NORMAL[f]
     local corner, box = {}, {}
     for k = 1, 3 do corner[k] = (n[k] + a[k] + b[k] + 1) * 8 end
     for k = 1, 3 do box[k] = math.min(8, corner[k]); box[k + 3] = math.max(8, corner[k]) end
-    -- the quadrant on the face plane, lifted 0.01 px off the base
-    local k     = n[1] ~= 0 and 1 or (n[2] ~= 0 and 2 or 3)
-    local plane = (n[k] > 0 and 16 or 0) + n[k] * 0.01
-    box[k], box[k + 3] = plane, plane
-    local l  = CT_LOGIC[logic]
-    local c  = cube(box, l[1], {[f] = true})
-    local uv = c.uv[f]
-    -- TF remapUVs: the quadrant's own UV scaled into the logic's piece of the sheet
+    local l = CT_LOGIC[logic]
+    local r = face_rect(box, f)
     local function ru(u) return l[2] + (l[4] - l[2]) * u / 16 end
     local function rv(v) return l[3] + (l[5] - l[3]) * v / 16 end
-    local u0, v0 = ru(uv.uv[1]), rv(uv.uv[2])
-    local u1, v1 = ru(uv.uv[1] + uv.uv_size[1]), rv(uv.uv[2] + uv.uv_size[2])
-    uv.uv, uv.uv_size = {u0, v0}, {u1 - u0, v1 - v0}
-    return c
+    local rect = {ru(r[1]), rv(r[2]), ru(r[3]), rv(r[4])}
+    -- the quad on the face plane, lifted 0.01 px off the base face (no z-fighting)
+    local k = n[1] ~= 0 and 1 or (n[2] ~= 0 and 2 or 3)
+    local plane = (n[k] > 0 and 16 or 0) + n[k] * 0.01
+    box[k], box[k + 3] = plane, plane
+    return cube(box, {faces = {[f] = {rect = rect, mat = l[1]}}, faces_only = true})
 end
 
--- One geometry per connection mask (bit d of FACES6 order: the connection on that side), each
--- holding the base cube and the 24 quadrant overlays that mask shows: no bone visibility (Bedrock
--- caps its entries) and one permutation per mask.
-local function ct_geos(ctx, faces, disabled_overlay)
-    local key = {}
-    for _, f in ipairs(FACES6) do table.insert(key, faces[f] and "1" or "0") end
-    local suffix = table.concat(key) .. (disabled_overlay and "o" or "")
-    local ids = {}
-    for mask = 0, 63 do
-        local g = "geometry.gf_families.ct_" .. suffix .. "_" .. mask
-        ids[mask] = g
-        if not ctx.geos[g] then
-            local conn = {}
-            for d, f in ipairs(FACES6) do conn[f] = (mask >> (d - 1)) & 1 == 1 end
-            local cubes = {}
-            for _, f in ipairs(FACES6) do
-                local dirs = CT_PLANE[FACE_AXIS[f]]
-                for i = 1, 4 do
-                    local logic
-                    if faces[f] then
-                        local side1, side2 = conn[dirs[i]], conn[dirs[i % 4 + 1]]
-                        local corner = side1 and side2 -- see above: a filled corner
-                        logic = (i - 1) % 2 == 0 and ct_of(side1, side2, corner) or ct_of(side2, side1, corner)
-                    elseif disabled_overlay then
-                        logic = "none"
-                    end
-                    if logic then table.insert(cubes, ct_quad(f, i, logic)) end
-                end
+-- The sides the enabled faces look at, and the corner states the block can hold within the budget
+-- (nil: none): the six side states and the others multiply up to 65536 permutations, and one
+-- geometry per combination of the bits that matter stays at 256 at most.
+local function ct_bits(faces, other_states)
+    local sides_, corners = {}, {}
+    for _, f in ipairs(FACES6) do
+        if faces[f] then
+            local dirs = CT_PLANE[AXIS_OF[f]]
+            for i = 1, 4 do
+                sides_[dirs[i]] = true
+                corners[corner_key(dirs[i], dirs[i % 4 + 1])] = true
             end
-            ctx.geos[g] = geo_doc(g, {bone("base", {cube({0, 0, 0, 16, 16, 16})}), bone("overlay", cubes)})
         end
     end
-    return ids
+    local s, c = {}, sorted_keys(corners)
+    for _, f in ipairs(FACES6) do if sides_[f] then table.insert(s, f) end end
+    if (1 << (6 + #c)) * other_states > 65536 or (1 << (#s + #c)) > 256 then c = nil end
+    return s, c
 end
 
-builders.connected_texture = function (doc, e, t, ctx)
-    for _, f in ipairs(FACES6) do add_state(doc, NS .. f, ints(1)) end
+local function ct_logic_for(f, i, conn, corners)
+    local dirs = CT_PLANE[AXIS_OF[f]]
+    local s1, s2 = dirs[i], dirs[i % 4 + 1]
+    local side1, side2 = conn[s1], conn[s2]
+    local corner
+    if corners then corner = side1 and side2 and conn[corner_key(s1, s2)] else corner = side1 and side2 end
+    return (i - 1) % 2 == 0 and ct_of(side1, side2, corner) or ct_of(side2, side1, corner)
+end
+
+visual.connected_texture = function (doc, e, t, ctx)
     local method = e.params.render_method or "alpha_test"
     if not (t.overlay and t.connected) then
         full_block(doc, t, e.params.render_method) -- no overlay sheets: the plain block
@@ -1120,16 +1438,44 @@ builders.connected_texture = function (doc, e, t, ctx)
     end
     local faces = {}
     for _, f in ipairs(e.params.faces or FACES6) do faces[f] = true end
-    local ids = ct_geos(ctx, faces, e.params.render_on_disabled_faces ~= false)
-    geometry(doc, ids[0])
+    local disabled = e.params.render_on_disabled_faces ~= false
+    local others = 1
+    for name, values in pairs(states_of(doc)) do
+        if not name:match("^twilightforest:[a-z]+$") or not NORMAL[name:sub(#NS + 1)] then others = others * #values end
+    end
+    local sides_, corners = ct_bits(faces, others)
+    -- the bits: the sides the faces look at, then the corners; one geometry and one permutation per
+    -- combination (the other sides change nothing)
+    local bits = {}
+    for _, f in ipairs(sides_) do table.insert(bits, f) end
+    for _, c in ipairs(corners or {}) do table.insert(bits, c); ensure_state(doc, NS .. c, BOOL()) end
+    local fkey = {}
+    for _, f in ipairs(FACES6) do table.insert(fkey, faces[f] and "1" or "0") end
+    local prefix = "geometry.gf_families.ct_" .. table.concat(fkey) .. (disabled and "o" or "") .. (corners and "c" or "")
+    for mask = 0, (1 << #bits) - 1 do
+        local conn = {}
+        for i, name in ipairs(bits) do conn[name] = (mask >> (i - 1)) & 1 == 1 end
+        local g = geo(ctx, prefix .. "_" .. mask, function ()
+            local cubes = {}
+            for _, f in ipairs(FACES6) do
+                for i = 1, 4 do
+                    local logic
+                    if faces[f] then logic = ct_logic_for(f, i, conn, corners) elseif disabled then logic = "none" end
+                    if logic then table.insert(cubes, ct_quad(f, i, logic)) end
+                end
+            end
+            return geo_doc(prefix .. "_" .. mask, {bone("base", {cube({0, 0, 0, 16, 16, 16})}), bone("overlay", cubes)})
+        end)
+        if mask == 0 then geometry(doc, g) end
+        if mask > 0 then
+            local cond = {}
+            for i, name in ipairs(bits) do table.insert(cond, is(NS .. name, conn[name])) end
+            perm(doc, all(table.unpack(cond)), {["minecraft:geometry"] = g})
+        end
+    end
     comps(doc)["minecraft:material_instances"] = {
         ["*"] = mat(tex(t, "base", "*"), method), overlay = mat(t.overlay, method), connected = mat(t.connected, method),
     }
-    for mask = 1, 63 do
-        local cond = {}
-        for d, f in ipairs(FACES6) do table.insert(cond, is(NS .. f, (mask >> (d - 1)) & 1)) end
-        perm(doc, all(table.unpack(cond)), {["minecraft:geometry"] = ids[mask]})
-    end
 end
 
 -- ---- modifiers -----------------------------------------------------------------------------------
@@ -1138,39 +1484,50 @@ end
 
 local modifiers = {}
 
--- Java SimpleWaterloggedBlock: Bedrock's liquid detection keeps the water layer.
+-- Java SimpleWaterloggedBlock: Bedrock's liquid detection keeps the water layer (Java's
+-- waterlogged property is not a block state on Bedrock, docs/spec/blockstates.md).
 modifiers.waterloggable = function (doc)
     comps(doc)["minecraft:liquid_detection"] = {detection_rules = arr({{liquid_type = "water", can_contain_liquid = true, on_liquid_touches = "no_reaction"}})}
 end
 
--- TF SnowLoggable: twilightforest:layers 0..8 of snow in the block (a snow layer bone).
+-- TF SnowLoggable: layers 0..8 of snow in the block (SNOW_SHAPE_BY_LAYER: 2 px per layer): snow
+-- bones in a copy of the geometry, the snow in the selection box.
 modifiers.snowloggable = function (doc, e, t, ctx)
-    add_state(doc, NS .. "layers", ints(8))
+    ensure_state(doc, NS .. "layers", ints(8))
     local g = comps(doc)["minecraft:geometry"]
     local id = type(g) == "table" and g.identifier or g
-    if type(id) == "string" and id:match("^geometry%.gf_families") then
-        -- a snow bone per layer in a copy of the geometry
+    if type(id) == "string" and ctx.geos[id] then
         local sid = id .. "_snowy"
-        if not ctx.geos[sid] and ctx.geos[id] then
+        geo(ctx, sid, function ()
             local d = copy(ctx.geos[id])
-            local geo = d["minecraft:geometry"][1]
-            geo.description.identifier = sid
-            for n = 1, 8 do table.insert(geo.bones, bone("snow_" .. n, {cube({0, 0, 0, 16, n * 2, 16}, "snow")})) end
-            ctx.geos[sid] = d
-        end
+            local geom = d["minecraft:geometry"][1]
+            geom.description.identifier = sid
+            for n = 1, 8 do table.insert(geom.bones, bone("snow_" .. n, {cube({0, 0, 0, 16, n * 2, 16}, {mat = "snow"})})) end
+            return d
+        end)
         local vis = type(g) == "table" and copy(g.bone_visibility) or {}
         for n = 1, 8 do vis["snow_" .. n] = is(NS .. "layers", n) end
         comps(doc)["minecraft:geometry"] = {identifier = sid, bone_visibility = vis}
-        -- the snow takes the block's render method (Bedrock refuses opaque and transparent together)
-        local base = comps(doc)["minecraft:material_instances"]["*"]
-        comps(doc)["minecraft:material_instances"].snow = mat(e.params.snow_texture or "snow", base and base.render_method or "opaque")
-        for _, p in ipairs(block_of(doc).permutations) do
+        for _, p in ipairs(block_of(doc).permutations or {}) do
             local pg = p.components["minecraft:geometry"]
             if type(pg) == "table" and pg.identifier == id then
                 pg.identifier = sid
                 for n = 1, 8 do pg.bone_visibility["snow_" .. n] = is(NS .. "layers", n) end
             end
         end
+        -- the snow takes the block's render method (Bedrock refuses opaque and transparent together)
+        local mi = comps(doc)["minecraft:material_instances"] or {}
+        local base = mi["*"]
+        mi.snow = mat(e.params.snow_texture or "snow", base and base.render_method or "opaque",
+            base and base.ambient_occlusion == false and {ambient_occlusion = true, face_dimming = true} or nil)
+        comps(doc)["minecraft:material_instances"] = mi
+    end
+    -- the snow is part of the block's shape (SnowLoggable shapes)
+    local sel = comps(doc)["minecraft:selection_box"]
+    local sb = type(sel) == "table" and sel.origin and {sel.origin[1] + 8, sel.origin[2], sel.origin[3] + 8, sel.origin[1] + 8 + sel.size[1], sel.origin[2] + sel.size[2], sel.origin[3] + 8 + sel.size[3]} or {2, 0, 2, 14, 13, 14}
+    for n = 1, 8 do
+        local snow = {0, 0, 0, 16, n * 2, 16}
+        perm(doc, is(NS .. "layers", n), {["minecraft:selection_box"] = cbox(bounds({sb, snow})), ["minecraft:collision_box"] = n > 1 and cbox({0, 0, 0, 16, (n - 1) * 2, 16}) or false})
     end
 end
 
@@ -1178,9 +1535,9 @@ end
 -- block type climbable (BlockProperty::Climbable) on the server and in the client mod.
 modifiers.climbable = function () end
 
--- TF LightableBlock: twilightforest:lighting none / normal / dim / ominous; light per level.
+-- TF LightableBlock: lighting none / normal / dim / ominous; light per level.
 modifiers.lightable = function (doc, e)
-    add_state(doc, NS .. "lighting", arr({"none", "normal", "dim", "ominous"}))
+    ensure_state(doc, NS .. "lighting", list("none", "normal", "dim", "ominous"))
     local light = e.params.light_levels or {none = 0, normal = 15, dim = 7, ominous = 15}
     for _, l in ipairs({"normal", "dim", "ominous"}) do
         if light[l] and light[l] > 0 then perm(doc, is(NS .. "lighting", l), {["minecraft:light_emission"] = light[l]}) end
@@ -1195,6 +1552,17 @@ local SHAPES = {
     wall_pillar = true, connectable_pillar = true, connected_texture = true,
 }
 local MODIFIERS = {waterloggable = true, snowloggable = true, climbable = true, lightable = true}
+
+-- F1 names the Java class: it refines the family (as src/feature/families/Registry.cpp does)
+local function family_of(name, class)
+    if name == "sign" and class == "WallSignBlock" then return "wall_sign" end
+    if name == "hanging_sign" and class == "WallHangingSignBlock" then return "wall_hanging_sign" end
+    if name == "pillar" then
+        if class == "WallPillarBlock" then return "wall_pillar" end
+        if class == "ThornsBlock" or class == "BurntThornsBlock" or class == "ConnectableRotatedPillarBlock" then return "connectable_pillar" end
+    end
+    return name
+end
 
 -- Default Bedrock block sounds per family (RP blocks.json) when params.sound is absent.
 local DEFAULT_SOUND = {
@@ -1211,21 +1579,22 @@ local function read_entries(file, out, errors)
         table.insert(errors, "unreadable family data " .. file)
         return
     end
-    local list = doc
-    if type(doc) == "table" and doc.entries then list = doc.entries end
-    if type(list) ~= "table" then return end
-    for i, e in ipairs(list) do
+    local items = doc
+    if type(doc) == "table" and doc.entries then items = doc.entries end
+    if type(items) ~= "table" then return end
+    for i, e in ipairs(items) do
         if type(e) ~= "table" or type(e.id) ~= "string" or type(e.family) ~= "string" then
             table.insert(errors, string.format("%s: entry %d needs an id and a family", file, i))
         elseif not SHAPES[e.family] and not MODIFIERS[e.family] then
             table.insert(errors, string.format("%s: %s has the unknown family '%s'", file, e.id, e.family))
         else
-            table.insert(out, {id = e.id, family = e.family, params = type(e.params) == "table" and e.params or {}, file = file})
+            local params = type(e.params) == "table" and e.params or {}
+            table.insert(out, {id = e.id, family = family_of(e.family, params.class), params = params, file = file})
         end
     end
 end
 
--- Groups entries per id: one shape family (or "cube" for modifier-only ids) and its modifiers.
+-- Groups entries per id: one shape family (nil for modifier-only ids) and its modifiers.
 local function group(entries, errors)
     local by_id, order = {}, {}
     for _, e in ipairs(entries) do
@@ -1248,14 +1617,12 @@ local function group(entries, errors)
     end
     for _, id in ipairs(order) do
         local g = by_id[id]
-        g.shape = g.shape or "cube"
         if g.params.waterlogged or g.params.waterloggable then g.modifiers.waterloggable = true end
     end
     table.sort(order)
     return by_id, order
 end
 
--- Every JSON file under `dir` (recursively), sorted.
 local function json_files(dir)
     if not os.isdir(dir) then return {} end
     local files = os.files(path.join(dir, "**.json"))
@@ -1263,7 +1630,7 @@ local function json_files(dir)
     return files
 end
 
--- BP definitions of a pack: identifier -> file.
+-- BP definitions of a pack: identifier -> {file, doc}.
 local function bp_blocks(bpdir)
     local out = {}
     for _, f in ipairs(json_files(path.join(bpdir, "blocks"))) do
@@ -1298,19 +1665,175 @@ end
 
 local function safe_name(id) return (id:gsub(":", "_"):gsub("/", "_")) end
 
+-- ---- block documents -----------------------------------------------------------------------------
+
+local KEEP = {
+    "minecraft:destructible_by_mining", "minecraft:destructible_by_explosion", "minecraft:map_color",
+    "minecraft:loot", "minecraft:display_name", "minecraft:flammable", "minecraft:light_emission",
+    "minecraft:friction", "minecraft:crafting_table", "minecraft:destruction_particles",
+}
+
+-- The starting document of `entry`: the skeleton (whole, or its base components when the kit
+-- draws the block), or the params / defaults. The skeleton's states are always kept.
+local function base_doc(entry, skeleton, basedoc, keep_visual)
+    local p = entry.params
+    local sblock = skeleton and skeleton["minecraft:block"]
+    local doc
+    if sblock and keep_visual then
+        doc = copy(skeleton)
+        doc.format_version = FORMAT
+        doc["minecraft:block"].description.traits = nil
+        if doc["minecraft:block"].permutations == nil then doc["minecraft:block"].permutations = arr({}) end
+    else
+        local comps_ = {}
+        local src = skeleton or basedoc
+        local scomps = src and src["minecraft:block"] and src["minecraft:block"].components or {}
+        for _, k in ipairs(KEEP) do
+            if scomps[k] ~= nil then comps_[k] = copy(scomps[k]) end
+        end
+        for k, v in pairs(scomps) do
+            if type(k) == "string" and k:match("^tag:") then comps_[k] = copy(v) end
+        end
+        if skeleton == nil and basedoc ~= nil then comps_["minecraft:loot"] = nil end -- the base block's loot is not ours
+        local desc = {identifier = entry.id}
+        local sdesc = sblock and sblock.description
+        desc.menu_category = (sdesc and copy(sdesc.menu_category)) or p.menu_category or {category = "construction"}
+        if sdesc and sdesc.states then desc.states = copy(sdesc.states) end
+        doc = {format_version = FORMAT, ["minecraft:block"] = {description = desc, components = comps_, permutations = arr({})}}
+    end
+    local comps_ = doc["minecraft:block"].components
+    if p.hardness then comps_["minecraft:destructible_by_mining"] = {seconds_to_destroy = p.hardness} end
+    if p.resistance then comps_["minecraft:destructible_by_explosion"] = {explosion_resistance = p.resistance} end
+    if p.map_color then comps_["minecraft:map_color"] = p.map_color end
+    if p.light then comps_["minecraft:light_emission"] = p.light end
+    if p.loot then comps_["minecraft:loot"] = p.loot end
+    if p.tool then comps_["tag:minecraft:is_" .. p.tool .. "_item_destructible"] = {} end
+    if comps_["minecraft:destructible_by_mining"] == nil then comps_["minecraft:destructible_by_mining"] = {seconds_to_destroy = 1} end
+    return doc
+end
+
+-- ---- extras --------------------------------------------------------------------------------------
+
+-- The display entity of sign text (spike S3: custom blocks hold no block entity, the text shows as
+-- the name of an invisible entity at the sign; src/feature/families/Signs.cpp places it).
+local function sign_text_entity(bpdir, rpdir)
+    local bp = {
+        format_version = "1.16.0",
+        ["minecraft:entity"] = {
+            description = {identifier = SIGN_TEXT_ENTITY, is_spawnable = false, is_summonable = true, is_experimental = false},
+            components = {
+                ["minecraft:type_family"] = {family = arr({"inanimate", "gloamingforest_sign_text"})},
+                ["minecraft:collision_box"] = {width = 0.01, height = 0.01},
+                ["minecraft:physics"] = {has_gravity = false, has_collision = false},
+                ["minecraft:pushable"] = {is_pushable = false, is_pushable_by_piston = false},
+                ["minecraft:damage_sensor"] = {triggers = {cause = "all", deals_damage = false}},
+                ["minecraft:knockback_resistance"] = {value = 1.0},
+                ["minecraft:health"] = {value = 1, max = 1},
+                ["minecraft:fire_immune"] = {},
+                ["minecraft:nameable"] = {always_show = true, allow_name_tag_renaming = false},
+                ["minecraft:persistent"] = {},
+                ["minecraft:conditional_bandwidth_optimization"] = {},
+            },
+        },
+    }
+    local file = path.join(bpdir, "entities", "gf_families_sign_text.json")
+    os.mkdir(path.directory(file))
+    json.savefile(file, bp)
+    local rp = {
+        format_version = "1.10.0",
+        ["minecraft:client_entity"] = {
+            description = {
+                identifier = SIGN_TEXT_ENTITY,
+                materials = {default = "entity_alphatest"},
+                textures = {default = "textures/entity/sign"},
+                geometry = {default = "geometry.gf_families.empty"},
+                render_controllers = arr({"controller.render.default"}),
+            },
+        },
+    }
+    local rfile = path.join(rpdir, "entity", "gf_families_sign_text.entity.json")
+    os.mkdir(path.directory(rfile))
+    json.savefile(rfile, rp)
+    return {
+        format_version = GEO_FORMAT,
+        ["minecraft:geometry"] = arr({{
+            description = {identifier = "geometry.gf_families.empty", texture_width = 16, texture_height = 16, visible_bounds_width = 1, visible_bounds_height = 1},
+            bones = arr({{name = "root", pivot = {0, 0, 0}}}),
+        }}),
+    }
+end
+
+-- TF's sound types as Bedrock block sounds (sounds.json block_sounds and interactive_sounds),
+-- with the volume and pitch Java plays them at (SoundType: break / place (v + 1) / 2 at p * 0.8,
+-- hit (v + 1) / 8 at p * 0.5, step v * 0.15, fall v * 0.5 at p * 0.75).
+local function sound_types(rpdir, used)
+    if table.empty(used) then return end
+    merge_json_file(path.join(rpdir, "sounds.json"), function (doc)
+        doc = doc or {}
+        doc.block_sounds = doc.block_sounds or {}
+        doc.interactive_sounds = doc.interactive_sounds or {}
+        doc.interactive_sounds.block_sounds = doc.interactive_sounds.block_sounds or {}
+        for name, _ in pairs(used) do
+            local s = SOUND_TYPES[name]
+            if s then
+                local v, p, pre = s.volume, s.pitch, s.prefix
+                doc.block_sounds[name] = {volume = 1.0, pitch = 1.0, events = {
+                    default = "",
+                    ["break"] = {sound = pre .. "break", volume = (v + 1) / 2, pitch = p * 0.8},
+                    place = {sound = pre .. "place", volume = (v + 1) / 2, pitch = p * 0.8},
+                    hit = {sound = pre .. "hit", volume = (v + 1) / 8, pitch = p * 0.5},
+                }}
+                doc.interactive_sounds.block_sounds[name] = {volume = 1.0, pitch = 1.0, events = {
+                    default = "",
+                    step = {sound = pre .. "step", volume = v * 0.15, pitch = p},
+                    fall = {sound = pre .. "fall", volume = v * 0.5, pitch = p * 0.75},
+                    jump = {sound = pre .. "step", volume = v * 0.15, pitch = p},
+                    land = {sound = pre .. "fall", volume = v * 0.5, pitch = p * 0.75},
+                }}
+            end
+        end
+        return doc
+    end)
+end
+
 -- ---- generation ----------------------------------------------------------------------------------
+
+-- The entity textures of signs and chests (the assembled RP's TF textures, registered in
+-- terrain_texture.json under tf_entity_*), or the params' textures.
+local function entity_textures(g, rpdir, ctx)
+    local function register(key, rel)
+        ctx.terrain[key] = rel
+        if not os.isfile(path.join(rpdir, rel .. ".png")) and not os.isfile(path.join(rpdir, rel .. ".tga")) then
+            table.insert(ctx.missing, rel)
+        end
+        return key
+    end
+    local t = {}
+    local shape = g.shape
+    if shape == "sign" or shape == "wall_sign" then
+        local w = wood_of({id = g.id, params = g.params})
+        t.entity = register("tf_entity_sign_" .. w, "textures/twilightforest/entity/signs/" .. w)
+    elseif shape == "hanging_sign" or shape == "wall_hanging_sign" then
+        local w = wood_of({id = g.id, params = g.params})
+        t.entity = register("tf_entity_hanging_sign_" .. w, "textures/twilightforest/entity/signs/hanging/" .. w)
+    elseif shape == "chest" or shape == "trapped_chest" then
+        local w = wood_of({id = g.id, params = g.params})
+        local dir = CHEST_TEXTURE_DIRS[w] or w
+        local trapped = shape == "trapped_chest"
+        for _, k in ipairs({"single", "left", "right"}) do
+            local name = trapped and (k == "single" and "trapped" or ("trapped_" .. k)) or k
+            t[k] = register("tf_entity_chest_" .. dir .. "_" .. name, "textures/twilightforest/entity/chest/" .. dir .. "/" .. name)
+        end
+    end
+    return t
+end
 
 -- Generates the family blocks of `entries` into one BP / RP pair. Returns {blocks, skipped, files}.
 local function generate_set(entries, bpdir, rpdir, opts, errors)
     local by_id, order = group(entries, errors)
     local existing = bp_blocks(bpdir)
     local manual = opts.manual or {}
-    local ctx = {geos = {}, all = {}}
-    for _, id in ipairs(order) do
-        local g = by_id[id]
-        ctx.all[g.shape] = ctx.all[g.shape] or {}
-        table.insert(ctx.all[g.shape], id)
-    end
+    local ctx = {geos = {}, terrain = {}, missing = {}}
     ctx.loot_double = function (e)
         local rel = "loot_tables/gf_families/" .. safe_name(e.id) .. "_double.json"
         local file = path.join(bpdir, rel)
@@ -1328,22 +1851,53 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             local skel = existing[id]
             local base = g.params.base and existing[g.params.base] or nil
             local e = {id = id, params = g.params}
-            local doc = base_doc(e, skel and skel.doc or nil, base and base.doc or nil)
+            local shape = g.shape
+            local skel_geo = skel and skel.doc["minecraft:block"] and skel.doc["minecraft:block"].components["minecraft:geometry"] ~= nil
+            -- F1's skeleton models stay (TF's own block models); the kit draws block entity models,
+            -- connected textures and blocks without a skeleton model; modifier-only ids keep theirs
+            local keep_visual = skel_geo and (shape == nil or not ENTITY_MODEL[shape]) and not g.params.textures
+            if shape == nil and not skel then
+                shape = "cube"
+            end
+            local doc = base_doc(e, skel and skel.doc or nil, base and base.doc or nil, keep_visual or (shape == nil))
+            for _, s in ipairs(shape and FAMILY_STATES[shape] or {}) do ensure_state(doc, NS .. s[1], state_values(s[2])) end
             local t = textures_of(e, skel and skel.doc or (base and base.doc) or nil)
-            local build = builders[g.shape]
-            build(doc, e, t, ctx)
+            if shape and ENTITY_MODEL[shape] and not g.params.textures then
+                for k, v in pairs(entity_textures(g, rpdir, ctx)) do t[k] = v end
+            end
+            if shape and not keep_visual then
+                local v = visual[shape]
+                if v then v(doc, e, t, ctx) elseif shape == "cube" then full_block(doc, t, g.params.render_method) end
+            end
+            if shape and behaviour[shape] then behaviour[shape](doc, e, ctx) end
             for _, m in ipairs(sorted_keys(g.modifiers)) do modifiers[m](doc, e, t, ctx) end
             if g.params.components then
                 for k, v in pairs(g.params.components) do comps(doc)[k] = v end
             end
-            if #block_of(doc).permutations == 0 then block_of(doc).permutations = nil end
+            if block_of(doc).permutations and #block_of(doc).permutations == 0 then block_of(doc).permutations = nil end
             local file = skel and skel.file or path.join(bpdir, "blocks", "gf_families", safe_name(id) .. ".json")
             os.mkdir(path.directory(file))
             json.savefile(file, doc)
             table.insert(result.files, file)
             result.blocks = result.blocks + 1
-            local sound = g.params.sound or DEFAULT_SOUND[g.shape]
+            local sound = g.params.sound or (shape and DEFAULT_SOUND[shape])
             if sound then result.sounds[id] = sound end
+        end
+    end
+    -- TF's sound types for the blocks that use them (any block of the pack)
+    local used = {}
+    for id, name in pairs(SOUND_TYPE_BLOCKS) do
+        if existing[id] then result.sounds[id] = name; used[name] = true end
+    end
+    for id, g in pairs(by_id) do
+        if type(g.params.sound_type) == "string" and SOUND_TYPES[g.params.sound_type] then result.sounds[id] = g.params.sound_type; used[g.params.sound_type] = true end
+    end
+    sound_types(rpdir, used)
+    -- the sign text display entity, when there are signs
+    for _, g in pairs(by_id) do
+        if g.shape == "sign" or g.shape == "wall_sign" or g.shape == "hanging_sign" or g.shape == "wall_hanging_sign" then
+            ctx.geos["geometry.gf_families.empty"] = sign_text_entity(bpdir, rpdir)
+            break
         end
     end
     -- geometries
@@ -1352,12 +1906,26 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
         os.mkdir(path.directory(file))
         json.savefile(file, ctx.geos[gid])
     end
-    -- block sounds (RP blocks.json; an id that has an entry keeps it)
+    -- entity textures used as block textures
+    if not table.empty(ctx.terrain) then
+        merge_json_file(path.join(rpdir, "textures", "terrain_texture.json"), function (doc)
+            doc = doc or {resource_pack_name = "gloamingforest", texture_name = "atlas.terrain", padding = 8, num_mip_levels = 4, texture_data = {}}
+            doc.texture_data = doc.texture_data or {}
+            for k, v in pairs(ctx.terrain) do if doc.texture_data[k] == nil then doc.texture_data[k] = {textures = v} end end
+            return doc
+        end)
+    end
+    for _, m in ipairs(ctx.missing) do
+        if opts.strict_textures then table.insert(errors, "families: entity texture " .. m .. " is not in the resource pack") end
+    end
+    -- block sounds (RP blocks.json; an id that has an entry keeps it, TF's sound types replace it)
     if not table.empty(result.sounds) then
         merge_json_file(path.join(rpdir, "blocks.json"), function (doc)
             doc = doc or {format_version = "1.21.40"}
             for id, sound in pairs(result.sounds) do
-                if doc[id] == nil then doc[id] = {sound = sound} elseif type(doc[id]) == "table" and doc[id].sound == nil then doc[id].sound = sound end
+                local tf_type = SOUND_TYPES[sound] ~= nil
+                if doc[id] == nil then doc[id] = {sound = sound}
+                elseif type(doc[id]) == "table" and (doc[id].sound == nil or tf_type) then doc[id].sound = sound end
             end
             return doc
         end)
@@ -1402,7 +1970,7 @@ function generate(projectdir, outdir, opts)
     local entries, ferrors = families(outdir)
     for _, e in ipairs(ferrors) do table.insert(errors, e) end
     if os.isdir(bp) and os.isdir(rp) and #entries > 0 then
-        local r = generate_set(entries, bp, rp, {manual = manual}, errors)
+        local r = generate_set(entries, bp, rp, {manual = manual, strict_textures = true}, errors)
         summary.blocks, summary.skipped = r.blocks, r.skipped
         for _, f in ipairs(r.files) do table.insert(summary.files, f) end
     end

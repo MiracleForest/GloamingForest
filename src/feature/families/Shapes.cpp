@@ -4,6 +4,7 @@
 // Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
 //   src/main/java/twilightforest/block/ConnectableRotatedPillarBlock.java
 //   src/main/java/twilightforest/block/WallPillarBlock.java
+//   src/main/java/twilightforest/client/model/block/connected/ConnectedTextureModel.java
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -11,21 +12,27 @@
 // Block families (F11): the shapes that follow their neighbours (Java updateShape), kept by the
 // server for every client:
 //   fence (FenceBlock), pane (IronBarsBlock) and wall (WallBlock) connections with Java's rules,
-//   the wall post and tall sides, TF's wall pillars and connectable pillars (six connections),
-//   connected textures (connections to the same block), fence gates lowered in walls, and the
-//   24 px collision of fences, walls and closed fence gates; slab doubling (SlabBlock).
+//   the wall post and tall sides, stairs shapes (StairBlock.getStairsShape, vanilla stairs
+//   included), TF's wall pillars and connectable pillars (ConnectableRotatedPillarBlock: the side
+//   that changed), connected textures (connections to their own kind and the corner blocks),
+//   fence gates lowered in walls, and the 24 px collision of fences, walls and closed fence
+//   gates; slab doubling (SlabBlock.canBeReplaced).
 
 #include <algorithm>
 #include <cmath>
 
 #include "ll/api/memory/Hook.h"
+#include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/deps/shared_types/legacy/LevelSoundEvent.h"
+#include "mc/world/actor/ActorSoundIdentifier.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/GameType.h"
+#include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockProperty.h"
 #include "mc/world/level/block/BlockType.h"
@@ -42,6 +49,10 @@ namespace gf::feature::families {
 
 namespace ia = interactions;
 
+namespace detail {
+bool pillarConnects(BlockSource& region, BlockPos const& pos, int dir, Entry const& e, int axis);
+} // namespace detail
+
 namespace {
 
 // ---- neighbour kinds --------------------------------------------------------------------------------
@@ -56,7 +67,7 @@ Kind kindOf(Block const& b, bool* wooden = nullptr) {
     if (auto const* e = entryOf(b)) {
         switch (e->family) {
         case Family::Fence:
-            if (wooden) *wooden = e->flag("wooden", true);
+            if (wooden) *wooden = e->flag("wooden", e->str("class") != "IronBarsBlock");
             return Kind::Fence;
         case Family::FenceGate: return Kind::FenceGate;
         case Family::Wall: return Kind::Wall;
@@ -77,14 +88,10 @@ Kind kindOf(Block const& b, bool* wooden = nullptr) {
 
 /// The facing of a fence gate (ours or vanilla's) as a FacingID.
 int gateFacing(Block const& b) {
-    if (auto d = dirOf(strState(b, state::Cardinal))) return *d;
-    // vanilla: direction 0 south, 1 west, 2 north, 3 east
-    static constexpr int legacy[4]{South, West, North, East};
-    if (auto d = intState(b, "direction")) return legacy[*d & 3];
+    if (auto d = dirOf(strState(b, state::Facing))) return *d;
+    if (auto d = intState(b, "direction")) return from2D(*d); // vanilla: Java's 2D data value
     return North;
 }
-
-int axisOf(int dir) { return dir < 2 ? 1 : (dir < 4 ? 2 : 0); } // 0 x, 1 y, 2 z
 
 /// Java FenceGateBlock.connectsToDirection(state, direction).
 bool gateConnects(Block const& gate, int dir) { return axisOf(gateFacing(gate)) == axisOf(clockwise(dir)); }
@@ -175,7 +182,7 @@ bool postOverride(Block const& b) {
 
 bool wallPostAbove(Block const& above) {
     if (kindOf(above) != Kind::Wall) return false;
-    if (auto up = intState(above, state::Up)) return *up != 0;
+    if (auto up = boolState(above, state::Up)) return *up;
     auto bit = strState(above, "wall_post_bit"); // vanilla walls
     return bit == "1" || bit == "true";
 }
@@ -200,48 +207,8 @@ bool updateWall(BlockSource& region, BlockPos const& pos, Block const& block) {
             up            = !tallLine && ((above && postOverride(*above)) || covered(face, kPostTest));
         }
     }
-    Json s{{state::Up, up ? 1 : 0}};
-    for (int i = 0; i < 4; ++i) s[state::wallSide(kWallDirs[i])] = side[i] == Side::Tall ? 2 : (side[i] == Side::Low ? 1 : 0);
-    Block const* next = withStates(block, s);
-    return next && next != &block && game::setBlock(region, pos, *next);
-}
-
-// ---- pillars ------------------------------------------------------------------------------------------
-
-/// The axis (0 x, 1 y, 2 z) of a block placed on minecraft:block_face.
-int pillarAxis(Block const& b) {
-    auto f = dirOf(strState(b, state::BlockFace));
-    return f ? axisOf(*f) : 1;
-}
-
-bool updatePillarConnections(BlockSource& region, BlockPos const& pos, Block const& block, Entry const& e) {
-    int  axis = pillarAxis(block);
-    Json s    = Json::object();
-    for (int d = 0; d < 6; ++d) {
-        BlockPos     n  = offset(pos, d);
-        Block const* nb = blockAt(region, n);
-        bool         on = false;
-        if (nb && !nb->isAir()) {
-            if (e.family == Family::WallPillar) {
-                // TF WallPillarBlock.canConnectTo
-                auto const* ne = entryOf(*nb);
-                on = ne && ne->family == Family::WallPillar && (axisOf(d) == axis || axisOf(d) == pillarAxis(*nb));
-            } else if (e.family == Family::ConnectedTexture) {
-                // TF ConnectedTextureModel: the blocks it connects to (default: itself)
-                auto list = e.params.find("connects_to");
-                if (list != e.params.end() && list->is_array()) {
-                    for (auto const& id : *list)
-                        if (id.is_string() && id.get<std::string>() == nb->getTypeName()) on = true;
-                } else {
-                    on = nb->getTypeName() == e.id;
-                }
-            } else {
-                // TF ConnectableRotatedPillarBlock.canConnectTo
-                on = !exceptionForConnection(*nb) && sturdy(region, n, opposite(d));
-            }
-        }
-        s[state::side(d)] = on ? 1 : 0;
-    }
+    Json s{{state::Up, up}};
+    for (int i = 0; i < 4; ++i) s[state::side(kWallDirs[i])] = side[i] == Side::Tall ? "tall" : (side[i] == Side::Low ? "low" : "none");
     Block const* next = withStates(block, s);
     return next && next != &block && game::setBlock(region, pos, *next);
 }
@@ -250,7 +217,7 @@ bool updateConnections4(BlockSource& region, BlockPos const& pos, Block const& b
     Json s = Json::object();
     for (int d : kHorizontal) {
         bool on = e.family == Family::Fence ? fenceConnects(region, pos, d, e.flag("wooden", true)) : paneConnects(region, pos, d);
-        s[state::side(d)] = on ? 1 : 0;
+        s[state::side(d)] = on;
     }
     Block const* next = withStates(block, s);
     return next && next != &block && game::setBlock(region, pos, *next);
@@ -264,8 +231,89 @@ bool updateGateInWall(BlockSource& region, BlockPos const& pos, Block const& blo
         return b && kindOf(*b) == Kind::Wall;
     };
     bool         inWall = isWall(clockwise(facing)) || isWall(counterClockwise(facing));
-    Block const* next   = withStates(block, {{state::InWall, inWall ? 1 : 0}});
+    Block const* next   = withStates(block, {{state::InWall, inWall}});
     return next && next != &block && game::setBlock(region, pos, *next);
+}
+
+// ---- stairs (Java StairBlock) -------------------------------------------------------------------------
+
+struct StairInfo {
+    int  facing;
+    bool top;
+};
+
+/// Java StairBlock.isStairs with its facing and half: ours, and Bedrock's vanilla stairs
+/// (weirdo_direction 0 east, 1 west, 2 south, 3 north; upside_down_bit).
+std::optional<StairInfo> stairInfo(Block const& b) {
+    if (auto const* e = entryOf(b)) {
+        if (e->family != Family::Stairs) return std::nullopt;
+        return StairInfo{facingOf(b), strState(b, state::Half) == "top"};
+    }
+    if (!b.getTypeName().ends_with("_stairs")) return std::nullopt;
+    auto w = intState(b, "weirdo_direction");
+    if (!w) return std::nullopt;
+    static constexpr int map[4]{East, West, South, North};
+    return StairInfo{map[*w & 3], flagState(b, "upside_down_bit")};
+}
+
+/// Java StairBlock.canTakeShape.
+bool canTakeShape(BlockSource& region, BlockPos const& pos, StairInfo const& self, int face) {
+    Block const* b = blockAt(region, offset(pos, face));
+    if (!b) return true;
+    auto o = stairInfo(*b);
+    return !o || o->facing != self.facing || o->top != self.top;
+}
+
+// ---- pillars (TF ConnectableRotatedPillarBlock / WallPillarBlock) ------------------------------------
+
+bool updatePillarSide(BlockSource& region, BlockPos const& pos, Block const& block, Entry const& e, int dir) {
+    bool         on   = detail::pillarConnects(region, pos, dir, e, axisStateOf(block));
+    Block const* next = withStates(block, {{state::side(dir), on}});
+    return next && next != &block && game::setBlock(region, pos, *next);
+}
+
+// ---- connected textures (TF ConnectedTextureModel) ------------------------------------------------------
+
+/// shouldConnectSide / isCornerBlockPresent: a block of the connectable blocks (params.connects_to,
+/// default: itself).
+bool connector(Entry const& e, Block const* other) {
+    if (!other || other->isAir()) return false;
+    auto list = e.params.find("connects_to");
+    if (list != e.params.end() && list->is_array()) {
+        for (auto const& id : *list)
+            if (id.is_string() && id.get<std::string>() == other->getTypeName()) return true;
+        return false;
+    }
+    return other->getTypeName() == e.id;
+}
+
+/// ConnectionLogic.AXIS_PLANE_DIRECTIONS by axis (0 x, 1 y, 2 z)
+constexpr std::array<std::array<int, 4>, 3> kPlane{{{Up, North, Down, South}, {North, East, South, West}, {Up, East, Down, West}}};
+
+bool updateConnectedTexture(BlockSource& region, BlockPos const& pos, Block const& block, Entry const& e) {
+    Json s = Json::object();
+    for (int d = 0; d < 6; ++d) s[state::side(d)] = connector(e, blockAt(region, offset(pos, d)));
+    // the twelve diagonals (states the block has: the generator adds them within its budget)
+    for (auto const& plane : kPlane) {
+        for (int i = 0; i < 4; ++i) {
+            int a = plane[i], b = plane[(i + 1) % 4];
+            s[state::corner(a, b)] = connector(e, blockAt(region, offset(offset(pos, a), b)));
+        }
+    }
+    Block const* next = withStates(block, s);
+    return next && next != &block && game::setBlock(region, pos, *next);
+}
+
+/// The connected texture blocks whose corner is `pos` (placed or removed there).
+void updateCtDiagonals(BlockSource& region, BlockPos const& pos) {
+    for (auto const& plane : kPlane) {
+        for (int i = 0; i < 4; ++i) {
+            BlockPos     q = offset(offset(pos, plane[i]), plane[(i + 1) % 4]);
+            Block const* b = blockAt(region, q);
+            auto const*  e = b ? entryOf(*b) : nullptr;
+            if (e && e->family == Family::ConnectedTexture) updateConnectedTexture(region, q, *b, *e);
+        }
+    }
 }
 
 // ---- slabs ----------------------------------------------------------------------------------------------
@@ -274,8 +322,9 @@ bool updateGateInWall(BlockSource& region, BlockPos const& pos, Block const& blo
 std::optional<bool> singleSlabHalf(Block const& block) {
     auto const* e = entryOf(block);
     if (!e || e->family != Family::Slab) return std::nullopt;
-    if (intState(block, state::Double).value_or(0) != 0) return std::nullopt;
-    return strState(block, state::VerticalHalf) == "top";
+    auto t = strState(block, state::Type);
+    if (t == "double") return std::nullopt;
+    return t == "top";
 }
 
 /// Java SlabBlock.canBeReplaced: a single slab takes a second one of its kind into its empty half.
@@ -290,10 +339,10 @@ ia::Result slabUseOn(ia::UseOnContext const& c) {
     int                     face    = c.face;
     std::optional<BlockPos> mergeAt;
     if (clicked.getTypeName() == c.itemId) {
-        // the clicked slab: its top face (bottom slab), bottom face (top slab), or a side clicked
-        // in the empty half
+        // the clicked slab (replacingClickedOnBlock): its top face (bottom slab), bottom face (top
+        // slab), or a side clicked in the empty half
         if (auto top = singleSlabHalf(clicked)) {
-            bool upper = c.hit[1] - std::floor(c.hit[1]) > 0.5;
+            bool upper = c.hit[1] > 0.5;
             bool side  = face >= 2 && face < 6;
             if ((!*top && (face == Up || (upper && side))) || (*top && (face == Down || (!upper && side)))) mergeAt = at;
         }
@@ -307,11 +356,15 @@ ia::Result slabUseOn(ia::UseOnContext const& c) {
     if (mergeAt) {
         // vanilla placement rules: no adventure mode, nobody standing in the block
         AABB box{Vec3{float(mergeAt->x), float(mergeAt->y), float(mergeAt->z)}, Vec3{mergeAt->x + 1.0f, mergeAt->y + 1.0f, mergeAt->z + 1.0f}};
-        if (player.getPlayerGameType() == GameType::Adventure || !region.isUnobstructedByEntities(box, nullptr)) mergeAt.reset();
+        if (!mayBuild(player) || !region.isUnobstructedByEntities(box, nullptr)) mergeAt.reset();
     }
     if (!mergeAt || !mergeSlab(region, *mergeAt)) return ia::Result::Pass;
     consumeHeld(player, c.item);
-    bedrockSound(region, *mergeAt, "use.wood");
+    // BlockItem.place: the block's own place sound
+    if (auto const* merged = blockAt(region, *mergeAt)) {
+        region.getLevel().playSound(region, SharedTypes::Legacy::LevelSoundEvent::Place, Vec3{mergeAt->x + .5f, mergeAt->y + .5f, mergeAt->z + .5f},
+                                    static_cast<int>(merged->mNetworkId), ActorSoundIdentifier(player), false);
+    }
     log().info("families: {} merged {} into a double slab", player.getRealName(), c.itemId);
     return ia::Result::Consume;
 }
@@ -325,31 +378,44 @@ std::vector<ia::HandlerId>& handlerIds() {
 
 std::vector<std::array<float, 6>> tallCollision(Block const& block, Entry const& e) {
     std::vector<std::array<float, 6>> out;
-    auto conn = [&](int d) { return intState(block, state::side(d)).value_or(0) != 0; };
     if (e.family == Family::Fence) {
+        // CrossCollisionBlock.makeShapes(2, 2, 24, 0, 24)
         out.push_back({6, 0, 6, 10, 24, 10});
-        if (conn(North)) out.push_back({6, 0, 0, 10, 24, 6});
-        if (conn(South)) out.push_back({6, 0, 10, 10, 24, 16});
-        if (conn(West)) out.push_back({0, 0, 6, 6, 24, 10});
-        if (conn(East)) out.push_back({10, 0, 6, 16, 24, 10});
+        if (flagState(block, state::side(North).c_str())) out.push_back({6, 0, 0, 10, 24, 10});
+        if (flagState(block, state::side(South).c_str())) out.push_back({6, 0, 6, 10, 24, 16});
+        if (flagState(block, state::side(West).c_str())) out.push_back({0, 0, 6, 10, 24, 10});
+        if (flagState(block, state::side(East).c_str())) out.push_back({6, 0, 6, 16, 24, 10});
     } else if (e.family == Family::Wall) {
-        // Java WallBlock.makeShapes(4, 3, 24, 0, 24, 24): post 4..12, sides 5..11, all 24 px high
-        if (intState(block, state::Up).value_or(1) != 0) out.push_back({4, 0, 4, 12, 24, 12});
-        auto side = [&](int d) { return intState(block, state::wallSide(d)).value_or(0) != 0; };
+        // WallBlock.makeShapes(4, 3, 24, 0, 24, 24)
+        if (flagState(block, state::Up)) out.push_back({4, 0, 4, 12, 24, 12});
+        auto side = [&](int d) { auto v = strState(block, state::side(d)); return !v.empty() && v != "none"; };
         if (side(North)) out.push_back({5, 0, 0, 11, 24, 11});
         if (side(South)) out.push_back({5, 0, 5, 11, 24, 16});
         if (side(West)) out.push_back({0, 0, 5, 11, 24, 11});
         if (side(East)) out.push_back({5, 0, 5, 16, 24, 11});
-        if (out.empty()) out.push_back({4, 0, 4, 12, 24, 12});
-    } else if (e.family == Family::FenceGate && intState(block, state::Open).value_or(0) == 0) {
-        int axis = axisOf(gateFacing(block));
-        if (axis == 2) out.push_back({0, 0, 6, 16, 24, 10});
+    } else if (e.family == Family::FenceGate && !flagState(block, state::Open)) {
+        if (axisOf(gateFacing(block)) == 2) out.push_back({0, 0, 6, 16, 24, 10});
         else out.push_back({6, 0, 0, 10, 24, 16});
     }
     return out;
 }
 
 } // namespace
+
+namespace detail {
+/// TF ConnectableRotatedPillarBlock.canConnectTo / WallPillarBlock.canConnectTo for the neighbour
+/// on `dir` of the pillar at `pos` (axis 0 x, 1 y, 2 z).
+bool pillarConnects(BlockSource& region, BlockPos const& pos, int dir, Entry const& e, int axis) {
+    BlockPos     n  = offset(pos, dir);
+    Block const* nb = blockAt(region, n);
+    if (!nb || nb->isAir()) return false;
+    if (e.family == Family::WallPillar) {
+        auto const* ne = entryOf(*nb);
+        return ne && ne->family == Family::WallPillar && (axisOf(dir) == axis || axisOf(dir) == axisStateOf(*nb));
+    }
+    return !exceptionForConnection(*nb) && sturdy(region, n, opposite(dir));
+}
+} // namespace detail
 
 LL_TYPE_INSTANCE_HOOK(
     FamiliesCollisionHook,
@@ -364,10 +430,10 @@ LL_TYPE_INSTANCE_HOOK(
     ::std::vector<::AABB>&                             inoutBoxes,
     ::optional_ref<::GetCollisionShapeInterface const> entity
 ) {
-    auto const* e = entryOf(block);
-    if (!e || (e->family != Family::Fence && e->family != Family::Wall && e->family != Family::FenceGate)) {
-        return origin(block, region, pos, intersectTestBox, inoutBoxes, entity);
-    }
+    // most blocks leave here: a sorted pointer range check, no lookup
+    if (!tallCollisionType(*this)) return origin(block, region, pos, intersectTestBox, inoutBoxes, entity);
+    auto const* e = entryOf(*this);
+    if (!e) return origin(block, region, pos, intersectTestBox, inoutBoxes, entity);
     auto boxes = tallCollision(block, *e);
     if (boxes.empty()) return origin(block, region, pos, intersectTestBox, inoutBoxes, entity);
     bool added = false;
@@ -383,11 +449,38 @@ LL_TYPE_INSTANCE_HOOK(
     return added;
 }
 
+std::string stairsShape(BlockSource& region, BlockPos const& pos, Block const& stairs) {
+    // Java StairBlock.getStairsShape
+    auto self = stairInfo(stairs);
+    if (!self) return "straight";
+    int dir = self->facing;
+    if (Block const* front = blockAt(region, offset(pos, dir))) {
+        if (auto o = stairInfo(*front); o && o->top == self->top) {
+            if (axisOf(o->facing) != axisOf(dir) && canTakeShape(region, pos, *self, opposite(o->facing))) {
+                return o->facing == counterClockwise(dir) ? "outer_left" : "outer_right";
+            }
+        }
+    }
+    if (Block const* back = blockAt(region, offset(pos, opposite(dir)))) {
+        if (auto o = stairInfo(*back); o && o->top == self->top) {
+            if (axisOf(o->facing) != axisOf(dir) && canTakeShape(region, pos, *self, o->facing)) {
+                return o->facing == counterClockwise(dir) ? "inner_left" : "inner_right";
+            }
+        }
+    }
+    return "straight";
+}
+
 bool mergeSlab(BlockSource& region, BlockPos const& pos) {
     Block const* block = blockAt(region, pos);
     if (!block || !singleSlabHalf(*block)) return false;
-    auto const* merged = withStates(*block, {{state::Double, 1}});
-    return merged && merged != block && game::setBlock(region, pos, *merged);
+    auto const* merged = withStates(*block, {{state::Type, "double"}});
+    if (!merged || merged == block || !game::setBlock(region, pos, *merged)) return false;
+    // Java: a double slab is never waterlogged (Bedrock: the water layer goes)
+    if (!region.getExtraBlock(pos).isAir()) {
+        if (auto const* air = game::blockWith("minecraft:air")) region.setExtraBlock(pos, *air, 3);
+    }
+    return true;
 }
 
 bool updateShape(BlockSource& region, BlockPos const& pos) {
@@ -400,9 +493,12 @@ bool updateShape(BlockSource& region, BlockPos const& pos) {
     case Family::Pane: return updateConnections4(region, pos, *block, *e);
     case Family::Wall: return updateWall(region, pos, *block);
     case Family::FenceGate: return updateGateInWall(region, pos, *block);
-    case Family::WallPillar:
-    case Family::ConnectablePillar:
-    case Family::ConnectedTexture: return updatePillarConnections(region, pos, *block, *e);
+    case Family::Stairs: {
+        auto shape = stairsShape(region, pos, *block);
+        auto const* next = withStates(*block, {{state::Shape, shape}});
+        return next && next != block && game::setBlock(region, pos, *next);
+    }
+    case Family::ConnectedTexture: return updateConnectedTexture(region, pos, *block, *e);
     default: return false;
     }
 }
@@ -415,11 +511,37 @@ void installShapes() {
     static bool registered = false;
     if (registered) return;
     registered = true;
-    for (auto family : {Family::Fence, Family::Pane, Family::Wall, Family::FenceGate, Family::WallPillar, Family::ConnectablePillar, Family::ConnectedTexture}) {
+    for (auto family : {Family::Fence, Family::Pane, Family::Wall, Family::FenceGate, Family::ConnectedTexture}) {
         for (auto const* e : entriesOf(family)) {
             blockevents::onNeighborChanged(e->id, [](BlockSource& region, BlockPos const& pos, BlockPos const&) { updateShape(region, pos); });
             blockevents::onPlaced(e->id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { updateShape(region, pos); });
         }
+    }
+    for (auto const* e : entriesOf(Family::Stairs)) {
+        // StairBlock.updateShape: a horizontal neighbour changed
+        blockevents::onNeighborChanged(e->id, [](BlockSource& region, BlockPos const& pos, BlockPos const& from) {
+            if (from.y == pos.y) updateShape(region, pos);
+        });
+        blockevents::onPlaced(e->id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { updateShape(region, pos); });
+    }
+    for (auto family : {Family::WallPillar, Family::ConnectablePillar}) {
+        for (auto const* e : entriesOf(family)) {
+            // ConnectableRotatedPillarBlock.updateShape: the side of the neighbour that changed
+            blockevents::onNeighborChanged(e->id, [](BlockSource& region, BlockPos const& pos, BlockPos const& from) {
+                Block const* b  = blockAt(region, pos);
+                auto const*  pe = b ? entryOf(*b) : nullptr;
+                if (!pe) return;
+                for (int d = 0; d < 6; ++d) {
+                    BlockPos n = offset(pos, d);
+                    if (n.x == from.x && n.y == from.y && n.z == from.z) updatePillarSide(region, pos, *b, *pe, d);
+                }
+            });
+        }
+    }
+    for (auto const* e : entriesOf(Family::ConnectedTexture)) {
+        // the corner blocks of the connected texture blocks around (no direct neighbours)
+        blockevents::onPlaced(e->id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { updateCtDiagonals(region, pos); });
+        blockevents::onRemoved(e->id, [](BlockSource& region, BlockPos const& pos, Block const&) { updateCtDiagonals(region, pos); });
     }
 }
 

@@ -1,17 +1,22 @@
 #pragma once
 
 // Block families (F11), internal header of src/feature/families: the family data of every unit
-// (assets/data/families/<u>.json -> <mod>/data/gf/families/, plus the gf_test fixture families of
-// development builds), the block state schema tools/families writes, and the world helpers the
+// (assets/data/families/<u>.json and F1's imported data -> <mod>/data/gf/families/, plus the gf_test
+// fixture families of development builds), the block state schema, and the world helpers the
 // family behaviours share. Other units never include this header (rule R2): they declare blocks
 // as family data and react through gf::blockevents / gf::signs.
 //
-// State schema (tools/families/families.lua writes the same names):
-//   traits   minecraft:cardinal_direction (Java's horizontal FACING), minecraft:block_face (the
-//            clicked face: pillar axis, button face), minecraft:vertical_half (slab / trapdoor
-//            half), minecraft:corner (stairs), minecraft:facing_direction (directional)
-//   custom   twilightforest:<Java property> as integers 0..n; twilightforest:type (chests:
-//            single / left / right) and twilightforest:lighting (none / normal / dim / ominous)
+// State schema: docs/spec/blockstates.md (F1, frozen, rule R1). Every Java property p is the
+// Bedrock state twilightforest:p with Java's values (booleans [false, true], integers 0..n, enums by
+// name); no placement traits: the runtime sets the states on placement as Java's
+// getStateForPlacement does, and keeps the neighbour-dependent ones as Java's updateShape does.
+// States this kit adds to blocks (rule R1: additions only):
+//   twilightforest:open_count  0..15  chests and trapped chests: the players looking inside (lid,
+//                                      the trapped chest's signal)
+//   twilightforest:<direction> bool   connected textures: a connection on that side
+//   twilightforest:corner_<a>_<b> bool connected textures: the diagonal block (when the budget allows)
+//   twilightforest:layers / lighting   snowloggable / lightable blocks without those states
+// The params every family reads are documented in tools/families/README.md.
 
 #include <array>
 #include <cstdint>
@@ -84,56 +89,69 @@ enum Modifier : unsigned {
 struct Entry {
     std::string id;
     Family      family    = Family::Cube;
+    bool        shaped    = false; ///< a shape family was given (modifier-only entries keep their block)
     unsigned    modifiers = 0;
     Json        params    = Json::object();
 
     [[nodiscard]] bool has(Modifier m) const { return (modifiers & m) != 0; }
     [[nodiscard]] std::string str(char const* key, std::string fallback = {}) const;
     [[nodiscard]] int  integer(char const* key, int fallback) const;
+    [[nodiscard]] double number(char const* key, double fallback) const;
     [[nodiscard]] bool flag(char const* key, bool fallback = false) const;
 };
 
 /// The family name in data ("stairs", "fence_gate", ...); nullopt for an unknown name.
 [[nodiscard]] std::optional<Family> familyOf(std::string_view name);
+/// The family of a data entry: its name refined by the Java class F1 imports (params.class: a
+/// "sign" of class WallSignBlock is a wall sign, a "pillar" of class WallPillarBlock a wall pillar).
+[[nodiscard]] std::optional<Family> familyOf(std::string_view name, std::string_view javaClass);
 [[nodiscard]] char const*           familyName(Family family);
 
 // ---- registry ------------------------------------------------------------------------------------
 
-/// Loads the family data (mod load and every world ready; the block types are looked up again).
+/// Loads the family data (mod load; the block types are looked up again on every world).
 void loadRegistry();
-/// The entry of a block id / block (nullptr when it is not a family block).
+/// The entry of a block id / block (nullptr when it is not a family block). Lock-free: the
+/// registry is an immutable snapshot published atomically (server and client threads read it).
 [[nodiscard]] Entry const* entryOf(std::string_view id);
 [[nodiscard]] Entry const* entryOf(Block const& block);
+[[nodiscard]] Entry const* entryOf(BlockType const& type);
 /// Every entry (sorted by id).
 [[nodiscard]] std::vector<Entry const*> entries();
 /// The entries of one family.
 [[nodiscard]] std::vector<Entry const*> entriesOf(Family family);
+/// Block types with a 24 px collision (fences, walls, closed gates): a cheap pre-check for the
+/// collision hook, which runs for every block the game tests.
+[[nodiscard]] bool tallCollisionType(BlockType const& type);
 
 // ---- states --------------------------------------------------------------------------------------
 
 namespace state {
-inline constexpr char Cardinal[]     = "minecraft:cardinal_direction";
-inline constexpr char BlockFace[]    = "minecraft:block_face";
-inline constexpr char VerticalHalf[] = "minecraft:vertical_half";
-inline constexpr char FacingDir[]    = "minecraft:facing_direction";
-inline constexpr char Double[]       = "twilightforest:double";
-inline constexpr char Open[]         = "twilightforest:open";
-inline constexpr char Powered[]      = "twilightforest:powered";
-inline constexpr char InWall[]       = "twilightforest:in_wall";
-inline constexpr char Upper[]        = "twilightforest:upper";
-inline constexpr char Hinge[]        = "twilightforest:hinge";
-inline constexpr char Up[]           = "twilightforest:up";
-inline constexpr char Distance[]     = "twilightforest:distance";
-inline constexpr char Persistent[]   = "twilightforest:persistent";
-inline constexpr char Stage[]        = "twilightforest:stage";
-inline constexpr char Type[]         = "twilightforest:type";
-inline constexpr char Rotation[]     = "twilightforest:rotation";
-inline constexpr char Attached[]     = "twilightforest:attached";
-inline constexpr char Layers[]       = "twilightforest:layers";
-inline constexpr char Lighting[]     = "twilightforest:lighting";
-/// twilightforest:north / east / south / west / up / down (connections), <dir>_wall (walls)
+inline constexpr char Facing[]     = "twilightforest:facing";
+inline constexpr char Half[]       = "twilightforest:half";
+inline constexpr char Shape[]      = "twilightforest:shape";
+inline constexpr char Type[]       = "twilightforest:type";
+inline constexpr char Hinge[]      = "twilightforest:hinge";
+inline constexpr char Open[]       = "twilightforest:open";
+inline constexpr char Powered[]    = "twilightforest:powered";
+inline constexpr char InWall[]     = "twilightforest:in_wall";
+inline constexpr char Up[]         = "twilightforest:up";
+inline constexpr char Axis[]       = "twilightforest:axis";
+inline constexpr char Face[]       = "twilightforest:face";
+inline constexpr char Distance[]   = "twilightforest:distance";
+inline constexpr char Persistent[] = "twilightforest:persistent";
+inline constexpr char Stage[]      = "twilightforest:stage";
+inline constexpr char Rotation[]   = "twilightforest:rotation";
+inline constexpr char Attached[]   = "twilightforest:attached";
+inline constexpr char Layers[]     = "twilightforest:layers";
+inline constexpr char Lighting[]   = "twilightforest:lighting";
+inline constexpr char Rotated[]    = "twilightforest:rotated";
+inline constexpr char OpenCount[]  = "twilightforest:open_count";
+/// twilightforest:north / east / south / west / up / down (fence / pane / pillar connections are
+/// booleans, wall sides none / low / tall)
 [[nodiscard]] std::string side(int dir);
-[[nodiscard]] std::string wallSide(int dir);
+/// twilightforest:corner_<a>_<b> (connected textures: the diagonal block of sides a and b)
+[[nodiscard]] std::string corner(int a, int b);
 } // namespace state
 
 // ---- directions ----------------------------------------------------------------------------------
@@ -150,6 +168,12 @@ inline constexpr std::array<int, 4> kHorizontal{North, East, South, West};
 [[nodiscard]] int clockwise(int dir);        ///< horizontal: north -> east -> south -> west
 [[nodiscard]] int counterClockwise(int dir); ///< horizontal: north -> west -> south -> east
 [[nodiscard]] inline bool horizontal(int dir) { return dir >= 2; }
+/// 0 x, 1 y, 2 z
+[[nodiscard]] inline int axisOf(int dir) { return dir < 2 ? 1 : (dir < 4 ? 2 : 0); }
+[[nodiscard]] char const* axisName(int axis);
+/// Java Direction.get2DDataValue (S 0, W 1, N 2, E 3) and back.
+[[nodiscard]] int to2D(int dir);
+[[nodiscard]] int from2D(int value);
 [[nodiscard]] GlobalPos offset(GlobalPos p, int dir, int n = 1);
 [[nodiscard]] BlockPos  offset(BlockPos const& p, int dir, int n = 1);
 
@@ -164,45 +188,70 @@ bool                       set(GlobalPos const& p, Block const& block);
 bool                       clear(GlobalPos const& p);
 [[nodiscard]] bool         replaceableAt(GlobalPos const& p);
 
-/// Integer / boolean state (nullopt: no such state).
+/// Integer state (booleans 0 / 1; nullopt: no such state).
 [[nodiscard]] std::optional<int> intState(Block const& block, std::string_view name);
-/// Any state as text ("north", "1", "true"); "" when absent.
+/// Boolean state (nullopt: no such state).
+[[nodiscard]] std::optional<bool> boolState(Block const& block, std::string_view name);
+[[nodiscard]] bool               flagState(Block const& block, std::string_view name); ///< false when absent
+/// Any state as text ("north", "1", "true" for booleans); "" when absent.
 [[nodiscard]] std::string strState(Block const& block, std::string_view name);
-/// `block` with the states replaced ({"name": int | bool | "text"}); nullptr when a value is
+/// twilightforest:facing as a direction (`fallback` when absent).
+[[nodiscard]] int facingOf(Block const& block, int fallback = North);
+/// twilightforest:axis as 0 x, 1 y, 2 z (1 when absent).
+[[nodiscard]] int axisStateOf(Block const& block);
+/// `block` with the states replaced ({"name": bool | int | "text"}); nullptr when a value is
 /// unknown. States the block does not have are ignored.
 [[nodiscard]] Block const* withStates(Block const& block, Json const& states);
 /// Sets states of the block at `p` (only when they change). True when the block changed.
 bool setStates(GlobalPos const& p, Json const& states);
+bool setStates(BlockSource& region, BlockPos const& p, Json const& states);
 
-/// Java's horizontal facing a placed block faces (Direction#getOpposite of the player's
-/// horizontal look direction is `opposite(lookDir(player))`).
+/// Java Entity.getDirection (the player's horizontal look direction).
 [[nodiscard]] int lookDir(Actor const& actor);
 /// Java Direction.orderedByNearest of the player's look, nearest first.
 [[nodiscard]] std::array<int, 6> nearestLooking(Actor const& actor);
-/// Rotation 0..15 of a standing sign placed by `actor` (Java RotationSegment.convertToSegment(yRot + 180)).
-[[nodiscard]] int signRotation(Actor const& actor);
+/// Java's yaw of an entity (degrees).
+[[nodiscard]] float yawOf(Actor const& actor);
+/// Java RotationSegment.convertToSegment(degrees).
+[[nodiscard]] int rotationSegment(float degrees);
 
 /// The block's face toward `face` is sturdy (Java isFaceSturdy FULL).
 [[nodiscard]] bool sturdy(BlockSource& region, BlockPos const& pos, int face);
-/// A solid, opaque full block (Java isRedstoneConductor / isSolidRender for hinge checks).
+/// Java isFaceSturdy(SupportType.CENTER): the face can hold something in its centre.
+[[nodiscard]] bool sturdyCenter(BlockSource& region, BlockPos const& pos, int face);
+/// Java BlockState.isSolid (the block blocks movement and is not replaceable).
+[[nodiscard]] bool solidAt(BlockSource& region, BlockPos const& pos);
+/// A solid, opaque full block (Java isRedstoneConductor / isCollisionShapeFullBlock).
 [[nodiscard]] bool solidBlock(BlockSource& region, BlockPos const& pos);
 /// Java Block.isExceptionForConnection: leaves, barriers, pumpkins, melons, shulker boxes.
 [[nodiscard]] bool exceptionForConnection(Block const& block);
+/// Vanilla leaves (Bedrock's leaves carry no Java distance; they count as leaves).
+[[nodiscard]] bool vanillaLeaves(Block const& block);
 /// The entities whose box intersects `box` (players too: the game keeps them outside the chunks).
 [[nodiscard]] std::vector<Actor*> entitiesIn(BlockSource& region, AABB const& box);
 /// Redstone signal reaching the block (vanilla sources and gf::redstone emitters).
 [[nodiscard]] bool hasNeighborSignal(BlockSource& region, BlockPos const& pos);
 
-/// Plays a Java sound event at the block centre through gf::fx (silent until F10 maps it).
+/// Plays a TF sound event ("block.twilightforest.jar.place") at the block centre through gf::fx.
 void sound(BlockSource& region, BlockPos const& pos, std::string const& event, float volume = 1.f, float pitch = 1.f);
-/// Plays a Bedrock sound name at the block (PlaySoundPacket to players nearby).
+/// Plays a Bedrock sound name (a vanilla sound Java plays: "open.wooden_door") at the block.
 void bedrockSound(BlockSource& region, BlockPos const& pos, std::string const& name, float volume = 1.f, float pitch = 1.f);
+/// Java's random pitch of doors, gates and chests: nextFloat() * 0.1 + 0.9.
+[[nodiscard]] float wobblePitch();
+/// A vanilla particle effect at the block centre (Bedrock effect name).
+void particle(BlockSource& region, BlockPos const& pos, std::string const& effect);
+/// The block's own break effect (Java levelEvent 2001: break particles and sound).
+void breakEffect(BlockSource& region, BlockPos const& pos, Block const& block);
 
 [[nodiscard]] ItemStack makeItem(std::string_view id, int count = 1);
 void                    drop(BlockSource& region, BlockPos const& pos, ItemStack const& item);
 void                    give(Player& player, ItemStack const& item);
 /// Uses one of the player's held item (not in creative).
 void consumeHeld(Player& player, ItemStack const& contextItem);
+/// Breaks the block at `pos` as Java's destroyBlock(pos, true): its drops (loot) and effect.
+void destroyWithDrops(BlockSource& region, BlockPos const& pos);
+/// Java Player.mayBuild (not adventure / spectator).
+[[nodiscard]] bool mayBuild(Player const& player);
 
 /// Bedrock repeats a use-on while the button is held, and simulated players report every use as
 /// a repeat: true when `player` used `pos` less than 5 ticks ago (a held button), so a click acts
@@ -211,11 +260,16 @@ void consumeHeld(Player& player, ItemStack const& contextItem);
 
 /// Runs `fn` at the end of the current server tick (after the block change that asked).
 void defer(std::function<void()> fn);
-/// Runs `fn` after `ticks` server ticks (Java scheduleTick); dropped when the world closes.
+/// Runs `fn` after `ticks` server ticks (Java scheduleTick); dropped when the world closes (the
+/// families that need one across a reload persist it themselves, see Switches.cpp).
 void schedule(int ticks, std::function<void()> fn);
+/// The server ticks since the module started (scheduled work).
+[[nodiscard]] std::int64_t now();
 
 // ---- behaviours (one file each) ------------------------------------------------------------------
 
+void installPlacement();
+void uninstallPlacement();
 void installShapes();
 void uninstallShapes();
 void installDoors();
@@ -232,8 +286,10 @@ void uninstallSigns();
 void applyClimbable();
 
 /// Recomputes the neighbour-dependent states of the family block at `pos` (connections, wall
-/// posts, leaf distance, chest pairs); true when the block changed.
+/// posts, stairs shapes, leaf distance, chest pairs); true when the block changed.
 bool updateShape(BlockSource& region, BlockPos const& pos);
+/// Java StairBlock.getStairsShape for the stairs at `pos` (by their facing and half).
+[[nodiscard]] std::string stairsShape(BlockSource& region, BlockPos const& pos, Block const& stairs);
 
 /// Slab doubling (Java SlabBlock.canBeReplaced) for selftests and the use-on handler.
 bool mergeSlab(BlockSource& region, BlockPos const& pos);
@@ -241,7 +297,8 @@ bool mergeSlab(BlockSource& region, BlockPos const& pos);
 bool useDoor(GlobalPos const& pos, Player* player);
 bool useTrapdoor(GlobalPos const& pos, Player* player);
 bool useFenceGate(GlobalPos const& pos, Player* player);
-/// Places the upper half of the door just placed at `pos` (Java DoorBlock.setPlacedBy).
+/// Orients a door just placed at `pos` and places its upper half (Java DoorBlock
+/// getStateForPlacement + setPlacedBy).
 bool placeDoor(GlobalPos const& pos, Actor* placer, double hitX, double hitZ);
 /// Presses a button (Java ButtonBlock.press); false when it is pressed already.
 bool pressButton(GlobalPos const& pos);
@@ -249,7 +306,7 @@ bool pressButton(GlobalPos const& pos);
 int updateLeafDistance(BlockSource& region, BlockPos const& pos);
 /// Java SaplingBlock.advanceTree.
 void advanceSapling(BlockSource& region, BlockPos const& pos);
-/// Pairs the chest at `pos` with a neighbour as Java ChestBlock.getStateForPlacement does.
+/// Pairs the chest at `pos` as Java ChestBlock.getStateForPlacement does (`facing`: the chest's).
 void pairChest(BlockSource& region, BlockPos const& pos, int facing, bool sneaking, std::optional<int> clickedFace);
 /// The other half of a double chest (nullopt: single).
 [[nodiscard]] std::optional<BlockPos> chestPartner(BlockSource& region, BlockPos const& pos);

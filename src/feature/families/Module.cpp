@@ -23,10 +23,11 @@ void tickBlockEvents();
 void resetBlockEvents();
 void runQueues();
 void clearQueues();
-void doorsTick(int tick);
-void loadDoors();
-void saveDoors();
 void clearDoors();
+void chestsTick(int tick);
+void clearChests();
+void signsTick(int tick);
+void clearSigns();
 void refreshTypes();
 } // namespace detail
 
@@ -52,6 +53,7 @@ public:
     void install() {
         if (entries().empty()) loadRegistry();
         detail::installBlockEvents();
+        installPlacement();
         installShapes();
         installDoors();
         installSwitches();
@@ -62,7 +64,8 @@ public:
             ++mTicks;
             detail::runQueues();
             detail::tickBlockEvents();
-            detail::doorsTick(mTicks);
+            detail::chestsTick(mTicks);
+            detail::signsTick(mTicks);
         });
         static bool registered = false;
         if (!registered) {
@@ -71,13 +74,12 @@ public:
                 detail::refreshTypes();
                 detail::resetBlockEvents();
                 applyClimbable();
-                detail::loadDoors();
             });
-            game::db::onWorldSave([] { detail::saveDoors(); });
             game::db::onWorldClosed([] {
-                detail::saveDoors();
                 detail::clearQueues();
                 detail::clearDoors();
+                detail::clearChests();
+                detail::clearSigns();
                 detail::resetBlockEvents();
             });
         }
@@ -85,7 +87,6 @@ public:
             // BDS: the world exists already when mods are enabled
             detail::refreshTypes();
             applyClimbable();
-            detail::loadDoors();
         }
         log().info("families: installed ({} family blocks)", entries().size());
     }
@@ -98,6 +99,7 @@ public:
         uninstallSwitches();
         uninstallDoors();
         uninstallShapes();
+        uninstallPlacement();
         detail::uninstallBlockEvents();
         detail::clearQueues();
     }

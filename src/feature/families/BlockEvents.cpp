@@ -5,7 +5,8 @@
 //
 //   random tick       LevelChunk::tickImpl: Java's random ticks (ServerLevel.tickChunk), the
 //                     gamerule's randomTickSpeed x 3 positions per 16-block section per tick
-//                     (Bedrock's default 1 is Java's default 3), only for blocks with handlers
+//                     (Bedrock's default 1 is Java's default 3), only in sections whose palette
+//                     holds a block with handlers
 //   neighbour change  every block change (any cause, LeviLamina's BlockChangedEvent) notifies the
 //                     six neighbours, at the end of the tick (Java neighborChanged / updateShape)
 //   placed / removed  the same changes when the block type changes; the placer is the player of
@@ -14,6 +15,9 @@
 //                     checkInsideBlocks) intersects
 //   stepped on        every tick, the block under an entity standing on the ground (Java stepOn)
 //   projectile hit    ProjectileComponent::onHit on a block
+//
+// The families themselves also hear when a chunk ticks for the first time after it loaded (doors
+// and switches re-arm, sign display entities are checked) and which block a placement replaced.
 
 #include "feature/families/BlockEvents.h"
 
@@ -42,6 +46,8 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/chunk/LevelChunk.h"
+#include "mc/world/level/chunk/SubChunk.h"
+#include "mc/world/level/chunk/SubChunkStorage.h"
 #include "mc/world/level/storage/GameRule.h"
 #include "mc/world/level/storage/GameRules.h"
 #include "mc/world/phys/AABB.h"
@@ -52,6 +58,10 @@
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
+
+namespace gf::feature::families::detail {
+using ChunkFn = std::function<void(BlockSource& region, LevelChunk& chunk)>;
+}
 
 namespace gf::blockevents {
 
@@ -105,7 +115,7 @@ struct Handlers {
     std::vector<std::pair<std::string, EntityFn>>     projectile;
     std::vector<std::pair<std::string, PlacedFn>>     placed;
     std::vector<std::pair<std::string, RemovedFn>>    removed;
-    /// per kind: block type -> indices of the matching handlers (lazily filled)
+    /// per kind: block type -> indices of the matching handlers (filled on the server thread)
     std::array<std::unordered_map<BlockType const*, std::vector<std::size_t>>, KindCount> cache;
 };
 Handlers& handlers() {
@@ -156,11 +166,27 @@ std::vector<std::size_t> const& matching(Kind k, BlockType const& type) {
     return cache.emplace(&type, std::move(idx)).first->second;
 }
 
+/// A small direct-mapped cache of "has random tick handlers" per block type: the random tick scan
+/// asks it for every palette entry of every ticking section.
+struct TypeFlagCache {
+    struct Slot {
+        BlockType const* type = nullptr;
+        bool             has  = false;
+    };
+    std::array<Slot, 512> slots{};
+    void clear() { slots.fill({}); }
+};
+TypeFlagCache& randomTickTypes() {
+    static TypeFlagCache c;
+    return c;
+}
+
 template <class Fn>
 void add(Kind k, std::string const& target, Fn fn) {
     if (!fn || target.empty()) return;
     listOf<Fn>(k).emplace_back(target, std::move(fn));
     handlers().cache[k].clear();
+    if (k == RandomTickK) randomTickTypes().clear();
 }
 
 template <class Fn, class... Args>
@@ -200,6 +226,17 @@ bool has(Kind k, Block const& block) {
     return any(k) && !matching<Fn>(k, block.getBlockType()).empty();
 }
 
+bool randomTicks(BlockType const& type) {
+    auto& c    = randomTickTypes();
+    auto  key  = reinterpret_cast<std::uintptr_t>(&type);
+    auto& slot = c.slots[(key >> 4) % c.slots.size()];
+    if (slot.type != &type) {
+        slot.type = &type;
+        slot.has  = !matching<RandomTickFn>(RandomTickK, type).empty();
+    }
+    return slot.has;
+}
+
 // ---- random ticks ---------------------------------------------------------------------------------
 
 struct TickRate {
@@ -226,23 +263,64 @@ int randomTickSpeed(Level& level) {
     return r.speed;
 }
 
+/// The section's palette holds a block with random tick handlers.
+bool sectionTicks(SubChunk const& sub) {
+    auto const* storage = sub.mBlocksReadPtr[0];
+    if (!storage) return false;
+    return storage->hasAnyElementMatchingFilterInPalette([](Block const& b) { return randomTicks(b.getBlockType()); });
+}
+
 void randomTicks(LevelChunk& chunk, BlockSource& region) {
     auto& level = region.getLevel();
     if (level.isClientSide()) return;
     int perSection = randomTickSpeed(level) * 3;
     if (perSection <= 0) return;
-    ChunkPos const cp    = chunk.mPosition;
-    int const      minY  = region.getMinHeight();
-    int const      maxY  = region.getMaxHeight();
-    auto&          rng   = tickRandom();
-    for (int y0 = minY; y0 < maxY; y0 += 16) {
+    ChunkPos const cp   = chunk.mPosition;
+    int const      maxY = region.getMaxHeight();
+    auto&          rng  = tickRandom();
+    for (auto const& sub : *chunk.mSubChunks) {
+        if (!sectionTicks(sub)) continue;
+        int y0 = static_cast<int>(sub.mAbsoluteIndex) * 16;
         for (int i = 0; i < perSection; ++i) {
             int      bits = rng.nextInt();
             BlockPos pos{cp.x * 16 + (bits & 15), y0 + ((bits >> 4) & 15), cp.z * 16 + ((bits >> 8) & 15)};
             if (pos.y >= maxY) continue;
             Block const& block = region.getBlock(pos);
-            if (block.isAir() || !has<RandomTickFn>(RandomTickK, block)) continue;
+            if (block.isAir() || !randomTicks(block.getBlockType())) continue;
             call<RandomTickFn>(RandomTickK, block, "random tick", region, pos, block, static_cast<RandomSource&>(rng));
+        }
+    }
+}
+
+// ---- chunks: the first tick after a load ---------------------------------------------------------------
+
+std::vector<fam::detail::ChunkFn>& chunkListeners() {
+    static std::vector<fam::detail::ChunkFn> l;
+    return l;
+}
+/// (dimension, chunk) -> the last server tick it ticked; a chunk not ticked for a while has been
+/// unloaded (or left the simulation distance) and counts as loaded again.
+std::map<std::tuple<int, int, int>, std::int64_t>& tickedChunks() {
+    static std::map<std::tuple<int, int, int>, std::int64_t> m;
+    return m;
+}
+
+void chunkTicked(LevelChunk& chunk, BlockSource& region) {
+    if (chunkListeners().empty() || region.getLevel().isClientSide()) return;
+    auto           now = fam::now();
+    ChunkPos const cp  = chunk.mPosition;
+    auto           key = std::make_tuple(static_cast<int>(region.getDimensionId()), cp.x, cp.z);
+    auto& m   = tickedChunks();
+    auto  it  = m.find(key);
+    bool  fresh = it == m.end() || now - it->second > 40;
+    m[key]      = now;
+    if (now % 600 == 0) std::erase_if(m, [now](auto const& kv) { return now - kv.second > 1200; });
+    if (!fresh) return;
+    for (auto const& fn : chunkListeners()) {
+        try {
+            fn(region, chunk);
+        } catch (std::exception const& e) {
+            log().error("blockevents: chunk load handler failed: {}", e.what());
         }
     }
 }
@@ -264,6 +342,11 @@ std::set<std::pair<core::GlobalPos, core::GlobalPos>>& pendingNeighbors() {
     static std::set<std::pair<core::GlobalPos, core::GlobalPos>> s;
     return s;
 }
+/// The block a family block replaced this tick (Java BlockPlaceContext: the replaced state).
+std::map<core::GlobalPos, Block const*>& replaced() {
+    static std::map<core::GlobalPos, Block const*> m;
+    return m;
+}
 
 Actor* actorById(std::int64_t uid) {
     if (uid == 0) return nullptr;
@@ -279,6 +362,10 @@ void onBlockChanged(BlockSource& region, BlockPos const& pos, Block const& previ
     int  dim         = static_cast<int>(region.getDimensionId());
     auto gp          = game::globalPos(dim, pos);
     bool typeChanged = &previous.getBlockType() != &now.getBlockType();
+    if (typeChanged && fam::entryOf(now)) {
+        if (replaced().empty()) fam::defer([] { replaced().clear(); });
+        replaced()[gp] = &previous;
+    }
     // (the game reports some changes twice: one dispatch per position and tick)
     if (typeChanged && has<RemovedFn>(RemovedK, previous) && pendingRemovals().insert(gp).second) {
         Block const* prev = &previous;
@@ -302,7 +389,7 @@ void onBlockChanged(BlockSource& region, BlockPos const& pos, Block const& previ
     }
     if (!any(NeighborK)) return;
     for (int d = 0; d < 6; ++d) {
-        BlockPos     n = fam::offset(pos, d);
+        BlockPos     n  = fam::offset(pos, d);
         Block const* nb = fam::blockAt(region, n);
         if (!nb || !has<NeighborFn>(NeighborK, *nb)) continue;
         auto key = std::make_pair(game::globalPos(dim, n), gp);
@@ -324,9 +411,12 @@ void entityTick() {
     if (!any(InsideK) && !any(StepK)) return;
     auto level = ll::service::getLevel();
     if (!level) return;
-    // every runtime actor and every player (simulated players included)
-    std::vector<Actor*>             actors = level->getRuntimeActorList();
-    std::unordered_set<Actor const*> seen(actors.begin(), actors.end());
+    // every runtime actor and every player (simulated players included); the buffers are reused
+    static std::vector<Actor*>             actors;
+    static std::unordered_set<Actor const*> seen;
+    actors = level->getRuntimeActorList();
+    seen.clear();
+    seen.insert(actors.begin(), actors.end());
     level->forEachPlayer([&](Player& p) {
         if (seen.insert(&p).second) actors.push_back(&p);
         return true;
@@ -336,21 +426,20 @@ void entityTick() {
         auto& region = actor->getDimensionBlockSource();
         AABB  box    = actor->getAABB();
         if (any(InsideK)) {
-            // Java Entity.checkInsideBlocks: the box deflated by 1e-7
+            // Java Entity.checkInsideBlocks: the box deflated by 1e-7, every block it touches
             int x0 = static_cast<int>(std::floor(box.min.x + 1e-7)), x1 = static_cast<int>(std::floor(box.max.x - 1e-7));
             int y0 = static_cast<int>(std::floor(box.min.y + 1e-7)), y1 = static_cast<int>(std::floor(box.max.y - 1e-7));
             int z0 = static_cast<int>(std::floor(box.min.z + 1e-7)), z1 = static_cast<int>(std::floor(box.max.z - 1e-7));
-            if ((x1 - x0 + 1) * (y1 - y0 + 1) * (z1 - z0 + 1) <= 64) {
-                for (int x = x0; x <= x1; ++x)
-                    for (int y = y0; y <= y1; ++y)
-                        for (int z = z0; z <= z1; ++z) {
-                            BlockPos     p{x, y, z};
-                            Block const* b = fam::blockAt(region, p);
-                            if (!b || b->isAir() || !has<EntityFn>(InsideK, *b)) continue;
-                            call<EntityFn>(InsideK, *b, "entity inside", region, p, *actor);
-                            if (!actor->isAlive()) break;
-                        }
-            }
+            bool alive = true;
+            for (int x = x0; x <= x1 && alive; ++x)
+                for (int y = y0; y <= y1 && alive; ++y)
+                    for (int z = z0; z <= z1 && alive; ++z) {
+                        BlockPos     p{x, y, z};
+                        Block const* b = fam::blockAt(region, p);
+                        if (!b || b->isAir() || !has<EntityFn>(InsideK, *b)) continue;
+                        call<EntityFn>(InsideK, *b, "entity inside", region, p, *actor);
+                        alive = actor->isAlive();
+                    }
         }
         if (any(StepK) && actor->isOnGround() && actor->isAlive()) {
             // Java Entity.getOnPos: the block 0.2 below the feet
@@ -386,9 +475,9 @@ LL_TYPE_INSTANCE_HOOK(
     ::std::function<void()> spawnerCallback
 ) {
     origin(tickRegion, tick, std::move(spawnerCallback));
-    if (!any(RandomTickK)) return;
     try {
-        randomTicks(*this, tickRegion);
+        chunkTicked(*this, tickRegion);
+        if (any(RandomTickK)) randomTicks(*this, tickRegion);
     } catch (std::exception const& e) {
         log().error("blockevents: random ticks failed: {}", e.what());
     }
@@ -468,12 +557,46 @@ void randomTickAt(BlockSource& region, BlockPos const& pos) {
     );
 }
 
+/// The families hear when a chunk ticks for the first time after it loaded.
+void onChunkLoaded(ChunkFn fn) { gf::blockevents::chunkListeners().push_back(std::move(fn)); }
+
+/// Every block of `chunk` whose type `want` accepts (only the sections whose palette holds one).
+void forEachInChunk(BlockSource& region, LevelChunk& chunk, std::function<bool(BlockType const&)> const& want, std::function<void(BlockPos const&, Block const&)> const& fn) {
+    ChunkPos const cp   = chunk.mPosition;
+    int const      maxY = region.getMaxHeight();
+    for (auto const& sub : *chunk.mSubChunks) {
+        auto const* storage = sub.mBlocksReadPtr[0];
+        if (!storage || !storage->hasAnyElementMatchingFilterInPalette([&](Block const& b) { return want(b.getBlockType()); })) continue;
+        int y0 = static_cast<int>(sub.mAbsoluteIndex) * 16;
+        for (int y = y0; y < y0 + 16 && y < maxY; ++y)
+            for (int x = 0; x < 16; ++x)
+                for (int z = 0; z < 16; ++z) {
+                    BlockPos     p{cp.x * 16 + x, y, cp.z * 16 + z};
+                    Block const& b = region.getBlock(p);
+                    if (want(b.getBlockType())) fn(p, b);
+                }
+    }
+}
+
+/// The block a family block replaced at `pos` this tick (nullptr: unknown).
+Block const* replacedBlock(GlobalPos const& pos) {
+    auto& m  = gf::blockevents::replaced();
+    auto  it = m.find(pos);
+    return it == m.end() ? nullptr : it->second;
+}
+
+/// Whether the random tick scan of a section would look at this block type (selftests).
+bool randomTicked(BlockType const& type) { return gf::blockevents::randomTicks(type); }
+
 /// The block type cache (block types change between worlds on the client).
 void resetBlockEvents() {
     for (auto& c : gf::blockevents::handlers().cache) c.clear();
+    gf::blockevents::randomTickTypes().clear();
     gf::blockevents::pendingPlaces().clear();
     gf::blockevents::pendingRemovals().clear();
     gf::blockevents::pendingNeighbors().clear();
+    gf::blockevents::replaced().clear();
+    gf::blockevents::tickedChunks().clear();
 }
 
 void uninstallBlockEvents() {

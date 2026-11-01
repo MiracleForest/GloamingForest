@@ -8,6 +8,7 @@
 #include <list>
 #include <map>
 #include <numbers>
+#include <random>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -17,10 +18,12 @@
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/deps/nbt/IntTag.h"
 #include "mc/deps/nbt/StringTag.h"
+#include "mc/deps/shared_types/legacy/LevelEvent.h"
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
 #include "mc/network/packet/PlaySoundPacket.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/player/AbilitiesIndex.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -28,6 +31,8 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockChangeContext.h"
+#include "mc/world/level/block/BlockProperty.h"
 #include "mc/world/level/block/BlockSupportType.h"
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/CachedComponentData.h"
@@ -46,7 +51,12 @@ namespace gf::feature::families {
 
 namespace state {
 std::string side(int dir) { return std::string("twilightforest:") + dirName(dir); }
-std::string wallSide(int dir) { return std::string("twilightforest:") + dirName(dir) + "_wall"; }
+std::string corner(int a, int b) {
+    // the two names in alphabetical order (tools/families/families.lua corner_key)
+    std::string_view x = dirName(a), y = dirName(b);
+    if (x > y) std::swap(x, y);
+    return std::string("twilightforest:corner_").append(x).append("_").append(y);
+}
 } // namespace state
 
 char const* dirName(int dir) {
@@ -59,6 +69,8 @@ std::optional<int> dirOf(std::string_view name) {
         if (name == dirName(d)) return d;
     return std::nullopt;
 }
+
+char const* axisName(int axis) { return axis == 0 ? "x" : (axis == 2 ? "z" : "y"); }
 
 int clockwise(int dir) {
     switch (dir) {
@@ -78,6 +90,21 @@ int counterClockwise(int dir) {
     case East: return North;
     default: return dir;
     }
+}
+
+int to2D(int dir) {
+    switch (dir) {
+    case South: return 0;
+    case West: return 1;
+    case North: return 2;
+    case East: return 3;
+    default: return -1;
+    }
+}
+
+int from2D(int value) {
+    static constexpr int map[4]{South, West, North, East};
+    return map[value & 3];
 }
 
 GlobalPos offset(GlobalPos p, int dir, int n) {
@@ -122,20 +149,49 @@ bool replaceableAt(GlobalPos const& p) {
     return region && game::replaceable(*region, BlockPos{p.x, p.y, p.z});
 }
 
-std::optional<int> intState(Block const& block, std::string_view name) { return game::intState(block, name); }
+namespace {
+CompoundTagVariant const* stateTag(Block const& block, std::string_view name) {
+    auto const& nbt = *block.mSerializationId;
+    if (!nbt.contains("states")) return nullptr;
+    auto const& states = nbt["states"];
+    if (!states.is_object()) return nullptr;
+    auto const& c = states.get<CompoundTag>();
+    std::string key(name);
+    if (!c.contains(key)) return nullptr;
+    return &c[key];
+}
+} // namespace
+
+std::optional<int> intState(Block const& block, std::string_view name) {
+    auto const* t = stateTag(block, name);
+    if (!t) return std::nullopt;
+    if (t->hold(Tag::Type::Byte)) return static_cast<int>(t->get<ByteTag>().data);
+    if (t->hold(Tag::Type::Int)) return t->get<IntTag>().data;
+    return std::nullopt;
+}
+
+std::optional<bool> boolState(Block const& block, std::string_view name) {
+    auto v = intState(block, name);
+    if (!v) return std::nullopt;
+    return *v != 0;
+}
+
+bool flagState(Block const& block, std::string_view name) { return boolState(block, name).value_or(false); }
 
 std::string strState(Block const& block, std::string_view name) {
-    auto const& nbt = *block.mSerializationId;
-    if (!nbt.contains("states")) return {};
-    auto const& states = nbt["states"];
-    if (!states.is_object()) return {};
-    auto const& c = states.get<CompoundTag>();
-    if (!c.contains(std::string(name))) return {};
-    auto const& v = c[std::string(name)];
-    if (v.is_string()) return std::string(v.get<StringTag>());
-    if (v.hold(Tag::Type::Byte)) return static_cast<int>(v.get<ByteTag>().data) ? "1" : "0";
-    if (v.hold(Tag::Type::Int)) return std::to_string(v.get<IntTag>().data);
+    auto const* t = stateTag(block, name);
+    if (!t) return {};
+    if (t->is_string()) return std::string(t->get<StringTag>());
+    if (t->hold(Tag::Type::Byte)) return t->get<ByteTag>().data ? "true" : "false";
+    if (t->hold(Tag::Type::Int)) return std::to_string(t->get<IntTag>().data);
     return {};
+}
+
+int facingOf(Block const& block, int fallback) { return dirOf(strState(block, state::Facing)).value_or(fallback); }
+
+int axisStateOf(Block const& block) {
+    auto a = strState(block, state::Axis);
+    return a == "x" ? 0 : (a == "z" ? 2 : 1);
 }
 
 Block const* withStates(Block const& block, Json const& states) {
@@ -170,37 +226,44 @@ Block const* withStates(Block const& block, Json const& states) {
     return found ? found.as_ptr() : nullptr;
 }
 
-bool setStates(GlobalPos const& p, Json const& states) {
-    auto const* b = blockAt(p);
+bool setStates(BlockSource& region, BlockPos const& p, Json const& states) {
+    auto const* b = blockAt(region, p);
     if (!b) return false;
     auto const* n = withStates(*b, states);
     if (!n || n == b) return false;
-    return set(p, *n);
+    return game::setBlock(region, p, *n);
 }
 
-int lookDir(Actor const& actor) {
-    // Java 2D data 0 S, 1 W, 2 N, 3 E (game::playerFacing) -> FacingID
-    static constexpr int map[4]{South, West, North, East};
-    return map[game::playerFacing(actor) & 3];
+bool setStates(GlobalPos const& p, Json const& states) {
+    auto* region = regionOf(p.dim);
+    return region && setStates(*region, BlockPos{p.x, p.y, p.z}, states);
+}
+
+int lookDir(Actor const& actor) { return from2D(game::playerFacing(actor)); }
+
+float yawOf(Actor const& actor) { return actor.getRotation().y; }
+
+int rotationSegment(float degrees) {
+    // Java RotationSegment.convertToSegment: Mth.floor(degrees / 22.5 + 0.5) & 15
+    return static_cast<int>(std::floor(degrees / 22.5f + 0.5f)) & 15;
 }
 
 std::array<int, 6> nearestLooking(Actor const& actor) {
-    // Bedrock rotation: x = pitch (down positive), y = yaw (0 = south, 90 = west)
-    auto   rot   = actor.getRotation();
-    double pitch = rot.x * std::numbers::pi / 180.0, yaw = rot.y * std::numbers::pi / 180.0;
-    double look[3]{-std::sin(yaw) * std::cos(pitch), -std::sin(pitch), std::cos(yaw) * std::cos(pitch)};
-    std::array<std::pair<double, int>, 6> scored;
-    for (int d = 0; d < 6; ++d) scored[d] = {-(kDx[d] * look[0] + kDy[d] * look[1] + kDz[d] * look[2]), d};
-    std::stable_sort(scored.begin(), scored.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
-    std::array<int, 6> out{};
-    for (int i = 0; i < 6; ++i) out[i] = scored[i].second;
-    return out;
-}
-
-int signRotation(Actor const& actor) {
-    // Java RotationSegment.convertToSegment(yRot + 180): floor((yRot + 180) * 16 / 360 + 0.5) & 15
-    float yaw = actor.getRotation().y;
-    return static_cast<int>(std::floor((yaw + 180.0f) * 16.0f / 360.0f + 0.5f)) & 15;
+    // Java Direction.orderedByNearest(entity): the three axes by how much the look follows them
+    auto  rot   = actor.getRotation();
+    float pitch = rot.x * std::numbers::pi_v<float> / 180.0f, yaw = -rot.y * std::numbers::pi_v<float> / 180.0f;
+    float f2 = std::sin(pitch), f3 = std::cos(pitch), f4 = std::sin(yaw), f5 = std::cos(yaw);
+    bool  flag  = f4 > 0.0f, flag1 = f2 < 0.0f, flag2 = f5 > 0.0f;
+    float f6 = flag ? f4 : -f4, f7 = flag1 ? -f2 : f2, f8 = flag2 ? f5 : -f5;
+    float f9 = f6 * f3, f10 = f8 * f3;
+    int   x = flag ? East : West, y = flag1 ? Up : Down, z = flag2 ? South : North;
+    auto  make = [](int a, int b, int c) { return std::array<int, 6>{a, b, c, opposite(c), opposite(b), opposite(a)}; };
+    if (f6 > f8) {
+        if (f7 > f9) return make(y, x, z);
+        return f10 > f7 ? make(x, z, y) : make(x, y, z);
+    }
+    if (f7 > f10) return make(y, z, x);
+    return f9 > f7 ? make(z, x, y) : make(z, y, x);
 }
 
 bool sturdy(BlockSource& region, BlockPos const& pos, int face) {
@@ -209,17 +272,45 @@ bool sturdy(BlockSource& region, BlockPos const& pos, int face) {
     return b->canProvideSupport(static_cast<uchar>(face), BlockSupportType::Edge);
 }
 
+bool sturdyCenter(BlockSource& region, BlockPos const& pos, int face) {
+    auto const* b = blockAt(region, pos);
+    if (!b || b->isAir()) return false;
+    return b->canProvideSupport(static_cast<uchar>(face), BlockSupportType::Center);
+}
+
+bool solidAt(BlockSource& region, BlockPos const& pos) {
+    // Java BlockBehaviour.BlockStateBase.calculateSolid: a collision shape whose bounds average
+    // 0.729 or are a full block high
+    auto const* b = blockAt(region, pos);
+    if (!b || b->isAir()) return false;
+    std::vector<AABB> boxes;
+    b->getBlockType().addCollisionShapes(*b, region, pos, nullptr, boxes, {});
+    if (boxes.empty()) return false;
+    AABB bounds = boxes.front();
+    for (auto const& box : boxes) {
+        bounds.min.x = std::min(bounds.min.x, box.min.x), bounds.min.y = std::min(bounds.min.y, box.min.y), bounds.min.z = std::min(bounds.min.z, box.min.z);
+        bounds.max.x = std::max(bounds.max.x, box.max.x), bounds.max.y = std::max(bounds.max.y, box.max.y), bounds.max.z = std::max(bounds.max.z, box.max.z);
+    }
+    float sx = bounds.max.x - bounds.min.x, sy = bounds.max.y - bounds.min.y, sz = bounds.max.z - bounds.min.z;
+    return (sx + sy + sz) / 3.0f >= 0.7291666f || sy >= 1.0f;
+}
+
 bool solidBlock(BlockSource& region, BlockPos const& pos) {
     auto const* b = blockAt(region, pos);
     return b && !b->isAir() && b->mCachedComponentData->mIsSolid;
 }
 
-bool exceptionForConnection(Block const& block) {
+bool vanillaLeaves(Block const& block) {
     auto const& type = block.getBlockType();
     if ((static_cast<std::uint64_t>(type.mProperties) & static_cast<std::uint64_t>(BlockProperty::Leaves)) != 0) return true;
+    std::string const& id = block.getTypeName();
+    return id.starts_with("minecraft:") && id.find("leaves") != std::string::npos;
+}
+
+bool exceptionForConnection(Block const& block) {
+    if (vanillaLeaves(block)) return true;
     if (auto const* e = entryOf(block); e && e->family == Family::Leaves) return true;
     std::string const& id = block.getTypeName();
-    if (id.find("leaves") != std::string::npos) return true;
     if (id.find("shulker_box") != std::string::npos) return true;
     return id == "minecraft:barrier" || id == "minecraft:carved_pumpkin" || id == "minecraft:lit_pumpkin" || id == "minecraft:melon_block"
         || id == "minecraft:pumpkin";
@@ -257,6 +348,29 @@ void bedrockSound(BlockSource& region, BlockPos const& pos, std::string const& n
     pkt.sendTo(pos, region.getDimensionId());
 }
 
+namespace {
+std::mt19937& rng() {
+    static std::mt19937 r{std::random_device{}()};
+    return r;
+}
+} // namespace
+
+float wobblePitch() { return std::uniform_real_distribution<float>(0.f, 1.f)(rng()) * 0.1f + 0.9f; }
+
+void particle(BlockSource& region, BlockPos const& pos, std::string const& effect) {
+    auto level = ll::service::getLevel();
+    if (!level) return;
+    auto dim = level->getDimension(region.getDimensionId()).lock();
+    if (!dim) return;
+    level->spawnParticleEffect(effect, Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, dim.get());
+}
+
+void breakEffect(BlockSource& region, BlockPos const& pos, Block const& block) {
+    region.getLevel().broadcastLevelEvent(
+        SharedTypes::Legacy::LevelEvent::ParticlesDestroyBlock, Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, static_cast<int>(block.mNetworkId), nullptr
+    );
+}
+
 ItemStack makeItem(std::string_view id, int count) {
     auto s = game::items::make(id, count);
     return s ? *s : ItemStack{};
@@ -285,6 +399,10 @@ void consumeHeld(Player& player, ItemStack const& contextItem) {
     player.sendInventory(false);
 }
 
+void destroyWithDrops(BlockSource& region, BlockPos const& pos) { region.getLevel().destroyBlock(region, pos, true, BlockChangeContext{}); }
+
+bool mayBuild(Player const& player) { return player.canUseAbility(AbilitiesIndex::Build); }
+
 // ---- deferred and scheduled work --------------------------------------------------------------
 
 namespace {
@@ -305,6 +423,8 @@ std::int64_t& tickCounter() {
     return t;
 }
 } // namespace
+
+std::int64_t now() { return tickCounter(); }
 
 bool repeatedUse(Player& player, GlobalPos const& pos, bool firstEvent) {
     struct LastUse {
