@@ -279,13 +279,13 @@ a Lich) prio 1, NearestAttackableTargetGoal(Player, mustSee) prio 2. When hurt b
 target and gain Speed III (amplifier 2) and Strength II (amplifier 1) for 200 ticks. Each `aiStep`: without a
 master, adopt a non-clone Lich within (32, 16, 32) that wants minions (< 3), black magic trail, take its target;
 with no master or a dead master, `kill()`. `finalizeSpawn`: on HARD, while babies summoned < `minion_count / 4`,
-20 % (`nextInt(100) <= 20`) to be a baby (counted on the master); `ZombieGroupData(baby, canJoinChicken true)`.
+21 % (`nextInt(100) <= 20`) to be a baby (counted on the master); `ZombieGroupData(baby, canJoinChicken true)`.
 No default equipment, cannot pick up loot. Sounds `minion.*`. Loot `twilightforest:entities/lich_minion`: empty.
 
 ### 3.2 `twilightforest:death_tome` (Death Tome)
 
 MONSTER 0.75 x 1.5, egg `twilightforest:death_tome_spawn_egg` (`0x774e22` / `0xdbcdbe`). Attributes: health 20,
-speed 0.25, flying speed 0.6, attack 4. FlyingMoveControl(maxTurn 10, no gravity false). Tags:
+speed 0.25, flying speed 0.6, attack 4. FlyingMoveControl(maxTurn 10, hoversInPlace false). Tags:
 `minecraft:powder_snow_walkable_mobs`, `minecraft:fall_damage_immune`.
 - Goals: Float 0; RangedAttackGoal(speed 1, interval 100, radius 5) 4; WaterAvoidingRandomFlyingGoal(1.0) 5;
   LookAtPlayer(8) 6; RandomLookAround 6. Targets: HurtBy 1; NearestAttackable(Player, mustSee) 2, but while on a
@@ -448,8 +448,8 @@ Used by `twilightforest:entities/carminite_ghastling` (U26). Implement with `loo
      lower room a ladder column topped by cobblestone. If the room above fails, the roof fallback is used.
    - Further bridges (rooms of size >= 1): terminate when `genDepth > 30` or `nextInt(stackIndex * 2 + 1) == 0`
      (stack index 0 = has room above only, 1 = above and below, 2 = otherwise), or too close to the ground (ground
-     room, or rooms taller than 11 with the jigsaw below y 7) -> cover; else bridge to a room of size `size -
-     nextInt(2)`.
+     room, or rooms taller than 11 with the jigsaw below y 7) -> cover; else `tryRoomAndBridge` with
+     `roomMaxSize = size - nextInt(2)`, so the next room has size `roomMaxSize - 1` down to 1 (at least one smaller).
    - Roof (`twilightforest:lich_tower/roof`, no ladder up): side roof when the space above is taken, shuffled
      `<size>/roof` or `<size>/side_roof`, fallback `<size>/roof_fallback`; roofs use SoftReplaceProcessor.
    - Beard (`twilightforest:lich_tower/beard`, unless entered from below): ground rooms use `<size>/trim`
@@ -475,9 +475,12 @@ base 1, bridges and room decor 2.
 Default processors on every tower piece: JigsawReplacement, ignore structure blocks, StoneBricksVariants,
 CobbleVariants, InfestBlocksProcessor, UpdateMarkingProcessor for birch fence, polished andesite stairs, stone
 brick / mossy stone brick / cobblestone / mossy cobblestone walls, `twilightforest:wrought_iron_fence`,
-`twilightforest:canopy_fence`, `twilightforest:twisted_stone_pillar`. Room spawner processor: 2 spawners at 0.8
-with spider / cave spider / swarm spider / hedge spider 1 each, skeleton 4, zombie 4 (1/3 spiders, 1/3 skeleton,
-1/3 zombie). Central mob-bridge spawner processor: 4, skeleton 2, zombie 1, swarm spider 1.
+`twilightforest:canopy_fence`, `twilightforest:twisted_stone_pillar`. Room spawner processor (`SpawnerProcessor.compile(range 2, maxWidth 0.8)`):
+for every vanilla or sinister spawner in the template sets `SpawnRange` 2, initial `Delay = MinSpawnDelay * 0.25`, and,
+when the template gives no `SpawnData`, picks spider / cave spider / swarm spider / hedge spider 1 each, skeleton 4,
+zombie 4 (1/3 spiders, 1/3 skeleton, 1/3 zombie) with custom spawn rules (block light 0-7, sky light 0-15); mobs wider
+than 0.8 get a `generic.scale` attribute of `0.8 / width`. Central mob-bridge spawner processor
+(`compile(range 4)`): `SpawnRange` 4, no width cap, skeleton 2, zombie 1, swarm spider 1.
 
 ### 4.2 Piece type ids
 

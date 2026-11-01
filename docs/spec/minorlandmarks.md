@@ -113,10 +113,12 @@ limit and at least 16; refuses water (sea floor below the surface) unless allowe
 x/z +-3, y -3..+128 (except the sapling) to be tree-replaceable.
 
 Pieces (translate exactly; `HollowTreePiece` base):
-- `twilightforest:TFHTTr` (HollowTreeTrunk): hollow trunk of the radius; `3..5` large branches at
-  `height * rand * 0.9 + height / 10`, medium and small branches around, roots below, a ladder of vines/bugs inside.
+- `twilightforest:TFHTTr` (HollowTreeTrunk): hollow trunk of the radius; `nextInt(3) + 3` with an inclusive loop =
+  4..6 **small** branches (length 4, angle 0.35, leafy) at `height * rand * 0.9 + height / 10`; then `buildFullCrown`
+  adds the large, medium and small crown branches and roots (counts from its min/max branch arguments, inclusive
+  loops); vines and bugs on the trunk.
 - `twilightforest:TFHTLB` (HollowTreeLargeBranch): 1/8 (`LEAF_DUNGEON_CHANCE` 8) a leaf dungeon at the tip;
-  `nextInt(length/6) + length/8` medium branches; 4 reinforcement logs.
+  `nextInt(length/6) + length/8 + 1` medium branches (inclusive loop); 5 reinforcement logs (`i <= 4`).
 - `twilightforest:TFHTMB` (HollowTreeMedBranch): `min(nextInt(3) + 1, length / 5)` shoots and leaf balls radius 2 or 3.
 - `twilightforest:TFHTSB` (HollowTreeSmallBranch): leaf ball radius 1-2 at the tip.
 - `twilightforest:TFHTRo` (HollowTreeRoot): root strands into the ground.

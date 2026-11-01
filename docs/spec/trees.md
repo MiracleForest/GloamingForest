@@ -35,7 +35,7 @@ redstone-conducting; vanilla `LeavesBlock` decay (`distance` 1-7, `persistent`, 
 | `twilightforest:transformation_leaves` | 0.2 | `animateTick`: one `twilightforest:leaf_rune` particle on the bottom face (velocity 0.5) | fade `x*27 + y*63 + z*39`, (108,204,234) -> (96,107,121) |
 | `twilightforest:mining_leaves` | 0.2 | | fade `x*31 + y*33 + z*32`, (252,241,68) -> (237,172,9) |
 | `twilightforest:sorting_leaves` | 0.2 | | fade `x*63 + y*63 + z*63`, (54,76,3) -> (168,199,43) |
-| `twilightforest:dark_leaves` | **2.0 / 10.0**, no random ticks (do not decay) | full support shape, light block 15 (fully opaque to light) | biome foliage colour |
+| `twilightforest:dark_leaves` | **2.0 / 10.0**; no `randomTicks()` in its properties, but `LeavesBlock.isRandomlyTicking` (distance 7 and not persistent) still makes it decay like other leaves | full support shape, light block 15 (fully opaque to light) | biome foliage colour |
 | `twilightforest:hardened_dark_leaves` | 2.0 / 10.0, a plain block (no decay, no states) | mobs never spawn on it; pick block gives dark leaves; no block item (owners: block only) | biome foliage colour |
 
 Item tints: the leaf items use the default foliage / the same algorithms with no position (time leaves item

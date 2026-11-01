@@ -29,7 +29,7 @@ MONSTER 1.49 x 2.5, tracking 80, interval 3; egg `twilightforest:minoshroom_spaw
 
 | Item | Value |
 |---|---|
-| attributes | Minotaur's (speed 0.25, monster defaults: attack damage 2 + held axe modifiers, follow range 35) with max health **120** and knockback resistance **0.5** |
+| attributes | Minotaur's (speed 0.25, monster defaults: attack damage 2 + held axe modifiers, follow range 16) with max health **120** and knockback resistance **0.5** |
 | xp reward | 100 |
 | equipment | main hand `twilightforest:diamond_minotaur_axe` (`populateDefaultEquipmentSlots`), then difficulty enchantments; main-hand drop chance 0 |
 | home radius | 20; home structure `twilightforest:labyrinth` |
@@ -224,7 +224,7 @@ interior `max(entrances, innerFloor).clamp(0, 1)` masked by `Focused(centre, 24.
 | `twilightforest:TFMMRF` | MazeRoomFountainComponent | level 1 room #4: decorative 6 x 6 basin with water |
 | `twilightforest:TFMMRV` | MazeRoomVaultComponent | level 2 room #4: sealed decorative/brick vault, pressure plates over TNT, sand above, four double chests (`twilightforest:labyrinth_vault`, one random jackpot `twilightforest:labyrinth_vault_jackpot`); no spawns |
 | `twilightforest:TFMMRSC` | MazeRoomSpawnerChestsComponent | rooms #5-6: four cut-mazestone pillar cages (oak plank/stair floor and roof, iron bars), a `twilightforest:minotaur` spawner at (4, 2, 4), two `twilightforest:labyrinth_room` chests at (4, 2, 11) and (11, 2, 4), pressure plate over 4 TNT at (11, 1, 11) |
-| `twilightforest:TFMMDE` | MazeDeadEndComponent | oak fence doorway (default dead end, 3/8 incl. case 0) |
+| `twilightforest:TFMMDE` | MazeDeadEndComponent | oak fence doorway (default dead end, case 0: 1/8) |
 | `twilightforest:TFMMDEC` | MazeDeadEndChestComponent | double chest `twilightforest:labyrinth_dead_end` on oak plank + stairs behind cut mazestone and iron bars; no spawns (1/8) |
 | `twilightforest:TFMMDETrC` | MazeDeadEndTrappedChestComponent | as above with a **trapped** double chest over 4 TNT; no spawns (1/16) |
 | `twilightforest:TFMMDETC` | MazeDeadEndTripwireChestComponent | chest dead end plus tripwire across (1, 1, 2)-(3) and unstable TNT under the hook and chest (1/16) |
@@ -258,7 +258,8 @@ Corridor case 3 (painting) and case 0 place nothing.
   7 roots (level 1) / shrooms (level 2), else plain) and straight corridors with walls on both sides
   (`nextInt(5)`: 1 fence, 2 iron fence, 4 roots/shrooms, else none) at `min + (dx * 5 + 1, 0, dz * 5 + 1)`.
 - `postProcess`: level 2 encases its box in bedrock (y -1..6); air box (1..d, 1..4); mazestone ceiling at y 5
-  (level 1 only replaces existing blocks); mazestone mosaic floor at y 0 (replacing stone only); then
+  (level 1 only replaces existing blocks); mazestone mosaic floor at y 0 (a one-layer `generateBox`: every block is boundary, so all mosaic; `stone` is only
+  the unused inside fill); then
   `maze.copyToStructure(world, 1, 2, 1)`.
 
 ### 7.3 Chest loot (owned here)

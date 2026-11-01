@@ -41,7 +41,7 @@ sprites (owned here; U21, F8 spawners and others emit them by id).
 | `twilightforest:chiseled_canopy_bookshelf` | chiseled-bookshelf sound, strength 2.5, flammable (30 / 20), bass; states `facing`, 6 `slot_N_occupied`, `spawner`; block entity `twilightforest:chiseled_canopy_bookshelf` | 2.3 |
 | `twilightforest:coronation_carpet` | copy of red carpet; mobs may spawn on it (`isValidSpawn` always); member of `#minecraft:wool_carpets` | sinister spawners treat it as solid floor |
 | `twilightforest:terrorcotta_arcs` | stone, pickaxe, 1.5 / 6.0; rotated pillar (`axis`) | |
-| `twilightforest:terrorcotta_curves` | stone, pickaxe, 1.5 / 6.0; glazed terracotta (horizontal `facing`, push PUSH_ONLY like glazed terracotta) | |
+| `twilightforest:terrorcotta_curves` | stone, pickaxe, 1.5 / 6.0; GlazedTerracottaBlock (horizontal `facing`; no push reaction set, so it moves normally with pistons) | |
 | `twilightforest:terrorcotta_lines` | stone, pickaxe, 1.5 / 6.0; TF BinaryRotatedBlock (two-way `axis` x/z) | |
 | `twilightforest:wrought_iron_fence` | strength 8 / 20, metal, pickaxe, no occlusion; states `post` (none, post, capped), `north_fence`..`west_fence` (none, middle, bottom, top, full), `waterlogged` | 2.4 |
 | `twilightforest:sinister_spawner` | copy of `minecraft:spawner`, no loot table, xp 15-43 (`15 + nextInt(15) + nextInt(15)`); block entity (vanilla-like) | 2.5 |
@@ -146,7 +146,7 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
   `twilightforest:recipes/decorations/wrought_iron_fence`. Loot `twilightforest:blocks/wrought_iron_fence`: itself.
 - `twilightforest:wrought_iron_bar` ("Wrought Iron Bar"): plain item in `#c:ingots/wrought_iron`; TF 4.8 has no
   recipe for it (loot/creative only).
-- Bedrock: 5 x 4 x 4 x 4 x 4 x 3 x 2 permutations is far over budget: store the side states as BlockData or
+- Bedrock: post (3) x four sides of 5 values (625) x waterlogged (2) = 3750 permutations is far over budget: store the side states as BlockData or
   compute the geometry client-side (F11 connected family); keep the state names for parity.
 
 ### 2.5 Sinister spawner

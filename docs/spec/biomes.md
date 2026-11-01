@@ -39,10 +39,11 @@ max 12000 ticks) and the cave mood sound (6000 ticks, extent 8, offset 2.0).
   (`BiomeDensitySource`: a list of `TerrainColumn`s + `biome_layer_config` = `twilightforest:biomes_along_streams`).
 - Horizontal biome: the layer stack's `LazyArea` (cache 25, per-layer salt) sampled at quart coordinates
   `(x >> 2, z >> 2)` gives the key biome; `getMainBiome` returns that column's main biome.
-- Vertical biome (`getNoiseBiome(qx, qy, qz)`): the key biome's `TerrainColumn` maps the quart y relative to the
-  surface to a biome (e.g. most columns: the biome itself above `-1`, `twilightforest:underground` below `-3`; the
-  highlands use `twilightforest:highlands_underground`; final plateau and thornlands have one layer). Thresholds are in
-  the grid table (section 5).
+- Vertical biome (`getNoiseBiome(qx, qy, qz)`): the key biome's `TerrainColumn.getBiome(qy)` returns the layer whose
+  key is nearest to the **absolute** quart y (`|key - qy|`, keys reduced in ascending order, ties keep the lower key; no
+  layers -> the key biome). E.g. clearing (keys -3, -1): quart y >= -1 -> clearing, quart y <= -2 -> underground
+  (block y < -4); the highlands use `twilightforest:highlands_underground`; final plateau and thornlands have one
+  layer. Keys are in the grid table (section 5).
 - Terrain blending (`sampleTerrain`, used by U2's `biome_driven_terrain` / `biome_driven_noise`): blend radius 8.75
   (int 9) blocks, block offset 2 (quart centre); for every quart cell within the radius:
   `falloff = 8.75^2 * weight * exp((distSq * 2 + depth) * -0.4)` for depth and the same with `scale` for scale; result
@@ -61,8 +62,9 @@ Two registry entries (both owned): `biome_layer_stack/twilightforest:random_fore
 1. `random_biomes` [1]: per pixel `nextRandom(15) == 0` -> rare biome (uniform from lake, dense mushroom forest,
    enchanted forest, clearing, spooky forest) else common (uniform from forest, dense forest, mushroom forest, oak
    savannah, firefly forest).
-2. `key_biomes` [1000]: key biomes glacier, fire swamp, dark forest center, final plateau. Parent sampled at
-   `(x | 3, z | 3)`; per 4x4 block a fixed RNG `overworldSeed + (x & -4) * 25117 + (z & -4) * 151121` picks the key cell
+2. `key_biomes` [1000]: key biomes glacier, fire swamp, dark forest center, final plateau. The parent is sampled at
+   `(x, z)` (TF's `AreaTransformer1.run` seeds the pixel RNG at `(x, z)`; `getParentX/Y = x | 3` is not used for
+   sampling); per 4x4 block a fixed RNG `overworldSeed + (x & -4) * 25117 + (z & -4) * 151121` picks the key cell
    `(1..2, 1..2)`; a second RNG `overworldSeed + (x / 8) * 25117 + (z / 8) * 151121` picks `offset = nextInt(3)`; the key
    cell of each 8x8 quadrant gets key biome `(offset + quadrant) & 3` (quadrant 0..3 from `x & 4`, `z & 4`).
 3. `companion_biomes` [1000]: a pixel not itself the key but touching it (4-neighbours) becomes the companion: fire
@@ -80,8 +82,8 @@ Two registry entries (both owned): `biome_layer_stack/twilightforest:random_fore
   when any 4-neighbour differs, unless either side is lake, thornlands, clearing or oak savannah, or the pair is one of
   (snowy forest, glacier), (mushroom forest, dense mushroom forest), (swamp, fire swamp), (dark forest, dark forest
   center), (highlands, final plateau).
-- `median` (unused by the shipped stacks): the most common of the 3x3 (5 of 9 wins; ties prefer the centre index 5,
-  else 50 % random).
+- `median` (unused by the shipped stacks): the most common of the 3x3 sampled at `(x + pos % 3, z + pos / 3)` (5 of 9 wins;
+  ties prefer index 5, i.e. `(x + 2, z + 1)`, else 50 % random).
 - Vanilla legacy layer RNG (`LazyAreaContext`): world-seed mixing as Java's `LinearCongruentialGenerator`; keep it
   bit-exact (F5 `jrand` provides it) so biome maps match Java seeds.
 
