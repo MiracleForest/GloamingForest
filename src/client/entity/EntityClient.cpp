@@ -65,6 +65,7 @@ struct ClientState {
     std::set<std::int64_t>                      logged; ///< bars whose colour was applied (one log line each)
     bool                                        ridingUnfriendly = false;
     std::mutex                                  barsMutex; ///< bars / logged: the HUD may read them on another thread
+    bool                                        disabled = false; ///< the HUD's table did not look as expected
 };
 ClientState& C() {
     static ClientState s;
@@ -72,14 +73,31 @@ ClientState& C() {
 }
 
 /// Writes the exact colours into the HUD's boss table (ClientTFBossBar#renderBossBar's tint).
+bool plausible(mce::Color const& c) {
+    auto ok = [](float v) { return v >= 0.0f && v <= 1.0f; };
+    return ok(c.r) && ok(c.g) && ok(c.b) && c.a > 0.99f && c.a < 1.01f;
+}
+
 void applyColours(ClientInstanceScreenModel const& model) {
     auto&            s = C();
     std::scoped_lock lock(s.barsMutex);
-    if (s.bars.empty()) return;
+    if (s.bars.empty() || s.disabled) return;
     auto& infos = const_cast<std::unordered_map<ActorUniqueID, BossInfo>&>(model.mBossInfo.get());
+    // the table's layout comes from generated headers: check it before writing into it
+    if (infos.size() > 64) {
+        s.disabled = true;
+        log().warn("client boss bar colours disabled: the HUD's boss table looks wrong ({} entries)", infos.size());
+        return;
+    }
     for (auto& [id, info] : infos) {
         auto it = s.bars.find(id.rawID);
         if (it == s.bars.end()) continue;
+        mce::Color const& have = info.mBarColor.get();
+        if (!plausible(have)) {
+            s.disabled = true;
+            log().warn("client boss bar colours disabled: unexpected colour layout ({} {} {} {})", have.r, have.g, have.b, have.a);
+            return;
+        }
         info.mBarColor = mce::Color(static_cast<uint>(it->second.rgb));
         if (s.logged.insert(id.rawID).second) log().info("client boss bar {} coloured #{:06X}", id.rawID, it->second.rgb);
     }

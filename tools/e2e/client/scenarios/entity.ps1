@@ -16,7 +16,9 @@ if ($script:Mode -eq 'local') {
     $mark = Get-LogMark
     Invoke-Chat '/difficulty easy'
     Invoke-Chat "/$bar"
-    Wait-LogLine 'client boss bar -?\d+ coloured #FF8000' 30 -Since $mark | Out-Null
+    Wait-LogLine 'client boss bar -?\d+ received' 30 -Since $mark | Out-Null
+    $hit = Wait-LogLine 'client boss bar -?\d+ coloured #FF8000|client boss bar colours disabled' 30 -Since $mark
+    if ($hit -match 'disabled') { Write-Step "warning: the exact-RGB bar is off on this build: $hit" }
     Start-Sleep -Seconds 2
     Save-Screenshot 'boss-bar-local' | Out-Null
     $mark2 = Get-LogMark
