@@ -6,7 +6,7 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'ui.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) ui selftest(s) failed" }
-if ($r.Pass -lt 12) { throw "expected at least 12 ui selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 14) { throw "expected at least 14 ui selftests to pass, got $($r.Pass)" }
 
 # the fixture screen type and the fixture key are registered on the server
 $mark = Get-LogMark

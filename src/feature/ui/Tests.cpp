@@ -6,11 +6,14 @@
 // fallback); in the server-only runs they act on a test companion and check the recorded messages.
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <set>
 #include <unordered_map>
 
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
 
 #include "feature/common/Screens.h"
 #include "feature/ext/ui/Server.h"
@@ -18,6 +21,8 @@
 #include "feature/net/Net.h"
 #include "feature/ui/Fixture.h"
 #include "feature/ui/Ui.h"
+#include "game/Blocks.h"
+#include "mod/I18n.h"
 #include "mod/Log.h"
 #include "selftest/SelfTest.h"
 
@@ -144,6 +149,32 @@ GF_REGISTER_SELFTEST("ui.fixture_fog", [](Context& ctx) {
         if (fx::show(*rp, {{"show", true}, {"fog", true}})) ++real;
     }
     ctx.info("fixture fog shown to " + std::to_string(real) + " companion(s)");
+});
+
+// A vanilla chest titled with containerTitleSkin (the JSON-UI skin of vanilla container
+// screens): for every real player two blocks south of its feet (the client scenario faces south
+// and opens it), else at the test position, where only the stored name is checked.
+GF_REGISTER_SELFTEST("ui.fixture_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto title = gf::ui::containerTitleSkin(gf::tr("gf.ui.fixture.title", "GloamingForest UI fixture"), "ui/fixture_container");
+    int  real  = 0;
+    for (auto* rp : fx::realPlayers()) {
+        auto const& at = rp->getPosition();
+        BlockPos    feet{static_cast<int>(std::floor(at.x)), static_cast<int>(std::floor(at.y - 1.62f)), static_cast<int>(std::floor(at.z))};
+        if (fx::placeNamedChest(rp->getDimensionBlockSource(), {feet.x, feet.y, feet.z + 2}, title)) ++real;
+    }
+    ctx.info("skinned chest placed for " + std::to_string(real) + " real player(s)");
+    auto pos = ctx.testPos(6220);
+    co_await ctx.ensureLoaded(pos);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    ctx.cleanupBlock(pos);
+    ctx.require(fx::placeNamedChest(*region, gf::game::blockPos(pos), title), "the chest is placed and named");
+    ctx.check(fx::chestName(*region, gf::game::blockPos(pos)) == title, "the chest keeps the skinned title");
+});
+
+GF_REGISTER_SELFTEST("ui.fixture_chest_clear", [](Context& ctx) {
+    int n = fx::clearChests();
+    ctx.info("removed " + std::to_string(n) + " fixture chest(s)");
 });
 
 // Turns the client fixture off again (the client scenario runs it after its screenshots).

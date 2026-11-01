@@ -12,6 +12,25 @@
 $remote = $script:Mode -ne 'local'
 $hostRx = if ($remote) { '\[host\].*' } else { '' }
 
+# A vanilla chest titled with containerTitleSkin, two blocks south of the player: the resource
+# pack's JSON-UI draws the skin around the vanilla chest screen (any client). Screenshot:
+# out/ui/<tag>-chest-skin.png.
+function Invoke-UiChest([string]$tag) {
+    Invoke-Chat '/tp @s ~ ~ ~ facing ~ ~ ~5'
+    Start-Sleep -Seconds 2
+    $mark = Get-LogMark
+    $r = Invoke-SelfTest 'ui.fixture_chest'
+    if ($r.Fail -gt 0) { throw 'ui.fixture_chest failed' }
+    Wait-LogLine "${hostRx}ui fixture: chest '.*' placed" 20 -Since $mark | Out-Null
+    Start-Sleep -Seconds 2
+    Focus-Game
+    Click 0.5 0.5 -Relative -Right
+    Start-Sleep -Seconds 3
+    Save-Screenshot "$tag-chest-skin" | Out-Null
+    Close-Screen
+    Invoke-SelfTest 'ui.fixture_chest_clear' | Out-Null
+}
+
 if ($script:Mode -eq 'remote-vanilla') {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
     $mark = Get-LogMark
@@ -24,6 +43,7 @@ if ($script:Mode -eq 'remote-vanilla') {
     Wait-LogLine "\[host\].*ui form 'GloamingForest UI fixture' closed by" 30 -Since $mark | Out-Null
     Write-Step 'the vanilla client got the form fallback and closed it'
     if (Get-LeviLog | Select-String -Pattern '\[host\].*companion joined' -Quiet) { throw 'a vanilla client was accepted as a companion' }
+    Invoke-UiChest 'vanilla'
     return
 }
 
@@ -78,12 +98,13 @@ function Invoke-UiFixture([string]$tag) {
 # opens is closed again before the next chat command
 $r = Invoke-SelfTest 'ui.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) ui selftest(s) failed" }
-if (-not $remote -and $r.Pass -lt 16) { throw "expected at least 16 ui selftests in the client build, got $($r.Pass)" }
+if (-not $remote -and $r.Pass -lt 18) { throw "expected at least 18 ui selftests in the client build, got $($r.Pass)" }
 Start-Sleep -Seconds 1
 if ((Get-ClientScreen) -ne 'hud_screen') { Close-Screen }
 Invoke-SelfTest 'ui.fixture_hide' | Out-Null
 
 Invoke-UiFixture 'classic'
+Invoke-UiChest 'classic'
 
 # the fixture key reaches the server (forwarded on input.key)
 $mark = Get-LogMark

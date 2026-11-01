@@ -18,6 +18,7 @@
 #include "client/render/Render.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <map>
 #include <mutex>
@@ -182,6 +183,8 @@ struct Registry {
     std::unordered_map<std::string, tint::TintFn>           tints;
     std::unordered_map<Block const*, bool>                  blockHasTint;
     bool                                                    loggedWorld = false;
+    std::atomic<bool>                                       anyBlocks{false}; ///< lock-free checks on chunk builder threads
+    std::atomic<bool>                                       anyTints{false};
     int                                                     dim         = -1;
 };
 Registry& reg() {
@@ -316,6 +319,7 @@ void registerBlockRenderer(std::string const& blockId, BlockRenderFn fn, Flags f
     auto&           r = reg();
     std::lock_guard lock(r.mutex);
     r.blocks[blockId] = {std::move(fn), flags};
+    r.anyBlocks       = true;
     r.blockHasRenderer.clear(); // recomputed per block state
 }
 
@@ -452,6 +456,7 @@ void registerBlock(std::string const& blockId, TintFn fn) {
     auto&           r = render::reg();
     std::lock_guard lock(r.mutex);
     r.tints[blockId] = std::move(fn);
+    r.anyTints       = true;
     r.blockHasTint.clear();
 }
 } // namespace gf::client::tint
@@ -495,7 +500,7 @@ LL_STATIC_HOOK(
     BlockPos const&                                                    chunkMinPos,
     bool                                                               checkIgnoreBlockTransforms
 ) {
-    if (visualReference == ClientBlockPipeline::VisualReference::Block) {
+    if (visualReference == ClientBlockPipeline::VisualReference::Block && r::reg().anyBlocks) {
         auto&           rg = r::reg();
         std::lock_guard lock(rg.mutex);
         if (r::hasRendererLocked(rg, block)) {
@@ -647,6 +652,7 @@ LL_TYPE_INSTANCE_HOOK(
     TintMethod      tintMethod,
     BiomeTintCache* biomeTintCache
 ) {
+    if (!r::reg().anyTints) return origin(block, blockPos, tintMethod, biomeTintCache);
     try {
         gf::client::tint::TintFn fn;
         {

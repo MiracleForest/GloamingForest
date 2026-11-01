@@ -13,13 +13,22 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/dataloadhelper/DefaultDataLoadHelper.h"
+#include "mc/deps/nbt/CompoundTag.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/item/SaveContextFactory.h"
+#include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/dimension/Dimension.h"
 
 #include "feature/common/Screens.h"
 #include "feature/ext/ui/Server.h"
 #include "feature/net/Net.h"
 #include "feature/ui/Ui.h"
+#include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
@@ -59,6 +68,59 @@ std::vector<Player*> realPlayers() {
 }
 
 bool show(Player& player, Json const& what) { return net::send(player, "ui.fixture", what); }
+
+namespace {
+/// The game's DefaultDataLoadHelper (no state, only its vtable): loads saved NBT as is.
+DataLoadHelper& defaultLoadHelper() {
+    static void** helper = DefaultDataLoadHelper::$vftable();
+    return *reinterpret_cast<DataLoadHelper*>(&helper);
+}
+struct PlacedChest {
+    int      dim;
+    BlockPos pos;
+};
+std::vector<PlacedChest>& placed() {
+    static std::vector<PlacedChest> v;
+    return v;
+}
+} // namespace
+
+bool placeNamedChest(BlockSource& region, BlockPos const& pos, std::string const& name) {
+    auto const* chest = game::blockWith("minecraft:chest");
+    if (!chest || !game::setBlock(region, pos, *chest)) return false;
+    auto* actor = region.getBlockEntity(pos);
+    if (!actor) return false;
+    auto        level = ll::service::getLevel();
+    auto        ctx   = SaveContextFactory::createCloneSaveContext();
+    CompoundTag tag;
+    if (!level || !actor->save(tag, *ctx)) return false;
+    tag["CustomName"] = name;
+    actor->load(*level, tag, defaultLoadHelper());
+    actor->refresh(region);
+    placed().push_back({static_cast<int>(region.getDimensionId()), pos});
+    log().info("ui fixture: chest '{}' placed at {} {} {}", name, pos.x, pos.y, pos.z);
+    return true;
+}
+
+std::string chestName(BlockSource& region, BlockPos const& pos) {
+    auto* actor = region.getBlockEntity(pos);
+    if (!actor) return {};
+    auto        ctx = SaveContextFactory::createCloneSaveContext();
+    CompoundTag tag;
+    if (!actor->save(tag, *ctx) || !tag.contains("CustomName", Tag::Type::String)) return {};
+    return std::string(static_cast<std::string const&>(tag["CustomName"]));
+}
+
+int clearChests() {
+    int n = 0;
+    for (auto const& c : placed()) {
+        auto* region = game::regionOf(c.dim);
+        if (!region) continue;
+        if (game::blockIdAt(*region, c.pos) == "minecraft:chest" && game::clearBlock(*region, c.pos)) ++n;
+    }
+    placed().clear();
+    return n;
+}
 
 void openFormFallback(Player& player) {
     ++gForms;

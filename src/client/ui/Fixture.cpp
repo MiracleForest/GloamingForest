@@ -49,7 +49,7 @@ namespace {
 using Json = nlohmann::json;
 constexpr char kSkin[]     = "textures/gui/ui/fixture_container";
 constexpr char kGeo[]      = "geometry.gf_ui.fixture";
-constexpr char kGeoTex[]   = "textures/entity/ui/fixture";
+constexpr char kGeoTex[]   = "textures/ui/fixture_geo";
 constexpr int  kFixtureKey = 'J';
 
 struct State {
