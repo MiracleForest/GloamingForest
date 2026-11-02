@@ -111,6 +111,7 @@ public:
             registerWorldgenStages();
             spawn::onSpecialSpawn(specialSpawns);
             game::db::onWorldReady([] {
+                noteServerThread(); // a new world's server thread is known before its first tick
                 resetProtection();
                 resetHints();
                 loadRecords();

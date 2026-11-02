@@ -2,13 +2,14 @@
 # (break / use / multi-place refused for a survival player without the lock advancement, the boxes
 # and packets shown, allowed after the grant through the advancement seam and the progression store
 # once it exists), conquest, the start store (written, read back, kept over a server restart), hint
-# books and the hint mob's guaranteed book drop, decoration clearance, the descriptors' full TF
-# records; then /twilightforest center | info | conquer | locate | place | genbook from the console.
+# books and the hint mob's guaranteed book drop, the hint timer's game time, decoration clearance, the
+# start evaluation threading and locate probe, the descriptors' full TF records; then /twilightforest
+# center | info | conquer | locate | place | genbook from the console.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'landmark.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) landmark selftest(s) failed" }
-if ($r.Pass -lt 10) { throw "expected at least 10 landmark selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 12) { throw "expected at least 12 landmark selftests to pass, got $($r.Pass)" }
 
 # The commands (console origin: the overworld at 0 0 0)
 $mark = Get-LogMark

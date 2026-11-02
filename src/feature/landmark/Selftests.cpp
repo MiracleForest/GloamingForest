@@ -48,7 +48,9 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/Tick.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/storage/LevelData.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 
@@ -165,7 +167,7 @@ struct StartsScope {
     StartsScope(StartsScope const&)            = delete;
     StartsScope& operator=(StartsScope const&) = delete;
     void touch(int cx, int cz) {
-        if (std::find(chunks.begin(), chunks.end(), std::pair{cx, cz}) != chunks.end()) return;
+        if (std::any_of(chunks.begin(), chunks.end(), [&](auto const& c) { return c.first == cx && c.second == cz; })) return;
         chunks.emplace_back(cx, cz);
         std::vector<std::string> keys;
         for (auto const& r : fl::recordsStartedIn(dim, cx, cz)) keys.push_back(r->start.key);
@@ -710,7 +712,9 @@ GF_REGISTER_SELFTEST("landmark.starts", [](Context& ctx) -> ll::coro::CoroTask<>
     ctx.require(distant != nullptr, "a fixture start at the far center");
     fl::putRecord(distant);
     ctx.check(fl::nearestLandmark(dim, cx + 128, cz) == nullptr, "an unloaded center chunk gives no landmark (checkReady)");
-    ctx.check(fl::nearestLandmarkOf(dim, kFixture, farCenter.x, farCenter.z) == distant, "markStructureConquered still finds it (no ready check)");
+    // markStructureConquered has no ready check on the center chunk, but reads a start only where its
+    // own start chunk is loaded (LandmarkUtil#locateNearestLandmarkStart's level.hasChunk)
+    ctx.check(fl::nearestLandmarkOf(dim, kFixture, farCenter.x, farCenter.z) == nullptr, "nor a start to conquer while its start chunk is not loaded");
 });
 
 GF_REGISTER_SELFTEST("landmark.persist_1_write", [](Context& ctx) -> ll::coro::CoroTask<> {

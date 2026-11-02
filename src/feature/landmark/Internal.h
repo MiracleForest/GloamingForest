@@ -223,8 +223,9 @@ void clearRecords();
 /// Server thread (protection, the structure protection sync, /tf info, /tf conquer).
 [[nodiscard]] RecordPtr nearestLandmark(int dim, int chunkX, int chunkZ, std::optional<GlobalPos> pos = std::nullopt);
 /// LandmarkUtil#locateNearestLandmarkStart(level, structureKey, pos) for a structure key (no ready
-/// check, as TF): the valid start of `key` referencing the nearest landmark center chunk; besides,
-/// only a forceStart start of `key` (selftests) whose box covers the column.
+/// check on the center chunk, as TF): the valid start of `key` referencing the nearest landmark
+/// center chunk whose own start chunk is loaded (level.hasChunk(packedX, packedZ)); besides, only a
+/// forceStart start of `key` (selftests) whose box covers the column. Server thread.
 [[nodiscard]] RecordPtr nearestLandmarkOf(int dim, std::string const& key, int blockX, int blockZ);
 /// Whether chunk (cx, cz) of `dim` is loaded on the server (Level#hasChunk; server thread).
 [[nodiscard]] bool chunkLoaded(int dim, int chunkX, int chunkZ);
@@ -354,7 +355,9 @@ Actor* spawnHintCarrier(Info const& info, BlockSource& region, float x, float y,
 [[nodiscard]] std::optional<float> mainHandDropChance(Actor& actor);
 /// Rewrites a hint book (translatable_book) for `reader`'s language; true when it changed.
 bool retranslateBook(ItemStack& book, Player const& reader);
-/// Level#getGameTime: the persisted world tick (level.dat's currentTick).
+/// Level#getGameTime: the persisted world tick (level.dat's currentTick). Level::getCurrentTick
+/// returns that very field, which advances every tick and continues over a restart (landmark.hint_timer
+/// and the persist tests check both).
 [[nodiscard]] std::uint64_t gameTime();
 void installHints();
 void uninstallHints();

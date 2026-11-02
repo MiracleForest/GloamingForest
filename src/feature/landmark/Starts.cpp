@@ -139,7 +139,10 @@ bool onServerThread() { return std::this_thread::get_id() == gServerThread.load(
 /// gets what is stored so far, and a thread inside an evaluation never waits for another one (two
 /// layouts asking about each other's chunks would wait for each other).
 thread_local std::vector<ChunkKey> tEvaluating;
-bool evaluatingHere(ChunkKey const& key) { return std::find(tEvaluating.begin(), tEvaluating.end(), key) != tEvaluating.end(); }
+bool evaluatingHere(ChunkKey const& key) {
+    // any_of, not find: MSVC's vectorized find rejects a 12-byte trivially comparable type
+    return std::any_of(tEvaluating.begin(), tEvaluating.end(), [&](ChunkKey const& k) { return k == key; });
+}
 
 /// How long a generation thread waits for another thread evaluating the same start chunk before it
 /// evaluates the chunk itself (the evaluating thread never waits, so this is only a safety net).
@@ -1091,6 +1094,9 @@ std::string probeStart(int dim, StructureSet const& set, int chunkX, int chunkZ)
 }
 
 bool chunkLoaded(int dim, int chunkX, int chunkZ) {
+    // the level's BlockSource belongs to the server thread: a caller on another thread (a W1 unit
+    // asking isProtectedFor during generation) gets no ready check rather than a racy read
+    if (gServerThread.load(std::memory_order_relaxed) != std::thread::id{} && !onServerThread()) return true;
     auto* region = game::regionOf(dim);
     return region && region->hasChunksAt(BlockPos{chunkX * 16, region->getMinHeight(), chunkZ * 16}, 0, false);
 }
@@ -1124,10 +1130,11 @@ RecordPtr nearestLandmarkOf(int dim, std::string const& key, int blockX, int blo
     auto center = cl::nearestCenter(blockX >> 4, blockZ >> 4);
     int  ccx = center.x >> 4, ccz = center.z >> 4;
     ensureStartsAround(dim, ccx, ccz);
-    // the starts of `key` referencing the center chunk (ChunkAccess#getReferencesForStructure), valid
-    // ones only (StructureStart#isValid: a reserved site has no pieces)
+    // the starts of `key` referencing the center chunk (ChunkAccess#getReferencesForStructure) whose
+    // start chunk is loaded (level.hasChunk(packedX, packedZ)), valid ones only (StructureStart
+    // #isValid: a reserved site has no pieces). There is no ready check on the center chunk itself
     for (auto const& rec : recordsIntersecting(dim, ccx, ccz))
-        if (rec->start.key == key && !rec->placed && !rec->pieces.empty()) return rec;
+        if (rec->start.key == key && !rec->placed && !rec->pieces.empty() && chunkLoaded(dim, rec->chunkX, rec->chunkZ)) return rec;
     // TF reads the grid center chunk only; forceStart's starts (the selftests' stand-in for a grid
     // start, off the grid) count where their box covers the column. Natural and placed ones never do
     for (auto const& rec : recordsIntersecting(dim, blockX >> 4, blockZ >> 4))
