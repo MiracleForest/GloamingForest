@@ -51,11 +51,12 @@ namespace gf::feature::families {
 
 namespace state {
 std::string side(int dir) { return std::string("twilightforest:") + dirName(dir); }
+std::string ctSide(int dir) { return std::string(kKit) + dirName(dir); }
 std::string corner(int a, int b) {
     // the two names in alphabetical order (tools/families/families.lua corner_key)
     std::string_view x = dirName(a), y = dirName(b);
     if (x > y) std::swap(x, y);
-    return std::string("twilightforest:corner_").append(x).append("_").append(y);
+    return std::string(kKit).append("corner_").append(x).append("_").append(y);
 }
 } // namespace state
 

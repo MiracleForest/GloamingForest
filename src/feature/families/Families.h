@@ -10,12 +10,14 @@
 // Bedrock state twilightforest:p with Java's values (booleans [false, true], integers 0..n, enums by
 // name); no placement traits: the runtime sets the states on placement as Java's
 // getStateForPlacement does, and keeps the neighbour-dependent ones as Java's updateShape does.
-// States this kit adds to blocks (rule R1: additions only):
-//   twilightforest:open_count  0..15  chests and trapped chests: the players looking inside (lid,
+// States this kit adds to blocks (rule R1: additions only). The ones no Java block declares live
+// in the kit's own namespace, so a TF block keeps exactly its frozen twilightforest:* states:
+//   gloamingforest:open_count  0..15  chests and trapped chests: the players looking inside (lid,
 //                                      the trapped chest's signal)
-//   twilightforest:<direction> bool   connected textures: a connection on that side
-//   twilightforest:corner_<a>_<b> bool connected textures: the diagonal block (when the budget allows)
-//   twilightforest:layers / lighting   snowloggable / lightable blocks without those states
+//   gloamingforest:<direction> bool   connected textures: a connection on that side
+//   gloamingforest:corner_<a>_<b> bool connected textures: the diagonal block (when the budget allows)
+//   twilightforest:layers / lighting   snowloggable / lightable blocks without those states (Java's
+//                                      SnowLoggable / LightableBlock properties)
 // The params every family reads are documented in tools/families/README.md.
 
 #include <array>
@@ -146,11 +148,15 @@ inline constexpr char Attached[]   = "twilightforest:attached";
 inline constexpr char Layers[]     = "twilightforest:layers";
 inline constexpr char Lighting[]   = "twilightforest:lighting";
 inline constexpr char Rotated[]    = "twilightforest:rotated";
-inline constexpr char OpenCount[]  = "twilightforest:open_count";
+/// The namespace of the states the kit adds that no Java block declares.
+inline constexpr char kKit[]       = "gloamingforest:";
+inline constexpr char OpenCount[]  = "gloamingforest:open_count";
 /// twilightforest:north / east / south / west / up / down (fence / pane / pillar connections are
 /// booleans, wall sides none / low / tall)
 [[nodiscard]] std::string side(int dir);
-/// twilightforest:corner_<a>_<b> (connected textures: the diagonal block of sides a and b)
+/// gloamingforest:north / ... (connected textures: a connection on that side)
+[[nodiscard]] std::string ctSide(int dir);
+/// gloamingforest:corner_<a>_<b> (connected textures: the diagonal block of sides a and b)
 [[nodiscard]] std::string corner(int a, int b);
 } // namespace state
 

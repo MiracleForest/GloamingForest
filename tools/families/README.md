@@ -100,7 +100,11 @@ Per family:
 
 As `docs/spec/blockstates.md` (F1, rule R1): every Java property `p` is `twilightforest:p` with
 Java's values (booleans `[false, true]`, integers `0..n`, enums by name); no placement traits: the
-runtime sets them on placement as Java's `getStateForPlacement` does. The kit adds
-`twilightforest:open_count` (chests: the players inside, the lid, the trapped chest's signal),
-`twilightforest:<direction>` and `twilightforest:corner_<a>_<b>` (connected textures), and
-`twilightforest:layers` / `twilightforest:lighting` to snowloggable / lightable blocks that lack them.
+runtime sets them on placement as Java's `getStateForPlacement` does. The states the kit adds that
+no Java block declares are in its own namespace, so a TF block keeps exactly its frozen
+`twilightforest:*` states (F1's `import.blocks` checks that): `gloamingforest:open_count` (chests:
+the players inside, the lid, the trapped chest's signal), `gloamingforest:<direction>` and
+`gloamingforest:corner_<a>_<b>` (connected textures). Java's own SnowLoggable / LightableBlock
+properties `twilightforest:layers` / `twilightforest:lighting` are added to snowloggable / lightable
+blocks that lack them. A lightable block keeps the light per state of F1's skeleton (TF's
+`lightLevel`) unless the data gives `light_levels`.

@@ -736,7 +736,8 @@ bool signCanSurvive(BlockSource& region, BlockPos const& pos, Block const& b, En
     case Family::Sign: return solidAt(region, offset(pos, Down));                    // StandingSignBlock
     case Family::WallSign: return solidAt(region, offset(pos, opposite(facingOf(b)))); // WallSignBlock
     case Family::HangingSign: return sturdyCenter(region, offset(pos, Up), Down);      // CeilingHangingSignBlock
-    default: return true;                                                              // WallHangingSignBlock
+    case Family::WallHangingSign: return wallHangingCanPlace(region, pos, facingOf(b)); // WallHangingSignBlock.canSurvive
+    default: return true;
     }
 }
 
@@ -863,11 +864,27 @@ void installSigns() {
     });
     for (auto family : {Family::Sign, Family::WallSign, Family::HangingSign, Family::WallHangingSign}) {
         for (auto const* e : entriesOf(family)) {
-            // SignBlock / CeilingHangingSignBlock.updateShape: the sign breaks without its support
-            blockevents::onNeighborChanged(e->id, [](BlockSource& region, BlockPos const& pos, BlockPos const&) {
+            // the sign breaks without its support, checked only when the neighbour on the side
+            // Java's updateShape looks at changes (StandingSignBlock: below; WallSignBlock: behind;
+            // CeilingHangingSignBlock: above; WallHangingSignBlock: either side along its board)
+            blockevents::onNeighborChanged(e->id, [](BlockSource& region, BlockPos const& pos, BlockPos const& from) {
                 Block const* b  = blockAt(region, pos);
                 auto const*  se = b ? entryOf(*b) : nullptr;
-                if (!isSign(se) || signCanSurvive(region, pos, *b, *se)) return;
+                if (!isSign(se)) return;
+                int dir = -1;
+                for (int d = 0; d < 6; ++d) {
+                    BlockPos n = offset(pos, d);
+                    if (n.x == from.x && n.y == from.y && n.z == from.z) dir = d;
+                }
+                bool watched = false;
+                switch (se->family) {
+                case Family::Sign: watched = dir == Down; break;
+                case Family::WallSign: watched = dir >= 0 && opposite(dir) == facingOf(*b); break;
+                case Family::HangingSign: watched = dir == Up; break;
+                case Family::WallHangingSign: watched = dir >= 0 && axisOf(dir) == axisOf(clockwise(facingOf(*b))); break;
+                default: break;
+                }
+                if (!watched || signCanSurvive(region, pos, *b, *se)) return;
                 log().info("families: {} at {} {} {} lost its support", se->id, pos.x, pos.y, pos.z);
                 destroyWithDrops(region, pos);
             });

@@ -12,7 +12,7 @@
 // Screen: "families.chest" (gf::screens): the client mod's native chest screen (Java's ChestMenu:
 // 3 or 6 rows over the player's inventory), a form for vanilla clients. The players inside are
 // counted per half (Java ContainerOpenersCounter, checked every 5 ticks: gone, too far, other
-// dimension): twilightforest:open_count opens the lid, plays the chest sounds and is the trapped
+// dimension): gloamingforest:open_count opens the lid, plays the chest sounds and is the trapped
 // chest's signal (its BP permutations: redstone_producer 0..15).
 
 #include <algorithm>

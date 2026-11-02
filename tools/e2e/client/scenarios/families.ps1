@@ -100,8 +100,8 @@ $rows = @(
             @(12, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`"]"),
             @(14, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`"]"),
             @(15, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`"]"),
-            @(17, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`",`"twilightforest:open_count`"=1]"),
-            @(18, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`",`"twilightforest:open_count`"=1]"),
+            @(17, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`",`"gloamingforest:open_count`"=1]"),
+            @(18, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`",`"gloamingforest:open_count`"=1]"),
             @(20, 0, 0, 'gf_test:family_trapped_chest', "[`"$f`"=`"north`"]"))
     },
     @{ name = 'families-4-variants'; x = 90; blocks = @(

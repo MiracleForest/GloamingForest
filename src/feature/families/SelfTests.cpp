@@ -810,11 +810,11 @@ GF_REGISTER_SELFTEST("families.shapes", [](Context& ctx) -> ll::coro::CoroTask<>
     auto c1 = at(p, 0, 1, 4), c2 = at(p, 1, 1, 4), c3 = at(p, 0, 2, 4), c4 = at(p, 1, 2, 4);
     ctx.require(ctx.setBlock(c1, "gf_test:family_ct_flat") && ctx.setBlock(c2, "gf_test:family_ct_flat") && ctx.setBlock(c3, "gf_test:family_ct_flat"), "three connected texture blocks");
     co_await ctx.ticks(3);
-    ctx.check(flag(c1, "twilightforest:east") && flag(c1, "twilightforest:up") && !flag(c1, "twilightforest:west"), "connected textures join their own kind");
-    ctx.check(!flag(c1, "twilightforest:corner_east_up"), "no corner block yet");
+    ctx.check(flag(c1, "gloamingforest:east") && flag(c1, "gloamingforest:up") && !flag(c1, "gloamingforest:west"), "connected textures join their own kind");
+    ctx.check(!flag(c1, "gloamingforest:corner_east_up"), "no corner block yet");
     ctx.require(ctx.setBlock(c4, "gf_test:family_ct_flat"), "the corner block");
     co_await ctx.ticks(3);
-    ctx.check(flag(c1, "twilightforest:corner_east_up"), "the diagonal block sets the corner (ConnectedTextureModel.isCornerBlockPresent)");
+    ctx.check(flag(c1, "gloamingforest:corner_east_up"), "the diagonal block sets the corner (ConnectedTextureModel.isCornerBlockPresent)");
     (void)box;
 });
 

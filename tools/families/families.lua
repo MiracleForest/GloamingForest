@@ -47,6 +47,9 @@
 import("core.base.json")
 
 local NS = "twilightforest:"
+-- the states the kit adds that no Java block declares (chests' open_count, connected textures):
+-- TF's blocks keep exactly their frozen twilightforest:* states (docs/spec/blockstates.md)
+local KIT = "gloamingforest:"
 local GEO_DIR = "models/blocks/gf_families"
 local FORMAT = "1.26.0"
 local GEO_FORMAT = "1.21.0"
@@ -463,14 +466,14 @@ local FAMILY_STATES = {
     wall_sign = {{"facing", FACING4}},
     hanging_sign = {{"attached", "bool"}, {"rotation", 15}},
     wall_hanging_sign = {{"facing", FACING4}},
-    chest = {{"facing", FACING4}, {"type", {"single", "left", "right"}}, {"open_count", 15}},
-    trapped_chest = {{"facing", FACING4}, {"type", {"single", "left", "right"}}, {"open_count", 15}},
+    chest = {{"facing", FACING4}, {"type", {"single", "left", "right"}}, {"open_count", 15, KIT}},
+    trapped_chest = {{"facing", FACING4}, {"type", {"single", "left", "right"}}, {"open_count", 15, KIT}},
     horizontal = {{"facing", FACING4}},
     directional = {{"facing", FACING6}},
     binary_rotated = {{"rotated", "bool"}},
     wall_pillar = {{"axis", AXES}, {"down", "bool"}, {"east", "bool"}, {"north", "bool"}, {"south", "bool"}, {"up", "bool"}, {"west", "bool"}},
     connectable_pillar = {{"axis", AXES}, {"down", "bool"}, {"east", "bool"}, {"north", "bool"}, {"south", "bool"}, {"up", "bool"}, {"west", "bool"}},
-    connected_texture = {{"down", "bool"}, {"east", "bool"}, {"north", "bool"}, {"south", "bool"}, {"up", "bool"}, {"west", "bool"}},
+    connected_texture = {{"down", "bool", KIT}, {"east", "bool", KIT}, {"north", "bool", KIT}, {"south", "bool", KIT}, {"up", "bool", KIT}, {"west", "bool", KIT}},
 }
 
 -- Families Java draws with block entity renderers: the kit makes their model even over a skeleton.
@@ -1213,8 +1216,8 @@ local function chest_visual(doc, e, t, ctx)
     local vis = {}
     for _, kind in ipairs({"single", "left", "right"}) do
         vis[kind .. "_bottom"] = is(NS .. "type", kind)
-        vis[kind .. "_lid"] = all(is(NS .. "type", kind), is(NS .. "open_count", 0))
-        vis[kind .. "_lid_open"] = all(is(NS .. "type", kind), q(NS .. "open_count") .. " > 0")
+        vis[kind .. "_lid"] = all(is(NS .. "type", kind), is(KIT .. "open_count", 0))
+        vis[kind .. "_lid_open"] = all(is(NS .. "type", kind), q(KIT .. "open_count") .. " > 0")
     end
     geometry(doc, g, vis)
     local m = e.params.render_method or "alpha_test"
@@ -1246,7 +1249,7 @@ behaviour.trapped_chest = function (doc, e)
     -- TrappedChestBlock.getSignal: the players inside (0..15), strongly into the block below
     comps(doc)["minecraft:redstone_conductivity"] = {redstone_conductor = false}
     comps(doc)["minecraft:redstone_producer"] = {power = 0}
-    for n = 1, 15 do perm(doc, is(NS .. "open_count", n), {["minecraft:redstone_producer"] = {power = n, strongly_powered_face = "down"}}) end
+    for n = 1, 15 do perm(doc, is(KIT .. "open_count", n), {["minecraft:redstone_producer"] = {power = n, strongly_powered_face = "down"}}) end
 end
 
 -- horizontal (TF TFHorizontalBlock, HorizontalDirectionalBlock): facing; the front (params
@@ -1366,7 +1369,7 @@ behaviour.wall_pillar = function (doc, e) pillar_conn_behaviour(doc, e, "wall_pi
 -- every face is four 8 x 8 quadrants; each quadrant draws the overlay (TF's overlay_texture) or a
 -- piece of the connected sheet (overlay_connected: cornerless / vertical / horizontal / corner) by
 -- the connections to its two sides and the block in their corner (twilightforest:<direction> and
--- twilightforest:corner_<a>_<b>, kept by the runtime). Bedrock's per-block budget (65536 states)
+-- gloamingforest:corner_<a>_<b>, kept by the runtime). Bedrock's per-block budget (65536 states)
 -- holds the corners only for blocks whose enabled faces need few of them (six sides and twelve
 -- corners are 2^18): otherwise two connected sides count as a filled corner (cornerless), as in a
 -- flat wall.
@@ -1448,14 +1451,14 @@ visual.connected_texture = function (doc, e, t, ctx)
     local disabled = e.params.render_on_disabled_faces ~= false
     local others = 1
     for name, values in pairs(states_of(doc)) do
-        if not name:match("^twilightforest:[a-z]+$") or not NORMAL[name:sub(#NS + 1)] then others = others * #values end
+        if not name:match("^gloamingforest:[a-z]+$") or not NORMAL[name:sub(#KIT + 1)] then others = others * #values end
     end
     local sides_, corners = ct_bits(faces, others)
     -- the bits: the sides the faces look at, then the corners; one geometry and one permutation per
     -- combination (the other sides change nothing)
     local bits = {}
     for _, f in ipairs(sides_) do table.insert(bits, f) end
-    for _, c in ipairs(corners or {}) do table.insert(bits, c); ensure_state(doc, NS .. c, BOOL()) end
+    for _, c in ipairs(corners or {}) do table.insert(bits, c); ensure_state(doc, KIT .. c, BOOL()) end
     local fkey = {}
     for _, f in ipairs(FACES6) do table.insert(fkey, faces[f] and "1" or "0") end
     local prefix = "geometry.gf_families.ct_" .. table.concat(fkey) .. (disabled and "o" or "") .. (corners and "c" or "")
@@ -1476,7 +1479,7 @@ visual.connected_texture = function (doc, e, t, ctx)
         if mask == 0 then geometry(doc, g) end
         if mask > 0 then
             local cond = {}
-            for i, name in ipairs(bits) do table.insert(cond, is(NS .. name, conn[name])) end
+            for i, name in ipairs(bits) do table.insert(cond, is(KIT .. name, conn[name])) end
             perm(doc, all(table.unpack(cond)), {["minecraft:geometry"] = g})
         end
     end
@@ -1545,6 +1548,15 @@ modifiers.climbable = function () end
 -- TF LightableBlock: lighting none / normal / dim / ominous; light per level.
 modifiers.lightable = function (doc, e)
     ensure_state(doc, NS .. "lighting", list("none", "normal", "dim", "ominous"))
+    -- F1's skeleton already carries TF's own light per state (the block's lightLevel lambda: skull
+    -- candles give 3 per candle, ...): it wins unless the data names light_levels
+    if not e.params.light_levels then
+        local has = comps(doc)["minecraft:light_emission"] ~= nil
+        for _, p in ipairs(block_of(doc).permutations or {}) do
+            if p.components and p.components["minecraft:light_emission"] ~= nil then has = true end
+        end
+        if has then return end
+    end
     local light = e.params.light_levels or {none = 0, normal = 15, dim = 7, ominous = 15}
     for _, l in ipairs({"normal", "dim", "ominous"}) do
         if light[l] and light[l] > 0 then perm(doc, is(NS .. "lighting", l), {["minecraft:light_emission"] = light[l]}) end
@@ -1874,7 +1886,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
                 shape = "cube"
             end
             local doc = base_doc(e, skel and skel.doc or nil, base and base.doc or nil, keep_visual or (shape == nil))
-            for _, s in ipairs(shape and FAMILY_STATES[shape] or {}) do ensure_state(doc, NS .. s[1], state_values(s[2])) end
+            for _, s in ipairs(shape and FAMILY_STATES[shape] or {}) do ensure_state(doc, (s[3] or NS) .. s[1], state_values(s[2])) end
             local t = textures_of(e, skel and skel.doc or (base and base.doc) or nil)
             if shape and ENTITY_MODEL[shape] and not g.params.textures then
                 for k, v in pairs(entity_textures(g, rpdir, ctx)) do t[k] = v end

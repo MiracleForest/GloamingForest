@@ -292,7 +292,7 @@ constexpr std::array<std::array<int, 4>, 3> kPlane{{{Up, North, Down, South}, {N
 
 bool updateConnectedTexture(BlockSource& region, BlockPos const& pos, Block const& block, Entry const& e) {
     Json s = Json::object();
-    for (int d = 0; d < 6; ++d) s[state::side(d)] = connector(e, blockAt(region, offset(pos, d)));
+    for (int d = 0; d < 6; ++d) s[state::ctSide(d)] = connector(e, blockAt(region, offset(pos, d)));
     // the twelve diagonals (states the block has: the generator adds them within its budget)
     for (auto const& plane : kPlane) {
         for (int i = 0; i < 4; ++i) {
