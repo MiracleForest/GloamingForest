@@ -18,6 +18,7 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/deps/core/string/HashedString.h"
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/commands/CommandPermissionLevel.h"
@@ -54,6 +55,7 @@
 #include "feature/families/SignFont.h"
 #include "feature/families/Signs.h"
 #include "feature/inventory/Inventory.h"
+#include "feature/inventory/InventoryInternal.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -780,6 +782,7 @@ GF_REGISTER_SELFTEST("families.double_chest", [](Context& ctx) -> ll::coro::Coro
     auto ha = gf::inventory::find(region, gf::game::blockPos(a));
     ctx.require(ha.has_value(), "the chest is a container of the inventory contract (tools/families declared it)");
     ctx.check(ha->slots == 27, "a half has 27 slots (" + std::to_string(ha->slots) + ")");
+    ctx.check(gf::inventory::nativeContainer(region, gf::game::blockPos(a)) != nullptr, "it keeps them in its block actor (minecraft:block_entity: the inventory contract's native backend)");
     ha->set(a, 0, *gf::game::items::make("minecraft:dirt", 5));
     // b east of a, facing north: b is the RIGHT (first) half, a the LEFT
     ctx.require(ctx.setBlock(b, "gf_test:family_chest"), "chest b east of it");
@@ -824,6 +827,9 @@ GF_REGISTER_SELFTEST("families.double_chest", [](Context& ctx) -> ll::coro::Coro
         ctx.check(st(a, fam::state::Lid) == 0 && st(b, fam::state::Lid) == 0, "and the lids close again");
         ctx.check(gf::game::items::idOf(ha->get(a, 0)) == "minecraft:dirt" && gf::game::items::idOf(hb->get(b, 0)) == "minecraft:stone" && itemsNear(ctx, a).empty(),
                   "the halves keep their stacks while their states change (pairing, lids)");
+        auto const* inA = gf::blockdata::get(region, gf::game::blockPos(a), "inventory");
+        ctx.check(gf::inventory::nativeContainer(region, gf::game::blockPos(a)) != nullptr && gf::inventory::nativeContainer(region, gf::game::blockPos(b)) != nullptr && (!inA || !inA->contains("items")),
+                  "in their block actors through every state change, nothing in block data");
     }
     ctx.check(fam::chestLidStep(0) == 0 && fam::chestLidStep(1) == 1 && fam::chestLidStep(3) == 3 && fam::chestLidStep(5) == 4 && fam::chestLidStep(10) == 4,
               "ChestRenderer's eased lid: 1 - (1 - o)^3 in 22.5 degree steps");
@@ -1287,6 +1293,9 @@ GF_REGISTER_SELFTEST("families.tf_blocks", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(ctx.setBlock(ch, "twilightforest:canopy_trapped_chest", {{kFacing, "north"}}), "a canopy trapped chest");
     co_await ctx.ticks(1);
     ctx.check(gf::inventory::find(region, gf::game::blockPos(ch)).has_value(), "TF's chests are containers of the inventory contract");
+    ctx.check(gf::inventory::nativeContainer(region, gf::game::blockPos(ch)) != nullptr, "their slots are in their block actor (minecraft:block_entity, format 1.26.50)");
+    if (auto const* blk = fam::blockAt(ch))
+        ctx.check(blk->getBlockType().hasTag(HashedString("minecraft:is_axe_item_destructible")), "and they keep their tool tag (the minecraft:tags array of that format, params.tags)");
     auto declared = containerDeclarations("families.json");
     ctx.check(declared.value("twilightforest:canopy_trapped_chest", fam::Json{}).value("stat", "") == "minecraft:trigger_trapped_chest"
                   && declared.value("twilightforest:canopy_chest", fam::Json{}).value("stat", "") == "minecraft:open_chest",

@@ -39,6 +39,12 @@
 #                                           mod: the corner piece at the L's inner corner)
 #   out/families/families-14-sign-form.png  remote-vanilla: the sign editor form (its title is the
 #                                           game's own sign.edit text)
+#   out/families/families-25-tf-chest-hopper.png   TF's canopy double chest with a hopper on its left
+#                                           half that emptied itself into the chest
+#   out/families/families-26-tf-chest-hopper-screen.png   that chest right-clicked: the client mod's
+#                                           54-slot chest screen (local, remote-mod) or the game's large
+#                                           chest screen (remote-vanilla) with the hopper's 3 gold
+#                                           ingots and 2 diamonds in the right half's first slots
 #   out/families/families-16-tf-sign-text.png        client mod: TF's canopy signs written through the
 #                                           editor and coloured with items, from the north: the wall
 #                                           sign's front (4 black lines), the standing sign's back
@@ -272,6 +278,38 @@ Save-Screenshot 'families-13-tf-bush' | Out-Null
 Invoke-Teleport "/tp @s 99.5 $($y + 1) $($z - 2.5) 0 10"
 Start-Sleep -Seconds 3
 Save-Screenshot 'families-15-ct-close' | Out-Null
+
+# TF's canopy double chest fed by a hopper on its LEFT half (Hoppers.cpp: the game's hopper sees the
+# chest's block actor container, the double chest as Java's CompoundContainer, the right half first),
+# then opened by a right click: the client mod's 54-slot chest screen (local, remote-mod) or the
+# game's large chest screen through F10's proxy (remote-vanilla), the hopper's 3 gold ingots and 2
+# diamonds in the first slots (the right half's), the left half's rows empty
+$hx = 190
+Invoke-Teleport "/tp @s $($hx + 1) $($y + 2) $($z - 6) 0 15"
+Start-Sleep -Seconds 4
+Invoke-Build "setblock $hx $y $z twilightforest:canopy_chest [`"$f`"=`"north`",`"twilightforest:type`"=`"left`"]"
+Invoke-Build "setblock $($hx + 1) $y $z twilightforest:canopy_chest [`"$f`"=`"north`",`"twilightforest:type`"=`"right`"]"
+Invoke-Build "setblock $hx $($y + 1) $z hopper [`"facing_direction`"=0]"
+Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 0 gold_ingot 3"
+Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 1 diamond 2"
+Start-Sleep -Seconds 12 # 5 transfers of 8 ticks; the chat fades
+Invoke-Teleport "/tp @s $($hx + 1) $($y + 1) $($z - 4) 0 20"
+Start-Sleep -Seconds 3
+Save-Screenshot 'families-25-tf-chest-hopper' | Out-Null
+# stand south of the chest, looking north at it
+Invoke-Teleport "/tp @s $($hx + 0.5) $y $($z + 2.5) 180 30"
+Start-Sleep -Seconds 2
+$mark = Get-LogMark
+Click 0.5 0.5 -Relative -Right
+if (Test-ClientTrace) {
+    Wait-LogLine 'client screen: (inventory\.chest|large_chest_screen)' 20 -Since $mark | Out-Null
+} else {
+    Wait-LogLine 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)' 20 -Since $mark | Out-Null
+}
+Start-Sleep -Seconds 2
+Save-Screenshot 'families-26-tf-chest-hopper-screen' | Out-Null
+Close-Screen
+Start-Sleep -Seconds 1
 
 # a sign written in game: the client mod's native editor (an empty-hand click on the sign), the
 # text on the sign's display entity; vanilla clients get the editor as a form

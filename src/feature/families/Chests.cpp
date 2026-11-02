@@ -4,11 +4,16 @@
 // The container is the inventory contract's (F10, spike S3: src/feature/inventory): tools/families
 // declares every chest family block as a container (data/gf/containers/families.json; a unit's own
 // declaration of the block wins), so the slots (each half its own 27), the screen (the client
-// mod's "inventory.chest"; on vanilla clients the game's chest screen through a proxy, a form for a
-// double chest), a double chest's 54 slots (ChestBlock#combine: the right half first), the open /
-// close sounds, the opening stat (TrappedChestBlock: trigger_trapped_chest), the comparator output,
-// the blocked rule (a redstone conductor or a sitting cat above), loot tables (LootTable#fill on the
-// first access) and the contents a broken half drops are F10's.
+// mod's "inventory.chest"; on vanilla clients the game's chest screen through a proxy, the game's
+// large chest screen for a double chest), a double chest's 54 slots (ChestBlock#combine: the right
+// half first), the open / close sounds, the opening stat (TrappedChestBlock: trigger_trapped_chest),
+// the comparator output, the blocked rule (a redstone conductor or a sitting cat above), loot tables
+// (LootTable#fill on the first access) and the contents a broken half drops are F10's.
+// The slots are F10's native backend: tools/families gives the chests minecraft:block_entity
+// (format 1.26.50, spike S7), so each half has a data-driven block actor holding a game container,
+// saved with its chunk; Hoppers.cpp shows that container to hoppers, hopper minecarts and droppers.
+// A chest whose stacks are still in block data (placed while the chests had no block actor) moves
+// them into its container in its chunk's first tick (migrateChest).
 // This file keeps what the chest block itself does:
 // - facing and type on placement (ChestBlock#getStateForPlacement) and when a neighbour changes
 //   (ChestBlock#updateShape): the pairs F10's screens follow;
@@ -26,18 +31,25 @@
 #include <map>
 #include <vector>
 
+#include "mc/world/Container.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockType.h"
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/VanillaBlockActorFactory.h"
 #include "mc/world/level/chunk/LevelChunk.h"
 
+#include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
 #include "feature/ext/combat/InventoryViewers.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/families/Families.h"
+#include "feature/inventory/InventoryInternal.h"
 #include "game/Blocks.h"
+#include "game/Items.h"
 #include "mod/Log.h"
 
 namespace gf::feature::families {
@@ -157,15 +169,18 @@ void tickLids() {
     }
 }
 
-/// A chunk's first tick after it loaded: nobody is inside its chests yet, so a lid or a trapped
+/// A chunk's first tick after it loaded: a chest whose stacks are still in block data moves them
+/// into its block actor (migrateChest); nobody is inside its chests yet, so a lid or a trapped
 /// chest's signal left up (saved while open) goes down.
 void settleChunk(BlockSource& region, LevelChunk& chunk) {
-    int                                           dim = static_cast<int>(region.getDimensionId());
-    std::vector<std::pair<BlockPos, Block const*>> up;
-    detail::forEachInChunk(region, chunk, [](BlockType const& t) { return isChest(entryOf(t)); }, [&](BlockPos const& p, Block const& b) {
-        if (intState(b, state::Lid).value_or(0) > 0 || intState(b, state::OpenCount).value_or(0) > 0) up.emplace_back(p, &b);
-    });
-    for (auto const& [p, b] : up) {
+    int                   dim = static_cast<int>(region.getDimensionId());
+    std::vector<BlockPos> chests;
+    detail::forEachInChunk(region, chunk, [](BlockType const& t) { return isChest(entryOf(t)); }, [&](BlockPos const& p, Block const&) { chests.push_back(p); });
+    for (auto const& p : chests) {
+        migrateChest(region, p);
+        Block const* b = blockAt(region, p);
+        if (!b || !isChest(entryOf(*b))) continue;
+        if (intState(*b, state::Lid).value_or(0) == 0 && intState(*b, state::OpenCount).value_or(0) == 0) continue;
         auto gp = game::globalPos(dim, p);
         if (lids().contains(gp) || inventory::viewers(gp) > 0) continue;
         if (intState(*b, state::OpenCount).value_or(0) > 0) setStates(region, p, {{state::OpenCount, 0}});
@@ -173,7 +188,69 @@ void settleChunk(BlockSource& region, LevelChunk& chunk) {
     }
 }
 
+/// The block data key of F10's BlockData container backend: {"items": [stack | null, ...], "loot":
+/// {table, seed}} (src/feature/inventory/Inventory.cpp).
+constexpr char kInventoryKey[] = "inventory";
+
 } // namespace
+
+int migrateChest(BlockSource& region, BlockPos const& pos) {
+    Block const* b = blockAt(region, pos);
+    if (!b || !isChest(entryOf(*b))) return 0;
+    Json data;
+    if (auto const* inv = blockdata::get(region, pos, kInventoryKey); inv && inv->is_object() && inv->contains("items")) data = *inv;
+    else return 0;
+    std::vector<ItemStack> stacks;
+    if (auto const& items = data["items"]; items.is_array())
+        for (auto const& j : items) stacks.push_back(j.is_null() ? ItemStack{} : game::items::fromJson(j));
+    bool any = std::any_of(stacks.begin(), stacks.end(), [](ItemStack const& s) { return !game::items::isEmpty(s); });
+    auto* c   = any ? inventory::nativeContainer(region, pos) : nullptr;
+    if (any && !c && !region.getBlockEntity(pos) && b->getBlockType().getBlockEntityType() != BlockActorType::Undefined) {
+        // the chunk was saved without the chest's block actor (the chests had none then; a state
+        // change of the block does not make one): the game's factory makes the one its type
+        // declares (with the inventory contract's container) and the chunk takes it
+        if (auto* chunk = region.getChunkAt(pos)) {
+            if (auto actor = VanillaBlockActorFactory::createBlockActor(pos, b->getBlockType()); actor && actor->getType() == BlockActorType::DataDriven) {
+                chunk->_placeBlockEntity(actor);
+                region.fireBlockEntityChanged(*actor); // saved with the chunk
+            }
+        }
+        c = inventory::nativeContainer(region, pos);
+        if (c) log().info("families: the chest at {} {} {} got its block actor", pos.x, pos.y, pos.z);
+    }
+    if (any && !c) return 0; // no block actor to move them to: F10 keeps reading them from block data
+    int                    moved = 0, dropped = 0;
+    std::vector<ItemStack> rest;
+    for (std::size_t i = 0; any && i < stacks.size(); ++i) {
+        auto const& s = stacks[i];
+        if (game::items::isEmpty(s)) continue;
+        int slot = static_cast<int>(i);
+        if (slot < c->getContainerSize() && game::items::isEmpty(c->getItem(slot))) {
+            c->setItem(slot, s);
+            ++moved;
+        } else {
+            rest.push_back(s);
+        }
+    }
+    // a slot taken in both (or beyond the container): the first empty one, else dropped
+    for (auto const& s : rest) {
+        int slot = -1;
+        for (int i = 0; i < c->getContainerSize() && slot < 0; ++i)
+            if (game::items::isEmpty(c->getItem(i))) slot = i;
+        if (slot >= 0) {
+            c->setItem(slot, s);
+            ++moved;
+        } else {
+            drop(region, pos, s);
+            ++dropped;
+        }
+    }
+    // the block data keeps what is not a slot (a pending loot table)
+    data.erase("items");
+    blockdata::set(region, pos, kInventoryKey, data.empty() ? Json(nullptr) : data);
+    if (moved || dropped) log().info("families: moved {} stack(s) of the chest at {} {} {} from block data into its block actor ({} dropped: no room)", moved, pos.x, pos.y, pos.z, dropped);
+    return moved;
+}
 
 std::optional<BlockPos> chestPartner(BlockSource& region, BlockPos const& pos) {
     Block const* b = blockAt(region, pos);

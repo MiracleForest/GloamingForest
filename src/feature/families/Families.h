@@ -39,6 +39,7 @@ class Block;
 class BlockPos;
 class BlockSource;
 class BlockType;
+class Container;
 class ItemStack;
 class Player;
 
@@ -305,6 +306,8 @@ void installChests();
 void uninstallChests();
 void installSigns();
 void uninstallSigns();
+void installHoppers();
+void uninstallHoppers();
 /// BlockProperty::Climbable on the climbable family blocks (server and client builds).
 void applyClimbable();
 
@@ -343,5 +346,17 @@ void pairChest(BlockSource& region, BlockPos const& pos, int facing, bool sneaki
 [[nodiscard]] std::optional<BlockPos> chestPartner(BlockSource& region, BlockPos const& pos);
 /// The lid step (gloamingforest:lid) drawn for a ChestLidController openness in tenths (0..10).
 [[nodiscard]] int chestLidStep(int openness);
+/// What hoppers, hopper minecarts and droppers see at `pos` (Java HopperBlockEntity#getContainerAt
+/// of a container block, Hoppers.cpp): the inventory contract's native container of the block (the
+/// data-driven block actor of minecraft:block_entity), for a paired half of a declared double
+/// chest both halves as one 54-slot CompoundContainer (the right half first; ChestBlock#getContainer
+/// ignoring the blocked rule); a pending loot table is rolled first (RandomizableContainer). nullptr:
+/// no native container there (or the client's level). Valid for the current tick only.
+[[nodiscard]] Container* hopperContainerAt(BlockSource& region, BlockPos const& pos);
+/// A chest whose stacks are still kept in block data (placed while the chests had no block actor,
+/// F10's BlockData backend): its stacks move into its native container (a chunk saved without the
+/// chest's block actor gets one first). Runs for every chest in a chunk's first tick after it
+/// loaded. Returns the stacks moved (0: nothing to move, or no native container to move them to).
+int migrateChest(BlockSource& region, BlockPos const& pos);
 
 } // namespace gf::feature::families
