@@ -181,8 +181,8 @@ bool spawn(std::string const& particleId, Vec3 const& pos, Vec3 const& velocity,
 [[nodiscard]] std::vector<std::pair<std::string, bool>> declared();
 /// Removes the factory of `particleId` (fixtures and selftests); false when there was none.
 bool unregisterNative(std::string const& particleId);
-// When the client level spawns a particle effect with a native factory (Level::addParticleEffect:
-// the server's SpawnParticleEffectPacket, data-driven emitters), the factory gets the emitter
+// When the client spawns a particle effect with a native factory (the server's SpawnParticleEffectPacket,
+// e.g. /particle or F10's fx, and Level::addParticleEffect of the client level), the factory gets the emitter
 // position, the velocity `variable.velocity` (x, y, z), else `variable.direction` (x, y, z) times
 // `variable.speed` (default 1), else zero, and as params every molang variable of the effect by
 // name without "variable." (numbers; structs as objects of their members: {"color": {"r", "g",

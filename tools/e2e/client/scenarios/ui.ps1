@@ -272,12 +272,12 @@ function Invoke-UiKeys {
     Write-Step 'the fixture keys (bound and late) reached the server'
 }
 
-# A native particle factory runs when the client level spawns the effect (Level::addParticleEffect):
-# /particle on the server sends the effect like any other.
+# A native particle factory runs when the client spawns the effect: /particle on the server sends a
+# SpawnParticleEffectPacket like every server-spawned effect.
 function Invoke-UiParticle {
     $mark = Get-LogMark
     Invoke-Chat '/particle gf_test:fixture_particle ~ ~1 ~'
-    $line = Wait-LogLine '^(?!\[host\]).*particles: native factory of gf_test:fixture_particle ran \(engine\)' 20 -Since $mark
+    $line = Wait-LogLine '^(?!\[host\]).*particles: native factory of gf_test:fixture_particle ran \(engine' 20 -Since $mark
     Write-Step "the native particle factory ran from the engine: $line"
 }
 

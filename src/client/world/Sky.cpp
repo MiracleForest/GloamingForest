@@ -20,8 +20,9 @@
 //   the rain and lightning levels are left alone, as TF's DimensionSpecialEffects;
 // - music: MusicManager::getSituationalMusic (TF's setMusicInDimension);
 // - particles: native factories for TF's 29 particle ids (TFParticleType), run instead of the
-//   data-driven particle when the client level spawns that effect (Level::addParticleEffect), with
-//   the effect's molang variables;
+//   data-driven particle when the client spawns that effect: the server's SpawnParticleEffectPacket
+//   (LegacyClientNetworkHandler::handle) and effects the client level adds itself
+//   (Level::addParticleEffect), with the effect's molang variables;
 // - maps: the client's MapItemSavedData as a MapView, TF's decoration icons (drawn by Render.cpp);
 // - camera: LocalPlayer::getFieldOfViewModifier modifiers, the screen shake of
 //   ClientGameEvents (beanstalk rumbling: the local player's yaw / pitch jitter per tick, config
@@ -52,6 +53,9 @@
 #include "mc/client/game/ClientInstance.h"
 #include "mc/client/gui/screens/ScreenContext.h"
 #include "mc/client/multiplayer/ClientLevel.h"
+#include "mc/client/network/LegacyClientNetworkHandler.h"
+#include "mc/network/packet/SpawnParticleEffectPacket.h"
+#include "mc/network/packet/SpawnParticleEffectPacketPayload.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/client/renderer/BaseActorRenderContext.h"
 #include "mc/client/renderer/game/LevelRendererCamera.h"
@@ -784,6 +788,34 @@ LL_TYPE_INSTANCE_HOOK(
     origin(effect, emitterPosition, molangVariables);
 }
 
+// The server's particle packets (/particle, F10's fx for every effect a server spawns) reach the
+// client level without Level::addParticleEffect (spike S5, round 3): the client handler of
+// SpawnParticleEffectPacket runs the native factory instead of the data-driven effect.
+LL_TYPE_INSTANCE_HOOK(
+    ParticlePacketHook,
+    ll::memory::HookPriority::Normal,
+    LegacyClientNetworkHandler,
+    &LegacyClientNetworkHandler::$handle,
+    void,
+    NetworkIdentifier const&         source,
+    SpawnParticleEffectPacket const& packet
+) {
+    if (gf::client::particles::factories().any.load(std::memory_order_relaxed)) {
+        try {
+            std::string const& id  = packet.mEffectName;
+            auto               map = gf::client::particles::factories().map.load();
+            if (map->contains(id)) {
+                std::optional<MolangVariableMap> const& vars = packet.mMolangVariables;
+                auto [params, velocity] = vars ? gf::client::particles::fromMolang(*vars) : std::pair<nlohmann::json, Vec3>{nlohmann::json::object(), Vec3{}};
+                gf::client::particles::spawn(id, packet.mPos, velocity, params);
+                cl::logOnce("particle_packet:" + id, "particles: native factory of " + id + " ran (engine, SpawnParticleEffectPacket)");
+                return;
+            }
+        } catch (...) {}
+    }
+    origin(source, packet);
+}
+
 LL_TYPE_INSTANCE_HOOK(CameraFovHook, ll::memory::HookPriority::Normal, LocalPlayer, &LocalPlayer::getFieldOfViewModifier, float) {
     float f = origin();
     try {
@@ -848,10 +880,12 @@ public:
         world_hooks::SkyRainHook::hook();
         world_hooks::MusicSelectHook::hook();
         world_hooks::ParticleEffectHook::hook();
+        world_hooks::ParticlePacketHook::hook();
         world_hooks::CameraFovHook::hook();
     }
     void uninstall() {
         world_hooks::CameraFovHook::unhook();
+        world_hooks::ParticlePacketHook::unhook();
         world_hooks::ParticleEffectHook::unhook();
         world_hooks::MusicSelectHook::unhook();
         world_hooks::SkyRainHook::unhook();
