@@ -13,9 +13,11 @@
 
   - kind: block, block_item, item, spawn_egg, entity, biome, structure, structure_set, ...,
     lang (en_us keys), config_section, config_key, net, subcommand, function, gamerule, stat,
-    attribute, keybind, registry, registry_entry, selftest, selftest_dx, worlddb, e2e, path, stub.
+    attribute, keybind, registry, registry_entry, selftest, selftest_dx, worlddb, e2e, path, stub;
+    plus the kinds of the ids outside TF's namespace a unit declares (units.<u>.ids in the rules,
+    e.g. mod_entity).
   - id-or-glob: TF ids with their namespace ("twilightforest:naga_stone"); globs for path, net,
-    selftest and worlddb rows.
+    selftest and worlddb rows; declared ids as written ("gloamingforest:sign_text").
   - owner: a unit id (F0..F16, U1..U30, A8).
   - mode: gen (produced by a tool: import, models, synth; regenerate, never hand-edit) or manual.
 
@@ -94,6 +96,8 @@ function Get-DataIds([string]$dir, [string]$filter = '*.json') {
 $ids = [ordered]@{}        # kind -> [list of ids]
 $owner = @{}               # kind -> @{ id -> owner }
 $modes = @{}               # kind -> gen|manual
+$idModes = @{}             # kind -> @{ id -> gen|manual } (ids units declare, units.<u>.ids)
+$declared = [Collections.Generic.List[object]]::new() # [kind, id, unit] of units.<u>.ids
 $unclaimed = [Collections.Generic.List[string]]::new()
 $notes = [Collections.Generic.List[string]]::new()
 
@@ -474,10 +478,39 @@ foreach ($u in $rules.units.Keys) {
     if ($unit.ContainsKey('config')) { foreach ($c in $unit.config) { Set-Owner config_section $c $u } }
     if ($unit.ContainsKey('subcommands')) { foreach ($c in $unit.subcommands) { Set-Owner subcommand $c $u } }
     if ($unit.ContainsKey('e2e')) { foreach ($c in $unit.e2e) { Set-Owner e2e $c $u } }
+    # ids outside TF's namespace that a unit declares itself: {kind: [entry]}, an entry being the full
+    # id ("<ns>:<path>", mode gen) or {id, mode: gen|manual}. TF's own ids go through the rule tables.
+    if ($unit.ContainsKey('ids')) {
+        foreach ($k in $unit.ids.Keys) {
+            foreach ($e in $unit.ids[$k]) {
+                $i = if ($e -is [Collections.IDictionary]) { [string]$e['id'] } else { [string]$e }
+                $m = if ($e -is [Collections.IDictionary] -and $e.Contains('mode')) { [string]$e['mode'] } else { 'gen' }
+                $problem = if ($i -notmatch '^[a-z0-9_.-]+:[a-z0-9_./-]+$') { "is not a full id <namespace>:<path>" }
+                    elseif ($i.StartsWith('twilightforest:')) { "is TF's: the rule tables own TF ids" }
+                    elseif ($m -notin 'gen', 'manual') { "has mode '$m' (gen or manual)" }
+                    elseif ($other = @($owner.Keys | Where-Object { $owner[$_].ContainsKey($i) -and $owner[$_][$i] -ne $u } | Select-Object -First 1)) { "is owned by $($owner[$other[0]][$i]) already ($($other[0]))" }
+                if ($problem) { Write-Host "[owners] $u ids.${k}: '$i' $problem" -ForegroundColor Red; exit 1 }
+                Set-Owner $k $i $u
+                if (-not $idModes.ContainsKey($k)) { $idModes[$k] = @{} }
+                $idModes[$k][$i] = $m
+                $declared.Add(@($k, $i, $u))
+            }
+        }
+    }
 }
 # F-units with several directories own the channel / key prefixes of each (F10: combat, loot, fx, ...)
 foreach ($c in $rules.netChannels) { Set-Owner net $c[0] $c[1] }
 foreach ($k in 'config_section', 'subcommand', 'net', 'selftest', 'selftest_dx', 'worlddb', 'e2e', 'stub') { if ($ids.Contains($k)) { $modes[$k] = 'manual' } }
+# a declared id keeps its unit: no later rule or unit may take it over or claim the same id under
+# another kind (the check above sees only the owners set before the declaring unit's turn)
+foreach ($d in $declared) {
+    $other = @($owner.Keys | Sort-Object | Where-Object { $owner[$_].ContainsKey($d[1]) -and $owner[$_][$d[1]] -ne $d[2] })
+    if ($other) {
+        $by = $owner[$other[0]][$d[1]]
+        $how = if ($other[0] -eq $d[0]) { "was taken over by $by" } else { "is owned by $by too ($($other[0]))" }
+        Write-Host "[owners] $($d[2]) ids.$($d[0]): '$($d[1])' $how" -ForegroundColor Red; exit 1
+    }
+}
 
 # ---- output -------------------------------------------------------------------------------------------
 $nsKinds = @('block', 'block_item', 'item', 'spawn_egg', 'entity', 'biome', 'structure', 'structure_set', 'structure_type', 'map_decoration', 'particle',
@@ -492,8 +525,9 @@ foreach ($kind in $ids.Keys) {
     $mode = if ($modes.ContainsKey($kind)) { $modes[$kind] } else { 'gen' }
     foreach ($id in $ids[$kind]) {
         if (-not $owner[$kind].ContainsKey($id)) { continue }
-        $full = if ($nsKinds -contains $kind) { "twilightforest:$id" } elseif ($kind -eq 'tag') { $p = $id.Split(':', 3); "$($p[0])/#$($p[1]):$($p[2])" } elseif ($kind -eq 'registry_entry') { $p = $id.Split(':', 3); "$($p[0])/$($p[1]):$($p[2])" } else { $id }
-        $lines.Add("$kind`t$full`t$($owner[$kind][$id])`t$mode")
+        $full = if ($nsKinds -contains $kind) { if ($id.Contains(':')) { $id } else { "twilightforest:$id" } } elseif ($kind -eq 'tag') { $p = $id.Split(':', 3); "$($p[0])/#$($p[1]):$($p[2])" } elseif ($kind -eq 'registry_entry') { $p = $id.Split(':', 3); "$($p[0])/$($p[1]):$($p[2])" } else { $id }
+        $m = if ($idModes.ContainsKey($kind) -and $idModes[$kind].ContainsKey($id)) { $idModes[$kind][$id] } else { $mode }
+        $lines.Add("$kind`t$full`t$($owner[$kind][$id])`t$m")
         $counts[$kind] = 1 + $(if ($counts.Contains($kind)) { $counts[$kind] } else { 0 })
     }
 }
@@ -509,7 +543,8 @@ $header = @(
 $text = (($header + $sorted) -join "`n") + "`n"
 $unclaimedText = (@($unclaimed | Sort-Object -Unique) -join "`n") + $(if ($unclaimed.Count) { "`n" } else { '' })
 
-# duplicate ids across owners are impossible by construction; ambiguous paths are checked by assemble
+# one owner per id: the rule tables assign each id once and a unit's declared ids (units.<u>.ids)
+# are rejected above when another owner has them; ambiguous paths are checked by assemble
 Write-Host ("[owners] {0} rows: {1}" -f $sorted.Count, (($counts.Keys | ForEach-Object { "$_=$($counts[$_])" }) -join ', '))
 foreach ($n in $notes) { Write-Host "[owners] note: $n" }
 if ($unclaimed.Count) {

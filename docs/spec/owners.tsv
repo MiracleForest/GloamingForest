@@ -5030,6 +5030,7 @@ map_decoration	twilightforest:small_hollow_hill	U18	manual
 map_decoration	twilightforest:troll_caves	U27	manual
 map_decoration	twilightforest:yeti_lair	U27	manual
 menu	twilightforest:uncrafting	U13	manual
+mod_entity	gloamingforest:sign_text	F11	gen
 net	armory.*	U7	manual
 net	artifacts.*	U9	manual
 net	artifacts.lifedrain_particle	U9	manual

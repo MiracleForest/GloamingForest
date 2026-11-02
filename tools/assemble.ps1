@@ -24,5 +24,6 @@ if (-not $Check) { Write-Host 'usage: pwsh tools/assemble.ps1 -Check [-Out <dir>
 if (-not $Out) { $Out = Join-Path $root 'build/assemble-check' }
 $env:Path = $env:Path + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
 if (-not (Get-Command xmake -ErrorAction SilentlyContinue)) { Write-Host 'xmake not found on PATH' -ForegroundColor Red; exit 1 }
-& xmake lua (Join-Path $root 'tools/xmake/assemble_check.lua') $root $Out
-exit $LASTEXITCODE
+# -P: this checkout's project (a worktree nested in another checkout would otherwise see the outer one)
+& xmake lua -P $root (Join-Path $root 'tools/xmake/assemble_check.lua') $root $Out
+exit $(if ($LASTEXITCODE -eq 0) { 0 } else { 1 }) # xmake exits 255 on a raise
