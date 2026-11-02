@@ -52,6 +52,13 @@ local NS = "twilightforest:"
 local KIT = "gloamingforest:"
 local GEO_DIR = "models/blocks/gf_families"
 local FORMAT = "1.26.0"
+-- Spike S7 (F1, docs/spikes/S7.md): from format 1.26.20 (the v1_26_20 block schema) a block declares
+-- its tags as one "minecraft:tags" array and may carry minecraft:block_entity; up to 1.26.10 it
+-- declares them as "tag:<id>": {} components and takes neither. The chests are written in
+-- BLOCK_ENTITY_FORMAT: minecraft:block_entity gives them a data-driven block actor, which F10's
+-- inventory contract fills with a game container (its native backend, spike S3).
+local TAGS_ARRAY_FORMAT = "1.26.20"
+local BLOCK_ENTITY_FORMAT = "1.26.50"
 local GEO_FORMAT = "1.21.0"
 local SIGN_TEXT_ENTITY = "gloamingforest:sign_text"
 
@@ -506,6 +513,82 @@ end
 
 local function block_of(doc) return doc["minecraft:block"] end
 local function comps(doc) return block_of(doc).components end
+
+-- ---- block tags (spike S7) -------------------------------------------------------------------------
+
+-- "1.26.50" >= "1.26.20"
+local function version_at_least(v, min)
+    local a, b = {}, {}
+    for n in tostring(v or "0"):gmatch("%d+") do table.insert(a, tonumber(n)) end
+    for n in tostring(min):gmatch("%d+") do table.insert(b, tonumber(n)) end
+    for i = 1, math.max(#a, #b) do
+        local x, y = a[i] or 0, b[i] or 0
+        if x ~= y then return x > y end
+    end
+    return true
+end
+-- the document's format takes the minecraft:tags array (else "tag:<id>" components)
+local function tags_as_array(doc) return version_at_least(doc.format_version, TAGS_ARRAY_FORMAT) end
+
+-- The tags a components table carries, in either form (in order, once each).
+local function tags_in(components, out, seen)
+    out, seen = out or {}, seen or {}
+    local function add(t)
+        if type(t) == "string" and t ~= "" and not seen[t] then seen[t] = true; table.insert(out, t) end
+    end
+    local array = components and components["minecraft:tags"]
+    if type(array) == "table" then for _, t in ipairs(array.tags or array) do add(t) end end
+    local legacy = {}
+    for k, _ in pairs(components or {}) do
+        if type(k) == "string" and k:match("^tag:") then table.insert(legacy, k:sub(5)) end
+    end
+    table.sort(legacy)
+    for _, t in ipairs(legacy) do add(t) end
+    return out, seen
+end
+
+-- Drops both tag forms from a components table.
+local function strip_tags(components)
+    if type(components) ~= "table" then return end
+    for k, _ in pairs(components) do
+        if type(k) == "string" and k:match("^tag:") then components[k] = nil end
+    end
+    components["minecraft:tags"] = nil
+end
+
+-- The Bedrock block tags of `entry`, free of any format: F1's params.tags (the tool tags and the tier
+-- tag of a block a tool mines, data/gf/families/<u>.json), else the tags of the document the block
+-- starts from (the skeleton or the base block, in either form); params.tool adds its tool's tag.
+local function block_tags(entry, source)
+    local p = entry.params
+    local out, seen
+    if type(p.tags) == "table" then
+        out, seen = {}, {}
+        for _, t in ipairs(p.tags) do
+            if type(t) == "string" and t ~= "" and not seen[t] then seen[t] = true; table.insert(out, t) end
+        end
+    else
+        local scomps = source and source["minecraft:block"] and source["minecraft:block"].components or {}
+        out, seen = tags_in(scomps)
+    end
+    if p.tool then
+        local t = "minecraft:is_" .. p.tool .. "_item_destructible"
+        if not seen[t] then seen[t] = true; table.insert(out, t) end
+    end
+    return out
+end
+
+-- Writes `tags` in the form the document's format takes (whatever tag form it carried goes).
+local function write_tags(doc, tags)
+    local c = comps(doc)
+    strip_tags(c)
+    if #tags == 0 then return end
+    if tags_as_array(doc) then
+        c["minecraft:tags"] = arr(copy(tags))
+    else
+        for _, t in ipairs(tags) do c["tag:" .. t] = {} end
+    end
+end
 local function states_of(doc) return block_of(doc).description.states or {} end
 
 -- adds a state unless the block has it (a skeleton's states are frozen)
@@ -1311,9 +1394,13 @@ visual.trapped_chest = chest_visual
 -- ChestBlock.getShape: single AABB, a double chest reaches its partner
 local CHEST_AABB = {single = {1, 0, 1, 15, 14, 15}, north = {1, 0, 0, 15, 14, 15}, south = {1, 0, 1, 15, 14, 16}, west = {0, 0, 1, 15, 14, 15}, east = {1, 0, 1, 16, 14, 15}}
 local function chest_behaviour(doc, e)
-    -- the slots are the inventory contract's BlockData backend: F10's native backend needs
-    -- minecraft:block_entity, which format 1.26.0 refuses ('not valid here') and 1.26.50 takes only
-    -- without the tag:* components F1 gives TF's chests ('not present in the Schema'): see README
+    -- ChestBlockEntity: the slots are a game container in the block's data-driven block actor (the
+    -- inventory contract's native backend, F10 / spike S3), saved with the chunk, seen by hoppers,
+    -- hopper minecarts and droppers (src/feature/families/Hoppers.cpp). minecraft:block_entity needs
+    -- the v1_26_20 block schema, where the block's tags are the minecraft:tags array (spike S7;
+    -- write_tags writes them in that form)
+    doc.format_version = BLOCK_ENTITY_FORMAT
+    comps(doc)["minecraft:block_entity"] = {}
     for _, f in ipairs(FACING4) do
         for _, kind in ipairs({"single", "left", "right"}) do
             local b = CHEST_AABB.single
@@ -1822,15 +1909,14 @@ local function base_doc(entry, skeleton, basedoc, keep_visual)
         doc.format_version = FORMAT
         doc["minecraft:block"].description.traits = nil
         if doc["minecraft:block"].permutations == nil then doc["minecraft:block"].permutations = arr({}) end
+        -- the skeleton's tags in its own format's form: write_tags writes them again in this one's
+        strip_tags(doc["minecraft:block"].components)
     else
         local comps_ = {}
         local src = skeleton or basedoc
         local scomps = src and src["minecraft:block"] and src["minecraft:block"].components or {}
         for _, k in ipairs(KEEP) do
             if scomps[k] ~= nil then comps_[k] = copy(scomps[k]) end
-        end
-        for k, v in pairs(scomps) do
-            if type(k) == "string" and k:match("^tag:") then comps_[k] = copy(v) end
         end
         if skeleton == nil and basedoc ~= nil then comps_["minecraft:loot"] = nil end -- the base block's loot is not ours
         local desc = {identifier = entry.id}
@@ -1845,7 +1931,6 @@ local function base_doc(entry, skeleton, basedoc, keep_visual)
     if p.map_color then comps_["minecraft:map_color"] = p.map_color end
     if p.light then comps_["minecraft:light_emission"] = p.light end
     if p.loot then comps_["minecraft:loot"] = p.loot end
-    if p.tool then comps_["tag:minecraft:is_" .. p.tool .. "_item_destructible"] = {} end
     if comps_["minecraft:destructible_by_mining"] == nil then comps_["minecraft:destructible_by_mining"] = {seconds_to_destroy = 1} end
     return doc
 end
@@ -1985,7 +2070,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             functions = arr({{["function"] = "set_count", count = 2}})}})}})})
         return rel
     end
-    local result = {blocks = 0, skipped = 0, files = {}, sounds = {}, waterloggable = {}, chests = {}}
+    local result = {blocks = 0, skipped = 0, files = {}, sounds = {}, waterloggable = {}, chests = {}, tags = {}}
     for _, id in ipairs(order) do
         local g = by_id[id]
         if manual[id] then
@@ -2014,6 +2099,10 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             end
             if shape and behaviour[shape] then behaviour[shape](doc, e, ctx) end
             for _, m in ipairs(sorted_keys(g.modifiers)) do modifiers[m](doc, e, t, ctx) end
+            -- the tags last: a behaviour may have moved the document to another format (chests)
+            local tags = block_tags(e, (skel and skel.doc) or (base and base.doc) or nil)
+            write_tags(doc, tags)
+            result.tags[id] = tags
             if g.params.components then
                 for k, v in pairs(g.params.components) do comps(doc)[k] = v end
             end
@@ -2201,6 +2290,19 @@ local function check_block(file, doc, geos, errors)
     end
     geo_ok(block.components["minecraft:geometry"])
     for _, p in ipairs(block.permutations or {}) do geo_ok(p.components["minecraft:geometry"]) end
+    -- spike S7: a block format refuses the other tag form, and minecraft:block_entity before 1.26.20
+    local legacy, array = false, block.components["minecraft:tags"] ~= nil
+    for k, _ in pairs(block.components) do
+        if type(k) == "string" and k:match("^tag:") then legacy = true end
+    end
+    if tags_as_array(doc) and legacy then
+        table.insert(errors, string.format("%s: format %s takes the minecraft:tags array, not tag:* components", file, tostring(doc.format_version)))
+    elseif not tags_as_array(doc) and array then
+        table.insert(errors, string.format("%s: format %s takes tag:* components, not minecraft:tags", file, tostring(doc.format_version)))
+    end
+    if block.components["minecraft:block_entity"] ~= nil and not tags_as_array(doc) then
+        table.insert(errors, string.format("%s: format %s refuses minecraft:block_entity", file, tostring(doc.format_version)))
+    end
     return count
 end
 
@@ -2232,6 +2334,25 @@ local function verify(outdir, summary, errors)
             table.insert(errors, string.format("%s: %s is waterloggable but has no liquid detection", f, id))
         end
     end
+    -- the chests carry their block actor (F10's native container backend, spike S3) and every tag
+    -- of the entry (spike S7: the minecraft:tags array of their format)
+    for _, f in ipairs(summary.files) do
+        local doc = try_json(f)
+        local block = doc and doc["minecraft:block"]
+        local id = block and block.description and block.description.identifier
+        if id and summary.chests[id] then
+            if block.components["minecraft:block_entity"] == nil then
+                table.insert(errors, string.format("%s: the chest %s has no minecraft:block_entity (its slots would be block data, which hoppers do not see)", f, id))
+            end
+            local want = summary.chest_tags[id] or {}
+            local have, has = tags_in(block.components)
+            local same = #have == #want
+            for _, t in ipairs(want) do if not has[t] then same = false end end
+            if not same then
+                table.insert(errors, string.format("%s: the chest %s does not carry its tags [%s]", f, id, table.concat(want, ", ")))
+            end
+        end
+    end
     -- the fixture in F1's form ({"family": "slab", "params": {"traits": ["waterloggable"]}})
     if summary.fixtures > 0 and not summary.waterloggable["gf_test:family_slab"] then
         table.insert(errors, "gf_test:family_slab: params.traits [waterloggable] did not make it waterloggable")
@@ -2258,7 +2379,7 @@ function generate(projectdir, outdir, opts)
     local errors = {}
     local manual = manual_ids(opts.manual_dirs or {path.join(projectdir, "assets", "pack", "bp"), path.join(projectdir, "assets", "test", "bp")})
     -- waterloggable: id -> generated file (every waterloggable modifier, by family or params.traits)
-    local summary = {blocks = 0, skipped = 0, fixtures = 0, files = {}, waterloggable = {}, permutations = 0, errors = errors}
+    local summary = {blocks = 0, skipped = 0, fixtures = 0, files = {}, waterloggable = {}, chests = {}, chest_tags = {}, permutations = 0, errors = errors}
     local sets, done = 0, 0
 
     local bp = path.join(outdir, "behavior_packs", "GloamingForest_BP")
@@ -2274,6 +2395,7 @@ function generate(projectdir, outdir, opts)
             summary.blocks, summary.skipped = r.blocks, r.skipped
             for _, f in ipairs(r.files) do table.insert(summary.files, f) end
             for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end
+            for id, shape in pairs(r.chests) do summary.chests[id] = shape; summary.chest_tags[id] = r.tags[id] end
             declare_chests(outdir, r.chests, "families.json", summary.files)
             write_ct_corners(outdir, r.ct_corners, "families.json", summary.files)
             mark(bp, r.blocks)
@@ -2293,6 +2415,7 @@ function generate(projectdir, outdir, opts)
             summary.fixtures = r.blocks
             for _, f in ipairs(r.files) do table.insert(summary.files, f) end
             for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end
+            for id, shape in pairs(r.chests) do summary.chests[id] = shape; summary.chest_tags[id] = r.tags[id] end
             declare_chests(outdir, r.chests, "families_test.json", summary.files)
             write_ct_corners(outdir, r.ct_corners, "families_test.json", summary.files)
             mark(tbp, r.blocks)

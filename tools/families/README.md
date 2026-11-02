@@ -66,6 +66,7 @@ Every family:
 | `textures` | a texture key, or `{key: texture key}` (`*`, `side`, `top`, `bottom`, `end`, `up`, `down`, `north`..., `front`, `back`, `lower`, `upper`, `pot`, `soil`, `plant`, `overlay`, `connected`, `single`/`left`/`right` for chests): the kit draws the block with these instead of keeping the skeleton's model |
 | `render_method` | Bedrock material render method |
 | `hardness`, `resistance`, `map_color`, `light`, `loot`, `tool` | base components (otherwise the skeleton's) |
+| `tags` | F1's import: the block's Bedrock block tags, free of any format (see Block tags) |
 | `menu_category` | when there is no skeleton |
 | `sound` | the Bedrock block sound in `blocks.json` (default per family) |
 | `sound_type` | a TF sound type (`twilightforest.jar`, TFSoundTypes; the jars get it from TFBlocks) |
@@ -124,14 +125,43 @@ sitting cat), the opening stat (`minecraft:open_chest`, trapped chests
 placement and when a neighbour changes, the lid from F10's openers
 (`feature/ext/combat/InventoryViewers.h`) and the trapped chest's signal.
 
-The chests keep their slots in F10's BlockData backend, not its native one (a game container in the
-data-driven block actor of `minecraft:block_entity`, spike S3). The kit tried both formats for that
-component on the TF chests: format_version 1.26.0 refuses it (`child 'minecraft:block_entity' not
-valid here`) and 1.26.50 accepts it but refuses the `tag:minecraft:is_axe_item_destructible`
-components F1 gives TF's chests (`this component was found in the input, but is not present in the
-Schema`), so the chests would not load. The fixture chests (no tag components) loaded with it at
-1.26.50 and kept their slots through pair and lid state changes; the native backend can follow once
-the import writes block tags in a form 1.26.50 takes.
+The chests keep their slots in F10's native backend: the kit writes every chest family block in
+format_version 1.26.50 with `minecraft:block_entity`, so each half has a data-driven block actor and
+F10 gives it a game container (spike S3), saved with the chunk (27 slots per half, kept through the
+pair, lid and signal state changes). Format 1.26.0 refuses `minecraft:block_entity` (`not valid
+here`); 1.26.50 takes it and declares the block's tags as one `minecraft:tags` array (spike S7), so
+the kit writes the tags in the form of each document's format (below). `run.ps1` (and assemble)
+fails when a generated chest lacks `minecraft:block_entity` or one of its tags, or when a document
+carries a tag form its format refuses.
+
+As in Java (TF's chests are vanilla `ChestBlock` / `TrappedChestBlock`, so
+`HopperBlockEntity#getContainerAt` finds their `ChestBlockEntity`), hoppers fill a chest from above
+and from its sides and empty it from below, hopper minecarts empty the chest above their rail and
+droppers drop into the chest they face: `src/feature/families/Hoppers.cpp` hands the game's hopper
+and dropper lookups (`Hopper::_getContainerInBlock`, `Hopper::_getContainersAt`,
+`DropperBlockActor::getContainerAt`) the native container, which they would not see on their own (a
+data-driven block actor has no vanilla main component). A paired half gives the double chest as one
+54-slot `CompoundContainer`, the right half first (a hopper on the left half fills the right half's
+first free slot), the blocked rule ignored (`ChestBlock#getContainer(.., true)`), and a pending loot
+table rolls on the hopper's first look (`RandomizableContainer#unpackLootTable(null)`). The lookup
+covers every block of the inventory contract with a native container (Java's skull chest and
+keepsake casket are container block entities too); a block kept in block data stays invisible to
+hoppers.
+
+A chest whose stacks are still in block data (placed while the chests used F10's BlockData backend)
+moves them into its block actor in its chunk's first tick after it loads; a chunk saved without the
+chest's block actor gets one first (the game's block actor factory makes the one the block type
+declares and the chunk takes it; a state change of the block does not create it). No world with
+such chests shipped (W0 builds only), but development worlds have them.
+
+## Block tags
+
+The kit takes a block's Bedrock tags from F1's `params.tags` (the tool tags and, for a block a tool
+mines, its tier tag; spike S7), else from the document the block starts from (the skeleton or
+`params.base`, in either form), plus `params.tool`'s tag, and writes them in the form of the format
+it writes the block in: one `minecraft:tags` array from 1.26.20 (the chests, 1.26.50), a
+`"tag:<id>": {}` component per tag up to 1.26.10 (every other family block, 1.26.0). Whatever tag
+form the skeleton copy carries is dropped first, so the skeleton's own format does not matter.
 
 ## Lang strings
 
