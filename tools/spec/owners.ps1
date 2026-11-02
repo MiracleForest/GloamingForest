@@ -474,8 +474,8 @@ foreach ($u in $rules.units.Keys) {
     if ($unit.ContainsKey('config')) { foreach ($c in $unit.config) { Set-Owner config_section $c $u } }
     if ($unit.ContainsKey('subcommands')) { foreach ($c in $unit.subcommands) { Set-Owner subcommand $c $u } }
     if ($unit.ContainsKey('e2e')) { foreach ($c in $unit.e2e) { Set-Owner e2e $c $u } }
-    # ids outside TF's namespace a unit's tools create ({kind: [full id]}, e.g. F11's sign text
-    # display entity gloamingforest:sign_text)
+    # ids outside TF's namespace a unit's tools create ({kind: [full id]}; kind mod_entity for F11's
+    # sign text display entity gloamingforest:sign_text: the entity rows are TF's mobs)
     if ($unit.ContainsKey('ids')) { foreach ($k in $unit.ids.Keys) { foreach ($i in $unit.ids[$k]) { Set-Owner $k $i $u } } }
 }
 # F-units with several directories own the channel / key prefixes of each (F10: combat, loot, fx, ...)

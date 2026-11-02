@@ -1906,7 +1906,6 @@ enchantment	twilightforest:renewal	U10	gen
 enchantment_effect	twilightforest:apply_frosted	U10	manual
 enchantment_effect	twilightforest:recharge_scepter	U10	manual
 enchantment_effect	twilightforest:smash_blocks	U10	manual
-entity	gloamingforest:sign_text	F11	gen
 entity	twilightforest:adherent	U30	gen
 entity	twilightforest:alpha_yeti	U27	gen
 entity	twilightforest:armored_giant	U29	gen
@@ -5031,6 +5030,7 @@ map_decoration	twilightforest:small_hollow_hill	U18	manual
 map_decoration	twilightforest:troll_caves	U27	manual
 map_decoration	twilightforest:yeti_lair	U27	manual
 menu	twilightforest:uncrafting	U13	manual
+mod_entity	gloamingforest:sign_text	F11	gen
 net	armory.*	U7	manual
 net	artifacts.*	U9	manual
 net	artifacts.lifedrain_particle	U9	manual
