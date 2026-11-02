@@ -1209,8 +1209,9 @@ std::vector<Start> startsIntersecting(int dimension, ChunkPos chunk) {
 }
 
 bool isConquered(Start const& start) {
-    auto chunk = start.data.value("chunk", Json::array());
-    if (chunk.is_array() && chunk.size() == 2)
+    // a Start built by another unit (a test's, F5's spawn rules) may carry no data object at all
+    auto chunk = start.data.is_object() ? start.data.value("chunk", Json::array()) : Json::array();
+    if (chunk.is_array() && chunk.size() == 2 && chunk[0].is_number_integer() && chunk[1].is_number_integer())
         if (auto rec = fl::findRecord(start.dimension, chunk[0].get<int>(), chunk[1].get<int>(), start.key)) return rec->start.conquered;
     return start.conquered;
 }
