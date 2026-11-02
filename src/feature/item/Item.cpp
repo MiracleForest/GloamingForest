@@ -257,7 +257,9 @@ bool hasTooltip(ItemStack const& stack) {
 bool refreshLore(ItemStack& stack, Player const* viewer) {
     if (game::items::isEmpty(stack)) return false;
     std::vector<std::string> mine;
-    for (auto& line : tooltipLines(stack, viewer)) mine.push_back((line.starts_with("\xC2\xA7") ? "\xC2\xA7r" : "\xC2\xA7r\xC2\xA7" "7") + line);
+    // Bedrock draws lore purple and italic: a line keeps its own style after the reset, an unstyled
+    // one is white as Java draws an unstyled tooltip Component (ClientTextTooltip, colour -1)
+    for (auto& line : tooltipLines(stack, viewer)) mine.push_back((line.starts_with("\xC2\xA7") ? "\xC2\xA7r" : "\xC2\xA7r\xC2\xA7" "f") + line);
     auto old = game::items::getData(stack, kLoreKey);
     std::vector<std::string> previous;
     if (old.is_array())

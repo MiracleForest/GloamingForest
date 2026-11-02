@@ -9,7 +9,9 @@
 // - Bars: the durability / dose bar a unit gave with item::setBar, as the client mod's renderer
 //   draws it (client/item: from the slot's real stack, its item data included).
 // - Tooltips: the lines the server writes as lore, and a refresh after a unit changed a stack's
-//   data outside the inventory tick (a chest, an item frame).
+//   data outside the inventory tick (a chest, an item frame). A line starting with a § code keeps
+//   its style; an unstyled line is white, as Java draws an unstyled tooltip Component (Bedrock's
+//   lore default, purple italic, is reset): give TF's style explicitly ("§7" for TF's gray lines).
 // - Display contexts: TFItemDisplayContextEnumExtension's JARRED context ("twilightforest:jarred",
 //   items drawn inside a mason jar; Java falls back to FIXED): the display transforms of an item's
 //   model by context with that fallback, and (client) a renderer registry the jar renderer
