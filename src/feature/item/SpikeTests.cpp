@@ -49,6 +49,7 @@
 #include "feature/item/ItemInternal.h"
 #include "game/Items.h"
 #include "mod/Log.h"
+#include "mod/Module.h"
 #include "selftest/SelfTest.h"
 
 namespace {
@@ -291,6 +292,20 @@ GF_REGISTER_SELFTEST("item.spike_client", [](Context& ctx) {
     });
     ctx.info("real players given the S6 carriers: " + std::to_string(given));
 });
+
+#ifdef GF_CLIENT
+namespace {
+// A companion client (remote-mod) runs no selftests, so the fixtures the host's selftests register
+// at runtime are registered here at mod load, as units register theirs in both processes: the
+// client mod then draws the fixture's bars, TWILIGHT name and effect icon and previews the anvil.
+class SpikeClientFixturesModule {
+public:
+    void install() { registerFixtures(true); }
+    void uninstall() {}
+};
+} // namespace
+GF_REGISTER_MODULE(SpikeClientFixturesModule);
+#endif
 
 GF_REGISTER_SELFTEST("item.spike_client_clear", [](Context& ctx) {
     auto level = ll::service::getLevel();
