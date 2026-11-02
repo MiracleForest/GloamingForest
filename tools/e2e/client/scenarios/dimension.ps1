@@ -55,11 +55,13 @@ function Get-FadeAlpha($frame, $reference) {
     return [Math]::Round($num / [Math]::Max($den, 1.0), 2)
 }
 
-# The time stamp of a log line ([yyyy-MM-dd HH:mm:ss.fff ...]).
+# The time stamp of a log line: the game's '[yyyy-MM-dd HH:mm:ss.fff ...' or the host's
+# '[host] HH:mm:ss.fff ...' (today; the same machine's clock).
 function Get-LineTime([string]$line) {
-    $m = [regex]::Match($line, '\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3}) ')
+    $m = [regex]::Match($line, '(\d{4}-\d\d-\d\d )?(\d\d:\d\d:\d\d\.\d{3}) ')
     if (-not $m.Success) { return $null }
-    return [datetime]::ParseExact($m.Groups[1].Value, 'yyyy-MM-dd HH:mm:ss.fff', [Globalization.CultureInfo]::InvariantCulture)
+    $day = if ($m.Groups[1].Success) { $m.Groups[1].Value.Trim() } else { (Get-Date).ToString('yyyy-MM-dd') }
+    return [datetime]::ParseExact("$day $($m.Groups[2].Value)", 'yyyy-MM-dd HH:mm:ss.fff', [Globalization.CultureInfo]::InvariantCulture)
 }
 
 # Frames 0.5 s apart while the player stands in a portal, with the time each was taken.
@@ -187,7 +189,7 @@ if ($script:Mode -ne 'remote-vanilla') {
 }
 if ($script:Mode -ne 'local') {
     # what the host sent this client when it joined (DimensionDataPacket)
-    $sent = Get-LeviLog | Select-String -Pattern '\[host\].*dimension definitions sent to .* give twilightforest:twilight_forest y (-?\d+)\.\.(-?\d+)' | Select-Object -Last 1
+    $sent = Get-LeviLog | Select-String -Pattern '\[host\].*dimension definitions sent to a client give twilightforest:twilight_forest y (-?\d+)\.\.(-?\d+)' | Select-Object -Last 1
     if (-not $sent) { throw 'the host logged no dimension definitions sent to the client' }
     Write-Step $sent.Line
     if ($sent.Matches[0].Groups[1].Value -ne '-32' -or $sent.Matches[0].Groups[2].Value -ne '256') { throw "the client was sent y $($sent.Matches[0].Groups[1].Value)..$($sent.Matches[0].Groups[2].Value) for the Twilight Forest, not -32..256" }
