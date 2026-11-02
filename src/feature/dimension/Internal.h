@@ -10,6 +10,8 @@
 #include <string_view>
 #include <vector>
 
+#include "mc/deps/core/math/Vec3.h"
+
 class Actor;
 class Block;
 class BlockPos;
@@ -17,7 +19,6 @@ class BlockSource;
 class Dimension;
 class ItemActor;
 class Player;
-class Vec3;
 
 namespace gf::feature::dimension {
 
@@ -46,6 +47,10 @@ void resetTwilightId();
 [[nodiscard]] std::string dimensionName(int dim);
 /// Java's DimensionType#coordinateScale of a dimension: overworld 1, nether 8, end 1, Twilight 0.125.
 [[nodiscard]] double coordinateScaleOf(int dim);
+/// dimension_type ambient_light: writes DimensionType#brightness with TF's 0.01 into the
+/// dimension's brightness ramp (the Twilight Forest's Dimension object of a server or client
+/// level). True when it changed.
+bool applyAmbientLight(Dimension& dimension);
 /// Build limits of a loaded dimension ([min, max) in blocks), nullopt when it is not loaded.
 struct Height {
     int min = 0, max = 0;
@@ -102,6 +107,16 @@ void portalIndexTouch(int dim, BlockPos const& pos);
 /// The portal blocks the index knows in a dimension (the chunks near players; tests).
 [[nodiscard]] std::vector<BlockPos> indexedPortals(int dim);
 
+/// TF's functions tp_twilight / tp_overworld (Functions.cpp), `execute in <destination> run tp @p
+/// ~ ~ ~` run at `source` in `srcDim`: who goes (@p, 0: nobody) and where. nullopt when the
+/// destination does not exist.
+struct FunctionTeleport {
+    std::int64_t player = 0;
+    int          dim    = 0;
+    Vec3         pos;
+};
+[[nodiscard]] std::optional<FunctionTeleport> runTpFunction(int srcDim, Vec3 const& source, bool toTwilight);
+
 /// Per-player state kept across ticks, keyed by the unique id (rule R16).
 [[nodiscard]] std::int64_t idOf(Actor const& actor);
 [[nodiscard]] Player* playerById(std::int64_t id);
@@ -131,9 +146,13 @@ void checkForPortalCreation(Player& player, BlockSource& world, float rangeToChe
 void portalNeighborChanged(BlockSource& region, BlockPos const& pos);
 /// Registers the portal block's neighbour handler with gf::blockevents.
 void registerPortalBlockEvents();
-/// ItemEntity#getOwner: the player who dropped / threw an item (-1: nobody).
+/// ItemEntity#getOwner: the player who threw an item (-1: nobody). Only throws name their thrower
+/// (Player#drop with includeThrowerName): death drops and other spawned items have none.
 [[nodiscard]] std::int64_t itemOwner(ItemActor const& item);
-/// The item spawn hook that remembers who dropped what.
+/// Gives an item a thrower (an item made from a thrown one keeps its thrower).
+void setItemOwner(ItemActor const& item, std::int64_t owner);
+/// The player drop / item spawn hooks that remember who threw what, and the block survival hooks
+/// (mushrooms, sugar cane).
 void installItemOwners();
 void uninstallItemOwners();
 /// Forgets the item owners of a closed world.
@@ -143,5 +162,8 @@ void moveItemOwner(std::int64_t from, std::int64_t to);
 /// BlockHooks#modifySoilDecisionForMushroomBlockSurvivability: a Twilight portal among the eight
 /// blocks around the one under `pos` keeps a mushroom at `pos` alive.
 [[nodiscard]] bool portalKeepsMushroom(BlockSource& region, BlockPos const& pos);
+/// TFPortalBlock#getFluidState for SugarCaneBlock#canSurvive: sugar cane at `pos` on #dirt / #sand
+/// with a Twilight portal on a side of that soil block has its water.
+[[nodiscard]] bool portalWatersSugarCane(BlockSource& region, BlockPos const& pos);
 
 } // namespace gf::feature::dimension

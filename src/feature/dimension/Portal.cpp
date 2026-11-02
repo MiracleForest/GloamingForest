@@ -11,7 +11,8 @@
 // Lighting a Twilight portal: a player's portal activator item (a diamond) thrown into a water
 // pool whose rim is dirt topped with plants; the pool turns into portal blocks under a lightning
 // bolt. Portal blocks fall back to water when their floor or rim breaks. Mushrooms next to a portal
-// survive in any light.
+// survive in any light, and sugar cane takes a portal next to its soil for its water
+// (TFPortalBlock#getFluidState).
 
 #include <cctype>
 #include <deque>
@@ -41,6 +42,7 @@
 #include "mc/world/level/Tick.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/MushroomBlock.h"
+#include "mc/world/level/block/SugarCaneBlock.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/phys/AABB.h"
 
@@ -97,7 +99,31 @@ std::unordered_set<std::int64_t>& playersNotified() {
     return s;
 }
 
+/// The player whose throw is being spawned (0: none). Java's Player#drop(stack, dropAround,
+/// includeThrowerName) names the thrower only for throws (the drop key, items dragged out of a
+/// screen, the creative inventory: dropAround false); the death drops of Inventory#dropAll
+/// (dropAround true, includeThrowerName false) have no thrower. Bedrock's Player::drop has the same
+/// `randomly` (= dropAround) flag; a dead player's drops never count.
+thread_local std::int64_t gThrower = 0;
+
 } // namespace
+
+LL_TYPE_INSTANCE_HOOK(
+    TwilightPlayerDropHook,
+    ll::memory::HookPriority::Normal,
+    Player,
+    &Player::$drop,
+    bool,
+    ItemStack const& item,
+    bool const       randomly
+) {
+    if (randomly || !isAlive()) return origin(item, randomly);
+    auto outer = gThrower;
+    gThrower   = idOf(*this);
+    bool r     = origin(item, randomly);
+    gThrower   = outer;
+    return r;
+}
 
 LL_TYPE_INSTANCE_HOOK(
     TwilightItemThrowerHook,
@@ -112,11 +138,11 @@ LL_TYPE_INSTANCE_HOOK(
     int              throwTime
 ) {
     auto* item = origin(region, inst, spawner, pos, throwTime);
-    if (item && spawner && spawner->isPlayer()) {
+    if (item && spawner && gThrower != 0 && spawner->isPlayer() && idOf(*spawner) == gThrower) {
         auto& level = region.getLevel();
         pruneThrowers(level, 4);
         auto id = idOf(*item);
-        if (throwers().owner.insert_or_assign(id, idOf(*spawner)).second) {
+        if (throwers().owner.insert_or_assign(id, gThrower).second) {
             throwers().order.emplace_back(level.getCurrentServerTick().tickID, id);
         }
     }
@@ -124,10 +150,18 @@ LL_TYPE_INSTANCE_HOOK(
 }
 
 std::int64_t itemOwner(ItemActor const& item) {
-    auto owner = item.getOwnerId().rawID;
-    if (owner != -1 && owner != 0) return owner;
+    // (the engine's own owner id of an item is set for every item a player drops, thrown or not:
+    // only the throws recorded here count)
     auto it = throwers().owner.find(idOf(item));
     return it == throwers().owner.end() ? -1 : it->second;
+}
+
+void setItemOwner(ItemActor const& item, std::int64_t owner) {
+    if (owner == -1 || owner == 0) return;
+    auto level = ll::service::getLevel();
+    if (!level) return;
+    auto id = idOf(item);
+    if (throwers().owner.insert_or_assign(id, owner).second) throwers().order.emplace_back(level->getCurrentServerTick().tickID, id);
 }
 
 void clearItemOwners() {
@@ -171,13 +205,46 @@ LL_TYPE_INSTANCE_HOOK(
     return portalKeepsMushroom(region, pos) || origin(region, pos);
 }
 
+bool portalWatersSugarCane(BlockSource& region, BlockPos const& pos) {
+    BlockPos below{pos.x, pos.y - 1, pos.z};
+    if (below.y < region.getMinHeight() || below.y >= region.getMaxHeight() || !region.hasChunksAt(below, 0, false)) return false;
+    // SugarCaneBlock#canSurvive: the soil is #dirt or #sand, then one of its four sides is water
+    auto soil = region.getBlock(below).getTypeName();
+    if (!blockTagged("minecraft:dirt", soil) && !blockTagged("minecraft:sand", soil)) return false;
+    for (auto const& [dx, dz] : {std::pair{0, -1}, std::pair{1, 0}, std::pair{0, 1}, std::pair{-1, 0}}) {
+        BlockPos side{below.x + dx, below.y, below.z + dz};
+        if (region.hasChunksAt(side, 0, false) && isPortal(region.getBlock(side))) return true;
+    }
+    return false;
+}
+
+/// TFPortalBlock#getFluidState (the portal is a little water, "and this checks the checkbox in
+/// Sugar Cane logic to not destroy itself when portal is made"): a Twilight portal next to the
+/// cane's soil counts as its water. Bedrock's sugar cane asks mayPlace when it is placed and
+/// whenever it checks that it can stay.
+LL_TYPE_INSTANCE_HOOK(
+    TwilightSugarCaneHook,
+    ll::memory::HookPriority::Normal,
+    SugarCaneBlock,
+    &SugarCaneBlock::$mayPlace,
+    bool,
+    BlockSource&    region,
+    BlockPos const& pos
+) {
+    return origin(region, pos) || portalWatersSugarCane(region, pos);
+}
+
 void installItemOwners() {
+    TwilightPlayerDropHook::hook();
     TwilightItemThrowerHook::hook();
     TwilightMushroomHook::hook();
+    TwilightSugarCaneHook::hook();
 }
 void uninstallItemOwners() {
+    TwilightSugarCaneHook::unhook();
     TwilightMushroomHook::unhook();
     TwilightItemThrowerHook::unhook();
+    TwilightPlayerDropHook::unhook();
     clearItemOwners();
 }
 
@@ -312,11 +379,12 @@ bool tryToCreatePortal(BlockSource& region, BlockPos const& pos, ItemActor* cata
         // rest of a stack floats on as a fresh item of the same thrower
         auto& stack = catalyst->item();
         if (stack.mCount > 1) {
-            auto  rest  = game::items::withCount(stack, stack.mCount - 1);
-            auto* owner = playerById(itemOwner(*catalyst));
-            Vec3  at    = catalyst->getFeetPos();
+            auto  rest    = game::items::withCount(stack, stack.mCount - 1);
+            auto  ownerId = itemOwner(*catalyst);
+            auto* owner   = playerById(ownerId);
+            Vec3  at      = catalyst->getFeetPos();
             catalyst->remove();
-            region.getLevel().getSpawner().spawnItem(region, rest, owner, at, 0);
+            if (auto* fresh = region.getLevel().getSpawner().spawnItem(region, rest, owner, at, 0)) setItemOwner(*fresh, ownerId);
         } else {
             catalyst->remove();
         }

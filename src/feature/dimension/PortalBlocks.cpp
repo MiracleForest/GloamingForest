@@ -109,6 +109,8 @@ std::unordered_map<std::string, std::vector<std::string>> const& fallbackTags() 
           "minecraft:moss_block",
           "minecraft:mud",
           "minecraft:muddy_mangrove_roots"}},
+        // the soil of sugar cane next to a portal (SugarCaneBlock#canSurvive: #dirt or #sand)
+        {"minecraft:sand", {"minecraft:sand", "minecraft:red_sand", "minecraft:suspicious_sand"}},
         {"minecraft:flowers",
          {"minecraft:dandelion",
           "minecraft:poppy",
