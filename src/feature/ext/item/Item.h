@@ -71,4 +71,20 @@ void setDisplayTransform(std::string const& itemId, std::string const& context, 
 /// ItemDisplayContext fallback: JARRED -> FIXED), else nullopt (identity).
 [[nodiscard]] std::optional<DisplayTransform> displayTransform(std::string const& itemId, std::string const& context);
 
+/// An armour trim material (TF's: U7). Bedrock's level trim registry is the list the server sends a
+/// player when it joins (TrimDataPacket), and clients take materials only then (spike S6): an item
+/// trimmed with a material added after a player joined is not drawn at all for that player. So a
+/// material is registered at mod load (or before a world starts) and F9 appends it to the level's
+/// registry right after the registry initialises (TrimMaterialRegistry::initializeServer; BDS, where
+/// the world exists before mod enable: at world ready, before players can join). The palette textures
+/// are the owner's resource pack files.
+struct TrimMaterialSpec {
+    std::string id;     ///< the material id in item data ("Trim": {"Material": id})
+    std::string color;  ///< the § colour code of its tooltip text ("§2")
+    std::string itemId; ///< the item that applies it in the smithing table
+};
+void addTrimMaterial(TrimMaterialSpec const& spec);
+/// Whether the current level's trim registry holds the material.
+[[nodiscard]] bool hasTrimMaterial(std::string const& materialId);
+
 } // namespace gf::item::ext
