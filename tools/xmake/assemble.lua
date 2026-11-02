@@ -141,11 +141,23 @@ local function load_json(file)
     return doc
 end
 
+-- pairs over parsed JSON: the sandbox's pairs calls t:pairs() instead when the object has a "pairs"
+-- key (the chest declarations of data/gf/containers do), so such objects go through their keys
+local function json_pairs(t)
+    if type(t) ~= "table" or t.pairs == nil then return pairs(t) end
+    local keys, i = table.keys(t), 0
+    return function ()
+        i = i + 1
+        local k = keys[i]
+        if k ~= nil then return k, t[k] end
+    end
+end
+
 local function is_array(t)
     if type(t) ~= "table" then return false end
     if json.is_marked_as_array and json.is_marked_as_array(t) then return true end
     local n = 0
-    for _ in pairs(t) do n = n + 1 end
+    for _ in json_pairs(t) do n = n + 1 end
     return n > 0 and #t == n
 end
 
@@ -158,9 +170,9 @@ end
 local function apply_wrapper(wrapper, merged, packname)
     if wrapper == nil then return merged end
     local out = {}
-    for k, v in pairs(wrapper) do
+    for k, v in json_pairs(wrapper) do
         if k == "$spread" then
-            for mk, mv in pairs(merged) do out[mk] = mv end
+            for mk, mv in json_pairs(merged) do out[mk] = mv end
         elseif v == "$merged" then
             out[k] = merged
         elseif v == "$pack" then
@@ -322,7 +334,7 @@ local function union_into(acc, value, where)
         end
     elseif type(value) == "table" then
         acc.__map = acc.__map or {}
-        for k, v in pairs(value) do
+        for k, v in json_pairs(value) do
             if type(v) == "table" then
                 acc.__map[k] = acc.__map[k] or {}
                 union_into(acc.__map[k], v, where .. "." .. k)
@@ -344,7 +356,7 @@ local function union_result(acc)
     end
     if acc.__map then
         local out = {}
-        for k, v in pairs(acc.__map) do
+        for k, v in json_pairs(acc.__map) do
             out[k] = type(v) == "table" and union_result(v) or v
         end
         return out
@@ -417,7 +429,7 @@ local function merge_fragments(spec, gen, manual, cfg)
                         if type(doc) ~= "table" or is_array(doc) then
                             fail("fragment %s must be a JSON object", files[r].file)
                         else
-                            for k, v in pairs(doc) do
+                            for k, v in json_pairs(doc) do
                                 if layer_origin[k] then
                                     fail("duplicate key '%s' in %s (already defined in %s)", k, files[r].file, layer_origin[k])
                                 end
@@ -457,7 +469,7 @@ local function check_blocks(bpdirs, cfg)
             local states = block and block.description and block.description.states
             local count = 1
             if type(states) == "table" then
-                for name, values in pairs(states) do
+                for name, values in json_pairs(states) do
                     local n = 1
                     if type(values) == "table" and is_array(values) then
                         n = #values
@@ -672,10 +684,7 @@ local function check_dangling(jsonfiles, known, cfg, datadir)
             end
         elseif type(v) == "table" then
             local entry = type(v.type) == "string" and LOOT_ENTRY_KINDS[v.type] or nil
-            -- table.keys, not pairs: the sandbox's pairs calls v:pairs() when a JSON object has a
-            -- "pairs" key (the chest declarations of data/gf/containers do)
-            for _, k in ipairs(table.keys(v)) do
-                local x = v[k]
+            for k, x in json_pairs(v) do
                 if type(k) == "number" then
                     visit(x, ctx, kinds) -- list elements keep the list's kinds
                 elseif not DEFINING_KEYS[k] then
@@ -877,7 +886,7 @@ local function merge_lang(projectdir, cfg, outdir)
                     if type(doc) == "table" then
                         by_locale[locale] = by_locale[locale] or {}
                         layer_origin[locale] = layer_origin[locale] or {}
-                        for k, v in pairs(doc) do
+                        for k, v in json_pairs(doc) do
                             if layer_origin[locale][k] then
                                 fail("duplicate lang key '%s' (%s) in %s (already defined in %s)", k, locale, files[r].file, layer_origin[locale][k])
                             end
@@ -975,7 +984,7 @@ local function known_ids(bpdirs, outdir, owners)
             -- items and entities by kind, the rest (features, feature rules, ...) as "bp:<type>"
             local doc = try_json(file)
             if type(doc) == "table" then
-                for key, def in pairs(doc) do
+                for key, def in json_pairs(doc) do
                     local id = type(key) == "string" and key:match("^minecraft:") and type(def) == "table" and type(def.description) == "table"
                         and def.description.identifier or nil
                     if type(id) == "string" then
@@ -1069,6 +1078,7 @@ local function assemble_content(projectdir, outdir, version)
                 local families = import("families", {rootdir = families_dir, anonymous = true})
                 local res = families.generate(projectdir, outdir, {no_fixtures = not with_tests})
                 res.entries = families.families and #(families.families(outdir)) or 0
+                for _, k in ipairs({"blocks", "skipped", "fixtures"}) do res[k] = res[k] or 0 end
                 return res
             end,
             catch {

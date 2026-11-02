@@ -488,7 +488,7 @@ foreach ($u in $rules.units.Keys) {
                 $problem = if ($i -notmatch '^[a-z0-9_.-]+:[a-z0-9_./-]+$') { "is not a full id <namespace>:<path>" }
                     elseif ($i.StartsWith('twilightforest:')) { "is TF's: the rule tables own TF ids" }
                     elseif ($m -notin 'gen', 'manual') { "has mode '$m' (gen or manual)" }
-                    elseif ($owner.ContainsKey($k) -and $owner[$k].ContainsKey($i) -and $owner[$k][$i] -ne $u) { "is owned by $($owner[$k][$i]) already" }
+                    elseif ($other = @($owner.Keys | Where-Object { $owner[$_].ContainsKey($i) -and $owner[$_][$i] -ne $u } | Select-Object -First 1)) { "is owned by $($owner[$other[0]][$i]) already ($($other[0]))" }
                 if ($problem) { Write-Host "[owners] $u ids.${k}: '$i' $problem" -ForegroundColor Red; exit 1 }
                 Set-Owner $k $i $u
                 if (-not $idModes.ContainsKey($k)) { $idModes[$k] = @{} }
