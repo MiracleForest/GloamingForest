@@ -34,6 +34,7 @@
 #include "feature/enchant/EnchantInternal.h"
 #include "feature/item/Item.h"
 #include "feature/recipes/Recipes.h"
+#include "feature/net/Net.h"
 #include "feature/recipes/RecipesInternal.h"
 #include "game/Items.h"
 #include "mod/Log.h"
@@ -187,6 +188,8 @@ GF_REGISTER_SELFTEST("item.real_anvil_arm", [](Context& ctx) {
         if (!levelsBefore().contains(uid)) levelsBefore()[uid] = levelsOf(p);
         p.addLevels(30 - levelsOf(p));
         p.sendInventory(false);
+        // a companion previews the anvil itself: it needs the fixture enchantment too (the S6 fixtures)
+        gf::net::send(p, "item.spike_fixtures", {{"on", true}});
         gf::log().info("item: real anvil armed for {}", p.getRealName());
     });
     ctx.info("real players armed for the anvil: " + std::to_string(n));
@@ -214,6 +217,7 @@ GF_REGISTER_SELFTEST("item.real_anvil_check", [](Context& ctx) {
             p.addLevels(it->second - levelsOf(p));
             levelsBefore().erase(it);
         }
+        gf::net::send(p, "item.spike_fixtures", {{"on", false}});
     });
     gf::enchant::internal::unregisterType("gf_test:fixture_react");
     ctx.info("real players checked: " + std::to_string(n));

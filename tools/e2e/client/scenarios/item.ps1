@@ -16,7 +16,8 @@
 #    of the same id as TF's special recipes are), checked by item.real_craft_check.
 # 3. An anvil merge of a sword and a book with the fixture enchantment at I (item.real_anvil_*; the
 #    check gives the player its levels back). A vanilla client offers no result there (its own
-#    preview): it then holds the book and uses the anvil, gets the anvil form and takes the sword.
+#    preview): it then holds the book, sneaks and uses the anvil, gets the anvil form and takes the
+#    sword.
 # Local mode also runs every item selftest in the integrated server; remote modes run them on the
 # BDS host and check that a vanilla client stays connected with the carriers in its inventory.
 $script:IsLocal = $script:Mode -eq 'local'
@@ -123,6 +124,8 @@ $mark = Get-LogMark
 $r = Invoke-SelfTest 'item.real_anvil_arm'
 if ($r.Fail -gt 0) { throw 'item.real_anvil_arm failed' }
 Wait-LogLine 'real anvil armed for' 30 -Since $mark | Out-Null
+# a companion previews the anvil with the fixture enchantment the host told it about
+if ($script:Mode -eq 'remote-mod') { Wait-LogLine 'S6 fixtures registered for the host' 30 -Since $mark | Out-Null }
 Invoke-Chat '/setblock ~3 ~ ~ anvil'
 Start-Sleep -Milliseconds 800
 Click 0.5 0.5 -Relative -Right
@@ -158,7 +161,12 @@ if ($script:Mode -eq 'remote-vanilla' -and $line -match 'fixture_react 1 \(0 eng
     Press-Key '2' # the book
     Start-Sleep -Milliseconds 600
     $mark = Get-LogMark
+    # a sneaking use (a plain one opens the client's own anvil screen, with a hint to sneak)
+    [BsE2E.Native]::Key([uint16]0x10, $false)
+    Start-Sleep -Milliseconds 700
     Click 0.5 0.5 -Relative -Right
+    Start-Sleep -Milliseconds 300
+    [BsE2E.Native]::Key([uint16]0x10, $true)
     Wait-LogLine 'enchant: anvil form for .*\(1 offers\)' 15 -Since $mark | Out-Null
     Start-Sleep -Milliseconds 1500
     Save-Screenshot 'anvil-form' | Out-Null

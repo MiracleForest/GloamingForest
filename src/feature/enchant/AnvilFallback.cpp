@@ -3,7 +3,8 @@
 // A vanilla Bedrock client computes the anvil's result itself and offers none when the second item
 // brings custom enchantments only (an enchanted book of TF's from loot: its enchantments live in the
 // item's user data). The server's merge (Enchant.cpp's anvil hook) never runs for it, so a vanilla
-// player who uses an anvil holding such a book gets a form instead of the anvil screen: one button
+// player who sneaks and uses an anvil holding such a book gets a form (a plain use opens the
+// client's anvil screen whatever the server answers, so it gets a hint to sneak instead): one button
 // per inventory item the book makes a result for, with Java's AnvilMenu#createResult numbers (the
 // merged enchantments, the level cost with the prior work penalty, "Too Expensive!" from 40 levels
 // in survival); a choice is AnvilMenu#onTake (the levels, the book, the prior work of the result,
@@ -228,11 +229,18 @@ public:
     void install() {
         if (mHandler >= 0) return;
         mHandler = ia::onUseOn({.item = kBook}, [](ia::UseOnContext const& c) {
-            if (!isAnvil(c.blockId) || c.offhand || c.sneaking) return ia::Result::Pass;
+            if (!isAnvil(c.blockId) || c.offhand) return ia::Result::Pass;
             if (net::isCompanion(c.player) || !internal::isCustomOnlyBook(c.item)) return ia::Result::Pass;
             int slot = c.player.getSelectedItemSlot();
             // nothing the book can go on: the anvil screen opens as usual (renaming, repairs)
             if (internal::anvilOffers(c.player, slot).empty()) return ia::Result::Pass;
+            if (!c.sneaking) {
+                // a vanilla client opens its anvil screen on a plain use whatever the server answers:
+                // the screen opens, with a hint to the form (a sneaking use opens no screen)
+                if (c.firstEvent)
+                    c.player.sendMessage(trFor(c.player, "gf.item.anvil.hint", "Sneak and use the anvil with this book to apply it."));
+                return ia::Result::Pass;
+            }
             if (!c.firstEvent) return ia::Result::Consume; // the held button's repeats
             auto uid = c.player.getOrCreateUniqueID();
             auto pos  = c.pos;

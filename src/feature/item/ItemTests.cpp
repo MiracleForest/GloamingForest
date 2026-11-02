@@ -965,10 +965,12 @@ GF_REGISTER_SELFTEST("item.enchant_anvil_form", [](Context& ctx) -> ll::coro::Co
     std::string       blockId = "minecraft:anvil", itemId = "minecraft:enchanted_book";
     auto const&       block   = ctx.region()->getBlock(gf::game::blockPos(pos));
     auto const&       held    = p->getInventory().getItem(p->getSelectedItemSlot());
-    ia::UseOnContext  c{*p, held, itemId, block, blockId, pos, 1, {0.5, 1.0, 0.5}, false, true};
-    ctx.check(ia::dispatchUseOn(c) == ia::Result::Consume, "a vanilla player's click with the book opens the form instead of the anvil");
+    ia::UseOnContext  plain{*p, held, itemId, block, blockId, pos, 1, {0.5, 1.0, 0.5}, false, true};
+    ctx.check(ia::dispatchUseOn(plain) == ia::Result::Pass, "a plain use opens the anvil screen (with a hint to sneak)");
+    ia::UseOnContext c{*p, held, itemId, block, blockId, pos, 1, {0.5, 1.0, 0.5}, true, true};
+    ctx.check(ia::dispatchUseOn(c) == ia::Result::Consume, "a vanilla player's sneaking use with the book opens the form");
     gf::net::setTestCompanion(*p, true);
-    ctx.check(ia::dispatchUseOn(c) == ia::Result::Pass, "a companion's click opens the anvil screen");
+    ctx.check(ia::dispatchUseOn(c) == ia::Result::Pass, "a companion's use opens the anvil screen (its client previews the merge)");
     gf::net::setTestCompanion(*p, false);
     co_await ctx.ticks(2); // the form goes out on the next tick
     p = get();

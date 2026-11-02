@@ -71,13 +71,14 @@ void setDisplayTransform(std::string const& itemId, std::string const& context, 
 /// ItemDisplayContext fallback: JARRED -> FIXED), else nullopt (identity).
 [[nodiscard]] std::optional<DisplayTransform> displayTransform(std::string const& itemId, std::string const& context);
 
-/// An armour trim material (TF's: U7). Bedrock's level trim registry is the list the server sends a
-/// player when it joins (TrimDataPacket), and clients take materials only then (spike S6): an item
-/// trimmed with a material added after a player joined is not drawn at all for that player. So a
-/// material is registered at mod load (or before a world starts) and F9 appends it to the level's
-/// registry right after the registry initialises (TrimMaterialRegistry::initializeServer; BDS, where
-/// the world exists before mod enable: at world ready, before players can join). The palette textures
-/// are the owner's resource pack files.
+/// An armour trim material (TF's: U7). Bedrock's level trim registry is the list the server sends
+/// players in TrimDataPacket (at join, and again by anyone who changes it). A material is registered
+/// at mod load and F9 appends it to every level's registry right after the registry initialises
+/// (TrimMaterialRegistry::initializeServer; BDS, where the world exists before mod enable: at world
+/// ready), so it is there for the smithing table, the tooltip's trim line (in the material's colour)
+/// and every joining player. Spike S6: the inventory icon of armour trimmed with a material outside
+/// Bedrock's own list is not drawn by the client (registered before the join or after, with a palette
+/// texture of the vanilla pack or none); the client mod's icon generation for TF's materials is U7's.
 struct TrimMaterialSpec {
     std::string id;     ///< the material id in item data ("Trim": {"Material": id})
     std::string color;  ///< the § colour code of its tooltip text ("§2")

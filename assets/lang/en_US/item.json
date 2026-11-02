@@ -3,5 +3,6 @@
   "gf.item.anvil.pick": "Apply the book to:",
   "gf.item.anvil.none": "Nothing in your inventory can take this book:",
   "gf.item.anvil.cost": "Enchantment Cost: {}",
-  "gf.item.anvil.levels": "Enchantment Cost: {}"
+  "gf.item.anvil.levels": "Enchantment Cost: {}",
+  "gf.item.anvil.hint": "Sneak and use the anvil with this book to apply it."
 }

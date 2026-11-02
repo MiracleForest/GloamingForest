@@ -3,5 +3,6 @@
   "gf.item.anvil.pick": "将附魔书用于：",
   "gf.item.anvil.none": "物品栏中没有物品可以接受这本书：",
   "gf.item.anvil.cost": "附魔花费：{}",
-  "gf.item.anvil.levels": "附魔花费：{}"
+  "gf.item.anvil.levels": "附魔花费：{}",
+  "gf.item.anvil.hint": "潜行并手持此书使用铁砧即可附魔。"
 }
