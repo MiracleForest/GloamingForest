@@ -31,7 +31,13 @@ struct Active {
     /// (amplifier, remaining ticks); they resume when the one before ends.
     std::vector<std::pair<int, int>> hidden;
     std::optional<Displaced>         displaced;
+    /// Read back from its persistence tag and not yet matched with the carrier the actor kept (the
+    /// tag may be up to kWriteInterval ticks old).
+    bool reloaded = false;
 };
+
+/// How often (ticks) the persistence tags are rewritten while nothing else changes.
+inline constexpr int kWriteInterval = 20;
 
 /// The custom effects of an actor (loaded from its persistence tags when not in memory yet).
 [[nodiscard]] std::vector<Active> activeOf(Actor const& actor);

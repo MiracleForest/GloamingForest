@@ -9,8 +9,10 @@
 // replaces and keeps the old one hidden when it lasts longer; the same amplifier extends; a lower,
 // longer one waits hidden and resumes when the stronger one ends; #tick counts the hidden ones down
 // too). The state survives unloads and restarts as an actor tag ("gf_fx|<id>|<amplifier>|<ticks>|
-// <hidden>|<displaced>", rewritten every second) and ends on death; milk and /effect clear
-// (Actor::removeAllEffects) end it as they end every effect on Java.
+// <hidden>|<displaced>", rewritten on every change, every second and when the world saves) and
+// ends on death; milk and /effect clear (Actor::removeAllEffects) end it as they end every effect
+// on Java. A state read back from its tag may be up to a second old while the carrier the actor
+// kept is exact: the state follows its carrier then (see resync).
 //
 // The carrier is the custom effect's own instance only while it is: a vanilla instance of the same
 // effect (a Slowness potion, a stray's arrow) that is as strong and lasts as long is left alone (it
@@ -123,6 +125,7 @@ std::optional<Active> parseTag(std::string const& tag) {
             a.displaced = d;
         }
     }
+    a.reloaded = true;
     return a;
 }
 
@@ -134,6 +137,31 @@ void writeTags(Actor& actor, std::vector<Active> const& list) {
         if (a.ticks > 0) actor.addTag(tagOf(a));
 }
 
+/// A state read back from its tag (`a.reloaded`) against the carrier the actor kept: the tag is up to
+/// kWriteInterval ticks old while the carrier ticked on until the actor unloaded or the world
+/// stopped. The carrier is the custom effect's own when it has its amplifier and particle visibility
+/// and a duration within that window; the state then follows it (the elapsed ticks come off the
+/// hidden chain and the displaced instance too), so the carrier is recognised as ours afterwards.
+/// Lock held; the spec must be registered (else it waits for the next tick).
+void resync(Store& s, Actor const& actor, Active& a) {
+    if (!a.reloaded) return;
+    auto sp = s.specs.find(a.id);
+    if (sp == s.specs.end()) return;
+    a.reloaded = false;
+    auto const& spec = sp->second;
+    if (spec.carrier.empty()) return;
+    auto vid = internal::vanillaId(spec.carrier);
+    if (!vid) return;
+    auto const* cur = actor.getEffect(*vid);
+    if (!cur || static_cast<int>(cur->mAmplifier) != a.amplifier || cur->mEffectVisible != !spec.hideCarrierParticles) return;
+    int elapsed = a.ticks - cur->mDuration->mValue;
+    if (elapsed <= 0 || elapsed > internal::kWriteInterval + 2) return;
+    a.ticks -= elapsed;
+    for (auto& h : a.hidden) h.second -= elapsed;
+    std::erase_if(a.hidden, [](auto const& h) { return h.second <= 0; });
+    if (a.displaced && (a.displaced->ticks -= elapsed) <= 0) a.displaced.reset();
+}
+
 /// The in-memory list of an actor, loaded from its tags on first use (lock held).
 std::vector<Active>& listOf(Store& s, Actor const& actor) {
     auto uid = uidOf(actor);
@@ -143,6 +171,7 @@ std::vector<Active>& listOf(Store& s, Actor const& actor) {
     if (actor.hasTags())
         for (auto const& t : actor.getTags())
             if (auto a = parseTag(t)) list.push_back(*a);
+    for (auto& a : list) resync(s, actor, a);
     return s.active[uid] = std::move(list);
 }
 
@@ -392,7 +421,7 @@ void tickAll() {
         auto&           s = store();
         std::lock_guard lock(s.mutex);
         ++s.tick;
-        bool writeNow = s.tick % 20 == 0;
+        bool writeNow = s.tick % internal::kWriteInterval == 0;
         for (auto it = s.active.begin(); it != s.active.end();) {
             auto& list = it->second;
             if (list.empty()) {
@@ -420,6 +449,7 @@ void tickAll() {
                     changed = true;
                     continue;
                 }
+                resync(s, *actor, a); // a state read back before its spec was registered
                 auto const& spec = sp->second;
                 // the carrier went away without the effect (an expired vanilla instance that carried
                 // it meanwhile, a single /effect removal): put it back; milk and /effect clear end both
@@ -537,6 +567,15 @@ public:
         static bool registered = false;
         if (!registered) {
             registered = true;
+            game::db::onWorldSave([] {
+                // the saved actors carry the exact state (the tags are otherwise up to a second old)
+                auto level = ll::service::getLevel();
+                if (!level) return;
+                auto&           s = store();
+                std::lock_guard lock(s.mutex);
+                for (auto const& [uid, list] : s.active)
+                    if (Actor* actor = level->fetchEntity(ActorUniqueID{uid}, false); actor && actor->isAlive()) writeTags(*actor, list);
+            });
             game::db::onWorldClosed([] {
                 auto&           s = store();
                 std::lock_guard lock(s.mutex);
