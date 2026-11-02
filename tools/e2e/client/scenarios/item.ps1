@@ -6,10 +6,11 @@
 #    registry first), 4 / 5 fixture items whose bars come from their item data (1 and 3 doses of 4),
 #    6 armour trimmed with a material registered at load (ext::addTrimMaterial: in the level's
 #    registry before the player joined), 7 the same armour with a vanilla trim, 8 with a material
-#    appended after the join; and the fixture carrier effect (hidden Slowness II). Screenshots:
-#    out/item/{hud-carriers,slot1..8-*,inventory,tooltip-*}.png. A companion (remote-mod) registers
+#    appended after the join, 9 with one appended after the join that has no palette texture; and
+#    the fixture carrier effect (hidden Slowness II). Screenshots:
+#    out/item/{hud-carriers,slot1..9-*,inventory,tooltip-*}.png. A companion (remote-mod) registers
 #    the same fixtures when the host tells it ("item.spike_fixtures"). item.spike_client_clear takes
-#    the effect, the eight items and the registrations back, on the host and on the companion.
+#    the effect, the nine items and the registrations back, on the host and on the companion.
 # 2. Special crafting through a real crafting table (gf_test:fixture_item: two sticks in a column,
 #    special recipe of item.real_craft_arm, shadowed in the data index by a code-only data recipe
 #    of the same id as TF's special recipes are), checked by item.real_craft_check.
@@ -54,8 +55,8 @@ Start-Sleep -Seconds 12  # the inventory and the lore refresh reach the client; 
 Wait-HudReady
 
 Save-Screenshot 'hud-carriers' | Out-Null
-$names = @{ 1 = 'slot1-fixture'; 2 = 'slot2-sword'; 3 = 'slot3-banner'; 4 = 'slot4-bar-one-dose'; 5 = 'slot5-bar-three-doses'; 6 = 'slot6-trim-at-load'; 7 = 'slot7-trim-emerald'; 8 = 'slot8-trim-late' }
-foreach ($slot in 1..8) {
+$names = @{ 1 = 'slot1-fixture'; 2 = 'slot2-sword'; 3 = 'slot3-banner'; 4 = 'slot4-bar-one-dose'; 5 = 'slot5-bar-three-doses'; 6 = 'slot6-trim-at-load'; 7 = 'slot7-trim-emerald'; 8 = 'slot8-trim-late'; 9 = 'slot9-trim-no-palette' }
+foreach ($slot in 1..9) {
     Press-Key "$slot"
     Start-Sleep -Milliseconds 700
     Save-Screenshot $names[$slot] | Out-Null
@@ -64,7 +65,7 @@ Press-Key '1'
 
 Open-Inventory
 Save-Screenshot 'inventory' | Out-Null
-foreach ($t in @(@(1, 'tooltip-fixture'), @(2, 'tooltip-sword'), @(3, 'tooltip-banner'), @(6, 'tooltip-trim-at-load'), @(7, 'tooltip-trim-emerald'), @(8, 'tooltip-trim-late'))) {
+foreach ($t in @(@(1, 'tooltip-fixture'), @(2, 'tooltip-sword'), @(3, 'tooltip-banner'), @(6, 'tooltip-trim-at-load'), @(7, 'tooltip-trim-emerald'), @(8, 'tooltip-trim-late'), @(9, 'tooltip-trim-no-palette'))) {
     Move-Mouse (Hotbar-X $t[0]) $hotbarY -Relative
     Start-Sleep -Milliseconds 800
     Save-Screenshot $t[1] | Out-Null

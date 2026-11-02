@@ -71,8 +71,13 @@ namespace items = gf::game::items;
 
 constexpr char kFixture[]        = "gf_test:fixture_item";
 constexpr char kUnknownPattern[] = "gf_test_pattern";
-constexpr char kTrimMaterial[]   = "gf_test_trim";      ///< registered at load (ext::addTrimMaterial), development builds
-constexpr char kLateTrim[]       = "gf_test_late_trim"; ///< appended while players are in the world
+// Trim material probes. A trimmed item's icon is drawn with the material's colour palette texture
+// (textures/trims/color_palettes/<material>.png of the resource packs): the vanilla pack has palettes
+// no vanilla material uses (the *_darker ones of armour made of the material itself), so materials
+// of those ids separate the registration's timing from the texture.
+constexpr char kTrimMaterial[] = "iron_darker";  ///< registered at load (ext::addTrimMaterial), development builds
+constexpr char kLateTrim[]     = "gold_darker";  ///< appended while players are in the world
+constexpr char kNoPalette[]    = "gf_test_trim"; ///< appended while players are in the world, no palette texture
 
 /// A banner whose second pattern is `pattern` (an id no Bedrock client knows: TF's would be such ids).
 std::optional<ItemStack> bannerWith(std::string const& pattern) {
@@ -145,9 +150,9 @@ std::map<std::int64_t, std::vector<std::pair<int, std::string>>>& givenSlots() {
     return m;
 }
 
-/// The level's trim registries with `kLateTrim` appended (a copy of the first material: §2, the
-/// fixture item as its item) or removed while players are in the world; every real player gets the
-/// new TrimDataPacket.
+/// The level's trim registries with `kLateTrim` and `kNoPalette` appended (copies of the first
+/// material: §2, the fixture item as their item) or removed while players are in the world; every
+/// real player gets the new TrimDataPacket.
 bool setTrimProbe(bool add) {
     auto level = ll::service::getLevel();
     if (!level) return false;
@@ -157,16 +162,18 @@ bool setTrimProbe(bool add) {
     // TrimMaterial has no exported assignment: the list is rebuilt by copy construction and swapped
     auto&                     list = materials->mTrimMaterials.get();
     std::vector<TrimMaterial> kept;
-    kept.reserve(list.size() + 1);
+    kept.reserve(list.size() + 2);
     for (auto const& m : list)
-        if (m.mMaterialId->getString() != kLateTrim) kept.push_back(m);
+        if (m.mMaterialId->getString() != kLateTrim && m.mMaterialId->getString() != kNoPalette) kept.push_back(m);
     if (add) {
         if (kept.empty()) return false;
-        TrimMaterial m(kept.front());
-        m.mMaterialId = HashedString(kLateTrim);
-        m.mColor      = std::string("\xC2\xA7" "2");
-        m.mItemName   = HashedString(kFixture);
-        kept.push_back(m);
+        for (auto const* id : {kLateTrim, kNoPalette}) {
+            TrimMaterial m(kept.front());
+            m.mMaterialId = HashedString(id);
+            m.mColor      = std::string("\xC2\xA7" "2");
+            m.mItemName   = HashedString(kFixture);
+            kept.push_back(m);
+        }
     }
     list.swap(kept);
     level->forEachPlayer([&](Player& p) {
@@ -347,6 +354,7 @@ GF_REGISTER_SELFTEST("item.spike_client", [](Context& ctx) {
         give(trimmed("minecraft:diamond_chestplate", kTrimMaterial, "coast")); // hotbar 6: registered at load
         give(trimmed("minecraft:diamond_chestplate", "emerald", "coast"));    // hotbar 7: vanilla
         give(trimmed("minecraft:diamond_chestplate", kLateTrim, "coast"));    // hotbar 8: appended after the join
+        give(trimmed("minecraft:diamond_chestplate", kNoPalette, "coast"));   // hotbar 9: appended after the join, no palette
         gf::effects::apply(p, "gf_test:fixture_frosted", 20 * 60, 1);
         p.sendInventory(false);
         ++given;
