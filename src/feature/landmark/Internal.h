@@ -89,12 +89,21 @@ struct Traits {
     bool customDensity     = false; ///< CustomDensitySource (terraformer)
 };
 
+/// The adjustForTerrain override of a structure class: WorldUtil#adjustForTerrain(context, x, z,
+/// radiusFromCenterChunk, gridLength) + offset, no clamp (LichTowerStructure 32, 4;
+/// HedgeMazeStructure 24, 4; NagaCourtyardStructure 40, 4, + 2).
+struct TerrainOverride {
+    int radius = 0, gridLength = 0, offset = 0;
+};
+
 /// A descriptor with everything TF's structure record holds.
 struct Info {
     Descriptor                         d;
     Traits                             traits;
     core::landmark::DecorationConfig   decoration;
     core::landmark::TerrainAdjustment  adjustment = core::landmark::TerrainAdjustment::None;
+    /// The structure class's adjustForTerrain override (nullopt: DecorationClearance#adjustForTerrain).
+    std::optional<TerrainOverride>     terrainOverride;
     bool                               centerInChunk = true;
     std::string                        type;         ///< the structure type id
     std::string                        biomes;       ///< "#tag" or one biome id
@@ -188,6 +197,11 @@ using RecordPtr = std::shared_ptr<Record>;
 [[nodiscard]] std::vector<RecordPtr> allRecords(int dim);
 /// Stores a record (replacing one with the same start chunk and key); persisted on the next flush.
 void putRecord(RecordPtr record);
+/// The world generation of the record store: clearRecords (a world closed or loaded) bumps it, and
+/// a start made for an older generation is dropped instead of stored.
+[[nodiscard]] std::uint64_t recordWorld();
+/// Bumped whenever a record, a generator or a terraformer changes (caches compare it).
+[[nodiscard]] std::uint64_t recordsVersion();
 void eraseRecord(int dim, int chunkX, int chunkZ, std::string const& key);
 /// Marks a record changed (persisted on the next flush).
 void markDirty(Record const& record);
@@ -201,15 +215,19 @@ void clearRecords();
 [[nodiscard]] RecordPtr recordFromJson(Json const& j);
 [[nodiscard]] std::string recordDbKey(int dim, int chunkX, int chunkZ);
 
-/// LandmarkUtil#locateNearestLandmarkStart: the #twilightforest:landmark start in the landmark
-/// center chunk nearest to chunk (cx, cz). With `pos`, also an off-grid start made by forceStart
-/// (the selftests' stand-in for a grid start; never a /twilightforest place one) whose box contains
-/// it.
+/// LandmarkUtil#locateNearestLandmarkStart (locateNearestMatchingLandmark with checkReady): the
+/// valid #twilightforest:landmark start in the landmark center chunk nearest to chunk (cx, cz),
+/// nothing while that center chunk is not loaded (Level#hasChunk). With `pos`, also an off-grid
+/// start made by forceStart (the selftests' stand-in for a grid start; never a /twilightforest place
+/// one) whose box contains it. Reserved sites (no generator yet, no pieces) are no valid starts.
+/// Server thread (protection, the structure protection sync, /tf info, /tf conquer).
 [[nodiscard]] RecordPtr nearestLandmark(int dim, int chunkX, int chunkZ, std::optional<GlobalPos> pos = std::nullopt);
-/// LandmarkUtil#locateNearestLandmarkStart(level, structureKey, pos) for a structure key: the start of
-/// `key` referencing the nearest landmark center chunk; besides, only a forceStart start of `key`
-/// (selftests) whose box covers the column.
+/// LandmarkUtil#locateNearestLandmarkStart(level, structureKey, pos) for a structure key (no ready
+/// check, as TF): the valid start of `key` referencing the nearest landmark center chunk; besides,
+/// only a forceStart start of `key` (selftests) whose box covers the column.
 [[nodiscard]] RecordPtr nearestLandmarkOf(int dim, std::string const& key, int blockX, int blockZ);
+/// Whether chunk (cx, cz) of `dim` is loaded on the server (Level#hasChunk; server thread).
+[[nodiscard]] bool chunkLoaded(int dim, int chunkX, int chunkZ);
 
 /// The world seed the grid and placements use (the overworld seed, as TF).
 [[nodiscard]] std::int64_t levelSeed();
@@ -222,17 +240,40 @@ void clearRecords();
 [[nodiscard]] bool biomeMatches(std::string const& biomes, std::string const& biomeId);
 
 /// Evaluates the structure sets for start chunk (cx, cz) of the Twilight Forest and stores the
-/// starts that begin there (ChunkGenerator#createStructures). Idempotent.
-void ensureStartsIn(int dim, int chunkX, int chunkZ);
-/// ensureStartsIn for every start chunk that can reach chunk (cx, cz).
+/// starts that begin there (ChunkGenerator#createStructures). Idempotent and never blocking the
+/// server thread: while another thread evaluates the chunk, a generation thread waits for it
+/// (bounded), but the server thread and a thread inside an evaluation (a layout asking about another
+/// chunk) evaluate it themselves; the result is deterministic and the first start stored per key is
+/// kept. True when the chunk's starts are known on return (false: this thread is evaluating that
+/// very chunk, or the world was closed meanwhile).
+bool ensureStartsIn(int dim, int chunkX, int chunkZ);
+/// ensureStartsIn for every start chunk that can reach chunk (cx, cz) (chunks another thread is
+/// evaluating last).
 void ensureStartsAround(int dim, int chunkX, int chunkZ);
 /// Whether the structure sets of start chunk (cx, cz) were evaluated (StructureCheck's "known").
 [[nodiscard]] bool startsEvaluated(int dim, int chunkX, int chunkZ);
-/// ChunkGenerator#getFirstOccupiedHeight through the terrain provider of ext::setHeightProvider
-/// (nullopt: none registered yet).
-[[nodiscard]] std::optional<int> occupiedHeight(int dim, int x, int z, worldgen::Heightmap type);
-/// The registered terrain height provider, copied (empty: none); fetch it once for many samples.
+/// Records the server thread (called from the server tick): it never waits for a generation thread.
+void noteServerThread();
+/// Test seam: the dimension TF's structure sets place in instead of the Twilight Forest (nullopt:
+/// the Twilight Forest), so the start evaluation runs while the dimension contract is a stub.
+void setStructureDimOverride(std::optional<int> dim);
+/// Test seam: marks start chunk (cx, cz) as being evaluated by another thread (busy) or releases it.
+void setEvaluationBusy(int dim, int chunkX, int chunkZ, bool busy);
+/// Test seam: forgets that start chunk (cx, cz) was evaluated (and the probes and the
+/// ensureStartsAround runs that relied on it).
+void forgetEvaluation(int dim, int chunkX, int chunkZ);
+/// The structure of `set` that starts in start chunk (cx, cz) ("": none), as the Starts stage would
+/// make it there (placement, weighted pick, layout and biome check), computed without storing a
+/// start: /twilightforest locate's CHUNK_LOAD_NEEDED for a chunk nobody generated. Remembered per
+/// world in memory only.
+[[nodiscard]] std::string probeStart(int dim, StructureSet const& set, int chunkX, int chunkZ);
+/// The registered terrain height provider (ext::setHeightProvider), copied (empty: none registered
+/// yet): every height query goes through it; fetch it once for many samples.
 [[nodiscard]] std::function<std::optional<int>(int dim, int x, int z, worldgen::Heightmap type)> heightProvider();
+/// WorldUtil#adjustForTerrain(context, xInCenterChunk, zInCenterChunk, radiusFromCenterChunk,
+/// gridLength) over `provider`'s WORLD_SURFACE_WG heights (nullopt: no provider, or no column).
+[[nodiscard]] std::optional<int> adjustForTerrainAroundChunk(std::function<std::optional<int>(int, int, int, worldgen::Heightmap)> const& provider, int dim, int x,
+                                                             int z, int radiusFromCenterChunk, int gridLength);
 /// The index of a structure inside its decoration step: ChunkGenerator#applyBiomeDecoration counts
 /// every Structure registry entry of the step, vanilla's 34 included, in registry order (resource
 /// locations sorted path first, then namespace).

@@ -128,6 +128,7 @@ public:
             (void)levelSeed();
         }
         mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([this](auto&) {
+            noteServerThread(); // the thread that never waits for a generation thread (ensureStartsIn)
             auto tick = ++mTicks;
             protectionTick(tick);
             auto level = ll::service::getLevel();

@@ -94,6 +94,16 @@ Traits traitsOf(std::string const& type) {
     return t;
 }
 
+/// The structure classes overriding LandmarkStructure#adjustForTerrain with WorldUtil
+/// #adjustForTerrain over the center chunk widened by a radius (no clamp, adjust_structure_elevation
+/// not consulted); every other one uses DecorationClearance#adjustForTerrain.
+std::optional<TerrainOverride> terrainOverrideOf(std::string const& type) {
+    if (type == "twilightforest:lich_tower") return TerrainOverride{32, 4, 0};     // LichTowerStructure#adjustForTerrain
+    if (type == "twilightforest:hedge_maze") return TerrainOverride{24, 4, 0};     // HedgeMazeStructure#adjustForTerrain
+    if (type == "twilightforest:naga_courtyard") return TerrainOverride{40, 4, 2}; // NagaCourtyardStructure#adjustForTerrain: + 2
+    return std::nullopt;
+}
+
 /// StructureTagGenerator.LANDMARK.
 bool inLandmarkTag(std::string const& key) {
     static char const* const members[] = {
@@ -164,6 +174,7 @@ Info parseRecord(std::string const& key, Json const& record, Json const* fixedCl
     i.type         = record.value("type", std::string{});
     i.traits       = traitsOf(i.type);
     i.traits.landmarkTag = inLandmarkTag(key);
+    i.terrainOverride    = terrainOverrideOf(i.type);
     i.biomes       = record.value("biomes", std::string{});
     i.step         = record.value("step", std::string{"surface_structures"});
     i.centerInChunk = record.value("center_in_chunk", true);

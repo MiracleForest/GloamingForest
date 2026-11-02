@@ -55,7 +55,10 @@ namespace gf::landmark::ext {
 /// to the terrain density (beardifier equivalent). Empty function: no terraformer reaches the chunk.
 using ChunkTerraformer = std::function<double(int x, int y, int z)>;
 [[nodiscard]] ChunkTerraformer chunkTerraformer(int dimension, int chunkX, int chunkZ);
-/// chunkTerraformer(dimension, x >> 4, z >> 4) at one position (prefer chunkTerraformer per chunk).
+/// chunkTerraformer(dimension, x >> 4, z >> 4) at one position. The chunk's terraformer is gathered
+/// once and kept per thread while the queries stay in that chunk (and no start, generator or
+/// terraformer changes), so per-cell calls cost one lookup; chunkTerraformer per chunk is still the
+/// cheapest.
 [[nodiscard]] double terraformDensity(int dimension, int x, int y, int z);
 /// Whether any start with a terraformer references chunk (chunkX, chunkZ) (skip the terraformers when not).
 [[nodiscard]] bool hasTerraformers(int dimension, int chunkX, int chunkZ);

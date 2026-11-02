@@ -279,19 +279,20 @@ struct SetTargets {
 
 /// ChunkGenerator#getStructureGeneratingAt for a random spread placement. StructureCheck#checkStart:
 /// a chunk whose starts are known answers START_PRESENT / START_NOT_PRESENT; else the frequency
-/// reduction may say START_NOT_PRESENT, and otherwise (CHUNK_LOAD_NEEDED) the chunk is brought to
-/// STRUCTURE_STARTS and its real start decides: findGenerationPoint and the biome check at the
-/// generation point, as the worldgen Starts stage makes it.
-bool structureAt(int dimension, std::string const& key, plc::Placement const& p, std::int64_t seed, int chunkX, int chunkZ, bool skipKnownStructures) {
+/// reduction may say START_NOT_PRESENT, and otherwise (CHUNK_LOAD_NEEDED) the chunk's real start
+/// decides: the structure set's placement, weighted pick, findGenerationPoint and the biome check
+/// at the generation point, as the worldgen Starts stage makes it. Java brings the chunk to
+/// STRUCTURE_STARTS for that; here only this set is evaluated (fl::probeStart) and nothing is
+/// stored, so a locate never writes starts for chunks nobody generated (the Starts stage makes the
+/// same start when the chunk generates).
+bool structureAt(int dimension, std::string const& key, fl::StructureSet const& set, std::int64_t seed, int chunkX, int chunkZ, bool skipKnownStructures) {
     if (fl::startsEvaluated(dimension, chunkX, chunkZ)) {
         auto rec = fl::findRecord(dimension, chunkX, chunkZ, key);
         return rec && !rec->placed && !skipKnownStructures;
     }
-    if (!plc::applyAdditionalChunkRestrictions(p, seed, chunkX, chunkZ)) return false;
-    fl::ensureStartsIn(dimension, chunkX, chunkZ);
-    auto rec = fl::findRecord(dimension, chunkX, chunkZ, key);
+    if (!plc::applyAdditionalChunkRestrictions(set.placement, seed, chunkX, chunkZ)) return false;
     // a new start has no reference yet: StructureStart#canBeReferenced, so skipKnownStructures takes it
-    return rec && !rec->placed;
+    return fl::probeStart(dimension, set, chunkX, chunkZ) == key;
 }
 
 } // namespace
@@ -356,7 +357,7 @@ std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x,
                         if (!edgeI && j != -k && j != k) continue;
                         auto pot = plc::potentialStructureChunk(p, seed, cx + p.spacing * i, cz + p.spacing * j);
                         for (auto const& key : st.keys) {
-                            if (!structureAt(dimension, key, p, seed, pot.x, pot.z, skipKnownStructures)) continue;
+                            if (!structureAt(dimension, key, *st.set, seed, pot.x, pot.z, skipKnownStructures)) continue;
                             auto [lx, lz] = plc::locatePos(p, pot.x, pot.z);
                             consider(key, lx, lz); // getStructureGeneratingAt: the first one of the ring
                             hitRing = true;

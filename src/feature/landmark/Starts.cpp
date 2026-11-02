@@ -18,14 +18,18 @@
 // per start chunk: {"<structure key>": start}), cached in memory. Starts are made by the worldgen
 // stages (Starts: the start chunk's structure sets, ChunkGenerator#createStructures; Pieces: every
 // start reaching the chunk places its pieces, StructureStart#placeInChunk), by forceStart /
-// generateAt (commands, saplings, selftests) and on demand by lookups, so a site is reserved
-// even before its generator exists (rule: placement is exact before W1 lands). Generation may run
-// on worker threads: the cache is locked, the DB is written on the server thread only.
+// generateAt (commands, saplings, selftests) and on demand by lookups (protection, clearance,
+// terraforming; /twilightforest locate only probes and stores nothing), so a site is reserved even
+// before its generator exists (rule: placement is exact before W1 lands). Generation may run on
+// worker threads: the cache is locked, the server thread never waits for a worker, and the DB is
+// written on the server thread only.
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
+#include <cstdlib>
+#include <limits>
 #include <map>
 #include <set>
 #include <shared_mutex>
@@ -99,7 +103,7 @@ struct ChunkKeyHash {
     }
 };
 
-/// Bound of the evaluated / aroundDone caches (entries; both are rebuilt on demand when dropped).
+/// Bound of the evaluated / aroundDone / probe caches (entries; rebuilt on demand when dropped).
 constexpr std::size_t kMaxEvaluatedChunks = std::size_t{1} << 18;
 
 struct Records {
@@ -107,10 +111,12 @@ struct Records {
     std::unordered_map<ChunkKey, std::vector<RecordPtr>, ChunkKeyHash>      byStartChunk;
     std::unordered_map<ChunkKey, std::vector<RecordPtr>, ChunkKeyHash>      byChunk; ///< chunks a box covers
     std::unordered_set<ChunkKey, ChunkKeyHash>                              evaluated; ///< start chunks whose sets ran
-    /// start chunks whose sets are being evaluated, with the thread doing it
+    /// start chunks whose sets are being evaluated, with the thread that claimed them
     std::unordered_map<ChunkKey, std::thread::id, ChunkKeyHash>             inProgress;
     std::condition_variable_any                                             evaluatedChanged;
     std::unordered_set<ChunkKey, ChunkKeyHash>                              aroundDone; ///< ensureStartsAround ran
+    /// probeStart's answers: (dim, start chunk, structure set) -> the key starting there ("" none)
+    std::map<std::tuple<int, int, int, std::string>, std::string>            probes;
     std::set<std::tuple<int, int, int>>                                     dirty; ///< start chunks to write
     std::uint64_t                                                           world = 0; ///< bumped by clearRecords
     std::atomic<std::int64_t>                                               seed{0};
@@ -120,6 +126,24 @@ Records& records() {
     static Records r;
     return r;
 }
+
+/// recordsVersion(): bumped on every change of a record, a generator or a terraformer.
+std::atomic<std::uint64_t> gVersion{0};
+void bumpVersion() { gVersion.fetch_add(1, std::memory_order_acq_rel); }
+
+/// The server thread (noteServerThread, from the server tick): it never waits for another thread.
+std::atomic<std::thread::id> gServerThread{};
+bool onServerThread() { return std::this_thread::get_id() == gServerThread.load(std::memory_order_relaxed); }
+
+/// The start chunks this thread is evaluating, innermost last. A layout asking about its own chunk
+/// gets what is stored so far, and a thread inside an evaluation never waits for another one (two
+/// layouts asking about each other's chunks would wait for each other).
+thread_local std::vector<ChunkKey> tEvaluating;
+bool evaluatingHere(ChunkKey const& key) { return std::find(tEvaluating.begin(), tEvaluating.end(), key) != tEvaluating.end(); }
+
+/// How long a generation thread waits for another thread evaluating the same start chunk before it
+/// evaluates the chunk itself (the evaluating thread never waits, so this is only a safety net).
+constexpr auto kEvaluationWait = std::chrono::seconds(2);
 
 /// Chunks covered by a box (column-wise).
 template <class Fn>
@@ -252,15 +276,16 @@ private:
 
 } // namespace
 
-std::optional<int> occupiedHeight(int dim, int x, int z, worldgen::Heightmap type) {
-    auto fn = heightProvider();
-    if (!fn) return std::nullopt;
-    return fn(dim, x, z, type);
-}
-
 ext::HeightFn heightProvider() {
     std::lock_guard lock(generators().mutex);
     return generators().height;
+}
+
+std::optional<int> adjustForTerrainAroundChunk(ext::HeightFn const& provider, int dim, int x, int z, int radiusFromCenterChunk, int gridLength) {
+    if (!provider) return std::nullopt;
+    return cl::adjustForTerrainAroundChunk(x, z, radiusFromCenterChunk, gridLength, [&](int cx, int cz) {
+        return provider(dim, cx, cz, worldgen::Heightmap::WorldSurfaceWg);
+    });
 }
 
 namespace {
@@ -350,31 +375,18 @@ void placeInChunk(Record const& rec, worldgen::Region& region, int chunkX, int c
     }
 }
 
-/// LandmarkStructure#findGenerationPoint's y: the structure's adjustForTerrain. LichTowerStructure,
-/// HedgeMazeStructure and NagaCourtyardStructure override it with WorldUtil#adjustForTerrain over the
-/// center chunk widened by a margin (no clamp, adjust_structure_elevation not consulted); the others
-/// use DecorationClearance#adjustForTerrain. Without a terrain provider: sea level.
+/// LandmarkStructure#findGenerationPoint's y: the structure's adjustForTerrain (Info::terrainOverride
+/// for the classes overriding it, else DecorationClearance#adjustForTerrain). Without a terrain
+/// provider: sea level.
 int heightFor(Info const& info, int dim, int x, int z) {
-    struct Override {
-        char const* type;
-        int         radius, gridLength, offset;
-    };
-    static constexpr Override kOverrides[] = {
-        {"twilightforest:lich_tower", 32, 4, 0},     // LichTowerStructure#adjustForTerrain
-        {"twilightforest:hedge_maze", 24, 4, 0},     // HedgeMazeStructure#adjustForTerrain
-        {"twilightforest:naga_courtyard", 40, 4, 2}, // NagaCourtyardStructure#adjustForTerrain: + 2
-    };
     int  sea      = seaLevelOf(dim);
     auto provider = heightProvider(); // once: the samples below need no lock
-    for (auto const& o : kOverrides) {
-        if (info.type != o.type) continue;
-        if (!provider) return sea; // no terrain provider yet: every landmark at sea level
-        auto h = cl::adjustForTerrainAroundChunk(x, z, o.radius, o.gridLength, [&](int cx, int cz) {
-            return provider(dim, cx, cz, worldgen::Heightmap::WorldSurfaceWg);
-        });
-        return h ? *h + o.offset : sea;
+    if (!provider) return sea;        // no terrain provider yet: every landmark at sea level
+    if (auto const& o = info.terrainOverride) {
+        auto h = adjustForTerrainAroundChunk(provider, dim, x, z, o->radius, o->gridLength);
+        return h ? *h + o->offset : sea;
     }
-    if (!info.decoration.adjustElevation || !provider) return sea; // no terrain provider yet: sea level
+    if (!info.decoration.adjustElevation) return sea;
     auto h = provider(dim, x, z, worldgen::Heightmap::WorldSurfaceWg);
     if (!h) return sea;
     return std::clamp(*h, sea + 1, sea + 7);
@@ -416,6 +428,7 @@ void setGenerator(std::string const& key, Generator generator) {
     auto            k = normalizeKey(key);
     generators().gens[k] = std::make_shared<Generator const>(std::move(generator));
     rebuildTerraformers(generators(), k, {});
+    bumpVersion();
 }
 
 void removeGenerator(std::string const& key) {
@@ -423,6 +436,7 @@ void removeGenerator(std::string const& key) {
     auto            k = normalizeKey(key);
     generators().gens.erase(k);
     rebuildTerraformers(generators(), k, {});
+    bumpVersion();
 }
 
 TerraformerList terraformersFor(std::string const& key) {
@@ -450,6 +464,7 @@ void rebuildTerraformers(Generators& g, std::string const& key, std::function<do
 void addTerraformer(std::string const& key, std::function<double(Start const&, int, int, int)> fn) {
     std::lock_guard lock(generators().mutex);
     rebuildTerraformers(generators(), normalizeKey(key), std::move(fn));
+    bumpVersion();
 }
 
 // ---- world facts -------------------------------------------------------------------------------------
@@ -466,7 +481,15 @@ std::int64_t levelSeed() {
     return 0;
 }
 
+namespace {
+/// setStructureDimOverride (selftests): INT_MIN = none.
+std::atomic<int> gStructureDimOverride{std::numeric_limits<int>::min()};
+} // namespace
+
+void setStructureDimOverride(std::optional<int> dim) { gStructureDimOverride.store(dim.value_or(std::numeric_limits<int>::min())); }
+
 std::optional<int> twilightDim() {
+    if (int o = gStructureDimOverride.load(); o != std::numeric_limits<int>::min()) return o;
     if (auto t = gf::world::twilight()) return static_cast<int>(*t);
     return std::nullopt;
 }
@@ -534,20 +557,70 @@ std::vector<RecordPtr> allRecords(int dim) {
     return out;
 }
 
+namespace {
+
+/// The stored record of `key` started in chunk (cx, cz) (records lock held).
+RecordPtr findLocked(Records& r, int dim, int chunkX, int chunkZ, std::string const& key) {
+    auto it = r.byStartChunk.find({dim, chunkX, chunkZ});
+    if (it == r.byStartChunk.end()) return nullptr;
+    for (auto const& rec : it->second)
+        if (rec->start.key == key) return rec;
+    return nullptr;
+}
+
+/// Stores a record (records lock held).
+void storeLocked(Records& r, RecordPtr const& record) {
+    record->start.data["chunk"] = Json::array({record->chunkX, record->chunkZ});
+    indexRecord(r, record);
+    r.dirty.emplace(record->start.dimension, record->chunkX, record->chunkZ);
+    bumpVersion();
+}
+
+/// Stores a start the Starts stage made for world generation `world`: dropped when that world was
+/// closed meanwhile (clearRecords), and never in place of a start of the key already stored there
+/// (another thread evaluating the same chunk made the same one first) other than a /place record.
+void putStartRecord(RecordPtr const& record, std::uint64_t world) {
+    auto&            r = records();
+    std::unique_lock lock(r.mutex);
+    if (r.world != world) return;
+    if (auto old = findLocked(r, record->start.dimension, record->chunkX, record->chunkZ, record->start.key); old && !old->placed) return;
+    storeLocked(r, record);
+}
+
+/// Replaces `existing` by `revived` (its pieces rebuilt) when `existing` is still the stored record
+/// and the world is still generation `world`; the conquered flag set meanwhile is kept.
+void replaceRecord(RecordPtr const& existing, RecordPtr const& revived, std::uint64_t world) {
+    auto&            r = records();
+    std::unique_lock lock(r.mutex);
+    if (r.world != world) return;
+    if (findLocked(r, existing->start.dimension, existing->chunkX, existing->chunkZ, existing->start.key) != existing) return;
+    revived->start.conquered = existing->start.conquered;
+    storeLocked(r, revived);
+}
+
+} // namespace
+
 void putRecord(RecordPtr record) {
     if (!record) return;
     auto&            r = records();
     std::unique_lock lock(r.mutex);
-    record->start.data["chunk"] = Json::array({record->chunkX, record->chunkZ});
-    indexRecord(r, record);
-    r.dirty.emplace(record->start.dimension, record->chunkX, record->chunkZ);
+    storeLocked(r, record);
 }
+
+std::uint64_t recordWorld() {
+    auto&            r = records();
+    std::shared_lock lock(r.mutex);
+    return r.world;
+}
+
+std::uint64_t recordsVersion() { return gVersion.load(std::memory_order_acquire); }
 
 void eraseRecord(int dim, int chunkX, int chunkZ, std::string const& key) {
     auto&            r = records();
     std::unique_lock lock(r.mutex);
     unindexRecord(r, dim, chunkX, chunkZ, key);
     r.dirty.emplace(dim, chunkX, chunkZ);
+    bumpVersion();
 }
 
 void markDirty(Record const& rec) {
@@ -662,6 +735,7 @@ void loadRecords() {
                 std::unique_lock lock(r.mutex);
                 rec->start.data["chunk"] = Json::array({rec->chunkX, rec->chunkZ});
                 indexRecord(r, rec);
+                bumpVersion();
                 ++n;
             }
         }
@@ -677,8 +751,10 @@ void clearRecords() {
     r.evaluated.clear();
     ++r.world; // a chunk still being evaluated for the closed world never lands in the next one
     r.aroundDone.clear();
+    r.probes.clear();
     r.dirty.clear();
     r.haveSeed.store(false);
+    bumpVersion();
 }
 
 // ---- start creation ----------------------------------------------------------------------------------
@@ -766,25 +842,22 @@ void reviveRecord(RecordPtr const& existing) {
         existing->reviveTried = false; // try again once a generator registers
         return;
     }
+    auto                     world = recordWorld(); // a world closed meanwhile never gets the result
     std::optional<GlobalPos> at;
     if (existing->forced || existing->start.generated) at = existing->start.center;
     auto rec = createStart(*inf, existing->start.dimension, existing->chunkX, existing->chunkZ, at, existing->forced);
     if (!rec) return;
-    rec->placed          = existing->placed;
-    rec->start.conquered = existing->start.conquered;
-    putRecord(rec);
+    rec->placed = existing->placed;
+    replaceRecord(existing, rec, world);
 }
 
 // ---- worldgen: structure sets ------------------------------------------------------------------------
 
 namespace {
 
-bool tryGenerateStructure(Info const& info, int dim, int chunkX, int chunkZ) {
-    // a /twilightforest place record of the key is no start: the chunk's own start replaces it
-    if (auto existing = findRecord(dim, chunkX, chunkZ, info.d.key); existing && !existing->placed) {
-        reviveRecord(existing);
-        return true;
-    }
+/// Structure#findValidGenerationPoint + generate for start chunk (cx, cz): a new start of `info`
+/// where its biome allows one (nullptr: none). Nothing is stored.
+RecordPtr makeNewStart(Info const& info, int dim, int chunkX, int chunkZ) {
     // Only the worldgen biome source here: this runs on generation threads, where the level's
     // BlockSource must not be touched.
     if (info.traits.landmark) {
@@ -793,17 +866,34 @@ bool tryGenerateStructure(Info const& info, int dim, int chunkX, int chunkZ) {
         auto col   = cl::biomeSampleColumn(chunkX, chunkZ);
         auto biome = worldgen::mainBiomeAt(col.x, col.z);
         if (biome.empty()) biome = worldgen::biomeAt(BlockPos{col.x, seaLevelOf(dim), col.z});
-        if (!biomeMatches(info.biomes, biome)) return false;
+        if (!biomeMatches(info.biomes, biome)) return nullptr;
     }
     auto rec = createStart(info, dim, chunkX, chunkZ, std::nullopt, false);
-    if (!rec) return false;
+    if (!rec) return nullptr;
     if (!info.traits.landmark) {
         // Structure#findValidGenerationPoint: findGenerationPoint, then isValidBiome at the stub's
         // position (the noise biome at the generation point, its y included)
         auto const& c = rec->start.center;
-        if (!biomeMatches(info.biomes, worldgen::biomeAt(BlockPos{c.x, c.y, c.z}))) return false;
+        if (!biomeMatches(info.biomes, worldgen::biomeAt(BlockPos{c.x, c.y, c.z}))) return nullptr;
     }
-    putRecord(rec);
+    return rec;
+}
+
+/// The stored start of `info` in start chunk (cx, cz) that the chunk's evaluation keeps (a
+/// /twilightforest place record of the key is no start: the chunk's own start replaces it).
+RecordPtr existingStart(Info const& info, int dim, int chunkX, int chunkZ) {
+    auto existing = findRecord(dim, chunkX, chunkZ, info.d.key);
+    return existing && !existing->placed ? existing : nullptr;
+}
+
+bool tryGenerateStructure(Info const& info, int dim, int chunkX, int chunkZ, std::uint64_t world) {
+    if (auto existing = existingStart(info, dim, chunkX, chunkZ)) {
+        reviveRecord(existing);
+        return true;
+    }
+    auto rec = makeNewStart(info, dim, chunkX, chunkZ);
+    if (!rec) return false;
+    putStartRecord(rec, world);
     return true;
 }
 
@@ -814,46 +904,51 @@ plc::SetLookup setLookup() {
     };
 }
 
-} // namespace
+/// ChunkGenerator#createStructures for one structure set of start chunk (cx, cz): its placement,
+/// then vanilla's weighted pick of its structures until one starts (`tryOne`). The key that
+/// started ("" none).
+std::string evaluateSet(StructureSet const& set, std::int64_t seed, int chunkX, int chunkZ, std::function<bool(Info const&)> const& tryOne) {
+    if (set.placement.kind == plc::Kind::Unknown) return {};
+    auto variety = [seed](int cx, int cz) { return cl::pickVariety(seed, cx, cz); };
+    if (!plc::isStructureChunk(set.placement, seed, chunkX, chunkZ, variety, setLookup())) return {};
+    std::vector<int> weights;
+    for (auto const& [k, w] : set.structures) weights.push_back(w);
+    int index = plc::tryWeighted(seed, chunkX, chunkZ, weights, [&](int i) {
+        auto const* inf = info(set.structures[i].first);
+        return inf && tryOne(*inf);
+    });
+    return index >= 0 ? set.structures[index].first : std::string{};
+}
 
-void ensureStartsIn(int dim, int chunkX, int chunkZ) {
-    auto tf = twilightDim();
-    if (!tf || *tf != dim) return; // TF's structure sets only place in the Twilight Forest
-    auto&          r = records();
-    ChunkKey const key{dim, chunkX, chunkZ};
-    std::uint64_t  world = 0;
-    {
-        std::shared_lock lock(r.mutex);
-        if (r.evaluated.contains(key)) return;
-    }
-    {
-        // one thread creates the starts of a chunk; the others wait until they exist (a protection
-        // check on the server thread while a generation thread builds the start sees the record)
-        std::unique_lock lock(r.mutex);
-        auto const       deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-        for (;;) {
-            if (r.evaluated.contains(key)) return;
-            auto it = r.inProgress.find(key);
-            if (it == r.inProgress.end()) break;
-            // the same thread again (a layout asking about its own chunk): nothing to wait for
-            if (it->second == std::this_thread::get_id()) return;
-            if (r.evaluatedChanged.wait_until(lock, deadline) == std::cv_status::timeout && r.inProgress.contains(key)) {
-                static std::atomic<bool> warned{false};
-                if (!warned.exchange(true)) log().warn("landmark: gave up waiting for the starts of chunk {} {} (another thread)", chunkX, chunkZ);
-                return;
-            }
-        }
-        r.inProgress.emplace(key, std::this_thread::get_id());
-        world = r.world;
-    }
+enum class Claim { Known, Claimed, Busy };
+
+/// Claims start chunk `key` for this thread's evaluation: Known (evaluated already), Claimed (the
+/// world generation it is evaluated for in `world`), Busy (another thread evaluates it).
+Claim tryClaim(Records& r, ChunkKey const& key, std::uint64_t& world) {
+    std::unique_lock lock(r.mutex);
+    if (r.evaluated.contains(key)) return Claim::Known;
+    if (r.inProgress.contains(key)) return Claim::Busy;
+    r.inProgress.emplace(key, std::this_thread::get_id());
+    world = r.world;
+    return Claim::Claimed;
+}
+
+/// ChunkGenerator#createStructures for start chunk `key`: every structure set, the starts stored for
+/// world generation `world` (dropped when that world was closed meanwhile). `claimed`: this thread
+/// holds the chunk's inProgress entry; else another thread does and this is a duplicate
+/// evaluation (deterministic: the first start stored per key is kept). True when the chunk's starts
+/// are known afterwards.
+bool evaluateStarts(Records& r, ChunkKey const& key, std::uint64_t world, bool claimed) {
     struct Finish {
         Records&            r;
         ChunkKey const      key;
         std::uint64_t const world;
+        bool const          claimed;
         ~Finish() {
+            tEvaluating.pop_back();
             {
                 std::unique_lock lock(r.mutex);
-                r.inProgress.erase(key);
+                if (claimed) r.inProgress.erase(key);
                 if (r.world == world) {
                     if (r.evaluated.size() >= kMaxEvaluatedChunks) r.evaluated.clear(); // re-evaluating is idempotent
                     r.evaluated.insert(key);
@@ -861,19 +956,75 @@ void ensureStartsIn(int dim, int chunkX, int chunkZ) {
             }
             r.evaluatedChanged.notify_all();
         }
-    } finish{r, key, world};
-    auto seed    = levelSeed();
-    auto variety = [seed](int cx, int cz) { return cl::pickVariety(seed, cx, cz); };
-    auto lookup  = setLookup();
-    for (auto const* set : structureSets()) {
-        if (set->placement.kind == plc::Kind::Unknown) continue;
-        if (!plc::isStructureChunk(set->placement, seed, chunkX, chunkZ, variety, lookup)) continue;
-        std::vector<int> weights;
-        for (auto const& [k, w] : set->structures) weights.push_back(w);
-        (void)plc::tryWeighted(seed, chunkX, chunkZ, weights, [&](int index) {
-            auto const* inf = info(set->structures[index].first);
-            return inf && tryGenerateStructure(*inf, dim, chunkX, chunkZ);
-        });
+    };
+    tEvaluating.push_back(key);
+    Finish finish{r, key, world, claimed};
+    auto   seed = levelSeed();
+    for (auto const* set : structureSets())
+        (void)evaluateSet(*set, seed, key.x, key.z, [&](Info const& inf) { return tryGenerateStructure(inf, key.dim, key.x, key.z, world); });
+    std::shared_lock lock(r.mutex);
+    return r.world == world;
+}
+
+} // namespace
+
+void noteServerThread() { gServerThread.store(std::this_thread::get_id(), std::memory_order_relaxed); }
+
+void setEvaluationBusy(int dim, int chunkX, int chunkZ, bool busy) {
+    auto& r = records();
+    {
+        std::unique_lock lock(r.mutex);
+        // std::thread::id{} is no thread's id: the chunk looks claimed by another thread
+        if (busy) r.inProgress[{dim, chunkX, chunkZ}] = std::thread::id{};
+        else r.inProgress.erase({dim, chunkX, chunkZ});
+    }
+    r.evaluatedChanged.notify_all();
+}
+
+void forgetEvaluation(int dim, int chunkX, int chunkZ) {
+    auto&            r = records();
+    std::unique_lock lock(r.mutex);
+    r.evaluated.erase({dim, chunkX, chunkZ});
+    std::erase_if(r.aroundDone, [&](ChunkKey const& k) {
+        return k.dim == dim && std::abs(k.x - chunkX) <= kReferenceRange && std::abs(k.z - chunkZ) <= kReferenceRange;
+    });
+    std::erase_if(r.probes, [&](auto const& e) { return std::get<0>(e.first) == dim && std::get<1>(e.first) == chunkX && std::get<2>(e.first) == chunkZ; });
+}
+
+bool ensureStartsIn(int dim, int chunkX, int chunkZ) {
+    auto tf = twilightDim();
+    if (!tf || *tf != dim) return true; // TF's structure sets only place in the Twilight Forest
+    auto&          r = records();
+    ChunkKey const key{dim, chunkX, chunkZ};
+    {
+        std::shared_lock lock(r.mutex);
+        if (r.evaluated.contains(key)) return true;
+    }
+    // a layout asking about its own chunk: what is stored so far (the evaluation is under way here)
+    if (evaluatingHere(key)) return false;
+    auto const deadline = std::chrono::steady_clock::now() + kEvaluationWait;
+    for (;;) {
+        std::uint64_t world = 0;
+        switch (tryClaim(r, key, world)) {
+        case Claim::Known: return true;
+        case Claim::Claimed: return evaluateStarts(r, key, world, true);
+        case Claim::Busy: break;
+        }
+        // Another thread evaluates the chunk. A generation thread outside any evaluation waits for
+        // it (that thread never waits itself, so it finishes); the server thread never waits, and
+        // neither does a thread inside an evaluation (two layouts asking about each other's chunks
+        // would wait for each other): they evaluate the chunk themselves
+        if (tEvaluating.empty() && !onServerThread()) {
+            bool settled = false;
+            {
+                std::unique_lock lock(r.mutex);
+                settled = r.evaluatedChanged.wait_until(lock, deadline, [&] { return r.evaluated.contains(key) || !r.inProgress.contains(key); });
+            }
+            if (settled) continue; // known now, or free to claim (the other thread's world was closed)
+            log().warn("landmark: chunk {} {}: another thread is still evaluating its starts after {} s; evaluating them here", chunkX, chunkZ,
+                       std::chrono::duration_cast<std::chrono::seconds>(kEvaluationWait).count());
+        }
+        return evaluateStarts(r, key, recordWorld(), false);
     }
 }
 
@@ -892,28 +1043,78 @@ void ensureStartsAround(int dim, int chunkX, int chunkZ) {
         std::shared_lock lock(r.mutex);
         if (r.aroundDone.contains({dim, chunkX, chunkZ})) return;
     }
-    for (int dx = -kReferenceRange; dx <= kReferenceRange; ++dx)
-        for (int dz = -kReferenceRange; dz <= kReferenceRange; ++dz) ensureStartsIn(dim, chunkX + dx, chunkZ + dz);
+    // the free chunks first, the ones another thread is evaluating last (generation threads working
+    // on neighbouring chunks walk the same range: they share it out instead of queueing chunk by chunk)
+    bool                  complete = true;
+    std::vector<ChunkKey> busy;
+    for (int dx = -kReferenceRange; dx <= kReferenceRange; ++dx) {
+        for (int dz = -kReferenceRange; dz <= kReferenceRange; ++dz) {
+            ChunkKey const key{dim, chunkX + dx, chunkZ + dz};
+            if (evaluatingHere(key)) {
+                complete = false; // this thread's own evaluation (a layout's query): not known yet
+                continue;
+            }
+            std::uint64_t world = 0;
+            switch (tryClaim(r, key, world)) {
+            case Claim::Known: break;
+            case Claim::Claimed: complete = evaluateStarts(r, key, world, true) && complete; break;
+            case Claim::Busy: busy.push_back(key); break;
+            }
+        }
+    }
+    for (auto const& key : busy) complete = ensureStartsIn(key.dim, key.x, key.z) && complete;
+    if (!complete) return;
     std::unique_lock lock(r.mutex);
     if (r.aroundDone.size() >= kMaxEvaluatedChunks) r.aroundDone.clear(); // only a fast path
     r.aroundDone.insert({dim, chunkX, chunkZ});
 }
 
+std::string probeStart(int dim, StructureSet const& set, int chunkX, int chunkZ) {
+    auto&         r = records();
+    auto          probeKey = std::make_tuple(dim, chunkX, chunkZ, set.id);
+    std::uint64_t world    = 0;
+    {
+        std::shared_lock lock(r.mutex);
+        if (auto it = r.probes.find(probeKey); it != r.probes.end()) return it->second;
+        world = r.world;
+    }
+    // what evaluateStarts would store for this set: the stored start of a key, else a new one
+    auto found = evaluateSet(set, levelSeed(), chunkX, chunkZ, [&](Info const& inf) {
+        return existingStart(inf, dim, chunkX, chunkZ) || makeNewStart(inf, dim, chunkX, chunkZ);
+    });
+    std::unique_lock lock(r.mutex);
+    if (r.world == world) {
+        if (r.probes.size() >= kMaxEvaluatedChunks) r.probes.clear();
+        r.probes[probeKey] = found;
+    }
+    return found;
+}
+
+bool chunkLoaded(int dim, int chunkX, int chunkZ) {
+    auto* region = game::regionOf(dim);
+    return region && region->hasChunksAt(BlockPos{chunkX * 16, region->getMinHeight(), chunkZ * 16}, 0, false);
+}
+
 RecordPtr nearestLandmark(int dim, int chunkX, int chunkZ, std::optional<GlobalPos> pos) {
     auto center = cl::nearestCenter(chunkX, chunkZ);
     int  ccx = center.x >> 4, ccz = center.z >> 4;
-    ensureStartsIn(dim, ccx, ccz);
-    for (auto const& rec : recordsStartedIn(dim, ccx, ccz)) {
-        if (rec->placed) continue; // /place stores no start
-        auto const* inf = info(rec->start.key);
-        if (inf && inf->traits.landmarkTag) return rec;
+    // LandmarkUtil#locateNearestMatchingLandmark(..., checkReady = true): nothing while the center
+    // chunk is not loaded (Level#hasChunk), then ChunkAccess#getAllStarts, which holds valid starts only
+    if (chunkLoaded(dim, ccx, ccz)) {
+        (void)ensureStartsIn(dim, ccx, ccz);
+        for (auto const& rec : recordsStartedIn(dim, ccx, ccz)) {
+            if (rec->placed || rec->pieces.empty()) continue; // /place stores no start; a reserved site is no valid start
+            auto const* inf = info(rec->start.key);
+            if (inf && inf->traits.landmarkTag) return rec;
+        }
     }
     if (pos) {
         // TF reads the grid center chunk only. forceStart's starts (the selftests' stand-in for a
         // grid start, at test positions off the grid) count too; /twilightforest place's never do
         for (auto const& rec : recordsIntersecting(dim, pos->x >> 4, pos->z >> 4)) {
             auto const* inf = info(rec->start.key);
-            if (rec->forced && !rec->placed && inf && inf->traits.landmarkTag && rec->start.box.contains(pos->x, pos->y, pos->z)) return rec;
+            if (rec->forced && !rec->placed && !rec->pieces.empty() && inf && inf->traits.landmarkTag && rec->start.box.contains(pos->x, pos->y, pos->z))
+                return rec;
         }
     }
     return nullptr;
@@ -923,14 +1124,15 @@ RecordPtr nearestLandmarkOf(int dim, std::string const& key, int blockX, int blo
     auto center = cl::nearestCenter(blockX >> 4, blockZ >> 4);
     int  ccx = center.x >> 4, ccz = center.z >> 4;
     ensureStartsAround(dim, ccx, ccz);
-    // the starts of `key` referencing the center chunk (ChunkAccess#getReferencesForStructure)
+    // the starts of `key` referencing the center chunk (ChunkAccess#getReferencesForStructure), valid
+    // ones only (StructureStart#isValid: a reserved site has no pieces)
     for (auto const& rec : recordsIntersecting(dim, ccx, ccz))
-        if (rec->start.key == key && !rec->placed) return rec;
+        if (rec->start.key == key && !rec->placed && !rec->pieces.empty()) return rec;
     // TF reads the grid center chunk only; forceStart's starts (the selftests' stand-in for a grid
     // start, off the grid) count where their box covers the column. Natural and placed ones never do
     for (auto const& rec : recordsIntersecting(dim, blockX >> 4, blockZ >> 4))
-        if (rec->forced && !rec->placed && rec->start.key == key && rec->start.box.minX <= blockX && blockX <= rec->start.box.maxX && rec->start.box.minZ <= blockZ
-            && blockZ <= rec->start.box.maxZ)
+        if (rec->forced && !rec->placed && !rec->pieces.empty() && rec->start.key == key && rec->start.box.minX <= blockX && blockX <= rec->start.box.maxX
+            && rec->start.box.minZ <= blockZ && blockZ <= rec->start.box.maxZ)
             return rec;
     return nullptr;
 }
@@ -1139,8 +1341,28 @@ ChunkTerraformer chunkTerraformer(int dimension, int chunkX, int chunkZ) {
 }
 
 double terraformDensity(int dimension, int x, int y, int z) {
-    auto fn = chunkTerraformer(dimension, x >> 4, z >> 4);
-    return fn ? fn(x, y, z) : 0.0;
+    // a per-position caller (one noise cell after another) stays in one chunk for a long run: the
+    // chunk's gathered terraformer is kept per thread until the chunk, or anything it was gathered
+    // from (records, generators, terraformers, the world), changes
+    struct Cached {
+        bool             valid = false;
+        int              dimension = 0, chunkX = 0, chunkZ = 0;
+        std::uint64_t    version = 0;
+        ChunkTerraformer fn;
+    };
+    thread_local Cached cache;
+    int                 chunkX = x >> 4, chunkZ = z >> 4;
+    auto                version = fl::recordsVersion();
+    if (!cache.valid || cache.dimension != dimension || cache.chunkX != chunkX || cache.chunkZ != chunkZ || cache.version != version) {
+        cache.fn = chunkTerraformer(dimension, chunkX, chunkZ);
+        // the version read before gathering: a change made meanwhile makes the next call gather again
+        cache.valid     = true;
+        cache.dimension = dimension;
+        cache.chunkX    = chunkX;
+        cache.chunkZ    = chunkZ;
+        cache.version   = version;
+    }
+    return cache.fn ? cache.fn(x, y, z) : 0.0;
 }
 
 bool hasTerraformers(int dimension, int chunkX, int chunkZ) { return !terraformingStarts(dimension, chunkX, chunkZ).empty(); }
@@ -1150,7 +1372,10 @@ void setHeightProvider(HeightFn fn) {
     fl::generators().height = std::move(fn);
 }
 
-std::optional<int> firstOccupiedHeight(int dimension, int x, int z, worldgen::Heightmap type) { return fl::occupiedHeight(dimension, x, z, type); }
+std::optional<int> firstOccupiedHeight(int dimension, int x, int z, worldgen::Heightmap type) {
+    auto provider = fl::heightProvider();
+    return provider ? provider(dimension, x, z, type) : std::nullopt;
+}
 
 std::optional<int> adjustForTerrain(int dimension, int xMin, int zMin, int xMax, int zMax, int gridLength, worldgen::Heightmap type) {
     auto provider = fl::heightProvider();
@@ -1159,11 +1384,7 @@ std::optional<int> adjustForTerrain(int dimension, int xMin, int zMin, int xMax,
 }
 
 std::optional<int> adjustForTerrain(int dimension, int xInCenterChunk, int zInCenterChunk, int radiusFromCenterChunk, int gridLength) {
-    auto provider = fl::heightProvider();
-    if (!provider) return std::nullopt;
-    return core::landmark::adjustForTerrainAroundChunk(xInCenterChunk, zInCenterChunk, radiusFromCenterChunk, gridLength, [&](int x, int z) {
-        return provider(dimension, x, z, worldgen::Heightmap::WorldSurfaceWg);
-    });
+    return fl::adjustForTerrainAroundChunk(fl::heightProvider(), dimension, xInCenterChunk, zInCenterChunk, radiusFromCenterChunk, gridLength);
 }
 
 int seaLevel(int dimension) { return fl::seaLevelOf(dimension); }
