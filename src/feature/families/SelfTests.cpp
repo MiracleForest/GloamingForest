@@ -71,6 +71,7 @@ bool   signEdit(Player& player, GlobalPos const& pos, bool front, std::vector<st
 Actor* signDisplay(GlobalPos const& pos, bool front);
 Json   signSentText(GlobalPos const& pos);
 void   signSendAll(Player& player);
+void   signForgetUnloaded(GlobalPos const& pos);
 } // namespace gf::feature::families::detail
 
 namespace {
@@ -1370,6 +1371,18 @@ GF_REGISTER_SELFTEST("families.sign_sync", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(ctx.setBlock(at(q, 0, -1, 0), "minecraft:stone"), "ground 2");
     ctx.require(ctx.setBlock(q, "gf_test:family_sign", {{fam::state::Rotation, 8}}), "a second sign");
     co_await ctx.ticks(1);
+    {
+        // a vanilla player (no client mod) is sent no sign text: it reads the display entity's name
+        gf::net::setTestCompanion(ctx.player(), false);
+        (void)gf::net::takeTestMessages(ctx.player());
+        gf::signs::setText(q, {"vanilla"});
+        co_await ctx.ticks(1);
+        bool none = true;
+        for (auto const& m : gf::net::takeTestMessages(ctx.player())) none = none && m.channel != "families.sign_text";
+        ctx.check(!gf::net::isCompanion(ctx.player()) && none, "a vanilla player is sent no sign text");
+        auto* display = fam::detail::signDisplay(q, true);
+        ctx.check(display && display->getNameTag() == "vanilla\n\n\n", "it reads the text on the display entity's name tag");
+    }
     CompanionGuard guard(ctx);
     auto texts = [&ctx] {
         std::vector<fam::Json> out;
@@ -1412,6 +1425,13 @@ GF_REGISTER_SELFTEST("families.sign_sync", [](Context& ctx) -> ll::coro::CoroTas
     co_await ctx.ticks(1);
     sent = texts();
     ctx.check(sent.size() == 1 && names(sent[0], "signs") && namesAt(sent[0], "signs", q), "the changes of one tick go in one message (" + std::to_string(sent.size()) + " messages)");
+    // a sign whose chunk unloads is withdrawn from the companions (its load sends it again), so the
+    // client mod's list keeps only the signs of loaded chunks
+    fam::detail::signForgetUnloaded(q);
+    co_await ctx.ticks(1);
+    sent = texts();
+    ctx.check(sent.size() == 1 && namesAt(sent[0], "gone", q) && !namesAt(sent[0], "gone", p) && fam::detail::signSentText(q).is_null(),
+              "a sign whose chunk unloads is gone for the companions (" + std::to_string(sent.size()) + " messages)");
     ctx.setBlock(q, "minecraft:air");
     ctx.setBlock(at(q, 0, -1, 0), "minecraft:air");
     ctx.setBlock(p, "minecraft:air");
