@@ -16,6 +16,7 @@
 #include <climits>
 #include <map>
 #include <mutex>
+#include <set>
 
 #include "ll/api/form/SimpleForm.h"
 #include "ll/api/service/Bedrock.h"
@@ -249,12 +250,19 @@ constexpr int kAfterClose = 10;           ///< the client's screen is gone
 
 enum class Phase { WaitOpen, WaitClose, AfterClose };
 
+/// Players with a form on the way (one at a time: repeated uses do not queue more).
+std::set<std::int64_t>& pendingForms() {
+    static std::set<std::int64_t> s;
+    return s;
+}
+
 void formWhenClosed(ActorUniqueID uid, int slot, core::GlobalPos pos, Phase phase, int ticks) {
     ia::nextTick([=] {
+        auto done  = [&] { pendingForms().erase(uid.rawID); };
         auto level = ll::service::getLevel();
-        if (!level) return;
+        if (!level) return done();
         auto* p = level->getPlayer(uid);
-        if (!p) return;
+        if (!p) return done();
         bool open = p->mContainerManager != nullptr;
         switch (phase) {
         case Phase::WaitOpen:
@@ -265,12 +273,18 @@ void formWhenClosed(ActorUniqueID uid, int slot, core::GlobalPos pos, Phase phas
         case Phase::WaitClose:
             if (!open) formWhenClosed(uid, slot, pos, Phase::AfterClose, 0);
             else if (ticks < kCloseWait) formWhenClosed(uid, slot, pos, Phase::WaitClose, ticks + 1);
-            else log().info("enchant: anvil form for {} given up (the anvil stayed open)", p->getRealName());
+            else {
+                log().info("enchant: anvil form for {} given up (the anvil stayed open)", p->getRealName());
+                done();
+            }
             return;
         case Phase::AfterClose:
             if (open) formWhenClosed(uid, slot, pos, Phase::WaitClose, 0); // opened again
             else if (ticks < kAfterClose) formWhenClosed(uid, slot, pos, Phase::AfterClose, ticks + 1);
-            else showForm(*p, slot, pos);
+            else {
+                done();
+                showForm(*p, slot, pos);
+            }
             return;
         }
     });
@@ -287,11 +301,13 @@ public:
             // nothing the book can go on: the anvil screen opens as usual (renaming, repairs)
             if (internal::anvilOffers(c.player, slot).empty()) return ia::Result::Pass;
             // a vanilla client opens its own anvil screen on a use (sneaking or not) whatever the
-            // server answers: the anvil works as usual, and the form waits behind its screen until
-            // the player closes it (a chat line says so)
+            // server answers: the anvil works as usual, and the form follows when its screen is
+            // closed (a chat line says so)
             if (!c.firstEvent) return ia::Result::Pass; // the held button's repeats
+            auto const& uid = c.player.getOrCreateUniqueID();
+            if (!pendingForms().insert(uid.rawID).second) return ia::Result::Pass; // one on the way
             c.player.sendMessage(trFor(c.player, "gf.item.anvil.hint", "Close the anvil to choose what this book goes on."));
-            formWhenClosed(c.player.getOrCreateUniqueID(), slot, c.pos, Phase::WaitOpen, 0);
+            formWhenClosed(uid, slot, c.pos, Phase::WaitOpen, 0);
             return ia::Result::Pass;
         });
     }
