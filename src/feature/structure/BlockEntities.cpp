@@ -72,6 +72,7 @@
 
 #include "core/Keys.h"
 #include "feature/common/BlockData.h"
+#include "feature/ext/entity/EntityExt.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/loot/Loot.h"
 #include "feature/spawn/Spawn.h"
@@ -550,6 +551,32 @@ void storeSpawnerRecord(BlockSource& source, BlockPos const& pos, Json const& re
     bd::set(source, pos, kDataKey, doc.empty() ? Json() : doc);
 }
 
+/// BaseSpawner#load (SinisterSpawnerBlockEntity#loadAdditional) of a template's spawner data into
+/// the sinister spawner block entity F8 keeps at `pos` (nothing for any other block): Delay,
+/// SpawnData (the next mob; without SpawnPotentials the only potential, weight 1), MinSpawnDelay,
+/// MaxSpawnDelay, SpawnCount, MaxNearbyEntities, RequiredPlayerRange and SpawnRange when given;
+/// what the data leaves out keeps the spawner's value (a template saves every field).
+void loadSinisterSpawner(BlockSource& source, BlockPos const& pos, std::string const& entityId, Json const& data) {
+    auto spawner = boss::ext::sinisterSpawner(source, pos);
+    if (!spawner) return;
+    if (!entityId.empty()) {
+        spawner->nextEntity = entityId;
+        spawner->potentials = {{entityId, 1}};
+    }
+    auto field = [&](char const* name, int& out) {
+        if (data.contains(name) && data[name].is_number_integer()) out = data[name].get<int>();
+    };
+    field("Delay", spawner->spawnDelay);
+    field("MinSpawnDelay", spawner->minSpawnDelay);
+    field("MaxSpawnDelay", spawner->maxSpawnDelay);
+    field("SpawnCount", spawner->spawnCount);
+    field("MaxNearbyEntities", spawner->maxNearbyEntities);
+    field("RequiredPlayerRange", spawner->requiredPlayerRange);
+    field("SpawnRange", spawner->spawnRange);
+    if (!boss::ext::setSinisterSpawner(source, pos, *spawner))
+        warnOnce("sinister:" + source.getBlock(pos).getTypeName(), "structure: the sinister spawner refused its template data");
+}
+
 bool runSpawner(BlockSource& source, BlockPos const& pos, Json const& action) {
     auto        entityId = action.value("entity", std::string{});
     auto const& data     = action.value("data", Json::object());
@@ -562,7 +589,11 @@ bool runSpawner(BlockSource& source, BlockPos const& pos, Json const& action) {
             // nothing there (a processor dropped it): vanilla has no block entity to load the data into
             if (b.isAir() || blocks::isLiquid(b)) return true;
             // a spawner block of its own (TF's sinister spawner, SpawnerProcessor handles it like
-            // the vanilla one): the block stays, its block entity (F8) reads the spawner data here
+            // the vanilla one): the block stays and its block entity (F8's, in block data) loads
+            // the data as BaseSpawner#load does
+            loadSinisterSpawner(source, pos, entityId, data);
+            // what F8's spawner does not carry (SpawnData's generic.scale and custom spawn rules)
+            // and the fields, for the kit's spawn events (Spawners.cpp)
             storeSpawnerRecord(source, pos, spawnerRecordOf(entityId, data, true));
             return true;
         }

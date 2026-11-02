@@ -59,9 +59,13 @@
 #include "mc/world/level/chunk/LevelChunkBlockActorStorage.h"
 
 #include "core/Keys.h"
+#include "feature/common/BlockData.h"
+#include "feature/ext/entity/EntityExt.h"
 #include "mod/Log.h"
 
 namespace gf::structure::spawners {
+
+namespace bd = ::gf::feature::common::blockdata;
 
 namespace {
 
@@ -340,6 +344,35 @@ std::optional<BlockPos> firingSpawner(BlockSource& source, Vec3 const& at, std::
                     best       = q;
                     bestFiring = firing;
                     bestDist   = dist;
+                }
+            }
+        }
+    if (best) return best;
+    // TF's sinister spawner (F8's block entity, in block data, spawns as a spawner): the nearest one
+    // whose spawn box (SinisterSpawnerLogic: within SpawnRange of the block on every axis) holds the
+    // mob and whose block F7 left a spawner record with (a template's spawner data)
+    int dim = static_cast<int>(source.getDimensionId());
+    for (int cx = core::chunkOf(p.x - kMaxReach); cx <= core::chunkOf(p.x + kMaxReach); cx++)
+        for (int cz = core::chunkOf(p.z - kMaxReach); cz <= core::chunkOf(p.z + kMaxReach); cz++) {
+            if (!source.getChunk(cx, cz)) continue;
+            std::vector<BlockPos> recorded; // (collected first: the queries below read block data too)
+            bd::forEachInChunk(dim, cx, cz, [&](core::GlobalPos const& gp, Json const& doc) {
+                auto it = doc.find("structure");
+                if (it != doc.end() && it->is_object() && it->contains("spawner")) recorded.push_back(BlockPos{gp.x, gp.y, gp.z});
+            });
+            for (auto const& q : recorded) {
+                auto sinister = boss::ext::sinisterSpawner(source, q);
+                if (!sinister) continue;
+                bool spawns = sinister->nextEntity == entityId;
+                for (auto const& [id, weight] : sinister->potentials) spawns |= id == entityId;
+                if (!spawns) continue;
+                int    range = std::max(1, sinister->spawnRange);
+                double dx = at.x - (q.x + 0.5), dy = at.y - q.y, dz = at.z - (q.z + 0.5);
+                if (std::abs(dx) > range + 1 || std::abs(dz) > range + 1 || std::abs(dy) > range + 1) continue;
+                double dist = dx * dx + dy * dy + dz * dz;
+                if (!best || dist < bestDist) {
+                    best     = q;
+                    bestDist = dist;
                 }
             }
         }

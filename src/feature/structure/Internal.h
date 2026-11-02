@@ -287,9 +287,11 @@ void lootTable(Region& region, BlockPos const& pos, std::string const& tableId, 
 void spawner(Region& region, BlockPos const& pos, std::string const& entityId, Json const& data);
 /// A template's spawner block entity data for the block the template put at `pos` (the block
 /// stays, as StructureTemplate loads the data into that block's own block entity): a vanilla
-/// spawner is set up as spawner() does; any other block (TF's sinister spawner, whose block entity
-/// is F8's) keeps the data in its BlockData "structure"."spawner" record
-/// ({"entity", "data": {the BaseSpawner fields}, "scale"?, "spawn_rules"?}); air takes nothing.
+/// spawner is set up as spawner() does; TF's sinister spawner gets it in its block entity (F8's
+/// gf::boss::ext::setSinisterSpawner, as BaseSpawner#load) and any such block keeps it in its
+/// BlockData "structure"."spawner" record ({"entity", "data": {the BaseSpawner fields}, "scale"?,
+/// "spawn_rules"?}: the generic.scale and custom spawn rules the kit applies to its spawns); air
+/// takes nothing.
 void spawnerData(Region& region, BlockPos const& pos, std::string const& entityId, Json const& data);
 /// Sign text (lines 0..3).
 void sign(Region& region, BlockPos const& pos, std::vector<std::string> const& lines);
@@ -364,7 +366,8 @@ void uninstall();
 namespace spawners {
 /// The spawner block whose spawn is under way at `at` for mob `entityId`: the nearest vanilla
 /// spawner around `at` (within its SpawnRange, one block up or down) whose mob is `entityId`,
-/// preferring the one whose delay ran out (the one spawning now).
+/// preferring the one whose delay ran out (the one spawning now); else the nearest TF sinister
+/// spawner (F8's) with a kit spawner record whose spawn box holds `at` and whose mob it is.
 [[nodiscard]] std::optional<BlockPos> firingSpawner(BlockSource& source, Vec3 const& at, std::string const& entityId);
 /// Applies a generic.scale-like size factor to a live mob now (Bedrock bounding box data).
 bool applyScale(Actor& actor, float scale);
