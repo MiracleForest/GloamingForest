@@ -1156,7 +1156,7 @@
     "R11 Licensing: translated TF code keeps the LGPL attribution header naming the TF source file; textures/models/lang only via tools/import (CC BY-NC-SA 4.0, attribution in assets/LICENSE and NOTICE); sounds, music and structure templates are original (synth toolkit, template DSL) and may follow TF's footprint, slots, spawners, chests and loot from the spec and the LGPL template definitions.",
     "R12 Selftests: prefix <u>.*; unit U<n> owns testPos dx 100n..100n+99, W0b unit F<k> owns 5000+100k..5000+100k+99, W2 9000+; tests depend only on W0 plus the unit itself (progression::grant, landmark::forceStart, skeleton ids, fixtures) and must pass inside the 'full' run.",
     "R13 Config: one GF_REGISTER_CONFIG section per unit named after it; every TF config key (TFCommonConfig ~35, TFClientConfig ~21) is mapped to exactly one section in docs/spec/config.md; shared values (boss drop chests, multiplayer adjuster, portal) live in W0 sections.",
-    "R14 Commands and functions: every /twilightforest subcommand and datapack function has one owner in owners.tsv, spelled as TF's literal (tp F4, center/info/conquer (+ reactivate)/genbook F6, structure_util F7, map_locator/biomepng U13, shield U9, sinister_spawner U22, travellers_gear U11); GloamingForest additions: selftest/stubs/config/reload F0, locate/place F6, gamerule F10, structure_util place/capture/jigsaw/templates/piece/outline/pending_probe/scale_probe F7 (docs/spec/README.md, Subcommands).",
+    "R14 Commands and functions: every /twilightforest subcommand and datapack function has one owner in owners.tsv, spelled as TF's literal (tp F4, center/info/conquer (+ reactivate)/genbook F6, structure_util F7, map_locator/biomepng U13, shield U9, sinister_spawner U22, travellers_gear U11); GloamingForest additions: selftest/stubs/config/reload F0, locate/place/generatebook (an alias of genbook) F6, gamerule F10, structure_util place/capture/jigsaw/templates/piece/outline/pending_probe/scale_probe F7 (docs/spec/README.md, Subcommands).",
     "R15 Net: channels are <u>.<name>, one client handler per channel; server-to-client data goes only over the companion protocol; vanilla clients must never receive companion packets.",
     "R16 World data keys gf:<u>:...; never keep Player* or block pointers across ticks; defer world edits from cancelled interactions to the next tick.",
     "R17 Unknown ids at runtime are skipped with one warning per id; assemble fails on dangling twilightforest: references in BP/data; W2 runs a registered-but-unimplemented report.",
@@ -1223,7 +1223,7 @@
     {
       "name": "template",
       "owner": "F7",
-      "api": "Template file assets/structures/<u>/<path>.gft.json {size, palette, blocks (RLE), markers, jigsaw connectors, entities}; pwsh tools/structures/build.ps1 -Unit <u> builds *.gfs.ps1 DSL scripts and -Check validates against the 205 imported template definitions; /tf structure_util place <id> <pos> <rot>."
+      "api": "Template file assets/structures/<u>/<path>.gft.json {size, palette, blocks (RLE), markers, jigsaw connectors, entities}; pwsh tools/structures/build.ps1 -Unit <u> builds *.gfs.ps1 DSL scripts and -Check validates against the 205 imported template definitions; /tf structure_util place <template_id> [rotation] [mirror] (at your feet)."
     },
     {
       "name": "world",

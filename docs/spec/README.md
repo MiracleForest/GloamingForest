@@ -96,7 +96,7 @@ their tool unit (F1 import, F2 geo, F3 audio) may also write them: the tools gen
 | `structure_set` | 19 |
 | `structure_type` | 20 |
 | `stub` | 43 |
-| `subcommand` | 40 |
+| `subcommand` | 41 |
 | `tag` | 393 |
 | `trigger` | 13 |
 | `trim_material` | 6 |
@@ -107,8 +107,8 @@ that are commented out in `TFBlocks.java`), 254 items plus 357 block items and 5
 22 biomes, 25 structure keys, 129 configured and 107 placed features, 634 loot tables, 553 recipes (twilightforest and
 minecraft namespaces, generated and hand-written), 545 advancements (45 plus the recipe unlocks), 328 sound events (`GHAST_TRAP_ACTIVE` is commented out in `TFSounds.java`; `sounds.json` has 328),
 29 particles, 40 damage types, 1 effect, 4 enchantments, 393 tags (154 in the twilightforest namespace), 8 data maps,
-2061 en_us keys, 53 TF config keys, 10 stats (`TFStats` registers 10; the plan says 9), 40 subcommand rows (TF's 11
-subcommands with their literal children, 25 literal paths, plus 15 GloamingForest additions; see below; the plan says 15),
+2061 en_us keys, 53 TF config keys, 10 stats (`TFStats` registers 10; the plan says 9), 41 subcommand rows (TF's 11
+subcommands with their literal children, 25 literal paths, plus 16 GloamingForest additions; see below; the plan says 15),
 175 structure piece types (`TFStructurePieceTypes`, including the 18 `"TFLT" + "<suffix>"` pieces of the revamped Lich
 Tower and `TFJigsawTemplate`), 14 custom registries (every directory of TF's `data/twilightforest/twilight/`; the plan says 9).
 
@@ -146,6 +146,7 @@ them is a TF literal):
 |---|---|---|
 | F0 | `selftest`, `stubs`, `config`, `reload` | the selftest runner, the contract stubs a world called, the config screen (TF edits its config in the mod list), reloading the config files and translations |
 | F6 | `locate`, `place` | find / generate a landmark (TF uses vanilla's `/locate` and `/place`) |
+| F6 | `generatebook` | an alias of TF's `genbook` (the spelling the plan used before issue #5); new text names `genbook` |
 | F7 | `structure_util place`, `capture`, `jigsaw`, `templates`, `piece`, `outline`, `pending_probe`, `scale_probe` | template and piece tools of the structure kit, below TF's `structure_util` |
 | F10 | `gamerule` | TF's game rules (Bedrock's `/gamerule` cannot hold custom rules) |
 
@@ -156,15 +157,29 @@ them is a TF literal):
 the merge would overwrite it). Besides the atlases, `sound_definitions`, music,
 `blocks.json`, texts and the item catalog, `rp/sounds.json.d/<unit>.json` -> the resource pack's `sounds.json` (mode
 `categories`): the ids of `block_sounds`, `entity_sounds.entities`, `individual_event_sounds.events`,
-`interactive_sounds.block_sounds` and `interactive_sounds.entity_sounds.entities` are merged one by one; any other key
-fails (vanilla's defaults stay). A block names its sound in `blocks.json` (`"sound": "<block_sounds id>"`). F11's family
+`individual_named_sounds.sounds`, `interactive_sounds.block_sounds` and `interactive_sounds.entity_sounds.entities` are
+merged one by one; any other key fails (vanilla's defaults stay). A block names its sound in `blocks.json` (`"sound": "<block_sounds id>"`). F11's family
 generator adds TF's sound types (`twilightforest.<type>`) after the merge: fragments do not define those ids.
 
 The dangling-reference check resolves every `twilightforest:` value of the BP and data files: against BP definitions,
 data files by registry (`tags/worldgen/<registry>/` and `tags/twilight/<registry>/` are two-segment tag registries),
 owners.tsv and the reviewed ids of `tools/import/known-ids.json` (F1), each by its kind. The values of `tag`, `tags`
-and `generates_on` (and the import's `tagValuedKeys`) name tags, with or without `#`. A `tfDangling` reference of
-`known-ids.json` (dangling in TF itself, kept for parity) is a warning; every other unresolved reference fails.
+and `generates_on` (and the import's `tagValuedKeys`) name tags, with or without `#`, of the registry the context gives:
+the `tag` of a recipe (Java data or Bedrock BP recipe) is an item tag, `generates_on` and the `tag` of a
+`minecraft:matching_block_tag` predicate or `minecraft:tag_match` rule test a block tag, any other a tag of any
+registry. Two `tags` lists are not references: an item's `minecraft:tags` component declares Bedrock item tags (they
+count as known item tags, so a unit may give an item a Bedrock-only tag and use it in a BP recipe) and a Bedrock
+recipe's `tags` name its crafting stations. A `tfDangling` reference of `known-ids.json` (dangling in TF itself, kept
+for parity) is a warning when its kind matches the reference (a `tag:<registry>` entry covers only a tag reference);
+every other unresolved reference fails.
+
+owners.tsv still spells the six `data/twilightforest/tags/twilight/wood_palettes/*` tags with a one-segment registry
+(`twilight/#twilightforest:wood_palettes/<path>`, owner F9 by the fallback rule), the form F1's import looks them up
+by. Moving them to the two-segment form (`twilight/wood_palettes/#twilightforest:<path>`) and to F7 is one joint change
+of F0 and F1 (A8): `"tagRegistryGroups": ["worldgen", "twilight"]` and a tag rule `twilight/wood_palettes:*` -> F7 in
+`tools/spec/owners.rules.json`, F1's `Data.cs` / `Known.cs` reading `tags/twilight/` as two-segment, and the import
+regenerated (the six files move from `assets/gen/import/item/` to `assets/gen/import/structure/`). Either half alone
+fails `tools/import/run.ps1 -Check`.
 
 ## W0a: Scaffold, contract headers and ownership manifest
 
@@ -185,7 +200,7 @@ Implement every contract behind the W0a headers, build the asset toolchains (imp
 | F3 | Sound synthesis toolkit and baseline audio | 5300-5399 | `assets/gen/audio/**`, `src/core/synth/**`, `tests/synth/**`, `tools/e2e/*/scenarios/synth{,.*}.ps1`, `tools/sounds/**`, and its per-unit files as `synth` (R3) | - | synth, owners |
 | F4 | Dimension, time, teleport and Twilight portal (spike S1) | 5400-5499 | `**/*.d/dimension.json`, `assets/data/*/dimension.json`, `assets/lang/*/dimension.json`, `assets/pack/{bp,rp}/**/dimension/**`, `assets/pack/rp/texts.d/*/dimension.lang`, `docs/spikes/S1.md`, `src/client/dimension/**`, `src/feature/dimension/**`, `tools/e2e/*/scenarios/dimension{,.*}.ps1`, and its per-unit files as `dimension` (R3) | attachment 2, block 1, config_key 11, dimension 1, dimension_type 1, function 2, gamerule 2, lang 38, sound_event 1, subcommand 1, tag 5, trigger 1 | world, rules+fx, progression, mod, selftest |
 | F5 | Generator pipeline, feature interpreter, spawn engine, Java-parity core (spike S2) | 5500-5599 | `docs/spikes/S2.md`, `src/core/{jrand,noise}/**`, `src/feature/{worldgen,features,spawn}/**`, `tests/worldgen/**`, `tools/e2e/*/scenarios/worldgen{,.*}.ps1`, and its per-unit files as `worldgen` (R3) | feature_type 1, function 2, placement_modifier 2 | worldgen, features, spawn, selftest |
-| F6 | Landmarks: grid, placement, descriptors, conquest, protection, hints | 5600-5699 | `**/*.d/landmark.json`, `assets/data/landmarks/**`, `assets/lang/*/landmark.json`, `assets/pack/{bp,rp}/**/landmark/**`, `assets/pack/rp/texts.d/*/landmark.lang`, `src/client/landmark/**`, `src/core/landmark/**`, `src/feature/landmark/**`, `tests/landmark/**`, `tools/e2e/*/scenarios/landmark{,.*}.ps1`, and its per-unit files as `landmark` (R3) | damage_type 1, data_component 1, entity 1, function 1, lang 75, particle 1, structure_placement_type 2, structure_type 2, subcommand 7, tag 3, trigger 1 | landmark, structure, progression, interactions, client.render |
+| F6 | Landmarks: grid, placement, descriptors, conquest, protection, hints | 5600-5699 | `**/*.d/landmark.json`, `assets/data/landmarks/**`, `assets/lang/*/landmark.json`, `assets/pack/{bp,rp}/**/landmark/**`, `assets/pack/rp/texts.d/*/landmark.lang`, `src/client/landmark/**`, `src/core/landmark/**`, `src/feature/landmark/**`, `tests/landmark/**`, `tools/e2e/*/scenarios/landmark{,.*}.ps1`, and its per-unit files as `landmark` (R3) | damage_type 1, data_component 1, entity 1, function 1, lang 75, particle 1, structure_placement_type 2, structure_type 2, subcommand 8, tag 3, trigger 1 | landmark, structure, progression, interactions, client.render |
 | F7 | Structure kit, template toolkit and shared piece libraries | 5700-5799 | `assets/data/structure/**`, `src/feature/structure/**`, `tests/structure/**`, `tools/e2e/*/scenarios/structure{,.*}.ps1`, `tools/structures/*`, `tools/structures/lib/**`, and its per-unit files as `structure` (R3) | lang 9, registry 5, registry_entry 44, structure_piece_type 2, structure_processor 17, subcommand 14 | structure, template, loot, spawn |
 | F8 | Entities, AI, multipart, projectiles and boss kit (spike S4) | 5800-5899 | `**/*.d/{entity,boss}.json`, `assets/lang/*/{entity,boss}.json`, `assets/pack/{bp,rp}/**/{entity,boss}/**`, `docs/spikes/S4.md`, `src/client/entity/**`, `src/feature/{entity,projectile,boss}/**`, `tools/e2e/*/scenarios/{entity,boss}{,.*}.ps1`, and its per-unit files as `entity` (R3) | attachment 1, block_entity 10, config_key 2, data_serializer 1, lang 9, sound_event 1, trigger 1 | entity, projectile, boss, combat, loot, inventory, landmark |
 | F9 | Items, enchantments, effects, recipes, tags, data maps, stats, gear query (spike S6) | 5900-5999 | `**/*.d/item.json`, `assets/lang/*/item.json`, `docs/spikes/S6.md`, `src/client/item/**`, `src/feature/{item,enchant,effects,recipes,tags,datamaps,stats,traits,gear,catalog}/**`, `tools/e2e/*/scenarios/item{,.*}.ps1`, and its per-unit files as `item` (R3) | config_key 1, creative_tab 4, data_map 2, lang 202, registry 1, tag 37 | item, enchant+effects, recipes, data |
