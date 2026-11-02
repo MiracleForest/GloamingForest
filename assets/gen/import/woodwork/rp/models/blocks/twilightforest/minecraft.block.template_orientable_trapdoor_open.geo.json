@@ -1,0 +1,59 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.minecraft.block.template_orientable_trapdoor_open",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, 5],
+              "size": [16, 16, 3],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "texture"
+                },
+                "east": {
+                  "uv": [0, 0],
+                  "uv_size": [3, 16],
+                  "material_instance": "texture"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "texture"
+                },
+                "west": {
+                  "uv": [13, 0],
+                  "uv_size": [3, 16],
+                  "material_instance": "texture"
+                },
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -3],
+                  "material_instance": "texture"
+                },
+                "down": {
+                  "uv": [16, 3],
+                  "uv_size": [-16, -3],
+                  "material_instance": "texture"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:cube_talisman",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_cube_talisman"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:cube_talisman.name"
+      },
+      "minecraft:tags": {
+        "tags": ["randomium:blacklist", "twilightforest:wip"]
+      }
+    }
+  }
+}

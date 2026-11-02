@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/mining_fence"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#S#", "#S#"],
+    "key": {
+      "#": {
+        "item": "twilightforest:mining_planks"
+      },
+      "S": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:mining_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:mining_fence",
+      "count": 3
+    }
+  }
+}

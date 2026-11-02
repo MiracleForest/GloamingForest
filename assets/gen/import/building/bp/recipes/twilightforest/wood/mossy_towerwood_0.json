@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:wood/mossy_towerwood_0"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "twilightforest:towerwood"
+      },
+      {
+        "item": "minecraft:vine"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:towerwood"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:mossy_towerwood"
+    }
+  }
+}

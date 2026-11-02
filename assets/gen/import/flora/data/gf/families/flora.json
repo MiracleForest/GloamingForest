@@ -1,0 +1,199 @@
+[
+  {
+    "id": "twilightforest:blackberry_bush",
+    "family": "snowloggable",
+    "params": {
+      "class": "BerryBushBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:blightberry_bush",
+    "family": "snowloggable",
+    "params": {
+      "class": "DarkTowerBerryBushBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:blueberry_bush",
+    "family": "snowloggable",
+    "params": {
+      "class": "BerryBushBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:cicada_jar",
+    "family": "waterloggable",
+    "params": {
+      "class": "CicadaJarBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"]
+    }
+  },
+  {
+    "id": "twilightforest:copper_oreberry",
+    "family": "snowloggable",
+    "params": {
+      "class": "OreBerryBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:duskberry_bush",
+    "family": "snowloggable",
+    "params": {
+      "class": "DarkTowerBerryBushBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:essence_oreberry",
+    "family": "snowloggable",
+    "params": {
+      "class": "OreBerryBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:firefly_jar",
+    "family": "waterloggable",
+    "params": {
+      "class": "FireflyJarBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"]
+    }
+  },
+  {
+    "id": "twilightforest:firefly_particle_spawner",
+    "family": "waterloggable",
+    "params": {
+      "class": "FireflySpawnerBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"],
+      "states": ["particle_radius"]
+    }
+  },
+  {
+    "id": "twilightforest:gold_oreberry",
+    "family": "snowloggable",
+    "params": {
+      "class": "OreBerryBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:iron_oreberry",
+    "family": "snowloggable",
+    "params": {
+      "class": "OreBerryBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:maloberry_bush",
+    "family": "snowloggable",
+    "params": {
+      "class": "BerryBushBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:mason_jar",
+    "family": "waterloggable",
+    "params": {
+      "class": "MasonJarBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"]
+    }
+  },
+  {
+    "id": "twilightforest:moonworm",
+    "family": "waterloggable",
+    "params": {
+      "class": "MoonwormBlock",
+      "vanillaClass": "BaseEntityBlock",
+      "traits": ["waterloggable"],
+      "states": ["facing"]
+    }
+  },
+  {
+    "id": "twilightforest:potted_fiddlehead",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_mayapple",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_mushgloom",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:raspberry_bush",
+    "family": "snowloggable",
+    "params": {
+      "class": "BerryBushBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:root_strand",
+    "family": "climbable",
+    "params": {
+      "class": "RootStrandBlock",
+      "vanillaClass": "BushBlock",
+      "traits": ["climbable"]
+    }
+  },
+  {
+    "id": "twilightforest:skyberry_bush",
+    "family": "snowloggable",
+    "params": {
+      "class": "DarkTowerBerryBushBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  },
+  {
+    "id": "twilightforest:stingberry_bush",
+    "family": "snowloggable",
+    "params": {
+      "class": "DarkTowerBerryBushBlock",
+      "vanillaClass": "Block",
+      "traits": ["snowloggable"],
+      "states": ["age", "layers"]
+    }
+  }
+]

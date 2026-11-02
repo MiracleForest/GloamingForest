@@ -1,0 +1,23 @@
+{
+  "commands.tffeature.center": "Střed lokace: %s",
+  "commands.tffeature.chunk": "Nalezeno v chunku lokace: %s",
+  "commands.tffeature.nearest": "Nejbližší lokace je: %s",
+  "commands.tffeature.none_nearby": "V okolí se nepodařilo najít žádnou lokaci!",
+  "commands.tffeature.not_player": "Tento příkaz musí být spuštěn platným hráčem!",
+  "structure.twilightforest.aurora_palace": "Polární palác",
+  "structure.twilightforest.dark_tower": "Temná věž",
+  "structure.twilightforest.final_castle": "Hrad konečné plošiny",
+  "structure.twilightforest.hedge_maze": "Živoplotové bludiště",
+  "structure.twilightforest.hydra_lair": "Hydří doupě",
+  "structure.twilightforest.knight_stronghold": "Rytířova pevnost",
+  "structure.twilightforest.labyrinth": "Minotaurův labyrint",
+  "structure.twilightforest.large_hollow_hill": "Velký jámový kopec",
+  "structure.twilightforest.lich_tower": "Lichova věž",
+  "structure.twilightforest.medium_hollow_hill": "Střední jámový kopec",
+  "structure.twilightforest.mushroom_tower": "Houbový hrad",
+  "structure.twilightforest.naga_courtyard": "Dvůr nagy",
+  "structure.twilightforest.quest_grove": "Háj úkolů",
+  "structure.twilightforest.small_hollow_hill": "Malý jámový kopec",
+  "structure.twilightforest.troll_cave": "Trolí jeskyně",
+  "structure.twilightforest.yeti_cave": "Yetiho jeskyně"
+}

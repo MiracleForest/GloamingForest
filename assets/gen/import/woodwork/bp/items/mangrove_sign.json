@@ -1,0 +1,26 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:mangrove_sign",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_mangrove_sign"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:mangrove_sign.name"
+      },
+      "minecraft:max_stack_size": 16,
+      "minecraft:block_placer": {
+        "block": "twilightforest:mangrove_sign",
+        "replace_block_item": true
+      }
+    }
+  }
+}

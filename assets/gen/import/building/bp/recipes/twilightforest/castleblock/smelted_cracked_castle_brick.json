@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "twilightforest:castleblock/smelted_cracked_castle_brick"
+    },
+    "tags": ["furnace"],
+    "input": "twilightforest:castle_brick",
+    "output": "twilightforest:cracked_castle_brick",
+    "unlock": [
+      {
+        "item": "twilightforest:castle_brick"
+      }
+    ]
+  }
+}

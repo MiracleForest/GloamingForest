@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/dark_chest"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#C#", "###"],
+    "key": {
+      "#": {
+        "item": "twilightforest:dark_planks"
+      },
+      "C": {
+        "item": "minecraft:chest"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:dark_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:dark_chest",
+      "count": 2
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:armored_giant",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/misc/missing_texture"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.armored_giant"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#239391",
+        "overlay_color": "#9a9a9a"
+      }
+    }
+  }
+}

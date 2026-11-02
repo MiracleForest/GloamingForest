@@ -1,0 +1,57 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:ominous_yellow_candle",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:candles": [0, 1, 2, 3, 4]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.1
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.5
+      },
+      "minecraft:map_color": "#e5e533",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_candle_lit",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:candles') == 1",
+        "components": {
+          "minecraft:light_emission": 2
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 2",
+        "components": {
+          "minecraft:light_emission": 4
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 3",
+        "components": {
+          "minecraft:light_emission": 6
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 4",
+        "components": {
+          "minecraft:light_emission": 8
+        }
+      }
+    ]
+  }
+}

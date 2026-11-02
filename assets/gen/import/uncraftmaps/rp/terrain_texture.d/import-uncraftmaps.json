@@ -1,0 +1,14 @@
+{
+  "tf_block_uncrafting_glow": {
+    "textures": "textures/twilightforest/block/uncrafting_glow"
+  },
+  "tf_block_uncrafting_glow_side": {
+    "textures": "textures/twilightforest/block/uncrafting_glow_side"
+  },
+  "tf_block_uncrafting_side": {
+    "textures": "textures/twilightforest/block/uncrafting_side"
+  },
+  "tf_block_uncrafting_top": {
+    "textures": "textures/twilightforest/block/uncrafting_top"
+  }
+}

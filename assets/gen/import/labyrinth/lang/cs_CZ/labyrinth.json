@@ -1,0 +1,13 @@
+{
+  "entity.twilightforest.maze_slime": "Bludištní slizoun",
+  "entity.twilightforest.minoshroom": "Minomůrka",
+  "entity.twilightforest.minotaur": "Minotaurus",
+  "item.twilightforest.maze_slime_spawn_egg": "Vejce s bludištním slizem",
+  "item.twilightforest.minoshroom_spawn_egg": "Vajíčko s minomůrkou",
+  "item.twilightforest.minotaur_spawn_egg": "Vajíčko s minotaurem",
+  "subtitles.twilightforest.entity.minoshroom.ambient": "Minomůrka bučí",
+  "subtitles.twilightforest.entity.minoshroom.attack": "Minomůrka útočí",
+  "subtitles.twilightforest.entity.minoshroom.death": "Minomůrka zemřela",
+  "subtitles.twilightforest.entity.minoshroom.hurt": "Minomůrka byla zraněna",
+  "subtitles.twilightforest.entity.minoshroom.slam": "Minomůrka bouchne o zem"
+}

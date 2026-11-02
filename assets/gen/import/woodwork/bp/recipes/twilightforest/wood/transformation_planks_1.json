@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:wood/transformation_planks_1"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "twilightforest:stripped_transformation_log"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:stripped_transformation_log"
+      },
+      {
+        "item": "twilightforest:stripped_transformation_wood"
+      },
+      {
+        "item": "twilightforest:transformation_log"
+      },
+      {
+        "item": "twilightforest:transformation_wood"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:transformation_planks",
+      "count": 4
+    }
+  }
+}

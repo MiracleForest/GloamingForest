@@ -1,0 +1,7 @@
+entity.twilightforest.naga=Naga
+entity.twilightforest:naga.name=Naga
+item.spawn_egg.entity.twilightforest:naga.name=Naga Spawn Egg
+item.twilightforest.naga_spawn_egg=Naga Spawn Egg
+subtitles.twilightforest.entity.naga.hiss=Naga hisses
+subtitles.twilightforest.entity.naga.hurt=Naga hurts
+subtitles.twilightforest.entity.naga.rattle=Naga rattles

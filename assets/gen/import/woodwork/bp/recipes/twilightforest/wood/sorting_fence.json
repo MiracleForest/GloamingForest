@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/sorting_fence"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#S#", "#S#"],
+    "key": {
+      "#": {
+        "item": "twilightforest:sorting_planks"
+      },
+      "S": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:sorting_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:sorting_fence",
+      "count": 3
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:equipment/steeleaf_chestplate"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["# #", "###", "###"],
+    "key": {
+      "#": {
+        "item": "twilightforest:steeleaf_ingot"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:steeleaf_ingot"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:steeleaf_chestplate"
+    }
+  }
+}

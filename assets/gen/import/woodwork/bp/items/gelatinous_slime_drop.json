@@ -1,0 +1,24 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:gelatinous_slime_drop",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_gelatinous_slime_drop"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:gelatinous_slime_drop.name"
+      },
+      "minecraft:tags": {
+        "tags": ["c:foods", "twilightforest:lower_on_drying_rack"]
+      }
+    }
+  }
+}

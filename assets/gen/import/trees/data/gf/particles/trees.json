@@ -1,0 +1,41 @@
+{
+  "twilightforest:leaf_rune": {
+    "textures": [
+      "minecraft:particle/sga_a",
+      "minecraft:particle/sga_b",
+      "minecraft:particle/sga_c",
+      "minecraft:particle/sga_d",
+      "minecraft:particle/sga_e",
+      "minecraft:particle/sga_f",
+      "minecraft:particle/sga_g",
+      "minecraft:particle/sga_h",
+      "minecraft:particle/sga_i",
+      "minecraft:particle/sga_j",
+      "minecraft:particle/sga_k",
+      "minecraft:particle/sga_l",
+      "minecraft:particle/sga_m",
+      "minecraft:particle/sga_n",
+      "minecraft:particle/sga_o",
+      "minecraft:particle/sga_p",
+      "minecraft:particle/sga_q",
+      "minecraft:particle/sga_r",
+      "minecraft:particle/sga_s",
+      "minecraft:particle/sga_t",
+      "minecraft:particle/sga_u",
+      "minecraft:particle/sga_v",
+      "minecraft:particle/sga_w",
+      "minecraft:particle/sga_x",
+      "minecraft:particle/sga_y",
+      "minecraft:particle/sga_z"
+    ]
+  },
+  "twilightforest:log_core_particle": {
+    "textures": ["textures/twilightforest/particle/log_core"]
+  },
+  "twilightforest:sorting_particle": {
+    "textures": ["textures/twilightforest/particle/log_core"]
+  },
+  "twilightforest:transformation_particle": {
+    "textures": ["textures/twilightforest/particle/log_core"]
+  }
+}

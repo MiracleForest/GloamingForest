@@ -1,0 +1,8 @@
+block.twilightforest.twilight_portal=Dämmerwald-Portal
+config.twilightforest.max_portal_size=Maximalgröße des Portals
+config.twilightforest.origin_dimension=Ursprungsdimenion
+dimension.twilightforest.twilight_forest=Dämmerwald
+misc.twilightforest.portal_unsafe=Es scheint hier nicht sicher zu sein...
+misc.twilightforest.portal_unworthy=Das Portalbecken reagiert nicht. Vielleicht wurde etwas übersehen?
+subtitles.twilightforest.block.portal.whoosh=Dämmerwald-Portal ruft
+tile.twilightforest:twilight_portal.name=Dämmerwald-Portal

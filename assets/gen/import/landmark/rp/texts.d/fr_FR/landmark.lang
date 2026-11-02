@@ -1,0 +1,7 @@
+commands.tffeature.center=Centre de la fonctionnalité : %s
+commands.tffeature.chunk=Être dans le chunk de la fonctionnalité : %s
+commands.tffeature.nearest=La structure la plus proche est %s
+commands.tffeature.none_nearby=Impossible de trouver une fonctionnalité à proximité !
+twilightforest.book.darktower.1=§8[[Un carnet d'explorateur qui semble avoir résisté à une explosion]]§0~LINEBREAK~~LINEBREAK~_Cette tour a clairement des mécanismes qui ne me répondent pas. Leur magie aspire preque à reconnaître mon contact, mais elle ne le peut pas. C'est comme si les
+twilightforest.book.darktower.2=dispositifs de la tour étaient en train d'être supprimés par un groupe d'être-vivants environnant.~LINEBREAK~~LINEBREAK~§8[[Texte suivant]]§0~LINEBREAK~~LINEBREAK~_La magie semble émaner des profondeurs des forteresses proches. Elle ne peut pas
+twilightforest.book.darktower.3=provenir des goblins, puisque leur magie est séduisante mais floue.~LINEBREAK~~LINEBREAK~§8[[Texte suivant]]§0~LINEBREAK~~LINEBREAK~_Mon analyse indique qu'elle vient de plusieurs sources, opérant comme un groupe. J'y retournerai plus tard.

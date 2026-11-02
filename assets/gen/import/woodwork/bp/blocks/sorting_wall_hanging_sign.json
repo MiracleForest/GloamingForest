@@ -1,0 +1,32 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:sorting_wall_hanging_sign",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 5
+      },
+      "tag:minecraft:is_axe_item_destructible": {},
+      "minecraft:map_color": "#815631",
+      "minecraft:collision_box": false,
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_stripped_sorting_log",
+          "render_method": "opaque"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
+  "kind": "tag",
+  "reason": "a TF tag named without '#' as the value of a tag-valued key (tools/import/known-ids.json tagValuedKeys: Java ingredients and block predicates, TagKey codecs, Bedrock item tags), which assemble checks as a plain id",
+  "referencedBy": ["data/twilightforest/recipe/wood/sorting_planks.json"]
+}

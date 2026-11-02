@@ -1,0 +1,3 @@
+config.twilightforest.aurora_biomes=오로라 셰이더 생물 군계
+config.twilightforest.aurora_biomes.tooltip=오로라 셰이더 효과가 나타날 생물 군계를 정의합니다. 효과를 비활성화하려면 목록을 비워두세요.
+subtitles.twilightforest.environment.acid_rain=산성 비가 부식시킴

@@ -1,0 +1,9 @@
+config.twilightforest.ram_indicator=Індикатор вовни квестового барана
+config.twilightforest.ram_indicator.tooltip=Промальовує значок або X над вашим перехрестям, тримаючи вовну під час наведення курсора на квестового барана, залежно від того, чи було йому вже дано вовну цього кольору.
+entity.twilightforest.quest_ram=Квестовий баран
+entity.twilightforest:quest_ram.name=Квестовий баран
+item.spawn_egg.entity.twilightforest:quest_ram.name=Яйце виклику квестового барана
+item.twilightforest.quest_ram_spawn_egg=Яйце виклику квестового барана
+subtitles.twilightforest.entity.quest_ram.ambient=Квестовий баран мекає
+subtitles.twilightforest.entity.quest_ram.death=Квестовий баран гине
+subtitles.twilightforest.entity.quest_ram.hurt=Квестового барана поранено

@@ -1,0 +1,13 @@
+block.twilightforest.encased_fire_jet=Zapouzdřená ohnivá tryska
+block.twilightforest.encased_smoker=Zapouzdřený kuřák
+block.twilightforest.fire_jet=Ohnivá tryska
+block.twilightforest.smoker=Kuřák
+entity.twilightforest.hydra_mortar=Hydří moždíř
+entity.twilightforest:hydra_mortar.name=Hydří moždíř
+item.spawn_egg.entity.twilightforest:hydra.name=Vajíčko s hydrou
+item.twilightforest.hydra_spawn_egg=Vajíčko s hydrou
+subtitles.twilightforest.block.jet.start=Ohnivá tryska se aktivuje
+tile.twilightforest:encased_fire_jet.name=Zapouzdřená ohnivá tryska
+tile.twilightforest:encased_smoker.name=Zapouzdřený kuřák
+tile.twilightforest:fire_jet.name=Ohnivá tryska
+tile.twilightforest:smoker.name=Kuřák

@@ -1,0 +1,14 @@
+{
+  "twilightforest:encased_fire_jet": {
+    "sound": "wood"
+  },
+  "twilightforest:encased_smoker": {
+    "sound": "wood"
+  },
+  "twilightforest:fire_jet": {
+    "sound": "grass"
+  },
+  "twilightforest:smoker": {
+    "sound": "grass"
+  }
+}
