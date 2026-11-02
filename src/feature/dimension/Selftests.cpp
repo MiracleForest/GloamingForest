@@ -1,17 +1,21 @@
 // Selftests of unit F4 (dimension): `/twilightforest selftest "dimension.*"`, dx 5400..5499 (rule R12).
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <format>
 #include <limits>
+#include <map>
 #include <set>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "ll/api/Config.h"
 #include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
+#include "ll/api/thread/ServerThreadExecutor.h"
 
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/network/MinecraftPacketIds.h"
@@ -21,16 +25,20 @@
 #include "mc/network/packet/SyncWorldClocksPacket.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/commands/CommandPermissionLevel.h"
+#include "mc/server/commands/CommandUtils.h"
 #include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/level/storage/GameRule.h"
 #include "mc/world/level/storage/GameRules.h"
+#include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/Weather.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockType.h"
@@ -48,6 +56,7 @@
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Config.h"
+#include "mod/Log.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::feature::dimension {
@@ -183,12 +192,121 @@ private:
     std::size_t      mNext = 0;
 };
 
-/// The positions makePortalAt touches around a portal whose lowest corner is `p` (for cleanup).
-void cleanupPortalSite(Context& ctx, core::GlobalPos p) {
-    for (int dx = -1; dx <= 2; ++dx)
-        for (int dz = -1; dz <= 2; ++dz)
-            for (int dy = -1; dy <= 1; ++dy) ctx.cleanupBlock(p.offset(dx, dy, dz));
-}
+/// The blocks a test changes outside its flat areas (the generated Twilight Forest, the ground
+/// under a flat area): saved before they change (id, states and the liquid layer, never a Block
+/// pointer: rule R16) and put back when the test ends, bottom up, with their chunks loaded first.
+/// While `watchSites()` is on, every portal site makePortalAt builds (a trip's return portal) is
+/// saved before it is built. A test that ends early (require) has them put back by the destructor.
+class TerrainRestore {
+public:
+    TerrainRestore() = default;
+    TerrainRestore(TerrainRestore const&)            = delete;
+    TerrainRestore& operator=(TerrainRestore const&) = delete;
+    ~TerrainRestore() {
+        if (mWatching) tp::setSiteObserver({});
+        if (mBlocks.empty()) return;
+        ll::coro::keepThis([blocks = std::move(mBlocks)]() -> ll::coro::CoroTask<> {
+            int n = co_await putBack(blocks);
+            log().info("dimension selftest: put back {} blocks of the terrain after the test ended early", n);
+        }).launch(ll::thread::ServerThreadExecutor::getDefault());
+    }
+
+    /// Saves the block at `pos` (the first save of a position counts).
+    void save(BlockSource& region, BlockPos const& pos) {
+        int dim = static_cast<int>(region.getDimensionId());
+        if (pos.y < region.getMinHeight() || pos.y >= region.getMaxHeight()) return;
+        if (!mSeen.insert({dim, pos.x, pos.y, pos.z}).second) return;
+        Saved b{dim, pos, game::blockId(region.getBlock(pos)), statesJson(region.getBlock(pos)), {}, {}};
+        Block const& extra = region.getExtraBlock(pos);
+        if (!extra.isAir()) {
+            b.extraId     = game::blockId(extra);
+            b.extraStates = statesJson(extra);
+        }
+        mBlocks.push_back(std::move(b));
+    }
+    /// Saves the blocks makePortalAt changes around a portal whose lowest corner is `corner`.
+    void saveSite(BlockSource& region, BlockPos const& corner) {
+        for (int dy = -1; dy <= 5; ++dy)
+            for (int dx = -1; dx <= 2; ++dx)
+                for (int dz = -1; dz <= 2; ++dz) save(region, BlockPos{corner.x + dx, corner.y + dy, corner.z + dz});
+        mSites.emplace_back(static_cast<int>(region.getDimensionId()), corner);
+    }
+    /// Saves every site makePortalAt builds from now on (until restore() or the end of the test).
+    void watchSites() {
+        mWatching = true;
+        tp::setSiteObserver([this](BlockSource& region, BlockPos const& corner) { saveSite(region, corner); });
+    }
+    [[nodiscard]] std::size_t sites() const { return mSites.size(); }
+    /// Puts every saved block back; the number of blocks that had changed.
+    ll::coro::CoroTask<int> restore() {
+        if (mWatching) tp::setSiteObserver({});
+        mWatching   = false;
+        auto blocks = std::move(mBlocks);
+        mBlocks.clear();
+        mSeen.clear();
+        int n = co_await putBack(blocks);
+        for (auto const& [dim, corner] : mSites) portalIndexTouch(dim, corner);
+        mSites.clear();
+        co_return n;
+    }
+
+private:
+    struct Saved {
+        int            dim = 0;
+        BlockPos       pos;
+        std::string    id;
+        nlohmann::json states;
+        std::string    extraId; ///< the liquid layer ("" when empty)
+        nlohmann::json extraStates;
+    };
+
+    /// game::statesOf (text values) as blockWithStates takes them (bool, int or text).
+    static nlohmann::json statesJson(Block const& block) {
+        nlohmann::json out = nlohmann::json::object();
+        for (auto const& [name, text] : game::statesOf(block)) {
+            if (text == "true" || text == "false") out[name] = text == "true";
+            else if (!text.empty() && (std::isdigit(static_cast<unsigned char>(text[0])) || (text[0] == '-' && text.size() > 1))
+                     && text.find_first_not_of("-0123456789") == std::string::npos)
+                out[name] = std::stoi(text);
+            else out[name] = text;
+        }
+        return out;
+    }
+
+    static ll::coro::CoroTask<int> putBack(std::vector<Saved> blocks) {
+        std::stable_sort(blocks.begin(), blocks.end(), [](Saved const& a, Saved const& b) { return a.pos.y < b.pos.y; });
+        std::map<std::tuple<int, int, int>, std::vector<std::size_t>> byChunk;
+        for (std::size_t i = 0; i < blocks.size(); ++i) byChunk[{blocks[i].dim, blocks[i].pos.x >> 4, blocks[i].pos.z >> 4}].push_back(i);
+        int changed = 0;
+        for (auto const& [key, list] : byChunk) {
+            auto [dim, cx, cz] = key;
+            auto hold          = co_await loadArea(dim, BlockPos{cx * 16 + 8, 64, cz * 16 + 8}, 0);
+            auto* region       = game::regionOf(dim);
+            if (!hold || !region) {
+                log().warn("dimension selftest: chunk {} {} of dimension {} did not load: {} blocks not put back", cx, cz, dim, list.size());
+                continue;
+            }
+            auto const* air = game::blockWith("minecraft:air");
+            for (auto i : list) {
+                auto const& b    = blocks[i];
+                auto const* want = game::blockWithStates(b.id, b.states);
+                if (!want) want = game::blockWith(b.id);
+                if (want && &region->getBlock(b.pos) != want) {
+                    game::setBlock(*region, b.pos, *want);
+                    ++changed;
+                }
+                auto const* extra = b.extraId.empty() ? air : game::blockWithStates(b.extraId, b.extraStates);
+                if (extra && &region->getExtraBlock(b.pos) != extra) region->setExtraBlock(b.pos, *extra, 3);
+            }
+        }
+        co_return changed;
+    }
+
+    std::vector<Saved>                         mBlocks;
+    std::set<std::tuple<int, int, int, int>>   mSeen;
+    std::vector<std::pair<int, BlockPos>>      mSites;
+    bool                                       mWatching = false;
+};
 
 // ---- the dimension (spike S1) ---------------------------------------------------------------------------------------
 
@@ -227,22 +345,33 @@ GF_REGISTER_SELFTEST("dimension.registered", [](Context& ctx) {
     ctx.check(std::abs(ow->getTimeOfDay(6000, 0.0f) - want) > 1e-3f, "the overworld's time still flows");
 });
 
-// A player enters the dimension and blocks can be placed from y -32 to y 255.
+// A player enters the dimension and blocks can be placed from y -32 to y 255 (in the generated
+// terrain: the blocks it had are put back afterwards).
 GF_REGISTER_SELFTEST("dimension.enter", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.require(co_await ctx.inTwilight(), "moved into the Twilight Forest");
     auto tf = *world::twilight();
     ctx.check(static_cast<int>(ctx.player().getDimensionId()) == static_cast<int>(tf), "the player is in the Twilight Forest");
-    auto at = ctx.testPos(5400);
+    auto           at = ctx.testPos(5400);
+    TerrainRestore terrain;
+    auto           hold   = co_await loadArea(static_cast<int>(tf), BlockPos{at.x, 0, at.z}, 0);
+    auto*          region = ctx.region();
+    ctx.require(hold != nullptr && region != nullptr, "the test column loaded");
+    auto const* stone = game::blockWith("minecraft:stone");
+    ctx.require(stone != nullptr, "stone");
     for (int y : {world::kMinY, 0, 64, world::kMinY + world::kHeight - 1}) {
-        core::GlobalPos p{static_cast<int>(tf), at.x, y, at.z};
-        ctx.require(co_await ctx.ensureLoaded(p), "chunk loaded at y " + std::to_string(y));
-        ctx.check(ctx.setBlock(p, "minecraft:stone"), "stone set at y " + std::to_string(y));
-        ctx.check(ctx.blockAt(p) == "minecraft:stone", "stone reads back at y " + std::to_string(y));
+        BlockPos p{at.x, y, at.z};
+        auto     was = game::blockId(region->getBlock(p));
+        terrain.save(*region, p);
+        game::setBlock(*region, p, *stone);
+        ctx.check(game::blockId(region->getBlock(p)) == "minecraft:stone", "stone reads back at y " + std::to_string(y) + " (was " + was + ")");
     }
-    auto* region = ctx.region();
-    ctx.require(region != nullptr, "region");
     ctx.check(region->getMinHeight() == world::kMinY, "region min height -32");
     ctx.check(region->getMaxHeight() == world::kMinY + world::kHeight, "region max height 256");
+    int back = co_await terrain.restore();
+    ctx.info("put back " + std::to_string(back) + " blocks of the generated terrain");
+    region = game::regionOf(static_cast<int>(tf));
+    ctx.require(region != nullptr, "region");
+    ctx.check(game::blockId(region->getBlock(BlockPos{at.x, world::kMinY + world::kHeight - 1, at.z})) != "minecraft:stone", "the terrain is back");
 });
 
 // ---- config, gamerules, tags ------------------------------------------------------------------------------------------
@@ -432,6 +561,9 @@ GF_REGISTER_SELFTEST("dimension.portal_travel", [](Context& ctx) -> ll::coro::Co
     auto pool = core::GlobalPos{ctx.dimension(), box.minX + 3, box.minY - 1, box.minZ + 3};
     ctx.require(buildPool(ctx, pool), "pool built");
     ctx.require(portal::tryActivate(*region, game::blockPos(pool)), "lit");
+    // the return portal is built into the generated Twilight Forest: put back afterwards
+    TerrainRestore terrain;
+    terrain.watchSites();
     auto& p  = ctx.player();
     auto  id = idOf(p);
     p.teleport(Vec3{pool.x - 1.5f, static_cast<float>(pool.y + 1), pool.z + 0.5f}, DimensionType(ctx.dimension()));
@@ -459,28 +591,46 @@ GF_REGISTER_SELFTEST("dimension.portal_travel", [](Context& ctx) -> ll::coro::Co
     auto* pl       = playerById(id);
     auto* tfRegion = game::regionOf(tfId);
     ctx.require(pl && tfRegion, "player and dimension");
+    // PortalProcessor: the process stays after the trip (portalTime 61) and decays from here on
+    auto arrived = portalProcessOf(*pl);
+    ctx.check(arrived.hasProcess && arrived.portalTime > 0 && !arrived.travelling,
+              "the portal process is kept after the trip (portalTime " + std::to_string(arrived.portalTime) + ")");
     auto here    = game::blockPosOf(pl->getFeetPos());
     auto portals = tp::portalBlocksNear(*tfRegion, here, 4);
     ctx.check(portals.size() == 4, "a 2x2 return portal (" + std::to_string(portals.size()) + " blocks)");
     BlockPos corner = portals.front();
     for (auto const& b : portals) corner = BlockPos{std::min(corner.x, b.x), b.y, std::min(corner.z, b.z)};
-    cleanupPortalSite(ctx, core::GlobalPos{tfId, corner.x, corner.y, corner.z});
+    ctx.check(terrain.sites() == 1, "the site of the return portal was saved before it was built");
     ctx.check(!game::intState(tfRegion->getBlock(corner), kOneWayState).value_or(1), "the return portal is usable (shouldReturnPortalBeUsable)");
     ctx.info("arrived at " + str(here) + ", return portal at " + str(corner));
     // the way back is cached for the return portal's columns
     auto back = tp::cacheGet("minecraft:overworld", corner.x, corner.z);
     ctx.check(back.has_value(), "the way back is cached");
+    ctx.check(!ctx.blockAt(core::GlobalPos{tfId, corner.x, corner.y - 1, corner.z}).ends_with(":air"), "the return portal stands on the ground (y " + std::to_string(corner.y) + ", " + ctx.blockAt(core::GlobalPos{tfId, corner.x, corner.y - 1, corner.z}) + " below)");
 
-    // back home (after the 10 tick portal cooldown: standing in a portal while it runs restarts it)
-    co_await ctx.ticks(15);
+    // back home as soon as the 10 tick cooldown is over (standing in a portal while it runs
+    // restarts it): the kept process goes on from where it decayed to, so the trip comes sooner
+    // than 60 ticks (TF: transition + 1 - what is left)
+    PortalProcessView left;
+    for (int i = 0; i < 40; ++i) {
+        pl = playerById(id);
+        ctx.require(pl != nullptr, "the player is still there");
+        left = portalProcessOf(*pl);
+        if (left.cooldown <= 0) break;
+        co_await ctx.ticks(1);
+    }
     pl = playerById(id);
     ctx.require(pl != nullptr, "the player is still there");
+    ctx.check(left.cooldown <= 0, "the portal cooldown ran out");
+    ctx.info("stepping into the return portal with portalTime " + std::to_string(left.hasProcess ? left.portalTime : 0));
     pl->teleport(Vec3{corner.x + 0.5f, static_cast<float>(corner.y), corner.z + 0.5f}, DimensionType(tfId));
-    bool home = false;
+    int  leaveTick = -1;
+    bool home      = false;
     for (ticks = 0; ticks < 400 && !home; ++ticks) {
         co_await ctx.ticks(1);
         pl = playerById(id);
         ctx.require(pl != nullptr, "the player is still there");
+        if (leaveTick < 0 && portalProcessOf(*pl).travelling) leaveTick = ticks;
         home = static_cast<int>(pl->getDimensionId()) == ctx.dimension();
         if (home) {
             co_await ctx.ticks(5);
@@ -489,10 +639,23 @@ GF_REGISTER_SELFTEST("dimension.portal_travel", [](Context& ctx) -> ll::coro::Co
         }
     }
     ctx.check(home, "back next to the first portal");
-    ctx.check(!ctx.blockAt(core::GlobalPos{tfId, corner.x, corner.y - 1, corner.z}).ends_with(":air"), "the return portal stands on the ground (y " + std::to_string(corner.y) + ", " + ctx.blockAt(core::GlobalPos{tfId, corner.x, corner.y - 1, corner.z}) + " below)");
+    if (left.hasProcess && left.portalTime > 4) {
+        // the first tick in decays it once more (4), then portalTime counts up from there until
+        // it reaches 60: the trip leaves 65 - left ticks later (a fresh process: 61)
+        int want = kDefaultDelay + 5 - left.portalTime;
+        ctx.check(leaveTick >= 0 && std::abs(leaveTick - want) <= 3 && leaveTick < kDefaultDelay,
+                  "the way back left after " + std::to_string(leaveTick) + " ticks (TF: " + std::to_string(want) + ", the process went on)");
+    } else {
+        ctx.info("the process had run out before the player stepped in: the way back took the full delay");
+        ctx.check(leaveTick >= kDefaultDelay, "the way back left after " + std::to_string(leaveTick) + " ticks");
+    }
     for (auto const& b : portals) tp::cacheRemove("minecraft:overworld", b.x, b.z);
     for (int dx = 0; dx < 2; ++dx)
         for (int dz = 0; dz < 2; ++dz) tp::cacheRemove(world::kDimensionId, pool.x + dx, pool.z + dz);
+    int put = co_await terrain.restore();
+    ctx.info("put back " + std::to_string(put) + " blocks of the generated terrain at the return portal");
+    tfRegion = game::regionOf(tfId);
+    ctx.check(tfRegion && tp::portalBlocksNear(*tfRegion, corner, 2).empty(), "the return portal is gone, the terrain is back");
 });
 
 // newPlayersSpawnInTF (CapabilityEvents#newSpawnInTwilightForest): the player lands in the Twilight
@@ -504,6 +667,9 @@ GF_REGISTER_SELFTEST("dimension.new_player_spawn", [](Context& ctx) -> ll::coro:
     ConfigGuard config;
     gf::config::mut<DimensionConfig>().newPlayersSpawnInTF = true;
     gf::config::mut<DimensionConfig>().portalForNewPlayer  = true;
+    // the portal is built into the generated Twilight Forest: put back afterwards
+    TerrainRestore terrain;
+    terrain.watchSites();
     auto& sp = ctx.spawnPlayer("gf_test_newcomer");
     auto  id = idOf(sp);
     struct Unbanish {
@@ -538,10 +704,10 @@ GF_REGISTER_SELFTEST("dimension.new_player_spawn", [](Context& ctx) -> ll::coro:
     ctx.check(portals.size() == 4, "next to a fresh portal (portalForNewPlayer)");
     if (!portals.empty()) {
         ctx.check(game::intState(game::regionOf(static_cast<int>(*tf))->getBlock(portals.front()), kOneWayState).value_or(0) == 1, "a one-way portal (forced entry)");
-        BlockPos corner = portals.front();
-        for (auto const& b : portals) corner = BlockPos{std::min(corner.x, b.x), b.y, std::min(corner.z, b.z)};
-        cleanupPortalSite(ctx, core::GlobalPos{static_cast<int>(*tf), corner.x, corner.y, corner.z});
     }
+    ctx.check(terrain.sites() == 1, "the portal's site was saved before it was built");
+    int put = co_await terrain.restore();
+    ctx.info("put back " + std::to_string(put) + " blocks of the generated terrain at the new player's portal");
 });
 
 // ---- non-player entities -----------------------------------------------------------------------------------------
@@ -558,6 +724,9 @@ GF_REGISTER_SELFTEST("dimension.item_travel", [](Context& ctx) -> ll::coro::Coro
     auto pool = core::GlobalPos{ctx.dimension(), box.minX + 3, box.minY - 1, box.minZ + 3};
     ctx.require(buildPool(ctx, pool), "pool built");
     ctx.require(portal::tryActivate(*region, game::blockPos(pool)), "lit");
+    // the return portal is built into the generated Twilight Forest: put back afterwards
+    TerrainRestore terrain;
+    terrain.watchSites();
     // the destination (x and z times 8, generated by the Twilight Forest's generator), with nobody there
     int const destX = pool.x * 8, destZ = pool.z * 8;
     // the test player waits next to the pool, in the overworld
@@ -599,13 +768,14 @@ GF_REGISTER_SELFTEST("dimension.item_travel", [](Context& ctx) -> ll::coro::Coro
         BlockPos corner = portals.front();
         for (auto const& b : portals) corner = BlockPos{std::min(corner.x, b.x), b.y, std::min(corner.z, b.z)};
         ctx.check(!ctx.blockAt(core::GlobalPos{tfId, corner.x, corner.y - 1, corner.z}).ends_with(":air"), "the return portal stands on the ground (y " + std::to_string(corner.y) + ", " + ctx.blockAt(core::GlobalPos{tfId, corner.x, corner.y - 1, corner.z}) + " below)");
-        cleanupPortalSite(ctx, core::GlobalPos{tfId, corner.x, corner.y, corner.z});
         for (auto const& b : portals) tp::cacheRemove("minecraft:overworld", b.x, b.z);
     }
     for (int dx = 0; dx < 2; ++dx)
         for (int dz = 0; dz < 2; ++dz) tp::cacheRemove(world::kDimensionId, pool.x + dx, pool.z + dz);
     // it does not come straight back (Entity#getDimensionChangingDelay: 300 ticks for entities)
     there->remove();
+    int put = co_await terrain.restore();
+    ctx.info("put back " + std::to_string(put) + " blocks of the generated terrain at the item's return portal");
 });
 
 // ---- the area loader -------------------------------------------------------------------------------------------------
@@ -668,12 +838,15 @@ GF_REGISTER_SELFTEST("dimension.portal_site_fluids", [](Context& ctx) -> ll::cor
     auto water = site.offset(0, 3, 1), stone = site.offset(1, 4, 0);
     ctx.check(ctx.setBlock(water, "minecraft:water"), "water above the site");
     ctx.check(ctx.setBlock(stone, "minecraft:stone"), "stone above the site");
+    // (the dirt floor reaches below the flat area's ground layer: put back after the test)
+    TerrainRestore terrain;
+    terrain.saveSite(*region, game::blockPos(site));
     tp::makePortalAt(*region, game::blockPos(site), false);
-    cleanupPortalSite(ctx, site);
     ctx.check(countPortals(*region, game::blockPos(site)) == 4, "a 2x2 portal");
     ctx.check(ctx.blockAt(water) == "minecraft:water", "Level#removeBlock leaves the water (" + ctx.blockAt(water) + ")");
     ctx.check(ctx.blockAt(stone) == "minecraft:air", "the stone is cleared (" + ctx.blockAt(stone) + ")");
     co_await ctx.ticks(1);
+    co_await terrain.restore();
 });
 
 // ---- TFConfig#getPortalLockingAdvancement ------------------------------------------------------------------------------------
@@ -697,6 +870,11 @@ GF_REGISTER_SELFTEST("dimension.portal_lock", [](Context& ctx) {
         ctx.check(portalLockingAdvancement(true).has_value(), "the configured lock is kept");
         ctx.check(!cfg.portalUnlockedByAdvancement.empty(), "and stays in the config");
     }
+    // a vanilla advancement is valid in TF (PlayerHelper.getAdvancement): kept, never cleared
+    ctx.check(isVanillaAdvancement("minecraft:story/enter_the_nether") && !isVanillaAdvancement("minecraft:Not Valid"), "vanilla ids");
+    cfg.portalUnlockedByAdvancement = "minecraft:story/enter_the_nether";
+    ctx.check(portalLockingAdvancement(true) == std::optional<std::string>("minecraft:story/enter_the_nether"), "a vanilla advancement locks portals");
+    ctx.check(cfg.portalUnlockedByAdvancement == "minecraft:story/enter_the_nether", "and stays in the config");
 });
 
 // ---- the per-player clock of vanilla clients ----------------------------------------------------------------------------------
@@ -844,21 +1022,18 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
     auto nether = runTpFunction(1, Vec3{10.0f, 64.0f, 10.0f}, true);
     ctx.check(nether && nether->pos.x == 640.0f && nether->pos.z == 640.0f, "the nether (scale 8) is 64 times farther in the Twilight Forest");
 
-    // the behavior pack function, run by the test player at its feet (Y moved to 70 by `positioned`)
+    // the behavior pack function, run by the test player at its feet, with Y moved by `positioned`
+    // to the generated ground of the arrival column in the Twilight Forest (loaded without a
+    // player), so the player lands on the terrain
     auto& p    = ctx.player();
     auto  id   = idOf(p);
     auto  name = p.getRealName();
     auto  at   = ctx.testPos(5498);
-    // a platform under the arrival spot first (the Twilight Forest is void until F5); loading it
-    // may take the test player there
-    BlockPos floor{static_cast<int>(std::floor((at.x + 0.5f) * 8.0f)), 69, static_cast<int>(std::floor((at.z + 0.5f) * 8.0f))};
-    ctx.require(co_await ctx.ensureLoaded(core::GlobalPos{tfId, floor.x, floor.y, floor.z}), "the arrival spot loaded");
-    for (int dx = -1; dx <= 1; ++dx)
-        for (int dz = -1; dz <= 1; ++dz) {
-            core::GlobalPos f{tfId, floor.x + dx, floor.y, floor.z + dz};
-            ctx.setBlock(f, "minecraft:stone");
-            ctx.cleanupBlock(f);
-        }
+    BlockPos column{static_cast<int>(std::floor((at.x + 0.5f) * 8.0f)), 0, static_cast<int>(std::floor((at.z + 0.5f) * 8.0f))};
+    auto     columnHold = co_await loadArea(tfId, column, 2);
+    ctx.require(columnHold != nullptr && game::regionOf(tfId) != nullptr, "the arrival column loaded");
+    int ground = tp::heightmap(*game::regionOf(tfId), column.x, column.z);
+    ctx.info("the arrival column's ground is at y " + std::to_string(ground));
     // then the test player stands at the source spot in the overworld
     ctx.player().teleport(Vec3{at.x + 0.5f, static_cast<float>(at.y), at.z + 0.5f}, DimensionType(ctx.dimension()));
     Player* pl = nullptr;
@@ -869,14 +1044,14 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
     }
     ctx.require(pl != nullptr && static_cast<int>(pl->getDimensionId()) == ctx.dimension(), "the test player at the source spot");
     Vec3 source = pl->getFeetPos();
-    source.y    = 70.0f;
+    source.y    = static_cast<float>(ground);
     auto want   = runTpFunction(ctx.dimension(), source, true);
     ctx.require(want.has_value(), "the expected destination");
     if (want->player != id) {
         ctx.info("another player is nearer to the scaled position: the in-game part is skipped");
         co_return;
     }
-    auto [okF, outF] = runCommand("execute as \"" + name + "\" at @s positioned ~ 70 ~ run function twilightforest/dimension/tp_twilight");
+    auto [okF, outF] = runCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function twilightforest/dimension/tp_twilight", name, ground));
     ctx.check(okF, "function tp_twilight runs (" + outF + ")");
     bool there = false;
     for (int i = 0; okF && i < 200 && !there; ++i) {
@@ -891,7 +1066,7 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
     Vec3 got = pl->getFeetPos();
     ctx.info(std::format("from {:.2f} {:.2f} to {:.2f} {:.2f} {:.2f} in the Twilight Forest", source.x, source.z, got.x, got.y, got.z));
     ctx.check(std::abs(got.x - source.x * 8.0f) < 0.01f && std::abs(got.z - source.z * 8.0f) < 0.01f, "X and Z times 8");
-    ctx.check(std::abs(got.y - 70.0f) < 1.5f, "Y as the execution position had it (70, on the platform)");
+    ctx.check(std::abs(got.y - static_cast<float>(ground)) < 1.5f, std::format("Y as the execution position had it ({}, on the ground)", ground));
     // and back from where it stands, Y back on the overworld's ground
     Vec3 back = got;
     back.y    = static_cast<float>(at.y);
@@ -980,8 +1155,12 @@ GF_REGISTER_SELFTEST("dimension.portal_block", [](Context& ctx) -> ll::coro::Cor
     ctx.check(ctx.blockAt(portalBase.offset(0, 1, 0)) == kPortalBlock, "the portal block stays where it is");
     ctx.check(ctx.blockAt(portalBase.offset(0, 2, 0)) != kPortalBlock, "and was not pushed up");
 
-    // explosions: the portal's own resistance is TF's 0, its fluid's (water) protects it
-    ctx.check(portalState.mDirectData->mExplosionResistance == 0.0f, "the block keeps TF's explosion resistance 0 (strength(-1.0F))");
+    // explosions: Java takes the larger of the block's resistance (0) and its fluid's (water) for
+    // every explosion: the block carries the water's
+    auto const* waterBlock = game::blockWith("minecraft:water");
+    ctx.require(waterBlock != nullptr, "water");
+    ctx.check(portalState.mDirectData->mExplosionResistance == waterBlock->mDirectData->mExplosionResistance,
+              std::format("the portal resists explosions as water does ({} / {})", portalState.mDirectData->mExplosionResistance, waterBlock->mDirectData->mExplosionResistance));
     auto glass = pool.offset(0, 1, 0);
     ctx.setBlock(glass, "minecraft:glass");
     auto level = ll::service::getLevel();
@@ -1095,6 +1274,255 @@ GF_REGISTER_SELFTEST("dimension.dimension_type", [](Context& ctx) {
     ctx.check(dark(t, 13, 0, 6, {31, 7}), "sky light 13 darkened by 6 is 7");
     ctx.check(!dark(t, 14, 0, 6, {31, 7}), "sky light 14 darkened by 6 is 8");
     ctx.check(dark(ext::dimensionType(1), 0, 15, 0, {0, 0}) == false && dark(ext::dimensionType(1), 0, 7, 0, {0, 0}), "the nether: no block light limit, a constant 7");
+});
+
+// ---- TFPortalBlock#getFluidState: what the portal's water does ----------------------------------------------
+
+// The portal is level-1 water: an entity in it lands without fall damage, its fire goes out,
+// water-sensitive mobs take drowning damage there, and farmland within 4 blocks stays moist.
+GF_REGISTER_SELFTEST("dimension.portal_water", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto  box    = co_await ctx.flatArea(5420, 16, 24);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    int  dim  = ctx.dimension();
+    auto pool = core::GlobalPos{dim, box.minX + 3, box.minY - 1, box.minZ + 3};
+    ctx.require(buildPool(ctx, pool), "pool built");
+    ctx.require(portal::tryActivate(*region, game::blockPos(pool)), "lit");
+    auto level = ll::service::getLevel();
+    ctx.require(level.has_value(), "level");
+    co_await ctx.ticks(2); // the portal index reads the pool (the water rules run on it)
+
+    Vec3 inPool{pool.x + 1.0f, static_cast<float>(pool.y), pool.z + 1.0f};
+    Vec3 onGrass{box.minX + 12.5f, static_cast<float>(box.minY), box.minZ + 12.5f};
+    std::vector<std::int64_t> spawned;
+    struct Despawn {
+        std::vector<std::int64_t>& ids;
+        ~Despawn() {
+            if (auto level = ll::service::getLevel())
+                for (auto id : ids)
+                    if (auto* a = level->fetchEntity(ActorUniqueID{id}, false)) a->remove();
+        }
+    } despawn{spawned};
+    auto spawn = [&](char const* type, Vec3 const& at) -> std::int64_t {
+        auto* r = game::regionOf(dim);
+        if (!r) return 0;
+        ActorUniqueID uid{};
+        auto*         a = CommandUtils::spawnEntityAt(*r, at, ActorDefinitionIdentifier(type), uid, nullptr);
+        if (!a) return 0;
+        // on portal cooldown: in the pool it stays (its cooldown starts again each tick inside)
+        setPortalCooldown(*a, 1000);
+        spawned.push_back(idOf(*a));
+        return idOf(*a);
+    };
+    auto actor = [&](std::int64_t id) -> Actor* { return ll::service::getLevel()->fetchEntity(ActorUniqueID{id}, false); };
+
+    // where the water is: on the pool's floor in it, on the rim not
+    auto probe = spawn("minecraft:pig", inPool);
+    ctx.require(probe != 0, "pig spawned");
+    ctx.check(actor(probe) && inPortalWater(*actor(probe), *region), "a pig on the pool's floor is in the portal's water");
+    if (auto* a = actor(probe)) {
+        a->teleport(Vec3{pool.x - 0.5f, static_cast<float>(pool.y + 1), pool.z + 0.5f}, DimensionType(dim));
+        ctx.check(!inPortalWater(*a, *region), "a pig on the rim is not");
+        a->remove();
+    }
+
+    // fall damage: a pig dropped 8 blocks onto grass is hurt, one dropped into the pool is not
+    auto grassPig = spawn("minecraft:pig", Vec3{onGrass.x, onGrass.y + 8.0f, onGrass.z});
+    auto poolPig  = spawn("minecraft:pig", Vec3{inPool.x, inPool.y + 8.0f, inPool.z});
+    ctx.require(grassPig != 0 && poolPig != 0, "pigs spawned");
+    int grassFull = actor(grassPig)->getHealth(), poolFull = actor(poolPig)->getHealth();
+    int grassMin = grassFull, poolMin = poolFull;
+    for (int i = 0; i < 50; ++i) {
+        co_await ctx.ticks(1);
+        auto* g = actor(grassPig);
+        auto* q = actor(poolPig);
+        grassMin = std::min(grassMin, g ? g->getHealth() : 0);
+        poolMin  = std::min(poolMin, q ? q->getHealth() : 0);
+    }
+    ctx.info(std::format("pigs after an 8 block fall: on grass {} of {}, into the portal {} of {}", grassMin, grassFull, poolMin, poolFull));
+    ctx.check(grassMin < grassFull, "the control: a pig falling 8 blocks onto grass is hurt");
+    ctx.check(poolMin == poolFull, "a pig falling 8 blocks into the portal's water lands unhurt");
+
+    // the same for a survival player
+    auto& faller   = ctx.spawnPlayer("gf_test_faller");
+    auto  fallerId = idOf(faller);
+    faller.setPlayerGameType(GameType::Survival);
+    setPortalCooldown(faller, 1000);
+    auto fall = [&](Vec3 const& onto) {
+        if (auto* f = playerById(fallerId)) f->teleport(Vec3{onto.x, onto.y + 8.0f, onto.z}, DimensionType(dim));
+    };
+    fall(inPool);
+    int full = 20, intoPool = 20, ontoGrass = 20;
+    for (int i = 0; i < 50; ++i) {
+        co_await ctx.ticks(1);
+        if (auto* f = playerById(fallerId)) intoPool = std::min(intoPool, f->getHealth());
+    }
+    fall(onGrass);
+    for (int i = 0; i < 50; ++i) {
+        co_await ctx.ticks(1);
+        if (auto* f = playerById(fallerId)) ontoGrass = std::min(ontoGrass, f->getHealth());
+    }
+    ctx.info(std::format("a survival player after an 8 block fall: into the portal {} of {}, onto grass {}", intoPool, full, ontoGrass));
+    ctx.check(intoPool == full, "a survival player jumping 8 blocks into the portal's water lands unhurt");
+    if (ontoGrass < full) ctx.info("(the control: the same fall onto grass hurts)");
+    else ctx.info("the simulated player took no fall damage on grass either: the player part only shows no damage");
+
+    // fire: a burning pig in the pool is put out, one on the grass keeps burning
+    auto wetPig = spawn("minecraft:pig", inPool);
+    auto dryPig = spawn("minecraft:pig", onGrass);
+    ctx.require(wetPig != 0 && dryPig != 0, "pigs spawned");
+    actor(wetPig)->setOnFire(8, true);
+    actor(dryPig)->setOnFire(8, true);
+    co_await ctx.ticks(3);
+    ctx.check(actor(wetPig) && !actor(wetPig)->isOnFire(), "a burning pig in the portal's water is put out");
+    ctx.check(actor(dryPig) && actor(dryPig)->isOnFire(), "the control: a burning pig on grass keeps burning");
+
+    // water-sensitive mobs (Entity#isSensitiveToWater): a snow golem in the pool takes drowning damage
+    auto golem = spawn("minecraft:snow_golem", inPool);
+    ctx.require(golem != 0, "snow golem spawned");
+    int golemFull = actor(golem)->getHealth(), golemMin = golemFull;
+    for (int i = 0; i < 30; ++i) {
+        co_await ctx.ticks(1);
+        auto* g  = actor(golem);
+        golemMin = std::min(golemMin, g ? g->getHealth() : 0);
+    }
+    ctx.check(golemMin < golemFull, std::format("a snow golem in the portal's water is hurt ({} of {})", golemMin, golemFull));
+
+    // farmland 3 blocks from the pool is made fully moist by a random tick; far from it the game's
+    // rule dries it
+    region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    auto nearFarm = pool.offset(-3, 0, 1);
+    auto farFarm  = core::GlobalPos{dim, box.minX + 13, pool.y, box.minZ + 13};
+    ctx.require(ctx.setBlock(nearFarm, "minecraft:farmland", {{"moisturized_amount", 2}}), "farmland near the pool");
+    ctx.require(ctx.setBlock(farFarm, "minecraft:farmland", {{"moisturized_amount", 5}}), "farmland far from it");
+    ctx.check(portalWatersFarmland(*region, game::blockPos(nearFarm)), "the portal waters the farmland 3 blocks away");
+    ctx.check(!portalWatersFarmland(*region, game::blockPos(farFarm)), "but not the far one");
+    auto& random = level->getRandom();
+    for (auto const& f : {nearFarm, farFarm}) region->getBlock(game::blockPos(f)).randomTick(*region, game::blockPos(f), random);
+    auto moisture = [&](core::GlobalPos const& f) { return game::intState(region->getBlock(game::blockPos(f)), "moisturized_amount").value_or(-1); };
+    ctx.check(moisture(nearFarm) == 7, "the farmland near the portal is fully moist after a random tick (" + std::to_string(moisture(nearFarm)) + ")");
+    auto* weather = region->getDimension().mWeather.get();
+    bool  raining = weather && weather->isRainingAt(*region, game::blockPos(farFarm.offset(0, 1, 0)));
+    if (raining) ctx.info("it rains on the far farmland: the control is skipped");
+    else ctx.check(moisture(farFarm) == 4, "the control: the far farmland dries by one (" + std::to_string(moisture(farFarm)) + ")");
+});
+
+// ---- gf::world::teleport ------------------------------------------------------------------------------------------
+
+std::vector<std::tuple<std::int64_t, int, int>>& heardTeleports() {
+    static std::vector<std::tuple<std::int64_t, int, int>> v;
+    return v;
+}
+void listenToTeleports() {
+    static bool const once = [] {
+        portal::onTeleported([](Player& p, DimensionType from, DimensionType to) {
+            auto& v = heardTeleports();
+            if (v.size() > 64) v.erase(v.begin());
+            v.emplace_back(idOf(p), static_cast<int>(from), static_cast<int>(to));
+        });
+        return true;
+    }();
+    (void)once;
+}
+bool heard(std::int64_t id, int from, int to) {
+    auto const& v = heardTeleports();
+    return std::find(v.begin(), v.end(), std::make_tuple(id, from, to)) != v.end();
+}
+
+// gf::world::teleport moves a player with its riders (its shoulder parrots on Bedrock): within a
+// dimension at once, into another one once the destination has loaded (the player waits where it
+// is meanwhile), and tells portal::onTeleported.
+GF_REGISTER_SELFTEST("dimension.teleport_riders", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto tf = world::twilight();
+    ctx.require(tf.has_value(), "the Twilight Forest exists");
+    listenToTeleports();
+    heardTeleports().clear();
+    int  tfId = static_cast<int>(*tf);
+    int  home = ctx.dimension();
+    auto at   = ctx.testPos(5470, 2);
+    auto id   = idOf(ctx.player());
+    Vec3 start{at.x + 0.5f, static_cast<float>(at.y), at.z + 0.5f};
+    ctx.player().teleport(start, DimensionType(home));
+    co_await ctx.ticks(2);
+    auto* region = ctx.region();
+    auto* pl     = playerById(id);
+    ctx.require(region && pl, "region and player");
+    std::vector<std::int64_t> parrots;
+    struct Despawn {
+        std::vector<std::int64_t>& ids;
+        ~Despawn() {
+            if (auto level = ll::service::getLevel())
+                for (auto i : ids)
+                    if (auto* a = level->fetchEntity(ActorUniqueID{i}, false)) a->remove();
+        }
+    } despawn{parrots};
+    ActorUniqueID uid{};
+    auto*         parrot = CommandUtils::spawnEntityAt(*region, start, ActorDefinitionIdentifier("minecraft:parrot"), uid, nullptr);
+    ctx.require(parrot != nullptr, "parrot spawned");
+    parrots.push_back(idOf(*parrot));
+    parrot->startRiding(*pl, true);
+    co_await ctx.ticks(2);
+    auto riderOf = [&](Player& player) -> Actor* {
+        auto* r = player.getFirstPassenger();
+        if (r) parrots.push_back(idOf(*r));
+        return r && r->getTypeName() == "minecraft:parrot" ? r : nullptr;
+    };
+    pl             = playerById(id);
+    bool withRider = pl && riderOf(*pl);
+    if (!withRider) ctx.info("the player could not carry the parrot: only the player's moves are checked");
+
+    // within the dimension: at once
+    Vec3 near{start.x + 3.0f, start.y, start.z};
+    ctx.require(world::teleport(*pl, DimensionType(home), near, 90.0f), "teleport within the dimension");
+    pl = playerById(id);
+    ctx.require(pl != nullptr, "player");
+    ctx.check(std::abs(pl->getFeetPos().x - near.x) < 0.01f && std::abs(pl->getFeetPos().z - near.z) < 0.01f, "the player moved at once");
+    ctx.check(heard(id, home, home), "portal::onTeleported heard it");
+    co_await ctx.ticks(2);
+    pl = playerById(id);
+    if (withRider) ctx.check(pl && riderOf(*pl), "the parrot is still on its shoulder");
+
+    // into the Twilight Forest, onto the generated ground of a fresh column
+    BlockPos column{(at.x + 3) * 8 + 4, 0, at.z * 8 + 4};
+    int      ground = 0;
+    {
+        auto hold = co_await loadArea(tfId, column, 0);
+        ctx.require(hold != nullptr && game::regionOf(tfId), "the column loaded");
+        ground = tp::heightmap(*game::regionOf(tfId), column.x, column.z);
+    }
+    Vec3 dest{column.x + 0.5f, static_cast<float>(ground), column.z + 0.5f};
+    pl = playerById(id);
+    ctx.require(pl != nullptr, "player");
+    ctx.require(world::teleport(*pl, *tf, dest, 0.0f), "the teleport into the Twilight Forest started");
+    ctx.check(static_cast<int>(pl->getDimensionId()) == home, "the player waits at home while the destination loads");
+    bool there = false;
+    int  ticks = 0;
+    for (; ticks < 300 && !there; ++ticks) {
+        co_await ctx.ticks(1);
+        pl    = playerById(id);
+        there = pl && static_cast<int>(pl->getDimensionId()) == tfId && heard(id, home, tfId);
+    }
+    ctx.require(there, "the player arrived in the Twilight Forest (portal::onTeleported)");
+    co_await ctx.ticks(10);
+    pl = playerById(id);
+    ctx.require(pl != nullptr, "player");
+    ctx.info(std::format("arrived after {} ticks at {:.2f} {:.2f} {:.2f} (asked {:.2f} {} {:.2f})", ticks, pl->getFeetPos().x, pl->getFeetPos().y, pl->getFeetPos().z, dest.x, ground, dest.z));
+    ctx.check(std::abs(pl->getFeetPos().x - dest.x) < 0.5f && std::abs(pl->getFeetPos().z - dest.z) < 0.5f && std::abs(pl->getFeetPos().y - dest.y) < 1.5f, "at the asked spot");
+    if (withRider) ctx.check(riderOf(*pl) != nullptr, "the parrot came along and is on its shoulder again");
+
+    // and home
+    ctx.require(world::teleport(*pl, DimensionType(home), start, 0.0f), "the teleport home started");
+    bool back = false;
+    for (int i = 0; i < 300 && !back; ++i) {
+        co_await ctx.ticks(1);
+        pl   = playerById(id);
+        back = pl && static_cast<int>(pl->getDimensionId()) == home && heard(id, tfId, home);
+    }
+    ctx.check(back, "the player is home again");
+    co_await ctx.ticks(10);
+    pl = playerById(id);
+    if (withRider && pl) ctx.check(riderOf(*pl) != nullptr, "with the parrot");
 });
 
 } // namespace

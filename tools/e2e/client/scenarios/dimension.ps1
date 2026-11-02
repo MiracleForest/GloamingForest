@@ -1,11 +1,20 @@
 # F4 (dimension): a real player lights a Twilight portal with a thrown diamond, travels into the
 # Twilight Forest (portal overlay with the client mod, camera fade on a vanilla client), sees the
-# dimension render from y -32 to 255 under its fixed night (time 13000), and comes back.
+# dimension render from y -32 to 255 under its fixed night (time 13000), and comes back the same
+# way, in survival, through the return portal the teleporter built on the generated ground.
+# The overlay / fade is measured: frames 0.5 s apart are compared with a reference frame of the
+# same view without it, which gives its opacity over time, next to TF's (the portal sprite's
+# alpha 3/4 x timer / 60).
 # The fixed time is checked twice: the sky straight up is sampled 6 times over 20 s and must stay
 # far darker than the overworld's noon sky (no flicker back to day), and in remote modes the host
 # watches what it sends the client for the same 20 s (selftest dimension.clock_watch: every tick
 # ends with the time of day 13000).
-# Screenshots: out/dimension/{start,sky-overworld,portal-lit,portal-overlay-0.5s..2s,twilight-arrival,sky-1..6,twilight-up,twilight-down,back-home}.png
+# The build range: the client's own dimension reads y -32..256 (the client mod logs it; for a
+# vanilla client the host logs the DimensionDataPacket it was sent), and a stone pillar from y -32
+# to 255 shows both ends: its top against the sky, its foot from a room cleared at the bottom of
+# the world.
+# Screenshots: out/dimension/{start,sky-overworld,portal-reference,portal-lit,portal-overlay-0.5s..2.5s,
+# twilight-arrival,sky-1..6,twilight-up,twilight-bottom,return-overlay-1s,return-overlay-2s,back-home}.png
 $hostPrefix = if ($script:Mode -eq 'local') { '' } else { '\[host\].*' }
 
 # Mean luminance (0..255) of the middle of a screenshot (the sky when looking straight up; the
@@ -23,6 +32,64 @@ function Get-SkyLuminance([string]$path) {
         return [Math]::Round($sum / [Math]::Max($n, 1), 1)
     } finally { $bmp.Dispose() }
 }
+
+# Mean colour of a whole screenshot (every 16th pixel), as @(r, g, b).
+function Get-MeanColour([string]$path) {
+    $bmp = [System.Drawing.Bitmap]::FromFile($path)
+    try {
+        $r = 0.0; $g = 0.0; $b = 0.0; $n = 0
+        for ($y = 0; $y -lt $bmp.Height; $y += 16) { for ($x = 0; $x -lt $bmp.Width; $x += 16) { $c = $bmp.GetPixel($x, $y); $r += $c.R; $g += $c.G; $b += $c.B; $n++ } }
+        return @(($r / $n), ($g / $n), ($b / $n))
+    } finally { $bmp.Dispose() }
+}
+
+# How far a frame went from the reference towards the fade colour (0: none, 1: the colour itself).
+$fadeColour = @(84.0, 10.0, 186.0) # the portal sprite's average (the camera fade's colour)
+function Get-FadeAlpha($frame, $reference) {
+    $num = 0.0; $den = 0.0
+    for ($i = 0; $i -lt 3; $i++) {
+        $d = $fadeColour[$i] - $reference[$i]
+        $num += ($frame[$i] - $reference[$i]) * $d; $den += $d * $d
+    }
+    return [Math]::Round($num / [Math]::Max($den, 1.0), 2)
+}
+
+# The time stamp of a log line ([yyyy-MM-dd HH:mm:ss.fff ...]).
+function Get-LineTime([string]$line) {
+    $m = [regex]::Match($line, '\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3}) ')
+    if (-not $m.Success) { return $null }
+    return [datetime]::ParseExact($m.Groups[1].Value, 'yyyy-MM-dd HH:mm:ss.fff', [Globalization.CultureInfo]::InvariantCulture)
+}
+
+# Frames 0.5 s apart while the player stands in a portal, with the time each was taken.
+function Save-OverlayFrames([string]$prefix, [string[]]$labels) {
+    $frames = @()
+    foreach ($t in $labels) {
+        Start-Sleep -Milliseconds 500
+        $before = Get-Date
+        $shot = Save-Screenshot "$prefix-$t"
+        $frames += [pscustomobject]@{ Label = $t; Path = $shot; Time = $before.AddTicks(((Get-Date) - $before).Ticks / 2) }
+    }
+    return $frames
+}
+
+# The opacity of the overlay frames, from when the server started the fade (or the client mod its
+# overlay), next to TF's: 0.75 x timer / 60 with the timer one tick in when it starts.
+function Write-OverlayRamp($frames, $reference, [string]$startPattern, [int]$since) {
+    $start = Get-LeviLog -Since $since | Select-String -Pattern $startPattern | Select-Object -First 1
+    $t0 = if ($start) { Get-LineTime $start.Line } else { $null }
+    $rows = @()
+    foreach ($f in $frames) {
+        $c = Get-MeanColour $f.Path
+        $alpha = Get-FadeAlpha $c $reference
+        $t = if ($t0) { [Math]::Round(($f.Time - $t0).TotalSeconds, 2) } else { $null }
+        $tf = if ($null -ne $t) { [Math]::Round(0.75 * [Math]::Min(1.0, ($t * 20.0 + 1.0) / 60.0), 2) } else { $null }
+        Write-Step ("{0}: mean colour {1:N0} {2:N0} {3:N0}, opacity {4} at {5} s (TF {6})" -f $f.Label, $c[0], $c[1], $c[2], $alpha, $t, $tf)
+        $rows += [pscustomobject]@{ Label = $f.Label; Alpha = $alpha; T = $t; Tf = $tf }
+    }
+    return $rows
+}
+
 Wait-LogLine "${hostPrefix}GloamingForest world ready" 120 | Out-Null
 if ($script:Mode -eq 'local') {
     $r = Invoke-SelfTest 'dimension.registered'
@@ -48,9 +115,15 @@ Invoke-Chat '/fill 101 -61 103 102 -61 104 water'
 Invoke-Chat '/clear @s'
 Invoke-Chat '/give @s diamond 1'
 # the lighting strikes everything within 3 blocks (destructivePortalLightning)
-Invoke-Chat '/effect @s resistance 300 4 true'
-Invoke-Chat '/effect @s fire_resistance 300 0 true'
+Invoke-Chat '/effect @s resistance 600 4 true'
+Invoke-Chat '/effect @s fire_resistance 600 0 true'
 Start-Sleep -Seconds 1
+# the reference for the overlay: the view from the spot the player will stand on in the portal,
+# while the pool is still water (the eyes are above it)
+Invoke-Teleport '/tp @s 101.6 -61 103.6 0 20'
+Start-Sleep -Milliseconds 1500
+$reference = Get-MeanColour (Save-Screenshot 'portal-reference')
+Write-Step ("reference view: mean colour {0:N0} {1:N0} {2:N0}" -f $reference[0], $reference[1], $reference[2])
 
 # throw the diamond into the pool from its north rim, looking south and down
 Invoke-Teleport '/tp @s 101.5 -60 102.4 0 60'
@@ -74,23 +147,27 @@ Save-Screenshot 'portal-lit' | Out-Null
 # stand in the portal: the overlay / fade grows over 3 s, then the trip
 $mark = Get-LogMark
 Invoke-Teleport '/tp @s 101.6 -61 103.6 0 20'
-# four frames 0.5 s apart, with their mean colour (how the overlay / fade grows)
-foreach ($t in 'portal-overlay-0.5s', 'portal-overlay-1s', 'portal-overlay-1.5s', 'portal-overlay-2s') {
-    Start-Sleep -Milliseconds 500
-    $shot = Save-Screenshot $t
-    $bmp = [System.Drawing.Bitmap]::FromFile($shot)
-    try {
-        $r = 0.0; $g = 0.0; $b = 0.0; $n = 0
-        for ($y = 0; $y -lt $bmp.Height; $y += 16) { for ($x = 0; $x -lt $bmp.Width; $x += 16) { $c = $bmp.GetPixel($x, $y); $r += $c.R; $g += $c.G; $b += $c.B; $n++ } }
-        Write-Step ("{0}: mean colour {1:N0} {2:N0} {3:N0}" -f $t, ($r / $n), ($g / $n), ($b / $n))
-    } finally { $bmp.Dispose() }
-}
+$frames = Save-OverlayFrames 'portal-overlay' @('0.5s', '1s', '1.5s', '2s', '2.5s')
 if ($script:Mode -eq 'local') {
-    Wait-LogLine 'client portal overlay: ' 10 -Since $mark | Out-Null
+    $overlayLine = Wait-LogLine 'client portal overlay: ' 10 -Since $mark
+    Write-Step $overlayLine
 } else {
     Wait-LogLine '\[host\].*dimension: portal fade shown to' 10 -Since $mark | Out-Null
 }
 $trip = Wait-LogLine "${hostPrefix}dimension: .* travelled from minecraft:overworld to twilightforest:twilight_forest at (\S+) (\S+) (\S+)" 60 -Since $mark
+$startPattern = if ($script:Mode -eq 'local' -and $overlayLine -match 'native') { 'client portal overlay: native' } else { 'dimension: portal fade shown to' }
+$rampRows = Write-OverlayRamp $frames $reference $startPattern $mark
+# Bedrock's fade grows to opaque only: it grows at TF's rate and is TF's 0.75 at the trip, opaque
+# after it. Before 2.5 s it must stay near TF's ramp (round 3 had it at 0.65 after 0.5 s)
+foreach ($row in $rampRows) {
+    if ($null -ne $row.T -and $row.T -lt 2.6 -and $row.Alpha -gt $row.Tf + 0.25) {
+        throw "the portal overlay is too opaque too early: $($row.Alpha) at $($row.T) s (TF $($row.Tf))"
+    }
+}
+$enter = Get-LeviLog -Since $mark | Select-String -Pattern 'enters the portal at' | Select-Object -First 1
+$tEnter = if ($enter) { Get-LineTime $enter.Line } else { $null }
+$tTrip  = Get-LineTime $trip
+if ($tEnter -and $tTrip) { Write-Step ("the trip took {0:N2} s from the 60th tick in to the arrival" -f ($tTrip - $tEnter).TotalSeconds) }
 $built = Get-LeviLog -Since $mark | Select-String -Pattern 'built a portal at (-?\d+) (-?\d+) (-?\d+) in twilightforest:twilight_forest' | Select-Object -Last 1
 Start-Sleep -Seconds 5
 Save-Screenshot 'twilight-arrival' | Out-Null
@@ -99,6 +176,20 @@ if ($script:Mode -ne 'remote-vanilla') {
     $ramp = Get-LeviLog -Since $mark | Select-String -Pattern 'brightness ramp now has ambient light' | Where-Object { $_.Line -notmatch '\[host\]' } | Select-Object -First 1
     if (-not $ramp) { throw 'the client did not give the Twilight Forest its ambient light (no "brightness ramp now has ambient light" line)' }
     Write-Step $ramp.Line
+}
+# the build range the client built the dimension with
+if ($script:Mode -ne 'remote-vanilla') {
+    $range = Get-LeviLog -Since $mark | Select-String -Pattern 'client dimension twilightforest:twilight_forest: y (-?\d+)\.\.(-?\d+)' | Where-Object { $_.Line -notmatch '\[host\]' } | Select-Object -First 1
+    if (-not $range) { throw 'the client mod did not log its Twilight Forest build range' }
+    Write-Step $range.Line
+    if ($range.Matches[0].Groups[1].Value -ne '-32' -or $range.Matches[0].Groups[2].Value -ne '256') { throw "the client builds the Twilight Forest at y $($range.Matches[0].Groups[1].Value)..$($range.Matches[0].Groups[2].Value), not -32..256" }
+}
+if ($script:Mode -ne 'local') {
+    # what the host sent this client when it joined (DimensionDataPacket)
+    $sent = Get-LeviLog | Select-String -Pattern '\[host\].*dimension definitions sent to .* give twilightforest:twilight_forest y (-?\d+)\.\.(-?\d+)' | Select-Object -Last 1
+    if (-not $sent) { throw 'the host logged no dimension definitions sent to the client' }
+    Write-Step $sent.Line
+    if ($sent.Matches[0].Groups[1].Value -ne '-32' -or $sent.Matches[0].Groups[2].Value -ne '256') { throw "the client was sent y $($sent.Matches[0].Groups[1].Value)..$($sent.Matches[0].Groups[2].Value) for the Twilight Forest, not -32..256" }
 }
 
 # the fixed time: 20 s under the Twilight sky (and, in remote modes, the host's view of the clock it
@@ -129,32 +220,56 @@ if ($script:Mode -ne 'local') {
     }
 }
 
-# the build range: a stone pillar from y -32 to y 255 next to the player
-Invoke-Chat '/fill ~3 -32 ~3 ~3 255 ~3 stone'
-Invoke-Chat '/setblock ~3 255 ~3 glowstone'
-Invoke-Chat '/setblock ~3 -32 ~3 glowstone'
+# the build range: a stone pillar from y -32 to y 255 next to the arrival spot, glowstone at both ends
+$tm = [regex]::Match($trip, 'at (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)\s*$')
+$ax = [int][Math]::Floor([double]::Parse($tm.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture))
+$ay = [double]::Parse($tm.Groups[2].Value, [Globalization.CultureInfo]::InvariantCulture)
+$az = [int][Math]::Floor([double]::Parse($tm.Groups[3].Value, [Globalization.CultureInfo]::InvariantCulture))
+$px = $ax + 3; $pz = $az + 3
+Invoke-Chat "/fill $px -32 $pz $px 255 $pz stone"
+Invoke-Chat "/setblock $px 255 $pz glowstone"
+Invoke-Chat "/setblock $px -32 $pz glowstone"
 Start-Sleep -Seconds 2
-Invoke-Teleport '/tp @s ~ ~ ~ -45 -75'
+Invoke-Teleport ('/tp @s {0} {1} {2} -45 -75' -f ($ax + 0.5), $ay, ($az + 0.5))
 Start-Sleep -Seconds 2
 Save-Screenshot 'twilight-up' | Out-Null
-Invoke-Teleport '/tp @s ~ ~ ~ -45 75'
-Start-Sleep -Seconds 2
-Save-Screenshot 'twilight-down' | Out-Null
-Invoke-Chat '/fill ~3 -32 ~3 ~3 255 ~3 air'
+# its foot: a room cleared at the bottom of the world around it (y -31..-26 on a stone floor at
+# y -32), the player in a corner looking at the glowstone at y -32
+Invoke-Chat ("/fill {0} -32 {1} {2} -32 {3} stone" -f ($px - 2), ($pz - 2), ($px + 2), ($pz + 2))
+Invoke-Chat ("/fill {0} -31 {1} {2} -26 {3} air" -f ($px - 2), ($pz - 2), ($px + 2), ($pz + 2))
+Invoke-Chat "/fill $px -31 $pz $px -26 $pz stone"
+Invoke-Chat "/setblock $px -32 $pz glowstone"
+Invoke-Teleport ('/tp @s {0} -31 {1} -45 35' -f ($px - 1.5), ($pz - 1.5))
+Start-Sleep -Seconds 3
+Save-Screenshot 'twilight-bottom' | Out-Null
+Invoke-Chat "/fill $px -31 $pz $px 255 $pz air"
 
-# and back through the return portal
-if ($built) {
-    $x = [int]$built.Matches[0].Groups[1].Value; $y = [int]$built.Matches[0].Groups[2].Value; $z = [int]$built.Matches[0].Groups[3].Value
-    # the Twilight Forest is still void (F5): the portal there has no floor, so the way back is
-    # taken in creative mode (playersTfPortalCreativeDelay: 1 tick) before the player falls through
-    Invoke-Chat '/gamemode creative'
-    $mark = Get-LogMark
-    Invoke-Teleport ('/tp @s {0} {1} {2} 0 20' -f ($x + 0.6), ($y + 0.4), ($z + 0.6))
-    Wait-LogLine "${hostPrefix}dimension: .* travelled from twilightforest:twilight_forest to minecraft:overworld" 60 -Since $mark | Out-Null
-    Start-Sleep -Seconds 4
-    Save-Screenshot 'back-home' | Out-Null
-    Invoke-Chat '/gamemode survival'
+# and back through the return portal, in survival (the trip, the overlay / fade and the delay of a
+# survival player: playersTfPortalDefaultDelay)
+if (-not $built) { throw 'no "built a portal" line: the return portal is unknown' }
+$x = [int]$built.Matches[0].Groups[1].Value; $y = [int]$built.Matches[0].Groups[2].Value; $z = [int]$built.Matches[0].Groups[3].Value
+Invoke-Chat '/gamemode survival'
+$mark = Get-LogMark
+Invoke-Teleport ('/tp @s {0} {1} {2} 0 20' -f ($x + 0.6), ($y + 0.1), ($z + 0.6))
+$back = Save-OverlayFrames 'return-overlay' @('1s', '2s')
+if ($script:Mode -eq 'local') {
+    Wait-LogLine 'client portal overlay: ' 10 -Since $mark | Out-Null
 } else {
-    Write-Step 'warning: no return portal line; the way back was not tested'
+    Wait-LogLine '\[host\].*dimension: portal fade shown to' 10 -Since $mark | Out-Null
 }
+Wait-LogLine "${hostPrefix}dimension: .* travelled from twilightforest:twilight_forest to minecraft:overworld" 60 -Since $mark | Out-Null
+$enterBack = Get-LeviLog -Since $mark | Select-String -Pattern 'enters the portal at' | Select-Object -First 1
+$fadeBack  = Get-LeviLog -Since $mark | Select-String -Pattern $startPattern | Select-Object -First 1
+$tLeave    = if ($enterBack) { Get-LineTime $enterBack.Line } else { $null }
+$tIn       = if ($fadeBack) { Get-LineTime $fadeBack.Line } else { $null }
+if ($tLeave -and $tIn) {
+    $delay = ($tLeave - $tIn).TotalSeconds
+    Write-Step ("the way back left {0:N2} s after the player stepped in (survival delay: 3 s)" -f $delay)
+    if ($delay -lt 2.5) { throw "the way back left after $delay s: the survival delay of 60 ticks was not kept" }
+} else {
+    Write-Step 'warning: no time stamps on the portal lines: the delay of the way back is not measured'
+}
+foreach ($f in $back) { $c = Get-MeanColour $f.Path; Write-Step ("{0}: mean colour {1:N0} {2:N0} {3:N0}" -f $f.Label, $c[0], $c[1], $c[2]) }
+Start-Sleep -Seconds 4
+Save-Screenshot 'back-home' | Out-Null
 if (-not (Get-GameProcess)) { throw 'the game closed during the trip' }
