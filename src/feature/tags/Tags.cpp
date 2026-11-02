@@ -1,7 +1,8 @@
 // The tag part of contract "data" (F9): TF's tags and the vanilla / c: tags they add to, loaded from
 // the mod's data tree (data/<ns>/tags/<registry>/<path>.json, imported by F1 and unioned with the
 // units' fragments by assemble, rule R6), nested tags resolved, the vanilla members of vanilla tags
-// answered by the bridge (VanillaTags.h).
+// answered by the bridge (VanillaTags.h). The data's vanilla ids are Java's: they become the game's
+// Bedrock ids at load (JavaIds.h); queries take Bedrock ids.
 #include "feature/tags/Tags.h"
 
 #include <algorithm>
@@ -17,6 +18,7 @@
 
 #include "feature/ext/item/Tags.h"
 #include "feature/item/DataFiles.h"
+#include "feature/tags/JavaIds.h"
 #include "feature/tags/TagsInternal.h"
 #include "feature/tags/VanillaTags.h"
 #include "mod/Log.h"
@@ -136,7 +138,8 @@ resolveLocked(Store& s, std::optional<Registry> registry, std::string const& dir
                     for (auto const& b : sub->bridged)
                         if (std::find(out->bridged.begin(), out->bridged.end(), b) == out->bridged.end()) out->bridged.push_back(b);
                 } else {
-                    out->set.insert(data::withNamespace(v));
+                    // the data's Java ids as the game's (JavaIds.h)
+                    for (auto& id : javaids::bedrock(dir, data::withNamespace(v))) out->set.insert(std::move(id));
                 }
             }
         }

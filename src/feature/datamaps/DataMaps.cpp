@@ -3,7 +3,8 @@
 // parrot_imitations), loaded from data/<ns>/data_maps/<registry>/<name>.json as NeoForge reads
 // them: {"replace": bool, "values": {"<id>": value, "#<tag>": value}, "remove": [...]}; a map id is
 // "<ns>:<name>". Direct entries win over tag entries; tag entries are matched through gf::tags in
-// the map's registry. A reload swaps in a new snapshot of every map and keeps the old one, so the
+// the map's registry. The data's vanilla ids are Java's: keys (and the values' ids of the map's
+// registry) become the game's Bedrock ids at load (tags/JavaIds.h); `get` takes Bedrock ids. A reload swaps in a new snapshot of every map and keeps the old one, so the
 // values `get` returned stay valid while other threads (the client mod) read. The composter and
 // furnace apply compostables / furnace_fuels (VanillaMaps.cpp).
 #include "feature/datamaps/DataMaps.h"
@@ -17,6 +18,7 @@
 #include <unordered_map>
 
 #include "feature/item/DataFiles.h"
+#include "feature/tags/JavaIds.h"
 #include "feature/tags/Tags.h"
 #include "mod/Log.h"
 
@@ -82,13 +84,18 @@ void load() {
             map.values.clear();
             map.tagged.clear();
         }
+        // the data's Java ids of the map's registry as the game's Bedrock ids (JavaIds.h): the keys,
+        // and the values' id fields of the same registry (crumble_to, transform_to)
         auto add = [&](std::string key, nlohmann::json value) {
+            if (value.is_object())
+                for (auto v = value.begin(); v != value.end(); ++v)
+                    if (v->is_string() && v->get<std::string>().starts_with("minecraft:")) *v = tags::javaids::primary(registry, v->get<std::string>());
             if (key.starts_with('#')) {
                 auto tag = data::withNamespace(key.substr(1));
                 std::erase_if(map.tagged, [&](auto const& e) { return e.first == tag; });
                 map.tagged.emplace_back(tag, std::move(value));
             } else {
-                map.values[data::withNamespace(key)] = std::move(value);
+                for (auto const& id : tags::javaids::bedrock(registry, data::withNamespace(key))) map.values[id] = value;
             }
         };
         if (auto it = doc.find("values"); it != doc.end()) {
@@ -104,7 +111,8 @@ void load() {
                 if (!r.is_string()) continue;
                 auto key = r.get<std::string>();
                 if (key.starts_with('#')) std::erase_if(map.tagged, [&](auto const& e) { return e.first == data::withNamespace(key.substr(1)); });
-                else map.values.erase(data::withNamespace(key));
+                else
+                    for (auto const& id : tags::javaids::bedrock(registry, data::withNamespace(key))) map.values.erase(id);
             }
         }
     }
