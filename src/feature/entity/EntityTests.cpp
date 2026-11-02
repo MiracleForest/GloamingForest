@@ -38,7 +38,6 @@
 #include "mc/world/phys/AABB.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 
-#include "core/Stub.h"
 #include "core/jrand/JRand.h"
 #include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
@@ -112,12 +111,6 @@ std::optional<std::variant<int, float, bool, std::string>> propertyOf(Actor& a, 
 double dist(Vec3 const& a, Vec3 const& b) {
     double dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
     return std::sqrt(dx * dx + dy * dy + dz * dz);
-}
-
-/// Whether F10's combat contract is still F0's stub (the damage routing then has nothing to run on).
-bool combatStubbed() {
-    auto calls = core::stubCalls();
-    return std::find(calls.begin(), calls.end(), "combat.onIncoming") != calls.end();
 }
 
 /// A goal with scripted canUse (selector semantics).
@@ -590,12 +583,6 @@ GF_REGISTER_SELFTEST("entity.multipart", [](Context& ctx) -> ll::coro::CoroTask<
 // Damage other than a player's melee on a part (explosions, projectiles, magic) goes to the parent
 // through the combat pipeline; environmental damage (suffocation, fire, falls, ...) reaches neither
 GF_REGISTER_SELFTEST("entity.multipart_damage", [](Context& ctx) -> ll::coro::CoroTask<> {
-    if (combatStubbed()) {
-        // skipped, not passed: it runs again (and must pass) once F10's combat pipeline is in
-        ctx.info("SKIP: the combat contract is still F0's stub, the damage routing has no pipeline to run in");
-        log().info("SELFTEST SKIP entity.multipart_damage: the combat contract is F0's stub (runs once F10 lands)");
-        co_return;
-    }
     DifficultyScope easy(Difficulty::Easy);
     auto            box = co_await ctx.flatArea(5814, 6);
     auto            at  = ctx.testPos(5816, 2);

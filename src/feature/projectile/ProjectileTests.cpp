@@ -29,7 +29,6 @@
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/dimension/DimensionType.h"
 
-#include "core/Stub.h"
 #include "feature/entity/Entity.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
@@ -259,15 +258,9 @@ GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
     co_await ctx.ticks(1);
     auto* t = fe::actorById(targetId);
     ctx.require(t != nullptr, "the target survived");
-    auto calls = core::stubCalls();
-    if (std::find(calls.begin(), calls.end(), "combat.hurt") == calls.end()) {
-        ctx.check(health - t->getHealth() == 6, "ceil(3 * 2) = 6 arrow damage (" + std::to_string(health - t->getHealth()) + ")");
-        ctx.check(fe::actorById(pid) == nullptr, "an arrow that hit is gone");
-    } else {
-        // the combat contract is still F0's stub: the hit does not land, the arrow is deflected
-        if (auto* a = fe::actorById(pid)) ctx.check(gp::ext::velocity(*a).x < 0.0f, "an arrow whose hit did not land bounces back (REVERSE * 0.2)");
-        else ctx.check(false, "a deflected arrow keeps flying");
-    }
+    // the hit lands through the combat pipeline (gf::combat::hurt)
+    ctx.check(health - t->getHealth() == 6, "ceil(3 * 2) = 6 arrow damage (" + std::to_string(health - t->getHealth()) + ")");
+    ctx.check(fe::actorById(pid) == nullptr, "an arrow that hit is gone");
     if (auto* a = fe::actorById(pid)) a->remove();
     if (auto* a = fe::actorById(targetId)) a->remove();
     // gravity 0.05 (AbstractArrow), not the throwable's 0.03
@@ -342,9 +335,8 @@ GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.check(effect != nullptr, "the pig is poisoned by the tipped arrow");
     if (effect) ctx.check(effect->mDuration->mValue == std::max(potionTicks / 8, 1), "for 1/8 of the potion's duration (" + std::to_string(effect->mDuration->mValue) + " of " + std::to_string(potionTicks) + ")");
     removeActorById(pigId); // out of the next shot's way
-    // with F10's combat pipeline the hit lands and the effects come with it
-    auto stubs = core::stubCalls();
-    if (std::find(stubs.begin(), stubs.end(), "combat.hurt") == stubs.end()) {
+    // through the combat pipeline the hit lands and the effects come with it
+    {
         auto* fresh = spawnMob(at.offset(5, 0, 2), "minecraft:pig");
         ctx.require(fresh != nullptr, "a second pig spawns");
         auto freshId = fe::uidOf(*fresh);
@@ -361,8 +353,6 @@ GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
             ctx.check(f->getEffect(poison->mEffects->front().mId) != nullptr, "and the shot pig is poisoned");
         else ctx.info("the shot pig died of the hit (the poison is not checked)");
         removeActorById(freshId);
-    } else {
-        ctx.info("the combat contract is still a stub: arrow hits on living targets do not land (doPostHurtEffects checked directly)");
     }
     removeActorById(pigId);
     (void)box;

@@ -1,12 +1,15 @@
 // Selftests of F8's "boss" contract (rule R12: prefix entity.*, dx 5800..5899): the e2e fixture
 // boss (gf_test:boss with 3 parts: parts follow, damage routes to the parent, the boss bar's
-// BossEventPackets, the death chest filled from the loot buffer, the conquest), peaceful turning
-// the boss back into its spawner, the spawner variants (height rules, the Lich's floor), the
-// sinister spawner, the trophy table and the bar colours; entity.client_fixture shows the fixture
-// bosses to a real player for the client e2e's screenshots.
+// BossEventPackets, the death chest filled from the loot buffer, the conquest), the conquest of a
+// real landmark start (gf::landmark) with its structure_cleared and hurt_boss triggers, no portal
+// travel for bosses and parts, peaceful turning the boss back into its spawner, the spawner
+// variants (height rules, the Lich's floor), the sinister spawner, the trophy table and the bar
+// colours; entity.client_fixture shows the fixture bosses to a real player for the client e2e's
+// screenshots.
 
 #include <algorithm>
 #include <cmath>
+#include <set>
 
 #include "ll/api/chrono/GameChrono.h"
 #include "ll/api/coro/CoroTask.h"
@@ -17,7 +20,9 @@
 #include "mc/world/Container.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -36,8 +41,11 @@
 #include "feature/entity/EntityFixture.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/inventory/Inventory.h"
 #include "feature/landmark/Landmark.h"
 #include "feature/net/Net.h"
+#include "feature/progression/Progression.h"
+#include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
@@ -189,13 +197,13 @@ GF_REGISTER_SELFTEST("entity.boss_lifecycle", [](Context& ctx) -> ll::coro::Coro
     auto* container = chestAt(*chest);
     ctx.require(container != nullptr, "the death chest is a container");
     // IBossLootBuffer#fill spreads the table's roll over the shuffled slots and may land on the slot
-    // set above (Java's buffer is empty before the death); the stub loot contract rolls nothing
+    // set above (Java's buffer is empty before the death)
     int inChest = countOf(*container, "gf_test:fixture_item");
     ctx.check(inChest >= 1, "the death chest holds the loot buffer (" + std::to_string(inChest) + " fixture items)");
-    // the conquest of the home landmark
+    // the conquest of the home structure at the home point (gf_test:fixture has no landmark start
+    // here; entity.boss_conquest conquers a real one)
     auto conquest = lastConquest();
-    ctx.check(conquest && conquest->first == home && conquest->second == "gf_test:fixture", "the home landmark was conquered");
-    if (auto start = gf::landmark::startAt(home.dim, game::blockPos(home))) ctx.check(start->conquered, "the landmark start is conquered");
+    ctx.check(conquest && conquest->first == home && conquest->second == "gf_test:fixture", "the conquest of the home structure was asked at the home point");
     // the bar is gone, the parts with it
     bool removed = false;
     for (auto const& e : capture.events()) removed |= e.bossId == uid && e.type == "remove";
@@ -207,6 +215,253 @@ GF_REGISTER_SELFTEST("entity.boss_lifecycle", [](Context& ctx) -> ll::coro::Coro
         for (int i = 0; i < c->getContainerSize(); ++i) c->setItem(i, game::items::empty());
     if (auto* region = game::regionOf(chest->dim))
         if (auto const* b = game::blockWith(floor.empty() ? "minecraft:grass_block" : floor)) game::setBlock(*region, game::blockPos(*chest), *b);
+    (void)box;
+});
+
+namespace {
+
+/// The unlocked fixture landmark of the landmark contract (development builds): conquerable like
+/// the Naga courtyard (no progression lock, so it protects nothing), a 7x7x7 stone brick shell
+/// around its center with a porch in front.
+constexpr char const* kConquestLandmark = "gf_test:landmark_fixture_open";
+
+/// The progression triggers fired while a TriggerRecorder lives. The contract's listeners cannot
+/// be removed: one listener per trigger for the process, recording only while a recorder lives.
+struct TriggerEvent {
+    std::string    trigger;
+    std::int64_t   player = 0;
+    nlohmann::json data;
+};
+struct TriggerLog {
+    bool                      on = false;
+    std::vector<TriggerEvent> events;
+};
+TriggerLog& triggerLog() {
+    static TriggerLog t;
+    return t;
+}
+struct TriggerRecorder {
+    TriggerRecorder() {
+        static bool const listening = [] {
+            for (auto const* id : {"twilightforest:hurt_boss", "twilightforest:structure_cleared"})
+                gf::progression::onTrigger(id, [trigger = std::string(id)](Player& p, nlohmann::json const& data) {
+                    if (triggerLog().on) triggerLog().events.push_back({trigger, p.getOrCreateUniqueID().rawID, data});
+                });
+            return true;
+        }();
+        (void)listening;
+        triggerLog() = {.on = true, .events = {}};
+    }
+    ~TriggerRecorder() { triggerLog() = {}; }
+    TriggerRecorder(TriggerRecorder const&)            = delete;
+    TriggerRecorder& operator=(TriggerRecorder const&) = delete;
+    /// The index of the first `trigger` fired for `player` (-1: none).
+    [[nodiscard]] int find(std::string const& trigger, std::int64_t player) const {
+        auto const& ev = triggerLog().events;
+        for (std::size_t i = 0; i < ev.size(); ++i)
+            if (ev[i].trigger == trigger && ev[i].player == player) return static_cast<int>(i);
+        return -1;
+    }
+    [[nodiscard]] nlohmann::json data(int index) const { return index >= 0 ? triggerLog().events[index].data : nlohmann::json(); }
+};
+
+} // namespace
+
+// BaseTFBoss#postmortem -> LandmarkUtil#markStructureConquered on a real landmark start (the landmark
+// contract): the fixture boss's home structure is the unlocked fixture landmark while this test runs.
+// A start forced around the boss's home point is conquered when the boss dies there;
+// "structure_cleared" reaches the player within 32 blocks of the home point and not the one beyond;
+// "hurt_boss" reaches the player who hurt the boss, before the conquest (LivingDeathEvent is posted at
+// the start of LivingEntity#die, #postmortem runs after super.die); the death chest takes the
+// landmark's floor under the home point.
+GF_REGISTER_SELFTEST("entity.boss_conquest", [](Context& ctx) -> ll::coro::CoroTask<> {
+    FixtureScope    fixture;
+    DifficultyScope easy(Difficulty::Easy);
+    ctx.require(gf::landmark::descriptor(kConquestLandmark) != nullptr, "the fixture landmark exists (the gf_test data is deployed)");
+    ctx.require(gf::landmark::descriptor(kConquestLandmark)->conquerable, "and is conquerable");
+    auto spec          = fe::tests::fixtureBossSpec();
+    spec.homeStructure = kConquestLandmark;
+    gf::boss::registerBoss(spec);
+    struct SpecScope {
+        ~SpecScope() { gf::boss::registerBoss(fe::tests::fixtureBossSpec()); }
+    } specScope;
+    resetTestRecords();
+    auto box    = co_await ctx.flatArea(5805, 12);
+    auto center = ctx.testPos(5809, 3);
+    auto home   = center.offset(0, 1, 0); // on the shell's floor
+    // the landmark start around the home point (a start an earlier run left there is replaced and
+    // keeps its flag: reactivated first, and again when the test ends)
+    auto forced = gf::landmark::forceStart(kConquestLandmark, center);
+    ctx.require(forced.has_value() && forced->generated, "forceStart made the fixture landmark");
+    struct Reactivate {
+        core::GlobalPos at;
+        ~Reactivate() { gf::landmark::setConquered(at.dim, game::blockPos(at), kConquestLandmark, false); }
+    } reactivate{home};
+    gf::landmark::setConquered(home.dim, game::blockPos(home), kConquestLandmark, false);
+    auto start = gf::landmark::startAt(home.dim, game::blockPos(home));
+    ctx.require(start.has_value() && start->key == kConquestLandmark, "the home point is inside the landmark start");
+    ctx.check(!gf::landmark::isConquered(*start), "the start is not conquered before the fight");
+    auto shellFloor = ctx.blockAt(center);
+    ctx.check(!shellFloor.empty() && shellFloor != "minecraft:air", "the landmark's shell stands (its floor: " + shellFloor + ")");
+    // a player inside with the boss, one 40 blocks away
+    auto& near   = ctx.spawnPlayer("gf_conquest_near");
+    auto  nearId = near.getOrCreateUniqueID().rawID;
+    near.teleport(Vec3{home.x + 0.5f, float(home.y), home.z + 2.5f}, DimensionType(home.dim));
+    auto& far   = ctx.spawnPlayer("gf_conquest_far");
+    auto  farId = far.getOrCreateUniqueID().rawID;
+    far.teleport(Vec3{home.x + 40.5f, float(home.y) + 1.0f, home.z + 0.5f}, DimensionType(home.dim));
+    co_await ctx.ticks(3);
+    auto* boss = spawnMob(home, "gf_test:boss");
+    ctx.require(boss != nullptr, "the fixture boss spawns inside the landmark");
+    auto uid = fe::uidOf(*boss);
+    ge::setHome(*boss, home, 20);
+    co_await ctx.ticks(2);
+    // the player inside hurts it (MultiplayerInclusivityAttachment: qualified for hurt_boss)
+    if (auto* p = fe::playerById(nearId); p && mobById(uid)) static_cast<SimulatedPlayer*>(p)->simulateAttack(mobById(uid));
+    co_await ctx.ticks(2);
+    boss = mobById(uid);
+    ctx.require(boss != nullptr && boss->isAlive(), "the boss survives the hit");
+    auto part = gf::boss::participants(*boss);
+    ctx.check(part.size() == 1 && fe::uidOf(*part[0]) == nearId, "the player inside qualified for the fight");
+    auto* f = fe::playerById(farId);
+    ctx.require(f != nullptr, "the far player is there");
+    auto fp = f->getFeetPos();
+    ctx.check(std::abs(fp.x - (home.x + 0.5f)) > 34.0f, "the far player is beyond AABB(home).inflate(32) (x " + std::to_string(fp.x) + ", home " + std::to_string(home.x) + ")");
+    TriggerRecorder triggers;
+    boss->kill();
+    co_await ctx.ticks(2);
+    // the conquest: the start's flag, through markStructureConquered at the home point
+    auto after = gf::landmark::startAt(home.dim, game::blockPos(home));
+    ctx.require(after.has_value(), "the landmark start is still there");
+    ctx.check(gf::landmark::isConquered(*after), "the boss's death conquered its home landmark");
+    auto conquest = lastConquest();
+    ctx.check(conquest && conquest->first == home && conquest->second == kConquestLandmark, "at the boss's home point, for its home structure");
+    // the triggers
+    int cleared = triggers.find("twilightforest:structure_cleared", nearId);
+    int hurt    = triggers.find("twilightforest:hurt_boss", nearId);
+    ctx.check(cleared >= 0 && triggers.data(cleared).value("structure", std::string()) == kConquestLandmark,
+              "structure_cleared fired for the player within 32 blocks (" + triggers.data(cleared).dump() + ")");
+    ctx.check(triggers.find("twilightforest:structure_cleared", farId) < 0, "and not for the player 40 blocks away");
+    ctx.check(hurt >= 0 && triggers.data(hurt).value("entity", std::string()) == "gf_test:boss", "hurt_boss fired for the qualified player (" + triggers.data(hurt).dump() + ")");
+    ctx.check(triggers.find("twilightforest:hurt_boss", farId) < 0, "and not for the player who did not hurt the boss");
+    ctx.check(hurt >= 0 && cleared > hurt, "hurt_boss (LivingDeathEvent) came before the conquest (postmortem)");
+    // the death chest takes the landmark's floor under the home point
+    for (int i = 0; i < 60 && !lastDeathChest(); ++i) co_await ctx.ticks(1);
+    auto chest = lastDeathChest();
+    ctx.require(chest.has_value(), "the death chest was placed");
+    ctx.check(chest->x == home.x && chest->y == home.y - 1 && chest->z == home.z, "in the shell's floor under the home point");
+    if (auto* c = chestAt(*chest))
+        for (int i = 0; i < c->getContainerSize(); ++i) c->setItem(i, game::items::empty());
+    (void)box;
+});
+
+// Entity#canUsePortal: BaseTFBoss and TF's parts refuse portals (Mob::canChangeDimensionsUsingPortal,
+// which Bedrock's portals and the Twilight portal ask); other mobs keep the engine's answer unless a
+// type is marked (gf::entity::ext::setCanUsePortal: RisingZombie).
+GF_REGISTER_SELFTEST("entity.boss_portal", [](Context& ctx) -> ll::coro::CoroTask<> {
+    FixtureScope    fixture;
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box  = co_await ctx.flatArea(5841, 5);
+    auto            at   = ctx.testPos(5842, 2);
+    auto*           boss = spawnMob(at, "gf_test:boss");
+    auto*           pig  = spawnMob(ctx.testPos(5844, 2), "minecraft:pig");
+    ctx.require(boss && pig, "a fixture boss and a pig spawn");
+    auto bossId = fe::uidOf(*boss), pigId = fe::uidOf(*pig);
+    struct Cleanup {
+        std::int64_t boss, pig;
+        ~Cleanup() {
+            ge::ext::setCanUsePortal("minecraft:pig", true);
+            for (auto id : {boss, pig})
+                if (auto* a = fe::actorById(id)) a->remove();
+        }
+    } cleanup{bossId, pigId};
+    auto handle = ge::addPart(*boss, "portal_probe", {0.8f, 0.8f}, [](Mob&) { return Vec3{0.0f, 2.5f, 0.0f}; });
+    co_await ctx.ticks(2);
+    boss = mobById(bossId);
+    pig  = mobById(pigId);
+    ctx.require(boss && pig, "both are there");
+    ctx.check(!boss->canChangeDimensionsUsingPortal(), "a TF boss never goes through a portal (BaseTFBoss#canUsePortal)");
+    auto* partActor = ge::partActor(handle);
+    ctx.require(partActor != nullptr, "the boss has its part");
+    auto* partMob = fe::asMob(*partActor);
+    ctx.check(partMob && !partMob->canChangeDimensionsUsingPortal(), "nor does its part (HydraPart, NagaSegment)");
+    bool engine = pig->canChangeDimensionsUsingPortal();
+    ctx.info(std::string("the engine lets a pig use portals: ") + (engine ? "yes" : "no"));
+    ge::ext::setCanUsePortal("minecraft:pig", false);
+    ctx.check(!pig->canChangeDimensionsUsingPortal(), "a type marked with setCanUsePortal(false) does not (RisingZombie)");
+    ge::ext::setCanUsePortal("minecraft:pig", true);
+    ctx.check(pig->canChangeDimensionsUsingPortal() == engine, "and gets the engine's answer back");
+    // a type that is no registered boss any more is the engine's again
+    gf::feature::boss::unregisterBossForTest("gf_test:boss");
+    bool unregistered = boss->canChangeDimensionsUsingPortal();
+    gf::boss::registerBoss(fe::tests::fixtureBossSpec());
+    ctx.check(!boss->canChangeDimensionsUsingPortal(), "registered again, it refuses again");
+    ctx.info(std::string("an unregistered gf_test:boss may use portals: ") + (unregistered ? "yes" : "no"));
+    (void)box;
+});
+
+// TF's bosses leave their loot in one of TF's chests (getDeathContainer: canopy, twilight oak,
+// mangrove, dark chest; the block families' chest blocks, containers of the inventory contract):
+// the chest takes the loot buffer through gf::inventory; a chest block that does not become a
+// container drops the loot where it stands instead of losing it (IBossLootBuffer
+// #depositDropsIntoChest's Block#popResource).
+GF_REGISTER_SELFTEST("entity.boss_tf_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
+    FixtureScope    fixture;
+    DifficultyScope easy(Difficulty::Easy);
+    struct LifecycleScope {
+        ~LifecycleScope() { clearLifecycleForTest("gf_test:boss"); }
+    } lifecycleScope;
+    gf::boss::ext::Lifecycle lc;
+    lc.deathContainer = [](Mob&, core::jrand::RandomSource&) { return std::string("twilightforest:canopy_chest"); };
+    gf::boss::ext::setLifecycle("gf_test:boss", lc);
+    resetTestRecords();
+    auto  box  = co_await ctx.flatArea(5846, 4);
+    auto  home = ctx.testPos(5847, 2);
+    auto* boss = spawnMob(home, "gf_test:boss");
+    ctx.require(boss != nullptr, "the fixture boss spawns");
+    auto uid = fe::uidOf(*boss);
+    ge::setHome(*boss, home, 20);
+    co_await ctx.ticks(2);
+    if ((boss = mobById(uid))) boss->kill();
+    for (int i = 0; i < 60 && !lastDeathChest(); ++i) co_await ctx.ticks(1);
+    auto chest = lastDeathChest();
+    ctx.require(chest.has_value(), "a death chest was placed");
+    ctx.check(*chest == home.offset(0, -1, 0), "under the home point");
+    ctx.check(ctx.blockAt(*chest) == "twilightforest:canopy_chest", "of the type's death container (" + ctx.blockAt(*chest) + ")");
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "the test dimension");
+    auto states = game::statesOf(region->getBlock(game::blockPos(*chest)));
+    ctx.check(states.contains("twilightforest:facing"), "with its facing (" + states["twilightforest:facing"] + ")");
+    // the fixture table rolls gf_test:fixture_item into the buffer
+    int inChest = 0, dropped = 0;
+    if (auto h = gf::inventory::find(*region, game::blockPos(*chest)); h && h->get && h->set) {
+        for (int i = 0; i < 4 && inChest == 0; ++i) {
+            for (int s = 0; s < h->slots; ++s)
+                if (game::items::idOf(h->get(*chest, s)) == "gf_test:fixture_item") inChest += game::items::countOf(h->get(*chest, s));
+            if (inChest == 0) co_await ctx.ticks(1);
+        }
+        ctx.check(inChest >= 1, "the TF chest holds the loot (" + std::to_string(inChest) + " fixture items)");
+        if ((h = gf::inventory::find(*region, game::blockPos(*chest))))
+            for (int s = 0; s < h->slots; ++s) h->set(*chest, s, game::items::empty());
+    } else {
+        // not a container (the families' container declarations are not deployed): after the fill's
+        // 20 ticks the loot pops out at the chest
+        ctx.info("twilightforest:canopy_chest is no container of the inventory contract here: the loot must drop");
+        for (int i = 0; i < 30 && dropped == 0; ++i) {
+            co_await ctx.ticks(1);
+            auto level = ll::service::getLevel();
+            if (!level) continue;
+            for (auto* a : level->getRuntimeActorList()) {
+                if (!a || !a->isType(ActorType::ItemEntity) || static_cast<int>(a->getDimensionId()) != chest->dim) continue;
+                auto const& p = a->getPosition();
+                if (std::abs(p.x - (chest->x + 0.5f)) > 3.0f || std::abs(p.y - (chest->y + 0.5f)) > 3.0f || std::abs(p.z - (chest->z + 0.5f)) > 3.0f) continue;
+                auto const& item = static_cast<ItemActor*>(a)->item();
+                if (game::items::idOf(item) == "gf_test:fixture_item") dropped += game::items::countOf(item);
+                a->remove();
+            }
+        }
+        ctx.check(dropped >= 1, "the loot dropped at the chest (" + std::to_string(dropped) + " fixture items)");
+    }
     (void)box;
 });
 
@@ -813,6 +1068,36 @@ GF_REGISTER_SELFTEST("entity.boss_tables", [](Context& ctx) {
     ctx.check(gf::boss::ext::nearestBarColor(0xEC00B8) == 0, "pink -> PINK");
     ctx.check(gf::boss::ext::nearestBarColor(0xE9EC00) == 4, "yellow -> YELLOW");
     ctx.check(gf::boss::ext::nearestBarColor(0x5E9916) == 3, "the naga's green -> GREEN");
+    // the tags the kit reads come from the tag data (gf::tags): EntityTagGenerator
+    // .MULTIPLAYER_INCLUSIVE_ENTITIES (the qualified players and the health adjuster) and
+    // ItemTagGenerator.KOBOLD_PACIFICATION_BREADS (the kobold's goal)
+    using gf::tags::Registry;
+    auto inclusive = gf::tags::members(Registry::EntityType, "twilightforest:multiplayer_inclusive_entities");
+    std::vector<std::string> const tfInclusive{"twilightforest:alpha_yeti", "twilightforest:hydra",        "twilightforest:lich",
+                                               "twilightforest:minoshroom", "twilightforest:naga",         "twilightforest:plateau_boss",
+                                               "twilightforest:snow_queen", "twilightforest:ur_ghast"};
+    ctx.check(inclusive == tfInclusive, "multiplayer_inclusive_entities holds TF's 8 bosses (" + nlohmann::json(inclusive).dump() + ")");
+    ctx.check(!gf::tags::has(Registry::EntityType, "twilightforest:multiplayer_inclusive_entities", "twilightforest:knight_phantom"), "the knight phantoms are not in it");
+    ctx.check(gf::tags::has(Registry::Item, "twilightforest:kobold_pacification_breads", "minecraft:bread"), "kobold_pacification_breads holds bread");
+    // the death chest's facing: Direction.Plane.HORIZONTAL.getRandomDirection, one draw over north,
+    // east, south, west, in the chest's own facing state (the vanilla chest's
+    // minecraft:cardinal_direction; twilightforest:facing on TF's chests, the bosses' containers)
+    static char const* const horizontal[] = {"north", "east", "south", "west"};
+    std::set<std::string>    tfFacings;
+    bool                     javaOrder = true;
+    fe::JavaRandom seeds(42); // a death's seed is the boss random's nextLong (the first nextInt(4) of
+                              // small consecutive seeds is the same)
+    for (int n = 0; n < 32; ++n) {
+        auto           seed = seeds.nextLong();
+        fe::JavaRandom java(seed);
+        auto           expected = horizontal[java.nextInt(4)];
+        auto [tfState, tfValue] = deathChestFacingForTest("twilightforest:canopy_chest", seed);
+        auto [vState, vValue]   = deathChestFacingForTest("minecraft:chest", seed);
+        javaOrder &= tfState == "twilightforest:facing" && tfValue == expected && vState == "minecraft:cardinal_direction" && vValue == expected;
+        tfFacings.insert(tfValue);
+    }
+    ctx.check(javaOrder, "the death chests face the direction Java draws (twilightforest:facing on TF's chests)");
+    ctx.check(tfFacings.size() == 4, "a TF death chest faces every horizontal direction (" + std::to_string(tfFacings.size()) + " seen)");
     // config "bosses" defaults (TFConfig)
     ctx.check(gf::boss::ext::dropChests(), "bossesSpawnDropChests defaults to true");
     ctx.check(!gf::boss::ext::adjustsHealth() && !gf::boss::ext::adjustsLootRolls(), "multiplayerFightAdjuster defaults to NONE");
