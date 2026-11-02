@@ -5,8 +5,8 @@
 # guaranteed book drop, the hint timer's game time, decoration clearance, the start evaluation
 # threading and locate probe, the descriptors' full TF records, Java's decoration slots and seeds of
 # the landmark pieces, the biome checks against TF's biome tags and TF's command literals and texts;
-# then /twilightforest center | info | conquer [reactivate] | locate | place | genbook [<structure>]
-# (+ the generatebook alias) from the console.
+# then /twilightforest center | info | conquer [reactivate] | locate <structure or #tag> | place |
+# genbook [<structure>] (+ the generatebook alias) from the console.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'landmark.*'
@@ -24,6 +24,14 @@ Wait-LogLine 'landmark: info at' 30 -Since $mark | Out-Null
 $mark = Get-LogMark
 Send-Console 'tffeature locate twilightforest:lich_tower'
 Wait-LogLine 'landmark: locate twilightforest:lich_tower from' 30 -Since $mark | Out-Null
+# a structure tag (LocateCommand#getHolders: Registry#getTag) and one of Minecraft's own structures
+# (Bedrock generates and locates those itself)
+$mark = Get-LogMark
+Send-Console 'tf locate #twilightforest:landmark'
+Wait-LogLine 'landmark: locate #twilightforest:landmark from' 30 -Since $mark | Out-Null
+$mark = Get-LogMark
+Send-Console 'tf locate minecraft:village_plains'
+Wait-LogLine "landmark: locate minecraft:village_plains: not a Twilight Forest structure" 30 -Since $mark | Out-Null
 $mark = Get-LogMark
 Send-Console 'twilightforest place twilightforest:lich_tower'
 Wait-LogLine 'landmark: place twilightforest:lich_tower at .* failed|landmark: placed twilightforest:lich_tower' 30 -Since $mark | Out-Null

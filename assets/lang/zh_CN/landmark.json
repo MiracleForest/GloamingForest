@@ -1,0 +1,3 @@
+{
+  "gf.landmark.not_twilight_structure": "/twilightforest locate 和 place 只处理暮色森林的结构；%s 不是其中之一（Minecraft 自身的结构请用基岩版的 /locate 查找）"
+}

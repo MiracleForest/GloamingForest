@@ -299,14 +299,12 @@ std::optional<int> adjustForTerrainAroundChunk(ext::HeightFn const& provider, in
     });
 }
 
-namespace {
-
-/// The GenerationStep.Decoration ordinal of a descriptor's step (surface_structures, Structure's
-/// default, when unknown).
 int stepOf(Info const& info) {
     int step = dec::stepIndex(info.step);
     return step < 0 ? kSurfaceStructures : step;
 }
+
+namespace {
 
 /// StructureStart#placeInChunk for chunk (cx, cz) of `region`, with the structure's decoration
 /// random (shared by every start of the structure placed in this chunk at this step, as Java's
@@ -355,24 +353,31 @@ std::shared_ptr<Generator const> generatorFor(std::string const& key) {
     return it == generators().gens.end() ? nullptr : it->second;
 }
 
-int featureIndex(Info const& info) {
-    // ChunkGenerator#applyBiomeDecoration: registry.stream() grouped by step; every structure of the
-    // step before this one counts (vanilla's and TF's, never the gf_test fixtures)
-    auto registry = dec::vanillaStructures();
-    for (auto const& k : descriptorKeys()) {
-        if (k == info.d.key || isFixtureKey(k)) continue;
-        if (auto const* o = landmark::info(k)) registry.push_back({k, stepOf(*o)});
+namespace {
+
+/// The number of structures the worldgen's Structure registry holds at decoration step `step`.
+int registryStepSize(int step) {
+    auto steps = worldgen::ext::structuresByStep();
+    return step >= 0 && step < static_cast<int>(steps.size()) ? static_cast<int>(steps[static_cast<std::size_t>(step)].size()) : 0;
+}
+
+} // namespace
+
+void assignSlot(Info& info, int unregisteredBefore) {
+    if (auto s = worldgen::ext::structureSlot(info.d.key)) {
+        info.slot       = {s->step, s->index};
+        info.inRegistry = true;
+        return;
     }
-    return dec::slotOf(info.d.key, stepOf(info), registry).index;
+    int step        = stepOf(info);
+    info.slot       = {step, registryStepSize(step) + unregisteredBefore};
+    info.inRegistry = false;
 }
 
 dec::Slot decorationSlot(std::string const& key) {
-    // the worldgen's Structure registry (Minecraft's, TF's and the data packs' structures), the one
-    // the decoration context seeds with; a key it does not know (the gf_test fixtures) by its
-    // descriptor, at the place it would sort to
+    if (auto const* inf = info(key)) return inf->slot;
     if (auto s = worldgen::ext::structureSlot(key)) return {s->step, s->index};
-    if (auto const* inf = info(key)) return {stepOf(*inf), inf->featureIndex};
-    return {kSurfaceStructures, 0};
+    return {kSurfaceStructures, registryStepSize(kSurfaceStructures)};
 }
 
 std::unique_ptr<core::jrand::WorldgenRandom> decorationRandom(std::int64_t levelSeed, int chunkX, int chunkZ, std::string const& key) {
@@ -1129,6 +1134,8 @@ int spawnIndexAt(Record const& r, int x, int y, int z) {
 // ---- worldgen stages ---------------------------------------------------------------------------------
 
 int decorateStep(worldgen::Region& region, int chunkX, int chunkZ, worldgen::ext::DecorationContext const& d) {
+    // the pipeline runs this at all 11 steps; no landmark structure decorates at most of them
+    if (d.step < 0 || d.step >= dec::kSteps || !(decorationStepMask() & (1u << d.step))) return 0;
     int dim = region.dimension();
     ensureStartsAround(dim, chunkX, chunkZ); // known after the first step: one shared lookup
     // StructureManager#startsForStructure for the structures decorating at this step: every start

@@ -42,6 +42,8 @@ struct Store {
     std::map<std::string, StructureSet> sets;
     std::mutex                          loadMutex; ///< one load at a time
     std::atomic<bool>                   loaded{false};
+    /// bit `step`: some descriptor decorates at that GenerationStep.Decoration (decorationStepMask)
+    std::atomic<std::uint32_t>          stepMask{0};
 };
 Store& store() {
     static Store s;
@@ -319,26 +321,26 @@ void loadDescriptorsLocked() {
         else ++it;
     }
 
-    // into the store, then the decoration step indexes (ChunkGenerator#applyBiomeDecoration: featureIndex
-    // reads the stored descriptors). Other threads wait in ensureLoaded until `loaded` is set
-    std::vector<std::string> added;
+    // the decoration slots (ChunkGenerator#applyBiomeDecoration, assignSlot), then into the store.
+    // Other threads wait in ensureLoaded until `loaded` is set
+    std::map<int, int> unregistered; // step -> unregistered descriptors given a slot past its end
+    {
+        std::shared_lock lock(store().mutex);
+        for (auto const& [key, i] : store().infos)
+            if (!i.inRegistry) ++unregistered[i.slot.step];
+    }
+    for (auto& [key, i] : infos) {
+        assignSlot(i, unregistered[stepOf(i)]);
+        if (!i.inRegistry) ++unregistered[i.slot.step];
+    }
     {
         std::unique_lock lock(store().mutex);
         // add only: entries already there (run-time registrations) keep their address
-        for (auto& [key, i] : infos)
-            if (store().infos.try_emplace(key, std::move(i)).second) added.push_back(key);
-        for (auto& [id, s] : sets) store().sets.try_emplace(id, std::move(s));
-    }
-    for (auto const& key : added) {
-        Info const* i = nullptr;
-        {
-            std::shared_lock lock(store().mutex);
-            if (auto it = store().infos.find(key); it != store().infos.end()) i = &it->second;
+        for (auto& [key, i] : infos) {
+            auto [it, added] = store().infos.try_emplace(key, std::move(i));
+            if (added) store().stepMask.fetch_or(1u << it->second.slot.step, std::memory_order_relaxed);
         }
-        if (!i) continue;
-        int              index = featureIndex(*i);
-        std::unique_lock lock(store().mutex);
-        store().infos.find(key)->second.featureIndex = index;
+        for (auto& [id, s] : sets) store().sets.try_emplace(id, std::move(s));
     }
     store().loaded.store(true, std::memory_order_release);
     log().info("landmark: {} descriptors, {} structure sets loaded", descriptorKeys().size(), structureSets().size());
@@ -380,11 +382,22 @@ std::vector<StructureSet const*> structureSets() {
 void registerInfo(Info i) {
     ensureLoaded(); // the data's descriptors first: a fixture never takes a TF key's place
     i.raw["gf_runtime"] = true;
-    i.featureIndex      = featureIndex(i);
+    assignSlot(i, 0); // the worldgen's registry first (its own lock), outside the store lock
     std::unique_lock lock(store().mutex);
-    auto             key = i.d.key;
+    // past the end of the step: after the unregistered descriptors already there, counted under the
+    // same lock as the insertion so two registrations never share an index
+    if (!i.inRegistry)
+        for (auto const& [k, o] : store().infos)
+            if (!o.inRegistry && o.slot.step == i.slot.step) ++i.slot.index;
+    auto key = i.d.key;
     // never overwrite or erase: info() hands out pointers into the map
-    store().infos.try_emplace(key, std::move(i));
+    auto [it, added] = store().infos.try_emplace(key, std::move(i));
+    if (added) store().stepMask.fetch_or(1u << it->second.slot.step, std::memory_order_relaxed);
+}
+
+std::uint32_t decorationStepMask() {
+    ensureLoaded();
+    return store().stepMask.load(std::memory_order_relaxed);
 }
 
 } // namespace gf::feature::landmark

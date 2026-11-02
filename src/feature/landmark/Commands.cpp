@@ -20,7 +20,14 @@
 //
 // Permissions: TF's levels mapped one down onto Bedrock's (Java 2 "gamemasters" -> GameDirectors,
 // commands::isAdmin; Java 3 "admins", genbook -> Admin, or any operator: Java's default
-// op-permission-level 4 gives operators level 3, Bedrock operators run at GameDirectors).
+// op-permission-level 4 gives operators level 3, Bedrock operators run at GameDirectors). Java's
+// requires(n) hides the literal from a source below level n, so brigadier's parse stops there.
+// Bedrock cannot hide one overload: a command's permission is the Signature's
+// (CommandRegistry::Signature::permissionLevel; CommandRegistry::Overload has no such field, and
+// ll::command::CommandRegistrar::getOrCreateCommand takes the requirement per command), and
+// /twilightforest must stay open to everyone (TF's root and structure_util clear_display require
+// nothing). A source below the level gets Bedrock's own answer for a command it may not use,
+// commands.generic.unknown, which the client translates.
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -31,6 +38,7 @@
 
 #include "mc/server/commands/CommandOrigin.h"
 #include "mc/server/commands/CommandOutput.h"
+#include "mc/server/commands/CommandOutputParameter.h"
 #include "mc/server/commands/CommandPermissionLevel.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
@@ -39,11 +47,13 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/dimension/Dimension.h"
 
+#include "core/jrand/Mth.h"
 #include "core/landmark/Grid.h"
 #include "core/landmark/Landmark.h"
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/worldgen/Generation.h"
 #include "feature/landmark/Internal.h"
+#include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "mod/Commands.h"
 #include "mod/I18n.h"
@@ -84,9 +94,14 @@ BlockPos originBlock(CommandOrigin const& origin) { return game::blockPosOf(orig
 
 std::string shortString(int x, int y, int z) { return std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z); }
 
+/// A source below the literal's permission level (Java: requires(n) hides `literal`; see above):
+/// Bedrock's "Unknown command: %s. Please check that the command exists and that you have
+/// permission to use it.", translated by the reader's client.
+void denied(CommandOutput& output, std::string const& literal) { output.error("commands.generic.unknown", {CommandOutputParameter(literal)}); }
+
 /// CenterCommand.
 void center(CommandOrigin const& origin, CommandOutput& output) {
-    if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
+    if (!commands::isAdmin(origin)) return denied(output, "center");
     auto  pos = origin.getWorldPosition();
     int   dx  = static_cast<int>(std::floor(pos.x));
     int   dz  = static_cast<int>(std::floor(pos.z));
@@ -106,7 +121,7 @@ void center(CommandOrigin const& origin, CommandOutput& output) {
 
 /// InfoCommand.
 void infoCommand(CommandOrigin const& origin, CommandOutput& output) {
-    if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
+    if (!commands::isAdmin(origin)) return denied(output, "info");
     int  dim = originDim(origin);
     auto pos = originBlock(origin);
     auto rec = nearestLandmark(dim, pos.x >> 4, pos.z >> 4, GlobalPos{dim, pos.x, pos.y, pos.z});
@@ -147,7 +162,7 @@ void infoCommand(CommandOrigin const& origin, CommandOutput& output) {
 
 /// ConquerCommand#changeStructureActivity.
 void conquer(CommandOrigin const& origin, CommandOutput& output, bool flag) {
-    if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
+    if (!commands::isAdmin(origin)) return denied(output, "conquer");
     int  dim = originDim(origin);
     auto pos = originBlock(origin);
     auto rec = nearestLandmark(dim, pos.x >> 4, pos.z >> 4, GlobalPos{dim, pos.x, pos.y, pos.z});
@@ -216,8 +231,7 @@ std::optional<std::string> readResourceArgument(CommandOrigin const& origin, Com
 /// is a ResourceKeyArgument: resolved (ResourceKeyArgument#getStructure) before generateBook runs.
 void genbook(CommandOrigin const& origin, CommandOutput& output, std::optional<std::string> structure) {
     auto* player = commands::playerOf(origin);
-    if (origin.getPermissionsLevel() < CommandPermissionLevel::Admin && !(player && player->isOperator()))
-        return output.error("You need operator permission.");
+    if (origin.getPermissionsLevel() < CommandPermissionLevel::Admin && !(player && player->isOperator())) return denied(output, "genbook");
     auto const  arg   = structure.value_or("(all)");
     Info const* named = nullptr;
     if (structure) {
@@ -264,42 +278,86 @@ void genbook(CommandOrigin const& origin, CommandOutput& output, std::optional<s
     log().info("landmark: genbook gave {} book(s) to {}", given, player->getRealName());
 }
 
-/// `/twilightforest locate <structure>`.
+/// Mth.floor(LocateCommand#dist(x1, z1, x2, z2)): Mth.sqrt((float) (dx * dx + dz * dz)) over Java's
+/// wrapping int arithmetic (an overflowed square is negative: its NaN root casts to 0 in Java).
+int horizontalDistance(int x1, int z1, int x2, int z2) {
+    namespace mth = core::mth;
+    int  dx   = mth::iadd(x2, mth::imul(x1, -1));
+    int  dz   = mth::iadd(z2, mth::imul(z1, -1));
+    auto root = std::sqrt(static_cast<float>(mth::iadd(mth::imul(dx, dx), mth::imul(dz, dz))));
+    return std::isnan(root) ? 0 : mth::floorf(root);
+}
+
+/// A registered structure without a landmark descriptor (Minecraft's own, or a data pack's): Java's
+/// /locate and /place handle it, here Bedrock's world generator owns Minecraft's structures and
+/// GloamingForest knows the Twilight Forest's only.
+void notTwilightStructure(CommandOrigin const& origin, CommandOutput& output, std::string const& printable) {
+    output.error(say(origin, "gf.landmark.not_twilight_structure",
+                     "/twilightforest locate and place know the Twilight Forest's structures only; %s is not one of them (Bedrock's own /locate finds Minecraft's)",
+                     printable));
+}
+
+/// `/twilightforest locate <structure>` (LocateCommand#locateStructure).
 void locate(CommandOrigin const& origin, CommandOutput& output, std::string const& structure) {
-    if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
+    if (!commands::isAdmin(origin)) return denied(output, "locate");
     int  dim = originDim(origin);
     auto pos = originBlock(origin);
     // ResourceOrTagKeyArgument: "#" and a tag, or a key; resource locations as Java reads them
     bool tag    = structure.starts_with("#");
     auto parsed = readResourceArgument(origin, output, tag ? structure.substr(1) : structure);
     if (!parsed) return;
-    auto key = tag ? "#" + *parsed : *parsed;
-    if (!tag && !structureRegistered(key))
-        return output.error(say(origin, "commands.locate.structure.invalid", "There is no structure with type \"%s\"", key));
-    // LocateCommand: ChunkGenerator#findNearestMapStructure(level, holders, pos, 100, false)
-    auto hit = gf::landmark::ext::locate(dim, key, pos.x, pos.z, 100);
-    if (!hit) {
-        log().info("landmark: locate {} from {} {}: none", key, pos.x, pos.z);
-        return output.error(say(origin, "commands.locate.structure.not_found", "Could not find a structure of type \"%s\" nearby", key));
+    // ResourceOrTagKeyArgument.Result#asPrintable
+    auto printable = tag ? "#" + *parsed : *parsed;
+    // LocateCommand#getHolders: Registry#getHolder for a key, Registry#getTag for a tag (the
+    // structure tags of the tags contract: TF's #twilightforest:landmark and any data pack's);
+    // neither is ERROR_STRUCTURE_INVALID with the printable argument
+    std::vector<std::string> holders;
+    if (tag) holders = tags::members(tags::Registry::Structure, *parsed);
+    else if (structureRegistered(*parsed)) holders.push_back(*parsed);
+    if (holders.empty()) {
+        log().info("landmark: locate {}: invalid", printable);
+        return output.error(say(origin, "commands.locate.structure.invalid", "There is no structure with type \"%s\"", printable));
     }
-    double dx   = hit->pos.x - pos.x;
-    double dz   = hit->pos.z - pos.z;
-    int    dist = static_cast<int>(std::floor(std::sqrt(dx * dx + dz * dz)));
-    output.success(say(origin, "commands.locate.structure.success", "The nearest %s is at %s (%s blocks away)", hit->key,
+    // Minecraft's structures: in the Twilight Forest none generates (no structure set of theirs has a
+    // biome of TF's biome source), so Java finds none there either and the search below answers
+    // not_found; anywhere else Java finds them, and only Bedrock's own /locate can
+    auto tf = twilightDim();
+    if ((!tf || *tf != dim) && std::any_of(holders.begin(), holders.end(), [](std::string const& k) { return info(k) == nullptr; })) {
+        log().info("landmark: locate {}: not a Twilight Forest structure", printable);
+        return notTwilightStructure(origin, output, printable);
+    }
+    // LocateCommand: ChunkGenerator#findNearestMapStructure(level, holders, pos, 100, false)
+    auto hit = gf::landmark::ext::locate(dim, printable, pos.x, pos.z, 100);
+    if (!hit) {
+        log().info("landmark: locate {} from {} {}: none", printable, pos.x, pos.z);
+        return output.error(say(origin, "commands.locate.structure.not_found", "Could not find a structure of type \"%s\" nearby", printable));
+    }
+    // LocateCommand#showLocateResult: a tag names the structure found after it
+    auto element = tag ? printable + " (" + hit->key + ")" : printable;
+    int  dist    = horizontalDistance(pos.x, pos.z, hit->pos.x, hit->pos.z);
+    output.success(say(origin, "commands.locate.structure.success", "The nearest %s is at %s (%s blocks away)", element,
                        "[" + std::to_string(hit->pos.x) + ", ~, " + std::to_string(hit->pos.z) + "]", std::to_string(dist)));
-    log().info("landmark: locate {} from {} {}: {} at {} {} ({} blocks)", key, pos.x, pos.z, hit->key, hit->pos.x, hit->pos.z, dist);
+    log().info("landmark: locate {} from {} {}: {} at {} {} ({} blocks)", printable, pos.x, pos.z, hit->key, hit->pos.x, hit->pos.z, dist);
 }
 
 /// `/twilightforest place <structure> [x y z]`.
 void place(CommandOrigin const& origin, CommandOutput& output, std::string const& structure, std::optional<BlockPos> at) {
-    if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
+    if (!commands::isAdmin(origin)) return denied(output, "place");
     int  dim    = originDim(origin);
     auto pos    = at.value_or(originBlock(origin));
     auto parsed = readResourceArgument(origin, output, structure); // ResourceKeyArgument
     if (!parsed) return;
-    auto key    = *parsed;
+    auto key = *parsed;
+    // ResourceKeyArgument#getStructure: ERROR_INVALID_STRUCTURE for a key the registry does not hold
+    if (!structureRegistered(key)) return output.error(say(origin, "commands.place.structure.invalid", "There is no structure with type \"%s\"", key));
+    // PlaceCommand#placeStructure places Minecraft's structures anywhere (its biome check passes
+    // everything); Bedrock's world generator owns those
+    if (!info(key)) {
+        log().info("landmark: place {}: not a Twilight Forest structure", key);
+        return notTwilightStructure(origin, output, key);
+    }
     auto region = game::regionOf(dim);
-    if (!region || !info(key)) return output.error(say(origin, "commands.place.structure.invalid", "There is no structure with type \"%s\"", key));
+    if (!region) return output.error(say(origin, "commands.place.structure.failed", "Failed to place structure"));
     if (!generatorFor(key) || !gf::landmark::generateAt(key, *region, pos)) {
         log().info("landmark: place {} at {} {} {} failed", key, pos.x, pos.y, pos.z);
         return output.error(say(origin, "commands.place.structure.failed", "Failed to place structure"));
@@ -373,11 +431,17 @@ bool structureAt(int dimension, std::string const& key, fl::StructureSet const& 
 } // namespace
 
 std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x, int z, int searchRadius, bool skipKnownStructures) {
-    // targets: one key or the #twilightforest:landmark tag
+    // targets: one key, or the members of a structure tag (the tags contract's), the ones with a
+    // descriptor (Minecraft's own structures never generate in the Twilight Forest). The gf_test
+    // fixtures say they are in #twilightforest:landmark (no tag file lists them)
     std::vector<std::string> targets;
-    if (keyOrTag == "#twilightforest:landmark") {
-        for (auto const& k : fl::descriptorKeys())
-            if (auto const* i = fl::info(k); i && i->traits.landmarkTag) targets.push_back(k);
+    if (keyOrTag.starts_with('#')) {
+        auto const tag = keyOrTag.substr(1);
+        for (auto const& k : gf::tags::members(gf::tags::Registry::Structure, tag))
+            if (fl::info(k)) targets.push_back(k);
+        if (tag == "twilightforest:landmark")
+            for (auto const& k : fl::descriptorKeys())
+                if (auto const* i = fl::info(k); i && fl::isFixtureKey(k) && i->traits.landmarkTag) targets.push_back(k);
     } else if (fl::info(keyOrTag)) {
         targets.push_back(keyOrTag);
     }

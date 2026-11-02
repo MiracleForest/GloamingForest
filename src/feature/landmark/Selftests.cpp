@@ -7,11 +7,16 @@
 //                             structure sets, the decoration step indexes, stable over a reload),
 //                             entity names, the layouts' context random
 //   landmark.decoration       Java's decoration slots and seeds of the 21 TF structures (registry,
-//                             worldgen context, loaded placement), and the landmark.pieces structure
-//                             step placing a start at its step only with its structure's random
+//                             worldgen context, loaded placement), the core's structure table
+//                             against the worldgen's registry entry by entry, the decoration step
+//                             mask, the fixtures' slots past the end of their step, and the
+//                             landmark.pieces structure step placing a start at its step only with
+//                             its structure's random
 //   landmark.biomes           every landmark's biome check against TF's biome tags (tags contract)
 //   landmark.commands         TF's literals, argument shapes and texts of center / conquer
-//                             [reactivate] / genbook [<structure>] (+ the generatebook alias)
+//                             [reactivate] / genbook [<structure>] (+ the generatebook alias),
+//                             locate's keys and structure tags (invalid, Minecraft's structures, a
+//                             tag's result), and commands.generic.unknown below a literal's level
 //   landmark.protection       forceStart + protection: break / use / multi-place refused for a
 //                             non-qualified survival player, boxes + packets shown, allowed after
 //                             progression::grant and locked again after revoke (the progression
@@ -75,6 +80,7 @@
 #include "feature/landmark/Internal.h"
 #include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
+#include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
@@ -329,8 +335,10 @@ GF_REGISTER_SELFTEST("landmark.grid", [](Context& ctx) {
     // surface structures, labyrinth buried_treasure and knight_stronghold
     auto const* lichInfo = fl::info("twilightforest:lich_tower");
     auto const* labInfo  = fl::info("twilightforest:labyrinth");
-    ctx.check(lichInfo && fl::featureIndex(*lichInfo) == 14, "lich_tower is decoration index 14 of surface_structures");
-    ctx.check(labInfo && fl::featureIndex(*labInfo) == 2, "labyrinth is decoration index 2 of underground_structures");
+    ctx.check(lichInfo && lichInfo->inRegistry && lichInfo->slot == (gf::core::landmark::decoration::Slot{4, 14}),
+              "lich_tower is decoration index 14 of surface_structures");
+    ctx.check(labInfo && labInfo->inRegistry && labInfo->slot == (gf::core::landmark::decoration::Slot{3, 2}),
+              "labyrinth is decoration index 2 of underground_structures");
 });
 
 namespace {
@@ -379,11 +387,14 @@ private:
     std::int64_t mSeed;
 };
 
-/// Runs a command as the server console in dimension `dim`: (success, the output messages).
-std::pair<bool, std::string> runCommand(std::string const& command, int dim) {
+/// Runs a command as the server console in dimension `dim` at permission level `level`: (success,
+/// the output messages: ids and parameters). The selftest framework's runServerCommand
+/// (src/selftest/SelfTest.cpp) is file-local and has no permission level; F0 is asked to expose
+/// one in SelfTest.h, which replaces this copy.
+std::pair<bool, std::string> runCommand(std::string const& command, int dim, CommandPermissionLevel permission = CommandPermissionLevel::Owner) {
     auto level = ll::service::getLevel();
     if (!level) return {false, "no level"};
-    ServerCommandOrigin origin("gloamingforest-landmark-selftest", level->asServer(), CommandPermissionLevel::Owner, DimensionType(dim));
+    ServerCommandOrigin origin("gloamingforest-landmark-selftest", level->asServer(), permission, DimensionType(dim));
     auto        out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
     std::string messages;
     for (auto const& m : out.mMessages) {
@@ -403,15 +414,41 @@ GF_REGISTER_SELFTEST("landmark.decoration", [](Context& ctx) {
     namespace dec = gf::core::landmark::decoration;
     namespace wgx = gf::worldgen::ext;
     // the slots: Java's, the worldgen registry's (what the structure step's context seeds with) and
-    // the descriptors' featureIndex agree for all 21 TF structures
+    // the descriptors' agree for all 21 TF structures
     for (auto const& w : kJavaSlots) {
         auto const* inf  = fl::info(w.key);
         auto        slot = fl::decorationSlot(w.key);
         auto        reg  = wgx::structureSlot(w.key);
-        ctx.check(inf && slot == (dec::Slot{w.step, w.index}) && reg && reg->step == w.step && reg->index == w.index && fl::featureIndex(*inf) == w.index
+        ctx.check(inf && inf->inRegistry && inf->slot == (dec::Slot{w.step, w.index}) && slot == inf->slot && reg && reg->step == w.step && reg->index == w.index
                       && dec::stepIndex(inf->step) == w.step,
                   std::string(w.key) + " decorates at step " + std::to_string(w.step) + " index " + std::to_string(w.index) + " (got " + std::to_string(slot.step) + "/"
                       + std::to_string(slot.index) + ", registry " + (reg ? std::to_string(reg->step) + "/" + std::to_string(reg->index) : "none") + ")");
+    }
+    // the core's own Structure registry (Minecraft 1.21.1's 34 structures, the gtests' table) with
+    // TF's descriptors at their steps, in registry order, is F5's structuresByStep() entry by entry:
+    // the two cannot drift apart unnoticed (a data pack structure F5 reads would show here too)
+    {
+        auto registry = dec::vanillaStructures();
+        for (auto const& k : fl::descriptorKeys())
+            if (auto const* inf = fl::info(k); inf && !fl::isFixtureKey(k)) registry.push_back({k, fl::stepOf(*inf)});
+        std::stable_sort(registry.begin(), registry.end(), [](dec::Structure const& a, dec::Structure const& b) { return dec::registryBefore(a.id, b.id); });
+        std::vector<std::vector<std::string>> core(dec::kSteps);
+        for (auto const& e : registry) core[static_cast<std::size_t>(e.step)].push_back(e.id);
+        auto        worldgen = wgx::structuresByStep();
+        std::string firstDiff;
+        int         entries = 0;
+        for (int step = 0; step < dec::kSteps && firstDiff.empty(); ++step) {
+            auto const& a = core[static_cast<std::size_t>(step)];
+            auto const  b = step < static_cast<int>(worldgen.size()) ? worldgen[static_cast<std::size_t>(step)] : std::vector<std::string>{};
+            for (std::size_t i = 0; i < std::max(a.size(), b.size()) && firstDiff.empty(); ++i) {
+                auto ea = i < a.size() ? a[i] : std::string("(none)");
+                auto eb = i < b.size() ? b[i] : std::string("(none)");
+                if (ea != eb) firstDiff = std::string(dec::stepName(step)) + " #" + std::to_string(i) + ": core " + ea + ", worldgen " + eb;
+                else ++entries;
+            }
+        }
+        ctx.check(firstDiff.empty() && entries == 34 + 21,
+                  "the core's structure registry is the worldgen's, entry by entry (" + (firstDiff.empty() ? std::to_string(entries) + " entries" : firstDiff) + ")");
     }
     // the seeds: the decoration context the worldgen hands the structure step and the random of a
     // placement in loaded chunks are Java's setDecorationSeed + setFeatureSeed
@@ -431,14 +468,25 @@ GF_REGISTER_SELFTEST("landmark.decoration", [](Context& ctx) {
     }
     ctx.check(mismatches == 0, "every TF structure's decoration random is Java's (" + std::to_string(mismatches) + " mismatches)");
 
+    // the steps some landmark decorates at: TF's underground_structures, surface_structures and
+    // top_layer_modification (the fixtures' surface_structures); the structure step returns at once
+    // at the other 8
+    ctx.check(fl::decorationStepMask() == ((1u << 3) | (1u << 4) | (1u << 10)),
+              "landmarks decorate at steps 3, 4 and 10 only (mask " + std::to_string(fl::decorationStepMask()) + ")");
+
     // the structure step itself: a start is placed at its structure's step only, every piece with
-    // the structure's one random (the fixture landmark: no registry lists it, so its descriptor's
-    // surface_structures and featureIndex, the place it would sort to)
+    // the structure's one random (the fixture landmarks: no registry lists them, so their
+    // descriptor's surface_structures, past the end of it in registration order: no registered
+    // structure shares their seed)
     auto const* fixture = fl::info(kFixture);
-    ctx.require(fixture != nullptr, "the fixture descriptor");
+    auto const* open    = fl::info(kOpenFixture);
+    ctx.require(fixture != nullptr && open != nullptr, "the fixture descriptors");
+    auto surface     = static_cast<int>(wgx::structuresByStep()[4].size());
     auto fixtureSlot = fl::decorationSlot(kFixture);
-    ctx.check(fixtureSlot == (dec::Slot{4, 13}), "the fixture sorts before large_hollow_hill: surface_structures index 13 (got " + std::to_string(fixtureSlot.step)
-                                                     + "/" + std::to_string(fixtureSlot.index) + ")");
+    ctx.check(!fixture->inRegistry && fixtureSlot == (dec::Slot{4, surface}) && open->slot == (dec::Slot{4, surface + 1}),
+              "the fixtures decorate past the end of surface_structures: " + std::to_string(surface) + " and " + std::to_string(surface + 1) + " (got "
+                  + std::to_string(fixtureSlot.step) + "/" + std::to_string(fixtureSlot.index) + ", " + std::to_string(open->slot.step) + "/"
+                  + std::to_string(open->slot.index) + ")");
     auto base = ctx.testPos(5670, 2);
     int  dim = base.dim, cx = base.x >> 4, cz = (base.z >> 4) + 20000; // far from every other start
     auto rec  = fl::createStart(*fixture, dim, cx, cz, GlobalPos{dim, cx * 16 + 8, 64, cz * 16 + 8}, true);
@@ -465,7 +513,8 @@ GF_REGISTER_SELFTEST("landmark.decoration", [](Context& ctx) {
     ctx.check(placed == "00001000000", "placed at surface_structures only (starts per step: " + placed + ")");
     auto java = dec::structureRandom(ds, fixtureSlot);
     auto a = java->nextLong(), b = java->nextLong();
-    ctx.check(probes.size() == 2 && probes[0] == a && probes[1] == b, "the shell and the porch drew from one random, setFeatureSeed(decorationSeed, 13, 4)");
+    ctx.check(probes.size() == 2 && probes[0] == a && probes[1] == b,
+              "the shell and the porch drew from one random, setFeatureSeed(decorationSeed, " + std::to_string(fixtureSlot.index) + ", 4)");
     ctx.check(region.placed > 0, "the pieces wrote through the region (" + std::to_string(region.placed) + " blocks)");
 });
 
@@ -540,32 +589,70 @@ GF_REGISTER_SELFTEST("landmark.commands", [](Context& ctx) {
               "TF's declared-only keys and unknown ids are not");
 
     int  dim      = ctx.testPos(5670).dim;
-    auto expectIn = [&](std::string const& command, bool ok, std::string const& text) {
-        auto [success, messages] = runCommand(command, dim);
-        ctx.check(success == ok && messages.find(text) != std::string::npos,
-                  "/" + command + " -> " + (ok ? "success" : "failure") + " with '" + text + "' (got " + (success ? "success" : "failure") + ": " + messages + ")");
+    auto expectIn = [&](std::string const& command, bool ok, std::vector<std::string> const& texts,
+                        CommandPermissionLevel permission = CommandPermissionLevel::Owner) {
+        auto [success, messages] = runCommand(command, dim, permission);
+        bool        all          = true;
+        std::string want;
+        for (auto const& t : texts) {
+            all = all && messages.find(t) != std::string::npos;
+            want += (want.empty() ? "'" : ", '") + t + "'";
+        }
+        ctx.check(success == ok && all, "/" + command + " -> " + (ok ? "success" : "failure") + " with " + want + " (got " + (success ? "success" : "failure") + ": "
+                                            + messages + ")");
     };
     // genbook [<structure>]: the argument is resolved before generateBook checks for a player
-    expectIn("twilightforest genbook minecraft:no_such_structure", false, "There is no structure with type \"minecraft:no_such_structure\"");
-    expectIn("twilightforest genbook lich_tower", false, "There is no structure with type \"minecraft:lich_tower\"");
-    expectIn("twilightforest genbook twilightforest:quest_island", false, "There is no structure with type \"twilightforest:quest_island\"");
+    expectIn("twilightforest genbook minecraft:no_such_structure", false, {"There is no structure with type \"minecraft:no_such_structure\""});
+    expectIn("twilightforest genbook lich_tower", false, {"There is no structure with type \"minecraft:lich_tower\""});
+    expectIn("twilightforest genbook twilightforest:quest_island", false, {"There is no structure with type \"twilightforest:quest_island\""});
     // ResourceLocation#read stops at the first character no resource location holds: "Bad:Id" reads
     // as "" (minecraft:) followed by trailing data; "a:b:c" reads whole and is no valid location
-    expectIn("twilightforest genbook Bad:Id", false, "Expected whitespace to end one argument, but found trailing data");
-    expectIn("twilightforest genbook a:b:c", false, "Invalid ID");
+    expectIn("twilightforest genbook Bad:Id", false, {"Expected whitespace to end one argument, but found trailing data"});
+    expectIn("twilightforest genbook a:b:c", false, {"Invalid ID"});
     // the GloamingForest additions locate / place read their argument the same way (Java's /locate
     // structure and /place structure)
-    expectIn("twilightforest locate lich_tower", false, "There is no structure with type \"minecraft:lich_tower\"");
-    expectIn("twilightforest place lich_tower", false, "There is no structure with type \"minecraft:lich_tower\"");
-    expectIn("twilightforest genbook twilightforest:lich_tower", false, "This command must be run by a valid player!");
-    expectIn("tf genbook minecraft:village_plains", false, "This command must be run by a valid player!");
-    expectIn("tffeature genbook", false, "This command must be run by a valid player!");
-    expectIn("twilightforest generatebook", false, "This command must be run by a valid player!");
+    expectIn("twilightforest locate lich_tower", false, {"There is no structure with type \"minecraft:lich_tower\""});
+    expectIn("twilightforest place lich_tower", false, {"There is no structure with type \"minecraft:lich_tower\""});
+    // locate's tag: LocateCommand#getHolders reads Registry#getTag (the tags contract's structure
+    // tags); an unknown one is ERROR_STRUCTURE_INVALID with "#" and the tag
+    ctx.check(gf::tags::members(gf::tags::Registry::Structure, "twilightforest:landmark").size() == 16, "#twilightforest:landmark has TF's 16 structures");
+    expectIn("twilightforest locate #twilightforest:no_such_tag", false, {"There is no structure with type \"#twilightforest:no_such_tag\""});
+    expectIn("twilightforest locate #Bad", false, {"Expected whitespace to end one argument, but found trailing data"});
+    // Minecraft's own structures: outside the Twilight Forest Java finds and places them, which only
+    // Bedrock's own commands can here (the console stands in the overworld)
+    expectIn("twilightforest locate minecraft:village_plains", false, {"minecraft:village_plains is not one of them"});
+    expectIn("twilightforest place minecraft:village_plains", false, {"minecraft:village_plains is not one of them"});
+    // a tag's result names the structure found (LocateCommand#showLocateResult): a forced fixture
+    // start, in #twilightforest:landmark, far above this unit's row
+    {
+        auto const* fixture = fl::info(kFixture);
+        ctx.require(fixture != nullptr, "the fixture descriptor");
+        auto    center = at(ctx.testPos(5675, 3), 0, 60, 0);
+        Cleanup cleanup;
+        auto    rec = fl::createStart(*fixture, center.dim, center.x >> 4, center.z >> 4, center, true);
+        ctx.require(rec != nullptr, "a forced fixture start");
+        cleanup.starts.push_back(center);
+        fl::putRecord(rec);
+        expectIn("twilightforest locate #twilightforest:landmark", true, {"The nearest #twilightforest:landmark (gf_test:landmark_fixture", ", ~, "});
+        expectIn("twilightforest locate gf_test:landmark_fixture", true, {"The nearest gf_test:landmark_fixture is at [", " blocks away)"});
+    }
+    expectIn("twilightforest genbook twilightforest:lich_tower", false, {"This command must be run by a valid player!"});
+    expectIn("tf genbook minecraft:village_plains", false, {"This command must be run by a valid player!"});
+    expectIn("tffeature genbook", false, {"This command must be run by a valid player!"});
+    expectIn("twilightforest generatebook", false, {"This command must be run by a valid player!"});
     // conquer [reactivate]: the console stands outside every landmark here
-    expectIn("twilightforest conquer", false, "You are not in a structure");
-    expectIn("twilightforest conquer reactivate", false, "You are not in a structure");
-    // center: TF's three lines
-    for (auto const* line : {"The nearest feature is: ", "Center of feature: ", "Located in feature chunk: "}) expectIn("twilightforest center", true, line);
+    expectIn("twilightforest conquer", false, {"You are not in a structure"});
+    expectIn("twilightforest conquer reactivate", false, {"You are not in a structure"});
+    // center: TF's three lines, from one run
+    expectIn("twilightforest center", true, {"The nearest feature is: ", "Center of feature: ", "Located in feature chunk: "});
+    // a source below the literal's level: Java's requires(n) hides the literal; Bedrock answers a
+    // command the source may not use with commands.generic.unknown (genbook needs Admin, the
+    // others GameDirectors)
+    for (auto const* literal : {"center", "info", "conquer", "conquer reactivate", "locate twilightforest:lich_tower", "place twilightforest:lich_tower"})
+        expectIn(std::string("twilightforest ") + literal, false, {"commands.generic.unknown " + std::string(literal).substr(0, std::string(literal).find(' '))},
+                 CommandPermissionLevel::Any);
+    expectIn("twilightforest genbook", false, {"commands.generic.unknown genbook"}, CommandPermissionLevel::GameDirectors);
+    expectIn("twilightforest genbook", false, {"This command must be run by a valid player!"}, CommandPermissionLevel::Admin);
 });
 
 GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTask<> {

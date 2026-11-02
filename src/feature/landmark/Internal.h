@@ -119,7 +119,11 @@ struct Info {
     std::string                        hintMob;      ///< hint_creature.hint_mob
     std::string                        hintBook;     ///< "lichtower" (twilightforest.book.<name>)
     int                                hintPages = 0;
-    int                                featureIndex = 0; ///< in its decoration step (set at load: featureIndex())
+    /// Where ChunkGenerator#applyBiomeDecoration seeds it (set when it joins the store,
+    /// assignSlot): the worldgen's Structure registry slot (worldgen::ext::structureSlot), or for
+    /// a key the registry does not hold (the gf_test fixtures) past the end of its step.
+    core::landmark::decoration::Slot   slot;
+    bool                               inRegistry = false; ///< the worldgen's Structure registry holds it
     Json                               raw;          ///< the record as loaded
 };
 
@@ -282,14 +286,26 @@ void forgetEvaluation(int dim, int chunkX, int chunkZ);
 /// gridLength) over `provider`'s WORLD_SURFACE_WG heights (nullopt: no provider, or no column).
 [[nodiscard]] std::optional<int> adjustForTerrainAroundChunk(std::function<std::optional<int>(int, int, int, worldgen::Heightmap)> const& provider, int dim, int x,
                                                              int z, int radiusFromCenterChunk, int gridLength);
-/// The index of a structure inside its decoration step: ChunkGenerator#applyBiomeDecoration counts
-/// every Structure registry entry of the step, vanilla's 34 included, in registry order (resource
-/// locations sorted path first, then namespace; core/landmark/Decoration.h), over the descriptors.
-[[nodiscard]] int featureIndex(Info const& info);
-/// The step and index applyBiomeDecoration seeds structure `key` with: the worldgen's Structure
-/// registry slot (worldgen::ext::structureSlot), else the descriptor's step and featureIndex (the
-/// gf_test fixtures, which no registry lists).
+/// Sets info.slot and info.inRegistry (a descriptor joining the store; the store lock not held).
+/// ChunkGenerator#applyBiomeDecoration's index counts every Structure registry entry of the step,
+/// vanilla's 34 included, in registry order: F5's registry (worldgen::ext::structureSlot) is the
+/// one the decoration context seeds with, so a registered key takes its slot. A key it does not
+/// hold (the gf_test fixtures) goes past the end of its step, after every registered structure and
+/// the `unregisteredBefore` unregistered descriptors of that step already in the store, so no
+/// registered structure shares its seed. (core/landmark/Decoration's own table of Minecraft's
+/// structures serves the gtests; landmark.decoration compares it with F5's registry.) The slot is
+/// kept: F5 loads its data, and so its registry, once per process (features::detail::data();
+/// nothing calls reloadData), so it never moves under a loaded descriptor.
+void assignSlot(Info& info, int unregisteredBefore);
+/// The GenerationStep.Decoration ordinal of a descriptor's step (surface_structures, Structure's
+/// default, when unknown).
+[[nodiscard]] int stepOf(Info const& info);
+/// The step and index applyBiomeDecoration seeds structure `key` with: its descriptor's slot, else
+/// the worldgen's Structure registry slot, else past the end of surface_structures.
 [[nodiscard]] core::landmark::decoration::Slot decorationSlot(std::string const& key);
+/// The decoration steps some descriptor's structure decorates at (bit `step`; TF's: 3, 4 and 10):
+/// the landmark.pieces structure step returns at once at the others.
+[[nodiscard]] std::uint32_t decorationStepMask();
 /// The random the pieces of `key` are placed with in chunk (cx, cz): WorldgenRandom(Xoroshiro)
 /// setDecorationSeed(levelSeed, cx << 4, cz << 4), then setFeatureSeed(.., decorationSlot(key)).
 [[nodiscard]] std::unique_ptr<core::jrand::WorldgenRandom> decorationRandom(std::int64_t levelSeed, int chunkX, int chunkZ, std::string const& key);
