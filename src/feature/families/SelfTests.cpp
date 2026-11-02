@@ -1357,14 +1357,18 @@ GF_REGISTER_SELFTEST("families.leaves_waterlogged", [](Context& ctx) -> ll::coro
 
 GF_REGISTER_SELFTEST("families.sign_sync", [](Context& ctx) -> ll::coro::CoroTask<> {
     // the client mod draws the sign text itself (SignRenderer): the server sends companions the
-    // text of a sign when it changes, "gone" when it goes, everything when they join; vanilla
-    // players get nothing (they read the display entity's name tag)
+    // text of a sign when it changes (the changes of a tick in one message at its end), "gone" when
+    // it goes, everything when they join; vanilla players get nothing (they read the display
+    // entity's name tag)
     if (!fixturesReady(ctx)) co_return;
     auto box = co_await ctx.flatArea(6182, 5);
     auto p   = ctx.testPos(6184, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     ctx.require(ctx.setBlock(at(p, 0, -1, 0), "minecraft:stone"), "ground");
     ctx.require(ctx.setBlock(p, "gf_test:family_sign", {{fam::state::Rotation, 8}}), "a sign");
+    auto q = at(p, 2, 0, 0);
+    ctx.require(ctx.setBlock(at(q, 0, -1, 0), "minecraft:stone"), "ground 2");
+    ctx.require(ctx.setBlock(q, "gf_test:family_sign", {{fam::state::Rotation, 8}}), "a second sign");
     co_await ctx.ticks(1);
     CompanionGuard guard(ctx);
     auto texts = [&ctx] {
@@ -1373,14 +1377,17 @@ GF_REGISTER_SELFTEST("families.sign_sync", [](Context& ctx) -> ll::coro::CoroTas
             if (m.channel == "families.sign_text") out.push_back(m.payload);
         return out;
     };
-    auto names = [&p](fam::Json const& msg, char const* list) {
+    auto namesAt = [](fam::Json const& msg, char const* list, GlobalPos const& where) {
         for (auto const& e : msg.value(list, fam::Json::array())) {
             auto const& pos = e.is_array() ? e : e.value("pos", fam::Json());
-            if (pos == fam::Json::array({p.dim, p.x, p.y, p.z})) return true;
+            if (pos == fam::Json::array({where.dim, where.x, where.y, where.z})) return true;
         }
         return false;
     };
+    auto names = [&](fam::Json const& msg, char const* list) { return namesAt(msg, list, p); };
     gf::signs::setText(p, {"sync", "me"});
+    ctx.check(texts().empty(), "nothing is sent before the end of the tick");
+    co_await ctx.ticks(1);
     auto sent = texts();
     ctx.check(sent.size() == 1 && names(sent[0], "signs"), "a companion is sent the new text (" + std::to_string(sent.size()) + " messages)");
     if (!sent.empty() && !sent[0].value("signs", fam::Json::array()).empty()) {
@@ -1389,14 +1396,24 @@ GF_REGISTER_SELFTEST("families.sign_sync", [](Context& ctx) -> ll::coro::CoroTas
                   "with both sides' lines, colour and glow");
     }
     gf::signs::setText(p, {"sync", "me"});
+    co_await ctx.ticks(1);
     ctx.check(texts().empty(), "the same text is not sent again");
     gf::signs::setText(p, {"back"}, false);
+    co_await ctx.ticks(1);
     sent = texts();
     ctx.check(sent.size() == 1 && names(sent[0], "signs") && sent[0]["signs"][0]["back"]["lines"][0] == "back", "a change of the back is sent");
     ctx.check(fam::detail::signSentText(p).value("front", fam::Json()).value("lines", fam::Json::array()) == fam::Json::array({"sync", "me", "", ""}), "the server remembers what it sent");
     fam::detail::signSendAll(ctx.player());
     sent = texts();
     ctx.check(!sent.empty() && names(sent[0], "signs"), "a companion that joins gets the text of the signs");
+    // two signs written in one tick: one message with both
+    gf::signs::setText(p, {"one", "tick"});
+    gf::signs::setText(q, {"same", "tick"});
+    co_await ctx.ticks(1);
+    sent = texts();
+    ctx.check(sent.size() == 1 && names(sent[0], "signs") && namesAt(sent[0], "signs", q), "the changes of one tick go in one message (" + std::to_string(sent.size()) + " messages)");
+    ctx.setBlock(q, "minecraft:air");
+    ctx.setBlock(at(q, 0, -1, 0), "minecraft:air");
     ctx.setBlock(p, "minecraft:air");
     co_await ctx.ticks(2);
     sent = texts();

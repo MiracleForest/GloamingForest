@@ -15,14 +15,20 @@
 //   the scale 1/64 x 2/3 (hanging 1/64 x 0.9) with y down;
 // - the lines: four, each the first line of Font.split(line, 90; hanging 60), x = -width / 2, line
 //   i at y = i x 10 - 20 (hanging i x 9 - 18);
-// - the colours: text that does not glow is getDarkColor (the dye's colour x 0.4); glowing text is
-//   the dye's colour at full brightness, with drawInBatch8xOutline in getDarkColor (black text:
-//   0xF0EBCC) while isOutlineVisible (black text, the local player looking through a spyglass, or
-//   the camera within 16 blocks);
+// - the colours: text that does not glow is getDarkColor (the dye's colour x 0.4) in the sign's
+//   light (packedLight); glowing text is the dye's colour at full brightness, with
+//   drawInBatch8xOutline in getDarkColor (black text: 0xF0EBCC) while isOutlineVisible (black text,
+//   the local player looking through a spyglass in first person, or the camera entity within 16
+//   blocks);
 // - drawn within 64 blocks (BlockEntityRenderer.getViewDistance).
 // The server sends the text ("families.sign_text", src/feature/families/Signs.cpp); the block
 // renderer of every sign family block (contract client.render, F12) draws it with the game's font
-// in the sign's pose (Font::drawCached with the vanilla sign renderer's text materials).
+// in the sign's pose, the way Bedrock's SignRenderer draws its own text (measured in game: its
+// Font::drawCached calls and shader state): ActorShaderManager::setupShaderParameters at the sign
+// first (the light at the block, which the lit text material multiplies by), then each line with
+// the darken path on (the text colour times the dark colour given to drawCached: the only way these
+// materials take a colour), the lit material for unlit text and the glow material (no light) for
+// glowing text and its outline.
 // The server's display entities (gloamingforest:sign_text: the name tag vanilla clients read) show
 // no name tag here while the server sends the text: ActorRenderDispatcher::extractRenderTextObjects
 // (the name tag of one actor for the frame) gives nothing for them on the client of a companion
@@ -47,10 +53,13 @@
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/client/game/IClientInstance.h"
 #include "mc/client/gui/Font.h"
 #include "mc/client/gui/FontHandle.h"
+#include "mc/client/options/IOptionRegistry.h"
 #include "mc/client/gui/screens/ScreenContext.h"
 #include "mc/client/player/LocalPlayer.h"
+#include "mc/client/renderer/ActorShaderManager.h"
 #include "mc/client/renderer/BaseActorRenderContext.h"
 #include "mc/client/renderer/Tessellator.h"
 #include "mc/client/renderer/actor/ActorRenderDispatcher.h"
@@ -58,11 +67,14 @@
 #include "mc/client/renderer/blockactor/SignRenderer.h"
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/math/Matrix.h"
+#include "mc/deps/core/math/Vec2.h"
+#include "mc/deps/core/math/Vec4.h"
 #include "mc/deps/minecraft_renderer/objects/NameTagRenderObject.h"
 #include "mc/deps/minecraft_renderer/renderer/MaterialPtr.h"
 #include "mc/deps/minecraft_renderer/resources/OffscreenCaptureDescription.h"
 #include "mc/deps/renderer/Camera.h"
 #include "mc/deps/renderer/MatrixStack.h"
+#include "mc/deps/renderer/ShaderColor.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/Level.h"
@@ -217,7 +229,8 @@ mce::Color colorOf(unsigned rgb) {
     return mce::Color{static_cast<float>((rgb >> 16) & 0xFF) / 255.f, static_cast<float>((rgb >> 8) & 0xFF) / 255.f, static_cast<float>(rgb & 0xFF) / 255.f, 1.f};
 }
 
-/// The vanilla sign renderer's text materials (glowing text has its own, unlit).
+/// The vanilla sign renderer's text materials: the lit one, and the glowing one, which ignores the
+/// light (Java's full-bright 15728880).
 mce::MaterialPtr const* textMaterial(BaseActorRenderContext& rc, bool glowing) {
     BlockActorRenderDispatcher& dispatcher = rc.mBlockEntityRenderDispatcher;
     auto* sign = static_cast<SignRenderer*>(dispatcher.mRenderers->operator[](BlockActorRendererId::Sign).get());
@@ -228,10 +241,17 @@ mce::MaterialPtr const* textMaterial(BaseActorRenderContext& rc, bool glowing) {
     return plain.mRenderMaterialInfoPtr.get() ? &plain : nullptr;
 }
 
-void drawLine(Font& font, ScreenContext& sc, std::string_view text, float x, float y, unsigned rgb, mce::MaterialPtr const* material) {
-    mce::Color color = colorOf(rgb);
-    mce::Color black{0.f, 0.f, 0.f, 1.f};
-    font.drawCached(sc, text, x, y, color, false, false, false, material, -1, false, 0.0f, color, black, 0.0f, 0.0f, OffscreenCaptureDescription{}, false);
+/// One line in `rgb` times `scale` (0..1 per channel). The sign text materials take the colour only
+/// through the font's darken path: the line's colour times the shader's dark colour, which drawCached
+/// sets when `darken` is on (with it off the text keeps whatever dark colour the last text left,
+/// which made every line the same grey); the lit material multiplies by the light that
+/// SignRenderer's setupShaderParameters left in the screen context. Vanilla's SignRenderer draws its
+/// text the same way (darken on, its dark colour 0.5 for unlit text).
+void drawLine(Font& font, ScreenContext& sc, std::string_view text, float x, float y, unsigned rgb, float scale, mce::MaterialPtr const* material) {
+    mce::Color const color = colorOf(rgb);
+    mce::Color const dark{scale, scale, scale, 1.f};
+    mce::Color const none{0.f, 0.f, 0.f, 0.f};
+    font.drawCached(sc, text, x, y, color, true, true, false, material, -1, false, 0.0f, none, dark, 0.0f, 0.0f, OffscreenCaptureDescription{}, true);
 }
 
 /// One side of a sign: SignRenderer.renderSignText in the pose `pose` (the sign's, in camera space).
@@ -247,11 +267,14 @@ void drawSide(render::RenderContext& ctx, Font& font, glm::mat4 const& pose, Sig
     int const lineHeight = hanging ? 9 : 10;  // HangingSignBlockEntity.TEXT_LINE_HEIGHT / SignBlockEntity's
     int const maxWidth   = hanging ? 60 : 90; // getMaxTextLineWidth
     int const top        = 4 * lineHeight / 2;
-    // the colours (renderSignText)
+    // the colours (renderSignText): text that does not glow is getDarkColor (the dye's colour x 0.4,
+    // drawn as the dye's colour with the dark colour 0.4) in the sign's light; glowing text is the
+    // dye's colour at full brightness, with the 8x outline in getDarkColor (black: 0xF0EBCC) while
+    // isOutlineVisible
     unsigned const textColor = dyeTextColor(side.color);
     unsigned const dark      = signDarkColor(textColor, side.glowing);
     bool const     outline   = side.glowing && (textColor == 0 || outlineNear); // isOutlineVisible
-    unsigned const color     = side.glowing ? textColor : dark;
+    float const    scale     = side.glowing ? 1.0f : 0.4f;
     auto const*    material  = textMaterial(rc, side.glowing);
     if (!material) return;
 
@@ -263,26 +286,77 @@ void drawSide(render::RenderContext& ctx, Font& font, glm::mat4 const& pose, Sig
         float x     = static_cast<float>((-width) / 2);
         float y     = static_cast<float>(i * lineHeight - top);
         if (outline) {
-            // drawInBatch8xOutline: the line in the dark colour moved one pixel in eight directions,
-            // then the line itself in front (Java's POLYGON_OFFSET)
-            // (the font caches a line's mesh by its text and colour, not its place: each copy moves
-            // by its matrix)
+            // drawInBatch8xOutline: the line in the dark colour moved one pixel (the glyphs' shadow
+            // offset) in eight directions, full bright, then the line itself in front (Java's
+            // POLYGON_OFFSET). The font caches a line's mesh by its text and colour, not its place:
+            // each copy moves by its matrix.
             for (int dx = -1; dx <= 1; ++dx) {
                 for (int dy = -1; dy <= 1; ++dy) {
                     if (dx == 0 && dy == 0) continue;
                     auto ref          = world.push(false);
                     ref.mat->_m.get() = ref.mat->_m.get() * glm::translate(m, glm::vec3{static_cast<float>(dx), static_cast<float>(dy), 0.0f});
-                    drawLine(font, ctx.screen, line, x, y, dark, material);
+                    drawLine(font, ctx.screen, line, x, y, dark, 1.0f, material);
                 }
             }
         }
         auto ref          = world.push(false);
         ref.mat->_m.get() = ref.mat->_m.get() * glm::translate(m, glm::vec3{0.0f, 0.0f, outline ? 0.1f : 0.0f});
-        drawLine(font, ctx.screen, line, x, y, color, material);
+        drawLine(font, ctx.screen, line, x, y, textColor, scale, material);
     }
 }
 
+/// The screen context's text state for one sign, restored afterwards: SignRenderer's light at the
+/// sign (ActorShaderManager::setupShaderParameters at the block, as SignRenderer::render sets it
+/// before the board and the text: the light the lit text material multiplies by, Java's packedLight)
+/// and environmental text.
+class SignTextState {
+public:
+    SignTextState(render::RenderContext& ctx, BlockPos const& pos, bool lit)
+    : mScreen(ctx.screen),
+      mColor(static_cast<ShaderColor&>(ctx.screen.currentShaderColor)),
+      mDark(static_cast<ShaderColor&>(ctx.screen.currentShaderDarkColor)),
+      mEnvironmental(ctx.screen.isDrawingEnvironmentalText) {
+        mScreen.isDrawingEnvironmentalText = true;
+        if (!lit) return;
+        IClientInstance& client = ctx.actors->mClientInstance;
+        auto*            region = client.getRegion();
+        auto*            light  = client.getLightTexture();
+        if (region && light)
+            ActorShaderManager::setupShaderParameters(ctx.screen, *region, pos, ctx.partialTicks, false, *light, ctx.actors->mLightVolumeManager, Vec2{1.0f, 1.0f}, Vec4{0.0f, 0.0f, 0.0f, 0.0f});
+    }
+    ~SignTextState() {
+        ShaderColor& color = mScreen.currentShaderColor;
+        ShaderColor& dark  = mScreen.currentShaderDarkColor;
+        color              = mColor;
+        color.dirty        = true;
+        dark               = mDark;
+        dark.dirty         = true;
+        mScreen.isDrawingEnvironmentalText = mEnvironmental;
+    }
+    SignTextState(SignTextState const&)            = delete;
+    SignTextState& operator=(SignTextState const&) = delete;
+
+private:
+    ScreenContext& mScreen;
+    ShaderColor    mColor;
+    ShaderColor    mDark;
+    bool           mEnvironmental;
+};
+
 std::atomic<bool> gDrawn{false};
+
+/// SignRenderer.isOutlineVisible without its black text case: the local player scoping in first
+/// person, or the camera entity within 16 blocks of the sign's centre (distanceToSqr of the entity's
+/// position, its feet).
+bool outlineVisible(render::RenderContext& ctx, LocalPlayer& player, BlockPos const& pos) {
+    IClientInstance& client = ctx.actors->mClientInstance;
+    if (client.getOptions().getPlayerViewPerspective() == 0 && player.isScoping()) return true;
+    Actor const* camera = client.getCameraActor();
+    if (!camera) camera = &player;
+    Vec3 const feet = camera->getFeetPos();
+    float const dx = feet.x - (static_cast<float>(pos.x) + 0.5f), dy = feet.y - (static_cast<float>(pos.y) + 0.5f), dz = feet.z - (static_cast<float>(pos.z) + 0.5f);
+    return dx * dx + dy * dy + dz * dz < kOutlineDistance * kOutlineDistance;
+}
 
 /// The block renderer of every sign family block.
 void drawSign(render::RenderContext& ctx, BlockPos const& pos, Block const& block, float) {
@@ -310,10 +384,14 @@ void drawSign(render::RenderContext& ctx, BlockPos const& pos, Block const& bloc
         pose = glm::rotate(pose, glm::radians(yRot), glm::vec3{0, 1, 0});
         if (!standing) pose = glm::translate(pose, glm::vec3{0.0f, -0.3125f, -0.4375f});
     }
-    // isOutlineVisible: the camera within 16 blocks of the sign's centre, or a spyglass in use
-    bool outlineNear = d2 < kOutlineDistance * kOutlineDistance || player->isScoping();
+    // isOutlineVisible: the local player looking through a spyglass in first person, or the camera
+    // entity (its feet) within 16 blocks of the sign's centre
+    bool outlineNear = outlineVisible(ctx, *player, pos);
     auto handle      = ctx.actors->getFontHandle();
     auto& font       = handle->getFont();
+    // the light at the sign even when only glowing text is drawn (the glow material ignores it; a pack
+    // without that material falls back to the lit one)
+    SignTextState state(ctx, pos, true);
     drawSide(ctx, font, pose, text->front, true, hanging, outlineNear);
     drawSide(ctx, font, pose, text->back, false, hanging, outlineNear);
     if (!gDrawn.exchange(true)) log().info("families: sign text drawn on the board ({} at {} {} {})", e->id, pos.x, pos.y, pos.z);

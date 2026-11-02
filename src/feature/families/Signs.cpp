@@ -221,14 +221,28 @@ Json drawnText(Json const& doc) {
     return {{"front", side("front")}, {"back", side("back")}};
 }
 
-/// The text each sign had when it was last sent to the companions (the signs with text in loaded
-/// chunks; checkDisplays drops unloaded ones): a companion that joins gets all of them.
+/// The text each sign had when it was last sent to the companions, or will have at the end of the
+/// tick (the signs with text in loaded chunks; checkDisplays drops unloaded ones): a companion that
+/// joins gets all of them.
 std::map<GlobalPos, Json>& sentTexts() {
     static std::map<GlobalPos, Json> m;
     return m;
 }
 
+/// The changes of this tick, sent to the companions once at its end (flushTexts): the signs whose
+/// text changed and the signs whose text went.
+struct PendingTexts {
+    std::map<GlobalPos, Json> signs;
+    std::set<GlobalPos>       gone;
+};
+PendingTexts& pendingTexts() {
+    static PendingTexts p;
+    return p;
+}
+
 Json posJson(GlobalPos const& p) { return Json::array({p.dim, p.x, p.y, p.z}); }
+
+constexpr std::size_t kBatch = 64; ///< signs per message
 
 /// Sends `payload` on the sign text channel to every companion (vanilla clients get nothing).
 void sendToCompanions(Json const& payload) {
@@ -241,21 +255,54 @@ void sendToCompanions(Json const& payload) {
 }
 
 /// The companions' copy of the text of the sign at `pos` follows `text` (nullptr: no sign or no
-/// text there): sent when it changed (SignBlockEntity.setChanged's update packet).
+/// text there): queued when it changed and sent at the end of the tick (SignBlockEntity.setChanged's
+/// update packet), so a chunk full of signs that loads costs one message per companion.
 void syncText(GlobalPos const& pos, Json const* text) {
-    auto& sent = sentTexts();
-    auto  it   = sent.find(pos);
+    auto& sent    = sentTexts();
+    auto& pending = pendingTexts();
+    auto  it      = sent.find(pos);
     if (!text) {
         if (it == sent.end()) return;
         sent.erase(it);
-        sendToCompanions({{"gone", Json::array({posJson(pos)})}});
+        pending.signs.erase(pos);
+        pending.gone.insert(pos);
         return;
     }
     if (it != sent.end() && it->second == *text) return;
-    sent[pos]   = *text;
-    Json entry  = *text;
-    entry["pos"] = posJson(pos);
-    sendToCompanions({{"signs", Json::array({entry})}});
+    sent[pos] = *text;
+    pending.gone.erase(pos);
+    pending.signs[pos] = *text;
+}
+
+/// Sends this tick's changes to every companion: {"signs": [...], "gone": [...]}, at most 64 entries
+/// a message.
+void flushTexts() {
+    auto& pending = pendingTexts();
+    if (pending.signs.empty() && pending.gone.empty()) return;
+    Json signs = Json::array();
+    Json gone  = Json::array();
+    auto flush = [&] {
+        if (signs.empty() && gone.empty()) return;
+        Json msg = Json::object();
+        if (!signs.empty()) msg["signs"] = std::move(signs);
+        if (!gone.empty()) msg["gone"] = std::move(gone);
+        sendToCompanions(msg);
+        signs = Json::array();
+        gone  = Json::array();
+    };
+    for (auto const& pos : pending.gone) {
+        gone.push_back(posJson(pos));
+        if (signs.size() + gone.size() >= kBatch) flush();
+    }
+    for (auto& [pos, text] : pending.signs) {
+        Json entry   = std::move(text);
+        entry["pos"] = posJson(pos);
+        signs.push_back(std::move(entry));
+        if (signs.size() + gone.size() >= kBatch) flush();
+    }
+    flush();
+    pending.signs.clear();
+    pending.gone.clear();
 }
 
 /// A companion that joins gets the text of every sign (in batches of 64 signs).
@@ -267,10 +314,11 @@ void sendAllTexts(Player& player) {
         batch = Json::array();
     };
     for (auto const& [pos, text] : sentTexts()) {
+        if (pendingTexts().signs.contains(pos)) continue; // the end of the tick sends it to every companion
         Json entry   = text;
         entry["pos"] = posJson(pos);
         batch.push_back(std::move(entry));
-        if (batch.size() >= 64) flush();
+        if (batch.size() >= kBatch) flush();
     }
     flush();
 }
@@ -376,6 +424,7 @@ void checkDisplays() {
             // who kept their copy meanwhile; a joining companion gets the loaded signs)
             displayed().erase(pos);
             sentTexts().erase(pos);
+            pendingTexts().signs.erase(pos);
             continue;
         }
         auto seen = chunkTicked().find({pos.dim, pos.x >> 4, pos.z >> 4});
@@ -391,6 +440,21 @@ void checkDisplays() {
         if (!ok) reconcileDisplay(pos);
     }
     std::erase_if(chunkTicked(), [tick](auto const& kv) { return tick - kv.second >= 40; });
+    // a sign with text but no display entity (it could not be spawned) is not in displayed(): it
+    // leaves the companions' list the same way when its chunk unloads
+    for (auto it = sentTexts().begin(); it != sentTexts().end();) {
+        if (displayed().contains(it->first)) { // checked above
+            ++it;
+            continue;
+        }
+        auto* region = regionOf(it->first.dim);
+        if (region && region->hasChunksAt(game::blockPos(it->first), 0, false)) {
+            ++it;
+            continue;
+        }
+        pendingTexts().signs.erase(it->first);
+        it = sentTexts().erase(it);
+    }
 }
 
 /// Display entities left behind (their sign is gone, or names another entity): removed.
@@ -942,6 +1006,7 @@ void installSigns() {
 
 namespace detail {
 void signsTick(int tick) {
+    flushTexts();
     if (tick % 20 != 0) return;
     clearInvalidEditors();
     checkDisplays();
@@ -951,6 +1016,8 @@ void clearSigns() {
     displayed().clear();
     chunkTicked().clear();
     sentTexts().clear();
+    pendingTexts().signs.clear();
+    pendingTexts().gone.clear();
 }
 /// Selftests: the text the companions were last sent for the sign at `pos` (null: none).
 Json signSentText(GlobalPos const& pos) {

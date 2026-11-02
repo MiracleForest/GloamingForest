@@ -2116,7 +2116,10 @@ local function declare_chests(outdir, chests, name, files)
     local list = arr({})
     for _, id in ipairs(sorted_keys(chests)) do
         if not others[id] then
-            -- ChestBlockEntity#getDefaultName / CompoundContainer: container.chest(Double)
+            -- ChestBlockEntity#getDefaultName / CompoundContainer: container.chest(Double). F11 owns
+            -- these two keys (assets/lang/<locale>/families.json, rule R9): the chest family names
+            -- its containers with them; the inventory contract (F10) only falls back to the same
+            -- key and must not define it again (a duplicate fails the lang merge).
             table.insert(list, {block = id, rows = 3, title = "container.chest", chest = true, pairs = true, double_title = "container.chestDouble",
                 stat = chests[id] == "trapped_chest" and "minecraft:trigger_trapped_chest" or "minecraft:open_chest", comparator = true})
         end

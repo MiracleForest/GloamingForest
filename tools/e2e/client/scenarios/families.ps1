@@ -361,6 +361,22 @@ if ("$written" -match 'sign written at (-?\d+) (-?\d+) (-?\d+)') {
     Save-Screenshot 'families-19-sign-written' | Out-Null
 } else { throw "no 'sign written at' line from families.sign_a_write" }
 
+# The client mod drew the sign text on the boards, hid the display entities' name tags and blended
+# the canopy / mangrove leaves with the biome foliage (client lines, not the host's); a vanilla
+# client does none of it (its client log has no such line)
+$clientLines = @(
+    'families: sign text drawn on the board',
+    'families: the sign text display entities show no name tag',
+    'families: canopy and mangrove leaves blend the biome foliage colour'
+)
+if ($script:Mode -eq 'remote-vanilla') {
+    foreach ($l in $clientLines) {
+        if (Get-LeviLog | Where-Object { $_ -notmatch '^\[host\]' -and $_ -match [regex]::Escape($l) }) { throw "a vanilla client logged '$l'" }
+    }
+} else {
+    foreach ($l in $clientLines) { Wait-LogLine "^(?!\[host\]).*$([regex]::Escape($l))" 20 | Out-Null }
+}
+
 # a vanilla client edits a sign through a form; its title is the game's own sign.edit text
 if ($script:Mode -eq 'remote-vanilla') {
     Invoke-Teleport "/tp @s 60.5 $($y) $($z + 2.5) 180 25"
