@@ -9,9 +9,10 @@
 //
 // Client build only. The local player's portal timer (TFPortalAttachment on the client: up 1 a
 // tick inside a Twilight portal, down 2 outside, at most 60), the full-screen portal overlay drawn
-// above everything with alpha timer / 60 (a HUD layer of gf::client::hud), and the screen closing
-// while inside a portal. When the HUD layer framework is not available yet (contract stub) the
-// client asks the server for the camera-fade stand-in vanilla clients get ("dimension.client").
+// above everything with alpha timer / 60 (a HUD layer of gf::client::hud; the sprite is drawn by
+// the contract extension feature/ext/dimension/HudSprite.h), and the screen closing while inside a
+// portal. When the HUD layer framework is not available yet (contract stub) the client asks the
+// server for the camera-fade stand-in vanilla clients get ("dimension.client").
 
 #ifdef GF_CLIENT
 
@@ -33,6 +34,7 @@
 #include "client/Client.h"
 #include "client/ui/Ui.h"
 #include "core/Stub.h"
+#include "feature/ext/dimension/HudSprite.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
@@ -44,9 +46,13 @@ namespace {
 
 constexpr int  kMaxTicks      = 60; // TFPortalAttachment.MAX_TICKS
 constexpr char kPortalBlock[] = "twilightforest:twilight_portal";
+/// The twilight_portal block's particle texture (minecraft:block/nether_portal), as the resource
+/// pack has it: the portal block's own texture (atlas tile "portal").
+constexpr char kPortalSprite[] = "textures/blocks/portal";
 
 struct ClientState {
     int  portalTimer = 0;
+    int  ticks       = 0; ///< client ticks, for the sprite's animation
     bool inside      = false;
     bool native      = false; ///< the HUD layer framework draws our layer
     std::string popped;       ///< the screen a pop was scheduled for (until the HUD is on top again)
@@ -67,7 +73,8 @@ bool openPortalAt(BlockSource& region, BlockPos const& p) {
 
 /// TFPortalAttachment#tick on the client (entityInside sets "inside" for the tick).
 void tick() {
-    auto& s      = state();
+    auto& s = state();
+    ++s.ticks;
     auto* player = currentPlayer();
     if (!player) {
         s = ClientState{.native = s.native};
@@ -102,14 +109,19 @@ void tick() {
     s.inside = inside;
 }
 
-/// PortalOverlay#render: the portal sprite over the whole screen, alpha timer / MAX_TICKS.
+/// PortalOverlay#render: the portal block's particle sprite (the animated nether portal texture,
+/// one frame a tick as the block atlas animates it) blitted over the whole GUI with the colour
+/// (1, 1, 1, timer / MAX_TICKS).
 void draw(screen::Canvas& canvas, float) {
     auto const& s = state();
     if (s.portalTimer <= 0) return;
     float alpha = static_cast<float>(s.portalTimer) / static_cast<float>(kMaxTicks);
-    // the nether portal sprite TF draws, averaged (its own alpha is about 3/4)
+    auto [w, h] = screen::guiSize();
+    core::Rect whole{-canvas.originX(), -canvas.originY(), w, h};
+    if (hud::ext::blitSprite(canvas, kPortalSprite, whole, alpha, s.ticks)) return;
+    // the texture is still loading: the sprite's average colour (its own alpha is about 3/4)
     auto a = static_cast<unsigned>(std::clamp(alpha * 0.75f, 0.0f, 1.0f) * 255.0f);
-    canvas.fill(core::Rect{-canvas.originX(), -canvas.originY(), 4096.0f, 4096.0f}, (a << 24) | 0x540ABA);
+    canvas.fill(whole, (a << 24) | 0x540ABA);
 }
 
 } // namespace
