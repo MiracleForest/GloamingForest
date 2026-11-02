@@ -709,7 +709,9 @@ Vec3 safePosInColumn(BlockSource& region, Traveller const& t, Vec3 const& pos) {
     float hw = t.width / 2.0f;
     AABB  box{Vec3{pos.x - hw, pos.y, pos.z - hw}, Vec3{pos.x + hw, pos.y + t.height, pos.z + hw}};
     if (noCollision(region, box)) return pos;
-    int height = heightmap(region, static_cast<int>(std::lround(pos.x)), static_cast<int>(std::lround(pos.z)));
+    // Java Math.round: floor(x + 0.5) (std::lround rounds the halves of negative values away from zero)
+    auto javaRound = [](double v) { return static_cast<int>(std::floor(v + 0.5)); };
+    int  height    = heightmap(region, javaRound(pos.x), javaRound(pos.z));
     return Vec3{pos.x, static_cast<float>(height), pos.z};
 }
 

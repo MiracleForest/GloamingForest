@@ -612,7 +612,15 @@ void newSpawnInTwilightForest(Player& player) {
             co_return;
         }
         BlockPos newDefaultSpawn{column.x, tp::heightmap(*region, column.x, column.z), column.z};
-        bool     arrived = false;
+        // TF sets the respawn point and the banished mark right after changeDimension, whatever
+        // became of the trip: here as soon as the trip starts (a player who leaves or a trip that
+        // fails later stays banished, with the Twilight Forest as its spawn)
+        if (auto* p = playerById(t.id)) {
+            p->setRespawnPosition(newDefaultSpawn, DimensionType(tf));
+            setBanished(*p);
+            log().info("dimension: {} now lives in the Twilight Forest (spawn {} {} {})", t.name, newDefaultSpawn.x, newDefaultSpawn.y, newDefaultSpawn.z);
+        }
+        bool arrived = false;
         if (portal) {
             arrived = co_await runTransition(t, tf, newDefaultSpawn, true);
         } else {
@@ -632,11 +640,7 @@ void newSpawnInTwilightForest(Player& player) {
             holdFor(std::move(second), 20);
         }
         holdFor(std::move(hold), 20);
-        auto* p = playerById(t.id);
-        if (!arrived || !p) co_return;
-        p->setRespawnPosition(newDefaultSpawn, DimensionType(tf));
-        setBanished(*p);
-        log().info("dimension: {} now lives in the Twilight Forest (spawn {} {} {})", t.name, newDefaultSpawn.x, newDefaultSpawn.y, newDefaultSpawn.z);
+        if (!arrived) log().warn("dimension: the new spawn trip of {} did not complete; its spawn stays in the Twilight Forest", t.name);
     }).launch(ll::thread::ServerThreadExecutor::getDefault());
 }
 
@@ -739,20 +743,22 @@ void displayTicks(Level& level) {
 
 /// Entity#handlePortal (PortalProcessor#processPortalTeleportation) for one entity.
 void handlePortal(Actor& actor, State& st, int transitionTime) {
-    if (st.portalCooldown > 0) --st.portalCooldown;
+    if (st.portalCooldown > 0) --st.portalCooldown; // processPortalCooldown
     if (!st.hasProcess || st.travelling) return;
+    bool teleport = false;
     if (!st.insideThisTick) {
         st.portalTime = std::max(st.portalTime - 4, 0); // decayTick
-        if (st.portalTime <= 0) st.hasProcess = false;   // hasExpired
-        return;
+    } else {
+        st.insideThisTick = false;
+        teleport          = canUsePortal(actor) && st.portalTime++ >= transitionTime;
     }
-    st.insideThisTick = false;
-    if (!canUsePortal(actor)) return;
-    if (st.portalTime++ >= transitionTime) {
+    if (teleport) {
         st.portalCooldown = changeDelayOf(actor); // setPortalCooldown
         st.hasProcess     = false;
         st.portalTime     = 0;
         startTrip(actor, st.entry);
+    } else if (st.portalTime <= 0) {
+        st.hasProcess = false; // hasExpired: portalProcess = null
     }
 }
 
