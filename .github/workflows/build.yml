@@ -92,7 +92,7 @@ jobs:
           pwsh -NoProfile -File tools/tf/fetch.ps1
           if ($LASTEXITCODE) { exit 1 }
 
-      - name: Tool checks (owners, import, synth, models, template, families)
+      - name: Tool checks (owners, import, synth, models, template)
         if: matrix.target_type == 'server'
         shell: pwsh
         run: |
@@ -103,8 +103,10 @@ jobs:
             @('tools/sounds/synth.ps1', '-Check'),      # F3: the committed audio renders from its recipes
             @('tools/models/test.ps1', '-SkipTree'),    # F2: the converter's PowerShell / C# tests
             @('tools/models/convert.ps1', '-Check'),    # F2: the committed geometry reproduces
-            @('tools/structures/build.ps1', '-Check'),  # F7: templates against TF's template definitions
-            @('tools/families/run.ps1', '-Out', 'build/assemble-check'))  # F11 (-Check without assembling again)
+            @('tools/structures/build.ps1', '-Check'))  # F7: templates against TF's template definitions
+          # F11's family generator and its checks (integer states, permutation budget, geometry) run
+          # inside the 'Assemble checks' step above: assemble -Check runs tools/families/run.lua on the
+          # assembled packs (a second run on the same directory would be a no-op).
           $failed = @()
           foreach ($c in $checks) {
             Write-Host "::group::pwsh $($c -join ' ')"
