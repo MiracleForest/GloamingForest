@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "twilightforest:maze_stone/smelted_maze_stone_cracked"
+    },
+    "tags": ["furnace"],
+    "input": "twilightforest:mazestone_brick",
+    "output": "twilightforest:cracked_mazestone",
+    "unlock": [
+      {
+        "item": "twilightforest:mazestone_brick"
+      }
+    ]
+  }
+}

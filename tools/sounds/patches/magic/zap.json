@@ -1,0 +1,77 @@
+{
+  "about": "Magic bolt: bright FM sweep with sparkle noise and a room.",
+  "params": {
+    "pitch": 600,
+    "len": 0.5,
+    "index": 6,
+    "ratio": 1.41,
+    "sweep": 12
+  },
+  "length": "$len",
+  "tail": 0.5,
+  "layers": [
+    {
+      "type": "fm",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch*semi($sweep)"
+          ],
+          [
+            "$len",
+            "$pitch"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "ratio": "$ratio",
+      "index": {
+        "env": [
+          [
+            0,
+            "$index"
+          ],
+          [
+            "$len",
+            0.5
+          ]
+        ],
+        "curve": "exp"
+      },
+      "env": {
+        "a": 0.005,
+        "d": "$len*0.5",
+        "s": 0.4,
+        "r": "$len*0.3"
+      }
+    },
+    {
+      "type": "grains",
+      "density": 90,
+      "grain": [
+        0.005,
+        0.02
+      ],
+      "freq": [
+        "$pitch*3",
+        "$pitch*10"
+      ],
+      "wave": "sine",
+      "amp": 0.35
+    }
+  ],
+  "fx": [
+    {
+      "type": "echo",
+      "time": 0.09,
+      "feedback": 0.3,
+      "mix": 0.2
+    },
+    {
+      "type": "reverb",
+      "room": 0.5,
+      "mix": 0.2
+    }
+  ]
+}

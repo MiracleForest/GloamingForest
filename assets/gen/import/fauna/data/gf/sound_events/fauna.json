@@ -1,0 +1,518 @@
+{
+  "twilightforest:entity.twilightforest.bighorn_sheep.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.bighorn_sheep.ambient",
+    "sounds": [
+      {
+        "event": "entity.sheep.ambient"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.bighorn_sheep.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.bighorn_sheep.death",
+    "sounds": [
+      {
+        "event": "entity.sheep.death"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.bighorn_sheep.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.bighorn_sheep.hurt",
+    "sounds": [
+      {
+        "event": "entity.sheep.hurt"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.bighorn_sheep.step": {
+    "category": "neutral",
+    "subtitle": "subtitles.block.generic.footsteps",
+    "sounds": [
+      {
+        "event": "entity.sheep.step"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.boar.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.boar.ambient",
+    "sounds": [
+      {
+        "event": "entity.pig.ambient"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.boar.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.boar.death",
+    "sounds": [
+      {
+        "event": "entity.pig.death"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.boar.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.boar.hurt",
+    "sounds": [
+      {
+        "event": "entity.pig.hurt"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.boar.step": {
+    "category": "neutral",
+    "subtitle": "subtitles.block.generic.footsteps",
+    "sounds": [
+      {
+        "event": "entity.pig.step"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.deer.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.deer.ambient",
+    "sounds": [
+      {
+        "file": "mob/deer/idle1"
+      },
+      {
+        "file": "mob/deer/idle2"
+      },
+      {
+        "file": "mob/deer/idle3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.deer.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.deer.death",
+    "sounds": [
+      {
+        "file": "mob/deer/death"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.deer.eat": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.deer.eat",
+    "sounds": [
+      {
+        "file": "entity/horse/eat1"
+      },
+      {
+        "file": "entity/horse/eat2"
+      },
+      {
+        "file": "entity/horse/eat3"
+      },
+      {
+        "file": "entity/horse/eat4"
+      },
+      {
+        "file": "entity/horse/eat5"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.deer.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.deer.hurt",
+    "sounds": [
+      {
+        "file": "mob/deer/hurt1"
+      },
+      {
+        "file": "mob/deer/hurt2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.dwarf_rabbit.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.dwarf_rabbit.ambient",
+    "sounds": [
+      {
+        "event": "entity.rabbit.ambient"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.dwarf_rabbit.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.dwarf_rabbit.death",
+    "sounds": [
+      {
+        "event": "entity.rabbit.death"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.dwarf_rabbit.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.dwarf_rabbit.hurt",
+    "sounds": [
+      {
+        "event": "entity.rabbit.hurt"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.kobold.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.kobold.ambient",
+    "sounds": [
+      {
+        "file": "mob/kobold/ambient1"
+      },
+      {
+        "file": "mob/kobold/ambient2"
+      },
+      {
+        "file": "mob/kobold/ambient3"
+      },
+      {
+        "file": "mob/kobold/ambient4"
+      },
+      {
+        "file": "mob/kobold/ambient5"
+      },
+      {
+        "file": "mob/kobold/ambient6"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.kobold.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.kobold.death",
+    "sounds": [
+      {
+        "file": "mob/kobold/death1"
+      },
+      {
+        "file": "mob/kobold/death2"
+      },
+      {
+        "file": "mob/kobold/death3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.kobold.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.kobold.hurt",
+    "sounds": [
+      {
+        "file": "mob/kobold/hurt1"
+      },
+      {
+        "file": "mob/kobold/hurt2"
+      },
+      {
+        "file": "mob/kobold/hurt3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.kobold.munch": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.kobold.munch",
+    "sounds": [
+      {
+        "event": "entity.generic.eat"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.mosquito.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.mosquito.ambient",
+    "sounds": [
+      {
+        "file": "mob/mosquito/animals132"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.alpha_yeti": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.alpha_yeti",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.alpha_yeti.growl",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.carminite_golem": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.carminite_golem",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.carminite_golem.hurt",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.death_tome": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.death_tome",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.death_tome.ambient",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.hostile_wolf": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.hostile_wolf",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.hostile_wolf.ambient",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.hydra": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.hydra",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.hydra.growl",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.ice_core": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.ice_core",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.ice.ambient",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.kobold": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.kobold",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.kobold.ambient",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.minotaur": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.minotaur",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.minotaur.ambient",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.mosquito": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.mosquito",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.mosquito.ambient",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.naga": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.naga",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.naga.hiss",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.redcap": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.redcap",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.redcap.ambient",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.parrot.imitate.wraith": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.parrot.imitate.wraith",
+    "sounds": [
+      {
+        "event": "twilightforest:entity.twilightforest.wraith.ambient",
+        "volume": 0.6,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.penguin.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.penguin.ambient",
+    "sounds": [
+      {
+        "file": "mob/penguin/idle1"
+      },
+      {
+        "file": "mob/penguin/idle2"
+      },
+      {
+        "file": "mob/penguin/idle3"
+      },
+      {
+        "file": "mob/penguin/idle4"
+      },
+      {
+        "file": "mob/penguin/idle5"
+      },
+      {
+        "file": "mob/penguin/idle6"
+      },
+      {
+        "file": "mob/penguin/idle7"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.penguin.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.penguin.death",
+    "sounds": [
+      {
+        "file": "mob/penguin/death"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.penguin.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.penguin.hurt",
+    "sounds": [
+      {
+        "file": "mob/penguin/hurt"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.raven.caw": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.raven.caw",
+    "sounds": [
+      {
+        "file": "mob/raven/caw1"
+      },
+      {
+        "file": "mob/raven/caw2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.raven.squawk": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.raven.squawk",
+    "sounds": [
+      {
+        "file": "mob/raven/squawk1"
+      },
+      {
+        "file": "mob/raven/squawk2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.squirrel.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.squirrel.ambient",
+    "sounds": [
+      {
+        "file": "mob/squirrel/idle1"
+      },
+      {
+        "file": "mob/squirrel/idle2"
+      },
+      {
+        "file": "mob/squirrel/idle3"
+      },
+      {
+        "file": "mob/squirrel/idle4"
+      },
+      {
+        "file": "mob/squirrel/idle5"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.squirrel.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.squirrel.death",
+    "sounds": [
+      {
+        "file": "mob/squirrel/death"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.squirrel.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.squirrel.hurt",
+    "sounds": [
+      {
+        "file": "mob/squirrel/hurt"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.tiny_bird.chirp": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.tiny_bird.chirp",
+    "sounds": [
+      {
+        "file": "mob/tiny_bird/chirp1"
+      },
+      {
+        "file": "mob/tiny_bird/chirp2"
+      },
+      {
+        "file": "mob/tiny_bird/chirp3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.tiny_bird.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.tiny_bird.hurt",
+    "sounds": [
+      {
+        "file": "mob/tiny_bird/hurt1"
+      },
+      {
+        "file": "mob/tiny_bird/hurt2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.tiny_bird.song": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.tiny_bird.song",
+    "sounds": [
+      {
+        "file": "mob/tiny_bird/song1"
+      },
+      {
+        "file": "mob/tiny_bird/song2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.tiny_bird.takeoff": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.tiny_bird.takeoff",
+    "sounds": [
+      {
+        "event": "entity.bat.takeoff"
+      }
+    ]
+  }
+}

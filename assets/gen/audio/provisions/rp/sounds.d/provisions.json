@@ -1,0 +1,142 @@
+{
+  "music_disc.twilightforest.findings": {
+    "category": "record",
+    "max_distance": 64,
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/provisions/music/findings",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.twilightforest.home": {
+    "category": "record",
+    "max_distance": 64,
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/provisions/music/home",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.twilightforest.maker": {
+    "category": "record",
+    "max_distance": 64,
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/provisions/music/maker",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.twilightforest.motion": {
+    "category": "record",
+    "max_distance": 64,
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/provisions/music/motion",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.twilightforest.radiance": {
+    "category": "record",
+    "max_distance": 64,
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/provisions/music/radiance",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.twilightforest.steps": {
+    "category": "record",
+    "max_distance": 64,
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/provisions/music/steps",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.twilightforest.superstitious": {
+    "category": "record",
+    "max_distance": 64,
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/provisions/music/superstitious",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.twilightforest.thread": {
+    "category": "record",
+    "max_distance": 64,
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/provisions/music/thread",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.twilightforest.wayfarer": {
+    "category": "record",
+    "max_distance": 64,
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/provisions/music/wayfarer",
+        "stream": true
+      }
+    ]
+  },
+  "music.twilightforest.twilight_forest": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/provisions/music/superstitious",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "name": "sounds/twilightforest/provisions/music/steps",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "name": "sounds/twilightforest/provisions/music/radiance",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "name": "sounds/twilightforest/provisions/music/home",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "name": "sounds/twilightforest/provisions/music/wayfarer",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "name": "sounds/twilightforest/provisions/music/findings",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "name": "sounds/twilightforest/provisions/music/maker",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "name": "sounds/twilightforest/provisions/music/thread",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "name": "sounds/twilightforest/provisions/music/motion",
+        "volume": 0.5,
+        "stream": true
+      }
+    ]
+  }
+}

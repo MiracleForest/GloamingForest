@@ -1,0 +1,167 @@
+[
+  {
+    "id": "twilightforest:blue_castle_door",
+    "family": "connected_texture",
+    "params": {
+      "class": "CastleDoorBlock",
+      "vanillaClass": "Block",
+      "traits": ["connected_texture"],
+      "states": ["active", "vanish"]
+    }
+  },
+  {
+    "id": "twilightforest:blue_force_field",
+    "family": "waterloggable",
+    "params": {
+      "class": "ForceFieldBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"],
+      "states": ["down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:brown_thorns",
+    "family": "pillar",
+    "params": {
+      "class": "ThornsBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "traits": ["waterloggable"],
+      "states": ["axis", "down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:burnt_thorns",
+    "family": "pillar",
+    "params": {
+      "class": "BurntThornsBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "traits": ["waterloggable"],
+      "states": ["axis", "down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:cinder_log",
+    "family": "log",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "states": ["axis"]
+    }
+  },
+  {
+    "id": "twilightforest:green_force_field",
+    "family": "waterloggable",
+    "params": {
+      "class": "ForceFieldBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"],
+      "states": ["down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:green_thorns",
+    "family": "pillar",
+    "params": {
+      "class": "ThornsBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "traits": ["waterloggable"],
+      "states": ["axis", "down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:orange_force_field",
+    "family": "waterloggable",
+    "params": {
+      "class": "ForceFieldBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"],
+      "states": ["down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:pink_castle_door",
+    "family": "connected_texture",
+    "params": {
+      "class": "CastleDoorBlock",
+      "vanillaClass": "Block",
+      "traits": ["connected_texture"],
+      "states": ["active", "vanish"]
+    }
+  },
+  {
+    "id": "twilightforest:pink_force_field",
+    "family": "waterloggable",
+    "params": {
+      "class": "ForceFieldBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"],
+      "states": ["down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:potted_dead_thorn",
+    "family": "potted",
+    "params": {
+      "class": "SpecialFlowerPotBlock",
+      "vanillaClass": "FlowerPotBlock",
+      "plant": "twilightforest:burnt_thorns"
+    }
+  },
+  {
+    "id": "twilightforest:potted_green_thorn",
+    "family": "potted",
+    "params": {
+      "class": "SpecialFlowerPotBlock",
+      "vanillaClass": "FlowerPotBlock",
+      "plant": "twilightforest:green_thorns"
+    }
+  },
+  {
+    "id": "twilightforest:potted_thorn",
+    "family": "potted",
+    "params": {
+      "class": "SpecialFlowerPotBlock",
+      "vanillaClass": "FlowerPotBlock",
+      "plant": "twilightforest:brown_thorns"
+    }
+  },
+  {
+    "id": "twilightforest:thorn_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "SpecialStemLeavesBlock",
+      "vanillaClass": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:violet_castle_door",
+    "family": "connected_texture",
+    "params": {
+      "class": "CastleDoorBlock",
+      "vanillaClass": "Block",
+      "traits": ["connected_texture"],
+      "states": ["active", "vanish"]
+    }
+  },
+  {
+    "id": "twilightforest:violet_force_field",
+    "family": "waterloggable",
+    "params": {
+      "class": "ForceFieldBlock",
+      "vanillaClass": "Block",
+      "traits": ["waterloggable"],
+      "states": ["down", "east", "north", "south", "up", "west"]
+    }
+  },
+  {
+    "id": "twilightforest:yellow_castle_door",
+    "family": "connected_texture",
+    "params": {
+      "class": "CastleDoorBlock",
+      "vanillaClass": "Block",
+      "traits": ["connected_texture"],
+      "states": ["active", "vanish"]
+    }
+  }
+]

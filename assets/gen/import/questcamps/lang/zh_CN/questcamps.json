@@ -1,0 +1,9 @@
+{
+  "config.twilightforest.ram_indicator": "谜题羊羊毛指示",
+  "config.twilightforest.ram_indicator.tooltip": "手持羊毛指向谜题羊时，在十字准星上方显示勾或叉，用于提示该颜色的羊毛是否已提交",
+  "entity.twilightforest.quest_ram": "谜题羊",
+  "item.twilightforest.quest_ram_spawn_egg": "谜题羊刷怪蛋",
+  "subtitles.twilightforest.entity.quest_ram.ambient": "谜题羊：咩~",
+  "subtitles.twilightforest.entity.quest_ram.death": "谜题羊：死亡",
+  "subtitles.twilightforest.entity.quest_ram.hurt": "谜题羊：受伤"
+}

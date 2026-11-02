@@ -1,0 +1,12 @@
+commands.tffeature.usage=/%s <info | reaktivieren | erobern | zentrum>
+misc.twilightforest.advancement_hidden=<Versteckter Erfolg>
+misc.twilightforest.advancement_required=Erfolg erforderlich:
+misc.twilightforest.core_disabled=%s ist über die Konfiguration deaktiviert
+misc.twilightforest.firefly_spawner_radius=Leuchtkäfer-Partikelradius: %s Blöcke
+misc.twilightforest.pedestal_ineligible=Du bist unwürdig.
+misc.twilightforest.wip=Diese Funktion ist in Arbeit und kann Fehler oder unbeabsichtigte Auswirkungen haben, die Ihrer Welt schaden können
+twilightforest.configuration.section.twilightforest.client.toml=Client-Einstellungen
+twilightforest.configuration.section.twilightforest.client.toml.title=Client-Einstellungen
+twilightforest.configuration.section.twilightforest.common.toml=Allgemeine Einstellungen
+twilightforest.configuration.section.twilightforest.common.toml.title=Allgemeine Einstellungen
+twilightforest.configuration.title=Twilight Forest-Konfiguration

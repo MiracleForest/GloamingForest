@@ -1,0 +1,8 @@
+{
+  "entity.twilightforest.minoshroom": "Μανιταρόταυρος",
+  "entity.twilightforest.minotaur": "Μινώταυρος",
+  "item.twilightforest.minoshroom_spawn_egg": "Αβγό Γέννησης Μανιταρόταυρου",
+  "item.twilightforest.minotaur_spawn_egg": "Αβγό Γέννησης Μινώταυρου",
+  "subtitles.twilightforest.entity.minoshroom.death": "Μανιταρόταυρος πεθαίνει",
+  "subtitles.twilightforest.entity.minoshroom.hurt": "Μανιταρόταυρος τραυματίζεται"
+}

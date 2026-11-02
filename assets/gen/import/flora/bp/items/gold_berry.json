@@ -1,0 +1,21 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:gold_berry",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_gold_berry"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:gold_berry.name"
+      }
+    }
+  }
+}

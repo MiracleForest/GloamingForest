@@ -1,0 +1,89 @@
+{
+  "about": "Crow caw: harsh nasal pulse wave through an 'a' formant with drive, repeated.",
+  "params": {
+    "pitch": 750,
+    "len": 0.25,
+    "count": 1,
+    "gap": 0.32,
+    "size": 1.5,
+    "rough": 3
+  },
+  "length": "$len",
+  "tail": 0.15,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "pulse",
+      "pw": 0.3,
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch*1.05"
+          ],
+          [
+            "$len*0.3",
+            "$pitch*1.1"
+          ],
+          [
+            "$len",
+            "$pitch*0.8"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "vibrato": {
+        "rate": 35,
+        "depth": 0.5
+      },
+      "env": {
+        "a": 0.01,
+        "d": "$len*0.6",
+        "s": 0.6,
+        "r": "$len*0.25"
+      },
+      "formant": {
+        "vowel": 0,
+        "shift": "$size",
+        "mix": 0.8
+      },
+      "drive": "$rough",
+      "repeat": {
+        "count": "$count",
+        "every": "$gap",
+        "jitter": 0.04,
+        "decay": 0.85
+      }
+    },
+    {
+      "type": "noise",
+      "color": "pink",
+      "amp": 0.2,
+      "env": {
+        "a": 0.01,
+        "d": "$len*0.5",
+        "s": 0.3,
+        "r": 0.05
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": 2400,
+          "q": 1.2
+        }
+      ],
+      "repeat": {
+        "count": "$count",
+        "every": "$gap",
+        "decay": 0.85
+      }
+    }
+  ],
+  "fx": [
+    {
+      "type": "reverb",
+      "room": 0.3,
+      "mix": 0.1
+    }
+  ]
+}

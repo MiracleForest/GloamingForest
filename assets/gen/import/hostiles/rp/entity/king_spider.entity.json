@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:king_spider",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/kingspider"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.king_spider"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#2c1a0e",
+        "overlay_color": "#ffc017"
+      }
+    }
+  }
+}

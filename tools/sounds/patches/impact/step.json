@@ -1,0 +1,72 @@
+{
+  "about": "Footstep: a short muffled noise thump with a little click; 'bright' and 'weight' set the surface and size.",
+  "params": {
+    "weight": 1.0,
+    "bright": 1.0,
+    "len": 0.09
+  },
+  "length": "$len",
+  "tail": 0.08,
+  "layers": [
+    {
+      "type": "noise",
+      "color": "pink",
+      "env": {
+        "a": 0.002,
+        "d": "$len*0.6",
+        "s": 0.0,
+        "r": 0.02
+      },
+      "filter": [
+        {
+          "type": "lp",
+          "freq": "1800*$bright/$weight",
+          "q": 0.8
+        }
+      ]
+    },
+    {
+      "type": "osc",
+      "wave": "sine",
+      "amp": "0.6*$weight",
+      "freq": {
+        "env": [
+          [
+            0,
+            "140/$weight"
+          ],
+          [
+            "$len",
+            "70/$weight"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "env": {
+        "a": 0.002,
+        "d": "$len*0.7",
+        "s": 0.0,
+        "r": 0.02
+      }
+    },
+    {
+      "type": "noise",
+      "color": "white",
+      "amp": "0.2*$bright",
+      "length": 0.01,
+      "env": {
+        "a": 0.0005,
+        "d": 0.006,
+        "s": 0,
+        "r": 0.002
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "4000*$bright",
+          "q": 1
+        }
+      ]
+    }
+  ]
+}

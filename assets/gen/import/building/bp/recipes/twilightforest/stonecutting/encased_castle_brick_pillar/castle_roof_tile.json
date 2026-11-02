@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:stonecutting/encased_castle_brick_pillar/castle_roof_tile"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "twilightforest:encased_castle_brick_pillar"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:encased_castle_brick_pillar"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:castle_roof_tile"
+    }
+  }
+}

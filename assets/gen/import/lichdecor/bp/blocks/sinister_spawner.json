@@ -1,0 +1,53 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:sinister_spawner",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 25
+      },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_sinister_spawner",
+          "render_method": "alpha_test"
+        },
+        "up": {
+          "texture": "tf_block_sinister_spawner",
+          "render_method": "alpha_test"
+        },
+        "down": {
+          "texture": "tf_block_sinister_spawner",
+          "render_method": "alpha_test"
+        },
+        "north": {
+          "texture": "tf_block_sinister_spawner",
+          "render_method": "alpha_test"
+        },
+        "south": {
+          "texture": "tf_block_sinister_spawner",
+          "render_method": "alpha_test"
+        },
+        "east": {
+          "texture": "tf_block_sinister_spawner",
+          "render_method": "alpha_test"
+        },
+        "west": {
+          "texture": "tf_block_sinister_spawner",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

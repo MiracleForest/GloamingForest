@@ -1,0 +1,61 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.cube_of_annihilation",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 1.5, 0]
+      },
+      "bones": [
+        {
+          "name": "box",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-8, 16, -8],
+              "size": [16, 16, 16],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "box_x",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-8, 16, -8],
+              "size": [16, 16, 16],
+              "uv": [0, 32]
+            }
+          ]
+        },
+        {
+          "name": "box_y",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-8, 16, -8],
+              "size": [16, 16, 16],
+              "uv": [0, 32]
+            }
+          ]
+        },
+        {
+          "name": "box_z",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-8, 16, -8],
+              "size": [16, 16, 16],
+              "uv": [0, 32]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+block.twilightforest.aurora_block=Aurora Bloğu
+block.twilightforest.aurora_pillar=Aurora Sütunu
+block.twilightforest.aurora_slab=Aurora Basamak
+tile.twilightforest:aurora_block.name=Aurora Bloğu
+tile.twilightforest:aurora_pillar.name=Aurora Sütunu
+tile.twilightforest:aurora_slab.name=Aurora Basamak

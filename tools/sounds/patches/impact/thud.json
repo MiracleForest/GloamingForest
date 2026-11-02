@@ -1,0 +1,64 @@
+{
+  "about": "Heavy hit: falling low sine, noise crack and a short room.",
+  "params": {
+    "pitch": 90,
+    "len": 0.35,
+    "crack": 0.5
+  },
+  "length": "$len",
+  "tail": 0.25,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch*2.2"
+          ],
+          [
+            "$len*0.3",
+            "$pitch"
+          ],
+          [
+            "$len",
+            "$pitch*0.6"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "env": {
+        "a": 0.002,
+        "d": "$len*0.6",
+        "s": 0.0,
+        "r": 0.05
+      },
+      "drive": 2
+    },
+    {
+      "type": "noise",
+      "color": "pink",
+      "amp": "$crack",
+      "env": {
+        "a": 0.001,
+        "d": 0.06,
+        "s": 0.0,
+        "r": 0.03
+      },
+      "filter": [
+        {
+          "type": "lp",
+          "freq": 3000
+        }
+      ]
+    }
+  ],
+  "fx": [
+    {
+      "type": "reverb",
+      "room": 0.35,
+      "mix": 0.12
+    }
+  ]
+}

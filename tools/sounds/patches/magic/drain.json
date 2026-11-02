@@ -1,0 +1,68 @@
+{
+  "about": "Life drain: a falling FM drone with pulsing tremolo.",
+  "params": {
+    "pitch": 300,
+    "len": 0.8,
+    "fall": -12
+  },
+  "length": "$len",
+  "tail": 0.4,
+  "layers": [
+    {
+      "type": "fm",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch"
+          ],
+          [
+            "$len",
+            "$pitch*semi($fall)"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "ratio": 0.5,
+      "index": 3,
+      "env": {
+        "a": 0.05,
+        "d": "$len*0.5",
+        "s": 0.7,
+        "r": "$len*0.3"
+      },
+      "tremolo": {
+        "rate": 14,
+        "depth": 0.6
+      }
+    },
+    {
+      "type": "noise",
+      "color": "pink",
+      "amp": 0.2,
+      "env": {
+        "a": 0.05,
+        "d": "$len*0.5",
+        "s": 0.5,
+        "r": 0.1
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": {
+            "from": 3000,
+            "to": 500
+          },
+          "q": 3
+        }
+      ]
+    }
+  ],
+  "fx": [
+    {
+      "type": "reverb",
+      "room": 0.5,
+      "mix": 0.2
+    }
+  ]
+}

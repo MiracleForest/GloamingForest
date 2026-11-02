@@ -1,0 +1,92 @@
+{
+  "tf_block_blank": {
+    "textures": "textures/twilightforest/block/blank"
+  },
+  "tf_block_encased_towerwood": {
+    "textures": "textures/twilightforest/block/encased_towerwood"
+  },
+  "tf_block_mining_log_top": {
+    "textures": "textures/twilightforest/block/mining_log_top"
+  },
+  "tf_block_mosspatch": {
+    "textures": "textures/twilightforest/block/mosspatch"
+  },
+  "tf_block_sorting_log_top": {
+    "textures": "textures/twilightforest/block/sorting_log_top"
+  },
+  "tf_block_time_log_top": {
+    "textures": "textures/twilightforest/block/time_log_top"
+  },
+  "tf_block_tower_device_level_2_towerdev_ghasttraplid_off_1": {
+    "textures": "textures/twilightforest/block/tower_device_level_2/towerdev_ghasttraplid_off_1"
+  },
+  "tf_block_tower_device_level_2_towerdev_ghasttraplid_on_1": {
+    "textures": "textures/twilightforest/block/tower_device_level_2/towerdev_ghasttraplid_on_1"
+  },
+  "tf_block_tower_device_level_3_towerdev_ghasttraplid_on_2": {
+    "textures": "textures/twilightforest/block/tower_device_level_3/towerdev_ghasttraplid_on_2"
+  },
+  "tf_block_towerdev_ghasttraplid_off": {
+    "textures": "textures/twilightforest/block/towerdev_ghasttraplid_off"
+  },
+  "tf_block_towerdev_ghasttraplid_on": {
+    "textures": "textures/twilightforest/block/towerdev_ghasttraplid_on"
+  },
+  "tf_block_towerwood": {
+    "textures": "textures/twilightforest/block/towerwood"
+  },
+  "tf_block_transformation_log_top": {
+    "textures": "textures/twilightforest/block/transformation_log_top"
+  },
+  "tf_block_wood_planks_canopy_0": {
+    "textures": "textures/twilightforest/block/wood/planks_canopy_0"
+  },
+  "tf_vanilla_block_basalt_side": {
+    "textures": "textures/blocks/basalt_side"
+  },
+  "tf_vanilla_block_basalt_top": {
+    "textures": "textures/blocks/basalt_top"
+  },
+  "tf_vanilla_block_birch_planks": {
+    "textures": "textures/blocks/planks_birch"
+  },
+  "tf_vanilla_block_dirt": {
+    "textures": "textures/blocks/dirt"
+  },
+  "tf_vanilla_block_flower_pot": {
+    "textures": "textures/blocks/flower_pot"
+  },
+  "tf_vanilla_block_jungle_planks": {
+    "textures": "textures/blocks/planks_jungle"
+  },
+  "tf_vanilla_block_nether_portal": {
+    "textures": "textures/blocks/portal"
+  },
+  "tf_vanilla_block_netherite_block": {
+    "textures": "textures/blocks/netherite_block"
+  },
+  "tf_vanilla_block_oak_leaves": {
+    "textures": "textures/blocks/leaves_oak_carried"
+  },
+  "tf_vanilla_block_oak_log": {
+    "textures": "textures/blocks/log_oak"
+  },
+  "tf_vanilla_block_oak_planks": {
+    "textures": "textures/blocks/planks_oak"
+  },
+  "tf_vanilla_block_obsidian": {
+    "textures": "textures/blocks/obsidian"
+  },
+  "tf_vanilla_block_poppy": {
+    "textures": "textures/blocks/flower_rose"
+  },
+  "tf_vanilla_block_snow": {
+    "textures": "textures/blocks/snow"
+  },
+  "tf_vanilla_block_soul_sand": {
+    "textures": "textures/blocks/soul_sand"
+  },
+  "tf_vanilla_block_stone": {
+    "textures": "textures/blocks/stone"
+  }
+}

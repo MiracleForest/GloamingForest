@@ -1,0 +1,16 @@
+block.twilightforest.cicada=Cykada
+block.twilightforest.cicada_jar=Słój cykad
+block.twilightforest.fallen_leaves=Opadłe liście
+block.twilightforest.firefly=Świetlik
+block.twilightforest.firefly_jar=Słój świetlików
+block.twilightforest.firefly_particle_spawner=Przyzywacz Cząsteczek Świetlików
+block.twilightforest.liveroot_block=Żywokłącze
+block.twilightforest.moonworm=Księżycowy robak
+tile.twilightforest:cicada.name=Cykada
+tile.twilightforest:cicada_jar.name=Słój cykad
+tile.twilightforest:fallen_leaves.name=Opadłe liście
+tile.twilightforest:firefly.name=Świetlik
+tile.twilightforest:firefly_jar.name=Słój świetlików
+tile.twilightforest:firefly_particle_spawner.name=Przyzywacz Cząsteczek Świetlików
+tile.twilightforest:liveroot_block.name=Żywokłącze
+tile.twilightforest:moonworm.name=Księżycowy robak

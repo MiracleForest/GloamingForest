@@ -1,0 +1,16 @@
+{
+  "block.twilightforest.experiment_115": "Expérience 115",
+  "effect.twilightforest.frosted": "Givré",
+  "enchantment.twilightforest.chill_aura": "Aura de froid",
+  "enchantment.twilightforest.chill_aura.desc": "Ajoute une chance pour l'attaquant t'obtenir l'effet givré après avoir touché le porteur.",
+  "enchantment.twilightforest.destruction.desc": "Permet au bloc et à la chaîne de casser des blocs avec un niveau de minage supérieur.",
+  "enchantment.twilightforest.fire_react": "Réaction de Feu",
+  "enchantment.twilightforest.fire_react.desc": "Ajoute une chance pour l'attaquant d'être mis en feu après avoir touché le porteur.",
+  "item.twilightforest.cooked_meef": "Steak de Meef",
+  "item.twilightforest.cooked_venison": "Steak de chevreuil",
+  "item.twilightforest.hydra_chop": "Tranche d'Hydre",
+  "item.twilightforest.maze_wafer": "Tranche de labyrinthe",
+  "item.twilightforest.meef_stroganoff": "Stroganoff de Meef",
+  "item.twilightforest.raw_meef": "Viande de Meef crue",
+  "item.twilightforest.raw_venison": "Chevreuil cru"
+}

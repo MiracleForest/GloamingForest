@@ -1,0 +1,10 @@
+{
+  "block.twilightforest.uncrafting_table.activate": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "sounds/block/end_portal/endportal"
+      }
+    ]
+  }
+}

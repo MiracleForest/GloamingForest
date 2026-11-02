@@ -1,0 +1,8 @@
+{
+  "commands.tffeature.structure.boundaries": "Hranice struktury: %s",
+  "commands.tffeature.structure.inside": "Jsi v orientačním bodu struktury",
+  "commands.tffeature.structure.outside": "Nejsi v orientačním bodu struktury",
+  "commands.tffeature.structure.required": "Nejsi ve struktuře",
+  "commands.tffeature.structure.spawn_info": "%s, hmotnost %s",
+  "commands.tffeature.structure.spawn_list": "Seznam spawnování pro tuto oblast je:"
+}

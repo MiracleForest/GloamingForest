@@ -1,0 +1,10 @@
+entity.twilightforest.death_tome=Τόμος του Θανάτου
+entity.twilightforest.lich=Λιτς
+entity.twilightforest.rising_zombie=Ζόμπι
+entity.twilightforest:death_tome.name=Τόμος του Θανάτου
+entity.twilightforest:lich.name=Λιτς
+entity.twilightforest:rising_zombie.name=Ζόμπι
+item.spawn_egg.entity.twilightforest:death_tome.name=Αβγό Γέννησης Τόμου του Θανάτου
+item.spawn_egg.entity.twilightforest:lich.name=Αβγό Γέννησης Λιτς
+item.twilightforest.death_tome_spawn_egg=Αβγό Γέννησης Τόμου του Θανάτου
+item.twilightforest.lich_spawn_egg=Αβγό Γέννησης Λιτς

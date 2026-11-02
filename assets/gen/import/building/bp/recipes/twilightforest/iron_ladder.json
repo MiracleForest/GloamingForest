@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:iron_ladder"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["-#-", "-#-"],
+    "key": {
+      "#": {
+        "item": "minecraft:iron_bars"
+      },
+      "-": {
+        "item": "minecraft:iron_nugget"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:iron_bars"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:iron_ladder",
+      "count": 3
+    }
+  }
+}

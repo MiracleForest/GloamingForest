@@ -1,0 +1,28 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:phantom_chestplate",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_phantom_chestplate"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:phantom_chestplate.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 480
+      },
+      "minecraft:tags": {
+        "tags": ["twilightforest:kept_on_death"]
+      }
+    }
+  }
+}

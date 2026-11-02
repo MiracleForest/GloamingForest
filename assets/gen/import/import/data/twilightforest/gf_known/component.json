@@ -1,0 +1,24 @@
+{
+  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
+  "kind": "travellers_modifier_type",
+  "reason": "\"type\" of twilight/travellers_modifiers entries; a code registry (codec), no data file (src/main/java/twilightforest/init/custom/TravellersModifierTypes.java (COMPONENT))",
+  "referencedBy": [
+    "data/twilightforest/twilight/travellers_modifiers/agile_ranger.json",
+    "data/twilightforest/twilight/travellers_modifiers/all_night_goggles.json",
+    "data/twilightforest/twilight/travellers_modifiers/arrow_magnetism.json",
+    "data/twilightforest/twilight/travellers_modifiers/auto_repair.json",
+    "data/twilightforest/twilight/travellers_modifiers/double_jump.json",
+    "data/twilightforest/twilight/travellers_modifiers/efficient_eater.json",
+    "data/twilightforest/twilight/travellers_modifiers/gradual_glide.json",
+    "data/twilightforest/twilight/travellers_modifiers/haste.json",
+    "data/twilightforest/twilight/travellers_modifiers/item_display.json",
+    "data/twilightforest/twilight/travellers_modifiers/perfect_dodge.json",
+    "data/twilightforest/twilight/travellers_modifiers/red_thread_vision.json",
+    "data/twilightforest/twilight/travellers_modifiers/side_step.json",
+    "data/twilightforest/twilight/travellers_modifiers/slimy_soles.json",
+    "data/twilightforest/twilight/travellers_modifiers/stealth.json",
+    "data/twilightforest/twilight/travellers_modifiers/straight_ahead.json",
+    "data/twilightforest/twilight/travellers_modifiers/unrestrained.json",
+    "data/twilightforest/twilight/travellers_modifiers/water_walk.json"
+  ]
+}

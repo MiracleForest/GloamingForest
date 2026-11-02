@@ -1,0 +1,29 @@
+{
+  "about": "Shaker tick.",
+  "params": {
+    "freq": 6000,
+    "dur": 0.1,
+    "vel": 1
+  },
+  "length": 0.05,
+  "tail": 0.03,
+  "normalize": -8,
+  "layers": [
+    {
+      "type": "noise",
+      "color": "white",
+      "env": {
+        "a": 0.002,
+        "d": 0.03,
+        "s": 0,
+        "r": 0.01
+      },
+      "filter": [
+        {
+          "type": "hp",
+          "freq": 5000
+        }
+      ]
+    }
+  ]
+}

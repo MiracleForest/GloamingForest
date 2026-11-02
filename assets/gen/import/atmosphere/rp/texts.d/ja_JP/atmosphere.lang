@@ -1,0 +1,4 @@
+config.twilightforest.aurora_biomes=オーロラシェーダーが表示されるバイオーム
+config.twilightforest.aurora_biomes.button=バイオームの編集
+config.twilightforest.aurora_biomes.tooltip=オーロラシェーダーが表示されるバイオームを定義します。無効化するには、リストを空にします。
+subtitles.twilightforest.environment.acid_rain=酸性雨が火傷させる

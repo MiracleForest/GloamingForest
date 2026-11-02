@@ -1,0 +1,323 @@
+{
+  "twilightforest:block.twilightforest.trophy_pedestal.activate": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.trophy_pedestal.activate",
+    "sounds": [
+      {
+        "event": "entity.zombie.infect"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.blockchain_goblin.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.blockchain_goblin.ambient",
+    "sounds": [
+      {
+        "file": "mob/redcap/redcap1"
+      },
+      {
+        "file": "mob/redcap/redcap2"
+      },
+      {
+        "file": "mob/redcap/redcap3"
+      },
+      {
+        "file": "mob/redcap/redcap4"
+      },
+      {
+        "file": "mob/redcap/redcap5"
+      },
+      {
+        "file": "mob/redcap/redcap6"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.blockchain_goblin.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.blockchain_goblin.death",
+    "sounds": [
+      {
+        "file": "mob/redcap/die1"
+      },
+      {
+        "file": "mob/redcap/die2"
+      },
+      {
+        "file": "mob/redcap/die3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.blockchain_goblin.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.blockchain_goblin.hurt",
+    "sounds": [
+      {
+        "file": "mob/redcap/hurt1"
+      },
+      {
+        "file": "mob/redcap/hurt2"
+      },
+      {
+        "file": "mob/redcap/hurt3"
+      },
+      {
+        "file": "mob/redcap/hurt4"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.goblin_knight.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.ambient",
+    "sounds": [
+      {
+        "file": "mob/redcap/redcap1"
+      },
+      {
+        "file": "mob/redcap/redcap2"
+      },
+      {
+        "file": "mob/redcap/redcap3"
+      },
+      {
+        "file": "mob/redcap/redcap4"
+      },
+      {
+        "file": "mob/redcap/redcap5"
+      },
+      {
+        "file": "mob/redcap/redcap6"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.goblin_knight.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.death",
+    "sounds": [
+      {
+        "file": "mob/redcap/die1"
+      },
+      {
+        "file": "mob/redcap/die2"
+      },
+      {
+        "file": "mob/redcap/die3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.goblin_knight.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.hurt",
+    "sounds": [
+      {
+        "file": "mob/redcap/hurt1"
+      },
+      {
+        "file": "mob/redcap/hurt2"
+      },
+      {
+        "file": "mob/redcap/hurt3"
+      },
+      {
+        "file": "mob/redcap/hurt4"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.goblin_knight.muffled.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.muffled.ambient",
+    "sounds": [
+      {
+        "file": "mob/redcap/muffled/redcap1"
+      },
+      {
+        "file": "mob/redcap/muffled/redcap2"
+      },
+      {
+        "file": "mob/redcap/muffled/redcap3"
+      },
+      {
+        "file": "mob/redcap/muffled/redcap4"
+      },
+      {
+        "file": "mob/redcap/muffled/redcap5"
+      },
+      {
+        "file": "mob/redcap/muffled/redcap6"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.goblin_knight.muffled.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.muffled.death",
+    "sounds": [
+      {
+        "file": "mob/redcap/muffled/die1"
+      },
+      {
+        "file": "mob/redcap/muffled/die2"
+      },
+      {
+        "file": "mob/redcap/muffled/die3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.goblin_knight.muffled.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.goblin_knight.muffled.hurt",
+    "sounds": [
+      {
+        "file": "mob/redcap/muffled/hurt1"
+      },
+      {
+        "file": "mob/redcap/muffled/hurt2"
+      },
+      {
+        "file": "mob/redcap/muffled/hurt3"
+      },
+      {
+        "file": "mob/redcap/muffled/hurt4"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.helmet_crab.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.helmet_crab.ambient",
+    "sounds": [
+      {
+        "file": "mob/helmet_crab/idle1"
+      },
+      {
+        "file": "mob/helmet_crab/idle2"
+      },
+      {
+        "file": "mob/helmet_crab/idle3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.helmet_crab.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.helmet_crab.death",
+    "sounds": [
+      {
+        "file": "mob/helmet_crab/hurt1"
+      },
+      {
+        "file": "mob/helmet_crab/hurt2"
+      },
+      {
+        "file": "mob/helmet_crab/hurt3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.helmet_crab.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.helmet_crab.hurt",
+    "sounds": [
+      {
+        "file": "mob/helmet_crab/hurt1"
+      },
+      {
+        "file": "mob/helmet_crab/hurt2"
+      },
+      {
+        "file": "mob/helmet_crab/hurt3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.helmet_crab.step": {
+    "category": "neutral",
+    "subtitle": "subtitles.block.generic.footsteps",
+    "sounds": [
+      {
+        "file": "mob/helmet_crab/step1"
+      },
+      {
+        "file": "mob/helmet_crab/step2"
+      },
+      {
+        "file": "mob/helmet_crab/step3"
+      },
+      {
+        "file": "mob/helmet_crab/step4"
+      },
+      {
+        "file": "mob/helmet_crab/step5"
+      },
+      {
+        "file": "mob/helmet_crab/step6"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.knight_phantom.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.knight_phantom.ambient",
+    "sounds": [
+      {
+        "file": "mob/wraith/wraith1"
+      },
+      {
+        "file": "mob/wraith/wraith2"
+      },
+      {
+        "file": "mob/wraith/wraith3"
+      },
+      {
+        "file": "mob/wraith/wraith4"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.knight_phantom.axe": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.knight_phantom.axe",
+    "sounds": [
+      {
+        "event": "entity.arrow.shoot"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.knight_phantom.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.knight_phantom.death",
+    "sounds": [
+      {
+        "file": "mob/wraith/wraith1"
+      },
+      {
+        "file": "mob/wraith/wraith2"
+      },
+      {
+        "file": "mob/wraith/wraith3"
+      },
+      {
+        "file": "mob/wraith/wraith4"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.knight_phantom.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.knight_phantom.hurt",
+    "sounds": [
+      {
+        "file": "mob/wraith/wraith1"
+      },
+      {
+        "file": "mob/wraith/wraith2"
+      },
+      {
+        "file": "mob/wraith/wraith3"
+      },
+      {
+        "file": "mob/wraith/wraith4"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.knight_phantom.pickaxe": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.knight_phantom.pickaxe",
+    "sounds": [
+      {
+        "event": "entity.arrow.shoot"
+      }
+    ]
+  }
+}

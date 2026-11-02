@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:aurora_pillar"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#", "#"],
+    "key": {
+      "#": {
+        "item": "twilightforest:aurora_block"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:aurora_slab"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:aurora_pillar",
+      "count": 2
+    }
+  }
+}

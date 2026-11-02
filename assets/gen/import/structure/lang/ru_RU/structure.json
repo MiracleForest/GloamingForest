@@ -1,0 +1,10 @@
+{
+  "commands.tffeature.structure.boundaries": "Границы структуры: %s",
+  "commands.tffeature.structure.conquer.status": "Флаг завоевания структуры: %s",
+  "commands.tffeature.structure.conquer.update": "Флаг завоевания структуры был %s, изменён на %s",
+  "commands.tffeature.structure.inside": "Вы находитесь в структуре объекта",
+  "commands.tffeature.structure.outside": "Вы не находитесь в структуре объекта",
+  "commands.tffeature.structure.required": "Вы не находитесь в структуре",
+  "commands.tffeature.structure.spawn_info": "%s, вес %s",
+  "commands.tffeature.structure.spawn_list": "Список появления этой области:"
+}

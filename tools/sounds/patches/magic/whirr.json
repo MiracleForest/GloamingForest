@@ -1,0 +1,78 @@
+{
+  "about": "Machine or trap whirr: an FM whine sweeping between two pitches with tremolo.",
+  "params": {
+    "f0": 200,
+    "f1": 900,
+    "len": 1.0,
+    "wob": 18
+  },
+  "length": "$len",
+  "tail": 0.3,
+  "layers": [
+    {
+      "type": "fm",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$f0"
+          ],
+          [
+            "$len",
+            "$f1"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "ratio": 2.01,
+      "index": 2.5,
+      "env": {
+        "a": 0.05,
+        "d": "$len*0.5",
+        "s": 0.8,
+        "r": "$len*0.2"
+      },
+      "tremolo": {
+        "rate": "$wob",
+        "depth": 0.4
+      }
+    },
+    {
+      "type": "noise",
+      "color": "pink",
+      "amp": 0.2,
+      "env": {
+        "a": 0.05,
+        "d": "$len*0.5",
+        "s": 0.6,
+        "r": 0.1
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": {
+            "env": [
+              [
+                0,
+                "$f0*4"
+              ],
+              [
+                "$len",
+                "$f1*4"
+              ]
+            ],
+            "curve": "exp"
+          },
+          "q": 4
+        }
+      ]
+    }
+  ],
+  "fx": [
+    {
+      "type": "reverb",
+      "room": 0.4,
+      "mix": 0.15
+    }
+  ]
+}

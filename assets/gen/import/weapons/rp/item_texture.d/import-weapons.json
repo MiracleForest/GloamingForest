@@ -1,0 +1,50 @@
+{
+  "tf_item_block_and_chain": {
+    "textures": "textures/twilightforest/item/block_and_chain"
+  },
+  "tf_item_crumble_horn": {
+    "textures": "textures/twilightforest/item/crumble_horn"
+  },
+  "tf_item_cube_of_annihilation": {
+    "textures": "textures/twilightforest/item/cube_of_annihilation"
+  },
+  "tf_item_cube_talisman": {
+    "textures": "textures/twilightforest/item/cube_talisman"
+  },
+  "tf_item_ender_bow": {
+    "textures": "textures/twilightforest/item/ender_bow"
+  },
+  "tf_item_glass_sword_solid": {
+    "textures": "textures/twilightforest/item/glass_sword_solid"
+  },
+  "tf_item_ice_bomb": {
+    "textures": "textures/twilightforest/item/ice_bomb"
+  },
+  "tf_item_ice_bow_solid": {
+    "textures": "textures/twilightforest/item/ice_bow_solid"
+  },
+  "tf_item_ice_sword_solid": {
+    "textures": "textures/twilightforest/item/ice_sword_solid"
+  },
+  "tf_item_lamp_of_cinders": {
+    "textures": "textures/twilightforest/item/lamp_of_cinders"
+  },
+  "tf_item_moonworm_queen": {
+    "textures": "textures/twilightforest/item/moonworm_queen"
+  },
+  "tf_item_ore_magnet": {
+    "textures": "textures/twilightforest/item/ore_magnet"
+  },
+  "tf_item_peacock_feather_fan": {
+    "textures": "textures/twilightforest/item/peacock_feather_fan"
+  },
+  "tf_item_seeker_bow": {
+    "textures": "textures/twilightforest/item/seeker_bow"
+  },
+  "tf_item_transformation_powder": {
+    "textures": "textures/twilightforest/item/transformation_powder"
+  },
+  "tf_item_triple_bow": {
+    "textures": "textures/twilightforest/item/triple_bow"
+  }
+}

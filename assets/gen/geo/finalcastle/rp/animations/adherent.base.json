@@ -1,0 +1,19 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.adherent.base": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
+        },
+        "leftArm": {
+          "rotation": ["math.sin(query.life_time * 76.7763) * (-2.8648)", 0, "math.cos(query.life_time * 152.4068 + 76.2034) * (-17.1887) - 17.1887"]
+        },
+        "rightArm": {
+          "rotation": ["math.sin(query.life_time * 76.7763) * 2.8648", 0, "math.cos(query.life_time * 152.4068 + 76.2034) * 17.1887 + 17.1887"]
+        }
+      }
+    }
+  }
+}
