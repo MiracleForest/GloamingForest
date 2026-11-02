@@ -59,6 +59,10 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
+#include "mc/world/level/block/actor/BrewingStandBlockActor.h"
+#include "mc/world/level/block/actor/ChiseledBookshelfBlockActor.h"
+#include "mc/world/level/block/actor/FurnaceBlockActor.h"
+#include "mc/world/level/block/actor/HopperBlockActor.h"
 #include "mc/world/level/block/actor/RandomizableBlockActorContainer.h"
 #include "mc/world/level/block/actor/RandomizableBlockActorContainerBase.h"
 #include "mc/world/level/block/actor/RandomizableBlockActorFillingContainer.h"
@@ -298,24 +302,46 @@ void outlineBox(CommandOrigin const& origin, CommandOutput& output, StructureUti
     output.success("outlined");
 }
 
-/// Item#getRarity of 1.21.1 for the items whose rarity F9's rarity table does not carry: vanilla
-/// Items and TF's TFItems / TFBlocks rarities (UNCOMMON, RARE, EPIC; TF's TWILIGHT items, the
-/// trophies and banner patterns, are F9's): 0 common, 1 uncommon, 2 rare, 3 epic. F9's table
-/// (gf::item::ext::rarityOf) knows TWILIGHT and what units register; this one stays until every
-/// item's rarity is registered there.
+/// Item#getRarity for the items whose rarity F9's rarity table does not carry: 0 common, 1
+/// uncommon, 2 rare, 3 epic. F9's table (gf::item::ext::rarityOf) knows TF's TWILIGHT items (the
+/// trophies and banner patterns) and what units register; this one stays until every item's
+/// rarity is registered there.
+///   - Minecraft 1.21.1: every Item.Properties#rarity of net.minecraft.world.item.Items (read from
+///     the server-1.21.1 jar's Items.<clinit>: the Rarity before each item's registration; no other
+///     class sets one), by Bedrock id where it differs (Java's light is Bedrock's light_block).
+///     Every other vanilla item is common (trial keys, the ominous bottle, smithing templates).
+///   - TF 4.8: the UNCOMMON / RARE / EPIC rarities of TFItems and TFBlocks (and fiery_block, whose
+///     registerFireResistantItem sets UNCOMMON).
 int baseRarity(std::string const& id) {
     static std::unordered_map<std::string, int> const table = [] {
         std::unordered_map<std::string, int> t;
-        for (auto const* s : {"minecraft:experience_bottle", "minecraft:dragon_breath", "minecraft:heart_of_the_sea", "minecraft:totem_of_undying",
-                              "minecraft:creeper_head", "minecraft:zombie_head", "minecraft:skeleton_skull", "minecraft:wither_skeleton_skull",
-                              "minecraft:player_head", "minecraft:dragon_head", "minecraft:piglin_head", "minecraft:nether_star",
-                              "minecraft:enchanted_book", "minecraft:trial_key", "minecraft:ominous_trial_key", "minecraft:ominous_bottle",
-                              "minecraft:music_disc_13", "minecraft:music_disc_cat", "minecraft:music_disc_blocks", "minecraft:music_disc_chirp",
-                              "minecraft:music_disc_far", "minecraft:music_disc_mall", "minecraft:music_disc_mellohi", "minecraft:music_disc_stal",
-                              "minecraft:music_disc_strad", "minecraft:music_disc_ward", "minecraft:music_disc_11", "minecraft:music_disc_wait",
-                              "minecraft:music_disc_otherside", "minecraft:music_disc_5", "minecraft:music_disc_pigstep", "minecraft:music_disc_relic",
-                              "minecraft:music_disc_creator", "minecraft:music_disc_creator_music_box", "minecraft:music_disc_precipice",
-                              "twilightforest:naga_scale", "twilightforest:naga_chestplate", "twilightforest:naga_leggings", "twilightforest:twilight_scepter",
+        // 1.21.1 UNCOMMON
+        for (auto const* s : {"minecraft:elytra", "minecraft:experience_bottle", "minecraft:skeleton_skull", "minecraft:wither_skeleton_skull",
+                              "minecraft:player_head", "minecraft:zombie_head", "minecraft:creeper_head", "minecraft:dragon_head",
+                              "minecraft:piglin_head", "minecraft:nether_star", "minecraft:enchanted_book", "minecraft:dragon_breath",
+                              "minecraft:totem_of_undying", "minecraft:heart_of_the_sea", "minecraft:creeper_banner_pattern",
+                              "minecraft:skull_banner_pattern", "minecraft:piglin_banner_pattern"})
+            t[s] = 1;
+        // 1.21.1 RARE
+        for (auto const* s : {"minecraft:beacon", "minecraft:conduit", "minecraft:golden_apple", "minecraft:end_crystal", "minecraft:music_disc_13",
+                              "minecraft:music_disc_cat", "minecraft:music_disc_blocks", "minecraft:music_disc_chirp", "minecraft:music_disc_creator",
+                              "minecraft:music_disc_creator_music_box", "minecraft:music_disc_far", "minecraft:music_disc_mall",
+                              "minecraft:music_disc_mellohi", "minecraft:music_disc_stal", "minecraft:music_disc_strad", "minecraft:music_disc_ward",
+                              "minecraft:music_disc_11", "minecraft:music_disc_wait", "minecraft:music_disc_otherside", "minecraft:music_disc_relic",
+                              "minecraft:music_disc_5", "minecraft:music_disc_pigstep", "minecraft:music_disc_precipice", "minecraft:flow_banner_pattern",
+                              "minecraft:guster_banner_pattern"})
+            t[s] = 2;
+        // 1.21.1 EPIC
+        for (auto const* s : {"minecraft:heavy_core", "minecraft:dragon_egg", "minecraft:command_block", "minecraft:barrier", "minecraft:light",
+                              "minecraft:light_block", "minecraft:repeating_command_block", "minecraft:chain_command_block", "minecraft:structure_void",
+                              "minecraft:structure_block", "minecraft:jigsaw", "minecraft:enchanted_golden_apple", "minecraft:mace",
+                              "minecraft:command_block_minecart", "minecraft:knowledge_book", "minecraft:debug_stick", "minecraft:trident",
+                              "minecraft:mojang_banner_pattern"})
+            t[s] = 3;
+        // Bedrock's light blocks, one item per light level
+        for (int level = 0; level <= 15; level++) t["minecraft:light_block_" + std::to_string(level)] = 3;
+        // TF 4.8 UNCOMMON
+        for (auto const* s : {"twilightforest:naga_scale", "twilightforest:naga_chestplate", "twilightforest:naga_leggings", "twilightforest:twilight_scepter",
                               "twilightforest:lifedrain_scepter", "twilightforest:zombie_scepter", "twilightforest:fortification_scepter",
                               "twilightforest:exanimate_essence", "twilightforest:ore_meter", "twilightforest:hydra_chop", "twilightforest:fiery_blood",
                               "twilightforest:fiery_tears", "twilightforest:fiery_ingot", "twilightforest:fiery_helmet", "twilightforest:fiery_chestplate",
@@ -333,43 +359,58 @@ int baseRarity(std::string const& id) {
                               "twilightforest:wither_skeleton_skull_candle", "twilightforest:creeper_skull_candle", "twilightforest:player_skull_candle",
                               "twilightforest:piglin_skull_candle", "twilightforest:fiery_block"})
             t[s] = 1;
-        for (auto const* s : {"minecraft:golden_apple", "minecraft:beacon", "minecraft:conduit", "minecraft:end_crystal", "minecraft:trident",
-                              "minecraft:heavy_core", "twilightforest:mazebreaker_pickaxe", "twilightforest:crumble_horn",
+        // TF 4.8 RARE
+        for (auto const* s : {"twilightforest:mazebreaker_pickaxe", "twilightforest:crumble_horn",
                               "twilightforest:peacock_feather_fan", "twilightforest:moonworm_queen", "twilightforest:music_disc_radiance",
                               "twilightforest:music_disc_steps", "twilightforest:music_disc_superstitious", "twilightforest:music_disc_home",
                               "twilightforest:music_disc_wayfarer", "twilightforest:music_disc_findings", "twilightforest:music_disc_maker",
                               "twilightforest:music_disc_thread", "twilightforest:music_disc_motion"})
             t[s] = 2;
-        for (auto const* s : {"minecraft:enchanted_golden_apple", "minecraft:elytra", "minecraft:dragon_egg", "minecraft:command_block",
-                              "minecraft:chain_command_block", "minecraft:repeating_command_block", "minecraft:command_block_minecart",
-                              "minecraft:structure_block", "minecraft:jigsaw", "minecraft:barrier", "minecraft:light_block", "minecraft:debug_stick",
-                              "minecraft:knowledge_book", "minecraft:mace"})
-            t[s] = 3;
         return t;
     }();
     auto it = table.find(id);
     return it != table.end() ? it->second : 0;
 }
 
-/// A vanilla container block actor that has a loot table (RandomizableContainer): its Container
-/// and, for chests, barrels and shulker boxes, the FillingContainer that holds its own slots
-/// (dispensers and droppers are plain Containers).
-struct VanillaLootContainer {
-    Container*       container = nullptr;
-    FillingContainer* filling  = nullptr;
+/// A vanilla block actor whose Java block entity is a Container (CountLootCommand counts those):
+/// its Container; for chests, barrels and shulker boxes the FillingContainer that holds its own
+/// slots; whether Java's is a RandomizableContainer (its loot table is unpacked before counting;
+/// Bedrock's loot table field for all but the hopper, whose table the kit keeps).
+struct VanillaContainer {
+    Container*        container    = nullptr;
+    FillingContainer* filling      = nullptr;
+    bool              randomizable = false; ///< Bedrock's own loot table field (RandomizableBlockActorContainerBase)
+    bool              hopper       = false; ///< RandomizableContainer in Java, the kit keeps its table
 };
-std::optional<VanillaLootContainer> vanillaLootContainer(BlockActor& actor) {
+std::optional<VanillaContainer> vanillaContainer(BlockActor& actor) {
     switch (actor.getType()) {
     case BlockActorType::Chest:
     case BlockActorType::BarrelBlock:
     case BlockActorType::ShulkerBox: {
         auto* filling = static_cast<FillingContainer*>(static_cast<RandomizableBlockActorFillingContainer*>(&actor));
-        return VanillaLootContainer{static_cast<Container*>(filling), filling};
+        return VanillaContainer{static_cast<Container*>(filling), filling, true};
     }
     case BlockActorType::Dispenser:
     case BlockActorType::Dropper:
-        return VanillaLootContainer{static_cast<Container*>(static_cast<RandomizableBlockActorContainer*>(&actor)), nullptr};
+    case BlockActorType::Crafter:
+    case BlockActorType::DecoratedPot:
+        return VanillaContainer{static_cast<Container*>(static_cast<RandomizableBlockActorContainer*>(&actor)), nullptr, true};
+    case BlockActorType::Jukebox:
+        // a Container in Java (ContainerSingleItem), not a RandomizableContainer: never unpacked
+        return VanillaContainer{static_cast<Container*>(static_cast<RandomizableBlockActorContainer*>(&actor)), nullptr, false};
+    case BlockActorType::Hopper:
+        return VanillaContainer{static_cast<Container*>(static_cast<HopperBlockActor*>(&actor)), nullptr, false, true};
+    case BlockActorType::Furnace:
+    case BlockActorType::BlastFurnace:
+    case BlockActorType::Smoker:
+        return VanillaContainer{static_cast<Container*>(static_cast<FurnaceBlockActor*>(&actor)), nullptr, false};
+    case BlockActorType::BrewingStand:
+        return VanillaContainer{static_cast<Container*>(static_cast<BrewingStandBlockActor*>(&actor)), nullptr, false};
+    case BlockActorType::ChiseledBookshelf:
+        return VanillaContainer{static_cast<Container*>(static_cast<ChiseledBookshelfBlockActor*>(&actor)), nullptr, false};
     default:
+        // not a Container in Java: ender chests, lecterns, beacons, cauldrons, campfires, item
+        // frames (entities in Java), ...
         return std::nullopt;
     }
 }
@@ -384,13 +425,17 @@ bool notCommon(ItemStack const& stack) {
 }
 
 std::optional<std::vector<ItemStack>> containerItems(BlockSource& source, BlockPos const& pos) {
-    // RandomizableContainer#unpackLootTable(null) (no player, no luck) through the loot contract
-    // (F10): vanilla containers by the game's own unpacking (F10 rolls its tables there), custom
-    // ones (gf::inventory) by reading their storage, which unpacks a pending table
+    // CountLootCommand#countItemsInContainer: every Container block entity, a RandomizableContainer
+    // unpacked first (unpackLootTable(null): no player, no luck) through the loot contract (F10):
+    // vanilla containers by the game's own unpacking (F10 rolls its tables there), a hopper by the
+    // kit (Bedrock's hopper has no loot table field), custom ones (gf::inventory) by reading their
+    // storage, which unpacks a pending table
     if (auto* actor = source.getBlockEntity(pos)) {
-        if (auto vanilla = vanillaLootContainer(*actor)) {
-            static_cast<RandomizableBlockActorContainerBase&>(*actor).unPackLootTable(source.getLevel(), *vanilla->container, source.getDimensionId(),
-                                                                                      nullptr);
+        if (auto vanilla = vanillaContainer(*actor)) {
+            if (vanilla->randomizable)
+                static_cast<RandomizableBlockActorContainerBase&>(*actor).unPackLootTable(source.getLevel(), *vanilla->container, source.getDimensionId(),
+                                                                                          nullptr);
+            if (vanilla->hopper) (void)blockentities::unpackHopper(source, pos);
             // a chest's own slots: the Container view of a paired chest spans both halves, and Java
             // counts each half's block entity on its own
             if (vanilla->filling) return std::vector<ItemStack>(vanilla->filling->mItems->begin(), vanilla->filling->mItems->end());

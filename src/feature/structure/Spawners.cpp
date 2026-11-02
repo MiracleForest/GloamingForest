@@ -59,13 +59,10 @@
 #include "mc/world/level/chunk/LevelChunkBlockActorStorage.h"
 
 #include "core/Keys.h"
-#include "feature/common/BlockData.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "mod/Log.h"
 
 namespace gf::structure::spawners {
-
-namespace bd = ::gf::feature::common::blockdata;
 
 namespace {
 
@@ -350,17 +347,12 @@ std::optional<BlockPos> firingSpawner(BlockSource& source, Vec3 const& at, std::
     // TF's sinister spawner (F8's block entity, in block data, spawns as a spawner): the ones whose
     // spawn box (SinisterSpawnerLogic: within SpawnRange of the block on every axis) holds the mob
     // and whose block F7 left a spawner record with (a template's spawner data), on the same terms
-    // (the one spawning now first: its delay ran out, then the nearest)
-    int dim = static_cast<int>(source.getDimensionId());
+    // (the one spawning now first: its delay ran out, then the nearest). The kit's index of its
+    // spawner records names them (no block data walk per spawn).
     for (int cx = core::chunkOf(p.x - kMaxReach); cx <= core::chunkOf(p.x + kMaxReach); cx++)
         for (int cz = core::chunkOf(p.z - kMaxReach); cz <= core::chunkOf(p.z + kMaxReach); cz++) {
             if (!source.getChunk(cx, cz)) continue;
-            std::vector<BlockPos> recorded; // (collected first: the queries below read block data too)
-            bd::forEachInChunk(dim, cx, cz, [&](core::GlobalPos const& gp, Json const& doc) {
-                auto it = doc.find("structure");
-                if (it != doc.end() && it->is_object() && it->contains("spawner")) recorded.push_back(BlockPos{gp.x, gp.y, gp.z});
-            });
-            for (auto const& q : recorded) {
+            for (auto const& q : blockentities::spawnerRecordsIn(source, cx, cz)) {
                 auto sinister = boss::ext::sinisterSpawner(source, q);
                 if (!sinister) continue;
                 auto mob    = namespaced(entityId);
@@ -381,6 +373,30 @@ std::optional<BlockPos> firingSpawner(BlockSource& source, Vec3 const& at, std::
         }
     return best;
 }
+
+namespace {
+
+/// The last spawner lookup (a mob's SpawningMobEvent and its SpawnedMobEvent ask for the same one
+/// in the same tick).
+struct LastLookup {
+    bool                    valid = false;
+    int                     tick  = 0;
+    int                     dim   = 0;
+    Vec3                    at{};
+    std::string             mob;
+    std::optional<BlockPos> result;
+};
+LastLookup gLastLookup;
+
+std::optional<BlockPos> firingSpawnerOnce(BlockSource& source, Vec3 const& at, std::string const& mob) {
+    int  dim  = static_cast<int>(source.getDimensionId());
+    auto& l   = gLastLookup;
+    if (l.valid && l.tick == gTicks && l.dim == dim && l.at.x == at.x && l.at.y == at.y && l.at.z == at.z && l.mob == mob) return l.result;
+    l = LastLookup{true, gTicks, dim, at, mob, firingSpawner(source, at, mob)};
+    return l.result;
+}
+
+} // namespace
 
 int vetoes() { return gVetoes; }
 
@@ -450,7 +466,7 @@ void install() {
             if (!ev.fromSpawner()) return;
             auto& source  = ev.blockSource();
             auto  mob     = canonical(ev.identifier());
-            auto  spawner = firingSpawner(source, ev.pos(), mob);
+            auto  spawner = firingSpawnerOnce(source, ev.pos(), mob);
             if (!spawner) return;
             auto record = recordFor(source, *spawner, mob);
             if (!record || !record->contains("spawn_rules")) return;
@@ -469,7 +485,7 @@ void install() {
             if (!ev.fromSpawner() || !ev.mob()) return;
             auto& source  = ev.blockSource();
             auto  mob     = canonical(ev.identifier());
-            auto  spawner = firingSpawner(source, ev.pos(), mob);
+            auto  spawner = firingSpawnerOnce(source, ev.pos(), mob);
             if (!spawner) return;
             auto record = recordFor(source, *spawner, mob);
             if (!record || !record->contains("scale")) return;
@@ -483,7 +499,8 @@ void install() {
 }
 
 void clear() {
-    gHeld = false;
+    gHeld             = false;
+    gLastLookup.valid = false;
     gScaled.clear();
     std::lock_guard lock(gPendingMutex);
     gPending.clear();
