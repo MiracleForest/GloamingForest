@@ -23,6 +23,17 @@ namespace {
 int gScopes = 0;
 } // namespace
 
+gf::boss::BossSpec fixtureBossSpec() {
+    return {
+        .entityId        = "gf_test:boss",
+        .homeStructure   = "gf_test:fixture",
+        .lootTable       = "gf_test:entities/boss",
+        .deathChestBlock = "minecraft:chest",
+        .bar             = {.rgb = kFixtureRgb, .darken = true, .fog = false},
+        .deathTicks      = 20,
+    };
+}
+
 FixtureScope::FixtureScope() {
     if (gScopes++ > 0) return;
     ge::registerType(
@@ -61,14 +72,7 @@ FixtureScope::FixtureScope() {
                 },
         }
     );
-    gf::boss::registerBoss({
-        .entityId        = "gf_test:boss",
-        .homeStructure   = "gf_test:fixture",
-        .lootTable       = "gf_test:entities/boss",
-        .deathChestBlock = "minecraft:chest",
-        .bar             = {.rgb = kFixtureRgb, .darken = true, .fog = false},
-        .deathTicks      = 20,
-    });
+    gf::boss::registerBoss(fixtureBossSpec());
     gf::feature::boss::markInclusiveForTest("gf_test:boss");
 }
 
