@@ -3,8 +3,10 @@
 // Contract "structure" / "template": GloamingForest templates (rule R19). TF's .nbt templates are
 // All Rights Reserved and never read; every template is an original .gft.json with the id of the
 // TF template it stands in for. Placement follows vanilla StructureTemplate#placeInWorld:
-// processors see every block (original and current info), the result is mirrored and rotated
-// about the pivot, clipped to the settings' box, then block entity markers and entities follow.
+// processors see every block (original and current info) in the order Java keeps a loaded
+// template's blocks (TemplateOrder.cpp: full blocks, other shapes, block entities; each by y, x,
+// z), the result is mirrored and rotated about the pivot, clipped to the settings' box, then block
+// entity markers and entities follow.
 //
 // Format (format "gloamingforest:template", format_version 1):
 //   id        "twilightforest:lich_tower/root/foyer"
@@ -176,6 +178,7 @@ std::unique_ptr<Parsed> parse(Template const& t) {
         }
         p->paletteWaterlogged.push_back(wl);
         p->pottedPlant.push_back(blocks::pottedPlant(name));
+        p->paletteList.push_back(static_cast<std::int8_t>(javaList(entry)));
     }
     p->cells.reserve(static_cast<std::size_t>(p->sx) * p->sy * p->sz);
     for (auto const& run : doc["blocks"]) {
@@ -504,42 +507,68 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
             blockData[{m.pos.x, m.pos.y, m.pos.z}] = std::move(d);
         }
 
-    auto const& clip = settings.clip;
-    std::vector<Placed> placed;
+    // the blocks in Java's order (StructureTemplate#loadPalette / buildInfoList): full blocks, then
+    // other shapes, then blocks with block entity data (a marker's data, a block entity's block, a
+    // data marker: Java's DATA structure block), each list by y, then x, then z
+    std::set<std::tuple<int, int, int>> dataMarkerCells;
+    for (auto const& m : t.markers)
+        if (m.isData()) dataMarkerCells.insert({m.pos.x, m.pos.y, m.pos.z});
+    struct Cell {
+        int list, y, x, z;
+    };
+    std::vector<Cell> order;
+    order.reserve(t.cells.size());
     for (int y = 0; y < t.sy; y++)
         for (int z = 0; z < t.sz; z++)
             for (int x = 0; x < t.sx; x++) {
                 auto idx = t.cells[static_cast<std::size_t>(t.index(x, y, z))];
                 if (idx == 0xffff || idx >= t.palette.size() || !t.palette[idx]) continue;
-                BlockPos local{x, y, z};
-                BlockPos rel   = relative(placement, local);
-                BlockPos world{rel.x + placement.offset.x, rel.y + placement.offset.y, rel.z + placement.offset.z};
-                // processors keep x / z (gravity moves y only): skip columns outside the clip early
-                if (clip && (world.x < clip->minX || world.x > clip->maxX || world.z < clip->minZ || world.z > clip->maxZ)) continue;
-                BlockInfo original{local, t.palette[idx], Json()};
-                if (auto it = blockData.find({x, y, z}); it != blockData.end()) original.data = it->second;
-                BlockInfo current{world, t.palette[idx], original.data};
-                bool      dropped = false;
-                for (auto const& p : procs) {
-                    auto next = processors::run(p, region, original, current, settings, placement.pivotPos);
-                    if (!next) {
-                        dropped = true;
-                        break;
-                    }
-                    current = std::move(*next);
-                }
-                if (dropped || !current.block) continue;
-                if (clip && !clip->contains(current.pos.x, current.pos.y, current.pos.z)) continue;
-                Placed out{current.pos, current.block, std::move(current.data)};
-                // the Java state's waterlogged survives the processors while the block can hold
-                // water (FeaturePlacers.transferAllStateKeys copies it); a pot keeps its plant
-                bool sameBlock = blocks::id(*current.block) == blocks::id(*t.palette[idx]);
-                int  wl        = t.paletteWaterlogged[idx];
-                if (sameBlock) out.waterlogged = wl;
-                else if (liquids::waterloggable(*current.block)) out.waterlogged = wl > 0 ? 1 : 0;
-                if (!t.pottedPlant[idx].empty() && blocks::id(*current.block) == "minecraft:flower_pot") out.pottedPlant = t.pottedPlant[idx];
-                placed.push_back(std::move(out));
+                bool withData = blockData.contains({x, y, z}) || dataMarkerCells.contains({x, y, z});
+                order.push_back(Cell{withData ? 2 : t.paletteList[idx], y, x, z});
             }
+    std::sort(order.begin(), order.end(), [](Cell const& a, Cell const& b) {
+        return std::tie(a.list, a.y, a.x, a.z) < std::tie(b.list, b.y, b.x, b.z);
+    });
+    // StructurePlaceSettings#getRandomPalette(palettes, offset): one draw of the shared random for
+    // the template's (single) palette before any block
+    if (shared) (void)shared->nextInt(1);
+
+    auto const& clip = settings.clip;
+    std::vector<Placed> placed;
+    for (auto const& cell : order) {
+        int  x = cell.x, y = cell.y, z = cell.z;
+        auto idx = t.cells[static_cast<std::size_t>(t.index(x, y, z))];
+        BlockPos local{x, y, z};
+        BlockPos rel   = relative(placement, local);
+        BlockPos world{rel.x + placement.offset.x, rel.y + placement.offset.y, rel.z + placement.offset.z};
+        // processors keep x / z (gravity moves y only): skip columns outside the clip early, unless
+        // the placement shares a random (Java processes every block, the bounding box only limits
+        // what is placed: the blocks outside still draw)
+        if (clip && !shared && (world.x < clip->minX || world.x > clip->maxX || world.z < clip->minZ || world.z > clip->maxZ)) continue;
+        BlockInfo original{local, t.palette[idx], Json()};
+        if (auto it = blockData.find({x, y, z}); it != blockData.end()) original.data = it->second;
+        BlockInfo current{world, t.palette[idx], original.data};
+        bool      dropped = false;
+        for (auto const& p : procs) {
+            auto next = processors::run(p, region, original, current, settings, placement.pivotPos);
+            if (!next) {
+                dropped = true;
+                break;
+            }
+            current = std::move(*next);
+        }
+        if (dropped || !current.block) continue;
+        if (clip && !clip->contains(current.pos.x, current.pos.y, current.pos.z)) continue;
+        Placed out{current.pos, current.block, std::move(current.data)};
+        // the Java state's waterlogged survives the processors while the block can hold
+        // water (FeaturePlacers.transferAllStateKeys copies it); a pot keeps its plant
+        bool sameBlock = blocks::id(*current.block) == blocks::id(*t.palette[idx]);
+        int  wl        = t.paletteWaterlogged[idx];
+        if (sameBlock) out.waterlogged = wl;
+        else if (liquids::waterloggable(*current.block)) out.waterlogged = wl > 0 ? 1 : 0;
+        if (!t.pottedPlant[idx].empty() && blocks::id(*current.block) == "minecraft:flower_pot") out.pottedPlant = t.pottedPlant[idx];
+        placed.push_back(std::move(out));
+    }
 
     // StructureTemplate#placeInWorld with LiquidSettings.APPLY_WATERLOGGING (unless the settings
     // ignore it): a waterloggable block put where the world holds a water source is waterlogged;

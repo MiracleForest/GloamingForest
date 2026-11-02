@@ -120,7 +120,7 @@ public:
             for (int z = box.minZ; z <= box.maxZ; z++)
                 for (int x = box.minX; x <= box.maxX; x++) {
                     auto const& b = getBlock(BlockPos{x, y, z});
-                    // TF blocks count as air: the goldens stay valid once the block skeleton (F1) registers them
+                    // TF blocks count as air (their states are F1's, a table that may still grow; tests name them where it matters)
                     if (!b.getTypeName().starts_with("minecraft:")) h.add(x - box.minX, y - box.minY, z - box.minZ, "minecraft:air");
                     else h.add(x - box.minX, y - box.minY, z - box.minZ, b.getTypeName(), game::statesOf(b));
                 }
@@ -283,7 +283,7 @@ std::string const& fixtureId() {
 /// (courtyard_terrace), smooth stone (smooth_stone_variants), grass on dirt, under stone and next to
 /// podzol / mycelium / grass (smart_grass), full and partial blocks over solid, partial and
 /// replaceable world blocks (soft_replace), a spawner without spawn data (spawner_processor) and
-/// TF's nagastone (nagastone_variants, once TF's blocks are registered).
+/// TF's nagastone (nagastone_variants).
 constexpr BlockPos kTargetsOrigin{10, 64, 0};
 
 std::string const& processorTargetsId() {
@@ -606,10 +606,13 @@ GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
     };
     auto const* targets = templates::parsed(processorTargetsId());
     ctx.require(targets != nullptr, "processor targets fixture");
-    // the fixture at kOrigin, the processor targets 10 blocks east, over a prepared world
+    // the fixture at kOrigin, the processor targets 10 blocks east, over a prepared world; each
+    // placement shares one random seeded 0x5eed between its blocks (StructurePlaceSettings
+    // #setRandom), so the order the blocks are processed in (TemplateOrder.cpp) shows in the result
     struct Run {
-        std::string               hash;
-        std::vector<templates::Placed> placed; ///< the targets' placement
+        std::string                    hash;
+        std::vector<templates::Placed> fixture; ///< the fixture's placement
+        std::vector<templates::Placed> placed;  ///< the targets' placement
     };
     auto place = [&](std::vector<std::string> const& processors, MemoryRegion& mem) {
         prepareProcessorWorld(mem);
@@ -621,10 +624,39 @@ GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
             p.settings.processors = processors;
             p.settings.seed       = 0x5eed;
             JavaRandom random(7);
-            ctx.require(templates::placeInWorld(i == 0 ? *t : *targets, mem, p, random, nullptr, i == 1 ? &run.placed : nullptr), "placed");
+            ctx.require(templates::placeInWorld(i == 0 ? *t : *targets, mem, p, random, nullptr, i == 1 ? &run.placed : &run.fixture), "placed");
         }
         run.hash = mem.hash(BlockBox{-2, 62, -2, 17, 70, 7});
         return run;
+    };
+    // what a placement put where (the later block wins; TF blocks as air, as in the hashes), by
+    // y, then z, then x
+    auto blocksOf = [](Run const& r) {
+        std::map<std::tuple<int, int, int>, std::string> m;
+        for (auto const* list : {&r.fixture, &r.placed})
+            for (auto const& p : *list) {
+                std::string id = p.block ? blocks::id(*p.block) : std::string("minecraft:air");
+                if (!id.starts_with("minecraft:")) id = "minecraft:air";
+                m[{p.pos.y, p.pos.z, p.pos.x}] = id;
+            }
+        return m;
+    };
+    // the positions a processor changed against the plain placement ("x,y,z:block", "-": nothing
+    // placed there), for comparison with a model of Java's StructureTemplate processing
+    auto diffOf = [&](Run const& plainRun, Run const& r) {
+        auto        a = blocksOf(plainRun), b = blocksOf(r);
+        std::string out;
+        std::set<std::tuple<int, int, int>> keys;
+        for (auto const& [k, _] : a) keys.insert(k);
+        for (auto const& [k, _] : b) keys.insert(k);
+        for (auto const& k : keys) {
+            auto ia = a.find(k), ib = b.find(k);
+            std::string va = ia == a.end() ? "-" : ia->second, vb = ib == b.end() ? "-" : ib->second;
+            if (va == vb) continue;
+            if (vb.starts_with("minecraft:")) vb = vb.substr(10);
+            out += std::to_string(std::get<2>(k)) + "," + std::to_string(std::get<0>(k)) + "," + std::to_string(std::get<1>(k)) + ":" + vb + ";";
+        }
+        return out;
     };
     MemoryRegion plainMem;
     auto         plain = place({}, plainMem);
@@ -635,6 +667,7 @@ GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
         auto mem    = std::make_unique<MemoryRegion>();
         runs[name]  = place({config.dump()}, *mem);
         checkGolden(ctx, "processor_" + name, runs[name].hash);
+        ctx.info("diff processor_" + name + ": " + diffOf(plain, runs[name]));
         worlds[name] = std::move(mem);
     }
     auto at = [&](std::string const& name, int x, int y, int z) -> Block const& { return worlds[name]->getBlock(BlockPos{x, y, z}); };
@@ -675,19 +708,25 @@ GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
             ctx.check(std::abs(p.data.value("entity_scale", 1.0f) - 0.8f / 1.4f) < 1e-5f, "a spider wider than 0.8 is scaled to fit");
     }
     ctx.check(spawnerChecked, "the targets' spawner was processed");
-    // the processors that change nothing here: update_marking (Bedrock updates shapes itself) and,
-    // without TF's block skeleton, nagastone_variants
+    // update_marking changes nothing here (Bedrock updates shapes itself)
     ctx.check(runs["update_marking"].hash == plain.hash, "update_marking places the template unchanged");
-    if (blocks::isRegisteredBlock("twilightforest:etched_nagastone")) {
-        int variants = 0;
-        for (auto const& p : runs["nagastone_variants"].placed)
-            if (p.block && (blocks::id(*p.block).find("mossy") != std::string::npos || blocks::id(*p.block).find("cracked") != std::string::npos))
-                variants++;
-        ctx.check(variants > 0, "nagastone_variants turns some nagastone mossy or cracked (" + std::to_string(variants) + ")");
-    } else {
-        ctx.check(runs["nagastone_variants"].hash == plain.hash, "nagastone_variants leaves vanilla blocks alone");
-        ctx.info("TF's nagastone blocks are not registered (block skeleton): nagastone_variants checked on vanilla blocks only");
-    }
+    // nagastone_variants on TF's nagastone (F1's blocks; they hash as air): the targets' etched
+    // nagastone and pillars become mossy or cracked as Java's processing order draws them, keeping
+    // their states (FeaturePlacers.transferAllStateKeys), and vanilla blocks stay
+    ctx.require(blocks::isRegisteredBlock("twilightforest:etched_nagastone") && blocks::isRegisteredBlock("twilightforest:nagastone_pillar") &&
+                    blocks::isRegisteredBlock("twilightforest:cracked_etched_nagastone") && blocks::isRegisteredBlock("twilightforest:mossy_nagastone_pillar"),
+                "TF's nagastone blocks are registered");
+    std::string nagastone;
+    for (auto const& p : runs["nagastone_variants"].placed)
+        if (p.block && blocks::id(*p.block).find("nagastone") != std::string::npos)
+            nagastone += std::to_string(p.pos.x) + "," + std::to_string(p.pos.y) + "," + std::to_string(p.pos.z) + ":" + blocks::id(*p.block) + ";";
+    checkGolden(ctx, "nagastone_variants_blocks", nagastone);
+    ctx.check(runs["nagastone_variants"].hash == plain.hash, "nagastone_variants leaves vanilla blocks alone");
+    auto const* etched = blocks::fromJava("twilightforest:etched_nagastone");
+    for (auto const& p : runs["nagastone_variants"].placed)
+        if (p.block && etched && blocks::id(*p.block) == "twilightforest:cracked_etched_nagastone")
+            ctx.check(blocks::javaProperty(*p.block, "facing") == blocks::javaProperty(*etched, "facing"),
+                      "the cracked etched nagastone keeps the etched nagastone's facing");
     ctx.check(processorTypes().size() >= 24, "17 TF + 7 vanilla processor types registered (" + std::to_string(processorTypes().size()) + ")");
 });
 

@@ -158,6 +158,8 @@ struct Parsed {
     std::vector<std::int8_t>  paletteWaterlogged;
     /// The plant of a Java minecraft:potted_* state (Bedrock id; "" for every other state).
     std::vector<std::string>  pottedPlant;
+    /// The list StructureTemplate#addToLists puts each palette state in (javaList).
+    std::vector<std::int8_t>  paletteList;
     std::vector<std::uint16_t> cells;       ///< palette index per block, y-major, then z, then x
     std::vector<Marker>       markers;
     std::vector<Connector>    connectors;
@@ -165,6 +167,11 @@ struct Parsed {
     [[nodiscard]] int index(int x, int y, int z) const { return (y * sz + z) * sx + x; }
 };
 
+/// StructureTemplate#addToLists for a Java state without block entity data (TemplateOrder.cpp): 0
+/// a full collision block, 1 any other shape, 2 a block with a block entity (its data is saved
+/// with the template). placeInWorld processes and places a template's blocks list by list, each
+/// sorted by y, then x, then z (StructureTemplate#buildInfoList).
+[[nodiscard]] int javaList(Json const& javaState);
 /// Parses and validates a template document (errors listed; empty: valid).
 [[nodiscard]] std::vector<std::string> validate(Json const& doc);
 /// Registers an in-memory template (selftest fixtures, /tf structure_util capture); replaces one

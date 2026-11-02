@@ -49,6 +49,9 @@ std::map<std::string, Json>       gLists; ///< in-memory processor lists
 
 BlockInfo replaced(BlockInfo const& current, Block const& block, Json data = Json()) { return BlockInfo{current.pos, &block, std::move(data)}; }
 
+/// Java's long multiplication (wraps on overflow; C++ signed overflow is undefined).
+std::int64_t javaMul(std::int64_t a, std::int64_t b) { return static_cast<std::int64_t>(static_cast<std::uint64_t>(a) * static_cast<std::uint64_t>(b)); }
+
 bool isBlock(BlockInfo const& info, std::string_view javaId) { return info.block && blocks::is(*info.block, javaId); }
 
 /// The Bedrock block of a Java default state, cached per id.
@@ -153,7 +156,7 @@ std::optional<BlockInfo> boxCutting(Region&, BlockInfo const&, BlockInfo const& 
 
 std::optional<BlockInfo> cobbleVariants(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const&) {
     RandomSource& random = randomAt(current.pos);
-    random.setSeed(random.nextLong() * 2);
+    random.setSeed(javaMul(random.nextLong(), 2));
     if (isBlock(current, "minecraft:cobblestone") && random.nextBoolean()) return replaced(current, blocks::java("minecraft:mossy_cobblestone"));
     if (isBlock(current, "minecraft:cobblestone_stairs") && random.nextBoolean())
         return replaced(current, blocks::transferStates(*current.block, blocks::java("minecraft:mossy_cobblestone_stairs")));
@@ -167,7 +170,7 @@ std::optional<BlockInfo> cobbleVariants(Region&, BlockInfo const&, BlockInfo con
 std::optional<BlockInfo> infestBlocks(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const&) {
     // settings.getRandom(pos.below(-10)): ten blocks up
     RandomSource& random = randomAt(BlockPos{current.pos.x, current.pos.y + 10, current.pos.z});
-    random.setSeed(random.nextLong() * 2);
+    random.setSeed(javaMul(random.nextLong(), 2));
     static std::vector<std::pair<char const*, char const*>> const conversions{
         {"minecraft:stone", "minecraft:infested_stone"},
         {"minecraft:cobblestone", "minecraft:infested_cobblestone"},
@@ -185,7 +188,7 @@ std::optional<BlockInfo> infestBlocks(Region&, BlockInfo const&, BlockInfo const
 
 std::optional<BlockInfo> nagastoneVariants(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const&) {
     RandomSource& random = randomAt(current.pos);
-    random.setSeed(random.nextLong() * 5);
+    random.setSeed(javaMul(random.nextLong(), 5));
     auto swap = [&](char const* mossy, char const* cracked) {
         return replaced(current, blocks::transferStates(*current.block, blocks::java(random.nextBoolean() ? mossy : cracked)));
     };
@@ -218,7 +221,7 @@ std::optional<BlockInfo> smartGrass(Region& region, BlockInfo const& original, B
 
 std::optional<BlockInfo> smoothStoneVariants(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const&) {
     RandomSource& random = randomAt(current.pos);
-    random.setSeed(random.nextLong() * 4);
+    random.setSeed(javaMul(random.nextLong(), 4));
     if (isBlock(current, "minecraft:smooth_stone_slab") && random.nextBoolean())
         return replaced(current, blocks::transferStates(*current.block, blocks::java("minecraft:cobblestone_slab")));
     if (isBlock(current, "minecraft:smooth_stone") && random.nextBoolean()) return replaced(current, blocks::java("minecraft:cobblestone"));
@@ -342,8 +345,8 @@ std::optional<BlockInfo> stateTransfiguring(Region& region, BlockInfo const& ori
     JavaRandom   random(pure::mthGetSeed(current.pos.x, current.pos.y, current.pos.z));
     std::int64_t i = random.nextLong();
     for (auto const& rule : config.value("rules", Json::array())) {
-        random.setSeed(i * 3);
-        i += 115;
+        random.setSeed(javaMul(i, 3));
+        i = static_cast<std::int64_t>(static_cast<std::uint64_t>(i) + 115u);
         if (processorRuleTest(rule, *current.block, state, original.pos, current.pos, tPivot, random)) {
             auto const* out = blocks::fromJavaState(rule["output_state"]);
             if (!out) return current;
@@ -355,7 +358,7 @@ std::optional<BlockInfo> stateTransfiguring(Region& region, BlockInfo const& ori
 
 std::optional<BlockInfo> stoneBricksVariants(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const&) {
     RandomSource& random = randomAt(current.pos);
-    random.setSeed(random.nextLong() * 3);
+    random.setSeed(javaMul(random.nextLong(), 3));
     if (isBlock(current, "minecraft:stone_bricks") && random.nextBoolean())
         return replaced(current, blocks::java(random.nextBoolean() ? "minecraft:mossy_stone_bricks" : "minecraft:cracked_stone_bricks"));
     if (isBlock(current, "minecraft:stone_brick_stairs") && random.nextBoolean())
