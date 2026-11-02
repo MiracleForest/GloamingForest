@@ -97,7 +97,7 @@ if (-not (Register-SelfTestResult $r)) { throw 'entity.client_fixture failed' }
 if (-not $remote) {
     $r = Invoke-SelfTest 'entity.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) entity selftest(s) failed" }
-    if ($r.Pass -lt 30) { throw "expected at least 30 entity selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 35) { throw "expected at least 35 entity selftests to pass, got $($r.Pass)" }
 } elseif (-not (Get-GameProcess)) {
     throw 'the game closed while connected to the host'
 }

@@ -7,7 +7,7 @@
 //                       NoClipMoveControl wanted position, the flying speed of FlyingMoveControl,
 //                       ITFCharger / IBreathAttacker state and the breath attack, IHostileMount
 //                       (marker, riders) / YetiThrowAttachment state, the string_list data
-//                       serializer (Hydra#HEAD_NAMES).
+//                       serializer (Hydra#HEAD_NAMES), Entity#canUsePortal of an actor type.
 //   gf::projectile::ext the owner and velocity of a simulated projectile, TFArrow / AbstractArrow
 //                       (default hit damage, crit, pickup, water inertia, doPostHurtEffects),
 //                       TFThrowable#makeTrail.
@@ -94,6 +94,14 @@ void markHostileMount(std::string const& entityId);
 [[nodiscard]] bool isRidingUnfriendly(Actor const& actor);
 /// HostileMountEvents#hostileDismount: the rider may leave (the mob lets go).
 void hostileDismount(Actor& rider);
+/// Entity#canUsePortal of an actor type: false keeps every actor of `entityId` out of portals
+/// (Bedrock's and the Twilight portal), whatever its kind: mobs (RisingZombie), projectiles and
+/// other non-mob actors (ChainBlock, CubeOfAnnihilation), falling blocks. TF's bosses
+/// (gf::boss::registerBoss, BaseTFBoss) and the parts (addPart: HydraPart, NagaSegment) never use
+/// portals without it. Players are never refused. F4's Twilight portal takes an actor that carries
+/// a passenger through without asking (gf::portal's canUsePortal, reported to F4).
+void setCanUsePortal(std::string const& entityId, bool canUse);
+
 /// YetiThrowAttachment: thrown by a hostile mount and still in the air.
 [[nodiscard]] bool thrown(Player const& player);
 /// YetiThrowAttachment#getThrowCooldown (200 ticks after a throw).
