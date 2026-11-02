@@ -2,7 +2,11 @@
 # The selftests ("entity.*") cover the unit record's e2e: the fixture boss gf_test:boss with 3
 # parts (the parts follow, damage on a part goes to the parent), the BossEventPackets of its bar,
 # the death chest filled from the loot buffer (on the floor block under the home point) and the
-# conquest of its home; plus behaviour dispatch (die once, only for a real death), entity
+# conquest of its home (entity.boss_conquest: a real landmark start conquered by the boss's death,
+# structure_cleared within 32 blocks, hurt_boss first, the forced start dropped afterwards); the
+# portal refusal through F4's Twilight portal (entity.boss_portal), TF's chests and the fallback
+# of a death container that is no container (entity.boss_tf_chest, entity.boss_chest_fallback),
+# hurt_boss for a non-boss of the inclusive tag (entity.boss_inclusive); plus behaviour dispatch (die once, only for a real death), entity
 # properties read back through Molang, the goal selector and TF's goals at work (charge, breath),
 # the pathfinding block rules, the hostile mount (no dismount, no teleport), the projectile and
 # arrow simulation, peaceful turning the boss back into its spawner, the spawner variants and the
@@ -15,16 +19,22 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'entity.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) entity selftest(s) failed" }
-if ($r.Pass -lt 30) { throw "expected at least 30 entity selftests to pass, got $($r.Pass)" }
-foreach ($line in 'boss: gf_test:boss died', 'boss: death chest of gf_test:boss at', 'boss: gf_test:boss conquered gf_test:fixture',
+if ($r.Pass -lt 35) { throw "expected at least 35 entity selftests to pass, got $($r.Pass)" }
+foreach ($line in 'boss: gf_test:boss died', 'boss: death chest of gf_test:boss at', 'boss: gf_test:boss found no conquerable start of gf_test:fixture',
                   'boss: gf_test:boss turned back into gf_test:fixture_block', 'boss: gf_test:fixture_block spawned gf_test:boss',
                   'boss: sinister spawner at', 'entity: minecraft:horse grabbed', 'entity: minecraft:horse threw',
                   'entity: the teleport of', 'picked up gf_test:boss_part',
                   'boss: the death animation of gf_test:boss finished after 60 ticks', 'SELFTEST PASS entity.sync_late',
                   'did not come back with its chunk, its death goes on without it', 'boss: the death chest of gf_test:boss waits for its chunk',
-                  'SELFTEST PASS entity.boss_unload') {
+                  'SELFTEST PASS entity.boss_unload', 'SELFTEST PASS entity.boss_conquest',
+                  'boss: gf_test:boss conquered gf_test:landmark_fixture_open',
+                  'SELFTEST PASS entity.boss_portal', 'SELFTEST PASS entity.boss_tf_chest',
+                  'SELFTEST PASS entity.boss_chest_fallback', 'never became a container: ',
+                  'SELFTEST PASS entity.boss_inclusive') {
     if (-not (Get-ServerLog | Select-String -SimpleMatch $line -Quiet)) { throw "missing log line: $line" }
 }
+# only the fixture landmark's real start may report a conquest
+if (Get-ServerLog | Select-String -SimpleMatch 'boss: gf_test:boss conquered gf_test:fixture ' -Quiet) { throw 'a conquest of gf_test:fixture (no landmark) was reported' }
 
 # The persisted entity data (data(actor, key), the home point) travels with the actor's save.
 $mark = Get-LogMark
@@ -45,6 +55,10 @@ Write-Step "dying boss nonce $dyingNonce"
 
 Restart-Server
 $mark = Get-LogMark
+# entity.boss_conquest dropped its forced start: the reloaded world has no fixture pieces to load
+if (Get-ServerLog | Select-String -Pattern 'unknown piece type gf_test:landmark_fixture_(shell|porch)' -Quiet) {
+    throw "the forced fixture landmark start of entity.boss_conquest stayed in the world"
+}
 if (-not (Get-ServerLog | Select-String -Pattern 'boss: [1-9]\d* dying boss\(es\) and \d+ death chest\(s\) resumed from the world save' -Quiet)) {
     throw 'the dying boss was not resumed from the world save'
 }

@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include "feature/boss/Boss.h"
+
 namespace gf::feature::entity::tests {
 
 /// The fixture boss's bar colour: orange, which no vanilla BossBarColor has (red is nearest).
@@ -18,6 +20,9 @@ struct Probe {
     std::string lastDieType;
 };
 Probe& probe();
+
+/// The fixture boss's registration (gf::boss::registerBoss) as FixtureScope makes it.
+[[nodiscard]] gf::boss::BossSpec fixtureBossSpec();
 
 /// Registers the fixture boss's Behaviour and boss spec while alive (nested scopes share one).
 class FixtureScope {

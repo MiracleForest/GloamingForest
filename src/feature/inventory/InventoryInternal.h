@@ -11,6 +11,8 @@
 
 #include "nlohmann/json.hpp"
 
+#include "mc/world/level/BlockPos.h"
+
 #include "feature/inventory/Inventory.h"
 
 class BlockActor;
@@ -83,8 +85,20 @@ bool unpackLoot(GlobalPos const& pos, Player* opener);
 /// Container#stillValidBlockEntity's reach: the player's eye within its block interaction range + 4
 /// of the block (every screen route uses it).
 [[nodiscard]] bool withinReach(Player& player, GlobalPos const& pos);
-/// Awards the declared container's opening stat to `player` (ChestBlock#useWithoutItem).
-void awardOpenStat(Player& player, GlobalPos const& pos);
+/// The horizontal facing of the chest-like block at `pos` ("north", "south", "west", "east"; its
+/// facing / cardinal_direction state, "north" without one).
+[[nodiscard]] std::string chestFacingOf(GlobalPos const& pos);
+/// `player` opened the declared chest at `pos` (ChestBlock#useWithoutItem once its menu opened):
+/// the opening stat is awarded and the nearby piglins are angered (angerNearbyPiglins(player,
+/// true)). Nothing for a declared container that is not a chest (Declared::chest false).
+void chestOpenedBy(Player& player, GlobalPos const& pos);
+/// PiglinAi#angerNearbyPiglins (ChestBlock#useWithoutItem when a declared chest opened): the idle
+/// adult piglins (not brutes) whose box meets the player's box inflated by 16 and, with
+/// `angerOnlyIfCanSee`, that see the player take the player as their target (Bedrock's piglin then
+/// turns angry for 30 s: Java's ANGRY_AT for 600 ticks). Java has no gold armour exception here;
+/// creative and spectator players anger none (Sensor#isEntityAttackableIgnoringLineOfSight). Baby
+/// piglins are skipped: Bedrock's have no attack and would only pass the anger on. Returns how many.
+int angerNearbyPiglins(Player& player, bool angerOnlyIfCanSee);
 /// The comparator output of the declared container at `pos` (Declared::comparator; nullopt: not a
 /// declared container with one), as redstone::analogOutput reads it.
 [[nodiscard]] std::optional<int> comparatorSignal(GlobalPos const& pos);
@@ -92,13 +106,19 @@ void awardOpenStat(Player& player, GlobalPos const& pos);
 // ---- vanilla clients: the game's chest screen through a chest minecart (VanillaContainer.cpp) ------
 
 /// Vanilla clients: the game's own chest screen for the 27-slot container at `pos`, titled
-/// `title`, through an invisible chest minecart. While it is open the proxy and the storage hold
-/// the same slots: the screen's changes are written to the storage as they happen, every write
-/// through the handler (`find`) reaches the proxy at once, and other code's changes behind the
-/// handler are pulled in before each item request of a viewer and every tick (the storage wins a
-/// slot changed on both sides). A player already in the session whose screen closed opens it again.
-/// False when the container is not 27 slots or the proxy cannot be made.
+/// `title`, through an invisible chest minecart; for a paired half of a double chest the game's
+/// large chest screen of both halves (54 slots, the right half first) on a chest pair of the
+/// player's client (VanillaContainer.cpp). While it is open the proxy and the storage hold the same
+/// slots: the screen's changes are written to the storage as they happen, every write through the
+/// handler (`find`) reaches the proxy at once, and other code's changes behind the handler are
+/// pulled in before each item request of a viewer and every tick (the storage wins a slot changed
+/// on both sides). A player already in the session whose screen closed opens it again. False when
+/// a part is not 27 slots, the player is out of reach or the proxy (or the chest pair's place)
+/// cannot be made: the caller shows the form.
 bool openVanillaContainer(Player& player, GlobalPos const& pos, std::string const& title);
+/// The position of the client-side chest pair (its lead chest) a double chest's large chest
+/// screen opens on (nullopt: no double chest session shows `pos`). Selftests.
+[[nodiscard]] std::optional<BlockPos> vanillaProxyChestPair(GlobalPos const& pos);
 /// A viewer's client sent an item request (ItemStackRequestPacket): the proxies it looks at take in
 /// the storage's slots first (the storage wins a slot changed on both sides).
 void proxyBeforeScreenRequest(Player& player);

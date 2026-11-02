@@ -14,6 +14,7 @@
 #include <unordered_map>
 
 #include "core/jrand/Mth.h"
+#include "core/noise/LegacyNormalNoise.h"
 #include "core/noise/NoiseChunk.h"
 
 #pragma clang fp contract(off)
@@ -351,18 +352,13 @@ double PerlinNoise::maxValue() const { return mImpl ? mImpl->maxValue : 0.0; }
 
 // ==== NormalNoise ==================================================================================
 
-struct NormalNoise::Impl {
-    PerlinNoise first, second;
-    double      valueFactor = 0;
-    double      maxValue    = 0;
-};
+namespace {
 
-NormalNoise NormalNoise::create(jrand::RandomSource& random, NoiseParameters const& params) {
-    auto impl    = std::make_shared<Impl>();
-    impl->first  = PerlinNoise::create(random, params);
-    impl->second = PerlinNoise::create(random, params);
-    int j        = std::numeric_limits<int>::max();
-    int k        = std::numeric_limits<int>::min();
+/// NormalNoise's valueFactor: TARGET_DEVIATION / 2 over the expected deviation of the octaves from
+/// the first to the last non-zero amplitude.
+double normalValueFactor(NoiseParameters const& params) {
+    int j = std::numeric_limits<int>::max();
+    int k = std::numeric_limits<int>::min();
     for (std::size_t l = 0; l < params.amplitudes.size(); ++l) {
         if (params.amplitudes[l] != 0.0) {
             j = std::min(j, static_cast<int>(l));
@@ -370,8 +366,31 @@ NormalNoise NormalNoise::create(jrand::RandomSource& random, NoiseParameters con
         }
     }
     auto expectedDeviation = [](int octaves) { return 0.1 * (1.0 + 1.0 / static_cast<double>(octaves + 1)); };
-    impl->valueFactor      = 0.16666666666666666 / expectedDeviation(k - j);
-    impl->maxValue         = (impl->first.maxValue() + impl->second.maxValue()) * impl->valueFactor;
+    return 0.16666666666666666 / expectedDeviation(k - j);
+}
+
+/// NormalNoise#getValue over its two PerlinNoise (the second sampled at INPUT_FACTOR times the point).
+double normalValue(PerlinNoise const& first, PerlinNoise const& second, double valueFactor, double x, double y, double z) {
+    double d0 = x * 1.0181268882175227;
+    double d1 = y * 1.0181268882175227;
+    double d2 = z * 1.0181268882175227;
+    return (first.getValue(x, y, z) + second.getValue(d0, d1, d2)) * valueFactor;
+}
+
+} // namespace
+
+struct NormalNoise::Impl {
+    PerlinNoise first, second;
+    double      valueFactor = 0;
+    double      maxValue    = 0;
+};
+
+NormalNoise NormalNoise::create(jrand::RandomSource& random, NoiseParameters const& params) {
+    auto impl         = std::make_shared<Impl>();
+    impl->first       = PerlinNoise::create(random, params);
+    impl->second      = PerlinNoise::create(random, params);
+    impl->valueFactor = normalValueFactor(params);
+    impl->maxValue    = (impl->first.maxValue() + impl->second.maxValue()) * impl->valueFactor;
     NormalNoise out;
     out.mImpl = std::move(impl);
     return out;
@@ -379,12 +398,22 @@ NormalNoise NormalNoise::create(jrand::RandomSource& random, NoiseParameters con
 
 double NormalNoise::getValue(double x, double y, double z) const {
     if (!mImpl) return 0.0;
-    double d0 = x * 1.0181268882175227;
-    double d1 = y * 1.0181268882175227;
-    double d2 = z * 1.0181268882175227;
-    return (mImpl->first.getValue(x, y, z) + mImpl->second.getValue(d0, d1, d2)) * mImpl->valueFactor;
+    return normalValue(mImpl->first, mImpl->second, mImpl->valueFactor, x, y, z);
 }
 double NormalNoise::maxValue() const { return mImpl ? mImpl->maxValue : 0.0; }
+
+// ==== LegacyNormalNoise ============================================================================
+
+LegacyNormalNoise LegacyNormalNoise::createLegacyNetherBiome(jrand::RandomSource& random, NoiseParameters const& params) {
+    LegacyNormalNoise out;
+    out.mFirst       = PerlinNoise::createLegacy(random, params);
+    out.mSecond      = PerlinNoise::createLegacy(random, params);
+    out.mValueFactor = normalValueFactor(params);
+    out.mMaxValue    = (out.mFirst.maxValue() + out.mSecond.maxValue()) * out.mValueFactor;
+    return out;
+}
+
+double LegacyNormalNoise::getValue(double x, double y, double z) const { return normalValue(mFirst, mSecond, mValueFactor, x, y, z); }
 
 // ==== density functions ============================================================================
 

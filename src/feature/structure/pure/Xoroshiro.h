@@ -13,8 +13,9 @@
 // TFDimensionData#makeNoiseSettings). tests/structure/XoroshiroTest.cpp checks every value against
 // the output of tests/structure/oracle/XoroshiroOracle.java run on Minecraft 1.21.1 itself.
 //
-// F5's gf::core::jrand::Xoroshiro128pp (contract "worldgen") is still a stub; once it is
-// implemented the structure kit can use it instead (A8, W2b).
+// F5's gf::core::jrand::Xoroshiro128pp (contract "worldgen") was a stub when this was written; it
+// is implemented now, and A8 folds the kit onto it in W2b (both are checked against Minecraft's
+// own values).
 
 #include <array>
 #include <cmath>
