@@ -203,6 +203,7 @@ struct Registry {
     std::unordered_map<std::int64_t, std::unique_ptr<ActorState>> states;
     std::vector<std::int64_t>                                    removals;
     std::unordered_set<std::string>                              hostileMounts; ///< IHostileMount types
+    std::unordered_set<std::string>                              noPortal;      ///< types whose canUsePortal is false (ext)
     /// Whether the tick hook looks at a type (one lookup per actor and tick instead of asking
     /// every registry); cleared when a registration changes.
     std::unordered_map<std::string, bool>                        interest;
@@ -506,6 +507,13 @@ void addInternalHooks(InternalHooks hooks) {
     invalidateInterest();
 }
 void invalidateInterest() { reg().interest.clear(); }
+bool portalAllowed(Mob const& mob) {
+    if (mob.isPlayer() || !isServerActor(mob)) return true;
+    if (!reg().noPortal.empty() && reg().noPortal.contains(mob.getTypeName())) return false;
+    for (auto const& h : reg().internal)
+        if (h.usePortal && !h.usePortal(mob)) return false;
+    return true;
+}
 void onLevelTick(std::function<void()> fn) { reg().levelTicks.push_back(std::move(fn)); }
 void removeLater(std::int64_t uid) { reg().removals.push_back(uid); }
 bool hasBehaviour(std::string const& typeId) { return reg().behaviours.contains(typeId); }
@@ -574,6 +582,13 @@ LL_TYPE_INSTANCE_HOOK(EntitySetTargetHook, ll::memory::HookPriority::Normal, Mob
         return;
     }
     origin(target);
+}
+
+// Entity#canUsePortal: TF's bosses (BaseTFBoss) and parts (HydraPart, NagaSegment, TFPart) never go
+// through a portal. Bedrock's portals ask Mob::canChangeDimensionsUsingPortal, and so does the
+// Twilight portal (gf::portal's Entity#canUsePortal for a mob without passengers).
+LL_TYPE_INSTANCE_HOOK(EntityPortalHook, ll::memory::HookPriority::Normal, Mob, &Mob::$canChangeDimensionsUsingPortal, bool) {
+    return origin() && gf::feature::entity::portalAllowed(*this);
 }
 
 // ---- contract -----------------------------------------------------------------------------------
@@ -692,6 +707,11 @@ void markHostileMount(std::string const& entityId) {
     fe::invalidateInterest();
 }
 
+void setCanUsePortal(std::string const& entityId, bool canUse) {
+    if (canUse) fe::reg().noPortal.erase(entityId);
+    else fe::reg().noPortal.insert(entityId);
+}
+
 } // namespace ext
 
 } // namespace gf::entity
@@ -713,6 +733,7 @@ public:
         EntitySaveHook::hook();
         EntityLoadHook::hook();
         EntitySetTargetHook::hook();
+        EntityPortalHook::hook();
         auto& bus = ll::event::EventBus::getInstance();
         listeners().push_back(bus.emplaceListener<ll::event::ServerLevelTickEvent>([](ll::event::ServerLevelTickEvent&) {
             for (auto const& fn : reg().levelTicks) guarded("level tick", "-", fn);
@@ -771,6 +792,7 @@ public:
         auto& bus = ll::event::EventBus::getInstance();
         for (auto& l : listeners()) bus.removeListener(l);
         listeners().clear();
+        EntityPortalHook::unhook();
         EntitySetTargetHook::unhook();
         EntityLoadHook::unhook();
         EntitySaveHook::unhook();

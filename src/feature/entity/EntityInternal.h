@@ -137,11 +137,17 @@ struct InternalHooks {
     std::function<bool(Actor const& actor)>                                           save;
     /// Right before the state's data is written into the actor's save tag.
     std::function<void(Actor const& actor, ActorState& state)>                        persist;
+    /// false: the mob never goes through a portal (Entity#canUsePortal: BaseTFBoss, TF's parts).
+    std::function<bool(Mob const& mob)>                                               usePortal;
 };
 void addInternalHooks(InternalHooks hooks);
 /// Forgets which actor types the tick hook looks at (call after a registration changed what an
 /// `interesting` callback answers).
 void invalidateInterest();
+
+/// Whether a mob may go through a portal (Mob::canChangeDimensionsUsingPortal, which the engine's
+/// portals and the Twilight portal ask): false when an internal hook's usePortal says so.
+[[nodiscard]] bool portalAllowed(Mob const& mob);
 
 /// Runs `fn` once on every server tick (level tick), after the actors ticked.
 void onLevelTick(std::function<void()> fn);

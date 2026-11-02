@@ -59,6 +59,9 @@ void unregisterSinisterBlockForTest(std::string const& blockId);
 void setSpawnerKindForTest(std::string const& blockId, std::optional<SpawnerKind> kind);
 /// Mobs spawned by sinister spawners so far.
 [[nodiscard]] int sinisterSpawnedForTest();
+/// The facing state of the death chest `blockId` placed with a death's random seeded `seed` (the
+/// state's name and value; empty when the block has no facing state).
+[[nodiscard]] std::pair<std::string, std::string> deathChestFacingForTest(std::string const& blockId, std::int64_t seed);
 /// IBossLootBuffer#tryDeposit's rule: a piston could push or break the block (PushReaction != BLOCK).
 [[nodiscard]] bool pistonMovable(BlockSource& region, BlockPos const& pos);
 /// Engine death ticks held back so far (dying boss bodies kept past Bedrock's 20 ticks).

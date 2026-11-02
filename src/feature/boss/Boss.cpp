@@ -337,22 +337,10 @@ bool peaceful() {
 
 // ---- multiplayer --------------------------------------------------------------------------------
 
+/// getType().is(EntityTagGenerator.MULTIPLAYER_INCLUSIVE_ENTITIES): the tag data (gf::tags) decides.
 bool inclusive(std::string const& type) {
     if (S().inclusiveForTest.contains(type)) return true;
-    if (tags::has(tags::Registry::EntityType, kInclusiveTag, type)) return true;
-    if (!tags::members(tags::Registry::EntityType, kInclusiveTag).empty()) return false;
-    // the tag of TF 4.8 while the tag data is not available
-    static std::unordered_set<std::string> const fallback{
-        "twilightforest:naga",
-        "twilightforest:lich",
-        "twilightforest:minoshroom",
-        "twilightforest:hydra",
-        "twilightforest:ur_ghast",
-        "twilightforest:alpha_yeti",
-        "twilightforest:snow_queen",
-        "twilightforest:plateau_boss",
-    };
-    return fallback.contains(type);
+    return tags::has(tags::Registry::EntityType, kInclusiveTag, type);
 }
 
 /// MultiplayerInclusivityAttachment#maybeAddQualifiedPlayer.
@@ -687,9 +675,15 @@ Container* vanillaContainer(BlockSource& region, BlockPos const& pos) {
     return nullptr;
 }
 
+/// getDeathContainer(random).defaultBlockState().setValue(ChestBlock.FACING,
+/// Direction.Plane.HORIZONTAL.getRandomDirection(random)): one draw over north, east, south, west.
+/// The facing state is the vanilla chest's minecraft:cardinal_direction or, on TF's chests (the
+/// block families' chest blocks: canopy, twilight oak, mangrove, dark), twilightforest:facing.
 Block const* chestState(std::string const& id, fe::JavaRandom& random) {
     static char const* const dirs[] = {"north", "east", "south", "west"};
-    if (auto const* b = game::blockWithStates(id, {{"minecraft:cardinal_direction", dirs[random.nextInt(4)]}})) return b;
+    auto const*              dir    = dirs[random.nextInt(4)];
+    for (auto const* state : {"minecraft:cardinal_direction", "twilightforest:facing"})
+        if (auto const* b = game::blockWithStates(id, {{state, dir}})) return b;
     return game::blockWith(id);
 }
 
@@ -963,7 +957,11 @@ void sendDeathTime(Mob& boss, int deathTime) {
 void defaultPostmortem(Mob& boss, BossSpec const& spec, std::string const& damageType, Actor* killer) {
     if (auto it = S().bars.find(uidOf(boss)); it != S().bars.end()) setProgress(boss, it->second, 0.0f);
     saveDropsIntoBoss(boss, spec, damageType, killer);
-    // LandmarkUtil#markStructureConquered at the home point
+    // LandmarkUtil#markStructureConquered(level, getRestrictionPoint(), getHomeStructure(), true):
+    // nothing without a home point or with one in another dimension; else the landmark contract
+    // finds the start of the home structure from the home point (LandmarkUtil
+    // #locateNearestLandmarkStart), conquers it when it is a TFStructureStart (ConquerableStructure)
+    // and fires "structure_cleared" for the players within 32 blocks of the home point
     auto home = gf::entity::home(boss);
     if (home && home->pos.dim == static_cast<int>(boss.getDimensionId()) && !spec.homeStructure.empty()) {
         BlockPos hp{home->pos.x, home->pos.y, home->pos.z};
@@ -973,25 +971,28 @@ void defaultPostmortem(Mob& boss, BossSpec const& spec, std::string const& damag
     }
 }
 
-/// BaseTFBoss#die: #postmortem when the boss spawns loot (BaseTFBoss#shouldDropLoot: without death
-/// chests the loot table drops as for any mob, the death pipeline's entity drops; with them those
-/// drops are suppressed, see install()), the group advancement, then the death animation.
+/// BaseTFBoss#die: super.die first (LivingEntity#die posts LivingDeathEvent before anything else:
+/// EntityEvents#grantGroupAdvancementIfNeeded fires "hurt_boss" for the qualified players; the
+/// loot table drops as for any mob without death chests, BaseTFBoss#shouldDropLoot, and those drops
+/// are suppressed with them, see install()), then #postmortem when the boss spawns loot (the loot
+/// buffer and the conquest of the home landmark, which fires "structure_cleared"), then the death
+/// animation.
 void onBossDie(Mob& boss, std::string const& damageType, Actor* killer) {
     auto const* spec = bossSpec(boss.getTypeName());
     if (!spec) return;
     auto const& type = boss.getTypeName();
     auto        uid  = uidOf(boss);
     if (dyingRecord(uid)) return; // a dying body that came back with its chunk: its death goes on
+    // EntityEvents#grantGroupAdvancementIfNeeded (LivingDeathEvent)
+    if (auto q = S().qualified.find(uid); q != S().qualified.end())
+        for (auto pid : q->second)
+            if (auto* p = fe::playerById(pid)) gf::progression::trigger(*p, "twilightforest:hurt_boss", {{"entity", type}});
     auto const* lc   = lifecycleOf(type);
     bool        loot = shouldSpawnLoot(boss);
     if (loot) {
         if (lc && lc->postmortem) lifecycleRun("postmortem", type, [&] { lc->postmortem(boss, damageType, killer); });
         else defaultPostmortem(boss, *spec, damageType, killer);
     }
-    // EntityEvents#grantGroupAdvancementIfNeeded
-    if (auto q = S().qualified.find(uid); q != S().qualified.end())
-        for (auto pid : q->second)
-            if (auto* p = fe::playerById(pid)) gf::progression::trigger(*p, "twilightforest:hurt_boss", {{"entity", type}});
     auto home = gf::entity::home(boss);
     Dying d;
     d.uid        = uid;
@@ -1808,6 +1809,8 @@ public:
                     if (auto* mob = fe::asMob(actor)) onBossDie(*mob, damageType, killer);
                 },
             .spawn = [](Actor& actor, fe::ActorState& state) { onBossSpawn(actor, state); },
+            // BaseTFBoss#canUsePortal: false
+            .usePortal = [](Mob const& mob) { return !bossSpec(mob.getTypeName()); },
         });
         fe::onLevelTick([] {
             tickDying();
@@ -1816,7 +1819,15 @@ public:
                 if (fillContainer(it->pos, it->items)) {
                     it = S().pendingFills.erase(it);
                 } else if (--it->tries <= 0) {
-                    log().warn("boss: the death chest of {} at {} {} {} has no container", it->type, it->pos.x, it->pos.y, it->pos.z);
+                    // the block never became a container: the loot is not lost, it pops out where
+                    // the chest stands (IBossLootBuffer#depositDropsIntoChest's Block#popResource)
+                    log().warn("boss: the death chest of {} at {} {} {} has no container, the loot dropped there", it->type, it->pos.x, it->pos.y,
+                               it->pos.z);
+                    auto* region = game::regionOf(it->pos.dim);
+                    if (auto* lv = level(); lv && region && region->hasChunksAt(game::blockPos(it->pos), 0, false))
+                        for (auto const& s : it->items)
+                            if (!game::items::isEmpty(s))
+                                lv->getSpawner().spawnItem(*region, s, nullptr, Vec3{it->pos.x + 0.5f, it->pos.y + 0.5f, it->pos.z + 0.5f}, 0);
                     it = S().pendingFills.erase(it);
                 } else ++it;
             }
@@ -1908,6 +1919,14 @@ void markInclusiveForTest(std::string const& type) { S().inclusiveForTest.insert
 void unmarkInclusiveForTest(std::string const& type) { S().inclusiveForTest.erase(type); }
 std::optional<core::GlobalPos> lastDeathChest() { return S().lastChest; }
 std::optional<std::pair<core::GlobalPos, std::string>> lastConquest() { return S().lastConquest; }
+std::pair<std::string, std::string> deathChestFacingForTest(std::string const& blockId, std::int64_t seed) {
+    fe::JavaRandom random(seed);
+    auto const*    chest = chestState(blockId, random);
+    if (!chest) return {};
+    for (auto const& [name, value] : game::statesOf(*chest))
+        if (name == "minecraft:cardinal_direction" || name == "twilightforest:facing") return {name, value};
+    return {};
+}
 void resetTestRecords() {
     S().lastChest.reset();
     S().lastConquest.reset();
