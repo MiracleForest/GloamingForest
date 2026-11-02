@@ -40,6 +40,7 @@
 #include "mc/server/commands/CommandOutput.h"
 #include "mc/server/commands/CommandOutputParameter.h"
 #include "mc/server/commands/CommandPermissionLevel.h"
+#include "mc/server/commands/CommandRawText.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
@@ -68,6 +69,11 @@ struct StructureParam {
 struct PlaceParams {
     std::string structure;
     int         x = 0, y = 0, z = 0;
+};
+/// locate's ResourceOrTagKeyArgument: the rest of the line (Bedrock's string parameter refuses a
+/// leading '#', so "#twilightforest:landmark" could not be typed as Java takes it).
+struct LocateParam {
+    CommandRawText structure;
 };
 
 namespace {
@@ -383,8 +389,12 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
             [](CommandOrigin const& o, CommandOutput& out, fl::StructureParam const& p) { fl::genbook(o, out, p.structure); }
         );
     }
-    cmd.overload<fl::StructureParam>().text("locate").required("structure").execute(
-        [](CommandOrigin const& o, CommandOutput& out, fl::StructureParam const& p) { fl::locate(o, out, p.structure); }
+    cmd.overload<fl::LocateParam>().text("locate").required("structure").execute(
+        [](CommandOrigin const& o, CommandOutput& out, fl::LocateParam const& p) {
+            auto const& t     = p.structure.mText;
+            auto        first = t.find_first_not_of(" \t");
+            fl::locate(o, out, first == std::string::npos ? std::string() : t.substr(first, t.find_last_not_of(" \t") - first + 1));
+        }
     );
     cmd.overload<fl::StructureParam>().text("place").required("structure").execute(
         [](CommandOrigin const& o, CommandOutput& out, fl::StructureParam const& p) { fl::place(o, out, p.structure, std::nullopt); }
