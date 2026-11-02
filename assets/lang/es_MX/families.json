@@ -1,5 +1,6 @@
 {
   "container.chest": "Cofre",
   "container.chestDouble": "Cofre grande",
+  "hanging_sign.edit": "Editar mensaje del letrero colgante",
   "sign.edit": "Editar mensaje del letrero"
 }

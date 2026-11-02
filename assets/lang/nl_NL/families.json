@@ -1,5 +1,6 @@
 {
   "container.chest": "Kist",
   "container.chestDouble": "Grote kist",
-  "sign.edit": "Bordbericht bewerken"
+  "hanging_sign.edit": "Bericht op hangbord bewerken",
+  "sign.edit": "Bordtekst bewerken"
 }

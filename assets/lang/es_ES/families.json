@@ -1,5 +1,6 @@
 {
   "container.chest": "Cofre",
   "container.chestDouble": "Cofre grande",
-  "sign.edit": "Editar mensaje de señal"
+  "hanging_sign.edit": "Editar mensaje del cartel colgante",
+  "sign.edit": "Editar mensaje del cartel"
 }

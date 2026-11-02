@@ -1,5 +1,6 @@
 {
   "container.chest": "Скриня",
   "container.chestDouble": "Велика скриня",
-  "sign.edit": "Змінити повідомлення для підпису"
+  "hanging_sign.edit": "Редагування тексту вивіски",
+  "sign.edit": "Редагування тексту таблички"
 }

@@ -1,5 +1,6 @@
 {
   "container.chest": "Truhla",
   "container.chestDouble": "Velká truhla",
-  "sign.edit": "Upravit text cedule"
+  "hanging_sign.edit": "Napiš text na závěsnou ceduli",
+  "sign.edit": "Napiš text na ceduli"
 }

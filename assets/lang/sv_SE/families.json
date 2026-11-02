@@ -1,5 +1,6 @@
 {
   "container.chest": "Kista",
   "container.chestDouble": "Stor kista",
-  "sign.edit": "Redigera skyltens meddelande"
+  "hanging_sign.edit": "Redigera skyltmeddelande",
+  "sign.edit": "Redigera skyltmeddelande"
 }

@@ -1,5 +1,6 @@
 {
   "container.chest": "Truhe",
   "container.chestDouble": "Große Truhe",
-  "sign.edit": "Beschriftung eingeben"
+  "hanging_sign.edit": "Hängeschildbeschriftung bearbeiten",
+  "sign.edit": "Schildbeschriftung bearbeiten"
 }

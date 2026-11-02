@@ -1,5 +1,6 @@
 {
   "container.chest": "Coffre",
   "container.chestDouble": "Grand coffre",
-  "sign.edit": "Modifier le message"
+  "hanging_sign.edit": "Texte de la pancarte suspendue :",
+  "sign.edit": "Texte de la pancarte :"
 }

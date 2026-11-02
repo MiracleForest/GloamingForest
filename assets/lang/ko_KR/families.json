@@ -1,5 +1,6 @@
 {
   "container.chest": "상자",
   "container.chestDouble": "큰 상자",
-  "sign.edit": "사인 메시지 변경"
+  "hanging_sign.edit": "매다는 표지판 문구 편집",
+  "sign.edit": "표지판 문구 편집"
 }

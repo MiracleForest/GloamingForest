@@ -1,5 +1,6 @@
 {
   "container.chest": "Láda",
   "container.chestDouble": "Nagy láda",
-  "sign.edit": "Tábla üzenetének szerkesztése"
+  "hanging_sign.edit": "Függőtábla üzenetének módosítása",
+  "sign.edit": "Tábla szövegének szerkesztése"
 }

@@ -1,5 +1,6 @@
 {
   "container.chest": "Peti",
   "container.chestDouble": "Peti Besar",
-  "sign.edit": "Edit pesan tanda"
+  "hanging_sign.edit": "Sunting Pesan Papan Tanda Gantung",
+  "sign.edit": "Ubah Pesan Papan Tanda"
 }

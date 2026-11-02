@@ -1,5 +1,6 @@
 {
   "container.chest": "Skrzynia",
-  "container.chestDouble": "Duża skrzynia",
-  "sign.edit": "Edytuj treść znaku"
+  "container.chestDouble": "Wielka skrzynia",
+  "hanging_sign.edit": "Edytuj treść podwieszanej tabliczki",
+  "sign.edit": "Edytuj treść tabliczki"
 }
