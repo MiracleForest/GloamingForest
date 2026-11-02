@@ -9,6 +9,7 @@
 
 #include "mc/world/item/ItemStack.h"
 
+#include "core/GlobalPos.h"
 #include "feature/enchant/Enchant.h"
 
 class BlockPos;
@@ -63,6 +64,23 @@ bool applyAnvilOffer(Player& player, int bookSlot, int targetSlot, BlockPos cons
 /// Whether a stack is an enchanted book whose enchantments are all custom (the vanilla client's anvil
 /// offers nothing for it).
 [[nodiscard]] bool isCustomOnlyBook(ItemStack const& stack);
+/// ItemCombinerMenu#stillValid's reach (Minecraft 1.21, Player#canInteractWithBlock(pos, 4.0)): the
+/// anvil block's box within the block interaction range (4.5, creative 5) plus 4 of the eyes.
+[[nodiscard]] bool stillAtAnvil(Player const& player, BlockPos const& anvil);
+/// A button of the vanilla anvil form: what it showed and where.
+struct AnvilChoice {
+    int             bookSlot   = -1;
+    int             targetSlot = -1;
+    core::GlobalPos anvil;
+    ItemStack       book;   ///< the book the form listed
+    ItemStack       target; ///< the item the button showed
+    int             cost = 0;
+};
+enum class AnvilChoiceResult { Applied, NoAnvil, TooFar, Changed, NotApplied };
+/// The form's answer, which can come much later: the anvil still stands at its place, the player is
+/// still at it (stillAtAnvil), the slots still hold the book and the item the button showed for the
+/// same cost; then applyAnvilOffer (NotApplied: it refused, e.g. too few levels).
+AnvilChoiceResult takeAnvilChoice(Player& player, AnvilChoice const& choice);
 /// Vanilla anvil fallback uses of a player (selftests / e2e).
 [[nodiscard]] int anvilFallbackCount(Player& player);
 /// Anvil forms sent to a player (selftests).

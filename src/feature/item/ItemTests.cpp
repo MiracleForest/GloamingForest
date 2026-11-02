@@ -12,6 +12,7 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
@@ -33,6 +34,7 @@
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/ComposterBlock.h"
@@ -44,10 +46,12 @@
 #include "feature/catalog/CatalogInternal.h"
 #include "feature/common/Interactions.h"
 #include "feature/datamaps/DataMaps.h"
+#include "feature/datamaps/DataMapsInternal.h"
 #include "feature/effects/Effects.h"
 #include "feature/effects/EffectsInternal.h"
 #include "feature/enchant/Enchant.h"
 #include "feature/enchant/EnchantInternal.h"
+#include "feature/ext/item/DataMaps.h"
 #include "feature/ext/item/Enchant.h"
 #include "feature/ext/item/Item.h"
 #include "feature/ext/item/Recipes.h"
@@ -233,12 +237,15 @@ GF_REGISTER_SELFTEST("item.tags_java_ids", [](Context& ctx) {
     } else {
         ctx.info("TF's data maps are not in this build (F1's import): the synthetic tree stands in");
     }
+    // the map's id field (as a consumer registers it); other fields keep their strings
+    gf::datamaps::ext::registerIdField("gf_test:crumble", "crumble_to", "block");
     ScopedTree tree({
         {"gf_test/tags/block/paths.json", {{"values", {"minecraft:dirt_path", "minecraft:snow_block", "minecraft:water", "minecraft:stone"}}}},
         {"gf_test/tags/item/bricks.json", {{"values", {"minecraft:nether_brick", "minecraft:nether_bricks"}}}},
         {"gf_test/tags/entity_type/pigs.json", {{"values", {"minecraft:zombified_piglin"}}}},
         {"gf_test/data_maps/block/crumble.json",
-         {{"values", {{"minecraft:nether_bricks", {{"crumble_chance", 0.5}, {"crumble_to", "minecraft:magma_block"}}}}}}},
+         {{"values", {{"minecraft:nether_bricks", {{"crumble_chance", 0.5}, {"crumble_to", "minecraft:magma_block"}, {"sound", "minecraft:snow"}}}}}}},
+        {"gf_test/data_maps/block/other.json", {{"values", {{"minecraft:stone", {{"crumble_to", "minecraft:magma_block"}}}}}}},
     });
     ctx.check(gf::tags::has(Registry::Block, "gf_test:paths", "minecraft:grass_path"), "minecraft:dirt_path is grass_path");
     ctx.check(gf::tags::has(Registry::Block, "gf_test:paths", "minecraft:snow") && !gf::tags::has(Registry::Block, "gf_test:paths", "minecraft:snow_layer"),
@@ -250,6 +257,19 @@ GF_REGISTER_SELFTEST("item.tags_java_ids", [](Context& ctx) {
     ctx.check(gf::tags::has(Registry::EntityType, "gf_test:pigs", "minecraft:zombie_pigman"), "entities: zombified_piglin is zombie_pigman");
     auto const* v = gf::datamaps::get("gf_test:crumble", "minecraft:nether_brick");
     ctx.check(v && v->value("crumble_to", std::string()) == "minecraft:magma", "data map keys and their values' block ids are Bedrock's");
+    ctx.check(v && v->value("sound", std::string()) == "minecraft:snow", "a field that is no id field keeps its string (Java's minecraft:snow is no block here)");
+    auto const* other = gf::datamaps::get("gf_test:other", "minecraft:stone");
+    ctx.check(other && other->value("crumble_to", std::string()) == "minecraft:magma_block", "a map without registered id fields keeps its values");
+    // TF's own maps' fields are built in (CrumbledBlock, EntityTransformation)
+    auto fieldOf = [](std::string const& map, std::string const& field) {
+        auto f  = gf::datamaps::internal::idFields(map);
+        auto it = f.find(field);
+        return it == f.end() ? std::string() : it->second;
+    };
+    ctx.check(fieldOf("twilightforest:crumble_horn", "crumble_to") == "block" && fieldOf("twilightforest:ominous_fire", "transform_to") == "entity_type"
+                  && fieldOf("twilightforest:transformation_powder", "transform_to") == "entity_type",
+              "crumble_to (block) and transform_to (entity type) are TF's id fields");
+    gf::datamaps::internal::unregisterIdField("gf_test:crumble", "crumble_to");
 });
 
 // ---- synthetic data: tags, data maps, recipes, enchantments, travellers modifiers --------------------
@@ -750,7 +770,7 @@ GF_REGISTER_SELFTEST("item.tooltip_lines", [](Context& ctx) {
     auto& inv = player.getInventory();
     inv.setItem(1, *stack);
     gf::item::internal::tickPlayer(player, true);
-    ctx.check(loreHas(inv.getItem(1), sect() + "r" + sect() + "7Fixture tooltip"), "the tooltip line is the stack's lore, gray as TF writes it");
+    ctx.check(loreHas(inv.getItem(1), sect() + "r" + sect() + "fFixture tooltip"), "the unstyled tooltip line is the stack's lore, white as Java draws it");
     ItemStack enchanted = inv.getItem(1);
     gf::enchant::set(enchanted, "gf_test:fixture_react", 2);
     ctx.check(loreHas(enchanted, sect() + "7Fixture React II"), "a custom enchantment is a lore line named like an enchantment");
@@ -978,6 +998,96 @@ GF_REGISTER_SELFTEST("item.enchant_anvil_form", [](Context& ctx) -> ll::coro::Co
     for (int i = 0; i < 5; ++i) p->getInventory().setItem(i, ItemStack::EMPTY_ITEM());
     p->getInventory().setItem(p->getSelectedItemSlot(), ItemStack::EMPTY_ITEM());
     p->addLevels(before - levelsOf(*p));
+    en::internal::unregisterType("gf_test:fixture_react");
+});
+
+// The anvil form's answer comes later: Java's AnvilMenu#stillValid (the anvil in place, the player in
+// reach), the book and the item the button showed; a creative player puts a book on any item.
+GF_REGISTER_SELFTEST("item.enchant_anvil_choice", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace en = gf::enchant;
+    using R      = en::internal::AnvilChoiceResult;
+    en::registerType("gf_test:fixture_react", {.maxLevel = 3, .anvilCost = 8, .supportedItems = "minecraft:iron_sword"});
+    en::registerType("gf_test:fixture_other", {.maxLevel = 3, .anvilCost = 8, .supportedItems = "minecraft:iron_sword"});
+    auto uid  = ctx.player().getOrCreateUniqueID();
+    auto get  = [&]() -> Player* { return ll::service::getLevel()->getPlayer(uid); };
+    auto book = [](char const* enchantment) {
+        auto s = items::make("minecraft:enchanted_book").value_or(ItemStack::EMPTY_ITEM());
+        gf::enchant::set(s, enchantment, 1);
+        return s;
+    };
+    auto anvil = ctx.testPos(5915, 2);
+    ctx.require(co_await ctx.ensureLoaded(anvil), "test area loaded");
+    auto bp = gf::game::blockPos(anvil);
+    ctx.require(ctx.setBlock(anvil, "minecraft:anvil"), "an anvil");
+    auto* p = get();
+    ctx.require(p != nullptr, "the player");
+    auto mode = p->getPlayerGameType();
+    p->setPlayerGameType(GameType::Survival);
+    // the player 2.5 blocks south of the anvil, `dx` blocks east of it
+    auto moveTo = [&](float dx) {
+        if (auto* q = get()) q->teleport(Vec3{static_cast<float>(bp.x) + 0.5f + dx, static_cast<float>(bp.y), static_cast<float>(bp.z) + 2.5f}, q->getDimensionId());
+    };
+    moveTo(0.f);
+    co_await ctx.ticks(2);
+    p = get();
+    ctx.require(p != nullptr, "the player");
+    ctx.require(ctx.blockAt(anvil) == "minecraft:anvil", "the anvil stands on the test row's ground (got " + ctx.blockAt(anvil) + ")");
+    int before = levelsOf(*p);
+    p->addLevels(10 - before);
+    p->getInventory().setItem(0, items::make("minecraft:iron_sword").value_or(ItemStack::EMPTY_ITEM()));
+    p->getInventory().setItem(1, book("gf_test:fixture_react"));
+    p->getInventory().setItem(2, items::make("minecraft:diamond").value_or(ItemStack::EMPTY_ITEM()));
+    co_await ctx.ticks(2); // the inventory tick has seen the stacks (lore), as before a form is sent
+    p = get();
+    ctx.require(p != nullptr, "the player");
+    auto& inv = p->getInventory();
+    ctx.check(en::internal::stillAtAnvil(*p, bp), "2.5 blocks from the anvil: in reach");
+    ctx.check(!en::internal::stillAtAnvil(*p, BlockPos{bp.x + 12, bp.y, bp.z}), "an anvil 12 blocks away: out of reach (4.5 + 4)");
+    auto offer = en::internal::anvilOffer(*p, 1, 0);
+    ctx.require(offer.has_value() && offer->cost == 4, "the sword's offer: fixture_react I at 4 levels");
+    ItemStack const listed = inv.getItem(1);
+    en::internal::AnvilChoice choice{1, 0, anvil, listed, inv.getItem(0), offer->cost};
+    // another TF book of the same cost in the book's slot: not the book the form listed
+    inv.setItem(1, book("gf_test:fixture_other"));
+    auto swapped = en::internal::anvilOffer(*p, 1, 0);
+    ctx.check(swapped.has_value() && swapped->cost == 4, "(the other book makes an offer of the same cost)");
+    ctx.check(en::internal::takeAnvilChoice(*p, choice) == R::Changed, "a swapped book is not applied");
+    ctx.check(en::level(inv.getItem(0), "gf_test:fixture_other") == 0, "the sword did not get the other book's enchantment");
+    inv.setItem(1, listed);
+    // the answer from far away (ItemCombinerMenu#stillValid)
+    moveTo(12.f);
+    co_await ctx.ticks(2);
+    p = get();
+    ctx.require(p != nullptr, "the player");
+    ctx.info("eyes at " + std::to_string(p->getEyePos().x - bp.x) + " blocks east of the anvil");
+    ctx.check(en::internal::takeAnvilChoice(*p, choice) == R::TooFar, "12 blocks from the anvil the choice is refused");
+    ctx.check(en::level(p->getInventory().getItem(0), "gf_test:fixture_react") == 0 && levelsOf(*p) == 10, "nothing taken, nothing given");
+    moveTo(0.f);
+    co_await ctx.ticks(2);
+    p = get();
+    ctx.require(p != nullptr, "the player");
+    ctx.check(en::internal::takeAnvilChoice(*p, choice) == R::Applied, "back at the anvil the choice is taken");
+    ctx.check(en::level(p->getInventory().getItem(0), "gf_test:fixture_react") == 1 && levelsOf(*p) == 6, "the sword has I for 4 levels");
+    // the anvil gone: no answer
+    p->getInventory().setItem(1, book("gf_test:fixture_react"));
+    auto again = en::internal::anvilOffer(*p, 1, 0);
+    gf::game::clearBlock(*ctx.region(), bp);
+    co_await ctx.ticks(1);
+    p = get();
+    ctx.require(p != nullptr, "the player");
+    if (again) ctx.check(en::internal::takeAnvilChoice(*p, {1, 0, anvil, p->getInventory().getItem(1), p->getInventory().getItem(0), again->cost}) == R::NoAnvil, "without the anvil the choice is refused");
+    // survival: no offer for the diamond; creative (instabuild): any item takes the book (AnvilMenu's flag1)
+    ctx.check(!en::internal::anvilOffer(*p, 1, 2).has_value(), "survival: a diamond takes no fixture_react");
+    p->setPlayerGameType(GameType::Creative);
+    co_await ctx.ticks(1);
+    p = get();
+    ctx.require(p != nullptr, "the player");
+    auto creative = en::internal::anvilOffer(*p, 1, 2);
+    ctx.check(creative.has_value() && en::level(creative->result, "gf_test:fixture_react") == 1, "creative: the diamond takes the book (every item can store enchantments)");
+    p->setPlayerGameType(mode);
+    for (int i = 0; i < 3; ++i) p->getInventory().setItem(i, ItemStack::EMPTY_ITEM());
+    p->addLevels(before - levelsOf(*p));
+    en::internal::unregisterType("gf_test:fixture_other");
     en::internal::unregisterType("gf_test:fixture_react");
 });
 

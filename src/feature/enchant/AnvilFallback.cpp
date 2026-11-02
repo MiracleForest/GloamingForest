@@ -8,10 +8,12 @@
 // is sent once the anvil's container has closed, and a chat line says so): one button
 // per inventory item the book makes a result for, with Java's AnvilMenu#createResult numbers (the
 // merged enchantments, the level cost with the prior work penalty, "Too Expensive!" from 40 levels
-// in survival); a choice is AnvilMenu#onTake (the levels, the book, the prior work of the result,
-// and the anvil: 12 % chance of a damage step unless the player has infinite materials, the use or
-// break sound). Players with the client mod (companions) and books that carry vanilla enchantments
-// too go through the anvil screen.
+// in survival; any item for a player who builds instantly); a choice is AnvilMenu#onTake (the
+// levels, the book, the prior work of the result, and the anvil: 12 % chance of a damage step unless
+// the player has infinite materials, the use or break sound), taken only while the menu would still
+// be valid (the anvil in place, the player within reach of it) and the slots hold what the button
+// showed. Players with the client mod (companions) and books that carry vanilla enchantments too go
+// through the anvil screen.
 #include <algorithm>
 #include <climits>
 #include <map>
@@ -21,6 +23,7 @@
 #include "ll/api/form/SimpleForm.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/shared_types/legacy/LevelEvent.h"
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/util/Random.h"
@@ -75,13 +78,11 @@ int levelsOf(Player const& player) {
 
 bool instabuild(Player const& player) { return player.canUseAbility(AbilitiesIndex::Instabuild); }
 
-/// EnchantmentHelper#canStoreEnchantments: gear the enchanting system knows, and enchanted books.
-bool canStoreEnchantments(ItemStack const& stack) {
-    if (items::isEmpty(stack)) return false;
-    if (items::idOf(stack) == kBook) return true;
-    Item const* item = stack.mItem.get();
-    return item && item->getEnchantSlot() != 0;
-}
+/// EnchantmentHelper#canStoreEnchantments: every 1.21 item carries the ENCHANTMENTS component
+/// (DataComponents.COMMON_ITEM_COMPONENTS), so any stack can take the book. Whether an enchantment
+/// joins it is AnvilMenu's flag1 (mergeAnvil): the item supports it, or the player builds instantly
+/// (a creative player puts any book on any item), or the item is a book.
+bool canStoreEnchantments(ItemStack const& stack) { return !items::isEmpty(stack); }
 
 std::map<std::int64_t, int>& fallbackCounts() {
     static std::map<std::int64_t, int> m;
@@ -201,6 +202,31 @@ int anvilFormCount(Player& player) {
     return it == formCounts().end() ? 0 : it->second;
 }
 
+bool stillAtAnvil(Player const& player, BlockPos const& anvil) {
+    // ItemCombinerMenu#stillValid -> Player#canInteractWithBlock(pos, 4.0):
+    // new AABB(pos).distanceToSqr(getEyePosition()) < (blockInteractionRange() + 4.0)^2
+    Vec3   eye   = player.getEyePos();
+    double range = (instabuild(player) ? 5.0 : 4.5) + 4.0;
+    auto   axis  = [](double v, int lo) { return v < lo ? lo - v : (v > lo + 1 ? v - (lo + 1) : 0.0); };
+    double dx = axis(eye.x, anvil.x), dy = axis(eye.y, anvil.y), dz = axis(eye.z, anvil.z);
+    return dx * dx + dy * dy + dz * dz < range * range;
+}
+
+AnvilChoiceResult takeAnvilChoice(Player& player, AnvilChoice const& choice) {
+    auto& region = player.getDimensionBlockSource();
+    auto  pos    = game::blockPos(choice.anvil);
+    if (game::globalPos(region, pos) != choice.anvil || !isAnvil(game::blockIdAt(region, pos))) return AnvilChoiceResult::NoAnvil;
+    if (!stillAtAnvil(player, pos)) return AnvilChoiceResult::TooFar;
+    auto& inv = player.getInventory();
+    if (choice.bookSlot < 0 || choice.targetSlot < 0 || choice.bookSlot >= inv.getContainerSize() || choice.targetSlot >= inv.getContainerSize())
+        return AnvilChoiceResult::Changed;
+    if (!items::sameItemSameData(inv.getItem(choice.bookSlot), choice.book) || !items::sameItemSameData(inv.getItem(choice.targetSlot), choice.target))
+        return AnvilChoiceResult::Changed;
+    auto now = anvilOffer(player, choice.bookSlot, choice.targetSlot);
+    if (!now || now->cost != choice.cost) return AnvilChoiceResult::Changed;
+    return applyAnvilOffer(player, choice.bookSlot, choice.targetSlot, &pos) ? AnvilChoiceResult::Applied : AnvilChoiceResult::NotApplied;
+}
+
 } // namespace internal
 
 namespace {
@@ -217,19 +243,14 @@ void showForm(Player& player, int bookSlot, core::GlobalPos anvil) {
     } else {
         form.setContent(trFor(player, "gf.item.anvil.pick", "Apply the book to:") + enchants);
         for (auto const& o : offers) {
-            int  target = o.targetSlot;
-            auto shown  = player.getInventory().getItem(target);
-            auto text   = items::displayName(shown) + "\n" + trFor(player, "gf.item.anvil.cost", "Enchantment Cost: {}", o.cost);
-            form.appendButton(text, [bookSlot, target, anvil, shown, cost = o.cost](Player& p) {
-                // the form's answer comes later: the player is still at the anvil, and the slot
-                // still holds the item and the offer the button showed
-                auto& region = p.getDimensionBlockSource();
-                auto  pos    = game::blockPos(anvil);
-                if (game::globalPos(region, pos) != anvil || !isAnvil(game::blockIdAt(region, pos))) return;
-                if (!items::sameItemSameData(p.getInventory().getItem(target), shown)) return;
-                auto now = internal::anvilOffer(p, bookSlot, target);
-                if (!now || now->cost != cost) return;
-                internal::applyAnvilOffer(p, bookSlot, target, &pos);
+            internal::AnvilChoice choice{bookSlot, o.targetSlot, anvil, book, player.getInventory().getItem(o.targetSlot), o.cost};
+            auto text = items::displayName(choice.target) + "\n" + trFor(player, "gf.item.anvil.cost", "Enchantment Cost: {}", o.cost);
+            form.appendButton(text, [choice](Player& p) {
+                // the form's answer comes later: AnvilMenu#stillValid and the slots as the button showed them
+                auto result = internal::takeAnvilChoice(p, choice);
+                if (result == internal::AnvilChoiceResult::TooFar) p.sendMessage(trFor(p, "gf.item.anvil.away", "You are too far from the anvil."));
+                else if (result != internal::AnvilChoiceResult::Applied && result != internal::AnvilChoiceResult::NotApplied)
+                    log().info("enchant: anvil form choice of {} dropped ({})", p.getRealName(), result == internal::AnvilChoiceResult::NoAnvil ? "no anvil" : "changed");
             });
         }
     }
