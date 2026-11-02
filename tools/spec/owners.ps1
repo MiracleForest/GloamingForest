@@ -501,9 +501,15 @@ foreach ($u in $rules.units.Keys) {
 # F-units with several directories own the channel / key prefixes of each (F10: combat, loot, fx, ...)
 foreach ($c in $rules.netChannels) { Set-Owner net $c[0] $c[1] }
 foreach ($k in 'config_section', 'subcommand', 'net', 'selftest', 'selftest_dx', 'worlddb', 'e2e', 'stub') { if ($ids.Contains($k)) { $modes[$k] = 'manual' } }
-# a declared id keeps its unit: no later rule may take it over
+# a declared id keeps its unit: no later rule or unit may take it over or claim the same id under
+# another kind (the check above sees only the owners set before the declaring unit's turn)
 foreach ($d in $declared) {
-    if ($owner[$d[0]][$d[1]] -ne $d[2]) { Write-Host "[owners] $($d[2]) ids.$($d[0]): '$($d[1])' was taken over by $($owner[$d[0]][$d[1]])" -ForegroundColor Red; exit 1 }
+    $other = @($owner.Keys | Sort-Object | Where-Object { $owner[$_].ContainsKey($d[1]) -and $owner[$_][$d[1]] -ne $d[2] })
+    if ($other) {
+        $by = $owner[$other[0]][$d[1]]
+        $how = if ($other[0] -eq $d[0]) { "was taken over by $by" } else { "is owned by $by too ($($other[0]))" }
+        Write-Host "[owners] $($d[2]) ids.$($d[0]): '$($d[1])' $how" -ForegroundColor Red; exit 1
+    }
 }
 
 # ---- output -------------------------------------------------------------------------------------------
