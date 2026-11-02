@@ -341,6 +341,7 @@ GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto const* effect = pig->getEffect(poison->mEffects->empty() ? 0u : poison->mEffects->front().mId);
     ctx.check(effect != nullptr, "the pig is poisoned by the tipped arrow");
     if (effect) ctx.check(effect->mDuration->mValue == std::max(potionTicks / 8, 1), "for 1/8 of the potion's duration (" + std::to_string(effect->mDuration->mValue) + " of " + std::to_string(potionTicks) + ")");
+    removeActorById(pigId); // out of the next shot's way
     // with F10's combat pipeline the hit lands and the effects come with it
     auto stubs = core::stubCalls();
     if (std::find(stubs.begin(), stubs.end(), "combat.hurt") == stubs.end()) {
@@ -358,6 +359,7 @@ GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
         ctx.check(postHurtsForTest() > before, "a landed hit runs doPostHurtEffects");
         if (auto* f = fe::actorById(freshId); f && f->isAlive())
             ctx.check(f->getEffect(poison->mEffects->front().mId) != nullptr, "and the shot pig is poisoned");
+        else ctx.info("the shot pig died of the hit (the poison is not checked)");
         removeActorById(freshId);
     } else {
         ctx.info("the combat contract is still a stub: arrow hits on living targets do not land (doPostHurtEffects checked directly)");
