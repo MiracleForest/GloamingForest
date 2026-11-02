@@ -1,20 +1,19 @@
 // Client half of gf::fx (client build): the "fx.particle" handler (see Fx.cpp and
 // feature/ext/combat/FxNative.h). A TF particle goes to the native sink first (F12's particle
 // factories, gf::client::particles::spawnFromFx); without a native version the resource pack's
-// effect spawns, `count` times (at most 64), each offset by params "spread" as gf::fx offsets the
-// particles of vanilla clients (a gaussian times the distance per axis, ServerLevel#sendParticles).
-// The effect is added to the client level (Level::addParticleEffect, what the game's client code
-// spawns effects with); Level::spawnParticleEffect only broadcasts from a server level, so on the
-// client it showed nothing.
+// effect spawns `count` times (at most kMaxClientEffects: Java's count, where vanilla clients get
+// at most kMaxVanillaParticles packets), each offset by params "spread" as gf::fx offsets the
+// particles of vanilla clients (a gaussian times the distance per axis, ServerLevel#sendParticles),
+// with the message's velocity as the molang variable `variable.velocity` (FxMolang.cpp), as
+// vanilla clients get it. The effect is added to the client level (Level::addParticleEffect, what
+// the game's client code spawns effects with); Level::spawnParticleEffect only broadcasts from a
+// server level, so on the client it showed nothing.
 
 #ifdef GF_CLIENT
 
 #include <algorithm>
 #include <atomic>
-#include <cstddef>
 #include <mutex>
-#include <new>
-#include <vector>
 #include <optional>
 #include <random>
 #include <set>
@@ -46,22 +45,19 @@ NativeSink& sinkSlot() {
 
 std::atomic<std::uint64_t> gNative{0}, gEffects{0}, gSilent{0};
 
-/// An empty MolangVariableMap (the effect gets no variables, as from the server's packets). Its
-/// default constructor is not exported; an empty map is two empty vectors and a false flag, which
-/// in the release STL the game uses is all zero bytes. It is never destroyed.
-MolangVariableMap const& noVariables() {
-    static_assert(sizeof(std::vector<short>) == 3 * sizeof(void*), "a vector is three pointers (no debug proxy)");
-    static_assert(sizeof(MolangVariableMap) == 2 * sizeof(std::vector<short>) + 8, "MolangVariableMap: two vectors and a flag");
-    alignas(MolangVariableMap) static std::byte storage[sizeof(MolangVariableMap)]{}; // zero-filled (.bss)
-    return *std::launder(reinterpret_cast<MolangVariableMap const*>(storage));
-}
+std::mutex          gVelocityMutex;
+std::optional<Vec3> gLastVelocity;
 
-/// One line per particle id and route (the e2e scenarios wait for it; no line per particle).
-void logRoute(std::string const& id, std::string const& route) {
+/// One line per particle id, route and probe (the e2e scenarios wait for it; no line per
+/// particle). params "probe" names the caller (a selftest), so each one logs its own line.
+void logRoute(std::string const& id, std::string const& route, nlohmann::json const& params) {
     static std::mutex            m;
     static std::set<std::string> seen;
+    std::string                  probe = params.is_object() ? params.value("probe", std::string{}) : std::string{};
     std::lock_guard              lock(m);
-    if (seen.insert(id + "|" + route).second) log().info("fx: client particle {} {}", id, route);
+    if (!seen.insert(id + "|" + route + "|" + probe).second) return;
+    if (probe.empty()) log().info("fx: client particle {} {}", id, route);
+    else log().info("fx: client particle {} {} (probe {})", id, route, probe);
 }
 
 Vec3 vecOf(nlohmann::json const& j) {
@@ -86,7 +82,7 @@ void onParticle(nlohmann::json const& msg) {
         try {
             if (sink(id, pos, vel, count, params)) {
                 ++gNative;
-                logRoute(id, "drawn by its native factory");
+                logRoute(id, "drawn by its native factory", params);
                 return;
             }
         } catch (std::exception const& ex) {
@@ -97,28 +93,26 @@ void onParticle(nlohmann::json const& msg) {
     auto* player = gf::client::currentPlayer();
     if (effect.empty() || !player) {
         ++gSilent;
-        logRoute(id, "is silent (no native factory, no resource pack effect)");
+        logRoute(id, "is silent (no native factory, no resource pack effect)", params);
         return;
     }
-    int n = std::clamp(count, 1, 64);
-    std::optional<Vec3> spread;
-    if (params.is_object()) {
-        if (auto s = params.find("spread"); s != params.end() && n > 1) {
-            auto v = vecOf(*s);
-            if (s->is_array() && s->size() == 3) spread = v;
-        }
-    }
-    thread_local std::mt19937       rng{std::random_device{}()};
-    std::normal_distribution<float> gauss(0.f, 1.f);
-    // the effect's own motion, as vanilla clients get it (the server sends no molang variables)
-    HashedString const name(effect);
-    for (int i = 0; i < n; ++i) {
-        Vec3 at = pos;
-        if (spread) at = Vec3{pos.x + gauss(rng) * spread->x, pos.y + gauss(rng) * spread->y, pos.z + gauss(rng) * spread->z};
-        player->getLevel().addParticleEffect(name, at, noVariables());
-    }
+    int  n      = std::clamp(count, 1, kMaxClientEffects);
+    auto spread = n > 1 ? spreadOf(params) : std::nullopt;
+    thread_local std::mt19937 rng{std::random_device{}()};
+    // a moving particle gets its own map; the others share one empty map (never destroyed: the
+    // game's destructor must not run at process exit)
+    static MolangMap*        sEmpty = new MolangMap();
+    std::optional<MolangMap> vars;
+    if (vel.x != 0.f || vel.y != 0.f || vel.z != 0.f) fillVariables(vars.emplace(), vel);
+    MolangVariableMap const& molang = vars ? vars->get() : sEmpty->get();
+    HashedString const       name(effect);
+    for (int i = 0; i < n; ++i) player->getLevel().addParticleEffect(name, spread ? spreadAt(pos, *spread, rng) : pos, molang);
     ++gEffects;
-    logRoute(id, "spawned as the resource pack effect " + effect);
+    {
+        std::lock_guard lock(gVelocityMutex);
+        gLastVelocity = vel.x != 0.f || vel.y != 0.f || vel.z != 0.f ? std::optional<Vec3>(vel) : std::nullopt;
+    }
+    logRoute(id, "spawned as the resource pack effect " + effect, params);
 }
 
 class FxClientModule {
@@ -139,6 +133,11 @@ bool hasNativeSink() {
 }
 
 ClientCounters clientCounters() { return {gNative.load(), gEffects.load(), gSilent.load()}; }
+
+std::optional<Vec3> lastEffectVelocity() {
+    std::lock_guard lock(gVelocityMutex);
+    return gLastVelocity;
+}
 
 } // namespace gf::fx::client
 

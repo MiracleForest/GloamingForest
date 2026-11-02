@@ -28,6 +28,7 @@
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/provider/SynchedActorDataAccess.h"
+#include "mc/util/MolangVariableMap.h"
 #include "mc/util/VariantParameterList.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/actor/ActorHurtResult.h"
@@ -159,6 +160,35 @@ GF_REGISTER_SELFTEST("combat.fx", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto after = fx::counters();
     ctx.check(after.particlePackets >= before.particlePackets + 2, "particles were sent to the player nearby");
     ctx.check(after.soundPackets >= before.soundPackets + 2, "sounds were sent (in range and to one player)");
+    ctx.check(after.movingPackets == before.movingPackets, "a particle without velocity carries no molang variables");
+    // a moving particle: its velocity goes to vanilla clients as `variable.velocity`
+    fx::particle(dim, "minecraft:flame", p.getPosition(), Vec3{0, 0.05f, 0}, 3, JsonT{{"spread", {0.2, 0.2, 0.2}}});
+    auto moving = fx::counters();
+    ctx.check(moving.particlePackets >= after.particlePackets + 3 && moving.movingPackets >= after.movingPackets + 3,
+              "each particle packet of a moving particle carries variable.velocity (" + std::to_string(moving.movingPackets - after.movingPackets) + ")");
+    std::uint64_t near = 0; // the players in the 32 blocks fx reaches (a client e2e run has its real player too)
+    ll::service::getLevel()->forEachPlayer([&](Player& q) {
+        auto d = q.getPosition() - p.getPosition();
+        if (static_cast<int>(q.getDimensionId()) == static_cast<int>(p.getDimensionId()) && d.x * d.x + d.y * d.y + d.z * d.z <= 32.f * 32.f) ++near;
+        return true;
+    });
+    fx::particle(dim, "minecraft:flame", p.getPosition(), {}, 100);
+    auto sent = fx::counters().particlePackets - moving.particlePackets;
+    ctx.check(sent >= near && sent <= near * static_cast<std::uint64_t>(fx::kMaxVanillaParticles),
+              "a player gets at most kMaxVanillaParticles packets per call (" + std::to_string(sent) + " for " + std::to_string(near) + " player(s))");
+    // the spread helper both sides use (ServerLevel#sendParticles' gaussian offset)
+    ctx.check(fx::spreadOf(JsonT{{"spread", {1, 2, 3}}}).has_value() && !fx::spreadOf(JsonT{{"spread", {1, "x", 3}}}) && !fx::spreadOf(JsonT{{"spread", {1, 2}}})
+                  && !fx::spreadOf(JsonT::array()),
+              "params spread: three numbers, anything else none");
+    std::mt19937 rng{7};
+    auto         off = fx::spreadAt(Vec3{10, 20, 30}, Vec3{0, 0, 0}, rng);
+    ctx.check(off.x == 10 && off.y == 20 && off.z == 30, "no spread: the position itself");
+    // a real molang variable map (constructed in place, the game's destructor)
+    {
+        fx::MolangMap vars;
+        vars.setVelocity(Vec3{0.1f, 0.2f, 0.3f});
+        ctx.check(!vars.get().mVariables->empty(), "the molang map holds variable.velocity");
+    }
     // companions get TF particles over fx.particle
     gf::net::setTestCompanion(p, true);
     (void)gf::net::takeTestMessages(p);
@@ -588,7 +618,12 @@ GF_REGISTER_SELFTEST("combat.inventory_handler", [](Context& ctx) -> ll::coro::C
     for (int i = 0; i < h->slots; ++i) h->set(pos, i, ItemStack{});
 });
 
-GF_REGISTER_SELFTEST("combat.container_persist_write", [](Context& ctx) -> ll::coro::CoroTask<> {
+// A container keeps its slots over a world reload: combat.container_persist_save fills the fixture
+// container 3 blocks under testPos 6010 and writes a marker (gf:combat:container_probe);
+// combat.container_persist_verify checks the slots, erases the marker and puts the block that was
+// there back. The server scenario runs them around a restart; a glob run ("combat.*", "full")
+// sorts save before verify, so verify cleans up in the same run and nothing stays in the world.
+GF_REGISTER_SELFTEST("combat.container_persist_save", [](Context& ctx) -> ll::coro::CoroTask<> {
     DeclaredScope fixture(fixtureDeclaration());
     auto* region = ctx.region();
     ctx.require(region != nullptr, "the overworld is available");
@@ -610,10 +645,10 @@ GF_REGISTER_SELFTEST("combat.container_persist_write", [](Context& ctx) -> ll::c
     ctx.info("container marker written count=" + std::to_string(n));
 });
 
-GF_REGISTER_SELFTEST("combat.container_persist_read", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.container_persist_verify", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto marker = db::get(kPersistKey);
     if (!marker) {
-        ctx.info("no container marker (combat.container_persist_write did not run before): nothing to check");
+        ctx.info("no container marker (combat.container_persist_save did not run before): nothing to check");
         co_return;
     }
     db::erase(kPersistKey);
