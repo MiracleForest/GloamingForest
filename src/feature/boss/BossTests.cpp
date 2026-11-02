@@ -311,8 +311,11 @@ GF_REGISTER_SELFTEST("entity.boss_lifecycle_hooks", [](Context& ctx) -> ll::coro
         if (!flagged(m, "gf_knight")) return gf::boss::ext::defaultPostmortem(m, type, killer);
         auto* other = mobById(hookProbe().otherKnight);
         if (other && other != &m && other->isAlive()) {
+            // two slots: the other knight's own roll may overwrite one of them (IBossLootBuffer#fill
+            // spreads over all 27 slots, as in Java)
             auto item = game::items::make("gf_test:fixture_item", 2);
             if (item) gf::boss::ext::setLootBufferSlot(*other, 0, *item);
+            if (item) gf::boss::ext::setLootBufferSlot(*other, 1, *item);
             return;
         }
         gf::boss::ext::defaultPostmortem(m, type, killer);
@@ -403,13 +406,13 @@ GF_REGISTER_SELFTEST("entity.boss_lifecycle_hooks", [](Context& ctx) -> ll::coro
     ctx.check(!lastConquest().has_value(), "and conquers nothing yet");
     k2 = mobById(k2Id);
     ctx.require(k2 != nullptr, "the other knight lives");
-    ctx.check(game::items::idOf(gf::boss::ext::lootBuffer(*k2)[0]) == "gf_test:fixture_item", "it got the dead knight's loot");
+    ctx.check(game::items::idOf(gf::boss::ext::lootBuffer(*k2)[0]) == "gf_test:fixture_item" && game::items::idOf(gf::boss::ext::lootBuffer(*k2)[1]) == "gf_test:fixture_item", "it got the dead knight's loot");
     k2->kill();
     co_await ctx.ticks(30);
     auto chestK = lastDeathChest();
     ctx.require(chestK.has_value(), "the last knight deposits the chest");
     ctx.check(lastConquest().has_value(), "and the stronghold is conquered");
-    if (auto* container = chestAt(*chestK)) ctx.check(countOf(*container, "gf_test:fixture_item") == 2, "the chest holds the shared loot");
+    if (auto* container = chestAt(*chestK)) ctx.check(countOf(*container, "gf_test:fixture_item") >= 3, "the chest holds the shared loot (" + std::to_string(countOf(*container, "gf_test:fixture_item")) + " fixture items)");
     restoreFloor(*chestK, floorK);
     (void)box;
 });
@@ -532,9 +535,6 @@ GF_REGISTER_SELFTEST("entity.boss_unload", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(boss != nullptr, "the fixture boss spawns");
     auto uid = fe::uidOf(*boss);
     ge::setHome(*boss, home, 20);
-    auto item = game::items::make("gf_test:fixture_item", 3);
-    ctx.require(item.has_value(), "fixture item available");
-    gf::boss::ext::setLootBufferSlot(*boss, 4, *item);
     // a companion far away; the bar hidden (KnightPhantom#startSeenByPlayer: knights 1-5)
     auto& far   = ctx.spawnPlayer("gf_unload_far");
     auto  farId = far.getOrCreateUniqueID().rawID;
@@ -551,6 +551,10 @@ GF_REGISTER_SELFTEST("entity.boss_unload", [](Context& ctx) -> ll::coro::CoroTas
     if ((boss = mobById(uid))) boss->kill();
     co_await ctx.ticks(3);
     ctx.require(dyingForTest(uid).has_value(), "the boss is dying");
+    // the buffer as the dying body holds it goes into the chest (3 diamonds: not in the loot table)
+    auto item = game::items::make("minecraft:diamond", 3);
+    ctx.require(item.has_value(), "diamonds available");
+    if ((boss = mobById(uid))) gf::boss::ext::setLootBufferSlot(*boss, 4, *item);
     auto* p = fe::playerById(farId);
     ctx.require(p != nullptr, "the far companion is there");
     (void)gf::net::takeTestMessages(*p);
@@ -606,7 +610,7 @@ GF_REGISTER_SELFTEST("entity.boss_unload", [](Context& ctx) -> ll::coro::CoroTas
     auto chest = lastDeathChest();
     ctx.require(chest.has_value(), "a death chest was placed");
     ctx.check(*chest == home.offset(0, -1, 0), "at home.below()");
-    if (auto* c = chestAt(*chest)) ctx.check(countOf(*c, "gf_test:fixture_item") == 3, "holding the loot buffer");
+    if (auto* c = chestAt(*chest)) ctx.check(countOf(*c, "minecraft:diamond") == 3, "holding the loot buffer the dying body held (" + std::to_string(countOf(*c, "minecraft:diamond")) + " diamonds)");
     restoreFloor(*chest, floor);
     // without a home: the chest goes where the body is at the end of its animation
     resetTestRecords();
@@ -696,13 +700,14 @@ GF_REGISTER_SELFTEST("entity.boss_dying_write", [](Context& ctx) -> ll::coro::Co
     ctx.require(boss != nullptr, "the probe boss spawns");
     auto uid = fe::uidOf(*boss);
     ge::setHome(*boss, home, 20);
-    auto item = game::items::make("gf_test:fixture_item", 5);
-    ctx.require(item.has_value(), "fixture item available");
-    gf::boss::ext::setLootBufferSlot(*boss, 7, *item);
     co_await ctx.ticks(2);
     if ((boss = mobById(uid))) boss->kill();
     co_await ctx.ticks(5);
     ctx.require(dyingForTest(uid).has_value(), "the probe boss is dying");
+    // 5 diamonds in the dying body's buffer (not in the loot table)
+    auto item = game::items::make("minecraft:diamond", 5);
+    ctx.require(item.has_value(), "diamonds available");
+    if ((boss = mobById(uid))) gf::boss::ext::setLootBufferSlot(*boss, 7, *item);
     auto nonce = static_cast<long long>(fe::freshSeed() & 0x7fffffff);
     nlohmann::json rec{{"nonce", nonce}, {"uid", uid}, {"home", {home.dim, home.x, home.y, home.z}}, {"floor", ctx.blockAt(home.offset(0, -1, 0))}};
     game::db::put(kDyingProbeKey, rec);
@@ -737,8 +742,8 @@ GF_REGISTER_SELFTEST("entity.boss_dying_read", [](Context& ctx) -> ll::coro::Cor
     ctx.require(chest.has_value(), "the resumed death placed its chest");
     ctx.check(*chest == home.offset(0, -1, 0), "under the home point");
     int items = 0;
-    if (auto* c = chestAt(*chest)) items = countOf(*c, "gf_test:fixture_item");
-    ctx.check(items == 5, "holding the loot buffer saved with the death (" + std::to_string(items) + ")");
+    if (auto* c = chestAt(*chest)) items = countOf(*c, "minecraft:diamond");
+    ctx.check(items == 5, "holding the loot buffer saved with the death (" + std::to_string(items) + " diamonds)");
     restoreFloor(*chest, floor);
     if (ctx.failures().empty()) ctx.info("dying boss resumed nonce=" + std::to_string(nonce));
 });

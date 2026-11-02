@@ -15,7 +15,7 @@
 # client as ordinary actors) and boss-dying-<mode>.png (the dead body 2 s after the death, where
 # Bedrock alone removes it after 1 s). Local mode also runs every entity selftest on the
 # integrated server (the client build's hooks).
-# The dividers of a notched bar in a screenshot: the orange bar's fullest row in the top of the
+# The dividers of a notched bar in a screenshot: the orange bar's brightest row in the top of the
 # image, then the runs of pixels clearly darker than the row's median inside the bar.
 function Measure-BarDividers([string]$png) {
     Add-Type -AssemblyName System.Drawing
@@ -24,12 +24,16 @@ function Measure-BarDividers([string]$png) {
         $top = [int]($bmp.Height * 0.12)
         $best = $null
         for ($y = 0; $y -lt $top; $y++) {
-            $n = 0; $x0 = -1; $x1 = -1
+            $n = 0; $x0 = -1; $x1 = -1; $rs = [System.Collections.Generic.List[int]]::new()
             for ($x = [int]($bmp.Width * 0.2); $x -lt [int]($bmp.Width * 0.8); $x++) {
                 $c = $bmp.GetPixel($x, $y)
-                if ($c.R -gt 60 -and $c.R -gt $c.G * 1.5 -and $c.G -gt $c.B * 2 -and $c.B -lt 40) { $n++; if ($x0 -lt 0) { $x0 = $x }; $x1 = $x }
+                if ($c.R -gt 60 -and $c.R -gt $c.G * 1.5 -and $c.G -gt $c.B * 2 -and $c.B -lt 40) { $n++; $rs.Add($c.R); if ($x0 -lt 0) { $x0 = $x }; $x1 = $x }
             }
-            if (-not $best -or $n -gt $best.N) { $best = [pscustomobject]@{ N = $n; Y = $y; X0 = $x0; X1 = $x1 } }
+            if ($n -lt 100) { continue }
+            # the bar's brightest row by its median (its middle rows carry the dividers; the top and
+            # bottom rows do not)
+            $rs.Sort(); $mid = $rs[[int]($rs.Count / 2)]
+            if (-not $best -or $mid -gt $best.Mid) { $best = [pscustomobject]@{ N = $n; Y = $y; X0 = $x0; X1 = $x1; Mid = $mid } }
         }
         if (-not $best -or $best.N -lt 100) { return [pscustomobject]@{ Found = $false; Dividers = 0 } }
         $reds = @(for ($x = $best.X0 + 4; $x -le $best.X1 - 4; $x++) { [int]$bmp.GetPixel($x, $best.Y).R })

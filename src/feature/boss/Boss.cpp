@@ -1050,6 +1050,7 @@ void tickDying() {
             d.absentTicks = 0;
             d.bodiless    = false;
             d.pos         = actor->getFeetPos(); // EntityUtil#bossChestLocation: blockPosition() at the removal
+            if (auto const& held = bufferOf(*actor); held != d.buffer) d.buffer = held; // what the body holds now
         } else {
             if (!chunkLoaded(d.dim, game::blockPosOf(d.pos))) {
                 d.absentTicks = 0; // the body waits in its unloaded chunk
