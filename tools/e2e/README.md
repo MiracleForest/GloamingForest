@@ -60,6 +60,16 @@ In remote modes the BDS console log is merged into the session log as `[host] ..
 `Wait-LogLine` sees client and server lines alike, and `Send-HostConsole 'cmd'` runs a server
 console command. The host stops when the client run ends (or dies).
 
+**Host hook.** Before the host boots, `server/scenarios/client-host.prelaunch.ps1` dot-sources the
+client scenario's optional `client/scenarios/<scenario>.host-prelaunch.ps1` inside the server
+harness, after the slot was reset, the mod deployed and `server.properties` written. It sees the
+server API (`lib.ps1`): the host's mod folder is
+`Join-Path $script:SlotDir "$(Get-ModsDirName $script:SlotDir)\$script:ModName"` (e.g. for a probe
+pack), `$HostMode` is `remote-mod` or `remote-vanilla`, `$env:GF_E2E_HOST_DIR` the host folder the
+client also sees (`$script:HostDir`). The next run of the slot syncs it again, so nothing needs
+undoing. The client's `<scenario>.prelaunch.ps1` prepares the game only. `smoke.host-prelaunch.ps1`
+leaves a marker that the remote `smoke` runs check.
+
 ## Prerequisites
 
 - **Server:** [lip](https://github.com/LiteLDev/lip) on `PATH`; the first run installs BDS +
@@ -94,7 +104,8 @@ appears; the server exits non-zero or has to be killed.
 ## Writing a scenario
 
 A scenario is `server/scenarios/<name>.ps1` or `client/scenarios/<name>.ps1` (rule R3:
-`<unit>.ps1`, plus optional `<unit>.prelaunch.ps1` / `<unit>.restore.ps1`). Put the feature logic in
+`<unit>.ps1`, plus optional `<unit>.prelaunch.ps1` / `<unit>.restore.ps1`, and for the client's
+remote modes `<unit>.host-prelaunch.ps1`, run on the BDS host: see Client modes). Put the feature logic in
 **selftests inside the mod** (`/twilightforest selftest "<unit>.*"`) and use the scenario to start
 them; the client scenario adds what only a real client shows: screens, keys, screenshots.
 
