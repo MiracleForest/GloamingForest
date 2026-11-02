@@ -77,16 +77,45 @@ jobs:
         shell: pwsh
         run: pwsh tools/assemble.ps1 -Check
 
-      - name: Tool checks (import, synth, template)
+      # The shared TF checkout the tool checks read (tools/tf/fetch.ps1: git with a blob-less
+      # partial clone of the pinned commit, never the GitHub API; no .ogg / .nbt), cached per commit.
+      - uses: actions/cache@v6
+        if: matrix.target_type == 'server'
+        with:
+          path: ~/AppData/Local/gf-tf
+          key: gf-tf-9e40a75721c716b2fdf80c16d1058fe718825e9f-${{ hashFiles('tools/tf/fetch.ps1') }}
+
+      - name: TF checkout
         if: matrix.target_type == 'server'
         shell: pwsh
         run: |
-          # each check runs once its unit (F1, F3, F7) replaced the placeholder entry point
-          foreach ($t in 'tools/import/run.ps1', 'tools/sounds/synth.ps1', 'tools/structures/build.ps1') {
-            if (Select-String -Path $t -Pattern 'is a placeholder of the' -Quiet) { Write-Host "skip $t (not implemented yet)"; continue }
-            pwsh $t -Check
-            if ($LASTEXITCODE) { throw "$t -Check failed" }
+          pwsh -NoProfile -File tools/tf/fetch.ps1
+          if ($LASTEXITCODE) { exit 1 }
+
+      - name: Tool checks (owners, import, synth, models, template)
+        if: matrix.target_type == 'server'
+        shell: pwsh
+        run: |
+          # every check runs; the step fails at the end when any of them failed
+          $checks = @(
+            @('tools/spec/owners.ps1', '-Check'),       # docs/spec/owners.tsv is generated from TF and the rules
+            @('tools/import/run.ps1', '-Check'),        # F1: the committed import reproduces byte for byte
+            @('tools/sounds/synth.ps1', '-Check'),      # F3: the committed audio renders from its recipes
+            @('tools/models/test.ps1', '-SkipTree'),    # F2: the converter's PowerShell / C# tests
+            @('tools/models/convert.ps1', '-Check'),    # F2: the committed geometry reproduces
+            @('tools/structures/build.ps1', '-Check'))  # F7: templates against TF's template definitions
+          # F11's family generator and its checks (integer states, permutation budget, geometry) run
+          # inside the 'Assemble checks' step above: assemble -Check runs tools/families/run.lua on the
+          # assembled packs (a second run on the same directory would be a no-op).
+          $failed = @()
+          foreach ($c in $checks) {
+            Write-Host "::group::pwsh $($c -join ' ')"
+            pwsh -NoProfile -File @c
+            $rc = $LASTEXITCODE
+            Write-Host '::endgroup::'
+            if ($rc) { Write-Host "::error::$($c -join ' ') failed (exit $rc)"; $failed += $c[0] }
           }
+          if ($failed) { exit 1 }
 
       - name: ARR guard
         if: matrix.target_type == 'server'

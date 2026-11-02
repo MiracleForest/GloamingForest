@@ -20,8 +20,10 @@ units; each unit owns disjoint ids and paths and integrates with the others only
 Columns: `kind`, `id-or-glob`, `owner`, `mode` (`gen`: produced by a tool, regenerate with `-Unit <unit>`; `manual`).
 Ids carry their namespace (`twilightforest:naga_stone`); tags are `<registry>/#<ns>:<path>`, registry entries
 `<registry>/<ns>:<path>`; `path` rows are globs (`**` any path, `*` one segment, `{a,b}` alternatives; the most
-specific match wins, an exact path beats any glob). `stub` rows are the placeholders F0 created in W0b directories.
-`tools/ci/ownership.ps1 -Unit <unit>` checks a change against the `path` rows; assemble checks that every asset file
+specific match wins, an exact path beats any glob). `stub` rows are the placeholders F0 created in W0b directories;
+`subcommand` rows are literal paths below `/twilightforest` (see Subcommands).
+`tools/ci/ownership.ps1 -Unit <unit>` checks a change against the `path` rows (against `origin/main` by default, so a
+stale local `main` in a worktree does not count other units' merged work); assemble checks that every asset file
 has an owner. The generated layers `assets/gen/{import,geo,audio}/<unit>/**` (mode `gen`) belong to their unit, and
 their tool unit (F1 import, F2 geo, F3 audio) may also write them: the tools generate every unit's layer (R3).
 
@@ -70,10 +72,11 @@ their tool unit (F1 import, F2 geo, F3 audio) may also write them: the tools gen
 | `loot_table` | 634 |
 | `map_decoration` | 15 |
 | `menu` | 1 |
+| `mod_entity` | 1 |
 | `net` | 110 |
 | `noise_settings` | 2 |
 | `particle` | 29 |
-| `path` | 825 |
+| `path` | 903 |
 | `placed_feature` | 107 |
 | `placement_modifier` | 10 |
 | `poi` | 1 |
@@ -87,13 +90,13 @@ their tool unit (F1 import, F2 geo, F3 audio) may also write them: the tools gen
 | `spawn_egg` | 51 |
 | `stat` | 10 |
 | `structure` | 25 |
-| `structure_piece_type` | 156 |
+| `structure_piece_type` | 175 |
 | `structure_placement_type` | 2 |
 | `structure_processor` | 17 |
 | `structure_set` | 19 |
 | `structure_type` | 20 |
 | `stub` | 43 |
-| `subcommand` | 18 |
+| `subcommand` | 41 |
 | `tag` | 393 |
 | `trigger` | 13 |
 | `trim_material` | 6 |
@@ -104,9 +107,79 @@ that are commented out in `TFBlocks.java`), 254 items plus 357 block items and 5
 22 biomes, 25 structure keys, 129 configured and 107 placed features, 634 loot tables, 553 recipes (twilightforest and
 minecraft namespaces, generated and hand-written), 545 advancements (45 plus the recipe unlocks), 328 sound events (`GHAST_TRAP_ACTIVE` is commented out in `TFSounds.java`; `sounds.json` has 328),
 29 particles, 40 damage types, 1 effect, 4 enchantments, 393 tags (154 in the twilightforest namespace), 8 data maps,
-2061 en_us keys, 53 TF config keys, 10 stats (`TFStats` registers 10; the plan says 9), 18 subcommands (TF's 14 plus F0's `selftest`, `reload`, `config` and `stubs`; the plan says 15), 14 custom registries (every directory of TF's `data/twilightforest/twilight/`; the plan says 9).
+2061 en_us keys, 53 TF config keys, 10 stats (`TFStats` registers 10; the plan says 9), 41 subcommand rows (TF's 11
+subcommands with their literal children, 25 literal paths, plus 16 GloamingForest additions; see below; the plan says 15),
+175 structure piece types (`TFStructurePieceTypes`, including the 18 `"TFLT" + "<suffix>"` pieces of the revamped Lich
+Tower and `TFJigsawTemplate`), 14 custom registries (every directory of TF's `data/twilightforest/twilight/`; the plan says 9).
 
 Ids no unit record claims: none.
+
+### Per-unit files
+
+Every W1 unit, and every W0b unit with `"unitFiles": true` in `tools/spec/owners.rules.json` (F1-F13), owns these
+files by its unit name `<n>` (R3): `**/*.d/<n>.json` (pack fragments, tag unions), `assets/pack/rp/texts.d/*/<n>.lang`,
+`assets/data/*/<n>.json`, `assets/lang/*/<n>.json` (its `tr` strings, R9), `assets/tags/**/*.d/<n>.json` (R6),
+`tools/import/overrides/<n>.json` and `tools/sounds/recipes/<n>.json` (its sound refinements, R10). F8's are named
+`entity`, F10's `combat`, F12's `ui`, F11's `families` (for example `assets/lang/en_us/families.json`).
+
+### Subcommands (R14)
+
+A `subcommand` row's id is the literal path below `/twilightforest` (aliases `/tf`, `/tffeature`) without its
+arguments: `shield set` is `/twilightforest shield <target> set <amount> [temp]`. TF's literals are read from
+`command/TFCommand.java` and the command classes it chains, and partitioned by `ids.subcommand`; a unit registers them
+exactly as TF spells them (`GF_REGISTER_SUBCOMMAND`).
+
+| Owner | TF 4.8 literals |
+|---|---|
+| F4 | `tp` |
+| F6 | `center`, `info`, `conquer` (+ `reactivate`), `genbook` |
+| F7 | `structure_util` (+ `display_pieces`, `clear_display`, `count_loot`, `count_template`, `generator_radius`) |
+| U9 | `shield` (+ `set`, `add`) |
+| U11 | `travellers_gear` (+ `add_modifier`, `remove_modifier`) |
+| U13 | `map_locator`, `biomepng` |
+| U22 | `sinister_spawner` (+ `add_particle`, `remove_particle`, `set_loot`, `clear_loot`) |
+
+**GloamingForest additions** (not in TF; `gfSubcommands` of the unit in the rules, and `owners.ps1` fails when one of
+them is a TF literal):
+
+| Owner | Addition | What |
+|---|---|---|
+| F0 | `selftest`, `stubs`, `config`, `reload` | the selftest runner, the contract stubs a world called, the config screen (TF edits its config in the mod list), reloading the config files and translations |
+| F6 | `locate`, `place` | find / generate a landmark (TF uses vanilla's `/locate` and `/place`) |
+| F6 | `generatebook` | an alias of TF's `genbook` (the spelling the plan used before issue #5); new text names `genbook` |
+| F7 | `structure_util place`, `capture`, `jigsaw`, `templates`, `piece`, `outline`, `pending_probe`, `scale_probe` | template and piece tools of the structure kit, below TF's `structure_util` |
+| F10 | `gamerule` | TF's game rules (Bedrock's `/gamerule` cannot hold custom rules) |
+
+### Assemble: merges and the reference check
+
+`tools/xmake/merges.json` merges fragment directories (`*.d/<unit>.json`) of the gen layer and then the manual layer
+(the manual layer wins per id; a duplicate inside one layer fails; a plain file at a merge's output path fails, since
+the merge would overwrite it). Besides the atlases, `sound_definitions`, music,
+`blocks.json`, texts and the item catalog, `rp/sounds.json.d/<unit>.json` -> the resource pack's `sounds.json` (mode
+`categories`): the ids of `block_sounds`, `entity_sounds.entities`, `individual_event_sounds.events`,
+`individual_named_sounds.sounds`, `interactive_sounds.block_sounds` and `interactive_sounds.entity_sounds.entities` are
+merged one by one; any other key fails (vanilla's defaults stay). A block names its sound in `blocks.json` (`"sound": "<block_sounds id>"`). F11's family
+generator adds TF's sound types (`twilightforest.<type>`) after the merge: fragments do not define those ids.
+
+The dangling-reference check resolves every `twilightforest:` value of the BP and data files: against BP definitions,
+data files by registry (`tags/worldgen/<registry>/` and `tags/twilight/<registry>/` are two-segment tag registries),
+owners.tsv and the reviewed ids of `tools/import/known-ids.json` (F1), each by its kind. The values of `tag`, `tags`
+and `generates_on` (and the import's `tagValuedKeys`) name tags, with or without `#`, of the registry the context gives:
+the `tag` of a recipe (Java data or Bedrock BP recipe) is an item tag, `generates_on` and the `tag` of a
+`minecraft:matching_block_tag` predicate or `minecraft:tag_match` rule test a block tag, any other a tag of any
+registry. Two `tags` lists are not references: an item's `minecraft:tags` component declares Bedrock item tags (they
+count as known item tags, so a unit may give an item a Bedrock-only tag and use it in a BP recipe) and a Bedrock
+recipe's `tags` name its crafting stations. A `tfDangling` reference of `known-ids.json` (dangling in TF itself, kept
+for parity) is a warning when its kind matches the reference (a `tag:<registry>` entry covers only a tag reference);
+every other unresolved reference fails.
+
+owners.tsv still spells the six `data/twilightforest/tags/twilight/wood_palettes/*` tags with a one-segment registry
+(`twilight/#twilightforest:wood_palettes/<path>`, owner F9 by the fallback rule), the form F1's import looks them up
+by. Moving them to the two-segment form (`twilight/wood_palettes/#twilightforest:<path>`) and to F7 is one joint change
+of F0 and F1 (A8): `"tagRegistryGroups": ["worldgen", "twilight"]` and a tag rule `twilight/wood_palettes:*` -> F7 in
+`tools/spec/owners.rules.json`, F1's `Data.cs` / `Known.cs` reading `tags/twilight/` as two-segment, and the import
+regenerated (the six files move from `assets/gen/import/item/` to `assets/gen/import/structure/`). Either half alone
+fails `tools/import/run.ps1 -Check`.
 
 ## W0a: Scaffold, contract headers and ownership manifest
 
@@ -122,19 +195,19 @@ Implement every contract behind the W0a headers, build the asset toolchains (imp
 
 | Unit | Title | Selftest dx | Owned paths | Ids owned | Contracts |
 |---|---|---|---|---|---|
-| F1 | Import tool and content skeleton (spike S7) | 5100-5199 | `assets/gen/import/**`, `docs/spec/{blockstates,import}.md`, `docs/spikes/S7.md`, `tools/e2e/*/scenarios/import{,.*}.ps1`, `tools/import/**` | tag 239 | import, owners, assemble |
-| F2 | Java model converter and geometry import | 5200-5299 | `assets/gen/geo/**`, `docs/spec/models.md`, `tools/e2e/*/scenarios/models{,.*}.ps1`, `tools/models/**` | - | geo, owners |
-| F3 | Sound synthesis toolkit and baseline audio | 5300-5399 | `assets/gen/audio/**`, `src/core/synth/**`, `tests/synth/**`, `tools/e2e/*/scenarios/synth{,.*}.ps1`, `tools/sounds/**` | - | synth, owners |
-| F4 | Dimension, time, teleport and Twilight portal (spike S1) | 5400-5499 | `**/*.d/dimension.json`, `assets/data/*/dimension.json`, `assets/lang/*/dimension.json`, `assets/pack/{bp,rp}/**/dimension/**`, `assets/pack/rp/texts.d/*/dimension.lang`, `docs/spikes/S1.md`, `src/client/dimension/**`, `src/feature/dimension/**`, `tools/e2e/*/scenarios/dimension{,.*}.ps1` | attachment 2, block 1, config_key 11, dimension 1, dimension_type 1, function 2, gamerule 2, lang 38, sound_event 1, subcommand 1, tag 5, trigger 1 | world, rules+fx, progression, mod, selftest |
-| F5 | Generator pipeline, feature interpreter, spawn engine, Java-parity core (spike S2) | 5500-5599 | `docs/spikes/S2.md`, `src/core/{jrand,noise}/**`, `src/feature/{worldgen,features,spawn}/**`, `tests/worldgen/**`, `tools/e2e/*/scenarios/worldgen{,.*}.ps1` | feature_type 1, function 2, placement_modifier 2 | worldgen, features, spawn, selftest |
-| F6 | Landmarks: grid, placement, descriptors, conquest, protection, hints | 5600-5699 | `**/*.d/landmark.json`, `assets/data/landmarks/**`, `assets/lang/*/landmark.json`, `assets/pack/{bp,rp}/**/landmark/**`, `assets/pack/rp/texts.d/*/landmark.lang`, `src/client/landmark/**`, `src/core/landmark/**`, `src/feature/landmark/**`, `tests/landmark/**`, `tools/e2e/*/scenarios/landmark{,.*}.ps1` | damage_type 1, data_component 1, entity 1, function 1, lang 75, particle 1, structure_placement_type 2, structure_type 2, subcommand 6, tag 3, trigger 1 | landmark, structure, progression, interactions, client.render |
-| F7 | Structure kit, template toolkit and shared piece libraries | 5700-5799 | `assets/data/structure/**`, `src/feature/structure/**`, `tests/structure/**`, `tools/e2e/*/scenarios/structure{,.*}.ps1`, `tools/structures/*`, `tools/structures/lib/**` | lang 9, registry 5, registry_entry 44, structure_piece_type 1, structure_processor 17, subcommand 1 | structure, template, loot, spawn |
-| F8 | Entities, AI, multipart, projectiles and boss kit (spike S4) | 5800-5899 | `**/*.d/{entity,boss}.json`, `assets/lang/*/{entity,boss}.json`, `assets/pack/{bp,rp}/**/{entity,boss}/**`, `docs/spikes/S4.md`, `src/client/entity/**`, `src/feature/{entity,projectile,boss}/**`, `tools/e2e/*/scenarios/{entity,boss}{,.*}.ps1` | attachment 1, block_entity 10, config_key 2, data_serializer 1, lang 9, sound_event 1, trigger 1 | entity, projectile, boss, combat, loot, inventory, landmark |
-| F9 | Items, enchantments, effects, recipes, tags, data maps, stats, gear query (spike S6) | 5900-5999 | `**/*.d/item.json`, `assets/lang/*/item.json`, `docs/spikes/S6.md`, `src/client/item/**`, `src/feature/{item,enchant,effects,recipes,tags,datamaps,stats,traits,gear,catalog}/**`, `tools/e2e/*/scenarios/item{,.*}.ps1` | config_key 1, creative_tab 4, data_map 2, lang 202, registry 1, tag 37 | item, enchant+effects, recipes, data |
-| F10 | Combat, death, loot, inventories/containers, progression bus, gamerules, fx (spike S3) | 6000-6099 | `**/*.d/combat.json`, `assets/data/containers/combat.json`, `assets/lang/*/combat.json`, `docs/spikes/S3.md`, `src/client/inventory/**`, `src/feature/{combat,death,loot,inventory,progression,gamerules,fx}/**`, `tools/e2e/*/scenarios/combat{,.*}.ps1` | lang 70, loot_condition 1, loot_function 1, loot_number_provider 2, loot_table 4, subcommand 1 | combat, death, loot, inventory, progression, rules+fx, interactions |
-| F11 | Block families kit and block event dispatch | 6100-6199 | `src/client/families/**`, `src/feature/families/**`, `tools/e2e/*/scenarios/families{,.*}.ps1`, `tools/families/**` | - | families+blockevents, blockdata+redstone, interactions, inventory |
-| F12 | Client frameworks and vanilla UI fallbacks (spike S5) | 6200-6299 | `**/*.d/ui.json`, `assets/lang/*/ui.json`, `assets/pack/{bp,rp}/**/ui/**`, `docs/spikes/S5.md`, `src/client/{ui,render,world,input}/**`, `src/feature/{ui,movement}/**`, `tools/e2e/*/scenarios/ui{,.*}.ps1` | config_key 1, lang 18 | client.ui, client.render, client.world, client.input+movement |
-| F13 | Java oracle (derived goldens only) | 6300-6399 | `tests/golden/**`, `tools/e2e/*/scenarios/oracle{,.*}.ps1`, `tools/oracle/**` | - | selftest |
+| F1 | Import tool and content skeleton (spike S7) | 5100-5199 | `assets/gen/import/**`, `docs/spec/{blockstates,import}.md`, `docs/spikes/S7.md`, `tools/e2e/*/scenarios/import{,.*}.ps1`, `tools/import/**`, and its per-unit files as `import` (R3) | tag 239 | import, owners, assemble |
+| F2 | Java model converter and geometry import | 5200-5299 | `assets/gen/geo/**`, `docs/spec/models.md`, `tools/e2e/*/scenarios/models{,.*}.ps1`, `tools/models/**`, and its per-unit files as `models` (R3) | - | geo, owners |
+| F3 | Sound synthesis toolkit and baseline audio | 5300-5399 | `assets/gen/audio/**`, `src/core/synth/**`, `tests/synth/**`, `tools/e2e/*/scenarios/synth{,.*}.ps1`, `tools/sounds/**`, and its per-unit files as `synth` (R3) | - | synth, owners |
+| F4 | Dimension, time, teleport and Twilight portal (spike S1) | 5400-5499 | `**/*.d/dimension.json`, `assets/data/*/dimension.json`, `assets/lang/*/dimension.json`, `assets/pack/{bp,rp}/**/dimension/**`, `assets/pack/rp/texts.d/*/dimension.lang`, `docs/spikes/S1.md`, `src/client/dimension/**`, `src/feature/dimension/**`, `tools/e2e/*/scenarios/dimension{,.*}.ps1`, and its per-unit files as `dimension` (R3) | attachment 2, block 1, config_key 11, dimension 1, dimension_type 1, function 2, gamerule 2, lang 38, sound_event 1, subcommand 1, tag 5, trigger 1 | world, rules+fx, progression, mod, selftest |
+| F5 | Generator pipeline, feature interpreter, spawn engine, Java-parity core (spike S2) | 5500-5599 | `docs/spikes/S2.md`, `src/core/{jrand,noise}/**`, `src/feature/{worldgen,features,spawn}/**`, `tests/worldgen/**`, `tools/e2e/*/scenarios/worldgen{,.*}.ps1`, and its per-unit files as `worldgen` (R3) | feature_type 1, function 2, placement_modifier 2 | worldgen, features, spawn, selftest |
+| F6 | Landmarks: grid, placement, descriptors, conquest, protection, hints | 5600-5699 | `**/*.d/landmark.json`, `assets/data/landmarks/**`, `assets/lang/*/landmark.json`, `assets/pack/{bp,rp}/**/landmark/**`, `assets/pack/rp/texts.d/*/landmark.lang`, `src/client/landmark/**`, `src/core/landmark/**`, `src/feature/landmark/**`, `tests/landmark/**`, `tools/e2e/*/scenarios/landmark{,.*}.ps1`, and its per-unit files as `landmark` (R3) | damage_type 1, data_component 1, entity 1, function 1, lang 75, particle 1, structure_placement_type 2, structure_type 2, subcommand 8, tag 3, trigger 1 | landmark, structure, progression, interactions, client.render |
+| F7 | Structure kit, template toolkit and shared piece libraries | 5700-5799 | `assets/data/structure/**`, `src/feature/structure/**`, `tests/structure/**`, `tools/e2e/*/scenarios/structure{,.*}.ps1`, `tools/structures/*`, `tools/structures/lib/**`, and its per-unit files as `structure` (R3) | lang 9, registry 5, registry_entry 44, structure_piece_type 2, structure_processor 17, subcommand 14 | structure, template, loot, spawn |
+| F8 | Entities, AI, multipart, projectiles and boss kit (spike S4) | 5800-5899 | `**/*.d/{entity,boss}.json`, `assets/lang/*/{entity,boss}.json`, `assets/pack/{bp,rp}/**/{entity,boss}/**`, `docs/spikes/S4.md`, `src/client/entity/**`, `src/feature/{entity,projectile,boss}/**`, `tools/e2e/*/scenarios/{entity,boss}{,.*}.ps1`, and its per-unit files as `entity` (R3) | attachment 1, block_entity 10, config_key 2, data_serializer 1, lang 9, sound_event 1, trigger 1 | entity, projectile, boss, combat, loot, inventory, landmark |
+| F9 | Items, enchantments, effects, recipes, tags, data maps, stats, gear query (spike S6) | 5900-5999 | `**/*.d/item.json`, `assets/lang/*/item.json`, `docs/spikes/S6.md`, `src/client/item/**`, `src/feature/{item,enchant,effects,recipes,tags,datamaps,stats,traits,gear,catalog}/**`, `tools/e2e/*/scenarios/item{,.*}.ps1`, and its per-unit files as `item` (R3) | config_key 1, creative_tab 4, data_map 2, lang 202, registry 1, tag 37 | item, enchant+effects, recipes, data |
+| F10 | Combat, death, loot, inventories/containers, progression bus, gamerules, fx (spike S3) | 6000-6099 | `**/*.d/combat.json`, `assets/data/containers/combat.json`, `assets/lang/*/combat.json`, `docs/spikes/S3.md`, `src/client/inventory/**`, `src/feature/{combat,death,loot,inventory,progression,gamerules,fx}/**`, `tools/e2e/*/scenarios/combat{,.*}.ps1`, and its per-unit files as `combat` (R3) | lang 70, loot_condition 1, loot_function 1, loot_number_provider 2, loot_table 4, subcommand 1 | combat, death, loot, inventory, progression, rules+fx, interactions |
+| F11 | Block families kit and block event dispatch | 6100-6199 | `src/client/families/**`, `src/feature/families/**`, `tools/e2e/*/scenarios/families{,.*}.ps1`, `tools/families/**`, and its per-unit files as `families` (R3) | mod_entity 1 | families+blockevents, blockdata+redstone, interactions, inventory |
+| F12 | Client frameworks and vanilla UI fallbacks (spike S5) | 6200-6299 | `**/*.d/ui.json`, `assets/lang/*/ui.json`, `assets/pack/{bp,rp}/**/ui/**`, `docs/spikes/S5.md`, `src/client/{ui,render,world,input}/**`, `src/feature/{ui,movement}/**`, `tools/e2e/*/scenarios/ui{,.*}.ps1`, and its per-unit files as `ui` (R3) | config_key 1, lang 18 | client.ui, client.render, client.world, client.input+movement |
+| F13 | Java oracle (derived goldens only) | 6300-6399 | `tests/golden/**`, `tools/e2e/*/scenarios/oracle{,.*}.ps1`, `tools/oracle/**`, and its per-unit files as `oracle` (R3) | - | selftest |
 | F14 | Spec: world and landmarks | 6400-6499 | `docs/spec/{biomes,terrain,trees,minorlandmarks,questcamps,naga,lich,lichdecor,labyrinth}.md` | - | owners |
 | F15 | Spec: mobs and late landmarks | 6500-6599 | `docs/spec/{fauna,hostiles,hydra,stronghold,darktower,caves,aurora,giants,finalcastle}.md` | - | owners |
 | F16 | Spec: blocks, items, player systems, client; not-ported list | 6600-6699 | `docs/spec/{woodwork,building,flora,armory,weapons,artifacts,provisions,tgear,tgmove,uncraftmaps,progression,atmosphere}.md`, `docs/spec/not-ported.md` | config_key 1, lang 127, structure 4 | owners |
@@ -153,9 +226,9 @@ Implement all TF 4.8 content on top of W0. 30 units, each owning disjoint ids an
 | U6 | Flora, critters and berries (flora) | 600-699 | `src/{feature,client,core}/flora/**`, `tests/flora/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 15, block 34, block_entity 5, block_item 25, config_key 2, configured_feature 16, damage_type 2, data_component 1, feature_type 8, item 21, lang 62, loot_table 50, particle 4, placed_feature 17, recipe 20, sound_event 12, stat 2, tag 7, trigger 1 | families+blockevents, features, inventory, progression, data, client.render, fx |
 | U7 | Armor and tool tiers (armory) | 700-799 | `src/{feature,client,core}/armory/**`, `tests/armory/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 61, armor_material 8, damage_type 2, item 59, lang 76, loot_modifier 1, recipe 61, recipe_serializer 1, sound_event 1, tag 14, trim_material 6 | item, loot, enchant+effects, combat, recipes, geo, client.render |
 | U8 | Weapons and throwables (weapons) | 800-899 | `src/{feature,client,core}/weapons/**`, `tests/weapons/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 2, attachment 1, config_key 2, damage_type 1, data_component 2, data_map 2, entity 6, item 17, lang 44, particle 1, recipe 3, recipe_serializer 1, sound_event 12, stat 1, tag 1, trigger 1 | item, projectile, combat, effects, data, client.world, fx |
-| U9 | Scepters, charms, artifacts and death keeping (artifacts) | 900-999 | `src/{feature,client,core}/artifacts/**`, `tests/artifacts/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 4, attachment 3, attribute 1, block 1, block_entity 1, config_key 5, damage_type 3, data_component 8, entity 3, function 1, item 20, lang 91, loot_table 3, particle 3, recipe 15, recipe_serializer 4, sound_event 25, stat 3, subcommand 1, tag 3, trigger 1 | item, projectile, entity, death, inventory, recipes, data, client.ui, client.render |
+| U9 | Scepters, charms, artifacts and death keeping (artifacts) | 900-999 | `src/{feature,client,core}/artifacts/**`, `tests/artifacts/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 4, attachment 3, attribute 1, block 1, block_entity 1, config_key 5, damage_type 3, data_component 8, entity 3, function 1, item 20, lang 91, loot_table 3, particle 3, recipe 15, recipe_serializer 4, sound_event 25, stat 3, subcommand 3, tag 3, trigger 1 | item, projectile, entity, death, inventory, recipes, data, client.ui, client.render |
 | U10 | Provisions, enchantments, effects, music discs and soundscape (provisions) | 1000-1099 | `src/{feature,client,core}/provisions/**`, `tests/provisions/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3), `tools/sounds/music/**` | advancement 8, attachment 1, block 1, damage_type 1, data_component 1, effect 1, enchantment 4, enchantment_effect 3, item 33, jukebox_song 9, lang 52, recipe 8, sound_event 10, stat 1, tag 1, trigger 1 | item, enchant+effects, combat, client.world, synth, progression |
-| U11 | Travellers' Gear: equipment, goggles and red thread (tgear) | 1100-1199 | `src/{feature,client,core}/tgear/**`, `tests/tgear/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 6, armor_material 1, attachment 2, block 1, block_entity 1, block_item 1, config_key 5, data_component 19, item 6, keybind 4, lang 84, loot_table 1, particle 1, recipe 33, recipe_serializer 3, registry_entry 12, sound_event 9, subcommand 1, tag 1, trigger 1 | item, gear (data), recipes, combat, entity, projectile, client.ui, client.render, client.input+movement, client.world |
+| U11 | Travellers' Gear: equipment, goggles and red thread (tgear) | 1100-1199 | `src/{feature,client,core}/tgear/**`, `tests/tgear/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 6, armor_material 1, attachment 2, block 1, block_entity 1, block_item 1, config_key 5, data_component 19, item 6, keybind 4, lang 84, loot_table 1, particle 1, recipe 33, recipe_serializer 3, registry_entry 12, sound_event 9, subcommand 3, tag 1, trigger 1 | item, gear (data), recipes, combat, entity, projectile, client.ui, client.render, client.input+movement, client.world |
 | U12 | Travellers' Gear: movement (tgmove) | 1200-1299 | `src/{feature,client,core}/tgmove/**`, `tests/tgmove/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | attachment 17, config_key 1, data_component 12, lang 2, particle 1, registry_entry 12 | gear (data), client.input+movement, rules+fx, combat |
 | U13 | Uncrafting table and maps (uncraftmaps) | 1300-1399 | `src/{feature,client,core}/uncraftmaps/**`, `tests/uncraftmaps/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 5, block 1, block_item 1, config_key 10, data_map 2, item 8, lang 49, loot_condition 1, loot_table 1, menu 1, recipe 10, recipe_serializer 3, sound_event 1, stat 1, subcommand 2, tag 4, trigger 1 | recipes, inventory, client.ui, client.world, landmark, data, progression |
 | U14 | Progression and advancements (progression) | 1400-1499 | `src/{feature,client,core}/progression/**`, `tests/progression/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3), `assets/data/advancements/**`, `assets/data/restrictions/**`, `src/feature/progression_content/**` | advancement 45, config_key 1, gamerule 1, item_sub_predicate 1, lang 95, registry 1, registry_entry 9 | progression, rules+fx, client.ui, landmark, data |
@@ -165,12 +238,12 @@ Implement all TF 4.8 content on top of W0. 30 units, each owning disjoint ids an
 | U18 | Minor landmarks and decorative features (minorlandmarks) | 1800-1899 | `src/{feature,client,core}/minorlandmarks/**`, `tests/minorlandmarks/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | block 1, block_item 1, configured_feature 31, feature_type 12, lang 1, loot_table 10, map_decoration 4, placed_feature 35, structure 7, structure_piece_type 9, structure_set 6, structure_type 4 | landmark, structure, features, loot, spawn |
 | U19 | Quest grove, camps and template features (questcamps) | 1900-1999 | `src/{feature,client,core}/questcamps/**`, `tests/questcamps/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | config_key 1, configured_feature 7, entity 1, feature_type 6, lang 7, loot_table 12, map_decoration 1, placed_feature 5, registry 1, registry_entry 36, sound_event 4, spawn_egg 1, structure 2, structure_piece_type 1, structure_set 2, structure_type 2, trigger 1 | landmark, structure, template, features, entity, loot, client.ui |
 | U20 | Naga courtyard and Naga (naga) | 2000-2099 | `src/{feature,client,core}/naga/**`, `tests/naga/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | entity 1, lang 5, loot_table 1, map_decoration 1, registry_entry 1, sound_event 3, spawn_egg 1, structure 1, structure_piece_type 15, structure_set 1, structure_type 1, tag 1 | landmark, structure, template, boss, entity, loot |
-| U21 | Lich tower and Lich (lich) | 2100-2199 | `src/{feature,client,core}/lich/**`, `tests/lich/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | attribute 2, damage_type 5, entity 7, lang 23, loot_condition 1, loot_table 14, map_decoration 1, particle 1, registry_entry 165, sound_event 15, spawn_egg 2, structure 1, structure_piece_type 16, structure_set 1, structure_type 1, tag 4 | landmark, structure, template, boss, entity, projectile, loot |
-| U22 | Lich tower interiors and decor (lichdecor) | 2200-2299 | `src/{feature,client,core}/lichdecor/**`, `tests/lichdecor/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3), `assets/structures/lich/rooms/**` | advancement 11, block 40, block_entity 6, block_item 10, config_key 1, damage_type 1, data_component 3, data_map 1, data_serializer 1, entity 1, item 8, lang 68, loot_table 40, particle 2, recipe 11, registry 1, registry_entry 5, sound_event 8, stat 1, subcommand 1 | template, families+blockevents, inventory, entity, data, client.render |
+| U21 | Lich tower and Lich (lich) | 2100-2199 | `src/{feature,client,core}/lich/**`, `tests/lich/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | attribute 2, damage_type 5, entity 7, lang 23, loot_condition 1, loot_table 14, map_decoration 1, particle 1, registry_entry 165, sound_event 15, spawn_egg 2, structure 1, structure_piece_type 34, structure_set 1, structure_type 1, tag 4 | landmark, structure, template, boss, entity, projectile, loot |
+| U22 | Lich tower interiors and decor (lichdecor) | 2200-2299 | `src/{feature,client,core}/lichdecor/**`, `tests/lichdecor/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3), `assets/structures/lich/rooms/**` | advancement 11, block 40, block_entity 6, block_item 10, config_key 1, damage_type 1, data_component 3, data_map 1, data_serializer 1, entity 1, item 8, lang 68, loot_table 40, particle 2, recipe 11, registry 1, registry_entry 5, sound_event 8, stat 1, subcommand 5 | template, families+blockevents, inventory, entity, data, client.render |
 | U23 | Labyrinth and Minoshroom (labyrinth) | 2300-2399 | `src/{feature,client,core}/labyrinth/**`, `tests/labyrinth/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 5, block 1, block_item 1, damage_type 1, entity 3, item 1, lang 20, loot_table 8, map_decoration 1, recipe 5, sound_event 17, spawn_egg 3, structure 1, structure_piece_type 27, structure_set 1, structure_type 1, tag 1 | landmark, structure, boss, entity, loot, interactions |
 | U24 | Hydra lair, Hydra and fire swamp (hydra) | 2400-2499 | `src/{feature,client,core}/hydra/**`, `tests/hydra/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 2, block 4, block_entity 2, block_item 4, configured_feature 2, damage_type 4, entity 2, feature_type 1, lang 18, loot_table 5, map_decoration 1, particle 2, placed_feature 2, recipe 2, sound_event 11, spawn_egg 1, structure 1, structure_piece_type 1, structure_set 1, structure_type 1, tag 3 | landmark, structure, boss, entity, projectile, features, families+blockevents, fx |
 | U25 | Knight stronghold and Knight Phantoms (stronghold) | 2500-2599 | `src/{feature,client,core}/stronghold/**`, `tests/stronghold/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | block 2, block_item 2, damage_type 4, entity 6, lang 32, loot_table 9, map_decoration 1, sound_event 19, spawn_egg 4, stat 1, structure 1, structure_piece_type 21, structure_set 1, structure_type 1, trigger 2 | landmark, structure, boss, entity, projectile, loot, progression |
-| U26 | Dark tower, Ur-Ghast and tower devices (darktower) | 2600-2699 | `src/{feature,client,core}/darktower/**`, `tests/darktower/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 6, block 15, block_entity 5, block_item 11, damage_type 3, entity 7, item 3, lang 69, loot_table 15, map_decoration 1, particle 2, poi 1, recipe 6, sound_event 45, spawn_egg 6, structure 1, structure_piece_type 15, structure_set 1, structure_type 1, tag 4, trigger 1 | landmark, structure, boss, entity, projectile, families+blockevents, blockdata+redstone, loot, progression |
+| U26 | Dark tower, Ur-Ghast and tower devices (darktower) | 2600-2699 | `src/{feature,client,core}/darktower/**`, `tests/darktower/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 6, block 15, block_entity 5, block_item 11, damage_type 3, entity 7, item 3, lang 69, loot_table 15, map_decoration 1, particle 2, poi 1, recipe 6, sound_event 44, spawn_egg 6, structure 1, structure_piece_type 15, structure_set 1, structure_type 1, tag 4, trigger 1 | landmark, structure, boss, entity, projectile, families+blockevents, blockdata+redstone, loot, progression |
 | U27 | Troll caves and yeti cave (caves) | 2700-2799 | `src/{feature,client,core}/caves/**`, `tests/caves/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | attachment 1, block 6, block_item 6, configured_feature 6, damage_type 3, entity 5, feature_type 5, lang 33, loot_table 12, map_decoration 2, placed_feature 5, recipe 1, sound_event 19, spawn_egg 3, structure 2, structure_piece_type 9, structure_set 2, structure_type 2, tag 1 | landmark, structure, features, boss, entity, projectile, client.render |
 | U28 | Aurora palace, Snow Queen and mushroom tower (aurora) | 2800-2899 | `src/{feature,client,core}/aurora/**`, `tests/aurora/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 2, block 4, block_item 4, damage_type 2, entity 6, lang 27, loot_table 11, map_decoration 1, particle 5, recipe 2, sound_event 12, spawn_egg 5, structure 2, structure_piece_type 13, structure_set 1, structure_type 2, tag 2 | landmark, structure, boss, entity, projectile, client.render, fx |
 | U29 | Beanstalk, cloud castle and giants (giants) | 2900-2999 | `src/{feature,client,core}/giants/**`, `tests/giants/**`, its fragments, lang, data, structures, tool recipes and scenarios (R3) | advancement 8, attachment 1, block 12, block_entity 1, block_item 11, config_key 3, entity 2, item 3, lang 25, loot_condition 1, loot_modifier 1, loot_table 13, particle 1, recipe 8, sound_event 1, spawn_egg 2, structure 1, structure_set 1, structure_type 1, tag 3 | landmark, structure, families+blockevents, item, loot, entity, client.render |

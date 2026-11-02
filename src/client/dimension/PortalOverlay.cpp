@@ -11,8 +11,8 @@
 // tick inside a Twilight portal, down 2 outside, at most 60), the full-screen portal overlay drawn
 // above everything with alpha timer / 60 (a HUD layer of gf::client::hud; the sprite is drawn by
 // the contract extension feature/ext/dimension/HudSprite.h), and the screen closing while inside a
-// portal. When the HUD layer framework is not available yet (contract stub) the client asks the
-// server for the camera-fade stand-in vanilla clients get ("dimension.client").
+// portal. The client tells the server that it draws the overlay itself ("dimension.client"), so the
+// server sends it none of the camera-fade stand-in vanilla clients get.
 
 #ifdef GF_CLIENT
 
@@ -33,7 +33,6 @@
 
 #include "client/Client.h"
 #include "client/ui/Ui.h"
-#include "core/Stub.h"
 #include "feature/ext/dimension/HudSprite.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
@@ -54,7 +53,7 @@ struct ClientState {
     int  portalTimer = 0;
     int  ticks       = 0; ///< client ticks, for the sprite's animation
     bool inside      = false;
-    bool native      = false; ///< the HUD layer framework draws our layer
+    bool drawing     = false; ///< the module is installed: F12's HUD layer draws the overlay
     std::string popped;       ///< the screen a pop was scheduled for (until the HUD is on top again)
 };
 ClientState& state() {
@@ -77,7 +76,7 @@ void tick() {
     ++s.ticks;
     auto* player = currentPlayer();
     if (!player) {
-        s = ClientState{.native = s.native};
+        s = ClientState{.drawing = s.drawing};
         return;
     }
     auto&    region = player->getDimensionBlockSource();
@@ -105,7 +104,7 @@ void tick() {
         s.portalTimer = std::max(s.portalTimer - 2, 0);
     }
     if (!inside) s.popped.clear();
-    if (!before && s.portalTimer > 0) log().info("client portal overlay: {}", s.native ? "native" : "camera fade");
+    if (!before && s.portalTimer > 0) log().info("client portal overlay: {}", s.drawing ? "native" : "camera fade");
     s.inside = inside;
 }
 
@@ -129,20 +128,26 @@ void draw(screen::Canvas& canvas, float) {
 class PortalOverlayModule {
 public:
     void install() {
-        hud::addLayer("dimension.portal_overlay", 10000, draw);
-        auto calls       = core::stubCalls();
-        state().native   = std::find(calls.begin(), calls.end(), "client.hud.addLayer") == calls.end();
-        feature::net::client::onConnected([] { feature::net::client::send("dimension.client", {{"overlay", state().native}}); });
+        // F12's HUD layers draw it (the layer stays for the process: the contract has no removal,
+        // and the layer draws nothing while the timer is 0)
+        static bool const layered = [] {
+            hud::addLayer("dimension.portal_overlay", 10000, draw);
+            return true;
+        }();
+        (void)layered;
+        state().drawing = true;
+        feature::net::client::onConnected([] { feature::net::client::send("dimension.client", {{"overlay", state().drawing}}); });
         auto& bus = ll::event::EventBus::getInstance();
         mListeners.push_back(bus.emplaceListener<ll::event::ClientLevelTickEvent>([](auto&) { tick(); }));
         mListeners.push_back(bus.emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) {
-            state() = ClientState{.native = state().native};
+            state() = ClientState{.drawing = state().drawing};
         }));
     }
     void uninstall() {
         auto& bus = ll::event::EventBus::getInstance();
         for (auto& l : mListeners) bus.removeListener(l);
         mListeners.clear();
+        state() = ClientState{}; // the layer draws nothing (and reports no native overlay) from now on
     }
 
 private:
