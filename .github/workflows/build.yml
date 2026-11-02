@@ -104,7 +104,7 @@ jobs:
             @('tools/models/test.ps1', '-SkipTree'),    # F2: the converter's PowerShell / C# tests
             @('tools/models/convert.ps1', '-Check'),    # F2: the committed geometry reproduces
             @('tools/structures/build.ps1', '-Check'),  # F7: templates against TF's template definitions
-            @('tools/families/run.ps1', '-Check'))      # F11: the family generator on an assembled tree
+            @('tools/families/run.ps1', '-Out', 'build/assemble-check'))  # F11 (-Check without assembling again)
           $failed = @()
           foreach ($c in $checks) {
             Write-Host "::group::pwsh $($c -join ' ')"

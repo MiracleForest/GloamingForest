@@ -774,13 +774,6 @@ local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
     local tagkeys = {}
     for k, _ in pairs(TAG_VALUED_KEYS) do tagkeys[k] = true end
     for k, _ in pairs(reviewed.tagKeys) do tagkeys[k] = true end
-    local function allows(kinds, kind)
-        if not kinds then return true end
-        for _, k in ipairs(kinds) do
-            if k == kind then return true end
-        end
-        return false
-    end
     local function exists(id, istag, kinds)
         if not kinds then
             return (istag and known.tag or known["*"])[id] ~= nil
@@ -814,7 +807,7 @@ local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
                     count = count + 1
                     if not exists(id, istag, kinds) then
                         local d = reviewed.dangling[v]
-                        if d and allows(kinds, d.kind) then
+                        if d and (not kinds or table.contains(kinds, d.kind)) then
                             warn("dangling reference '%s' (%s) in %s: dangling in TF itself, kept for parity (tools/import/known-ids.json tfDangling): %s",
                                 v, d.kind, ctx.file, d.reason)
                         else
@@ -970,6 +963,11 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
         if spec.root == pack.root then
             for outrel, data in pairs(merge_fragments(spec, gen, manual, cfg)) do
                 local target = path.join(dst, outrel)
+                -- the merge writes the whole file: a plain file of the same path would be lost
+                if files[outrel] then
+                    fail("%s is the merge output of %s fragments: move its content into a fragment (it would be overwritten)",
+                        rel(files[outrel], projectdir), spec.glob)
+                end
                 if data.lang then
                     os.mkdir(path.directory(target))
                     io.writefile(target, table.concat(data.lang, "\n") .. "\n")
@@ -1087,9 +1085,10 @@ local function copy_data(projectdir, cfg, outdir, with_tests)
             end
         end
         for key, files in pairs(groups) do
-            -- registry may contain a slash (worldgen/biome): the namespace is the first segment
-            -- that the imported data tree has as data/<ns>/tags/<registry>
+            -- the two-segment registries (worldgen/biome, twilight/wood_palettes; see data_registry)
+            -- keep their slash: the namespace is the segment after the registry
             local registry, ns, tagpath = key:match("^(worldgen/[^/]+)/([^/]+)/(.+)$")
+            if not registry then registry, ns, tagpath = key:match("^(twilight/[^/]+)/([^/]+)/(.+)$") end
             if not registry then registry, ns, tagpath = key:match("^([^/]+)/([^/]+)/(.+)$") end
             if not registry then
                 fail("bad tag fragment path %s", key)
