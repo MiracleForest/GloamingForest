@@ -293,6 +293,7 @@ struct State {
     std::unordered_map<std::string, bool> monsterTypes; ///< sinister spawn types: Monster category (learnt)
     std::vector<Deposit>                  deposits;     ///< death chests waiting for their chunk
     std::function<bool(int dim, BlockPos const& pos)> unloadedForTest; ///< chunks that count as not loaded (selftests)
+    bool worldOpen = false; ///< between the world's ready and closed events (the deaths are saved only then)
 };
 State& S() {
     static State s;
@@ -989,7 +990,7 @@ std::optional<PendingFill> fillFromJson(Json const& j) try {
 /// for their container (on every change of the set and on each world save, so a crash right after
 /// a chest was placed does not place it again, and the loot of a chest still being filled is kept).
 void saveDeaths() {
-    if (!game::db::available()) return;
+    if (!game::db::available() || !S().worldOpen) return; // not after the world closed (its state is gone)
     Json dying = Json::array(), deposits = Json::array();
     for (auto& d : S().dying) {
         if (d.released) continue;
@@ -2019,9 +2020,15 @@ public:
     // the world lifecycle listeners go in at mod load: BDS reports its world ready while the
     // storage module installs, before this one
     void load() {
-        game::db::onWorldReady([] { loadDeaths(); });
+        game::db::onWorldReady([] {
+            S().worldOpen = true;
+            loadDeaths();
+        });
+        // a save after the world closed (BDS still ticks the level, and the storage's autosave
+        // fires, while the mods are disabled) writes nothing: saveDeaths checks worldOpen
         game::db::onWorldSave([] { saveDeaths(); });
         game::db::onWorldClosed([] {
+            S().worldOpen = false;
             S().bars.clear();
             S().qualified.clear();
             S().dying.clear();
