@@ -11,6 +11,10 @@ if ($script:Mode -eq 'local') {
     # remote: the host runs the mod; a vanilla client (remote-vanilla) must stay connected and
     # must never receive a companion packet (the server logs every accepted companion)
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
+    # the host ran this scenario's host hook (smoke.host-prelaunch.ps1) before it booted
+    $marker = Join-Path $script:HostDir 'host-prelaunch.txt'
+    if (-not (Test-Path $marker)) { throw "the host did not run scenarios/smoke.host-prelaunch.ps1 (no $marker)" }
+    Write-Step "host hook: $((Get-Content $marker -Raw).Trim())"
     $r = Invoke-SelfTest 'core.net'
     if ($r.Fail -gt 0) { throw 'core.net failed on the host' }
     if ($script:Mode -eq 'remote-vanilla') {
