@@ -117,7 +117,7 @@ $rows = @(
             @(17, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`",`"gloamingforest:lid`"=4]"),
             @(18, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`",`"gloamingforest:lid`"=4]"),
             @(20, 0, 0, 'gf_test:family_trapped_chest', "[`"$f`"=`"north`"]"),
-            @(22, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"gloamingforest:lid`"=2]"))
+            @(13, 0, -2, 'gf_test:family_chest', "[`"$f`"=`"north`",`"gloamingforest:lid`"=2]"))
     },
     @{ name = 'families-4-variants'; x = 90; blocks = @(
             @(0, 0, 0, 'gf_test:family_horizontal', "[`"$f`"=`"north`"]"),
@@ -175,13 +175,22 @@ $rows = @(
             @(12, 1, 0, 'twilightforest:blue_castle_door', ''),
             @(13, 0, 0, 'twilightforest:blue_castle_door', ''),
             @(15, 0, 0, 'twilightforest:time_log', '["twilightforest:axis"="y"]'),
-            @(15, 1, 0, 'twilightforest:time_leaves', '["twilightforest:persistent"=true]'))
+            @(15, 1, 0, 'twilightforest:time_leaves', '["twilightforest:persistent"=true]'),
+            # grass with its sides in view: under a snowy bush (the client mod draws it snowy) and bare
+            @(18, 0, 0, 'minecraft:grass_block', ''),
+            @(18, 1, 0, 'twilightforest:blackberry_bush', '["twilightforest:age"=3,"twilightforest:layers"=2]'),
+            @(20, 0, 0, 'minecraft:grass_block', ''),
+            @(20, 1, 0, 'gf_test:family_snowloggable', '["twilightforest:layers"=3]'),
+            @(22, 0, 0, 'minecraft:grass_block', ''))
     }
 )
 
 Invoke-Teleport "/tp @s 50 $($y + 1) 30 0 20"
 Start-Sleep -Seconds 3
 foreach ($row in $rows) {
+    # a host places blocks only in loaded chunks: go to each row first
+    Invoke-Teleport "/tp @s $($row.x + 10) $($y + 2) $($z - 9) 0 15"
+    Start-Sleep -Seconds 4
     foreach ($b in $row.blocks) {
         $x = $row.x + $b[0]
         $states = if ($b[4]) { " $($b[4])" } else { '' }
@@ -189,15 +198,29 @@ foreach ($row in $rows) {
     }
 }
 Start-Sleep -Seconds 12 # the chat fades
+# the lids stand open only while players look inside: a chest whose chunk loads again (the camera
+# went far away) closes its lid (Chests.cpp), so the open ones are set again before their pictures
+function Set-OpenLids {
+    $row = $rows[2]
+    foreach ($b in $row.blocks) {
+        if ($b[4] -match 'gloamingforest:lid') { Invoke-Build "setblock $($row.x + $b[0]) $($y + $b[1]) $($z + $b[2]) $($b[3]) $($b[4])" }
+    }
+}
 foreach ($row in $rows) {
     $cx = $row.x + 10
     Invoke-Teleport "/tp @s $cx $($y + 2) $($z - 9) 0 15"
     Start-Sleep -Seconds 3
+    if ($row.name -eq 'families-3-containers') {
+        Set-OpenLids
+        Start-Sleep -Seconds 2
+    }
     Save-Screenshot $row.name | Out-Null
 }
 # a close look at the containers (signs and chests)
 Invoke-Teleport "/tp @s 69 $($y + 1) $($z - 4) 0 15"
 Start-Sleep -Seconds 3
+Set-OpenLids
+Start-Sleep -Seconds 2
 Save-Screenshot 'families-5-close' | Out-Null
 # a close look at the snowloggable (3 snow layers under the sapling; it stands 5 blocks from the lit
 # lamp: block light 10, so TF's SnowLoggable.meltSnow, which melts above 11, leaves the snow)
@@ -209,7 +232,7 @@ Save-Screenshot 'families-8-snowloggable' | Out-Null
 Invoke-Teleport "/tp @s 133 $($y + 1) $($z - 4) 0 15"
 Start-Sleep -Seconds 3
 Save-Screenshot 'families-12-tf-close' | Out-Null
-Invoke-Teleport "/tp @s 150.5 $($y + 1) $($z - 2.5) 0 35"
+Invoke-Teleport "/tp @s 170.5 $($y + 2) $($z - 3.5) 0 25"
 Start-Sleep -Seconds 3
 Save-Screenshot 'families-13-tf-bush' | Out-Null
 
