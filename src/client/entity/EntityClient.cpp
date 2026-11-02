@@ -53,6 +53,9 @@
 #include "mc/client/gui/screens/models/ClientInstanceScreenModel.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/client/renderer/screen/MinecraftUIRenderContext.h"
+#include "mc/entity/components/ActorUniqueIDComponent.h"
+#include "mc/entity/components/death/DeathTickingComponent.h"
+#include "mc/entity/systems/death/ClientMobTickDeathSystemImpl.h"
 #include "mc/deps/core/math/Color.h"
 #include "mc/safety/RedactableString.h"
 
@@ -118,6 +121,14 @@ std::string plain(std::string const& s) {
 }
 
 } // namespace
+
+/// Whether the server still runs the death animation of the TF boss `uid` (its death time arrived
+/// and its bar was not removed yet).
+bool holdsDyingBody(std::int64_t uid) {
+    auto&            s = C();
+    std::scoped_lock lock(s.mutex);
+    return s.deathTimes.contains(uid);
+}
 
 /// ClientTFBossBar#renderBossBar's tint: the exact RGB of the TF boss the HUD's bar `index` shows.
 /// The bar's title is matched against the TF bars once per change (a new raw title at the index or
@@ -207,6 +218,13 @@ void drawNotches(ScreenView& view, MinecraftUIRenderContext& ctx) {
         gridCache = gridPtr;
     }
     UIControl* grid = gridPtr.get();
+    // after the HUD rendered, the context still clips to the last clipped control: draw unclipped
+    ctx.saveCurrentClippingRectangle();
+    ctx.setFullClippingRectangle();
+    struct RestoreClip {
+        MinecraftUIRenderContext& c;
+        ~RestoreClip() { c.restoreSavedClippingRectangle(); }
+    } restoreClip{ctx};
     gf::client::screen::Canvas canvas(ctx);
     for (auto const& item : grid->mChildren.get()) {
         if (!item || !item->mIsVisibleInTree) continue;
@@ -247,6 +265,49 @@ LL_TYPE_INSTANCE_HOOK(
     auto colour = origin(index);
     if (auto exact = gf::client::entity::exactColour(*this, index)) return *exact;
     return colour;
+}
+
+// A dying TF boss keeps its body for its whole death animation (the server holds its removal): the
+// client's own death ticking would end the death at 20 ticks (death smoke, the body gone) while the
+// server still has it, so it is held at 19 (the body lies on its side) until the server ends the
+// death (the bar's "remove", then RemoveActor). Vanilla clients end it at 20 on their own.
+LL_STATIC_HOOK(
+    EntityClientDeathTickHook,
+    ll::memory::HookPriority::Normal,
+    &ClientMobTickDeathSystemImpl::_tick,
+    void,
+    StrictEntityContext&                                         entity,
+    AABBShapeComponent const&                                    aabbShape,
+    ActorDefinitionIdentifierComponent const&                    actorIdentifier,
+    ActorUniqueIDComponent const&                                actorUniqueID,
+    DimensionTypeComponent const&                                dimensionType,
+    OffsetsComponent const&                                      offsets,
+    SoundEventPlayerComponent const&                             soundEventPlayer,
+    StateVectorComponent const&                                  stateVector,
+    ActorDataFlagComponent&                                      actorFlags,
+    ActorDataDirtyFlagsComponent&                                actorDirtyFlags,
+    ActorOwnerComponent&                                         actorOwner,
+    DeathTickingComponent&                                       deathTicking,
+    Optional<PlayerComponent>                                    player,
+    ViewT<StrictEntityContext, SoundEventRequestQueueComponent>& soundRequestQueueView
+) {
+    if (deathTicking.mTicks >= 19 && gf::client::entity::holdsDyingBody(actorUniqueID.mActorUniqueID->rawID)) return;
+    origin(
+        entity,
+        aabbShape,
+        actorIdentifier,
+        actorUniqueID,
+        dimensionType,
+        offsets,
+        soundEventPlayer,
+        stateVector,
+        actorFlags,
+        actorDirtyFlags,
+        actorOwner,
+        deathTicking,
+        player,
+        soundRequestQueueView
+    );
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -439,8 +500,10 @@ public:
         if (!std::exchange(handlers, true)) registerHandlers();
         EntityClientBossColourHook::hook();
         EntityClientMountHeartsHook::hook();
+        EntityClientDeathTickHook::hook();
     }
     void uninstall() {
+        EntityClientDeathTickHook::unhook();
         EntityClientMountHeartsHook::unhook();
         EntityClientBossColourHook::unhook();
         clearState();
