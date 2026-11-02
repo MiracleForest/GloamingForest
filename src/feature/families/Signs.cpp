@@ -150,6 +150,24 @@ std::string fitLine(std::string const& line, int maxWidth) {
 
 int maxWidthOf(Entry const* e) { return hanging(e) ? 60 : 90; } // HangingSignBlockEntity.MAX_TEXT_LINE_WIDTH
 
+/// Java ServerGamePacketListenerImpl.updateSignText: ChatFormatting.stripFormatting on every
+/// line a player sends. Bedrock clients read "§" and the character after it as a format code
+/// (Java's StringDecomposer skips the pair too), so every pair goes, and a lone trailing "§".
+std::string stripFormatting(std::string const& line) {
+    static constexpr char kSection[] = "\xC2\xA7"; // U+00A7 in UTF-8
+    std::string           out;
+    out.reserve(line.size());
+    for (std::size_t i = 0; i < line.size();) {
+        if (line.compare(i, 2, kSection) == 0) {
+            i += 2;
+            if (i < line.size()) i += utf8Length(static_cast<unsigned char>(line[i])); // the code character
+            continue;
+        }
+        out += line[i++];
+    }
+    return out;
+}
+
 // ---- display entities -------------------------------------------------------------------------------
 
 /// Java SignBlock.getYRotationDegrees: the direction the front text faces.
@@ -211,6 +229,14 @@ Actor* spawnDisplay(BlockSource& region, Vec3 const& at) {
     return level.addEntity(region, std::move(ctx));
 }
 
+/// The signs with display entities in loaded chunks (signsTick checks them every 20 ticks, so a
+/// display entity that went (/kill, a command that removed it) comes back, as Java's sign text
+/// can't be removed without the sign).
+std::set<GlobalPos>& displayed() {
+    static std::set<GlobalPos> s;
+    return s;
+}
+
 /// The display entities of the sign at `pos` match its text (created, renamed, moved, removed).
 void reconcileDisplay(GlobalPos const& pos) {
     auto* region = regionOf(pos.dim);
@@ -218,9 +244,15 @@ void reconcileDisplay(GlobalPos const& pos) {
     BlockPos     bp = game::blockPos(pos);
     Block const* b  = blockAt(*region, bp);
     auto const*  e  = b ? entryOf(*b) : nullptr;
-    if (!isSign(e)) return;
+    if (!isSign(e)) {
+        displayed().erase(pos);
+        return;
+    }
     auto const* raw = bd::get(*region, bp, kKey);
-    if (!raw || !raw->is_object()) return; // no text ever written
+    if (!raw || !raw->is_object()) { // no text ever written
+        displayed().erase(pos);
+        return;
+    }
     Json doc     = *raw;
     Json display = doc.value("display", Json::object());
     bool changed = false;
@@ -228,6 +260,10 @@ void reconcileDisplay(GlobalPos const& pos) {
         char const* key  = front ? "front" : "back";
         Json        side = doc.value(key, emptySide());
         Actor*      a    = entityById(display.value(key, std::int64_t{0}));
+        if (a && !a->isAlive()) { // killed (/kill): a new one replaces it
+            a->remove();
+            a = nullptr;
+        }
         if (!hasText(side)) {
             if (a) a->remove();
             if (display.contains(key)) {
@@ -257,6 +293,22 @@ void reconcileDisplay(GlobalPos const& pos) {
     if (changed) {
         doc["display"] = display;
         bd::set(*region, bp, kKey, doc);
+    }
+    if (display.empty()) displayed().erase(pos);
+    else displayed().insert(pos);
+}
+
+/// Every 20 ticks: the display entities of the signs in loaded chunks are still there, alive and
+/// in place (a sign whose chunk unloaded is checked again when the chunk ticks after its load).
+void checkDisplays() {
+    std::vector<GlobalPos> signs(displayed().begin(), displayed().end());
+    for (auto const& pos : signs) {
+        auto* region = regionOf(pos.dim);
+        if (!region || !region->hasChunksAt(game::blockPos(pos), 0, false)) {
+            displayed().erase(pos);
+            continue;
+        }
+        reconcileDisplay(pos);
     }
 }
 
@@ -402,7 +454,7 @@ bool editText(Player& player, GlobalPos const& pos, bool front, std::vector<std:
     if (!isSign(e) || docAt(pos).value("waxed", false) || !mayBuild(player) || tooFar(player, pos)) return false;
     int written = 0;
     for (auto& l : lines) {
-        l = fitLine(l, maxWidthOf(e));
+        l = fitLine(stripFormatting(l), maxWidthOf(e));
         if (!l.empty()) ++written;
     }
     signs::setText(pos, lines, front);
@@ -417,9 +469,40 @@ void openEditor(Player& player, GlobalPos const& pos, bool front) {
 }
 
 GlobalPos posOf(Json const& ctx) {
-    auto p = ctx.value("pos", Json::array());
-    if (!p.is_array() || p.size() != 4) return {};
+    auto it = ctx.is_object() ? ctx.find("pos") : ctx.end();
+    if (it == ctx.end() || !it->is_array() || it->size() != 4) return {};
+    for (auto const& v : *it)
+        if (!v.is_number_integer()) return {};
+    auto const& p = *it;
     return GlobalPos{p[0].get<int>(), p[1].get<int>(), p[2].get<int>(), p[3].get<int>()};
+}
+
+/// The wood of a sign (TFWoodTypes: twilight_oak, canopy, ...): params.wood, F1's woodType
+/// ("canopy_wood_type"), or the id (as tools/families' wood_of).
+std::string woodOf(Entry const& e) {
+    if (auto w = e.str("wood"); !w.empty()) return w;
+    if (auto t = e.str("woodType"); !t.empty()) {
+        for (std::string_view suffix : {"_wood_type", "_wood_set", "_set"}) {
+            if (t.ends_with(suffix)) {
+                t.resize(t.size() - suffix.size());
+                break;
+            }
+        }
+        return t;
+    }
+    std::string name = e.id.substr(e.id.find(':') + 1);
+    for (std::string_view suffix : {"_wall_hanging_sign", "_hanging_sign", "_wall_sign", "_sign"}) {
+        if (name.ends_with(suffix)) return name.substr(0, name.size() - suffix.size());
+    }
+    return name;
+}
+
+/// The texture the editor draws the sign with (SignEditScreen: the sign's entity texture;
+/// HangingSignEditScreen: textures/gui/hanging_signs/<wood>), params.gui_texture first.
+std::string editorTexture(Entry const& e) {
+    if (auto t = e.str("gui_texture"); !t.empty()) return t;
+    auto wood = woodOf(e);
+    return hanging(&e) ? "textures/twilightforest/gui/hanging_signs/" + wood : "textures/twilightforest/entity/signs/" + wood;
 }
 
 std::optional<Json> editorData(Player& player, Json const& ctx) {
@@ -430,12 +513,17 @@ std::optional<Json> editorData(Player& player, Json const& ctx) {
     auto const* b = blockAt(pos);
     auto const* e = b ? entryOf(*b) : nullptr;
     if (!isSign(e)) return std::nullopt;
-    auto doc = docAt(pos);
+    auto        doc  = docAt(pos);
+    auto const& side = doc[front ? "front" : "back"];
     return Json{
         {"title", trFor(player, hanging(e) ? "hanging_sign.edit" : "sign.edit", hanging(e) ? "Edit Hanging Sign Message" : "Edit Sign Message")},
-        {"lines", doc[front ? "front" : "back"]["lines"]},
+        {"lines", side["lines"]},
+        {"color", side.value("color", std::string{"black"})},
+        {"glowing", side.value("glowing", false)},
         {"max_width", maxWidthOf(e)},
         {"hanging", hanging(e)},
+        {"standing", e->family == Family::Sign}, // SignEditScreen draws the stick of a standing sign
+        {"texture", editorTexture(*e)},
     };
 }
 
@@ -755,6 +843,7 @@ void installSigns() {
     // the display entities of a broken sign
     bd::onErase([](GlobalPos const& pos, Json const& doc, std::string const&) {
         if (!doc.contains(kKey)) return;
+        displayed().erase(pos);
         broadcast(pos, nullptr); // the companions that have its text drop it
         if (!doc[kKey].contains("display")) return;
         for (auto const& [side, id] : doc[kKey]["display"].items()) {
@@ -781,10 +870,12 @@ void signsTick(int tick) {
     if (tick % 20 != 0) return;
     clearInvalidEditors();
     syncCompanions();
+    checkDisplays();
 }
 void clearSigns() {
     editors().clear();
     companionChunks().clear();
+    displayed().clear();
 }
 /// Selftests: records `player` as the sign's editor (SignBlock.openTextEdit without the screen).
 void signEditorFor(Player& player, GlobalPos const& pos, bool front) { editors()[player.getOrCreateUniqueID().rawID] = {pos, front}; }
