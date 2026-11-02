@@ -3,20 +3,27 @@
 // factories, gf::client::particles::spawnFromFx); without a native version the resource pack's
 // effect spawns, `count` times (at most 64), each offset by params "spread" as gf::fx offsets the
 // particles of vanilla clients (a gaussian times the distance per axis, ServerLevel#sendParticles).
+// The effect is added to the client level (Level::addParticleEffect, what the game's client code
+// spawns effects with); Level::spawnParticleEffect only broadcasts from a server level, so on the
+// client it showed nothing.
 
 #ifdef GF_CLIENT
 
 #include <algorithm>
 #include <atomic>
+#include <cstddef>
 #include <mutex>
+#include <new>
+#include <vector>
 #include <optional>
 #include <random>
 #include <set>
 #include <string>
 
 #include "mc/client/player/LocalPlayer.h"
+#include "mc/deps/core/string/HashedString.h"
+#include "mc/util/MolangVariableMap.h"
 #include "mc/world/level/Level.h"
-#include "mc/world/level/dimension/Dimension.h"
 
 #include "client/Client.h"
 #include "feature/ext/combat/FxNative.h"
@@ -38,6 +45,16 @@ NativeSink& sinkSlot() {
 }
 
 std::atomic<std::uint64_t> gNative{0}, gEffects{0}, gSilent{0};
+
+/// An empty MolangVariableMap (the effect gets no variables, as from the server's packets). Its
+/// default constructor is not exported; an empty map is two empty vectors and a false flag, which
+/// in the release STL the game uses is all zero bytes. It is never destroyed.
+MolangVariableMap const& noVariables() {
+    static_assert(sizeof(std::vector<short>) == 3 * sizeof(void*), "a vector is three pointers (no debug proxy)");
+    static_assert(sizeof(MolangVariableMap) == 2 * sizeof(std::vector<short>) + 8, "MolangVariableMap: two vectors and a flag");
+    alignas(MolangVariableMap) static std::byte storage[sizeof(MolangVariableMap)]{}; // zero-filled (.bss)
+    return *std::launder(reinterpret_cast<MolangVariableMap const*>(storage));
+}
 
 /// One line per particle id and route (the e2e scenarios wait for it; no line per particle).
 void logRoute(std::string const& id, std::string const& route) {
@@ -83,8 +100,7 @@ void onParticle(nlohmann::json const& msg) {
         logRoute(id, "is silent (no native factory, no resource pack effect)");
         return;
     }
-    auto& dim = player->getDimension();
-    int   n   = std::clamp(count, 1, 64);
+    int n = std::clamp(count, 1, 64);
     std::optional<Vec3> spread;
     if (params.is_object()) {
         if (auto s = params.find("spread"); s != params.end() && n > 1) {
@@ -94,10 +110,12 @@ void onParticle(nlohmann::json const& msg) {
     }
     thread_local std::mt19937       rng{std::random_device{}()};
     std::normal_distribution<float> gauss(0.f, 1.f);
+    // the effect's own motion, as vanilla clients get it (the server sends no molang variables)
+    HashedString const name(effect);
     for (int i = 0; i < n; ++i) {
         Vec3 at = pos;
         if (spread) at = Vec3{pos.x + gauss(rng) * spread->x, pos.y + gauss(rng) * spread->y, pos.z + gauss(rng) * spread->z};
-        player->getLevel().spawnParticleEffect(effect, at, &dim);
+        player->getLevel().addParticleEffect(name, at, noVariables());
     }
     ++gEffects;
     logRoute(id, "spawned as the resource pack effect " + effect);
