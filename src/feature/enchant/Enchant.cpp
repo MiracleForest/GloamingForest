@@ -15,8 +15,9 @@
 // - grindstone (EnchantUtils::removeEnchants / CraftHandlerGrindstone::_getExperienceFromItem):
 //   every custom enchantment goes (none is a curse), giving its min cost as experience;
 // - enchanting table: only enchantments in #minecraft:in_enchanting_table are offered; TF 4.8 puts
-//   none of its four there, so the table never gives them (the roll below serves registered specs
-//   with `discoverable`).
+//   none of its four there, so the table never gives them (the roll below serves specs that are
+//   `discoverable`). treasure / tradeable / discoverable come from the vanilla enchantment tags for
+//   every spec, the data's and an owner's registerType alike, unless ext::setFlags set them.
 #include "feature/enchant/Enchant.h"
 
 #include <algorithm>
@@ -49,6 +50,7 @@
 #include "mc/world/item/enchanting/ItemEnchants.h"
 
 #include "feature/enchant/EnchantInternal.h"
+#include "feature/ext/item/Enchant.h"
 #include "feature/item/DataFiles.h"
 #include "feature/item/ItemInternal.h"
 #include "feature/tags/Tags.h"
@@ -73,8 +75,9 @@ struct Entry {
 };
 
 struct Store {
-    std::recursive_mutex         mutex;
-    std::map<std::string, Entry> specs;
+    std::recursive_mutex              mutex;
+    std::map<std::string, Entry>      specs;
+    std::map<std::string, ext::Flags> flags; ///< ext::setFlags, by id
 };
 
 Store& store() {
@@ -160,22 +163,34 @@ Spec specOfJson(std::string const& id, Json const& j) {
     return s;
 }
 
-/// Reads a data spec's flags from vanilla's enchantment tags, on first use: the tags may reload after
-/// the enchantments (reload listeners run in registration order). TF 4.8 adds its enchantments to
-/// none of #minecraft:treasure / tradeable / in_enchanting_table. Lock held.
+/// Reads a spec's flags from vanilla's enchantment tags (or ext::setFlags), on first use: the tags
+/// may reload after the enchantments (reload listeners run in registration order). TF 4.8 adds its
+/// enchantments to none of #minecraft:treasure / tradeable / in_enchanting_table. Lock held.
 Entry& resolveFlags(std::string const& id, Entry& e) {
     if (!e.flagsPending) return e;
-    e.flagsPending        = false;
+    e.flagsPending = false;
+    if (auto it = store().flags.find(id); it != store().flags.end()) {
+        e.spec.treasure     = it->second.treasure;
+        e.spec.tradeable    = it->second.tradeable;
+        e.spec.discoverable = it->second.discoverable;
+        return e;
+    }
     e.spec.treasure     = tags::has(tags::Registry::Enchantment, "minecraft:treasure", id);
     e.spec.tradeable    = tags::has(tags::Registry::Enchantment, "minecraft:tradeable", id);
     e.spec.discoverable = tags::has(tags::Registry::Enchantment, "minecraft:in_enchanting_table", id);
     return e;
 }
 
+/// Every spec reads its flags again at its next use (the tags reloaded, a flag override changed).
+void invalidateFlags(Store& st) {
+    for (auto& [id, e] : st.specs) e.flagsPending = true;
+}
+
 void loadData() {
     auto&           st = store();
     std::lock_guard lock(st.mutex);
     std::erase_if(st.specs, [](auto const& e) { return e.second.fromData; });
+    invalidateFlags(st); // the tags reload with the data: the registered specs read them again
     int n = 0;
     for (auto const& f : data::list("enchantment")) {
         if (f.ns == "minecraft") continue; // vanilla's are Bedrock's own
@@ -230,8 +245,27 @@ void registerType(std::string const& enchantmentId, Spec spec) {
     std::lock_guard lock(st.mutex);
     auto            id = fullId(enchantmentId);
     if (spec.nameKey.empty()) spec.nameKey = "enchantment." + id.substr(0, id.find(':')) + "." + id.substr(id.find(':') + 1);
-    st.specs[id] = {std::move(spec), false};
+    // treasure / tradeable / discoverable are Java's tags (or ext::setFlags), not the Spec's defaults
+    st.specs[id] = {std::move(spec), false, true};
 }
+
+namespace ext {
+void setFlags(std::string const& enchantmentId, Flags flags) {
+    auto&           st = store();
+    std::lock_guard lock(st.mutex);
+    auto            id = fullId(enchantmentId);
+    st.flags[id]       = flags;
+    if (auto it = st.specs.find(id); it != st.specs.end()) it->second.flagsPending = true;
+}
+
+void clearFlags(std::string const& enchantmentId) {
+    auto&           st = store();
+    std::lock_guard lock(st.mutex);
+    auto            id = fullId(enchantmentId);
+    st.flags.erase(id);
+    if (auto it = st.specs.find(id); it != st.specs.end()) it->second.flagsPending = true;
+}
+} // namespace ext
 
 int level(ItemStack const& stack, std::string const& enchantmentId) {
     if (game::items::isEmpty(stack)) return 0;
@@ -344,6 +378,7 @@ void unregisterType(std::string const& enchantmentId) {
     auto&           st = store();
     std::lock_guard lock(st.mutex);
     st.specs.erase(fullId(enchantmentId));
+    st.flags.erase(fullId(enchantmentId));
 }
 
 std::string levelName(int lvl) {
@@ -387,7 +422,7 @@ void updateGlint(ItemStack& stack) {
     }
 }
 
-int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, bool bookEnchant, bool creative) {
+int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, bool bookEnchant, bool creative, int* joined) {
     if (game::items::isEmpty(out)) return 0;
     auto outId = game::items::idOf(out);
     auto mine  = custom(first);
@@ -418,6 +453,7 @@ int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, 
     for (auto const& [id, lvl] : mine) held[id] = lvl;
     auto stored = Json::object();
     for (auto const& [id, lvl] : mine) stored[id] = lvl;
+    if (joined) *joined = 0;
     for (auto const& [id, lvl2] : theirs) {
         auto spec = specOf(id);
         int  lvl1 = held.contains(id) ? held[id] : 0;
@@ -434,6 +470,7 @@ int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, 
         if (spec) lvl = std::min(lvl, spec->maxLevel);
         stored[id] = lvl;
         held[id]   = lvl;
+        if (joined) ++*joined;
         int anvil  = spec ? spec->anvilCost : 1;
         if (bookEnchant) anvil = std::max(1, anvil / 2);
         cost += anvil * lvl;
@@ -583,6 +620,8 @@ bool anyDiscoverable() {
 } // namespace
 
 namespace internal {
+
+bool anyTableEnchantment() { return anyDiscoverable(); }
 
 std::map<std::string, int> rollTable(std::string const& itemId, int enchantValue, int cost, int seed, int option) {
     std::map<std::string, int> out;

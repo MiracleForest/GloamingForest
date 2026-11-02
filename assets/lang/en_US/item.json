@@ -1,0 +1,7 @@
+{
+  "gf.item.anvil.title": "Repair & Name",
+  "gf.item.anvil.pick": "Apply the book to:",
+  "gf.item.anvil.none": "Nothing in your inventory can take this book:",
+  "gf.item.anvil.cost": "Enchantment Cost: {}",
+  "gf.item.anvil.levels": "Enchantment Cost: {}"
+}

@@ -7,9 +7,11 @@
 #include <string>
 #include <vector>
 
+#include "mc/world/item/ItemStack.h"
+
 #include "feature/enchant/Enchant.h"
 
-class ItemStack;
+class BlockPos;
 class Player;
 
 namespace gf::enchant::internal {
@@ -27,8 +29,9 @@ namespace gf::enchant::internal {
 [[nodiscard]] bool supports(std::string const& enchantmentId, std::string const& itemId);
 /// Java's anvil merge of the custom enchantments of `second` into `out` (the copy of `first` the
 /// anvil made, the vanilla enchantments merged by the engine): returns the extra anvil cost. The
-/// anvil hook's path; `creative`: the player builds instantly (no supported-items check).
-int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, bool bookEnchant, bool creative = false);
+/// anvil hook's path; `creative`: the player builds instantly (no supported-items check). `joined`:
+/// how many of the second item's custom enchantments joined (AnvilMenu's "flag2").
+int mergeAnvil(ItemStack const& first, ItemStack const& second, ItemStack& out, bool bookEnchant, bool creative = false, int* joined = nullptr);
 /// The grindstone: removes every custom enchantment (none of TF's is a curse). True when any was.
 bool grind(ItemStack& stack);
 /// The experience the grindstone gives for the custom enchantments (Java: the min cost of each).
@@ -39,8 +42,29 @@ bool grind(ItemStack& stack);
 /// Anvil merges with custom enchantments a player made through item stack requests (selftests).
 void              countAnvilMerge(Player& player);
 [[nodiscard]] int anvilMergeCount(Player& player);
-/// Removes a registered enchantment spec (selftests).
+/// Removes a registered enchantment spec and its ext::setFlags (selftests).
 void unregisterType(std::string const& enchantmentId);
+/// Whether the enchanting table may offer any custom enchantment (a discoverable, non-treasure spec).
+[[nodiscard]] bool anyTableEnchantment();
+/// The vanilla anvil fallback (ext/item/Enchant.h): what applying the book in the player's
+/// inventory slot `bookSlot` to the stack in `targetSlot` gives (Java's AnvilMenu#createResult: the
+/// merged copy and the level cost, prior work included); nullopt when it would give nothing.
+struct AnvilOffer {
+    int       targetSlot = -1;
+    ItemStack result;
+    int       cost = 0;
+};
+[[nodiscard]] std::optional<AnvilOffer> anvilOffer(Player& player, int bookSlot, int targetSlot);
+/// Every inventory slot the book in `bookSlot` makes an offer for, in slot order.
+[[nodiscard]] std::vector<AnvilOffer> anvilOffers(Player& player, int bookSlot);
+/// Applies an offer as the anvil does (checked again; levels, the book, the prior work, the anvil at
+/// `anvil` may be damaged). False when the inventory changed meanwhile or the player lacks the levels.
+bool applyAnvilOffer(Player& player, int bookSlot, int targetSlot, BlockPos const* anvil);
+/// Whether a stack is an enchanted book whose enchantments are all custom (the vanilla client's anvil
+/// offers nothing for it).
+[[nodiscard]] bool isCustomOnlyBook(ItemStack const& stack);
+/// Vanilla anvil fallback uses of a player (selftests / e2e).
+[[nodiscard]] int anvilFallbackCount(Player& player);
 /// Roman numerals as Java's enchantment.level.N ("I" .. "X", then digits).
 [[nodiscard]] std::string levelName(int level);
 /// The glint marker: an empty vanilla enchantment list makes clients draw the glint without a

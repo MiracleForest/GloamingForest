@@ -1,0 +1,7 @@
+{
+  "gf.item.anvil.title": "修复和命名",
+  "gf.item.anvil.pick": "将附魔书用于：",
+  "gf.item.anvil.none": "物品栏中没有物品可以接受这本书：",
+  "gf.item.anvil.cost": "附魔花费：{}",
+  "gf.item.anvil.levels": "附魔花费：{}"
+}
