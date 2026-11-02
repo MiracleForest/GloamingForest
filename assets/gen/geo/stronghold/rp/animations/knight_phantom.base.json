@@ -1,0 +1,16 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.knight_phantom.base": {
+      "loop": true,
+      "bones": {
+        "leftLeg": {
+          "rotation": ["math.sin(query.life_time * 343.7747) * 11.4592 + 22.9183", 0, 0]
+        },
+        "rightLeg": {
+          "rotation": ["math.sin(query.life_time * 343.7747) * 11.4592 + 22.9183", 0, 0]
+        }
+      }
+    }
+  }
+}

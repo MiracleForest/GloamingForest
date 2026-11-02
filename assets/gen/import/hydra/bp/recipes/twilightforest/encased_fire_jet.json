@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:encased_fire_jet"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#A#", "A^A", "uuu"],
+    "key": {
+      "#": {
+        "item": "twilightforest:encased_towerwood"
+      },
+      "^": {
+        "item": "twilightforest:fire_jet"
+      },
+      "u": {
+        "item": "minecraft:lava_bucket"
+      },
+      "A": {
+        "item": "minecraft:redstone"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:fire_jet"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:encased_fire_jet"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "entity.twilightforest.maze_slime": "Slime do Labirinto",
+  "entity.twilightforest.minoshroom": "Minogumelo",
+  "entity.twilightforest.minotaur": "Minotauro",
+  "item.twilightforest.maze_slime_spawn_egg": "Ovo gerador de Slime do Labirinto",
+  "item.twilightforest.minoshroom_spawn_egg": "Ovo gerador de Minogumelo",
+  "item.twilightforest.minotaur_spawn_egg": "Ovo Gerador de Minotauro",
+  "subtitles.twilightforest.entity.maze_slime.death": "Slime do Labirinto morre",
+  "subtitles.twilightforest.entity.maze_slime.hurt": "Slime do Labirinto causa dano",
+  "subtitles.twilightforest.entity.maze_slime.squish": "Slime do Labirinto esmaga",
+  "subtitles.twilightforest.entity.minoshroom.ambient": "Minogumelo muje",
+  "subtitles.twilightforest.entity.minoshroom.attack": "Minocogumelo ataca",
+  "subtitles.twilightforest.entity.minoshroom.death": "Minogumelo morre",
+  "subtitles.twilightforest.entity.minoshroom.hurt": "Minogumelo ferido",
+  "subtitles.twilightforest.entity.minoshroom.slam": "Minogumelo bate no chão",
+  "subtitles.twilightforest.entity.minotaur.ambient": "Minotauro muje",
+  "subtitles.twilightforest.entity.minotaur.attack": "Minotauro ataca",
+  "subtitles.twilightforest.entity.minotaur.death": "Minotauro morre",
+  "subtitles.twilightforest.entity.minotaur.hurt": "Minotauro é ferido"
+}

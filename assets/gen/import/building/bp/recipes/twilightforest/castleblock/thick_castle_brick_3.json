@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:castleblock/thick_castle_brick_3"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##", "##"],
+    "key": {
+      "#": {
+        "item": "twilightforest:mossy_castle_brick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:castle_brick"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:thick_castle_brick",
+      "count": 4
+    }
+  }
+}

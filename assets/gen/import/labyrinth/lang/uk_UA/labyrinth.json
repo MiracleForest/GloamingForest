@@ -1,0 +1,22 @@
+{
+  "block.twilightforest.maze_slime_block": "Слизовий блок лабіринту",
+  "entity.twilightforest.maze_slime": "Слимак лабіринту",
+  "entity.twilightforest.minoshroom": "Гриботавр",
+  "entity.twilightforest.minotaur": "Мінотавр",
+  "item.twilightforest.maze_slime_ball": "Лабіринтова слизова кулька",
+  "item.twilightforest.maze_slime_spawn_egg": "Яйце виклику слимака лабіринту",
+  "item.twilightforest.minoshroom_spawn_egg": "Яйце виклику Гриботавра",
+  "item.twilightforest.minotaur_spawn_egg": "Яйце виклику мінотавра",
+  "subtitles.twilightforest.entity.maze_slime.death": "Слимак лабіринту гине",
+  "subtitles.twilightforest.entity.maze_slime.hurt": "Слимак лабіринту поранено",
+  "subtitles.twilightforest.entity.maze_slime.squish": "Слимак лабіринту хлюпає",
+  "subtitles.twilightforest.entity.minoshroom.ambient": "Гриботавр мичить",
+  "subtitles.twilightforest.entity.minoshroom.attack": "Гриботавр атакує",
+  "subtitles.twilightforest.entity.minoshroom.death": "Гриботавр помирає",
+  "subtitles.twilightforest.entity.minoshroom.hurt": "Гриботавра поранено",
+  "subtitles.twilightforest.entity.minoshroom.slam": "Гриботавр плескає по землі",
+  "subtitles.twilightforest.entity.minotaur.ambient": "Мінотавр мичить",
+  "subtitles.twilightforest.entity.minotaur.attack": "Мінотавр атакує",
+  "subtitles.twilightforest.entity.minotaur.death": "Мінотавр гине",
+  "subtitles.twilightforest.entity.minotaur.hurt": "Мінотавра поранено"
+}

@@ -1,0 +1,42 @@
+{
+  "about": "Rustle of leaves, paper or cloth: band-passed noise grains.",
+  "params": {
+    "len": 0.5,
+    "density": 220,
+    "f0": 1500,
+    "f1": 7000
+  },
+  "length": "$len",
+  "tail": 0.05,
+  "layers": [
+    {
+      "type": "grains",
+      "density": {
+        "env": [
+          [
+            0,
+            "$density*0.3"
+          ],
+          [
+            "$len*0.3",
+            "$density"
+          ],
+          [
+            "$len",
+            "$density*0.2"
+          ]
+        ]
+      },
+      "grain": [
+        0.004,
+        0.02
+      ],
+      "freq": [
+        "$f0",
+        "$f1"
+      ],
+      "wave": "noise",
+      "q": 1.5
+    }
+  ]
+}

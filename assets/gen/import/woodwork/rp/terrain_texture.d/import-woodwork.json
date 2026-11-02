@@ -1,0 +1,311 @@
+{
+  "tf_block_canopy_log": {
+    "textures": "textures/twilightforest/block/canopy_log"
+  },
+  "tf_block_canopy_log_top": {
+    "textures": "textures/twilightforest/block/canopy_log_top"
+  },
+  "tf_block_dark_log": {
+    "textures": "textures/twilightforest/block/dark_log"
+  },
+  "tf_block_dark_log_top": {
+    "textures": "textures/twilightforest/block/dark_log_top"
+  },
+  "tf_block_mangrove_log": {
+    "textures": "textures/twilightforest/block/mangrove_log"
+  },
+  "tf_block_mangrove_log_top": {
+    "textures": "textures/twilightforest/block/mangrove_log_top"
+  },
+  "tf_block_mining_log": {
+    "textures": "textures/twilightforest/block/mining_log"
+  },
+  "tf_block_moss_overhang": {
+    "textures": "textures/twilightforest/block/moss_overhang"
+  },
+  "tf_block_snow_overhang": {
+    "textures": "textures/twilightforest/block/snow_overhang"
+  },
+  "tf_block_sorting_log": {
+    "textures": "textures/twilightforest/block/sorting_log"
+  },
+  "tf_block_stripped_canopy_log": {
+    "textures": "textures/twilightforest/block/stripped_canopy_log"
+  },
+  "tf_block_stripped_canopy_log_top": {
+    "textures": "textures/twilightforest/block/stripped_canopy_log_top"
+  },
+  "tf_block_stripped_dark_log": {
+    "textures": "textures/twilightforest/block/stripped_dark_log"
+  },
+  "tf_block_stripped_dark_log_top": {
+    "textures": "textures/twilightforest/block/stripped_dark_log_top"
+  },
+  "tf_block_stripped_mangrove_log": {
+    "textures": "textures/twilightforest/block/stripped_mangrove_log"
+  },
+  "tf_block_stripped_mangrove_log_top": {
+    "textures": "textures/twilightforest/block/stripped_mangrove_log_top"
+  },
+  "tf_block_stripped_mining_log": {
+    "textures": "textures/twilightforest/block/stripped_mining_log"
+  },
+  "tf_block_stripped_mining_log_top": {
+    "textures": "textures/twilightforest/block/stripped_mining_log_top"
+  },
+  "tf_block_stripped_sorting_log": {
+    "textures": "textures/twilightforest/block/stripped_sorting_log"
+  },
+  "tf_block_stripped_sorting_log_top": {
+    "textures": "textures/twilightforest/block/stripped_sorting_log_top"
+  },
+  "tf_block_stripped_time_log": {
+    "textures": "textures/twilightforest/block/stripped_time_log"
+  },
+  "tf_block_stripped_time_log_top": {
+    "textures": "textures/twilightforest/block/stripped_time_log_top"
+  },
+  "tf_block_stripped_transformation_log": {
+    "textures": "textures/twilightforest/block/stripped_transformation_log"
+  },
+  "tf_block_stripped_transformation_log_top": {
+    "textures": "textures/twilightforest/block/stripped_transformation_log_top"
+  },
+  "tf_block_stripped_twilight_oak_log": {
+    "textures": "textures/twilightforest/block/stripped_twilight_oak_log"
+  },
+  "tf_block_stripped_twilight_oak_log_top": {
+    "textures": "textures/twilightforest/block/stripped_twilight_oak_log_top"
+  },
+  "tf_block_time_log": {
+    "textures": "textures/twilightforest/block/time_log"
+  },
+  "tf_block_transformation_log": {
+    "textures": "textures/twilightforest/block/transformation_log"
+  },
+  "tf_block_twilight_oak_log": {
+    "textures": "textures/twilightforest/block/twilight_oak_log"
+  },
+  "tf_block_twilight_oak_log_top": {
+    "textures": "textures/twilightforest/block/twilight_oak_log_top"
+  },
+  "tf_block_wood_bookshelf_canopy": {
+    "textures": "textures/twilightforest/block/wood/bookshelf_canopy"
+  },
+  "tf_block_wood_door_canopy_lower": {
+    "textures": "textures/twilightforest/block/wood/door/canopy_lower"
+  },
+  "tf_block_wood_door_canopy_upper": {
+    "textures": "textures/twilightforest/block/wood/door/canopy_upper"
+  },
+  "tf_block_wood_door_darkwood_lower": {
+    "textures": "textures/twilightforest/block/wood/door/darkwood_lower"
+  },
+  "tf_block_wood_door_darkwood_upper": {
+    "textures": "textures/twilightforest/block/wood/door/darkwood_upper"
+  },
+  "tf_block_wood_door_mangrove_lower": {
+    "textures": "textures/twilightforest/block/wood/door/mangrove_lower"
+  },
+  "tf_block_wood_door_mangrove_upper": {
+    "textures": "textures/twilightforest/block/wood/door/mangrove_upper"
+  },
+  "tf_block_wood_door_mine_lower": {
+    "textures": "textures/twilightforest/block/wood/door/mine_lower"
+  },
+  "tf_block_wood_door_mine_upper": {
+    "textures": "textures/twilightforest/block/wood/door/mine_upper"
+  },
+  "tf_block_wood_door_sort_lower": {
+    "textures": "textures/twilightforest/block/wood/door/sort_lower"
+  },
+  "tf_block_wood_door_sort_side": {
+    "textures": "textures/twilightforest/block/wood/door/sort_side"
+  },
+  "tf_block_wood_door_sort_upper": {
+    "textures": "textures/twilightforest/block/wood/door/sort_upper"
+  },
+  "tf_block_wood_door_time_lower": {
+    "textures": "textures/twilightforest/block/wood/door/time_lower"
+  },
+  "tf_block_wood_door_time_upper": {
+    "textures": "textures/twilightforest/block/wood/door/time_upper"
+  },
+  "tf_block_wood_door_trans_lower": {
+    "textures": "textures/twilightforest/block/wood/door/trans_lower"
+  },
+  "tf_block_wood_door_trans_upper": {
+    "textures": "textures/twilightforest/block/wood/door/trans_upper"
+  },
+  "tf_block_wood_door_twilight_oak_lower": {
+    "textures": "textures/twilightforest/block/wood/door/twilight_oak_lower"
+  },
+  "tf_block_wood_door_twilight_oak_upper": {
+    "textures": "textures/twilightforest/block/wood/door/twilight_oak_upper"
+  },
+  "tf_block_wood_planks_darkwood_0": {
+    "textures": "textures/twilightforest/block/wood/planks_darkwood_0"
+  },
+  "tf_block_wood_planks_mangrove_0": {
+    "textures": "textures/twilightforest/block/wood/planks_mangrove_0"
+  },
+  "tf_block_wood_planks_mine_0": {
+    "textures": "textures/twilightforest/block/wood/planks_mine_0"
+  },
+  "tf_block_wood_planks_sort_0": {
+    "textures": "textures/twilightforest/block/wood/planks_sort_0"
+  },
+  "tf_block_wood_planks_time_0": {
+    "textures": "textures/twilightforest/block/wood/planks_time_0"
+  },
+  "tf_block_wood_planks_trans_0": {
+    "textures": "textures/twilightforest/block/wood/planks_trans_0"
+  },
+  "tf_block_wood_planks_twilight_oak_0": {
+    "textures": "textures/twilightforest/block/wood/planks_twilight_oak_0"
+  },
+  "tf_block_wood_trapdoor_canopy_trapdoor": {
+    "textures": "textures/twilightforest/block/wood/trapdoor/canopy_trapdoor"
+  },
+  "tf_block_wood_trapdoor_darkwood_trapdoor": {
+    "textures": "textures/twilightforest/block/wood/trapdoor/darkwood_trapdoor"
+  },
+  "tf_block_wood_trapdoor_mangrove_trapdoor": {
+    "textures": "textures/twilightforest/block/wood/trapdoor/mangrove_trapdoor"
+  },
+  "tf_block_wood_trapdoor_mine_trapdoor": {
+    "textures": "textures/twilightforest/block/wood/trapdoor/mine_trapdoor"
+  },
+  "tf_block_wood_trapdoor_sort_trapdoor": {
+    "textures": "textures/twilightforest/block/wood/trapdoor/sort_trapdoor"
+  },
+  "tf_block_wood_trapdoor_time_trapdoor": {
+    "textures": "textures/twilightforest/block/wood/trapdoor/time_trapdoor"
+  },
+  "tf_block_wood_trapdoor_trans_trapdoor": {
+    "textures": "textures/twilightforest/block/wood/trapdoor/trans_trapdoor"
+  },
+  "tf_block_wood_trapdoor_twilight_oak_trapdoor": {
+    "textures": "textures/twilightforest/block/wood/trapdoor/twilight_oak_trapdoor"
+  },
+  "tf_vanilla_block_acacia_log": {
+    "textures": "textures/blocks/log_acacia"
+  },
+  "tf_vanilla_block_acacia_log_top": {
+    "textures": "textures/blocks/log_acacia_top"
+  },
+  "tf_vanilla_block_acacia_planks": {
+    "textures": "textures/blocks/planks_acacia"
+  },
+  "tf_vanilla_block_bamboo_planks": {
+    "textures": "textures/blocks/bamboo_planks"
+  },
+  "tf_vanilla_block_birch_log": {
+    "textures": "textures/blocks/log_birch"
+  },
+  "tf_vanilla_block_birch_log_top": {
+    "textures": "textures/blocks/log_birch_top"
+  },
+  "tf_vanilla_block_cherry_log": {
+    "textures": "textures/blocks/cherry_log_side"
+  },
+  "tf_vanilla_block_cherry_log_top": {
+    "textures": "textures/blocks/cherry_log_top"
+  },
+  "tf_vanilla_block_cherry_planks": {
+    "textures": "textures/blocks/cherry_planks"
+  },
+  "tf_vanilla_block_crimson_planks": {
+    "textures": "textures/blocks/huge_fungus/crimson_planks"
+  },
+  "tf_vanilla_block_crimson_stem": {
+    "textures": "textures/blocks/huge_fungus/crimson_log_side"
+  },
+  "tf_vanilla_block_crimson_stem_top": {
+    "textures": "textures/blocks/huge_fungus/crimson_log_top"
+  },
+  "tf_vanilla_block_dark_oak_log": {
+    "textures": "textures/blocks/log_big_oak"
+  },
+  "tf_vanilla_block_dark_oak_log_top": {
+    "textures": "textures/blocks/log_big_oak_top"
+  },
+  "tf_vanilla_block_dark_oak_planks": {
+    "textures": "textures/blocks/planks_big_oak"
+  },
+  "tf_vanilla_block_jungle_log": {
+    "textures": "textures/blocks/log_jungle"
+  },
+  "tf_vanilla_block_jungle_log_top": {
+    "textures": "textures/blocks/log_jungle_top"
+  },
+  "tf_vanilla_block_ladder": {
+    "textures": "textures/blocks/ladder"
+  },
+  "tf_vanilla_block_mangrove_log": {
+    "textures": "textures/blocks/mangrove_log_side"
+  },
+  "tf_vanilla_block_mangrove_log_top": {
+    "textures": "textures/blocks/mangrove_log_top"
+  },
+  "tf_vanilla_block_mangrove_planks": {
+    "textures": "textures/blocks/mangrove_planks"
+  },
+  "tf_vanilla_block_oak_log_top": {
+    "textures": "textures/blocks/log_oak_top"
+  },
+  "tf_vanilla_block_short_grass": {
+    "textures": "textures/blocks/tallgrass_carried"
+  },
+  "tf_vanilla_block_spruce_log": {
+    "textures": "textures/blocks/log_spruce"
+  },
+  "tf_vanilla_block_spruce_log_top": {
+    "textures": "textures/blocks/log_spruce_top"
+  },
+  "tf_vanilla_block_spruce_planks": {
+    "textures": "textures/blocks/planks_spruce"
+  },
+  "tf_vanilla_block_stripped_acacia_log": {
+    "textures": "textures/blocks/stripped_acacia_log"
+  },
+  "tf_vanilla_block_stripped_birch_log": {
+    "textures": "textures/blocks/stripped_birch_log"
+  },
+  "tf_vanilla_block_stripped_cherry_log": {
+    "textures": "textures/blocks/stripped_cherry_log_side"
+  },
+  "tf_vanilla_block_stripped_crimson_stem": {
+    "textures": "textures/blocks/huge_fungus/stripped_crimson_stem_side"
+  },
+  "tf_vanilla_block_stripped_dark_oak_log": {
+    "textures": "textures/blocks/stripped_dark_oak_log"
+  },
+  "tf_vanilla_block_stripped_jungle_log": {
+    "textures": "textures/blocks/stripped_jungle_log"
+  },
+  "tf_vanilla_block_stripped_mangrove_log": {
+    "textures": "textures/blocks/stripped_mangrove_log_side"
+  },
+  "tf_vanilla_block_stripped_oak_log": {
+    "textures": "textures/blocks/stripped_oak_log"
+  },
+  "tf_vanilla_block_stripped_spruce_log": {
+    "textures": "textures/blocks/stripped_spruce_log"
+  },
+  "tf_vanilla_block_stripped_warped_stem": {
+    "textures": "textures/blocks/huge_fungus/stripped_warped_stem_side"
+  },
+  "tf_vanilla_block_vine": {
+    "textures": "textures/blocks/vine_carried"
+  },
+  "tf_vanilla_block_warped_planks": {
+    "textures": "textures/blocks/huge_fungus/warped_planks"
+  },
+  "tf_vanilla_block_warped_stem": {
+    "textures": "textures/blocks/huge_fungus/warped_stem_side"
+  },
+  "tf_vanilla_block_warped_stem_top": {
+    "textures": "textures/blocks/huge_fungus/warped_stem_top"
+  }
+}

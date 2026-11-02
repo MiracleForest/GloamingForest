@@ -1,0 +1,28 @@
+{
+  "about": "Plucked string (Karplus-Strong).",
+  "params": {
+    "freq": 220,
+    "dur": 0.5,
+    "vel": 1,
+    "bright": 0.5,
+    "decay": 1.6
+  },
+  "length": "$dur",
+  "tail": 0.6,
+  "normalize": -3,
+  "layers": [
+    {
+      "type": "pluck",
+      "freq": "$freq",
+      "decay": "$decay",
+      "bright": "$bright",
+      "ring": 0.6,
+      "env": {
+        "a": 0.001,
+        "d": 0,
+        "s": 1,
+        "r": 0.5
+      }
+    }
+  ]
+}

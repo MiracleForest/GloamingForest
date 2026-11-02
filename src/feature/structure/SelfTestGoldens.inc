@@ -1,0 +1,51 @@
+// Golden values of the structure selftests (rule R19), {"name", "value"}: volume hashes of
+// in-memory placements at a fixed origin, so they do not depend on where the test area is (TF
+// blocks hash as air, so the values hold before and after the block skeleton registers them).
+// Reviewed once with screenshots of the same placements in the world (tools/e2e/client/scenarios/structure.ps1).
+{"template_none", "512ca9d6e76363cf"},
+{"template_cw90", "174b60051e64a482"},
+{"template_cw180", "eecc42f4bf847358"},
+{"template_ccw90", "bde9c82ba5082307"},
+{"template_left_right", "c2d51b80280c11d4"},
+{"template_front_back", "7769faef2fd10a7d"},
+{"template_world_cw90", "174b60051e64a482"},
+// processors: the fixture at (0, 64, 0) and the processor targets at (10, 64, 0) over the prepared
+// world; spawner_processor, update_marking and (without TF's blocks) nagastone_variants equal
+// processor_none: spawn data is not part of a volume hash, the other two change nothing here
+{"processor_none", "615811ce73edfd6e"},
+{"processor_box_cutting", "82c8e2920dc136fb"},
+{"processor_cobble_variants", "08b9650905ea0d14"},
+{"processor_courtyard_terrace", "f4331d95ca09e9bd"},
+{"processor_infest_blocks", "bb6fb223b405ae64"},
+{"processor_nagastone_variants", "615811ce73edfd6e"},
+{"processor_smart_grass", "3b61e6873de495e0"},
+{"processor_smooth_stone_variants", "887da8d50fef7e5c"},
+{"processor_soft_replace", "c0574a48c1a016a5"},
+{"processor_spawner_processor", "615811ce73edfd6e"},
+{"processor_state_transfiguring", "a6107588ea10d6d2"},
+{"processor_stone_brick_variants", "149cf4d2b3149458"},
+{"processor_targeted_rot", "0ca64de3adefa3db"},
+{"processor_update_marking", "615811ce73edfd6e"},
+{"processor_vertical_decay", "c222f28023434248"},
+{"processor_web", "ac87a6c289897a0a"},
+{"processor_wood_multiswizzle", "f281337035c1d93d"},
+{"processor_wood_swizzle", "eb71fd97bd69212d"},
+{"processor_rule", "e804d890c7414853"},
+{"processor_gravity", "b12639ed4e113cff"},
+{"processor_block_ignore", "06d114a20f41c792"},
+{"jigsaw_layout", "gf_test:structure/jig/start@-2,1,-2r0;gf_test:structure/jig/room_a@-5,1,-1r3;gf_test:structure/jig/room_b@-9,1,-1r2;gf_test:structure/jig/room_a@-1,1,-5r0;gf_test:structure/jig/room_b@-1,1,-9r3;gf_test:structure/jig/room_b@3,1,-1r0;"},
+{"jigsaw_blocks", "a0aeee07382be472"},
+// the template definitions API: getShuffledSequence's first template for eight draws of one random,
+// the terrain-adjusted assembly over the hilly test ground, and WorldUtil.adjustForTerrain(5, 5, 12, 3)
+// (checked by hand: the 3 x 3 grid heights 66 66 65 64 62 62 61 61 60, rank weighted: 2786 / 45 -> 62)
+{"shuffled_sequence", "room_a;room_a;room_a;room_a;room_b;room_b;room_a;room_b;"},
+{"jigsaw_terrain_layout", "gf_test:structure/jig/terrain_start@-2,0,-2r0;gf_test:structure/jig/room_a@-1,2,-5r0;gf_test:structure/jig/room_b@-1,2,-9r3;gf_test:structure/jig/room_b@-6,0,-1r2;gf_test:structure/jig/room_a@3,-2,-1r1;gf_test:structure/jig/room_b@6,-2,-1r0;"},
+{"adjust_for_terrain", "62"},
+{"stronghold_stones_400", "minecraft:cracked_stone_bricks=77 minecraft:infested_stone_bricks=21 minecraft:mossy_stone_bricks=123 minecraft:stone_bricks=179 "},
+{"speleothems", "c98ebbc5b764891c"},
+{"lattice_chunk00", "0,0;-3,-1;0,3;-3,1;0,7;-3,5;0,10;-3,8;6,0;-3,12;6,3;3,-1;6,7;3,1;6,10;3,5;3,8;3,12;"},
+{"maze_6x6", "a900f988d15e0ff5"},
+{"hollow_hill_small", "7b9a9299709faca8"},
+{"tower_layout", "twilightforest:TFLTBA=34 twilightforest:TFLTBea=12 twilightforest:TFLTBri=7 twilightforest:TFLTMai=1 twilightforest:TFLTOut=4 twilightforest:TFLTRAS=20 twilightforest:TFLTRF=11 twilightforest:TFLTRGF=3 twilightforest:TFLTRPO=6 twilightforest:TFLTRSF=4 twilightforest:TFLTRSt=4 twilightforest:TFLTRStO=3 twilightforest:TFLTWin=46 -16,-21,39,144,39"},
+{"tower_blocks", "7f419aede8b5cfc3"},
+{"component_helpers", "c7caf7366f3b8f18"},

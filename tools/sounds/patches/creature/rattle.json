@@ -1,0 +1,37 @@
+{
+  "about": "Rattle: a fast train of short resonant clicks.",
+  "params": {
+    "len": 0.6,
+    "rate": 32,
+    "freq": 3500,
+    "q": 4
+  },
+  "length": "$len",
+  "tail": 0.05,
+  "layers": [
+    {
+      "type": "noise",
+      "color": "white",
+      "length": 0.012,
+      "env": {
+        "a": 0.0005,
+        "d": 0.008,
+        "s": 0.0,
+        "r": 0.003
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "$freq*rand(0.85,1.15)",
+          "q": "$q"
+        }
+      ],
+      "repeat": {
+        "count": "$len*$rate",
+        "every": "1/$rate",
+        "jitter": "0.15/$rate",
+        "decay": 0.985
+      }
+    }
+  ]
+}

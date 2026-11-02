@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:minotaur",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/minotaur"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.minotaur"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#3f3024",
+        "overlay_color": "#aa7d66"
+      }
+    }
+  }
+}

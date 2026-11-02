@@ -1,0 +1,1215 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:canopy_stairs",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:half": ["bottom", "top"],
+        "twilightforest:shape": ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 15
+      },
+      "tag:minecraft:is_axe_item_destructible": {},
+      "minecraft:map_color": "#815631",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_wood_planks_canopy_0",
+          "render_method": "opaque"
+        },
+        "bottom": {
+          "texture": "tf_block_wood_planks_canopy_0",
+          "render_method": "opaque"
+        },
+        "side": {
+          "texture": "tf_block_wood_planks_canopy_0",
+          "render_method": "opaque"
+        },
+        "top": {
+          "texture": "tf_block_wood_planks_canopy_0",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 90, 0]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'straight'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'straight'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'straight'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'straight'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'straight'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'straight'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'bottom' && q.block_state('twilightforest:shape') == 'straight'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'inner_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_left'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'outer_right'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:half') == 'top' && q.block_state('twilightforest:shape') == 'straight'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_block_wood_planks_canopy_0",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [180, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

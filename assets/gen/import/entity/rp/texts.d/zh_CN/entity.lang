@@ -1,0 +1,9 @@
+config.twilightforest.boss_drop_chests=Boss战利品箱子
+config.twilightforest.boss_drop_chests.tooltip=启用后，暮色森林的Boss将会把它们的掉落物存入箱子中，箱子位于它们的生成地，而非直接把物品掉落出来。注意幻影骑士并不受此影响，因其掉落机制不同。
+config.twilightforest.multiplayer_fight_adjuster=多人游戏战斗调整
+config.twilightforest.multiplayer_fight_adjuster.more_health=更多生命值
+config.twilightforest.multiplayer_fight_adjuster.more_loot=更多战利品
+config.twilightforest.multiplayer_fight_adjuster.more_loot_and_health=更多战利品与生命值
+config.twilightforest.multiplayer_fight_adjuster.none=无
+config.twilightforest.multiplayer_fight_adjuster.tooltip=决定Boss的战斗机制在多人模式下的调整方式，有以下 4 个可用的取值：~LINEBREAK~无（NONE）：在多人参与战斗时不进行任何修改，Boss的行为将与单人模式/独自战斗时相同。~LINEBREAK~更多战利品（MORE_LOOT）：根据参与战斗的人数增加Boss掉落的战利品。该功能完全由实体战利品表控制，使用“twilightforest:multiplayer_multiplier”战利品函数。注意：该功能仅对标签“twilightforest:multiplayer_inclusive_entities”内的实体生效。~LINEBREAK~更多生命值（MORE_HEALTH）：在Boss战开始时，每多一名玩家会为Boss增加 20 心的生命值。~LINEBREAK~更多战利品与生命值（MORE_LOOT_AND_HEALTH）：同时执行以上两者的功能。
+subtitles.twilightforest.block.boss_chest.appear=Boss 战利品箱：出现

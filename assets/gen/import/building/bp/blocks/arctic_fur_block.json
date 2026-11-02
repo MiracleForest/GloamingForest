@@ -1,0 +1,32 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:arctic_fur_block",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.8
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 4
+      },
+      "tag:minecraft:is_hoe_item_destructible": {},
+      "minecraft:map_color": "#c7c7c7",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 20,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_arctic_fur_block_ctm",
+          "render_method": "opaque"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/twilight_oak_trapped_chest"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#C#", "###"],
+    "key": {
+      "#": {
+        "item": "twilightforest:twilight_oak_planks"
+      },
+      "C": {
+        "item": "minecraft:trapped_chest"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:twilight_oak_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:twilight_oak_trapped_chest",
+      "count": 2
+    }
+  }
+}

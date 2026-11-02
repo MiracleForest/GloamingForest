@@ -1,0 +1,10 @@
+{
+  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
+  "kind": "travellers_modifier_type",
+  "reason": "\"type\" of twilight/travellers_modifiers entries; a code registry (codec), no data file (src/main/java/twilightforest/init/custom/TravellersModifierTypes.java (BUILTIN))",
+  "referencedBy": [
+    "data/twilightforest/twilight/travellers_modifiers/high_jump.json",
+    "data/twilightforest/twilight/travellers_modifiers/swap_hotbar_ability.json",
+    "data/twilightforest/twilight/travellers_modifiers/zoom.json"
+  ]
+}

@@ -1,0 +1,10 @@
+block.twilightforest.encased_fire_jet=Jet de feu recouvert
+block.twilightforest.encased_smoker=Fumeur recouvert
+block.twilightforest.fire_jet=Jet de feu
+block.twilightforest.smoker=Bloc fumant
+entity.twilightforest.hydra=Hydre
+entity.twilightforest:hydra.name=Hydre
+tile.twilightforest:encased_fire_jet.name=Jet de feu recouvert
+tile.twilightforest:encased_smoker.name=Fumeur recouvert
+tile.twilightforest:fire_jet.name=Jet de feu
+tile.twilightforest:smoker.name=Bloc fumant

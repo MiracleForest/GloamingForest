@@ -1,0 +1,6 @@
+entity.twilightforest.deer=Ciervo
+entity.twilightforest.dwarf_rabbit=Conejo Enano
+entity.twilightforest.kobold=Kobold
+entity.twilightforest:deer.name=Ciervo
+entity.twilightforest:dwarf_rabbit.name=Conejo Enano
+entity.twilightforest:kobold.name=Kobold

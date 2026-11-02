@@ -1,0 +1,90 @@
+{
+  "about": "Cicada drone: high band-passed noise with a fast pulse and a slow swell.",
+  "params": {
+    "len": 2.5,
+    "pulse": 120,
+    "band": 5200
+  },
+  "length": "$len",
+  "tail": 0.2,
+  "layers": [
+    {
+      "type": "noise",
+      "color": "white",
+      "env": {
+        "env": [
+          [
+            0,
+            0
+          ],
+          [
+            "$len*0.25",
+            1
+          ],
+          [
+            "$len*0.75",
+            0.9
+          ],
+          [
+            "$len",
+            0
+          ]
+        ],
+        "curve": "smooth"
+      },
+      "tremolo": {
+        "rate": "$pulse",
+        "depth": 0.85
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "$band",
+          "q": 3
+        },
+        {
+          "type": "bp",
+          "freq": "$band",
+          "q": 2
+        }
+      ]
+    },
+    {
+      "type": "osc",
+      "wave": "square",
+      "freq": "$band*0.5",
+      "amp": 0.1,
+      "env": {
+        "env": [
+          [
+            0,
+            0
+          ],
+          [
+            "$len*0.3",
+            1
+          ],
+          [
+            "$len*0.7",
+            0.8
+          ],
+          [
+            "$len",
+            0
+          ]
+        ]
+      },
+      "tremolo": {
+        "rate": "$pulse",
+        "depth": 1
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "$band",
+          "q": 4
+        }
+      ]
+    }
+  ]
+}

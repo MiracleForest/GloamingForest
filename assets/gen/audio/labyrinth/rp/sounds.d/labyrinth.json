@@ -1,0 +1,287 @@
+{
+  "entity.twilightforest.maze_slime_small.death": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.maze_slime.death",
+    "sounds": [
+      {
+        "name": "sounds/mob/slime/small1"
+      },
+      {
+        "name": "sounds/mob/slime/small2"
+      },
+      {
+        "name": "sounds/mob/slime/small3"
+      },
+      {
+        "name": "sounds/mob/slime/small4"
+      },
+      {
+        "name": "sounds/mob/slime/small5"
+      }
+    ]
+  },
+  "entity.twilightforest.maze_slime_small.hurt": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.maze_slime.hurt",
+    "sounds": [
+      {
+        "name": "sounds/mob/slime/small1"
+      },
+      {
+        "name": "sounds/mob/slime/small2"
+      },
+      {
+        "name": "sounds/mob/slime/small3"
+      },
+      {
+        "name": "sounds/mob/slime/small4"
+      },
+      {
+        "name": "sounds/mob/slime/small5"
+      }
+    ]
+  },
+  "entity.twilightforest.maze_slime_small.squish": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.maze_slime.squish",
+    "sounds": [
+      {
+        "name": "sounds/mob/slime/small1"
+      },
+      {
+        "name": "sounds/mob/slime/small2"
+      },
+      {
+        "name": "sounds/mob/slime/small3"
+      },
+      {
+        "name": "sounds/mob/slime/small4"
+      },
+      {
+        "name": "sounds/mob/slime/small5"
+      }
+    ]
+  },
+  "entity.twilightforest.maze_slime.death": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.maze_slime.death",
+    "sounds": [
+      {
+        "name": "sounds/mob/slime/big1"
+      },
+      {
+        "name": "sounds/mob/slime/big2"
+      },
+      {
+        "name": "sounds/mob/slime/big3"
+      },
+      {
+        "name": "sounds/mob/slime/big4"
+      }
+    ]
+  },
+  "entity.twilightforest.maze_slime.hurt": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.maze_slime.hurt",
+    "sounds": [
+      {
+        "name": "sounds/mob/slime/big1"
+      },
+      {
+        "name": "sounds/mob/slime/big2"
+      },
+      {
+        "name": "sounds/mob/slime/big3"
+      },
+      {
+        "name": "sounds/mob/slime/big4"
+      }
+    ]
+  },
+  "entity.twilightforest.maze_slime.squish": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.maze_slime.squish",
+    "sounds": [
+      {
+        "name": "sounds/mob/slime/big1"
+      },
+      {
+        "name": "sounds/mob/slime/big2"
+      },
+      {
+        "name": "sounds/mob/slime/big3"
+      },
+      {
+        "name": "sounds/mob/slime/big4"
+      }
+    ]
+  },
+  "entity.twilightforest.minoshroom.ambient": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.minoshroom.ambient",
+    "sounds": [
+      {
+        "name": "sounds/mob/cow/say1"
+      },
+      {
+        "name": "sounds/mob/cow/say2"
+      },
+      {
+        "name": "sounds/mob/cow/say3"
+      },
+      {
+        "name": "sounds/mob/cow/say4"
+      }
+    ]
+  },
+  "entity.twilightforest.minoshroom.attack": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.minoshroom.attack",
+    "sounds": [
+      {
+        "name": "sounds/mob/irongolem/throw"
+      }
+    ]
+  },
+  "entity.twilightforest.minoshroom.death": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.minoshroom.death",
+    "sounds": [
+      {
+        "name": "sounds/mob/cow/hurt1"
+      },
+      {
+        "name": "sounds/mob/cow/hurt2"
+      },
+      {
+        "name": "sounds/mob/cow/hurt3"
+      }
+    ]
+  },
+  "entity.twilightforest.minoshroom.hurt": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.minoshroom.hurt",
+    "sounds": [
+      {
+        "name": "sounds/mob/cow/hurt1"
+      },
+      {
+        "name": "sounds/mob/cow/hurt2"
+      },
+      {
+        "name": "sounds/mob/cow/hurt3"
+      }
+    ]
+  },
+  "entity.twilightforest.minoshroom.slam": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.minoshroom.slam",
+    "sounds": [
+      {
+        "name": "sounds/random/explode1"
+      },
+      {
+        "name": "sounds/random/explode2"
+      },
+      {
+        "name": "sounds/random/explode3"
+      },
+      {
+        "name": "sounds/random/explode4"
+      }
+    ]
+  },
+  "entity.twilightforest.minoshroom.step": {
+    "category": "hostile",
+    "subtitle": "subtitles.block.generic.footsteps",
+    "sounds": [
+      {
+        "name": "sounds/mob/cow/step1"
+      },
+      {
+        "name": "sounds/mob/cow/step2"
+      },
+      {
+        "name": "sounds/mob/cow/step3"
+      },
+      {
+        "name": "sounds/mob/cow/step4"
+      }
+    ]
+  },
+  "entity.twilightforest.minotaur.ambient": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.minotaur.ambient",
+    "sounds": [
+      {
+        "name": "sounds/mob/cow/say1"
+      },
+      {
+        "name": "sounds/mob/cow/say2"
+      },
+      {
+        "name": "sounds/mob/cow/say3"
+      },
+      {
+        "name": "sounds/mob/cow/say4"
+      }
+    ]
+  },
+  "entity.twilightforest.minotaur.attack": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.minotaur.attack",
+    "sounds": [
+      {
+        "name": "sounds/mob/irongolem/throw"
+      }
+    ]
+  },
+  "entity.twilightforest.minotaur.death": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.minotaur.death",
+    "sounds": [
+      {
+        "name": "sounds/mob/cow/hurt1"
+      },
+      {
+        "name": "sounds/mob/cow/hurt2"
+      },
+      {
+        "name": "sounds/mob/cow/hurt3"
+      }
+    ]
+  },
+  "entity.twilightforest.minotaur.hurt": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.minotaur.hurt",
+    "sounds": [
+      {
+        "name": "sounds/mob/cow/hurt1"
+      },
+      {
+        "name": "sounds/mob/cow/hurt2"
+      },
+      {
+        "name": "sounds/mob/cow/hurt3"
+      }
+    ]
+  },
+  "entity.twilightforest.minotaur.step": {
+    "category": "hostile",
+    "subtitle": "subtitles.block.generic.footsteps",
+    "sounds": [
+      {
+        "name": "sounds/mob/cow/step1"
+      },
+      {
+        "name": "sounds/mob/cow/step2"
+      },
+      {
+        "name": "sounds/mob/cow/step3"
+      },
+      {
+        "name": "sounds/mob/cow/step4"
+      }
+    ]
+  }
+}

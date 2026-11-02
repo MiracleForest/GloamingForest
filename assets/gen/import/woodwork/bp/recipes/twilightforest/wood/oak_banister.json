@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/oak_banister"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---", "| |"],
+    "key": {
+      "-": {
+        "item": "minecraft:oak_slab"
+      },
+      "|": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:oak_slab"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:oak_banister",
+      "count": 3
+    }
+  }
+}

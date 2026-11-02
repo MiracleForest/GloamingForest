@@ -1,0 +1,40 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:gold_minotaur_axe",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_gold_minotaur_axe"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:gold_minotaur_axe.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 32
+      },
+      "minecraft:hand_equipped": true,
+      "minecraft:digger": {
+        "use_efficiency": true,
+        "destroy_speeds": [
+          {
+            "block": {
+              "tags": "q.any_tag('minecraft:is_axe_item_destructible') && !q.any_tag('minecraft:stone_tier_destructible', 'minecraft:iron_tier_destructible', 'minecraft:diamond_tier_destructible', 'minecraft:netherite_tier_destructible')"
+            },
+            "speed": 12
+          }
+        ]
+      },
+      "minecraft:tags": {
+        "tags": ["minecraft:is_axe", "minecraft:is_tool", "minecraft:golden_tier"]
+      }
+    }
+  }
+}

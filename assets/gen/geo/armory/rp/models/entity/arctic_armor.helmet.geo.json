@@ -1,0 +1,94 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.arctic_armor.helmet",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 1.75, 0]
+      },
+      "bones": [
+        {
+          "name": "head",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-4, 24, -4],
+              "size": [8, 8, 8],
+              "inflate": 1,
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "right_hood",
+          "parent": "head",
+          "pivot": [-2.5, 27, -5],
+          "cubes": [
+            {
+              "origin": [-3.5, 25, -6],
+              "size": [1, 4, 1],
+              "inflate": 0.5,
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "left_hood",
+          "parent": "head",
+          "pivot": [2.5, 27, -5],
+          "cubes": [
+            {
+              "origin": [2.5, 25, -6],
+              "size": [1, 4, 1],
+              "inflate": 0.5,
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "top_hood",
+          "parent": "head",
+          "pivot": [0, 29.5, -5],
+          "cubes": [
+            {
+              "origin": [-2, 29.5, -6],
+              "size": [4, 1, 1],
+              "inflate": 0.5,
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "bottom_hood",
+          "parent": "head",
+          "pivot": [0, 23.5, -5],
+          "cubes": [
+            {
+              "origin": [-2, 23.5, -6],
+              "size": [4, 1, 1],
+              "inflate": 0.5,
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "hat",
+          "parent": "head",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-4, 24, -4],
+              "size": [8, 8, 8],
+              "inflate": 1.5,
+              "uv": [32, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

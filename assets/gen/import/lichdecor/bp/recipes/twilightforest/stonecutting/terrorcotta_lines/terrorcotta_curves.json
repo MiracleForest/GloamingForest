@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:stonecutting/terrorcotta_lines/terrorcotta_curves"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "twilightforest:terrorcotta_lines"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:terrorcotta_lines"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:terrorcotta_curves"
+    }
+  }
+}

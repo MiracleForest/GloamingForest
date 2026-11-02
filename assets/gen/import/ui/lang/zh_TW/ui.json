@@ -1,0 +1,10 @@
+{
+  "gui.twilightforest.crumble_horn_jei": "瓦解之號角",
+  "gui.twilightforest.moonworm_queen_jei": "修覆月光蠕蟲女王",
+  "gui.twilightforest.optifine.message": "在繼續之前，請注意 Optifine 已知會導致崩潰、多部分實體視覺錯誤和許多其他問題。\n\n在報告錯誤之前，請先刪除 Optifine，然後再次檢查錯誤是否仍然存在。\n\nOptifine 相關問題在暮色森林中可能永遠無法解決！\n\n該內容可能在客戶端配置中被禁用。",
+  "gui.twilightforest.optifine.suggestions": "如下是我們推薦使用的一些替代模組。",
+  "gui.twilightforest.optifine.title": "警告：檢測到 optifine",
+  "gui.twilightforest.progression_end.discord": "Discord 服務器",
+  "gui.twilightforest.progression_end.message": "進度已經完成。 在高原上等待的最終城堡尚未完工，正在進行中。 如果您想了解 mod 的開發進度，您可以加入我們的%s。",
+  "gui.twilightforest.transformation_jei": "轉換粉"
+}

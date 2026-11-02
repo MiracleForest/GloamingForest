@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/mangrove_gate"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["S#S", "S#S"],
+    "key": {
+      "#": {
+        "item": "twilightforest:mangrove_planks"
+      },
+      "S": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:mangrove_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:mangrove_fence_gate"
+    }
+  }
+}

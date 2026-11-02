@@ -1,0 +1,67 @@
+{
+  "about": "Insect buzz or click-chirp: sawtooth with wing-beat amplitude modulation through a band-pass.",
+  "params": {
+    "pitch": 220,
+    "len": 0.5,
+    "wing": 90,
+    "band": 1800,
+    "q": 1.5,
+    "bend": 0
+  },
+  "length": "$len",
+  "tail": 0.05,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "saw",
+      "freq": {
+        "lfo": "smooth",
+        "rate": 7,
+        "depth": "$pitch*0.05",
+        "center": {
+          "from": "$pitch",
+          "to": "$pitch*semi($bend)"
+        }
+      },
+      "env": {
+        "a": 0.02,
+        "d": "$len*0.5",
+        "s": 0.7,
+        "r": "$len*0.2"
+      },
+      "tremolo": {
+        "rate": "$wing",
+        "depth": 0.7
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "$band",
+          "q": "$q"
+        }
+      ]
+    },
+    {
+      "type": "noise",
+      "color": "white",
+      "amp": 0.2,
+      "env": {
+        "a": 0.01,
+        "d": "$len*0.5",
+        "s": 0.5,
+        "r": "$len*0.2"
+      },
+      "tremolo": {
+        "rate": "$wing",
+        "depth": 0.9
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "$band*2.5",
+          "q": 2
+        }
+      ]
+    }
+  ]
+}

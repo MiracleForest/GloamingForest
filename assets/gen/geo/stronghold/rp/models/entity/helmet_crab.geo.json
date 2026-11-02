@@ -1,0 +1,254 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.helmet_crab",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 3.5,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 0.25, 0]
+      },
+      "bones": [
+        {
+          "name": "crab",
+          "pivot": [0, 5, 0],
+          "cubes": [
+            {
+              "origin": [-2.5, 4.5, -5],
+              "size": [0, 1, 0],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "body",
+          "parent": "crab",
+          "pivot": [0, 5, 0],
+          "cubes": [
+            {
+              "origin": [-2.5, 2.5, -5],
+              "size": [5, 5, 5],
+              "uv": [32, 4]
+            }
+          ]
+        },
+        {
+          "name": "right_eye",
+          "parent": "body",
+          "pivot": [-1, 6, -4],
+          "rotation": [45, 0, -45],
+          "cubes": [
+            {
+              "origin": [-2, 6, -5],
+              "size": [2, 3, 2],
+              "uv": [10, 0]
+            }
+          ]
+        },
+        {
+          "name": "left_eye",
+          "parent": "body",
+          "pivot": [1, 6, -4],
+          "rotation": [45, 0, 45],
+          "cubes": [
+            {
+              "origin": [0, 6, -5],
+              "size": [2, 3, 2],
+              "uv": [10, 0]
+            }
+          ]
+        },
+        {
+          "name": "right_claw",
+          "parent": "crab",
+          "pivot": [-3, 4, -3],
+          "rotation": [0, -75.6036, -11],
+          "cubes": [
+            {
+              "origin": [-10, 3, -4],
+              "size": [8, 2, 2],
+              "uv": [38, 0]
+            }
+          ]
+        },
+        {
+          "name": "claw_base",
+          "parent": "right_claw",
+          "pivot": [-9, 4, -3.5],
+          "rotation": [0, 90, 0],
+          "cubes": [
+            {
+              "origin": [-9, 2.5, -4.5],
+              "size": [3, 3, 2],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "claw_bottom",
+          "parent": "claw_base",
+          "pivot": [-6, 4, -3.5],
+          "rotation": [0, 0, 14.9112],
+          "cubes": [
+            {
+              "origin": [-6, 2.5, -4.5],
+              "size": [3, 2, 2],
+              "uv": [0, 8]
+            }
+          ]
+        },
+        {
+          "name": "claw_top",
+          "parent": "claw_base",
+          "pivot": [-6, 5, -3.5],
+          "rotation": [0, 0, -10.6509],
+          "cubes": [
+            {
+              "origin": [-6, 4.5, -4.5],
+              "size": [3, 1, 2],
+              "uv": [0, 5]
+            }
+          ]
+        },
+        {
+          "name": "left_claw",
+          "parent": "crab",
+          "pivot": [3, 4, -3],
+          "rotation": [0, 33, 11],
+          "cubes": [
+            {
+              "origin": [2, 3, -4],
+              "size": [8, 2, 2],
+              "uv": [18, 0]
+            }
+          ]
+        },
+        {
+          "name": "right_leg_1",
+          "parent": "crab",
+          "pivot": [-3, 4, -1],
+          "rotation": [0, 16, -11],
+          "cubes": [
+            {
+              "origin": [-10, 3, -2],
+              "size": [8, 2, 2],
+              "uv": [18, 0]
+            }
+          ]
+        },
+        {
+          "name": "left_leg_1",
+          "parent": "crab",
+          "pivot": [3, 4, -1],
+          "rotation": [0, -16, 11],
+          "cubes": [
+            {
+              "origin": [2, 3, -2],
+              "size": [8, 2, 2],
+              "uv": [18, 0]
+            }
+          ]
+        },
+        {
+          "name": "right_leg_2",
+          "parent": "crab",
+          "pivot": [-3, 4, -2],
+          "rotation": [0, -16, -11],
+          "cubes": [
+            {
+              "origin": [-10, 3, -3],
+              "size": [8, 2, 2],
+              "uv": [18, 0]
+            }
+          ]
+        },
+        {
+          "name": "left_leg_2",
+          "parent": "crab",
+          "pivot": [3, 4, -2],
+          "rotation": [0, 16, 11],
+          "cubes": [
+            {
+              "origin": [2, 3, -3],
+              "size": [8, 2, 2],
+              "uv": [18, 0]
+            }
+          ]
+        },
+        {
+          "name": "helmet_base",
+          "pivot": [0, 6, 0],
+          "rotation": [-100, -30, 0]
+        },
+        {
+          "name": "helmet",
+          "parent": "helmet_base",
+          "pivot": [0, 6, 0],
+          "rotation": [0, 45, 0],
+          "cubes": [
+            {
+              "origin": [-3.5, 6, -3.5],
+              "size": [7, 11, 7],
+              "uv": [0, 14]
+            }
+          ]
+        },
+        {
+          "name": "right_horn_1",
+          "parent": "helmet_base",
+          "pivot": [-3.5, 15, 0],
+          "rotation": [0, -15, 10],
+          "cubes": [
+            {
+              "origin": [-9.5, 13.5, -1.5],
+              "size": [7, 3, 3],
+              "uv": [28, 14]
+            }
+          ]
+        },
+        {
+          "name": "right_horn_2",
+          "parent": "right_horn_1",
+          "pivot": [-9, 15, 0],
+          "rotation": [0, -15, 10],
+          "cubes": [
+            {
+              "origin": [-12, 14, -1],
+              "size": [3, 2, 2],
+              "uv": [28, 20]
+            }
+          ]
+        },
+        {
+          "name": "left_horn_1",
+          "parent": "helmet_base",
+          "pivot": [3.5, 15, 0],
+          "rotation": [0, 15, -10],
+          "cubes": [
+            {
+              "origin": [2.5, 13.5, -1.5],
+              "size": [7, 3, 3],
+              "uv": [28, 14],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "left_horn_2",
+          "parent": "left_horn_1",
+          "pivot": [9, 15, 0],
+          "rotation": [0, 15, -10],
+          "cubes": [
+            {
+              "origin": [9, 14, -1],
+              "size": [3, 2, 2],
+              "uv": [28, 20]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

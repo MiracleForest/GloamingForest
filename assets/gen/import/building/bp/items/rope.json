@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:rope",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_rope"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:rope.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:rope",
+        "replace_block_item": true
+      }
+    }
+  }
+}

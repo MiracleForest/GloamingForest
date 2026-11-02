@@ -1,0 +1,53 @@
+{
+  "about": "Warm detuned pad.",
+  "params": {
+    "freq": 220,
+    "dur": 2,
+    "vel": 1,
+    "cutoff": 1400
+  },
+  "length": "$dur",
+  "tail": 1.5,
+  "normalize": -6,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "saw",
+      "freq": "$freq",
+      "unison": {
+        "voices": 3,
+        "detune": 9
+      },
+      "env": {
+        "a": "min(0.8,$dur*0.4)",
+        "d": 0.6,
+        "s": 0.75,
+        "r": 1.2
+      },
+      "filter": [
+        {
+          "type": "lp",
+          "freq": {
+            "lfo": "sine",
+            "rate": 0.2,
+            "depth": 300,
+            "center": "$cutoff"
+          },
+          "q": 0.8
+        }
+      ]
+    },
+    {
+      "type": "osc",
+      "wave": "triangle",
+      "freq": "$freq*0.5",
+      "amp": 0.4,
+      "env": {
+        "a": "min(0.8,$dur*0.4)",
+        "d": 0.6,
+        "s": 0.75,
+        "r": 1.2
+      }
+    }
+  ]
+}

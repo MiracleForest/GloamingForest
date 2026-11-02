@@ -1,0 +1,59 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.minecraft.block.button",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-3, 0, -2],
+              "size": [6, 2, 4],
+              "uv": {
+                "north": {
+                  "uv": [5, 14],
+                  "uv_size": [6, 2],
+                  "material_instance": "texture"
+                },
+                "east": {
+                  "uv": [6, 14],
+                  "uv_size": [4, 2],
+                  "material_instance": "texture"
+                },
+                "south": {
+                  "uv": [5, 14],
+                  "uv_size": [6, 2],
+                  "material_instance": "texture"
+                },
+                "west": {
+                  "uv": [6, 14],
+                  "uv_size": [4, 2],
+                  "material_instance": "texture"
+                },
+                "up": {
+                  "uv": [11, 10],
+                  "uv_size": [-6, -4],
+                  "material_instance": "texture"
+                },
+                "down": {
+                  "uv": [11, 10],
+                  "uv_size": [-6, -4],
+                  "material_instance": "texture"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:rainy_cloud",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.8
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:map_color": "#a0a0ff",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_rainy_cloud",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "tf_block_rainy_cloud",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "tf_block_rainy_cloud",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "tf_block_rainy_cloud",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "tf_block_rainy_cloud",
+          "render_method": "opaque"
+        },
+        "east": {
+          "texture": "tf_block_rainy_cloud",
+          "render_method": "opaque"
+        },
+        "west": {
+          "texture": "tf_block_rainy_cloud",
+          "render_method": "opaque"
+        }
+      }
+    }
+  }
+}

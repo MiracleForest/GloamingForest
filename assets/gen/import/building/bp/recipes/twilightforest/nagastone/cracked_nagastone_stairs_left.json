@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:nagastone/cracked_nagastone_stairs_left"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#  ", "## ", "###"],
+    "key": {
+      "#": {
+        "item": "twilightforest:cracked_etched_nagastone"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:cracked_etched_nagastone"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:cracked_nagastone_stairs_left",
+      "count": 8
+    }
+  }
+}

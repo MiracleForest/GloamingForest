@@ -1,0 +1,140 @@
+{
+  "tf_block_blackberry_bush": {
+    "textures": "textures/twilightforest/block/blackberry_bush"
+  },
+  "tf_block_blackberry_bush_ripe": {
+    "textures": "textures/twilightforest/block/blackberry_bush_ripe"
+  },
+  "tf_block_blightberry_bush": {
+    "textures": "textures/twilightforest/block/blightberry_bush"
+  },
+  "tf_block_blightberry_bush_ripe": {
+    "textures": "textures/twilightforest/block/blightberry_bush_ripe"
+  },
+  "tf_block_blueberry_bush": {
+    "textures": "textures/twilightforest/block/blueberry_bush"
+  },
+  "tf_block_blueberry_bush_ripe": {
+    "textures": "textures/twilightforest/block/blueberry_bush_ripe"
+  },
+  "tf_block_cloverpatch": {
+    "textures": "textures/twilightforest/block/cloverpatch"
+  },
+  "tf_block_copper_oreberry": {
+    "textures": "textures/twilightforest/block/copper_oreberry"
+  },
+  "tf_block_copper_oreberry_ripe": {
+    "textures": "textures/twilightforest/block/copper_oreberry_ripe"
+  },
+  "tf_block_duskberry_bush": {
+    "textures": "textures/twilightforest/block/duskberry_bush"
+  },
+  "tf_block_duskberry_bush_ripe": {
+    "textures": "textures/twilightforest/block/duskberry_bush_ripe"
+  },
+  "tf_block_essence_oreberry": {
+    "textures": "textures/twilightforest/block/essence_oreberry"
+  },
+  "tf_block_essence_oreberry_ripe": {
+    "textures": "textures/twilightforest/block/essence_oreberry_ripe"
+  },
+  "tf_block_fiddlehead": {
+    "textures": "textures/twilightforest/block/fiddlehead"
+  },
+  "tf_block_gold_oreberry": {
+    "textures": "textures/twilightforest/block/gold_oreberry"
+  },
+  "tf_block_gold_oreberry_ripe": {
+    "textures": "textures/twilightforest/block/gold_oreberry_ripe"
+  },
+  "tf_block_huge_lily_pad_0": {
+    "textures": "textures/twilightforest/block/huge_lily_pad_0"
+  },
+  "tf_block_huge_lily_pad_1": {
+    "textures": "textures/twilightforest/block/huge_lily_pad_1"
+  },
+  "tf_block_huge_lily_pad_2": {
+    "textures": "textures/twilightforest/block/huge_lily_pad_2"
+  },
+  "tf_block_huge_lily_pad_3": {
+    "textures": "textures/twilightforest/block/huge_lily_pad_3"
+  },
+  "tf_block_huge_water_lily": {
+    "textures": "textures/twilightforest/block/huge_water_lily"
+  },
+  "tf_block_iron_oreberry": {
+    "textures": "textures/twilightforest/block/iron_oreberry"
+  },
+  "tf_block_iron_oreberry_ripe": {
+    "textures": "textures/twilightforest/block/iron_oreberry_ripe"
+  },
+  "tf_block_jar_bottom": {
+    "textures": "textures/twilightforest/block/jar_bottom"
+  },
+  "tf_block_jar_side": {
+    "textures": "textures/twilightforest/block/jar_side"
+  },
+  "tf_block_jar_top": {
+    "textures": "textures/twilightforest/block/jar_top"
+  },
+  "tf_block_liveroot_block": {
+    "textures": "textures/twilightforest/block/liveroot_block"
+  },
+  "tf_block_maloberry_bush": {
+    "textures": "textures/twilightforest/block/maloberry_bush"
+  },
+  "tf_block_maloberry_bush_ripe": {
+    "textures": "textures/twilightforest/block/maloberry_bush_ripe"
+  },
+  "tf_block_mayapple": {
+    "textures": "textures/twilightforest/block/mayapple"
+  },
+  "tf_block_mayapple_side": {
+    "textures": "textures/twilightforest/block/mayapple_side"
+  },
+  "tf_block_mushgloom": {
+    "textures": "textures/twilightforest/block/mushgloom"
+  },
+  "tf_block_mushgloom_head": {
+    "textures": "textures/twilightforest/block/mushgloom_head"
+  },
+  "tf_block_potted_fiddlehead": {
+    "textures": "textures/twilightforest/block/potted_fiddlehead"
+  },
+  "tf_block_potted_mushgloom": {
+    "textures": "textures/twilightforest/block/potted_mushgloom"
+  },
+  "tf_block_raspberry_bush": {
+    "textures": "textures/twilightforest/block/raspberry_bush"
+  },
+  "tf_block_raspberry_bush_ripe": {
+    "textures": "textures/twilightforest/block/raspberry_bush_ripe"
+  },
+  "tf_block_root": {
+    "textures": "textures/twilightforest/block/root"
+  },
+  "tf_block_root_strand": {
+    "textures": "textures/twilightforest/block/root_strand"
+  },
+  "tf_block_skyberry_bush": {
+    "textures": "textures/twilightforest/block/skyberry_bush"
+  },
+  "tf_block_skyberry_bush_ripe": {
+    "textures": "textures/twilightforest/block/skyberry_bush_ripe"
+  },
+  "tf_block_stingberry_bush": {
+    "textures": "textures/twilightforest/block/stingberry_bush"
+  },
+  "tf_block_stingberry_bush_ripe": {
+    "textures": "textures/twilightforest/block/stingberry_bush_ripe"
+  },
+  "tf_block_torchberry_plant": {
+    "textures": "textures/twilightforest/block/torchberry_plant"
+  },
+  "tf_block_torchberry_plant_glow": {
+    "textures": "textures/twilightforest/block/torchberry_plant_glow"
+  },
+  "tf_vanilla_block_composter_compost": {
+    "textures": "textures/blocks/compost"
+  }
+}
