@@ -9,12 +9,16 @@
 #   lines and geometry, fog / sky / cloud providers, a TF-style ContainerScreen, item renderers in
 #   an item frame (Fixed) and on the head (Head) and TF map decorations on a held and a framed map
 #   (a conquered icon with TF's red X, the player icon on top); the fixture keys J (bound at mod load)
-#   and K (registered late) must reach the server, a /particle with the fixture's native particle
+#   and K (registered late) must reach the server, a /particle and a gf::fx::particle (F10's
+#   fx.particle, through F12's native sink: velocity and count) with the fixture's native particle
 #   must run its factory, a jump must give JumpPressed / LeftGround / Landed edges, a movement rule
-#   must correct a real client's move and a distance rule must not correct a respawn. Blocks go on
-#   the stage in the ui selftest row; ui.fixture_clear puts the stage and the player back after each
-#   step. All of it twice in local mode: Classic (graphics_mode 1, set by ui.prelaunch.ps1) and
-#   Vibrant Visuals (graphics_mode 2, after a game restart).
+#   must correct a real client's move and a distance rule must not correct a respawn (the server
+#   turns doimmediaterespawn / keepinventory on and puts their earlier values back). The framed map
+#   leaves the player icon out (Java's showOnItemFrame). Blocks go on the stage in the ui selftest
+#   row; ui.fixture_clear puts the stage and the player back after each step. All of it twice in
+#   local mode: Classic (graphics_mode 1, set by ui.prelaunch.ps1) and Vibrant Visuals (graphics_mode
+#   2, after a game restart; the restarted world may still carry the tag and the fixture's leftovers
+#   from before the restart: ui.fixture_clear and /tag remove first).
 #   Screenshots: out/ui/<mode>-hud-toast-world.png, <mode>-gui-hidden.png, <mode>-fog.png,
 #   <mode>-screen(-clicked).png, <mode>-chest-skin.png, <mode>-chest-plain.png, <mode>-frame.png,
 #   <mode>-map.png, <mode>-map-frame.png, <mode>-head.png.
@@ -240,6 +244,8 @@ function Invoke-UiItems([string]$mode) {
     Invoke-UiTest 'ui.fixture_map_frame' | Out-Null
     Wait-LogLine "${hostRx}ui fixture: item frame with minecraft:filled_map placed" 20 -Since $mark | Out-Null
     Wait-UiStage $mark
+    # Java's MapRenderer leaves the player marker (showOnItemFrame false) out on a framed map
+    Wait-UiLine 'render: map decoration minecraft:player not drawn on an item frame' 20 0 | Out-Null   # once per game session
     Save-Screenshot "$mode-map-frame" | Out-Null
     $mark = Get-LogMark
     Invoke-UiTest 'ui.fixture_clear' | Out-Null
@@ -279,6 +285,12 @@ function Invoke-UiParticle {
     Invoke-Chat '/particle gf_test:fixture_particle ~ ~1 ~'
     $line = Wait-LogLine '^(?!\[host\]).*particles: native factory of gf_test:fixture_particle ran \(engine' 20 -Since $mark
     Write-Step "the native particle factory ran from the engine: $line"
+    # gf::fx::particle (F10) for a companion: fx.particle reaches the factory through F12's native
+    # sink with the call's velocity and count
+    $mark = Get-LogMark
+    Invoke-UiTest 'ui.fixture_fx' | Out-Null
+    $line = Wait-LogLine '^(?!\[host\]).*particles: native factory of gf_test:fixture_particle ran \(fx\.particle, x2 vel 0\.250 0\.500 -0\.125\)' 20 -Since $mark
+    Write-Step "the native particle factory ran from gf::fx::particle: $line"
 }
 
 # The real client's auth input gives the input edges of a jump, the ground state from the packet.
@@ -309,24 +321,28 @@ function Invoke-UiValidate {
 
 # A distance rule (moves of at most 4 blocks) and a respawn far from the death place: the respawn is
 # a move of the server, so the rule must neither reject it nor correct the player back.
+# The server turns doimmediaterespawn and keepinventory on for the step (ui.fixture_far keeps their
+# values before it in the world DB) and ui.fixture_far_off puts those values back.
 function Invoke-UiRespawn {
-    Invoke-Chat '/gamerule doimmediaterespawn true'
-    Invoke-Chat '/gamerule keepinventory true'
     $mark = Get-LogMark
     Invoke-UiTest 'ui.fixture_far' | Out-Null
+    $before = Wait-LogLine "${hostRx}ui fixture: gamerules before the respawn step: " 20 -Since $mark
     Wait-UiStage $mark
+    Start-Sleep -Seconds 1
     Invoke-Chat '/kill @s'
     Start-Sleep -Seconds 5
     Focus-Game
     Press-Key W 800
     Start-Sleep -Seconds 3
     Invoke-UiTest 'ui.fixture_far_off' | Out-Null
+    $after = Wait-LogLine "${hostRx}ui fixture: gamerules put back: " 20 -Since $mark
     $bad = Get-LeviLog -Since $mark | Where-Object { $_ -match 'movement: ui\.fixture_far_rule rejected|movement: corrected .*ui\.fixture_far_rule' } | Select-Object -First 1
     if ($bad) { throw "the respawn was treated as a move: $bad" }
-    Invoke-Chat '/gamerule doimmediaterespawn false'
-    Invoke-Chat '/gamerule keepinventory false'
+    $was = if ($before -match 'step: (\{.*\})') { $Matches[1] } else { '?' }
+    $now = if ($after -match 'put back: (\{.*\})') { $Matches[1] } else { '!' }
+    if ($was -ne $now) { throw "the gamerules were not put back as they were: before $was, put back $now" }
     Invoke-UiTest 'ui.fixture_clear' | Out-Null
-    Write-Step 'a respawn under a distance rule caused no rejection and no correction'
+    Write-Step "a respawn under a distance rule caused no rejection and no correction; gamerules back to $was"
 }
 
 Invoke-UiFixture 'classic'
@@ -349,8 +365,14 @@ if (-not $remote) {
     Enter-TestWorld -Attempts 2
     Wait-HudReady
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
-    # the game was closed without saving: a stage the world DB kept is put back first
+    # the game was closed without a final save: the world may come back with the tag of the first
+    # half (an autosave while it was on) and what the world DB kept (stage, players, gamerules); the
+    # clear puts those back, then the tag goes before the fixture opts the player in again
     Invoke-UiTest 'ui.fixture_clear' | Out-Null
+    Invoke-Chat "/tag @s remove $tag"
+    Start-Sleep -Milliseconds 800
+    if ((Get-UiFixturePlayers) -ne 0) { throw "the restarted world still carries $tag after /tag remove" }
+    Write-Step 'the restarted world starts untagged'
     Enable-UiFixturePlayer
     Invoke-UiFixture 'vibrant'
     Invoke-UiChest 'vibrant'

@@ -20,9 +20,10 @@
 //   the rain and lightning levels are left alone, as TF's DimensionSpecialEffects;
 // - music: MusicManager::getSituationalMusic (TF's setMusicInDimension);
 // - particles: native factories for TF's 29 particle ids (TFParticleType), run instead of the
-//   data-driven particle when the client spawns that effect: the server's SpawnParticleEffectPacket
-//   (LegacyClientNetworkHandler::handle) and effects the client level adds itself
-//   (Level::addParticleEffect), with the effect's molang variables;
+//   data-driven particle when the client spawns that effect: gf::fx::particle's companion message
+//   (F10's fx.particle handler asks spawnFromFx through gf::fx::client::setNativeSink), the server's
+//   SpawnParticleEffectPacket (LegacyClientNetworkHandler::handle) and effects the client level
+//   adds itself (Level::addParticleEffect), with the effect's molang variables;
 // - maps: the client's MapItemSavedData as a MapView, TF's decoration icons (drawn by Render.cpp);
 // - camera: LocalPlayer::getFieldOfViewModifier modifiers, the screen shake of
 //   ClientGameEvents (beanstalk rumbling: the local player's yaw / pitch jitter per tick, config
@@ -89,6 +90,7 @@
 
 #include "client/Client.h"
 #include "client/world/ClientConfig.h"
+#include "feature/ext/combat/FxNative.h"
 #include "feature/ext/ui/Client.h"
 #include "mod/Config.h"
 #include "mod/Log.h"
@@ -312,6 +314,38 @@ bool spawn(std::string const& particleId, Vec3 const& pos, Vec3 const& velocity,
     return true;
 }
 
+bool spawnFromFx(std::string const& particleId, Vec3 const& pos, Vec3 const& velocity, int count, nlohmann::json const& params) {
+    if (!factories().any.load(std::memory_order_relaxed)) return false;
+    auto map = factories().map.load();
+    auto it  = map->find(particleId);
+    if (it == map->end()) return false;
+    // as gf::fx for vanilla clients: params "spread" offsets each particle by a gaussian times the
+    // distance per axis (ServerLevel#sendParticles)
+    int                  n = std::clamp(count, 1, 256);
+    std::optional<Vec3>  spread;
+    if (params.is_object()) {
+        if (auto s = params.find("spread"); s != params.end() && s->is_array() && s->size() == 3 && (*s)[0].is_number() && (*s)[1].is_number() && (*s)[2].is_number())
+            spread = Vec3{(*s)[0].get<float>(), (*s)[1].get<float>(), (*s)[2].get<float>()};
+    }
+    thread_local std::mt19937       rng{std::random_device{}()};
+    std::normal_distribution<float> gauss(0.f, 1.f);
+    for (int i = 0; i < n; ++i) {
+        Vec3 at = pos;
+        if (spread && n > 1) at = Vec3{pos.x + gauss(rng) * spread->x, pos.y + gauss(rng) * spread->y, pos.z + gauss(rng) * spread->z};
+        try {
+            it->second(at, velocity, params);
+        } catch (std::exception const& e) {
+            log().error("particles: factory of {} failed: {}", particleId, e.what());
+            break;
+        }
+    }
+    logOnce(
+        "particle_fx:" + particleId,
+        fmt::format("particles: native factory of {} ran (fx.particle, x{} vel {:.3f} {:.3f} {:.3f})", particleId, n, velocity.x, velocity.y, velocity.z)
+    );
+    return true;
+}
+
 std::vector<std::pair<std::string, bool>> declared() {
     std::vector<std::pair<std::string, bool>> out;
     auto                                      map = factories().map.load();
@@ -373,10 +407,10 @@ std::pair<nlohmann::json, Vec3> fromMolang(MolangVariableMap const& vars) {
 namespace maps {
 namespace {
 struct MapState {
-    std::mutex                                                     mutex;
-    std::unordered_map<std::string, std::string>                   icons;
-    std::unordered_map<std::int64_t, std::vector<Decoration>>      extra;
-    std::unordered_map<std::int64_t, std::vector<DecorationStyle>> styles;
+    std::mutex                                                          mutex;
+    std::unordered_map<std::string, std::string>                        icons;
+    std::unordered_map<std::int64_t, std::shared_ptr<DecoratedMap const>> maps; ///< immutable snapshots
+    std::atomic<std::size_t>                                            mapCount{0}; ///< maps.size(), read without the lock
 };
 
 /// The vanilla map icon atlas (textures/map/map_icons: 4 x 4 cells of 16 px; MapDecoration::Type
@@ -445,21 +479,49 @@ bool removeIcon(std::string const& decorationType) {
 void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations) { setDecorations(mapId, std::move(decorations), {}); }
 
 void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations, std::vector<DecorationStyle> styles) {
-    std::lock_guard lock(mapState().mutex);
-    if (decorations.empty()) {
-        mapState().extra.erase(mapId);
-        mapState().styles.erase(mapId);
-        return;
+    std::shared_ptr<DecoratedMap const> next;
+    if (!decorations.empty()) {
+        styles.resize(decorations.size());
+        next = std::make_shared<DecoratedMap const>(DecoratedMap{std::move(decorations), std::move(styles)});
     }
-    styles.resize(decorations.size());
-    mapState().extra[mapId]  = std::move(decorations);
-    mapState().styles[mapId] = std::move(styles);
+    std::shared_ptr<DecoratedMap const> old; // released outside the lock
+    std::lock_guard                     lock(mapState().mutex);
+    auto&                               m = mapState().maps;
+    if (auto it = m.find(mapId); it != m.end()) {
+        old = std::move(it->second);
+        if (next) it->second = std::move(next);
+        else m.erase(it);
+    } else if (next) m.emplace(mapId, std::move(next));
+    mapState().mapCount.store(m.size(), std::memory_order_relaxed);
+}
+
+std::shared_ptr<DecoratedMap const> decorated(std::int64_t mapId) {
+    if (mapState().mapCount.load(std::memory_order_relaxed) == 0) return nullptr;
+    std::lock_guard lock(mapState().mutex);
+    auto            it = mapState().maps.find(mapId);
+    return it == mapState().maps.end() ? nullptr : it->second;
+}
+
+bool hasDecorations(std::int64_t mapId) {
+    if (mapState().mapCount.load(std::memory_order_relaxed) == 0) return false;
+    std::lock_guard lock(mapState().mutex);
+    return mapState().maps.contains(mapId);
+}
+
+bool showOnItemFrame(std::string const& decorationType) {
+    // Java's MapDecorationTypes registered with showOnItemFrame false (the player markers)
+    static std::unordered_map<std::string, bool> const hidden{
+        {"minecraft:player", true},          {"minecraft:red_marker", true},        {"minecraft:blue_marker", true},
+        {"minecraft:player_off_map", true},  {"minecraft:player_off_limits", true}, {"minecraft:0", true},
+        {"minecraft:2", true},               {"minecraft:3", true},                 {"minecraft:6", true},
+        {"minecraft:13", true},
+    };
+    return !hidden.contains(decorationType);
 }
 
 std::vector<DecorationStyle> stylesOf(std::int64_t mapId) {
-    std::lock_guard lock(mapState().mutex);
-    auto            it = mapState().styles.find(mapId);
-    return it == mapState().styles.end() ? std::vector<DecorationStyle>{} : it->second;
+    auto d = decorated(mapId);
+    return d ? d->styles : std::vector<DecorationStyle>{};
 }
 
 std::optional<Icon> iconFor(std::string const& decorationType) {
@@ -474,9 +536,8 @@ std::optional<Icon> iconFor(std::string const& decorationType) {
 }
 
 std::vector<Decoration> decorationsOf(std::int64_t mapId) {
-    std::lock_guard lock(mapState().mutex);
-    auto            it = mapState().extra.find(mapId);
-    return it == mapState().extra.end() ? std::vector<Decoration>{} : it->second;
+    auto d = decorated(mapId);
+    return d ? d->decorations : std::vector<Decoration>{};
 }
 
 std::string iconOf(std::string const& decorationType) {
@@ -788,9 +849,11 @@ LL_TYPE_INSTANCE_HOOK(
     origin(effect, emitterPosition, molangVariables);
 }
 
-// The server's particle packets (/particle, F10's fx for every effect a server spawns) reach the
-// client level without Level::addParticleEffect (spike S5, round 3): the client handler of
-// SpawnParticleEffectPacket runs the native factory instead of the data-driven effect.
+// The server's particle packets (/particle, F10's fx for vanilla clients) reach the client level
+// without Level::addParticleEffect (spike S5, round 3): the client handler of
+// SpawnParticleEffectPacket runs the native factory instead of the data-driven effect, as the
+// vanilla handler would spawn it: only in the local player's dimension, and for an effect bound to
+// an actor at the actor's position plus the packet's (an offset then).
 LL_TYPE_INSTANCE_HOOK(
     ParticlePacketHook,
     ll::memory::HookPriority::Normal,
@@ -804,12 +867,32 @@ LL_TYPE_INSTANCE_HOOK(
         try {
             std::string const& id  = packet.mEffectName;
             auto               map = gf::client::particles::factories().map.load();
-            if (map->contains(id)) {
-                std::optional<MolangVariableMap> const& vars = packet.mMolangVariables;
-                auto [params, velocity] = vars ? gf::client::particles::fromMolang(*vars) : std::pair<nlohmann::json, Vec3>{nlohmann::json::object(), Vec3{}};
-                gf::client::particles::spawn(id, packet.mPos, velocity, params);
-                cl::logOnce("particle_packet:" + id, "particles: native factory of " + id + " ran (engine, SpawnParticleEffectPacket)");
-                return;
+            auto*              player = cl::currentPlayer();
+            if (map->contains(id) && player) {
+                int dim = static_cast<int>(packet.mVanillaDimensionId);
+                if (dim != static_cast<int>(player->getDimensionId())) {
+                    cl::logOnce("particle_packet_dim:" + id, "particles: " + id + " for dimension " + std::to_string(dim) + " skipped (not the player's)");
+                    return; // the vanilla handler drops it too
+                }
+                ActorUniqueID const actorId = packet.mActorId;
+                Vec3                pos     = packet.mPos;
+                bool const          bound   = actorId != ActorUniqueID::INVALID_ID() && actorId.rawID != 0;
+                Actor*              actor   = bound ? player->getLevel().fetchEntity(actorId, false) : nullptr;
+                if (!bound || actor) {
+                    std::optional<MolangVariableMap> const& vars = packet.mMolangVariables;
+                    auto [params, velocity] = vars ? gf::client::particles::fromMolang(*vars) : std::pair<nlohmann::json, Vec3>{nlohmann::json::object(), Vec3{}};
+                    if (actor) {
+                        pos = actor->getPosition() + packet.mPos;
+                        params["actor"] = actorId.rawID;
+                    }
+                    gf::client::particles::spawn(id, pos, velocity, params);
+                    cl::logOnce(
+                        std::string("particle_packet") + (actor ? "_actor:" : ":") + id,
+                        "particles: native factory of " + id + " ran (engine, SpawnParticleEffectPacket" + (actor ? ", bound to an actor" : "") + ")"
+                    );
+                    return;
+                }
+                // an actor this client does not know: what the vanilla handler does with it
             }
         } catch (...) {}
     }
@@ -882,8 +965,11 @@ public:
         world_hooks::ParticleEffectHook::hook();
         world_hooks::ParticlePacketHook::hook();
         world_hooks::CameraFovHook::hook();
+        // F10's fx.particle handler (gf::fx::particle for companions) asks the native factories first
+        gf::fx::client::setNativeSink(&particles::spawnFromFx);
     }
     void uninstall() {
+        gf::fx::client::setNativeSink({});
         world_hooks::CameraFovHook::unhook();
         world_hooks::ParticlePacketHook::unhook();
         world_hooks::ParticleEffectHook::unhook();

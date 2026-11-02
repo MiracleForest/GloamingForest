@@ -17,7 +17,9 @@
 //   the layout of TF's container GUIs), nine container slots and the player inventory;
 // - key "ui.fixture" (J, registered at mod load) and "ui.fixture_late" (K, registered at install,
 //   after the game built its input handler): forwarded to the server, which logs the presses;
-// - native particle "gf_test:fixture_particle": the client scenario runs /particle with it.
+// - native particle "gf_test:fixture_particle": the client scenario runs /particle with it and the
+//   server's ui.fixture_fx plays it with gf::fx::particle (F10's fx.particle, F12's native sink);
+// - map decorations on a framed map: the vanilla player icon is left out (Java's showOnItemFrame).
 //
 // The fixture's textures and geometry are built into the mod (FixtureAssets.h): the textures are
 // written next to the test data and drawn as file textures, so the resource pack carries nothing of
@@ -339,7 +341,8 @@ public:
         registerFixtureKey();
         // a key registered after the game built its input handler: delivered from raw key events
         keys::registerKey("ui.fixture_late", kLateKey, "key.categories.gloamingforest.fixture", [] { log().info("ui fixture: late key pressed (client)"); });
-        // a native particle the client scenario spawns with /particle (Level::addParticleEffect)
+        // a native particle the client scenario spawns with /particle (SpawnParticleEffectPacket) and
+        // the server with gf::fx::particle (fx.particle)
         particles::registerNative(kParticle, [](Vec3 const& pos, Vec3 const&, Json const&) {
             static std::atomic<bool> logged{false};
             if (!logged.exchange(true)) log().info("ui fixture: particle factory ran at {:.1f} {:.1f} {:.1f}", pos.x, pos.y, pos.z);

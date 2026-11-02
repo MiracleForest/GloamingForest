@@ -6,8 +6,9 @@
 // container open). Every press and release is also forwarded to the server ("input.key" {id,
 // down}, gf::input::onKey) when it runs GloamingForest. LeviLamina binds a key into the game's
 // controls only when the game builds its input handler (after mod load, before the modules'
-// install()); a key registered later is delivered from the raw keyboard events (ll KeyInputEvent)
-// with its default key, with a warning (feature/ext/ui/Client.h).
+// install()); a key registered later (from any module's install(), whatever its order, or later)
+// is delivered from the raw keyboard events (ll KeyInputEvent) with its default key, with a warning
+// (feature/ext/ui/Client.h).
 //
 // Movement: one hook on LocalPlayer::normalTick (rule R8). Before the player's tick the local
 // player's state is read into a MoveState, the handlers change it (by descending priority) and
@@ -19,6 +20,7 @@
 #include "client/input/Input.h"
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <mutex>
 #include <set>
@@ -60,8 +62,8 @@ struct Key {
 struct State {
     std::mutex                 mutex;
     std::map<std::string, Key> keys;
-    /// Set when the modules are installed: the game has built its input handler by then, so
-    /// LeviLamina no longer binds new keys.
+    /// Set at the end of mod load (the last module load()) and at the first install() of any module:
+    /// the game builds its input handler after mod load, so LeviLamina no longer binds new keys.
     bool                       inputBuilt = false;
     ll::event::ListenerPtr     rawKeys; ///< raw key events for late keys
 };
@@ -308,10 +310,28 @@ public:
 private:
     bool mHooked = false;
 };
+
+/// Marks the input handler as built whatever the order of the module that registers a key: the
+/// last module load() (the end of mod load; the game builds its input handler after it, spike S5)
+/// and the first install() of any module (should load() not run). A key registered from any
+/// install() or later is then a late key (delivered from raw key events, with a warning).
+class InputBuiltAtLoadEnd {
+public:
+    void load() { keys::markInputBuilt(); }
+    void install() { keys::markInputBuilt(); }
+    void uninstall() {}
+};
+class InputBuiltAtFirstInstall {
+public:
+    void install() { keys::markInputBuilt(); }
+    void uninstall() {}
+};
 } // namespace
 
 } // namespace gf::client::movement
 
 GF_REGISTER_MODULE_ORDERED(gf::client::movement::InputModule, gf::ModuleOrder::Contracts);
+GF_REGISTER_MODULE_ORDERED(gf::client::movement::InputBuiltAtLoadEnd, std::numeric_limits<int>::max());
+GF_REGISTER_MODULE_ORDERED(gf::client::movement::InputBuiltAtFirstInstall, std::numeric_limits<int>::min());
 
 #endif // GF_CLIENT

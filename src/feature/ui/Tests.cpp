@@ -19,19 +19,23 @@
 #include <unordered_map>
 
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
+#include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
+#include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 
 #include "feature/common/Screens.h"
 #include "feature/ext/ui/Server.h"
+#include "feature/fx/Fx.h"
 #include "feature/movement/Movement.h"
 #include "feature/net/Net.h"
 #include "feature/ui/Fixture.h"
 #include "feature/ui/Ui.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "game/WorldDb.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
 #include "selftest/SelfTest.h"
@@ -47,6 +51,8 @@ constexpr char kFixtureItem[]  = "gf_test:fixture_item";
 constexpr char kFixtureBlock[] = "gf_test:fixture_block";
 /// The stage of the real-player steps (fixture::prepareStage): dx 6260..6262 of this unit's row.
 constexpr int kStageDx = 6261;
+/// The world DB key of the stage (fixture::prepareStage).
+constexpr char kStageKeyForTests[] = "gf:ui:fixture_stage";
 
 /// The fixture is off in production builds (no gf_test packs): its tests only say so.
 bool fixtureOff(Context& ctx) {
@@ -80,6 +86,25 @@ ll::coro::CoroTask<std::optional<StageAt>> stageFor(Context& ctx, std::vector<Pl
 
 /// The tagged players again after a co_await (rule R16).
 std::vector<Player*> fixturePlayersNow() { return fx::fixturePlayers(); }
+
+/// Takes down a test frame (placeFrame at `pos`, its stone south of it) the way the fixture does:
+/// emptied first, so ItemFrameBlockActor::onRemoved drops nothing; checks that no item lies around.
+ll::coro::CoroTask<> removeFrame(Context& ctx, gf::core::GlobalPos pos) {
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto at     = gf::game::blockPos(pos);
+    auto before = fx::itemEntitiesNear(*region, at, 3); // (items an older build dropped may still lie here)
+    ctx.check(fx::emptyFrame(*region, at), "the frame is emptied");
+    auto const* air = gf::game::blockWith("minecraft:air");
+    ctx.require(air != nullptr, "minecraft:air");
+    gf::game::setBlock(*region, at, *air);
+    gf::game::setBlock(*region, {at.x, at.y, at.z + 1}, *air);
+    co_await ctx.ticks(2);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto after = fx::itemEntitiesNear(*region, at, 3);
+    ctx.check(after <= before, "nothing dropped where the frame was: " + std::to_string(before) + " item(s) before, " + std::to_string(after) + " after");
+}
 
 // ---- vanilla fallbacks ---------------------------------------------------------------------------
 
@@ -283,6 +308,7 @@ GF_REGISTER_SELFTEST("ui.fixture_frame", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.cleanupBlock(gf::core::GlobalPos{pos.dim, pos.x, pos.y, pos.z + 1});
     ctx.require(fx::placeFrame(*region, at, kFixtureItem), "the frame is placed");
     ctx.check(fx::frameItem(*region, at) == kFixtureItem, "the frame holds the fixture item");
+    co_await removeFrame(ctx, pos);
 });
 
 // ItemContext::Head: the fixture block on the tagged players' heads (their helmet is kept and put
@@ -296,7 +322,7 @@ GF_REGISTER_SELFTEST("ui.fixture_head", [](Context& ctx) -> ll::coro::CoroTask<>
         auto players = fixturePlayersNow();
         for (auto* rp : players) {
             fx::standOnStage(*rp, *st->region, st->origin, 1.62f); // level head: the front view looks the player in the face
-            rp->setArmor(ArmorSlot::Head, *block);
+            fx::setHead(*rp, *block);
         }
         ctx.info("fixture block put on " + names(players));
     }
@@ -319,8 +345,7 @@ GF_REGISTER_SELFTEST("ui.fixture_map", [](Context& ctx) -> ll::coro::CoroTask<> 
         for (auto* rp : fixturePlayersNow()) {
             // look down at the held map (Java and Bedrock draw it larger then)
             fx::standOnStage(*rp, *st->region, st->origin, -2.0f);
-            rp->setSelectedItem(*map);
-            rp->sendInventory(true);
+            fx::setHeld(*rp, *map); // the slot's stack is remembered first, whichever slot is selected
             if (fx::show(*rp, {{"show", true}, {"map", true}})) ++real;
         }
         ctx.info("fixture map given to " + std::to_string(real) + " companion(s)");
@@ -361,14 +386,20 @@ GF_REGISTER_SELFTEST("ui.fixture_map_frame", [](Context& ctx) -> ll::coro::CoroT
     auto map = gf::game::items::make("minecraft:filled_map");
     ctx.require(map.has_value() && fx::placeFrame(*region, at, *map), "a frame with a map is placed");
     ctx.check(fx::frameItem(*region, at) == "minecraft:filled_map", "the frame holds the map");
+    co_await removeFrame(ctx, pos);
 });
 
-// Puts back what the fixture tests changed for tagged players: the stage blocks, then the players'
-// helmet, held stack and position.
+// Puts back what the fixture tests changed for tagged players: the stage blocks, the players' helmet,
+// inventory slots and position, and the respawn step's gamerules (also what a session that ended
+// before its clear left: world DB).
 GF_REGISTER_SELFTEST("ui.fixture_clear", [](Context& ctx) {
     int blocks  = fx::clearStage();
     int players = fx::restorePlayers();
-    ctx.info("stage restored (" + std::to_string(blocks) + " block(s)), " + std::to_string(players) + " player(s) put back");
+    int rules   = fx::restoreRespawnRules();
+    ctx.info(
+        "stage restored (" + std::to_string(blocks) + " block(s)), " + std::to_string(players) + " player(s) put back, " + std::to_string(rules) +
+        " gamerule(s) put back; " + std::to_string(fx::savedPlayerCount()) + " player(s) not in the level stay remembered"
+    );
 });
 
 // Turns the client fixture off again for tagged companions (the client scenario runs it after its
@@ -383,11 +414,16 @@ GF_REGISTER_SELFTEST("ui.fixture_hide", [](Context& ctx) {
 });
 
 // The undo of the real-player steps, with the test player standing in for a tagged one: its
-// position, held stack and helmet come back and the stage blocks are restored.
+// position, every inventory slot a step changed (also after it switched slots between two steps) and
+// helmet come back, the stage blocks are restored and the stage's item frame drops nothing.
 GF_REGISTER_SELFTEST("ui.fixture_restore", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
     if (!fx::fixturePlayers().empty()) {
         ctx.info("fixture players present: their stage stays until ui.fixture_clear");
+        co_return;
+    }
+    if (fx::savedPlayerCount() > 0) {
+        ctx.info("a player of an earlier session waits to be put back (ui.fixture_clear): skipped");
         co_return;
     }
     auto pos = ctx.testPos(kStageDx);
@@ -397,38 +433,82 @@ GF_REGISTER_SELFTEST("ui.fixture_restore", [](Context& ctx) -> ll::coro::CoroTas
     BlockPos origin = gf::game::blockPos(pos);
     auto     before = gf::game::blockIdAt(*region, {origin.x, origin.y, origin.z + 2});
     auto     sword  = gf::game::items::make("minecraft:iron_sword");
+    auto     bread  = gf::game::items::make("minecraft:bread", 5);
     auto     helmet = gf::game::items::make("minecraft:iron_helmet");
     auto     block  = gf::game::items::make(kFixtureBlock);
     auto     map    = gf::game::items::make("minecraft:filled_map");
-    ctx.require(sword && helmet && block && map, "the items");
+    ctx.require(sword && bread && helmet && block && map, "the items");
     {
         auto& p = ctx.player();
-        p.setSelectedItem(*sword);
+        p.setSelectedSlot(0);
+        p.getInventory().setItem(0, *sword);
+        p.getInventory().setItem(1, *bread);
         p.setArmor(ArmorSlot::Head, *helmet);
     }
     co_await ctx.ticks(1);
-    Vec3 start;
+    Vec3        start;
+    std::size_t items = 0;
     {
         auto& p = ctx.player();
         start   = p.getFeetPos();
         ctx.require(fx::prepareStage(*region, origin), "the stage is prepared");
         ctx.check(fx::placeNamedChest(*region, {origin.x, origin.y, origin.z + 2}, ""), "a stage chest");
+        ctx.check(fx::placeFrame(*region, {origin.x, origin.y + 1, origin.z + 3}, kFixtureItem), "a stage frame with the fixture item");
+        items = fx::itemEntitiesNear(*region, origin, 4);
         fx::standOnStage(p, *region, origin, 0.5f);
-        p.setSelectedItem(*map);
-        p.setArmor(ArmorSlot::Head, *block);
+        fx::setHeld(p, *map); // slot 0
+        fx::setHead(p, *block);
     }
+    co_await ctx.ticks(1);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    {
+        auto& p = ctx.player();
+        p.setSelectedSlot(1); // the player switches slots between two steps
+        fx::setHeld(p, *map); // slot 1
+        fx::standOnStage(p, *region, origin, 1.5f);
+    }
+    ctx.check(fx::savedPlayerCount() >= 1, "the player is remembered");
     co_await ctx.ticks(2);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
     ctx.check(fx::clearStage() > 0, "the stage blocks are put back");
     ctx.check(gf::game::blockIdAt(*region, {origin.x, origin.y, origin.z + 2}) == before, "the chest is gone again");
     ctx.check(fx::restorePlayers() == 1, "one player put back");
     co_await ctx.ticks(2);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto dropped = fx::itemEntitiesNear(*region, origin, 4);
+    ctx.check(dropped <= items, "the stage frame dropped nothing: " + std::to_string(items) + " item(s) before, " + std::to_string(dropped) + " after");
     auto& p = ctx.player();
-    ctx.check(p.getSelectedItem().getTypeName() == "minecraft:iron_sword", "the held stack is back, got " + p.getSelectedItem().getTypeName());
+    ctx.check(p.getInventory().getItem(0).getTypeName() == "minecraft:iron_sword", "slot 0 is back, got " + p.getInventory().getItem(0).getTypeName());
+    ctx.check(p.getInventory().getItem(1).getTypeName() == "minecraft:bread" && p.getInventory().getItem(1).mCount == 5, "slot 1 is back, got " + p.getInventory().getItem(1).getTypeName());
     ctx.check(p.getArmor(ArmorSlot::Head).getTypeName() == "minecraft:iron_helmet", "the helmet is back");
     ctx.check(p.getFeetPos().distanceTo(start) < 1.0f, "the player is back where it was");
-    ctx.check(fx::clearStage() == 0 && fx::restorePlayers() == 0, "nothing left to put back");
+    ctx.check(fx::clearStage() == 0 && fx::restorePlayers() == 0 && fx::savedPlayerCount() == 0, "nothing left to put back");
 });
 
+// A stage an earlier session left elsewhere (here: far outside the loaded world) that cannot be put
+// back keeps its snapshot: prepareStage refuses a new stage instead of overwriting it.
+GF_REGISTER_SELFTEST("ui.fixture_stage_kept", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (fixtureOff(ctx)) co_return;
+    if (!fx::fixturePlayers().empty() || gf::game::db::get(kStageKeyForTests)) {
+        ctx.info("a stage is in use: skipped");
+        co_return;
+    }
+    auto pos = ctx.testPos(kStageDx);
+    co_await ctx.ensureLoaded(pos);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    Json far = {{"dim", 0}, {"blocks", Json::array({Json::array({2000000, 64, 2000000, "minecraft:stone", Json::object()})})}};
+    gf::game::db::put(kStageKeyForTests, far);
+    ctx.check(!fx::prepareStage(*region, gf::game::blockPos(pos)), "no new stage while an earlier one cannot be put back");
+    auto kept = gf::game::db::get(kStageKeyForTests);
+    ctx.check(kept && *kept == far, "the earlier stage's snapshot is kept");
+    ctx.check(fx::clearStage() == 0, "it cannot be put back now either");
+    fx::discardStage();
+    ctx.check(!gf::game::db::get(kStageKeyForTests), "discarded");
+});
 // ---- input ---------------------------------------------------------------------------------------
 
 namespace keytest {
@@ -584,6 +664,31 @@ GF_REGISTER_SELFTEST("ui.movement_reset", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(!gf::movement::settling(p), "forgotten");
 });
 
+// A client that never claims the new place (a dimension that loads for more than 100 packets) ends
+// the wait from where the server put it: a distance rule then accepts the first real move there and
+// rejects a late claim of the old place, instead of sending the player back to it.
+GF_REGISTER_SELFTEST("ui.movement_arrive_timeout", [](Context& ctx) -> ll::coro::CoroTask<> {
+    (void)ctx.player();
+    co_await ctx.ticks(1);
+    auto& p  = ctx.player();
+    auto  id = p.getOrCreateUniqueID().rawID;
+    gf::movement::validate("ui.test_far_rule", [id](Player& who, Vec3 const& from, Vec3 const& to) {
+        return who.getOrCreateUniqueID().rawID != id || from.distanceTo(to) <= 4.f;
+    });
+    Vec3 here = p.getFeetPos();
+    Vec3 old  = here + Vec3{100, 0, 0}; // what a slow client keeps claiming
+    gf::movement::resetTrack(p, gf::movement::ResetReason::Dimension);
+    bool rejected = false;
+    for (int i = 0; i < 100; ++i) rejected = gf::movement::claimMove(p, old).has_value() || rejected;
+    ctx.check(!rejected && gf::movement::settling(p), "claims of the old place are skipped while the client loads");
+    ctx.check(!gf::movement::claimMove(p, old).has_value() && !gf::movement::settling(p), "the wait ends after 100 packets");
+    ctx.check(!gf::movement::claimMove(p, here + Vec3{1, 0, 0}).has_value(), "the first real move at the new place passes");
+    auto back = gf::movement::claimMove(p, old);
+    ctx.check(back.has_value() && back->distanceTo(here) < 2.f, "a late claim of the old place is rejected towards the new place");
+    ctx.check(gf::movement::removeValidator("ui.test_far_rule"), "the rule is removed");
+    gf::movement::forgetTrack(p);
+});
+
 // The real-client correction (client scenario, local and remote-mod): rule "ui.fixture_rule"
 // rejects every horizontal move of the tagged players present now; the scenario walks and waits for
 // the rejection and the correction, then ui.fixture_validate_off removes the rule and checks that
@@ -641,9 +746,12 @@ FarRule& farRule() {
 
 GF_REGISTER_SELFTEST("ui.fixture_far", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
-    // the stage is far from the spawn: the respawn moves the player much more than 4 blocks
+    // the stage is far from the spawn: the respawn moves the player much more than 4 blocks; the
+    // player respawns at once and keeps its inventory (gamerules kept and put back by
+    // ui.fixture_far_off / ui.fixture_clear)
     if (auto st = co_await stageFor(ctx, fixturePlayersNow())) {
         for (auto* rp : fixturePlayersNow()) fx::standOnStage(*rp, *st->region, st->origin, 1.62f);
+        ctx.check(fx::setRespawnRules(), "doimmediaterespawn and keepinventory are on");
     }
     std::set<std::int64_t> ids;
     for (auto* rp : fx::fixturePlayers()) ids.insert(rp->getOrCreateUniqueID().rawID);
@@ -656,6 +764,7 @@ GF_REGISTER_SELFTEST("ui.fixture_far", [](Context& ctx) -> ll::coro::CoroTask<> 
 
 GF_REGISTER_SELFTEST("ui.fixture_far_off", [](Context& ctx) {
     if (fixtureOff(ctx)) return;
+    if (int rules = fx::restoreRespawnRules(); rules > 0) ctx.info(std::to_string(rules) + " gamerule(s) put back");
     bool was = gf::movement::removeValidator("ui.fixture_far_rule");
     if (!farRule().on || !was) {
         ctx.info("ui.fixture_far_rule was not on");
@@ -673,6 +782,39 @@ GF_REGISTER_SELFTEST("ui.fixture_edges", [](Context& ctx) {
     if (fixtureOff(ctx)) return;
     fx::logEdges(12);
     ctx.info("logging the next 12 input edges of fixture players");
+});
+
+// gf::fx::particle with the fixture's native particle: companions get F10's fx.particle with the
+// call's velocity, count and params, and the client mod runs F12's factory with them (the client
+// scenario waits for "particles: native factory of gf_test:fixture_particle ran (fx.particle, x2
+// vel 0.250 0.500 -0.125)"); here the message a test companion gets is checked.
+constexpr char kFixtureParticle[] = "gf_test:fixture_particle";
+Vec3 const     kFxVelocity{0.25f, 0.5f, -0.125f};
+
+GF_REGISTER_SELFTEST("ui.fixture_fx", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (fixtureOff(ctx)) co_return;
+    int real = 0;
+    for (auto* rp : fx::fixturePlayers()) {
+        if (!net::isCompanion(*rp)) continue;
+        gf::fx::particle(rp->getDimension(), kFixtureParticle, rp->getPosition() + Vec3{0, 0.5f, 1.5f}, kFxVelocity, 2, Json{{"ui_test", 7}});
+        ++real;
+    }
+    ctx.info("fixture fx particle sent near " + std::to_string(real) + " companion(s)");
+    (void)ctx.player();
+    co_await ctx.ticks(1);
+    auto& p = ctx.player();
+    net::setTestCompanion(p, true);
+    (void)net::takeTestMessages(p);
+    gf::fx::particle(p.getDimension(), kFixtureParticle, p.getPosition(), kFxVelocity, 2, Json{{"ui_test", 7}});
+    auto msgs = net::takeTestMessages(p);
+    net::setTestCompanion(p, false);
+    auto it = std::find_if(msgs.begin(), msgs.end(), [](auto const& m) { return m.channel == "fx.particle"; });
+    ctx.require(it != msgs.end(), "a companion gets fx.particle");
+    auto const& m = it->payload;
+    ctx.check(m.value("id", std::string{}) == kFixtureParticle && m.value("count", 0) == 2, "the particle id and count");
+    auto vel = m.value("vel", Json::array());
+    ctx.check(vel.is_array() && vel.size() == 3 && std::abs(vel[0].get<float>() - 0.25f) < 1e-5f && std::abs(vel[1].get<float>() - 0.5f) < 1e-5f && std::abs(vel[2].get<float>() + 0.125f) < 1e-5f, "the velocity, got " + vel.dump());
+    ctx.check(m.value("params", Json::object()).value("ui_test", 0) == 7, "the params");
 });
 
 } // namespace

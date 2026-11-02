@@ -11,8 +11,10 @@
 // - toast: TF's two toast styles (LockedBiomeToast, MissingAdvancementToast) and their colours;
 //   toasts are not drawn while the GUI is hidden (F1), as Java's ToastComponent.
 // - hud::guiHidden: Java's options.hideGui for HUD layers (TF's overlays check it themselves).
-// - particles::spawn: runs a native particle factory (the client handler of fx.particle uses it);
-//   what a factory gets when the engine spawns the particle (molang variables).
+// - particles::spawn: runs a native particle factory; F12 connects the registry to F10's client
+//   handler of fx.particle (gf::fx::particle) through gf::fx::client::setNativeSink
+//   (feature/ext/combat/FxNative.h); what a factory gets from fx.particle and when the engine spawns
+//   the particle (molang variables).
 // - maps::setDecorations: TF map decorations drawn over a map (MagicMapPacket / MazeMapPacket data),
 //   with TF's two IMapDecorationRenderers (the conquered red X, the player icon on top) and the
 //   vanilla map icons.
@@ -128,8 +130,11 @@ void setContainerItems(screen::ContainerScreen& screen, nlohmann::json const& it
 /// stack. ContainerScreen's hover tooltips show it.
 [[nodiscard]] std::vector<std::string> hoverLines(ItemStack const& stack);
 
-/// Per-screen states of ContainerScreens (slot stacks, the title the skin draws) kept now: an entry
-/// goes away the frame after its screen stopped being the open one (tests).
+/// Per-screen states of ContainerScreens (slot stacks, the title the skin draws) kept now (tests).
+/// An entry lives as long as its screen: a ContainerScreen keeps an invisible widget (the first of
+/// `widgets`; leave it there) whose destruction drops the state, so a screen that is covered (chat,
+/// a modal) or not opened yet keeps its stacks. A state whose screen lost that widget (a subclass
+/// cleared `widgets`) goes once its screen has not been the open one for 10 seconds.
 [[nodiscard]] std::size_t containerStateCount();
 
 /// Toasts waiting or shown (tests).
@@ -177,6 +182,12 @@ namespace gf::client::particles {
 /// Runs the native factory of `particleId`; false when none is registered (then the caller
 /// spawns the data-driven particle).
 bool spawn(std::string const& particleId, Vec3 const& pos, Vec3 const& velocity, nlohmann::json const& params = {});
+/// What F10's fx.particle handler calls (gf::fx::client::setNativeSink, installed by F12): runs the
+/// factory of `particleId` max(1, count) times (at most 256) with the message's velocity and params,
+/// each particle offset by params "spread" [dx, dy, dz] as gf::fx does for vanilla clients (a
+/// gaussian times the distance per axis, ServerLevel#sendParticles); false when no factory is
+/// registered (then F10 spawns the resource pack effect).
+bool spawnFromFx(std::string const& particleId, Vec3 const& pos, Vec3 const& velocity, int count, nlohmann::json const& params);
 /// TF's 29 particle ids (declared at load) and whether each has a factory.
 [[nodiscard]] std::vector<std::pair<std::string, bool>> declared();
 /// Removes the factory of `particleId` (fixtures and selftests); false when there was none.
@@ -187,12 +198,17 @@ bool unregisterNative(std::string const& particleId);
 // `variable.speed` (default 1), else zero, and as params every molang variable of the effect by
 // name without "variable." (numbers; structs as objects of their members: {"color": {"r", "g",
 // "b", "a"}, "direction": {"x", "y", "z"}}). Senders (F10's fx for vanilla clients) use these names.
+// A SpawnParticleEffectPacket is handled as the vanilla handler does: one for another dimension than
+// the local player's is dropped; one bound to an actor (its actor id set) spawns at the actor's
+// position plus the packet's position (an offset then), with params "actor" (the unique id), and one
+// whose actor this client does not know is left to the vanilla handler.
 } // namespace gf::client::particles
 
 namespace gf::client::maps {
 /// Extra (TF) decorations drawn over map `mapId` with the icons of `setIcon`; replaces the
 /// previous list (an empty list removes it). Map pixels -128..127 as MapItemSavedData. Drawn on top
-/// of held maps (first person) and maps in item frames, as Java's MapRenderer: an 8 x 8 map pixel
+/// of held maps (first person) and maps in item frames (there only the decorations that show on item
+/// frames, DecorationStyle::onFrame), as Java's MapRenderer: an 8 x 8 map pixel
 /// quad at (x / 2 + 64, z / 2 + 64) turned by rotation * 22.5 degrees, in the map space the game
 /// uses when it looks the map up (MapRenderer::_getMapInstance inside the first-person pass, an
 /// item in hand or an item frame; MapRenderer::render itself cannot be hooked, spike S5).
@@ -214,7 +230,26 @@ struct DecorationStyle {
     /// MagicMapPlayerIconRenderer (the player icon of magic maps): the icon at depth -0.3 instead of
     /// its place in the list, so it lies on top of every other decoration and red X.
     bool topmost = false;
+    /// Java's MapDecorationType#showOnItemFrame: whether the decoration is drawn on a map in an item
+    /// frame (MapRenderer skips the others there; held maps draw every decoration). nullopt: the
+    /// type's own value (showOnItemFrame below).
+    std::optional<bool> onFrame;
 };
+/// Java's showOnItemFrame of a decoration type: false for the vanilla player markers
+/// (MapDecorationTypes PLAYER, RED_MARKER, BLUE_MARKER, PLAYER_OFF_MAP, PLAYER_OFF_LIMITS: by Java
+/// name or as "minecraft:<index>" 0, 2, 3, 6, 13), true for every other type (TF's 15 TFMapDecorations
+/// register true).
+[[nodiscard]] bool showOnItemFrame(std::string const& decorationType);
+/// Whether map `mapId` has TF decorations (one lock, no copy: the render thread asks for every map it
+/// draws).
+[[nodiscard]] bool hasDecorations(std::int64_t mapId);
+/// The decorations of `mapId` with their styles (one entry per decoration), as one immutable snapshot
+/// (nullptr: none).
+struct DecoratedMap {
+    std::vector<Decoration>      decorations;
+    std::vector<DecorationStyle> styles;
+};
+[[nodiscard]] std::shared_ptr<DecoratedMap const> decorated(std::int64_t mapId);
 /// setDecorations with a style per decoration (`styles[i]` for `decorations[i]`; missing entries are
 /// plain). The contract's setDecorations draws every decoration plain.
 void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations, std::vector<DecorationStyle> styles);

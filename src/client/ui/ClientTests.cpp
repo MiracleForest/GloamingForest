@@ -5,10 +5,19 @@
 #ifdef GF_CLIENT
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
+#include <mutex>
+#include <vector>
 
+#include "ll/api/service/Bedrock.h"
+
+#include "mc/network/packet/SpawnParticleEffectPacket.h"
+#include "mc/network/packet/SpawnParticleEffectPacketPayload.h"
+#include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/Level.h"
 
 #include "client/input/Input.h"
 #include "client/render/Geo.h"
@@ -17,6 +26,8 @@
 #include "client/world/ClientConfig.h"
 #include "client/world/Sky.h"
 #include "feature/ext/ui/Client.h"
+#include "feature/fx/Fx.h"
+#include "feature/net/Net.h"
 #include "game/Items.h"
 #include "mod/Config.h"
 #include "selftest/SelfTest.h"
@@ -82,19 +93,32 @@ GF_REGISTER_SELFTEST("ui.client_ui", [](Context& ctx) {
     }
 });
 
-// ContainerScreen states (slot stacks, the title) go away once their screen is no longer open.
+// ContainerScreen states (slot stacks, the title) live as long as their screen: a screen that is not
+// the open one (covered, or not opened yet) keeps its stacks over many frames, and its state goes
+// when the screen is destroyed. A screen whose widgets were cleared (its life token with them) falls
+// back to the time rule.
 GF_REGISTER_SELFTEST("ui.client_container_state", [](Context& ctx) -> ll::coro::CoroTask<> {
     std::size_t before = cl::ui::containerStateCount();
-    {
-        cl::screen::ContainerScreen s("ui test", "", 176, 166);
-        s.slots.push_back({0, 8, 18});
-        cl::ui::setContainerItems(s, Json{{"0", gf::game::items::toJson(*gf::game::items::make("minecraft:map"))}});
-        ctx.check(cl::ui::containerStateCount() >= 1, "a state for the screen"); // (states of closed screens may go meanwhile)
-    } // the screen is gone without ever being open: the UI render passes drop its state
-    for (int i = 0; i < 40 && cl::ui::containerStateCount() > before; ++i) co_await ctx.ticks(1);
-    ctx.check(cl::ui::containerStateCount() <= before, "the state of a closed screen is dropped, " + std::to_string(cl::ui::containerStateCount()) + " left");
-});
+    auto        map    = gf::game::items::make("minecraft:map");
+    ctx.require(map.has_value(), "minecraft:map");
+    auto s = std::make_unique<cl::screen::ContainerScreen>("ui test", "", 176, 166);
+    s->slots.push_back({0, 8, 18});
+    cl::ui::setContainerItems(*s, Json{{"0", gf::game::items::toJson(*map)}});
+    ctx.check(cl::ui::containerStateCount() == before + 1, "a state for the screen");
+    co_await ctx.ticks(40); // 2 s: many frames and UI passes
+    ctx.check(cl::ui::containerStateCount() == before + 1, "a live screen that is not the open one keeps its state");
+    s.reset();
+    ctx.check(cl::ui::containerStateCount() == before, "the state goes with its screen");
 
+    // a subclass that clears `widgets` (the token with them) while the screen is not open
+    auto o = std::make_unique<cl::screen::ContainerScreen>("ui test 2", "", 176, 166);
+    o->widgets.clear();
+    cl::ui::setContainerItems(*o, Json{{"0", gf::game::items::toJson(*map)}});
+    ctx.check(cl::ui::containerStateCount() == before + 1, "a state for the screen without its token");
+    o.reset(); // nothing tells F12: the time rule (10 s without being the open one) drops it
+    for (int i = 0; i < 300 && cl::ui::containerStateCount() > before; ++i) co_await ctx.ticks(1);
+    ctx.check(cl::ui::containerStateCount() == before, "the state of a screen without its token goes after the grace time");
+});
 GF_REGISTER_SELFTEST("ui.client_render", [](Context& ctx) {
     namespace r = cl::render;
     r::registerBlockRenderer("gf_test:ui_test_block", [](auto&, auto const&, auto const&, float) {}, {.throughWalls = true});
@@ -195,6 +219,18 @@ GF_REGISTER_SELFTEST("ui.client_world", [](Context& ctx) {
     ctx.check(cl::maps::stylesOf(kMap).size() == 1 && cl::maps::stylesOf(kMap)[0].topmost, "the player icon on top");
     cl::maps::setDecorations(kMap, {});
     ctx.check(cl::maps::stylesOf(kMap).empty(), "styles go with the decorations");
+    // item frames: Java's showOnItemFrame (false for the vanilla player markers, true for TF's icons),
+    // or the style's own onFrame
+    ctx.check(!cl::maps::showOnItemFrame("minecraft:player") && !cl::maps::showOnItemFrame("minecraft:0") && !cl::maps::showOnItemFrame("minecraft:player_off_map"), "the player markers are not drawn on item frames");
+    ctx.check(cl::maps::showOnItemFrame("minecraft:red_x") && cl::maps::showOnItemFrame("twilightforest:lich_tower") && cl::maps::showOnItemFrame("minecraft:frame"), "TF's icons, the red X and the frame marker are");
+    ctx.check(!cl::maps::hasDecorations(kMap) && !cl::maps::decorated(kMap), "no decorations: none reported");
+    cl::maps::setDecorations(kMap, {{.type = "minecraft:player", .x = 0, .z = 0, .rotation = 0, .name = ""}, {.type = "gf_test:ui_test_icon", .x = 0, .z = 0, .rotation = 0, .name = ""}}, {{}, {.onFrame = false}});
+    auto snap = cl::maps::decorated(kMap);
+    ctx.check(cl::maps::hasDecorations(kMap) && snap && snap->decorations.size() == 2 && snap->styles.size() == 2, "one snapshot with the decorations and their styles");
+    ctx.check(snap && !snap->styles[0].onFrame && snap->styles[1].onFrame == false, "onFrame: the type's own unless the style says");
+    cl::maps::setDecorations(kMap, {});
+    ctx.check(snap && snap->decorations.size() == 2, "a snapshot stays valid after the map changed");
+    ctx.check(!cl::maps::hasDecorations(kMap), "removed");
     // icons: registered textures (whole), vanilla icons as cells of the vanilla atlas
     auto own = cl::maps::iconFor("gf_test:ui_test_icon");
     ctx.check(own && own->texture == "textures/gui/ui/fixture_geo" && own->u0 == 0 && own->u1 == 1, "a registered icon is its whole texture");
@@ -217,6 +253,141 @@ GF_REGISTER_SELFTEST("ui.client_world", [](Context& ctx) {
     cl::camera::shake(0.001f, 5);
     ctx.check(cl::camera::shaking() > 5 && cl::camera::shakeIntensity() == 0.001f, "the latest intensity, the longer duration");
     cfg.screenShakingEffect = keep;
+});
+
+// Native particles reached from the server: gf::fx::particle for a companion (F10's fx.particle
+// handler asks F12's factories through gf::fx::client::setNativeSink) with its velocity, count,
+// params and spread, and SpawnParticleEffectPackets as the vanilla handler takes them (another
+// dimension: dropped; bound to an actor: at the actor plus the offset). The factory only records:
+// the local player sees nothing.
+struct FxSeen {
+    std::mutex        mutex;
+    std::vector<Vec3> pos, vel;
+    std::vector<Json> params;
+};
+FxSeen& fxSeen() {
+    static FxSeen s;
+    return s;
+}
+std::size_t fxCount() {
+    std::lock_guard lock(fxSeen().mutex);
+    return fxSeen().pos.size();
+}
+void fxClear() {
+    std::lock_guard lock(fxSeen().mutex);
+    fxSeen().pos.clear();
+    fxSeen().vel.clear();
+    fxSeen().params.clear();
+}
+
+/// The local player on the server side (a companion: the client mod's handshake), 0 when none.
+std::int64_t companionId() {
+    std::int64_t id    = 0;
+    auto         level = ll::service::getLevel();
+    if (!level) return 0;
+    level->forEachPlayer([&id](Player& p) {
+        if (p.isSimulated() || !gf::net::isCompanion(p)) return true;
+        id = p.getOrCreateUniqueID().rawID;
+        return false;
+    });
+    return id;
+}
+
+GF_REGISTER_SELFTEST("ui.client_fx_particle", [](Context& ctx) -> ll::coro::CoroTask<> {
+    constexpr char kId[] = "gf_test:ui_fx_particle";
+    auto           who   = companionId();
+    if (who == 0) {
+        ctx.info("no companion player in this world: skipped");
+        co_return;
+    }
+    fxClear();
+    cl::particles::registerNative(kId, [](Vec3 const& pos, Vec3 const& vel, Json const& params) {
+        std::lock_guard lock(fxSeen().mutex);
+        fxSeen().pos.push_back(pos);
+        fxSeen().vel.push_back(vel);
+        fxSeen().params.push_back(params);
+    });
+    struct Unregister {
+        ~Unregister() { cl::particles::unregisterNative("gf_test:ui_fx_particle"); }
+    } unregister;
+    auto wait = [&ctx](std::size_t n) -> ll::coro::CoroTask<> {
+        for (int i = 0; i < 60 && fxCount() < n; ++i) co_await ctx.ticks(1);
+    };
+    auto player = [who]() -> Player* {
+        auto level = ll::service::getLevel();
+        return level ? level->getPlayer(ActorUniqueID{who}) : nullptr; // rule R16
+    };
+
+    // gf::fx::particle: three particles, the velocity and params of the call
+    Vec3 at{};
+    {
+        auto* p = player();
+        ctx.require(p != nullptr, "the companion player");
+        at = p->getPosition() + Vec3{0, 1, 0};
+        gf::fx::particle(p->getDimension(), kId, at, Vec3{0.25f, 0.5f, -0.125f}, 3, Json{{"ui_test", 7}});
+    }
+    co_await wait(3);
+    {
+        std::lock_guard lock(fxSeen().mutex);
+        auto const&     s = fxSeen();
+        ctx.check(s.pos.size() == 3, "fx.particle ran the factory 3 times, got " + std::to_string(s.pos.size()));
+        bool same = !s.pos.empty();
+        for (std::size_t i = 0; i < s.pos.size(); ++i) {
+            same = same && s.pos[i].distanceTo(at) < 1e-3f && s.vel[i].distanceTo(Vec3{0.25f, 0.5f, -0.125f}) < 1e-4f && s.params[i].value("ui_test", 0) == 7;
+        }
+        ctx.check(same, "each at the position with the call's velocity and params");
+    }
+    // params "spread": each particle offset (gaussian x distance), as gf::fx does for vanilla clients
+    fxClear();
+    {
+        auto* p = player();
+        ctx.require(p != nullptr, "the companion player");
+        gf::fx::particle(p->getDimension(), kId, at, Vec3{}, 4, Json{{"spread", {0.5, 0.0, 0.5}}});
+    }
+    co_await wait(4);
+    {
+        std::lock_guard lock(fxSeen().mutex);
+        auto const&     s     = fxSeen();
+        bool            moved = false, flat = s.pos.size() == 4;
+        for (auto const& v : s.pos) {
+            moved = moved || std::abs(v.x - at.x) > 1e-4f || std::abs(v.z - at.z) > 1e-4f;
+            flat  = flat && std::abs(v.y - at.y) < 1e-4f;
+        }
+        ctx.check(flat && moved, "four particles spread in x and z, none in y, got " + std::to_string(s.pos.size()));
+    }
+
+    // a SpawnParticleEffectPacket of another dimension is dropped, as the vanilla handler drops it
+    fxClear();
+    int dim = 0;
+    {
+        auto* p = player();
+        ctx.require(p != nullptr, "the companion player");
+        dim = static_cast<int>(p->getDimensionId());
+        SpawnParticleEffectPacket other(SpawnParticleEffectPacketPayload(at, kId, static_cast<uchar>(dim == 0 ? 1 : 0), std::nullopt));
+        other.sendTo(*p);
+    }
+    co_await ctx.ticks(10);
+    ctx.check(fxCount() == 0, "a packet for another dimension runs no factory");
+    // bound to the player: at the player's position plus the packet's offset
+    Vec3 expect{};
+    {
+        auto* p = player();
+        ctx.require(p != nullptr, "the companion player");
+        expect = p->getPosition() + Vec3{0, 0.5f, 0};
+        SpawnParticleEffectPacket bound(SpawnParticleEffectPacketPayload(Vec3{0, 0.5f, 0}, kId, static_cast<uchar>(dim), std::nullopt));
+        bound.mActorId = ActorUniqueID{who};
+        bound.sendTo(*p);
+    }
+    co_await wait(1);
+    {
+        std::lock_guard lock(fxSeen().mutex);
+        auto const&     s = fxSeen();
+        ctx.check(s.pos.size() == 1, "a packet bound to the player ran the factory once, got " + std::to_string(s.pos.size()));
+        if (!s.pos.empty()) {
+            ctx.check(s.pos[0].distanceTo(expect) < 1.5f, "at the player plus the offset (" + std::to_string(s.pos[0].distanceTo(expect)) + " blocks off)");
+            ctx.check(s.params[0].value("actor", std::int64_t{0}) == who, "params carry the actor");
+        }
+    }
 });
 
 } // namespace

@@ -83,8 +83,11 @@ void feedInput(Player& player, InputSample const& sample);
 // - a server teleport (Player::teleportTo: /tp, a correction, LeviLamina's Actor::teleport, unit
 //   code), a respawn (PlayerRespawnEvent; a dead player's moves are never checked) and a dimension
 //   change (the first packet in the new dimension): the moves are not checked until the client has
-//   arrived: a HandledTeleport packet, or a claimed position within 2 blocks of the server's, or
-//   after 100 packets; packets still in flight from the old place are skipped.
+//   arrived: a HandledTeleport packet, or a claimed position within 2 blocks of the server's (the
+//   next move starts from that claim), or after 100 packets (a slow dimension load: the next move
+//   then starts from where the server put the player, the teleport's target or the server's
+//   position, never from a claim that may still be the old place); packets still in flight from the
+//   old place are skipped.
 // A rejected move is corrected two server ticks later, once the queued input was applied: the
 // player is teleported back to `from` (in the dimension of the rejection; none when the player
 // changed dimension meanwhile). Until the client acknowledges that teleport (or 40 packets at most)
@@ -97,6 +100,10 @@ enum class ResetReason { Teleport, Respawn, Dimension };
 void resetTrack(Player& player, ResetReason reason);
 /// Whether the moves of `player` are skipped until the client arrives (tests).
 [[nodiscard]] bool settling(Player const& player);
+/// Runs the validation of one auth input claim (feet position; `handledTeleport`: the packet
+/// acknowledges a server teleport) as the packet hook does, for players that send no packets
+/// (selftests); the correction target when rejected (no correction is scheduled).
+std::optional<Vec3> claimMove(Player& player, Vec3 const& feet, bool handledTeleport = false);
 /// Corrections waiting for player `playerId` (ActorUniqueID raw id; tests).
 [[nodiscard]] std::size_t pendingCorrections(std::int64_t playerId);
 /// Drops everything kept about `player` (tests).

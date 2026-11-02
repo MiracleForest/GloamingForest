@@ -5,7 +5,8 @@
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
-//// "client.render" (F12). Client build only.
+//
+// "client.render" (F12). Client build only.
 //
 // One hook per render event (rule R8: units register here):
 // - world: LevelRendererCamera::renderBlockEntities, opaque pass: onWorld callbacks, then the block
@@ -635,7 +636,8 @@ void renderFramed(BaseActorRenderContext& rc, IVanillaRenderBlockActorComponent&
 // decorations are drawn in that space once the enclosing render returned, so they lie on top.
 struct MapScope {
     BaseActorRenderContext*                         rc;
-    std::vector<std::pair<std::int64_t, glm::mat4>> maps; ///< map id, its space
+    bool                                            frame; ///< an item frame: Java's MapRenderer `active`
+    std::vector<std::pair<std::int64_t, glm::mat4>> maps;  ///< map id, its space
 };
 std::vector<MapScope>& mapScopes() {
     thread_local std::vector<MapScope> s;
@@ -644,10 +646,15 @@ std::vector<MapScope>& mapScopes() {
 
 /// Opens a capture around a render that may draw maps (the first-person pass, an item in hand, an
 /// item frame); a map belongs to the innermost one, which draws its decorations when it ends (so in
-/// the same render pass and projection as the map).
-void beginMapCapture(BaseActorRenderContext& rc) { mapScopes().push_back({&rc, {}}); }
+/// the same render pass and projection as the map). `frame`: the capture of an item frame (a capture
+/// opened inside one, e.g. an item render of the frame, is one too).
+void beginMapCapture(BaseActorRenderContext& rc, bool frame) {
+    auto& scopes = mapScopes();
+    bool  inside = !scopes.empty() && scopes.back().frame;
+    scopes.push_back({&rc, frame || inside, {}});
+}
 
-void drawMapDecorations(BaseActorRenderContext& rc, std::int64_t mapId, glm::mat4 const& mapSpace);
+void drawMapDecorations(BaseActorRenderContext& rc, std::int64_t mapId, glm::mat4 const& mapSpace, bool inFrame);
 
 void endMapCapture() {
     auto& scopes = mapScopes();
@@ -656,7 +663,7 @@ void endMapCapture() {
     scopes.pop_back();
     for (auto const& [id, space] : scope.maps) {
         try {
-            drawMapDecorations(*scope.rc, id, space);
+            drawMapDecorations(*scope.rc, id, space, scope.frame);
         } catch (...) {}
     }
 }
@@ -667,7 +674,7 @@ void captureMap(MapItemSavedData const& data) {
     if (scopes.empty()) return;
     auto&        scope = scopes.back();
     std::int64_t id    = data.mMapId->rawID;
-    if (maps::decorationsOf(id).empty()) return;
+    if (!maps::hasDecorations(id)) return; // every map the game draws, every frame: no copy here
     infoOnce("map_capture", "map " + std::to_string(id) + " with TF decorations rendered (" + std::to_string(scopes.size()) + " capture scopes)");
     glm::mat4 space = scope.rc->mScreenContext.camera.worldMatrixStack.get().top()._m.get();
     for (auto& [mid, s] : scope.maps) {
@@ -696,11 +703,14 @@ void drawMapQuad(ScreenContext& screen, mce::MaterialPtr const& material, mce::T
 /// of the 128 x 128 map, turned by rotation * 22.5 degrees, an 8 x 8 quad of the icon at depth
 /// index * -0.001. TF's IMapDecorationRenderers: MagicMapPlayerIconRenderer draws its icon at depth
 /// -0.3 (topmost), ConqueredMapIconRenderer adds the red X (scale 2, translated (-1, -1, -0.005),
-/// depth -0.095) and lets the icon be drawn as well.
-void drawMapDecorations(BaseActorRenderContext& rc, std::int64_t mapId, glm::mat4 const& mapSpace) {
-    auto list = maps::decorationsOf(mapId);
-    if (list.empty()) return;
-    auto                    styles   = maps::stylesOf(mapId);
+/// depth -0.095) and lets the icon be drawn as well. On a framed map (`inFrame`, Java's `active`) a
+/// decoration whose type does not show on item frames is skipped before any renderer runs and takes
+/// no depth index, as MapRenderer does.
+void drawMapDecorations(BaseActorRenderContext& rc, std::int64_t mapId, glm::mat4 const& mapSpace, bool inFrame) {
+    auto snapshot = maps::decorated(mapId); // immutable: no copy of the list or the styles
+    if (!snapshot || snapshot->decorations.empty()) return;
+    auto const&             list     = snapshot->decorations;
+    auto const&             styles   = snapshot->styles;
     auto&                   screen   = rc.mScreenContext;
     mce::MaterialPtr const* material = modelMaterial(&rc); // the alpha-tested model material drawGeo uses
     if (!material) return;
@@ -711,7 +721,11 @@ void drawMapDecorations(BaseActorRenderContext& rc, std::int64_t mapId, glm::mat
     for (std::size_t i = 0; i < list.size(); ++i) {
         auto const& d     = list[i];
         auto        style = i < styles.size() ? styles[i] : maps::DecorationStyle{};
-        float       index = static_cast<float>(k++);
+        if (inFrame && !style.onFrame.value_or(maps::showOnItemFrame(d.type))) {
+            infoOnce("map_frame_skip", "map decoration " + d.type + " not drawn on an item frame");
+            continue;
+        }
+        float index = static_cast<float>(k++);
         glm::mat4   at    = glm::translate(glm::mat4{1.f}, glm::vec3{static_cast<float>(d.x) / 2.f + 64.f, static_cast<float>(d.z) / 2.f + 64.f, 0.f});
         at                = glm::rotate(at, glm::radians(static_cast<float>(d.rotation * 360) / 16.f), glm::vec3{0, 0, 1});
         if (style.conquered && redX) {
@@ -850,7 +864,7 @@ LL_TYPE_INSTANCE_HOOK(
     bool                    useMatrixAsIs,
     bool                    renderingMainHand
 ) {
-    r::beginMapCapture(renderContext); // a held map is drawn inside
+    r::beginMapCapture(renderContext, false); // a held map is drawn inside
     try {
         origin(renderContext, entity, item, posAndRotSetByJSON, itemFlags, useMatrixAsIs, renderingMainHand);
     } catch (...) {
@@ -970,7 +984,7 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     // the overload may forward to the one with a render position: one dispatch per frame block
     ++r::frameDispatchDepth();
-    r::beginMapCapture(entityRenderContext);
+    r::beginMapCapture(entityRenderContext, true); // a framed map: Java's MapRenderer with active
     try {
         origin(entityRenderContext, renderSource, renderComponent, block, renderAlphaLayer, forcedMat, forceTex, breakingAmount, std::move(renderMetadata));
     } catch (...) {
@@ -1004,7 +1018,7 @@ LL_TYPE_INSTANCE_HOOK(
     int                                   breakingAmount,
     std::optional<dragon::RenderMetadata> renderMetadata
 ) {
-    r::beginMapCapture(entityRenderContext);
+    r::beginMapCapture(entityRenderContext, true); // a framed map: Java's MapRenderer with active
     try {
         origin(entityRenderContext, renderSource, renderComponent, block, renderPos, worldPos, renderAlphaLayer, forcedMat, forceTex, breakingAmount, std::move(renderMetadata));
     } catch (...) {
@@ -1083,7 +1097,7 @@ LL_TYPE_INSTANCE_HOOK(
     Matrix const&           prevProj,
     ItemContextFlags        itemFlags
 ) {
-    r::beginMapCapture(renderContext);
+    r::beginMapCapture(renderContext, false);
     try {
         origin(renderContext, prevProj, itemFlags);
     } catch (...) {

@@ -258,20 +258,15 @@ namespace {
 
 using Input = PlayerAuthInputPacketPayload::InputData;
 
-/// Validates the move a packet claims (before it is queued); the correction target when rejected.
-std::optional<Vec3> checkMove(Player& player, PlayerAuthInputPacket const& packet) {
+/// Validates a claimed feet position `to` (`ack`: the packet acknowledges a server teleport); the
+/// correction target when rejected.
+std::optional<Vec3> checkClaim(Player& player, Vec3 const& to, bool ack) {
     auto& s = st();
-    if (player.isSimulated()) return std::nullopt;
     // the track is kept without validators too (one lookup per packet), so a rule registered later
     // starts from the last move the client claimed, not from a server position it has not reached
-    // the packet carries the client's eye position: the validators and the correction use feet
-    float eye    = player.getPosition().y - player.getFeetPos().y;
-    Vec3  claim  = packet.mPos;
-    Vec3  to{claim.x, claim.y - eye, claim.z};
     auto  id     = player.getOrCreateUniqueID().rawID;
     auto& t      = s.tracks[id];
     int   dim    = static_cast<int>(player.getDimensionId());
-    bool  ack    = packet.mInputData->contains(Input::HandledTeleport);
     Vec3  feet   = player.getFeetPos();
     if (!t.valid) { // the first packet of this player: the server's position
         t       = Track{};
@@ -298,8 +293,16 @@ std::optional<Vec3> checkMove(Player& player, PlayerAuthInputPacket const& packe
             Vec3  target = t.target.value_or(feet);
             float near  = to.distanceTo(target);
             // near the server's place, and nearer to it than to where the client was before the move
-            arrived = arrived || (near <= kArriveDistance && near <= to.distanceTo(t.origin) && target.distanceTo(t.origin) > 1e-3f)
-                   || t.settlePackets > kArrivePackets;
+            arrived = arrived || (near <= kArriveDistance && near <= to.distanceTo(t.origin) && target.distanceTo(t.origin) > 1e-3f);
+            if (!arrived && t.settlePackets > kArrivePackets) {
+                // the client never claimed the new place (a dimension that loads slowly): the next
+                // moves start from where the server put the player, not from a claim that may still
+                // be the old place (a distance rule would then send the player back there)
+                t.settle = Settle::None;
+                t.last   = target;
+                log().debug("movement: {} did not arrive within {} packets; validating from the server's place", player.getRealName(), kArrivePackets);
+                return std::nullopt;
+            }
         }
         else arrived = arrived || t.settlePackets > kAckPackets; // moves sent before the correction arrived
         if (arrived) {
@@ -320,6 +323,15 @@ std::optional<Vec3> checkMove(Player& player, PlayerAuthInputPacket const& packe
     t.settle        = Settle::Rejected;
     t.settlePackets = 0;
     return from;
+}
+
+/// Validates the move a packet claims (before it is queued); the correction target when rejected.
+std::optional<Vec3> checkMove(Player& player, PlayerAuthInputPacket const& packet) {
+    if (player.isSimulated()) return std::nullopt;
+    // the packet carries the client's eye position: the validators and the correction use feet
+    float eye   = player.getPosition().y - player.getFeetPos().y;
+    Vec3  claim = packet.mPos;
+    return checkClaim(player, Vec3{claim.x, claim.y - eye, claim.z}, packet.mInputData->contains(Input::HandledTeleport));
 }
 
 /// Server tick: the corrections whose delay ran out.
@@ -349,6 +361,8 @@ void runCorrections() {
 }
 
 } // namespace
+
+std::optional<Vec3> claimMove(Player& player, Vec3 const& feet, bool handledTeleport) { return checkClaim(player, feet, handledTeleport); }
 
 // One hook for the auth input (rule R8: units use onInputEdge / validate instead).
 LL_TYPE_INSTANCE_HOOK(

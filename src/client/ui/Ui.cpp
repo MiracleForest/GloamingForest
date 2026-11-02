@@ -235,17 +235,56 @@ constexpr unsigned kSlotHover   = 0x80FFFFFF; // AbstractContainerScreen.renderS
 struct ScreenSide {
     std::map<int, std::shared_ptr<ItemStack>> items;
     std::string                               title;
-    std::uint64_t                             touched = 0; ///< ContainerItems::pass when last set or drawn
+    /// The screen's LifeToken widget is alive: the state goes when the screen is destroyed. False
+    /// once the widget went while its screen lived on (a subclass cleared `widgets`): then the state
+    /// goes after kOrphanGrace without its screen being the open one.
+    bool                                  tracked = false;
+    std::chrono::steady_clock::time_point seen{}; ///< last set, drawn or found open
 };
 struct ContainerItems {
     std::mutex                                             mutex;
     std::unordered_map<ContainerScreen const*, ScreenSide> items;
-    std::uint64_t                                          pass = 0; ///< UI render passes seen by prune()
+    std::unordered_map<ContainerScreen const*, int>        tokens; ///< live LifeTokens per screen
 };
 ContainerItems& containerItems() {
     static ContainerItems c;
     return c;
 }
+constexpr auto kOrphanGrace = std::chrono::seconds(10);
+
+/// An invisible widget every ContainerScreen holds (the first of `widgets`): the screen's widgets
+/// are destroyed with it, so its destructor tells when the screen is gone (the ContainerScreen
+/// header has no destructor of ours).
+class LifeToken final : public Widget {
+public:
+    explicit LifeToken(ContainerScreen const* owner) : Widget(Rect{0, 0, 0, 0}), mOwner(owner) {
+        visible = false;
+        enabled = false;
+        auto&           ci = containerItems();
+        std::lock_guard lock(ci.mutex);
+        ++ci.tokens[mOwner];
+    }
+    ~LifeToken() override {
+        try {
+            auto&           ci = containerItems();
+            std::lock_guard lock(ci.mutex);
+            if (auto t = ci.tokens.find(mOwner); t != ci.tokens.end() && --t->second <= 0) ci.tokens.erase(t);
+            if (ci.tokens.contains(mOwner)) return;
+            auto it = ci.items.find(mOwner);
+            if (it == ci.items.end()) return;
+            // the framework releases its screen before destroying it, so a screen that is still the
+            // open one lives on (a subclass cleared its widgets): the time rule from now on
+            if (static_cast<Screen const*>(mOwner) == current()) {
+                it->second.tracked = false;
+                it->second.seen    = std::chrono::steady_clock::now();
+            } else ci.items.erase(it);
+        } catch (...) {}
+    }
+    void render(Canvas&, float, float) override {}
+
+private:
+    ContainerScreen const* mOwner;
+};
 
 Rect slotRect(float x, float y) { return Rect{x, y, 16, 16}; }
 
@@ -258,26 +297,42 @@ Rect inventoryRect(ContainerScreen const& s, int slot) {
 
 bool skinHasInventory(ContainerScreen const& s) { return !s.showInventory && s.height >= 166; }
 
-/// Drops the states of screens the framework closed (its unique_ptr is gone; the ContainerScreen
-/// header has no destructor of ours): every UI render pass, a state whose screen is not the open one
-/// and was not set or drawn in the last few passes goes.
+/// The states whose screen lost its LifeToken while it lived (see ScreenSide::tracked): they go once
+/// the screen has not been the open one for kOrphanGrace. States of live screens (tracked) stay
+/// however long the screen is covered or waits to be opened.
 void pruneContainerStates() {
     auto&           ci = containerItems();
     std::lock_guard lock(ci.mutex);
-    ++ci.pass;
     if (ci.items.empty()) return;
-    auto const* open = current();
-    std::erase_if(ci.items, [&](auto const& e) { return e.first != open && ci.pass - e.second.touched > 4; });
+    Screen const* open = current();
+    auto          now  = std::chrono::steady_clock::now();
+    for (auto it = ci.items.begin(); it != ci.items.end();) {
+        bool isOpen = static_cast<Screen const*>(it->first) == open;
+        if (isOpen) it->second.seen = now;
+        if (!it->second.tracked && !isOpen && now - it->second.seen > kOrphanGrace) it = ci.items.erase(it);
+        else ++it;
+    }
+}
+
+/// The state of `s` (tracked while its LifeToken lives). Under the lock.
+ScreenSide& sideOf(ContainerItems& ci, ContainerScreen const& s) {
+    auto& side   = ci.items[&s];
+    side.tracked = ci.tokens.contains(&s);
+    side.seen    = std::chrono::steady_clock::now();
+    return side;
 }
 } // namespace
 
 ContainerScreen::ContainerScreen(std::string title, std::string skin, float width, float height)
 : Screen(std::move(title), width, height),
   skin(std::move(skin)) {
-    // a closed screen may have lived at this address: start without its state
-    auto&           ci = containerItems();
-    std::lock_guard lock(ci.mutex);
-    ci.items.erase(this);
+    {
+        // a screen that lost its token may have lived at this address: start without its state
+        auto&           ci = containerItems();
+        std::lock_guard lock(ci.mutex);
+        ci.items.erase(this);
+    }
+    add<LifeToken>(this);
 }
 
 void ContainerScreen::renderExtra(Canvas& c, float mx, float my) {
@@ -291,8 +346,7 @@ void ContainerScreen::renderExtra(Canvas& c, float mx, float my) {
     {
         auto&           ci   = containerItems();
         std::lock_guard lock(ci.mutex);
-        auto&           side = ci.items[this];
-        side.touched         = ci.pass;
+        auto&           side = sideOf(ci, *this);
         if (skinned && !title.empty()) side.title = std::exchange(title, std::string{}); // drawn here from now on
         if (!skinned && title.empty() && !side.title.empty()) title = side.title;        // skin gone: the framework's title
         shownTitle = side.title.empty() ? title : side.title;
@@ -346,11 +400,9 @@ namespace ui {
 void setContainerItems(screen::ContainerScreen& s, nlohmann::json const& items) {
     auto&           ci = screen::containerItems();
     std::lock_guard lock(ci.mutex);
-    // states of closed screens go in pruneContainerStates (a reused address starts afresh in the constructor)
-
-    auto& side   = ci.items[&s];
-    side.touched = ci.pass;
-    auto& map    = side.items;
+    // the state goes with the screen (its LifeToken; a reused address starts afresh in the constructor)
+    auto& side = screen::sideOf(ci, s);
+    auto& map  = side.items;
     map.clear();
     if (!items.is_object()) return;
     for (auto const& [k, v] : items.items()) {

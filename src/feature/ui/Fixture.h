@@ -2,6 +2,7 @@
 
 // The F12 fixture, server side (selftests "ui.*" and the e2e scenarios): see Fixture.cpp.
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -35,12 +36,25 @@ void openFormFallback(Player& player);
 
 // ---- what the real-player steps change, and how it is undone (ui.fixture_clear) -----------------
 
-/// Remembers what the fixture is about to change on `player`, once until restorePlayers: dimension,
-/// feet position, rotation, the selected hotbar slot and its stack, the helmet.
+/// Remembers where `player` is before the fixture moves it (dimension, feet position, rotation),
+/// once until restorePlayers. What is remembered is kept in memory and in the world DB
+/// (gf:ui:fixture_players; real players only), so a session that ends before ui.fixture_clear
+/// (a crash, a harness restart) is put back by the next session's restorePlayers.
 void rememberPlayer(Player& player);
-/// Puts every remembered player back (helmet, the stack of the remembered slot, position and
-/// rotation); returns how many players were restored.
+/// Remembers the stack of inventory slot `slot` before a step changes it (once per slot until
+/// restorePlayers; the player is remembered too).
+void rememberSlot(Player& player, int slot);
+/// Remembers the helmet before a step changes it (once until restorePlayers).
+void rememberHead(Player& player);
+/// Puts `stack` into the selected hotbar slot, that slot remembered first.
+void setHeld(Player& player, ItemStack const& stack);
+/// Puts `stack` on the head, the helmet remembered first.
+void setHead(Player& player, ItemStack const& stack);
+/// Puts every remembered player that is in the level back (helmet, every remembered slot, position
+/// and rotation); players not in the level stay remembered. Returns how many players were restored.
 int restorePlayers();
+/// The players remembered now (memory and world DB).
+[[nodiscard]] std::size_t savedPlayerCount();
 
 /// The stage of the real-player steps: a 3 x 5 x 5 box in the ui selftest row (testPos(6260),
 /// dz 0..4; rule R12) with a grass floor at y - 1 and air above; the player stands on `origin` (its
@@ -51,8 +65,18 @@ bool prepareStage(BlockSource& region, BlockPos const& origin);
 /// Moves `player` (remembered first) onto the stage origin, facing south and looking at
 /// `targetHeight` blocks above the floor two blocks ahead.
 void standOnStage(Player& player, BlockSource const& region, BlockPos const& origin, float targetHeight);
-/// Puts the stage's blocks back as they were before prepareStage; returns the blocks changed.
+/// Puts the stage's blocks back as they were before prepareStage (item frames emptied first, so
+/// nothing drops); returns the blocks changed. A stage that is not loaded keeps its snapshot for a
+/// later clear; prepareStage then reuses that snapshot at the same place (and refuses a new stage
+/// elsewhere).
 int clearStage();
+/// Drops the stage without putting it back (memory and world DB; selftests).
+void discardStage();
+/// Empties the item frame at `pos` (ItemFrameBlockActor::onRemoved drops the framed item when the
+/// block is replaced); false when there is no frame or it holds nothing.
+bool emptyFrame(BlockSource& region, BlockPos const& pos);
+/// The item entities within `radius` blocks of `origin` (selftests: nothing dropped).
+[[nodiscard]] std::size_t itemEntitiesNear(BlockSource& region, BlockPos const& origin, int radius);
 
 // ---- blocks ----------------------------------------------------------------------------------
 
@@ -74,6 +98,16 @@ bool placeFrame(BlockSource& region, BlockPos const& pos, ItemStack const& item)
 /// Logs the next `count` input edges (gf::movement::onInputEdge) of fixture players, one line each
 /// ("ui fixture: edge <Edge> of <player>"); 0 stops.
 void logEdges(int count);
+
+// ---- the respawn step (gamerules) ----------------------------------------------------------------
+
+/// Turns doimmediaterespawn and keepinventory on for the respawn step, their values before kept in the
+/// world DB (gf:ui:fixture_rules; the first values stay until restoreRespawnRules); false when a value
+/// could not be read or a command failed.
+bool setRespawnRules();
+/// Puts the two gamerules back to the kept values (also after a session that ended before); returns
+/// how many were kept (0: nothing to put back).
+int restoreRespawnRules();
 
 [[nodiscard]] int clicks();
 [[nodiscard]] int keyPresses();
