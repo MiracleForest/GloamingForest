@@ -39,6 +39,8 @@ if ($script:Mode -eq 'local') {
     if ($r.Pass -lt 26) { throw "expected 26 worldgen selftests to pass, got $($r.Pass)" }
     if (-not (Get-LeviLog -Since $mark | Select-String -Pattern 'worldgen timing: 200 chunks' -Quiet)) { throw 'no 200-chunk timing line logged' }
     if (-not (Get-LeviLog -Since $mark | Select-String -Pattern 'worldgen custom biome: \S+ written and read back' -Quiet)) { throw 'the custom probe biome was not written into a chunk' }
+    # worldgen.landmark_rules forces F6 starts only in the harness's fresh world GF-Test: required here
+    if (-not (Get-LeviLog -Since $mark | Select-String -Pattern 'worldgen landmark rules: forced starts checked' -Quiet)) { throw 'worldgen.landmark_rules did not check the forced starts (is the world GF-Test?)' }
 
     # The biome the server and the client level hold under the player: the same, and the expected one.
     function Write-BiomeView([string]$where, [string]$expected) {

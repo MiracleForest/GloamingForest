@@ -33,7 +33,6 @@
 #include "core/noise/PerlinSimplex.h"
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/features/Internal.h"
-#include "feature/tags/Tags.h"
 #include "feature/worldgen/Internal.h"
 
 #pragma clang fp contract(off)
@@ -523,34 +522,37 @@ int findOnGroundYPosition(PlacementContext const& c, int x, int y, int z, int co
     return std::numeric_limits<int>::max();
 }
 
-/// The structure ids of a HolderSet<Structure> (structures_allowed): an id, a list of ids, or a
-/// "#tag" of structures.
-std::vector<std::string> structureKeys(Json const& set) {
-    std::vector<std::string> out;
-    auto add = [&](std::string const& entry) {
-        if (entry.starts_with('#')) {
-            for (auto& id : tags::members(tags::Registry::Structure, normalizeId(entry))) out.push_back(std::move(id));
-        } else {
-            out.push_back(normalizeId(entry));
-        }
-    };
-    if (set.is_string()) add(set.get<std::string>());
-    if (set.is_array())
-        for (auto const& e : set)
-            if (e.is_string()) add(e.get<std::string>());
-    return out;
-}
-
 /// AvoidLandmarkModifier#getPositions: F6 decides from the starts referencing the position's chunk
 /// (DecorationClearance, the pieces with UtilityPiece#allowFeatures, the start box's center).
+/// structureTypeBlocksFeaturePlacement skips a start that is not StructureStart#isValid (no pieces:
+/// a site F6 reserved for a landmark without a generator yet); F6's featureBlocked keeps the
+/// clearance square of such a site, so a structure whose starts in this chunk all lack pieces goes
+/// to F6 as allowed (when one structure has a start with and one without pieces here, which F6's
+/// revival of reserved sites leaves no room for, F6's answer stands for both).
 Positions noStructure(PlacementContext const& c, BlockPos const& pos) {
+    int  dimension = c.region.dimension();
+    auto starts    = landmark::startsIntersecting(dimension, {pos.x >> 4, pos.z >> 4});
+    if (starts.empty()) return {pos}; // ChunkAccess#getAllReferences: none
+    auto allowed   = structureIds(field(c.config, "structures_allowed"));
+    auto isAllowed = [&](std::string const& key) { return std::find(allowed->begin(), allowed->end(), key) != allowed->end(); };
+    std::vector<std::string> withoutPieces;
+    bool                     candidate = false; // a valid start of a structure the feature may not overlap
+    for (auto const& start : starts) {
+        if (isAllowed(start.key)) continue;
+        bool valid = std::any_of(starts.begin(), starts.end(), [&](landmark::Start const& s) { return s.key == start.key && !s.pieceBoxes.empty(); });
+        if (valid) candidate = true;
+        else if (std::find(withoutPieces.begin(), withoutPieces.end(), start.key) == withoutPieces.end()) withoutPieces.push_back(start.key);
+    }
+    if (!candidate) return {pos};
     landmark::ext::Occupancy occupancy;
     occupancy.surface             = c.config.value("occupies_surface", false);
     occupancy.underground         = c.config.value("occupies_underground", false);
     occupancy.vegetation          = c.config.value("occupies_vegetation", false);
     occupancy.additionalClearance = c.config.value("additional_clearance", 0);
-    if (auto it = c.config.find("structures_allowed"); it != c.config.end()) occupancy.structuresAllowed = structureKeys(*it);
-    if (landmark::ext::featureBlocked(c.region.dimension(), pos.x, pos.y, pos.z, occupancy)) return {};
+    occupancy.structuresAllowed.reserve(allowed->size() + withoutPieces.size());
+    occupancy.structuresAllowed.assign(allowed->begin(), allowed->end());
+    occupancy.structuresAllowed.insert(occupancy.structuresAllowed.end(), withoutPieces.begin(), withoutPieces.end());
+    if (landmark::ext::featureBlocked(dimension, pos.x, pos.y, pos.z, occupancy)) return {};
     return {pos};
 }
 

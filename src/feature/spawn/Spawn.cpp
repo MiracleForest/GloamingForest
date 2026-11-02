@@ -12,6 +12,7 @@
 #include <cmath>
 #include <deque>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <set>
 #include <shared_mutex>
@@ -81,7 +82,9 @@ struct State {
     std::unordered_map<std::string, ext::SpawnBehaviour> behaviours; ///< the mob's own spawn answers
     std::unordered_map<std::string, Table>              tables;     ///< registered by units (setBiomeSpawns)
     std::unordered_map<std::string, Table>              jsonTables; ///< read from the imported biome JSON (per world)
-    std::vector<SpecialSpawnFn>                         special;
+    /// onSpecialSpawn's functions, in registration order: replaced as a whole on registration, so a
+    /// reader copies the pointer only
+    std::shared_ptr<std::vector<SpecialSpawnFn> const>  special = std::make_shared<std::vector<SpecialSpawnFn> const>();
 };
 State& state() {
     static State s;
@@ -405,7 +408,9 @@ void setBiomeSpawns(std::string const& biomeId, Table table) {
 
 void onSpecialSpawn(SpecialSpawnFn fn) {
     std::unique_lock lock(state().mutex);
-    state().special.push_back(std::move(fn));
+    auto             list = std::make_shared<std::vector<SpecialSpawnFn>>(*state().special);
+    list->push_back(std::move(fn));
+    state().special = std::move(list);
 }
 
 namespace ext {
@@ -445,12 +450,12 @@ Table tableOf(std::string const& biomeId) {
 }
 
 std::vector<SpawnEntry> spawnListAt(BlockSource& region, BlockPos const& pos, std::string const& category, std::string const& biome) {
-    std::vector<SpecialSpawnFn> special;
+    std::shared_ptr<std::vector<SpecialSpawnFn> const> special;
     {
         std::shared_lock lock(state().mutex);
         special = state().special;
     }
-    for (auto const& fn : special)
+    for (auto const& fn : *special)
         if (auto list = fn(region, pos, category)) return *list;
     auto t  = tableOf(biome);
     auto it = t.byCategory.find(category);
@@ -647,6 +652,7 @@ struct Spawner {
             return true;
         });
         if (players.empty()) return;
+        features::detail::TagCacheScope tagPass; // the fence / wall / door tags of every spawn attempt of the tick
         // MinecraftServer#isSpawningMonsters: no monsters on Peaceful (ServerChunkCache#spawnEnemies)
         bool spawnEnemies = level->getDifficulty() != SharedTypes::Legacy::Difficulty::Peaceful;
 

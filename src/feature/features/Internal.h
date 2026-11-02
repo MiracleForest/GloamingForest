@@ -12,6 +12,7 @@
 #include <optional>
 #include <shared_mutex>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
 
@@ -135,5 +136,22 @@ void clearBlockCache();
 [[nodiscard]] Block const* blockFromJson(Json const& json);
 /// Java property value of `block` ("axis" -> "y"), nullopt when absent.
 [[nodiscard]] std::optional<std::string> javaProperty(Block const& block, std::string_view name);
+
+// ---- tag answers of one generation pass ---------------------------------------------------------------
+/// While one is alive on a thread, kit::hasTag keeps its answer per (tag, block) and structureIds its
+/// answer per HolderSet there; nested scopes share them, the outermost one forgets them. Opened around
+/// work that asks the same tags many times with no tag data reload in between: a chunk's generation
+/// and its decoration, a natural spawner tick. Outside a scope every call asks gf::tags, whose data
+/// may reload between two calls (/twilightforest reload; F9's selftests swap the data tree).
+class TagCacheScope {
+public:
+    TagCacheScope();
+    ~TagCacheScope();
+    TagCacheScope(TagCacheScope const&)            = delete;
+    TagCacheScope& operator=(TagCacheScope const&) = delete;
+};
+/// The structure ids of a HolderSet<Structure> (no_structure's structures_allowed): an id, a list of
+/// ids, or "#tag"s (gf::tags' members), namespaced; empty for anything else.
+[[nodiscard]] std::shared_ptr<std::vector<std::string> const> structureIds(Json const& set);
 
 } // namespace gf::features::detail

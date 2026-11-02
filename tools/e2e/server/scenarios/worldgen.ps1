@@ -38,6 +38,10 @@ if ($surface) { Write-Step "spawn heights: $($surface.Matches[0].Groups[1].Value
 $tags = $log | Select-String -Pattern 'worldgen tags: (.*)' | Select-Object -Last 1
 if (-not $tags) { throw 'the block and biome tags were not checked against gf::tags' }
 Write-Step "tags: $($tags.Matches[0].Groups[1].Value)"
+# worldgen.landmark_rules forces F6 starts only in the harness's fresh world GF-Test: required here
+$rules = $log | Select-String -Pattern 'worldgen landmark rules: (forced starts checked .*)' | Select-Object -Last 1
+if (-not $rules) { throw 'worldgen.landmark_rules did not check the forced starts (is the world GF-Test?)' }
+Write-Step "landmark rules: $($rules.Matches[0].Groups[1].Value)"
 
 # The generator in the Twilight Forest: required once the dimension exists (F4 installs it, and the
 # generator hook logs that it took over the dimension's generator); otherwise a distinct skip line.

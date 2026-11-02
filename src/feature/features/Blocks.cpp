@@ -11,7 +11,9 @@
 // tags, survival).
 #include <algorithm>
 #include <cctype>
+#include <functional>
 #include <memory>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -293,6 +295,60 @@ bool replaceableId(std::string const& javaId) {
     return ids.contains(javaId);
 }
 
+/// Heterogeneous lookup by string_view.
+struct StringHash {
+    using is_transparent = void;
+    std::size_t operator()(std::string_view s) const noexcept { return std::hash<std::string_view>{}(s); }
+};
+
+/// The answers kept while a TagCacheScope is open on this thread.
+struct TagCache {
+    int depth = 0;
+    /// tag (as asked) -> block -> member
+    std::unordered_map<std::string, std::unordered_map<Block const*, bool>, StringHash, std::equal_to<>> blocks;
+    /// a HolderSet's JSON (by address, its value kept to tell a reused address) -> its structure ids
+    struct Set {
+        Json                                            value;
+        std::shared_ptr<std::vector<std::string> const> ids;
+    };
+    std::unordered_map<Json const*, Set> structureSets;
+};
+TagCache& tagCache() {
+    thread_local TagCache c;
+    return c;
+}
+
+/// kit::hasTag without the scope's cache.
+bool hasTagUncached(Block const& block, std::string_view tagIn) {
+    std::string tag = normalizeId(std::string(tagIn));
+    // gf::tags (F9): TF's tag data with the units' fragments, nested tags, and the vanilla members
+    // of the vanilla tags its bridge answers; it takes the game's (Bedrock) ids
+    if (tags::has(tags::Registry::Block, tag, block.getTypeName())) return true;
+    // the vanilla tags the bridge does not answer
+    auto it = vanillaTags().find(tag);
+    if (it == vanillaTags().end()) return false;
+    std::string const id = kit::javaId(block);
+    for (auto const& entry : it->second)
+        if (entry.starts_with('#') ? kit::hasTag(block, std::string_view(entry).substr(1)) : entry == id) return true;
+    return false;
+}
+
+std::shared_ptr<std::vector<std::string> const> structureIdsUncached(Json const& set) {
+    auto out = std::make_shared<std::vector<std::string>>();
+    auto add = [&](std::string const& entry) {
+        if (entry.starts_with('#')) {
+            for (auto& id : tags::members(tags::Registry::Structure, normalizeId(entry))) out->push_back(std::move(id));
+        } else {
+            out->push_back(normalizeId(entry));
+        }
+    };
+    if (set.is_string()) add(set.get<std::string>());
+    if (set.is_array())
+        for (auto const& e : set)
+            if (e.is_string()) add(e.get<std::string>());
+    return out;
+}
+
 } // namespace
 
 namespace kit {
@@ -385,18 +441,16 @@ bool isReplaceable(Block const& block) {
     return replaceableId(javaId(block));
 }
 
-bool hasTag(Block const& block, std::string_view tagIn) {
-    std::string tag = normalizeId(std::string(tagIn));
-    // gf::tags (F9): TF's tag data with the units' fragments, nested tags, and the vanilla members
-    // of the vanilla tags its bridge answers; it takes the game's (Bedrock) ids
-    if (tags::has(tags::Registry::Block, tag, block.getTypeName())) return true;
-    // the vanilla tags the bridge does not answer
-    auto it = vanillaTags().find(tag);
-    if (it == vanillaTags().end()) return false;
-    std::string const id = javaId(block);
-    for (auto const& entry : it->second)
-        if (entry.starts_with('#') ? hasTag(block, std::string_view(entry).substr(1)) : entry == id) return true;
-    return false;
+bool hasTag(Block const& block, std::string_view tag) {
+    auto& cache = tagCache();
+    if (cache.depth == 0) return hasTagUncached(block, tag);
+    if (auto byTag = cache.blocks.find(tag); byTag != cache.blocks.end())
+        if (auto known = byTag->second.find(&block); known != byTag->second.end()) return known->second;
+    bool member = hasTagUncached(block, tag); // may add other tags' answers (the built-in includes)
+    auto byTag  = cache.blocks.find(tag);
+    if (byTag == cache.blocks.end()) byTag = cache.blocks.emplace(std::string(tag), std::unordered_map<Block const*, bool>{}).first;
+    byTag->second.emplace(&block, member);
+    return member;
 }
 
 bool canSurvive(Region& region, BlockPos const& pos, Block const& block) {
@@ -443,6 +497,28 @@ std::optional<std::string> javaProperty(Block const& block, std::string_view nam
     }
     if (auto it = states.find(std::string(name)); it != states.end()) return it->second;
     return std::nullopt;
+}
+
+TagCacheScope::TagCacheScope() { ++tagCache().depth; }
+
+TagCacheScope::~TagCacheScope() {
+    auto& cache = tagCache();
+    if (--cache.depth > 0) return;
+    cache.blocks.clear();
+    cache.structureSets.clear();
+}
+
+std::shared_ptr<std::vector<std::string> const> structureIds(Json const& set) {
+    auto& cache = tagCache();
+    if (cache.depth == 0) return structureIdsUncached(set);
+    // keyed by the JSON's address (a placed feature's modifier, the same object at every call) and
+    // checked by value: an inline JSON freed meanwhile may have left its address to another one
+    auto& slot = cache.structureSets[&set];
+    if (!slot.ids || slot.value != set) {
+        slot.value = set;
+        slot.ids   = structureIdsUncached(set);
+    }
+    return slot.ids;
 }
 
 } // namespace detail

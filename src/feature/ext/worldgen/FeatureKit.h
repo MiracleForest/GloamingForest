@@ -58,6 +58,8 @@ using Json = nlohmann::json;
 /// Membership in a Java block tag ("minecraft:dirt", "twilightforest:mazestone"): gf::tags (TF's
 /// tag data and its vanilla bridge, asked with the block's game id), plus the vanilla tags of Java
 /// 1.21.1 the bridge does not answer (minecraft:fences, doors, trapdoors, overworld_natural_logs).
+/// During a chunk's generation or decoration and a natural spawner tick the answer of a (tag, block)
+/// is asked once and kept for the rest of that pass.
 [[nodiscard]] bool hasTag(Block const& block, std::string_view javaTag);
 /// `block` may stay at `pos` (BlockState#canSurvive).
 [[nodiscard]] bool canSurvive(Region& region, BlockPos const& pos, Block const& block);
