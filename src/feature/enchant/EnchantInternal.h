@@ -65,6 +65,8 @@ bool applyAnvilOffer(Player& player, int bookSlot, int targetSlot, BlockPos cons
 [[nodiscard]] bool isCustomOnlyBook(ItemStack const& stack);
 /// Vanilla anvil fallback uses of a player (selftests / e2e).
 [[nodiscard]] int anvilFallbackCount(Player& player);
+/// Anvil forms sent to a player (selftests).
+[[nodiscard]] int anvilFormCount(Player& player);
 /// Roman numerals as Java's enchantment.level.N ("I" .. "X", then digits).
 [[nodiscard]] std::string levelName(int level);
 /// The glint marker: an empty vanilla enchantment list makes clients draw the glint without a

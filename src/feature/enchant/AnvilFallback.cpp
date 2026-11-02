@@ -3,8 +3,9 @@
 // A vanilla Bedrock client computes the anvil's result itself and offers none when the second item
 // brings custom enchantments only (an enchanted book of TF's from loot: its enchantments live in the
 // item's user data). The server's merge (Enchant.cpp's anvil hook) never runs for it, so a vanilla
-// player who sneaks and uses an anvil holding such a book gets a form (a plain use opens the
-// client's anvil screen whatever the server answers, so it gets a hint to sneak instead): one button
+// player who uses an anvil holding such a book also gets a form (the client opens its own anvil
+// screen on the use whatever the server answers, and drops a form that arrives meanwhile: the form
+// is sent once the anvil's container has closed, and a chat line says so): one button
 // per inventory item the book makes a result for, with Java's AnvilMenu#createResult numbers (the
 // merged enchantments, the level cost with the prior work penalty, "Too Expensive!" from 40 levels
 // in survival); a choice is AnvilMenu#onTake (the levels, the book, the prior work of the result,
@@ -20,6 +21,7 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/shared_types/legacy/LevelEvent.h"
+#include "mc/legacy/ActorUniqueID.h"
 #include "mc/util/Random.h"
 #include "mc/world/actor/player/AbilitiesIndex.h"
 #include "mc/world/actor/player/Inventory.h"
@@ -81,6 +83,10 @@ bool canStoreEnchantments(ItemStack const& stack) {
 }
 
 std::map<std::int64_t, int>& fallbackCounts() {
+    static std::map<std::int64_t, int> m;
+    return m;
+}
+std::map<std::int64_t, int>& formCounts() {
     static std::map<std::int64_t, int> m;
     return m;
 }
@@ -188,6 +194,12 @@ int anvilFallbackCount(Player& player) {
     return it == fallbackCounts().end() ? 0 : it->second;
 }
 
+int anvilFormCount(Player& player) {
+    std::lock_guard lock(countsMutex());
+    auto            it = formCounts().find(player.getOrCreateUniqueID().rawID);
+    return it == formCounts().end() ? 0 : it->second;
+}
+
 } // namespace internal
 
 namespace {
@@ -221,7 +233,47 @@ void showForm(Player& player, int bookSlot, core::GlobalPos anvil) {
         }
     }
     form.sendTo(player);
+    {
+        std::lock_guard lock(countsMutex());
+        ++formCounts()[player.getOrCreateUniqueID().rawID];
+    }
     log().info("enchant: anvil form for {} ({} offers)", player.getRealName(), offers.size());
+}
+
+/// A form sent while a client screen is open is dropped by the client, and a vanilla client opens its
+/// anvil screen on the use whatever the server answers: the form goes out once the player's container
+/// (the anvil's, server side) has closed again, or right away when none opened within a second.
+constexpr int kOpenWait   = 20;           ///< ticks for the anvil screen to open
+constexpr int kCloseWait  = 20 * 60 * 5;  ///< at most this long at the anvil
+constexpr int kAfterClose = 10;           ///< the client's screen is gone
+
+enum class Phase { WaitOpen, WaitClose, AfterClose };
+
+void formWhenClosed(ActorUniqueID uid, int slot, core::GlobalPos pos, Phase phase, int ticks) {
+    ia::nextTick([=] {
+        auto level = ll::service::getLevel();
+        if (!level) return;
+        auto* p = level->getPlayer(uid);
+        if (!p) return;
+        bool open = p->mContainerManager != nullptr;
+        switch (phase) {
+        case Phase::WaitOpen:
+            if (open) formWhenClosed(uid, slot, pos, Phase::WaitClose, 0);
+            else if (ticks >= kOpenWait) formWhenClosed(uid, slot, pos, Phase::AfterClose, 0); // no screen opened
+            else formWhenClosed(uid, slot, pos, Phase::WaitOpen, ticks + 1);
+            return;
+        case Phase::WaitClose:
+            if (!open) formWhenClosed(uid, slot, pos, Phase::AfterClose, 0);
+            else if (ticks < kCloseWait) formWhenClosed(uid, slot, pos, Phase::WaitClose, ticks + 1);
+            else log().info("enchant: anvil form for {} given up (the anvil stayed open)", p->getRealName());
+            return;
+        case Phase::AfterClose:
+            if (open) formWhenClosed(uid, slot, pos, Phase::WaitClose, 0); // opened again
+            else if (ticks < kAfterClose) formWhenClosed(uid, slot, pos, Phase::AfterClose, ticks + 1);
+            else showForm(*p, slot, pos);
+            return;
+        }
+    });
 }
 
 class AnvilFallbackModule {
@@ -234,22 +286,13 @@ public:
             int slot = c.player.getSelectedItemSlot();
             // nothing the book can go on: the anvil screen opens as usual (renaming, repairs)
             if (internal::anvilOffers(c.player, slot).empty()) return ia::Result::Pass;
-            if (!c.sneaking) {
-                // a vanilla client opens its anvil screen on a plain use whatever the server answers:
-                // the screen opens, with a hint to the form (a sneaking use opens no screen)
-                if (c.firstEvent)
-                    c.player.sendMessage(trFor(c.player, "gf.item.anvil.hint", "Sneak and use the anvil with this book to apply it."));
-                return ia::Result::Pass;
-            }
-            if (!c.firstEvent) return ia::Result::Consume; // the held button's repeats
-            auto uid = c.player.getOrCreateUniqueID();
-            auto pos  = c.pos;
-            ia::nextTick([uid, slot, pos] {
-                auto level = ll::service::getLevel();
-                if (!level) return;
-                if (auto* p = level->getPlayer(uid)) showForm(*p, slot, pos);
-            });
-            return ia::Result::Consume;
+            // a vanilla client opens its own anvil screen on a use (sneaking or not) whatever the
+            // server answers: the anvil works as usual, and the form waits behind its screen until
+            // the player closes it (a chat line says so)
+            if (!c.firstEvent) return ia::Result::Pass; // the held button's repeats
+            c.player.sendMessage(trFor(c.player, "gf.item.anvil.hint", "Close the anvil to choose what this book goes on."));
+            formWhenClosed(c.player.getOrCreateUniqueID(), slot, c.pos, Phase::WaitOpen, 0);
+            return ia::Result::Pass;
         });
     }
     void uninstall() {

@@ -12,9 +12,9 @@
 // - Vanilla clients and the anvil: a vanilla client previews the anvil itself and offers no result
 //   for a merge whose second item brings custom enchantments only (an enchanted book of TF's from
 //   loot): the server's anvil merge never runs. Their fallback is the anvil form: a vanilla player
-//   who sneaks and uses an anvil holding an enchanted book whose enchantments are all custom gets a
-//   form of the items in their inventory the book can go on (a plain use opens the client's own
-//   anvil screen, with a chat hint to sneak), with Java's AnvilMenu result and level cost; a
+//   who uses an anvil holding an enchanted book whose enchantments are all custom gets a form of the
+//   items in their inventory the book can go on (it shows when the client's own anvil screen, which
+//   opens on the use anyway, is closed; a chat line says so), with Java's AnvilMenu result and level cost; a
 //   choice applies it as the anvil would (the levels, the prior work penalty, the 12 % chance that
 //   the anvil is damaged, its sound). Players with the client mod use the anvil screen itself, and
 //   books with vanilla enchantments too go through the anvil screen (the client offers their
