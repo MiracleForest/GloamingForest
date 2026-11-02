@@ -23,6 +23,8 @@
 #include <deque>
 #include <format>
 #include <filesystem>
+#include <mutex>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -245,7 +247,23 @@ namespace {
 std::atomic<Block const*> gPortalOpen{nullptr};
 std::atomic<Block const*> gPortalOneWay{nullptr};
 std::atomic<float>        gWaterResistance{0.0f};
-thread_local int          gExplosionDepth = 0;
+
+/// The explosions in flight on every thread, and what the first one changed: the window is shared
+/// by all threads (a thread-local depth would let an explosion on another thread read the raised
+/// value as the block's own and put it back for good).
+struct ExplosionWindow {
+    std::mutex   mutex;
+    int          depth     = 0;
+    Block const* states[2] = {nullptr, nullptr}; ///< the states the first explosion raised
+    float        own[2]    = {0.0f, 0.0f};       ///< what they held before
+};
+ExplosionWindow& explosionWindow() {
+    static ExplosionWindow w;
+    return w;
+}
+
+/// The resistance in a permutation's direct data (written atomically: other threads may read it).
+std::atomic_ref<float> resistanceOf(Block const& block) { return std::atomic_ref<float>(const_cast<Block&>(block).mDirectData->mExplosionResistance); }
 } // namespace
 
 void refreshPortalTypes() {
@@ -255,35 +273,52 @@ void refreshPortalTypes() {
     gWaterResistance.store(water ? water->mDirectData->mExplosionResistance : 0.0f);
 }
 
+void beginPortalExplosion() {
+    auto&           w = explosionWindow();
+    std::lock_guard lock(w.mutex);
+    if (w.depth++ > 0) return; // an explosion is in flight: the portal already holds the water's
+    float water = gWaterResistance.load();
+    w.states[0] = gPortalOpen.load();
+    w.states[1] = gPortalOneWay.load();
+    for (int i = 0; i < 2; ++i) {
+        if (!w.states[i]) continue;
+        auto resistance = resistanceOf(*w.states[i]);
+        w.own[i]        = resistance.load();
+        if (water > 0.0f) resistance.store(std::max(w.own[i], water));
+    }
+}
+
+void endPortalExplosion() {
+    auto&           w = explosionWindow();
+    std::lock_guard lock(w.mutex);
+    if (w.depth <= 0) {
+        w.depth = 0;
+        return;
+    }
+    if (--w.depth > 0) return; // another explosion still runs
+    // the last one out puts back what the first one found (in reverse order)
+    for (int i = 1; i >= 0; --i) {
+        if (w.states[i]) resistanceOf(*w.states[i]).store(w.own[i]);
+        w.states[i] = nullptr;
+    }
+}
+
+int portalExplosionDepth() {
+    auto&           w = explosionWindow();
+    std::lock_guard lock(w.mutex);
+    return w.depth;
+}
+
+float portalWaterResistance() { return gWaterResistance.load(); }
+
 /// TFPortalBlock#getFluidState for explosions. The explosion's rays read each block's resistance
 /// straight from its permutation's direct data (inline: a hook on BlockType::getExplosionResistance
 /// is not consulted, selftest round 4), so the portal's two permutations hold the water's
-/// resistance while an explosion runs on this thread and TF's 0 otherwise. The writes are atomic
-/// (std::atomic_ref); only the outermost of nested explosions writes. Explosions are computed by
-/// the server only: the client mod's own thread does not run them.
+/// resistance while any explosion runs and TF's 0 otherwise (the explosion window above: nested
+/// explosions, explosions on several threads and an explosion that throws all leave TF's 0 behind).
 LL_TYPE_INSTANCE_HOOK(TwilightPortalExplosionHook, ll::memory::HookPriority::Normal, Explosion, &Explosion::explode, bool, IRandom& random) {
-    Block const* states[2] = {gPortalOpen.load(), gPortalOneWay.load()};
-    float        water     = gWaterResistance.load();
-    if (gExplosionDepth > 0 || !states[0] || water <= 0.0f) {
-        ++gExplosionDepth;
-        bool r = origin(random);
-        --gExplosionDepth;
-        return r;
-    }
-    float own[2] = {0.0f, 0.0f};
-    for (int i = 0; i < 2; ++i) {
-        if (!states[i]) continue;
-        std::atomic_ref<float> resistance(const_cast<Block*>(states[i])->mDirectData->mExplosionResistance);
-        own[i] = resistance.load();
-        resistance.store(std::max(own[i], water));
-    }
-    ++gExplosionDepth;
-    bool r = origin(random);
-    --gExplosionDepth;
-    for (int i = 0; i < 2; ++i) {
-        if (states[i]) std::atomic_ref<float>(const_cast<Block*>(states[i])->mDirectData->mExplosionResistance).store(own[i]);
-    }
-    return r;
+    PortalExplosionScope window;
+    return origin(random);
 }
 
 void installItemOwners() {
@@ -518,16 +553,25 @@ void checkForPortalCreation(Player& player, BlockSource& world, float rangeToChe
 }
 
 /// TFPortalBlock#neighborChanged: the portal turns back into water when its floor or rim breaks.
-void portalNeighborChanged(BlockSource& region, BlockPos const& pos) {
+/// Java sets the water with UPDATE_ALL, so the portal blocks next to it hear of it and go too: here
+/// the water's block change reaches them through gf::blockevents (F11 tells the six neighbours of
+/// every block change at the end of the tick), and the whole pool turns back into water.
+bool portalNeighborChanged(BlockSource& region, BlockPos const& pos) {
+    if (pos.y < region.getMinHeight() || pos.y >= region.getMaxHeight()) return false;
     Block const& state = region.getBlock(pos);
-    if (!isPortal(state)) return;
+    if (!isPortal(state)) return false;
+    // Java's getBlockState loads the chunk it reads; here an unloaded neighbour would read as air
+    // and break a valid portal: the rule waits until the floor and the four sides are loaded
+    for (auto const& [dx, dy, dz] : {std::tuple{0, -1, 0}, std::tuple{0, 0, -1}, std::tuple{1, 0, 0}, std::tuple{0, 0, 1}, std::tuple{-1, 0, 0}}) {
+        if (!region.hasChunksAt(BlockPos{pos.x + dx, pos.y + dy, pos.z + dz}, 0, false)) return false;
+    }
     bool good = sturdyTop(region, BlockPos{pos.x, pos.y - 1, pos.z});
     for (auto const& [dx, dz] : {std::pair{0, -1}, std::pair{1, 0}, std::pair{0, 1}, std::pair{-1, 0}}) {
         if (!good) break;
         Block const& neighboringState = region.getBlock(BlockPos{pos.x + dx, pos.y, pos.z + dz});
         good = blockTagged("twilightforest:portal/edge", neighboringState.getTypeName()) || &neighboringState == &state;
     }
-    if (good) return;
+    if (good) return false;
     region.getLevel().broadcastLevelEvent(
         SharedTypes::Legacy::LevelEvent::ParticlesDestroyBlock,
         Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f},
@@ -537,12 +581,26 @@ void portalNeighborChanged(BlockSource& region, BlockPos const& pos) {
     if (auto const* water = game::blockWith("minecraft:water")) game::setBlock(region, pos, *water);
     portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
     log().info("dimension: portal block at {} {} {} broke back into water", pos.x, pos.y, pos.z);
+    return true;
 }
 
 void registerPortalBlockEvents() {
-    blockevents::onNeighborChanged(kPortalBlock, [](BlockSource& region, BlockPos const& pos, BlockPos const&) {
-        portalNeighborChanged(region, pos);
-    });
+    // gf::blockevents keeps its handlers for the process: once, however often the module installs
+    static bool const registered = [] {
+        blockevents::onNeighborChanged(kPortalBlock, [](BlockSource& region, BlockPos const& pos, BlockPos const&) {
+            portalNeighborChanged(region, pos);
+        });
+        // a portal block placed or removed by anything (a command, a structure, another unit) is
+        // read by the portal index on the next tick instead of at its next rescan
+        blockevents::onPlaced(kPortalBlock, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) {
+            portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
+        });
+        blockevents::onRemoved(kPortalBlock, [](BlockSource& region, BlockPos const& pos, Block const&) {
+            portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
+        });
+        return true;
+    }();
+    (void)registered;
 }
 
 } // namespace gf::feature::dimension
