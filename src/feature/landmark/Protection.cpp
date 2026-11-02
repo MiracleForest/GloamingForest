@@ -83,7 +83,6 @@ struct LiveBox {
 struct State {
     std::mutex                                   mutex;
     std::optional<bool>                          enforcedOverride;
-    AdvancementCheck                             advancementOverride;
     std::vector<LiveBox>                         boxes;
     std::unordered_map<std::int64_t, std::string> lastStructurePayload; ///< per companion
     std::vector<ia::HandlerId>                   handlers;
@@ -301,21 +300,12 @@ void setEnforcedOverride(std::optional<bool> value) {
     state().enforcedOverride = value;
 }
 
-void setAdvancementOverride(AdvancementCheck check) {
-    std::lock_guard lock(state().mutex);
-    state().advancementOverride = std::move(check);
-}
-
 bool hasRequiredAdvancements(Player const& player, Info const& inf) {
-    // PlayerHelper#doesPlayerHaveRequiredAdvancements: every advancement of the lock
-    AdvancementCheck check;
-    {
-        std::lock_guard lock(state().mutex);
-        check = state().advancementOverride;
-    }
-    for (auto const& adv : inf.d.lockAdvancements)
-        if (!(check ? check(player, adv) : progression::has(player, adv))) return false;
-    return true;
+    // PlayerHelper#playerHasRequiredAdvancements (through doesPlayerHaveRequiredAdvancements): its
+    // loop returns at the first advancement, done or not, so the first one of the lock decides (every
+    // TF structure has at most one); no lock: allowed. The progression store answers isDone()
+    auto const& lock = inf.d.lockAdvancements;
+    return lock.empty() || progression::has(player, lock.front());
 }
 
 bool pieceProtectedAt(Record const& record, std::size_t index, int x, int y, int z) {

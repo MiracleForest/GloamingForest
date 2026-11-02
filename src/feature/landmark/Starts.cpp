@@ -16,8 +16,10 @@
 // Persistent landmark starts. Java keeps structure starts in the chunk NBT; Bedrock has no such
 // slot, so every start lives in the world DB under gf:landmark:start:<dim>:<cx>:<cz> (one document
 // per start chunk: {"<structure key>": start}), cached in memory. Starts are made by the worldgen
-// stages (Starts: the start chunk's structure sets, ChunkGenerator#createStructures; Pieces: every
-// start reaching the chunk places its pieces, StructureStart#placeInChunk), by forceStart /
+// stages (Starts: the start chunk's structure sets, ChunkGenerator#createStructures; the
+// landmark.pieces structure step: at its structure's decoration step, every start reaching the
+// chunk places its pieces, StructureStart#placeInChunk, with Java's per-structure decoration
+// random, ChunkGenerator#applyBiomeDecoration), by forceStart /
 // generateAt (commands, saplings, selftests) and on demand by lookups (protection, clearance,
 // terraforming; /twilightforest locate only probes and stores nothing), so a site is reserved even
 // before its generator exists (rule: placement is exact before W1 lands). Generation may run on
@@ -50,11 +52,13 @@
 
 #include "core/Keys.h"
 #include "core/jrand/JRand.h"
+#include "core/landmark/Decoration.h"
 #include "core/landmark/Grid.h"
 #include "core/landmark/JavaMath.h"
 #include "core/landmark/Landmark.h"
 #include "feature/dimension/World.h"
 #include "feature/ext/landmark/LandmarkExt.h"
+#include "feature/ext/worldgen/Generation.h"
 #include "feature/landmark/Internal.h"
 #include "feature/progression/Progression.h"
 #include "feature/structure/bases/Component.h"
@@ -68,9 +72,13 @@ namespace gf::feature::landmark {
 
 namespace cl  = core::landmark;
 namespace plc = core::landmark::placement;
+namespace dec = core::landmark::decoration;
 namespace ext = gf::landmark::ext;
 
 namespace {
+
+/// GenerationStep.Decoration.SURFACE_STRUCTURES (Structure.StructureSettings' default step).
+constexpr int kSurfaceStructures = 4;
 
 // ---- generators --------------------------------------------------------------------------------------
 
@@ -291,83 +299,23 @@ std::optional<int> adjustForTerrainAroundChunk(ext::HeightFn const& provider, in
     });
 }
 
+int stepOf(Info const& info) {
+    int step = dec::stepIndex(info.step);
+    return step < 0 ? kSurfaceStructures : step;
+}
+
 namespace {
 
-/// GenerationStep.Decoration ordinals.
-int stepIndex(std::string const& step) {
-    static char const* const steps[] = {"raw_generation",  "lakes",           "local_modifications", "underground_structures",
-                                        "surface_structures", "strongholds",  "underground_ores",    "underground_decoration",
-                                        "fluid_springs",   "vegetal_decoration", "top_layer_modification"};
-    for (int i = 0; i < 11; ++i)
-        if (step == steps[i]) return i;
-    return 4;
-}
-
-/// Minecraft 1.21.1's Structure registry entries (data/minecraft/worldgen/structure/*.json of the
-/// vanilla data pack): path and GenerationStep. TF's structures share the steps with them.
-struct VanillaStructure {
-    char const* path;
-    char const* step;
-};
-constexpr VanillaStructure kVanillaStructures[] = {
-    {"ancient_city", "underground_decoration"},
-    {"bastion_remnant", "surface_structures"},
-    {"buried_treasure", "underground_structures"},
-    {"desert_pyramid", "surface_structures"},
-    {"end_city", "surface_structures"},
-    {"fortress", "underground_decoration"},
-    {"igloo", "surface_structures"},
-    {"jungle_pyramid", "surface_structures"},
-    {"mansion", "surface_structures"},
-    {"mineshaft", "underground_structures"},
-    {"mineshaft_mesa", "underground_structures"},
-    {"monument", "surface_structures"},
-    {"nether_fossil", "underground_decoration"},
-    {"ocean_ruin_cold", "surface_structures"},
-    {"ocean_ruin_warm", "surface_structures"},
-    {"pillager_outpost", "surface_structures"},
-    {"ruined_portal", "surface_structures"},
-    {"ruined_portal_desert", "surface_structures"},
-    {"ruined_portal_jungle", "surface_structures"},
-    {"ruined_portal_mountain", "surface_structures"},
-    {"ruined_portal_nether", "surface_structures"},
-    {"ruined_portal_ocean", "surface_structures"},
-    {"ruined_portal_swamp", "surface_structures"},
-    {"shipwreck", "surface_structures"},
-    {"shipwreck_beached", "surface_structures"},
-    {"stronghold", "surface_structures"},
-    {"swamp_hut", "surface_structures"},
-    {"trail_ruins", "underground_structures"},
-    {"trial_chambers", "underground_structures"},
-    {"village_desert", "surface_structures"},
-    {"village_plains", "surface_structures"},
-    {"village_savanna", "surface_structures"},
-    {"village_snowy", "surface_structures"},
-    {"village_taiga", "surface_structures"},
-};
-
-/// The registry order of two structure ids. RegistryDataLoader adds the entries in the order of
-/// ResourceManager#listResources (a TreeMap over the file locations "worldgen/structure/<path>.json")
-/// and ResourceLocation#compareTo compares the path first, then the namespace.
-bool registryBefore(std::string const& aNamespace, std::string const& aPath, std::string const& bNamespace, std::string const& bPath) {
-    auto a = aPath + ".json", b = bPath + ".json";
-    if (a != b) return a < b;
-    return aNamespace < bNamespace;
-}
-
-/// StructureStart#placeInChunk for chunk (cx, cz) of `region`.
-void placeInChunk(Record const& rec, worldgen::Region& region, int chunkX, int chunkZ) {
+/// StructureStart#placeInChunk for chunk (cx, cz) of `region`, with the structure's decoration
+/// random (shared by every start of the structure placed in this chunk at this step, as Java's
+/// applyBiomeDecoration passes one WorldgenRandom to all of them).
+void placeInChunk(Record const& rec, worldgen::Region& region, int chunkX, int chunkZ, worldgen::RandomSource& random) {
     if (rec.livePieces.empty()) return;
     // ChunkGenerator#getWritableArea: the chunk column from minBuildHeight + 1 to maxBuildHeight - 1
     BlockBox chunkBox{chunkX * 16, region.minY() + 1, chunkZ * 16, chunkX * 16 + 15, region.maxY() - 1, chunkZ * 16 + 15};
     auto const& first = rec.livePieces.front()->bbox;
     auto        c     = cl::boxCenter(first);
     BlockPos    pivot{c.x, first.minY, c.z};
-    auto const* inf   = info(rec.start.key);
-
-    core::jrand::WorldgenRandom random(std::make_unique<core::jrand::LegacyRandom>(0));
-    auto decoration = random.setDecorationSeed(region.seed(), chunkX * 16, chunkZ * 16);
-    random.setFeatureSeed(decoration, inf ? inf->featureIndex : 0, inf ? stepIndex(inf->step) : 4);
     for (auto const& piece : rec.livePieces) {
         if (!piece->bbox.intersects(chunkBox)) continue;
         try {
@@ -405,21 +353,35 @@ std::shared_ptr<Generator const> generatorFor(std::string const& key) {
     return it == generators().gens.end() ? nullptr : it->second;
 }
 
-int featureIndex(Info const& info) {
-    // ChunkGenerator#applyBiomeDecoration: registry.stream() grouped by step; every structure of the
-    // step before this one counts (vanilla's and TF's, never the gf_test fixtures)
-    auto [ns, path] = splitKey(info.d.key);
-    int n           = 0;
-    for (auto const& v : kVanillaStructures)
-        if (info.step == v.step && registryBefore("minecraft", v.path, ns, path)) ++n;
-    for (auto const& k : descriptorKeys()) {
-        if (k == info.d.key || isFixtureKey(k)) continue;
-        auto const* o = landmark::info(k);
-        if (!o || o->step != info.step) continue;
-        auto [kns, kpath] = splitKey(k);
-        if (registryBefore(kns, kpath, ns, path)) ++n;
+namespace {
+
+/// The number of structures the worldgen's Structure registry holds at decoration step `step`.
+int registryStepSize(int step) {
+    auto steps = worldgen::ext::structuresByStep();
+    return step >= 0 && step < static_cast<int>(steps.size()) ? static_cast<int>(steps[static_cast<std::size_t>(step)].size()) : 0;
+}
+
+} // namespace
+
+void assignSlot(Info& info, int unregisteredBefore) {
+    if (auto s = worldgen::ext::structureSlot(info.d.key)) {
+        info.slot       = {s->step, s->index};
+        info.inRegistry = true;
+        return;
     }
-    return n;
+    int step        = stepOf(info);
+    info.slot       = {step, registryStepSize(step) + unregisteredBefore};
+    info.inRegistry = false;
+}
+
+dec::Slot decorationSlot(std::string const& key) {
+    if (auto const* inf = info(key)) return inf->slot;
+    if (auto s = worldgen::ext::structureSlot(key)) return {s->step, s->index};
+    return {kSurfaceStructures, registryStepSize(kSurfaceStructures)};
+}
+
+std::unique_ptr<core::jrand::WorldgenRandom> decorationRandom(std::int64_t levelSeed, int chunkX, int chunkZ, std::string const& key) {
+    return dec::structureRandom(dec::decorationSeed(levelSeed, chunkX, chunkZ), decorationSlot(key));
 }
 
 namespace {
@@ -829,7 +791,10 @@ int placeLoaded(Record const& rec, BlockSource& region) {
     forChunks(all, [&](int cx, int cz) {
         if (!region.hasChunksAt(BlockPos{cx * 16, region.getMinHeight(), cz * 16}, 0, false)) return;
         LoadedRegion adapter(region, cx, cz, rec.start.seed);
-        placeInChunk(rec, adapter, cx, cz);
+        // Java's /place structure passes the level's random; this takes the one the chunk's
+        // decoration would have used, so a placement is reproducible
+        auto random = decorationRandom(rec.start.seed, cx, cz, rec.start.key);
+        placeInChunk(rec, adapter, cx, cz, *random);
         ++placed;
     });
     return placed;
@@ -1168,18 +1133,56 @@ int spawnIndexAt(Record const& r, int x, int y, int z) {
 
 // ---- worldgen stages ---------------------------------------------------------------------------------
 
+int decorateStep(worldgen::Region& region, int chunkX, int chunkZ, worldgen::ext::DecorationContext const& d) {
+    // the pipeline runs this at all 11 steps; no landmark structure decorates at most of them
+    if (d.step < 0 || d.step >= dec::kSteps || !(decorationStepMask() & (1u << d.step))) return 0;
+    int dim = region.dimension();
+    ensureStartsAround(dim, chunkX, chunkZ); // known after the first step: one shared lookup
+    // StructureManager#startsForStructure for the structures decorating at this step: every start
+    // reaching the chunk. One whose pieces are not in memory gets them again first (reviveRecord
+    // replaces the record, so it is read again)
+    struct Due {
+        dec::Slot slot;
+        RecordPtr rec;
+    };
+    std::vector<Due> due;
+    for (auto const& rec : recordsIntersecting(dim, chunkX, chunkZ)) {
+        auto slot = decorationSlot(rec->start.key);
+        if (slot.step != d.step) continue;
+        auto live = rec;
+        if (live->livePieces.empty()) {
+            reviveRecord(live);
+            live = findRecord(dim, rec->chunkX, rec->chunkZ, rec->start.key);
+            if (!live || live->livePieces.empty()) continue;
+        }
+        due.push_back({slot, live});
+    }
+    // in registry order (their index); a structure's starts share its random
+    std::stable_sort(due.begin(), due.end(), [](Due const& a, Due const& b) {
+        return a.slot.index != b.slot.index ? a.slot.index < b.slot.index : a.rec->start.key < b.rec->start.key;
+    });
+    int placed = 0;
+    for (std::size_t i = 0; i < due.size();) {
+        // worldgenrandom.setFeatureSeed(decorationSeed, index, step), then the structure's starts
+        auto random = d.structureRandom(due[i].slot.index);
+        auto key    = due[i].rec->start.key;
+        for (; i < due.size() && due[i].rec->start.key == key; ++i) {
+            placeInChunk(*due[i].rec, region, chunkX, chunkZ, *random);
+            ++placed;
+        }
+    }
+    return placed;
+}
+
 void registerWorldgenStages() {
     // ChunkStatus.STRUCTURE_STARTS: the starts beginning in this chunk
     worldgen::addStage(worldgen::Stage::Starts, "landmark.starts", 0, [](worldgen::Chunk& chunk, worldgen::Region& region) {
         ensureStartsIn(region.dimension(), chunk.chunkX(), chunk.chunkZ());
     });
-    // ChunkGenerator#applyBiomeDecoration's structure part: every start reaching the chunk
-    worldgen::addStage(worldgen::Stage::Pieces, "landmark.pieces", 0, [](worldgen::Chunk& chunk, worldgen::Region& region) {
-        int dim = region.dimension();
-        ensureStartsAround(dim, chunk.chunkX(), chunk.chunkZ());
-        for (auto const& rec : recordsIntersecting(dim, chunk.chunkX(), chunk.chunkZ()))
-            if (rec->livePieces.empty()) reviveRecord(rec);
-        for (auto const& rec : recordsIntersecting(dim, chunk.chunkX(), chunk.chunkZ())) placeInChunk(*rec, region, chunk.chunkX(), chunk.chunkZ());
+    // ChunkGenerator#applyBiomeDecoration's structure part, at every GenerationStep.Decoration step
+    // before that step's features: the starts reaching the chunk of the structures of that step
+    worldgen::ext::addStructureStep("landmark.pieces", 0, [](worldgen::Chunk& chunk, worldgen::Region& region) {
+        if (auto const* d = worldgen::ext::decorationContext()) (void)decorateStep(region, chunk.chunkX(), chunk.chunkZ(), *d);
     });
 }
 
