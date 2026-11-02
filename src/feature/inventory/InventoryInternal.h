@@ -38,6 +38,10 @@ struct Declared {
     std::string closeSound = "minecraft:block.chest.close";
     /// Awarded to the opener (Stats.OPEN_CHEST; TrappedChestBlock: minecraft:trigger_trapped_chest).
     std::string stat = "minecraft:open_chest";
+    /// Comparator output (redstone::registerAnalog): Java's getAnalogOutputSignal of a container
+    /// block, AbstractContainerMenu#getRedstoneSignalFromContainer over its slots (a double chest's
+    /// halves together; 0 while a chest is blocked: ChestBlock#getContainer finds none).
+    bool comparator = true;
 };
 
 /// The registered handler of `blockId` with its defaults filled (nullopt: not a container). Its
@@ -81,6 +85,9 @@ bool unpackLoot(GlobalPos const& pos, Player* opener);
 [[nodiscard]] bool withinReach(Player& player, GlobalPos const& pos);
 /// Awards the declared container's opening stat to `player` (ChestBlock#useWithoutItem).
 void awardOpenStat(Player& player, GlobalPos const& pos);
+/// The comparator output of the declared container at `pos` (Declared::comparator; nullopt: not a
+/// declared container with one), as redstone::analogOutput reads it.
+[[nodiscard]] std::optional<int> comparatorSignal(GlobalPos const& pos);
 
 // ---- vanilla clients: the game's chest screen through a chest minecart (VanillaContainer.cpp) ------
 
@@ -88,9 +95,13 @@ void awardOpenStat(Player& player, GlobalPos const& pos);
 /// `title`, through an invisible chest minecart. While it is open the proxy and the storage hold
 /// the same slots: the screen's changes are written to the storage as they happen, every write
 /// through the handler (`find`) reaches the proxy at once, and other code's changes behind the
-/// handler are pulled in every tick (the storage wins a slot changed on both sides). False when
-/// the container is not 27 slots or the proxy cannot be made.
+/// handler are pulled in before each item request of a viewer and every tick (the storage wins a
+/// slot changed on both sides). A player already in the session whose screen closed opens it again.
+/// False when the container is not 27 slots or the proxy cannot be made.
 bool openVanillaContainer(Player& player, GlobalPos const& pos, std::string const& title);
+/// A viewer's client sent an item request (ItemStackRequestPacket): the proxies it looks at take in
+/// the storage's slots first (the storage wins a slot changed on both sides).
+void proxyBeforeScreenRequest(Player& player);
 /// Container proxies open now (selftests).
 [[nodiscard]] int vanillaProxyCount();
 /// The proxy's container for `pos` (selftests; nullptr when none is open).

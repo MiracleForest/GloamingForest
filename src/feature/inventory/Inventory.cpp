@@ -25,15 +25,18 @@
 //     [{"block": "twilightforest:twilight_oak_chest", "rows": 3, "title": "container.chest", "skin": "",
 //       "chest": true, "pairs": true, "double_title": "container.chestDouble",
 //       "sounds": {"open": "minecraft:block.chest.open", "close": "minecraft:block.chest.close"},
-//       "stat": "minecraft:open_chest"}]
+//       "stat": "minecraft:open_chest", "comparator": true}]
 // which registers the storage, opens it on use (not while sneaking with an item; ChestBlock#
 // isChestBlockedAt: not while a redstone conductor or a sitting cat is above, `chest`), awards the
 // stat, plays the open / close sounds at the first opener and after the last one (ChestBlockEntity's
 // ContainerOpenersCounter: the right half of a double chest plays them between the halves, the left
 // half none), pairs a half whose chest type state is left / right with its neighbour into one
-// 54-slot screen (ChestBlock#combine: the right half's slots first, `pairs`) and drops the contents
-// when the block is broken. A pending loot table (placeContainer / setLootTable) rolls on the first
-// access (Java's RandomizableContainer#unpackLootTable: the opener's luck).
+// 54-slot screen (ChestBlock#combine: the right half's slots first, `pairs`), gives vanilla
+// comparators Java's container signal (redstone::registerAnalog, `comparator`) and drops the
+// contents when the block is broken. A pending loot table (placeContainer / setLootTable) rolls on
+// the first access (Java's RandomizableContainer#unpackLootTable: the opener's luck; a comparator
+// reading the container unpacks it too, as Java's getItem does). Hoppers do not see custom
+// containers (spike S3).
 
 #include "feature/inventory/Inventory.h"
 
@@ -87,6 +90,7 @@
 
 #include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
+#include "feature/common/Redstone.h"
 #include "feature/common/Screens.h"
 #include "feature/ext/combat/InventoryViewers.h"
 #include "feature/fx/Fx.h"
@@ -131,7 +135,8 @@ public:
             if (auto* region = game::regionOf(where->dim); region && region->hasChunksAt(game::blockPos(*where), 0, false)) {
                 if (auto* actor = region->getBlockEntity(game::blockPos(*where))) region->fireBlockEntityChanged(*actor);
             }
-            // game code writing the container directly (hoppers): an open proxy shows it at once
+            // game code writing the container directly (not hoppers: they do not see it, S3): an
+            // open proxy shows it at once
             if (proxyOpen(*where)) proxyMirror(*where, slot, item);
         }
     }
@@ -202,6 +207,7 @@ struct Store {
     std::map<std::string, Declared> declared;
     std::set<std::string>           interactionsFor; ///< blocks whose use / destroy handlers exist
     std::set<std::string>           defaultStorage;  ///< blocks whose slots are the default backend's
+    std::set<std::string>           analogFor;       ///< blocks whose comparator output this module registered
 };
 
 Store& store() {
@@ -1064,7 +1070,9 @@ void screenForm(Player& player, Json const& ctx) {
             auto        hh    = r && inReach(p, pos) ? find(*r, game::blockPos(pos)) : std::nullopt;
             if (hh) {
                 auto taken = hh->extract(pos, slot, 64, false);
-                if (!p.add(taken) && !game::items::isEmpty(taken)) hh->insert(pos, taken, false);
+                // what the inventory has no room for goes back in; what the container has no room
+                // for any more (another writer filled the slot meanwhile) drops at the player's feet
+                if (!p.add(taken) && !game::items::isEmpty(taken)) giveBack(p, hh->insert(pos, taken, false));
                 p.sendInventory(false);
             }
         }
@@ -1150,7 +1158,8 @@ Declared parseDeclared(Json const& e) {
             d.closeSound = s->value("close", std::string{});
         }
     }
-    d.stat = e.value("stat", d.stat);
+    d.stat       = e.value("stat", d.stat);
+    d.comparator = e.value("comparator", d.comparator);
     return d;
 }
 
@@ -1232,21 +1241,35 @@ std::optional<Handler> handlerFor(std::string const& blockId) {
 }
 
 void unregisterBlock(std::string const& blockId) {
-    std::lock_guard lock(store().mutex);
-    store().handlers.erase(blockId);
-    store().declared.erase(blockId);
-    store().defaultStorage.erase(blockId);
+    bool analog;
+    {
+        std::lock_guard lock(store().mutex);
+        store().handlers.erase(blockId);
+        store().declared.erase(blockId);
+        store().defaultStorage.erase(blockId);
+        analog = store().analogFor.erase(blockId) > 0;
+    }
+    if (analog) redstone::unregisterAnalog(blockId);
 }
 
 void declare(Declared const& d) {
+    bool hadAnalog;
     {
         std::lock_guard lock(store().mutex);
         store().declared[d.block] = d;
+        hadAnalog = d.comparator ? !store().analogFor.insert(d.block).second : store().analogFor.erase(d.block) > 0;
     }
     Handler h;
     h.slots = d.slots;
     registerBlock(d.block, h);
     ensureInteractions(d.block);
+    // ChestBlock#hasAnalogOutputSignal / getAnalogOutputSignal: vanilla comparators read it through
+    // the redstone contract's comparator hook
+    if (d.comparator && !hadAnalog)
+        redstone::registerAnalog(d.block, [](BlockSource& region, BlockPos const& bp, Block const&) {
+            return comparatorSignal(game::globalPos(region, bp));
+        });
+    else if (!d.comparator && hadAnalog) redstone::unregisterAnalog(d.block);
 }
 
 std::optional<Declared> declared(std::string const& blockId) {
@@ -1341,6 +1364,52 @@ bool chestBlocked(GlobalPos const& pos) {
     for (auto const& p : partsOf(pos))
         if (blockedAt(*region, game::blockPos(p))) return true;
     return false;
+}
+
+std::optional<int> comparatorSignal(GlobalPos const& pos) {
+    auto* region = regionFor(pos);
+    if (!region) return std::nullopt;
+    auto id = game::blockIdAt(*region, game::blockPos(pos));
+    auto d  = declared(id);
+    if (!d || !d->comparator) return std::nullopt;
+    // a comparator's circuit component asks whenever it is evaluated: one reading per position and
+    // tick (Java's comparators read the container once per scheduled tick too)
+    static std::uint64_t            memoTick = std::numeric_limits<std::uint64_t>::max();
+    static std::map<GlobalPos, int> memo;
+    auto                            level = ll::service::getLevel();
+    std::uint64_t                   now   = level ? static_cast<std::uint64_t>(level->getCurrentTick().tickID) : 0;
+    if (now != memoTick) {
+        memo.clear();
+        memoTick = now;
+    }
+    if (auto it = memo.find(pos); it != memo.end()) return it->second;
+    int signal = 0;
+    // ChestBlock#getContainer(state, level, pos, false): none while either half is blocked (0)
+    if (!(d->chest && chestBlocked(pos))) {
+        // AbstractContainerMenu#getRedstoneSignalFromContainer over the (compound) container
+        float f    = 0.f;
+        int   size = 0;
+        for (auto const& p : partsOf(pos)) {
+            auto* r = regionFor(p);
+            auto  h = r ? rawHandlerFor(game::blockIdAt(*r, game::blockPos(p))) : std::nullopt;
+            if (!h) continue;
+            size += h->slots;
+            // RandomizableContainer#getItem unpacks a pending table first (as the screen does)
+            for (auto const& s : slotsOf(p, *h, id)) {
+                if (game::items::isEmpty(s)) continue;
+                // Container#getMaxStackSize(stack): min(99, the stack's own limit)
+                int max = std::clamp(static_cast<int>(s.getMaxStackSize()), 1, 99);
+                f += static_cast<float>(game::items::countOf(s)) / static_cast<float>(max);
+            }
+        }
+        if (size > 0) {
+            f /= static_cast<float>(size);
+            // Mth.lerpDiscrete(f, 0, 15)
+            signal = static_cast<int>(std::floor(f * 14.f)) + (f > 0.f ? 1 : 0);
+        }
+    }
+    memo[pos] = signal;
+    return signal;
 }
 
 int viewerCount(GlobalPos const& pos) {

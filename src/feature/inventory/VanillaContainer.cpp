@@ -12,9 +12,15 @@
 //   - the screen's changes (the game's item transactions, shift-clicks, drag-splitting) are
 //     written to the storage as they happen (a content change listener on the proxy's container);
 //   - every write through a handler from gf::inventory::find (the client mod's screen, the forms,
-//     units, hoppers into the native container) reaches the proxy at once (proxyMirror / proxyPull);
-//   - code that changes the storage behind the handler is pulled in every tick, and a slot changed
-//     on both sides keeps the storage's stack (the proxy slot is reset).
+//     units) and every write to the injected native container itself (game code that sets its
+//     slots) reaches the proxy at once (proxyMirror / proxyPull). Hoppers do not see custom
+//     containers (spike S3: no IVanillaMainBlockActorComponent); anything that changes the proxy's
+//     own container (the screen, a hopper reaching the minecart) goes through the listener;
+//   - code that changes the storage behind the handler (a unit's own get / set storage written
+//     directly) is pulled in right before each item request of a viewer's screen (the client's
+//     ItemStackRequestPacket) and every tick, and a slot changed on both sides keeps the storage's
+//     stack (the proxy slot is reset; the listener checks it too). A Handler with its own get / set
+//     should still write through find()'s handler while a screen may be open.
 // So no screen shows a stack the storage no longer has, and nothing can be taken twice. When the
 // block goes (broken, exploded, replaced) the session ends at once without touching the storage:
 // the storage's copy drops, the proxy is emptied and removed. When the last viewer closes the
@@ -30,12 +36,17 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/world/BlockChangedEvent.h"
 #include "ll/api/event/world/ServerLevelTickEvent.h"
+#include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/vanilla_components/AABBShapeComponent.h"
 #include "mc/entity/components_json_legacy/ContainerComponent.h"
 #include "mc/legacy/ActorUniqueID.h"
+#include "mc/network/NetworkIdentifier.h"
+#include "mc/network/ServerNetworkHandler.h"
+#include "mc/network/packet/ItemStackRequestPacket.h"
+#include "mc/server/ServerPlayer.h"
 #include "mc/server/commands/CommandUtils.h"
 #include "mc/world/ContainerContentChangeListener.h"
 #include "mc/world/actor/Actor.h"
@@ -64,6 +75,26 @@
 #include "game/WorldDb.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
+
+// A client's item request (every take, place, swap, drop or craft of its open container screen):
+// a proxy the player is looking at first takes in what the storage changed behind its handler
+// since the last tick, so the request works on the storage's slots (a stale stack fails the
+// request's own check and the client is resynced) and nothing is taken twice.
+LL_TYPE_INSTANCE_HOOK(
+    InventoryProxyRequestHook,
+    ll::memory::HookPriority::Normal,
+    ServerNetworkHandler,
+    &ServerNetworkHandler::$handle,
+    void,
+    NetworkIdentifier const&      source,
+    ItemStackRequestPacket const& packet
+) {
+    if (gf::inventory::vanillaProxyCount() > 0) {
+        if (auto* player = thisFor<NetEventCallback>()->_getServerPlayer(source, packet.mSenderSubId))
+            gf::inventory::proxyBeforeScreenRequest(*player);
+    }
+    origin(source, packet);
+}
 
 namespace gf::inventory {
 
@@ -156,17 +187,40 @@ std::optional<Handler> storageOf(GlobalPos const& pos) {
 }
 
 /// The screen changed slot `slot` of the proxy (a player's item transaction): the storage takes it
-/// at once.
+/// at once, unless the storage's slot itself changed since both sides last agreed (code that wrote
+/// the storage behind the handler, not pulled in yet): then the storage wins, as in reconcile, and
+/// the proxy slot is reset to it.
 void onProxyChanged(GlobalPos const& pos, int slot) {
     if (tSyncing || slot < 0 || slot >= kProxySlots) return;
     Session* s = nullptr;
     auto*    c = sessionContainer(pos, &s);
     auto     h = storageOf(pos);
     if (!c || !s || !h) return;
-    SyncScope   guard;
-    auto const& now = c->getItem(slot);
+    SyncScope guard;
+    s->snapshot.resize(kProxySlots);
+    auto&     snap   = s->snapshot[static_cast<std::size_t>(slot)];
+    ItemStack now    = c->getItem(slot);
+    auto      stored = h->get(pos, slot);
+    if (!same(stored, snap)) {
+        if (!same(now, stored)) c->setItem(slot, stored);
+        snap = stored;
+        log().warn(
+            "inventory: slot {} of the container at {} {} {} changed behind its handler and in the vanilla screen at once: the storage's {} x{} stays",
+            slot,
+            pos.x,
+            pos.y,
+            pos.z,
+            game::items::idOf(stored),
+            game::items::countOf(stored)
+        );
+        return;
+    }
     h->set(pos, slot, now);
-    s->snapshot[static_cast<std::size_t>(slot)] = now;
+    // what the storage holds now (a handler may keep something else): both sides show it, so the
+    // next change of this slot is not taken for a conflict and the tick does not write it again
+    auto after = h->get(pos, slot);
+    if (!same(after, now)) c->setItem(slot, after);
+    snap = after;
     log().debug("inventory: the vanilla screen changed slot {} of the container at {} {} {}", slot, pos.x, pos.y, pos.z);
 }
 
@@ -311,6 +365,7 @@ void closeAll() {
 class VanillaContainerModule {
 public:
     void install() {
+        InventoryProxyRequestHook::hook();
         auto& bus = ll::event::EventBus::getInstance();
         mTick     = bus.emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { onTick(); });
         // the block of an open session changes (broken, exploded, replaced, a unit's own storage):
@@ -349,6 +404,7 @@ public:
         auto& bus = ll::event::EventBus::getInstance();
         bus.removeListener(mTick);
         bus.removeListener(mBlock);
+        InventoryProxyRequestHook::unhook();
         closeAll();
     }
 
@@ -370,7 +426,16 @@ bool openVanillaContainer(Player& player, GlobalPos const& pos, std::string cons
     if (!withinReach(player, pos)) return false;
     auto uid = player.getOrCreateUniqueID().rawID;
     if (auto it = sessions().find(pos); it != sessions().end() && fetch(it->second.proxy)) {
-        if (!it->second.viewers.contains(uid)) it->second.viewers[uid] = Viewer{nowTick() + 1};
+        auto& viewers = it->second.viewers;
+        auto  v       = viewers.find(uid);
+        // a viewer whose screen already closed (Esc, then a use again before the next tick) opens
+        // anew: the tick would otherwise drop it as closed and end the session
+        bool closed = false;
+        if (v != viewers.end() && v->second.opened) {
+            auto open = v->second.manager.lock();
+            closed    = !open || player.mContainerManager.get() != open.get();
+        }
+        if (v == viewers.end() || closed) viewers[uid] = Viewer{nowTick() + 1};
         return true;
     }
     ActorUniqueID id;
@@ -460,6 +525,13 @@ void proxyEnd(GlobalPos const& pos) {
     finish(pos, it->second, false);
     sessions().erase(it);
     recountViewers(pos);
+}
+
+void proxyBeforeScreenRequest(Player& player) {
+    if (sessions().empty()) return;
+    auto uid = player.getOrCreateUniqueID().rawID;
+    for (auto& [pos, s] : sessions())
+        if (s.viewers.contains(uid)) (void)reconcile(pos, s); // a session that cannot go on ends on the tick
 }
 
 std::set<std::int64_t> proxyViewers(GlobalPos const& pos) {
