@@ -672,7 +672,10 @@ local function check_dangling(jsonfiles, known, cfg, datadir)
             end
         elseif type(v) == "table" then
             local entry = type(v.type) == "string" and LOOT_ENTRY_KINDS[v.type] or nil
-            for k, x in pairs(v) do
+            -- table.keys, not pairs: the sandbox's pairs calls v:pairs() when a JSON object has a
+            -- "pairs" key (the chest declarations of data/gf/containers do)
+            for _, k in ipairs(table.keys(v)) do
+                local x = v[k]
                 if type(k) == "number" then
                     visit(x, ctx, kinds) -- list elements keep the list's kinds
                 elseif not DEFINING_KEYS[k] then
@@ -1039,11 +1042,12 @@ local function assemble_content(projectdir, outdir, version)
     end
     merge_lang(projectdir, cfg, outdir)
     local datajsons = copy_data(projectdir, cfg, outdir, with_tests)
-    local bpdirs, alljsons = {}, {}
+    local bpdirs, alljsons, shipped_bpdirs = {}, {}, {}
     for _, pack in ipairs(cfg.packs) do
         if with_tests or not pack.test then
             local dst, jsons = build_pack(projectdir, cfg, pack, outdir, version, not pack.test)
             if pack.root == "bp" then table.insert(bpdirs, dst) end
+            if pack.root == "bp" and not pack.test then table.insert(shipped_bpdirs, dst) end
             if not pack.test then
                 for _, j in ipairs(jsons) do table.insert(alljsons, j) end
             end
@@ -1056,15 +1060,51 @@ local function assemble_content(projectdir, outdir, version)
     -- data (data/gf/families) as Bedrock block definitions in the packs just built, and the gf_test
     -- fixture families; checked below with the rest. Nothing happens until tools/families exists.
     local families_dir = path.join(projectdir, "tools", "families")
+    local families_summary = "no family generator"
     if os.isfile(path.join(families_dir, "families.lua")) then
-        local families = import("families", {rootdir = families_dir, anonymous = true})
-        local r = families.generate(projectdir, outdir, {no_fixtures = not with_tests})
-        for _, e in ipairs(r.errors) do fail("%s", e) end
-        -- the generated blocks of the shipped pack are checked for dangling references too
-        for _, f in ipairs(r.files or {}) do
-            if f:find("[/\\]GloamingForest_BP[/\\]") then table.insert(alljsons, f) end
+        families_summary = "family generator failed"
+        -- a raise inside the generator is one more error: the ones collected so far still print
+        local r = try {
+            function ()
+                local families = import("families", {rootdir = families_dir, anonymous = true})
+                local res = families.generate(projectdir, outdir, {no_fixtures = not with_tests})
+                res.entries = families.families and #(families.families(outdir)) or 0
+                return res
+            end,
+            catch {
+                function (e) fail("families: tools/families/families.lua raised: %s", tostring(e)) end
+            }
+        }
+        if r then
+            for _, e in ipairs(r.errors or {}) do fail("%s", e) end
+            -- a generator that silently makes nothing would ship none of the family blocks
+            local fixture_files = os.files(path.join(families_dir, "fixtures", "**.json"))
+            if not r.already and r.entries > 0 and r.blocks + r.skipped == 0 then
+                fail("families: %d family entries in data/gf/families but no block generated", r.entries)
+            end
+            if not r.already and with_tests and #fixture_files > 0 and r.fixtures == 0 then
+                fail("families: %d fixture file(s) in tools/families/fixtures but no fixture block generated", #fixture_files)
+            end
+            if r.already then
+                families_summary = "family blocks generated before"
+            else
+                families_summary = string.format("%d family blocks (%d hand-made), %d family fixtures", r.blocks, r.skipped, r.fixtures)
+            end
+            -- what the generator added to the shipped behavior pack (blocks, the sign text entity,
+            -- loot tables) and to data/gf (the container declarations F10 reads, the client's
+            -- connected texture corners) is checked for dangling references too
+            local seen = {}
+            for _, j in ipairs(alljsons) do seen[norm(j)] = true end
+            local dirs = table.join(shipped_bpdirs, {path.join(outdir, "data", "gf")})
+            for _, dir in ipairs(dirs) do
+                for _, f in ipairs(os.isdir(dir) and os.files(path.join(dir, "**.json")) or {}) do
+                    if not seen[norm(f)] and path.filename(f) ~= "manifest.json" then
+                        seen[norm(f)] = true
+                        table.insert(alljsons, f)
+                    end
+                end
+            end
         end
-        note("families: %d blocks, %d fixtures, %d permutations", r.blocks, r.fixtures, r.permutations or 0)
     end
     local permutations = check_blocks(bpdirs, cfg)
     local owners = load_owners(projectdir, cfg)
@@ -1072,7 +1112,8 @@ local function assemble_content(projectdir, outdir, version)
     local refs = check_dangling(alljsons, known_ids(bpdirs, outdir, owners), cfg, path.join(outdir, "data"))
     local scanned = check_arr(projectdir, cfg)
     report(outdir)
-    return string.format("%d block permutations, %d owned files, %d references, %d files hash-checked", permutations, owned, refs, scanned)
+    return string.format("%d block permutations, %s, %d owned files, %d references, %d files hash-checked",
+        permutations, families_summary, owned, refs, scanned)
 end
 
 function main(target, target_type)
