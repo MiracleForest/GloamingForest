@@ -182,6 +182,9 @@ void addList(std::string const& id, Json const& l) {
 
 void registerBuiltins() {
     // ---- block entity markers of .gft templates --------------------------------------------------
+    // (a template placement gives a randomizable container its LootTableSeed, drawn as
+    // StructureTemplate#placeInWorld draws it, in "seed" / "LootTableSeed"; the handlers draw only
+    // when called without one)
     registerMarkerHandler("loot", [](Region& region, BlockPos const& pos, std::string const&, Json const& data, RandomSource& random) {
         auto seed = data.contains("seed") ? data["seed"].get<std::int64_t>() : random.nextLong();
         blockentities::lootTable(region, pos, data.value("table", std::string{}), seed);
@@ -197,7 +200,9 @@ void registerBuiltins() {
     });
     registerMarkerHandler("block_entity", [](Region& region, BlockPos const& pos, std::string const&, Json const& data, RandomSource& random) {
         // generic: a loot table or spawner entity in vanilla block entity field names
-        if (data.contains("LootTable")) blockentities::lootTable(region, pos, data["LootTable"].get<std::string>(), data.value("LootTableSeed", random.nextLong()));
+        if (data.contains("LootTable"))
+            blockentities::lootTable(region, pos, data["LootTable"].get<std::string>(),
+                                     data.contains("LootTableSeed") ? data["LootTableSeed"].get<std::int64_t>() : random.nextLong());
         if (data.contains("SpawnData") || data.contains("entity")) {
             std::string id = data.value("entity", std::string{});
             if (id.empty() && data["SpawnData"].is_object()) id = data["SpawnData"].value("entity", Json::object()).value("id", std::string{});
