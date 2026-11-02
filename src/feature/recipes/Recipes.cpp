@@ -19,9 +19,12 @@
 // - the game's own crafting table recipes (Level::getRecipes(), the vanilla ones and the Bedrock
 //   recipes of the packs), converted once per world for `producing` (the uncrafting table
 //   uncrafts vanilla items too);
-// - special (code-driven) crafting: the crafting hook asks the matcher / assembler of the recipe
-//   id the client crafted (a BP recipe with that identifier shows the shape to vanilla clients;
-//   variable layouts: ext/item/Recipes.h), and puts the remainders back into the grid.
+// - special (code-driven) crafting: the crafting hook asks the matcher / assembler of the BP recipe
+//   the client crafted (the request's recipe net id; a BP recipe with the special's identifier
+//   shows the shape to vanilla clients; variable layouts: ext/item/Recipes.h), never the Java data
+//   recipe of the same id, and puts the remainders back into the grid.
+// Data recipes with "neoforge:conditions" load only when the conditions hold (NeoForge's
+// ConditionalOps; TF's uncrafting_table_enabled, mod_loaded for the jeed integration recipes).
 // The recipe pointers the queries return stay valid for the process: a data reload or a new world
 // keeps the previous generation of recipes alive instead of freeing it.
 #include "feature/recipes/Recipes.h"
@@ -45,8 +48,12 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/player/PlayerUISlot.h"
 #include "mc/world/inventory/network/ItemStackNetResult.h"
+#include "mc/world/inventory/network/ItemStackRequestActionType.h"
+#include "mc/world/inventory/network/TypedServerNetId.h"
 #include "mc/world/inventory/network/crafting/CraftHandlerCrafting.h"
+#include "mc/world/inventory/network/crafting/ItemStackRequestActionCraftBase.h"
 #include "mc/world/inventory/network/crafting/ItemStackRequestActionCraftHandler.h"
+#include "mc/world/inventory/network/crafting/ItemStackRequestActionCraftRecipeOptional.h"
 #include "mc/world/item/Item.h"
 #include "mc/world/item/ItemDescriptor.h"
 #include "mc/world/item/ItemInstance.h"
@@ -87,10 +94,16 @@ struct Store {
     /// out stay valid for the process (a deque's move keeps its elements where they are).
     std::vector<std::unique_ptr<std::deque<CraftingRecipe>>>   retired;
     std::map<std::string, std::string>                         layouts; ///< BP recipe id -> special id (ext::addSpecialLayout)
-    std::unordered_map<std::string, CraftingRecipe const*>     byId;
+    std::unordered_map<std::string, CraftingRecipe const*>     byId;     ///< data wins over the game's recipe of an id
+    std::unordered_map<std::string, CraftingRecipe const*>     nativeById; ///< the game's recipes only (BP identifiers)
     std::unordered_map<std::string, std::vector<CraftingRecipe const*>> byResult;
     std::unordered_map<std::string, std::vector<CraftingRecipe const*>> byType;
     std::map<std::string, Special>                             specials;
+    std::map<std::string, ext::ConditionFn>                    conditions; ///< registered condition types
+    std::map<std::string, Json>                                testData;   ///< selftests: data recipes by id
+    std::map<std::string, CraftingRecipe>                      testNative; ///< selftests: stand-ins for BP recipes
+    std::set<std::string>                                      noLoader;   ///< recipe types without a loader (warned once)
+    bool levelConditions = false; ///< a condition was evaluated without a level (tag_empty): again at world ready
     bool                                                       nativeDirty = true;
     bool                                                       dataLoaded  = false;
     bool                                                       dataDirty   = false; ///< a loader came after the data
@@ -266,9 +279,13 @@ void index(Store& s, CraftingRecipe const& r) {
 
 void reindex(Store& s) {
     s.byId.clear();
+    s.nativeById.clear();
     s.byResult.clear();
     s.byType.clear();
-    for (auto const& r : s.nativeRecipes) index(s, r);
+    for (auto const& r : s.nativeRecipes) {
+        index(s, r);
+        s.nativeById[r.id] = &r;
+    }
     for (auto const& r : s.dataRecipes) index(s, r); // data wins over a game recipe of the same id
     // the game recipe of an id the data has too: drop it from the lists
     for (auto& [item, list] : s.byResult)
@@ -276,8 +293,66 @@ void reindex(Store& s) {
     for (auto& [type, list] : s.byType) std::erase_if(list, [&](CraftingRecipe const* r) { return s.byId[r->id] != r; });
 }
 
+// ---- NeoForge conditions (net.neoforged.neoforge.common.conditions) -----------------------------------
+
+bool conditionHolds(Store& s, Json const& c);
+
+bool allHold(Store& s, Json const& list) {
+    if (list.is_object()) return conditionHolds(s, list);
+    if (!list.is_array()) return true;
+    for (auto const& c : list)
+        if (!conditionHolds(s, c)) return false;
+    return true;
+}
+
+/// One condition (lock held): the registered test of its type, else NeoForge's own and TF's.
+bool conditionHolds(Store& s, Json const& c) {
+    if (!c.is_object()) return true;
+    auto type = data::withNamespace(c.value("type", std::string()));
+    if (auto it = s.conditions.find(type); it != s.conditions.end()) {
+        try {
+            return it->second(c);
+        } catch (std::exception const& e) {
+            log().warn("recipes: condition {} failed: {}", type, e.what());
+            return false;
+        }
+    }
+    if (type == "neoforge:true") return true;
+    if (type == "neoforge:false") return false;
+    if (type == "neoforge:not") return !conditionHolds(s, c.value("value", Json::object()));
+    if (type == "neoforge:and") return allHold(s, c.value("values", Json::array()));
+    if (type == "neoforge:or") {
+        auto values = c.value("values", Json::array());
+        if (!values.is_array()) return false;
+        for (auto const& v : values)
+            if (conditionHolds(s, v)) return true;
+        return false;
+    }
+    if (type == "neoforge:mod_loaded") {
+        // the platform runs vanilla and TF only (TF's jeed integration recipes stay out)
+        auto mod = c.value("modid", std::string());
+        return mod == "minecraft" || mod == "neoforge" || mod == "twilightforest";
+    }
+    if (type == "neoforge:item_exists") {
+        auto item = data::withNamespace(c.value("item", std::string()));
+        return item.starts_with("minecraft:") || item.starts_with("twilightforest:") || item.starts_with("gf_test:");
+    }
+    if (type == "neoforge:tag_empty") {
+        // the vanilla tag bridge enumerates the game's items: evaluated again once a world is ready
+        if (!ll::service::getLevel()) s.levelConditions = true;
+        return tags::members(tags::Registry::Item, data::withNamespace(c.value("tag", std::string()))).empty();
+    }
+    // UncraftingTableCondition: !TFConfig.disableEntireTable, TF's default until U13 registers it
+    if (type == "twilightforest:uncrafting_table_enabled") return true;
+    static std::set<std::string> warned;
+    if (warned.insert(type).second) log().warn("recipes: unknown recipe condition type {}: the recipe does not load", type);
+    return false;
+}
+
 std::optional<CraftingRecipe> loadOne(Store& s, std::string const& id, Json const& j) {
     if (!j.is_object()) return std::nullopt;
+    // ConditionalOps: a recipe whose conditions fail is not there (no warning, as on NeoForge)
+    if (auto it = j.find("neoforge:conditions"); it != j.end() && !allHold(s, *it)) return std::nullopt;
     auto type = data::withNamespace(j.value("type", std::string()));
     if (type.empty() || type == "minecraft:") return std::nullopt;
     if (auto it = s.loaders.find(type); it != s.loaders.end()) {
@@ -297,10 +372,7 @@ std::optional<CraftingRecipe> loadOne(Store& s, std::string const& id, Json cons
         }
     }
     auto r = builtIn(id, j);
-    if (!r) {
-        static std::set<std::string> warned;
-        if (warned.insert(type).second) log().warn("recipes: no loader for recipe type {} (first: {})", type, id);
-    }
+    if (!r && s.noLoader.insert(type).second) log().warn("recipes: no loader for recipe type {} (first: {})", type, id);
     return r;
 }
 
@@ -329,6 +401,7 @@ void loadData() {
             add(f.id(), doc);
         }
     }
+    for (auto const& [id, j] : s.testData) add(id, j);
     s.dataLoaded = true;
     s.dataDirty  = false;
     reindex(s);
@@ -362,7 +435,8 @@ Ingredient ingredientOf(RecipeIngredient const& ri) {
 void convertNative(Store& s) {
     retire(s, s.nativeRecipes);
     s.nativeDirty = false;
-    auto level    = ll::service::getLevel();
+    for (auto const& [id, r] : s.testNative) s.nativeRecipes.push_back(r);
+    auto level = ll::service::getLevel();
     if (!level) return;
     auto const& all = level->getRecipes().mRecipes.get();
     auto        it  = all.find(HashedString("crafting_table"));
@@ -420,6 +494,13 @@ void addSpecialLayout(std::string const& specialId, std::string const& bpRecipeI
     auto&           s = store();
     std::lock_guard lock(s.mutex);
     s.layouts[data::withNamespace(bpRecipeId)] = data::withNamespace(specialId);
+}
+
+void registerCondition(std::string const& typeId, ConditionFn test) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    s.conditions[data::withNamespace(typeId)] = std::move(test);
+    if (s.dataLoaded) s.dataDirty = true; // the data's conditions are evaluated again
 }
 } // namespace ext
 
@@ -498,20 +579,178 @@ bool anySpecial() {
     return !s.specials.empty();
 }
 
-std::string specialFor(std::string const& resultItemId) {
+namespace {
+std::string idOfStack(ItemStack const* s) { return s && !game::items::isEmpty(*s) ? game::items::idOf(*s) : std::string(); }
+
+bool fitsShaped(CraftingRecipe const& r, CraftingGrid const& grid, bool mirrored) {
+    int minX = grid.width, minY = grid.height, maxX = -1, maxY = -1;
+    for (int y = 0; y < grid.height; ++y)
+        for (int x = 0; x < grid.width; ++x) {
+            auto i = static_cast<std::size_t>(y * grid.width + x);
+            if (i >= grid.slots.size() || idOfStack(grid.slots[i]).empty()) continue;
+            minX = std::min(minX, x), minY = std::min(minY, y), maxX = std::max(maxX, x), maxY = std::max(maxY, y);
+        }
+    if (maxX < 0) return false;
+    // the recipe's own empty rim (a pattern with blank edges) is part of its shape
+    if (r.width < maxX - minX + 1 || r.height < maxY - minY + 1) return false;
+    for (int ox = std::max(0, maxX - r.width + 1); ox <= std::min(minX, grid.width - r.width); ++ox)
+        for (int oy = std::max(0, maxY - r.height + 1); oy <= std::min(minY, grid.height - r.height); ++oy) {
+            bool ok = true;
+            for (int y = 0; ok && y < grid.height; ++y)
+                for (int x = 0; ok && x < grid.width; ++x) {
+                    auto id = idOfStack(grid.slots[static_cast<std::size_t>(y * grid.width + x)]);
+                    int  rx = x - ox, ry = y - oy;
+                    if (rx < 0 || ry < 0 || rx >= r.width || ry >= r.height) {
+                        ok = id.empty();
+                        continue;
+                    }
+                    if (mirrored) rx = r.width - 1 - rx;
+                    auto i = static_cast<std::size_t>(ry * r.width + rx);
+                    ok     = i < r.ingredients.size() && internal::matches(r.ingredients[i], id);
+                }
+            if (ok) return true;
+        }
+    return false;
+}
+
+bool assign(std::vector<std::string> const& ids, std::vector<Ingredient> const& ingredients, std::vector<bool>& used, std::size_t i) {
+    if (i == ids.size()) return true;
+    for (std::size_t k = 0; k < ingredients.size(); ++k) {
+        if (used[k] || !internal::matches(ingredients[k], ids[i])) continue;
+        used[k] = true;
+        if (assign(ids, ingredients, used, i + 1)) return true;
+        used[k] = false;
+    }
+    return false;
+}
+
+bool fitsShapeless(CraftingRecipe const& r, CraftingGrid const& grid) {
+    std::vector<std::string> ids;
+    for (auto const* s : grid.slots)
+        if (auto id = idOfStack(s); !id.empty()) ids.push_back(std::move(id));
+    std::vector<Ingredient> ingredients;
+    for (auto const& i : r.ingredients)
+        if (!i.empty()) ingredients.push_back(i);
+    if (ids.empty() || ids.size() != ingredients.size()) return false;
+    std::vector<bool> used(ingredients.size(), false);
+    return assign(ids, ingredients, used, 0);
+}
+
+std::map<std::int64_t, std::string>& routes() {
+    static std::map<std::int64_t, std::string> m;
+    return m;
+}
+} // namespace
+
+bool fits(CraftingRecipe const& recipe, CraftingGrid const& grid) {
+    if (recipe.width > 0 && recipe.height > 0) return fitsShaped(recipe, grid, false) || fitsShaped(recipe, grid, true);
+    return fitsShapeless(recipe, grid);
+}
+
+std::vector<std::string> specialCandidates(std::string const& resultItemId, CraftingGrid const& grid) {
+    std::vector<std::pair<std::string, CraftingRecipe const*>> found;
+    {
+        auto&           s = store();
+        std::lock_guard lock(s.mutex);
+        ensureNative();
+        auto result = data::withNamespace(resultItemId);
+        auto native = [&](std::string const& bpId) -> CraftingRecipe const* {
+            auto it = s.nativeById.find(bpId);
+            return it != s.nativeById.end() && it->second->resultItem == result ? it->second : nullptr;
+        };
+        for (auto const& [id, sp] : s.specials)
+            if (auto const* r = native(id)) found.emplace_back(id, r);
+        for (auto const& [bp, id] : s.layouts)
+            if (s.specials.contains(id))
+                if (auto const* r = native(bp)) found.emplace_back(bp, r);
+    }
+    // the client crafted a BP recipe the server checked against the grid: only those that fit
+    std::sort(found.begin(), found.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
+    std::vector<std::string> fitting;
+    for (auto const& [id, r] : found)
+        if (fits(*r, grid)) fitting.push_back(id);
+    return fitting;
+}
+
+std::string resolveSpecial(std::string const& bpRecipeId, std::string const& resultItemId, CraftingGrid const& grid, bool* refused) {
+    if (refused) *refused = false;
+    if (!bpRecipeId.empty()) {
+        if (!isSpecial(bpRecipeId)) return {};
+        Matcher matcher;
+        {
+            auto&           s = store();
+            std::lock_guard lock(s.mutex);
+            if (auto const* sp = specialOf(s, bpRecipeId)) matcher = sp->matcher;
+        }
+        if (matcher && !matcher(grid)) {
+            if (refused) *refused = true;
+            return {};
+        }
+        return data::withNamespace(bpRecipeId);
+    }
+    for (auto const& id : specialCandidates(resultItemId, grid)) {
+        Matcher matcher;
+        {
+            auto&           s = store();
+            std::lock_guard lock(s.mutex);
+            if (auto const* sp = specialOf(s, id)) matcher = sp->matcher;
+        }
+        if (!matcher || matcher(grid)) return id;
+    }
+    return {};
+}
+
+std::string lastSpecialRoute(std::int64_t playerUid) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    auto            it = routes().find(playerUid);
+    return it == routes().end() ? std::string() : it->second;
+}
+
+CraftingRecipe const* nativeById(std::string const& recipeId) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
     ensureNative();
-    auto result = data::withNamespace(resultItemId);
-    auto gives  = [&](std::string const& bpId) {
-        auto it = s.byId.find(bpId);
-        return it != s.byId.end() && it->second->resultItem == result;
-    };
-    for (auto const& [id, sp] : s.specials)
-        if (gives(id)) return id;
-    for (auto const& [bp, id] : s.layouts)
-        if (s.specials.contains(id) && gives(bp)) return bp;
-    return {};
+    auto it = s.nativeById.find(data::withNamespace(recipeId));
+    return it == s.nativeById.end() ? nullptr : it->second;
+}
+
+void setTestDataRecipe(std::string const& id, Json const& recipe) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    if (recipe.is_null()) s.testData.erase(data::withNamespace(id));
+    else s.testData[data::withNamespace(id)] = recipe;
+    loadData();
+}
+
+void setTestNativeRecipe(CraftingRecipe const& recipe, bool remove) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    if (remove) s.testNative.erase(recipe.id);
+    else s.testNative[recipe.id] = recipe;
+    s.nativeDirty = true;
+    convertNative(s);
+    reindex(s);
+}
+
+void unregisterCondition(std::string const& typeId) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    s.conditions.erase(data::withNamespace(typeId));
+    if (s.dataLoaded) s.dataDirty = true;
+}
+
+bool conditionsHold(Json const& conditions) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    return allHold(s, conditions);
+}
+
+std::set<std::string> typesWithoutLoader() {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    ensureData();
+    return s.noLoader;
 }
 
 bool isSpecial(std::string const& recipeId) {
@@ -625,16 +864,41 @@ void refreshNative() {
 } // namespace internal
 
 namespace {
-/// The last crafting handler that handled a craft action on this thread. The results are set up
-/// later in the same request (the CraftResults action after the CraftRecipe one), by the request's
-/// craft handler: a handler is the crafting table's when it is this one (compared, never followed).
-thread_local CraftHandlerCrafting* gCrafting = nullptr;
+/// What the crafting table's craft handler saw of the item stack request being processed on this
+/// thread, as copied values (no handler pointer is ever followed): set by its craft actions (the
+/// CraftRecipe action names the BP recipe by its net id), cleared at the end of the request.
+struct CraftState {
+    void const* owner = nullptr; ///< the request's ItemStackRequestActionCraftHandler (compared only)
+    std::string recipeId;        ///< the BP recipe the client crafted ("" unknown)
+    std::string resultItem;      ///< that recipe's result item
+    bool        workbench = false;
+};
+thread_local CraftState gCraft;
+
+/// The recipe a CraftRecipe / CraftRecipeAuto action crafts (its id and result item). The action is
+/// ItemStackRequestActionCraft<RecipeNetId, 12 | 13>: the net id follows the craft base as in
+/// ItemStackRequestActionCraftRecipeOptional (the same base and first member); a recipe whose
+/// result is not what the craft makes is not taken (see the results hook).
+std::pair<std::string, std::string> recipeOfAction(ItemStackRequestActionCraftBase const& action) {
+    auto type = static_cast<ItemStackRequestActionType>(action.mActionType);
+    if (type != ItemStackRequestActionType::CraftRecipe && type != ItemStackRequestActionType::CraftRecipeAuto) return {};
+    auto level = ll::service::getLevel();
+    if (!level) return {};
+    RecipeNetId const& netId  = static_cast<ItemStackRequestActionCraftRecipeOptional const&>(action).mRecipeNetId;
+    auto const*        recipe = level->getRecipes().getRecipeByNetId(netId);
+    if (!recipe) return {};
+    std::string id = *recipe->mRecipeId;
+    if (id.find(':') == std::string::npos) id = "minecraft:" + id;
+    auto const& results = recipe->getResultItems();
+    return {id, results.empty() || results.front().isNull() ? std::string() : results.front().getTypeName()};
+}
 } // namespace
 
 } // namespace gf::recipes
 
 namespace rc = gf::recipes;
 
+// The crafting table's craft actions: which BP recipe the request crafts, in which grid.
 LL_TYPE_INSTANCE_HOOK(
     RecipesCraftActionHook,
     ll::memory::HookPriority::Normal,
@@ -643,8 +907,34 @@ LL_TYPE_INSTANCE_HOOK(
     ItemStackNetResult,
     ItemStackRequestActionCraftBase const& action
 ) {
-    rc::gCrafting = this;
+    try {
+        void const* owner = &static_cast<ItemStackRequestActionCraftHandler&>(mCraftRequestHandler);
+        if (rc::gCraft.owner != owner) rc::gCraft = {};
+        rc::gCraft.owner     = owner;
+        rc::gCraft.workbench = mWorkbench;
+        auto type            = static_cast<ItemStackRequestActionType>(action.mActionType);
+        if (type == ItemStackRequestActionType::CraftRecipe || type == ItemStackRequestActionType::CraftRecipeAuto) {
+            auto [id, result]     = rc::recipeOfAction(action);
+            rc::gCraft.recipeId   = std::move(id);
+            rc::gCraft.resultItem = std::move(result);
+        }
+    } catch (...) {
+        rc::gCraft = {};
+    }
     return origin(action);
+}
+
+// The end of an item stack request: nothing of it is kept for the next one.
+LL_TYPE_INSTANCE_HOOK(
+    RecipesEndRequestHook,
+    ll::memory::HookPriority::Normal,
+    ItemStackRequestActionCraftHandler,
+    &ItemStackRequestActionCraftHandler::endRequest,
+    ItemStackNetResult,
+    ItemStackNetResult currentResult
+) {
+    if (rc::gCraft.owner == this) rc::gCraft = {};
+    return origin(currentResult);
 }
 
 // The results of a craft: a special recipe's assembler replaces the recipe's static result.
@@ -660,38 +950,29 @@ LL_TYPE_INSTANCE_HOOK(
     try {
         Player& player = mPlayer;
         if (player.isClientSide() || results.size() != 1 || results.front().isNull() || !rc::internal::anySpecial()) return origin(results, numCrafts);
-        auto level = ll::service::getLevel();
-        if (!level) return origin(results, numCrafts);
-        std::string id;
-        bool        workbench = false, byLookup = false;
-        auto*       handler   = mCraftHandler.get();
-        if (handler && static_cast<CraftHandlerBase*>(rc::gCrafting) == handler) {
-            // the crafting table's handler of this request (the results are set up inside its craft
-            // action): its recipe when it already stored the net id, its grid size
-            auto* crafting = rc::gCrafting;
-            if (auto const* recipe = level->getRecipes().getRecipeByNetId(crafting->mRecipeNetId)) id = *recipe->mRecipeId;
-            workbench = crafting->mWorkbench;
-        } else {
+        auto resultItem = results.front().getTypeName();
+        bool table      = rc::gCraft.owner == this; // the crafting table's request
+        // the BP recipe the request crafted: only when it makes this result (a net id read from an
+        // unexpected action layout names another recipe or none, and the result decides then)
+        std::string bp        = table && rc::gCraft.resultItem == resultItem ? rc::gCraft.recipeId : std::string();
+        bool        workbench = false;
+        if (table) workbench = rc::gCraft.workbench;
+        else {
             auto& ui = player.mPlayerUIContainer.get();
             for (int i = static_cast<int>(PlayerUISlot::Crafting3x3Input1); i <= static_cast<int>(PlayerUISlot::Crafting3x3Input9); ++i)
                 workbench = workbench || !ui.getItem(i).isNull();
         }
-        if (id.empty() || !rc::internal::isSpecial(id)) {
-            // the special recipe (or layout) whose BP recipe gives this result (on 1.26.51 the
-            // handler's recipe net id is not set yet when the results are)
-            if (auto found = rc::internal::specialFor(results.front().getTypeName()); !found.empty()) {
-                id       = found;
-                byLookup = true;
-            }
+        auto grid    = rc::internal::gridOf(player, workbench);
+        bool refused = false;
+        auto id      = rc::internal::resolveSpecial(bp, resultItem, grid.grid, &refused);
+        if (refused) {
+            gf::log().info("recipes: special crafting {} refused for {}", bp, player.getRealName());
+            return ItemStackNetResult::Error;
         }
         if (id.empty()) return origin(results, numCrafts);
-        if (id.find(':') == std::string::npos) id = "minecraft:" + id;
-        if (!rc::internal::isSpecial(id)) return origin(results, numCrafts);
-        auto grid   = rc::internal::gridOf(player, workbench);
         auto result = rc::internal::assembleSpecial(id, grid.grid);
         if (!result || gf::game::items::isEmpty(*result)) {
-            // found by its result only: another recipe of the same item may be the one crafted
-            if (byLookup) return origin(results, numCrafts);
+            if (bp.empty()) return origin(results, numCrafts); // a candidate by its result only
             gf::log().info("recipes: special crafting {} refused for {}", id, player.getRealName());
             return ItemStackNetResult::Error;
         }
@@ -719,12 +1000,15 @@ LL_TYPE_INSTANCE_HOOK(
                 gf::log().info("recipes: special crafting remainder placed for {}", p->getRealName());
             });
         }
+        char const* route = bp.empty() ? "result" : "request";
         {
             auto&           s = rc::store();
             std::lock_guard lock(s.mutex);
-            ++rc::internal::craftCounts()[player.getOrCreateUniqueID().rawID];
+            auto            uid = player.getOrCreateUniqueID().rawID;
+            ++rc::internal::craftCounts()[uid];
+            rc::internal::routes()[uid] = route;
         }
-        gf::log().info("recipes: special crafting {} for {}", id, player.getRealName());
+        gf::log().info("recipes: special crafting {} for {} (found by the {})", id, player.getRealName(), route);
         std::vector<ItemInstance> replaced{ItemInstance(*result)};
         return origin(replaced, numCrafts);
     } catch (std::exception const& e) {
@@ -740,6 +1024,7 @@ public:
     void install() {
         if (int r = RecipesCraftActionHook::hook(); r != 0) log().error("recipes: the crafting table hook failed ({})", r);
         if (int r = RecipesInitResultsHook::hook(); r != 0) log().error("recipes: the craft results hook failed ({})", r);
+        if (int r = RecipesEndRequestHook::hook(); r != 0) log().error("recipes: the request end hook failed ({})", r);
         static bool registered = false;
         if (!registered) {
             registered = true;
@@ -747,6 +1032,10 @@ public:
                 auto&           s = store();
                 std::lock_guard lock(s.mutex);
                 s.nativeDirty = true;
+                if (s.levelConditions && s.dataLoaded) {
+                    s.levelConditions = false;
+                    s.dataDirty       = true;
+                }
             });
             game::db::onWorldClosed([] {
                 auto&           s = store();
@@ -758,8 +1047,10 @@ public:
         }
     }
     void uninstall() {
+        RecipesEndRequestHook::unhook();
         RecipesInitResultsHook::unhook();
         RecipesCraftActionHook::unhook();
+        gCraft = {};
     }
 };
 } // namespace
