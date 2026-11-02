@@ -37,6 +37,7 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/player/PlayerJoinEvent.h"
 #include "ll/api/event/player/PlayerRespawnEvent.h"
+#include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
@@ -52,6 +53,7 @@
 #include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/GameType.h"
+#include "mc/world/actor/Actor.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Tick.h"
 #include "mc/world/level/Spawner.h"
@@ -303,13 +305,39 @@ std::uint64_t nowTick() {
 /// Victims kept alive this tick (ActorUniqueID) -> the health their handler left and the tick.
 thread_local std::unordered_map<std::int64_t, std::pair<float, std::uint64_t>> tSurvived;
 
-/// Entities whose death the pipeline handled (ActorUniqueID -> tick): a second `die` for the same
-/// death (the game may call it again) must not drop the loot or fire the kill again.
-std::unordered_map<std::int64_t, std::uint64_t>& handledDeaths() {
-    static std::unordered_map<std::int64_t, std::uint64_t> m;
+/// Entities whose death the pipeline handled: a second `die` for the same death (the game may call
+/// it again) must not drop the loot or fire the kill again. A player's entry lasts its life (it
+/// goes when the player respawns); a mob's goes once the dead mob is removed from the level (its
+/// ActorUniqueID is never used again), checked by the sweep.
+struct Handled {
+    std::uint64_t tick   = 0;
+    bool          player = false;
+};
+std::unordered_map<std::int64_t, Handled>& handledDeaths() {
+    static std::unordered_map<std::int64_t, Handled> m;
     return m;
 }
+
+constexpr int kHandledSweepTicks = 20;
+
+/// Forgets the deaths of mobs that are gone (every kHandledSweepTicks ticks).
+void sweepHandledDeaths() {
+    auto& handled = handledDeaths();
+    if (handled.empty()) return;
+    auto level = ll::service::getLevel();
+    if (!level || level->getCurrentTick().tickID % kHandledSweepTicks != 0) return;
+    std::erase_if(handled, [&](auto const& e) {
+        if (e.second.player) return false;
+        ActorUniqueID id;
+        id.rawID = e.first;
+        return level->fetchEntity(id, true) == nullptr;
+    });
+}
 } // namespace
+
+bool deathHandled(std::int64_t actorId) { return handledDeaths().contains(actorId); }
+
+std::size_t handledDeathCount() { return handledDeaths().size(); }
 
 void reapplySurvival(Actor& victim) {
     if (tSurvived.empty()) return;
@@ -397,18 +425,13 @@ void handleDeath(Actor& self, ActorDamageSource const& source, std::function<voi
         ~Pop() { tDying.pop_back(); }
     } pop;
     auto selfId = self.getOrCreateUniqueID().rawID;
-    {
-        // a second die for a death already handled (the game may call it again): one entry per
-        // life (mobs never come back; a player's entry goes when it respawns)
-        auto& handled = handledDeaths();
-        if (handled.contains(selfId)) return die();
-        auto now = nowTick();
-        if (handled.size() > 1024) std::erase_if(handled, [now](auto const& e) { return now - e.second > 6000; });
-    }
+    // a second die for a death already handled (the game may call it again): one entry per life (a
+    // player's goes when it respawns, a mob's when the dead mob is removed)
+    if (handledDeaths().contains(selfId)) return die();
     auto [attacker, direct] = combat::entitiesOf(source);
     combat::DamageInfo info{self, combat::typeOf(self, source), attacker, direct, 0.f};
     if (runLethal(self, info)) return;
-    handledDeaths()[selfId] = nowTick();
+    handledDeaths()[selfId] = Handled{nowTick(), self.isPlayer()};
     Player*     killer   = killerPlayer(self, attacker);
     std::int64_t killerId = killer ? killer->getOrCreateUniqueID().rawID : 0;
     if (self.isPlayer() && !static_cast<Player&>(self).isClientSide()) keepAndOffer(static_cast<Player&>(self));
@@ -483,6 +506,7 @@ public:
         mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerJoinEvent>([](ll::event::PlayerJoinEvent& ev) {
             if (!ev.self().isClientSide()) dropStaleRecord(ev.self());
         });
+        mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { sweepHandledDeaths(); });
         static bool registered = false;
         if (!registered) {
             registered = true;
@@ -500,6 +524,7 @@ public:
     void uninstall() {
         ll::event::EventBus::getInstance().removeListener(mRespawn);
         ll::event::EventBus::getInstance().removeListener(mJoin);
+        ll::event::EventBus::getInstance().removeListener(mTick);
         DeathServerPlayerDieHook::unhook();
         DeathPlayerDieHook::unhook();
         DeathMobDieHook::unhook();
@@ -508,6 +533,7 @@ public:
 private:
     ll::event::ListenerPtr mRespawn;
     ll::event::ListenerPtr mJoin;
+    ll::event::ListenerPtr mTick;
 };
 
 } // namespace

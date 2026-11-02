@@ -2,6 +2,8 @@
 
 // F10-internal parts of the death pipeline (selftests).
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <string>
 
@@ -29,5 +31,10 @@ void setTestKeptOnDeath(std::function<bool(std::string const& itemId)> fn);
 void handleDeath(Actor& self, ActorDamageSource const& source, std::function<void()> const& die);
 /// A player respawned: its next death runs the pipeline again (one handled death per life).
 void forgetDeath(Player const& player);
+/// Whether the pipeline handled the death of the entity `actorId` (ActorUniqueID) and still keeps
+/// it: a player until it respawns, a mob until it is removed from the level (selftests).
+[[nodiscard]] bool deathHandled(std::int64_t actorId);
+/// The deaths kept now (selftests).
+[[nodiscard]] std::size_t handledDeathCount();
 
 } // namespace gf::death
