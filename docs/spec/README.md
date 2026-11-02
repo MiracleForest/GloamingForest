@@ -152,7 +152,8 @@ them is a TF literal):
 ### Assemble: merges and the reference check
 
 `tools/xmake/merges.json` merges fragment directories (`*.d/<unit>.json`) of the gen layer and then the manual layer
-(the manual layer wins per id; a duplicate inside one layer fails). Besides the atlases, `sound_definitions`, music,
+(the manual layer wins per id; a duplicate inside one layer fails; a plain file at a merge's output path fails, since
+the merge would overwrite it). Besides the atlases, `sound_definitions`, music,
 `blocks.json`, texts and the item catalog, `rp/sounds.json.d/<unit>.json` -> the resource pack's `sounds.json` (mode
 `categories`): the ids of `block_sounds`, `entity_sounds.entities`, `individual_event_sounds.events`,
 `interactive_sounds.block_sounds` and `interactive_sounds.entity_sounds.entities` are merged one by one; any other key
