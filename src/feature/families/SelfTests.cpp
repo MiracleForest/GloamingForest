@@ -1372,14 +1372,16 @@ GF_REGISTER_SELFTEST("families.sign_sync", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(ctx.setBlock(q, "gf_test:family_sign", {{fam::state::Rotation, 8}}), "a second sign");
     co_await ctx.ticks(1);
     {
-        // a vanilla player (no client mod) is sent no sign text: it reads the display entity's name
+        // a vanilla player (no client mod) reads the display entity's name tag; that it is sent no
+        // sign text rests on net::send's refusal (this check only sees what a regression that marked
+        // it a companion would record), and the client scenario checks it on a real host
         gf::net::setTestCompanion(ctx.player(), false);
         (void)gf::net::takeTestMessages(ctx.player());
         gf::signs::setText(q, {"vanilla"});
         co_await ctx.ticks(1);
         bool none = true;
         for (auto const& m : gf::net::takeTestMessages(ctx.player())) none = none && m.channel != "families.sign_text";
-        ctx.check(!gf::net::isCompanion(ctx.player()) && none, "a vanilla player is sent no sign text");
+        ctx.check(!gf::net::isCompanion(ctx.player()) && none, "a vanilla player is no companion and records no sign text");
         auto* display = fam::detail::signDisplay(q, true);
         ctx.check(display && display->getNameTag() == "vanilla\n\n\n", "it reads the text on the display entity's name tag");
     }

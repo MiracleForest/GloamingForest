@@ -245,12 +245,17 @@ Json posJson(GlobalPos const& p) { return Json::array({p.dim, p.x, p.y, p.z}); }
 
 constexpr std::size_t kBatch = 64; ///< signs per message
 
+/// The players of this world named by sendText's log line (cleared with the world).
+std::set<std::int64_t>& loggedCompanions() {
+    static std::set<std::int64_t> s;
+    return s;
+}
+
 /// Sends `payload` on the sign text channel to `player` (a companion; net::send refuses others), with
 /// one host log line for each real player first sent sign text (e2e: never a vanilla client).
 void sendText(Player& player, Json const& payload) {
-    static std::set<std::string> logged; // the UUIDs of a session's companions
     if (!net::send(player, kTextChannel, payload) || player.isSimulatedPlayer()) return;
-    if (logged.insert(player.getUuid().asString()).second) log().info("families: sign text sent to the companion {}", player.getRealName());
+    if (loggedCompanions().insert(player.getOrCreateUniqueID().rawID).second) log().info("families: sign text sent to the companion {}", player.getRealName());
 }
 
 /// Sends `payload` on the sign text channel to every companion (vanilla clients get nothing).
@@ -1025,6 +1030,7 @@ void clearSigns() {
     displayed().clear();
     chunkTicked().clear();
     sentTexts().clear();
+    loggedCompanions().clear();
     pendingTexts().signs.clear();
     pendingTexts().gone.clear();
 }
