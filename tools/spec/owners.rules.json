@@ -1,5 +1,5 @@
 {
-  "comment": "Rules of tools/spec/owners.ps1 (contract 'owners'). 'units' lists every unit with its directory name, selftest dx range and the paths it owns (R3, R12); 'ids' partitions every TF id per kind with ordered [glob, owner] rules (first match wins; globs match the id path without the namespace; '{a,b}' alternation, '*' any text); 'lang' maps en_us key patterns to an owner or to '$<kind>:<capture>' (the owner of that id). Ids no rule claims are reported (and listed under 'unclaimed' in docs/spec/README.md).",
+  "comment": "Rules of tools/spec/owners.ps1 (contract 'owners'). 'units' lists every unit with its directory name, selftest dx range and the paths it owns (R3, R12), and under its own 'ids' the ids outside TF's namespace it creates ({kind: [full id or {id, mode: gen|manual}]}; gen by default; no other owner may have them); 'ids' partitions every TF id per kind with ordered [glob, owner] rules (first match wins; globs match the id path without the namespace; '{a,b}' alternation, '*' any text); 'lang' maps en_us key patterns to an owner or to '$<kind>:<capture>' (the owner of that id). Ids no rule claims are reported (and listed under 'unclaimed' in docs/spec/README.md).",
   "units": {
     "F0":  { "name": "core", "wave": "W0a", "title": "Scaffold, contract headers, owners", "dx": [5000, 5099],
              "paths": [
@@ -79,7 +79,8 @@
              "worlddb": ["gf:combat:", "gf:loot:", "gf:inventory:", "gf:progression:", "gf:gamerules:"], "subcommands": ["gamerule"], "e2e": ["combat"] },
     "F11": { "name": "families", "wave": "W0b", "title": "Block families kit and block event dispatch", "dx": [6100, 6199],
              "paths": ["src/feature/families/**", "src/client/families/**", "tools/families/**", "tools/e2e/*/scenarios/families{,.*}.ps1"],
-             "worlddb": ["gf:families:"], "e2e": ["families"] },
+             "worlddb": ["gf:families:"], "e2e": ["families"],
+             "ids": { "mod_entity": [{ "id": "gloamingforest:sign_text", "mode": "gen" }] } },
     "F12": { "name": "ui", "wave": "W0b", "title": "Client frameworks and vanilla UI fallbacks (S5)", "dx": [6200, 6299],
              "paths": ["src/client/{ui,render,world,input}/**", "src/feature/{ui,movement}/**", "docs/spikes/S5.md", "assets/pack/{bp,rp}/**/ui/**", "**/*.d/ui.json", "assets/lang/*/ui.json", "tools/e2e/*/scenarios/ui{,.*}.ps1"],
              "worlddb": ["gf:ui:"], "config": ["client"], "e2e": ["ui"] },

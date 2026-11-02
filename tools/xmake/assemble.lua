@@ -141,11 +141,23 @@ local function load_json(file)
     return doc
 end
 
+-- pairs over parsed JSON: the sandbox's pairs calls t:pairs() instead when the object has a "pairs"
+-- key (the chest declarations of data/gf/containers do), so such objects go through their keys
+local function json_pairs(t)
+    if type(t) ~= "table" or t.pairs == nil then return pairs(t) end
+    local keys, i = table.keys(t), 0
+    return function ()
+        i = i + 1
+        local k = keys[i]
+        if k ~= nil then return k, t[k] end
+    end
+end
+
 local function is_array(t)
     if type(t) ~= "table" then return false end
     if json.is_marked_as_array and json.is_marked_as_array(t) then return true end
     local n = 0
-    for _ in pairs(t) do n = n + 1 end
+    for _ in json_pairs(t) do n = n + 1 end
     return n > 0 and #t == n
 end
 
@@ -158,9 +170,9 @@ end
 local function apply_wrapper(wrapper, merged, packname)
     if wrapper == nil then return merged end
     local out = {}
-    for k, v in pairs(wrapper) do
+    for k, v in json_pairs(wrapper) do
         if k == "$spread" then
-            for mk, mv in pairs(merged) do out[mk] = mv end
+            for mk, mv in json_pairs(merged) do out[mk] = mv end
         elseif v == "$merged" then
             out[k] = merged
         elseif v == "$pack" then
@@ -182,18 +194,17 @@ local function mod_version()
     return tonumber(major) or 0, tonumber(minor) or 0, tonumber(patch) or 0
 end
 
--- A positive number (2..30001) derived from the content and paths of every file under `dirs`.
-local function pack_stamp(dirs)
-    local parts = {}
-    for _, dir in ipairs(dirs) do
-        if os.isdir(dir) then
-            local files = os.files(path.join(dir, "**"))
-            table.sort(files)
-            for _, file in ipairs(files) do
-                table.insert(parts, rel(file, dir) .. "=" .. hash.md5(file))
-            end
+-- A positive number (2..30001) derived from the content and paths (relative to `base`) of `files`.
+local function pack_stamp(base, files)
+    local parts, seen = {}, {}
+    for _, file in ipairs(files) do
+        local r = rel(file, base)
+        if not seen[r] then
+            seen[r] = true
+            table.insert(parts, r .. "=" .. hash.md5(file))
         end
     end
+    table.sort(parts)
     local tmp = os.tmpfile() .. ".packstamp"
     io.writefile(tmp, table.concat(parts, "\n"))
     local digest = hash.md5(tmp)
@@ -322,7 +333,7 @@ local function union_into(acc, value, where)
         end
     elseif type(value) == "table" then
         acc.__map = acc.__map or {}
-        for k, v in pairs(value) do
+        for k, v in json_pairs(value) do
             if type(v) == "table" then
                 acc.__map[k] = acc.__map[k] or {}
                 union_into(acc.__map[k], v, where .. "." .. k)
@@ -344,7 +355,7 @@ local function union_result(acc)
     end
     if acc.__map then
         local out = {}
-        for k, v in pairs(acc.__map) do
+        for k, v in json_pairs(acc.__map) do
             out[k] = type(v) == "table" and union_result(v) or v
         end
         return out
@@ -417,7 +428,7 @@ local function merge_fragments(spec, gen, manual, cfg)
                         if type(doc) ~= "table" or is_array(doc) then
                             fail("fragment %s must be a JSON object", files[r].file)
                         else
-                            for k, v in pairs(doc) do
+                            for k, v in json_pairs(doc) do
                                 if layer_origin[k] then
                                     fail("duplicate key '%s' in %s (already defined in %s)", k, files[r].file, layer_origin[k])
                                 end
@@ -457,7 +468,7 @@ local function check_blocks(bpdirs, cfg)
             local states = block and block.description and block.description.states
             local count = 1
             if type(states) == "table" then
-                for name, values in pairs(states) do
+                for name, values in json_pairs(states) do
                     local n = 1
                     if type(values) == "table" and is_array(values) then
                         n = #values
@@ -672,7 +683,7 @@ local function check_dangling(jsonfiles, known, cfg, datadir)
             end
         elseif type(v) == "table" then
             local entry = type(v.type) == "string" and LOOT_ENTRY_KINDS[v.type] or nil
-            for k, x in pairs(v) do
+            for k, x in json_pairs(v) do
                 if type(k) == "number" then
                     visit(x, ctx, kinds) -- list elements keep the list's kinds
                 elseif not DEFINING_KEYS[k] then
@@ -874,7 +885,7 @@ local function merge_lang(projectdir, cfg, outdir)
                     if type(doc) == "table" then
                         by_locale[locale] = by_locale[locale] or {}
                         layer_origin[locale] = layer_origin[locale] or {}
-                        for k, v in pairs(doc) do
+                        for k, v in json_pairs(doc) do
                             if layer_origin[locale][k] then
                                 fail("duplicate lang key '%s' (%s) in %s (already defined in %s)", k, locale, files[r].file, layer_origin[locale][k])
                             end
@@ -972,7 +983,7 @@ local function known_ids(bpdirs, outdir, owners)
             -- items and entities by kind, the rest (features, feature rules, ...) as "bp:<type>"
             local doc = try_json(file)
             if type(doc) == "table" then
-                for key, def in pairs(doc) do
+                for key, def in json_pairs(doc) do
                     local id = type(key) == "string" and key:match("^minecraft:") and type(def) == "table" and type(def.description) == "table"
                         and def.description.identifier or nil
                     if type(id) == "string" then
@@ -1028,22 +1039,30 @@ local function assemble_content(projectdir, outdir, version)
     local cfg = load_config(projectdir)
     errors, notes = {}, {}
     local with_tests = os.getenv("GF_NO_TEST_PACKS") ~= "1"
+    local families_dir = path.join(projectdir, "tools", "families")
     if version == nil then
         local major, minor, patch = mod_version()
         version = {major, minor, patch}
         if major == 0 and minor == 0 and patch == 0 then
-            local dirs = {path.join(projectdir, "assets")}
-            version = {0, 0, pack_stamp(dirs)}
+            -- what shapes the packs: the assets and the family generator's code and fixtures (a new
+            -- version: no stale cached pack); not its docs or its command line (run.ps1, run.lua)
+            local files = os.files(path.join(projectdir, "assets", "**"))
+            for _, f in ipairs(os.files(path.join(families_dir, "**.lua"))) do
+                if rel(f, families_dir) ~= "run.lua" then table.insert(files, f) end
+            end
+            table.join2(files, os.files(path.join(families_dir, "fixtures", "**")))
+            version = {0, 0, pack_stamp(projectdir, files)}
         end
     end
     merge_lang(projectdir, cfg, outdir)
     local datajsons = copy_data(projectdir, cfg, outdir, with_tests)
-    local bpdirs, alljsons = {}, {}
+    local bpdirs, alljsons, shipped_dirs = {}, {}, {}
     for _, pack in ipairs(cfg.packs) do
         if with_tests or not pack.test then
             local dst, jsons = build_pack(projectdir, cfg, pack, outdir, version, not pack.test)
             if pack.root == "bp" then table.insert(bpdirs, dst) end
             if not pack.test then
+                table.insert(shipped_dirs, dst)
                 for _, j in ipairs(jsons) do table.insert(alljsons, j) end
             end
         else
@@ -1051,13 +1070,68 @@ local function assemble_content(projectdir, outdir, version)
         end
     end
     for _, j in ipairs(datajsons) do table.insert(alljsons, j) end
+    -- F11's block family generator (tools/families, contract "families+blockevents"): the family
+    -- data (data/gf/families) as Bedrock block definitions in the packs just built, and the gf_test
+    -- fixture families; checked below with the rest. Nothing happens until tools/families exists.
+    local families_summary = "no family generator"
+    if os.isfile(path.join(families_dir, "families.lua")) then
+        families_summary = "family generator failed"
+        -- a raise inside the generator is one more error: the ones collected so far still print
+        local r = try {
+            function ()
+                local families = import("families", {rootdir = families_dir, anonymous = true})
+                local res = families.generate(projectdir, outdir, {no_fixtures = not with_tests})
+                for _, k in ipairs({"blocks", "skipped", "fixtures"}) do res[k] = res[k] or 0 end
+                -- the entries are read again only when nothing was generated, to tell a generator
+                -- that silently made nothing from data without entries (generate reported the
+                -- data's read errors already)
+                res.entries = 0
+                if res.blocks + res.skipped == 0 and families.families then res.entries = #(families.families(outdir)) end
+                return res
+            end,
+            catch {
+                function (e) fail("families: tools/families/families.lua raised: %s", tostring(e)) end
+            }
+        }
+        if r then
+            for _, e in ipairs(r.errors or {}) do fail("%s", e) end
+            -- every pack directory was just rebuilt, which drops the generator's "generated" marker:
+            -- a marked pack here is a stale output directory, and its blocks went unchecked
+            if r.already then fail("families: the packs in %s were marked as generated before this assemble", outdir) end
+            -- a generator that silently makes nothing would ship none of the family blocks
+            local fixture_files = os.files(path.join(families_dir, "fixtures", "**.json"))
+            if not r.already and r.entries > 0 and r.blocks + r.skipped == 0 then
+                fail("families: %d family entries in data/gf/families but no block generated", r.entries)
+            end
+            if not r.already and with_tests and #fixture_files > 0 and r.fixtures == 0 then
+                fail("families: %d fixture file(s) in tools/families/fixtures but no fixture block generated", #fixture_files)
+            end
+            families_summary = string.format("%d family blocks (%d hand-made), %d family fixtures", r.blocks, r.skipped, r.fixtures)
+            -- what the generator added to the shipped packs (behavior: blocks, the sign text entity,
+            -- loot tables; resource: block models, the sign text client entity, its additions to
+            -- blocks.json and terrain_texture.json) and to data/gf (the container declarations F10
+            -- reads, the client's connected texture corners) is checked for dangling references too
+            local seen = {}
+            for _, j in ipairs(alljsons) do seen[norm(j)] = true end
+            local dirs = table.join(shipped_dirs, {path.join(outdir, "data", "gf")})
+            for _, dir in ipairs(dirs) do
+                for _, f in ipairs(os.isdir(dir) and os.files(path.join(dir, "**.json")) or {}) do
+                    if not seen[norm(f)] and path.filename(f) ~= "manifest.json" then
+                        seen[norm(f)] = true
+                        table.insert(alljsons, f)
+                    end
+                end
+            end
+        end
+    end
     local permutations = check_blocks(bpdirs, cfg)
     local owners = load_owners(projectdir, cfg)
     local owned = check_owners(projectdir, cfg, owners)
     local refs = check_dangling(alljsons, known_ids(bpdirs, outdir, owners), cfg, path.join(outdir, "data"))
     local scanned = check_arr(projectdir, cfg)
     report(outdir)
-    return string.format("%d block permutations, %d owned files, %d references, %d files hash-checked", permutations, owned, refs, scanned)
+    return string.format("%d block permutations, %s, %d owned files, %d references, %d files hash-checked",
+        permutations, families_summary, owned, refs, scanned)
 end
 
 function main(target, target_type)
