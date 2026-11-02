@@ -15,10 +15,14 @@ foreach ($line in 'tags: \d+ tag files loaded', 'recipes: \d+ data recipes loade
 }
 # recipes whose neoforge:conditions fail (TF's jeed integration) are skipped without a warning
 if ($log | Select-String -Pattern 'no loader for recipe type jeed:' -Quiet) { throw 'the jeed recipes were parsed although their mod_loaded condition fails' }
+# the prelaunch flag (item.prelaunch.ps1): this run, and only this run, registers the S6 trim probe at load
+if (-not ($log | Select-String -Pattern 'item: S6 trim probe registered at load' -Quiet)) { throw 'the S6 trim probe was not registered at load (prelaunch flag)' }
 
 $r = Invoke-SelfTest 'item.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) item selftest(s) failed: $($r.Failed -join ', ')" }
-if ($r.Pass -lt 38) { throw "expected at least 38 item selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 43) { throw "expected at least 43 item selftests to pass, got $($r.Pass)" }
+# TF's recipes, tags and data maps name only ids the game knows (item.java_ids_registry's counts)
+Get-ServerLog | Select-String -Pattern 'SELFTEST INFO item\.(java_ids_registry|recipes_java_ids)' | ForEach-Object { Write-Step $_.Line }
 
 # the S6 evidence lines (docs/spikes/S6.md quotes them)
 $mark = Get-LogMark

@@ -11,6 +11,8 @@
 #    out/item/{hud-carriers,slot1..9-*,inventory,tooltip-*}.png. A companion (remote-mod) registers
 #    the same fixtures when the host tells it ("item.spike_fixtures"). item.spike_client_clear takes
 #    the effect, the nine items and the registrations back, on the host and on the companion.
+#    Then item.spike_attachables dresses the player in TF's fiery helmet and naga chestplate (the
+#    mod RP's attachables): out/item/attachables-front.png from the front camera.
 # 2. Special crafting through a real crafting table (gf_test:fixture_item: two sticks in a column,
 #    special recipe of item.real_craft_arm, shadowed in the data index by a code-only data recipe
 #    of the same id as TF's special recipes are), checked by item.real_craft_check.
@@ -23,9 +25,11 @@
 $script:IsLocal = $script:Mode -eq 'local'
 if ($script:IsLocal) {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
+    # the prelaunch flag (item.prelaunch.ps1): the local world registers the S6 trim probe at load
+    if (-not (Get-LeviLog | Select-String -Pattern 'item: S6 trim probe registered at load' -Quiet)) { throw 'the S6 trim probe was not registered at load (prelaunch flag)' }
     $r = Invoke-SelfTest 'item.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) item selftest(s) failed in the local world: $($r.Failed -join ', ')" }
-    if ($r.Pass -lt 38) { throw "expected at least 38 item selftests, got $($r.Pass)" }
+    if ($r.Pass -lt 43) { throw "expected at least 43 item selftests, got $($r.Pass)" }
 } else {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
 }
@@ -84,6 +88,19 @@ if ($r.Fail -gt 0) { throw 'item.spike_client_clear failed' }
 if ($script:Mode -eq 'remote-mod') { Wait-LogLine 'S6 fixtures dropped for the host' 30 -Since $mark | Out-Null }
 Start-Sleep -Seconds 2
 Save-Screenshot 'carriers-cleared' | Out-Null
+
+# ---- 1b. S6 attachables: TF's armour on the body (F2's attachables over F1's items, the mod's RP) --
+$mark = Get-LogMark
+$r = Invoke-SelfTest 'item.spike_attachables'
+if ($r.Fail -gt 0) { throw 'item.spike_attachables failed' }
+Wait-LogLine 'S6 attachables worn by' 30 -Since $mark | Out-Null
+Invoke-Chat '/camera @s set minecraft:third_person_front'
+Start-Sleep -Seconds 3
+Save-Screenshot 'attachables-front' | Out-Null
+Invoke-Chat '/camera @s clear'
+Start-Sleep -Seconds 1
+$r = Invoke-SelfTest 'item.spike_attachables_clear'
+if ($r.Fail -gt 0) { throw 'item.spike_attachables_clear failed' }
 
 # ---- 2. special crafting through a crafting table ------------------------------------------------------
 $mark = Get-LogMark

@@ -5,11 +5,12 @@
 // and a tooltip (lore + glint marker) and two fixture items whose bars come from their item data
 // (one and three of four doses), an iron sword with only a custom enchantment, a banner with a
 // pattern id vanilla clients do not know, armour trimmed with a material registered at load
-// (ext::addTrimMaterial, in the level's registry before anyone joined), a vanilla-trimmed one, and
-// one trimmed with a material appended while the player is in the world; and puts the fixture
-// carrier effect (hidden
-// Slowness II for frosted) on them. `item.spike_client_clear` takes all of it back (the 'full' run
-// runs the two in a row). On a server without real players there is nothing to give.
+// (ext::addTrimMaterial, in the level's registry before anyone joined: only in the spike's runs,
+// whose prelaunch step leaves <mod>/s6-trim-probe.flag; otherwise it is appended with the late
+// ones), a vanilla-trimmed one, and ones trimmed with materials appended while the player is in the
+// world; and puts the fixture carrier effect (hidden Slowness II for frosted) on them.
+// `item.spike_client_clear` takes all of it back (the 'full' run runs the two in a row). On a server
+// without real players there is nothing to give.
 //
 // A companion client (remote-mod) runs no selftests: the host sends it "item.spike_fixtures"
 // {"on": true} with the carriers and {"on": false} when it takes them back, and the client mod
@@ -17,6 +18,9 @@
 // registered at mod load, so no fixture reaches a world that did not run item.spike_client.
 
 #include <algorithm>
+#include <bitset>
+#include <cmath>
+#include <cstdlib>
 #include <filesystem>
 #include <map>
 #include <set>
@@ -44,8 +48,15 @@
 #include "mc/world/item/registry/TrimMaterialRegistryHardCodedInit.h"
 #include "mc/world/item/registry/TrimPattern.h"
 #include "mc/world/item/registry/TrimPatternRegistry.h"
+#include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
+#include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/actor/BannerPattern.h"
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/BlockActorType.h"
+#include "mc/world/level/block/actor/JukeboxBlockActor.h"
+#include "mc/world/level/ServerSoundInstance.h"
 
 #include "feature/catalog/CatalogInternal.h"
 #include "feature/effects/Effects.h"
@@ -59,8 +70,10 @@
 #include "feature/item/Item.h"
 #include "feature/item/ItemInternal.h"
 #include "feature/net/Net.h"
+#include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Log.h"
+#include "mod/Main.h"
 #include "mod/Module.h"
 #include "selftest/SelfTest.h"
 
@@ -75,9 +88,12 @@ constexpr char kUnknownPattern[] = "gf_test_pattern";
 // (textures/trims/color_palettes/<material>.png of the resource packs): the vanilla pack has palettes
 // no vanilla material uses (the *_darker ones of armour made of the material itself), so materials
 // of those ids separate the registration's timing from the texture.
-constexpr char kTrimMaterial[] = "iron_darker";  ///< registered at load (ext::addTrimMaterial), development builds
+constexpr char kTrimMaterial[] = "iron_darker";  ///< registered at load (ext::addTrimMaterial) in the spike's runs
 constexpr char kLateTrim[]     = "gold_darker";  ///< appended while players are in the world
 constexpr char kNoPalette[]    = "gf_test_trim"; ///< appended while players are in the world, no palette texture
+// The probe BP of the spike's runs (tools/e2e/server/scenarios/item.s6probe.ps1): a data-driven disc.
+constexpr char kProbeDisc[]  = "gf_s6:disc";
+constexpr char kProbeSound[] = "gf_s6.disc";
 
 /// A banner whose second pattern is `pattern` (an id no Bedrock client knows: TF's would be such ids).
 std::optional<ItemStack> bannerWith(std::string const& pattern) {
@@ -150,9 +166,35 @@ std::map<std::int64_t, std::vector<std::pair<int, std::string>>>& givenSlots() {
     return m;
 }
 
+/// The spike run's flag for the trim material registered at load: a development build (the gf_test
+/// data is installed) with <mod>/s6-trim-probe.flag (the e2e prelaunch step) or GF_S6_TRIM_PROBE.
+bool trimProbeFlagged() {
+    std::error_code ec;
+    if (!std::filesystem::is_directory(gf::feature::item::data::root() / "gf_test", ec)) return false;
+    char*       value = nullptr;
+    std::size_t size  = 0;
+    if (_dupenv_s(&value, &size, "GF_S6_TRIM_PROBE") == 0 && value) {
+        std::free(value);
+        return true;
+    }
+    try {
+        return std::filesystem::exists(gf::Mod::getInstance().getSelf().getModDir() / "s6-trim-probe.flag", ec);
+    } catch (...) {
+        return false;
+    }
+}
+
+/// The materials setTrimProbe appended (and takes out again).
+std::set<std::string>& appendedProbes() {
+    static std::set<std::string> s;
+    return s;
+}
+
 /// The level's trim registries with `kLateTrim` and `kNoPalette` appended (copies of the first
-/// material: §2, the fixture item as their item) or removed while players are in the world; every
-/// real player gets the new TrimDataPacket.
+/// material: §2, the fixture item as their item) while players are in the world, and `kTrimMaterial`
+/// too when the run did not register it at load (no prelaunch flag: the BDS host of the client's
+/// remote modes); `add` false takes out what it appended. Every real player gets the new
+/// TrimDataPacket.
 bool setTrimProbe(bool add) {
     auto level = ll::service::getLevel();
     if (!level) return false;
@@ -160,19 +202,30 @@ bool setTrimProbe(bool add) {
     auto patterns  = level->getTrimPatternRegistry().lock();
     if (!materials || !patterns) return false;
     // TrimMaterial has no exported assignment: the list is rebuilt by copy construction and swapped
-    auto&                     list = materials->mTrimMaterials.get();
+    auto& list = materials->mTrimMaterials.get();
+    auto& mine = appendedProbes();
+    // what was appended belongs to the registry it went into (the client loads many worlds)
+    static void const* appendedTo = nullptr;
+    if (appendedTo != materials.get()) mine.clear();
+    appendedTo  = materials.get();
+    bool atLoad = std::any_of(list.begin(), list.end(), [](TrimMaterial const& m) { return m.mMaterialId->getString() == kTrimMaterial; })
+               && !mine.contains(kTrimMaterial);
     std::vector<TrimMaterial> kept;
-    kept.reserve(list.size() + 2);
+    kept.reserve(list.size() + 3);
     for (auto const& m : list)
-        if (m.mMaterialId->getString() != kLateTrim && m.mMaterialId->getString() != kNoPalette) kept.push_back(m);
+        if (!mine.contains(m.mMaterialId->getString()) && m.mMaterialId->getString() != kLateTrim && m.mMaterialId->getString() != kNoPalette) kept.push_back(m);
+    mine.clear();
     if (add) {
         if (kept.empty()) return false;
-        for (auto const* id : {kLateTrim, kNoPalette}) {
+        std::vector<char const*> ids{kLateTrim, kNoPalette};
+        if (!atLoad) ids.push_back(kTrimMaterial);
+        for (auto const* id : ids) {
             TrimMaterial m(kept.front());
             m.mMaterialId = HashedString(id);
             m.mColor      = std::string("\xC2\xA7" "2");
             m.mItemName   = HashedString(kFixture);
             kept.push_back(m);
+            mine.insert(id);
         }
     }
     list.swap(kept);
@@ -241,24 +294,33 @@ GF_REGISTER_SELFTEST("item.spike_trim_materials", [](Context& ctx) {
     ctx.check(materials.size() >= 10, "trim materials are a hard-coded list (got " + std::to_string(materials.size()) + ")");
     ctx.info("trim materials: " + list);
     // ext::addTrimMaterial: a material registered at load is in the level's registry from its start
-    // (development builds register the fixture material gf_test_trim)
-    ctx.check(gf::item::ext::hasTrimMaterial(kTrimMaterial), "the material registered at load is in the level's registry (appended before any player joined)");
+    // (the spike's runs register the fixture material iron_darker: the prelaunch flag)
+    bool flagged = trimProbeFlagged();
+    if (flagged) ctx.check(gf::item::ext::hasTrimMaterial(kTrimMaterial), "the material registered at load is in the level's registry (appended before any player joined)");
+    else {
+        ctx.check(!gf::item::ext::hasTrimMaterial(kTrimMaterial), "without the spike's flag no fixture material is registered at load");
+        ctx.info("no s6-trim-probe.flag in this run: the material registered at load is not probed");
+    }
     // the level's registry is a vector the server sends in TrimDataPacket: a material can also be
-    // appended later (clients that joined before do not take it: item.spike_client's hotbar 8)
+    // appended later (clients that joined before take it from the re-sent packet: item.spike_client's hotbar 8)
     ctx.require(setTrimProbe(true), "a material appended to the level's trim registry");
     ctx.check(gf::item::ext::hasTrimMaterial(kLateTrim), "the level's trim registry holds it");
     ctx.check(setTrimProbe(false) && !gf::item::ext::hasTrimMaterial(kLateTrim), "and takes it back");
+    ctx.check(gf::item::ext::hasTrimMaterial(kTrimMaterial) == flagged, "the material registered at load stays (only in the spike's run)");
 });
 
 namespace {
-// Development builds (the gf_test data is installed) register the fixture trim material at load, as
-// U7 registers TF's: it is in every world's registry before players join.
+// The spike's runs (and only they) register the fixture trim material at load, as U7 registers TF's,
+// so it is in the world's registry before players join: the e2e scenario's prelaunch step
+// (tools/e2e/{server,client}/scenarios/item.prelaunch.ps1) leaves <mod>/s6-trim-probe.flag next to
+// a development build (or GF_S6_TRIM_PROBE is set). item.spike_client_clear takes it back out of
+// the registry. Every other world, the 'full' run included, never has it.
 class SpikeTrimFixtureModule {
 public:
     void install() {
-        std::error_code ec;
-        if (!std::filesystem::is_directory(gf::feature::item::data::root() / "gf_test", ec)) return;
+        if (!trimProbeFlagged()) return;
         gf::item::ext::addTrimMaterial({.id = kTrimMaterial, .color = "\xC2\xA7" "2", .itemId = kFixture});
+        gf::log().info("item: S6 trim probe registered at load ({})", kTrimMaterial);
     }
     void uninstall() {}
 };
@@ -267,7 +329,44 @@ GF_REGISTER_MODULE(SpikeTrimFixtureModule);
 
 // How the game's own discs name their sound: the record component's SoundEventIdentifier is a
 // variant of (none, LevelSoundEvent, sound event name); a name is what a TF disc's BP item gives.
-GF_REGISTER_SELFTEST("item.spike_record_sounds", [](Context& ctx) {
+// The spike's runs add a probe BP disc (gf_s6:disc, "sound_event": "gf_s6.disc", prelaunch step):
+// the BP parser keeps the custom name, and a jukebox plays it.
+GF_REGISTER_SELFTEST("item.spike_record_sounds", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (auto disc = items::make(kProbeDisc)) {
+        auto const* component = disc->mItem ? disc->mItem->getComponent(RecordItemComponent::getIdentifier()) : nullptr;
+        ctx.require(component != nullptr, std::string(kProbeDisc) + " (probe BP item) has its record component");
+        auto const* record = static_cast<RecordItemComponent const*>(component);
+        auto const& sound  = record->mSoundEvent->mSound.get();
+        auto const* name   = std::get_if<std::string>(&sound);
+        ctx.check(name && *name == kProbeSound, std::string("the BP disc's sound_event is kept as the name ") + kProbeSound + " (got " + (name ? *name : std::string("no name")) + ")");
+        ctx.check(record->mComparatorSignal == 7 && std::abs(record->mDuration - 5.f) < 0.01f, "with its comparator signal (7) and duration (5 s)");
+        // a jukebox plays it (JukeboxBlockActor::_startRecordSound with the named sound)
+        auto pos = ctx.testPos(5950);
+        ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+        ctx.require(ctx.setBlock(pos, "minecraft:jukebox"), "a jukebox");
+        auto  bp     = gf::game::blockPos(pos);
+        auto* region = ctx.region();
+        auto* actor  = region ? region->getBlockEntity(bp) : nullptr;
+        ctx.require(actor && actor->getType() == BlockActorType::Jukebox, "the jukebox's block actor");
+        auto& jukebox = static_cast<JukeboxBlockActor&>(*actor);
+        jukebox.setRecord(*disc, true);
+        bool started = jukebox.mServerSoundInstance->has_value();
+        if (!started) jukebox.startPlayingRecord(*region);
+        ctx.info(std::string("setRecord(disc, true) ") + (started ? "started the record itself" : "left the start to startPlayingRecord"));
+        co_await ctx.ticks(2);
+        region = ctx.region();
+        actor  = region ? region->getBlockEntity(bp) : nullptr;
+        ctx.require(actor && actor->getType() == BlockActorType::Jukebox, "the jukebox is still there");
+        auto& playing = static_cast<JukeboxBlockActor&>(*actor);
+        ctx.check(items::idOf(*playing.mRecord) == kProbeDisc, "the jukebox holds the BP disc");
+        ctx.info(std::string("the jukebox ") + (playing.mServerSoundInstance->has_value() ? "runs a server sound instance for " : "runs no server sound instance for ") + kProbeSound
+                 + ", ticks playing " + std::to_string(playing.mTicksPlaying));
+        ctx.check(playing.mServerSoundInstance->has_value() || playing.mTicksPlaying > 0, "the jukebox plays the named record");
+        playing.stopPlayingRecord(*region);
+        playing.setRecord(ItemStack::EMPTY_ITEM(), false);
+    } else {
+        ctx.info(std::string("no ") + kProbeDisc + " (the probe BP of the spike's prelaunch step): the BP disc is not probed");
+    }
     int components = 0, named = 0, enums = 0;
     std::string sample;
     for (char const* id : {"minecraft:music_disc_13", "minecraft:music_disc_cat", "minecraft:music_disc_pigstep", "minecraft:music_disc_otherside",
@@ -289,6 +388,63 @@ GF_REGISTER_SELFTEST("item.spike_record_sounds", [](Context& ctx) {
     ctx.info("vanilla discs with a record component: " + std::to_string(components) + " (sound by name " + std::to_string(named) + ", by LevelSoundEvent "
              + std::to_string(enums) + "): " + sample);
     ctx.check(components > 0, "the game's discs are component items with a record component");
+});
+
+// Attachables: TF's armour on the body is resource pack attachables (F2's tools/models/attachable.ps1
+// over F1's BP items, in the mod's RP that BDS also sends vanilla clients). item.spike_attachables
+// puts TF's fiery helmet (F2's own geometry, geometry.twilightforest.fiery_armor.helmet) and naga
+// chestplate (the humanoid armour geometry with TF's naga scale texture) into every real player's
+// armour slots; the client e2e photographs the player from the front. item.spike_attachables_clear
+// puts back what was there. On a server without real players there is nothing to dress.
+namespace {
+using ArmorSlot = SharedTypes::Legacy::ArmorSlot;
+std::map<std::int64_t, std::pair<ItemStack, ItemStack>>& wornBefore() {
+    static std::map<std::int64_t, std::pair<ItemStack, ItemStack>> m;
+    return m;
+}
+} // namespace
+
+GF_REGISTER_SELFTEST("item.spike_attachables", [](Context& ctx) {
+    auto helmet = items::make("twilightforest:fiery_helmet");
+    auto chest  = items::make("twilightforest:naga_chestplate");
+    if (!helmet || !chest) {
+        ctx.info("TF's armour items are not in this build (F1's import): no attachable to show");
+        return;
+    }
+    auto level = ll::service::getLevel();
+    ctx.require(level.has_value(), "a level");
+    int dressed = 0;
+    level->forEachPlayer([&](Player& p) {
+        if (p.isSimulatedPlayer()) return true;
+        auto uid = p.getOrCreateUniqueID().rawID;
+        if (!wornBefore().contains(uid)) wornBefore()[uid] = {p.getArmor(ArmorSlot::Head), p.getArmor(ArmorSlot::Torso)};
+        p.setArmor(ArmorSlot::Head, *helmet);
+        p.setArmor(ArmorSlot::Torso, *chest);
+        p.sendArmor(std::bitset<5>().set());
+        p.sendInventory(false);
+        ++dressed;
+        gf::log().info("item: S6 attachables worn by {}", p.getRealName());
+        return true;
+    });
+    ctx.info("real players wearing TF's fiery helmet and naga chestplate: " + std::to_string(dressed));
+});
+
+GF_REGISTER_SELFTEST("item.spike_attachables_clear", [](Context& ctx) {
+    auto level = ll::service::getLevel();
+    ctx.require(level.has_value(), "a level");
+    int undressed = 0;
+    level->forEachPlayer([&](Player& p) {
+        auto it = wornBefore().find(p.getOrCreateUniqueID().rawID);
+        if (it == wornBefore().end()) return true;
+        p.setArmor(ArmorSlot::Head, it->second.first);
+        p.setArmor(ArmorSlot::Torso, it->second.second);
+        p.sendArmor(std::bitset<5>().set());
+        p.sendInventory(false);
+        wornBefore().erase(it);
+        ++undressed;
+        return true;
+    });
+    ctx.info("players given back their armour: " + std::to_string(undressed));
 });
 
 GF_REGISTER_SELFTEST("item.spike_catalog_groups", [](Context& ctx) {
@@ -324,7 +480,9 @@ GF_REGISTER_SELFTEST("item.spike_client", [](Context& ctx) {
     registerFixtures(true);
     auto level = ll::service::getLevel();
     ctx.require(level.has_value(), "a level");
+    bool atLoad = gf::item::ext::hasTrimMaterial(kTrimMaterial);
     setTrimProbe(true);
+    ctx.info(std::string("hotbar 6's material ") + kTrimMaterial + (atLoad ? ": registered at load (before the join)" : ": not flagged at load, appended with the late ones"));
     int given = 0;
     level->forEachPlayer([&](Player& p) {
         if (p.isSimulatedPlayer()) return true;
