@@ -52,6 +52,7 @@
 
 #include "feature/combat/Combat.h"
 #include "feature/combat/CombatInternal.h"
+#include "feature/common/Redstone.h"
 #include "feature/death/Death.h"
 #include "feature/death/DeathInternal.h"
 #include "feature/ext/combat/InventoryViewers.h"
@@ -543,9 +544,18 @@ namespace {
 constexpr char kContainerBlock[] = "gf_test:fixture_block";
 constexpr char kPersistKey[]     = "gf:combat:container_probe";
 
-void declareFixture() {
-    gf::inventory::declare({.block = kContainerBlock, .rows = 3, .slots = 27, .title = "container.chest", .skin = ""});
-}
+gf::inventory::Declared fixtureDeclaration() { return {.block = kContainerBlock, .rows = 3, .slots = 27, .title = "container.chest", .skin = ""}; }
+
+/// A container declaration for one test: it goes when the test ends, also when a `require` aborts
+/// it midway (other units' tests of the fixture block in the same run must not have their use-on
+/// open a screen or their breaks drop block data contents).
+struct DeclaredScope {
+    explicit DeclaredScope(gf::inventory::Declared const& d) : block(d.block) { gf::inventory::declare(d); }
+    ~DeclaredScope() { gf::inventory::unregisterBlock(block); }
+    DeclaredScope(DeclaredScope const&)            = delete;
+    DeclaredScope& operator=(DeclaredScope const&) = delete;
+    std::string block;
+};
 
 GlobalPos persistPos(Context& ctx, BlockSource const& region) {
     auto pos = ctx.testPos(6010);
@@ -556,7 +566,7 @@ GlobalPos persistPos(Context& ctx, BlockSource const& region) {
 
 GF_REGISTER_SELFTEST("combat.inventory_handler", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace inv = gf::inventory;
-    declareFixture();
+    DeclaredScope fixture(fixtureDeclaration());
     auto pos = ctx.testPos(6006);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     ctx.require(ctx.setBlock(pos, kContainerBlock), "fixture block placed");
@@ -585,11 +595,10 @@ GF_REGISTER_SELFTEST("combat.inventory_handler", [](Context& ctx) -> ll::coro::C
     ctx.check(emeralds == 3 && !inv::pendingLoot(pos), "the table rolled into the container on access");
     gf::loot::registerTable("gf_test:combat/box", nullptr);
     for (int i = 0; i < h->slots; ++i) h->set(pos, i, ItemStack{});
-    inv::unregisterBlock(kContainerBlock);
 });
 
 GF_REGISTER_SELFTEST("combat.container_persist_write", [](Context& ctx) -> ll::coro::CoroTask<> {
-    declareFixture();
+    DeclaredScope fixture(fixtureDeclaration());
     auto* region = ctx.region();
     ctx.require(region != nullptr, "the overworld is available");
     auto pos = persistPos(ctx, *region);
@@ -608,7 +617,6 @@ GF_REGISTER_SELFTEST("combat.container_persist_write", [](Context& ctx) -> ll::c
     h->set(pos, 13, *items::make("minecraft:gold_ingot", n));
     db::put(kPersistKey, {{"pos", {pos.dim, pos.x, pos.y, pos.z}}, {"count", n}, {"was", was}});
     ctx.info("container marker written count=" + std::to_string(n));
-    gf::inventory::unregisterBlock(kContainerBlock);
 });
 
 GF_REGISTER_SELFTEST("combat.container_persist_read", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -618,7 +626,7 @@ GF_REGISTER_SELFTEST("combat.container_persist_read", [](Context& ctx) -> ll::co
         co_return;
     }
     db::erase(kPersistKey);
-    declareFixture();
+    DeclaredScope fixture(fixtureDeclaration());
     auto      at = (*marker)["pos"];
     GlobalPos pos{at[0].get<int>(), at[1].get<int>(), at[2].get<int>(), at[3].get<int>()};
     int       n  = marker->value("count", -1);
@@ -636,7 +644,6 @@ GF_REGISTER_SELFTEST("combat.container_persist_read", [](Context& ctx) -> ll::co
     auto was = marker->value("was", std::string{});
     if (auto const* original = was.empty() ? nullptr : gf::game::blockWith(was)) gf::game::setBlock(*region, bp, *original);
     else gf::game::clearBlock(*region, bp);
-    gf::inventory::unregisterBlock(kContainerBlock);
 });
 
 // ---- progression ---------------------------------------------------------------------------------
@@ -856,7 +863,7 @@ GF_REGISTER_SELFTEST("combat.loot_set_contents", [](Context& ctx) {
 
 GF_REGISTER_SELFTEST("combat.inventory_screen_auth", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace inv = gf::inventory;
-    declareFixture();
+    DeclaredScope fixture(fixtureDeclaration());
     auto a = ctx.testPos(6011);
     auto b = ctx.testPos(6012);
     ctx.require(co_await ctx.ensureLoaded(a), "test area loaded");
@@ -894,7 +901,6 @@ GF_REGISTER_SELFTEST("combat.inventory_screen_auth", [](Context& ctx) -> ll::cor
               "rows and title come from the server's record (" + (updateData.is_object() ? updateData.dump() : std::string("no update")) + ")");
     gf::net::setTestCompanion(p, false);
     hb->set(b, 0, ItemStack{});
-    inv::unregisterBlock(kContainerBlock);
 });
 
 
@@ -929,7 +935,7 @@ int countAt(std::optional<gf::inventory::Handler> const& h, GlobalPos const& pos
 // tick of a take drops only what the storage still holds.
 GF_REGISTER_SELFTEST("combat.inventory_vanilla_proxy", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace inv = gf::inventory;
-    declareFixture();
+    DeclaredScope fixture(fixtureDeclaration());
     auto pos = ctx.testPos(6014);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     ctx.require(ctx.setBlock(pos, kContainerBlock), "a 27-slot container placed");
@@ -994,7 +1000,6 @@ GF_REGISTER_SELFTEST("combat.inventory_vanilla_proxy", [](Context& ctx) -> ll::c
     auto* again = ll::service::getLevel()->getPlayer(id);
     if (again) static_cast<ServerPlayer&>(*again).doDeleteContainerManager(false);
     (void)takeItemEntitiesNear(pos, 4);
-    inv::unregisterBlock(kContainerBlock);
 });
 
 // ---- inventory: Java's ChestMenu clicks on the client mod's screen -----------------------------------
@@ -1017,7 +1022,7 @@ void clearInventory(Player& p) {
 
 GF_REGISTER_SELFTEST("combat.inventory_clicks", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace inv = gf::inventory;
-    declareFixture();
+    DeclaredScope fixture(fixtureDeclaration());
     auto pos = ctx.testPos(6015);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     ctx.require(ctx.setBlock(pos, kContainerBlock), "a 27-slot container placed");
@@ -1083,7 +1088,6 @@ GF_REGISTER_SELFTEST("combat.inventory_clicks", [](Context& ctx) -> ll::coro::Co
         gf::net::setTestCompanion(*again, false);
     }
     for (int i = 0; i < h->slots; ++i) h->set(pos, i, ItemStack{});
-    inv::unregisterBlock(kContainerBlock);
 });
 
 // ---- inventory: ChestBlock's rules for declared chests ----------------------------------------------
@@ -1100,7 +1104,7 @@ GF_REGISTER_SELFTEST("combat.inventory_chest_rules", [](Context& ctx) -> ll::cor
             sLastCount = n;
         });
     }
-    declareFixture();
+    DeclaredScope fixture(fixtureDeclaration());
     auto pos = ctx.testPos(6016);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     ctx.require(ctx.setBlock(pos, kContainerBlock), "a chest placed");
@@ -1137,7 +1141,7 @@ GF_REGISTER_SELFTEST("combat.inventory_chest_rules", [](Context& ctx) -> ll::cor
     ctx.check(sLastCount == 0, "the viewers listener heard the last opener leave");
     // double chests (the probe chest of the combat scenario: gf_combat:chest with type / facing)
     if (gf::game::blockWithStates("gf_combat:chest", {{"gf_combat:type", "right"}, {"gf_combat:facing", "north"}})) {
-        inv::declare({.block = "gf_combat:chest", .rows = 3, .slots = 27, .title = "container.chest", .skin = "", .pairs = true});
+        DeclaredScope chest({.block = "gf_combat:chest", .rows = 3, .slots = 27, .title = "container.chest", .skin = "", .pairs = true});
         auto right = ctx.testPos(6018);
         auto left  = ctx.testPos(6017);
         ctx.require(ctx.setBlock(right, "gf_combat:chest", {{"gf_combat:type", "right"}, {"gf_combat:facing", "north"}}), "the right half");
@@ -1167,13 +1171,11 @@ GF_REGISTER_SELFTEST("combat.inventory_chest_rules", [](Context& ctx) -> ll::cor
         ctx.check(items::isEmpty(hl->get(left, 0)) && countInInventory(p, "minecraft:lapis_lazuli") == 3, "slot 27 is the left half's first slot");
         gf::net::injectFromClient(p, "screen.closed", {{"type", "inventory.chest"}});
         hr->set(right, 0, ItemStack{});
-        inv::unregisterBlock("gf_combat:chest");
     } else {
         ctx.info("no gf_combat:chest probe block in this run (the combat scenario adds it): pairing is not checked");
     }
     clearInventory(p);
     gf::net::setTestCompanion(p, false);
-    inv::unregisterBlock(kContainerBlock);
 });
 
 // ---- death: the kept_on_death tag keeper, stale kept records -------------------------------------------
@@ -1426,4 +1428,142 @@ GF_REGISTER_SELFTEST("combat.hurt_sound", [](Context& ctx) -> ll::coro::CoroTask
     ctx.require(again != nullptr, "the player is still there");
     gf::combat::hurt(*again, 1.f, "twilightforest:hydra_bite"); // "hurt": the game's own sound
     ctx.check(gf::combat::hurtSoundsReplaced() == before + 1, "plain damage keeps the game's hurt sound");
+});
+
+// ---- inventory: the vanilla screen proxy against writes behind the handler, a screen opened again -----
+
+// A unit with its own storage changes a slot behind its handler while a vanilla player looks at the
+// proxy: the player's next item request first takes in the storage's slots; a take of the stale stack
+// in the same tick keeps the storage's stack (nothing exists twice); a player who closed the screen
+// and uses the block again in the same tick gets the screen again.
+GF_REGISTER_SELFTEST("combat.inventory_vanilla_conflict", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace inv = gf::inventory;
+    DeclaredScope fixture(fixtureDeclaration());
+    auto          pos = ctx.testPos(6024);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    ctx.require(ctx.setBlock(pos, kContainerBlock), "a 27-slot container placed");
+    auto* region = ctx.region();
+    auto  h      = inv::find(*region, gf::game::blockPos(pos));
+    auto  raw    = inv::rawHandlerFor(kContainerBlock);
+    ctx.require(h.has_value() && raw.has_value(), "the container handlers");
+    auto& p      = ctx.player();
+    auto  id     = p.getOrCreateUniqueID();
+    int   before = inv::vanillaProxyCount();
+    ctx.require(inv::openChestLike(p, pos, 3, "container.chest"), "a vanilla player opened it");
+    co_await ctx.ticks(6); // the screen opens after the proxy reached the client
+    auto* proxy = inv::vanillaProxyContainer(pos);
+    ctx.require(proxy != nullptr, "the proxy is open");
+    // the storage changes behind the handler and the screen takes the stale stack in the same tick
+    h->set(pos, 0, *items::make("minecraft:diamond", 64));
+    raw->set(pos, 0, *items::make("minecraft:emerald", 10)); // the unit's own storage (the diamonds handed out)
+    proxy->setItem(0, ItemStack{});                          // the vanilla player takes the stale diamonds
+    auto stored = h->get(pos, 0);
+    ctx.check(items::idOf(stored) == "minecraft:emerald" && items::countOf(stored) == 10,
+              "the storage's stack stays (" + items::idOf(stored) + " x" + std::to_string(items::countOf(stored)) + ")");
+    ctx.check(items::idOf(proxy->getItem(0)) == "minecraft:emerald" && items::countOf(proxy->getItem(0)) == 10, "the proxy slot is reset to the storage's stack");
+    // a change behind the handler reaches the proxy before the viewer's next item request
+    raw->set(pos, 1, *items::make("minecraft:stick", 5));
+    ctx.check(items::isEmpty(proxy->getItem(1)), "a write behind the handler is not mirrored by itself");
+    inv::proxyBeforeScreenRequest(p);
+    ctx.check(items::countOf(proxy->getItem(1)) == 5, "the item request hook pulls the storage in first, in the same tick");
+    proxy->setItem(1, *items::make("minecraft:stick", 2));
+    ctx.check(countAt(h, pos, 1) == 2, "a screen change after the pull reaches the storage");
+    // the player closes the screen and uses the block again before the next tick
+    static_cast<ServerPlayer&>(p).doDeleteContainerManager(false);
+    ctx.require(inv::openChestLike(p, pos, 3, "container.chest"), "used again in the tick it closed");
+    co_await ctx.ticks(4);
+    auto* again = ll::service::getLevel()->getPlayer(id);
+    ctx.require(again != nullptr, "the player is still there");
+    ctx.check(inv::vanillaProxyCount() == before + 1 && inv::proxyViewers(pos).contains(id.rawID), "the session goes on with the player in it");
+    ctx.check(again->mContainerManager.get() != nullptr, "the chest screen opened again");
+    for (int i = 0; i < h->slots; ++i) h->set(pos, i, ItemStack{});
+    static_cast<ServerPlayer&>(*again).doDeleteContainerManager(false);
+    co_await ctx.ticks(2);
+    ctx.check(inv::vanillaProxyCount() == before, "the proxy goes when the screen closes");
+});
+
+// ---- inventory: comparator output of declared containers ---------------------------------------------
+
+// ChestBlock#getAnalogOutputSignal: AbstractContainerMenu#getRedstoneSignalFromContainer, read by a
+// vanilla comparator through the redstone contract.
+GF_REGISTER_SELFTEST("combat.inventory_comparator", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace inv = gf::inventory;
+    namespace rs  = gf::redstone;
+    DeclaredScope fixture(fixtureDeclaration());
+    auto          pos  = ctx.testPos(6025);
+    auto          comp = ctx.testPos(6026);
+    auto          out  = ctx.testPos(6027);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    ctx.require(ctx.setBlock(pos, kContainerBlock), "a 27-slot container placed");
+    // a vanilla comparator east of it (its rear faces west, towards the container), stone in front
+    bool placed = ctx.setBlock(comp, "minecraft:unpowered_comparator", {{"minecraft:cardinal_direction", "west"}})
+               || ctx.setBlock(comp, "minecraft:unpowered_comparator", {{"direction", 1}});
+    ctx.require(placed, "a comparator behind the container");
+    ctx.require(ctx.setBlock(out, "minecraft:stone"), "a block in front of the comparator");
+    auto h = inv::find(*ctx.region(), gf::game::blockPos(pos));
+    ctx.require(h.has_value(), "the container handler");
+    auto signal = [&] { return rs::analogOutput(*ctx.region(), gf::game::blockPos(pos)).value_or(-1); };
+    ctx.check(signal() == 0, "an empty container gives 0 (" + std::to_string(signal()) + ")");
+    // Mth.lerpDiscrete(sum(count / max stack) / slots, 0, 15); one reading per position and tick
+    h->set(pos, 0, *items::make("minecraft:cobblestone", 64));
+    co_await ctx.ticks(1);
+    ctx.check(signal() == 1, "one full stack in 27 slots gives 1 (" + std::to_string(signal()) + ")");
+    for (int i = 0; i < 14; ++i) h->set(pos, i, *items::make("minecraft:cobblestone", 64));
+    co_await ctx.ticks(1);
+    ctx.check(signal() == 8, "14 full stacks give 8 (" + std::to_string(signal()) + ")");
+    for (int i = 0; i < 27; ++i) h->set(pos, i, *items::make("minecraft:ender_pearl", 16));
+    co_await ctx.ticks(1);
+    ctx.check(signal() == 15, "27 stacks of 16 pearls (their own limit) give 15 (" + std::to_string(signal()) + ")");
+    ctx.check(rs::comparatorInput(*ctx.region(), gf::game::blockPos(comp)).value_or(-1) == 15, "the comparator behind it reads 15");
+    co_await ctx.ticks(10);
+    ctx.info("the comparator's own output into the block in front: " + std::to_string(rs::signalFrom(*ctx.region(), gf::game::blockPos(comp), gf::game::blockPos(out))));
+    // ChestBlock#getContainer finds none while the chest is blocked: 0
+    auto above = pos;
+    above.y += 1;
+    ctx.require(ctx.setBlock(above, "minecraft:stone"), "stone above the chest");
+    co_await ctx.ticks(1);
+    ctx.check(signal() == 0, "a blocked chest gives 0 (" + std::to_string(signal()) + ")");
+    ctx.require(ctx.setBlock(above, "minecraft:air"), "nothing above the chest");
+    // RandomizableContainer#getItem: reading the slots rolls a pending table first
+    for (int i = 0; i < 27; ++i) h->set(pos, i, ItemStack{});
+    gf::loot::registerTable("gf_test:combat/comparator", JsonT::parse(R"({"pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:emerald","functions":[{"function":"minecraft:set_count","count":3}]}]}]})"));
+    h->setLootTable(pos, "gf_test:combat/comparator", 9);
+    co_await ctx.ticks(1);
+    ctx.check(signal() == 1 && !inv::pendingLoot(pos), "reading the signal unpacked the table (" + std::to_string(signal()) + ")");
+    gf::loot::registerTable("gf_test:combat/comparator", nullptr);
+    for (int i = 0; i < 27; ++i) h->set(pos, i, ItemStack{});
+    // a double chest: both halves read the 54 slots together
+    if (gf::game::blockWithStates("gf_combat:chest", {{"gf_combat:type", "right"}, {"gf_combat:facing", "north"}})) {
+        DeclaredScope chest({.block = "gf_combat:chest", .rows = 3, .slots = 27, .title = "container.chest", .skin = "", .pairs = true});
+        auto          left  = ctx.testPos(6028);
+        auto          right = ctx.testPos(6029);
+        ctx.require(ctx.setBlock(right, "gf_combat:chest", {{"gf_combat:type", "right"}, {"gf_combat:facing", "north"}}), "the right half");
+        ctx.require(ctx.setBlock(left, "gf_combat:chest", {{"gf_combat:type", "left"}, {"gf_combat:facing", "north"}}), "the left half");
+        auto hr = inv::find(*ctx.region(), gf::game::blockPos(right));
+        ctx.require(hr.has_value(), "the right half is a container");
+        for (int i = 0; i < 27; ++i) hr->set(right, i, *items::make("minecraft:cobblestone", 64));
+        co_await ctx.ticks(1);
+        auto l = inv::comparatorSignal(left).value_or(-1), r = inv::comparatorSignal(right).value_or(-1);
+        ctx.check(l == 8 && r == 8, "27 full stacks in a double chest give 8 at both halves (" + std::to_string(l) + ", " + std::to_string(r) + ")");
+        for (int i = 0; i < 27; ++i) hr->set(right, i, ItemStack{});
+    } else {
+        ctx.info("no gf_combat:chest probe block in this run (the combat scenario adds it): the double chest is not checked");
+    }
+});
+
+// ---- death: a mob's handled death is forgotten once it is gone -----------------------------------------
+
+GF_REGISTER_SELFTEST("combat.death_entries", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto pos = ctx.testPos(6030);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    auto* region = ctx.region();
+    Vec3  at{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + .5f};
+    auto* mob = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:silverfish"), nullptr, at, false, false, false);
+    ctx.require(mob != nullptr, "a silverfish spawned");
+    auto id = mob->getOrCreateUniqueID().rawID;
+    gf::combat::hurt(*mob, 1000.f, "twilightforest:thrown_axe");
+    ctx.check(gf::death::deathHandled(id), "the death is kept while the dead mob is in the level");
+    co_await ctx.ticks(70); // the death animation (20 ticks), then the sweep (every 20 ticks)
+    ctx.check(!gf::death::deathHandled(id), "the entry went with the mob (" + std::to_string(gf::death::handledDeathCount()) + " kept)");
+    (void)takeItemEntitiesNear(pos, 4);
 });
