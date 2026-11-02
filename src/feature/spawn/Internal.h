@@ -9,9 +9,9 @@
 #include <vector>
 
 #include "feature/ext/worldgen/Spawning.h"
-#include "feature/landmark/Landmark.h"
 #include "feature/spawn/Spawn.h"
 
+class BlockPos;
 class BlockSource;
 
 namespace gf::spawn::detail {
@@ -35,27 +35,18 @@ int spawnForChunkGeneration(worldgen::Region& region, std::string const& biomeId
     double                     y,
     double                     z
 );
-/// Holder#is(biome tag): the vanilla tags the spawner reads built in, gf::tags, the data files.
+/// Holder#is(biome tag): gf::tags (TF's biome tags), plus the vanilla biome tags the spawner reads
+/// (minecraft:is_river, minecraft:reduce_water_ambient_spawns) built in.
 [[nodiscard]] bool biomeHasTag(std::string const& biome, std::string const& tag);
-
-/// EntityEvents#gatherPotentialSpawns for one landmark start: the controlled list of `category` at
-/// `pos`, nullopt when the start does not decide (the caller keeps looking / uses the biome).
-[[nodiscard]] std::optional<std::vector<SpawnEntry>>
-controlledSpawnsOf(landmark::Start const& start, landmark::Descriptor const& descriptor, BlockPos const& pos, std::string const& category);
-/// ChunkGenerator#getMobsAt's structure spawn overrides of one start (StructureSpawnOverride:
-/// "full" box or "piece" boxes), nullopt when the start has none for `category` at `pos`.
-[[nodiscard]] std::optional<std::vector<SpawnEntry>>
-spawnOverridesOf(landmark::Start const& start, landmark::Descriptor const& descriptor, BlockPos const& pos, std::string const& category);
-/// The spawn list index at `pos` (EntityEvents#getSpawnListIndexAt; -1: none).
-[[nodiscard]] int spawnIndexAt(landmark::Start const& start, BlockPos const& pos);
-/// HollowHillStructure#canSpawnMob.
-[[nodiscard]] bool hollowHillCanSpawnMob(BlockPos const& pos, landmark::BlockBox const& startBox);
 
 /// The spawn table of a biome (registered, else read from its imported JSON); thread-safe.
 [[nodiscard]] Table tableOf(std::string const& biomeId);
 
-/// StructureStart#isValid: a start with pieces (or generated).
-[[nodiscard]] inline bool startValid(landmark::Start const& start) { return start.generated || !start.pieceBoxes.empty(); }
+/// NaturalSpawner#mobsAt in the Twilight Forest: ChunkGenerator#getMobsAt changed by NeoForge's
+/// PotentialSpawns event. The special spawn functions (onSpecialSpawn) answer first: F6's
+/// EntityEvents#structureSpecialSpawns gives a landmark start's controlled list (its
+/// gatherPotentialSpawns) or a structure's spawn override; otherwise the biome's list of `category`.
+[[nodiscard]] std::vector<SpawnEntry> spawnListAt(BlockSource& region, BlockPos const& pos, std::string const& category, std::string const& biome);
 
 /// ChunkAccess#getHeight(WORLD_SURFACE, x, z): the highest non-air block of the column (minY - 1
 /// when empty), found below the chunk's highest non-air sub-chunk.

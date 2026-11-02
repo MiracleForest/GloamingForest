@@ -309,6 +309,7 @@ std::vector<std::string> writeBiomes(Providers const& p, Chunk& chunk, std::int6
 void generateChunk(Chunk& chunk, Region& chunkRegion, std::int64_t seed) { generateChunk(*providers(), chunk, chunkRegion, seed); }
 
 void generateChunk(Providers const& p, Chunk& chunk, Region& chunkRegion, std::int64_t seed) {
+    features::detail::TagCacheScope tagPass; // the tag answers of this chunk's blankets and carvers
     // Biomes: the biome source at quart resolution (game chunks: zoomed per block, the raw biomes
     // kept for the decoration of the neighbourhood)
     auto biomes = writeBiomes(p, chunk, seed);
@@ -457,6 +458,7 @@ void applyCarvers(Providers const& p, Chunk& chunk, Region& region, std::int64_t
 void decorateChunk(Chunk* chunk, Region& region, std::int64_t seed) { decorateChunk(*providers(), chunk, region, seed); }
 
 void decorateChunk(Providers const& p, Chunk* chunkIn, Region& region, std::int64_t seed) {
+    features::detail::TagCacheScope tagPass; // the tag answers of this chunk's structures, features and spawns
     RegionChunk viewChunk(region);
     Chunk&      chunk = chunkIn ? *chunkIn : viewChunk;
     int         cx = region.centerChunkX(), cz = region.centerChunkZ();

@@ -28,6 +28,7 @@
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/provider/SynchedActorDataAccess.h"
+#include "mc/util/MolangVariableMap.h"
 #include "mc/util/VariantParameterList.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/actor/ActorHurtResult.h"
@@ -52,6 +53,7 @@
 
 #include "feature/combat/Combat.h"
 #include "feature/combat/CombatInternal.h"
+#include "feature/combat/CombatTestUtil.h"
 #include "feature/common/Redstone.h"
 #include "feature/death/Death.h"
 #include "feature/death/DeathInternal.h"
@@ -94,20 +96,10 @@ bool isActive(Actor const& a) { return gActive != 0 && const_cast<Actor&>(a).get
 
 float healthOf(Player& p) { return static_cast<float>(p.getHealth()); }
 
-int countIn(std::vector<ItemStack> const& list, std::string const& id) {
-    int n = 0;
-    for (auto const& s : list)
-        if (items::idOf(s) == id) n += items::countOf(s);
-    return n;
-}
-
-int countInInventory(Player& p, std::string const& id) {
-    int   n   = 0;
-    auto& inv = p.getInventory();
-    for (int i = 0; i < inv.getContainerSize(); ++i)
-        if (items::idOf(inv.getItem(i)) == id) n += items::countOf(inv.getItem(i));
-    return n;
-}
+using gf::combat::testutil::clearInventory;
+using gf::combat::testutil::countIn;
+using gf::combat::testutil::countInInventory;
+using gf::combat::testutil::takeItemEntitiesNear;
 
 /// Item entities within `radius` blocks of `pos` (same dimension).
 int itemEntitiesNear(GlobalPos const& pos, float radius) {
@@ -168,6 +160,35 @@ GF_REGISTER_SELFTEST("combat.fx", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto after = fx::counters();
     ctx.check(after.particlePackets >= before.particlePackets + 2, "particles were sent to the player nearby");
     ctx.check(after.soundPackets >= before.soundPackets + 2, "sounds were sent (in range and to one player)");
+    ctx.check(after.movingPackets == before.movingPackets, "a particle without velocity carries no molang variables");
+    // a moving particle: its velocity goes to vanilla clients as `variable.velocity`
+    fx::particle(dim, "minecraft:flame", p.getPosition(), Vec3{0, 0.05f, 0}, 3, JsonT{{"spread", {0.2, 0.2, 0.2}}});
+    auto moving = fx::counters();
+    ctx.check(moving.particlePackets >= after.particlePackets + 3 && moving.movingPackets >= after.movingPackets + 3,
+              "each particle packet of a moving particle carries variable.velocity (" + std::to_string(moving.movingPackets - after.movingPackets) + ")");
+    std::uint64_t near = 0; // the players in the 32 blocks fx reaches (a client e2e run has its real player too)
+    ll::service::getLevel()->forEachPlayer([&](Player& q) {
+        auto d = q.getPosition() - p.getPosition();
+        if (static_cast<int>(q.getDimensionId()) == static_cast<int>(p.getDimensionId()) && d.x * d.x + d.y * d.y + d.z * d.z <= 32.f * 32.f) ++near;
+        return true;
+    });
+    fx::particle(dim, "minecraft:flame", p.getPosition(), {}, 100);
+    auto sent = fx::counters().particlePackets - moving.particlePackets;
+    ctx.check(sent >= near && sent <= near * static_cast<std::uint64_t>(fx::kMaxVanillaParticles),
+              "a player gets at most kMaxVanillaParticles packets per call (" + std::to_string(sent) + " for " + std::to_string(near) + " player(s))");
+    // the spread helper both sides use (ServerLevel#sendParticles' gaussian offset)
+    ctx.check(fx::spreadOf(JsonT{{"spread", {1, 2, 3}}}).has_value() && !fx::spreadOf(JsonT{{"spread", {1, "x", 3}}}) && !fx::spreadOf(JsonT{{"spread", {1, 2}}})
+                  && !fx::spreadOf(JsonT::array()),
+              "params spread: three numbers, anything else none");
+    std::mt19937 rng{7};
+    auto         off = fx::spreadAt(Vec3{10, 20, 30}, Vec3{0, 0, 0}, rng);
+    ctx.check(off.x == 10 && off.y == 20 && off.z == 30, "no spread: the position itself");
+    // a real molang variable map (constructed in place, the game's destructor)
+    {
+        fx::MolangMap vars;
+        vars.setVelocity(Vec3{0.1f, 0.2f, 0.3f});
+        ctx.check(!vars.get().mVariables->empty(), "the molang map holds variable.velocity");
+    }
     // companions get TF particles over fx.particle
     gf::net::setTestCompanion(p, true);
     (void)gf::net::takeTestMessages(p);
@@ -198,7 +219,7 @@ GF_REGISTER_SELFTEST("combat.damage_types", [](Context& ctx) {
     ctx.check(c::causeFor("twilightforest:expired", false) == Cause::Override, "bypasses_invulnerability -> Override");
     ctx.check(c::causeFor("twilightforest:thrown_axe", true) == Cause::Projectile, "is_projectile -> Projectile");
     ctx.check(c::causeFor("twilightforest:hydra_bite", true) == Cause::EntityAttack, "plain damage with an attacker -> EntityAttack");
-    ctx.check(c::damageTypeHasTag("twilightforest:clamped", "minecraft:no_knockback"), "TF's tag memberships are built in");
+    ctx.check(c::damageTypeHasTag("twilightforest:clamped", "minecraft:no_knockback"), "TF's tag memberships come from the tag data (F9)");
 });
 
 GF_REGISTER_SELFTEST("combat.hurt_hook", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -597,7 +618,12 @@ GF_REGISTER_SELFTEST("combat.inventory_handler", [](Context& ctx) -> ll::coro::C
     for (int i = 0; i < h->slots; ++i) h->set(pos, i, ItemStack{});
 });
 
-GF_REGISTER_SELFTEST("combat.container_persist_write", [](Context& ctx) -> ll::coro::CoroTask<> {
+// A container keeps its slots over a world reload: combat.container_persist_save fills the fixture
+// container 3 blocks under testPos 6010 and writes a marker (gf:combat:container_probe);
+// combat.container_persist_verify checks the slots, erases the marker and puts the block that was
+// there back. The server scenario runs them around a restart; a glob run ("combat.*", "full")
+// sorts save before verify, so verify cleans up in the same run and nothing stays in the world.
+GF_REGISTER_SELFTEST("combat.container_persist_save", [](Context& ctx) -> ll::coro::CoroTask<> {
     DeclaredScope fixture(fixtureDeclaration());
     auto* region = ctx.region();
     ctx.require(region != nullptr, "the overworld is available");
@@ -619,10 +645,10 @@ GF_REGISTER_SELFTEST("combat.container_persist_write", [](Context& ctx) -> ll::c
     ctx.info("container marker written count=" + std::to_string(n));
 });
 
-GF_REGISTER_SELFTEST("combat.container_persist_read", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.container_persist_verify", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto marker = db::get(kPersistKey);
     if (!marker) {
-        ctx.info("no container marker (combat.container_persist_write did not run before): nothing to check");
+        ctx.info("no container marker (combat.container_persist_save did not run before): nothing to check");
         co_return;
     }
     db::erase(kPersistKey);
@@ -908,23 +934,6 @@ GF_REGISTER_SELFTEST("combat.inventory_screen_auth", [](Context& ctx) -> ll::cor
 
 namespace {
 
-/// The item entities within `radius` of `pos`: their stacks, and they are removed (no leftovers in
-/// the shared test row).
-std::vector<ItemStack> takeItemEntitiesNear(GlobalPos const& pos, float radius) {
-    std::vector<ItemStack> out;
-    auto                   level = ll::service::getLevel();
-    if (!level) return out;
-    for (auto* a : level->getRuntimeActorList()) {
-        if (!a || !a->isType(ActorType::ItemEntity) || static_cast<int>(a->getDimensionId()) != pos.dim) continue;
-        auto const& at = a->getPosition();
-        float       dx = at.x - (pos.x + .5f), dy = at.y - (pos.y + .5f), dz = at.z - (pos.z + .5f);
-        if (dx * dx + dy * dy + dz * dz > radius * radius) continue;
-        out.push_back(static_cast<ItemActor*>(a)->item());
-        a->remove();
-    }
-    return out;
-}
-
 int countAt(std::optional<gf::inventory::Handler> const& h, GlobalPos const& pos, int slot) { return items::countOf(h->get(pos, slot)); }
 
 } // namespace
@@ -1010,12 +1019,6 @@ namespace {
 void clickScreen(Player& p, GlobalPos const& pos, JsonT action) {
     action["op"] = "click";
     gf::net::injectFromClient(p, "screen.action", {{"type", "inventory.chest"}, {"context", {{"pos", {pos.dim, pos.x, pos.y, pos.z}}, {"rows", 3}, {"title", "container.chest"}}}, {"action", action}});
-}
-
-void clearInventory(Player& p) {
-    auto& inv = p.getInventory();
-    for (int i = 0; i < inv.getContainerSize(); ++i) inv.setItem(i, ItemStack{});
-    p.setOffhandSlot(ItemStack{});
 }
 
 } // namespace
@@ -1184,18 +1187,16 @@ GF_REGISTER_SELFTEST("combat.keepers_tag", [](Context& ctx) -> ll::coro::CoroTas
     namespace tags = gf::tags;
     auto pos = ctx.testPos(6020);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
-    // a real member when F9's tag data is loaded, else the test lookup names the stick a member
+    // a real member of TF's tag: the keeper asks F9's tag data (gf::tags), no test lookup
     auto        members = tags::members(tags::Registry::Item, "twilightforest:kept_on_death");
-    std::string kept    = "minecraft:stick";
+    std::string kept;
     for (auto const& m : members)
         if (items::make(m, 1)) {
             kept = m;
             break;
         }
-    if (members.empty()) {
-        ctx.info("no kept_on_death tag data (F9): the built-in keeper is checked with a test member");
-        gf::death::setTestKeptOnDeath([kept](std::string const& id) { return id == kept; });
-    }
+    ctx.require(!kept.empty(), "twilightforest:kept_on_death has an item member in F9's tag data (" + std::to_string(members.size()) + " members)");
+    ctx.check(tags::has(tags::Registry::Item, "twilightforest:kept_on_death", kept), "gf::tags::has answers the member");
     auto& sp = ctx.spawnPlayer("gf_combat_tag_keeper");
     auto  id = sp.getOrCreateUniqueID();
     auto  stack = items::make(kept, 1);
@@ -1203,7 +1204,6 @@ GF_REGISTER_SELFTEST("combat.keepers_tag", [](Context& ctx) -> ll::coro::CoroTas
     ctx.give(sp, *stack);
     gf::combat::hurt(sp, 1000.f, "twilightforest:expired");
     co_await ctx.ticks(2);
-    gf::death::setTestKeptOnDeath({});
     auto* p = ll::service::getLevel()->getPlayer(id);
     ctx.require(p != nullptr, "the player is still in the level");
     auto record = db::get("gf:combat:kept:" + p->getUuid().asString());

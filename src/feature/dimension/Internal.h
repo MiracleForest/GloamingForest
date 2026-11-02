@@ -122,7 +122,8 @@ void newSpawnInTwilightForest(Player& player);
 /// Forgets that a player (by UUID string) was banished to the Twilight Forest (tests).
 void unbanish(std::string const& uuid);
 
-/// Portal blocks changed at `pos` (lit, built, broken): the portal index reads that area again.
+/// Portal blocks changed at `pos`: the portal index reads that area again. Every portal block
+/// placed or removed (lit, built, broken, by any cause) touches it through gf::blockevents.
 void portalIndexTouch(int dim, BlockPos const& pos);
 /// The portal blocks the index knows in a dimension (the chunks near players; tests).
 [[nodiscard]] std::vector<BlockPos> indexedPortals(int dim);
@@ -165,10 +166,39 @@ void causeLightning(BlockSource& region, BlockPos const& pos, bool destructive);
 bool tryToCreatePortal(BlockSource& region, BlockPos const& pos, ItemActor* catalyst, Player* player);
 /// ProgressionEvents#checkForPortalCreation.
 void checkForPortalCreation(Player& player, BlockSource& world, float rangeToCheck);
-/// TFPortalBlock#neighborChanged.
-void portalNeighborChanged(BlockSource& region, BlockPos const& pos);
-/// Registers the portal block's neighbour handler with gf::blockevents.
+/// TFPortalBlock#neighborChanged: the portal block at `pos` turns back into water when its floor
+/// or one of its four sides is no longer valid (true when it did). Java's getBlockState loads a
+/// chunk that is not loaded: when the rule reaches a block whose chunk is not loaded, the check
+/// waits for it instead (the chunks around `pos` are loaded for it, then it runs again).
+bool portalNeighborChanged(BlockSource& region, BlockPos const& pos);
+/// Neighbour checks waiting for a chunk right now, and since the world opened (tests).
+[[nodiscard]] int portalChecksWaiting();
+[[nodiscard]] int portalChecksWaited();
+/// Drops the waiting neighbour checks (the world closed).
+void clearPortalChecks();
+/// Turns the portal block's handlers of gf::blockevents on (TravelModule::install; registered once
+/// per process, since the contract has no removal): neighbour changes (TFPortalBlock#neighborChanged),
+/// and placements / removals by any cause, which the portal index reads again. Off again with
+/// unregisterPortalBlockEvents (uninstall): the handlers then do nothing.
 void registerPortalBlockEvents();
+void unregisterPortalBlockEvents();
+/// The portal's explosion window (Portal.cpp, TFPortalBlock#getFluidState for explosions): from
+/// the start of the first explosion in flight to the end of the last one (nested ones, or ones on
+/// another thread), the portal's two states hold the water's explosion resistance; the last one
+/// to end puts back what they held before. The Explosion::explode hook opens one per explosion
+/// with PortalExplosionScope (an explosion that throws closes it too); selftests open them by hand.
+void beginPortalExplosion();
+void endPortalExplosion();
+/// Explosions in flight (0: none).
+[[nodiscard]] int portalExplosionDepth();
+/// The water's explosion resistance the portal takes during an explosion (0 before the first world).
+[[nodiscard]] float portalWaterResistance();
+struct PortalExplosionScope {
+    PortalExplosionScope() { beginPortalExplosion(); }
+    ~PortalExplosionScope() { endPortalExplosion(); }
+    PortalExplosionScope(PortalExplosionScope const&)            = delete;
+    PortalExplosionScope& operator=(PortalExplosionScope const&) = delete;
+};
 /// ItemEntity#getOwner: the player who threw an item (-1: nobody). Only throws name their thrower
 /// (Player#drop with includeThrowerName): death drops and other spawned items have none.
 [[nodiscard]] std::int64_t itemOwner(ItemActor const& item);
@@ -178,7 +208,7 @@ void setItemOwner(ItemActor const& item, std::int64_t owner);
 /// (mushrooms, sugar cane).
 void installItemOwners();
 void uninstallItemOwners();
-/// Looks up the portal's states and the water's explosion resistance the explosion rule uses
+/// Looks up the portal's states and the water's explosion resistance the explosion window uses
 /// (each world).
 void refreshPortalTypes();
 /// Forgets the item owners of a closed world.
