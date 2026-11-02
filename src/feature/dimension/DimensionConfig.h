@@ -1,0 +1,48 @@
+// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
+//   src/main/java/twilightforest/config/TFCommonConfig.java
+//   src/main/java/twilightforest/config/TFConfig.java
+// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
+// of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
+#pragma once
+
+// Config section "dimension" (rule R13, docs/spec/config.md): TF's "Dimension Settings" and
+// "Portal Settings" keys with TF's names, defaults and ranges.
+
+#include <string>
+
+namespace gf::feature::dimension {
+
+struct DimensionConfig {
+    int version = 1;
+
+    // -- Dimension Settings (config.twilightforest.dim_settings) --
+    /// spawn_in_tf: new players spawn in the Twilight Forest (and respawn there without a bed).
+    bool newPlayersSpawnInTF = false;
+    /// portal_for_new_player: such players arrive next to a fresh (one-way) portal.
+    bool portalForNewPlayer = false;
+
+    // -- Portal Settings (config.twilightforest.portal_settings) --
+    /// origin_dimension: where Twilight portals lead back to.
+    std::string originDimension = "minecraft:overworld";
+    /// portals_in_other_dimensions: portals may be lit outside the origin and the Twilight Forest.
+    bool allowPortalsInOtherDimensions = false;
+    /// portal_permission: permission level (0..4) needed to light a portal.
+    int portalCreationPermission = 0;
+    /// disable_portal: portals can't be lit at all.
+    bool disablePortalCreation = false;
+    /// check_portal_placement: check the destination for safety before lighting (false = check
+    /// when lighting and refuse with "It doesn't seem safe here...").
+    bool checkPortalPlacement = true;
+    /// destructive_portal_lighting: the lightning that lights a portal strikes entities around it.
+    bool destructivePortalLightning = true;
+    /// portal_return: portals made at the destination can be used to return.
+    bool shouldReturnPortalBeUsable = true;
+    /// portal_unlocked_by_advancement: advancement id a player needs to light / use portals ("" = none).
+    std::string portalUnlockedByAdvancement;
+    /// max_portal_size: the largest pool (in water blocks) that lights, 4..2147483647.
+    int maxPortalSize = 64;
+};
+
+} // namespace gf::feature::dimension
