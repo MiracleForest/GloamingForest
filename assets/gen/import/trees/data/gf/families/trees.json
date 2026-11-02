@@ -5,7 +5,13 @@
     "params": {
       "class": "LeavesBlock",
       "traits": ["waterloggable"],
-      "states": ["distance", "persistent"]
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
     }
   },
   {
@@ -13,7 +19,8 @@
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
-      "states": ["stage"]
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
     }
   },
   {
@@ -23,7 +30,13 @@
       "class": "DarkLeavesBlock",
       "vanillaClass": "LeavesBlock",
       "traits": ["waterloggable"],
-      "states": ["distance", "persistent"]
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
     }
   },
   {
@@ -31,7 +44,8 @@
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
-      "states": ["stage"]
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
     }
   },
   {
@@ -39,7 +53,8 @@
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
-      "states": ["stage"]
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
     }
   },
   {
@@ -48,7 +63,13 @@
     "params": {
       "class": "LeavesBlock",
       "traits": ["waterloggable"],
-      "states": ["distance", "persistent"]
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
     }
   },
   {
@@ -58,7 +79,8 @@
       "class": "MangroveSaplingBlock",
       "vanillaClass": "SaplingBlock",
       "traits": ["waterloggable"],
-      "states": ["stage"]
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
     }
   },
   {
@@ -67,7 +89,13 @@
     "params": {
       "class": "LeavesBlock",
       "traits": ["waterloggable"],
-      "states": ["distance", "persistent"]
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
     }
   },
   {
@@ -76,7 +104,8 @@
     "params": {
       "class": "MineLogCoreBlock",
       "vanillaClass": "RotatedPillarBlock",
-      "states": ["active", "axis"]
+      "states": ["active", "axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -84,7 +113,8 @@
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
-      "states": ["stage"]
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
     }
   },
   {
@@ -163,7 +193,13 @@
     "params": {
       "class": "LeavesBlock",
       "traits": ["waterloggable"],
-      "states": ["distance", "persistent"]
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
     }
   },
   {
@@ -171,7 +207,8 @@
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
-      "states": ["stage"]
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
     }
   },
   {
@@ -180,7 +217,13 @@
     "params": {
       "class": "LeavesBlock",
       "traits": ["waterloggable"],
-      "states": ["distance", "persistent"]
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
     }
   },
   {
@@ -189,7 +232,8 @@
     "params": {
       "class": "SortLogCoreBlock",
       "vanillaClass": "RotatedPillarBlock",
-      "states": ["active", "axis"]
+      "states": ["active", "axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -197,7 +241,8 @@
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
-      "states": ["stage"]
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
     }
   },
   {
@@ -206,7 +251,13 @@
     "params": {
       "class": "LeavesBlock",
       "traits": ["waterloggable"],
-      "states": ["distance", "persistent"]
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
     }
   },
   {
@@ -215,7 +266,8 @@
     "params": {
       "class": "TimeLogCoreBlock",
       "vanillaClass": "RotatedPillarBlock",
-      "states": ["active", "axis"]
+      "states": ["active", "axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -223,7 +275,8 @@
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
-      "states": ["stage"]
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
     }
   },
   {
@@ -233,7 +286,13 @@
       "class": "TransformationLeavesBlock",
       "vanillaClass": "LeavesBlock",
       "traits": ["waterloggable"],
-      "states": ["distance", "persistent"]
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
     }
   },
   {
@@ -242,7 +301,8 @@
     "params": {
       "class": "TransLogCoreBlock",
       "vanillaClass": "RotatedPillarBlock",
-      "states": ["active", "axis"]
+      "states": ["active", "axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -250,7 +310,8 @@
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
-      "states": ["stage"]
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
     }
   },
   {
@@ -259,7 +320,13 @@
     "params": {
       "class": "LeavesBlock",
       "traits": ["waterloggable"],
-      "states": ["distance", "persistent"]
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
     }
   },
   {
@@ -267,7 +334,8 @@
     "family": "sapling",
     "params": {
       "class": "SaplingBlock",
-      "states": ["stage"]
+      "states": ["stage"],
+      "tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"]
     }
   }
 ]

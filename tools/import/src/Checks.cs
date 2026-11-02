@@ -51,7 +51,18 @@ namespace GfImport
             var exp = ExpectedStates();
             if (exp == null) return;
             string bsDir = Path.Combine(GenRes, "assets", "twilightforest", "blockstates");
-            int checkedRotations = 0;
+            int checkedRotations = 0, checkedFamilyTags = 0;
+            // the families data entries (after the overrides), by block id
+            var familyEntries = new Dictionary<string, J>(StringComparer.Ordinal);
+            foreach (var unit in Out)
+                foreach (var gen in unit.Value)
+                    if (gen.Key.StartsWith("data/gf/families/", StringComparison.Ordinal) && gen.Key.EndsWith(".json", StringComparison.Ordinal))
+                    {
+                        var list = J.Parse(Encoding.UTF8.GetString(gen.Value.Bytes));
+                        if (!list.IsArr) { Errors.Add(gen.Key + ": not an array of family entries"); continue; }
+                        foreach (var entry in list.A)
+                            if (entry.IsObj && entry["id"] != null) familyEntries[entry["id"].AsString()] = entry;
+                    }
             foreach (var bi in BlockInfos.Values)
             {
                 SortedDictionary<string, GenFile> files;
@@ -62,6 +73,19 @@ namespace GfImport
                     continue;
                 }
                 var doc = J.Parse(Encoding.UTF8.GetString(f.Bytes))["minecraft:block"];
+                // a family block's params.tags (the kit's format-free input) are the tags of its skeleton file
+                J fam = null;
+                if (bi.Family != null && !familyEntries.TryGetValue("twilightforest:" + bi.Id, out fam))
+                    Errors.Add("data/gf/families: no entry for the family block twilightforest:" + bi.Id + " (" + bi.Family + ")");
+                else if (fam != null)
+                {
+                    var pt = fam["params"] != null ? fam["params"]["tags"] : null;
+                    var want = BlockTagsIn(doc["components"]).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    var have = (pt != null && pt.IsArr ? pt.A.Select(x => x.AsString()) : Enumerable.Empty<string>()).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    if (!want.SequenceEqual(have))
+                        Errors.Add("data/gf/families: twilightforest:" + bi.Id + " params.tags [" + string.Join(", ", have) + "], its bp/blocks file has [" + string.Join(", ", want) + "] (an override changes both)");
+                    checkedFamilyTags++;
+                }
                 var states = doc["description"]["states"];
                 var got = (states != null ? states.Keys : Enumerable.Empty<string>()).OrderBy(x => x, StringComparer.Ordinal).ToList();
                 var e = exp[bi.Chain[0]];
@@ -114,7 +138,8 @@ namespace GfImport
                     checkedRotations++;
                 }
             }
-            Log.Add(checkedRotations + " variant rotations checked against TF's blockstates; block states checked against tools/import/expected-states.json");
+            Log.Add(checkedRotations + " variant rotations checked against TF's blockstates; block states checked against tools/import/expected-states.json; "
+                + checkedFamilyTags + " family blocks' params.tags checked against their skeleton files");
         }
 
         /// <summary>The behaviour values of the generated BP block files (after the overrides) and their RP sounds against
@@ -192,13 +217,13 @@ namespace GfImport
                 // the tools that mine it (Bedrock tool tags), the tier a tool needs (Bedrock tier tag) and the drop rule
                 if (e["tools"] != null)
                 {
-                    var comps = doc["components"];
-                    var wantTools = e["tools"].A.Select(t => "tag:" + BedrockToolTag[t.AsString()]).OrderBy(x => x, StringComparer.Ordinal).ToList();
-                    var haveTools = comps.Keys.Where(k => BedrockToolTag.Values.Any(v => k == "tag:" + v)).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    var tags = BlockTagsIn(doc["components"]);
+                    var wantTools = e["tools"].A.Select(t => BedrockToolTag[t.AsString()]).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    var haveTools = tags.Where(k => BedrockToolTag.Values.Contains(k)).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     if (!wantTools.SequenceEqual(haveTools))
                         Errors.Add("bp/blocks/" + id + ".json: tool tags [" + string.Join(", ", haveTools) + "], TF gives [" + string.Join(", ", wantTools) + "] (" + e["source"].AsString() + ")");
-                    string wantTier = e["tier"] != null ? "tag:" + BedrockTierTag[e["tier"].AsString()] : "(none)";
-                    var haveTiers = comps.Keys.Where(k => BedrockTierTag.Values.Any(v => k == "tag:" + v)).ToList();
+                    string wantTier = e["tier"] != null ? BedrockTierTag[e["tier"].AsString()] : "(none)";
+                    var haveTiers = tags.Where(k => BedrockTierTag.Values.Contains(k)).ToList();
                     string haveTier = haveTiers.Count == 0 ? "(none)" : string.Join(", ", haveTiers);
                     if (wantTier != haveTier) Errors.Add("bp/blocks/" + id + ".json: tier tag " + haveTier + ", TF gives " + wantTier + " (" + e["source"].AsString() + ")");
                     checkedValues += 2;

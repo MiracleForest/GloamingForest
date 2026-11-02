@@ -1,6 +1,0 @@
-{
-  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
-  "kind": "texture",
-  "reason": "\"texture\" of twilight/dwarf_rabbit_variant/dutch: a resource pack texture (src/main/resources/assets/twilightforest/textures/entity/bunnydutch.png)",
-  "referencedBy": ["data/twilightforest/twilight/dwarf_rabbit_variant/dutch.json"]
-}

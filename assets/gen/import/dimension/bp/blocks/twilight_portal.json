@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:twilight_portal",
@@ -20,7 +20,6 @@
       "minecraft:geometry": {
         "identifier": "geometry.tf.twilightforest.block.twilight_portal.multipart",
         "bone_visibility": {
-          "part0": true,
           "part1": "q.block_state('twilightforest:is_one_way')"
         }
       },

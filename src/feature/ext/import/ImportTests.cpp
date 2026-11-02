@@ -16,8 +16,10 @@
 #include <map>
 #include <optional>
 #include <regex>
+#include <set>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "ll/api/service/Bedrock.h"
@@ -208,13 +210,8 @@ GF_REGISTER_SELFTEST("import.lang_and_data", [](Context& ctx) {
         int  count = 0;
         std::error_code ec;
         if (fs::exists(root, ec))
-            for (auto it = fs::recursive_directory_iterator(root, ec); it != fs::recursive_directory_iterator(); it.increment(ec)) {
-                if (it->is_directory()) {
-                    if (it->path().filename() == "gf_known") it.disable_recursion_pending();
-                    continue;
-                }
-                ++count;
-            }
+            for (auto it = fs::recursive_directory_iterator(root, ec); it != fs::recursive_directory_iterator(); it.increment(ec))
+                if (!it->is_directory()) ++count;
         ctx.check(count >= expected.get<int>(), "data/" + dir + ": " + std::to_string(count) + " files, expected at least " + std::to_string(expected.get<int>()));
     }
 });
@@ -441,25 +438,150 @@ GF_REGISTER_SELFTEST("import.bool_defaults", [](Context& ctx) {
     }
 });
 
+namespace {
+
+/// What a TF block needs around it to stay where it is placed: what the canSurvive (and the updateShape or
+/// neighborChanged that asks it) of its Java classes requires, written down by hand from Minecraft 1.21.1 and TF 4.8.
+/// Every block stands on a floor block, minecraft:dirt unless a rule says otherwise: sturdy, solid and in
+/// #minecraft:dirt, it holds StandingSignBlock (isSolid below), PressurePlateBlock, DoorBlock's lower half,
+/// BushBlock.mayPlaceOn (saplings, TFPlantBlock), BerryBushBlock (#twilightforest:tf_berry_bushes_survive),
+/// CritterBlock and ThornRoseBlock (default facing up: resting on the block below), MossPatchBlock, FallenLeavesBlock,
+/// MushgloomBlock, OminousFireBlock, Experiment115Block, CarpetBlock and CandelabraBlock (default on_wall false).
+struct Support {
+    std::string                      floor = "minecraft:dirt";
+    std::string                      ceiling;   ///< the block above it ("": none)
+    std::vector<std::pair<int, int>> sides;     ///< grass blocks beside it (dx, dz), at its height
+    JDoc                             states = JDoc::object(); ///< the state it is placed in (its default otherwise)
+    std::optional<JDoc>              upper;     ///< its upper half, one above
+    bool                             poke = false; ///< a block set above it afterwards: Java's neighbour check runs in place
+};
+
+/// The support of a block from its Java class chain (data/gf/import/skeleton.json "classes": TF's classes, then the
+/// vanilla class reached); the first class of the chain with a rule decides.
+Support supportOf(JDoc const& chain) {
+    Support s;
+    for (auto const& c : chain) {
+        auto const cls = c.is_string() ? c.get<std::string>() : std::string();
+        if (cls == "WallSignBlock" || cls == "LadderBlock") {
+            // WallSignBlock.canSurvive: the block behind it (facing.getOpposite()) isSolid; LadderBlock.canSurvive: that
+            // block's face is sturdy. Facing north: the block south of it.
+            s.states = {{"twilightforest:facing", "north"}};
+            s.sides  = {{0, 1}};
+        } else if (cls == "ButtonBlock") {
+            // FaceAttachedHorizontalDirectionalBlock.canSurvive (TF's default face wall, facing north): the block south of
+            // it has a sturdy north face
+            s.states = {{"twilightforest:face", "wall"}, {"twilightforest:facing", "north"}};
+            s.sides  = {{0, 1}};
+        } else if (cls == "WallHangingSignBlock") {
+            // WallHangingSignBlock.canPlace: a sturdy block on its clockwise (east of a sign facing north) or
+            // counter-clockwise side
+            s.states = {{"twilightforest:facing", "north"}};
+            s.sides  = {{1, 0}};
+        } else if (cls == "CeilingHangingSignBlock") {
+            s.ceiling = "minecraft:dirt"; // CeilingHangingSignBlock.canSurvive: the block above has a sturdy centre
+        } else if (cls == "TorchberryPlantBlock" || cls == "RootStrandBlock") {
+            s.ceiling = "minecraft:dirt"; // TFPlantBlock.canPlaceRootAt: the block above is #twilightforest:plants_hang_on
+        } else if (cls == "TrollRootBlock") {
+            s.ceiling = "minecraft:stone"; // canPlaceRootBelow: the block above is #minecraft:base_stone_overworld
+        } else if (cls == "RopeBlock") {
+            // RopeBlock (default y true, x and z false): onPlace schedules a tick, and tick() destroys a rope whose
+            // checkConnection(UP) fails; canSurvive / canConnectTo(UP): the block above is leaves, a rope along y, or has
+            // a sturdy centre on its down face
+            s.ceiling = "minecraft:dirt";
+        } else if (cls == "DoorBlock" || cls == "BrazierBlock") {
+            // DoorBlock / BrazierBlock.updateShape: the lower half goes when the block above is not its upper half
+            s.states = {{"twilightforest:half", "lower"}};
+            s.upper  = JDoc{{"twilightforest:half", "upper"}};
+        } else if (cls == "DarkTowerBerryBushBlock") {
+            // canBePlacedAt: #twilightforest:dark_tower_berry_bushes_survive (#c:netherracks, ...); shouldDie on #minecraft:nylium
+            s.floor = "minecraft:netherrack";
+        } else if (cls == "OreBerryBlock") {
+            s.floor = "minecraft:stone"; // canBePlacedAt: #twilightforest:oreberry_bushes_survive (#c:stones, ...)
+        } else if (cls == "WaterlilyBlock") {
+            s.floor = "minecraft:ice"; // WaterlilyBlock.mayPlaceOn: water or an IceBlock below, no fluid above
+        } else if (cls == "MultifaceBlock") {
+            s.states = {{"twilightforest:down", true}}; // MultifaceBlock.updateShape: a block without a face goes
+        } else if (cls == "LeavesBlock") {
+            s.states = {{"twilightforest:persistent", true}}; // LeavesBlock.randomTick: decays unless persistent (player placed)
+        } else if (cls == "TFPortalBlock") {
+            // TFPortalBlock.neighborChanged: a sturdy floor and #twilightforest:portal/edge (grass, dirt) on all four sides,
+            // else water again; poked to run that check in its frame
+            s.sides = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+            s.poke  = true;
+        } else {
+            continue;
+        }
+        return s;
+    }
+    return s;
+}
+
+} // namespace
+
+// Every block placed and read back. Each block gets its own cell, one air gap away from the next, with the support its
+// Java classes need (supportOf: a floor, the block it hangs on or from, its upper half, the portal's frame), so that a
+// block a unit gives TF's survival rules (F11's signs, F4's portal, ...) stays: the supports go first, the blocks and
+// then their upper halves, and the blocks are removed before their supports.
 GF_REGISTER_SELFTEST("import.place_blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
     requireSkeleton(ctx);
-    std::vector<std::string> ids;
-    for (auto const& [id, _] : skeleton()["blocks"].items()) ids.push_back(id);
-    // 100 x 5 positions per layer in this unit's row (dx 5100..5199, dz 0..4), two layers up
+    auto const& skel = skeleton();
+    ctx.require(skel.contains("classes") && skel["classes"].is_object(), "data/gf/import/skeleton.json lists the Java classes of the blocks");
+    // cells at x 1, 3, .., 97 (dx 5101..5197) and dz 1, 3 of this unit's row (dx 5100..5199, dz 0..4), in layers of 4
+    // (floor, block, the block above it, air) from one above the surface
+    constexpr int kPerRow = 49, kPerLayer = 2 * kPerRow, kLayerHeight = 4;
     for (int x = 0; x < 100; x += 16) ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5100 + x)), "test row loaded");
     ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5199)), "test row loaded");
-    std::vector<gf::core::GlobalPos> placed(ids.size());
-    Failures                         fails{ctx, "blocks placed"};
-    for (size_t i = 0; i < ids.size(); ++i) {
-        auto pos = ctx.testPos(5100 + static_cast<int>(i % 100), static_cast<int>((i / 100) % 5));
-        pos.y += 1 + static_cast<int>(i / 500);
-        placed[i] = pos;
-        if (!ctx.setBlock(pos, ids[i])) fails.add("cannot place " + ids[i]);
+    struct Cell {
+        std::string         id;
+        gf::core::GlobalPos pos;
+        Support             support;
+    };
+    std::vector<Cell>                                        cells;
+    std::vector<std::pair<gf::core::GlobalPos, std::string>> supports;
+    std::set<std::tuple<int, int, int>>                      taken;
+    auto addSupport = [&](gf::core::GlobalPos const& p, std::string const& id) {
+        if (taken.insert(std::make_tuple(p.x, p.y, p.z)).second) supports.emplace_back(p, id); // a grass block between two cells serves both
+    };
+    Failures fails{ctx, "blocks placed with their support and read back"};
+    for (auto const& [id, states] : skel["blocks"].items()) {
+        int  i     = static_cast<int>(cells.size());
+        int  j     = i % kPerLayer;
+        auto pos   = ctx.testPos(5101 + 2 * (j % kPerRow), 1 + 2 * (j / kPerRow));
+        pos.y     += 2 + (i / kPerLayer) * kLayerHeight;
+        auto s     = supportOf(skel["classes"].value(id, JDoc::array()));
+        for (auto const& [name, _] : s.states.items())
+            if (!states.contains(name)) fails.add(id + " has no state " + name + " (its support rule places it in one)");
+        // one block one above: a ceiling support, or the upper half / poke block (the removal orders them apart)
+        if (!s.ceiling.empty() && (s.upper || s.poke)) fails.add(id + ": its support rule sets both a ceiling and a block above it");
+        addSupport(pos.offset(0, -1, 0), s.floor);
+        if (!s.ceiling.empty()) addSupport(pos.offset(0, 1, 0), s.ceiling);
+        for (auto const& [dx, dz] : s.sides) addSupport(pos.offset(dx, 0, dz), "minecraft:grass_block");
+        cells.push_back({id, pos, std::move(s)});
     }
+    // (setBlock reports false when the block is already there.) From here on nothing aborts the test, so the removal
+    // below always runs in its order.
+    for (auto const& [p, id] : supports)
+        if (!ctx.setBlock(p, id) && ctx.blockAt(p) != id) fails.add("cannot place the support " + id);
+    for (auto const& c : cells)
+        if (!ctx.setBlock(c.pos, c.id, c.support.states)) fails.add("cannot place " + c.id + " " + c.support.states.dump());
+    for (auto const& c : cells)
+        if (c.support.upper && !ctx.setBlock(c.pos.offset(0, 1, 0), c.id, *c.support.upper)) fails.add("cannot place the upper half of " + c.id);
     co_await ctx.ticks(1);
-    for (size_t i = 0; i < ids.size(); ++i) {
-        auto got = ctx.blockAt(placed[i]);
-        if (got != ids[i]) fails.add(ids[i] + " reads back as " + got);
+    for (auto const& c : cells)
+        if (c.support.poke && !ctx.setBlock(c.pos.offset(0, 1, 0), "minecraft:glass")) fails.add("cannot set a block above " + c.id);
+    co_await ctx.ticks(3);
+    for (auto const& c : cells) {
+        if (auto got = ctx.blockAt(c.pos); got != c.id) fails.add(c.id + " " + c.support.states.dump() + " reads back as " + got);
+        if (!c.support.upper) continue;
+        if (auto got = ctx.blockAt(c.pos.offset(0, 1, 0)); got != c.id) fails.add(c.id + "'s upper half reads back as " + got);
     }
-    fails.done(static_cast<int>(ids.size()));
+    fails.done(static_cast<int>(cells.size()));
+    // the blocks go before what holds them (a support removed first breaks its block, with drops): the upper halves
+    // (held by their lower halves) and the blocks set above a cell, then the cells, then the supports
+    if (auto* region = ctx.region()) {
+        for (auto const& c : cells)
+            if (c.support.upper || c.support.poke) gf::game::clearBlock(*region, gf::game::blockPos(c.pos.offset(0, 1, 0)));
+        for (auto const& c : cells) gf::game::clearBlock(*region, gf::game::blockPos(c.pos));
+        for (auto const& [p, id] : supports) gf::game::clearBlock(*region, gf::game::blockPos(p));
+    }
 });

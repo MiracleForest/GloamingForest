@@ -38,7 +38,7 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 |---|---|---|
 | `textures` | 1197 PNG (+ `.mcmeta`) | `rp/textures/twilightforest/<tf path>.png`; atlas keys `tf_<path with _>` in `rp/terrain_texture.d`, `rp/item_texture.d`; animated block textures in `rp/flipbook_textures.d`; vanilla textures TF reuses as `tf_vanilla_<path>` keys pointing at the game's own files (never copied) |
 | `models` | 523 blockstates, 2984 generated + 123 hand models, a built-in library of the vanilla parent shapes they extend (`Models.cs`, `Vanilla`) | `rp/models/blocks/twilightforest/*.geo.json`: one geometry per element-defining model (`geometry.tf.<model id>`), shared by every block using it, material instances named after the Java texture variables; one geometry per multipart block (a bone per part, shown by Molang `bone_visibility`) |
-| `blockstates` | blockstates, the TF block classes (`createBlockStateDefinition`, `registerDefaultState`, `getLightEmission`), `TFBlocks.java` (class, strength, light, sound, map colour, collision, `requiresCorrectToolForDrops`), `RegistrationEvents.java` (`setFlammable`), the tool tags (`#minecraft:mineable/*`, `#minecraft:needs_*_tool`, `#minecraft:sword_efficient`, `#minecraft:leaves`) | `bp/blocks/<id>.json` (format 1.21.80): states, permutations, `minecraft:geometry` / `material_instances` / `transformation`, collision and selection boxes from the model bounds, destructibility, tool and tier tags, light (per state where TF computes it), map colour, flammability, friction; `rp/blocks.d` sounds; [blockstates.md](blockstates.md) |
+| `blockstates` | blockstates, the TF block classes (`createBlockStateDefinition`, `registerDefaultState`, `getLightEmission`), `TFBlocks.java` (class, strength, light, sound, map colour, collision, `requiresCorrectToolForDrops`), `RegistrationEvents.java` (`setFlammable`), the tool tags (`#minecraft:mineable/*`, `#minecraft:needs_*_tool`, `#minecraft:sword_efficient`, `#minecraft:leaves`) | `bp/blocks/<id>.json` (format 1.26.50; the family blocks, which F11's families kit rewrites, 1.21.80: see *Block format* below): states, permutations, `minecraft:geometry` / `material_instances` / `transformation`, collision and selection boxes from the model bounds, destructibility, tool and tier tags, light (per state where TF computes it), map colour, flammability, friction; `rp/blocks.d` sounds and `rp/sounds.json.d` TF's own sound types; [blockstates.md](blockstates.md) |
 | `lang` | en_us (2061 keys) + 99 translations | `lang/<locale>/<unit>.json` (every TF key a locale translates; `gf::tr` falls back to en_US) and `rp/texts.d/<locale>/<unit>.lang` (the same keys for rawtext, plus the Bedrock names `tile.twilightforest:<id>.name`, `item.twilightforest:<id>.name`, `entity.twilightforest:<id>.name`, `item.spawn_egg.entity.twilightforest:<id>.name`, the creative group titles) for the 29 Bedrock locales (below); other TF locales (`en_ud`, ...) are dropped |
 | `tags` | 393 tag files (TF, minecraft, c, neoforge and compat namespaces) | `data/<ns>/tags/<registry>/<path>.json` of the tag owner (other namespaces: F1) |
 | `loot` | 634 loot tables, 2 loot modifiers, NeoForge's global modifier list | `data/<ns>/loot_table/**`, `data/<ns>/loot_modifiers/**` (TF functions and conditions kept by id for F10) |
@@ -51,9 +51,9 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 | `sounds` | `sounds.json` (328 events, 288 subtitles) | **No `sound_definitions`** (see below). Validates that every event has an owner in owners.tsv (a missing one fails the run) and writes a plain, non-merged listing `data/gf/sound_events/<unit>.json`: event -> Bedrock category, subtitle key, sound *names* (TF file paths without namespace, vanilla events). The subtitle texts come with the `lang` kind |
 | `skeleton` | TFItems, TFToolMaterials, TFEntities, models/item | `bp/items/<id>.json` (254 items, the tiered tools with `minecraft:digger` and Bedrock's tool tags, and the block items whose Java item model is a flat icon: `minecraft:block_placer` with `replace_block_item`), `bp/entities/<id>.json` (80, collision box, health, type family, `is_spawnable` for the 51 with eggs), `rp/entity/<id>.entity.json` + `rp/models/entity/skeleton/<id>.geo.json` (a placeholder box of the entity's size with its TF texture, spawn egg colours), `data/gf/import/skeleton.json` (the id list the `import.*` selftests check), `data/gf/import/harvest.json` (every block's tools, tier and drop rule: read by the runtime, below, and the selftests) |
 | `catalog` | TFCreativeTabs (4 tabs) | `bp/item_catalog.d/import.json` (Bedrock creative groups: blocks -> construction, items and food -> items, equipment -> equipment) and `data/gf/catalog/import.json` (`gf::catalog` groups in TF's order) |
-| `families` | TF block classes and interfaces, block tags, model loaders | `data/gf/families/<unit>.json`: `[{id, family, params: {class, vanillaClass, traits, base, copyOf, woodType, plant, states}}]` for F11 (below) |
+| `families` | TF block classes and interfaces, block tags, model loaders | `data/gf/families/<unit>.json`: `[{id, family, params: {class, vanillaClass, traits, base, copyOf, woodType, plant, states, tags}}]` for F11 (below) |
 
-## References and the assemble bridge
+## References
 
 Every `twilightforest:` string of the generated data and BP files must name something that exists. The import
 resolves each one (`Known.cs`) against the generated data files (tags with Java's registry paths, including the
@@ -68,18 +68,14 @@ dangling in TF itself are listed under `tfDangling` and reported as a warning on
 the recipe's pre-rename id; TF renamed it `travellers_vest` and the criterion never triggers in TF either; kept
 verbatim for parity). An allowlist entry no data references any more is reported as stale.
 
-**Bridge (temporary, requested from F0 / A8 in [issue #21](https://github.com/MiracleForest/GloamingForest/issues/21)).** assemble's dangling-reference check (`tools/xmake/assemble.lua`,
-F0) knows only data files, BP definitions and owners.tsv rows; it checks the values of `tag` / `tags` keys as plain
-ids and reads `data/<ns>/tags/twilight/<registry>/` with a one-segment registry. Until it does what the import's
-check does, the import writes one index file for each reference it resolved but assemble cannot (67:
-`data/twilightforest/gf_known/**`, `data/twilightforest/tags/gf_known/**`, each naming its kind, reason and
-referencing files). They are generated **only** from the resolutions above (never for an unresolved reference),
-nothing reads them at run time, and the `import.lang_and_data` selftest skips them. Requested change to assemble
-(F0 / A8), after which the bridge is dropped (its two `EmitJson` calls in `Known.cs`; the check stays): (1) `tag` / `tags` / `generates_on` values
-are tag references; (2) `tags/twilight/<registry>` is a two-segment registry like `tags/worldgen/<registry>`;
-(3) the ids of `tools/import/known-ids.json` (`ids`, `tfDangling`) are known, by kind; (4) a `tfDangling` reference
-is a warning, not an error. Until (4), the `tfDangling` reference stays in the bridge: assemble's check has no warning
-level (`check_dangling` fails on every unknown reference), so leaving it out would fail every build instead of warning.
+assemble's dangling-reference check (`tools/xmake/assemble.lua`, F0) does the same on the assembled packs
+([issue #21](https://github.com/MiracleForest/GloamingForest/issues/21), fixed in F0's W0c): it reads
+`tools/import/known-ids.json` itself (its `ids` known by kind, its `tfDangling` references reported as warnings),
+types the values of tag-valued keys as tags and reads `tags/twilight/<registry>/` as a two-segment registry. The
+import therefore writes no index file for it (the W0b bridge `data/twilightforest/gf_known/**` is gone); it keeps its
+own check so that a dangling reference fails at generation, next to the TF file that names it. `assemble -Check`
+reports the one `tfDangling` reference as its only warning.
+
 ## Sound events
 
 F3 (`tools/sounds/synth.ps1`) writes the resource pack's `sound_definitions` for all 328 TF sound events, one
@@ -137,7 +133,7 @@ Shared files get one owner by rule:
   lying one's). Weighted random variants use their first model. `uvlock` is not supported by Bedrock.
 - Multipart (fences, walls, panes, ...): one geometry per block, a bone per part rotated about the block centre (bone
   rotation `[x, y, 0]`),
-  visibility from the part's `when` condition.
+  visibility from the part's `when` condition (a part without one is always shown).
 - Geometry: Java elements `from`/`to` (0..16) become Bedrock cubes with `origin = [8 - to.x, from.y, from.z - 8]`
   (Bedrock's model x axis is mirrored), per-face UVs (up / down faces flipped as Bedrock maps them), face
   `rotation` -> `uv_rotation`, element rotation -> cube `pivot` / `rotation` `[-x, -y, z]` (`rescale` applied to the size),
@@ -184,11 +180,16 @@ Shared files get one owner by rule:
   `sounds.json` `block_sounds`), not sound events, so the closest one stands in where the Java type has none:
   `LILY_PAD` -> `grass` (Bedrock's own `waterlily` uses `grass`, vanilla `blocks.json` 1.26.51; Java's lily pad
   differs only in its place sound), `FLOWERING_AZALEA` -> `azalea` (the vanilla `blocks.json` names no flowering
-  azalea type; the three troll roots use it), and TF's `TFSoundTypes.JAR` (mason / firefly / cicada jar: TF's own
-  `block.twilightforest.jar.*` events, which F3 defines in `sound_definitions`) -> `glass`. A `block_sounds` entry
-  `twilightforest:jar` pointing at F3's events would need a merged RP `sounds.json`, which assemble does not have
-  (`tools/xmake/merges.json`, F0 / A8; requested in issue #21); until then the jar owners (U6) play the jar events
-  through `fx` on placement and breaking, and the blocks use the glass type. Flammability: only the 180 blocks TF registers with
+  azalea type; the three troll roots use it). TF's own sound types (`TFSoundTypes.java`: `JAR`, NeoForge's
+  `DeferredSoundType(volume, pitch, break, step, place, hit, fall)` of `TFSounds` events) become sound types of the
+  pack: `twilightforest.<type>` (`twilightforest.jar`: the mason jar, firefly jar, firefly particle spawner and cicada
+  jar), written to `rp/sounds.json.d/import-<owner>.json` (assemble merges it into the resource pack's `sounds.json`
+  per id; one file per owner of the blocks using the type, F1 when several units do): `block_sounds` break, place
+  and hit, `interactive_sounds.block_sounds` step and fall, each with F3's event (`block.twilightforest.jar.*`) at the
+  volume and pitch Java plays it for a type of volume v and pitch p (break and place (v + 1) / 2 at p x 0.8, hit
+  (v + 1) / 8 at p x 0.5, step v x 0.15 at p, fall v x 0.5 at p x 0.75); Bedrock's jump and land, which Java has no
+  sound of their own for, play the step and the fall. F11's family generator writes the same entries after the
+  merge (`tools/families/families.lua` `SOUND_TYPES`), identical, so the result does not depend on the order. Flammability: only the 180 blocks TF registers with
   `FireBlock.setFlammable(block, encouragement, flammability)` (`RegistrationEvents.java`) get
   `minecraft:flammable` (`catch_chance_modifier` = encouragement, `destroy_chance_modifier` = flammability);
   `ignitedByLava` alone does not make a block burn in Java. Blocks not listed in a creative tab get
@@ -254,6 +255,22 @@ Shared files get one owner by rule:
   vanishing blocks, magic log cores, torchberry plant, brazier, ominous candles, skull candles, candelabra,
   casket and skull chest with lava). The mason jar's light comes from its block entity's item and stays the
   owner's.
+- Block format (`Blocks.BlockFormat`, `FamilyBlockFormat`; measured on BDS 1.26.51, [S7](../spikes/S7.md)): from
+  format 1.26.20 a block file is read by the schema `SharedTypes::v1_26_20::BlockDefinition`, which keeps block tags
+  in the component `minecraft:tags`, an **array** of tag ids (`"minecraft:tags": ["minecraft:is_pickaxe_item_destructible"]`;
+  the item form `{"tags": [...]}` is refused, "expected an array"), refuses the older `"tag:<id>": {}` components
+  ("not present in the Schema": the block does not load) and takes `minecraft:block_entity`; formats up to 1.26.10
+  take only `"tag:<id>"` components (`minecraft:tags` is "not valid here") and refuse `minecraft:block_entity`. The
+  import writes every block the game loads as written in **1.26.50** with the `minecraft:tags` array. The family
+  blocks (the 347 of `data/gf/families`) are rewritten at assemble by F11's families kit, in its own format 1.26.0
+  (`tools/families/families.lua` `FORMAT`), from a copy of the skeleton or from its `"tag:"` components: their
+  skeleton is the kit's input, never loaded as written, and keeps 1.21.80 with `"tag:<id>"` components until the kit
+  no longer reads the skeleton's tag form (then `FamilyBlockFormat` becomes `BlockFormat`). The kit's format-free
+  input is the families data's `params.tags` (*Families* below): for a family block the kit writes in 1.26.50 (the
+  chests, with `minecraft:block_entity` for F10's native container backend) they are its `minecraft:tags` array, for
+  one in 1.26.0 its `"tag:<id>"` components. In the v1_26_20 schema a `bone_visibility`
+  value is a Molang string (a boolean is refused): a multipart part without a `when` is not named (a bone
+  `bone_visibility` does not name is shown).
 
 ## Items, entities, recipes
 
@@ -301,7 +318,11 @@ trapped_chest, horizontal, directional, climbable for `LadderBlock`), else the b
 `params.traits` lists every trait family of the contract the block has, whatever its shape: `waterloggable` (a
 `waterlogged` Java property), `snowloggable` (implements `SnowLoggable`), `climbable` (`LadderBlock`, or in
 `#minecraft:climbable`), `lightable` (implements `LightableBlock`), `connected_texture` (a model with TF's
-`connected_texture_block` loader).
+`connected_texture_block` loader). `params.tags` lists the block's Bedrock block tags (*Tools and drops* above:
+`minecraft:is_<tool>_item_destructible`, `minecraft:leaves`, the tier tag), free of the block format, so that the
+kit writes them in the form of whatever format it writes the block in (`minecraft:tags` array from 1.26.20,
+`"tag:<id>"` components up to 1.26.10, *Block format* above); absent for a block without tags. The import fails
+when a family block's `params.tags` and its skeleton file's tags differ (after the overrides).
 
 ## Lang
 

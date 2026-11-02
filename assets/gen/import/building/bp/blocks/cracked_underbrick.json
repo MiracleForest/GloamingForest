@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:cracked_underbrick",
@@ -14,8 +14,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 30
       },
-      "tag:minecraft:is_pickaxe_item_destructible": {},
-      "tag:minecraft:stone_tier_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:stone_tier_destructible"],
       "minecraft:map_color": "#8f7748",
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {

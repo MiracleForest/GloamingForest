@@ -1,6 +1,0 @@
-{
-  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
-  "kind": "damage_effects",
-  "reason": "\"effects\" of damage_type/clamped; a NeoForge enum extension of DamageEffects (serialized twilightforest:pinch) (src/main/java/twilightforest/TFEnumExtensions.java (DamageEffects_PINCH))",
-  "referencedBy": ["data/twilightforest/damage_type/clamped.json"]
-}

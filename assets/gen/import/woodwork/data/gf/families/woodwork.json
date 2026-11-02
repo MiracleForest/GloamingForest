@@ -6,7 +6,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -16,7 +17,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -26,7 +28,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -36,7 +39,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -46,7 +50,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -56,7 +61,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -67,7 +73,8 @@
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -77,7 +84,8 @@
       "class": "ButtonBlock",
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_set",
-      "states": ["face", "facing", "powered"]
+      "states": ["face", "facing", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -87,7 +95,8 @@
       "class": "ChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -97,7 +106,8 @@
       "class": "DoorBlock",
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_set",
-      "states": ["facing", "half", "hinge", "open", "powered"]
+      "states": ["facing", "half", "hinge", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -107,7 +117,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -117,7 +128,8 @@
       "class": "FenceBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
-      "states": ["east", "north", "south", "west"]
+      "states": ["east", "north", "south", "west"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -127,7 +139,8 @@
       "class": "FenceGateBlock",
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_type",
-      "states": ["facing", "in_wall", "open", "powered"]
+      "states": ["facing", "in_wall", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -138,7 +151,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_type",
-      "states": ["attached", "rotation"]
+      "states": ["attached", "rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -146,7 +160,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -156,7 +171,8 @@
       "class": "PressurePlateBlock",
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_set",
-      "states": ["powered"]
+      "states": ["powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -167,7 +183,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_type",
-      "states": ["rotation"]
+      "states": ["rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -177,7 +194,8 @@
       "class": "SlabBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
-      "states": ["type"]
+      "states": ["type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -187,7 +205,8 @@
       "class": "StairBlock",
       "traits": ["waterloggable"],
       "base": "twilightforest:canopy_planks",
-      "states": ["facing", "half", "shape"]
+      "states": ["facing", "half", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -197,7 +216,8 @@
       "class": "TrapDoorBlock",
       "traits": ["waterloggable"],
       "woodType": "canopy_wood_set",
-      "states": ["facing", "half", "open", "powered"]
+      "states": ["facing", "half", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -207,7 +227,8 @@
       "class": "TrappedChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -218,7 +239,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -229,7 +251,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:canopy_planks",
       "woodType": "canopy_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -237,7 +260,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -247,7 +271,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -257,7 +282,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -267,7 +293,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -277,7 +304,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -288,7 +316,8 @@
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -298,7 +327,8 @@
       "class": "ButtonBlock",
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_set",
-      "states": ["face", "facing", "powered"]
+      "states": ["face", "facing", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -308,7 +338,8 @@
       "class": "ChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -318,7 +349,8 @@
       "class": "DoorBlock",
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_set",
-      "states": ["facing", "half", "hinge", "open", "powered"]
+      "states": ["facing", "half", "hinge", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -328,7 +360,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -338,7 +371,8 @@
       "class": "FenceBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
-      "states": ["east", "north", "south", "west"]
+      "states": ["east", "north", "south", "west"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -348,7 +382,8 @@
       "class": "FenceGateBlock",
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_type",
-      "states": ["facing", "in_wall", "open", "powered"]
+      "states": ["facing", "in_wall", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -359,7 +394,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_type",
-      "states": ["attached", "rotation"]
+      "states": ["attached", "rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -367,7 +403,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -377,7 +414,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -387,7 +425,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -397,7 +436,8 @@
       "class": "PressurePlateBlock",
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_set",
-      "states": ["powered"]
+      "states": ["powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -408,7 +448,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_type",
-      "states": ["rotation"]
+      "states": ["rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -418,7 +459,8 @@
       "class": "SlabBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
-      "states": ["type"]
+      "states": ["type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -428,7 +470,8 @@
       "class": "StairBlock",
       "traits": ["waterloggable"],
       "base": "twilightforest:dark_planks",
-      "states": ["facing", "half", "shape"]
+      "states": ["facing", "half", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -439,7 +482,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_set",
-      "states": ["facing", "half", "open", "powered"]
+      "states": ["facing", "half", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -449,7 +493,8 @@
       "class": "TrappedChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -460,7 +505,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -471,7 +517,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:dark_planks",
       "woodType": "dark_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -479,7 +526,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -489,7 +537,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -498,7 +547,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -508,7 +558,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -517,7 +568,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -527,7 +579,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -536,7 +589,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -546,7 +600,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -555,7 +610,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -565,7 +621,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -574,7 +631,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -584,7 +642,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -593,7 +652,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -603,7 +663,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -612,7 +673,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -622,7 +684,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -631,7 +694,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -641,7 +705,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -650,7 +715,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -660,7 +726,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -669,7 +736,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -679,7 +747,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -688,7 +757,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -698,7 +768,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -707,7 +778,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -717,7 +789,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -726,7 +799,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -736,7 +810,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -745,7 +820,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -755,7 +831,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -764,7 +841,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -774,7 +852,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -783,7 +862,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -793,7 +873,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -802,7 +883,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -812,7 +894,8 @@
       "class": "ClimbableHollowLogBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["climbable"],
-      "states": ["facing", "variant"]
+      "states": ["facing", "variant"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -821,7 +904,8 @@
     "params": {
       "class": "VerticalHollowLogBlock",
       "vanillaClass": "Block",
-      "traits": ["waterloggable"]
+      "traits": ["waterloggable"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -831,7 +915,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -841,7 +926,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -852,7 +938,8 @@
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -862,7 +949,8 @@
       "class": "ButtonBlock",
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_set",
-      "states": ["face", "facing", "powered"]
+      "states": ["face", "facing", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -872,7 +960,8 @@
       "class": "ChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -882,7 +971,8 @@
       "class": "DoorBlock",
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_set",
-      "states": ["facing", "half", "hinge", "open", "powered"]
+      "states": ["facing", "half", "hinge", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -892,7 +982,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -902,7 +993,8 @@
       "class": "FenceBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
-      "states": ["east", "north", "south", "west"]
+      "states": ["east", "north", "south", "west"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -912,7 +1004,8 @@
       "class": "FenceGateBlock",
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_type",
-      "states": ["facing", "in_wall", "open", "powered"]
+      "states": ["facing", "in_wall", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -923,7 +1016,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_type",
-      "states": ["attached", "rotation"]
+      "states": ["attached", "rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -931,7 +1025,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -941,7 +1036,8 @@
       "class": "PressurePlateBlock",
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_set",
-      "states": ["powered"]
+      "states": ["powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -952,7 +1048,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_type",
-      "states": ["rotation"]
+      "states": ["rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -962,7 +1059,8 @@
       "class": "SlabBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
-      "states": ["type"]
+      "states": ["type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -972,7 +1070,8 @@
       "class": "StairBlock",
       "traits": ["waterloggable"],
       "base": "twilightforest:mangrove_planks",
-      "states": ["facing", "half", "shape"]
+      "states": ["facing", "half", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -983,7 +1082,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_set",
-      "states": ["facing", "half", "open", "powered"]
+      "states": ["facing", "half", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -993,7 +1093,8 @@
       "class": "TrappedChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1004,7 +1105,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1015,7 +1117,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mangrove_planks",
       "woodType": "mangrove_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1023,7 +1126,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1034,7 +1138,8 @@
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1044,7 +1149,8 @@
       "class": "ButtonBlock",
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_set",
-      "states": ["face", "facing", "powered"]
+      "states": ["face", "facing", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1054,7 +1160,8 @@
       "class": "ChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1064,7 +1171,8 @@
       "class": "DoorBlock",
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_set",
-      "states": ["facing", "half", "hinge", "open", "powered"]
+      "states": ["facing", "half", "hinge", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1074,7 +1182,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1084,7 +1193,8 @@
       "class": "FenceBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
-      "states": ["east", "north", "south", "west"]
+      "states": ["east", "north", "south", "west"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1094,7 +1204,8 @@
       "class": "FenceGateBlock",
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_type",
-      "states": ["facing", "in_wall", "open", "powered"]
+      "states": ["facing", "in_wall", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1105,7 +1216,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_type",
-      "states": ["attached", "rotation"]
+      "states": ["attached", "rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1113,7 +1225,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1123,7 +1236,8 @@
       "class": "PressurePlateBlock",
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_set",
-      "states": ["powered"]
+      "states": ["powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1134,7 +1248,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_type",
-      "states": ["rotation"]
+      "states": ["rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1144,7 +1259,8 @@
       "class": "SlabBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
-      "states": ["type"]
+      "states": ["type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1154,7 +1270,8 @@
       "class": "StairBlock",
       "traits": ["waterloggable"],
       "base": "twilightforest:mining_planks",
-      "states": ["facing", "half", "shape"]
+      "states": ["facing", "half", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1165,7 +1282,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_set",
-      "states": ["facing", "half", "open", "powered"]
+      "states": ["facing", "half", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1175,7 +1293,8 @@
       "class": "TrappedChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1186,7 +1305,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1197,7 +1317,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:mining_planks",
       "woodType": "mining_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1205,7 +1326,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1215,7 +1337,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1225,7 +1348,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1236,7 +1360,8 @@
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1246,7 +1371,8 @@
       "class": "ButtonBlock",
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_set",
-      "states": ["face", "facing", "powered"]
+      "states": ["face", "facing", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1256,7 +1382,8 @@
       "class": "ChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1266,7 +1393,8 @@
       "class": "DoorBlock",
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_set",
-      "states": ["facing", "half", "hinge", "open", "powered"]
+      "states": ["facing", "half", "hinge", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1276,7 +1404,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1286,7 +1415,8 @@
       "class": "FenceBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
-      "states": ["east", "north", "south", "west"]
+      "states": ["east", "north", "south", "west"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1296,7 +1426,8 @@
       "class": "FenceGateBlock",
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_type",
-      "states": ["facing", "in_wall", "open", "powered"]
+      "states": ["facing", "in_wall", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1307,7 +1438,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_type",
-      "states": ["attached", "rotation"]
+      "states": ["attached", "rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1315,7 +1447,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1325,7 +1458,8 @@
       "class": "PressurePlateBlock",
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_set",
-      "states": ["powered"]
+      "states": ["powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1336,7 +1470,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_type",
-      "states": ["rotation"]
+      "states": ["rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1346,7 +1481,8 @@
       "class": "SlabBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
-      "states": ["type"]
+      "states": ["type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1356,7 +1492,8 @@
       "class": "StairBlock",
       "traits": ["waterloggable"],
       "base": "twilightforest:sorting_planks",
-      "states": ["facing", "half", "shape"]
+      "states": ["facing", "half", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1367,7 +1504,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_set",
-      "states": ["facing", "half", "open", "powered"]
+      "states": ["facing", "half", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1377,7 +1515,8 @@
       "class": "TrappedChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1388,7 +1527,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1399,7 +1539,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:sorting_planks",
       "woodType": "sorting_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1407,7 +1548,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1417,7 +1559,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1427,7 +1570,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1435,7 +1579,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1443,7 +1588,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1451,7 +1597,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1459,7 +1606,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1467,7 +1615,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1475,7 +1624,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1483,7 +1633,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1491,7 +1642,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1499,7 +1651,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1507,7 +1660,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1515,7 +1669,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1523,7 +1678,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1531,7 +1687,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1539,7 +1696,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1547,7 +1705,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1555,7 +1714,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1566,7 +1726,8 @@
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1576,7 +1737,8 @@
       "class": "ButtonBlock",
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_set",
-      "states": ["face", "facing", "powered"]
+      "states": ["face", "facing", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1586,7 +1748,8 @@
       "class": "ChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1596,7 +1759,8 @@
       "class": "DoorBlock",
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_set",
-      "states": ["facing", "half", "hinge", "open", "powered"]
+      "states": ["facing", "half", "hinge", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1606,7 +1770,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1616,7 +1781,8 @@
       "class": "FenceBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
-      "states": ["east", "north", "south", "west"]
+      "states": ["east", "north", "south", "west"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1626,7 +1792,8 @@
       "class": "FenceGateBlock",
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_type",
-      "states": ["facing", "in_wall", "open", "powered"]
+      "states": ["facing", "in_wall", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1637,7 +1804,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_type",
-      "states": ["attached", "rotation"]
+      "states": ["attached", "rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1645,7 +1813,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1655,7 +1824,8 @@
       "class": "PressurePlateBlock",
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_set",
-      "states": ["powered"]
+      "states": ["powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1666,7 +1836,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_type",
-      "states": ["rotation"]
+      "states": ["rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1676,7 +1847,8 @@
       "class": "SlabBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
-      "states": ["type"]
+      "states": ["type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1686,7 +1858,8 @@
       "class": "StairBlock",
       "traits": ["waterloggable"],
       "base": "twilightforest:time_planks",
-      "states": ["facing", "half", "shape"]
+      "states": ["facing", "half", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1697,7 +1870,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_set",
-      "states": ["facing", "half", "open", "powered"]
+      "states": ["facing", "half", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1707,7 +1881,8 @@
       "class": "TrappedChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1718,7 +1893,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1729,7 +1905,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:time_planks",
       "woodType": "time_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1737,7 +1914,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1748,7 +1926,8 @@
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1758,7 +1937,8 @@
       "class": "ButtonBlock",
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_set",
-      "states": ["face", "facing", "powered"]
+      "states": ["face", "facing", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1768,7 +1948,8 @@
       "class": "ChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1778,7 +1959,8 @@
       "class": "DoorBlock",
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_set",
-      "states": ["facing", "half", "hinge", "open", "powered"]
+      "states": ["facing", "half", "hinge", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1788,7 +1970,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1798,7 +1981,8 @@
       "class": "FenceBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
-      "states": ["east", "north", "south", "west"]
+      "states": ["east", "north", "south", "west"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1808,7 +1992,8 @@
       "class": "FenceGateBlock",
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_type",
-      "states": ["facing", "in_wall", "open", "powered"]
+      "states": ["facing", "in_wall", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1819,7 +2004,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_type",
-      "states": ["attached", "rotation"]
+      "states": ["attached", "rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1827,7 +2013,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1837,7 +2024,8 @@
       "class": "PressurePlateBlock",
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_set",
-      "states": ["powered"]
+      "states": ["powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1848,7 +2036,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_type",
-      "states": ["rotation"]
+      "states": ["rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1858,7 +2047,8 @@
       "class": "SlabBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
-      "states": ["type"]
+      "states": ["type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1868,7 +2058,8 @@
       "class": "StairBlock",
       "traits": ["waterloggable"],
       "base": "twilightforest:transformation_planks",
-      "states": ["facing", "half", "shape"]
+      "states": ["facing", "half", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1879,7 +2070,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_set",
-      "states": ["facing", "half", "open", "powered"]
+      "states": ["facing", "half", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1889,7 +2081,8 @@
       "class": "TrappedChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1900,7 +2093,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1911,7 +2105,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:transformation_planks",
       "woodType": "transformation_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1919,7 +2114,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1930,7 +2126,8 @@
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1940,7 +2137,8 @@
       "class": "ButtonBlock",
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_set",
-      "states": ["face", "facing", "powered"]
+      "states": ["face", "facing", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1950,7 +2148,8 @@
       "class": "ChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1960,7 +2159,8 @@
       "class": "DoorBlock",
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_set",
-      "states": ["facing", "half", "hinge", "open", "powered"]
+      "states": ["facing", "half", "hinge", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1970,7 +2170,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1980,7 +2181,8 @@
       "class": "FenceBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
-      "states": ["east", "north", "south", "west"]
+      "states": ["east", "north", "south", "west"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -1990,7 +2192,8 @@
       "class": "FenceGateBlock",
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_wood_type",
-      "states": ["facing", "in_wall", "open", "powered"]
+      "states": ["facing", "in_wall", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2001,7 +2204,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_wood_type",
-      "states": ["attached", "rotation"]
+      "states": ["attached", "rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2009,7 +2213,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2019,7 +2224,8 @@
       "class": "PressurePlateBlock",
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_set",
-      "states": ["powered"]
+      "states": ["powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2030,7 +2236,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_wood_type",
-      "states": ["rotation"]
+      "states": ["rotation"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2040,7 +2247,8 @@
       "class": "SlabBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
-      "states": ["type"]
+      "states": ["type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2050,7 +2258,8 @@
       "class": "StairBlock",
       "traits": ["waterloggable"],
       "base": "twilightforest:twilight_oak_planks",
-      "states": ["facing", "half", "shape"]
+      "states": ["facing", "half", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2061,7 +2270,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_set",
-      "states": ["facing", "half", "open", "powered"]
+      "states": ["facing", "half", "open", "powered"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2071,7 +2281,8 @@
       "class": "TrappedChestBlock",
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
-      "states": ["facing", "type"]
+      "states": ["facing", "type"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2082,7 +2293,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2090,7 +2302,8 @@
     "family": "wood",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2101,7 +2314,8 @@
       "traits": ["waterloggable"],
       "copyOf": "twilightforest:twilight_oak_planks",
       "woodType": "twilight_oak_wood_type",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2111,7 +2325,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2121,7 +2336,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2131,7 +2347,8 @@
       "class": "BanisterBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "traits": ["waterloggable"],
-      "states": ["extended", "facing", "shape"]
+      "states": ["extended", "facing", "shape"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -2141,7 +2358,8 @@
       "class": "DryingRackBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable"],
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   }
 ]

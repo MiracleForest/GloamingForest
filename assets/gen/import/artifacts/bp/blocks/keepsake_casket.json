@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:keepsake_casket",
@@ -17,7 +17,7 @@
         "seconds_to_destroy": 5
       },
       "minecraft:destructible_by_explosion": false,
-      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#191919",
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {

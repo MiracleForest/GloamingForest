@@ -1,6 +1,0 @@
-{
-  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
-  "kind": "template_marker_handler_type",
-  "reason": "\"type\" of twilight/template_marker_handler_list handlers; a code registry (codec) (src/main/java/twilightforest/init/custom/TemplateMarkerHandlers.java (LOOT))",
-  "referencedBy": ["data/twilightforest/twilight/template_marker_handler_list/camp_marker_handlers.json"]
-}

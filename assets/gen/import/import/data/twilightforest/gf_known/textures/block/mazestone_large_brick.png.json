@@ -1,6 +1,0 @@
-{
-  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
-  "kind": "texture",
-  "reason": "\"background\" of advancement root: a resource pack texture (src/main/resources/assets/twilightforest/textures/block/mazestone_large_brick.png)",
-  "referencedBy": ["data/twilightforest/advancement/root.json"]
-}

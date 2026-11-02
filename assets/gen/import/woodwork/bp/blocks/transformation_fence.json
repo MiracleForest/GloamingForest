@@ -29,7 +29,6 @@
       "minecraft:geometry": {
         "identifier": "geometry.tf.twilightforest.block.transformation_fence.multipart",
         "bone_visibility": {
-          "part0": true,
           "part1": "q.block_state('twilightforest:north')",
           "part2": "q.block_state('twilightforest:south')",
           "part3": "q.block_state('twilightforest:west')",

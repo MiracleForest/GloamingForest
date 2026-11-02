@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:mazestone_brick",
@@ -14,8 +14,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 25
       },
-      "tag:minecraft:is_pickaxe_item_destructible": {},
-      "tag:minecraft:diamond_tier_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"],
       "minecraft:map_color": "#707070",
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {

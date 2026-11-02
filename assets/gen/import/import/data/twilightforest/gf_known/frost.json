@@ -1,9 +1,0 @@
-{
-  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
-  "kind": "enforcement",
-  "reason": "\"enforcement\" of twilight/restrictions entries; a code registry (src/main/java/twilightforest/init/custom/Enforcements.java (FROST))",
-  "referencedBy": [
-    "data/twilightforest/twilight/restrictions/glacier.json",
-    "data/twilightforest/twilight/restrictions/snowy_forest.json"
-  ]
-}
