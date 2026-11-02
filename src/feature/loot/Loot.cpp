@@ -475,7 +475,9 @@ bool placeContainer(BlockSource& region, BlockPos const& pos, std::string const&
         warnOnce("placeContainer: unknown block " + blockId);
         return false;
     }
-    if (game::blockIdAt(region, pos) != blockId || &region.getBlock(pos) != block) {
+    // a container of this block already standing there keeps its states (its facing, a double
+    // chest's half): only the loot table is set (a template's loot marker on its own chest)
+    if (game::blockIdAt(region, pos) != blockId) {
         if (!game::setBlock(region, pos, *block)) return false;
     }
     if (auto* actor = region.getBlockEntity(pos); actor && isVanillaLootContainer(*actor)) {
