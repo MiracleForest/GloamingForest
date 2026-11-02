@@ -18,8 +18,9 @@
 //                       getBossBarColor); the hook answers with the RGB of the TF boss whose title
 //                       (and, between equal titles, progress) that bar shows, matched once per
 //                       change of the index's title or of the TF bars. The bar's overlay
-//                       (BossBarOverlay NOTCHED_6/10/12/20: the Naga, the shielded Lich) is drawn
-//                       over the HUD's bar after the HUD rendered (Bedrock draws no notches).
+//                       (BossBarOverlay NOTCHED_6/10/12/20: the Naga, the shielded Lich): the
+//                       HUD bar's two images get textures with the notch dividers in them (Bedrock
+//                       draws no overlay), tinted like the bar as Java tints its notch sprites.
 //   boss.death_time     UpdateDeathTimePacket (read with gf::client::entity::deathTime).
 //   entity.move_player  MovePlayerPacket: the local player is pushed.
 //   entity.hostile_mount  ClientGameEvents#removeHostileMountHealth: no mount hearts on a hostile
@@ -38,6 +39,7 @@
 #include <mutex>
 #include <set>
 #include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -46,6 +48,8 @@
 #include "ll/api/event/render/UIRenderEvent.h"
 #include "ll/api/memory/Hook.h"
 
+#include "mc/client/gui/controls/RenderableComponent.h"
+#include "mc/client/gui/controls/SpriteComponent.h"
 #include "mc/client/gui/controls/UIControl.h"
 #include "mc/client/gui/controls/VisualTree.h"
 #include "mc/client/gui/controls/renderers/HudHorseHeartRenderer.h"
@@ -56,11 +60,12 @@
 #include "mc/entity/components/ActorUniqueIDComponent.h"
 #include "mc/entity/components/death/DeathTickingComponent.h"
 #include "mc/entity/systems/death/ClientMobTickDeathSystemImpl.h"
+#include "mc/deps/core/file/PathView.h"
 #include "mc/deps/core/math/Color.h"
+#include "mc/deps/core/resource/ResourceLocation.h"
 #include "mc/safety/RedactableString.h"
 
 #include "client/Client.h"
-#include "client/screen/base/Screen.h"
 #include "feature/net/Net.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -82,15 +87,15 @@ struct IndexMatch {
     std::string   rawTitle;
     std::uint64_t generation = 0; ///< ClientState::generation when matched
     std::int64_t  boss       = 0; ///< 0: no TF boss
-    Clock::time_point seen;       ///< the last frame the HUD asked for this bar
 };
 
 struct ClientState {
     std::mutex                                       mutex; ///< everything below: net handlers vs. HUD / renderers
     std::unordered_map<std::int64_t, BossBar>        bars;
-    std::uint64_t                                    generation = 1; ///< bumped by every "boss.bar" message
+    std::uint64_t                                    generation = 1; ///< bumped when the TF bars change (titles, set, style)
     std::unordered_map<int, IndexMatch>              matches;        ///< HUD bar index -> TF boss
     std::set<std::int64_t>                           notchLogged;    ///< bars whose notches were drawn (one log line each)
+    std::uint64_t                                    notchVersion = 1; ///< bumped when an index's TF bar or a bar's overlay changes
     std::unordered_map<std::int64_t, DeathTime>      deathTimes;
     std::unordered_map<std::int64_t, std::vector<Part>> multipart;
     std::unordered_map<std::int64_t, std::int64_t>   partParents;
@@ -142,7 +147,6 @@ std::optional<mce::Color> exactColour(ClientInstanceScreenModel const& model, in
     std::string raw = model.getBossName(index).mUnredactedString;
     std::scoped_lock lock(s.mutex);
     auto& match = s.matches[index];
-    match.seen  = Clock::now();
     if (match.generation != s.generation || match.rawTitle != raw) {
         std::string title  = plain(raw);
         float       health = model.getBossHealthPercentage(index);
@@ -155,7 +159,8 @@ std::optional<mce::Color> exactColour(ClientInstanceScreenModel const& model, in
         }
         match.rawTitle   = std::move(raw);
         match.generation = s.generation;
-        match.boss       = best;
+        if (match.boss != best) ++s.notchVersion; // the bar at this index is another one now
+        match.boss = best;
         if (!best && s.unmatched.insert(title).second) log().info("client boss bar '{}' has no TF colour", title);
     }
     auto it = s.bars.find(match.boss);
@@ -167,7 +172,8 @@ std::optional<mce::Color> exactColour(ClientInstanceScreenModel const& model, in
 namespace {
 
 /// The boss bar controls of the HUD (hud_screen.json: boss_health_grid -> one boss_health_panel
-/// per bar, collection "boss_bars", with its progress_bar_for_collections).
+/// per bar, collection "boss_bars", with its progress_bar_for_collections of two images:
+/// empty_progress_bar and filled_progress_bar_for_collections).
 UIControl* findControl(UIControl& root, std::string_view name, int depth = 0) {
     if (root.mName.get() == name) return &root;
     if (depth > 40) return nullptr;
@@ -177,96 +183,126 @@ UIControl* findControl(UIControl& root, std::string_view name, int depth = 0) {
     return nullptr;
 }
 
-/// BossHealthOverlay#drawBar's overlay sprites (BossBarOverlay NOTCHED_6 / 10 / 12 / 20) over the
-/// HUD's bar: Bedrock's HUD draws no notches, so the client mod adds them after the HUD rendered.
-/// Java's notch sprites are Mojang's textures (not TF's assets, not on Bedrock): the notches are
-/// drawn as 1-pixel dividers, darker over the bar's background than over its progress.
-/// The notch dividers of the HUD's bars this frame (GUI pixels, ARGB).
-struct Notch {
-    float    x = 0, y = 0, w = 0, h = 0;
-    unsigned argb = 0;
+/// The sprite of an image control (its one renderable component).
+SpriteComponent* spriteOf(UIControl& image) {
+    auto const& list = image.mRenderableComponentLookup.get();
+    return list.empty() || !list.front() ? nullptr : static_cast<SpriteComponent*>(list.front());
+}
+
+/// ClientTFBossBar#renderBossBar's overlay (BossEvent.BossBarOverlay NOTCHED_6 / 10 / 12 / 20:
+/// the Naga's, the shielded Lich's): Java draws BossHealthOverlay's notch sprites over the bar's
+/// background and over its progress, tinted like the bar. Bedrock's HUD draws no overlay, and draws
+/// issued from the render events do not reach its batched layer, so the client mod gives the HUD
+/// bar's own two images textures with the dividers in them (the resource pack's
+/// textures/ui/entity/boss_bar_notched_<n>_{background,progress}: original pixel art, the HUD tints
+/// them with the bar's colour as Java tints its sprites) and puts the vanilla textures back when
+/// the bar at that index shows no notched TF bar. The textures change only when the bars do (the
+/// HUD's matches or a "boss.bar" message), not per frame.
+struct NotchedImage {
+    std::weak_ptr<UIControl> control;
+    std::string              vanilla; ///< the texture the HUD gave it
+    std::string              applied; ///< the texture set now ("" = the vanilla one)
 };
-std::vector<Notch>& pendingNotches() {
-    static std::vector<Notch> v; // render thread only
-    return v;
+struct NotchState {
+    std::weak_ptr<UIControl>  grid;
+    std::uint64_t             version = 0; ///< ClientState::notchVersion of the last pass
+    std::vector<UIControl*>   items;       ///< the grid's item controls in the last pass (identity only)
+    std::vector<NotchedImage> images;      ///< every image the client mod changed
+};
+NotchState& notchState() {
+    static NotchState n; // render thread only
+    return n;
 }
+constexpr int kNotches[] = {0, 6, 10, 12, 20};
 
-/// Paints the collected dividers unclipped (after a render, the context still clips to the last
-/// clipped control).
-void paintNotches(MinecraftUIRenderContext& ctx) {
-    auto& notches = pendingNotches();
-    if (notches.empty()) return;
-    ctx.saveCurrentClippingRectangle();
-    ctx.setFullClippingRectangle();
-    {
-        gf::client::screen::Canvas canvas(ctx);
-        for (auto const& n : notches) canvas.fill({n.x, n.y, n.w, n.h}, n.argb);
+/// Sets an image's texture, remembering the HUD's own one.
+void setTexture(UIControl& image, std::shared_ptr<UIControl> const& owner, std::string const& texture) {
+    auto* sprite = spriteOf(image);
+    if (!sprite) return;
+    auto& list = notchState().images;
+    auto  it   = std::find_if(list.begin(), list.end(), [&](NotchedImage const& n) { return n.control.lock().get() == &image; });
+    if (it == list.end()) {
+        if (texture.empty()) return; // never changed: nothing to put back
+        list.push_back({owner, sprite->mResourceLocation->mPath->value, ""});
+        it = std::prev(list.end());
     }
-    ctx.restoreSavedClippingRectangle();
+    if (it->applied == texture) return;
+    std::string const& path = texture.empty() ? it->vanilla : texture;
+    sprite->setResourceLocation(ResourceLocation(Core::PathView(path)));
+    it->applied = texture;
 }
 
-/// Collects the dividers over the bars the HUD shows (from its visual tree).
-void collectNotches(ScreenView& view) {
-    pendingNotches().clear();
-    auto& s = C();
-    struct Want {
-        int          index    = 0;
-        int          notches  = 0;
-        float        progress = 0;
-        std::int64_t boss     = 0;
-    };
-    std::vector<Want> wants;
+/// Applies the overlay textures to the HUD's bars when the TF bars, their HUD indices or the HUD's
+/// bar controls changed; otherwise a frame costs a version read and a pointer compare per bar.
+void applyNotches(ScreenView& view) {
+    auto&         s = C();
+    std::uint64_t version;
     {
         std::scoped_lock lock(s.mutex);
-        auto             now = Clock::now();
+        version = s.notchVersion;
+    }
+    auto& st   = notchState();
+    auto  grid = st.grid.lock();
+    if (grid) {
+        auto const& children = grid->mChildren.get();
+        bool        same     = version == st.version && children.size() == st.items.size();
+        for (std::size_t i = 0; same && i < children.size(); ++i) same = children[i].get() == st.items[i];
+        if (same) return; // nothing changed
+    } else {
+        // no change since the last pass, and no grid lost since (a rebuilt HUD tree: apply again)
+        if (version == st.version && st.items.empty()) return;
+        auto* tree = view.mVisualTree.get();
+        if (!tree || !tree->mRootControl) return;
+        UIControl* found = findControl(*tree->mRootControl, "boss_health_grid");
+        if (found)
+            if (auto parent = found->mParent.lock())
+                for (auto const& child : parent->mChildren.get())
+                    if (child.get() == found) grid = child;
+        if (!grid) {
+            st.items.clear(); // look again at the next change, not on every frame
+            st.version = version;
+            return;
+        }
+        st.grid = grid;
+        st.images.clear(); // a new HUD tree: its images have their own textures
+    }
+    // (HUD index, notches, boss) of the notched TF bars
+    std::vector<std::tuple<int, int, std::int64_t>> shown;
+    {
+        std::scoped_lock lock(s.mutex);
         for (auto const& [index, match] : s.matches) {
-            if (!match.boss || now - match.seen > std::chrono::milliseconds(500)) continue;
+            if (!match.boss) continue;
             auto it = s.bars.find(match.boss);
             if (it == s.bars.end() || it->second.overlay <= 0) continue;
-            static constexpr int kNotches[] = {0, 6, 10, 12, 20};
-            wants.push_back({index, kNotches[std::clamp(it->second.overlay, 0, 4)], it->second.progress, match.boss});
+            shown.emplace_back(index, kNotches[std::clamp(it->second.overlay, 0, 4)], match.boss);
         }
+        version = s.notchVersion;
     }
-    if (wants.empty() || !view.mVisualTree.get()) return;
-    // the grid control, found once per HUD tree (render thread only)
-    static std::weak_ptr<UIControl> gridCache;
-    std::shared_ptr<UIControl>      gridPtr = gridCache.lock();
-    if (!gridPtr) {
-        auto const& root = view.mVisualTree.get()->mRootControl;
-        if (!root) return;
-        UIControl* found = findControl(*root, "boss_health_grid");
-        if (!found) return;
-        // its owning pointer: the parent's child entry
-        if (auto parent = found->mParent.lock())
-            for (auto const& child : parent->mChildren.get())
-                if (child.get() == found) gridPtr = child;
-        if (!gridPtr) return;
-        gridCache = gridPtr;
-    }
-    UIControl* grid = gridPtr.get();
+    st.version = version;
+    st.items.clear();
     for (auto const& item : grid->mChildren.get()) {
-        if (!item || !item->mIsVisibleInTree) continue;
-        int index = item->findCollectionIndex("boss_bars");
-        auto want = std::find_if(wants.begin(), wants.end(), [&](Want const& w) { return w.index == index; });
-        if (want == wants.end()) continue;
+        st.items.push_back(item.get());
+        if (!item) continue;
+        int  index   = item->findCollectionIndex("boss_bars");
+        auto w       = std::find_if(shown.begin(), shown.end(), [&](auto const& t) { return std::get<0>(t) == index; });
+        int  notches = w != shown.end() ? std::get<1>(*w) : 0;
         UIControl* bar = findControl(*item, "progress_bar_for_collections");
         if (!bar) continue;
-        if (bar->mCachedPositionDirty) bar->_setCachedPosition();
-        auto  pos = bar->mCachedPosition.get();
-        auto  sz  = bar->mSize.get();
-        float x = pos.x, y = pos.y, w = sz.x, h = sz.y;
-        if (w <= 0 || h <= 0) continue;
-        float filled = x + w * std::clamp(want->progress, 0.0f, 1.0f);
-        for (int k = 1; k < want->notches; ++k) {
-            float nx = std::floor(x + w * static_cast<float>(k) / static_cast<float>(want->notches));
-            pendingNotches().push_back({nx, y, 1.0f, h, nx < filled ? 0x80000000u : 0x50000000u});
+        for (auto const& child : bar->mChildren.get()) {
+            if (!child) continue;
+            auto const& name = child->mName.get();
+            bool        background = name == "empty_progress_bar";
+            if (!background && name != "filled_progress_bar_for_collections") continue;
+            std::string texture;
+            if (notches) texture = "textures/ui/entity/boss_bar_notched_" + std::to_string(notches) + (background ? "_background" : "_progress");
+            setTexture(*child, child, texture);
         }
-        std::scoped_lock lock(s.mutex);
-        if (s.notchLogged.insert(want->boss).second)
-            log().info("client boss bar {} notched {} at {:.0f} {:.0f} ({:.0f} x {:.0f})", want->boss, want->notches, x, y, w, h);
     }
+    std::scoped_lock lock(s.mutex);
+    for (auto const& [index, notches, boss] : shown)
+        if (s.notchLogged.insert(boss).second)
+            log().info("client boss bar {} notched {} (HUD bar {}: textures/ui/entity/boss_bar_notched_{}_*)", boss, notches, index, notches);
 }
-
 } // namespace
 
 } // namespace gf::client::entity
@@ -432,20 +468,33 @@ void registerHandlers() {
         auto             id = m.value("id", std::int64_t{0});
         auto&            s  = C();
         std::scoped_lock lock(s.mutex);
-        ++s.generation; // the HUD's title matches are made again
         auto             op = m.value("op", std::string("add"));
+        // the HUD's title matches are made again when the bars change: added, removed, renamed,
+        // restyled; a progress update only when another bar has the same title (the progress
+        // then tells them apart)
+        if (op == "progress") {
+            auto it = s.bars.find(id);
+            if (it == s.bars.end()) return;
+            it->second.progress = m.value("progress", it->second.progress);
+            auto title          = plain(it->second.title);
+            for (auto const& [other, b] : s.bars)
+                if (other != id && plain(b.title) == title) {
+                    ++s.generation;
+                    break;
+                }
+            return;
+        }
+        ++s.generation;
+        ++s.notchVersion;
         if (op == "remove") {
             s.bars.erase(id);
             s.logged.erase(id);
+            s.notchLogged.erase(id);
             s.deathTimes.erase(id);
             return;
         }
         if (!s.bars.contains(id) && op == "add") log().info("client boss bar {} received (#{:06X})", id, m.value("rgb", 0u));
         auto& bar = s.bars[id];
-        if (op == "progress") {
-            bar.progress = m.value("progress", bar.progress);
-            return;
-        }
         if (op == "name") {
             bar.title = m.value("title", bar.title);
             return;
@@ -505,24 +554,12 @@ void registerHandlers() {
 class EntityClientModule {
 public:
     // the render listener is added at mod load, before the game's threads run (as the screen
-    // framework's: adding render listeners while the client runs can deadlock the game)
+    // framework's: adding render listeners while the client runs can deadlock the game); it looks
+    // at the HUD only, and changes its bar textures only when the TF bars changed
     void load() {
         auto& bus = ll::event::EventBus::getInstance();
-        // the HUD batches its controls, so the dividers are painted on the screen rendered after it in the
-        // frame (the HUD's own context as well, for a frame where none is)
         mListener = bus.emplaceListener<ll::event::AfterUIRenderEvent>([](ll::event::AfterUIRenderEvent& ev) {
-            auto name = ev.screenView().getScreenName();
-            if (name == "hud_screen") {
-                collectNotches(ev.screenView());
-                paintNotches(ev.uiRenderContext());
-                return;
-            }
-            paintNotches(ev.uiRenderContext());
-            pendingNotches().clear();
-        });
-        mBeforeListener = bus.emplaceListener<ll::event::BeforeUIRenderEvent>([](ll::event::BeforeUIRenderEvent& ev) {
-            if (pendingNotches().empty() || ev.screenView().getScreenName() == "hud_screen") return;
-            paintNotches(ev.uiRenderContext());
+            if (ev.screenView().getScreenName() == "hud_screen") applyNotches(ev.screenView());
         });
     }
     void install() {
@@ -541,7 +578,6 @@ public:
 
 private:
     ll::event::ListenerPtr mListener;
-    ll::event::ListenerPtr mBeforeListener;
 };
 
 } // namespace
