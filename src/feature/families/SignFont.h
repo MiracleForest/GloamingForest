@@ -2,7 +2,8 @@
 
 // Block families (F11): Java's sign line width, shared by the server (Signs.cpp: the cut of an
 // edit's lines) and the client mod's sign editor (src/client/families/Screens.cpp: where typing
-// stops), so both builds cut a line at the same place. Font.width over the default font's
+// stops) and sign text (SignText.cpp: the part of a line drawn on the board), so both builds cut a
+// line at the same place. Font.width over the default font's
 // advances; a character outside ASCII counts 9 (the widest glyph of the fallback font). Lines are
 // UTF-8. No game headers: both builds include it.
 
@@ -65,6 +66,40 @@ namespace gf::feature::families::signfont {
         i += len;
     }
     return out;
+}
+
+/// What SignRenderer draws of a line: Font.split(line, maxWidth).get(0), the first line of Java's
+/// word wrap (StringSplitter.LineBreakFinder): characters are added while the width stays within
+/// `maxWidth` (the first one always); past it the line ends at the last space (the space left out)
+/// or before the character that went past; a line break ends it too. A formatting code ("§" and
+/// the character after it) has no width.
+[[nodiscard]] inline std::string firstLine(std::string_view line, int maxWidth) {
+    static constexpr std::size_t npos = std::string_view::npos;
+    int                          width = 0;
+    bool                         wide  = false; ///< hadNonZeroWidthChar
+    std::size_t                  space = npos;
+    for (std::size_t i = 0; i < line.size();) {
+        std::size_t len = 1;
+        char32_t    c   = decodeAt(line, i, len);
+        if (c == 0xA7) { // StringDecomposer.iterateFormatted: the code and its character are styles
+            std::size_t next = i + len;
+            if (next < line.size()) {
+                std::size_t codeLen = 1;
+                (void)decodeAt(line, next, codeLen);
+                next += codeLen;
+            }
+            i = next;
+            continue;
+        }
+        if (c == '\n') return std::string(line.substr(0, i));
+        if (c == ' ') space = i;
+        int w = charWidth(c);
+        width += w;
+        if (wide && width > maxWidth) return std::string(line.substr(0, space != npos ? space : i));
+        wide = wide || w != 0;
+        i += len;
+    }
+    return std::string(line);
 }
 
 /// At most `maxBytes` of `s`, cut between characters (JSON documents need valid UTF-8).

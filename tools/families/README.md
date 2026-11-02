@@ -132,3 +132,18 @@ components F1 gives TF's chests (`this component was found in the input, but is 
 Schema`), so the chests would not load. The fixture chests (no tag components) loaded with it at
 1.26.50 and kept their slots through pair and lid state changes; the native backend can follow once
 the import writes block tags in a form 1.26.50 takes.
+
+## Lang strings
+
+The kit's own strings are in `assets/lang/<locale>/families.json` (rule R9: F11 owns these keys; no
+other unit may define them, as a duplicate key fails the lang merge):
+
+| Key | Used for |
+|---|---|
+| `container.chest`, `container.chestDouble` | the chest family's container titles (ChestBlockEntity#getDefaultName, CompoundContainer), declared in `data/gf/containers/families.json`; F10's inventory contract falls back to the same keys without defining them |
+| `sign.edit`, `hanging_sign.edit` | the sign editor's title (AbstractSignEditScreen): the client mod's native editor and the server's text for a vanilla client's form |
+
+They are vanilla Minecraft's (not TF's) UI strings, taken verbatim from Java Edition 1.21.1's own
+language files (Mojang's 1.21.1 asset index) for the 29 Bedrock locales; Bedrock's `nb_NO` uses
+Java's `no_no`. Bedrock ships the same short strings under `sign.edit` / `container.chest`. Their
+provenance is recorded here and in the PR that added them (#31) for the licence review.

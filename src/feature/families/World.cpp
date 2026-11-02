@@ -408,7 +408,10 @@ void dropAndRemove(BlockSource& region, BlockPos const& pos) {
     Block const& block = region.getBlock(pos);
     if (block.isAir()) return;
     // Block.dropResources: the block's loot without a tool or an entity (the loot contract's Java
-    // table for a TF block), then Level.removeBlock: no levelEvent 2001 (particles and sound)
+    // table for a TF block), then Level.removeBlock: no levelEvent 2001 (particles and sound).
+    // Java's removeBlock puts the block's fluid in its place (FluidState.createLegacyBlock), and so
+    // does Bedrock's: the water of a waterlogged block (its liquid layer) becomes a water source
+    // there (selftest families.leaves_waterlogged)
     ResourceDropsContext ctx{ResourceDropsCause::Other, 0.0f, ItemStack::EMPTY_ITEM(), pos, region.getDimensionId(), region};
     block.spawnResources(region, pos, region.getLevel().getIRandom(), ctx, nullptr);
     region.removeBlock(pos, BlockChangeContext{});

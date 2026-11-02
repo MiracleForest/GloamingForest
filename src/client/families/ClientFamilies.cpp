@@ -16,7 +16,9 @@
 // - Leaf colours by position (ColorHandler: time, transformation, mining, sorting and rainbow oak
 //   leaves, LeafColors.h) through the client.render contract's tint (gf::client::tint, F12): their
 //   materials carry a tint method (tools/families), which a vanilla client fills with the biome's
-//   foliage colour.
+//   foliage colour. Canopy and mangrove leaves blend the biome foliage colour there
+//   (CANOPY_COLORIZER / MANGROVE_COLORIZER; the game's foliage tint at the position, LeafTint.h);
+//   a vanilla client keeps their evergreen / birch tint methods.
 // - Snowy grass under snowloggables: TFBushBlock.updateSnowBeneath sets the grass below a bush
 //   with snow in it SNOWY. Bedrock's grass has no such state: it draws its snowed side when the
 //   client's grass variant (GrassBlock::calcVariant, client only) finds snow above, so the variant
@@ -34,6 +36,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/GrassBlock.h"
 
+#include "client/families/LeafTint.h"
 #include "client/render/Render.h"
 #include "feature/families/Families.h"
 #include "feature/families/LeafColors.h"
@@ -88,14 +91,24 @@ public:
         static bool tinted = false;
         if (!tinted) {
             tinted = true;
-            int n  = 0;
+            int n = 0, blended = 0;
             for (auto const* e : fam::entriesOf(fam::Family::Leaves)) {
-                auto color = fam::leafcolors::of(e->id);
-                if (!color) continue;
-                tint::registerBlock(e->id, [fn = *color](BlockPos const& p) { return fn(p.x, p.y, p.z); });
-                ++n;
+                if (auto color = fam::leafcolors::of(e->id)) {
+                    tint::registerBlock(e->id, [fn = *color](BlockPos const& p) { return fn(p.x, p.y, p.z); });
+                    ++n;
+                } else if (auto blend = fam::leafcolors::blendOf(e->id)) {
+                    // CANOPY_COLORIZER / MANGROVE_COLORIZER of the biome foliage colour there; when the
+                    // game can't be asked for it (a tint function reached outside a chunk mesh's tint
+                    // resolver, or before a world is joined), ColorHandler's colour without a world:
+                    // FoliageColor.getEvergreenColor / getBirchColor, without the colorizer
+                    tint::registerBlock(e->id, [b = *blend](BlockPos const& p) {
+                        auto foliage = biomeFoliageAt(p);
+                        return foliage ? b.fn(*foliage) : b.withoutWorld;
+                    });
+                    ++blended;
+                }
             }
-            if (n) log().info("families: {} leaf colours by position", n);
+            if (n + blended) log().info("families: {} leaf colours by position, {} blended with the biome foliage", n, blended);
         }
     }
 

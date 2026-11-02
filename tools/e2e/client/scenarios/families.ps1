@@ -15,8 +15,10 @@
 #                                           climbable, snowloggable (3 layers)
 #   out/families/families-5-close.png       the signs and chests close up
 #   out/families/families-6-sign-text.png   a sign written through the editor (client mod: the native
-#                                           editor screen; the text shows on its display entity)
-#   out/families/families-7-sign-text-hud.png  the same with the HUD on (the text's name tag shows)
+#                                           editor screen; the text drawn flat on the board as Java's
+#                                           SignRenderer, no name tag)
+#   out/families/families-7-sign-text-hud.png  the same with the HUD on (a hidden HUD hides name tags:
+#                                           the client mod's board text stays either way)
 #   out/families/families-8-snowloggable.png   the snowloggable close up (its 3 snow layers)
 #   out/families/families-9-sign-editor.png    the native sign editor (client mod: Java's
 #                                           SignEditScreen, the sign drawn with the line on it)
@@ -26,7 +28,9 @@
 #   out/families/families-11-tf-plants.png  a grown blackberry bush with 2 snow layers, a young
 #                                           blueberry bush with 1, TF's leaves (time, mining, sorting,
 #                                           transformation, rainbow oak pre-tinted with Java's colour
-#                                           without a world; twilight oak and canopy by the biome),
+#                                           without a world; twilight oak by the biome; canopy and
+#                                           mangrove: the client mod blends the biome foliage as
+#                                           ColorHandler, a vanilla client tints evergreen / birch),
 #                                           castle doors (connected textures), a time log
 #   out/families/families-12-tf-close.png   TF's signs and chests close up
 #   out/families/families-13-tf-bush.png    the snowy berry bush close up (client mod: the grass
@@ -35,6 +39,30 @@
 #                                           mod: the corner piece at the L's inner corner)
 #   out/families/families-14-sign-form.png  remote-vanilla: the sign editor form (its title is the
 #                                           game's own sign.edit text)
+#   out/families/families-16-tf-sign-text.png        client mod: TF's canopy signs written through the
+#                                           editor and coloured with items, from the north: the wall
+#                                           sign's front (4 black lines), the standing sign's back
+#                                           (blue, glowing: the dark blue outline), the hanging sign
+#                                           (glowing black: the cream outline), the wall hanging sign
+#                                           (red dye: dark red); Java's layout and scale per kind
+#   out/families/families-17-tf-sign-text-close.png  the same close up
+#   out/families/families-18-tf-sign-text-far.png    the same from 20 blocks: the blue glowing text
+#                                           has no outline there (isOutlineVisible: 16 blocks), the
+#                                           black one keeps it
+#   out/families/families-19-sign-written.png       the sign families.sign_a_write wrote (server
+#                                           side): client mod on the board, vanilla client as the
+#                                           display entity's name tag
+#   out/families/families-20-compare-black.png ... families-23-compare-glow-blue.png   client mod:
+#                                           TF's canopy signs (right) next to the game's own oak
+#                                           signs (left) in the same light, written and coloured
+#                                           the same way: black text, red dye, glow ink on black
+#                                           (hanging signs), blue dye and glow ink (standing signs)
+#   out/families/families-24-glow-far-40.png, families-24-glow-far-60.png   client mod: the glow ink
+#                                           hanging signs of picture 22 through a spyglass from 40 and
+#                                           60 blocks: black letters over the cream outline, no
+#                                           z-fighting (Java's POLYGON_OFFSET)
+# families.classic runs this scenario in the Classic look (graphics_mode 1): Vibrant Visuals lights
+# sign text (the game's own too), Classic shows Java's colours as they are.
 # Local mode also runs the families selftests on the integrated server; remote modes build through
 # the host console (the vanilla client sees the downloaded resource pack).
 
@@ -173,6 +201,7 @@ $rows = @(
             @(8, 0, 0, 'twilightforest:rainbow_oak_leaves', '["twilightforest:persistent"=true]'),
             @(9, 0, 0, 'twilightforest:twilight_oak_leaves', '["twilightforest:persistent"=true]'),
             @(10, 0, 0, 'twilightforest:canopy_leaves', '["twilightforest:persistent"=true]'),
+            @(11, 0, 0, 'twilightforest:mangrove_leaves', '["twilightforest:persistent"=true]'),
             @(12, 0, 0, 'twilightforest:blue_castle_door', ''),
             @(12, 1, 0, 'twilightforest:blue_castle_door', ''),
             @(13, 0, 0, 'twilightforest:blue_castle_door', ''),
@@ -270,6 +299,198 @@ if ($script:Mode -ne 'remote-vanilla') {
     if ($hudHidden) { Press-Key F1; Start-Sleep -Milliseconds 800 }
     Save-Screenshot 'families-7-sign-text-hud' | Out-Null
     if ($hudHidden) { Press-Key F1; Start-Sleep -Milliseconds 800 }
+
+    # Java's sign text on TF's signs, written through the editor and coloured with items (client
+    # mod: drawn flat on the board as SignRenderer / HangingSignRenderer draw it; the display
+    # entities' name tags hidden): the canopy wall sign's front (black), the standing sign's back
+    # (blue dye, then glow ink: glowing blue with its outline), the hanging sign's front (glow ink:
+    # black with the cream outline), the wall hanging sign's front (red dye: dark red)
+    $tf = $rows[4]
+    function Write-Sign([double]$x, [double]$yy, [double]$zz, [double]$pitch, [string[]]$lines) {
+        Invoke-Teleport "/tp @s $x $yy $zz 0 $pitch"
+        Start-Sleep -Seconds 1
+        $m = Get-LogMark
+        Click 0.5 0.5 -Relative -Right
+        Wait-LogLine 'client screen: families.sign' 20 -Since $m | Out-Null
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($i -gt 0) { Press-Key ENTER }   # SignEditScreen: Enter goes to the next line
+            Type-Text $lines[$i]
+        }
+        Start-Sleep -Milliseconds 500
+        Close-Screen
+        Wait-LogLine 'edited the sign at' 20 -Since $m | Out-Null
+    }
+    function Use-OnSign([double]$x, [double]$yy, [double]$zz, [double]$pitch, [string]$item) {
+        Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 $item"
+        Invoke-Teleport "/tp @s $x $yy $zz 0 $pitch"
+        Start-Sleep -Seconds 1
+        $m = Get-LogMark
+        Click 0.5 0.5 -Relative -Right
+        Wait-LogLine "used minecraft:$item on the sign" 20 -Since $m | Out-Null
+    }
+    # stand north of each sign (a teleport to a whole z stands in the block's middle: 1.5 blocks
+    # from the sign's block) looking south at its board (the floor signs' boards about half a
+    # block up: 25 degrees down; the hanging ones' at eye height: 6 degrees)
+    $sx = $tf.x
+    Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
+    Write-Sign ($sx + 4.5) $y ($z - 2) 25 @('Welcome to', 'the', 'Twilight', 'Forest')
+    Write-Sign ($sx + 2.5) $y ($z - 2) 25 @('The back of', 'a canopy sign')
+    Use-OnSign ($sx + 2.5) $y ($z - 2) 25 'blue_dye'
+    Use-OnSign ($sx + 2.5) $y ($z - 2) 25 'glow_ink_sac'
+    Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
+    Write-Sign ($sx + 6.5) $y ($z - 2) 6 @('Hanging', 'sign')
+    Use-OnSign ($sx + 6.5) $y ($z - 2) 6 'glow_ink_sac'
+    Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
+    Write-Sign ($sx + 9.5) $y ($z - 2) 6 @('Wall', 'hanging')
+    Use-OnSign ($sx + 9.5) $y ($z - 2) 6 'red_dye'
+    Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
+    Start-Sleep -Seconds 1
+    Invoke-Teleport "/tp @s $($sx + 6) $($y + 1) $($z - 6) 0 12"
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'families-16-tf-sign-text' | Out-Null
+    Invoke-Teleport "/tp @s $($sx + 5) $($y) $($z - 3) 0 8"
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'families-17-tf-sign-text-close' | Out-Null
+    # from 20 blocks away the coloured glowing text loses its outline (isOutlineVisible: 16 blocks);
+    # the black one keeps it
+    Invoke-Teleport "/tp @s $($sx + 5) $($y + 2) $($z - 20) 0 5"
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'families-18-tf-sign-text-far' | Out-Null
+
+    # Vanilla references in the same light: each TF canopy sign (west) next to the game's own oak
+    # sign (east of it: on the left in the pictures), written and coloured the same way (the game's
+    # own editor and dye handling for the oak ones): black text on wall signs, red dye on wall
+    # signs, glow ink on black hanging signs, blue dye and glow ink on standing signs
+    $vx = 200
+    $compare = @(
+        @(0, 0, 1, 'minecraft:stone', ''),
+        @(0, 0, 0, 'twilightforest:canopy_wall_sign', "[`"$f`"=`"north`"]"),
+        @(1, 0, 1, 'minecraft:stone', ''),
+        @(1, 0, 0, 'minecraft:wall_sign', '["facing_direction"=2]'),
+        @(4, 0, 1, 'minecraft:stone', ''),
+        @(4, 0, 0, 'twilightforest:canopy_wall_sign', "[`"$f`"=`"north`"]"),
+        @(5, 0, 1, 'minecraft:stone', ''),
+        @(5, 0, 0, 'minecraft:wall_sign', '["facing_direction"=2]'),
+        @(8, 2, 0, 'minecraft:stone', ''),
+        @(8, 1, 0, 'twilightforest:canopy_hanging_sign', '["twilightforest:rotation"=8]'),
+        @(9, 2, 0, 'minecraft:stone', ''),
+        @(9, 1, 0, 'minecraft:oak_hanging_sign', '["hanging"=true,"attached_bit"=false,"facing_direction"=2]'),
+        @(12, 0, 0, 'twilightforest:canopy_sign', '["twilightforest:rotation"=8]'),
+        @(13, 0, 0, 'minecraft:standing_sign', '["ground_sign_direction"=8]')
+    )
+    Invoke-Teleport "/tp @s $($vx + 6) $($y + 2) $($z - 9) 0 15"
+    Start-Sleep -Seconds 4
+    foreach ($b in $compare) {
+        $states = if ($b[4]) { " $($b[4])" } else { '' }
+        Invoke-Build "setblock $($vx + $b[0]) $($y + $b[1]) $($z + $b[2]) $($b[3])$states"
+    }
+    Start-Sleep -Seconds 2
+    # the game's own editor and items on an oak sign (no GloamingForest log lines to wait for)
+    function Write-VanillaSign([double]$x, [double]$yy, [double]$zz, [double]$pitch, [string]$line) {
+        Invoke-Teleport "/tp @s $x $yy $zz 0 $pitch"
+        Start-Sleep -Seconds 1
+        $m = Get-LogMark
+        Click 0.5 0.5 -Relative -Right
+        Wait-LogLine 'client screen: sign_screen' 20 -Since $m | Out-Null
+        Start-Sleep -Seconds 1
+        Type-Text $line
+        Start-Sleep -Milliseconds 500
+        Close-Screen
+        Wait-LogLine 'client screen: hud_screen' 20 -Since $m | Out-Null
+        Start-Sleep -Seconds 1
+    }
+    function Use-OnVanillaSign([double]$x, [double]$yy, [double]$zz, [double]$pitch, [string]$item) {
+        Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 $item"
+        Invoke-Teleport "/tp @s $x $yy $zz 0 $pitch"
+        Start-Sleep -Seconds 1
+        Click 0.5 0.5 -Relative -Right
+        Start-Sleep -Seconds 1
+    }
+    Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
+    Write-Sign ($vx + 0.5) $y ($z - 2) 25 @('Black text')
+    Write-VanillaSign ($vx + 1.5) $y ($z - 2) 25 'Black text'
+    Write-Sign ($vx + 4.5) $y ($z - 2) 25 @('Red dye')
+    Write-VanillaSign ($vx + 5.5) $y ($z - 2) 25 'Red dye'
+    Write-Sign ($vx + 8.5) $y ($z - 2) 6 @('Glow ink')
+    Write-VanillaSign ($vx + 9.5) $y ($z - 2) 6 'Glow ink'
+    Write-Sign ($vx + 12.5) $y ($z - 2) 25 @('Blue glow')
+    Write-VanillaSign ($vx + 13.5) $y ($z - 2) 25 'Blue glow'
+    Use-OnSign ($vx + 4.5) $y ($z - 2) 25 'red_dye'
+    Use-OnVanillaSign ($vx + 5.5) $y ($z - 2) 25 'red_dye'
+    Use-OnSign ($vx + 8.5) $y ($z - 2) 6 'glow_ink_sac'
+    Use-OnVanillaSign ($vx + 9.5) $y ($z - 2) 6 'glow_ink_sac'
+    Use-OnSign ($vx + 12.5) $y ($z - 2) 25 'blue_dye'
+    Use-OnSign ($vx + 12.5) $y ($z - 2) 25 'glow_ink_sac'
+    Use-OnVanillaSign ($vx + 13.5) $y ($z - 2) 25 'blue_dye'
+    Use-OnVanillaSign ($vx + 13.5) $y ($z - 2) 25 'glow_ink_sac'
+    Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
+    Start-Sleep -Seconds 1
+    # one pair a picture, 2.5 blocks from the boards: TF's on the right, the oak one on the left
+    Invoke-Teleport "/tp @s $($vx + 1) $y $($z - 2.5) 0 20"
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'families-20-compare-black' | Out-Null
+    Invoke-Teleport "/tp @s $($vx + 5) $y $($z - 2.5) 0 20"
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'families-21-compare-red' | Out-Null
+    Invoke-Teleport "/tp @s $($vx + 9) $y $($z - 2.5) 0 4"
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'families-22-compare-glow-black' | Out-Null
+    Invoke-Teleport "/tp @s $($vx + 13) $y $($z - 2.5) 0 20"
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'families-23-compare-glow-blue' | Out-Null
+
+    # Glowing black text far away, through a spyglass (the zoom makes the letters big enough to see;
+    # black glowing text keeps its outline at any distance): Java draws the line over its 8 outline
+    # copies with a depth offset, the client mod nearer to the camera along the view rays by a lead
+    # that grows with the distance, so the cream outline never shows through the black letters
+    # (z-fighting) at 40 or 60 blocks (the text is drawn within 64); the oak hanging sign beside it
+    Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 spyglass"
+    foreach ($far in 40, 60) {
+        Invoke-Teleport "/tp @s $($vx + 9) $y $($z - $far) 0 0"
+        Start-Sleep -Seconds 3
+        Move-Mouse 0.5 0.5 -Relative
+        [BsE2E.Native]::MouseButton(1, $false) # hold use: look through the spyglass
+        try {
+            Start-Sleep -Milliseconds 1500
+            Save-Screenshot "families-24-glow-far-$far" | Out-Null
+        } finally { [BsE2E.Native]::MouseButton(1, $true) }
+        Start-Sleep -Milliseconds 500
+    }
+    Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
+}
+
+# The text of a sign written by the server (families.sign_a_write): the client mod draws it on the
+# board (front: four lines), a vanilla client shows the display entity's name tag
+$mark = Get-LogMark
+$r = Invoke-SelfTest 'families.sign_a_write'
+if ($r.Pass -ne 1) { throw 'families.sign_a_write did not pass' }
+$written = Wait-LogLine 'sign written at (-?\d+) (-?\d+) (-?\d+)' 20 -Since $mark
+if ("$written" -match 'sign written at (-?\d+) (-?\d+) (-?\d+)') {
+    $wx = [int]$Matches[1]; $wy = [int]$Matches[2]; $wz = [int]$Matches[3]
+    # the sign stands at rotation 0: its front faces south
+    Invoke-Teleport "/tp @s $($wx + 0.5) $($wy) $($wz + 2.5) 180 20"
+    Start-Sleep -Seconds 4
+    Save-Screenshot 'families-19-sign-written' | Out-Null
+} else { throw "no 'sign written at' line from families.sign_a_write" }
+
+# The client mod drew the sign text on the boards, hid the display entities' name tags and blended
+# the canopy / mangrove leaves with the biome foliage (client lines, not the host's). The server
+# names each player it sent sign text to: the client mod user (remote-mod), never the vanilla
+# client (remote-vanilla: the host has written signs by now, so a send would have happened)
+$clientLines = @(
+    'families: sign text drawn on the board',
+    'families: the sign text display entities show no name tag',
+    'families: canopy and mangrove leaves blend the biome foliage colour'
+)
+$sentLine = 'families: sign text sent to the companion'
+if ($script:Mode -eq 'remote-vanilla') {
+    Start-Sleep -Seconds 2
+    $sent = Get-LeviLog | Where-Object { $_ -match "^\[host\].*$([regex]::Escape($sentLine))" }
+    if ($sent) { throw "the host sent sign text to the vanilla client: $($sent | Select-Object -First 1)" }
+} else {
+    foreach ($l in $clientLines) { Wait-LogLine "^(?!\[host\]).*$([regex]::Escape($l))" 20 | Out-Null }
+    if ($script:Mode -eq 'remote-mod') { Wait-LogLine "^\[host\].*$([regex]::Escape($sentLine))" 20 | Out-Null }
+    else { Wait-LogLine ([regex]::Escape($sentLine)) 20 | Out-Null }
 }
 
 # a vanilla client edits a sign through a form; its title is the game's own sign.edit text

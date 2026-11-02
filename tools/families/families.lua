@@ -227,6 +227,17 @@ local function cboxes(boxes)
     for _, b in ipairs(boxes) do table.insert(out, cbox(b)) end
     return out
 end
+-- A box of the block's world frame (Java's AABB for that facing) in the frame of the south-facing
+-- model, which a transformation of `quarters` clockwise quarter turns (QUARTERS) turns back into
+-- place: Bedrock's transformation turns the selection and collision boxes with the geometry, so a
+-- block turned by a transformation declares its boxes unturned.
+local function unturn(b, quarters)
+    local x1, y1, z1, x2, y2, z2 = b[1], b[2], b[3], b[4], b[5], b[6]
+    for _ = 1, (quarters or 0) % 4 do
+        x1, z1, x2, z2 = z1, 16 - x2, z2, 16 - x1
+    end
+    return {x1, y1, z1, x2, y2, z2}
+end
 local function bounds(boxes)
     local o = {16, 16, 16, 0, 0, 0}
     for _, b in ipairs(boxes) do
@@ -1183,7 +1194,7 @@ end
 local WALL_SIGN_AABB = {north = {0, 4.5, 14, 16, 12.5, 16}, south = {0, 4.5, 0, 16, 12.5, 2}, east = {0, 4.5, 0, 2, 12.5, 16}, west = {14, 4.5, 0, 16, 12.5, 16}}
 behaviour.wall_sign = function (doc)
     comps(doc)["minecraft:collision_box"] = false
-    for _, d in ipairs(FACING4) do perm(doc, is(NS .. "facing", d), {["minecraft:selection_box"] = cbox(WALL_SIGN_AABB[d])}) end
+    for _, d in ipairs(FACING4) do perm(doc, is(NS .. "facing", d), {["minecraft:selection_box"] = cbox(unturn(WALL_SIGN_AABB[d], QUARTERS[d]))}) end
 end
 visual.hanging_sign = function (doc, e, t, ctx)
     local g = geo(ctx, "geometry.gf_families.hanging_sign", function ()
@@ -1207,8 +1218,9 @@ behaviour.hanging_sign = function (doc)
     comps(doc)["minecraft:collision_box"] = false
     comps(doc)["minecraft:selection_box"] = cbox({3, 0, 3, 13, 16, 13}) -- CeilingHangingSignBlock.SHAPE
     -- CeilingHangingSignBlock.AABBS for the four straight rotations
+    -- (rotation_perms turns rotation r by r // 4 quarters)
     for r, b in pairs({[0] = {1, 0, 7, 15, 10, 9}, [4] = {7, 0, 1, 9, 10, 15}, [8] = {1, 0, 7, 15, 10, 9}, [12] = {7, 0, 1, 9, 10, 15}}) do
-        perm(doc, is(NS .. "rotation", r), {["minecraft:selection_box"] = cbox(b)})
+        perm(doc, is(NS .. "rotation", r), {["minecraft:selection_box"] = cbox(unturn(b, r // 4))})
     end
 end
 visual.wall_hanging_sign = function (doc, e, t, ctx)
@@ -1228,7 +1240,8 @@ behaviour.wall_hanging_sign = function (doc)
         local ns = d == "north" or d == "south"
         local plank = ns and {0, 14, 6, 16, 16, 10} or {6, 14, 0, 10, 16, 16}
         local board = ns and {1, 0, 7, 15, 10, 9} or {7, 0, 1, 9, 10, 15}
-        perm(doc, is(NS .. "facing", d), {["minecraft:collision_box"] = cbox(plank), ["minecraft:selection_box"] = cbox(bounds({plank, board}))})
+        local q = QUARTERS[d]
+        perm(doc, is(NS .. "facing", d), {["minecraft:collision_box"] = cbox(unturn(plank, q)), ["minecraft:selection_box"] = cbox(unturn(bounds({plank, board}), q))})
     end
 end
 
@@ -1309,6 +1322,7 @@ local function chest_behaviour(doc, e)
                 local cw = ({north = "east", east = "south", south = "west", west = "north"})[f]
                 b = CHEST_AABB[kind == "left" and cw or CCW[f]]
             end
+            b = unturn(b, QUARTERS[f]) -- facing_perms turns the chest
             perm(doc, all(is(NS .. "facing", f), is(NS .. "type", kind)), {["minecraft:collision_box"] = cbox(b), ["minecraft:selection_box"] = cbox(b)})
         end
     end
@@ -2102,7 +2116,10 @@ local function declare_chests(outdir, chests, name, files)
     local list = arr({})
     for _, id in ipairs(sorted_keys(chests)) do
         if not others[id] then
-            -- ChestBlockEntity#getDefaultName / CompoundContainer: container.chest(Double)
+            -- ChestBlockEntity#getDefaultName / CompoundContainer: container.chest(Double). F11 owns
+            -- these two keys (assets/lang/<locale>/families.json, rule R9): the chest family names
+            -- its containers with them; the inventory contract (F10) only falls back to the same
+            -- key and must not define it again (a duplicate fails the lang merge).
             table.insert(list, {block = id, rows = 3, title = "container.chest", chest = true, pairs = true, double_title = "container.chestDouble",
                 stat = chests[id] == "trapped_chest" and "minecraft:trigger_trapped_chest" or "minecraft:open_chest", comparator = true})
         end
