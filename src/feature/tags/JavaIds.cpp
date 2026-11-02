@@ -81,7 +81,9 @@ Table const& blocks() {
             {"minecraft:oak_wall_sign", {"minecraft:wall_sign"}},
             {"minecraft:dark_oak_sign", {"minecraft:darkoak_standing_sign"}},
             {"minecraft:dark_oak_wall_sign", {"minecraft:darkoak_wall_sign"}},
-            {"minecraft:light", {"minecraft:light_block", "minecraft:light_block_0", "minecraft:light_block_1", "minecraft:light_block_2",
+            {"minecraft:small_dripleaf", {"minecraft:small_dripleaf_block"}},
+            // (minecraft:light_block is only an alias of light_block_0 in 26.51: the flattened levels)
+            {"minecraft:light", {"minecraft:light_block_0", "minecraft:light_block_1", "minecraft:light_block_2",
                                  "minecraft:light_block_3", "minecraft:light_block_4", "minecraft:light_block_5", "minecraft:light_block_6",
                                  "minecraft:light_block_7", "minecraft:light_block_8", "minecraft:light_block_9", "minecraft:light_block_10",
                                  "minecraft:light_block_11", "minecraft:light_block_12", "minecraft:light_block_13", "minecraft:light_block_14",
@@ -153,6 +155,12 @@ Table const& items() {
         // Bedrock's tipped arrows are minecraft:arrow with the potion as data value (Java's
         // potion_contents component; the uncrafting recipe's data keeps it)
         {"minecraft:tipped_arrow", {"minecraft:arrow"}},
+        {"minecraft:small_dripleaf", {"minecraft:small_dripleaf_block"}},
+        // Java's light item is level 15 by default; Bedrock has one item per level
+        {"minecraft:light", {"minecraft:light_block_15", "minecraft:light_block_0", "minecraft:light_block_1", "minecraft:light_block_2", "minecraft:light_block_3",
+                             "minecraft:light_block_4", "minecraft:light_block_5", "minecraft:light_block_6", "minecraft:light_block_7", "minecraft:light_block_8",
+                             "minecraft:light_block_9", "minecraft:light_block_10", "minecraft:light_block_11", "minecraft:light_block_12",
+                             "minecraft:light_block_13", "minecraft:light_block_14"}},
         {"minecraft:zombified_piglin_spawn_egg", {"minecraft:zombie_pigman_spawn_egg"}},
         // (Bedrock's evoker spawn egg is minecraft:evoker_spawn_egg, as Java's)
     };
