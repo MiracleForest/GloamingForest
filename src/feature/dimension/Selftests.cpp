@@ -1,7 +1,11 @@
 // Selftests of unit F4 (dimension): `/twilightforest selftest "dimension.*"`, dx 5400..5499 (rule R12).
 
+#include <algorithm>
 #include <cmath>
+#include <format>
+#include <set>
 #include <string>
+#include <vector>
 
 #include "ll/api/Config.h"
 #include "ll/api/command/CommandRegistrar.h"
@@ -29,6 +33,7 @@
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/dimension/Dimension.h"
+#include "mc/world/level/dimension/DimensionBrightnessRamp.h"
 #include "mc/world/phys/AABB.h"
 
 #include "feature/dimension/AreaLoader.h"
@@ -37,6 +42,7 @@
 #include "feature/dimension/Internal.h"
 #include "feature/dimension/Teleporter.h"
 #include "feature/dimension/World.h"
+#include "feature/ext/dimension/DimensionType.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Config.h"
@@ -110,6 +116,70 @@ int countPortals(BlockSource& region, BlockPos const& corner, int width = 2, int
             if (isPortal(region.getBlock(BlockPos{corner.x + dx, corner.y, corner.z + dz}))) ++n;
     return n;
 }
+
+/// The item entities within `range` blocks of `at` (ids).
+std::set<std::int64_t> itemsNear(BlockSource& region, Vec3 const& at, float range) {
+    std::set<std::int64_t> out;
+    AABB                   box{at - Vec3(range, range, range), at + Vec3(range, range, range)};
+    for (auto* e : region.getEntities(box, 0.0f, ActorType::ItemEntity))
+        if (e && e->getEntityTypeId() == ActorType::ItemEntity) out.insert(idOf(*e));
+    return out;
+}
+
+/// The item entity of `itemId` near `at` that is not in `before` (nullptr: none).
+ItemActor* newItemNear(BlockSource& region, Vec3 const& at, std::set<std::int64_t> const& before, std::string const& itemId) {
+    AABB box{at - Vec3(8, 8, 8), at + Vec3(8, 8, 8)};
+    for (auto* e : region.getEntities(box, 0.0f, ActorType::ItemEntity)) {
+        if (!e || e->getEntityTypeId() != ActorType::ItemEntity || before.contains(idOf(*e))) continue;
+        auto& item = static_cast<ItemActor&>(*e);
+        if (game::items::idOf(item.item()) == itemId) return &item;
+    }
+    return nullptr;
+}
+
+/// Player#drop: the player drops `stack` (thrown ahead, or around it when `randomly`); the new
+/// item entity, nullptr when none appeared.
+ItemActor* dropFrom(Player& player, ItemStack const& stack, bool randomly) {
+    auto* region = game::regionOf(static_cast<int>(player.getDimensionId()));
+    if (!region) return nullptr;
+    Vec3 at     = player.getFeetPos();
+    auto before = itemsNear(*region, at, 8.0f);
+    player.drop(stack, randomly);
+    return newItemNear(*region, at, before, game::items::idOf(stack));
+}
+
+/// Sets the first of `ids` the game knows at `pos` (block ids differ between versions); the id set,
+/// "" when none could be.
+std::string setFirst(Context& ctx, core::GlobalPos const& pos, std::initializer_list<char const*> ids) {
+    for (auto const* id : ids) {
+        ctx.setBlock(pos, id);
+        if (ctx.blockAt(pos) == id) return id;
+    }
+    return {};
+}
+
+/// A random source that answers nextInt(bound) with the scripted values in turn (clamped below the
+/// bound), for the rules that draw from a RandomSource.
+class ScriptedRandom final : public core::jrand::RandomSource {
+public:
+    explicit ScriptedRandom(std::vector<int> values) : mValues(std::move(values)) {}
+    void                                                  setSeed(std::int64_t) override {}
+    [[nodiscard]] int                                     nextInt() override { return pop(); }
+    [[nodiscard]] int                                     nextInt(int bound) override { return std::clamp(pop(), 0, bound - 1); }
+    [[nodiscard]] std::int64_t                            nextLong() override { return pop(); }
+    [[nodiscard]] bool                                    nextBoolean() override { return pop() != 0; }
+    [[nodiscard]] float                                   nextFloat() override { return 0.0f; }
+    [[nodiscard]] double                                  nextDouble() override { return 0.0; }
+    [[nodiscard]] double                                  nextGaussian() override { return 0.0; }
+    [[nodiscard]] std::unique_ptr<RandomSource>           fork() override { return std::make_unique<ScriptedRandom>(mValues); }
+    [[nodiscard]] std::unique_ptr<core::jrand::PositionalRandomFactory> forkPositional() override { return nullptr; }
+    [[nodiscard]] std::size_t                             used() const { return mNext; }
+
+private:
+    int pop() { return mNext < mValues.size() ? mValues[mNext++] : 0; }
+    std::vector<int> mValues;
+    std::size_t      mNext = 0;
+};
 
 /// The positions makePortalAt touches around a portal whose lowest corner is `p` (for cleanup).
 void cleanupPortalSite(Context& ctx, core::GlobalPos p) {
@@ -291,11 +361,19 @@ GF_REGISTER_SELFTEST("dimension.portal_item", [](Context& ctx) -> ll::coro::Coro
     co_await ctx.ticks(45);
     ctx.check(countPortals(*region, game::blockPos(pool)) == 0, "an unowned diamond does not light the pool");
     if (auto* s = level->fetchEntity(ActorUniqueID{idOf(*stray)}, false)) s->remove();
-    // the player's own diamond
-    auto* own = level->getSpawner().spawnItem(*region, *stack, &ctx.player(), center, 0);
-    ctx.require(own != nullptr, "owned diamond spawned");
+    // a diamond the game spawns with the player as its spawner, but not thrown, does not count
+    auto* spawned = level->getSpawner().spawnItem(*region, *stack, &ctx.player(), center, 0);
+    ctx.require(spawned != nullptr, "diamond spawned for the player");
+    ctx.check(itemOwner(*spawned) == -1, "an item spawned for the player without a throw has no thrower");
+    co_await ctx.ticks(45);
+    ctx.check(countPortals(*region, game::blockPos(pool)) == 0, "a diamond the player did not throw does not light the pool");
+    if (auto* s = level->fetchEntity(ActorUniqueID{idOf(*spawned)}, false)) s->remove();
+    // the player's own diamond, thrown (Player#drop), then put in the middle of the pool
+    auto* own = dropFrom(ctx.player(), *stack, false);
+    ctx.require(own != nullptr, "the player threw a diamond");
     auto ownId = idOf(*own);
-    ctx.check(itemOwner(static_cast<ItemActor&>(*own)) == owner, "the diamond's owner is the player who dropped it");
+    ctx.check(itemOwner(*own) == owner, "the diamond's thrower is the player who threw it");
+    own->teleport(center, DimensionType(ctx.dimension()));
     bool lit = false;
     for (int i = 0; i < 60 && !lit; ++i) {
         co_await ctx.ticks(1);
@@ -730,7 +808,7 @@ GF_REGISTER_SELFTEST("dimension.clock_watch", [](Context& ctx) -> ll::coro::Coro
 
 // ---- functions: /execute in the Twilight Forest --------------------------------------------------------------------------------
 
-// TF's functions tp_twilight / tp_overworld are "execute in <dimension> run tp @p ~ ~ ~".
+// Bedrock's /execute in accepts the custom dimension's identifier.
 GF_REGISTER_SELFTEST("dimension.execute_in", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto tf = world::twilight();
     ctx.require(tf.has_value(), "the Twilight Forest exists");
@@ -738,40 +816,279 @@ GF_REGISTER_SELFTEST("dimension.execute_in", [](Context& ctx) -> ll::coro::CoroT
     auto  id   = idOf(p);
     auto  name = p.getRealName();
     auto [ok, out] = runCommand("execute as \"" + name + "\" at @s in twilightforest:twilight_forest run tp @s ~ ~ ~");
-    ctx.info(std::string("execute in twilightforest:twilight_forest: ") + (ok ? "ok" : "refused") + (out.empty() ? "" : " (" + out + ")"));
+    ctx.check(ok, "execute in twilightforest:twilight_forest runs (" + out + ")");
     bool there = false;
     for (int i = 0; ok && i < 200 && !there; ++i) {
         co_await ctx.ticks(1);
         auto* pl = playerById(id);
         there    = pl && world::isTwilight(pl->getDimensionId());
     }
-    ctx.info(std::string("the player is ") + (there ? "in" : "not in") + " the Twilight Forest");
+    ctx.check(there, "the player is in the Twilight Forest");
     auto [ok2, out2] = runCommand("execute as \"" + name + "\" at @s in overworld run tp @s ~ ~ ~");
     ctx.check(ok2, "execute in overworld runs (" + out2 + ")");
-    // the behavior pack functions
-    for (int i = 0; i < 200; ++i) {
-        co_await ctx.ticks(1);
-        auto* pl = playerById(id);
-        if (pl && static_cast<int>(pl->getDimensionId()) == 0) break;
-    }
-    auto [okF, outF] = runCommand("execute as \"" + name + "\" at @s run function twilightforest/dimension/tp_twilight");
-    ctx.info(std::string("function twilightforest/dimension/tp_twilight: ") + (okF ? "ok" : "refused") + (outF.empty() ? "" : " (" + outF + ")"));
-    there = false;
-    for (int i = 0; okF && i < 200 && !there; ++i) {
-        co_await ctx.ticks(1);
-        auto* pl = playerById(id);
-        there    = pl && world::isTwilight(pl->getDimensionId());
-    }
-    ctx.check(there, "tp_twilight moved the player into the Twilight Forest");
-    auto [okB, outB] = runCommand("execute as \"" + name + "\" at @s run function twilightforest/dimension/tp_overworld");
-    ctx.check(okB, "function tp_overworld runs (" + outB + ")");
     bool back = false;
-    for (int i = 0; okB && i < 200 && !back; ++i) {
+    for (int i = 0; ok2 && i < 200 && !back; ++i) {
         co_await ctx.ticks(1);
         auto* pl = playerById(id);
         back     = pl && static_cast<int>(pl->getDimensionId()) == 0;
     }
-    ctx.check(back, "tp_overworld moved the player back to the overworld");
+    ctx.check(back, "the player is back in the overworld");
+});
+
+// TF's functions tp_twilight / tp_overworld ("execute in <dimension> run tp @p ~ ~ ~"): Java's
+// execute in scales X and Z by from.coordinateScale / to.coordinateScale (x8 into the Twilight
+// Forest, /8 out of it).
+GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto tf = world::twilight();
+    ctx.require(tf.has_value(), "the Twilight Forest exists");
+    int tfId = static_cast<int>(*tf);
+    // the semantics (CommandSourceStack#withLevel)
+    auto in = runTpFunction(0, Vec3{100.5f, 70.0f, -20.25f}, true);
+    ctx.require(in.has_value(), "tp_twilight has a destination");
+    ctx.check(in->dim == tfId, "tp_twilight goes to the Twilight Forest");
+    ctx.check(in->pos.x == 804.0f && in->pos.y == 70.0f && in->pos.z == -162.0f, "overworld 100.5 70 -20.25 is 804 70 -162 there");
+    auto out = runTpFunction(tfId, Vec3{804.0f, 70.0f, -162.0f}, false);
+    ctx.require(out.has_value(), "tp_overworld has a destination");
+    ctx.check(out->dim == 0 && out->pos.x == 100.5f && out->pos.z == -20.25f, "and back: 100.5 70 -20.25 in the overworld");
+    auto same = runTpFunction(tfId, Vec3{5.0f, 6.0f, 7.0f}, true);
+    ctx.check(same && same->pos.x == 5.0f && same->pos.z == 7.0f, "within the same dimension the position stays");
+    auto nether = runTpFunction(1, Vec3{10.0f, 64.0f, 10.0f}, true);
+    ctx.check(nether && nether->pos.x == 640.0f && nether->pos.z == 640.0f, "the nether (scale 8) is 64 times farther in the Twilight Forest");
+
+    // the behavior pack function, run by the test player at its feet (Y moved to 70 by `positioned`)
+    auto& p    = ctx.player();
+    auto  id   = idOf(p);
+    auto  name = p.getRealName();
+    auto  at   = ctx.testPos(5498);
+    // a platform under the arrival spot first (the Twilight Forest is void until F5); loading it
+    // may take the test player there
+    BlockPos floor{static_cast<int>(std::floor((at.x + 0.5f) * 8.0f)), 69, static_cast<int>(std::floor((at.z + 0.5f) * 8.0f))};
+    ctx.require(co_await ctx.ensureLoaded(core::GlobalPos{tfId, floor.x, floor.y, floor.z}), "the arrival spot loaded");
+    for (int dx = -1; dx <= 1; ++dx)
+        for (int dz = -1; dz <= 1; ++dz) {
+            core::GlobalPos f{tfId, floor.x + dx, floor.y, floor.z + dz};
+            ctx.setBlock(f, "minecraft:stone");
+            ctx.cleanupBlock(f);
+        }
+    // then the test player stands at the source spot in the overworld
+    ctx.player().teleport(Vec3{at.x + 0.5f, static_cast<float>(at.y), at.z + 0.5f}, DimensionType(ctx.dimension()));
+    Player* pl = nullptr;
+    for (int i = 0; i < 200; ++i) {
+        co_await ctx.ticks(1);
+        pl = playerById(id);
+        if (pl && static_cast<int>(pl->getDimensionId()) == ctx.dimension() && std::abs(pl->getFeetPos().x - (at.x + 0.5f)) < 0.01f) break;
+    }
+    ctx.require(pl != nullptr && static_cast<int>(pl->getDimensionId()) == ctx.dimension(), "the test player at the source spot");
+    Vec3 source = pl->getFeetPos();
+    source.y    = 70.0f;
+    auto want   = runTpFunction(ctx.dimension(), source, true);
+    ctx.require(want.has_value(), "the expected destination");
+    if (want->player != id) {
+        ctx.info("another player is nearer to the scaled position: the in-game part is skipped");
+        co_return;
+    }
+    auto [okF, outF] = runCommand("execute as \"" + name + "\" at @s positioned ~ 70 ~ run function twilightforest/dimension/tp_twilight");
+    ctx.check(okF, "function tp_twilight runs (" + outF + ")");
+    bool there = false;
+    for (int i = 0; okF && i < 200 && !there; ++i) {
+        co_await ctx.ticks(1);
+        pl    = playerById(id);
+        there = pl && world::isTwilight(pl->getDimensionId());
+    }
+    ctx.require(there, "tp_twilight moved the player into the Twilight Forest");
+    co_await ctx.ticks(5);
+    pl = playerById(id);
+    ctx.require(pl != nullptr, "the test player");
+    Vec3 got = pl->getFeetPos();
+    ctx.info(std::format("from {:.2f} {:.2f} to {:.2f} {:.2f} {:.2f} in the Twilight Forest", source.x, source.z, got.x, got.y, got.z));
+    ctx.check(std::abs(got.x - source.x * 8.0f) < 0.01f && std::abs(got.z - source.z * 8.0f) < 0.01f, "X and Z times 8");
+    ctx.check(std::abs(got.y - 70.0f) < 1.5f, "Y as the execution position had it (70, on the platform)");
+    // and back from where it stands, Y back on the overworld's ground
+    Vec3 back = got;
+    back.y    = static_cast<float>(at.y);
+    auto home = runTpFunction(tfId, back, false);
+    ctx.require(home.has_value(), "the expected way back");
+    if (home->player != id) {
+        ctx.info("another player is nearer to the scaled way back: it is not taken");
+        pl->teleport(Vec3{at.x + 0.5f, static_cast<float>(at.y), at.z + 0.5f}, DimensionType(ctx.dimension()));
+        co_return;
+    }
+    auto [okB, outB] = runCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function twilightforest/dimension/tp_overworld", name, at.y));
+    ctx.check(okB, "function tp_overworld runs (" + outB + ")");
+    bool home2 = false;
+    for (int i = 0; okB && i < 200 && !home2; ++i) {
+        co_await ctx.ticks(1);
+        pl    = playerById(id);
+        home2 = pl && static_cast<int>(pl->getDimensionId()) == 0;
+    }
+    ctx.require(home2, "tp_overworld moved the player back to the overworld");
+    co_await ctx.ticks(5);
+    pl = playerById(id);
+    ctx.require(pl != nullptr, "the test player");
+    Vec3 end = pl->getFeetPos();
+    ctx.check(std::abs(end.x - source.x) < 0.01f && std::abs(end.z - source.z) < 0.01f, std::format("X and Z divided by 8: back at {:.2f} {:.2f}", end.x, end.z));
+});
+
+// ---- the portal block's physical rules ---------------------------------------------------------------------------------
+
+// TFPortalBlock#getFluidState (sugar cane keeps its water), pushReaction BLOCK (pistons can't move
+// it) and no map colour (maps look through it).
+GF_REGISTER_SELFTEST("dimension.portal_block", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto  box    = co_await ctx.flatArea(5401, 8, 8);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    int  y  = box.minY - 1; // the grass layer
+    auto at = [&](int dx, int dz, int dy = 0) { return core::GlobalPos{ctx.dimension(), box.minX + dx, y + dy, box.minZ + dz}; };
+
+    // sugar cane on the rim of a pool, then the pool is lit
+    auto pool = at(1, 1);
+    ctx.require(buildPool(ctx, pool), "pool built");
+    auto cane   = pool.offset(-1, 1, 0);
+    auto caneId = setFirst(ctx, cane, {"minecraft:reeds", "minecraft:sugar_cane"});
+    ctx.require(!caneId.empty(), "sugar cane on the rim (found " + ctx.blockAt(cane) + ")");
+    ctx.require(portal::tryActivate(*region, game::blockPos(pool)), "lit");
+    ctx.check(portalWatersSugarCane(*region, game::blockPos(cane)), "the portal next to its soil waters it");
+    auto const& caneBlock = region->getBlock(game::blockPos(cane));
+    ctx.check(caneBlock.getBlockType().mayPlace(*region, game::blockPos(cane)), "the cane may stay (SugarCaneBlock mayPlace)");
+    // its neighbour (the short grass on the next rim block) changes: it checks that it can stay
+    ctx.setBlock(cane.offset(0, 0, 1), "minecraft:air");
+    ctx.setBlock(cane.offset(0, 0, 1), "minecraft:short_grass");
+    co_await ctx.ticks(10);
+    ctx.check(ctx.blockAt(cane) == caneId, "the cane is still there after a neighbour update (" + ctx.blockAt(cane) + ")");
+    // away from water and portals the vanilla rule decides
+    auto dry = at(6, 6, 1);
+    ctx.check(!portalWatersSugarCane(*region, game::blockPos(dry)), "no portal by a dry spot");
+    ctx.check(!caneBlock.getBlockType().mayPlace(*region, game::blockPos(dry)), "sugar cane may not stand on a dry spot");
+
+    // no map colour (MapColor.NONE): the portal is transparent to maps, as air is
+    auto const& portalState = region->getBlock(game::blockPos(pool));
+    auto        portalColor = portalState.getBlockType().getMapColor(*region, game::blockPos(pool), portalState);
+    auto        airPos      = game::blockPos(pool.offset(0, 2, 0));
+    auto const& air         = region->getBlock(airPos);
+    auto        airColor    = air.getBlockType().getMapColor(*region, airPos, air);
+    ctx.info(std::format("map colours: portal {} {} {} {}, air {} {} {} {}", portalColor.r, portalColor.g, portalColor.b, portalColor.a, airColor.r, airColor.g, airColor.b, airColor.a));
+    ctx.check(portalColor.a == 0.0f, "the portal has no map colour (alpha 0)");
+
+    // pistons: a stone above a powered piston moves up, a portal block does not
+    auto pushTest = [&](int dz, std::string const& id, nlohmann::json const& states) -> core::GlobalPos {
+        auto base = at(6, dz);
+        ctx.setBlock(base, "minecraft:piston", {{"facing_direction", 1}});
+        ctx.setBlock(base.offset(0, 1, 0), id, states);
+        return base;
+    };
+    auto stoneBase = pushTest(1, "minecraft:stone", nlohmann::json::object());
+    auto portalBase = pushTest(4, kPortalBlock, {{kOneWayState, false}});
+    // the portal block's rim (its neighbour rule keeps a portal ringed by portal/edge blocks)
+    for (auto [dx, dz] : {std::pair{-1, 0}, std::pair{1, 0}, std::pair{0, -1}, std::pair{0, 1}}) ctx.setBlock(portalBase.offset(dx, 1, dz), "minecraft:dirt");
+    for (auto base : {stoneBase, portalBase}) {
+        auto [ok, msg] = runCommand(std::format("setblock {} {} {} redstone_block", base.x + 1, base.y, base.z), ctx.dimension());
+        ctx.check(ok, "redstone block next to the piston (" + msg + ")");
+    }
+    co_await ctx.ticks(20);
+    ctx.info("after the pistons fired: stone column " + ctx.blockAt(stoneBase.offset(0, 1, 0)) + " / " + ctx.blockAt(stoneBase.offset(0, 2, 0)) + ", portal column "
+             + ctx.blockAt(portalBase.offset(0, 1, 0)) + " / " + ctx.blockAt(portalBase.offset(0, 2, 0)));
+    ctx.check(ctx.blockAt(stoneBase.offset(0, 2, 0)) == "minecraft:stone", "the control: the piston pushed the stone up");
+    ctx.check(ctx.blockAt(portalBase.offset(0, 1, 0)) == kPortalBlock, "the portal block stays where it is");
+    ctx.check(ctx.blockAt(portalBase.offset(0, 2, 0)) != kPortalBlock, "and was not pushed up");
+});
+
+// ---- Player#drop: only throws name a thrower ---------------------------------------------------------------------------
+
+GF_REGISTER_SELFTEST("dimension.thrower", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto  level  = ll::service::getLevel();
+    auto* region = ctx.region();
+    ctx.require(level.has_value() && region != nullptr, "level");
+    auto at    = ctx.testPos(5499, 2);
+    auto stack = game::items::make("minecraft:diamond", 1);
+    ctx.require(stack.has_value(), "diamond");
+    auto& p  = ctx.player();
+    auto  id = idOf(p);
+    p.teleport(Vec3{at.x + 0.5f, static_cast<float>(at.y), at.z + 0.5f}, DimensionType(ctx.dimension()));
+    co_await ctx.ticks(2);
+    auto* pl = playerById(id);
+    ctx.require(pl != nullptr, "the test player");
+    // a throw (drop key, a stack dragged out of a screen: dropAround false) names the thrower
+    auto* thrown = dropFrom(*pl, *stack, false);
+    ctx.require(thrown != nullptr, "the player threw a diamond");
+    ctx.check(itemOwner(*thrown) == id, "a thrown item names its thrower");
+    thrown->remove();
+    // dropped around the player (Inventory#dropAll: dropAround, no thrower name)
+    auto* around = dropFrom(*pl, *stack, true);
+    ctx.require(around != nullptr, "the player dropped a diamond around itself");
+    ctx.check(itemOwner(*around) == -1, "an item dropped around the player names nobody");
+    around->remove();
+    // the death drops of a player
+    auto& rules     = *level->getGameRules().mGameRules;
+    auto  keepIndex = static_cast<std::size_t>(GameRules::GameRulesIndex::KeepInventory);
+    bool  keep      = keepIndex < rules.size() && std::get_if<bool>(&rules[keepIndex].mValue.get()) && *std::get_if<bool>(&rules[keepIndex].mValue.get());
+    if (keep) {
+        ctx.info("keepInventory is on: no death drops to look at");
+        co_return;
+    }
+    auto& dying   = ctx.spawnPlayer("gf_test_dropper");
+    auto  dyingId = idOf(dying);
+    dying.teleport(Vec3{at.x + 2.5f, static_cast<float>(at.y), at.z + 0.5f}, DimensionType(ctx.dimension()));
+    co_await ctx.ticks(2);
+    auto* d = playerById(dyingId);
+    ctx.require(d != nullptr, "the dying player");
+    ctx.give(*d, *stack);
+    Vec3 where  = d->getFeetPos();
+    auto before = itemsNear(*region, where, 8.0f);
+    d->kill();
+    ItemActor* dropped = nullptr;
+    for (int i = 0; i < 40 && !dropped; ++i) {
+        co_await ctx.ticks(1);
+        dropped = newItemNear(*region, where, before, "minecraft:diamond");
+    }
+    ctx.require(dropped != nullptr, "the dead player dropped its diamond");
+    ctx.check(itemOwner(*dropped) == -1, "death drops name nobody (Inventory#dropAll)");
+    dropped->remove();
+});
+
+// ---- dimension_type values (contract extension feature/ext/dimension/DimensionType.h) ---------------------------------
+
+GF_REGISTER_SELFTEST("dimension.dimension_type", [](Context& ctx) {
+    namespace ext = world::ext;
+    auto const& t = ext::twilightType();
+    ctx.check(t.fixedTime == 13000 && t.coordinateScale == 0.125 && t.minY == -32 && t.height == 288 && t.logicalHeight == 288, "twilight_forest_type: time, scale, height");
+    ctx.check(t.ambientLight == 0.01f && t.monsterSpawnBlockLightLimit == 7 && t.monsterSpawnLightMin == 0 && t.monsterSpawnLightMax == 7, "ambient light and monster spawn light");
+    ctx.check(t.bedWorks && !t.respawnAnchorWorks && !t.hasRaids && !t.piglinSafe && t.natural && t.hasSkylight && !t.hasCeiling && !t.ultrawarm, "flags");
+    auto tf = world::twilight();
+    ctx.require(tf.has_value(), "the Twilight Forest exists");
+    ctx.check(&ext::dimensionType(static_cast<int>(*tf)) == &t, "the Twilight Forest's id reads twilight_forest_type");
+    ctx.check(ext::dimensionType(0).id == "minecraft:overworld" && ext::dimensionType(1).id == "minecraft:the_nether", "vanilla types");
+    // DimensionType#brightness
+    ctx.check(std::abs(ext::brightness(0.01f, 0) - 0.01f) < 1e-6f, "light 0: the ambient light");
+    ctx.check(std::abs(ext::brightness(0.01f, 15) - 1.0f) < 1e-6f, "light 15: 1");
+    ctx.check(std::abs(ext::brightness(0.0f, 7) - (7.0f / 15.0f) / (4.0f - 3.0f * 7.0f / 15.0f)) < 1e-6f, "light 7 without ambient light");
+    // the Twilight Forest's brightness ramp has it
+    auto level = ll::service::getLevel();
+    ctx.require(level.has_value(), "level");
+    auto d = level->getOrCreateDimension(*tf).lock();
+    ctx.require(d != nullptr, "the dimension");
+    auto const& ramp = d->getBrightnessRamp().mBrightnessRamp;
+    bool        same = true;
+    for (int i = 0; i < 16; ++i) same &= std::abs(ramp[i] - ext::brightness(0.01f, i)) < 1e-6f;
+    ctx.check(same, std::format("the dimension's brightness ramp is DimensionType#brightness with 0.01 (light 0: {:.4f})", ramp[0]));
+    // Level#updateSkyBrightness at time 13000 (DimensionType#timeOfDay 0.2597), noon and midnight
+    float tod = d->getTimeOfDay(level->getTime(), 0.0f);
+    ctx.check(std::abs(tod - 0.25965f) < 1e-3f, std::format("time of day {:.5f}", tod));
+    ctx.check(ext::skyDarken(tod, 0.0f, 0.0f) == 6 && ext::skyDarken(0.0f, 0.0f, 0.0f) == 0 && ext::skyDarken(0.5f, 0.0f, 0.0f) == 11, "sky darkening 6 at 13000, 0 at noon, 11 at midnight");
+    // Monster#isDarkEnoughToSpawn: nextInt(32) against the sky light, the block light limit, then
+    // the light test nextInt(8)
+    auto dark = [&](ext::DimensionTypeValues const& type, int sky, int block, int darken, std::vector<int> rolls) {
+        ScriptedRandom r(std::move(rolls));
+        return ext::isDarkEnoughToSpawn(type, sky, block, darken, r);
+    };
+    ctx.check(dark(t, 0, 0, 6, {0, 0}), "darkness spawns");
+    ctx.check(dark(t, 0, 7, 6, {0, 7}), "block light 7 spawns in the Twilight Forest when the test rolls 7");
+    ctx.check(!dark(t, 0, 7, 6, {0, 6}), "but not when it rolls 6");
+    ctx.check(!dark(t, 0, 8, 6, {0, 7}), "block light 8 never spawns there");
+    ctx.check(!dark(ext::dimensionType(0), 0, 1, 6, {0, 7}), "the overworld's block light limit is 0");
+    ctx.check(!dark(t, 15, 0, 6, {14, 7}), "a sky light above the nextInt(32) roll refuses");
+    ctx.check(dark(t, 13, 0, 6, {31, 7}), "sky light 13 darkened by 6 is 7");
+    ctx.check(!dark(t, 14, 0, 6, {31, 7}), "sky light 14 darkened by 6 is 8");
+    ctx.check(dark(ext::dimensionType(1), 0, 15, 0, {0, 0}) == false && dark(ext::dimensionType(1), 0, 7, 0, {0, 0}), "the nether: no block light limit, a constant 7");
 });
 
 } // namespace

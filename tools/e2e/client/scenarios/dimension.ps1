@@ -94,6 +94,12 @@ $trip = Wait-LogLine "${hostPrefix}dimension: .* travelled from minecraft:overwo
 $built = Get-LeviLog -Since $mark | Select-String -Pattern 'built a portal at (-?\d+) (-?\d+) (-?\d+) in twilightforest:twilight_forest' | Select-Object -Last 1
 Start-Sleep -Seconds 5
 Save-Screenshot 'twilight-arrival' | Out-Null
+# ambient_light 0.01: the client mod gives its own Twilight Forest the brightness ramp the server's has
+if ($script:Mode -ne 'remote-vanilla') {
+    $ramp = Get-LeviLog -Since $mark | Select-String -Pattern 'brightness ramp now has ambient light' | Where-Object { $_.Line -notmatch '\[host\]' } | Select-Object -First 1
+    if (-not $ramp) { throw 'the client did not give the Twilight Forest its ambient light (no "brightness ramp now has ambient light" line)' }
+    Write-Step $ramp.Line
+}
 
 # the fixed time: 20 s under the Twilight sky (and, in remote modes, the host's view of the clock it
 # sends this client meanwhile)

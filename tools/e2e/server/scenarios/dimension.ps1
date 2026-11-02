@@ -6,11 +6,12 @@ Write-Step $reg.Line
 
 $r = Invoke-SelfTest 'dimension.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) dimension selftest(s) failed" }
-if ($r.Pass -lt 19) { throw "expected at least 19 dimension selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 23) { throw "expected at least 23 dimension selftests to pass, got $($r.Pass)" }
 
 # the trips logged their lines (one per user-visible action): a player's and an item's
 foreach ($p in 'dimension: portal lit at', 'enters the portal at', 'travelled from minecraft:overworld to twilightforest:twilight_forest',
-    'travelled from twilightforest:twilight_forest to minecraft:overworld', 'minecraft:item travelled from minecraft:overworld', 'built a portal at') {
+    'travelled from twilightforest:twilight_forest to minecraft:overworld', 'minecraft:item travelled from minecraft:overworld', 'built a portal at',
+    'function twilightforest:tp_twilight .*moves', "brightness ramp now has ambient light") {
     if (-not (Get-ServerLog | Select-String -Pattern $p -Quiet)) { throw "no '$p' line" }
 }
 
