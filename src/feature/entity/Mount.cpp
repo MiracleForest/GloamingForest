@@ -13,11 +13,14 @@
 // IHostileMount: a mob grabs a player as its rider (alpha yeti, pinch beetle, yeti); the player
 // can't dismount, crouch off or teleport away, takes no suffocation damage while held, and is
 // thrown with YetiThrowAttachment's state (fall damage while thrown becomes "yeeted" damage by
-// the thrower). A mob is a hostile mount when its type is marked (ext::markHostileMount, Java's
-// IHostileMount marker) or when it grabbed its rider (mount::grab).
-//   - preventTeleportingOffHostileMounts (EntityTeleportEvent: ender pearl, chorus fruit,
-//     commands, ender teleports): Player::teleportTo is cancelled for a rider of a hostile mount
-//     (every cause but the engine's internal "unknown" moves).
+// the thrower; ThrowRiderGoal#stop sets that state for a Player rider only, any other rider is
+// just pushed, so non-player riders keep plain fall damage as in TF). A mob is a hostile mount
+// when its type is marked (ext::markHostileMount, Java's IHostileMount marker) or when it grabbed
+// its rider (mount::grab).
+//   - preventTeleportingOffHostileMounts (EntityTeleportEvent of any living rider: ender pearl,
+//     chorus fruit, commands, enderman / shulker teleports): Player::teleportTo and Mob::teleportTo
+//     are cancelled for a rider of a hostile mount (every cause but the engine's internal
+//     "unknown" moves), Actor::tryTeleportTo (the random teleports) fails for one.
 //   - preventMountDismount: Bedrock has no dismount event to cancel, so a rider that left the
 //     seat is put back on the next tick, unless the mob let go (hostileDismount) or the player is
 //     invulnerable (creative / spectator, as Java's `!player.getAbilities().invulnerable`).
@@ -29,6 +32,7 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockSource.h"
@@ -152,11 +156,15 @@ bool ridingUnfriendly(Actor const& actor) {
 /// vehicle; only the vehicle's own teleport is an event).
 int gMountTeleports = 0;
 
-/// HostileMountEvents#preventTeleportingOffHostileMounts for Player::teleportTo.
-bool blocksTeleport(Player& player, int cause) {
-    if (player.isClientSide() || cause == 0 || S().allowDismount || gMountTeleports > 0 || !ridingUnfriendly(player)) return false;
+/// HostileMountEvents#preventTeleportingOffHostileMounts (EntityTeleportEvent of any living rider:
+/// commands, ender pearls, chorus fruit, enderman / shulker teleports) for Actor::teleportTo,
+/// Player::teleportTo and Actor::tryTeleportTo.
+bool blocksTeleport(Actor& actor, int cause, bool anyCause) {
+    if (actor.isClientSide() || (cause == 0 && !anyCause) || S().allowDismount || gMountTeleports > 0 || !ridingUnfriendly(actor)) return false;
+    if (!actor.isPlayer() && !actor.hasCategory(ActorCategory::Mob)) return false; // LivingEntity only
     ++S().blockedTeleports;
-    log().info("entity: the teleport of {} was cancelled (riding {})", player.getRealName(), player.getVehicle()->getTypeName());
+    auto name = actor.isPlayer() ? static_cast<Player&>(actor).getRealName() : actor.getTypeName();
+    log().info("entity: the teleport of {} was cancelled (riding {})", name, actor.getVehicle()->getTypeName());
     return true;
 }
 
@@ -205,8 +213,43 @@ LL_TYPE_INSTANCE_HOOK(
     int         sourceEntityType,
     bool        keepVelocity
 ) {
-    if (gf::feature::entity::blocksTeleport(*this, cause)) return;
+    if (gf::feature::entity::blocksTeleport(*this, cause, false)) return;
     origin(pos, shouldStopRiding, cause, sourceEntityType, keepVelocity);
+}
+
+// the same for every other living rider (Mob#teleportTo; Player overrides it, its hook is the one above)
+LL_TYPE_INSTANCE_HOOK(
+    EntityActorRiderTeleportHook,
+    ll::memory::HookPriority::Normal,
+    Mob,
+    &Mob::$teleportTo,
+    void,
+    Vec3 const& pos,
+    bool        shouldStopRiding,
+    int         cause,
+    int         sourceEntityType,
+    bool        keepVelocity
+) {
+    if (!isPlayer() && gf::feature::entity::blocksTeleport(*this, cause, false)) return;
+    origin(pos, shouldStopRiding, cause, sourceEntityType, keepVelocity);
+}
+
+// the random teleports (chorus fruit, endermen, shulkers: EntityTeleportEvent.ChorusFruit /
+// EnderEntity) of a rider of a hostile mount fail
+LL_TYPE_INSTANCE_HOOK(
+    EntityRiderTryTeleportHook,
+    ll::memory::HookPriority::Normal,
+    Actor,
+    &Actor::tryTeleportTo,
+    bool,
+    Vec3 const& pos,
+    bool        landOnBlock,
+    bool        avoidLiquid,
+    int         cause,
+    int         entityType
+) {
+    if (gf::feature::entity::blocksTeleport(*this, cause, true)) return false;
+    return origin(pos, landOnBlock, avoidLiquid, cause, entityType);
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -228,6 +271,8 @@ namespace gf::feature::entity {
 
 void installMounts() {
     EntityRiderTeleportHook::hook();
+    EntityActorRiderTeleportHook::hook();
+    EntityRiderTryTeleportHook::hook();
     EntityMountTeleportHook::hook();
     static bool once = false;
     if (std::exchange(once, true)) return;
@@ -250,6 +295,8 @@ void installMounts() {
 
 void uninstallMounts() {
     EntityMountTeleportHook::unhook();
+    EntityRiderTryTeleportHook::unhook();
+    EntityActorRiderTeleportHook::unhook();
     EntityRiderTeleportHook::unhook();
 }
 

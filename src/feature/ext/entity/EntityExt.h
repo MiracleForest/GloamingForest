@@ -4,17 +4,20 @@
 // What the entity / projectile / boss contracts lack for TF's bosses and mobs:
 //
 //   gf::entity::ext     TFPart hits (Java's attackEntityFromPart), part management, the
-//                       NoClipMoveControl wanted position, ITFCharger / IBreathAttacker state and
-//                       the breath attack, IHostileMount (marker, riders) / YetiThrowAttachment
-//                       state, the string_list data serializer (Hydra#HEAD_NAMES).
+//                       NoClipMoveControl wanted position, the flying speed of FlyingMoveControl,
+//                       ITFCharger / IBreathAttacker state and the breath attack, IHostileMount
+//                       (marker, riders) / YetiThrowAttachment state, the string_list data
+//                       serializer (Hydra#HEAD_NAMES).
 //   gf::projectile::ext the owner and velocity of a simulated projectile, TFArrow / AbstractArrow
-//                       (default hit damage, crit, pickup, water inertia), TFThrowable#makeTrail.
+//                       (default hit damage, crit, pickup, water inertia, doPostHurtEffects),
+//                       TFThrowable#makeTrail.
 //   gf::boss::ext       ServerTFBossBar#updateStyle (the Lich's colour changes), the boss bar
 //                       flags, the death time, BaseTFBoss's overridable lifecycle steps (loot,
 //                       spawner, postmortem, death animation, death container, postRemoval), the
 //                       home radius of spawned bosses, the 27-slot loot buffer, the "bosses" config
 //                       values the multiplayer loot functions read, the alpha yeti trophy's rare
-//                       roar, and the sinister spawner block entity (SinisterSpawnerLogic).
+//                       roar and the trophies' particle options, and the sinister spawner block
+//                       entity (SinisterSpawnerLogic).
 // The client mod's readers of what F8 syncs are in feature/ext/entity/EntityClientExt.h.
 
 #include <cstdint>
@@ -66,6 +69,12 @@ void setPartRotation(PartHandle const& part, float yRot, float xRot);
 void setWantedPosition(Mob& mob, Vec3 const& pos, double speed);
 /// The wanted position (nullopt: the controller is idle).
 [[nodiscard]] std::optional<Vec3> wantedPosition(Mob const& mob);
+/// Java's Attributes.FLYING_SPEED of an entity type (SnowQueen 0.23, DeathTome 0.6): the speed the
+/// Flying / Hovering controllers (FlyingMoveControl) give a mob in the air (on the ground they use
+/// its movement speed). Without one: the attribute's default 0.4 (Bedrock's minecraft:flying_speed
+/// is another value: the air acceleration of LivingEntity#getFlyingSpeed).
+void setFlyingSpeed(std::string const& entityId, double flyingSpeed);
+[[nodiscard]] double flyingSpeed(Mob& mob);
 
 /// ITFCharger#isCharging, IBreathAttacker#isBreathing (set by the charge / breath goals).
 [[nodiscard]] bool isCharging(Actor const& mob);
@@ -120,6 +129,10 @@ struct ArrowSpec {
     float       waterInertia = 0.6f;              ///< AbstractArrow#getWaterInertia (Spec::drag is the air's 0.99)
     /// Runs before the default hit (SeekerArrow#onHitEntity: setCritArrow(false) first).
     std::function<void(Actor& arrow, Actor& target)> beforeHitEntity;
+    /// AbstractArrow#doPostHurtEffects additions of the type: run only for a hit that landed on a
+    /// living target, after the effects of the fired stack (TFArrow#doPostHurtEffects ->
+    /// Arrow#doPostHurtEffects: a tipped arrow's potion at 1/8 of its duration, at least 1 tick).
+    std::function<void(Actor& arrow, Actor& target)> postHurt;
 };
 /// Registers an arrow type: AbstractArrow#tick / #onHitEntity / #onHitBlock / #playerTouch run for
 /// it (ArrowSpec::gravity, Spec::drag in the air, ArrowSpec::waterInertia in water).
@@ -186,7 +199,10 @@ void setDeathTime(Mob& boss, int deathTime);
 ///              EntityUtil#bossChestLocation : nothing; then onPostRemoval (Lich#lightNearbyCandles);
 ///              then the engine removes the body (XP, death particles).
 ///   peaceful:  BaseTFBoss#checkDespawn: shouldCreateSpawner ? placeSpawner(home) : nothing; gone.
-/// If the body is unloaded while dying, the defaults run with what was known at death.
+/// A dying boss is kept in the world DB (TF saves it with its chunk): while its body's chunk is not
+/// loaded the death waits, and it goes on after a world reload. A body that does not come back with
+/// its loaded chunk finishes its death without it (the defaults, with what was known at its last
+/// tick); a death chest whose chunk is not loaded is placed when the chunk loads.
 struct Lifecycle {
     /// BaseTFBoss#shouldSpawnLoot (default: the doMobLoot gamerule). Lich: !isShadowClone().
     std::function<bool(Mob& boss)> shouldSpawnLoot;
@@ -249,6 +265,22 @@ struct RareSound {
     int         oneIn = 0;
 };
 [[nodiscard]] std::optional<RareSound> trophyRareSound(std::string const& blockId);
+
+/// AbstractTrophyBlock#createParticle beyond TrophyVariant::particle: how many particles one use
+/// shows and the options Java creates them with, as gf::fx::particle params:
+///   ur_ghast        {"color": [1, 0, 0], "scale": 1}               DustParticleOptions.REDSTONE
+///   knight_phantom  {"item": "twilightforest:knightmetal_sword"}   ItemParticleOption
+///   minoshroom      {"block": <the block under the trophy>}        BlockParticleOption(pos.below());
+///                   {"block": "below"} when no region / position is given
+///   quest_ram       {"color": "random"}                            ColorParticleOption of 3 nextFloat()
+/// The others have no options ({}). nullopt: no particle (hydra, final boss) or not a trophy.
+struct TrophyParticle {
+    std::string    particle;
+    int            count = 0;
+    nlohmann::json params = nlohmann::json::object();
+};
+[[nodiscard]] std::optional<TrophyParticle>
+trophyParticle(std::string const& blockId, BlockSource* region = nullptr, BlockPos const* pos = nullptr);
 
 /// The sinister spawner block entity (SinisterSpawnerBlockEntity + SinisterSpawnerLogic over
 /// vanilla's BaseSpawner) of a twilightforest:sinister_spawner block, kept in its block data

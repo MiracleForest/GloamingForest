@@ -1191,6 +1191,8 @@ void wantedMove(Mob& m, ActorState& s, ge::MoveKind kind) {
     }
     float speed = static_cast<float>(s.wantedSpeed) * movementSpeed(m);
     if (flying) {
+        // FlyingMoveControl: speedModifier * MOVEMENT_SPEED on the ground, * FLYING_SPEED in the air
+        if (!m.isOnGround()) speed = static_cast<float>(s.wantedSpeed * ge::ext::flyingSpeed(m));
         counterGravity(m);
         turnTowards(m, dx, dz, 90.0F);
         if (std::abs(dy) > 1.0E-5 || horizontal > 1.0E-5) {

@@ -32,31 +32,9 @@ using Json = nlohmann::json;
 
 /// Minecraft's LegacyRandomSource (java.util.Random's LCG): the random source of a mob's goals, so
 /// the goal code consumes random numbers the way TF does (seedable for deterministic selftests).
-/// It is a gf::core::jrand::RandomSource with the member names of the W0 contract's LegacyRandom:
-/// while F5's implementation is not on main (the file there is F0's stub) F8 keeps this copy;
-/// A8 replaces it with `using JavaRandom = gf::core::jrand::LegacyRandom;` (entity.java_random
-/// compares the two once F5's is in).
-class JavaRandom final : public core::jrand::RandomSource {
-public:
-    explicit JavaRandom(std::int64_t seed = 0) { setSeed(seed); }
-    void                       setSeed(std::int64_t seed) override;
-    [[nodiscard]] int          next(int bits);
-    [[nodiscard]] int          nextInt() override;
-    [[nodiscard]] int          nextInt(int bound) override;
-    [[nodiscard]] std::int64_t nextLong() override;
-    [[nodiscard]] bool         nextBoolean() override;
-    [[nodiscard]] float        nextFloat() override;
-    [[nodiscard]] double       nextDouble() override;
-    [[nodiscard]] double       nextGaussian() override;
-    /// LegacyRandomSource#fork / #forkPositional (LegacyPositionalRandomFactory).
-    [[nodiscard]] std::unique_ptr<core::jrand::RandomSource>            fork() override;
-    [[nodiscard]] std::unique_ptr<core::jrand::PositionalRandomFactory> forkPositional() override;
-
-private:
-    std::int64_t mSeed         = 0;
-    double       mNextGaussian = 0;
-    bool         mHaveGaussian = false;
-};
+/// It is the W0 contract's gf::core::jrand::LegacyRandom (F5); entity.java_random checks it against
+/// Java's values and an independent copy of java.util.Random.
+using JavaRandom = core::jrand::LegacyRandom;
 
 /// A fresh seed (std::random_device), used for actors that were not seeded by a test.
 [[nodiscard]] std::int64_t freshSeed();
@@ -284,8 +262,9 @@ void uninstallMounts();
 void tickMount(Mob& mob, ActorState& state);
 /// HostileMountEvents#isRidingUnfriendly.
 [[nodiscard]] bool ridingUnfriendly(Actor const& actor);
-/// Whether Player::teleportTo with `cause` is cancelled for `player` (riding a hostile mount).
-[[nodiscard]] bool blocksTeleport(Player& player, int cause);
+/// Whether a teleport with `cause` of the living `actor` is cancelled (it rides a hostile mount);
+/// `anyCause`: also the engine's cause 0 (the random teleports of Actor::tryTeleportTo).
+[[nodiscard]] bool blocksTeleport(Actor& actor, int cause, bool anyCause);
 /// Teleports cancelled so far (selftests).
 [[nodiscard]] int blockedTeleportsForTest();
 

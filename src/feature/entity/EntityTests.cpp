@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <type_traits>
 
 #include "ll/api/chrono/GameChrono.h"
 #include "ll/api/coro/CoroTask.h"
@@ -23,6 +24,7 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/world/actor/ActorFactory.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/state/PropertyComponent.h"
@@ -92,6 +94,15 @@ void removeActor(std::int64_t uid) {
     if (auto* a = actorById(uid)) a->remove();
 }
 
+/// Spawns any actor (a boat, a minecart: not a mob) through the actor factory.
+Actor* spawnActor(core::GlobalPos const& at, std::string const& id, float dx = 0.5f, float dz = 0.5f) {
+    auto* region = game::regionOf(at.dim);
+    auto  level  = ll::service::getLevel();
+    if (!region || !level) return nullptr;
+    auto owned = level->getActorFactory().createSpawnedActor(ActorDefinitionIdentifier(id), nullptr, Vec3{at.x + dx, float(at.y), at.z + dz}, Vec2{0.0f, 0.0f});
+    return owned ? level->addEntity(*region, std::move(owned)) : nullptr;
+}
+
 std::optional<std::variant<int, float, bool, std::string>> propertyOf(Actor& a, std::string const& name) {
     auto props = a.getEntityContext().tryGetComponent<PropertyComponent>();
     if (!props) return std::nullopt;
@@ -123,12 +134,65 @@ public:
 
 } // namespace
 
-// java.util.Random parity (the goals consume random numbers as TF does)
+namespace {
+/// An independent copy of java.util.Random (the reference F8 used before F5's LegacyRandom was on
+/// main): entity.java_random checks that the goals' random source agrees with it bit for bit.
+class ReferenceJavaRandom {
+public:
+    explicit ReferenceJavaRandom(std::int64_t seed) : mSeed((seed ^ 0x5DEECE66DLL) & ((1LL << 48) - 1)) {}
+    int next(int bits) {
+        mSeed = (mSeed * 0x5DEECE66DLL + 0xBLL) & ((1LL << 48) - 1);
+        return static_cast<int>(static_cast<std::int64_t>(static_cast<std::uint64_t>(mSeed) >> (48 - bits)));
+    }
+    int nextInt() { return next(32); }
+    int nextInt(int bound) {
+        if ((bound & -bound) == bound) return static_cast<int>((static_cast<std::int64_t>(bound) * next(31)) >> 31);
+        int bits, val;
+        do {
+            bits = next(31);
+            val  = bits % bound;
+        } while (bits - val + (bound - 1) < 0);
+        return val;
+    }
+    std::int64_t nextLong() { return static_cast<std::int64_t>(static_cast<std::uint64_t>(static_cast<std::int64_t>(next(32))) << 32) + next(32); }
+    bool         nextBoolean() { return next(1) != 0; }
+    float        nextFloat() { return static_cast<float>(next(24)) / static_cast<float>(1 << 24); }
+    double       nextDouble() { return static_cast<double>((static_cast<std::int64_t>(next(26)) << 27) + next(27)) * 0x1.0p-53; }
+    double       nextGaussian() {
+        if (mHave) {
+            mHave = false;
+            return mNext;
+        }
+        double v1, v2, s;
+        do {
+            v1 = 2 * nextDouble() - 1;
+            v2 = 2 * nextDouble() - 1;
+            s  = v1 * v1 + v2 * v2;
+        } while (s >= 1 || s == 0);
+        double m = std::sqrt(-2 * std::log(s) / s);
+        mNext    = v2 * m;
+        mHave    = true;
+        return v1 * m;
+    }
+
+private:
+    std::int64_t mSeed;
+    double       mNext = 0;
+    bool         mHave = false;
+};
+} // namespace
+
+// java.util.Random parity (the goals consume random numbers as TF does): JavaRandom is F5's
+// gf::core::jrand::LegacyRandom; it must give Java's values and agree with an independent copy
 GF_REGISTER_SELFTEST("entity.java_random", [](Context& ctx) {
+    static_assert(std::is_same_v<JavaRandom, core::jrand::LegacyRandom>, "the goals use the W0 contract's LegacyRandom");
     JavaRandom r0(0);
     ctx.check(r0.nextInt() == -1155484576, "new Random(0).nextInt() == -1155484576");
     JavaRandom r42(42);
     ctx.check(r42.nextInt() == -1170105035, "new Random(42).nextInt() == -1170105035");
+    ctx.check(JavaRandom(0).nextLong() == -4962768465676381896LL, "new Random(0).nextLong() == -4962768465676381896");
+    ctx.check(JavaRandom(0).nextDouble() == 0.730967787376657, "new Random(0).nextDouble() == 0.730967787376657");
+    ctx.check(JavaRandom(0).nextGaussian() == 0.8025330637390305, "new Random(0).nextGaussian() == 0.8025330637390305");
     JavaRandom a(7), b(7);
     bool       same = true;
     for (int i = 0; i < 50; ++i) same &= a.nextInt(30) == b.nextInt(30);
@@ -147,17 +211,25 @@ GF_REGISTER_SELFTEST("entity.java_random", [](Context& ctx) {
     ctx.check(k1->nextLong() == k2->nextLong(), "fork() is deterministic");
     auto p1 = JavaRandom(5).forkPositional(), p2 = JavaRandom(5).forkPositional();
     ctx.check(p1->at(1, 2, 3)->nextInt() == p2->at(1, 2, 3)->nextInt() && p1->fromHashOf("a")->nextInt() == p2->fromHashOf("a")->nextInt(), "forkPositional() is deterministic");
-    // once F5's LegacyRandom is in (main still has F0's stub), both must agree bit for bit
-    core::jrand::LegacyRandom legacy(0);
-    if (legacy.nextInt() == -1155484576) {
-        core::jrand::LegacyRandom l(1234);
-        JavaRandom                j(1234);
-        bool                      agree = true;
-        for (int i = 0; i < 100; ++i) agree &= l.nextInt(97) == j.nextInt(97) && l.nextDouble() == j.nextDouble() && l.nextLong() == j.nextLong();
-        ctx.check(agree, "JavaRandom matches gf::core::jrand::LegacyRandom");
-    } else {
-        ctx.info("gf::core::jrand::LegacyRandom is still a stub: nothing to compare");
+    // bit for bit against the independent copy, over every member the goals and the boss kit use
+    for (std::int64_t seed : {std::int64_t{0}, std::int64_t{1234}, std::int64_t{-987654321012345LL}, std::int64_t{0x5DEECE66DLL}}) {
+        JavaRandom          j(seed);
+        ReferenceJavaRandom r(seed);
+        bool                agree = true;
+        for (int i = 0; i < 200 && agree; ++i) {
+            int bound = 1 + i * 7 % 300; // powers of two and others
+            agree &= j.nextInt(bound) == r.nextInt(bound) && j.nextInt(64) == r.nextInt(64) && j.nextInt() == r.nextInt();
+            agree &= j.nextLong() == r.nextLong() && j.nextBoolean() == r.nextBoolean() && j.nextFloat() == r.nextFloat();
+            agree &= j.nextDouble() == r.nextDouble() && j.nextGaussian() == r.nextGaussian();
+        }
+        ctx.check(agree, "gf::core::jrand::LegacyRandom matches java.util.Random for seed " + std::to_string(seed));
     }
+    // fork() is LegacyRandomSource#fork: a new source seeded with nextLong()
+    JavaRandom          fj(77);
+    ReferenceJavaRandom fr(77);
+    auto                forked = fj.fork();
+    ReferenceJavaRandom expect(fr.nextLong());
+    ctx.check(forked->nextInt() == expect.nextInt(), "fork() seeds the new source with nextLong()");
 });
 
 GF_REGISTER_SELFTEST("entity.behaviour", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -635,6 +707,31 @@ GF_REGISTER_SELFTEST("entity.mount_type", [](Context& ctx) -> ll::coro::CoroTask
     ge::ext::hostileDismount(*p);
     co_await ctx.ticks(2);
     if ((p = playerById(spId))) ctx.check(p->getVehicle() == nullptr, "hostileDismount lets it go");
+    // any living rider (EntityTeleportEvent of a LivingEntity): a pig in a boat marked as a hostile
+    // mount is not teleported away, by a command nor by a random (enderman / chorus) teleport
+    {
+        struct BoatMark {
+            BoatMark() { ge::ext::markHostileMount("minecraft:boat"); }
+            ~BoatMark() { unmarkHostileMountForTest("minecraft:boat"); }
+        } boatMark;
+        auto* boat = spawnActor(at.offset(3, 0, 3), "minecraft:boat");
+        auto* pig  = spawnMob(at.offset(3, 0, 1), "minecraft:pig");
+        ctx.require(boat && pig, "a boat and a pig spawn");
+        auto boatId = uidOf(*boat), pigId = uidOf(*pig);
+        ctx.require(pig->startRiding(*boat, true) && pig->getVehicle() == boat, "the pig sits in the boat");
+        ctx.check(ge::ext::isRidingUnfriendly(*pig), "a mob riding a hostile mount rides unfriendly");
+        int  blocked = blockedTeleportsForTest();
+        auto before  = pig->getFeetPos();
+        pig->teleportTo(Vec3{before.x + 30.0f, before.y, before.z}, true, 3 /* command */, 0, false);
+        bool hopped = pig->tryTeleportTo(Vec3{before.x + 20.0f, before.y, before.z}, false, true, 2 /* chorus fruit */, 0);
+        co_await ctx.ticks(2);
+        pig = mobById(pigId);
+        ctx.require(pig != nullptr, "the pig is still there");
+        ctx.check(blockedTeleportsForTest() >= blocked + 2 && !hopped, "both teleports were cancelled (" + std::to_string(blockedTeleportsForTest() - blocked) + ")");
+        ctx.check(dist(pig->getFeetPos(), before) < 4.0, "the rider stayed with its mount");
+        removeActor(pigId);
+        removeActor(boatId);
+    }
     removeActor(mid);
     (void)box;
 });
@@ -742,9 +839,20 @@ GF_REGISTER_SELFTEST("entity.move_controls", [](Context& ctx) -> ll::coro::CoroT
         ge::ext::setWantedPosition(*m, g, 1.0);
         return {uidOf(*m), s, g};
     };
+    // Attributes.FLYING_SPEED in the air (FlyingMoveControl): the type's (DeathTome 0.6), else the
+    // attribute's default 0.4
+    struct FlyScope {
+        FlyScope() { ge::ext::setFlyingSpeed("gf_test:boss_part", 0.6); }
+        ~FlyScope() { ge::ext::setFlyingSpeed("gf_test:boss_part", 0.0); }
+    } fly;
     auto glide = launch("gf_test:boss_part", at.offset(0, 0, 2), 1.0f);
     auto climb = launch("minecraft:armor_stand", at.offset(2, 0, 4), 0.0f);
     ctx.require(glide.id && climb.id, "the flyers spawn");
+    if (auto* gm = mobById(glide.id)) ctx.check(ge::ext::flyingSpeed(*gm) == 0.6, "the flying speed of a type that set one (0.6)");
+    if (auto* cm = mobById(climb.id)) {
+        double fs = ge::ext::flyingSpeed(*cm);
+        ctx.check(fs == 0.4, "a type without one flies with the attribute's default 0.4 (" + std::to_string(fs) + ")");
+    }
     for (int i = 0; i < 60; ++i) co_await ctx.ticks(1);
     auto* g = mobById(glide.id);
     auto* c = mobById(climb.id);
@@ -823,10 +931,10 @@ GF_REGISTER_SELFTEST("entity.sync_late", [](Context& ctx) -> ll::coro::CoroTask<
     msgs = gf::net::takeTestMessages(*p);
     ctx.check(!hasList(msgs, uid, key, {"left"}), "nothing for a companion 200 blocks away");
     p->teleport(Vec3{at.x + 4.5f, float(at.y), at.z + 1.5f}, DimensionType(at.dim));
-    co_await ctx.ticks(25);
+    co_await ctx.ticks(3); // looked at every tick: the state comes with the actor (Java: with its spawn packet)
     ctx.require((p = playerById(farId)) != nullptr, "the far player came near");
     msgs = gf::net::takeTestMessages(*p);
-    ctx.check(hasList(msgs, uid, key, {"left"}) && hasParts(msgs, uid, 1), "a companion that comes into range gets the list and the parts (startSeenByPlayer)");
+    ctx.check(hasList(msgs, uid, key, {"left"}) && hasParts(msgs, uid, 1), "a companion that comes into range gets the list and the parts within 3 ticks (startSeenByPlayer)");
     ctx.check(viewerCountForTest(uid) == 2, "both companions see the actor (" + std::to_string(viewerCountForTest(uid)) + ")");
     removeActor(uid);
     co_await ctx.ticks(2);

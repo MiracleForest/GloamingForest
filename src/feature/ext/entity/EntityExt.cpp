@@ -53,6 +53,26 @@ std::optional<Vec3> wantedPosition(Mob const& mob) {
     return s->wanted;
 }
 
+namespace {
+std::unordered_map<std::string, double>& flyingSpeeds() {
+    static std::unordered_map<std::string, double> m;
+    return m;
+}
+} // namespace
+
+void setFlyingSpeed(std::string const& entityId, double speed) {
+    if (speed > 0.0) flyingSpeeds()[entityId] = speed;
+    else flyingSpeeds().erase(entityId);
+}
+
+// Attributes.FLYING_SPEED: the type's (Java's attribute supplier), else the attribute's default
+// 0.4. Bedrock's minecraft:flying_speed is not this value: it is the air acceleration per tick
+// (LivingEntity#getFlyingSpeed, 0.02 by default).
+double flyingSpeed(Mob& mob) {
+    if (auto it = flyingSpeeds().find(mob.getTypeName()); it != flyingSpeeds().end()) return it->second;
+    return 0.4;
+}
+
 bool isCharging(Actor const& mob) { return flag(mob, "entity:charging"); }
 bool isBreathing(Actor const& mob) { return flag(mob, "entity:breathing"); }
 

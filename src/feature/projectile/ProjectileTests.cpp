@@ -12,9 +12,14 @@
 
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/server/SimulatedPlayer.h"
+#include "mc/deps/core/math/Vec2.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/world/actor/ActorFactory.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/effect/EffectDuration.h"
+#include "mc/world/effect/MobEffectInstance.h"
+#include "mc/world/item/alchemy/Potion.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
@@ -95,6 +100,19 @@ Mob* spawnMob(core::GlobalPos const& at, std::string const& id) {
     auto  level  = ll::service::getLevel();
     if (!region || !level) return nullptr;
     return level->getSpawner().spawnMob(*region, ActorDefinitionIdentifier(id), nullptr, Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f}, false, false, false);
+}
+
+/// Spawns any actor (a boat: not a mob) through the actor factory.
+Actor* spawnActor(core::GlobalPos const& at, std::string const& id) {
+    auto* region = game::regionOf(at.dim);
+    auto  level  = ll::service::getLevel();
+    if (!region || !level) return nullptr;
+    auto owned = level->getActorFactory().createSpawnedActor(ActorDefinitionIdentifier(id), nullptr, Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f}, Vec2{0.0f, 0.0f});
+    return owned ? level->addEntity(*region, std::move(owned)) : nullptr;
+}
+
+void removeActorById(std::int64_t uid) {
+    if (auto* a = fe::actorById(uid)) a->remove();
 }
 
 } // namespace
@@ -291,6 +309,60 @@ GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
     }
     ctx.check(arrows >= 1, "the pickup item (minecraft:arrow) is in the inventory (" + std::to_string(arrows) + ")");
     if (auto* a = fe::actorById(pid)) a->remove();
+    // Entity#canBeHitByProjectile: a boat is pickable, the arrow hits it (the engine's own damage)
+    hits().entity.clear();
+    auto* boat = spawnActor(at.offset(5, 0, 0), "minecraft:boat");
+    ctx.require(boat != nullptr, "a boat spawns");
+    auto boatId = fe::uidOf(*boat);
+    shooter     = fe::playerById(spId);
+    ctx.require(shooter != nullptr, "the shooter is still there");
+    eye       = shooter->getEyePos();
+    auto bpos = boat->getPosition();
+    p         = gp::shoot(*shooter, kFixture, Vec3{bpos.x - eye.x, bpos.y + 0.2f - eye.y, bpos.z - eye.z}, 3.0f, 0.0f);
+    ctx.require(p != nullptr, "an arrow at the boat");
+    pid = fe::uidOf(*p);
+    for (int i = 0; i < 20 && hits().entity.empty(); ++i) co_await ctx.ticks(1);
+    ctx.check(hits().entity == "minecraft:boat", "the arrow hit the boat (" + hits().entity + ")");
+    co_await ctx.ticks(1);
+    ctx.info(std::string("the boat's hurt ") + (fe::actorById(pid) ? "did not land (the arrow bounced)" : "landed (the arrow is gone)"));
+    if (auto* a = fe::actorById(pid)) a->remove();
+    if (auto* a = fe::actorById(boatId)) a->remove();
+    // Arrow#doPostHurtEffects of the fired stack (TFArrow: the parent arrow's): a tipped arrow of
+    // poison gives poison for 1/8 of the potion's duration
+    auto* pig = spawnMob(at.offset(3, 0, 2), "minecraft:pig");
+    ctx.require(pig != nullptr, "a pig spawns");
+    auto pigId  = fe::uidOf(*pig);
+    auto poison = Potion::Poison();
+    ctx.require(poison != nullptr, "the poison potion");
+    auto tipped = game::items::make("minecraft:arrow", 1, static_cast<short>(poison->mId + 1));
+    ctx.require(tipped.has_value(), "a tipped arrow of poison");
+    int potionTicks = poison->mEffects->empty() ? 0 : poison->mEffects->front().mDuration->mValue;
+    applyFiredStackEffectsForTest(*pig, *tipped);
+    auto const* effect = pig->getEffect(poison->mEffects->empty() ? 0u : poison->mEffects->front().mId);
+    ctx.check(effect != nullptr, "the pig is poisoned by the tipped arrow");
+    if (effect) ctx.check(effect->mDuration->mValue == std::max(potionTicks / 8, 1), "for 1/8 of the potion's duration (" + std::to_string(effect->mDuration->mValue) + " of " + std::to_string(potionTicks) + ")");
+    // with F10's combat pipeline the hit lands and the effects come with it
+    auto stubs = core::stubCalls();
+    if (std::find(stubs.begin(), stubs.end(), "combat.hurt") == stubs.end()) {
+        auto* fresh = spawnMob(at.offset(5, 0, 2), "minecraft:pig");
+        ctx.require(fresh != nullptr, "a second pig spawns");
+        auto freshId = fe::uidOf(*fresh);
+        int  before  = postHurtsForTest();
+        shooter      = fe::playerById(spId);
+        ctx.require(shooter != nullptr, "the shooter is still there");
+        eye       = shooter->getEyePos();
+        auto fpos = fresh->getFeetPos();
+        p = gp::shoot(*shooter, kFixture, Vec3{fpos.x - eye.x, fpos.y + 0.5f - eye.y, fpos.z - eye.z}, 3.0f, 0.0f, {{"pickupItem", game::items::toJson(*tipped)}});
+        ctx.require(p != nullptr, "a tipped arrow is shot");
+        for (int i = 0; i < 20 && postHurtsForTest() == before; ++i) co_await ctx.ticks(1);
+        ctx.check(postHurtsForTest() > before, "a landed hit runs doPostHurtEffects");
+        if (auto* f = fe::actorById(freshId); f && f->isAlive())
+            ctx.check(f->getEffect(poison->mEffects->front().mId) != nullptr, "and the shot pig is poisoned");
+        removeActorById(freshId);
+    } else {
+        ctx.info("the combat contract is still a stub: arrow hits on living targets do not land (doPostHurtEffects checked directly)");
+    }
+    removeActorById(pigId);
     (void)box;
 });
 

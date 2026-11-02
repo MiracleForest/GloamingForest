@@ -64,78 +64,7 @@ namespace gf::feature::entity {
 
 namespace ia = gf::interactions;
 
-// ---- java.util.Random -------------------------------------------------------------------------
-
-void JavaRandom::setSeed(std::int64_t seed) {
-    mSeed         = (seed ^ 0x5DEECE66DLL) & ((1LL << 48) - 1);
-    mHaveGaussian = false;
-}
-int JavaRandom::next(int bits) {
-    mSeed = (mSeed * 0x5DEECE66DLL + 0xBLL) & ((1LL << 48) - 1);
-    return static_cast<int>(static_cast<std::int64_t>(static_cast<std::uint64_t>(mSeed) >> (48 - bits)));
-}
-int JavaRandom::nextInt() { return next(32); }
-int JavaRandom::nextInt(int bound) {
-    if (bound <= 0) return 0;
-    if ((bound & -bound) == bound) return static_cast<int>((static_cast<std::int64_t>(bound) * next(31)) >> 31);
-    int bits, val;
-    do {
-        bits = next(31);
-        val  = bits % bound;
-    } while (bits - val + (bound - 1) < 0);
-    return val;
-}
-std::int64_t JavaRandom::nextLong() { return (static_cast<std::int64_t>(next(32)) << 32) + next(32); }
-bool         JavaRandom::nextBoolean() { return next(1) != 0; }
-float        JavaRandom::nextFloat() { return static_cast<float>(next(24)) / static_cast<float>(1 << 24); }
-double       JavaRandom::nextDouble() {
-    return static_cast<double>((static_cast<std::int64_t>(next(26)) << 27) + next(27)) * 0x1.0p-53;
-}
-double JavaRandom::nextGaussian() {
-    if (mHaveGaussian) {
-        mHaveGaussian = false;
-        return mNextGaussian;
-    }
-    double v1, v2, s;
-    do {
-        v1 = 2 * nextDouble() - 1;
-        v2 = 2 * nextDouble() - 1;
-        s  = v1 * v1 + v2 * v2;
-    } while (s >= 1 || s == 0);
-    double multiplier = std::sqrt(-2 * std::log(s) / s);
-    mNextGaussian     = v2 * multiplier;
-    mHaveGaussian     = true;
-    return v1 * multiplier;
-}
-
-namespace {
-/// LegacyRandomSource.LegacyPositionalRandomFactory.
-class JavaPositionalFactory final : public core::jrand::PositionalRandomFactory {
-public:
-    explicit JavaPositionalFactory(std::int64_t seed) : mSeed(seed) {}
-    std::unique_ptr<core::jrand::RandomSource> at(int x, int y, int z) override {
-        // Mth#getSeed(x, y, z), in Java's wrapping long arithmetic
-        auto          mul = [](std::int64_t a, std::int64_t b) { return static_cast<std::int64_t>(static_cast<std::uint64_t>(a) * static_cast<std::uint64_t>(b)); };
-        std::int64_t  i   = static_cast<std::int64_t>(static_cast<std::int32_t>(static_cast<std::uint32_t>(x) * 3129871u)) ^ mul(z, 116129781LL) ^ y;
-        i                 = static_cast<std::int64_t>(static_cast<std::uint64_t>(mul(mul(i, i), 42317861LL)) + static_cast<std::uint64_t>(mul(i, 11LL)));
-        return std::make_unique<JavaRandom>((i >> 16) ^ mSeed);
-    }
-    std::unique_ptr<core::jrand::RandomSource> fromHashOf(std::string_view name) override {
-        // String#hashCode over the UTF-16 units (the names are ASCII resource locations)
-        std::int32_t h = 0;
-        for (unsigned char c : name) h = static_cast<std::int32_t>(static_cast<std::uint32_t>(h) * 31u + c);
-        return std::make_unique<JavaRandom>(static_cast<std::int64_t>(h) ^ mSeed);
-    }
-
-private:
-    std::int64_t mSeed;
-};
-} // namespace
-
-std::unique_ptr<core::jrand::RandomSource> JavaRandom::fork() { return std::make_unique<JavaRandom>(nextLong()); }
-std::unique_ptr<core::jrand::PositionalRandomFactory> JavaRandom::forkPositional() {
-    return std::make_unique<JavaPositionalFactory>(nextLong());
-}
+// ---- random sources -----------------------------------------------------------------------------
 
 std::int64_t freshSeed() {
     static std::mt19937_64 rng{std::random_device{}()};
@@ -261,6 +190,10 @@ Vec3 eyeOf(Actor const& actor) { return actor.getEyePos(); }
 namespace {
 
 constexpr char const* kSaveTag = "GloamingForest";
+constexpr char const* kDiedKey = "entity:died"; ///< data(): the die hooks ran for this body (saved with it)
+
+/// Notes an actor whose state companions get when they start seeing it (companion sync below).
+void noteSynced(std::int64_t uid, ActorState const& s);
 
 struct Registry {
     std::unordered_map<std::string, gf::entity::Behaviour>       behaviours;
@@ -355,10 +288,12 @@ void onActorDie(Mob& mob, ActorDamageSource const& source) {
     auto&       r    = reg();
     auto const& type = mob.getTypeName();
     if (!r.states.contains(uidOf(mob)) && !interesting(type)) return;
-    // once per life: the engine may call die again for a death already handled
+    // once per life: the engine may call die again for a death already handled, also for a dead
+    // body saved and loaded again with its chunk (the flag travels in the save tag)
     auto& state = stateOf(mob);
     if (state.died || !reallyDead(mob)) return;
-    state.died    = true;
+    state.died = true;
+    if (!mob.isPlayer() && state.data.is_object()) state.data[kDiedKey] = true;
     Actor* killer = nullptr;
     if (source.isEntitySource() || source.isChildEntitySource()) killer = actorById(source.getEntityUniqueID().rawID);
     bool        byPlayer = killer && killer->isPlayer();
@@ -407,6 +342,8 @@ void readSave(Actor& actor, CompoundTag const& tag) {
     auto& s  = stateOf(actor);
     s.data   = std::move(j);
     s.loaded = true;
+    if (s.data.value(kDiedKey, false)) s.died = true; // a dead body saved with its chunk
+    noteSynced(uidOf(actor), s);
     auto ty  = actor.getTypeName();
     if (auto bit = reg().behaviours.find(ty); bit != reg().behaviours.end() && bit->second.load) {
         Json extra = s.data.contains("entity:save") ? s.data["entity:save"] : Json::object();
@@ -470,9 +407,8 @@ JavaRandom& randomOf(Actor& actor) {
 
 namespace {
 
-constexpr char const* kSyncedKey   = "entity:synced"; ///< data(): the keys gf::entity::sync sent (persisted)
-constexpr double      kTrackRange  = 160.0;           ///< Java's tracking range of the bosses (10 chunks)
-constexpr int         kTrackPeriod = 10;              ///< ticks between two looks for new viewers
+constexpr char const* kSyncedKey  = "entity:synced"; ///< data(): the keys gf::entity::sync sent (persisted)
+constexpr double      kTrackRange = 160.0;           ///< Java's tracking range of the bosses (10 chunks)
 
 /// The companions that got an actor's synced state, by actor unique id.
 std::unordered_map<std::int64_t, std::set<std::int64_t>>& viewers() {
@@ -480,11 +416,21 @@ std::unordered_map<std::int64_t, std::set<std::int64_t>>& viewers() {
     return v;
 }
 
+/// The actors with synced state (looked at every tick for new viewers).
+std::set<std::int64_t>& syncedActors() {
+    static std::set<std::int64_t> s;
+    return s;
+}
+
 bool hasSyncedState(ActorState const& s) {
     if (!s.parts.empty()) return true;
     if (!s.data.is_object()) return false;
     auto it = s.data.find(kSyncedKey);
     return it != s.data.end() && it->is_array() && !it->empty();
+}
+
+void noteSynced(std::int64_t uid, ActorState const& s) {
+    if (hasSyncedState(s)) syncedActors().insert(uid);
 }
 
 /// Every synced value of `actor` and its part list, for a companion that starts seeing it.
@@ -497,15 +443,23 @@ void sendAll(Player& player, Actor& actor, ActorState& s) {
         if (auto* mob = asMob(actor)) gf::net::send(player, "entity.multipart", partsMessage(*mob, s));
 }
 
-/// Looks for the companions that started seeing an actor with synced state (every kTrackPeriod
-/// ticks, and at once for a companion that just joined).
+/// Looks for the companions that started seeing an actor with synced state (every tick, so the
+/// state reaches a companion with the actor, as Java's SynchedEntityData does with the spawn
+/// packet; at once for a companion that just joined). An actor that is not loaded forgets its
+/// viewers: they get everything again when it comes back.
 void trackAll() {
-    auto& v = viewers();
-    for (auto& [uid, state] : reg().states) {
-        if (!state || !hasSyncedState(*state)) continue;
-        if (auto* actor = actorById(uid)) updateViewers(*actor, *state, nullptr);
+    auto& set = syncedActors();
+    for (auto it = set.begin(); it != set.end();) {
+        auto* state = findState(*it);
+        if (!state || !hasSyncedState(*state)) {
+            viewers().erase(*it);
+            it = set.erase(it);
+            continue;
+        }
+        if (auto* actor = actorById(*it)) updateViewers(*actor, *state, nullptr);
+        else viewers().erase(*it);
+        ++it;
     }
-    std::erase_if(v, [](auto const& kv) { return !actorById(kv.first); });
 }
 
 } // namespace
@@ -523,17 +477,23 @@ Json dataMessage(Actor& actor, ActorState const& s, std::string const& key) {
 }
 
 void updateViewers(Actor& actor, ActorState& s, std::function<void(Player&)> const& change) {
-    auto&                  seen = viewers()[uidOf(actor)];
-    std::set<std::int64_t> now;
-    for (auto* p : playersNear(static_cast<int>(actor.getDimensionId()), actor.getFeetPos(), kTrackRange)) {
+    syncedActors().insert(uidOf(actor));
+    auto&       seen    = viewers()[uidOf(actor)];
+    auto        near    = playersNear(static_cast<int>(actor.getDimensionId()), actor.getFeetPos(), kTrackRange);
+    std::size_t inRange = 0;
+    for (auto* p : near) {
         if (!gf::net::isCompanion(*p)) continue;
         auto pid = uidOf(*p);
-        now.insert(pid);
-        if (!seen.contains(pid)) sendAll(*p, actor, s); // startSeenByPlayer: everything (the change included)
+        ++inRange;
+        if (seen.insert(pid).second) sendAll(*p, actor, s); // startSeenByPlayer: everything (the change included)
         else if (change) change(*p);
     }
-    // a companion that left the range gets everything again when it comes back
-    seen = std::move(now);
+    // a companion that left the range gets everything again when it comes back (the set is
+    // rebuilt only when someone left)
+    if (seen.size() != inRange)
+        std::erase_if(seen, [&](std::int64_t pid) {
+            return std::none_of(near.begin(), near.end(), [&](Player* p) { return uidOf(*p) == pid && gf::net::isCompanion(*p); });
+        });
 }
 
 std::size_t viewerCountForTest(std::int64_t uid) {
@@ -791,11 +751,10 @@ public:
             game::db::onWorldClosed([] {
                 reg().states.clear();
                 viewers().clear();
+                syncedActors().clear();
             });
             // startSeenByPlayer for the companions that came into range
-            onLevelTick([] {
-                if (currentTick() % kTrackPeriod == 0) trackAll();
-            });
+            onLevelTick([] { trackAll(); });
             // a companion that just joined gets everything it sees now
             gf::net::onCompanionJoined([](Player& player) {
                 auto pid = uidOf(player);

@@ -17,9 +17,14 @@
 //     callback: gone); a block hit that keeps the projectile sticks it in the ground;
 //   - arrows (ext::registerArrow, TFArrow over AbstractArrow): an entity hit deals
 //     ceil(speed * baseDamage) (+ the crit bonus) of minecraft:arrow by the owner and removes the
-//     arrow, or deflects it when the hit did not land; a block hit sticks it (shake 7, despawn
-//     after 1200 ticks, falling again when its block goes); a player touching a stuck arrow picks
-//     it up by its pickup rule; the Spec hooks run after as the subclass's additions;
+//     arrow, or deflects it when the hit did not land; a landed hit on a living target knocks it
+//     back and runs #doPostHurtEffects (the fired stack's: a tipped arrow's potion; then
+//     ArrowSpec::postHurt); a block hit sticks it (shake 7, despawn after 1200 ticks, falling again
+//     when its block goes); a player touching a stuck arrow picks it up by its pickup rule; the
+//     Spec hooks run after as the subclass's additions;
+//   - every projectile hits what Java's Entity#canBeHitByProjectile allows: living things, TF
+//     parts, and the pickable vanilla objects (boats, minecarts, end crystals, paintings, leash
+//     knots, fireballs, wind charges, shulker bullets), which take the engine's own damage;
 //   - steering functions (seeker arrows, moonworm shots) may replace the velocity every tick.
 // The entity is moved every tick (clients interpolate); its state is saved with the actor and the
 // flight resumes after a reload.
@@ -37,11 +42,19 @@
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/ecs/gamerefs_entity/GameRefsEntity.h"
+#include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorCategory.h"
+#include "mc/world/actor/ActorDamageByChildActorSource.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorFactory.h"
+#include "mc/world/actor/ActorHurtResult.h"
+#include "mc/world/actor/ActorType.h"
+#include "mc/world/actor/HurtParameters.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/effect/EffectDuration.h"
+#include "mc/world/effect/MobEffectInstance.h"
+#include "mc/world/item/alchemy/Potion.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/attribute/AttributeInstance.h"
 #include "mc/world/attribute/AttributeInstanceConstRef.h"
@@ -79,6 +92,7 @@ namespace {
 constexpr double kEntityMargin  = 0.3;  ///< ProjectileUtil.DEFAULT_ENTITY_HIT_RESULT_MARGIN
 constexpr int    kInGroundLimit = 1200; ///< AbstractArrow#tickDespawn
 constexpr char const* kDataKey = "entity:projectile";
+int                   gPostHurts = 0; ///< landed living hits that ran doPostHurtEffects (selftests)
 
 struct Sim {
     std::string  type;
@@ -232,15 +246,42 @@ bool intersects(AABB const& a, AABB const& b) {
     return a.min.x < b.max.x && a.max.x > b.min.x && a.min.y < b.max.y && a.max.y > b.min.y && a.min.z < b.max.z && a.max.z > b.min.z;
 }
 
-/// Projectile#canHitEntity (living things, players, multipart parts; never another projectile):
-/// until the projectile left its owner, nothing of the owner's vehicle stack
-/// (Entity#isPassengerOfSameVehicle: the owner itself, its mount, the mount's other riders); an
-/// arrow (AbstractArrow#tick) passes through players its player owner may not harm.
+/// Entity#canBeHitByProjectile (isAlive() && isPickable()) of the non-living vanilla types that are
+/// pickable in Java: boats and minecarts, end crystals, paintings and leash knots (HangingEntity),
+/// fireballs, wind charges and shulker bullets (AbstractHurtingProjectile / ShulkerBullet; the
+/// dragon fireball is not pickable). An armor stand is a mob (LivingEntity).
+bool pickableObject(Actor const& target) {
+    switch (target.getEntityTypeId()) {
+    case ActorType::BoatRideable:
+    case ActorType::ChestBoatRideable:
+    case ActorType::MinecartRideable:
+    case ActorType::MinecartHopper:
+    case ActorType::MinecartTNT:
+    case ActorType::MinecartChest:
+    case ActorType::MinecartFurnace:
+    case ActorType::MinecartCommandBlock:
+    case ActorType::EnderCrystal:
+    case ActorType::Painting:
+    case ActorType::LeashKnot:
+    case ActorType::LargeFireball:
+    case ActorType::SmallFireball:
+    case ActorType::WindChargeProjectile:
+    case ActorType::BreezeWindChargeProjectile:
+    case ActorType::ShulkerBullet: return true;
+    default: return false;
+    }
+}
+
+/// Projectile#canHitEntity (Entity#canBeHitByProjectile: living things, players, multipart parts,
+/// the pickable vanilla objects; never a TF projectile, which is not pickable): until the
+/// projectile left its owner, nothing of the owner's vehicle stack (Entity#isPassengerOfSameVehicle:
+/// the owner itself, its mount, the mount's other riders); an arrow (AbstractArrow#tick) passes
+/// through players its player owner may not harm.
 bool canHit(Actor& projectile, Sim const& s, Actor& target) {
     if (&target == &projectile || !target.isAlive()) return false;
     if (target.isPlayer() && static_cast<Player&>(target).isSpectator()) return false;
     if (S().live.contains(fe::uidOf(target))) return false;
-    bool pickable = target.hasCategory(ActorCategory::Mob) || target.isPlayer() || fe::parentOfPart(target) != 0;
+    bool pickable = target.hasCategory(ActorCategory::Mob) || target.isPlayer() || fe::parentOfPart(target) != 0 || pickableObject(target);
     if (!pickable) return false;
     Actor* owner = s.owner ? fe::actorById(s.owner) : nullptr;
     if (!s.leftOwner && owner && rootVehicle(*owner) == rootVehicle(target)) return false;
@@ -256,6 +297,39 @@ void markRemoved(Actor& projectile) {
 /// The arrow's hit sound pitch: 1.2 / (nextFloat() * 0.2 + 0.9).
 float hitPitch(Actor& p) { return 1.2F / (fe::randomOf(p).nextFloat() * 0.2F + 0.9F); }
 
+/// Arrow#doPostHurtEffects of the fired stack (TFArrow#doPostHurtEffects runs the parent arrow's):
+/// a tipped arrow (Bedrock: minecraft:arrow whose aux value is its potion id + 1) gives its
+/// potion's effects at 1/8 of their duration, at least 1 tick, with their amplifier, ambience and
+/// visibility. Bedrock has no spectral arrow (SpectralArrow#doPostHurtEffects' glowing) and no
+/// custom arrow effects.
+void applyFiredStackEffects(Sim const& s, Actor& target) {
+    if (!s.pickupStack.is_object()) return;
+    auto stack = game::items::fromJson(s.pickupStack);
+    if (game::items::isEmpty(stack) || game::items::idOf(stack) != "minecraft:arrow") return;
+    int id = static_cast<int>(stack.getAuxValue()) - 1;
+    if (id < 0) return;
+    auto const& potions = Potion::mPotionsById();
+    if (id >= static_cast<int>(potions.size()) || !potions[id]) return;
+    for (auto const& e : *potions[id]->mEffects) {
+        MobEffectInstance effect(e.mId, EffectDuration{std::max(e.mDuration->mValue / 8, 1)});
+        effect.mAmplifier     = e.mAmplifier;
+        effect.mAmbient       = e.mAmbient;
+        effect.mEffectVisible = e.mEffectVisible;
+        if (target.canBeAffectedByArrow(effect)) target.addEffect(effect);
+    }
+}
+
+/// Entity#hurt of a non-living target (a boat, a minecart, an end crystal, ...): the engine's own
+/// damage by the arrow (DamageSources#arrow(arrow, owner)).
+bool hurtObject(Actor& target, Actor& arrow, Actor* owner, float damage) {
+    ActorDamageByChildActorSource source(arrow, owner ? *owner : arrow, SharedTypes::Legacy::ActorDamageCause::Projectile);
+    HurtParameters                params{};
+    params.mKnockback   = true;
+    params.mIgnition    = false;
+    params.mExtraKnockbackPower = 0.0f;
+    return static_cast<bool>(target.hurt(source, damage, params));
+}
+
 /// AbstractArrow#onHitEntity. True: the arrow is gone.
 bool arrowHitEntity(Actor& p, Sim& s, pe::ArrowSpec const& arrow, Actor& target) {
     if (arrow.beforeHitEntity) arrow.beforeHitEntity(p, target);
@@ -268,10 +342,19 @@ bool arrowHitEntity(Actor& p, Sim& s, pe::ArrowSpec const& arrow, Actor& target)
     }
     Actor* owner     = fe::actorById(s.owner);
     bool   enderman  = target.getTypeName() == "minecraft:enderman";
+    // a TFPart is no LivingEntity (its hurt goes to the parent through gf::combat), nor are the
+    // vanilla objects (their own Entity#hurt)
+    bool   part      = fe::parentOfPart(target) != 0;
+    bool   living    = !part && (target.isPlayer() || target.hasCategory(ActorCategory::Mob));
     if (p.isOnFire() && !enderman) target.setOnFire(5, true);
-    bool   landed    = gf::combat::hurt(target, static_cast<float>(dmg), "minecraft:arrow", owner ? owner : &p, &p);
+    bool   landed    = living || part ? gf::combat::hurt(target, static_cast<float>(dmg), "minecraft:arrow", owner ? owner : &p, &p)
+                                      : hurtObject(target, p, owner, static_cast<float>(dmg));
     if (landed) {
         if (enderman) return false;
+        if (!living) {
+            gf::fx::sound(p.getDimension(), arrow.hitSound, p.getPosition(), 1.0F, hitPitch(p));
+            return true;
+        }
         if (s.knockback > 0.0) {
             // AbstractArrow#doKnockback
             double resist = 0.0;
@@ -283,6 +366,10 @@ bool arrowHitEntity(Actor& p, Sim& s, pe::ArrowSpec const& arrow, Actor& target)
                 fe::push(target, Vec3{float(s.vel.x * f), 0.1f, float(s.vel.z * f)});
             }
         }
+        // #doPostHurtEffects: the fired stack's (TFArrow: the parent arrow's), then the type's own
+        if (target.isAlive()) applyFiredStackEffects(s, target);
+        if (arrow.postHurt) arrow.postHurt(p, target);
+        ++gPostHurts;
         // ClientboundGameEventPacket.ARROW_HIT_PLAYER: the shooter hears its hit on a player
         if (target.isPlayer() && owner && owner != &target && owner->isPlayer())
             gf::fx::soundTo(static_cast<Player&>(*owner), "minecraft:entity.arrow.hit_player", 0.18F, 0.45F);
@@ -510,6 +597,12 @@ void unregisterTypeForTest(std::string const& entityId) {
     fe::invalidateInterest();
 }
 int liveCount() { return static_cast<int>(S().live.size()); }
+int postHurtsForTest() { return gPostHurts; }
+void applyFiredStackEffectsForTest(Actor& target, ItemStack const& stack) {
+    Sim s;
+    s.pickupStack = game::items::toJson(stack);
+    applyFiredStackEffects(s, target);
+}
 } // namespace gf::feature::projectile
 
 namespace gf::projectile {
