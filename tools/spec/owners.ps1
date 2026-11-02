@@ -211,8 +211,49 @@ Add-Ids loot_function @([regex]::Matches($lootText, 'FUNCTIONS\.register\("([a-z
 Add-Ids loot_number_provider @([regex]::Matches($lootText, 'NUMBERS\.register\("([a-z0-9_]+)"') | ForEach-Object { $_.Groups[1].Value }) manual
 $pieceText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/TFStructurePieceTypes.java'))
 $pieceClass = @{}
-foreach ($m in [regex]::Matches($pieceText, 'registerPieceType\("([A-Za-z0-9_]+)",\s*(\w+)::new')) { $pieceClass[$m.Groups[1].Value] = $m.Groups[2].Value }
+# registerPieceType(<one or more string literals joined by +>, <Class>::<method reference>): the
+# revamped Lich Tower registers "TFLT" + "TFoy", ..., TFJigsawTemplate TwilightJigsawPiece::defaultDeserialize
+foreach ($m in [regex]::Matches($pieceText, 'registerPieceType\(((?:"[A-Za-z0-9_]+"\s*\+\s*)*"[A-Za-z0-9_]+"),\s*(\w+)::\w+')) {
+    $name = ([regex]::Matches($m.Groups[1].Value, '"([A-Za-z0-9_]+)"') | ForEach-Object { $_.Groups[1].Value }) -join ''
+    $pieceClass[$name] = $m.Groups[2].Value
+}
 Add-Ids structure_piece_type @($pieceClass.Keys | Sort-Object) manual
+
+# /twilightforest subcommands (R14): the literal paths TF registers below its root command
+# (command/TFCommand.java and the command classes it chains), arguments left out: "sinister_spawner",
+# "sinister_spawner add_particle", "shield set" (/twilightforest shield <target> set <amount>). A
+# command class's first Commands.literal is its own literal, the others are its children; a branch
+# (`x = Commands.literal("structure_util").then(a.register())...`) holds the literals of its classes.
+$cmdDir = Join-Path $JavaDir 'command'
+$cmdText = Strip-Comments (Read-Text (Join-Path $cmdDir 'TFCommand.java'))
+$cmdClass = @{}
+foreach ($m in [regex]::Matches($cmdText, 'private\s+(\w+)\s+(\w+)\s*;')) { $cmdClass[$m.Groups[2].Value] = $m.Groups[1].Value }
+function Get-CommandPaths([string]$field, [string]$prefix) {
+    if (-not $cmdClass.ContainsKey($field)) { throw "TFCommand.java: no command field '$field'" }
+    $text = Strip-Comments (Read-Text (Join-Path $cmdDir "$($cmdClass[$field]).java"))
+    $lits = @([regex]::Matches($text, 'Commands\.literal\("([a-z0-9_]+)"\)') | ForEach-Object { $_.Groups[1].Value })
+    if (-not $lits) { throw "$($cmdClass[$field]).java registers no literal" }
+    $own = "$prefix$($lits[0])"
+    return @($own) + @($lits | Select-Object -Skip 1 | ForEach-Object { "$own $_" })
+}
+$cmdBranches = @{}
+foreach ($m in [regex]::Matches($cmdText, '(\w+)\s*=\s*Commands\.literal\("([a-z0-9_]+)"\)((?:\s*\.then\(\w+\.register\([^)]*\)\))+)\s*;')) {
+    $cmdBranches[$m.Groups[1].Value] = @{ literal = $m.Groups[2].Value; fields = @([regex]::Matches($m.Groups[3].Value, '\.then\((\w+)\.register') | ForEach-Object { $_.Groups[1].Value }) }
+}
+$cmdRoot = [regex]::Match($cmdText, 'Commands\.literal\("twilightforest"\)(.*?);', 'Singleline')
+if (-not $cmdRoot.Success) { throw 'TFCommand.java: no Commands.literal("twilightforest") chain' }
+$subcommands = [Collections.Generic.List[string]]::new()
+foreach ($m in [regex]::Matches($cmdRoot.Groups[1].Value, '\.then\((\w+)(\.register\([^)]*\))?\)')) {
+    $ref = $m.Groups[1].Value
+    if ($m.Groups[2].Success) { foreach ($p in Get-CommandPaths $ref '') { $subcommands.Add($p) } }
+    elseif ($cmdBranches.ContainsKey($ref)) {
+        $b = $cmdBranches[$ref]
+        $subcommands.Add($b.literal)
+        foreach ($f in $b.fields) { foreach ($p in Get-CommandPaths $f "$($b.literal) ") { $subcommands.Add($p) } }
+    } else { throw "TFCommand.java: cannot resolve the subcommand '$ref'" }
+}
+Add-Ids subcommand $subcommands manual
+$tfSubcommands = [Collections.Generic.HashSet[string]]::new([string[]]@($subcommands))
 
 # data maps, tags, twilight/* registries
 $dataMaps = @()
@@ -289,6 +330,8 @@ foreach ($k in 'block', 'item', 'entity', 'biome', 'structure', 'particle', 'sou
     'noise_settings', 'dimension', 'dimension_type', 'function') {
     if ($ids.Contains($k)) { Resolve-Rules $k $IdRules[$k] }
 }
+# TF's /twilightforest literals (units.<u>.gfSubcommands below adds GloamingForest's own)
+Resolve-Rules 'subcommand' $IdRules['subcommand']
 # map decorations, structure sets and structure types follow their structure
 $byStructure = { param($ref, $id) Owner-Of 'structure' $id }
 Resolve-Rules 'structure_set' @(, @('*', '$structure')) $byStructure
@@ -443,17 +486,24 @@ foreach ($key in $ids['lang']) {
 # ---- unit-declared rows: paths, net, config sections, subcommands, selftests, world DB, scenarios ----
 $pathRows = [Collections.Generic.List[object]]::new()
 function Add-Path([string]$glob, [string]$o, [string]$mode = 'manual') { $pathRows.Add([pscustomobject]@{ kind = 'path'; id = $glob; owner = $o; mode = $mode }) }
+# The files a unit owns by its name (R3): its fragments (every *.d/<n>.json: pack merges, texts, tag
+# unions R6), unit data, mod strings, import overrides and sound refinements (R10). Every W1 unit; the
+# W0b units with "unitFiles": true.
+function Get-UnitFiles([string]$n) {
+    return @("**/*.d/$n.json", "assets/pack/rp/texts.d/*/$n.lang", "assets/data/*/$n.json", "assets/lang/*/$n.json", "assets/tags/**/*.d/$n.json",
+        "tools/import/overrides/$n.json", "tools/sounds/recipes/$n.json")
+}
 foreach ($u in $rules.units.Keys) {
     $unit = $rules.units[$u]
     $n = $unit.name
     if ($unit.ContainsKey('paths')) {
         foreach ($p in $unit.paths) { Add-Path $p $u $(if ($p -like 'assets/gen/*') { 'gen' } else { 'manual' }) }
     }
+    if ($unit.wave -eq 'W0b' -and $unit.ContainsKey('unitFiles') -and $unit.unitFiles) { foreach ($p in Get-UnitFiles $n) { Add-Path $p $u } }
     if ($unit.wave -eq 'W1') {
         $src = if ($unit.ContainsKey('srcPaths')) { $unit.srcPaths } else { @("src/feature/$n/**", "src/client/$n/**") }
-        foreach ($p in @($src) + @("src/core/$n/**", "tests/$n/**", "assets/pack/{bp,rp}/**/$n/**", "**/*.d/$n.json", "assets/pack/rp/texts.d/*/$n.lang",
-                "assets/data/*/$n.json", "assets/lang/*/$n.json", "assets/tags/**/*.d/$n.json", "tools/import/overrides/$n.json", "tools/sounds/recipes/$n.json",
-                "tools/structures/$n/**", "tools/e2e/*/scenarios/$n{,.*}.ps1", "docs/units/$n.md", "src/feature/ext/$n/**")) { Add-Path $p $u }
+        foreach ($p in @($src) + @("src/core/$n/**", "tests/$n/**", "assets/pack/{bp,rp}/**/$n/**") +
+                @(Get-UnitFiles $n) + @("tools/structures/$n/**", "tools/e2e/*/scenarios/$n{,.*}.ps1", "docs/units/$n.md", "src/feature/ext/$n/**")) { Add-Path $p $u }
         $structures = if ($unit.ContainsKey('structurePaths')) { $unit.structurePaths } else { @("assets/structures/$n/**") }
         foreach ($p in $structures) { Add-Path $p $u }
         foreach ($p in @("assets/gen/import/$n/**", "assets/gen/geo/$n/**", "assets/gen/audio/$n/**")) { Add-Path $p $u 'gen' }
@@ -476,7 +526,16 @@ foreach ($u in $rules.units.Keys) {
     foreach ($w in $prefixes) { Set-Owner worlddb "$w*" $u }
     if ($unit.ContainsKey('net')) { foreach ($c in $unit.net) { Set-Owner net $c $u } }
     if ($unit.ContainsKey('config')) { foreach ($c in $unit.config) { Set-Owner config_section $c $u } }
-    if ($unit.ContainsKey('subcommands')) { foreach ($c in $unit.subcommands) { Set-Owner subcommand $c $u } }
+    # GloamingForest's own /twilightforest subcommands (not TF literals: those go through ids.subcommand)
+    if ($unit.ContainsKey('subcommands')) { Write-Host "[owners] $u has 'subcommands': TF's literals are owned by ids.subcommand, GloamingForest additions go to 'gfSubcommands'" -ForegroundColor Red; exit 1 }
+    if ($unit.ContainsKey('gfSubcommands')) {
+        foreach ($c in $unit.gfSubcommands) {
+            $problem = if ($tfSubcommands.Contains($c)) { "is TF's literal (owned through ids.subcommand)" }
+                elseif (($o = Owner-Of subcommand $c) -and $o -ne $u) { "is $o's already" }
+            if ($problem) { Write-Host "[owners] $u gfSubcommands: '$c' $problem" -ForegroundColor Red; exit 1 }
+            Set-Owner subcommand $c $u
+        }
+    }
     if ($unit.ContainsKey('e2e')) { foreach ($c in $unit.e2e) { Set-Owner e2e $c $u } }
     # ids outside TF's namespace that a unit declares itself: {kind: [entry]}, an entry being the full
     # id ("<ns>:<path>", mode gen) or {id, mode: gen|manual}. TF's own ids go through the rule tables.
@@ -528,14 +587,18 @@ foreach ($kind in $ids.Keys) {
         $full = if ($nsKinds -contains $kind) { if ($id.Contains(':')) { $id } else { "twilightforest:$id" } } elseif ($kind -eq 'tag') { $p = $id.Split(':', 3); "$($p[0])/#$($p[1]):$($p[2])" } elseif ($kind -eq 'registry_entry') { $p = $id.Split(':', 3); "$($p[0])/$($p[1]):$($p[2])" } else { $id }
         $m = if ($idModes.ContainsKey($kind) -and $idModes[$kind].ContainsKey($id)) { $idModes[$kind][$id] } else { $mode }
         $lines.Add("$kind`t$full`t$($owner[$kind][$id])`t$m")
-        $counts[$kind] = 1 + $(if ($counts.Contains($kind)) { $counts[$kind] } else { 0 })
     }
 }
-foreach ($p in $pathRows) {
-    $lines.Add("path`t$($p.id)`t$($p.owner)`t$($p.mode)")
-    $counts['path'] = 1 + $(if ($counts.Contains('path')) { $counts['path'] } else { 0 })
-}
+foreach ($p in $pathRows) { $lines.Add("path`t$($p.id)`t$($p.owner)`t$($p.mode)") }
+# a path a unit lists itself and also gets by its name (e.g. assets/lang/*/dimension.json) is one row
 $sorted = @($lines | Sort-Object -CaseSensitive -Unique)
+foreach ($l in $sorted) { $k = $l.Substring(0, $l.IndexOf("`t")); $counts[$k] = 1 + $(if ($counts.Contains($k)) { $counts[$k] } else { 0 }) }
+# one owner per path glob
+$pathOwners = @{}
+foreach ($p in $pathRows) {
+    if ($pathOwners.ContainsKey($p.id) -and $pathOwners[$p.id] -ne $p.owner) { Write-Host "[owners] path '$($p.id)' is claimed by $($pathOwners[$p.id]) and $($p.owner)" -ForegroundColor Red; exit 1 }
+    $pathOwners[$p.id] = $p.owner
+}
 $header = @(
     '# docs/spec/owners.tsv: generated by tools/spec/owners.ps1 from TF 4.8 (9e40a75721c716b2fdf80c16d1058fe718825e9f) and tools/spec/owners.rules.json. Do not edit.',
     "kind`tid`towner`tmode"
