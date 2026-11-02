@@ -17,17 +17,23 @@
 // states): vanilla 1.21.1 blocks by family below, TF 4.8 blocks by their classes
 // (docs/spec/blockstates.md: BaseEntityBlock and the vanilla block entity bases for list 2; the
 // vanilla families with partial shapes, the TF classes overriding the collision or outline shape
-// and the blocks TFBlocks registers with noCollission for list 1). TF blocks whose shape depends
-// on a state templates leave at its default (castle doors and vanishing blocks, full until they
-// vanish) are full blocks. The ids are frozen (rule R1), so the tables do not go stale.
+// and the blocks TFBlocks registers with noCollission for list 1). The ids are frozen (rule R1), so
+// the tables do not go stale.
+// Blocks whose collision shape is full in one state and not in another are decided by the state
+// the template names (javaStateList): a double slab is full (SlabType.DOUBLE: Shapes.block()), an
+// extended piston or sticky piston is not (PistonBaseBlock: the base without its head), nor a
+// vanished castle door ("vanish") or reappearing block ("vanished": CastleDoorBlock and
+// VanishingBlock#getCollisionShape are empty then). No other vanilla 1.21.1 or TF 4.8 block changes
+// between a full and a partial collision shape with its state.
 #include "feature/structure/Internal.h"
 
 #include <iterator>
-
-#include "mc/world/level/block/Block.h"
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_set>
+
+#include "mc/world/level/block/Block.h"
 
 namespace gf::structure::templates {
 
@@ -75,7 +81,7 @@ Set const& tfEntities() {
 }
 
 /// TF blocks without a full collision block (vanilla families with partial shapes, TF's shape
-/// overrides, noCollission), by path. Double slabs are full (javaList checks the state first).
+/// overrides, noCollission), by path. Double slabs are full (javaStateList checks the state first).
 Set const& tfPartial() {
     static Set const s{
         "acacia_banister", "aurora_slab", "bamboo_banister", "birch_banister", "blackberry_bush", "blightberry_bush",
@@ -168,7 +174,7 @@ Set const& vanillaPartial() {
         "flowering_azalea", "pink_petals", "pitcher_plant", "pitcher_crop", "torchflower", "torchflower_crop", "dandelion", "poppy",
         "blue_orchid", "allium", "azure_bluet", "oxeye_daisy", "cornflower", "lily_of_the_valley", "wither_rose", "sunflower", "lilac",
         "rose_bush", "peony", "crimson_roots", "warped_roots", "nether_sprouts", "crimson_fungus", "warped_fungus", "brown_mushroom",
-        "red_mushroom", "mangrove_propagule", "heavy_core", "flower_pot", "cake", "candle", "iron_bars", "rail"};
+        "red_mushroom", "mangrove_propagule", "heavy_core", "flower_pot", "cake", "candle", "candle_cake", "iron_bars", "rail"};
     return s;
 }
 
@@ -187,6 +193,36 @@ bool endsWithAny(std::string_view path, std::string_view const (&suffixes)[N]) {
     return false;
 }
 
+/// Whether property `key` of a Java state's Properties is `value` (a template saves property
+/// values as strings).
+bool hasProperty(Json const& javaState, char const* key, std::string_view value) {
+    if (!javaState.is_object()) return false;
+    auto props = javaState.find("Properties");
+    if (props == javaState.end() || !props->is_object()) return false;
+    auto it = props->find(key);
+    if (it == props->end()) return false;
+    if (it->is_string()) return it->get<std::string>() == value;
+    if (it->is_boolean()) return (it->get<bool>() ? "true" : "false") == value;
+    return false;
+}
+
+/// The list of the blocks whose collision shape is full in some states and partial in others
+/// (nullopt: the block's list does not depend on its state).
+std::optional<int> javaStateList(std::string_view ns, std::string_view path, Json const& javaState) {
+    // a double slab is a full block (SlabBlock: SlabType.DOUBLE has Shapes.block())
+    if (path.ends_with("_slab")) {
+        if (hasProperty(javaState, "type", "double")) return 0;
+        return std::nullopt;
+    }
+    if (ns == "minecraft" && (path == "piston" || path == "sticky_piston"))
+        return hasProperty(javaState, "extended", "true") ? 1 : 0; // PistonBaseBlock: an extended piston keeps only its base
+    if (ns == "twilightforest") {
+        if (path.ends_with("_castle_door")) return hasProperty(javaState, "vanish", "true") ? 1 : 0;  // CastleDoorBlock
+        if (path == "reappearing_block") return hasProperty(javaState, "vanished", "true") ? 1 : 0; // VanishingBlock
+    }
+    return std::nullopt;
+}
+
 } // namespace
 
 int javaList(Json const& javaState) {
@@ -196,11 +232,7 @@ int javaList(Json const& javaState) {
     auto             colon = name.find(':');
     std::string_view ns    = colon == std::string::npos ? std::string_view("minecraft") : std::string_view(name).substr(0, colon);
     std::string_view path  = colon == std::string::npos ? std::string_view(name) : std::string_view(name).substr(colon + 1);
-    // a double slab is a full block (SlabBlock: SlabType.DOUBLE has Shapes.block())
-    if (path.ends_with("_slab") && javaState.is_object()) {
-        auto props = javaState.value("Properties", Json::object());
-        if (props.is_object() && props.contains("type") && props["type"].is_string() && props["type"].get<std::string>() == "double") return 0;
-    }
+    if (auto byState = javaStateList(ns, path, javaState)) return *byState;
     if (ns == "twilightforest") {
         if (tfEntities().contains(path)) return 2;
         return tfPartial().contains(path) ? 1 : 0;

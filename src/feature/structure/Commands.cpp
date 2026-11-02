@@ -418,10 +418,10 @@ std::optional<VanillaContainer> vanillaContainer(BlockActor& actor) {
 } // namespace
 
 bool notCommon(ItemStack const& stack) {
-    // F9's rarity: TWILIGHT, units' registrations, the enchantment bump (an enchanted stack is
-    // never common); else the item's base rarity of the table above
-    if (item::ext::rarityOf(stack) != item::ext::Rarity::Common) return true;
-    return stack.isEnchanted() || baseRarity(stack.getTypeName()) != 0;
+    // ItemStack#getRarity through F9 (TWILIGHT, units' registrations and the enchantment bump: an
+    // enchanted stack is never common); a stack F9 calls common is an unenchanted item without a
+    // registered rarity, whose base rarity is the table's above
+    return item::ext::rarityOf(stack) != item::ext::Rarity::Common || baseRarity(stack.getTypeName()) != 0;
 }
 
 std::optional<std::vector<ItemStack>> containerItems(BlockSource& source, BlockPos const& pos) {

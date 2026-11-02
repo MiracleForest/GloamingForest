@@ -35,6 +35,9 @@ namespace {
 struct Registries {
     std::shared_mutex                    mutex;
     std::map<std::string, Factory>       pieces;
+    /// Factories used only while `pieces` has none for the id (selftest stand-ins for other units'
+    /// fixture pieces): a unit's own registration wins whatever the order.
+    std::map<std::string, Factory>       fallbackPieces;
     std::map<std::string, ProcessorFn>   processors;
     std::map<std::string, MarkerFn>      markers;
 };
@@ -340,8 +343,21 @@ bool Piece::placeTemplate(Region& region, BlockBox const& chunkBox, std::string 
 // ---- registries ---------------------------------------------------------------------------------------
 
 void registerPieceType(std::string const& typeId, Factory factory) {
+    bool replaced = false;
+    {
+        std::unique_lock lock(reg().mutex);
+        auto&            slot = reg().pieces[typeId];
+        // a second factory of another kind for the same id replaces the first one silently
+        // otherwise (the same factory registered again, a module installed again, is no news)
+        replaced = slot && factory && slot.target_type() != factory.target_type();
+        slot     = std::move(factory);
+    }
+    if (replaced) log().warn("structure: piece type '{}' was registered again with another factory; the later one replaces it", typeId);
+}
+
+void registerFallbackPieceType(std::string const& typeId, Factory factory) {
     std::unique_lock lock(reg().mutex);
-    reg().pieces[typeId] = std::move(factory);
+    reg().fallbackPieces[typeId] = std::move(factory);
 }
 
 std::unique_ptr<Piece> loadPiece(Json const& saved) {
@@ -350,7 +366,8 @@ std::unique_ptr<Piece> loadPiece(Json const& saved) {
     {
         std::shared_lock lock(reg().mutex);
         auto             it = reg().pieces.find(id);
-        if (it != reg().pieces.end()) factory = it->second;
+        if (it != reg().pieces.end() && it->second) factory = it->second;
+        else if (auto fb = reg().fallbackPieces.find(id); fb != reg().fallbackPieces.end()) factory = fb->second;
     }
     if (!factory) {
         warnOnce("piece:" + id, "structure: unknown piece type '" + id + "' (piece skipped)");
