@@ -498,9 +498,13 @@ void proxyMirror(GlobalPos const& pos, int slot, ItemStack const& stack) {
     auto*    c = sessionContainer(pos, &s);
     if (!c || !s) return;
     SyncScope guard;
-    if (!same(c->getItem(slot), stack)) c->setItem(slot, stack);
+    // the storage's own form of the stack (a handler or the item JSON may keep it slightly
+    // differently): the listener compares the storage with this snapshot
+    auto h      = storageOf(pos);
+    auto stored = h ? h->get(pos, slot) : stack;
+    if (!same(c->getItem(slot), stored)) c->setItem(slot, stored);
     s->snapshot.resize(kProxySlots);
-    s->snapshot[static_cast<std::size_t>(slot)] = stack;
+    s->snapshot[static_cast<std::size_t>(slot)] = stored;
 }
 
 void proxyPull(GlobalPos const& pos) {
