@@ -25,6 +25,7 @@
 #include "core/landmark/Grid.h"
 #include "core/landmark/Landmark.h"
 #include "core/landmark/Placement.h"
+#include "TestRepo.h"
 
 namespace {
 
@@ -33,45 +34,8 @@ namespace cl  = gf::core::landmark;
 namespace plc = gf::core::landmark::placement;
 using nlohmann::json;
 
-/// An environment variable as a path ("" when unset).
-fs::path envPath(char const* name) {
-#ifdef _WIN32
-    char*       value = nullptr;
-    std::size_t len   = 0;
-    if (_dupenv_s(&value, &len, name) != 0 || !value) return {};
-    fs::path out(value);
-    std::free(value);
-    return out;
-#else
-    char const* value = std::getenv(name);
-    return value ? fs::path(value) : fs::path();
-#endif
-}
-
-/// The repository root: $GF_REPO_DIR, or found walking up from this file / the working directory
-/// (xmake runs the tests from the build directory) to tests/golden/manifest.json.
-fs::path repoDir() {
-    static fs::path const dir = [] {
-        std::error_code ec;
-        auto isRoot = [&](fs::path const& p) { return fs::exists(p / "tests/golden/manifest.json", ec); };
-        if (auto env = envPath("GF_REPO_DIR"); !env.empty() && isRoot(env)) return env;
-        for (fs::path start : {fs::path(__FILE__).parent_path(), fs::current_path(ec)}) {
-            for (fs::path p = start; !p.empty(); p = p.parent_path()) {
-                if (isRoot(p)) return p;
-                if (p == p.root_path()) break;
-            }
-        }
-        return fs::path();
-    }();
-    return dir;
-}
-
-json readJson(fs::path const& p) {
-    std::ifstream      in(p, std::ios::binary);
-    std::ostringstream ss;
-    ss << in.rdbuf();
-    return json::parse(ss.str(), nullptr, false);
-}
+using gf::tests::landmark::readJson;
+using gf::tests::landmark::repoDir;
 
 /// tests/golden/landmarks/*.json.
 std::vector<fs::path> landmarkGoldens() {

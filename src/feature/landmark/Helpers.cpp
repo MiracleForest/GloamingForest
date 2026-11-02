@@ -63,10 +63,11 @@ std::string prettyPath(std::string const& path) {
 } // namespace
 
 std::string structureName(std::string const& key, Player const* player) {
+    // Component.translatable("structure.<ns>.<path>").getString(): a key without a translation shows
+    // as itself (TF's structure.twilightforest.quest_island at a lake center, docs/spec/not-ported.md)
     auto [ns, path] = splitKey(key);
     auto langKey    = "structure." + ns + "." + path;
-    auto pretty     = prettyPath(path);
-    return player ? trFor(*player, langKey, pretty) : tr(langKey, pretty);
+    return player ? trFor(*player, langKey, langKey) : tr(langKey, langKey);
 }
 
 std::string entityName(std::string const& id, Player const* player) {
@@ -139,6 +140,10 @@ namespace {
 constexpr char kFixtureKey[]     = "gf_test:landmark_fixture";
 constexpr char kOpenFixtureKey[] = "gf_test:landmark_fixture_open";
 
+/// setFixtureProbe's function (the selftests' look at the random a piece is placed with).
+std::mutex                                     gProbeMutex;
+std::function<void(worldgen::RandomSource&, BlockBox const&)> gFixtureProbe;
+
 /// A 7x7x7 stone brick shell (the protected main piece) and a 7x1x3 porch in front of it (not
 /// protected, through Generator::pieceProtected).
 class FixturePiece final : public structure::Piece {
@@ -146,7 +151,11 @@ public:
     FixturePiece(BlockBox box, bool shell) : Piece(shell ? "gf_test:landmark_fixture_shell" : "gf_test:landmark_fixture_porch"), mShell(shell) {
         bbox = box;
     }
-    void postProcess(worldgen::Region& region, worldgen::RandomSource&, BlockBox const& chunkBox, BlockPos const&) override {
+    void postProcess(worldgen::Region& region, worldgen::RandomSource& random, BlockBox const& chunkBox, BlockPos const&) override {
+        {
+            std::lock_guard lock(gProbeMutex);
+            if (gFixtureProbe) gFixtureProbe(random, bbox);
+        }
         auto const* wall = game::blockWith(mShell ? "minecraft:stone_bricks" : "minecraft:oak_planks");
         if (!wall) return;
         for (int x = bbox.minX; x <= bbox.maxX; ++x)
@@ -166,6 +175,11 @@ BlockBox shellBox(Start const& s) { return {s.center.x - 3, s.center.y, s.center
 BlockBox porchBox(Start const& s) { return {s.center.x - 3, s.center.y, s.center.z + 4, s.center.x + 3, s.center.y, s.center.z + 6}; }
 
 } // namespace
+
+void setFixtureProbe(std::function<void(worldgen::RandomSource& random, BlockBox const& pieceBox)> probe) {
+    std::lock_guard lock(gProbeMutex);
+    gFixtureProbe = std::move(probe);
+}
 
 bool registerFixture() {
     if (info(kFixtureKey)) return true;

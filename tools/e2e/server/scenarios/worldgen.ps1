@@ -4,7 +4,8 @@
 # biome writes (the custom probe biome of worldgen.prelaunch.ps1, a height-varying layout zoomed
 # per block into a live chunk, timed), the stage order (blankets at surface time, structure steps
 # at every decoration step with Java's structure registry seeds, the plain Pieces stage once),
-# carvers, the spawn engine (Java's default spawn checks) and the landmark spawn rules, the dev functions run
+# carvers, the spawn engine (Java's default spawn checks), TF's landmark rules (controlled spawns
+# and no_structure over a start F6 forced) and the block / biome tags (gf::tags of F9), the dev functions run
 # through /function, a server map over custom / vanilla biome columns, the 200-chunk generation
 # timing of the whole pipeline and, when F4's dimension exists, the in-dimension generator run
 # (selftests "worldgen.*"). The timing lines are the budget record of the run.
@@ -13,7 +14,7 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'worldgen.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) worldgen selftest(s) failed" }
-if ($r.Pass -lt 25) { throw "expected 25 worldgen selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 26) { throw "expected 26 worldgen selftests to pass, got $($r.Pass)" }
 $log = @(Get-ServerLog -Since $mark)
 
 $timing = $log | Select-String -Pattern 'worldgen timing: 200 chunks in ([\d.]+) ms \(([\d.]+) ms/chunk' | Select-Object -Last 1
@@ -34,6 +35,13 @@ $zoom = $log | Select-String -Pattern 'worldgen biome zoom: (.*)' | Select-Objec
 if ($zoom) { Write-Step "biome zoom: $($zoom.Matches[0].Groups[1].Value)" }
 $surface = $log | Select-String -Pattern 'worldgen spawn: (WORLD_SURFACE .*)' | Select-Object -Last 1
 if ($surface) { Write-Step "spawn heights: $($surface.Matches[0].Groups[1].Value)" }
+$tags = $log | Select-String -Pattern 'worldgen tags: (.*)' | Select-Object -Last 1
+if (-not $tags) { throw 'the block and biome tags were not checked against gf::tags' }
+Write-Step "tags: $($tags.Matches[0].Groups[1].Value)"
+# worldgen.landmark_rules forces F6 starts only in the harness's fresh world GF-Test: required here
+$rules = $log | Select-String -Pattern 'worldgen landmark rules: (forced starts checked .*)' | Select-Object -Last 1
+if (-not $rules) { throw 'worldgen.landmark_rules did not check the forced starts (is the world GF-Test?)' }
+Write-Step "landmark rules: $($rules.Matches[0].Groups[1].Value)"
 
 # The generator in the Twilight Forest: required once the dimension exists (F4 installs it, and the
 # generator hook logs that it took over the dimension's generator); otherwise a distinct skip line.

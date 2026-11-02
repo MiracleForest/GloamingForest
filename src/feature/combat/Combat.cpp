@@ -1,7 +1,6 @@
 // GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
 // Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
 //   src/main/java/twilightforest/init/TFDamageTypes.java
-//   src/main/java/twilightforest/data/tags/DamageTypeTagGenerator.java (the generated tag data)
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -24,7 +23,9 @@
 //   named by Java's ids ("minecraft:player_attack", "minecraft:fall", ...) from the Bedrock cause.
 // - gf::combat::hurt(victim, amount, type, attacker, direct) builds the Bedrock damage source:
 //   the cause follows the type's tags (bypasses_armor -> Magic, is_fire -> Fire, is_explosion ->
-//   EntityExplosion, is_fall -> Fall, is_projectile -> Projectile, ...), no_knockback turns the
+//   EntityExplosion, is_fall -> Fall, is_projectile -> Projectile, ...; the memberships are the
+//   damage type tags of the data through gf::tags, F9, plus vanilla's own members, which
+//   Bedrock has no data for), no_knockback turns the
 //   knockback off, the type's exhaustion is added to a hurt player, and the death message is
 //   Java's (DamageSource#getLocalizedDeathMessage: "death.attack.<msgId>", ".player" with the kill
 //   credit, ".item" with a named weapon) through one ActorDamageSource#getDeathMessage hook.
@@ -140,39 +141,13 @@ std::map<std::string, DamageTypeSpec> builtinTypes() {
     return out;
 }
 
-/// TF's memberships in the vanilla / NeoForge damage type tags (the generated tag data).
-std::map<std::string, std::set<std::string>> const& builtinTags() {
+/// Vanilla's own members of the vanilla damage type tags TF relies on (Mojang's data, which Bedrock
+/// does not have). TF's memberships (its generated tag data: minecraft:is_fire holds
+/// twilightforest:hydra_fire, ...) and every unit's union fragments come from the data through F9's
+/// gf::tags.
+std::map<std::string, std::set<std::string>> const& vanillaTags() {
     static std::map<std::string, std::set<std::string>> const t = [] {
-        auto tf = [](std::initializer_list<char const*> paths) {
-            std::set<std::string> s;
-            for (auto p : paths) s.insert(std::string("twilightforest:") + p);
-            return s;
-        };
         std::map<std::string, std::set<std::string>> m;
-        m["minecraft:always_most_significant_fall"] = tf({"expired"});
-        m["minecraft:avoids_guardian_thorns"]       = tf({"ghast_tear", "hydra_fire", "hydra_mortar", "slam", "yeeted"});
-        m["minecraft:bypasses_armor"] = tf({"ghast_tear", "lich_bolt", "lich_bomb", "slam", "yeeted", "leaf_brain", "lost_words", "schooled", "lifedrain", "expired", "acid_rain", "ominous_fire"});
-        m["minecraft:bypasses_enchantments"]     = tf({"falling_ice"});
-        m["minecraft:bypasses_invulnerability"] = tf({"expired"});
-        m["minecraft:bypasses_resistance"]      = tf({"expired"});
-        m["minecraft:bypasses_wolf_armor"] = tf({"lich_bolt", "lich_bomb", "frozen", "leaf_brain", "lost_words", "schooled", "lifedrain", "expired", "acid_rain"});
-        m["minecraft:damages_helmet"]      = tf({"ghast_tear", "thrown_block"});
-        m["minecraft:ignites_armor_stands"] = tf({"hydra_fire", "hydra_mortar", "fire_jet", "scorched"});
-        m["minecraft:is_explosion"]         = tf({"lich_bomb"});
-        m["minecraft:is_fall"]              = tf({"yeeted"});
-        m["minecraft:is_fire"]              = tf({"hydra_fire", "hydra_mortar", "fiery", "fire_jet", "scorched"});
-        m["minecraft:is_projectile"] = tf({"lich_bolt", "lich_bomb", "thrown_axe", "thrown_pickaxe", "thrown_block", "leaf_brain", "lost_words", "schooled", "snowball_fight", "twilight_scepter", "lifedrain"});
-        m["minecraft:no_anger"]     = tf({"slam"});
-        m["minecraft:no_knockback"] = tf({"ghast_tear", "thorns", "oreberry", "fiery", "fire_jet", "reactor", "clamped", "moonworm", "acid_rain", "ominous_fire"});
-        m["minecraft:panic_environmental_causes"] = tf({"ominous_fire"});
-        m["minecraft:witch_resistant_to"]         = tf({"lich_bolt", "lich_bomb", "leaf_brain", "lost_words", "schooled", "acid_rain"});
-        m["minecraft:wither_immune_to"]           = tf({"ominous_fire"});
-        m["neoforge:is_environment"] = tf({"thorns", "oreberry", "knightmetal", "fiery", "fire_jet", "reactor", "slider", "falling_ice", "acid_rain"});
-        m["neoforge:is_magic"] = tf({"lich_bolt", "lich_bomb", "chilling_breath", "reactor", "haunt", "frozen", "leaf_brain", "lost_words", "schooled", "snowball_fight", "twilight_scepter", "lifedrain", "acid_rain", "ominous_fire"});
-        m["neoforge:is_physical"] = tf({"ghast_tear", "hydra_bite", "squish", "thrown_axe", "thrown_pickaxe", "thorns", "oreberry", "fiery", "fire_jet", "slider", "thrown_block", "axing", "slam", "yeeted", "ant", "clamped", "spiked", "falling_ice", "moonworm"});
-        m["neoforge:is_technical"]               = tf({"expired"});
-        m["twilightforest:breaks_lich_shields"] = {"twilightforest:lich_bolt", "twilightforest:twilight_scepter", "minecraft:magic", "minecraft:indirect_magic", "minecraft:sonic_boom"};
-        // vanilla members TF relies on (vanilla's own tags)
         m["minecraft:is_fire"].insert({"minecraft:in_fire", "minecraft:on_fire", "minecraft:lava", "minecraft:hot_floor", "minecraft:fireball", "minecraft:unattributed_fireball", "minecraft:campfire"});
         m["minecraft:is_projectile"].insert({"minecraft:arrow", "minecraft:trident", "minecraft:mob_projectile", "minecraft:fireball", "minecraft:wither_skull", "minecraft:thrown", "minecraft:unattributed_fireball", "minecraft:wind_charge"});
         m["minecraft:is_fall"].insert({"minecraft:fall", "minecraft:stalagmite", "minecraft:ender_pearl"});
@@ -515,10 +490,10 @@ std::vector<std::string> damageTypeIds() {
 }
 
 bool damageTypeHasTag(std::string const& id, std::string const& tag) {
-    auto const& b  = builtinTags();
-    auto        it = b.find(tag);
-    if (it != b.end() && it->second.contains(id)) return true;
-    return tags::has(tags::Registry::DamageType, tag, id);
+    if (tags::has(tags::Registry::DamageType, tag, id)) return true; // the data (TF's, the units' fragments)
+    auto const& v  = vanillaTags();
+    auto        it = v.find(tag);
+    return it != v.end() && it->second.contains(id);
 }
 
 Cause causeFor(std::string const& id, bool hasAttacker) {

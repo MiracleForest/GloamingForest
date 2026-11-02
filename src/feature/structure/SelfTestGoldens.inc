@@ -1,6 +1,7 @@
 // Golden values of the structure selftests (rule R19), {"name", "value"}: volume hashes of
-// in-memory placements at a fixed origin, so they do not depend on where the test area is (TF
-// blocks hash as air, so the values hold before and after the block skeleton registers them).
+// in-memory placements at a fixed origin, so they do not depend on where the test area is. TF
+// blocks hash as air (their Bedrock states belong to F1's frozen table, which may still grow);
+// what TF blocks a test places is checked by name where it matters (nagastone_variants_blocks).
 // Reviewed once with screenshots of the same placements in the world (tools/e2e/client/scenarios/structure.ps1).
 {"template_none", "512ca9d6e76363cf"},
 {"template_cw90", "174b60051e64a482"},
@@ -10,29 +11,48 @@
 {"template_front_back", "7769faef2fd10a7d"},
 {"template_world_cw90", "174b60051e64a482"},
 // processors: the fixture at (0, 64, 0) and the processor targets at (10, 64, 0) over the prepared
-// world; spawner_processor, update_marking and (without TF's blocks) nagastone_variants equal
-// processor_none: spawn data is not part of a volume hash, the other two change nothing here
+// world, each placement sharing one random seeded 0x5eed between its blocks; spawner_processor,
+// update_marking and nagastone_variants equal processor_none: spawn data is not part of a volume
+// hash, update_marking changes nothing here and TF's nagastone hashes as air.
+// The shared-random goldens (cobble_variants, infest_blocks, smooth_stone_variants,
+// stone_brick_variants, targeted_rot, vertical_decay, web) follow Java's processing order:
+// StructureTemplate#loadPalette / buildInfoList (full blocks, other shapes, block entities; each
+// by y, x, z) after the getRandomPalette draw, with TF's nagastone processed like every block
+// (F1 registers it). Their "diff processor_<name>" info lines (the blocks each processor changed)
+// equal the output of tests/structure/oracle/TemplateOracle.java, which places the same fixtures
+// with Minecraft 1.21.1's own StructureTemplate (load, getRandomPalette, processBlockInfos,
+// filterBlocks; the server jar of the F13 oracle install) and TF's processor bodies (translated,
+// ProcessorOracle.java), as does nagastone_variants_blocks; ProcessorOracle.java models the same
+// order by hand and prints the same lines (tests/structure/oracle/run.ps1 compares them).
 {"processor_none", "615811ce73edfd6e"},
 {"processor_box_cutting", "82c8e2920dc136fb"},
-{"processor_cobble_variants", "08b9650905ea0d14"},
+{"processor_cobble_variants", "c1f14db5d759e4b6"},
 {"processor_courtyard_terrace", "f4331d95ca09e9bd"},
-{"processor_infest_blocks", "bb6fb223b405ae64"},
+{"processor_infest_blocks", "ab07749d0267fe2d"},
 {"processor_nagastone_variants", "615811ce73edfd6e"},
 {"processor_smart_grass", "3b61e6873de495e0"},
-{"processor_smooth_stone_variants", "887da8d50fef7e5c"},
+{"processor_smooth_stone_variants", "9360f52caa7d62e0"},
 {"processor_soft_replace", "c0574a48c1a016a5"},
 {"processor_spawner_processor", "615811ce73edfd6e"},
 {"processor_state_transfiguring", "a6107588ea10d6d2"},
-{"processor_stone_brick_variants", "149cf4d2b3149458"},
-{"processor_targeted_rot", "0ca64de3adefa3db"},
+{"processor_stone_brick_variants", "badb8edceeb91670"},
+{"processor_targeted_rot", "8dfb8c136af26891"},
 {"processor_update_marking", "615811ce73edfd6e"},
-{"processor_vertical_decay", "c222f28023434248"},
-{"processor_web", "ac87a6c289897a0a"},
+{"processor_vertical_decay", "dce644af72330f7a"},
+{"processor_web", "b23c00a054536580"},
 {"processor_wood_multiswizzle", "f281337035c1d93d"},
 {"processor_wood_swizzle", "eb71fd97bd69212d"},
 {"processor_rule", "e804d890c7414853"},
 {"processor_gravity", "b12639ed4e113cff"},
 {"processor_block_ignore", "06d114a20f41c792"},
+// nagastone_variants on the targets' TF nagastone (the placed blocks, Java's order)
+{"nagastone_variants_blocks", "10,64,4:twilightforest:etched_nagastone;11,64,4:twilightforest:nagastone_pillar;13,64,4:twilightforest:cracked_etched_nagastone;14,64,4:twilightforest:nagastone_pillar;"},
+// structure.shared_random: a hut whose data marker sits on a structure_void cell (Java's DATA
+// structure block, processed like every block) and a chest (its LootTableSeed drawn while placing),
+// then its data markers listed (filterBlocks) and a basement placed with the same random, under
+// stone_brick_variants: the variants left, by y, z, x. The same as TemplateOracle's "shared_random:"
+// line (without the data marker's structure block the basement comes out differently).
+{"shared_random", "30,60,0:cracked_stone_bricks;31,60,0:mossy_stone_bricks;32,60,0:mossy_stone_bricks;30,60,2:cracked_stone_bricks;31,60,2:mossy_stone_bricks;32,60,2:cracked_stone_bricks;32,64,0:mossy_stone_bricks;30,64,1:mossy_stone_bricks;30,64,2:mossy_stone_bricks;31,64,2:cracked_stone_bricks;32,64,2:mossy_stone_bricks;30,65,0:mossy_stone_bricks;"},
 {"jigsaw_layout", "gf_test:structure/jig/start@-2,1,-2r0;gf_test:structure/jig/room_a@-5,1,-1r3;gf_test:structure/jig/room_b@-9,1,-1r2;gf_test:structure/jig/room_a@-1,1,-5r0;gf_test:structure/jig/room_b@-1,1,-9r3;gf_test:structure/jig/room_b@3,1,-1r0;"},
 {"jigsaw_blocks", "a0aeee07382be472"},
 // the template definitions API: getShuffledSequence's first template for eight draws of one random,
