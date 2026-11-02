@@ -11,11 +11,14 @@
 #                                           latches meeting in the middle, an open double), trapped chest
 #   out/families/families-4-variants.png    horizontal, directional, binary rotated, wall and
 #                                           connectable pillars, connected textures, lightable,
-#                                           snowloggable (3 layers), climbable
+#                                           climbable, snowloggable (3 layers)
 #   out/families/families-5-close.png       the signs and chests close up
 #   out/families/families-6-sign-text.png   a sign written through the editor (client mod: the native
 #                                           editor screen; the text shows on its display entity)
 #   out/families/families-7-sign-text-hud.png  the same with the HUD on (the text's name tag shows)
+#   out/families/families-8-snowloggable.png   the snowloggable close up (its 3 snow layers)
+#   out/families/families-9-sign-editor.png    the native sign editor (client mod: Java's
+#                                           SignEditScreen, the sign drawn with the line on it)
 # Local mode also runs the families selftests on the integrated server; remote modes build through
 # the host console (the vanilla client sees the downloaded resource pack).
 
@@ -117,8 +120,8 @@ $rows = @(
             @(13, 0, 0, 'gf_test:family_ct_flat', ''),
             @(12, 1, 0, 'gf_test:family_ct_flat', ''),
             @(15, 0, 0, 'gf_test:family_lightable', '["twilightforest:lighting"="normal"]'),
-            @(17, 0, 0, 'gf_test:family_snowloggable', '["twilightforest:layers"=3]'),
-            @(19, 0, 0, 'gf_test:family_climbable', ''))
+            @(17, 0, 0, 'gf_test:family_climbable', ''),
+            @(20, 0, 0, 'gf_test:family_snowloggable', '["twilightforest:layers"=3]'))
     }
 )
 
@@ -142,6 +145,11 @@ foreach ($row in $rows) {
 Invoke-Teleport "/tp @s 69 $($y + 1) $($z - 4) 0 15"
 Start-Sleep -Seconds 3
 Save-Screenshot 'families-5-close' | Out-Null
+# a close look at the snowloggable (3 snow layers under the sapling; it stands 5 blocks from the lit
+# lamp: block light 10, so TF's SnowLoggable.meltSnow, which melts above 11, leaves the snow)
+Invoke-Teleport "/tp @s 110.5 $($y + 1) $($z - 2.5) 0 40"
+Start-Sleep -Seconds 3
+Save-Screenshot 'families-8-snowloggable' | Out-Null
 
 # a sign written in game: the client mod's native editor (an empty-hand click on the sign), the
 # text on the sign's display entity; vanilla clients get the editor as a form
@@ -154,6 +162,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     Wait-LogLine 'client screen: families.sign' 20 -Since $mark | Out-Null
     Type-Text 'Twilight'
     Start-Sleep -Seconds 1
+    Save-Screenshot 'families-9-sign-editor' | Out-Null
     Close-Screen
     # the typed line reached the server (Esc keeps it, as Java's SignEditScreen)
     Wait-LogLine 'edited the sign at 60 .*\(1 of 4 lines written\)' 20 -Since $mark | Out-Null

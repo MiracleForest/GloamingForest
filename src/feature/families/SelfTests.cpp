@@ -11,6 +11,7 @@
 
 #include <cmath>
 #include <random>
+#include <variant>
 
 #include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/service/Bedrock.h"
@@ -23,6 +24,7 @@
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorFlags.h"
+#include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/provider/SynchedActorDataAccess.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/gamemode/GameMode.h"
@@ -36,6 +38,8 @@
 #include "mc/world/level/block/BlockProperty.h"
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/dimension/DimensionType.h"
+#include "mc/world/level/storage/GameRule.h"
+#include "mc/world/level/storage/GameRules.h"
 #include "mc/world/phys/AABB.h"
 
 #include "feature/common/BlockData.h"
@@ -46,6 +50,7 @@
 #include "feature/families/Families.h"
 #include "feature/families/Signs.h"
 #include "feature/inventory/Inventory.h"
+#include "feature/loot/Loot.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -58,6 +63,9 @@ using TreePlacer = std::function<bool(std::string const& feature, BlockSource& r
 TreePlacer& treePlacer();
 void   advanceSaplingWith(BlockSource& region, BlockPos const& pos, gf::blockevents::RandomSource& random);
 void   chestViewer(Player& player, GlobalPos const& pos, bool open);
+bool   chestBlocked(GlobalPos const& pos);
+void   chestSetLootTable(GlobalPos const& pos, std::string const& table, std::int64_t seed);
+std::function<std::vector<ItemStack>(std::string const& table, gf::loot::LootContext const& ctx)>& chestLootRoller();
 int    chestSize(GlobalPos const& pos);
 ItemStack chestGet(GlobalPos const& pos, int slot);
 void   chestSet(GlobalPos const& pos, int slot, ItemStack const& stack);
@@ -124,6 +132,38 @@ bool command(std::string const& cmd) {
     ServerCommandOrigin origin("gloamingforest-selftest", level->asServer(), CommandPermissionLevel::Owner, DimensionType(0));
     return ll::command::CommandRegistrar::getServerInstance().executeCommand(cmd, origin).mSuccessCount > 0;
 }
+
+/// The world's randomTickSpeed (1 when it can't be read).
+int randomTickSpeed() {
+    auto level = ll::service::getLevel();
+    if (!level) return 1;
+    auto const& rules = level->getGameRules().mGameRules.get();
+    auto        idx   = static_cast<std::size_t>(GameRules::GameRulesIndex::RandomTickSpeed);
+    if (idx >= rules.size()) return 1;
+    auto const* v = std::get_if<int>(&rules[idx].mValue.get());
+    return v ? *v : 1;
+}
+
+/// Raises randomTickSpeed for the guard's life and puts the world's own value back afterwards,
+/// also when a require() ends the test early (the coroutine frame goes).
+class RandomTicksRaised {
+public:
+    explicit RandomTicksRaised(int speed) : mBefore(randomTickSpeed()) { mOk = command("gamerule randomtickspeed " + std::to_string(speed)); }
+    ~RandomTicksRaised() { restore(); }
+    RandomTicksRaised(RandomTicksRaised const&)            = delete;
+    RandomTicksRaised& operator=(RandomTicksRaised const&) = delete;
+    [[nodiscard]] bool ok() const { return mOk; }
+    void               restore() {
+        if (mRestored) return;
+        mRestored = true;
+        command("gamerule randomtickspeed " + std::to_string(mBefore));
+    }
+
+private:
+    int  mBefore;
+    bool mOk       = false;
+    bool mRestored = false;
+};
 
 /// Puts `itemId` (16 of it; "" = an empty hand) in hotbar slot 0 and stands the player two blocks
 /// off face `face` of `p` (south of it for the top / bottom), looking at `look` (default: `p`).
@@ -245,6 +285,9 @@ GF_REGISTER_SELFTEST("families.fixtures", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(fam::entryOf("gf_test:family_wall_hanging_sign")->family == fam::Family::WallHangingSign, "a hanging sign of class WallHangingSignBlock is a wall hanging sign");
     ctx.check(fam::entryOf("gf_test:family_wall_pillar")->family == fam::Family::WallPillar, "a pillar of class WallPillarBlock is a wall pillar");
     ctx.check(fam::entryOf("gf_test:family_stairs")->has(fam::Waterloggable), "params.waterlogged adds the waterloggable modifier");
+    // F1's form: the modifiers in params.traits
+    ctx.check(fam::entryOf("gf_test:family_slab")->has(fam::Waterloggable), "params.traits [waterloggable] adds the waterloggable modifier");
+    ctx.check(fam::entryOf("gf_test:family_climbable")->has(fam::Climbable), "params.traits [climbable] adds the climbable modifier");
     ctx.check(fam::entryOf("gf_test:family_lightable")->has(fam::Lightable) && fam::entryOf("gf_test:family_lightable")->family == fam::Family::Cube,
               "a shape family and a modifier on one id");
     // TF's registrations fill what data leaves out
@@ -538,9 +581,10 @@ GF_REGISTER_SELFTEST("families.leaves_decay", [](Context& ctx) -> ll::coro::Coro
     for (int i = 0; i < 80 && !(st(leaf1, fam::state::Distance) == 7 && st(leaf2, fam::state::Distance) == 7); ++i) co_await ctx.ticks(1);
     ctx.check(st(leaf1, fam::state::Distance) == 7 && st(leaf2, fam::state::Distance) == 7, "no log: distance 7");
     // the game's random ticks (LevelChunk::tickImpl at a raised randomTickSpeed) decay them
-    ctx.require(command("gamerule randomtickspeed 1000"), "random ticks raised");
+    RandomTicksRaised fast(1000);
+    ctx.require(fast.ok(), "random ticks raised");
     for (int i = 0; i < 60 && (ctx.blockAt(leaf1) == "gf_test:family_leaves" || ctx.blockAt(leaf2) == "gf_test:family_leaves"); ++i) co_await ctx.ticks(1);
-    command("gamerule randomtickspeed 1");
+    fast.restore();
     ctx.check(ctx.blockAt(leaf1) != "gf_test:family_leaves" && ctx.blockAt(leaf2) != "gf_test:family_leaves", "the leaves decayed on random ticks");
     ctx.check(ctx.blockAt(keeper) == "gf_test:family_leaves", "persistent leaves never decay");
     (void)box;
@@ -624,6 +668,12 @@ GF_REGISTER_SELFTEST("families.sign_edit", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(fam::detail::signEdit(ctx.player(), p, true, {"WWW again"}), "a dye that changes nothing opens the editor");
     ctx.check(co_await click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:stick"), "a stick click");
     ctx.check(fam::detail::signEdit(ctx.player(), p, true, {"WWW stick"}), "any other item opens the editor");
+    // ServerGamePacketListenerImpl.updateSignText: ChatFormatting.stripFormatting on every line
+    fam::detail::signEditorFor(ctx.player(), p, true);
+    fam::detail::signEdit(ctx.player(), p, true, {"\xC2\xA7" "k" "\xC2\xA7" "c" "Hi" "\xC2\xA7", "a\xC2\xA7" "lb"});
+    ctx.check(gf::signs::text(p)[0] == "Hi" && gf::signs::text(p)[1] == "ab", "a player's formatting codes are stripped (" + gf::signs::text(p)[0] + ")");
+    fam::detail::signEditorFor(ctx.player(), p, true);
+    fam::detail::signEdit(ctx.player(), p, true, {"WWW stick"});
     ctx.check(co_await click(ctx, p, Facing::North, Vec3{0.5f, 0.5f, 0.5f}, "minecraft:honeycomb"), "a honeycomb click");
     co_await ctx.ticks(2);
     fam::detail::signEditorFor(ctx.player(), p, true);
@@ -631,13 +681,26 @@ GF_REGISTER_SELFTEST("families.sign_edit", [](Context& ctx) -> ll::coro::CoroTas
     // companions get the text of the signs in their range and dimension
     gf::net::setTestCompanion(ctx.player(), true);
     co_await ctx.ticks(25); // the companion's chunks are registered every 20 ticks
-    gf::net::takeTestMessages(ctx.player());
+    (void)gf::net::takeTestMessages(ctx.player());
     gf::signs::setText(p, {"for companions"});
     auto msgs = gf::net::takeTestMessages(ctx.player());
     bool got  = false;
     for (auto const& m : msgs) got = got || m.channel == "signs.text";
     ctx.check(got, "a companion in range gets the changed text");
     gf::net::setTestCompanion(ctx.player(), false);
+    // the text can't be taken off the sign: a killed display entity comes back (checked every 20
+    // ticks)
+    command("kill @e[type=gloamingforest:sign_text,x=" + std::to_string(p.x) + ",y=" + std::to_string(p.y) + ",z=" + std::to_string(p.z) + ",r=2]");
+    co_await ctx.ticks(2);
+    auto* killed = fam::detail::signDisplay(p, true);
+    ctx.info(std::string("after /kill the display entity is ") + (!killed ? "gone" : (killed->isAlive() ? "alive" : "dead")));
+    for (int i = 0; i < 50; ++i) {
+        auto* d = fam::detail::signDisplay(p, true);
+        if (d && d->isAlive() && d->getNameTag().find("for companions") != std::string::npos) break;
+        co_await ctx.ticks(1);
+    }
+    auto* back = fam::detail::signDisplay(p, true);
+    ctx.check(back && back->isAlive() && back->getNameTag().find("for companions") != std::string::npos, "a killed display entity comes back with the text");
     if (auto* o = ll::service::getLevel()->fetchEntity(otherId, false)) static_cast<SimulatedPlayer*>(o)->simulateDisconnect();
     ctx.cleanupBlock(p);
     (void)box;
@@ -825,6 +888,12 @@ GF_REGISTER_SELFTEST("families.interactions", [](Context& ctx) -> ll::coro::Coro
     ctx.check(co_await click(ctx, pot, Facing::Up, Vec3{0.5f, 0.4f, 0.5f}, ""), "an empty hand on the potted sapling");
     co_await ctx.ticks(2);
     ctx.check(ctx.blockAt(pot) == "minecraft:flower_pot", "the plant comes out again");
+    // FlowerPotBlock.useItemOn: any plant (a vanilla one too) on a full pot does nothing
+    ctx.check(co_await click(ctx, pot, Facing::Up, Vec3{0.5f, 0.4f, 0.5f}, "gf_test:family_sapling"), "the sapling again");
+    co_await ctx.ticks(2);
+    ctx.check(co_await click(ctx, pot, Facing::Up, Vec3{0.5f, 0.4f, 0.5f}, "minecraft:cactus"), "a cactus on the full pot");
+    co_await ctx.ticks(2);
+    ctx.check(ctx.blockAt(pot) == "gf_test:family_potted", "a vanilla plant leaves the full pot as it is (" + ctx.blockAt(pot) + ")");
     // lightable
     auto lamp = at(p, 4, 0, 0);
     ctx.require(ctx.setBlock(lamp, "gf_test:family_lightable"), "a lightable block");
@@ -939,13 +1008,156 @@ GF_REGISTER_SELFTEST("families.blockevents", [](Context& ctx) -> ll::coro::CoroT
     ctx.setBlock(p, "gf_test:fixture_block", {{"gf_test:level", 2}});
     co_await ctx.ticks(2);
     ctx.check(placed == 1 && removed == 0, "a state change is no placement / removal");
-    ctx.require(command("gamerule randomtickspeed 1000"), "random ticks raised");
+    RandomTicksRaised fast(1000);
+    ctx.require(fast.ok(), "random ticks raised");
     for (int i = 0; i < 40 && ticked == 0; ++i) co_await ctx.ticks(1);
-    command("gamerule randomtickspeed 1");
+    fast.restore();
     ctx.check(ticked >= 1, "the chunk's random ticks reach the block (" + std::to_string(ticked) + ")");
     ctx.setBlock(p, "minecraft:air");
     co_await ctx.ticks(2);
     ctx.check(removed == 1, "onRemoved ran once (" + std::to_string(removed) + ")");
     ctx.setBlock(at(p, 1, 0, 0), "minecraft:air");
     probe = GlobalPos{-1, 0, -100000, 0};
+});
+
+GF_REGISTER_SELFTEST("families.waterlogging", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // a waterloggable family block (here F1's form: the slab's params.traits) placed into water
+    // keeps the water in the block (Bedrock's liquid detection; Java SimpleWaterloggedBlock); a
+    // family block without the modifier does not
+    if (!fixturesReady(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6177, 5);
+    auto p   = ctx.testPos(6177, 2);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto& region = *ctx.region();
+    auto  wet    = [&region](GlobalPos const& q) {
+        auto const& extra = region.getExtraBlock(gf::game::blockPos(q)).getTypeName();
+        return extra == "minecraft:water" || extra == "minecraft:flowing_water";
+    };
+    std::pair<GlobalPos, char const*> const cases[]{{at(p, 1, 0, 0), "gf_test:family_slab"}, {at(p, 4, 0, 0), "gf_test:family_fence"}};
+    for (auto const& [w, id] : cases) {
+        // a basin: stone around the water
+        for (auto [dx, dz] : {std::pair{1, 0}, std::pair{-1, 0}, std::pair{0, 1}, std::pair{0, -1}})
+            ctx.require(ctx.setBlock(at(w, dx, 0, dz), "minecraft:stone"), "the basin");
+        ctx.require(ctx.setBlock(w, "minecraft:water"), "water in the basin");
+    }
+    co_await ctx.ticks(2);
+    for (auto const& [w, id] : cases) {
+        auto placed = co_await place(ctx, at(w, 0, -1, 0), Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, id);
+        co_await ctx.ticks(3);
+        ctx.check(placed && *placed == w && ctx.blockAt(w) == id, std::string(id) + " placed into the water (" + ctx.blockAt(w) + ")");
+    }
+    ctx.check(wet(cases[0].first), "the waterloggable slab keeps the water");
+    ctx.check(!wet(cases[1].first), "a family block without the modifier does not");
+    (void)box;
+});
+
+GF_REGISTER_SELFTEST("families.chest_screen", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // the native chest screen acts only on the chest the player opened: the context a client sends
+    // names any position, the server keeps its own
+    if (!fixturesReady(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6182, 5);
+    auto p   = ctx.testPos(6182, 2);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto a = at(p, 1, 0, 0), b = at(p, 4, 0, 0);
+    ctx.require(ctx.setBlock(a, "gf_test:family_chest", {{kFacing, "north"}}) && ctx.setBlock(b, "gf_test:family_chest", {{kFacing, "north"}}), "two single chests");
+    co_await ctx.ticks(2);
+    fam::detail::chestSet(a, 0, *gf::game::items::make("minecraft:stone", 3));
+    fam::detail::chestSet(b, 0, *gf::game::items::make("minecraft:dirt", 5));
+    struct CompanionOff {
+        Context& ctx;
+        ~CompanionOff() {
+            gf::net::setTestCompanion(ctx.player(), false);
+        }
+    } off{ctx};
+    gf::net::setTestCompanion(ctx.player(), true);
+    (void)gf::net::takeTestMessages(ctx.player());
+    // the player opens chest a (an empty-hand click: the native screen of a companion)
+    ctx.check(co_await click(ctx, a, Facing::North, Vec3{0.5f, 0.5f, 0.0f}, ""), "a click on chest a");
+    co_await ctx.ticks(2);
+    bool opened = false;
+    for (auto const& m : gf::net::takeTestMessages(ctx.player())) opened = opened || (m.channel == "screen.open" && m.payload.value("type", std::string{}) == "families.chest");
+    ctx.require(opened, "the native chest screen opened");
+    auto ctxOf  = [](GlobalPos const& q) { return fam::Json{{"pos", {q.dim, q.x, q.y, q.z}}}; };
+    auto action = [&](GlobalPos const& q, fam::Json const& act) {
+        gf::net::injectFromClient(ctx.player(), "screen.action", {{"type", "families.chest"}, {"context", ctxOf(q)}, {"action", act}});
+    };
+    // a click on the opened chest's slot 0 takes its stack onto the cursor
+    action(a, {{"op", "click"}, {"slot", 0}, {"button", "left"}});
+    ctx.check(gf::game::items::isEmpty(fam::detail::chestGet(a, 0)), "an action on the opened chest is taken");
+    // the same client names chest b (in reach, never opened): refused, the screen closes
+    (void)gf::net::takeTestMessages(ctx.player());
+    action(b, {{"op", "click"}, {"slot", 0}, {"button", "left"}});
+    action(b, {{"op", "inv_click"}, {"slot", 0}, {"button", "left"}, {"shift", true}});
+    auto moved = fam::detail::chestGet(b, 0);
+    ctx.check(gf::game::items::idOf(moved) == "minecraft:dirt" && gf::game::items::countOf(moved) == 5, "an action on a chest the player did not open changes nothing");
+    bool closed = false;
+    for (auto const& m : gf::net::takeTestMessages(ctx.player())) closed = closed || m.channel == "screen.close";
+    ctx.check(closed, "and closes the screen");
+    // leaving the chest: the cursor stack goes back to the player
+    fam::detail::chestViewer(ctx.player(), a, false);
+    (void)box;
+});
+
+GF_REGISTER_SELFTEST("families.chest_loot", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // Java ChestBlock.onRemove -> Containers.dropContents reads every slot through getItem, which
+    // unpacks a pending loot table first: an unopened loot chest broken drops its loot; a sitting
+    // cat blocks a chest (ChestBlock.isCatSittingOnChest)
+    if (!fixturesReady(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6187, 5);
+    auto p   = ctx.testPos(6187, 2);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto c = at(p, 2, 0, 0);
+    ctx.require(ctx.setBlock(c, "gf_test:family_chest", {{kFacing, "north"}}), "a chest");
+    co_await ctx.ticks(1);
+    // the loot contract's roll, fixed for the test (and put back however the test ends)
+    static std::string rolled;
+    rolled.clear();
+    struct Roller {
+        Roller() {
+            fam::detail::chestLootRoller() = [](std::string const& table, gf::loot::LootContext const& lc) {
+                rolled = table + (lc.player ? " (player)" : "");
+                return std::vector<ItemStack>{*gf::game::items::make("minecraft:diamond", 2), *gf::game::items::make("minecraft:dirt", 3)};
+            };
+        }
+        ~Roller() { fam::detail::chestLootRoller() = nullptr; }
+    } roller;
+    fam::detail::chestSet(c, 5, *gf::game::items::make("minecraft:stick", 1));
+    fam::detail::chestSetLootTable(c, "gf_test:chests/fixture_chest", 42);
+    for (auto* item : itemsNear(ctx, c)) item->remove();
+    ctx.setBlock(c, "minecraft:air"); // broken without being opened
+    co_await ctx.ticks(4);
+    int diamonds = 0, dirt = 0, sticks = 0;
+    for (auto* a : itemsNear(ctx, c)) {
+        auto const& stack = static_cast<ItemActor*>(a)->item();
+        auto        id    = gf::game::items::idOf(stack);
+        int         n     = gf::game::items::countOf(stack);
+        if (id == "minecraft:diamond") diamonds += n;
+        if (id == "minecraft:dirt") dirt += n;
+        if (id == "minecraft:stick") sticks += n;
+    }
+    ctx.check(rolled == "gf_test:chests/fixture_chest", "the pending loot table is rolled when the chest breaks, without a player (" + rolled + ")");
+    ctx.check(diamonds == 2 && dirt == 3, "its loot drops (" + std::to_string(diamonds) + " diamonds, " + std::to_string(dirt) + " dirt)");
+    ctx.check(sticks == 1, "with the stacks it held");
+    for (auto* item : itemsNear(ctx, c)) item->remove();
+    // a cat sitting on a chest blocks it
+    auto c2 = at(p, 0, 0, 2);
+    ctx.require(ctx.setBlock(c2, "gf_test:family_chest", {{kFacing, "north"}}), "another chest");
+    co_await ctx.ticks(1);
+    ctx.check(!fam::detail::chestBlocked(c2), "a free chest is not blocked");
+    command("summon minecraft:cat " + std::to_string(c2.x + 0.5) + " " + std::to_string(c2.y + 1) + " " + std::to_string(c2.z + 0.5));
+    co_await ctx.ticks(2);
+    Actor* cat = nullptr;
+    AABB   above{Vec3{float(c2.x) - 1, float(c2.y), float(c2.z) - 1}, Vec3{c2.x + 2.f, c2.y + 3.f, c2.z + 2.f}};
+    for (Actor* a : ctx.region()->getEntities(above, 0.0f))
+        if (a && a->getTypeName() == "minecraft:cat") cat = a;
+    ctx.require(cat, "a cat on the chest");
+    cat->teleport(Vec3{c2.x + 0.5f, c2.y + 0.875f, c2.z + 0.5f}, cat->getDimensionId());
+    SynchedActorDataAccess::setActorFlag(cat->getEntityContext(), ActorFlags::Sitting, false);
+    bool standing = fam::detail::chestBlocked(c2);
+    SynchedActorDataAccess::setActorFlag(cat->getEntityContext(), ActorFlags::Sitting, true);
+    bool sitting = fam::detail::chestBlocked(c2);
+    cat->remove();
+    ctx.check(!standing, "a cat that does not sit on it does not block it");
+    ctx.check(sitting, "a sitting cat on it blocks it");
+    (void)box;
 });
