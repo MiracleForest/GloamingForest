@@ -93,7 +93,7 @@ function Wait-UiStage([int]$Since) {
 function Assert-UiUntouched([int]$Since) {
     $lines = @(Get-LeviLog -Since $Since)
     # (simulated test players are named gf_test_<n>; only the real player matters here)
-    foreach ($rx in 'ui fixture: shown', 'screen opened: GloamingForest UI fixture', 'ui fixture: .* put back', "ui form 'GloamingForest UI fixture' sent to (?!gf_test_)", "ui ddui 'ui.fixture' sent to (?!gf_test_)") {
+    foreach ($rx in 'ui fixture: shown', 'screen opened: GloamingForest UI fixture', 'ui fixture: \S+ put back \(position', "ui form 'GloamingForest UI fixture' sent to (?!gf_test_)", "ui ddui 'ui.fixture' sent to (?!gf_test_)") {
         $hit = $lines | Where-Object { $_ -match $rx } | Select-Object -First 1
         if ($hit) { throw "the ui.* run acted on the untagged player: $hit" }
     }
@@ -250,7 +250,7 @@ function Invoke-UiItems([string]$mode) {
     $mark = Get-LogMark
     Invoke-UiTest 'ui.fixture_clear' | Out-Null
     # the stack the player held before the map is back (the fixture keeps it)
-    Wait-LogLine "${hostRx}ui fixture: .* put back" 20 -Since $mark | Out-Null
+    Wait-LogLine "${hostRx}ui fixture: \S+ put back \(position" 20 -Since $mark | Out-Null
 
     $mark = Get-LogMark
     Invoke-UiTest 'ui.fixture_head' | Out-Null

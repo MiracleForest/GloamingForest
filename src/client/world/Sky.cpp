@@ -339,10 +339,9 @@ bool spawnFromFx(std::string const& particleId, Vec3 const& pos, Vec3 const& vel
             break;
         }
     }
-    logOnce(
-        "particle_fx:" + particleId,
-        fmt::format("particles: native factory of {} ran (fx.particle, x{} vel {:.3f} {:.3f} {:.3f})", particleId, n, velocity.x, velocity.y, velocity.z)
-    );
+    // one line per particle, count and velocity per level (the e2e scenarios wait for a given call)
+    auto line = fmt::format("particles: native factory of {} ran (fx.particle, x{} vel {:.3f} {:.3f} {:.3f})", particleId, n, velocity.x, velocity.y, velocity.z);
+    logOnce("particle_fx:" + line, line);
     return true;
 }
 

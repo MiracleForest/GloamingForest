@@ -369,7 +369,7 @@ int clearStage() {
     bool loaded = region != nullptr;
     for (auto const& b : s.blocks) loaded = loaded && region->hasChunksAt(b.pos, 0, false);
     if (!loaded) {
-        log().warn("ui fixture: the stage is not loaded; it is put back by a later ui.fixture_clear");
+        log().warn("ui fixture: the stage is not loaded; a later ui.fixture_clear restores it");
         return 0;
     }
     for (auto const& b : s.blocks) emptyFrame(*region, b.pos);
@@ -392,7 +392,7 @@ bool prepareStage(BlockSource& region, BlockPos const& origin) {
         clearStage(); // a stage elsewhere (another session's spawn, another dimension): put it back first
         if (s.active) {
             // its snapshot is the only copy of those blocks: keep it rather than start another stage
-            log().warn("ui fixture: an earlier stage elsewhere could not be put back; no new stage");
+            log().warn("ui fixture: an earlier stage elsewhere could not be restored; no new stage");
             return false;
         }
     }
@@ -633,7 +633,7 @@ int restoreRespawnRules() {
         ++n;
     }
     if (!ok) {
-        log().warn("ui fixture: the gamerules could not be put back ({}); kept for a later ui.fixture_clear", stored->dump());
+        log().warn("ui fixture: the gamerules could not be restored ({}); kept for a later ui.fixture_clear", stored->dump());
         return 0;
     }
     game::db::erase(kRulesKey);

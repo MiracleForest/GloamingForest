@@ -790,6 +790,7 @@ GF_REGISTER_SELFTEST("ui.fixture_edges", [](Context& ctx) {
 // vel 0.250 0.500 -0.125)"); here the message a test companion gets is checked.
 constexpr char kFixtureParticle[] = "gf_test:fixture_particle";
 Vec3 const     kFxVelocity{0.25f, 0.5f, -0.125f};
+Vec3 const     kTestVelocity{0.125f, 0.25f, 0.375f};
 
 GF_REGISTER_SELFTEST("ui.fixture_fx", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
@@ -805,7 +806,9 @@ GF_REGISTER_SELFTEST("ui.fixture_fx", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto& p = ctx.player();
     net::setTestCompanion(p, true);
     (void)net::takeTestMessages(p);
-    gf::fx::particle(p.getDimension(), kFixtureParticle, p.getPosition(), kFxVelocity, 2, Json{{"ui_test", 7}});
+    // another velocity than the tagged players' call: a real companion near the test player gets this
+    // one too (harmless: the factory only logs), and the client scenario waits for kFxVelocity
+    gf::fx::particle(p.getDimension(), kFixtureParticle, p.getPosition(), kTestVelocity, 2, Json{{"ui_test", 7}});
     auto msgs = net::takeTestMessages(p);
     net::setTestCompanion(p, false);
     auto it = std::find_if(msgs.begin(), msgs.end(), [](auto const& m) { return m.channel == "fx.particle"; });
@@ -813,7 +816,7 @@ GF_REGISTER_SELFTEST("ui.fixture_fx", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto const& m = it->payload;
     ctx.check(m.value("id", std::string{}) == kFixtureParticle && m.value("count", 0) == 2, "the particle id and count");
     auto vel = m.value("vel", Json::array());
-    ctx.check(vel.is_array() && vel.size() == 3 && std::abs(vel[0].get<float>() - 0.25f) < 1e-5f && std::abs(vel[1].get<float>() - 0.5f) < 1e-5f && std::abs(vel[2].get<float>() + 0.125f) < 1e-5f, "the velocity, got " + vel.dump());
+    ctx.check(vel.is_array() && vel.size() == 3 && std::abs(vel[0].get<float>() - 0.125f) < 1e-5f && std::abs(vel[1].get<float>() - 0.25f) < 1e-5f && std::abs(vel[2].get<float>() - 0.375f) < 1e-5f, "the velocity, got " + vel.dump());
     ctx.check(m.value("params", Json::object()).value("ui_test", 0) == 7, "the params");
 });
 
