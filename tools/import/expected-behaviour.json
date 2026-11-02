@@ -82,5 +82,24 @@
     "giant_cobblestone": { "hardness": 128, "resistance": 50, "tools": ["pickaxe"], "requiresTool": true, "source": "TFBlocks.java:212 ofFullCopy(Blocks.COBBLESTONE).requiresCorrectToolForDrops().strength(128.0F, 50.0F); #minecraft:mineable/pickaxe" },
     "arctic_fur_block": { "hardness": 0.8, "resistance": 0.8, "tools": ["hoe"], "requiresTool": false, "source": "TFBlocks.java:281 strength(0.8F); #minecraft:mineable/hoe" },
     "candelabra": { "hardness": 1.5, "resistance": 1.5, "tools": ["pickaxe"], "requiresTool": false, "source": "TFBlocks.java:109 strength(1.5F); #minecraft:mineable/pickaxe" }
+  },
+  "soundTypesComment": "Hand-written golden of TF's own sound types (TFSoundTypes.java) as the Bedrock block sound types of the import's rp/sounds.json.d fragments. Per type: javaType (the Java constant the blocks' sound(...) names), blocks (the TF blocks of that type, TFBlocks.java), and the events of block_sounds and interactive_sounds.block_sounds: [sound event, volume, pitch] or \"\" (silent). Java plays a SoundType of volume v and pitch p (Minecraft 1.21.1): break (LevelRenderer.levelEvent 2001) and place (BlockItem.place) at (v + 1) / 2, pitch p x 0.8; hit (MultiPlayerGameMode.continueDestroyBlock) at (v + 1) / 8, pitch p x 0.5; step (Entity.playStepSound) at v x 0.15, pitch p; fall (LivingEntity.playBlockFallSound, only with fall damage) at v x 0.5, pitch p x 0.75; no sound for a jump, nor for a landing without fall damage (Bedrock's jump and land: silent). tools/import/src/Checks.cs (CheckSoundTypes) compares every fragment with it on every run.",
+  "soundTypes": {
+    "twilightforest.jar": {
+      "javaType": "TFSoundTypes.JAR",
+      "blocks": ["mason_jar", "firefly_jar", "firefly_particle_spawner", "cicada_jar"],
+      "block_sounds": {
+        "break": ["block.twilightforest.jar.break", 1.0, 0.8],
+        "place": ["block.twilightforest.jar.place", 1.0, 0.8],
+        "hit": ["block.twilightforest.jar.hit", 0.25, 0.5]
+      },
+      "interactive_sounds": {
+        "step": ["block.twilightforest.jar.step", 0.15, 1.0],
+        "fall": ["block.twilightforest.jar.fall", 0.5, 0.75],
+        "jump": "",
+        "land": ""
+      },
+      "source": "TFSoundTypes.java: JAR = new DeferredSoundType(1.0F, 1.0F, TFSounds.JAR_BREAK, TFSounds.JAR_STEP, TFSounds.JAR_PLACE, TFSounds.JAR_HIT, TFSounds.JAR_FALL) (v = 1, p = 1); TFSounds.java: JAR_BREAK = createEvent(\"block.twilightforest.jar.break\"), JAR_STEP ... .step, JAR_PLACE ... .place, JAR_HIT ... .hit, JAR_FALL ... .fall; TFBlocks.java:39-42 sound(TFSoundTypes.JAR): MASON_JAR, FIREFLY_JAR, FIREFLY_SPAWNER, CICADA_JAR"
+    }
   }
 }

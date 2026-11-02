@@ -52,17 +52,8 @@ namespace GfImport
             if (exp == null) return;
             string bsDir = Path.Combine(GenRes, "assets", "twilightforest", "blockstates");
             int checkedRotations = 0, checkedFamilyTags = 0;
-            // the families data entries (after the overrides), by block id
-            var familyEntries = new Dictionary<string, J>(StringComparer.Ordinal);
-            foreach (var unit in Out)
-                foreach (var gen in unit.Value)
-                    if (gen.Key.StartsWith("data/gf/families/", StringComparison.Ordinal) && gen.Key.EndsWith(".json", StringComparison.Ordinal))
-                    {
-                        var list = J.Parse(Encoding.UTF8.GetString(gen.Value.Bytes));
-                        if (!list.IsArr) { Errors.Add(gen.Key + ": not an array of family entries"); continue; }
-                        foreach (var entry in list.A)
-                            if (entry.IsObj && entry["id"] != null) familyEntries[entry["id"].AsString()] = entry;
-                    }
+            // the families data entries (after the overrides), by block id (duplicates are errors there)
+            var familyEntries = FamilyEntries();
             foreach (var bi in BlockInfos.Values)
             {
                 SortedDictionary<string, GenFile> files;
@@ -77,13 +68,13 @@ namespace GfImport
                 J fam = null;
                 if (bi.Family != null && !familyEntries.TryGetValue("twilightforest:" + bi.Id, out fam))
                     Errors.Add("data/gf/families: no entry for the family block twilightforest:" + bi.Id + " (" + bi.Family + ")");
-                else if (fam != null)
+                else if (fam != null && !familyTagOverrides.Contains(bi.Id))
                 {
                     var pt = fam["params"] != null ? fam["params"]["tags"] : null;
                     var want = BlockTagsIn(doc["components"]).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     var have = (pt != null && pt.IsArr ? pt.A.Select(x => x.AsString()) : Enumerable.Empty<string>()).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     if (!want.SequenceEqual(have))
-                        Errors.Add("data/gf/families: twilightforest:" + bi.Id + " params.tags [" + string.Join(", ", have) + "], its bp/blocks file has [" + string.Join(", ", want) + "] (an override changes both)");
+                        Errors.Add("data/gf/families: twilightforest:" + bi.Id + " params.tags [" + string.Join(", ", have) + "], its bp/blocks file has [" + string.Join(", ", want) + "] (the skeleton follows params.tags, SyncFamilyTags)");
                     checkedFamilyTags++;
                 }
                 var states = doc["description"]["states"];
@@ -149,7 +140,9 @@ namespace GfImport
         {
             string gf = Path.Combine(Root, "tools", "import", "expected-behaviour.json");
             if (!File.Exists(gf)) { Errors.Add("tools/import/expected-behaviour.json is missing"); return; }
-            var golden = ReadJson(gf)["blocks"];
+            var goldenDoc = ReadJson(gf);
+            var golden = goldenDoc["blocks"];
+            var soundTypes = goldenDoc["soundTypes"];
             int checkedValues = 0;
             foreach (var id in golden.Keys)
             {
@@ -247,12 +240,129 @@ namespace GfImport
                 }
                 if (e["sound"] != null)
                 {
-                    string want = BedrockSound(e["sound"].AsString());
-                    if (sound != want) Errors.Add("rp/blocks.d: twilightforest:" + id + " sound " + (sound ?? "(none)") + ", TF gives " + e["sound"].AsString() + " -> " + want);
+                    // TF's own sound types by the golden's soundTypes (javaType -> the pack's type, written by hand), the
+                    // vanilla ones by the engine type of Blocks.SoundMap
+                    string javaSound = e["sound"].AsString(), want;
+                    if (javaSound.StartsWith("TFSoundTypes.", StringComparison.Ordinal))
+                    {
+                        want = soundTypes != null ? soundTypes.Keys.FirstOrDefault(k => soundTypes[k]["javaType"] != null && soundTypes[k]["javaType"].AsString() == javaSound) : null;
+                        if (want == null) Errors.Add("tools/import/expected-behaviour.json: " + id + " has sound " + javaSound + ", which no soundTypes entry names as its javaType");
+                    }
+                    else want = BedrockSound(javaSound);
+                    if (want != null && sound != want) Errors.Add("rp/blocks.d: twilightforest:" + id + " sound " + (sound ?? "(none)") + ", TF gives " + javaSound + " -> " + want);
                     checkedValues++;
                 }
             }
             Log.Add(checkedValues + " behaviour values of " + golden.Keys.Count() + " blocks checked against tools/import/expected-behaviour.json");
+        }
+
+        /// <summary>TF's own sound types as written to the rp/sounds.json.d fragments (after the overrides) against the
+        /// hand-written soundTypes of tools/import/expected-behaviour.json, independent of the generator: every golden
+        /// type is defined by exactly one fragment, with volume and pitch 1 and exactly the golden's events (the sound
+        /// event, its volume and pitch, or "" for a silent one; "default" silent) in block_sounds and
+        /// interactive_sounds.block_sounds; its blocks name it in their owner's rp/blocks.d fragment; a fragment defines
+        /// no type the golden lacks and nothing but those two categories.</summary>
+        public void CheckSoundTypes()
+        {
+            string gf = Path.Combine(Root, "tools", "import", "expected-behaviour.json");
+            if (!File.Exists(gf)) { Errors.Add("tools/import/expected-behaviour.json is missing"); return; }
+            var golden = ReadJson(gf)["soundTypes"];
+            if (golden == null || !golden.IsObj) { Errors.Add("tools/import/expected-behaviour.json has no soundTypes object"); return; }
+            // every type the fragments define: id -> [(fragment, block_sounds entry, interactive_sounds entry)]
+            var defined = new SortedDictionary<string, List<Tuple<string, J, J>>>(StringComparer.Ordinal);
+            foreach (var unit in Out)
+                foreach (var gen in unit.Value)
+                {
+                    if (!gen.Key.StartsWith("rp/sounds.json.d/", StringComparison.Ordinal)) continue;
+                    string where = unit.Key + "/" + gen.Key;
+                    var doc = J.Parse(Encoding.UTF8.GetString(gen.Value.Bytes));
+                    foreach (var k in doc.Keys)
+                        if (k != "block_sounds" && k != "interactive_sounds") Errors.Add(where + ": unexpected category " + k + " (the import writes block_sounds and interactive_sounds.block_sounds)");
+                    var bs = doc["block_sounds"];
+                    var ib = doc["interactive_sounds"] != null ? doc["interactive_sounds"]["block_sounds"] : null;
+                    if (doc["interactive_sounds"] != null)
+                        foreach (var k in doc["interactive_sounds"].Keys)
+                            if (k != "block_sounds") Errors.Add(where + ": unexpected category interactive_sounds." + k);
+                    foreach (var id in (bs != null ? bs.Keys : Enumerable.Empty<string>()).Union(ib != null ? ib.Keys : Enumerable.Empty<string>()))
+                    {
+                        List<Tuple<string, J, J>> list;
+                        if (!defined.TryGetValue(id, out list)) defined[id] = list = new List<Tuple<string, J, J>>();
+                        list.Add(Tuple.Create(where, bs != null ? bs[id] : null, ib != null ? ib[id] : null));
+                    }
+                }
+            int checkedEvents = 0;
+            foreach (var id in golden.Keys)
+            {
+                var g = golden[id];
+                List<Tuple<string, J, J>> defs;
+                if (!defined.TryGetValue(id, out defs)) { Errors.Add("sound type " + id + " (tools/import/expected-behaviour.json soundTypes) is defined by no rp/sounds.json.d fragment"); continue; }
+                if (defs.Count > 1) Errors.Add("sound type " + id + " is defined by " + defs.Count + " fragments: " + string.Join(", ", defs.Select(d => d.Item1)));
+                var def = defs[0];
+                checkedEvents += CheckSoundEntry(def.Item1 + " block_sounds." + id, def.Item2, g["block_sounds"]);
+                checkedEvents += CheckSoundEntry(def.Item1 + " interactive_sounds.block_sounds." + id, def.Item3, g["interactive_sounds"]);
+                // the blocks of the type name it (their owner's rp/blocks.d fragment)
+                foreach (var b in g["blocks"] != null ? g["blocks"].A.Select(x => x.AsString()) : Enumerable.Empty<string>())
+                {
+                    BlockInfo bi;
+                    SortedDictionary<string, GenFile> files;
+                    GenFile rp;
+                    string sound = null;
+                    if (BlockInfos.TryGetValue(b, out bi) && Out.TryGetValue(NameOf(bi.Owner), out files) && files.TryGetValue("rp/blocks.d/import-" + NameOf(bi.Owner) + ".json", out rp))
+                    {
+                        var entry = J.Parse(Encoding.UTF8.GetString(rp.Bytes))["twilightforest:" + b];
+                        if (entry != null && entry["sound"] != null) sound = entry["sound"].AsString();
+                    }
+                    if (sound != id) Errors.Add("rp/blocks.d: twilightforest:" + b + " sound " + (sound ?? "(none)") + ", TF gives " + (g["javaType"] != null ? g["javaType"].AsString() : "?") + " -> " + id);
+                }
+            }
+            foreach (var id in defined.Keys)
+                if (golden[id] == null) Errors.Add("sound type " + id + " (" + string.Join(", ", defined[id].Select(d => d.Item1)) + ") has no entry in tools/import/expected-behaviour.json soundTypes");
+            Log.Add(checkedEvents + " sound type events of " + golden.Keys.Count() + " TF sound type(s) checked against tools/import/expected-behaviour.json");
+        }
+
+        /// <summary>One sound type entry ({volume, pitch, events}) against the golden's events ({event: [sound, volume,
+        /// pitch] or ""}). Returns the number of events checked.</summary>
+        int CheckSoundEntry(string where, J entry, J want)
+        {
+            if (want == null || !want.IsObj) { Errors.Add("tools/import/expected-behaviour.json: no golden events for " + where); return 0; }
+            if (entry == null || !entry.IsObj) { Errors.Add(where + " is missing"); return 0; }
+            Func<J, double> num = v => v != null && v.IsNum ? v.AsDouble() : double.NaN;
+            Func<double, double, bool> near = (a, b) => Math.Abs(a - b) <= 1e-6;
+            if (!near(num(entry["volume"]), 1.0) || !near(num(entry["pitch"]), 1.0))
+                Errors.Add(where + ": volume " + (entry["volume"] != null ? entry["volume"].ToCompact() : "(none)") + " / pitch " + (entry["pitch"] != null ? entry["pitch"].ToCompact() : "(none)") + ", expected 1 / 1 (the events carry Java's values)");
+            var events = entry["events"];
+            if (events == null || !events.IsObj) { Errors.Add(where + " has no events"); return 0; }
+            var expectedKeys = new SortedSet<string>(want.Keys, StringComparer.Ordinal) { "default" };
+            var haveKeys = new SortedSet<string>(events.Keys, StringComparer.Ordinal);
+            if (!expectedKeys.SetEquals(haveKeys))
+                Errors.Add(where + ": events [" + string.Join(", ", haveKeys) + "], expected [" + string.Join(", ", expectedKeys) + "]");
+            if (events["default"] != null && !(events["default"].IsStr && events["default"].S == ""))
+                Errors.Add(where + ": event default " + events["default"].ToCompact() + ", expected \"\" (silent)");
+            int n = 0;
+            foreach (var ev in want.Keys)
+            {
+                var w = want[ev];
+                var h = events[ev];
+                if (h == null) continue; // reported with the keys above
+                n++;
+                if (w.IsStr)
+                {
+                    if (!(h.IsStr && h.S == w.S)) Errors.Add(where + ": event " + ev + " " + h.ToCompact() + ", TF plays " + (w.S == "" ? "nothing (\"\")" : w.ToCompact()));
+                    continue;
+                }
+                if (!w.IsArr || w.A.Count != 3 || !w.A[0].IsStr || !w.A[1].IsNum || !w.A[2].IsNum)
+                {
+                    Errors.Add("tools/import/expected-behaviour.json: soundTypes event " + ev + " of " + where + " is neither \"\" nor [sound, volume, pitch]");
+                    continue;
+                }
+                string ws = w.A[0].AsString();
+                double wv = w.A[1].AsDouble(), wp = w.A[2].AsDouble();
+                bool ok = h.IsObj && h["sound"] != null && h["sound"].AsString() == ws && near(num(h["volume"]), wv) && near(num(h["pitch"]), wp)
+                    && h.Keys.All(k => k == "sound" || k == "volume" || k == "pitch");
+                if (!ok)
+                    Errors.Add(where + ": event " + ev + " " + h.ToCompact() + ", TF plays " + J.Obj().Set("sound", ws).Set("volume", wv).Set("pitch", wp).ToCompact());
+            }
+            return n;
         }
 
         /// <summary>A component of a block file in a state, as Bedrock resolves it: the root's, replaced by every permutation

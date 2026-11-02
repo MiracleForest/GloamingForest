@@ -187,9 +187,16 @@ Shared files get one owner by rule:
   per id; one file per owner of the blocks using the type, F1 when several units do): `block_sounds` break, place
   and hit, `interactive_sounds.block_sounds` step and fall, each with F3's event (`block.twilightforest.jar.*`) at the
   volume and pitch Java plays it for a type of volume v and pitch p (break and place (v + 1) / 2 at p x 0.8, hit
-  (v + 1) / 8 at p x 0.5, step v x 0.15 at p, fall v x 0.5 at p x 0.75); Bedrock's jump and land, which Java has no
-  sound of their own for, play the step and the fall. F11's family generator writes the same entries after the
-  merge (`tools/families/families.lua` `SOUND_TYPES`), identical, so the result does not depend on the order. Flammability: only the 180 blocks TF registers with
+  (v + 1) / 8 at p x 0.5, step v x 0.15 at p, fall v x 0.5 at p x 0.75, the fall only with fall damage). Bedrock's
+  jump and land events have no Java counterpart (Java plays no block sound for a jump, nor for a landing without
+  fall damage): they are written silent (`""`, as the `default` event), so no engine fallback plays a sound TF does
+  not. The fragment is checked on every run against the hand-written `soundTypes` of
+  `tools/import/expected-behaviour.json` (`Checks.CheckSoundTypes`: event names, volumes, pitches, silent events, the
+  blocks of each type), and the assembled `sounds.json` / `blocks.json` in game by `import.sound_types`. Known
+  conflict, routed to F11: the families kit (`tools/families/families.lua` `SOUND_TYPES`, `SOUND_TYPE_BLOCKS`,
+  `sound_types()`) writes its own hard-coded copy of `twilightforest.jar` into the merged `sounds.json` after the
+  merge, which replaces this fragment's entries (its copy plays the step and fall sounds on jump and land); until
+  the kit drops it, `import.sound_types` accepts exactly that copy for jump and land and nothing else. Flammability: only the 180 blocks TF registers with
   `FireBlock.setFlammable(block, encouragement, flammability)` (`RegistrationEvents.java`) get
   `minecraft:flammable` (`catch_chance_modifier` = encouragement, `destroy_chance_modifier` = flammability);
   `ignitedByLava` alone does not make a block burn in Java. Blocks not listed in a creative tab get
@@ -321,8 +328,10 @@ trapped_chest, horizontal, directional, climbable for `LadderBlock`), else the b
 `connected_texture_block` loader). `params.tags` lists the block's Bedrock block tags (*Tools and drops* above:
 `minecraft:is_<tool>_item_destructible`, `minecraft:leaves`, the tier tag), free of the block format, so that the
 kit writes them in the form of whatever format it writes the block in (`minecraft:tags` array from 1.26.20,
-`"tag:<id>"` components up to 1.26.10, *Block format* above); absent for a block without tags. The import fails
-when a family block's `params.tags` and its skeleton file's tags differ (after the overrides).
+`"tag:<id>"` components up to 1.26.10, *Block format* above); absent for a block without tags. `params.tags` is the
+single source of a family block's tags: after the overrides, the skeleton file's tags are rewritten from it in the
+form of the file's format (`Ctx.SyncFamilyTags`, *Overrides* below), and the import fails when they still differ, when
+a family block has no entry, or when an id is listed twice (in one file or across units).
 
 ## Lang
 
@@ -356,6 +365,21 @@ the files are written or checked):
 
 `drop` takes globs over the unit's generated paths, `patch` RFC 6902 operations `add` / `replace` / `remove` on a
 generated JSON file, `rename` moves a generated file. A patch or rename target that is not generated fails the run.
+
+A family block's Bedrock block tags (tools, tier, `minecraft:leaves`) are overridden through its families entry
+only: patch `params.tags` of the entry in `data/gf/families/<unit>.json` (the entries are an array, so the pointer
+is its index, `/<n>/params/tags`: look the index up in the generated file, 198 below is `twilight_oak_chest` at
+9e40a757, and re-check it after a regeneration that adds blocks), and the import writes the skeleton's tags from it in the form of the skeleton's
+format (`"tag:<id>"` components today, the `minecraft:tags` array once `FamilyBlockFormat` is 1.26.20 or later), so
+the override keeps working across that change. A patch of a family block's skeleton tags (`bp/blocks/<id>.json`
+`tag:*` or `minecraft:tags`) fails the run with that hint:
+
+```json
+{"patch": {"data/gf/families/woodwork.json": [
+  {"op": "replace", "path": "/198/params/tags", "value": ["minecraft:is_axe_item_destructible"]}]}}
+```
+
+A non-family block keeps its tags in its skeleton file only (patch `/minecraft:block/components/minecraft:tags`).
 
 ## Determinism
 

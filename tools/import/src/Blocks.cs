@@ -360,7 +360,7 @@ namespace GfImport
                 comps.Set("minecraft:destructible_by_explosion", ExplosionComponent(jb.Resistance));
                 // the tools that mine it faster and the tier a tool needs (Harvest.cs), in the form of the block's format
                 string format = FormatOf(bi);
-                HarvestTags(bi, comps, format == BlockFormat);
+                HarvestTags(bi, comps, ModernBlockFormat(format));
                 // light: a constant, or a function of the block's states (one permutation per other light level)
                 var lightPerms = new List<J>();
                 var lf = Light.Of(this, bi, Warn);
@@ -734,11 +734,14 @@ namespace GfImport
 
         /// <summary>TF's own sound types (TFSoundTypes.java) as Bedrock block sound types of the pack's sounds.json
         /// (rp/sounds.json.d/import-<unit>.json, merged by assemble per id): block_sounds (break, place, hit) and
-        /// interactive_sounds (step, fall; jump and land, which Java has no sound of their own for, play the step and
-        /// the fall sound), each with F3's sound event and the volume and pitch Java plays it at for a SoundType of
-        /// volume v and pitch p (break and place: (v + 1) / 2 at p * 0.8, LevelRenderer / BlockItem.place; hit: (v + 1) / 8
-        /// at p * 0.5, MultiPlayerGameMode; step: v * 0.15 at p, Entity.playStepSound; fall: v * 0.5 at p * 0.75,
-        /// LivingEntity.playBlockFallSound). One file per owner of the blocks using the type (F1 when several units do).</summary>
+        /// interactive_sounds (step, fall), each with F3's sound event and the volume and pitch Java plays it at for a
+        /// SoundType of volume v and pitch p (break and place: (v + 1) / 2 at p * 0.8, LevelRenderer / BlockItem.place;
+        /// hit: (v + 1) / 8 at p * 0.5, MultiPlayerGameMode; step: v * 0.15 at p, Entity.playStepSound; fall: v * 0.5 at
+        /// p * 0.75, LivingEntity.playBlockFallSound, only with fall damage). Bedrock's jump and land events have no Java
+        /// counterpart (Java plays no block sound for a jump, nor for a landing without fall damage): both are written
+        /// silent ("", as the "default" event), so no fallback of the engine plays a sound TF does not. One file per
+        /// owner of the blocks using the type (F1 when several units do). Checked against the hand-written soundTypes of
+        /// tools/import/expected-behaviour.json (Checks.CheckSoundTypes).</summary>
         void ImportSoundTypes()
         {
             var perOwner = new SortedDictionary<string, J>(StringComparer.Ordinal);
@@ -761,8 +764,8 @@ namespace GfImport
                     .Set("default", "")
                     .Set("step", ev(t.Step, v * 0.15, p))
                     .Set("fall", ev(t.Fall, v * 0.5, p * 0.75))
-                    .Set("jump", ev(t.Step, v * 0.15, p))
-                    .Set("land", ev(t.Fall, v * 0.5, p * 0.75))));
+                    .Set("jump", "")
+                    .Set("land", "")));
                 Log.Add("TF sound type TFSoundTypes." + t.Name + " -> block sound " + id + " (" + string.Join(", ", kv.Value.Select(NameOf)) + ")");
             }
             foreach (var kv in perOwner)
