@@ -6,13 +6,17 @@
 // processors see every block (original and current info) in the order Java keeps a loaded
 // template's blocks (TemplateOrder.cpp: full blocks, other shapes, block entities; each by y, x,
 // z), the result is mirrored and rotated about the pivot, clipped to the settings' box, then block
-// entity markers and entities follow.
+// entity markers (each randomizable container drawing its LootTableSeed first) and entities
+// follow. A placement shares one random between its blocks when the settings carry a seed or the
+// caller gives one (feature/ext/structure/SharedRandom.h: TF's template features).
 //
 // Format (format "gloamingforest:template", format_version 1):
 //   id        "twilightforest:lich_tower/root/foyer"
 //   size      [x, y, z]
 //   palette   [{"Name": java id, "Properties": {java property: value}}, ...]
-//             minecraft:structure_void entries are not placed (vanilla templates omit them)
+//             minecraft:structure_void entries are not placed (vanilla templates omit them); a
+//             data marker on a structure_void cell is Java's DATA structure block there: the
+//             processors see it (a minecraft:structure_block), nothing is placed
 //   blocks    run-length [[palette index, count], ...] over y, then z, then x (x fastest)
 //   markers   [{"pos": [x, y, z], "marker": name, "data": {...}}]
 //             "data": a TF data marker, label in data.metadata (TwilightTemplateStructurePiece
@@ -233,11 +237,17 @@ std::unique_ptr<Parsed> parse(Template const& t) {
         en.data         = e.value("data", Json::object());
         p->entities.push_back(std::move(en));
     }
-    // the placed cells in Java's order (StructureTemplate#loadPalette / buildInfoList): full blocks,
-    // then other shapes, then blocks with block entity data (a marker's data, a block entity's
-    // block, a data marker: Java's DATA structure block), each list by y, then x, then z
-    std::set<std::tuple<int, int, int>> withData;
-    for (auto const& m : p->markers) withData.insert({m.pos.x, m.pos.y, m.pos.z});
+    // the cells of Java's template in its order (StructureTemplate#loadPalette / buildInfoList):
+    // full blocks, then other shapes, then blocks with block entity data (a marker's data, a block
+    // entity's block, a data marker: Java's DATA structure block), each list by y, then x, then z.
+    // A structure_void cell is no block of a Java template, except under a data marker: there Java
+    // saved its DATA structure block. Cells whose Java state has no Bedrock block stay (processed
+    // with no block, not placed): every block Java processes draws from a shared random.
+    std::set<std::tuple<int, int, int>> withData, dataMarkers;
+    for (auto const& m : p->markers) {
+        withData.insert({m.pos.x, m.pos.y, m.pos.z});
+        if (m.isData()) dataMarkers.insert({m.pos.x, m.pos.y, m.pos.z});
+    }
     struct Cell {
         int list, y, x, z;
     };
@@ -246,7 +256,15 @@ std::unique_ptr<Parsed> parse(Template const& t) {
         for (int z = 0; z < p->sz; z++)
             for (int x = 0; x < p->sx; x++) {
                 auto idx = p->cells[static_cast<std::size_t>(p->index(x, y, z))];
-                if (idx == 0xffff || idx >= p->palette.size() || !p->palette[idx]) continue;
+                if (idx == 0xffff) {
+                    if (dataMarkers.contains({x, y, z})) cells.push_back(Cell{2, y, x, z});
+                    continue;
+                }
+                if (idx >= p->palette.size()) continue;
+                if (!p->palette[idx])
+                    warnOnce("template-unresolved:" + t.id + ":" + p->paletteJson[idx].dump(),
+                             "structure: template " + t.id + ": Java state " + p->paletteJson[idx].dump() +
+                                 " has no Bedrock block (processed with no block, not placed)");
                 cells.push_back(Cell{withData.contains({x, y, z}) ? 2 : p->paletteList[idx], y, x, z});
             }
     std::sort(cells.begin(), cells.end(), [](Cell const& a, Cell const& b) { return std::tie(a.list, a.y, a.x, a.z) < std::tie(b.list, b.y, b.x, b.z); });
@@ -500,9 +518,49 @@ BlockPos relative(Placement const& placement, BlockPos const& local) {
     return transformPos(local, placement.settings.mirror, placement.settings.rotation, placement.rotationPivot);
 }
 
-/// The template's shared random while a placement with a fixed seed runs (else processors get a
+/// The template's shared random while a placement that shares one runs (else processors get a
 /// position-seeded one): vanilla StructurePlaceSettings#getRandom(pos).
-thread_local JavaRandom* tSharedRandom = nullptr;
+thread_local RandomSource* tSharedRandom = nullptr;
+
+namespace {
+
+/// The data markers of `t` in the order of Java's template (its DATA structure blocks have block
+/// entity data: the third list of StructureTemplate#buildInfoList, by y, then x, then z), the order
+/// StructureTemplate#filterBlocks returns them in.
+std::vector<Marker const*> dataMarkersInOrder(Parsed const& t) {
+    std::vector<Marker const*> out;
+    for (auto const& m : t.markers)
+        if (m.isData()) out.push_back(&m);
+    std::stable_sort(out.begin(), out.end(), [](Marker const* a, Marker const* b) {
+        return std::tie(a->pos.y, a->pos.x, a->pos.z) < std::tie(b->pos.y, b->pos.x, b->pos.z);
+    });
+    return out;
+}
+
+/// Sets the processors' per-placement state (shared random, offset, clip) for one placement and
+/// restores the outer one when it ends (a marker handler may place a template of its own).
+struct PlacementScope {
+    RandomSource*           previousShared;
+    BlockPos                previousOffset;
+    std::optional<BlockBox> previousClip;
+    PlacementScope(RandomSource* shared, Placement const& placement)
+    : previousShared(tSharedRandom),
+      previousOffset(processors::currentOffset()),
+      previousClip(processors::currentClip()) {
+        tSharedRandom = shared;
+        processors::setCurrentOffset(placement.offset);
+        processors::setCurrentClip(placement.settings.clip);
+    }
+    ~PlacementScope() {
+        tSharedRandom = previousShared;
+        processors::setCurrentOffset(previousOffset);
+        processors::setCurrentClip(previousClip);
+    }
+    PlacementScope(PlacementScope const&)            = delete;
+    PlacementScope& operator=(PlacementScope const&) = delete;
+};
+
+} // namespace
 
 bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, RandomSource& random,
                   std::vector<std::pair<BlockPos, std::string>>* dataMarkers, std::vector<Placed>* placedOut) {
@@ -510,26 +568,36 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
     auto const& settings = placement.settings;
     auto        procs    = processors::expand(settings.processors);
 
-    std::optional<JavaRandom> shared;
-    if (settings.seed != 0) shared.emplace(settings.seed);
-    JavaRandom* previousShared = tSharedRandom;
-    tSharedRandom              = shared ? &*shared : nullptr;
-    BlockPos previousOffset    = processors::currentOffset();
-    processors::setCurrentOffset(placement.offset);
+    // StructurePlaceSettings#setRandom: the caller's random, or one of the settings' seed
+    std::optional<JavaRandom> seeded;
+    RandomSource*             shared = placement.sharedRandom;
+    if (!shared && settings.seed != 0) shared = &seeded.emplace(settings.seed);
+    PlacementScope scope(shared, placement);
 
-    // markers that carry block entity data, by local position
+    // markers that carry block entity data, by local position; every marker's cell has block
+    // entity data in Java (a data marker's is its DATA structure block)
     std::map<std::tuple<int, int, int>, Json> blockData;
-    for (auto const& m : t.markers)
+    std::set<std::tuple<int, int, int>>       withNbt;
+    for (auto const& m : t.markers) {
+        withNbt.insert({m.pos.x, m.pos.y, m.pos.z});
         if (!m.isData()) {
             Json d      = m.data;
             d["marker"] = m.marker;
             blockData[{m.pos.x, m.pos.y, m.pos.z}] = std::move(d);
         }
+    }
 
     // StructurePlaceSettings#getRandomPalette(palettes, offset): one draw of the shared random for
     // the template's (single) palette before any block
     if (shared) (void)shared->nextInt(1);
 
+    // Java's DATA structure block on a data marker's structure_void cell (processed, never placed;
+    // resolved when the template has such a cell)
+    std::optional<Block const*> dataBlockCache;
+    auto                        dataBlock = [&] {
+        if (!dataBlockCache) dataBlockCache = dataMarkerBlock();
+        return *dataBlockCache;
+    };
     auto const& clip = settings.clip;
     std::vector<Placed> placed;
     // the blocks in Java's order (Parsed::order)
@@ -543,9 +611,11 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
         // the placement shares a random (Java processes every block, the bounding box only limits
         // what is placed: the blocks outside still draw)
         if (clip && !shared && (world.x < clip->minX || world.x > clip->maxX || world.z < clip->minZ || world.z > clip->maxZ)) continue;
-        BlockInfo original{local, t.palette[idx], Json()};
+        bool         dataCell = idx == 0xffff; // (Parsed::order holds a structure_void cell only under a data marker)
+        Block const* block    = dataCell ? dataBlock() : t.palette[idx];
+        BlockInfo    original{local, block, Json()};
         if (auto it = blockData.find({x, y, z}); it != blockData.end()) original.data = it->second;
-        BlockInfo current{world, t.palette[idx], original.data};
+        BlockInfo current{world, block, original.data};
         bool      dropped = false;
         for (auto const& p : procs) {
             auto next = processors::run(p, region, original, current, settings, placement.pivotPos);
@@ -555,16 +625,22 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
             }
             current = std::move(*next);
         }
-        if (dropped || !current.block) continue;
+        // nothing to place: dropped, no Bedrock block (an unresolved Java state no processor
+        // replaced), or the data marker's structure block itself (its handler decides the cell)
+        if (dropped || !current.block || (dataCell && current.block == dataBlock())) continue;
         if (clip && !clip->contains(current.pos.x, current.pos.y, current.pos.z)) continue;
         Placed out{current.pos, current.block, std::move(current.data)};
-        // the Java state's waterlogged survives the processors while the block can hold
-        // water (FeaturePlacers.transferAllStateKeys copies it); a pot keeps its plant
-        bool sameBlock = blocks::id(*current.block) == blocks::id(*t.palette[idx]);
-        int  wl        = t.paletteWaterlogged[idx];
-        if (sameBlock) out.waterlogged = wl;
-        else if (liquids::waterloggable(*current.block)) out.waterlogged = wl > 0 ? 1 : 0;
-        if (!t.pottedPlant[idx].empty() && blocks::id(*current.block) == "minecraft:flower_pot") out.pottedPlant = t.pottedPlant[idx];
+        // Java's StructureBlockInfo#nbt: a block entity's (or a marker's) data, or what a processor gave
+        out.nbt = dataCell || withNbt.contains({x, y, z}) || t.paletteList[idx] == 2 || out.data.is_object();
+        if (!dataCell) {
+            // the Java state's waterlogged survives the processors while the block can hold
+            // water (FeaturePlacers.transferAllStateKeys copies it); a pot keeps its plant
+            bool sameBlock = t.palette[idx] && blocks::id(*current.block) == blocks::id(*t.palette[idx]);
+            int  wl        = t.paletteWaterlogged[idx];
+            if (sameBlock) out.waterlogged = wl;
+            else if (liquids::waterloggable(*current.block)) out.waterlogged = wl > 0 ? 1 : 0;
+            if (!t.pottedPlant[idx].empty() && blocks::id(*current.block) == "minecraft:flower_pot") out.pottedPlant = t.pottedPlant[idx];
+        }
         placed.push_back(std::move(out));
     }
 
@@ -588,7 +664,11 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
         // any other source fluid (lava) there: placeLiquid refuses it and the block is not retried
         bool worldSource = keepLiquids && container && !worldWater && liquids::isLavaSource(region.getBlock(p.pos));
         bool water       = p.waterlogged == 1 || worldWater;
-        if (!liquids::setBlock(region, p.pos, *b, placement.flags, water)) continue;
+        bool set         = liquids::setBlock(region, p.pos, *b, placement.flags, water);
+        // Java puts a barrier first under a block with block entity data, so its setBlock always
+        // changes the block: an unchanged one stands as well
+        p.stood = set || (p.nbt && &region.getBlock(p.pos) == b);
+        if (!set) continue;
         if (!keepLiquids) continue;
         if (p.waterlogged == 1 || liquids::alwaysWater(*b) || liquids::isWaterSource(*b)) sourcesPlaced.insert(key(p.pos));
         else if (container) {
@@ -620,20 +700,35 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
     // flower pot contents (the pot block stands now)
     for (auto const& p : placed)
         if (!p.pottedPlant.empty() && p.pos.y >= region.minY() && p.pos.y < region.maxY()) blockentities::flowerPot(region, p.pos, p.pottedPlant);
-    // block entity data after every block stands (containers need their block)
+    // block entity data after every block stands (containers need their block). Java loads it into
+    // the block entity right after setting each block, and first draws the LootTableSeed of a
+    // RandomizableContainer from placeInWorld's random (StructureTemplate#placeInWorld puts it over
+    // any seed the data has): the same draws in the same (placement) order
     for (auto const& p : placed) {
+        if (!p.stood) continue;
+        std::optional<std::int64_t> lootSeed;
+        if (p.nbt && randomizableContainer(*p.block)) lootSeed = random.nextLong();
         if (!p.data.is_object() || !p.data.contains("marker")) continue;
         auto name = p.data["marker"].get<std::string>();
-        if (auto const* fn = markerFor(name)) (*fn)(region, p.pos, name, p.data, random);
+        Json data = p.data;
+        if (lootSeed) {
+            data["seed"]          = *lootSeed;
+            data["LootTableSeed"] = *lootSeed;
+        } else {
+            // no randomizable container: Java draws nothing (and no loot table applies there)
+            if (!data.contains("seed")) data["seed"] = 0;
+            if (!data.contains("LootTableSeed")) data["LootTableSeed"] = 0;
+        }
+        if (auto const* fn = markerFor(name)) (*fn)(region, p.pos, name, data, random);
         else warnOnce("marker:" + name, "structure: no handler for template marker '" + name + "'");
     }
     if (dataMarkers) {
-        for (auto const& m : t.markers) {
-            if (!m.isData()) continue;
-            BlockPos rel = relative(placement, m.pos);
+        // (as StructureTemplate#filterBlocks lists the template's structure blocks: in its order)
+        for (auto const* m : dataMarkersInOrder(t)) {
+            BlockPos rel = relative(placement, m->pos);
             BlockPos world{rel.x + placement.offset.x, rel.y + placement.offset.y, rel.z + placement.offset.z};
             if (clip && !clip->contains(world.x, world.y, world.z)) continue;
-            dataMarkers->emplace_back(world, m.label());
+            dataMarkers->emplace_back(world, m->label());
         }
     }
     if (!settings.ignoreEntities) {
@@ -690,9 +785,24 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
         }
     }
     if (placedOut) *placedOut = std::move(placed);
-    tSharedRandom = previousShared;
-    processors::setCurrentOffset(previousOffset);
     return true;
+}
+
+std::vector<std::pair<BlockPos, std::string>> filterDataMarkers(Parsed const& t, Placement const& placement) {
+    // StructureTemplate#filterBlocks: settings.getRandomPalette(palettes, pos) draws from the
+    // settings' random (the template's single palette), then every structure block of it inside the
+    // bounding box; the kit's are its data markers (Java's DATA structure blocks). Only a random the
+    // caller shares can show the draw.
+    if (placement.sharedRandom) (void)placement.sharedRandom->nextInt(1);
+    std::vector<std::pair<BlockPos, std::string>> out;
+    auto const&                                   clip = placement.settings.clip;
+    for (auto const* m : dataMarkersInOrder(t)) {
+        BlockPos rel = relative(placement, m->pos);
+        BlockPos world{rel.x + placement.offset.x, rel.y + placement.offset.y, rel.z + placement.offset.z};
+        if (clip && !clip->contains(world.x, world.y, world.z)) continue;
+        out.emplace_back(world, m->label());
+    }
+    return out;
 }
 
 // ---- contract entry points ---------------------------------------------------------------------------
@@ -709,11 +819,14 @@ bool place(std::string const& id, Region& region, BlockPos const& origin, Templa
     pl.offset   = origin;
     pl.pivotPos = origin;
     pl.settings = settings;
+    // a seed: StructurePlaceSettings#setRandom(RandomSource.create(seed)), the same random passed
+    // to placeInWorld (as TF's template features pass theirs)
     JavaRandom random(settings.seed != 0 ? settings.seed : pure::mthGetSeed(origin.x, origin.y, origin.z));
-    std::vector<std::pair<BlockPos, std::string>> data;
-    if (!placeInWorld(*t, region, pl, random, &data)) return false;
-    // TF data markers: a handler registered under the label gets them (features handle their own)
-    for (auto const& [pos, label] : data)
+    if (settings.seed != 0) pl.sharedRandom = &random;
+    if (!placeInWorld(*t, region, pl, random)) return false;
+    // TF data markers (StructureTemplate#filterBlocks after the placement): a handler registered
+    // under the label gets them (features handle their own)
+    for (auto const& [pos, label] : filterDataMarkers(*t, pl))
         if (auto const* fn = markerFor(label)) (*fn)(region, pos, label, Json::object(), random);
     return true;
 }

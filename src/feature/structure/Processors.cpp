@@ -386,8 +386,11 @@ std::optional<BlockInfo> updateMarking(Region& region, BlockInfo const&, BlockIn
     // level.getChunk(pos).markPosForPostprocessing(pos): once the chunk is complete (Java: FULL
     // status, LevelChunk#postProcessGeneration) the block there takes its shape from its
     // neighbours (Block.updateFromNeighbourShapes); here a queued job runs once the chunk is
-    // loaded, after the whole structure stands
-    if (current.block && listHasBlock(config.value("mark_updates", Json::array()), *current.block)) blockentities::updateShape(region, current.pos);
+    // loaded, after the whole structure stands. Only for the blocks this placement places: a
+    // shared-random placement processes the blocks outside its clip too, and the placement of
+    // their own chunk marks them (Java marks them twice)
+    if (current.block && insideCurrentClip(current.pos) && listHasBlock(config.value("mark_updates", Json::array()), *current.block))
+        blockentities::updateShape(region, current.pos);
     return current;
 }
 
@@ -503,13 +506,17 @@ std::optional<BlockInfo> protectedBlocks(Region& region, BlockInfo const&, Block
 
 std::optional<BlockInfo> passthrough(Region&, BlockInfo const&, BlockInfo const& current, TemplateSettings const&, Json const&) { return current; }
 
-thread_local BlockPos tOffset{0, 0, 0};
+thread_local BlockPos                tOffset{0, 0, 0};
+thread_local std::optional<BlockBox> tClip;
 
 } // namespace
 
 BlockPos currentPivot() { return tPivot; }
 BlockPos currentOffset() { return tOffset; }
 void     setCurrentOffset(BlockPos const& offset) { tOffset = offset; }
+void     setCurrentClip(std::optional<BlockBox> const& clip) { tClip = clip; }
+std::optional<BlockBox> currentClip() { return tClip; }
+bool     insideCurrentClip(BlockPos const& pos) { return !tClip || tClip->contains(pos.x, pos.y, pos.z); }
 
 void addList(std::string const& id, Json const& list) {
     std::unique_lock lock(gListsMutex);

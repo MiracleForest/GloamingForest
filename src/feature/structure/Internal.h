@@ -166,10 +166,14 @@ struct Parsed {
     /// The list StructureTemplate#addToLists puts each palette state in (javaList).
     std::vector<std::int8_t>  paletteList;
     std::vector<std::uint16_t> cells;       ///< palette index per block, y-major, then z, then x
-    /// The placed cells (not structure_void, known blocks) in the order StructureTemplate keeps a
-    /// loaded template's blocks (#loadPalette / #buildInfoList): the full blocks, then the other
-    /// shapes, then the blocks with block entity data (markers, block entity blocks; javaList),
-    /// each list by y, then x, then z. Processors see the blocks in this order.
+    /// The cells Java's template holds, in the order StructureTemplate keeps a loaded template's
+    /// blocks (#loadPalette / #buildInfoList): the full blocks, then the other shapes, then the
+    /// blocks with block entity data (markers, block entity blocks; javaList), each list by y, then
+    /// x, then z. Processors see the blocks in this order. structure_void cells are not in it (Java
+    /// templates never save them) unless a data marker sits there: that cell is Java's DATA
+    /// structure block (processed, never placed: the marker's handler decides the cell). Cells whose
+    /// Java state does not resolve to a Bedrock block are in it too (processed with no block, not
+    /// placed), so they keep their draws of a shared random.
     std::vector<BlockPos>     order;
     std::vector<Marker>       markers;
     std::vector<Connector>    connectors;
@@ -182,6 +186,14 @@ struct Parsed {
 /// with the template). placeInWorld processes and places a template's blocks list by list, each
 /// sorted by y, then x, then z (StructureTemplate#buildInfoList).
 [[nodiscard]] int javaList(Json const& javaState);
+/// Whether the block entity of `block` is a RandomizableContainer in Java (chests and trapped chests
+/// of every wood, TF's skull chest and keepsake casket, barrels, hoppers, dispensers, droppers,
+/// shulker boxes, decorated pots, crafters): StructureTemplate#placeInWorld draws its
+/// LootTableSeed from the placement's random when the template gives it block entity data.
+[[nodiscard]] bool randomizableContainer(Block const& block);
+/// The block a data marker stands for in Java (a minecraft:structure_block in DATA mode): what the
+/// processors see on a data marker's structure_void cell (never placed).
+[[nodiscard]] Block const* dataMarkerBlock();
 /// Parses and validates a template document (errors listed; empty: valid).
 [[nodiscard]] std::vector<std::string> validate(Json const& doc);
 /// Registers an in-memory template (selftest fixtures, /tf structure_util capture); replaces one
@@ -202,6 +214,10 @@ struct Placement {
     BlockPos         rotationPivot{0, 0, 0};
     int              flags = 2;
     bool             knownShape = false;
+    /// StructurePlaceSettings#setRandom: the random every processor draws from (and the palette
+    /// pick). nullptr: a JavaRandom of settings.seed when the seed is set, else none (processors
+    /// then draw from position-seeded randoms, StructurePlaceSettings#getRandom(pos)).
+    RandomSource*    sharedRandom = nullptr;
 };
 /// One block a placement produced, in world coordinates.
 struct Placed {
@@ -210,12 +226,21 @@ struct Placed {
     Json         data;
     int          waterlogged = -1; ///< the Java state's waterlogged (-1: the block has no such property)
     std::string  pottedPlant;      ///< flower pot content (Bedrock plant id)
+    bool         nbt   = false;    ///< Java's StructureBlockInfo#nbt is set (block entity data)
+    bool         stood = false;    ///< the block was set in the world (Java: setBlock returned true)
 };
 /// StructureTemplate#placeInWorld for a GloamingForest template: processes every block, places
 /// the ones inside settings.clip, applies their block entity markers and spawns the entities.
-/// `dataMarkers` receives the TF data markers (world position + label) inside the clip.
+/// `dataMarkers` receives the TF data markers (world position + label) inside the clip. `random`
+/// is placeInWorld's random argument: the LootTableSeed of every randomizable container with block
+/// entity data placed is drawn from it, in placement order, before the markers run.
 bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, RandomSource& random,
                   std::vector<std::pair<BlockPos, std::string>>* dataMarkers = nullptr, std::vector<Placed>* placedOut = nullptr);
+/// StructureTemplate#filterBlocks(pos, settings, Blocks.STRUCTURE_BLOCK) for the data markers: the
+/// TF data markers of `t` (world position + label) inside settings.clip, in Java's order, with
+/// StructurePlaceSettings#getRandomPalette's draw (`placement.sharedRandom`'s nextInt(1)) when the
+/// placement shares a random.
+[[nodiscard]] std::vector<std::pair<BlockPos, std::string>> filterDataMarkers(Parsed const& t, Placement const& placement);
 /// StructureTemplate.calculateRelativePosition(settings, pos) (rotation, mirror, pivot).
 [[nodiscard]] BlockPos relative(Placement const& placement, BlockPos const& local);
 /// The yaw StructureTemplate#placeEntities gives an entity facing `yaw` in the template:
@@ -256,6 +281,13 @@ void registerBuiltins();
 /// The template offset of the running placement (StructureProcessor's offset argument).
 [[nodiscard]] BlockPos currentOffset();
 void                   setCurrentOffset(BlockPos const& offset);
+/// The box the running placement places in (settings.clip; nullopt: everywhere). Processors run on
+/// every block of a template, the ones outside included (their draws of a shared random count),
+/// but side effects on the world (update_marking's shape updates) are kept to the blocks placed:
+/// the placement of the neighbouring chunk marks its own.
+void                   setCurrentClip(std::optional<BlockBox> const& clip);
+[[nodiscard]] std::optional<BlockBox> currentClip();
+[[nodiscard]] bool     insideCurrentClip(BlockPos const& pos);
 } // namespace processors
 
 // ---- registries (Piece.cpp) -------------------------------------------------------------------------
@@ -342,6 +374,17 @@ void updateShape(Region& region, BlockPos const& pos);
 [[nodiscard]] std::optional<Json> spawnerRecord(BlockSource& source, BlockPos const& pos);
 /// Drops that record (its spawner spawns another mob now: Java replaced the whole SpawnData).
 void forgetSpawnerRecord(BlockSource& source, BlockPos const& pos);
+/// The positions of chunk (cx, cz) of dimension `dim` whose block data holds a kit spawner record
+/// (an in-memory index: a chunk's block data is read once, then kept up to date by the record
+/// writes; positions whose record went with their block drop out when looked up).
+[[nodiscard]] std::vector<BlockPos> spawnerRecordsIn(BlockSource& source, int cx, int cz);
+/// RandomizableContainer#unpackLootTable(null) for a hopper the kit gave a loot table (Bedrock's
+/// hopper has no loot table field; Java's hopper is a RandomizableContainer, so the kit keeps the
+/// table in the hopper's block data until it is unpacked): rolls it into the hopper. False when
+/// nothing was pending.
+bool unpackHopper(BlockSource& source, BlockPos const& pos);
+/// A hopper's pending loot table (table id, seed) the kit keeps (nullopt: none).
+[[nodiscard]] std::optional<std::pair<std::string, std::int64_t>> pendingHopperLoot(BlockSource& source, BlockPos const& pos);
 /// A flower pot's plant (FlowerPotBlockActor PlantBlock).
 void flowerPot(Region& region, BlockPos const& pos, std::string const& plantId);
 /// Water in the liquid layer at `pos` of a generation region, put there once the chunk is loaded
@@ -528,9 +571,12 @@ bool spike(Region& region, BlockPos const& pos, std::string const& configId, Ran
 } // namespace speleothems
 
 // ---- commands (Commands.cpp) ------------------------------------------------------------------------------
-/// The slots of the container at `pos` (a vanilla loot container or a gf::inventory one), its loot
-/// table unpacked first (RandomizableContainer#unpackLootTable(null), through the loot contract);
-/// nullopt when no container stands there.
+/// The slots of the container at `pos`: a vanilla block actor whose Java block entity is a
+/// Container (chests, barrels, shulker boxes, dispensers, droppers, crafters, decorated pots,
+/// hoppers, furnaces, smokers, blast furnaces, brewing stands, chiseled bookshelves, jukeboxes) or
+/// a gf::inventory one; a RandomizableContainer's loot table unpacked first
+/// (RandomizableContainer#unpackLootTable(null), through the loot contract; a hopper's by the kit).
+/// nullopt when no such container stands there.
 [[nodiscard]] std::optional<std::vector<ItemStack>> containerItems(BlockSource& source, BlockPos const& pos);
 /// ItemStack#getRarity() != Rarity.COMMON (count_loot's filter): F9's rarity of the stack
 /// (gf::item::ext::rarityOf: TWILIGHT, registered rarities, the enchantment bump), else the item's
@@ -542,6 +588,8 @@ bool spike(Region& region, BlockPos const& pos, std::string const& configId, Ran
 [[nodiscard]] std::map<std::string, int> countLootIn(BlockSource& source, landmark::Start const& start, bool showCommon);
 
 // ---- misc -------------------------------------------------------------------------------------------------
+/// The BlockData key of the kit's per-block records (spawner records, a hopper's pending loot).
+inline constexpr char kBlockDataKey[] = "structure";
 /// Logs `message` once per key (missing ids and the like).
 void warnOnce(std::string const& key, std::string const& message);
 /// The TF dimension's sea level (noise settings: 0).

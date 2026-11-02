@@ -7,7 +7,8 @@
 //   0  blocks without block entity data whose collision shape is a full block,
 //   1  every other block (partial and empty shapes: stairs, slabs, fences, plants, air, ...),
 //   2  blocks with block entity data (a template saves it for every block entity: chests, spawners,
-//      signs, ...; TF's DATA structure blocks are the kit's data markers).
+//      signs, ...; TF's DATA structure blocks are the kit's data markers, also on a structure_void
+//      cell).
 // The order matters wherever a placement shares one random source between its blocks
 // (StructurePlaceSettings#setRandom: TF's template features and the graveyard): every processor
 // that draws for a block moves the sequence for the blocks after it.
@@ -22,6 +23,8 @@
 #include "feature/structure/Internal.h"
 
 #include <iterator>
+
+#include "mc/world/level/block/Block.h"
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -33,7 +36,7 @@ namespace {
 using Set = std::unordered_set<std::string_view>;
 
 /// TF blocks with a block entity (BaseEntityBlock, ChestBlock, the sign blocks, AbstractFurnaceBlock,
-/// ChiseledBookShelfBlock), by path.
+/// ChiseledBookShelfBlock, EntityBlock such as RedThreadBlock), by path.
 Set const& tfEntities() {
     static Set const s{
         "acacia_drying_rack", "alpha_yeti_boss_spawner", "alpha_yeti_trophy", "alpha_yeti_wall_trophy", "antibuilder",
@@ -56,7 +59,7 @@ Set const& tfEntities() {
         "ominous_lime_candle", "ominous_magenta_candle", "ominous_orange_candle", "ominous_pink_candle",
         "ominous_purple_candle", "ominous_red_candle", "ominous_white_candle", "ominous_yellow_candle",
         "piglin_skull_candle", "piglin_wall_skull_candle", "player_skull_candle", "player_wall_skull_candle",
-        "quest_ram_trophy", "quest_ram_wall_trophy", "reactor_debris", "sinister_spawner", "skeleton_skull_candle",
+        "quest_ram_trophy", "quest_ram_wall_trophy", "reactor_debris", "red_thread", "sinister_spawner", "skeleton_skull_candle",
         "skeleton_wall_skull_candle", "skull_chest", "smoker", "snow_queen_boss_spawner", "snow_queen_trophy",
         "snow_queen_wall_trophy", "sorting_chest", "sorting_drying_rack", "sorting_hanging_sign", "sorting_sign",
         "sorting_trapped_chest", "sorting_wall_hanging_sign", "sorting_wall_sign", "spruce_drying_rack", "time_chest",
@@ -117,7 +120,7 @@ Set const& tfPartial() {
         "potted_mangrove_sapling", "potted_mayapple", "potted_mining_sapling", "potted_mushgloom",
         "potted_rainbow_oak_sapling", "potted_sorting_sapling", "potted_thorn", "potted_time_sapling",
         "potted_transformation_sapling", "potted_twilight_oak_sapling", "rainbow_oak_sapling", "raspberry_bush",
-        "red_thread", "root_strand", "rope", "skyberry_bush", "slider", "sorting_banister", "sorting_button",
+        "root_strand", "rope", "skyberry_bush", "slider", "sorting_banister", "sorting_button",
         "sorting_door", "sorting_fence", "sorting_fence_gate", "sorting_pressure_plate", "sorting_sapling",
         "sorting_slab", "sorting_stairs", "sorting_trapdoor", "spruce_banister", "stingberry_bush", "thorn_rose",
         "time_banister", "time_button", "time_door", "time_fence", "time_fence_gate", "time_pressure_plate",
@@ -206,6 +209,27 @@ int javaList(Json const& javaState) {
     if (vanillaEntities().contains(path) || endsWithAny(path, kEntitySuffixes)) return 2;
     if (vanillaPartial().contains(path) || endsWithAny(path, kPartialSuffixes) || path.starts_with("potted_")) return 1;
     return 0;
+}
+
+bool randomizableContainer(Block const& block) {
+    // by the Bedrock id of the block the placement put there (StructureTemplate checks the block
+    // entity of the placed state): vanilla 1.21.1's RandomizableContainer block entities (chests,
+    // barrels, hoppers, dispensers, droppers, shulker boxes, decorated pots, crafters) and TF's (its
+    // wooden chests and trapped chests are vanilla ChestBlocks; SkullChestBlockEntity and the
+    // keepsake casket's extend RandomizableContainerBlockEntity)
+    auto const&      id    = blocks::id(block);
+    auto             colon = id.find(':');
+    std::string_view ns    = colon == std::string::npos ? std::string_view("minecraft") : std::string_view(id).substr(0, colon);
+    std::string_view path  = colon == std::string::npos ? std::string_view(id) : std::string_view(id).substr(colon + 1);
+    if (ns == "twilightforest") return path.ends_with("_chest") || path == "keepsake_casket";
+    if (ns != "minecraft") return false;
+    static Set const vanilla{"chest", "trapped_chest", "barrel", "hopper", "dispenser", "dropper", "decorated_pot", "crafter"};
+    return vanilla.contains(path) || path.ends_with("shulker_box");
+}
+
+Block const* dataMarkerBlock() {
+    // (not cached here: block types are registered per world on the client, blocks:: caches them)
+    return blocks::fromJavaState(Json{{"Name", "minecraft:structure_block"}, {"Properties", {{"mode", "data"}}}});
 }
 
 } // namespace gf::structure::templates
