@@ -1,0 +1,9 @@
+{
+  "gf.item.anvil.title": "修复和命名",
+  "gf.item.anvil.pick": "将附魔书用于：",
+  "gf.item.anvil.none": "物品栏中没有物品可以接受这本书：",
+  "gf.item.anvil.cost": "附魔花费：{}",
+  "gf.item.anvil.levels": "附魔花费：{}",
+  "gf.item.anvil.hint": "关闭铁砧界面后即可选择此书附魔的物品。",
+  "gf.item.anvil.away": "你离铁砧太远了。"
+}
