@@ -11,16 +11,21 @@
 --            manual layer wins per id: per output path, per BP identifier and per fragment key.
 --            Duplicates inside one layer fail the build.
 --   Merges   fragment directories ("*.d") are merged into one file: mode "object" (a duplicate key
---            fails), "union" (arrays concatenated, scalars de-duplicated) or "lang" (.lang lines).
+--            fails), "union" (arrays concatenated, scalars de-duplicated), "lang" (.lang lines) or
+--            "categories" (the named objects of the file merged per id: rp/sounds.json.d ->
+--            sounds.json by block_sounds, entity_sounds.entities, ...; a duplicate id inside a
+--            layer fails).
 --   Lang     assets/lang/<locale>/*.json and the gen layer's lang/<locale>/*.json -> lang/<locale>.json
 --            for the 29 Bedrock locales (TF locale names such as de_de are normalised; others are
 --            dropped with a note).
 --   Tags     assets/tags/<registry>/<ns>/<path>.d/<unit>.json are unioned into the imported tag
 --            data/<ns>/tags/<registry>/<path>.json (rule R6).
 --   Checks   integer block states 0..n, block permutation budget, dangling twilightforest:
---            references in BP / data (per kind: a `block` key must name a block), every asset
---            file has an owner (docs/spec/owners.tsv), and the ARR hash guard (no TF .ogg / .nbt
---            content, tools/ci/arr-blobs.txt).
+--            references in BP / data (per kind: a `block` key must name a block; the values of
+--            tag-valued keys name tags; the reviewed ids of tools/import/known-ids.json are known
+--            by kind, its tfDangling references are warnings), every asset file has an owner
+--            (docs/spec/owners.tsv), and the ARR hash guard (no TF .ogg / .nbt content,
+--            tools/ci/arr-blobs.txt).
 --
 -- "${version}" in pack manifests is replaced by the mod version as a JSON array [major, minor, patch]
 -- (untagged builds: [0, 0, <stamp of the pack sources>], so games never reuse a stale cached pack).
@@ -31,10 +36,16 @@
 import("core.base.json")
 
 local errors = {}
+local warnings = {}
 local notes = {}
 
 local function fail(fmt, ...)
     table.insert(errors, string.format(fmt, ...))
+end
+
+-- printed on every run, never fails it (e.g. a reference that is dangling in TF itself)
+local function warn(fmt, ...)
+    table.insert(warnings, string.format(fmt, ...))
 end
 
 local function note(fmt, ...)
@@ -363,44 +374,133 @@ local function union_result(acc)
     return {}
 end
 
+-- Calls fn(file, layer, relpath) for every file matching `pats`: the gen layer first, then the manual
+-- layer, each in path order.
+local function each_fragment(gen, manual, pats, fn)
+    for _, layer in ipairs({{gen, "gen"}, {manual, "manual"}}) do
+        local files = layer[1]
+        local relpaths = table.keys(files)
+        table.sort(relpaths)
+        for _, r in ipairs(relpaths) do
+            if glob_match(pats, r) then fn(files[r].file, layer[2], r) end
+        end
+    end
+end
+
+-- Per-id layering of the "object" and "categories" merges: put(id, value, file, layer) keeps the
+-- last value of an id (the manual layer comes second and wins, with a note); an id defined twice
+-- inside one layer fails. `what` names the ids in the messages ("key", "block_sounds id").
+local function id_layers(what)
+    local L = {merged = {}}
+    local origin, layer_origin, current = {}, {}, nil
+    function L.put(id, value, file, layer)
+        if layer ~= current then current, layer_origin = layer, {} end
+        if layer_origin[id] then
+            fail("duplicate %s '%s' in %s (already defined in %s)", what, id, file, layer_origin[id])
+        elseif origin[id] and layer == "manual" then
+            note("manual %s '%s' in %s overrides %s", what, id, file, origin[id])
+        end
+        layer_origin[id] = file
+        L.merged[id] = value
+        origin[id] = file
+    end
+    return L
+end
+
+-- Mode "categories": every fragment is an object holding some of `spec.categories`, dotted paths
+-- of objects keyed by id ("block_sounds", "entity_sounds.entities"); each category is merged per id
+-- like an "object" merge (a duplicate id inside a layer fails, the manual layer wins per id). Any
+-- other key of a fragment fails: it would be dropped (e.g. entity_sounds.defaults stays vanilla's).
+local function merge_categories(spec, gen, manual, pats)
+    local cats, prefixes = {}, {}
+    for _, c in ipairs(spec.categories or {}) do
+        local parts = {}
+        for p in c:gmatch("[^%.]+") do table.insert(parts, p) end
+        table.insert(cats, {name = c, parts = parts})
+        for i = 1, #parts - 1 do prefixes[table.concat(parts, ".", 1, i)] = true end
+    end
+    local layers = {} -- category -> id_layers
+    for _, c in ipairs(cats) do layers[c.name] = id_layers(c.name .. " id") end
+    each_fragment(gen, manual, pats, function (file, layer)
+        local function walk(node, prefix)
+            for k, v in json_pairs(node) do
+                local p = prefix and (prefix .. "." .. k) or k
+                if layers[p] then
+                    if type(v) ~= "table" or (is_array(v) and #v > 0) then
+                        fail("%s: '%s' must be an object of ids", file, p)
+                    else
+                        for id, def in json_pairs(v) do
+                            if type(def) ~= "table" or (is_array(def) and #def > 0) then
+                                fail("%s: %s '%s' must be an object", file, p, id)
+                            end
+                            layers[p].put(id, def, file, layer)
+                        end
+                    end
+                elseif prefixes[p] and type(v) == "table" and not is_array(v) then
+                    walk(v, p)
+                else
+                    fail("%s: '%s' is not one of the categories merged into %s (%s)", file, p, spec.out, table.concat(spec.categories, ", "))
+                end
+            end
+        end
+        local doc = load_json(file)
+        if doc ~= nil then
+            if type(doc) ~= "table" or is_array(doc) then
+                fail("fragment %s must be a JSON object", file)
+            else
+                walk(doc, nil)
+            end
+        end
+    end)
+    local data = {}
+    for _, c in ipairs(cats) do
+        local ids = layers[c.name].merged
+        if not table.empty(ids) then
+            local node = data
+            for i = 1, #c.parts - 1 do
+                node[c.parts[i]] = node[c.parts[i]] or {}
+                node = node[c.parts[i]]
+            end
+            node[c.parts[#c.parts]] = ids
+        end
+    end
+    if table.empty(data) then return {} end
+    return {[spec.out] = {json = data}}
+end
+
 -- Merges the fragments matching `glob` (relative to the root) from both layers.
 -- Returns {outpath -> data} (the "{locale}" of lang merges expanded).
 local function merge_fragments(spec, gen, manual, cfg)
     local pats = compile_glob(spec.glob)
+    if spec.mode == "categories" then return merge_categories(spec, gen, manual, pats) end
     local out = {}
     if spec.mode == "lang" then
         local by_locale = {}
-        for _, layer in ipairs({{gen, "gen"}, {manual, "manual"}}) do
-            local files, lname = layer[1], layer[2]
-            local keys = {}
-            local relpaths = table.keys(files)
-            table.sort(relpaths)
-            for _, r in ipairs(relpaths) do
-                if glob_match(pats, r) then
-                    local localedir = r:match("([^/]+)/[^/]+%.lang$")
-                    local locale = localedir and locale_of(localedir, cfg)
-                    if not locale then
-                        note("dropped %s (not one of the 29 Bedrock locales)", files[r].file)
-                    else
-                        by_locale[locale] = by_locale[locale] or {lines = {}, order = {}}
-                        local L = by_locale[locale]
-                        keys[locale] = keys[locale] or {}
-                        for line in io.lines(files[r].file) do
-                            line = line:gsub("\r$", ""):gsub("^\239\187\191", "")
-                            local key = line:match("^([^#=][^=]*)=")
-                            if key then
-                                if keys[locale][key] then
-                                    fail("duplicate texts key '%s' in %s (already in %s)", key, files[r].file, keys[locale][key])
-                                end
-                                keys[locale][key] = files[r].file
-                                if L.lines[key] == nil then table.insert(L.order, key) end
-                                L.lines[key] = line -- the manual layer comes second and wins
-                            end
-                        end
+        local keys, current = {}, nil -- locale -> {key -> file} of the current layer
+        each_fragment(gen, manual, pats, function (file, layer, r)
+            if layer ~= current then current, keys = layer, {} end
+            local localedir = r:match("([^/]+)/[^/]+%.lang$")
+            local locale = localedir and locale_of(localedir, cfg)
+            if not locale then
+                note("dropped %s (not one of the 29 Bedrock locales)", file)
+                return
+            end
+            by_locale[locale] = by_locale[locale] or {lines = {}, order = {}}
+            local L = by_locale[locale]
+            keys[locale] = keys[locale] or {}
+            for line in io.lines(file) do
+                line = line:gsub("\r$", ""):gsub("^\239\187\191", "")
+                local key = line:match("^([^#=][^=]*)=")
+                if key then
+                    if keys[locale][key] then
+                        fail("duplicate texts key '%s' in %s (already in %s)", key, file, keys[locale][key])
                     end
+                    keys[locale][key] = file
+                    if L.lines[key] == nil then table.insert(L.order, key) end
+                    L.lines[key] = line -- the manual layer comes second and wins
                 end
             end
-        end
+        end)
         for locale, L in pairs(by_locale) do
             local lines = {}
             for _, key in ipairs(L.order) do table.insert(lines, L.lines[key]) end
@@ -408,45 +508,23 @@ local function merge_fragments(spec, gen, manual, cfg)
         end
         return out
     end
-    local merged = {}
-    local origin = {}
+    local keys = id_layers("key")
     local acc = {}
     local any = false
-    for _, layer in ipairs({{gen, "gen"}, {manual, "manual"}}) do
-        local files, lname = layer[1], layer[2]
-        local layer_origin = {}
-        local relpaths = table.keys(files)
-        table.sort(relpaths)
-        for _, r in ipairs(relpaths) do
-            if glob_match(pats, r) then
-                local doc = load_json(files[r].file)
-                if doc ~= nil then
-                    any = true
-                    if spec.mode == "union" then
-                        union_into(acc, doc, files[r].file)
-                    else
-                        if type(doc) ~= "table" or is_array(doc) then
-                            fail("fragment %s must be a JSON object", files[r].file)
-                        else
-                            for k, v in json_pairs(doc) do
-                                if layer_origin[k] then
-                                    fail("duplicate key '%s' in %s (already defined in %s)", k, files[r].file, layer_origin[k])
-                                end
-                                layer_origin[k] = files[r].file
-                                if origin[k] and lname == "manual" then
-                                    note("manual key '%s' in %s overrides %s", k, files[r].file, origin[k])
-                                end
-                                merged[k] = v
-                                origin[k] = files[r].file
-                            end
-                        end
-                    end
-                end
-            end
+    each_fragment(gen, manual, pats, function (file, layer)
+        local doc = load_json(file)
+        if doc == nil then return end
+        any = true
+        if spec.mode == "union" then
+            union_into(acc, doc, file)
+        elseif type(doc) ~= "table" or is_array(doc) then
+            fail("fragment %s must be a JSON object", file)
+        else
+            for k, v in json_pairs(doc) do keys.put(k, v, file, layer) end
         end
-    end
+    end)
     if not any then return out end
-    local data = spec.mode == "union" and union_result(acc) or merged
+    local data = spec.mode == "union" and union_result(acc) or keys.merged
     if table.empty(data) then return out end
     out[spec.out] = {json = data}
     return out
@@ -589,8 +667,25 @@ local REF_KEY_KINDS = {
     damage_type = {"damage_type"},
     recipe = {"recipe"}, recipes = {"recipe"},
 }
--- Keys that define an id instead of referring to one.
-local DEFINING_KEYS = {identifier = true}
+-- Keys that define an id instead of referring to one: a BP identifier, and the Bedrock item tags an
+-- item declares (the item component minecraft:tags {"tags": [...]}; known_ids adds them to the item
+-- tags, so a unit may give an item a Bedrock-only tag and name it in a BP recipe).
+local DEFINING_KEYS = {identifier = true, ["minecraft:tags"] = true}
+-- Keys whose values name a tag, with or without '#': Java ingredients and block predicates
+-- ({"tag": id}, matching_block_tag), TagKey codecs (BerryBushConfig's generates_on) and Bedrock
+-- recipe ingredients; tools/import/known-ids.json's tagValuedKeys adds to them. The registry is the
+-- key's (TAG_KEY_KINDS), the predicate type's (BLOCK_TAG_TYPES) or the file's (a recipe's tag is an
+-- item tag); otherwise a tag of any registry.
+local TAG_VALUED_KEYS = {tag = true, tags = true, generates_on = true}
+local TAG_KEY_KINDS = {generates_on = {"tag:block"}}
+-- Objects {"type" | "predicate_type": T, "tag": id} whose tag is a block tag: the block predicate
+-- matching_block_tag and the rule test tag_match.
+local BLOCK_TAG_TYPES = {["minecraft:matching_block_tag"] = true, ["minecraft:tag_match"] = true}
+-- The "tags" of a Bedrock recipe (minecraft:recipe_shaped {"tags": ["crafting_table"]}) name the
+-- crafting stations (a block's minecraft:crafting_table crafting_tags), not tags.
+local function is_bp_recipe_key(k)
+    return type(k) == "string" and k:match("^minecraft:recipe_") ~= nil
+end
 -- Loot pool entries {"type": T, "name" | "value": id}: the kind follows the entry type.
 local LOOT_ENTRY_KINDS = {
     ["minecraft:item"] = {"item"},
@@ -627,7 +722,8 @@ local function data_registry(r)
     for p in rest:gmatch("[^/]+") do table.insert(parts, p) end
     local depth = 1
     if parts[1] == "tags" then
-        depth = parts[2] == "worldgen" and 3 or 2
+        -- two-segment tag registries: tags/worldgen/<registry>/, tags/twilight/<registry>/
+        depth = (parts[2] == "worldgen" or parts[2] == "twilight") and 3 or 2
     elseif parts[1] == "worldgen" or parts[1] == "twilight" or parts[1] == "data_maps" then
         depth = 2
     end
@@ -642,11 +738,53 @@ local function registry_kind(registry)
     return (registry:gsub("^worldgen/", ""))
 end
 
+-- The kind of a reviewed entry as known_ids keeps it: a tag ('#' reference or kind "tag:<registry>")
+-- becomes "tag:<tag registry>" (biome -> tag:worldgen/biome), any other kind stays.
+local function reviewed_kind(ref, kind)
+    local reg = kind:match("^tag:(.+)$")
+    if not reg and ref:sub(1, 1) == "#" then reg = kind end
+    if reg then return "tag:" .. (TAG_REGISTRY[reg] or reg) end
+    return kind
+end
+
+-- The reviewed references of tools/import/known-ids.json (F1, cfg.checks.knownIds): {ids = {ref ->
+-- kind}, dangling = {ref -> {kind, reason}}, tagKeys = {key -> true}}, kinds by reviewed_kind. "ids"
+-- are ids TF registers in code (codec types, texture locations, template pools), known by their kind;
+-- "tfDangling" are references dangling in TF itself, kept verbatim for parity: a warning, never an error.
+local function load_reviewed(projectdir, cfg)
+    local reviewed = {ids = {}, dangling = {}, tagKeys = {}}
+    local rel_file = cfg.checks.knownIds
+    local file = rel_file and path.join(projectdir, rel_file)
+    if not file or not os.isfile(file) then return reviewed end
+    local doc = load_json(file)
+    if type(doc) ~= "table" then return reviewed end
+    for ref, e in json_pairs(doc.ids or {}) do
+        if type(e) ~= "table" or type(e.kind) ~= "string" then fail("%s: ids.%s has no kind", rel_file, ref)
+        else reviewed.ids[ref] = reviewed_kind(ref, e.kind) end
+    end
+    for ref, e in json_pairs(doc.tfDangling or {}) do
+        if type(e) ~= "table" or type(e.kind) ~= "string" then fail("%s: tfDangling.%s has no kind", rel_file, ref)
+        else reviewed.dangling[ref] = {kind = reviewed_kind(ref, e.kind), reason = type(e.reason) == "string" and e.reason or ""} end
+    end
+    for key, _ in json_pairs(doc.tagValuedKeys or {}) do reviewed.tagKeys[key] = true end
+    return reviewed
+end
+
 -- Every "twilightforest:..." string value in BP / data JSON must name something that exists, of the
--- kind its key implies: `"block": "twilightforest:naga"` fails when naga is only an entity.
-local function check_dangling(jsonfiles, known, cfg, datadir)
+-- kind its key implies: `"block": "twilightforest:naga"` fails when naga is only an entity. The value
+-- of a tag-valued key names a tag ('#' or not) of the registry its context gives (a recipe's "tag" is
+-- an item tag, generates_on a block tag). A reference listed as tfDangling (dangling in TF itself) of
+-- the same kind is a warning.
+local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
     local nss = cfg.checks.danglingNamespaces or {}
     local count = 0
+    local tagkeys = {}
+    for k, _ in pairs(TAG_VALUED_KEYS) do tagkeys[k] = true end
+    for k, _ in pairs(reviewed.tagKeys) do tagkeys[k] = true end
+    -- the tag registry a kind names as a tag ("tag:item" and "item" -> "item"), nil when unknown
+    local function tag_registry(k)
+        return k:match("^tag:") and k:sub(5) or TAG_REGISTRY[k]
+    end
     local function exists(id, istag, kinds)
         if not kinds then
             return (istag and known.tag or known["*"])[id] ~= nil
@@ -654,7 +792,7 @@ local function check_dangling(jsonfiles, known, cfg, datadir)
         for _, k in ipairs(kinds) do
             local set
             if istag then
-                local reg = k:match("^tag:") and k:sub(5) or TAG_REGISTRY[k]
+                local reg = tag_registry(k)
                 set = reg and known["tag:" .. reg] or known.tag
             else
                 set = known[k]
@@ -665,34 +803,75 @@ local function check_dangling(jsonfiles, known, cfg, datadir)
     end
     local function kinds_text(kinds, istag)
         if not kinds then return istag and "tag" or "id of any kind" end
-        return (istag and "tag of " or "") .. table.concat(kinds, " / ")
+        if not istag then return table.concat(kinds, " / ") end
+        local regs = {}
+        for _, k in ipairs(kinds) do table.insert(regs, tag_registry(k) or k) end
+        return table.concat(table.unique(regs), " / ") .. " tag"
     end
-    -- ctx: {file, values = kinds of tag "values", id = kinds of "id" keys, parent = kinds of "parent"}
-    local function visit(v, ctx, kinds)
+    -- A tfDangling entry covers a reference of its own kind only: a tag entry ("tag:<registry>")
+    -- a tag reference, an id entry an id reference of one of the kinds the key allows.
+    local function dangling_entry(v, id, hash, istag, kinds)
+        local d = reviewed.dangling[v] or (istag and reviewed.dangling[hash and id or ("#" .. id)]) or nil
+        if not d then return nil end
+        local dtag = d.kind:match("^tag:(.+)$")
+        if (dtag ~= nil) ~= (istag == true) then return nil end
+        if not kinds then return d end
+        for _, k in ipairs(kinds) do
+            if (istag and (tag_registry(k) == nil or tag_registry(k) == dtag)) or (not istag and k == d.kind) then return d end
+        end
+        return nil
+    end
+    -- ctx: {file, values = kinds of tag "values", id = kinds of "id" keys, parent = kinds of "parent",
+    -- tag = kinds of the "tag" keys of the file (a recipe's ingredients name item tags)};
+    -- tagref: the value of a tag-valued key (a tag even without '#'); parentkey: the key v is the value of
+    local function visit(v, ctx, kinds, tagref, parentkey)
         if type(v) == "string" then
-            local istag = v:sub(1, 1) == "#"
-            local s = istag and v:sub(2) or v
+            local hash = v:sub(1, 1) == "#"
+            -- a tag: '#', the value of a tag-valued key, or a value whose kinds are all tags
+            -- (a loot entry {"type": "minecraft:tag", "name": id})
+            local alltags = kinds ~= nil and #kinds > 0
+            for _, k in ipairs(kinds or {}) do
+                if not k:match("^tag:") then alltags = false end
+            end
+            local istag = hash or tagref == true or alltags
+            local s = hash and v:sub(2) or v
             for _, ns in ipairs(nss) do
                 local id = s:match("^(" .. ns .. ":[a-z0-9_/%.%-]+)$")
                 if id then
                     count = count + 1
                     if not exists(id, istag, kinds) then
-                        fail("dangling reference '%s' (not a known %s) in %s", v, kinds_text(kinds, istag), ctx.file)
+                        local d = dangling_entry(v, id, hash, istag, kinds)
+                        if d then
+                            warn("dangling reference '%s' (%s) in %s: dangling in TF itself, kept for parity (tools/import/known-ids.json tfDangling): %s",
+                                v, d.kind, ctx.file, d.reason)
+                        else
+                            fail("dangling reference '%s' (not a known %s) in %s", v, kinds_text(kinds, istag), ctx.file)
+                        end
                     end
                 end
             end
         elseif type(v) == "table" then
             local entry = type(v.type) == "string" and LOOT_ENTRY_KINDS[v.type] or nil
+            local blocktag = (type(v.type) == "string" and BLOCK_TAG_TYPES[v.type])
+                or (type(v.predicate_type) == "string" and BLOCK_TAG_TYPES[v.predicate_type])
             for k, x in json_pairs(v) do
                 if type(k) == "number" then
-                    visit(x, ctx, kinds) -- list elements keep the list's kinds
-                elseif not DEFINING_KEYS[k] then
+                    visit(x, ctx, kinds, tagref, parentkey) -- list elements keep the list's kinds
+                elseif DEFINING_KEYS[k] then
+                    -- defines ids (see known_ids)
+                elseif tagkeys[k] then
+                    if not (k == "tags" and is_bp_recipe_key(parentkey)) then
+                        local sub = TAG_KEY_KINDS[k]
+                        if k == "tag" then sub = blocktag and {"tag:block"} or ctx.tag end
+                        visit(x, ctx, sub, true, k)
+                    end
+                else
                     local sub = REF_KEY_KINDS[k]
                     if entry and (k == "name" or k == "value") then sub = entry
                     elseif k == "values" and ctx.values then sub = ctx.values
                     elseif k == "id" and (ctx.id or kinds) then sub = ctx.id or kinds -- {"id": ...} of a typed list
                     elseif k == "parent" and ctx.parent then sub = ctx.parent end
-                    visit(x, ctx, sub)
+                    visit(x, ctx, sub, false, k)
                 end
             end
         end
@@ -707,10 +886,15 @@ local function check_dangling(jsonfiles, known, cfg, datadir)
                 local tagreg = registry:match("^tags/(.+)$")
                 -- values of a tag registry without a kind here are checked against every kind
                 if tagreg and REGISTRY_KIND[tagreg] then ctx.values = {REGISTRY_KIND[tagreg]} end
-                if registry == "recipe" then ctx.id = {"item"} end
+                if registry == "recipe" then ctx.id, ctx.tag = {"item"}, {"tag:item"} end
                 if registry == "advancement" then ctx.parent = {"advancement"} end
+            elseif type(doc) == "table" and not is_array(doc) and norm(file):find("/recipes/", 1, true) then
+                -- a Bedrock recipe (a BP's recipes/): its ingredients' tags are item tags
+                for k, _ in json_pairs(doc) do
+                    if is_bp_recipe_key(k) then ctx.tag = {"tag:item"} end
+                end
             end
-            visit(doc, ctx, nil)
+            visit(doc, ctx, nil, false, nil)
         end
     end
     return count
@@ -827,6 +1011,11 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
         if spec.root == pack.root then
             for outrel, data in pairs(merge_fragments(spec, gen, manual, cfg)) do
                 local target = path.join(dst, outrel)
+                -- the merge writes the whole file: a plain file of the same path would be lost
+                if files[outrel] then
+                    fail("%s is the merge output of %s fragments: move its content into a fragment (it would be overwritten)",
+                        rel(files[outrel], projectdir), spec.glob)
+                end
                 if data.lang then
                     os.mkdir(path.directory(target))
                     io.writefile(target, table.concat(data.lang, "\n") .. "\n")
@@ -944,9 +1133,10 @@ local function copy_data(projectdir, cfg, outdir, with_tests)
             end
         end
         for key, files in pairs(groups) do
-            -- registry may contain a slash (worldgen/biome): the namespace is the first segment
-            -- that the imported data tree has as data/<ns>/tags/<registry>
+            -- the two-segment registries (worldgen/biome, twilight/wood_palettes; see data_registry)
+            -- keep their slash: the namespace is the segment after the registry
             local registry, ns, tagpath = key:match("^(worldgen/[^/]+)/([^/]+)/(.+)$")
+            if not registry then registry, ns, tagpath = key:match("^(twilight/[^/]+)/([^/]+)/(.+)$") end
             if not registry then registry, ns, tagpath = key:match("^([^/]+)/([^/]+)/(.+)$") end
             if not registry then
                 fail("bad tag fragment path %s", key)
@@ -973,9 +1163,9 @@ local function copy_data(projectdir, cfg, outdir, with_tests)
 end
 
 -- Ids that exist, per kind (see check_dangling): BP identifiers, data files by registry, tags,
--- owners.tsv ids.
+-- owners.tsv ids, the reviewed ids of tools/import/known-ids.json by their kind.
 local BP_KINDS = {["minecraft:block"] = {"block", "item"}, ["minecraft:item"] = {"item"}, ["minecraft:entity"] = {"entity"}}
-local function known_ids(bpdirs, outdir, owners)
+local function known_ids(bpdirs, outdir, owners, reviewed)
     local known = {["*"] = {}, tag = {}}
     for _, bpdir in ipairs(bpdirs) do
         for _, file in ipairs(os.files(path.join(bpdir, "**.json"))) do
@@ -988,6 +1178,14 @@ local function known_ids(bpdirs, outdir, owners)
                         and def.description.identifier or nil
                     if type(id) == "string" then
                         for _, kind in ipairs(BP_KINDS[key] or {"bp:" .. key:sub(11)}) do add_known(known, kind, id) end
+                        -- the Bedrock item tags an item declares (minecraft:tags) are item tags
+                        local comps = key == "minecraft:item" and type(def.components) == "table" and def.components or nil
+                        local tags = comps and type(comps["minecraft:tags"]) == "table" and comps["minecraft:tags"].tags or nil
+                        if type(tags) == "table" then
+                            for _, t in ipairs(tags) do
+                                if type(t) == "string" then add_known(known, "tag:item", (t:gsub("^#", ""))) end
+                            end
+                        end
                     end
                 end
             end
@@ -1021,6 +1219,7 @@ local function known_ids(bpdirs, outdir, owners)
             end
         end
     end
+    for ref, kind in pairs(reviewed.ids) do add_known(known, kind, (ref:gsub("^#", ""))) end
     return known
 end
 
@@ -1028,6 +1227,7 @@ local function report(label)
     for _, n in ipairs(notes) do
         if os.getenv("GF_ASSEMBLE_VERBOSE") then cprint("${dim}[assemble] %s", n) end
     end
+    for _, w in ipairs(warnings) do cprint("${yellow}[assemble] warning: %s", w) end
     if #errors > 0 then
         for _, e in ipairs(errors) do cprint("${bright red}[assemble] %s", e) end
         raise("assemble failed with %d error(s) (%s)", #errors, label)
@@ -1037,7 +1237,7 @@ end
 -- Packs, lang, data and checks into `outdir` (no binaries).
 local function assemble_content(projectdir, outdir, version)
     local cfg = load_config(projectdir)
-    errors, notes = {}, {}
+    errors, warnings, notes = {}, {}, {}
     local with_tests = os.getenv("GF_NO_TEST_PACKS") ~= "1"
     local families_dir = path.join(projectdir, "tools", "families")
     if version == nil then
@@ -1127,11 +1327,12 @@ local function assemble_content(projectdir, outdir, version)
     local permutations = check_blocks(bpdirs, cfg)
     local owners = load_owners(projectdir, cfg)
     local owned = check_owners(projectdir, cfg, owners)
-    local refs = check_dangling(alljsons, known_ids(bpdirs, outdir, owners), cfg, path.join(outdir, "data"))
+    local reviewed = load_reviewed(projectdir, cfg)
+    local refs = check_dangling(alljsons, known_ids(bpdirs, outdir, owners, reviewed), cfg, path.join(outdir, "data"), reviewed)
     local scanned = check_arr(projectdir, cfg)
     report(outdir)
-    return string.format("%d block permutations, %s, %d owned files, %d references, %d files hash-checked",
-        permutations, families_summary, owned, refs, scanned)
+    return string.format("%d block permutations, %s, %d owned files, %d references (%d warning(s)), %d files hash-checked",
+        permutations, families_summary, owned, refs, #warnings, scanned)
 end
 
 function main(target, target_type)

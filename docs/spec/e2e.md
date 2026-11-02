@@ -19,9 +19,13 @@ pwsh -NoProfile -File tools/e2e/server/run.ps1 -Scenario <unit>                #
 pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario <unit> -Mode local    # client slot + game lock
 pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario <unit> -Mode remote-vanilla   # when the unit has a vanilla fallback
 
-pwsh tools/ci/ownership.ps1 -Unit <unit>                                       # the diff touches only owned paths
+git fetch origin
+pwsh tools/ci/ownership.ps1 -Unit <unit>                                       # the diff touches only owned paths (vs origin/main)
 pwsh tools/ci/arr-guard.ps1 -Range origin/main                                 # no All Rights Reserved TF file, in any commit
 ```
+
+`tools/ci/ownership.ps1` compares with `origin/main` by default (`main` only when there is no remote): the local
+`main` of a worktree is usually behind, and a stale base lists other units' merged changes as violations.
 
 A run passes when it exits 0: the scenario finished, every `Invoke-SelfTest` printed
 `SELFTEST DONE pass=<N> fail=0` with at least one test, and no `ERR` / `FTL` line from GloamingForest,
@@ -43,8 +47,14 @@ Exceptions:
 ## Scenarios
 
 - Names follow rule R3: `tools/e2e/server/scenarios/<unit>.ps1`, `tools/e2e/client/scenarios/<unit>.ps1`, with
-  optional `<unit>.prelaunch.ps1` (before the server boots) and `<unit>.restore.ps1`. Extra scenarios are
-  `<unit>.<topic>.ps1`.
+  optional `<unit>.prelaunch.ps1` (before the server boots, or before the game starts) and `<unit>.restore.ps1`.
+  Extra scenarios are `<unit>.<topic>.ps1`.
+- Remote client modes (`remote-mod`, `remote-vanilla`): the BDS the client joins is the server harness's scenario
+  `client-host`. Before it boots it runs the optional `tools/e2e/client/scenarios/<unit>.host-prelaunch.ps1`,
+  dot-sourced in the server harness (after the slot reset, the mod deployment and `server.properties`), so a unit can
+  install a probe pack on the host: `Join-Path $script:SlotDir "$(Get-ModsDirName $script:SlotDir)\$script:ModName"`
+  is the host's mod folder, `$HostMode` the client mode. The client's own `<unit>.prelaunch.ps1` does not reach the
+  host.
 - Put the logic in selftests inside the mod (`GF_REGISTER_SELFTEST("<unit>.<case>", ...)`, dx range of the unit,
   rule R12) and start them from the scenario with `Invoke-SelfTest '<unit>.*'`. The scenario adds what only the
   harness can do: restarts (`Restart-Server`), chat commands, keys and clicks, screenshots.
