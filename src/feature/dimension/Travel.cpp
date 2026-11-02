@@ -1089,6 +1089,7 @@ public:
             portalIndex().clear();
             gTick = 0;
             resetNotified();
+            refreshPortalTypes();
             portalWaterClear();
             loadBanished();
             tp::cacheLoad();

@@ -14,8 +14,8 @@
 // survive in any light, and sugar cane takes a portal next to its soil for its water
 // (TFPortalBlock#getFluidState; the rest of what the portal's water does is in PortalFluid.cpp).
 // Explosions: ExplosionDamageCalculator#getBlockExplosionResistance takes the larger of the block's
-// resistance (strength(-1.0F): 0) and its fluid's (water: 100) wherever Java reads it, so the block
-// JSON gives the portal the water's resistance (JSON 500 = 100 in game, the import's x5 rule).
+// resistance (strength(-1.0F): 0) and its fluid's (water: 100): during an explosion the portal holds
+// the water's resistance, the block keeps TF's 0 otherwise.
 
 #include <algorithm>
 #include <atomic>
@@ -42,6 +42,7 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/Explosion.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/Tick.h"
@@ -239,13 +240,61 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(region, pos) || portalWatersSugarCane(region, pos);
 }
 
+namespace {
+/// The portal's two states and the water's explosion resistance (looked up each world).
+std::atomic<Block const*> gPortalOpen{nullptr};
+std::atomic<Block const*> gPortalOneWay{nullptr};
+std::atomic<float>        gWaterResistance{0.0f};
+thread_local int          gExplosionDepth = 0;
+} // namespace
+
+void refreshPortalTypes() {
+    auto const* water = game::blockWith("minecraft:water");
+    gPortalOpen.store(portalBlock(false));
+    gPortalOneWay.store(portalBlock(true));
+    gWaterResistance.store(water ? water->mDirectData->mExplosionResistance : 0.0f);
+}
+
+/// TFPortalBlock#getFluidState for explosions. The explosion's rays read each block's resistance
+/// straight from its permutation's direct data (inline: a hook on BlockType::getExplosionResistance
+/// is not consulted, selftest round 4), so the portal's two permutations hold the water's
+/// resistance while an explosion runs on this thread and TF's 0 otherwise. The writes are atomic
+/// (std::atomic_ref); only the outermost of nested explosions writes. Explosions are computed by
+/// the server only: the client mod's own thread does not run them.
+LL_TYPE_INSTANCE_HOOK(TwilightPortalExplosionHook, ll::memory::HookPriority::Normal, Explosion, &Explosion::explode, bool, IRandom& random) {
+    Block const* states[2] = {gPortalOpen.load(), gPortalOneWay.load()};
+    float        water     = gWaterResistance.load();
+    if (gExplosionDepth > 0 || !states[0] || water <= 0.0f) {
+        ++gExplosionDepth;
+        bool r = origin(random);
+        --gExplosionDepth;
+        return r;
+    }
+    float own[2] = {0.0f, 0.0f};
+    for (int i = 0; i < 2; ++i) {
+        if (!states[i]) continue;
+        std::atomic_ref<float> resistance(const_cast<Block*>(states[i])->mDirectData->mExplosionResistance);
+        own[i] = resistance.load();
+        resistance.store(std::max(own[i], water));
+    }
+    ++gExplosionDepth;
+    bool r = origin(random);
+    --gExplosionDepth;
+    for (int i = 0; i < 2; ++i) {
+        if (states[i]) std::atomic_ref<float>(const_cast<Block*>(states[i])->mDirectData->mExplosionResistance).store(own[i]);
+    }
+    return r;
+}
+
 void installItemOwners() {
     TwilightPlayerDropHook::hook();
     TwilightItemThrowerHook::hook();
     TwilightMushroomHook::hook();
     TwilightSugarCaneHook::hook();
+    TwilightPortalExplosionHook::hook();
 }
 void uninstallItemOwners() {
+    TwilightPortalExplosionHook::unhook();
     TwilightSugarCaneHook::unhook();
     TwilightMushroomHook::unhook();
     TwilightItemThrowerHook::unhook();

@@ -178,6 +178,9 @@ void setItemOwner(ItemActor const& item, std::int64_t owner);
 /// (mushrooms, sugar cane).
 void installItemOwners();
 void uninstallItemOwners();
+/// Looks up the portal's states and the water's explosion resistance the explosion rule uses
+/// (each world).
+void refreshPortalTypes();
 /// Forgets the item owners of a closed world.
 void clearItemOwners();
 /// The item `from` was copied into another dimension as `to`: it keeps its owner.

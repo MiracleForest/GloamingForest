@@ -1155,12 +1155,9 @@ GF_REGISTER_SELFTEST("dimension.portal_block", [](Context& ctx) -> ll::coro::Cor
     ctx.check(ctx.blockAt(portalBase.offset(0, 1, 0)) == kPortalBlock, "the portal block stays where it is");
     ctx.check(ctx.blockAt(portalBase.offset(0, 2, 0)) != kPortalBlock, "and was not pushed up");
 
-    // explosions: Java takes the larger of the block's resistance (0) and its fluid's (water) for
-    // every explosion: the block carries the water's
-    auto const* waterBlock = game::blockWith("minecraft:water");
-    ctx.require(waterBlock != nullptr, "water");
-    ctx.check(portalState.mDirectData->mExplosionResistance == waterBlock->mDirectData->mExplosionResistance,
-              std::format("the portal resists explosions as water does ({} / {})", portalState.mDirectData->mExplosionResistance, waterBlock->mDirectData->mExplosionResistance));
+    // explosions: Java takes the larger of the block's resistance (TF's 0) and its fluid's (water)
+    // for every explosion: during one the portal holds the water's, the block keeps 0 otherwise
+    ctx.check(portalState.mDirectData->mExplosionResistance == 0.0f, "the block keeps TF's explosion resistance 0 (strength(-1.0F))");
     auto glass = pool.offset(0, 1, 0);
     ctx.setBlock(glass, "minecraft:glass");
     auto level = ll::service::getLevel();
@@ -1175,6 +1172,7 @@ GF_REGISTER_SELFTEST("dimension.portal_block", [](Context& ctx) -> ll::coro::Cor
             if (id == kPortalBlock || id == "minecraft:water") ++kept;
         }
     ctx.check(kept == 4, "the portal blocks are still there (" + std::to_string(kept) + " of 4)");
+    ctx.check(region->getBlock(game::blockPos(pool)).mDirectData->mExplosionResistance == 0.0f, "and hold TF's 0 again after the explosion");
 });
 
 // ---- Player#drop: only throws name a thrower ---------------------------------------------------------------------------
