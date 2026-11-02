@@ -492,20 +492,49 @@ ll::coro::CoroTask<bool> moveTraveller(tp::Traveller& t, int dest, Vec3 at) {
         co_return false;
     }
     if (t.isPlayer) sendRiders();
-    // the riders get on again once they are there too
-    for (auto r : arrivedRiders) {
-        for (int i = 0; i < 200; ++i) {
-            auto* rider   = actorById(r);
-            auto* vehicle = actorById(t.id);
-            if (!rider || !vehicle) break;
-            if (rider->getDimensionId() == vehicle->getDimensionId()) {
-                rider->startRiding(*vehicle, true);
-                break;
+    // the riders get on again once the traveller is placed (finishTrip: keepRidersOn)
+    t.passengers = arrivedRiders;
+    if (!riders.empty() && arrivedRiders.size() < riders.size())
+        log().warn("dimension: {} took only {} of its {} riders along to {}", t.name, arrivedRiders.size(), riders.size(), dimensionName(dest));
+    co_return true;
+}
+
+/// The riders that came along get on their vehicle again. The engine finishes a player's
+/// dimension change over the next ticks and may drop its passengers meanwhile: they are put back
+/// on until they have stayed on for 10 ticks (for at most 3 s).
+void keepRidersOn(std::int64_t vehicleId, std::vector<std::int64_t> riders, std::string name, int dest) {
+    if (riders.empty()) return;
+    ll::coro::keepThis([vehicleId, riders = std::move(riders), name = std::move(name), dest]() -> ll::coro::CoroTask<> {
+        int on = 0, steady = 0;
+        for (int i = 0; i < 60 && steady < 10; ++i) {
+            auto* vehicle = actorById(vehicleId);
+            if (!vehicle) break;
+            on       = 0;
+            bool all = true;
+            for (auto r : riders) {
+                auto* rider = actorById(r);
+                if (!rider || rider->getDimensionId() != vehicle->getDimensionId()) {
+                    all = false;
+                    continue;
+                }
+                if (rider->getVehicle() != vehicle) {
+                    all = false;
+                    rider->startRiding(*vehicle, true);
+                }
+                if (rider->getVehicle() == vehicle) ++on;
             }
+            steady = all ? steady + 1 : 0;
             co_await ll::chrono::ticks(1);
         }
-    }
-    co_return true;
+        log().info(
+            "dimension: {} took {} riders along to {}, {} back on{}",
+            name,
+            riders.size(),
+            dimensionName(dest),
+            on,
+            steady >= 10 ? "" : " (they did not stay on: the engine has not finished the dimension change)"
+        );
+    }).launch(ll::thread::ServerThreadExecutor::getDefault());
 }
 
 /// Moves a player within its dimension with its riders (a teleport drops them: they are taken
@@ -530,6 +559,7 @@ void finishTrip(tp::Traveller const& t, int to, Vec3 const& at, char const* verb
         teleportWithRiders(p, to, at, Vec2{t.pitch, t.yaw});
         p.setFallDistance(0.0f);
     }
+    keepRidersOn(t.id, t.passengers, t.name, to);
     auto& st      = states()[t.id];
     st.travelling = false;
     st.fading     = false; // the fade runs out by itself after the trip, as TF's overlay does
