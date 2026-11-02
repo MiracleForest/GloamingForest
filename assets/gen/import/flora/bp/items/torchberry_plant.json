@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:torchberry_plant",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_torchberry_plant"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:torchberry_plant.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:torchberry_plant",
+        "replace_block_item": true
+      }
+    }
+  }
+}

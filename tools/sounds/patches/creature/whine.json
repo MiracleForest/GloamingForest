@@ -1,0 +1,52 @@
+{
+  "about": "Mosquito-like whine: thin sawtooth with vibrato and a passing pitch drift.",
+  "params": {
+    "pitch": 620,
+    "len": 1.2
+  },
+  "length": "$len",
+  "tail": 0.1,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "saw",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch*0.95"
+          ],
+          [
+            "$len*0.5",
+            "$pitch*1.08"
+          ],
+          [
+            "$len",
+            "$pitch*0.9"
+          ]
+        ],
+        "curve": "smooth"
+      },
+      "vibrato": {
+        "rate": 11,
+        "depth": 0.25
+      },
+      "env": {
+        "a": "$len*0.3",
+        "d": "$len*0.3",
+        "s": 0.8,
+        "r": "$len*0.3"
+      },
+      "filter": [
+        {
+          "type": "hp",
+          "freq": 500
+        },
+        {
+          "type": "lp",
+          "freq": 5000
+        }
+      ]
+    }
+  ]
+}

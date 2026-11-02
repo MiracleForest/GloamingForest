@@ -1,0 +1,57 @@
+{
+  "about": "Whoosh: noise through a sweeping band-pass.",
+  "params": {
+    "len": 0.35,
+    "f0": 400,
+    "f1": 3000,
+    "q": 1.4
+  },
+  "length": "$len",
+  "tail": 0.1,
+  "layers": [
+    {
+      "type": "noise",
+      "color": "pink",
+      "env": {
+        "env": [
+          [
+            0,
+            0
+          ],
+          [
+            "$len*0.4",
+            1
+          ],
+          [
+            "$len",
+            0
+          ]
+        ],
+        "curve": "smooth"
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": {
+            "env": [
+              [
+                0,
+                "$f0"
+              ],
+              [
+                "$len*0.5",
+                "$f1"
+              ],
+              [
+                "$len",
+                "$f0*1.5"
+              ]
+            ],
+            "curve": "exp"
+          },
+          "q": "$q"
+        }
+      ]
+    }
+  ]
+}

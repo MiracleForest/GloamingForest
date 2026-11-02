@@ -1,0 +1,11 @@
+{
+  "twilightforest:environment.twilightforest.acid_rain": {
+    "category": "ambient",
+    "subtitle": "subtitles.twilightforest.environment.acid_rain",
+    "sounds": [
+      {
+        "event": "block.fire.extinguish"
+      }
+    ]
+  }
+}

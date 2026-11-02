@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:encased_smoker"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#A#", "A^A", "#A#"],
+    "key": {
+      "#": {
+        "item": "twilightforest:encased_towerwood"
+      },
+      "^": {
+        "item": "twilightforest:smoker"
+      },
+      "A": {
+        "item": "minecraft:redstone"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:smoker"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:encased_smoker"
+    }
+  }
+}

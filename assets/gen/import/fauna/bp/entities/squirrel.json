@@ -1,0 +1,29 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:squirrel",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": ["twilightforest", "squirrel", "creature", "mob"]
+      },
+      "minecraft:collision_box": {
+        "width": 0.3,
+        "height": 0.5
+      },
+      "minecraft:health": {
+        "value": 6,
+        "max": 6
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      }
+    }
+  }
+}

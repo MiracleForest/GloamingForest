@@ -1,0 +1,454 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:hollow_time_log_climbable",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:variant": ["vine", "ladder", "ladder_waterlogged"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 10
+      },
+      "tag:minecraft:is_axe_item_destructible": {},
+      "minecraft:map_color": "#976d4d",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 5
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_vine",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_time_log",
+          "render_method": "alpha_test"
+        },
+        "climbable": {
+          "texture": "tf_vanilla_block_vine",
+          "render_method": "alpha_test"
+        },
+        "inner": {
+          "texture": "tf_block_stripped_time_log",
+          "render_method": "alpha_test"
+        },
+        "side": {
+          "texture": "tf_block_time_log",
+          "render_method": "alpha_test"
+        },
+        "top": {
+          "texture": "tf_block_time_log_top",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 180, 0]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:variant') == 'ladder'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:variant') == 'ladder_waterlogged'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:variant') == 'vine'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_vine",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_vine",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:variant') == 'ladder'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:variant') == 'ladder_waterlogged'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:variant') == 'vine'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_vine",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_vine",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:variant') == 'ladder'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:variant') == 'ladder_waterlogged'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:variant') == 'vine'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_vine",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_vine",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:variant') == 'ladder'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:variant') == 'ladder_waterlogged'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_ladder",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_ladder",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:variant') == 'vine'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log_vine",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "climbable": {
+              "texture": "tf_vanilla_block_vine",
+              "render_method": "alpha_test"
+            },
+            "inner": {
+              "texture": "tf_block_stripped_time_log",
+              "render_method": "alpha_test"
+            },
+            "side": {
+              "texture": "tf_block_time_log",
+              "render_method": "alpha_test"
+            },
+            "top": {
+              "texture": "tf_block_time_log_top",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

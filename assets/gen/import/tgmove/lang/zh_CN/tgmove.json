@@ -1,0 +1,4 @@
+{
+  "config.twilightforest.manual_travellers_wings_gradual_glide": "手动渐进滑翔",
+  "config.twilightforest.manual_travellers_wings_gradual_glide.tooltip": "关闭时：默认缓降，潜行加速下落；开启时：默认自由落体，潜行触发缓降"
+}

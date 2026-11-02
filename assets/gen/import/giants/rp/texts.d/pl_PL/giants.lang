@@ -1,0 +1,12 @@
+block.twilightforest.fluffy_cloud=Puszysta Chmura
+block.twilightforest.giant_cobblestone=Ogromny Bruk
+block.twilightforest.giant_leaves=Ogromne Liście
+block.twilightforest.giant_log=Ogromna Kłoda
+block.twilightforest.giant_obsidian=Ogromny Obsydian
+block.twilightforest.rainy_cloud=Deszczowa Chmura
+tile.twilightforest:fluffy_cloud.name=Puszysta Chmura
+tile.twilightforest:giant_cobblestone.name=Ogromny Bruk
+tile.twilightforest:giant_leaves.name=Ogromne Liście
+tile.twilightforest:giant_log.name=Ogromna Kłoda
+tile.twilightforest:giant_obsidian.name=Ogromny Obsydian
+tile.twilightforest:rainy_cloud.name=Deszczowa Chmura

@@ -1,0 +1,21 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:four_leaf_clover",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_four_leaf_clover"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:four_leaf_clover.name"
+      }
+    }
+  }
+}

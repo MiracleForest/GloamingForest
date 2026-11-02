@@ -1,0 +1,703 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:spruce_banister",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:extended": [false, true],
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:shape": ["tall", "short", "connected"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 15
+      },
+      "tag:minecraft:is_axe_item_destructible": {},
+      "minecraft:map_color": "#815631",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.banister_tall",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_spruce_planks",
+          "render_method": "opaque"
+        },
+        "texture": {
+          "texture": "tf_vanilla_block_spruce_planks",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 180, 0]
+      },
+      "minecraft:collision_box": {
+        "origin": [-8, 0, -8],
+        "size": [16, 16, 4]
+      },
+      "minecraft:selection_box": {
+        "origin": [-8, 0, -8],
+        "size": [16, 16, 4]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_connected",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [4.992, 0, -5.5],
+            "size": [3, 16, 11]
+          },
+          "minecraft:selection_box": {
+            "origin": [4.992, 0, -5.5],
+            "size": [3, 16, 11]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_short",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [4, 0, -8],
+            "size": [4, 8, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [4, 0, -8],
+            "size": [4, 8, 16]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_tall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [4, 0, -8],
+            "size": [4, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [4, 0, -8],
+            "size": [4, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_connected",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-5.5, 0, -7.992],
+            "size": [11, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, -7.992],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_short",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 8, 4]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_tall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 4]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_connected",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-5.5, 0, 4.992],
+            "size": [11, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, 4.992],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_short",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_tall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_connected",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-7.992, 0, -5.5],
+            "size": [3, 16, 11]
+          },
+          "minecraft:selection_box": {
+            "origin": [-7.992, 0, -5.5],
+            "size": [3, 16, 11]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_short",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [4, 8, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [4, 8, 16]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_tall",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [4, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [4, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_connected_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [4.992, 0, -5.5],
+            "size": [3, 16, 11]
+          },
+          "minecraft:selection_box": {
+            "origin": [4.992, 0, -5.5],
+            "size": [3, 16, 11]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_short_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [4, 0, -8],
+            "size": [4, 8, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [4, 0, -8],
+            "size": [4, 8, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_tall_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [4, 0, -8],
+            "size": [4, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [4, 0, -8],
+            "size": [4, 16, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_connected_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-5.5, 0, -7.992],
+            "size": [11, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, -7.992],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_short_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 8, 4]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_tall_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 4]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_connected_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-5.5, 0, 4.992],
+            "size": [11, 16, 3]
+          },
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, 4.992],
+            "size": [11, 16, 3]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_short_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 8, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_tall_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, 4],
+            "size": [16, 16, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:shape') == 'connected'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_connected_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-7.992, 0, -5.5],
+            "size": [3, 16, 11]
+          },
+          "minecraft:selection_box": {
+            "origin": [-7.992, 0, -5.5],
+            "size": [3, 16, 11]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:shape') == 'short'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_short_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [4, 8, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [4, 8, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:extended') && q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:shape') == 'tall'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.banister_tall_extended",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_spruce_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [4, 16, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [4, 16, 16]
+          }
+        }
+      }
+    ]
+  }
+}

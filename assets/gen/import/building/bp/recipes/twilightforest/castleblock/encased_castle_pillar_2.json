@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:castleblock/encased_castle_pillar_2"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#H#", "#H#"],
+    "key": {
+      "#": {
+        "item": "twilightforest:castle_brick"
+      },
+      "H": {
+        "item": "twilightforest:bold_castle_brick_pillar"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:castle_brick"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:encased_castle_brick_pillar",
+      "count": 6
+    }
+  }
+}

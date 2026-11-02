@@ -1,0 +1,22 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:pocket_watch",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_pocket_watch"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:pocket_watch.name"
+      },
+      "minecraft:max_stack_size": 1
+    }
+  }
+}

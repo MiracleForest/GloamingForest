@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:kobold",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/kobold"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.kobold"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#372096",
+        "overlay_color": "#895d1b"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:compressed_blocks/knightmetal_block"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#m#", "###"],
+    "key": {
+      "#": {
+        "item": "twilightforest:knightmetal_ingot"
+      },
+      "m": {
+        "item": "twilightforest:knightmetal_ingot"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:knightmetal_ingot"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:knightmetal_block"
+    }
+  }
+}

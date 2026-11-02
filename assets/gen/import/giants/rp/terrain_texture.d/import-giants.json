@@ -1,0 +1,29 @@
+{
+  "tf_block_fluffy_cloud": {
+    "textures": "textures/twilightforest/block/fluffy_cloud"
+  },
+  "tf_block_huge_stalk": {
+    "textures": "textures/twilightforest/block/huge_stalk"
+  },
+  "tf_block_huge_stalk_top": {
+    "textures": "textures/twilightforest/block/huge_stalk_top"
+  },
+  "tf_block_rainy_cloud": {
+    "textures": "textures/twilightforest/block/rainy_cloud"
+  },
+  "tf_block_snowy_cloud": {
+    "textures": "textures/twilightforest/block/snowy_cloud"
+  },
+  "tf_block_uberous_soil": {
+    "textures": "textures/twilightforest/block/uberous_soil"
+  },
+  "tf_block_wispy_cloud": {
+    "textures": "textures/twilightforest/block/wispy_cloud"
+  },
+  "tf_vanilla_block_azalea_leaves": {
+    "textures": "textures/blocks/azalea_leaves"
+  },
+  "tf_vanilla_block_cobblestone": {
+    "textures": "textures/blocks/cobblestone"
+  }
+}

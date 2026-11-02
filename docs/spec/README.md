@@ -22,7 +22,8 @@ Ids carry their namespace (`twilightforest:naga_stone`); tags are `<registry>/#<
 `<registry>/<ns>:<path>`; `path` rows are globs (`**` any path, `*` one segment, `{a,b}` alternatives; the most
 specific match wins, an exact path beats any glob). `stub` rows are the placeholders F0 created in W0b directories.
 `tools/ci/ownership.ps1 -Unit <unit>` checks a change against the `path` rows; assemble checks that every asset file
-has an owner.
+has an owner. The generated layers `assets/gen/{import,geo,audio}/<unit>/**` (mode `gen`) belong to their unit, and
+their tool unit (F1 import, F2 geo, F3 audio) may also write them: the tools generate every unit's layer (R3).
 
 | Kind | Rows |
 |---|---|
@@ -72,7 +73,7 @@ has an owner.
 | `net` | 110 |
 | `noise_settings` | 2 |
 | `particle` | 29 |
-| `path` | 770 |
+| `path` | 825 |
 | `placed_feature` | 107 |
 | `placement_modifier` | 10 |
 | `poi` | 1 |
@@ -121,9 +122,9 @@ Implement every contract behind the W0a headers, build the asset toolchains (imp
 
 | Unit | Title | Selftest dx | Owned paths | Ids owned | Contracts |
 |---|---|---|---|---|---|
-| F1 | Import tool and content skeleton (spike S7) | 5100-5199 | `assets/gen/import/**`, `docs/spec/{blockstates,import}.md`, `docs/spikes/S7.md`, `tools/import/**` | tag 239 | import, owners, assemble |
-| F2 | Java model converter and geometry import | 5200-5299 | `assets/gen/geo/**`, `docs/spec/models.md`, `tools/models/**` | - | geo, owners |
-| F3 | Sound synthesis toolkit and baseline audio | 5300-5399 | `assets/gen/audio/**`, `src/core/synth/**`, `tests/synth/**`, `tools/sounds/**` | - | synth, owners |
+| F1 | Import tool and content skeleton (spike S7) | 5100-5199 | `assets/gen/import/**`, `docs/spec/{blockstates,import}.md`, `docs/spikes/S7.md`, `tools/e2e/*/scenarios/import{,.*}.ps1`, `tools/import/**` | tag 239 | import, owners, assemble |
+| F2 | Java model converter and geometry import | 5200-5299 | `assets/gen/geo/**`, `docs/spec/models.md`, `tools/e2e/*/scenarios/models{,.*}.ps1`, `tools/models/**` | - | geo, owners |
+| F3 | Sound synthesis toolkit and baseline audio | 5300-5399 | `assets/gen/audio/**`, `src/core/synth/**`, `tests/synth/**`, `tools/e2e/*/scenarios/synth{,.*}.ps1`, `tools/sounds/**` | - | synth, owners |
 | F4 | Dimension, time, teleport and Twilight portal (spike S1) | 5400-5499 | `**/*.d/dimension.json`, `assets/data/*/dimension.json`, `assets/lang/*/dimension.json`, `assets/pack/{bp,rp}/**/dimension/**`, `assets/pack/rp/texts.d/*/dimension.lang`, `docs/spikes/S1.md`, `src/client/dimension/**`, `src/feature/dimension/**`, `tools/e2e/*/scenarios/dimension{,.*}.ps1` | attachment 2, block 1, config_key 11, dimension 1, dimension_type 1, function 2, gamerule 2, lang 38, sound_event 1, subcommand 1, tag 5, trigger 1 | world, rules+fx, progression, mod, selftest |
 | F5 | Generator pipeline, feature interpreter, spawn engine, Java-parity core (spike S2) | 5500-5599 | `docs/spikes/S2.md`, `src/core/{jrand,noise}/**`, `src/feature/{worldgen,features,spawn}/**`, `tests/worldgen/**`, `tools/e2e/*/scenarios/worldgen{,.*}.ps1` | feature_type 1, function 2, placement_modifier 2 | worldgen, features, spawn, selftest |
 | F6 | Landmarks: grid, placement, descriptors, conquest, protection, hints | 5600-5699 | `**/*.d/landmark.json`, `assets/data/landmarks/**`, `assets/lang/*/landmark.json`, `assets/pack/{bp,rp}/**/landmark/**`, `assets/pack/rp/texts.d/*/landmark.lang`, `src/client/landmark/**`, `src/core/landmark/**`, `src/feature/landmark/**`, `tests/landmark/**`, `tools/e2e/*/scenarios/landmark{,.*}.ps1` | damage_type 1, data_component 1, entity 1, function 1, lang 75, particle 1, structure_placement_type 2, structure_type 2, subcommand 6, tag 3, trigger 1 | landmark, structure, progression, interactions, client.render |
@@ -133,7 +134,7 @@ Implement every contract behind the W0a headers, build the asset toolchains (imp
 | F10 | Combat, death, loot, inventories/containers, progression bus, gamerules, fx (spike S3) | 6000-6099 | `**/*.d/combat.json`, `assets/data/containers/combat.json`, `assets/lang/*/combat.json`, `docs/spikes/S3.md`, `src/client/inventory/**`, `src/feature/{combat,death,loot,inventory,progression,gamerules,fx}/**`, `tools/e2e/*/scenarios/combat{,.*}.ps1` | lang 70, loot_condition 1, loot_function 1, loot_number_provider 2, loot_table 4, subcommand 1 | combat, death, loot, inventory, progression, rules+fx, interactions |
 | F11 | Block families kit and block event dispatch | 6100-6199 | `src/client/families/**`, `src/feature/families/**`, `tools/e2e/*/scenarios/families{,.*}.ps1`, `tools/families/**` | - | families+blockevents, blockdata+redstone, interactions, inventory |
 | F12 | Client frameworks and vanilla UI fallbacks (spike S5) | 6200-6299 | `**/*.d/ui.json`, `assets/lang/*/ui.json`, `assets/pack/{bp,rp}/**/ui/**`, `docs/spikes/S5.md`, `src/client/{ui,render,world,input}/**`, `src/feature/{ui,movement}/**`, `tools/e2e/*/scenarios/ui{,.*}.ps1` | config_key 1, lang 18 | client.ui, client.render, client.world, client.input+movement |
-| F13 | Java oracle (derived goldens only) | 6300-6399 | `tests/golden/**`, `tools/oracle/**` | - | selftest |
+| F13 | Java oracle (derived goldens only) | 6300-6399 | `tests/golden/**`, `tools/e2e/*/scenarios/oracle{,.*}.ps1`, `tools/oracle/**` | - | selftest |
 | F14 | Spec: world and landmarks | 6400-6499 | `docs/spec/{biomes,terrain,trees,minorlandmarks,questcamps,naga,lich,lichdecor,labyrinth}.md` | - | owners |
 | F15 | Spec: mobs and late landmarks | 6500-6599 | `docs/spec/{fauna,hostiles,hydra,stronghold,darktower,caves,aurora,giants,finalcastle}.md` | - | owners |
 | F16 | Spec: blocks, items, player systems, client; not-ported list | 6600-6699 | `docs/spec/{woodwork,building,flora,armory,weapons,artifacts,provisions,tgear,tgmove,uncraftmaps,progression,atmosphere}.md`, `docs/spec/not-ported.md` | config_key 1, lang 127, structure 4 | owners |

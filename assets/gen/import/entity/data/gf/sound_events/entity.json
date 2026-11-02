@@ -1,0 +1,11 @@
+{
+  "twilightforest:block.twilightforest.boss_chest.appear": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.boss_chest.appear",
+    "sounds": [
+      {
+        "event": "entity.evoker.prepare_summon"
+      }
+    ]
+  }
+}

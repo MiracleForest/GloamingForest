@@ -1,0 +1,273 @@
+[
+  {
+    "id": "twilightforest:canopy_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:canopy_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"]
+    }
+  },
+  {
+    "id": "twilightforest:dark_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "DarkLeavesBlock",
+      "vanillaClass": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:darkwood_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"]
+    }
+  },
+  {
+    "id": "twilightforest:hollow_oak_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"]
+    }
+  },
+  {
+    "id": "twilightforest:mangrove_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:mangrove_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "MangroveSaplingBlock",
+      "vanillaClass": "SaplingBlock",
+      "traits": ["waterloggable"],
+      "states": ["stage"]
+    }
+  },
+  {
+    "id": "twilightforest:mining_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:mining_log_core",
+    "family": "pillar",
+    "params": {
+      "class": "MineLogCoreBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["active", "axis"]
+    }
+  },
+  {
+    "id": "twilightforest:mining_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"]
+    }
+  },
+  {
+    "id": "twilightforest:potted_canopy_sapling",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_darkwood_sapling",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_hollow_oak_sapling",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_mangrove_sapling",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_mining_sapling",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_rainbow_oak_sapling",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_sorting_sapling",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_time_sapling",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_transformation_sapling",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:potted_twilight_oak_sapling",
+    "family": "potted",
+    "params": {
+      "class": "FlowerPotBlock"
+    }
+  },
+  {
+    "id": "twilightforest:rainbow_oak_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:rainbow_oak_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"]
+    }
+  },
+  {
+    "id": "twilightforest:sorting_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:sorting_log_core",
+    "family": "pillar",
+    "params": {
+      "class": "SortLogCoreBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["active", "axis"]
+    }
+  },
+  {
+    "id": "twilightforest:sorting_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"]
+    }
+  },
+  {
+    "id": "twilightforest:time_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:time_log_core",
+    "family": "pillar",
+    "params": {
+      "class": "TimeLogCoreBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["active", "axis"]
+    }
+  },
+  {
+    "id": "twilightforest:time_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"]
+    }
+  },
+  {
+    "id": "twilightforest:transformation_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "TransformationLeavesBlock",
+      "vanillaClass": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:transformation_log_core",
+    "family": "pillar",
+    "params": {
+      "class": "TransLogCoreBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "states": ["active", "axis"]
+    }
+  },
+  {
+    "id": "twilightforest:transformation_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"]
+    }
+  },
+  {
+    "id": "twilightforest:twilight_oak_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"]
+    }
+  },
+  {
+    "id": "twilightforest:twilight_oak_sapling",
+    "family": "sapling",
+    "params": {
+      "class": "SaplingBlock",
+      "states": ["stage"]
+    }
+  }
+]

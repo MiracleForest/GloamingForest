@@ -1,0 +1,21 @@
+{
+  "block.twilightforest.aurora_block": "Bloco de Aurora",
+  "block.twilightforest.aurora_pillar": "Pilar de Aurora",
+  "block.twilightforest.aurora_slab": "Laje de Aurora",
+  "block.twilightforest.auroralized_glass": "Vidro Auroralizado",
+  "entity.twilightforest.ice_crystal": "Cristal de Gelo",
+  "entity.twilightforest.ice_snowball": "Bola de Gelo",
+  "entity.twilightforest.snow_guardian": "Guardião de Neve",
+  "entity.twilightforest.snow_queen": "Rainha da Neve",
+  "entity.twilightforest.stable_ice_core": "Núcleo de Gelo Estável",
+  "entity.twilightforest.unstable_ice_core": "Núcleo de Gelo Instável",
+  "item.twilightforest.ice_crystal_spawn_egg": "Ovo gerador de Cristal de Gelo",
+  "item.twilightforest.snow_guardian_spawn_egg": "Ovo gerador de Guardião da Neve",
+  "item.twilightforest.snow_queen_spawn_egg": "Ovo gerador de Rainha da Neve",
+  "item.twilightforest.stable_ice_core_spawn_egg": "Ovo gerador de Núcleo de Gelo Estável",
+  "item.twilightforest.unstable_ice_core_spawn_egg": "Ovo gerador de Núcleo de Gelo Instável",
+  "subtitles.twilightforest.entity.ice.ambient": "Núcleo de gelo estala",
+  "subtitles.twilightforest.entity.ice.death": "Núcleo de Gelo Morre",
+  "subtitles.twilightforest.entity.ice.hurt": "Núcleo de Gelo é ferido",
+  "subtitles.twilightforest.entity.ice.shoot": "Ice Core atira bola de neve"
+}

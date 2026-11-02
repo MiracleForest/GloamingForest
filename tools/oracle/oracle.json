@@ -1,0 +1,21 @@
+{
+  "comment": "Pinned downloads of the Java oracle (tools/oracle/fetch.ps1). Everything is downloaded at run time into %LOCALAPPDATA%\\gf-oracle (or $env:GF_ORACLE_HOME) and verified by SHA-256; nothing here is ever committed. The TF jar is only loaded by the server: no file is ever extracted from it (rules R10, R11).",
+  "jdk": {
+    "version": "21.0.12+8",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12%2B8/OpenJDK21U-jdk_x64_windows_hotspot_21.0.12_8.zip",
+    "sha256": "9ba963ee2371874a74185d18bc7bb2ab9407df7683300855ed7606e0662321d0"
+  },
+  "minecraft": "1.21.1",
+  "neoforge": {
+    "version": "21.1.209",
+    "url": "https://maven.neoforged.net/releases/net/neoforged/neoforge/21.1.209/neoforge-21.1.209-installer.jar",
+    "sha256": "5252312784636b20421a43a75b11c39a65c7e75f9702c12f7dfc2d80eee15c40"
+  },
+  "twilightforest": {
+    "version": "4.8.3802",
+    "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f",
+    "url": "https://maven.tamaized.com/releases/team-twilight/twilightforest/4.8.3802/twilightforest-4.8.3802-universal.jar",
+    "sha256": "363e0a60f8c8371601a398020c14cf7c7706d59404e0752b535ddb0a8a78818c",
+    "provenance": "4.8.3802 is the last 1.21.1-branch CI build (TF's azure-pipelines.yml publishes <mod_version>.<revision> to maven.tamaized.com, group team-twilight; neo_version 21.1.209 as in TF's gradle.properties). Verified once when pinned: all 1566 .java files of twilightforest-4.8.3802-sources.jar are byte-identical to src/main/java of the pinned commit; the commits after the last code change touch only build files and one .nbt template."
+  }
+}

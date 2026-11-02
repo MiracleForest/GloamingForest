@@ -1,0 +1,30 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:ur_ghast",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": ["twilightforest", "ur_ghast", "monster", "mob"]
+      },
+      "minecraft:collision_box": {
+        "width": 14,
+        "height": 18
+      },
+      "minecraft:health": {
+        "value": 250,
+        "max": 250
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:fire_immune": true
+    }
+  }
+}

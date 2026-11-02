@@ -1,0 +1,6 @@
+{
+  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
+  "kind": "attribute_modifier_id",
+  "reason": "the id of the AttributeModifier the modifier applies; a plain identifier, not a registry entry (src/generated/resources/data/twilightforest/twilight/travellers_modifiers/aquatic_agility.json)",
+  "referencedBy": ["data/twilightforest/twilight/travellers_modifiers/aquatic_agility.json"]
+}

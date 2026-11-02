@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:knight_phantom",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/knightphantom"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.knight_phantom"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#a6673b",
+        "overlay_color": "#d3e7bc"
+      }
+    }
+  }
+}

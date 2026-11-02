@@ -1,0 +1,137 @@
+{
+  "twilightforest:entity.twilightforest.ice.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.ice.ambient",
+    "sounds": [
+      {
+        "file": "mob/ice/crackle1"
+      },
+      {
+        "file": "mob/ice/crackle2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.ice.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.ice.death",
+    "sounds": [
+      {
+        "file": "mob/ice/death1"
+      },
+      {
+        "file": "mob/ice/death2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.ice.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.ice.hurt",
+    "sounds": [
+      {
+        "file": "mob/ice/hurt1"
+      },
+      {
+        "file": "mob/ice/hurt2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.ice.shoot": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.ice.shoot",
+    "sounds": [
+      {
+        "event": "entity.snowball.throw"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.snow_guardian.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.snow_guardian.ambient",
+    "sounds": [
+      {
+        "file": "mob/ice/crackle1"
+      },
+      {
+        "file": "mob/ice/crackle2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.snow_guardian.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.snow_guardian.death",
+    "sounds": [
+      {
+        "file": "mob/ice/death1"
+      },
+      {
+        "file": "mob/ice/death2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.snow_guardian.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.snow_guardian.hurt",
+    "sounds": [
+      {
+        "file": "mob/ice/hurt1"
+      },
+      {
+        "file": "mob/ice/hurt2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.snow_queen.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.snow_queen.ambient",
+    "sounds": [
+      {
+        "file": "mob/ice/crackle1"
+      },
+      {
+        "file": "mob/ice/crackle2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.snow_queen.attack": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.snow_queen.attack",
+    "sounds": [
+      {
+        "event": "entity.iron_golem.attack"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.snow_queen.break": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.snow_queen.break",
+    "sounds": [
+      {
+        "event": "entity.item.break"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.snow_queen.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.snow_queen.death",
+    "sounds": [
+      {
+        "file": "mob/ice/death1"
+      },
+      {
+        "file": "mob/ice/death2"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.snow_queen.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.snow_queen.hurt",
+    "sounds": [
+      {
+        "file": "mob/ice/hurt1"
+      },
+      {
+        "file": "mob/ice/hurt2"
+      }
+    ]
+  }
+}

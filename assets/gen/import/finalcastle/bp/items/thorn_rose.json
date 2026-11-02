@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:thorn_rose",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_thorn_rose"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:thorn_rose.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:thorn_rose",
+        "replace_block_item": true
+      }
+    }
+  }
+}

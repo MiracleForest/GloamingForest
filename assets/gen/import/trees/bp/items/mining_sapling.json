@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:mining_sapling",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_mining_sapling"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:mining_sapling.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:mining_sapling",
+        "replace_block_item": true
+      }
+    }
+  }
+}

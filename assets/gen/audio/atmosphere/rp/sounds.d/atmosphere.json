@@ -1,0 +1,11 @@
+{
+  "environment.twilightforest.acid_rain": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.environment.acid_rain",
+    "sounds": [
+      {
+        "name": "sounds/random/fizz"
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/canopy_plate"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##"],
+    "key": {
+      "#": {
+        "item": "twilightforest:canopy_planks"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:canopy_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:canopy_pressure_plate"
+    }
+  }
+}

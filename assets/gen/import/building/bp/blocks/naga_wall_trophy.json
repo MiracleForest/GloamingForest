@@ -1,0 +1,30 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:naga_wall_trophy",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:powered": [true, false]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_soul_sand",
+          "render_method": "opaque"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "twilightforest:antibuilder": {
+    "sound": "wood"
+  },
+  "twilightforest:antibuilt_block": {
+    "sound": "wood"
+  },
+  "twilightforest:built_block": {
+    "sound": "wood"
+  },
+  "twilightforest:carminite_builder": {
+    "sound": "wood"
+  },
+  "twilightforest:carminite_reactor": {
+    "sound": "wood"
+  },
+  "twilightforest:fake_diamond": {
+    "sound": "metal"
+  },
+  "twilightforest:fake_gold": {
+    "sound": "metal"
+  },
+  "twilightforest:ghast_trap": {
+    "sound": "wood"
+  },
+  "twilightforest:infested_towerwood": {
+    "sound": "wood"
+  },
+  "twilightforest:locked_vanishing_block": {
+    "sound": "wood"
+  },
+  "twilightforest:reactor_debris": {
+    "sound": "ancient_debris"
+  },
+  "twilightforest:reappearing_block": {
+    "sound": "wood"
+  },
+  "twilightforest:slider": {
+    "sound": "stone"
+  },
+  "twilightforest:unbreakable_vanishing_block": {
+    "sound": "wood"
+  },
+  "twilightforest:vanishing_block": {
+    "sound": "wood"
+  }
+}

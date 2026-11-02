@@ -1,0 +1,81 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:zombie_skull_candle",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:candles": [0, 1, 2, 3, 4],
+        "twilightforest:lighting": ["none", "normal", "dim", "ominous"],
+        "twilightforest:rotation": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 5
+      },
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_soul_sand",
+          "render_method": "opaque"
+        }
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 1",
+        "components": {
+          "minecraft:light_emission": 1
+        }
+      },
+      {
+        "condition": "(q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 2) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 1)",
+        "components": {
+          "minecraft:light_emission": 2
+        }
+      },
+      {
+        "condition": "(q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 1) || (q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 3)",
+        "components": {
+          "minecraft:light_emission": 3
+        }
+      },
+      {
+        "condition": "(q.block_state('twilightforest:lighting') == 'dim' && q.block_state('twilightforest:candles') == 4) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 2)",
+        "components": {
+          "minecraft:light_emission": 4
+        }
+      },
+      {
+        "condition": "(q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 2) || (q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 3)",
+        "components": {
+          "minecraft:light_emission": 6
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:lighting') == 'ominous' && q.block_state('twilightforest:candles') == 4",
+        "components": {
+          "minecraft:light_emission": 8
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 3",
+        "components": {
+          "minecraft:light_emission": 9
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:lighting') == 'normal' && q.block_state('twilightforest:candles') == 4",
+        "components": {
+          "minecraft:light_emission": 12
+        }
+      }
+    ]
+  }
+}

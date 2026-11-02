@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:sorting_door",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_sorting_door"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:sorting_door.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:sorting_door",
+        "replace_block_item": true
+      }
+    }
+  }
+}
