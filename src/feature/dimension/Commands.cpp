@@ -5,12 +5,10 @@
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// /twilightforest tp (rule R14: subcommand owned by F4), and the bodies of TF's data pack
-// functions twilightforest:tp_twilight / tp_overworld ("execute in <dimension> run tp @p ~ ~ ~") as
-// /twilightforest tp twilight|overworld (the behavior pack functions
-// twilightforest/dimension/tp_* run them). A move to another dimension completes asynchronously:
-// the success message is TF's, a move that does not complete is reported to the player
-// (gf::world::teleport) and logged.
+// /twilightforest tp (rule R14: subcommand owned by F4; TF's functions tp_twilight / tp_overworld
+// are in Functions.cpp). A move to another dimension completes asynchronously: the success
+// message is TF's, a move that does not complete is reported to the player (gf::world::teleport)
+// and logged.
 
 #include <cstdio>
 
@@ -69,31 +67,10 @@ void teleportCommand(CommandOrigin const& origin, CommandOutput& output) {
     ));
 }
 
-/// The data pack functions: the player moves to the same coordinates of another dimension.
-void teleportSame(CommandOrigin const& origin, CommandOutput& output, bool toTwilight) {
-    if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
-    auto* player = commands::playerOf(origin);
-    if (!player) return output.error(tr("commands.tffeature.teleport.player_only", "Command must be run by a player."));
-    std::optional<DimensionType> dest = toTwilight ? world::twilight() : std::optional<DimensionType>(DimensionType(0));
-    if (!dest) return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable."));
-    Vec3 pos = player->getFeetPos();
-    if (!world::teleport(*player, *dest, pos, player->getRotation().y)) {
-        return output.error(tr("commands.tffeature.teleport.dimension_missing", "The Twilight Forest dimension is unavailable."));
-    }
-    // vanilla /tp's message
-    output.success(trFor(*player, "commands.tp.success", "Teleported %1$s to %2$s", player->getRealName(), dimensionName(static_cast<int>(*dest))));
-}
-
 } // namespace
 
 GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
     cmd.overload().text("tp").execute([](CommandOrigin const& origin, CommandOutput& output) { teleportCommand(origin, output); });
-    cmd.overload().text("tp").text("twilight").execute([](CommandOrigin const& origin, CommandOutput& output) {
-        teleportSame(origin, output, true);
-    });
-    cmd.overload().text("tp").text("overworld").execute([](CommandOrigin const& origin, CommandOutput& output) {
-        teleportSame(origin, output, false);
-    });
 });
 
 } // namespace gf::feature::dimension
