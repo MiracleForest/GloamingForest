@@ -19,8 +19,11 @@
 // StructureTemplate#loadPalette / buildInfoList (full blocks, other shapes, block entities; each
 // by y, x, z) after the getRandomPalette draw, with TF's nagastone processed like every block
 // (F1 registers it). Their "diff processor_<name>" info lines (the blocks each processor changed)
-// equal the output of tests/structure/oracle/ProcessorOracle.java (Java's processing order and
-// TF's processors over java.util.Random), as does nagastone_variants_blocks.
+// equal the output of tests/structure/oracle/TemplateOracle.java, which places the same fixtures
+// with Minecraft 1.21.1's own StructureTemplate (load, getRandomPalette, processBlockInfos,
+// filterBlocks; the server jar of the F13 oracle install) and TF's processor bodies (translated,
+// ProcessorOracle.java), as does nagastone_variants_blocks; ProcessorOracle.java models the same
+// order by hand and prints the same lines (tests/structure/oracle/run.ps1 compares them).
 {"processor_none", "615811ce73edfd6e"},
 {"processor_box_cutting", "82c8e2920dc136fb"},
 {"processor_cobble_variants", "c1f14db5d759e4b6"},
@@ -47,7 +50,7 @@
 // structure.shared_random: a hut whose data marker sits on a structure_void cell (Java's DATA
 // structure block, processed like every block) and a chest (its LootTableSeed drawn while placing),
 // then its data markers listed (filterBlocks) and a basement placed with the same random, under
-// stone_brick_variants: the variants left, by y, z, x. The same as ProcessorOracle's "shared_random:"
+// stone_brick_variants: the variants left, by y, z, x. The same as TemplateOracle's "shared_random:"
 // line (without the data marker's structure block the basement comes out differently).
 {"shared_random", "30,60,0:cracked_stone_bricks;31,60,0:mossy_stone_bricks;32,60,0:mossy_stone_bricks;30,60,2:cracked_stone_bricks;31,60,2:mossy_stone_bricks;32,60,2:cracked_stone_bricks;32,64,0:mossy_stone_bricks;30,64,1:mossy_stone_bricks;30,64,2:mossy_stone_bricks;31,64,2:cracked_stone_bricks;32,64,2:mossy_stone_bricks;30,65,0:mossy_stone_bricks;"},
 {"jigsaw_layout", "gf_test:structure/jig/start@-2,1,-2r0;gf_test:structure/jig/room_a@-5,1,-1r3;gf_test:structure/jig/room_b@-9,1,-1r2;gf_test:structure/jig/room_a@-1,1,-5r0;gf_test:structure/jig/room_b@-1,1,-9r3;gf_test:structure/jig/room_b@3,1,-1r0;"},

@@ -4,7 +4,8 @@
 # wood palettes, block selectors, speleothems, TFMaze, HollowHill, the old lich tower bases, spawner
 # mob scaling and custom spawn rules) pass with their golden volume hashes, the kit loaded its data,
 # /twilightforest structure_util answers, an outline expires without harm, and across a restart
-# work queued for an unloaded chunk runs once the chunk is loaded and a scaled mob keeps its size.
+# work queued for an unloaded chunk runs once the chunk is loaded, a scaled mob keeps its size and
+# structure.count_loot passes again on the landmark start it left in the world.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 Wait-LogLine 'structure kit: \d+ wood palettes, \d+ speleothem configs' 60 | Out-Null
 
@@ -16,7 +17,7 @@ Wait-LogLine 'structure_util scale_probe armed' 30 -Since $mark | Out-Null
 
 $r = Invoke-SelfTest 'structure.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) structure selftest(s) failed" }
-if ($r.Pass -lt 28) { throw "expected at least 28 structure selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 31) { throw "expected at least 31 structure selftests to pass, got $($r.Pass)" }
 $probeWritten = Get-ServerLog | Select-String -Pattern 'scale probe written id=(-?\d+)' | Select-Object -Last 1
 if (-not $probeWritten) { throw 'structure.scale_probe did not leave its scaled mob for the restart' }
 
@@ -70,3 +71,12 @@ Write-Step "the scaled mob kept its size across the restart ($($scaled.Line.Trim
 # the kit still places in the world after the reload
 $r = Invoke-SelfTest 'structure.template_world'
 if ($r.Pass -ne 1) { throw 'structure.template_world did not pass after the restart' }
+
+# structure.count_loot forces F6's fixture landmark start and the landmark contract cannot remove a
+# start: a second run in the same world (its start reloaded, F6's fixture pieces rebuilt by the
+# kit's fallback piece factories) still passes, and no piece type is unknown after the reload
+$r = Invoke-SelfTest 'structure.count_loot'
+if ($r.Pass -ne 1) { throw 'structure.count_loot did not pass a second time in the same world' }
+$unknown = Get-ServerLog | Select-String -Pattern "unknown piece type 'gf_test:landmark_fixture" | Select-Object -First 1
+if ($unknown) { throw "a reloaded fixture landmark start has an unknown piece type: $($unknown.Line.Trim())" }
+Write-Step 'structure.count_loot passed again in the same world after the restart'

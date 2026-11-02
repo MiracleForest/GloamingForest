@@ -25,7 +25,12 @@
 // Printed: for each processor the blocks it changed against the plain placement ("x,y,z:block",
 // "-" where nothing is placed; TF's nagastone counts as air, as in the selftest's volume hashes),
 // the same lines the selftest logs as "SELFTEST INFO structure.processors: diff processor_<name>"
-// (the selftest prints Bedrock ids: minecraft:web is Java's cobweb). Run with
+// (the selftest prints Bedrock ids: minecraft:web is Java's cobweb). This is a hand model of
+// StructureTemplate's order (its FULL and BLOCK_ENTITIES sets entered by hand); TemplateOracle.java
+// places the same fixtures with the 1.21.1 server jar's own StructureTemplate and these processor
+// bodies, and must print the same lines. Run both with
+//   pwsh tests/structure/oracle/run.ps1
+// or this one alone (plain JDK) with
 //   javac -d out tests/structure/oracle/ProcessorOracle.java && java -cp out ProcessorOracle
 import java.util.ArrayList;
 import java.util.Comparator;

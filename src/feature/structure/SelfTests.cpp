@@ -40,7 +40,10 @@
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
 #include "mc/world/level/block/actor/FlowerPotBlockActor.h"
+#include "mc/world/Container.h"
+#include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/actor/FurnaceBlockActor.h"
+#include "mc/world/level/block/actor/HopperBlockActor.h"
 #include "mc/world/level/block/actor/MobSpawnerBlockActor.h"
 #include "mc/world/phys/AABB.h"
 
@@ -51,6 +54,7 @@
 #include "feature/ext/structure/Processors.h"
 #include "feature/ext/structure/SharedRandom.h"
 #include "feature/ext/structure/TemplateDefinitions.h"
+#include "feature/enchant/Enchant.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/landmark/Landmark.h"
 #include "feature/structure/Region.h"
@@ -458,6 +462,24 @@ GF_REGISTER_SELFTEST("structure.piece_coordinates", [](Context& ctx) {
     BlockBox     chunk{100, 10, 200, 104, 19, 214};
     south.fill(mem, chunk, 0, 0, 0, 9, 0, 0, blocks::java("minecraft:stone"), blocks::java("minecraft:stone"), false);
     ctx.check(mem.size() == 5, "a fill is clipped to the chunk box (" + std::to_string(mem.size()) + " blocks)");
+    // a fallback piece factory (the kit's stand-ins for other units' fixture pieces) loads a piece
+    // only while no factory is registered for its id: the owner's registration wins in any order
+    std::string const probe = "gf_test:structure/fallback_probe";
+    auto              make  = [](int marker) {
+        return [marker](Json const& saved) -> std::unique_ptr<Piece> {
+            auto piece = std::make_unique<TestPiece>(boxFromJson(saved.value("BB", Json::array())), std::nullopt);
+            piece->genDepth = marker;
+            return piece;
+        };
+    };
+    Json saved{{"id", probe}, {"BB", Json::array({0, 0, 0, 1, 1, 1})}};
+    registerFallbackPieceType(probe, make(7));
+    auto viaFallback = loadPiece(saved);
+    registerPieceType(probe, make(9));
+    registerFallbackPieceType(probe, make(7));
+    auto viaOwner = loadPiece(saved);
+    ctx.check(viaFallback && viaFallback->genDepth == 7 && viaOwner && viaOwner->genDepth == 9,
+              "a fallback piece factory serves only until the type's own factory is registered");
 });
 
 // ---- templates ----------------------------------------------------------------------------------------------------
@@ -789,7 +811,7 @@ GF_REGISTER_SELFTEST("structure.shared_random", [](Context& ctx) {
     // its data marker too, then the chest's LootTableSeed), filterBlocks for the data markers (the
     // palette pick again), then the basement with the same random (postPlacement). StoneBricksVariants
     // reseeds the random from every block it sees, so each draw moves the whole rest of the sequence.
-    // tests/structure/oracle/ProcessorOracle.java models the same in Java ("shared_random:").
+    // tests/structure/oracle/TemplateOracle.java places the same with 1.21.1's StructureTemplate ("shared_random:").
     auto run = [&](bool marker, std::vector<std::pair<BlockPos, std::string>>* markers) {
         MemoryRegion     mem;
         JavaRandom       random(0x5eed);
@@ -823,6 +845,50 @@ GF_REGISTER_SELFTEST("structure.shared_random", [](Context& ctx) {
     ctx.check(withMarker != without, "the data marker's structure block draws from the shared random like Java's (" + without + ")");
     // ext::placeTemplate takes the caller's random: the same seed gives the same result
     ctx.check(run(true, nullptr) == withMarker, "the same seed places the same");
+    // StructureTemplate#addToLists for the blocks whose collision shape depends on their state
+    auto list = [](char const* name, Json props) { return templates::javaList(Json{{"Name", name}, {"Properties", std::move(props)}}); };
+    ctx.check(list("minecraft:piston", {{"extended", "false"}, {"facing", "up"}}) == 0 && list("minecraft:sticky_piston", {{"extended", "true"}, {"facing", "up"}}) == 1,
+              "a retracted piston is a full block, an extended one is not (list 0 / 1)");
+    ctx.check(list("minecraft:stone_slab", {{"type", "double"}}) == 0 && list("minecraft:stone_slab", {{"type", "bottom"}}) == 1 &&
+                  list("twilightforest:aurora_slab", {{"type", "double"}}) == 0,
+              "a double slab is a full block, a single one is not");
+    ctx.check(list("twilightforest:pink_castle_door", {{"vanish", "false"}, {"active", "false"}}) == 0 &&
+                  list("twilightforest:pink_castle_door", {{"vanish", "true"}, {"active", "false"}}) == 1 &&
+                  list("twilightforest:reappearing_block", {{"vanished", "false"}, {"active", "false"}}) == 0 &&
+                  list("twilightforest:reappearing_block", {{"vanished", "true"}, {"active", "false"}}) == 1,
+              "a vanished castle door or reappearing block has no collision shape (list 1)");
+    ctx.check(list("minecraft:chest", Json::object()) == 2 && list("minecraft:stone_bricks", Json::object()) == 0, "block entities in list 2, full blocks in list 0");
+});
+
+namespace {
+
+/// StructureTemplate#addToLists of Minecraft 1.21.1's block states (JavaListsGolden.inc).
+struct JavaListEntry {
+    char const* id;
+    char const* properties;
+    int         list;
+};
+JavaListEntry const kJavaLists[] = {
+#include "JavaListsGolden.inc"
+};
+
+} // namespace
+
+GF_REGISTER_SELFTEST("structure.java_lists", [](Context& ctx) {
+    // StructureTemplate#addToLists of every Minecraft 1.21.1 block state, from the game itself
+    // (tests/structure/oracle/TemplateOracle.java "lists" runs the server jar's own method over every
+    // block's default state and every state whose list differs from it, into JavaListsGolden.inc):
+    // the kit's templates::javaList classifies each vanilla state as the game does
+    auto const& table = kJavaLists;
+    int         bad   = 0;
+    std::string mismatches;
+    for (auto const& e : table) {
+        int got = templates::javaList(Json{{"Name", e.id}, {"Properties", Json::parse(e.properties)}});
+        if (got == e.list) continue;
+        if (bad++ < 16) mismatches += std::string(e.id) + e.properties + ": " + std::to_string(got) + " (Java " + std::to_string(e.list) + "); ";
+    }
+    ctx.check(std::size(table) > 1000, "the table holds every 1.21.1 block (" + std::to_string(std::size(table)) + " states)");
+    ctx.check(bad == 0, std::to_string(bad) + " vanilla states in another list than Java's: " + mismatches);
 });
 
 // ---- TF marker handlers and jigsaw pieces ----------------------------------------------------------------------------
@@ -1514,8 +1580,9 @@ namespace {
 /// F6's fixture landmark pieces (feature/landmark/Helpers.cpp: a stone brick shell, an oak porch)
 /// have no registered piece type, so a start that persisted them (F6's landmark.persistence and
 /// structure.count_loot leave their forced starts in the world: the landmark contract cannot remove
-/// a start) was reloaded with a warning and without its pieces. The kit registers them: rebuilt
-/// from their saved box, they place what F6's FixturePiece places.
+/// a start) was reloaded with a warning and without its pieces. Until F6 registers them, the kit
+/// gives them fallback factories (used only while no factory is registered for the id, so F6's own
+/// wins once it exists): rebuilt from their saved box, they place what F6's FixturePiece places.
 class LandmarkFixturePiece final : public Piece {
 public:
     explicit LandmarkFixturePiece(bool shell) : Piece(shell ? "gf_test:landmark_fixture_shell" : "gf_test:landmark_fixture_porch"), mShell(shell) {}
@@ -1538,7 +1605,7 @@ private:
 struct LandmarkFixturePieces {
     LandmarkFixturePieces() {
         for (bool shell : {true, false})
-            registerPieceType(shell ? "gf_test:landmark_fixture_shell" : "gf_test:landmark_fixture_porch", [shell](Json const& saved) -> std::unique_ptr<Piece> {
+            registerFallbackPieceType(shell ? "gf_test:landmark_fixture_shell" : "gf_test:landmark_fixture_porch", [shell](Json const& saved) -> std::unique_ptr<Piece> {
                 auto piece = std::make_unique<LandmarkFixturePiece>(shell);
                 piece->load(saved);
                 return piece;
@@ -1659,7 +1726,115 @@ GF_REGISTER_SELFTEST("structure.count_loot", [](Context& ctx) -> ll::coro::CoroT
         auto stack = game::items::make(id, 1, 0);
         ctx.check(stack && !notCommon(*stack), std::string(id) + " is common");
     }
+    // an enchanted stack is never common (ItemStack#getRarity's bump, F9's)
+    if (auto sword = game::items::make("minecraft:iron_sword", 1, 0)) {
+        ctx.check(!notCommon(*sword), "an iron sword is common");
+        gf::enchant::set(*sword, "minecraft:unbreaking", 1);
+        ctx.check(notCommon(*sword), "an enchanted iron sword is not common");
+    }
     co_return;
+});
+
+// ---- a hopper's loot table is unpacked on any access ----------------------------------------------------------------
+
+GF_REGISTER_SELFTEST("structure.hopper_loot", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // Java's hopper is a RandomizableContainer: its loot table is unpacked on the first access to its
+    // container. A powered hopper (HopperBlockEntity#tryMoveItems needs ENABLED: its own ticks leave
+    // the container alone) keeps the table the kit gave it until another hopper pushes into it, its
+    // container is read, a comparator reads it or it is removed (HopperBlock#onRemove ->
+    // Containers#dropContentsOnDestroy: the table is rolled, then the contents drop).
+    auto area = co_await ctx.flatArea(5783, 6, 4);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5783)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto const* hopper   = game::blockWith("minecraft:hopper");
+    auto const* redstone = game::blockWith("minecraft:redstone_block");
+    ctx.require(hopper && redstone, "hopper and redstone block");
+    int      y = area.minY;
+    BlockPos fed{area.minX + 2, y, area.minZ + 1};     // a hopper above pushes into it
+    BlockPos peeked{area.minX + 4, y, area.minZ + 1};  // its container is read
+    BlockPos read{area.minX + 2, y, area.minZ + 3};    // a comparator reads it
+    BlockPos removed{area.minX + 4, y, area.minZ + 4}; // removed
+    BlockPos feeder{fed.x, fed.y + 1, fed.z};
+    for (auto const& pos : {fed, peeked, read, removed}) {
+        (void)game::setBlock(*source, pos, *hopper);
+        (void)game::setBlock(*source, BlockPos{pos.x + 1, pos.y, pos.z}, *redstone); // powers it
+    }
+    co_await ctx.ticks(4); // block actors exist a tick later
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    {
+        BlockSourceRegion region(*source, fed);
+        std::int64_t      seed = 41;
+        for (auto const& pos : {fed, peeked, read, removed}) blockentities::lootTable(region, pos, "gf_test:chests/fixture_chest", seed++);
+    }
+    co_await ctx.ticks(10); // the powered hoppers tick: their own ticks unpack nothing
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    bool allPending = true;
+    for (auto const& pos : {fed, peeked, read, removed}) allPending = allPending && blockentities::pendingHopperLoot(*source, pos).has_value();
+    ctx.require(allPending, "the powered hoppers keep their loot tables through their own ticks");
+    ctx.check(blockentities::pendingHoppers() >= 4, "the kit's hooks watch the pending hoppers (" + std::to_string(blockentities::pendingHoppers()) + ")");
+    // a hopper above pushes a cobblestone into the powered one: the table is unpacked first
+    // (HopperBlockEntity#addItem reads the target's slots), then the stone goes into a free slot
+    (void)game::setBlock(*source, feeder, *hopper); // facing down, not powered (the redstone block is diagonal)
+    co_await ctx.ticks(2);
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto* feederActor = source->getBlockEntity(feeder);
+    ctx.require(feederActor && feederActor->getType() == BlockActorType::Hopper, "the feeding hopper's block actor");
+    auto stone = game::items::make("minecraft:cobblestone", 1, 0);
+    ctx.require(stone.has_value(), "a cobblestone");
+    static_cast<Container&>(static_cast<HopperBlockActor&>(*feederActor)).setItem(0, *stone);
+    co_await ctx.ticks(30);
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto countOf = [&](BlockPos const& pos, std::string const& id) {
+        int n = 0;
+        if (auto items = containerItems(*source, pos))
+            for (auto const& s : *items)
+                if (!s.isNull() && s.getTypeName() == id) n += s.mCount;
+        return n;
+    };
+    // (read before the items: reading them through containerItems unpacks a pending hopper)
+    bool fedUnpacked = !blockentities::pendingHopperLoot(*source, fed).has_value();
+    int  stonesIn  = countOf(fed, "minecraft:cobblestone");
+    int  stonesOut = countOf(feeder, "minecraft:cobblestone");
+    bool loot      = countOf(fed, "gf_test:fixture_item") + countOf(fed, "minecraft:stick") > 0;
+    ctx.check(fedUnpacked && loot,
+              "a hopper pushing into the powered hopper unpacked its loot table (" + std::to_string(stonesIn) + " stone moved in)");
+    ctx.check(stonesIn + stonesOut == 1, "the stone went into the unpacked hopper or stayed in the feeder when no slot was free");
+    // a read of its container (Container#getItem: RandomizableContainerBlockEntity unpacks first)
+    if (auto* actor = source->getBlockEntity(peeked); actor && actor->getType() == BlockActorType::Hopper)
+        (void)static_cast<Container&>(static_cast<HopperBlockActor&>(*actor)).getItem(0);
+    ctx.check(!blockentities::pendingHopperLoot(*source, peeked) && holdsFixtureLoot(*source, peeked), "reading the powered hopper's container unpacked it");
+    // a comparator's reading (HopperBlock#getComparatorSignal reads every slot)
+    Block const& readBlock = source->getBlock(read);
+    int          signal    = readBlock.getBlockType().getComparatorSignal(*source, read, readBlock, 2);
+    ctx.check(!blockentities::pendingHopperLoot(*source, read) && signal > 0 && holdsFixtureLoot(*source, read),
+              "a comparator reading the powered hopper unpacked it (signal " + std::to_string(signal) + ")");
+    // its removal (not by a player: an explosion, a command): the table is rolled and the contents drop
+    BlockBox around{removed.x - 2, removed.y - 1, removed.z - 2, removed.x + 2, removed.y + 2, removed.z + 2};
+    (void)game::setBlock(*source, removed, blocks::air());
+    co_await ctx.ticks(2);
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto fixtureDrops = itemsIn(*source, around, "gf_test:fixture_item");
+    auto stickDrops   = itemsIn(*source, around, "minecraft:stick");
+    ctx.check(!fixtureDrops.empty() || !stickDrops.empty(),
+              "the removed powered hopper dropped its loot table's items (" + std::to_string(fixtureDrops.size() + stickDrops.size()) + " item entities)");
+    for (auto* a : fixtureDrops) a->despawn();
+    for (auto* a : stickDrops) a->despawn();
+    for (auto* a : itemsIn(*source, around, "minecraft:diamond")) a->despawn();
+    bool leftPending = false;
+    for (auto const& pos : {fed, peeked, read, removed}) leftPending = leftPending || blockentities::pendingHopperLoot(*source, pos).has_value();
+    ctx.check(!leftPending, "no hopper of the test is left pending (" + std::to_string(blockentities::pendingHoppers()) + " watched)");
+    // empty the hoppers (the restored area removes them: nothing drops)
+    for (auto const& pos : {fed, peeked, read, feeder})
+        if (auto* actor = source->getBlockEntity(pos); actor && actor->getType() == BlockActorType::Hopper) {
+            auto& container = static_cast<Container&>(static_cast<HopperBlockActor&>(*actor));
+            for (int slot = 0; slot < container.getContainerSize(); slot++) container.setItem(slot, ItemStack::EMPTY_ITEM());
+        }
 });
 
 // ---- TF's sinister spawner in a template keeps its block ---------------------------------------------------------------
@@ -1683,7 +1858,7 @@ GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro:
          {{"SpawnPotentials", Json::array({Json{{"weight", 2}, {"data", {{"entity", {{"id", "minecraft:zombie"}}}}}},
                                            Json{{"weight", 1}, {"data", {{"entity", {{"id", "minecraft:skeleton"}}}}}}})},
           {"EntityScanRange", 7},
-          {"ParticleOptions", Json::array({Json{{"type", "minecraft:dust"}, {"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}}, "minecraft:flame"})}}}}});
+          {"ParticleOptions", Json::array({Json{{"type", "minecraft:dust"}, {"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}}, Json{{"type", "minecraft:flame"}}})}}}}});
     std::string error;
     ctx.require(templates::add(doc, &error), "the sinister spawner template registers " + error);
     auto area = co_await ctx.flatArea(5745, 4, 4);
@@ -1761,6 +1936,63 @@ GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro:
     blockentities::forgetSpawnerRecord(*source, sinister);
     blockentities::forgetSpawnerRecord(*source, vanilla);
     blockentities::forgetSpawnerRecord(*source, withData);
+});
+
+GF_REGISTER_SELFTEST("structure.spawner_load", [](Context& ctx) {
+    // BaseSpawner#load and SinisterSpawnerLogic#load on hand-written spawner data (a Java template
+    // saves every field; the kit's templates may leave some out)
+    using boss::ext::SinisterSpawner;
+    auto load = [](Json data, std::string const& entity = {}) {
+        SinisterSpawner s;
+        s.spawnDelay = 123;
+        s.particles  = {"minecraft:smoke"};
+        blockentities::loadSinisterSpawnerData(s, entity, data);
+        return s;
+    };
+    SinisterSpawner const defaults;
+    // Delay = getShort("Delay"): 0 without it, the low 16 bits of a larger number
+    ctx.check(load(Json::object()).spawnDelay == 0, "no Delay: the delay is 0");
+    ctx.check(load(Json{{"Delay", 65535}}).spawnDelay == -1 && load(Json{{"Delay", 40}}).spawnDelay == 40, "Delay is a short");
+    // MinSpawnDelay, MaxSpawnDelay and SpawnCount only together, when MinSpawnDelay is there
+    auto noMin = load(Json{{"MaxSpawnDelay", 500}, {"SpawnCount", 2}});
+    ctx.check(noMin.minSpawnDelay == defaults.minSpawnDelay && noMin.maxSpawnDelay == defaults.maxSpawnDelay && noMin.spawnCount == defaults.spawnCount,
+              "MaxSpawnDelay and SpawnCount without MinSpawnDelay are not read");
+    auto onlyMin = load(Json{{"MinSpawnDelay", 100}});
+    ctx.check(onlyMin.minSpawnDelay == 100 && onlyMin.maxSpawnDelay == 0 && onlyMin.spawnCount == 0,
+              "MinSpawnDelay alone reads its partners as 0 (" + std::to_string(onlyMin.maxSpawnDelay) + ", " + std::to_string(onlyMin.spawnCount) + ")");
+    // MaxNearbyEntities and RequiredPlayerRange only together, when MaxNearbyEntities is there
+    auto noMax = load(Json{{"RequiredPlayerRange", 8}});
+    ctx.check(noMax.requiredPlayerRange == defaults.requiredPlayerRange && noMax.maxNearbyEntities == defaults.maxNearbyEntities,
+              "RequiredPlayerRange without MaxNearbyEntities is not read");
+    auto onlyMax = load(Json{{"MaxNearbyEntities", 3}});
+    ctx.check(onlyMax.maxNearbyEntities == 3 && onlyMax.requiredPlayerRange == 0, "MaxNearbyEntities alone reads RequiredPlayerRange as 0");
+    auto range = load(Json{{"SpawnRange", 6}});
+    ctx.check(range.spawnRange == 6 && range.entityScanRange == 6, "SpawnRange alone, EntityScanRange follows it");
+    // SpawnData: the next spawn and, without SpawnPotentials, the only potential
+    auto spawnData = load(Json{{"SpawnData", {{"entity", {{"id", "minecraft:zombie"}}}}}});
+    ctx.check(spawnData.nextEntity == "minecraft:zombie" && spawnData.potentials == std::vector<std::pair<std::string, int>>{{"minecraft:zombie", 1}},
+              "SpawnData is the next spawn and the only potential");
+    // ParticleOptions: cleared, then the data's only when the whole list decodes
+    auto particles = [&](Json list) { return load(Json{{"ParticleOptions", std::move(list)}}).particles; };
+    using Ids      = std::vector<std::string>;
+    ctx.check(load(Json::object()).particles.empty(), "no ParticleOptions: no particles (the old ones are cleared)");
+    ctx.check(particles(Json::array({Json{{"type", "minecraft:flame"}}, Json{{"type", "twilightforest:firefly"}}})) == Ids{"minecraft:flame", "twilightforest:firefly"},
+              "a list of particle compounds loads");
+    ctx.check(particles(Json::array({Json{{"type", "minecraft:flame"}}, Json{{"type", "minecraft:flame"}}})) == Ids{"minecraft:flame"},
+              "a repeated particle is kept once (a set)");
+    ctx.check(particles(Json::array({Json{{"type", "minecraft:flame"}}, "minecraft:smoke"})).empty(), "a bare id fails the whole list");
+    ctx.check(particles(Json::array({Json{{"type", "minecraft:flame"}}, Json{{"type", "minecraft:dust"}}})).empty(),
+              "a dust without its colour and scale fails the whole list");
+    ctx.check(particles(Json::array({Json{{"type", "minecraft:dust"}, {"color", {1.0, 0.0, 0.0}}, {"scale", 9.0}}})).empty(),
+              "a dust scale outside 0.01..4 fails the list");
+    ctx.check(particles(Json::array({Json{{"type", "minecraft:no_such_particle"}}})).empty(), "an unknown particle type fails the list");
+    ctx.check(particles(Json::array({Json{{"type", "minecraft:block"}, {"block_state", {{"Name", "minecraft:stone"}}}},
+                                     Json{{"type", "minecraft:item"}, {"item", {{"id", "minecraft:stick"}}}},
+                                     Json{{"type", "twilightforest:fallen_leaf"}, {"r", 1}, {"g", 2}, {"b", 3}}})) ==
+                  Ids{"minecraft:block", "minecraft:item", "twilightforest:fallen_leaf"},
+              "block, item and leaf particles load with their options");
+    ctx.check(particles(Json::array({Json{{"type", "minecraft:item"}, {"item", "minecraft:air"}}})).empty(), "an item particle of air fails the list");
+    ctx.check(load(Json{{"EntityScanRange", 9}, {"SpawnRange", 2}}).entityScanRange == 9, "EntityScanRange loads over the SpawnRange");
 });
 
 // ---- jigsaw over terrain, the template definitions API --------------------------------------------------------------
