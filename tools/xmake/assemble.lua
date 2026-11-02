@@ -194,18 +194,17 @@ local function mod_version()
     return tonumber(major) or 0, tonumber(minor) or 0, tonumber(patch) or 0
 end
 
--- A positive number (2..30001) derived from the content and paths of every file under `dirs`.
-local function pack_stamp(dirs)
-    local parts = {}
-    for _, dir in ipairs(dirs) do
-        if os.isdir(dir) then
-            local files = os.files(path.join(dir, "**"))
-            table.sort(files)
-            for _, file in ipairs(files) do
-                table.insert(parts, rel(file, dir) .. "=" .. hash.md5(file))
-            end
+-- A positive number (2..30001) derived from the content and paths (relative to `base`) of `files`.
+local function pack_stamp(base, files)
+    local parts, seen = {}, {}
+    for _, file in ipairs(files) do
+        local r = rel(file, base)
+        if not seen[r] then
+            seen[r] = true
+            table.insert(parts, r .. "=" .. hash.md5(file))
         end
     end
+    table.sort(parts)
     local tmp = os.tmpfile() .. ".packstamp"
     io.writefile(tmp, table.concat(parts, "\n"))
     local digest = hash.md5(tmp)
@@ -1040,24 +1039,30 @@ local function assemble_content(projectdir, outdir, version)
     local cfg = load_config(projectdir)
     errors, notes = {}, {}
     local with_tests = os.getenv("GF_NO_TEST_PACKS") ~= "1"
+    local families_dir = path.join(projectdir, "tools", "families")
     if version == nil then
         local major, minor, patch = mod_version()
         version = {major, minor, patch}
         if major == 0 and minor == 0 and patch == 0 then
-            -- the family generator's code shapes the packs too (a new version: no stale cached pack)
-            local dirs = {path.join(projectdir, "assets"), path.join(projectdir, "tools", "families")}
-            version = {0, 0, pack_stamp(dirs)}
+            -- what shapes the packs: the assets and the family generator's code and fixtures (a new
+            -- version: no stale cached pack); not its docs or its command line (run.ps1, run.lua)
+            local files = os.files(path.join(projectdir, "assets", "**"))
+            for _, f in ipairs(os.files(path.join(families_dir, "**.lua"))) do
+                if rel(f, families_dir) ~= "run.lua" then table.insert(files, f) end
+            end
+            table.join2(files, os.files(path.join(families_dir, "fixtures", "**")))
+            version = {0, 0, pack_stamp(projectdir, files)}
         end
     end
     merge_lang(projectdir, cfg, outdir)
     local datajsons = copy_data(projectdir, cfg, outdir, with_tests)
-    local bpdirs, alljsons, shipped_bpdirs = {}, {}, {}
+    local bpdirs, alljsons, shipped_dirs = {}, {}, {}
     for _, pack in ipairs(cfg.packs) do
         if with_tests or not pack.test then
             local dst, jsons = build_pack(projectdir, cfg, pack, outdir, version, not pack.test)
             if pack.root == "bp" then table.insert(bpdirs, dst) end
-            if pack.root == "bp" and not pack.test then table.insert(shipped_bpdirs, dst) end
             if not pack.test then
+                table.insert(shipped_dirs, dst)
                 for _, j in ipairs(jsons) do table.insert(alljsons, j) end
             end
         else
@@ -1068,7 +1073,6 @@ local function assemble_content(projectdir, outdir, version)
     -- F11's block family generator (tools/families, contract "families+blockevents"): the family
     -- data (data/gf/families) as Bedrock block definitions in the packs just built, and the gf_test
     -- fixture families; checked below with the rest. Nothing happens until tools/families exists.
-    local families_dir = path.join(projectdir, "tools", "families")
     local families_summary = "no family generator"
     if os.isfile(path.join(families_dir, "families.lua")) then
         families_summary = "family generator failed"
@@ -1077,8 +1081,12 @@ local function assemble_content(projectdir, outdir, version)
             function ()
                 local families = import("families", {rootdir = families_dir, anonymous = true})
                 local res = families.generate(projectdir, outdir, {no_fixtures = not with_tests})
-                res.entries = families.families and #(families.families(outdir)) or 0
                 for _, k in ipairs({"blocks", "skipped", "fixtures"}) do res[k] = res[k] or 0 end
+                -- the entries are read again only when nothing was generated, to tell a generator
+                -- that silently made nothing from data without entries (generate reported the
+                -- data's read errors already)
+                res.entries = 0
+                if res.blocks + res.skipped == 0 and families.families then res.entries = #(families.families(outdir)) end
                 return res
             end,
             catch {
@@ -1087,6 +1095,9 @@ local function assemble_content(projectdir, outdir, version)
         }
         if r then
             for _, e in ipairs(r.errors or {}) do fail("%s", e) end
+            -- every pack directory was just rebuilt, which drops the generator's "generated" marker:
+            -- a marked pack here is a stale output directory, and its blocks went unchecked
+            if r.already then fail("families: the packs in %s were marked as generated before this assemble", outdir) end
             -- a generator that silently makes nothing would ship none of the family blocks
             local fixture_files = os.files(path.join(families_dir, "fixtures", "**.json"))
             if not r.already and r.entries > 0 and r.blocks + r.skipped == 0 then
@@ -1095,17 +1106,14 @@ local function assemble_content(projectdir, outdir, version)
             if not r.already and with_tests and #fixture_files > 0 and r.fixtures == 0 then
                 fail("families: %d fixture file(s) in tools/families/fixtures but no fixture block generated", #fixture_files)
             end
-            if r.already then
-                families_summary = "family blocks generated before"
-            else
-                families_summary = string.format("%d family blocks (%d hand-made), %d family fixtures", r.blocks, r.skipped, r.fixtures)
-            end
-            -- what the generator added to the shipped behavior pack (blocks, the sign text entity,
-            -- loot tables) and to data/gf (the container declarations F10 reads, the client's
-            -- connected texture corners) is checked for dangling references too
+            families_summary = string.format("%d family blocks (%d hand-made), %d family fixtures", r.blocks, r.skipped, r.fixtures)
+            -- what the generator added to the shipped packs (behavior: blocks, the sign text entity,
+            -- loot tables; resource: block models, the sign text client entity, its additions to
+            -- blocks.json and terrain_texture.json) and to data/gf (the container declarations F10
+            -- reads, the client's connected texture corners) is checked for dangling references too
             local seen = {}
             for _, j in ipairs(alljsons) do seen[norm(j)] = true end
-            local dirs = table.join(shipped_bpdirs, {path.join(outdir, "data", "gf")})
+            local dirs = table.join(shipped_dirs, {path.join(outdir, "data", "gf")})
             for _, dir in ipairs(dirs) do
                 for _, f in ipairs(os.isdir(dir) and os.files(path.join(dir, "**.json")) or {}) do
                     if not seen[norm(f)] and path.filename(f) ~= "manifest.json" then
