@@ -10,6 +10,16 @@
 //                               through the chest minecart proxy (27 slots)
 //   combat.ui_chest_screen      a BlockData container: the client mod's chest screen (companions)
 //                               or, on vanilla clients, the game's chest screen through the proxy
+//   combat.ui_tf_double_chest   TF's twilight oak double chest (F11's families declare it a container
+//                               of this contract) opened as a right click opens it: the client mod's
+//                               54-slot "Large Chest" (the right half first), the form on vanilla
+//   combat.ui_tf_trapped_chest  TF's trapped chest, a right click: the client mod's chest screen, the
+//                               game's chest screen through the proxy on vanilla clients
+//   combat.ui_missing_toast     TF's MissingAdvancementToast for progress_lich (F12's toast on the
+//                               client mod, the game's toast on vanilla clients)
+//   combat.ui_fx_particles      TF's large_flame through gf::fx in front of the player for 5 s (the
+//                               client mod: fx.particle, its native factory or resource pack effect;
+//                               vanilla clients: the game's particle packets)
 //   combat.ui_cleanup           removes what the tests above placed (the scenario runs it last)
 //
 // Rule R12 exception (client only): the blocks go right beside the real player, not in the test
@@ -19,6 +29,8 @@
 // combat.ui_cleanup removes them at once. Removing a block empties its container first (no drops),
 // puts the block that was there back and takes back the fixture block's container declaration.
 
+#include <algorithm>
+#include <tuple>
 #include <vector>
 
 #include "ll/api/service/Bedrock.h"
@@ -40,10 +52,12 @@
 
 #include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
+#include "feature/fx/Fx.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/inventory/InventoryInternal.h"
 #include "feature/loot/Loot.h"
 #include "feature/loot/LootInternal.h"
+#include "feature/progression/Progression.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
@@ -138,8 +152,12 @@ int cleanupUi() {
     return n;
 }
 
-/// Whether `player` has a container screen open (the game's, the client mod's chest screen).
-bool screenOpen(Player& player) { return player.mContainerManager.get() != nullptr || !gf::inventory::openedParts(player).empty(); }
+/// Whether `player` has a container screen open (the game's, the client mod's chest screen), or a
+/// placed container still has an opener (the form of a vanilla client's double chest).
+bool screenOpen(Player& player) {
+    if (player.mContainerManager.get() != nullptr || !gf::inventory::openedParts(player).empty()) return true;
+    return std::any_of(ui().placed.begin(), ui().placed.end(), [](Placed const& p) { return gf::inventory::viewerCount(p.pos) > 0; });
+}
 
 /// Removes the test blocks once the player's screen is closed: watched from 5 s after the test
 /// (the screen opens a few ticks later) for up to five minutes. A later UI test or
@@ -278,6 +296,122 @@ GF_REGISTER_SELFTEST("combat.ui_chest_screen", [](Context& ctx) -> ll::coro::Cor
     ctx.require(p != nullptr, "the player is still there");
     ctx.require(gf::inventory::openChestLike(*p, pos, 3, "container.chest"), "the chest screen opened");
     gf::log().info("combat ui: chest screen opened for {}", p->getRealName());
+});
+
+namespace {
+
+/// Fills the slots `stacks` names ({slot, item id, count}) of the container at `pos`.
+void fill(GlobalPos const& pos, std::initializer_list<std::tuple<int, char const*, int>> stacks) {
+    auto* region = gf::game::regionOf(pos.dim);
+    auto  h      = region ? gf::inventory::find(*region, gf::game::blockPos(pos)) : std::nullopt;
+    if (!h) return;
+    for (auto const& [slot, id, count] : stacks)
+        if (auto s = gf::game::items::make(id, count)) h->set(pos, slot, *s);
+}
+
+/// What a right click does: GameMode::useItemOn with the player's held item (the interactions
+/// dispatch, then the inventory contract's chest handler).
+bool useOn(Player& p, BlockPos const& bp) {
+    auto& held   = const_cast<ItemStack&>(p.getSelectedItem());
+    auto  result = p.mGameMode->useItemOn(held, bp, 1, Vec3{bp.x + .5f, bp.y + 1.f, bp.z + .5f}, HandSlot::Mainhand, nullptr, true);
+    return result.mSuccess;
+}
+
+} // namespace
+
+// TF's double chest, the halves placed north of the player facing it (south): a left half's partner
+// is west of it (ChestBlock#getConnectedDirection).
+GF_REGISTER_SELFTEST("combat.ui_tf_double_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        co_return;
+    }
+    beginUiTest(*p);
+    auto& region = p->getDimensionBlockSource();
+    auto  lbp    = besidePlayer(*p, 1, -2);
+    auto  rbp    = besidePlayer(*p, 0, -2);
+    auto const* left  = gf::game::blockWithStates("twilightforest:twilight_oak_chest", {{"twilightforest:type", "left"}, {"twilightforest:facing", "south"}});
+    auto const* right = gf::game::blockWithStates("twilightforest:twilight_oak_chest", {{"twilightforest:type", "right"}, {"twilightforest:facing", "south"}});
+    ctx.require(left && right, "the twilight oak chest halves");
+    ctx.require(place(region, lbp, *left) && place(region, rbp, *right), "a twilight oak double chest beside the player");
+    auto lpos = gf::game::globalPos(region, lbp), rpos = gf::game::globalPos(region, rbp);
+    ctx.require(gf::inventory::partsOf(lpos).size() == 2, "the halves pair");
+    fill(rpos, {{0, "twilightforest:naga_scale", 7}, {4, "twilightforest:raven_feather", 12}, {13, "twilightforest:liveroot", 20}, {26, "twilightforest:torchberries", 5}});
+    fill(lpos, {{0, "twilightforest:ironwood_ingot", 9}, {10, "twilightforest:steeleaf_ingot", 16}, {20, "twilightforest:fiery_ingot", 3}, {26, "twilightforest:arctic_fur", 4}});
+    auto id = p->getOrCreateUniqueID();
+    co_await ctx.ticks(10); // once the client has the blocks and the chat that ran the test has closed
+    p = ll::service::getLevel()->getPlayer(id);
+    ctx.require(p != nullptr, "the player is still there");
+    bool used = useOn(*p, lbp);
+    gf::log().info("combat ui: tf double chest opened for {} (use-on {})", p->getRealName(), used ? "succeeded" : "refused");
+    ctx.check(gf::inventory::viewerCount(lpos) == 1 && gf::inventory::viewerCount(rpos) == 1, "the right click opened both halves");
+});
+
+GF_REGISTER_SELFTEST("combat.ui_tf_trapped_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        co_return;
+    }
+    beginUiTest(*p);
+    auto&       region = p->getDimensionBlockSource();
+    auto        bp     = besidePlayer(*p, 0, 2);
+    auto const* chest  = gf::game::blockWithStates("twilightforest:canopy_trapped_chest", {{"twilightforest:facing", "north"}});
+    ctx.require(chest != nullptr, "the canopy trapped chest");
+    ctx.require(place(region, bp, *chest), "a canopy trapped chest beside the player");
+    auto pos = gf::game::globalPos(region, bp);
+    fill(pos, {{0, "twilightforest:knightmetal_ingot", 8}, {13, "twilightforest:carminite", 3}, {22, "twilightforest:naga_scale", 1}});
+    auto id = p->getOrCreateUniqueID();
+    co_await ctx.ticks(10);
+    p = ll::service::getLevel()->getPlayer(id);
+    ctx.require(p != nullptr, "the player is still there");
+    bool used = useOn(*p, bp);
+    gf::log().info("combat ui: tf trapped chest opened for {} (use-on {})", p->getRealName(), used ? "succeeded" : "refused");
+    ctx.check(gf::inventory::viewerCount(pos) == 1, "the right click opened it");
+});
+
+GF_REGISTER_SELFTEST("combat.ui_missing_toast", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        co_return;
+    }
+    beginUiTest(*p);
+    auto id = p->getOrCreateUniqueID();
+    co_await ctx.ticks(10); // once the chat that ran the test has closed
+    p = ll::service::getLevel()->getPlayer(id);
+    ctx.require(p != nullptr, "the player is still there");
+    gf::progression::showMissing(*p, "twilightforest:progress_lich");
+    gf::log().info("combat ui: missing advancement toast sent to {}", p->getRealName());
+});
+
+GF_REGISTER_SELFTEST("combat.ui_fx_particles", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        co_return;
+    }
+    beginUiTest(*p);
+    // 5 s of TF's large flame, 3 blocks in front of the eyes (16 a tick, spread as sendParticles)
+    struct Emitter {
+        static void run(std::int64_t playerId, int ticks) {
+            if (ticks <= 0) return;
+            gf::interactions::nextTick([playerId, ticks] {
+                ActorUniqueID uid;
+                uid.rawID = playerId;
+                auto  level = ll::service::getLevel();
+                auto* pl    = level ? level->getPlayer(uid) : nullptr;
+                if (!pl) return;
+                auto at = pl->getPosition() + pl->getViewVector(0.f) * 3.f;
+                gf::fx::particle(pl->getDimension(), "twilightforest:large_flame", at, Vec3{0, .05f, 0}, 16, nlohmann::json{{"spread", {.4, .4, .4}}});
+                run(playerId, ticks - 1);
+            });
+        }
+    };
+    Emitter::run(p->getOrCreateUniqueID().rawID, 100);
+    gf::log().info("combat ui: fx particles for {}", p->getRealName());
+    co_return;
 });
 
 GF_REGISTER_SELFTEST("combat.ui_cleanup", [](Context& ctx) {

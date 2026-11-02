@@ -10,15 +10,38 @@
 #   chest-screen.png       a container opened as a player opens it: the client mod's chest screen
 #                          (local, remote-mod: Java's generic_54 layout) or, on a vanilla client,
 #                          the game's chest screen through the proxy (remote-vanilla)
+#   tf-double-chest.png    TF's twilight oak double chest (F11's families declare TF's chests as this
+#                          contract's containers), right-clicked: the client mod's 54-slot "Large
+#                          Chest", the right half's slots first (local, remote-mod), the form on a
+#                          vanilla client (remote-vanilla)
+#   tf-trapped-chest.png   TF's canopy trapped chest, right-clicked: the client mod's chest screen, the
+#                          game's chest screen through the proxy on a vanilla client
+#   fx-particles.png       TF's large_flame through gf::fx in front of the player: the client mod gets
+#                          fx.particle (F12's native sink first, else the resource pack effect), a
+#                          vanilla client the game's particle packets
+#   missing-advancement-toast.png  TF's MissingAdvancementToast for progress_lich: the client mod's
+#                          toast through F12 (UPPER_TEXT and the title in white, the lich tower
+#                          miniature), the game's toast on a vanilla client
 # combat.ui_cleanup then removes the blocks the UI tests placed beside the player.
-# Open every screenshot and compare it with TF's chest GUI (vanilla's generic_54 layout).
+# Open every screenshot and compare it with TF's chest GUI (vanilla's generic_54 layout) and TF's
+# MissingAdvancementToast (the advancement toast frame, item at 6,8, text at 25,7 and 25,18).
 $ready = if ($script:Mode -eq 'local') { 'GloamingForest world ready' } else { '\[host\].*GloamingForest world ready' }
 Wait-LogLine $ready 120 | Out-Null
 Save-Screenshot 'hud' | Out-Null
 
-foreach ($t in 'combat.loot_tf_functions', 'combat.loot_number_rounding', 'combat.loot_set_contents', 'combat.fx', 'combat.progression') {
+foreach ($t in 'combat.loot_tf_functions', 'combat.loot_number_rounding', 'combat.loot_set_contents', 'combat.fx', 'combat.progression',
+    'combat.missing_advancement', 'combat.damage_type_tags', 'combat.loot_tags') {
     $r = Invoke-SelfTest $t
     if ($r.Fail -gt 0) { throw "$t failed" }
+}
+if ($script:Mode -eq 'local') {
+    # the client mod's own side (client build only): the toast F12 queues for showMissing, and
+    # fx.particle through F12's native particle sink
+    foreach ($t in 'combat.client_missing_toast', 'combat.client_fx_native') {
+        $r = Invoke-SelfTest $t
+        if ($r.Fail -gt 0) { throw "$t failed" }
+        if ($r.Pass -ne 1) { throw "$t did not run" }
+    }
 }
 
 # Every screen is shown and photographed even when an earlier one failed; the failures are thrown
@@ -73,6 +96,44 @@ if ($script:Mode -eq 'remote-vanilla') {
 } else {
     Show-ContainerTest 'combat.ui_chest_screen' 'chest-screen' 'combat ui: chest screen opened' 'inventory\.chest'
 }
+# TF's chests (F11's declared containers) opened by a right click
+if ($script:Mode -eq 'remote-vanilla') {
+    Show-ContainerTest 'combat.ui_tf_double_chest' 'tf-double-chest' 'combat ui: tf double chest opened for'
+    Show-ContainerTest 'combat.ui_tf_trapped_chest' 'tf-trapped-chest' 'inventory: \S+ opened the container at .* \(vanilla screen\)'
+} else {
+    Show-ContainerTest 'combat.ui_tf_double_chest' 'tf-double-chest' 'combat ui: tf double chest opened for' 'inventory\.chest'
+    Show-ContainerTest 'combat.ui_tf_trapped_chest' 'tf-trapped-chest' 'combat ui: tf trapped chest opened for' 'inventory\.chest'
+}
+
+# fx particles in front of the player (5 s)
+$mark = Get-LogMark
+$r = Invoke-SelfTest 'combat.ui_fx_particles'
+if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_fx_particles failed') }
+if (Test-ClientTrace) {
+    # the client mod's fx.particle handler: F12's native factory or the resource pack effect (one
+    # line per particle id and route in the run: combat.client_fx_native may have logged it already)
+    try { Write-Step "fx: $(Wait-LogLine 'fx: client particle twilightforest:large_flame' 20)" }
+    catch { $screenFailures.Add('the client mod did not handle fx.particle for twilightforest:large_flame') }
+} else {
+    Start-Sleep -Seconds 1
+}
+Save-Screenshot 'fx-particles' | Out-Null
+
+# the missing advancement toast (shown 10 s; 600 ms slide in)
+$mark = Get-LogMark
+$r = Invoke-SelfTest 'combat.ui_missing_toast'
+if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_missing_toast failed') }
+if (Test-ClientTrace) {
+    try {
+        Write-Step "toast: $(Wait-LogLine 'client toast: missing advancement twilightforest:progress_lich' 20 -Since $mark)"
+        Wait-LogLine 'ui: toast drawn: ' 20 -Since $mark | Out-Null
+    } catch { $screenFailures.Add('the client mod did not show the missing advancement toast') }
+} else {
+    Wait-LogLine 'combat ui: missing advancement toast sent to' 20 -Since $mark | Out-Null
+}
+Start-Sleep -Seconds 2
+Save-Screenshot 'missing-advancement-toast' | Out-Null
+
 # the UI tests' blocks and the fixture's container declaration go (nothing stays for later tests)
 $r = Invoke-SelfTest 'combat.ui_cleanup'
 if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_cleanup failed') }
