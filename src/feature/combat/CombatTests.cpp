@@ -198,7 +198,7 @@ GF_REGISTER_SELFTEST("combat.damage_types", [](Context& ctx) {
     ctx.check(c::causeFor("twilightforest:expired", false) == Cause::Override, "bypasses_invulnerability -> Override");
     ctx.check(c::causeFor("twilightforest:thrown_axe", true) == Cause::Projectile, "is_projectile -> Projectile");
     ctx.check(c::causeFor("twilightforest:hydra_bite", true) == Cause::EntityAttack, "plain damage with an attacker -> EntityAttack");
-    ctx.check(c::damageTypeHasTag("twilightforest:clamped", "minecraft:no_knockback"), "TF's tag memberships are built in");
+    ctx.check(c::damageTypeHasTag("twilightforest:clamped", "minecraft:no_knockback"), "TF's tag memberships come from the tag data (F9)");
 });
 
 GF_REGISTER_SELFTEST("combat.hurt_hook", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -1184,18 +1184,16 @@ GF_REGISTER_SELFTEST("combat.keepers_tag", [](Context& ctx) -> ll::coro::CoroTas
     namespace tags = gf::tags;
     auto pos = ctx.testPos(6020);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
-    // a real member when F9's tag data is loaded, else the test lookup names the stick a member
+    // a real member of TF's tag: the keeper asks F9's tag data (gf::tags), no test lookup
     auto        members = tags::members(tags::Registry::Item, "twilightforest:kept_on_death");
-    std::string kept    = "minecraft:stick";
+    std::string kept;
     for (auto const& m : members)
         if (items::make(m, 1)) {
             kept = m;
             break;
         }
-    if (members.empty()) {
-        ctx.info("no kept_on_death tag data (F9): the built-in keeper is checked with a test member");
-        gf::death::setTestKeptOnDeath([kept](std::string const& id) { return id == kept; });
-    }
+    ctx.require(!kept.empty(), "twilightforest:kept_on_death has an item member in F9's tag data (" + std::to_string(members.size()) + " members)");
+    ctx.check(tags::has(tags::Registry::Item, "twilightforest:kept_on_death", kept), "gf::tags::has answers the member");
     auto& sp = ctx.spawnPlayer("gf_combat_tag_keeper");
     auto  id = sp.getOrCreateUniqueID();
     auto  stack = items::make(kept, 1);
@@ -1203,7 +1201,6 @@ GF_REGISTER_SELFTEST("combat.keepers_tag", [](Context& ctx) -> ll::coro::CoroTas
     ctx.give(sp, *stack);
     gf::combat::hurt(sp, 1000.f, "twilightforest:expired");
     co_await ctx.ticks(2);
-    gf::death::setTestKeptOnDeath({});
     auto* p = ll::service::getLevel()->getPlayer(id);
     ctx.require(p != nullptr, "the player is still in the level");
     auto record = db::get("gf:combat:kept:" + p->getUuid().asString());
