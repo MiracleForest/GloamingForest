@@ -4,7 +4,10 @@
 // the game's keyboard controls and can be remapped there. Like Java's KeyMappings with the
 // IN_GAME conflict context, the handlers run only while the HUD is the top screen (no chat, no
 // container open). Every press and release is also forwarded to the server ("input.key" {id,
-// down}, gf::input::onKey) when it runs GloamingForest.
+// down}, gf::input::onKey) when it runs GloamingForest. LeviLamina binds a key into the game's
+// controls only when the game builds its input handler (after mod load, before the modules'
+// install()); a key registered later is delivered from the raw keyboard events (ll KeyInputEvent)
+// with its default key, with a warning (feature/ext/ui/Client.h).
 //
 // Movement: one hook on LocalPlayer::normalTick (rule R8). Before the player's tick the local
 // player's state is read into a MoveState, the handlers change it (by descending priority) and
@@ -20,6 +23,8 @@
 #include <mutex>
 #include <set>
 
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/input/KeyInputEvent.h"
 #include "ll/api/input/KeyHandle.h"
 #include "ll/api/input/KeyRegistry.h"
 #include "ll/api/memory/Hook.h"
@@ -49,10 +54,16 @@ struct Key {
     std::function<void()> onPress, onRelease;
     bool                  down   = false;
     bool                  logged = false; ///< first press logged (e2e, spike S5)
+    int                   code   = 0;     ///< the default key
+    bool                  late   = false; ///< registered after the input handler was built
 };
 struct State {
     std::mutex                 mutex;
     std::map<std::string, Key> keys;
+    /// Set when the modules are installed: the game has built its input handler by then, so
+    /// LeviLamina no longer binds new keys.
+    bool                       inputBuilt = false;
+    ll::event::ListenerPtr     rawKeys; ///< raw key events for late keys
 };
 State& st() {
     static State s;
@@ -107,7 +118,10 @@ void registerKey(std::string const& id, int defaultKey, std::string const& categ
             k.onRelease = std::move(onRelease);
             return;
         }
-        s.keys.emplace(id, Key{category, std::move(onPress), std::move(onRelease), false});
+        Key k{category, std::move(onPress), std::move(onRelease)};
+        k.code = defaultKey;
+        k.late = s.inputBuilt;
+        s.keys.emplace(id, std::move(k));
     }
     try {
         std::vector<int> codes;
@@ -116,13 +130,60 @@ void registerKey(std::string const& id, int defaultKey, std::string const& categ
         auto& handle   = registry.getOrCreateKey(id, codes, true);
         handle.registerButtonDownHandler([id](FocusImpact, IClientInstance&) { keys::handle(id, true); });
         handle.registerButtonUpHandler([id](FocusImpact, IClientInstance&) { keys::handle(id, false); });
-        // LeviLamina binds the keys when the game builds its input handler: register them from a
-        // module's load() (mod load), as the fixture does
-        if (currentClient() && currentClient()->getLocalPlayer()) log().warn("keys: {} registered in a running game may stay unbound until restart", id);
     } catch (std::exception const& e) {
         log().error("keys: could not register {}: {}", id, e.what());
     }
+    if (lateBound(id)) {
+        log().warn(
+            "keys: {} was registered after the game built its input handler: it works with its default key {} but is missing "
+            "from the controls until the next start (register keys from a module's load())",
+            id,
+            defaultKey
+        );
+    }
 }
+
+bool lateBound(std::string const& id) {
+    auto&           s = st();
+    std::lock_guard lock(s.mutex);
+    auto            it = s.keys.find(id);
+    return it != s.keys.end() && it->second.late;
+}
+
+namespace {
+/// Raw key events: the late keys bound to `code` (the bound ones come through their key handles).
+void rawKey(int code, bool down) {
+    std::vector<std::string> ids;
+    {
+        auto&           s = st();
+        std::lock_guard lock(s.mutex);
+        for (auto const& [id, k] : s.keys)
+            if (k.late && k.code > 0 && k.code == code) ids.push_back(id);
+    }
+    for (auto const& id : ids) handle(id, down);
+}
+
+void markInputBuilt() {
+    auto&           s = st();
+    std::lock_guard lock(s.mutex);
+    s.inputBuilt = true;
+}
+
+void listenRawKeys(bool on) {
+    auto& s   = st();
+    auto& bus = ll::event::EventBus::getInstance();
+    if (on && !s.rawKeys) {
+        s.rawKeys = bus.emplaceListener<ll::event::KeyInputEvent>([](ll::event::KeyInputEvent& ev) {
+            try {
+                rawKey(ev.keyCode(), ev.isDown());
+            } catch (...) {}
+        });
+    } else if (!on && s.rawKeys) {
+        bus.removeListener(s.rawKeys);
+        s.rawKeys = nullptr;
+    }
+}
+} // namespace
 
 bool down(std::string const& id) {
     auto&           s = st();
@@ -232,11 +293,16 @@ public:
     void load() {
         if (!mHooked) MovementLocalTickHook::hook();
         mHooked = true;
+        keys::listenRawKeys(true);
     }
-    void install() { load(); }
+    void install() {
+        load();
+        keys::markInputBuilt(); // the keys of every module's load() are bound by now
+    }
     void uninstall() {
         if (mHooked) MovementLocalTickHook::unhook();
         mHooked = false;
+        keys::listenRawKeys(false);
     }
 
 private:

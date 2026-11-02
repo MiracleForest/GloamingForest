@@ -17,10 +17,13 @@
 // - toast: TF's toasts (LockedBiomeToast, MissingAdvancementToast) in Java's ToastComponent: 160 x
 //   32 at the top right over every screen, 5 slots (a toast keeps the slot it got; more wait in a
 //   queue), 600 ms slide in / out with the in / out sound (Bedrock's UI toast sound), item at
-//   (6, 8), title at (25, 7) in -256, body at (25, 18) in white, hidden after `ms` shown. The
-//   background is a redraw of the advancement frame (Mojang's sprite is not reused).
+//   (6, 8), title at (25, 7) and body at (25, 18) in the toast's colours (LockedBiomeToast: -256 and
+//   white, the contract's default; MissingAdvancementToast: white and white), hidden after `ms`
+//   shown; nothing is drawn (and the queue waits) while the GUI is hidden (F1), as ToastComponent.
+//   The background is a redraw of the advancement frame (Mojang's sprite is not reused).
 // - tooltip: lines under the item name of every hover text (ItemStackBase::getFormattedHovertext);
 //   ContainerScreen's hover tooltips show that whole hover text (Java's getTooltipFromItem).
+// - textures: resource pack paths, or absolute file paths read from the disk (client/render/TexturePath.h).
 
 #ifdef GF_CLIENT
 
@@ -43,6 +46,7 @@
 #include "mc/client/game/ClientInstance.h"
 #include "mc/client/gui/screens/ScreenView.h"
 #include "mc/client/multiplayer/ClientLevel.h"
+#include "mc/client/options/IOptionRegistry.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/client/gui/screens/ScreenContext.h"
 #include "mc/client/renderer/RenderMaterialGroup.h"
@@ -74,6 +78,7 @@
 #include "mc/world/item/ItemStackBase.h"
 
 #include "client/Client.h"
+#include "client/render/TexturePath.h"
 #include "feature/ext/ui/Client.h"
 #include "game/Items.h"
 #include "mod/Log.h"
@@ -119,13 +124,13 @@ mce::TexturePtr* textureOf(std::string const& path, MinecraftUIRenderContext* ui
     if (auto it = cache.textures.find(key); it != cache.textures.end()) return it->second;
     mce::TexturePtr* t = nullptr;
     if (ui) {
-        t = new mce::TexturePtr(ui->getTexture(ResourceLocation(Core::PathView(path)), false));
+        t = new mce::TexturePtr(ui->getTexture(render::textureLocation(path), false));
     } else {
         auto* c = currentClient();
         if (!c) return nullptr;
         auto group = c->getTextureGroup();
         if (!group) return nullptr;
-        t = new mce::TexturePtr(group->getTexture(ResourceLocation(Core::PathView(path)), false, std::nullopt, cg::TextureSetLayerType::Color));
+        t = new mce::TexturePtr(group->getTexture(render::textureLocation(path), false, std::nullopt, cg::TextureSetLayerType::Color));
     }
     cache.textures.emplace(key, t);
     return t;
@@ -230,10 +235,12 @@ constexpr unsigned kSlotHover   = 0x80FFFFFF; // AbstractContainerScreen.renderS
 struct ScreenSide {
     std::map<int, std::shared_ptr<ItemStack>> items;
     std::string                               title;
+    std::uint64_t                             touched = 0; ///< ContainerItems::pass when last set or drawn
 };
 struct ContainerItems {
     std::mutex                                             mutex;
     std::unordered_map<ContainerScreen const*, ScreenSide> items;
+    std::uint64_t                                          pass = 0; ///< UI render passes seen by prune()
 };
 ContainerItems& containerItems() {
     static ContainerItems c;
@@ -250,6 +257,18 @@ Rect inventoryRect(ContainerScreen const& s, int slot) {
 }
 
 bool skinHasInventory(ContainerScreen const& s) { return !s.showInventory && s.height >= 166; }
+
+/// Drops the states of screens the framework closed (its unique_ptr is gone; the ContainerScreen
+/// header has no destructor of ours): every UI render pass, a state whose screen is not the open one
+/// and was not set or drawn in the last few passes goes.
+void pruneContainerStates() {
+    auto&           ci = containerItems();
+    std::lock_guard lock(ci.mutex);
+    ++ci.pass;
+    if (ci.items.empty()) return;
+    auto const* open = current();
+    std::erase_if(ci.items, [&](auto const& e) { return e.first != open && ci.pass - e.second.touched > 4; });
+}
 } // namespace
 
 ContainerScreen::ContainerScreen(std::string title, std::string skin, float width, float height)
@@ -273,6 +292,7 @@ void ContainerScreen::renderExtra(Canvas& c, float mx, float my) {
         auto&           ci   = containerItems();
         std::lock_guard lock(ci.mutex);
         auto&           side = ci.items[this];
+        side.touched         = ci.pass;
         if (skinned && !title.empty()) side.title = std::exchange(title, std::string{}); // drawn here from now on
         if (!skinned && title.empty() && !side.title.empty()) title = side.title;        // skin gone: the framework's title
         shownTitle = side.title.empty() ? title : side.title;
@@ -326,13 +346,11 @@ namespace ui {
 void setContainerItems(screen::ContainerScreen& s, nlohmann::json const& items) {
     auto&           ci = screen::containerItems();
     std::lock_guard lock(ci.mutex);
-    // forget screens that were closed (their pointers may be reused)
-    auto* now = screen::current();
-    for (auto it = ci.items.begin(); it != ci.items.end();) {
-        if (it->first != &s && it->first != now) it = ci.items.erase(it);
-        else ++it;
-    }
-    auto& map = ci.items[&s].items;
+    // states of closed screens go in pruneContainerStates (a reused address starts afresh in the constructor)
+
+    auto& side   = ci.items[&s];
+    side.touched = ci.pass;
+    auto& map    = side.items;
     map.clear();
     if (!items.is_object()) return;
     for (auto const& [k, v] : items.items()) {
@@ -340,6 +358,12 @@ void setContainerItems(screen::ContainerScreen& s, nlohmann::json const& items) 
             map[std::stoi(k)] = screen::iconOf(v);
         } catch (...) {}
     }
+}
+
+std::size_t containerStateCount() {
+    auto&           ci = screen::containerItems();
+    std::lock_guard lock(ci.mutex);
+    return ci.items.size();
 }
 
 int containerSlotAt(screen::ContainerScreen const& s, float mx, float my) {
@@ -419,6 +443,7 @@ constexpr char  kToastSound[] = "random.toast";
 /// A toast on screen (Java's ToastInstance): it keeps its slot until it has slid out.
 struct Shown {
     ToastSpec                  spec;
+    Style                      style;
     std::shared_ptr<ItemStack> icon;
     std::string                title, body;
     int                        index         = 0;
@@ -426,12 +451,17 @@ struct Shown {
     long                       visibleTime   = 0;
     bool                       show          = true; ///< Visibility.SHOW / HIDE
 };
+struct Queued {
+    ToastSpec spec;
+    Style     style;
+};
 struct Toasts {
-    std::mutex            mutex;
-    std::vector<Shown>    visible;
-    std::deque<ToastSpec> queued;
-    bool                  occupied[kSlots]{};
-    bool                  logged = false;
+    std::mutex         mutex;
+    std::vector<Shown> visible;
+    std::deque<Queued> queued;
+    bool               occupied[kSlots]{};
+    bool               logged       = false;
+    bool               hiddenLogged = false;
 };
 Toasts& toasts() {
     static Toasts t;
@@ -477,8 +507,8 @@ bool renderOne(screen::Canvas& c, float guiWidth, Shown& s, long now) {
     float y = static_cast<float>(s.index) * kToastHeight;
     drawBackground(c, x, y);
     if (s.icon) c.item(*s.icon, x + 6, y + 8);
-    c.text(x + 25, y + 7, s.title, 0xFFFFFF00, screen::Align::Left, false);
-    c.text(x + 25, y + 18, s.body, 0xFFFFFFFF, screen::Align::Left, false);
+    c.text(x + 25, y + 7, s.title, s.style.titleColor, screen::Align::Left, false);
+    c.text(x + 25, y + 18, s.body, s.style.bodyColor, screen::Align::Left, false);
     // the toast's own render: hidden once it was shown `ms` (LockedBiomeToast: timer >= 10000)
     bool show = now - s.visibleTime < std::max(0, s.spec.ms);
     if (show != s.show) {
@@ -494,7 +524,16 @@ bool renderOne(screen::Canvas& c, float guiWidth, Shown& s, long now) {
 void render(screen::Canvas& c, float guiWidth) {
     auto&           t = toasts();
     std::lock_guard lock(t.mutex);
-    long const      now = nowMs();
+    // Java's ToastComponent.render does nothing while options.hideGui (the queue waits too)
+    if (hud::guiHidden()) {
+        if (!t.hiddenLogged && !(t.visible.empty() && t.queued.empty())) {
+            t.hiddenLogged = true;
+            log().info("ui: toasts not drawn while the GUI is hidden");
+        }
+        return;
+    }
+    t.hiddenLogged = false;
+    long const now = nowMs();
     for (auto it = t.visible.begin(); it != t.visible.end();) {
         if (renderOne(c, guiWidth, *it, now)) {
             t.occupied[it->index] = false;
@@ -513,7 +552,8 @@ void render(screen::Canvas& c, float guiWidth) {
             if (!t.occupied[i]) free = i;
         if (free < 0) break;
         Shown s;
-        s.spec  = std::move(t.queued.front());
+        s.spec  = std::move(t.queued.front().spec);
+        s.style = t.queued.front().style;
         s.index = free;
         t.queued.pop_front();
         if (!s.spec.iconItem.empty()) {
@@ -527,13 +567,53 @@ void render(screen::Canvas& c, float guiWidth) {
 }
 } // namespace
 
-void show(ToastSpec const& spec) {
+void show(ToastSpec const& spec) { show(spec, Style{}); }
+
+void show(ToastSpec const& spec, Style style) {
     auto&           t = toasts();
     std::lock_guard lock(t.mutex);
-    t.queued.push_back(spec);
+    t.queued.push_back({spec, style});
     t.logged = false;
 }
+
+std::size_t cancel(std::string const& titleKey) {
+    auto&           t = toasts();
+    std::lock_guard lock(t.mutex);
+    std::size_t     n = std::erase_if(t.queued, [&](Queued const& q) { return q.spec.titleKey == titleKey; });
+    for (auto it = t.visible.begin(); it != t.visible.end();) {
+        if (it->spec.titleKey != titleKey) {
+            ++it;
+            continue;
+        }
+        t.occupied[it->index] = false;
+        it                    = t.visible.erase(it);
+        ++n;
+    }
+    return n;
+}
+
+std::optional<Style> styleOfToast(std::string const& titleKey) {
+    auto&           t = toasts();
+    std::lock_guard lock(t.mutex);
+    for (auto const& s : t.visible)
+        if (s.spec.titleKey == titleKey) return s.style;
+    for (auto const& q : t.queued)
+        if (q.spec.titleKey == titleKey) return q.style;
+    return std::nullopt;
+}
 } // namespace toast
+
+namespace hud {
+bool guiHidden() {
+    auto* c = currentClient();
+    if (!c) return false;
+    try {
+        return c->getOptions().getHideHud();
+    } catch (...) {
+        return false;
+    }
+}
+} // namespace hud
 
 namespace ui {
 std::size_t toastCount() {
@@ -712,6 +792,7 @@ public:
         mListeners.push_back(bus.emplaceListener<ll::event::AfterUIRenderEvent>(
             [](ll::event::AfterUIRenderEvent& ev) {
                 try {
+                    screen::pruneContainerStates();
                     if (ev.screenView().getScreenName() == "hud_screen") renderHud(ev.uiRenderContext());
                     // not twice when the cancelled BeforeUIRenderEvent of this scene drew them
                     bool drawn          = toastsDrawnFor() == &ev.screenView();

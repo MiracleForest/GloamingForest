@@ -6,5 +6,6 @@
   "gf.ui.fixture.clicks": "点击次数：{}",
   "gf.ui.fixture.hud_line": "HUD 图层",
   "gf.ui.fixture.toast_title": "界面测试件",
-  "gf.ui.fixture.toast_body": "客户端框架的提示框"
+  "gf.ui.fixture.toast_body": "客户端框架的提示框",
+  "gf.ui.fixture.toast_advancement": "进度提示框"
 }

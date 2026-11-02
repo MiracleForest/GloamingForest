@@ -41,10 +41,18 @@ GF_REGISTER_SELFTEST("ui.client_ui", [](Context& ctx) {
     layers = cl::ui::hudLayers();
     ctx.check(std::find(layers.begin(), layers.end(), "ui.test_a") == layers.end(), "layers can be removed");
 
-    // toasts queue up (shown for 1 ms)
+    // toasts queue up with their style, and are cancelled again before they are drawn (gf_test keys:
+    // nothing shows on the real client)
     auto before = cl::ui::toastCount();
-    cl::toast::show({.iconItem = "minecraft:map", .titleKey = "gf.ui.fixture.toast_title", .bodyKey = "gf.ui.fixture.toast_body", .ms = 1});
-    ctx.check(cl::ui::toastCount() == before + 1, "a toast was queued");
+    cl::toast::show({.iconItem = "minecraft:map", .titleKey = "gf_test.ui.toast_a", .bodyKey = "gf_test.ui.toast_body", .ms = 1});
+    cl::toast::show({.iconItem = "minecraft:map", .titleKey = "gf_test.ui.toast_b", .bodyKey = "gf_test.ui.toast_body", .ms = 1}, cl::toast::styleOf(cl::toast::Kind::MissingAdvancement));
+    ctx.check(cl::ui::toastCount() == before + 2, "two toasts were queued");
+    auto styleA = cl::toast::styleOfToast("gf_test.ui.toast_a"), styleB = cl::toast::styleOfToast("gf_test.ui.toast_b");
+    ctx.check(styleA && styleA->titleColor == 0xFFFFFF00u && styleA->bodyColor == 0xFFFFFFFFu, "LockedBiomeToast: title -256, body white");
+    ctx.check(styleB && styleB->titleColor == 0xFFFFFFFFu && styleB->bodyColor == 0xFFFFFFFFu, "MissingAdvancementToast: white title and body");
+    ctx.check(cl::toast::cancel("gf_test.ui.toast_a") == 1 && cl::toast::cancel("gf_test.ui.toast_b") == 1, "the toasts are cancelled");
+    ctx.check(cl::ui::toastCount() == before && !cl::toast::styleOfToast("gf_test.ui.toast_a"), "no toast is left");
+    ctx.info(std::string("GUI hidden (F1): ") + (cl::hud::guiHidden() ? "yes" : "no"));
 
     // tooltips: lines of the item's providers, removed again at the end
     cl::tooltip::add("gf_test:fixture_item", [](ItemStack const& s, std::vector<std::string>& lines) {
@@ -63,10 +71,28 @@ GF_REGISTER_SELFTEST("ui.client_ui", [](Context& ctx) {
     ctx.check(cl::ui::hoverLines(ItemStack::EMPTY_ITEM()).empty(), "an empty stack has no hover text");
     ctx.check(cl::ui::removeTooltips("gf_test:fixture_item") && cl::ui::tooltipLines(*stick).empty(), "the provider is removed");
 
-    // the fixture key (development builds deploy the gf_test packs)
+    // the fixture keys (development builds deploy the gf_test packs): "ui.fixture" from mod load is
+    // bound by LeviLamina, "ui.fixture_late" from install comes from the raw key events
     auto keys = cl::keys::registered();
     ctx.info("registered keys: " + std::to_string(keys.size()));
-    ctx.check(!cl::keys::down("ui.not_a_key"), "an unknown key is up");
+    ctx.check(!cl::keys::down("ui.not_a_key") && !cl::keys::lateBound("ui.not_a_key"), "an unknown key is up and not late");
+    if (std::find(keys.begin(), keys.end(), "ui.fixture_late") != keys.end()) {
+        ctx.check(cl::keys::lateBound("ui.fixture_late"), "a key registered at install is late");
+        ctx.check(!cl::keys::lateBound("ui.fixture"), "a key registered at mod load is bound");
+    }
+});
+
+// ContainerScreen states (slot stacks, the title) go away once their screen is no longer open.
+GF_REGISTER_SELFTEST("ui.client_container_state", [](Context& ctx) -> ll::coro::CoroTask<> {
+    std::size_t before = cl::ui::containerStateCount();
+    {
+        cl::screen::ContainerScreen s("ui test", "", 176, 166);
+        s.slots.push_back({0, 8, 18});
+        cl::ui::setContainerItems(s, Json{{"0", gf::game::items::toJson(*gf::game::items::make("minecraft:map"))}});
+        ctx.check(cl::ui::containerStateCount() >= 1, "a state for the screen"); // (states of closed screens may go meanwhile)
+    } // the screen is gone without ever being open: the UI render passes drop its state
+    for (int i = 0; i < 40 && cl::ui::containerStateCount() > before; ++i) co_await ctx.ticks(1);
+    ctx.check(cl::ui::containerStateCount() <= before, "the state of a closed screen is dropped, " + std::to_string(cl::ui::containerStateCount()) + " left");
 });
 
 GF_REGISTER_SELFTEST("ui.client_render", [](Context& ctx) {
@@ -157,6 +183,25 @@ GF_REGISTER_SELFTEST("ui.client_world", [](Context& ctx) {
     ctx.check(decs.size() == 1 && decs[0].x == 10 && decs[0].z == -20 && decs[0].rotation == 4, "decorations kept per map");
     cl::maps::setDecorations(kMap, {});
     ctx.check(cl::maps::decorationsOf(kMap).empty(), "an empty list removes them");
+    // TF's decoration renderers: a conquered icon (red X) and the player icon on top
+    cl::maps::setDecorations(
+        kMap,
+        {{.type = "gf_test:ui_test_icon", .x = 0, .z = 0, .rotation = 0, .name = ""}, {.type = "minecraft:player", .x = 2, .z = 2, .rotation = 8, .name = ""}},
+        {{.conquered = true}}
+    );
+    auto styles = cl::maps::stylesOf(kMap);
+    ctx.check(styles.size() == 2 && styles[0].conquered && !styles[0].topmost && !styles[1].conquered && !styles[1].topmost, "one style per decoration, missing ones plain");
+    cl::maps::setDecorations(kMap, {{.type = "minecraft:player", .x = 2, .z = 2, .rotation = 8, .name = ""}}, {{.topmost = true}});
+    ctx.check(cl::maps::stylesOf(kMap).size() == 1 && cl::maps::stylesOf(kMap)[0].topmost, "the player icon on top");
+    cl::maps::setDecorations(kMap, {});
+    ctx.check(cl::maps::stylesOf(kMap).empty(), "styles go with the decorations");
+    // icons: registered textures (whole), vanilla icons as cells of the vanilla atlas
+    auto own = cl::maps::iconFor("gf_test:ui_test_icon");
+    ctx.check(own && own->texture == "textures/gui/ui/fixture_geo" && own->u0 == 0 && own->u1 == 1, "a registered icon is its whole texture");
+    auto player = cl::maps::iconFor("minecraft:player"), x = cl::maps::iconFor("minecraft:red_x"), byIndex = cl::maps::iconFor("minecraft:4");
+    ctx.check(player && player->texture == "textures/map/map_icons" && player->u0 == 0 && player->v0 == 0 && player->u1 == .25f, "the player icon is the atlas's first cell");
+    ctx.check(x && byIndex && x->u0 == 0 && x->v0 == .25f && byIndex->v0 == .25f && x->v1 == .5f, "the red X is cell 4, by name and by index");
+    ctx.check(!cl::maps::iconFor("minecraft:16") && !cl::maps::iconFor("twilightforest:unknown"), "no icon for others");
     ctx.check(cl::maps::removeIcon("gf_test:ui_test_icon") && cl::maps::iconOf("gf_test:ui_test_icon").empty(), "icon removed");
     ctx.check(!cl::maps::view(-123456789).has_value(), "an unknown map has no view");
 

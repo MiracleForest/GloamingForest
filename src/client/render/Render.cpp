@@ -1,4 +1,11 @@
-// "client.render" (F12). Client build only.
+// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
+//   src/main/java/twilightforest/client/renderer/map/ConqueredMapIconRenderer.java
+//   src/main/java/twilightforest/client/renderer/map/MagicMapPlayerIconRenderer.java
+// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
+// of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
+//// "client.render" (F12). Client build only.
 //
 // One hook per render event (rule R8: units register here):
 // - world: LevelRendererCamera::renderBlockEntities, opaque pass: onWorld callbacks, then the block
@@ -40,6 +47,7 @@
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/client/ClientExitLevelEvent.h"
+#include "ll/api/event/client/ClientJoinLevelEvent.h"
 #include "ll/api/memory/Hook.h"
 
 #include "mc/client/game/ClientInstance.h"
@@ -101,6 +109,7 @@
 
 #include "client/Client.h"
 #include "client/render/Geo.h"
+#include "client/render/TexturePath.h"
 #include "feature/ext/ui/Client.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
@@ -162,7 +171,7 @@ mce::TexturePtr* textureOf(std::string const& path) {
     if (!c) return nullptr;
     auto group = c->getTextureGroup();
     if (!group) return nullptr;
-    auto* t = new mce::TexturePtr(group->getTexture(ResourceLocation(Core::PathView(path)), false, std::nullopt, cg::TextureSetLayerType::Color));
+    auto* t = new mce::TexturePtr(group->getTexture(textureLocation(path), false, std::nullopt, cg::TextureSetLayerType::Color));
     cache.emplace(path, t);
     return t;
 }
@@ -670,44 +679,69 @@ void captureMap(MapItemSavedData const& data) {
     scope.maps.emplace_back(id, space);
 }
 
+/// One textured quad of a map decoration: Java's corners (-1, 1) (1, 1) (1, -1) (-1, -1) with v from
+/// the top, at depth `z` of the current matrix; both windings.
+void drawMapQuad(ScreenContext& screen, mce::MaterialPtr const& material, mce::TexturePtr const& tex, maps::Icon const& icon, float z) {
+    Tessellator& tess = screen.tessellator;
+    tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 8, false);
+    tess.color(1.f, 1.f, 1.f, 1.f);
+    Vec2 tl{icon.u0, icon.v0}, tr{icon.u1, icon.v0}, br{icon.u1, icon.v1}, bl{icon.u0, icon.v1};
+    tess.simpleQuad(Vec3{-1, 1, z}, tl, Vec3{1, 1, z}, tr, Vec3{1, -1, z}, br, Vec3{-1, -1, z}, bl);
+    tess.simpleQuad(Vec3{-1, -1, z}, bl, Vec3{1, -1, z}, br, Vec3{1, 1, z}, tr, Vec3{-1, 1, z}, tl);
+    TextureVariant variant{tex};
+    MeshHelpers::renderMeshImmediately(screen, tess, material, variant, OffscreenCaptureDescription{});
+}
+
 /// TF's decorations over a map, as Java's MapRenderer draws a decoration: at (x / 2 + 64, z / 2 + 64)
-/// of the 128 x 128 map, turned by rotation * 22.5 degrees, an 8 x 8 quad of the icon texture.
+/// of the 128 x 128 map, turned by rotation * 22.5 degrees, an 8 x 8 quad of the icon at depth
+/// index * -0.001. TF's IMapDecorationRenderers: MagicMapPlayerIconRenderer draws its icon at depth
+/// -0.3 (topmost), ConqueredMapIconRenderer adds the red X (scale 2, translated (-1, -1, -0.005),
+/// depth -0.095) and lets the icon be drawn as well.
 void drawMapDecorations(BaseActorRenderContext& rc, std::int64_t mapId, glm::mat4 const& mapSpace) {
     auto list = maps::decorationsOf(mapId);
     if (list.empty()) return;
+    auto                    styles   = maps::stylesOf(mapId);
     auto&                   screen   = rc.mScreenContext;
     mce::MaterialPtr const* material = modelMaterial(&rc); // the alpha-tested model material drawGeo uses
     if (!material) return;
     auto& world = screen.camera.worldMatrixStack.get();
     infoOnce("map_space", "map space " + matrixText(mapSpace));
-    Tessellator& tess = screen.tessellator;
-    int          k    = 0;
-    for (auto const& d : list) {
-        auto icon = maps::iconOf(d.type);
-        if (icon.empty()) {
+    auto redX = maps::iconFor("minecraft:red_x");
+    int  k    = 0;
+    for (std::size_t i = 0; i < list.size(); ++i) {
+        auto const& d     = list[i];
+        auto        style = i < styles.size() ? styles[i] : maps::DecorationStyle{};
+        float       index = static_cast<float>(k++);
+        glm::mat4   at    = glm::translate(glm::mat4{1.f}, glm::vec3{static_cast<float>(d.x) / 2.f + 64.f, static_cast<float>(d.z) / 2.f + 64.f, 0.f});
+        at                = glm::rotate(at, glm::radians(static_cast<float>(d.rotation * 360) / 16.f), glm::vec3{0, 0, 1});
+        if (style.conquered && redX) {
+            // ConqueredMapIconRenderer: the red X, then the icon (the renderer returns false)
+            if (auto* tex = textureOf(redX->texture)) {
+                auto      ref = world.push(false);
+                glm::mat4 m   = glm::translate(glm::scale(at, glm::vec3{2.f, 2.f, 2.f}), glm::vec3{-1.f, -1.f, -0.005f});
+                ref.mat->_m.get() = mapSpace * m;
+                drawMapQuad(screen, *material, *tex, *redX, -0.095f);
+                infoOnce("map_conquered", "map red X drawn over a conquered icon (" + d.type + ")");
+            }
+        }
+        auto icon = maps::iconFor(d.type);
+        if (!icon) {
             warn("map_icon:" + d.type, "no icon for map decoration " + d.type);
             continue;
         }
-        auto* tex = textureOf(icon);
+        auto* tex = textureOf(icon->texture);
         if (!tex) continue;
         auto      ref = world.push(false);
-        glm::mat4 m   = glm::translate(glm::mat4{1.f}, glm::vec3{static_cast<float>(d.x) / 2.f + 64.f, static_cast<float>(d.z) / 2.f + 64.f, -0.02f});
-        m             = glm::rotate(m, glm::radians(static_cast<float>(d.rotation * 360) / 16.f), glm::vec3{0, 0, 1});
+        glm::mat4 m   = glm::translate(at, glm::vec3{0.f, 0.f, -0.02f});
         m             = glm::scale(m, glm::vec3{4.f, 4.f, 3.f});
         m             = glm::translate(m, glm::vec3{-0.125f, 0.125f, 0.f});
         ref.mat->_m.get() = mapSpace * m;
-        float z           = static_cast<float>(k++) * -0.001f;
-        tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 8, false);
-        tess.color(1.f, 1.f, 1.f, 1.f);
-        // Java's corners (-1, 1) (1, 1) (1, -1) (-1, -1) with v from the top; both windings
-        tess.simpleQuad(Vec3{-1, 1, z}, Vec2{0, 0}, Vec3{1, 1, z}, Vec2{1, 0}, Vec3{1, -1, z}, Vec2{1, 1}, Vec3{-1, -1, z}, Vec2{0, 1});
-        tess.simpleQuad(Vec3{-1, -1, z}, Vec2{0, 1}, Vec3{1, -1, z}, Vec2{1, 1}, Vec3{1, 1, z}, Vec2{1, 0}, Vec3{-1, 1, z}, Vec2{0, 0});
-        TextureVariant variant{*tex};
-        MeshHelpers::renderMeshImmediately(screen, tess, *material, variant, OffscreenCaptureDescription{});
+        // MagicMapPlayerIconRenderer: a fixed depth instead of the index's, so it is always on top
+        drawMapQuad(screen, *material, *tex, *icon, style.topmost ? -0.3f : index * -0.001f);
+        if (style.topmost) infoOnce("map_topmost", "map icon drawn on top (" + d.type + ")");
     }
     infoOnce("map", "map decorations drawn (" + std::to_string(list.size()) + " on map " + std::to_string(mapId) + ")");
 }
-
 } // namespace
 
 } // namespace gf::client::render
@@ -1092,11 +1126,20 @@ public:
     void load() {
         geo::setRoot(gf::Mod::getInstance().getSelf().getModDir());
         if (!mExit) {
+            // The chunk builders cache registry entries by Block pointer: a world loaded later in the
+            // same process registers its custom blocks anew, and a freed Block's address may come back
+            // as another block, so every level change drops those caches (a new registry version).
             mExit = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) {
-                auto&           rg = reg();
-                std::lock_guard lock(rg.trackedMutex);
-                rg.tracked.clear();
-                rg.dim = -1;
+                auto& rg = reg();
+                {
+                    std::lock_guard lock(rg.trackedMutex);
+                    rg.tracked.clear();
+                    rg.dim = -1;
+                }
+                rg.version.fetch_add(1, std::memory_order_acq_rel);
+            });
+            mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientJoinLevelEvent>([](auto&) {
+                reg().version.fetch_add(1, std::memory_order_acq_rel);
             });
         }
     }
@@ -1131,11 +1174,14 @@ public:
         render_hooks::RenderExtractHook::unhook();
         render_hooks::RenderWorldHook::unhook();
         if (mExit) ll::event::EventBus::getInstance().removeListener(mExit);
+        if (mJoin) ll::event::EventBus::getInstance().removeListener(mJoin);
         mExit = nullptr;
+        mJoin = nullptr;
     }
 
 private:
     ll::event::ListenerPtr mExit;
+    ll::event::ListenerPtr mJoin;
 };
 } // namespace
 } // namespace gf::client::render

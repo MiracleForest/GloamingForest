@@ -200,6 +200,7 @@ struct Library {
     std::filesystem::path        root;
     bool                         loaded = false;
     std::map<std::string, Model> models;
+    std::map<std::string, Model> added; ///< add(): kept across setRoot
 };
 Library& library() {
     static Library l;
@@ -241,8 +242,17 @@ Model const* find(std::string const& id) {
     auto&           l = library();
     std::lock_guard lock(l.mutex);
     if (!l.loaded) loadAll(l);
-    auto it = l.models.find(id);
-    return it == l.models.end() ? nullptr : &it->second;
+    if (auto it = l.models.find(id); it != l.models.end()) return &it->second;
+    auto it = l.added.find(id);
+    return it == l.added.end() ? nullptr : &it->second;
+}
+
+std::size_t add(std::map<std::string, Model> models) {
+    auto&           l = library();
+    std::lock_guard lock(l.mutex);
+    std::size_t     n = 0;
+    for (auto& [id, m] : models) n += l.added.try_emplace(id, std::move(m)).second ? 1 : 0;
+    return n;
 }
 
 } // namespace gf::client::render::geo

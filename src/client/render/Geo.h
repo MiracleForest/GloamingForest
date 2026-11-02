@@ -42,6 +42,10 @@ struct Model {
 [[nodiscard]] Model const* find(std::string const& id);
 /// Directory scanned by `find` (the mod directory); set at load.
 void setRoot(std::filesystem::path const& modDir);
+/// Adds geometries that are not in a resource pack (the development fixture's, built into the mod);
+/// an id already added keeps its first geometry (pointers from `find` stay valid). Returns how many
+/// were added.
+std::size_t add(std::map<std::string, Model> models);
 
 } // namespace gf::client::render::geo
 

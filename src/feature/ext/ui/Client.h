@@ -8,10 +8,18 @@
 //   threads and spaces every registry runs in; removal of registrations (fixtures, selftests).
 // - ui: textures in GUI pixels (TF's GUI skins), the item stacks of a ContainerScreen's slots, the
 //   hit tests of its slots and of the player inventory drawn inside a TF skin, an item's hover text.
+// - toast: TF's two toast styles (LockedBiomeToast, MissingAdvancementToast) and their colours;
+//   toasts are not drawn while the GUI is hidden (F1), as Java's ToastComponent.
+// - hud::guiHidden: Java's options.hideGui for HUD layers (TF's overlays check it themselves).
 // - particles::spawn: runs a native particle factory (the client handler of fx.particle uses it);
 //   what a factory gets when the engine spawns the particle (molang variables).
-// - maps::setDecorations: TF map decorations drawn over a map (MagicMapPacket / MazeMapPacket data).
+// - maps::setDecorations: TF map decorations drawn over a map (MagicMapPacket / MazeMapPacket data),
+//   with TF's two IMapDecorationRenderers (the conquered red X, the player icon on top) and the
+//   vanilla map icons.
 // - camera: what camera::shake does (TF's degrees) and its state (tests).
+// - keys: when registerKey must run (mod load) and what happens to a key registered later.
+// - textures: every texture name these APIs take is a resource pack path without extension, or an
+//   absolute file path (with its extension), which is read from the disk (development fixtures).
 
 #ifdef GF_CLIENT
 
@@ -120,6 +128,10 @@ void setContainerItems(screen::ContainerScreen& screen, nlohmann::json const& it
 /// stack. ContainerScreen's hover tooltips show it.
 [[nodiscard]] std::vector<std::string> hoverLines(ItemStack const& stack);
 
+/// Per-screen states of ContainerScreens (slot stacks, the title the skin draws) kept now: an entry
+/// goes away the frame after its screen stopped being the open one (tests).
+[[nodiscard]] std::size_t containerStateCount();
+
 /// Toasts waiting or shown (tests).
 [[nodiscard]] std::size_t toastCount();
 /// HUD layer ids in draw order (tests).
@@ -132,6 +144,34 @@ void removeHudLayer(std::string const& id);
 bool removeTooltips(std::string const& itemId);
 
 } // namespace gf::client::ui
+
+namespace gf::client::hud {
+/// Whether the player hid the GUI (F1; Java's options.hideGui). HUD layers are drawn either way, as
+/// in Java where each TF overlay checks hideGui itself (all but the portal overlay do).
+[[nodiscard]] bool guiHidden();
+} // namespace gf::client::hud
+
+namespace gf::client::toast {
+/// A toast's text colours (ARGB, as Java's drawString).
+struct Style {
+    unsigned titleColor = 0xFFFFFF00; ///< LockedBiomeToast's title: -256
+    unsigned bodyColor  = 0xFFFFFFFF;
+};
+/// TF's toasts: LockedBiomeToast (title -256, body white; the contract's show() draws this style)
+/// and MissingAdvancementToast (UPPER_TEXT 0xffffffff, the advancement title 0xffffff: white).
+/// Both are shown for 10 s (ToastSpec::ms = 10000).
+enum class Kind { LockedBiome, MissingAdvancement };
+[[nodiscard]] constexpr Style styleOf(Kind kind) {
+    return kind == Kind::MissingAdvancement ? Style{0xFFFFFFFF, 0xFFFFFFFF} : Style{};
+}
+/// Shows a toast with `style` (Java's ToastComponent: 5 slots, a queue, 600 ms slides; not drawn while
+/// the GUI is hidden).
+void show(ToastSpec const& spec, Style style);
+/// Removes the toasts with `titleKey`, waiting or shown (selftests); returns how many.
+std::size_t cancel(std::string const& titleKey);
+/// The style of the first toast with `titleKey`, waiting or shown (tests).
+[[nodiscard]] std::optional<Style> styleOfToast(std::string const& titleKey);
+} // namespace gf::client::toast
 
 namespace gf::client::particles {
 /// Runs the native factory of `particleId`; false when none is registered (then the caller
@@ -163,6 +203,35 @@ void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations);
 [[nodiscard]] std::vector<Decoration> decorationsOf(std::int64_t mapId);
 /// The texture registered for a decoration type ("" for none).
 [[nodiscard]] std::string iconOf(std::string const& decorationType);
+
+/// TF's IMapDecorationRenderers for one decoration (Java draws them only on TFMagicMapData; the caller
+/// sets them for magic maps).
+struct DecorationStyle {
+    /// ConqueredMapIconRenderer (structure icons of conquered landmarks): the icon is drawn and the
+    /// red X (MapDecorationTypes.RED_X: the X of the vanilla map icon atlas) over it, at the icon's
+    /// place turned with it, scaled 2, translated (-1, -1, -0.005), a 2 x 2 quad at depth -0.095.
+    bool conquered = false;
+    /// MagicMapPlayerIconRenderer (the player icon of magic maps): the icon at depth -0.3 instead of
+    /// its place in the list, so it lies on top of every other decoration and red X.
+    bool topmost = false;
+};
+/// setDecorations with a style per decoration (`styles[i]` for `decorations[i]`; missing entries are
+/// plain). The contract's setDecorations draws every decoration plain.
+void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations, std::vector<DecorationStyle> styles);
+/// The styles of `mapId`'s decorations (one per decoration).
+[[nodiscard]] std::vector<DecorationStyle> stylesOf(std::int64_t mapId);
+/// The icon a decoration type is drawn with: a texture and its part (u0, v0, u1, v1 in 0..1).
+struct Icon {
+    std::string texture;
+    float       u0 = 0, v0 = 0, u1 = 1, v1 = 1;
+};
+/// setIcon's texture (all of it); else a vanilla map icon, a 16 x 16 cell of the vanilla atlas
+/// "textures/map/map_icons" (4 x 4 cells): "minecraft:<MapDecoration::Type index 0..15>" (as view()
+/// reports them) or the Java name ("minecraft:player" 0, "minecraft:frame" 1, "minecraft:red_marker"
+/// 2, "minecraft:blue_marker" 3, "minecraft:red_x" / "minecraft:target_x" 4, "minecraft:target_point"
+/// 5, "minecraft:player_off_map" 6, "minecraft:player_off_limits" 13, "minecraft:mansion" 14,
+/// "minecraft:monument" 15); nullopt: none.
+[[nodiscard]] std::optional<Icon> iconFor(std::string const& decorationType);
 /// Removes the icon of a decoration type (fixtures and selftests); false when there was none.
 bool removeIcon(std::string const& decorationType);
 } // namespace gf::client::maps
@@ -197,8 +266,16 @@ void clearProvider(int dimension);
 } // namespace gf::client::sky
 
 namespace gf::client::keys {
+// When to register (spike S5): LeviLamina binds a key into the game's controls when the game builds
+// its input handler, which happens after mod load and before the modules' install(). Register keys
+// from a module's load(): they then appear in the keyboard controls and can be remapped. A key
+// registered later (install(), a world join) is still delivered, from the raw keyboard events with
+// its default key, with a warning; it is missing from the controls until the next game start.
+
 /// The registered key ids (tests).
 [[nodiscard]] std::vector<std::string> registered();
+/// Whether `id` was registered after the input handler was built (delivered from raw key events).
+[[nodiscard]] bool lateBound(std::string const& id);
 } // namespace gf::client::keys
 
 #endif // GF_CLIENT

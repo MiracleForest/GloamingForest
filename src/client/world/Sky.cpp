@@ -36,7 +36,9 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <random>
+#include <string_view>
 #include <unordered_map>
 #include <variant>
 
@@ -367,10 +369,30 @@ std::pair<nlohmann::json, Vec3> fromMolang(MolangVariableMap const& vars) {
 namespace maps {
 namespace {
 struct MapState {
-    std::mutex                                                mutex;
-    std::unordered_map<std::string, std::string>              icons;
-    std::unordered_map<std::int64_t, std::vector<Decoration>> extra;
+    std::mutex                                                     mutex;
+    std::unordered_map<std::string, std::string>                   icons;
+    std::unordered_map<std::int64_t, std::vector<Decoration>>      extra;
+    std::unordered_map<std::int64_t, std::vector<DecorationStyle>> styles;
 };
+
+/// The vanilla map icon atlas (textures/map/map_icons: 4 x 4 cells of 16 px; MapDecoration::Type
+/// 0..15) and the Java names of its icons.
+constexpr char kVanillaIcons[] = "textures/map/map_icons";
+int vanillaCell(std::string const& type) {
+    static std::unordered_map<std::string, int> const names{
+        {"minecraft:player", 0},          {"minecraft:frame", 1},      {"minecraft:red_marker", 2},
+        {"minecraft:blue_marker", 3},     {"minecraft:red_x", 4},      {"minecraft:target_x", 4},
+        {"minecraft:target_point", 5},    {"minecraft:player_off_map", 6}, {"minecraft:player_off_limits", 13},
+        {"minecraft:mansion", 14},        {"minecraft:monument", 15},
+    };
+    if (auto it = names.find(type); it != names.end()) return it->second;
+    constexpr std::string_view prefix = "minecraft:";
+    if (!type.starts_with(prefix)) return -1;
+    auto rest = std::string_view(type).substr(prefix.size());
+    if (rest.empty() || rest.size() > 2 || rest.find_first_not_of("0123456789") != std::string_view::npos) return -1;
+    int n = std::stoi(std::string(rest));
+    return n <= 15 ? n : -1;
+}
 MapState& mapState() {
     static MapState s;
     return s;
@@ -416,10 +438,35 @@ bool removeIcon(std::string const& decorationType) {
     return mapState().icons.erase(decorationType) > 0;
 }
 
-void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations) {
+void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations) { setDecorations(mapId, std::move(decorations), {}); }
+
+void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations, std::vector<DecorationStyle> styles) {
     std::lock_guard lock(mapState().mutex);
-    if (decorations.empty()) mapState().extra.erase(mapId);
-    else mapState().extra[mapId] = std::move(decorations);
+    if (decorations.empty()) {
+        mapState().extra.erase(mapId);
+        mapState().styles.erase(mapId);
+        return;
+    }
+    styles.resize(decorations.size());
+    mapState().extra[mapId]  = std::move(decorations);
+    mapState().styles[mapId] = std::move(styles);
+}
+
+std::vector<DecorationStyle> stylesOf(std::int64_t mapId) {
+    std::lock_guard lock(mapState().mutex);
+    auto            it = mapState().styles.find(mapId);
+    return it == mapState().styles.end() ? std::vector<DecorationStyle>{} : it->second;
+}
+
+std::optional<Icon> iconFor(std::string const& decorationType) {
+    {
+        std::lock_guard lock(mapState().mutex);
+        if (auto it = mapState().icons.find(decorationType); it != mapState().icons.end()) return Icon{.texture = it->second};
+    }
+    int cell = vanillaCell(decorationType);
+    if (cell < 0) return std::nullopt;
+    float u = static_cast<float>(cell % 4) / 4.f, v = static_cast<float>(cell / 4) / 4.f;
+    return Icon{.texture = kVanillaIcons, .u0 = u, .v0 = v, .u1 = u + .25f, .v1 = v + .25f};
 }
 
 std::vector<Decoration> decorationsOf(std::int64_t mapId) {

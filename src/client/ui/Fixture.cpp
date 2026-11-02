@@ -3,25 +3,33 @@
 // turns it on with "ui.fixture" {show, hud, toast, world, fog, map} (feature/ui/Fixture.cpp):
 //
 // - HUD layer "ui.fixture": a panel with an item, the graphics mode and the three blit methods;
-// - a toast (Java's toast layout) with a map icon;
+// - two toasts (Java's toast layout) with a map icon: LockedBiomeToast's colours (yellow title) and
+//   MissingAdvancementToast's (white title);
 // - world: a line box around the block below the player, a line up to the sky and the fixture
 //   geometry (geometry.gf_ui.fixture) drawn with drawGeo in front of the player;
 // - fog: a provider for the player's dimension (red fog 4..24 blocks, clouds at y 160), and a sky
 //   provider that reports the sky hook;
 // - item renderers: gf_test:fixture_item in item frames (Fixed) and gf_test:fixture_block on heads
 //   (Head): a box, the item space's axes (x red, y green, z blue) and the fixture geometry;
-// - map: TF-style decorations (gf_test:fixture_icon*) on the map the player holds;
+// - map: TF-style decorations (gf_test:fixture_icon*) on the map the player holds, one of them
+//   conquered (TF's red X) and the vanilla player icon drawn on top (MagicMapPlayerIconRenderer);
 // - screen "ui.fixture": a ContainerScreen with the fixture GUI skin (an original texture with
 //   the layout of TF's container GUIs), nine container slots and the player inventory;
-// - key "ui.fixture" (J): forwarded to the server, which logs the press.
+// - key "ui.fixture" (J, registered at mod load) and "ui.fixture_late" (K, registered at install,
+//   after the game built its input handler): forwarded to the server, which logs the presses;
+// - native particle "gf_test:fixture_particle": the client scenario runs /particle with it.
 //
-// One log line per first draw of each part (the e2e scenario waits for them).
+// The fixture's textures and geometry are built into the mod (FixtureAssets.h): the textures are
+// written next to the test data and drawn as file textures, so the resource pack carries nothing of
+// the fixture. One log line per first draw of each part (the e2e scenario waits for them).
 
 #ifdef GF_CLIENT
 
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/client/ClientExitLevelEvent.h"
@@ -36,7 +44,9 @@
 
 #include "client/Client.h"
 #include "client/input/Input.h"
+#include "client/render/Geo.h"
 #include "client/render/Render.h"
+#include "client/ui/FixtureAssets.h"
 #include "client/ui/Ui.h"
 #include "client/world/Sky.h"
 #include "feature/ext/ui/Client.h"
@@ -44,6 +54,7 @@
 #include "feature/ui/Fixture.h"
 #include "game/Items.h"
 #include "mod/Log.h"
+#include "mod/Main.h"
 #include "mod/Module.h"
 
 namespace gf::client::ui::fixture {
@@ -51,14 +62,45 @@ namespace gf::client::ui::fixture {
 namespace {
 
 using Json = nlohmann::json;
-constexpr char kSkin[]        = "textures/gui/ui/fixture_container";
 constexpr char kGeo[]         = "geometry.gf_ui.fixture";
-constexpr char kGeoTex[]      = "textures/gui/ui/fixture_geo";
 constexpr char kFixtureItem[] = "gf_test:fixture_item";
 constexpr char kFixtureHead[] = "gf_test:fixture_block";
 constexpr char kIconA[]       = "gf_test:fixture_icon";
 constexpr char kIconB[]       = "gf_test:fixture_icon_skin";
+constexpr char kParticle[]    = "gf_test:fixture_particle";
 constexpr int  kFixtureKey    = 'J';
+constexpr int  kLateKey       = 'K';
+
+/// The fixture's file textures (absolute paths, set at install).
+struct Textures {
+    std::string skin, geo;
+};
+Textures& tex() {
+    static Textures t;
+    return t;
+}
+
+/// Writes an embedded texture to `dir` (when missing or different) and returns its absolute path.
+std::string writeTexture(std::filesystem::path const& dir, char const* name, unsigned char const* data, std::size_t size) {
+    std::error_code ec;
+    std::filesystem::create_directories(dir, ec);
+    auto path = std::filesystem::absolute(dir / name, ec);
+    if (!std::filesystem::exists(path, ec) || std::filesystem::file_size(path, ec) != size) {
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(size));
+    }
+    return path.generic_string();
+}
+
+void installAssets() {
+    auto dir   = gf::Mod::getInstance().getSelf().getModDir() / "data" / "gf_test" / "ui";
+    tex().skin = writeTexture(dir, "fixture_container.png", assets::kContainerPng, sizeof(assets::kContainerPng));
+    tex().geo  = writeTexture(dir, "fixture_geo.png", assets::kGeoPng, sizeof(assets::kGeoPng));
+    std::string error;
+    auto        models = render::geo::parse(Json::parse(assets::kGeoJson), &error);
+    if (models.empty()) log().error("ui fixture: geometry: {}", error);
+    render::geo::add(std::move(models));
+}
 
 struct State {
     std::atomic<bool> hud{false}, world{false}, mapPending{false};
@@ -102,7 +144,7 @@ void drawHud(screen::Canvas& c, float) {
         screen::Rect r{panel.x + static_cast<float>(m) * 50, panel.y + panel.h + 4, 44, 41};
         c.fill(r, 0xFF202020);
         ui::setBlitMethod(m);
-        bool ok = ui::blit(c, kSkin, r, 0, 0, 88, 83);
+        bool ok = ui::blit(c, tex().skin, r, 0, 0, 88, 83);
         c.text(r.x + 2, r.y + r.h + 2, std::to_string(m) + (ok ? "" : " -"), 0xFFFFFFFF);
     }
     ui::setBlitMethod(keep);
@@ -124,7 +166,7 @@ void drawWorld(render::RenderContext& ctx, float) {
     }
     // the fixture geometry three blocks to the south, turning slowly
     float spin = static_cast<float>(std::fmod(static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()) / 25.0, 360.0));
-    render::drawGeo(ctx, kGeo, kGeoTex, {.translation = {bx + .5f, by, bz + 3.5f}, .rotationDeg = {0, spin, 0}, .scale = {1, 1, 1}});
+    render::drawGeo(ctx, kGeo, tex().geo, {.translation = {bx + .5f, by, bz + 3.5f}, .rotationDeg = {0, spin, 0}, .scale = {1, 1, 1}});
     if (!st().loggedWorld.exchange(true)) log().info("ui fixture: world lines drawn");
 }
 
@@ -137,7 +179,7 @@ void drawItemSpace(render::RenderContext& ctx, float half) {
         lines.line({0, 0, 0}, {0, half * 1.6f, 0}, 0xFF30FF30);
         lines.line({0, 0, 0}, {0, 0, half * 1.6f}, 0xFF3060FF);
     }
-    render::drawGeo(ctx, kGeo, kGeoTex, {.translation = {0, -half, 0}, .rotationDeg = {0, 0, 0}, .scale = {half, half, half}});
+    render::drawGeo(ctx, kGeo, tex().geo, {.translation = {0, -half, 0}, .rotationDeg = {0, 0, 0}, .scale = {half, half, half}});
 }
 
 void drawFixed(render::RenderContext& ctx, ItemStack const&, render::ItemContext) {
@@ -189,17 +231,21 @@ void tickMap() {
     if (id == 0) return;
     st().mapPending = false;
     st().mapId      = id;
-    maps::setIcon(kIconA, kGeoTex);
-    maps::setIcon(kIconB, kSkin);
-    // corners, centre and a turned icon: the map space and the rotation show in the screenshot
+    maps::setIcon(kIconA, tex().geo);
+    maps::setIcon(kIconB, tex().skin);
+    // corners, centre and a turned icon: the map space and the rotation show in the screenshot; the
+    // north-west icon is conquered (TF's red X over it) and the vanilla player icon, listed before the
+    // centre icon it overlaps, is drawn on top of it (MagicMapPlayerIconRenderer)
     maps::setDecorations(
         id,
         {
             {.type = kIconA, .x = -96, .z = -96, .rotation = 0, .name = "NW"},
+            {.type = "minecraft:player", .x = 6, .z = 6, .rotation = 0, .name = ""},
             {.type = kIconB, .x = 0, .z = 0, .rotation = 0, .name = ""},
             {.type = kIconA, .x = 96, .z = -96, .rotation = 4, .name = ""},
             {.type = kIconA, .x = 96, .z = 96, .rotation = 8, .name = "SE"},
-        }
+        },
+        {{.conquered = true}, {.topmost = true}, {}, {}, {}}
     );
     log().info("ui fixture: map decorations set on map {}", id);
 }
@@ -231,7 +277,12 @@ void onMessage(Json const& msg) {
         st().loggedWorld = false;
     }
     if (msg.value("toast", false)) {
+        // LockedBiomeToast's colours (the contract's default), then MissingAdvancementToast's
         toast::show({.iconItem = "minecraft:map", .titleKey = "gf.ui.fixture.toast_title", .bodyKey = "gf.ui.fixture.toast_body", .ms = 30000});
+        toast::show(
+            {.iconItem = "minecraft:compass", .titleKey = "gf.ui.fixture.toast_advancement", .bodyKey = "gf.ui.fixture.toast_body", .ms = 30000},
+            toast::styleOf(toast::Kind::MissingAdvancement)
+        );
     }
     if (msg.contains("fog")) setFog(msg.value("fog", false));
     if (msg.value("map", false)) st().mapPending = true;
@@ -245,7 +296,7 @@ void onMessage(Json const& msg) {
 class FixtureScreen : public screen::ContainerScreen {
 public:
     FixtureScreen(Json const& data, screen::SendFn send)
-    : ContainerScreen(ctr("gf.ui.fixture.title", "GloamingForest UI fixture"), kSkin, 176, 166),
+    : ContainerScreen(ctr("gf.ui.fixture.title", "GloamingForest UI fixture"), tex().skin, 176, 166),
       mSend(std::move(send)) {
         for (int i = 0; i < 9; ++i) slots.push_back({i, 8 + static_cast<float>(i) * 18, 18});
         onData(data);
@@ -278,6 +329,7 @@ public:
     void install() {
         if (!gf::ui::fixture::enabled() || mInstalled) return; // production build: no fixture
         mInstalled = true;
+        installAssets();
         hud::addLayer("ui.fixture", 1000, drawHud);
         render::onWorld(drawWorld);
         render::registerItemRenderer(kFixtureItem, drawFixed, render::Fixed);
@@ -285,6 +337,13 @@ public:
         screen::registerScreen("ui.fixture", [](Json const& data, screen::SendFn send) { return std::make_unique<FixtureScreen>(data, std::move(send)); });
         net::client::on("ui.fixture", onMessage);
         registerFixtureKey();
+        // a key registered after the game built its input handler: delivered from raw key events
+        keys::registerKey("ui.fixture_late", kLateKey, "key.categories.gloamingforest.fixture", [] { log().info("ui fixture: late key pressed (client)"); });
+        // a native particle the client scenario spawns with /particle (Level::addParticleEffect)
+        particles::registerNative(kParticle, [](Vec3 const& pos, Vec3 const&, Json const&) {
+            static std::atomic<bool> logged{false};
+            if (!logged.exchange(true)) log().info("ui fixture: particle factory ran at {:.1f} {:.1f} {:.1f}", pos.x, pos.y, pos.z);
+        });
         auto& bus = ll::event::EventBus::getInstance();
         mListeners.push_back(bus.emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) {
             st().hud   = false;
