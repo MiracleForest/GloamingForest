@@ -108,6 +108,8 @@ struct State {
     // the destination, loaded while the player waits in the portal (Java loads it at once)
     AreaHandle preload;
     bool       preloading = false;
+    int        preloadDim = -1; ///< where the preload is (the trip loads the same area)
+    BlockPos   preloadAt{};
     // trip / presentation
     bool travelling    = false;
     bool fading        = false; ///< a camera fade is showing (vanilla overlay)
@@ -461,12 +463,17 @@ ll::coro::CoroTask<bool> moveTraveller(tp::Traveller& t, int dest, Vec3 at) {
         }
         t.id = *moved;
     }
+    // the riders of a copy (made in the destination at once) follow at once; a player's (its
+    // shoulder parrots) only once the player is there, so a player that does not arrive keeps them
     std::vector<std::int64_t> arrivedRiders;
-    for (auto r : riders) {
-        auto* rider = actorById(r);
-        if (!rider) continue;
-        if (auto id = transferEntity(*rider, dest, at, rider->getRotation())) arrivedRiders.push_back(*id);
-    }
+    auto                      sendRiders = [&] {
+        for (auto r : riders) {
+            auto* rider = actorById(r);
+            if (!rider) continue;
+            if (auto id = transferEntity(*rider, dest, at, rider->getRotation())) arrivedRiders.push_back(*id);
+        }
+    };
+    if (!t.isPlayer) sendRiders();
     // players change dimension over a few ticks; copies are there at once
     bool there = false;
     for (int i = 0; i < 200 && !there; ++i) {
@@ -477,8 +484,14 @@ ll::coro::CoroTask<bool> moveTraveller(tp::Traveller& t, int dest, Vec3 at) {
     }
     if (!there) {
         log().warn("dimension: {} did not arrive in {} at {:.1f} {:.1f} {:.1f}", t.name, dimensionName(dest), at.x, at.y, at.z);
+        if (t.isPlayer) {
+            if (auto* p = actorById(t.id))
+                for (auto r : riders) // back on, where the player is
+                    if (auto* rider = actorById(r); rider && rider->getDimensionId() == p->getDimensionId()) rider->startRiding(*p, true);
+        }
         co_return false;
     }
+    if (t.isPlayer) sendRiders();
     // the riders get on again once they are there too
     for (auto r : arrivedRiders) {
         for (int i = 0; i < 200; ++i) {
@@ -551,9 +564,12 @@ std::optional<BlockPos> knownPortal(int dest, BlockPos const& srcPos, BlockPos c
 ll::coro::CoroTask<bool> runTransition(tp::Traveller t, int dest, BlockPos pos, bool forcedEntry) {
     TripGuard guard{t.id};
     auto      destName = dimensionName(dest);
-    auto      known    = knownPortal(dest, t.srcPos, pos);
-    auto      hold     = co_await loadArea(dest, known.value_or(pos), kLoadRadius);
-    // (the area the player's wait preloaded is shared by the trip's own hold now)
+    // the area the player's wait preloaded (its portal search done then), else the search now
+    std::optional<BlockPos> center;
+    if (auto it = states().find(t.id); it != states().end() && it->second.preload && it->second.preloadDim == dest) center = it->second.preloadAt;
+    if (!center) center = knownPortal(dest, t.srcPos, pos).value_or(pos);
+    auto hold = co_await loadArea(dest, *center, kLoadRadius);
+    // (the trip's own hold shares the preloaded area now)
     if (auto it = states().find(t.id); it != states().end()) it->second.preload.reset();
     if (!hold) {
         log().warn("dimension: the trip of {} to {} was called off (the destination did not load)", t.name, destName);
@@ -651,7 +667,11 @@ void preloadDestination(Player& player, State& st) {
         if (it == states().end()) co_return;
         it->second.preloading = false;
         // kept while the player is still on its way in (the process runs, no trip yet)
-        if (hold && it->second.hasProcess && !it->second.travelling) it->second.preload = std::move(hold);
+        if (hold && it->second.hasProcess && !it->second.travelling) {
+            it->second.preload    = std::move(hold);
+            it->second.preloadDim = dim;
+            it->second.preloadAt  = at;
+        }
     }).launch(ll::thread::ServerThreadExecutor::getDefault());
 }
 

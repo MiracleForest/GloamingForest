@@ -33,12 +33,13 @@ function Get-SkyLuminance([string]$path) {
     } finally { $bmp.Dispose() }
 }
 
-# Mean colour of a whole screenshot (every 16th pixel), as @(r, g, b).
+# Mean colour of a screenshot (every 16th pixel), as @(r, g, b): the top 70 % of it (the hotbar
+# and, in the portal, the pool's own blocks around the feet are left out).
 function Get-MeanColour([string]$path) {
     $bmp = [System.Drawing.Bitmap]::FromFile($path)
     try {
         $r = 0.0; $g = 0.0; $b = 0.0; $n = 0
-        for ($y = 0; $y -lt $bmp.Height; $y += 16) { for ($x = 0; $x -lt $bmp.Width; $x += 16) { $c = $bmp.GetPixel($x, $y); $r += $c.R; $g += $c.G; $b += $c.B; $n++ } }
+        for ($y = 0; $y -lt [int]($bmp.Height * 0.7); $y += 16) { for ($x = 0; $x -lt $bmp.Width; $x += 16) { $c = $bmp.GetPixel($x, $y); $r += $c.R; $g += $c.G; $b += $c.B; $n++ } }
         return @(($r / $n), ($g / $n), ($b / $n))
     } finally { $bmp.Dispose() }
 }

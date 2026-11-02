@@ -90,6 +90,13 @@ std::chrono::milliseconds backoff(int attempts) {
     return std::chrono::milliseconds(500 << std::clamp(attempts - 1, 0, 4));
 }
 
+/// The frames of a vertical strip texture (height / width; 1 when it is not taller than wide).
+int framesOf(BedrockTextureData const& data) {
+    auto const& d = data.mTextureDescription.get();
+    if (d.mWidth == 0) return 0;
+    return d.mHeight < d.mWidth ? 1 : static_cast<int>(d.mHeight / d.mWidth);
+}
+
 BedrockTextureData const* readyData(mce::TexturePtr const& t) {
     auto const* data = t.mClientTexture.get();
     if (!data || data->mIsMissingTexture == IsMissingTexture::Yes) return nullptr;
@@ -169,10 +176,7 @@ mce::MaterialPtr const* material() {
 int spriteFrames(screen::Canvas& canvas, std::string const& texture) {
     mce::TexturePtr* t    = nullptr;
     auto const*      data = textureOf(texture, canvas.context(), &t);
-    if (!data) return 0;
-    auto const& d = data->mTextureDescription.get();
-    if (d.mWidth == 0 || d.mHeight < d.mWidth) return d.mWidth == 0 ? 0 : 1;
-    return static_cast<int>(d.mHeight / d.mWidth);
+    return data ? framesOf(*data) : 0;
 }
 
 bool blitSprite(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float alpha, int frame) {
@@ -181,8 +185,7 @@ bool blitSprite(screen::Canvas& canvas, std::string const& texture, screen::Rect
     mce::TexturePtr* t    = nullptr;
     auto const*      data = textureOf(texture, canvas.context(), &t);
     if (!data || !t) return false;
-    auto const& desc   = data->mTextureDescription.get();
-    int         frames = desc.mWidth == 0 ? 0 : (desc.mHeight < desc.mWidth ? 1 : static_cast<int>(desc.mHeight / desc.mWidth));
+    int         frames = framesOf(*data);
     auto const* m      = material();
     if (frames <= 0 || !m) return false;
     frame          = ((frame % frames) + frames) % frames;
