@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:carminite_ghastling",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/misc/missing_texture"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.carminite_ghastling"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#bcbcbc",
+        "overlay_color": "#a74343"
+      }
+    }
+  }
+}

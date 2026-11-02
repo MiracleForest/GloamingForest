@@ -1,0 +1,101 @@
+{
+  "tf_item_beef_jerky": {
+    "textures": "textures/twilightforest/item/beef_jerky"
+  },
+  "tf_item_berry_medley": {
+    "textures": "textures/twilightforest/item/berry_medley"
+  },
+  "tf_item_chicken_jerky": {
+    "textures": "textures/twilightforest/item/chicken_jerky"
+  },
+  "tf_item_cod_jerky": {
+    "textures": "textures/twilightforest/item/cod_jerky"
+  },
+  "tf_item_cooked_meef": {
+    "textures": "textures/twilightforest/item/cooked_meef"
+  },
+  "tf_item_cooked_venison": {
+    "textures": "textures/twilightforest/item/cooked_venison"
+  },
+  "tf_item_experiment_115": {
+    "textures": "textures/twilightforest/item/experiment_115"
+  },
+  "tf_item_fugu_jerky": {
+    "textures": "textures/twilightforest/item/fugu_jerky"
+  },
+  "tf_item_hydra_chop": {
+    "textures": "textures/twilightforest/item/hydra_chop"
+  },
+  "tf_item_maze_wafer": {
+    "textures": "textures/twilightforest/item/maze_wafer"
+  },
+  "tf_item_meef_jerky": {
+    "textures": "textures/twilightforest/item/meef_jerky"
+  },
+  "tf_item_meef_stroganoff": {
+    "textures": "textures/twilightforest/item/meef_stroganoff"
+  },
+  "tf_item_monster_jerky": {
+    "textures": "textures/twilightforest/item/monster_jerky"
+  },
+  "tf_item_moss_soup": {
+    "textures": "textures/twilightforest/item/moss_soup"
+  },
+  "tf_item_music_disc_findings": {
+    "textures": "textures/twilightforest/item/music_disc_findings"
+  },
+  "tf_item_music_disc_home": {
+    "textures": "textures/twilightforest/item/music_disc_home"
+  },
+  "tf_item_music_disc_maker": {
+    "textures": "textures/twilightforest/item/music_disc_maker"
+  },
+  "tf_item_music_disc_motion": {
+    "textures": "textures/twilightforest/item/music_disc_motion"
+  },
+  "tf_item_music_disc_radiance": {
+    "textures": "textures/twilightforest/item/music_disc_radiance"
+  },
+  "tf_item_music_disc_steps": {
+    "textures": "textures/twilightforest/item/music_disc_steps"
+  },
+  "tf_item_music_disc_superstitious": {
+    "textures": "textures/twilightforest/item/music_disc_superstitious"
+  },
+  "tf_item_music_disc_thread": {
+    "textures": "textures/twilightforest/item/music_disc_thread"
+  },
+  "tf_item_music_disc_wayfarer": {
+    "textures": "textures/twilightforest/item/music_disc_wayfarer"
+  },
+  "tf_item_mutton_jerky": {
+    "textures": "textures/twilightforest/item/mutton_jerky"
+  },
+  "tf_item_pork_jerky": {
+    "textures": "textures/twilightforest/item/pork_jerky"
+  },
+  "tf_item_rabbit_jerky": {
+    "textures": "textures/twilightforest/item/rabbit_jerky"
+  },
+  "tf_item_raw_meef": {
+    "textures": "textures/twilightforest/item/raw_meef"
+  },
+  "tf_item_raw_venison": {
+    "textures": "textures/twilightforest/item/raw_venison"
+  },
+  "tf_item_salmon_jerky": {
+    "textures": "textures/twilightforest/item/salmon_jerky"
+  },
+  "tf_item_shika_senbei": {
+    "textures": "textures/twilightforest/item/shika_senbei"
+  },
+  "tf_item_tropical_fish_jerky": {
+    "textures": "textures/twilightforest/item/tropical_fish_jerky"
+  },
+  "tf_item_venison_jerky": {
+    "textures": "textures/twilightforest/item/venison_jerky"
+  },
+  "tf_vanilla_item_bread": {
+    "textures": "textures/items/bread"
+  }
+}

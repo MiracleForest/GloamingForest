@@ -1,0 +1,99 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.knightmetal_armor.helmet",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 1.75, 0]
+      },
+      "bones": [
+        {
+          "name": "head",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-4, 24, -4],
+              "size": [8, 8, 8],
+              "inflate": 1,
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "right_horn_1",
+          "parent": "head",
+          "pivot": [-4, 30.5, 0],
+          "rotation": [0, -15, 10],
+          "cubes": [
+            {
+              "origin": [-9.5, 29, -1.5],
+              "size": [5, 3, 3],
+              "inflate": 0.25,
+              "uv": [24, 0]
+            }
+          ]
+        },
+        {
+          "name": "right_horn_2",
+          "parent": "right_horn_1",
+          "pivot": [-8.5, 30.5, 0],
+          "rotation": [0, 0, 10],
+          "cubes": [
+            {
+              "origin": [-12, 29.5, -1],
+              "size": [3, 2, 2],
+              "inflate": 0.25,
+              "uv": [54, 16]
+            }
+          ]
+        },
+        {
+          "name": "left_horn_1",
+          "parent": "head",
+          "pivot": [4, 30.5, 0],
+          "rotation": [0, 15, -10],
+          "cubes": [
+            {
+              "origin": [4.5, 29, -1.5],
+              "size": [5, 3, 3],
+              "inflate": 0.25,
+              "uv": [24, 0],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "left_horn_2",
+          "parent": "left_horn_1",
+          "pivot": [8.5, 30.5, 0],
+          "rotation": [0, 0, -10],
+          "cubes": [
+            {
+              "origin": [9, 29.5, -1],
+              "size": [3, 2, 2],
+              "inflate": 0.25,
+              "uv": [54, 16]
+            }
+          ]
+        },
+        {
+          "name": "hat",
+          "parent": "head",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-4, 24, -4],
+              "size": [8, 8, 8],
+              "inflate": 1.5,
+              "uv": [32, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

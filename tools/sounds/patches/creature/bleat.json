@@ -1,0 +1,69 @@
+{
+  "about": "Bleat: sawtooth with a strong goat vibrato through an 'e' to 'a' vowel.",
+  "params": {
+    "pitch": 420,
+    "len": 0.6,
+    "size": 1.2,
+    "vib": 0.8,
+    "vibRate": 9
+  },
+  "length": "$len",
+  "tail": 0.15,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "saw",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch*1.05"
+          ],
+          [
+            "$len",
+            "$pitch*0.85"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "vibrato": {
+        "rate": "$vibRate",
+        "depth": "$vib"
+      },
+      "tremolo": {
+        "rate": "$vibRate",
+        "depth": 0.3
+      },
+      "env": {
+        "a": 0.03,
+        "d": "$len*0.5",
+        "s": 0.7,
+        "r": "$len*0.25"
+      },
+      "formant": {
+        "vowel": {
+          "env": [
+            [
+              0,
+              1
+            ],
+            [
+              "$len",
+              0
+            ]
+          ]
+        },
+        "shift": "$size",
+        "mix": 0.8
+      },
+      "drive": 1.5
+    }
+  ],
+  "fx": [
+    {
+      "type": "filter",
+      "filter": "hp",
+      "freq": 150
+    }
+  ]
+}

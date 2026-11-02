@@ -1,0 +1,53 @@
+{
+  "about": "Burst: noise explosion with a falling sub and a long tail.",
+  "params": {
+    "len": 0.8,
+    "pitch": 60
+  },
+  "length": "$len",
+  "tail": 0.8,
+  "layers": [
+    {
+      "type": "noise",
+      "color": "brown",
+      "env": {
+        "a": 0.002,
+        "d": "$len*0.5",
+        "s": 0.2,
+        "r": "$len*0.4"
+      },
+      "filter": [
+        {
+          "type": "lp",
+          "freq": {
+            "from": 6000,
+            "to": 400
+          }
+        }
+      ],
+      "drive": 2
+    },
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": {
+        "from": "$pitch*2",
+        "to": "$pitch*0.5"
+      },
+      "env": {
+        "a": 0.002,
+        "d": 0.3,
+        "s": 0.0,
+        "r": 0.1
+      },
+      "amp": 0.8
+    }
+  ],
+  "fx": [
+    {
+      "type": "reverb",
+      "room": 0.6,
+      "mix": 0.2
+    }
+  ]
+}

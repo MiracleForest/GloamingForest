@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:carminite_broodling",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/misc/missing_texture"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.carminite_broodling"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#343c14",
+        "overlay_color": "#baee02"
+      }
+    }
+  }
+}

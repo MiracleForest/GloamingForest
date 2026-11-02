@@ -1,0 +1,1429 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.ur_ghast_trophy_held_left",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3.5,
+        "visible_bounds_offset": [0, 1.25, 0]
+      },
+      "bones": [
+        {
+          "name": "ur_ghast_trophy_held_left",
+          "parent": "leftArm",
+          "pivot": [0, 0, 0],
+          "rotation": [-54.7356, 150, -35.2644]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_body",
+          "parent": "ur_ghast_trophy_held_left",
+          "pivot": [-9.04264, 9.27351, -0.55736],
+          "rotation": [0, 180, 0],
+          "cubes": [
+            {
+              "origin": [-11.04264, 7.27351, -2.55736],
+              "size": [4, 4, 4],
+              "uv": {
+                "north": {
+                  "uv": [16, 16],
+                  "uv_size": [16, 16]
+                },
+                "east": {
+                  "uv": [0, 16],
+                  "uv_size": [16, 16]
+                },
+                "south": {
+                  "uv": [48, 16],
+                  "uv_size": [16, 16]
+                },
+                "west": {
+                  "uv": [32, 16],
+                  "uv_size": [16, 16]
+                },
+                "up": {
+                  "uv": [16, 0],
+                  "uv_size": [16, 16]
+                },
+                "down": {
+                  "uv": [32, 16],
+                  "uv_size": [16, -16]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_0",
+          "parent": "ur_ghast_trophy_held_left_body",
+          "pivot": [-7.91764, 7.52351, 0.56764],
+          "rotation": [20.0535, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8.29264, 6.27351, 0.19264],
+              "size": [0.75, 1.25, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 3],
+                  "uv_size": [3, 5]
+                },
+                "east": {
+                  "uv": [0, 3],
+                  "uv_size": [3, 5]
+                },
+                "south": {
+                  "uv": [9, 3],
+                  "uv_size": [3, 5]
+                },
+                "west": {
+                  "uv": [6, 3],
+                  "uv_size": [3, 5]
+                },
+                "up": {
+                  "uv": [3, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_0_extension",
+          "parent": "ur_ghast_trophy_held_left_tentacle_0",
+          "pivot": [-7.91764, 6.52351, 0.56764],
+          "rotation": [17.1887, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8.29264, 5.27351, 0.19264],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 3],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [0, 3],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [9, 3],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [6, 3],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [3, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_0_extension_2",
+          "parent": "ur_ghast_trophy_held_left_tentacle_0_extension",
+          "pivot": [-7.91764, 5.52351, 0.56764],
+          "rotation": [20.0535, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8.29264, 4.27351, 0.19264],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 7],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [0, 7],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [9, 7],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [6, 7],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [3, 4],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 7],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_0_tip",
+          "parent": "ur_ghast_trophy_held_left_tentacle_0_extension_2",
+          "pivot": [-7.91764, 4.52351, 0.56764],
+          "rotation": [22.9183, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8.29264, 3.27351, 0.19264],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 12],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [0, 12],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [9, 12],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [6, 12],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [3, 9],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 12],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_1",
+          "parent": "ur_ghast_trophy_held_left_body",
+          "pivot": [-10.16764, 7.52351, 0.56764],
+          "rotation": [12.061, 22.3619, 0],
+          "cubes": [
+            {
+              "origin": [-10.54264, 6.27351, 0.19264],
+              "size": [0.75, 1.25, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [4, 3],
+                  "uv_size": [3, 5]
+                },
+                "east": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 5]
+                },
+                "south": {
+                  "uv": [10, 3],
+                  "uv_size": [3, 5]
+                },
+                "west": {
+                  "uv": [7, 3],
+                  "uv_size": [3, 5]
+                },
+                "up": {
+                  "uv": [4, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [7, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_1_extension",
+          "parent": "ur_ghast_trophy_held_left_tentacle_1",
+          "pivot": [-10.16764, 6.52351, 0.56764],
+          "rotation": [0.9586, 0, 0],
+          "cubes": [
+            {
+              "origin": [-10.54264, 5.27351, 0.19264],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [4, 3],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [10, 3],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [7, 3],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [4, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [7, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_1_extension_2",
+          "parent": "ur_ghast_trophy_held_left_tentacle_1_extension",
+          "pivot": [-10.16764, 5.52351, 0.56764],
+          "rotation": [-5.7435, 0, 0],
+          "cubes": [
+            {
+              "origin": [-10.54264, 4.27351, 0.19264],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [4, 7],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [1, 7],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [10, 7],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [7, 7],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [4, 4],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [7, 7],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_1_tip",
+          "parent": "ur_ghast_trophy_held_left_tentacle_1_extension_2",
+          "pivot": [-10.16764, 4.52351, 0.56764],
+          "rotation": [-11.2852, 0, 0],
+          "cubes": [
+            {
+              "origin": [-10.54264, 3.27351, 0.19264],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [4, 12],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [1, 12],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [10, 12],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [7, 12],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [4, 9],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [7, 12],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_2",
+          "parent": "ur_ghast_trophy_held_left_body",
+          "pivot": [-9.04264, 7.52351, -0.55736],
+          "rotation": [2.9491, 9.7949, 0],
+          "cubes": [
+            {
+              "origin": [-9.41764, 6.27351, -0.93236],
+              "size": [0.75, 1.25, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [5, 3],
+                  "uv_size": [3, 5]
+                },
+                "east": {
+                  "uv": [2, 3],
+                  "uv_size": [3, 5]
+                },
+                "south": {
+                  "uv": [11, 3],
+                  "uv_size": [3, 5]
+                },
+                "west": {
+                  "uv": [8, 3],
+                  "uv_size": [3, 5]
+                },
+                "up": {
+                  "uv": [5, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [8, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_2_extension",
+          "parent": "ur_ghast_trophy_held_left_tentacle_2",
+          "pivot": [-9.04264, 6.52351, -0.55736],
+          "rotation": [-1.7569, 0, 0],
+          "cubes": [
+            {
+              "origin": [-9.41764, 5.27351, -0.93236],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [5, 3],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [2, 3],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [11, 3],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [8, 3],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [5, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [8, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_2_extension_2",
+          "parent": "ur_ghast_trophy_held_left_tentacle_2_extension",
+          "pivot": [-9.04264, 5.52351, -0.55736],
+          "rotation": [9.785, 0, 0],
+          "cubes": [
+            {
+              "origin": [-9.41764, 4.27351, -0.93236],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [5, 7],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [2, 7],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [11, 7],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [8, 7],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [5, 4],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [8, 7],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_2_tip",
+          "parent": "ur_ghast_trophy_held_left_tentacle_2_extension_2",
+          "pivot": [-9.04264, 4.52351, -0.55736],
+          "rotation": [22.2262, 0, 0],
+          "cubes": [
+            {
+              "origin": [-9.41764, 3.27351, -0.93236],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [5, 12],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [2, 12],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [11, 12],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [8, 12],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [5, 9],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [8, 12],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_3",
+          "parent": "ur_ghast_trophy_held_left_body",
+          "pivot": [-7.66764, 7.52351, -1.68236],
+          "rotation": [9.6663, -18.0716, 0],
+          "cubes": [
+            {
+              "origin": [-8.04264, 6.27351, -2.05736],
+              "size": [0.75, 1.25, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 3],
+                  "uv_size": [3, 5]
+                },
+                "east": {
+                  "uv": [0, 3],
+                  "uv_size": [3, 5]
+                },
+                "south": {
+                  "uv": [9, 3],
+                  "uv_size": [3, 5]
+                },
+                "west": {
+                  "uv": [6, 3],
+                  "uv_size": [3, 5]
+                },
+                "up": {
+                  "uv": [3, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_3_extension",
+          "parent": "ur_ghast_trophy_held_left_tentacle_3",
+          "pivot": [-7.66764, 6.52351, -1.68236],
+          "rotation": [16.7347, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8.04264, 5.27351, -2.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [6, 3],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [3, 3],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [9, 3],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [6, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [9, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_3_extension_2",
+          "parent": "ur_ghast_trophy_held_left_tentacle_3_extension",
+          "pivot": [-7.66764, 5.52351, -1.68236],
+          "rotation": [10.7049, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8.04264, 4.27351, -2.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [6, 7],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [3, 7],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [12, 7],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [9, 7],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [6, 4],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [9, 7],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_3_tip",
+          "parent": "ur_ghast_trophy_held_left_tentacle_3_extension_2",
+          "pivot": [-7.66764, 4.52351, -1.68236],
+          "rotation": [-9.915, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8.04264, 3.27351, -2.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [6, 12],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [3, 12],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [12, 12],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [9, 12],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [6, 9],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [9, 12],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_4",
+          "parent": "ur_ghast_trophy_held_left_body",
+          "pivot": [-10.41764, 7.52351, -1.68236],
+          "rotation": [19.7183, -17.7105, 0],
+          "cubes": [
+            {
+              "origin": [-10.79264, 6.27351, -2.05736],
+              "size": [0.75, 1.25, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [4, 3],
+                  "uv_size": [3, 5]
+                },
+                "east": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 5]
+                },
+                "south": {
+                  "uv": [10, 3],
+                  "uv_size": [3, 5]
+                },
+                "west": {
+                  "uv": [7, 3],
+                  "uv_size": [3, 5]
+                },
+                "up": {
+                  "uv": [4, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [7, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_4_extension",
+          "parent": "ur_ghast_trophy_held_left_tentacle_4",
+          "pivot": [-10.41764, 6.52351, -1.68236],
+          "rotation": [4.0514, 0, 0],
+          "cubes": [
+            {
+              "origin": [-10.79264, 5.27351, -2.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 3],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [0, 3],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [9, 3],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [6, 3],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [3, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_4_extension_2",
+          "parent": "ur_ghast_trophy_held_left_tentacle_4_extension",
+          "pivot": [-10.41764, 5.52351, -1.68236],
+          "rotation": [-6.2973, 0, 0],
+          "cubes": [
+            {
+              "origin": [-10.79264, 4.27351, -2.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 7],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [0, 7],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [9, 7],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [6, 7],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [3, 4],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 7],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_4_tip",
+          "parent": "ur_ghast_trophy_held_left_tentacle_4_extension_2",
+          "pivot": [-10.41764, 4.52351, -1.68236],
+          "rotation": [20.2064, 0, 0],
+          "cubes": [
+            {
+              "origin": [-10.79264, 3.27351, -2.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 12],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [0, 12],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [9, 12],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [6, 12],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [3, 9],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 12],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_5",
+          "parent": "ur_ghast_trophy_held_left_body",
+          "pivot": [-10.91764, 8.39851, -0.80736],
+          "rotation": [14.4088, 10.3141, 45],
+          "cubes": [
+            {
+              "origin": [-11.29264, 7.14851, -1.18236],
+              "size": [0.75, 1.25, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [5, 3],
+                  "uv_size": [3, 5]
+                },
+                "east": {
+                  "uv": [2, 3],
+                  "uv_size": [3, 5]
+                },
+                "south": {
+                  "uv": [11, 3],
+                  "uv_size": [3, 5]
+                },
+                "west": {
+                  "uv": [8, 3],
+                  "uv_size": [3, 5]
+                },
+                "up": {
+                  "uv": [5, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [8, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_5_extension",
+          "parent": "ur_ghast_trophy_held_left_tentacle_5",
+          "pivot": [-10.91764, 7.39851, -0.80736],
+          "rotation": [-3.8782, 0, 0],
+          "cubes": [
+            {
+              "origin": [-11.29264, 6.14851, -1.18236],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [4, 3],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [10, 3],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [7, 3],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [4, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [7, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_5_extension_2",
+          "parent": "ur_ghast_trophy_held_left_tentacle_5_extension",
+          "pivot": [-10.91764, 6.39851, -0.80736],
+          "rotation": [20.0207, 0, 0],
+          "cubes": [
+            {
+              "origin": [-11.29264, 5.14851, -1.18236],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [4, 7],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [1, 7],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [10, 7],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [7, 7],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [4, 4],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [7, 7],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_5_tip",
+          "parent": "ur_ghast_trophy_held_left_tentacle_5_extension_2",
+          "pivot": [-10.91764, 5.39851, -0.80736],
+          "rotation": [-7.2859, 0, 0],
+          "cubes": [
+            {
+              "origin": [-11.29264, 4.14851, -1.18236],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [4, 12],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [1, 12],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [10, 12],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [7, 12],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [4, 9],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [7, 12],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_6",
+          "parent": "ur_ghast_trophy_held_left_body",
+          "pivot": [-10.91764, 9.64851, 0.31764],
+          "rotation": [3.6128, 22.2283, 60],
+          "cubes": [
+            {
+              "origin": [-11.29264, 8.39851, -0.05736],
+              "size": [0.75, 1.25, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 3],
+                  "uv_size": [3, 5]
+                },
+                "east": {
+                  "uv": [0, 3],
+                  "uv_size": [3, 5]
+                },
+                "south": {
+                  "uv": [9, 3],
+                  "uv_size": [3, 5]
+                },
+                "west": {
+                  "uv": [6, 3],
+                  "uv_size": [3, 5]
+                },
+                "up": {
+                  "uv": [3, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_6_extension",
+          "parent": "ur_ghast_trophy_held_left_tentacle_6",
+          "pivot": [-10.91764, 8.64851, 0.31764],
+          "rotation": [15.4085, 0, 0],
+          "cubes": [
+            {
+              "origin": [-11.29264, 7.39851, -0.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [5, 3],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [2, 3],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [11, 3],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [8, 3],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [5, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [8, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_6_extension_2",
+          "parent": "ur_ghast_trophy_held_left_tentacle_6_extension",
+          "pivot": [-10.91764, 7.64851, 0.31764],
+          "rotation": [-5.1381, 0, 0],
+          "cubes": [
+            {
+              "origin": [-11.29264, 6.39851, -0.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [5, 7],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [2, 7],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [11, 7],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [8, 7],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [5, 4],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [8, 7],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_6_tip",
+          "parent": "ur_ghast_trophy_held_left_tentacle_6_extension_2",
+          "pivot": [-10.91764, 6.64851, 0.31764],
+          "rotation": [17.0203, 0, 0],
+          "cubes": [
+            {
+              "origin": [-11.29264, 5.39851, -0.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [5, 12],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [2, 12],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [11, 12],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [8, 12],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [5, 9],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [8, 12],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_7",
+          "parent": "ur_ghast_trophy_held_left_body",
+          "pivot": [-7.16764, 8.39851, -0.80736],
+          "rotation": [7.4114, -0.5778, -45],
+          "cubes": [
+            {
+              "origin": [-7.54264, 7.14851, -1.18236],
+              "size": [0.75, 1.25, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [4, 3],
+                  "uv_size": [3, 5]
+                },
+                "east": {
+                  "uv": [1, 3],
+                  "uv_size": [3, 5]
+                },
+                "south": {
+                  "uv": [10, 3],
+                  "uv_size": [3, 5]
+                },
+                "west": {
+                  "uv": [7, 3],
+                  "uv_size": [3, 5]
+                },
+                "up": {
+                  "uv": [4, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [7, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_7_extension",
+          "parent": "ur_ghast_trophy_held_left_tentacle_7",
+          "pivot": [-7.16764, 7.39851, -0.80736],
+          "rotation": [7.2772, 0, 0],
+          "cubes": [
+            {
+              "origin": [-7.54264, 6.14851, -1.18236],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [6, 3],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [3, 3],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [12, 3],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [9, 3],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [6, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [9, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_7_extension_2",
+          "parent": "ur_ghast_trophy_held_left_tentacle_7_extension",
+          "pivot": [-7.16764, 6.39851, -0.80736],
+          "rotation": [8.8479, 0, 0],
+          "cubes": [
+            {
+              "origin": [-7.54264, 5.14851, -1.18236],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [6, 7],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [3, 7],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [12, 7],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [9, 7],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [6, 4],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [9, 7],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_7_tip",
+          "parent": "ur_ghast_trophy_held_left_tentacle_7_extension_2",
+          "pivot": [-7.16764, 5.39851, -0.80736],
+          "rotation": [-3.6093, 0, 0],
+          "cubes": [
+            {
+              "origin": [-7.54264, 4.14851, -1.18236],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [6, 12],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [3, 12],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [12, 12],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [9, 12],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [6, 9],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [9, 12],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_8",
+          "parent": "ur_ghast_trophy_held_left_body",
+          "pivot": [-7.16764, 9.64851, 0.31764],
+          "rotation": [18.739, -22.4814, -60],
+          "cubes": [
+            {
+              "origin": [-7.54264, 8.39851, -0.05736],
+              "size": [0.75, 1.25, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [5, 3],
+                  "uv_size": [3, 5]
+                },
+                "east": {
+                  "uv": [2, 3],
+                  "uv_size": [3, 5]
+                },
+                "south": {
+                  "uv": [11, 3],
+                  "uv_size": [3, 5]
+                },
+                "west": {
+                  "uv": [8, 3],
+                  "uv_size": [3, 5]
+                },
+                "up": {
+                  "uv": [5, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [8, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_8_extension",
+          "parent": "ur_ghast_trophy_held_left_tentacle_8",
+          "pivot": [-7.16764, 8.64851, 0.31764],
+          "rotation": [-5.2381, 0, 0],
+          "cubes": [
+            {
+              "origin": [-7.54264, 7.39851, -0.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 3],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [0, 3],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [9, 3],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [6, 3],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [3, 0],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 3],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_8_extension_2",
+          "parent": "ur_ghast_trophy_held_left_tentacle_8_extension",
+          "pivot": [-7.16764, 7.64851, 0.31764],
+          "rotation": [11.6019, 0, 0],
+          "cubes": [
+            {
+              "origin": [-7.54264, 6.39851, -0.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 7],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [0, 7],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [9, 7],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [6, 7],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [3, 4],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 7],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ur_ghast_trophy_held_left_tentacle_8_tip",
+          "parent": "ur_ghast_trophy_held_left_tentacle_8_extension_2",
+          "pivot": [-7.16764, 6.64851, 0.31764],
+          "rotation": [12.9264, 0, 0],
+          "cubes": [
+            {
+              "origin": [-7.54264, 5.39851, -0.05736],
+              "size": [0.75, 1, 0.75],
+              "uv": {
+                "north": {
+                  "uv": [3, 12],
+                  "uv_size": [3, 4]
+                },
+                "east": {
+                  "uv": [0, 12],
+                  "uv_size": [3, 4]
+                },
+                "south": {
+                  "uv": [9, 12],
+                  "uv_size": [3, 4]
+                },
+                "west": {
+                  "uv": [6, 12],
+                  "uv_size": [3, 4]
+                },
+                "up": {
+                  "uv": [3, 9],
+                  "uv_size": [3, 3]
+                },
+                "down": {
+                  "uv": [6, 12],
+                  "uv_size": [3, -3]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

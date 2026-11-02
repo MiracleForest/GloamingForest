@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:moss_patch",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_patch_moss"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:moss_patch.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:moss_patch",
+        "replace_block_item": true
+      }
+    }
+  }
+}

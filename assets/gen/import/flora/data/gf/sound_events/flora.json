@@ -1,0 +1,142 @@
+{
+  "twilightforest:block.twilightforest.bug.squish": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.bug.squish",
+    "sounds": [
+      {
+        "event": "entity.slime.squish_small"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.cicada": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.cicada",
+    "sounds": [
+      {
+        "file": "mob/cicada1"
+      },
+      {
+        "file": "mob/cicada2"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.jar.break": {
+    "category": "block",
+    "subtitle": "subtitles.block.generic.break",
+    "sounds": [
+      {
+        "file": "random/jar/jar1"
+      },
+      {
+        "file": "random/jar/jar2"
+      },
+      {
+        "file": "random/jar/jar3"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.jar.fall": {
+    "category": "block",
+    "sounds": [
+      {
+        "file": "random/jar/jar1"
+      },
+      {
+        "file": "random/jar/jar2"
+      },
+      {
+        "file": "random/jar/jar3"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.jar.hit": {
+    "category": "block",
+    "subtitle": "subtitles.block.generic.hit",
+    "sounds": [
+      {
+        "file": "random/jar/jar1"
+      },
+      {
+        "file": "random/jar/jar2"
+      },
+      {
+        "file": "random/jar/jar3"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.jar.insert": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jar.insert",
+    "sounds": [
+      {
+        "file": "random/jar/jar_in"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.jar.lid_swap": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jar.lid_swap",
+    "sounds": [
+      {
+        "file": "random/jar/jar_swap"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.jar.place": {
+    "category": "block",
+    "subtitle": "subtitles.block.generic.place",
+    "sounds": [
+      {
+        "file": "random/jar/jar_place"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.jar.remove": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jar.remove",
+    "sounds": [
+      {
+        "file": "random/jar/jar_out"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.jar.step": {
+    "category": "block",
+    "subtitle": "subtitles.block.generic.footsteps",
+    "sounds": [
+      {
+        "file": "random/jar/jar1"
+      },
+      {
+        "file": "random/jar/jar2"
+      },
+      {
+        "file": "random/jar/jar3"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.jar.wiggle": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.jar.wiggle",
+    "sounds": [
+      {
+        "file": "random/jar/jar_wiggle1"
+      },
+      {
+        "file": "random/jar/jar_wiggle2"
+      },
+      {
+        "file": "random/jar/jar_wiggle3"
+      }
+    ]
+  },
+  "twilightforest:block.twilightforest.torchberry.harvest": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.torchberry.harvest",
+    "sounds": [
+      {
+        "event": "block.sweet_berry_bush.pick_berries"
+      }
+    ]
+  }
+}

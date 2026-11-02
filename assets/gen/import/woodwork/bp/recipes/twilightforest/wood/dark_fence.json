@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/dark_fence"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#S#", "#S#"],
+    "key": {
+      "#": {
+        "item": "twilightforest:dark_planks"
+      },
+      "S": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:dark_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:dark_fence",
+      "count": 3
+    }
+  }
+}

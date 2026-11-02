@@ -1,0 +1,124 @@
+{
+  "about": "Huge roar: detuned sawtooth stack and noise through an opening vowel, heavy drive and a large room.",
+  "params": {
+    "pitch": 70,
+    "len": 1.4,
+    "size": 0.65,
+    "rough": 4,
+    "noise": 0.5,
+    "room": 0.6,
+    "rise": 3
+  },
+  "length": "$len",
+  "tail": 0.6,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "saw",
+      "unison": {
+        "voices": 3,
+        "detune": 25
+      },
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch*0.8"
+          ],
+          [
+            "$len*0.35",
+            "$pitch*semi($rise)"
+          ],
+          [
+            "$len",
+            "$pitch*0.7"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "vibrato": {
+        "rate": 5,
+        "depth": 0.3
+      },
+      "env": {
+        "a": "$len*0.15",
+        "d": "$len*0.5",
+        "s": 0.8,
+        "r": "$len*0.35"
+      },
+      "formant": {
+        "vowel": {
+          "env": [
+            [
+              0,
+              4
+            ],
+            [
+              "$len*0.4",
+              0
+            ],
+            [
+              "$len",
+              3
+            ]
+          ]
+        },
+        "shift": "$size",
+        "mix": 0.7
+      },
+      "drive": "$rough"
+    },
+    {
+      "type": "noise",
+      "color": "pink",
+      "amp": "$noise",
+      "env": {
+        "a": "$len*0.1",
+        "d": "$len*0.6",
+        "s": 0.6,
+        "r": "$len*0.3"
+      },
+      "tremolo": {
+        "rate": 31,
+        "depth": 0.6
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "900*$size",
+          "q": 0.8
+        }
+      ]
+    },
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": "$pitch*0.5",
+      "amp": 0.5,
+      "env": {
+        "a": "$len*0.1",
+        "d": 0.3,
+        "s": 0.7,
+        "r": "$len*0.3"
+      }
+    }
+  ],
+  "fx": [
+    {
+      "type": "filter",
+      "filter": "hp",
+      "freq": 30
+    },
+    {
+      "type": "filter",
+      "filter": "lp",
+      "freq": "5000*$size+1500"
+    },
+    {
+      "type": "reverb",
+      "room": "$room",
+      "damp": 0.4,
+      "mix": 0.18
+    }
+  ]
+}

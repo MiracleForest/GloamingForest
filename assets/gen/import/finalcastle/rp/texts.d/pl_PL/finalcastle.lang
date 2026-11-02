@@ -1,0 +1,14 @@
+block.twilightforest.blue_force_field=Niebieskie Pole Siłowe
+block.twilightforest.brown_thorns=Ciernie
+block.twilightforest.burnt_thorns=Przypalone Ciernie
+block.twilightforest.green_force_field=Zielone Pole Siłowe
+block.twilightforest.green_thorns=Zielone Ciernie
+block.twilightforest.pink_castle_door=Karmaynowe drzwi zamkowe
+block.twilightforest.pink_force_field=Karmazynowe Pole Siłowe
+tile.twilightforest:blue_force_field.name=Niebieskie Pole Siłowe
+tile.twilightforest:brown_thorns.name=Ciernie
+tile.twilightforest:burnt_thorns.name=Przypalone Ciernie
+tile.twilightforest:green_force_field.name=Zielone Pole Siłowe
+tile.twilightforest:green_thorns.name=Zielone Ciernie
+tile.twilightforest:pink_castle_door.name=Karmaynowe drzwi zamkowe
+tile.twilightforest:pink_force_field.name=Karmazynowe Pole Siłowe

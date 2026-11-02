@@ -1,0 +1,9 @@
+config.twilightforest.boss_drop_chests=Boss Drop Chests
+config.twilightforest.boss_drop_chests.tooltip=If true, Twilight Forest's bosses will put their drops inside of a chest where they originally spawned instead of dropping the loot directly.~LINEBREAK~Note that the Knight Phantoms are not affected by this as their drops work differently.
+config.twilightforest.multiplayer_fight_adjuster=Multiplayer Fight Adjuster
+config.twilightforest.multiplayer_fight_adjuster.more_health=More Health
+config.twilightforest.multiplayer_fight_adjuster.more_loot=More Loot
+config.twilightforest.multiplayer_fight_adjuster.more_loot_and_health=More Loot & Health
+config.twilightforest.multiplayer_fight_adjuster.none=None
+config.twilightforest.multiplayer_fight_adjuster.tooltip=Determines how bosses should adjust to multiplayer fights. There are 4 possible values that can be put here:~LINEBREAK~NONE: doesnt do anything when multiple people participate in a bossfight. Bosses will act the same as they do in singleplayer or solo fights.~LINEBREAK~MORE_LOOT: adds additional drops to a boss' loot table based on how many players participated in the fight. These are fully controlled through the entity's loot table, using the `twilightforest:multiplayer_multiplier` loot function. Note that this function will only do things to entities that are included in the `twilightforest:multiplayer_inclusive_entities` tag.~LINEBREAK~MORE_HEALTH: increases the health of each boss by 20 hearts for each player nearby when the fight starts.~LINEBREAK~MORE_LOOT_AND_HEALTH: does both of the above functions for each boss.
+subtitles.twilightforest.block.boss_chest.appear=Boss Chest appears

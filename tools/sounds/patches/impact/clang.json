@@ -1,0 +1,46 @@
+{
+  "about": "A heavy blow on a metal plate (a zombie bashing an iron door, a shield deflecting): a low falling thump, a short noise crack and ringing metal modes.",
+  "params": {
+    "freq": 380,
+    "pitch": 75,
+    "decay": 0.7,
+    "ring": 0.7
+  },
+  "length": 0.3,
+  "tail": 1.0,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": {
+        "env": [
+          [0, "$pitch*2.2"],
+          [0.08, "$pitch"],
+          [0.3, "$pitch*0.6"]
+        ],
+        "curve": "exp"
+      },
+      "env": {"a": 0.002, "d": 0.18, "s": 0.0, "r": 0.05},
+      "drive": 2
+    },
+    {
+      "type": "noise",
+      "color": "pink",
+      "amp": 0.8,
+      "env": {"a": 0.001, "d": 0.05, "s": 0.0, "r": 0.03},
+      "filter": [{"type": "lp", "freq": 4000}]
+    },
+    {
+      "type": "modal",
+      "modes": "metal",
+      "freq": "$freq",
+      "decay": "$decay",
+      "spread": 0.3,
+      "strike": 0.004,
+      "ring": 1.0,
+      "length": 0.01,
+      "amp": "$ring"
+    }
+  ],
+  "fx": [{"type": "reverb", "room": 0.4, "mix": 0.15}]
+}

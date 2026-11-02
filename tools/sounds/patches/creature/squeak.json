@@ -1,0 +1,59 @@
+{
+  "about": "Squeak: a short nasal pulse wave with a fast pitch bend.",
+  "params": {
+    "pitch": 1800,
+    "len": 0.12,
+    "bend": 5,
+    "count": 1,
+    "gap": 0.12
+  },
+  "length": "$len",
+  "tail": 0.05,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "pulse",
+      "pw": 0.2,
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch"
+          ],
+          [
+            "$len*0.4",
+            "$pitch*semi($bend)"
+          ],
+          [
+            "$len",
+            "$pitch*semi(-2)"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "vibrato": {
+        "rate": 28,
+        "depth": 0.6
+      },
+      "env": {
+        "a": 0.005,
+        "d": "$len*0.5",
+        "s": 0.6,
+        "r": "$len*0.3"
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "$pitch*2",
+          "q": 1.5
+        }
+      ],
+      "repeat": {
+        "count": "$count",
+        "every": "$gap",
+        "jitter": "$gap*0.2",
+        "decay": 0.85
+      }
+    }
+  ]
+}

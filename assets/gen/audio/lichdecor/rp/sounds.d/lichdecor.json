@@ -1,0 +1,75 @@
+{
+  "block.twilightforest.candelabra.light": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.candelabra.light",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/candelabra/light"
+      }
+    ]
+  },
+  "block.twilightforest.candelabra.ominous": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.candelabra.ominous",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/candelabra/ominous"
+      }
+    ]
+  },
+  "block.twilightforest.chiseled_bookshelf.convert": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.chiseled_bookshelf.convert",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/remedy"
+      }
+    ]
+  },
+  "block.twilightforest.ominous_fire.light": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.ominous_fire.light",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/candelabra/ominous"
+      }
+    ]
+  },
+  "block.twilightforest.skull_chest.close": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.skull_chest.close",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/casket/close"
+      }
+    ]
+  },
+  "block.twilightforest.skull_chest.locked": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.skull_chest.locked",
+    "sounds": [
+      {
+        "name": "sounds/random/door_close"
+      }
+    ]
+  },
+  "block.twilightforest.skull_chest.open": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.skull_chest.open",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/casket/open",
+        "pitch": 1.25
+      }
+    ]
+  },
+  "block.twilightforest.wrought_iron_fence.extend": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.wrought_iron_fence.extend",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/lichdecor/random/casket/repair"
+      }
+    ]
+  }
+}

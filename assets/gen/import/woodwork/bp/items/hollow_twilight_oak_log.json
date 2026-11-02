@@ -1,0 +1,21 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:hollow_twilight_oak_log",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_twilight_oak_log"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:hollow_twilight_oak_log.name"
+      }
+    }
+  }
+}

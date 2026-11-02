@@ -1,0 +1,22 @@
+{
+  "entity.twilightforest.fire_beetle": "Ohnivý brouk",
+  "entity.twilightforest.hedge_spider": "Živoplotový pavouk",
+  "entity.twilightforest.hostile_wolf": "Zlý vlk",
+  "entity.twilightforest.king_spider": "Pavoučí král",
+  "entity.twilightforest.mist_wolf": "Mlžný vlk",
+  "entity.twilightforest.nature_bolt": "Přírodní blesk",
+  "entity.twilightforest.pinch_beetle": "Roháč",
+  "entity.twilightforest.skeleton_druid": "Kostlivecký druid",
+  "entity.twilightforest.slime_beetle": "Slizký brouk",
+  "entity.twilightforest.swarm_spider": "Rojící pavouk",
+  "entity.twilightforest.winter_wolf": "Zimní vlk",
+  "item.twilightforest.fire_beetle_spawn_egg": "Vajíčko s ohnivým broukem",
+  "item.twilightforest.hedge_spider_spawn_egg": "Vajíčko s keřovým pavoukem",
+  "item.twilightforest.hostile_wolf_spawn_egg": "Vajíčko se zlým vlkem",
+  "item.twilightforest.king_spider_spawn_egg": "Vajíčko s pavoučím králem",
+  "item.twilightforest.mist_wolf_spawn_egg": "Vajíčko s mlžným vlkem",
+  "item.twilightforest.skeleton_druid_spawn_egg": "Vajíčko s kostliveckým druidem",
+  "item.twilightforest.slime_beetle_spawn_egg": "Vajíčko se slizovým broukem",
+  "item.twilightforest.swarm_spider_spawn_egg": "Vajíčko s rojícím pavoukem",
+  "item.twilightforest.winter_wolf_spawn_egg": "Vajíčko se zimním vlkem"
+}

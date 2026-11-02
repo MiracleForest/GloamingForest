@@ -1,0 +1,21 @@
+{
+  "block.twilightforest.candelabra": "Candelabro",
+  "block.twilightforest.creeper_skull_candle": "Candela testa di creeper",
+  "block.twilightforest.piglin_skull_candle": "Candela testa di piglin",
+  "block.twilightforest.player_skull_candle": "Candela testa di giocatore",
+  "block.twilightforest.player_skull_candle.named": "Candela testa di %s",
+  "block.twilightforest.skeleton_skull_candle": "Candela teschio di scheletro",
+  "block.twilightforest.terrorcotta_curves": "Curve di terrorcotta",
+  "block.twilightforest.terrorcotta_lines": "Linee di terrorcotta",
+  "block.twilightforest.wither_skeleton_skull_candle": "Candela teschio di scheletro wither",
+  "block.twilightforest.wrought_iron_fence": "Staccionata in ferro battuto",
+  "block.twilightforest.zombie_skull_candle": "Candela testa di zombi",
+  "entity.twilightforest.magic_painting": "Quadro magico",
+  "item.twilightforest.magic_painting": "Quadro magico",
+  "item.twilightforest.skull_candle.desc": "Ha: %s %s candela",
+  "item.twilightforest.skull_candle.desc.multiple": "Ha: %s %s candele",
+  "magic_painting.twilightforest.castaway_paradise.title": "Paradiso dei naufraghi",
+  "magic_painting.twilightforest.darkness.title": "Oscurità",
+  "magic_painting.twilightforest.lucid_lands.title": "Terre Lucide",
+  "stat.twilightforest.skull_candles_made": "Candela testa creata"
+}

@@ -1,0 +1,319 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:transformation_log_core",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:active": [false, true],
+        "twilightforest:axis": ["x", "y", "z"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 10
+      },
+      "tag:minecraft:is_axe_item_destructible": {},
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_transformation_log_core",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "tf_block_transformation_log_top",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "tf_block_transformation_log_top",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "tf_block_transformation_log_core",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "tf_block_transformation_log_core",
+          "render_method": "opaque"
+        },
+        "east": {
+          "texture": "tf_block_transformation_log_core",
+          "render_method": "opaque"
+        },
+        "west": {
+          "texture": "tf_block_transformation_log_core",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [270, 270, 0]
+      },
+      "minecraft:map_color": "#815631"
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:active') && q.block_state('twilightforest:axis') == 'x'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:active') && q.block_state('twilightforest:axis') == 'y'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:active') && q.block_state('twilightforest:axis') == 'z'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_transformation_log_core",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active') && q.block_state('twilightforest:axis') == 'x'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active') && q.block_state('twilightforest:axis') == 'y'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active') && q.block_state('twilightforest:axis') == 'z'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_transformation_log_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_transformation_log_core_on",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:light_emission": 15
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y'",
+        "components": {
+          "minecraft:map_color": "#8f7748"
+        }
+      }
+    ]
+  }
+}

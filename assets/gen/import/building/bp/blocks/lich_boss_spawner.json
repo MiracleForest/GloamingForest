@@ -1,0 +1,48 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:lich_boss_spawner",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": false,
+      "minecraft:destructible_by_explosion": false,
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_boss_spawner",
+          "render_method": "alpha_test"
+        },
+        "up": {
+          "texture": "tf_block_boss_spawner",
+          "render_method": "alpha_test"
+        },
+        "down": {
+          "texture": "tf_block_boss_spawner",
+          "render_method": "alpha_test"
+        },
+        "north": {
+          "texture": "tf_block_boss_spawner",
+          "render_method": "alpha_test"
+        },
+        "south": {
+          "texture": "tf_block_boss_spawner",
+          "render_method": "alpha_test"
+        },
+        "east": {
+          "texture": "tf_block_boss_spawner",
+          "render_method": "alpha_test"
+        },
+        "west": {
+          "texture": "tf_block_boss_spawner",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:raven_feather",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_raven_feather"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:raven_feather.name"
+      },
+      "minecraft:tags": {
+        "tags": ["c:feathers"]
+      }
+    }
+  }
+}

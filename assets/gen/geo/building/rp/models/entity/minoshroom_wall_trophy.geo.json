@@ -1,0 +1,100 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.minoshroom_wall_trophy",
+        "texture_width": 128,
+        "texture_height": 32,
+        "visible_bounds_width": 2.5,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 0.5, 0]
+      },
+      "bones": [
+        {
+          "name": "minoshroom_wall_trophy",
+          "pivot": [0, 0, 0],
+          "rotation": [0, 180, 0]
+        },
+        {
+          "name": "head",
+          "parent": "minoshroom_wall_trophy",
+          "pivot": [0, 4, 3.944],
+          "cubes": [
+            {
+              "origin": [-4, 4, -0.056],
+              "size": [8, 8, 8],
+              "uv": [96, 16]
+            }
+          ]
+        },
+        {
+          "name": "snout",
+          "parent": "head",
+          "pivot": [0, 6, -0.056],
+          "cubes": [
+            {
+              "origin": [-2, 4, -1.056],
+              "size": [4, 3, 1],
+              "uv": [105, 28]
+            }
+          ]
+        },
+        {
+          "name": "right_horn_1",
+          "parent": "head",
+          "pivot": [-2.5, 10.5, 3.944],
+          "rotation": [0, -25, 10],
+          "cubes": [
+            {
+              "origin": [-8, 9, 2.444],
+              "size": [5, 3, 3],
+              "uv": [0, 0],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "right_horn_2",
+          "parent": "right_horn_1",
+          "pivot": [-7, 10.5, 3.944],
+          "rotation": [0, -15, 45],
+          "cubes": [
+            {
+              "origin": [-10.5, 9.5, 2.944],
+              "size": [3, 2, 2],
+              "uv": [16, 0],
+              "mirror": true
+            }
+          ]
+        },
+        {
+          "name": "left_horn_1",
+          "parent": "head",
+          "pivot": [2.5, 10.5, 3.944],
+          "rotation": [0, 25, -10],
+          "cubes": [
+            {
+              "origin": [3, 9, 2.444],
+              "size": [5, 3, 3],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "left_horn_2",
+          "parent": "left_horn_1",
+          "pivot": [7, 10.5, 3.944],
+          "rotation": [0, 15, -45],
+          "cubes": [
+            {
+              "origin": [7.5, 9.5, 2.944],
+              "size": [3, 2, 2],
+              "uv": [16, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

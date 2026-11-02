@@ -1,0 +1,199 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.minecraft.block.flower_pot_cross",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [2, 0, -3],
+              "size": [1, 6, 6],
+              "uv": {
+                "north": {
+                  "uv": [10, 10],
+                  "uv_size": [1, 6],
+                  "material_instance": "flowerpot"
+                },
+                "east": {
+                  "uv": [5, 10],
+                  "uv_size": [6, 6],
+                  "material_instance": "flowerpot"
+                },
+                "south": {
+                  "uv": [5, 10],
+                  "uv_size": [1, 6],
+                  "material_instance": "flowerpot"
+                },
+                "west": {
+                  "uv": [5, 10],
+                  "uv_size": [6, 6],
+                  "material_instance": "flowerpot"
+                },
+                "up": {
+                  "uv": [6, 11],
+                  "uv_size": [-1, -6],
+                  "material_instance": "flowerpot"
+                },
+                "down": {
+                  "uv": [6, 11],
+                  "uv_size": [-1, -6],
+                  "material_instance": "flowerpot"
+                }
+              }
+            },
+            {
+              "origin": [-3, 0, -3],
+              "size": [1, 6, 6],
+              "uv": {
+                "north": {
+                  "uv": [5, 10],
+                  "uv_size": [1, 6],
+                  "material_instance": "flowerpot"
+                },
+                "east": {
+                  "uv": [5, 10],
+                  "uv_size": [6, 6],
+                  "material_instance": "flowerpot"
+                },
+                "south": {
+                  "uv": [10, 10],
+                  "uv_size": [1, 6],
+                  "material_instance": "flowerpot"
+                },
+                "west": {
+                  "uv": [5, 10],
+                  "uv_size": [6, 6],
+                  "material_instance": "flowerpot"
+                },
+                "up": {
+                  "uv": [11, 11],
+                  "uv_size": [-1, -6],
+                  "material_instance": "flowerpot"
+                },
+                "down": {
+                  "uv": [11, 11],
+                  "uv_size": [-1, -6],
+                  "material_instance": "flowerpot"
+                }
+              }
+            },
+            {
+              "origin": [-2, 0, -3],
+              "size": [4, 6, 1],
+              "uv": {
+                "north": {
+                  "uv": [6, 10],
+                  "uv_size": [4, 6],
+                  "material_instance": "flowerpot"
+                },
+                "south": {
+                  "uv": [6, 10],
+                  "uv_size": [4, 6],
+                  "material_instance": "flowerpot"
+                },
+                "up": {
+                  "uv": [10, 6],
+                  "uv_size": [-4, -1],
+                  "material_instance": "flowerpot"
+                },
+                "down": {
+                  "uv": [10, 11],
+                  "uv_size": [-4, -1],
+                  "material_instance": "flowerpot"
+                }
+              }
+            },
+            {
+              "origin": [-2, 0, 2],
+              "size": [4, 6, 1],
+              "uv": {
+                "north": {
+                  "uv": [6, 10],
+                  "uv_size": [4, 6],
+                  "material_instance": "flowerpot"
+                },
+                "south": {
+                  "uv": [6, 10],
+                  "uv_size": [4, 6],
+                  "material_instance": "flowerpot"
+                },
+                "up": {
+                  "uv": [10, 11],
+                  "uv_size": [-4, -1],
+                  "material_instance": "flowerpot"
+                },
+                "down": {
+                  "uv": [10, 6],
+                  "uv_size": [-4, -1],
+                  "material_instance": "flowerpot"
+                }
+              }
+            },
+            {
+              "origin": [-2, 0, -2],
+              "size": [4, 4, 4],
+              "uv": {
+                "up": {
+                  "uv": [10, 10],
+                  "uv_size": [-4, -4],
+                  "material_instance": "dirt"
+                },
+                "down": {
+                  "uv": [10, 10],
+                  "uv_size": [-4, -4],
+                  "material_instance": "flowerpot"
+                }
+              }
+            },
+            {
+              "origin": [-7.6368, 4, 0],
+              "size": [15.2735, 12, 0],
+              "pivot": [0, 8, 0],
+              "rotation": [0, -45, 0],
+              "uv": {
+                "north": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "plant"
+                },
+                "south": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "plant"
+                }
+              }
+            },
+            {
+              "origin": [0, 4, -7.6368],
+              "size": [0, 12, 15.2735],
+              "pivot": [0, 8, 0],
+              "rotation": [0, -45, 0],
+              "uv": {
+                "east": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "plant"
+                },
+                "west": {
+                  "uv": [0, 0],
+                  "uv_size": [16, 16],
+                  "material_instance": "plant"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

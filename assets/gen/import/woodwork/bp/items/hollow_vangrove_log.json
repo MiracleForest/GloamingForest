@@ -1,0 +1,21 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:hollow_vangrove_log",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_vanilla_block_mangrove_log"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:hollow_vangrove_log.name"
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:penguin",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/penguin"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.penguin"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#12151b",
+        "overlay_color": "#f9edd2"
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "twilightforest:extended_snow_warning": {
+    "textures": [
+      "textures/twilightforest/particle/snow_0",
+      "textures/twilightforest/particle/snow_1",
+      "textures/twilightforest/particle/snow_2",
+      "textures/twilightforest/particle/snow_3"
+    ]
+  },
+  "twilightforest:ice_beam": {
+    "textures": [
+      "textures/twilightforest/particle/snow_0",
+      "textures/twilightforest/particle/snow_1",
+      "textures/twilightforest/particle/snow_2",
+      "textures/twilightforest/particle/snow_3"
+    ]
+  },
+  "twilightforest:snow": {
+    "textures": [
+      "textures/twilightforest/particle/snow_0",
+      "textures/twilightforest/particle/snow_1",
+      "textures/twilightforest/particle/snow_2",
+      "textures/twilightforest/particle/snow_3"
+    ]
+  },
+  "twilightforest:snow_guardian": {
+    "textures": [
+      "textures/twilightforest/particle/snow_0",
+      "textures/twilightforest/particle/snow_1",
+      "textures/twilightforest/particle/snow_2",
+      "textures/twilightforest/particle/snow_3"
+    ]
+  },
+  "twilightforest:snow_warning": {
+    "textures": [
+      "textures/twilightforest/particle/snow_0",
+      "textures/twilightforest/particle/snow_1",
+      "textures/twilightforest/particle/snow_2",
+      "textures/twilightforest/particle/snow_3"
+    ]
+  }
+}

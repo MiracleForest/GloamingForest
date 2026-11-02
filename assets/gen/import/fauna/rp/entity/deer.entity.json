@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:deer",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/wilddeer"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.deer"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#7b4d2e",
+        "overlay_color": "#4b241d"
+      }
+    }
+  }
+}

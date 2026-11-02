@@ -1,0 +1,11 @@
+{
+  "twilightforest:block.twilightforest.beanstalk.grow": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.beanstalk.grow",
+    "sounds": [
+      {
+        "file": "random/beanstalk_grow"
+      }
+    ]
+  }
+}

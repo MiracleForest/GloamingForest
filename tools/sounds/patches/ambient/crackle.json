@@ -1,0 +1,39 @@
+{
+  "about": "Ice or fire crackle: sparse clicks with icy pings.",
+  "params": {
+    "len": 0.8,
+    "density": 25,
+    "ping": 0.5
+  },
+  "length": "$len",
+  "tail": 0.4,
+  "layers": [
+    {
+      "type": "grains",
+      "density": "$density",
+      "grain": [
+        0.001,
+        0.005
+      ],
+      "freq": [
+        1500,
+        9000
+      ],
+      "wave": "click"
+    },
+    {
+      "type": "modal",
+      "modes": "ice",
+      "freq": "rand(1800,3200)",
+      "amp": "$ping",
+      "length": 0.01,
+      "ring": 0.4,
+      "repeat": {
+        "count": 3,
+        "every": "$len/3",
+        "jitter": "$len/4",
+        "decay": 0.8
+      }
+    }
+  ]
+}
