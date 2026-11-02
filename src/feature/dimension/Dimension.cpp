@@ -16,15 +16,21 @@
 //     client mod); vanilla clients get a per-player clock (Clock.cpp);
 //   - has_raids false: villages in the dimension never start a raid;
 //   - EntityEvents#stopEndermenFromGrabbingBlocksInTF: the take_block goal never starts there.
+//   - ambient_light 0.01: the dimension's brightness ramp is DimensionType#brightness with TF's
+//     ambient light (the engine's light levels here, the client mod's light texture there).
 // The other values need no code: coordinate_scale 0.125 (World.cpp, the teleporter), bed_works
 // (custom dimensions allow beds), respawn_anchor_works false and piglin_safe false (Bedrock anchors
 // only work and piglins only stay unconverted in the Nether), infiniburn #infiniburn_overworld
 // (netherrack and magma burn forever in every Bedrock dimension), ultrawarm false, has_ceiling
 // false, has_skylight true, natural true (the definition's defaults), min_y / height /
-// logical_height (the definition). ambient_light, monster spawn light and effects belong to the
-// sky / spawning units (U15, F5).
+// logical_height (the definition). monster_spawn_light_level / monster_spawn_block_light_limit
+// are read by the spawners through the contract extension feature/ext/dimension/DimensionType.h
+// (Monster#isDarkEnoughToSpawn); effects (the sky renderer) belong to U15.
 
+#include <algorithm>
+#include <array>
 #include <atomic>
+#include <iterator>
 #include <string>
 
 #include "ll/api/memory/Hook.h"
@@ -37,9 +43,11 @@
 #include "mc/world/level/DimensionManager.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/dimension/Dimension.h"
+#include "mc/world/level/dimension/DimensionBrightnessRamp.h"
 #include "mc/world/level/dimension/DimensionDefinitionGroup.h"
 
 #include "feature/dimension/DimensionConfig.h"
+#include "feature/ext/dimension/DimensionType.h"
 #include "feature/dimension/Internal.h"
 #include "feature/dimension/World.h"
 #include "game/WorldDb.h"
@@ -112,6 +120,32 @@ double coordinateScaleOf(int dim) {
     return 1.0;
 }
 
+bool applyAmbientLight(Dimension& dimension) {
+    auto* owner = dimension.mDimensionBrightnessRamp.get();
+    if (!owner) return false;
+    auto&               ramp = owner->mBrightnessRamp;
+    static auto const   table = [] {
+        std::array<float, 16> t{};
+        float                 raw[16];
+        world::ext::brightnessRamp(world::ext::twilightType().ambientLight, raw);
+        std::copy(std::begin(raw), std::end(raw), t.begin());
+        return t;
+    }();
+    auto const& want = table;
+    if (std::equal(std::begin(want), std::end(want), std::begin(ramp))) return false;
+    float was0 = ramp[0], was7 = ramp[7];
+    std::copy(std::begin(want), std::end(want), std::begin(ramp));
+    log().info(
+        "dimension: the Twilight Forest's brightness ramp now has ambient light {} (light 0: {:.4f} -> {:.4f}, light 7: {:.4f} -> {:.4f})",
+        world::ext::twilightType().ambientLight,
+        was0,
+        ramp[0],
+        was7,
+        ramp[7]
+    );
+    return true;
+}
+
 std::optional<Height> heightOf(int dim) {
     auto level = ll::service::getLevel();
     if (!level) return std::nullopt;
@@ -153,6 +187,7 @@ void logRegistration(char const* when) {
         log().error("dimension: {} has id {} but could not be created ({})", world::kDimensionId, static_cast<int>(*type), when);
         return;
     }
+    applyAmbientLight(*d);
     log().info(
         "dimension: {} registered as dimension {} (name '{}', y {}..{}, natural {}, bed respawn {}, sky {}) ({})",
         world::kDimensionId,
