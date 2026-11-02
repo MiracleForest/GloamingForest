@@ -29,6 +29,7 @@
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/dimension/DimensionType.h"
 
+#include "feature/combat/Combat.h"
 #include "feature/entity/Entity.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
@@ -113,6 +114,37 @@ Actor* spawnActor(core::GlobalPos const& at, std::string const& id) {
 void removeActorById(std::int64_t uid) {
     if (auto* a = fe::actorById(uid)) a->remove();
 }
+
+/// The actor whose incoming damage the combat pipeline cancels while a CancelHitsScope lives, and
+/// the hits cancelled. The contract's handlers cannot be removed: one handler for the process,
+/// active only while a scope names a target.
+struct CancelHits {
+    std::int64_t target    = 0;
+    int          cancelled = 0;
+};
+CancelHits& cancelHits() {
+    static CancelHits c;
+    return c;
+}
+int cancelledHits() { return cancelHits().cancelled; }
+struct CancelHitsScope {
+    explicit CancelHitsScope(std::int64_t target) {
+        static bool const listening = [] {
+            gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
+                auto& c = cancelHits();
+                if (c.target == 0 || fe::uidOf(d.victim) != c.target) return gf::combat::Verdict::Pass;
+                ++c.cancelled;
+                return gf::combat::Verdict::Cancel;
+            });
+            return true;
+        }();
+        (void)listening;
+        cancelHits() = {.target = target, .cancelled = 0};
+    }
+    ~CancelHitsScope() { cancelHits() = {}; }
+    CancelHitsScope(CancelHitsScope const&)            = delete;
+    CancelHitsScope& operator=(CancelHitsScope const&) = delete;
+};
 
 } // namespace
 
@@ -262,6 +294,35 @@ GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.check(health - t->getHealth() == 6, "ceil(3 * 2) = 6 arrow damage (" + std::to_string(health - t->getHealth()) + ")");
     ctx.check(fe::actorById(pid) == nullptr, "an arrow that hit is gone");
     if (auto* a = fe::actorById(pid)) a->remove();
+    // a hit that does not land (an onIncoming handler cancels the target's damage): the arrow is
+    // deflected (ProjectileDeflection.REVERSE, then * 0.2) and no doPostHurtEffects runs
+    {
+        CancelHitsScope cancel(targetId);
+        hits().entity.clear();
+        t = fe::actorById(targetId);
+        ctx.require(t != nullptr, "the target is still there");
+        int  healthBefore = t->getHealth();
+        int  postBefore   = postHurtsForTest();
+        auto* shooter2    = fe::playerById(spId);
+        ctx.require(shooter2 != nullptr, "the shooter is still there");
+        eye  = shooter2->getEyePos();
+        tpos = t->getFeetPos();
+        p    = gp::shoot(*shooter2, kFixture, Vec3{tpos.x - eye.x, tpos.y + 1.0f - eye.y, tpos.z - eye.z}, 3.0f, 0.0f);
+        ctx.require(p != nullptr, "a second arrow is shot");
+        pid = fe::uidOf(*p);
+        for (int i = 0; i < 20 && hits().entity.empty(); ++i) co_await ctx.ticks(1);
+        ctx.check(hits().entity == "gf_test:boss", "the second arrow hit the target (" + hits().entity + ")");
+        ctx.check(cancelledHits() >= 1, "the combat pipeline cancelled its damage (" + std::to_string(cancelledHits()) + ")");
+        if (auto* a = fe::actorById(pid)) {
+            auto v = gp::ext::velocity(*a);
+            ctx.check(v.x < 0.0f && v.x > -0.35f, "the arrow whose hit did not land bounces back at a tenth of its speed (vx " + std::to_string(v.x) + ")");
+        } else {
+            ctx.check(false, "a deflected arrow keeps flying");
+        }
+        ctx.check(postHurtsForTest() == postBefore, "no doPostHurtEffects for a hit that did not land");
+        if (auto* tt = fe::actorById(targetId)) ctx.check(tt->getHealth() == healthBefore, "and the target took no damage");
+        if (auto* a = fe::actorById(pid)) a->remove();
+    }
     if (auto* a = fe::actorById(targetId)) a->remove();
     // gravity 0.05 (AbstractArrow), not the throwable's 0.03
     shooter = fe::playerById(spId);

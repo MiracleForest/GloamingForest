@@ -44,6 +44,7 @@
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/actor/item/FallingBlockActor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/state/ActorPropertyUtils.h"
 #include "mc/world/actor/state/PropertyComponent.h"
@@ -204,6 +205,8 @@ struct Registry {
     std::vector<std::int64_t>                                    removals;
     std::unordered_set<std::string>                              hostileMounts; ///< IHostileMount types
     std::unordered_set<std::string>                              noPortal;      ///< types whose canUsePortal is false (ext)
+    std::int64_t                                                 portalWatch = 0;      ///< the actor whose portal queries are counted (selftests)
+    int                                                          portalWatchCount = 0; ///< its portal queries so far
     /// Whether the tick hook looks at a type (one lookup per actor and tick instead of asking
     /// every registry); cleared when a registration changes.
     std::unordered_map<std::string, bool>                        interest;
@@ -507,13 +510,20 @@ void addInternalHooks(InternalHooks hooks) {
     invalidateInterest();
 }
 void invalidateInterest() { reg().interest.clear(); }
-bool portalAllowed(Mob const& mob) {
-    if (mob.isPlayer() || !isServerActor(mob)) return true;
-    if (!reg().noPortal.empty() && reg().noPortal.contains(mob.getTypeName())) return false;
-    for (auto const& h : reg().internal)
-        if (h.usePortal && !h.usePortal(mob)) return false;
+bool portalAllowed(Actor const& actor) {
+    if (actor.isPlayer() || !isServerActor(actor)) return true;
+    auto& r = reg();
+    if (r.portalWatch != 0 && uidOf(actor) == r.portalWatch) ++r.portalWatchCount;
+    if (!r.noPortal.empty() && r.noPortal.contains(actor.getTypeName())) return false;
+    for (auto const& h : r.internal)
+        if (h.usePortal && !h.usePortal(actor)) return false;
     return true;
 }
+void watchPortalQueriesForTest(std::int64_t uid) {
+    reg().portalWatch      = uid;
+    reg().portalWatchCount = 0;
+}
+int portalQueriesForTest() { return reg().portalWatchCount; }
 void onLevelTick(std::function<void()> fn) { reg().levelTicks.push_back(std::move(fn)); }
 void removeLater(std::int64_t uid) { reg().removals.push_back(uid); }
 bool hasBehaviour(std::string const& typeId) { return reg().behaviours.contains(typeId); }
@@ -585,10 +595,25 @@ LL_TYPE_INSTANCE_HOOK(EntitySetTargetHook, ll::memory::HookPriority::Normal, Mob
 }
 
 // Entity#canUsePortal: TF's bosses (BaseTFBoss) and parts (HydraPart, NagaSegment, TFPart) never go
-// through a portal. Bedrock's portals ask Mob::canChangeDimensionsUsingPortal, and so does the
-// Twilight portal (gf::portal's Entity#canUsePortal for a mob without passengers).
+// through a portal, nor do the types marked with ext::setCanUsePortal (RisingZombie, ChainBlock,
+// CubeOfAnnihilation). Bedrock's portals and the Twilight portal ask the actor's
+// canChangeDimensionsUsingPortal: Mob, FallingBlockActor and Player override Actor's, every other
+// actor (projectiles, items, vehicles) answers with Actor's own; all three non-player ones are
+// hooked. (F4's Twilight portal lets an actor that carries a passenger through without asking it.)
 LL_TYPE_INSTANCE_HOOK(EntityPortalHook, ll::memory::HookPriority::Normal, Mob, &Mob::$canChangeDimensionsUsingPortal, bool) {
-    return origin() && gf::feature::entity::portalAllowed(*this);
+    return gf::feature::entity::portalAllowed(*this) && origin(); // refused types never reach the engine's rule
+}
+LL_TYPE_INSTANCE_HOOK(ActorPortalHook, ll::memory::HookPriority::Normal, Actor, &Actor::$canChangeDimensionsUsingPortal, bool) {
+    return gf::feature::entity::portalAllowed(*this) && origin(); // refused types never reach the engine's rule
+}
+LL_TYPE_INSTANCE_HOOK(
+    FallingBlockPortalHook,
+    ll::memory::HookPriority::Normal,
+    FallingBlockActor,
+    &FallingBlockActor::$canChangeDimensionsUsingPortal,
+    bool
+) {
+    return gf::feature::entity::portalAllowed(*this) && origin(); // refused types never reach the engine's rule
 }
 
 // ---- contract -----------------------------------------------------------------------------------
@@ -734,6 +759,8 @@ public:
         EntityLoadHook::hook();
         EntitySetTargetHook::hook();
         EntityPortalHook::hook();
+        ActorPortalHook::hook();
+        FallingBlockPortalHook::hook();
         auto& bus = ll::event::EventBus::getInstance();
         listeners().push_back(bus.emplaceListener<ll::event::ServerLevelTickEvent>([](ll::event::ServerLevelTickEvent&) {
             for (auto const& fn : reg().levelTicks) guarded("level tick", "-", fn);
@@ -792,6 +819,8 @@ public:
         auto& bus = ll::event::EventBus::getInstance();
         for (auto& l : listeners()) bus.removeListener(l);
         listeners().clear();
+        FallingBlockPortalHook::unhook();
+        ActorPortalHook::unhook();
         EntityPortalHook::unhook();
         EntitySetTargetHook::unhook();
         EntityLoadHook::unhook();

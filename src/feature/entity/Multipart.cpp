@@ -292,7 +292,7 @@ void installMultipart() {
         .save = [](Actor const& actor) { return parentOfPart(actor) == 0 && actor.getTypeName() != kGenericPart; },
         // Java's parts are no level entities (PartEntity): they never reach a portal (HydraPart,
         // NagaSegment#canUsePortal false)
-        .usePortal = [](Mob const& mob) { return parentOfPart(mob) == 0 && mob.getTypeName() != kGenericPart; },
+        .usePortal = [](Actor const& actor) { return parentOfPart(actor) == 0 && actor.getTypeName() != kGenericPart; },
     });
     onLevelTick([] {
         auto& m = M();

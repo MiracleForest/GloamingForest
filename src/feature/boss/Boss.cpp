@@ -34,9 +34,10 @@
 //     companion protocol carries TFBossBarPacket's exact RGB, overlay, darken and fog plus the
 //     viewer's title and the progress ("boss.bar"; the client mod paints the bar with the RGB) and
 //     UpdateDeathTimePacket ("boss.death_time", when a player starts seeing a dying boss).
-//   - Death (postmortem): the loot table rolls into the 27-slot buffer (IBossLootBuffer, saved
-//     with the boss), the home landmark is conquered (gf::landmark), "hurt_boss" fires for every
-//     qualified player. The dead body stays in the level for the boss's whole death animation
+//   - Death: "hurt_boss" fires for every qualified player first (LivingDeathEvent; for any mob of
+//     the inclusive tag, a registered boss or not), then the postmortem: the loot table rolls into
+//     the 27-slot buffer (IBossLootBuffer, saved with the boss) and the home landmark is conquered
+//     (gf::landmark, "structure_cleared"). The dead body stays in the level for the boss's whole death animation
 //     (BaseTFBoss#tickDeath / #isDeathAnimationFinished; Bedrock's own death ticking system,
 //     which removes a dead mob after 20 ticks, is held back for it); then the buffer goes into
 //     the death chest at EntityUtil#bossChestLocation (home.below(), replacing the floor block
@@ -49,7 +50,8 @@
 //     entities, so the spawner blocks around players are found with the chunk palettes
 //     (BlockSource::fetchBlocksInBox, one slice of the box per tick, a margin beyond the longest
 //     range so a spawner is known before a player gets in range) and ticked every level tick.
-//   - Multiplayer: health adjuster on spawn, qualified players (participants), config "bosses".
+//   - Multiplayer: health adjuster on spawn, qualified players (participants), config "bosses";
+//     for every type of twilightforest:multiplayer_inclusive_entities (EntityEvents).
 
 #include "feature/boss/Boss.h"
 #include "feature/boss/BossInternal.h"
@@ -112,6 +114,7 @@
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/deps/shared_types/legacy/EquipmentSlot.h"
 
+#include "core/landmark/Landmark.h"
 #include "feature/combat/Combat.h"
 #include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
@@ -228,6 +231,21 @@ struct Deposit {
     std::int64_t seed = 0;
 };
 
+/// A death chest that was placed before its container existed (a chest block may get its block
+/// entity a tick later): the 27 slots go in once the container is there. A block that does not
+/// become a container within kFillTries ticks of its loaded chunk gets the loot popped out where
+/// it stands instead (IBossLootBuffer#depositDropsIntoChest's Block#popResource). Saved with the
+/// deaths, so a world closed meanwhile keeps the loot; while the chunk is not loaded it waits.
+constexpr int kFillTries = 20; ///< loaded ticks a placed death chest has to become a container
+
+struct PendingFill {
+    core::GlobalPos pos;
+    Json            buffer; ///< the 27 slots (items as JSON)
+    int             tries = kFillTries;
+    std::string     type;
+    std::int64_t    seed = 0; ///< the celebration's random (IBossLootBuffer#celebrateAt)
+};
+
 constexpr int         kBodyGrace = 40;                     ///< ticks a loaded chunk has to bring a dying body back
 constexpr char const* kDeathsKey = "gf:entity:boss_deaths"; ///< the world DB record of the dying bosses
 
@@ -260,16 +278,12 @@ struct State {
     std::vector<ia::HandlerId>                   handlers;
     // the last death chest (selftests)
     std::optional<core::GlobalPos>               lastChest;
-    struct PendingFill {
-        core::GlobalPos        pos;
-        std::vector<ItemStack> items;
-        int                    tries = 20;
-        std::string            type;
-    };
-    std::vector<PendingFill> pendingFills;
+    std::vector<PendingFill> pendingFills; ///< death chests waiting for their container
     std::unordered_set<std::int64_t> discarding; ///< bosses removed on peaceful (removal pending)
     int                              spawnerVersion = 0;
-    std::optional<std::pair<core::GlobalPos, std::string>> lastConquest;
+    std::optional<std::pair<core::GlobalPos, std::string>> lastConquest; ///< the last conquest asked (selftests)
+    bool                             lastConquestFound = false; ///< and whether it found a start to conquer
+    std::vector<std::string>         inclusiveMembers;  ///< the inclusive tag as the entity hooks last saw it
     int                              sinisterSpawned = 0; ///< mobs spawned by sinister spawners (selftests)
     std::unordered_map<std::string, SpawnerKind> kindsForTest; ///< fixture spawners with a variant's rules
     int sinisterRange = 16; ///< the longest requiredPlayerRange a sinister spawner was given (scan box)
@@ -349,6 +363,17 @@ void qualify(Actor& boss, Actor* source) {
     auto& list = S().qualified[uidOf(boss)];
     auto  id   = uidOf(*source);
     if (std::find(list.begin(), list.end(), id) == list.end()) list.push_back(id);
+}
+
+/// EntityEvents#grantGroupAdvancementIfNeeded (LivingDeathEvent): "hurt_boss" for every qualified
+/// player of a dying mob, MultiplayerInclusivityAttachment#grantGroupAdvancement. Any mob that has
+/// the attachment gets it: a type of the inclusive tag a player damaged, a registered boss or not.
+void grantGroupAdvancement(Mob& mob) {
+    auto q = S().qualified.find(uidOf(mob));
+    if (q == S().qualified.end()) return;
+    auto const& type = mob.getTypeName();
+    for (auto pid : q->second)
+        if (auto* p = fe::playerById(pid)) gf::progression::trigger(*p, "twilightforest:hurt_boss", {{"entity", type}});
 }
 
 /// EntityEvents#adjustEntityHealthInMultiplayerFights (FinalizeSpawnEvent).
@@ -752,9 +777,37 @@ bool chunkLoaded(int dim, BlockPos const& pos) {
     return region && region->hasChunksAt(pos, 0, false);
 }
 
+/// The 27 slots of a saved loot buffer (items as JSON, null: empty).
+std::vector<ItemStack> itemsOf(Json const& buffer) {
+    std::vector<ItemStack> items;
+    for (int i = 0; i < kContainerSize; ++i) {
+        auto const& j = buffer.is_array() && i < static_cast<int>(buffer.size()) ? buffer[i] : Json();
+        items.push_back(j.is_null() ? game::items::empty() : game::items::fromJson(j));
+    }
+    return items;
+}
+
+int stacksIn(std::vector<ItemStack> const& items) {
+    int n = 0;
+    for (auto const& s : items) n += game::items::isEmpty(s) ? 0 : 1;
+    return n;
+}
+
+/// Block#popResource for every stack at `pos` (Bedrock's own: the random offset around the block's
+/// centre, the doTileDrops rule); the item entities spawned.
+int popLoot(int dim, BlockPos const& pos, std::vector<ItemStack> const& items) {
+    auto* region = game::regionOf(dim);
+    if (!region) return 0;
+    int n = 0;
+    for (auto const& s : items)
+        if (!game::items::isEmpty(s) && BlockType::popResource(*region, pos, s, nullptr)) ++n;
+    return n;
+}
+
 /// IBossLootBuffer#tryDeposit: an existing chest of the type, or a block that is replaceable or
 /// that a piston could move (stone, dirt, grass: the floor under the home point), without a block
-/// entity; then its container takes the 27 slots.
+/// entity; then its container takes the 27 slots and #celebrateAt runs. A chest placed just now
+/// may get its container on a later tick: the fill waits for it (PendingFill, celebrated then).
 bool tryDeposit(Deposit const& d, Block const& chest, BlockPos const& pos, fe::JavaRandom& random, std::vector<ItemStack> const& items) {
     auto* region = game::regionOf(d.dim);
     if (!region || !region->hasChunksAt(pos, 0, false)) return false;
@@ -764,16 +817,16 @@ bool tryDeposit(Deposit const& d, Block const& chest, BlockPos const& pos, fe::J
         if (!game::setBlock(*region, pos, chest)) return false;
     }
     core::GlobalPos gpos{d.dim, pos.x, pos.y, pos.z};
-    // a chest placed just now may get its container on the next tick: the fill waits for it
-    if (!fillContainer(gpos, items)) {
-        if (isChest) return false;
-        S().pendingFills.push_back({gpos, items, 20, d.type});
-    }
-    celebrateAt(d.dim, Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, random);
+    bool            filled = fillContainer(gpos, items);
+    if (!filled && isChest) return false;
     S().lastChest = gpos;
-    int stacks    = 0;
-    for (auto const& s : items) stacks += game::items::isEmpty(s) ? 0 : 1;
-    log().info("boss: death chest of {} at {} {} {} ({} stacks)", d.type, pos.x, pos.y, pos.z, stacks);
+    log().info("boss: death chest of {} at {} {} {} ({} stacks)", d.type, pos.x, pos.y, pos.z, stacksIn(items));
+    if (filled) {
+        celebrateAt(d.dim, Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, random);
+    } else {
+        // saved with the deaths by the caller (tickDying / tickDeposits save after a change)
+        S().pendingFills.push_back({gpos, d.buffer, kFillTries, d.type, random.nextLong()});
+    }
     return true;
 }
 
@@ -783,25 +836,58 @@ bool depositDropsIntoChest(Deposit const& d) {
     if (!config().bossesSpawnDropChests) return true;
     if (!chunkLoaded(d.dim, d.pos)) return false;
     fe::JavaRandom random(d.seed);
-    std::vector<ItemStack> items;
-    for (int i = 0; i < kContainerSize; ++i) {
-        auto const& j = d.buffer.is_array() && i < static_cast<int>(d.buffer.size()) ? d.buffer[i] : Json();
-        items.push_back(j.is_null() ? game::items::empty() : game::items::fromJson(j));
-    }
-    BlockPos    pos    = d.pos;
-    auto const* chest  = chestState(d.chestBlock, random);
-    auto*       region = game::regionOf(d.dim);
+    auto           items  = itemsOf(d.buffer);
+    BlockPos       pos    = d.pos;
+    auto const*    chest  = chestState(d.chestBlock, random);
+    auto*          region = game::regionOf(d.dim);
     if (!chest || !region) return true;
     if (tryDeposit(d, *chest, pos, random, items)) return true;
     for (int y = pos.y; y < region->getMaxHeight(); ++y)
         if (tryDeposit(d, *chest, BlockPos{pos.x, y, pos.z}, random, items)) return true;
-    // nowhere to put a chest: Block#popResource (into the loaded chunk)
-    if (auto* lv = level())
-        for (auto const& s : items)
-            if (!game::items::isEmpty(s)) lv->getSpawner().spawnItem(*region, s, nullptr, Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, 0);
+    // nowhere to put a chest: Block#popResource (into the loaded chunk), then #celebrateAt
+    int popped = popLoot(d.dim, pos, items);
     celebrateAt(d.dim, Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, random);
-    log().info("boss: no room for the death chest of {}, the loot dropped at {} {} {}", d.type, pos.x, pos.y, pos.z);
+    log().info("boss: no room for the death chest of {}, {} of {} stacks popped out at {} {} {}", d.type, popped, stacksIn(items), pos.x, pos.y, pos.z);
     return true;
+}
+
+void saveDeaths();
+
+/// The death chests waiting for their container (PendingFill): filled (and celebrated) once the
+/// container is there. Only the ticks of a loaded chunk count; a block that did not become a
+/// container after kFillTries of them gets its loot popped out where it stands
+/// (#depositDropsIntoChest's Block#popResource, then #celebrateAt), so the loot is never lost.
+void tickFills() {
+    auto& list = S().pendingFills;
+    if (list.empty()) return;
+    bool changed = false;
+    for (auto it = list.begin(); it != list.end();) {
+        BlockPos pos = game::blockPos(it->pos);
+        if (!chunkLoaded(it->pos.dim, pos)) {
+            ++it; // waits for its chunk (saved with the deaths)
+            continue;
+        }
+        auto           items = itemsOf(it->buffer);
+        fe::JavaRandom random(it->seed);
+        Vec3           center{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f};
+        if (fillContainer(it->pos, items)) {
+            celebrateAt(it->pos.dim, center, random);
+            it      = list.erase(it);
+            changed = true;
+            continue;
+        }
+        if (--it->tries > 0) {
+            ++it;
+            continue;
+        }
+        int popped = popLoot(it->pos.dim, pos, items);
+        celebrateAt(it->pos.dim, center, random);
+        log().warn("boss: the death chest of {} at {} {} {} never became a container: {} of {} stacks popped out there", it->type, pos.x, pos.y, pos.z, popped,
+                   stacksIn(items));
+        it      = list.erase(it);
+        changed = true;
+    }
+    if (changed) saveDeaths();
 }
 
 // ---- dying bosses in the world DB (TF saves them with their chunk) -------------------------------
@@ -874,8 +960,34 @@ std::optional<Deposit> depositFromJson(Json const& j) try {
     return std::nullopt;
 }
 
-/// Writes the dying bosses and the waiting death chests (on every change of the set and on each
-/// world save, so a crash right after a chest was placed does not place it again).
+Json toJson(PendingFill const& f) {
+    return {
+        {"type",   f.type                          },
+        {"pos",    {f.pos.dim, f.pos.x, f.pos.y, f.pos.z}},
+        {"buffer", f.buffer                        },
+        {"tries",  f.tries                         },
+        {"seed",   f.seed                          },
+    };
+}
+
+std::optional<PendingFill> fillFromJson(Json const& j) try {
+    auto p = j.is_object() ? j.find("pos") : j.end();
+    if (!j.is_object() || p == j.end() || !p->is_array() || p->size() != 4) return std::nullopt;
+    PendingFill f;
+    f.type   = j.value("type", std::string());
+    f.pos    = core::GlobalPos{(*p)[0].get<int>(), (*p)[1].get<int>(), (*p)[2].get<int>(), (*p)[3].get<int>()};
+    f.buffer = j.value("buffer", Json());
+    f.tries  = std::max(1, j.value("tries", kFillTries));
+    f.seed   = j.value("seed", std::int64_t{0});
+    return f;
+} catch (std::exception const& e) {
+    log().warn("boss: a saved death chest fill is unreadable ({})", e.what());
+    return std::nullopt;
+}
+
+/// Writes the dying bosses, the death chests waiting for their chunk and the placed ones waiting
+/// for their container (on every change of the set and on each world save, so a crash right after
+/// a chest was placed does not place it again, and the loot of a chest still being filled is kept).
 void saveDeaths() {
     if (!game::db::available()) return;
     Json dying = Json::array(), deposits = Json::array();
@@ -887,9 +999,11 @@ void saveDeaths() {
         }
         dying.push_back(toJson(d));
     }
+    Json fills = Json::array();
     for (auto const& d : S().deposits) deposits.push_back(toJson(d));
-    if (dying.empty() && deposits.empty()) game::db::erase(kDeathsKey);
-    else game::db::put(kDeathsKey, {{"dying", std::move(dying)}, {"deposits", std::move(deposits)}});
+    for (auto const& f : S().pendingFills) fills.push_back(toJson(f));
+    if (dying.empty() && deposits.empty() && fills.empty()) game::db::erase(kDeathsKey);
+    else game::db::put(kDeathsKey, {{"dying", std::move(dying)}, {"deposits", std::move(deposits)}, {"fills", std::move(fills)}});
 }
 
 /// Reads the deaths a world saved (its load); they go on when their chunks are loaded.
@@ -907,6 +1021,12 @@ void loadDeaths() {
         for (auto const& j : *it)
             if (auto d = depositFromJson(j)) {
                 S().deposits.push_back(std::move(*d));
+                ++m;
+            }
+    if (auto it = rec->find("fills"); it != rec->end() && it->is_array())
+        for (auto const& j : *it)
+            if (auto f = fillFromJson(j)) {
+                S().pendingFills.push_back(std::move(*f));
                 ++m;
             }
     if (n || m) log().info("boss: {} dying boss(es) and {} death chest(s) resumed from the world save", n, m);
@@ -953,6 +1073,22 @@ void sendDeathTime(Mob& boss, int deathTime) {
             gf::net::send(*p, "boss.death_time", {{"id", uidOf(boss)}, {"rid", static_cast<std::int64_t>(boss.getRuntimeID().rawID)}, {"deathTime", deathTime}});
 }
 
+/// Whether LandmarkUtil#markStructureConquered at the home point `pos` had a start of `key` to
+/// conquer (setConquered returns nothing): `key` is a conquerable landmark (a TFStructureStart)
+/// and one of its starts that the contract looks up from `pos` is conquered now (the one
+/// referencing the nearest landmark grid center's chunk, or a forced one covering the column).
+bool conqueredAt(int dim, BlockPos const& pos, std::string const& key) {
+    auto const* d = gf::landmark::descriptor(key);
+    if (!d || !d->conquerable) return false;
+    auto conquered = [&](gf::landmark::Start const& s) { return s.key == d->key && gf::landmark::isConquered(s); };
+    for (auto const& s : gf::landmark::startsIntersecting(dim, {pos.x >> 4, pos.z >> 4}))
+        if (conquered(s) && s.box.minX <= pos.x && pos.x <= s.box.maxX && s.box.minZ <= pos.z && pos.z <= s.box.maxZ) return true;
+    auto center = core::landmark::nearestCenter(pos.x >> 4, pos.z >> 4);
+    for (auto const& s : gf::landmark::startsIntersecting(dim, {center.x >> 4, center.z >> 4}))
+        if (conquered(s)) return true;
+    return false;
+}
+
 /// BaseTFBoss#postmortem's default: the bar to 0, the loot table into the buffer, the conquest.
 void defaultPostmortem(Mob& boss, BossSpec const& spec, std::string const& damageType, Actor* killer) {
     if (auto it = S().bars.find(uidOf(boss)); it != S().bars.end()) setProgress(boss, it->second, 0.0f);
@@ -966,8 +1102,11 @@ void defaultPostmortem(Mob& boss, BossSpec const& spec, std::string const& damag
     if (home && home->pos.dim == static_cast<int>(boss.getDimensionId()) && !spec.homeStructure.empty()) {
         BlockPos hp{home->pos.x, home->pos.y, home->pos.z};
         gf::landmark::setConquered(home->pos.dim, hp, spec.homeStructure, true);
-        S().lastConquest = std::make_pair(home->pos, spec.homeStructure);
-        log().info("boss: {} conquered {} at {} {} {}", boss.getTypeName(), spec.homeStructure, hp.x, hp.y, hp.z);
+        bool found           = conqueredAt(home->pos.dim, hp, spec.homeStructure);
+        S().lastConquest      = std::make_pair(home->pos, spec.homeStructure);
+        S().lastConquestFound = found;
+        if (found) log().info("boss: {} conquered {} at {} {} {}", boss.getTypeName(), spec.homeStructure, hp.x, hp.y, hp.z);
+        else log().info("boss: {} found no conquerable start of {} at its home point {} {} {}", boss.getTypeName(), spec.homeStructure, hp.x, hp.y, hp.z);
     }
 }
 
@@ -983,10 +1122,7 @@ void onBossDie(Mob& boss, std::string const& damageType, Actor* killer) {
     auto const& type = boss.getTypeName();
     auto        uid  = uidOf(boss);
     if (dyingRecord(uid)) return; // a dying body that came back with its chunk: its death goes on
-    // EntityEvents#grantGroupAdvancementIfNeeded (LivingDeathEvent)
-    if (auto q = S().qualified.find(uid); q != S().qualified.end())
-        for (auto pid : q->second)
-            if (auto* p = fe::playerById(pid)) gf::progression::trigger(*p, "twilightforest:hurt_boss", {{"entity", type}});
+    grantGroupAdvancement(boss);  // EntityEvents#grantGroupAdvancementIfNeeded (LivingDeathEvent)
     auto const* lc   = lifecycleOf(type);
     bool        loot = shouldSpawnLoot(boss);
     if (loot) {
@@ -1191,10 +1327,12 @@ void onBossTick(Actor& actor, fe::ActorState const& state) {
 
 void onBossSpawn(Actor& actor, fe::ActorState& state) {
     auto* boss = fe::asMob(actor);
+    if (!boss) return;
     auto const* spec = bossSpec(actor.getTypeName());
-    if (!boss || !spec) return;
-    (void)barOf(*boss, *spec, state);
-    // EntityEvents#adjustEntityHealthInMultiplayerFights runs once, on the boss's first spawn
+    if (spec) (void)barOf(*boss, *spec, state);
+    else if (!inclusive(actor.getTypeName())) return;
+    // EntityEvents#adjustEntityHealthInMultiplayerFights (FinalizeSpawnEvent of any type of the
+    // inclusive tag, a registered boss or not) runs once, on the mob's first spawn
     if (!state.loaded && !(state.data.is_object() && state.data.contains("boss:adjusted"))) {
         adjustHealth(*boss);
         gf::entity::data(actor, "boss:adjusted") = true;
@@ -1802,35 +1940,25 @@ public:
         static bool once = false;
         if (std::exchange(once, true)) return;
         fe::addInternalHooks({
-            .interesting = [](std::string const& type) { return S().bosses.contains(type); },
+            // the registered bosses, and every type of the inclusive tag (its multiplayer health
+            // adjuster on spawn and its "hurt_boss" on death, EntityEvents)
+            .interesting = [](std::string const& type) { return S().bosses.contains(type) || inclusive(type); },
             .tick        = [](Actor& actor, fe::ActorState& state) { onBossTick(actor, state); },
             .die =
                 [](Actor& actor, std::string const& damageType, Actor* killer) {
-                    if (auto* mob = fe::asMob(actor)) onBossDie(*mob, damageType, killer);
+                    auto* mob = fe::asMob(actor);
+                    if (!mob) return;
+                    if (bossSpec(mob->getTypeName())) onBossDie(*mob, damageType, killer);
+                    else grantGroupAdvancement(*mob); // EntityEvents#grantGroupAdvancementIfNeeded
                 },
             .spawn = [](Actor& actor, fe::ActorState& state) { onBossSpawn(actor, state); },
             // BaseTFBoss#canUsePortal: false
-            .usePortal = [](Mob const& mob) { return !bossSpec(mob.getTypeName()); },
+            .usePortal = [](Actor const& actor) { return !bossSpec(actor.getTypeName()); },
         });
         fe::onLevelTick([] {
             tickDying();
             tickDeposits();
-            for (auto it = S().pendingFills.begin(); it != S().pendingFills.end();) {
-                if (fillContainer(it->pos, it->items)) {
-                    it = S().pendingFills.erase(it);
-                } else if (--it->tries <= 0) {
-                    // the block never became a container: the loot is not lost, it pops out where
-                    // the chest stands (IBossLootBuffer#depositDropsIntoChest's Block#popResource)
-                    log().warn("boss: the death chest of {} at {} {} {} has no container, the loot dropped there", it->type, it->pos.x, it->pos.y,
-                               it->pos.z);
-                    auto* region = game::regionOf(it->pos.dim);
-                    if (auto* lv = level(); lv && region && region->hasChunksAt(game::blockPos(it->pos), 0, false))
-                        for (auto const& s : it->items)
-                            if (!game::items::isEmpty(s))
-                                lv->getSpawner().spawnItem(*region, s, nullptr, Vec3{it->pos.x + 0.5f, it->pos.y + 0.5f, it->pos.z + 0.5f}, 0);
-                    it = S().pendingFills.erase(it);
-                } else ++it;
-            }
+            tickFills();
             tickSpawners();
             // bars of bosses that are gone (unloaded, dying bodies too: stopSeenByPlayer; /kill'ed
             // past the hook)
@@ -1842,6 +1970,15 @@ public:
                 }
                 for (auto uid : gone) removeBar(uid);
                 std::erase_if(S().discarding, [](std::int64_t uid) { return !fe::actorById(uid); });
+                // MultiplayerInclusivityAttachment lives with its mob: the qualified players of the
+                // mobs that are gone (a dead body's after its removal, a dying boss's when its
+                // death ends) go with them
+                std::erase_if(S().qualified, [](auto const& kv) { return !fe::actorById(kv.first) && !dyingRecord(kv.first); });
+                // a data reload that changed the inclusive tag changes which types the hooks see
+                if (auto now = tags::members(tags::Registry::EntityType, kInclusiveTag); now != S().inclusiveMembers) {
+                    S().inclusiveMembers = std::move(now);
+                    fe::invalidateInterest();
+                }
             }
         });
         gf::combat::onDealt(gf::combat::priority::Normal, [](gf::combat::DamageInfo const& d) {
@@ -1915,10 +2052,19 @@ bool heightRuleAllows(SpawnerKind kind, int spawnerY, double playerY) {
 }
 
 // test seams (BossTests.cpp)
-void markInclusiveForTest(std::string const& type) { S().inclusiveForTest.insert(type); }
-void unmarkInclusiveForTest(std::string const& type) { S().inclusiveForTest.erase(type); }
+void markInclusiveForTest(std::string const& type) {
+    S().inclusiveForTest.insert(type);
+    fe::invalidateInterest();
+}
+void unmarkInclusiveForTest(std::string const& type) {
+    S().inclusiveForTest.erase(type);
+    fe::invalidateInterest();
+}
 std::optional<core::GlobalPos> lastDeathChest() { return S().lastChest; }
 std::optional<std::pair<core::GlobalPos, std::string>> lastConquest() { return S().lastConquest; }
+bool lastConquestFound() { return S().lastConquest.has_value() && S().lastConquestFound; }
+int  pendingFillsForTest() { return static_cast<int>(S().pendingFills.size()); }
+bool qualifiedForTest(std::int64_t uid) { return S().qualified.contains(uid); }
 std::pair<std::string, std::string> deathChestFacingForTest(std::string const& blockId, std::int64_t seed) {
     fe::JavaRandom random(seed);
     auto const*    chest = chestState(blockId, random);
@@ -1930,6 +2076,7 @@ std::pair<std::string, std::string> deathChestFacingForTest(std::string const& b
 void resetTestRecords() {
     S().lastChest.reset();
     S().lastConquest.reset();
+    S().lastConquestFound = false;
 }
 bool hasBar(std::int64_t uid) { return S().bars.contains(uid); }
 void unregisterSpawnerForTest(std::string const& blockId) {
@@ -1981,6 +2128,7 @@ void saveDeathsForTest() { saveDeaths(); }
 void forgetDeathsForTest() {
     S().dying.clear();
     S().deposits.clear();
+    S().pendingFills.clear();
 }
 void loadDeathsForTest() { loadDeaths(); }
 void setDeathFinishForTest(std::int64_t uid, int finish) {
