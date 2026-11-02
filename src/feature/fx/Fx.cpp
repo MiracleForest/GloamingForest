@@ -389,7 +389,8 @@ void particle(Dimension& dimension, std::string const& particleId, Vec3 const& p
     int           n     = std::clamp(count, 1, kMaxVanillaParticles);
     auto          dimId = static_cast<uchar>(static_cast<int>(dimension.getDimensionId()));
     std::vector<Vec3> at(static_cast<std::size_t>(n), pos);
-    if (auto spread = params.is_object() ? params.value("spread", nlohmann::json{}) : nlohmann::json{}; spread.is_array() && spread.size() == 3 && n > 1) {
+    if (auto spread = params.is_object() ? params.value("spread", nlohmann::json{}) : nlohmann::json{};
+        spread.is_array() && spread.size() == 3 && spread[0].is_number() && spread[1].is_number() && spread[2].is_number() && n > 1) {
         static thread_local std::mt19937 rng{std::random_device{}()};
         std::normal_distribution<float>  gauss(0.f, 1.f);
         for (auto& v : at) {
