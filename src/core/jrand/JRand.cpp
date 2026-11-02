@@ -11,6 +11,7 @@
 #include <string>
 
 #include "core/jrand/Mth.h"
+#include "core/jrand/RandomSupport.h"
 
 #pragma clang fp contract(off)
 
@@ -26,29 +27,8 @@ constexpr std::int64_t kMultiplier = 0x5DEECE66DLL;
 constexpr std::int64_t kIncrement  = 0xBLL;
 constexpr std::int64_t kMask48     = (1LL << 48) - 1;
 
-constexpr std::int64_t kGoldenRatio64 = static_cast<std::int64_t>(0x9E3779B97F4A7C15ULL); // -7046029254386353131
-constexpr std::int64_t kSilverRatio64 = 0x6A09E667F3BCC909LL;                               //  7640891576956012809
-
 constexpr float  kFloatUnit  = 5.9604645E-8F;               // 2^-24
 constexpr double kDoubleUnit = static_cast<double>(1.110223E-16F); // MC's float constant, exactly 2^-53
-
-/// RandomSupport#mixStafford13.
-std::int64_t mixStafford13(std::int64_t z) {
-    z = lmul(z ^ lushr(z, 30), static_cast<std::int64_t>(0xBF58476D1CE4E5B9ULL));
-    z = lmul(z ^ lushr(z, 27), static_cast<std::int64_t>(0x94D049BB133111EBULL));
-    return z ^ lushr(z, 31);
-}
-
-struct Seed128 {
-    std::int64_t lo, hi;
-};
-
-/// RandomSupport#upgradeSeedTo128bit.
-Seed128 upgradeSeedTo128bit(std::int64_t seed) {
-    std::int64_t lo = seed ^ kSilverRatio64;
-    std::int64_t hi = ladd(lo, kGoldenRatio64);
-    return {mixStafford13(lo), mixStafford13(hi)};
-}
 
 // ---- MD5 (RFC 1321), for RandomSupport#seedFromHashOf ------------------------------------------
 std::array<std::uint8_t, 16> md5(std::string_view text) {
@@ -115,15 +95,6 @@ std::array<std::uint8_t, 16> md5(std::string_view text) {
     return out;
 }
 
-/// RandomSupport#seedFromHashOf: the MD5 of the UTF-8 bytes as two big-endian longs.
-Seed128 seedFromHashOf(std::string_view name) {
-    auto         digest = md5(name);
-    std::uint64_t lo = 0, hi = 0;
-    for (int i = 0; i < 8; ++i) lo = (lo << 8) | digest[static_cast<std::size_t>(i)];
-    for (int i = 8; i < 16; ++i) hi = (hi << 8) | digest[static_cast<std::size_t>(i)];
-    return {static_cast<std::int64_t>(lo), static_cast<std::int64_t>(hi)};
-}
-
 /// MarsagliaPolarGaussian#nextGaussian over `nextDouble` (shared by every source).
 template <class NextDouble>
 double polarGaussian(double& nextNext, bool& haveNextNext, NextDouble&& nextDouble) {
@@ -170,6 +141,8 @@ public:
     std::unique_ptr<RandomSource> fromHashOf(std::string_view name) override {
         return std::make_unique<LegacyRandom>(static_cast<std::int64_t>(javaStringHash(name)) ^ mSeed);
     }
+    /// LegacyPositionalRandomFactory#fromSeed: the seed alone (the factory's own seed is not mixed in).
+    static std::unique_ptr<RandomSource> fromSeed(std::int64_t seed) { return std::make_unique<LegacyRandom>(seed); }
 
 private:
     std::int64_t mSeed;
@@ -185,6 +158,8 @@ public:
         auto s = seedFromHashOf(name);
         return std::make_unique<Xoroshiro128pp>(s.lo ^ mLo, s.hi ^ mHi);
     }
+    /// XoroshiroPositionalRandomFactory#fromSeed.
+    std::unique_ptr<RandomSource> fromSeed(std::int64_t seed) const { return std::make_unique<Xoroshiro128pp>(seed ^ mLo, seed ^ mHi); }
 
 private:
     std::int64_t mLo, mHi;
@@ -224,6 +199,38 @@ private:
 };
 
 } // namespace
+
+// ---- RandomSupport ------------------------------------------------------------------------------
+
+std::int64_t mixStafford13(std::int64_t z) {
+    z = lmul(z ^ lushr(z, 30), static_cast<std::int64_t>(0xBF58476D1CE4E5B9ULL));
+    z = lmul(z ^ lushr(z, 27), static_cast<std::int64_t>(0x94D049BB133111EBULL));
+    return z ^ lushr(z, 31);
+}
+
+Seed128bit upgradeSeedTo128bitUnmixed(std::int64_t seed) {
+    std::int64_t lo = seed ^ kSilverRatio64;
+    return {lo, ladd(lo, kGoldenRatio64)};
+}
+
+Seed128bit upgradeSeedTo128bit(std::int64_t seed) {
+    auto s = upgradeSeedTo128bitUnmixed(seed);
+    return {mixStafford13(s.lo), mixStafford13(s.hi)};
+}
+
+Seed128bit seedFromHashOf(std::string_view name) {
+    auto          digest = md5(name);
+    std::uint64_t lo = 0, hi = 0;
+    for (int i = 0; i < 8; ++i) lo = (lo << 8) | digest[static_cast<std::size_t>(i)];
+    for (int i = 8; i < 16; ++i) hi = (hi << 8) | digest[static_cast<std::size_t>(i)];
+    return {static_cast<std::int64_t>(lo), static_cast<std::int64_t>(hi)};
+}
+
+std::unique_ptr<RandomSource> positionalFromSeed(PositionalRandomFactory& factory, std::int64_t seed) {
+    if (dynamic_cast<LegacyPositionalFactory*>(&factory)) return LegacyPositionalFactory::fromSeed(seed);
+    if (auto* x = dynamic_cast<XoroshiroPositionalFactory*>(&factory)) return x->fromSeed(seed);
+    return nullptr;
+}
 
 // ---- RandomSource -------------------------------------------------------------------------------
 
