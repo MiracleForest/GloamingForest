@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <deque>
 #include <map>
 #include <random>
 #include <set>
@@ -108,15 +109,19 @@ TickRandom& tickRandom() {
 enum Kind { RandomTickK, NeighborK, InsideK, StepK, ProjectileK, PlacedK, RemovedK, KindCount };
 
 struct Handlers {
-    std::vector<std::pair<std::string, RandomTickFn>> randomTick;
-    std::vector<std::pair<std::string, NeighborFn>>   neighbor;
-    std::vector<std::pair<std::string, EntityFn>>     inside;
-    std::vector<std::pair<std::string, EntityFn>>     step;
-    std::vector<std::pair<std::string, EntityFn>>     projectile;
-    std::vector<std::pair<std::string, PlacedFn>>     placed;
-    std::vector<std::pair<std::string, RemovedFn>>    removed;
-    /// per kind: block type -> indices of the matching handlers (filled on the server thread)
+    std::deque<std::pair<std::string, RandomTickFn>> randomTick;
+    std::deque<std::pair<std::string, NeighborFn>>   neighbor;
+    std::deque<std::pair<std::string, EntityFn>>     inside;
+    std::deque<std::pair<std::string, EntityFn>>     step;
+    std::deque<std::pair<std::string, EntityFn>>     projectile;
+    std::deque<std::pair<std::string, PlacedFn>>     placed;
+    std::deque<std::pair<std::string, RemovedFn>>    removed;
+    /// per kind: block type -> indices of the matching handlers, ascending (filled on the server
+    /// thread)
     std::array<std::unordered_map<BlockType const*, std::vector<std::size_t>>, KindCount> cache;
+    /// bumped whenever `cache` is cleared (a handler added, the block types reset): a dispatch
+    /// running then looks its index list up again
+    std::uint64_t generation = 0;
 };
 Handlers& handlers() {
     static Handlers h;
@@ -124,26 +129,26 @@ Handlers& handlers() {
 }
 
 template <class Fn>
-std::vector<std::pair<std::string, Fn>>& listOf(Kind k);
+std::deque<std::pair<std::string, Fn>>& listOf(Kind k);
 template <>
-std::vector<std::pair<std::string, RandomTickFn>>& listOf<RandomTickFn>(Kind) {
+std::deque<std::pair<std::string, RandomTickFn>>& listOf<RandomTickFn>(Kind) {
     return handlers().randomTick;
 }
 template <>
-std::vector<std::pair<std::string, NeighborFn>>& listOf<NeighborFn>(Kind) {
+std::deque<std::pair<std::string, NeighborFn>>& listOf<NeighborFn>(Kind) {
     return handlers().neighbor;
 }
 template <>
-std::vector<std::pair<std::string, EntityFn>>& listOf<EntityFn>(Kind k) {
+std::deque<std::pair<std::string, EntityFn>>& listOf<EntityFn>(Kind k) {
     auto& h = handlers();
     return k == InsideK ? h.inside : (k == StepK ? h.step : h.projectile);
 }
 template <>
-std::vector<std::pair<std::string, PlacedFn>>& listOf<PlacedFn>(Kind) {
+std::deque<std::pair<std::string, PlacedFn>>& listOf<PlacedFn>(Kind) {
     return handlers().placed;
 }
 template <>
-std::vector<std::pair<std::string, RemovedFn>>& listOf<RemovedFn>(Kind) {
+std::deque<std::pair<std::string, RemovedFn>>& listOf<RemovedFn>(Kind) {
     return handlers().removed;
 }
 
@@ -186,23 +191,37 @@ void add(Kind k, std::string const& target, Fn fn) {
     if (!fn || target.empty()) return;
     listOf<Fn>(k).emplace_back(target, std::move(fn));
     handlers().cache[k].clear();
+    ++handlers().generation;
     if (k == RandomTickK) randomTickTypes().clear();
 }
 
+/// Runs the handlers of `block` in registration order, without copying them (entity-inside and
+/// stepped-on run for every entity every tick). The handler lists are deques that only grow, so a
+/// handler stays where it is when another one registers during the dispatch; such a late handler
+/// waits for the next dispatch, and the index list (rebuilt then) is looked up again.
 template <class Fn, class... Args>
 void call(Kind k, Block const& block, char const* what, Args&&... args) {
-    auto const& idx = matching<Fn>(k, block.getBlockType());
-    if (idx.empty()) return;
-    auto const& list = listOf<Fn>(k);
-    // copies: a handler may register more handlers
-    std::vector<Fn> fns;
-    fns.reserve(idx.size());
-    for (auto i : idx) fns.push_back(list[i].second);
-    for (auto& fn : fns) {
+    auto&       h   = handlers();
+    auto const* idx = &matching<Fn>(k, block.getBlockType());
+    if (idx->empty()) return;
+    auto const&       list  = listOf<Fn>(k);
+    std::size_t const known = list.size();
+    auto              gen   = h.generation;
+    std::size_t       j     = 0;
+    while (j < idx->size()) {
+        std::size_t const i = (*idx)[j];
+        if (i >= known) break;
         try {
-            fn(args...);
+            list[i].second(args...);
         } catch (std::exception const& e) {
             log().error("blockevents: {} handler for {} failed: {}", what, block.getTypeName(), e.what());
+        }
+        if (h.generation != gen) {
+            gen = h.generation;
+            idx = &matching<Fn>(k, block.getBlockType());
+            j   = static_cast<std::size_t>(std::upper_bound(idx->begin(), idx->end(), i) - idx->begin());
+        } else {
+            ++j;
         }
     }
 }
@@ -591,6 +610,7 @@ bool randomTicked(BlockType const& type) { return gf::blockevents::randomTicks(t
 /// The block type cache (block types change between worlds on the client).
 void resetBlockEvents() {
     for (auto& c : gf::blockevents::handlers().cache) c.clear();
+    ++gf::blockevents::handlers().generation;
     gf::blockevents::randomTickTypes().clear();
     gf::blockevents::pendingPlaces().clear();
     gf::blockevents::pendingRemovals().clear();

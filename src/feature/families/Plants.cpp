@@ -297,6 +297,25 @@ Entry const* pottedFor(std::string const& plantId) {
     return nullptr;
 }
 
+/// The vanilla plants a flower pot takes (Java FlowerPotBlock.POTTED_BY_CONTENT, as the Bedrock
+/// items, old and new names, plus Bedrock's newer pottable plants).
+bool vanillaPottable(std::string_view id) {
+    static constexpr std::string_view kPlants[] = {
+        "minecraft:torchflower",        "minecraft:oak_sapling",       "minecraft:spruce_sapling",     "minecraft:birch_sapling",
+        "minecraft:jungle_sapling",     "minecraft:acacia_sapling",    "minecraft:cherry_sapling",     "minecraft:dark_oak_sapling",
+        "minecraft:pale_oak_sapling",   "minecraft:sapling",           "minecraft:mangrove_propagule", "minecraft:fern",
+        "minecraft:tallgrass",          "minecraft:dandelion",         "minecraft:yellow_flower",      "minecraft:poppy",
+        "minecraft:red_flower",         "minecraft:blue_orchid",       "minecraft:allium",             "minecraft:azure_bluet",
+        "minecraft:red_tulip",          "minecraft:orange_tulip",      "minecraft:white_tulip",        "minecraft:pink_tulip",
+        "minecraft:oxeye_daisy",        "minecraft:cornflower",        "minecraft:lily_of_the_valley", "minecraft:wither_rose",
+        "minecraft:red_mushroom",       "minecraft:brown_mushroom",    "minecraft:deadbush",           "minecraft:dead_bush",
+        "minecraft:cactus",             "minecraft:bamboo",            "minecraft:crimson_fungus",     "minecraft:warped_fungus",
+        "minecraft:crimson_roots",      "minecraft:warped_roots",      "minecraft:azalea",             "minecraft:flowering_azalea",
+        "minecraft:open_eyeblossom",    "minecraft:closed_eyeblossom",
+    };
+    return std::find(std::begin(kPlants), std::end(kPlants), id) != std::end(kPlants);
+}
+
 /// Bedrock's vanilla flower pot is empty (its update_bit is set while it holds a plant).
 bool emptyVanillaPot(Block const& b) {
     if (b.getTypeName() != "minecraft:flower_pot") return false;
@@ -446,9 +465,9 @@ void installPlants() {
             auto const* e = entryOf(c.block);
             if (!e || (c.sneaking && !c.itemId.empty())) return ia::Result::Pass; // sneaking with an item: the item's use
             if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
-            // FlowerPotBlock.useItemOn: a plant on a full pot does nothing; any other item takes
-            // the plant out (PASS_TO_DEFAULT_BLOCK_INTERACTION -> useWithoutItem)
-            if (!c.itemId.empty() && pottedFor(c.itemId)) return ia::Result::Consume;
+            // FlowerPotBlock.useItemOn: a plant (TF's or vanilla) on a full pot does nothing; any
+            // other item takes the plant out (PASS_TO_DEFAULT_BLOCK_INTERACTION -> useWithoutItem)
+            if (!c.itemId.empty() && (pottedFor(c.itemId) || vanillaPottable(c.itemId))) return ia::Result::Consume;
             if (!c.itemId.empty() && c.offhand) return ia::Result::Pass; // useWithoutItem: the main hand only
             // useWithoutItem: the plant back to the player (TF's SpecialFlowerPotBlock keeps it)
             if (!e->flag("special")) {
