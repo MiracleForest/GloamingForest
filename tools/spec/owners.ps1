@@ -474,6 +474,9 @@ foreach ($u in $rules.units.Keys) {
     if ($unit.ContainsKey('config')) { foreach ($c in $unit.config) { Set-Owner config_section $c $u } }
     if ($unit.ContainsKey('subcommands')) { foreach ($c in $unit.subcommands) { Set-Owner subcommand $c $u } }
     if ($unit.ContainsKey('e2e')) { foreach ($c in $unit.e2e) { Set-Owner e2e $c $u } }
+    # ids outside TF's namespace a unit's tools create ({kind: [full id]}, e.g. F11's sign text
+    # display entity gloamingforest:sign_text)
+    if ($unit.ContainsKey('ids')) { foreach ($k in $unit.ids.Keys) { foreach ($i in $unit.ids[$k]) { Set-Owner $k $i $u } } }
 }
 # F-units with several directories own the channel / key prefixes of each (F10: combat, loot, fx, ...)
 foreach ($c in $rules.netChannels) { Set-Owner net $c[0] $c[1] }
@@ -492,7 +495,7 @@ foreach ($kind in $ids.Keys) {
     $mode = if ($modes.ContainsKey($kind)) { $modes[$kind] } else { 'gen' }
     foreach ($id in $ids[$kind]) {
         if (-not $owner[$kind].ContainsKey($id)) { continue }
-        $full = if ($nsKinds -contains $kind) { "twilightforest:$id" } elseif ($kind -eq 'tag') { $p = $id.Split(':', 3); "$($p[0])/#$($p[1]):$($p[2])" } elseif ($kind -eq 'registry_entry') { $p = $id.Split(':', 3); "$($p[0])/$($p[1]):$($p[2])" } else { $id }
+        $full = if ($nsKinds -contains $kind) { if ($id.Contains(':')) { $id } else { "twilightforest:$id" } } elseif ($kind -eq 'tag') { $p = $id.Split(':', 3); "$($p[0])/#$($p[1]):$($p[2])" } elseif ($kind -eq 'registry_entry') { $p = $id.Split(':', 3); "$($p[0])/$($p[1]):$($p[2])" } else { $id }
         $lines.Add("$kind`t$full`t$($owner[$kind][$id])`t$mode")
         $counts[$kind] = 1 + $(if ($counts.Contains($kind)) { $counts[$kind] } else { 0 })
     }

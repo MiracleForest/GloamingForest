@@ -1906,6 +1906,7 @@ enchantment	twilightforest:renewal	U10	gen
 enchantment_effect	twilightforest:apply_frosted	U10	manual
 enchantment_effect	twilightforest:recharge_scepter	U10	manual
 enchantment_effect	twilightforest:smash_blocks	U10	manual
+entity	gloamingforest:sign_text	F11	gen
 entity	twilightforest:adherent	U30	gen
 entity	twilightforest:alpha_yeti	U27	gen
 entity	twilightforest:armored_giant	U29	gen

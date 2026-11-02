@@ -1032,7 +1032,8 @@ local function assemble_content(projectdir, outdir, version)
         local major, minor, patch = mod_version()
         version = {major, minor, patch}
         if major == 0 and minor == 0 and patch == 0 then
-            local dirs = {path.join(projectdir, "assets")}
+            -- the family generator's code shapes the packs too (a new version: no stale cached pack)
+            local dirs = {path.join(projectdir, "assets"), path.join(projectdir, "tools", "families")}
             version = {0, 0, pack_stamp(dirs)}
         end
     end
@@ -1051,6 +1052,20 @@ local function assemble_content(projectdir, outdir, version)
         end
     end
     for _, j in ipairs(datajsons) do table.insert(alljsons, j) end
+    -- F11's block family generator (tools/families, contract "families+blockevents"): the family
+    -- data (data/gf/families) as Bedrock block definitions in the packs just built, and the gf_test
+    -- fixture families; checked below with the rest. Nothing happens until tools/families exists.
+    local families_dir = path.join(projectdir, "tools", "families")
+    if os.isfile(path.join(families_dir, "families.lua")) then
+        local families = import("families", {rootdir = families_dir, anonymous = true})
+        local r = families.generate(projectdir, outdir, {no_fixtures = not with_tests})
+        for _, e in ipairs(r.errors) do fail("%s", e) end
+        -- the generated blocks of the shipped pack are checked for dangling references too
+        for _, f in ipairs(r.files or {}) do
+            if f:find("[/\\]GloamingForest_BP[/\\]") then table.insert(alljsons, f) end
+        end
+        note("families: %d blocks, %d fixtures, %d permutations", r.blocks, r.fixtures, r.permutations or 0)
+    end
     local permutations = check_blocks(bpdirs, cfg)
     local owners = load_owners(projectdir, cfg)
     local owned = check_owners(projectdir, cfg, owners)
