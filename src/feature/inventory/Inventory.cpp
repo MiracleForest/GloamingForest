@@ -1390,7 +1390,7 @@ int angerNearbyPiglins(Player& player, bool angerOnlyIfCanSee) {
     AABB  area{box.min - Vec3{16.f, 16.f, 16.f}, box.max + Vec3{16.f, 16.f, 16.f}};
     auto  eyes  = player.getEyePos();
     auto  level = ll::service::getLevel();
-    int   n     = 0;
+    int   n     = 0, byEvent = 0;
     for (auto* a : region.getEntities(area, 0.0f)) {
         if (!a || !a->isType(ActorType::Piglin) || !a->isAlive() || a->isBaby()) continue;
         auto& piglin = static_cast<Mob&>(*a);
@@ -1403,14 +1403,14 @@ int angerNearbyPiglins(Player& player, bool angerOnlyIfCanSee) {
         // PiglinAi#setAngerTarget (ANGRY_AT for 600 ticks): the target; Bedrock's piglin turns
         // angry on a new target (minecraft:on_target_acquired, its 30 s minecraft:angry)
         piglin.setTarget(&player);
-        if (!piglin.getEntityContext().hasComponent<AngryComponent>()) {
+        if (!piglin.getEntityContext().hasComponent<AngryComponent>() && !piglin.getStatusFlag(ActorFlags::Angry)) {
             VariantParameterList params{};
             params.mSelf = &piglin;
-            (void)piglin.executeEvent("become_angry_event", params);
+            if (piglin.executeEvent("become_angry_event", params)) ++byEvent;
         }
         ++n;
     }
-    if (n) log().info("inventory: {} angered {} piglin(s) by opening a chest", player.getRealName(), n);
+    if (n) log().info("inventory: {} angered {} piglin(s) by opening a chest ({} through become_angry_event)", player.getRealName(), n, byEvent);
     return n;
 }
 

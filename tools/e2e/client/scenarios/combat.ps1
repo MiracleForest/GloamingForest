@@ -15,6 +15,9 @@
 #                          Chest", the right half's slots first (local, remote-mod); on a vanilla
 #                          client the game's large chest screen with the same slots (remote-vanilla:
 #                          the chest minecart proxy behind a chest pair of the client)
+#   tf-double-chest-taken.png  remote-vanilla: the large chest screen after two clicks moved the
+#                          naga scales from screen slot 0 to the first hotbar slot (the host's
+#                          combat.ui_tf_double_chest_taken checks the right half and the inventory)
 #   tf-trapped-chest.png   TF's canopy trapped chest, right-clicked: the client mod's chest screen, the
 #                          game's chest screen through the proxy on a vanilla client
 #   fx-particles.png       TF's large_flame through gf::fx in front of the player: the client mod gets
@@ -50,7 +53,8 @@ if ($script:Mode -eq 'local') {
 #   -Opened  the server's log line once the test opened the screen
 #   -Screen  the client mod's trace of the screen that must come up (client mod runs only)
 $screenFailures = [System.Collections.Generic.List[string]]::new()
-function Show-ContainerTest([string]$Test, [string]$Shot, [string]$Opened, [string]$Screen, [switch]$Spike) {
+#   -Interact  runs on the open screen after the screenshot (clicks, a check), before it closes
+function Show-ContainerTest([string]$Test, [string]$Shot, [string]$Opened, [string]$Screen, [switch]$Spike, [scriptblock]$Interact) {
     $mark = Get-LogMark
     $r    = Invoke-SelfTest $Test
     if ($r.Fail -gt 0) { $screenFailures.Add("$Test failed"); return }
@@ -77,6 +81,9 @@ function Show-ContainerTest([string]$Test, [string]$Shot, [string]$Opened, [stri
     Start-Sleep -Seconds 2
     Save-Screenshot $Shot | Out-Null
     if (-not $shown) { return }
+    if ($Interact) {
+        try { & $Interact } catch { $screenFailures.Add("$Test interaction: $_") }
+    }
     $closed = Get-LogMark
     Close-Screen
     if (Test-ClientTrace) {
@@ -99,8 +106,25 @@ if ($script:Mode -eq 'remote-vanilla') {
 }
 # TF's chests (F11's declared containers) opened by a right click
 if ($script:Mode -eq 'remote-vanilla') {
-    # the game's large chest screen: the minecart proxy behind a chest pair of the client
-    Show-ContainerTest 'combat.ui_tf_double_chest' 'tf-double-chest' 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)'
+    # the game's large chest screen: the minecart proxy behind a chest pair of the client. Its item
+    # requests reach the halves: a click takes the right half's first stack (screen slot 0, the
+    # naga scales), a click puts it in the first hotbar slot; the host checks both sides (a host
+    # console selftest: the chat would cover the screen)
+    $takeStack = {
+        foreach ($at in @(@(0.3664, 0.2333), @(0.3664, 0.8194))) {
+            Move-Mouse $at[0] $at[1] -Relative
+            Start-Sleep -Milliseconds 300
+            Click $at[0] $at[1] -Relative
+            Start-Sleep -Milliseconds 700
+        }
+        Save-Screenshot 'tf-double-chest-taken' | Out-Null
+        $m = Get-LogMark
+        Send-HostConsole 'twilightforest selftest "combat.ui_tf_double_chest_taken"'
+        $line = Wait-LogLine 'SELFTEST (PASS|FAIL) combat\.ui_tf_double_chest_taken.*' 30 -Since $m
+        Write-Step "large chest item request: $line"
+        if ($line -match 'SELFTEST FAIL') { throw $line }
+    }
+    Show-ContainerTest 'combat.ui_tf_double_chest' 'tf-double-chest' 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)' -Interact $takeStack
     Show-ContainerTest 'combat.ui_tf_trapped_chest' 'tf-trapped-chest' 'inventory: \S+ opened the container at .* \(vanilla screen\)'
 } else {
     Show-ContainerTest 'combat.ui_tf_double_chest' 'tf-double-chest' 'combat ui: tf double chest opened for' 'inventory\.chest'

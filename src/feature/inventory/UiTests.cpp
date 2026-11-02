@@ -32,6 +32,7 @@
 // puts the block that was there back and takes back the fixture block's container declaration.
 
 #include <algorithm>
+#include <optional>
 #include <tuple>
 #include <vector>
 
@@ -39,6 +40,7 @@
 
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/world/Container.h"
+#include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/gamemode/InteractionResult.h"
@@ -348,6 +350,37 @@ GF_REGISTER_SELFTEST("combat.ui_tf_double_chest", [](Context& ctx) -> ll::coro::
     bool used = useOn(*p, lbp);
     gf::log().info("combat ui: tf double chest opened for {} (use-on {})", p->getRealName(), used ? "succeeded" : "refused");
     ctx.check(gf::inventory::viewerCount(lpos) == 1 && gf::inventory::viewerCount(rpos) == 1, "the right click opened both halves");
+});
+
+// After the client e2e moved the right half's first stack (7 naga scales, screen slot 0) into the
+// first hotbar slot with two clicks in the game's large chest screen (remote-vanilla): the item
+// request reached the right half's storage through the 54-slot proxy.
+GF_REGISTER_SELFTEST("combat.ui_tf_double_chest_taken", [](Context& ctx) {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to check");
+        return;
+    }
+    std::optional<GlobalPos> right;
+    for (auto const& placed : ui().placed)
+        if (auto* region = gf::game::regionOf(placed.pos.dim);
+            region && gf::game::blockIdAt(*region, gf::game::blockPos(placed.pos)) == "twilightforest:twilight_oak_chest"
+            && gf::inventory::partsOf(placed.pos).size() == 2 && gf::inventory::partsOf(placed.pos).front() == placed.pos)
+            right = placed.pos; // the right half: first of its double chest's parts
+    ctx.require(right.has_value(), "the double chest of combat.ui_tf_double_chest is still there");
+    auto* region = gf::game::regionOf(right->dim);
+    auto  h      = gf::inventory::find(*region, gf::game::blockPos(*right));
+    ctx.require(h.has_value(), "the right half is a container");
+    ctx.check(gf::game::items::isEmpty(h->get(*right, 0)), "the right half's slot 0 is empty (" + gf::game::items::idOf(h->get(*right, 0)) + ")");
+    auto& inv    = p->getInventory();
+    int   scales = 0;
+    for (int i = 0; i < inv.getContainerSize(); ++i)
+        if (gf::game::items::idOf(inv.getItem(i)) == "twilightforest:naga_scale") scales += gf::game::items::countOf(inv.getItem(i));
+    ctx.check(scales == 7, "the 7 naga scales are in the player's inventory (" + std::to_string(scales) + ")");
+    for (int i = 0; i < inv.getContainerSize(); ++i)
+        if (gf::game::items::idOf(inv.getItem(i)) == "twilightforest:naga_scale") inv.setItem(i, ItemStack{});
+    p->sendInventory(false);
+    gf::log().info("combat ui: tf double chest item request checked");
 });
 
 GF_REGISTER_SELFTEST("combat.ui_tf_trapped_chest", [](Context& ctx) -> ll::coro::CoroTask<> {

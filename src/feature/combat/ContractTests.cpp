@@ -43,6 +43,7 @@
 #include "mc/world/attribute/AttributeInstance.h"
 #include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/SharedAttributes.h"
+#include "mc/world/actor/ActorFlags.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/gamemode/InteractionResult.h"
@@ -313,6 +314,10 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
                || ctx.setBlock(comp, "minecraft:unpowered_comparator", {{"direction", 3}});
     ctx.require(placed, "a comparator behind the left half");
     ctx.require(ctx.setBlock(out, "minecraft:stone"), "a block in front of the comparator");
+    for (int i = 0; i < 27; ++i) {
+        hl->set(left, i, ItemStack{});
+        hr->set(right, i, ItemStack{});
+    }
     co_await ctx.ticks(2);
     region   = ctx.region();
     int read = rs::comparatorInput(*region, gf::game::blockPos(comp)).value_or(-1);
@@ -541,7 +546,7 @@ bool angry(std::int64_t piglin) {
     ActorUniqueID id;
     id.rawID = piglin;
     auto* a  = level->fetchEntity(id, false);
-    return a && a->getEntityContext().hasComponent<AngryComponent>();
+    return a && (a->getEntityContext().hasComponent<AngryComponent>() || a->getStatusFlag(ActorFlags::Angry));
 }
 } // namespace
 
@@ -600,9 +605,16 @@ GF_REGISTER_SELFTEST("combat.tf_chest_piglins", [](Context& ctx) -> ll::coro::Co
     ctx.require(pp != nullptr, "the player is still there");
     ctx.check(!openedChestScreen(*pp).empty(), "the click opened the chest");
     ctx.check(targets(idSeeing, pid), "the piglin that sees the player took it as its target");
-    ctx.check(angry(idSeeing), "and turned angry (Bedrock's minecraft:angry: Java's ANGRY_AT for 600 ticks)");
     ctx.check(!targets(idHidden, pid), "the piglin behind the wall did not (angerOnlyIfCanSee)");
     ctx.check(!targets(idFar, pid), "the piglin 20 blocks away did not (the box inflated by 16)");
+    bool isAngry = false;
+    for (int i = 0; i < 10 && !isAngry; ++i) {
+        co_await ctx.ticks(1);
+        isAngry = angry(idSeeing);
+    }
+    ctx.check(isAngry, "and turned angry (Bedrock's minecraft:angry: Java's ANGRY_AT for 600 ticks)");
+    pp = playerById(pid);
+    ctx.require(pp != nullptr, "the player is still there");
     gf::net::injectFromClient(*pp, "screen.closed", {{"type", "inventory.chest"}});
     piglins.removeAll(); // the angry one would pass its anger on
 
