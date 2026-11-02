@@ -1516,7 +1516,8 @@ GF_REGISTER_SELFTEST("combat.inventory_comparator", [](Context& ctx) -> ll::coro
     ctx.check(signal() == 15, "27 stacks of 16 pearls (their own limit) give 15 (" + std::to_string(signal()) + ")");
     ctx.check(rs::comparatorInput(*ctx.region(), gf::game::blockPos(comp)).value_or(-1) == 15, "the comparator behind it reads 15");
     co_await ctx.ticks(10);
-    ctx.info("the comparator's own output into the block in front: " + std::to_string(rs::signalFrom(*ctx.region(), gf::game::blockPos(comp), gf::game::blockPos(out))));
+    int output = rs::signalFrom(*ctx.region(), gf::game::blockPos(comp), gf::game::blockPos(out));
+    ctx.check(output == 15, "the vanilla comparator re-evaluated and puts out 15 (" + std::to_string(output) + ")");
     // ChestBlock#getContainer finds none while the chest is blocked: 0
     auto above = pos;
     above.y += 1;
@@ -1558,8 +1559,8 @@ GF_REGISTER_SELFTEST("combat.death_entries", [](Context& ctx) -> ll::coro::CoroT
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto* region = ctx.region();
     Vec3  at{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + .5f};
-    auto* mob = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:silverfish"), nullptr, at, false, false, false);
-    ctx.require(mob != nullptr, "a silverfish spawned");
+    auto* mob = region->getLevel().getSpawner().spawnMob(*region, ActorDefinitionIdentifier("minecraft:bat"), nullptr, at, false, false, false);
+    ctx.require(mob != nullptr, "a bat spawned (no drops; the test world is peaceful)");
     auto id = mob->getOrCreateUniqueID().rawID;
     gf::combat::hurt(*mob, 1000.f, "twilightforest:thrown_axe");
     ctx.check(gf::death::deathHandled(id), "the death is kept while the dead mob is in the level");
