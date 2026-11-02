@@ -390,14 +390,16 @@ void forgetSpawnerRecord(BlockSource& source, BlockPos const& pos);
 /// RandomizableContainer#unpackLootTable(null) for a hopper the kit gave a loot table (Bedrock's
 /// hopper has no loot table field; Java's hopper is a RandomizableContainer, so the kit keeps the
 /// table in the hopper's block data until it is unpacked): rolls it into the hopper (LootTable#fill
-/// through the loot contract). False when nothing was pending. Besides the callers, the kit's hooks
-/// unpack a pending hopper on any access to its container (another hopper pushing into it or
-/// pulling from it, a comparator's reading, its removal by any cause) and the interactions contract
-/// when a player opens or breaks it.
+/// through the loot contract). False when nothing was pending, or while the hopper's block actor is
+/// not there (a block that is no longer a hopper drops its table). Besides the callers, the kit's
+/// listener of the hopper access dispatch (ext/structure/HopperAccess.h) unpacks a pending hopper on
+/// any access to its container (another hopper pushing into it or pulling from it, a comparator's
+/// reading, its removal by any cause, its own tick while enabled) and the interactions contract when
+/// a player opens or breaks it.
 bool unpackHopper(BlockSource& source, BlockPos const& pos);
 /// A hopper's pending loot table (table id, seed) the kit keeps (nullopt: none).
 [[nodiscard]] std::optional<std::pair<std::string, std::int64_t>> pendingHopperLoot(BlockSource& source, BlockPos const& pos);
-/// The number of hoppers with a pending loot table the kit's hooks watch (every dimension).
+/// The number of hoppers with a pending loot table the kit watches (every dimension).
 [[nodiscard]] std::size_t pendingHoppers();
 /// SinisterSpawnerLogic's ParticleOptions decoded (PARTICLES_CODEC: ParticleTypes.CODEC.listOf()):
 /// each entry a compound {"type": particle id, ...the options its type requires} of a 1.21.1 or TF
@@ -435,7 +437,7 @@ void queueTestMark(int dim, BlockPos const& pos, std::string const& nonce);
 void load();
 void save();
 /// The hook that gives the kit's paintings Java's survival check (HangingActor::$wouldSurvive), the
-/// hopper hooks that unpack a pending loot table, the block data listeners.
+/// hopper access listener that unpacks a pending loot table, the block data listeners.
 void install();
 void uninstall();
 /// HangingEntity#survives for the painting `actor` (the kit's check; nullopt: not a painting).

@@ -50,13 +50,16 @@
 #include "core/Keys.h"
 #include "core/VolumeHash.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/structure/HopperAccess.h"
 #include "feature/ext/structure/Placement.h"
 #include "feature/ext/structure/Processors.h"
 #include "feature/ext/structure/SharedRandom.h"
 #include "feature/ext/structure/TemplateDefinitions.h"
+#include "feature/common/BlockData.h"
 #include "feature/enchant/Enchant.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/landmark/Landmark.h"
+#include "feature/loot/Loot.h"
 #include "feature/structure/Region.h"
 #include "feature/structure/bases/BasesInternal.h"
 #include "feature/structure/bases/HollowHill.h"
@@ -1741,8 +1744,9 @@ GF_REGISTER_SELFTEST("structure.hopper_loot", [](Context& ctx) -> ll::coro::Coro
     // Java's hopper is a RandomizableContainer: its loot table is unpacked on the first access to its
     // container. A powered hopper (HopperBlockEntity#tryMoveItems needs ENABLED: its own ticks leave
     // the container alone) keeps the table the kit gave it until another hopper pushes into it, its
-    // container is read, a comparator reads it or it is removed (HopperBlock#onRemove ->
-    // Containers#dropContentsOnDestroy: the table is rolled, then the contents drop).
+    // container is read, a comparator reads it, it is removed (HopperBlock#onRemove ->
+    // Containers#dropContentsOnDestroy: the table is rolled, then the contents drop) or a hopper
+    // below pulls from it (HopperBlockEntity#suckInItems -> tryTakeInItemFromSlot: getItem first).
     auto area = co_await ctx.flatArea(5783, 6, 4);
     ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5783)), "test area loaded");
     auto* source = ctx.region();
@@ -1755,8 +1759,10 @@ GF_REGISTER_SELFTEST("structure.hopper_loot", [](Context& ctx) -> ll::coro::Coro
     BlockPos peeked{area.minX + 4, y, area.minZ + 1};  // its container is read
     BlockPos read{area.minX + 2, y, area.minZ + 3};    // a comparator reads it
     BlockPos removed{area.minX + 4, y, area.minZ + 4}; // removed
+    BlockPos pulled{area.minX, y + 1, area.minZ + 4};  // a hopper below pulls from it
     BlockPos feeder{fed.x, fed.y + 1, fed.z};
-    for (auto const& pos : {fed, peeked, read, removed}) {
+    BlockPos puller{pulled.x, pulled.y - 1, pulled.z};
+    for (auto const& pos : {fed, peeked, read, removed, pulled}) {
         (void)game::setBlock(*source, pos, *hopper);
         (void)game::setBlock(*source, BlockPos{pos.x + 1, pos.y, pos.z}, *redstone); // powers it
     }
@@ -1766,15 +1772,32 @@ GF_REGISTER_SELFTEST("structure.hopper_loot", [](Context& ctx) -> ll::coro::Coro
     {
         BlockSourceRegion region(*source, fed);
         std::int64_t      seed = 41;
-        for (auto const& pos : {fed, peeked, read, removed}) blockentities::lootTable(region, pos, "gf_test:chests/fixture_chest", seed++);
+        for (auto const& pos : {fed, peeked, read, removed, pulled}) blockentities::lootTable(region, pos, "gf_test:chests/fixture_chest", seed++);
     }
     co_await ctx.ticks(10); // the powered hoppers tick: their own ticks unpack nothing
     source = ctx.region();
     ctx.require(source != nullptr, "block source");
     bool allPending = true;
-    for (auto const& pos : {fed, peeked, read, removed}) allPending = allPending && blockentities::pendingHopperLoot(*source, pos).has_value();
+    for (auto const& pos : {fed, peeked, read, removed, pulled}) allPending = allPending && blockentities::pendingHopperLoot(*source, pos).has_value();
     ctx.require(allPending, "the powered hoppers keep their loot tables through their own ticks");
-    ctx.check(blockentities::pendingHoppers() >= 4, "the kit's hooks watch the pending hoppers (" + std::to_string(blockentities::pendingHoppers()) + ")");
+    ctx.check(blockentities::pendingHoppers() >= 5, "the kit's hooks watch the pending hoppers (" + std::to_string(blockentities::pendingHoppers()) + ")");
+    int  dim         = static_cast<int>(source->getDimensionId());
+    auto listedNow   = [dim](BlockPos const& pos) {
+        // the stored list (gf:structure:hoppers, [dim, x, y, z] each)
+        auto stored = game::db::get("gf:structure:hoppers");
+        if (!stored || !stored->is_array()) return false;
+        for (auto const& h : *stored)
+            if (h == Json::array({dim, pos.x, pos.y, pos.z})) return true;
+        return false;
+    };
+    bool allWatched = true;
+    for (auto const& pos : {fed, peeked, read, removed, pulled}) allWatched = allWatched && structure::ext::hoppers::watched(dim, pos);
+    ctx.check(allWatched, "the pending hoppers are watched by the hopper access dispatch");
+    // the block data's write (autosave): the hopper list is written first
+    blockdata::flush();
+    bool allListed = true;
+    for (auto const& pos : {fed, peeked, read, removed, pulled}) allListed = allListed && listedNow(pos);
+    ctx.check(allListed, "the stored hopper list holds the pending hoppers once the block data is written");
     // a hopper above pushes a cobblestone into the powered one: the table is unpacked first
     // (HopperBlockEntity#addItem reads the target's slots), then the stone goes into a free slot
     (void)game::setBlock(*source, feeder, *hopper); // facing down, not powered (the redstone block is diagonal)
@@ -1808,6 +1831,14 @@ GF_REGISTER_SELFTEST("structure.hopper_loot", [](Context& ctx) -> ll::coro::Coro
     if (auto* actor = source->getBlockEntity(peeked); actor && actor->getType() == BlockActorType::Hopper)
         (void)static_cast<Container&>(static_cast<HopperBlockActor&>(*actor)).getItem(0);
     ctx.check(!blockentities::pendingHopperLoot(*source, peeked) && holdsFixtureLoot(*source, peeked), "reading the powered hopper's container unpacked it");
+    ctx.check(!structure::ext::hoppers::watched(dim, peeked), "an unpacked hopper is no longer watched");
+    // an unpacked hopper stays in the stored list for one more block data write (a crash between the
+    // list's write and the block data's never leaves a table the list misses), then leaves it
+    blockdata::flush();
+    bool listedOnce = listedNow(peeked);
+    blockdata::flush();
+    ctx.check(listedOnce && !listedNow(peeked) && listedNow(read),
+              "an unpacked hopper leaves the stored list one block data write later; a pending one stays");
     // a comparator's reading (HopperBlock#getComparatorSignal reads every slot)
     Block const& readBlock = source->getBlock(read);
     int          signal    = readBlock.getBlockType().getComparatorSignal(*source, read, readBlock, 2);
@@ -1826,11 +1857,54 @@ GF_REGISTER_SELFTEST("structure.hopper_loot", [](Context& ctx) -> ll::coro::Coro
     for (auto* a : fixtureDrops) a->despawn();
     for (auto* a : stickDrops) a->despawn();
     for (auto* a : itemsIn(*source, around, "minecraft:diamond")) a->despawn();
+    // an enabled hopper below the powered one pulls from it (HopperBlockEntity#suckInItems ->
+    // tryTakeInItemFromSlot reads the source's slot: the table is unpacked before anything moves)
+    ctx.check(blockentities::pendingHopperLoot(*source, pulled).has_value(), "the hopper to pull from is still pending");
+    (void)game::setBlock(*source, puller, *hopper); // facing down, not powered (the redstone block is diagonal)
+    co_await ctx.ticks(40);
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    bool pulledUnpacked = !blockentities::pendingHopperLoot(*source, pulled).has_value();
+    // what the table rolls (LootTable#fill rolls it with the same random before spreading it)
+    loot::LootContext lc;
+    lc.region = source;
+    lc.origin = Vec3{static_cast<float>(pulled.x) + 0.5f, static_cast<float>(pulled.y) + 0.5f, static_cast<float>(pulled.z) + 0.5f};
+    lc.seed   = 45;
+    std::map<std::string, int> rolled, both;
+    for (auto const& s : loot::roll("gf_test:chests/fixture_chest", lc))
+        if (!s.isNull()) rolled[s.getTypeName()] += s.mCount;
+    int pulledOut = 0;
+    for (auto const& pos : {pulled, puller})
+        if (auto items = containerItems(*source, pos))
+            for (auto const& s : *items) {
+                if (s.isNull()) continue;
+                both[s.getTypeName()] += s.mCount;
+                if (pos == puller) pulledOut += s.mCount;
+            }
+    auto describe = [](std::map<std::string, int> const& m) {
+        std::string out;
+        for (auto const& [id, n] : m) out += (out.empty() ? "" : ", ") + id + " x" + std::to_string(n);
+        return out.empty() ? std::string("nothing") : out;
+    };
+    ctx.check(pulledUnpacked && pulledOut > 0 && both == rolled,
+              "a hopper below pulled the unpacked loot out of the powered one (" + std::to_string(pulledOut) + " items pulled; the two hold " + describe(both) +
+                  ", the table rolls " + describe(rolled) + ")");
+    // a table whose block is no longer a hopper (block data that outlived it: here moved onto a
+    // stone block) is dropped at its first unpack, and its position no longer watched
+    BlockPos    gone{area.minX + 5, y, area.minZ + 2};
+    auto const* stoneBlock = game::blockWith("minecraft:stone");
+    ctx.require(stoneBlock != nullptr, "stone");
+    (void)game::setBlock(*source, gone, *stoneBlock);
+    blockdata::put(game::globalPos(*source, gone), Json{{kBlockDataKey, {{"loot", {{"table", "gf_test:chests/fixture_chest"}, {"seed", 7}}}}}});
+    bool staleWatched = structure::ext::hoppers::watched(dim, gone);
+    bool unpacked     = blockentities::unpackHopper(*source, gone);
+    ctx.check(staleWatched && !unpacked && !blockentities::pendingHopperLoot(*source, gone) && !structure::ext::hoppers::watched(dim, gone),
+              "a table on a block that is no longer a hopper is dropped and its position no longer watched");
     bool leftPending = false;
-    for (auto const& pos : {fed, peeked, read, removed}) leftPending = leftPending || blockentities::pendingHopperLoot(*source, pos).has_value();
+    for (auto const& pos : {fed, peeked, read, removed, pulled}) leftPending = leftPending || blockentities::pendingHopperLoot(*source, pos).has_value();
     ctx.check(!leftPending, "no hopper of the test is left pending (" + std::to_string(blockentities::pendingHoppers()) + " watched)");
     // empty the hoppers (the restored area removes them: nothing drops)
-    for (auto const& pos : {fed, peeked, read, feeder})
+    for (auto const& pos : {fed, peeked, read, feeder, pulled, puller})
         if (auto* actor = source->getBlockEntity(pos); actor && actor->getType() == BlockActorType::Hopper) {
             auto& container = static_cast<Container&>(static_cast<HopperBlockActor&>(*actor));
             for (int slot = 0; slot < container.getContainerSize(); slot++) container.setItem(slot, ItemStack::EMPTY_ITEM());
@@ -1993,6 +2067,23 @@ GF_REGISTER_SELFTEST("structure.spawner_load", [](Context& ctx) {
               "block, item and leaf particles load with their options");
     ctx.check(particles(Json::array({Json{{"type", "minecraft:item"}, {"item", "minecraft:air"}}})).empty(), "an item particle of air fails the list");
     ctx.check(load(Json{{"EntityScanRange", 9}, {"SpawnRange", 2}}).entityScanRange == 9, "EntityScanRange loads over the SpawnRange");
+    // SpawnPotentials: each entry a WeightedEntry.Wrapper with both "data" (a SpawnData and its
+    // entity compound) and "weight" (Codec.INT); an entry that does not decode is dropped alone
+    // (resultOrPartial)
+    using Weighted  = std::vector<std::pair<std::string, int>>;
+    auto potentials = [&](Json list) { return load(Json{{"SpawnPotentials", std::move(list)}}).potentials; };
+    Json zombie     = {{"entity", {{"id", "minecraft:zombie"}}}};
+    Json spider     = {{"entity", {{"id", "minecraft:spider"}}}};
+    ctx.check(potentials(Json::array({Json{{"data", zombie}}, Json{{"data", spider}, {"weight", 2}}})) == Weighted{{"minecraft:spider", 2}},
+              "a potential without a weight is dropped");
+    ctx.check(potentials(Json::array({Json{{"data", zombie}, {"weight", "3"}}, Json{{"data", spider}, {"weight", 2}}})) == Weighted{{"minecraft:spider", 2}},
+              "a weight that is not a number drops its entry");
+    ctx.check(potentials(Json::array({Json{{"data", zombie}, {"weight", 2.9}}})) == Weighted{{"minecraft:zombie", 2}}, "a floating weight is truncated (Codec.INT)");
+    ctx.check(potentials(Json::array({Json{{"entity", "minecraft:zombie"}, {"weight", 1}}, Json{{"data", {{"id", "minecraft:zombie"}}}, {"weight", 1}}})).empty(),
+              "an entry without a SpawnData compound and its entity is dropped");
+    ctx.check(potentials(Json::array({Json{{"data", zombie}, {"weight", 3}}, Json{{"data", spider}, {"weight", 1}}})) ==
+                  Weighted{{"minecraft:zombie", 3}, {"minecraft:spider", 1}},
+              "weighted potentials load in order");
 });
 
 // ---- jigsaw over terrain, the template definitions API --------------------------------------------------------------
