@@ -151,14 +151,21 @@ Save-Screenshot 'portal-lit' | Out-Null
 $mark = Get-LogMark
 Invoke-Teleport '/tp @s 101.6 -61 103.6 0 20'
 $frames = Save-OverlayFrames 'portal-overlay' @('0.5s', '1s', '1.5s', '2s', '2.5s')
-if ($script:Mode -eq 'local') {
-    $overlayLine = Wait-LogLine 'client portal overlay: ' 10 -Since $mark
+# the client mod draws TF's PortalOverlay with F12's HUD layers ('native'); the server sends the
+# camera fade only to a player without it (vanilla clients)
+$native = $false
+if ($script:Mode -ne 'remote-vanilla') {
+    $overlayLine = Wait-LogLine '^(?!\[host\]).*client portal overlay: ' 10 -Since $mark
     Write-Step $overlayLine
-} else {
-    Wait-LogLine '\[host\].*dimension: portal fade shown to' 10 -Since $mark | Out-Null
+    $native = $overlayLine -match 'overlay: native'
+}
+if (-not $native) {
+    Wait-LogLine "${hostPrefix}dimension: portal fade shown to" 10 -Since $mark | Out-Null
+} elseif (Get-LeviLog -Since $mark | Select-String -Pattern 'dimension: portal fade shown to' -Quiet) {
+    throw 'the server sent the camera fade to a client that draws the portal overlay itself'
 }
 $trip = Wait-LogLine "${hostPrefix}dimension: .* travelled from minecraft:overworld to twilightforest:twilight_forest at (\S+) (\S+) (\S+)" 60 -Since $mark
-$startPattern = if ($script:Mode -eq 'local' -and $overlayLine -match 'native') { 'client portal overlay: native' } else { 'dimension: portal fade shown to' }
+$startPattern = if ($native) { '^(?!\[host\]).*client portal overlay: native' } else { 'dimension: portal fade shown to' }
 $rampRows = Write-OverlayRamp $frames $reference $startPattern $mark
 # Bedrock's fade grows to opaque only: it grows at TF's rate and is TF's 0.75 at the trip, opaque
 # after it. Before 2.5 s it must stay near TF's ramp (round 3 had it at 0.65 after 0.5 s)
@@ -255,11 +262,7 @@ Invoke-Chat '/gamemode survival'
 $mark = Get-LogMark
 Invoke-Teleport ('/tp @s {0} {1} {2} 0 20' -f ($x + 0.6), ($y + 0.1), ($z + 0.6))
 $back = Save-OverlayFrames 'return-overlay' @('1s', '2s')
-if ($script:Mode -eq 'local') {
-    Wait-LogLine 'client portal overlay: ' 10 -Since $mark | Out-Null
-} else {
-    Wait-LogLine '\[host\].*dimension: portal fade shown to' 10 -Since $mark | Out-Null
-}
+Wait-LogLine $startPattern 10 -Since $mark | Out-Null
 Wait-LogLine "${hostPrefix}dimension: .* travelled from twilightforest:twilight_forest to minecraft:overworld" 60 -Since $mark | Out-Null
 $enterBack = Get-LeviLog -Since $mark | Select-String -Pattern 'enters the portal at' | Select-Object -First 1
 $fadeBack  = Get-LeviLog -Since $mark | Select-String -Pattern $startPattern | Select-Object -First 1
