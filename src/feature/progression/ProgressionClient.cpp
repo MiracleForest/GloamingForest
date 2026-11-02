@@ -11,21 +11,26 @@
 // server synced them ("combat.progress"), the tfEnforcedProgression gamerule ("gamerules.sync")
 // and the biome restrictions (<mod>/data/<ns>/twilight/restrictions/<biome>.json, as TF's
 // Restriction registry). The missing advancement toast ("combat.missing_advancement") is TF's
-// MissingAdvancementToast: "Advancement Required!" over the advancement's title, for 10 s.
+// MissingAdvancementToast through F12's toasts (feature/ext/ui/Client.h): UPPER_TEXT
+// "Advancement Required:" (0xffffffff) over the advancement's title (0xffffff: white too, Java's
+// drawString makes an alpha of 0 opaque) and its icon, in the advancement toast frame, for 10 s.
 
 #ifdef GF_CLIENT
 
 #include <filesystem>
 #include <fstream>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <unordered_map>
 
 #include "client/Client.h"
 #include "client/ui/Ui.h"
+#include "feature/ext/ui/Client.h"
 #include "feature/gamerules/GameRulesInternal.h"
 #include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
+#include "feature/progression/ProgressionInternal.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
 #include "mod/Main.h"
@@ -46,6 +51,9 @@ ClientState& cstate() {
     static ClientState s;
     return s;
 }
+
+std::mutex                       gToastMutex;
+std::optional<ShownMissingToast> gLastToast;
 
 void loadRestrictions(ClientState& s) {
     s.restrictionsLoaded = true;
@@ -77,6 +85,11 @@ void loadRestrictions(ClientState& s) {
 }
 
 } // namespace
+
+std::optional<ShownMissingToast> lastMissingToast() {
+    std::lock_guard lock(gToastMutex);
+    return gLastToast;
+}
 
 bool has(std::string const& advancementId) {
     std::lock_guard lock(cstate().mutex);
@@ -111,13 +124,21 @@ public:
                 if (a.is_string()) cstate().done.insert(a.get<std::string>());
         });
         net::client::on("combat.missing_advancement", [](nlohmann::json const& msg) {
-            gf::client::toast::ToastSpec spec;
-            spec.iconItem = msg.value("icon", std::string{"twilightforest:twilight_portal_miniature_structure"});
-            spec.titleKey = "misc.twilightforest.advancement_required";
-            spec.bodyKey  = msg.value("title", std::string{"twilightforest.ui.advancement.no_title"});
-            spec.ms       = 10000; // TF: 10 seconds
-            gf::client::toast::show(spec);
-            log().info("client toast: missing advancement {}", msg.value("advancement", std::string{}));
+            namespace toast = gf::client::toast;
+            toast::ToastSpec spec;
+            spec.iconItem = msg.value("icon", std::string{kMissingIcon});
+            if (spec.iconItem.empty()) spec.iconItem = kMissingIcon;
+            spec.titleKey = kMissingUpperText;
+            // the advancement's title: a translation key (translated on this client) or plain text
+            spec.bodyKey = msg.value("title", std::string{kMissingNoTitle});
+            spec.ms      = kMissingToastMs;
+            toast::show(spec, toast::styleOf(toast::Kind::MissingAdvancement));
+            auto advancement = msg.value("advancement", std::string{});
+            {
+                std::lock_guard lock(gToastMutex);
+                gLastToast = ShownMissingToast{advancement, spec.titleKey, spec.bodyKey, spec.iconItem, spec.ms};
+            }
+            log().info("client toast: missing advancement {} ({}, icon {})", advancement, spec.bodyKey, spec.iconItem);
         });
         net::client::onConnected([] {
             std::lock_guard lock(cstate().mutex);

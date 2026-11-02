@@ -8,8 +8,9 @@
 //     none is registered, the resource pack's effect;
 //   - vanilla clients get SpawnParticleEffectPackets of the resource pack's particle effect with
 //     the same identifier (vanilla particle types are mapped to Bedrock's effects): one per
-//     particle up to 8 per call, offset by params "spread" (Java's gaussian x distance); the
-//     effect's own motion replaces the velocity (the server cannot build molang variables).
+//     particle up to 8 per call (kMaxVanillaParticles), offset by params "spread" (Java's
+//     gaussian x distance), with the velocity as the molang variable `variable.velocity` {x, y, z}
+//     (FxMolang.cpp; an effect that does not read it moves on its own).
 // Sounds: TF's sound events ("entity.twilightforest.naga.hiss", the sound_definitions names F3
 // generates) and the vanilla events TF plays ("minecraft:entity.ghast.shoot", mapped to Bedrock's
 // names) go out as PlaySoundPacket to the players in range (16 blocks, more for volume > 1, as
@@ -23,6 +24,7 @@
 #include <filesystem>
 #include <fstream>
 #include <mutex>
+#include <optional>
 #include <random>
 #include <set>
 #include <string>
@@ -36,6 +38,7 @@
 #include "mc/network/MinecraftPackets.h"
 #include "mc/network/packet/PlaySoundPacket.h"
 #include "mc/network/packet/SpawnParticleEffectPacket.h"
+#include "mc/util/MolangVariableMap.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/Level.h"
@@ -371,10 +374,11 @@ nlohmann::json vecJson(Vec3 const& v) { return {v.x, v.y, v.z}; }
 
 std::uint64_t gParticlePackets = 0;
 std::uint64_t gSoundPackets    = 0;
+std::uint64_t gMovingPackets   = 0;
 
 } // namespace
 
-Counters counters() { return {gParticlePackets, gSoundPackets}; }
+Counters counters() { return {gParticlePackets, gSoundPackets, gMovingPackets}; }
 
 void particle(Dimension& dimension, std::string const& particleId, Vec3 const& pos, Vec3 const& velocity, int count, nlohmann::json const& params) {
     auto r = resolveParticle(particleId);
@@ -382,22 +386,18 @@ void particle(Dimension& dimension, std::string const& particleId, Vec3 const& p
     nlohmann::json msg;
     if (r.native) msg = {{"id", particleId}, {"pos", vecJson(pos)}, {"vel", vecJson(velocity)}, {"count", count}, {"params", params}, {"effect", r.effect}};
     // Vanilla clients: one SpawnParticleEffectPacket per effect instance (the packet has no
-    // count, and the server cannot build its molang variables), at most kMaxVanillaParticles per
-    // call; with params "spread" [dx, dy, dz] each one is offset as ServerLevel#sendParticles
-    // offsets them (gaussian x distance). The velocity is the effect's own.
-    constexpr int kMaxVanillaParticles = 8;
-    int           n     = std::clamp(count, 1, kMaxVanillaParticles);
-    auto          dimId = static_cast<uchar>(static_cast<int>(dimension.getDimensionId()));
+    // count), at most kMaxVanillaParticles per call; with params "spread" [dx, dy, dz] each one is
+    // offset as ServerLevel#sendParticles offsets them (gaussian x distance). The velocity goes as
+    // the molang variable `variable.velocity`.
+    int  n     = std::clamp(count, 1, kMaxVanillaParticles);
+    auto dimId = static_cast<uchar>(static_cast<int>(dimension.getDimensionId()));
     std::vector<Vec3> at(static_cast<std::size_t>(n), pos);
-    if (auto spread = params.is_object() ? params.value("spread", nlohmann::json{}) : nlohmann::json{}; spread.is_array() && spread.size() == 3 && n > 1) {
+    if (auto spread = spreadOf(params); spread && n > 1) {
         static thread_local std::mt19937 rng{std::random_device{}()};
-        std::normal_distribution<float>  gauss(0.f, 1.f);
-        for (auto& v : at) {
-            v.x += gauss(rng) * spread[0].get<float>();
-            v.y += gauss(rng) * spread[1].get<float>();
-            v.z += gauss(rng) * spread[2].get<float>();
-        }
+        for (auto& v : at) v = spreadAt(pos, *spread, rng);
     }
+    bool const               moving = velocity.x != 0.f || velocity.y != 0.f || velocity.z != 0.f;
+    std::optional<MolangMap> vars; // made for the first vanilla client when the particle moves
     forPlayersNear(dimension, pos, 32.f, [&](Player& p) {
         if (r.native && net::isCompanion(p)) {
             net::send(p, "fx.particle", msg);
@@ -405,10 +405,13 @@ void particle(Dimension& dimension, std::string const& particleId, Vec3 const& p
             return;
         }
         if (r.effect.empty()) return;
+        if (moving && !vars) fillVariables(vars.emplace(), velocity);
         for (auto const& v : at) {
-            SpawnParticleEffectPacket pkt(SpawnParticleEffectPacketPayload(v, r.effect, dimId, std::nullopt));
+            auto molang = vars ? std::optional<MolangVariableMap>(vars->get()) : std::nullopt;
+            SpawnParticleEffectPacket pkt(SpawnParticleEffectPacketPayload(v, r.effect, dimId, std::move(molang)));
             pkt.sendTo(p);
             ++gParticlePackets;
+            if (vars) ++gMovingPackets;
         }
     });
 }

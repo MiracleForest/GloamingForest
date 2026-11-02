@@ -75,9 +75,10 @@ namespace {
 struct Definition {
     std::vector<std::string>              criteria;
     std::vector<std::vector<std::string>> requirements;
-    std::string                           title;     ///< translation key or text ("" = no display)
+    bool                                  hasDisplay = false; ///< the JSON has a "display" (Java's DisplayInfo)
+    std::string                           title;              ///< translation key or text
     bool                                  titleIsKey = false;
-    std::string                           icon;      ///< item id
+    std::string                           icon;               ///< item id
 };
 
 struct PlayerProgress {
@@ -149,9 +150,10 @@ void loadDefinitionFile(std::filesystem::path const& file, std::string const& id
         if (d.requirements.empty())
             for (auto const& c : d.criteria) d.requirements.push_back({c}); // Java: AND of every criterion
         if (auto disp = j.find("display"); disp != j.end() && disp->is_object()) {
-            d.title = textOf(disp->value("title", nlohmann::json{}), d.titleIsKey);
-            auto icon = disp->value("icon", nlohmann::json::object());
-            d.icon    = icon.value("id", icon.value("item", std::string{}));
+            d.hasDisplay = true;
+            d.title      = textOf(disp->value("title", nlohmann::json{}), d.titleIsKey);
+            auto icon    = disp->value("icon", nlohmann::json::object());
+            d.icon       = icon.is_object() ? icon.value("id", icon.value("item", std::string{})) : std::string{};
         }
         s.definitions[id] = std::move(d);
     } catch (std::exception const& ex) {
@@ -328,29 +330,33 @@ void onGranted(GrantedFn fn) {
     state().granted.push_back(std::move(fn));
 }
 
-void showMissing(Player& player, std::string const& advancementId) {
-    // TF: the advancement's display title and icon, or "no title" with the portal miniature
-    std::string title = "twilightforest.ui.advancement.no_title";
-    bool        isKey = true;
-    std::string icon  = "twilightforest:twilight_portal_miniature_structure";
-    {
-        std::lock_guard lock(state().mutex);
-        if (auto const* d = definition(advancementId); d && !d->title.empty()) {
-            title = d->title;
-            isKey = d->titleIsKey;
-            if (!d->icon.empty()) icon = d->icon;
-        }
+MissingToast missingToastFor(std::string const& advancementId) {
+    // TF: info == null ? (no_title, the portal miniature) : (info.getTitle(), info.getIcon())
+    MissingToast t{kMissingNoTitle, true, kMissingIcon};
+    std::lock_guard lock(state().mutex);
+    if (auto const* d = definition(advancementId); d && d->hasDisplay) {
+        t.title      = d->title;
+        t.titleIsKey = d->titleIsKey;
+        t.icon       = d->icon;
     }
+    return t;
+}
+
+void showMissing(Player& player, std::string const& advancementId) {
+    auto t = missingToastFor(advancementId);
     log().info("progression: missing advancement toast {} for {}", advancementId, player.getRealName());
     if (net::isCompanion(player)) {
-        net::send(player, "combat.missing_advancement", {{"advancement", advancementId}, {"title", title}, {"titleIsKey", isKey}, {"icon", icon}});
+        net::send(player, "combat.missing_advancement", {{"advancement", advancementId}, {"title", t.title}, {"titleIsKey", t.titleIsKey}, {"icon", t.icon}});
         return;
     }
+    // vanilla clients: the game's toast with the same two lines (no icon: the packet has none)
     auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::ToastRequest);
     if (!packet) return;
     auto& pkt    = static_cast<ToastRequestPacket&>(*packet);
-    pkt.mTitle   = trFor(player, "misc.twilightforest.advancement_required", "Advancement Required!");
-    pkt.mContent = isKey ? trFor(player, title, "???") : title;
+    pkt.mTitle   = trFor(player, kMissingUpperText, "Advancement Required:");
+    // an untranslated key reads as the key, as Java's Component.translatable (TF has no text for
+    // twilightforest.ui.advancement.no_title)
+    pkt.mContent = t.titleIsKey ? trFor(player, t.title, t.title) : t.title;
     pkt.sendTo(player);
 }
 
