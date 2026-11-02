@@ -366,6 +366,11 @@ namespace GfImport
                 }
                 // Java property names; the Bedrock state is "twilightforest:<name>" (docs/spec/blockstates.md)
                 if (bi.States.Count > 0) p.Set("states", J.Strs(bi.States.Select(s => s.Java)));
+                // the block's Bedrock block tags (tools and tier, Harvest.cs), free of the block format: the kit writes
+                // them in the form of the format it writes the block in ("tag:<id>" components up to 1.26.10, one
+                // minecraft:tags array from 1.26.20; docs/spikes/S7.md), whatever form the skeleton file has
+                var tags = BedrockBlockTags(bi.Id);
+                if (tags.Count > 0) p.Set("tags", J.Strs(tags));
                 J arr;
                 string unit = NameOf(bi.Owner);
                 if (!perUnit.TryGetValue(bi.Owner, out arr)) perUnit[bi.Owner] = arr = J.Arr();

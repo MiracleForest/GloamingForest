@@ -51,7 +51,7 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 | `sounds` | `sounds.json` (328 events, 288 subtitles) | **No `sound_definitions`** (see below). Validates that every event has an owner in owners.tsv (a missing one fails the run) and writes a plain, non-merged listing `data/gf/sound_events/<unit>.json`: event -> Bedrock category, subtitle key, sound *names* (TF file paths without namespace, vanilla events). The subtitle texts come with the `lang` kind |
 | `skeleton` | TFItems, TFToolMaterials, TFEntities, models/item | `bp/items/<id>.json` (254 items, the tiered tools with `minecraft:digger` and Bedrock's tool tags, and the block items whose Java item model is a flat icon: `minecraft:block_placer` with `replace_block_item`), `bp/entities/<id>.json` (80, collision box, health, type family, `is_spawnable` for the 51 with eggs), `rp/entity/<id>.entity.json` + `rp/models/entity/skeleton/<id>.geo.json` (a placeholder box of the entity's size with its TF texture, spawn egg colours), `data/gf/import/skeleton.json` (the id list the `import.*` selftests check), `data/gf/import/harvest.json` (every block's tools, tier and drop rule: read by the runtime, below, and the selftests) |
 | `catalog` | TFCreativeTabs (4 tabs) | `bp/item_catalog.d/import.json` (Bedrock creative groups: blocks -> construction, items and food -> items, equipment -> equipment) and `data/gf/catalog/import.json` (`gf::catalog` groups in TF's order) |
-| `families` | TF block classes and interfaces, block tags, model loaders | `data/gf/families/<unit>.json`: `[{id, family, params: {class, vanillaClass, traits, base, copyOf, woodType, plant, states}}]` for F11 (below) |
+| `families` | TF block classes and interfaces, block tags, model loaders | `data/gf/families/<unit>.json`: `[{id, family, params: {class, vanillaClass, traits, base, copyOf, woodType, plant, states, tags}}]` for F11 (below) |
 
 ## References
 
@@ -265,9 +265,10 @@ Shared files get one owner by rule:
   blocks (the 347 of `data/gf/families`) are rewritten at assemble by F11's families kit, in its own format 1.26.0
   (`tools/families/families.lua` `FORMAT`), from a copy of the skeleton or from its `"tag:"` components: their
   skeleton is the kit's input, never loaded as written, and keeps 1.21.80 with `"tag:<id>"` components until the kit
-  writes 1.26.20 or later (then `FamilyBlockFormat` becomes `BlockFormat`). For a family block the kit writes in
-  1.26.50 (the chests, with `minecraft:block_entity` for F10's native container backend), the tags are the
-  skeleton's `"tag:"` component names, as one `minecraft:tags` array. In the v1_26_20 schema a `bone_visibility`
+  no longer reads the skeleton's tag form (then `FamilyBlockFormat` becomes `BlockFormat`). The kit's format-free
+  input is the families data's `params.tags` (*Families* below): for a family block the kit writes in 1.26.50 (the
+  chests, with `minecraft:block_entity` for F10's native container backend) they are its `minecraft:tags` array, for
+  one in 1.26.0 its `"tag:<id>"` components. In the v1_26_20 schema a `bone_visibility`
   value is a Molang string (a boolean is refused): a multipart part without a `when` is not named (a bone
   `bone_visibility` does not name is shown).
 
@@ -317,7 +318,11 @@ trapped_chest, horizontal, directional, climbable for `LadderBlock`), else the b
 `params.traits` lists every trait family of the contract the block has, whatever its shape: `waterloggable` (a
 `waterlogged` Java property), `snowloggable` (implements `SnowLoggable`), `climbable` (`LadderBlock`, or in
 `#minecraft:climbable`), `lightable` (implements `LightableBlock`), `connected_texture` (a model with TF's
-`connected_texture_block` loader).
+`connected_texture_block` loader). `params.tags` lists the block's Bedrock block tags (*Tools and drops* above:
+`minecraft:is_<tool>_item_destructible`, `minecraft:leaves`, the tier tag), free of the block format, so that the
+kit writes them in the form of whatever format it writes the block in (`minecraft:tags` array from 1.26.20,
+`"tag:<id>"` components up to 1.26.10, *Block format* above); absent for a block without tags. The import fails
+when a family block's `params.tags` and its skeleton file's tags differ (after the overrides).
 
 ## Lang
 

@@ -6,7 +6,8 @@
       "class": "CastleDoorBlock",
       "vanillaClass": "Block",
       "traits": ["connected_texture"],
-      "states": ["active", "vanish"]
+      "states": ["active", "vanish"],
+      "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   },
   {
@@ -44,7 +45,8 @@
     "family": "log",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"]
     }
   },
   {
@@ -84,7 +86,8 @@
       "class": "CastleDoorBlock",
       "vanillaClass": "Block",
       "traits": ["connected_texture"],
-      "states": ["active", "vanish"]
+      "states": ["active", "vanish"],
+      "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   },
   {
@@ -131,7 +134,13 @@
       "class": "SpecialStemLeavesBlock",
       "vanillaClass": "LeavesBlock",
       "traits": ["waterloggable"],
-      "states": ["distance", "persistent"]
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
     }
   },
   {
@@ -141,7 +150,8 @@
       "class": "CastleDoorBlock",
       "vanillaClass": "Block",
       "traits": ["connected_texture"],
-      "states": ["active", "vanish"]
+      "states": ["active", "vanish"],
+      "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   },
   {
@@ -161,7 +171,8 @@
       "class": "CastleDoorBlock",
       "vanillaClass": "Block",
       "traits": ["connected_texture"],
-      "states": ["active", "vanish"]
+      "states": ["active", "vanish"],
+      "tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"]
     }
   }
 ]

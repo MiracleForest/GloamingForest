@@ -4,7 +4,8 @@
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
@@ -13,7 +14,8 @@
     "params": {
       "class": "SlabBlock",
       "traits": ["waterloggable"],
-      "states": ["type"]
+      "states": ["type"],
+      "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {

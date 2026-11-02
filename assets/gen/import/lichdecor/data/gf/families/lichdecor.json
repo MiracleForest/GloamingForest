@@ -6,7 +6,8 @@
       "class": "CandelabraBlock",
       "vanillaClass": "BaseEntityBlock",
       "traits": ["waterloggable", "lightable"],
-      "states": ["facing", "has_candle_1", "has_candle_2", "has_candle_3", "lighting", "on_wall"]
+      "states": ["facing", "has_candle_1", "has_candle_2", "has_candle_3", "lighting", "on_wall"],
+      "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
@@ -94,7 +95,8 @@
     "family": "pillar",
     "params": {
       "class": "RotatedPillarBlock",
-      "states": ["axis"]
+      "states": ["axis"],
+      "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
@@ -124,7 +126,8 @@
       "class": "WroughtIronFenceBlock",
       "vanillaClass": "Block",
       "traits": ["waterloggable"],
-      "states": ["east_fence", "north_fence", "post", "south_fence", "west_fence"]
+      "states": ["east_fence", "north_fence", "post", "south_fence", "west_fence"],
+      "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
