@@ -1127,7 +1127,10 @@ void ensureInteractions(std::string const& blockId) {
     ia::onUseOn({.block = blockId}, [](ia::UseOnContext const& c) {
         auto d = declared(c.blockId);
         if (!d) return ia::Result::Pass;
-        if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass; // Java: sneaking with an item places
+        // Java (ServerPlayerGameMode#useItemOn): sneaking with an item in either hand skips the
+        // block's use (the item places / is used)
+        bool emptyHands = c.itemId.empty() && game::items::isEmpty(c.player.getOffhandSlot());
+        if (c.sneaking && !emptyHands) return ia::Result::Pass;
         if (!c.firstEvent) return ia::Result::Consume;
         auto h = handlerFor(c.blockId);
         if (h && h->open && h->open(c.player, c.pos)) awardOpenStat(c.player, c.pos);
