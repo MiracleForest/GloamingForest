@@ -26,4 +26,19 @@ struct Counters {
 /// Packets sent so far (selftests).
 [[nodiscard]] Counters counters();
 
+#ifdef GF_CLIENT
+namespace client {
+/// The client's "fx.particle" messages so far (selftests): drawn by the native sink (F12's
+/// factories), spawned as the resource pack effect, or silent (no native version, no effect).
+struct ClientCounters {
+    std::uint64_t native  = 0;
+    std::uint64_t effects = 0;
+    std::uint64_t silent  = 0;
+};
+[[nodiscard]] ClientCounters clientCounters();
+/// Whether a native sink is installed (F12 installs gf::client::particles::spawnFromFx).
+[[nodiscard]] bool hasNativeSink();
+} // namespace client
+#endif
+
 } // namespace gf::fx
