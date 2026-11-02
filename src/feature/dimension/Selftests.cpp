@@ -7,8 +7,11 @@
 #include <limits>
 #include <map>
 #include <set>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <tuple>
+#include <variant>
 #include <vector>
 
 #include "ll/api/Config.h"
@@ -23,7 +26,9 @@
 #include "mc/network/packet/GameRulesChangedPacket.h"
 #include "mc/network/packet/SetTimePacket.h"
 #include "mc/network/packet/SyncWorldClocksPacket.h"
+#include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/server/SimulatedPlayer.h"
+#include "mc/server/sim/LookDuration.h"
 #include "mc/server/commands/CommandPermissionLevel.h"
 #include "mc/server/commands/CommandUtils.h"
 #include "mc/server/commands/ServerCommandOrigin.h"
@@ -53,6 +58,9 @@
 #include "feature/dimension/Teleporter.h"
 #include "feature/dimension/World.h"
 #include "feature/ext/dimension/DimensionType.h"
+#include "feature/gamerules/GameRules.h"
+#include "feature/progression/Progression.h"
+#include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Config.h"
@@ -244,8 +252,7 @@ public:
         auto blocks = std::move(mBlocks);
         mBlocks.clear();
         mSeen.clear();
-        int n = co_await putBack(blocks);
-        for (auto const& [dim, corner] : mSites) portalIndexTouch(dim, corner);
+        int n = co_await putBack(blocks); // (the portal index hears of it through gf::blockevents)
         mSites.clear();
         co_return n;
     }
@@ -273,11 +280,34 @@ private:
         return out;
     }
 
+    /// Puts one saved block back (its chunk is loaded); true when it had changed.
+    static bool putOne(BlockSource& region, Saved const& b) {
+        bool        changed = false;
+        auto const* want    = game::blockWithStates(b.id, b.states);
+        if (!want) want = game::blockWith(b.id);
+        if (want && &region.getBlock(b.pos) != want) {
+            game::setBlock(region, b.pos, *want);
+            changed = true;
+        }
+        auto const* extra = b.extraId.empty() ? game::blockWith("minecraft:air") : game::blockWithStates(b.extraId, b.extraStates);
+        if (extra && &region.getExtraBlock(b.pos) != extra) region.setExtraBlock(b.pos, *extra, 3);
+        return changed;
+    }
+
     static ll::coro::CoroTask<int> putBack(std::vector<Saved> blocks) {
         std::stable_sort(blocks.begin(), blocks.end(), [](Saved const& a, Saved const& b) { return a.pos.y < b.pos.y; });
+        // every block whose chunk is still loaded goes back at once, within one tick: a portal never
+        // sees half of its frame put back (the portal's neighbour rule, run at the end of the tick
+        // through gf::blockevents, would turn it into water that then flows into the terrain)
+        int                                                           changed = 0;
         std::map<std::tuple<int, int, int>, std::vector<std::size_t>> byChunk;
-        for (std::size_t i = 0; i < blocks.size(); ++i) byChunk[{blocks[i].dim, blocks[i].pos.x >> 4, blocks[i].pos.z >> 4}].push_back(i);
-        int changed = 0;
+        for (std::size_t i = 0; i < blocks.size(); ++i) {
+            auto const& b      = blocks[i];
+            auto*       region = game::regionOf(b.dim);
+            if (region && region->hasChunksAt(b.pos, 0, false)) changed += putOne(*region, b) ? 1 : 0;
+            else byChunk[{b.dim, b.pos.x >> 4, b.pos.z >> 4}].push_back(i);
+        }
+        // the rest chunk by chunk, each loaded first
         for (auto const& [key, list] : byChunk) {
             auto [dim, cx, cz] = key;
             auto hold          = co_await loadArea(dim, BlockPos{cx * 16 + 8, 64, cz * 16 + 8}, 0);
@@ -286,18 +316,7 @@ private:
                 log().warn("dimension selftest: chunk {} {} of dimension {} did not load: {} blocks not put back", cx, cz, dim, list.size());
                 continue;
             }
-            auto const* air = game::blockWith("minecraft:air");
-            for (auto i : list) {
-                auto const& b    = blocks[i];
-                auto const* want = game::blockWithStates(b.id, b.states);
-                if (!want) want = game::blockWith(b.id);
-                if (want && &region->getBlock(b.pos) != want) {
-                    game::setBlock(*region, b.pos, *want);
-                    ++changed;
-                }
-                auto const* extra = b.extraId.empty() ? air : game::blockWithStates(b.extraId, b.extraStates);
-                if (extra && &region->getExtraBlock(b.pos) != extra) region->setExtraBlock(b.pos, *extra, 3);
-            }
+            for (auto i : list) changed += putOne(*region, blocks[i]) ? 1 : 0;
         }
         co_return changed;
     }
@@ -385,9 +404,36 @@ GF_REGISTER_SELFTEST("dimension.config_defaults", [](Context& ctx) {
     ctx.check(d.portalUnlockedByAdvancement.empty() && d.maxPortalSize == 64, "lock and size defaults");
 });
 
+// TFPortalBlock#getPortalTransitionTime: the two gamerules of the gamerule store (F10), the
+// creative one for invulnerable players (creative, spectator). Set through the contract and through
+// `/twilightforest gamerule`; the rules go back to what they were.
 GF_REGISTER_SELFTEST("dimension.portal_delay", [](Context& ctx) {
-    auto& p = ctx.player();
-    ctx.check(portalDelay(p) == kDefaultDelay, "survival delay is playersTfPortalDefaultDelay (60), got " + std::to_string(portalDelay(p)));
+    struct RestoreRules {
+        gamerules::Value def      = gamerules::get(kDefaultDelayRule);
+        gamerules::Value creative = gamerules::get(kCreativeDelayRule);
+        ~RestoreRules() {
+            gamerules::set(kDefaultDelayRule, def);
+            gamerules::set(kCreativeDelayRule, creative);
+        }
+    } restore;
+    ctx.check(std::holds_alternative<int>(restore.def) && std::holds_alternative<int>(restore.creative), "both delays are integer gamerules of the store");
+    auto& p = static_cast<SimulatedPlayer&>(ctx.player());
+    p.setPlayerGameType(GameType::Survival);
+    ctx.check(portalDelay(p) == gamerules::getInt(kDefaultDelayRule), "survival: playersTfPortalDefaultDelay, got " + std::to_string(portalDelay(p)));
+    ctx.info(std::format("the world's delays: {} / {} (TF's defaults 60 / 1)", gamerules::getInt(kDefaultDelayRule), gamerules::getInt(kCreativeDelayRule)));
+    ctx.require(gamerules::set(kDefaultDelayRule, 30), "playersTfPortalDefaultDelay set to 30");
+    ctx.check(portalDelay(p) == 30, "a survival player's delay follows it (" + std::to_string(portalDelay(p)) + ")");
+    auto [ok, msg] = runCommand(std::string("twilightforest gamerule ") + kDefaultDelayRule + " 45");
+    ctx.check(ok, "/twilightforest gamerule " + std::string(kDefaultDelayRule) + " 45 (" + msg + ")");
+    ctx.check(portalDelay(p) == 45, "and through the command (" + std::to_string(portalDelay(p)) + ")");
+    ctx.require(gamerules::set(kCreativeDelayRule, 7), "playersTfPortalCreativeDelay set to 7");
+    p.setPlayerGameType(GameType::Creative);
+    ctx.check(portalDelay(p) == 7, "a creative player's delay is playersTfPortalCreativeDelay (" + std::to_string(portalDelay(p)) + ")");
+    p.setPlayerGameType(GameType::Spectator);
+    ctx.check(portalDelay(p) == 7, "so is a spectator's (" + std::to_string(portalDelay(p)) + ")");
+    p.setPlayerGameType(GameType::Adventure);
+    ctx.check(portalDelay(p) == 45, "an adventure player's is the default one (" + std::to_string(portalDelay(p)) + ")");
+    p.setPlayerGameType(GameType::Survival);
 });
 
 GF_REGISTER_SELFTEST("dimension.tags", [](Context& ctx) {
@@ -406,6 +452,20 @@ GF_REGISTER_SELFTEST("dimension.tags", [](Context& ctx) {
     ctx.check(blockTagged("twilightforest:portal/decoration", "twilightforest:canopy_sapling"), "TF saplings decorate (#saplings)");
     ctx.check(blockTagged("twilightforest:portal/decoration", "twilightforest:twilight_oak_leaves"), "TF leaves decorate (#leaves)");
     ctx.check(portalBlock(false) && portalBlock(true) && portalBlock(false) != portalBlock(true), "both portal states exist");
+    // the tag store (F9) answers TF's portal tags itself (F4's own member lists are only a fallback
+    // for an empty store), with Java's ids turned into the game's
+    for (auto const* t : {"twilightforest:portal/edge", "twilightforest:portal/decoration", "twilightforest:portal/fluid", "twilightforest:portal/generated_decoration"})
+        ctx.check(!tags::members(tags::Registry::Block, t).empty(), std::string("the tag store has #") + t);
+    ctx.check(!tags::members(tags::Registry::Item, "twilightforest:portal/activator").empty(), "the tag store has #twilightforest:portal/activator");
+    auto registered = [](std::initializer_list<char const*> ids) -> std::string {
+        for (auto const* id : ids)
+            if (game::blockWith(id)) return id;
+        return {};
+    };
+    ctx.check(blockTagged("twilightforest:portal/edge", "minecraft:farmland"), "farmland is a portal edge");
+    if (auto path = registered({"minecraft:dirt_path", "minecraft:grass_path"}); !path.empty()) ctx.check(blockTagged("twilightforest:portal/edge", path), path + " (minecraft:dirt_path) is a portal edge");
+    if (auto cane = registered({"minecraft:sugar_cane", "minecraft:reeds"}); !cane.empty()) ctx.check(blockTagged("twilightforest:portal/decoration", cane), cane + " (minecraft:sugar_cane) decorates");
+    if (auto bush = registered({"minecraft:dead_bush", "minecraft:deadbush"}); !bush.empty()) ctx.check(blockTagged("twilightforest:portal/decoration", bush), bush + " (minecraft:dead_bush) decorates");
 });
 
 // ---- TFPortalBlock: lighting --------------------------------------------------------------------------------------------
@@ -471,7 +531,23 @@ GF_REGISTER_SELFTEST("dimension.portal_light", [](Context& ctx) -> ll::coro::Cor
     ctx.check(!game::intState(region->getBlock(game::blockPos(oneWay)), kOneWayState).value_or(1), "and becomes two-way");
 });
 
-// A diamond thrown by a player into a pool lights it (ProgressionEvents#checkForPortalCreation).
+/// The players the progression bus (F10) heard twilightforest:make_tf_portal for.
+std::vector<std::int64_t>& madePortal() {
+    static std::vector<std::int64_t> v;
+    return v;
+}
+void listenToMadePortal() {
+    static bool const once = [] {
+        progression::onTrigger(kMakePortalTrigger, [](Player& p, nlohmann::json const&) {
+            if (madePortal().size() < 64) madePortal().push_back(idOf(p));
+        });
+        return true;
+    }();
+    (void)once;
+}
+
+// A diamond thrown by a player into a pool lights it (ProgressionEvents#checkForPortalCreation) and
+// fires TF's make_tf_portal trigger.
 GF_REGISTER_SELFTEST("dimension.portal_item", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto  box    = co_await ctx.flatArea(5440, 12, 8);
     auto* region = ctx.region();
@@ -480,6 +556,8 @@ GF_REGISTER_SELFTEST("dimension.portal_item", [](Context& ctx) -> ll::coro::Coro
     ctx.require(buildPool(ctx, pool), "pool built");
     auto& p     = ctx.player();
     auto  owner = idOf(p);
+    listenToMadePortal();
+    madePortal().clear();
     p.teleport(Vec3{pool.x - 1.5f, static_cast<float>(pool.y + 1), pool.z + 1.0f}, DimensionType(ctx.dimension()));
     co_await ctx.ticks(2);
     // someone else's diamond does not count
@@ -512,22 +590,188 @@ GF_REGISTER_SELFTEST("dimension.portal_item", [](Context& ctx) -> ll::coro::Coro
     }
     ctx.check(lit, "the player's diamond in the pool lights the portal within 3 s");
     ctx.check(level->fetchEntity(ActorUniqueID{ownId}, false) == nullptr, "the diamond was used up");
+    ctx.check(std::count(madePortal().begin(), madePortal().end(), owner) == 1, "the progression bus heard twilightforest:make_tf_portal for the player once");
 });
 
-// The portal turns back into water when its rim breaks (TFPortalBlock#neighborChanged).
+// TFPortalBlock#neighborChanged through the game's own block changes (gf::blockevents, F11): a
+// portal whose rim or floor is no longer valid turns back into water, and the water it leaves
+// reaches the portal blocks next to it (Java: setBlock(WATER, UPDATE_ALL)), so the whole pool goes.
+// Changes that keep the frame valid (another edge block, a block above, a decoration) leave it.
 GF_REGISTER_SELFTEST("dimension.portal_neighbor", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto  box    = co_await ctx.flatArea(5460, 8, 8);
+    auto  box    = co_await ctx.flatArea(5460, 16, 8);
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
-    auto pool = core::GlobalPos{ctx.dimension(), box.minX + 2, box.minY - 1, box.minZ + 2};
-    ctx.require(buildPool(ctx, pool), "pool built");
-    ctx.require(portal::tryActivate(*region, game::blockPos(pool)), "lit");
-    portalNeighborChanged(*region, game::blockPos(pool));
-    ctx.check(isPortal(region->getBlock(game::blockPos(pool))), "an intact portal stays");
-    ctx.check(ctx.setBlock(pool.offset(-1, 0, 0), "minecraft:stone"), "rim broken");
-    portalNeighborChanged(*region, game::blockPos(pool));
-    ctx.check(game::blockId(region->getBlock(game::blockPos(pool))) == "minecraft:water", "the portal block next to stone is water again");
-    ctx.check(isPortal(region->getBlock(game::blockPos(pool.offset(1, 0, 1)))), "the far block stays until its own neighbours change");
+    int  dim   = ctx.dimension();
+    int  y     = box.minY - 1; // the grass layer
+    auto count = [&](core::GlobalPos const& pool, std::string const& id) {
+        int n = 0;
+        for (int dx = 0; dx < 2; ++dx)
+            for (int dz = 0; dz < 2; ++dz) n += ctx.blockAt(pool.offset(dx, 0, dz)) == id ? 1 : 0;
+        return n;
+    };
+    auto light = [&](core::GlobalPos const& pool) {
+        if (!buildPool(ctx, pool)) return false;
+        auto* r = ctx.region();
+        return r && portal::tryActivate(*r, game::blockPos(pool));
+    };
+    // the block changes reach the portal at the end of the tick; a few ticks for the water to spread
+    auto settle = [&]() { return ctx.ticks(4); };
+    // the player waits out of the lightning's reach (3 blocks around each pool)
+    ctx.player().teleport(Vec3{box.minX + 8.5f, static_cast<float>(box.minY), box.minZ + 7.5f}, DimensionType(dim));
+    co_await ctx.ticks(1);
+
+    // A: a lit portal stays through its own lighting and through changes that keep its frame
+    auto a = core::GlobalPos{dim, box.minX + 2, y, box.minZ + 2};
+    ctx.require(light(a), "pool A lit");
+    co_await settle();
+    ctx.check(count(a, kPortalBlock) == 4, "the lit portal stays a portal (" + std::to_string(count(a, kPortalBlock)) + " of 4)");
+    {
+        // the portal index hears of the new portal blocks through gf::blockevents' onPlaced
+        auto indexed = indexedPortals(dim);
+        int  known   = 0;
+        for (int dx = 0; dx < 2; ++dx)
+            for (int dz = 0; dz < 2; ++dz) known += std::count(indexed.begin(), indexed.end(), game::blockPos(a.offset(dx, 0, dz))) > 0 ? 1 : 0;
+        ctx.check(known == 4, "the portal index knows the lit portal (" + std::to_string(known) + " of 4)");
+    }
+    auto rimA = a.offset(-1, 0, 0); // the west rim block the player breaks below
+    ctx.check(ctx.setBlock(a.offset(-1, 0, 1), "minecraft:dirt"), "a rim block becomes dirt (still a portal/edge block)");
+    ctx.check(ctx.setBlock(a.offset(0, 1, 0), "minecraft:glass"), "glass above a portal block");
+    ctx.check(ctx.setBlock(rimA.offset(0, 1, 0), "minecraft:air"), "a rim decoration taken away (decorations matter for lighting only)");
+    co_await settle();
+    ctx.check(ctx.setBlock(a.offset(0, 1, 0), "minecraft:air"), "the glass taken away again");
+    co_await settle();
+    ctx.check(count(a, kPortalBlock) == 4, "changes that keep the frame valid leave the portal (" + std::to_string(count(a, kPortalBlock)) + " of 4)");
+
+    // ... then a survival player breaks a rim block by hand: the portal turns back into water, all of it
+    {
+        auto& sp = static_cast<SimulatedPlayer&>(ctx.player()); // the test player is a simulated one
+        sp.setPlayerGameType(GameType::Survival);
+        sp.teleport(Vec3{rimA.x - 0.5f, static_cast<float>(y + 1), rimA.z + 0.5f}, DimensionType(dim));
+        sp.simulateLookAt(game::blockPos(rimA), sim::LookDuration::Instant);
+        sp.simulateSetItem(ItemStack::EMPTY_ITEM(), true, 0);
+    }
+    co_await ctx.ticks(2); // a simulated player applies its look on its next tick
+    std::string how = static_cast<SimulatedPlayer&>(ctx.player()).simulateDestroyBlock(game::blockPos(rimA), ScriptModuleMinecraft::ScriptFacing::Up)
+                        ? "started"
+                        : "refused";
+    int took = 0;
+    for (; took < 120 && ctx.blockAt(rimA) == "minecraft:grass_block"; ++took) co_await ctx.ticks(1);
+    static_cast<SimulatedPlayer&>(ctx.player()).simulateStopDestroyingBlock();
+    ctx.info("the player's destroy " + how + ": the rim block is " + ctx.blockAt(rimA) + " after " + std::to_string(took) + " ticks");
+    if (ctx.blockAt(rimA) == "minecraft:grass_block") {
+        ctx.info("the simulated player could not break the rim block: a block change breaks it instead");
+        ctx.setBlock(rimA, "minecraft:air");
+    }
+    co_await settle();
+    ctx.check(count(a, "minecraft:water") == 4, "the rim broken by a player: the whole portal is water again (" + std::to_string(count(a, "minecraft:water")) + " of 4)");
+    if (auto* r = ctx.region()) {
+        // the grass block's drop
+        AABB near{Vec3(rimA.x - 3.0f, y - 1.0f, rimA.z - 3.0f), Vec3(rimA.x + 4.0f, y + 4.0f, rimA.z + 4.0f)};
+        for (auto* e : r->getEntities(near, 0.0f, ActorType::ItemEntity))
+            if (e && e->getEntityTypeId() == ActorType::ItemEntity) e->remove();
+    }
+    ctx.player().teleport(Vec3{box.minX + 8.5f, static_cast<float>(box.minY), box.minZ + 7.5f}, DimensionType(dim));
+    co_await ctx.ticks(1);
+
+    // B: stone in the rim
+    auto b = core::GlobalPos{dim, box.minX + 7, y, box.minZ + 2};
+    ctx.require(light(b), "pool B lit");
+    co_await settle();
+    ctx.require(count(b, kPortalBlock) == 4, "pool B is a portal");
+    ctx.check(ctx.setBlock(b.offset(2, 0, 1), "minecraft:stone"), "a rim block becomes stone");
+    co_await settle();
+    ctx.check(count(b, "minecraft:water") == 4, "stone in the rim: the whole portal is water again (" + std::to_string(count(b, "minecraft:water")) + " of 4)");
+
+    // C: the floor under one portal block goes (a pool built on the grass layer, so that its floor
+    // is in the flat area)
+    auto c = core::GlobalPos{dim, box.minX + 12, y + 1, box.minZ + 2};
+    ctx.require(light(c), "pool C lit");
+    co_await settle();
+    ctx.require(count(c, kPortalBlock) == 4, "pool C is a portal");
+    ctx.check(ctx.setBlock(c.offset(1, -1, 1), "minecraft:air"), "the floor under a portal block taken away");
+    co_await settle();
+    ctx.check(count(c, "minecraft:water") == 4, "no floor: the whole portal is water again (" + std::to_string(count(c, "minecraft:water")) + " of 4)");
+    // (the index follows: none of the three pools is indexed as portal blocks any more)
+    auto indexed = indexedPortals(dim);
+    int  stale   = 0;
+    for (auto const& pool : {a, b, c})
+        for (int dx = 0; dx < 2; ++dx)
+            for (int dz = 0; dz < 2; ++dz)
+                stale += std::count(indexed.begin(), indexed.end(), game::blockPos(pool.offset(dx, 0, dz))) > 0 ? 1 : 0;
+    ctx.check(stale == 0, "the portal index forgot the blocks that turned into water (" + std::to_string(stale) + " left)");
+});
+
+// TFPortalBlock#neighborChanged reads the floor and the four sides with Level#getBlockState, which
+// loads a chunk that is not loaded. Two portal blocks on the east border of a loaded area (their east
+// sides in a chunk that is not loaded) hear of a change: each check waits for that chunk, has it
+// loaded and runs again. The one whose west side became stone turns into water; the other one,
+// whose frame is whole, stays (TF's rule on the block the east chunk holds). Under the surface of
+// the flat world: the water has nowhere to flow, and every changed block is put back afterwards.
+GF_REGISTER_SELFTEST("dimension.portal_neighbor_unloaded", [](Context& ctx) -> ll::coro::CoroTask<> {
+    int  dim  = ctx.dimension();
+    auto base = ctx.testPos(5466);
+    // 4096 blocks east of the test rows, far from every player and test area: one chunk is loaded
+    int  cx   = (base.x + 4096) >> 4;
+    int  cz   = base.z >> 4;
+    auto hold = co_await loadArea(dim, BlockPos{cx * 16 + 8, 0, cz * 16 + 8}, 0);
+    ctx.require(hold != nullptr, "a far chunk loaded");
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    // the east border of the loaded area there
+    int border = cx;
+    while (border < cx + 8 && region->hasChunksAt(BlockPos{(border + 1) * 16, 0, cz * 16 + 8}, 0, false)) ++border;
+    ctx.require(border < cx + 8, "a chunk east of the far area is not loaded");
+    int x   = border * 16 + 15; // the east side is in the next chunk
+    int top = region->getAboveTopSolidBlock(x, cz * 16 + 8, false, false);
+    int y   = top - 2; // the flat world's dirt under its grass
+    ctx.require(y - 1 >= region->getMinHeight(), "ground deep enough under the far area (surface " + std::to_string(top) + ")");
+    BlockPos whole{x, y, cz * 16 + 4}, broken{x, y, cz * 16 + 10};
+    auto     at = [&](BlockPos const& p) { return core::GlobalPos{dim, p.x, p.y, p.z}; };
+    for (auto const& p : {whole, broken}) {
+        // the next chunk holds the same ground at this height (a flat world): solid, an edge block
+        ctx.require(blockTagged("twilightforest:portal/edge", ctx.blockAt(at(p))), "dirt under the far area at " + str(p) + " (" + ctx.blockAt(at(p)) + ")");
+    }
+    auto const* portal = portalBlock(false);
+    ctx.require(portal != nullptr, "the portal block");
+    TerrainRestore terrain;
+    auto put = [&](BlockPos const& p, Block const* block) {
+        if (!block) return false;
+        terrain.save(*region, p);
+        game::setBlock(*region, p, *block);
+        return &region->getBlock(p) == block;
+    };
+    auto side = [](BlockPos const& p, int dx, int dy, int dz) { return BlockPos{p.x + dx, p.y + dy, p.z + dz}; };
+    auto const* dirt  = game::blockWith("minecraft:dirt");
+    auto const* stone = game::blockWith("minecraft:stone");
+    // a frame on the loaded side (floor, north, south, west), then the portal blocks
+    for (auto const& p : {whole, broken})
+        for (auto const& n : {side(p, 0, -1, 0), side(p, 0, 0, -1), side(p, 0, 0, 1), side(p, -1, 0, 0)}) ctx.require(put(n, dirt), "dirt at " + str(n));
+    ctx.require(put(whole, portal) && put(broken, portal), "two portal blocks on the border");
+    for (auto const& p : {whole, broken}) ctx.require(!region->hasChunksAt(side(p, 1, 0, 0), 0, false), "the east side of " + str(p) + " is in a chunk that is not loaded");
+    // the changes: stone west of one, a block above the other (its frame stays whole)
+    int waited = portalChecksWaited();
+    ctx.require(put(side(broken, -1, 0, 0), stone), "stone west of the broken one");
+    ctx.require(put(side(whole, 0, 1, 0), stone), "stone above the whole one");
+    co_await ctx.ticks(2); // the block changes reach the portal blocks at the end of the tick
+    ctx.check(portalChecksWaited() - waited >= 2, "both checks waited for the east chunk (" + std::to_string(portalChecksWaited() - waited) + ")");
+    int took = 0;
+    for (; took < 300 && portalChecksWaiting() > 0; ++took) co_await ctx.ticks(1);
+    ctx.check(portalChecksWaiting() == 0, "the checks ran once the east chunk loaded (" + std::to_string(took) + " ticks)");
+    // the east sides as the checks read them (the chunk held for the reading)
+    auto holdEast = co_await loadArea(dim, side(whole, 1, 0, 0), 0);
+    ctx.require(holdEast != nullptr, "the east chunk loaded");
+    auto eastWhole = ctx.blockAt(at(side(whole, 1, 0, 0)));
+    auto eastBroken = ctx.blockAt(at(side(broken, 1, 0, 0)));
+    ctx.info("after " + std::to_string(took) + " ticks: the east sides are " + eastWhole + " / " + eastBroken + "; the portal blocks are " + ctx.blockAt(at(whole)) + " / "
+             + ctx.blockAt(at(broken)));
+    ctx.check(ctx.blockAt(at(broken)) == "minecraft:water", "the broken frame: the portal block turned into water (" + ctx.blockAt(at(broken)) + ")");
+    bool edge = blockTagged("twilightforest:portal/edge", eastWhole);
+    ctx.check(
+        ctx.blockAt(at(whole)) == (edge ? std::string(kPortalBlock) : std::string("minecraft:water")),
+        std::string("the whole frame (east side ") + eastWhole + "): " + (edge ? "the portal block stays" : "TF's rule turns it into water") + " (" + ctx.blockAt(at(whole)) + ")"
+    );
+    int n = co_await terrain.restore();
+    ctx.info("put back " + std::to_string(n) + " blocks");
 });
 
 // ---- TeleporterCache ----------------------------------------------------------------------------------------------------------
@@ -875,6 +1119,35 @@ GF_REGISTER_SELFTEST("dimension.portal_lock", [](Context& ctx) {
     cfg.portalUnlockedByAdvancement = "minecraft:story/enter_the_nether";
     ctx.check(portalLockingAdvancement(true) == std::optional<std::string>("minecraft:story/enter_the_nether"), "a vanilla advancement locks portals");
     ctx.check(cfg.portalUnlockedByAdvancement == "minecraft:story/enter_the_nether", "and stays in the config");
+
+    // the lock against the progression store (F10): TFPortalBlock#entityInside turns a survival
+    // player without the advancement away ("unworthy"), lets one with it through; creative and
+    // spectator players are never held back
+    if (!shipped) return;
+    std::string const adv = "twilightforest:progress_lich";
+    cfg.portalUnlockedByAdvancement = adv;
+    auto& p   = static_cast<SimulatedPlayer&>(ctx.player());
+    bool  had = progression::has(p, adv);
+    struct Restore {
+        SimulatedPlayer* p;
+        std::string      adv;
+        bool             had;
+        ~Restore() {
+            p->setPlayerGameType(GameType::Survival);
+            if (had) progression::grant(*p, adv);
+            else progression::revoke(*p, adv);
+        }
+    } restore{&p, adv, had};
+    p.setPlayerGameType(GameType::Survival);
+    progression::revoke(p, adv);
+    ctx.check(!progression::has(p, adv) && unworthy(p), "without " + adv + " a survival player is unworthy");
+    progression::grant(p, adv);
+    ctx.check(progression::has(p, adv) && !unworthy(p), "with it the portal lets the player through");
+    progression::revoke(p, adv);
+    p.setPlayerGameType(GameType::Creative);
+    ctx.check(!unworthy(p), "a creative player without it is never held back");
+    p.setPlayerGameType(GameType::Spectator);
+    ctx.check(!unworthy(p), "nor is a spectator");
 });
 
 // ---- the per-player clock of vanilla clients ----------------------------------------------------------------------------------
@@ -1154,25 +1427,130 @@ GF_REGISTER_SELFTEST("dimension.portal_block", [](Context& ctx) -> ll::coro::Cor
     ctx.check(ctx.blockAt(stoneBase.offset(0, 2, 0)) == "minecraft:stone", "the control: the piston pushed the stone up");
     ctx.check(ctx.blockAt(portalBase.offset(0, 1, 0)) == kPortalBlock, "the portal block stays where it is");
     ctx.check(ctx.blockAt(portalBase.offset(0, 2, 0)) != kPortalBlock, "and was not pushed up");
+});
 
-    // explosions: Java takes the larger of the block's resistance (TF's 0) and its fluid's (water)
-    // for every explosion: during one the portal holds the water's, the block keeps 0 otherwise
-    ctx.check(portalState.mDirectData->mExplosionResistance == 0.0f, "the block keeps TF's explosion resistance 0 (strength(-1.0F))");
-    auto glass = pool.offset(0, 1, 0);
-    ctx.setBlock(glass, "minecraft:glass");
+// Explosions (TFPortalBlock#getFluidState): Java's ExplosionDamageCalculator takes the larger of the
+// block's resistance (TF's 0) and its fluid's (water, 100), so an explosion never destroys a portal
+// block, though the block itself keeps 0. Two deterministic cases (the explosion's rays: each starts
+// with radius x 0.7..1.3, loses 0.225 per 0.3-block step and (resistance + 0.3) x 0.3 per block):
+//  - the rim holds: a power-0.75 explosion 0.25 above the middle of the pool breaks the glass on
+//    the pool (its first step) and reaches every portal block (one step down: any ray keeps at
+//    least 0.525 - 0.405 there, which breaks a block of resistance 0), but never the grass rim
+//    (four steps away: at most 0.975 - 1.17 left), so the portal stays a portal;
+//  - the rim breaks: a power-1.5 explosion 0.25 above a rim block breaks it (one step down, at
+//    least 1.05 - 0.585 left) and reaches the portal block beside it; the portal blocks resist, and
+//    TF's neighbour rule then turns the whole portal back into water.
+GF_REGISTER_SELFTEST("dimension.portal_explosion", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto  box    = co_await ctx.flatArea(5430, 10, 8);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
     auto level = ll::service::getLevel();
     ctx.require(level.has_value(), "level");
-    level->explode(*region, nullptr, Vec3{pool.x + 1.0f, pool.y + 1.5f, pool.z + 1.0f}, 1.5f, false, true, std::numeric_limits<float>::max(), false);
-    co_await ctx.ticks(2);
-    ctx.check(ctx.blockAt(glass) != "minecraft:glass", "the explosion broke the glass above the pool (" + ctx.blockAt(glass) + ")");
-    int kept = 0;
-    for (int dx = 0; dx < 2; ++dx)
-        for (int dz = 0; dz < 2; ++dz) {
-            auto id = ctx.blockAt(pool.offset(dx, 0, dz));
-            if (id == kPortalBlock || id == "minecraft:water") ++kept;
-        }
-    ctx.check(kept == 4, "the portal blocks are still there (" + std::to_string(kept) + " of 4)");
-    ctx.check(region->getBlock(game::blockPos(pool)).mDirectData->mExplosionResistance == 0.0f, "and hold TF's 0 again after the explosion");
+    auto const* open   = portalBlock(false);
+    auto const* oneWay = portalBlock(true);
+    ctx.require(open && oneWay, "both portal states");
+    auto tfZero = [&] { return open->mDirectData->mExplosionResistance == 0.0f && oneWay->mDirectData->mExplosionResistance == 0.0f; };
+    ctx.check(tfZero(), "the block keeps TF's explosion resistance 0 (strength(-1.0F))");
+
+    // a lit 2x2 portal in the middle of the area (the craters stay inside it)
+    int  y    = box.minY - 1; // the grass layer
+    auto pool = core::GlobalPos{ctx.dimension(), box.minX + 4, y, box.minZ + 4};
+    ctx.require(buildPool(ctx, pool), "pool built");
+    ctx.require(portal::tryActivate(*ctx.region(), game::blockPos(pool)), "lit");
+    co_await ctx.ticks(4);
+    auto count = [&](std::string const& id) {
+        int n = 0;
+        for (int dx = 0; dx < 2; ++dx)
+            for (int dz = 0; dz < 2; ++dz) n += ctx.blockAt(pool.offset(dx, 0, dz)) == id ? 1 : 0;
+        return n;
+    };
+    ctx.require(count(kPortalBlock) == 4, "the pool is a portal");
+    // the rim: the eight edge blocks beside the pool
+    std::vector<core::GlobalPos> rim;
+    for (int i = 0; i < 2; ++i) {
+        rim.push_back(pool.offset(-1, 0, i));
+        rim.push_back(pool.offset(2, 0, i));
+        rim.push_back(pool.offset(i, 0, -1));
+        rim.push_back(pool.offset(i, 0, 2));
+    }
+    auto rimBroken = [&] {
+        std::string broken;
+        for (auto const& p : rim)
+            if (!blockTagged("twilightforest:portal/edge", ctx.blockAt(p))) broken += (broken.empty() ? "" : ", ") + ctx.blockAt(p) + " at " + str(game::blockPos(p));
+        return broken;
+    };
+    auto explode = [&](Vec3 const& center, float power) {
+        auto* r = ctx.region();
+        return r && level->explode(*r, nullptr, center, power, false, true, std::numeric_limits<float>::max(), false);
+    };
+
+    // the rim holds: two explosions in the same tick (a TNT chain), each opens and closes the window
+    auto glass = pool.offset(0, 1, 0);
+    ctx.require(ctx.setBlock(glass, "minecraft:glass"), "glass on the pool");
+    Vec3 middle{pool.x + 1.0f, pool.y + 1.25f, pool.z + 1.0f};
+    for (int i = 0; i < 2; ++i) {
+        explode(middle, 0.75f);
+        ctx.check(tfZero() && portalExplosionDepth() == 0, "TF's 0 again after explosion " + std::to_string(i + 1));
+    }
+    co_await ctx.ticks(4); // block changes reach the portal at the end of the tick
+    auto broken = rimBroken();
+    ctx.info("after the explosions over the pool: " + std::to_string(count(kPortalBlock)) + " portal blocks, glass " + ctx.blockAt(glass) + ", rim "
+             + (broken.empty() ? "intact" : "broken (" + broken + ")"));
+    ctx.check(ctx.blockAt(glass) != "minecraft:glass", "the explosions broke the glass on the pool (" + ctx.blockAt(glass) + ")");
+    ctx.check(broken.empty(), "the explosions did not reach the rim (" + broken + ")");
+    ctx.check(count(kPortalBlock) == 4, "the portal blocks resisted the explosions: the portal stays (" + std::to_string(count(kPortalBlock)) + " of 4)");
+
+    // the rim breaks: an explosion over the west rim block (its decoration taken away first)
+    auto west = pool.offset(-1, 0, 0);
+    ctx.setBlock(west.offset(0, 1, 0), "minecraft:air");
+    explode(Vec3{west.x + 0.5f, west.y + 1.25f, west.z + 0.5f}, 1.5f);
+    ctx.check(tfZero() && portalExplosionDepth() == 0, "TF's 0 again after the explosion over the rim");
+    co_await ctx.ticks(4); // (the water flows into the crater only after 5 ticks)
+    int portals = count(kPortalBlock), water = count("minecraft:water");
+    ctx.info("after the explosion over the rim: " + std::to_string(portals) + " portal blocks, " + std::to_string(water) + " water, rim " + rimBroken());
+    ctx.check(!blockTagged("twilightforest:portal/edge", ctx.blockAt(west)), "the explosion broke the rim block under it (" + ctx.blockAt(west) + ")");
+    ctx.check(portals + water == 4, "the explosion destroyed none of the portal blocks (" + std::to_string(portals) + " portal, " + std::to_string(water) + " water)");
+    ctx.check(water == 4, "the rim broke: TF's neighbour rule turned the whole portal back into water (" + std::to_string(water) + " of 4)");
+    ctx.check(tfZero(), "and the portal holds TF's 0 again after the explosions");
+    if (auto* r = ctx.region()) {
+        // the drops of the broken blocks
+        AABB area{Vec3(static_cast<float>(box.minX), y - 1.0f, static_cast<float>(box.minZ)), Vec3(box.maxX + 1.0f, y + 6.0f, box.maxZ + 1.0f)};
+        for (auto* e : r->getEntities(area, 0.0f, ActorType::ItemEntity))
+            if (e && e->getEntityTypeId() == ActorType::ItemEntity) e->remove();
+    }
+});
+
+// The portal's explosion window (Explosion::explode): the water's resistance from the start of the
+// first explosion in flight to the end of the last one, whether they nest (an explosion set off by
+// another one) or overlap on two threads, and TF's 0 again afterwards, also after an explosion that
+// throws. (Driven by hand: the game's explosions open it the same way, see dimension.portal_block.)
+GF_REGISTER_SELFTEST("dimension.explosion_window", [](Context& ctx) {
+    auto const* open   = portalBlock(false);
+    auto const* oneWay = portalBlock(true);
+    ctx.require(open && oneWay, "both portal states");
+    float water = portalWaterResistance();
+    ctx.require(water > 0.0f, "the water's explosion resistance is known (" + std::to_string(water) + ")");
+    ctx.require(portalExplosionDepth() == 0, "no explosion in flight");
+    auto holds = [&](float v) { return open->mDirectData->mExplosionResistance == v && oneWay->mDirectData->mExplosionResistance == v; };
+    ctx.require(holds(0.0f), "TF's 0 outside explosions");
+    // (only checks below, never a require: every window opened here is closed again)
+    beginPortalExplosion();
+    ctx.check(holds(water), std::format("during an explosion both states hold the water's {}", water));
+    beginPortalExplosion(); // a nested explosion
+    endPortalExplosion();
+    ctx.check(holds(water), "a nested explosion ending first leaves the outer one the water's resistance");
+    std::thread([] { beginPortalExplosion(); }).join(); // one on another thread starts
+    endPortalExplosion();                                // the first one ends
+    ctx.check(holds(water), "an explosion still running on another thread keeps the water's resistance");
+    std::thread([] { endPortalExplosion(); }).join();
+    ctx.check(holds(0.0f) && portalExplosionDepth() == 0, "TF's 0 again once the last explosion ended");
+    try {
+        PortalExplosionScope scope;
+        throw std::runtime_error("an explosion that throws");
+    } catch (std::exception const&) {}
+    ctx.check(holds(0.0f) && portalExplosionDepth() == 0, "TF's 0 again after an explosion that threw");
+    endPortalExplosion(); // an unbalanced end does not go below zero
+    ctx.check(portalExplosionDepth() == 0 && holds(0.0f), "an end without a start changes nothing");
 });
 
 // ---- Player#drop: only throws name a thrower ---------------------------------------------------------------------------

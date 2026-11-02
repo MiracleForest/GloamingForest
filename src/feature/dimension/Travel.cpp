@@ -62,7 +62,6 @@
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/phys/AABB.h"
 
-#include "core/Stub.h"
 #include "feature/common/Interactions.h"
 #include "feature/dimension/AreaLoader.h"
 #include "feature/dimension/DimensionConfig.h"
@@ -883,23 +882,11 @@ void animateTick(Dimension& dim, Block const& state, BlockPos const& pos) {
     }
 }
 
-/// Whether gf::fx is still F0's stub (nothing to show then; checked once a second).
-bool fxIsStub() {
-    static int  checkedAt = -1000;
-    static bool stub      = false;
-    if (gTick - checkedAt >= 20 || gTick < checkedAt) {
-        checkedAt  = gTick;
-        auto calls = core::stubCalls();
-        stub       = std::find(calls.begin(), calls.end(), "fx.particle") != calls.end();
-    }
-    return stub;
-}
-
 /// Each indexed portal block near a player plays its display tick with the chance the nearest
 /// player's client would pick it (Java runs animateTick per client; one roll per block here, the
 /// particles are visible to everyone near).
 void displayTicks(Level& level) {
-    if (portalIndex().empty() || fxIsStub()) return;
+    if (portalIndex().empty()) return;
     std::unordered_map<int, std::vector<BlockPos>> players;
     level.forEachPlayer([&](Player& p) {
         players[static_cast<int>(p.getDimensionId())].push_back(game::blockPosOf(p.getFeetPos()));
@@ -1090,6 +1077,7 @@ public:
             gTick = 0;
             resetNotified();
             refreshPortalTypes();
+            clearPortalChecks();
             portalWaterClear();
             loadBanished();
             tp::cacheLoad();
@@ -1100,6 +1088,7 @@ public:
             portalIndex().clear();
             banished().clear();
             tp::cacheClear();
+            clearPortalChecks();
             portalWaterClear();
             clearItemOwners(); // unique ids of another world mean other items
         });
@@ -1159,6 +1148,7 @@ public:
         for (auto& l : mListeners) bus.removeListener(l);
         mListeners.clear();
         net::off(kClientChannel);
+        unregisterPortalBlockEvents();
         uninstallPortalFluid();
         uninstallItemOwners();
     }
