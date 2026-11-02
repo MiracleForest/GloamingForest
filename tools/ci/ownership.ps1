@@ -4,7 +4,7 @@
 
 .DESCRIPTION
   Compares the working tree (committed, staged, modified and untracked files) with the merge base
-  of HEAD and -Base (default main; origin/main when there is no local main) and resolves the owner
+  of HEAD and -Base and resolves the owner
   of every changed path with the `path` rows of docs/spec/owners.tsv: the most specific glob wins
   (most literal characters); two different owners at the same specificity are an error.
 
@@ -17,16 +17,19 @@
     - <u> is F0 (the scaffold) and the path is one of its `stub` rows (placeholders in W0b
       directories, replaced by their owners).
   -Unit takes a unit id (F0, F4, U12, A8) or a unit name (core, dimension, tgmove).
+  -Base defaults to origin/main when that ref exists, else main: in a worktree the local main is
+  usually behind origin/main, and a stale base lists other units' merged changes as violations
+  (fetch first: git fetch origin). A -Base that does not exist is tried as origin/<Base>.
 
   Exit code 0 = the change is owned, 1 = violations (listed).
 
 .EXAMPLE
-  pwsh tools/ci/ownership.ps1 -Unit f0
+  pwsh tools/ci/ownership.ps1 -Unit f0                       # against origin/main (main without a remote)
   pwsh tools/ci/ownership.ps1 -Unit biomes -Base origin/main
 #>
 param(
     [Parameter(Mandatory)][string]$Unit,
-    [string]$Base = 'main',
+    [string]$Base,
     [string]$Owners
 )
 $ErrorActionPreference = 'Stop'
@@ -105,8 +108,13 @@ function Get-PathOwner([string]$path) {
     return @{ owner = $best.owner; why = $best.glob; mode = $best.mode }
 }
 
-# changed files since the merge base
-& git -C $root rev-parse --verify --quiet $Base *> $null
+# changed files since the merge base; the default base is origin/main (the local main of a worktree
+# is usually stale), main when there is no remote
+if (-not $Base) {
+    & git -C $root rev-parse --verify --quiet 'origin/main^{commit}' *> $null
+    $Base = if ($LASTEXITCODE -eq 0) { 'origin/main' } else { 'main' }
+}
+& git -C $root rev-parse --verify --quiet "$Base^{commit}" *> $null
 if ($LASTEXITCODE -ne 0) { $Base = "origin/$Base" }
 $mergeBase = (& git -C $root merge-base HEAD $Base 2>$null)
 if ($LASTEXITCODE -ne 0 -or -not $mergeBase) { Write-Host "[ownership] no merge base with $Base" -ForegroundColor Red; exit 1 }
@@ -129,5 +137,5 @@ if ($violations.Count) {
     $violations | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
     exit 1
 }
-Write-Host "[ownership] OK: $($changed.Count) changed path(s), all owned by $unitId ($unitName) since $($mergeBase.Substring(0, 8))" -ForegroundColor Green
+Write-Host "[ownership] OK: $($changed.Count) changed path(s), all owned by $unitId ($unitName) since $($mergeBase.Substring(0, 8)) ($Base)" -ForegroundColor Green
 exit 0
