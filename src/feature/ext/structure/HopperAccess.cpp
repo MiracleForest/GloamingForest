@@ -21,6 +21,7 @@
 #include "mc/world/Container.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/ILevel.h"
 #include "mc/world/level/block/HopperBlock.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
 #include "mc/world/level/block/actor/HopperBlockActor.h"
@@ -74,7 +75,8 @@ std::vector<int> watchedDims(BlockPos const& pos) {
 
 // ---- the dispatch ------------------------------------------------------------------------------------
 
-/// The server thread (noted on world load and on every server tick): listeners run there only.
+/// The server thread (noted on every server tick, at install on BDS and by a watched server
+/// hopper's tick): listeners run there only.
 std::atomic<std::thread::id> gServerThread{};
 void                         noteServerThread() { gServerThread.store(std::this_thread::get_id(), std::memory_order_relaxed); }
 bool                         onServerThread() { return std::this_thread::get_id() == gServerThread.load(std::memory_order_relaxed); }
@@ -102,7 +104,13 @@ void dispatch(BlockSource& region, BlockPos const& pos, Access access) {
 
 /// A hopper at `pos` of `region` (its tick, removal, comparator reading).
 void atPosition(BlockSource& region, BlockPos const& pos, Access access) {
-    if (tDispatching || !mayBeWatched(pos) || !onServerThread()) return;
+    if (tDispatching || !mayBeWatched(pos)) return;
+    if (!onServerThread()) {
+        // a server level's block actor ticks on the server thread (before the world's first
+        // server tick noted it); anything else is not dispatched
+        if (access != Access::Tick || region.getILevel().isClientSide()) return;
+        noteServerThread();
+    }
     if (!watched(static_cast<int>(region.getDimensionId()), pos)) return;
     dispatch(region, pos, access);
 }
@@ -222,16 +230,16 @@ std::vector<std::array<int, 4>> watchedPositions() {
 
 namespace gf::feature::structure {
 
-/// Installs the hopper hooks and notes the server thread (world load, every server tick).
+/// Installs the hopper hooks and notes the server thread (every server tick).
 class HopperAccessModule {
 public:
     void install() {
         namespace h = gf::structure::ext::hoppers;
-        if (!mRegistered) {
-            mRegistered = true;
-            game::db::onWorldReady([] { h::noteServerThread(); }); // (a world's server thread before its first tick)
-        }
+        // (BDS enables mods on the server thread with the world already there; the client's local
+        // worlds are noted by their first server tick or a watched hopper's tick)
+#ifndef GF_CLIENT
         if (game::db::available()) h::noteServerThread();
+#endif
         mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { h::noteServerThread(); });
         h::HopperAccessTickHook::hook();
         h::HopperAccessGetItemHook::hook();
@@ -251,7 +259,6 @@ public:
     }
 
 private:
-    bool                   mRegistered = false;
     ll::event::ListenerPtr mTick;
 };
 
