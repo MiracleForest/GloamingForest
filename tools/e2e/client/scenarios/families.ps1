@@ -57,6 +57,10 @@
 #                                           signs (left) in the same light, written and coloured
 #                                           the same way: black text, red dye, glow ink on black
 #                                           (hanging signs), blue dye and glow ink (standing signs)
+#   out/families/families-24-glow-far-40.png, families-24-glow-far-60.png   client mod: the glow ink
+#                                           hanging signs of picture 22 through a spyglass from 40 and
+#                                           60 blocks: black letters over the cream outline, no
+#                                           z-fighting (Java's POLYGON_OFFSET)
 # families.classic runs this scenario in the Classic look (graphics_mode 1): Vibrant Visuals lights
 # sign text (the game's own too), Classic shows Java's colours as they are.
 # Local mode also runs the families selftests on the integrated server; remote modes build through
@@ -434,6 +438,25 @@ if ($script:Mode -ne 'remote-vanilla') {
     Invoke-Teleport "/tp @s $($vx + 13) $y $($z - 2.5) 0 20"
     Start-Sleep -Seconds 2
     Save-Screenshot 'families-23-compare-glow-blue' | Out-Null
+
+    # Glowing black text far away, through a spyglass (the zoom makes the letters big enough to see;
+    # black glowing text keeps its outline at any distance): Java draws the line over its 8 outline
+    # copies with a depth offset, the client mod nearer to the camera along the view rays by a lead
+    # that grows with the distance, so the cream outline never shows through the black letters
+    # (z-fighting) at 40 or 60 blocks (the text is drawn within 64); the oak hanging sign beside it
+    Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 spyglass"
+    foreach ($far in 40, 60) {
+        Invoke-Teleport "/tp @s $($vx + 9) $y $($z - $far) 0 0"
+        Start-Sleep -Seconds 3
+        Move-Mouse 0.5 0.5 -Relative
+        [BsE2E.Native]::MouseButton(1, $false) # hold use: look through the spyglass
+        try {
+            Start-Sleep -Milliseconds 1500
+            Save-Screenshot "families-24-glow-far-$far" | Out-Null
+        } finally { [BsE2E.Native]::MouseButton(1, $true) }
+        Start-Sleep -Milliseconds 500
+    }
+    Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
 }
 
 # The text of a sign written by the server (families.sign_a_write): the client mod draws it on the
