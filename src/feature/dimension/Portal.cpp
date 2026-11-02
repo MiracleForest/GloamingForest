@@ -12,7 +12,10 @@
 // pool whose rim is dirt topped with plants; the pool turns into portal blocks under a lightning
 // bolt. Portal blocks fall back to water when their floor or rim breaks. Mushrooms next to a portal
 // survive in any light, and sugar cane takes a portal next to its soil for its water
-// (TFPortalBlock#getFluidState).
+// (TFPortalBlock#getFluidState; the rest of what the portal's water does is in PortalFluid.cpp).
+// Explosions: ExplosionDamageCalculator#getBlockExplosionResistance takes the larger of the block's
+// resistance (strength(-1.0F): 0) and its fluid's (water: 100) wherever Java reads it, so the block
+// JSON gives the portal the water's resistance (JSON 500 = 100 in game, the import's x5 rule).
 
 #include <algorithm>
 #include <atomic>
@@ -39,12 +42,10 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockSource.h"
-#include "mc/world/level/Explosion.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/Tick.h"
 #include "mc/world/level/block/Block.h"
-#include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/MushroomBlock.h"
 #include "mc/world/level/block/SugarCaneBlock.h"
 #include "mc/world/level/dimension/Dimension.h"
@@ -238,52 +239,13 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(region, pos) || portalWatersSugarCane(region, pos);
 }
 
-namespace {
-struct PortalTypes {
-    Block const* open   = nullptr;
-    Block const* oneWay = nullptr;
-    Block const* water  = nullptr;
-};
-PortalTypes& portalTypes() {
-    static PortalTypes t;
-    return t;
-}
-} // namespace
-
-void refreshPortalTypes() {
-    portalTypes() = PortalTypes{portalBlock(false), portalBlock(true), game::blockWith("minecraft:water")};
-}
-
-/// TFPortalBlock#getFluidState for explosions: ExplosionDamageCalculator#getBlockExplosionResistance
-/// takes the larger of the block's resistance (strength(-1.0F): 0) and its fluid's (water: 100), so
-/// explosions leave the portal as they leave water. The block keeps TF's own 0 (the game reads it
-/// from the block's data when an explosion runs): during an explosion it holds the water's.
-LL_TYPE_INSTANCE_HOOK(TwilightPortalExplosionHook, ll::memory::HookPriority::Normal, Explosion, &Explosion::explode, bool, IRandom& random) {
-    auto const& t = portalTypes();
-    if (!t.water || !t.open) return origin(random);
-    float water = t.water->mDirectData->mExplosionResistance;
-    std::vector<std::pair<Block*, float>> keep;
-    for (auto const* b : {t.open, t.oneWay}) {
-        if (!b) continue;
-        auto* block = const_cast<Block*>(b);
-        float own   = block->mDirectData->mExplosionResistance;
-        keep.emplace_back(block, own);
-        block->mDirectData->mExplosionResistance = std::max(own, water);
-    }
-    bool r = origin(random);
-    for (auto const& [block, own] : keep) block->mDirectData->mExplosionResistance = own;
-    return r;
-}
-
 void installItemOwners() {
     TwilightPlayerDropHook::hook();
     TwilightItemThrowerHook::hook();
     TwilightMushroomHook::hook();
     TwilightSugarCaneHook::hook();
-    TwilightPortalExplosionHook::hook();
 }
 void uninstallItemOwners() {
-    TwilightPortalExplosionHook::unhook();
     TwilightSugarCaneHook::unhook();
     TwilightMushroomHook::unhook();
     TwilightItemThrowerHook::unhook();
@@ -300,8 +262,9 @@ void actionBar(Player& player, std::string const& text) {
     packet->sendTo(player);
 }
 
-bool advancementExists(std::string const& id) {
-    // ResourceLocation.tryParse: namespace:path of [a-z0-9_.-] (path also '/')
+namespace {
+/// ResourceLocation.tryParse: namespace:path of [a-z0-9_.-] (path also '/').
+bool validResourceLocation(std::string const& id) {
     auto colon = id.find(':');
     if (colon == std::string::npos || colon == 0 || colon + 1 >= id.size()) return false;
     for (std::size_t i = 0; i < id.size(); ++i) {
@@ -309,16 +272,41 @@ bool advancementExists(std::string const& id) {
         bool ok = std::islower(c) || std::isdigit(c) || c == '_' || c == '-' || c == '.' || (i > colon && c == '/') || i == colon;
         if (!ok) return false;
     }
-    auto file = Mod::getInstance().getSelf().getModDir() / "data" / id.substr(0, colon) / "advancement" / (id.substr(colon + 1) + ".json");
-    std::error_code ec;
-    return std::filesystem::is_regular_file(file, ec);
+    return true;
 }
+} // namespace
+
+bool advancementExists(std::string const& id) {
+    if (!validResourceLocation(id)) return false;
+    auto colon = id.find(':');
+    auto root  = Mod::getInstance().getSelf().getModDir() / "data" / id.substr(0, colon);
+    std::error_code ec;
+    for (char const* dir : {"advancement", "advancements"}) {
+        if (std::filesystem::is_regular_file(root / dir / (id.substr(colon + 1) + ".json"), ec)) return true;
+    }
+    return false;
+}
+
+bool isVanillaAdvancement(std::string const& id) { return id.starts_with("minecraft:") && validResourceLocation(id); }
 
 std::optional<std::string> portalLockingAdvancement(bool quiet) {
     // TFConfig#getPortalLockingAdvancement: checked once per configured value
     static std::string checked;
     auto&              cfg = gf::config::mut<DimensionConfig>();
     if (cfg.portalUnlockedByAdvancement.empty()) return std::nullopt;
+    if (cfg.portalUnlockedByAdvancement != checked && isVanillaAdvancement(cfg.portalUnlockedByAdvancement)
+        && !advancementExists(cfg.portalUnlockedByAdvancement)) {
+        // PlayerHelper.getAdvancement finds every vanilla advancement on a Java server. Bedrock has
+        // none and the mod ships no vanilla advancement data, so the id can't be checked: it is
+        // kept, and a player meets it once the progression store has it (gf::progression::grant)
+        log().warn(
+            "dimension: the portal locking advancement '{}' is a vanilla advancement; Bedrock has no vanilla advancements, so it is "
+            "kept unchecked and a player meets it only once the progression store has it",
+            cfg.portalUnlockedByAdvancement
+        );
+        checked = cfg.portalUnlockedByAdvancement;
+        return cfg.portalUnlockedByAdvancement;
+    }
     if (cfg.portalUnlockedByAdvancement != checked) {
         // a build without TF's advancement data (before the import ships it) can't tell: keep it
         std::error_code ec;

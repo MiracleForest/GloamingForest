@@ -41,6 +41,7 @@
 #include "mc/network/NetworkIdentifierWithSubId.h"
 #include "mc/network/NetworkSystem.h"
 #include "mc/network/Packet.h"
+#include "mc/network/packet/DimensionDataPacket.h"
 #include "mc/network/packet/GameRulesChangedPacket.h"
 #include "mc/network/packet/SetTimePacket.h"
 #include "mc/network/packet/SyncWorldClocksPacket.h"
@@ -410,8 +411,33 @@ std::unordered_map<NetworkIdentifier, ClientClock>& wire() {
     return m;
 }
 
+/// The dimension definitions a client is sent when it joins (DimensionDataPacket): the Twilight
+/// Forest's height range as the client will build the dimension (the e2e checks it for vanilla
+/// clients, which log nothing themselves).
+void noteDimensionData(NetworkIdentifier const& id, DimensionDataPacket const& packet) {
+    auto const& defs = packet.mDimensionDefinitionGroup->mDimensionDefinitions.get();
+    auto        it   = defs.find(world::kDimensionId);
+    if (it == defs.end()) {
+        log().warn("dimension: the dimension definitions sent to {} lack {} ({} definitions)", id.getAddress(), world::kDimensionId, defs.size());
+        return;
+    }
+    auto const& d = it->second;
+    log().info(
+        "dimension: the dimension definitions sent to {} give {} y {}..{} (height {})",
+        id.getAddress(),
+        world::kDimensionId,
+        d.mMinY,
+        d.mMinY + d.mHeightRange,
+        d.mHeightRange
+    );
+}
+
 void recordWire(NetworkIdentifier const& id, Packet const& packet) {
     // (no level access here: the network may send from another thread)
+    if (packet.getId() == MinecraftPacketIds::DimensionDataPacket) {
+        noteDimensionData(id, static_cast<DimensionDataPacket const&>(packet));
+        return;
+    }
     auto kind = kindOf(packet, false);
     if (kind == TimePacket::None) return;
     std::lock_guard lock(wireMutex());

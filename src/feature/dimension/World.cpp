@@ -113,34 +113,16 @@ bool isTwilight(DimensionType dimension) {
     return id >= 0 && static_cast<int>(dimension) == id;
 }
 
-// Within a dimension the move is immediate. Across dimensions it is asynchronous on Bedrock (the
-// client loads the dimension): true means the move was started; listeners of portal::onTeleported
-// hear of it once the player is there, and a move that does not complete within 10 s is logged
-// and told to the player.
+// Within a dimension the move is immediate. Into another dimension it is asynchronous on Bedrock:
+// the destination area loads first while the player waits where it is (TFTeleporter#placeEntity
+// runs with the destination loaded), then the player moves there with its riders and the client
+// loads the dimension. True means the move was started; portal::onTeleported listeners hear of it
+// once the player is there, and a move that does not complete is logged and told to the player.
 bool teleport(Player& player, DimensionType dimension, Vec3 const& pos, float yaw) {
     auto level = ll::service::getLevel();
     if (!level) return false;
-    int to = static_cast<int>(dimension);
     if (!level->getDimension(dimension).lock() && !level->getOrCreateDimension(dimension).lock()) return false;
-    int   from  = static_cast<int>(player.getDimensionId());
-    float pitch = player.getRotation().x;
-    if (from == to) {
-        player.teleport(pos, dimension, Vec2{pitch, yaw});
-        dim::notifyTeleported(player, from, to);
-        return true;
-    }
-    dim::moveAcross(
-        player,
-        to,
-        pos,
-        yaw,
-        pitch,
-        [from, to](Player& p) { dim::notifyTeleported(p, from, to); },
-        [to](Player* p) {
-            if (p) p->sendMessage(trFor(*p, "gf.dimension.teleport_failed", "The teleport to {} did not complete.", dim::dimensionName(to)));
-        }
-    );
-    return true;
+    return dim::teleportPlayer(player, static_cast<int>(dimension), pos, yaw, player.getRotation().x);
 }
 
 double coordinateScale() { return 0.125; }

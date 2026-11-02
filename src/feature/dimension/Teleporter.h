@@ -16,6 +16,7 @@
 // loaded the destination area (the portal search, safety checks and portal building).
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <optional>
 #include <string>
@@ -96,7 +97,12 @@ void cacheClear();
 /// fallback, anywhere); caches the way back. Returns the portal position.
 BlockPos makePortal(BlockSource& dest, Traveller const& t, Vec3 const& pos, bool locked);
 /// makePortalAt: the 2x2 portal with its grass rim, dirt floor, cleared air and nature decorations.
+/// It changes the blocks at dx -1..2, dy -1..5, dz -1..2 of `pos`.
 BlockPos makePortalAt(BlockSource& region, BlockPos const& pos, bool locked);
+/// Tests: told about every portal site makePortalAt is about to change (the selftests put the
+/// generated terrain back afterwards). An empty function: nobody listens.
+using SiteObserver = std::function<void(BlockSource& region, BlockPos const& corner)>;
+void setSiteObserver(SiteObserver fn);
 /// NoReturnTeleporter#placePosition: a spot next to an existing / ideal / okay portal site, or the
 /// scaled position, without building a portal.
 [[nodiscard]] Vec3 noReturnPlacePosition(BlockSource& dest, Traveller const& t, Vec3 const& pos);

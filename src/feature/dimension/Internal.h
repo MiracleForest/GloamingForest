@@ -80,6 +80,19 @@ struct Height {
 [[nodiscard]] int portalDelay(Player const& player);
 /// The portal timer of the player (TFPortalAttachment: 0..60), for overlays and tests.
 [[nodiscard]] int portalTimer(Player const& player);
+/// An entity's portal process as vanilla keeps it (Entity#portalProcess, portalCooldown), whether
+/// it is on a trip and whether its destination is preloaded (tests).
+struct PortalProcessView {
+    bool hasProcess = false;
+    int  portalTime = 0;
+    int  cooldown   = 0;
+    bool travelling = false;
+    bool preloaded  = false;
+};
+[[nodiscard]] PortalProcessView portalProcessOf(Actor const& actor);
+/// Entity#setPortalCooldown with a given length (tests: an entity on cooldown that stays in a
+/// portal never goes through it, its cooldown starts again every tick it is inside).
+void setPortalCooldown(Actor& actor, int ticks);
 /// Fires the portal::onTeleported listeners.
 void notifyTeleported(Player& player, int from, int to);
 /// Schedules a cross-dimension move and runs `then(player)` once the player is in `dim` and its
@@ -94,6 +107,13 @@ void moveAcross(
     std::function<void(Player&)> then,
     std::function<void(Player*)> failed = {}
 );
+
+/// gf::world::teleport: within a dimension at once; into another one the destination loads first
+/// (the player waits where it is), then the player moves there with its riders (its shoulder
+/// parrots on Bedrock) and portal::onTeleported fires; a move that does not complete is logged and
+/// told to the player. Off its vehicle first (ServerPlayer#teleportTo). False when the player is
+/// already on a trip.
+bool teleportPlayer(Player& player, int dest, Vec3 const& at, float yaw, float pitch);
 
 /// CapabilityEvents#newSpawnInTwilightForest (no-op unless newPlayersSpawnInTF).
 void newSpawnInTwilightForest(Player& player);
@@ -127,10 +147,13 @@ struct FunctionTeleport {
 void actionBar(Player& player, std::string const& text);
 /// TFConfig#getPortalLockingAdvancement: the advancement that unlocks portals (nullopt: none). The
 /// configured id is checked once per value against the advancements the mod ships
-/// (data/<namespace>/advancement/<path>.json); an unknown one is logged, cleared and saved.
+/// (data/<namespace>/advancement[s]/<path>.json); an unknown one is logged, cleared and saved. A
+/// vanilla id (minecraft:...) is kept unchecked with a warning: Bedrock has no vanilla advancements.
 [[nodiscard]] std::optional<std::string> portalLockingAdvancement(bool quiet = false);
-/// Whether advancement `id` exists (data/<namespace>/advancement/<path>.json in the mod's data).
+/// Whether advancement `id` exists (data/<namespace>/advancement[s]/<path>.json in the mod's data).
 [[nodiscard]] bool advancementExists(std::string const& id);
+/// A well-formed id in the minecraft namespace (Java's server knows every vanilla advancement).
+[[nodiscard]] bool isVanillaAdvancement(std::string const& id);
 /// TFPortalBlock#entityInside / ProgressionEvents: the "unworthy" message + missing-advancement
 /// toast; true when the player may not use / light portals.
 bool unworthy(Player& player);
@@ -155,8 +178,6 @@ void setItemOwner(ItemActor const& item, std::int64_t owner);
 /// (mushrooms, sugar cane).
 void installItemOwners();
 void uninstallItemOwners();
-/// Looks up the portal and water block types the explosion rule compares with (each world).
-void refreshPortalTypes();
 /// Forgets the item owners of a closed world.
 void clearItemOwners();
 /// The item `from` was copied into another dimension as `to`: it keeps its owner.
@@ -167,5 +188,24 @@ void moveItemOwner(std::int64_t from, std::int64_t to);
 /// TFPortalBlock#getFluidState for SugarCaneBlock#canSurvive: sugar cane at `pos` on #dirt / #sand
 /// with a Twilight portal on a side of that soil block has its water.
 [[nodiscard]] bool portalWatersSugarCane(BlockSource& region, BlockPos const& pos);
+
+// ---- the portal's water (PortalFluid.cpp) -----------------------------------------------------------------
+
+/// TFPortalBlock#getFluidState as Entity#updateFluidHeightAndDoFluidPushing sees it: the entity's
+/// box reaches below the surface of a portal's level-1 water (1/9 of a block).
+[[nodiscard]] bool inPortalWater(Actor& actor, BlockSource& region);
+/// What the water does to an entity in it this tick (fall distance, fire, splash, water-sensitive
+/// mobs); called for every entity near portal blocks, players included, once a tick.
+void portalWaterTick(Actor& actor, BlockSource& region);
+/// After every entity of the tick: who was in the water (the splash is for those who enter).
+void portalWaterEndTick();
+/// Forgets who was in the water (a closed world).
+void portalWaterClear();
+/// FarmBlock#isNearWater with the portal's water: a portal within 4 blocks of the farmland at
+/// `pos`, at its level or one above.
+[[nodiscard]] bool portalWatersFarmland(BlockSource& region, BlockPos const& pos);
+/// The fall damage rule (gf::combat) and the farmland hook.
+void installPortalFluid();
+void uninstallPortalFluid();
 
 } // namespace gf::feature::dimension

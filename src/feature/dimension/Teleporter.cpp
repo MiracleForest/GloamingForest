@@ -715,7 +715,17 @@ Vec3 safePosInColumn(BlockSource& region, Traveller const& t, Vec3 const& pos) {
     return Vec3{pos.x, static_cast<float>(height), pos.z};
 }
 
+namespace {
+SiteObserver& siteObserver() {
+    static SiteObserver o;
+    return o;
+}
+} // namespace
+
+void setSiteObserver(SiteObserver fn) { siteObserver() = std::move(fn); }
+
 BlockPos makePortalAt(BlockSource& world, BlockPos const& pos, bool locked) {
+    if (auto const& observer = siteObserver()) observer(world, pos);
     auto const* grass = game::blockWith("minecraft:grass_block");
     auto const* dirt  = game::blockWith("minecraft:dirt");
     auto const* air   = game::blockWith("minecraft:air");

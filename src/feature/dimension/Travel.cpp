@@ -16,8 +16,10 @@
 // gamerule delay for players, 0 for every other entity) for players and for every other entity
 // that can use portals (items, mobs, vehicles with their riders), and the trip itself, plus the
 // new-player spawn in the Twilight Forest. Java loads the destination synchronously; here the
-// traveller stays where it is while a transient ticking area loads the destination (AreaLoader.h),
-// then the teleporter runs and the traveller moves straight to its arrival spot. Vanilla clients
+// traveller stays where it is while a transient ticking area loads the destination (AreaLoader.h;
+// for a player it starts loading 2 s before the trip, while it waits in the portal), then the
+// teleporter runs and the traveller moves straight to its arrival spot. gf::world::teleport uses
+// the same machinery (destination first, riders along). Vanilla clients
 // see the portal overlay as a camera fade; the client mod draws TF's PortalOverlay
 // (src/client/dimension) and tells the server so on "dimension.client".
 
@@ -73,6 +75,7 @@
 #include "game/Blocks.h"
 #include "game/WorldDb.h"
 #include "mod/Config.h"
+#include "mod/I18n.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
@@ -102,10 +105,15 @@ struct State {
     int      portalTime     = 0;
     BlockPos entry{};
     int      portalCooldown = 0;
+    // the destination, loaded while the player waits in the portal (Java loads it at once)
+    AreaHandle preload;
+    bool       preloading = false;
     // trip / presentation
     bool travelling    = false;
     bool fading        = false; ///< a camera fade is showing (vanilla overlay)
-    int  fadeTick      = 0;     ///< tickCount when the fade was (re)sent
+    int  fadeTick      = 0;     ///< tickCount when the fade is to be renewed
+    int  fadeStart     = 0;     ///< tickCount when the fade started to grow
+    int  fadeInTicks   = 1;     ///< how long it grows
     bool nativeOverlay = false; ///< the client mod draws TF's PortalOverlay
     int  tickCount     = 0;
 };
@@ -250,16 +258,33 @@ void sendFade(Player& player, bool clearFirst, float in, float hold, float out) 
     packet->sendTo(player);
 }
 
-/// TF's overlay grows over the 60 ticks before the trip and runs out over 30 ticks after it. The
-/// fade does the same on its own: in over the remaining ticks, a short hold that covers the
-/// dimension loading (the client drops camera instructions while it loads), out over 1.5 s. It is
-/// renewed while the player stays inside (a portal on cooldown) or waits for the destination.
-constexpr float kFadeHold = 1.0f;
-constexpr float kFadeOut  = 1.5f;
+/// TF's overlay is the portal sprite drawn with alpha timer / 60: the sprite's own alpha (about
+/// 3/4) times a ramp over the 60 ticks before the trip; after the trip it runs out over 30 ticks.
+/// Bedrock's fade has no partial alpha to hold, it only grows to opaque: it grows at TF's rate
+/// (0.75 x timer / 60) so that it reaches TF's 0.75 at the trip, and becomes opaque only after it,
+/// while the client shows the dimension change. A short hold covers that (the client drops camera
+/// instructions while it loads a dimension, so the fade times itself), then it runs out over 1.5 s.
+/// It is renewed while the player stays inside (a portal on cooldown, a longer gamerule delay) or
+/// waits for the destination.
+constexpr float kSpriteAlpha = 0.75f;
+constexpr float kFadeHold    = 1.0f;
+constexpr float kFadeOut     = 1.5f;
 
-/// Takes a camera fade down: the overlay runs out over the timer's remaining ticks (2 a tick).
+/// How far the client's fade has grown (0..1).
+float fadeAlpha(State const& st) {
+    return std::clamp(static_cast<float>(st.tickCount - st.fadeStart) / static_cast<float>(std::max(st.fadeInTicks, 1)), 0.0f, 1.0f);
+}
+
+/// Takes a camera fade down when the player steps out: TF's overlay runs out over the timer's
+/// remaining ticks (2 a tick). A fade that is (nearly) opaque runs out that long; one that is still
+/// translucent goes at once (a new fade would start from opaque).
 void endFade(Player& player, State& st) {
-    sendFade(player, true, 0.05f, 0.0f, std::max(static_cast<float>(st.portalTimer) / 40.0f, 0.05f));
+    if (fadeAlpha(st) >= 0.85f) {
+        sendFade(player, true, 0.05f, 0.0f, std::max(static_cast<float>(st.portalTimer) / 40.0f, 0.05f));
+    } else if (auto clear = MinecraftPackets::createPacket(MinecraftPacketIds::CameraInstruction)) {
+        static_cast<CameraInstructionPacket&>(*clear).mCameraInstruction->mClear = true;
+        clear->sendTo(player);
+    }
     st.fading = false;
 }
 
@@ -267,18 +292,21 @@ void endFade(Player& player, State& st) {
 /// client mod's overlay.
 void updateFade(Player& player, State& st, bool wasInside) {
     if (st.nativeOverlay) return;
-    // a fade always ends opaque: with a short transition time (creative) TF's overlay hardly
-    // shows before the trip, so there is none
+    // with a short transition time (creative) TF's overlay hardly shows before the trip: no fade
     if (st.attachInside && !st.fading && !st.travelling && portalDelay(player) >= 20) {
-        float in = std::max(static_cast<float>(kMaxTicks - st.portalTimer) / 20.0f, 0.05f);
+        float in = std::max(static_cast<float>(kMaxTicks - st.portalTimer) / 20.0f / kSpriteAlpha, 0.05f);
         sendFade(player, false, in, kFadeHold, kFadeOut);
-        st.fading   = true;
-        st.fadeTick = st.tickCount + static_cast<int>((in + kFadeHold) * 20.0f); // when it starts to go
-        log().info("dimension: portal fade shown to {}", player.getRealName());
+        st.fading      = true;
+        st.fadeStart   = st.tickCount;
+        st.fadeInTicks = static_cast<int>(in * 20.0f);
+        st.fadeTick    = st.tickCount + static_cast<int>((in + kFadeHold) * 20.0f); // when it starts to go
+        log().info("dimension: portal fade shown to {} (in {:.2f} s)", player.getRealName(), in);
     } else if (st.attachInside && st.fading && st.tickCount >= st.fadeTick) {
         // still inside, or waiting for the destination to load: keep it up
         sendFade(player, false, 0.05f, kFadeHold, kFadeOut);
-        st.fadeTick = st.tickCount + static_cast<int>(kFadeHold * 20.0f);
+        st.fadeStart   = st.tickCount;
+        st.fadeInTicks = 1;
+        st.fadeTick    = st.tickCount + static_cast<int>(kFadeHold * 20.0f);
     } else if (!st.attachInside && wasInside && st.fading && !st.travelling) {
         endFade(player, st);
     }
@@ -411,11 +439,12 @@ std::optional<std::int64_t> transferEntity(Actor& actor, int dest, Vec3 const& a
 }
 
 /// Moves the traveller (and its riders) to `at` in `dest` and waits until it is there. The
-/// traveller's id becomes the one it has in `dest`.
+/// traveller's id becomes the one it has in `dest`. A player's riders are its shoulder parrots on
+/// Bedrock (Java keeps them in the player's data, so they travel along): they come along too.
 ll::coro::CoroTask<bool> moveTraveller(tp::Traveller& t, int dest, Vec3 at) {
     auto* a = actorById(t.id);
     if (!a) co_return false;
-    std::vector<std::int64_t> riders = t.isPlayer ? std::vector<std::int64_t>{} : takePassengers(*a);
+    std::vector<std::int64_t> riders = takePassengers(*a);
     auto                      moved  = transferEntity(*a, dest, at, Vec2{t.pitch, t.yaw});
     if (!moved) {
         log().warn("dimension: {} could not be moved to {}", t.name, dimensionName(dest));
@@ -466,7 +495,7 @@ ll::coro::CoroTask<bool> moveTraveller(tp::Traveller& t, int dest, Vec3 at) {
     co_return true;
 }
 
-void finishTrip(tp::Traveller const& t, int to, Vec3 const& at) {
+void finishTrip(tp::Traveller const& t, int to, Vec3 const& at, char const* verb = "travelled") {
     auto* a = actorById(t.id);
     if (!a) return;
     if (t.isPlayer) {
@@ -479,8 +508,9 @@ void finishTrip(tp::Traveller const& t, int to, Vec3 const& at) {
     st.travelling = false;
     st.fading     = false; // the fade runs out by itself after the trip, as TF's overlay does
     log().info(
-        "dimension: {} travelled from {} to {} at {:.1f} {:.1f} {:.1f}",
+        "dimension: {} {} from {} to {} at {:.1f} {:.1f} {:.1f}",
         t.name,
+        verb,
         dimensionName(t.srcDim),
         dimensionName(to),
         at.x,
@@ -507,19 +537,24 @@ struct TripGuard {
     }
 };
 
+/// Where the destination's portal is, as far as the cache and the destination's loaded chunks tell
+/// now (nullopt: none known yet): the area a trip loads first.
+std::optional<BlockPos> knownPortal(int dest, BlockPos const& srcPos, BlockPos const& pos) {
+    if (auto cached = tp::cacheGet(dimensionName(dest), srcPos.x, srcPos.z)) return cached->pos;
+    if (auto* region = game::regionOf(dest)) return tp::getPortalPosition(*region, pos);
+    return std::nullopt;
+}
+
 /// TFTeleporter#createTransition (+ createPosition): the destination is loaded first, the traveller
 /// stays where it is until the teleporter found or built its portal, then moves there. When the
 /// destination does not load in time the trip is called off and the traveller stays at home.
 ll::coro::CoroTask<bool> runTransition(tp::Traveller t, int dest, BlockPos pos, bool forcedEntry) {
     TripGuard guard{t.id};
     auto      destName = dimensionName(dest);
-    auto      cached   = tp::cacheGet(destName, t.srcPos.x, t.srcPos.z);
-    // where the existing portal is, as far as the destination's loaded chunks tell now
-    std::optional<BlockPos> known = cached ? std::optional<BlockPos>(cached->pos) : std::nullopt;
-    if (!known) {
-        if (auto* region = game::regionOf(dest)) known = tp::getPortalPosition(*region, pos);
-    }
-    auto hold = co_await loadArea(dest, known.value_or(pos), kLoadRadius);
+    auto      known    = knownPortal(dest, t.srcPos, pos);
+    auto      hold     = co_await loadArea(dest, known.value_or(pos), kLoadRadius);
+    // (the area the player's wait preloaded is shared by the trip's own hold now)
+    if (auto it = states().find(t.id); it != states().end()) it->second.preload.reset();
     if (!hold) {
         log().warn("dimension: the trip of {} to {} was called off (the destination did not load)", t.name, destName);
         co_return false;
@@ -557,22 +592,32 @@ ll::coro::CoroTask<bool> runTransition(tp::Traveller t, int dest, BlockPos pos, 
     co_return true;
 }
 
-/// TFPortalBlock#getPortalDestination, then the trip.
-void startTrip(Actor& actor, BlockPos const& entry) {
+/// TFPortalBlock#getPortalDestination: the destination dimension and the scaled entry position.
+struct Destination {
+    int      dim = 0;
+    BlockPos pos;
+};
+std::optional<Destination> portalDestination(int src, BlockPos const& entry, bool quiet = false) {
     auto const& cfg = gf::config::get<DimensionConfig>();
-    int         src = static_cast<int>(actor.getDimensionId());
     int         tf  = twilightId();
-    if (tf < 0) return;
+    if (tf < 0) return std::nullopt;
     std::optional<int> dest = src != tf ? std::optional<int>(tf) : dimensionByName(cfg.originDimension);
     if (!dest) {
-        log().warn("dimension: the portal's origin dimension {} does not exist", cfg.originDimension);
-        return;
+        if (!quiet) log().warn("dimension: the portal's origin dimension {} does not exist", cfg.originDimension);
+        return std::nullopt;
     }
     double scale = coordinateScaleOf(src) / coordinateScaleOf(*dest);
     // WorldBorder#clampToBounds (Bedrock: the +-29999984 limits)
     auto clamp = [](double v) { return static_cast<int>(std::floor(std::clamp(v, -29999984.0, 29999983.0))); };
-    BlockPos newPos{clamp(entry.x * scale), entry.y, clamp(entry.z * scale)};
-    auto     t = tp::capture(actor);
+    return Destination{*dest, BlockPos{clamp(entry.x * scale), entry.y, clamp(entry.z * scale)}};
+}
+
+/// TFPortalBlock#getPortalDestination, then the trip.
+void startTrip(Actor& actor, BlockPos const& entry) {
+    int  src  = static_cast<int>(actor.getDimensionId());
+    auto dest = portalDestination(src, entry);
+    if (!dest) return;
+    auto t                    = tp::capture(actor);
     states()[t.id].travelling = true;
     log().info(
         "dimension: {} enters the portal at {} {} {} in {} -> {}",
@@ -581,10 +626,32 @@ void startTrip(Actor& actor, BlockPos const& entry) {
         entry.y,
         entry.z,
         dimensionName(src),
-        dimensionName(*dest)
+        dimensionName(dest->dim)
     );
-    ll::coro::keepThis([t = std::move(t), dest = *dest, newPos]() -> ll::coro::CoroTask<> {
+    ll::coro::keepThis([t = std::move(t), dest = dest->dim, newPos = dest->pos]() -> ll::coro::CoroTask<> {
         co_await runTransition(t, dest, newPos, false);
+    }).launch(ll::thread::ServerThreadExecutor::getDefault());
+}
+
+/// Java loads the destination within the tick of the trip. Here it loads while the player waits
+/// in the portal, from kPreloadTicks before the trip on, so the trip finds it ready and leaves on
+/// time (the trip's own hold shares the area).
+constexpr int kPreloadTicks = 40;
+
+void preloadDestination(Player& player, State& st) {
+    int  src  = static_cast<int>(player.getDimensionId());
+    auto dest = portalDestination(src, st.entry, true);
+    if (!dest) return;
+    BlockPos at    = knownPortal(dest->dim, game::blockPosOf(player.getFeetPos()), dest->pos).value_or(dest->pos);
+    auto     id    = idOf(player);
+    st.preloading  = true;
+    ll::coro::keepThis([id, dim = dest->dim, at]() -> ll::coro::CoroTask<> {
+        auto hold = co_await loadArea(dim, at, kLoadRadius);
+        auto it   = states().find(id);
+        if (it == states().end()) co_return;
+        it->second.preloading = false;
+        // kept while the player is still on its way in (the process runs, no trip yet)
+        if (hold && it->second.hasProcess && !it->second.travelling) it->second.preload = std::move(hold);
     }).launch(ll::thread::ServerThreadExecutor::getDefault());
 }
 
@@ -642,6 +709,66 @@ void newSpawnInTwilightForest(Player& player) {
         holdFor(std::move(hold), 20);
         if (!arrived) log().warn("dimension: the new spawn trip of {} did not complete; its spawn stays in the Twilight Forest", t.name);
     }).launch(ll::thread::ServerThreadExecutor::getDefault());
+}
+
+// ---- gf::world::teleport ----------------------------------------------------------------------------------------------------
+
+bool teleportPlayer(Player& player, int dest, Vec3 const& at, float yaw, float pitch) {
+    tp::Traveller t;
+    t.id       = idOf(player);
+    t.isPlayer = true;
+    t.name     = player.getRealName();
+    t.srcDim   = static_cast<int>(player.getDimensionId());
+    t.srcExact = player.getFeetPos();
+    t.srcPos   = game::blockPosOf(t.srcExact);
+    t.yaw      = yaw;
+    t.pitch    = pitch;
+    auto& st   = states()[t.id];
+    if (st.travelling) {
+        log().warn("dimension: {} is already on its way somewhere: no teleport to {}", t.name, dimensionName(dest));
+        return false;
+    }
+    // ServerPlayer#teleportTo: off its vehicle first
+    if (player.getVehicle()) player.stopRiding(true, false, false, true);
+    if (dest == t.srcDim) {
+        // within the dimension at once; the riders (shoulder parrots) come along
+        auto riders = takePassengers(player);
+        player.teleport(at, DimensionType(dest), Vec2{pitch, yaw});
+        for (auto r : riders) {
+            auto* rider = actorById(r);
+            if (!rider) continue;
+            rider->teleport(at, DimensionType(dest), rider->getRotation());
+            rider->startRiding(player, true);
+        }
+        notifyTeleported(player, t.srcDim, dest);
+        return true;
+    }
+    // TFTeleporter#placeEntity semantics: the destination is loaded first (the player waits where
+    // it is), then the player and its riders move there
+    st.travelling = true;
+    ll::coro::keepThis([t, dest, at]() mutable -> ll::coro::CoroTask<> {
+        TripGuard guard{t.id};
+        auto      hold   = co_await loadArea(dest, game::blockPosOf(at), kLoadRadius);
+        auto      failed = [&](char const* why) {
+            log().warn("dimension: the teleport of {} to {} did not complete ({})", t.name, dimensionName(dest), why);
+            if (auto* p = playerById(t.id)) {
+                p->sendMessage(trFor(*p, "gf.dimension.teleport_failed", "The teleport to {} did not complete.", dimensionName(dest)));
+            }
+        };
+        if (!hold) {
+            failed("the destination did not load");
+            co_return;
+        }
+        if (!playerById(t.id)) co_return;
+        bool moved = co_await moveTraveller(t, dest, at);
+        holdFor(std::move(hold), 20);
+        if (!moved) {
+            failed("the player did not arrive");
+            co_return;
+        }
+        finishTrip(t, dest, at, "teleported");
+    }).launch(ll::thread::ServerThreadExecutor::getDefault());
+    return true;
 }
 
 bool hasRespawnPosition(Player const& player) {
@@ -741,10 +868,13 @@ void displayTicks(Level& level) {
 
 // ---- per tick -------------------------------------------------------------------------------------------------------------
 
-/// Entity#handlePortal (PortalProcessor#processPortalTeleportation) for one entity.
+/// Entity#handlePortal (PortalProcessor#processPortalTeleportation) for one entity. Java's trip
+/// happens within the tick; here the traveller waits for its destination, and its cooldown and
+/// portal process stand still meanwhile (they run from the arrival on, as in Java).
 void handlePortal(Actor& actor, State& st, int transitionTime) {
+    if (st.travelling) return;
     if (st.portalCooldown > 0) --st.portalCooldown; // processPortalCooldown
-    if (!st.hasProcess || st.travelling) return;
+    if (!st.hasProcess) return;
     bool teleport = false;
     if (!st.insideThisTick) {
         st.portalTime = std::max(st.portalTime - 4, 0); // decayTick
@@ -753,12 +883,13 @@ void handlePortal(Actor& actor, State& st, int transitionTime) {
         teleport          = canUsePortal(actor) && st.portalTime++ >= transitionTime;
     }
     if (teleport) {
+        // the process stays (portalTime transition + 1) and decays from the arrival on: a player
+        // who steps into a portal again before it ran out goes on from where it is
         st.portalCooldown = changeDelayOf(actor); // setPortalCooldown
-        st.hasProcess     = false;
-        st.portalTime     = 0;
         startTrip(actor, st.entry);
     } else if (st.portalTime <= 0) {
         st.hasProcess = false; // hasExpired: portalProcess = null
+        st.preload.reset();
     }
 }
 
@@ -781,6 +912,11 @@ void tickPlayer(Player& player) {
                 st.attachInside = true;
             }
         }
+    }
+    // inside a portal (not on cooldown) with the trip near: its destination loads meanwhile
+    if (st.hasProcess && st.insideThisTick && !st.travelling && !st.preload && !st.preloading) {
+        int delay = portalDelay(player);
+        if (delay > 1 && st.portalTime >= std::max(0, delay - kPreloadTicks)) preloadDestination(player, st);
     }
 
     // TFPortalAttachment#tick
@@ -818,13 +954,15 @@ void tickEntities() {
             continue;
         }
         auto* actor = actorById(it->first);
-        if (actor && !actor->isPlayer()) handlePortal(*actor, st, 0); // getPortalTransitionTime: 0
-        else if (st.portalCooldown > 0) --st.portalCooldown;            // on its way between dimensions
+        if (actor && !actor->isPlayer()) handlePortal(*actor, st, 0);              // getPortalTransitionTime: 0
+        else if (st.portalCooldown > 0 && !st.travelling) --st.portalCooldown; // (a copy on its way keeps it)
         if (!st.hasProcess && st.portalCooldown <= 0 && !st.travelling) it = states().erase(it);
         else ++it;
     }
-    // TFPortalBlock#entityInside for the entities in the indexed portal blocks
+    // TFPortalBlock#entityInside for the entities in the indexed portal blocks, and what the
+    // portal's water does to every entity in it (players too)
     std::vector<std::pair<std::int64_t, BlockPos>> inside;
+    std::vector<std::pair<std::int64_t, int>>      wet;
     for (auto const& [dim, chunks] : portalIndex()) {
         auto* region = game::regionOf(dim);
         if (!region) continue;
@@ -837,11 +975,19 @@ void tickEntities() {
             }
             AABB box{Vec3(lo.x, lo.y, lo.z), Vec3(hi.x + 1, hi.y + 1, hi.z + 1)};
             for (auto* actor : region->getEntities(box, 0.0f)) {
-                if (!actor || actor->isPlayer() || !canUsePortal(*actor)) continue;
+                if (!actor) continue;
+                wet.emplace_back(idOf(*actor), dim);
+                if (actor->isPlayer() || !canUsePortal(*actor)) continue;
                 if (auto pos = touchedPortal(*actor, *region)) inside.emplace_back(idOf(*actor), *pos);
             }
         }
     }
+    for (auto const& [id, dim] : wet) {
+        auto* actor  = actorById(id);
+        auto* region = game::regionOf(dim);
+        if (actor && region && static_cast<int>(actor->getDimensionId()) == dim) portalWaterTick(*actor, *region);
+    }
+    portalWaterEndTick();
     for (auto const& [id, pos] : inside) {
         auto* actor = actorById(id);
         if (!actor) continue;
@@ -866,6 +1012,19 @@ int portalTimer(Player const& player) {
     return it == states().end() ? 0 : it->second.portalTimer;
 }
 
+void setPortalCooldown(Actor& actor, int ticks) {
+    auto& st          = states()[idOf(actor)];
+    st.player         = actor.isPlayer();
+    st.portalCooldown = ticks;
+}
+
+PortalProcessView portalProcessOf(Actor const& actor) {
+    auto it = states().find(idOf(actor));
+    if (it == states().end()) return {};
+    auto const& st = it->second;
+    return PortalProcessView{st.hasProcess, st.portalTime, st.portalCooldown, st.travelling, static_cast<bool>(st.preload)};
+}
+
 class TravelModule {
 public:
     void load() {
@@ -874,7 +1033,7 @@ public:
             portalIndex().clear();
             gTick = 0;
             resetNotified();
-            refreshPortalTypes();
+            portalWaterClear();
             loadBanished();
             tp::cacheLoad();
         });
@@ -884,6 +1043,7 @@ public:
             portalIndex().clear();
             banished().clear();
             tp::cacheClear();
+            portalWaterClear();
             clearItemOwners(); // unique ids of another world mean other items
         });
     }
@@ -893,6 +1053,7 @@ public:
         gamerules::registerInt(kCreativeDelayRule, kCreativeDelay);
         registerPortalBlockEvents();
         installItemOwners();
+        installPortalFluid();
         net::on(kClientChannel, [](Player& player, nlohmann::json const& msg) {
             bool native                          = msg.value("overlay", false);
             states()[idOf(player)].nativeOverlay = native;
@@ -941,6 +1102,7 @@ public:
         for (auto& l : mListeners) bus.removeListener(l);
         mListeners.clear();
         net::off(kClientChannel);
+        uninstallPortalFluid();
         uninstallItemOwners();
     }
 
