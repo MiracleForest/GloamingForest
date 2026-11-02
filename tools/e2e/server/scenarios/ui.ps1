@@ -1,15 +1,18 @@
 # F12 (ui): the client frameworks' server halves on BDS. Every "ui.*" selftest: vanilla
 # fallbacks (title skins, forms, DDUI refusal and sessions), native screens and the fixture for
-# test companions (screen, HUD, chest, item frame, head, map), key forwarding (input.key), input
-# edges, motion and movement validation (registration, rejection, removal). The client scenario
-# (tools/e2e/client/scenarios/ui.ps1) covers what needs a real client. Every test runs twice: the
-# second run checks that nothing the first left behind (handlers, rules) changes the result.
+# test companions (screen, HUD, chest, item frame, head, map), the undo of the real-player steps
+# (stage blocks, position, held stack, helmet), key forwarding (input.key), input edges and the
+# ground state of an auth input packet, motion, movement validation (registration, rejection,
+# removal) and its fresh start after server teleports, respawns and dimension changes. The client
+# scenario (tools/e2e/client/scenarios/ui.ps1) covers what needs a real client. Every test runs
+# twice: the second run checks that nothing the first left behind (handlers, rules, the stage)
+# changes the result.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 foreach ($round in 1, 2) {
     $r = Invoke-SelfTest 'ui.*'
     if ($r.Fail -gt 0) { throw "round ${round}: $($r.Fail) ui selftest(s) failed" }
-    if ($r.Pass -lt 22) { throw "round ${round}: expected at least 22 ui selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 29) { throw "round ${round}: expected at least 29 ui selftests to pass, got $($r.Pass)" }
 }
 
 # no F12 contract stub is called any more

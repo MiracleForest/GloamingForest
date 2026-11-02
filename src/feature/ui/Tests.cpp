@@ -1,15 +1,20 @@
 // Selftests of F12, server side ("ui.*", dx 6200..6299; rule R12). They run in both builds; the
 // client build adds the client registry tests (client/ui/ClientTests.cpp).
 //
-// The fixture tests ("ui.fixture_*") drive the e2e scenarios: with a real player connected (the
-// client harness) they act on that player (companion: native fixture; vanilla: the form / DDUI
-// fallback); in the server-only runs they act on a test companion or the test player and check
-// what was recorded. Every registration a test makes is removed again (rule R12: the tests pass
-// in any order and any number of times in one session).
+// The fixture tests ("ui.fixture_*") drive the e2e scenarios. They act on a real player only when it
+// carries the tag gf_ui_fixture (fixture::kPlayerTag; the client scenario adds it after its `ui.*`
+// run): companions get the native fixture, vanilla players the form / DDUI fallback. Untagged
+// players are never touched, so `ui.*` and the full run leave a developer's or A8's player alone.
+// Without tagged players the tests act on a test companion or the test player and check what was
+// recorded. The real-player steps put their blocks on the stage in this unit's row (testPos(6260),
+// dz 0..4) and ui.fixture_clear puts the stage and the players back (position, held stack, helmet).
+// Every registration a test makes is removed again (the tests pass in any order and any number of
+// times in one session).
 
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <optional>
 #include <set>
 #include <unordered_map>
 
@@ -40,6 +45,8 @@ using ArmorSlot = SharedTypes::Legacy::ArmorSlot;
 
 constexpr char kFixtureItem[]  = "gf_test:fixture_item";
 constexpr char kFixtureBlock[] = "gf_test:fixture_block";
+/// The stage of the real-player steps (fixture::prepareStage): dx 6260..6262 of this unit's row.
+constexpr int kStageDx = 6261;
 
 /// The fixture is off in production builds (no gf_test packs): its tests only say so.
 bool fixtureOff(Context& ctx) {
@@ -48,21 +55,31 @@ bool fixtureOff(Context& ctx) {
     return true;
 }
 
-/// The feet block of a real player and the turn that makes it look south at height `dy` 2 blocks away.
-struct Facing {
-    BlockPos feet;
-    Vec2     rot;
+std::string names(std::vector<Player*> const& players) {
+    std::string out;
+    for (auto* p : players) out += (out.empty() ? "" : ", ") + p->getRealName();
+    return out;
+}
+
+/// The stage for the tagged players (an empty list: nothing to prepare). Its origin is the feet
+/// block of the player; the chest / frame goes two blocks south of it.
+struct StageAt {
+    BlockSource* region = nullptr;
+    BlockPos     origin{};
 };
-Facing faceSouth(Player& p, float targetHeight) {
-    auto const& at = p.getPosition();
-    BlockPos    feet{static_cast<int>(std::floor(at.x)), static_cast<int>(std::floor(at.y - 1.62f)), static_cast<int>(std::floor(at.z))};
-    // the eye is 1.62 above the feet; the target `targetHeight` above them and 2 blocks away
-    float pitch = static_cast<float>(std::atan2(1.62 - targetHeight, 2.0) * 180.0 / 3.14159265358979);
-    return {feet, Vec2{pitch, 0.f}};
+ll::coro::CoroTask<std::optional<StageAt>> stageFor(Context& ctx, std::vector<Player*> const& players) {
+    if (players.empty()) co_return std::nullopt;
+    auto pos = ctx.testPos(kStageDx);
+    co_await ctx.ensureLoaded(pos);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region for the stage");
+    BlockPos origin = gf::game::blockPos(pos);
+    ctx.require(fx::prepareStage(*region, origin), "the stage is prepared in the ui row");
+    co_return StageAt{region, origin};
 }
-void standAndFace(Player& p, Facing const& f) {
-    p.teleport(Vec3{static_cast<float>(f.feet.x) + .5f, static_cast<float>(f.feet.y), static_cast<float>(f.feet.z) + .5f}, p.getDimensionId(), f.rot);
-}
+
+/// The tagged players again after a co_await (rule R16).
+std::vector<Player*> fixturePlayersNow() { return fx::fixturePlayers(); }
 
 // ---- vanilla fallbacks ---------------------------------------------------------------------------
 
@@ -88,15 +105,15 @@ GF_REGISTER_SELFTEST("ui.form_fallback", [](Context& ctx) -> ll::coro::CoroTask<
     gf::ui::form(p, "ui.form_fallback", "body", {{.text = "A", .icon = "", .onClick = [clicked](Player&) { *clicked = true; }}}, [closed](Player&) { *closed = true; });
     co_await ctx.ticks(2);
     ctx.check(!*clicked && !*closed, "no answer from a simulated player");
-    // real vanilla players (the remote-vanilla e2e client) get the fixture form; the scenario
+    // tagged vanilla players (the remote-vanilla e2e client) get the fixture form; the scenario
     // closes it and waits for "ui form ... closed by"
     int real = 0;
-    for (auto* rp : fx::realPlayers()) {
+    for (auto* rp : fx::fixturePlayers()) {
         if (net::isCompanion(*rp)) continue;
         fx::openFormFallback(*rp);
         ++real;
     }
-    ctx.info("fixture form sent to " + std::to_string(real) + " real vanilla player(s)");
+    ctx.info("fixture form sent to " + std::to_string(real) + " fixture player(s)");
 });
 
 GF_REGISTER_SELFTEST("ui.ddui", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -113,11 +130,11 @@ GF_REGISTER_SELFTEST("ui.ddui", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.check(gf::ui::dduiSessions() == before, "a refused document keeps no session");
 });
 
-// The DDUI fallback for real vanilla players (remote-vanilla e2e: shown, then closed with ESC).
+// The DDUI fallback for tagged vanilla players (remote-vanilla e2e: shown, then closed with ESC).
 GF_REGISTER_SELFTEST("ui.fixture_ddui", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
     int real = 0;
-    for (auto* rp : fx::realPlayers()) {
+    for (auto* rp : fx::fixturePlayers()) {
         if (net::isCompanion(*rp)) continue;
         bool shown = gf::ui::ddui(*rp, "ui.fixture", fx::dduiDocument(), [](Player& p, Json const& r) {
             gf::log().info("ui fixture: ddui response of {}: {}", p.getRealName(), r.dump());
@@ -125,7 +142,7 @@ GF_REGISTER_SELFTEST("ui.fixture_ddui", [](Context& ctx) -> ll::coro::CoroTask<>
         if (shown) ++real;
         else ctx.info("DDUI not available for " + rp->getRealName());
     }
-    ctx.info("fixture DDUI sent to " + std::to_string(real) + " real vanilla player(s)");
+    ctx.info("fixture DDUI sent to " + std::to_string(real) + " fixture player(s)");
     (void)ctx.player();
     co_await ctx.ticks(1);
     ctx.check(!gf::ui::ddui(ctx.player(), "ui.fixture", fx::dduiDocument(), {}), "a simulated player gets no DDUI");
@@ -156,17 +173,20 @@ GF_REGISTER_SELFTEST("ui.screen_native", [](Context& ctx) -> ll::coro::CoroTask<
     net::setTestCompanion(p, false);
 });
 
+// Reports the tagged players (read only; the client scenario checks its tag arrived).
+GF_REGISTER_SELFTEST("ui.fixture_players", [](Context& ctx) {
+    auto players = fx::fixturePlayers();
+    ctx.info("fixture players: " + std::to_string(players.size()) + (players.empty() ? "" : " (" + names(players) + ")"));
+});
+
 GF_REGISTER_SELFTEST("ui.fixture_show", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
     Json what = {{"show", true}, {"hud", true}, {"toast", true}, {"world", true}, {"screen", false}};
     int  real = 0;
-    for (auto* rp : fx::realPlayers()) {
+    for (auto* rp : fx::fixturePlayers()) {
         if (fx::show(*rp, what)) ++real;
     }
-    if (real > 0) {
-        ctx.info("fixture shown to " + std::to_string(real) + " companion(s)");
-        co_return;
-    }
+    if (real > 0) ctx.info("fixture shown to " + std::to_string(real) + " companion(s)");
     (void)ctx.player();
     co_await ctx.ticks(1);
     auto& p = ctx.player();
@@ -179,11 +199,11 @@ GF_REGISTER_SELFTEST("ui.fixture_show", [](Context& ctx) -> ll::coro::CoroTask<>
     net::setTestCompanion(p, false);
 });
 
-// Opens the native fixture screen for real companions (the client scenario screenshots it).
+// Opens the native fixture screen for tagged companions (the client scenario screenshots it).
 GF_REGISTER_SELFTEST("ui.fixture_screen", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
     int real = 0;
-    for (auto* rp : fx::realPlayers()) {
+    for (auto* rp : fx::fixturePlayers()) {
         if (!net::isCompanion(*rp)) continue;
         if (gf::screens::open(*rp, "ui.fixture")) ++real;
     }
@@ -193,30 +213,29 @@ GF_REGISTER_SELFTEST("ui.fixture_screen", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(gf::screens::open(ctx.player(), "ui.fixture"), "the fixture screen type is registered");
 });
 
-// Turns on the fixture's fog / sky / cloud providers for real companions (client scenario).
+// Turns on the fixture's fog / sky / cloud providers for tagged companions (client scenario).
 GF_REGISTER_SELFTEST("ui.fixture_fog", [](Context& ctx) {
     if (fixtureOff(ctx)) return;
     int real = 0;
-    for (auto* rp : fx::realPlayers()) {
+    for (auto* rp : fx::fixturePlayers()) {
         if (fx::show(*rp, {{"show", true}, {"fog", true}})) ++real;
     }
     ctx.info("fixture fog shown to " + std::to_string(real) + " companion(s)");
 });
 
 // The vanilla container fallback: a vanilla chest titled with containerTitleSkin (the plain title,
-// spike S5), for every real player two blocks south of its feet (the player is turned to it and
-// the client scenario opens it), else at the test position, where only the stored name is checked.
+// spike S5) on the stage two blocks south of the tagged players (turned to it; the client scenario
+// opens it), and at the test position, where the stored name is checked.
 GF_REGISTER_SELFTEST("ui.fixture_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
     auto title = gf::ui::containerTitleSkin(gf::tr("gf.ui.fixture.title", "GloamingForest UI fixture"), "ui/fixture_container");
-    int  real  = 0;
-    for (auto* rp : fx::realPlayers()) {
-        auto f = faceSouth(*rp, 0.5f); // the chest's middle
-        if (!fx::placeNamedChest(rp->getDimensionBlockSource(), {f.feet.x, f.feet.y, f.feet.z + 2}, title)) continue;
-        ++real;
-        standAndFace(*rp, f);
+    if (auto st = co_await stageFor(ctx, fixturePlayersNow())) {
+        BlockPos chest{st->origin.x, st->origin.y, st->origin.z + 2};
+        ctx.check(fx::placeNamedChest(*st->region, chest, title), "the stage chest is placed");
+        auto players = fixturePlayersNow();
+        for (auto* rp : players) fx::standOnStage(*rp, *st->region, st->origin, 0.5f); // the chest's middle
+        ctx.info("named chest placed on the stage for " + names(players));
     }
-    ctx.info("named chest placed for " + std::to_string(real) + " real player(s)");
     auto pos = ctx.testPos(6220);
     co_await ctx.ensureLoaded(pos);
     auto* region = ctx.region();
@@ -229,14 +248,13 @@ GF_REGISTER_SELFTEST("ui.fixture_chest", [](Context& ctx) -> ll::coro::CoroTask<
 // A chest without a custom name at the same place (the client scenario compares the two).
 GF_REGISTER_SELFTEST("ui.fixture_chest_plain", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
-    int real = 0;
-    for (auto* rp : fx::realPlayers()) {
-        auto f = faceSouth(*rp, 0.5f);
-        if (!fx::placeNamedChest(rp->getDimensionBlockSource(), {f.feet.x, f.feet.y, f.feet.z + 2}, "")) continue;
-        ++real;
-        standAndFace(*rp, f);
+    if (auto st = co_await stageFor(ctx, fixturePlayersNow())) {
+        BlockPos chest{st->origin.x, st->origin.y, st->origin.z + 2};
+        ctx.check(fx::placeNamedChest(*st->region, chest, ""), "the stage chest is placed");
+        auto players = fixturePlayersNow();
+        for (auto* rp : players) fx::standOnStage(*rp, *st->region, st->origin, 0.5f);
+        ctx.info("plain chest placed on the stage for " + names(players));
     }
-    ctx.info("plain chest placed for " + std::to_string(real) + " real player(s)");
     auto pos = ctx.testPos(6250);
     co_await ctx.ensureLoaded(pos);
     auto* region = ctx.region();
@@ -246,18 +264,16 @@ GF_REGISTER_SELFTEST("ui.fixture_chest_plain", [](Context& ctx) -> ll::coro::Cor
     ctx.check(fx::chestName(*region, gf::game::blockPos(pos)).empty(), "a plain chest has no custom name");
 });
 
-// ItemContext::Fixed: an item frame with the fixture item one block above a real player's feet, two
-// blocks south (the client scenario screenshots it), else at the test position.
+// ItemContext::Fixed: an item frame with the fixture item one block above the stage floor, two
+// blocks south of the tagged players (the client scenario screenshots it), and at the test position.
 GF_REGISTER_SELFTEST("ui.fixture_frame", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
-    int real = 0;
-    for (auto* rp : fx::realPlayers()) {
-        auto f = faceSouth(*rp, 1.5f); // the frame's middle
-        if (!fx::placeFrame(rp->getDimensionBlockSource(), {f.feet.x, f.feet.y + 1, f.feet.z + 2}, kFixtureItem)) continue;
-        ++real;
-        standAndFace(*rp, f);
+    if (auto st = co_await stageFor(ctx, fixturePlayersNow())) {
+        ctx.check(fx::placeFrame(*st->region, {st->origin.x, st->origin.y + 1, st->origin.z + 2}, kFixtureItem), "the stage frame is placed");
+        auto players = fixturePlayersNow();
+        for (auto* rp : players) fx::standOnStage(*rp, *st->region, st->origin, 1.5f); // the frame's middle
+        ctx.info("item frame placed on the stage for " + names(players));
     }
-    ctx.info("item frame placed for " + std::to_string(real) + " real player(s)");
     auto pos = ctx.testPos(6230, 1);
     co_await ctx.ensureLoaded(pos);
     auto* region = ctx.region();
@@ -269,20 +285,21 @@ GF_REGISTER_SELFTEST("ui.fixture_frame", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.check(fx::frameItem(*region, at) == kFixtureItem, "the frame holds the fixture item");
 });
 
-// ItemContext::Head: the fixture block on real players' heads (the client scenario screenshots it
-// in third person), else on the test player.
+// ItemContext::Head: the fixture block on the tagged players' heads (their helmet is kept and put
+// back by ui.fixture_clear; the client scenario screenshots it in third person), and on the test
+// player.
 GF_REGISTER_SELFTEST("ui.fixture_head", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
     auto block = gf::game::items::make(kFixtureBlock);
     ctx.require(block.has_value(), "the fixture block item (gf_test packs)");
-    int real = 0;
-    for (auto* rp : fx::realPlayers()) {
-        rp->setArmor(ArmorSlot::Head, *block);
-        // level head: the third-person front view looks the player in the face
-        rp->teleport(rp->getFeetPos(), rp->getDimensionId(), Vec2{0.f, rp->getRotation().y});
-        ++real;
+    if (auto st = co_await stageFor(ctx, fixturePlayersNow())) {
+        auto players = fixturePlayersNow();
+        for (auto* rp : players) {
+            fx::standOnStage(*rp, *st->region, st->origin, 1.62f); // level head: the front view looks the player in the face
+            rp->setArmor(ArmorSlot::Head, *block);
+        }
+        ctx.info("fixture block put on " + names(players));
     }
-    ctx.info("fixture block put on " + std::to_string(real) + " real player(s)");
     (void)ctx.player();
     co_await ctx.ticks(1);
     auto& p = ctx.player();
@@ -290,21 +307,24 @@ GF_REGISTER_SELFTEST("ui.fixture_head", [](Context& ctx) -> ll::coro::CoroTask<>
     ctx.check(p.getArmor(ArmorSlot::Head).getTypeName() == kFixtureBlock, "the head slot holds the fixture block");
 });
 
-// Map decorations: a filled map in real players' hands and the fixture decorations on it
-// (companions draw them; the client scenario screenshots the held map).
+// Map decorations: a filled map in the tagged players' hands (the held stack is kept and put back by
+// ui.fixture_clear) and the fixture decorations on it (companions draw them; the client scenario
+// screenshots the held map).
 GF_REGISTER_SELFTEST("ui.fixture_map", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
     auto map = gf::game::items::make("minecraft:filled_map");
     ctx.require(map.has_value(), "minecraft:filled_map");
-    int real = 0;
-    for (auto* rp : fx::realPlayers()) {
-        rp->setSelectedItem(*map);
-        rp->sendInventory(true);
-        // look down at the held map (Java and Bedrock draw it larger then)
-        rp->teleport(rp->getFeetPos(), rp->getDimensionId(), Vec2{60.f, rp->getRotation().y});
-        if (fx::show(*rp, {{"show", true}, {"map", true}})) ++real;
+    if (auto st = co_await stageFor(ctx, fixturePlayersNow())) {
+        int real = 0;
+        for (auto* rp : fixturePlayersNow()) {
+            // look down at the held map (Java and Bedrock draw it larger then)
+            fx::standOnStage(*rp, *st->region, st->origin, -2.0f);
+            rp->setSelectedItem(*map);
+            rp->sendInventory(true);
+            if (fx::show(*rp, {{"show", true}, {"map", true}})) ++real;
+        }
+        ctx.info("fixture map given to " + std::to_string(real) + " companion(s)");
     }
-    ctx.info("fixture map given to " + std::to_string(real) + " companion(s)");
     (void)ctx.player();
     co_await ctx.ticks(1);
     auto& p = ctx.player();
@@ -316,20 +336,21 @@ GF_REGISTER_SELFTEST("ui.fixture_map", [](Context& ctx) -> ll::coro::CoroTask<> 
     net::setTestCompanion(p, false);
 });
 
-// The held fixture map in an item frame two blocks south of real players (framed maps: the client
-// scenario screenshots it); the test player has no map with an id, so only the frame is checked.
+// The held fixture map in an item frame on the stage (framed maps: the client scenario screenshots
+// it); the test player has no map with an id, so only the frame is checked there.
 GF_REGISTER_SELFTEST("ui.fixture_map_frame", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
-    int real = 0;
-    for (auto* rp : fx::realPlayers()) {
-        auto const& held = rp->getSelectedItem();
-        if (held.isNull() || held.getTypeName() != "minecraft:filled_map") continue;
-        auto f = faceSouth(*rp, 1.5f);
-        if (!fx::placeFrame(rp->getDimensionBlockSource(), {f.feet.x, f.feet.y + 1, f.feet.z + 2}, held)) continue;
-        ++real;
-        standAndFace(*rp, f);
+    if (auto st = co_await stageFor(ctx, fixturePlayersNow())) {
+        int real = 0;
+        for (auto* rp : fixturePlayersNow()) {
+            auto const& held = rp->getSelectedItem();
+            if (held.isNull() || held.getTypeName() != "minecraft:filled_map") continue;
+            if (!fx::placeFrame(*st->region, {st->origin.x, st->origin.y + 1, st->origin.z + 2}, held)) continue;
+            fx::standOnStage(*rp, *st->region, st->origin, 1.5f);
+            ++real;
+        }
+        ctx.info("framed map placed on the stage for " + std::to_string(real) + " player(s)");
     }
-    ctx.info("framed map placed for " + std::to_string(real) + " real player(s)");
     auto pos = ctx.testPos(6240, 1);
     co_await ctx.ensureLoaded(pos);
     auto* region = ctx.region();
@@ -342,26 +363,70 @@ GF_REGISTER_SELFTEST("ui.fixture_map_frame", [](Context& ctx) -> ll::coro::CoroT
     ctx.check(fx::frameItem(*region, at) == "minecraft:filled_map", "the frame holds the map");
 });
 
-// Clears what the fixture tests placed for real players (blocks, the fixture block on heads).
+// Puts back what the fixture tests changed for tagged players: the stage blocks, then the players'
+// helmet, held stack and position.
 GF_REGISTER_SELFTEST("ui.fixture_clear", [](Context& ctx) {
-    int n = fx::clearPlaced();
-    int heads = 0;
-    for (auto* rp : fx::realPlayers()) {
-        if (rp->getArmor(ArmorSlot::Head).getTypeName() != kFixtureBlock) continue;
-        rp->setArmor(ArmorSlot::Head, ItemStack::EMPTY_ITEM());
-        ++heads;
-    }
-    ctx.info("removed " + std::to_string(n) + " fixture block(s) and " + std::to_string(heads) + " fixture head item(s)");
+    int blocks  = fx::clearStage();
+    int players = fx::restorePlayers();
+    ctx.info("stage restored (" + std::to_string(blocks) + " block(s)), " + std::to_string(players) + " player(s) put back");
 });
 
-// Turns the client fixture off again (the client scenario runs it after its screenshots).
+// Turns the client fixture off again for tagged companions (the client scenario runs it after its
+// screenshots).
 GF_REGISTER_SELFTEST("ui.fixture_hide", [](Context& ctx) {
     if (fixtureOff(ctx)) return;
     int real = 0;
-    for (auto* rp : fx::realPlayers()) {
+    for (auto* rp : fx::fixturePlayers()) {
         if (fx::show(*rp, {{"show", false}})) ++real;
     }
     ctx.info("fixture hidden for " + std::to_string(real) + " companion(s)");
+});
+
+// The undo of the real-player steps, with the test player standing in for a tagged one: its
+// position, held stack and helmet come back and the stage blocks are restored.
+GF_REGISTER_SELFTEST("ui.fixture_restore", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (fixtureOff(ctx)) co_return;
+    if (!fx::fixturePlayers().empty()) {
+        ctx.info("fixture players present: their stage stays until ui.fixture_clear");
+        co_return;
+    }
+    auto pos = ctx.testPos(kStageDx);
+    co_await ctx.ensureLoaded(pos);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    BlockPos origin = gf::game::blockPos(pos);
+    auto     before = gf::game::blockIdAt(*region, {origin.x, origin.y, origin.z + 2});
+    auto     sword  = gf::game::items::make("minecraft:iron_sword");
+    auto     helmet = gf::game::items::make("minecraft:iron_helmet");
+    auto     block  = gf::game::items::make(kFixtureBlock);
+    auto     map    = gf::game::items::make("minecraft:filled_map");
+    ctx.require(sword && helmet && block && map, "the items");
+    {
+        auto& p = ctx.player();
+        p.setSelectedItem(*sword);
+        p.setArmor(ArmorSlot::Head, *helmet);
+    }
+    co_await ctx.ticks(1);
+    Vec3 start;
+    {
+        auto& p = ctx.player();
+        start   = p.getFeetPos();
+        ctx.require(fx::prepareStage(*region, origin), "the stage is prepared");
+        ctx.check(fx::placeNamedChest(*region, {origin.x, origin.y, origin.z + 2}, ""), "a stage chest");
+        fx::standOnStage(p, *region, origin, 0.5f);
+        p.setSelectedItem(*map);
+        p.setArmor(ArmorSlot::Head, *block);
+    }
+    co_await ctx.ticks(2);
+    ctx.check(fx::clearStage() > 0, "the stage blocks are put back");
+    ctx.check(gf::game::blockIdAt(*region, {origin.x, origin.y, origin.z + 2}) == before, "the chest is gone again");
+    ctx.check(fx::restorePlayers() == 1, "one player put back");
+    co_await ctx.ticks(2);
+    auto& p = ctx.player();
+    ctx.check(p.getSelectedItem().getTypeName() == "minecraft:iron_sword", "the held stack is back, got " + p.getSelectedItem().getTypeName());
+    ctx.check(p.getArmor(ArmorSlot::Head).getTypeName() == "minecraft:iron_helmet", "the helmet is back");
+    ctx.check(p.getFeetPos().distanceTo(start) < 1.0f, "the player is back where it was");
+    ctx.check(fx::clearStage() == 0 && fx::restorePlayers() == 0, "nothing left to put back");
 });
 
 // ---- input ---------------------------------------------------------------------------------------
@@ -452,6 +517,27 @@ GF_REGISTER_SELFTEST("ui.movement_edges", [](Context& ctx) -> ll::coro::CoroTask
     log.byPlayer.erase(id);
 });
 
+// On the ground comes from the auth input packet itself (its vertical collision and the y the client
+// claims), not from the server's state before the packet is applied.
+GF_REGISTER_SELFTEST("ui.movement_ground", [](Context& ctx) {
+    using gf::movement::groundFromInput;
+    // standing: collision below, no climb
+    ctx.check(groundFromInput(true, 0.0f, false).value_or(false), "standing on the ground");
+    // the jump tick: the client moved up, no collision
+    ctx.check(!groundFromInput(false, 0.42f, false).value_or(true), "jumping leaves the ground");
+    // falling: no collision
+    ctx.check(!groundFromInput(false, -0.3f, false).value_or(true), "falling is in the air");
+    // landing: collision while moving down
+    ctx.check(groundFromInput(true, -0.2f, false).value_or(false), "landing");
+    // a collision while the claimed y rose (a ceiling, a step up, standing up from sneaking): no
+    // answer, the last state stays
+    ctx.check(!groundFromInput(true, 0.1f, false).has_value() && !groundFromInput(true, 0.35f, false).has_value(), "a ceiling or a step up keeps the last state");
+    // sneaking lowers the eye on the ground: still the ground
+    ctx.check(groundFromInput(true, -0.35f, false).value_or(false), "sneaking on the ground");
+    // a teleport or a respawn (jump of the position): no answer, the edge detector keeps its state
+    ctx.check(!groundFromInput(true, -50.0f, false).has_value() && !groundFromInput(true, 0.0f, true).has_value(), "no ground change across a teleport");
+});
+
 GF_REGISTER_SELFTEST("ui.apply_motion", [](Context& ctx) -> ll::coro::CoroTask<> {
     (void)ctx.player();
     co_await ctx.ticks(1);
@@ -479,8 +565,27 @@ GF_REGISTER_SELFTEST("ui.movement_validate", [](Context& ctx) -> ll::coro::CoroT
     ctx.check(gf::movement::validateMove(p, at, at + Vec3{0, 10, 0}) || before > 0, "without the rule the move passes");
 });
 
+// A server teleport, a respawn or a dimension change starts the validation afresh: the moves the
+// client sent before it are not checked against the new place, and no correction is pending.
+GF_REGISTER_SELFTEST("ui.movement_reset", [](Context& ctx) -> ll::coro::CoroTask<> {
+    (void)ctx.player();
+    co_await ctx.ticks(1);
+    auto& p  = ctx.player();
+    auto  id = p.getOrCreateUniqueID().rawID;
+    // tracks are kept with and without rules (a rule registered later starts from the last claim)
+    gf::movement::resetTrack(p, gf::movement::ResetReason::Teleport);
+    ctx.check(gf::movement::settling(p), "a teleport waits for the client to arrive");
+    gf::movement::resetTrack(p, gf::movement::ResetReason::Respawn);
+    ctx.check(gf::movement::settling(p), "a respawn too");
+    gf::movement::resetTrack(p, gf::movement::ResetReason::Dimension);
+    ctx.check(gf::movement::settling(p), "a dimension change too");
+    ctx.check(gf::movement::pendingCorrections(id) == 0, "no correction is pending after a reset");
+    gf::movement::forgetTrack(p);
+    ctx.check(!gf::movement::settling(p), "forgotten");
+});
+
 // The real-client correction (client scenario, local and remote-mod): rule "ui.fixture_rule"
-// rejects every horizontal move of the real players present now; the scenario walks and waits for
+// rejects every horizontal move of the tagged players present now; the scenario walks and waits for
 // the rejection and the correction, then ui.fixture_validate_off removes the rule and checks that
 // the corrections kept the player near where it started.
 struct StrictPlayers {
@@ -495,20 +600,20 @@ GF_REGISTER_SELFTEST("ui.fixture_validate", [](Context& ctx) {
     if (fixtureOff(ctx)) return;
     auto& s = strictPlayers();
     s.start.clear();
-    for (auto* rp : fx::realPlayers()) s.start[rp->getOrCreateUniqueID().rawID] = rp->getFeetPos();
+    for (auto* rp : fx::fixturePlayers()) s.start[rp->getOrCreateUniqueID().rawID] = rp->getFeetPos();
     gf::movement::validate("ui.fixture_rule", [](Player& p, Vec3 const& from, Vec3 const& to) {
         if (!strictPlayers().start.contains(p.getOrCreateUniqueID().rawID)) return true;
         float dx = to.x - from.x, dz = to.z - from.z;
         return dx * dx + dz * dz <= 0.05f * 0.05f;
     });
-    ctx.info("ui.fixture_rule holds " + std::to_string(s.start.size()) + " real player(s) in place; corrections so far: " + std::to_string(gf::movement::corrections()));
+    ctx.info("ui.fixture_rule holds " + std::to_string(s.start.size()) + " fixture player(s) in place; corrections so far: " + std::to_string(gf::movement::corrections()));
 });
 
 GF_REGISTER_SELFTEST("ui.fixture_validate_off", [](Context& ctx) {
     if (fixtureOff(ctx)) return;
     gf::movement::removeValidator("ui.fixture_rule");
     auto& s = strictPlayers();
-    for (auto* rp : fx::realPlayers()) {
+    for (auto* rp : fx::fixturePlayers()) {
         auto it = s.start.find(rp->getOrCreateUniqueID().rawID);
         if (it == s.start.end()) continue;
         Vec3  at = rp->getFeetPos();
@@ -519,6 +624,55 @@ GF_REGISTER_SELFTEST("ui.fixture_validate_off", [](Context& ctx) {
     }
     s.start.clear();
     ctx.info("corrections so far: " + std::to_string(gf::movement::corrections()));
+});
+
+// The respawn step of the client scenario: the tagged players go to the stage (far from the spawn)
+// and rule "ui.fixture_far_rule" rejects their moves longer than 4 blocks (a distance rule, as
+// U12's); the scenario kills the player there and it respawns at the spawn: that jump must not be
+// rejected nor corrected.
+struct FarRule {
+    std::size_t corrections = 0;
+    bool        on          = false;
+};
+FarRule& farRule() {
+    static FarRule f;
+    return f;
+}
+
+GF_REGISTER_SELFTEST("ui.fixture_far", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (fixtureOff(ctx)) co_return;
+    // the stage is far from the spawn: the respawn moves the player much more than 4 blocks
+    if (auto st = co_await stageFor(ctx, fixturePlayersNow())) {
+        for (auto* rp : fixturePlayersNow()) fx::standOnStage(*rp, *st->region, st->origin, 1.62f);
+    }
+    std::set<std::int64_t> ids;
+    for (auto* rp : fx::fixturePlayers()) ids.insert(rp->getOrCreateUniqueID().rawID);
+    farRule() = {gf::movement::corrections(), true};
+    gf::movement::validate("ui.fixture_far_rule", [ids](Player& p, Vec3 const& from, Vec3 const& to) {
+        return !ids.contains(p.getOrCreateUniqueID().rawID) || from.distanceTo(to) <= 4.0f;
+    });
+    ctx.info("ui.fixture_far_rule watches " + std::to_string(ids.size()) + " fixture player(s); corrections so far: " + std::to_string(farRule().corrections));
+});
+
+GF_REGISTER_SELFTEST("ui.fixture_far_off", [](Context& ctx) {
+    if (fixtureOff(ctx)) return;
+    bool was = gf::movement::removeValidator("ui.fixture_far_rule");
+    if (!farRule().on || !was) {
+        ctx.info("ui.fixture_far_rule was not on");
+        return;
+    }
+    auto added = gf::movement::corrections() - farRule().corrections;
+    farRule()  = {};
+    ctx.info("corrections while ui.fixture_far_rule was on: " + std::to_string(added));
+    ctx.check(added == 0, "no correction after the respawn, got " + std::to_string(added));
+});
+
+// Logs the next input edges of the tagged players (the client scenario jumps and waits for
+// JumpPressed, LeftGround and Landed from the real client's auth input).
+GF_REGISTER_SELFTEST("ui.fixture_edges", [](Context& ctx) {
+    if (fixtureOff(ctx)) return;
+    fx::logEdges(12);
+    ctx.info("logging the next 12 input edges of fixture players");
 });
 
 } // namespace
