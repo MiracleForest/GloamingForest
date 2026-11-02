@@ -16,7 +16,8 @@
 // Pieces of the unit:
 //   Descriptors.cpp  TF's structure records (assets/data/landmarks/*.json) and structure sets
 //   Starts.cpp       the persistent start store (gf:landmark:start:<dim>:<cx>:<cz>), start creation,
-//                    the worldgen stages (Starts, Pieces), placement in loaded chunks, locate
+//                    the worldgen stages (Starts; the pieces at their decoration step), placement in
+//                    loaded chunks, locate
 //   Protection.cpp   ProgressionEvents (break / place / interact / multi-place / entity damage),
 //                    protection packets, boxes and particles, the structure protection sync
 //   Hints.cpp        hint books per player and the hint monster
@@ -36,10 +37,16 @@
 
 #include "nlohmann/json.hpp"
 
+#include "core/jrand/JRand.h"
 #include "core/landmark/Clearance.h"
+#include "core/landmark/Decoration.h"
 #include "core/landmark/Placement.h"
 #include "feature/landmark/Landmark.h"
 #include "feature/worldgen/Worldgen.h"
+
+namespace gf::worldgen::ext {
+struct DecorationContext;
+}
 
 class AABB;
 class Actor;
@@ -277,8 +284,20 @@ void forgetEvaluation(int dim, int chunkX, int chunkZ);
                                                              int z, int radiusFromCenterChunk, int gridLength);
 /// The index of a structure inside its decoration step: ChunkGenerator#applyBiomeDecoration counts
 /// every Structure registry entry of the step, vanilla's 34 included, in registry order (resource
-/// locations sorted path first, then namespace).
+/// locations sorted path first, then namespace; core/landmark/Decoration.h), over the descriptors.
 [[nodiscard]] int featureIndex(Info const& info);
+/// The step and index applyBiomeDecoration seeds structure `key` with: the worldgen's Structure
+/// registry slot (worldgen::ext::structureSlot), else the descriptor's step and featureIndex (the
+/// gf_test fixtures, which no registry lists).
+[[nodiscard]] core::landmark::decoration::Slot decorationSlot(std::string const& key);
+/// The random the pieces of `key` are placed with in chunk (cx, cz): WorldgenRandom(Xoroshiro)
+/// setDecorationSeed(levelSeed, cx << 4, cz << 4), then setFeatureSeed(.., decorationSlot(key)).
+[[nodiscard]] std::unique_ptr<core::jrand::WorldgenRandom> decorationRandom(std::int64_t levelSeed, int chunkX, int chunkZ, std::string const& key);
+/// The landmark.pieces structure step (worldgen::ext::addStructureStep) for decoration step `d.step`
+/// of chunk (cx, cz): the starts of `region`'s dimension reaching the chunk whose structure decorates
+/// at that step, structure by structure in registry order, each structure's starts placed with
+/// d.structureRandom(its index) (StructureStart#placeInChunk). Returns the number of starts placed.
+int decorateStep(worldgen::Region& region, int chunkX, int chunkZ, worldgen::ext::DecorationContext const& d);
 /// Creates a start of `key` with its center at block (x, y, z) (y: nullopt = TF's height rule)
 /// for start chunk (cx, cz); nullptr when the generator made no pieces.
 [[nodiscard]] RecordPtr createStart(Info const& info, int dim, int chunkX, int chunkZ, std::optional<GlobalPos> at, bool forced);
@@ -289,7 +308,8 @@ void reviveRecord(RecordPtr const& record);
 /// forceStart); returns the number of chunks placed.
 int placeLoaded(Record const& record, BlockSource& region);
 
-/// Adds the Starts and Pieces stages to the worldgen pipeline (once).
+/// Adds the landmark.starts stage (Stage::Starts) and the landmark.pieces structure step
+/// (worldgen::ext::addStructureStep, every decoration step) to the worldgen pipeline (once).
 void registerWorldgenStages();
 
 /// Whether an entity bounding box intersects AABB(block (x, y, z)).inflate(inflate): Level
@@ -322,10 +342,6 @@ void uninstallProtection();
 void resetProtection();
 /// Test seam: forces the enforcement result (nullopt: the gamerule).
 void setEnforcedOverride(std::optional<bool> value);
-/// Test seam: answers PlayerHelper's advancement check instead of gf::progression (nullptr: the
-/// progression store), so the allow path is testable while progression is a contract stub.
-using AdvancementCheck = std::function<bool(Player const& player, std::string const& advancement)>;
-void setAdvancementOverride(AdvancementCheck check);
 /// ProgressionEvents#isPieceProtected for piece `index` of a record: Generator::pieceProtected
 /// (asked at `at`, a position inside the piece) when the generator has one, else the piece's flag.
 [[nodiscard]] bool pieceProtectedAt(Record const& record, std::size_t index, int x, int y, int z);
@@ -366,7 +382,7 @@ void resetHints();
 // ---- shared helpers ----------------------------------------------------------------------------------
 
 /// "Lich Tower": the structure's name (structure.<ns>.<path>) in the player's language (or the
-/// default language without a player).
+/// default language without a player); the key itself when it has no translation, as Java shows it.
 [[nodiscard]] std::string structureName(std::string const& key, Player const* player);
 /// EntityType#getDescription().getString(): an entity's name ("minecraft:zombie" -> "Zombie") in the
 /// player's language: TF's names from the mod language (entity.<ns>.<path>), else the game's own
@@ -380,10 +396,22 @@ void emitParticles(int dim, std::string const& id, std::vector<std::array<float,
 /// Whether a contract stub was hit (core/Stub.h) since start.
 [[nodiscard]] bool stubHit(std::string const& name);
 
+// ---- commands (Commands.cpp) -------------------------------------------------------------------------
+
+/// ResourceLocation#read of a command argument: "<ns>:<path>" ("minecraft" without a namespace);
+/// nullopt for an invalid one (argument.id.invalid).
+[[nodiscard]] std::optional<std::string> parseResourceLocation(std::string const& text);
+/// Whether the Structure registry holds `key` (ResourceKeyArgument#getStructure): the worldgen's
+/// structures (Minecraft's, TF's, the data packs') and the descriptors.
+[[nodiscard]] bool structureRegistered(std::string const& key);
+
 /// Registers the test fixture landmarks "gf_test:landmark_fixture" / "_open" (descriptor +
 /// generator) when the gf_test fixture data is deployed (<mod>/data/gf_test: development builds;
 /// GF_NO_TEST_PACKS=1 leaves it out). True when they are registered.
 bool registerFixture();
+/// Test seam: called with the random each fixture piece's postProcess receives and the piece's box,
+/// before it places its blocks (nullptr: none; any thread). It may draw from the random.
+void setFixtureProbe(std::function<void(worldgen::RandomSource& random, BlockBox const& pieceBox)> probe);
 /// Whether a structure key is a gf_test fixture.
 [[nodiscard]] inline bool isFixtureKey(std::string const& key) { return key.starts_with("gf_test:"); }
 

@@ -10,9 +10,11 @@
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// /twilightforest center | info | conquer [reactivate] | genbook [structure] (TF's subcommands)
-// and locate <structure> | place <structure> [x y z] (Java's vanilla /locate structure and
-// /place structure, which know TF's structures there; Bedrock's do not). Locating landmark grid
+// /twilightforest center | info | conquer [reactivate] | genbook [<structure>] (TF's subcommands,
+// literals, argument shapes and texts) and the GloamingForest additions (docs/spec/README.md,
+// Subcommands): generatebook (an alias of genbook), locate <structure> | place <structure> [x y z]
+// (Java's vanilla /locate structure and /place structure, which know TF's structures there;
+// Bedrock's do not). Locating landmark grid
 // structures follows TF's ResolveNearestNonRandomSpreadMapStructure hook (WorldUtil
 // #findNearestMapLandmark); random spread structures use vanilla's ring search.
 //
@@ -40,6 +42,7 @@
 #include "core/landmark/Grid.h"
 #include "core/landmark/Landmark.h"
 #include "feature/ext/landmark/LandmarkExt.h"
+#include "feature/ext/worldgen/Generation.h"
 #include "feature/landmark/Internal.h"
 #include "game/Blocks.h"
 #include "mod/Commands.h"
@@ -126,8 +129,9 @@ void infoCommand(CommandOrigin const& origin, CommandOutput& output) {
             bool c = rec->start.conquered;
             output.success(std::string(c ? "§l§a" : "§l§c") + say(origin, "commands.tffeature.structure.conquer.status", "Structure conquer flag: %s", c ? "true" : "false"));
         }
-        // what is the spawn list
-        output.success("§n" + say(origin, "commands.tffeature.structure.spawn_list", "Spawn list for this area is:"));
+        // what is the spawn list (TF underlines it: Bedrock has no underline, and its §n is the
+        // copper colour, so the line stays plain)
+        output.success(say(origin, "commands.tffeature.structure.spawn_list", "Spawn list for this area is:"));
         if (auto spawns = gf::landmark::ext::potentialSpawns(dim, "monster", pos.x, pos.y, pos.z)) {
             for (auto const& e : *spawns) {
                 // EntityType#getDescription().getString(): the entity's name in the reader's language
@@ -148,8 +152,10 @@ void conquer(CommandOrigin const& origin, CommandOutput& output, bool flag) {
     auto pos = originBlock(origin);
     auto rec = nearestLandmark(dim, pos.x >> 4, pos.z >> 4, GlobalPos{dim, pos.x, pos.y, pos.z});
     auto const* inf = rec ? info(rec->start.key) : nullptr;
-    if (!rec || !rec->start.box.contains(pos.x, pos.y, pos.z) || !inf || !inf->traits.conquerable)
+    if (!rec || !rec->start.box.contains(pos.x, pos.y, pos.z) || !inf || !inf->traits.conquerable) {
+        log().info("landmark: {} at {} {} {}: not in a structure", flag ? "conquer" : "conquer reactivate", pos.x, pos.y, pos.z);
         return output.error(say(origin, "commands.tffeature.structure.required", "You are not in a structure"));
+    }
     output.success(say(origin, "commands.tffeature.structure.conquer.update", "Structure conquer flag was %s, changing to %s",
                        rec->start.conquered ? "true" : "false", flag ? "true" : "false"));
     if (rec->start.conquered != flag) {
@@ -165,29 +171,89 @@ void giveBook(Player& player, ItemStack book) {
     player.sendInventory(false);
 }
 
+} // namespace
+
+std::optional<std::string> parseResourceLocation(std::string const& text) {
+    // ResourceLocation#bySeparator(text, ':'): the namespace before the first ':' (none, or an empty
+    // one: "minecraft"), the path after it; then isValidNamespace / isValidPath
+    auto        colon = text.find(':');
+    std::string ns    = colon == std::string::npos || colon == 0 ? std::string("minecraft") : text.substr(0, colon);
+    std::string path  = colon == std::string::npos ? text : text.substr(colon + 1);
+    auto        plain = [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.'; };
+    if (!std::all_of(ns.begin(), ns.end(), plain)) return std::nullopt;
+    if (!std::all_of(path.begin(), path.end(), [&](char c) { return plain(c) || c == '/'; })) return std::nullopt;
+    return ns + ":" + path;
+}
+
+bool structureRegistered(std::string const& key) {
+    // the Structure registry: Minecraft's, TF's and the data packs' structures (the worldgen's), plus
+    // the descriptors (the gf_test fixtures of development builds)
+    return info(key) != nullptr || worldgen::ext::structureSlot(key).has_value();
+}
+
+namespace {
+
+/// A resource location argument as brigadier reads it: ResourceLocation#read takes the characters a
+/// resource location may hold (readGreedy) and parses them (argument.id.invalid), then the
+/// dispatcher refuses anything left of the word (CommandSyntaxException
+/// #dispatcherExpectedArgumentSeparator). nullopt once the error is sent.
+std::optional<std::string> readResourceArgument(CommandOrigin const& origin, CommandOutput& output, std::string const& text) {
+    auto end = text.find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyz_-.:/");
+    auto key = parseResourceLocation(text.substr(0, end));
+    if (!key) {
+        output.error(say(origin, "argument.id.invalid", "Invalid ID"));
+        return std::nullopt;
+    }
+    if (end != std::string::npos) {
+        output.error(say(origin, "command.expected.separator", "Expected whitespace to end one argument, but found trailing data"));
+        return std::nullopt;
+    }
+    return key;
+}
+
 /// GenerateBookCommand#generateBook (requires permission level 3: Bedrock's Admin, or an operator,
-/// as Java's default op-permission-level 4 gives every operator level 3).
+/// as Java's default op-permission-level 4 gives every operator level 3). The structure argument
+/// is a ResourceKeyArgument: resolved (ResourceKeyArgument#getStructure) before generateBook runs.
 void genbook(CommandOrigin const& origin, CommandOutput& output, std::optional<std::string> structure) {
     auto* player = commands::playerOf(origin);
     if (origin.getPermissionsLevel() < CommandPermissionLevel::Admin && !(player && player->isOperator()))
         return output.error("You need operator permission.");
-    if (!player || player->isSimulatedPlayer())
+    auto const  arg   = structure.value_or("(all)");
+    Info const* named = nullptr;
+    if (structure) {
+        // ResourceKeyArgument#resolveKey: a key the registry does not hold is ERROR_INVALID_STRUCTURE
+        // with the location
+        auto key = readResourceArgument(origin, output, *structure);
+        if (!key) {
+            log().info("landmark: genbook {}: invalid id", arg);
+            return;
+        }
+        if (!structureRegistered(*key)) {
+            log().info("landmark: genbook {}: no structure {}", arg, *key);
+            return output.error(say(origin, "commands.place.structure.invalid", "There is no structure with type \"%s\"", *key));
+        }
+        named = info(*key);
+    }
+    if (!player || player->isSimulatedPlayer()) {
+        log().info("landmark: genbook {}: not run by a player", arg);
         return output.error(say(origin, "commands.tffeature.not_player", "This command must be run by a valid player!"));
+    }
     int given = 0;
     if (!structure) {
+        // every StructureHints of the registry, in registry order (TF's keys sorted by path)
         for (auto const& key : descriptorKeys()) {
             auto const* inf = info(key);
-            if (!inf || !inf->traits.progression || key.starts_with("gf_test:")) continue; // StructureHints
+            if (!inf || !inf->traits.progression || isFixtureKey(key)) continue;
             if (auto book = createHintBook(*inf, player)) {
                 giveBook(*player, *book);
                 ++given;
             }
         }
     } else {
-        auto const* inf = info(normalizeKey(*structure));
+        // a StructureHints structure gives its hint book, any other structure HintConfig.defaultBook()
         std::optional<ItemStack> book;
-        if (inf && inf->traits.progression) book = createHintBook(*inf, player);
-        else book = makeBook("unknown", 2, player); // HintConfig.defaultBook()
+        if (named && named->traits.progression) book = createHintBook(*named, player);
+        else book = makeBook("unknown", 2, player);
         if (book) {
             giveBook(*player, *book);
             ++given;
@@ -203,7 +269,13 @@ void locate(CommandOrigin const& origin, CommandOutput& output, std::string cons
     if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
     int  dim = originDim(origin);
     auto pos = originBlock(origin);
-    auto key = structure.starts_with("#") ? structure : normalizeKey(structure);
+    // ResourceOrTagKeyArgument: "#" and a tag, or a key; resource locations as Java reads them
+    bool tag    = structure.starts_with("#");
+    auto parsed = readResourceArgument(origin, output, tag ? structure.substr(1) : structure);
+    if (!parsed) return;
+    auto key = tag ? "#" + *parsed : *parsed;
+    if (!tag && !structureRegistered(key))
+        return output.error(say(origin, "commands.locate.structure.invalid", "There is no structure with type \"%s\"", key));
     // LocateCommand: ChunkGenerator#findNearestMapStructure(level, holders, pos, 100, false)
     auto hit = gf::landmark::ext::locate(dim, key, pos.x, pos.z, 100);
     if (!hit) {
@@ -223,7 +295,9 @@ void place(CommandOrigin const& origin, CommandOutput& output, std::string const
     if (!commands::isAdmin(origin)) return output.error("You need operator permission.");
     int  dim    = originDim(origin);
     auto pos    = at.value_or(originBlock(origin));
-    auto key    = normalizeKey(structure);
+    auto parsed = readResourceArgument(origin, output, structure); // ResourceKeyArgument
+    if (!parsed) return;
+    auto key    = *parsed;
     auto region = game::regionOf(dim);
     if (!region || !info(key)) return output.error(say(origin, "commands.place.structure.invalid", "There is no structure with type \"%s\"", key));
     if (!generatorFor(key) || !gf::landmark::generateAt(key, *region, pos)) {
@@ -244,6 +318,7 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
     cmd.overload().text("info").execute([](CommandOrigin const& o, CommandOutput& out) { fl::infoCommand(o, out); });
     cmd.overload().text("conquer").execute([](CommandOrigin const& o, CommandOutput& out) { fl::conquer(o, out, true); });
     cmd.overload().text("conquer").text("reactivate").execute([](CommandOrigin const& o, CommandOutput& out) { fl::conquer(o, out, false); });
+    // TF's genbook [<structure>] (GenerateBookCommand) and GloamingForest's alias generatebook
     for (char const* literal : {"genbook", "generatebook"}) {
         cmd.overload().text(literal).execute([](CommandOrigin const& o, CommandOutput& out) { fl::genbook(o, out, std::nullopt); });
         cmd.overload<fl::StructureParam>().text(literal).required("structure").execute(
