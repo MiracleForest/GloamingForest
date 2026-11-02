@@ -44,11 +44,29 @@
 //
 //     gf::recipes::ext::registerCondition("twilightforest:uncrafting_table_enabled",
 //                                         [](nlohmann::json const&) { return !config().disableEntireTable; });
+//
+// Java ids: every data recipe (TF's data and the units' bundles data/gf/recipes/<unit>.json) is
+// Java data and names vanilla items by their Java id (minecraft:cobweb, lily_pad, slime_block,
+// item_frame, dead_bush, chain, stone_slab, tipped_arrow). The built-in loaders hold the game's
+// Bedrock ids in `ingredients` (every Bedrock id of a renamed item: minecraft:web) and `resultItem`
+// (the main one: minecraft:deadbush, minecraft:iron_chain), so producing(), ofType() and matching
+// work with Bedrock stacks; `data` keeps the file's JSON (Java ids) as it is. An owner's loader
+// (registerType) parses the JSON itself: it uses parseIngredient / itemId below to get the same ids.
+// Bedrock spells a few Java items as another item with a data value: minecraft:tipped_arrow is
+// minecraft:arrow (the potion is the aux value; TF's uncrafting recipe "tipped_arrow" so lists
+// minecraft:arrow as its input, and its owner checks the stack's potion), and NeoForge's
+// "components" ingredients (TF's potions) keep their components in `data` only.
+//
+//     auto r = gf::recipes::CraftingRecipe{};
+//     r.ingredients.push_back(gf::recipes::ext::parseIngredient(json["input"]));
+//     r.resultItem = gf::recipes::ext::itemId(json["result"]);
 
 #include <functional>
 #include <string>
 
 #include "nlohmann/json.hpp"
+
+#include "feature/recipes/Recipes.h"
 
 namespace gf::recipes::ext {
 
@@ -59,5 +77,12 @@ void addSpecialLayout(std::string const& specialId, std::string const& bpRecipeI
 using ConditionFn = std::function<bool(nlohmann::json const& condition)>;
 /// Registers (or replaces) a recipe condition type; recipes are evaluated again at the next query.
 void registerCondition(std::string const& typeId, ConditionFn test);
+
+/// A Java ingredient of the data ({"item"}, {"tag"}, lists, "#tag", NeoForge's compound "children",
+/// "items" and "ingredient") with the game's item ids, as the built-in loaders parse it.
+[[nodiscard]] Ingredient parseIngredient(nlohmann::json const& ingredient);
+/// A Java item id or result ("minecraft:dead_bush", {"id": ...}, {"item": ...}) as the game's item
+/// id ("minecraft:deadbush"); "" for anything else.
+[[nodiscard]] std::string itemId(nlohmann::json const& result);
 
 } // namespace gf::recipes::ext

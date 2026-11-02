@@ -23,6 +23,9 @@
 //   the client crafted (the request's recipe net id; a BP recipe with the special's identifier
 //   shows the shape to vanilla clients; variable layouts: ext/item/Recipes.h), never the Java data
 //   recipe of the same id, and puts the remainders back into the grid.
+// The data's vanilla item ids are Java's (minecraft:cobweb, dead_bush, item_frame, chain, ...): the
+// built-in loaders hold the game's Bedrock ids (tags/JavaIds.h; ext::parseIngredient / itemId for
+// owners' loaders); a recipe's `data` keeps the file's JSON as it is.
 // Data recipes with "neoforge:conditions" load only when the conditions hold (NeoForge's
 // ConditionalOps; TF's uncrafting_table_enabled, mod_loaded for the jeed integration recipes).
 // The recipe pointers the queries return stay valid for the process: a data reload or a new world
@@ -67,6 +70,7 @@
 #include "feature/ext/item/Recipes.h"
 #include "feature/item/DataFiles.h"
 #include "feature/recipes/RecipesInternal.h"
+#include "feature/tags/JavaIds.h"
 #include "feature/tags/Tags.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
@@ -121,12 +125,24 @@ void retire(Store& s, std::deque<CraftingRecipe>& list) {
 }
 
 // ---- Java data ---------------------------------------------------------------------------------------
+// The data names vanilla items by Java id (minecraft:cobweb, lily_pad, slime_block, item_frame,
+// dead_bush, chain, stone_slab): ingredients take every Bedrock id of one, results its main one
+// (tags/JavaIds.h). Tags stay tag ids: the tag runtime renames their members.
+
+/// A Java item id of the data as the game's item id.
+std::string bedrockItem(std::string const& javaId) { return tags::javaids::primary("item", data::withNamespace(javaId)); }
+
+/// Adds the Bedrock ids of a Java item id to an ingredient (once each).
+void addItem(Ingredient& out, std::string const& javaId) {
+    for (auto& id : tags::javaids::bedrock("item", data::withNamespace(javaId)))
+        if (std::find(out.items.begin(), out.items.end(), id) == out.items.end()) out.items.push_back(std::move(id));
+}
 
 std::string idField(Json const& j) {
-    if (j.is_string()) return data::withNamespace(j.get<std::string>());
+    if (j.is_string()) return bedrockItem(j.get<std::string>());
     if (!j.is_object()) return {};
     for (auto const* k : {"id", "item"})
-        if (auto it = j.find(k); it != j.end() && it->is_string()) return data::withNamespace(it->get<std::string>());
+        if (auto it = j.find(k); it != j.end() && it->is_string()) return bedrockItem(it->get<std::string>());
     return {};
 }
 
@@ -138,11 +154,11 @@ void parseIngredientInto(Json const& j, Ingredient& out) {
     if (j.is_string()) {
         auto s = j.get<std::string>();
         if (s.starts_with('#')) out.tag = data::withNamespace(s.substr(1));
-        else out.items.push_back(data::withNamespace(s));
+        else addItem(out, s);
         return;
     }
     if (!j.is_object()) return;
-    if (auto it = j.find("item"); it != j.end() && it->is_string()) out.items.push_back(data::withNamespace(it->get<std::string>()));
+    if (auto it = j.find("item"); it != j.end() && it->is_string()) addItem(out, it->get<std::string>());
     if (auto it = j.find("tag"); it != j.end() && it->is_string()) {
         if (out.tag.empty()) out.tag = data::withNamespace(it->get<std::string>());
         else // a second tag: keep its members (an Ingredient holds one tag)
@@ -252,7 +268,7 @@ std::optional<CraftingRecipe> builtIn(std::string const& id, Json const& j) {
         r.data["gear_item"] = travellersItemOf(r.ingredients);
     } else if (t == "twilightforest:scepter_repair") {
         // ScepterRepairRecipe: the scepter plus its repair ingredients restore `durability`
-        auto scepter = data::withNamespace(j.value("scepter", std::string()));
+        auto scepter = bedrockItem(j.value("scepter", std::string()));
         r.ingredients.push_back(Ingredient{{scepter}, {}});
         for (auto& i : parseList(j.value("repair_ingredients", Json::array()))) r.ingredients.push_back(std::move(i));
         r.resultItem = scepter;
@@ -502,6 +518,10 @@ void registerCondition(std::string const& typeId, ConditionFn test) {
     s.conditions[data::withNamespace(typeId)] = std::move(test);
     if (s.dataLoaded) s.dataDirty = true; // the data's conditions are evaluated again
 }
+
+Ingredient parseIngredient(Json const& ingredient) { return one(ingredient); }
+
+std::string itemId(Json const& result) { return idField(result); }
 } // namespace ext
 
 std::vector<CraftingRecipe const*> producing(std::string const& itemId) {
@@ -847,6 +867,16 @@ std::size_t dataRecipeCount() {
     return s.dataRecipes.size();
 }
 
+std::vector<CraftingRecipe const*> dataRecipes() {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    ensureData();
+    std::vector<CraftingRecipe const*> out;
+    out.reserve(s.dataRecipes.size());
+    for (auto const& r : s.dataRecipes) out.push_back(&r);
+    return out;
+}
+
 std::size_t nativeRecipeCount() {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
@@ -872,6 +902,7 @@ struct CraftState {
     std::string recipeId;        ///< the BP recipe the client crafted ("" unknown)
     std::string resultItem;      ///< that recipe's result item
     bool        workbench = false;
+    bool        gridCraft = false; ///< the request crafts a recipe of the grid (CraftRecipe / CraftRecipeAuto)
 };
 thread_local CraftState gCraft;
 
@@ -917,6 +948,7 @@ LL_TYPE_INSTANCE_HOOK(
             auto [id, result]     = rc::recipeOfAction(action);
             rc::gCraft.recipeId   = std::move(id);
             rc::gCraft.resultItem = std::move(result);
+            rc::gCraft.gridCraft  = true;
         }
     } catch (...) {
         rc::gCraft = {};
@@ -950,19 +982,16 @@ LL_TYPE_INSTANCE_HOOK(
     try {
         Player& player = mPlayer;
         if (player.isClientSide() || results.size() != 1 || results.front().isNull() || !rc::internal::anySpecial()) return origin(results, numCrafts);
+        // only a grid craft of the crafting screen (CraftHandlerCrafting's CraftRecipe / CraftRecipeAuto
+        // of this request): a trade, the loom, the smithing table, the anvil or a creative pick of
+        // the same item never takes the grid's ingredients
+        if (rc::gCraft.owner != this || !rc::gCraft.gridCraft) return origin(results, numCrafts);
         auto resultItem = results.front().getTypeName();
-        bool table      = rc::gCraft.owner == this; // the crafting table's request
         // the BP recipe the request crafted: only when it makes this result (a net id read from an
         // unexpected action layout names another recipe or none, and the result decides then)
-        std::string bp        = table && rc::gCraft.resultItem == resultItem ? rc::gCraft.recipeId : std::string();
-        bool        workbench = false;
-        if (table) workbench = rc::gCraft.workbench;
-        else {
-            auto& ui = player.mPlayerUIContainer.get();
-            for (int i = static_cast<int>(PlayerUISlot::Crafting3x3Input1); i <= static_cast<int>(PlayerUISlot::Crafting3x3Input9); ++i)
-                workbench = workbench || !ui.getItem(i).isNull();
-        }
-        auto grid    = rc::internal::gridOf(player, workbench);
+        std::string bp        = rc::gCraft.resultItem == resultItem ? rc::gCraft.recipeId : std::string();
+        bool        workbench = rc::gCraft.workbench;
+        auto        grid      = rc::internal::gridOf(player, workbench);
         bool refused = false;
         auto id      = rc::internal::resolveSpecial(bp, resultItem, grid.grid, &refused);
         if (refused) {

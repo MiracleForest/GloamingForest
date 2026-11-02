@@ -267,6 +267,10 @@ std::vector<std::string> membersIn(std::string const& dir, std::string const& ta
     return resolve(std::nullopt, normalizeDir(dir), stripHash(tag))->sorted;
 }
 
+std::vector<std::string> dataMembers(std::string const& dir, std::string const& tag) {
+    return resolve(std::nullopt, normalizeDir(dir), stripHash(tag))->sorted;
+}
+
 std::size_t fileCount() {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
@@ -280,6 +284,10 @@ void reload() { load(); }
 namespace ext {
 bool                     hasIn(std::string const& dir, std::string const& tag, std::string const& id) { return internal::hasIn(dir, tag, id); }
 std::vector<std::string> membersIn(std::string const& dir, std::string const& tag) { return internal::membersIn(dir, tag); }
+std::vector<std::string> bedrockIds(std::string const& dir, std::string const& javaId) {
+    return javaids::bedrock(normalizeDir(dir), data::withNamespace(javaId));
+}
+std::string bedrockId(std::string const& dir, std::string const& javaId) { return javaids::primary(normalizeDir(dir), data::withNamespace(javaId)); }
 } // namespace ext
 
 } // namespace gf::tags

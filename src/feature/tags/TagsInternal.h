@@ -16,6 +16,9 @@ namespace gf::tags::internal {
 /// (bridge included); TF's own registries ("twilight": wood palettes, ...) have no vanilla bridge.
 [[nodiscard]] bool                     hasIn(std::string const& dir, std::string const& tag, std::string const& id);
 [[nodiscard]] std::vector<std::string> membersIn(std::string const& dir, std::string const& tag);
+/// The data members of a tag (nested data tags flattened, the data's Java ids renamed to Bedrock's;
+/// without the vanilla bridge, whose members come from the game's registries).
+[[nodiscard]] std::vector<std::string> dataMembers(std::string const& dir, std::string const& tag);
 [[nodiscard]] std::size_t              fileCount();
 void                                   reload();
 

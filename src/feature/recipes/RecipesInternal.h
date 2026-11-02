@@ -15,7 +15,8 @@ class Player;
 
 namespace gf::recipes::internal {
 
-/// Parses a Java ingredient ({"item"}, {"tag"}, arrays, NeoForge compound "children", "#tag").
+/// Parses a Java ingredient ({"item"}, {"tag"}, arrays, NeoForge compound "children", "#tag"); its
+/// Java vanilla item ids become the game's (ext::parseIngredient).
 [[nodiscard]] Ingredient parseIngredient(Json const& j);
 /// Whether a stack id fits an ingredient (tags through gf::tags).
 [[nodiscard]] bool matches(Ingredient const& ingredient, std::string const& itemId);
@@ -66,6 +67,8 @@ void unregisterSpecial(std::string const& recipeId);
 /// Recipes loaded from the data tree / converted from the game.
 [[nodiscard]] std::size_t dataRecipeCount();
 [[nodiscard]] std::size_t nativeRecipeCount();
+/// Every recipe loaded from the data tree (the current generation; pointers stay valid).
+[[nodiscard]] std::vector<CraftingRecipe const*> dataRecipes();
 /// Converts the game's crafting table recipes again (after a world load).
 void refreshNative();
 /// The game's own recipe of an id (the BP / vanilla recipe, never the data's), nullptr: none.

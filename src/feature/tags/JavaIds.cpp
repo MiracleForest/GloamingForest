@@ -1,6 +1,7 @@
 // Java -> Bedrock ids of the vanilla content in TF's data (JavaIds.h).
 #include "feature/tags/JavaIds.h"
 
+#include <algorithm>
 #include <unordered_map>
 
 namespace gf::tags::javaids {
@@ -67,7 +68,7 @@ Table const& blocks() {
             {"minecraft:twisting_vines_plant", {"minecraft:twisting_vines"}},
             {"minecraft:cave_vines", {"minecraft:cave_vines", "minecraft:cave_vines_head_with_berries"}},
             {"minecraft:cave_vines_plant", {"minecraft:cave_vines_body_with_berries", "minecraft:cave_vines"}},
-            {"minecraft:chain", {"minecraft:iron_chain", "minecraft:chain"}},
+            {"minecraft:chain", {"minecraft:iron_chain"}}, // renamed in Bedrock 1.21.110 (and Java 1.21.9)
             {"minecraft:stone_stairs", {"minecraft:normal_stone_stairs"}},
             {"minecraft:cobblestone_stairs", {"minecraft:stone_stairs"}},
             {"minecraft:stone_slab", {"minecraft:normal_stone_slab"}},
@@ -111,7 +112,8 @@ Table const& blocks() {
 }
 
 /// Items whose Bedrock id differs (block items follow their block where Bedrock's item has the
-/// block's name; a few plain items have names of their own).
+/// block's name; a few plain items have names of their own). A Java item that Bedrock spells as
+/// another item with a data value maps to that item (the value, Java's components, stays in the data).
 Table const& items() {
     static Table const t{
         {"minecraft:nether_brick", {"minecraft:netherbrick"}},
@@ -141,12 +143,18 @@ Table const& items() {
         {"minecraft:oak_button", {"minecraft:wooden_button"}},
         {"minecraft:oak_pressure_plate", {"minecraft:wooden_pressure_plate"}},
         {"minecraft:shulker_box", {"minecraft:undyed_shulker_box"}},
-        {"minecraft:chain", {"minecraft:iron_chain", "minecraft:chain"}},
+        {"minecraft:chain", {"minecraft:iron_chain"}},
         {"minecraft:stone_stairs", {"minecraft:normal_stone_stairs"}},
         {"minecraft:cobblestone_stairs", {"minecraft:stone_stairs"}},
         {"minecraft:stone_slab", {"minecraft:normal_stone_slab"}},
+        {"minecraft:item_frame", {"minecraft:frame"}},
+        {"minecraft:glow_item_frame", {"minecraft:glow_frame"}},
+        {"minecraft:map", {"minecraft:empty_map"}},
+        // Bedrock's tipped arrows are minecraft:arrow with the potion as data value (Java's
+        // potion_contents component; the uncrafting recipe's data keeps it)
+        {"minecraft:tipped_arrow", {"minecraft:arrow"}},
         {"minecraft:zombified_piglin_spawn_egg", {"minecraft:zombie_pigman_spawn_egg"}},
-        {"minecraft:evoker_spawn_egg", {"minecraft:evocation_illager_spawn_egg"}},
+        // (Bedrock's evoker spawn egg is minecraft:evoker_spawn_egg, as Java's)
     };
     return t;
 }
@@ -165,8 +173,7 @@ Table const& entities() {
         {"minecraft:trident", {"minecraft:thrown_trident"}},
         {"minecraft:potion", {"minecraft:splash_potion", "minecraft:lingering_potion"}},
         {"minecraft:wither_skull", {"minecraft:wither_skull", "minecraft:wither_skull_dangerous"}},
-        {"minecraft:item_frame", {"minecraft:frame"}},
-        {"minecraft:glow_item_frame", {"minecraft:glow_frame"}},
+        // (Java's item frame entities are blocks on Bedrock, minecraft:frame / glow_frame: no entity type)
     };
     return t;
 }
@@ -179,6 +186,13 @@ Table const* tableOf(std::string_view dir) {
 }
 
 } // namespace
+
+std::vector<std::pair<std::string, std::vector<std::string>>> entries(std::string_view dir) {
+    std::vector<std::pair<std::string, std::vector<std::string>>> out;
+    if (auto const* t = tableOf(dir)) out.assign(t->begin(), t->end());
+    std::sort(out.begin(), out.end());
+    return out;
+}
 
 std::vector<std::string> bedrock(std::string_view dir, std::string const& javaId) {
     if (javaId.starts_with("minecraft:"))
