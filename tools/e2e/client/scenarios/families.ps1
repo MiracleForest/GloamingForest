@@ -31,6 +31,8 @@
 #   out/families/families-12-tf-close.png   TF's signs and chests close up
 #   out/families/families-13-tf-bush.png    the snowy berry bush close up (client mod: the grass
 #                                           below drawn snowy)
+#   out/families/families-15-ct-close.png   the six-face connected texture fixture close up (client
+#                                           mod: the corner piece at the L's inner corner)
 #   out/families/families-14-sign-form.png  remote-vanilla: the sign editor form (its title is the
 #                                           game's own sign.edit text)
 # Local mode also runs the families selftests on the integrated server; remote modes build through
@@ -235,6 +237,12 @@ Save-Screenshot 'families-12-tf-close' | Out-Null
 Invoke-Teleport "/tp @s 170.5 $($y + 2) $($z - 3.5) 0 25"
 Start-Sleep -Seconds 3
 Save-Screenshot 'families-13-tf-bush' | Out-Null
+# the six-face connected texture fixture close up: its packs draw two connected sides as the
+# cornerless piece; the client mod draws the corner piece where the diagonal block is missing (the
+# inner corner of the L)
+Invoke-Teleport "/tp @s 99.5 $($y + 1) $($z - 2.5) 0 10"
+Start-Sleep -Seconds 3
+Save-Screenshot 'families-15-ct-close' | Out-Null
 
 # a sign written in game: the client mod's native editor (an empty-hand click on the sign), the
 # text on the sign's display entity; vanilla clients get the editor as a form

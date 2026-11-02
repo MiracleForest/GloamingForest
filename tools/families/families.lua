@@ -411,20 +411,21 @@ local SOUND_TYPE_BLOCKS = {
 -- Java; canopy and mangrove leaves blend the biome foliage with 0x469A66 / 0xC0E694
 -- (CANOPY_COLORIZER / MANGROVE_COLORIZER), which Bedrock's tint methods can't: they take the tint
 -- of Java's colour without a world (FoliageColor.getEvergreenColor / getBirchColor).
+-- Time, transformation, mining, sorting and rainbow oak leaves: ColorHandler colours them by
+-- position alone. They get a tint method so the client mod's tint (gf::client::tint, F12's
+-- PositionDependentTintResolver hook, which only runs for tinted materials) draws Java's colour
+-- per position (src/client/families); a vanilla client tints them with the biome's foliage.
 local LEAF_TINTS = {
     ["twilightforest:twilight_oak_leaves"] = "default_foliage", ["twilightforest:dark_leaves"] = "default_foliage",
     ["twilightforest:canopy_leaves"] = "evergreen_foliage", ["twilightforest:mangrove_leaves"] = "birch_foliage",
+    ["twilightforest:time_leaves"] = "default_foliage", ["twilightforest:transformation_leaves"] = "default_foliage",
+    ["twilightforest:mining_leaves"] = "default_foliage", ["twilightforest:sorting_leaves"] = "default_foliage",
+    ["twilightforest:rainbow_oak_leaves"] = "default_foliage",
 }
--- The leaves Java colours without the biome: their grey textures pre-tinted with Java's colour
--- (terrain_texture.json tint_color). Beanstalk and thorn leaves are always
--- FoliageColor.getEvergreenColor; time, transformation, mining and sorting leaves take their
--- colour without a world (the item, a vanilla client) and rainbow oak FoliageColor.getDefaultColor:
--- the client mod draws their colour per position (src/client/families, through gf::client::tint).
+-- The leaves Java always colours the same (FoliageColor.getEvergreenColor): their grey textures
+-- pre-tinted with it (terrain_texture.json tint_color), the same on every client.
 local LEAF_COLORS = {
     ["twilightforest:beanstalk_leaves"] = "#619961", ["twilightforest:thorn_leaves"] = "#619961",
-    ["twilightforest:time_leaves"] = "#6a9c17", ["twilightforest:transformation_leaves"] = "#6cccea",
-    ["twilightforest:mining_leaves"] = "#fcf144", ["twilightforest:sorting_leaves"] = "#364c03",
-    ["twilightforest:rainbow_oak_leaves"] = "#48b518",
 }
 
 -- The wood of a sign / chest (TFWoodTypes names: twilight_oak, canopy, mangrove, dark, time,
@@ -1960,6 +1961,8 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
     -- the resource pack's own terrain textures (the images of the textures the kit tints)
     local rp_terrain = try_json(path.join(rpdir, "textures", "terrain_texture.json"))
     ctx.rp_terrain = type(rp_terrain) == "table" and rp_terrain.texture_data or {}
+    -- textures the caller adds to the pack afterwards (the fixtures' vanilla paths)
+    for k, v in pairs(opts.textures or {}) do if ctx.rp_terrain[k] == nil then ctx.rp_terrain[k] = {textures = v} end end
     ctx.loot_double = function (e)
         local rel = "loot_tables/gf_families/" .. safe_name(e.id) .. "_double.json"
         local file = path.join(bpdir, rel)
@@ -2269,7 +2272,7 @@ function generate(projectdir, outdir, opts)
         if #fx.entries > 0 and marked(tbp) then
             done = done + 1
         elseif #fx.entries > 0 then
-            local r = generate_set(fx.entries, tbp, trp, {manual = manual}, errors)
+            local r = generate_set(fx.entries, tbp, trp, {manual = manual, textures = fx.textures}, errors)
             summary.fixtures = r.blocks
             for _, f in ipairs(r.files) do table.insert(summary.files, f) end
             for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end

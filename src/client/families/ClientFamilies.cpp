@@ -14,8 +14,9 @@
 // - Climbable family blocks (TF's climbable hollow logs, rope, iron ladder: BlockProperty::Climbable,
 //   like vanilla ladders) for the client's own movement, set again on every join.
 // - Leaf colours by position (ColorHandler: time, transformation, mining, sorting and rainbow oak
-//   leaves, LeafColors.h) through the client.render contract's tint (gf::client::tint, F12); the
-//   packs carry Java's colour without a world for every client (tools/families).
+//   leaves, LeafColors.h) through the client.render contract's tint (gf::client::tint, F12): their
+//   materials carry a tint method (tools/families), which a vanilla client fills with the biome's
+//   foliage colour.
 // - Snowy grass under snowloggables: TFBushBlock.updateSnowBeneath sets the grass below a bush
 //   with snow in it SNOWY. Bedrock's grass has no such state: it draws its snowed side when the
 //   client's grass variant (GrassBlock::calcVariant, client only) finds snow above, so the variant
