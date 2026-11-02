@@ -551,15 +551,17 @@ GF_REGISTER_SELFTEST("import.place_blocks", [](Context& ctx) -> ll::coro::CoroTa
         for (auto const& [dx, dz] : s.sides) addSupport(pos.offset(dx, 0, dz), "minecraft:grass_block");
         cells.push_back({id, pos, std::move(s)});
     }
-    // (setBlock reports false when the block is already there)
-    for (auto const& [p, id] : supports) ctx.require(ctx.setBlock(p, id) || ctx.blockAt(p) == id, "support " + id + " placed");
+    // (setBlock reports false when the block is already there.) From here on nothing aborts the test, so the removal
+    // below always runs in its order.
+    for (auto const& [p, id] : supports)
+        if (!ctx.setBlock(p, id) && ctx.blockAt(p) != id) fails.add("cannot place the support " + id);
     for (auto const& c : cells)
         if (!ctx.setBlock(c.pos, c.id, c.support.states)) fails.add("cannot place " + c.id + " " + c.support.states.dump());
     for (auto const& c : cells)
         if (c.support.upper && !ctx.setBlock(c.pos.offset(0, 1, 0), c.id, *c.support.upper)) fails.add("cannot place the upper half of " + c.id);
     co_await ctx.ticks(1);
     for (auto const& c : cells)
-        if (c.support.poke) ctx.require(ctx.setBlock(c.pos.offset(0, 1, 0), "minecraft:glass"), "a block set above " + c.id);
+        if (c.support.poke && !ctx.setBlock(c.pos.offset(0, 1, 0), "minecraft:glass")) fails.add("cannot set a block above " + c.id);
     co_await ctx.ticks(3);
     for (auto const& c : cells) {
         if (auto got = ctx.blockAt(c.pos); got != c.id) fails.add(c.id + " " + c.support.states.dump() + " reads back as " + got);
