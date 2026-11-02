@@ -15,7 +15,8 @@
 // resolver for Bedrock's "default_foliage" tint at the position (the biomes' foliage colours
 // blended as the game blends them; a block without a tint function of its own is asked, so the
 // tint registry hands the request to the game). A tint function reached any other way finds no
-// resolver and gets FoliageColor's default.
+// resolver (nullopt): the leaves take ColorHandler's colour without a world (LeafColors.h Blend:
+// FoliageColor.getEvergreenColor / getBirchColor).
 
 #ifdef GF_CLIENT
 
@@ -80,7 +81,7 @@ std::optional<unsigned> biomeFoliageAt(BlockPos const& pos) {
     Block const* probe = gProbe.load(std::memory_order_acquire);
     if (!cur.resolver || !probe) {
         static std::atomic<bool> warned{false};
-        if (!warned.exchange(true)) log().warn("families: no tint resolver to ask for the biome foliage at {} {} {} (FoliageColor's default instead)", pos.x, pos.y, pos.z);
+        if (!warned.exchange(true)) log().warn("families: no tint resolver to ask for the biome foliage at {} {} {} (the colour without a world instead)", pos.x, pos.y, pos.z);
         return std::nullopt;
     }
     // the resolver's positions are relative to the mesh's corner

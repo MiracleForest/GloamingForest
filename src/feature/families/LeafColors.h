@@ -13,8 +13,9 @@
 // colour at fade 0 (rainbow oak: FoliageColor.getDefaultColor). Canopy and mangrove leaves blend
 // the biome foliage colour at the position (CANOPY_COLORIZER / MANGROVE_COLORIZER, blendOf): the
 // client mod applies them to the game's own foliage tint there; without a world Java uses
-// FoliageColor.getEvergreenColor / getBirchColor (a vanilla client: Bedrock's evergreen / birch
-// tint methods). No game headers: both builds include it (the server's selftests check the values).
+// FoliageColor.getEvergreenColor / getBirchColor (Blend::withoutWorld: the client mod's colour when
+// it can't ask the game for the foliage colour; a vanilla client: Bedrock's evergreen / birch tint
+// methods). No game headers: both builds include it (the server's selftests check the values).
 
 #include <cstdint>
 #include <optional>
@@ -71,12 +72,23 @@ namespace gf::feature::families::leafcolors {
 /// ColorHandler.MANGROVE_COLORIZER: TFBlocks.MANGROVE_LEAVES, ((foliage & 0xFEFEFE) + 0xC0E694) / 2.
 [[nodiscard]] constexpr unsigned mangrove(unsigned foliage) { return (((foliage & 0xFEFEFEu) + 0xC0E694u) / 2u) & 0xFFFFFFu; }
 
+/// FoliageColor.getEvergreenColor (-10380959): canopy leaves without a world.
+inline constexpr unsigned kEvergreen = 0x619961;
+/// FoliageColor.getBirchColor (-8345771): mangrove leaves without a world.
+inline constexpr unsigned kBirch = 0x80A755;
+
 using BlendFn = unsigned (*)(unsigned foliage);
-/// The colorizer ColorHandler applies to the biome foliage colour for a TF leaf block id (nullopt:
-/// none; those leaves take the foliage colour as it is, or one of `of`).
-[[nodiscard]] constexpr std::optional<BlendFn> blendOf(std::string_view id) {
-    if (id == "twilightforest:canopy_leaves") return &canopy;
-    if (id == "twilightforest:mangrove_leaves") return &mangrove;
+/// ColorHandler's colour of canopy or mangrove leaves: the colorizer of the biome foliage colour at
+/// the position, and the colour without a world or position (getter == null || pos == null).
+struct Blend {
+    BlendFn  fn;
+    unsigned withoutWorld;
+};
+/// The blend ColorHandler applies to a TF leaf block id (nullopt: none; those leaves take the
+/// foliage colour as it is, or one of `of`).
+[[nodiscard]] constexpr std::optional<Blend> blendOf(std::string_view id) {
+    if (id == "twilightforest:canopy_leaves") return Blend{&canopy, kEvergreen};
+    if (id == "twilightforest:mangrove_leaves") return Blend{&mangrove, kBirch};
     return std::nullopt;
 }
 

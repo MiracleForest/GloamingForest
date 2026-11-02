@@ -80,8 +80,6 @@ namespace gf::client::families {
 
 namespace {
 
-constexpr unsigned kDefaultFoliage = 0x48B518; ///< FoliageColor.getDefaultColor
-
 class ClientFamiliesModule {
 public:
     void install() {
@@ -99,9 +97,14 @@ public:
                     tint::registerBlock(e->id, [fn = *color](BlockPos const& p) { return fn(p.x, p.y, p.z); });
                     ++n;
                 } else if (auto blend = fam::leafcolors::blendOf(e->id)) {
-                    // CANOPY_COLORIZER / MANGROVE_COLORIZER of the biome foliage colour there (the
-                    // game's default foliage when the resolver can't be asked: FoliageColor's default)
-                    tint::registerBlock(e->id, [fn = *blend](BlockPos const& p) { return fn(biomeFoliageAt(p).value_or(kDefaultFoliage)); });
+                    // CANOPY_COLORIZER / MANGROVE_COLORIZER of the biome foliage colour there; when the
+                    // game can't be asked for it (a tint function reached outside a chunk mesh's tint
+                    // resolver, or before a world is joined), ColorHandler's colour without a world:
+                    // FoliageColor.getEvergreenColor / getBirchColor, without the colorizer
+                    tint::registerBlock(e->id, [b = *blend](BlockPos const& p) {
+                        auto foliage = biomeFoliageAt(p);
+                        return foliage ? b.fn(*foliage) : b.withoutWorld;
+                    });
                     ++blended;
                 }
             }
