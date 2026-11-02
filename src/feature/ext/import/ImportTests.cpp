@@ -483,6 +483,11 @@ Support supportOf(JDoc const& chain) {
             s.ceiling = "minecraft:dirt"; // TFPlantBlock.canPlaceRootAt: the block above is #twilightforest:plants_hang_on
         } else if (cls == "TrollRootBlock") {
             s.ceiling = "minecraft:stone"; // canPlaceRootBelow: the block above is #minecraft:base_stone_overworld
+        } else if (cls == "RopeBlock") {
+            // RopeBlock (default y true, x and z false): onPlace schedules a tick, and tick() destroys a rope whose
+            // checkConnection(UP) fails; canSurvive / canConnectTo(UP): the block above is leaves, a rope along y, or has
+            // a sturdy centre on its down face
+            s.ceiling = "minecraft:dirt";
         } else if (cls == "DoorBlock" || cls == "BrazierBlock") {
             // DoorBlock / BrazierBlock.updateShape: the lower half goes when the block above is not its upper half
             s.states = {{"twilightforest:half", "lower"}};
@@ -569,11 +574,12 @@ GF_REGISTER_SELFTEST("import.place_blocks", [](Context& ctx) -> ll::coro::CoroTa
         if (auto got = ctx.blockAt(c.pos.offset(0, 1, 0)); got != c.id) fails.add(c.id + "'s upper half reads back as " + got);
     }
     fails.done(static_cast<int>(cells.size()));
-    // the blocks go before what holds them (a support removed first breaks its block, with drops)
+    // the blocks go before what holds them (a support removed first breaks its block, with drops): the upper halves
+    // (held by their lower halves) and the blocks set above a cell, then the cells, then the supports
     if (auto* region = ctx.region()) {
-        for (auto const& c : cells) gf::game::clearBlock(*region, gf::game::blockPos(c.pos));
         for (auto const& c : cells)
             if (c.support.upper || c.support.poke) gf::game::clearBlock(*region, gf::game::blockPos(c.pos.offset(0, 1, 0)));
+        for (auto const& c : cells) gf::game::clearBlock(*region, gf::game::blockPos(c.pos));
         for (auto const& [p, id] : supports) gf::game::clearBlock(*region, gf::game::blockPos(p));
     }
 });
