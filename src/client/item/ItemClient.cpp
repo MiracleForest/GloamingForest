@@ -400,14 +400,15 @@ void drawHudEffects(MinecraftUIRenderContext& ctx) {
     }
 }
 
-/// MobEffectUtil#formatDuration: m:ss (h:mm:ss over an hour), "**:**" for infinite.
+/// MobEffectUtil#formatDuration -> StringUtil#formatTickDuration (20 ticks a second): "%02d:%02d",
+/// "%02d:%02d:%02d" from an hour ("03:00", "01:00:00"); effect.duration.infinite ("∞") for infinite.
 std::string formatDuration(int ticks) {
     if (ticks < 0) return translate("effect.duration.infinite", "∞");
     int  seconds = ticks / 20;
     int  h = seconds / 3600, m = seconds / 60 % 60, sec = seconds % 60;
     char buf[32];
-    if (h > 0) std::snprintf(buf, sizeof buf, "%d:%02d:%02d", h, m, sec);
-    else std::snprintf(buf, sizeof buf, "%d:%02d", m, sec);
+    if (h > 0) std::snprintf(buf, sizeof buf, "%02d:%02d:%02d", h, m, sec);
+    else std::snprintf(buf, sizeof buf, "%02d:%02d", m, sec);
     return buf;
 }
 
@@ -526,7 +527,8 @@ LL_TYPE_INSTANCE_HOOK(
     }
 }
 
-// The name colour of an item with a rarity (TF's TWILIGHT: dark green); custom names keep theirs.
+// The name colour of an item with a rarity (TF's TWILIGHT: dark green). As Java's
+// ItemStack#getDisplayName / getTooltipLines, a custom name keeps the rarity's colour and is italic.
 LL_TYPE_INSTANCE_HOOK(
     ItemRarityPrefixHook,
     ll::memory::HookPriority::Normal,
@@ -537,8 +539,10 @@ LL_TYPE_INSTANCE_HOOK(
     auto prefix = origin();
     try {
         if (isNull() || !mItem) return prefix;
-        if (gf::item::ext::rarityOf(mItem->mFullName->getString()) == gf::item::ext::Rarity::Common || !getCustomName().empty()) return prefix;
-        return gf::item::ext::rarityColor(gf::item::ext::rarityOf(static_cast<ItemStackBase const&>(*this)));
+        if (gf::item::ext::rarityOf(mItem->mFullName->getString()) == gf::item::ext::Rarity::Common) return prefix;
+        std::string out = gf::item::ext::rarityColor(gf::item::ext::rarityOf(static_cast<ItemStackBase const&>(*this)));
+        if (!getCustomName().empty()) out += "\xC2\xA7" "o";
+        return out;
     } catch (...) {
         return prefix;
     }
