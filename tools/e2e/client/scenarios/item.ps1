@@ -133,7 +133,13 @@ $r = Invoke-SelfTest 'item.real_anvil_check'
 if ($r.Fail -gt 0) { throw "the real anvil merge failed: $($r.Failed -join ', ')" }
 $line = Wait-LogLine 'real anvil checked for .*: fixture_react \d' 15 -Since $mark
 Write-Step "anvil: $line"
-if ($line -notmatch 'fixture_react 2') { throw "the real anvil merge did not give fixture_react II: $line" }
+if ($script:Mode -eq 'remote-vanilla' -and $line -match 'fixture_react 1 \(0 engine merges\)') {
+    # a vanilla client previews the anvil itself and offers no result for a merge of custom
+    # enchantments only (the recorded deviation; anvil-inputs.png shows the empty result slot)
+    Write-Step 'vanilla client: no anvil result offered for a custom-only merge (deviation)'
+} elseif ($line -notmatch 'fixture_react 2') {
+    throw "the real anvil merge did not give fixture_react II: $line"
+}
 Invoke-Chat '/setblock ~3 ~ ~ air'
 
 if (-not $script:IsLocal) {
