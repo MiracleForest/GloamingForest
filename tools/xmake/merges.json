@@ -1,5 +1,5 @@
 {
-  "comment": "Fragment merges and layers of tools/xmake/assemble.lua (contract 'assemble', AGENTS.md). Fragments live in directories ending in '.d'; 'object' merges fail on a duplicate key, 'union' merges concatenate arrays (scalars de-duplicated). Gen layer (assets/gen/<tool>/<unit>/<root>/**) is overridden per id by the manual layer (assets/pack/<root>/**, assets/lang/**, assets/data/**).",
+  "comment": "Fragment merges and layers of tools/xmake/assemble.lua (contract 'assemble', AGENTS.md). Fragments live in directories ending in '.d'; 'object' merges fail on a duplicate key, 'union' merges concatenate arrays (scalars de-duplicated), 'categories' merges each listed object path ('entity_sounds.entities') per id (a duplicate id fails; other keys fail). Gen layer (assets/gen/<tool>/<unit>/<root>/**) is overridden per id by the manual layer (assets/pack/<root>/**, assets/lang/**, assets/data/**).",
   "modName": "GloamingForest",
   "resourcePackName": "gloamingforest",
   "packLicenseFiles": [
@@ -31,6 +31,9 @@
     { "root": "rp", "glob": "sounds.d/*.json", "out": "sounds/sound_definitions.json", "mode": "object",
       "wrapper": { "format_version": "1.20.20", "sound_definitions": "$merged" } },
     { "root": "rp", "glob": "music_definitions.d/*.json", "out": "sounds/music_definitions.json", "mode": "object" },
+    { "root": "rp", "glob": "sounds.json.d/*.json", "out": "sounds.json", "mode": "categories",
+      "categories": ["block_sounds", "entity_sounds.entities", "individual_event_sounds.events", "interactive_sounds.block_sounds", "interactive_sounds.entity_sounds.entities"],
+      "comment": "Bedrock's resource-pack sounds.json (the sounds a block, entity or event plays; their names are sound_definitions entries): each category merged per block / entity / event id" },
     { "root": "rp", "glob": "blocks.d/*.json", "out": "blocks.json", "mode": "object",
       "wrapper": { "format_version": "1.21.40", "$spread": "$merged" } },
     { "root": "rp", "glob": "texts.d/*/*.lang", "out": "texts/{locale}.lang", "mode": "lang" },
@@ -48,6 +51,7 @@
     "integerStates": true,
     "permutationBudget": { "perBlock": 65536, "total": 4000000 },
     "danglingNamespaces": ["twilightforest"],
+    "knownIds": "tools/import/known-ids.json",
     "owners": "docs/spec/owners.tsv",
     "ownedRoots": ["assets/pack", "assets/gen", "assets/data", "assets/lang", "assets/tags", "assets/structures", "assets/test"],
     "arrBlobs": "tools/ci/arr-blobs.txt",
