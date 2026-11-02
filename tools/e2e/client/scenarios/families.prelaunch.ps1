@@ -8,3 +8,7 @@ if ($script:Mode -eq 'local' -or $script:Mode -eq 'remote-mod') {
     & pwsh -NoProfile -File (Join-Path $script:RepoRoot 'tools/families/run.ps1') -Out $deployed
     if ($LASTEXITCODE -ne 0) { throw 'tools/families/run.ps1 failed on the deployed mod' }
 }
+# the instance's own graphics mode, should a killed families.classic (or ui) run have left its
+# backup behind (F12's option helpers; nothing to do without a backup)
+. (Join-Path $PSScriptRoot 'ui.graphics.ps1')
+Restore-UiGraphicsModes
