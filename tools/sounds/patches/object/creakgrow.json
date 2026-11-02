@@ -1,0 +1,44 @@
+{
+  "about": "Growing plant: rising woody creaks with leafy rustles.",
+  "params": {
+    "len": 1.2
+  },
+  "length": "$len",
+  "tail": 0.3,
+  "layers": [
+    {
+      "type": "patch",
+      "patch": "object/creak",
+      "params": {
+        "pitch": 45,
+        "len": "$len*0.8",
+        "bend": 12,
+        "jitter": 0.5
+      }
+    },
+    {
+      "type": "patch",
+      "patch": "object/rustle",
+      "amp": 0.6,
+      "params": {
+        "len": "$len",
+        "density": 160
+      }
+    },
+    {
+      "type": "osc",
+      "wave": "sine",
+      "amp": 0.3,
+      "freq": {
+        "from": 180,
+        "to": 520
+      },
+      "env": {
+        "a": "$len*0.4",
+        "d": "$len*0.3",
+        "s": 0.6,
+        "r": 0.2
+      }
+    }
+  ]
+}

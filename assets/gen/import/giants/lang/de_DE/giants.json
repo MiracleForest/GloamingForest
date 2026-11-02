@@ -1,0 +1,22 @@
+{
+  "block.twilightforest.beanstalk_leaves": "Bohnenrankenlaub",
+  "block.twilightforest.fluffy_cloud": "Flaumige Wolke",
+  "block.twilightforest.giant_cobblestone": "Riesiger Pflasterstein",
+  "block.twilightforest.giant_leaves": "Riesenlaub",
+  "block.twilightforest.giant_log": "Riesenholz",
+  "block.twilightforest.giant_obsidian": "Riesenobsidian",
+  "block.twilightforest.huge_stalk": "Riesiger Stiel",
+  "block.twilightforest.rainy_cloud": "Regenwolke",
+  "block.twilightforest.snowy_cloud": "Schneewolke",
+  "block.twilightforest.uberous_soil": "Hochwertige Erde",
+  "block.twilightforest.wispy_cloud": "Dünne Wolke",
+  "entity.twilightforest.armored_giant": "Gepanzerter Riese",
+  "entity.twilightforest.giant_miner": "Bergriese",
+  "item.twilightforest.armored_giant_spawn_egg": "Gepanzerter-Riese-Spawn-Ei",
+  "item.twilightforest.giant_miner_spawn_egg": "Bergriese-Spawn-Ei",
+  "item.twilightforest.giant_pickaxe": "Spitzhacke des Riesen",
+  "item.twilightforest.giant_pickaxe.desc": "Zerstört Riesenblöcke",
+  "item.twilightforest.giant_sword": "Schwert der Riesen",
+  "item.twilightforest.magic_beans": "Magische Bohne",
+  "subtitles.twilightforest.block.beanstalk.grow": "Boden grollt"
+}

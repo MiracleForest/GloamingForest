@@ -1,0 +1,11 @@
+{
+  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
+  "kind": "tag",
+  "reason": "a TF tag of a two-segment registry (data/<ns>/tags/twilight/<registry>/ or tags/worldgen/<registry>/), which assemble reads with a one-segment registry",
+  "referencedBy": [
+    "data/twilightforest/worldgen/configured_feature/druid_hut.json",
+    "data/twilightforest/worldgen/configured_feature/fancy_well.json",
+    "data/twilightforest/worldgen/configured_feature/simple_well.json"
+  ],
+  "values": []
+}

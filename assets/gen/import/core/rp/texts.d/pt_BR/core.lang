@@ -1,0 +1,7 @@
+commands.tffeature.usage=/%s <informações | reativar | conquistar | centro>
+misc.twilightforest.advancement_hidden=<Avanço Oculto>
+misc.twilightforest.advancement_required=Avanço necessário:
+misc.twilightforest.core_disabled=%s está desativado via configuração
+misc.twilightforest.firefly_spawner_radius=Raio da Partícula de Vaga-lume: %s Blocos
+misc.twilightforest.pedestal_ineligible=Você não é digno.
+misc.twilightforest.wip=Este recurso é um trabalho em andamento e pode conter erros ou efeitos não intencionais que podem danificar seu mundo

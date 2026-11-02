@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:nagastone/mossy_nagastone_pillar_1"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:moss_block"
+      },
+      {
+        "item": "twilightforest:nagastone_pillar"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:nagastone_pillar"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:mossy_nagastone_pillar"
+    }
+  }
+}

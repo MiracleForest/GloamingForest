@@ -1,0 +1,24 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:rabbit_jerky",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_rabbit_jerky"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:rabbit_jerky.name"
+      },
+      "minecraft:tags": {
+        "tags": ["c:foods", "c:foods/jerky"]
+      }
+    }
+  }
+}

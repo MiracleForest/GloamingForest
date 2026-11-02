@@ -1,0 +1,11 @@
+{
+  "twilightforest:item.twilightforest.knightmetal_armor.equip": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.knightmetal_armor.equip",
+    "sounds": [
+      {
+        "event": "item.armor.equip_netherite"
+      }
+    ]
+  }
+}

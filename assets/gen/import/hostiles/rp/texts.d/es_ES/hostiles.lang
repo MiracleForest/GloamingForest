@@ -1,0 +1,6 @@
+entity.twilightforest.hostile_wolf=Lobo Hostil
+entity.twilightforest.king_spider=Rey araña
+entity.twilightforest.mist_wolf=Lobo de Niebla
+entity.twilightforest:hostile_wolf.name=Lobo Hostil
+entity.twilightforest:king_spider.name=Rey araña
+entity.twilightforest:mist_wolf.name=Lobo de Niebla

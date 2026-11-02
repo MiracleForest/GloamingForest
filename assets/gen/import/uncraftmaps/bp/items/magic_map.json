@@ -1,0 +1,21 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:magic_map",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_magic_map"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:magic_map.name"
+      }
+    }
+  }
+}

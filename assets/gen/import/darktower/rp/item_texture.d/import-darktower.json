@@ -1,0 +1,11 @@
+{
+  "tf_item_borer_essence": {
+    "textures": "textures/twilightforest/item/borer_essence"
+  },
+  "tf_item_carminite": {
+    "textures": "textures/twilightforest/item/carminite"
+  },
+  "tf_item_tower_key": {
+    "textures": "textures/twilightforest/item/tower_key"
+  }
+}

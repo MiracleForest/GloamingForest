@@ -1,0 +1,12 @@
+commands.tffeature.usage=/%s <info | reactivate | conquer | center>
+misc.twilightforest.advancement_hidden=<Hidden Advancement>
+misc.twilightforest.advancement_required=Advancement Required:
+misc.twilightforest.core_disabled=%s is disabled via config
+misc.twilightforest.firefly_spawner_radius=Firefly Particle Radius: %s Blocks
+misc.twilightforest.pedestal_ineligible=You are unworthy.
+misc.twilightforest.wip=This feature is a work in progress and may have bugs or unintended effects that may damage your world
+twilightforest.configuration.section.twilightforest.client.toml=Client Settings
+twilightforest.configuration.section.twilightforest.client.toml.title=Client Settings
+twilightforest.configuration.section.twilightforest.common.toml=Common Settings
+twilightforest.configuration.section.twilightforest.common.toml.title=Common Settings
+twilightforest.configuration.title=Twilight Forest Config

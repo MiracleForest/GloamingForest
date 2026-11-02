@@ -1,0 +1,44 @@
+{
+  "entity.twilightforest.naga.hiss": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.naga.hiss",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/naga/mob/naga/hiss1"
+      },
+      {
+        "name": "sounds/twilightforest/naga/mob/naga/hiss2"
+      },
+      {
+        "name": "sounds/twilightforest/naga/mob/naga/hiss3"
+      }
+    ]
+  },
+  "entity.twilightforest.naga.hurt": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.naga.hurt",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/naga/mob/naga/hurt1"
+      },
+      {
+        "name": "sounds/twilightforest/naga/mob/naga/hurt2"
+      },
+      {
+        "name": "sounds/twilightforest/naga/mob/naga/hurt3"
+      }
+    ]
+  },
+  "entity.twilightforest.naga.rattle": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.naga.rattle",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/naga/mob/naga/rattle1"
+      },
+      {
+        "name": "sounds/twilightforest/naga/mob/naga/rattle2"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "twilightforest:dim_flame": {
+    "textures": ["textures/twilightforest/particle/dim_flame"]
+  },
+  "twilightforest:ominous_flame": {
+    "textures": ["textures/twilightforest/particle/ominous_flame"]
+  }
+}

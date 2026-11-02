@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:stonecutting/transformation_log/hollow_transformation_log"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "twilightforest:transformation_log"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:transformation_log"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:hollow_transformation_log"
+    }
+  }
+}

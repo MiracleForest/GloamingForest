@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:compressed_blocks/ironwood_block"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#m#", "###"],
+    "key": {
+      "#": {
+        "item": "twilightforest:ironwood_ingot"
+      },
+      "m": {
+        "item": "twilightforest:ironwood_ingot"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:ironwood_ingot"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:ironwood_block"
+    }
+  }
+}

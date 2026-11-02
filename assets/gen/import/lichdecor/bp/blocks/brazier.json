@@ -1,0 +1,56 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:brazier",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:half": ["lower", "upper"],
+        "twilightforest:light": ["off", "dim", "half", "bright", "full"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_wood_planks_canopy_0",
+          "render_method": "opaque"
+        }
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'dim'",
+        "components": {
+          "minecraft:light_emission": 4
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'half'",
+        "components": {
+          "minecraft:light_emission": 6
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'bright'",
+        "components": {
+          "minecraft:light_emission": 9
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:half') == 'upper' && q.block_state('twilightforest:light') == 'full'",
+        "components": {
+          "minecraft:light_emission": 12
+        }
+      }
+    ]
+  }
+}

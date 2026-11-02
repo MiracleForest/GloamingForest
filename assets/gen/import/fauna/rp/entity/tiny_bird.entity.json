@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:tiny_bird",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/tinybirdblue"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.tiny_bird"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#33aadd",
+        "overlay_color": "#1188ee"
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "entity.twilightforest.maze_slime": "Slime de Laberinto",
+  "entity.twilightforest.minoshroom": "Minosetauro",
+  "entity.twilightforest.minotaur": "Minotauro",
+  "item.twilightforest.maze_slime_spawn_egg": "Generar Slime de Laberinto",
+  "item.twilightforest.minoshroom_spawn_egg": "Generar Minosetauro",
+  "item.twilightforest.minotaur_spawn_egg": "Generar Minotauro",
+  "subtitles.twilightforest.entity.minoshroom.ambient": "Mugido de Minosetauro",
+  "subtitles.twilightforest.entity.minoshroom.attack": "Carga de Minosetauro",
+  "subtitles.twilightforest.entity.minoshroom.death": "Minosetauro muerto",
+  "subtitles.twilightforest.entity.minoshroom.hurt": "Minosetauro herido",
+  "subtitles.twilightforest.entity.minotaur.ambient": "Mugido de Minotauro",
+  "subtitles.twilightforest.entity.minotaur.attack": "Carga de Minotauro",
+  "subtitles.twilightforest.entity.minotaur.death": "Minotauro muerto",
+  "subtitles.twilightforest.entity.minotaur.hurt": "Minotauro herido"
+}

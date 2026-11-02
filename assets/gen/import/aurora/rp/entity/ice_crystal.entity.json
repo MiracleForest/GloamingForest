@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:ice_crystal",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/icecrystal"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.ice_crystal"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#dce9fe",
+        "overlay_color": "#adcafb"
+      }
+    }
+  }
+}

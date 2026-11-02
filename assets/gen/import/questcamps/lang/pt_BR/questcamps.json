@@ -1,0 +1,9 @@
+{
+  "config.twilightforest.ram_indicator": "Indicador de Lã do Carneiro de Missão",
+  "config.twilightforest.ram_indicator.tooltip": "Renderiza uma marca de seleção ou X acima da mira enquanto segura a lã ao passar o mouse sobre o Carneiro de Missão, dependendo se essa cor de lã já foi alimentada.",
+  "entity.twilightforest.quest_ram": "Carneiro de Missão",
+  "item.twilightforest.quest_ram_spawn_egg": "Ovo gerador de Carneiro de Missão",
+  "subtitles.twilightforest.entity.quest_ram.ambient": "Carneiro Explorador balança",
+  "subtitles.twilightforest.entity.quest_ram.death": "Carneiro Explorador morre",
+  "subtitles.twilightforest.entity.quest_ram.hurt": "Carneiro Explorador causa dano"
+}

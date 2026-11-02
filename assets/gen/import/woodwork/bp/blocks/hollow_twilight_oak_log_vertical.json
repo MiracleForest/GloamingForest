@@ -1,0 +1,45 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:hollow_twilight_oak_log_vertical",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 10
+      },
+      "tag:minecraft:is_axe_item_destructible": {},
+      "minecraft:map_color": "#8f7748",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 5
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.vertical_hollow_log",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_twilight_oak_log",
+          "render_method": "opaque"
+        },
+        "inner": {
+          "texture": "tf_block_stripped_twilight_oak_log",
+          "render_method": "opaque"
+        },
+        "side": {
+          "texture": "tf_block_twilight_oak_log",
+          "render_method": "opaque"
+        },
+        "top": {
+          "texture": "tf_block_twilight_oak_log_top",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

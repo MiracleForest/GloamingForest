@@ -1,0 +1,59 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.minecraft.block.carpet",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 0.75, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -8],
+              "size": [16, 1, 16],
+              "uv": {
+                "north": {
+                  "uv": [0, 15],
+                  "uv_size": [16, 1],
+                  "material_instance": "wool"
+                },
+                "east": {
+                  "uv": [0, 15],
+                  "uv_size": [16, 1],
+                  "material_instance": "wool"
+                },
+                "south": {
+                  "uv": [0, 15],
+                  "uv_size": [16, 1],
+                  "material_instance": "wool"
+                },
+                "west": {
+                  "uv": [0, 15],
+                  "uv_size": [16, 1],
+                  "material_instance": "wool"
+                },
+                "up": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "wool"
+                },
+                "down": {
+                  "uv": [16, 16],
+                  "uv_size": [-16, -16],
+                  "material_instance": "wool"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

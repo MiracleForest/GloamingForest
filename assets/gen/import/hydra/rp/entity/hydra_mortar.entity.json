@@ -1,0 +1,18 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:hydra_mortar",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/hydramortar"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.hydra_mortar"
+      },
+      "render_controllers": ["controller.render.default"]
+    }
+  }
+}

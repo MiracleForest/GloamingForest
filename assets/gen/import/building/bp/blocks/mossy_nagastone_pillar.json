@@ -1,0 +1,304 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:mossy_nagastone_pillar",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:axis": ["y", "x", "z"],
+        "twilightforest:reversed": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 30
+      },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_nagastone_pillar_side_mossy",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "tf_block_nagastone_pillar_end_mossy",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "tf_block_nagastone_pillar_end_mossy",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "tf_block_nagastone_pillar_side_mossy",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "tf_block_nagastone_pillar_side_mossy",
+          "render_method": "opaque"
+        },
+        "east": {
+          "texture": "tf_block_nagastone_pillar_side_mossy",
+          "render_method": "opaque"
+        },
+        "west": {
+          "texture": "tf_block_nagastone_pillar_side_mossy",
+          "render_method": "opaque"
+        }
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && !q.block_state('twilightforest:reversed')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [90, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x' && q.block_state('twilightforest:reversed')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [90, 90, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y' && !q.block_state('twilightforest:reversed')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y' && q.block_state('twilightforest:reversed')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && !q.block_state('twilightforest:reversed')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_nagastone_pillar_side_mossy",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [90, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z' && q.block_state('twilightforest:reversed')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_nagastone_pillar_end_mossy",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_nagastone_pillar_side_mossy_alt",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [90, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

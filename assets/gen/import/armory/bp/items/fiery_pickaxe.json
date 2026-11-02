@@ -1,0 +1,45 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:fiery_pickaxe",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_fiery_pickaxe"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:fiery_pickaxe.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 1024
+      },
+      "minecraft:hand_equipped": true,
+      "minecraft:digger": {
+        "use_efficiency": true,
+        "destroy_speeds": [
+          {
+            "block": {
+              "tags": "q.any_tag('minecraft:is_pickaxe_item_destructible')"
+            },
+            "speed": 9
+          }
+        ]
+      },
+      "minecraft:tags": {
+        "tags": [
+          "minecraft:is_pickaxe",
+          "minecraft:is_tool",
+          "minecraft:netherite_tier",
+          "alexscaves:ferromagnetic_items"
+        ]
+      }
+    }
+  }
+}

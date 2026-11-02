@@ -1,0 +1,11 @@
+{
+  "twilightforest:block.twilightforest.portal.whoosh": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.portal.whoosh",
+    "sounds": [
+      {
+        "event": "block.portal.ambient"
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/mining_stairs"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#  ", "## ", "###"],
+    "key": {
+      "#": {
+        "item": "twilightforest:mining_planks"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:mining_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:mining_stairs",
+      "count": 8
+    }
+  }
+}

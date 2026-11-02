@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:wood/time_planks_3"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "twilightforest:stripped_time_wood"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:stripped_time_log"
+      },
+      {
+        "item": "twilightforest:stripped_time_wood"
+      },
+      {
+        "item": "twilightforest:time_log"
+      },
+      {
+        "item": "twilightforest:time_wood"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:time_planks",
+      "count": 4
+    }
+  }
+}

@@ -1,0 +1,8 @@
+commands.tffeature.structure.boundaries=구조물 경계: %s
+commands.tffeature.structure.conquer.status=구조물 정복기: %s
+commands.tffeature.structure.conquer.update=구조물 정복기가 %s이었고, %s로 변경되었습니다.
+commands.tffeature.structure.inside=당신은 구조물 내부에 존재합니다
+commands.tffeature.structure.outside=당신은 구조물 외부에 존재합니다
+commands.tffeature.structure.required=구조물에 없습니다.
+commands.tffeature.structure.spawn_info=%s 무게 %s
+commands.tffeature.structure.spawn_list=이 지역의 스폰 목록은 다음과 같습니다:

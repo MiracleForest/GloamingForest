@@ -1,0 +1,11 @@
+{
+  "tf_item_magic_beans": {
+    "textures": "textures/twilightforest/item/magic_beans"
+  },
+  "tf_vanilla_item_stone_pickaxe": {
+    "textures": "textures/items/stone_pickaxe"
+  },
+  "tf_vanilla_item_stone_sword": {
+    "textures": "textures/items/stone_sword"
+  }
+}

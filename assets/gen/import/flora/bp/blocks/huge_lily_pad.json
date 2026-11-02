@@ -1,0 +1,429 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:huge_lily_pad",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:piece": ["nw", "ne", "se", "sw"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "tag:minecraft:is_axe_item_destructible": {},
+      "tag:minecraft:is_sword_item_destructible": {},
+      "minecraft:map_color": "#007c00",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_huge_lily_pad_1",
+          "render_method": "alpha_test"
+        },
+        "texture": {
+          "texture": "tf_block_huge_lily_pad_1",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": false,
+      "minecraft:selection_box": {
+        "origin": [-8, 0, -8],
+        "size": [16, 1, 16]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:piece') == 'ne'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_1",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_1",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:piece') == 'nw'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_2",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_2",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:piece') == 'se'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_0",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_0",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:piece') == 'sw'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_3",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_3",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:piece') == 'ne'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_0",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_0",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:piece') == 'nw'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_1",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_1",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:piece') == 'se'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_3",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_3",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:piece') == 'sw'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_2",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_2",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:piece') == 'ne'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_2",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_2",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:piece') == 'nw'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_3",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_3",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:piece') == 'se'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_1",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_1",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:piece') == 'sw'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_0",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_0",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:piece') == 'ne'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_3",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_3",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:piece') == 'nw'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_0",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_0",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:piece') == 'se'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_2",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_2",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:piece') == 'sw'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.huge_lily_pad",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_huge_lily_pad_1",
+              "render_method": "alpha_test"
+            },
+            "texture": {
+              "texture": "tf_block_huge_lily_pad_1",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      }
+    ]
+  }
+}

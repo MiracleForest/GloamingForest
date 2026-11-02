@@ -1,0 +1,10 @@
+{
+  "commands.tffeature.structure.boundaries": "Limites da estrutura: %s",
+  "commands.tffeature.structure.conquer.status": "Bandeira de conquista de estrutura: %s",
+  "commands.tffeature.structure.conquer.update": "Bandeira de conquista de estrutura era %s, mudando para %s",
+  "commands.tffeature.structure.inside": "Você está em uma estrutura de Marco",
+  "commands.tffeature.structure.outside": "Você não está em uma estrutura de Marco",
+  "commands.tffeature.structure.required": "Você não está em uma estrutura",
+  "commands.tffeature.structure.spawn_info": "%s, Peso %s",
+  "commands.tffeature.structure.spawn_list": "Lista de geraçãopara esta área é:"
+}

@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:huge_lily_pad",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_huge_lily_pad"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:huge_lily_pad.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:huge_lily_pad",
+        "replace_block_item": true
+      }
+    }
+  }
+}

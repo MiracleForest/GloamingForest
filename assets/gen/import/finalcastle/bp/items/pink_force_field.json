@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:pink_force_field",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_forcefield_white"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:pink_force_field.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:pink_force_field",
+        "replace_block_item": true
+      }
+    }
+  }
+}

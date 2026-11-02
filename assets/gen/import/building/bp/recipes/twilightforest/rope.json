@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:rope"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["#", "#", "#"],
+    "key": {
+      "#": {
+        "item": "twilightforest:root_strand"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:root_strand"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:rope",
+      "count": 8
+    }
+  }
+}

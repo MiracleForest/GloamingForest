@@ -1,0 +1,179 @@
+{
+  "tf_item_alpha_yeti_fur": {
+    "textures": "textures/twilightforest/item/alpha_yeti_fur"
+  },
+  "tf_item_arctic_boots": {
+    "textures": "textures/twilightforest/item/arctic_boots"
+  },
+  "tf_item_arctic_chestplate": {
+    "textures": "textures/twilightforest/item/arctic_chestplate"
+  },
+  "tf_item_arctic_fur": {
+    "textures": "textures/twilightforest/item/arctic_fur"
+  },
+  "tf_item_arctic_helmet": {
+    "textures": "textures/twilightforest/item/arctic_helmet"
+  },
+  "tf_item_arctic_leggings": {
+    "textures": "textures/twilightforest/item/arctic_leggings"
+  },
+  "tf_item_armor_shard": {
+    "textures": "textures/twilightforest/item/armor_shard"
+  },
+  "tf_item_armor_shard_cluster": {
+    "textures": "textures/twilightforest/item/armor_shard_cluster"
+  },
+  "tf_item_diamond_minotaur_axe": {
+    "textures": "textures/twilightforest/item/diamond_minotaur_axe"
+  },
+  "tf_item_fiery_blood": {
+    "textures": "textures/twilightforest/item/fiery_blood"
+  },
+  "tf_item_fiery_boots": {
+    "textures": "textures/twilightforest/item/fiery_boots"
+  },
+  "tf_item_fiery_chestplate": {
+    "textures": "textures/twilightforest/item/fiery_chestplate"
+  },
+  "tf_item_fiery_helmet": {
+    "textures": "textures/twilightforest/item/fiery_helmet"
+  },
+  "tf_item_fiery_ingot": {
+    "textures": "textures/twilightforest/item/fiery_ingot"
+  },
+  "tf_item_fiery_leggings": {
+    "textures": "textures/twilightforest/item/fiery_leggings"
+  },
+  "tf_item_fiery_pickaxe": {
+    "textures": "textures/twilightforest/item/fiery_pickaxe"
+  },
+  "tf_item_fiery_sword": {
+    "textures": "textures/twilightforest/item/fiery_sword"
+  },
+  "tf_item_fiery_tears": {
+    "textures": "textures/twilightforest/item/fiery_tears"
+  },
+  "tf_item_gold_minotaur_axe": {
+    "textures": "textures/twilightforest/item/gold_minotaur_axe"
+  },
+  "tf_item_ironwood_axe": {
+    "textures": "textures/twilightforest/item/ironwood_axe"
+  },
+  "tf_item_ironwood_boots": {
+    "textures": "textures/twilightforest/item/ironwood_boots"
+  },
+  "tf_item_ironwood_chestplate": {
+    "textures": "textures/twilightforest/item/ironwood_chestplate"
+  },
+  "tf_item_ironwood_helmet": {
+    "textures": "textures/twilightforest/item/ironwood_helmet"
+  },
+  "tf_item_ironwood_hoe": {
+    "textures": "textures/twilightforest/item/ironwood_hoe"
+  },
+  "tf_item_ironwood_ingot": {
+    "textures": "textures/twilightforest/item/ironwood_ingot"
+  },
+  "tf_item_ironwood_leggings": {
+    "textures": "textures/twilightforest/item/ironwood_leggings"
+  },
+  "tf_item_ironwood_pickaxe": {
+    "textures": "textures/twilightforest/item/ironwood_pickaxe"
+  },
+  "tf_item_ironwood_shovel": {
+    "textures": "textures/twilightforest/item/ironwood_shovel"
+  },
+  "tf_item_ironwood_sword": {
+    "textures": "textures/twilightforest/item/ironwood_sword"
+  },
+  "tf_item_knightmetal_axe": {
+    "textures": "textures/twilightforest/item/knightmetal_axe"
+  },
+  "tf_item_knightmetal_boots": {
+    "textures": "textures/twilightforest/item/knightmetal_boots"
+  },
+  "tf_item_knightmetal_chestplate": {
+    "textures": "textures/twilightforest/item/knightmetal_chestplate"
+  },
+  "tf_item_knightmetal_helmet": {
+    "textures": "textures/twilightforest/item/knightmetal_helmet"
+  },
+  "tf_item_knightmetal_ingot": {
+    "textures": "textures/twilightforest/item/knightmetal_ingot"
+  },
+  "tf_item_knightmetal_leggings": {
+    "textures": "textures/twilightforest/item/knightmetal_leggings"
+  },
+  "tf_item_knightmetal_pickaxe": {
+    "textures": "textures/twilightforest/item/knightmetal_pickaxe"
+  },
+  "tf_item_knightmetal_ring": {
+    "textures": "textures/twilightforest/item/knightmetal_ring"
+  },
+  "tf_item_knightmetal_sword": {
+    "textures": "textures/twilightforest/item/knightmetal_sword"
+  },
+  "tf_item_mazebreaker_pickaxe": {
+    "textures": "textures/twilightforest/item/mazebreaker_pickaxe"
+  },
+  "tf_item_naga_chestplate": {
+    "textures": "textures/twilightforest/item/naga_chestplate"
+  },
+  "tf_item_naga_leggings": {
+    "textures": "textures/twilightforest/item/naga_leggings"
+  },
+  "tf_item_naga_scale": {
+    "textures": "textures/twilightforest/item/naga_scale"
+  },
+  "tf_item_phantom_chestplate": {
+    "textures": "textures/twilightforest/item/phantom_chestplate"
+  },
+  "tf_item_phantom_helmet": {
+    "textures": "textures/twilightforest/item/phantom_helmet"
+  },
+  "tf_item_raw_ironwood": {
+    "textures": "textures/twilightforest/item/raw_ironwood"
+  },
+  "tf_item_steeleaf_axe": {
+    "textures": "textures/twilightforest/item/steeleaf_axe"
+  },
+  "tf_item_steeleaf_boots": {
+    "textures": "textures/twilightforest/item/steeleaf_boots"
+  },
+  "tf_item_steeleaf_chestplate": {
+    "textures": "textures/twilightforest/item/steeleaf_chestplate"
+  },
+  "tf_item_steeleaf_helmet": {
+    "textures": "textures/twilightforest/item/steeleaf_helmet"
+  },
+  "tf_item_steeleaf_hoe": {
+    "textures": "textures/twilightforest/item/steeleaf_hoe"
+  },
+  "tf_item_steeleaf_ingot": {
+    "textures": "textures/twilightforest/item/steeleaf_ingot"
+  },
+  "tf_item_steeleaf_leggings": {
+    "textures": "textures/twilightforest/item/steeleaf_leggings"
+  },
+  "tf_item_steeleaf_pickaxe": {
+    "textures": "textures/twilightforest/item/steeleaf_pickaxe"
+  },
+  "tf_item_steeleaf_shovel": {
+    "textures": "textures/twilightforest/item/steeleaf_shovel"
+  },
+  "tf_item_steeleaf_sword": {
+    "textures": "textures/twilightforest/item/steeleaf_sword"
+  },
+  "tf_item_yeti_boots": {
+    "textures": "textures/twilightforest/item/yeti_boots"
+  },
+  "tf_item_yeti_chestplate": {
+    "textures": "textures/twilightforest/item/yeti_chestplate"
+  },
+  "tf_item_yeti_helmet": {
+    "textures": "textures/twilightforest/item/yeti_helmet"
+  },
+  "tf_item_yeti_leggings": {
+    "textures": "textures/twilightforest/item/yeti_leggings"
+  }
+}

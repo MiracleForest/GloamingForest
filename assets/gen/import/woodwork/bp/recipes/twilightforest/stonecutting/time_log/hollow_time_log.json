@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:stonecutting/time_log/hollow_time_log"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "twilightforest:time_log"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:time_log"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:hollow_time_log"
+    }
+  }
+}

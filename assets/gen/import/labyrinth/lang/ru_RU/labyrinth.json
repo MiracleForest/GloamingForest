@@ -1,0 +1,20 @@
+{
+  "entity.twilightforest.maze_slime": "Лабиринтовый слизень",
+  "entity.twilightforest.minoshroom": "Гриботавр",
+  "entity.twilightforest.minotaur": "Минотавр",
+  "item.twilightforest.maze_slime_spawn_egg": "Яйцо призыва слизня лабиринта",
+  "item.twilightforest.minoshroom_spawn_egg": "Яйцо призыва гриботавра",
+  "item.twilightforest.minotaur_spawn_egg": "Яйцо призыва минотавра",
+  "subtitles.twilightforest.entity.maze_slime.death": "Лабиринтовый слизень погибает",
+  "subtitles.twilightforest.entity.maze_slime.hurt": "Лабиринтовый слизень ранен",
+  "subtitles.twilightforest.entity.maze_slime.squish": "Лабиринтовый слизень прыгает",
+  "subtitles.twilightforest.entity.minoshroom.ambient": "Гриботавр мычит",
+  "subtitles.twilightforest.entity.minoshroom.attack": "Гриботавр атакует",
+  "subtitles.twilightforest.entity.minoshroom.death": "Гриботавр погибает",
+  "subtitles.twilightforest.entity.minoshroom.hurt": "Гриботавр ранен",
+  "subtitles.twilightforest.entity.minoshroom.slam": "Гриботавр ударил по земле",
+  "subtitles.twilightforest.entity.minotaur.ambient": "Минотавр мычит",
+  "subtitles.twilightforest.entity.minotaur.attack": "Минотавр готовится к рывку",
+  "subtitles.twilightforest.entity.minotaur.death": "Минотавр погибает",
+  "subtitles.twilightforest.entity.minotaur.hurt": "Минотавр ранен"
+}
