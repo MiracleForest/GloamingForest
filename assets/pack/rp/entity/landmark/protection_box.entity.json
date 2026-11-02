@@ -1,0 +1,37 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:protection_box",
+      "materials": {
+        "default": "entity_beam"
+      },
+      "textures": {
+        "default": "textures/entity/landmark/tf-derived/protectionbox"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.protection_box.tiled"
+      },
+      "animations": {
+        "scale": "animation.twilightforest.protection_box.scale"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.epoch = q.property('gf:epoch');",
+          "v.since = (v.epoch != (v.last_epoch ?? 0)) ? q.life_time : (v.since ?? 0);",
+          "v.last_epoch = v.epoch;",
+          "v.box_life = 60 - (q.life_time - v.since) * 20;"
+        ],
+        "animate": [
+          "scale"
+        ],
+        "should_update_bones_and_effects_offscreen": true
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.protection_box.x",
+        "controller.render.twilightforest.protection_box.y",
+        "controller.render.twilightforest.protection_box.z"
+      ]
+    }
+  }
+}
