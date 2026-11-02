@@ -7865,6 +7865,7 @@ subcommand	conquer	F6	manual
 subcommand	conquer reactivate	F6	manual
 subcommand	gamerule	F10	manual
 subcommand	genbook	F6	manual
+subcommand	generatebook	F6	manual
 subcommand	info	F6	manual
 subcommand	locate	F6	manual
 subcommand	map_locator	U13	manual

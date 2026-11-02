@@ -48,6 +48,8 @@ $JavaDir = Join-Path $TfDir 'src/main/java/twilightforest'
 $GenRes = Join-Path $TfDir 'src/generated/resources'
 $MainRes = Join-Path $TfDir 'src/main/resources'
 $rules = Get-Content (Join-Path $PSScriptRoot 'owners.rules.json') -Raw | ConvertFrom-Json -AsHashtable
+# the directories below data/<ns>/tags/ that hold tag registries (two-segment registries "<group>/<registry>")
+$tagRegistryGroups = @(if ($rules.ContainsKey('tagRegistryGroups')) { $rules.tagRegistryGroups } else { 'worldgen' })
 
 # ---- helpers --------------------------------------------------------------------------------------
 
@@ -228,13 +230,54 @@ $cmdDir = Join-Path $JavaDir 'command'
 $cmdText = Strip-Comments (Read-Text (Join-Path $cmdDir 'TFCommand.java'))
 $cmdClass = @{}
 foreach ($m in [regex]::Matches($cmdText, 'private\s+(\w+)\s+(\w+)\s*;')) { $cmdClass[$m.Groups[2].Value] = $m.Groups[1].Value }
+# The end (exclusive) of the builder chain that starts at $start: the ')' or ',' closing the call it
+# is an argument of, or the ';' ending its statement (string and char literals skipped).
+function Get-ChainEnd([string]$text, [int]$start) {
+    $depth = 0
+    for ($i = $start; $i -lt $text.Length; $i++) {
+        $c = $text[$i]
+        if ($c -eq '"' -or $c -eq "'") {
+            for ($i++; $i -lt $text.Length -and $text[$i] -ne $c; $i++) { if ($text[$i] -eq '\') { $i++ } }
+        } elseif ($c -eq '(' -or $c -eq '{' -or $c -eq '[') { $depth++ }
+        elseif ($c -eq ')' -or $c -eq '}' -or $c -eq ']') { if (--$depth -lt 0) { return $i } }
+        elseif (($c -eq ';' -or $c -eq ',') -and $depth -eq 0) { return $i }
+    }
+    return $text.Length
+}
 function Get-CommandPaths([string]$field, [string]$prefix) {
     if (-not $cmdClass.ContainsKey($field)) { throw "TFCommand.java: no command field '$field'" }
-    $text = Strip-Comments (Read-Text (Join-Path $cmdDir "$($cmdClass[$field]).java"))
-    $lits = @([regex]::Matches($text, 'Commands\.literal\("([a-z0-9_]+)"\)') | ForEach-Object { $_.Groups[1].Value })
-    if (-not $lits) { throw "$($cmdClass[$field]).java registers no literal" }
-    $own = "$prefix$($lits[0])"
-    return @($own) + @($lits | Select-Object -Skip 1 | ForEach-Object { "$own $_" })
+    $file = "$($cmdClass[$field]).java"
+    $text = Strip-Comments (Read-Text (Join-Path $cmdDir $file))
+    $ms = @([regex]::Matches($text, 'Commands\.literal\("([a-z0-9_]+)"\)'))
+    if (-not $ms) { throw "$file registers no literal" }
+    $lits = @($ms | ForEach-Object { $_.Groups[1].Value })
+    # builder variables: name -> index of their literal (conquer = Commands.literal("conquer"))
+    $vars = @{}
+    foreach ($m in [regex]::Matches($text, '(\w+)\s*=\s*Commands\.literal\("[a-z0-9_]+"\)')) {
+        for ($k = 0; $k -lt $ms.Count; $k++) { if ($ms[$k].Index -gt $m.Index -and $ms[$k].Index -lt $m.Index + $m.Length) { $vars[$m.Groups[1].Value] = $k } }
+    }
+    # the class's own literal is the one register() returns (directly or through its variable);
+    # every other literal is read as its direct child
+    $own = 0
+    $reg = [regex]::Match($text, '\bregister\s*\([^)]*\)\s*\{')
+    $ret = [regex]::new('return\s+(?:Commands\.literal\("([a-z0-9_]+)"\)|(\w+)\b)').Match($text, $(if ($reg.Success) { $reg.Index } else { 0 }))
+    if ($ret.Success -and $ret.Groups[1].Success) { $own = [array]::IndexOf($lits, $ret.Groups[1].Value) }
+    elseif ($ret.Success -and $vars.ContainsKey($ret.Groups[2].Value)) { $own = $vars[$ret.Groups[2].Value] }
+    # A literal inside another child literal's chain (a.then(b.then(literal("c")))), directly or
+    # through a builder variable (b = literal("b"); ... .then(b.then(c))), is a deeper path: fail
+    # instead of writing a wrong row (a TF bump that nests literals needs a real tree walk here).
+    for ($j = 0; $j -lt $ms.Count; $j++) {
+        for ($i = 0; $i -lt $ms.Count; $i++) {
+            if ($i -ne $j -and $i -ne $own -and $j -ne $own -and $ms[$i].Index -lt $ms[$j].Index -and $ms[$j].Index -lt (Get-ChainEnd $text ($ms[$i].Index + $ms[$i].Length))) {
+                throw "$($file): the literal '$($lits[$j])' is nested in the child literal '$($lits[$i])'; owners.ps1 reads one level of children only"
+            }
+        }
+    }
+    foreach ($v in $vars.Keys) {
+        if ($vars[$v] -ne $own -and $text -match "\.then\(\s*$v\s*\.then\(") { throw "$($file): the child literal '$($lits[$vars[$v]])' ($v) gets a child of its own; owners.ps1 reads one level of children only" }
+    }
+    $self = "$prefix$($lits[$own])"
+    return @($self) + @(for ($k = 0; $k -lt $lits.Count; $k++) { if ($k -ne $own) { "$self $($lits[$k])" } })
 }
 $cmdBranches = @{}
 foreach ($m in [regex]::Matches($cmdText, '(\w+)\s*=\s*Commands\.literal\("([a-z0-9_]+)"\)((?:\s*\.then\(\w+\.register\([^)]*\)\))+)\s*;')) {
@@ -266,7 +309,8 @@ foreach ($nsDir in Get-ChildItem (Join-Path $GenRes 'data') -Directory) {
     $tdir = Join-Path $nsDir.FullName 'tags'
     if (-not (Test-Path $tdir)) { continue }
     foreach ($regDir in Get-ChildItem $tdir -Directory) {
-        $regs = if ($regDir.Name -eq 'worldgen') { Get-ChildItem $regDir.FullName -Directory | ForEach-Object { @{ name = "worldgen/$($_.Name)"; dir = $_.FullName } } } else { @(@{ name = $regDir.Name; dir = $regDir.FullName }) }
+        # two-segment tag registries (tags/worldgen/<registry>/, rules.tagRegistryGroups) are "<group>/<registry>"
+        $regs = if ($tagRegistryGroups -contains $regDir.Name) { Get-ChildItem $regDir.FullName -Directory | ForEach-Object { @{ name = "$($regDir.Name)/$($_.Name)"; dir = $_.FullName } } } else { @(@{ name = $regDir.Name; dir = $regDir.FullName }) }
         foreach ($reg in $regs) {
             foreach ($t in Get-DataIds $reg.dir) { $tags.Add("$($reg.name):$($nsDir.Name):$t") }
         }
