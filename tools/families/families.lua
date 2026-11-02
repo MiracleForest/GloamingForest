@@ -52,8 +52,6 @@ local NS = "twilightforest:"
 local KIT = "gloamingforest:"
 local GEO_DIR = "models/blocks/gf_families"
 local FORMAT = "1.26.0"
--- minecraft:block_entity is accepted from this format on (spike S3)
-local BLOCK_ENTITY_FORMAT = "1.26.50"
 local GEO_FORMAT = "1.21.0"
 local SIGN_TEXT_ENTITY = "gloamingforest:sign_text"
 
@@ -1299,10 +1297,9 @@ visual.trapped_chest = chest_visual
 -- ChestBlock.getShape: single AABB, a double chest reaches its partner
 local CHEST_AABB = {single = {1, 0, 1, 15, 14, 15}, north = {1, 0, 0, 15, 14, 15}, south = {1, 0, 1, 15, 14, 16}, west = {0, 0, 1, 15, 14, 15}, east = {1, 0, 1, 16, 14, 15}}
 local function chest_behaviour(doc, e)
-    -- the inventory contract's native backend (spike S3): a data-driven block actor (format
-    -- 1.26.50) that F10 gives a game container for the declared chest, saved with the block
-    comps(doc)["minecraft:block_entity"] = {}
-    doc.format_version = BLOCK_ENTITY_FORMAT
+    -- the slots are the inventory contract's BlockData backend: F10's native backend needs
+    -- minecraft:block_entity, which format 1.26.0 refuses ('not valid here') and 1.26.50 takes only
+    -- without the tag:* components F1 gives TF's chests ('not present in the Schema'): see README
     for _, f in ipairs(FACING4) do
         for _, kind in ipairs({"single", "left", "right"}) do
             local b = CHEST_AABB.single

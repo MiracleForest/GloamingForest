@@ -124,7 +124,11 @@ sitting cat), the opening stat (`minecraft:open_chest`, trapped chests
 placement and when a neighbour changes, the lid from F10's openers
 (`feature/ext/combat/InventoryViewers.h`) and the trapped chest's signal.
 
-The chest family blocks carry `minecraft:block_entity` (format_version 1.26.50, spike S3), so F10's
-native backend keeps their slots in the game container it gives their data-driven block actor,
-saved with the block; the selftest `families.double_chest` checks that the slots stay while the
-chest's pair and lid states change.
+The chests keep their slots in F10's BlockData backend, not its native one (a game container in the
+data-driven block actor of `minecraft:block_entity`, spike S3). The kit tried both formats for that
+component on the TF chests: format_version 1.26.0 refuses it (`child 'minecraft:block_entity' not
+valid here`) and 1.26.50 accepts it but refuses the `tag:minecraft:is_axe_item_destructible`
+components F1 gives TF's chests (`this component was found in the input, but is not present in the
+Schema`), so the chests would not load. The fixture chests (no tag components) loaded with it at
+1.26.50 and kept their slots through pair and lid state changes; the native backend can follow once
+the import writes block tags in a form 1.26.50 takes.
