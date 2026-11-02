@@ -186,7 +186,7 @@ namespace {
 
 /// Java RandomizableContainer.unpackLootTable on `data` (a half's storage): its pending loot
 /// table rolled into its empty slots (LootTable.fill). False when it had none.
-bool rollPendingLoot(Json& data, BlockSource* region, GlobalPos const& pos, Player* player) {
+bool rollPendingLoot(Json& data, BlockSource* region, GlobalPos const& pos, Player* player, Block const* block = nullptr) {
     if (!data.contains("loot") || !data["loot"].is_object()) return false;
     auto table = data["loot"].value("table", std::string{});
     auto seed  = data["loot"].value("seed", std::int64_t{0});
@@ -198,6 +198,7 @@ bool rollPendingLoot(Json& data, BlockSource* region, GlobalPos const& pos, Play
     ctx.player     = player;
     ctx.thisEntity = player;
     ctx.seed       = seed;
+    ctx.block      = block ? block : blockAt(*region, game::blockPos(pos));
     auto const& roller = detail::chestLootRoller();
     fillLoot(data, roller ? roller(table, ctx) : loot::roll(table, ctx), seed);
     log().info("families: the chest at {} {} {} rolled {}", pos.x, pos.y, pos.z, table);
@@ -683,7 +684,8 @@ void installChests() {
         if (!region) return;
         BlockPos bp   = game::blockPos(pos);
         Json     data = doc[kKey];
-        rollPendingLoot(data, region, pos, nullptr);
+        // the chest is gone already: the context names the chest block it was
+        rollPendingLoot(data, region, pos, nullptr, game::blockWith(previous));
         auto items = data.value("items", Json::array());
         for (auto const& j : items)
             if (!j.is_null()) drop(*region, bp, game::items::fromJson(j));

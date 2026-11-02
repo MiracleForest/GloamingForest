@@ -196,7 +196,8 @@ private:
         auto [sw, sh] = screen::guiSize();
         float java    = sh / 4 + (mHanging ? 19.f : 54.f);
         float below   = mStanding ? 82.f : 27.f;
-        return std::max(below, std::min(java, sh / 2 - 22));
+        float bottom  = sh / 2 - 22; // always on the screen, over the stick on a very small GUI
+        return std::min(std::max(below, std::min(java, bottom)), bottom);
     }
 
     void drawSign(screen::Canvas& c) {

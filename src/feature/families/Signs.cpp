@@ -274,6 +274,18 @@ void reconcileDisplay(GlobalPos const& pos) {
         }
         Vec3 at = textCentre(pos, *b, *e, front);
         if (!a) {
+            // one of ours that the record lost (it loaded after the record was rewritten): adopted
+            auto tag = displayTag(pos, front);
+            AABB near{Vec3{at.x - 1.5f, at.y - 1.5f, at.z - 1.5f}, Vec3{at.x + 1.5f, at.y + 1.5f, at.z + 1.5f}};
+            for (Actor* o : region->getEntities(near, 0.0f)) {
+                if (!o || !o->isAlive() || o->getTypeName() != kDisplayType || !o->hasTag(tag)) continue;
+                a            = o;
+                display[key] = a->getOrCreateUniqueID().rawID;
+                changed      = true;
+                break;
+            }
+        }
+        if (!a) {
             a = spawnDisplay(*region, at);
             if (!a) continue;
             a->addTag(kDisplayTag);
@@ -298,18 +310,39 @@ void reconcileDisplay(GlobalPos const& pos) {
     else displayed().insert(pos);
 }
 
-/// Every 20 ticks: the display entities of the signs in loaded chunks are still there, alive and
-/// in place (a sign whose chunk unloaded is checked again when the chunk ticks after its load).
+/// The chunks whose first tick after a load was seen ((dim, chunk x, chunk z) -> fam::now()):
+/// their entities have had time to load.
+std::map<std::tuple<int, int, int>, std::int64_t>& chunkTicked() {
+    static std::map<std::tuple<int, int, int>, std::int64_t> m;
+    return m;
+}
+
+/// Every 20 ticks: the display entities of the signs in loaded chunks are still there and alive
+/// (a sign whose chunk unloaded is checked again when the chunk ticks after its load). Only a
+/// missing or dead entity costs a reconcile, and only 40 ticks after the chunk's load (its
+/// entities load with it, a little later than its blocks).
 void checkDisplays() {
     std::vector<GlobalPos> signs(displayed().begin(), displayed().end());
+    auto                   tick = now();
     for (auto const& pos : signs) {
         auto* region = regionOf(pos.dim);
         if (!region || !region->hasChunksAt(game::blockPos(pos), 0, false)) {
             displayed().erase(pos);
             continue;
         }
-        reconcileDisplay(pos);
+        auto seen = chunkTicked().find({pos.dim, pos.x >> 4, pos.z >> 4});
+        if (seen != chunkTicked().end() && tick - seen->second < 40) continue;
+        auto const* raw = bd::get(*region, game::blockPos(pos), kKey);
+        bool        ok  = raw && raw->is_object() && raw->contains("display");
+        if (ok) {
+            for (auto const& [side, id] : (*raw)["display"].items()) {
+                auto* a = entityById(id.is_number_integer() ? id.get<std::int64_t>() : 0);
+                if (!a || !a->isAlive()) ok = false;
+            }
+        }
+        if (!ok) reconcileDisplay(pos);
     }
+    std::erase_if(chunkTicked(), [tick](auto const& kv) { return tick - kv.second >= 40; });
 }
 
 /// Display entities left behind (their sign is gone, or names another entity): removed.
@@ -854,6 +887,7 @@ void installSigns() {
     detail::onChunkLoaded([](BlockSource& region, LevelChunk& chunk) {
         ChunkPos const cp  = chunk.mPosition;
         int            dim = static_cast<int>(region.getDimensionId());
+        chunkTicked()[{dim, cp.x, cp.z}] = now();
         std::vector<GlobalPos> signs;
         bd::forEachInChunk(dim, cp.x, cp.z, [&](GlobalPos const& pos, Json const& doc) {
             if (doc.contains(kKey)) signs.push_back(pos);
@@ -876,6 +910,7 @@ void clearSigns() {
     editors().clear();
     companionChunks().clear();
     displayed().clear();
+    chunkTicked().clear();
 }
 /// Selftests: records `player` as the sign's editor (SignBlock.openTextEdit without the screen).
 void signEditorFor(Player& player, GlobalPos const& pos, bool front) { editors()[player.getOrCreateUniqueID().rawID] = {pos, front}; }

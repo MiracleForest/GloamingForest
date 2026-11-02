@@ -39,6 +39,9 @@ function main(projectdir, outdir, mode)
     local summary = families.generate(projectdir, outdir)
     local errors = summary.errors
     if summary.already then
+        -- the packs are done; problems in the family data still show
+        for _, e in ipairs(errors) do cprint("${bright red}[families] %s", e) end
+        if #errors > 0 then raise("families: %d error(s)", #errors) end
         cprint("${bright green}[families]: ${reset}%s: already generated (by the build's assemble or an earlier run)", outdir)
         return
     end
