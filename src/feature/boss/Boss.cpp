@@ -186,16 +186,23 @@ struct Bar {
     std::optional<std::string> name;
     std::string             lastTag; ///< the name tag the bar's title was made from
     std::set<std::int64_t>  players; ///< the players the bar was added for
+    std::unordered_map<std::int64_t, std::string> titles; ///< the title per viewer (dropped on a name change)
+    std::uint64_t           nextAudience = 0; ///< the tick of the next look for viewers
 };
 
+constexpr int kAudiencePeriod = 5; ///< ticks between two looks for a bar's viewers (startSeenByPlayer)
+
 /// A dying boss (BaseTFBoss#tickDeath). Its dead body stays in the level while the animation runs
-/// (deathHold keeps Bedrock's own 20-tick removal back); if the body unloads, the record finishes
-/// the death with what was known at the death.
+/// (deathHold keeps Bedrock's own 20-tick removal back). TF saves the dying boss with its chunk
+/// (dyingInventory, deathTime) and finishes the death when the chunk loads again: while the body's
+/// chunk is not loaded the record waits; once the chunk is loaded and the body did not come back
+/// with it (kBodyGrace ticks), the death goes on without the body. The records are saved in the
+/// world DB (kDeathsKey), so a world close or a server stop during the animation resumes them.
 struct Dying {
     std::int64_t                 uid = 0;
     std::string                  type;
     int                          dim = 0;
-    Vec3                         pos{};
+    Vec3                         pos{}; ///< the body's last position (EntityUtil#bossChestLocation without a home)
     std::optional<core::GlobalPos> home;
     int                          deathTime = 0;
     int                          finish    = 20;
@@ -205,7 +212,24 @@ struct Dying {
     std::int64_t                 seed = 0;
     bool                         released     = false; ///< the animation finished: the engine removes the body
     int                          releaseTicks = 0;
+    int                          absentTicks  = 0;     ///< ticks the body was missing from its loaded chunk
+    bool                         bodiless     = false; ///< the body did not come back: the death goes on without it
 };
+
+/// A death chest waiting for its chunk (IBossLootBuffer#depositDropsIntoChest at a position whose
+/// chunk is not loaded: the chest is placed when the chunk loads, never popped into an unloaded
+/// region).
+struct Deposit {
+    std::string  type;
+    int          dim = 0;
+    BlockPos     pos{};
+    Json         buffer;
+    std::string  chestBlock;
+    std::int64_t seed = 0;
+};
+
+constexpr int         kBodyGrace = 40;                     ///< ticks a loaded chunk has to bring a dying body back
+constexpr char const* kDeathsKey = "gf:entity:boss_deaths"; ///< the world DB record of the dying bosses
 
 /// SinisterSpawnerLogic's runtime (the spawn buffer and scan position are not saved in Java).
 struct SinisterRuntime {
@@ -253,6 +277,8 @@ struct State {
     std::unordered_map<std::string, int>                      homeRadii;  ///< EnforcedHomePoint#getHomeRadius
     int heldDeathTicks = 0; ///< engine death ticks held back (selftests)
     std::unordered_map<std::string, bool> monsterTypes; ///< sinister spawn types: Monster category (learnt)
+    std::vector<Deposit>                  deposits;     ///< death chests waiting for their chunk
+    std::function<bool(int dim, BlockPos const& pos)> unloadedForTest; ///< chunks that count as not loaded (selftests)
 };
 State& S() {
     static State s;
@@ -340,11 +366,14 @@ void qualify(Actor& boss, Actor* source) {
 /// EntityEvents#adjustEntityHealthInMultiplayerFights (FinalizeSpawnEvent).
 void adjustHealth(Mob& mob) {
     if (!gf::boss::ext::adjustsHealth() || !inclusive(mob.getTypeName())) return;
-    int n = 0;
+    // Level#getEntitiesOfClass(ServerPlayer, getBoundingBox().inflate(32, 10, 32)): the players whose
+    // box intersects the inflated box (NO_CREATIVE_OR_SPECTATOR, ENTITY_STILL_ALIVE)
+    int  n  = 0;
     auto bb = mob.getAABB();
-    for (auto* p : fe::playersNear(static_cast<int>(mob.getDimensionId()), mob.getFeetPos(), 64.0)) {
-        auto f = p->getFeetPos();
-        if (f.x < bb.min.x - 32 || f.x > bb.max.x + 32 || f.y < bb.min.y - 10 || f.y > bb.max.y + 10 || f.z < bb.min.z - 32 || f.z > bb.max.z + 32) continue;
+    AABB box{Vec3{bb.min.x - 32.0f, bb.min.y - 10.0f, bb.min.z - 32.0f}, Vec3{bb.max.x + 32.0f, bb.max.y + 10.0f, bb.max.z + 32.0f}};
+    for (auto* p : fe::playersNear(static_cast<int>(mob.getDimensionId()), mob.getFeetPos(), 96.0)) {
+        auto const& pb = p->getAABB();
+        if (!(pb.min.x < box.max.x && pb.max.x > box.min.x && pb.min.y < box.max.y && pb.max.y > box.min.y && pb.min.z < box.max.z && pb.max.z > box.min.z)) continue;
         if (p->isCreative() || p->isSpectator() || !p->isAlive()) continue;
         ++n;
     }
@@ -393,11 +422,15 @@ int nearest(unsigned rgb) {
     return best;
 }
 
-std::string barTitle(Mob& boss, Player const& viewer) {
+/// BaseTFBoss#getBossBarTitle for one viewer (in the viewer's language), cached per viewer until
+/// the name changes.
+std::string const& barTitle(Mob& boss, Player const& viewer) {
     auto& bar = S().bars[uidOf(boss)];
-    if (bar.name) return *bar.name;
-    if (!boss.getNameTag().empty()) return boss.getNameTag();
-    // BaseTFBoss#getBossBarTitle: the type name ("entity.twilightforest.naga")
+    auto [it, fresh] = bar.titles.try_emplace(uidOf(viewer));
+    if (!fresh) return it->second;
+    if (bar.name) return it->second = *bar.name;
+    if (!boss.getNameTag().empty()) return it->second = boss.getNameTag();
+    // the type name ("entity.twilightforest.naga")
     std::string const& type = boss.getTypeName();
     auto               colon = type.find(':');
     std::string        ns    = colon == std::string::npos ? "minecraft" : type.substr(0, colon);
@@ -406,7 +439,7 @@ std::string barTitle(Mob& boss, Player const& viewer) {
     for (auto& c : fallback)
         if (c == '_') c = ' ';
     if (!fallback.empty()) fallback[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fallback[0])));
-    return gf::trFor(viewer, "entity." + ns + "." + path, fallback);
+    return it->second = gf::trFor(viewer, "entity." + ns + "." + path, fallback);
 }
 
 void sendBossEvent(Player& player, std::int64_t bossId, BossEventUpdateType type, std::string const& name, float percent, int color, int overlay) {
@@ -444,18 +477,26 @@ void sendCompanionBar(Player& player, Mob& boss, Bar const& bar, char const* op,
     );
 }
 
-int deathTimeOf(Mob& boss) {
+Dying const* dyingRecord(std::int64_t uid) {
     for (auto const& d : S().dying)
-        if (d.uid == uidOf(boss)) return d.deathTime;
+        if (d.uid == uid) return &d;
+    return nullptr;
+}
+
+int deathTimeOf(Mob& boss) {
+    if (auto const* d = dyingRecord(uidOf(boss))) return d->deathTime;
     return boss.getDeathTime();
 }
 
+/// BaseTFBoss#startSeenByPlayer: the bar for the player (a hidden bar records the viewer only) and,
+/// for a dying boss, its death time (UpdateDeathTimePacket goes to every tracking player, whether
+/// the bar shows or not: KnightPhantom hides the bars of knights 1-5).
 void addViewer(Mob& boss, Bar& bar, Player& player) {
     if (!bar.players.insert(uidOf(player)).second) return;
-    if (!bar.visible) return;
-    sendBossEvent(player, uidOf(boss), BossEventUpdateType::Add, barTitle(boss, player), bar.progress, nearest(bar.rgb), bar.overlay);
-    sendCompanionBar(player, boss, bar, "add");
-    // BaseTFBoss#startSeenByPlayer: a dying boss sends its death time (UpdateDeathTimePacket)
+    if (bar.visible) {
+        sendBossEvent(player, uidOf(boss), BossEventUpdateType::Add, barTitle(boss, player), bar.progress, nearest(bar.rgb), bar.overlay);
+        sendCompanionBar(player, boss, bar, "add");
+    }
     if (int dt = deathTimeOf(boss); dt > 0 && gf::net::isCompanion(player))
         gf::net::send(player, "boss.death_time", {{"id", uidOf(boss)}, {"rid", static_cast<std::int64_t>(boss.getRuntimeID().rawID)}, {"deathTime", dt}});
 }
@@ -480,13 +521,18 @@ void forEachViewer(Bar const& bar, std::function<void(Player&)> const& fn) {
         if (auto* p = fe::playerById(pid)) fn(*p);
 }
 
+/// The players tracking the boss (startSeenByPlayer / stopSeenByPlayer), looked at every
+/// kAudiencePeriod ticks (at once for a new bar).
 void updateAudience(Mob& boss, Bar& bar) {
+    auto now = fe::currentTick();
+    if (now < bar.nextAudience) return;
+    bar.nextAudience = now + kAudiencePeriod;
     auto near = fe::playersNear(static_cast<int>(boss.getDimensionId()), boss.getFeetPos(), kTrackRange);
-    std::set<std::int64_t> now;
-    for (auto* p : near) now.insert(uidOf(*p));
     for (auto it = bar.players.begin(); it != bar.players.end();) {
-        if (!now.contains(*it)) {
+        bool stays = std::any_of(near.begin(), near.end(), [&](Player* p) { return uidOf(*p) == *it; });
+        if (!stays) {
             if (auto* p = fe::playerById(*it); p && bar.visible) removeViewer(uidOf(boss), *p);
+            bar.titles.erase(*it);
             it = bar.players.erase(it);
         } else ++it;
     }
@@ -497,14 +543,16 @@ void setProgress(Mob& boss, Bar& bar, float progress) {
     progress = std::clamp(progress, 0.0f, 1.0f);
     if (std::abs(progress - bar.progress) < 1e-4f) return;
     bar.progress = progress;
+    // an update_percent carries no title (BossEventPacket writes only the health for it)
     forEachViewer(bar, [&](Player& p) {
-        sendBossEvent(p, uidOf(boss), BossEventUpdateType::UpdatePercent, barTitle(boss, p), progress, nearest(bar.rgb), bar.overlay);
+        sendBossEvent(p, uidOf(boss), BossEventUpdateType::UpdatePercent, std::string(), progress, nearest(bar.rgb), bar.overlay);
         if (gf::net::isCompanion(p)) gf::net::send(p, "boss.bar", {{"op", "progress"}, {"id", uidOf(boss)}, {"progress", progress}});
     });
 }
 
 /// A new title for the bar's viewers (BaseTFBoss#setCustomName / BossBar::setName).
 void sendTitle(Mob& boss, Bar& bar) {
+    bar.titles.clear();
     forEachViewer(bar, [&](Player& p) {
         auto title = barTitle(boss, p);
         sendBossEvent(p, uidOf(boss), BossEventUpdateType::UpdateName, title, bar.progress, nearest(bar.rgb), bar.overlay);
@@ -703,10 +751,17 @@ bool pistonMovable(BlockSource& region, BlockPos const& pos) {
 
 namespace {
 
+/// Whether the chunk at `pos` is loaded (dying bodies and death chests wait for it).
+bool chunkLoaded(int dim, BlockPos const& pos) {
+    if (S().unloadedForTest && S().unloadedForTest(dim, pos)) return false;
+    auto* region = game::regionOf(dim);
+    return region && region->hasChunksAt(pos, 0, false);
+}
+
 /// IBossLootBuffer#tryDeposit: an existing chest of the type, or a block that is replaceable or
 /// that a piston could move (stone, dirt, grass: the floor under the home point), without a block
 /// entity; then its container takes the 27 slots.
-bool tryDeposit(Dying const& d, Block const& chest, BlockPos const& pos, fe::JavaRandom& random, std::vector<ItemStack> const& items) {
+bool tryDeposit(Deposit const& d, Block const& chest, BlockPos const& pos, fe::JavaRandom& random, std::vector<ItemStack> const& items) {
     auto* region = game::regionOf(d.dim);
     if (!region || !region->hasChunksAt(pos, 0, false)) return false;
     bool isChest = game::blockIdAt(*region, pos) == d.chestBlock;
@@ -728,28 +783,161 @@ bool tryDeposit(Dying const& d, Block const& chest, BlockPos const& pos, fe::Jav
     return true;
 }
 
-/// IBossLootBuffer#depositDropsIntoChest at EntityUtil#bossChestLocation.
-void depositDropsIntoChest(Dying const& d) {
-    if (!config().bossesSpawnDropChests) return;
+/// IBossLootBuffer#depositDropsIntoChest at `d.pos` (EntityUtil#bossChestLocation). False: the
+/// chunk there is not loaded, nothing was done (the deposit waits for it).
+bool depositDropsIntoChest(Deposit const& d) {
+    if (!config().bossesSpawnDropChests) return true;
+    if (!chunkLoaded(d.dim, d.pos)) return false;
     fe::JavaRandom random(d.seed);
     std::vector<ItemStack> items;
     for (int i = 0; i < kContainerSize; ++i) {
         auto const& j = d.buffer.is_array() && i < static_cast<int>(d.buffer.size()) ? d.buffer[i] : Json();
         items.push_back(j.is_null() ? game::items::empty() : game::items::fromJson(j));
     }
-    BlockPos pos = d.home && d.home->dim == d.dim ? BlockPos{d.home->x, d.home->y - 1, d.home->z} : game::blockPosOf(d.pos);
-    auto const* chest = chestState(d.chestBlock, random);
+    BlockPos    pos    = d.pos;
+    auto const* chest  = chestState(d.chestBlock, random);
     auto*       region = game::regionOf(d.dim);
-    if (!chest || !region) return;
-    if (tryDeposit(d, *chest, pos, random, items)) return;
+    if (!chest || !region) return true;
+    if (tryDeposit(d, *chest, pos, random, items)) return true;
     for (int y = pos.y; y < region->getMaxHeight(); ++y)
-        if (tryDeposit(d, *chest, BlockPos{pos.x, y, pos.z}, random, items)) return;
-    // nowhere to put a chest: Block#popResource
+        if (tryDeposit(d, *chest, BlockPos{pos.x, y, pos.z}, random, items)) return true;
+    // nowhere to put a chest: Block#popResource (into the loaded chunk)
     if (auto* lv = level())
         for (auto const& s : items)
             if (!game::items::isEmpty(s)) lv->getSpawner().spawnItem(*region, s, nullptr, Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, 0);
     celebrateAt(d.dim, Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, random);
     log().info("boss: no room for the death chest of {}, the loot dropped at {} {} {}", d.type, pos.x, pos.y, pos.z);
+    return true;
+}
+
+// ---- dying bosses in the world DB (TF saves them with their chunk) -------------------------------
+
+Json toJson(Dying const& d) {
+    Json home = d.home ? Json{d.home->dim, d.home->x, d.home->y, d.home->z} : Json();
+    return {
+        {"uid",       d.uid                  },
+        {"type",      d.type                 },
+        {"dim",       d.dim                  },
+        {"pos",       {d.pos.x, d.pos.y, d.pos.z}},
+        {"home",      home                   },
+        {"deathTime", d.deathTime            },
+        {"finish",    d.finish               },
+        {"buffer",    d.buffer               },
+        {"loot",      d.loot                 },
+        {"chest",     d.chestBlock           },
+        {"seed",      d.seed                 },
+        {"bodiless",  d.bodiless             },
+    };
+}
+
+std::optional<Dying> dyingFromJson(Json const& j) try {
+    if (!j.is_object() || !j.contains("uid") || !j.contains("type")) return std::nullopt;
+    Dying d;
+    d.uid       = j.value("uid", std::int64_t{0});
+    d.type      = j.value("type", std::string());
+    d.dim       = j.value("dim", 0);
+    if (auto p = j.find("pos"); p != j.end() && p->is_array() && p->size() == 3) d.pos = Vec3{(*p)[0].get<float>(), (*p)[1].get<float>(), (*p)[2].get<float>()};
+    if (auto h = j.find("home"); h != j.end() && h->is_array() && h->size() == 4)
+        d.home = core::GlobalPos{(*h)[0].get<int>(), (*h)[1].get<int>(), (*h)[2].get<int>(), (*h)[3].get<int>()};
+    d.deathTime  = j.value("deathTime", 0);
+    d.finish     = j.value("finish", 20);
+    d.buffer     = j.value("buffer", Json());
+    d.loot       = j.value("loot", true);
+    d.chestBlock = j.value("chest", std::string("minecraft:chest"));
+    d.seed       = j.value("seed", std::int64_t{0});
+    d.bodiless   = j.value("bodiless", false);
+    if (!d.uid || d.type.empty()) return std::nullopt;
+    return d;
+} catch (std::exception const& e) {
+    log().warn("boss: a saved dying boss is unreadable ({})", e.what());
+    return std::nullopt;
+}
+
+Json toJson(Deposit const& d) {
+    return {
+        {"type",   d.type                       },
+        {"dim",    d.dim                        },
+        {"pos",    {d.pos.x, d.pos.y, d.pos.z}  },
+        {"buffer", d.buffer                     },
+        {"chest",  d.chestBlock                 },
+        {"seed",   d.seed                       },
+    };
+}
+
+std::optional<Deposit> depositFromJson(Json const& j) try {
+    auto p = j.is_object() ? j.find("pos") : j.end();
+    if (!j.is_object() || p == j.end() || !p->is_array() || p->size() != 3) return std::nullopt;
+    Deposit d;
+    d.type       = j.value("type", std::string());
+    d.dim        = j.value("dim", 0);
+    d.pos        = BlockPos{(*p)[0].get<int>(), (*p)[1].get<int>(), (*p)[2].get<int>()};
+    d.buffer     = j.value("buffer", Json());
+    d.chestBlock = j.value("chest", std::string("minecraft:chest"));
+    d.seed       = j.value("seed", std::int64_t{0});
+    return d;
+} catch (std::exception const& e) {
+    log().warn("boss: a saved death chest is unreadable ({})", e.what());
+    return std::nullopt;
+}
+
+/// Writes the dying bosses and the waiting death chests (on every change of the set and on each
+/// world save, so a crash right after a chest was placed does not place it again).
+void saveDeaths() {
+    if (!game::db::available()) return;
+    Json dying = Json::array(), deposits = Json::array();
+    for (auto& d : S().dying) {
+        if (d.released) continue;
+        if (auto* body = fe::actorById(d.uid)) {
+            d.buffer = bufferOf(*body); // the buffer as the body holds it now
+            d.pos    = body->getFeetPos();
+        }
+        dying.push_back(toJson(d));
+    }
+    for (auto const& d : S().deposits) deposits.push_back(toJson(d));
+    if (dying.empty() && deposits.empty()) game::db::erase(kDeathsKey);
+    else game::db::put(kDeathsKey, {{"dying", std::move(dying)}, {"deposits", std::move(deposits)}});
+}
+
+/// Reads the deaths a world saved (its load); they go on when their chunks are loaded.
+void loadDeaths() {
+    auto rec = game::db::get(kDeathsKey);
+    if (!rec || !rec->is_object()) return;
+    int n = 0, m = 0;
+    if (auto it = rec->find("dying"); it != rec->end() && it->is_array())
+        for (auto const& j : *it)
+            if (auto d = dyingFromJson(j); d && !dyingRecord(d->uid)) {
+                S().dying.push_back(std::move(*d));
+                ++n;
+            }
+    if (auto it = rec->find("deposits"); it != rec->end() && it->is_array())
+        for (auto const& j : *it)
+            if (auto d = depositFromJson(j)) {
+                S().deposits.push_back(std::move(*d));
+                ++m;
+            }
+    if (n || m) log().info("boss: {} dying boss(es) and {} death chest(s) resumed from the world save", n, m);
+}
+
+/// The death chest of a finished death: placed now when its chunk is loaded, else when it loads.
+void depositOrWait(Dying const& d) {
+    Deposit dep;
+    dep.type       = d.type;
+    dep.dim        = d.dim;
+    dep.pos        = d.home && d.home->dim == d.dim ? BlockPos{d.home->x, d.home->y - 1, d.home->z} : game::blockPosOf(d.pos);
+    dep.buffer     = d.buffer;
+    dep.chestBlock = d.chestBlock;
+    dep.seed       = d.seed;
+    if (depositDropsIntoChest(dep)) return;
+    log().info("boss: the death chest of {} waits for its chunk at {} {} {}", d.type, dep.pos.x, dep.pos.y, dep.pos.z);
+    S().deposits.push_back(std::move(dep));
+}
+
+/// The death chests that waited for their chunk.
+void tickDeposits() {
+    auto& list    = S().deposits;
+    auto  before  = list.size();
+    std::erase_if(list, [](Deposit const& d) { return depositDropsIntoChest(d); });
+    if (list.size() != before) saveDeaths();
 }
 
 // ---- lifecycle ------------------------------------------------------------------------------------
@@ -793,6 +981,7 @@ void onBossDie(Mob& boss, std::string const& damageType, Actor* killer) {
     if (!spec) return;
     auto const& type = boss.getTypeName();
     auto        uid  = uidOf(boss);
+    if (dyingRecord(uid)) return; // a dying body that came back with its chunk: its death goes on
     auto const* lc   = lifecycleOf(type);
     bool        loot = shouldSpawnLoot(boss);
     if (loot) {
@@ -816,6 +1005,7 @@ void onBossDie(Mob& boss, std::string const& damageType, Actor* killer) {
     d.chestBlock = spec->deathChestBlock.empty() ? std::string("minecraft:chest") : spec->deathChestBlock;
     d.seed       = fe::randomOf(boss).nextLong();
     S().dying.push_back(std::move(d));
+    saveDeaths();
     // the client mod counts the death time on from here (Bedrock clients stop at their 20 ticks)
     sendDeathTime(boss, 0);
     log().info("boss: {} died ({}{})", type, damageType, loot ? "" : ", no loot");
@@ -836,9 +1026,12 @@ int deathHold(std::int64_t uid) {
 
 /// BaseTFBoss#tickDeath for the dying bosses: the death time, the unit's tickDeath, and when the
 /// animation is finished #remove(KILLED) -> #postRemoval (the death chest, onPostRemoval); the
-/// engine then removes the body. A body that unloaded finishes with the defaults.
+/// engine then removes the body. A body whose chunk is not loaded waits (Java's dying boss is saved
+/// with its chunk and ticks again when it loads); a body that did not come back with its loaded
+/// chunk finishes its death without it (the defaults, with what was known at its last tick).
 void tickDying() {
-    auto& dying = S().dying;
+    auto& dying   = S().dying;
+    bool  changed = false;
     for (auto it = dying.begin(); it != dying.end();) {
         auto&  d     = *it;
         Actor* actor = fe::actorById(d.uid);
@@ -851,6 +1044,26 @@ void tickDying() {
                 it = dying.erase(it);
             } else ++it;
             continue;
+        }
+        if (actor) {
+            if (d.bodiless || d.absentTicks > 0) log().info("boss: the body of {} is back (death time {})", d.type, d.deathTime);
+            d.absentTicks = 0;
+            d.bodiless    = false;
+            d.pos         = actor->getFeetPos(); // EntityUtil#bossChestLocation: blockPosition() at the removal
+        } else {
+            if (!chunkLoaded(d.dim, game::blockPosOf(d.pos))) {
+                d.absentTicks = 0; // the body waits in its unloaded chunk
+                ++it;
+                continue;
+            }
+            if (!d.bodiless) {
+                if (++d.absentTicks < kBodyGrace) {
+                    ++it;
+                    continue;
+                }
+                d.bodiless = true;
+                log().info("boss: the body of {} did not come back with its chunk, its death goes on without it (death time {})", d.type, d.deathTime);
+            }
         }
         d.deathTime++;
         auto const* lc = lifecycleOf(d.type);
@@ -875,15 +1088,17 @@ void tickDying() {
             }
         }
         removeBar(d.uid);
-        if (deposit) depositDropsIntoChest(d);
+        if (deposit) depositOrWait(d);
         if (mob && lc && lc->onPostRemoval) lifecycleRun("onPostRemoval", d.type, [&] { lc->onPostRemoval(*mob); });
-        log().info("boss: the death animation of {} finished after {} ticks", d.type, d.deathTime);
+        log().info("boss: the death animation of {} finished after {} ticks{}", d.type, d.deathTime, actor ? "" : " (without its body)");
         d.released = true;
+        changed    = true;
         if (!actor) {
             S().qualified.erase(d.uid);
             it = dying.erase(it);
         } else ++it;
     }
+    if (changed) saveDeaths();
 }
 
 /// The spawner block of a boss type (BaseTFBoss#getBossSpawner).
@@ -953,8 +1168,12 @@ void onBossTick(Actor& actor, fe::ActorState const& state) {
     if (!boss) return;
     auto const* spec = bossSpec(actor.getTypeName());
     if (!spec) return;
-    // a dead body keeps the bar it had until its death animation ends (then it is gone with it)
-    if (!boss->isAlive() && !S().bars.contains(uidOf(*boss))) return;
+    // a dead body keeps the bar it had until its death animation ends (then it is gone with it); a
+    // dying body that came back with its chunk shows it again (startSeenByPlayer)
+    if (!boss->isAlive() && !S().bars.contains(uidOf(*boss))) {
+        auto const* d = dyingRecord(uidOf(*boss));
+        if (!d || d->released) return;
+    }
     auto& bar = barOf(*boss, *spec, state);
     if (boss->isAlive() && peacefulDespawn(*boss)) return;
     // BaseTFBoss#customServerAiStep (alive) / #tickDeath (dying) -> tickBossBar
@@ -1472,6 +1691,15 @@ void writeBackSinister(core::GlobalPos const* only) {
 
 // ---- trophies (BossVariant) ------------------------------------------------------------------------
 
+/// The BossVariant name of a trophy block id ("twilightforest:naga_wall_trophy" -> "naga", wall).
+std::string trophyKey(std::string const& blockId, bool& wall) {
+    std::string key = blockId.starts_with("twilightforest:") ? blockId.substr(15) : blockId;
+    wall            = false;
+    if (key.ends_with("_wall_trophy")) key = key.substr(0, key.size() - 12), wall = true;
+    else if (key.ends_with("_trophy")) key = key.substr(0, key.size() - 7);
+    return key;
+}
+
 struct VariantRow {
     char const*                 variant;
     gf::boss::TrophyVariant     floor;
@@ -1582,6 +1810,7 @@ public:
         });
         fe::onLevelTick([] {
             tickDying();
+            tickDeposits();
             for (auto it = S().pendingFills.begin(); it != S().pendingFills.end();) {
                 if (fillContainer(it->pos, it->items)) {
                     it = S().pendingFills.erase(it);
@@ -1591,12 +1820,14 @@ public:
                 } else ++it;
             }
             tickSpawners();
-            // bars of bosses that vanished without dying (unloaded, /kill'ed past the hook)
+            // bars of bosses that are gone (unloaded, dying bodies too: stopSeenByPlayer; /kill'ed
+            // past the hook)
             if (fe::currentTick() % 20 == 0) {
                 std::vector<std::int64_t> gone;
-                for (auto const& [uid, bar] : S().bars)
-                    if (!fe::actorById(uid) && std::none_of(S().dying.begin(), S().dying.end(), [&](Dying const& d) { return d.uid == uid; }))
-                        gone.push_back(uid);
+                for (auto const& [uid, bar] : S().bars) {
+                    auto* a = fe::actorById(uid);
+                    if (!a || !bossSpec(a->getTypeName())) gone.push_back(uid); // gone, or no boss type any more
+                }
                 for (auto uid : gone) removeBar(uid);
                 std::erase_if(S().discarding, [](std::int64_t uid) { return !fe::actorById(uid); });
             }
@@ -1635,10 +1866,17 @@ public:
         }
         S().spawnerVersion++;
         bd::onWriteBack([](core::GlobalPos const* pos) { writeBackSinister(pos); });
+    }
+    // the world lifecycle listeners go in at mod load: BDS reports its world ready while the
+    // storage module installs, before this one
+    void load() {
+        game::db::onWorldReady([] { loadDeaths(); });
+        game::db::onWorldSave([] { saveDeaths(); });
         game::db::onWorldClosed([] {
             S().bars.clear();
             S().qualified.clear();
             S().dying.clear();
+            S().deposits.clear();
             S().activeSpawners.clear();
             S().pendingFills.clear();
             S().discarding.clear();
@@ -1708,6 +1946,30 @@ bool spawnRulesAllowForTest(BlockSource& region, BlockPos const& pos, bool monst
 void setSpawnerKindForTest(std::string const& blockId, std::optional<SpawnerKind> kind) {
     if (kind) S().kindsForTest[blockId] = *kind;
     else S().kindsForTest.erase(blockId);
+}
+void setUnloadedForTest(std::function<bool(int dim, BlockPos const& pos)> fn) { S().unloadedForTest = std::move(fn); }
+std::optional<DyingInfo> dyingForTest(std::int64_t uid) {
+    auto const* d = dyingRecord(uid);
+    if (!d) return std::nullopt;
+    DyingInfo out{d->deathTime, d->finish, d->bodiless, d->released, 0};
+    if (d->buffer.is_array())
+        for (auto const& j : d->buffer) out.bufferStacks += j.is_null() ? 0 : 1;
+    return out;
+}
+int  pendingDepositsForTest() { return static_cast<int>(S().deposits.size()); }
+void saveDeathsForTest() { saveDeaths(); }
+void forgetDeathsForTest() {
+    S().dying.clear();
+    S().deposits.clear();
+}
+void loadDeathsForTest() { loadDeaths(); }
+void setDeathFinishForTest(std::int64_t uid, int finish) {
+    for (auto& d : S().dying)
+        if (d.uid == uid) d.finish = finish;
+}
+void dropDyingForTest(std::int64_t uid) {
+    std::erase_if(S().dying, [&](Dying const& d) { return d.uid == uid; });
+    saveDeaths();
 }
 
 } // namespace gf::feature::boss
@@ -1792,11 +2054,8 @@ std::vector<Player*> participants(Mob const& boss) {
 }
 
 std::optional<TrophyVariant> trophyVariant(std::string const& blockId) {
-    std::string key = blockId;
-    if (key.starts_with("twilightforest:")) key = key.substr(15);
     bool wall = false;
-    if (key.ends_with("_wall_trophy")) key = key.substr(0, key.size() - 12), wall = true;
-    else if (key.ends_with("_trophy")) key = key.substr(0, key.size() - 7);
+    auto key  = fb::trophyKey(blockId, wall);
     for (auto const& row : fb::variants()) {
         if (key != row.variant) continue;
         TrophyVariant v = row.floor;
@@ -1913,6 +2172,33 @@ std::optional<RareSound> trophyRareSound(std::string const& blockId) {
     if (blockId == "twilightforest:alpha_yeti_trophy" || blockId == "twilightforest:alpha_yeti_wall_trophy" || blockId == "alpha_yeti")
         return RareSound{"entity.twilightforest.alpha_yeti.roar", 50};
     return std::nullopt;
+}
+
+// AbstractTrophyBlock#createParticle: the loop counts and the particle options per BossVariant
+std::optional<TrophyParticle> trophyParticle(std::string const& blockId, BlockSource* region, BlockPos const* pos) {
+    auto variant = trophyVariant(blockId);
+    if (!variant || variant->particle.empty()) return std::nullopt;
+    bool wall = false;
+    auto key  = fb::trophyKey(blockId, wall);
+    TrophyParticle out;
+    out.particle = variant->particle;
+    out.count    = 10;
+    if (key == "lich") out.count = 5;
+    else if (key == "snow_queen") out.count = 20;
+    if (key == "ur_ghast") out.params = {{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}}; // DustParticleOptions.REDSTONE
+    else if (key == "knight_phantom") out.params = {{"item", "twilightforest:knightmetal_sword"}};
+    else if (key == "quest_ram") out.params = {{"color", "random"}};
+    else if (key == "minoshroom") {
+        // BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(pos.below()))
+        out.params = {{"block", "below"}};
+        if (region && pos) {
+            Block const& below = region->getBlock(BlockPos{pos->x, pos->y - 1, pos->z});
+            nlohmann::json states = nlohmann::json::object();
+            for (auto const& [name, value] : game::statesOf(below)) states[name] = value;
+            out.params = {{"block", game::blockId(below)}, {"states", std::move(states)}};
+        }
+    }
+    return out;
 }
 
 namespace {

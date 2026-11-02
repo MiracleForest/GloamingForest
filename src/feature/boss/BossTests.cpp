@@ -5,6 +5,7 @@
 // sinister spawner, the trophy table and the bar colours; entity.client_fixture shows the fixture
 // bosses to a real player for the client e2e's screenshots.
 
+#include <algorithm>
 #include <cmath>
 
 #include "ll/api/chrono/GameChrono.h"
@@ -36,8 +37,10 @@
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/landmark/Landmark.h"
+#include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "game/WorldDb.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::feature::boss::tests {
@@ -474,6 +477,272 @@ GF_REGISTER_SELFTEST("entity.boss_spawner_rules", [](Context& ctx) -> ll::coro::
     (void)box;
 });
 
+namespace {
+/// The fixture boss with a death animation of `ticks` while the scope lives (back to the fixture's
+/// 20 after; declare it after the FixtureScope).
+struct DeathTicksScope {
+    explicit DeathTicksScope(int ticks) { reg(ticks); }
+    ~DeathTicksScope() { reg(20); }
+    static void reg(int ticks) {
+        gf::boss::registerBoss({
+            .entityId        = "gf_test:boss",
+            .homeStructure   = "gf_test:fixture",
+            .lootTable       = "gf_test:entities/boss",
+            .deathChestBlock = "minecraft:chest",
+            .bar             = {.rgb = kFixtureRgb, .darken = true, .fog = false},
+            .deathTicks      = ticks,
+        });
+    }
+};
+
+bool hasDeathTime(std::vector<core::Envelope> const& msgs, std::int64_t uid) {
+    for (auto const& m : msgs)
+        if (m.channel == "boss.death_time" && m.payload.value("id", std::int64_t{0}) == uid) return true;
+    return false;
+}
+
+/// The positions that count as unloaded chunks in a test (dying bodies, death chests).
+struct UnloadedScope {
+    std::vector<BlockPos> positions;
+    UnloadedScope() {
+        setUnloadedForTest([this](int, BlockPos const& pos) { return std::find(positions.begin(), positions.end(), pos) != positions.end(); });
+    }
+    ~UnloadedScope() { setUnloadedForTest(nullptr); }
+};
+} // namespace
+
+// TF saves a dying boss with its chunk (dyingInventory, deathTime) and finishes BaseTFBoss#tickDeath
+// when the chunk loads again, so its death chest always appears. Here a boss dies with a long death
+// animation: a companion that comes into range of the dying boss gets its death time although the
+// bar is hidden (KnightPhantom hides knights 1-5); the body leaves the level and its chunk counts
+// as unloaded: the death waits (no death time, no chest); the record survives the world DB (save,
+// forget, load); the chunk loads without the body: the death goes on without it; the chest's chunk
+// is still unloaded: the chest waits, then appears with the loot buffer when it loads. A boss
+// without a home leaves its chest where its body is at the end (EntityUtil#bossChestLocation).
+GF_REGISTER_SELFTEST("entity.boss_unload", [](Context& ctx) -> ll::coro::CoroTask<> {
+    FixtureScope    fixture;
+    DeathTicksScope longDeath(200);
+    DifficultyScope easy(Difficulty::Easy);
+    UnloadedScope   unloaded;
+    resetTestRecords();
+    auto box   = co_await ctx.flatArea(5896, 4);
+    auto home  = ctx.testPos(5897, 1);
+    auto floor = ctx.blockAt(home.offset(0, -1, 0));
+    auto* boss = spawnMob(home.offset(2, 0, 0), "gf_test:boss");
+    ctx.require(boss != nullptr, "the fixture boss spawns");
+    auto uid = fe::uidOf(*boss);
+    ge::setHome(*boss, home, 20);
+    auto item = game::items::make("gf_test:fixture_item", 3);
+    ctx.require(item.has_value(), "fixture item available");
+    gf::boss::ext::setLootBufferSlot(*boss, 4, *item);
+    // a companion far away; the bar hidden (KnightPhantom#startSeenByPlayer: knights 1-5)
+    auto& far   = ctx.spawnPlayer("gf_unload_far");
+    auto  farId = far.getOrCreateUniqueID().rawID;
+    far.teleport(Vec3{home.x + 200.5f, float(home.y), home.z + 0.5f}, DimensionType(home.dim));
+    struct CompanionScope {
+        std::int64_t id;
+        ~CompanionScope() {
+            if (auto* p = fe::playerById(id)) gf::net::setTestCompanion(*p, false);
+        }
+    } companion{farId};
+    co_await ctx.ticks(3);
+    if (auto* p = fe::playerById(farId)) gf::net::setTestCompanion(*p, true);
+    if ((boss = mobById(uid))) gf::boss::bar(*boss).setVisible(false);
+    if ((boss = mobById(uid))) boss->kill();
+    co_await ctx.ticks(3);
+    ctx.require(dyingForTest(uid).has_value(), "the boss is dying");
+    auto* p = fe::playerById(farId);
+    ctx.require(p != nullptr, "the far companion is there");
+    (void)gf::net::takeTestMessages(*p);
+    p->teleport(Vec3{home.x + 0.5f, float(home.y), home.z + 3.5f}, DimensionType(home.dim));
+    bool got = false;
+    for (int i = 0; i < 15 && !got; ++i) {
+        co_await ctx.ticks(1);
+        if ((p = fe::playerById(farId))) got = hasDeathTime(gf::net::takeTestMessages(*p), uid);
+    }
+    ctx.check(got, "a companion that starts seeing a dying boss with a hidden bar gets its death time (UpdateDeathTimePacket)");
+    // the body's chunk unloads with the body: the death waits
+    auto* body = mobById(uid);
+    ctx.require(body != nullptr, "the dead body is there");
+    auto bodyAt  = game::blockPosOf(body->getFeetPos());
+    auto chestPos = BlockPos{home.x, home.y - 1, home.z};
+    unloaded.positions = {bodyAt, chestPos};
+    body->remove();
+    co_await ctx.ticks(2);
+    auto paused = dyingForTest(uid);
+    ctx.require(paused.has_value(), "the record stays while the body's chunk is unloaded");
+    co_await ctx.ticks(30);
+    auto still = dyingForTest(uid);
+    ctx.check(still && still->deathTime == paused->deathTime, "no death time passes while the chunk is unloaded (" + std::to_string(still ? still->deathTime : -1) + ")");
+    ctx.check(!lastDeathChest().has_value() && ctx.blockAt(home.offset(0, -1, 0)) == floor, "no chest, and no loot popped into the unloaded region");
+    // the world save and load (onWorldSave / onWorldReady)
+    saveDeathsForTest();
+    forgetDeathsForTest();
+    ctx.check(!dyingForTest(uid).has_value(), "forgotten in memory");
+    loadDeathsForTest();
+    auto loaded = dyingForTest(uid);
+    ctx.require(loaded.has_value(), "the dying boss came back from the world DB");
+    ctx.check(loaded->deathTime == paused->deathTime && loaded->finish == 200 && loaded->bufferStacks >= 1, "with its death time, animation length and loot buffer (" + std::to_string(loaded->bufferStacks) + " stacks)");
+    // the body's chunk loads without the body: after the grace period the death goes on
+    unloaded.positions = {chestPos};
+    for (int i = 0; i < 60; ++i) co_await ctx.ticks(1);
+    auto going = dyingForTest(uid);
+    ctx.require(going.has_value(), "the death goes on");
+    ctx.check(going->bodiless && going->deathTime > paused->deathTime, "without its body (death time " + std::to_string(going->deathTime) + ")");
+    // the animation ends while the chest's chunk is not loaded: the chest waits
+    setDeathFinishForTest(uid, going->deathTime + 2);
+    co_await ctx.ticks(5);
+    ctx.check(!dyingForTest(uid).has_value(), "the death finished");
+    ctx.check(pendingDepositsForTest() == 1, "the death chest waits for its chunk");
+    ctx.check(!lastDeathChest().has_value() && ctx.blockAt(home.offset(0, -1, 0)) == floor, "nothing placed in the unloaded chunk");
+    saveDeathsForTest(); // the waiting chest goes through the world DB too
+    forgetDeathsForTest();
+    loadDeathsForTest();
+    ctx.check(pendingDepositsForTest() == 1, "the waiting chest came back from the world DB");
+    // its chunk loads: the chest appears with the buffer
+    unloaded.positions.clear();
+    co_await ctx.ticks(3);
+    ctx.check(pendingDepositsForTest() == 0, "the waiting chest was placed");
+    auto chest = lastDeathChest();
+    ctx.require(chest.has_value(), "a death chest was placed");
+    ctx.check(*chest == home.offset(0, -1, 0), "at home.below()");
+    if (auto* c = chestAt(*chest)) ctx.check(countOf(*c, "gf_test:fixture_item") == 3, "holding the loot buffer");
+    restoreFloor(*chest, floor);
+    // without a home: the chest goes where the body is at the end of its animation
+    resetTestRecords();
+    auto* b = spawnMob(home.offset(0, 0, 2), "gf_test:boss");
+    ctx.require(b != nullptr, "a boss without a home spawns");
+    auto bId = fe::uidOf(*b);
+    co_await ctx.ticks(2);
+    if ((b = mobById(bId))) b->kill();
+    co_await ctx.ticks(3);
+    auto moved = home.offset(2, 0, 2);
+    if ((b = mobById(bId))) b->moveTo(Vec3{moved.x + 0.5f, float(moved.y), moved.z + 0.5f}, b->getRotation());
+    co_await ctx.ticks(3);
+    if (auto d = dyingForTest(bId)) setDeathFinishForTest(bId, d->deathTime + 2);
+    co_await ctx.ticks(6);
+    auto chestB = lastDeathChest();
+    ctx.require(chestB.has_value(), "the homeless boss left a death chest");
+    ctx.check(chestB->x == moved.x && chestB->z == moved.z, "where its body was at the end (column " + std::to_string(chestB->x) + " " + std::to_string(chestB->z) + ", moved to " + std::to_string(moved.x) + " " + std::to_string(moved.z) + ")");
+    if (auto* c = chestAt(*chestB))
+        for (int i = 0; i < c->getContainerSize(); ++i) c->setItem(i, game::items::empty());
+    ctx.setBlock(*chestB, "minecraft:air");
+    (void)box;
+});
+
+// The world save and load for real (server scenario: write, Restart-Server, read): a fixture boss
+// dies with a very long animation; after the restart its death is resumed from the world DB and,
+// given its end, places the death chest with its loot under its home. entity.boss_dying_write
+// leaves a probe record (gf:entity:dying_probe); entity.boss_dying_read (after the restart) collects
+// it. Without a probe (a plain "entity.*" run sorts the read first) the read has nothing to check;
+// a probe no read collects is dropped after two minutes.
+namespace {
+constexpr char const* kDyingProbeKey  = "gf:entity:dying_probe";
+constexpr char const* kDyingProbeType = "gf_test:boss_part";
+constexpr int         kDyingProbeTtl = 2400;
+
+void dropProbe(nlohmann::json const& rec) {
+    auto uid = rec.value("uid", std::int64_t{0});
+    dropDyingForTest(uid);
+    if (auto* a = fe::actorById(uid)) a->remove();
+}
+
+struct ProbeExpiry {
+    std::int64_t  uid   = 0;
+    long long     nonce = -1;
+    std::uint64_t until = 0;
+};
+/// The probe a read has not collected yet (uid 0: none), dropped after kDyingProbeTtl ticks.
+ProbeExpiry& probeExpiry() {
+    static ProbeExpiry e;
+    static bool        once = false;
+    if (!std::exchange(once, true))
+        fe::onLevelTick([] {
+            auto& p = e;
+            if (!p.uid || fe::currentTick() < p.until) return;
+            if (auto r = game::db::get(kDyingProbeKey); r && r->value("nonce", -1LL) == p.nonce) {
+                dropProbe(*r);
+                game::db::erase(kDyingProbeKey);
+            } else if (dyingForTest(p.uid)) {
+                dropDyingForTest(p.uid);
+            }
+            p = {};
+        });
+    return e;
+}
+} // namespace
+
+GF_REGISTER_SELFTEST("entity.boss_dying_write", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // the probe is a boss of its own type (gf_test:boss_part registered as a boss while this test
+    // runs), so the lifecycle overrides other tests give gf_test:boss do not end its death
+    struct ProbeBossScope {
+        ProbeBossScope() {
+            gf::boss::registerBoss({
+                .entityId        = kDyingProbeType,
+                .homeStructure   = "gf_test:fixture",
+                .lootTable       = "gf_test:entities/boss",
+                .deathChestBlock = "minecraft:chest",
+                .bar             = {.rgb = kFixtureRgb},
+                .deathTicks      = 1000000,
+            });
+        }
+        ~ProbeBossScope() { unregisterBossForTest(kDyingProbeType); }
+    } probeBoss;
+    DifficultyScope easy(Difficulty::Easy);
+    auto home = ctx.testPos(5898, 4);
+    ctx.require(co_await ctx.ensureLoaded(home), "test area loaded");
+    if (auto old = game::db::get(kDyingProbeKey)) dropProbe(*old); // one probe at a time
+    auto* boss = spawnMob(home, kDyingProbeType);
+    ctx.require(boss != nullptr, "the probe boss spawns");
+    auto uid = fe::uidOf(*boss);
+    ge::setHome(*boss, home, 20);
+    auto item = game::items::make("gf_test:fixture_item", 5);
+    ctx.require(item.has_value(), "fixture item available");
+    gf::boss::ext::setLootBufferSlot(*boss, 7, *item);
+    co_await ctx.ticks(2);
+    if ((boss = mobById(uid))) boss->kill();
+    co_await ctx.ticks(5);
+    ctx.require(dyingForTest(uid).has_value(), "the probe boss is dying");
+    auto nonce = static_cast<long long>(fe::freshSeed() & 0x7fffffff);
+    nlohmann::json rec{{"nonce", nonce}, {"uid", uid}, {"home", {home.dim, home.x, home.y, home.z}}, {"floor", ctx.blockAt(home.offset(0, -1, 0))}};
+    game::db::put(kDyingProbeKey, rec);
+    saveDeathsForTest();
+    // dropped if no read collects it (the 'full' run): one level tick listener for all probes
+    probeExpiry() = {uid, nonce, fe::currentTick() + kDyingProbeTtl};
+    ctx.info("dying boss written nonce=" + std::to_string(nonce));
+});
+
+GF_REGISTER_SELFTEST("entity.boss_dying_read", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto rec = game::db::get(kDyingProbeKey);
+    if (!rec) {
+        ctx.info("no dying probe (entity.boss_dying_write did not run before): nothing to check");
+        co_return;
+    }
+    game::db::erase(kDyingProbeKey);
+    auto uid   = rec->value("uid", std::int64_t{0});
+    auto nonce = rec->value("nonce", -1LL);
+    auto h     = rec->value("home", nlohmann::json::array());
+    ctx.require(uid != 0 && h.is_array() && h.size() == 4, "the probe record is complete");
+    core::GlobalPos home{h[0].get<int>(), h[1].get<int>(), h[2].get<int>(), h[3].get<int>()};
+    auto            floor = rec->value("floor", std::string("minecraft:grass_block"));
+    ctx.require(co_await ctx.ensureLoaded(home), "test area loaded");
+    auto d = dyingForTest(uid);
+    ctx.require(d.has_value(), "the dying boss came back from the world save");
+    ctx.check(d->finish == 1000000 && d->bufferStacks >= 1, "with its animation length and loot buffer");
+    ctx.info(std::string("the body ") + (fe::actorById(uid) ? "came back with its chunk" : "did not come back with its chunk"));
+    resetTestRecords();
+    setDeathFinishForTest(uid, d->deathTime + 5);
+    for (int i = 0; i < 120 && !lastDeathChest(); ++i) co_await ctx.ticks(1);
+    auto chest = lastDeathChest();
+    ctx.require(chest.has_value(), "the resumed death placed its chest");
+    ctx.check(*chest == home.offset(0, -1, 0), "under the home point");
+    int items = 0;
+    if (auto* c = chestAt(*chest)) items = countOf(*c, "gf_test:fixture_item");
+    ctx.check(items == 5, "holding the loot buffer saved with the death (" + std::to_string(items) + ")");
+    restoreFloor(*chest, floor);
+    if (ctx.failures().empty()) ctx.info("dying boss resumed nonce=" + std::to_string(nonce));
+});
+
 GF_REGISTER_SELFTEST("entity.boss_tables", [](Context& ctx) {
     // BossVariant: 10 rows, floor and wall trophies, the comparator strengths of TFBlocks
     char const* variants[] = {"naga", "lich", "hydra", "ur_ghast", "knight_phantom", "snow_queen", "minoshroom", "alpha_yeti", "quest_ram", "final_boss"};
@@ -489,6 +758,24 @@ GF_REGISTER_SELFTEST("entity.boss_tables", [](Context& ctx) {
     ctx.check(!gf::boss::trophyVariant("twilightforest:oak_log").has_value(), "no variant for other blocks");
     auto roar = gf::boss::ext::trophyRareSound("twilightforest:alpha_yeti_trophy");
     ctx.check(roar && roar->oneIn == 50 && roar->sound == "entity.twilightforest.alpha_yeti.roar", "the alpha yeti trophy roars once in 50");
+    // AbstractTrophyBlock#createParticle: counts and particle options
+    auto ghastP = gf::boss::ext::trophyParticle("twilightforest:ur_ghast_trophy");
+    ctx.check(ghastP && ghastP->particle == "minecraft:dust" && ghastP->count == 10 && ghastP->params.value("color", nlohmann::json()) == nlohmann::json({1.0, 0.0, 0.0}) && ghastP->params.value("scale", 0.0) == 1.0, "ur-ghast trophy: 10 red dust (DustParticleOptions.REDSTONE)");
+    auto knightP = gf::boss::ext::trophyParticle("twilightforest:knight_phantom_wall_trophy");
+    ctx.check(knightP && knightP->particle == "minecraft:item" && knightP->params.value("item", std::string()) == "twilightforest:knightmetal_sword", "knight phantom trophy: knightmetal sword item particles");
+    auto minoP = gf::boss::ext::trophyParticle("twilightforest:minoshroom_trophy");
+    ctx.check(minoP && minoP->particle == "minecraft:block" && minoP->params.value("block", std::string()) == "below", "minoshroom trophy: block particles of the block below");
+    auto ramP = gf::boss::ext::trophyParticle("twilightforest:quest_ram_trophy");
+    ctx.check(ramP && ramP->params.value("color", std::string()) == "random", "quest ram trophy: random colours (ColorParticleOption)");
+    auto lichP = gf::boss::ext::trophyParticle("twilightforest:lich_trophy"), queenP = gf::boss::ext::trophyParticle("twilightforest:snow_queen_trophy");
+    ctx.check(lichP && lichP->count == 5 && queenP && queenP->count == 20, "5 angry lich particles, 20 snow warnings");
+    ctx.check(!gf::boss::ext::trophyParticle("twilightforest:hydra_trophy") && !gf::boss::ext::trophyParticle("twilightforest:final_boss_trophy"), "no particles for the hydra and final boss trophies");
+    if (auto* region = game::regionOf(ctx.testPos(5856).dim)) {
+        auto     at = ctx.testPos(5856);
+        BlockPos bp{at.x, at.y, at.z};
+        auto     resolved = gf::boss::ext::trophyParticle("twilightforest:minoshroom_wall_trophy", region, &bp);
+        ctx.check(resolved && resolved->params.value("block", std::string()) == ctx.blockAt(at.offset(0, -1, 0)), "with a position: the block under the trophy (" + (resolved ? resolved->params.dump() : std::string()) + ")");
+    }
     // the spawner block entities (BossSpawnerBlockEntity and its variants)
     struct Row {
         char const* block;

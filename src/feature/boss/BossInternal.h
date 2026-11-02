@@ -3,6 +3,7 @@
 // Internals of F8's boss kit for its selftests (not a contract).
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <utility>
@@ -66,5 +67,29 @@ void setSpawnerKindForTest(std::string const& blockId, std::optional<SpawnerKind
 void clearLifecycleForTest(std::string const& entityId);
 /// SpawnPlacements#checkSpawnRules (SPAWNER) as the sinister spawner applies it.
 [[nodiscard]] bool spawnRulesAllowForTest(BlockSource& region, BlockPos const& pos, bool monster);
+
+/// Chunks that count as not loaded for the dying bosses and their death chests (`fn(dim, pos)`
+/// true: not loaded; nullptr: the real chunk state again).
+void setUnloadedForTest(std::function<bool(int dim, BlockPos const& pos)> fn);
+/// The dying record of the boss `uid` (nullopt: none).
+struct DyingInfo {
+    int          deathTime = 0;
+    int          finish    = 0;
+    bool         bodiless  = false;
+    bool         released  = false;
+    int          bufferStacks = 0; ///< non-empty slots of its loot buffer
+};
+[[nodiscard]] std::optional<DyingInfo> dyingForTest(std::int64_t uid);
+/// Death chests waiting for their chunk.
+[[nodiscard]] int pendingDepositsForTest();
+/// The world save / load of the dying bosses and waiting death chests: write them to the world DB,
+/// forget them in memory, read them back.
+void saveDeathsForTest();
+void forgetDeathsForTest();
+void loadDeathsForTest();
+/// Sets the animation length of the dying record `uid` (a test resuming a saved death).
+void setDeathFinishForTest(std::int64_t uid, int finish);
+/// Drops the dying record `uid` without its death chest.
+void dropDyingForTest(std::int64_t uid);
 
 } // namespace gf::feature::boss
