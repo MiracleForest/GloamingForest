@@ -53,7 +53,8 @@ New-Item -ItemType Directory -Force (Join-Path $s7Pack 'blocks') | Out-Null
 }
 '@ | Set-Content -Encoding UTF8 (Join-Path $s7Pack 'manifest.json')
 
-# keep in step with kS7Formats / kS7Forms in src/feature/ext/import/S7Probe.cpp
+# The single list of the probes: every probe written here is listed in the pack's probes.json, which import.s7_probe
+# reads (src/feature/ext/import/S7Probe.cpp), so a format or form added here is probed there.
 $formats = @('1.21.80', '1.26.0', '1.26.10', '1.26.20', '1.26.30', '1.26.40', '1.26.50')
 $tags = '"minecraft:is_pickaxe_item_destructible", "gf_s7:probe"'
 $forms = [ordered]@{
@@ -64,9 +65,11 @@ $forms = [ordered]@{
     legacy_entity = "$('"tag:minecraft:is_pickaxe_item_destructible": {}, "tag:gf_s7:probe": {}'), `"minecraft:block_entity`": {}"
 }
 $written = 0
+$probes = [System.Collections.Generic.List[object]]::new()
 foreach ($fv in $formats) {
     foreach ($form in $forms.Keys) {
         $name = "${form}_$($fv -replace '\.', '_')"
+        $probes.Add([ordered]@{ id = "gf_s7:$name"; form = $form; format = $fv })
         @"
 {
   "format_version": "$fv",
@@ -84,4 +87,6 @@ foreach ($fv in $formats) {
         $written++
     }
 }
-Write-Step "S7 probe pack: $written blocks written to $s7Pack"
+# (a file at the pack's root outside its known folders is not read by the game)
+[ordered]@{ probes = $probes } | ConvertTo-Json -Depth 4 | Set-Content -Encoding UTF8 (Join-Path $s7Pack 'probes.json')
+Write-Step "S7 probe pack: $written blocks written to $s7Pack (listed in probes.json)"
