@@ -24,13 +24,15 @@
 #include <format>
 #include <filesystem>
 #include <mutex>
-#include <tuple>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 
 #include "ll/api/Config.h"
+#include "ll/api/coro/CoroTask.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
+#include "ll/api/thread/ServerThreadExecutor.h"
 
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/network/MinecraftPacketIds.h"
@@ -54,6 +56,7 @@
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/phys/AABB.h"
 
+#include "feature/dimension/AreaLoader.h"
 #include "feature/dimension/DimensionConfig.h"
 #include "feature/dimension/Internal.h"
 #include "feature/dimension/Teleporter.h"
@@ -505,9 +508,9 @@ bool tryToCreatePortal(BlockSource& region, BlockPos const& pos, ItemActor* cata
         }
     }
     causeLightning(region, pos, cfg.destructivePortalLightning);
+    // (the portal index hears of the new portal blocks through gf::blockevents' onPlaced)
     for (auto const& [p, isPool] : blocksChecked)
         if (isPool) game::setBlock(region, p, *portal);
-    portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
     log().info(
         "dimension: portal lit at {} {} {} in {} ({} blocks{})",
         pos.x,
@@ -552,6 +555,54 @@ void checkForPortalCreation(Player& player, BlockSource& world, float rangeToChe
     }
 }
 
+namespace {
+/// Whether the portal block's gf::blockevents handlers act (TravelModule installed).
+std::atomic<bool> gPortalEventsOn{false};
+
+/// The neighbour checks waiting for a chunk (server thread only), the world they belong to (a
+/// closed world's checks are dropped) and how many waited since the world opened.
+struct WaitingChecks {
+    std::set<core::GlobalPos> positions;
+    int                       world  = 0;
+    int                       waited = 0;
+};
+WaitingChecks& waitingChecks() {
+    static WaitingChecks w;
+    return w;
+}
+
+/// Loads the chunks around the portal block at `pos` (its four sides') and runs its neighbour check
+/// again: Java's getBlockState loads the chunk of a side it reads (synchronously; here over a few
+/// ticks, the portal block waiting meanwhile). One wait per position at a time; a load that times
+/// out (a busy server) is tried again, up to kChunkWaitTries times.
+constexpr int kChunkWaitTries = 5;
+void checkWhenLoaded(BlockSource& region, BlockPos const& pos) {
+    int   dim = static_cast<int>(region.getDimensionId());
+    auto  key = game::globalPos(dim, pos);
+    auto& w   = waitingChecks();
+    if (!w.positions.insert(key).second) return;
+    ++w.waited;
+    log().debug("dimension: the portal block at {} {} {} waits for the chunk of a side before its neighbour check", pos.x, pos.y, pos.z);
+    ll::coro::keepThis([dim, pos, key, world = w.world]() -> ll::coro::CoroTask<> {
+        AreaHandle hold;
+        for (int attempt = 0; attempt < kChunkWaitTries && !hold; ++attempt) {
+            hold = co_await loadArea(dim, pos, 1);
+            if (waitingChecks().world != world || !gPortalEventsOn.load() || !game::regionOf(dim)) break;
+        }
+        auto& w = waitingChecks();
+        if (w.world != world) co_return; // the world closed meanwhile
+        w.positions.erase(key);
+        auto* region = game::regionOf(dim);
+        if (!gPortalEventsOn.load() || !region) co_return;
+        if (!hold) {
+            log().warn("dimension: the chunks around the portal block at {} {} {} did not load: its neighbour check is dropped", pos.x, pos.y, pos.z);
+            co_return;
+        }
+        portalNeighborChanged(*region, pos);
+    }).launch(ll::thread::ServerThreadExecutor::getDefault());
+}
+} // namespace
+
 /// TFPortalBlock#neighborChanged: the portal turns back into water when its floor or rim breaks.
 /// Java sets the water with UPDATE_ALL, so the portal blocks next to it hear of it and go too: here
 /// the water's block change reaches them through gf::blockevents (F11 tells the six neighbours of
@@ -560,15 +611,23 @@ bool portalNeighborChanged(BlockSource& region, BlockPos const& pos) {
     if (pos.y < region.getMinHeight() || pos.y >= region.getMaxHeight()) return false;
     Block const& state = region.getBlock(pos);
     if (!isPortal(state)) return false;
-    // Java's getBlockState loads the chunk it reads; here an unloaded neighbour would read as air
-    // and break a valid portal: the rule waits until the floor and the four sides are loaded
-    for (auto const& [dx, dy, dz] : {std::tuple{0, -1, 0}, std::tuple{0, 0, -1}, std::tuple{1, 0, 0}, std::tuple{0, 0, 1}, std::tuple{-1, 0, 0}}) {
-        if (!region.hasChunksAt(BlockPos{pos.x + dx, pos.y + dy, pos.z + dz}, 0, false)) return false;
-    }
-    bool good = sturdyTop(region, BlockPos{pos.x, pos.y - 1, pos.z});
+    // Java's getBlockState loads the chunk it reads; here a block of a chunk that is not loaded
+    // would read as air (and break a valid portal): the check reads in Java's order and, when it
+    // reaches such a block, waits until the chunk is loaded and runs again
+    auto readable = [&](BlockPos const& p) {
+        if (region.hasChunksAt(p, 0, false)) return true;
+        checkWhenLoaded(region, pos);
+        return false;
+    };
+    BlockPos below{pos.x, pos.y - 1, pos.z};
+    if (!readable(below)) return false;
+    bool good = sturdyTop(region, below);
+    // Direction.Plane.HORIZONTAL: north, east, south, west
     for (auto const& [dx, dz] : {std::pair{0, -1}, std::pair{1, 0}, std::pair{0, 1}, std::pair{-1, 0}}) {
         if (!good) break;
-        Block const& neighboringState = region.getBlock(BlockPos{pos.x + dx, pos.y, pos.z + dz});
+        BlockPos side{pos.x + dx, pos.y, pos.z + dz};
+        if (!readable(side)) return false;
+        Block const& neighboringState = region.getBlock(side);
         good = blockTagged("twilightforest:portal/edge", neighboringState.getTypeName()) || &neighboringState == &state;
     }
     if (good) return false;
@@ -578,29 +637,47 @@ bool portalNeighborChanged(BlockSource& region, BlockPos const& pos) {
         static_cast<int>(state.mNetworkId),
         nullptr
     );
+    // (the portal index hears of it through gf::blockevents' onRemoved)
     if (auto const* water = game::blockWith("minecraft:water")) game::setBlock(region, pos, *water);
-    portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
     log().info("dimension: portal block at {} {} {} broke back into water", pos.x, pos.y, pos.z);
     return true;
 }
 
+int portalChecksWaiting() { return static_cast<int>(waitingChecks().positions.size()); }
+int portalChecksWaited() { return waitingChecks().waited; }
+
+void clearPortalChecks() {
+    auto& w = waitingChecks();
+    w.positions.clear();
+    w.waited = 0;
+    ++w.world;
+}
+
 void registerPortalBlockEvents() {
-    // gf::blockevents keeps its handlers for the process: once, however often the module installs
+    gPortalEventsOn.store(true);
+    // gf::blockevents keeps its handlers for the process (it has no removal): registered once, they
+    // act only while the module is installed
     static bool const registered = [] {
         blockevents::onNeighborChanged(kPortalBlock, [](BlockSource& region, BlockPos const& pos, BlockPos const&) {
-            portalNeighborChanged(region, pos);
+            if (gPortalEventsOn.load()) portalNeighborChanged(region, pos);
         });
-        // a portal block placed or removed by anything (a command, a structure, another unit) is
-        // read by the portal index on the next tick instead of at its next rescan
+        // a portal block placed or removed by anything (lit, built by the teleporter, broken back
+        // into water, a command, a structure, another unit) is read by the portal index on the next
+        // tick instead of at its next rescan
         blockevents::onPlaced(kPortalBlock, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) {
-            portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
+            if (gPortalEventsOn.load()) portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
         });
         blockevents::onRemoved(kPortalBlock, [](BlockSource& region, BlockPos const& pos, Block const&) {
-            portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
+            if (gPortalEventsOn.load()) portalIndexTouch(static_cast<int>(region.getDimensionId()), pos);
         });
         return true;
     }();
     (void)registered;
+}
+
+void unregisterPortalBlockEvents() {
+    gPortalEventsOn.store(false);
+    clearPortalChecks();
 }
 
 } // namespace gf::feature::dimension

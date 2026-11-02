@@ -773,7 +773,7 @@ BlockPos makePortalAt(BlockSource& world, BlockPos const& pos, bool locked) {
              {-1, -1}, {0, -1}, {1, -1}, {2, -1}, {-1, 0}, {2, 0}, {-1, 1}, {2, 1}, {-1, 2}, {0, 2}, {1, 2}, {2, 2}
          })
         if (auto const* deco = randNatureBlock()) set(offset(pos, dx, 1, dz), *deco);
-    portalIndexTouch(static_cast<int>(world.getDimensionId()), pos);
+    // (the portal index hears of the new portal blocks through gf::blockevents' onPlaced)
     log().info("dimension: built a {}portal at {} {} {} in {}", locked ? "one-way " : "", pos.x, pos.y, pos.z, currentDimName(world));
     return pos;
 }

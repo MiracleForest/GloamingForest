@@ -1077,6 +1077,7 @@ public:
             gTick = 0;
             resetNotified();
             refreshPortalTypes();
+            clearPortalChecks();
             portalWaterClear();
             loadBanished();
             tp::cacheLoad();
@@ -1087,6 +1088,7 @@ public:
             portalIndex().clear();
             banished().clear();
             tp::cacheClear();
+            clearPortalChecks();
             portalWaterClear();
             clearItemOwners(); // unique ids of another world mean other items
         });
@@ -1146,6 +1148,7 @@ public:
         for (auto& l : mListeners) bus.removeListener(l);
         mListeners.clear();
         net::off(kClientChannel);
+        unregisterPortalBlockEvents();
         uninstallPortalFluid();
         uninstallItemOwners();
     }
