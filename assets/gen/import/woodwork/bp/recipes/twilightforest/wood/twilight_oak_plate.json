@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/twilight_oak_plate"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##"],
+    "key": {
+      "#": {
+        "item": "twilightforest:twilight_oak_planks"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:twilight_oak_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:twilight_oak_pressure_plate"
+    }
+  }
+}

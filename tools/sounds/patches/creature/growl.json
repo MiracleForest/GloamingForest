@@ -1,0 +1,122 @@
+{
+  "about": "Low rough growl: wobbling sawtooth with a sub octave, amplitude roughness and a raspy noise band.",
+  "params": {
+    "pitch": 90,
+    "len": 0.8,
+    "size": 0.8,
+    "rough": 3,
+    "rasp": 0.35,
+    "wobble": 0.6,
+    "vowelA": 3,
+    "vowelB": 4,
+    "rumble": 38
+  },
+  "length": "$len",
+  "tail": 0.25,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "saw",
+      "freq": {
+        "lfo": "smooth",
+        "rate": 9,
+        "depth": "$pitch*0.08*$wobble",
+        "center": {
+          "env": [
+            [
+              0,
+              "$pitch*0.9"
+            ],
+            [
+              "$len*0.3",
+              "$pitch*1.1"
+            ],
+            [
+              "$len",
+              "$pitch*0.8"
+            ]
+          ],
+          "curve": "exp"
+        }
+      },
+      "env": {
+        "a": 0.06,
+        "d": "$len*0.5",
+        "s": 0.75,
+        "r": "$len*0.3"
+      },
+      "tremolo": {
+        "rate": "$rumble",
+        "depth": 0.45
+      },
+      "formant": {
+        "vowel": {
+          "env": [
+            [
+              0,
+              "$vowelA"
+            ],
+            [
+              "$len",
+              "$vowelB"
+            ]
+          ]
+        },
+        "shift": "$size*0.8",
+        "mix": 0.75
+      },
+      "drive": "$rough"
+    },
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": "$pitch*0.5",
+      "amp": 0.4,
+      "env": {
+        "a": 0.05,
+        "d": 0.2,
+        "s": 0.8,
+        "r": 0.2
+      }
+    },
+    {
+      "type": "noise",
+      "color": "brown",
+      "amp": "$rasp",
+      "env": {
+        "a": 0.05,
+        "d": "$len*0.6",
+        "s": 0.5,
+        "r": 0.2
+      },
+      "tremolo": {
+        "rate": "$rumble*0.8",
+        "depth": 0.8
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "700*$size",
+          "q": 1.0
+        }
+      ]
+    }
+  ],
+  "fx": [
+    {
+      "type": "filter",
+      "filter": "hp",
+      "freq": 35
+    },
+    {
+      "type": "filter",
+      "filter": "lp",
+      "freq": "4000*$size"
+    },
+    {
+      "type": "reverb",
+      "room": 0.3,
+      "mix": 0.08
+    }
+  ]
+}

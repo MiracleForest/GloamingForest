@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:equipment/travellers_vest"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["l l", "lwl", "lwl"],
+    "key": {
+      "l": {
+        "item": "twilightforest:tanned_leather"
+      },
+      "w": {
+        "tag": "minecraft:wool"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:tanned_leather"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_vest"
+    }
+  }
+}

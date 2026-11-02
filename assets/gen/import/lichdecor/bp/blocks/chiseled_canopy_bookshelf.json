@@ -1,0 +1,63 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:chiseled_canopy_bookshelf",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"],
+        "twilightforest:slot_0_occupied": [false, true],
+        "twilightforest:slot_1_occupied": [false, true],
+        "twilightforest:slot_2_occupied": [false, true],
+        "twilightforest:slot_3_occupied": [false, true],
+        "twilightforest:slot_4_occupied": [false, true],
+        "twilightforest:slot_5_occupied": [false, true],
+        "twilightforest:spawner": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 12.5
+      },
+      "tag:minecraft:is_axe_item_destructible": {},
+      "minecraft:map_color": "#664c33",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 30,
+        "destroy_chance_modifier": 20
+      },
+      "minecraft:geometry": {
+        "identifier": "geometry.tf.twilightforest.block.chiseled_canopy_bookshelf.multipart",
+        "bone_visibility": {
+          "part0": "q.block_state('twilightforest:facing') == 'north'",
+          "part13": "q.block_state('twilightforest:facing') == 'east'",
+          "part26": "q.block_state('twilightforest:facing') == 'south'",
+          "part39": "q.block_state('twilightforest:facing') == 'west'"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_chiseled_bookshelf_empty",
+          "render_method": "opaque"
+        },
+        "t_minecraft_block_chiseled_bookshelf_empty": {
+          "texture": "tf_vanilla_block_chiseled_bookshelf_empty",
+          "render_method": "opaque"
+        },
+        "t_twilightforest_block_wood_chiseled_canopy_bookshelf_side": {
+          "texture": "tf_block_wood_chiseled_canopy_bookshelf_side",
+          "render_method": "opaque"
+        },
+        "t_twilightforest_block_wood_chiseled_canopy_bookshelf_top": {
+          "texture": "tf_block_wood_chiseled_canopy_bookshelf_top",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

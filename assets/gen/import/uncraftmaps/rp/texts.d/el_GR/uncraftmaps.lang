@@ -1,0 +1,7 @@
+container.twilightforest.uncrafting_table=Τραπέζι Αποσυναρμολόγησης
+item.twilightforest.filled_magic_map=Μαγικός Χάρτης
+item.twilightforest.filled_maze_map=Χάρτης Λαβυρίνθου
+item.twilightforest.magic_map=Κενός Μαγικός Χάρτης
+item.twilightforest:filled_magic_map.name=Μαγικός Χάρτης
+item.twilightforest:filled_maze_map.name=Χάρτης Λαβυρίνθου
+item.twilightforest:magic_map.name=Κενός Μαγικός Χάρτης

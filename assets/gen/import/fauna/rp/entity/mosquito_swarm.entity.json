@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:mosquito_swarm",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/mosquitoswarm"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.mosquito_swarm"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#080904",
+        "overlay_color": "#2d2f21"
+      }
+    }
+  }
+}

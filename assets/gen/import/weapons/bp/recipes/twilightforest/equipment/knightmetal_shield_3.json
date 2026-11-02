@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:equipment/knightmetal_shield_3"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["-#", "-o", "-#"],
+    "key": {
+      "#": {
+        "item": "twilightforest:infested_towerwood"
+      },
+      "-": {
+        "item": "twilightforest:knightmetal_ingot"
+      },
+      "o": {
+        "item": "twilightforest:knightmetal_ring"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:knightmetal_ingot"
+      },
+      {
+        "item": "twilightforest:knightmetal_ring"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:knightmetal_shield"
+    }
+  }
+}

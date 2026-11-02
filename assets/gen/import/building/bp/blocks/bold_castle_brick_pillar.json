@@ -1,0 +1,149 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:bold_castle_brick_pillar",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:axis": ["y", "x", "z"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 100
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 250
+      },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "tag:minecraft:diamond_tier_destructible": {},
+      "minecraft:map_color": "#fffcf5",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_bold_castle_brick_pillar_side",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "tf_block_bold_castle_brick_pillar_end",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "tf_block_bold_castle_brick_pillar_end",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "tf_block_bold_castle_brick_pillar_side",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "tf_block_bold_castle_brick_pillar_side",
+          "render_method": "opaque"
+        },
+        "east": {
+          "texture": "tf_block_bold_castle_brick_pillar_side",
+          "render_method": "opaque"
+        },
+        "west": {
+          "texture": "tf_block_bold_castle_brick_pillar_side",
+          "render_method": "opaque"
+        }
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'x'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.util.cube_column_rotationally_correct_x",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_bold_castle_brick_pillar_side",
+              "render_method": "opaque"
+            },
+            "end": {
+              "texture": "tf_block_bold_castle_brick_pillar_end",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_bold_castle_brick_pillar_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 270, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'y'",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_bold_castle_brick_pillar_side",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_block_bold_castle_brick_pillar_end",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_block_bold_castle_brick_pillar_end",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_block_bold_castle_brick_pillar_side",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_block_bold_castle_brick_pillar_side",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_block_bold_castle_brick_pillar_side",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_block_bold_castle_brick_pillar_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:axis') == 'z'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.util.cube_column_rotationally_correct_z",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_bold_castle_brick_pillar_side",
+              "render_method": "opaque"
+            },
+            "end": {
+              "texture": "tf_block_bold_castle_brick_pillar_end",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_block_bold_castle_brick_pillar_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [270, 0, 0]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

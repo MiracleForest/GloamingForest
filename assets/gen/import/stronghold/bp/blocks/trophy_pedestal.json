@@ -1,0 +1,184 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:trophy_pedestal",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:active": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": false,
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 10000
+      },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.trophy_pedestal",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_pedestal_top",
+          "render_method": "blend"
+        },
+        "east": {
+          "texture": "tf_block_pedestal_ur-ghast_latent",
+          "render_method": "blend"
+        },
+        "end": {
+          "texture": "tf_block_pedestal_top",
+          "render_method": "blend"
+        },
+        "north": {
+          "texture": "tf_block_pedestal_naga_latent",
+          "render_method": "blend"
+        },
+        "south": {
+          "texture": "tf_block_pedestal_lich_latent",
+          "render_method": "blend"
+        },
+        "west": {
+          "texture": "tf_block_pedestal_hydra_latent",
+          "render_method": "blend"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-7, 0, -7],
+        "size": [14, 16, 14]
+      },
+      "minecraft:selection_box": {
+        "origin": [-7, 0, -7],
+        "size": [14, 16, 14]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.trophy_pedestal",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_pedestal_top",
+              "render_method": "blend"
+            },
+            "east": {
+              "texture": "tf_block_pedestal_ur-ghast_latent",
+              "render_method": "blend"
+            },
+            "end": {
+              "texture": "tf_block_pedestal_top",
+              "render_method": "blend"
+            },
+            "north": {
+              "texture": "tf_block_pedestal_naga_latent",
+              "render_method": "blend"
+            },
+            "south": {
+              "texture": "tf_block_pedestal_lich_latent",
+              "render_method": "blend"
+            },
+            "west": {
+              "texture": "tf_block_pedestal_hydra_latent",
+              "render_method": "blend"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-7, 0, -7],
+            "size": [14, 16, 14]
+          },
+          "minecraft:selection_box": {
+            "origin": [-7, 0, -7],
+            "size": [14, 16, 14]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.trophy_pedestal_active",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_pedestal_top",
+              "render_method": "blend"
+            },
+            "east": {
+              "texture": "tf_block_pedestal_ur-ghast_latent",
+              "render_method": "blend"
+            },
+            "east2": {
+              "texture": "tf_block_pedestal_ur-ghast_glow",
+              "render_method": "blend"
+            },
+            "east3": {
+              "texture": "tf_block_pedestal_ur-ghast",
+              "render_method": "blend"
+            },
+            "end": {
+              "texture": "tf_block_pedestal_top",
+              "render_method": "blend"
+            },
+            "end2": {
+              "texture": "tf_block_pedestal_top_glow",
+              "render_method": "blend"
+            },
+            "north": {
+              "texture": "tf_block_pedestal_naga_latent",
+              "render_method": "blend"
+            },
+            "north2": {
+              "texture": "tf_block_pedestal_naga_glow",
+              "render_method": "blend"
+            },
+            "north3": {
+              "texture": "tf_block_pedestal_naga",
+              "render_method": "blend"
+            },
+            "south": {
+              "texture": "tf_block_pedestal_lich_latent",
+              "render_method": "blend"
+            },
+            "south2": {
+              "texture": "tf_block_pedestal_lich_glow",
+              "render_method": "blend"
+            },
+            "south3": {
+              "texture": "tf_block_pedestal_lich",
+              "render_method": "blend"
+            },
+            "west": {
+              "texture": "tf_block_pedestal_hydra_latent",
+              "render_method": "blend"
+            },
+            "west2": {
+              "texture": "tf_block_pedestal_hydra_glow",
+              "render_method": "blend"
+            },
+            "west3": {
+              "texture": "tf_block_pedestal_hydra",
+              "render_method": "blend"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-7, 0, -7],
+            "size": [14, 16, 14]
+          },
+          "minecraft:selection_box": {
+            "origin": [-7, 0, -7],
+            "size": [14, 16, 14]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active')",
+        "components": {
+          "minecraft:destructible_by_mining": {
+            "seconds_to_destroy": 2
+          }
+        }
+      }
+    ]
+  }
+}

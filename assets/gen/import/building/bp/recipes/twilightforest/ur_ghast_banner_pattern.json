@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:ur_ghast_banner_pattern"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:paper"
+      },
+      {
+        "item": "twilightforest:ur_ghast_trophy"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:ur_ghast_trophy"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:ur_ghast_banner_pattern"
+    }
+  }
+}

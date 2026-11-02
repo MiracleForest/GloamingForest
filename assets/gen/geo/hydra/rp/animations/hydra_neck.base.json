@@ -1,0 +1,13 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.hydra_neck.base": {
+      "loop": true,
+      "bones": {
+        "neck": {
+          "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
+        }
+      }
+    }
+  }
+}

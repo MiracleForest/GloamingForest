@@ -1,0 +1,245 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.snow_queen_trophy",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 0.25, 0]
+      },
+      "bones": [
+        {
+          "name": "snow_queen_trophy",
+          "pivot": [0, 0, 0],
+          "rotation": [0, 180, 0]
+        },
+        {
+          "name": "head",
+          "parent": "snow_queen_trophy",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-4, 0, -4],
+              "size": [8, 8, 8],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "crown",
+          "parent": "head",
+          "pivot": [0, 0, 0]
+        },
+        {
+          "name": "crown_front_0",
+          "parent": "crown",
+          "pivot": [0, 6, -4],
+          "cubes": [
+            {
+              "origin": [-4.5, 5.5, -4.5],
+              "size": [9, 1, 1],
+              "uv": [28, 30]
+            }
+          ]
+        },
+        {
+          "name": "spike_4",
+          "parent": "crown_front_0",
+          "pivot": [0, 6, -4],
+          "rotation": [15, 0, 0],
+          "cubes": [
+            {
+              "origin": [-0.5, 5.5, -5],
+              "size": [1, 4, 1],
+              "uv": [48, 27]
+            }
+          ]
+        },
+        {
+          "name": "spike_3l",
+          "parent": "crown_front_0",
+          "pivot": [-2.5, 6, -4],
+          "rotation": [10, 0, -10],
+          "cubes": [
+            {
+              "origin": [-3, 5.5, -5],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "spike_3r",
+          "parent": "crown_front_0",
+          "pivot": [2.5, 6, -4],
+          "rotation": [10, 0, 10],
+          "cubes": [
+            {
+              "origin": [2, 5.5, -5],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_front_1",
+          "parent": "crown",
+          "pivot": [0, 6, 4],
+          "cubes": [
+            {
+              "origin": [-4.5, 5.5, 3.5],
+              "size": [9, 1, 1],
+              "uv": [28, 30]
+            }
+          ]
+        },
+        {
+          "name": "crown_front_1_spike_4",
+          "parent": "crown_front_1",
+          "pivot": [0, 6, 4],
+          "rotation": [-15, 0, 0],
+          "cubes": [
+            {
+              "origin": [-0.5, 5.5, 4],
+              "size": [1, 4, 1],
+              "uv": [48, 27]
+            }
+          ]
+        },
+        {
+          "name": "crown_front_1_spike_3l",
+          "parent": "crown_front_1",
+          "pivot": [-2.5, 6, 4],
+          "rotation": [-10, 0, -10],
+          "cubes": [
+            {
+              "origin": [-3, 5.5, 4],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_front_1_spike_3r",
+          "parent": "crown_front_1",
+          "pivot": [2.5, 6, 4],
+          "rotation": [-10, 0, 10],
+          "cubes": [
+            {
+              "origin": [2, 5.5, 4],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_0",
+          "parent": "crown",
+          "pivot": [-4, 6, 0],
+          "rotation": [0, 90, 0],
+          "cubes": [
+            {
+              "origin": [-7.5, 5.5, -0.5],
+              "size": [7, 1, 1],
+              "uv": [28, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_0_spike_4",
+          "parent": "crown_side_0",
+          "pivot": [-4, 6, 0],
+          "rotation": [15, 0, 0],
+          "cubes": [
+            {
+              "origin": [-4.5, 5.5, -1],
+              "size": [1, 4, 1],
+              "uv": [48, 27]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_0_spike_3l",
+          "parent": "crown_side_0",
+          "pivot": [-6.5, 6, 0],
+          "rotation": [10, 0, -10],
+          "cubes": [
+            {
+              "origin": [-7, 5.5, -1],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_0_spike_3r",
+          "parent": "crown_side_0",
+          "pivot": [-1.5, 6, 0],
+          "rotation": [10, 0, 10],
+          "cubes": [
+            {
+              "origin": [-2, 5.5, -1],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_1",
+          "parent": "crown",
+          "pivot": [4, 6, 0],
+          "rotation": [0, 90, 0],
+          "cubes": [
+            {
+              "origin": [0.5, 5.5, -0.5],
+              "size": [7, 1, 1],
+              "uv": [28, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_1_spike_4",
+          "parent": "crown_side_1",
+          "pivot": [4, 6, 0],
+          "rotation": [-15, 0, 0],
+          "cubes": [
+            {
+              "origin": [3.5, 5.5, 0],
+              "size": [1, 4, 1],
+              "uv": [48, 27]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_1_spike_3l",
+          "parent": "crown_side_1",
+          "pivot": [1.5, 6, 0],
+          "rotation": [-10, 0, -10],
+          "cubes": [
+            {
+              "origin": [1, 5.5, 0],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_1_spike_3r",
+          "parent": "crown_side_1",
+          "pivot": [6.5, 6, 0],
+          "rotation": [-10, 0, 10],
+          "cubes": [
+            {
+              "origin": [6, 5.5, 0],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

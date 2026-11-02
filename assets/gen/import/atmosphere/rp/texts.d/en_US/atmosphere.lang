@@ -1,0 +1,4 @@
+config.twilightforest.aurora_biomes=Aurora Shader Biomes
+config.twilightforest.aurora_biomes.button=Edit Biomes
+config.twilightforest.aurora_biomes.tooltip=Defines which biomes the aurora shader effect will appear in. Leave the list empty to disable the effect.
+subtitles.twilightforest.environment.acid_rain=Acid rain scalds

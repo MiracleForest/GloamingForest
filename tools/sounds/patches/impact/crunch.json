@@ -1,0 +1,44 @@
+{
+  "about": "Crunch or break: dense noise grains with stony modal knocks.",
+  "params": {
+    "len": 0.35,
+    "freq": 900,
+    "bright": 1.0
+  },
+  "length": "$len",
+  "tail": 0.2,
+  "layers": [
+    {
+      "type": "grains",
+      "density": {
+        "from": 400,
+        "to": 40
+      },
+      "grain": [
+        0.003,
+        0.015
+      ],
+      "freq": [
+        "800*$bright",
+        "6000*$bright"
+      ],
+      "wave": "noise",
+      "q": 2
+    },
+    {
+      "type": "modal",
+      "modes": "stone",
+      "freq": "$freq",
+      "strike": 0.01,
+      "length": 0.05,
+      "ring": 0.2,
+      "amp": 0.6,
+      "repeat": {
+        "count": 3,
+        "every": "$len/4",
+        "jitter": 0.02,
+        "decay": 0.7
+      }
+    }
+  ]
+}

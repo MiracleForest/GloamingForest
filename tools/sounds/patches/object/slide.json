@@ -1,0 +1,42 @@
+{
+  "about": "Sliding lid or stopper: band-passed friction noise with a closing clink.",
+  "params": {
+    "len": 0.3,
+    "f0": 1200,
+    "f1": 2600,
+    "clink": 2200
+  },
+  "length": "$len",
+  "tail": 0.5,
+  "layers": [
+    {
+      "type": "noise",
+      "color": "white",
+      "env": {
+        "a": 0.02,
+        "d": "$len*0.5",
+        "s": 0.6,
+        "r": "$len*0.2"
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": {
+            "from": "$f0",
+            "to": "$f1"
+          },
+          "q": 6
+        }
+      ]
+    },
+    {
+      "type": "modal",
+      "modes": "glass",
+      "freq": "$clink",
+      "start": "$len*0.85",
+      "length": 0.01,
+      "ring": 0.5,
+      "amp": 0.6
+    }
+  ]
+}

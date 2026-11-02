@@ -1,0 +1,18 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:thrown_block",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/misc/missing_texture"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.thrown_block"
+      },
+      "render_controllers": ["controller.render.default"]
+    }
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:birch_drying_rack",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 7.5
+      },
+      "tag:minecraft:is_axe_item_destructible": {},
+      "minecraft:map_color": "#f7e9a3",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_birch_planks",
+          "render_method": "opaque"
+        },
+        "texture": {
+          "texture": "tf_vanilla_block_birch_planks",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:transformation": {
+        "rotation": [0, 180, 0]
+      },
+      "minecraft:collision_box": {
+        "origin": [-8, 12, -8],
+        "size": [16, 4, 4]
+      },
+      "minecraft:selection_box": {
+        "origin": [-8, 12, -8],
+        "size": [16, 4, 4]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [4, 12, -8],
+            "size": [4, 4, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [4, 12, -8],
+            "size": [4, 4, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 12, -8],
+            "size": [16, 4, 4]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 12, -8],
+            "size": [16, 4, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 12, 4],
+            "size": [16, 4, 4]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 12, 4],
+            "size": [16, 4, 4]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.template_drying_rack",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "opaque"
+            },
+            "texture": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 12, -8],
+            "size": [4, 4, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 12, -8],
+            "size": [4, 4, 16]
+          }
+        }
+      }
+    ]
+  }
+}

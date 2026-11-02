@@ -1,0 +1,11 @@
+{
+  "commands.tffeature.display_pieces.missing_key": "missing key",
+  "commands.tffeature.structure.boundaries": "Structure boundaries: %s",
+  "commands.tffeature.structure.conquer.status": "Structure conquer flag: %s",
+  "commands.tffeature.structure.conquer.update": "Structure conquer flag was %s, changing to %s",
+  "commands.tffeature.structure.inside": "You are in a Landmark structure",
+  "commands.tffeature.structure.outside": "You are not in a Landmark structure",
+  "commands.tffeature.structure.required": "You are not in a structure",
+  "commands.tffeature.structure.spawn_info": "%s, Weight %s",
+  "commands.tffeature.structure.spawn_list": "Spawn list for this area is:"
+}

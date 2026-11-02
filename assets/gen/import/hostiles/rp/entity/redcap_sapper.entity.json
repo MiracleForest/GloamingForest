@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:redcap_sapper",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/redcapsapper"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.redcap_sapper"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#575d21",
+        "overlay_color": "#ab1e14"
+      }
+    }
+  }
+}

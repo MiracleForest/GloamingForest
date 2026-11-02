@@ -1,0 +1,20 @@
+{
+  "block.twilightforest.encased_fire_jet": "Jato de Fogo Encapsulado",
+  "block.twilightforest.encased_smoker": "Defumador Encapsulado",
+  "block.twilightforest.fire_jet": "Jato de Fogo",
+  "block.twilightforest.smoker": "Defumador",
+  "entity.twilightforest.hydra": "Hidra",
+  "entity.twilightforest.hydra_mortar": "Argamassa de Hidra",
+  "item.twilightforest.hydra_spawn_egg": "Ovo gerador de Hidra",
+  "subtitles.twilightforest.block.jet.active": "Jato de Fogo dispara",
+  "subtitles.twilightforest.block.jet.pop": "Jato de Fogo estoura",
+  "subtitles.twilightforest.block.jet.start": "Jato de Fogo ativado",
+  "subtitles.twilightforest.block.smoker.start": "Defumador ativado",
+  "subtitles.twilightforest.entity.hydra.death": "Hydra ruge em derrota",
+  "subtitles.twilightforest.entity.hydra.growl": "Hidra rosna",
+  "subtitles.twilightforest.entity.hydra.hurt": "Hidra ferida",
+  "subtitles.twilightforest.entity.hydra.roar": "Hidra ruge",
+  "subtitles.twilightforest.entity.hydra.shoot": "Hydra atira morteiro",
+  "subtitles.twilightforest.entity.hydra.shoot_fire": "Hydra cospe fogo",
+  "subtitles.twilightforest.entity.hydra.warn": "Hidra se prepara para morder"
+}

@@ -1,0 +1,12 @@
+{
+  "block.twilightforest.antibuilder": "Anti-constructor",
+  "block.twilightforest.antibuilt_block": "Bloque anti-constructor",
+  "block.twilightforest.built_block": "Bloque construido",
+  "block.twilightforest.carminite_builder": "Constructor de carminita",
+  "block.twilightforest.carminite_reactor": "Reactor de carminita",
+  "block.twilightforest.fake_diamond": "Bloque de diamante",
+  "block.twilightforest.fake_gold": "Bloque de oro",
+  "block.twilightforest.ghast_trap": "Trampa para ghasts",
+  "block.twilightforest.infested_towerwood": "Tablones de madera de torre infestados",
+  "block.twilightforest.locked_vanishing_block": "Bloque de Desaparición Bloqueado"
+}

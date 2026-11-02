@@ -1,0 +1,245 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.snow_queen_wall_trophy",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 2.5,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 0.5, 0]
+      },
+      "bones": [
+        {
+          "name": "snow_queen_wall_trophy",
+          "pivot": [0, 0, 0],
+          "rotation": [0, 180, 0]
+        },
+        {
+          "name": "head",
+          "parent": "snow_queen_wall_trophy",
+          "pivot": [0, 4, 3.984],
+          "cubes": [
+            {
+              "origin": [-4, 4, -0.016],
+              "size": [8, 8, 8],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "crown",
+          "parent": "head",
+          "pivot": [0, 4, 3.984]
+        },
+        {
+          "name": "crown_front_0",
+          "parent": "crown",
+          "pivot": [0, 10, -0.016],
+          "cubes": [
+            {
+              "origin": [-4.5, 9.5, -0.516],
+              "size": [9, 1, 1],
+              "uv": [28, 30]
+            }
+          ]
+        },
+        {
+          "name": "spike_4",
+          "parent": "crown_front_0",
+          "pivot": [0, 10, -0.016],
+          "rotation": [15, 0, 0],
+          "cubes": [
+            {
+              "origin": [-0.5, 9.5, -1.016],
+              "size": [1, 4, 1],
+              "uv": [48, 27]
+            }
+          ]
+        },
+        {
+          "name": "spike_3l",
+          "parent": "crown_front_0",
+          "pivot": [-2.5, 10, -0.016],
+          "rotation": [10, 0, -10],
+          "cubes": [
+            {
+              "origin": [-3, 9.5, -1.016],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "spike_3r",
+          "parent": "crown_front_0",
+          "pivot": [2.5, 10, -0.016],
+          "rotation": [10, 0, 10],
+          "cubes": [
+            {
+              "origin": [2, 9.5, -1.016],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_front_1",
+          "parent": "crown",
+          "pivot": [0, 10, 7.984],
+          "cubes": [
+            {
+              "origin": [-4.5, 9.5, 7.484],
+              "size": [9, 1, 1],
+              "uv": [28, 30]
+            }
+          ]
+        },
+        {
+          "name": "crown_front_1_spike_4",
+          "parent": "crown_front_1",
+          "pivot": [0, 10, 7.984],
+          "rotation": [-15, 0, 0],
+          "cubes": [
+            {
+              "origin": [-0.5, 9.5, 7.984],
+              "size": [1, 4, 1],
+              "uv": [48, 27]
+            }
+          ]
+        },
+        {
+          "name": "crown_front_1_spike_3l",
+          "parent": "crown_front_1",
+          "pivot": [-2.5, 10, 7.984],
+          "rotation": [-10, 0, -10],
+          "cubes": [
+            {
+              "origin": [-3, 9.5, 7.984],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_front_1_spike_3r",
+          "parent": "crown_front_1",
+          "pivot": [2.5, 10, 7.984],
+          "rotation": [-10, 0, 10],
+          "cubes": [
+            {
+              "origin": [2, 9.5, 7.984],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_0",
+          "parent": "crown",
+          "pivot": [-4, 10, 3.984],
+          "rotation": [0, 90, 0],
+          "cubes": [
+            {
+              "origin": [-7.5, 9.5, 3.484],
+              "size": [7, 1, 1],
+              "uv": [28, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_0_spike_4",
+          "parent": "crown_side_0",
+          "pivot": [-4, 10, 3.984],
+          "rotation": [15, 0, 0],
+          "cubes": [
+            {
+              "origin": [-4.5, 9.5, 2.984],
+              "size": [1, 4, 1],
+              "uv": [48, 27]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_0_spike_3l",
+          "parent": "crown_side_0",
+          "pivot": [-6.5, 10, 3.984],
+          "rotation": [10, 0, -10],
+          "cubes": [
+            {
+              "origin": [-7, 9.5, 2.984],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_0_spike_3r",
+          "parent": "crown_side_0",
+          "pivot": [-1.5, 10, 3.984],
+          "rotation": [10, 0, 10],
+          "cubes": [
+            {
+              "origin": [-2, 9.5, 2.984],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_1",
+          "parent": "crown",
+          "pivot": [4, 10, 3.984],
+          "rotation": [0, 90, 0],
+          "cubes": [
+            {
+              "origin": [0.5, 9.5, 3.484],
+              "size": [7, 1, 1],
+              "uv": [28, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_1_spike_4",
+          "parent": "crown_side_1",
+          "pivot": [4, 10, 3.984],
+          "rotation": [-15, 0, 0],
+          "cubes": [
+            {
+              "origin": [3.5, 9.5, 3.984],
+              "size": [1, 4, 1],
+              "uv": [48, 27]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_1_spike_3l",
+          "parent": "crown_side_1",
+          "pivot": [1.5, 10, 3.984],
+          "rotation": [-10, 0, -10],
+          "cubes": [
+            {
+              "origin": [1, 9.5, 3.984],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        },
+        {
+          "name": "crown_side_1_spike_3r",
+          "parent": "crown_side_1",
+          "pivot": [6.5, 10, 3.984],
+          "rotation": [-10, 0, 10],
+          "cubes": [
+            {
+              "origin": [6, 9.5, 3.984],
+              "size": [1, 3, 1],
+              "uv": [52, 28]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

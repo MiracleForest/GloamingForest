@@ -1,0 +1,133 @@
+{
+  "twilightforest:music.twilightforest.twilight_forest": {
+    "category": "music",
+    "sounds": [
+      {
+        "file": "music/superstitious",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "file": "music/steps",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "file": "music/radiance",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "file": "music/home",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "file": "music/wayfarer",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "file": "music/findings",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "file": "music/maker",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "file": "music/thread",
+        "volume": 0.5,
+        "stream": true
+      },
+      {
+        "file": "music/motion",
+        "volume": 0.5,
+        "stream": true
+      }
+    ]
+  },
+  "twilightforest:music_disc.twilightforest.findings": {
+    "category": "record",
+    "sounds": [
+      {
+        "file": "music/findings",
+        "stream": true
+      }
+    ]
+  },
+  "twilightforest:music_disc.twilightforest.home": {
+    "category": "record",
+    "sounds": [
+      {
+        "file": "music/home",
+        "stream": true
+      }
+    ]
+  },
+  "twilightforest:music_disc.twilightforest.maker": {
+    "category": "record",
+    "sounds": [
+      {
+        "file": "music/maker",
+        "stream": true
+      }
+    ]
+  },
+  "twilightforest:music_disc.twilightforest.motion": {
+    "category": "record",
+    "sounds": [
+      {
+        "file": "music/motion",
+        "stream": true
+      }
+    ]
+  },
+  "twilightforest:music_disc.twilightforest.radiance": {
+    "category": "record",
+    "sounds": [
+      {
+        "file": "music/radiance",
+        "stream": true
+      }
+    ]
+  },
+  "twilightforest:music_disc.twilightforest.steps": {
+    "category": "record",
+    "sounds": [
+      {
+        "file": "music/steps",
+        "stream": true
+      }
+    ]
+  },
+  "twilightforest:music_disc.twilightforest.superstitious": {
+    "category": "record",
+    "sounds": [
+      {
+        "file": "music/superstitious",
+        "stream": true
+      }
+    ]
+  },
+  "twilightforest:music_disc.twilightforest.thread": {
+    "category": "record",
+    "sounds": [
+      {
+        "file": "music/thread",
+        "stream": true
+      }
+    ]
+  },
+  "twilightforest:music_disc.twilightforest.wayfarer": {
+    "category": "record",
+    "sounds": [
+      {
+        "file": "music/wayfarer",
+        "stream": true
+      }
+    ]
+  }
+}

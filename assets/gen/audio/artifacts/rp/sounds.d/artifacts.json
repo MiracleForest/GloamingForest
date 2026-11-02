@@ -1,0 +1,305 @@
+{
+  "block.twilightforest.casket.close": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.casket.close",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/casket/close"
+      }
+    ]
+  },
+  "block.twilightforest.casket.locked": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.casket.locked",
+    "sounds": [
+      {
+        "name": "sounds/random/door_close"
+      }
+    ]
+  },
+  "block.twilightforest.casket.open": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.casket.open",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/casket/open"
+      }
+    ]
+  },
+  "block.twilightforest.casket.repair": {
+    "category": "block",
+    "subtitle": "subtitles.twilightforest.block.casket.repair",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/casket/repair"
+      }
+    ]
+  },
+  "entity.twilightforest.fortification_shield.add": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.entity.fortification_shield.add",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/shield_use"
+      }
+    ]
+  },
+  "entity.twilightforest.fortification_shield.block": {
+    "category": "hostile",
+    "subtitle": "subtitles.twilightforest.entity.fortification_shield.block",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/vanilla/mob/zombie/metal1",
+        "volume": 0.5
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/vanilla/mob/zombie/metal2",
+        "volume": 0.5
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/vanilla/mob/zombie/metal3",
+        "volume": 0.5
+      }
+    ]
+  },
+  "entity.twilightforest.fortification_shield.break": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.entity.fortification_shield.break",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/shield_break"
+      }
+    ]
+  },
+  "entity.twilightforest.fortification_shield.expire": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.entity.fortification_shield.expire",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/shield_stop"
+      }
+    ]
+  },
+  "entity.twilightforest.loyal_zombie.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.loyal_zombie.ambient",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/say1"
+      },
+      {
+        "name": "sounds/mob/zombie/say2"
+      },
+      {
+        "name": "sounds/mob/zombie/say3"
+      }
+    ]
+  },
+  "entity.twilightforest.loyal_zombie.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.loyal_zombie.death",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/death"
+      }
+    ]
+  },
+  "entity.twilightforest.loyal_zombie.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.loyal_zombie.hurt",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/hurt1"
+      },
+      {
+        "name": "sounds/mob/zombie/hurt2"
+      }
+    ]
+  },
+  "entity.twilightforest.loyal_zombie.step": {
+    "category": "neutral",
+    "subtitle": "subtitles.block.generic.footsteps",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/step1"
+      },
+      {
+        "name": "sounds/mob/zombie/step2"
+      },
+      {
+        "name": "sounds/mob/zombie/step3"
+      },
+      {
+        "name": "sounds/mob/zombie/step4"
+      },
+      {
+        "name": "sounds/mob/zombie/step5"
+      }
+    ]
+  },
+  "item.twilightforest.charm.keep": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.charm.keep",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/unfect"
+      }
+    ]
+  },
+  "item.twilightforest.charm.life": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.charm.life",
+    "sounds": [
+      {
+        "name": "sounds/random/use_totem"
+      }
+    ]
+  },
+  "item.twilightforest.flask.break": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.flask.break",
+    "sounds": [
+      {
+        "name": "sounds/random/glass1"
+      },
+      {
+        "name": "sounds/random/glass2"
+      },
+      {
+        "name": "sounds/random/glass3"
+      }
+    ]
+  },
+  "item.twilightforest.flask.crack": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.flask.crack",
+    "sounds": [
+      {
+        "name": "sounds/random/glass1"
+      },
+      {
+        "name": "sounds/random/glass2"
+      },
+      {
+        "name": "sounds/random/glass3"
+      }
+    ]
+  },
+  "item.twilightforest.flask.fill": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.flask.fill",
+    "sounds": [
+      {
+        "name": "sounds/block/brewing_stand/brew1"
+      },
+      {
+        "name": "sounds/block/brewing_stand/brew2"
+      }
+    ]
+  },
+  "item.twilightforest.life_scepter.drain": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.life_scepter.drain",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/drain1"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/drain2"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/drain3"
+      }
+    ]
+  },
+  "item.twilightforest.ore_meter.clear": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.ore_meter.clear",
+    "sounds": [
+      {
+        "name": "sounds/block/crafter/craft"
+      }
+    ]
+  },
+  "item.twilightforest.ore_meter.crackle": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.ore_meter.crackle",
+    "sounds": [
+      {
+        "name": "sounds/ambient/nether/basalt_deltas/click1"
+      },
+      {
+        "name": "sounds/ambient/nether/basalt_deltas/click2"
+      },
+      {
+        "name": "sounds/ambient/nether/basalt_deltas/click3"
+      },
+      {
+        "name": "sounds/ambient/nether/basalt_deltas/click4"
+      },
+      {
+        "name": "sounds/ambient/nether/basalt_deltas/click5"
+      }
+    ]
+  },
+  "item.twilightforest.ore_meter.target_block": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.ore_meter.target_block",
+    "sounds": [
+      {
+        "name": "sounds/item/lock_compass1"
+      },
+      {
+        "name": "sounds/item/lock_compass2"
+      }
+    ]
+  },
+  "item.twilightforest.shield.shatter": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.shield.shatter",
+    "sounds": [
+      {
+        "name": "sounds/mob/zombie/woodbreak"
+      }
+    ]
+  },
+  "item.twilightforest.twilight_scepter.pearl_hit": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.twilight_scepter.pearl_hit",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_hit1"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_hit2"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_hit3"
+      }
+    ]
+  },
+  "item.twilightforest.twilight_scepter.use": {
+    "category": "player",
+    "subtitle": "subtitles.twilightforest.item.twilight_scepter.use",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_use1"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_use2"
+      },
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/twilight_use3"
+      }
+    ]
+  },
+  "item.twilightforest.zombie_scepter.use": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.item.zombie_scepter.use",
+    "sounds": [
+      {
+        "name": "sounds/twilightforest/artifacts/random/scepter/zombie"
+      }
+    ]
+  }
+}

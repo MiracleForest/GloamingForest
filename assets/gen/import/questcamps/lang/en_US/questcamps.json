@@ -1,0 +1,9 @@
+{
+  "config.twilightforest.ram_indicator": "Questing Ram Wool Indicator",
+  "config.twilightforest.ram_indicator.tooltip": "Renders a check mark or X above your crosshair while holding wool when hovering over the Questing Ram depending on if that color of wool has been fed to it already.",
+  "entity.twilightforest.quest_ram": "Questing Ram",
+  "item.twilightforest.quest_ram_spawn_egg": "Questing Ram Spawn Egg",
+  "subtitles.twilightforest.entity.quest_ram.ambient": "Questing Ram bleats",
+  "subtitles.twilightforest.entity.quest_ram.death": "Questing Ram dies",
+  "subtitles.twilightforest.entity.quest_ram.hurt": "Questing Ram hurts"
+}
