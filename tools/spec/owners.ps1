@@ -258,11 +258,12 @@ function Get-CommandPaths([string]$field, [string]$prefix) {
     }
     # the class's own literal is the one register() returns (directly or through its variable);
     # every other literal is read as its direct child
-    $own = 0
     $reg = [regex]::Match($text, '\bregister\s*\([^)]*\)\s*\{')
-    $ret = [regex]::new('return\s+(?:Commands\.literal\("([a-z0-9_]+)"\)|(\w+)\b)').Match($text, $(if ($reg.Success) { $reg.Index } else { 0 }))
+    if (-not $reg.Success) { throw "$($file): no register() method" }
+    $ret = [regex]::new('return\s+(?:Commands\.literal\("([a-z0-9_]+)"\)|(\w+)\b)').Match($text, $reg.Index)
     if ($ret.Success -and $ret.Groups[1].Success) { $own = [array]::IndexOf($lits, $ret.Groups[1].Value) }
     elseif ($ret.Success -and $vars.ContainsKey($ret.Groups[2].Value)) { $own = $vars[$ret.Groups[2].Value] }
+    else { throw "$($file): register() does not return a Commands.literal or a builder variable of one; owners.ps1 cannot tell the class's own literal" }
     # A literal inside another child literal's chain (a.then(b.then(literal("c")))), directly or
     # through a builder variable (b = literal("b"); ... .then(b.then(c))), is a deeper path: fail
     # instead of writing a wrong row (a TF bump that nests literals needs a real tree walk here).
@@ -273,8 +274,9 @@ function Get-CommandPaths([string]$field, [string]$prefix) {
             }
         }
     }
+    # a child literal's builder variable that gets a child anywhere (.then(b.then(c)) or b.then(c);)
     foreach ($v in $vars.Keys) {
-        if ($vars[$v] -ne $own -and $text -match "\.then\(\s*$v\s*\.then\(") { throw "$($file): the child literal '$($lits[$vars[$v]])' ($v) gets a child of its own; owners.ps1 reads one level of children only" }
+        if ($vars[$v] -ne $own -and $text -cmatch "\b$v\s*\.then\(") { throw "$($file): the child literal '$($lits[$vars[$v]])' ($v) gets a child of its own; owners.ps1 reads one level of children only" }
     }
     $self = "$prefix$($lits[$own])"
     return @($self) + @(for ($k = 0; $k -lt $lits.Count; $k++) { if ($k -ne $own) { "$self $($lits[$k])" } })

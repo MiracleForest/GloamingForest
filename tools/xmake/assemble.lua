@@ -374,15 +374,15 @@ local function union_result(acc)
     return {}
 end
 
--- Calls fn(file, layer) for every file matching `pats`: the gen layer first, then the manual layer,
--- each in path order.
+-- Calls fn(file, layer, relpath) for every file matching `pats`: the gen layer first, then the manual
+-- layer, each in path order.
 local function each_fragment(gen, manual, pats, fn)
     for _, layer in ipairs({{gen, "gen"}, {manual, "manual"}}) do
         local files = layer[1]
         local relpaths = table.keys(files)
         table.sort(relpaths)
         for _, r in ipairs(relpaths) do
-            if glob_match(pats, r) then fn(files[r].file, layer[2]) end
+            if glob_match(pats, r) then fn(files[r].file, layer[2], r) end
         end
     end
 end
@@ -476,37 +476,31 @@ local function merge_fragments(spec, gen, manual, cfg)
     local out = {}
     if spec.mode == "lang" then
         local by_locale = {}
-        for _, layer in ipairs({{gen, "gen"}, {manual, "manual"}}) do
-            local files, lname = layer[1], layer[2]
-            local keys = {}
-            local relpaths = table.keys(files)
-            table.sort(relpaths)
-            for _, r in ipairs(relpaths) do
-                if glob_match(pats, r) then
-                    local localedir = r:match("([^/]+)/[^/]+%.lang$")
-                    local locale = localedir and locale_of(localedir, cfg)
-                    if not locale then
-                        note("dropped %s (not one of the 29 Bedrock locales)", files[r].file)
-                    else
-                        by_locale[locale] = by_locale[locale] or {lines = {}, order = {}}
-                        local L = by_locale[locale]
-                        keys[locale] = keys[locale] or {}
-                        for line in io.lines(files[r].file) do
-                            line = line:gsub("\r$", ""):gsub("^\239\187\191", "")
-                            local key = line:match("^([^#=][^=]*)=")
-                            if key then
-                                if keys[locale][key] then
-                                    fail("duplicate texts key '%s' in %s (already in %s)", key, files[r].file, keys[locale][key])
-                                end
-                                keys[locale][key] = files[r].file
-                                if L.lines[key] == nil then table.insert(L.order, key) end
-                                L.lines[key] = line -- the manual layer comes second and wins
-                            end
-                        end
+        local keys, current = {}, nil -- locale -> {key -> file} of the current layer
+        each_fragment(gen, manual, pats, function (file, layer, r)
+            if layer ~= current then current, keys = layer, {} end
+            local localedir = r:match("([^/]+)/[^/]+%.lang$")
+            local locale = localedir and locale_of(localedir, cfg)
+            if not locale then
+                note("dropped %s (not one of the 29 Bedrock locales)", file)
+                return
+            end
+            by_locale[locale] = by_locale[locale] or {lines = {}, order = {}}
+            local L = by_locale[locale]
+            keys[locale] = keys[locale] or {}
+            for line in io.lines(file) do
+                line = line:gsub("\r$", ""):gsub("^\239\187\191", "")
+                local key = line:match("^([^#=][^=]*)=")
+                if key then
+                    if keys[locale][key] then
+                        fail("duplicate texts key '%s' in %s (already in %s)", key, file, keys[locale][key])
                     end
+                    keys[locale][key] = file
+                    if L.lines[key] == nil then table.insert(L.order, key) end
+                    L.lines[key] = line -- the manual layer comes second and wins
                 end
             end
-        end
+        end)
         for locale, L in pairs(by_locale) do
             local lines = {}
             for _, key in ipairs(L.order) do table.insert(lines, L.lines[key]) end
@@ -833,7 +827,13 @@ local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
     local function visit(v, ctx, kinds, tagref, parentkey)
         if type(v) == "string" then
             local hash = v:sub(1, 1) == "#"
-            local istag = hash or tagref == true
+            -- a tag: '#', the value of a tag-valued key, or a value whose kinds are all tags
+            -- (a loot entry {"type": "minecraft:tag", "name": id})
+            local alltags = kinds ~= nil and #kinds > 0
+            for _, k in ipairs(kinds or {}) do
+                if not k:match("^tag:") then alltags = false end
+            end
+            local istag = hash or tagref == true or alltags
             local s = hash and v:sub(2) or v
             for _, ns in ipairs(nss) do
                 local id = s:match("^(" .. ns .. ":[a-z0-9_/%.%-]+)$")
@@ -888,8 +888,8 @@ local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
                 if tagreg and REGISTRY_KIND[tagreg] then ctx.values = {REGISTRY_KIND[tagreg]} end
                 if registry == "recipe" then ctx.id, ctx.tag = {"item"}, {"tag:item"} end
                 if registry == "advancement" then ctx.parent = {"advancement"} end
-            elseif type(doc) == "table" and not is_array(doc) then
-                -- a Bedrock recipe: its ingredients' tags are item tags
+            elseif type(doc) == "table" and not is_array(doc) and norm(file):find("/recipes/", 1, true) then
+                -- a Bedrock recipe (a BP's recipes/): its ingredients' tags are item tags
                 for k, _ in json_pairs(doc) do
                     if is_bp_recipe_key(k) then ctx.tag = {"tag:item"} end
                 end
