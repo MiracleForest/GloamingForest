@@ -26,7 +26,12 @@
 class Actor;
 class Block;
 class BlockSource;
+class ItemStack;
 class Vec3;
+
+namespace gf::landmark {
+struct Start;
+} // namespace gf::landmark
 
 namespace gf::structure {
 
@@ -339,13 +344,6 @@ void flowerPot(Region& region, BlockPos const& pos, std::string const& plantId);
 void waterlog(Region& region, BlockPos const& pos, std::string const& blockId);
 /// DryingRackBlockEntity#fillFromLootTable: rolls `tableId` now and stores the last stack.
 void fillRack(Region& region, BlockPos const& pos, std::string const& tableId, std::int64_t seed);
-/// The loot table F7 gave the container at `pos` (count_loot unpacks it), nullopt when none.
-struct LootRecord {
-    std::string  table;
-    std::int64_t seed = 0;
-};
-[[nodiscard]] std::optional<LootRecord> lootRecord(int dim, BlockPos const& pos);
-void                                    forgetLootRecord(int dim, BlockPos const& pos);
 /// Runs the deferred work whose chunks are loaded (server tick; every job of a chunk at once, then
 /// its shape updates; chunks checked every few ticks).
 void flush();
@@ -523,6 +521,20 @@ struct Lattice {
 /// BlockSpikeFeature.startSpike with the config's stalactite / stalagmite pick.
 bool spike(Region& region, BlockPos const& pos, std::string const& configId, RandomSource& random, bool hanging, int forcedMaxHeight);
 } // namespace speleothems
+
+// ---- commands (Commands.cpp) ------------------------------------------------------------------------------
+/// The slots of the container at `pos` (a vanilla loot container or a gf::inventory one), its loot
+/// table unpacked first (RandomizableContainer#unpackLootTable(null), through the loot contract);
+/// nullopt when no container stands there.
+[[nodiscard]] std::optional<std::vector<ItemStack>> containerItems(BlockSource& source, BlockPos const& pos);
+/// ItemStack#getRarity() != Rarity.COMMON (count_loot's filter): F9's rarity of the stack
+/// (gf::item::ext::rarityOf: TWILIGHT, registered rarities, the enchantment bump), else the item's
+/// 1.21.1 / TF 4.8 base rarity.
+[[nodiscard]] bool notCommon(ItemStack const& stack);
+/// CountLootCommand for landmark start `start` in `source`'s dimension: the items of the containers
+/// inside its pieces (in the loaded chunks of its box), loot tables unpacked first; only the stacks
+/// that are not common unless `showCommon` (ItemStack#getRarity).
+[[nodiscard]] std::map<std::string, int> countLootIn(BlockSource& source, landmark::Start const& start, bool showCommon);
 
 // ---- misc -------------------------------------------------------------------------------------------------
 /// Logs `message` once per key (missing ids and the like).

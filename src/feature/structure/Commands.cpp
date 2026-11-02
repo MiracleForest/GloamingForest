@@ -50,12 +50,18 @@
 #include "mc/server/commands/CommandOrigin.h"
 #include "mc/server/commands/CommandOutput.h"
 #include "mc/world/actor/ActorType.h"
+#include "mc/world/Container.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/inventory/FillingContainer.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/BlockActorType.h"
+#include "mc/world/level/block/actor/RandomizableBlockActorContainer.h"
+#include "mc/world/level/block/actor/RandomizableBlockActorContainerBase.h"
+#include "mc/world/level/block/actor/RandomizableBlockActorFillingContainer.h"
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/chunk/LevelChunkBlockActorStorage.h"
 #include "mc/world/level/dimension/Dimension.h"
@@ -63,6 +69,7 @@
 
 #include "core/Keys.h"
 #include "feature/common/BlockData.h"
+#include "feature/ext/item/Item.h"
 #include "feature/ext/structure/TemplateDefinitions.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/loot/Loot.h"
@@ -291,9 +298,11 @@ void outlineBox(CommandOrigin const& origin, CommandOutput& output, StructureUti
     output.success("outlined");
 }
 
-/// Item#getRarity of 1.21.1 (vanilla Items and TF's TFItems / TFBlocks rarities): 0 common,
-/// 1 uncommon, 2 rare, 3 epic. (The item and catalog contracts of F9 carry no rarity yet; once
-/// they do, this table gives way to them.)
+/// Item#getRarity of 1.21.1 for the items whose rarity F9's rarity table does not carry: vanilla
+/// Items and TF's TFItems / TFBlocks rarities (UNCOMMON, RARE, EPIC; TF's TWILIGHT items, the
+/// trophies and banner patterns, are F9's): 0 common, 1 uncommon, 2 rare, 3 epic. F9's table
+/// (gf::item::ext::rarityOf) knows TWILIGHT and what units register; this one stays until every
+/// item's rarity is registered there.
 int baseRarity(std::string const& id) {
     static std::unordered_map<std::string, int> const table = [] {
         std::unordered_map<std::string, int> t;
@@ -322,7 +331,7 @@ int baseRarity(std::string const& id) {
                               "twilightforest:emperors_cloth", "twilightforest:crown_splinter", "twilightforest:mystic_crown",
                               "twilightforest:keepsake_casket", "twilightforest:zombie_skull_candle", "twilightforest:skeleton_skull_candle",
                               "twilightforest:wither_skeleton_skull_candle", "twilightforest:creeper_skull_candle", "twilightforest:player_skull_candle",
-                              "twilightforest:piglin_skull_candle"})
+                              "twilightforest:piglin_skull_candle", "twilightforest:fiery_block"})
             t[s] = 1;
         for (auto const* s : {"minecraft:golden_apple", "minecraft:beacon", "minecraft:conduit", "minecraft:end_crystal", "minecraft:trident",
                               "minecraft:heavy_core", "twilightforest:mazebreaker_pickaxe", "twilightforest:crumble_horn",
@@ -339,80 +348,103 @@ int baseRarity(std::string const& id) {
         return t;
     }();
     auto it = table.find(id);
-    if (it != table.end()) return it->second;
-    // TF's trophies (TFBlocks: fireResistant().rarity(UNCOMMON))
-    if (id.starts_with("twilightforest:") && id.ends_with("_trophy")) return 1;
-    return 0;
+    return it != table.end() ? it->second : 0;
 }
 
-/// ItemStack#getRarity: enchanted common / uncommon items are rare, rare ones epic.
-int rarityOf(ItemStack const& stack) {
-    int r = baseRarity(stack.getTypeName());
-    if (!stack.isEnchanted()) return r;
-    return r <= 1 ? 2 : 3;
+/// The slots of a vanilla container block actor that has a loot table (RandomizableContainer:
+/// chests, barrels and shulker boxes are FillingContainers, dispensers and droppers plain
+/// Containers); nullptr for any other block actor.
+Container* vanillaLootContainer(BlockActor& actor) {
+    switch (actor.getType()) {
+    case BlockActorType::Chest:
+    case BlockActorType::BarrelBlock:
+    case BlockActorType::ShulkerBox:
+        return static_cast<Container*>(static_cast<FillingContainer*>(static_cast<RandomizableBlockActorFillingContainer*>(&actor)));
+    case BlockActorType::Dispenser:
+    case BlockActorType::Dropper:
+        return static_cast<Container*>(static_cast<RandomizableBlockActorContainer*>(&actor));
+    default:
+        return nullptr;
+    }
 }
+
+} // namespace
+
+bool notCommon(ItemStack const& stack) {
+    // F9's rarity: TWILIGHT, units' registrations, the enchantment bump (an enchanted stack is
+    // never common); else the item's base rarity of the table above
+    if (item::ext::rarityOf(stack) != item::ext::Rarity::Common) return true;
+    return stack.isEnchanted() || baseRarity(stack.getTypeName()) != 0;
+}
+
+std::optional<std::vector<ItemStack>> containerItems(BlockSource& source, BlockPos const& pos) {
+    // RandomizableContainer#unpackLootTable(null) (no player, no luck) through the loot contract
+    // (F10): vanilla containers by the game's own unpacking (F10 rolls its tables there), custom
+    // ones (gf::inventory) by reading their storage, which unpacks a pending table
+    if (auto* actor = source.getBlockEntity(pos)) {
+        if (auto* container = vanillaLootContainer(*actor)) {
+            static_cast<RandomizableBlockActorContainerBase&>(*actor).unPackLootTable(source.getLevel(), *container, source.getDimensionId(), nullptr);
+            std::vector<ItemStack> items;
+            for (int slot = 0; slot < container->getContainerSize(); slot++) items.push_back(container->getItem(slot));
+            return items;
+        }
+    }
+    auto handler = inventory::find(source, pos);
+    if (!handler || !handler->get) return std::nullopt;
+    auto                   gpos = game::globalPos(source, pos);
+    std::vector<ItemStack> items;
+    for (int slot = 0; slot < handler->slots; slot++) items.push_back(handler->get(gpos, slot));
+    return items;
+}
+
+std::map<std::string, int> countLootIn(BlockSource& source, landmark::Start const& start, bool showCommon) {
+    // CountLootCommand: the block entities of the start box's loaded chunks, once each, that lie
+    // inside any piece box, each container unpacked first
+    std::vector<BlockBox> boxes;
+    for (auto const& p : piecesOf(start)) boxes.push_back(boxFromJson(p.value("BB", Json::array())));
+    auto inside = [&](BlockPos const& pos) {
+        return std::any_of(boxes.begin(), boxes.end(), [&](BlockBox const& b) { return b.contains(pos.x, pos.y, pos.z); });
+    };
+    int                        dim   = static_cast<int>(source.getDimensionId());
+    BlockBox const&            total = start.box;
+    std::map<std::string, int> counts;
+    for (int cz = core::chunkOf(total.minZ); cz <= core::chunkOf(total.maxZ); cz++)
+        for (int cx = core::chunkOf(total.minX); cx <= core::chunkOf(total.maxX); cx++) {
+            if (!source.hasChunksAt(BlockPos{cx * 16 + 8, source.getMinHeight(), cz * 16 + 8}, 0, false)) continue;
+            std::set<std::tuple<int, int, int>> seen;
+            auto count = [&](BlockPos const& pos) {
+                if (!seen.insert({pos.x, pos.y, pos.z}).second || !inside(pos)) return;
+                auto items = containerItems(source, pos);
+                if (!items) return;
+                for (auto const& stack : *items) {
+                    if (stack.isNull() || (!showCommon && !notCommon(stack))) continue;
+                    counts[stack.getTypeName()] += stack.mCount;
+                }
+            };
+            // the chunk's block entities: vanilla block actors, then the custom containers (their
+            // storage is block data)
+            if (auto* chunk = source.getChunk(cx, cz)) {
+                std::vector<BlockPos> actors;
+                for (auto const& [cbp, actor] : chunk->mBlockEntities->mMap.get())
+                    if (actor) actors.push_back(actor->getPosition());
+                for (auto const& pos : actors) count(pos);
+            }
+            // (collected first: unpacking edits block data, which must not change under the iteration)
+            std::vector<BlockPos> documents;
+            ::gf::feature::common::blockdata::forEachInChunk(dim, cx, cz, [&](core::GlobalPos const& gp, Json const&) { documents.push_back(game::blockPos(gp)); });
+            for (auto const& pos : documents) count(pos);
+        }
+    return counts;
+}
+
+namespace {
 
 void countLoot(CommandOrigin const& origin, CommandOutput& output, std::string const& key, bool showCommon) {
     auto w = where(origin, output);
     if (!w) return;
     auto start = startAt(*w, key, output);
     if (!start) return;
-    // CountLootCommand: the block entities of the start box's loaded chunks, once each, that lie
-    // inside any piece box; a container's unrolled loot table is unpacked first
-    std::vector<BlockBox> boxes;
-    for (auto const& p : piecesOf(*start)) boxes.push_back(boxFromJson(p.value("BB", Json::array())));
-    auto inside = [&](BlockPos const& pos) {
-        return std::any_of(boxes.begin(), boxes.end(), [&](BlockBox const& b) { return b.contains(pos.x, pos.y, pos.z); });
-    };
-    BlockBox const& total = start->box;
-    std::map<std::string, int> counts;
-    for (int cz = core::chunkOf(total.minZ); cz <= core::chunkOf(total.maxZ); cz++)
-        for (int cx = core::chunkOf(total.minX); cx <= core::chunkOf(total.maxX); cx++) {
-            if (!w->source->hasChunksAt(BlockPos{cx * 16 + 8, w->source->getMinHeight(), cz * 16 + 8}, 0, false)) continue;
-            std::set<std::tuple<int, int, int>> seen;
-            auto count = [&](BlockPos const& pos) {
-                if (!seen.insert({pos.x, pos.y, pos.z}).second || !inside(pos)) return;
-                auto handler = inventory::find(*w->source, pos);
-                if (!handler || !handler->get) return;
-                auto gpos = game::globalPos(*w->source, pos);
-                // RandomizableContainer#unpackLootTable: the table F7 gave it, rolled now
-                bool empty = true;
-                for (int slot = 0; slot < handler->slots && empty; slot++) empty = handler->get(gpos, slot).isNull();
-                if (auto record = blockentities::lootRecord(w->dim, pos)) {
-                    bool unpacked = !empty; // a container with items was opened (rolled) already
-                    if (empty && !record->table.empty() && handler->set) {
-                        loot::LootContext ctx;
-                        ctx.region = w->source;
-                        ctx.origin = Vec3{static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y) + 0.5f, static_cast<float>(pos.z) + 0.5f};
-                        ctx.player = nullptr; // unpackLootTable(null): no player, so no luck
-                        ctx.seed   = record->seed;
-                        auto items = loot::roll(record->table, ctx);
-                        // LootTable#fill: stacks beyond the container's slots are dropped, as in vanilla
-                        for (int slot = 0; slot < handler->slots && slot < static_cast<int>(items.size()); slot++) handler->set(gpos, slot, items[slot]);
-                        if (handler->setLootTable) handler->setLootTable(gpos, std::string{}, 0);
-                        unpacked = true;
-                    }
-                    if (unpacked) blockentities::forgetLootRecord(w->dim, pos);
-                }
-                for (int slot = 0; slot < handler->slots; slot++) {
-                    ItemStack stack = handler->get(gpos, slot);
-                    if (stack.isNull() || (!showCommon && rarityOf(stack) == 0)) continue;
-                    counts[stack.getTypeName()] += stack.mCount;
-                }
-            };
-            // the chunk's block entities: vanilla block actors, then the custom containers F7 placed
-            if (auto* chunk = w->source->getChunk(cx, cz)) {
-                std::vector<BlockPos> actors;
-                for (auto const& [cbp, actor] : chunk->mBlockEntities->mMap.get())
-                    if (actor) actors.push_back(actor->getPosition());
-                for (auto const& pos : actors) count(pos);
-            }
-            // (collected first: counting edits BlockData, which must not change under the iteration)
-            std::vector<BlockPos> documents;
-            ::gf::feature::common::blockdata::forEachInChunk(w->dim, cx, cz,
-                                                             [&](core::GlobalPos const& gp, Json const&) { documents.push_back(game::blockPos(gp)); });
-            for (auto const& pos : documents) count(pos);
-        }
+    auto counts = countLootIn(*w->source, *start, showCommon);
     std::vector<std::pair<std::string, int>> sorted(counts.begin(), counts.end());
     std::stable_sort(sorted.begin(), sorted.end(), [](auto const& a, auto const& b) { return a.second < b.second; });
     int sum = 0;

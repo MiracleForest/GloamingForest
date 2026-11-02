@@ -194,7 +194,8 @@ constexpr char kPendingPrefix[] = "gf:structure:pending:";
 /// Older builds kept every job in one array under this key (read once, then erased).
 constexpr char kLegacyPendingKey[] = "gf:structure:pending";
 constexpr char kTestMarkKey[]      = "gf:structure:test_mark";
-/// BlockData key: {"loot": {table, seed}, "spawner": {entity, scale?, spawn_rules?, data?}}
+/// BlockData key: {"spawner": {entity, scale?, spawn_rules?, data?}} (loot tables live with the
+/// containers: the loot contract keeps them)
 constexpr char kDataKey[]     = "structure";
 /// Chunks with queued work are checked this often (ticks); a chunk's jobs run together.
 constexpr int kFlushInterval = 5;
@@ -719,21 +720,21 @@ bool run(BlockSource& source, BlockPos const& pos, Json const& action) {
         auto table = action.value("table", std::string{});
         auto seed  = action.value("seed", std::int64_t{0});
         auto bid   = blocks::bedrockId(id);
-        if (!table.empty()) bd::set(source, pos, kDataKey, Json{{"loot", {{"table", table}, {"seed", seed}}}});
+        // the container and its loot table (RandomizableContainer#setLootTable): the loot
+        // contract keeps the table with the container and rolls it when it is first opened
         if (loot::placeContainer(source, pos, bid.empty() ? id : bid, action.value("facing", 2), table, seed)) return true;
-        // the loot contract is not there (yet): keep the chest itself
+        // not a container the loot contract knows: the block stands without loot
         Json props = Json::object();
         if (action.contains("direction")) props["facing"] = action["direction"];
         if (auto const* b = blocks::fromJava(id, props)) {
             if (&source.getBlock(pos) != b) game::setBlock(source, pos, *b);
         }
-        warnOnce("loot-container", "structure: gf::loot::placeContainer refused a container; chests stay empty until the loot contract is implemented");
+        warnOnce("loot-container:" + id, "structure: " + id + " is not a container the loot contract knows; placed without loot table " + table);
         return true;
     }
     if (kind == "loot") {
         auto table = action.value("table", std::string{});
         auto seed  = action.value("seed", std::int64_t{0});
-        if (!table.empty()) bd::set(source, pos, kDataKey, Json{{"loot", {{"table", table}, {"seed", seed}}}});
         if (auto h = inventory::find(source, pos); h && h->setLootTable) {
             h->setLootTable(game::globalPos(source, pos), table, seed);
             return true;
@@ -997,24 +998,6 @@ std::optional<std::array<double, 6>> paintingBoxFor(BlockPos const& placement, O
 }
 
 BlockPos paintingPlacement(BlockPos const& covered, Orientation direction) { return placementPosition(covered, direction); }
-
-std::optional<LootRecord> lootRecord(int dim, BlockPos const& pos) {
-    auto const* doc = bd::get(game::globalPos(dim, pos));
-    if (!doc || !doc->contains(kDataKey)) return std::nullopt;
-    auto const& d = (*doc)[kDataKey];
-    if (!d.is_object() || !d.contains("loot")) return std::nullopt;
-    return LootRecord{d["loot"].value("table", std::string{}), d["loot"].value("seed", std::int64_t{0})};
-}
-
-void forgetLootRecord(int dim, BlockPos const& pos) {
-    auto* source = game::regionOf(dim);
-    if (!source) return;
-    auto const* d = bd::get(*source, pos, kDataKey);
-    if (!d || !d->is_object()) return;
-    Json rest = *d;
-    rest.erase("loot");
-    bd::set(*source, pos, kDataKey, rest.empty() ? Json() : rest);
-}
 
 std::optional<Json> spawnerRecord(BlockSource& source, BlockPos const& pos) {
     auto const* d = bd::get(source, pos, kDataKey);

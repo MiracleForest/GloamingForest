@@ -45,9 +45,12 @@
 
 #include "core/Keys.h"
 #include "core/VolumeHash.h"
+#include "feature/ext/entity/EntityExt.h"
 #include "feature/ext/structure/Placement.h"
 #include "feature/ext/structure/Processors.h"
 #include "feature/ext/structure/TemplateDefinitions.h"
+#include "feature/inventory/Inventory.h"
+#include "feature/landmark/Landmark.h"
 #include "feature/structure/Region.h"
 #include "feature/structure/bases/BasesInternal.h"
 #include "feature/structure/bases/HollowHill.h"
@@ -348,6 +351,22 @@ void prepareProcessorWorld(MemoryRegion& mem) {
     put(12, 64, 4, "minecraft:oak_fence");
 }
 
+/// Whether the container at `pos` holds what gf_test:chests/fixture_chest rolls once its loot
+/// table is unpacked (the loot contract, F10: 1..3 rolls of fixture items or sticks, maybe a
+/// diamond), and nothing else.
+bool holdsFixtureLoot(BlockSource& source, BlockPos const& pos) {
+    auto items = containerItems(source, pos);
+    if (!items) return false;
+    int stacks = 0;
+    for (auto const& s : *items) {
+        if (s.isNull()) continue;
+        auto id = s.getTypeName();
+        if (id != "gf_test:fixture_item" && id != "minecraft:stick" && id != "minecraft:diamond") return false;
+        if (id != "minecraft:diamond") stacks++;
+    }
+    return stacks > 0;
+}
+
 /// A piece just to reach the helpers of ComponentOld in tests.
 class TestPiece final : public bases::ComponentOld {
 public:
@@ -557,9 +576,8 @@ GF_REGISTER_SELFTEST("structure.template_world", [](Context& ctx) -> ll::coro::C
         if (auto* spawner = static_cast<MobSpawnerBlockActor&>(*actor).mSpawner.get()) mob = spawner->mActorDefId->mCanonicalName->getString();
     ctx.check(mob == "minecraft:zombie", "the spawner marker set the spawner's mob (" + mob + ")");
     BlockPos chestPos = worldOf(BlockPos{2, 1, 0});
-    auto     record   = blockentities::lootRecord(ctx.dimension(), chestPos);
-    ctx.check(game::blockIdAt(*source, chestPos) == "minecraft:chest" && record && record->table == "gf_test:chests/fixture_chest",
-              "the loot marker gave the chest its loot table");
+    ctx.check(game::blockIdAt(*source, chestPos) == "minecraft:chest", "the chest stands");
+    ctx.check(holdsFixtureLoot(*source, chestPos), "the loot marker gave the chest its loot table (rolled by the loot contract when unpacked)");
     co_return;
 });
 
@@ -1371,7 +1389,6 @@ GF_REGISTER_SELFTEST("structure.markers", [](Context& ctx) -> ll::coro::CoroTask
     ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5750)), "test area loaded");
     auto* source = ctx.region();
     ctx.require(source != nullptr, "block source");
-    int        dim = static_cast<int>(source->getDimensionId());
     JavaRandom random(3);
     BlockPos   lootPos{area.minX + 1, area.minY, area.minZ + 1};
     BlockPos   rackPos{area.minX + 3, area.minY, area.minZ + 1};
@@ -1384,50 +1401,97 @@ GF_REGISTER_SELFTEST("structure.markers", [](Context& ctx) -> ll::coro::CoroTask
                   {"loot_table", "gf_test:chests/fixture_chest"}};
         ctx.check(markers::handle(loot, "", lootPos, region, random, area, Rotation::None), "the loot marker places its container");
         ctx.check(game::blockIdAt(*source, lootPos) == "minecraft:barrel", "a barrel stands");
-        auto record = blockentities::lootRecord(dim, lootPos);
-        ctx.check(record && record->table == "gf_test:chests/fixture_chest", "the barrel got the loot table");
+        ctx.check(holdsFixtureLoot(*source, lootPos), "the barrel got the loot table (rolled by the loot contract when unpacked)");
         // twilightforest:drying_rack: only a DryingRackBlock is placed
         Json notARack{{"type", "twilightforest:drying_rack"},
                       {"drying_rack_block", {{"type", "minecraft:simple_state_provider"}, {"state", state("minecraft:oak_planks")}}},
                       {"loot_table", "twilightforest:camp_drying_rack"}};
         ctx.check(!markers::handle(notARack, "", notRack, region, random, area, Rotation::None) && game::blockIdAt(*source, notRack) == "minecraft:air",
                   "the drying rack marker refuses a block that is not a drying rack");
-        if (blocks::isRegisteredBlock("twilightforest:birch_drying_rack")) {
-            Json rack{{"type", "twilightforest:drying_rack"},
-                      {"drying_rack_block",
-                       {{"type", "minecraft:simple_state_provider"}, {"state", state("twilightforest:birch_drying_rack", {{"facing", "north"}})}}},
-                      {"loot_table", "twilightforest:camp_drying_rack"}};
-            ctx.check(markers::handle(rack, "", rackPos, region, random, area, Rotation::Clockwise90) &&
-                          game::blockIdAt(*source, rackPos) == "twilightforest:birch_drying_rack",
-                      "the drying rack marker places the rack (and fills it from its loot table)");
+        // TF's drying rack (F1's block): placed turned with the rotation (BlockState#rotate), then
+        // DryingRackBlockEntity#fillFromLootTable keeps the last stack the table rolls
+        ctx.require(blocks::isRegisteredBlock("twilightforest:birch_drying_rack"), "TF's drying rack is registered");
+        Json rack{{"type", "twilightforest:drying_rack"},
+                  {"drying_rack_block",
+                   {{"type", "minecraft:simple_state_provider"}, {"state", state("twilightforest:birch_drying_rack", {{"facing", "north"}})}}},
+                  {"loot_table", "twilightforest:camp_drying_rack"}};
+        ctx.check(markers::handle(rack, "", rackPos, region, random, area, Rotation::Clockwise90) &&
+                      game::blockIdAt(*source, rackPos) == "twilightforest:birch_drying_rack",
+                  "the drying rack marker places the rack");
+        auto facing = blocks::javaProperty(source->getBlock(rackPos), "facing");
+        ctx.check(facing == std::optional<std::string>("east"), "the rack faces north turned clockwise: east (" + facing.value_or("none") + ")");
+        // the rack's storage is its owner's (gf::inventory handler of the drying racks, U4)
+        if (auto h = inventory::find(*source, rackPos); h && h->get) {
+            auto stack = h->get(game::globalPos(*source, rackPos), 0);
+            ctx.check(!stack.isNull(), "the rack holds the stack its loot table rolled (" + std::string(stack.isNull() ? "empty" : stack.getTypeName()) + ")");
         } else {
-            ctx.info("twilightforest:birch_drying_rack is not registered (block skeleton): drying rack placement checked by its refusal only");
+            ctx.info("no gf::inventory storage for twilightforest:birch_drying_rack yet (U4): the rack's fill from its loot table is not checked");
         }
     }
+});
+
+// ---- structure_util count_loot over a landmark start -------------------------------------------------------------------
+
+GF_REGISTER_SELFTEST("structure.count_loot", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // CountLootCommand on a real landmark start (F6's forceStart of the open fixture landmark, which
+    // protects nothing: a 7 x 7 x 7 shell and a porch in front of it) and the loot contract's
+    // containers (F10): only containers inside a piece count, each unpacked first
+    auto area = co_await ctx.flatArea(5700, 12, 8);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5700)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    core::GlobalPos center{ctx.dimension(), area.minX + 4, area.minY, area.minZ + 3};
+    auto            forced = landmark::forceStart("gf_test:landmark_fixture_open", center);
+    ctx.require(forced.has_value() && forced->pieceBoxes.size() == 2, "the fixture landmark starts with its shell and porch");
+    // StructureManager#getStructureAt, as the command finds it
+    BlockPos insideShell{center.x, center.y + 1, center.z};
+    BlockPos abovePorch{center.x, center.y + 3, center.z + 5}; // in the start's box, in no piece
+    auto     start = landmark::startAt(center.dim, insideShell);
+    ctx.require(start.has_value() && start->key == "gf_test:landmark_fixture_open" && start->box.contains(abovePorch.x, abovePorch.y, abovePorch.z),
+                "the start is found where the command looks");
+    {
+        BlockSourceRegion region(*source, insideShell);
+        blockentities::container(region, insideShell, "minecraft:chest", Orientation::North, "gf_test:chests/fixture_chest", 1234);
+        blockentities::container(region, abovePorch, "minecraft:chest", Orientation::North, "gf_test:chests/fixture_chest", 1234);
+    }
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    ctx.check(game::blockIdAt(*source, insideShell) == "minecraft:chest" && game::blockIdAt(*source, abovePorch) == "minecraft:chest", "the chests stand");
+    // show_common false first: the fixture loot is all common, nothing counts (the chest is unpacked)
+    ctx.check(countLootIn(*source, *start, false).empty(), "count_loot without common items counts nothing of the fixture loot");
+    auto counts = countLootIn(*source, *start, true);
+    int  counted = 0;
+    for (auto const& [item, n] : counts) counted += n;
+    int inShell = 0;
+    if (auto items = containerItems(*source, insideShell))
+        for (auto const& s : *items)
+            if (!s.isNull()) inShell += s.mCount;
+    std::string list;
+    for (auto const& [item, n] : counts) list += item + "=" + std::to_string(n) + " ";
+    ctx.check(counted > 0 && counted == inShell, "count_loot counts the chest in the shell (" + list + "), not the one outside the pieces");
+    ctx.check(holdsFixtureLoot(*source, abovePorch), "the chest outside the pieces still unpacks its own loot");
+    // ItemStack#getRarity: TF's UNCOMMON items (a table here), TWILIGHT trophies and banner
+    // patterns (F9's rarity), the fiery block's UNCOMMON item; sticks are common
+    for (auto const* id : {"twilightforest:naga_scale", "twilightforest:naga_trophy", "twilightforest:naga_banner_pattern", "twilightforest:fiery_block"}) {
+        auto stack = game::items::make(id, 1, 0);
+        ctx.check(stack && notCommon(*stack), std::string(id) + " is not common");
+    }
+    auto stick = game::items::make("minecraft:stick", 1, 0);
+    ctx.check(stick && !notCommon(*stick), "a stick is common");
+    co_return;
 });
 
 // ---- TF's sinister spawner in a template keeps its block ---------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro::CoroTask<> {
     // SpawnerProcessor handles TF's sinister spawner as it handles the vanilla one; the template's
-    // block stays a sinister spawner and its spawner data waits in BlockData for the block's own
-    // block entity (F8). Until the block skeleton registers it, the fixture block stands in (the
-    // kit treats every spawner block that is not the vanilla one alike) with the data the
-    // processor would give it.
-    bool        registered = blocks::isRegisteredBlock("twilightforest:sinister_spawner");
-    std::string blockId    = registered ? "twilightforest:sinister_spawner" : "gf_test:fixture_block";
-    if (!registered) ctx.info("twilightforest:sinister_spawner is not registered (block skeleton): gf_test:fixture_block stands in for it");
+    // block stays a sinister spawner and its block entity (F8's) loads the processed spawner data
+    // (BaseSpawner#load); the kit keeps what F8's spawner does not carry (generic.scale, custom
+    // spawn rules) with the block for its spawns.
+    std::string const blockId = "twilightforest:sinister_spawner";
+    ctx.require(blocks::isRegisteredBlock(blockId), "TF's sinister spawner is registered");
     float const scale = 0.8f / 1.4f; // entity_width_max 0.8 over the spider's width
     Json        doc   = makeTemplate("gf_test:structure/sinister", {state("minecraft:air"), state(blockId), state("minecraft:spawner")}, {{"12"}});
-    if (!registered)
-        doc["markers"] = Json::array({Json{{"pos", {0, 0, 0}},
-                                           {"marker", "spawner"},
-                                           {"data",
-                                            {{"entity", "minecraft:spider"},
-                                             {"SpawnRange", 4},
-                                             {"Delay", 50},
-                                             {"entity_scale", scale},
-                                             {"spawn_rules", {{"block_light", {0, 7}}, {"sky_light", {0, 15}}}}}}}});
     std::string error;
     ctx.require(templates::add(doc, &error), "the sinister spawner template registers " + error);
     auto area = co_await ctx.flatArea(5745, 4, 4);
@@ -1442,6 +1506,8 @@ GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro:
         settings.processors = {ext::compileSpawnerProcessor(4, 0.8f, {{"minecraft:spider", 1}})};
         ctx.require(templates::place("gf_test:structure/sinister", region, origin, settings), "the template places");
     }
+    // (read at once: once a player is near, F8 ticks the spawner and its delay counts down)
+    auto loaded = boss::ext::sinisterSpawner(*source, sinister);
     co_await ctx.ticks(8); // block actors exist a tick later; queued work runs every 5 ticks
     source = ctx.region();
     ctx.require(source != nullptr, "block source");
@@ -1449,15 +1515,32 @@ GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro:
     ctx.check(standing == blockId, "the template's spawner block stays " + blockId + " (" + standing + ")");
     auto* actor = source->getBlockEntity(sinister);
     ctx.check(!actor || actor->getType() != BlockActorType::MobSpawner, "no vanilla spawner block entity at the sinister spawner");
+    // the block entity (F8) loaded the data: SpawnData spider (the only potential), SpawnRange 4,
+    // Delay round(200 * 0.25), the other fields BaseSpawner's
+    ctx.check(loaded.has_value(), "the sinister spawner has its block entity");
+    if (loaded) {
+        bool onlySpider = loaded->potentials.size() == 1 && loaded->potentials[0] == std::pair<std::string, int>{"minecraft:spider", 1};
+        ctx.check(loaded->nextEntity == "minecraft:spider" && onlySpider, "its block entity spawns spiders (" + loaded->nextEntity + ")");
+        ctx.check(loaded->spawnRange == 4 && loaded->spawnDelay == 50, "its block entity's range 4 and delay round(200 * 0.25) (" +
+                                                                           std::to_string(loaded->spawnRange) + ", " + std::to_string(loaded->spawnDelay) + ")");
+        ctx.check(loaded->minSpawnDelay == 200 && loaded->maxSpawnDelay == 800 && loaded->spawnCount == 4 && loaded->maxNearbyEntities == 6 &&
+                      loaded->requiredPlayerRange == 16,
+                  "the fields the data leaves out keep BaseSpawner's values");
+    }
     auto record = blockentities::spawnerRecord(*source, sinister);
-    ctx.check(record.has_value(), "the sinister spawner's data is kept");
+    ctx.check(record.has_value(), "the kit keeps the sinister spawner's SpawnData extras");
     if (record) {
-        auto const& d = record->value("data", Json::object());
-        ctx.check(record->value("entity", std::string{}) == "minecraft:spider", "its mob (" + record->dump() + ")");
-        ctx.check(d.value("SpawnRange", 0) == 4 && d.value("Delay", 0) == 50, "its range 4 and delay round(200 * 0.25)");
+        ctx.check(record->value("entity", std::string{}) == "minecraft:spider", "for its mob (" + record->dump() + ")");
         ctx.check(std::abs(record->value("scale", 0.0f) - scale) < 1e-4f, "its generic.scale for entity_width_max 0.8");
         ctx.check(record->contains("spawn_rules") && (*record)["spawn_rules"] == Json{{"block_light", {0, 7}}, {"sky_light", {0, 15}}}, "its custom spawn rules");
     }
+    // the kit's spawn events find the sinister spawner for its spiders (scale, light rules): four
+    // blocks up is inside its spawn box (SpawnRange on every axis) and out of the vanilla spawner's
+    // (one block up or down)
+    Vec3 spot{static_cast<float>(sinister.x) + 0.5f, static_cast<float>(sinister.y + 4), static_cast<float>(sinister.z) + 0.5f};
+    auto firing = spawners::firingSpawner(*source, spot, "minecraft:spider");
+    ctx.check(firing.has_value() && *firing == sinister,
+              "a spider spawning in its box is the sinister spawner's (" + (firing ? std::to_string(firing->x) + " " + std::to_string(firing->y) : std::string("none")) + ")");
     // the vanilla spawner next to it gets the same processor's data in its block entity
     ctx.check(game::blockIdAt(*source, vanilla) == "minecraft:mob_spawner", "the vanilla spawner stands");
     std::string mob;
