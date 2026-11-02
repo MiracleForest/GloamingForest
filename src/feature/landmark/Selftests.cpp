@@ -15,15 +15,25 @@
 //   landmark.persistence      a start written to the world DB reads back (pieces, flags)
 //   landmark.hint_book        the hint book written for a player, rewritten for another language
 //   landmark.hint_drop        the hint mob carries the book and always drops it (drop chance 2.0)
+//   landmark.hint_timer       the hint timer's game time advances every tick (300 ticks sampled)
 //   landmark.clearance        decorationAllowed / featureBlocked / startsIntersecting / spawns, and
 //                             the terraformers over every chunk a start references
+//   landmark.starts           the start evaluation never blocks the server thread (a generation
+//                             thread waits), locate's probe stores nothing and agrees with the
+//                             Starts stage, nearestLandmark's ready check and valid starts only
 //   landmark.persist_1_write  (server scenario, before a restart) a forced, conquered start
 //   landmark.persist_2_read   (after the restart) that start, then removed; in a 'full' run the
 //                             two run back to back and leave nothing behind
 //   landmark.display          (client scenario) keeps protection boxes on show for a screenshot
 #include <algorithm>
 #include <atomic>
+#include <chrono>
+#include <functional>
+#include <memory>
 #include <optional>
+#include <string>
+#include <thread>
+#include <utility>
 #include <vector>
 
 #include "ll/api/service/Bedrock.h"
@@ -142,6 +152,51 @@ struct HostileMobsAllowed {
 bool hasChannel(std::vector<gf::core::Envelope> const& msgs, std::string const& channel) {
     return std::any_of(msgs.begin(), msgs.end(), [&](auto const& m) { return m.channel == channel; });
 }
+
+/// The start chunks a test evaluates with TF's structure sets placed in the test's own dimension
+/// (setStructureDimOverride, while the Twilight Forest is the dimension contract's stub). Afterwards,
+/// also on abort: the override is lifted, the chunks are released and forgotten, and every record
+/// the test added there is erased (memory and world DB).
+struct StartsScope {
+    int                                   dim;
+    std::vector<std::pair<int, int>>      chunks;
+    std::vector<std::vector<std::string>> before; ///< the keys started in each chunk before the test
+    explicit StartsScope(int d) : dim(d) { fl::setStructureDimOverride(d); }
+    StartsScope(StartsScope const&)            = delete;
+    StartsScope& operator=(StartsScope const&) = delete;
+    void touch(int cx, int cz) {
+        if (std::find(chunks.begin(), chunks.end(), std::pair{cx, cz}) != chunks.end()) return;
+        chunks.emplace_back(cx, cz);
+        std::vector<std::string> keys;
+        for (auto const& r : fl::recordsStartedIn(dim, cx, cz)) keys.push_back(r->start.key);
+        before.push_back(std::move(keys));
+    }
+    void lift() { fl::setStructureDimOverride(std::nullopt); }
+    ~StartsScope() {
+        lift();
+        for (std::size_t i = 0; i < chunks.size(); ++i) {
+            auto [cx, cz] = chunks[i];
+            fl::setEvaluationBusy(dim, cx, cz, false);
+            for (auto const& r : fl::recordsStartedIn(dim, cx, cz))
+                if (std::find(before[i].begin(), before[i].end(), r->start.key) == before[i].end()) fl::eraseRecord(dim, cx, cz, r->start.key);
+            fl::forgetEvaluation(dim, cx, cz);
+        }
+        fl::flushRecords();
+    }
+};
+
+/// A thread of a test, released and joined when the test ends (also on abort).
+struct TestThread {
+    std::thread           thread;
+    std::function<void()> release;
+    TestThread() = default;
+    TestThread(TestThread const&)            = delete;
+    TestThread& operator=(TestThread const&) = delete;
+    ~TestThread() {
+        if (release) release();
+        if (thread.joinable()) thread.join();
+    }
+};
 
 } // namespace
 
@@ -486,6 +541,29 @@ GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTas
     if (auto* left = level->fetchEntity(mobId, false)) left->remove();
 });
 
+GF_REGISTER_SELFTEST("landmark.hint_timer", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // ProgressionStructure's hint timer (a hint monster at most every 1200 ticks per structure) reads
+    // Level#getGameTime, fl::gameTime(): level.dat's currentTick. It has to advance with every tick,
+    // not only when the level data is written: sampled against the level's live tick for 300 ticks
+    auto level = ll::service::getLevel();
+    ctx.require(static_cast<bool>(level), "a level");
+    bool sameStorage = &level->getCurrentTick() == &level->getLevelData().mCurrentTick.get();
+    ctx.info(std::string("Level::getCurrentTick ") + (sameStorage ? "is" : "is not") + " the level data's currentTick");
+    auto const startGame = fl::gameTime(), startLive = level->getCurrentTick().tickID;
+    std::uint64_t game = startGame, live = startLive;
+    for (int sample = 0; sample < 6; ++sample) {
+        co_await ctx.ticks(50);
+        level = ll::service::getLevel();
+        ctx.require(static_cast<bool>(level), "the level is still there");
+        game = fl::gameTime();
+        live = level->getCurrentTick().tickID;
+        ctx.check((game > live ? game - live : live - game) <= 1,
+                  "after " + std::to_string((sample + 1) * 50) + " ticks the game time " + std::to_string(game) + " follows the live tick " + std::to_string(live));
+    }
+    ctx.check(game - startGame >= 290 && game - startGame <= live - startLive + 1,
+              "the game time advanced every tick (" + std::to_string(game - startGame) + " in " + std::to_string(live - startLive) + " live ticks)");
+});
+
 GF_REGISTER_SELFTEST("landmark.clearance", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto center = at(ctx.testPos(5640, 2), 0, 40, 0);
     ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5640, 2)), "test area loaded");
@@ -541,6 +619,100 @@ GF_REGISTER_SELFTEST("landmark.clearance", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(terraformCalls.load() >= 3, "the terraformer was evaluated");
 });
 
+GF_REGISTER_SELFTEST("landmark.starts", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace cl  = gf::core::landmark;
+    namespace plc = gf::core::landmark::placement;
+    using Clock   = std::chrono::steady_clock;
+    auto base     = ctx.testPos(5690, 2);
+    ctx.require(co_await ctx.ensureLoaded(base), "test area loaded");
+    int const   dim = base.dim, cx = base.x >> 4, cz = base.z >> 4;
+    StartsScope scope(dim);
+
+    // the server thread never waits for another thread evaluating a start chunk: it evaluates the
+    // chunk itself (the same deterministic starts)
+    scope.touch(cx, cz);
+    fl::forgetEvaluation(dim, cx, cz);
+    fl::setEvaluationBusy(dim, cx, cz, true);
+    auto t0    = Clock::now();
+    bool known = fl::ensureStartsIn(dim, cx, cz);
+    auto ms    = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - t0).count();
+    fl::setEvaluationBusy(dim, cx, cz, false);
+    ctx.check(known && fl::startsEvaluated(dim, cx, cz), "the server thread evaluated a chunk another thread holds itself");
+    ctx.check(ms < 1000, "without waiting for that thread (" + std::to_string(ms) + " ms)");
+
+    // a generation thread (no evaluation of its own under way) waits for the thread evaluating the
+    // chunk, then goes on
+    {
+        int const wx = cx - 1;
+        scope.touch(wx, cz);
+        fl::forgetEvaluation(dim, wx, cz);
+        fl::setEvaluationBusy(dim, wx, cz, true);
+        auto       state = std::make_shared<std::atomic<int>>(0); // 0 waiting, 1 known, 2 not known
+        TestThread worker;
+        worker.release = [dim, wx, cz] { fl::setEvaluationBusy(dim, wx, cz, false); };
+        worker.thread  = std::thread([state, dim, wx, cz] { state->store(fl::ensureStartsIn(dim, wx, cz) ? 1 : 2); });
+        co_await ctx.ticks(4);
+        ctx.check(state->load() == 0, "a generation thread waits while another thread evaluates the chunk");
+        fl::setEvaluationBusy(dim, wx, cz, false);
+        for (int i = 0; i < 40 && state->load() == 0; ++i) co_await ctx.ticks(1);
+        ctx.check(state->load() == 1 && fl::startsEvaluated(dim, wx, cz), "and evaluates it once released (state " + std::to_string(state->load()) + ")");
+    }
+
+    // /twilightforest locate's probe (CHUNK_LOAD_NEEDED): one structure set, nothing stored, and the
+    // same answer the Starts stage then gives the chunk
+    {
+        auto const* camp = fl::structureSet("twilightforest:camp");
+        ctx.require(camp != nullptr, "the camp structure set");
+        auto pot = plc::potentialStructureChunk(camp->placement, fl::levelSeed(), cx, cz);
+        scope.touch(pot.x, pot.z);
+        fl::forgetEvaluation(dim, pot.x, pot.z);
+        auto before = fl::recordsStartedIn(dim, pot.x, pot.z).size();
+        auto probed = fl::probeStart(dim, *camp, pot.x, pot.z);
+        ctx.check(fl::recordsStartedIn(dim, pot.x, pot.z).size() == before && !fl::startsEvaluated(dim, pot.x, pot.z),
+                  "locate's probe of chunk " + std::to_string(pot.x) + " " + std::to_string(pot.z) + " stores no start (" + (probed.empty() ? "none" : probed) + ")");
+        ctx.check(!gf::game::db::get(fl::recordDbKey(dim, pot.x, pot.z)).has_value() || before > 0, "nor writes one to the world DB");
+        (void)fl::ensureStartsIn(dim, pot.x, pot.z);
+        std::string made;
+        for (auto const& rec : fl::recordsStartedIn(dim, pot.x, pot.z))
+            for (auto const& [key, weight] : camp->structures)
+                if (rec->start.key == key && !rec->placed) made = key;
+        ctx.check(made == probed, "the Starts stage makes what the probe answered (\"" + made + "\" vs \"" + probed + "\")");
+    }
+    scope.lift();
+
+    // LandmarkUtil#locateNearestMatchingLandmark(checkReady): the grid center chunk must be loaded,
+    // and only valid starts count (a reserved site has no pieces); markStructureConquered's lookup has
+    // no ready check
+    auto const* fixture = fl::info(kFixture);
+    ctx.require(fixture != nullptr, "the fixture descriptor");
+    auto nearCenter = cl::nearestCenter(cx, cz);
+    ctx.require(co_await ctx.ensureLoaded(GlobalPos{dim, nearCenter.x, base.y, nearCenter.z}), "the nearest landmark center chunk loaded");
+    scope.touch(nearCenter.x >> 4, nearCenter.z >> 4);
+    auto natural = fl::createStart(*fixture, dim, nearCenter.x >> 4, nearCenter.z >> 4, GlobalPos{dim, nearCenter.x, base.y + 40, nearCenter.z}, false);
+    ctx.require(natural != nullptr && !natural->pieces.empty(), "a fixture start at the center");
+    fl::putRecord(natural);
+    ctx.check(fl::nearestLandmark(dim, cx, cz) == natural, "a valid start in the loaded center chunk is the nearest landmark");
+    ctx.check(fl::nearestLandmarkOf(dim, kFixture, nearCenter.x, nearCenter.z) == natural, "and the one markStructureConquered finds");
+    auto reserved = fl::createStart(*fixture, dim, nearCenter.x >> 4, nearCenter.z >> 4, GlobalPos{dim, nearCenter.x, base.y + 40, nearCenter.z}, false);
+    ctx.require(reserved != nullptr, "a second fixture start");
+    reserved->pieces.clear();
+    reserved->livePieces.clear();
+    reserved->start.pieceBoxes.clear();
+    reserved->start.generated = false;
+    fl::putRecord(reserved); // in place of the valid one
+    ctx.check(fl::nearestLandmark(dim, cx, cz) == nullptr, "a reserved site (no pieces) is no landmark start");
+    ctx.check(fl::nearestLandmarkOf(dim, kFixture, nearCenter.x, nearCenter.z) == nullptr, "nor one to conquer");
+    // a center chunk far from every player: not loaded
+    auto farCenter = cl::nearestCenter(cx + 128, cz);
+    ctx.require(!fl::chunkLoaded(dim, farCenter.x >> 4, farCenter.z >> 4), "a landmark center 2048 blocks away is not loaded");
+    scope.touch(farCenter.x >> 4, farCenter.z >> 4);
+    auto distant = fl::createStart(*fixture, dim, farCenter.x >> 4, farCenter.z >> 4, GlobalPos{dim, farCenter.x, base.y + 40, farCenter.z}, false);
+    ctx.require(distant != nullptr, "a fixture start at the far center");
+    fl::putRecord(distant);
+    ctx.check(fl::nearestLandmark(dim, cx + 128, cz) == nullptr, "an unloaded center chunk gives no landmark (checkReady)");
+    ctx.check(fl::nearestLandmarkOf(dim, kFixture, farCenter.x, farCenter.z) == distant, "markStructureConquered still finds it (no ready check)");
+});
+
 GF_REGISTER_SELFTEST("landmark.persist_1_write", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto center = at(ctx.testPos(5660, 2), 0, 60, 0);
     ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5660, 2)), "test area loaded");
@@ -551,9 +723,12 @@ GF_REGISTER_SELFTEST("landmark.persist_1_write", [](Context& ctx) -> ll::coro::C
     auto rec = fl::createStart(*fixture, center.dim, center.x >> 4, center.z >> 4, center, true);
     ctx.require(rec != nullptr, "the fixture start");
     rec->start.conquered = true;
+    // the hint timer's game time now: Level#getGameTime is persisted with the world, so after the
+    // restart it continues from here
+    rec->start.data["gf_test_game_time"] = fl::gameTime();
     fl::putRecord(rec);
     fl::flushRecords();
-    gf::log().info("landmark.persist_1_write: start written at {} {} {}", center.x, center.y, center.z);
+    gf::log().info("landmark.persist_1_write: start written at {} {} {} (game time {})", center.x, center.y, center.z, fl::gameTime());
 });
 
 GF_REGISTER_SELFTEST("landmark.persist_2_read", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -565,7 +740,9 @@ GF_REGISTER_SELFTEST("landmark.persist_2_read", [](Context& ctx) -> ll::coro::Co
         co_return;
     }
     ctx.check(rec->start.conquered && rec->forced && rec->pieces.size() == 2, "the start came back with its flag and pieces");
-    gf::log().info("landmark.persist_2_read: start verified at {} {} {}", center.x, center.y, center.z);
+    auto written = rec->start.data.value("gf_test_game_time", std::uint64_t{0});
+    ctx.check(fl::gameTime() >= written, "the game time went on from " + std::to_string(written) + " (now " + std::to_string(fl::gameTime()) + ")");
+    gf::log().info("landmark.persist_2_read: start verified at {} {} {} (game time {})", center.x, center.y, center.z, fl::gameTime());
     dropStart(center, kOpenFixture);
 });
 
