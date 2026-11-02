@@ -1,0 +1,13 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.hydra_mortar.base": {
+      "loop": true,
+      "bones": {
+        "mortar": {
+          "rotation": [0, 0, 0]
+        }
+      }
+    }
+  }
+}

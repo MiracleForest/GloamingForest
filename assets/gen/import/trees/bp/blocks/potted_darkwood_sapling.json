@@ -1,0 +1,47 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:potted_darkwood_sapling",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.potted_larger_sapling",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_flower_pot",
+          "render_method": "alpha_test"
+        },
+        "dirt": {
+          "texture": "tf_vanilla_block_dirt",
+          "render_method": "alpha_test"
+        },
+        "flowerpot": {
+          "texture": "tf_vanilla_block_flower_pot",
+          "render_method": "alpha_test"
+        },
+        "plant": {
+          "texture": "tf_block_darkwood_sapling",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-4, 0, -4],
+        "size": [7.8, 14, 7.8]
+      },
+      "minecraft:selection_box": {
+        "origin": [-4, 0, -4],
+        "size": [7.8, 14, 7.8]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:maze_map"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#A#", "###"],
+    "key": {
+      "#": {
+        "item": "minecraft:paper"
+      },
+      "A": {
+        "item": "twilightforest:maze_map_focus"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:maze_map_focus"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:maze_map"
+    }
+  }
+}

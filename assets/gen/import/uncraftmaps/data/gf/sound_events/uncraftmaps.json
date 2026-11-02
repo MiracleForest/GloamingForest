@@ -1,0 +1,10 @@
+{
+  "twilightforest:block.twilightforest.uncrafting_table.activate": {
+    "category": "block",
+    "sounds": [
+      {
+        "event": "block.end_portal.spawn"
+      }
+    ]
+  }
+}

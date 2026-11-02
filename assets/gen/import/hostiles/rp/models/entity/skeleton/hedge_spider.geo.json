@@ -1,0 +1,28 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.tf.skeleton.hedge_spider",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [0, 0.45, 0]
+      },
+      "bones": [
+        {
+          "name": "body",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-11, 0, -11],
+              "size": [22, 14, 22],
+              "uv": [0, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

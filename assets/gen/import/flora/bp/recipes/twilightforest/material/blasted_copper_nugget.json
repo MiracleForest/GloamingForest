@@ -1,0 +1,16 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "twilightforest:material/blasted_copper_nugget"
+    },
+    "tags": ["blast_furnace"],
+    "input": "twilightforest:copper_berry",
+    "output": "twilightforest:copper_nugget",
+    "unlock": [
+      {
+        "item": "twilightforest:copper_berry"
+      }
+    ]
+  }
+}

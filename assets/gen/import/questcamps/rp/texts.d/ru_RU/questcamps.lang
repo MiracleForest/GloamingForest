@@ -1,0 +1,7 @@
+entity.twilightforest.quest_ram=Квестовый баран
+entity.twilightforest:quest_ram.name=Квестовый баран
+item.spawn_egg.entity.twilightforest:quest_ram.name=Яйцо призыва квестового барана
+item.twilightforest.quest_ram_spawn_egg=Яйцо призыва квестового барана
+subtitles.twilightforest.entity.quest_ram.ambient=Квестовый Баран блеет
+subtitles.twilightforest.entity.quest_ram.death=Квестовый Баран погибает
+subtitles.twilightforest.entity.quest_ram.hurt=Квестовый Баран ранен

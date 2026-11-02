@@ -1,0 +1,42 @@
+{
+  "about": "Round bass.",
+  "params": {
+    "freq": 110,
+    "dur": 0.5,
+    "vel": 1
+  },
+  "length": "$dur",
+  "tail": 0.3,
+  "normalize": -3,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "triangle",
+      "freq": "$freq",
+      "env": {
+        "a": 0.01,
+        "d": 0.3,
+        "s": 0.6,
+        "r": 0.2
+      }
+    },
+    {
+      "type": "osc",
+      "wave": "saw",
+      "freq": "$freq",
+      "amp": 0.3,
+      "env": {
+        "a": 0.01,
+        "d": 0.2,
+        "s": 0.3,
+        "r": 0.2
+      },
+      "filter": [
+        {
+          "type": "lp",
+          "freq": "$freq*4"
+        }
+      ]
+    }
+  ]
+}

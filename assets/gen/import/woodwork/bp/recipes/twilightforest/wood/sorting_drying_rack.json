@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/sorting_drying_rack"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---"],
+    "key": {
+      "-": {
+        "item": "twilightforest:sorting_slab"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:sorting_slab"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:sorting_drying_rack"
+    }
+  }
+}

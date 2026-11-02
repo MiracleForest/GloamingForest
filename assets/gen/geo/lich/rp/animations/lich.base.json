@@ -1,0 +1,16 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.lich.base": {
+      "loop": true,
+      "bones": {
+        "leftArm": {
+          "rotation": ["((query.life_time * 20 > 0) ? -(math.sin(variable.attack_time * 180) * 1.2) + math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 0.4 - math.sin(query.life_time * 191.3679) * 0.15 - 3.1416 : 0) * 57.2958", "((query.life_time * 20 > 0) ? -(math.sin(variable.attack_time * 180) * 0.6) + 0.1 : 0) * 57.2958", "math.cos(query.life_time * 297.938) * (-8.5944) + 25.7831"]
+        },
+        "rightArm": {
+          "rotation": ["math.sin(variable.attack_time * 180) * (-68.7549) + math.sin((-variable.attack_time + 1) * (-variable.attack_time + 1) * (-180) + 180) * 22.9183 + math.sin(query.life_time * 191.3679) * 8.5944 - 90", "math.sin(variable.attack_time * 180) * 34.3775 - 5.7296", "math.cos(query.life_time * 297.938) * 8.5944 + 2.8648"]
+        }
+      }
+    }
+  }
+}

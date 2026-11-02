@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/twilight_oak_drying_rack"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---"],
+    "key": {
+      "-": {
+        "item": "twilightforest:twilight_oak_slab"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:twilight_oak_slab"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:twilight_oak_drying_rack"
+    }
+  }
+}

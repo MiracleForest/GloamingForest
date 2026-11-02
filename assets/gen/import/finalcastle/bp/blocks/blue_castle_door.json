@@ -1,0 +1,91 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:blue_castle_door",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:active": [false, true],
+        "twilightforest:vanish": [false, true]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 100
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 500
+      },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "tag:minecraft:diamond_tier_destructible": {},
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_castle_door",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:map_color": "#7f3fb2"
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:active') && !q.block_state('twilightforest:vanish')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_castle_door",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:active') && q.block_state('twilightforest:vanish')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_castle_door_vanished",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active') && !q.block_state('twilightforest:vanish')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_castle_door",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:active') && q.block_state('twilightforest:vanish')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_castle_door_vanished",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

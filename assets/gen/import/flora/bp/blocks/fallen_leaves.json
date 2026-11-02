@@ -1,0 +1,206 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:fallen_leaves",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:layers": [0, 1, 2, 3, 4, 5, 6, 7, 8]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:map_color": "#007c00",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 60,
+        "destroy_chance_modifier": 100
+      },
+      "minecraft:collision_box": false,
+      "minecraft:geometry": "geometry.tf.twilightforest.block.fallen_leaves1",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_oak_leaves",
+          "render_method": "alpha_test"
+        },
+        "all": {
+          "texture": "tf_vanilla_block_oak_leaves",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:selection_box": {
+        "origin": [-8, 0, -8],
+        "size": [16, 1, 16]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:layers') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.fallen_leaves1",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 1, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:layers') == 2",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.fallen_leaves2",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 2, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:layers') == 3",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.fallen_leaves3",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 4, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:layers') == 4",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.fallen_leaves4",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 6, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:layers') == 5",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.fallen_leaves5",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 8, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:layers') == 6",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.fallen_leaves6",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:layers') == 7",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.fallen_leaves7",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 12, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:layers') == 8",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.fallen_leaves8",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_vanilla_block_oak_leaves",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          }
+        }
+      }
+    ]
+  }
+}

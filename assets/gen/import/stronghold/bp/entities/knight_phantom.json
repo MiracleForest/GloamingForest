@@ -1,0 +1,29 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:knight_phantom",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": ["twilightforest", "knight_phantom", "monster", "mob"]
+      },
+      "minecraft:collision_box": {
+        "width": 1.25,
+        "height": 2.5
+      },
+      "minecraft:health": {
+        "value": 35,
+        "max": 35
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      }
+    }
+  }
+}

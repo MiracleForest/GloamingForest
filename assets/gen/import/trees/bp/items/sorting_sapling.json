@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:sorting_sapling",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_sorting_sapling"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:sorting_sapling.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:sorting_sapling",
+        "replace_block_item": true
+      }
+    }
+  }
+}

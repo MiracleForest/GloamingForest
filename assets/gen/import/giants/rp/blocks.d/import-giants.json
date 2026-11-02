@@ -1,0 +1,38 @@
+{
+  "twilightforest:beanstalk_grower": {
+    "sound": "stone"
+  },
+  "twilightforest:beanstalk_leaves": {
+    "sound": "azalea_leaves"
+  },
+  "twilightforest:fluffy_cloud": {
+    "sound": "cloth"
+  },
+  "twilightforest:giant_cobblestone": {
+    "sound": "stone"
+  },
+  "twilightforest:giant_leaves": {
+    "sound": "azalea_leaves"
+  },
+  "twilightforest:giant_log": {
+    "sound": "wood"
+  },
+  "twilightforest:giant_obsidian": {
+    "sound": "stone"
+  },
+  "twilightforest:huge_stalk": {
+    "sound": "stem"
+  },
+  "twilightforest:rainy_cloud": {
+    "sound": "cloth"
+  },
+  "twilightforest:snowy_cloud": {
+    "sound": "cloth"
+  },
+  "twilightforest:uberous_soil": {
+    "sound": "gravel"
+  },
+  "twilightforest:wispy_cloud": {
+    "sound": "cloth"
+  }
+}

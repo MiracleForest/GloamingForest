@@ -1,0 +1,21 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:brittle_potion_flask",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_blank"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:brittle_potion_flask.name"
+      }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:potted_green_thorn",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.potted_thorn_template",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_flower_pot",
+          "render_method": "alpha_test"
+        },
+        "flowerpot": {
+          "texture": "tf_vanilla_block_flower_pot",
+          "render_method": "alpha_test"
+        },
+        "thorn_side": {
+          "texture": "tf_block_green_thorns_side",
+          "render_method": "alpha_test"
+        },
+        "thorn_top": {
+          "texture": "tf_block_green_thorns_top",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-3, 0, -8],
+        "size": [11, 16, 11]
+      },
+      "minecraft:selection_box": {
+        "origin": [-3, 0, -8],
+        "size": [11, 16, 11]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

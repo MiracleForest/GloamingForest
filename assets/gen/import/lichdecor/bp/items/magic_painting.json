@@ -1,0 +1,21 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:magic_painting",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_magic_painting"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:magic_painting.name"
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "about": "Breathy flute.",
+  "params": {
+    "freq": 660,
+    "dur": 0.5,
+    "vel": 1
+  },
+  "length": "$dur",
+  "tail": 0.4,
+  "normalize": -4,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": "$freq",
+      "vibrato": {
+        "rate": 5,
+        "depth": 0.15,
+        "delay": 0.25
+      },
+      "env": {
+        "a": 0.06,
+        "d": 0.2,
+        "s": 0.85,
+        "r": 0.15
+      }
+    },
+    {
+      "type": "osc",
+      "wave": "sine",
+      "freq": "$freq*2",
+      "amp": 0.12,
+      "env": {
+        "a": 0.06,
+        "d": 0.2,
+        "s": 0.8,
+        "r": 0.15
+      }
+    },
+    {
+      "type": "noise",
+      "color": "pink",
+      "amp": 0.08,
+      "env": {
+        "a": 0.03,
+        "d": 0.1,
+        "s": 0.6,
+        "r": 0.1
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "$freq*2",
+          "q": 3
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:wood/twilight_oak_planks_3"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "twilightforest:stripped_twilight_oak_wood"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:stripped_twilight_oak_log"
+      },
+      {
+        "item": "twilightforest:stripped_twilight_oak_wood"
+      },
+      {
+        "item": "twilightforest:twilight_oak_log"
+      },
+      {
+        "item": "twilightforest:twilight_oak_wood"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:twilight_oak_planks",
+      "count": 4
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:magic_map_focus"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "twilightforest:raven_feather"
+      },
+      {
+        "item": "twilightforest:torchberries"
+      },
+      {
+        "item": "minecraft:glowstone_dust"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:raven_feather"
+      },
+      {
+        "item": "twilightforest:torchberries"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:magic_map_focus"
+    }
+  }
+}

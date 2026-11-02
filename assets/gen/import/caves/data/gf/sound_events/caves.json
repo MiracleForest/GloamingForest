@@ -1,0 +1,212 @@
+{
+  "twilightforest:entity.twilightforest.alpha_yeti.alert": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.alert",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/alert"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.alpha_yeti.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.death",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/death"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.alpha_yeti.grab": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.grab",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/grab"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.alpha_yeti.growl": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.growl",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/growl1"
+      },
+      {
+        "file": "mob/alpha_yeti/growl2"
+      },
+      {
+        "file": "mob/alpha_yeti/growl3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.alpha_yeti.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.hurt",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/hurt1"
+      },
+      {
+        "file": "mob/alpha_yeti/hurt2"
+      },
+      {
+        "file": "mob/alpha_yeti/hurt3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.alpha_yeti.ice": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.ice",
+    "sounds": [
+      {
+        "event": "entity.arrow.shoot"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.alpha_yeti.pant": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.pant",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/pant1"
+      },
+      {
+        "file": "mob/alpha_yeti/pant2"
+      },
+      {
+        "file": "mob/alpha_yeti/pant3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.alpha_yeti.roar": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.roar",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/roar"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.alpha_yeti.throw": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.alpha_yeti.throw",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/throw"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.troll.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.troll.ambient",
+    "sounds": [
+      {
+        "file": "mob/troll/idle1"
+      },
+      {
+        "file": "mob/troll/idle2"
+      },
+      {
+        "file": "mob/troll/idle3"
+      },
+      {
+        "file": "mob/troll/idle4"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.troll.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.troll.death",
+    "sounds": [
+      {
+        "file": "mob/troll/death"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.troll.grab_rock": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.troll.grab_rock",
+    "sounds": [
+      {
+        "file": "mob/troll/grab"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.troll.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.troll.hurt",
+    "sounds": [
+      {
+        "file": "mob/troll/hurt"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.troll.throw_rock": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.troll.throw_rock",
+    "sounds": [
+      {
+        "file": "mob/troll/throw"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.yeti.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.yeti.death",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/death"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.yeti.grab": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.yeti.grab",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/grab"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.yeti.growl": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.yeti.growl",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/growl1"
+      },
+      {
+        "file": "mob/alpha_yeti/growl2"
+      },
+      {
+        "file": "mob/alpha_yeti/growl3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.yeti.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.yeti.hurt",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/hurt1"
+      },
+      {
+        "file": "mob/alpha_yeti/hurt2"
+      },
+      {
+        "file": "mob/alpha_yeti/hurt3"
+      }
+    ]
+  },
+  "twilightforest:entity.twilightforest.yeti.throw": {
+    "category": "neutral",
+    "subtitle": "subtitles.twilightforest.entity.yeti.throw",
+    "sounds": [
+      {
+        "file": "mob/alpha_yeti/throw"
+      }
+    ]
+  }
+}

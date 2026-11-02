@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/sorting_trapped_chest"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["###", "#C#", "###"],
+    "key": {
+      "#": {
+        "item": "twilightforest:sorting_planks"
+      },
+      "C": {
+        "item": "minecraft:trapped_chest"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:sorting_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:sorting_trapped_chest",
+      "count": 2
+    }
+  }
+}

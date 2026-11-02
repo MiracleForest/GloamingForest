@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:stonecutting/mossy_etched_nagastone/mossy_nagastone_stairs_right"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "twilightforest:mossy_etched_nagastone"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:mossy_etched_nagastone"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:mossy_nagastone_stairs_right"
+    }
+  }
+}

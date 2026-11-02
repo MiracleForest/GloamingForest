@@ -1,0 +1,14 @@
+entity.twilightforest.death_tome=Księgo Widmo
+entity.twilightforest.lich=Licz
+entity.twilightforest.tome_bolt=Piorun Księgo Widma
+entity.twilightforest:death_tome.name=Księgo Widmo
+entity.twilightforest:lich.name=Licz
+entity.twilightforest:tome_bolt.name=Piorun Księgo Widma
+item.spawn_egg.entity.twilightforest:death_tome.name=Jajo przyzywające Księgo Widmo
+item.spawn_egg.entity.twilightforest:lich.name=Jajo przyzywające Licza
+item.twilightforest.death_tome_spawn_egg=Jajo przyzywające Księgo Widmo
+item.twilightforest.lich_spawn_egg=Jajo przyzywające Licza
+subtitles.twilightforest.entity.death_tome.ambient=Księgo Widmo przewraca swe strony
+subtitles.twilightforest.entity.death_tome.death=Księgo Widmo rozpada się
+subtitles.twilightforest.entity.death_tome.hurt=Księgo Widmo zgina się
+subtitles.twilightforest.entity.lich.death=Licz umiera

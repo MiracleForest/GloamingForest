@@ -1,0 +1,11 @@
+{
+  "block.twilightforest.aurora_block": "Blok zorzy",
+  "block.twilightforest.aurora_pillar": "Pilar zorzy",
+  "block.twilightforest.aurora_slab": "Płyta zorzy",
+  "block.twilightforest.auroralized_glass": "Zorzowe szkło",
+  "entity.twilightforest.ice_snowball": "Lodowa śnieżka",
+  "entity.twilightforest.snow_queen": "Królowa śniegu",
+  "item.twilightforest.snow_queen_spawn_egg": "Jajo przyzywające Królową śniegu",
+  "subtitles.twilightforest.entity.snow_queen.death": "Królowa śniegu umiera",
+  "subtitles.twilightforest.entity.snow_queen.hurt": "Raniona Królowa śniegu"
+}

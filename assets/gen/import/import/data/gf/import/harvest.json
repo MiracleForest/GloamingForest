@@ -1,0 +1,1295 @@
+{
+  "blocks": {
+    "twilightforest:acacia_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:acacia_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:antibuilder": {
+      "tools": ["axe"],
+      "requiresTool": true
+    },
+    "twilightforest:arctic_fur_block": {
+      "tools": ["hoe"]
+    },
+    "twilightforest:aurora_block": {},
+    "twilightforest:aurora_pillar": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:aurora_slab": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:bamboo_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:bamboo_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:beanstalk_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:birch_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:birch_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:blue_castle_door": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:blue_castle_rune_brick": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:bold_castle_brick_pillar": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:bold_castle_brick_stairs": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:bold_castle_brick_tile": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:bold_stone_pillar": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:candelabra": {
+      "tools": ["pickaxe"]
+    },
+    "twilightforest:canopy_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_bookshelf": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_button": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_door": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_fence": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_fence_gate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:canopy_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_planks": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_pressure_plate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_sapling": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:canopy_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_slab": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_stairs": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_trapdoor": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_trapped_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_wall_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_wall_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:canopy_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:carminite_block": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:carminite_builder": {
+      "tools": ["axe"],
+      "requiresTool": true
+    },
+    "twilightforest:carminite_reactor": {
+      "tools": ["axe"],
+      "requiresTool": true
+    },
+    "twilightforest:castle_brick": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:castle_brick_stairs": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:castle_roof_tile": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:cherry_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:cherry_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:chiseled_canopy_bookshelf": {
+      "tools": ["axe"]
+    },
+    "twilightforest:cinder_furnace": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:cinder_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:cinder_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:cracked_castle_brick": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:cracked_castle_brick_stairs": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:cracked_deadrock": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:cracked_etched_nagastone": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:cracked_mazestone": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:cracked_nagastone_pillar": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:cracked_nagastone_stairs_left": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:cracked_nagastone_stairs_right": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:cracked_towerwood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:cracked_underbrick": {
+      "tools": ["pickaxe"],
+      "tier": "stone",
+      "requiresTool": true
+    },
+    "twilightforest:crimson_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:crimson_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:cut_mazestone": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:dark_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_button": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_door": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_fence": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_fence_gate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:dark_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_oak_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_oak_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_planks": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_pressure_plate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_slab": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_stairs": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_tower_miniature_structure": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:dark_trapdoor": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_trapped_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_wall_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_wall_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:dark_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:darkwood_sapling": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:deadrock": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:decorative_mazestone": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:encased_castle_brick_pillar": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:encased_castle_brick_stairs": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:encased_castle_brick_tile": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:encased_fire_jet": {
+      "tools": ["axe"],
+      "requiresTool": true
+    },
+    "twilightforest:encased_smoker": {
+      "tools": ["axe"],
+      "requiresTool": true
+    },
+    "twilightforest:encased_towerwood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:etched_nagastone": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:fiery_block": {
+      "tools": ["pickaxe"],
+      "tier": "iron",
+      "requiresTool": true
+    },
+    "twilightforest:fire_jet": {
+      "tools": ["shovel"]
+    },
+    "twilightforest:ghast_trap": {
+      "tools": ["axe"],
+      "requiresTool": true
+    },
+    "twilightforest:giant_cobblestone": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:giant_leaves": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:giant_log": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:giant_obsidian": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:hedge": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_acacia_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_acacia_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_acacia_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_birch_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_birch_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_birch_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_canopy_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_canopy_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_canopy_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_cherry_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_cherry_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_cherry_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_crimson_stem_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_crimson_stem_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_crimson_stem_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_dark_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_dark_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_dark_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_dark_oak_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_dark_oak_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_dark_oak_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_jungle_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_jungle_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_jungle_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_mangrove_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_mangrove_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_mangrove_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_mining_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_mining_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_mining_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_oak_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_oak_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_oak_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_oak_sapling": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:hollow_sorting_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_sorting_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_sorting_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_spruce_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_spruce_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_spruce_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_time_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_time_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_time_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_transformation_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_transformation_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_transformation_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_twilight_oak_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_twilight_oak_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_twilight_oak_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_vangrove_log_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_vangrove_log_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_vangrove_log_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_warped_stem_climbable": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_warped_stem_horizontal": {
+      "tools": ["axe"]
+    },
+    "twilightforest:hollow_warped_stem_vertical": {
+      "tools": ["axe"]
+    },
+    "twilightforest:huge_lily_pad": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:huge_mushgloom": {
+      "tools": ["axe"]
+    },
+    "twilightforest:huge_mushgloom_stem": {
+      "tools": ["axe"]
+    },
+    "twilightforest:huge_stalk": {
+      "tools": ["axe"]
+    },
+    "twilightforest:infested_towerwood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:iron_ladder": {
+      "tools": ["pickaxe"],
+      "tier": "stone",
+      "requiresTool": true
+    },
+    "twilightforest:ironwood_block": {
+      "tools": ["axe", "pickaxe"]
+    },
+    "twilightforest:jungle_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:jungle_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:keepsake_casket": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:knightmetal_block": {
+      "tools": ["pickaxe"],
+      "tier": "iron",
+      "requiresTool": true
+    },
+    "twilightforest:lich_tower_miniature_structure": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:liveroot_block": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_button": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_door": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_fence": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_fence_gate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:mangrove_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_planks": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_pressure_plate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_root": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_sapling": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:mangrove_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_slab": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_stairs": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_trapdoor": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_trapped_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_wall_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_wall_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mangrove_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mazestone": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:mazestone_border": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:mazestone_brick": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:mazestone_mosaic": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:mining_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_button": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_door": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_fence": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_fence_gate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:mining_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_log_core": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_planks": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_pressure_plate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_sapling": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:mining_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_slab": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_stairs": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_trapdoor": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_trapped_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_wall_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_wall_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mining_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:minotaur_labyrinth_miniature_structure": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:mossy_castle_brick": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:mossy_castle_brick_stairs": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:mossy_etched_nagastone": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:mossy_mazestone": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:mossy_nagastone_pillar": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:mossy_nagastone_stairs_left": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:mossy_nagastone_stairs_right": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:mossy_towerwood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:mossy_underbrick": {
+      "tools": ["pickaxe"],
+      "tier": "stone",
+      "requiresTool": true
+    },
+    "twilightforest:naga_courtyard_miniature_structure": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:nagastone": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:nagastone_head": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:nagastone_pillar": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:nagastone_stairs_left": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:nagastone_stairs_right": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:oak_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:oak_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:pink_castle_door": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:pink_castle_rune_brick": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:rainbow_oak_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:rainbow_oak_sapling": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:reappearing_block": {
+      "tools": ["axe"],
+      "requiresTool": true
+    },
+    "twilightforest:root": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sinister_spawner": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:skull_chest": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:smoker": {
+      "tools": ["shovel"]
+    },
+    "twilightforest:sorting_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_button": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_door": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_fence": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_fence_gate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:sorting_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_log_core": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_planks": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_pressure_plate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_sapling": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:sorting_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_slab": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_stairs": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_trapdoor": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_trapped_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_wall_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_wall_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:sorting_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:spiral_bricks": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:spruce_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:spruce_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:steeleaf_block": {
+      "tools": ["hoe"]
+    },
+    "twilightforest:stripped_canopy_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_canopy_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_dark_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_dark_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_mangrove_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_mangrove_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_mining_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_mining_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_sorting_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_sorting_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_time_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_time_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_transformation_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_transformation_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_twilight_oak_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stripped_twilight_oak_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:stronghold_shield": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:terrorcotta_arcs": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:terrorcotta_curves": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:terrorcotta_lines": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:thick_castle_brick": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:thorn_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:thorn_rose": {
+      "tools": ["hoe"]
+    },
+    "twilightforest:time_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_button": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_door": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_fence": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_fence_gate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:time_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_log_core": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_planks": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_pressure_plate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_sapling": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:time_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_slab": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_stairs": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_trapdoor": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_trapped_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_wall_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_wall_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:time_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:towerwood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_button": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_door": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_fence": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_fence_gate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:transformation_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_log_core": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_planks": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_pressure_plate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_sapling": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:transformation_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_slab": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_stairs": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_trapdoor": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_trapped_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_wall_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_wall_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:transformation_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:trollsteinn": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:trophy_pedestal": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:twilight_oak_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_button": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_door": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_fence": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_fence_gate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_leaves": {
+      "tools": ["hoe", "leaves", "shears", "sword"]
+    },
+    "twilightforest:twilight_oak_log": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_planks": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_pressure_plate": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_sapling": {
+      "tools": ["axe", "sword"]
+    },
+    "twilightforest:twilight_oak_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_slab": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_stairs": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_trapdoor": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_trapped_chest": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_wall_hanging_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_oak_wood": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twilight_portal_miniature_structure": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:twilight_wall_sign": {
+      "tools": ["axe"]
+    },
+    "twilightforest:twisted_stone": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:twisted_stone_pillar": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:uberous_soil": {
+      "tools": ["shovel"]
+    },
+    "twilightforest:uncrafting_table": {
+      "tools": ["axe"]
+    },
+    "twilightforest:underbrick": {
+      "tools": ["pickaxe"],
+      "tier": "stone",
+      "requiresTool": true
+    },
+    "twilightforest:underbrick_floor": {
+      "tools": ["pickaxe"],
+      "tier": "stone",
+      "requiresTool": true
+    },
+    "twilightforest:vangrove_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:vangrove_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:vanishing_block": {
+      "tools": ["axe"]
+    },
+    "twilightforest:violet_castle_door": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:violet_castle_rune_brick": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:warped_banister": {
+      "tools": ["axe"]
+    },
+    "twilightforest:warped_drying_rack": {
+      "tools": ["axe"]
+    },
+    "twilightforest:weathered_deadrock": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:worn_castle_brick": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:worn_castle_brick_stairs": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:wrought_iron_fence": {
+      "tools": ["pickaxe"],
+      "requiresTool": true
+    },
+    "twilightforest:yellow_castle_door": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    },
+    "twilightforest:yellow_castle_rune_brick": {
+      "tools": ["pickaxe"],
+      "tier": "diamond",
+      "requiresTool": true
+    }
+  }
+}

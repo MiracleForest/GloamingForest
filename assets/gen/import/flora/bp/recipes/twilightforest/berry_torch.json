@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:berry_torch"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["A", "|"],
+    "key": {
+      "|": {
+        "item": "minecraft:stick"
+      },
+      "A": {
+        "item": "twilightforest:torchberries"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:torchberries"
+      }
+    ],
+    "result": {
+      "item": "minecraft:torch",
+      "count": 5
+    }
+  }
+}
