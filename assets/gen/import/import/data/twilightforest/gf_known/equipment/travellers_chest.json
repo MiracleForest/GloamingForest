@@ -1,0 +1,6 @@
+{
+  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
+  "kind": "recipe",
+  "reason": "dangling in TF itself: the craft_vest criterion of advancement craft_travellers_gear names the recipe's pre-rename id; TF renamed the item and recipe to travellers_vest and never updated the criterion, so it never triggers in TF either (the advancement's other criteria still grant it). Kept verbatim for parity.",
+  "referencedBy": ["data/twilightforest/advancement/craft_travellers_gear.json"]
+}

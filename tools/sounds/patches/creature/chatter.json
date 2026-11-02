@@ -1,0 +1,69 @@
+{
+  "about": "Goblin chatter: a few voiced syllables with random pitch and vowels.",
+  "params": {
+    "pitch": 280,
+    "count": 4,
+    "syll": 0.11,
+    "size": 1.3,
+    "rough": 1.5,
+    "cutoff": "5000*$size"
+  },
+  "length": "$count*$syll*1.15",
+  "tail": 0.15,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "saw",
+      "length": "$syll",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch*semi(rand(-3,5))"
+          ],
+          [
+            "$syll",
+            "$pitch*semi(rand(-6,2))"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "env": {
+        "a": 0.008,
+        "d": "$syll*0.5",
+        "s": 0.6,
+        "r": 0.03
+      },
+      "formant": {
+        "vowel": "rand(0,4)",
+        "shift": "$size",
+        "mix": 0.85
+      },
+      "drive": "$rough",
+      "repeat": {
+        "count": "$count",
+        "every": "$syll*1.15",
+        "jitter": "$syll*0.25",
+        "decay": 0.95
+      }
+    }
+  ],
+  "fx": [
+    {
+      "type": "filter",
+      "filter": "hp",
+      "freq": 120
+    },
+    {
+      "type": "filter",
+      "filter": "lp",
+      "freq": "$cutoff",
+      "stages": 2
+    },
+    {
+      "type": "reverb",
+      "room": 0.2,
+      "mix": 0.05
+    }
+  ]
+}

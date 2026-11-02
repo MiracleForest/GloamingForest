@@ -1,0 +1,61 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.naga_trophy_held",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3.5,
+        "visible_bounds_offset": [0, 1.25, 0]
+      },
+      "bones": [
+        {
+          "name": "naga_trophy_held",
+          "parent": "rightArm",
+          "pivot": [0, 0, 0],
+          "rotation": [-54.7356, -150, 35.2644]
+        },
+        {
+          "name": "naga_trophy_held_head",
+          "parent": "naga_trophy_held",
+          "pivot": [7.74264, 9.02082, 0.74264],
+          "rotation": [0, 180, 0],
+          "cubes": [
+            {
+              "origin": [5.74264, 8.02082, -1.25736],
+              "size": [4, 4, 4],
+              "uv": {
+                "north": {
+                  "uv": [16, 16],
+                  "uv_size": [16, 16]
+                },
+                "east": {
+                  "uv": [0, 16],
+                  "uv_size": [16, 16]
+                },
+                "south": {
+                  "uv": [48, 16],
+                  "uv_size": [16, 16]
+                },
+                "west": {
+                  "uv": [32, 16],
+                  "uv_size": [16, 16]
+                },
+                "up": {
+                  "uv": [16, 0],
+                  "uv_size": [16, 16]
+                },
+                "down": {
+                  "uv": [32, 16],
+                  "uv_size": [16, -16]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

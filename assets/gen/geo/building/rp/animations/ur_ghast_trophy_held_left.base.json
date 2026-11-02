@@ -1,0 +1,118 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.ur_ghast_trophy_held_left.base": {
+      "loop": true,
+      "bones": {
+        "ur_ghast_trophy_held_left_tentacle_0": {
+          "rotation": ["math.cos(query.life_time * 171.9733) * 8.5944 - 8.5943", "math.sin(query.life_time * 154.6986) * 22.9183", 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_0_extension": {
+          "rotation": ["math.cos(query.life_time * 229.2118) * 11.4592 - 11.4591", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_0_extension_2": {
+          "rotation": ["math.cos(query.life_time * 286.4502) * 14.3239 - 14.3239", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_0_tip": {
+          "rotation": ["math.cos(query.life_time * 343.6887) * 17.1887 - 17.1887", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_1": {
+          "rotation": ["math.cos(query.life_time * 171.9733 + 85.9866) * 8.5944 - 0.601844", "math.sin(query.life_time * 154.6986 + 77.3493) * 22.9183 - 22.3619", 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_1_extension": {
+          "rotation": ["math.cos(query.life_time * 229.2118 + 114.6059) * 11.4592 + 4.771", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_1_extension_2": {
+          "rotation": ["math.cos(query.life_time * 286.4502 + 143.2251) * 14.3239 + 11.4731", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_1_tip": {
+          "rotation": ["math.cos(query.life_time * 343.6887 + 171.8444) * 17.1887 + 17.0148", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_2": {
+          "rotation": ["math.cos(query.life_time * 171.9733 + 171.9733) * 8.5944 + 8.5101", "math.sin(query.life_time * 154.6986 + 154.6986) * 22.9183 - 9.7949", 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_2_extension": {
+          "rotation": ["math.cos(query.life_time * 229.2118 + 229.2118) * 11.4592 + 7.4865", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_2_extension_2": {
+          "rotation": ["math.cos(query.life_time * 286.4502 + 286.4502) * 14.3239 - 4.0554", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_2_tip": {
+          "rotation": ["math.cos(query.life_time * 343.6887 + 343.6887) * 17.1887 - 16.4966", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_3": {
+          "rotation": ["math.cos(query.life_time * 171.9733 + 257.9599) * 8.5944 + 1.7929", "math.sin(query.life_time * 154.6986 + 232.0479) * 22.9183 + 18.0716", 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_3_extension": {
+          "rotation": ["math.cos(query.life_time * 229.2118 + 343.8176) * 11.4592 - 11.0051", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_3_extension_2": {
+          "rotation": ["math.cos(query.life_time * 286.4502 + 429.6754) * 14.3239 - 4.9753", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_3_tip": {
+          "rotation": ["math.cos(query.life_time * 343.6887 + 515.5331) * 17.1887 + 15.6446", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_4": {
+          "rotation": ["math.cos(query.life_time * 171.9733 + 343.9466) * 8.5944 - 8.2591", "math.sin(query.life_time * 154.6986 + 309.3972) * 22.9183 + 17.7105", 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_4_extension": {
+          "rotation": ["math.cos(query.life_time * 229.2118 + 458.4235) * 11.4592 + 1.6782", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_4_extension_2": {
+          "rotation": ["math.cos(query.life_time * 286.4502 + 572.9005) * 14.3239 + 12.0269", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_4_tip": {
+          "rotation": ["math.cos(query.life_time * 343.6887 + 687.3774) * 17.1887 - 14.4768", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_5": {
+          "rotation": ["math.cos(query.life_time * 171.9733 + 429.9332) * 8.5944 - 2.9496", "math.sin(query.life_time * 154.6986 + 386.7465) * 22.9183 - 10.3141", 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_5_extension": {
+          "rotation": ["math.cos(query.life_time * 229.2118 + 573.0294) * 11.4592 + 9.6078", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_5_extension_2": {
+          "rotation": ["math.cos(query.life_time * 286.4502 + 716.1256) * 14.3239 - 14.2911", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_5_tip": {
+          "rotation": ["math.cos(query.life_time * 343.6887 + 859.2218) * 17.1887 + 13.0155", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_6": {
+          "rotation": ["math.cos(query.life_time * 171.9733 + 515.9198) * 8.5944 + 7.8464", "math.sin(query.life_time * 154.6986 + 464.0958) * 22.9183 - 22.2283", 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_6_extension": {
+          "rotation": ["math.cos(query.life_time * 229.2118 + 687.6353) * 11.4592 - 9.6789", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_6_extension_2": {
+          "rotation": ["math.cos(query.life_time * 286.4502 + 859.3507) * 14.3239 + 10.8677", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_6_tip": {
+          "rotation": ["math.cos(query.life_time * 343.6887 + 1031.0662) * 17.1887 - 11.2907", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_7": {
+          "rotation": ["math.cos(query.life_time * 171.9733 + 601.9065) * 8.5944 + 4.0478", "math.sin(query.life_time * 154.6986 + 541.4451) * 22.9183 + 0.5778", 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_7_extension": {
+          "rotation": ["math.cos(query.life_time * 229.2118 + 802.2412) * 11.4592 - 1.5476", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_7_extension_2": {
+          "rotation": ["math.cos(query.life_time * 286.4502 + 1002.5758) * 14.3239 - 3.1183", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_7_tip": {
+          "rotation": ["math.cos(query.life_time * 343.6887 + 1202.9105) * 17.1887 + 9.3389", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_8": {
+          "rotation": ["math.cos(query.life_time * 171.9733 + 687.8931) * 8.5944 - 7.2798", "math.sin(query.life_time * 154.6986 + 618.7944) * 22.9183 + 22.4814", 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_8_extension": {
+          "rotation": ["math.cos(query.life_time * 229.2118 + 916.8471) * 11.4592 + 10.9677", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_8_extension_2": {
+          "rotation": ["math.cos(query.life_time * 286.4502 + 1145.8009) * 14.3239 - 5.8723", 0, 0]
+        },
+        "ur_ghast_trophy_held_left_tentacle_8_tip": {
+          "rotation": ["math.cos(query.life_time * 343.6887 + 1374.7549) * 17.1887 - 7.1968", 0, 0]
+        }
+      }
+    }
+  }
+}

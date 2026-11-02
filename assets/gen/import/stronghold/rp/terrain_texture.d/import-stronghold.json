@@ -1,0 +1,50 @@
+{
+  "tf_block_pedestal_hydra": {
+    "textures": "textures/twilightforest/block/pedestal/hydra"
+  },
+  "tf_block_pedestal_hydra_glow": {
+    "textures": "textures/twilightforest/block/pedestal/hydra_glow"
+  },
+  "tf_block_pedestal_hydra_latent": {
+    "textures": "textures/twilightforest/block/pedestal/hydra_latent"
+  },
+  "tf_block_pedestal_lich": {
+    "textures": "textures/twilightforest/block/pedestal/lich"
+  },
+  "tf_block_pedestal_lich_glow": {
+    "textures": "textures/twilightforest/block/pedestal/lich_glow"
+  },
+  "tf_block_pedestal_lich_latent": {
+    "textures": "textures/twilightforest/block/pedestal/lich_latent"
+  },
+  "tf_block_pedestal_naga": {
+    "textures": "textures/twilightforest/block/pedestal/naga"
+  },
+  "tf_block_pedestal_naga_glow": {
+    "textures": "textures/twilightforest/block/pedestal/naga_glow"
+  },
+  "tf_block_pedestal_naga_latent": {
+    "textures": "textures/twilightforest/block/pedestal/naga_latent"
+  },
+  "tf_block_pedestal_top": {
+    "textures": "textures/twilightforest/block/pedestal/top"
+  },
+  "tf_block_pedestal_top_glow": {
+    "textures": "textures/twilightforest/block/pedestal/top_glow"
+  },
+  "tf_block_pedestal_ur-ghast": {
+    "textures": "textures/twilightforest/block/pedestal/ur-ghast"
+  },
+  "tf_block_pedestal_ur-ghast_glow": {
+    "textures": "textures/twilightforest/block/pedestal/ur-ghast_glow"
+  },
+  "tf_block_pedestal_ur-ghast_latent": {
+    "textures": "textures/twilightforest/block/pedestal/ur-ghast_latent"
+  },
+  "tf_block_shield_inside": {
+    "textures": "textures/twilightforest/block/shield_inside"
+  },
+  "tf_block_shield_outside": {
+    "textures": "textures/twilightforest/block/shield_outside"
+  }
+}

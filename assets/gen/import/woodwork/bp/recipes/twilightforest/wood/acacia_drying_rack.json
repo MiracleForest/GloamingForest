@@ -1,0 +1,23 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/acacia_drying_rack"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["---"],
+    "key": {
+      "-": {
+        "item": "minecraft:acacia_slab"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:acacia_slab"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:acacia_drying_rack"
+    }
+  }
+}

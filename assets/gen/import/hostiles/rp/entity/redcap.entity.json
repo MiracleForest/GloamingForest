@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:redcap",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/redcap"
+      },
+      "geometry": {
+        "default": "geometry.tf.skeleton.redcap"
+      },
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#3b3a6c",
+        "overlay_color": "#ab1e14"
+      }
+    }
+  }
+}

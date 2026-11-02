@@ -1,0 +1,22 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:stonecutting/mazestone_brick/decorative_mazestone"
+    },
+    "tags": ["stonecutter"],
+    "ingredients": [
+      {
+        "item": "twilightforest:mazestone_brick"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:mazestone_brick"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:decorative_mazestone"
+    }
+  }
+}

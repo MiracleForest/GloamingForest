@@ -1,0 +1,104 @@
+{
+  "twilightforest:blackberry_bush": {
+    "sound": "grass"
+  },
+  "twilightforest:blightberry_bush": {
+    "sound": "grass"
+  },
+  "twilightforest:blueberry_bush": {
+    "sound": "grass"
+  },
+  "twilightforest:cicada": {
+    "sound": "slime"
+  },
+  "twilightforest:cicada_jar": {
+    "sound": "glass"
+  },
+  "twilightforest:clover_patch": {
+    "sound": "grass"
+  },
+  "twilightforest:copper_oreberry": {
+    "sound": "metal"
+  },
+  "twilightforest:duskberry_bush": {
+    "sound": "grass"
+  },
+  "twilightforest:essence_oreberry": {
+    "sound": "metal"
+  },
+  "twilightforest:fallen_leaves": {
+    "sound": "azalea_leaves"
+  },
+  "twilightforest:fiddlehead": {
+    "sound": "grass"
+  },
+  "twilightforest:firefly": {
+    "sound": "slime"
+  },
+  "twilightforest:firefly_jar": {
+    "sound": "glass"
+  },
+  "twilightforest:firefly_particle_spawner": {
+    "sound": "glass"
+  },
+  "twilightforest:gold_oreberry": {
+    "sound": "metal"
+  },
+  "twilightforest:huge_lily_pad": {
+    "sound": "grass"
+  },
+  "twilightforest:huge_water_lily": {
+    "sound": "grass"
+  },
+  "twilightforest:iron_oreberry": {
+    "sound": "metal"
+  },
+  "twilightforest:liveroot_block": {
+    "sound": "wood"
+  },
+  "twilightforest:maloberry_bush": {
+    "sound": "grass"
+  },
+  "twilightforest:mason_jar": {
+    "sound": "glass"
+  },
+  "twilightforest:mayapple": {
+    "sound": "grass"
+  },
+  "twilightforest:moonworm": {
+    "sound": "slime"
+  },
+  "twilightforest:moss_patch": {
+    "sound": "moss_block"
+  },
+  "twilightforest:mushgloom": {
+    "sound": "fungus"
+  },
+  "twilightforest:potted_fiddlehead": {
+    "sound": "stone"
+  },
+  "twilightforest:potted_mayapple": {
+    "sound": "stone"
+  },
+  "twilightforest:potted_mushgloom": {
+    "sound": "stone"
+  },
+  "twilightforest:raspberry_bush": {
+    "sound": "grass"
+  },
+  "twilightforest:root": {
+    "sound": "wood"
+  },
+  "twilightforest:root_strand": {
+    "sound": "hanging_roots"
+  },
+  "twilightforest:skyberry_bush": {
+    "sound": "grass"
+  },
+  "twilightforest:stingberry_bush": {
+    "sound": "grass"
+  },
+  "twilightforest:torchberry_plant": {
+    "sound": "hanging_roots"
+  }
+}

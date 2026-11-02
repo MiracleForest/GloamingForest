@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:rainy_cloud"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["ccc", "cbc", "ccc"],
+    "key": {
+      "b": {
+        "item": "minecraft:water_bucket"
+      },
+      "c": {
+        "item": "twilightforest:fluffy_cloud"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:fluffy_cloud"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:rainy_cloud",
+      "count": 8
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/time_door"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##", "##", "##"],
+    "key": {
+      "#": {
+        "item": "twilightforest:time_planks"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:time_planks"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:time_door",
+      "count": 3
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "tf_item_filled_magic_map": {
+    "textures": "textures/twilightforest/item/filled_magic_map"
+  },
+  "tf_item_filled_maze_map": {
+    "textures": "textures/twilightforest/item/filled_maze_map"
+  },
+  "tf_item_filled_ore_map": {
+    "textures": "textures/twilightforest/item/filled_ore_map"
+  },
+  "tf_item_magic_map": {
+    "textures": "textures/twilightforest/item/magic_map"
+  },
+  "tf_item_magic_map_focus": {
+    "textures": "textures/twilightforest/item/magic_map_focus"
+  },
+  "tf_item_maze_map": {
+    "textures": "textures/twilightforest/item/maze_map"
+  },
+  "tf_item_maze_map_focus": {
+    "textures": "textures/twilightforest/item/maze_map_focus"
+  },
+  "tf_item_ore_map": {
+    "textures": "textures/twilightforest/item/ore_map"
+  }
+}

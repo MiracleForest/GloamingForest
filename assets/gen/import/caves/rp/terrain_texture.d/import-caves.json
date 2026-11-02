@@ -1,0 +1,29 @@
+{
+  "tf_block_huge_gloom_cap": {
+    "textures": "textures/twilightforest/block/huge_gloom_cap"
+  },
+  "tf_block_huge_gloom_inside": {
+    "textures": "textures/twilightforest/block/huge_gloom_inside"
+  },
+  "tf_block_huge_mushgloom_stem": {
+    "textures": "textures/twilightforest/block/huge_mushgloom_stem"
+  },
+  "tf_block_trollber": {
+    "textures": "textures/twilightforest/block/trollber"
+  },
+  "tf_block_trollber_glow": {
+    "textures": "textures/twilightforest/block/trollber_glow"
+  },
+  "tf_block_trollsteinn": {
+    "textures": "textures/twilightforest/block/trollsteinn"
+  },
+  "tf_block_trollsteinn_light": {
+    "textures": "textures/twilightforest/block/trollsteinn_light"
+  },
+  "tf_block_trollvidr": {
+    "textures": "textures/twilightforest/block/trollvidr"
+  },
+  "tf_block_unripe_trollber": {
+    "textures": "textures/twilightforest/block/unripe_trollber"
+  }
+}

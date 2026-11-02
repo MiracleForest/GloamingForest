@@ -1,0 +1,933 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:blackberry_bush",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:age": [0, 1, 2, 3],
+        "twilightforest:layers": [0, 1, 2, 3, 4, 5, 6, 7, 8]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.4
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:flammable": {
+        "catch_chance_modifier": 4,
+        "destroy_chance_modifier": 25
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_0",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_blackberry_bush",
+          "render_method": "alpha_test"
+        },
+        "all": {
+          "texture": "tf_block_blackberry_bush",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-4, 0.008, -4],
+        "size": [8, 7.992, 8]
+      },
+      "minecraft:selection_box": {
+        "origin": [-4, 0.008, -4],
+        "size": [8, 7.992, 8]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 0",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_0",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-4, 0.008, -4],
+            "size": [8, 7.992, 8]
+          },
+          "minecraft:selection_box": {
+            "origin": [-4, 0.008, -4],
+            "size": [8, 7.992, 8]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_1",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 2",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_2",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 3",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_3",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 4",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_4",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 5",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_5",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 10, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 6",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_6",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 12, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 12, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 7",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_7",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 0 && q.block_state('twilightforest:layers') == 8",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_small_8",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 0",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_0",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-6, 0.008, -6],
+            "size": [12, 11.992, 12]
+          },
+          "minecraft:selection_box": {
+            "origin": [-6, 0.008, -6],
+            "size": [12, 11.992, 12]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_1",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 2",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_2",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 3",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_3",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 4",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_4",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 5",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_5",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 6",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_6",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 7",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_7",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0, -8],
+            "size": [16, 14, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 1 && q.block_state('twilightforest:layers') == 8",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_8",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 0",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_0",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0.008, -8],
+            "size": [16, 15.992, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0.008, -8],
+            "size": [16, 15.992, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_1",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 2",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_2",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 3",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_3",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 4",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_4",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 5",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_5",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 6",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_6",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 7",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_large_7",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 2 && q.block_state('twilightforest:layers') == 8",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush",
+              "render_method": "alpha_test"
+            },
+            "up": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "down": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "north": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "south": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "east": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "west": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 0",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_0",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [-8, 0.008, -8],
+            "size": [16, 15.992, 16]
+          },
+          "minecraft:selection_box": {
+            "origin": [-8, 0.008, -8],
+            "size": [16, 15.992, 16]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_1",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 2",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_2",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 3",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_3",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 4",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_4",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 5",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_5",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 6",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_6",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 7",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.abstract_bush_grown_7",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "snow": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:age') == 3 && q.block_state('twilightforest:layers') == 8",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_blackberry_bush_ripe",
+              "render_method": "alpha_test"
+            },
+            "up": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "down": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "north": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "south": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "east": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            },
+            "west": {
+              "texture": "tf_vanilla_block_snow",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

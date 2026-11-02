@@ -1,0 +1,9 @@
+{
+  "commands.tffeature.structure.conquer.status": "Drapeau de conquête de structure : %s",
+  "commands.tffeature.structure.conquer.update": "Le drapeau de conquête de structure était %s, changé pour %s",
+  "commands.tffeature.structure.inside": "Vous êtes dans une structure repère",
+  "commands.tffeature.structure.outside": "Vous n'êtes pas dans une structure repère",
+  "commands.tffeature.structure.required": "Vous n'êtes pas dans une structure",
+  "commands.tffeature.structure.spawn_info": "%s, Poids %s",
+  "commands.tffeature.structure.spawn_list": "La liste d'apparition pour cette zone est :"
+}

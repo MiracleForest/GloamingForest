@@ -1,0 +1,47 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:cicada_jar",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.3
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 15
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.mason_jar",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_jar_side",
+          "render_method": "alpha_test"
+        },
+        "bottom": {
+          "texture": "tf_block_jar_bottom",
+          "render_method": "alpha_test"
+        },
+        "side": {
+          "texture": "tf_block_jar_side",
+          "render_method": "alpha_test"
+        },
+        "top": {
+          "texture": "tf_block_jar_top",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [-5, 0, -5],
+        "size": [10, 14, 10]
+      },
+      "minecraft:selection_box": {
+        "origin": [-5, 0, -5],
+        "size": [10, 14, 10]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

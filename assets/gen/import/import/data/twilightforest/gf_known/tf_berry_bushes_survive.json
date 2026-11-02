@@ -1,0 +1,11 @@
+{
+  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
+  "kind": "tag",
+  "reason": "a TF tag named without '#' as the value of a tag-valued key (tools/import/known-ids.json tagValuedKeys: Java ingredients and block predicates, TagKey codecs, Bedrock item tags), which assemble checks as a plain id",
+  "referencedBy": [
+    "data/twilightforest/worldgen/configured_feature/blackberry_bushes.json",
+    "data/twilightforest/worldgen/configured_feature/blueberry_bushes.json",
+    "data/twilightforest/worldgen/configured_feature/maloberry_bushes.json",
+    "data/twilightforest/worldgen/configured_feature/raspberry_bushes.json"
+  ]
+}

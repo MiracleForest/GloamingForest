@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:canopy_sapling",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_canopy_sapling"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:canopy_sapling.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:canopy_sapling",
+        "replace_block_item": true
+      }
+    }
+  }
+}

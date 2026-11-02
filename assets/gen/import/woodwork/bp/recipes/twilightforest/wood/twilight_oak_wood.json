@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:wood/twilight_oak_wood"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["##", "##"],
+    "key": {
+      "#": {
+        "item": "twilightforest:twilight_oak_log"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:twilight_oak_log"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:twilight_oak_wood",
+      "count": 3
+    }
+  }
+}

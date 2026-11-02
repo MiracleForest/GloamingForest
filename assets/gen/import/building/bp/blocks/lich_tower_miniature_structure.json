@@ -1,0 +1,174 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:lich_tower_miniature_structure",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:facing": ["north", "south", "west", "east"]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.75
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 3.75
+      },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:collision_box": false,
+      "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.lich_tower",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_stone_bricks",
+          "render_method": "alpha_test"
+        },
+        "birchwood": {
+          "texture": "tf_vanilla_block_birch_planks",
+          "render_method": "alpha_test"
+        },
+        "oakwood": {
+          "texture": "tf_vanilla_block_oak_planks",
+          "render_method": "alpha_test"
+        },
+        "stonebricks": {
+          "texture": "tf_vanilla_block_stone_bricks",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:selection_box": {
+        "origin": [-5, 0, -6],
+        "size": [10.5, 15, 11.5]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.lich_tower",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_stone_bricks",
+              "render_method": "alpha_test"
+            },
+            "birchwood": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "alpha_test"
+            },
+            "oakwood": {
+              "texture": "tf_vanilla_block_oak_planks",
+              "render_method": "alpha_test"
+            },
+            "stonebricks": {
+              "texture": "tf_vanilla_block_stone_bricks",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          },
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, -5],
+            "size": [11.5, 15, 10.5]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.lich_tower",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_stone_bricks",
+              "render_method": "alpha_test"
+            },
+            "birchwood": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "alpha_test"
+            },
+            "oakwood": {
+              "texture": "tf_vanilla_block_oak_planks",
+              "render_method": "alpha_test"
+            },
+            "stonebricks": {
+              "texture": "tf_vanilla_block_stone_bricks",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          },
+          "minecraft:selection_box": {
+            "origin": [-5, 0, -6],
+            "size": [10.5, 15, 11.5]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.lich_tower",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_stone_bricks",
+              "render_method": "alpha_test"
+            },
+            "birchwood": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "alpha_test"
+            },
+            "oakwood": {
+              "texture": "tf_vanilla_block_oak_planks",
+              "render_method": "alpha_test"
+            },
+            "stonebricks": {
+              "texture": "tf_vanilla_block_stone_bricks",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          },
+          "minecraft:selection_box": {
+            "origin": [-5.5, 0, -5.5],
+            "size": [10.5, 15, 11.5]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.lich_tower",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_stone_bricks",
+              "render_method": "alpha_test"
+            },
+            "birchwood": {
+              "texture": "tf_vanilla_block_birch_planks",
+              "render_method": "alpha_test"
+            },
+            "oakwood": {
+              "texture": "tf_vanilla_block_oak_planks",
+              "render_method": "alpha_test"
+            },
+            "stonebricks": {
+              "texture": "tf_vanilla_block_stone_bricks",
+              "render_method": "alpha_test"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          },
+          "minecraft:selection_box": {
+            "origin": [-6, 0, -5.5],
+            "size": [11.5, 15, 10.5]
+          }
+        }
+      }
+    ]
+  }
+}

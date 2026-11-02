@@ -1,0 +1,30 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:fire_beetle",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": ["twilightforest", "fire_beetle", "monster", "mob"]
+      },
+      "minecraft:collision_box": {
+        "width": 1.1,
+        "height": 0.5
+      },
+      "minecraft:health": {
+        "value": 25,
+        "max": 25
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:fire_immune": true
+    }
+  }
+}

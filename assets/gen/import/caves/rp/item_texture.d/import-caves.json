@@ -1,0 +1,11 @@
+{
+  "tf_block_trollber": {
+    "textures": "textures/twilightforest/block/trollber"
+  },
+  "tf_block_trollvidr": {
+    "textures": "textures/twilightforest/block/trollvidr"
+  },
+  "tf_block_unripe_trollber": {
+    "textures": "textures/twilightforest/block/unripe_trollber"
+  }
+}

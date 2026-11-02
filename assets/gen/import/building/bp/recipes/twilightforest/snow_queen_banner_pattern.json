@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:snow_queen_banner_pattern"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      {
+        "item": "minecraft:paper"
+      },
+      {
+        "item": "twilightforest:snow_queen_trophy"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:snow_queen_trophy"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:snow_queen_banner_pattern"
+    }
+  }
+}

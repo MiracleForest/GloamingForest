@@ -1,0 +1,107 @@
+{
+  "about": "Generic animal voice: a sawtooth with a rise-fall pitch contour, vibrato, moving vowel formants, drive and breath.",
+  "params": {
+    "pitch": 300,
+    "len": 0.5,
+    "rise": 2,
+    "fall": -5,
+    "vowelA": 0,
+    "vowelB": 3,
+    "size": 1.0,
+    "rough": 1.2,
+    "breath": 0.15,
+    "vib": 0.25,
+    "vibRate": 6,
+    "bright": 1.0,
+    "cutoff": "5500*$size"
+  },
+  "length": "$len",
+  "tail": 0.15,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "saw",
+      "freq": {
+        "env": [
+          [
+            0,
+            "$pitch*semi($fall*0.3)"
+          ],
+          [
+            "$len*0.3",
+            "$pitch*semi($rise)"
+          ],
+          [
+            "$len",
+            "$pitch*semi($fall)"
+          ]
+        ],
+        "curve": "exp"
+      },
+      "vibrato": {
+        "rate": "$vibRate",
+        "depth": "$vib",
+        "delay": "$len*0.2"
+      },
+      "env": {
+        "a": "min(0.04, $len*0.15)",
+        "d": "$len*0.4",
+        "s": 0.7,
+        "r": "$len*0.25"
+      },
+      "formant": {
+        "vowel": {
+          "env": [
+            [
+              0,
+              "$vowelA"
+            ],
+            [
+              "$len",
+              "$vowelB"
+            ]
+          ]
+        },
+        "shift": "$size",
+        "mix": 0.85
+      },
+      "drive": "$rough"
+    },
+    {
+      "type": "noise",
+      "color": "pink",
+      "amp": "$breath",
+      "env": {
+        "a": 0.02,
+        "d": "$len*0.5",
+        "s": 0.4,
+        "r": "$len*0.2"
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "1800*$size*$bright",
+          "q": 0.9
+        }
+      ]
+    }
+  ],
+  "fx": [
+    {
+      "type": "filter",
+      "filter": "hp",
+      "freq": "$pitch*0.5"
+    },
+    {
+      "type": "filter",
+      "filter": "lp",
+      "freq": "$cutoff",
+      "stages": 2
+    },
+    {
+      "type": "reverb",
+      "room": 0.25,
+      "mix": 0.06
+    }
+  ]
+}

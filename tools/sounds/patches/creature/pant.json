@@ -1,0 +1,41 @@
+{
+  "about": "Panting: alternating breathy noise bursts.",
+  "params": {
+    "len": 0.9,
+    "count": 3,
+    "size": 1.0
+  },
+  "length": "$len",
+  "tail": 0.1,
+  "layers": [
+    {
+      "type": "noise",
+      "color": "pink",
+      "length": "$len/$count*0.55",
+      "env": {
+        "a": 0.03,
+        "d": 0.08,
+        "s": 0.5,
+        "r": 0.06
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": "1100*$size*rand(0.85,1.2)",
+          "q": 1.3
+        }
+      ],
+      "formant": {
+        "vowel": "a",
+        "shift": "$size",
+        "mix": 0.5
+      },
+      "repeat": {
+        "count": "$count",
+        "every": "$len/$count",
+        "jitter": 0.02,
+        "decay": 0.9
+      }
+    }
+  ]
+}

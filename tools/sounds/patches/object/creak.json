@@ -1,0 +1,61 @@
+{
+  "about": "Creak: stick-slip friction (a jittering low sawtooth) through wooden resonances.",
+  "params": {
+    "pitch": 55,
+    "len": 0.8,
+    "jitter": 0.35,
+    "bend": 4
+  },
+  "length": "$len",
+  "tail": 0.15,
+  "layers": [
+    {
+      "type": "osc",
+      "wave": "saw",
+      "freq": {
+        "lfo": "noise",
+        "rate": 60,
+        "depth": "$pitch*$jitter",
+        "center": {
+          "env": [
+            [
+              0,
+              "$pitch"
+            ],
+            [
+              "$len",
+              "$pitch*semi($bend)"
+            ]
+          ],
+          "curve": "exp"
+        }
+      },
+      "env": {
+        "a": 0.03,
+        "d": "$len*0.5",
+        "s": 0.8,
+        "r": "$len*0.2"
+      },
+      "filter": [
+        {
+          "type": "bp",
+          "freq": 900,
+          "q": 4
+        },
+        {
+          "type": "peak",
+          "freq": 1700,
+          "q": 3
+        }
+      ],
+      "drive": 2
+    }
+  ],
+  "fx": [
+    {
+      "type": "reverb",
+      "room": 0.3,
+      "mix": 0.1
+    }
+  ]
+}
