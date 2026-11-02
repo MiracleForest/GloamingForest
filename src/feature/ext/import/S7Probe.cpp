@@ -6,8 +6,8 @@
 // or an array, each tag form with minecraft:block_entity); import.s7_probe reports, per probe, whether the game
 // registered it, the tags of its block type and default permutation, and its block actor type, and checks them
 // against what 1.26.51 measured (the minecraft:tags array and minecraft:block_entity from 1.26.20, "tag:<id>"
-// components before, the item form never). Without the probe pack (every other run) it reports the component name
-// only and passes.
+// components before, the item form never). Without the probe pack (every other run) it reports the component name and
+// that no probe is registered (two lines), and passes.
 //
 // Server build only: the probes run in the server harness, and the schema's name is read from the server binary.
 //
@@ -15,8 +15,9 @@
 
 #ifndef GF_CLIENT
 
-#include <iterator>
+#include <array>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "mc/deps/core/string/HashedString.h"
@@ -39,6 +40,19 @@ std::string tagList(std::vector<HashedString> const& tags) {
     return "[" + s + "]";
 }
 
+/// A probe format ("1_26_20") is 1.26.20 or later: the SharedTypes::v1_26_20 block schema reads it.
+bool modernFormat(std::string_view format) {
+    std::array<int, 3> v{};
+    size_t             part = 0;
+    for (char c : format) {
+        if (c == '_') {
+            if (++part == v.size()) return false;
+        } else if (c >= '0' && c <= '9') v[part] = v[part] * 10 + (c - '0');
+        else return false;
+    }
+    return v >= std::array<int, 3>{1, 26, 20};
+}
+
 } // namespace
 
 GF_REGISTER_SELFTEST("import.s7_probe", [](gf::selftest::Context& ctx) {
@@ -52,17 +66,22 @@ GF_REGISTER_SELFTEST("import.s7_probe", [](gf::selftest::Context& ctx) {
     };
     std::vector<Probe> probes;
     for (auto const* form : kS7Forms)
-        for (int f = 0; f < static_cast<int>(std::size(kS7Formats)); ++f) {
-            std::string id = std::string("gf_s7:") + form + "_" + kS7Formats[f];
-            probes.push_back({form, id, gf::game::blockWith(id), f >= 3}); // kS7Formats[3] is 1.26.20
+        for (auto const* format : kS7Formats) {
+            std::string id = std::string("gf_s7:") + form + "_" + format;
+            probes.push_back({form, id, gf::game::blockWith(id), modernFormat(format)});
         }
     int registered = 0;
+    for (auto const& p : probes)
+        if (p.block) ++registered;
+    ctx.info(std::to_string(registered) + " of " + std::to_string(probes.size()) + " probe blocks registered"
+             + (registered == 0 ? " (the probe pack of import.s7.prelaunch.ps1 is not installed in this run)" : ""));
+    // without the probe pack (every run but import.s7) nothing more to report
+    if (registered == 0) return;
     for (auto const& p : probes) {
         if (!p.block) {
             ctx.info(p.id + ": not registered");
             continue;
         }
-        ++registered;
         auto const& type = p.block->getBlockType();
         ctx.info(
             p.id + ": type tags " + tagList(*type.mTags) + ", permutation tags " + tagList(*p.block->mTags) + ", pickaxe tag "
@@ -70,9 +89,6 @@ GF_REGISTER_SELFTEST("import.s7_probe", [](gf::selftest::Context& ctx) {
             + std::to_string(static_cast<int>(type.getBlockEntityType()))
         );
     }
-    ctx.info(std::to_string(registered) + " of " + std::to_string(probes.size()) + " probe blocks registered"
-             + (registered == 0 ? " (the probe pack of import.s7.prelaunch.ps1 is not installed in this run)" : ""));
-    if (registered == 0) return;
     // what 1.26.51 measured (docs/spikes/S7.md): the minecraft:tags array from 1.26.20, "tag:<id>" components before,
     // the item form never, minecraft:block_entity from 1.26.20 (then a data-driven block actor, type 62)
     for (auto const& p : probes) {

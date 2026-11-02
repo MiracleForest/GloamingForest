@@ -133,32 +133,34 @@ namespace GfImport
 
             // resolve each one the way Java does, then the allowlist; the rest is a dangling reference
             var usedAllow = new HashSet<string>(StringComparer.Ordinal);
-            int resolved = 0;
+            int resolved = 0, tfDangling = 0, unknown = 0;
             foreach (var r in refs.Values)
             {
                 bool tag = r.Value.StartsWith("#", StringComparison.Ordinal);
                 string id = tag ? r.Value.Substring(1) : r.Value;
                 // a tag by Java's registry paths (tags/twilight/<r>/, tags/worldgen/<r>/), named with '#' or by a
                 // tag-valued key (tagValuedKeys), or an id TF registers in code (the allowlist names kind and source)
-                if ((tag || r.TagKey) && javaTags.Contains(id)) { }
-                else if (allowIds[r.Value] != null) usedAllow.Add(r.Value);
+                if ((tag || r.TagKey) && javaTags.Contains(id)) resolved++;
+                else if (allowIds[r.Value] != null) { usedAllow.Add(r.Value); resolved++; }
                 else if (dangling[r.Value] != null)
                 {
+                    // dangling in TF itself: kept verbatim, a warning
                     usedAllow.Add(r.Value);
+                    tfDangling++;
                     Warn("dangling reference " + r.Value + " (" + dangling[r.Value]["kind"].AsString() + ") in " + string.Join(", ", r.Files) + ": " + dangling[r.Value]["reason"].AsString());
                 }
                 else
                 {
+                    unknown++;
                     Errors.Add("dangling reference " + r.Value + " in " + string.Join(", ", r.Files.Take(4)) + (r.Files.Count > 4 ? " (+" + (r.Files.Count - 4) + ")" : "")
                         + ": not a generated data file, BP definition or owners.tsv id; add it to tools/import/known-ids.json with its kind and TF source if TF registers it in code");
-                    continue;
                 }
-                resolved++;
             }
             foreach (var k in allowIds.Keys.Concat(dangling.Keys))
                 if (!usedAllow.Contains(k)) Warn("tools/import/known-ids.json: " + k + " is not referenced (stale entry)");
             Log.Add(refs.Count + " references that are no generated data file, BP definition or owners.tsv id: " + resolved
-                + " resolved (Java tag paths, tools/import/known-ids.json), " + (refs.Count - resolved) + " dangling");
+                + " resolved (Java tag paths, tools/import/known-ids.json), " + tfDangling + " dangling in TF itself (tfDangling, warned), "
+                + unknown + " unknown (errors)");
         }
 
         static void VisitKeys(J v, string key, string[] keys, Action<string> onRef)
