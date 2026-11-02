@@ -52,10 +52,12 @@ using Json = nlohmann::json;
 [[nodiscard]] bool isLava(Block const& block);
 [[nodiscard]] bool blocksMotion(Block const& block);
 [[nodiscard]] bool isLeaves(Block const& block);
-/// BlockState#canBeReplaced (material replaceable: air, water, grass, snow layer, ...).
+/// BlockState#canBeReplaced (the blocks built `replaceable`: air, water, grass, snow layer, ...,
+/// and TF's fiddlehead, fallen leaves, ominous fire and wispy cloud).
 [[nodiscard]] bool isReplaceable(Block const& block);
-/// Membership in a Java block tag ("minecraft:dirt", "twilightforest:mazestone"); the vanilla tags
-/// world generation needs are built in, the rest go to gf::tags.
+/// Membership in a Java block tag ("minecraft:dirt", "twilightforest:mazestone"): gf::tags (TF's
+/// tag data and its vanilla bridge, asked with the block's game id), plus the vanilla tags of Java
+/// 1.21.1 the bridge does not answer (minecraft:fences, doors, trapdoors, overworld_natural_logs).
 [[nodiscard]] bool hasTag(Block const& block, std::string_view javaTag);
 /// `block` may stay at `pos` (BlockState#canSurvive).
 [[nodiscard]] bool canSurvive(Region& region, BlockPos const& pos, Block const& block);

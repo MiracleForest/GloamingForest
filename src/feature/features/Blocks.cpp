@@ -1,15 +1,20 @@
+// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
+//   src/main/java/twilightforest/init/TFBlocks.java
+// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
+// of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
+//
 // Java block states in Bedrock terms for the feature interpreter (F5): Java ids and properties of
 // the imported worldgen JSON -> Bedrock permutations, and the Java block queries world
-// generation uses (air, fluids, motion blocking, replaceable, tags, survival).
+// generation uses (air, fluids, motion blocking, replaceable with TFBlocks' replaceable blocks,
+// tags, survival).
 #include <algorithm>
-#include <array>
 #include <cctype>
-#include <filesystem>
-#include <fstream>
 #include <memory>
-#include <set>
-#include <shared_mutex>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -21,7 +26,6 @@
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
-#include "mod/Main.h"
 
 namespace gf::features {
 
@@ -225,50 +229,68 @@ std::unordered_map<std::string, Block const*>& cache() {
     return c;
 }
 
-bool nameIn(std::string const& id, std::initializer_list<char const*> names) {
-    return std::any_of(names.begin(), names.end(), [&](char const* n) { return id == n; });
-}
-
 bool endsWith(std::string const& s, std::string_view suffix) {
     return s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
-/// The vanilla tags world generation reads, by Java id (TF members join through gf::tags).
-std::optional<bool> builtinTag(std::string const& tag, std::string const& id) {
-    if (tag == "minecraft:dirt")
-        return nameIn(id, {"minecraft:dirt", "minecraft:grass_block", "minecraft:podzol", "minecraft:coarse_dirt", "minecraft:mycelium",
-                           "minecraft:rooted_dirt", "minecraft:moss_block", "minecraft:mud", "minecraft:muddy_mangrove_roots"});
-    if (tag == "minecraft:logs" || tag == "minecraft:logs_that_burn" || tag == "minecraft:overworld_natural_logs")
-        return id.starts_with("minecraft:") && (endsWith(id, "_log") || endsWith(id, "_wood") || endsWith(id, "_stem") || endsWith(id, "_hyphae"));
-    if (tag == "minecraft:leaves") return id.starts_with("minecraft:") && endsWith(id, "_leaves");
-    if (tag == "minecraft:sand") return nameIn(id, {"minecraft:sand", "minecraft:red_sand", "minecraft:suspicious_sand"});
-    if (tag == "minecraft:base_stone_overworld")
-        return nameIn(id, {"minecraft:stone", "minecraft:granite", "minecraft:diorite", "minecraft:andesite", "minecraft:tuff", "minecraft:deepslate"});
-    if (tag == "minecraft:stone_ore_replaceables")
-        return nameIn(id, {"minecraft:stone", "minecraft:granite", "minecraft:diorite", "minecraft:andesite"});
-    if (tag == "minecraft:deepslate_ore_replaceables") return nameIn(id, {"minecraft:deepslate", "minecraft:tuff"});
-    if (tag == "minecraft:replaceable_by_trees" || tag == "minecraft:replaceable_by_mushrooms")
-        return (id.starts_with("minecraft:") && endsWith(id, "_leaves"))
-            || nameIn(id, {"minecraft:short_grass", "minecraft:fern", "minecraft:dead_bush", "minecraft:vine", "minecraft:glow_lichen",
-                           "minecraft:sunflower", "minecraft:lilac", "minecraft:rose_bush", "minecraft:peony", "minecraft:tall_grass",
-                           "minecraft:large_fern", "minecraft:hanging_roots", "minecraft:pitcher_plant", "minecraft:water",
-                           "minecraft:seagrass", "minecraft:tall_seagrass", "minecraft:warped_roots", "minecraft:nether_sprouts",
-                           "minecraft:crimson_roots"});
-    if (tag == "minecraft:replaceable")
-        return nameIn(id, {"minecraft:air", "minecraft:water", "minecraft:lava", "minecraft:short_grass", "minecraft:fern", "minecraft:dead_bush",
-                           "minecraft:seagrass", "minecraft:tall_seagrass", "minecraft:fire", "minecraft:soul_fire", "minecraft:snow",
-                           "minecraft:vine", "minecraft:glow_lichen", "minecraft:light", "minecraft:tall_grass", "minecraft:large_fern",
-                           "minecraft:structure_void", "minecraft:bubble_column", "minecraft:warped_roots", "minecraft:nether_sprouts",
-                           "minecraft:crimson_roots", "minecraft:hanging_roots"});
-    if (tag == "minecraft:features_cannot_replace")
-        return nameIn(id, {"minecraft:bedrock", "minecraft:spawner", "minecraft:chest", "minecraft:end_portal_frame", "minecraft:reinforced_deepslate"});
-    if (tag == "minecraft:ice") return nameIn(id, {"minecraft:ice", "minecraft:packed_ice", "minecraft:blue_ice", "minecraft:frosted_ice"});
-    if (tag == "minecraft:snow") return nameIn(id, {"minecraft:snow", "minecraft:snow_block", "minecraft:powder_snow"});
-    if (tag == "minecraft:flowers" || tag == "minecraft:small_flowers")
-        return nameIn(id, {"minecraft:dandelion", "minecraft:poppy", "minecraft:blue_orchid", "minecraft:allium", "minecraft:azure_bluet",
-                           "minecraft:red_tulip", "minecraft:orange_tulip", "minecraft:white_tulip", "minecraft:pink_tulip",
-                           "minecraft:oxeye_daisy", "minecraft:cornflower", "minecraft:lily_of_the_valley", "minecraft:wither_rose"});
-    return std::nullopt;
+/// Vanilla tags of Minecraft 1.21.1's data pack, by Java id, where gf::tags falls short of Java: the
+/// tags its vanilla bridge does not answer, and the nested tag of minecraft:replaceable_by_trees
+/// (#minecraft:leaves, to which TF's data adds TF's leaves: the bridge's include reaches only the
+/// vanilla leaves). A "#tag" entry includes that tag through hasTag, TF's members with it.
+std::unordered_map<std::string, std::vector<std::string>> const& vanillaTags() {
+    static std::unordered_map<std::string, std::vector<std::string>> const m{
+        {"minecraft:replaceable_by_trees", {"#minecraft:leaves"}},
+        {"minecraft:fences", {"#minecraft:wooden_fences", "minecraft:nether_brick_fence"}},
+        {"minecraft:doors",
+         {"#minecraft:wooden_doors", "minecraft:copper_door", "minecraft:exposed_copper_door", "minecraft:weathered_copper_door",
+          "minecraft:oxidized_copper_door", "minecraft:waxed_copper_door", "minecraft:waxed_exposed_copper_door",
+          "minecraft:waxed_weathered_copper_door", "minecraft:waxed_oxidized_copper_door", "minecraft:iron_door"}},
+        {"minecraft:trapdoors",
+         {"#minecraft:wooden_trapdoors", "minecraft:iron_trapdoor", "minecraft:copper_trapdoor", "minecraft:exposed_copper_trapdoor",
+          "minecraft:weathered_copper_trapdoor", "minecraft:oxidized_copper_trapdoor", "minecraft:waxed_copper_trapdoor",
+          "minecraft:waxed_exposed_copper_trapdoor", "minecraft:waxed_weathered_copper_trapdoor", "minecraft:waxed_oxidized_copper_trapdoor"}},
+        {"minecraft:overworld_natural_logs",
+         {"minecraft:acacia_log", "minecraft:birch_log", "minecraft:oak_log", "minecraft:jungle_log", "minecraft:spruce_log", "minecraft:dark_oak_log",
+          "minecraft:mangrove_log", "minecraft:cherry_log"}},
+    };
+    return m;
+}
+
+/// BlockStateBase#canBeReplaced: the blocks built with BlockBehaviour.Properties#replaceable, by
+/// Java id. Vanilla 1.21.1's are the members of its minecraft:replaceable tag; TF's come from
+/// TFBlocks (fiddlehead, fallen leaves, ominous fire, wispy cloud), which no tag lists.
+bool replaceableId(std::string const& javaId) {
+    static std::unordered_set<std::string> const ids{
+        "minecraft:air",
+        "minecraft:water",
+        "minecraft:lava",
+        "minecraft:short_grass",
+        "minecraft:fern",
+        "minecraft:dead_bush",
+        "minecraft:seagrass",
+        "minecraft:tall_seagrass",
+        "minecraft:fire",
+        "minecraft:soul_fire",
+        "minecraft:snow",
+        "minecraft:vine",
+        "minecraft:glow_lichen",
+        "minecraft:light",
+        "minecraft:tall_grass",
+        "minecraft:large_fern",
+        "minecraft:structure_void",
+        "minecraft:void_air",
+        "minecraft:cave_air",
+        "minecraft:bubble_column",
+        "minecraft:warped_roots",
+        "minecraft:nether_sprouts",
+        "minecraft:crimson_roots",
+        "minecraft:hanging_roots",
+        "twilightforest:fiddlehead",
+        "twilightforest:fallen_leaves",
+        "twilightforest:ominous_fire",
+        "twilightforest:wispy_cloud",
+    };
+    return ids.contains(javaId);
 }
 
 } // namespace
@@ -360,18 +382,21 @@ bool isLeaves(Block const& block) {
 
 bool isReplaceable(Block const& block) {
     if (block.isAir() || isFluid(block)) return true;
-    return builtinTag("minecraft:replaceable", javaId(block)).value_or(false);
+    return replaceableId(javaId(block));
 }
 
 bool hasTag(Block const& block, std::string_view tagIn) {
     std::string tag = normalizeId(std::string(tagIn));
-    std::string id  = javaId(block);
-    if (auto b = builtinTag(tag, id); b && *b) return true;
-    if (tags::has(tags::Registry::Block, tag, id)) return true;
-    // the imported tag JSON itself (TF's members of its own and of vanilla tags), so world
-    // generation sees them whatever gf::tags answers
-    auto members = detail::dataBlockTag(tag);
-    return members && members->contains(id);
+    // gf::tags (F9): TF's tag data with the units' fragments, nested tags, and the vanilla members
+    // of the vanilla tags its bridge answers; it takes the game's (Bedrock) ids
+    if (tags::has(tags::Registry::Block, tag, block.getTypeName())) return true;
+    // the vanilla tags the bridge does not answer
+    auto it = vanillaTags().find(tag);
+    if (it == vanillaTags().end()) return false;
+    std::string const id = javaId(block);
+    for (auto const& entry : it->second)
+        if (entry.starts_with('#') ? hasTag(block, std::string_view(entry).substr(1)) : entry == id) return true;
+    return false;
 }
 
 bool canSurvive(Region& region, BlockPos const& pos, Block const& block) {
@@ -386,79 +411,6 @@ bool canSurvive(Region& region, BlockPos const& pos, Block const& block) {
 } // namespace kit
 
 namespace detail {
-
-namespace {
-
-struct DataTags {
-    std::shared_mutex                                                                  mutex; ///< shared: lookups, unique: loads
-    std::uint64_t                                                                      generation = 0;
-    std::unordered_map<std::string, std::shared_ptr<std::unordered_set<std::string> const>> sets;
-};
-DataTags& dataTags() {
-    static DataTags t;
-    return t;
-}
-
-/// <mod>/data/<ns>/tags/<registryDir>/<path>.json of `tag` ("values": ids, {"id", "required"}
-/// objects and "#tag" references, expanded recursively).
-void readTag(
-    std::filesystem::path const&     root,
-    std::string const&               registryDir,
-    std::string const&               tag,
-    std::unordered_set<std::string>& out,
-    std::set<std::string>&           visiting
-) {
-    if (!visiting.insert(tag).second) return; // a reference cycle
-    auto colon = tag.find(':');
-    auto file  = root / tag.substr(0, colon) / "tags" / std::filesystem::path(registryDir) / (tag.substr(colon + 1) + ".json");
-    std::error_code ec;
-    if (!std::filesystem::is_regular_file(file, ec)) return;
-    Json doc;
-    try {
-        std::ifstream in(file);
-        doc = Json::parse(in);
-    } catch (std::exception const& e) {
-        warnOnce("tag file " + registryDir + " " + tag, "cannot read " + registryDir + " tag " + tag + ": " + e.what());
-        return;
-    }
-    for (auto const& v : fieldArr(doc, "values")) {
-        std::string entry = v.is_string() ? v.get<std::string>() : (v.is_object() ? v.value("id", std::string()) : std::string());
-        if (entry.empty()) continue;
-        if (entry[0] == '#') readTag(root, registryDir, normalizeId(entry), out, visiting);
-        else out.insert(normalizeId(entry));
-    }
-}
-
-} // namespace
-
-std::shared_ptr<std::unordered_set<std::string> const> dataTag(std::string const& registryDir, std::string const& tag) {
-    auto&       t          = dataTags();
-    auto        generation = data().generation;
-    std::string key        = registryDir + "|" + tag;
-    {
-        // the hot path (every tag query of every worker thread): a shared lock
-        std::shared_lock lock(t.mutex);
-        if (t.generation == generation)
-            if (auto it = t.sets.find(key); it != t.sets.end()) return it->second;
-    }
-    std::unique_lock lock(t.mutex);
-    if (t.generation != generation) {
-        t.sets.clear();
-        t.generation = generation;
-    }
-    if (auto it = t.sets.find(key); it != t.sets.end()) return it->second;
-    auto set = std::make_shared<std::unordered_set<std::string>>();
-    try {
-        auto                  root = Mod::getInstance().getSelf().getModDir() / "data";
-        std::set<std::string> visiting;
-        readTag(root, registryDir, tag, *set, visiting);
-    } catch (std::exception const&) {
-        // no mod directory (tests): no data tags
-    }
-    return t.sets.emplace(std::move(key), std::move(set)).first->second;
-}
-
-std::shared_ptr<std::unordered_set<std::string> const> dataBlockTag(std::string const& tag) { return dataTag("block", tag); }
 
 void clearBlockCache() {
     std::lock_guard lock(cacheMutex());

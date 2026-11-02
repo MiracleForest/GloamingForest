@@ -36,7 +36,7 @@ if ($script:Mode -eq 'local') {
     $mark = Get-LogMark
     $r = Invoke-SelfTest 'worldgen.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) worldgen selftest(s) failed" }
-    if ($r.Pass -lt 25) { throw "expected 25 worldgen selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 26) { throw "expected 26 worldgen selftests to pass, got $($r.Pass)" }
     if (-not (Get-LeviLog -Since $mark | Select-String -Pattern 'worldgen timing: 200 chunks' -Quiet)) { throw 'no 200-chunk timing line logged' }
     if (-not (Get-LeviLog -Since $mark | Select-String -Pattern 'worldgen custom biome: \S+ written and read back' -Quiet)) { throw 'the custom probe biome was not written into a chunk' }
 

@@ -135,11 +135,5 @@ void clearBlockCache();
 [[nodiscard]] Block const* blockFromJson(Json const& json);
 /// Java property value of `block` ("axis" -> "y"), nullopt when absent.
 [[nodiscard]] std::optional<std::string> javaProperty(Block const& block, std::string_view name);
-/// The members of tag `tag` of a registry in the imported data (<mod>/data/<ns>/tags/<registryDir>,
-/// e.g. "block", "worldgen/biome"), "#tag" references expanded, cached per loaded data; empty when
-/// the tag has no file.
-[[nodiscard]] std::shared_ptr<std::unordered_set<std::string> const> dataTag(std::string const& registryDir, std::string const& tag);
-/// dataTag("block", tag).
-[[nodiscard]] std::shared_ptr<std::unordered_set<std::string> const> dataBlockTag(std::string const& tag);
 
 } // namespace gf::features::detail

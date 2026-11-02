@@ -1,21 +1,11 @@
-// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
-// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
-//   src/main/java/twilightforest/events/EntityEvents.java
-//   src/main/java/twilightforest/world/components/structures/util/ConfigurableSpawns.java
-//   src/main/java/twilightforest/world/components/structures/SpawnIndexProvider.java
-//   src/main/java/twilightforest/world/components/structures/type/HollowHillStructure.java
-// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
-// Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
-// of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
-//
 // Contract "spawn" (F5): the Twilight Forest's spawn engine. Per-entity placement rules
 // (SpawnPlacements), per-biome tables (registered by U1, else the imported biome JSON), special
-// spawns (TF's structureSpecialSpawns / landmark controlled spawns, gatherPotentialSpawns with
-// the piece spawn indices and the hollow hill dome), the structures' spawn overrides
-// (ChunkGenerator#getMobsAt), the chunk-generation spawns (NaturalSpawner#
-// spawnMobsForChunkGeneration) and the natural spawner of the dimension (NaturalSpawner#
-// spawnForChunk with Java's global and per-player mob caps), all behaviour compatible with
-// Minecraft 1.21.1.
+// spawns (onSpecialSpawn: NeoForge's PotentialSpawns event, where F6 answers TF's
+// EntityEvents#structureSpecialSpawns with the landmark starts' controlled spawns and the
+// structures' spawn overrides of ChunkGenerator#getMobsAt), the chunk-generation spawns
+// (NaturalSpawner#spawnMobsForChunkGeneration) and the natural spawner of the dimension
+// (NaturalSpawner#spawnForChunk with Java's global and per-player mob caps), all behaviour
+// compatible with Minecraft 1.21.1.
 #include "feature/spawn/Spawn.h"
 
 #include <algorithm>
@@ -59,7 +49,6 @@
 #include "core/jrand/Mth.h"
 #include "feature/dimension/World.h"
 #include "feature/features/Internal.h"
-#include "feature/landmark/Landmark.h"
 #include "feature/spawn/Internal.h"
 #include "feature/tags/Tags.h"
 #include "feature/worldgen/Internal.h"
@@ -73,8 +62,6 @@
 
 namespace gf::spawn {
 
-using features::detail::field;
-using features::detail::fieldArr;
 using features::detail::fieldObj;
 
 using Json = nlohmann::json;
@@ -95,8 +82,6 @@ struct State {
     std::unordered_map<std::string, Table>              tables;     ///< registered by units (setBiomeSpawns)
     std::unordered_map<std::string, Table>              jsonTables; ///< read from the imported biome JSON (per world)
     std::vector<SpecialSpawnFn>                         special;
-    std::unordered_map<std::string, ext::SpawnIndexFn>  spawnIndex; ///< landmark key -> piece spawn index lookup
-    std::unordered_map<std::string, ext::SpawnAreaFn>   spawnArea;  ///< landmark key -> extra condition
 };
 State& state() {
     static State s;
@@ -425,16 +410,6 @@ void onSpecialSpawn(SpecialSpawnFn fn) {
 
 namespace ext {
 
-void registerSpawnIndex(std::string const& landmarkKey, SpawnIndexFn fn) {
-    std::unique_lock lock(state().mutex);
-    state().spawnIndex[features::detail::normalizeId(landmarkKey)] = std::move(fn);
-}
-
-void registerSpawnArea(std::string const& landmarkKey, SpawnAreaFn fn) {
-    std::unique_lock lock(state().mutex);
-    state().spawnArea[features::detail::normalizeId(landmarkKey)] = std::move(fn);
-}
-
 void setPlacementHeightmap(std::string const& entityId, worldgen::Heightmap heightmap) {
     std::unique_lock lock(state().mutex);
     state().heightmaps[features::detail::normalizeId(entityId)] = heightmap;
@@ -447,7 +422,7 @@ void registerSpawnBehaviour(std::string const& entityId, SpawnBehaviour behaviou
 
 } // namespace ext
 
-// ==== tables, controlled spawns, overrides ==============================================================
+// ==== tables, special spawns ===========================================================================
 
 namespace detail {
 
@@ -469,85 +444,17 @@ Table tableOf(std::string const& biomeId) {
     return state().jsonTables.try_emplace(biomeId, std::move(t)).first->second;
 }
 
-bool hollowHillCanSpawnMob(BlockPos const& pos, landmark::BlockBox const& box) {
-    // HollowHillStructure#canSpawnMob: Mth.inverseLerp(float...) per axis, Mth.length(double...)
-    auto  inv = [](int v, int lo, int hi) { return (static_cast<float>(v) - static_cast<float>(lo)) / (static_cast<float>(hi) - static_cast<float>(lo)); };
-    float hX  = inv(pos.x, box.minX, box.maxX) * 2.0F - 1.0F;
-    float hY  = inv(pos.y, box.minY, box.maxY);
-    float hZ  = inv(pos.z, box.minZ, box.maxZ) * 2.0F - 1.0F;
-    double len = std::sqrt(static_cast<double>(hX) * static_cast<double>(hX) + static_cast<double>(hY) * static_cast<double>(hY)
-                           + static_cast<double>(hZ) * static_cast<double>(hZ));
-    return len < static_cast<double>(0.975F);
-}
-
-int spawnIndexAt(landmark::Start const& start, BlockPos const& pos) {
-    ext::SpawnIndexFn fn;
+std::vector<SpawnEntry> spawnListAt(BlockSource& region, BlockPos const& pos, std::string const& category, std::string const& biome) {
+    std::vector<SpecialSpawnFn> special;
     {
         std::shared_lock lock(state().mutex);
-        if (auto it = state().spawnIndex.find(start.key); it != state().spawnIndex.end()) fn = it->second;
+        special = state().special;
     }
-    if (fn) return fn(start, pos);
-    // EntityEvents#getSpawnListIndexAt over the pieces: the highest index of the pieces containing pos
-    Json const* indices = nullptr;
-    if (start.data.is_object())
-        if (auto it = start.data.find("spawn_indices"); it != start.data.end() && it->is_array()) indices = &*it;
-    int highest = -1;
-    for (std::size_t i = 0; i < start.pieceBoxes.size(); ++i) {
-        if (!start.pieceBoxes[i].contains(pos.x, pos.y, pos.z)) continue;
-        int index = 0; // TFStructureComponent#spawnListIndex default
-        if (indices) {
-            if (i >= indices->size() || !(*indices)[i].is_number_integer()) continue; // not a SpawnIndexProvider
-            index = (*indices)[i].get<int>();
-        }
-        highest = std::max(highest, index);
-    }
-    return highest;
-}
-
-std::optional<std::vector<SpawnEntry>>
-controlledSpawnsOf(landmark::Start const& start, landmark::Descriptor const& d, BlockPos const& pos, std::string const& category) {
-    auto const& c = d.controlledSpawns;
-    if (!c.is_object() || c.empty()) return std::nullopt; // not a ControlledSpawns structure
-    // ConfigurableSpawns#getSpawnableList
-    if (category != "monster") {
-        if (category == "ambient") return entriesOf(fieldArr(c, "ambient_spawns"));
-        if (category == "water_creature") return entriesOf(fieldArr(c, "water_spawns"));
-        return std::vector<SpawnEntry>{};
-    }
-    if (start.conquered || landmark::isConquered(start)) return std::nullopt; // TFStructureStart#isConquered
-    ext::SpawnAreaFn area;
-    {
-        std::shared_lock lock(state().mutex);
-        if (auto it = state().spawnArea.find(start.key); it != state().spawnArea.end()) area = it->second;
-    }
-    // HollowHillStructure (type twilightforest:hollow_hill): small, medium and large hollow hills
-    bool hollowHill = start.key == "twilightforest:small_hollow_hill" || start.key == "twilightforest:medium_hollow_hill"
-                   || start.key == "twilightforest:large_hollow_hill"
-                   || (d.extra.is_object() && d.extra.value("type", std::string()) == "twilightforest:hollow_hill");
-    if (!area && hollowHill) area = [](landmark::Start const& s, BlockPos const& p) { return hollowHillCanSpawnMob(p, s.box); };
-    if (area && !area(start, pos)) return std::nullopt;
-    int index = spawnIndexAt(start, pos);
-    if (index < 0) return std::nullopt;
-    // ControlledSpawningConfig#getForLabel("" + index)
-    return entriesOf(fieldObj(c, "labelled_monster_spawns").value(std::to_string(index), Json::array()));
-}
-
-std::optional<std::vector<SpawnEntry>>
-spawnOverridesOf(landmark::Start const& start, landmark::Descriptor const& d, BlockPos const& pos, std::string const& category) {
-    // the descriptor keeps TF's "spawn_overrides" object (category -> {bounding_box, spawns})
-    Json const& nested = fieldObj(d.spawnOverrides, "spawn_overrides");
-    Json const& all    = nested.empty() ? d.spawnOverrides : nested;
-    Json const& o      = fieldObj(all, category.c_str());
-    if (o.empty()) return std::nullopt;
-    bool inside = false;
-    if (o.value("bounding_box", std::string("piece")) == "full") {
-        inside = start.box.contains(pos.x, pos.y, pos.z);
-    } else {
-        for (auto const& b : start.pieceBoxes.empty() ? std::vector<core::BlockBox>{start.box} : start.pieceBoxes)
-            if (b.contains(pos.x, pos.y, pos.z)) inside = true;
-    }
-    if (!inside) return std::nullopt;
-    return entriesOf(fieldArr(o, "spawns"));
+    for (auto const& fn : special)
+        if (auto list = fn(region, pos, category)) return *list;
+    auto t  = tableOf(biome);
+    auto it = t.byCategory.find(category);
+    return it == t.byCategory.end() ? std::vector<SpawnEntry>{} : it->second;
 }
 
 bool spawnRulesDefault(worldgen::Region& region, BlockPos const& pos, ext::WalkTarget walkTarget, std::string_view category, bool generation) {
@@ -567,15 +474,14 @@ bool obstructionDefault(
 }
 
 bool biomeHasTag(std::string const& biome, std::string const& tag) {
-    // the vanilla tags the spawner reads are built in (Bedrock's packs do not carry Java's):
-    // BiomeTags.REDUCED_WATER_AMBIENT_SPAWNS = minecraft:reduce_water_ambient_spawns: [#minecraft:is_river],
-    // minecraft:is_river: [river, frozen_river] (1.21.1 data)
-    if (tag == "minecraft:reduce_water_ambient_spawns" || tag == "minecraft:is_river")
-        if (biome == "minecraft:river" || biome == "minecraft:frozen_river") return true;
-    // gf::tags (F9), then the imported tag files (<mod>/data/<ns>/tags/worldgen/biome) whatever F9 answers
+    // gf::tags (F9): TF's biome tags and the units' fragments
     if (tags::has(tags::Registry::Biome, tag, biome)) return true;
-    auto members = features::detail::dataTag("worldgen/biome", tag);
-    return members && members->contains(biome);
+    // the vanilla biome tags the spawner reads, which neither TF's data nor gf::tags' vanilla bridge
+    // holds (1.21.1 data): BiomeTags.REDUCED_WATER_AMBIENT_SPAWNS = minecraft:reduce_water_ambient_spawns:
+    // [#minecraft:is_river], minecraft:is_river: [river, frozen_river]
+    if (tag == "minecraft:reduce_water_ambient_spawns" || tag == "minecraft:is_river")
+        return biome == "minecraft:river" || biome == "minecraft:frozen_river";
+    return false;
 }
 
 int worldSurfaceY(BlockSource& region, int x, int z) {
@@ -590,30 +496,6 @@ int worldSurfaceY(BlockSource& region, int x, int z) {
 }
 
 } // namespace detail
-
-namespace {
-
-/// TF's EntityEvents#structureSpecialSpawns: the first ControlledSpawns start of the chunk decides.
-std::optional<std::vector<SpawnEntry>> controlledSpawns(std::vector<landmark::Start> const& starts, BlockPos const& pos, std::string const& category) {
-    for (auto const& start : starts) {
-        auto const* d = landmark::descriptor(start.key);
-        if (!d || !d->controlledSpawns.is_object() || d->controlledSpawns.empty() || !detail::startValid(start)) continue;
-        return detail::controlledSpawnsOf(start, *d, pos, category);
-    }
-    return std::nullopt;
-}
-
-/// ChunkGenerator#getMobsAt: a structure's spawn override for the category at pos.
-std::optional<std::vector<SpawnEntry>> spawnOverrides(std::vector<landmark::Start> const& starts, BlockPos const& pos, std::string const& category) {
-    for (auto const& start : starts) {
-        auto const* d = landmark::descriptor(start.key);
-        if (!d || !detail::startValid(start)) continue;
-        if (auto list = detail::spawnOverridesOf(start, *d, pos, category)) return list;
-    }
-    return std::nullopt;
-}
-
-} // namespace
 
 // ==== chunk generation spawns ===========================================================================
 
@@ -743,22 +625,9 @@ struct Spawner {
             if (closeForSpawning(p.feet, cx, cz)) ++p.counts[cat];
     }
 
-    /// NaturalSpawner#mobsAt: ChunkGenerator#getMobsAt (structure spawn overrides, then the biome)
-    /// changed by NeoForge's PotentialSpawns event (TF's structureSpecialSpawns, special spawns).
+    /// NaturalSpawner#mobsAt (detail::spawnListAt).
     std::vector<SpawnEntry> mobsAt(BlockSource& region, BlockPos const& pos, std::string const& category, std::string const& biome) {
-        std::vector<SpecialSpawnFn> special;
-        {
-            std::shared_lock lock(state().mutex);
-            special = state().special;
-        }
-        for (auto const& fn : special)
-            if (auto list = fn(region, pos, category)) return *list;
-        auto starts = landmark::startsIntersecting(static_cast<int>(region.getDimensionId()), {pos.x >> 4, pos.z >> 4});
-        if (auto list = controlledSpawns(starts, pos, category)) return *list;
-        if (auto list = spawnOverrides(starts, pos, category)) return *list;
-        auto t  = detail::tableOf(biome);
-        auto it = t.byCategory.find(category);
-        return it == t.byCategory.end() ? std::vector<SpawnEntry>{} : it->second;
+        return detail::spawnListAt(region, pos, category, biome);
     }
 
     void tick() {

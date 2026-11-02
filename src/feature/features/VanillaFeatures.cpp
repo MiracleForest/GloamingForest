@@ -31,9 +31,9 @@
 #include "core/jrand/JavaOrder.h"
 #include "core/jrand/Mth.h"
 #include "core/noise/PerlinSimplex.h"
+#include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/features/Internal.h"
-#include "feature/landmark/Landmark.h"
-#include "feature/spawn/Internal.h"
+#include "feature/tags/Tags.h"
 #include "feature/worldgen/Internal.h"
 
 #pragma clang fp contract(off)
@@ -523,52 +523,34 @@ int findOnGroundYPosition(PlacementContext const& c, int x, int y, int z, int co
     return std::numeric_limits<int>::max();
 }
 
-/// A structure HolderSet of the no_structure modifier contains `key`.
-bool structureAllowed(Json const& set, std::string const& key) {
-    if (set.is_string()) return normalizeId(set.get<std::string>()) == key;
+/// The structure ids of a HolderSet<Structure> (structures_allowed): an id, a list of ids, or a
+/// "#tag" of structures.
+std::vector<std::string> structureKeys(Json const& set) {
+    std::vector<std::string> out;
+    auto add = [&](std::string const& entry) {
+        if (entry.starts_with('#')) {
+            for (auto& id : tags::members(tags::Registry::Structure, normalizeId(entry))) out.push_back(std::move(id));
+        } else {
+            out.push_back(normalizeId(entry));
+        }
+    };
+    if (set.is_string()) add(set.get<std::string>());
     if (set.is_array())
         for (auto const& e : set)
-            if (e.is_string() && normalizeId(e.get<std::string>()) == key) return true;
-    return false;
+            if (e.is_string()) add(e.get<std::string>());
+    return out;
 }
 
+/// AvoidLandmarkModifier#getPositions: F6 decides from the starts referencing the position's chunk
+/// (DecorationClearance, the pieces with UtilityPiece#allowFeatures, the start box's center).
 Positions noStructure(PlacementContext const& c, BlockPos const& pos) {
-    bool occSurface     = c.config.value("occupies_surface", false);
-    bool occUnderground = c.config.value("occupies_underground", false);
-    bool occVegetation  = c.config.value("occupies_vegetation", false);
-    int  additional     = c.config.value("additional_clearance", 0);
-    auto const& allowed = fieldArr(c.config, "structures_allowed");
-    for (auto const& start : landmark::startsIntersecting(c.region.dimension(), {pos.x >> 4, pos.z >> 4})) {
-        if (structureAllowed(allowed, start.key)) continue;
-        auto const* d = landmark::descriptor(start.key);
-        if (!d) continue;                       // not a DecorationClearance structure
-        if (!spawn::detail::startValid(start)) continue; // StructureStart#isValid
-        bool surfaceClear     = !occSurface || d->surfaceDecorationsAllowed;
-        bool undergroundClear = !occUnderground || d->undergroundDecorationsAllowed;
-        bool vegetationClear  = !occVegetation || d->extra.value("vegetation", true);
-        if (surfaceClear && undergroundClear && vegetationClear) continue;
-        auto const& b = start.box;
-        int cx = b.minX + (b.maxX - b.minX + 1) / 2, cz = b.minZ + (b.maxZ - b.minZ + 1) / 2;
-        float radius = d->extra.value("chunk_clearance_radius", static_cast<float>(d->clearanceChunks));
-        if (radius <= 0) {
-            // TF's UtilityPiece with allowFeatures (the start's data "allow_features": one bool per
-            // entry of pieceBoxes) does not block features
-            Json const* allowFeatures = nullptr;
-            if (start.data.is_object())
-                if (auto it = start.data.find("allow_features"); it != start.data.end() && it->is_array()) allowFeatures = &*it;
-            auto pieces = start.pieceBoxes.empty() ? std::vector<core::BlockBox>{start.box} : start.pieceBoxes;
-            for (std::size_t i = 0; i < pieces.size(); ++i) {
-                auto const& pb = pieces[i];
-                if (allowFeatures && i < allowFeatures->size() && (*allowFeatures)[i].is_boolean() && (*allowFeatures)[i].get<bool>()) continue;
-                int qx = std::clamp(pos.x, pb.minX, pb.maxX), qy = std::clamp(pos.y, pb.minY, pb.maxY), qz = std::clamp(pos.z, pb.minZ, pb.maxZ);
-                int dist = std::max({std::abs(qx - pos.x), std::abs(qy - pos.y), std::abs(qz - pos.z)});
-                if (dist <= additional) return {};
-            }
-            continue;
-        }
-        float size = radius * 16.0F + static_cast<float>(additional);
-        if (static_cast<float>(std::abs(pos.x - cx)) < size && static_cast<float>(std::abs(pos.z - cz)) < size) return {};
-    }
+    landmark::ext::Occupancy occupancy;
+    occupancy.surface             = c.config.value("occupies_surface", false);
+    occupancy.underground         = c.config.value("occupies_underground", false);
+    occupancy.vegetation          = c.config.value("occupies_vegetation", false);
+    occupancy.additionalClearance = c.config.value("additional_clearance", 0);
+    if (auto it = c.config.find("structures_allowed"); it != c.config.end()) occupancy.structuresAllowed = structureKeys(*it);
+    if (landmark::ext::featureBlocked(c.region.dimension(), pos.x, pos.y, pos.z, occupancy)) return {};
     return {pos};
 }
 
