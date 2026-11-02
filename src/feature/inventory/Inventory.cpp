@@ -8,9 +8,10 @@
 //   - BlockData: any other block keeps its slots in its block data ("inventory": {items, loot}).
 // Both are shown with the client mod's chest screen ("inventory.chest"; the server keeps what each
 // player opened and refuses screen data / actions for anything else) and, on vanilla clients,
-// with the game's chest screen through a chest minecart proxy (27 slots, VanillaContainer.cpp)
-// or a form (take a stack, put stacks in) for other sizes: the client does not show the game's
-// screen for a custom block's own container (S3; openNativeScreen keeps the experiment).
+// with the game's chest screen through a chest minecart proxy (27 slots; a double chest as the
+// game's large chest screen of 54 slots on a client-side chest pair, VanillaContainer.cpp) or a
+// form (take a stack, put stacks in) for other sizes: the client does not show the game's screen
+// for a custom block's own container (S3; openNativeScreen keeps the experiment).
 // While a proxy is open, every write through a handler from `find` reaches it at once, so the
 // screen never shows a stack the storage no longer has.
 //
@@ -61,6 +62,12 @@
 
 #include "mc/common/Brightness.h"
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/entity/components_json_legacy/AngryComponent.h"
+#include "mc/util/VariantParameterList.h"
+#include "mc/world/actor/ActorFlags.h"
+#include "mc/world/actor/Mob.h"
+#include "mc/world/level/ShapeType.h"
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/deps/nbt/StringTag.h"
 #include "mc/deps/shared_types/legacy/ContainerType.h"
@@ -1133,7 +1140,7 @@ void ensureInteractions(std::string const& blockId) {
         if (c.sneaking && !emptyHands) return ia::Result::Pass;
         if (!c.firstEvent) return ia::Result::Consume;
         auto h = handlerFor(c.blockId);
-        if (h && h->open && h->open(c.player, c.pos)) awardOpenStat(c.player, c.pos);
+        if (h && h->open && h->open(c.player, c.pos)) chestOpenedBy(c.player, c.pos);
         return ia::Result::Consume;
     });
     // Java: breaking unpacks the loot with the breaker first; the contents drop when the block
@@ -1353,10 +1360,58 @@ std::vector<GlobalPos> partsOf(GlobalPos const& pos) {
 
 bool withinReach(Player& player, GlobalPos const& pos) { return inReach(player, pos); }
 
-void awardOpenStat(Player& player, GlobalPos const& pos) {
+std::string chestFacingOf(GlobalPos const& pos) {
+    auto* region = regionFor(pos);
+    if (!region) return "north";
+    switch (halfOf(region->getBlock(game::blockPos(pos))).facing) {
+    case 3: return "south";
+    case 4: return "west";
+    case 5: return "east";
+    default: return "north";
+    }
+}
+
+void chestOpenedBy(Player& player, GlobalPos const& pos) {
     auto* region = regionFor(pos);
     auto  d      = region ? declared(game::blockIdAt(*region, game::blockPos(pos))) : std::nullopt;
-    if (d && d->chest && !d->stat.empty()) stats::award(player, d->stat);
+    if (!d || !d->chest) return;
+    // ChestBlock#useWithoutItem once the menu opened: player.awardStat(getOpenChestStat()),
+    // PiglinAi.angerNearbyPiglins(player, true)
+    if (!d->stat.empty()) stats::award(player, d->stat);
+    (void)angerNearbyPiglins(player, true);
+}
+
+int angerNearbyPiglins(Player& player, bool angerOnlyIfCanSee) {
+    // Sensor#isEntityAttackableIgnoringLineOfSight: no anger at a creative or spectator player
+    if (player.isClientSide() || !player.isAlive() || player.isCreative() || player.isSpectator()) return 0;
+    auto& region = player.getDimensionBlockSource();
+    auto  box    = player.getAABB();
+    // player.getBoundingBox().inflate(16.0), getEntitiesOfClass(Piglin.class): piglins, not brutes
+    AABB  area{box.min - Vec3{16.f, 16.f, 16.f}, box.max + Vec3{16.f, 16.f, 16.f}};
+    auto  eyes  = player.getEyePos();
+    auto  level = ll::service::getLevel();
+    int   n     = 0;
+    for (auto* a : region.getEntities(area, 0.0f)) {
+        if (!a || !a->isType(ActorType::Piglin) || !a->isAlive() || a->isBaby()) continue;
+        auto& piglin = static_cast<Mob&>(*a);
+        // PiglinAi#isIdle: not fighting (a target), admiring an item or celebrating
+        ActorUniqueID target = piglin.mTargetId;
+        if (target.rawID != ActorUniqueID::INVALID_ID().rawID && level && level->fetchEntity(target, false)) continue;
+        if (piglin.getStatusFlag(ActorFlags::Admiring) || piglin.getStatusFlag(ActorFlags::Celebrating) || piglin.getStatusFlag(ActorFlags::CelebratingSpecial)) continue;
+        // BehaviorUtils#canSee: the player is one of the piglin's visible entities
+        if (angerOnlyIfCanSee && !piglin.canSee(eyes, ShapeType::Collision)) continue;
+        // PiglinAi#setAngerTarget (ANGRY_AT for 600 ticks): the target; Bedrock's piglin turns
+        // angry on a new target (minecraft:on_target_acquired, its 30 s minecraft:angry)
+        piglin.setTarget(&player);
+        if (!piglin.getEntityContext().hasComponent<AngryComponent>()) {
+            VariantParameterList params{};
+            params.mSelf = &piglin;
+            (void)piglin.executeEvent("become_angry_event", params);
+        }
+        ++n;
+    }
+    if (n) log().info("inventory: {} angered {} piglin(s) by opening a chest", player.getRealName(), n);
+    return n;
 }
 
 bool chestBlocked(GlobalPos const& pos) {
@@ -1516,16 +1571,17 @@ bool openChestLike(Player& player, GlobalPos const& pos, int rows, std::string c
     // a screen open for another container closes first (one menu per player)
     closeRecord(player, false);
     // Companions: the client mod's chest screen. Vanilla clients: the game's chest screen through
-    // a chest minecart proxy for a single 27-slot container (VanillaContainer.cpp; the client shows
-    // no screen for a custom block's own container, spike S3), the form for other sizes and double
-    // chests. The title of the vanilla screen goes through F12's container title skin convention
-    // (Declared::skin).
+    // a chest minecart proxy (VanillaContainer.cpp; the client shows no screen for a custom block's
+    // own container, spike S3): a 27-slot container as the minecart's chest screen, a double chest
+    // as the game's large chest screen of a client-side chest pair; the form for other sizes (or
+    // when no proxy can be made). The title of the vanilla screen goes through F12's container
+    // title skin convention (Declared::skin).
     bool companion = net::isCompanion(player);
-    if (!companion && parts.size() == 1) {
-        auto text = trFor(player, title, "Chest");
+    if (!companion) {
+        auto text = trFor(player, title, parts.size() > 1 ? "Large Chest" : "Chest");
         if (!skin.empty()) text = ui::containerTitleSkin(text, skin);
         if (openVanillaContainer(player, pos, text)) {
-            recountViewers(pos);
+            for (auto const& p : parts) recountViewers(p);
             return true;
         }
     }

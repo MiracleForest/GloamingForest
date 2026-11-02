@@ -4,8 +4,9 @@
 # selftests ("combat.*"), with the other W0 units' real implementations: TF's chests as F11's
 # families declare them (combat.tf_*), F9's stats and tags, the missing advancement toast. The
 # scenario adds the /twilightforest gamerule command and containers that keep their items over a
-# world reload (combat.container_persist_write and combat.tf_chest_persist_write, a TF double
-# chest, before the restart; the _read tests after it, same counts).
+# world reload (combat.container_persist_save and combat.tf_chest_persist_save, a TF double
+# chest, before the restart; the _verify tests after it, same counts; in the combat.* run above,
+# save sorts before verify, which checks and cleans up at once).
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 # /twilightforest gamerule <rule> <value> (Bedrock's /gamerule only knows vanilla rules)
@@ -28,32 +29,32 @@ if (-not (Get-ServerLog | Select-String -Pattern 'inventory: \d+ data-declared c
 
 # Containers keep their items over a world reload: the fixture block and a TF double chest.
 $mark = Get-LogMark
-$r = Invoke-SelfTest 'combat.container_persist_write'
-if ($r.Pass -ne 1) { throw 'combat.container_persist_write did not pass' }
+$r = Invoke-SelfTest 'combat.container_persist_save'
+if ($r.Pass -ne 1) { throw 'combat.container_persist_save did not pass' }
 $written = Get-ServerLog -Since $mark | Select-String -Pattern 'container marker written count=(\d+)' | Select-Object -Last 1
-if (-not $written) { throw 'combat.container_persist_write logged no count' }
+if (-not $written) { throw 'combat.container_persist_save logged no count' }
 $count = $written.Matches[0].Groups[1].Value
 Write-Step "container marker count $count"
 $mark = Get-LogMark
-$r = Invoke-SelfTest 'combat.tf_chest_persist_write'
-if ($r.Pass -ne 1) { throw 'combat.tf_chest_persist_write did not pass' }
+$r = Invoke-SelfTest 'combat.tf_chest_persist_save'
+if ($r.Pass -ne 1) { throw 'combat.tf_chest_persist_save did not pass' }
 $tfWritten = Get-ServerLog -Since $mark | Select-String -Pattern 'tf chest marker written gold=(\d+) emeralds=(\d+)' | Select-Object -Last 1
-if (-not $tfWritten) { throw 'combat.tf_chest_persist_write logged no counts' }
+if (-not $tfWritten) { throw 'combat.tf_chest_persist_save logged no counts' }
 $gold = $tfWritten.Matches[0].Groups[1].Value
 $emeralds = $tfWritten.Matches[0].Groups[2].Value
 Write-Step "tf chest marker gold $gold emeralds $emeralds"
 
 Restart-Server
 $mark = Get-LogMark
-$r = Invoke-SelfTest 'combat.container_persist_read'
-if ($r.Pass -ne 1) { throw 'combat.container_persist_read did not pass after the reload' }
+$r = Invoke-SelfTest 'combat.container_persist_verify'
+if ($r.Pass -ne 1) { throw 'combat.container_persist_verify did not pass after the reload' }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern "container marker verified count=$count\b" -Quiet)) {
     throw "the container did not keep its $count gold ingots over the reload"
 }
 Write-Step 'the container kept its items over the reload'
 $mark = Get-LogMark
-$r = Invoke-SelfTest 'combat.tf_chest_persist_read'
-if ($r.Pass -ne 1) { throw 'combat.tf_chest_persist_read did not pass after the reload' }
+$r = Invoke-SelfTest 'combat.tf_chest_persist_verify'
+if ($r.Pass -ne 1) { throw 'combat.tf_chest_persist_verify did not pass after the reload' }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern "tf chest marker verified gold=$gold emeralds=$emeralds\b" -Quiet)) {
     throw "the TF double chest did not keep its $gold gold ingots and $emeralds emeralds over the reload"
 }

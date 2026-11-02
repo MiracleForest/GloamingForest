@@ -12,7 +12,9 @@
 //                               or, on vanilla clients, the game's chest screen through the proxy
 //   combat.ui_tf_double_chest   TF's twilight oak double chest (F11's families declare it a container
 //                               of this contract) opened as a right click opens it: the client mod's
-//                               54-slot "Large Chest" (the right half first), the form on vanilla
+//                               54-slot "Large Chest" (the right half first); on vanilla clients the
+//                               game's large chest screen (the minecart proxy behind a chest pair of
+//                               the client)
 //   combat.ui_tf_trapped_chest  TF's trapped chest, a right click: the client mod's chest screen, the
 //                               game's chest screen through the proxy on vanilla clients
 //   combat.ui_missing_toast     TF's MissingAdvancementToast for progress_lich (F12's toast on the
@@ -153,7 +155,7 @@ int cleanupUi() {
 }
 
 /// Whether `player` has a container screen open (the game's, the client mod's chest screen), or a
-/// placed container still has an opener (the form of a vanilla client's double chest).
+/// placed container still has an opener (a form).
 bool screenOpen(Player& player) {
     if (player.mContainerManager.get() != nullptr || !gf::inventory::openedParts(player).empty()) return true;
     return std::any_of(ui().placed.begin(), ui().placed.end(), [](Placed const& p) { return gf::inventory::viewerCount(p.pos) > 0; });
@@ -404,7 +406,8 @@ GF_REGISTER_SELFTEST("combat.ui_fx_particles", [](Context& ctx) -> ll::coro::Cor
                 auto* pl    = level ? level->getPlayer(uid) : nullptr;
                 if (!pl) return;
                 auto at = pl->getPosition() + pl->getViewVector(0.f) * 3.f;
-                gf::fx::particle(pl->getDimension(), "twilightforest:large_flame", at, Vec3{0, .05f, 0}, 16, nlohmann::json{{"spread", {.4, .4, .4}}});
+                // "probe": the client mod logs its route once for this test (the scenario waits for it)
+                gf::fx::particle(pl->getDimension(), "twilightforest:large_flame", at, Vec3{0, .05f, 0}, 16, nlohmann::json{{"spread", {.4, .4, .4}}, {"probe", "combat.ui_fx_particles"}});
                 run(playerId, ticks - 1);
             });
         }

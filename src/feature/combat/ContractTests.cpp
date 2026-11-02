@@ -1,15 +1,19 @@
 // Selftests of F10 against the other W0 units' real implementations (prefix "combat.", testPos dx
-// 6031..6049):
+// 6029..6066):
 //   - TF's chests as tools/families declares them (F11, data/gf/containers/families.json) on the
 //     inventory contract: the declarations, storage, a double chest's halves (one 54-slot screen,
-//     the right half first; the comparator output of both halves; a broken half), the open / close
-//     sounds, the opening stats through F9's gf::stats (open_chest, trigger_trapped_chest), the
-//     chest block's own reactions to the openers (F11's lids and trapped chest signal), a loot
-//     table unpacked through LootTable#fill with the opener and the opener's luck, and the slots of
-//     a double chest over a world reload (combat.tf_chest_persist_write / _read around a restart);
+//     the right half first, also as the game's large chest screen of a vanilla client; the
+//     comparator output of both halves, read by a vanilla comparator behind the empty half; a
+//     broken half), the open / close sounds, the opening stats through
+//     F9's gf::stats (open_chest, trigger_trapped_chest), the piglins an opening angers
+//     (PiglinAi#angerNearbyPiglins), the chest block's own reactions to the openers (F11's lids
+//     and trapped chest signal), a loot table unpacked through LootTable#fill with the opener and
+//     the opener's luck, and the slots of a double chest over a world reload
+//     (combat.tf_chest_persist_save / _verify around a restart);
 //   - tag matchers through F9's gf::tags: damage type tags, loot entries and conditions;
 //   - TF's MissingAdvancementToast (what showMissing sends) and, in the client build, the toast
-//     F12 queues for it and the fx.particle route of companions through F12's native sink.
+//     F12 queues for it (its lines, icon, colours) and the fx.particle route of companions through
+//     F12's native sink or the resource pack effect with the call's velocity.
 // Every test empties the containers it filled before its blocks go (nothing drops in the test row).
 
 #include <algorithm>
@@ -22,6 +26,10 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/deps/shared_types/legacy/Difficulty.h"
+#include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
+#include "mc/entity/components_json_legacy/AngryComponent.h"
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/server/SimulatedPlayer.h"
@@ -35,8 +43,10 @@
 #include "mc/world/attribute/AttributeInstance.h"
 #include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/SharedAttributes.h"
+#include "mc/world/actor/Mob.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/gamemode/InteractionResult.h"
+#include "mc/world/level/GameType.h"
 #include "mc/world/item/HandSlot.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -294,8 +304,19 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
     co_await ctx.ticks(12);
     ctx.check(stateAt(left, kLid).value_or(-1) == 0 && stateAt(right, kLid).value_or(-1) == 0, "both lids closed again");
 
-    // the comparator output of each half: the double chest's 54 slots together
-    region = ctx.region();
+    // the comparator output of each half: the double chest's 54 slots together. A vanilla
+    // comparator west of the left half (its rear to the east, reading the left half) with stone in
+    // front of it (ChestBlock#getAnalogOutputSignal through the redstone contract's comparator hook)
+    auto comp   = ctx.testPos(6030);
+    auto out    = ctx.testPos(6029);
+    bool placed = ctx.setBlock(comp, "minecraft:unpowered_comparator", {{"minecraft:cardinal_direction", "east"}})
+               || ctx.setBlock(comp, "minecraft:unpowered_comparator", {{"direction", 3}});
+    ctx.require(placed, "a comparator behind the left half");
+    ctx.require(ctx.setBlock(out, "minecraft:stone"), "a block in front of the comparator");
+    co_await ctx.ticks(2);
+    region   = ctx.region();
+    int read = rs::comparatorInput(*region, gf::game::blockPos(comp)).value_or(-1);
+    ctx.check(read == 0, "the comparator behind the empty double chest reads 0 (" + std::to_string(read) + ")");
     for (int i = 0; i < 27; ++i) {
         hl->set(left, i, ItemStack{});
         hr->set(right, i, *items::make("minecraft:cobblestone", 64));
@@ -305,6 +326,11 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
     int sigL = rs::analogOutput(*region, gf::game::blockPos(left)).value_or(-1);
     int sigR = rs::analogOutput(*region, gf::game::blockPos(right)).value_or(-1);
     ctx.check(sigL == 8 && sigR == 8, "27 full stacks in the right half: both halves give a comparator 8 (" + std::to_string(sigL) + ", " + std::to_string(sigR) + ")");
+    read = rs::comparatorInput(*region, gf::game::blockPos(comp)).value_or(-1);
+    ctx.check(read == 8, "the comparator behind the empty left half reads the right half's stacks: 8 (" + std::to_string(read) + ")");
+    co_await ctx.ticks(10);
+    int output = rs::signalFrom(*ctx.region(), gf::game::blockPos(comp), gf::game::blockPos(out));
+    ctx.check(output == 8, "the vanilla comparator re-evaluated and puts out 8 (" + std::to_string(output) + ")");
     // a redstone conductor over either half: ChestBlock#getContainer finds no container (0 at both)
     auto above = left;
     above.y += 1;
@@ -313,8 +339,14 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
     region = ctx.region();
     sigR   = rs::analogOutput(*region, gf::game::blockPos(right)).value_or(-1);
     ctx.check(inv::chestBlocked(right) && sigR == 0, "stone over the left half blocks the double chest: the right half gives 0 (" + std::to_string(sigR) + ")");
+    read = rs::comparatorInput(*region, gf::game::blockPos(comp)).value_or(-1);
+    ctx.check(read == 0, "the comparator behind the blocked left half reads 0 (" + std::to_string(read) + ")");
+    co_await ctx.ticks(10);
+    output = rs::signalFrom(*ctx.region(), gf::game::blockPos(comp), gf::game::blockPos(out));
+    ctx.check(output == 0, "and puts out 0 again (" + std::to_string(output) + ")");
     ctx.require(ctx.setBlock(above, "minecraft:air"), "nothing above the chest");
     for (int i = 0; i < 27; ++i) hr->set(right, i, ItemStack{});
+    ctx.require(ctx.setBlock(comp, "minecraft:air") && ctx.setBlock(out, "minecraft:air"), "the comparator and its block go");
 
     // halves of different chests never pair (ChestBlock#combine: the same block)
     ctx.require(ctx.setBlock(lone, kOakChest, {{kType, "left"}, {kFacing, "north"}}) && ctx.setBlock(other, kCanopyChest, {{kType, "right"}, {kFacing, "north"}}),
@@ -334,6 +366,74 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
     hl->set(left, 9, ItemStack{});
     if (auto* again = playerById(pid)) clearInventory(*again);
     (void)takeItemEntitiesNear(left, 6);
+});
+
+// ---- TF's double chest on a vanilla client: the game's large chest screen ---------------------------------
+
+GF_REGISTER_SELFTEST("combat.tf_double_chest_vanilla", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto left  = ctx.testPos(6065);
+    auto right = ctx.testPos(6066);
+    ctx.require(co_await ctx.ensureLoaded(left), "test area loaded");
+    auto pid = ctx.player().getOrCreateUniqueID().rawID;
+    ChestsScope chests{{left, right}, pid};
+    ctx.require(ctx.setBlock(left, kOakChest, {{kType, "left"}, {kFacing, "north"}}), "the left half");
+    ctx.require(ctx.setBlock(right, kOakChest, {{kType, "right"}, {kFacing, "north"}}), "the right half");
+    auto* region = ctx.region();
+    auto  hl     = inv::find(*region, gf::game::blockPos(left));
+    auto  hr     = inv::find(*region, gf::game::blockPos(right));
+    ctx.require(hl && hr, "both halves are containers");
+    hr->set(right, 0, *items::make("minecraft:redstone", 2));
+    hl->set(left, 0, *items::make("minecraft:lapis_lazuli", 3));
+    hl->set(left, 26, *items::make("minecraft:stick", 5));
+    clearInventory(ctx.player());
+    int       before = inv::vanillaProxyCount();
+    long long opens  = gf::stats::value(ctx.player(), kOpenStat);
+    // a vanilla player's right click on the left half
+    co_await rightClick(ctx, left);
+    ctx.check(inv::vanillaProxyCount() == before + 1, "a vanilla player's click opened one proxy for both halves");
+    auto pair = inv::vanillaProxyChestPair(left);
+    ctx.require(pair.has_value() && inv::vanillaProxyChestPair(right) == pair, "the large chest screen opens on a client-side chest pair");
+    ctx.check(pair->x == right.x && pair->z == right.z && pair->y < right.y, "the pair's lead chest is under the right half (" + std::to_string(pair->y - right.y) + ")");
+    auto* proxy = inv::vanillaProxyContainer(left);
+    ctx.require(proxy && proxy == inv::vanillaProxyContainer(right), "one proxy container for both halves");
+    ctx.check(proxy->getContainerSize() == 54, "the proxy holds 54 slots (" + std::to_string(proxy->getContainerSize()) + ")");
+    ctx.check(items::idOf(proxy->getItem(0)) == "minecraft:redstone" && items::idOf(proxy->getItem(27)) == "minecraft:lapis_lazuli"
+                  && items::countOf(proxy->getItem(53)) == 5,
+              "the right half's slots first, then the left half's (ChestBlock#combine)");
+    co_await ctx.ticks(6); // the screen opens once the client has the proxy and the chest pair
+    auto* p = playerById(pid);
+    ctx.require(p != nullptr, "the player is still there");
+    ctx.check(p->mContainerManager.get() != nullptr, "the server opened the large chest screen (the minecart's container behind it)");
+    ctx.check(inv::viewers(left) == 1 && inv::viewers(right) == 1, "both halves count the opener");
+    ctx.check(gf::stats::value(*p, kOpenStat) == opens + 1, "minecraft:open_chest once");
+    // the screen's changes reach the halves; the halves' changes reach the screen
+    proxy = inv::vanillaProxyContainer(left);
+    ctx.require(proxy != nullptr, "the proxy is still there");
+    proxy->setItem(30, *items::make("minecraft:emerald", 4));
+    ctx.check(items::idOf(hl->get(left, 3)) == "minecraft:emerald" && items::countOf(hl->get(left, 3)) == 4, "screen slot 30 is the left half's slot 3");
+    proxy->setItem(0, ItemStack{});
+    ctx.check(items::isEmpty(hr->get(right, 0)), "taking screen slot 0 empties the right half's slot 0");
+    hl->set(left, 5, *items::make("minecraft:diamond", 7));
+    ctx.check(items::countOf(proxy->getItem(32)) == 7, "a write to the left half's slot 5 shows in screen slot 32 at once");
+    hr->set(right, 26, *items::make("minecraft:gold_ingot", 9));
+    ctx.check(items::countOf(proxy->getItem(26)) == 9, "a write to the right half's slot 26 shows in screen slot 26");
+    // closing the screen ends the session; the halves keep their slots
+    static_cast<ServerPlayer&>(*p).doDeleteContainerManager(false);
+    co_await ctx.ticks(3);
+    ctx.check(inv::vanillaProxyCount() == before && !inv::vanillaProxyChestPair(left), "closing the screen ends the proxy");
+    ctx.check(inv::viewers(left) == 0 && inv::viewers(right) == 0, "no opener is left");
+    ctx.check(items::countOf(hl->get(left, 3)) == 4 && items::countOf(hl->get(left, 5)) == 7 && items::countOf(hr->get(right, 26)) == 9, "the halves kept the slots");
+    for (int i = 0; i < 27; ++i) {
+        hl->set(left, i, ItemStack{});
+        hr->set(right, i, ItemStack{});
+    }
+    // a broken half ends an open session at once
+    co_await rightClick(ctx, left);
+    ctx.require(inv::vanillaProxyCount() == before + 1, "the large chest screen again");
+    region = ctx.region();
+    ctx.require(gf::game::clearBlock(*region, gf::game::blockPos(right)), "the right half is broken");
+    ctx.check(inv::vanillaProxyCount() == before && !inv::proxyOpen(left), "breaking a half ended the session");
+    (void)takeItemEntitiesNear(right, 4);
 });
 
 // ---- TF's trapped chest: the vanilla screen, the stat, the signal -------------------------------------------
@@ -383,6 +483,145 @@ GF_REGISTER_SELFTEST("combat.tf_trapped_chest", [](Context& ctx) -> ll::coro::Co
     h->set(pos, 13, ItemStack{});
 });
 
+// ---- TF's chest angers the piglins around (ChestBlock#useWithoutItem: PiglinAi.angerNearbyPiglins) ----
+
+namespace {
+/// Piglins of one test: removed (and the difficulty put back) when it ends, whatever happens.
+struct PiglinsScope {
+    std::vector<std::int64_t>       ids;
+    SharedTypes::Legacy::Difficulty difficulty = SharedTypes::Legacy::Difficulty::Peaceful;
+    bool                            changed    = false;
+    PiglinsScope() {
+        // piglins are monsters: a peaceful world removes them
+        if (auto level = ll::service::getLevel(); level && level->getDifficulty() == SharedTypes::Legacy::Difficulty::Peaceful) {
+            difficulty = level->getDifficulty();
+            level->setDifficulty(SharedTypes::Legacy::Difficulty::Easy);
+            changed = true;
+        }
+    }
+    void removeAll() {
+        auto level = ll::service::getLevel();
+        if (!level) return;
+        for (auto raw : ids) {
+            ActorUniqueID id;
+            id.rawID = raw;
+            if (auto* a = level->fetchEntity(id, false)) a->remove();
+        }
+        ids.clear();
+    }
+    ~PiglinsScope() {
+        removeAll();
+        if (auto level = ll::service::getLevel(); level && changed) level->setDifficulty(difficulty);
+    }
+    PiglinsScope(PiglinsScope const&)            = delete;
+    PiglinsScope& operator=(PiglinsScope const&) = delete;
+};
+
+/// An adult melee piglin at the floor of `pos` (nullptr when none spawned).
+Actor* spawnPiglin(BlockSource& region, GlobalPos const& pos, PiglinsScope& scope) {
+    Vec3  at{pos.x + .5f, static_cast<float>(pos.y), pos.z + .5f};
+    auto* a = region.getLevel().getSpawner().spawnMob(region, ActorDefinitionIdentifier("minecraft", "piglin", "spawn_adult_melee_no_hunting"), nullptr, at, false, false, false);
+    if (a) scope.ids.push_back(a->getOrCreateUniqueID().rawID);
+    return a;
+}
+
+/// The piglin's target is `player` (Mob#setTarget: Bedrock's piglin then turns angry).
+bool targets(std::int64_t piglin, std::int64_t player) {
+    auto level = ll::service::getLevel();
+    if (!level) return false;
+    ActorUniqueID id;
+    id.rawID = piglin;
+    auto* a  = level->fetchEntity(id, false);
+    return a && static_cast<Mob*>(a)->mTargetId->rawID == player;
+}
+
+bool angry(std::int64_t piglin) {
+    auto level = ll::service::getLevel();
+    if (!level) return false;
+    ActorUniqueID id;
+    id.rawID = piglin;
+    auto* a  = level->fetchEntity(id, false);
+    return a && a->getEntityContext().hasComponent<AngryComponent>();
+}
+} // namespace
+
+GF_REGISTER_SELFTEST("combat.tf_chest_piglins", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // the player opens the chest standing 2 blocks south of it (rightClick); piglins east of it:
+    // one in the open (sees the player), one behind a stone wall (8 blocks: in range, unseen), one
+    // 20 blocks away (beyond the player's box inflated by 16)
+    auto chest  = ctx.testPos(6044);
+    auto seeing = ctx.testPos(6048, 2);
+    auto hidden = ctx.testPos(6052, 2);
+    auto far    = ctx.testPos(6064, 2);
+    ctx.require(co_await ctx.ensureLoaded(chest), "test area loaded");
+    ctx.require(co_await ctx.ensureLoaded(far), "the far end loaded");
+    auto pid = ctx.player().getOrCreateUniqueID().rawID;
+    ChestsScope chests{{chest}, pid};
+    ctx.require(ctx.setBlock(chest, kOakChest, {{kFacing, "north"}}), "a twilight oak chest");
+    for (int dz = 0; dz <= 4; ++dz)
+        for (int dy = 0; dy < 3; ++dy) {
+            auto w = ctx.testPos(6050, dz);
+            w.y += dy;
+            ctx.require(ctx.setBlock(w, "minecraft:stone"), "the stone wall");
+        }
+    PiglinsScope piglins;
+    // a survival player in a golden helmet: Bedrock's piglins leave it alone until the chest opens
+    // (Java's angerNearbyPiglins has no gold exception)
+    auto& p        = ctx.player();
+    auto  gameType = p.getPlayerGameType();
+    p.setPlayerGameType(GameType::Survival);
+    p.setArmor(SharedTypes::Legacy::ArmorSlot::Head, *items::make("minecraft:golden_helmet", 1));
+    struct PlayerScope {
+        std::int64_t id;
+        GameType     gameType;
+        ~PlayerScope() {
+            if (auto* q = playerById(id)) {
+                q->setArmor(SharedTypes::Legacy::ArmorSlot::Head, ItemStack::EMPTY_ITEM());
+                q->setPlayerGameType(gameType);
+            }
+        }
+    } playerScope{pid, gameType};
+    CompanionScope companion(p); // the client mod's screen: no server container (Bedrock's own has_container_open rule stays out)
+    std::int64_t idSeeing = 0, idHidden = 0, idFar = 0;
+    bool         babies   = false;
+    // the piglins come right before the click (no time to wander or to pick a target of their own)
+    co_await rightClick(ctx, chest, [&](Player& q) {
+        auto& region = q.getDimensionBlockSource();
+        auto* a      = spawnPiglin(region, seeing, piglins);
+        auto* b      = spawnPiglin(region, hidden, piglins);
+        auto* c      = spawnPiglin(region, far, piglins);
+        if (a) idSeeing = a->getOrCreateUniqueID().rawID;
+        if (b) idHidden = b->getOrCreateUniqueID().rawID;
+        if (c) idFar = c->getOrCreateUniqueID().rawID;
+        babies = (a && a->isBaby()) || (b && b->isBaby()) || (c && c->isBaby());
+    });
+    ctx.require(idSeeing && idHidden && idFar && !babies, "three adult piglins");
+    auto* pp = playerById(pid);
+    ctx.require(pp != nullptr, "the player is still there");
+    ctx.check(!openedChestScreen(*pp).empty(), "the click opened the chest");
+    ctx.check(targets(idSeeing, pid), "the piglin that sees the player took it as its target");
+    ctx.check(angry(idSeeing), "and turned angry (Bedrock's minecraft:angry: Java's ANGRY_AT for 600 ticks)");
+    ctx.check(!targets(idHidden, pid), "the piglin behind the wall did not (angerOnlyIfCanSee)");
+    ctx.check(!targets(idFar, pid), "the piglin 20 blocks away did not (the box inflated by 16)");
+    gf::net::injectFromClient(*pp, "screen.closed", {{"type", "inventory.chest"}});
+    piglins.removeAll(); // the angry one would pass its anger on
+
+    // a creative player angers none (Sensor#isEntityAttackableIgnoringLineOfSight); a fresh piglin
+    pp->setPlayerGameType(GameType::Creative);
+    std::int64_t idCreative = 0;
+    co_await rightClick(ctx, chest, [&](Player& q) {
+        auto  spot = ctx.testPos(6047, 3);
+        auto* a    = spawnPiglin(q.getDimensionBlockSource(), spot, piglins);
+        if (a && !a->isBaby()) idCreative = a->getOrCreateUniqueID().rawID;
+    });
+    pp = playerById(pid);
+    ctx.require(pp != nullptr, "the player is still there");
+    ctx.check(!openedChestScreen(*pp).empty(), "the creative player opened the chest");
+    if (idCreative) ctx.check(!targets(idCreative, pid), "no piglin takes a creative player as its target");
+    else ctx.info("no adult piglin for the creative check");
+    gf::net::injectFromClient(*pp, "screen.closed", {{"type", "inventory.chest"}});
+});
+
 // ---- TF's chest with a loot table: LootTable#fill with the opener and its luck -----------------------------
 
 GF_REGISTER_SELFTEST("combat.tf_chest_loot", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -419,15 +658,16 @@ GF_REGISTER_SELFTEST("combat.tf_chest_loot", [](Context& ctx) -> ll::coro::CoroT
     auto* p = playerById(pid);
     ctx.require(p != nullptr, "the player is still there");
     if (oldLuck) (void)setLuck(*p, *oldLuck); // the player's own luck back
-    else ctx.info("the player has no luck attribute: the luck part reads 0");
+    ctx.require(oldLuck.has_value(), "the player has a luck attribute (SharedAttributes::LUCK)");
+    ctx.check(std::abs(luck - 3.f) < 1e-4f, "the opener's luck read 3 (" + std::to_string(luck) + ")");
     auto data = openedChestScreen(*p);
     ctx.check(!data.empty(), "the click opened the chest");
     ctx.check(!inv::pendingLoot(pos), "opening unpacked the table");
     auto all = inv::contents(pos);
     int  emeralds = countIn(all, "minecraft:emerald"), diamonds = countIn(all, "minecraft:diamond"), sticks = countIn(all, "minecraft:stick");
     int  diamondSlots = static_cast<int>(std::count_if(all.begin(), all.end(), [](ItemStack const& s) { return items::idOf(s) == "minecraft:diamond"; }));
-    int  expected     = static_cast<int>(std::floor(luck));
-    ctx.check(emeralds == expected, "bonus_rolls with the opener's luck " + std::to_string(luck) + ": " + std::to_string(expected) + " emerald(s) (got " + std::to_string(emeralds) + ")");
+    // LootPool: floor(rolls + bonus_rolls * luck) = floor(0 + 1 * 3)
+    ctx.check(emeralds == 3, "bonus_rolls with the opener's luck 3: 3 emeralds (got " + std::to_string(emeralds) + ")");
     ctx.check(diamonds == 12, "THIS_ENTITY is the opener: its pool rolled (" + std::to_string(diamonds) + " diamonds)");
     ctx.check(diamondSlots >= 2, "LootTable#fill split the stack over several slots (" + std::to_string(diamondSlots) + ")");
     ctx.check(sticks == 0, "no killer player: killed_by_player fails");
@@ -453,6 +693,10 @@ GF_REGISTER_SELFTEST("combat.tf_chest_loot", [](Context& ctx) -> ll::coro::CoroT
 });
 
 // ---- TF's double chest keeps its slots over a world reload ---------------------------------------------
+// combat.tf_chest_persist_save puts a twilight oak double chest 3 blocks under testPos 6039 / 6040 and
+// writes a marker (gf:combat:tf_chest_probe); combat.tf_chest_persist_verify checks both halves,
+// erases the marker and puts the blocks that were there back. The server scenario runs them around a
+// restart; a glob run sorts save before verify, so nothing stays in the world after it.
 
 namespace {
 constexpr char kTfPersistKey[] = "gf:combat:tf_chest_probe";
@@ -468,7 +712,7 @@ JsonT posJson(GlobalPos const& p) { return {p.dim, p.x, p.y, p.z}; }
 GlobalPos posOf(JsonT const& j) { return GlobalPos{j[0].get<int>(), j[1].get<int>(), j[2].get<int>(), j[3].get<int>()}; }
 } // namespace
 
-GF_REGISTER_SELFTEST("combat.tf_chest_persist_write", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.tf_chest_persist_save", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto* region = ctx.region();
     ctx.require(region != nullptr, "the overworld is available");
     auto [left, right] = persistHalves(ctx, *region);
@@ -499,10 +743,10 @@ GF_REGISTER_SELFTEST("combat.tf_chest_persist_write", [](Context& ctx) -> ll::co
     ctx.info("tf chest marker written gold=" + std::to_string(n) + " emeralds=" + std::to_string(m));
 });
 
-GF_REGISTER_SELFTEST("combat.tf_chest_persist_read", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.tf_chest_persist_verify", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto marker = db::get(kTfPersistKey);
     if (!marker) {
-        ctx.info("no tf chest marker (combat.tf_chest_persist_write did not run before): nothing to check");
+        ctx.info("no tf chest marker (combat.tf_chest_persist_save did not run before): nothing to check");
         co_return;
     }
     db::erase(kTfPersistKey);
@@ -689,6 +933,14 @@ GF_REGISTER_SELFTEST("combat.client_missing_toast", [](Context& ctx) -> ll::coro
     auto want = cl::toast::styleOf(cl::toast::Kind::MissingAdvancement);
     ctx.check(style->titleColor == want.titleColor && style->bodyColor == want.bodyColor && style->titleColor == 0xFFFFFFFFu,
               "MissingAdvancementToast's colours: white UPPER_TEXT, white title");
+    // what the client handler made of the server's message: the advancement's title and icon
+    auto shown = pr::client::lastMissingToast();
+    ctx.require(shown.has_value(), "the client mod recorded the toast it queued");
+    ctx.check(shown->advancement == "twilightforest:progress_lich", "the toast is progress_lich's (" + shown->advancement + ")");
+    ctx.check(shown->titleKey == pr::kMissingUpperText, "first line: UPPER_TEXT (" + shown->titleKey + ")");
+    ctx.check(shown->bodyKey == "advancement.twilightforest.kill_lich", "second line: the advancement's title (" + shown->bodyKey + ")");
+    ctx.check(shown->iconItem == "twilightforest:lich_tower_miniature_structure", "the advancement's icon (" + shown->iconItem + ")");
+    ctx.check(shown->ms == pr::kMissingToastMs && pr::kMissingToastMs == 10000, "shown for 10 s");
     ctx.check(cl::toast::cancel(pr::kMissingUpperText) >= 1, "the toast is taken off again");
 });
 
@@ -741,12 +993,18 @@ GF_REGISTER_SELFTEST("combat.client_fx_native", [](Context& ctx) -> ll::coro::Co
     {
         auto w = at();
         ctx.require(w.has_value(), "the companion player");
-        gf::fx::particle(*w->second, tfId, w->first, {}, 3, JsonT{{"spread", {0.3, 0.3, 0.3}}});
+        gf::fx::particle(*w->second, tfId, w->first, Vec3{0.f, 0.05f, 0.02f}, 3, JsonT{{"spread", {0.3, 0.3, 0.3}}, {"probe", "combat.client_fx_native"}});
     }
     for (int i = 0; i < 60 && fxc::clientCounters().native == before.native && fxc::clientCounters().effects == before.effects; ++i) co_await ctx.ticks(1);
     auto after = fxc::clientCounters();
     if (hasFactory) ctx.check(after.native > before.native, "a TF particle with a native factory is drawn natively");
-    else ctx.check(after.effects > before.effects, "a TF particle without a factory spawned its resource pack effect");
+    else {
+        ctx.check(after.effects > before.effects, "a TF particle without a factory spawned its resource pack effect");
+        // the call's velocity goes with the effect (variable.velocity), as vanilla clients get it
+        auto vel = fxc::lastEffectVelocity();
+        ctx.check(vel && std::abs(vel->y - 0.05f) < 1e-4f && std::abs(vel->z - 0.02f) < 1e-4f && vel->x == 0.f,
+                  "the effect got the call's velocity as variable.velocity");
+    }
     // a vanilla particle type: the game's packet to companions too, not fx.particle
     auto out = gf::fx::counters().particlePackets;
     {

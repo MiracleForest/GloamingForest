@@ -12,8 +12,9 @@
 #                          the game's chest screen through the proxy (remote-vanilla)
 #   tf-double-chest.png    TF's twilight oak double chest (F11's families declare TF's chests as this
 #                          contract's containers), right-clicked: the client mod's 54-slot "Large
-#                          Chest", the right half's slots first (local, remote-mod), the form on a
-#                          vanilla client (remote-vanilla)
+#                          Chest", the right half's slots first (local, remote-mod); on a vanilla
+#                          client the game's large chest screen with the same slots (remote-vanilla:
+#                          the chest minecart proxy behind a chest pair of the client)
 #   tf-trapped-chest.png   TF's canopy trapped chest, right-clicked: the client mod's chest screen, the
 #                          game's chest screen through the proxy on a vanilla client
 #   fx-particles.png       TF's large_flame through gf::fx in front of the player: the client mod gets
@@ -98,7 +99,8 @@ if ($script:Mode -eq 'remote-vanilla') {
 }
 # TF's chests (F11's declared containers) opened by a right click
 if ($script:Mode -eq 'remote-vanilla') {
-    Show-ContainerTest 'combat.ui_tf_double_chest' 'tf-double-chest' 'combat ui: tf double chest opened for'
+    # the game's large chest screen: the minecart proxy behind a chest pair of the client
+    Show-ContainerTest 'combat.ui_tf_double_chest' 'tf-double-chest' 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)'
     Show-ContainerTest 'combat.ui_tf_trapped_chest' 'tf-trapped-chest' 'inventory: \S+ opened the container at .* \(vanilla screen\)'
 } else {
     Show-ContainerTest 'combat.ui_tf_double_chest' 'tf-double-chest' 'combat ui: tf double chest opened for' 'inventory\.chest'
@@ -111,9 +113,10 @@ $r = Invoke-SelfTest 'combat.ui_fx_particles'
 if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_fx_particles failed') }
 if (Test-ClientTrace) {
     # the client mod's fx.particle handler: F12's native factory or the resource pack effect (one
-    # line per particle id and route in the run: combat.client_fx_native may have logged it already)
-    try { Write-Step "fx: $(Wait-LogLine 'fx: client particle twilightforest:large_flame' 20)" }
-    catch { $screenFailures.Add('the client mod did not handle fx.particle for twilightforest:large_flame') }
+    # line per particle id, route and probe: this test's particles carry the probe
+    # combat.ui_fx_particles, so the line is this test's own)
+    try { Write-Step "fx: $(Wait-LogLine 'fx: client particle twilightforest:large_flame .*\(probe combat\.ui_fx_particles\)' 20 -Since $mark)" }
+    catch { $screenFailures.Add('the client mod did not handle fx.particle for twilightforest:large_flame of combat.ui_fx_particles') }
 }
 Start-Sleep -Seconds 2 # the emitter runs from the next tick for 5 s; the chat that ran the test closes
 Save-Screenshot 'fx-particles' | Out-Null
