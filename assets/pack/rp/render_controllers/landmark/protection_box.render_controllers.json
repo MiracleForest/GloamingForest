@@ -1,0 +1,122 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.twilightforest.protection_box.x": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "root": true
+        },
+        {
+          "faces_x": true
+        }
+      ],
+      "uv_anim": {
+        "offset": [
+          "-q.life_time * 0.6",
+          "-q.life_time * 0.35"
+        ],
+        "scale": [
+          "(q.property('gf:size_z') * 16 + 2) / 64",
+          "(q.property('gf:size_y') * 16 + 2) / 64"
+        ]
+      },
+      "ignore_lighting": true,
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "math.clamp((v.box_life ?? 60) / 20, 0, 1)"
+      }
+    },
+    "controller.render.twilightforest.protection_box.y": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "root": true
+        },
+        {
+          "faces_y": true
+        }
+      ],
+      "uv_anim": {
+        "offset": [
+          "-q.life_time * 0.6",
+          "-q.life_time * 0.35"
+        ],
+        "scale": [
+          "(q.property('gf:size_x') * 16 + 2) / 64",
+          "(q.property('gf:size_z') * 16 + 2) / 64"
+        ]
+      },
+      "ignore_lighting": true,
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "math.clamp((v.box_life ?? 60) / 20, 0, 1)"
+      }
+    },
+    "controller.render.twilightforest.protection_box.z": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "root": true
+        },
+        {
+          "faces_z": true
+        }
+      ],
+      "uv_anim": {
+        "offset": [
+          "-q.life_time * 0.6",
+          "-q.life_time * 0.35"
+        ],
+        "scale": [
+          "(q.property('gf:size_x') * 16 + 2) / 64",
+          "(q.property('gf:size_y') * 16 + 2) / 64"
+        ]
+      },
+      "ignore_lighting": true,
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "math.clamp((v.box_life ?? 60) / 20, 0, 1)"
+      }
+    }
+  }
+}

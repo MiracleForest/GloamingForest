@@ -1,0 +1,133 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:protection_box",
+      "is_spawnable": false,
+      "is_summonable": false,
+      "properties": {
+        "gf:size_x": {
+          "type": "int",
+          "range": [
+            0,
+            1023
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "gf:size_y": {
+          "type": "int",
+          "range": [
+            0,
+            1023
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "gf:size_z": {
+          "type": "int",
+          "range": [
+            0,
+            1023
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "gf:epoch": {
+          "type": "int",
+          "range": [
+            0,
+            1023
+          ],
+          "default": 0,
+          "client_sync": true
+        }
+      }
+    },
+    "component_groups": {
+      "gf:life": {
+        "minecraft:timer": {
+          "looping": false,
+          "time": 3,
+          "time_down_event": {
+            "event": "gf:expire",
+            "target": "self"
+          }
+        }
+      },
+      "gf:expire": {
+        "minecraft:instant_despawn": {}
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "protection_box",
+          "inanimate"
+        ]
+      },
+      "minecraft:health": {
+        "value": 1,
+        "max": 1
+      },
+      "minecraft:collision_box": {
+        "width": 0.01,
+        "height": 0.01
+      },
+      "minecraft:physics": {
+        "has_gravity": false,
+        "has_collision": false
+      },
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": false
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "cause": "all",
+            "deals_damage": "no"
+          }
+        ]
+      },
+      "minecraft:knockback_resistance": {
+        "value": 1
+      },
+      "minecraft:fire_immune": {}
+    },
+    "events": {
+      "minecraft:entity_spawned": {
+        "add": {
+          "component_groups": [
+            "gf:life"
+          ]
+        }
+      },
+      "gf:refresh": {
+        "sequence": [
+          {
+            "remove": {
+              "component_groups": [
+                "gf:life"
+              ]
+            }
+          },
+          {
+            "add": {
+              "component_groups": [
+                "gf:life"
+              ]
+            }
+          }
+        ]
+      },
+      "gf:expire": {
+        "add": {
+          "component_groups": [
+            "gf:expire"
+          ]
+        }
+      }
+    }
+  }
+}
