@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <format>
+#include <limits>
 #include <set>
 #include <string>
 #include <vector>
@@ -32,6 +33,7 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/dimension/DimensionBrightnessRamp.h"
 #include "mc/world/phys/AABB.h"
@@ -990,6 +992,23 @@ GF_REGISTER_SELFTEST("dimension.portal_block", [](Context& ctx) -> ll::coro::Cor
     ctx.check(ctx.blockAt(stoneBase.offset(0, 2, 0)) == "minecraft:stone", "the control: the piston pushed the stone up");
     ctx.check(ctx.blockAt(portalBase.offset(0, 1, 0)) == kPortalBlock, "the portal block stays where it is");
     ctx.check(ctx.blockAt(portalBase.offset(0, 2, 0)) != kPortalBlock, "and was not pushed up");
+
+    // explosions: the portal's own resistance is TF's 0, its fluid's (water) protects it
+    ctx.check(portalState.mDirectData->mExplosionResistance == 0.0f, "the block keeps TF's explosion resistance 0 (strength(-1.0F))");
+    auto glass = pool.offset(0, 1, 0);
+    ctx.setBlock(glass, "minecraft:glass");
+    auto level = ll::service::getLevel();
+    ctx.require(level.has_value(), "level");
+    level->explode(*region, nullptr, Vec3{pool.x + 1.0f, pool.y + 1.5f, pool.z + 1.0f}, 1.5f, false, true, std::numeric_limits<float>::max(), false);
+    co_await ctx.ticks(2);
+    ctx.check(ctx.blockAt(glass) != "minecraft:glass", "the explosion broke the glass above the pool (" + ctx.blockAt(glass) + ")");
+    int kept = 0;
+    for (int dx = 0; dx < 2; ++dx)
+        for (int dz = 0; dz < 2; ++dz) {
+            auto id = ctx.blockAt(pool.offset(dx, 0, dz));
+            if (id == kPortalBlock || id == "minecraft:water") ++kept;
+        }
+    ctx.check(kept == 4, "the portal blocks are still there (" + std::to_string(kept) + " of 4)");
 });
 
 // ---- Player#drop: only throws name a thrower ---------------------------------------------------------------------------

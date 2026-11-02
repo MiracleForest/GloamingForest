@@ -874,6 +874,7 @@ public:
             portalIndex().clear();
             gTick = 0;
             resetNotified();
+            refreshPortalTypes();
             loadBanished();
             tp::cacheLoad();
         });

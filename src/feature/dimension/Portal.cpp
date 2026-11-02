@@ -14,6 +14,8 @@
 // survive in any light, and sugar cane takes a portal next to its soil for its water
 // (TFPortalBlock#getFluidState).
 
+#include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <deque>
 #include <format>
@@ -37,10 +39,12 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/Explosion.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/Tick.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/MushroomBlock.h"
 #include "mc/world/level/block/SugarCaneBlock.h"
 #include "mc/world/level/dimension/Dimension.h"
@@ -234,13 +238,52 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(region, pos) || portalWatersSugarCane(region, pos);
 }
 
+namespace {
+struct PortalTypes {
+    Block const* open   = nullptr;
+    Block const* oneWay = nullptr;
+    Block const* water  = nullptr;
+};
+PortalTypes& portalTypes() {
+    static PortalTypes t;
+    return t;
+}
+} // namespace
+
+void refreshPortalTypes() {
+    portalTypes() = PortalTypes{portalBlock(false), portalBlock(true), game::blockWith("minecraft:water")};
+}
+
+/// TFPortalBlock#getFluidState for explosions: ExplosionDamageCalculator#getBlockExplosionResistance
+/// takes the larger of the block's resistance (strength(-1.0F): 0) and its fluid's (water: 100), so
+/// explosions leave the portal as they leave water. The block keeps TF's own 0 (the game reads it
+/// from the block's data when an explosion runs): during an explosion it holds the water's.
+LL_TYPE_INSTANCE_HOOK(TwilightPortalExplosionHook, ll::memory::HookPriority::Normal, Explosion, &Explosion::explode, bool, IRandom& random) {
+    auto const& t = portalTypes();
+    if (!t.water || !t.open) return origin(random);
+    float water = t.water->mDirectData->mExplosionResistance;
+    std::vector<std::pair<Block*, float>> keep;
+    for (auto const* b : {t.open, t.oneWay}) {
+        if (!b) continue;
+        auto* block = const_cast<Block*>(b);
+        float own   = block->mDirectData->mExplosionResistance;
+        keep.emplace_back(block, own);
+        block->mDirectData->mExplosionResistance = std::max(own, water);
+    }
+    bool r = origin(random);
+    for (auto const& [block, own] : keep) block->mDirectData->mExplosionResistance = own;
+    return r;
+}
+
 void installItemOwners() {
     TwilightPlayerDropHook::hook();
     TwilightItemThrowerHook::hook();
     TwilightMushroomHook::hook();
     TwilightSugarCaneHook::hook();
+    TwilightPortalExplosionHook::hook();
 }
 void uninstallItemOwners() {
+    TwilightPortalExplosionHook::unhook();
     TwilightSugarCaneHook::unhook();
     TwilightMushroomHook::unhook();
     TwilightItemThrowerHook::unhook();
