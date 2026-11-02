@@ -233,6 +233,25 @@ std::unique_ptr<Parsed> parse(Template const& t) {
         en.data         = e.value("data", Json::object());
         p->entities.push_back(std::move(en));
     }
+    // the placed cells in Java's order (StructureTemplate#loadPalette / buildInfoList): full blocks,
+    // then other shapes, then blocks with block entity data (a marker's data, a block entity's
+    // block, a data marker: Java's DATA structure block), each list by y, then x, then z
+    std::set<std::tuple<int, int, int>> withData;
+    for (auto const& m : p->markers) withData.insert({m.pos.x, m.pos.y, m.pos.z});
+    struct Cell {
+        int list, y, x, z;
+    };
+    std::vector<Cell> cells;
+    for (int y = 0; y < p->sy; y++)
+        for (int z = 0; z < p->sz; z++)
+            for (int x = 0; x < p->sx; x++) {
+                auto idx = p->cells[static_cast<std::size_t>(p->index(x, y, z))];
+                if (idx == 0xffff || idx >= p->palette.size() || !p->palette[idx]) continue;
+                cells.push_back(Cell{withData.contains({x, y, z}) ? 2 : p->paletteList[idx], y, x, z});
+            }
+    std::sort(cells.begin(), cells.end(), [](Cell const& a, Cell const& b) { return std::tie(a.list, a.y, a.x, a.z) < std::tie(b.list, b.y, b.x, b.z); });
+    p->order.reserve(cells.size());
+    for (auto const& c : cells) p->order.push_back(BlockPos{c.x, c.y, c.z});
     return p;
 }
 
@@ -507,35 +526,14 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
             blockData[{m.pos.x, m.pos.y, m.pos.z}] = std::move(d);
         }
 
-    // the blocks in Java's order (StructureTemplate#loadPalette / buildInfoList): full blocks, then
-    // other shapes, then blocks with block entity data (a marker's data, a block entity's block, a
-    // data marker: Java's DATA structure block), each list by y, then x, then z
-    std::set<std::tuple<int, int, int>> dataMarkerCells;
-    for (auto const& m : t.markers)
-        if (m.isData()) dataMarkerCells.insert({m.pos.x, m.pos.y, m.pos.z});
-    struct Cell {
-        int list, y, x, z;
-    };
-    std::vector<Cell> order;
-    order.reserve(t.cells.size());
-    for (int y = 0; y < t.sy; y++)
-        for (int z = 0; z < t.sz; z++)
-            for (int x = 0; x < t.sx; x++) {
-                auto idx = t.cells[static_cast<std::size_t>(t.index(x, y, z))];
-                if (idx == 0xffff || idx >= t.palette.size() || !t.palette[idx]) continue;
-                bool withData = blockData.contains({x, y, z}) || dataMarkerCells.contains({x, y, z});
-                order.push_back(Cell{withData ? 2 : t.paletteList[idx], y, x, z});
-            }
-    std::sort(order.begin(), order.end(), [](Cell const& a, Cell const& b) {
-        return std::tie(a.list, a.y, a.x, a.z) < std::tie(b.list, b.y, b.x, b.z);
-    });
     // StructurePlaceSettings#getRandomPalette(palettes, offset): one draw of the shared random for
     // the template's (single) palette before any block
     if (shared) (void)shared->nextInt(1);
 
     auto const& clip = settings.clip;
     std::vector<Placed> placed;
-    for (auto const& cell : order) {
+    // the blocks in Java's order (Parsed::order)
+    for (auto const& cell : t.order) {
         int  x = cell.x, y = cell.y, z = cell.z;
         auto idx = t.cells[static_cast<std::size_t>(t.index(x, y, z))];
         BlockPos local{x, y, z};

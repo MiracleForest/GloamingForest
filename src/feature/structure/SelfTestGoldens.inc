@@ -19,7 +19,8 @@
 // StructureTemplate#loadPalette / buildInfoList (full blocks, other shapes, block entities; each
 // by y, x, z) after the getRandomPalette draw, with TF's nagastone processed like every block
 // (F1 registers it). Their "diff processor_<name>" info lines (the blocks each processor changed)
-// equal what an independent model of Java's processing gives for the same templates.
+// equal the output of tests/structure/oracle/ProcessorOracle.java (Java's processing order and
+// TF's processors over java.util.Random), as does nagastone_variants_blocks.
 {"processor_none", "615811ce73edfd6e"},
 {"processor_box_cutting", "82c8e2920dc136fb"},
 {"processor_cobble_variants", "c1f14db5d759e4b6"},

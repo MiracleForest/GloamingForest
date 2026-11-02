@@ -347,10 +347,10 @@ std::optional<BlockPos> firingSpawner(BlockSource& source, Vec3 const& at, std::
                 }
             }
         }
-    if (best) return best;
-    // TF's sinister spawner (F8's block entity, in block data, spawns as a spawner): the nearest one
-    // whose spawn box (SinisterSpawnerLogic: within SpawnRange of the block on every axis) holds the
-    // mob and whose block F7 left a spawner record with (a template's spawner data)
+    // TF's sinister spawner (F8's block entity, in block data, spawns as a spawner): the ones whose
+    // spawn box (SinisterSpawnerLogic: within SpawnRange of the block on every axis) holds the mob
+    // and whose block F7 left a spawner record with (a template's spawner data), on the same terms
+    // (the one spawning now first: its delay ran out, then the nearest)
     int dim = static_cast<int>(source.getDimensionId());
     for (int cx = core::chunkOf(p.x - kMaxReach); cx <= core::chunkOf(p.x + kMaxReach); cx++)
         for (int cz = core::chunkOf(p.z - kMaxReach); cz <= core::chunkOf(p.z + kMaxReach); cz++) {
@@ -363,16 +363,19 @@ std::optional<BlockPos> firingSpawner(BlockSource& source, Vec3 const& at, std::
             for (auto const& q : recorded) {
                 auto sinister = boss::ext::sinisterSpawner(source, q);
                 if (!sinister) continue;
-                bool spawns = sinister->nextEntity == entityId;
-                for (auto const& [id, weight] : sinister->potentials) spawns |= id == entityId;
+                auto mob    = namespaced(entityId);
+                bool spawns = !sinister->nextEntity.empty() && namespaced(sinister->nextEntity) == mob;
+                for (auto const& [id, weight] : sinister->potentials) spawns |= namespaced(id) == mob;
                 if (!spawns) continue;
                 int    range = std::max(1, sinister->spawnRange);
                 double dx = at.x - (q.x + 0.5), dy = at.y - q.y, dz = at.z - (q.z + 0.5);
                 if (std::abs(dx) > range + 1 || std::abs(dz) > range + 1 || std::abs(dy) > range + 1) continue;
-                double dist = dx * dx + dy * dy + dz * dz;
-                if (!best || dist < bestDist) {
-                    best     = q;
-                    bestDist = dist;
+                bool   firing = sinister->spawnDelay <= 0;
+                double dist   = dx * dx + dy * dy + dz * dz;
+                if (!best || (firing && !bestFiring) || (firing == bestFiring && dist < bestDist)) {
+                    best       = q;
+                    bestFiring = firing;
+                    bestDist   = dist;
                 }
             }
         }

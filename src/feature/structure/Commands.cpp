@@ -351,20 +351,26 @@ int baseRarity(std::string const& id) {
     return it != table.end() ? it->second : 0;
 }
 
-/// The slots of a vanilla container block actor that has a loot table (RandomizableContainer:
-/// chests, barrels and shulker boxes are FillingContainers, dispensers and droppers plain
-/// Containers); nullptr for any other block actor.
-Container* vanillaLootContainer(BlockActor& actor) {
+/// A vanilla container block actor that has a loot table (RandomizableContainer): its Container
+/// and, for chests, barrels and shulker boxes, the FillingContainer that holds its own slots
+/// (dispensers and droppers are plain Containers).
+struct VanillaLootContainer {
+    Container*       container = nullptr;
+    FillingContainer* filling  = nullptr;
+};
+std::optional<VanillaLootContainer> vanillaLootContainer(BlockActor& actor) {
     switch (actor.getType()) {
     case BlockActorType::Chest:
     case BlockActorType::BarrelBlock:
-    case BlockActorType::ShulkerBox:
-        return static_cast<Container*>(static_cast<FillingContainer*>(static_cast<RandomizableBlockActorFillingContainer*>(&actor)));
+    case BlockActorType::ShulkerBox: {
+        auto* filling = static_cast<FillingContainer*>(static_cast<RandomizableBlockActorFillingContainer*>(&actor));
+        return VanillaLootContainer{static_cast<Container*>(filling), filling};
+    }
     case BlockActorType::Dispenser:
     case BlockActorType::Dropper:
-        return static_cast<Container*>(static_cast<RandomizableBlockActorContainer*>(&actor));
+        return VanillaLootContainer{static_cast<Container*>(static_cast<RandomizableBlockActorContainer*>(&actor)), nullptr};
     default:
-        return nullptr;
+        return std::nullopt;
     }
 }
 
@@ -382,10 +388,14 @@ std::optional<std::vector<ItemStack>> containerItems(BlockSource& source, BlockP
     // (F10): vanilla containers by the game's own unpacking (F10 rolls its tables there), custom
     // ones (gf::inventory) by reading their storage, which unpacks a pending table
     if (auto* actor = source.getBlockEntity(pos)) {
-        if (auto* container = vanillaLootContainer(*actor)) {
-            static_cast<RandomizableBlockActorContainerBase&>(*actor).unPackLootTable(source.getLevel(), *container, source.getDimensionId(), nullptr);
+        if (auto vanilla = vanillaLootContainer(*actor)) {
+            static_cast<RandomizableBlockActorContainerBase&>(*actor).unPackLootTable(source.getLevel(), *vanilla->container, source.getDimensionId(),
+                                                                                      nullptr);
+            // a chest's own slots: the Container view of a paired chest spans both halves, and Java
+            // counts each half's block entity on its own
+            if (vanilla->filling) return std::vector<ItemStack>(vanilla->filling->mItems->begin(), vanilla->filling->mItems->end());
             std::vector<ItemStack> items;
-            for (int slot = 0; slot < container->getContainerSize(); slot++) items.push_back(container->getItem(slot));
+            for (int slot = 0; slot < vanilla->container->getContainerSize(); slot++) items.push_back(vanilla->container->getItem(slot));
             return items;
         }
     }

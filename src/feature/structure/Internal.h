@@ -166,6 +166,11 @@ struct Parsed {
     /// The list StructureTemplate#addToLists puts each palette state in (javaList).
     std::vector<std::int8_t>  paletteList;
     std::vector<std::uint16_t> cells;       ///< palette index per block, y-major, then z, then x
+    /// The placed cells (not structure_void, known blocks) in the order StructureTemplate keeps a
+    /// loaded template's blocks (#loadPalette / #buildInfoList): the full blocks, then the other
+    /// shapes, then the blocks with block entity data (markers, block entity blocks; javaList),
+    /// each list by y, then x, then z. Processors see the blocks in this order.
+    std::vector<BlockPos>     order;
     std::vector<Marker>       markers;
     std::vector<Connector>    connectors;
     std::vector<EntityEntry>  entities;

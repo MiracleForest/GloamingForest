@@ -1457,11 +1457,19 @@ GF_REGISTER_SELFTEST("structure.count_loot", [](Context& ctx) -> ll::coro::CoroT
     source = ctx.region();
     ctx.require(source != nullptr, "block source");
     ctx.check(game::blockIdAt(*source, insideShell) == "minecraft:chest" && game::blockIdAt(*source, abovePorch) == "minecraft:chest", "the chests stand");
-    // show_common false first: the fixture loot is all common, nothing counts (the chest is unpacked)
-    ctx.check(countLootIn(*source, *start, false).empty(), "count_loot without common items counts nothing of the fixture loot");
-    auto counts = countLootIn(*source, *start, true);
-    int  counted = 0;
-    for (auto const& [item, n] : counts) counted += n;
+    // show_common false first (the chest is unpacked then): only the stacks that are not common
+    auto uncommonOnly = countLootIn(*source, *start, false);
+    auto counts       = countLootIn(*source, *start, true);
+    int  counted      = 0;
+    for (auto const& [item, n] : counts) {
+        counted += n;
+        auto stack    = game::items::make(item, 1, 0);
+        bool expected = stack && notCommon(*stack);
+        auto it       = uncommonOnly.find(item);
+        ctx.check(expected ? (it != uncommonOnly.end() && it->second == n) : it == uncommonOnly.end(),
+                  "count_loot without common items " + std::string(expected ? "counts " : "leaves out ") + item);
+    }
+    ctx.check(uncommonOnly.size() <= counts.size(), "count_loot without common items counts nothing else");
     int inShell = 0;
     if (auto items = containerItems(*source, insideShell))
         for (auto const& s : *items)
