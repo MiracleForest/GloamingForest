@@ -36,7 +36,9 @@
                     LeviLamina) that only gets the server's resource pack: what players without the
                     client mod see.
   In remote modes the BDS console log is merged into the session log ("[host] " lines) and
-  Send-HostConsole runs server console commands.
+  Send-HostConsole runs server console commands. Before the host boots, it runs the optional
+  scenarios/<name>.host-prelaunch.ps1 in the server harness (e.g. a probe pack for the host's mod;
+  server/scenarios/client-host.prelaunch.ps1); scenarios/<name>.prelaunch.ps1 prepares the client.
 
 .EXAMPLE
   pwsh tools/e2e/client/run.ps1 -Scenario smoke -Build
@@ -115,6 +117,9 @@ function Start-RemoteHost {
     New-Item -ItemType Directory -Force $script:HostDir | Out-Null
     $env:GF_E2E_HOST_DIR = $script:HostDir
     $env:GF_E2E_HOST_OWNER_PID = "$PID"
+    # the host runs scenarios/<scenario>.host-prelaunch.ps1 before it boots (server/scenarios/client-host.prelaunch.ps1)
+    $env:GF_E2E_HOST_SCENARIO = $Scenario
+    $env:GF_E2E_HOST_MODE = $Mode
     $serverRun = Join-Path $PSScriptRoot '../server/run.ps1'
     $harnessLog = Join-Path $outDir 'host-harness.log'
     # Own server output folder per client run (out/client-host-<unit>), so parallel remote runs don't collide.
@@ -278,7 +283,7 @@ try {
             if (-not $hp.WaitForExit(120000)) { $hp.Kill($true); $failures.Add('BDS host did not stop') }
             elseif ($hp.ExitCode -ne 0) { $failures.Add("BDS host failed (exit $($hp.ExitCode), see tools/e2e/server/out/$script:HostOutName/)") }
         }
-        Remove-Item Env:GF_E2E_HOST_DIR, Env:GF_E2E_HOST_OWNER_PID -ErrorAction SilentlyContinue
+        Remove-Item Env:GF_E2E_HOST_DIR, Env:GF_E2E_HOST_OWNER_PID, Env:GF_E2E_HOST_SCENARIO, Env:GF_E2E_HOST_MODE -ErrorAction SilentlyContinue
     }
     Exit-GfSlot $script:ClientPoolSlot
 }
