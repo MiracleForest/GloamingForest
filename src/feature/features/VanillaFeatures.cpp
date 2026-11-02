@@ -31,9 +31,8 @@
 #include "core/jrand/JavaOrder.h"
 #include "core/jrand/Mth.h"
 #include "core/noise/PerlinSimplex.h"
+#include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/features/Internal.h"
-#include "feature/landmark/Landmark.h"
-#include "feature/spawn/Internal.h"
 #include "feature/worldgen/Internal.h"
 
 #pragma clang fp contract(off)
@@ -523,52 +522,37 @@ int findOnGroundYPosition(PlacementContext const& c, int x, int y, int z, int co
     return std::numeric_limits<int>::max();
 }
 
-/// A structure HolderSet of the no_structure modifier contains `key`.
-bool structureAllowed(Json const& set, std::string const& key) {
-    if (set.is_string()) return normalizeId(set.get<std::string>()) == key;
-    if (set.is_array())
-        for (auto const& e : set)
-            if (e.is_string() && normalizeId(e.get<std::string>()) == key) return true;
-    return false;
-}
-
+/// AvoidLandmarkModifier#getPositions: F6 decides from the starts referencing the position's chunk
+/// (DecorationClearance, the pieces with UtilityPiece#allowFeatures, the start box's center).
+/// structureTypeBlocksFeaturePlacement skips a start that is not StructureStart#isValid (no pieces:
+/// a site F6 reserved for a landmark without a generator yet); F6's featureBlocked keeps the
+/// clearance square of such a site, so a structure whose starts in this chunk all lack pieces goes
+/// to F6 as allowed (when one structure has a start with and one without pieces here, which F6's
+/// revival of reserved sites leaves no room for, F6's answer stands for both).
 Positions noStructure(PlacementContext const& c, BlockPos const& pos) {
-    bool occSurface     = c.config.value("occupies_surface", false);
-    bool occUnderground = c.config.value("occupies_underground", false);
-    bool occVegetation  = c.config.value("occupies_vegetation", false);
-    int  additional     = c.config.value("additional_clearance", 0);
-    auto const& allowed = fieldArr(c.config, "structures_allowed");
-    for (auto const& start : landmark::startsIntersecting(c.region.dimension(), {pos.x >> 4, pos.z >> 4})) {
-        if (structureAllowed(allowed, start.key)) continue;
-        auto const* d = landmark::descriptor(start.key);
-        if (!d) continue;                       // not a DecorationClearance structure
-        if (!spawn::detail::startValid(start)) continue; // StructureStart#isValid
-        bool surfaceClear     = !occSurface || d->surfaceDecorationsAllowed;
-        bool undergroundClear = !occUnderground || d->undergroundDecorationsAllowed;
-        bool vegetationClear  = !occVegetation || d->extra.value("vegetation", true);
-        if (surfaceClear && undergroundClear && vegetationClear) continue;
-        auto const& b = start.box;
-        int cx = b.minX + (b.maxX - b.minX + 1) / 2, cz = b.minZ + (b.maxZ - b.minZ + 1) / 2;
-        float radius = d->extra.value("chunk_clearance_radius", static_cast<float>(d->clearanceChunks));
-        if (radius <= 0) {
-            // TF's UtilityPiece with allowFeatures (the start's data "allow_features": one bool per
-            // entry of pieceBoxes) does not block features
-            Json const* allowFeatures = nullptr;
-            if (start.data.is_object())
-                if (auto it = start.data.find("allow_features"); it != start.data.end() && it->is_array()) allowFeatures = &*it;
-            auto pieces = start.pieceBoxes.empty() ? std::vector<core::BlockBox>{start.box} : start.pieceBoxes;
-            for (std::size_t i = 0; i < pieces.size(); ++i) {
-                auto const& pb = pieces[i];
-                if (allowFeatures && i < allowFeatures->size() && (*allowFeatures)[i].is_boolean() && (*allowFeatures)[i].get<bool>()) continue;
-                int qx = std::clamp(pos.x, pb.minX, pb.maxX), qy = std::clamp(pos.y, pb.minY, pb.maxY), qz = std::clamp(pos.z, pb.minZ, pb.maxZ);
-                int dist = std::max({std::abs(qx - pos.x), std::abs(qy - pos.y), std::abs(qz - pos.z)});
-                if (dist <= additional) return {};
-            }
-            continue;
-        }
-        float size = radius * 16.0F + static_cast<float>(additional);
-        if (static_cast<float>(std::abs(pos.x - cx)) < size && static_cast<float>(std::abs(pos.z - cz)) < size) return {};
+    int  dimension = c.region.dimension();
+    auto starts    = landmark::startsIntersecting(dimension, {pos.x >> 4, pos.z >> 4});
+    if (starts.empty()) return {pos}; // ChunkAccess#getAllReferences: none
+    auto allowed   = structureIds(field(c.config, "structures_allowed"));
+    auto isAllowed = [&](std::string const& key) { return std::find(allowed->begin(), allowed->end(), key) != allowed->end(); };
+    std::vector<std::string> withoutPieces;
+    bool                     candidate = false; // a valid start of a structure the feature may not overlap
+    for (auto const& start : starts) {
+        if (isAllowed(start.key)) continue;
+        bool valid = std::any_of(starts.begin(), starts.end(), [&](landmark::Start const& s) { return s.key == start.key && !s.pieceBoxes.empty(); });
+        if (valid) candidate = true;
+        else if (std::find(withoutPieces.begin(), withoutPieces.end(), start.key) == withoutPieces.end()) withoutPieces.push_back(start.key);
     }
+    if (!candidate) return {pos};
+    landmark::ext::Occupancy occupancy;
+    occupancy.surface             = c.config.value("occupies_surface", false);
+    occupancy.underground         = c.config.value("occupies_underground", false);
+    occupancy.vegetation          = c.config.value("occupies_vegetation", false);
+    occupancy.additionalClearance = c.config.value("additional_clearance", 0);
+    occupancy.structuresAllowed.reserve(allowed->size() + withoutPieces.size());
+    occupancy.structuresAllowed.assign(allowed->begin(), allowed->end());
+    occupancy.structuresAllowed.insert(occupancy.structuresAllowed.end(), withoutPieces.begin(), withoutPieces.end());
+    if (landmark::ext::featureBlocked(dimension, pos.x, pos.y, pos.z, occupancy)) return {};
     return {pos};
 }
 

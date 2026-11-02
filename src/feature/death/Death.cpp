@@ -174,12 +174,6 @@ bool dropStaleRecord(Player& player) {
     return true;
 }
 
-/// Selftests: an extra kept_on_death membership (F9's gf::tags may not have the tag data).
-std::function<bool(std::string const& itemId)>& testKeptOnDeath() {
-    static std::function<bool(std::string const& itemId)> fn;
-    return fn;
-}
-
 std::vector<SlotRef> allSlots(Player& p) {
     std::vector<SlotRef> out;
     int                  n = std::min(p.getInventory().getContainerSize(), 36);
@@ -456,8 +450,6 @@ void handleDeath(Actor& self, ActorDamageSource const& source, std::function<voi
 
 void forgetDeath(Player const& player) { handledDeaths().erase(const_cast<Player&>(player).getOrCreateUniqueID().rawID); }
 
-void setTestKeptOnDeath(std::function<bool(std::string const& itemId)> fn) { testKeptOnDeath() = std::move(fn); }
-
 } // namespace gf::death
 
 // ---- hooks (the outermost one runs the pipeline) --------------------------------------------------
@@ -511,13 +503,10 @@ public:
         if (!registered) {
             registered = true;
             game::db::onWorldClosed([] { handledDeaths().clear(); }); // ticks restart per world
-            // TF: items in twilightforest:kept_on_death are always kept (lowest keeper)
+            // TF: items in twilightforest:kept_on_death are always kept (lowest keeper; F9's tag data)
             registerKeeper(-100000, [](Player&, ItemStack& stack) {
                 auto id = game::items::idOf(stack);
-                if (id.empty()) return false;
-                if (tags::has(tags::Registry::Item, "twilightforest:kept_on_death", id)) return true;
-                auto const& test = testKeptOnDeath();
-                return test && test(id);
+                return !id.empty() && tags::has(tags::Registry::Item, "twilightforest:kept_on_death", id);
             });
         }
     }
