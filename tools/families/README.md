@@ -84,7 +84,7 @@ Per family:
 | `log`, `wood`, `pillar` | `stripped` (default: TF's STRIPPABLES, RegistrationEvents) |
 | `horizontal` | `placement`: `opposite` (default; TFHorizontalBlock), `look` (BanisterBlock), `none` (ClimbableHollowLogBlock) |
 | `directional` | `placement`: `nearest_opposite` (default; DirectionalBlock), `nearest` (EtchedNagastoneBlock), `nearest_y_flipped` (StrongholdShieldBlock), `none` |
-| `leaves` | `tint` (Bedrock tint method; default: TF's ColorHandler where Bedrock has one), `log` (counts as a log for leaf distance, on any family) |
+| `leaves` | `tint` (Bedrock tint method by biome; default: TF's ColorHandler where Bedrock has one), `tint_color` (`#rrggbb`: Java's colour without a world, the texture pre-tinted in `terrain_texture.json`; default: TF's time, transformation, mining, sorting, rainbow oak, beanstalk and thorn leaves), `log` (counts as a log for leaf distance, on any family). A tinted leaf takes Bedrock's grey image of a `_carried` vanilla texture |
 | `sapling` | `grower`: Java's TreeGrower `{feature, secondary_feature, secondary_chance, mega_feature, secondary_mega_feature, flowers_feature, secondary_flowers_feature}` or TF's StructureTreeGrower `{structure}` (default: TFTreeGrowers by sapling id); `feature`: a grower with one tree. A unit's own grower: `src/feature/ext/families/Growers.h` |
 | `potted` | `plant` (default: `potted_<x>` -> `<x>`, TF's thorn pots from RegistrationEvents), `special` (TF's SpecialFlowerPotBlock keeps the plant) |
 | `sign`, `hanging_sign` | `wall` (default: `<x>_sign` -> `<x>_wall_sign`, `<x>_hanging_sign` -> `<x>_wall_hanging_sign`); `gui_texture`: what the native editor draws the sign with (default: `textures/twilightforest/entity/signs/<wood>`, hanging signs `textures/twilightforest/gui/hanging_signs/<wood>`) |
@@ -93,7 +93,7 @@ Per family:
 | `connectable_pillar` | `width` (default 16; thorns 10) |
 | `connected_texture` | `connects_to` (block ids, default: itself), `faces` (default all), `render_on_disabled_faces` (default true) |
 | `cross` | `shape` (selection box, block pixels) |
-| `snowloggable` | `snow_texture`, `shape` (the plant's outline for the hit test) |
+| `snowloggable` | `snow_texture`, `shape` (the plant's outline for the hit test). A skeleton that has Java's shapes per state and `layers` (F1's TF bushes) keeps them; otherwise the kit adds the snow's boxes per layer count |
 | `lightable` | `light_levels` `{normal, dim, ominous}` |
 
 ## States
@@ -102,9 +102,29 @@ As `docs/spec/blockstates.md` (F1, rule R1): every Java property `p` is `twiligh
 Java's values (booleans `[false, true]`, integers `0..n`, enums by name); no placement traits: the
 runtime sets them on placement as Java's `getStateForPlacement` does. The states the kit adds that
 no Java block declares are in its own namespace, so a TF block keeps exactly its frozen
-`twilightforest:*` states (F1's `import.blocks` checks that): `gloamingforest:open_count` (chests:
-the players inside, the lid, the trapped chest's signal), `gloamingforest:<direction>` and
-`gloamingforest:corner_<a>_<b>` (connected textures). Java's own SnowLoggable / LightableBlock
-properties `twilightforest:layers` / `twilightforest:lighting` are added to snowloggable / lightable
-blocks that lack them. A lightable block keeps the light per state of F1's skeleton (TF's
-`lightLevel`) unless the data gives `light_levels`.
+`twilightforest:*` states (F1's `import.blocks` checks that): `gloamingforest:lid` (chests: the lid's
+angle in 22.5 degree steps, 0..4, moved by the runtime as Java's ChestLidController),
+`gloamingforest:open_count` (trapped chests: the players inside, their signal),
+`gloamingforest:<direction>` and `gloamingforest:corner_<a>_<b>` (connected textures). Java's own
+SnowLoggable / LightableBlock properties `twilightforest:layers` / `twilightforest:lighting` are added
+to snowloggable / lightable blocks that lack them. A lightable block keeps the light per state of F1's
+skeleton (TF's `lightLevel`) unless the data gives `light_levels`.
+
+## Chests are containers
+
+Chests and trapped chests keep their slots, screens, sounds, opening stat and comparator output in
+the inventory contract (F10, spike S3: `src/feature/inventory`). The generator declares every block
+of the `chest` / `trapped_chest` families as a container in `data/gf/containers/families.json`
+(fixtures: `families_test.json`), read by F10 at mod load: 27 slots, `pairs` (a left / right pair
+opens as one 54-slot chest, the right half first), `chest` (no screen under a redstone conductor or a
+sitting cat), the opening stat (`minecraft:open_chest`, trapped chests
+`minecraft:trigger_trapped_chest`) and the comparator output. A unit that declares the block itself in
+`assets/data/containers/<u>.json` wins (the generator leaves it out). The runtime
+(`src/feature/families/Chests.cpp`) keeps what the chest block does: the facing and type on
+placement and when a neighbour changes, the lid from F10's openers
+(`feature/ext/combat/InventoryViewers.h`) and the trapped chest's signal.
+
+The chest family blocks carry `minecraft:block_entity` (format_version 1.26.50, spike S3), so F10's
+native backend keeps their slots in the game container it gives their data-driven block actor,
+saved with the block; the selftest `families.double_chest` checks that the slots stay while the
+chest's pair and lid states change.

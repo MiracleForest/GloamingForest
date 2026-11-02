@@ -8,7 +8,8 @@
 #                                           logs, leaves, sapling, potted plant
 #   out/families/families-3-containers.png  signs (rotations 0 / 2 / 6, wall, hanging, wall hanging
 #                                           between two stones), chests (single, a double with the
-#                                           latches meeting in the middle, an open double), trapped chest
+#                                           latches meeting in the middle, an open double), trapped chest,
+#                                           a chest with its lid half open (lid 2: 45 degrees)
 #   out/families/families-4-variants.png    horizontal, directional, binary rotated, wall and
 #                                           connectable pillars, connected textures, lightable,
 #                                           climbable, snowloggable (3 layers)
@@ -19,6 +20,19 @@
 #   out/families/families-8-snowloggable.png   the snowloggable close up (its 3 snow layers)
 #   out/families/families-9-sign-editor.png    the native sign editor (client mod: Java's
 #                                           SignEditScreen, the sign drawn with the line on it)
+#   out/families/families-10-tf-woodwork.png   TF's own blocks through the kit: canopy door, sign,
+#                                           wall sign, hanging and wall hanging sign, chest, trapped
+#                                           chest double, trapdoor, button (TF's textures)
+#   out/families/families-11-tf-plants.png  a grown blackberry bush with 2 snow layers, a young
+#                                           blueberry bush with 1, TF's leaves (time, mining, sorting,
+#                                           transformation, rainbow oak pre-tinted with Java's colour
+#                                           without a world; twilight oak and canopy by the biome),
+#                                           castle doors (connected textures), a time log
+#   out/families/families-12-tf-close.png   TF's signs and chests close up
+#   out/families/families-13-tf-bush.png    the snowy berry bush close up (client mod: the grass
+#                                           below drawn snowy)
+#   out/families/families-14-sign-form.png  remote-vanilla: the sign editor form (its title is the
+#                                           game's own sign.edit text)
 # Local mode also runs the families selftests on the integrated server; remote modes build through
 # the host console (the vanilla client sees the downloaded resource pack).
 
@@ -100,9 +114,10 @@ $rows = @(
             @(12, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`"]"),
             @(14, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`"]"),
             @(15, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`"]"),
-            @(17, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`",`"gloamingforest:open_count`"=1]"),
-            @(18, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`",`"gloamingforest:open_count`"=1]"),
-            @(20, 0, 0, 'gf_test:family_trapped_chest', "[`"$f`"=`"north`"]"))
+            @(17, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`",`"gloamingforest:lid`"=4]"),
+            @(18, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`",`"gloamingforest:lid`"=4]"),
+            @(20, 0, 0, 'gf_test:family_trapped_chest', "[`"$f`"=`"north`"]"),
+            @(22, 0, 0, 'gf_test:family_chest', "[`"$f`"=`"north`",`"gloamingforest:lid`"=2]"))
     },
     @{ name = 'families-4-variants'; x = 90; blocks = @(
             @(0, 0, 0, 'gf_test:family_horizontal', "[`"$f`"=`"north`"]"),
@@ -122,6 +137,45 @@ $rows = @(
             @(15, 0, 0, 'gf_test:family_lightable', '["twilightforest:lighting"="normal"]'),
             @(17, 0, 0, 'gf_test:family_climbable', ''),
             @(20, 0, 0, 'gf_test:family_snowloggable', '["twilightforest:layers"=3]'))
+    },
+    # TF's own blocks through the kit (F1's skeleton and textures): canopy door, sign, wall sign,
+    # hanging sign, wall hanging sign, chest, trapped chest double
+    @{ name = 'families-10-tf-woodwork'; x = 120; blocks = @(
+            @(0, 0, 0, 'twilightforest:canopy_door', "[`"$f`"=`"north`",`"twilightforest:half`"=`"lower`"]"),
+            @(0, 1, 0, 'twilightforest:canopy_door', "[`"$f`"=`"north`",`"twilightforest:half`"=`"upper`"]"),
+            @(2, 0, 0, 'twilightforest:canopy_sign', '["twilightforest:rotation"=0]'),
+            @(4, 0, 1, 'minecraft:stone', ''),
+            @(4, 0, 0, 'twilightforest:canopy_wall_sign', "[`"$f`"=`"north`"]"),
+            @(6, 2, 0, 'minecraft:stone', ''),
+            @(6, 1, 0, 'twilightforest:canopy_hanging_sign', '["twilightforest:rotation"=8]'),
+            @(8, 1, 0, 'minecraft:stone', ''),
+            @(10, 1, 0, 'minecraft:stone', ''),
+            @(9, 1, 0, 'twilightforest:canopy_wall_hanging_sign', "[`"$f`"=`"north`"]"),
+            @(12, 0, 0, 'twilightforest:canopy_chest', "[`"$f`"=`"north`"]"),
+            @(14, 0, 0, 'twilightforest:canopy_trapped_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"left`"]"),
+            @(15, 0, 0, 'twilightforest:canopy_trapped_chest', "[`"$f`"=`"north`",`"twilightforest:type`"=`"right`"]"),
+            @(17, 0, 0, 'twilightforest:canopy_trapdoor', "[`"$f`"=`"north`",`"twilightforest:half`"=`"bottom`"]"),
+            @(19, 0, 0, 'twilightforest:canopy_planks', ''),
+            @(19, 1, 0, 'twilightforest:canopy_button', "[`"twilightforest:face`"=`"floor`",`"$f`"=`"north`"]"))
+    },
+    # a snowy grown berry bush (TF's shape and snow), TF's leaves (the time, mining and rainbow oak
+    # leaves pre-tinted with Java's colour without a world, twilight oak by the biome), castle
+    # doors (six-face connected textures)
+    @{ name = 'families-11-tf-plants'; x = 150; blocks = @(
+            @(0, 0, 0, 'twilightforest:blackberry_bush', '["twilightforest:age"=3,"twilightforest:layers"=2]'),
+            @(2, 0, 0, 'twilightforest:blueberry_bush', '["twilightforest:age"=0,"twilightforest:layers"=1]'),
+            @(4, 0, 0, 'twilightforest:time_leaves', '["twilightforest:persistent"=true]'),
+            @(5, 0, 0, 'twilightforest:mining_leaves', '["twilightforest:persistent"=true]'),
+            @(6, 0, 0, 'twilightforest:sorting_leaves', '["twilightforest:persistent"=true]'),
+            @(7, 0, 0, 'twilightforest:transformation_leaves', '["twilightforest:persistent"=true]'),
+            @(8, 0, 0, 'twilightforest:rainbow_oak_leaves', '["twilightforest:persistent"=true]'),
+            @(9, 0, 0, 'twilightforest:twilight_oak_leaves', '["twilightforest:persistent"=true]'),
+            @(10, 0, 0, 'twilightforest:canopy_leaves', '["twilightforest:persistent"=true]'),
+            @(12, 0, 0, 'twilightforest:blue_castle_door', ''),
+            @(12, 1, 0, 'twilightforest:blue_castle_door', ''),
+            @(13, 0, 0, 'twilightforest:blue_castle_door', ''),
+            @(15, 0, 0, 'twilightforest:time_log', '["twilightforest:axis"="y"]'),
+            @(15, 1, 0, 'twilightforest:time_leaves', '["twilightforest:persistent"=true]'))
     }
 )
 
@@ -150,6 +204,14 @@ Save-Screenshot 'families-5-close' | Out-Null
 Invoke-Teleport "/tp @s 110.5 $($y + 1) $($z - 2.5) 0 40"
 Start-Sleep -Seconds 3
 Save-Screenshot 'families-8-snowloggable' | Out-Null
+# TF's chests and signs close up (their TF textures), and the snowy berry bush on the grass (the
+# client mod draws the grass below snowy, TFBushBlock.updateSnowBeneath)
+Invoke-Teleport "/tp @s 133 $($y + 1) $($z - 4) 0 15"
+Start-Sleep -Seconds 3
+Save-Screenshot 'families-12-tf-close' | Out-Null
+Invoke-Teleport "/tp @s 150.5 $($y + 1) $($z - 2.5) 0 35"
+Start-Sleep -Seconds 3
+Save-Screenshot 'families-13-tf-bush' | Out-Null
 
 # a sign written in game: the client mod's native editor (an empty-hand click on the sign), the
 # text on the sign's display entity; vanilla clients get the editor as a form
@@ -177,4 +239,14 @@ if ($script:Mode -ne 'remote-vanilla') {
     if ($hudHidden) { Press-Key F1; Start-Sleep -Milliseconds 800 }
     Save-Screenshot 'families-7-sign-text-hud' | Out-Null
     if ($hudHidden) { Press-Key F1; Start-Sleep -Milliseconds 800 }
+}
+
+# a vanilla client edits a sign through a form; its title is the game's own sign.edit text
+if ($script:Mode -eq 'remote-vanilla') {
+    Invoke-Teleport "/tp @s 60.5 $($y) $($z + 2.5) 180 25"
+    Start-Sleep -Seconds 2
+    Click 0.5 0.5 -Relative -Right
+    Start-Sleep -Seconds 4
+    Save-Screenshot 'families-14-sign-form' | Out-Null
+    Close-Screen
 }

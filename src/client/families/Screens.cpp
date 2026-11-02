@@ -3,9 +3,9 @@
 // - "families.sign": Java's SignEditScreen / HangingSignEditScreen: the title, the sign drawn
 //   large with its four lines on it (typing stops at Java's line width: 90 px, hanging signs 60 px)
 //   and Done; the lines go to the server as they change and are kept when the screen closes
-//   (SignEditScreen.removed);
-// - "families.chest": Java's ChestMenu: 3 rows (a double chest: 6) over the player's inventory,
-//   the title top left; clicks go to the server, which owns the items and the cursor stack.
+//   (SignEditScreen.removed).
+// The chests of the families are the inventory contract's containers: their screen is F10's
+// "inventory.chest" (src/client/inventory).
 
 #ifdef GF_CLIENT
 
@@ -20,6 +20,7 @@
 #include "client/Client.h"
 #include "client/families/SignBoard.h"
 #include "client/screen/base/Screen.h"
+#include "feature/families/SignFont.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
@@ -50,31 +51,12 @@ public:
     }
 };
 
-/// Java's default font advances (the server cuts lines the same way).
-int charWidth(char32_t c) {
-    switch (c) {
-    case '!': case '\'': case ',': case '.': case ':': case ';': case '|': case 'i': return 2;
-    case '`': case 'l': return 3;
-    case ' ': case 'I': case '[': case ']': case 't': return 4;
-    case '"': case '(': case ')': case '*': case '<': case '>': case 'f': case 'k': case '{': case '}': return 5;
-    case '@': case '~': return 7;
-    default: return c < 0x80 ? 6 : 9;
-    }
-}
+// Java's default font advances: the server cuts the lines with the same table (SignFont.h)
+using feature::families::signfont::charWidth;
+using feature::families::signfont::lineWidth;
 
-int lineWidth(std::string const& s) {
-    int w = 0;
-    for (std::size_t i = 0; i < s.size();) {
-        unsigned char c   = static_cast<unsigned char>(s[i]);
-        std::size_t   len = c < 0x80 ? 1 : (c >> 5) == 6 ? 2 : (c >> 4) == 14 ? 3 : 4;
-        w += charWidth(c < 0x80 ? c : 0x100);
-        i += len;
-    }
-    return w;
-}
-
-/// A text of the mod's translations, else the game's own (Bedrock's texts know Java's gui.done),
-/// else the English fallback.
+/// A text of the mod's translations, else the game's own (Bedrock's texts know Java's gui.done and
+/// sign.edit), else the English fallback.
 std::string uiText(char const* key, char const* fallback) {
     auto mod = ctr(key, "\x01");
     if (mod != "\x01") return mod;
@@ -84,6 +66,13 @@ std::string uiText(char const* key, char const* fallback) {
         if (!text.empty() && text != key) return text;
     } catch (...) {}
     return fallback;
+}
+
+/// The editor's title: Java's key (title_key) in the player's language, else the server's text.
+std::string titleOf(Json const& data) {
+    auto fallback = data.value("title", std::string{"Edit Sign Message"});
+    auto key      = data.value("title_key", std::string{});
+    return key.empty() ? fallback : uiText(key.c_str(), fallback.c_str());
 }
 
 /// Java DyeColor.getTextColor.
@@ -117,7 +106,7 @@ public:
     : Screen("", 0, 0),
       mSend(std::move(send)),
       mData(data),
-      mTitle(data.value("title", std::string{"Edit Sign Message"})),
+      mTitle(titleOf(data)),
       mTexture(data.value("texture", std::string{})),
       mMaxWidth(data.value("max_width", 90)),
       mHanging(data.value("hanging", false)),
@@ -262,56 +251,10 @@ private:
     std::vector<std::string>        mShadow; ///< the lines as of the last frame (Esc keeps them)
 };
 
-constexpr float kSlot = 18;
-
-class ChestScreen final : public screen::Screen {
-public:
-    ChestScreen(Json const& data, screen::SendFn send)
-    : Screen(data.value("title", std::string{"Chest"}), 176, 17 + kSlot * static_cast<float>(rowsOf(data)) + 5),
-      mRows(rowsOf(data)),
-      mSend(std::move(send)),
-      mData(data) {
-        showInventory = true;
-    }
-
-    void init() override {
-        add<screen::Label>(Rect{8, 6, 160, 10}, title, color::kTextDark);
-        for (int i = 0; i < mRows * 9; ++i) {
-            float x = 8 + static_cast<float>(i % 9) * kSlot, y = 18 + static_cast<float>(i / 9) * kSlot;
-            auto& s = add<screen::Slot>(Rect{x, y, kSlot, kSlot}, [this, i](Button b, bool shift) {
-                mSend({{"op", "click"}, {"slot", i}, {"button", b == Button::Right ? "right" : "left"}, {"shift", shift}});
-            });
-            mSlots.push_back(&s);
-        }
-        onData(mData);
-        log().info("client screen: families.chest {}", title);
-    }
-
-    void onData(Json const& data) override {
-        mData      = data;
-        auto items = data.value("items", Json::array());
-        for (std::size_t i = 0; i < mSlots.size(); ++i) mSlots[i]->stack = i < items.size() ? screen::iconOf(items[i]) : nullptr;
-        setCursorItem(data.value("carried", Json{}));
-    }
-
-    void clickInventory(int slot, ItemStack const&, Button b, bool shift) override {
-        mSend({{"op", "inv_click"}, {"slot", slot}, {"button", b == Button::Right ? "right" : "left"}, {"shift", shift}});
-    }
-
-private:
-    static int rowsOf(Json const& data) { return std::clamp(data.value("rows", 3), 1, 6); }
-
-    int                        mRows;
-    screen::SendFn             mSend;
-    Json                       mData;
-    std::vector<screen::Slot*> mSlots;
-};
-
 class FamilyScreensModule {
 public:
     void install() {
         screen::registerServerScreen("families.sign", [](Json const& data, screen::SendFn send) { return std::make_unique<SignEditScreen>(data, std::move(send)); });
-        screen::registerServerScreen("families.chest", [](Json const& data, screen::SendFn send) { return std::make_unique<ChestScreen>(data, std::move(send)); });
     }
     void uninstall() {}
 };

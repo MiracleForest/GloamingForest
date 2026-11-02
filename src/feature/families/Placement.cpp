@@ -168,11 +168,13 @@ void placeHorizontal(Placing const& p, Entry const& e) {
 
 void placeDirectional(Placing const& p, Entry const& e) {
     // EtchedNagastoneBlock: the nearest looking direction; StrongholdShieldBlock: the same with
-    // up / down turned over; Java DirectionalBlock: the opposite of the nearest looking direction
+    // up / down turned over; Java DirectionalBlock (DispenserBlock, ...): the opposite of the
+    // nearest looking direction. BlockPlaceContext.getNearestLookingDirection is the player's look
+    // alone (Direction.orderedByNearest(player)[0]), not the clicked face's opposite first.
     auto cls  = e.str("class");
     auto mode = e.str("placement", cls == "EtchedNagastoneBlock" ? "nearest" : (cls == "StrongholdShieldBlock" ? "nearest_y_flipped" : "nearest_opposite"));
     if (mode == "none") return;
-    int d = placeLooking(p)[0];
+    int d = nearestLooking(p.c.player)[0];
     if (mode == "nearest_opposite") d = opposite(d);
     else if (mode == "nearest_y_flipped" && !horizontal(d)) d = opposite(d);
     setStates(p.region, p.pos, {{state::Facing, dirName(d)}});

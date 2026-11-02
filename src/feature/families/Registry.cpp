@@ -18,13 +18,15 @@
 // units leave out: the wall variant of a sign, the plant of a potted plant, the strippables
 // (RegistrationEvents STRIPPABLES / FlowerPotBlock.addPlant) and the tree growers (TFTreeGrowers).
 //
-// The registry is an immutable snapshot published atomically: the server thread (block events,
-// world ready) and the client thread (collision of the local player, client join) read it at the
-// same time; a refresh builds a new snapshot (the block types are resolved eagerly) and old
-// snapshots stay alive, so the Entry pointers handed out never dangle.
+// The server thread (block events, world ready) and the client's threads (collision of the local
+// player, chunk tessellation, client join) read the registry at the same time. The entries are
+// read once at mod load and stay (the Entry pointers handed out never dangle); only the table of
+// the game's block types changes per world, published atomically, and an old table is freed once
+// no thread reads it (each thread keeps the table it read until a newer one is published).
 
 #include <algorithm>
 #include <atomic>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -157,56 +159,89 @@ std::string swapSuffix(std::string const& id, std::string_view from, std::string
     return id.substr(0, id.size() - from.size()) + std::string(to);
 }
 
-// ---- the snapshot ------------------------------------------------------------------------------------
+// ---- the entries and the block type table ------------------------------------------------------------
 
-struct Snapshot {
-    std::map<std::string, Entry, std::less<>>          byId;
+/// The family entries by id: read once at mod load (a second load only if the first found none),
+/// so the few sets ever loaded stay alive and the Entry pointers handed out never dangle.
+struct Entries {
+    std::map<std::string, Entry, std::less<>> byId;
+};
+
+std::atomic<Entries const*>& currentEntries() {
+    static std::atomic<Entries const*> c{nullptr};
+    return c;
+}
+std::mutex& entriesMutex() {
+    static std::mutex m;
+    return m;
+}
+std::vector<std::unique_ptr<Entries>>& loadedEntries() {
+    static std::vector<std::unique_ptr<Entries>> k;
+    return k;
+}
+
+Entries const& entriesNow() {
+    static Entries const empty;
+    auto const* s = currentEntries().load(std::memory_order_acquire);
+    return s ? *s : empty;
+}
+
+/// The game's block types of the entries, per world (the client builds its block types again for
+/// every world it joins). Readers on any thread (the collision hook, chunk tessellation) keep the
+/// table they read in a per-thread cache, refreshed when a new one is published: an old table goes
+/// once every thread that read it has moved on, so a client joining many worlds holds at most one
+/// stale table per thread.
+struct Types {
     std::unordered_map<BlockType const*, Entry const*> byType;
     std::vector<BlockType const*>                      tall; ///< sorted (tallCollisionType)
     BlockType const*                                   tallMin = nullptr;
     BlockType const*                                   tallMax = nullptr;
 };
 
-std::atomic<Snapshot const*>& current() {
-    static std::atomic<Snapshot const*> c{nullptr};
-    return c;
+struct TypesSlot {
+    std::mutex                   mutex;
+    std::shared_ptr<Types const> current;
+    std::atomic<std::uint64_t>   generation{0};
+};
+TypesSlot& typesSlot() {
+    static TypesSlot s;
+    return s;
 }
 
-/// Every snapshot ever published (they stay alive: readers may hold their entries).
-std::mutex& keepMutex() {
-    static std::mutex m;
-    return m;
-}
-std::vector<std::unique_ptr<Snapshot>>& kept() {
-    static std::vector<std::unique_ptr<Snapshot>> k;
-    return k;
-}
-
-Snapshot const& snapshot() {
-    static Snapshot const empty;
-    auto const* s = current().load(std::memory_order_acquire);
-    return s ? *s : empty;
+Types const& types() {
+    static Types const                       empty;
+    thread_local std::shared_ptr<Types const> cached;
+    thread_local std::uint64_t                cachedGeneration = ~std::uint64_t{0};
+    auto&                                     slot             = typesSlot();
+    auto                                      generation       = slot.generation.load(std::memory_order_acquire);
+    if (generation != cachedGeneration) {
+        std::lock_guard lock(slot.mutex);
+        cached           = slot.current;
+        cachedGeneration = slot.generation.load(std::memory_order_relaxed);
+    }
+    return cached ? *cached : empty;
 }
 
-void publish(std::unique_ptr<Snapshot> s) {
-    std::lock_guard lock(keepMutex());
-    current().store(s.get(), std::memory_order_release);
-    kept().push_back(std::move(s));
+void publishTypes(std::shared_ptr<Types const> t) {
+    auto&           slot = typesSlot();
+    std::lock_guard lock(slot.mutex);
+    slot.current = std::move(t);
+    slot.generation.fetch_add(1, std::memory_order_release);
 }
 
-/// Looks the block types up (the game's block registry exists once a world loads).
-void resolveTypes(Snapshot& s) {
-    s.byType.clear();
-    s.tall.clear();
-    for (auto const& [id, entry] : s.byId) {
+/// Looks the block types of `entries` up (the game's block registry exists once a world loads).
+std::shared_ptr<Types const> resolveTypes(Entries const& entries) {
+    auto t = std::make_shared<Types>();
+    for (auto const& [id, entry] : entries.byId) {
         auto type = BlockType::tryGetFromRegistry(HashedString(id));
         if (!type) continue;
-        s.byType[type.as_ptr()] = &entry;
-        if (entry.family == Family::Fence || entry.family == Family::Wall || entry.family == Family::FenceGate) s.tall.push_back(type.as_ptr());
+        t->byType[type.as_ptr()] = &entry;
+        if (entry.family == Family::Fence || entry.family == Family::Wall || entry.family == Family::FenceGate) t->tall.push_back(type.as_ptr());
     }
-    std::sort(s.tall.begin(), s.tall.end());
-    s.tallMin = s.tall.empty() ? nullptr : s.tall.front();
-    s.tallMax = s.tall.empty() ? nullptr : s.tall.back();
+    std::sort(t->tall.begin(), t->tall.end());
+    t->tallMin = t->tall.empty() ? nullptr : t->tall.front();
+    t->tallMax = t->tall.empty() ? nullptr : t->tall.back();
+    return t;
 }
 
 void readFile(fs::path const& file, std::map<std::string, Entry, std::less<>>& out) {
@@ -304,16 +339,6 @@ void fillDefaults(std::map<std::string, Entry, std::less<>>& all) {
     }
 }
 
-/// A snapshot of `byId`; `resolve`: with the game's block types looked up (only once the game's
-/// block registry exists: the client loads mods before it does, and reading it then crashes the
-/// load).
-std::unique_ptr<Snapshot> build(std::map<std::string, Entry, std::less<>> byId, bool resolve) {
-    auto s  = std::make_unique<Snapshot>();
-    s->byId = std::move(byId);
-    if (resolve) resolveTypes(*s);
-    return s;
-}
-
 } // namespace
 
 std::optional<Family> familyOf(std::string_view name) {
@@ -376,30 +401,37 @@ void loadRegistry() {
     std::sort(files.begin(), files.end());
     for (auto const& f : files) readFile(f, loaded);
     fillDefaults(loaded);
-    // the block types are looked up when a world is ready (detail::refreshTypes)
-    auto s     = build(std::move(loaded), false);
-    auto count = s->byId.size();
-    publish(std::move(s));
-    log().info("families: {} family blocks loaded", count);
+    // the block types are looked up when a world is ready (detail::refreshTypes: the client loads
+    // mods before the game's block registry exists, and reading it then crashes the load)
+    auto e   = std::make_unique<Entries>();
+    e->byId  = std::move(loaded);
+    auto n   = e->byId.size();
+    {
+        std::lock_guard lock(entriesMutex());
+        currentEntries().store(e.get(), std::memory_order_release);
+        loadedEntries().push_back(std::move(e));
+    }
+    publishTypes(nullptr); // types of an earlier set would point at its entries
+    log().info("families: {} family blocks loaded", n);
 }
 
 Entry const* entryOf(std::string_view id) {
-    auto const& s  = snapshot();
+    auto const& s  = entriesNow();
     auto        it = s.byId.find(id);
     return it == s.byId.end() ? nullptr : &it->second;
 }
 
 Entry const* entryOf(BlockType const& type) {
-    auto const& s = snapshot();
-    if (s.byType.empty()) return nullptr;
-    auto it = s.byType.find(&type);
-    return it == s.byType.end() ? nullptr : it->second;
+    auto const& t = types();
+    if (t.byType.empty()) return nullptr;
+    auto it = t.byType.find(&type);
+    return it == t.byType.end() ? nullptr : it->second;
 }
 
 Entry const* entryOf(Block const& block) { return entryOf(block.getBlockType()); }
 
 bool tallCollisionType(BlockType const& type) {
-    auto const& s = snapshot();
+    auto const& s = types();
     auto const* t = &type;
     if (!s.tallMin || t < s.tallMin || t > s.tallMax) return false;
     return std::binary_search(s.tall.begin(), s.tall.end(), t);
@@ -407,26 +439,25 @@ bool tallCollisionType(BlockType const& type) {
 
 namespace detail {
 /// The game's block types changed (a new world; the client rebuilds them per world joined): a
-/// new snapshot with the types looked up again. Any thread.
+/// new table with the types looked up again (the old one goes when no thread reads it). Any thread.
 void refreshTypes() {
-    auto const& s     = snapshot();
-    auto        fresh = build(s.byId, true);
+    auto const& e     = entriesNow();
+    auto        fresh = resolveTypes(e);
     auto        found = fresh->byType.size();
-    auto        count = fresh->byId.size();
-    publish(std::move(fresh));
-    log().info("families: {} family blocks ({} registered in the game)", count, found);
+    publishTypes(std::move(fresh));
+    log().info("families: {} family blocks ({} registered in the game)", e.byId.size(), found);
 }
 } // namespace detail
 
 std::vector<Entry const*> entries() {
     std::vector<Entry const*> out;
-    for (auto const& [id, e] : snapshot().byId) out.push_back(&e);
+    for (auto const& [id, e] : entriesNow().byId) out.push_back(&e);
     return out;
 }
 
 std::vector<Entry const*> entriesOf(Family family) {
     std::vector<Entry const*> out;
-    for (auto const& [id, e] : snapshot().byId)
+    for (auto const& [id, e] : entriesNow().byId)
         if (e.family == family) out.push_back(&e);
     return out;
 }

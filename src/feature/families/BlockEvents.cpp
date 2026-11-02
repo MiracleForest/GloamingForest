@@ -7,8 +7,9 @@
 //                     gamerule's randomTickSpeed x 3 positions per 16-block section per tick
 //                     (Bedrock's default 1 is Java's default 3), only in sections whose palette
 //                     holds a block with handlers
-//   neighbour change  every block change (any cause, LeviLamina's BlockChangedEvent) notifies the
-//                     six neighbours, at the end of the tick (Java neighborChanged / updateShape)
+//   neighbour change  every block change (any cause, LeviLamina's BlockChangedEvent), the liquid
+//                     layer's too (a block waterlogged or drained), notifies the six neighbours,
+//                     at the end of the tick (Java neighborChanged / updateShape)
 //   placed / removed  the same changes when the block type changes; the placer is the player of
 //                     a use-on placement (interactions::onPlace), else null
 //   entity inside     every tick, the blocks an entity's box (deflated by 1e-7, as Java's
@@ -376,6 +377,8 @@ Actor* actorById(std::int64_t uid) {
     return level->fetchEntity(id, false);
 }
 
+void notifyNeighbors(BlockSource& region, BlockPos const& pos);
+
 void onBlockChanged(BlockSource& region, BlockPos const& pos, Block const& previous, Block const& now) {
     if (region.getLevel().isClientSide()) return;
     int  dim         = static_cast<int>(region.getDimensionId());
@@ -406,7 +409,22 @@ void onBlockChanged(BlockSource& region, BlockPos const& pos, Block const& previ
             call<PlacedFn>(PlacedK, *b, "placed", *r, pos, *b, actorById(placer));
         });
     }
+    notifyNeighbors(region, pos);
+}
+
+/// The liquid layer of a block changed (a waterloggable block filled or drained): Java's setBlock
+/// of the (un)waterlogged state tells the neighbours as any change does; no placement or removal.
+void onLiquidChanged(BlockSource& region, BlockPos const& pos, Block const& previous, Block const& now) {
+    if (region.getLevel().isClientSide() || &previous == &now) return;
+    notifyNeighbors(region, pos);
+}
+
+/// Every neighbour with handlers hears of the change at `pos` at the end of the tick (once per
+/// neighbour, position and tick).
+void notifyNeighbors(BlockSource& region, BlockPos const& pos) {
     if (!any(NeighborK)) return;
+    int  dim = static_cast<int>(region.getDimensionId());
+    auto gp  = game::globalPos(dim, pos);
     for (int d = 0; d < 6; ++d) {
         BlockPos     n  = fam::offset(pos, d);
         Block const* nb = fam::blockAt(region, n);
@@ -541,9 +559,9 @@ void installBlockEvents() {
     BlockEventsProjectileHitHook::hook();
     auto& bus = ll::event::EventBus::getInstance();
     listeners().push_back(bus.emplaceListener<ll::event::BlockChangedEvent>([](ll::event::BlockChangedEvent& ev) {
-        if (ev.layer() != 0) return;
         try {
-            onBlockChanged(ev.blockSource(), ev.pos(), ev.previousBlock(), ev.newBlock());
+            if (ev.layer() == 0) onBlockChanged(ev.blockSource(), ev.pos(), ev.previousBlock(), ev.newBlock());
+            else onLiquidChanged(ev.blockSource(), ev.pos(), ev.previousBlock(), ev.newBlock());
         } catch (std::exception const& e) {
             log().error("blockevents: block change dispatch failed: {}", e.what());
         }

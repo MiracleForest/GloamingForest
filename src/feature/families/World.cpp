@@ -36,6 +36,8 @@
 #include "mc/world/level/block/BlockSupportType.h"
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/CachedComponentData.h"
+#include "mc/world/level/block/ResourceDropsCause.h"
+#include "mc/world/level/block/ResourceDropsContext.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/phys/AABB.h"
@@ -401,6 +403,16 @@ void consumeHeld(Player& player, ItemStack const& contextItem) {
 }
 
 void destroyWithDrops(BlockSource& region, BlockPos const& pos) { region.getLevel().destroyBlock(region, pos, true, BlockChangeContext{}); }
+
+void dropAndRemove(BlockSource& region, BlockPos const& pos) {
+    Block const& block = region.getBlock(pos);
+    if (block.isAir()) return;
+    // Block.dropResources: the block's loot without a tool or an entity (the loot contract's Java
+    // table for a TF block), then Level.removeBlock: no levelEvent 2001 (particles and sound)
+    ResourceDropsContext ctx{ResourceDropsCause::Other, 0.0f, ItemStack::EMPTY_ITEM(), pos, region.getDimensionId(), region};
+    block.spawnResources(region, pos, region.getLevel().getIRandom(), ctx, nullptr);
+    region.removeBlock(pos, BlockChangeContext{});
+}
 
 bool mayBuild(Player const& player) { return player.canUseAbility(AbilitiesIndex::Build); }
 

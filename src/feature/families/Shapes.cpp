@@ -274,21 +274,9 @@ bool updatePillarSide(BlockSource& region, BlockPos const& pos, Block const& blo
 
 // ---- connected textures (TF ConnectedTextureModel) ------------------------------------------------------
 
-/// shouldConnectSide / isCornerBlockPresent: a block of the connectable blocks (params.connects_to,
-/// default: itself).
-bool connector(Entry const& e, Block const* other) {
-    if (!other || other->isAir()) return false;
-    auto list = e.params.find("connects_to");
-    if (list != e.params.end() && list->is_array()) {
-        for (auto const& id : *list)
-            if (id.is_string() && id.get<std::string>() == other->getTypeName()) return true;
-        return false;
-    }
-    return other->getTypeName() == e.id;
-}
+bool connector(Entry const& e, Block const* other) { return ctConnects(e, other); }
 
-/// ConnectionLogic.AXIS_PLANE_DIRECTIONS by axis (0 x, 1 y, 2 z)
-constexpr std::array<std::array<int, 4>, 3> kPlane{{{Up, North, Down, South}, {North, East, South, West}, {Up, East, Down, West}}};
+constexpr std::array<std::array<int, 4>, 3> kPlane{{ctPlane(0), ctPlane(1), ctPlane(2)}};
 
 bool updateConnectedTexture(BlockSource& region, BlockPos const& pos, Block const& block, Entry const& e) {
     Json s = Json::object();
@@ -549,6 +537,17 @@ void uninstallShapes() {
     for (auto id : handlerIds()) ia::remove(id);
     handlerIds().clear();
     FamiliesCollisionHook::unhook();
+}
+
+bool ctConnects(Entry const& e, Block const* other) {
+    if (!other || other->isAir()) return false;
+    auto list = e.params.find("connects_to");
+    if (list != e.params.end() && list->is_array()) {
+        for (auto const& id : *list)
+            if (id.is_string() && id.get<std::string>() == other->getTypeName()) return true;
+        return false;
+    }
+    return other->getTypeName() == e.id;
 }
 
 } // namespace gf::feature::families

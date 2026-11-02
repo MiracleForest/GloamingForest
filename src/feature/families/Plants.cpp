@@ -615,8 +615,10 @@ void installPlants() {
                 return;
             }
             if (!decaying(block)) return;
-            destroyWithDrops(region, pos);
-            log().info("families: {} at {} {} {} decayed", block.getTypeName(), pos.x, pos.y, pos.z);
+            // dropResources + removeBlock: the drops, silently (no break particles or sound)
+            std::string id = block.getTypeName();
+            dropAndRemove(region, pos);
+            log().debug("families: {} at {} {} {} decayed", id, pos.x, pos.y, pos.z);
         });
         // Java LeavesBlock.updateShape: a changed distance schedules the update (1 tick)
         auto update = [](BlockSource& region, BlockPos const& pos) {

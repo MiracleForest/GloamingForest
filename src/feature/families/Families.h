@@ -12,8 +12,8 @@
 // getStateForPlacement does, and keeps the neighbour-dependent ones as Java's updateShape does.
 // States this kit adds to blocks (rule R1: additions only). The ones no Java block declares live
 // in the kit's own namespace, so a TF block keeps exactly its frozen twilightforest:* states:
-//   gloamingforest:open_count  0..15  chests and trapped chests: the players looking inside (lid,
-//                                      the trapped chest's signal)
+//   gloamingforest:lid         0..4   chests and trapped chests: the lid's angle (22.5 degree steps)
+//   gloamingforest:open_count  0..15  trapped chests: the players looking inside (their signal)
 //   gloamingforest:<direction> bool   connected textures: a connection on that side
 //   gloamingforest:corner_<a>_<b> bool connected textures: the diagonal block (when the budget allows)
 //   twilightforest:layers / lighting   snowloggable / lightable blocks without those states (Java's
@@ -151,6 +151,7 @@ inline constexpr char Rotated[]    = "twilightforest:rotated";
 /// The namespace of the states the kit adds that no Java block declares.
 inline constexpr char kKit[]       = "gloamingforest:";
 inline constexpr char OpenCount[]  = "gloamingforest:open_count";
+inline constexpr char Lid[]        = "gloamingforest:lid";
 /// twilightforest:north / east / south / west / up / down (fence / pane / pillar connections are
 /// booleans, wall sides none / low / tall)
 [[nodiscard]] std::string side(int dir);
@@ -256,6 +257,9 @@ void                    give(Player& player, ItemStack const& item);
 void consumeHeld(Player& player, ItemStack const& contextItem);
 /// Breaks the block at `pos` as Java's destroyBlock(pos, true): its drops (loot) and effect.
 void destroyWithDrops(BlockSource& region, BlockPos const& pos);
+/// Java's dropResources(state, level, pos) then removeBlock(pos, false): the drops without the
+/// break effect (decaying leaves are silent).
+void dropAndRemove(BlockSource& region, BlockPos const& pos);
 /// Java Player.mayBuild (not adventure / spectator).
 [[nodiscard]] bool mayBuild(Player const& player);
 
@@ -296,6 +300,14 @@ void applyClimbable();
 bool updateShape(BlockSource& region, BlockPos const& pos);
 /// Java StairBlock.getStairsShape for the stairs at `pos` (by their facing and half).
 [[nodiscard]] std::string stairsShape(BlockSource& region, BlockPos const& pos, Block const& stairs);
+/// ConnectedTextureModel.shouldConnectSide / isCornerBlockPresent: `other` is one of the blocks a
+/// connected texture block `e` joins (params.connects_to, default: itself).
+[[nodiscard]] bool ctConnects(Entry const& e, Block const* other);
+/// ConnectionLogic.AXIS_PLANE_DIRECTIONS: the four sides around a face of axis `axis` (0 x, 1 y,
+/// 2 z), in quadrant order (quadrant i lies between sides i and i + 1).
+[[nodiscard]] constexpr std::array<int, 4> ctPlane(int axis) {
+    return axis == 0 ? std::array<int, 4>{Up, North, Down, South} : axis == 1 ? std::array<int, 4>{North, East, South, West} : std::array<int, 4>{Up, East, Down, West};
+}
 
 /// Slab doubling (Java SlabBlock.canBeReplaced) for selftests and the use-on handler.
 bool mergeSlab(BlockSource& region, BlockPos const& pos);
@@ -316,5 +328,7 @@ void advanceSapling(BlockSource& region, BlockPos const& pos);
 void pairChest(BlockSource& region, BlockPos const& pos, int facing, bool sneaking, std::optional<int> clickedFace);
 /// The other half of a double chest (nullopt: single).
 [[nodiscard]] std::optional<BlockPos> chestPartner(BlockSource& region, BlockPos const& pos);
+/// The lid step (gloamingforest:lid) drawn for a ChestLidController openness in tenths (0..10).
+[[nodiscard]] int chestLidStep(int openness);
 
 } // namespace gf::feature::families

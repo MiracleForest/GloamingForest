@@ -1,75 +1,58 @@
 // Block families (F11): chests and trapped chests (Java ChestBlock / TrappedChestBlock /
-// ChestBlockEntity): facing, double chests (type single / left / right) on placement and when a
-// neighbour changes, the storage and the screen, the players looking inside, the lid and the
-// trapped chest's signal.
+// ChestBlockEntity / ChestLidController).
 //
-// Storage: each half keeps its own 27 slots (block data "chest": {items, loot}); the inventory
-// contract's handler of a double chest is Java's CompoundContainer (DoubleBlockCombiner): slots
-// 0..26 are the first half's (the RIGHT one), 27..53 the second's, from either half. A loot table
-// (gf::loot::placeContainer, setLootTable) rolls into the half on its first access (Java
-// RandomizableContainer: LootTable.fill). A broken half drops its own slots (Containers
-// .dropContents).
-// Screen: "families.chest" (gf::screens): the client mod's native chest screen (Java's ChestMenu:
-// 3 or 6 rows over the player's inventory), a form for vanilla clients. The players inside are
-// counted per half (Java ContainerOpenersCounter, checked every 5 ticks: gone, too far, other
-// dimension): gloamingforest:open_count opens the lid, plays the chest sounds and is the trapped
-// chest's signal (its BP permutations: redstone_producer 0..15).
+// The container is the inventory contract's (F10, spike S3: src/feature/inventory): tools/families
+// declares every chest family block as a container (data/gf/containers/families.json; a unit's own
+// declaration of the block wins), so the slots (each half its own 27), the screen (the client
+// mod's "inventory.chest"; on vanilla clients the game's chest screen through a proxy, a form for a
+// double chest), a double chest's 54 slots (ChestBlock#combine: the right half first), the open /
+// close sounds, the opening stat (TrappedChestBlock: trigger_trapped_chest), the comparator output,
+// the blocked rule (a redstone conductor or a sitting cat above), loot tables (LootTable#fill on the
+// first access) and the contents a broken half drops are F10's.
+// This file keeps what the chest block itself does:
+// - facing and type on placement (ChestBlock#getStateForPlacement) and when a neighbour changes
+//   (ChestBlock#updateShape): the pairs F10's screens follow;
+// - the lid: gloamingforest:lid 0..4, the lid's angle in 22.5 degree steps, moved every tick as
+//   ChestLidController's openness (0.1 per tick toward open while players look inside, drawn eased
+//   as ChestRenderer: 1 - (1 - o)^3), from the openers the inventory contract counts
+//   (feature/ext/combat/InventoryViewers.h; a double chest's halves count the same players);
+// - the trapped chest's signal: gloamingforest:open_count = the openers (0..15; the BP's
+//   redstone_producer, TrappedChestBlock#getSignal and signalOpenCount).
+// After a reload nobody is inside: a chest whose lid or signal was left up closes in its chunk's
+// first tick.
 
 #include <algorithm>
 #include <cmath>
 #include <map>
-#include <random>
-#include <set>
+#include <vector>
 
-#include "ll/api/event/EventBus.h"
-#include "ll/api/event/player/PlayerDisconnectEvent.h"
-#include "ll/api/form/SimpleForm.h"
-#include "ll/api/service/Bedrock.h"
-
-#include "mc/deps/core/math/Vec3.h"
-#include "mc/network/MinecraftPacketIds.h"
-#include "mc/network/MinecraftPackets.h"
-#include "mc/network/packet/PlaySoundPacket.h"
-#include "mc/world/actor/Actor.h"
-#include "mc/world/actor/ActorFlags.h"
-#include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
-#include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
-#include "mc/world/level/Level.h"
-#include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
-#include "mc/world/phys/AABB.h"
+#include "mc/world/level/block/BlockType.h"
+#include "mc/world/level/chunk/LevelChunk.h"
 
-#include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
-#include "feature/common/Screens.h"
+#include "feature/ext/combat/InventoryViewers.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/families/Families.h"
-#include "feature/inventory/Inventory.h"
-#include "feature/loot/Loot.h"
-#include "feature/net/Net.h"
 #include "game/Blocks.h"
-#include "game/Items.h"
-#include "mod/I18n.h"
 #include "mod/Log.h"
 
 namespace gf::feature::families {
 
 namespace ia = interactions;
-namespace bd = blockdata;
+
+namespace detail {
+void onChunkLoaded(std::function<void(BlockSource&, LevelChunk&)> fn);
+void forEachInChunk(BlockSource& region, LevelChunk& chunk, std::function<bool(BlockType const&)> const& want, std::function<void(BlockPos const&, Block const&)> const& fn);
+} // namespace detail
 
 namespace {
 
-constexpr char kKey[]    = "chest";
-constexpr char kScreen[] = "families.chest";
-constexpr int  kSlots    = 27;
-
-std::vector<ia::HandlerId>& handlerIds() {
-    static std::vector<ia::HandlerId> ids;
-    return ids;
-}
+constexpr int kLidSteps      = 4;  ///< gloamingforest:lid 0..4 (22.5 degrees each)
+constexpr int kOpennessTicks = 10; ///< ChestLidController: openness 0..1 by 0.1 per tick
 
 bool isChest(Entry const* e) { return e && (e->family == Family::Chest || e->family == Family::TrappedChest); }
 
@@ -110,475 +93,84 @@ void updateChest(BlockSource& region, BlockPos const& pos, int dir) {
     if (auto const* next = withStates(*b, s); next && next != b) game::setBlock(region, pos, *next);
 }
 
-/// Java ChestBlock.isCatSittingOnChest: a sitting cat in the block space above.
-bool catSittingOn(BlockSource& region, BlockPos const& pos) {
-    AABB box{Vec3{float(pos.x), float(pos.y + 1), float(pos.z)}, Vec3{float(pos.x + 1), float(pos.y + 2), float(pos.z + 1)}};
-    for (Actor* a : entitiesIn(region, box)) {
-        if (a && a->getTypeName() == "minecraft:cat" && a->getStatusFlag(ActorFlags::Sitting)) return true;
-    }
-    return false;
-}
+// ---- the lid and the trapped chest's signal ----------------------------------------------------------
 
-/// Java ChestBlock.isChestBlockedAt: a redstone conductor (solid block) on top
-/// (isBlockedChestByBlock) or a sitting cat on it.
-bool blocked(BlockSource& region, BlockPos const& pos) { return solidBlock(region, offset(pos, Up)) || catSittingOn(region, pos); }
-
-// ---- storage ----------------------------------------------------------------------------------------
-
-Json storageOf(GlobalPos const& pos) {
-    auto* region = regionOf(pos.dim);
-    if (!region) return Json::object();
-    auto const* j = bd::get(*region, game::blockPos(pos), kKey);
-    return j && j->is_object() ? *j : Json::object();
-}
-
-void writeStorage(GlobalPos const& pos, Json const& data) {
-    if (auto* region = regionOf(pos.dim)) bd::set(*region, game::blockPos(pos), kKey, data);
-}
-
-/// Java LootTable.fill: the rolled stacks shuffled into the empty slots, bigger stacks split to
-/// fill them (shuffleAndSplitItems).
-void fillLoot(Json& data, std::vector<ItemStack> stacks, std::int64_t seed) {
-    std::mt19937_64 random(static_cast<std::uint64_t>(seed == 0 ? std::random_device{}() : seed));
-    auto nextInt = [&](int lo, int hi) { return hi <= lo ? lo : lo + static_cast<int>(random() % static_cast<std::uint64_t>(hi - lo + 1)); };
-    auto items   = data.value("items", Json::array());
-    while (static_cast<int>(items.size()) < kSlots) items.push_back(nullptr);
-    std::vector<int> slots;
-    for (int i = 0; i < kSlots; ++i)
-        if (items[i].is_null()) slots.push_back(i);
-    std::shuffle(slots.begin(), slots.end(), random);
-    std::vector<ItemStack> rest, big;
-    for (auto& s : stacks) {
-        if (game::items::isEmpty(s)) continue;
-        (game::items::countOf(s) > 1 ? big : rest).push_back(s);
-    }
-    while (static_cast<int>(slots.size()) - static_cast<int>(rest.size()) - static_cast<int>(big.size()) > 0 && !big.empty()) {
-        int       idx   = nextInt(0, static_cast<int>(big.size()) - 1);
-        ItemStack stack = big[idx];
-        big.erase(big.begin() + idx);
-        int       n     = nextInt(1, game::items::countOf(stack) / 2);
-        ItemStack part  = game::items::withCount(stack, n);
-        stack           = game::items::withCount(stack, game::items::countOf(stack) - n);
-        ((game::items::countOf(stack) > 1 && (random() & 1)) ? big : rest).push_back(stack);
-        ((game::items::countOf(part) > 1 && (random() & 1)) ? big : rest).push_back(part);
-    }
-    for (auto& s : big) rest.push_back(s);
-    std::shuffle(rest.begin(), rest.end(), random);
-    for (auto const& s : rest) {
-        if (slots.empty()) break;
-        items[slots.back()] = game::items::toJson(s);
-        slots.pop_back();
-    }
-    data["items"] = items;
-}
-
-} // namespace
-
-namespace detail {
-/// Selftests: replaces gf::loot::roll for the chests' loot tables (null: the loot contract's).
-std::function<std::vector<ItemStack>(std::string const& table, loot::LootContext const& ctx)>& chestLootRoller() {
-    static std::function<std::vector<ItemStack>(std::string const&, loot::LootContext const&)> f;
-    return f;
-}
-} // namespace detail
-
-namespace {
-
-/// Java RandomizableContainer.unpackLootTable on `data` (a half's storage): its pending loot
-/// table rolled into its empty slots (LootTable.fill). False when it had none.
-bool rollPendingLoot(Json& data, BlockSource* region, GlobalPos const& pos, Player* player, Block const* block = nullptr) {
-    if (!data.contains("loot") || !data["loot"].is_object()) return false;
-    auto table = data["loot"].value("table", std::string{});
-    auto seed  = data["loot"].value("seed", std::int64_t{0});
-    data.erase("loot");
-    if (!region || table.empty()) return true;
-    loot::LootContext ctx;
-    ctx.region     = region;
-    ctx.origin     = Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f};
-    ctx.player     = player;
-    ctx.thisEntity = player;
-    ctx.seed       = seed;
-    ctx.block      = block ? block : blockAt(*region, game::blockPos(pos));
-    auto const& roller = detail::chestLootRoller();
-    fillLoot(data, roller ? roller(table, ctx) : loot::roll(table, ctx), seed);
-    log().info("families: the chest at {} {} {} rolled {}", pos.x, pos.y, pos.z, table);
-    return true;
-}
-
-/// RandomizableContainer.setLootTable: the half rolls `table` on its first access.
-void setLootTableOf(GlobalPos const& pos, std::string const& table, std::int64_t seed) {
-    auto data    = storageOf(pos);
-    data["loot"] = {{"table", table}, {"seed", seed}};
-    writeStorage(pos, data);
-}
-
-/// Java RandomizableContainer.unpackLootTable: the half's pending loot table, on first access.
-void unpackLoot(GlobalPos const& pos, Player* player) {
-    auto data = storageOf(pos);
-    if (!rollPendingLoot(data, regionOf(pos.dim), pos, player)) return;
-    writeStorage(pos, data);
-}
-
-ItemStack slotOf(GlobalPos const& half, int slot) {
-    unpackLoot(half, nullptr);
-    auto items = storageOf(half).value("items", Json::array());
-    return slot >= 0 && slot < static_cast<int>(items.size()) && !items[slot].is_null() ? game::items::fromJson(items[slot]) : ItemStack{};
-}
-
-void setSlotOf(GlobalPos const& half, int slot, ItemStack const& stack) {
-    if (slot < 0 || slot >= kSlots) return;
-    unpackLoot(half, nullptr);
-    auto data  = storageOf(half);
-    auto items = data.value("items", Json::array());
-    while (static_cast<int>(items.size()) < kSlots) items.push_back(nullptr);
-    items[slot]   = game::items::isEmpty(stack) ? Json(nullptr) : game::items::toJson(stack);
-    data["items"] = items;
-    writeStorage(half, data);
-}
-
-/// The halves of the chest at `pos`, first (Java: the RIGHT half) first.
-std::vector<GlobalPos> halvesOf(GlobalPos const& pos) {
-    auto* region = regionOf(pos.dim);
-    if (!region) return {pos};
-    BlockPos     bp = game::blockPos(pos);
-    Block const* b  = blockAt(*region, bp);
-    auto         p  = chestPartner(*region, bp);
-    if (!b || !p) return {pos};
-    auto other = game::globalPos(pos.dim, *p);
-    return typeOf(*b) == "right" ? std::vector<GlobalPos>{pos, other} : std::vector<GlobalPos>{other, pos};
-}
-
-/// CompoundContainer: slot -> (half, slot in the half).
-std::optional<std::pair<GlobalPos, int>> resolve(GlobalPos const& pos, int slot) {
-    auto halves = halvesOf(pos);
-    if (slot < 0 || slot >= kSlots * static_cast<int>(halves.size())) return std::nullopt;
-    return std::make_pair(halves[slot / kSlots], slot % kSlots);
-}
-
-ItemStack getSlot(GlobalPos const& pos, int slot) {
-    auto r = resolve(pos, slot);
-    return r ? slotOf(r->first, r->second) : ItemStack{};
-}
-
-void setSlot(GlobalPos const& pos, int slot, ItemStack const& stack) {
-    if (auto r = resolve(pos, slot)) setSlotOf(r->first, r->second, stack);
-}
-
-int sizeOf(GlobalPos const& pos) { return kSlots * static_cast<int>(halvesOf(pos).size()); }
-
-/// Java ItemHandlerHelper order: matching stacks first, then empty slots.
-ItemStack insertInto(GlobalPos const& pos, ItemStack const& stack, bool simulate) {
-    ItemStack rest = stack;
-    int       size = sizeOf(pos);
-    for (int pass = 0; pass < 2 && !game::items::isEmpty(rest); ++pass) {
-        for (int i = 0; i < size && !game::items::isEmpty(rest); ++i) {
-            auto cur = getSlot(pos, i);
-            int  max = std::min(64, static_cast<int>(rest.getMaxStackSize()));
-            if (pass == 0 && !game::items::isEmpty(cur) && game::items::sameItemSameData(cur, rest)) {
-                int move = std::min(max - game::items::countOf(cur), game::items::countOf(rest));
-                if (move <= 0) continue;
-                if (!simulate) setSlot(pos, i, game::items::withCount(cur, game::items::countOf(cur) + move));
-                rest = game::items::withCount(rest, game::items::countOf(rest) - move);
-            } else if (pass == 1 && game::items::isEmpty(cur)) {
-                int move = std::min(max, game::items::countOf(rest));
-                if (!simulate) setSlot(pos, i, game::items::withCount(rest, move));
-                rest = game::items::withCount(rest, game::items::countOf(rest) - move);
-            }
-        }
-    }
-    return rest;
-}
-
-// ---- the players inside (ContainerOpenersCounter) -------------------------------------------------------
-
-struct Viewer {
-    GlobalPos              opened;
-    std::vector<GlobalPos> halves;
-    ItemStack              carried; ///< the native screen's cursor stack
-    bool                   native = false;
+/// A half's ChestLidController: its openness in tenths and whether players are inside.
+struct Lid {
+    int  openness = 0;
+    bool open     = false;
 };
-std::map<std::int64_t, Viewer>& viewers() {
-    static std::map<std::int64_t, Viewer> m;
+/// The lids that move or stand open (a closed lid at rest is not kept).
+std::map<GlobalPos, Lid>& lids() {
+    static std::map<GlobalPos, Lid> m;
     return m;
 }
 
-Player* playerById(std::int64_t uid) {
-    auto level = ll::service::getLevel();
-    if (!level) return nullptr;
-    ActorUniqueID id;
-    id.rawID = uid;
-    auto* a  = level->fetchEntity(id, false);
-    return a && a->isPlayer() ? static_cast<Player*>(a) : nullptr;
+/// ChestRenderer: the lid's angle of an openness (eased 1 - (1 - o)^3) in the kit's steps.
+int lidStep(int openness) {
+    double o     = static_cast<double>(std::clamp(openness, 0, kOpennessTicks)) / kOpennessTicks;
+    double eased = 1.0 - std::pow(1.0 - o, 3);
+    return std::clamp(static_cast<int>(std::lround(eased * kLidSteps)), 0, kLidSteps);
 }
 
-/// Container.stillValidBlockEntity: the block interaction range plus 4 from the player's eyes.
-bool inReach(Player& player, GlobalPos const& pos) {
-    if (static_cast<int>(player.getDimensionId()) != pos.dim) return false;
-    Vec3  eye = player.getEyePos();
-    float dx  = std::max({float(pos.x) - eye.x, 0.f, eye.x - (pos.x + 1.f)});
-    float dy  = std::max({float(pos.y) - eye.y, 0.f, eye.y - (pos.y + 1.f)});
-    float dz  = std::max({float(pos.z) - eye.z, 0.f, eye.z - (pos.z + 1.f)});
-    float r   = (player.isCreative() ? 5.0f : 4.5f) + 4.0f;
-    return dx * dx + dy * dy + dz * dz < r * r;
+/// The smallest openness drawn at `step` (a lid found up, e.g. after a reload, closes from there).
+int opennessAt(int step) {
+    for (int o = 0; o <= kOpennessTicks; ++o)
+        if (lidStep(o) >= step) return o;
+    return kOpennessTicks;
 }
 
-int countAt(GlobalPos const& half) {
-    int n = 0;
-    for (auto const& [uid, v] : viewers())
-        if (std::any_of(v.halves.begin(), v.halves.end(), [&half](GlobalPos const& h) { return h == half; })) ++n;
-    return n;
-}
-
-void soundAt(BlockSource& region, Vec3 const& at, char const* name) {
-    auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::PlaySound);
-    if (!packet) return;
-    auto& pkt   = static_cast<PlaySoundPacket&>(*packet);
-    pkt.mName   = name;
-    pkt.mPos    = BlockPos{static_cast<int>(std::floor(at.x * 8)), static_cast<int>(std::floor(at.y * 8)), static_cast<int>(std::floor(at.z * 8))};
-    pkt.mVolume = 0.5f;
-    pkt.mPitch  = wobblePitch();
-    pkt.sendTo(BlockPos{static_cast<int>(std::floor(at.x)), static_cast<int>(std::floor(at.y)), static_cast<int>(std::floor(at.z))}, region.getDimensionId());
-}
-
-/// ContainerOpenersCounter.openerCountChanged for a half: the state (lid, signal) and, from the
-/// first / RIGHT half, the open / close sound (ChestBlockEntity.playSound, centred on a double).
-void countChanged(GlobalPos const& half) {
-    auto* region = regionOf(half.dim);
-    if (!region) return;
-    BlockPos     bp = game::blockPos(half);
-    Block const* b  = blockAt(*region, bp);
-    if (!b || !isChest(entryOf(*b))) return;
-    int now = std::min(15, countAt(half));
-    int was = intState(*b, state::OpenCount).value_or(0);
-    if (now == was) return;
-    setStates(*region, bp, {{state::OpenCount, now}});
-    if ((was == 0) != (now == 0) && typeOf(*b) != "left") {
-        Vec3 at{bp.x + .5f, bp.y + .5f, bp.z + .5f};
-        if (typeOf(*b) == "right") {
-            int d = connectedDirection(*b);
-            at.x += kDx[d] * .5f;
-            at.z += kDz[d] * .5f;
-        }
-        soundAt(*region, at, now > 0 ? "random.chestopen" : "random.chestclosed");
-    }
-}
-
-/// AbstractContainerMenu.removed: the cursor stack goes back to the player (dropped at the chest
-/// when the player is gone already).
-void returnCarried(std::int64_t uid, Viewer const& v) {
-    if (game::items::isEmpty(v.carried)) return;
-    if (auto* p = playerById(uid)) {
-        give(*p, v.carried);
-    } else if (auto* region = regionOf(v.opened.dim)) {
-        drop(*region, game::blockPos(v.opened), v.carried);
-    }
-}
-
-void removeViewer(std::int64_t uid) {
-    auto it = viewers().find(uid);
-    if (it == viewers().end()) return;
-    Viewer v = std::move(it->second);
-    viewers().erase(it);
-    returnCarried(uid, v);
-    for (auto const& h : v.halves) countChanged(h);
-}
-
-ll::event::ListenerPtr& disconnectListener() {
-    static ll::event::ListenerPtr l;
-    return l;
-}
-
-void addViewer(Player& player, GlobalPos const& opened, bool native) {
-    auto uid = player.getOrCreateUniqueID().rawID;
-    removeViewer(uid); // one container at a time
-    auto& v  = viewers()[uid];
-    v.opened = opened;
-    v.halves = halvesOf(opened);
-    v.native = native;
-    for (auto const& h : v.halves) countChanged(h);
-}
-
-/// ContainerOpenersCounter.recheckOpeners (every 5 ticks while open).
-void recheck() {
-    std::vector<std::int64_t> gone;
-    for (auto const& [uid, v] : viewers()) {
-        auto* p = playerById(uid);
-        bool  ok = p && p->isAlive();
-        for (auto const& h : v.halves) {
-            auto const* b = blockAt(h);
-            if (!b || !isChest(entryOf(*b))) ok = false;
-        }
-        if (ok && !inReach(*p, v.opened)) ok = false;
-        if (!ok) {
-            if (p && v.native) screens::close(*p, kScreen);
-            gone.push_back(uid);
-        }
-    }
-    for (auto uid : gone) removeViewer(uid);
-}
-
-// ---- the screen -------------------------------------------------------------------------------------
-
-GlobalPos posOf(Json const& ctx) {
-    auto it = ctx.is_object() ? ctx.find("pos") : ctx.end();
-    if (it == ctx.end() || !it->is_array() || it->size() != 4) return {};
-    for (auto const& v : *it)
-        if (!v.is_number_integer()) return {};
-    auto const& p = *it;
-    return GlobalPos{p[0].get<int>(), p[1].get<int>(), p[2].get<int>(), p[3].get<int>()};
-}
-
-/// The chest the player opened (openChest: the server's own position and its halves); a screen
-/// context naming any other position is refused (the context comes from the client).
-Viewer* viewerOf(Player& player, GlobalPos const& pos) {
-    auto it = viewers().find(player.getOrCreateUniqueID().rawID);
-    if (it == viewers().end()) return nullptr;
-    auto& v = it->second;
-    if (v.opened == pos || std::any_of(v.halves.begin(), v.halves.end(), [&pos](GlobalPos const& h) { return h == pos; })) return &v;
-    return nullptr;
-}
-
-std::optional<Json> screenData(Player& player, Json const& ctx) {
-    auto        pos = posOf(ctx);
-    auto const* b   = blockAt(pos);
-    if (!b || !isChest(entryOf(*b)) || !inReach(player, pos) || !viewerOf(player, pos)) return std::nullopt;
-    int  size  = sizeOf(pos);
-    Json items = Json::array();
-    for (int i = 0; i < size; ++i) {
-        auto s = getSlot(pos, i);
-        items.push_back(game::items::isEmpty(s) ? Json(nullptr) : game::items::toJson(s));
-    }
-    auto* v       = viewerOf(player, pos);
-    Json  carried = v && !game::items::isEmpty(v->carried) ? game::items::toJson(v->carried) : Json(nullptr);
-    bool  dbl     = size > kSlots;
-    return Json{
-        {"title", dbl ? trFor(player, "container.chestDouble", "Large Chest") : trFor(player, "container.chest", "Chest")},
-        {"rows", dbl ? 6 : 3},
-        {"items", items},
-        {"carried", carried},
-    };
-}
-
-/// Java ChestMenu clicks (AbstractContainerMenu.doClick: pickup / place / swap / split, quick move).
-void screenAction(Player& player, Json const& ctx, Json const& action) {
-    auto  pos    = posOf(ctx);
-    auto* viewer = viewerOf(player, pos);
-    if (!viewer) return; // not the chest this player opened
-    auto& carried = viewer->carried;
-    auto  op      = action.value("op", std::string{});
-    int   slot    = action.value("slot", -1);
-    bool  right   = action.value("button", std::string{"left"}) == "right";
-    bool  shift   = action.value("shift", false);
-    auto& inv     = player.getInventory();
-    auto  click   = [&](ItemStack cur, auto const& put) {
-        if (game::items::isEmpty(carried)) {
-            if (game::items::isEmpty(cur)) return;
-            int take = right ? (game::items::countOf(cur) + 1) / 2 : game::items::countOf(cur);
-            carried  = game::items::withCount(cur, take);
-            put(game::items::withCount(cur, game::items::countOf(cur) - take));
-        } else if (game::items::isEmpty(cur)) {
-            int n = right ? 1 : game::items::countOf(carried);
-            put(game::items::withCount(carried, n));
-            carried = game::items::withCount(carried, game::items::countOf(carried) - n);
-        } else if (game::items::sameItemSameData(cur, carried)) {
-            int room = static_cast<int>(cur.getMaxStackSize()) - game::items::countOf(cur);
-            int n    = std::min(room, right ? 1 : game::items::countOf(carried));
-            if (n <= 0) return;
-            put(game::items::withCount(cur, game::items::countOf(cur) + n));
-            carried = game::items::withCount(carried, game::items::countOf(carried) - n);
-        } else {
-            put(carried);
-            carried = cur;
-        }
-    };
-    if (op == "click" && slot >= 0 && slot < sizeOf(pos)) {
-        auto cur = getSlot(pos, slot);
-        if (shift) { // ChestMenu.quickMoveStack: into the player's inventory
-            if (game::items::isEmpty(cur)) return;
-            ItemStack moving = cur;
-            if (player.add(moving) || game::items::isEmpty(moving)) setSlot(pos, slot, ItemStack{});
-            else setSlot(pos, slot, moving);
-        } else {
-            click(cur, [&](ItemStack const& s) { setSlot(pos, slot, s); });
-        }
-    } else if (op == "inv_click" && slot >= 0 && slot < inv.getContainerSize()) {
-        auto cur = inv.getItem(slot);
-        if (shift) { // into the chest
-            if (game::items::isEmpty(cur)) return;
-            inv.setItem(slot, insertInto(pos, cur, false));
-        } else {
-            click(cur, [&](ItemStack const& s) { inv.setItem(slot, s); });
-        }
-    }
-    player.sendInventory(false);
-}
-
-/// Vanilla clients: a form listing the stacks (a button takes one) and a button putting the held
-/// stack in.
-void screenForm(Player& player, Json const& ctx) {
-    auto pos = posOf(ctx);
-    auto data = screenData(player, ctx);
-    if (!data) {
-        removeViewer(player.getOrCreateUniqueID().rawID);
-        return;
-    }
-    ll::form::SimpleForm form;
-    form.setTitle((*data)["title"].get<std::string>());
-    std::vector<int> slots;
-    form.appendButton(trFor(player, "gf.families.chest.put", "Put the held stack in"));
-    int size = sizeOf(pos);
-    for (int i = 0; i < size; ++i) {
-        auto s = getSlot(pos, i);
-        if (game::items::isEmpty(s)) continue;
-        slots.push_back(i);
-        form.appendButton(game::items::displayName(s) + " x" + std::to_string(game::items::countOf(s)));
-    }
-    form.sendTo(player, [pos, slots, ctx](Player& p, int index, ll::form::FormCancelReason) {
-        if (index < 0) { // closed: the player leaves the chest
-            removeViewer(p.getOrCreateUniqueID().rawID);
-            return;
-        }
-        if (!inReach(p, pos)) {
-            removeViewer(p.getOrCreateUniqueID().rawID);
-            return;
-        }
-        if (index == 0) {
-            auto& held = const_cast<ItemStack&>(p.getSelectedItem());
-            if (!game::items::isEmpty(held)) {
-                held = insertInto(pos, held, false);
-                p.sendInventory(false);
-            }
-        } else if (index - 1 < static_cast<int>(slots.size())) {
-            int  slot  = slots[index - 1];
-            auto taken = getSlot(pos, slot);
-            setSlot(pos, slot, ItemStack{});
-            ItemStack rest = taken;
-            if (!p.add(rest) && !game::items::isEmpty(rest)) setSlot(pos, slot, rest);
-            p.sendInventory(false);
-        }
-        screenForm(p, ctx);
-    });
-}
-
-/// ChestBlock.useWithoutItem -> openMenu: the menu of the chest (both halves of a double).
-bool openChest(Player& player, GlobalPos const& pos) {
+/// The openers of the container at `pos` changed (feature/ext/combat/InventoryViewers.h):
+/// ChestBlockEntity's ContainerOpenersCounter.openerCountChanged.
+void viewersChanged(GlobalPos const& pos, int count) {
     auto* region = regionOf(pos.dim);
-    if (!region) return false;
+    if (!region) return;
     BlockPos     bp = game::blockPos(pos);
     Block const* b  = blockAt(*region, bp);
-    if (!b || !isChest(entryOf(*b))) return false;
-    auto partner = chestPartner(*region, bp);
-    if (blocked(*region, bp) || (partner && blocked(*region, *partner))) return false; // isChestBlockedAt
-    for (auto const& h : halvesOf(pos)) unpackLoot(h, &player);
-    bool native = net::isCompanion(player);
-    addViewer(player, pos, native);
-    Json ctx{{"pos", {pos.dim, pos.x, pos.y, pos.z}}};
-    if (!screens::open(player, kScreen, ctx)) {
-        removeViewer(player.getOrCreateUniqueID().rawID);
-        return false;
+    auto const*  e  = b ? entryOf(*b) : nullptr;
+    if (!isChest(e)) return;
+    // TrappedChestBlockEntity.signalOpenCount: the signal follows the count at once
+    if (e->family == Family::TrappedChest) setStates(*region, bp, {{state::OpenCount, std::clamp(count, 0, 15)}});
+    // ChestBlockEntity.triggerEvent(1, count): the lid opens while players are inside
+    auto [it, fresh] = lids().try_emplace(pos);
+    if (fresh) it->second.openness = opennessAt(intState(*b, state::Lid).value_or(0));
+    it->second.open = count > 0;
+}
+
+/// ChestLidController.tickLid of every lid that moves.
+void tickLids() {
+    for (auto it = lids().begin(); it != lids().end();) {
+        auto const&  pos    = it->first;
+        auto&        lid    = it->second;
+        auto*        region = regionOf(pos.dim);
+        BlockPos     bp     = game::blockPos(pos);
+        Block const* b      = region ? blockAt(*region, bp) : nullptr;
+        if (!b || !isChest(entryOf(*b))) {
+            it = lids().erase(it); // broken or unloaded: nothing to draw
+            continue;
+        }
+        lid.openness = lid.open ? std::min(lid.openness + 1, kOpennessTicks) : std::max(lid.openness - 1, 0);
+        int step     = lidStep(lid.openness);
+        if (intState(*b, state::Lid).value_or(0) != step) setStates(*region, bp, {{state::Lid, step}});
+        if (!lid.open && lid.openness == 0) it = lids().erase(it);
+        else ++it;
     }
-    log().info("families: {} opened the chest at {} {} {} ({} slots)", player.getRealName(), pos.x, pos.y, pos.z, sizeOf(pos));
-    return true;
+}
+
+/// A chunk's first tick after it loaded: nobody is inside its chests yet, so a lid or a trapped
+/// chest's signal left up (saved while open) goes down.
+void settleChunk(BlockSource& region, LevelChunk& chunk) {
+    int                                           dim = static_cast<int>(region.getDimensionId());
+    std::vector<std::pair<BlockPos, Block const*>> up;
+    detail::forEachInChunk(region, chunk, [](BlockType const& t) { return isChest(entryOf(t)); }, [&](BlockPos const& p, Block const& b) {
+        if (intState(b, state::Lid).value_or(0) > 0 || intState(b, state::OpenCount).value_or(0) > 0) up.emplace_back(p, &b);
+    });
+    for (auto const& [p, b] : up) {
+        auto gp = game::globalPos(dim, p);
+        if (lids().contains(gp) || inventory::viewers(gp) > 0) continue;
+        if (intState(*b, state::OpenCount).value_or(0) > 0) setStates(region, p, {{state::OpenCount, 0}});
+        if (int step = intState(*b, state::Lid).value_or(0); step > 0) lids()[gp] = Lid{opennessAt(step), false};
+    }
 }
 
 } // namespace
@@ -614,6 +206,8 @@ void pairChest(BlockSource& region, BlockPos const& pos, int facing, bool sneaki
     if (auto const* next = withStates(*b, {{state::Facing, dirName(dir)}, {state::Type, type}}); next && next != b) game::setBlock(region, pos, *next);
 }
 
+int chestLidStep(int openness) { return lidStep(openness); }
+
 namespace detail {
 void placeChest(ia::PlaceContext const& c) {
     auto* region = regionOf(c.pos.dim);
@@ -622,91 +216,17 @@ void placeChest(ia::PlaceContext const& c) {
     pairChest(*region, game::blockPos(c.pos), opposite(lookDir(c.player)), c.sneaking, c.face);
     if (auto const* b = blockAt(*region, game::blockPos(c.pos))) log().info("families: {} placed at {} {} {} ({})", c.blockId, c.pos.x, c.pos.y, c.pos.z, typeOf(*b));
 }
-/// Selftests: a player starts / stops looking inside (the screen's open and close).
-void chestViewer(Player& player, GlobalPos const& pos, bool open) {
-    if (open) addViewer(player, pos, false);
-    else removeViewer(player.getOrCreateUniqueID().rawID);
-}
-/// Selftests: Java ChestBlock.isChestBlockedAt (a solid block or a sitting cat on top).
-bool chestBlocked(GlobalPos const& pos) {
-    auto* region = regionOf(pos.dim);
-    return region && blocked(*region, game::blockPos(pos));
-}
-/// Selftests: the inventory handler's setLootTable.
-void chestSetLootTable(GlobalPos const& pos, std::string const& table, std::int64_t seed) { setLootTableOf(pos, table, seed); }
-/// The compound container's slots (selftests: the inventory contract's handler of the kit).
-int       chestSize(GlobalPos const& pos) { return sizeOf(pos); }
-ItemStack chestGet(GlobalPos const& pos, int slot) { return getSlot(pos, slot); }
-void      chestSet(GlobalPos const& pos, int slot, ItemStack const& stack) { setSlot(pos, slot, stack); }
-void chestsTick(int tick) {
-    if (tick % 5 == 0 && !viewers().empty()) recheck();
-}
-void clearChests() {
-    // the world goes: cursor stacks back to the players still there
-    for (auto const& [uid, v] : viewers())
-        if (auto* p = playerById(uid); p && !game::items::isEmpty(v.carried)) give(*p, v.carried);
-    viewers().clear();
-}
+void chestsTick(int) { tickLids(); }
+void clearChests() { lids().clear(); }
 } // namespace detail
 
 void installChests() {
-    for (auto family : {Family::Chest, Family::TrappedChest}) {
-        for (auto const* e : entriesOf(family)) {
-            ia::Match m;
-            m.block = e->id;
-            handlerIds().push_back(ia::onUseOn(m, [](ia::UseOnContext const& c) {
-                if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass;
-                if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
-                openChest(c.player, c.pos);
-                return ia::Result::Consume;
-            }));
-        }
-    }
-    // a player leaving with a chest open: its cursor stack back to its inventory first
-    disconnectListener() = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {
-        removeViewer(ev.self().getOrCreateUniqueID().rawID);
-    });
     static bool registered = false;
     if (registered) return;
     registered = true;
-    screens::registerType({
-        .id     = kScreen,
-        .data   = screenData,
-        .action = screenAction,
-        .form   = screenForm,
-        .closed = [](Player& player, Json const&) { removeViewer(player.getOrCreateUniqueID().rawID); },
-    });
-    // Containers.dropContents: a broken half drops its own slots, read through getItem, which
-    // unpacks a pending loot table first (RandomizableContainerBlockEntity: no player)
-    bd::onErase([](GlobalPos const& pos, Json const& doc, std::string const& previous) {
-        if (previous.empty() || !doc.contains(kKey) || !isChest(entryOf(previous)) || !doc[kKey].is_object()) return;
-        auto* region = regionOf(pos.dim);
-        if (!region) return;
-        BlockPos bp   = game::blockPos(pos);
-        Json     data = doc[kKey];
-        // the chest is gone already: the context names the chest block it was
-        rollPendingLoot(data, region, pos, nullptr, game::blockWith(previous));
-        auto items = data.value("items", Json::array());
-        for (auto const& j : items)
-            if (!j.is_null()) drop(*region, bp, game::items::fromJson(j));
-    });
     for (auto family : {Family::Chest, Family::TrappedChest}) {
         for (auto const* e : entriesOf(family)) {
-            inventory::Handler h;
-            h.slots   = kSlots;
-            h.get     = [](GlobalPos const& pos, int slot) { return getSlot(pos, slot); };
-            h.set     = [](GlobalPos const& pos, int slot, ItemStack const& stack) { setSlot(pos, slot, stack); };
-            h.insert  = [](GlobalPos const& pos, ItemStack const& stack, bool simulate) { return insertInto(pos, stack, simulate); };
-            h.extract = [](GlobalPos const& pos, int slot, int count, bool simulate) {
-                auto cur = getSlot(pos, slot);
-                if (game::items::isEmpty(cur) || count <= 0) return ItemStack{};
-                int take = std::min(count, game::items::countOf(cur));
-                if (!simulate) setSlot(pos, slot, game::items::withCount(cur, game::items::countOf(cur) - take));
-                return game::items::withCount(cur, take);
-            };
-            h.setLootTable = [](GlobalPos const& pos, std::string const& table, std::int64_t seed) { setLootTableOf(pos, table, seed); };
-            h.open = [](Player& player, GlobalPos const& pos) { return openChest(player, pos); };
-            inventory::registerBlock(e->id, std::move(h));
+            inventory::onViewersChanged(e->id, viewersChanged);
             blockevents::onNeighborChanged(e->id, [](BlockSource& region, BlockPos const& pos, BlockPos const& from) {
                 for (int d : kHorizontal) {
                     BlockPos n = offset(pos, d);
@@ -715,16 +235,9 @@ void installChests() {
             });
         }
     }
+    detail::onChunkLoaded(settleChunk);
 }
 
-void uninstallChests() {
-    for (auto id : handlerIds()) ia::remove(id);
-    handlerIds().clear();
-    if (disconnectListener()) {
-        ll::event::EventBus::getInstance().removeListener(disconnectListener());
-        disconnectListener() = nullptr;
-    }
-    detail::clearChests();
-}
+void uninstallChests() { detail::clearChests(); }
 
 } // namespace gf::feature::families

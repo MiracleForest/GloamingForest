@@ -47,11 +47,13 @@
 import("core.base.json")
 
 local NS = "twilightforest:"
--- the states the kit adds that no Java block declares (chests' open_count, connected textures):
+-- the states the kit adds that no Java block declares (chests' lid and open_count, connected textures):
 -- TF's blocks keep exactly their frozen twilightforest:* states (docs/spec/blockstates.md)
 local KIT = "gloamingforest:"
 local GEO_DIR = "models/blocks/gf_families"
 local FORMAT = "1.26.0"
+-- minecraft:block_entity is accepted from this format on (spike S3)
+local BLOCK_ENTITY_FORMAT = "1.26.50"
 local GEO_FORMAT = "1.21.0"
 local SIGN_TEXT_ENTITY = "gloamingforest:sign_text"
 
@@ -407,17 +409,24 @@ local SOUND_TYPE_BLOCKS = {
     ["twilightforest:firefly_particle_spawner"] = "twilightforest.jar", ["twilightforest:cicada_jar"] = "twilightforest.jar",
 }
 
--- ColorHandler: the leaves Bedrock can tint. Biome foliage (twilight oak, dark leaves) and the
--- fixed evergreen colour (beanstalk, thorn leaves) as Java; canopy and mangrove leaves blend the
--- biome foliage with 0x469A66 / 0xC0E694 (CANOPY_COLORIZER / MANGROVE_COLORIZER), which Bedrock's
--- tint methods can't: they take Java's colour without a world (FoliageColor.getEvergreenColor /
--- getBirchColor). Rainbow oak, time, transformation, mining and sorting leaves get per-position
--- colours (the client mod's tint); rainbow oak keeps Java's no-world default foliage until then.
+-- ColorHandler: the leaves Bedrock tints by biome. Biome foliage (twilight oak, dark leaves) as
+-- Java; canopy and mangrove leaves blend the biome foliage with 0x469A66 / 0xC0E694
+-- (CANOPY_COLORIZER / MANGROVE_COLORIZER), which Bedrock's tint methods can't: they take the tint
+-- of Java's colour without a world (FoliageColor.getEvergreenColor / getBirchColor).
 local LEAF_TINTS = {
     ["twilightforest:twilight_oak_leaves"] = "default_foliage", ["twilightforest:dark_leaves"] = "default_foliage",
     ["twilightforest:canopy_leaves"] = "evergreen_foliage", ["twilightforest:mangrove_leaves"] = "birch_foliage",
-    ["twilightforest:rainbow_oak_leaves"] = "default_foliage", ["twilightforest:beanstalk_leaves"] = "evergreen_foliage",
-    ["twilightforest:thorn_leaves"] = "evergreen_foliage",
+}
+-- The leaves Java colours without the biome: their grey textures pre-tinted with Java's colour
+-- (terrain_texture.json tint_color). Beanstalk and thorn leaves are always
+-- FoliageColor.getEvergreenColor; time, transformation, mining and sorting leaves take their
+-- colour without a world (the item, a vanilla client) and rainbow oak FoliageColor.getDefaultColor:
+-- the client mod draws their colour per position (src/client/families, through gf::client::tint).
+local LEAF_COLORS = {
+    ["twilightforest:beanstalk_leaves"] = "#619961", ["twilightforest:thorn_leaves"] = "#619961",
+    ["twilightforest:time_leaves"] = "#6a9c17", ["twilightforest:transformation_leaves"] = "#6cccea",
+    ["twilightforest:mining_leaves"] = "#fcf144", ["twilightforest:sorting_leaves"] = "#364c03",
+    ["twilightforest:rainbow_oak_leaves"] = "#48b518",
 }
 
 -- The wood of a sign / chest (TFWoodTypes names: twilight_oak, canopy, mangrove, dark, time,
@@ -466,8 +475,8 @@ local FAMILY_STATES = {
     wall_sign = {{"facing", FACING4}},
     hanging_sign = {{"attached", "bool"}, {"rotation", 15}},
     wall_hanging_sign = {{"facing", FACING4}},
-    chest = {{"facing", FACING4}, {"type", {"single", "left", "right"}}, {"open_count", 15, KIT}},
-    trapped_chest = {{"facing", FACING4}, {"type", {"single", "left", "right"}}, {"open_count", 15, KIT}},
+    chest = {{"facing", FACING4}, {"type", {"single", "left", "right"}}, {"lid", 4, KIT}},
+    trapped_chest = {{"facing", FACING4}, {"type", {"single", "left", "right"}}, {"lid", 4, KIT}, {"open_count", 15, KIT}},
     horizontal = {{"facing", FACING4}},
     directional = {{"facing", FACING6}},
     binary_rotated = {{"rotated", "bool"}},
@@ -969,13 +978,68 @@ visual.wood = function (doc, e, t) pillar_visual(doc, e, t, true) end
 
 -- leaves (Java LeavesBlock): distance 1..7 (0: not computed yet) and persistent.
 visual.leaves = function (doc, e, t) full_block(doc, t, e.params.render_method or "alpha_test") end
-behaviour.leaves = function (doc, e)
+-- The image of the terrain texture `name` (nil when unknown). F1 maps Java's vanilla leaves to
+-- Bedrock's "_carried" images, which are coloured already (the inventory's); Java tints the grey
+-- leaves, so a tinted leaf takes Bedrock's grey image of the same leaves.
+local function terrain_image(ctx, name)
+    local entry = ctx.rp_terrain and ctx.rp_terrain[name]
+    local t = type(entry) == "table" and entry.textures or nil
+    if type(t) == "table" then t = t.path or t[1] end
+    if type(t) == "table" then t = t.path end
+    if type(t) ~= "string" then return nil end
+    return (t:gsub("^(textures/blocks/.+)_carried$", "%1"))
+end
+
+-- The terrain texture `name` tinted with `color` ("#rrggbb"): a terrain_texture.json entry of the
+-- grey image with tint_color (the game tints it in the atlas); `name` when its image is unknown.
+local function tinted_texture(ctx, name, color)
+    local key = name .. "_gf_" .. color:gsub("#", "")
+    if ctx.terrain[name] and type(ctx.terrain[name]) == "table" and ctx.terrain[name].tint_color then return name end -- tinted already
+    local image = terrain_image(ctx, name)
+    if not image then
+        table.insert(ctx.missing, "terrain texture " .. name .. " (to tint " .. color .. ")")
+        return name
+    end
+    ctx.terrain[key] = {path = image, tint_color = color}
+    return key
+end
+
+-- The terrain texture `name` for a biome tint method: its grey image (a "_carried" image would be
+-- tinted twice).
+local function grey_texture(ctx, name)
+    local entry = ctx.rp_terrain and ctx.rp_terrain[name]
+    local image = terrain_image(ctx, name)
+    local t = type(entry) == "table" and entry.textures or nil
+    if not image or image == t or (type(t) == "table" and (t.path == image or t[1] == image)) then return name end
+    local key = name .. "_gf_grey"
+    ctx.terrain[key] = image
+    return key
+end
+behaviour.leaves = function (doc, e, ctx)
     comps(doc)["minecraft:light_dampening"] = 1
+    local color = e.params.tint_color or LEAF_COLORS[e.id]
     local tint = e.params.tint or LEAF_TINTS[e.id]
-    if tint then
+    if color then
+        local function pretint(mi)
+            if type(mi) ~= "table" then return end
+            for _, m in pairs(mi) do
+                if type(m) == "table" and type(m.texture) == "string" then
+                    m.texture = tinted_texture(ctx, m.texture, color)
+                    m.tint_method = nil
+                end
+            end
+        end
+        pretint(comps(doc)["minecraft:material_instances"])
+        for _, p in ipairs(block_of(doc).permutations or {}) do pretint(p.components["minecraft:material_instances"]) end
+    elseif tint then
         local function tinted(mi)
             if type(mi) ~= "table" then return end
-            for _, m in pairs(mi) do if type(m) == "table" then m.tint_method = tint end end
+            for _, m in pairs(mi) do
+                if type(m) == "table" then
+                    m.tint_method = tint
+                    if type(m.texture) == "string" then m.texture = grey_texture(ctx, m.texture) end
+                end
+            end
         end
         tinted(comps(doc)["minecraft:material_instances"])
         for _, p in ipairs(block_of(doc).permutations or {}) do tinted(p.components["minecraft:material_instances"]) end
@@ -1170,17 +1234,21 @@ behaviour.wall_hanging_sign = function (doc)
 end
 
 -- chest / trapped chest (Java ChestBlock, ChestRenderer's single / left / right models, 64 x 64):
--- facing / type, and open_count (the players inside: the lid opens; trapped chests send it as
--- their signal). params.layout "legacy": the pre-1.15 texture layout (Bedrock's own chest
--- textures, used by the fixtures).
+-- facing / type, the lid (gloamingforest:lid 0..4: the lid's angle in 22.5 degree steps, which the
+-- runtime moves as ChestLidController's openness, src/feature/families/Chests.cpp) and, for trapped
+-- chests, open_count (the players inside: their signal). params.layout "legacy": the pre-1.15
+-- texture layout (Bedrock's own chest textures, used by the fixtures).
 local CHEST_PARTS = {
     single = {bottom = {1, 0, 1, 14, 10, 14}, lid = {1, 0, 0, 14, 5, 14}, lock = {7, -2, 14, 2, 4, 1}},
     right = {bottom = {1, 0, 1, 15, 10, 14}, lid = {1, 0, 0, 15, 5, 14}, lock = {15, -2, 14, 1, 4, 1}},
     left = {bottom = {0, 0, 1, 15, 10, 14}, lid = {0, 0, 0, 15, 5, 14}, lock = {0, -2, 14, 1, 4, 1}},
 }
-local function chest_part_list(kind, open, legacy)
+-- the lid's positions: Bedrock turns the bones of block geometry in 22.5 degree steps
+local CHEST_LID_STEPS = 4
+local function chest_part_list(kind, angle, legacy)
     local p = CHEST_PARTS[kind]
-    local rot = open and {"x", -90} or nil -- ChestRenderer: lid.xRot = -(openness * PI / 2), fully open
+    -- ChestRenderer: lid.xRot = -(openness * PI / 2) (degrees here)
+    local rot = angle ~= 0 and {"x", -angle} or nil
     local parts = {
         {box = p.bottom, uv = {0, 19}},
         {box = p.lid, uv = {0, 0}, offset = {0, 9, 1}, rot = rot},
@@ -1205,19 +1273,19 @@ local function chest_visual(doc, e, t, ctx)
         local static = legacy and mmul(mtrans(0, 16, 16), mscale(1, -1, -1)) or mat3(1, 0, 0, 0, 1, 0, 0, 0, 1)
         local bones = {}
         for _, kind in ipairs({"single", "left", "right"}) do
-            local closed = part_cubes(chest_part_list(kind, false, legacy), static)
-            local opened = part_cubes(chest_part_list(kind, true, legacy), static)
+            local closed = part_cubes(chest_part_list(kind, 0, legacy), static)
             table.insert(bones, bone(kind .. "_bottom", {closed[1]}))
-            table.insert(bones, bone(kind .. "_lid", {closed[2], closed[3]}))
-            table.insert(bones, bone(kind .. "_lid_open", {opened[2], opened[3]}))
+            for k = 0, CHEST_LID_STEPS do
+                local lid = part_cubes(chest_part_list(kind, k * 90 / CHEST_LID_STEPS, legacy), static)
+                table.insert(bones, bone(kind .. "_lid_" .. k, {lid[2], lid[3]}))
+            end
         end
         return geo_doc(g, bones, 64, 64)
     end)
     local vis = {}
     for _, kind in ipairs({"single", "left", "right"}) do
         vis[kind .. "_bottom"] = is(NS .. "type", kind)
-        vis[kind .. "_lid"] = all(is(NS .. "type", kind), is(KIT .. "open_count", 0))
-        vis[kind .. "_lid_open"] = all(is(NS .. "type", kind), q(KIT .. "open_count") .. " > 0")
+        for k = 0, CHEST_LID_STEPS do vis[kind .. "_lid_" .. k] = all(is(NS .. "type", kind), is(KIT .. "lid", k)) end
     end
     geometry(doc, g, vis)
     local m = e.params.render_method or "alpha_test"
@@ -1231,6 +1299,10 @@ visual.trapped_chest = chest_visual
 -- ChestBlock.getShape: single AABB, a double chest reaches its partner
 local CHEST_AABB = {single = {1, 0, 1, 15, 14, 15}, north = {1, 0, 0, 15, 14, 15}, south = {1, 0, 1, 15, 14, 16}, west = {0, 0, 1, 15, 14, 15}, east = {1, 0, 1, 16, 14, 15}}
 local function chest_behaviour(doc, e)
+    -- the inventory contract's native backend (spike S3): a data-driven block actor (format
+    -- 1.26.50) that F10 gives a game container for the declared chest, saved with the block
+    comps(doc)["minecraft:block_entity"] = {}
+    doc.format_version = BLOCK_ENTITY_FORMAT
     for _, f in ipairs(FACING4) do
         for _, kind in ipairs({"single", "left", "right"}) do
             local b = CHEST_AABB.single
@@ -1246,7 +1318,8 @@ end
 behaviour.chest = chest_behaviour
 behaviour.trapped_chest = function (doc, e)
     chest_behaviour(doc, e)
-    -- TrappedChestBlock.getSignal: the players inside (0..15), strongly into the block below
+    -- TrappedChestBlock.getSignal: the players inside (open_count 0..15, the runtime's count of the
+    -- inventory contract's openers), strongly into the block below
     comps(doc)["minecraft:redstone_conductivity"] = {redstone_conductor = false}
     comps(doc)["minecraft:redstone_producer"] = {power = 0}
     for n = 1, 15 do perm(doc, is(KIT .. "open_count", n), {["minecraft:redstone_producer"] = {power = n, strongly_powered_face = "down"}}) end
@@ -1393,7 +1466,7 @@ end
 
 -- The overlay quad of quadrant i (1..4) of face f drawn with `logic` (UnbakedConnectedTextureModel:
 -- the octant from the centre to the face's corner, its face UVs remapped by the logic).
-local function ct_quad(f, i, logic)
+local function ct_quad(f, i, logic, lift)
     local dirs = CT_PLANE[AXIS_OF[f]]
     local a, b, n = NORMAL[dirs[i]], NORMAL[dirs[i % 4 + 1]], NORMAL[f]
     local corner, box = {}, {}
@@ -1404,9 +1477,10 @@ local function ct_quad(f, i, logic)
     local function ru(u) return l[2] + (l[4] - l[2]) * u / 16 end
     local function rv(v) return l[3] + (l[5] - l[3]) * v / 16 end
     local rect = {ru(r[1]), rv(r[2]), ru(r[3]), rv(r[4])}
-    -- the quad on the face plane, lifted 0.01 px off the base face (no z-fighting)
+    -- the quad on the face plane, lifted 0.01 px off the base face (no z-fighting; the client mod's
+    -- corner patches 0.02 px, over the overlay)
     local k = n[1] ~= 0 and 1 or (n[2] ~= 0 and 2 or 3)
-    local plane = (n[k] > 0 and 16 or 0) + n[k] * 0.01
+    local plane = (n[k] > 0 and 16 or 0) + n[k] * (lift or 0.01)
     box[k], box[k + 3] = plane, plane
     return cube(box, {faces = {[f] = {rect = rect, mat = l[1]}}, faces_only = true})
 end
@@ -1486,6 +1560,24 @@ visual.connected_texture = function (doc, e, t, ctx)
     comps(doc)["minecraft:material_instances"] = {
         ["*"] = mat(tex(t, "base", "*"), method), overlay = mat(t.overlay, method), connected = mat(t.connected, method),
     }
+    -- no room for the corners in the states: the client mod draws the corner piece over a quadrant
+    -- whose two sides connect while its diagonal block is missing (ConnectionLogic: corner, where the
+    -- pack drew cornerless), through the client.render contract (src/client/families/CtCorners.cpp)
+    -- with these patches and the connected sheet's image
+    if not corners then
+        local list = arr({})
+        for _, f in ipairs(FACES6) do
+            if faces[f] then
+                table.insert(list, f)
+                for i = 1, 4 do
+                    local gid = "geometry.gf_families.ct_corner_" .. f .. "_" .. i
+                    geo(ctx, gid, function () return geo_doc(gid, {bone("corner", {ct_quad(f, i, "corner", 0.02)})}) end)
+                end
+            end
+        end
+        local image = terrain_image(ctx, t.connected)
+        if image then ctx.ct_corners[e.id] = {texture = image, faces = list} end
+    end
 end
 
 -- ---- modifiers -----------------------------------------------------------------------------------
@@ -1532,7 +1624,15 @@ modifiers.snowloggable = function (doc, e, t, ctx)
             base and base.ambient_occlusion == false and {ambient_occlusion = true, face_dimming = true} or nil)
         comps(doc)["minecraft:material_instances"] = mi
     end
-    -- the snow is part of the block's shape (SnowLoggable shapes)
+    -- the snow is part of the block's shape (SnowLoggable shapes). F1's skeleton of a TF block has
+    -- Java's shape per state already (TFBushBlock.getShape / getCollisionShape with the snow of each
+    -- layer count, per age): those stay, the kit's layer boxes would override them
+    for _, p in ipairs(block_of(doc).permutations or {}) do
+        local c = p.components or {}
+        if type(p.condition) == "string" and p.condition:find(NS .. "layers", 1, true) and (c["minecraft:selection_box"] ~= nil or c["minecraft:collision_box"] ~= nil) then
+            return
+        end
+    end
     local sel = comps(doc)["minecraft:selection_box"]
     local sb = type(sel) == "table" and sel.origin and {sel.origin[1] + 8, sel.origin[2], sel.origin[3] + 8, sel.origin[1] + 8 + sel.size[1], sel.origin[2] + sel.size[2], sel.origin[3] + 8 + sel.size[3]} or {2, 0, 2, 14, 13, 14}
     for n = 1, 8 do
@@ -1859,7 +1959,10 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
     local by_id, order = group(entries, errors)
     local existing = bp_blocks(bpdir)
     local manual = opts.manual or {}
-    local ctx = {geos = {}, terrain = {}, missing = {}}
+    local ctx = {geos = {}, terrain = {}, missing = {}, ct_corners = {}}
+    -- the resource pack's own terrain textures (the images of the textures the kit tints)
+    local rp_terrain = try_json(path.join(rpdir, "textures", "terrain_texture.json"))
+    ctx.rp_terrain = type(rp_terrain) == "table" and rp_terrain.texture_data or {}
     ctx.loot_double = function (e)
         local rel = "loot_tables/gf_families/" .. safe_name(e.id) .. "_double.json"
         local file = path.join(bpdir, rel)
@@ -1868,7 +1971,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             functions = arr({{["function"] = "set_count", count = 2}})}})}})})
         return rel
     end
-    local result = {blocks = 0, skipped = 0, files = {}, sounds = {}, waterloggable = {}}
+    local result = {blocks = 0, skipped = 0, files = {}, sounds = {}, waterloggable = {}, chests = {}}
     for _, id in ipairs(order) do
         local g = by_id[id]
         if manual[id] then
@@ -1911,6 +2014,11 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             if sound then result.sounds[id] = sound end
         end
     end
+    result.ct_corners = ctx.ct_corners
+    -- the chest family blocks (hand-made BP files too: the container is the runtime's)
+    for id, g in pairs(by_id) do
+        if g.shape == "chest" or g.shape == "trapped_chest" then result.chests[id] = g.shape end
+    end
     -- TF's sound types for the blocks that use them (any block of the pack)
     local used = {}
     for id, name in pairs(SOUND_TYPE_BLOCKS) do
@@ -1938,12 +2046,13 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
         merge_json_file(path.join(rpdir, "textures", "terrain_texture.json"), function (doc)
             doc = doc or {resource_pack_name = "gloamingforest", texture_name = "atlas.terrain", padding = 8, num_mip_levels = 4, texture_data = {}}
             doc.texture_data = doc.texture_data or {}
-            for k, v in pairs(ctx.terrain) do if doc.texture_data[k] == nil then doc.texture_data[k] = {textures = v} end end
+            -- a tinted texture as vanilla's waterlily: [{path, tint_color}]
+            for k, v in pairs(ctx.terrain) do if doc.texture_data[k] == nil then doc.texture_data[k] = {textures = type(v) == "table" and arr({v}) or v} end end
             return doc
         end)
     end
     for _, m in ipairs(ctx.missing) do
-        if opts.strict_textures then table.insert(errors, "families: entity texture " .. m .. " is not in the resource pack") end
+        if opts.strict_textures then table.insert(errors, "families: texture " .. m .. " is not in the resource pack") end
     end
     -- block sounds (RP blocks.json; an id that has an entry keeps it, TF's sound types replace it)
     if not table.empty(result.sounds) then
@@ -1958,6 +2067,60 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
         end)
     end
     return result
+end
+
+-- ---- containers ----------------------------------------------------------------------------------
+--
+-- Chests and trapped chests keep their slots, screens, sounds, opening stat and comparator output
+-- in the inventory contract (F10, spike S3: src/feature/inventory): the generator declares every
+-- chest family block as a container there (data/gf/containers/<name>, read at mod load) with
+-- ChestBlock's rules: 27 slots, a left / right pair opening as one 54-slot chest, not opened under
+-- a redstone conductor or a sitting cat, the opening stat (TrappedChestBlock#getOpenChestStat:
+-- trigger_trapped_chest) and the comparator output. A unit's own declaration of the block
+-- (assets/data/containers/<u>.json) wins. The runtime (src/feature/families/Chests.cpp) keeps the
+-- pairing, the lid and the trapped chest's signal.
+local CONTAINERS_DIR = path.join("data", "gf", "containers")
+
+-- The blocks the other container files of `outdir` declare.
+local function declared_elsewhere(outdir, own)
+    local out = {}
+    for _, f in ipairs(json_files(path.join(outdir, CONTAINERS_DIR))) do
+        if path.filename(f) ~= own then
+            local doc = try_json(f)
+            for _, e in ipairs(type(doc) == "table" and doc or {}) do
+                if type(e) == "table" and type(e.block) == "string" then out[e.block] = f end
+            end
+        end
+    end
+    return out
+end
+
+-- Declares `chests` (id -> "chest" | "trapped_chest") in data/gf/containers/<name>.
+local function declare_chests(outdir, chests, name, files)
+    if table.empty(chests) then return end
+    local others = declared_elsewhere(outdir, name)
+    local list = arr({})
+    for _, id in ipairs(sorted_keys(chests)) do
+        if not others[id] then
+            -- ChestBlockEntity#getDefaultName / CompoundContainer: container.chest(Double)
+            table.insert(list, {block = id, rows = 3, title = "container.chest", chest = true, pairs = true, double_title = "container.chestDouble",
+                stat = chests[id] == "trapped_chest" and "minecraft:trigger_trapped_chest" or "minecraft:open_chest", comparator = true})
+        end
+    end
+    local file = path.join(outdir, CONTAINERS_DIR, name)
+    os.mkdir(path.directory(file))
+    json.savefile(file, list)
+    table.insert(files, file)
+end
+
+-- The connected texture blocks whose corners the client mod draws (data/gf/families_render/<name>):
+-- {id: {texture, faces}} (visual.connected_texture).
+local function write_ct_corners(outdir, corners, name, files)
+    if table.empty(corners) then return end
+    local file = path.join(outdir, "data", "gf", "families_render", name)
+    os.mkdir(path.directory(file))
+    json.savefile(file, {ct_corners = corners})
+    table.insert(files, file)
 end
 
 -- The fixture families (tools/families/fixtures/*.json): {entries, textures, names}.
@@ -2094,6 +2257,8 @@ function generate(projectdir, outdir, opts)
             summary.blocks, summary.skipped = r.blocks, r.skipped
             for _, f in ipairs(r.files) do table.insert(summary.files, f) end
             for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end
+            declare_chests(outdir, r.chests, "families.json", summary.files)
+            write_ct_corners(outdir, r.ct_corners, "families.json", summary.files)
             mark(bp, r.blocks)
         end
     end
@@ -2111,6 +2276,8 @@ function generate(projectdir, outdir, opts)
             summary.fixtures = r.blocks
             for _, f in ipairs(r.files) do table.insert(summary.files, f) end
             for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end
+            declare_chests(outdir, r.chests, "families_test.json", summary.files)
+            write_ct_corners(outdir, r.ct_corners, "families_test.json", summary.files)
             mark(tbp, r.blocks)
             -- fixture textures (vanilla texture paths) and names
             merge_json_file(path.join(trp, "textures", "terrain_texture.json"), function (doc)
