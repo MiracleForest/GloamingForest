@@ -114,9 +114,8 @@ if (Test-ClientTrace) {
     # line per particle id and route in the run: combat.client_fx_native may have logged it already)
     try { Write-Step "fx: $(Wait-LogLine 'fx: client particle twilightforest:large_flame' 20)" }
     catch { $screenFailures.Add('the client mod did not handle fx.particle for twilightforest:large_flame') }
-} else {
-    Start-Sleep -Seconds 1
 }
+Start-Sleep -Seconds 2 # the emitter runs from the next tick for 5 s; the chat that ran the test closes
 Save-Screenshot 'fx-particles' | Out-Null
 
 # the missing advancement toast (shown 10 s; 600 ms slide in)
