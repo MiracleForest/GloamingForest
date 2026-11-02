@@ -508,13 +508,26 @@ ll::coro::CoroTask<bool> moveTraveller(tp::Traveller& t, int dest, Vec3 at) {
     co_return true;
 }
 
+/// Moves a player within its dimension with its riders (a teleport drops them: they are taken
+/// off, moved and put on again).
+void teleportWithRiders(Player& player, int dim, Vec3 const& at, Vec2 const& rotation) {
+    auto riders = takePassengers(player);
+    player.teleport(at, DimensionType(dim), rotation);
+    for (auto r : riders) {
+        auto* rider = actorById(r);
+        if (!rider) continue;
+        rider->teleport(at, DimensionType(dim), rider->getRotation());
+        rider->startRiding(player, true);
+    }
+}
+
 void finishTrip(tp::Traveller const& t, int to, Vec3 const& at, char const* verb = "travelled") {
     auto* a = actorById(t.id);
     if (!a) return;
     if (t.isPlayer) {
         auto& p = static_cast<Player&>(*a);
         // place it exactly (the dimension change may settle it a little off)
-        p.teleport(at, DimensionType(to), Vec2{t.pitch, t.yaw});
+        teleportWithRiders(p, to, at, Vec2{t.pitch, t.yaw});
         p.setFallDistance(0.0f);
     }
     auto& st      = states()[t.id];
@@ -752,14 +765,7 @@ bool teleportPlayer(Player& player, int dest, Vec3 const& at, float yaw, float p
     if (player.getVehicle()) player.stopRiding(true, false, false, true);
     if (dest == t.srcDim) {
         // within the dimension at once; the riders (shoulder parrots) come along
-        auto riders = takePassengers(player);
-        player.teleport(at, DimensionType(dest), Vec2{pitch, yaw});
-        for (auto r : riders) {
-            auto* rider = actorById(r);
-            if (!rider) continue;
-            rider->teleport(at, DimensionType(dest), rider->getRotation());
-            rider->startRiding(player, true);
-        }
+        teleportWithRiders(player, dest, at, Vec2{pitch, yaw});
         notifyTeleported(player, t.srcDim, dest);
         return true;
     }

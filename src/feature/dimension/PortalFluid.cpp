@@ -26,6 +26,7 @@
 
 #include "ll/api/memory/Hook.h"
 
+#include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 #include "mc/deps/shared_types/legacy/LevelSoundEvent.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorType.h"
@@ -148,7 +149,8 @@ void portalWaterTick(Actor& actor, BlockSource& region) {
     actor.setFallDistance(0.0f);
     if (actor.isOnFire()) actor.stopFire();
     // LivingEntity#aiStep: isSensitiveToWater() && isInWaterRainOrBubble() -> hurt(drown, 1)
-    if (sensitiveToWater(actor)) combat::hurt(actor, 1.0f, "minecraft:drown");
+    // (the game's own drowning cause: gf::combat sees it as minecraft:drown)
+    if (sensitiveToWater(actor)) actor.hurtByCause(1.0f, SharedTypes::Legacy::ActorDamageCause::Drowning);
 }
 
 void portalWaterEndTick() {
