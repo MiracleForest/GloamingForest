@@ -181,7 +181,33 @@ UIControl* findControl(UIControl& root, std::string_view name, int depth = 0) {
 /// HUD's bar: Bedrock's HUD draws no notches, so the client mod adds them after the HUD rendered.
 /// Java's notch sprites are Mojang's textures (not TF's assets, not on Bedrock): the notches are
 /// drawn as 1-pixel dividers, darker over the bar's background than over its progress.
-void drawNotches(ScreenView& view, MinecraftUIRenderContext& ctx) {
+/// The notch dividers of the HUD's bars this frame (GUI pixels, ARGB).
+struct Notch {
+    float    x = 0, y = 0, w = 0, h = 0;
+    unsigned argb = 0;
+};
+std::vector<Notch>& pendingNotches() {
+    static std::vector<Notch> v; // render thread only
+    return v;
+}
+
+/// Paints the collected dividers unclipped (after a render, the context still clips to the last
+/// clipped control).
+void paintNotches(MinecraftUIRenderContext& ctx) {
+    auto& notches = pendingNotches();
+    if (notches.empty()) return;
+    ctx.saveCurrentClippingRectangle();
+    ctx.setFullClippingRectangle();
+    {
+        gf::client::screen::Canvas canvas(ctx);
+        for (auto const& n : notches) canvas.fill({n.x, n.y, n.w, n.h}, n.argb);
+    }
+    ctx.restoreSavedClippingRectangle();
+}
+
+/// Collects the dividers over the bars the HUD shows (from its visual tree).
+void collectNotches(ScreenView& view) {
+    pendingNotches().clear();
     auto& s = C();
     struct Want {
         int          index    = 0;
@@ -218,14 +244,6 @@ void drawNotches(ScreenView& view, MinecraftUIRenderContext& ctx) {
         gridCache = gridPtr;
     }
     UIControl* grid = gridPtr.get();
-    // after the HUD rendered, the context still clips to the last clipped control: draw unclipped
-    ctx.saveCurrentClippingRectangle();
-    ctx.setFullClippingRectangle();
-    struct RestoreClip {
-        MinecraftUIRenderContext& c;
-        ~RestoreClip() { c.restoreSavedClippingRectangle(); }
-    } restoreClip{ctx};
-    gf::client::screen::Canvas canvas(ctx);
     for (auto const& item : grid->mChildren.get()) {
         if (!item || !item->mIsVisibleInTree) continue;
         int index = item->findCollectionIndex("boss_bars");
@@ -241,7 +259,7 @@ void drawNotches(ScreenView& view, MinecraftUIRenderContext& ctx) {
         float filled = x + w * std::clamp(want->progress, 0.0f, 1.0f);
         for (int k = 1; k < want->notches; ++k) {
             float nx = std::floor(x + w * static_cast<float>(k) / static_cast<float>(want->notches));
-            canvas.fill({nx, y, 1.0f, h}, nx < filled ? 0x80000000u : 0x50000000u);
+            pendingNotches().push_back({nx, y, 1.0f, h, nx < filled ? 0x80000000u : 0x50000000u});
         }
         std::scoped_lock lock(s.mutex);
         if (s.notchLogged.insert(want->boss).second)
@@ -490,9 +508,21 @@ public:
     // framework's: adding render listeners while the client runs can deadlock the game)
     void load() {
         auto& bus = ll::event::EventBus::getInstance();
+        // the HUD batches its controls, so the dividers are painted on the screen rendered after it in the
+        // frame (the HUD's own context as well, for a frame where none is)
         mListener = bus.emplaceListener<ll::event::AfterUIRenderEvent>([](ll::event::AfterUIRenderEvent& ev) {
-            if (ev.screenView().getScreenName() != "hud_screen") return;
-            drawNotches(ev.screenView(), ev.uiRenderContext());
+            auto name = ev.screenView().getScreenName();
+            if (name == "hud_screen") {
+                collectNotches(ev.screenView());
+                paintNotches(ev.uiRenderContext());
+                return;
+            }
+            paintNotches(ev.uiRenderContext());
+            pendingNotches().clear();
+        });
+        mBeforeListener = bus.emplaceListener<ll::event::BeforeUIRenderEvent>([](ll::event::BeforeUIRenderEvent& ev) {
+            if (pendingNotches().empty() || ev.screenView().getScreenName() == "hud_screen") return;
+            paintNotches(ev.uiRenderContext());
         });
     }
     void install() {
@@ -511,6 +541,7 @@ public:
 
 private:
     ll::event::ListenerPtr mListener;
+    ll::event::ListenerPtr mBeforeListener;
 };
 
 } // namespace
