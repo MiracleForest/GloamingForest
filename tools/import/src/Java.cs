@@ -85,6 +85,40 @@ namespace GfImport
 
         static double F(string s) { return double.Parse(s.TrimEnd('F', 'f', 'D', 'd'), CultureInfo.InvariantCulture); }
 
+        /// <summary>A sound type of TF's own (init/TFSoundTypes.java): NeoForge's DeferredSoundType(volume, pitch,
+        /// break, step, place, hit, fall), the sounds as TF's sound event names (init/TFSounds.java createEvent).</summary>
+        public sealed class SoundTypeInfo
+        {
+            public string Name;            // "JAR"
+            public double Volume, Pitch;
+            public string Break, Step, Place, Hit, Fall;
+        }
+
+        /// <summary>TF's sound types by constant name.</summary>
+        public static Dictionary<string, SoundTypeInfo> SoundTypes(Ctx ctx)
+        {
+            var events = new Dictionary<string, string>(StringComparer.Ordinal);
+            string sounds = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFSounds.java")));
+            foreach (Match m in Regex.Matches(sounds, @"\b(\w+)\s*=\s*createEvent\(\s*""([a-z0-9_.]+)""\s*\)")) events[m.Groups[1].Value] = m.Groups[2].Value;
+            var types = new Dictionary<string, SoundTypeInfo>(StringComparer.Ordinal);
+            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFSoundTypes.java")));
+            foreach (var f in Fields(text, @"DeferredSoundType"))
+            {
+                var m = Regex.Match(f.Item3, @"^new\s+DeferredSoundType\(\s*([\d.]+[fF]?)\s*,\s*([\d.]+[fF]?)\s*,\s*TFSounds\.(\w+)\s*,\s*TFSounds\.(\w+)\s*,\s*TFSounds\.(\w+)\s*,\s*TFSounds\.(\w+)\s*,\s*TFSounds\.(\w+)\s*\)$");
+                if (!m.Success) { ctx.Warn("TFSoundTypes." + f.Item2 + ": not a DeferredSoundType(volume, pitch, break, step, place, hit, fall) of TFSounds: no Bedrock block sound"); continue; }
+                Func<int, string> ev = g =>
+                {
+                    string e;
+                    if (events.TryGetValue(m.Groups[g].Value, out e)) return e;
+                    ctx.Warn("TFSoundTypes." + f.Item2 + ": TFSounds." + m.Groups[g].Value + " is not a createEvent sound event");
+                    return null;
+                };
+                var t = new SoundTypeInfo { Name = f.Item2, Volume = F(m.Groups[1].Value), Pitch = F(m.Groups[2].Value), Break = ev(3), Step = ev(4), Place = ev(5), Hit = ev(6), Fall = ev(7) };
+                if (t.Break != null && t.Step != null && t.Place != null && t.Hit != null && t.Fall != null) types[t.Name] = t;
+            }
+            return types;
+        }
+
         public static Dictionary<string, JBlock> Blocks(Ctx ctx)
         {
             string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFBlocks.java")));
@@ -352,8 +386,9 @@ namespace GfImport
             m = Regex.Match(s, @"\.lightLevel\(\s*\(?\s*\w+\s*\)?\s*->\s*(\d+)\s*\)");
             if (m.Success) { b.Light = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); b.DynamicLight = false; b.LightExpr = null; }
             else if (s.Contains(".lightLevel(")) { b.DynamicLight = true; b.Light = 0; b.LightExpr = Light.LambdaOf(s); }
-            m = Regex.Match(s, @"\.sound\(\s*(?:SoundType|TFSoundTypes)\.(\w+)\s*\)");
-            if (m.Success) b.Sound = m.Groups[1].Value;
+            // a vanilla SoundType by its constant ("WOOD"), one of TF's own as "TFSoundTypes.JAR"
+            m = Regex.Match(s, @"\.sound\(\s*(SoundType|TFSoundTypes)\.(\w+)\s*\)");
+            if (m.Success) b.Sound = (m.Groups[1].Value == "TFSoundTypes" ? "TFSoundTypes." : "") + m.Groups[2].Value;
             // map colour: MapColor.X, DyeColor.X (its map colour), logProperties(top[, side]) (side: a lying log's bark), or
             // a lambda of one boolean state (the castle doors: VANISHED ? MapColor.NONE : the door's colour)
             const string color = @"MapColor\.\w+|DyeColor\.\w+(?:\.getMapColor\(\))?";

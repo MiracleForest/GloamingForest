@@ -304,9 +304,11 @@ namespace GfImport
             return res;
         }
 
-        public void ImportFamilies()
+        /// <summary>The family of every block (bi.Family, bi.Traits): the shape family of its Java class chain, else its
+        /// first trait family; null for a block the families kit (F11) does not build. Before ImportBlocks: the kit
+        /// rewrites a family block at assemble, so its skeleton file is the kit's input (Blocks.FamilyBlockFormat).</summary>
+        public void ComputeFamilies()
         {
-            var perUnit = new SortedDictionary<string, J>(StringComparer.Ordinal);
             var climbable = new HashSet<string>(TagMembers("minecraft:climbable", null, "block"), StringComparer.Ordinal);
             foreach (var bi in BlockInfos.Values)
             {
@@ -325,8 +327,19 @@ namespace GfImport
                 if (fam == null)
                     foreach (var tf in new[] { "climbable", "lightable", "snowloggable", "connected_texture", "waterloggable" })
                         if (traits.Contains(tf)) { fam = tf; break; }
-                if (fam == null) continue;
                 bi.Family = fam;
+                bi.Traits = traits;
+            }
+        }
+
+        public void ImportFamilies()
+        {
+            var perUnit = new SortedDictionary<string, J>(StringComparer.Ordinal);
+            foreach (var bi in BlockInfos.Values)
+            {
+                string fam = bi.Family;
+                var traits = bi.Traits;
+                if (fam == null) continue;
                 var p = J.Obj().Set("class", bi.Chain[0]);
                 if (bi.Chain.Count > 1) p.Set("vanillaClass", bi.Chain.Last());
                 // every trait, whatever the primary family (stairs are waterloggable, berry bushes snowloggable, ...)
@@ -353,6 +366,11 @@ namespace GfImport
                 }
                 // Java property names; the Bedrock state is "twilightforest:<name>" (docs/spec/blockstates.md)
                 if (bi.States.Count > 0) p.Set("states", J.Strs(bi.States.Select(s => s.Java)));
+                // the block's Bedrock block tags (tools and tier, Harvest.cs), free of the block format: the kit writes
+                // them in the form of the format it writes the block in ("tag:<id>" components up to 1.26.10, one
+                // minecraft:tags array from 1.26.20; docs/spikes/S7.md), whatever form the skeleton file has
+                var tags = BedrockBlockTags(bi.Id);
+                if (tags.Count > 0) p.Set("tags", J.Strs(tags));
                 J arr;
                 string unit = NameOf(bi.Owner);
                 if (!perUnit.TryGetValue(bi.Owner, out arr)) perUnit[bi.Owner] = arr = J.Arr();
@@ -538,13 +556,17 @@ namespace GfImport
 
         public void ImportSkeletonIndex()
         {
-            // blocks with their frozen states (the first value is the default state)
+            // blocks with their frozen states (the first value is the default state), and the Java class chain of each
+            // (the TF classes, then the vanilla class reached: import.place_blocks gives a block the support the
+            // canSurvive of its classes needs)
             var blocks = J.Obj();
+            var classes = J.Obj();
             foreach (var bi in BlockInfos.Values)
             {
                 var st = J.Obj();
                 foreach (var s in bi.States) st.Set(s.Bedrock, J.Strs(s.Values));
                 blocks.Set("twilightforest:" + bi.Id, st);
+                classes.Set("twilightforest:" + bi.Id, J.Strs(bi.Chain));
             }
             var data = J.Obj();
             foreach (var reg in new[] { "loot_table", "recipe", "advancement", "tags", "worldgen", "twilight", "data_maps" })
@@ -554,6 +576,7 @@ namespace GfImport
             }
             var doc = J.Obj()
                 .Set("blocks", blocks)
+                .Set("classes", classes)
                 .Set("data", data)
                 .Set("items", J.Strs(skeletonItems))
                 .Set("entities", J.Strs(Ids("entity")))

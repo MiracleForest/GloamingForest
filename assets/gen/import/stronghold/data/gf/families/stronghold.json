@@ -5,7 +5,8 @@
     "params": {
       "class": "StrongholdShieldBlock",
       "vanillaClass": "DirectionalBlock",
-      "states": ["facing"]
+      "states": ["facing"],
+      "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   },
   {
@@ -15,7 +16,8 @@
       "class": "TrophyPedestalBlock",
       "vanillaClass": "Block",
       "traits": ["waterloggable"],
-      "states": ["active"]
+      "states": ["active"],
+      "tags": ["minecraft:is_pickaxe_item_destructible"]
     }
   }
 ]

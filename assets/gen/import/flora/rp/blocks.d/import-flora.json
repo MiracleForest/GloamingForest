@@ -12,7 +12,7 @@
     "sound": "slime"
   },
   "twilightforest:cicada_jar": {
-    "sound": "glass"
+    "sound": "twilightforest.jar"
   },
   "twilightforest:clover_patch": {
     "sound": "grass"
@@ -36,10 +36,10 @@
     "sound": "slime"
   },
   "twilightforest:firefly_jar": {
-    "sound": "glass"
+    "sound": "twilightforest.jar"
   },
   "twilightforest:firefly_particle_spawner": {
-    "sound": "glass"
+    "sound": "twilightforest.jar"
   },
   "twilightforest:gold_oreberry": {
     "sound": "metal"
@@ -60,7 +60,7 @@
     "sound": "grass"
   },
   "twilightforest:mason_jar": {
-    "sound": "glass"
+    "sound": "twilightforest.jar"
   },
   "twilightforest:mayapple": {
     "sound": "grass"

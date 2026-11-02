@@ -1,9 +1,0 @@
-{
-  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
-  "kind": "template_pool",
-  "reason": "a pool alias target: template pools are keys inside the template definition files, not files of their own (src/main/java/twilightforest/world/components/structures/camp/CampPieces.java (rack); defined as a key of twilight/template_definition/camp/deco/*.json)",
-  "referencedBy": [
-    "data/twilightforest/twilight/template_definition/camp/path/path_2x4.json",
-    "data/twilightforest/twilight/template_definition/camp/path/path_3x4.json"
-  ]
-}

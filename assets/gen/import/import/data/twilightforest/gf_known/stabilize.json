@@ -1,6 +1,0 @@
-{
-  "comment": "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.",
-  "kind": "biome_layer_type",
-  "reason": "\"type\" of twilight/biome_layer_stack layers; a code registry (codec) (src/main/java/twilightforest/init/custom/BiomeLayerTypes.java (STABILIZE))",
-  "referencedBy": ["data/twilightforest/twilight/biome_layer_stack/random_forest_biomes.json"]
-}

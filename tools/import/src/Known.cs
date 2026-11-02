@@ -5,13 +5,11 @@
 // template pools, each with its kind, reason and TF source). A reference found nowhere fails the import;
 // references that are dangling in TF itself ("tfDangling") are kept verbatim and reported as warnings.
 //
-// Bridge for assemble (F0, tools/xmake/assemble.lua): its dangling-reference check knows only data files,
-// BP definitions and owners.tsv rows, checks the values of "tag" / "tags" keys as plain ids, and reads
-// data/<ns>/tags/twilight/<registry>/ as the registry "tags/twilight". Until it reads the allowlist itself
-// (requested from F0 / A8: issue #21, docs/spec/import.md), the import writes one index file per reference this check
-// resolved but assemble cannot (data/twilightforest/gf_known/**, data/twilightforest/tags/gf_known/**, each
-// naming its kind and reason). Nothing reads them at run time. The tfDangling reference is bridged too: assemble's check
-// has no warning level, so leaving it out would fail every build (issue #21, change 4).
+// assemble (F0, tools/xmake/assemble.lua) runs the same check on the assembled packs: it reads
+// tools/import/known-ids.json itself (ids known by kind, tfDangling references as warnings), types the
+// values of tag-valued keys as tags and reads tags/twilight/<registry>/ as a two-segment registry (issue
+// #21). The import keeps its own check so that a dangling reference fails at generation, with the TF
+// file that names it, and writes no index file for assemble.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -64,7 +62,7 @@ namespace GfImport
             // JSON keys whose value is a tag written without '#' (TagKey codecs, Bedrock item tags)
             var tagKeys = new HashSet<string>((allow["tagValuedKeys"] ?? J.Obj()).Keys, StringComparer.Ordinal);
 
-            // what assemble knows (its known_ids: owners.tsv ids, data files by its registry rule, BP identifiers)
+            // owners.tsv ids, data files by their one-segment registry, BP identifiers
             var known = new HashSet<string>(StringComparer.Ordinal);
             var knownTags = new HashSet<string>(StringComparer.Ordinal);
             // what Java knows besides: tags by Java's registry paths
@@ -89,7 +87,6 @@ namespace GfImport
                 {
                     if (f.Rel.StartsWith("data/", StringComparison.Ordinal))
                     {
-                        if (f.Rel.StartsWith("data/twilightforest/gf_known/", StringComparison.Ordinal) || f.Rel.StartsWith("data/twilightforest/tags/gf_known/", StringComparison.Ordinal)) continue;
                         var dr = DataRegistry(f.Rel.Substring(5));
                         if (dr != null)
                         {
@@ -108,7 +105,7 @@ namespace GfImport
                     }
                 }
 
-            // the references assemble would not resolve
+            // the references that name no generated data file, BP definition or owners.tsv id
             var refs = new SortedDictionary<string, Ref>(StringComparer.Ordinal);
             Action<string, string, string> note = (s, key, file) =>
             {
@@ -136,55 +133,34 @@ namespace GfImport
 
             // resolve each one the way Java does, then the allowlist; the rest is a dangling reference
             var usedAllow = new HashSet<string>(StringComparer.Ordinal);
-            int bridged = 0;
+            int resolved = 0, tfDangling = 0, unknown = 0;
             foreach (var r in refs.Values)
             {
                 bool tag = r.Value.StartsWith("#", StringComparison.Ordinal);
                 string id = tag ? r.Value.Substring(1) : r.Value;
-                string kind, reason;
-                if (tag && javaTags.Contains(id))
-                {
-                    kind = "tag";
-                    reason = "a TF tag of a two-segment registry (data/<ns>/tags/twilight/<registry>/ or tags/worldgen/<registry>/), which assemble reads with a one-segment registry";
-                }
-                else if (!tag && r.TagKey && javaTags.Contains(id))
-                {
-                    kind = "tag";
-                    reason = "a TF tag named without '#' as the value of a tag-valued key (tools/import/known-ids.json tagValuedKeys: Java ingredients and block predicates, TagKey codecs, Bedrock item tags), which assemble checks as a plain id";
-                }
-                else if (allowIds[r.Value] != null)
-                {
-                    kind = allowIds[r.Value]["kind"].AsString();
-                    reason = allowIds[r.Value]["reason"].AsString() + " (" + allowIds[r.Value]["source"].AsString() + ")";
-                    usedAllow.Add(r.Value);
-                }
+                // a tag by Java's registry paths (tags/twilight/<r>/, tags/worldgen/<r>/), named with '#' or by a
+                // tag-valued key (tagValuedKeys), or an id TF registers in code (the allowlist names kind and source)
+                if ((tag || r.TagKey) && javaTags.Contains(id)) resolved++;
+                else if (allowIds[r.Value] != null) { usedAllow.Add(r.Value); resolved++; }
                 else if (dangling[r.Value] != null)
                 {
-                    kind = dangling[r.Value]["kind"].AsString();
-                    reason = "dangling in TF itself: " + dangling[r.Value]["reason"].AsString();
+                    // dangling in TF itself: kept verbatim, a warning
                     usedAllow.Add(r.Value);
-                    Warn("dangling reference " + r.Value + " (" + kind + ") in " + string.Join(", ", r.Files) + ": " + dangling[r.Value]["reason"].AsString());
+                    tfDangling++;
+                    Warn("dangling reference " + r.Value + " (" + dangling[r.Value]["kind"].AsString() + ") in " + string.Join(", ", r.Files) + ": " + dangling[r.Value]["reason"].AsString());
                 }
                 else
                 {
+                    unknown++;
                     Errors.Add("dangling reference " + r.Value + " in " + string.Join(", ", r.Files.Take(4)) + (r.Files.Count > 4 ? " (+" + (r.Files.Count - 4) + ")" : "")
                         + ": not a generated data file, BP definition or owners.tsv id; add it to tools/import/known-ids.json with its kind and TF source if TF registers it in code");
-                    continue;
                 }
-                // the index file assemble reads (see the header)
-                string path = id.Substring(id.IndexOf(':') + 1);
-                var entry = J.Obj()
-                    .Set("comment", "Index for the assemble reference check only (F1, tools/import/src/Known.cs): assemble cannot resolve this reference yet; nothing reads this file at run time.")
-                    .Set("kind", kind).Set("reason", reason)
-                    .Set("referencedBy", J.Strs(r.Files));
-                if (tag) EmitJson("tags", ImportUnit, "data/twilightforest/tags/gf_known/" + path + ".json", entry.Set("values", J.Arr()));
-                else EmitJson("registries", ImportUnit, "data/twilightforest/gf_known/" + path + ".json", entry);
-                bridged++;
             }
             foreach (var k in allowIds.Keys.Concat(dangling.Keys))
-                if (!usedAllow.Contains(k)) Warn("tools/import/known-ids.json: " + k + " is not referenced (stale entry, or assemble resolves it now)");
-            Log.Add(refs.Count + " references assemble cannot resolve: " + bridged + " resolved (Java tag paths, tools/import/known-ids.json), "
-                + (refs.Count - bridged) + " dangling");
+                if (!usedAllow.Contains(k)) Warn("tools/import/known-ids.json: " + k + " is not referenced (stale entry)");
+            Log.Add(refs.Count + " references that are no generated data file, BP definition or owners.tsv id: " + resolved
+                + " resolved (Java tag paths, tools/import/known-ids.json), " + tfDangling + " dangling in TF itself (tfDangling, warned), "
+                + unknown + " unknown (errors)");
         }
 
         static void VisitKeys(J v, string key, string[] keys, Action<string> onRef)
