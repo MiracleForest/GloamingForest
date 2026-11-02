@@ -66,6 +66,7 @@
 #include "feature/ext/item/Effects.h"
 #include "feature/ext/item/Enchant.h"
 #include "feature/ext/item/Item.h"
+#include "feature/ext/item/Records.h"
 #include "feature/item/DataFiles.h"
 #include "feature/item/Item.h"
 #include "feature/item/ItemInternal.h"
@@ -93,7 +94,7 @@ constexpr char kLateTrim[]     = "gold_darker";  ///< appended while players are
 constexpr char kNoPalette[]    = "gf_test_trim"; ///< appended while players are in the world, no palette texture
 // The probe BP of the spike's runs (tools/e2e/server/scenarios/item.s6probe.ps1): a data-driven disc.
 constexpr char kProbeDisc[]  = "gf_s6:disc";
-constexpr char kProbeSound[] = "gf_s6.disc";
+constexpr char kProbeSound[] = "twilightforest:music_disc.twilightforest.radiance"; ///< F3's sound definitions
 
 /// A banner whose second pattern is `pattern` (an id no Bedrock client knows: TF's would be such ids).
 std::optional<ItemStack> bannerWith(std::string const& pattern) {
@@ -313,8 +314,8 @@ namespace {
 // The spike's runs (and only they) register the fixture trim material at load, as U7 registers TF's,
 // so it is in the world's registry before players join: the e2e scenario's prelaunch step
 // (tools/e2e/{server,client}/scenarios/item.prelaunch.ps1) leaves <mod>/s6-trim-probe.flag next to
-// a development build (or GF_S6_TRIM_PROBE is set). item.spike_client_clear takes it back out of
-// the registry. Every other world, the 'full' run included, never has it.
+// a development build (or GF_S6_TRIM_PROBE is set). Every other world, the 'full' run included,
+// never has it.
 class SpikeTrimFixtureModule {
 public:
     void install() {
@@ -328,19 +329,26 @@ public:
 GF_REGISTER_MODULE(SpikeTrimFixtureModule);
 
 // How the game's own discs name their sound: the record component's SoundEventIdentifier is a
-// variant of (none, LevelSoundEvent, sound event name); a name is what a TF disc's BP item gives.
-// The spike's runs add a probe BP disc (gf_s6:disc, "sound_event": "gf_s6.disc", prelaunch step):
-// the BP parser keeps the custom name, and a jukebox plays it.
+// variant of (none, LevelSoundEvent, sound event name). A BP disc cannot name a custom sound: the BP
+// parser binds "sound_event" to the LevelSoundEvent enum (the spike's first probe disc with
+// "sound_event": "gf_s6.disc" was refused: "This value is bound to 'LevelSoundEvent' and expects one
+// of the following strings ... Found: 'gf_s6.disc'"). So the probe BP disc (gf_s6:disc, prelaunch
+// step) leaves sound_event out, and its song is a named sound of ext::setRecordSound: the jukebox's
+// own start of the record plays it through gf::fx and its stop stops it (feature/item/Records.cpp).
 GF_REGISTER_SELFTEST("item.spike_record_sounds", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (auto disc = items::make(kProbeDisc)) {
         auto const* component = disc->mItem ? disc->mItem->getComponent(RecordItemComponent::getIdentifier()) : nullptr;
         ctx.require(component != nullptr, std::string(kProbeDisc) + " (probe BP item) has its record component");
         auto const* record = static_cast<RecordItemComponent const*>(component);
         auto const& sound  = record->mSoundEvent->mSound.get();
-        auto const* name   = std::get_if<std::string>(&sound);
-        ctx.check(name && *name == kProbeSound, std::string("the BP disc's sound_event is kept as the name ") + kProbeSound + " (got " + (name ? *name : std::string("no name")) + ")");
+        ctx.check(!std::holds_alternative<std::string>(sound), "the BP disc without sound_event names no sound");
+        if (auto const* e = std::get_if<SharedTypes::Legacy::LevelSoundEvent>(&sound))
+            ctx.info("the BP disc's default sound_event: LevelSoundEvent(" + std::to_string(static_cast<int>(*e)) + "), not played for a registered disc");
+        else ctx.info("the BP disc has no sound_event (monostate)");
         ctx.check(record->mComparatorSignal == 7 && std::abs(record->mDuration - 5.f) < 0.01f, "with its comparator signal (7) and duration (5 s)");
-        // a jukebox plays it (JukeboxBlockActor::_startRecordSound with the named sound)
+        gf::item::ext::setRecordSound(kProbeDisc, kProbeSound);
+        auto before = gf::item::internal::recordCounts();
+        // a jukebox plays it: JukeboxBlockActor::_startRecordSound -> the named sound
         auto pos = ctx.testPos(5950);
         ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
         ctx.require(ctx.setBlock(pos, "minecraft:jukebox"), "a jukebox");
@@ -349,21 +357,21 @@ GF_REGISTER_SELFTEST("item.spike_record_sounds", [](Context& ctx) -> ll::coro::C
         auto* actor  = region ? region->getBlockEntity(bp) : nullptr;
         ctx.require(actor && actor->getType() == BlockActorType::Jukebox, "the jukebox's block actor");
         auto& jukebox = static_cast<JukeboxBlockActor&>(*actor);
-        jukebox.setRecord(*disc, true);
-        bool started = jukebox.mServerSoundInstance->has_value();
-        if (!started) jukebox.startPlayingRecord(*region);
-        ctx.info(std::string("setRecord(disc, true) ") + (started ? "started the record itself" : "left the start to startPlayingRecord"));
+        jukebox.setRecord(*disc, true); // as JukeboxBlock#use: the record goes in and starts
         co_await ctx.ticks(2);
         region = ctx.region();
         actor  = region ? region->getBlockEntity(bp) : nullptr;
         ctx.require(actor && actor->getType() == BlockActorType::Jukebox, "the jukebox is still there");
         auto& playing = static_cast<JukeboxBlockActor&>(*actor);
         ctx.check(items::idOf(*playing.mRecord) == kProbeDisc, "the jukebox holds the BP disc");
-        ctx.info(std::string("the jukebox ") + (playing.mServerSoundInstance->has_value() ? "runs a server sound instance for " : "runs no server sound instance for ") + kProbeSound
-                 + ", ticks playing " + std::to_string(playing.mTicksPlaying));
-        ctx.check(playing.mServerSoundInstance->has_value() || playing.mTicksPlaying > 0, "the jukebox plays the named record");
+        auto now = gf::item::internal::recordCounts();
+        ctx.check(now.started > before.started && now.lastSound == kProbeSound,
+                  std::string("the jukebox's start played ") + kProbeSound + " (" + std::to_string(now.started - before.started) + " start(s), last '" + now.lastSound + "')");
+        ctx.info("jukebox ticks playing " + std::to_string(playing.mTicksPlaying) + ", server sound instance " + (playing.mServerSoundInstance->has_value() ? "yes" : "no"));
         playing.stopPlayingRecord(*region);
+        ctx.check(gf::item::internal::recordCounts().stopped == before.stopped + 1, "stopping the record stops the named sound");
         playing.setRecord(ItemStack::EMPTY_ITEM(), false);
+        gf::item::ext::setRecordSound(kProbeDisc, "");
     } else {
         ctx.info(std::string("no ") + kProbeDisc + " (the probe BP of the spike's prelaunch step): the BP disc is not probed");
     }

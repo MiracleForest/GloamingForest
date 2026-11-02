@@ -2,9 +2,10 @@
 # and the client's local mode; dot-sourced, not a scenario of its own). Nothing of it ships:
 # - <mod>/s6-trim-probe.flag: the run registers the fixture trim material iron_darker at load
 #   (src/feature/item/SpikeTests.cpp), as U7 registers TF's;
-# - behavior_packs/GloamingForest_S6_Probe_BP: a data-driven disc gf_s6:disc whose minecraft:record
-#   names a custom sound event (gf_s6.disc), as TF's discs (U10) will: item.spike_record_sounds
-#   reads its record component and plays it in a jukebox.
+# - behavior_packs/GloamingForest_S6_Probe_BP: a data-driven disc gf_s6:disc as TF's discs (U10)
+#   need it: minecraft:record without "sound_event" (the BP parser binds it to the LevelSoundEvent
+#   enum and refuses a custom name: the spike's first probe), its song a named sound of
+#   gf::item::ext::setRecordSound: item.spike_record_sounds plays it in a jukebox.
 function Write-S6Probe([string]$ModDir, [string]$Reason) {
     if (-not (Test-Path $ModDir)) { throw "the deployed mod is not at $ModDir" }
     Set-Content -Path (Join-Path $ModDir 's6-trim-probe.flag') -Value $Reason -Encoding UTF8
@@ -34,7 +35,7 @@ function Write-S6Probe([string]$ModDir, [string]$Reason) {
     "components": {
       "minecraft:icon": "gf_test_fixture_item",
       "minecraft:max_stack_size": 1,
-      "minecraft:record": { "comparator_signal": 7, "duration": 5, "sound_event": "gf_s6.disc" }
+      "minecraft:record": { "comparator_signal": 7, "duration": 5 }
     }
   }
 }

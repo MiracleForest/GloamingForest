@@ -51,6 +51,19 @@ void unregister(std::string const& itemId);
 /// Removes the display transforms of an item (selftests).
 void clearDisplayTransforms(std::string const& itemId);
 
+/// Jukebox songs of ext::setRecordSound (selftests): how many started / stopped, the last sound.
+struct RecordCounts {
+    int         started = 0;
+    int         stopped = 0;
+    std::string lastSound;
+};
+[[nodiscard]] RecordCounts recordCounts();
+/// The jukebox at `pos` starts the disc `disc`: its registered sound plays (false: none registered).
+bool startRecord(BlockSource& region, BlockPos const& pos, std::string const& disc);
+/// The jukebox at `pos` (dimension `dim`, -1 any) stops its registered sound, unless it plays
+/// `unlessDisc` (a record put in again). False when it played none.
+bool stopRecord(int dim, BlockPos const& pos, std::string const& unlessDisc);
+
 /// The lore data key ("gf:lore" in the user data): the lines GloamingForest wrote.
 inline constexpr char kLoreKey[] = "lore";
 
