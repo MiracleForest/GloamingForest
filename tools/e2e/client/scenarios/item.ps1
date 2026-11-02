@@ -4,12 +4,18 @@
 #    enchantment and a tooltip (lore + glint marker), 2 an iron sword whose only enchantment is
 #    custom, 3 a banner with a pattern id no client knows (local mode: appended to the client's
 #    registry first), 4 / 5 fixture items whose bars come from their item data (1 and 3 doses of 4),
-#    6 armour trimmed with a material appended to the server's trim registry, 7 the same armour with
-#    a vanilla trim; and the fixture carrier effect (hidden Slowness II). Screenshots:
-#    out/item/{hud-carriers,slot1..7-*,inventory,tooltip-*}.png. item.spike_client_clear takes it back.
+#    6 armour trimmed with a material registered at load (ext::addTrimMaterial: in the level's
+#    registry before the player joined), 7 the same armour with a vanilla trim, 8 with a material
+#    appended after the join; and the fixture carrier effect (hidden Slowness II). Screenshots:
+#    out/item/{hud-carriers,slot1..8-*,inventory,tooltip-*}.png. A companion (remote-mod) registers
+#    the same fixtures when the host tells it ("item.spike_fixtures"). item.spike_client_clear takes
+#    the effect, the eight items and the registrations back, on the host and on the companion.
 # 2. Special crafting through a real crafting table (gf_test:fixture_item: two sticks in a column,
-#    special recipe of item.real_craft_arm), checked by item.real_craft_check.
-# 3. An anvil merge of a sword and a book with the fixture enchantment at I (item.real_anvil_*).
+#    special recipe of item.real_craft_arm, shadowed in the data index by a code-only data recipe
+#    of the same id as TF's special recipes are), checked by item.real_craft_check.
+# 3. An anvil merge of a sword and a book with the fixture enchantment at I (item.real_anvil_*; the
+#    check gives the player its levels back). A vanilla client offers no result there (its own
+#    preview): it then holds the book and uses the anvil, gets the anvil form and takes the sword.
 # Local mode also runs every item selftest in the integrated server; remote modes run them on the
 # BDS host and check that a vanilla client stays connected with the carriers in its inventory.
 $script:IsLocal = $script:Mode -eq 'local'
@@ -17,7 +23,7 @@ if ($script:IsLocal) {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $r = Invoke-SelfTest 'item.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) item selftest(s) failed in the local world: $($r.Failed -join ', ')" }
-    if ($r.Pass -lt 30) { throw "expected at least 30 item selftests, got $($r.Pass)" }
+    if ($r.Pass -lt 38) { throw "expected at least 38 item selftests, got $($r.Pass)" }
 } else {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
 }
@@ -43,12 +49,13 @@ $mark = Get-LogMark
 $r = Invoke-SelfTest 'item.spike_client'
 if ($r.Fail -gt 0) { throw 'item.spike_client failed' }
 Wait-LogLine 'S6 carriers given to' 30 -Since $mark | Out-Null
+if ($script:Mode -eq 'remote-mod') { Wait-LogLine 'S6 fixtures registered for the host' 30 -Since $mark | Out-Null }
 Start-Sleep -Seconds 12  # the inventory and the lore refresh reach the client; the chat lines fade
 Wait-HudReady
 
 Save-Screenshot 'hud-carriers' | Out-Null
-$names = @{ 1 = 'slot1-fixture'; 2 = 'slot2-sword'; 3 = 'slot3-banner'; 4 = 'slot4-bar-one-dose'; 5 = 'slot5-bar-three-doses'; 6 = 'slot6-trim-probe'; 7 = 'slot7-trim-emerald' }
-foreach ($slot in 1..7) {
+$names = @{ 1 = 'slot1-fixture'; 2 = 'slot2-sword'; 3 = 'slot3-banner'; 4 = 'slot4-bar-one-dose'; 5 = 'slot5-bar-three-doses'; 6 = 'slot6-trim-at-load'; 7 = 'slot7-trim-emerald'; 8 = 'slot8-trim-late' }
+foreach ($slot in 1..8) {
     Press-Key "$slot"
     Start-Sleep -Milliseconds 700
     Save-Screenshot $names[$slot] | Out-Null
@@ -57,7 +64,7 @@ Press-Key '1'
 
 Open-Inventory
 Save-Screenshot 'inventory' | Out-Null
-foreach ($t in @(@(1, 'tooltip-fixture'), @(2, 'tooltip-sword'), @(3, 'tooltip-banner'), @(6, 'tooltip-trim-probe'), @(7, 'tooltip-trim-emerald'))) {
+foreach ($t in @(@(1, 'tooltip-fixture'), @(2, 'tooltip-sword'), @(3, 'tooltip-banner'), @(6, 'tooltip-trim-at-load'), @(7, 'tooltip-trim-emerald'), @(8, 'tooltip-trim-late'))) {
     Move-Mouse (Hotbar-X $t[0]) $hotbarY -Relative
     Start-Sleep -Milliseconds 800
     Save-Screenshot $t[1] | Out-Null
@@ -69,8 +76,12 @@ if (-not $script:IsLocal) {
     if (-not (Get-GameProcess)) { throw 'the game closed with the S6 carriers in its inventory' }
     if (Get-LeviLog | Select-String -Pattern 'disconnect|Disconnected' -Quiet) { throw 'the client was disconnected with the S6 carriers' }
 }
+$mark = Get-LogMark
 $r = Invoke-SelfTest 'item.spike_client_clear'
 if ($r.Fail -gt 0) { throw 'item.spike_client_clear failed' }
+if ($script:Mode -eq 'remote-mod') { Wait-LogLine 'S6 fixtures dropped for the host' 30 -Since $mark | Out-Null }
+Start-Sleep -Seconds 2
+Save-Screenshot 'carriers-cleared' | Out-Null
 
 # ---- 2. special crafting through a crafting table ------------------------------------------------------
 $mark = Get-LogMark
@@ -133,10 +144,42 @@ $r = Invoke-SelfTest 'item.real_anvil_check'
 if ($r.Fail -gt 0) { throw "the real anvil merge failed: $($r.Failed -join ', ')" }
 $line = Wait-LogLine 'real anvil checked for .*: fixture_react \d' 15 -Since $mark
 Write-Step "anvil: $line"
-if ($script:Mode -eq 'remote-vanilla' -and $line -match 'fixture_react 1 \(0 engine merges\)') {
+if ($script:Mode -eq 'remote-vanilla' -and $line -match 'fixture_react 1 \(0 engine merges') {
     # a vanilla client previews the anvil itself and offers no result for a merge of custom
-    # enchantments only (the recorded deviation; anvil-inputs.png shows the empty result slot)
-    Write-Step 'vanilla client: no anvil result offered for a custom-only merge (deviation)'
+    # enchantments only (anvil-inputs.png shows the empty result slot): its fallback is the anvil
+    # form, opened by using the anvil with the book in hand
+    Write-Step 'vanilla client: no anvil result offered for a custom-only merge; the anvil form instead'
+    $mark = Get-LogMark
+    $r = Invoke-SelfTest 'item.real_anvil_arm'
+    if ($r.Fail -gt 0) { throw 'item.real_anvil_arm failed' }
+    Wait-LogLine 'real anvil armed for' 30 -Since $mark | Out-Null
+    Start-Sleep -Seconds 1
+    Press-Key '2' # the book
+    Start-Sleep -Milliseconds 600
+    $mark = Get-LogMark
+    Click 0.5 0.5 -Relative -Right
+    Wait-LogLine 'enchant: anvil form for .*\(1 offers\)' 15 -Since $mark | Out-Null
+    Start-Sleep -Milliseconds 1500
+    Save-Screenshot 'anvil-form' | Out-Null
+    # the form's only button (the sword): down the panel's middle until the host applies it
+    $applied = $false
+    foreach ($y in @(0.30, 0.34, 0.38, 0.42, 0.46, 0.50, 0.54, 0.58, 0.62, 0.66)) {
+        Move-Mouse 0.5 $y -Relative
+        Start-Sleep -Milliseconds 300
+        Click 0.5 $y -Relative
+        Start-Sleep -Milliseconds 1200
+        if (Get-LeviLog -Since $mark | Select-String -Pattern 'enchant: anvil form merge for' -Quiet) { $applied = $true; break }
+    }
+    if (-not $applied) { throw 'the anvil form button was not taken (see anvil-form.png)' }
+    Start-Sleep -Milliseconds 800
+    Save-Screenshot 'anvil-form-taken' | Out-Null
+    Press-Key '1'
+    $mark = Get-LogMark
+    $r = Invoke-SelfTest 'item.real_anvil_check'
+    if ($r.Fail -gt 0) { throw "the anvil form merge failed: $($r.Failed -join ', ')" }
+    $line = Wait-LogLine 'real anvil checked for .*: fixture_react \d' 15 -Since $mark
+    Write-Step "anvil form: $line"
+    if ($line -notmatch 'fixture_react 2 .*1 form merges') { throw "the anvil form did not give fixture_react II: $line" }
 } elseif ($line -notmatch 'fixture_react 2') {
     throw "the real anvil merge did not give fixture_react II: $line"
 }

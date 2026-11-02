@@ -4,12 +4,21 @@
 // every real (non-simulated) player the carriers of S6 - a fixture item with a custom enchantment
 // and a tooltip (lore + glint marker) and two fixture items whose bars come from their item data
 // (one and three of four doses), an iron sword with only a custom enchantment, a banner with a
-// pattern id vanilla clients do not know, armour trimmed with a material appended to the server's
-// trim registry (and a vanilla-trimmed one beside it), and puts the fixture carrier effect (hidden
+// pattern id vanilla clients do not know, armour trimmed with a material registered at load
+// (ext::addTrimMaterial, in the level's registry before anyone joined), a vanilla-trimmed one, and
+// one trimmed with a material appended while the player is in the world; and puts the fixture
+// carrier effect (hidden
 // Slowness II for frosted) on them. `item.spike_client_clear` takes all of it back (the 'full' run
 // runs the two in a row). On a server without real players there is nothing to give.
+//
+// A companion client (remote-mod) runs no selftests: the host sends it "item.spike_fixtures"
+// {"on": true} with the carriers and {"on": false} when it takes them back, and the client mod
+// registers / unregisters the same fixtures (only where the gf_test packs are installed). Nothing is
+// registered at mod load, so no fixture reaches a world that did not run item.spike_client.
 
 #include <algorithm>
+#include <filesystem>
+#include <map>
 #include <set>
 #include <variant>
 
@@ -44,9 +53,12 @@
 #include "feature/enchant/Enchant.h"
 #include "feature/enchant/EnchantInternal.h"
 #include "feature/ext/item/Effects.h"
+#include "feature/ext/item/Enchant.h"
 #include "feature/ext/item/Item.h"
+#include "feature/item/DataFiles.h"
 #include "feature/item/Item.h"
 #include "feature/item/ItemInternal.h"
+#include "feature/net/Net.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -59,7 +71,8 @@ namespace items = gf::game::items;
 
 constexpr char kFixture[]        = "gf_test:fixture_item";
 constexpr char kUnknownPattern[] = "gf_test_pattern";
-constexpr char kTrimMaterial[]   = "gf_test_trim";
+constexpr char kTrimMaterial[]   = "gf_test_trim";      ///< registered at load (ext::addTrimMaterial), development builds
+constexpr char kLateTrim[]       = "gf_test_late_trim"; ///< appended while players are in the world
 
 /// A banner whose second pattern is `pattern` (an id no Bedrock client knows: TF's would be such ids).
 std::optional<ItemStack> bannerWith(std::string const& pattern) {
@@ -81,8 +94,15 @@ std::optional<ItemStack> trimmed(char const* item, std::string const& material, 
     return armour;
 }
 
+constexpr char kFixturesChannel[] = "item.spike_fixtures";
+
 void registerFixtures(bool client) {
-    gf::enchant::registerType("gf_test:fixture_react", {.maxLevel = 3, .anvilCost = 8, .minCost = {5, 9}, .nameKey = "enchantment.gf_test.fixture_react"});
+    // a fixture the enchanting table never offers, for one item only
+    gf::enchant::registerType(
+        "gf_test:fixture_react",
+        {.maxLevel = 3, .anvilCost = 8, .minCost = {5, 9}, .supportedItems = "minecraft:iron_sword", .discoverable = false, .nameKey = "enchantment.gf_test.fixture_react"}
+    );
+    gf::enchant::ext::setFlags("gf_test:fixture_react", {.treasure = false, .tradeable = false, .discoverable = false});
     gf::effects::registerType("gf_test:fixture_frosted", {.carrier = "minecraft:slowness", .color = 0x56CBFD});
     // a texture every pack has (TF's frosted icon comes with F1's import: textures/twilightforest/mob_effect/frosted)
     gf::effects::ext::setIcon("gf_test:fixture_frosted", "textures/items/snowball");
@@ -106,8 +126,28 @@ void unregisterFixtures() {
     gf::effects::internal::unregisterType("gf_test:fixture_frosted");
 }
 
-/// The level's trim registries with `kTrimMaterial` appended (copied from emerald: §a, nether star as
-/// its item) or removed; every real player gets the new TrimDataPacket.
+/// Tells every companion client to register (or drop) the fixtures; the number of companions told.
+int tellCompanions(bool on) {
+    auto level = ll::service::getLevel();
+    if (!level) return 0;
+    int n = 0;
+    level->forEachPlayer([&](Player& p) {
+        if (!p.isSimulatedPlayer() && gf::net::send(p, kFixturesChannel, {{"on", on}})) ++n;
+        return true;
+    });
+    return n;
+}
+
+/// The items item.spike_client gave (hotbar 1..7) by player: item.spike_client_clear takes back what
+/// is still there.
+std::map<std::int64_t, std::vector<std::pair<int, std::string>>>& givenSlots() {
+    static std::map<std::int64_t, std::vector<std::pair<int, std::string>>> m;
+    return m;
+}
+
+/// The level's trim registries with `kLateTrim` appended (a copy of the first material: §2, the
+/// fixture item as its item) or removed while players are in the world; every real player gets the
+/// new TrimDataPacket.
 bool setTrimProbe(bool add) {
     auto level = ll::service::getLevel();
     if (!level) return false;
@@ -119,13 +159,13 @@ bool setTrimProbe(bool add) {
     std::vector<TrimMaterial> kept;
     kept.reserve(list.size() + 1);
     for (auto const& m : list)
-        if (m.mMaterialId->getString() != kTrimMaterial) kept.push_back(m);
+        if (m.mMaterialId->getString() != kLateTrim) kept.push_back(m);
     if (add) {
         if (kept.empty()) return false;
         TrimMaterial m(kept.front());
-        m.mMaterialId = HashedString(kTrimMaterial);
+        m.mMaterialId = HashedString(kLateTrim);
         m.mColor      = std::string("\xC2\xA7" "2");
-        m.mItemName   = HashedString("minecraft:nether_star");
+        m.mItemName   = HashedString(kFixture);
         kept.push_back(m);
     }
     list.swap(kept);
@@ -193,14 +233,30 @@ GF_REGISTER_SELFTEST("item.spike_trim_materials", [](Context& ctx) {
     for (auto const& m : materials) list += m.mMaterialId->getString() + "=" + m.mItemName->getString() + " ";
     ctx.check(materials.size() >= 10, "trim materials are a hard-coded list (got " + std::to_string(materials.size()) + ")");
     ctx.info("trim materials: " + list);
-    // the level's registry is a vector the server sends in TrimDataPacket: a material can be appended
+    // ext::addTrimMaterial: a material registered at load is in the level's registry from its start
+    // (development builds register the fixture material gf_test_trim)
+    ctx.check(gf::item::ext::hasTrimMaterial(kTrimMaterial), "the material registered at load is in the level's registry (appended before any player joined)");
+    // the level's registry is a vector the server sends in TrimDataPacket: a material can also be
+    // appended later (clients that joined before do not take it: item.spike_client's hotbar 8)
     ctx.require(setTrimProbe(true), "a material appended to the level's trim registry");
-    auto level = ll::service::getLevel();
-    auto reg   = level->getTrimMaterialRegistry().lock();
-    bool found = std::any_of(reg->mTrimMaterials->begin(), reg->mTrimMaterials->end(), [](TrimMaterial const& m) { return m.mMaterialId->getString() == kTrimMaterial; });
-    ctx.check(found, "the level's trim registry holds it");
-    ctx.check(setTrimProbe(false), "and takes it back");
+    ctx.check(gf::item::ext::hasTrimMaterial(kLateTrim), "the level's trim registry holds it");
+    ctx.check(setTrimProbe(false) && !gf::item::ext::hasTrimMaterial(kLateTrim), "and takes it back");
 });
+
+namespace {
+// Development builds (the gf_test data is installed) register the fixture trim material at load, as
+// U7 registers TF's: it is in every world's registry before players join.
+class SpikeTrimFixtureModule {
+public:
+    void install() {
+        std::error_code ec;
+        if (!std::filesystem::is_directory(gf::feature::item::data::root() / "gf_test", ec)) return;
+        gf::item::ext::addTrimMaterial({.id = kTrimMaterial, .color = "\xC2\xA7" "2", .itemId = kFixture});
+    }
+    void uninstall() {}
+};
+} // namespace
+GF_REGISTER_MODULE(SpikeTrimFixtureModule);
 
 // How the game's own discs name their sound: the record component's SoundEventIdentifier is a
 // variant of (none, LevelSoundEvent, sound event name); a name is what a TF disc's BP item gives.
@@ -265,8 +321,14 @@ GF_REGISTER_SELFTEST("item.spike_client", [](Context& ctx) {
     int given = 0;
     level->forEachPlayer([&](Player& p) {
         if (p.isSimulatedPlayer()) return true;
-        int  slot = 0; // hotbar 1..7, whatever was there before
-        auto give = [&](std::optional<ItemStack> s) { p.getInventory().setItem(slot++, s.value_or(ItemStack::EMPTY_ITEM())); };
+        int   slot = 0; // hotbar 1..7, whatever was there before
+        auto& mine = givenSlots()[p.getOrCreateUniqueID().rawID];
+        mine.clear();
+        auto give = [&](std::optional<ItemStack> s) {
+            auto stack = s.value_or(ItemStack::EMPTY_ITEM());
+            if (!items::isEmpty(stack)) mine.emplace_back(slot, items::idOf(stack));
+            p.getInventory().setItem(slot++, stack);
+        };
         auto fixture = items::make(kFixture);
         if (fixture) {
             gf::enchant::set(*fixture, "gf_test:fixture_react", 2);
@@ -282,26 +344,46 @@ GF_REGISTER_SELFTEST("item.spike_client", [](Context& ctx) {
         give(bannerWith(kUnknownPattern));                                 // hotbar 3
         give(one);                                                         // hotbar 4
         give(three);                                                       // hotbar 5
-        give(trimmed("minecraft:diamond_chestplate", kTrimMaterial, "coast")); // hotbar 6
-        give(trimmed("minecraft:diamond_chestplate", "emerald", "coast"));    // hotbar 7
+        give(trimmed("minecraft:diamond_chestplate", kTrimMaterial, "coast")); // hotbar 6: registered at load
+        give(trimmed("minecraft:diamond_chestplate", "emerald", "coast"));    // hotbar 7: vanilla
+        give(trimmed("minecraft:diamond_chestplate", kLateTrim, "coast"));    // hotbar 8: appended after the join
         gf::effects::apply(p, "gf_test:fixture_frosted", 20 * 60, 1);
         p.sendInventory(false);
         ++given;
         gf::log().info("item: S6 carriers given to {}", p.getRealName());
         return true;
     });
-    ctx.info("real players given the S6 carriers: " + std::to_string(given));
+    // a companion client draws the fixtures' bars, TWILIGHT name and effect icon with the same
+    // registrations (they go again with item.spike_client_clear)
+    int told = tellCompanions(true);
+    ctx.info("real players given the S6 carriers: " + std::to_string(given) + ", companions told: " + std::to_string(told));
 });
 
 #ifdef GF_CLIENT
 namespace {
-// A companion client (remote-mod) runs no selftests, so the fixtures the host's selftests register
-// at runtime are registered here at mod load, as units register theirs in both processes: the
-// client mod then draws the fixture's bars, TWILIGHT name and effect icon and previews the anvil.
+// The client mod's side of "item.spike_fixtures": the host's item.spike_client / _clear register and
+// drop the fixtures; a client without the gf_test packs (a release install) ignores it.
 class SpikeClientFixturesModule {
 public:
-    void install() { registerFixtures(true); }
-    void uninstall() {}
+    void load() {
+        if (mLoaded) return;
+        mLoaded = true;
+        gf::net::client::on(kFixturesChannel, [](nlohmann::json const& msg) {
+            if (!items::make(kFixture)) return; // no fixture packs: not a development install
+            if (msg.value("on", false)) {
+                registerFixtures(true);
+                gf::log().info("item: S6 fixtures registered for the host");
+            } else {
+                unregisterFixtures();
+                gf::log().info("item: S6 fixtures dropped for the host");
+            }
+        });
+    }
+    void install() { load(); }
+    void uninstall() { unregisterFixtures(); }
+
+private:
+    bool mLoaded = false;
 };
 } // namespace
 GF_REGISTER_MODULE(SpikeClientFixturesModule);
@@ -310,12 +392,28 @@ GF_REGISTER_MODULE(SpikeClientFixturesModule);
 GF_REGISTER_SELFTEST("item.spike_client_clear", [](Context& ctx) {
     auto level = ll::service::getLevel();
     ctx.require(level.has_value(), "a level");
+    int taken = 0;
     level->forEachPlayer([&](Player& p) {
-        if (!p.isSimulatedPlayer()) gf::effects::remove(p, "gf_test:fixture_frosted");
+        if (p.isSimulatedPlayer()) return true;
+        gf::effects::remove(p, "gf_test:fixture_frosted");
+        // the carriers item.spike_client put into the hotbar, where they still are
+        auto it = givenSlots().find(p.getOrCreateUniqueID().rawID);
+        if (it != givenSlots().end()) {
+            auto& inv = p.getInventory();
+            for (auto const& [slot, id] : it->second)
+                if (slot < inv.getContainerSize() && items::idOf(inv.getItem(slot)) == id) {
+                    inv.setItem(slot, ItemStack::EMPTY_ITEM());
+                    ++taken;
+                }
+            givenSlots().erase(it);
+            p.sendInventory(false);
+        }
         return true;
     });
+    tellCompanions(false);
     setTrimProbe(false);
     unregisterFixtures();
+    ctx.info("S6 carriers taken back: " + std::to_string(taken));
 #ifdef GF_CLIENT
     // the probe pattern of item.spike_banner_append (last in the registry: no other pattern moves)
     auto& patterns = const_cast<std::vector<BannerPattern>&>(BannerPattern::mPatterns());

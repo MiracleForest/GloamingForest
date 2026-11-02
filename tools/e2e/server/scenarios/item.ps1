@@ -13,10 +13,12 @@ $log = Get-ServerLog
 foreach ($line in 'tags: \d+ tag files loaded', 'recipes: \d+ data recipes loaded', 'data maps: \d+ loaded') {
     if (-not ($log | Select-String -Pattern $line -Quiet)) { throw "missing log line '$line'" }
 }
+# recipes whose neoforge:conditions fail (TF's jeed integration) are skipped without a warning
+if ($log | Select-String -Pattern 'no loader for recipe type jeed:' -Quiet) { throw 'the jeed recipes were parsed although their mod_loaded condition fails' }
 
 $r = Invoke-SelfTest 'item.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) item selftest(s) failed: $($r.Failed -join ', ')" }
-if ($r.Pass -lt 30) { throw "expected at least 30 item selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 38) { throw "expected at least 38 item selftests to pass, got $($r.Pass)" }
 
 # the S6 evidence lines (docs/spikes/S6.md quotes them)
 $mark = Get-LogMark

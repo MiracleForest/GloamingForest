@@ -7,8 +7,11 @@
 // - Special crafting: the test BP recipe gf_test:fixture_item (two sticks in a column, assets/test)
 //   is registered as a special recipe: the matcher wants exactly two sticks, the assembler makes two
 //   fixture items carrying item data ("special"), the remainder is a stick in the first stick's slot
-//   (getRemainingItems). The client puts the sticks into a crafting table and takes the result: the
-//   request runs CraftHandlerCrafting -> _initCraftResults, Bedrock's own recipe check included.
+//   (getRemainingItems). A data recipe of the same id and of a code-only TF type
+//   (twilightforest:casket_repair_recipe, as TF's special recipes have) shadows the BP recipe in the
+//   data index meanwhile, as TF's data does for its special recipes. The client puts the sticks into
+//   a crafting table and takes the result: the request runs CraftHandlerCrafting ->
+//   _initCraftResults, Bedrock's own recipe check included.
 // - Anvil: an iron sword and an enchanted book, both with the fixture enchantment at level I, are
 //   combined in a real anvil: the sword must come out at level II.
 
@@ -22,6 +25,8 @@
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/player/PlayerUISlot.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/Level.h"
 
@@ -78,6 +83,19 @@ std::map<std::int64_t, int>& armedAt() {
     return m;
 }
 
+/// The experience level of a player.
+int levelsOf(Player const& p) {
+    auto        ref  = p.getAttribute(Player::LEVEL());
+    auto const* inst = static_cast<AttributeInstance const*>(ref.mPtr);
+    return inst ? static_cast<int>(inst->mCurrentValue) : 0;
+}
+
+/// Each real player's level before item.real_anvil_arm (restored by item.real_anvil_check).
+std::map<std::int64_t, int>& levelsBefore() {
+    static std::map<std::int64_t, int> m;
+    return m;
+}
+
 void clearOf(Player& p, std::string const& id) {
     auto& inv = p.getInventory();
     for (int i = 0; i < inv.getContainerSize(); ++i)
@@ -88,6 +106,7 @@ void clearOf(Player& p, std::string const& id) {
 } // namespace
 
 GF_REGISTER_SELFTEST("item.real_craft_arm", [](Context& ctx) {
+    rc::internal::setTestDataRecipe(kFixture, {{"type", "twilightforest:casket_repair_recipe"}, {"category", "misc"}});
     rc::registerSpecialCrafting(
         kFixture,
         [](rc::CraftingGrid const& g) {
@@ -137,14 +156,17 @@ GF_REGISTER_SELFTEST("item.real_craft_check", [](Context& ctx) {
         } else {
             int special = countOf(p, kFixture, [](ItemStack const& s) { return gf::item::getData(s, "special") == true; });
             int sticks  = countOf(p, "minecraft:stick");
+            auto route  = rc::internal::lastSpecialRoute(uid);
             ctx.check(special == 2, p.getRealName() + " crafted two fixture items with the assembler's item data (got " + std::to_string(special) + ")");
             ctx.check(sticks == 1, p.getRealName() + " kept the remainder stick (got " + std::to_string(sticks) + ")");
-            gf::log().info("item: real craft checked for {}: {} special items, {} remainder", p.getRealName(), special, sticks);
+            ctx.info("the crafting hook found the special recipe by the " + route);
+            gf::log().info("item: real craft checked for {}: {} special items, {} remainder (found by the {})", p.getRealName(), special, sticks, route);
         }
         clearOf(p, kFixture);
         clearOf(p, "minecraft:stick");
     });
     rc::internal::unregisterSpecial(kFixture);
+    rc::internal::setTestDataRecipe(kFixture, nlohmann::json());
     ctx.info("real players checked: " + std::to_string(n));
 });
 
@@ -160,7 +182,10 @@ GF_REGISTER_SELFTEST("item.real_anvil_arm", [](Context& ctx) {
         inv.setItem(0, *sword);
         inv.setItem(1, *book);
         inv.setItem(2, ItemStack::EMPTY_ITEM());
-        p.addLevels(30);
+        // 30 levels for the merge; item.real_anvil_check gives the player its own back
+        auto uid = p.getOrCreateUniqueID().rawID;
+        if (!levelsBefore().contains(uid)) levelsBefore()[uid] = levelsOf(p);
+        p.addLevels(30 - levelsOf(p));
         p.sendInventory(false);
         gf::log().info("item: real anvil armed for {}", p.getRealName());
     });
@@ -181,9 +206,14 @@ GF_REGISTER_SELFTEST("item.real_anvil_check", [](Context& ctx) {
         } else {
             ctx.check(best == 2, p.getRealName() + "'s sword came out of the anvil with the custom enchantment at II (got " + std::to_string(best) + ")");
         }
-        gf::log().info("item: real anvil checked for {}: fixture_react {} ({} engine merges)", p.getRealName(), best, gf::enchant::internal::anvilMergeCount(p));
+        gf::log().info("item: real anvil checked for {}: fixture_react {} ({} engine merges, {} form merges)", p.getRealName(), best,
+                       gf::enchant::internal::anvilMergeCount(p), gf::enchant::internal::anvilFallbackCount(p));
         clearOf(p, "minecraft:iron_sword");
         clearOf(p, "minecraft:enchanted_book");
+        if (auto it = levelsBefore().find(p.getOrCreateUniqueID().rawID); it != levelsBefore().end()) {
+            p.addLevels(it->second - levelsOf(p));
+            levelsBefore().erase(it);
+        }
     });
     gf::enchant::internal::unregisterType("gf_test:fixture_react");
     ctx.info("real players checked: " + std::to_string(n));

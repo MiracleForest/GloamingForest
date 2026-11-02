@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <random>
+#include <tuple>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -23,6 +24,9 @@
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/player/PlayerUISlot.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
+#include "mc/world/effect/EffectDuration.h"
 #include "mc/world/effect/MobEffectInstance.h"
 #include "mc/world/inventory/network/crafting/CraftHandlerGrindstone.h"
 #include "mc/world/item/Item.h"
@@ -44,6 +48,7 @@
 #include "feature/effects/EffectsInternal.h"
 #include "feature/enchant/Enchant.h"
 #include "feature/enchant/EnchantInternal.h"
+#include "feature/ext/item/Enchant.h"
 #include "feature/ext/item/Item.h"
 #include "feature/ext/item/Recipes.h"
 #include "feature/ext/item/Tags.h"
@@ -78,6 +83,13 @@ constexpr char kFixture[] = "gf_test:fixture_item";
 std::string const& sect() {
     static std::string const s = "\xC2\xA7";
     return s;
+}
+
+/// The player's experience level.
+int levelsOf(Player const& player) {
+    auto ref = player.getAttribute(Player::LEVEL());
+    auto const* inst = static_cast<AttributeInstance const*>(ref.mPtr);
+    return inst ? static_cast<int>(inst->mCurrentValue) : 0;
 }
 
 bool loreHas(ItemStack const& stack, std::string const& text) {
@@ -206,6 +218,38 @@ GF_REGISTER_SELFTEST("item.tags_ext_dirs", [](Context& ctx) {
     ctx.check(gf::tags::ext::hasIn("blocks", "minecraft:planks", "minecraft:oak_planks"), "the plural directory too");
     auto planks = gf::tags::ext::membersIn("block", "minecraft:planks");
     ctx.check(std::find(planks.begin(), planks.end(), "minecraft:oak_planks") != planks.end(), "membersIn of a vanilla directory lists the bridge's members");
+});
+
+// TF's data names vanilla content by Java id: tags and data maps hold the game's Bedrock ids.
+GF_REGISTER_SELFTEST("item.tags_java_ids", [](Context& ctx) {
+    using gf::tags::Registry;
+    // TF's own data, when F1's import is in this build
+    if (gf::datamaps::get("twilightforest:crumble_horn", "minecraft:cobblestone")) {
+        auto const* bricks = gf::datamaps::get("twilightforest:crumble_horn", "minecraft:nether_brick");
+        ctx.check(bricks != nullptr, "crumble_horn's minecraft:nether_bricks is Bedrock's nether_brick block");
+        ctx.check(gf::datamaps::get("twilightforest:crumble_horn", "minecraft:dirt_with_roots") != nullptr, "rooted_dirt is dirt_with_roots");
+        auto const* piglin = gf::datamaps::get("twilightforest:ominous_fire", "minecraft:piglin");
+        ctx.check(piglin && piglin->value("transform_to", std::string()) == "minecraft:zombie_pigman", "ominous_fire turns a piglin into Bedrock's zombie_pigman");
+    } else {
+        ctx.info("TF's data maps are not in this build (F1's import): the synthetic tree stands in");
+    }
+    ScopedTree tree({
+        {"gf_test/tags/block/paths.json", {{"values", {"minecraft:dirt_path", "minecraft:snow_block", "minecraft:water", "minecraft:stone"}}}},
+        {"gf_test/tags/item/bricks.json", {{"values", {"minecraft:nether_brick", "minecraft:nether_bricks"}}}},
+        {"gf_test/tags/entity_type/pigs.json", {{"values", {"minecraft:zombified_piglin"}}}},
+        {"gf_test/data_maps/block/crumble.json",
+         {{"values", {{"minecraft:nether_bricks", {{"crumble_chance", 0.5}, {"crumble_to", "minecraft:magma_block"}}}}}}},
+    });
+    ctx.check(gf::tags::has(Registry::Block, "gf_test:paths", "minecraft:grass_path"), "minecraft:dirt_path is grass_path");
+    ctx.check(gf::tags::has(Registry::Block, "gf_test:paths", "minecraft:snow") && !gf::tags::has(Registry::Block, "gf_test:paths", "minecraft:snow_layer"),
+              "Java's snow_block is Bedrock's snow (and not the snow layer)");
+    ctx.check(gf::tags::has(Registry::Block, "gf_test:paths", "minecraft:flowing_water"), "water holds both fluid blocks");
+    ctx.check(gf::tags::has(Registry::Block, "gf_test:paths", "minecraft:stone"), "ids Bedrock shares stay as they are");
+    ctx.check(gf::tags::has(Registry::Item, "gf_test:bricks", "minecraft:netherbrick") && gf::tags::has(Registry::Item, "gf_test:bricks", "minecraft:nether_brick"),
+              "items: the nether brick item is netherbrick, the bricks block item nether_brick");
+    ctx.check(gf::tags::has(Registry::EntityType, "gf_test:pigs", "minecraft:zombie_pigman"), "entities: zombified_piglin is zombie_pigman");
+    auto const* v = gf::datamaps::get("gf_test:crumble", "minecraft:nether_brick");
+    ctx.check(v && v->value("crumble_to", std::string()) == "minecraft:magma", "data map keys and their values' block ids are Bedrock's");
 });
 
 // ---- synthetic data: tags, data maps, recipes, enchantments, travellers modifiers --------------------
@@ -401,6 +445,150 @@ GF_REGISTER_SELFTEST("item.special_crafting", [](Context& ctx) {
               "a layout's BP recipe id reaches the special recipe");
     rc::internal::unregisterSpecial("gf_test:layouts");
     ctx.check(!rc::internal::isSpecial("gf_test:layouts_3"), "its layouts go with it");
+});
+
+namespace {
+/// A 3x3 grid of stacks by "x,y" (row-major), for the crafting hook's resolution.
+struct TestGrid {
+    std::vector<ItemStack>     stacks = std::vector<ItemStack>(9, ItemStack::EMPTY_ITEM());
+    gf::recipes::CraftingGrid  grid;
+    TestGrid(std::initializer_list<std::tuple<int, int, char const*>> cells) {
+        for (auto const& [x, y, id] : cells) stacks[static_cast<std::size_t>(y * 3 + x)] = items::make(id).value_or(ItemStack::EMPTY_ITEM());
+        grid.width = grid.height = 3;
+        for (auto const& s : stacks) grid.slots.push_back(&s);
+    }
+};
+} // namespace
+
+// TF's code-only data recipes have the special recipes' ids (twilightforest:casket_repair_recipe):
+// the crafting hook takes the BP recipe of the id, never the data recipe that shadows it in byId.
+GF_REGISTER_SELFTEST("item.special_crafting_shadowed", [](Context& ctx) {
+    namespace rc = gf::recipes;
+    ctx.require(rc::internal::nativeById(kFixture) != nullptr, "the test BP recipe gf_test:fixture_item is one of the game's recipes");
+    rc::internal::setTestDataRecipe(kFixture, {{"type", "twilightforest:casket_repair_recipe"}, {"category", "misc"}});
+    auto const* data = rc::byId(kFixture);
+    ctx.check(data && data->type == "twilightforest:casket_repair_recipe" && data->resultItem.empty(),
+              "a SimpleCraftingRecipeSerializer data recipe of the same id shadows it in byId (no result item)");
+    auto const* bp = rc::internal::nativeById(kFixture);
+    ctx.check(bp && bp->resultItem == kFixture, "the BP recipe stays the game's recipe of the id");
+    rc::registerSpecialCrafting(
+        kFixture,
+        [](rc::CraftingGrid const& g) {
+            int sticks = 0;
+            for (auto const* s : g.slots) sticks += s && items::idOf(*s) == "minecraft:stick";
+            return sticks == 2;
+        },
+        [](rc::CraftingGrid const&) { return items::make(kFixture, 2).value_or(ItemStack::EMPTY_ITEM()); }
+    );
+    TestGrid column({{1, 0, "minecraft:stick"}, {1, 1, "minecraft:stick"}});
+    ctx.check(bp && rc::internal::fits(*bp, column.grid), "two sticks in a column fit the BP recipe's shape");
+    ctx.check(rc::internal::resolveSpecial("", kFixture, column.grid) == kFixture, "found by its result despite the data twin");
+    ctx.check(rc::internal::resolveSpecial(kFixture, kFixture, column.grid) == kFixture, "and by the request's recipe");
+    TestGrid one({{1, 1, "minecraft:stick"}});
+    bool refused = false;
+    ctx.check(rc::internal::resolveSpecial(kFixture, kFixture, one.grid, &refused).empty() && refused, "the named special refuses a grid its matcher does not take");
+    auto made = rc::internal::assembleSpecial(kFixture, column.grid);
+    ctx.check(made && items::countOf(*made) == 2, "the assembler's stack, not the BP recipe's static result");
+    rc::internal::unregisterSpecial(kFixture);
+    rc::internal::setTestDataRecipe(kFixture, JsonDoc());
+    auto const* back = rc::byId(kFixture);
+    ctx.check(back && back->type == "minecraft:crafting_shaped" && back->resultItem == kFixture, "without the data twin byId is the BP recipe again");
+});
+
+// Several special recipes (or layouts) giving one item: each candidate's matcher is asked, those
+// whose BP shape fits the grid first, as Java's RecipeManager takes the first recipe that matches.
+GF_REGISTER_SELFTEST("item.special_crafting_shared_result", [](Context& ctx) {
+    namespace rc = gf::recipes;
+    auto shapeless = [](std::string id, std::vector<char const*> ingredients) {
+        rc::CraftingRecipe r;
+        r.id         = std::move(id);
+        r.type       = "minecraft:crafting_shapeless";
+        r.resultItem = kFixture;
+        for (auto const* i : ingredients) r.ingredients.push_back(rc::Ingredient{{i}, {}});
+        r.data = JsonDoc{{"type", r.type}, {"native", true}};
+        return r;
+    };
+    auto sticks = shapeless("gf_test:twin_a", {"minecraft:stick", "minecraft:stick"});
+    auto paper  = shapeless("gf_test:twin_b", {"minecraft:stick", "minecraft:paper"});
+    auto first  = shapeless("gf_test:twin_0", {"minecraft:stick", "minecraft:stick"});
+    for (auto const* r : {&sticks, &paper, &first}) rc::internal::setTestNativeRecipe(*r);
+    auto tagged = [](char const* tag) {
+        return [tag](rc::CraftingGrid const&) {
+            auto out = items::make(kFixture).value_or(ItemStack::EMPTY_ITEM());
+            gf::item::setData(out, "twin", tag);
+            return out;
+        };
+    };
+    auto count = [](rc::CraftingGrid const& g, char const* id) {
+        int n = 0;
+        for (auto const* s : g.slots) n += s && items::idOf(*s) == id;
+        return n;
+    };
+    // a special whose layouts are two BP recipes (the vest / gloves merge kind) and one of its own
+    rc::registerSpecialCrafting("gf_test:twin_special", [&](rc::CraftingGrid const& g) { return count(g, "minecraft:stick") == 2; }, tagged("a"));
+    rc::ext::addSpecialLayout("gf_test:twin_special", "gf_test:twin_a");
+    rc::registerSpecialCrafting("gf_test:twin_b", [&](rc::CraftingGrid const& g) { return count(g, "minecraft:paper") == 1; }, tagged("b"));
+    // sorted first and fitting too, but its matcher refuses: the next candidate crafts
+    rc::registerSpecialCrafting("gf_test:twin_0", [](rc::CraftingGrid const&) { return false; }, tagged("0"));
+    TestGrid two({{0, 0, "minecraft:stick"}, {2, 2, "minecraft:stick"}});
+    TestGrid mixed({{1, 1, "minecraft:stick"}, {0, 2, "minecraft:paper"}});
+    auto     candidates = rc::internal::specialCandidates(kFixture, two.grid);
+    ctx.check(candidates.size() == 2 && candidates[0] == "gf_test:twin_0" && candidates[1] == "gf_test:twin_a",
+              "candidates: the special BP recipes of the item that fit the grid, in id order (got " + std::to_string(candidates.size()) + ")");
+    auto a = rc::internal::resolveSpecial("", kFixture, two.grid);
+    ctx.check(a == "gf_test:twin_a", "a refusing matcher passes the craft on to the next candidate (got " + a + ")");
+    auto made = rc::internal::assembleSpecial(a, two.grid);
+    ctx.check(made && gf::item::getData(*made, "twin") == "a", "the layout runs its special recipe's assembler");
+    auto b = rc::internal::resolveSpecial("", kFixture, mixed.grid);
+    ctx.check(b == "gf_test:twin_b", "a stick and a paper go to the other special of the same item (got " + b + ")");
+    ctx.check(rc::internal::resolveSpecial("gf_test:twin_b", kFixture, mixed.grid) == "gf_test:twin_b", "the request's recipe decides when it is known");
+    TestGrid none({{0, 0, "minecraft:paper"}});
+    ctx.check(rc::internal::specialCandidates(kFixture, none.grid).empty() && rc::internal::resolveSpecial("", kFixture, none.grid).empty(),
+              "no special BP recipe fits a lone paper (twin_b's loose matcher is not asked): the crafted recipe's own result");
+    for (auto const* id : {"gf_test:twin_special", "gf_test:twin_b", "gf_test:twin_0"}) rc::internal::unregisterSpecial(id);
+    for (auto const* r : {&sticks, &paper, &first}) rc::internal::setTestNativeRecipe(*r, true);
+    ctx.check(rc::internal::nativeById("gf_test:twin_a") == nullptr, "the stand-ins are gone");
+});
+
+// NeoForge's recipe conditions: TF's jeed integration recipes (mod_loaded) are not there (and no
+// "no loader" warning names their type); the uncrafting table recipe follows its condition.
+GF_REGISTER_SELFTEST("item.recipes_conditions", [](Context& ctx) {
+    namespace rc = gf::recipes;
+    using J      = JsonDoc;
+    ctx.check(!rc::internal::conditionsHold(J::array({{{"type", "neoforge:mod_loaded"}, {"modid", "jeed"}}})), "mod_loaded jeed: false");
+    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "neoforge:mod_loaded"}, {"modid", "twilightforest"}}})), "mod_loaded twilightforest: true");
+    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "neoforge:not"}, {"value", {{"type", "neoforge:false"}}}}})), "not false");
+    ctx.check(!rc::internal::conditionsHold(J::array({{{"type", "neoforge:and"}, {"values", J::array({{{"type", "neoforge:true"}}, {{"type", "neoforge:false"}}})}}})), "and");
+    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "neoforge:or"}, {"values", J::array({{{"type", "neoforge:false"}}, {{"type", "neoforge:true"}}})}}})), "or");
+    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "neoforge:item_exists"}, {"item", "twilightforest:naga_scale"}}}))
+                  && !rc::internal::conditionsHold(J::array({{{"type", "neoforge:item_exists"}, {"item", "othermod:thing"}}})),
+              "item_exists: TF's items, no other mod's");
+    ctx.check(rc::internal::conditionsHold(J::array({{{"type", "twilightforest:uncrafting_table_enabled"}}})), "uncrafting_table_enabled: TF's default (enabled)");
+    // TF's own data, when F1's import is in this build
+    if (rc::byId("twilightforest:uncrafting_table")) {
+        ctx.check(rc::byId("twilightforest:jeed/strength") == nullptr, "TF's jeed recipes are not loaded");
+        ctx.check(!rc::internal::typesWithoutLoader().contains("jeed:effect_provider"), "and their type is not reported as unknown");
+    } else {
+        ctx.info("TF's recipe data is not in this build (F1's import): the synthetic tree stands in");
+    }
+    {
+        ScopedTree tree({
+            {"gf_test/recipe/jeed.json",
+             {{"neoforge:conditions", J::array({{{"type", "neoforge:mod_loaded"}, {"modid", "jeed"}}})}, {"type", "jeed:effect_provider"}, {"effect", "minecraft:strength"}}},
+            {"gf_test/recipe/table.json",
+             {{"neoforge:conditions", J::array({{{"type", "twilightforest:uncrafting_table_enabled"}}})},
+              {"type", "minecraft:crafting_shaped"},
+              {"pattern", {"##", "##"}},
+              {"key", {{"#", {{"item", "minecraft:oak_planks"}}}}},
+              {"result", {{"id", "minecraft:crafting_table"}}}}},
+        });
+        ctx.check(rc::byId("gf_test:jeed") == nullptr && !rc::internal::typesWithoutLoader().contains("jeed:effect_provider"), "a failing condition skips the recipe quietly");
+        ctx.check(rc::byId("gf_test:table") != nullptr, "the table recipe loads while the table is enabled");
+        rc::ext::registerCondition("twilightforest:uncrafting_table_enabled", [](JsonDoc const&) { return false; });
+        ctx.check(rc::byId("gf_test:table") == nullptr, "an owner's condition (disableEntireTable) removes it at the next query");
+        rc::internal::unregisterCondition("twilightforest:uncrafting_table_enabled");
+        ctx.check(rc::byId("gf_test:table") != nullptr, "and the default brings it back");
+    }
 });
 
 // ---- items -------------------------------------------------------------------------------------------
@@ -698,6 +886,99 @@ GF_REGISTER_SELFTEST("item.enchant_anvil", [](Context& ctx) {
     for (auto const* id : {"gf_test:fixture_react", "gf_test:fixture_chill", "gf_test:fixture_boots"}) en::internal::unregisterType(id);
 });
 
+// treasure / tradeable / discoverable are Java's enchantment tags for a registered spec too: an
+// owner's registerType does not make an enchantment the table offers unless its tag (or setFlags) does.
+GF_REGISTER_SELFTEST("item.enchant_flags", [](Context& ctx) {
+    namespace en = gf::enchant;
+    en::registerType("gf_test:flag_probe", {.maxLevel = 1, .weight = 1000, .minCost = {1, 0}, .maxCost = {100, 0}});
+    auto spec = en::internal::specOf("gf_test:flag_probe");
+    ctx.require(spec.has_value(), "the spec is registered");
+    ctx.check(!spec->discoverable && !spec->treasure && !spec->tradeable, "the Spec's defaults do not count: not in the tags, no flag");
+    auto rolled = [&] {
+        for (int seed = 0; seed < 40; ++seed)
+            for (int option = 0; option < 3; ++option)
+                if (en::internal::rollTable("minecraft:book", 1, 30, seed, option).contains("gf_test:flag_probe")) return true;
+        return false;
+    };
+    ctx.check(!rolled(), "the enchanting table never offers it");
+    en::ext::setFlags("gf_test:flag_probe", {.discoverable = true});
+    ctx.check(en::internal::specOf("gf_test:flag_probe")->discoverable && en::internal::anyTableEnchantment(), "an explicit flag wins over the tags");
+    ctx.check(rolled(), "and the table rolls it then (weight 1000)");
+    en::ext::clearFlags("gf_test:flag_probe");
+    ctx.check(!en::internal::specOf("gf_test:flag_probe")->discoverable && !rolled(), "back to the tags");
+    // TF's four, when F1's import is in this build: none is offered by the table, none is treasure
+    for (auto const* id : {"twilightforest:fire_react", "twilightforest:chill_aura", "twilightforest:destruction", "twilightforest:renewal"})
+        if (auto s = en::internal::specOf(id)) ctx.check(!s->discoverable && !s->treasure, std::string(id) + " is neither discoverable nor treasure (TF's tags)");
+    en::internal::unregisterType("gf_test:flag_probe");
+});
+
+// The vanilla client's anvil fallback: a TF enchanted book (custom enchantments only) applied from a
+// form with AnvilMenu's numbers.
+GF_REGISTER_SELFTEST("item.enchant_anvil_form", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace en = gf::enchant;
+    en::registerType("gf_test:fixture_react", {.maxLevel = 3, .anvilCost = 8, .supportedItems = "minecraft:iron_sword"});
+    auto uid = ctx.player().getOrCreateUniqueID();
+    auto get = [&]() -> Player* { return ll::service::getLevel()->getPlayer(uid); };
+    auto make = [](char const* id, int react) {
+        auto s = items::make(id).value_or(ItemStack::EMPTY_ITEM());
+        if (react > 0) gf::enchant::set(s, "gf_test:fixture_react", react);
+        return s;
+    };
+    auto& inv = get()->getInventory();
+    inv.setItem(0, make("minecraft:iron_sword", 1));
+    inv.setItem(1, make("minecraft:enchanted_book", 1));
+    inv.setItem(2, make("minecraft:diamond", 0));
+    inv.setItem(3, make("minecraft:iron_sword", 0));
+    inv.setItem(4, make("minecraft:iron_pickaxe", 0));
+    ctx.check(en::internal::isCustomOnlyBook(inv.getItem(1)), "a book with only a custom enchantment is the fallback's");
+    {
+        auto mixed = make("minecraft:enchanted_book", 1);
+        en::set(mixed, "minecraft:sharpness", 1);
+        ctx.check(!en::internal::isCustomOnlyBook(mixed), "a book with a vanilla enchantment too goes through the anvil screen");
+    }
+    auto offers = en::internal::anvilOffers(*get(), 1);
+    ctx.check(offers.size() == 2 && offers[0].targetSlot == 0 && offers[1].targetSlot == 3, "offers: the two swords (not the diamond, not the pickaxe it does not support)");
+    if (offers.size() == 2) {
+        ctx.check(en::level(offers[0].result, "gf_test:fixture_react") == 2 && offers[0].cost == 8, "I + I = II at max(1, 8 / 2) * 2 = 8 levels (got " + std::to_string(offers[0].cost) + ")");
+        ctx.check(en::level(offers[1].result, "gf_test:fixture_react") == 1 && offers[1].cost == 4, "a plain sword: I at 4 levels");
+        ctx.check(offers[0].result.getBaseRepairCost() == 1, "the result's prior work is 0 * 2 + 1");
+    }
+    // AnvilMenu#mayPickup / onTake
+    int before = levelsOf(*get());
+    get()->addLevels(10 - before);
+    ctx.check(en::internal::applyAnvilOffer(*get(), 1, 0, nullptr), "applied with 10 levels");
+    ctx.check(en::level(get()->getInventory().getItem(0), "gf_test:fixture_react") == 2, "the sword has II");
+    ctx.check(items::isEmpty(get()->getInventory().getItem(1)), "the book is used up");
+    get()->getInventory().setItem(1, make("minecraft:enchanted_book", 3));
+    auto again = en::internal::anvilOffer(*get(), 1, 0);
+    ctx.check(again && again->cost == 4 * 3 + 1 && en::level(again->result, "gf_test:fixture_react") == 3,
+              "II + III: III at 12 levels plus the sword's prior work (1) (got " + std::to_string(again ? again->cost : -1) + ")");
+    ctx.check(!en::internal::applyAnvilOffer(*get(), 1, 3, nullptr) && en::level(get()->getInventory().getItem(3), "gf_test:fixture_react") == 0,
+              "not enough levels (2 left, 12 needed): nothing changes");
+    // the click on an anvil: vanilla players get the form (the anvil screen does not open), companions
+    // the screen (the dispatch as the use-on hook runs it; no anvil is placed: the handler goes by id)
+    auto pos = ctx.testPos(5910);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    auto* p = get();
+    ctx.require(p != nullptr, "the player");
+    p->getInventory().setItem(p->getSelectedItemSlot(), make("minecraft:enchanted_book", 1));
+    std::string       blockId = "minecraft:anvil", itemId = "minecraft:enchanted_book";
+    auto const&       block   = ctx.region()->getBlock(gf::game::blockPos(pos));
+    auto const&       held    = p->getInventory().getItem(p->getSelectedItemSlot());
+    ia::UseOnContext  c{*p, held, itemId, block, blockId, pos, 1, {0.5, 1.0, 0.5}, false, true};
+    ctx.check(ia::dispatchUseOn(c) == ia::Result::Consume, "a vanilla player's click with the book opens the form instead of the anvil");
+    gf::net::setTestCompanion(*p, true);
+    ctx.check(ia::dispatchUseOn(c) == ia::Result::Pass, "a companion's click opens the anvil screen");
+    gf::net::setTestCompanion(*p, false);
+    co_await ctx.ticks(2); // the form goes out on the next tick
+    p = get();
+    ctx.require(p != nullptr, "the player");
+    for (int i = 0; i < 5; ++i) p->getInventory().setItem(i, ItemStack::EMPTY_ITEM());
+    p->getInventory().setItem(p->getSelectedItemSlot(), ItemStack::EMPTY_ITEM());
+    p->addLevels(before - levelsOf(*p));
+    en::internal::unregisterType("gf_test:fixture_react");
+});
+
 // ---- effects -----------------------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("item.effect_carrier", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -793,6 +1074,42 @@ GF_REGISTER_SELFTEST("item.effect_carrier_vanilla", [](Context& ctx) -> ll::coro
     c = get()->getEffect(2u);
     ctx.check(c && c->mAmplifier == 2 && c->mDuration->mValue > 500, "and removing frosted does not remove the potion");
     get()->removeEffect(2);
+    fx::internal::unregisterType("gf_test:fixture_frosted");
+});
+
+// A state read back from a persistence tag older than the carrier (an unload or a restart between
+// two tag writes) follows the carrier the actor kept, so the carrier is still known as its own.
+GF_REGISTER_SELFTEST("item.effect_carrier_reload", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace fx = gf::effects;
+    fx::registerType("gf_test:fixture_frosted", {.carrier = "minecraft:slowness", .color = 0x56CBFD});
+    auto uid = ctx.player().getOrCreateUniqueID();
+    auto get = [&]() -> Player* { return ll::service::getLevel()->getPlayer(uid); };
+    ctx.require(fx::apply(*get(), "gf_test:fixture_frosted", 400, 1), "frosted II for 20 s");
+    co_await ctx.ticks(3);
+    auto* p = get();
+    ctx.require(p != nullptr, "the player");
+    auto const* carrier = p->getEffect(2u);
+    ctx.require(carrier != nullptr, "its carrier");
+    int now = carrier->mDuration->mValue;
+    // the tag as the last periodic write left it: 15 ticks before the actor unloaded
+    for (auto const& t : p->getTags())
+        if (t.starts_with(fx::internal::kTagPrefix)) p->removeTag(t);
+    p->addTag(std::string(fx::internal::kTagPrefix) + "gf_test:fixture_frosted|1|" + std::to_string(now + 15) + "|0:" + std::to_string(now + 115) + "|");
+    fx::internal::forget(*p); // unloaded: the next query reads the tag
+    auto list = fx::internal::activeOf(*p);
+    ctx.check(list.size() == 1 && list[0].ticks == now, "the reloaded state follows its carrier (" + std::to_string(list.empty() ? -1 : list[0].ticks) + " / " + std::to_string(now) + ")");
+    ctx.check(list.size() == 1 && list[0].hidden.size() == 1 && list[0].hidden[0].second == now + 100, "its hidden instance lost the same ticks");
+    ctx.check(fx::internal::carrierIsOurs(*p, *fx::internal::specOf("gf_test:fixture_frosted"), list.front()), "the carrier is known as its own");
+    fx::remove(*p, "gf_test:fixture_frosted");
+    ctx.check(p->getEffect(2u) == nullptr, "removing the effect takes its carrier away (no foreign Slowness left)");
+    // a vanilla instance that only looks alike (another amplifier) stays foreign
+    ctx.require(fx::apply(*p, "minecraft:slowness", 600, 0), "a Slowness I potion");
+    p->addTag(std::string(fx::internal::kTagPrefix) + "gf_test:fixture_frosted|1|610||");
+    fx::internal::forget(*p);
+    list = fx::internal::activeOf(*p);
+    ctx.check(list.size() == 1 && list[0].ticks == 610, "a carrier of another level is not taken for the effect's own");
+    fx::internal::clearAll(*p);
+    p->removeEffect(2);
     fx::internal::unregisterType("gf_test:fixture_frosted");
 });
 
