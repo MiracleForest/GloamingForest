@@ -235,10 +235,10 @@ Invoke-Teleport ('/tp @s {0} {1} {2} -45 -75' -f ($ax + 0.5), $ay, ($az + 0.5))
 Start-Sleep -Seconds 2
 Save-Screenshot 'twilight-up' | Out-Null
 # its foot: a room cleared at the bottom of the world around it (y -31..-26 on a stone floor at
-# y -32), the player in a corner looking at the glowstone at y -32
+# y -32; the pillar goes on from the ceiling), the player in a corner looking down at the
+# glowstone at y -32 in the floor
 Invoke-Chat ("/fill {0} -32 {1} {2} -32 {3} stone" -f ($px - 2), ($pz - 2), ($px + 2), ($pz + 2))
 Invoke-Chat ("/fill {0} -31 {1} {2} -26 {3} air" -f ($px - 2), ($pz - 2), ($px + 2), ($pz + 2))
-Invoke-Chat "/fill $px -31 $pz $px -26 $pz stone"
 Invoke-Chat "/setblock $px -32 $pz glowstone"
 Invoke-Teleport ('/tp @s {0} -31 {1} -45 35' -f ($px - 1.5), ($pz - 1.5))
 Start-Sleep -Seconds 3
