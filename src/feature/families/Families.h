@@ -258,7 +258,7 @@ void consumeHeld(Player& player, ItemStack const& contextItem);
 /// Breaks the block at `pos` as Java's destroyBlock(pos, true): its drops (loot) and effect.
 void destroyWithDrops(BlockSource& region, BlockPos const& pos);
 /// Java's dropResources(state, level, pos) then removeBlock(pos, false): the drops without the
-/// break effect (decaying leaves are silent).
+/// break effect (decaying leaves are silent); a waterlogged block leaves its water source.
 void dropAndRemove(BlockSource& region, BlockPos const& pos);
 /// Java Player.mayBuild (not adventure / spectator).
 [[nodiscard]] bool mayBuild(Player const& player);

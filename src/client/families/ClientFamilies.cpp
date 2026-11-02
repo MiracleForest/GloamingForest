@@ -16,7 +16,9 @@
 // - Leaf colours by position (ColorHandler: time, transformation, mining, sorting and rainbow oak
 //   leaves, LeafColors.h) through the client.render contract's tint (gf::client::tint, F12): their
 //   materials carry a tint method (tools/families), which a vanilla client fills with the biome's
-//   foliage colour.
+//   foliage colour. Canopy and mangrove leaves blend the biome foliage colour there
+//   (CANOPY_COLORIZER / MANGROVE_COLORIZER; the game's foliage tint at the position, LeafTint.h);
+//   a vanilla client keeps their evergreen / birch tint methods.
 // - Snowy grass under snowloggables: TFBushBlock.updateSnowBeneath sets the grass below a bush
 //   with snow in it SNOWY. Bedrock's grass has no such state: it draws its snowed side when the
 //   client's grass variant (GrassBlock::calcVariant, client only) finds snow above, so the variant
@@ -34,6 +36,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/GrassBlock.h"
 
+#include "client/families/LeafTint.h"
 #include "client/render/Render.h"
 #include "feature/families/Families.h"
 #include "feature/families/LeafColors.h"
@@ -77,6 +80,8 @@ namespace gf::client::families {
 
 namespace {
 
+constexpr unsigned kDefaultFoliage = 0x48B518; ///< FoliageColor.getDefaultColor
+
 class ClientFamiliesModule {
 public:
     void install() {
@@ -88,14 +93,19 @@ public:
         static bool tinted = false;
         if (!tinted) {
             tinted = true;
-            int n  = 0;
+            int n = 0, blended = 0;
             for (auto const* e : fam::entriesOf(fam::Family::Leaves)) {
-                auto color = fam::leafcolors::of(e->id);
-                if (!color) continue;
-                tint::registerBlock(e->id, [fn = *color](BlockPos const& p) { return fn(p.x, p.y, p.z); });
-                ++n;
+                if (auto color = fam::leafcolors::of(e->id)) {
+                    tint::registerBlock(e->id, [fn = *color](BlockPos const& p) { return fn(p.x, p.y, p.z); });
+                    ++n;
+                } else if (auto blend = fam::leafcolors::blendOf(e->id)) {
+                    // CANOPY_COLORIZER / MANGROVE_COLORIZER of the biome foliage colour there (the
+                    // game's default foliage when the resolver can't be asked: FoliageColor's default)
+                    tint::registerBlock(e->id, [fn = *blend](BlockPos const& p) { return fn(biomeFoliageAt(p).value_or(kDefaultFoliage)); });
+                    ++blended;
+                }
             }
-            if (n) log().info("families: {} leaf colours by position", n);
+            if (n + blended) log().info("families: {} leaf colours by position, {} blended with the biome foliage", n, blended);
         }
     }
 

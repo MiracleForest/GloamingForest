@@ -10,8 +10,11 @@
 // transformation, mining and sorting leaves fade between two colours, rainbow oak leaves), as
 // 0xRRGGBB. The client mod tints those leaves with them (src/client/families, gf::client::tint);
 // without a world (an item, a vanilla client: tools/families pre-tints the textures) Java uses the
-// colour at fade 0 (rainbow oak: FoliageColor.getDefaultColor). No game headers: both builds
-// include it (the server's selftests check the values).
+// colour at fade 0 (rainbow oak: FoliageColor.getDefaultColor). Canopy and mangrove leaves blend
+// the biome foliage colour at the position (CANOPY_COLORIZER / MANGROVE_COLORIZER, blendOf): the
+// client mod applies them to the game's own foliage tint there; without a world Java uses
+// FoliageColor.getEvergreenColor / getBirchColor (a vanilla client: Bedrock's evergreen / birch
+// tint methods). No game headers: both builds include it (the server's selftests check the values).
 
 #include <cstdint>
 #include <optional>
@@ -60,6 +63,21 @@ namespace gf::feature::families::leafcolors {
     if ((blue & 256u) != 0) blue = 255u - (blue & 255u);
     blue &= 255u;
     return ((red << 16) | (green << 8) | blue) & 0xFFFFFFu;
+}
+
+/// ColorHandler.CANOPY_COLORIZER: TFBlocks.CANOPY_LEAVES blend the biome foliage colour
+/// (BiomeColors.getAverageFoliageColor) with 0x469A66, ((foliage & 0xFEFEFE) + 0x469A66) / 2.
+[[nodiscard]] constexpr unsigned canopy(unsigned foliage) { return (((foliage & 0xFEFEFEu) + 0x469A66u) / 2u) & 0xFFFFFFu; }
+/// ColorHandler.MANGROVE_COLORIZER: TFBlocks.MANGROVE_LEAVES, ((foliage & 0xFEFEFE) + 0xC0E694) / 2.
+[[nodiscard]] constexpr unsigned mangrove(unsigned foliage) { return (((foliage & 0xFEFEFEu) + 0xC0E694u) / 2u) & 0xFFFFFFu; }
+
+using BlendFn = unsigned (*)(unsigned foliage);
+/// The colorizer ColorHandler applies to the biome foliage colour for a TF leaf block id (nullopt:
+/// none; those leaves take the foliage colour as it is, or one of `of`).
+[[nodiscard]] constexpr std::optional<BlendFn> blendOf(std::string_view id) {
+    if (id == "twilightforest:canopy_leaves") return &canopy;
+    if (id == "twilightforest:mangrove_leaves") return &mangrove;
+    return std::nullopt;
 }
 
 using ColorFn = unsigned (*)(int x, int y, int z);

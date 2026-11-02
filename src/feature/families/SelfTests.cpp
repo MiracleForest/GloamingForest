@@ -69,6 +69,8 @@ void   advanceSaplingWith(BlockSource& region, BlockPos const& pos, gf::blockeve
 void   signEditorFor(Player& player, GlobalPos const& pos, bool front);
 bool   signEdit(Player& player, GlobalPos const& pos, bool front, std::vector<std::string> const& lines);
 Actor* signDisplay(GlobalPos const& pos, bool front);
+Json   signSentText(GlobalPos const& pos);
+void   signSendAll(Player& player);
 } // namespace gf::feature::families::detail
 
 namespace {
@@ -1297,8 +1299,110 @@ GF_REGISTER_SELFTEST("families.tf_blocks", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(lc::rainbow(0, 0, 0) == 0x00FF00 && lc::rainbow(8, 0, 0) == 0xFFFF80, "rainbow oak's colours (" + std::to_string(lc::rainbow(8, 0, 0)) + ")");
     ctx.check(lc::of("twilightforest:time_leaves").has_value() && !lc::of("twilightforest:canopy_leaves").has_value(), "only the position-coloured leaves");
     ctx.check(gf::game::blockWith("twilightforest:time_leaves") != nullptr, "time leaves exist");
+    // CANOPY_COLORIZER / MANGROVE_COLORIZER of the biome foliage (here FoliageColor's default)
+    ctx.check(lc::canopy(0x48B518) == 0x47A73F && lc::mangrove(0x48B518) == 0x84CD56 && lc::canopy(0xFF48B518) == 0x47A73F,
+              "canopy and mangrove leaves blend the foliage colour (" + std::to_string(lc::canopy(0x48B518)) + ", " + std::to_string(lc::mangrove(0x48B518)) + ")");
+    ctx.check(lc::blendOf("twilightforest:canopy_leaves").has_value() && lc::blendOf("twilightforest:mangrove_leaves").has_value() && !lc::blendOf("twilightforest:twilight_oak_leaves").has_value(),
+              "only canopy and mangrove leaves blend");
     // the sign editor's line width (SignFont.h, the same table on both sides)
     namespace sf = fam::signfont;
     ctx.check(sf::lineWidth("Twilight") == 6 + 6 + 2 + 3 + 2 + 6 + 6 + 4 && sf::fitLine(std::string(30, 'W'), 90, 384).size() == 15u, "Java's sign line width");
+    // what SignRenderer draws of a line: the first line of Font.split (word wrap at 90 px)
+    ctx.check(sf::firstLine("Here lies a naga", 90) == "Here lies a naga" && sf::firstLine(std::string(20, 'W'), 90) == std::string(15, 'W'),
+              "a line that fits is drawn whole, a long word is cut at 90 px");
+    ctx.check(sf::firstLine("WWWWWWWWWW WWWWWWWW", 90) == "WWWWWWWWWW" && sf::firstLine("ab\ncd", 90) == "ab" && sf::firstLine("\xC2\xA7" "cWWWWWWWWWWWWWWW", 90) == "\xC2\xA7" "cWWWWWWWWWWWWWWW",
+              "a long line breaks at its last space, at a line break, and formatting codes have no width (" + sf::firstLine("WWWWWWWWWW WWWWWWWW", 90) + ")");
+    ctx.check(sf::firstLine(std::string(12, 'W'), 60) == std::string(10, 'W'), "a hanging sign's line is 60 px");
+    (void)box;
+});
+
+GF_REGISTER_SELFTEST("families.leaves_waterlogged", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // Java LeavesBlock.randomTick: decaying leaves dropResources then level.removeBlock(pos, false),
+    // which puts the block's fluid in its place: waterlogged leaves leave their water source (TF's
+    // leaves are waterloggable: F1's params.traits)
+    if (!fam::entryOf("twilightforest:twilight_oak_leaves") || !gf::game::blockWith("twilightforest:twilight_oak_leaves")) {
+        ctx.info("no TF leaves in this build: skipped");
+        co_return;
+    }
+    auto box = co_await ctx.flatArea(6182, 5);
+    auto p   = ctx.testPos(6182, 2);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto& region = *ctx.region();
+    auto  wet    = [&region](GlobalPos const& q) {
+        auto const& extra = region.getExtraBlock(gf::game::blockPos(q)).getTypeName();
+        return extra == "minecraft:water" || extra == "minecraft:flowing_water";
+    };
+    auto const* water = gf::game::blockWith("minecraft:water");
+    ctx.require(water != nullptr, "water");
+    auto w = at(p, 2, 0, 0), dry = at(p, 2, 0, 2);
+    // a basin of stone around the waterlogged leaves, so the water can't flow away
+    for (auto [dx, dz] : {std::pair{1, 0}, std::pair{-1, 0}, std::pair{0, 1}, std::pair{0, -1}}) ctx.require(ctx.setBlock(at(w, dx, 0, dz), "minecraft:stone"), "the basin");
+    ctx.require(ctx.setBlock(w, "twilightforest:twilight_oak_leaves", {{fam::state::Distance, 7}, {fam::state::Persistent, false}}), "leaves far from any log");
+    ctx.require(ctx.setBlock(dry, "twilightforest:twilight_oak_leaves", {{fam::state::Distance, 7}, {fam::state::Persistent, false}}), "dry leaves far from any log");
+    region.setExtraBlock(gf::game::blockPos(w), *water, 3);
+    co_await ctx.ticks(3);
+    ctx.require(ctx.blockAt(w) == "twilightforest:twilight_oak_leaves" && wet(w), "the leaves are waterlogged (water in their liquid layer)");
+    fam::detail::randomTickAt(region, gf::game::blockPos(w));
+    fam::detail::randomTickAt(region, gf::game::blockPos(dry));
+    co_await ctx.ticks(2);
+    auto const* left = fam::blockAt(w);
+    ctx.check(left && left->getTypeName() == "minecraft:water", "the waterlogged leaves decayed into their water (" + ctx.blockAt(w) + ")");
+    ctx.check(left && fam::intState(*left, "liquid_depth").value_or(-1) == 0, "a water source, as Java's removeBlock leaves it");
+    ctx.check(!wet(w), "no water left in the liquid layer");
+    ctx.check(ctx.blockAt(dry) == "minecraft:air", "dry leaves decay into air (" + ctx.blockAt(dry) + ")");
+    for (auto* item : itemsNear(ctx, w)) item->remove();
+    for (auto* item : itemsNear(ctx, dry)) item->remove();
+    (void)box;
+});
+
+GF_REGISTER_SELFTEST("families.sign_sync", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // the client mod draws the sign text itself (SignRenderer): the server sends companions the
+    // text of a sign when it changes, "gone" when it goes, everything when they join; vanilla
+    // players get nothing (they read the display entity's name tag)
+    if (!fixturesReady(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6182, 5);
+    auto p   = ctx.testPos(6184, 2);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    ctx.require(ctx.setBlock(at(p, 0, -1, 0), "minecraft:stone"), "ground");
+    ctx.require(ctx.setBlock(p, "gf_test:family_sign", {{fam::state::Rotation, 8}}), "a sign");
+    co_await ctx.ticks(1);
+    CompanionGuard guard(ctx);
+    auto texts = [&ctx] {
+        std::vector<fam::Json> out;
+        for (auto const& m : gf::net::takeTestMessages(ctx.player()))
+            if (m.channel == "families.sign_text") out.push_back(m.payload);
+        return out;
+    };
+    auto names = [&p](fam::Json const& msg, char const* list) {
+        for (auto const& e : msg.value(list, fam::Json::array())) {
+            auto const& pos = e.is_array() ? e : e.value("pos", fam::Json());
+            if (pos == fam::Json::array({p.dim, p.x, p.y, p.z})) return true;
+        }
+        return false;
+    };
+    gf::signs::setText(p, {"sync", "me"});
+    auto sent = texts();
+    ctx.check(sent.size() == 1 && names(sent[0], "signs"), "a companion is sent the new text (" + std::to_string(sent.size()) + " messages)");
+    if (!sent.empty() && !sent[0].value("signs", fam::Json::array()).empty()) {
+        auto const& e = sent[0]["signs"][0];
+        ctx.check(e["front"]["lines"][0] == "sync" && e["front"]["color"] == "black" && e["front"]["glowing"] == false && e["back"]["lines"][0] == "",
+                  "with both sides' lines, colour and glow");
+    }
+    gf::signs::setText(p, {"sync", "me"});
+    ctx.check(texts().empty(), "the same text is not sent again");
+    gf::signs::setText(p, {"back"}, false);
+    sent = texts();
+    ctx.check(sent.size() == 1 && names(sent[0], "signs") && sent[0]["signs"][0]["back"]["lines"][0] == "back", "a change of the back is sent");
+    ctx.check(fam::detail::signSentText(p).value("front", fam::Json()).value("lines", fam::Json::array()) == fam::Json::array({"sync", "me", "", ""}), "the server remembers what it sent");
+    fam::detail::signSendAll(ctx.player());
+    sent = texts();
+    ctx.check(!sent.empty() && names(sent[0], "signs"), "a companion that joins gets the text of the signs");
+    ctx.setBlock(p, "minecraft:air");
+    co_await ctx.ticks(2);
+    sent = texts();
+    bool gone = false;
+    for (auto const& m : sent) gone = gone || names(m, "gone");
+    ctx.check(gone, "a broken sign's text is gone for the companions");
+    ctx.check(fam::detail::signSentText(p).is_null(), "and the server forgets it");
     (void)box;
 });

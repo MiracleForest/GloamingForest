@@ -11,7 +11,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <map>
 #include <memory>
 
 #include "mc/locale/I18n.h"
@@ -19,6 +18,7 @@
 
 #include "client/Client.h"
 #include "client/families/SignBoard.h"
+#include "client/families/SignText.h"
 #include "client/screen/base/Screen.h"
 #include "feature/families/SignFont.h"
 #include "mod/Log.h"
@@ -75,24 +75,12 @@ std::string titleOf(Json const& data) {
     return key.empty() ? fallback : uiText(key.c_str(), fallback.c_str());
 }
 
-/// Java DyeColor.getTextColor.
-unsigned dyeTextColor(std::string const& dye) {
-    static std::map<std::string, unsigned> const colours{
-        {"white", 0xFFFFFF}, {"orange", 0xFF681F}, {"magenta", 0xFF00FF}, {"light_blue", 0x9AC0CD}, {"yellow", 0xFFFF00}, {"lime", 0xBFFF00},
-        {"pink", 0xFF69B4},  {"gray", 0x808080},   {"light_gray", 0xD3D3D3}, {"cyan", 0x00FFFF},    {"purple", 0xA020F0}, {"blue", 0x0000FF},
-        {"brown", 0x8B4513}, {"green", 0x00FF00},  {"red", 0xFF0000},       {"black", 0x000000},
-    };
-    auto it = colours.find(dye);
-    return it == colours.end() ? 0 : it->second;
-}
-
-/// The colour SignEditScreen writes with: the dye's colour when glowing (black glows 0xF0EBCC),
-/// else AbstractSignRenderer.getDarkColor (the dye's colour x 0.4).
+/// The colour AbstractSignEditScreen.renderSignText writes with: the dye's colour when the text
+/// glows (black stays black: the outline is the world renderer's), else SignRenderer.getDarkColor
+/// (the dye's colour x 0.4).
 unsigned signTextColor(std::string const& dye, bool glowing) {
     unsigned c = dyeTextColor(dye);
-    if (glowing) return 0xFF000000 | (c == 0 ? 0xF0EBCC : c);
-    auto dark = [&](int shift) { return static_cast<unsigned>(((c >> shift) & 0xFF) * 0.4) << shift; };
-    return 0xFF000000 | dark(16) | dark(8) | dark(0);
+    return 0xFF000000 | (glowing ? c : signDarkColor(c, false));
 }
 
 /// Java's SignEditScreen / HangingSignEditScreen (AbstractSignEditScreen): the sign drawn large in
