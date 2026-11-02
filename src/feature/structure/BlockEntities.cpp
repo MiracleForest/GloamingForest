@@ -18,13 +18,17 @@
 #include "feature/structure/Region.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <deque>
+#include <limits>
 #include <mutex>
 #include <set>
 #include <shared_mutex>
+#include <thread>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
@@ -60,6 +64,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockChangeContext.h"
 #include "mc/world/level/block/BlockType.h"
+#include "mc/world/level/block/HopperBlock.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
 #include "mc/world/Container.h"
@@ -80,6 +85,9 @@
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/loot/Loot.h"
+// LootTable#fill (roll and spread with one random): F10 declares it here; F10 is asked to move it
+// into a contract extension header (the PR's notes for other units)
+#include "feature/loot/LootInternal.h"
 #include "feature/spawn/Spawn.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -552,7 +560,10 @@ Json spawnerRecordOf(std::string const& entityId, Json const& data, bool withFie
 // ---- the index of the kit's spawner records ---------------------------------------------------------
 
 /// The positions with a kit spawner record, per chunk (dimension, chunk x, chunk z): a chunk's
-/// block data is read once (the first time a spawn looks there), then the record writes keep it.
+/// block data is read once (the first time a spawn looks there), then kept by the record writes and
+/// the block data's erase / move listeners (a record goes with its block). Chunks no longer loaded
+/// are evicted every kIndexSweepInterval ticks (read again when a spawn looks there), and the index
+/// is dropped as a whole past kIndexMaxChunks chunks.
 struct SpawnerIndex {
     std::mutex                                                            mutex;
     std::map<std::tuple<int, int, int>, std::set<std::tuple<int, int, int>>> byChunk;
@@ -561,14 +572,35 @@ SpawnerIndex& spawnerIndex() {
     static SpawnerIndex s;
     return s;
 }
+constexpr int         kIndexSweepInterval = 1200;
+constexpr std::size_t kIndexMaxChunks     = 4096;
 
-void indexSpawnerRecord(BlockSource& source, BlockPos const& pos, bool present) {
+void indexSpawnerRecord(int dim, BlockPos const& pos, bool present) {
     auto&           idx = spawnerIndex();
     std::lock_guard lock(idx.mutex);
-    auto            it = idx.byChunk.find(chunkKey(static_cast<int>(source.getDimensionId()), pos));
+    auto            it = idx.byChunk.find(chunkKey(dim, pos));
     if (it == idx.byChunk.end()) return; // not read yet: it is read with the record in it
     if (present) it->second.insert({pos.x, pos.y, pos.z});
     else it->second.erase({pos.x, pos.y, pos.z});
+}
+void indexSpawnerRecord(BlockSource& source, BlockPos const& pos, bool present) {
+    indexSpawnerRecord(static_cast<int>(source.getDimensionId()), pos, present);
+}
+
+/// Evicts the chunks that are not loaded any more (and everything past kIndexMaxChunks).
+void sweepSpawnerIndex() {
+    auto&           idx = spawnerIndex();
+    std::lock_guard lock(idx.mutex);
+    if (idx.byChunk.size() > kIndexMaxChunks) {
+        idx.byChunk.clear();
+        return;
+    }
+    for (auto it = idx.byChunk.begin(); it != idx.byChunk.end();) {
+        auto [dim, cx, cz] = it->first;
+        auto* source       = game::regionOf(dim);
+        if (!source || !source->getChunk(cx, cz)) it = idx.byChunk.erase(it);
+        else ++it;
+    }
 }
 
 /// Replaces the spawner part of the BlockData at `pos` (nothing kept: removed).
@@ -591,135 +623,321 @@ std::string spawnDataEntity(Json const& spawnData) {
     return {};
 }
 
-/// ParticleTypes.CODEC entries of SinisterSpawnerLogic's ParticleOptions: a particle id, or
-/// {"type": id, ...options}. The options go to F8's spawner as the particle's fx params (dust
-/// colour and scale); entries that are neither are left out (Java's partial result).
-void particleOptions(Json const& list, std::vector<std::string>& ids, Json& params) {
-    ids.clear();
-    params = Json::object();
-    if (!list.is_array()) return;
-    for (auto const& e : list) {
-        std::string id;
-        if (e.is_string()) id = e.get<std::string>();
-        else if (e.is_object() && e.contains("type") && e["type"].is_string()) id = e["type"].get<std::string>();
-        if (id.empty()) continue;
-        if (id.find(':') == std::string::npos) id = "minecraft:" + id;
-        ids.push_back(id);
-        if (e.is_object()) {
-            Json options = e;
-            options.erase("type");
-            if (!options.empty()) params[id] = std::move(options);
-        }
-    }
+// ---- BaseSpawner#load ------------------------------------------------------------------------------
+// The kit keeps a template's NBT as JSON: a number tag is a JSON number.
+
+/// CompoundTag#contains(key, 99): a number tag of any type.
+bool nbtHasNumber(Json const& tag, char const* key) {
+    if (!tag.is_object()) return false;
+    auto it = tag.find(key);
+    return it != tag.end() && it->is_number();
 }
+
+/// The integer of a number tag (NumericTag#getAsLong: a float tag floored), nullopt when missing
+/// or not a number.
+std::optional<std::int64_t> nbtLong(Json const& tag, char const* key) {
+    if (!nbtHasNumber(tag, key)) return std::nullopt;
+    auto const& v = tag[key];
+    if (v.is_number_float()) {
+        double d = std::floor(v.get<double>());
+        if (!(d > -9.2e18 && d < 9.2e18)) return d > 0 ? std::numeric_limits<std::int64_t>::max() : std::numeric_limits<std::int64_t>::min();
+        return static_cast<std::int64_t>(d);
+    }
+    if (v.is_number_unsigned()) return static_cast<std::int64_t>(v.get<std::uint64_t>());
+    return v.get<std::int64_t>();
+}
+
+/// CompoundTag#getShort: NumericTag#getAsShort (the low 16 bits), 0 when missing or not a number.
+int nbtShort(Json const& tag, char const* key) {
+    auto v = nbtLong(tag, key);
+    return v ? static_cast<int>(static_cast<std::int16_t>(static_cast<std::uint16_t>(static_cast<std::uint64_t>(*v) & 0xffffu))) : 0;
+}
+
+/// CompoundTag#getInt: NumericTag#getAsInt (the low 32 bits), 0 when missing or not a number.
+int nbtInt(Json const& tag, char const* key) {
+    auto v = nbtLong(tag, key);
+    return v ? static_cast<int>(static_cast<std::int32_t>(static_cast<std::uint32_t>(static_cast<std::uint64_t>(*v) & 0xffffffffu))) : 0;
+}
+
+/// The BaseSpawner fields BaseSpawner#load reads from a spawner's data: Delay always (0 when the
+/// data has none); MinSpawnDelay, MaxSpawnDelay and SpawnCount together, only when MinSpawnDelay is
+/// there; MaxNearbyEntities and RequiredPlayerRange together, only when MaxNearbyEntities is there;
+/// SpawnRange when it is there. Each a short (CompoundTag#getShort: a missing partner reads 0).
+struct SpawnerTag {
+    int                               delay = 0;
+    std::optional<std::array<int, 3>> delays;  ///< min delay, max delay, spawn count
+    std::optional<std::array<int, 2>> nearby;  ///< max nearby entities, required player range
+    std::optional<int>                range;
+};
+SpawnerTag readSpawnerTag(Json const& data) {
+    SpawnerTag t;
+    t.delay = nbtShort(data, "Delay");
+    if (nbtHasNumber(data, "MinSpawnDelay")) t.delays = std::array<int, 3>{nbtShort(data, "MinSpawnDelay"), nbtShort(data, "MaxSpawnDelay"), nbtShort(data, "SpawnCount")};
+    if (nbtHasNumber(data, "MaxNearbyEntities")) t.nearby = std::array<int, 2>{nbtShort(data, "MaxNearbyEntities"), nbtShort(data, "RequiredPlayerRange")};
+    if (nbtHasNumber(data, "SpawnRange")) t.range = nbtShort(data, "SpawnRange");
+    return t;
+}
+
+// ---- SinisterSpawnerLogic's ParticleOptions ------------------------------------------------------------
+
+/// What a particle type's MapCodec asks for (ParticleTypes.CODEC dispatches on "type").
+enum class ParticleShape { Simple, Dust, DustTransition, BlockState, Item, Color, Vibration, Roll, Delay, Leaf };
+
+/// The particle types of Minecraft 1.21.1 (ParticleTypes: the SimpleParticleTypes, which take no
+/// options, and the option types; read from the server jar's ParticleTypes.<clinit>) and TF 4.8
+/// (TFParticleType), by id; nullopt for an unknown id (Registry#byNameCodec fails).
+std::optional<ParticleShape> particleShape(std::string const& id) {
+    static std::unordered_map<std::string, ParticleShape> const table = [] {
+        std::unordered_map<std::string, ParticleShape> t;
+        for (auto const* s :
+             {"angry_villager", "bubble", "cloud", "crit", "damage_indicator", "dragon_breath", "dripping_lava", "falling_lava", "landing_lava",
+              "dripping_water", "falling_water", "effect", "elder_guardian", "enchanted_hit", "enchant", "end_rod", "explosion_emitter", "explosion",
+              "gust", "small_gust", "gust_emitter_large", "gust_emitter_small", "sonic_boom", "firework", "fishing", "flame", "infested",
+              "cherry_leaves", "sculk_soul", "sculk_charge_pop", "soul_fire_flame", "soul", "flash", "happy_villager", "composter", "heart",
+              "instant_effect", "item_slime", "item_cobweb", "item_snowball", "large_smoke", "lava", "mycelium", "note", "poof", "portal", "rain",
+              "smoke", "white_smoke", "sneeze", "spit", "squid_ink", "sweep_attack", "totem_of_undying", "underwater", "splash", "witch",
+              "bubble_pop", "current_down", "bubble_column_up", "nautilus", "dolphin", "campfire_cosy_smoke", "campfire_signal_smoke",
+              "dripping_honey", "falling_honey", "landing_honey", "falling_nectar", "falling_spore_blossom", "ash", "crimson_spore", "warped_spore",
+              "spore_blossom_air", "dripping_obsidian_tear", "falling_obsidian_tear", "landing_obsidian_tear", "reverse_portal", "white_ash",
+              "small_flame", "snowflake", "dripping_dripstone_lava", "falling_dripstone_lava", "dripping_dripstone_water",
+              "falling_dripstone_water", "glow_squid_ink", "glow", "wax_on", "wax_off", "electric_spark", "scrape", "egg_crack", "dust_plume",
+              "trial_spawner_detection", "trial_spawner_detection_ominous", "vault_connection", "ominous_spawning", "raid_omen", "trial_omen"})
+            t[std::string("minecraft:") + s] = ParticleShape::Simple;
+        t["minecraft:dust"]                  = ParticleShape::Dust;           // color [3], scale 0.01..4
+        t["minecraft:dust_color_transition"] = ParticleShape::DustTransition; // from_color [3], to_color [3], scale 0.01..4
+        for (auto const* s : {"block", "block_marker", "falling_dust", "dust_pillar"}) t[std::string("minecraft:") + s] = ParticleShape::BlockState;
+        t["minecraft:item"]          = ParticleShape::Item;      // item
+        t["minecraft:entity_effect"] = ParticleShape::Color;     // color (ARGB int or [4])
+        t["minecraft:vibration"]     = ParticleShape::Vibration; // destination (a block position source), arrival_in_ticks
+        t["minecraft:sculk_charge"]  = ParticleShape::Roll;      // roll
+        t["minecraft:shriek"]        = ParticleShape::Delay;     // delay
+        for (auto const* s : {"large_flame", "leaf_rune", "boss_tear", "ghast_trap", "protection", "snow", "snow_warning", "extended_snow_warning",
+                              "snow_guardian", "ice_beam", "annihilate", "perfect_dodge", "double_jump", "huge_smoke", "firefly", "wandering_firefly",
+                              "particle_spawner_firefly", "dim_flame", "ominous_flame", "sorting_particle", "transformation_particle",
+                              "log_core_particle", "cloud_puff", "angry_lich", "twilight_orb", "shield_break", "drying_rack"})
+            t[std::string("twilightforest:") + s] = ParticleShape::Simple;
+        t["twilightforest:fallen_leaf"]  = ParticleShape::Leaf;  // LeafParticleData: r, g, b
+        t["twilightforest:magic_effect"] = ParticleShape::Color; // ColorParticleOption
+        return t;
+    }();
+    auto it = table.find(id);
+    return it == table.end() ? std::nullopt : std::optional<ParticleShape>(it->second);
+}
+
+/// ExtraCodecs.VECTOR3F / VECTOR4F: a list of exactly `n` numbers.
+bool isVector(Json const& v, std::size_t n) {
+    if (!v.is_array() || v.size() != n) return false;
+    return std::all_of(v.begin(), v.end(), [](Json const& e) { return e.is_number(); });
+}
+
+/// ScalableParticleOptionsBase.SCALE: a float in 0.01..4.
+bool validScale(Json const& options) {
+    if (!nbtHasNumber(options, "scale")) return false;
+    float scale = options["scale"].get<float>();
+    return scale >= 0.01f && scale <= 4.0f;
+}
+
+/// Whether `options` decode with the MapCodec of a particle of `shape`.
+bool validParticleOptions(ParticleShape shape, Json const& options) {
+    switch (shape) {
+    case ParticleShape::Simple:
+        return true;
+    case ParticleShape::Dust:
+        return options.contains("color") && isVector(options["color"], 3) && validScale(options);
+    case ParticleShape::DustTransition:
+        return options.contains("from_color") && isVector(options["from_color"], 3) && options.contains("to_color") && isVector(options["to_color"], 3) &&
+               validScale(options);
+    case ParticleShape::BlockState: {
+        // BlockParticleOption: BlockState.CODEC ({"Name", "Properties"}) or a block id
+        if (!options.contains("block_state")) return false;
+        auto const& s    = options["block_state"];
+        std::string name = s.is_string() ? s.get<std::string>() : (s.is_object() && s.contains("Name") && s["Name"].is_string() ? s["Name"].get<std::string>() : "");
+        return !name.empty() && blocks::fromJava(name) != nullptr;
+    }
+    case ParticleShape::Item: {
+        // ItemParticleOption: ItemStack.SINGLE_ITEM_CODEC ({"id", "components"?}) or an item id; never air
+        if (!options.contains("item")) return false;
+        auto const& s  = options["item"];
+        std::string id = s.is_string() ? s.get<std::string>() : (s.is_object() && s.contains("id") && s["id"].is_string() ? s["id"].get<std::string>() : "");
+        if (id.find(':') == std::string::npos && !id.empty()) id = "minecraft:" + id;
+        return !id.empty() && id != "minecraft:air" && game::items::make(id).has_value();
+    }
+    case ParticleShape::Color:
+        // ExtraCodecs.ARGB_COLOR_CODEC: an int, or [a, r, g, b] floats
+        return options.contains("color") && (options["color"].is_number() || isVector(options["color"], 4));
+    case ParticleShape::Vibration: {
+        // VibrationParticleOption: a block position source (an entity one is refused), arrival_in_ticks
+        if (!options.contains("destination") || !options["destination"].is_object() || !nbtHasNumber(options, "arrival_in_ticks")) return false;
+        auto const& d    = options["destination"];
+        auto        type = d.value("type", std::string{});
+        return (type == "minecraft:block" || type == "block") && d.contains("pos") && isVector(d["pos"], 3);
+    }
+    case ParticleShape::Roll:
+        return nbtHasNumber(options, "roll");
+    case ParticleShape::Delay:
+        return nbtHasNumber(options, "delay");
+    case ParticleShape::Leaf:
+        return nbtHasNumber(options, "r") && nbtHasNumber(options, "g") && nbtHasNumber(options, "b");
+    }
+    return false;
+}
+
+} // namespace
+
+std::optional<ParticleList> parseParticleOptions(Json const* list) {
+    // PARTICLES_CODEC = ParticleTypes.CODEC.listOf(): every entry a compound {"type": id, options...}
+    // (a bare id is not a compound and fails); a missing tag fails too
+    if (!list || !list->is_array()) return std::nullopt;
+    ParticleList out;
+    out.params = Json::object();
+    std::vector<Json> seen; // SinisterSpawnerLogic keeps them in a HashSet: a repeated entry once
+    for (auto const& e : *list) {
+        if (!e.is_object() || !e.contains("type") || !e["type"].is_string()) return std::nullopt;
+        std::string id = e["type"].get<std::string>();
+        if (id.find(':') == std::string::npos) id = "minecraft:" + id;
+        auto shape = particleShape(id);
+        if (!shape || !validParticleOptions(*shape, e)) return std::nullopt;
+        Json options = e;
+        options.erase("type");
+        Json entry{{"type", id}, {"options", options}};
+        if (std::find(seen.begin(), seen.end(), entry) != seen.end()) continue;
+        seen.push_back(entry);
+        if (out.params.contains(id)) {
+            // F8's spawner keeps one set of options per particle type
+            warnOnce("particle-options:" + id, "structure: a sinister spawner shows " + id + " with one set of options (its data lists several)");
+            continue;
+        }
+        out.ids.push_back(id);
+        if (!options.empty()) out.params[id] = std::move(options);
+    }
+    return out;
+}
+
+void loadSinisterSpawnerData(boss::ext::SinisterSpawner& spawner, std::string const& entityId, Json const& data) {
+    Json const& tag = data;
+    // BaseSpawner#load: Delay, unconditionally
+    SpawnerTag fields  = readSpawnerTag(tag);
+    spawner.spawnDelay = fields.delay;
+    // SpawnData (a compound) is the next spawn; the kit's "entity" is the SpawnData a processor wrote
+    if (!entityId.empty()) spawner.nextEntity = entityId;
+    else if (tag.is_object() && tag.contains("SpawnData") && tag["SpawnData"].is_object()) spawner.nextEntity = spawnDataEntity(tag["SpawnData"]);
+    if (tag.is_object() && tag.contains("SpawnPotentials") && tag["SpawnPotentials"].is_array()) {
+        // SpawnData.LIST_CODEC: [{"weight": n, "data": SpawnData}] (the kit also takes {"entity",
+        // "weight"}); resultOrPartial keeps the entries that parse
+        spawner.potentials.clear();
+        for (auto const& e : tag["SpawnPotentials"]) {
+            if (!e.is_object()) continue;
+            std::string id     = spawnDataEntity(e.contains("data") ? e["data"] : e.value("entity", Json()));
+            int         weight = e.value("weight", 1);
+            if (!id.empty() && weight > 0) spawner.potentials.emplace_back(id, weight);
+        }
+    } else {
+        // SimpleWeightedRandomList.single(nextSpawnData, or an empty SpawnData that spawns nothing)
+        spawner.potentials.clear();
+        if (!spawner.nextEntity.empty()) spawner.potentials.emplace_back(spawner.nextEntity, 1);
+    }
+    if (fields.delays) {
+        spawner.minSpawnDelay = (*fields.delays)[0];
+        spawner.maxSpawnDelay = (*fields.delays)[1];
+        spawner.spawnCount    = (*fields.delays)[2];
+    }
+    if (fields.nearby) {
+        spawner.maxNearbyEntities   = (*fields.nearby)[0];
+        spawner.requiredPlayerRange = (*fields.nearby)[1];
+    }
+    if (fields.range) spawner.spawnRange = *fields.range;
+    // SinisterSpawnerLogic#load: the particles are cleared, then the data's, only when the whole list
+    // parses (DataResult#isSuccess)
+    spawner.particles.clear();
+    spawner.particleParams = Json::object();
+    if (auto particles = parseParticleOptions(tag.is_object() && tag.contains("ParticleOptions") ? &tag["ParticleOptions"] : nullptr)) {
+        spawner.particles      = std::move(particles->ids);
+        spawner.particleParams = std::move(particles->params);
+    }
+    // EntityScanRange (any tag: CompoundTag#contains(key)), else the SpawnRange just loaded
+    spawner.entityScanRange = tag.is_object() && tag.contains("EntityScanRange") ? nbtInt(tag, "EntityScanRange") : spawner.spawnRange;
+}
+
+namespace {
 
 /// BaseSpawner#load + SinisterSpawnerLogic#load (SinisterSpawnerBlockEntity#loadAdditional) of a
 /// template's spawner data into the sinister spawner block entity F8 keeps at `pos` (nothing for
-/// any other block): Delay; SpawnData (the next mob); SpawnPotentials (weighted SpawnData; without
-/// it the next mob is the only potential, SimpleWeightedRandomList.single); MinSpawnDelay,
-/// MaxSpawnDelay, SpawnCount, MaxNearbyEntities, RequiredPlayerRange and SpawnRange when given (what
-/// the data leaves out keeps the spawner's value: a Java template saves every field);
-/// EntityScanRange (else the SpawnRange just loaded); ParticleOptions (the list is cleared and
-/// filled from the data: none without it).
+/// any other block).
 void loadSinisterSpawner(BlockSource& source, BlockPos const& pos, std::string const& entityId, Json const& data) {
     auto spawner = boss::ext::sinisterSpawner(source, pos);
     if (!spawner) return;
-    std::string next = entityId;
-    if (next.empty() && data.contains("SpawnData")) next = spawnDataEntity(data["SpawnData"]);
-    if (!next.empty()) spawner->nextEntity = next;
-    if (data.contains("SpawnPotentials") && data["SpawnPotentials"].is_array()) {
-        // SpawnData.LIST_CODEC: [{"weight": n, "data": SpawnData}] (the kit also takes {"entity", "weight"})
-        spawner->potentials.clear();
-        for (auto const& e : data["SpawnPotentials"]) {
-            if (!e.is_object()) continue;
-            std::string id = spawnDataEntity(e.contains("data") ? e["data"] : e.value("entity", Json()));
-            int         weight = e.value("weight", 1);
-            if (!id.empty() && weight > 0) spawner->potentials.emplace_back(id, weight);
-        }
-    } else if (!spawner->nextEntity.empty()) {
-        spawner->potentials = {{spawner->nextEntity, 1}};
-    }
-    auto field = [&](char const* name, int& out) {
-        if (data.contains(name) && data[name].is_number_integer()) out = data[name].get<int>();
-    };
-    field("Delay", spawner->spawnDelay);
-    field("MinSpawnDelay", spawner->minSpawnDelay);
-    field("MaxSpawnDelay", spawner->maxSpawnDelay);
-    field("SpawnCount", spawner->spawnCount);
-    field("MaxNearbyEntities", spawner->maxNearbyEntities);
-    field("RequiredPlayerRange", spawner->requiredPlayerRange);
-    field("SpawnRange", spawner->spawnRange);
-    spawner->entityScanRange = data.contains("EntityScanRange") && data["EntityScanRange"].is_number_integer() ? data["EntityScanRange"].get<int>()
-                                                                                                             : spawner->spawnRange;
-    particleOptions(data.value("ParticleOptions", Json()), spawner->particles, spawner->particleParams);
+    loadSinisterSpawnerData(*spawner, entityId, data);
     if (!boss::ext::setSinisterSpawner(source, pos, *spawner))
         warnOnce("sinister:" + source.getBlock(pos).getTypeName(), "structure: the sinister spawner refused its template data");
 }
 
 // ---- hopper loot tables --------------------------------------------------------------------------------
+// Java's hopper is a RandomizableContainer: its loot table is unpacked on any access to its
+// container (getItem, setItem, removeItem, isEmpty: a hopper pushing into it or pulling from it, its
+// first tick while enabled, a comparator's reading, Containers#dropContents when it is removed) and
+// when a player opens it. Bedrock's hopper has no loot table field: the kit keeps the table in the
+// hopper's block data and unpacks it on the same accesses (the container hooks below, the hopper's
+// removal and comparator reading, the interactions contract for players).
 
 bool isHopper(BlockActor const& actor) { return actor.getType() == BlockActorType::Hopper; }
 
-/// LootTable#fill(container, params, seed) into a hopper: the table's stacks (the loot contract's
-/// roll for the seed: Java's getRandomItems) spread over the empty slots as Java spreads them
-/// (getAvailableSlots shuffled, shuffleAndSplitItems). Java continues the roll's random for the
-/// spreading; the loot contract does not hand that random out, so one of the same seed stands in
-/// for it: the items are Java's, their slots and stack splits may differ.
+/// The hoppers with a pending loot table, (x, y, z, dimension), persisted in the world DB next to
+/// their tables (kHoppersKey, read at world load): the container hooks look a hopper up here first.
+constexpr char kHoppersKey[] = "gf:structure:hoppers";
+using HopperKey              = std::tuple<int, int, int, int>;
+std::mutex                   gHoppersMutex;
+std::set<HopperKey>          gHoppers;
+bool                         gHoppersDirty = false;
+std::atomic<int>             gHopperCount{0};
+/// The server thread (the kit's tick listener runs there): the hooks unpack only there (the client
+/// build's own hoppers are read on its render thread).
+std::atomic<std::thread::id> gServerThread{};
+/// Set while a hopper's table is rolled into it (its own reads and writes unpack nothing).
+thread_local bool            tUnpacking = false;
+/// The hopper whose own tick runs now: a powered hopper's tick does not touch its container in
+/// Java (HopperBlockEntity#tryMoveItems needs ENABLED), so its own reads unpack nothing.
+thread_local void const*     tOwnTick = nullptr;
+
+/// HopperBlock.ENABLED: Bedrock's toggle_bit is set while the hopper is powered.
+bool hopperEnabled(Block const& block) {
+    auto states = game::statesOf(block);
+    auto it     = states.find("toggle_bit");
+    return it == states.end() || it->second == "false" || it->second == "0";
+}
+
+void noteHopper(int dim, BlockPos const& pos, bool pending) {
+    std::lock_guard lock(gHoppersMutex);
+    HopperKey       key{pos.x, pos.y, pos.z, dim};
+    bool            changed = pending ? gHoppers.insert(key).second : gHoppers.erase(key) > 0;
+    if (!changed) return;
+    gHoppersDirty = true;
+    gHopperCount.store(static_cast<int>(gHoppers.size()), std::memory_order_relaxed);
+}
+
+bool onServerThread() { return std::this_thread::get_id() == gServerThread.load(std::memory_order_relaxed); }
+
+/// LootTable#fill(container, params, seed) into a hopper (unpackLootTable(null): no player, no
+/// luck): the loot contract's fill, which rolls the table and spreads the stacks over the empty
+/// slots with the same random, as Java does.
 void fillHopper(BlockSource& source, BlockPos const& pos, Container& container, std::string const& tableId, std::int64_t seed) {
     loot::LootContext ctx;
     ctx.region = &source;
     ctx.origin = Vec3{static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y) + 0.5f, static_cast<float>(pos.z) + 0.5f};
     ctx.seed   = seed;
-    auto       stacks = loot::roll(tableId, ctx);
-    JavaRandom random(seed);
-    auto       shuffle = [&](auto& list) { // Util.shuffle
-        for (int i = static_cast<int>(list.size()); i > 1; i--) std::swap(list[static_cast<std::size_t>(i - 1)], list[static_cast<std::size_t>(random.nextInt(i))]);
-    };
-    std::vector<int> slots;
-    for (int i = 0; i < container.getContainerSize(); i++)
-        if (container.getItem(i).isNull()) slots.push_back(i);
-    shuffle(slots);
-    // shuffleAndSplitItems(stacks, slots.size(), random)
-    std::vector<ItemStack> split;
-    std::erase_if(stacks, [&](ItemStack const& s) {
-        if (s.isNull()) return true;
-        if (s.mCount > 1) {
-            split.push_back(s);
-            return true;
-        }
-        return false;
-    });
-    while (static_cast<int>(slots.size()) - static_cast<int>(stacks.size()) - static_cast<int>(split.size()) > 0 && !split.empty()) {
-        auto      at   = static_cast<std::size_t>(pure::mthNextInt(random, 0, static_cast<int>(split.size()) - 1));
-        ItemStack big  = split[at];
-        split.erase(split.begin() + static_cast<std::ptrdiff_t>(at));
-        int       n     = pure::mthNextInt(random, 1, big.mCount / 2);
-        ItemStack small = big;
-        small.set(n);
-        big.set(big.mCount - n);
-        if (big.mCount > 1 && random.nextBoolean()) split.push_back(big);
-        else stacks.push_back(big);
-        if (small.mCount > 1 && random.nextBoolean()) split.push_back(small);
-        else stacks.push_back(small);
-    }
-    stacks.insert(stacks.end(), split.begin(), split.end());
-    shuffle(stacks);
-    for (auto const& s : stacks) {
-        if (slots.empty()) {
-            warnOnce("hopper-overfill:" + tableId, "structure: tried to over-fill a hopper with " + tableId);
-            break;
-        }
-        container.setItem(slots.back(), s);
-        slots.pop_back();
-    }
+    loot::fill(
+        tableId,
+        ctx,
+        container.getContainerSize(),
+        [&](int slot) -> ItemStack const& { return container.getItem(slot); },
+        [&](int slot, ItemStack const& stack) { container.setItem(slot, stack); }
+    );
     log().info("structure: unpacked {} into the hopper at {} {} {}", tableId, pos.x, pos.y, pos.z);
 }
 
 /// RandomizableContainer#setLootTable for a hopper: the kit keeps the table in the hopper's block
 /// data. A hopper unpacks its table on its first tick while it is enabled (HopperBlockEntity
 /// #pushItemsTick -> isEmpty -> unpackLootTable(null)): an enabled hopper is filled at once; a
-/// powered one when it is opened, broken or counted. False while the hopper's block actor is not
-/// there yet.
+/// powered one on its first container access. False while the hopper's block actor is not there yet.
 bool setHopperLoot(BlockSource& source, BlockPos const& pos, std::string const& tableId, std::int64_t seed) {
     auto* actor = source.getBlockEntity(pos);
     if (!actor || !isHopper(*actor)) return false;
@@ -727,9 +945,42 @@ bool setHopperLoot(BlockSource& source, BlockPos const& pos, std::string const& 
     if (auto const* old = bd::get(source, pos, kDataKey); old && old->is_object()) doc = *old;
     doc["loot"] = Json{{"table", tableId}, {"seed", seed}};
     bd::set(source, pos, kDataKey, doc);
-    auto states = game::statesOf(source.getBlock(pos));
-    if (auto it = states.find("toggle_bit"); it == states.end() || it->second == "false" || it->second == "0") (void)unpackHopper(source, pos);
+    noteHopper(static_cast<int>(source.getDimensionId()), pos, true);
+    if (hopperEnabled(source.getBlock(pos))) (void)unpackHopper(source, pos);
     return true;
+}
+
+/// Unpacks the table of a pending hopper at `pos` of `source` (the hooks: the hopper's container is
+/// about to be read or written, it is removed, a comparator reads it).
+/// Whether the hopper at `pos` of `source` has a pending table (the set, no block data read).
+bool hopperPendingAt(BlockSource& source, BlockPos const& pos) {
+    if (gHopperCount.load(std::memory_order_relaxed) == 0) return false;
+    std::lock_guard lock(gHoppersMutex);
+    return gHoppers.contains(HopperKey{pos.x, pos.y, pos.z, static_cast<int>(source.getDimensionId())});
+}
+
+void unpackIfPending(BlockSource& source, BlockPos const& pos) {
+    if (tUnpacking || !onServerThread() || !hopperPendingAt(source, pos)) return;
+    (void)unpackHopper(source, pos);
+}
+
+/// The same for a hopper's block actor (the container hooks have no BlockSource): the dimensions
+/// with a pending hopper at the actor's position whose block actor it is.
+void beforeHopperAccess(HopperBlockActor& actor) {
+    if (tUnpacking || tOwnTick == &actor || !onServerThread() || actor.getType() != BlockActorType::Hopper) return;
+    BlockPos const&  pos = actor.getPosition();
+    std::vector<int> dims;
+    {
+        std::lock_guard lock(gHoppersMutex);
+        for (auto it = gHoppers.lower_bound(HopperKey{pos.x, pos.y, pos.z, std::numeric_limits<int>::min()});
+             it != gHoppers.end() && std::get<0>(*it) == pos.x && std::get<1>(*it) == pos.y && std::get<2>(*it) == pos.z; ++it)
+            dims.push_back(std::get<3>(*it));
+    }
+    for (int dim : dims) {
+        auto* region = game::regionOf(dim);
+        if (!region || region->getBlockEntity(pos) != &actor) continue;
+        (void)unpackHopper(*region, pos);
+    }
 }
 
 bool runSpawner(BlockSource& source, BlockPos const& pos, Json const& action) {
@@ -759,13 +1010,33 @@ bool runSpawner(BlockSource& source, BlockPos const& pos, Json const& action) {
     auto& spawnerActor = static_cast<MobSpawnerBlockActor&>(*actor);
     if (!entityId.empty()) spawnerActor.setMob(source, ActorDefinitionIdentifier(entityId), nullptr);
     if (BaseMobSpawner* spawner = spawnerActor.mSpawner.get()) {
-        if (data.contains("Delay")) spawner->mSpawnDelay = data["Delay"].get<int>();
-        if (data.contains("MinSpawnDelay")) spawner->mMinSpawnDelay = data["MinSpawnDelay"].get<int>();
-        if (data.contains("MaxSpawnDelay")) spawner->mMaxSpawnDelay = data["MaxSpawnDelay"].get<int>();
-        if (data.contains("SpawnCount")) spawner->mSpawnCount = data["SpawnCount"].get<int>();
-        if (data.contains("MaxNearbyEntities")) spawner->mMaxNearbyEntities = data["MaxNearbyEntities"].get<int>();
-        if (data.contains("RequiredPlayerRange")) spawner->mRequiredPlayerRange = data["RequiredPlayerRange"].get<int>();
-        if (data.contains("SpawnRange")) spawner->mSpawnRange = data["SpawnRange"].get<int>();
+        if (!action.value("place", true)) {
+            // a template's spawner data: BaseSpawner#load (SpawnerBlockEntity#loadAdditional)
+            auto fields           = readSpawnerTag(data);
+            spawner->mSpawnDelay = fields.delay;
+            if (fields.delays) {
+                spawner->mMinSpawnDelay = (*fields.delays)[0];
+                spawner->mMaxSpawnDelay = (*fields.delays)[1];
+                spawner->mSpawnCount    = (*fields.delays)[2];
+            }
+            if (fields.nearby) {
+                spawner->mMaxNearbyEntities   = (*fields.nearby)[0];
+                spawner->mRequiredPlayerRange = (*fields.nearby)[1];
+            }
+            if (fields.range) spawner->mSpawnRange = *fields.range;
+        } else {
+            // TF's setSpawner: its modifier sets single fields of the new spawner
+            auto field = [&](char const* name, auto& out) {
+                if (nbtHasNumber(data, name)) out = nbtInt(data, name);
+            };
+            field("Delay", spawner->mSpawnDelay);
+            field("MinSpawnDelay", spawner->mMinSpawnDelay);
+            field("MaxSpawnDelay", spawner->mMaxSpawnDelay);
+            field("SpawnCount", spawner->mSpawnCount);
+            field("MaxNearbyEntities", spawner->mMaxNearbyEntities);
+            field("RequiredPlayerRange", spawner->mRequiredPlayerRange);
+            field("SpawnRange", spawner->mSpawnRange);
+        }
     }
     storeSpawnerRecord(source, pos, spawnerRecordOf(entityId, data, false));
     actor->refresh(source);
@@ -1079,8 +1350,98 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(region);
 }
 
+// ---- a hopper's pending loot table is unpacked on any access, as Java's RandomizableContainer ---------
+// Engine hooks outside the W0 contracts (no contract dispatches a vanilla hopper's container access,
+// its removal or its comparator reading; disclosed for A8). They cost one atomic read while no
+// hopper has a pending table (gHopperCount), and act only on the server thread.
+//   - HopperBlockActor's Container#getItem / #setItem: RandomizableContainerBlockEntity#getItem /
+//     #setItem unpack first. Bedrock's hopper transfers (another hopper pushing into it or pulling
+//     from it), Container#dropContents and the comparator's reading all go through them. Container
+//     is HopperBlockActor's second base and declares them: the hooks get the Container subobject
+//     as `this` (thisFor<Container>).
+//   - HopperBlock#onRemove (any removal: a player, an explosion, a command): the table is rolled
+//     before the block's contents drop (HopperBlock#onRemove -> Containers#dropContentsOnDestroy).
+//   - HopperBlock#getComparatorSignal: AbstractContainerMenu#getRedstoneSignalFromContainer reads
+//     every slot (getItem) of the hopper behind the comparator.
+//   - HopperBlockActor#tick: HopperBlockEntity#pushItemsTick -> tryMoveItems reads the container
+//     (isEmpty: unpacked) only while the hopper is ENABLED; a powered hopper's own tick leaves it
+//     alone, whatever Bedrock's tick reads of its own slots.
+
+LL_TYPE_INSTANCE_HOOK(
+    StructureHopperTickHook,
+    ll::memory::HookPriority::Normal,
+    HopperBlockActor,
+    &HopperBlockActor::$tick,
+    void,
+    ::BlockSource& region
+) {
+    if (gHopperCount.load(std::memory_order_relaxed) == 0) return origin(region);
+    // (this hopper's own table only: the cheap lookup first, its state once it is pending)
+    if (hopperPendingAt(region, getPosition()) && hopperEnabled(region.getBlock(getPosition()))) unpackIfPending(region, getPosition());
+    struct OwnTick {
+        void const* outer = tOwnTick;
+        explicit OwnTick(void const* self) { tOwnTick = self; }
+        ~OwnTick() { tOwnTick = outer; }
+    } own(static_cast<HopperBlockActor const*>(this));
+    origin(region);
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    StructureHopperGetItemHook,
+    ll::memory::HookPriority::Normal,
+    HopperBlockActor,
+    &HopperBlockActor::$getItem,
+    ::ItemStack const&,
+    int slot
+) {
+    if (gHopperCount.load(std::memory_order_relaxed) > 0) beforeHopperAccess(*thisFor<Container>());
+    return origin(slot);
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    StructureHopperSetItemHook,
+    ll::memory::HookPriority::Normal,
+    HopperBlockActor,
+    &HopperBlockActor::$setItem,
+    void,
+    int                slot,
+    ::ItemStack const& item
+) {
+    if (gHopperCount.load(std::memory_order_relaxed) > 0) beforeHopperAccess(*thisFor<Container>());
+    origin(slot, item);
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    StructureHopperRemoveHook,
+    ll::memory::HookPriority::Normal,
+    HopperBlock,
+    &HopperBlock::$onRemove,
+    void,
+    ::BlockSource&     region,
+    ::BlockPos const&  pos
+) {
+    if (gHopperCount.load(std::memory_order_relaxed) > 0) unpackIfPending(region, pos);
+    origin(region, pos);
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    StructureHopperComparatorHook,
+    ll::memory::HookPriority::Normal,
+    HopperBlock,
+    &HopperBlock::$getComparatorSignal,
+    int,
+    ::BlockSource&    region,
+    ::BlockPos const& pos,
+    ::Block const&    block,
+    uchar             dir
+) {
+    if (gHopperCount.load(std::memory_order_relaxed) > 0) unpackIfPending(region, pos);
+    return origin(region, pos, block, dir);
+}
+
 namespace {
 bool gPaintingHooked = false;
+bool gHopperHooked   = false;
 } // namespace
 
 std::optional<bool> javaSurvives(Actor& actor) {
@@ -1091,22 +1452,52 @@ std::optional<bool> javaSurvives(Actor& actor) {
 }
 
 void install() {
-    static bool hopperHandlers = false;
-    if (!hopperHandlers) {
-        hopperHandlers = true;
-        // a powered hopper keeps the loot table the kit gave it until it is opened or broken
-        // (RandomizableContainer#unpackLootTable from the menu and Containers#dropContents), as
-        // Java's: unpacked before vanilla opens it or drops its items
+    static bool handlers = false;
+    if (!handlers) {
+        handlers = true;
+        // a player opening a powered hopper: RandomizableContainer#unpackLootTable(player) from
+        // createMenu, before vanilla opens it
         namespace ia = interactions;
         ia::onUseOn({.block = "minecraft:hopper"}, [](ia::UseOnContext const& c) {
             if (!c.firstEvent || (c.sneaking && !c.itemId.empty())) return ia::Result::Pass;
             if (auto* region = game::regionOf(c.pos.dim)) (void)unpackHopper(*region, game::blockPos(c.pos));
             return ia::Result::Pass;
         }, ia::priority::High);
+        // a player breaking it (the removal hook below covers every other cause)
         ia::onDestroy({.block = "minecraft:hopper"}, [](ia::DestroyContext const& c) {
             if (auto* region = game::regionOf(c.pos.dim)) (void)unpackHopper(*region, game::blockPos(c.pos));
             return ia::Result::Pass;
         }, ia::priority::High);
+        // a record goes with its block: the block data of a changed block is erased (the hopper's
+        // table, the spawner record), a moved block's data moves with it (take, then put)
+        bd::onErase([](core::GlobalPos const& pos, Json const& doc, std::string const&) {
+            auto it = doc.find(kDataKey);
+            if (it == doc.end() || !it->is_object()) return;
+            BlockPos p{pos.x, pos.y, pos.z};
+            if (it->contains("loot")) noteHopper(pos.dim, p, false);
+            if (it->contains("spawner")) indexSpawnerRecord(pos.dim, p, false);
+        });
+        bd::onWriteBack([](core::GlobalPos const* pos) {
+            if (!pos) return;
+            BlockPos p{pos->x, pos->y, pos->z};
+            noteHopper(pos->dim, p, false);
+            indexSpawnerRecord(pos->dim, p, false);
+        });
+        bd::onPut([](core::GlobalPos const& pos, Json const& doc) {
+            auto it = doc.find(kDataKey);
+            if (it == doc.end() || !it->is_object()) return;
+            BlockPos p{pos.x, pos.y, pos.z};
+            if (it->contains("loot")) noteHopper(pos.dim, p, true);
+            if (it->contains("spawner")) indexSpawnerRecord(pos.dim, p, true);
+        });
+    }
+    if (!gHopperHooked) {
+        StructureHopperTickHook::hook();
+        StructureHopperGetItemHook::hook();
+        StructureHopperSetItemHook::hook();
+        StructureHopperRemoveHook::hook();
+        StructureHopperComparatorHook::hook();
+        gHopperHooked = true;
     }
     if (gPaintingHooked) return;
     StructurePaintingSurvivalHook::hook();
@@ -1114,6 +1505,14 @@ void install() {
 }
 
 void uninstall() {
+    if (gHopperHooked) {
+        StructureHopperTickHook::unhook();
+        StructureHopperGetItemHook::unhook();
+        StructureHopperSetItemHook::unhook();
+        StructureHopperRemoveHook::unhook();
+        StructureHopperComparatorHook::unhook();
+        gHopperHooked = false;
+    }
     if (!gPaintingHooked) return;
     StructurePaintingSurvivalHook::unhook();
     gPaintingHooked = false;
@@ -1209,19 +1608,10 @@ std::vector<BlockPos> spawnerRecordsIn(BlockSource& source, int cx, int cz) {
         std::lock_guard lock(idx.mutex);
         idx.byChunk.emplace(std::tuple<int, int, int>{dim, cx, cz}, positions);
     }
-    // a record goes with its block (block data is erased when the block type changes)
+    // (the record writes and the block data listeners keep the index: no block data is read here)
     std::vector<BlockPos> out;
-    std::vector<BlockPos> gone;
-    for (auto const& [x, y, z] : positions) {
-        BlockPos p{x, y, z};
-        if (spawnerRecord(source, p)) out.push_back(p);
-        else gone.push_back(p);
-    }
-    if (!gone.empty()) {
-        std::lock_guard lock(idx.mutex);
-        if (auto it = idx.byChunk.find({dim, cx, cz}); it != idx.byChunk.end())
-            for (auto const& p : gone) it->second.erase({p.x, p.y, p.z});
-    }
+    out.reserve(positions.size());
+    for (auto const& [x, y, z] : positions) out.push_back(BlockPos{x, y, z});
     return out;
 }
 
@@ -1233,19 +1623,40 @@ std::optional<std::pair<std::string, std::int64_t>> pendingHopperLoot(BlockSourc
 }
 
 bool unpackHopper(BlockSource& source, BlockPos const& pos) {
+    int  dim     = static_cast<int>(source.getDimensionId());
     auto pending = pendingHopperLoot(source, pos);
-    if (!pending) return false;
+    if (!pending) {
+        noteHopper(dim, pos, false);
+        return false;
+    }
     auto* actor = source.getBlockEntity(pos);
     if (!actor || !isHopper(*actor)) return false;
     // RandomizableContainer#unpackLootTable: the table goes first, then the fill
+    noteHopper(dim, pos, false);
     Json doc = *bd::get(source, pos, kDataKey);
     doc.erase("loot");
     bd::set(source, pos, kDataKey, doc.empty() ? Json() : doc);
-    if (!pending->first.empty()) fillHopper(source, pos, static_cast<Container&>(static_cast<HopperBlockActor&>(*actor)), pending->first, pending->second);
+    if (!pending->first.empty()) {
+        // (the fill's own slot reads and writes unpack nothing)
+        struct Guard {
+            bool outer = tUnpacking;
+            Guard() { tUnpacking = true; }
+            ~Guard() { tUnpacking = outer; }
+        } guard;
+        fillHopper(source, pos, static_cast<Container&>(static_cast<HopperBlockActor&>(*actor)), pending->first, pending->second);
+    }
     return true;
 }
 
+std::size_t pendingHoppers() {
+    std::lock_guard lock(gHoppersMutex);
+    return gHoppers.size();
+}
+
 void flush() {
+    // the kit's tick listener runs on the server thread: the hopper hooks act there only
+    gServerThread.store(std::this_thread::get_id(), std::memory_order_relaxed);
+    if (gTicks % kIndexSweepInterval == 0) sweepSpawnerIndex();
     if (++gTicks % kFlushInterval != 0) return;
     // the chunks with work whose chunk is loaded now
     std::vector<std::pair<ChunkKey, ChunkWork>> ready;
@@ -1346,6 +1757,18 @@ void load() {
         std::lock_guard lock(idx.mutex);
         idx.byChunk.clear();
     }
+    {
+        // the hoppers with a pending loot table
+        auto            stored = game::db::get(kHoppersKey);
+        std::lock_guard lock(gHoppersMutex);
+        gHoppers.clear();
+        gHoppersDirty = false;
+        if (stored && stored->is_array())
+            for (auto const& h : *stored)
+                if (h.is_array() && h.size() == 4 && std::all_of(h.begin(), h.end(), [](Json const& v) { return v.is_number_integer(); }))
+                    gHoppers.insert(HopperKey{h[1].get<int>(), h[2].get<int>(), h[3].get<int>(), h[0].get<int>()});
+        gHopperCount.store(static_cast<int>(gHoppers.size()), std::memory_order_relaxed);
+    }
     // the chunk records (collected first: nothing is read while the DB iterates)
     std::vector<ChunkKey> keys;
     game::db::forEachKey(kPendingPrefix, [&](std::string_view suffix) {
@@ -1391,8 +1814,18 @@ void save() {
     std::vector<std::pair<std::string, std::optional<Json>>> writes;
     bool                                                     eraseLegacy = false;
     {
+        // the hoppers with a pending loot table: [dim, x, y, z] each
+        std::lock_guard lock(gHoppersMutex);
+        if (gHoppersDirty) {
+            Json list = Json::array();
+            for (auto const& [x, y, z, dim] : gHoppers) list.push_back(Json::array({dim, x, y, z}));
+            if (list.empty()) writes.emplace_back(kHoppersKey, std::nullopt);
+            else writes.emplace_back(kHoppersKey, std::move(list));
+            gHoppersDirty = false;
+        }
+    }
+    {
         std::lock_guard lock(gJobsMutex);
-        if (gDirtyChunks.empty() && !gLegacyStored) return;
         // only the chunks whose work changed since the last save
         for (auto const& key : gDirtyChunks) {
             auto it = gWork.find(key);

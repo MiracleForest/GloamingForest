@@ -33,6 +33,10 @@ namespace gf::landmark {
 struct Start;
 } // namespace gf::landmark
 
+namespace gf::boss::ext {
+struct SinisterSpawner;
+} // namespace gf::boss::ext
+
 namespace gf::structure {
 
 using pure::JavaRandom;
@@ -296,6 +300,10 @@ void                   setCurrentClip(std::optional<BlockBox> const& clip);
 [[nodiscard]] std::vector<std::string> pieceTypes();
 [[nodiscard]] std::vector<std::string> processorTypes();
 [[nodiscard]] std::vector<std::string> markerTypes();
+/// A piece factory loadPiece uses only while no registerPieceType factory exists for `typeId`
+/// (selftest stand-ins for another unit's fixture pieces: that unit's own factory wins whatever
+/// the registration order).
+void registerFallbackPieceType(std::string const& typeId, Factory factory);
 
 // ---- TF template marker handlers (Markers.cpp) ---------------------------------------------------------
 namespace markers {
@@ -374,17 +382,42 @@ void updateShape(Region& region, BlockPos const& pos);
 [[nodiscard]] std::optional<Json> spawnerRecord(BlockSource& source, BlockPos const& pos);
 /// Drops that record (its spawner spawns another mob now: Java replaced the whole SpawnData).
 void forgetSpawnerRecord(BlockSource& source, BlockPos const& pos);
-/// The positions of chunk (cx, cz) of dimension `dim` whose block data holds a kit spawner record
-/// (an in-memory index: a chunk's block data is read once, then kept up to date by the record
-/// writes; positions whose record went with their block drop out when looked up).
+/// The positions of chunk (cx, cz) of the source's dimension whose block data holds a kit spawner
+/// record (an in-memory index: a chunk's block data is read once, then kept up to date by the
+/// record writes and the block data's erase / move listeners; chunks no longer loaded are evicted
+/// now and then). No block data is read for the positions themselves.
 [[nodiscard]] std::vector<BlockPos> spawnerRecordsIn(BlockSource& source, int cx, int cz);
 /// RandomizableContainer#unpackLootTable(null) for a hopper the kit gave a loot table (Bedrock's
 /// hopper has no loot table field; Java's hopper is a RandomizableContainer, so the kit keeps the
-/// table in the hopper's block data until it is unpacked): rolls it into the hopper. False when
-/// nothing was pending.
+/// table in the hopper's block data until it is unpacked): rolls it into the hopper (LootTable#fill
+/// through the loot contract). False when nothing was pending. Besides the callers, the kit's hooks
+/// unpack a pending hopper on any access to its container (another hopper pushing into it or
+/// pulling from it, a comparator's reading, its removal by any cause) and the interactions contract
+/// when a player opens or breaks it.
 bool unpackHopper(BlockSource& source, BlockPos const& pos);
 /// A hopper's pending loot table (table id, seed) the kit keeps (nullopt: none).
 [[nodiscard]] std::optional<std::pair<std::string, std::int64_t>> pendingHopperLoot(BlockSource& source, BlockPos const& pos);
+/// The number of hoppers with a pending loot table the kit's hooks watch (every dimension).
+[[nodiscard]] std::size_t pendingHoppers();
+/// SinisterSpawnerLogic's ParticleOptions decoded (PARTICLES_CODEC: ParticleTypes.CODEC.listOf()):
+/// each entry a compound {"type": particle id, ...the options its type requires} of a 1.21.1 or TF
+/// 4.8 particle type. The options go to F8's spawner as the particle's fx params.
+struct ParticleList {
+    std::vector<std::string> ids;
+    Json                     params = Json::object(); ///< particle id -> its options (dust colour and scale, ...)
+};
+/// nullopt when the list does not decode as a whole (a missing list, a bare id, an unknown type, an
+/// entry without the options its type requires): DataResult#isSuccess is false and
+/// SinisterSpawnerLogic#load adds none.
+[[nodiscard]] std::optional<ParticleList> parseParticleOptions(Json const* list);
+/// BaseSpawner#load + SinisterSpawnerLogic#load of a template's spawner data (`entityId`: the
+/// SpawnData a processor wrote, else the data's SpawnData compound) into F8's spawner: Delay always
+/// (0 without it); SpawnData; SpawnPotentials (else the next spawn is the only potential);
+/// MinSpawnDelay, MaxSpawnDelay and SpawnCount only together, when MinSpawnDelay is there;
+/// MaxNearbyEntities and RequiredPlayerRange only together, when MaxNearbyEntities is there;
+/// SpawnRange when there; the particles cleared, then the data's ParticleOptions when the whole list
+/// decodes; EntityScanRange, else the SpawnRange.
+void loadSinisterSpawnerData(boss::ext::SinisterSpawner& spawner, std::string const& entityId, Json const& data);
 /// A flower pot's plant (FlowerPotBlockActor PlantBlock).
 void flowerPot(Region& region, BlockPos const& pos, std::string const& plantId);
 /// Water in the liquid layer at `pos` of a generation region, put there once the chunk is loaded
@@ -401,7 +434,8 @@ void flush();
 void queueTestMark(int dim, BlockPos const& pos, std::string const& nonce);
 void load();
 void save();
-/// The hook that gives the kit's paintings Java's survival check (HangingActor::$wouldSurvive).
+/// The hook that gives the kit's paintings Java's survival check (HangingActor::$wouldSurvive), the
+/// hopper hooks that unpack a pending loot table, the block data listeners.
 void install();
 void uninstall();
 /// HangingEntity#survives for the painting `actor` (the kit's check; nullopt: not a painting).
