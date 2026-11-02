@@ -12,9 +12,10 @@ pwsh tools/families/run.ps1 -Check      # assembles into build/assemble-check an
 pwsh tools/families/run.ps1 -Out <dir>  # an assembled or deployed mod directory
 ```
 
-`tools/xmake/assemble.lua` (F0) runs the generator itself once its hook is in (the call is in the
-PR of F11); until then `run.ps1` applies it, and the e2e prelaunch scripts of F11 apply it to the
-deployed copy.
+`tools/xmake/assemble.lua` (F0) runs the generator on every build and in `tools/assemble.ps1 -Check`
+once its hook is in (F0's file: the hook is a separate F0 pull request that does nothing until this
+directory exists, so it can be merged first); without it `run.ps1` applies the generator, and the
+e2e prelaunch scripts of F11 apply it to the deployed copy when the build has not.
 
 ## Data
 
@@ -26,7 +27,18 @@ deployed copy.
 ```
 
 One id lists at most one shape family and any modifiers; params of later entries add to earlier
-ones. An unknown family is skipped with a warning.
+ones. An unknown family is skipped with a warning. A modifier is either an entry of its own (the
+`mason_jar` line above) or, F1's form, a name in `params.traits` of the shape entry:
+
+```json
+{"id": "twilightforest:canopy_slab", "family": "slab", "params": {"class": "SlabBlock", "traits": ["waterloggable"]}}
+{"id": "twilightforest:hollow_oak_log_climbable", "family": "horizontal", "params": {"class": "ClimbableHollowLogBlock", "traits": ["climbable"]}}
+```
+
+`traits` may name `waterloggable`, `snowloggable`, `climbable` and `lightable`; `connected_texture`
+there only repeats the family and is ignored. The runtime (`src/feature/families/Registry.cpp`) and
+the generator read both forms the same way, and `run.ps1` fails when a waterloggable block lacks
+Bedrock's liquid detection.
 
 Shape families: `cube stairs slab fence fence_gate wall door trapdoor button pressure_plate pane
 pillar log wood leaves cross sapling potted sign wall_sign hanging_sign wall_hanging_sign chest
@@ -59,6 +71,7 @@ Every family:
 | `sound_type` | a TF sound type (`twilightforest.jar`, TFSoundTypes; the jars get it from TFBlocks) |
 | `components` | raw Bedrock components merged last |
 | `waterlogged` / `waterloggable` | adds the waterloggable modifier |
+| `traits` | F1's modifiers of the entry (`["waterloggable", "climbable"]`) |
 
 Per family:
 
@@ -74,7 +87,7 @@ Per family:
 | `leaves` | `tint` (Bedrock tint method; default: TF's ColorHandler where Bedrock has one), `log` (counts as a log for leaf distance, on any family) |
 | `sapling` | `grower`: Java's TreeGrower `{feature, secondary_feature, secondary_chance, mega_feature, secondary_mega_feature, flowers_feature, secondary_flowers_feature}` or TF's StructureTreeGrower `{structure}` (default: TFTreeGrowers by sapling id); `feature`: a grower with one tree. A unit's own grower: `src/feature/ext/families/Growers.h` |
 | `potted` | `plant` (default: `potted_<x>` -> `<x>`, TF's thorn pots from RegistrationEvents), `special` (TF's SpecialFlowerPotBlock keeps the plant) |
-| `sign`, `hanging_sign` | `wall` (default: `<x>_sign` -> `<x>_wall_sign`, `<x>_hanging_sign` -> `<x>_wall_hanging_sign`) |
+| `sign`, `hanging_sign` | `wall` (default: `<x>_sign` -> `<x>_wall_sign`, `<x>_hanging_sign` -> `<x>_wall_hanging_sign`); `gui_texture`: what the native editor draws the sign with (default: `textures/twilightforest/entity/signs/<wood>`, hanging signs `textures/twilightforest/gui/hanging_signs/<wood>`) |
 | `wall_sign`, `wall_hanging_sign` | `standing` (the reverse) |
 | `chest`, `trapped_chest` | `layout`: `legacy` for Bedrock's pre-1.15 chest textures (fixtures) |
 | `connectable_pillar` | `width` (default 16; thorns 10) |

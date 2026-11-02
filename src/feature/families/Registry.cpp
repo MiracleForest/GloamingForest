@@ -91,6 +91,19 @@ std::optional<Modifier> modifierOf(std::string_view name) {
     return std::nullopt;
 }
 
+/// F1's form: the modifiers of an entry listed in params.traits ({"family": "slab", "params":
+/// {"traits": ["waterloggable"]}}). connected_texture there only repeats the family.
+unsigned traitModifiers(Json const& params) {
+    unsigned out = 0;
+    auto     it  = params.find("traits");
+    if (it == params.end() || !it->is_array()) return out;
+    for (auto const& t : *it) {
+        if (!t.is_string()) continue;
+        if (auto m = modifierOf(t.get<std::string>())) out |= *m;
+    }
+    return out;
+}
+
 // ---- TF's registrations ----------------------------------------------------------------------------
 
 /// RegistrationEvents: AxeItem.STRIPPABLES.put(log, stripped log) for TF's eight woods.
@@ -229,6 +242,7 @@ void readFile(fs::path const& file, std::map<std::string, Entry, std::less<>>& o
             entry.modifiers |= *mod;
         }
         for (auto const& [k, v] : params.items()) entry.params[k] = v;
+        entry.modifiers |= traitModifiers(params);
         if (entry.params.value("waterlogged", false) || entry.params.value("waterloggable", false)) entry.modifiers |= Waterloggable;
     }
 }

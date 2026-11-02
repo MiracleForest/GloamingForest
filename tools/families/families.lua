@@ -404,11 +404,15 @@ local SOUND_TYPE_BLOCKS = {
     ["twilightforest:firefly_particle_spawner"] = "twilightforest.jar", ["twilightforest:cicada_jar"] = "twilightforest.jar",
 }
 
--- ColorHandler: the leaves Bedrock can tint (biome foliage, the fixed evergreen colour); time,
--- transformation, mining and sorting leaves get per-position colours (the client mod's tint)
+-- ColorHandler: the leaves Bedrock can tint. Biome foliage (twilight oak, dark leaves) and the
+-- fixed evergreen colour (beanstalk, thorn leaves) as Java; canopy and mangrove leaves blend the
+-- biome foliage with 0x469A66 / 0xC0E694 (CANOPY_COLORIZER / MANGROVE_COLORIZER), which Bedrock's
+-- tint methods can't: they take Java's colour without a world (FoliageColor.getEvergreenColor /
+-- getBirchColor). Rainbow oak, time, transformation, mining and sorting leaves get per-position
+-- colours (the client mod's tint); rainbow oak keeps Java's no-world default foliage until then.
 local LEAF_TINTS = {
     ["twilightforest:twilight_oak_leaves"] = "default_foliage", ["twilightforest:dark_leaves"] = "default_foliage",
-    ["twilightforest:canopy_leaves"] = "default_foliage", ["twilightforest:mangrove_leaves"] = "default_foliage",
+    ["twilightforest:canopy_leaves"] = "evergreen_foliage", ["twilightforest:mangrove_leaves"] = "birch_foliage",
     ["twilightforest:rainbow_oak_leaves"] = "default_foliage", ["twilightforest:beanstalk_leaves"] = "evergreen_foliage",
     ["twilightforest:thorn_leaves"] = "evergreen_foliage",
 }
@@ -1615,6 +1619,13 @@ local function group(entries, errors)
         else
             g.modifiers[e.family] = true
         end
+        -- F1's form: the entry's modifiers in params.traits ({"family": "slab", "params": {"traits":
+        -- ["waterloggable"]}}); connected_texture there only repeats the family
+        if type(e.params.traits) == "table" then
+            for _, t in ipairs(e.params.traits) do
+                if MODIFIERS[t] then g.modifiers[t] = true end
+            end
+        end
         for k, v in pairs(e.params) do g.params[k] = v end
         table.insert(g.files, e.file)
     end
@@ -1845,7 +1856,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             functions = arr({{["function"] = "set_count", count = 2}})}})}})})
         return rel
     end
-    local result = {blocks = 0, skipped = 0, files = {}, sounds = {}}
+    local result = {blocks = 0, skipped = 0, files = {}, sounds = {}, waterloggable = {}}
     for _, id in ipairs(order) do
         local g = by_id[id]
         if manual[id] then
@@ -1882,6 +1893,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             os.mkdir(path.directory(file))
             json.savefile(file, doc)
             table.insert(result.files, file)
+            if g.modifiers.waterloggable then result.waterloggable[id] = file end
             result.blocks = result.blocks + 1
             local sound = g.params.sound or (shape and DEFAULT_SOUND[shape])
             if sound then result.sounds[id] = sound end
@@ -1960,22 +1972,118 @@ function families(outdir)
 end
 
 -- Generates the family blocks into the packs of the assembled directory `outdir`.
--- opts: {manual_dirs = {...}} (default: assets/pack/bp and assets/test/bp of `projectdir`).
--- Returns {blocks, skipped, fixtures, files = {...}, errors = {...}}.
+-- ---- checks --------------------------------------------------------------------------------------
+--
+-- What the generator wrote, checked the way tools/xmake/assemble.lua checks the packs (integer
+-- states list 0..n, the permutation budget per block) plus what only it knows: every geometry a
+-- generated block names is in the resource packs, every waterloggable modifier (a family of its
+-- own, params.waterlogged or F1's params.traits) has Bedrock's liquid detection.
+
+local TRAIT_STATES = {
+    ["minecraft:cardinal_direction"] = 4, ["minecraft:facing_direction"] = 6, ["minecraft:block_face"] = 6,
+    ["minecraft:vertical_half"] = 2, ["minecraft:corner_and_cardinal_direction"] = 20,
+}
+
+local function check_block(file, doc, geos, errors)
+    local block = doc["minecraft:block"]
+    local count = 1
+    for name, values in pairs(block.description.states or {}) do
+        if type(values) == "table" and #values > 0 then
+            if type(values[1]) == "number" then
+                for i, v in ipairs(values) do
+                    if v ~= i - 1 then table.insert(errors, string.format("%s: state %s must list 0..%d", file, name, #values - 1)) break end
+                end
+            end
+            count = count * #values
+        end
+    end
+    for _, trait in pairs(block.description.traits or {}) do
+        for _, s in ipairs(trait.enabled_states or {}) do count = count * (TRAIT_STATES[s] or 1) end
+    end
+    if count > 65536 then table.insert(errors, string.format("%s: %d permutations (budget 65536)", file, count)) end
+    local function geo_ok(g)
+        local id = type(g) == "table" and g.identifier or g
+        if type(id) == "string" and id:match("^geometry%.") and not geos[id] then
+            table.insert(errors, string.format("%s: geometry %s is not in the resource pack", file, id))
+        end
+    end
+    geo_ok(block.components["minecraft:geometry"])
+    for _, p in ipairs(block.permutations or {}) do geo_ok(p.components["minecraft:geometry"]) end
+    return count
+end
+
+local function rp_geometries(rpdir, out)
+    if not os.isdir(rpdir) then return end
+    for _, f in ipairs(os.files(path.join(rpdir, "models", "**.json"))) do
+        local doc = try_json(f)
+        for _, g in ipairs(doc and doc["minecraft:geometry"] or {}) do
+            local id = g.description and g.description.identifier
+            if id then out[id] = true end
+        end
+    end
+end
+
+-- Checks the files of `summary` (generate's); returns the permutation count.
+local function verify(outdir, summary, errors)
+    local geos = {}
+    for _, rp in ipairs({"GloamingForest_RP", "GloamingForest_Test_RP"}) do rp_geometries(path.join(outdir, "resource_packs", rp), geos) end
+    local perms = 0
+    for _, f in ipairs(summary.files) do
+        local doc = try_json(f)
+        if doc and doc["minecraft:block"] then perms = perms + check_block(f, doc, geos, errors) end
+    end
+    for id, f in pairs(summary.waterloggable) do
+        local doc = try_json(f)
+        local comps_ = doc and doc["minecraft:block"] and doc["minecraft:block"].components or {}
+        local rules = comps_["minecraft:liquid_detection"] and comps_["minecraft:liquid_detection"].detection_rules
+        if not (rules and rules[1] and rules[1].can_contain_liquid) then
+            table.insert(errors, string.format("%s: %s is waterloggable but has no liquid detection", f, id))
+        end
+    end
+    -- the fixture in F1's form ({"family": "slab", "params": {"traits": ["waterloggable"]}})
+    if summary.fixtures > 0 and not summary.waterloggable["gf_test:family_slab"] then
+        table.insert(errors, "gf_test:family_slab: params.traits [waterloggable] did not make it waterloggable")
+    end
+    return perms
+end
+
+-- A pack the generator completed has this file in its root (with LICENSE-ASSETS.txt): running it
+-- again on the same output is a no-op (it would stack permutations on the kept skeletons).
+-- tools/xmake/assemble.lua rebuilds every pack directory from scratch, which drops it.
+local MARKER = "families-generated.txt"
+
+local function marked(bpdir) return os.isfile(path.join(bpdir, MARKER)) end
+local function mark(bpdir, count)
+    io.writefile(path.join(bpdir, MARKER), string.format("Block families generated by tools/families (F11): %d blocks.\n", count))
+end
+
+-- opts: {manual_dirs = {...}} (default: assets/pack/bp and assets/test/bp of `projectdir`),
+-- no_fixtures.
+-- Returns {blocks, skipped, fixtures, files = {...}, waterloggable = {id -> file}, permutations,
+-- already (both sets were generated before: nothing done), errors = {...}}.
 function generate(projectdir, outdir, opts)
     opts = opts or {}
     local errors = {}
     local manual = manual_ids(opts.manual_dirs or {path.join(projectdir, "assets", "pack", "bp"), path.join(projectdir, "assets", "test", "bp")})
-    local summary = {blocks = 0, skipped = 0, fixtures = 0, files = {}, errors = errors}
+    -- waterloggable: id -> generated file (every waterloggable modifier, by family or params.traits)
+    local summary = {blocks = 0, skipped = 0, fixtures = 0, files = {}, waterloggable = {}, permutations = 0, errors = errors}
+    local sets, done = 0, 0
 
     local bp = path.join(outdir, "behavior_packs", "GloamingForest_BP")
     local rp = path.join(outdir, "resource_packs", "GloamingForest_RP")
     local entries, ferrors = families(outdir)
     for _, e in ipairs(ferrors) do table.insert(errors, e) end
     if os.isdir(bp) and os.isdir(rp) and #entries > 0 then
-        local r = generate_set(entries, bp, rp, {manual = manual, strict_textures = true}, errors)
-        summary.blocks, summary.skipped = r.blocks, r.skipped
-        for _, f in ipairs(r.files) do table.insert(summary.files, f) end
+        sets = sets + 1
+        if marked(bp) then
+            done = done + 1
+        else
+            local r = generate_set(entries, bp, rp, {manual = manual, strict_textures = true}, errors)
+            summary.blocks, summary.skipped = r.blocks, r.skipped
+            for _, f in ipairs(r.files) do table.insert(summary.files, f) end
+            for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end
+            mark(bp, r.blocks)
+        end
     end
 
     -- fixtures into the gf_test packs (development builds)
@@ -1983,10 +2091,15 @@ function generate(projectdir, outdir, opts)
     local trp = path.join(outdir, "resource_packs", "GloamingForest_Test_RP")
     if os.isdir(tbp) and os.isdir(trp) and not opts.no_fixtures then
         local fx = fixtures(projectdir, errors)
-        if #fx.entries > 0 then
+        if #fx.entries > 0 then sets = sets + 1 end
+        if #fx.entries > 0 and marked(tbp) then
+            done = done + 1
+        elseif #fx.entries > 0 then
             local r = generate_set(fx.entries, tbp, trp, {manual = manual}, errors)
             summary.fixtures = r.blocks
             for _, f in ipairs(r.files) do table.insert(summary.files, f) end
+            for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end
+            mark(tbp, r.blocks)
             -- fixture textures (vanilla texture paths) and names
             merge_json_file(path.join(trp, "textures", "terrain_texture.json"), function (doc)
                 doc = doc or {resource_pack_name = "gloamingforest", texture_name = "atlas.terrain", padding = 8, num_mip_levels = 4, texture_data = {}}
@@ -2018,5 +2131,7 @@ function generate(projectdir, outdir, opts)
             json.savefile(dfile, data)
         end
     end
+    summary.already = sets > 0 and done == sets
+    summary.permutations = verify(outdir, summary, errors)
     return summary
 end

@@ -6,9 +6,9 @@
   tools/families/families.lua turns the family data (assets/data/families/<unit>.json, assembled
   into data/gf/families/) into Bedrock block definitions, shared geometries, block sounds and
   double slab loot tables, and the fixture families (tools/families/fixtures/*.json) into the
-  gf_test packs. It is meant to run inside tools/xmake/assemble.lua right after the packs are
-  built (one call, see the PR of F11); until that hook exists this script applies it to an
-  assembled directory:
+  gf_test packs. tools/xmake/assemble.lua runs it right after the packs are built once F0's hook
+  is in; this script applies it to an assembled directory the build did not complete (a pack it
+  completed carries families-generated.txt, and a second run is a no-op):
 
     -Out <dir>   one or more assembled mod directories (default: bin/server/GloamingForest and
                  bin/client/GloamingForest, those that exist). The e2e scenarios of F11 run it on
@@ -49,7 +49,8 @@ if (-not $Out) { Write-Host '[families] nothing to do: no assembled directory (b
 $failed = $false
 foreach ($dir in $Out) {
     $full = (Resolve-Path $dir).Path
-    & xmake lua (Join-Path $root 'tools/families/run.lua') $root $full 'stamp'
+    # -P: this checkout, not a checkout the worktree is nested in
+    & xmake lua -P $root (Join-Path $root 'tools/families/run.lua') $root $full 'stamp'
     if ($LASTEXITCODE -ne 0) { $failed = $true }
 }
 if ($failed) { exit 1 }
