@@ -52,6 +52,7 @@
 
 #include "feature/combat/Combat.h"
 #include "feature/combat/CombatInternal.h"
+#include "feature/combat/CombatTestUtil.h"
 #include "feature/common/Redstone.h"
 #include "feature/death/Death.h"
 #include "feature/death/DeathInternal.h"
@@ -94,20 +95,10 @@ bool isActive(Actor const& a) { return gActive != 0 && const_cast<Actor&>(a).get
 
 float healthOf(Player& p) { return static_cast<float>(p.getHealth()); }
 
-int countIn(std::vector<ItemStack> const& list, std::string const& id) {
-    int n = 0;
-    for (auto const& s : list)
-        if (items::idOf(s) == id) n += items::countOf(s);
-    return n;
-}
-
-int countInInventory(Player& p, std::string const& id) {
-    int   n   = 0;
-    auto& inv = p.getInventory();
-    for (int i = 0; i < inv.getContainerSize(); ++i)
-        if (items::idOf(inv.getItem(i)) == id) n += items::countOf(inv.getItem(i));
-    return n;
-}
+using gf::combat::testutil::clearInventory;
+using gf::combat::testutil::countIn;
+using gf::combat::testutil::countInInventory;
+using gf::combat::testutil::takeItemEntitiesNear;
 
 /// Item entities within `radius` blocks of `pos` (same dimension).
 int itemEntitiesNear(GlobalPos const& pos, float radius) {
@@ -908,23 +899,6 @@ GF_REGISTER_SELFTEST("combat.inventory_screen_auth", [](Context& ctx) -> ll::cor
 
 namespace {
 
-/// The item entities within `radius` of `pos`: their stacks, and they are removed (no leftovers in
-/// the shared test row).
-std::vector<ItemStack> takeItemEntitiesNear(GlobalPos const& pos, float radius) {
-    std::vector<ItemStack> out;
-    auto                   level = ll::service::getLevel();
-    if (!level) return out;
-    for (auto* a : level->getRuntimeActorList()) {
-        if (!a || !a->isType(ActorType::ItemEntity) || static_cast<int>(a->getDimensionId()) != pos.dim) continue;
-        auto const& at = a->getPosition();
-        float       dx = at.x - (pos.x + .5f), dy = at.y - (pos.y + .5f), dz = at.z - (pos.z + .5f);
-        if (dx * dx + dy * dy + dz * dz > radius * radius) continue;
-        out.push_back(static_cast<ItemActor*>(a)->item());
-        a->remove();
-    }
-    return out;
-}
-
 int countAt(std::optional<gf::inventory::Handler> const& h, GlobalPos const& pos, int slot) { return items::countOf(h->get(pos, slot)); }
 
 } // namespace
@@ -1010,12 +984,6 @@ namespace {
 void clickScreen(Player& p, GlobalPos const& pos, JsonT action) {
     action["op"] = "click";
     gf::net::injectFromClient(p, "screen.action", {{"type", "inventory.chest"}, {"context", {{"pos", {pos.dim, pos.x, pos.y, pos.z}}, {"rows", 3}, {"title", "container.chest"}}}, {"action", action}});
-}
-
-void clearInventory(Player& p) {
-    auto& inv = p.getInventory();
-    for (int i = 0; i < inv.getContainerSize(); ++i) inv.setItem(i, ItemStack{});
-    p.setOffhandSlot(ItemStack{});
 }
 
 } // namespace

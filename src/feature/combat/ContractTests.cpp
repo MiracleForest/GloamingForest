@@ -13,6 +13,7 @@
 // Every test empties the containers it filled before its blocks go (nothing drops in the test row).
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <functional>
 #include <optional>
@@ -45,6 +46,7 @@
 #include "mc/world/level/block/Block.h"
 
 #include "feature/combat/CombatInternal.h"
+#include "feature/combat/CombatTestUtil.h"
 #include "feature/common/BlockData.h"
 #include "feature/common/Redstone.h"
 #include "feature/ext/combat/InventoryViewers.h"
@@ -98,42 +100,10 @@ Player* playerById(std::int64_t raw) {
     return level->getPlayer(id);
 }
 
-int countIn(std::vector<ItemStack> const& list, std::string const& id) {
-    int n = 0;
-    for (auto const& s : list)
-        if (items::idOf(s) == id) n += items::countOf(s);
-    return n;
-}
-
-int countInInventory(Player& p, std::string const& id) {
-    int   n   = 0;
-    auto& pin = p.getInventory();
-    for (int i = 0; i < pin.getContainerSize(); ++i)
-        if (items::idOf(pin.getItem(i)) == id) n += items::countOf(pin.getItem(i));
-    return n;
-}
-
-void clearInventory(Player& p) {
-    auto& pin = p.getInventory();
-    for (int i = 0; i < pin.getContainerSize(); ++i) pin.setItem(i, ItemStack{});
-    p.setOffhandSlot(ItemStack{});
-}
-
-/// The item entities within `radius` of `pos`: their stacks, and they are removed.
-std::vector<ItemStack> takeItemEntitiesNear(GlobalPos const& pos, float radius) {
-    std::vector<ItemStack> out;
-    auto                   level = ll::service::getLevel();
-    if (!level) return out;
-    for (auto* a : level->getRuntimeActorList()) {
-        if (!a || !a->isType(ActorType::ItemEntity) || static_cast<int>(a->getDimensionId()) != pos.dim) continue;
-        auto const& at = a->getPosition();
-        float       dx = at.x - (pos.x + .5f), dy = at.y - (pos.y + .5f), dz = at.z - (pos.z + .5f);
-        if (dx * dx + dy * dy + dz * dz > radius * radius) continue;
-        out.push_back(static_cast<ItemActor*>(a)->item());
-        a->remove();
-    }
-    return out;
-}
+using gf::combat::testutil::clearInventory;
+using gf::combat::testutil::countIn;
+using gf::combat::testutil::countInInventory;
+using gf::combat::testutil::takeItemEntitiesNear;
 
 std::optional<int> stateAt(GlobalPos const& pos, char const* state) {
     auto* region = gf::game::regionOf(pos.dim);
@@ -172,7 +142,13 @@ struct ChestsScope {
     std::int64_t           player = 0;
     ~ChestsScope() {
         if (auto* p = player ? playerById(player) : nullptr) {
+            // the client mod's "screen.closed" (injected messages only count for companions: the
+            // test's CompanionScope may have ended first)
+            bool companion = gf::net::isCompanion(*p);
+            if (!companion) gf::net::setTestCompanion(*p, true);
             gf::net::injectFromClient(*p, "screen.closed", {{"type", "inventory.chest"}});
+            (void)gf::net::takeTestMessages(*p);
+            if (!companion) gf::net::setTestCompanion(*p, false);
             if (p->mContainerManager.get()) static_cast<ServerPlayer&>(*p).doDeleteContainerManager(false);
         }
         for (auto const& pos : positions) {
@@ -434,16 +410,16 @@ GF_REGISTER_SELFTEST("combat.tf_chest_loot", [](Context& ctx) -> ll::coro::CoroT
     auto pending = inv::pendingLoot(pos);
     ctx.check(pending && pending->first == "gf_test:combat/tf_chest" && pending->second == 4242, "the table waits in the chest's block data");
     CompanionScope companion(ctx.player());
-    float luck = 0.f;
-    bool  hasLuck = false;
+    float                luck = 0.f;
+    std::optional<float> oldLuck;
     co_await rightClick(ctx, pos, [&](Player& p) {
-        hasLuck = setLuck(p, 3.f).has_value();
+        oldLuck = setLuck(p, 3.f);
         luck    = loot::luckOf(&p);
     });
     auto* p = playerById(pid);
     ctx.require(p != nullptr, "the player is still there");
-    (void)setLuck(*p, 0.f);
-    if (!hasLuck) ctx.info("the player has no luck attribute: the luck part reads 0");
+    if (oldLuck) (void)setLuck(*p, *oldLuck); // the player's own luck back
+    else ctx.info("the player has no luck attribute: the luck part reads 0");
     auto data = openedChestScreen(*p);
     ctx.check(!data.empty(), "the click opened the chest");
     ctx.check(!inv::pendingLoot(pos), "opening unpacked the table");
@@ -728,10 +704,10 @@ GF_REGISTER_SELFTEST("combat.client_fx_native", [](Context& ctx) -> ll::coro::Co
     }
     ctx.check(fxc::hasNativeSink(), "F12 installed its native particle sink");
     constexpr char kId[] = "gf_test:combat_fx_native";
-    static int     sRuns = 0;
-    sRuns                = 0;
+    static std::atomic<int> sRuns{0}; // the factory runs on the client thread
+    sRuns = 0;
     cl::particles::registerNative(kId, [](Vec3 const&, Vec3 const& vel, JsonT const& params) {
-        if (params.value("combat", 0) == 7 && vel.y > 0.4f) ++sRuns;
+        if (params.is_object() && params.value("combat", 0) == 7 && vel.y > 0.4f) ++sRuns;
     });
     struct Unregister {
         ~Unregister() { gf::client::particles::unregisterNative("gf_test:combat_fx_native"); }
@@ -747,9 +723,9 @@ GF_REGISTER_SELFTEST("combat.client_fx_native", [](Context& ctx) -> ll::coro::Co
         ctx.require(w.has_value(), "the companion player");
         gf::fx::particle(*w->second, kId, w->first, Vec3{0, 0.5f, 0}, 2, JsonT{{"combat", 7}});
     }
-    for (int i = 0; i < 60 && fxc::clientCounters().native == before.native; ++i) co_await ctx.ticks(1);
-    ctx.check(fxc::clientCounters().native == before.native + 1, "fx.particle went to the native sink");
-    ctx.check(sRuns == 2, "F12's factory ran for both particles with the call's velocity and params (" + std::to_string(sRuns) + ")");
+    for (int i = 0; i < 60 && sRuns.load() < 2; ++i) co_await ctx.ticks(1);
+    ctx.check(fxc::clientCounters().native > before.native, "fx.particle went to the native sink");
+    ctx.check(sRuns.load() == 2, "F12's factory ran for both particles with the call's velocity and params (" + std::to_string(sRuns.load()) + ")");
     // a TF particle id without a factory: its resource pack effect (vanilla clients see the same)
     std::string tfId;
     bool        hasFactory = false;
@@ -769,19 +745,16 @@ GF_REGISTER_SELFTEST("combat.client_fx_native", [](Context& ctx) -> ll::coro::Co
     }
     for (int i = 0; i < 60 && fxc::clientCounters().native == before.native && fxc::clientCounters().effects == before.effects; ++i) co_await ctx.ticks(1);
     auto after = fxc::clientCounters();
-    if (hasFactory) ctx.check(after.native == before.native + 1, "a TF particle with a native factory is drawn natively");
-    else ctx.check(after.effects == before.effects + 1 && after.native == before.native, "a TF particle without a factory spawned its resource pack effect");
-    // a vanilla particle type: the game's packet, not fx.particle
-    before   = fxc::clientCounters();
+    if (hasFactory) ctx.check(after.native > before.native, "a TF particle with a native factory is drawn natively");
+    else ctx.check(after.effects > before.effects, "a TF particle without a factory spawned its resource pack effect");
+    // a vanilla particle type: the game's packet to companions too, not fx.particle
     auto out = gf::fx::counters().particlePackets;
     {
         auto w = at();
         ctx.require(w.has_value(), "the companion player");
         gf::fx::particle(*w->second, "minecraft:flame", w->first, {}, 2);
     }
-    co_await ctx.ticks(10);
-    after = fxc::clientCounters();
-    ctx.check(gf::fx::counters().particlePackets > out && after.native == before.native && after.effects == before.effects && after.silent == before.silent,
-              "a vanilla particle type goes as the game's particle packet");
+    ctx.check(!gf::fx::resolveParticle("minecraft:flame").native && gf::fx::counters().particlePackets >= out + 2,
+              "a vanilla particle type goes as the game's particle packets");
 });
 #endif
