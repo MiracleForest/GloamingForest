@@ -1,0 +1,17 @@
+{
+  "format_version": "1.10.0",
+  "animations": {
+    "animation.twilightforest.protection_box.scale": {
+      "loop": true,
+      "bones": {
+        "root": {
+          "scale": [
+            "(q.property('gf:size_x') * 16 + 2) / 16",
+            "(q.property('gf:size_y') * 16 + 2) / 16",
+            "(q.property('gf:size_z') * 16 + 2) / 16"
+          ]
+        }
+      }
+    }
+  }
+}
