@@ -41,7 +41,13 @@ void unmarkInclusiveForTest(std::string const& type);
 /// The last death chest placed and the last conquest requested (selftests).
 [[nodiscard]] std::optional<core::GlobalPos>                         lastDeathChest();
 [[nodiscard]] std::optional<std::pair<core::GlobalPos, std::string>> lastConquest();
-void                                                                 resetTestRecords();
+/// Whether the last conquest requested found a start of the home structure to conquer.
+[[nodiscard]] bool lastConquestFound();
+void               resetTestRecords();
+/// Death chests placed that wait for their container (filled, or their loot popped out, later).
+[[nodiscard]] int pendingFillsForTest();
+/// Whether the mob `uid` has qualified players (MultiplayerInclusivityAttachment) on record.
+[[nodiscard]] bool qualifiedForTest(std::int64_t uid);
 /// Whether the boss with this unique id has a bar.
 [[nodiscard]] bool hasBar(std::int64_t uid);
 /// Removes a spawner registration (fixture spawners live only while their test runs).
@@ -59,6 +65,9 @@ void unregisterSinisterBlockForTest(std::string const& blockId);
 void setSpawnerKindForTest(std::string const& blockId, std::optional<SpawnerKind> kind);
 /// Mobs spawned by sinister spawners so far.
 [[nodiscard]] int sinisterSpawnedForTest();
+/// The facing state of the death chest `blockId` placed with a death's random seeded `seed` (the
+/// state's name and value; empty when the block has no facing state).
+[[nodiscard]] std::pair<std::string, std::string> deathChestFacingForTest(std::string const& blockId, std::int64_t seed);
 /// IBossLootBuffer#tryDeposit's rule: a piston could push or break the block (PushReaction != BLOCK).
 [[nodiscard]] bool pistonMovable(BlockSource& region, BlockPos const& pos);
 /// Engine death ticks held back so far (dying boss bodies kept past Bedrock's 20 ticks).
@@ -82,8 +91,8 @@ struct DyingInfo {
 [[nodiscard]] std::optional<DyingInfo> dyingForTest(std::int64_t uid);
 /// Death chests waiting for their chunk.
 [[nodiscard]] int pendingDepositsForTest();
-/// The world save / load of the dying bosses and waiting death chests: write them to the world DB,
-/// forget them in memory, read them back.
+/// The world save / load of the dying bosses and waiting death chests (and the chests waiting for
+/// their container): write them to the world DB, forget them in memory, read them back.
 void saveDeathsForTest();
 void forgetDeathsForTest();
 void loadDeathsForTest();
