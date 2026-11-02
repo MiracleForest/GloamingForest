@@ -10,7 +10,7 @@
         "default": "textures/entity/landmark/tf-derived/protectionbox"
       },
       "geometry": {
-        "default": "geometry.twilightforest.protection_box"
+        "default": "geometry.twilightforest.protection_box.tiled"
       },
       "animations": {
         "scale": "animation.twilightforest.protection_box.scale"
