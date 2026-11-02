@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:fiery_block",
@@ -14,8 +14,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 30
       },
-      "tag:minecraft:is_pickaxe_item_destructible": {},
-      "tag:minecraft:iron_tier_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:iron_tier_destructible"],
       "minecraft:map_color": "#251610",
       "minecraft:geometry": "geometry.tf.twilightforest.block.fiery_block",
       "minecraft:material_instances": {

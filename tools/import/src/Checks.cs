@@ -192,13 +192,13 @@ namespace GfImport
                 // the tools that mine it (Bedrock tool tags), the tier a tool needs (Bedrock tier tag) and the drop rule
                 if (e["tools"] != null)
                 {
-                    var comps = doc["components"];
-                    var wantTools = e["tools"].A.Select(t => "tag:" + BedrockToolTag[t.AsString()]).OrderBy(x => x, StringComparer.Ordinal).ToList();
-                    var haveTools = comps.Keys.Where(k => BedrockToolTag.Values.Any(v => k == "tag:" + v)).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    var tags = BlockTagsIn(doc["components"]);
+                    var wantTools = e["tools"].A.Select(t => BedrockToolTag[t.AsString()]).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    var haveTools = tags.Where(k => BedrockToolTag.Values.Contains(k)).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     if (!wantTools.SequenceEqual(haveTools))
                         Errors.Add("bp/blocks/" + id + ".json: tool tags [" + string.Join(", ", haveTools) + "], TF gives [" + string.Join(", ", wantTools) + "] (" + e["source"].AsString() + ")");
-                    string wantTier = e["tier"] != null ? "tag:" + BedrockTierTag[e["tier"].AsString()] : "(none)";
-                    var haveTiers = comps.Keys.Where(k => BedrockTierTag.Values.Any(v => k == "tag:" + v)).ToList();
+                    string wantTier = e["tier"] != null ? BedrockTierTag[e["tier"].AsString()] : "(none)";
+                    var haveTiers = tags.Where(k => BedrockTierTag.Values.Contains(k)).ToList();
                     string haveTier = haveTiers.Count == 0 ? "(none)" : string.Join(", ", haveTiers);
                     if (wantTier != haveTier) Errors.Add("bp/blocks/" + id + ".json: tier tag " + haveTier + ", TF gives " + wantTier + " (" + e["source"].AsString() + ")");
                     checkedValues += 2;

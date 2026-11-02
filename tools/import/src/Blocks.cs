@@ -30,7 +30,8 @@ namespace GfImport
         public List<JProp> JavaProps = new List<JProp>();   // createBlockStateDefinition along the class chain
         public string LightSource;                          // where a state-dependent light comes from
         public long Permutations = 1;
-        public string Family;        // families kind (stairs, slab, ...)
+        public string Family;        // families kind (stairs, slab, ...), null when the families kit does not build it
+        public List<string> Traits = new List<string>();   // its trait families (waterloggable, snowloggable, ...)
         public bool InCatalog;
         public Model ItemModel;
         public bool FlatItem;        // the item is a 2D icon (block_placer item)
@@ -357,8 +358,9 @@ namespace GfImport
                 if (jb.Unbreakable) comps.Set("minecraft:destructible_by_mining", false);
                 else comps.Set("minecraft:destructible_by_mining", J.Obj().Set("seconds_to_destroy", Math.Round(jb.Hardness, 4)));
                 comps.Set("minecraft:destructible_by_explosion", ExplosionComponent(jb.Resistance));
-                // the tools that mine it faster and the tier a tool needs (Harvest.cs)
-                HarvestTags(bi, comps);
+                // the tools that mine it faster and the tier a tool needs (Harvest.cs), in the form of the block's format
+                string format = FormatOf(bi);
+                HarvestTags(bi, comps, format == BlockFormat);
                 // light: a constant, or a function of the block's states (one permutation per other light level)
                 var lightPerms = new List<J>();
                 var lf = Light.Of(this, bi, Warn);
@@ -472,8 +474,10 @@ namespace GfImport
                         if (x != 0 || y != 0) bone.Set("rotation", J.Arr(new[] { J.Num(x), J.Num(y), J.Num(0) }));
                         bone.Set("cubes", J.Arr(Models.Cubes(els, "")));
                         bones.Add(bone);
+                        // a part without a condition is always shown: a bone bone_visibility does not name is visible
+                        // (the v1_26_20 block schema takes Molang strings only, no boolean)
                         string when = WhenExpr(bi, part["when"]);
-                        vis.Set(name, when == null ? (J)J.Bool(true) : J.Str(when));
+                        if (when != null) vis.Set(name, J.Str(when));
                         foreach (var f in els.SelectMany(e => e.Faces)) { allTex.Add(f.Tex); }
                         if (particle == null) particle = m.Particle;
                         var pb = RotateBounds(Models.Bounds(m.Elements), x, y);
@@ -488,7 +492,9 @@ namespace GfImport
                     mats.Set("*", J.Obj().Set("texture", UseTexture(particle, bi.Owner, "terrain") ?? "tf_missing").Set("render_method", rm));
                     foreach (var t in allTex.Distinct().OrderBy(x => x, StringComparer.Ordinal))
                         mats.Set(Models.InstanceName(t, ""), J.Obj().Set("texture", UseTexture(t, bi.Owner, "terrain") ?? "tf_missing").Set("render_method", rm));
-                    comps.Set("minecraft:geometry", J.Obj().Set("identifier", geoId).Set("bone_visibility", vis));
+                    var geometry = J.Obj().Set("identifier", geoId);
+                    if (vis.Keys.Any()) geometry.Set("bone_visibility", vis);
+                    comps.Set("minecraft:geometry", geometry);
                     comps.Set("minecraft:material_instances", mats);
                     if (bounds != null)
                     {
@@ -514,9 +520,17 @@ namespace GfImport
                     foreach (var p in StatePerms(bi, mapColor.Item1, mapColor.Item2, comps, "minecraft:map_color")) perms.Add(p);
                 var block = J.Obj().Set("description", desc).Set("components", comps);
                 if (perms.Count > 0) block.Set("permutations", perms);
-                var doc = J.Obj().Set("format_version", BlockFormat).Set("minecraft:block", block);
+                var doc = J.Obj().Set("format_version", format).Set("minecraft:block", block);
                 EmitJson("blockstates", bi.Owner, "bp/blocks/" + bi.Id + ".json", doc);
-                Fragment("blockstates", bi.Owner, "rp/blocks.d/import-" + NameOf(bi.Owner) + ".json", full, J.Obj().Set("sound", BedrockSound(jb.Sound)));
+                string sound = BedrockSound(jb.Sound);
+                Fragment("blockstates", bi.Owner, "rp/blocks.d/import-" + NameOf(bi.Owner) + ".json", full, J.Obj().Set("sound", sound));
+                Java.SoundTypeInfo tfType;
+                if (TfSoundType(jb.Sound, out tfType))
+                {
+                    SortedSet<string> users;
+                    if (!soundTypeUsers.TryGetValue(tfType.Name, out users)) soundTypeUsers[tfType.Name] = users = new SortedSet<string>(StringComparer.Ordinal);
+                    users.Add(bi.Owner);
+                }
             }
             foreach (var kv in geometries)
             {
@@ -524,11 +538,26 @@ namespace GfImport
                 string file = kv.Key.Substring("geometry.tf.".Length);
                 EmitJson("models", owner, "rp/models/blocks/twilightforest/" + file + ".geo.json", kv.Value);
             }
+            ImportSoundTypes();
             if (RuntimeBehaviour.Count > 0)
                 Log.Add(RuntimeBehaviour.Count + " destructibility override(s) depend on the player or the held item (left to the block owners): " + string.Join(", ", RuntimeBehaviour));
         }
 
-        public const string BlockFormat = "1.21.80";
+        /// <summary>The block format of the blocks the game loads as the import writes them: the newest BDS 1.26.51 takes
+        /// (docs/spikes/S7.md). From 1.26.20 a block file is read by the schema SharedTypes::v1_26_20::BlockDefinition:
+        /// block tags are the minecraft:tags component, an array of tag ids ("tag:&lt;id&gt;" components are not in it,
+        /// and minecraft:block_entity is), and a bone_visibility value is a Molang string, not a boolean.</summary>
+        public const string BlockFormat = "1.26.50";
+
+        /// <summary>The block format of the family blocks' skeletons. The families kit (F11, tools/families) rewrites
+        /// every block of the families data at assemble in its own format (families.lua FORMAT, 1.26.0), copying the
+        /// skeleton whole or its "tag:" components: a format before 1.26.20, whose blocks declare tags as "tag:&lt;id&gt;"
+        /// components (minecraft:tags is not valid there). These files are the kit's input and never load as written;
+        /// once the kit writes 1.26.20 or later, they take BlockFormat (docs/spikes/S7.md).</summary>
+        public const string FamilyBlockFormat = "1.21.80";
+
+        /// <summary>The format the import writes a block in.</summary>
+        static string FormatOf(BlockInfo bi) { return bi.Family != null ? FamilyBlockFormat : BlockFormat; }
 
         string MapColorHex(BlockInfo bi, string name)
         {
@@ -678,12 +707,66 @@ namespace GfImport
 
         // ---- tables -------------------------------------------------------------------------------------
 
+        /// <summary>The Bedrock block sound of a Java sound type: a vanilla SoundType's closest engine type (SoundMap), or
+        /// for one of TF's own ("TFSoundTypes.JAR") the pack's sound type twilightforest.jar (ImportSoundTypes).</summary>
         string BedrockSound(string javaSound)
         {
             string s;
-            if (SoundMap.TryGetValue(javaSound ?? "STONE", out s)) return s;
-            Warn("Java sound type " + javaSound + " has no Bedrock block sound (Blocks.SoundMap): stone used");
+            Java.SoundTypeInfo tf;
+            if (TfSoundType(javaSound, out tf)) return "twilightforest." + tf.Name.ToLowerInvariant();
+            if (javaSound != null && javaSound.StartsWith("TFSoundTypes.", StringComparison.Ordinal))
+                Warn("Java sound type " + javaSound + " is not a sound type of TFSoundTypes.java: stone used");
+            else if (SoundMap.TryGetValue(javaSound ?? "STONE", out s)) return s;
+            else Warn("Java sound type " + javaSound + " has no Bedrock block sound (Blocks.SoundMap): stone used");
             return "stone";
+        }
+
+        Dictionary<string, Java.SoundTypeInfo> tfSoundTypes;
+        readonly SortedDictionary<string, SortedSet<string>> soundTypeUsers = new SortedDictionary<string, SortedSet<string>>(StringComparer.Ordinal);
+
+        bool TfSoundType(string javaSound, out Java.SoundTypeInfo type)
+        {
+            type = null;
+            if (javaSound == null || !javaSound.StartsWith("TFSoundTypes.", StringComparison.Ordinal)) return false;
+            if (tfSoundTypes == null) tfSoundTypes = Java.SoundTypes(this);
+            return tfSoundTypes.TryGetValue(javaSound.Substring("TFSoundTypes.".Length), out type);
+        }
+
+        /// <summary>TF's own sound types (TFSoundTypes.java) as Bedrock block sound types of the pack's sounds.json
+        /// (rp/sounds.json.d/import-<unit>.json, merged by assemble per id): block_sounds (break, place, hit) and
+        /// interactive_sounds (step, fall; jump and land, which Java has no sound of their own for, play the step and
+        /// the fall sound), each with F3's sound event and the volume and pitch Java plays it at for a SoundType of
+        /// volume v and pitch p (break and place: (v + 1) / 2 at p * 0.8, LevelRenderer / BlockItem.place; hit: (v + 1) / 8
+        /// at p * 0.5, MultiPlayerGameMode; step: v * 0.15 at p, Entity.playStepSound; fall: v * 0.5 at p * 0.75,
+        /// LivingEntity.playBlockFallSound). One file per owner of the blocks using the type (F1 when several units do).</summary>
+        void ImportSoundTypes()
+        {
+            var perOwner = new SortedDictionary<string, J>(StringComparer.Ordinal);
+            foreach (var kv in soundTypeUsers)
+            {
+                var t = tfSoundTypes[kv.Key];
+                string id = "twilightforest." + t.Name.ToLowerInvariant();
+                string owner = SharedOwner(kv.Value);
+                J doc;
+                if (!perOwner.TryGetValue(owner, out doc))
+                    perOwner[owner] = doc = J.Obj().Set("block_sounds", J.Obj()).Set("interactive_sounds", J.Obj().Set("block_sounds", J.Obj()));
+                Func<string, double, double, J> ev = (name, vol, pitch) => J.Obj().Set("sound", name).Set("volume", Math.Round(vol, 4)).Set("pitch", Math.Round(pitch, 4));
+                double v = t.Volume, p = t.Pitch;
+                doc["block_sounds"].Set(id, J.Obj().Set("volume", 1.0).Set("pitch", 1.0).Set("events", J.Obj()
+                    .Set("default", "")
+                    .Set("break", ev(t.Break, (v + 1) / 2, p * 0.8))
+                    .Set("place", ev(t.Place, (v + 1) / 2, p * 0.8))
+                    .Set("hit", ev(t.Hit, (v + 1) / 8, p * 0.5))));
+                doc["interactive_sounds"]["block_sounds"].Set(id, J.Obj().Set("volume", 1.0).Set("pitch", 1.0).Set("events", J.Obj()
+                    .Set("default", "")
+                    .Set("step", ev(t.Step, v * 0.15, p))
+                    .Set("fall", ev(t.Fall, v * 0.5, p * 0.75))
+                    .Set("jump", ev(t.Step, v * 0.15, p))
+                    .Set("land", ev(t.Fall, v * 0.5, p * 0.75))));
+                Log.Add("TF sound type TFSoundTypes." + t.Name + " -> block sound " + id + " (" + string.Join(", ", kv.Value.Select(NameOf)) + ")");
+            }
+            foreach (var kv in perOwner)
+                EmitJson("blockstates", kv.Key, "rp/sounds.json.d/import-" + NameOf(kv.Key) + ".json", kv.Value);
         }
 
         static readonly Dictionary<string, string> SoundMap = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -702,8 +785,6 @@ namespace GfImport
             { "HANGING_SIGN", "hanging_sign" }, { "NETHER_WOOD", "nether_wood" }, { "CHERRY_WOOD", "cherry_wood" }, { "CHERRY_LEAVES", "cherry_leaves" },
             { "CHISELED_BOOKSHELF", "chiseled_bookshelf" }, { "LILY_PAD", "grass" }, { "SPONGE", "sponge" }, { "CALCITE", "calcite" }, { "TUFF", "tuff" },
             { "DRIPSTONE_BLOCK", "dripstone_block" }, { "MANGROVE_ROOTS", "mangrove_roots" }, { "FROGLIGHT", "froglight" },
-            // TFSoundTypes
-            { "JAR", "glass" }, { "CASKET", "metal" }, { "SKULL_CANDLE", "candle" }, { "THORNS", "wood" }, { "BOSS_SPAWNER", "metal" },
         };
 
         /// <summary>Java MapColor constants (Minecraft 1.21.1 RGB values).</summary>

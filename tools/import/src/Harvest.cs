@@ -113,13 +113,30 @@ namespace GfImport
             if (tierOnly.Count > 0) Log.Add(tierOnly.Count + " block(s) in a #minecraft:needs_<tier>_tool tag but in no #minecraft:mineable tag (the tier has no effect, no Bedrock tier tag): " + string.Join(", ", tierOnly));
         }
 
-        /// <summary>The Bedrock tag components of a block: its tools and, for a block a tool mines, its tier.</summary>
-        void HarvestTags(BlockInfo bi, J comps)
+        /// <summary>The Bedrock block tags of a block: its tools and, for a block a tool mines, its tier, in the form its
+        /// format takes (docs/spikes/S7.md): from 1.26.20 (modern) the minecraft:tags component, an array of tag ids;
+        /// before, one "tag:&lt;id&gt;" component per tag.</summary>
+        void HarvestTags(BlockInfo bi, J comps, bool modern)
         {
             Harvest h;
             if (!Harvests.TryGetValue(bi.Id, out h)) return;
-            foreach (var t in h.Tools) comps.Set("tag:" + BedrockToolTag[t], J.Obj());
-            if (h.Tier != null && h.Digger) comps.Set("tag:" + BedrockTierTag[h.Tier], J.Obj());
+            var tags = h.Tools.Select(t => BedrockToolTag[t]).ToList();
+            if (h.Tier != null && h.Digger) tags.Add(BedrockTierTag[h.Tier]);
+            if (tags.Count == 0) return;
+            if (modern) comps.Set("minecraft:tags", J.Strs(tags));
+            else foreach (var t in tags) comps.Set("tag:" + t, J.Obj());
+        }
+
+        /// <summary>The Bedrock block tags of block components, in either form: the minecraft:tags array (formats
+        /// 1.26.20 and later) or "tag:&lt;id&gt;" components (earlier formats).</summary>
+        public static List<string> BlockTagsIn(J comps)
+        {
+            var tags = new List<string>();
+            if (comps == null || !comps.IsObj) return tags;
+            var t = comps["minecraft:tags"];
+            if (t != null && t.IsArr) tags.AddRange(t.A.Where(x => x.IsStr).Select(x => x.S));
+            tags.AddRange(comps.Keys.Where(k => k.StartsWith("tag:", StringComparison.Ordinal)).Select(k => k.Substring(4)));
+            return tags;
         }
 
         /// <summary>The tools TF's tiered tools are (Bedrock item tags: kind, tool, tier) and their minecraft:digger: a

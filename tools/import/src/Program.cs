@@ -35,6 +35,7 @@ namespace GfImport
             ctx.PrepareBlocks();
             ctx.ComputeHarvest();         // tools, tier and drop rule of every block (TF's tool tags)
             ctx.CheckJavaStates();        // against the hand-written golden (tools/import/expected-states.json)
+            ctx.ComputeFamilies();        // which blocks the families kit rewrites (their skeleton is its input)
             ctx.ImportBlocks();           // blockstates + models (records texture uses)
             ctx.ImportItems();            // skeleton items (records icon uses)
             ctx.ImportEntities();         // skeleton entities

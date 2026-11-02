@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:ominous_fire",
@@ -18,14 +18,7 @@
       "minecraft:map_color": "#7f3fb2",
       "minecraft:collision_box": false,
       "minecraft:geometry": {
-        "identifier": "geometry.tf.twilightforest.block.ominous_fire.multipart",
-        "bone_visibility": {
-          "part0": true,
-          "part1": true,
-          "part2": true,
-          "part3": true,
-          "part4": true
-        }
+        "identifier": "geometry.tf.twilightforest.block.ominous_fire.multipart"
       },
       "minecraft:material_instances": {
         "*": {
