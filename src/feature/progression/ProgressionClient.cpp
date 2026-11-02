@@ -20,6 +20,7 @@
 #include <filesystem>
 #include <fstream>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <unordered_map>
 
@@ -51,6 +52,9 @@ ClientState& cstate() {
     return s;
 }
 
+std::mutex                       gToastMutex;
+std::optional<ShownMissingToast> gLastToast;
+
 void loadRestrictions(ClientState& s) {
     s.restrictionsLoaded = true;
     std::filesystem::path data;
@@ -81,6 +85,11 @@ void loadRestrictions(ClientState& s) {
 }
 
 } // namespace
+
+std::optional<ShownMissingToast> lastMissingToast() {
+    std::lock_guard lock(gToastMutex);
+    return gLastToast;
+}
 
 bool has(std::string const& advancementId) {
     std::lock_guard lock(cstate().mutex);
@@ -124,7 +133,12 @@ public:
             spec.bodyKey = msg.value("title", std::string{kMissingNoTitle});
             spec.ms      = kMissingToastMs;
             toast::show(spec, toast::styleOf(toast::Kind::MissingAdvancement));
-            log().info("client toast: missing advancement {} ({})", msg.value("advancement", std::string{}), spec.bodyKey);
+            auto advancement = msg.value("advancement", std::string{});
+            {
+                std::lock_guard lock(gToastMutex);
+                gLastToast = ShownMissingToast{advancement, spec.titleKey, spec.bodyKey, spec.iconItem, spec.ms};
+            }
+            log().info("client toast: missing advancement {} ({}, icon {})", advancement, spec.bodyKey, spec.iconItem);
         });
         net::client::onConnected([] {
             std::lock_guard lock(cstate().mutex);

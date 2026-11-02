@@ -2,6 +2,7 @@
 
 // F10-internal parts of gf::progression (the death pipeline fires kills; selftests).
 
+#include <optional>
 #include <string>
 
 #include "feature/progression/Progression.h"
@@ -32,5 +33,20 @@ void fireKilled(Player& killer, Actor& victim, std::string const& damageType);
 void forgetPlayer(Player const& player);
 /// The biome id at the player ("twilightforest:dark_forest", "minecraft:plains"; "" when unloaded).
 [[nodiscard]] std::string biomeIdAt(Player& player);
+
+#ifdef GF_CLIENT
+namespace client {
+/// The last missing advancement toast the client mod queued (ProgressionClient.cpp): what the
+/// server sent and what went to F12's toast (gf::client::toast::show). Selftests.
+struct ShownMissingToast {
+    std::string advancement; ///< the advancement the server named
+    std::string titleKey;    ///< the toast's first line (UPPER_TEXT)
+    std::string bodyKey;     ///< the advancement's title (a translation key or plain text)
+    std::string iconItem;
+    int         ms = 0;
+};
+[[nodiscard]] std::optional<ShownMissingToast> lastMissingToast();
+} // namespace client
+#endif
 
 } // namespace gf::progression
