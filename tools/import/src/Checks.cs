@@ -57,8 +57,12 @@ namespace GfImport
             foreach (var unit in Out)
                 foreach (var gen in unit.Value)
                     if (gen.Key.StartsWith("data/gf/families/", StringComparison.Ordinal) && gen.Key.EndsWith(".json", StringComparison.Ordinal))
-                        foreach (var entry in J.Parse(Encoding.UTF8.GetString(gen.Value.Bytes)).A)
-                            if (entry["id"] != null) familyEntries[entry["id"].AsString()] = entry;
+                    {
+                        var list = J.Parse(Encoding.UTF8.GetString(gen.Value.Bytes));
+                        if (!list.IsArr) { Errors.Add(gen.Key + ": not an array of family entries"); continue; }
+                        foreach (var entry in list.A)
+                            if (entry.IsObj && entry["id"] != null) familyEntries[entry["id"].AsString()] = entry;
+                    }
             foreach (var bi in BlockInfos.Values)
             {
                 SortedDictionary<string, GenFile> files;
@@ -70,8 +74,10 @@ namespace GfImport
                 }
                 var doc = J.Parse(Encoding.UTF8.GetString(f.Bytes))["minecraft:block"];
                 // a family block's params.tags (the kit's format-free input) are the tags of its skeleton file
-                J fam;
-                if (bi.Family != null && familyEntries.TryGetValue("twilightforest:" + bi.Id, out fam))
+                J fam = null;
+                if (bi.Family != null && !familyEntries.TryGetValue("twilightforest:" + bi.Id, out fam))
+                    Errors.Add("data/gf/families: no entry for the family block twilightforest:" + bi.Id + " (" + bi.Family + ")");
+                else if (fam != null)
                 {
                     var pt = fam["params"] != null ? fam["params"]["tags"] : null;
                     var want = BlockTagsIn(doc["components"]).OrderBy(x => x, StringComparer.Ordinal).ToList();

@@ -113,8 +113,9 @@ namespace GfImport
             if (tierOnly.Count > 0) Log.Add(tierOnly.Count + " block(s) in a #minecraft:needs_<tier>_tool tag but in no #minecraft:mineable tag (the tier has no effect, no Bedrock tier tag): " + string.Join(", ", tierOnly));
         }
 
-        /// <summary>The Bedrock block tags of a block (no namespace): its tools and, for a block a tool mines, its tier, in
-        /// the order the block file lists them. Empty for a block without tags.</summary>
+        /// <summary>The Bedrock block tags (namespaced ids, "minecraft:is_axe_item_destructible") of the block `id` (TF
+        /// path, no namespace): its tools and, for a block a tool mines, its tier, in the order the block file lists them.
+        /// Empty for a block without tags.</summary>
         public List<string> BedrockBlockTags(string id)
         {
             Harvest h;

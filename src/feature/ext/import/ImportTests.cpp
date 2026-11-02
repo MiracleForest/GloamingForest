@@ -551,6 +551,8 @@ GF_REGISTER_SELFTEST("import.place_blocks", [](Context& ctx) -> ll::coro::CoroTa
         auto s     = supportOf(skel["classes"].value(id, JDoc::array()));
         for (auto const& [name, _] : s.states.items())
             if (!states.contains(name)) fails.add(id + " has no state " + name + " (its support rule places it in one)");
+        // one block one above: a ceiling support, or the upper half / poke block (the removal orders them apart)
+        if (!s.ceiling.empty() && (s.upper || s.poke)) fails.add(id + ": its support rule sets both a ceiling and a block above it");
         addSupport(pos.offset(0, -1, 0), s.floor);
         if (!s.ceiling.empty()) addSupport(pos.offset(0, 1, 0), s.ceiling);
         for (auto const& [dx, dz] : s.sides) addSupport(pos.offset(dx, 0, dz), "minecraft:grass_block");
