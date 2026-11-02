@@ -8,9 +8,13 @@
 #ifdef GF_CLIENT
 
 #include <array>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
+
+class Actor;
 
 namespace gf::client::families {
 
@@ -29,13 +33,17 @@ struct SignSide {
     [[nodiscard]] bool         empty() const;
 };
 struct SignText {
-    SignSide front, back;
+    SignSide                  front, back;
+    std::vector<std::int64_t> display; ///< the unique ids of the sign's display entities (their name tags hidden)
 };
 
 /// The text the server sent for the sign at (dim, x, y, z) (nullopt: none).
 [[nodiscard]] std::optional<SignText> signTextAt(int dim, int x, int y, int z);
 /// The number of signs whose text the client knows (tests).
 [[nodiscard]] std::size_t signTextCount();
+/// The client mod hides the name tag of `actor`: a display entity (gloamingforest:sign_text) of the
+/// client's level that the text of a sign names, while that text is not empty.
+[[nodiscard]] bool hidesSignName(Actor const& actor);
 
 } // namespace gf::client::families
 

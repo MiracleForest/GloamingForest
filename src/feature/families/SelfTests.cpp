@@ -68,7 +68,6 @@ TreePlacer& treePlacer();
 void   advanceSaplingWith(BlockSource& region, BlockPos const& pos, gf::blockevents::RandomSource& random);
 void   signEditorFor(Player& player, GlobalPos const& pos, bool front);
 bool   signEdit(Player& player, GlobalPos const& pos, bool front, std::vector<std::string> const& lines);
-Actor* signDisplay(GlobalPos const& pos, bool front);
 Json   signSentText(GlobalPos const& pos);
 void   signSendAll(Player& player);
 void   signForgetUnloaded(GlobalPos const& pos);
@@ -1303,8 +1302,14 @@ GF_REGISTER_SELFTEST("families.tf_blocks", [](Context& ctx) -> ll::coro::CoroTas
     // CANOPY_COLORIZER / MANGROVE_COLORIZER of the biome foliage (here FoliageColor's default)
     ctx.check(lc::canopy(0x48B518) == 0x47A73F && lc::mangrove(0x48B518) == 0x84CD56 && lc::canopy(0xFF48B518) == 0x47A73F,
               "canopy and mangrove leaves blend the foliage colour (" + std::to_string(lc::canopy(0x48B518)) + ", " + std::to_string(lc::mangrove(0x48B518)) + ")");
-    ctx.check(lc::blendOf("twilightforest:canopy_leaves").has_value() && lc::blendOf("twilightforest:mangrove_leaves").has_value() && !lc::blendOf("twilightforest:twilight_oak_leaves").has_value(),
+    auto canopyBlend = lc::blendOf("twilightforest:canopy_leaves");
+    auto mangroveBlend = lc::blendOf("twilightforest:mangrove_leaves");
+    ctx.check(canopyBlend && mangroveBlend && canopyBlend->fn == &lc::canopy && mangroveBlend->fn == &lc::mangrove && !lc::blendOf("twilightforest:twilight_oak_leaves").has_value(),
               "only canopy and mangrove leaves blend");
+    // without a world (or position) ColorHandler gives FoliageColor.getEvergreenColor / getBirchColor,
+    // without the colorizer
+    ctx.check(canopyBlend && mangroveBlend && canopyBlend->withoutWorld == 0x619961 && mangroveBlend->withoutWorld == 0x80A755,
+              "without a world canopy leaves are evergreen and mangrove leaves birch coloured");
     // the sign editor's line width (SignFont.h, the same table on both sides)
     namespace sf = fam::signfont;
     ctx.check(sf::lineWidth("Twilight") == 6 + 6 + 2 + 3 + 2 + 6 + 6 + 4 && sf::fitLine(std::string(30, 'W'), 90, 384).size() == 15u, "Java's sign line width");
@@ -1409,6 +1414,11 @@ GF_REGISTER_SELFTEST("families.sign_sync", [](Context& ctx) -> ll::coro::CoroTas
         auto const& e = sent[0]["signs"][0];
         ctx.check(e["front"]["lines"][0] == "sync" && e["front"]["color"] == "black" && e["front"]["glowing"] == false && e["back"]["lines"][0] == "",
                   "with both sides' lines, colour and glow");
+        // the client mod hides the name tags of exactly the sign's display entities: named by id
+        auto*        display = fam::detail::signDisplay(p, true);
+        std::int64_t id      = display ? display->getOrCreateUniqueID().rawID : 0;
+        ctx.check(display && e.value("display", fam::Json::array()) == fam::Json::array({id}),
+                  "and the unique id of its display entity (" + e.value("display", fam::Json::array()).dump() + ", " + std::to_string(id) + ")");
     }
     gf::signs::setText(p, {"sync", "me"});
     co_await ctx.ticks(1);

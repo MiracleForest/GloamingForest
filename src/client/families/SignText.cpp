@@ -34,10 +34,14 @@
 // colours shift alike (client scenario families, pictures 20 to 23); the Classic look shows Java's
 // colours (scenario families.classic).
 // The server's display entities (gloamingforest:sign_text: the name tag vanilla clients read) show
-// no name tag here once the client has their sign's text: ActorRenderDispatcher::extractRenderTextObjects
-// (the name tag of one actor for the frame) gives nothing for them on the client of a companion
-// (the only hook of name tags; F11 owns it). The server withdraws a sign's text ("gone") when the
-// sign, its text or its chunk goes, so the client's list holds the signs of loaded chunks only.
+// no name tag here once the client has their sign's text, which names them by unique id:
+// ActorRenderDispatcher::extractRenderTextObjects (the name tag of one actor for the frame) gives
+// nothing for them on the client of a companion (the only hook of name tags; F11 owns it). The
+// server withdraws a sign's text ("gone") when the sign, its text or its chunk goes, so the client's
+// list holds the signs of loaded chunks only.
+// An outlined line (glowing text) is drawn over its 8 outline copies nearer to the camera along the
+// view rays (Java's POLYGON_OFFSET: in depth only), by a lead that grows with the distance as the
+// depth buffer's step does.
 
 #ifdef GF_CLIENT
 
@@ -57,6 +61,7 @@
 #include "ll/api/event/client/ClientJoinLevelEvent.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
+#include "ll/api/thread/ClientThreadExecutor.h"
 
 #include "mc/client/game/IClientInstance.h"
 #include "mc/client/gui/Font.h"
@@ -134,8 +139,21 @@ namespace {
 using Key = std::tuple<int, int, int, int>; ///< dim, x, y, z
 
 struct Store {
-    std::mutex                                         mutex; ///< the client thread writes, the render thread reads
-    std::map<Key, std::shared_ptr<SignText const>> texts; ///< immutable: readers keep theirs
+    std::mutex                                     mutex;    ///< the client thread writes, the render thread reads
+    std::map<Key, std::shared_ptr<SignText const>> texts;    ///< immutable: readers keep theirs
+    std::map<std::int64_t, Key>                    entities; ///< display entity -> its sign (the texts' display ids)
+
+    /// Puts `text` (nullptr: none) at `k`, keeping the display entity index in step.
+    void put(Key const& k, std::shared_ptr<SignText const> text) {
+        if (auto it = texts.find(k); it != texts.end()) {
+            for (auto id : it->second->display)
+                if (auto e = entities.find(id); e != entities.end() && e->second == k) entities.erase(e);
+            texts.erase(it);
+        }
+        if (!text) return;
+        for (auto id : text->display) entities[id] = k;
+        texts.emplace(k, std::move(text));
+    }
 };
 Store& store() {
     static auto* s = new Store; // kept for the process (never destroyed at exit)
@@ -170,13 +188,17 @@ void onText(Json const& msg) {
         std::lock_guard lock(s.mutex);
         if (auto g = msg.find("gone"); g != msg.end() && g->is_array())
             for (auto const& p : *g)
-                if (auto k = keyOf(p)) s.texts.erase(*k);
+                if (auto k = keyOf(p)) s.put(*k, nullptr);
         if (auto list = msg.find("signs"); list != msg.end() && list->is_array()) {
             for (auto const& e : *list) {
                 if (!e.is_object()) continue;
                 auto k = keyOf(e.value("pos", Json()));
                 if (!k) continue;
-                s.texts[*k] = std::make_shared<SignText const>(SignText{sideOf(e.value("front", Json())), sideOf(e.value("back", Json()))});
+                SignText text{sideOf(e.value("front", Json())), sideOf(e.value("back", Json())), {}};
+                if (auto d = e.find("display"); d != e.end() && d->is_array())
+                    for (auto const& id : *d)
+                        if (id.is_number_integer() && id.get<std::int64_t>() != 0) text.display.push_back(id.get<std::int64_t>());
+                s.put(*k, std::make_shared<SignText const>(std::move(text)));
                 ++n;
             }
         }
@@ -188,6 +210,7 @@ void clearTexts() {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
     s.texts.clear();
+    s.entities.clear();
 }
 
 } // namespace
@@ -198,6 +221,15 @@ std::shared_ptr<SignText const> sharedTextAt(int dim, int x, int y, int z) {
     auto&           s = store();
     std::lock_guard lock(s.mutex);
     auto            it = s.texts.find(Key{dim, x, y, z});
+    return it == s.texts.end() ? nullptr : it->second;
+}
+/// The text of the sign that names display entity `id` (nullptr: none).
+std::shared_ptr<SignText const> sharedTextOfDisplay(std::int64_t id) {
+    auto&           s = store();
+    std::lock_guard lock(s.mutex);
+    auto            e = s.entities.find(id);
+    if (e == s.entities.end()) return nullptr;
+    auto it = s.texts.find(e->second);
     return it == s.texts.end() ? nullptr : it->second;
 }
 } // namespace
@@ -220,15 +252,6 @@ namespace {
 
 constexpr float kViewDistance    = 64.0f; ///< BlockEntityRenderer.getViewDistance
 constexpr float kOutlineDistance = 16.0f; ///< SignRenderer.OUTLINE_RENDER_DISTANCE = Mth.square(16)
-
-/// Java SignBlock.getYRotationDegrees: a standing or ceiling sign's rotation x 22.5, a wall
-/// sign's facing (Direction.toYRot: south 0, west 90, north 180, east 270).
-float yRotationDegrees(Block const& b, fam::Entry const& e) {
-    if (e.family == fam::Family::Sign || e.family == fam::Family::HangingSign) return static_cast<float>(fam::intState(b, fam::state::Rotation).value_or(0)) * 22.5f;
-    static constexpr float toYRot[6]{0, 0, 180, 0, 90, 270};
-    int f = fam::facingOf(b);
-    return f >= 0 && f < 6 ? toYRot[f] : 0.0f;
-}
 
 mce::Color colorOf(unsigned rgb) {
     return mce::Color{static_cast<float>((rgb >> 16) & 0xFF) / 255.f, static_cast<float>((rgb >> 8) & 0xFF) / 255.f, static_cast<float>(rgb & 0xFF) / 255.f, 1.f};
@@ -259,8 +282,9 @@ void drawLine(Font& font, ScreenContext& sc, std::string_view text, float x, flo
     font.drawCached(sc, text, x, y, color, true, true, false, material, -1, false, 0.0f, none, dark, 0.0f, 0.0f, OffscreenCaptureDescription{}, true);
 }
 
-/// One side of a sign: SignRenderer.renderSignText in the pose `pose` (the sign's, in camera space).
-void drawSide(render::RenderContext& ctx, Font& font, glm::mat4 const& pose, SignSide const& side, bool front, bool hanging, bool outlineNear) {
+/// One side of a sign: SignRenderer.renderSignText in the pose `pose` (the sign's, in camera space),
+/// with the camera's eye at `eye` (in the same camera-relative space).
+void drawSide(render::RenderContext& ctx, Font& font, glm::mat4 const& pose, SignSide const& side, bool front, bool hanging, bool outlineNear, glm::vec3 const& eye) {
     if (side.empty()) return;
     auto& rc = *ctx.actors;
     // translateSignText
@@ -272,7 +296,7 @@ void drawSide(render::RenderContext& ctx, Font& font, glm::mat4 const& pose, Sig
     // keeps the handedness of the game's own sign text (a positive determinant, as vanilla's
     // SignRenderer leaves the matrix: measured), so the glyph quads face the reader and so do the
     // normals the font generates for them, which Vibrant Visuals lights the text by (mirrored, the
-    // text was lit from behind: grey-blue and washed out). Towards the reader is -z here.
+    // text was lit from behind: grey-blue and washed out).
     m = glm::scale(m, glm::vec3{f, -f, -f});
     int const lineHeight = hanging ? 9 : 10;  // HangingSignBlockEntity.TEXT_LINE_HEIGHT / SignBlockEntity's
     int const maxWidth   = hanging ? 60 : 90; // getMaxTextLineWidth
@@ -287,6 +311,25 @@ void drawSide(render::RenderContext& ctx, Font& font, glm::mat4 const& pose, Sig
     float const    scale     = side.glowing ? 1.0f : 0.4f;
     auto const*    material  = textMaterial(rc, side.glowing);
     if (!material) return;
+    // Java draws an outlined line over its 8 copies with POLYGON_OFFSET (glPolygonOffset(-1, -10):
+    // nearer in depth only, never moved on screen). The same here: the line moves towards the
+    // camera along the view rays (a scale about the eye), so its pixels stay where they are, by a
+    // lead that grows with the square of the
+    // distance as a perspective depth buffer's step does (about distance^2 / near plane per step):
+    // 0.001 block close up, 0.017 at 40 blocks, 0.042 at 64, where the text stops being drawn. A
+    // fixed lead (the 0.001 block of before) falls below the depth step past ~20 blocks, and the
+    // copies behind could show through the letters.
+    // The eye is not always the origin of these matrices (camera-relative to the camera's target,
+    // the player): in third person it stands behind or in front of the player, so the scale is
+    // about the eye itself.
+    glm::mat4 frontOfOutline = m;
+    {
+        glm::vec3 const centre   = glm::vec3(m * glm::vec4{0.0f, 0.0f, 0.0f, 1.0f});
+        float const     distance = glm::length(centre - eye);
+        float const     lead     = 0.001f + distance * distance * 1.0e-5f;
+        if (distance > 0.0f && lead < distance)
+            frontOfOutline = glm::translate(glm::mat4{1.0f}, eye) * glm::scale(glm::mat4{1.0f}, glm::vec3{1.0f - lead / distance}) * glm::translate(glm::mat4{1.0f}, -eye) * m;
+    }
 
     auto& world = ctx.screen.camera.worldMatrixStack.get();
     for (int i = 0; i < 4; ++i) {
@@ -310,22 +353,37 @@ void drawSide(render::RenderContext& ctx, Font& font, glm::mat4 const& pose, Sig
             }
         }
         auto ref          = world.push(false);
-        ref.mat->_m.get() = ref.mat->_m.get() * glm::translate(m, glm::vec3{0.0f, 0.0f, outline ? -0.1f : 0.0f});
+        ref.mat->_m.get() = ref.mat->_m.get() * (outline ? frontOfOutline : m);
         drawLine(font, ctx.screen, line, x, y, textColor, scale, material);
     }
 }
 
-/// The screen context's text state for one sign, restored afterwards: SignRenderer's light at the
-/// sign (ActorShaderManager::setupShaderParameters at the block, as SignRenderer::render sets it
-/// before the board and the text: the light the lit text material multiplies by, Java's packedLight)
-/// and environmental text.
+/// The screen context's text state for one sign: SignRenderer's light at the sign
+/// (ActorShaderManager::setupShaderParameters at the block, as SignRenderer::render sets it before
+/// the board and the text: the light the lit text material multiplies by, Java's packedLight) and
+/// environmental text.
+/// What it writes, and what is restored afterwards:
+/// - the screen context's own state: its shader colour and dark colour (ShaderColor values the next
+///   draw may read without setting: the font's darken path, Tessellator colours) and its drawing
+///   flags (isDrawingEnvironmentalText, set here, and the others, should the game's calls touch
+///   them): saved and restored;
+/// - the entity constant buffer (mce::GlobalConstantBuffers::entityConstantBuffer, ActorConstants:
+///   TILE_LIGHT_COLOR / INTENSITY, BLOCK_LIGHT_COLOR, OVERLAY_COLOR, CHANGE_COLOR, GLINT_COLOR,
+///   UV_ANIM / OFFSET / ROTATION / SCALE, through setEntityConstants): not restorable, as the game
+///   offers no way to read it back (its ShaderConstantFloat2 / Float4 constants have no data
+///   accessor). It is per-draw state: every actor and block actor renderer of the game writes all of
+///   it before it draws (vanilla's SignRenderer leaves exactly this state after a vanilla sign), and
+///   F12's world pass runs after LevelRendererCamera::renderBlockEntities, where the last block
+///   actor drawn left it at its own position. A block renderer after this one finds the light of
+///   the last sign drawn instead of the last block actor's: never a state it could rely on (one
+///   that draws with an actor material sets its own, as the game's renderers do).
 class SignTextState {
 public:
     SignTextState(render::RenderContext& ctx, BlockPos const& pos, bool lit)
     : mScreen(ctx.screen),
       mColor(static_cast<ShaderColor&>(ctx.screen.currentShaderColor)),
       mDark(static_cast<ShaderColor&>(ctx.screen.currentShaderDarkColor)),
-      mEnvironmental(ctx.screen.isDrawingEnvironmentalText) {
+      mFlags(Flags::of(ctx.screen)) {
         mScreen.isDrawingEnvironmentalText = true;
         if (!lit) return;
         IClientInstance& client = ctx.actors->mClientInstance;
@@ -341,16 +399,35 @@ public:
         color.dirty        = true;
         dark               = mDark;
         dark.dirty         = true;
-        mScreen.isDrawingEnvironmentalText = mEnvironmental;
+        mFlags.restore(mScreen);
     }
     SignTextState(SignTextState const&)            = delete;
     SignTextState& operator=(SignTextState const&) = delete;
 
 private:
+    /// The screen context's drawing flags (mce::MeshContext).
+    struct Flags {
+        bool ui, firstPerson, environmentalText, persistentUi, frameCapture, editorHighlight, movingBlock, dithering, alphaMaskedTint;
+        static Flags of(ScreenContext const& s) {
+            return {s.isDrawingUI, s.isDrawingFirstPersonObjects, s.isDrawingEnvironmentalText, s.isDrawingPersistentUIElement, s.isDoingFrameCapture,
+                    s.isDrawingEditorSelectionHighlight, s.isDrawingMovingBlock, s.isDitheringEnabled, s.isAlphaMaskedTintEnabled};
+        }
+        void restore(ScreenContext& s) const {
+            s.isDrawingUI                       = ui;
+            s.isDrawingFirstPersonObjects       = firstPerson;
+            s.isDrawingEnvironmentalText        = environmentalText;
+            s.isDrawingPersistentUIElement      = persistentUi;
+            s.isDoingFrameCapture               = frameCapture;
+            s.isDrawingEditorSelectionHighlight = editorHighlight;
+            s.isDrawingMovingBlock              = movingBlock;
+            s.isDitheringEnabled                = dithering;
+            s.isAlphaMaskedTintEnabled          = alphaMaskedTint;
+        }
+    };
     ScreenContext& mScreen;
     ShaderColor    mColor;
     ShaderColor    mDark;
-    bool           mEnvironmental;
+    Flags          mFlags;
 };
 
 std::atomic<bool> gDrawn{false};
@@ -384,7 +461,7 @@ void drawSign(render::RenderContext& ctx, BlockPos const& pos, Block const& bloc
     bool const standing = e->family == fam::Family::Sign;
     // translateSign, in camera space
     glm::mat4 pose = glm::translate(glm::mat4{1.0f}, glm::vec3{static_cast<float>(pos.x) - ctx.camera.x, static_cast<float>(pos.y) - ctx.camera.y, static_cast<float>(pos.z) - ctx.camera.z});
-    float     yRot = -yRotationDegrees(block, *e);
+    float     yRot = -fam::signYaw(block, *e); // SignBlock.getYRotationDegrees, as the server's display entities
     if (hanging) {
         pose = glm::translate(pose, glm::vec3{0.5f, 0.9375f, 0.5f});
         pose = glm::rotate(pose, glm::radians(yRot), glm::vec3{0, 1, 0});
@@ -402,14 +479,17 @@ void drawSign(render::RenderContext& ctx, BlockPos const& pos, Block const& bloc
     // the light at the sign even when only glowing text is drawn (the glow material ignores it; a pack
     // without that material falls back to the lit one)
     SignTextState state(ctx, pos, true);
-    drawSide(ctx, font, pose, text->front, true, hanging, outlineNear);
-    drawSide(ctx, font, pose, text->back, false, hanging, outlineNear);
+    // the eye in the camera-relative space of the pose: the inverse of the view x world matrices
+    // applied to the view space's origin (first person: about the origin; third person: the camera
+    // behind or in front of the player)
+    glm::mat4 const viewWorld = ctx.screen.camera.viewMatrixStack.get().top()._m.get() * ctx.screen.camera.worldMatrixStack.get().top()._m.get();
+    glm::vec3 const eye       = glm::vec3(glm::inverse(viewWorld) * glm::vec4{0.0f, 0.0f, 0.0f, 1.0f});
+    drawSide(ctx, font, pose, text->front, true, hanging, outlineNear, eye);
+    drawSide(ctx, font, pose, text->back, false, hanging, outlineNear, eye);
     if (!gDrawn.exchange(true)) log().info("families: sign text drawn on the board ({} at {} {} {})", e->id, pos.x, pos.y, pos.z);
 }
 
 // ---- the display entities' name tags --------------------------------------------------------------------
-
-constexpr char kDisplayType[] = "gloamingforest:sign_text";
 
 /// An actor of the client's own level (not the integrated server's).
 bool clientActor(Actor const& a) {
@@ -421,24 +501,14 @@ bool clientActor(Actor const& a) {
 } // namespace
 
 /// The client draws the sign text itself: the name tag of a display entity is not shown once the
-/// client has the text of its sign (until then, a sign whose text has not arrived keeps its tag).
-/// The server puts the entity in its sign's block (Signs.cpp textCentre: within the block, or 0.02
-/// past the face behind a wall sign): the block it stands in, else the block across the face it is
-/// within 0.1 of.
+/// client has the text of its sign. The server names a sign's display entities in its text (their
+/// unique ids, which the client's copies of the entities share: AddActorPacket), so an entity is
+/// matched to its own sign only: one whose sign's text has not arrived keeps its tag, whatever its
+/// neighbours have.
 bool hidesSignName(Actor const& actor) {
-    if (!net::client::connected() || actor.getTypeName() != kDisplayType || !clientActor(actor)) return false;
-    auto* player = currentPlayer();
-    if (!player) return false;
-    int const   dim = static_cast<int>(player->getDimensionId());
-    Vec3 const& p   = actor.getPosition();
-    int const   bx = static_cast<int>(std::floor(p.x)), by = static_cast<int>(std::floor(p.y)), bz = static_cast<int>(std::floor(p.z));
-    auto        written = [dim, by](int x, int z) {
-        auto t = sharedTextAt(dim, x, by, z);
-        return t && !(t->front.empty() && t->back.empty());
-    };
-    if (written(bx, bz)) return true;
-    float const fx = p.x - static_cast<float>(bx), fz = p.z - static_cast<float>(bz);
-    return (fx < 0.1f && written(bx - 1, bz)) || (fx > 0.9f && written(bx + 1, bz)) || (fz < 0.1f && written(bx, bz - 1)) || (fz > 0.9f && written(bx, bz + 1));
+    if (!net::client::connected() || actor.getTypeName() != fam::kSignTextDisplayType || !clientActor(actor) || !actor.hasUniqueID()) return false;
+    auto t = sharedTextOfDisplay(actor.getOrCreateUniqueID().rawID);
+    return t && !(t->front.empty() && t->back.empty());
 }
 
 } // namespace gf::client::families
@@ -540,6 +610,26 @@ GF_REGISTER_SELFTEST("families.sign_text_client", [](gf::selftest::Context& ctx)
     }
     ctx.check(text && text->front.lines[0] == "client" && text->front.lines[1] == "copy" && text->front.color == "black" && !text->front.glowing && text->back.empty(),
               "the client mod got the text to draw");
+    // the sign's display entity, named by its unique id, which the client's copy of it shares: its
+    // name tag is hidden there (asked on the client thread, which owns the client's level)
+    auto*        display = fam::detail::signDisplay(p, true);
+    std::int64_t id      = display ? display->getOrCreateUniqueID().rawID : 0;
+    ctx.check(display && text && text->display == std::vector<std::int64_t>{id}, "the text names the sign's display entity (" + std::to_string(id) + ")");
+    // each ask has its own answer slot: a late answer to an earlier ask never counts for a later one
+    auto hidden = std::make_shared<std::atomic<int>>(0); // 0 asked, 1 hidden, 2 shown, 3 no such actor on the client
+    for (int i = 0; i < 20 && id != 0 && hidden->load() != 1; ++i) {
+        hidden = std::make_shared<std::atomic<int>>(0);
+        ll::thread::ClientThreadExecutor::getDefault().execute([hidden, id] {
+            auto*         player = gf::client::currentPlayer();
+            ActorUniqueID uid;
+            uid.rawID = id;
+            Actor* a  = player ? player->getLevel().fetchEntity(uid, false) : nullptr;
+            hidden->store(!a ? 3 : gf::client::families::hidesSignName(*a) ? 1 : 2);
+        });
+        for (int t = 0; t < 40 && hidden->load() == 0; ++t) co_await ctx.ticks(1);
+        if (hidden->load() != 1) co_await ctx.ticks(5);
+    }
+    ctx.check(hidden->load() == 1, "the client's copy of the display entity shows no name tag (" + std::to_string(hidden->load()) + ")");
     ctx.setBlock(p, "minecraft:air");
     for (int i = 0; i < 100 && signTextAt(p.dim, p.x, p.y, p.z); ++i) co_await ctx.ticks(1);
     ctx.check(!signTextAt(p.dim, p.x, p.y, p.z), "and forgets it when the sign goes");
