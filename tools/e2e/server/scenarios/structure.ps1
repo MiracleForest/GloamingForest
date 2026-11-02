@@ -16,7 +16,7 @@ Wait-LogLine 'structure_util scale_probe armed' 30 -Since $mark | Out-Null
 
 $r = Invoke-SelfTest 'structure.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) structure selftest(s) failed" }
-if ($r.Pass -lt 26) { throw "expected at least 26 structure selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 28) { throw "expected at least 28 structure selftests to pass, got $($r.Pass)" }
 $probeWritten = Get-ServerLog | Select-String -Pattern 'scale probe written id=(-?\d+)' | Select-Object -Last 1
 if (-not $probeWritten) { throw 'structure.scale_probe did not leave its scaled mob for the restart' }
 

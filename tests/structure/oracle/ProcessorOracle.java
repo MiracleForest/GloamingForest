@@ -73,14 +73,21 @@ public class ProcessorOracle {
 		"sandstone_double_slab", "smooth_stone", "etched_nagastone", "nagastone_pillar");
 	static final Set<String> BLOCK_ENTITIES = Set.of("chest", "spawner");
 
-	/** StructureTemplate#loadPalette: the blocks of a template in buildInfoList's order. */
+	/**
+	 * StructureTemplate#loadPalette: the blocks of a template in buildInfoList's order. A
+	 * structure_void cell is not saved in a template, unless a data marker sits there (in `nbt`): that
+	 * cell is the marker's DATA structure block, which has block entity data.
+	 */
 	static List<Info> load(String[][] layers, Map<Character, String> palette, Set<List<Integer>> nbt) {
 		List<Info> full = new ArrayList<>(), other = new ArrayList<>(), withNbt = new ArrayList<>();
 		for (int y = 0; y < layers.length; y++)
 			for (int z = 0; z < layers[y].length; z++)
 				for (int x = 0; x < layers[y][z].length(); x++) {
 					String block = palette.get(layers[y][z].charAt(x));
-					if (block.equals("structure_void")) continue; // not saved in a template
+					if (block.equals("structure_void")) {
+						if (!nbt.contains(List.of(x, y, z))) continue; // not saved in a template
+						block = "structure_block"; // a data marker: Java's DATA structure block
+					}
 					Info info = new Info(x, y, z, block);
 					if (nbt.contains(List.of(x, y, z)) || BLOCK_ENTITIES.contains(block)) withNbt.add(info);
 					else if (FULL.contains(block)) full.add(info);
@@ -175,6 +182,47 @@ public class ProcessorOracle {
 		return world;
 	}
 
+	// structure.shared_random: TemplateFeature#place's druid hut and basement sharing the feature's random
+	static final Map<Character, String> HUT_PALETTE = palette("air", "stone_bricks", "structure_void", "chest", "cobblestone");
+	static final String[][] HUT = {{"111", "141", "111"}, {"1.2", "...", "1.3"}};
+	static final String[][] BASEMENT = {{"111", "111", "111"}};
+	/** The RandomizableContainer block entities among the blocks above. */
+	static final Set<String> RANDOMIZABLE = Set.of("chest");
+
+	/**
+	 * The hut placed with settings.setRandom(random) and placeInWorld(..., random, ...): getRandomPalette,
+	 * processBlockInfos (StoneBricksVariants on every block), then the placement loop drawing a
+	 * LootTableSeed for every RandomizableContainer with block entity data; filterBlocks for the data
+	 * markers (getRandomPalette again); the basement 4 blocks down with the same random. Returns the
+	 * stone brick variants left, by y, then z, then x.
+	 */
+	static String sharedRandom(boolean marker) {
+		Random random = new Random(0x5eedL);
+		Processor variants = PROCESSORS.get("stone_brick_variants");
+		TreeMap<List<Integer>, String> world = new TreeMap<>(Comparator.<List<Integer>>comparingInt(k -> k.get(1)).thenComparingInt(k -> k.get(2))
+			.thenComparingInt(k -> k.get(0)));
+		int[] hut = {30, 64, 0}, basement = {30, 60, 0};
+		random.nextInt(1); // the hut's StructurePlaceSettings#getRandomPalette
+		List<Info> processed = new ArrayList<>();
+		for (Info b : load(HUT, HUT_PALETTE, marker ? Set.of(List.of(2, 1, 0)) : Set.of()))
+			processed.add(variants.process(random, new Info(b.x() + hut[0], b.y() + hut[1], b.z() + hut[2], b.block()), hut));
+		for (Info b : processed) {
+			world.put(List.of(b.x(), b.y(), b.z()), b.block());
+			if (RANDOMIZABLE.contains(b.block())) random.nextLong(); // its LootTableSeed
+		}
+		random.nextInt(1); // filterBlocks(placementPos, settings, STRUCTURE_BLOCK): getRandomPalette
+		random.nextInt(1); // the basement's getRandomPalette
+		for (Info b : load(BASEMENT, HUT_PALETTE, Set.of())) {
+			Info out = variants.process(random, new Info(b.x() + basement[0], b.y() + basement[1], b.z() + basement[2], b.block()), basement);
+			world.put(List.of(out.x(), out.y(), out.z()), out.block());
+		}
+		StringBuilder out = new StringBuilder();
+		for (Map.Entry<List<Integer>, String> e : world.entrySet())
+			if (e.getValue().equals("mossy_stone_bricks") || e.getValue().equals("cracked_stone_bricks"))
+				out.append(e.getKey().get(0)).append(',').append(e.getKey().get(1)).append(',').append(e.getKey().get(2)).append(':').append(e.getValue()).append(';');
+		return out.toString();
+	}
+
 	public static void main(String[] args) {
 		TreeMap<List<Integer>, String> plain = world(null);
 		for (Map.Entry<String, Processor> e : PROCESSORS.entrySet()) {
@@ -194,5 +242,8 @@ public class ProcessorOracle {
 		for (Info b : place(load(TARGETS, TARGETS_PALETTE, TARGETS_NBT), new int[] {10, 64, 0}, PROCESSORS.get("nagastone_variants")))
 			if (b.block().contains("nagastone")) nagastone.append(b.x()).append(',').append(b.y()).append(',').append(b.z()).append(":twilightforest:").append(b.block()).append(';');
 		System.out.println("nagastone_variants_blocks: " + nagastone);
+		// the selftest structure.shared_random (its golden and its "shared_random:" info line)
+		System.out.println("shared_random: " + sharedRandom(true));
+		System.out.println("shared_random without the data marker: " + sharedRandom(false));
 	}
 }

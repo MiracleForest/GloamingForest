@@ -40,6 +40,7 @@
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
 #include "mc/world/level/block/actor/FlowerPotBlockActor.h"
+#include "mc/world/level/block/actor/FurnaceBlockActor.h"
 #include "mc/world/level/block/actor/MobSpawnerBlockActor.h"
 #include "mc/world/phys/AABB.h"
 
@@ -48,6 +49,7 @@
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/ext/structure/Placement.h"
 #include "feature/ext/structure/Processors.h"
+#include "feature/ext/structure/SharedRandom.h"
 #include "feature/ext/structure/TemplateDefinitions.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/landmark/Landmark.h"
@@ -748,6 +750,81 @@ GF_REGISTER_SELFTEST("structure.processors", [](Context& ctx) {
     ctx.check(processorTypes().size() >= 24, "17 TF + 7 vanilla processor types registered (" + std::to_string(processorTypes().size()) + ")");
 });
 
+// ---- a feature's random shared by its placements (TemplateFeature, GraveyardFeature) ------------------------------
+
+namespace {
+
+/// The hut and basement of structure.shared_random. The hut (3 x 2 x 3) has its data marker on a
+/// structure_void cell (the template DSL's default fill), which is Java's DATA structure block, and
+/// a chest after it in Java's block entity list (its LootTableSeed is drawn from the placement's
+/// random); the basement is all stone bricks.
+std::string const& sharedHutId(bool marker) {
+    static auto make = [](bool withMarker) {
+        std::vector<Json> palette{state("minecraft:air"), state("minecraft:stone_bricks"), state("minecraft:structure_void"),
+                                  state("minecraft:chest", {{"facing", "north"}, {"type", "single"}, {"waterlogged", "false"}}),
+                                  state("minecraft:cobblestone")};
+        std::string id  = withMarker ? "gf_test:structure/shared_hut" : "gf_test:structure/shared_hut_unmarked";
+        auto        doc = makeTemplate(id, palette, {{"111", "141", "111"}, {"1.2", "...", "1.3"}});
+        if (withMarker) doc["markers"] = Json::array({Json{{"pos", {2, 1, 0}}, {"marker", "data"}, {"data", {{"metadata", "gf_test:void_mark"}}}}});
+        templates::add(doc);
+        return id;
+    };
+    static std::string const marked = make(true), unmarked = make(false);
+    return marker ? marked : unmarked;
+}
+
+std::string const& sharedBasementId() {
+    static std::string const id = [] {
+        templates::add(makeTemplate("gf_test:structure/shared_basement", {state("minecraft:air"), state("minecraft:stone_bricks")}, {{"111", "111", "111"}}));
+        return std::string("gf_test:structure/shared_basement");
+    }();
+    return id;
+}
+
+} // namespace
+
+GF_REGISTER_SELFTEST("structure.shared_random", [](Context& ctx) {
+    // TemplateFeature#place with a random of its own (the druid hut): settings.setRandom(random);
+    // the hut placed (palette pick, its blocks processed in Java's order: the DATA structure block of
+    // its data marker too, then the chest's LootTableSeed), filterBlocks for the data markers (the
+    // palette pick again), then the basement with the same random (postPlacement). StoneBricksVariants
+    // reseeds the random from every block it sees, so each draw moves the whole rest of the sequence.
+    // tests/structure/oracle/ProcessorOracle.java models the same in Java ("shared_random:").
+    auto run = [&](bool marker, std::vector<std::pair<BlockPos, std::string>>* markers) {
+        MemoryRegion     mem;
+        JavaRandom       random(0x5eed);
+        TemplateSettings settings;
+        settings.processors = {Json{{"processor_type", "twilightforest:stone_brick_variants"}}.dump()};
+        BlockPos hut{30, 64, 0}, basement{30, 60, 0};
+        ctx.check(ext::placeTemplate(sharedHutId(marker), mem, hut, hut, settings, random), "the hut places");
+        auto found = ext::filterDataMarkers(sharedHutId(marker), hut, settings, random);
+        if (markers) *markers = found;
+        ctx.check(ext::placeTemplate(sharedBasementId(), mem, basement, basement, settings, random), "the basement places with the same random");
+        // the variants the two placements left, by y, then z, then x
+        std::string out;
+        for (int y = 60; y <= 65; y++)
+            for (int z = 0; z <= 2; z++)
+                for (int x = 30; x <= 32; x++) {
+                    auto const& id = blocks::id(mem.getBlock(BlockPos{x, y, z}));
+                    if (id == "minecraft:mossy_stone_bricks" || id == "minecraft:cracked_stone_bricks")
+                        out += std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z) + ":" + id.substr(10) + ";";
+                }
+        // the data marker's cell is the marker handler's: nothing is placed there
+        ctx.check(mem.getBlock(BlockPos{32, 65, 0}).isAir(), "nothing is placed on the data marker's structure_void cell");
+        return out;
+    };
+    std::vector<std::pair<BlockPos, std::string>> markers;
+    auto withMarker = run(true, &markers);
+    auto without    = run(false, nullptr);
+    ctx.info("shared_random: " + withMarker);
+    ctx.check(markers.size() == 1 && markers[0].first == BlockPos{32, 65, 0} && markers[0].second == "gf_test:void_mark",
+              "filterDataMarkers lists the data marker on the structure_void cell");
+    checkGolden(ctx, "shared_random", withMarker);
+    ctx.check(withMarker != without, "the data marker's structure block draws from the shared random like Java's (" + without + ")");
+    // ext::placeTemplate takes the caller's random: the same seed gives the same result
+    ctx.check(run(true, nullptr) == withMarker, "the same seed places the same");
+});
+
 // ---- TF marker handlers and jigsaw pieces ----------------------------------------------------------------------------
 
 namespace {
@@ -1430,62 +1507,158 @@ GF_REGISTER_SELFTEST("structure.markers", [](Context& ctx) -> ll::coro::CoroTask
     }
 });
 
-// ---- structure_util count_loot over a landmark start -------------------------------------------------------------------
+/// ---- structure_util count_loot over a landmark start -------------------------------------------------------------------
+
+namespace {
+
+/// F6's fixture landmark pieces (feature/landmark/Helpers.cpp: a stone brick shell, an oak porch)
+/// have no registered piece type, so a start that persisted them (F6's landmark.persistence and
+/// structure.count_loot leave their forced starts in the world: the landmark contract cannot remove
+/// a start) was reloaded with a warning and without its pieces. The kit registers them: rebuilt
+/// from their saved box, they place what F6's FixturePiece places.
+class LandmarkFixturePiece final : public Piece {
+public:
+    explicit LandmarkFixturePiece(bool shell) : Piece(shell ? "gf_test:landmark_fixture_shell" : "gf_test:landmark_fixture_porch"), mShell(shell) {}
+    void postProcess(Region& region, RandomSource&, BlockBox const& chunkBox, BlockPos const&) override {
+        auto const* wall = game::blockWith(mShell ? "minecraft:stone_bricks" : "minecraft:oak_planks");
+        if (!wall) return;
+        for (int x = bbox.minX; x <= bbox.maxX; ++x)
+            for (int y = bbox.minY; y <= bbox.maxY; ++y)
+                for (int z = bbox.minZ; z <= bbox.maxZ; ++z) {
+                    if (!chunkBox.contains(x, y, z)) continue;
+                    bool edge = x == bbox.minX || x == bbox.maxX || y == bbox.minY || y == bbox.maxY || z == bbox.minZ || z == bbox.maxZ;
+                    if (!mShell || edge) region.setBlock(BlockPos{x, y, z}, *wall);
+                }
+    }
+
+private:
+    bool mShell;
+};
+
+struct LandmarkFixturePieces {
+    LandmarkFixturePieces() {
+        for (bool shell : {true, false})
+            registerPieceType(shell ? "gf_test:landmark_fixture_shell" : "gf_test:landmark_fixture_porch", [shell](Json const& saved) -> std::unique_ptr<Piece> {
+                auto piece = std::make_unique<LandmarkFixturePiece>(shell);
+                piece->load(saved);
+                return piece;
+            });
+    }
+} const gLandmarkFixturePieces;
+
+/// The items of the container at `pos` (0 when none).
+int itemCount(BlockSource& source, BlockPos const& pos) {
+    int n = 0;
+    if (auto items = containerItems(source, pos))
+        for (auto const& s : *items)
+            if (!s.isNull()) n += s.mCount;
+    return n;
+}
+
+} // namespace
 
 GF_REGISTER_SELFTEST("structure.count_loot", [](Context& ctx) -> ll::coro::CoroTask<> {
     // CountLootCommand on a real landmark start (F6's forceStart of the open fixture landmark, which
-    // protects nothing: a 7 x 7 x 7 shell and a porch in front of it) and the loot contract's
-    // containers (F10): only containers inside a piece count, each unpacked first
-    auto area = co_await ctx.flatArea(5700, 12, 8);
-    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5700)), "test area loaded");
+    // protects nothing: a 7 x 7 x 7 shell and a porch in front of it): every Container block entity
+    // inside a piece counts, each RandomizableContainer unpacked first (the loot contract's chests,
+    // F10; hoppers, whose table the kit keeps), the other Containers as they are (a furnace)
+    auto area = co_await ctx.flatArea(5790, 10, 8);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5790)), "test area loaded");
     auto* source = ctx.region();
     ctx.require(source != nullptr, "block source");
-    core::GlobalPos center{ctx.dimension(), area.minX + 4, area.minY, area.minZ + 3};
+    // the shell (x and z within 3 of the center) and the porch (z 4..6 ahead) inside the 10 x 10 area
+    core::GlobalPos center{ctx.dimension(), area.minX + 6, area.minY, area.minZ + 3};
     auto            forced = landmark::forceStart("gf_test:landmark_fixture_open", center);
     ctx.require(forced.has_value() && forced->pieceBoxes.size() == 2, "the fixture landmark starts with its shell and porch");
-    // StructureManager#getStructureAt, as the command finds it
-    BlockPos insideShell{center.x, center.y + 1, center.z};
+    BlockPos chestPos{center.x, center.y + 1, center.z};
+    BlockPos hopperPos{center.x + 2, center.y + 1, center.z};      // an enabled hopper
+    BlockPos poweredPos{center.x - 2, center.y + 1, center.z - 2}; // a hopper powered by the block beside it
+    BlockPos redstonePos{center.x - 2, center.y + 1, center.z - 1};
+    BlockPos furnacePos{center.x - 2, center.y + 1, center.z + 2};
     BlockPos abovePorch{center.x, center.y + 3, center.z + 5}; // in the start's box, in no piece
-    auto     start = landmark::startAt(center.dim, insideShell);
+    // StructureManager#getStructureAt, as the command finds it
+    auto start = landmark::startAt(center.dim, chestPos);
     ctx.require(start.has_value() && start->key == "gf_test:landmark_fixture_open" && start->box.contains(abovePorch.x, abovePorch.y, abovePorch.z),
                 "the start is found where the command looks");
-    {
-        BlockSourceRegion region(*source, insideShell);
-        blockentities::container(region, insideShell, "minecraft:chest", Orientation::North, "gf_test:chests/fixture_chest", 1234);
-        blockentities::container(region, abovePorch, "minecraft:chest", Orientation::North, "gf_test:chests/fixture_chest", 1234);
-    }
+    auto const* hopper   = game::blockWith("minecraft:hopper");
+    auto const* redstone = game::blockWith("minecraft:redstone_block");
+    auto const* furnace  = game::blockWith("minecraft:furnace");
+    ctx.require(hopper && redstone && furnace, "hopper, redstone block and furnace blocks");
+    (void)game::setBlock(*source, poweredPos, *hopper);
+    (void)game::setBlock(*source, redstonePos, *redstone);
+    (void)game::setBlock(*source, furnacePos, *furnace);
+    co_await ctx.ticks(4); // block actors exist a tick later
     source = ctx.region();
     ctx.require(source != nullptr, "block source");
-    ctx.check(game::blockIdAt(*source, insideShell) == "minecraft:chest" && game::blockIdAt(*source, abovePorch) == "minecraft:chest", "the chests stand");
-    // show_common false first (the chest is unpacked then): only the stacks that are not common
-    auto uncommonOnly = countLootIn(*source, *start, false);
-    auto counts       = countLootIn(*source, *start, true);
-    int  counted      = 0;
-    for (auto const& [item, n] : counts) {
-        counted += n;
-        auto stack    = game::items::make(item, 1, 0);
-        bool expected = stack && notCommon(*stack);
-        auto it       = uncommonOnly.find(item);
-        ctx.check(expected ? (it != uncommonOnly.end() && it->second == n) : it == uncommonOnly.end(),
-                  "count_loot without common items " + std::string(expected ? "counts " : "leaves out ") + item);
+    auto powered = game::statesOf(source->getBlock(poweredPos));
+    ctx.check(powered.contains("toggle_bit") && (powered["toggle_bit"] == "true" || powered["toggle_bit"] == "1"),
+              "the redstone block powers the hopper beside it (" + powered["toggle_bit"] + ")");
+    {
+        BlockSourceRegion region(*source, chestPos);
+        blockentities::container(region, chestPos, "minecraft:chest", Orientation::North, "gf_test:chests/fixture_chest", 1234);
+        blockentities::container(region, hopperPos, "minecraft:hopper", std::nullopt, "gf_test:chests/fixture_chest", 99);
+        blockentities::lootTable(region, poweredPos, "gf_test:chests/fixture_chest", 77);
+        blockentities::container(region, abovePorch, "minecraft:chest", Orientation::North, "gf_test:chests/fixture_chest", 1234);
     }
-    ctx.check(uncommonOnly.size() <= counts.size(), "count_loot without common items counts nothing else");
-    int inShell = 0;
-    if (auto items = containerItems(*source, insideShell))
-        for (auto const& s : *items)
-            if (!s.isNull()) inShell += s.mCount;
-    std::string list;
+    // a furnace holding an uncommon item and its (common) fuel
+    auto* furnaceActor = source->getBlockEntity(furnacePos);
+    ctx.require(furnaceActor && furnaceActor->getType() == BlockActorType::Furnace, "the furnace's block actor");
+    {
+        auto& slots = static_cast<Container&>(static_cast<FurnaceBlockActor&>(*furnaceActor));
+        auto  scale = game::items::make("twilightforest:naga_scale", 3, 0);
+        auto  coal  = game::items::make("minecraft:coal", 5, 0);
+        ctx.require(scale && coal, "the furnace's items");
+        slots.setItem(0, *scale);
+        slots.setItem(1, *coal);
+    }
+    co_await ctx.ticks(8); // queued work runs every 5 ticks
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    ctx.check(game::blockIdAt(*source, chestPos) == "minecraft:chest" && game::blockIdAt(*source, abovePorch) == "minecraft:chest" &&
+                  game::blockIdAt(*source, hopperPos) == "minecraft:hopper" && game::blockIdAt(*source, furnacePos) == "minecraft:furnace",
+              "the containers stand");
+    // Java's hopper unpacks its loot table on its first tick while it is enabled; a powered one keeps it
+    ctx.check(!blockentities::pendingHopperLoot(*source, hopperPos) && holdsFixtureLoot(*source, hopperPos),
+              "the enabled hopper holds its loot table's items at once");
+    ctx.check(blockentities::pendingHopperLoot(*source, poweredPos).has_value(), "the powered hopper keeps its loot table");
+    // show_common false first (the containers are unpacked then): only the stacks that are not common
+    auto uncommonOnly = countLootIn(*source, *start, false);
+    ctx.check(!blockentities::pendingHopperLoot(*source, poweredPos) && holdsFixtureLoot(*source, poweredPos),
+              "count_loot unpacked the powered hopper's loot table");
+    auto        counts = countLootIn(*source, *start, true);
+    std::string list, uncommonList;
     for (auto const& [item, n] : counts) list += item + "=" + std::to_string(n) + " ";
-    ctx.check(counted > 0 && counted == inShell, "count_loot counts the chest in the shell (" + list + "), not the one outside the pieces");
+    for (auto const& [item, n] : uncommonOnly) uncommonList += item + "=" + std::to_string(n) + " ";
+    // the fixture table rolls common items (fixture items, sticks, diamonds): the naga scales in the
+    // furnace are counted, each other item exactly when it is not common
+    ctx.check(uncommonOnly.contains("twilightforest:naga_scale") && uncommonOnly["twilightforest:naga_scale"] == 3,
+              "count_loot without common items counts the furnace's naga scales (" + uncommonList + ")");
+    for (auto const& [item, n] : counts) {
+        auto stack = game::items::make(item, 1, 0);
+        ctx.check(stack && (notCommon(*stack) == uncommonOnly.contains(item)),
+                  "count_loot without common items " + std::string(uncommonOnly.contains(item) ? "counts " : "leaves out ") + item);
+    }
+    int inPieces = itemCount(*source, chestPos) + itemCount(*source, hopperPos) + itemCount(*source, poweredPos) + itemCount(*source, furnacePos);
+    int counted  = 0;
+    for (auto const& [item, n] : counts) counted += n;
+    ctx.check(counts.contains("minecraft:coal") && counts["minecraft:coal"] == 5, "the furnace's fuel counts with the common items (" + list + ")");
+    ctx.check(counted > 8 && counted == inPieces,
+              "count_loot counts the chest, both hoppers and the furnace in the shell (" + list + "), not the chest outside the pieces");
     ctx.check(holdsFixtureLoot(*source, abovePorch), "the chest outside the pieces still unpacks its own loot");
     // ItemStack#getRarity: TF's UNCOMMON items (a table here), TWILIGHT trophies and banner
-    // patterns (F9's rarity), the fiery block's UNCOMMON item; sticks are common
-    for (auto const* id : {"twilightforest:naga_scale", "twilightforest:naga_trophy", "twilightforest:naga_banner_pattern", "twilightforest:fiery_block"}) {
+    // patterns (F9's rarity), the fiery block's UNCOMMON item; 1.21.1's rarities (Items): banner
+    // patterns, music discs, the elytra, the heavy core and the trident are not common, trial keys,
+    // the ominous bottle and the globe banner pattern are; sticks are common
+    for (auto const* id : {"twilightforest:naga_scale", "twilightforest:naga_trophy", "twilightforest:naga_banner_pattern", "twilightforest:fiery_block",
+                           "minecraft:creeper_banner_pattern", "minecraft:mojang_banner_pattern", "minecraft:flow_banner_pattern", "minecraft:music_disc_cat",
+                           "minecraft:elytra", "minecraft:heavy_core", "minecraft:trident"}) {
         auto stack = game::items::make(id, 1, 0);
         ctx.check(stack && notCommon(*stack), std::string(id) + " is not common");
     }
-    auto stick = game::items::make("minecraft:stick", 1, 0);
-    ctx.check(stick && !notCommon(*stick), "a stick is common");
+    for (auto const* id : {"minecraft:stick", "minecraft:trial_key", "minecraft:ominous_trial_key", "minecraft:ominous_bottle", "minecraft:globe_banner_pattern"}) {
+        auto stack = game::items::make(id, 1, 0);
+        ctx.check(stack && !notCommon(*stack), std::string(id) + " is common");
+    }
     co_return;
 });
 
@@ -1499,7 +1672,18 @@ GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro:
     std::string const blockId = "twilightforest:sinister_spawner";
     ctx.require(blocks::isRegisteredBlock(blockId), "TF's sinister spawner is registered");
     float const scale = 0.8f / 1.4f; // entity_width_max 0.8 over the spider's width
-    Json        doc   = makeTemplate("gf_test:structure/sinister", {state("minecraft:air"), state(blockId), state("minecraft:spawner")}, {{"12"}});
+    // a second sinister spawner whose template data has what BaseSpawner#load and
+    // SinisterSpawnerLogic#load read besides SpawnData: SpawnPotentials, EntityScanRange and
+    // ParticleOptions (SpawnerProcessor leaves them as they are)
+    Json doc = makeTemplate("gf_test:structure/sinister", {state("minecraft:air"), state(blockId), state("minecraft:spawner")}, {{"121"}});
+    doc["markers"] = Json::array({Json{
+        {"pos", {2, 0, 0}},
+        {"marker", "spawner"},
+        {"data",
+         {{"SpawnPotentials", Json::array({Json{{"weight", 2}, {"data", {{"entity", {{"id", "minecraft:zombie"}}}}}},
+                                           Json{{"weight", 1}, {"data", {{"entity", {{"id", "minecraft:skeleton"}}}}}}})},
+          {"EntityScanRange", 7},
+          {"ParticleOptions", Json::array({Json{{"type", "minecraft:dust"}, {"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}}, "minecraft:flame"})}}}}});
     std::string error;
     ctx.require(templates::add(doc, &error), "the sinister spawner template registers " + error);
     auto area = co_await ctx.flatArea(5745, 4, 4);
@@ -1507,7 +1691,7 @@ GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro:
     auto* source = ctx.region();
     ctx.require(source != nullptr, "block source");
     BlockPos origin{area.minX + 1, area.minY, area.minZ + 1};
-    BlockPos sinister = origin, vanilla{origin.x + 1, origin.y, origin.z};
+    BlockPos sinister = origin, vanilla{origin.x + 1, origin.y, origin.z}, withData{origin.x + 2, origin.y, origin.z};
     {
         BlockSourceRegion region(*source, origin);
         TemplateSettings  settings;
@@ -1515,7 +1699,8 @@ GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro:
         ctx.require(templates::place("gf_test:structure/sinister", region, origin, settings), "the template places");
     }
     // (read at once: once a player is near, F8 ticks the spawner and its delay counts down)
-    auto loaded = boss::ext::sinisterSpawner(*source, sinister);
+    auto loaded     = boss::ext::sinisterSpawner(*source, sinister);
+    auto loadedData = boss::ext::sinisterSpawner(*source, withData);
     co_await ctx.ticks(8); // block actors exist a tick later; queued work runs every 5 ticks
     source = ctx.region();
     ctx.require(source != nullptr, "block source");
@@ -1534,6 +1719,20 @@ GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro:
         ctx.check(loaded->minSpawnDelay == 200 && loaded->maxSpawnDelay == 800 && loaded->spawnCount == 4 && loaded->maxNearbyEntities == 6 &&
                       loaded->requiredPlayerRange == 16,
                   "the fields the data leaves out keep BaseSpawner's values");
+        // SinisterSpawnerLogic#load: no EntityScanRange: the SpawnRange; no ParticleOptions: none
+        ctx.check(loaded->entityScanRange == 4 && loaded->particles.empty(),
+                  "without EntityScanRange it scans its SpawnRange, without ParticleOptions it shows none (" + std::to_string(loaded->entityScanRange) + ")");
+    }
+    ctx.check(loadedData.has_value(), "the second sinister spawner has its block entity");
+    if (loadedData) {
+        std::vector<std::pair<std::string, int>> const potentials{{"minecraft:zombie", 2}, {"minecraft:skeleton", 1}};
+        ctx.check(loadedData->nextEntity == "minecraft:spider" && loadedData->potentials == potentials,
+                  "SpawnPotentials load weighted and SpawnData stays the processor's (" + loadedData->nextEntity + ", " +
+                      std::to_string(loadedData->potentials.size()) + " potentials)");
+        ctx.check(loadedData->entityScanRange == 7, "EntityScanRange loads (" + std::to_string(loadedData->entityScanRange) + ")");
+        ctx.check(loadedData->particles == std::vector<std::string>{"minecraft:dust", "minecraft:flame"} &&
+                      loadedData->particleParams.is_object() && loadedData->particleParams.value("minecraft:dust", Json())["color"] == Json({1.0, 0.0, 0.0}),
+                  "ParticleOptions load with the dust's colour (" + loadedData->particleParams.dump() + ")");
     }
     auto record = blockentities::spawnerRecord(*source, sinister);
     ctx.check(record.has_value(), "the kit keeps the sinister spawner's SpawnData extras");
@@ -1561,6 +1760,7 @@ GF_REGISTER_SELFTEST("structure.sinister_spawner", [](Context& ctx) -> ll::coro:
     ctx.check(mob == "minecraft:spider" && range == 4, "the vanilla spawner spawns spiders within 4 (" + mob + ", " + std::to_string(range) + ")");
     blockentities::forgetSpawnerRecord(*source, sinister);
     blockentities::forgetSpawnerRecord(*source, vanilla);
+    blockentities::forgetSpawnerRecord(*source, withData);
 });
 
 // ---- jigsaw over terrain, the template definitions API --------------------------------------------------------------

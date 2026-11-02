@@ -44,6 +44,12 @@
 {"processor_block_ignore", "06d114a20f41c792"},
 // nagastone_variants on the targets' TF nagastone (the placed blocks, Java's order)
 {"nagastone_variants_blocks", "10,64,4:twilightforest:etched_nagastone;11,64,4:twilightforest:nagastone_pillar;13,64,4:twilightforest:cracked_etched_nagastone;14,64,4:twilightforest:nagastone_pillar;"},
+// structure.shared_random: a hut whose data marker sits on a structure_void cell (Java's DATA
+// structure block, processed like every block) and a chest (its LootTableSeed drawn while placing),
+// then its data markers listed (filterBlocks) and a basement placed with the same random, under
+// stone_brick_variants: the variants left, by y, z, x. The same as ProcessorOracle's "shared_random:"
+// line (without the data marker's structure block the basement comes out differently).
+{"shared_random", "30,60,0:cracked_stone_bricks;31,60,0:mossy_stone_bricks;32,60,0:mossy_stone_bricks;30,60,2:cracked_stone_bricks;31,60,2:mossy_stone_bricks;32,60,2:cracked_stone_bricks;32,64,0:mossy_stone_bricks;30,64,1:mossy_stone_bricks;30,64,2:mossy_stone_bricks;31,64,2:cracked_stone_bricks;32,64,2:mossy_stone_bricks;30,65,0:mossy_stone_bricks;"},
 {"jigsaw_layout", "gf_test:structure/jig/start@-2,1,-2r0;gf_test:structure/jig/room_a@-5,1,-1r3;gf_test:structure/jig/room_b@-9,1,-1r2;gf_test:structure/jig/room_a@-1,1,-5r0;gf_test:structure/jig/room_b@-1,1,-9r3;gf_test:structure/jig/room_b@3,1,-1r0;"},
 {"jigsaw_blocks", "a0aeee07382be472"},
 // the template definitions API: getShuffledSequence's first template for eight draws of one random,
