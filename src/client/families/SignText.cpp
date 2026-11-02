@@ -24,15 +24,20 @@
 // The server sends the text ("families.sign_text", src/feature/families/Signs.cpp); the block
 // renderer of every sign family block (contract client.render, F12) draws it with the game's font
 // in the sign's pose, the way Bedrock's SignRenderer draws its own text (measured in game: its
-// Font::drawCached calls and shader state): ActorShaderManager::setupShaderParameters at the sign
-// first (the light at the block, which the lit text material multiplies by), then each line with
-// the darken path on (the text colour times the dark colour given to drawCached: the only way these
-// materials take a colour), the lit material for unlit text and the glow material (no light) for
-// glowing text and its outline.
+// Font::drawCached calls, the shader state and the matrix it leaves): ActorShaderManager::
+// setupShaderParameters at the sign first (the light at the block, which the lit text material
+// multiplies by), then each line with the darken path on (the text colour times the dark colour
+// given to drawCached: the only way these materials take a colour), the lit material for unlit text
+// and the glow material (no light) for glowing text and its outline, in a matrix of positive
+// determinant like the game's (the glyphs, and the normals the font generates for them, face the
+// reader). Vibrant Visuals lights sign text, the game's own too: next to the game's oak signs the
+// colours shift alike (client scenario families, pictures 20 to 23); the Classic look shows Java's
+// colours (scenario families.classic).
 // The server's display entities (gloamingforest:sign_text: the name tag vanilla clients read) show
-// no name tag here while the server sends the text: ActorRenderDispatcher::extractRenderTextObjects
+// no name tag here once the client has their sign's text: ActorRenderDispatcher::extractRenderTextObjects
 // (the name tag of one actor for the frame) gives nothing for them on the client of a companion
-// (the only hook of name tags; F11 owns it).
+// (the only hook of name tags; F11 owns it). The server withdraws a sign's text ("gone") when the
+// sign, its text or its chunk goes, so the client's list holds the signs of loaded chunks only.
 
 #ifdef GF_CLIENT
 
@@ -263,7 +268,12 @@ void drawSide(render::RenderContext& ctx, Font& font, glm::mat4 const& pose, Sig
     if (!front) m = glm::rotate(m, glm::radians(180.0f), glm::vec3{0, 1, 0});
     m             = glm::translate(m, hanging ? glm::vec3{0.0f, -0.32f, 0.073f} : glm::vec3{0.0f, 0.33333334f, 0.046666667f});
     float const f = 0.015625f * (hanging ? 0.9f : 0.6666667f);
-    m             = glm::scale(m, glm::vec3{f, -f, f});
+    // Java's scale (f, -f, f) puts the glyphs where (f, -f, -f) does (they lie at z 0); the latter
+    // keeps the handedness of the game's own sign text (a positive determinant, as vanilla's
+    // SignRenderer leaves the matrix: measured), so the glyph quads face the reader and so do the
+    // normals the font generates for them, which Vibrant Visuals lights the text by (mirrored, the
+    // text was lit from behind: grey-blue and washed out). Towards the reader is -z here.
+    m = glm::scale(m, glm::vec3{f, -f, -f});
     int const lineHeight = hanging ? 9 : 10;  // HangingSignBlockEntity.TEXT_LINE_HEIGHT / SignBlockEntity's
     int const maxWidth   = hanging ? 60 : 90; // getMaxTextLineWidth
     int const top        = 4 * lineHeight / 2;
@@ -300,7 +310,7 @@ void drawSide(render::RenderContext& ctx, Font& font, glm::mat4 const& pose, Sig
             }
         }
         auto ref          = world.push(false);
-        ref.mat->_m.get() = ref.mat->_m.get() * glm::translate(m, glm::vec3{0.0f, 0.0f, outline ? 0.1f : 0.0f});
+        ref.mat->_m.get() = ref.mat->_m.get() * glm::translate(m, glm::vec3{0.0f, 0.0f, outline ? -0.1f : 0.0f});
         drawLine(font, ctx.screen, line, x, y, textColor, scale, material);
     }
 }
@@ -410,10 +420,25 @@ bool clientActor(Actor const& a) {
 
 } // namespace
 
-/// The client draws the sign text itself: the display entity's name tag is not shown.
+/// The client draws the sign text itself: the name tag of a display entity is not shown once the
+/// client has the text of its sign (until then, a sign whose text has not arrived keeps its tag).
+/// The server puts the entity in its sign's block (Signs.cpp textCentre: within the block, or 0.02
+/// past the face behind a wall sign): the block it stands in, else the block across the face it is
+/// within 0.1 of.
 bool hidesSignName(Actor const& actor) {
-    if (!net::client::connected() || actor.getTypeName() != kDisplayType) return false;
-    return clientActor(actor);
+    if (!net::client::connected() || actor.getTypeName() != kDisplayType || !clientActor(actor)) return false;
+    auto* player = currentPlayer();
+    if (!player) return false;
+    int const   dim = static_cast<int>(player->getDimensionId());
+    Vec3 const& p   = actor.getPosition();
+    int const   bx = static_cast<int>(std::floor(p.x)), by = static_cast<int>(std::floor(p.y)), bz = static_cast<int>(std::floor(p.z));
+    auto        written = [dim, by](int x, int z) {
+        auto t = sharedTextAt(dim, x, by, z);
+        return t && !(t->front.empty() && t->back.empty());
+    };
+    if (written(bx, bz)) return true;
+    float const fx = p.x - static_cast<float>(bx), fz = p.z - static_cast<float>(bz);
+    return (fx < 0.1f && written(bx - 1, bz)) || (fx > 0.9f && written(bx + 1, bz)) || (fz < 0.1f && written(bx, bz - 1)) || (fz > 0.9f && written(bx, bz + 1));
 }
 
 } // namespace gf::client::families
