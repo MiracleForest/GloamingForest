@@ -3,8 +3,11 @@
 // Internals of the tag runtime shared with F9's selftests and extension headers.
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
+
+#include "feature/tags/Tags.h"
 
 namespace gf::tags::internal {
 
@@ -19,7 +22,11 @@ namespace gf::tags::internal {
 /// The data members of a tag (nested data tags flattened, the data's Java ids renamed to Bedrock's;
 /// without the vanilla bridge, whose members come from the game's registries).
 [[nodiscard]] std::vector<std::string> dataMembers(std::string const& dir, std::string const& tag);
+/// The bridged vanilla tags a tag reaches through its includes (data and bridge), sorted.
+[[nodiscard]] std::vector<std::string> bridgedOf(Registry registry, std::string const& tag);
 [[nodiscard]] std::size_t              fileCount();
-void                                   reload();
+/// The published snapshot's generation (every load publishes a new one).
+[[nodiscard]] std::uint64_t generation();
+void                        reload();
 
 } // namespace gf::tags::internal

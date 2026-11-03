@@ -26,18 +26,21 @@
 
 namespace gf::tags::vanilla {
 
-namespace {
-
 using Pred = bool (*)(std::string const& id);
 
+/// One vanilla tag file: its own members (`ids`, `suffixes`, `native`, `pred`, minus `excludes`) and
+/// the tags it includes (Java's "#minecraft:..." entries, walked by the tag runtime).
 struct Rule {
     std::vector<std::string_view> ids;      ///< minecraft ids without the namespace
     std::vector<std::string_view> suffixes; ///< minecraft ids ending with one of these
-    std::vector<std::string_view> excludes; ///< minecraft ids never in the tag ("*suffix": ids ending with it)
+    std::vector<std::string_view> excludes; ///< minecraft ids never matched by this rule ("*suffix": ids ending with it)
     std::vector<std::string_view> native;   ///< Bedrock block / item tags (any namespace)
-    std::vector<std::string_view> include;  ///< other bridged tags of the same registry
+    std::vector<std::string_view> include;  ///< other tags of the same registry (bridged, data, or both)
     Pred                          pred = nullptr;
+    std::vector<HashedString>     nativeHashed{}; ///< `native` hashed once (rules())
 };
+
+namespace {
 
 constexpr std::string_view kWoods[] = {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "pale_oak", "bamboo", "crimson", "warped"};
 constexpr std::string_view kColors[] = {"white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
@@ -62,6 +65,24 @@ std::vector<std::string_view> woodIds(std::string_view suffix, bool netherAndBam
 std::vector<std::string_view> colorIds(std::string_view suffix) {
     std::vector<std::string_view> out;
     for (auto c : kColors) out.push_back(stored(std::string(c) + std::string(suffix)));
+    return out;
+}
+
+/// Java's minecraft:light: Bedrock's light_block_0 .. light_block_15 (one block per level; the
+/// legacy light_block is only an alias of light_block_0 in 26.51).
+std::vector<std::string_view> lightIds() {
+    std::vector<std::string_view> out{"light_block"};
+    for (int i = 0; i <= 15; ++i) out.push_back(stored("light_block_" + std::to_string(i)));
+    return out;
+}
+
+/// The copper doors / trapdoors of the four oxidation stages, plain and waxed: "<stage><suffix>".
+std::vector<std::string_view> copperIds(std::string_view suffix) {
+    std::vector<std::string_view> out;
+    for (std::string_view stage : {"", "exposed_", "weathered_", "oxidized_"}) {
+        out.push_back(stored(std::string(stage) + "copper" + std::string(suffix)));
+        out.push_back(stored("waxed_" + std::string(stage) + "copper" + std::string(suffix)));
+    }
     return out;
 }
 
@@ -99,7 +120,6 @@ bool isHead(std::string const& id) { return armorSlotOf(id) == 0; }
 bool isChest(std::string const& id) { return armorSlotOf(id) == 1; }
 bool isLegs(std::string const& id) { return armorSlotOf(id) == 2; }
 bool isFeet(std::string const& id) { return armorSlotOf(id) == 3; }
-bool isArmor(std::string const& id) { return armorSlotOf(id) >= 0; }
 bool isBoat(std::string const& id) {
     return id.starts_with("minecraft:") && id.ends_with("_boat") && !id.ends_with("_chest_boat");
 }
@@ -120,8 +140,10 @@ Rules buildRules() {
         r[{R::Block, tag}] = rule;
         r[{R::Item, tag}]  = rule;
     };
-    auto entity = [&](std::string const& tag, Rule rule) { r[{R::EntityType, tag}] = std::move(rule); };
-    auto fluid  = [&](std::string const& tag, Rule rule) { r[{R::Fluid, tag}] = std::move(rule); };
+    auto entity    = [&](std::string const& tag, Rule rule) { r[{R::EntityType, tag}] = std::move(rule); };
+    auto fluid     = [&](std::string const& tag, Rule rule) { r[{R::Fluid, tag}] = std::move(rule); };
+    auto biome     = [&](std::string const& tag, Rule rule) { r[{R::Biome, tag}] = std::move(rule); };
+    auto structure = [&](std::string const& tag, Rule rule) { r[{R::Structure, tag}] = std::move(rule); };
 
     // ---- wood --------------------------------------------------------------------------------------
     both("minecraft:crimson_stems", {.ids = {"crimson_stem", "stripped_crimson_stem", "crimson_hyphae", "stripped_crimson_hyphae"}});
@@ -129,6 +151,10 @@ Rules buildRules() {
     both("minecraft:logs_that_burn", {.suffixes = {"_log", "_wood"}, .native = {}});
     block("minecraft:logs", {.native = {"log"}, .include = {"minecraft:logs_that_burn", "minecraft:crimson_stems", "minecraft:warped_stems"}});
     item("minecraft:logs", {.native = {"minecraft:logs"}, .include = {"minecraft:logs_that_burn", "minecraft:crimson_stems", "minecraft:warped_stems"}});
+    // Java 1.21.1 (block only): the eight overworld trees' plain logs; pale_oak_log as Java 1.21.4
+    // adds it with the pale oak, which Bedrock has
+    block("minecraft:overworld_natural_logs",
+          {.ids = {"acacia_log", "birch_log", "oak_log", "jungle_log", "spruce_log", "dark_oak_log", "mangrove_log", "cherry_log", "pale_oak_log"}});
     both("minecraft:planks", {.suffixes = {"_planks"}});
     both("minecraft:leaves", {.ids = {"azalea_leaves_flowered", "flowering_azalea_leaves"}, .suffixes = {"_leaves"}});
     both("minecraft:saplings", {.ids = {"azalea", "flowering_azalea", "mangrove_propagule"}, .suffixes = {"_sapling"}, .excludes = {"bamboo_sapling"}});
@@ -140,20 +166,29 @@ Rules buildRules() {
     both("minecraft:wooden_buttons", {.ids = concat(woodIds("_button"), {"wooden_button"})});
     both("minecraft:wooden_pressure_plates", {.ids = concat(woodIds("_pressure_plate"), {"wooden_pressure_plate"})});
     both("minecraft:fence_gates", {.ids = {"fence_gate"}, .suffixes = {"_fence_gate"}});
+    // Java 1.21.1: fences = #wooden_fences + nether_brick_fence; doors / trapdoors = the wooden ones,
+    // iron's and the eight copper ones (block and item tags alike)
+    both("minecraft:fences", {.ids = {"nether_brick_fence"}, .include = {"minecraft:wooden_fences"}});
+    both("minecraft:doors", {.ids = concat(copperIds("_door"), {"iron_door"}), .include = {"minecraft:wooden_doors"}});
+    both("minecraft:trapdoors", {.ids = concat(copperIds("_trapdoor"), {"iron_trapdoor"}), .include = {"minecraft:wooden_trapdoors"}});
     block("minecraft:standing_signs", {.ids = concat(woodIds("_standing_sign"), {"standing_sign"})});
     block("minecraft:wall_signs", {.ids = concat(woodIds("_wall_sign"), {"wall_sign"})});
+    block("minecraft:signs", {.include = {"minecraft:standing_signs", "minecraft:wall_signs"}});
     block("minecraft:ceiling_hanging_signs", {.suffixes = {"_hanging_sign"}});
     block("minecraft:wall_hanging_signs", {.suffixes = {"_hanging_sign"}});
+    block("minecraft:all_hanging_signs", {.include = {"minecraft:ceiling_hanging_signs", "minecraft:wall_hanging_signs"}});
     item("minecraft:signs", {.ids = woodIds("_sign")});
     item("minecraft:hanging_signs", {.suffixes = {"_hanging_sign"}});
-    item("minecraft:boats", {.ids = {"bamboo_raft"}, .pred = isBoat});
+    // Java 1.21.1: #boats holds #chest_boats
+    item("minecraft:boats", {.ids = {"bamboo_raft"}, .include = {"minecraft:chest_boats"}, .pred = isBoat});
     item("minecraft:chest_boats", {.ids = {"bamboo_chest_raft"}, .suffixes = {"_chest_boat"}});
 
     // ---- building ----------------------------------------------------------------------------------
-    both("minecraft:stairs", {.suffixes = {"_stairs"}});
-    both("minecraft:slabs", {.suffixes = {"_slab"}, .excludes = {"double_stone_block_slab"}});
+    both("minecraft:stairs", {.suffixes = {"_stairs"}, .include = {"minecraft:wooden_stairs"}});
+    both("minecraft:slabs", {.suffixes = {"_slab"}, .excludes = {"double_stone_block_slab"}, .include = {"minecraft:wooden_slabs"}});
     both("minecraft:walls", {.suffixes = {"_wall"}});
-    both("minecraft:buttons", {.ids = {"wooden_button", "stone_button"}, .suffixes = {"_button"}});
+    both("minecraft:stone_buttons", {.ids = {"stone_button", "polished_blackstone_button"}});
+    both("minecraft:buttons", {.ids = {"wooden_button", "stone_button"}, .suffixes = {"_button"}, .include = {"minecraft:wooden_buttons", "minecraft:stone_buttons"}});
     both("minecraft:wool", {.suffixes = {"_wool"}});
     both("minecraft:wool_carpets", {.suffixes = {"_carpet"}, .excludes = {"moss_carpet", "pale_moss_carpet"}});
     both("minecraft:stone_bricks", {.ids = {"stone_bricks", "mossy_stone_bricks", "cracked_stone_bricks", "chiseled_stone_bricks"}});
@@ -185,9 +220,11 @@ Rules buildRules() {
     both("minecraft:lapis_ores", {.ids = {"lapis_ore", "deepslate_lapis_ore"}});
     both("minecraft:diamond_ores", {.ids = {"diamond_ore", "deepslate_diamond_ore"}});
     both("minecraft:emerald_ores", {.ids = {"emerald_ore", "deepslate_emerald_ore"}});
+    // Java 1.21.1 lists minecraft:snow (the layer: Bedrock's snow_layer), not #minecraft:snow
     block("minecraft:overworld_carver_replaceables",
-          {.ids = {"water", "gravel", "suspicious_gravel", "sandstone", "red_sandstone", "calcite", "packed_ice", "raw_iron_block", "raw_copper_block"},
-           .include = {"minecraft:base_stone_overworld", "minecraft:dirt", "minecraft:sand", "minecraft:terracotta", "minecraft:iron_ores", "minecraft:copper_ores", "minecraft:snow"}});
+          {.ids = {"water", "flowing_water", "gravel", "suspicious_gravel", "sandstone", "red_sandstone", "calcite", "snow_layer", "packed_ice", "raw_iron_block",
+                   "raw_copper_block"},
+           .include = {"minecraft:base_stone_overworld", "minecraft:dirt", "minecraft:sand", "minecraft:terracotta", "minecraft:iron_ores", "minecraft:copper_ores"}});
     block("minecraft:nether_carver_replaceables",
           {.ids = {"soul_sand", "soul_soil"}, .include = {"minecraft:base_stone_overworld", "minecraft:base_stone_nether", "minecraft:dirt", "minecraft:nylium", "minecraft:wart_blocks"}});
     block("minecraft:cave_vines", {.ids = {"cave_vines", "cave_vines_body_with_berries", "cave_vines_head_with_berries"}});
@@ -210,10 +247,14 @@ Rules buildRules() {
          {.ids = {"flowering_azalea", "azalea_leaves_flowered", "mangrove_propagule", "cherry_leaves", "pink_petals", "chorus_flower", "spore_blossom", "cactus_flower", "wildflowers"},
           .include = {"minecraft:small_flowers", "minecraft:tall_flowers"}});
     block("minecraft:crops", {.ids = {"wheat", "carrots", "potatoes", "beetroot", "melon_stem", "pumpkin_stem", "torchflower_crop", "pitcher_crop"}});
+    // Java 1.21.1 with Bedrock ids (tall_seagrass is Bedrock's seagrass, void_air / cave_air its air,
+    // light its 16 light blocks), and the plants later Java versions add (bush, firefly_bush, dry
+    // grass, leaf litter), which Bedrock has
     block("minecraft:replaceable",
-          {.ids = {"air", "water", "flowing_water", "lava", "flowing_lava", "short_grass", "tallgrass", "fern", "deadbush", "dead_bush", "seagrass", "fire", "soul_fire",
-                   "snow_layer", "vine", "glow_lichen", "light_block", "tall_grass", "large_fern", "structure_void", "hanging_roots", "crimson_roots", "warped_roots",
-                   "nether_sprouts", "bush", "firefly_bush", "short_dry_grass", "tall_dry_grass", "leaf_litter"}});
+          {.ids = concat({"air", "water", "flowing_water", "lava", "flowing_lava", "short_grass", "tallgrass", "fern", "deadbush", "dead_bush", "seagrass", "fire",
+                          "soul_fire", "snow_layer", "vine", "glow_lichen", "tall_grass", "large_fern", "structure_void", "bubble_column", "hanging_roots",
+                          "crimson_roots", "warped_roots", "nether_sprouts", "bush", "firefly_bush", "short_dry_grass", "tall_dry_grass", "leaf_litter"},
+                         lightIds())});
     block("minecraft:replaceable_by_trees",
           {.ids = {"short_grass", "tallgrass", "fern", "deadbush", "dead_bush", "vine", "glow_lichen", "sunflower", "lilac", "rose_bush", "peony", "tall_grass",
                    "large_fern", "hanging_roots", "pitcher_plant", "water", "flowing_water", "seagrass", "warped_roots", "nether_sprouts", "crimson_roots",
@@ -224,11 +265,20 @@ Rules buildRules() {
     block("minecraft:frog_prefer_jump_to", {.ids = {"waterlily", "lily_pad", "big_dripleaf"}});
 
     // ---- mining ------------------------------------------------------------------------------------
-    block("minecraft:mineable/pickaxe", {.native = {"minecraft:is_pickaxe_item_destructible"}});
-    block("minecraft:mineable/axe", {.native = {"minecraft:is_axe_item_destructible"}});
-    block("minecraft:mineable/shovel", {.native = {"minecraft:is_shovel_item_destructible"}});
+    // Bedrock's native tags hold the vanilla blocks; the includes are Java 1.21.1's (they bring the
+    // data members TF adds to those tags, as Java's nesting does)
+    block("minecraft:mineable/pickaxe",
+          {.native  = {"minecraft:is_pickaxe_item_destructible"},
+           .include = {"minecraft:stone_buttons", "minecraft:walls", "minecraft:shulker_boxes", "minecraft:anvil", "minecraft:cauldrons", "minecraft:rails"}});
+    block("minecraft:mineable/axe",
+          {.native  = {"minecraft:is_axe_item_destructible"},
+           .include = {"minecraft:banners", "minecraft:fence_gates", "minecraft:logs", "minecraft:planks", "minecraft:saplings", "minecraft:signs",
+                       "minecraft:wooden_buttons", "minecraft:wooden_doors", "minecraft:wooden_fences", "minecraft:wooden_pressure_plates", "minecraft:wooden_slabs",
+                       "minecraft:wooden_stairs", "minecraft:wooden_trapdoors", "minecraft:all_hanging_signs", "minecraft:bamboo_blocks"}});
+    block("minecraft:mineable/shovel", {.native = {"minecraft:is_shovel_item_destructible"}, .include = {"minecraft:concrete_powder"}});
     block("minecraft:mineable/hoe", {.native = {"minecraft:is_hoe_item_destructible"}});
-    block("minecraft:sword_efficient", {.native = {"minecraft:is_sword_item_destructible"}, .include = {"minecraft:leaves"}});
+    block("minecraft:sword_efficient",
+          {.native = {"minecraft:is_sword_item_destructible"}, .include = {"minecraft:leaves", "minecraft:saplings", "minecraft:small_flowers", "minecraft:crops"}});
     block("minecraft:needs_stone_tool", {.native = {"stone_pick_diggable"}});
     block("minecraft:needs_iron_tool", {.native = {"iron_pick_diggable"}});
     block("minecraft:needs_diamond_tool", {.native = {"diamond_pick_diggable"}});
@@ -239,8 +289,9 @@ Rules buildRules() {
     block("minecraft:incorrect_for_diamond_tool", {});
     block("minecraft:incorrect_for_netherite_tool", {});
     block("minecraft:wither_immune",
-          {.ids = {"barrier", "bedrock", "end_portal", "end_portal_frame", "end_gateway", "command_block", "repeating_command_block", "chain_command_block",
-                   "structure_block", "jigsaw", "moving_block", "light_block", "reinforced_deepslate"}});
+          {.ids = concat({"barrier", "bedrock", "end_portal", "end_portal_frame", "end_gateway", "command_block", "repeating_command_block", "chain_command_block",
+                          "structure_block", "jigsaw", "moving_block", "reinforced_deepslate"},
+                         lightIds())});
     block("minecraft:dragon_immune",
           {.ids = {"barrier", "bedrock", "end_portal", "end_portal_frame", "end_gateway", "command_block", "repeating_command_block", "chain_command_block",
                    "structure_block", "jigsaw", "moving_block", "obsidian", "crying_obsidian", "end_stone", "iron_bars", "respawn_anchor", "reinforced_deepslate"}});
@@ -255,26 +306,34 @@ Rules buildRules() {
     item("minecraft:chest_armor", {.pred = isChest});
     item("minecraft:leg_armor", {.pred = isLegs});
     item("minecraft:foot_armor", {.pred = isFeet});
-    item("minecraft:enchantable/head_armor", {.pred = isHead});
-    item("minecraft:enchantable/chest_armor", {.pred = isChest});
-    item("minecraft:enchantable/leg_armor", {.pred = isLegs});
-    item("minecraft:enchantable/foot_armor", {.pred = isFeet});
-    item("minecraft:enchantable/armor", {.pred = isArmor});
+    // the enchantable tags nest as Java 1.21.1's do
+    item("minecraft:enchantable/head_armor", {.include = {"minecraft:head_armor"}});
+    item("minecraft:enchantable/chest_armor", {.include = {"minecraft:chest_armor"}});
+    item("minecraft:enchantable/leg_armor", {.include = {"minecraft:leg_armor"}});
+    item("minecraft:enchantable/foot_armor", {.include = {"minecraft:foot_armor"}});
+    item("minecraft:enchantable/armor",
+         {.include = {"minecraft:enchantable/foot_armor", "minecraft:enchantable/leg_armor", "minecraft:enchantable/chest_armor", "minecraft:enchantable/head_armor"}});
     item("minecraft:enchantable/sword", {.include = {"minecraft:swords"}});
-    item("minecraft:enchantable/fire_aspect", {.include = {"minecraft:swords"}});
+    item("minecraft:enchantable/fire_aspect", {.ids = {"mace"}, .include = {"minecraft:enchantable/sword"}});
     item("minecraft:enchantable/sharp_weapon", {.include = {"minecraft:swords", "minecraft:axes"}});
-    item("minecraft:enchantable/weapon", {.include = {"minecraft:swords", "minecraft:axes"}});
+    item("minecraft:enchantable/weapon", {.ids = {"mace"}, .include = {"minecraft:enchantable/sharp_weapon"}});
     item("minecraft:enchantable/mining", {.ids = {"shears"}, .include = {"minecraft:pickaxes", "minecraft:axes", "minecraft:shovels", "minecraft:hoes"}});
     item("minecraft:enchantable/mining_loot", {.include = {"minecraft:pickaxes", "minecraft:axes", "minecraft:shovels", "minecraft:hoes"}});
-    item("minecraft:enchantable/durability", {.pred = isDamageable});
+    item("minecraft:enchantable/durability",
+         {.ids     = {"elytra", "shield", "bow", "crossbow", "trident", "flint_and_steel", "shears", "brush", "fishing_rod", "carrot_on_a_stick",
+                      "warped_fungus_on_a_stick", "mace"},
+          .include = {"minecraft:foot_armor", "minecraft:leg_armor", "minecraft:chest_armor", "minecraft:head_armor", "minecraft:swords", "minecraft:axes",
+                      "minecraft:pickaxes", "minecraft:shovels", "minecraft:hoes"},
+          .pred    = isDamageable});
     item("minecraft:enchantable/bow", {.ids = {"bow"}});
     item("minecraft:enchantable/crossbow", {.ids = {"crossbow"}});
     item("minecraft:enchantable/fishing", {.ids = {"fishing_rod"}});
     item("minecraft:enchantable/trident", {.ids = {"trident"}});
+    item("minecraft:enchantable/mace", {.ids = {"mace"}});
     item("minecraft:enchantable/equippable",
-         {.ids = {"elytra", "carved_pumpkin", "skull", "skeleton_skull", "wither_skeleton_skull", "zombie_head", "player_head", "creeper_head", "dragon_head", "piglin_head"},
-          .pred = isArmor});
-    item("minecraft:enchantable/vanishing", {.ids = {"compass", "recovery_compass", "carved_pumpkin", "skull"}, .include = {"minecraft:enchantable/durability"}});
+         {.ids     = {"elytra", "carved_pumpkin"},
+          .include = {"minecraft:foot_armor", "minecraft:leg_armor", "minecraft:chest_armor", "minecraft:head_armor", "minecraft:skulls"}});
+    item("minecraft:enchantable/vanishing", {.ids = {"compass", "carved_pumpkin"}, .include = {"minecraft:enchantable/durability", "minecraft:skulls"}});
     item("minecraft:fishes", {.ids = {"cod", "salmon", "tropical_fish", "pufferfish", "cooked_cod", "cooked_salmon"}});
     item("minecraft:meat",
          {.ids = {"beef", "cooked_beef", "porkchop", "cooked_porkchop", "mutton", "cooked_mutton", "chicken", "cooked_chicken", "rabbit", "cooked_rabbit", "rotten_flesh"}});
@@ -282,7 +341,8 @@ Rules buildRules() {
     item("minecraft:skulls", {.ids = {"skull", "skeleton_skull", "wither_skeleton_skull", "zombie_head", "player_head", "creeper_head", "dragon_head", "piglin_head"}});
     item("minecraft:banners", {.ids = {"banner"}});
     item("minecraft:trim_materials", {.native = {"minecraft:trim_materials"}});
-    item("minecraft:trimmable_armor", {.native = {"minecraft:trimmable_armors"}});
+    item("minecraft:trimmable_armor",
+         {.native = {"minecraft:trimmable_armors"}, .include = {"minecraft:foot_armor", "minecraft:leg_armor", "minecraft:chest_armor", "minecraft:head_armor"}});
     item("minecraft:dyeable", {.ids = {"leather_helmet", "leather_chestplate", "leather_leggings", "leather_boots", "leather_horse_armor", "wolf_armor"}});
     item("minecraft:freeze_immune_wearables", {.ids = {"leather_helmet", "leather_chestplate", "leather_leggings", "leather_boots", "leather_horse_armor"}});
 
@@ -301,12 +361,38 @@ Rules buildRules() {
     // Java 1.21.1: #arrows, firework_rocket, snowball, small_fireball, fireball, wither_skull, egg,
     // trident, dragon_fireball, wind_charge, breeze_wind_charge
     entity("minecraft:impact_projectiles",
-           {.ids = {"arrow", "fireworks_rocket", "snowball", "fireball", "small_fireball", "egg", "thrown_trident", "dragon_fireball", "wither_skull",
-                    "wither_skull_dangerous", "wind_charge_projectile", "breeze_wind_charge_projectile"}});
+           {.ids     = {"fireworks_rocket", "snowball", "fireball", "small_fireball", "egg", "thrown_trident", "dragon_fireball", "wither_skull",
+                        "wither_skull_dangerous", "wind_charge_projectile", "breeze_wind_charge_projectile"},
+            .include = {"minecraft:arrows"}});
     entity("minecraft:redirectable_projectile", {.ids = {"fireball", "wind_charge_projectile", "breeze_wind_charge_projectile"}});
     entity("minecraft:powder_snow_walkable_mobs", {.ids = {"rabbit", "endermite", "silverfish", "fox"}});
     entity("minecraft:immune_to_oozing", {.ids = {"slime"}});
     entity("minecraft:immune_to_infested", {.ids = {"silverfish"}});
+
+    // ---- biomes ------------------------------------------------------------------------------------
+    // Java 1.21.1 (Bedrock's biomes have the same names): the spawner's BiomeTags.REDUCED_WATER_AMBIENT_SPAWNS
+    biome("minecraft:is_river", {.ids = {"river", "frozen_river"}});
+    biome("minecraft:reduce_water_ambient_spawns", {.include = {"minecraft:is_river"}});
+
+    // ---- structures --------------------------------------------------------------------------------
+    // Minecraft 1.21.1's data/minecraft/tags/worldgen/structure (every tag file), by Java structure id:
+    // /locate and the structure HolderSets of TF's data name them (none generates in the Twilight
+    // Forest: Java finds none there)
+    structure("minecraft:cats_spawn_as_black", {.ids = {"swamp_hut"}});
+    structure("minecraft:cats_spawn_in", {.ids = {"swamp_hut"}});
+    structure("minecraft:dolphin_located", {.include = {"minecraft:ocean_ruin", "minecraft:shipwreck"}});
+    structure("minecraft:eye_of_ender_located", {.ids = {"stronghold"}});
+    structure("minecraft:mineshaft", {.ids = {"mineshaft", "mineshaft_mesa"}});
+    structure("minecraft:ocean_ruin", {.ids = {"ocean_ruin_cold", "ocean_ruin_warm"}});
+    structure("minecraft:on_ocean_explorer_maps", {.ids = {"monument"}});
+    structure("minecraft:on_treasure_maps", {.ids = {"buried_treasure"}});
+    structure("minecraft:on_trial_chambers_maps", {.ids = {"trial_chambers"}});
+    structure("minecraft:on_woodland_explorer_maps", {.ids = {"mansion"}});
+    structure("minecraft:ruined_portal",
+              {.ids = {"ruined_portal_desert", "ruined_portal_jungle", "ruined_portal_mountain", "ruined_portal_nether", "ruined_portal_ocean", "ruined_portal",
+                       "ruined_portal_swamp"}});
+    structure("minecraft:shipwreck", {.ids = {"shipwreck", "shipwreck_beached"}});
+    structure("minecraft:village", {.ids = {"village_plains", "village_desert", "village_savanna", "village_snowy", "village_taiga"}});
 
     // ---- NeoForge common tags (c:) -----------------------------------------------------------------
     // TF's data only adds TF entries to c: tags (replace: false); the vanilla members are NeoForge's
@@ -510,6 +596,9 @@ Rules buildRules() {
     fluid("minecraft:water", {.ids = {"water", "flowing_water"}});
     fluid("minecraft:lava", {.ids = {"lava", "flowing_lava"}});
     block("minecraft:lava", {.ids = {"lava", "flowing_lava"}});
+
+    for (auto& [key, rule] : r)
+        for (auto t : rule.native) rule.nativeHashed.emplace_back(t);
     return r;
 }
 
@@ -518,44 +607,58 @@ Rules const& rules() {
     return r;
 }
 
-Rule const* ruleOf(Registry registry, std::string const& tag) {
+bool nativeHas(Registry registry, std::string const& id, HashedString const& tag) {
+    if (registry == Registry::Block) {
+        auto type = BlockType::tryGetFromRegistry(HashedString(id));
+        return type && type->hasTag(tag);
+    }
+    if (registry == Registry::Item) {
+        auto const* item = itemOf(id);
+        return item && item->hasTag(tag);
+    }
+    return false;
+}
+
+bool excluded(Rule const& rule, std::string_view name) {
+    for (auto e : rule.excludes)
+        if (e.starts_with('*') ? name.ends_with(e.substr(1)) : name == e) return true;
+    return false;
+}
+
+constexpr std::string_view kMinecraft = "minecraft:";
+
+} // namespace
+
+Rule const* find(Registry registry, std::string const& tag) {
     auto it = rules().find({registry, tag});
     return it == rules().end() ? nullptr : &it->second;
 }
 
-bool nativeHas(Registry registry, std::string const& id, std::string_view tag) {
-    if (registry == Registry::Block) {
-        auto type = BlockType::tryGetFromRegistry(HashedString(id));
-        return type && type->hasTag(HashedString(std::string(tag)));
-    }
-    if (registry == Registry::Item) {
-        auto const* item = itemOf(id);
-        return item && item->hasTag(HashedString(std::string(tag)));
-    }
-    return false;
+bool known(Registry registry, std::string const& tag) { return find(registry, tag) != nullptr; }
+
+std::vector<std::string> includes(Rule const& rule) { return {rule.include.begin(), rule.include.end()}; }
+
+std::vector<std::string> listedIds(Rule const& rule) {
+    std::vector<std::string> out;
+    for (auto id : rule.ids)
+        if (!excluded(rule, id)) out.push_back(std::string(kMinecraft) + std::string(id));
+    return out;
 }
 
-bool ruleHas(Registry registry, Rule const& rule, std::string const& id, int depth) {
-    if (depth > 8) return false;
-    constexpr std::string_view mc = "minecraft:";
-    if (id.starts_with(mc)) {
-        std::string_view name = std::string_view(id).substr(mc.size());
-        for (auto e : rule.excludes) {
-            if (e.starts_with('*') ? name.ends_with(e.substr(1)) : name == e) return false;
-        }
-        if (std::find(rule.ids.begin(), rule.ids.end(), name) != rule.ids.end()) return true;
+bool hasPatterns(Rule const& rule) { return !rule.suffixes.empty() || !rule.native.empty() || rule.pred != nullptr; }
+
+bool matchesPattern(Registry registry, Rule const& rule, std::string const& id) {
+    if (id.starts_with(kMinecraft)) {
+        std::string_view name = std::string_view(id).substr(kMinecraft.size());
+        if (excluded(rule, name)) return false;
         for (auto s : rule.suffixes)
             if (name.size() > s.size() && name.ends_with(s)) return true;
     }
-    for (auto t : rule.native)
+    for (auto const& t : rule.nativeHashed)
         if (nativeHas(registry, id, t)) return true;
-    if (rule.pred && rule.pred(id)) return true;
-    for (auto t : rule.include)
-        if (auto const* sub = ruleOf(registry, std::string(t)); sub && ruleHas(registry, *sub, id, depth + 1)) return true;
-    return false;
+    return rule.pred && rule.pred(id);
 }
 
-/// Every id of the registry (blocks / items from the game, others from the bridge's lists).
 std::vector<std::string> registryIds(Registry registry) {
     std::vector<std::string> out;
     if (registry == Registry::Block) {
@@ -570,36 +673,13 @@ std::vector<std::string> registryIds(Registry registry) {
         if (!ref.isRegistryInitialized()) return out;
         for (auto const& [name, item] : ref.getNameToItemMap()) out.push_back(name.getString());
     } else {
+        // the bridge's id lists (every rule of the registry: the includes are rules of it too)
         std::set<std::string> ids;
-        std::function<void(Rule const&, int)> collect = [&](Rule const& rule, int depth) {
-            if (depth > 8) return;
-            for (auto i : rule.ids) ids.insert("minecraft:" + std::string(i));
-            for (auto t : rule.include)
-                if (auto const* sub = ruleOf(registry, std::string(t))) collect(*sub, depth + 1);
-        };
         for (auto const& [key, rule] : rules())
-            if (key.first == registry) collect(rule, 0);
+            if (key.first == registry)
+                for (auto& id : listedIds(rule)) ids.insert(std::move(id));
         out.assign(ids.begin(), ids.end());
     }
-    return out;
-}
-
-} // namespace
-
-bool known(Registry registry, std::string const& tag) { return ruleOf(registry, tag) != nullptr; }
-
-bool has(Registry registry, std::string const& tag, std::string const& id) {
-    auto const* rule = ruleOf(registry, tag);
-    return rule && !id.empty() && ruleHas(registry, *rule, id, 0);
-}
-
-std::vector<std::string> members(Registry registry, std::string const& tag) {
-    std::vector<std::string> out;
-    auto const*              rule = ruleOf(registry, tag);
-    if (!rule) return out;
-    for (auto const& id : registryIds(registry))
-        if (ruleHas(registry, *rule, id, 0)) out.push_back(id);
-    std::sort(out.begin(), out.end());
     return out;
 }
 

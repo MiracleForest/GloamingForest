@@ -161,8 +161,10 @@ GF_REGISTER_SELFTEST("item.tags_vanilla_bridge", [](Context& ctx) {
     ctx.check(!gf::tags::has(Registry::Item, "minecraft:enchantable/chest_armor", "minecraft:iron_helmet"), "an iron helmet is not chest armour");
     ctx.check(gf::tags::has(Registry::Item, "minecraft:enchantable/armor", "minecraft:iron_helmet"), "an iron helmet is armour");
     ctx.check(gf::tags::has(Registry::Item, "minecraft:enchantable/durability", "minecraft:iron_pickaxe"), "an iron pickaxe has durability");
-    ctx.check(gf::tags::has(Registry::Item, "minecraft:boats", "minecraft:oak_boat") && !gf::tags::has(Registry::Item, "minecraft:boats", "minecraft:oak_chest_boat"),
-              "boats exclude chest boats");
+    ctx.check(gf::tags::has(Registry::Item, "minecraft:boats", "minecraft:oak_boat") && gf::tags::has(Registry::Item, "minecraft:boats", "minecraft:oak_chest_boat"),
+              "boats hold #chest_boats (Java 1.21.1)");
+    ctx.check(gf::tags::has(Registry::Item, "minecraft:chest_boats", "minecraft:oak_chest_boat") && !gf::tags::has(Registry::Item, "minecraft:chest_boats", "minecraft:oak_boat"),
+              "chest boats exclude plain boats");
     ctx.check(gf::tags::has(Registry::EntityType, "minecraft:undead", "minecraft:stray"), "a stray is undead (nested bridge tags)");
     ctx.check(gf::tags::has(Registry::Fluid, "minecraft:water", "minecraft:flowing_water"), "flowing water is water");
     auto planks = gf::tags::members(Registry::Block, "minecraft:planks");
