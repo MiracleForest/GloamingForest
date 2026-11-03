@@ -72,8 +72,9 @@ GF_REGISTER_SELFTEST("core.server_command", [](Context& ctx) {
     ctx.check(!owner.messages.empty(), "the command's output messages are returned");
     auto any = runServerCommand("time query daytime", 0, CommandPermissionLevel::Any);
     ctx.check(!any.ok, "the same command fails at permission level Any (" + any.messages + ")");
-    auto unknown = runServerCommand("gf_no_such_command");
-    ctx.check(!unknown && !unknown.messages.empty(), "an unknown command fails with a message (" + unknown.messages + ")");
+    // (not an unknown command: the e2e harness reads a "Syntax error" line as a rejected selftest command)
+    auto failing = runServerCommand("tickingarea remove gf_selftest_no_such_area");
+    ctx.check(!failing && failing.messages.find("tickingarea") != std::string::npos, "a failing command returns its message (" + failing.messages + ")");
 });
 
 // ---- persistence across a world reload (tools/e2e/server/scenarios/smoke.ps1) --------------------

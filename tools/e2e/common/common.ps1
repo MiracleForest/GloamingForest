@@ -287,8 +287,12 @@ function Invoke-SelfTest([string]$Glob = '', [int]$TimeoutSeconds = 600, [switch
         try { Wait-LogLine "SELFTEST (START|BUSY|DONE)|$script:CommandErrorRegex" $StartSeconds -Since $mark | Out-Null; break }
         catch { if ($i -lt $Attempts) { Write-Step "selftest '$label' did not start (attempt $i/$Attempts); sending it again" } }
     }
+    # Once the run started, only DONE ends the wait: tests may run failing commands on purpose, and
+    # their "Syntax error" / "Unknown command" lines are not a rejected selftest command.
+    $started = [bool](Get-ServerLog -Since $mark | Select-String -Pattern 'SELFTEST START' -Quiet)
+    $endRegex = if ($started) { $script:SelfTestDoneRegex } else { "$script:SelfTestDoneRegex|$script:CommandErrorRegex" }
     try {
-        $hit = Wait-LogLine "$script:SelfTestDoneRegex|$script:CommandErrorRegex" $TimeoutSeconds -Since $mark
+        $hit = Wait-LogLine $endRegex $TimeoutSeconds -Since $mark
         if ($hit -notmatch $script:SelfTestDoneRegex) { Write-Step "selftest command rejected: $hit" }
     } catch {
         Write-Step "selftest '$label' did not finish: $_"

@@ -224,7 +224,6 @@ try {
             # worlds opened for multiplayer knock each other out ("An error has occurred", "Blaze").
             if ($script:Headless) { Set-WorldSinglePlayer (Join-Path (Get-WorldsDir) $script:WorldName) }
         }
-        Reset-CameraPerspective
         Reset-GameOptions           # HUD, hand, camera, graphics mode as every run expects them
         Enable-ContentLog           # checked after the game closed (Get-ContentLogProblems)
         Clear-CachedGfPacks         # never a stale pack cached by another build
@@ -269,6 +268,10 @@ try {
             Write-Step "running scenario '$Scenario'"
             . $scenarioFile
         } catch {
+            # the scenario's own Enter-TestWorld (after a restart, e.g. ui's Vibrant Visuals half)
+            if ($_.Exception -is [GfE2E.WrongWorldException] -and -not $script:NotRunReason) {
+                $script:NotRunReason = "the game was not in the scenario's $($script:WorldName) world after the scenario restarted it: $($_.Exception.Message)"
+            }
             if ($script:NotRunReason -or (Get-WatchdogFired)) {
                 Write-Step "scenario stopped: $_"
             } else {
@@ -280,7 +283,7 @@ try {
         }
         $errs = Get-ErrorLines
         if ($errs) {
-            $failures.Add("$($errs.Count) ERR/FTL line(s) in the log (docs/spec/e2e.md: every ERR line but the transport banner fails)")
+            $failures.Add("$($errs.Count) ERR/FTL line(s) in the log (docs/spec/e2e.md, Error lines)")
             $errs | Select-Object -First 20 | ForEach-Object { Write-Host "  ! $_" -ForegroundColor Red }
         }
         foreach ($p in Get-SelfTestProblems) { $failures.Add($p) }
@@ -295,21 +298,26 @@ try {
             }
             while (Get-GameProcess) { Start-Sleep -Seconds 2 }
         }
-        Stop-Game
-        Request-HostStop # the host shuts down while we clean up
-        # the game's content log of every session of the run (written as the game closed)
-        try { foreach ($p in Get-ContentLogProblems -OutDir $outDir -Strict:([bool]$script:ContentLogStrict)) { $failures.Add($p) } }
-        catch { $failures.Add("content log: $_") }
-        if ($remote) { Restore-ExternalServers } else { Remove-TestWorld }
-        Remove-DeployedMod
-        Remove-BeDDLeftover
-        Restore-OtherMods
-        $restore = Join-Path $PSScriptRoot "scenarios/$Scenario.restore.ps1"
-        # Dot-sourced (like the prelaunch script) so it sees this run's slot ($script:VersionName,
-        # Get-GameDataDir, ...); a failing restore must not keep the lock.
-        if (Test-Path $restore) { try { . $restore } catch { Write-Host "[e2e] restore script failed: $_" -ForegroundColor Red } }
-        Restore-ContentLogOption    # after the scenario's own restore (models turns the log on itself)
-        Exit-E2ELock
+        try {
+            Stop-Game
+            Request-HostStop # the host shuts down while we clean up
+            # the game's content log of every session of the run (written as the game closed)
+            try { foreach ($p in Get-ContentLogProblems -OutDir $outDir -Strict:([bool]$script:ContentLogStrict)) { $failures.Add($p) } }
+            catch { $failures.Add("content log: $_") }
+            if ($remote) { Restore-ExternalServers } else { Remove-TestWorld }
+            Remove-DeployedMod
+            Remove-BeDDLeftover
+            Restore-OtherMods
+            $restore = Join-Path $PSScriptRoot "scenarios/$Scenario.restore.ps1"
+            # Dot-sourced (like the prelaunch script) so it sees this run's slot ($script:VersionName,
+            # Get-GameDataDir, ...); a failing restore must not keep the lock.
+            if (Test-Path $restore) { try { . $restore } catch { Write-Host "[e2e] restore script failed: $_" -ForegroundColor Red } }
+        } finally {
+            # after the scenario's own restore (models turns the log on itself), and also when a
+            # cleanup step above failed
+            try { Restore-ContentLogOption } catch { Write-Host "[e2e] could not put content_log_file back: $_" -ForegroundColor Red }
+            Exit-E2ELock
+        }
     }
 } catch {
     if (($script:LockTimedOut -and -not $lockAcquired) -or $script:HostSlotTimedOut) {

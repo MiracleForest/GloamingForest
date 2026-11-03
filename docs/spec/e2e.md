@@ -49,7 +49,10 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   `ERR [Server] <reply>`, and scenarios run failing commands on purpose (a refused `/twilightforest locate`). The
   mod logs every command error first as `[GloamingForest] Command error: <reply>` (`src/mod/Commands.cpp`); an
   `ERR [Server]` line whose text is such a reply of the same run is the echo, not an error. A scenario checks
-  the replies it provokes itself.
+  the replies it provokes itself. The mod logs a reply as its message id and parameters, so this covers the
+  mod's own literal replies; a vanilla command's translated reply (`commands.tickingarea-remove...` logged, "No
+  ticking area ..." printed) is not recognised: a scenario does not send failing vanilla commands on the console
+  (selftests run them through `runServerCommand`, whose output never reaches the console).
 
 ### Client runs: content log, game options, watchdog, test world
 

@@ -280,7 +280,14 @@ function Register-PipeWatchdog {
         $script:GfPipeBaseMs = $BaseSeconds * 1000
         if (Get-Variable -Name GfInvokeBeDD -Scope Script -ErrorAction SilentlyContinue) { return }
         $script:GfInvokeBeDD = ${function:Invoke-BeDD}
+        $script:GfConnectBeDD = ${function:Connect-BeDD}
+        # once the watchdog killed the game, every later call fails at once (no reconnect attempts)
+        function script:Connect-BeDD([int]$TimeoutSeconds = 180, [string]$PipeName) {
+            if ([GfE2E.Watchdog]::Fired) { throw "BeDD: not connecting: the watchdog killed the game ($([GfE2E.Watchdog]::Fired))" }
+            & $script:GfConnectBeDD @PSBoundParameters
+        }
         function script:Invoke-BeDD([Parameter(Mandatory)][hashtable]$Request, [switch]$NoThrow) {
+            if ([GfE2E.Watchdog]::Fired) { throw "BeDD: $($Request['op']) not sent: the watchdog killed the game ($([GfE2E.Watchdog]::Fired))" }
             $ms = $script:GfPipeBaseMs
             foreach ($k in 'timeoutMs', 'holdMs') { if ($Request[$k] -is [ValueType]) { $ms += [int]$Request[$k] } }
             if ($Request['text'] -is [string] -and $Request['delayMs'] -is [ValueType]) { $ms += $Request['text'].Length * [int]$Request['delayMs'] }
@@ -288,6 +295,10 @@ function Register-PipeWatchdog {
             try { & $script:GfInvokeBeDD -Request $Request -NoThrow:$NoThrow } finally { [GfE2E.Watchdog]::Disarm() }
         }
     } $script:PipeTimeoutSec
+    # The commands the module exported to the global scope still name the original functions: point
+    # them at the wrappers too (the harness and harness-shim.ps1 call Connect-BeDD from out there).
+    Set-Item -Path function:global:Invoke-BeDD -Value (& $bedd { ${function:Invoke-BeDD} })
+    Set-Item -Path function:global:Connect-BeDD -Value (& $bedd { ${function:Connect-BeDD} })
     Write-Step "pipe watchdog: every BeDD call gets $script:PipeTimeoutSec s (+ its own waits); then the game is killed and the run is NOT RUN"
 }
 
@@ -342,14 +353,8 @@ function Get-GameDataDir {
 # Puts the camera back to first person (options.txt `game_thirdperson:0`) so a scenario that
 # switched views (F5 / camera presets) can't leave the shared game in third person for later runs.
 function Reset-CameraPerspective {
-    $data = Get-GameDataDir
-    foreach ($o in Get-ChildItem -Recurse -Path $data -Filter 'options.txt' -ErrorAction SilentlyContinue) {
-        $lines = Get-Content $o.FullName
-        if ($lines -match '^game_thirdperson:[1-9]') {
-            $lines -replace '^game_thirdperson:\d+', 'game_thirdperson:0' | Set-Content $o.FullName
-            Write-Step "reset camera perspective to first person in $($o.FullName)"
-        }
-    }
+    $old = Set-GameOption 'game_thirdperson' '0'
+    foreach ($p in $old.Keys) { if ($null -ne $old[$p] -and $old[$p] -ne '0') { Write-Step "reset camera perspective to first person in $p" } }
 }
 
 # The game's options files of this instance (one per signed-in user, and "Shared").
@@ -411,9 +416,24 @@ $script:ContentLogSince  = $null
 # A scenario may add its own ($script:ContentLogExpected += 'regex') for lines it causes on purpose.
 $script:ContentLogExpected = @('gfpreview_canary', 'fogs/(netherite_)?diving_helmet\.json')
 
+# The instance's own content_log_file values, kept in the e2e home until they are put back: a killed
+# run's backup survives, so the next run restores the instance's value, not the 1 it left behind.
+function Get-ContentLogBackupPath { Join-Path (Get-E2EHome) "content-log-option.$($script:VersionName).json" }
+
 function Enable-ContentLog {
     $script:ContentLogSince = (Get-Date).AddSeconds(-2)
-    $script:ContentLogBackup = Set-GameOption 'content_log_file' '1'
+    $old = Set-GameOption 'content_log_file' '1'
+    $file = Get-ContentLogBackupPath
+    $saved = $null
+    if (Test-Path $file) { try { $saved = Get-Content $file -Raw | ConvertFrom-Json -AsHashtable } catch { $saved = $null } }
+    if ($saved) {
+        # a killed run turned it on: its backup holds the instance's value
+        $script:ContentLogBackup = [ordered]@{}
+        foreach ($p in $old.Keys) { $script:ContentLogBackup[$p] = if ($saved.ContainsKey($p)) { $saved[$p] } else { $old[$p] } }
+    } else {
+        $script:ContentLogBackup = $old
+    }
+    $script:ContentLogBackup | ConvertTo-Json | Set-Content -Path $file -Encoding UTF8
     if ($script:ContentLogBackup.Count -eq 0) { Write-Step 'warning: no options.txt to turn the content log on in' }
     else { Write-Step "content log on ($(Join-Path (Get-GameDataDir) 'logs'))" }
 }
@@ -428,6 +448,7 @@ function Restore-ContentLogOption {
         Set-Content -Path $p -Value $lines
     }
     $script:ContentLogBackup = $null
+    Remove-Item (Get-ContentLogBackupPath) -Force -ErrorAction SilentlyContinue
 }
 
 # The content-log files this run's game sessions wrote.
@@ -1052,14 +1073,14 @@ function Get-WrongWorld([int]$Since, [int]$TimeoutSeconds = 15) {
         $log = @(Get-LeviLog -Since $Since)
         # any time in this game session (a stray join may come before the harness clicked anything)
         $join = @(Get-LeviLog) | Select-String -Pattern '\[BeDD\] join: connecting to (\S+)' | Select-Object -Last 1
-        if ($join) { return "the game was sent to the server $($join.Matches[0].Groups[1].Value) (a BeDD 'join' this run did not send)" }
+        if ($join) { return [pscustomobject]@{ StrayJoin = $true; Reason = "the game was sent to the server $($join.Matches[0].Groups[1].Value) (a BeDD 'join' this run did not send)" } }
         $level = $log | Select-String -Pattern "world: level '(.*)' opened" | Select-Object -Last 1
         if ($level) {
             $name = $level.Matches[0].Groups[1].Value
             if ($name -eq $script:WorldName) { return $null }
-            return "the game entered the world '$name', not $($script:WorldName)"
+            return [pscustomobject]@{ StrayJoin = $false; Reason = "the game entered the world '$name', not $($script:WorldName)" }
         }
-        if ((Get-Date) -gt $deadline) { return "the game is in a world that never logged ""world: level '...' opened"" (not the local $($script:WorldName))" }
+        if ((Get-Date) -gt $deadline) { return [pscustomobject]@{ StrayJoin = $false; Reason = "the game is in a world that never logged ""world: level '...' opened"" (not the local $($script:WorldName))" } }
         Start-Sleep -Milliseconds 500
     }
 }
@@ -1079,7 +1100,7 @@ function Enter-TestWorld([int]$LoadSeconds = 10, [int]$Attempts = 3) {
         } catch {
             # a game sent to another server never spawns in a local world: say so instead of retrying
             $wrong = Get-WrongWorld $mark 0
-            if ($wrong -and $wrong -match 'BeDD') { Save-Screenshot "wrong-world-$attempt" | Out-Null; throw [GfE2E.WrongWorldException]::new($wrong) }
+            if ($wrong -and $wrong.StrayJoin) { Save-Screenshot "wrong-world-$attempt" | Out-Null; throw [GfE2E.WrongWorldException]::new($wrong.Reason) }
             if ($attempt -eq $Attempts) { throw }
             # The game sometimes fails to join its own local world ("Connection timed out").
             # Leave the error dialog and try again.
@@ -1091,7 +1112,7 @@ function Enter-TestWorld([int]$LoadSeconds = 10, [int]$Attempts = 3) {
         }
         if ($spawned) {
             $wrong = Get-WrongWorld $mark
-            if ($wrong) { Save-Screenshot "wrong-world-$attempt" | Out-Null; throw [GfE2E.WrongWorldException]::new($wrong) }
+            if ($wrong) { Save-Screenshot "wrong-world-$attempt" | Out-Null; throw [GfE2E.WrongWorldException]::new($wrong.Reason) }
             Start-Sleep -Seconds 3
             Focus-Game
             Write-Step "in world $($script:WorldName)"
