@@ -300,10 +300,6 @@ void                   setCurrentClip(std::optional<BlockBox> const& clip);
 [[nodiscard]] std::vector<std::string> pieceTypes();
 [[nodiscard]] std::vector<std::string> processorTypes();
 [[nodiscard]] std::vector<std::string> markerTypes();
-/// A piece factory loadPiece uses only while no registerPieceType factory exists for `typeId`
-/// (selftest stand-ins for another unit's fixture pieces: that unit's own factory wins whatever
-/// the registration order).
-void registerFallbackPieceType(std::string const& typeId, Factory factory);
 
 // ---- TF template marker handlers (Markers.cpp) ---------------------------------------------------------
 namespace markers {
