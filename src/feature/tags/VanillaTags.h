@@ -33,6 +33,8 @@
 // skulls, mob heads) are in no armour tag. TF's data members are added on top, as Java's tag loader
 // does.
 
+#include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -53,8 +55,21 @@ struct Rule;
 [[nodiscard]] std::vector<std::string> listedIds(Rule const& rule);
 /// Whether a rule also matches by pattern (name suffix, Bedrock native tag, predicate).
 [[nodiscard]] bool hasPatterns(Rule const& rule);
-/// Whether `id` (namespaced) matches the rule's patterns (its listed ids and includes not checked).
-[[nodiscard]] bool matchesPattern(Registry registry, Rule const& rule, std::string const& id);
+/// The ids of the game's blocks and items that Bedrock's native tags put in each rule (the rules'
+/// `native` part), read from the game's registries once (opaque; VanillaTags.cpp). Queries never
+/// touch the game's registries: world generation asks from its own threads.
+struct NativeIndex;
+/// Reads the game's block and item registries into a new index (empty for a registry the game has
+/// not filled yet: no level). Call it on the server thread only.
+[[nodiscard]] std::shared_ptr<NativeIndex const> buildNativeIndex();
+/// Whether two indexes hold the same members (null and empty are the same).
+[[nodiscard]] bool sameNativeIndex(NativeIndex const* a, NativeIndex const* b);
+/// The number of (rule, id) pairs of an index (diagnostics).
+[[nodiscard]] std::size_t nativeIndexSize(NativeIndex const* native);
+/// Whether `id` (namespaced) matches the rule's patterns (its listed ids and includes not checked):
+/// name suffixes and predicates by the id, Bedrock's native tags through `native` (none without one).
+/// Thread-safe: reads no game state.
+[[nodiscard]] bool matchesPattern(Rule const& rule, std::string const& id, NativeIndex const* native);
 /// The ids of the game's registry the bridge enumerates for members (blocks / items: every
 /// registered id, empty without a level; other registries: every id the bridge's rules list).
 [[nodiscard]] std::vector<std::string> registryIds(Registry registry);

@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "mc/deps/core/string/HashedString.h"
@@ -634,15 +635,10 @@ Rules const& rules() {
     return r;
 }
 
-bool nativeHas(Registry registry, std::string const& id, HashedString const& tag) {
-    if (registry == Registry::Block) {
-        auto type = BlockType::tryGetFromRegistry(HashedString(id));
-        return type && type->hasTag(tag);
-    }
-    if (registry == Registry::Item) {
-        auto const* item = itemOf(id);
-        return item && item->hasTag(tag);
-    }
+/// Whether `type` (`item`) has one of the rule's native tags (server thread: reads the game's types).
+bool nativeHasAny(Rule const& rule, BlockType const* type, Item const* item) {
+    for (auto const& t : rule.nativeHashed)
+        if ((type && type->hasTag(t)) || (item && item->hasTag(t))) return true;
     return false;
 }
 
@@ -678,23 +674,66 @@ std::vector<std::string> listedIds(Rule const& rule) {
 
 bool hasPatterns(Rule const& rule) { return !rule.suffixes.empty() || !rule.native.empty() || rule.pred != nullptr; }
 
-bool matchesPattern(Registry registry, Rule const& rule, std::string const& id) {
+/// Per rule with native tags: the registered ids that have one of them.
+struct NativeIndex {
+    struct Hash {
+        using is_transparent = void;
+        std::size_t operator()(std::string_view s) const noexcept { return std::hash<std::string_view>{}(s); }
+    };
+    using Ids = std::unordered_set<std::string, Hash, std::equal_to<>>;
+    std::unordered_map<Rule const*, Ids> byRule;
+    std::size_t                          size = 0;
+
+    [[nodiscard]] bool has(Rule const& rule, std::string const& id) const {
+        auto it = byRule.find(&rule);
+        return it != byRule.end() && it->second.contains(id);
+    }
+};
+
+std::shared_ptr<NativeIndex const> buildNativeIndex() {
+    auto index = std::make_shared<NativeIndex>();
+    for (auto registry : {Registry::Block, Registry::Item}) {
+        std::vector<Rule const*> withNative;
+        for (auto const& [key, rule] : rules())
+            if (key.first == registry && !rule.nativeHashed.empty()) withNative.push_back(&rule);
+        if (withNative.empty()) continue;
+        // one lookup per registered id, then every rule's native tags on it
+        for (auto const& id : registryIds(registry)) {
+            BlockType const* type = nullptr;
+            Item const*      item = nullptr;
+            if (registry == Registry::Block) {
+                auto t = BlockType::tryGetFromRegistry(HashedString(id));
+                type   = t ? &*t : nullptr;
+            } else {
+                item = itemOf(id);
+            }
+            if (!type && !item) continue;
+            for (auto const* rule : withNative)
+                if (nativeHasAny(*rule, type, item) && index->byRule[rule].insert(id).second) ++index->size;
+        }
+    }
+    return index;
+}
+
+std::size_t nativeIndexSize(NativeIndex const* native) { return native ? native->size : 0; }
+
+bool sameNativeIndex(NativeIndex const* a, NativeIndex const* b) {
+    if (nativeIndexSize(a) == 0 || nativeIndexSize(b) == 0) return nativeIndexSize(a) == nativeIndexSize(b);
+    return a->size == b->size && a->byRule == b->byRule;
+}
+
+bool matchesPattern(Rule const& rule, std::string const& id, NativeIndex const* native) {
+    // Bedrock's native tags keep newer content too: they are Bedrock's own mechanics (what a pickaxe
+    // mines, what a sword or a log is; VanillaTags.h, policy)
+    auto nativeHit = [&] { return native && !rule.nativeHashed.empty() && native->has(rule, id); };
     if (id.starts_with(kMinecraft)) {
         std::string_view name = std::string_view(id).substr(kMinecraft.size());
         if (excluded(rule, name)) return false;
-        if (newerThan1211(name)) {
-            // only Bedrock's native tags keep newer content: they are Bedrock's own mechanics (what a
-            // pickaxe mines, what a sword or a log is; VanillaTags.h, policy)
-            for (auto const& t : rule.nativeHashed)
-                if (nativeHas(registry, id, t)) return true;
-            return false;
-        }
+        if (newerThan1211(name)) return nativeHit();
         for (auto s : rule.suffixes) // the cheap test first (world generation asks per block)
             if (name.size() > s.size() && name.ends_with(s)) return true;
     }
-    for (auto const& t : rule.nativeHashed)
-        if (nativeHas(registry, id, t)) return true;
-    return rule.pred && rule.pred(id);
+    return nativeHit() || (rule.pred && rule.pred(id));
 }
 
 std::vector<std::string> registryIds(Registry registry) {

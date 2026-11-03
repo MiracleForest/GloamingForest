@@ -195,7 +195,26 @@ GF_REGISTER_SELFTEST("item.tags_remove", [](Context& ctx) {
         {"minecraft/tags/item/enchantable/fire_aspect.json", {{"remove", {"gf_test:fiery", "minecraft:golden_sword"}}, {"values", JsonDoc::array()}}},
         {"gf_test/tags/item/hot.json", {{"values", {"#minecraft:enchantable/fire_aspect", "gf_test:other"}}}},
         {"gf_test/tags/item/blunt.json", {{"values", {"#minecraft:enchantable/weapon"}}, {"remove", {"#minecraft:swords"}}}},
+        // a removal of a tag that includes the remover back (Java rejects it): the removal is
+        // dropped, and the two tags share no members (a remove edge is no include)
+        {"gf_test/tags/item/remover.json", {{"values", {"gf_test:a"}}, {"remove", {"#gf_test:includer"}}}},
+        {"gf_test/tags/item/includer.json", {{"values", {"#gf_test:remover", "gf_test:x"}}}},
+        // a removed tag resolved on its own (no cycle), reached first through the removal
+        {"gf_test/tags/item/early.json", {{"values", {"gf_test:e1", "gf_test:e2"}}, {"remove", {"#gf_test:late"}}}},
+        {"gf_test/tags/item/late.json", {{"values", {"gf_test:e2", "#gf_test:late_inner"}}}},
+        {"gf_test/tags/item/late_inner.json", {{"values", {"gf_test:e3"}}}},
     });
+    {
+        auto has = [](char const* tag, char const* id) { return gf::tags::has(Registry::Item, tag, id); };
+        ctx.check(has("gf_test:remover", "gf_test:a") && !has("gf_test:remover", "gf_test:x"),
+                  "a removal of a tag including the remover back: dropped, and the remover gains none of its members");
+        ctx.check(has("gf_test:includer", "gf_test:a") && has("gf_test:includer", "gf_test:x"), "the includer holds the remover's members and its own");
+        auto remover = gf::tags::members(Registry::Item, "gf_test:remover");
+        ctx.check(remover == std::vector<std::string>{"gf_test:a"}, "members(remover) is its own entry only (" + std::to_string(remover.size()) + ")");
+        ctx.check(has("gf_test:early", "gf_test:e1") && !has("gf_test:early", "gf_test:e2") && !has("gf_test:early", "gf_test:e3"),
+                  "a #tag removal resolved before the remover: its members are taken out");
+        ctx.check(has("gf_test:late", "gf_test:e2") && has("gf_test:late", "gf_test:e3") && !has("gf_test:late", "gf_test:e1"), "and the removed tag keeps its own");
+    }
     auto has = [](char const* tag, char const* id) { return gf::tags::has(Registry::Item, tag, id); };
     ctx.check(has("minecraft:enchantable/sword", "gf_test:fiery") && has("minecraft:enchantable/sword", "minecraft:golden_sword"), "both swords are enchantable swords");
     ctx.check(!has("minecraft:enchantable/fire_aspect", "gf_test:fiery"), "a removed data id");
@@ -339,8 +358,12 @@ GF_REGISTER_SELFTEST("item.tags_concurrent_reload", [](Context& ctx) -> ll::coro
     auto              reloaded = std::make_shared<std::atomic<bool>>(false);
     std::atomic<int>  wrong{0};
     std::atomic<long> asked{0};
-    // answers from the data and the bridge's id lists (no pattern rule: the game's registries are
-    // read on the server thread only here)
+    // answers from the data, the bridge's id lists, a name pattern (#leaves) and Bedrock's native
+    // tags (#mineable/axe, #swords): the native tags come from the snapshot's index (read on the
+    // server thread), so no query here touches the game's registries
+    // pale_oak_planks: newer than Java 1.21.1, so a member through the native tag only
+    bool const nativeReady = gf::tags::has(Registry::Block, "minecraft:mineable/axe", "minecraft:pale_oak_planks");
+    ctx.check(nativeReady, "#mineable/axe holds pale_oak_planks (Bedrock's is_axe_item_destructible, read into the snapshot)");
     auto worker = [&] {
         long n = 0;
         while (!stop.load(std::memory_order_relaxed)) {
@@ -349,7 +372,11 @@ GF_REGISTER_SELFTEST("item.tags_concurrent_reload", [](Context& ctx) -> ll::coro
             if (gf::tags::has(Registry::Block, "minecraft:fences", "minecraft:cobblestone_wall")) ++wrong;
             if (!gf::tags::has(Registry::Structure, "minecraft:village", "minecraft:village_plains")) ++wrong;
             if (!gf::tags::has(Registry::Biome, "minecraft:reduce_water_ambient_spawns", "minecraft:river")) ++wrong;
-            n += 5;
+            if (!gf::tags::has(Registry::Block, "minecraft:leaves", "minecraft:oak_leaves")) ++wrong;
+            if (nativeReady && !gf::tags::has(Registry::Block, "minecraft:mineable/axe", "minecraft:pale_oak_planks")) ++wrong;
+            if (gf::tags::has(Registry::Block, "minecraft:mineable/axe", "minecraft:stone")) ++wrong;
+            if (nativeReady && !gf::tags::has(Registry::Item, "minecraft:swords", "minecraft:iron_sword")) ++wrong;
+            n += 9;
         }
         asked += n;
     };
@@ -365,7 +392,8 @@ GF_REGISTER_SELFTEST("item.tags_concurrent_reload", [](Context& ctx) -> ll::coro
     } threads{stop, {}};
     for (int i = 0; i < 4; ++i) threads.all.emplace_back(worker);
     // the reloads: joined when they finish in time, detached otherwise (a hung load must fail the
-    // test, not block the server thread); the thread touches only `reloaded`, which it co-owns
+    // test, not block the server thread; the load lock is timed, so a later reload gives up on a
+    // hung one instead of blocking); the thread touches only `reloaded`, which it co-owns
     struct Detached {
         std::thread t;
         ~Detached() {

@@ -29,6 +29,8 @@ std::filesystem::path root() {
 
 void setRoot(std::filesystem::path dir) { rootOverride() = std::move(dir); }
 
+bool rootOverridden() { return !rootOverride().empty(); }
+
 std::vector<File> list(std::string_view dir) { return list(dir, root()); }
 
 std::vector<File> list(std::string_view dir, std::filesystem::path const& base) {

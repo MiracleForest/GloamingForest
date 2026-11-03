@@ -22,6 +22,9 @@ namespace gf::feature::item::data {
 /// `<mod dir>/data` (an override for selftests: `setRoot`).
 [[nodiscard]] std::filesystem::path root();
 void                                setRoot(std::filesystem::path dir);
+/// Whether a selftest's override is set (the tag runtime then publishes nothing: the test reads its
+/// tags through a private tags::internal::ScopedSnapshot, other threads keep the mod's tags).
+[[nodiscard]] bool rootOverridden();
 
 struct File {
     std::string           ns;   ///< "twilightforest"

@@ -7,6 +7,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <random>
 #include <tuple>
 
@@ -114,14 +115,20 @@ std::filesystem::path writeTree(std::vector<std::pair<std::string, JsonDoc>> con
     return dir;
 }
 
-/// Loads a synthetic tree for the duration of a test (the real data comes back afterwards).
+/// Loads a synthetic tree for the duration of a (synchronous) test; the real data comes back
+/// afterwards. Its tags are private to the test's thread (a ScopedSnapshot; the tag runtime publishes
+/// nothing while the root is overridden), so world generation on other threads keeps TF's tags; the
+/// data maps, recipes and the rest load from the tree (they read the thread's tags while loading).
 struct ScopedTree {
-    std::filesystem::path dir;
+    std::filesystem::path                             dir;
+    std::optional<gf::tags::internal::ScopedSnapshot> tags;
     explicit ScopedTree(std::vector<std::pair<std::string, JsonDoc>> const& files) : dir(writeTree(files)) {
+        tags.emplace(dir);
         data::setRoot(dir);
         data::reloadAll();
     }
     ~ScopedTree() {
+        tags.reset(); // before the reload: the real data maps resolve their #tag keys with the real tags
         data::setRoot({});
         data::reloadAll();
         std::error_code ec;

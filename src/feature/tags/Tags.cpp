@@ -8,16 +8,20 @@
 // includes, whether the include is a "#tag" of the data or one of the bridge's (Java's own nesting:
 // #minecraft:overworld_carver_replaceables holds #minecraft:dirt, so TF's uberous_soil, which TF's
 // data adds to minecraft:dirt, is an overworld carver replaceable), minus NeoForge's "remove"
-// entries. Tags that include each other (Java rejects the cycle) share their members.
+// entries. Tags that include each other (Java rejects the cycle) share their members; a removed
+// #tag is never merged into the remover (a removal whose tag includes the remover back is dropped).
 //
 // Every tag is resolved once per load into an immutable snapshot; queries read the snapshot
 // without a lock (a thread keeps the snapshot it last read until a reload publishes a new one), so
-// world generation can ask per block while /twilightforest reload swaps the data.
+// world generation can ask per block while /twilightforest reload swaps the data. Bedrock's native
+// block / item tags are read into the snapshot on the server thread (at the data load and at every
+// world load): no query, from any thread, touches the game's registries.
 #include "feature/tags/Tags.h"
 
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <functional>
@@ -37,6 +41,7 @@
 #include "feature/tags/JavaIds.h"
 #include "feature/tags/TagsInternal.h"
 #include "feature/tags/VanillaTags.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 
 namespace gf::tags {
@@ -82,17 +87,17 @@ struct Resolved {
 
     [[nodiscard]] bool opaque() const { return !removed.empty() || !removedTags.empty(); }
 
-    /// Membership of a namespaced id.
-    [[nodiscard]] bool has(std::optional<Registry> registry, std::string const& id) const {
+    /// Membership of a namespaced id (`native`: the snapshot's index of Bedrock's native tags).
+    [[nodiscard]] bool has(std::optional<Registry> registry, std::string const& id, vanilla::NativeIndex const* native) const {
         if (!removed.empty() && removed.contains(id)) return false;
         for (auto const& t : removedTags)
-            if (t->has(registry, id)) return false;
+            if (t->has(registry, id, native)) return false;
         if ((!data.empty() && data.contains(id)) || (!listed.empty() && listed.contains(id))) return true;
         if (registry)
             for (auto const* rule : patterns)
-                if (vanilla::matchesPattern(*registry, *rule, id)) return true;
+                if (vanilla::matchesPattern(*rule, id, native)) return true;
         for (auto const& n : nested)
-            if (n->has(registry, id)) return true;
+            if (n->has(registry, id, native)) return true;
         return false;
     }
 
@@ -111,6 +116,9 @@ struct Snapshot {
     std::size_t                                   files = 0;
     std::array<ResolvedMap, kRegistryCount>       bridged; ///< by registry: data and bridge
     StringMap<ResolvedMap>                        dataOnly; ///< by dir: data members only
+    /// Bedrock's native tags of the game's blocks and items, read on the server thread (null before
+    /// a level exists): queries never touch the game's registries, from any thread.
+    std::shared_ptr<vanilla::NativeIndex const>   native;
     mutable std::mutex                            membersMutex;
     mutable StringMap<std::shared_ptr<std::vector<std::string> const>> members; ///< "<registry>|<tag>", with the bridge
 
@@ -201,16 +209,20 @@ bool warnOnce(std::string key) {
 }
 
 /// Resolves the tags of one directory for one registry variant (the bridge's includes and rules
-/// only with a registry). Tarjan's strongly connected components: a tag is resolved after every tag
-/// it includes; tags that include each other (a cycle) are one component and share its members.
+/// only with a registry). Tarjan's strongly connected components over the include edges: tags that
+/// include each other (a cycle) are one component and share its members. Components are resolved
+/// after every component they include and every tag they remove (NeoForge's "remove" #tag is a
+/// dependency, never a shared membership): a removal whose tag reaches the remover back through
+/// includes (a cycle Java rejects) is dropped with a warning.
 class Builder {
 public:
     /// `quiet`: no warnings (the selftests' private snapshots of synthetic data).
-    Builder(std::optional<Registry> registry, std::string dir, RawDir const* raw, bool quiet)
-    : mRegistry(registry), mDir(std::move(dir)), mRaw(raw), mQuiet(quiet) {}
+    Builder(std::optional<Registry> registry, std::string dir, RawDir const* raw, bool quiet, vanilla::NativeIndex const* native)
+    : mRegistry(registry), mDir(std::move(dir)), mRaw(raw), mQuiet(quiet), mNative(native) {}
 
     std::shared_ptr<Resolved const> get(std::string const& tag) {
         if (!mIndex.contains(tag)) connect(tag);
+        finishComponent(mComp.at(tag));
         return mDone.at(tag);
     }
     ResolvedMap take() { return std::move(mDone); }
@@ -220,6 +232,7 @@ private:
         std::vector<std::string> include; ///< data "#tags" and the bridge rule's includes
         std::vector<std::string> remove;  ///< "#tags" of NeoForge's "remove"
     };
+    enum class State : char { Open, Pending, Done };
 
     RawTag const* rawOf(std::string const& tag) const {
         if (!mRaw) return nullptr;
@@ -245,6 +258,7 @@ private:
         return e;
     }
 
+    /// Tarjan over the include edges only: records the components (resolved by finishComponent).
     void connect(std::string const& v) {
         int index = mNext++;
         mIndex[v] = index;
@@ -252,28 +266,74 @@ private:
         mStack.push_back(v);
         mOnStack.insert(v);
         auto e = edgesOf(v);
-        for (auto const* list : {&e.include, &e.remove}) {
-            for (auto const& w : *list) {
-                if (!mIndex.contains(w)) {
-                    connect(w);
-                    mLow[v] = std::min(mLow[v], mLow[w]);
-                } else if (mOnStack.contains(w)) {
-                    mLow[v] = std::min(mLow[v], mIndex[w]);
-                }
+        for (auto const& w : e.include) {
+            if (!mIndex.contains(w)) {
+                connect(w);
+                mLow[v] = std::min(mLow[v], mLow[w]);
+            } else if (mOnStack.contains(w)) {
+                mLow[v] = std::min(mLow[v], mIndex[w]);
             }
         }
         mEdges.emplace(v, std::move(e)); // finish() reads them (map nodes keep their address)
         if (mLow[v] != index) return;
+        auto                     id = static_cast<int>(mComponents.size());
         std::vector<std::string> scc;
         while (true) {
             auto w = std::move(mStack.back());
             mStack.pop_back();
             mOnStack.erase(w);
+            mComp[w] = id;
             bool root = w == v;
             scc.push_back(std::move(w));
             if (root) break;
         }
-        finish(scc);
+        mComponents.push_back(std::move(scc));
+        mState.push_back(State::Open);
+    }
+
+    /// Whether component `c` reaches a component being resolved through include edges (then a
+    /// removal of a tag of `c` would depend on itself).
+    bool reachesPending(int c) const {
+        std::vector<int>        todo{c};
+        std::unordered_set<int> seen{c};
+        while (!todo.empty()) {
+            int x = todo.back();
+            todo.pop_back();
+            if (mState[x] == State::Pending) return true;
+            if (mState[x] == State::Done) continue; // its include closure is resolved
+            for (auto const& v : mComponents[x])
+                for (auto const& w : mEdges.at(v).include)
+                    if (int y = mComp.at(w); seen.insert(y).second) todo.push_back(y);
+        }
+        return false;
+    }
+
+    /// Resolves component `c` after its dependencies (the components it includes and the tags it
+    /// removes).
+    void finishComponent(int c) {
+        if (mState[c] != State::Open) return;
+        mState[c] = State::Pending;
+        auto const scc = mComponents[c]; // a copy: connect() below may grow mComponents
+        for (auto const& v : scc)
+            for (auto const& w : mEdges.at(v).include)
+                if (int d = mComp.at(w); d != c) finishComponent(d);
+        StringSet removable; ///< the removed #tags resolved before this component
+        for (auto const& v : scc) {
+            for (auto const& t : mEdges.at(v).remove) {
+                if (!mIndex.contains(t)) connect(t);
+                int d = mComp.at(t);
+                if (reachesPending(d)) { // d == c included: c is pending
+                    if (firstWarning(mDir + "|remove|" + v + "|" + t))
+                        // the removed tag includes this one back: removing it would empty the tag
+                        log().warn("tags: {} tag {} removes #{}, which includes it back (a cycle Java rejects): the removal is ignored", mDir, v, t);
+                    continue;
+                }
+                finishComponent(d);
+                removable.insert(t);
+            }
+        }
+        finish(scc, removable);
+        mState[c] = State::Done;
     }
 
     /// One warning per include of `tag` that names neither a tag of the data nor one of the bridge
@@ -293,8 +353,9 @@ private:
         if (std::find(to.begin(), to.end(), r) == to.end()) to.push_back(r);
     }
 
-    /// Resolves one component (its includes outside it are resolved already).
-    void finish(std::vector<std::string> const& scc) {
+    /// Resolves one component (its includes outside it, and the #tags in `removable`, are resolved
+    /// already).
+    void finish(std::vector<std::string> const& scc, StringSet const& removable) {
         StringSet inScc(scc.begin(), scc.end());
         std::vector<Edges const*> edges;
         for (auto const& v : scc) edges.push_back(&mEdges.at(v));
@@ -351,15 +412,14 @@ private:
         for (auto const& v : scc) {
             auto const* raw = rawOf(v);
             if (!raw || raw->removes.empty()) continue;
-            if (!own) own = std::make_shared<Resolved>(*base);
             for (auto const& entry : raw->removes) {
                 if (entry.starts_with('#')) {
                     auto t = stripHash(entry);
-                    if (!inScc.contains(t)) addUnique(own->removedTags, mDone.at(t));
-                    else if (firstWarning(mDir + "|remove|" + v + "|" + t))
-                        // the removed tag includes this one back: removing it would empty the tag
-                        log().warn("tags: {} tag {} removes #{}, which includes it back (a cycle Java rejects): the removal is ignored", mDir, v, t);
+                    if (!removable.contains(t)) continue; // dropped (finishComponent warned)
+                    if (!own) own = std::make_shared<Resolved>(*base);
+                    addUnique(own->removedTags, mDone.at(t));
                 } else {
+                    if (!own) own = std::make_shared<Resolved>(*base);
                     for (auto& id : javaids::bedrock(mDir, data::withNamespace(entry))) own->removed.insert(std::move(id));
                 }
             }
@@ -368,7 +428,7 @@ private:
         if (own) {
             std::erase_if(own->data, [&](std::string const& id) {
                 return own->removed.contains(id)
-                    || std::any_of(own->removedTags.begin(), own->removedTags.end(), [&](auto const& t) { return t->has(mRegistry, id); });
+                    || std::any_of(own->removedTags.begin(), own->removedTags.end(), [&](auto const& t) { return t->has(mRegistry, id, mNative); });
             });
             sortData(*own);
             shared = own;
@@ -376,24 +436,29 @@ private:
         for (auto const& v : scc) mDone[v] = shared;
     }
 
-    std::optional<Registry>    mRegistry;
-    std::string                mDir;
-    RawDir const*              mRaw;
-    bool                       mQuiet;
-    ResolvedMap                mDone;
-    StringMap<Edges>           mEdges;
-    StringMap<int>             mIndex;
-    StringMap<int>             mLow;
-    std::vector<std::string>   mStack;
-    StringSet                  mOnStack;
-    int                        mNext = 0;
+    std::optional<Registry>          mRegistry;
+    std::string                      mDir;
+    RawDir const*                    mRaw;
+    bool                             mQuiet;
+    vanilla::NativeIndex const*      mNative;
+    ResolvedMap                      mDone;
+    StringMap<Edges>                 mEdges;
+    StringMap<int>                   mIndex;
+    StringMap<int>                   mLow;
+    StringMap<int>                   mComp;       ///< tag -> component
+    std::vector<std::vector<std::string>> mComponents; ///< by component: its tags
+    std::vector<State>               mState;      ///< by component
+    std::vector<std::string>         mStack;
+    StringSet                        mOnStack;
+    int                              mNext = 0;
 };
 
 /// Reads the data tree (`withData`: the mod's, or the one below `base`) and resolves every tag (the
 /// data's and the bridge's) into a new snapshot. Without the data it holds the bridge's rules only:
 /// the answers before the first load.
-std::shared_ptr<Snapshot const> build(bool withData, std::filesystem::path const* base = nullptr) {
+std::shared_ptr<Snapshot const> build(bool withData, std::shared_ptr<vanilla::NativeIndex const> native, std::filesystem::path const* base = nullptr) {
     auto       s     = std::make_shared<Snapshot>();
+    s->native        = std::move(native);
     auto const files = !withData ? std::vector<data::File>{} : base ? data::list("tags", *base) : data::list("tags");
     for (auto const& f : files) {
         auto [dir, path] = splitRegistry(f.rel);
@@ -410,7 +475,7 @@ std::shared_ptr<Snapshot const> build(bool withData, std::filesystem::path const
     for (auto registry : kRegistries) {
         std::string dir = registryName(registry);
         auto        d   = s->raw.find(dir);
-        Builder     b(registry, dir, d == s->raw.end() ? nullptr : &d->second, quiet);
+        Builder     b(registry, dir, d == s->raw.end() ? nullptr : &d->second, quiet, s->native.get());
         if (d != s->raw.end())
             for (auto const& [tag, raw] : d->second) (void)b.get(tag);
         for (auto const& tag : vanilla::knownTags(registry)) (void)b.get(tag);
@@ -419,7 +484,7 @@ std::shared_ptr<Snapshot const> build(bool withData, std::filesystem::path const
     // TF's own registries ("twilight", ...): data members only
     for (auto const& [dir, tags] : s->raw) {
         if (registryOf(dir)) continue;
-        Builder b(std::nullopt, dir, &tags, quiet);
+        Builder b(std::nullopt, dir, &tags, quiet, s->native.get());
         for (auto const& [tag, raw] : tags) (void)b.get(tag);
         s->dataOnly[dir] = b.take();
     }
@@ -431,7 +496,7 @@ std::shared_ptr<Snapshot const> build(bool withData, std::filesystem::path const
 /// snapshot, and a thread still reading the old one keeps it alive.
 struct Published {
     std::mutex                      mutex; ///< guards `snapshot`; serialises loads
-    std::shared_ptr<Snapshot const> snapshot = build(false); ///< the bridge alone until the data loads
+    std::shared_ptr<Snapshot const> snapshot = build(false, nullptr); ///< the bridge alone until the data loads
     std::atomic<std::uint64_t>      generation{1};
 };
 
@@ -476,25 +541,65 @@ std::shared_ptr<Snapshot const> const& current() {
     return local.snapshot;
 }
 
-std::mutex& loadMutex() {
-    static std::mutex m;
+/// Serialises loads. Timed: a load that never returns (a hung thread) must not block the server
+/// thread's next /twilightforest reload forever.
+std::timed_mutex& loadMutex() {
+    static std::timed_mutex m;
     return m;
 }
 
-void load() {
-    std::lock_guard serial(loadMutex());
-    auto            next = build(true);
-    auto            files = next->files;
+/// The index of Bedrock's native tags the next builds use (read on the server thread; guarded by
+/// loadMutex).
+std::shared_ptr<vanilla::NativeIndex const>& nativeIndex() {
+    static std::shared_ptr<vanilla::NativeIndex const> index;
+    return index;
+}
+
+/// Builds and publishes a new snapshot. `refreshNative` (server thread only): re-reads Bedrock's
+/// native tags from the game's registries first (the data reload and every world load); otherwise
+/// the last index is kept (a reload from another thread never touches the game's registries).
+void load(bool refreshNative) {
+    std::unique_lock serial(loadMutex(), std::defer_lock);
+    if (!serial.try_lock_for(std::chrono::seconds(30))) {
+        log().error("tags: another tag load has held the lock for 30 s (hung?): this load is skipped");
+        return;
+    }
+    if (refreshNative) nativeIndex() = vanilla::buildNativeIndex();
+    if (data::rootOverridden()) {
+        // a selftest's synthetic data tree: it reads its tags through a private ScopedSnapshot, and
+        // every other thread (world generation) keeps the published tags of the mod's data
+        log().info("tags: a selftest's data root is set: the published tags stay");
+        return;
+    }
+    auto next  = build(true, nativeIndex());
+    auto files = next->files;
     {
         auto&           p = published();
         std::lock_guard lock(p.mutex);
         p.snapshot = std::move(next);
         p.generation.fetch_add(1, std::memory_order_release);
     }
-    log().info("tags: {} tag files loaded", files);
+    log().info("tags: {} tag files loaded ({} native tag members)", files, vanilla::nativeIndexSize(nativeIndex().get()));
 }
 
-[[maybe_unused]] bool const kRegistered = (data::onReload(&load), true);
+/// A world load (the client fills its registries per world): re-reads Bedrock's native tags, and
+/// republishes only when they changed (BDS: the data load at mod enable already read them).
+void onWorldReady() {
+    auto index = vanilla::buildNativeIndex();
+    {
+        std::unique_lock serial(loadMutex(), std::defer_lock);
+        if (!serial.try_lock_for(std::chrono::seconds(30))) {
+            log().error("tags: another tag load has held the lock for 30 s (hung?): the native tags are not refreshed");
+            return;
+        }
+        if (vanilla::sameNativeIndex(nativeIndex().get(), index.get())) return;
+        nativeIndex() = std::move(index);
+    }
+    load(false);
+}
+
+// the data reload (server thread) and every world load
+[[maybe_unused]] bool const kRegistered = (data::onReload([] { load(true); }), game::db::onWorldReady(&onWorldReady), true);
 
 std::string membersKey(Registry registry, std::string_view tag) { return std::to_string(indexOf(registry)) + "|" + std::string(tag); }
 
@@ -505,7 +610,7 @@ bool has(Registry registry, std::string const& tag, std::string const& id) {
     std::string tagBuffer, idBuffer;
     auto const& snapshot = current();
     auto const* r        = snapshot->find(registry, tagKey(tag, tagBuffer));
-    return r && r->has(registry, idKey(id, idBuffer));
+    return r && r->has(registry, idKey(id, idBuffer), snapshot->native.get());
 }
 
 std::vector<std::string> members(Registry registry, std::string const& tag) {
@@ -520,7 +625,7 @@ std::vector<std::string> members(Registry registry, std::string const& tag) {
         r->collectData(all);
         std::vector<std::string> out;
         for (auto const& id : all)
-            if (r->has(registry, id)) out.push_back(id);
+            if (r->has(registry, id, snapshot->native.get())) out.push_back(id);
         return out;
     }
     auto cacheKey = membersKey(registry, key);
@@ -535,7 +640,7 @@ std::vector<std::string> members(Registry registry, std::string const& tag) {
     candidates.insert(ids.begin(), ids.end());
     auto list = std::make_shared<std::vector<std::string>>();
     for (auto const& id : candidates)
-        if (r->has(registry, id)) list->push_back(id);
+        if (r->has(registry, id, snapshot->native.get())) list->push_back(id);
     // the bridge enumerates the game's registries: cache only once a level exists
     if (!ll::service::getLevel()) return *list;
     std::lock_guard lock(snapshot->membersMutex);
@@ -599,8 +704,9 @@ bool hasIn(std::string const& dir, std::string const& tag, std::string const& id
     if (auto r = registryOfDir(dir)) return has(*r, tag, id);
     if (tag.empty() || id.empty()) return false;
     std::string tagBuffer, idBuffer;
-    auto const* r = current()->findData(normalizeDir(dir), tagKey(tag, tagBuffer));
-    return r && r->has(std::nullopt, idKey(id, idBuffer));
+    auto const& snapshot = current();
+    auto const* r        = snapshot->findData(normalizeDir(dir), tagKey(tag, tagBuffer));
+    return r && r->has(std::nullopt, idKey(id, idBuffer), snapshot->native.get());
 }
 
 std::vector<std::string> membersIn(std::string const& dir, std::string const& tag) {
@@ -622,7 +728,7 @@ std::vector<std::string> dataMembers(std::string const& dir, std::string const& 
     r->collectData(all);
     std::vector<std::string> out;
     for (auto const& id : all)
-        if (r->has(registry, id)) out.push_back(id);
+        if (r->has(registry, id, snapshot->native.get())) out.push_back(id);
     return out;
 }
 
@@ -640,12 +746,12 @@ std::size_t fileCount() { return current()->files; }
 
 std::uint64_t generation() { return published().generation.load(std::memory_order_acquire); }
 
-void reload() { load(); }
+void reload() { load(false); }
 
 ScopedSnapshot::ScopedSnapshot(std::filesystem::path const& root)
 : mAlive(std::make_shared<std::atomic<bool>>(true)),
   mThread(std::this_thread::get_id()) {
-    tPrivate = std::make_shared<Private>(Private{build(true, &root), mAlive, std::move(tPrivate)});
+    tPrivate = std::make_shared<Private>(Private{build(true, current()->native, &root), mAlive, std::move(tPrivate)});
 }
 
 ScopedSnapshot::~ScopedSnapshot() {
