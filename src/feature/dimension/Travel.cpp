@@ -352,11 +352,17 @@ bool isInWall(Actor& actor, BlockSource& region) {
     return false;
 }
 
+} // namespace
+
 /// Entity#canUsePortal(false): alive and not a passenger. For other entities also of a kind that
 /// goes through portals: Java entities that never move (lightning, effect clouds, hanging entities,
 /// eyes of ender, end crystals, evoker fangs) never touch blocks, fishing hooks, the dragon and the
-/// wither refuse portals, and the engine's own exclusions (Actor::canChangeDimensionsUsingPortal)
-/// apply except its rule against vehicles with riders (Java 1.21 takes the riders along).
+/// wither refuse portals, and then the actor's own answer, whether or not something rides it:
+/// Actor::canChangeDimensionsUsingPortal, where F8's hooks answer for BaseTFBoss, TF's parts and
+/// the types marked with gf::entity::ext::setCanUsePortal (false) before the engine's own rules.
+/// Like Java's canUsePortal(false), the engine's answer has no rule against riders (a boat with a
+/// pig in it may go: dimension.portal_ridden), so a vehicle travels and takes its riders along
+/// (Entity#changeDimension), while a TF boss stays even with a rider on it.
 bool canUsePortal(Actor& actor) {
     if (!actor.isAlive() || actor.getVehicle()) return false;
     if (actor.isPlayer()) return true;
@@ -375,8 +381,10 @@ bool canUsePortal(Actor& actor) {
     default:
         break;
     }
-    return actor.hasPassenger() || actor.canChangeDimensionsUsingPortal();
+    return actor.canChangeDimensionsUsingPortal();
 }
+
+namespace {
 
 /// Entity#setAsInsidePortal.
 void setAsInsidePortal(State& st, BlockPos const& pos, int cooldownDelay) {

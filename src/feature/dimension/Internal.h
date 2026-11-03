@@ -90,6 +90,11 @@ struct PortalProcessView {
     bool preloaded  = false;
 };
 [[nodiscard]] PortalProcessView portalProcessOf(Actor const& actor);
+/// Entity#canUsePortal(false) as TFPortalBlock#entityInside and Entity#handlePortal ask it: alive,
+/// riding nothing, of a kind that goes through portals, and the actor's own answer whether or not
+/// something rides it (Actor::canChangeDimensionsUsingPortal: F8's refusals of TF's bosses, parts
+/// and marked types, then the engine's).
+[[nodiscard]] bool canUsePortal(Actor& actor);
 /// Entity#setPortalCooldown with a given length (tests: an entity on cooldown that stays in a
 /// portal never goes through it, its cooldown starts again every tick it is inside).
 void setPortalCooldown(Actor& actor, int ticks);
