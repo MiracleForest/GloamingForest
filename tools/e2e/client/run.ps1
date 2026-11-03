@@ -39,7 +39,9 @@
   120 s more when busy) counts as hung too: the game is killed with its process tree and the run is
   NOT RUN (exit 2, a "WATCHDOG:" line). It fails (exit 1) instead when ERR lines, failing selftests
   or content-log errors came before the hang, or when the same scenario and mode hung on the same
-  build in the run before. $env:GF_E2E_TEST_HANG=enable|pipe freezes the game on purpose to test this.
+  build in the runs before (two in a row on different instances, three on one). A hung game gets a
+  minidump (out/<scenario>/hang-<pid>.dmp) and the mod's install trace is printed.
+  $env:GF_E2E_TEST_HANG=enable|pipe freezes the game on purpose to test this.
   Output: tools/e2e/client/out/<scenario>/ (screenshots, client.log, client-content-log.txt,
   selftest.json). Look at the screenshots.
 
@@ -215,6 +217,7 @@ try {
         $left = if ($LockTimeoutMinutes -gt 0) { [Math]::Max(1, [int][Math]::Ceiling(($lockDeadline - (Get-Date)).TotalMinutes)) } else { 0 }
         Enter-E2ELock -TimeoutMinutes $left -Slots $slots
         $outDir = Set-RunOutDir
+        [GfE2E.Watchdog]::DumpDir = $outDir   # a hung game's minidump (lib.ps1 WriteDump)
         if (-not $remote) { break }
         try { $hostInfo = Start-RemoteHost } catch { Exit-E2ELock; throw }
         if ($hostInfo) { break }
@@ -385,8 +388,14 @@ $hung = [bool](Get-WatchdogFired)
 $notRun = if ($hung) { "WATCHDOG: $(Get-WatchdogFired)" } elseif ($script:NotRunReason) { $script:NotRunReason }
 $dll = Join-Path $ModDir "$script:ModName.dll"
 # (a run that never started a game, or a test hang, leaves the count as it is)
-$hangs = if ($script:TestHang -or $script:GamesStarted -eq 0) { 0 } elseif ($hung) { Update-HangRecord $Scenario $Mode $dll -Hung } else { Update-HangRecord $Scenario $Mode $dll }
+$hangs = if ($script:TestHang -or $script:GamesStarted -eq 0) { @{ Count = 0; Instances = @(); Fails = $false } } else { Update-HangRecord $Scenario $Mode $dll -Instance $script:VersionName -Hung:$hung }
 if ($notRun) {
+    if ($hung -and $Mode -ne 'remote-vanilla') {
+        # what the mod logged about its module installs (which install() was still running)
+        $trace = @(Get-ModEnableTrace)
+        if ($trace.Count -gt 0) { Write-Host "[e2e] the mod's install trace before the hang:" -ForegroundColor Yellow; $trace | Select-Object -Last 12 | ForEach-Object { Write-Host "  | $_" } }
+        elseif ($script:GamesStarted -gt 0) { Write-Host "[e2e] the mod logged no install trace: the hang came before its enable() (see client.log)" -ForegroundColor Yellow }
+    }
     # only for a hang: a wrong world's own ERR lines (another world's mod state) are not this scenario's
     if ($hung -and $hardFailures.Count -gt 0) {
         Write-Host "[e2e] client scenario '$Scenario' FAILED (it also could not finish: $notRun)" -ForegroundColor Red
@@ -395,15 +404,15 @@ if ($notRun) {
         Write-Host "[e2e] output: $outDir"
         exit 1
     }
-    if ($hangs -ge 2) {
-        Write-Host "[e2e] client scenario '$Scenario' FAILED: the game hung in $hangs runs in a row of this scenario ($Mode) on the same build" -ForegroundColor Red
+    if ($hangs.Fails) {
+        Write-Host "[e2e] client scenario '$Scenario' FAILED: the game hung in $($hangs.Count) runs in a row of this scenario ($Mode) on the same build (instances: $($hangs.Instances -join ', '))" -ForegroundColor Red
         Write-Host "[e2e]   $notRun" -ForegroundColor Red
         Write-Host "[e2e] output: $outDir"
         exit 1
     }
     Write-Host "[e2e] client scenario '$Scenario' NOT RUN (the run could not test the scenario; retry it)" -ForegroundColor Yellow
     Write-Host "[e2e]   $notRun" -ForegroundColor Yellow
-    if ($hung -and -not $script:TestHang) { Write-Host "[e2e]   (a second hang in a row of '$Scenario' ($Mode) on this build fails)" -ForegroundColor Yellow }
+    if ($hung -and -not $script:TestHang) { Write-Host "[e2e]   (hung runs in a row of '$Scenario' ($Mode) on this build: $($hangs.Count), on $($hangs.Instances -join ', '); two on different instances, or three on one, fail)" -ForegroundColor Yellow }
     foreach ($f in $failures) { Write-Host "[e2e]   (not counted: $f)" -ForegroundColor DarkYellow }
     Write-Host "[e2e] output: $outDir"
     exit 2

@@ -252,7 +252,9 @@ $script:TransportBanner = @(
 # banner, and except the console's own echo of a command's error reply: BDS prints the error output
 # of a command run on its console as "ERR [Server] <reply>" right after the command, and scenarios run
 # failing commands on purpose (a refused /twilightforest locate). The mod logs a command error first as
-# "[GloamingForest] Command error: <reply>" (src/mod/Commands.cpp), but the same text only once per
+# "[GloamingForest] Command error: <msgId> [params]" and, when the server language prints it otherwise (a
+# translated vanilla reply, parameters filled in), "Command error text: <text>" (src/mod/Commands.cpp),
+# but the same reply only once per
 # $script:CommandEchoSeconds (10 s, its spam guard for ticking functions): an [Server] ERR line is the
 # echo when the mod logged the same text, from the same source (in a remote client run the host's
 # "[host] " lines), at most that long before it. An ERR line before any such reply, later, or with other
@@ -268,7 +270,7 @@ function Select-ErrorLines([string[]]$Lines) {
     $replies = @{}
     @(foreach ($l in $Lines) {
         $src = if ($l.StartsWith('[host] ')) { 'host' } else { 'own' }
-        if ($l -match '\[GloamingForest\]\s?Command error: (.*)$') {
+        if ($l -match '\[GloamingForest\]\s?Command error(?: text)?: (.*)$') {
             $key = "$src`u{1}$($Matches[1].TrimEnd())"
             $at = Get-LineSeconds $l
             if ($null -ne $at) { $replies[$key] = $at }

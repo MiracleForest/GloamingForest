@@ -47,15 +47,16 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   service that NetherNet needs). Exactly those six texts are skipped; any other line of the same look fails.
 - **The console's echo of a command reply.** BDS prints the error reply of a command run on its console as
   `ERR [Server] <reply>`, and scenarios run failing commands on purpose (a refused `/twilightforest locate`). The
-  mod logs a command error first as `[GloamingForest] Command error: <reply>` (`src/mod/Commands.cpp`; the same
-  text at most once per 10 s, its guard against ticking functions), and BDS prints the echo right after it. An
-  `ERR [Server]` line is that echo when the mod logged the same text from the same source (in a remote client
-  run the host's `[host]` lines) at most 10 s before it; an `ERR [Server]` line with no such reply before it, a
-  later one or one with other text still fails the run. A scenario checks
-  the replies it provokes itself. The mod logs a reply as its message id and parameters, so this covers the
-  mod's own literal replies; a vanilla command's translated reply (`commands.tickingarea-remove...` logged, "No
-  ticking area ..." printed) is not recognised: a scenario does not send failing vanilla commands on the console
-  (selftests run them through `runServerCommand`, whose output never reaches the console).
+  mod logs a command error first as `[GloamingForest] Command error: <msgId> [<params>]` and, when the server
+  language prints it differently (a translated vanilla reply, a reply with parameters filled in), also as
+  `[GloamingForest] Command error text: <text>`, the text `I18n` makes of the id and parameters
+  (`src/mod/Commands.cpp`; the same reply at most once per 10 s, its guard against ticking functions); BDS
+  prints the echo right after it. An `ERR [Server]` line is that echo when the mod logged the same text (either
+  form) from the same source (in a remote client run the host's `[host]` lines) at most 10 s before it; an
+  `ERR [Server]` line with no such reply before it, a later one or one with other text still fails the run. So
+  the mod's own replies, with or without parameters, and vanilla replies are covered alike (the server `smoke`
+  scenario sends a failing `tickingarea remove` on purpose to keep it so). A scenario checks the replies it
+  provokes itself.
 
 ### Client runs: content log, game options, watchdog, test world
 
@@ -85,13 +86,24 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   of retrying until its own deadline. A game that is still running without `GloamingForest enabled` after 180 s
   (`$env:GF_E2E_ENABLE_TIMEOUT_SEC`) is hung in "Enabling mods" when it used under 0.5 s of CPU in the next
   10 s, and gets 120 s more when it is busy; a game whose BeDD pipe never answers while it loads is hung too.
-  Each prints `[e2e] WATCHDOG: ...`, kills the game and makes the run NOT RUN, with two exceptions that fail it
-  (exit 1): failures recorded before the hang (ERR lines, failing selftests, content-log errors of a session
-  that closed), and a second hung run in a row of the same scenario and mode on the same build (counted in
-  `%LOCALAPPDATA%\lv-e2e\gf-hang.<scenario>.<mode>.<dll hash>.json`; a run that does not hang clears it), so a
-  deadlock in the mod's own code cannot be retried as NOT RUN for ever. `$env:GF_E2E_TEST_HANG=enable` (freeze
-  the game before `GloamingForest enabled`) or `=pipe` (freeze it right before the scenario) suspends the game
-  on purpose to exercise both paths; such runs are not counted.
+  Each prints `[e2e] WATCHDOG: ...`, writes a minidump of the game (`out/<scenario>/hang-<pid>.dmp`: every
+  thread's stack, the module list, a few MB; open it in WinDbg or Visual Studio) and kills it, prints the mod's
+  install trace (below) and makes the run NOT RUN, with two exceptions that fail it (exit 1): failures recorded
+  before the hang (ERR lines, failing selftests, content-log errors of a session that closed), and repeated
+  hangs of the same scenario and mode on the same build: two runs in a row that hung on two different
+  instances, or three in a row on one instance (a broken clone such as `hi2` gets one more retry than the
+  build, never an endless one). The record is
+  `%LOCALAPPDATA%\lv-e2e\gf-hang.<scenario>.<mode>.<dll hash>.json` with the instance of every hung run; a run
+  of that scenario, mode and build that does not hang clears it. So a deadlock in the mod's own code cannot be
+  retried as NOT RUN for ever. `$env:GF_E2E_TEST_HANG=enable` (freeze the game before
+  `GloamingForest enabled`) or `=pipe` (freeze it right before the scenario) suspends the game on purpose to
+  exercise both paths; a run that reaches the freeze point is not counted, but a real hang **before** it (the
+  game stuck in "Enabling mods" before the harness froze it) is a real hang and counts like any other.
+- **Install trace.** The mod logs `installing <N> modules` when it starts enabling, `<N> modules installed in
+  <ms> ms` when done, `module <name> installed in <ms> ms (slow)` for an `install()` over 1 s, and, from a
+  watcher thread, `install: module <name> still running after <ms> ms` every 20 s while one `install()` has not
+  returned (`src/mod/Module.cpp`; the same for `uninstall`). A hung run prints these lines; none at all means
+  the game hung before the mod's `enable()`.
 - **Test world.** After joining, `Enter-TestWorld` checks the mod's `world: level '<LevelName>' opened` line
   (`src/game/WorldDb.cpp`): a world other than `GF-Test`, or a BeDD `join` the run did not send, gets one more
   fresh game with a freshly installed `GF-Test`; the second time the run is NOT RUN (the console says why).

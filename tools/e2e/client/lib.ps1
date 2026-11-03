@@ -258,19 +258,45 @@ public static class Watchdog {
     public static void Suspend(int pid) {
         using (var p = Process.GetProcessById(pid)) { NtSuspendProcess(p.Handle); }
     }
+    /// Where the watchdog writes a minidump of the hung game before it kills it (the run's output
+    /// folder; null: no dump).
+    public static string DumpDir;
+    [System.Runtime.InteropServices.DllImport("dbghelp.dll", SetLastError = true)]
+    static extern bool MiniDumpWriteDump(IntPtr process, uint pid, Microsoft.Win32.SafeHandles.SafeFileHandle file,
+        uint type, IntPtr exception, IntPtr userStream, IntPtr callback);
+    // MiniDumpWithUnloadedModules | MiniDumpWithProcessThreadData | MiniDumpWithThreadInfo: every
+    // thread's stack and state, the module list; a few MB, no heap.
+    const uint DumpType = 0x20 | 0x100 | 0x1000;
+    static string WriteDump(Process p) {
+        if (DumpDir == null) return null;
+        string path = System.IO.Path.Combine(DumpDir, "hang-" + p.Id + ".dmp");
+        try {
+            System.IO.Directory.CreateDirectory(DumpDir);
+            using (var fs = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.ReadWrite, System.IO.FileShare.None)) {
+                if (MiniDumpWriteDump(p.Handle, (uint)p.Id, fs.SafeFileHandle, DumpType, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)) return path;
+            }
+            int err = System.Runtime.InteropServices.Marshal.GetLastWin32Error();
+            try { System.IO.File.Delete(path); } catch (Exception) { }
+            return "failed (error " + err + ")";
+        } catch (Exception e) { return "failed (" + e.Message + ")"; }
+    }
     static void KillAndRecord(string what) {
         var killed = new List<string>();
+        var dumps = new List<string>();
         foreach (var p in Process.GetProcessesByName("Minecraft.Windows")) {
             try {
                 string exe = p.MainModule.FileName;
                 if (InstanceDir == null || !exe.StartsWith(InstanceDir, StringComparison.OrdinalIgnoreCase)) continue;
+                string dump = WriteDump(p);
+                if (dump != null) dumps.Add(dump);
                 p.Kill(true);
                 killed.Add(p.Id.ToString());
             } catch (Exception) { }
         }
         Fired = what + "; "
             + (killed.Count > 0 ? "killed the game's process tree (pid " + string.Join(", ", killed) + ")"
-               : InstanceDir == null ? "killed nothing (this run holds no game lock)" : "no game of " + InstanceDir + " was running");
+               : InstanceDir == null ? "killed nothing (this run holds no game lock)" : "no game of " + InstanceDir + " was running")
+            + (dumps.Count > 0 ? "; minidump " + string.Join(", ", dumps) : "");
         Console.WriteLine("[e2e] WATCHDOG: " + Fired);
     }
 }
@@ -342,19 +368,34 @@ function Register-PipeWatchdog {
 function Get-WatchdogFired { [GfE2E.Watchdog]::Fired }
 
 # A hang is NOT RUN, so that a stuck machine or instance is retried, but a hang the mod causes
-# itself (a deadlock in client code) must not be retried for ever: the second watchdog run in a row
-# of the same scenario, mode and build fails (exit 1). The count lives in the e2e home per
-# scenario, mode and hash of the mod DLL; a run that does not hang clears it. Returns the number of
-# consecutive hung runs including this one (0 when -Hung is not set).
-function Update-HangRecord([string]$Scenario, [string]$Mode, [string]$Dll, [switch]$Hung) {
+# itself (a deadlock in client code) must not be retried for ever. The record lives in the e2e home
+# per scenario, mode and hash of the mod DLL, with the instance of every hung run; a run that does
+# not hang clears it. Consecutive hung runs fail (exit 1) once they happened on two different
+# instances (the same build hangs wherever it runs: the mod's own making), or three times on one
+# instance (a broken instance gets one more retry than the build, but never an endless one).
+# A hang before a test switch's freeze point ($env:GF_E2E_TEST_HANG) is a real one and counts.
+# Returns @{ Count; Instances; Fails } (Count 0 when -Hung is not set).
+function Update-HangRecord([string]$Scenario, [string]$Mode, [string]$Dll, [string]$Instance, [switch]$Hung) {
     $hash = if ($Dll -and (Test-Path $Dll)) { (Get-FileHash $Dll -Algorithm SHA256).Hash.Substring(0, 16) } else { 'nodll' }
     $file = Join-Path (Get-E2EHome) "gf-hang.$Scenario.$Mode.$hash.json"
-    if (-not $Hung) { Remove-Item $file -Force -ErrorAction SilentlyContinue; return 0 }
-    $n = 1
-    if (Test-Path $file) { try { $n = [int](Get-Content $file -Raw | ConvertFrom-Json).count + 1 } catch { $n = 1 } }
-    @{ count = $n; last = (Get-Date).ToString('o'); what = "$(Get-WatchdogFired)" } | ConvertTo-Json | Set-Content $file -Encoding UTF8
-    return $n
+    if (-not $Hung) { Remove-Item $file -Force -ErrorAction SilentlyContinue; return @{ Count = 0; Instances = @(); Fails = $false } }
+    $runs = @()
+    if (Test-Path $file) {
+        try {
+            $old = Get-Content $file -Raw | ConvertFrom-Json
+            # (a record of an older harness has only a count: those runs' instances are unknown)
+            $runs = if ($old.runs) { @($old.runs | ForEach-Object { "$_" }) } else { @(1..[int]$old.count | ForEach-Object { '?' }) }
+        } catch { $runs = @() }
+    }
+    $runs += $Instance
+    @{ count = $runs.Count; runs = $runs; last = (Get-Date).ToString('o'); what = "$(Get-WatchdogFired)" } | ConvertTo-Json | Set-Content $file -Encoding UTF8
+    $distinct = @($runs | Where-Object { $_ -ne '?' } | Sort-Object -Unique)
+    return @{ Count = $runs.Count; Instances = $runs; Fails = ($runs.Count -ge 3 -or ($runs.Count -ge 2 -and $distinct.Count -ge 2)) }
 }
+
+# What the mod said about its module installs before a hang (src/mod/Module.cpp: "module X still
+# running after N ms" every 20 s while one install() runs, "N modules installed in M ms" when done).
+function Get-ModEnableTrace { try { @(Get-LeviLog | Select-String -Pattern "\[$script:ModName\].*(still running after \d+ ms|modules installed in|installing \d+ modules|module \S+ (installed|loaded) in \d+ ms \(slow\))" | ForEach-Object { $_.Line }) } catch { @() } }
 
 # ---------------------------------------------------------------------------------------
 # Lock (one per game instance; slot 1's is shared with BEI's and BeetrootSkin's harnesses)

@@ -100,13 +100,14 @@ the world, checks it is `GF-Test` (else one more fresh game, then NOT RUN) and w
 dot-sources the scenario; **always** cleans up (game closed, content log checked, world and mod
 removed, other mods restored, `content_log_file` put back, locks released). Every BeDD pipe call and
 window capture runs under a watchdog: a game that does not answer within 120 s (plus the call's own
-waits; `$env:GF_E2E_PIPE_TIMEOUT_SEC`) is killed and the run is NOT RUN (`[e2e] WATCHDOG: ...`).
+waits; `$env:GF_E2E_PIPE_TIMEOUT_SEC`) is killed and the run is NOT RUN (`[e2e] WATCHDOG: ...`), with a
+minidump of the game in `out/<scenario>/hang-<pid>.dmp` and the mod's install trace printed.
 
 A run **fails** when the scenario throws; a selftest fails, never prints `DONE` or matches no test;
 any `ERR`/`FTL` line appears in the log, of any logger (`GloamingForest`, `LeviLamina`,
 `CrashLogger`, Bedrock content errors `ERR [Server] [Blocks|Items|...]`, other `ERR [Server]` lines,
 ...), except BDS's six-line "TRANSPORT TYPE ERROR" banner and the console's echo of a command reply the
-mod logged as `Command error:` ([docs/spec/e2e.md](../../docs/spec/e2e.md#error-lines)); the client's
+mod logged as `Command error:` or `Command error text:` ([docs/spec/e2e.md](../../docs/spec/e2e.md#error-lines)); the client's
 content log has an error (warnings are listed, and fail with `-StrictContentLog` or
 `$script:ContentLogStrict = $true`; `out/<scenario>/client-content-log.txt`); a crash file appears;
 the server exits non-zero or has to be killed.
