@@ -35,6 +35,7 @@
 #include "feature/dimension/World.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "mod/Commands.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
@@ -66,26 +67,6 @@ int rowOf(int hundreds) {
     if (hundreds >= 50 && hundreds <= 66) return 31 + (hundreds - 50);
     if (hundreds >= 90 && hundreds <= 99) return 48 + (hundreds - 90);
     return 58 + (((hundreds % 6) + 6) % 6);
-}
-
-struct CommandResult {
-    bool        ok = false;
-    std::string messages; ///< the output message ids and parameters, for failure reports
-};
-
-/// Runs a console command with an origin in dimension `dim` (ticking areas are per dimension).
-CommandResult runServerCommand(std::string const& command, int dim = 0) {
-    auto level = ll::service::getLevel();
-    if (!level) return {false, "no level"};
-    ServerCommandOrigin origin("gloamingforest-selftest", level->asServer(), CommandPermissionLevel::Owner, DimensionType(dim));
-    auto          out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
-    CommandResult r{out.mSuccessCount > 0, {}};
-    for (auto const& m : out.mMessages) {
-        if (!r.messages.empty()) r.messages += "; ";
-        r.messages += m.mMessageId;
-        for (auto const& p : m.mParams) r.messages += " " + p;
-    }
-    return r;
 }
 
 std::string bossEventType(BossEventUpdateType t) {
@@ -141,6 +122,26 @@ void inspectPacket(Packet const& packet) {
     BossEventCapture::record(e);
 }
 } // namespace
+
+CommandResult runServerCommand(std::string const& command, int dim, CommandPermissionLevel permission) {
+    auto level = ll::service::getLevel();
+    if (!level) return {false, 0, "no level"};
+    ServerCommandOrigin origin("gloamingforest-selftest", level->asServer(), permission, DimensionType(dim));
+    // the caller gets the reply in the result: no "Command error:" log line (mod/Commands.h); the
+    // framework's own clean-up removes ticking areas that may not exist on every run
+    struct Quiet {
+        Quiet() { ++commands::detail::quietCommandErrors; }
+        ~Quiet() { --commands::detail::quietCommandErrors; }
+    } quiet;
+    auto out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
+    CommandResult r{out.mSuccessCount > 0, static_cast<int>(out.mSuccessCount), {}};
+    for (auto const& m : out.mMessages) {
+        if (!r.messages.empty()) r.messages += "; ";
+        r.messages += m.mMessageId;
+        for (auto const& p : m.mParams) r.messages += " " + p;
+    }
+    return r;
+}
 
 LL_TYPE_INSTANCE_HOOK(
     SelftestBossToClientHook,

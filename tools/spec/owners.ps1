@@ -15,9 +15,9 @@
     lang (en_us keys), config_section, config_key, net, subcommand, function, gamerule, stat,
     attribute, keybind, registry, registry_entry, selftest, selftest_dx, worlddb, e2e, path, stub;
     plus the kinds of the ids outside TF's namespace a unit declares (units.<u>.ids in the rules,
-    e.g. mod_entity).
+    e.g. mod_entity, and lang keys that are not TF's, e.g. F11's container.chest).
   - id-or-glob: TF ids with their namespace ("twilightforest:naga_stone"); globs for path, net,
-    selftest and worlddb rows; declared ids as written ("gloamingforest:sign_text").
+    selftest and worlddb rows; declared ids as written ("gloamingforest:sign_text", "sign.edit").
   - owner: a unit id (F0..F16, U1..U30, A8).
   - mode: gen (produced by a tool: import, models, synth; regenerate, never hand-edit) or manual.
 
@@ -590,7 +590,11 @@ foreach ($u in $rules.units.Keys) {
             foreach ($e in $unit.ids[$k]) {
                 $i = if ($e -is [Collections.IDictionary]) { [string]$e['id'] } else { [string]$e }
                 $m = if ($e -is [Collections.IDictionary] -and $e.Contains('mode')) { [string]$e['mode'] } else { 'gen' }
-                $problem = if ($i -notmatch '^[a-z0-9_.-]+:[a-z0-9_./-]+$') { "is not a full id <namespace>:<path>" }
+                # lang: a translation key outside TF's en_us (e.g. a vanilla UI string a unit defines in
+                # assets/lang/<locale>/<u>.json); every other kind: a full id
+                $problem = if ($k -eq 'lang' -and $i -notmatch '^[A-Za-z0-9_.-]+$') { "is not a translation key ([A-Za-z0-9_.-]+)" }
+                    elseif ($k -eq 'lang' -and $lang.ContainsKey($i)) { "is a TF en_us key: the lang rules own it" }
+                    elseif ($k -ne 'lang' -and $i -notmatch '^[a-z0-9_.-]+:[a-z0-9_./-]+$') { "is not a full id <namespace>:<path>" }
                     elseif ($i.StartsWith('twilightforest:')) { "is TF's: the rule tables own TF ids" }
                     elseif ($m -notin 'gen', 'manual') { "has mode '$m' (gen or manual)" }
                     elseif ($other = @($owner.Keys | Where-Object { $owner[$_].ContainsKey($i) -and $owner[$_][$i] -ne $u } | Select-Object -First 1)) { "is owned by $($owner[$other[0]][$i]) already ($($other[0]))" }

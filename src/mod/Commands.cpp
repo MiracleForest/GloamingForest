@@ -22,6 +22,8 @@
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/locale/I18n.h"
+#include "mc/locale/Localization.h"
 #include "mc/server/commands/CommandOrigin.h"
 #include "mc/server/commands/CommandOutput.h"
 #include "mc/server/commands/CommandOutputMessageType.h"
@@ -55,7 +57,11 @@ bool isAdmin(CommandOrigin const& origin) { return origin.getPermissionsLevel() 
 
 // Command error replies go only to the sender's chat. Log them too, so e2e scenarios and server
 // admins can see why a player's command failed. A repeated error (a repeating command block, a
-// ticking function) is logged once per 10 s, never per tick.
+// ticking function) is logged once per 10 s, never per tick. Commands the mod runs itself through
+// selftest::runServerCommand (detail::quietCommandErrors) are not logged: the caller gets the reply.
+namespace detail {
+thread_local int quietCommandErrors = 0;
+}
 namespace {
 bool shouldLogCommandError(std::string const& line) {
     static std::mutex                                                             mutex;
@@ -80,7 +86,7 @@ LL_TYPE_INSTANCE_HOOK(
     std::vector<CommandOutputParameter> const& params,
     CommandOutputMessageType                   type
 ) {
-    if (type == CommandOutputMessageType::Error) {
+    if (type == CommandOutputMessageType::Error && detail::quietCommandErrors <= 0) {
         std::string args;
         for (auto const& p : params) {
             args += args.empty() ? " [" : ", ";
@@ -88,7 +94,17 @@ LL_TYPE_INSTANCE_HOOK(
         }
         if (!args.empty()) args += "]";
         auto line = std::string(msgId) + args;
-        if (shouldLogCommandError(line)) gf::log().info("Command error: {}", line);
+        if (shouldLogCommandError(line)) {
+            gf::log().info("Command error: {}", line);
+            // The text as the server language prints it (BDS echoes a console command's error reply
+            // as "ERR [Server] <text>"): the e2e harness matches that echo to this line, also for a
+            // vanilla reply or one with parameters (docs/spec/e2e.md, Error lines).
+            std::vector<std::string> texts;
+            texts.reserve(params.size());
+            for (auto const& p : params) texts.push_back(p.mString);
+            auto text = ::getI18n().get(std::string(msgId), texts, ::getI18n().getCurrentLanguage().get());
+            if (!text.empty() && text != line) gf::log().info("Command error text: {}", text);
+        }
     }
     origin(msgId, params, type);
 }
