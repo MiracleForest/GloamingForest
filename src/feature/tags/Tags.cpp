@@ -297,6 +297,8 @@ private:
                 auto const& sub = mDone.at(w);
                 if (sub->opaque()) {
                     addUnique(base->nested, sub);
+                    for (auto const& b : sub->bridged)
+                        if (std::find(base->bridged.begin(), base->bridged.end(), b) == base->bridged.end()) base->bridged.push_back(b);
                     continue;
                 }
                 base->data.insert(sub->data.begin(), sub->data.end());
@@ -355,10 +357,12 @@ private:
     int                        mNext = 0;
 };
 
-/// Reads the data tree and resolves every tag (the data's and the bridge's) into a new snapshot.
-std::shared_ptr<Snapshot const> build() {
+/// Reads the data tree (`withData`) and resolves every tag (the data's and the bridge's) into a new
+/// snapshot. Without the data it holds the bridge's rules only: the answers before the first load.
+std::shared_ptr<Snapshot const> build(bool withData) {
     auto s = std::make_shared<Snapshot>();
-    for (auto const& f : data::list("tags")) {
+    auto const files = withData ? data::list("tags") : std::vector<data::File>{};
+    for (auto const& f : files) {
         auto [dir, path] = splitRegistry(f.rel);
         if (dir.empty() || path.empty()) continue;
         auto doc = data::read(f.path);
@@ -394,7 +398,7 @@ std::shared_ptr<Snapshot const> build() {
 /// snapshot, and a thread still reading the old one keeps it alive.
 struct Published {
     std::mutex                      mutex; ///< guards `snapshot`; serialises loads
-    std::shared_ptr<Snapshot const> snapshot = std::make_shared<Snapshot>();
+    std::shared_ptr<Snapshot const> snapshot = build(false); ///< the bridge alone until the data loads
     std::atomic<std::uint64_t>      generation{1};
 };
 
@@ -427,7 +431,7 @@ std::mutex& loadMutex() {
 
 void load() {
     std::lock_guard serial(loadMutex());
-    auto            next = build();
+    auto            next = build(true);
     auto            files = next->files;
     {
         auto&           p = published();

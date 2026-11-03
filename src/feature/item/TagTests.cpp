@@ -204,7 +204,7 @@ GF_REGISTER_SELFTEST("item.tags_vanilla_java", [](Context& ctx) {
     // overworld_natural_logs (block): the plain logs of the overworld trees
     for (auto const* id : {"minecraft:oak_log", "minecraft:birch_log", "minecraft:cherry_log", "minecraft:mangrove_log"})
         ctx.check(block("minecraft:overworld_natural_logs", id), std::string("#minecraft:overworld_natural_logs holds ") + id);
-    for (auto const* id : {"minecraft:stripped_oak_log", "minecraft:oak_wood", "minecraft:crimson_stem", "twilightforest:twilight_oak_log"})
+    for (auto const* id : {"minecraft:stripped_oak_log", "minecraft:oak_wood", "minecraft:crimson_stem", "minecraft:pale_oak_log", "twilightforest:twilight_oak_log"})
         ctx.check(!block("minecraft:overworld_natural_logs", id), std::string("but not ") + id);
     // replaceable: bubble columns and the light blocks (Java's light)
     for (auto const* id : {"minecraft:bubble_column", "minecraft:light_block_0", "minecraft:light_block_15", "minecraft:short_grass", "minecraft:snow_layer"})
@@ -251,7 +251,7 @@ GF_REGISTER_SELFTEST("item.tags_vanilla_java", [](Context& ctx) {
     ctx.info("the bridge lists " + std::to_string(listed) + " block / item ids, " + std::to_string(missing) + " of them not ids of this game (legacy or newer names)");
 });
 
-// Minecraft 1.21.1's structure tags (data/minecraft/tags/worldgen/structure, all 13): /tf locate
+// Minecraft 1.21.1's structure tags (data/minecraft/tags/worldgen/structure, all 20): /tf locate
 // #minecraft:village finds the tag (and no village in the Twilight Forest).
 GF_REGISTER_SELFTEST("item.tags_structures", [](Context& ctx) {
     struct Expect {
@@ -266,6 +266,13 @@ GF_REGISTER_SELFTEST("item.tags_structures", [](Context& ctx) {
         {"minecraft:mineshaft", {"minecraft:mineshaft", "minecraft:mineshaft_mesa"}},
         {"minecraft:ocean_ruin", {"minecraft:ocean_ruin_cold", "minecraft:ocean_ruin_warm"}},
         {"minecraft:on_ocean_explorer_maps", {"minecraft:monument"}},
+        {"minecraft:on_desert_village_maps", {"minecraft:village_desert"}},
+        {"minecraft:on_plains_village_maps", {"minecraft:village_plains"}},
+        {"minecraft:on_savanna_village_maps", {"minecraft:village_savanna"}},
+        {"minecraft:on_snowy_village_maps", {"minecraft:village_snowy"}},
+        {"minecraft:on_taiga_village_maps", {"minecraft:village_taiga"}},
+        {"minecraft:on_jungle_explorer_maps", {"minecraft:jungle_pyramid"}},
+        {"minecraft:on_swamp_explorer_maps", {"minecraft:swamp_hut"}},
         {"minecraft:on_treasure_maps", {"minecraft:buried_treasure"}},
         {"minecraft:on_trial_chambers_maps", {"minecraft:trial_chambers"}},
         {"minecraft:on_woodland_explorer_maps", {"minecraft:mansion"}},
@@ -277,7 +284,7 @@ GF_REGISTER_SELFTEST("item.tags_structures", [](Context& ctx) {
          {"minecraft:village_desert", "minecraft:village_plains", "minecraft:village_savanna", "minecraft:village_snowy", "minecraft:village_taiga"}},
     };
     auto known = gf::tags::vanilla::knownTags(Registry::Structure);
-    ctx.check(known.size() == expected.size(), "the bridge knows Minecraft's 13 structure tags (got " + std::to_string(known.size()) + ")");
+    ctx.check(known.size() == expected.size(), "the bridge knows Minecraft's 20 structure tags (got " + std::to_string(known.size()) + ")");
     for (auto const& e : expected) {
         auto got = gf::tags::members(Registry::Structure, e.tag);
         auto want = e.members;

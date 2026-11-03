@@ -151,10 +151,9 @@ Rules buildRules() {
     both("minecraft:logs_that_burn", {.suffixes = {"_log", "_wood"}, .native = {}});
     block("minecraft:logs", {.native = {"log"}, .include = {"minecraft:logs_that_burn", "minecraft:crimson_stems", "minecraft:warped_stems"}});
     item("minecraft:logs", {.native = {"minecraft:logs"}, .include = {"minecraft:logs_that_burn", "minecraft:crimson_stems", "minecraft:warped_stems"}});
-    // Java 1.21.1 (block only): the eight overworld trees' plain logs; pale_oak_log as Java 1.21.4
-    // adds it with the pale oak, which Bedrock has
+    // Java 1.21.1 (block only): the eight overworld trees' plain logs
     block("minecraft:overworld_natural_logs",
-          {.ids = {"acacia_log", "birch_log", "oak_log", "jungle_log", "spruce_log", "dark_oak_log", "mangrove_log", "cherry_log", "pale_oak_log"}});
+          {.ids = {"acacia_log", "birch_log", "oak_log", "jungle_log", "spruce_log", "dark_oak_log", "mangrove_log", "cherry_log"}});
     both("minecraft:planks", {.suffixes = {"_planks"}});
     both("minecraft:leaves", {.ids = {"azalea_leaves_flowered", "flowering_azalea_leaves"}, .suffixes = {"_leaves"}});
     both("minecraft:saplings", {.ids = {"azalea", "flowering_azalea", "mangrove_propagule"}, .suffixes = {"_sapling"}, .excludes = {"bamboo_sapling"}});
@@ -385,6 +384,14 @@ Rules buildRules() {
     structure("minecraft:mineshaft", {.ids = {"mineshaft", "mineshaft_mesa"}});
     structure("minecraft:ocean_ruin", {.ids = {"ocean_ruin_cold", "ocean_ruin_warm"}});
     structure("minecraft:on_ocean_explorer_maps", {.ids = {"monument"}});
+    // the village and explorer map tags of the villager trade rebalance (added in 1.20.5)
+    structure("minecraft:on_desert_village_maps", {.ids = {"village_desert"}});
+    structure("minecraft:on_plains_village_maps", {.ids = {"village_plains"}});
+    structure("minecraft:on_savanna_village_maps", {.ids = {"village_savanna"}});
+    structure("minecraft:on_snowy_village_maps", {.ids = {"village_snowy"}});
+    structure("minecraft:on_taiga_village_maps", {.ids = {"village_taiga"}});
+    structure("minecraft:on_jungle_explorer_maps", {.ids = {"jungle_pyramid"}});
+    structure("minecraft:on_swamp_explorer_maps", {.ids = {"swamp_hut"}});
     structure("minecraft:on_treasure_maps", {.ids = {"buried_treasure"}});
     structure("minecraft:on_trial_chambers_maps", {.ids = {"trial_chambers"}});
     structure("minecraft:on_woodland_explorer_maps", {.ids = {"mansion"}});
