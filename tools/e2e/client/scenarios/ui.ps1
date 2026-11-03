@@ -14,7 +14,9 @@
 #   must run its factory, a jump must give JumpPressed / LeftGround / Landed edges, a movement rule
 #   must correct a real client's move and a distance rule must not correct a respawn (the server
 #   turns doimmediaterespawn / keepinventory on and puts their earlier values back). The framed map
-#   leaves the player icon out (Java's showOnItemFrame). Blocks go on the stage in the ui selftest
+#   leaves the player icon out (Java's showOnItemFrame). The frame step's stage also holds a block
+#   renderer, a tint on the game's foliage and two named armor stands, one of whose name tags the
+#   client hides with render::hideNameTag (the other stays drawn). Blocks go on the stage in the ui selftest
 #   row; ui.fixture_clear puts the stage and the player back after each step. All of it twice in
 #   local mode: Classic (graphics_mode 1, set by ui.prelaunch.ps1) and Vibrant Visuals (graphics_mode
 #   2, after a game restart; the restarted world may still carry the tag and the fixture's leftovers
@@ -280,7 +282,8 @@ function Invoke-UiFixture([string]$mode) {
     Wait-LogLine 'ui: toast drawn' 30 -Since $mark | Out-Null
     # the toasts' frame is the game's own toast texture (logged once per game session)
     Wait-LogLine 'ui: toast frame drawn with textures/ui/greyBorder' 30 | Out-Null
-    Wait-LogLine 'ui fixture: world lines drawn' 30 -Since $mark | Out-Null
+    # an onWorld callback gets no lightAt (drawGeo lights each geometry at its own place)
+    Wait-LogLine 'ui fixture: world lines drawn \(lightAt none\)' 30 -Since $mark | Out-Null
     Start-Sleep -Seconds 2
     $shot = Save-Screenshot "$mode-hud-toast-world"
     # the HUD layer's block items (drawn after the game's UI pass): a vanilla and a TF block, cubes
@@ -342,6 +345,14 @@ function Invoke-UiItems([string]$mode) {
         $light = Wait-UiLine '^(?!\[host\]).*render: block renderers drawn, each with the light at its block' 20 0   # once per game session
         $tint  = Wait-UiLine '^(?!\[host\]).*ui fixture: stage leaves tinted from the game''s foliage' 20 $mark
         Write-Step "${mode}: stage renderers ran: $block | $light | $tint"
+        # render::hideNameTag in a real frame: of the two named armor stands behind the stage blocks
+        # (name tags always shown), the client fixture's rule (type and predicate) hides one; the name
+        # tag pass (ActorRenderDispatcher::extractRenderTextObjects) drops it and draws the other
+        Wait-LogLine "${hostRx}ui fixture: 2 named armor stand\(s\) placed on the stage" 20 -Since $mark | Out-Null
+        $hidden = Wait-UiLine '^(?!\[host\]).*ui fixture: name tag of ''GF UI hidden name tag'' hidden' 20 $mark
+        $pass   = Wait-UiLine '^(?!\[host\]).*render: name tag hidden \(minecraft:armor_stand\)' 20 0   # once per game session
+        $shown  = Wait-UiLine '^(?!\[host\]).*ui fixture: name tag of ''GF UI shown name tag'' left drawn' 20 $mark
+        Write-Step "${mode}: name tags: $hidden | $pass | $shown"
     }
     Start-Sleep -Seconds 2
     Save-Screenshot "$mode-frame" | Out-Null

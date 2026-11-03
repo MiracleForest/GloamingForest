@@ -84,8 +84,10 @@ namespace gf::client::render {
 //   block (Java's BlockEntityRenderer packedLight), an entity renderer and the items an entity holds
 //   or wears the light at the entity's eyes (Java's getPackedLightCoords), an item on the ground the
 //   light at the item, an item in a frame the light at the frame block (full bright in a glow
-//   frame), an item in a GUI slot full bright (Java's GUI items), an onWorld callback the light at
-//   the camera. The light itself (the entity constants of the actor materials:
+//   frame), an item in a GUI slot full bright (Java's GUI items). An onWorld callback gets no
+//   lightAt (nullopt): drawGeo lights each geometry it draws at that geometry's own translation (a
+//   world position), wherever in the world it is; a callback that draws with the game's lit
+//   materials itself calls setupLight(ctx, place) for each place it draws at. The light itself (the entity constants of the actor materials:
 //   ActorShaderManager::setupShaderParameters, the block and sky light the lit materials multiply
 //   by) is applied where it is drawn with: drawGeo sets it before every draw (at lightAt, else at
 //   its own position), so neither the draw before the renderer nor draws in between (text, the
@@ -159,7 +161,7 @@ public:
     /// Where the light of this renderer is taken (world coordinates; "What a renderer
     /// finds at entry"): the block of a block renderer, the eyes of the entity of an entity renderer
     /// and of the holder / wearer of an item, the item entity on the ground, the frame block of a
-    /// framed item, the camera for onWorld. drawGeo draws with the light here (nullopt: at its own
+    /// framed item; nullopt for onWorld. drawGeo draws with the light here (nullopt: at its own
     /// translation, which is then a world position). A renderer may move it (e.g. to light a
     /// geometry by the block above).
     std::optional<Vec3> lightAt;

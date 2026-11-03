@@ -317,6 +317,8 @@ GF_REGISTER_SELFTEST("ui.fixture_frame", [](Context& ctx) -> ll::coro::CoroTask<
             "stage blocks: " + gf::game::blockId(region->getBlock({origin.x - 1, origin.y, origin.z + 2})) + " and " +
             gf::game::blockId(region->getBlock({origin.x + 1, origin.y, origin.z + 2}))
         );
+        // two named armor stands behind them: the client fixture hides one name tag (render::hideNameTag)
+        ctx.check(fx::placeNameTagStands(*region, origin) == 2, "the named armor stands are on the stage");
     }
     auto pos = ctx.testPos(6230, 1);
     co_await ctx.ensureLoaded(pos);
@@ -328,6 +330,31 @@ GF_REGISTER_SELFTEST("ui.fixture_frame", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.require(fx::placeFrame(*region, at, kFixtureItem), "the frame is placed");
     ctx.check(fx::frameItem(*region, at) == kFixtureItem, "the frame holds the fixture item");
     co_await removeFrame(ctx, pos);
+});
+
+// The stage's named armor stands (the client fixture's name tag step) are placed and removed again,
+// nothing dropped (dx 6236: the row, dz 0..4).
+GF_REGISTER_SELFTEST("ui.fixture_name_stands", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (fixtureOff(ctx)) co_return;
+    auto pos = ctx.testPos(6236, 0);
+    co_await ctx.ensureLoaded(gf::core::GlobalPos{pos.dim, pos.x, pos.y, pos.z + 4});
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto     origin = gf::game::blockPos(pos);
+    BlockPos min{origin.x - 1, origin.y - 1, origin.z};
+    auto     before = fx::itemEntitiesNear(*region, {origin.x, origin.y, origin.z + 4}, 3);
+    ctx.require(fx::placeNameTagStands(*region, origin) == 2, "two named armor stands are placed");
+    ctx.check(fx::placeNameTagStands(*region, origin) == 2, "placing them again replaces the earlier ones");
+    co_await ctx.ticks(2);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    ctx.check(fx::removeNameTagStands(*region, min) == 2, "both are removed (and no more than two were there)");
+    co_await ctx.ticks(2);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    ctx.check(fx::removeNameTagStands(*region, min) == 0, "none is left");
+    auto after = fx::itemEntitiesNear(*region, {origin.x, origin.y, origin.z + 4}, 3);
+    ctx.check(after <= before, "nothing dropped: " + std::to_string(before) + " item(s) before, " + std::to_string(after) + " after");
 });
 
 // ItemContext::Head: the fixture block on the tagged players' heads (their helmet is kept and put

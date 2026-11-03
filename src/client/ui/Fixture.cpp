@@ -8,7 +8,9 @@
 //   icon (twilight oak planks) and a literal body;
 // - stage renderers (the frame step, "stage": its origin): a block renderer on the fixture block left
 //   of the frame (the fixture geometry, lit by the block above it) and a tint of the twilight oak
-//   leaves right of it built on the game's foliage colour (red and blue swapped on the stage only);
+//   leaves right of it built on the game's foliage colour (red and blue swapped on the stage only),
+//   and a name tag rule for the two named armor stands behind them (render::hideNameTag by type and
+//   predicate: the one named "GF UI hidden name tag" loses its name tag, the other keeps it);
 // - world: a line box around the block below the player, a line up to the sky and the fixture
 //   geometry (geometry.gf_ui.fixture) drawn with drawGeo in front of the player;
 // - fog: a provider for the player's dimension (red fog 4..24 blocks, clouds at y 160), and a sky
@@ -46,6 +48,7 @@
 #include "mc/client/game/ClientInstance.h"
 #include "mc/client/options/IOptionRegistry.h"
 #include "mc/client/player/LocalPlayer.h"
+#include "mc/world/actor/Actor.h"
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/options/GraphicsMode.h"
 #include "mc/world/item/ItemStack.h"
@@ -194,7 +197,8 @@ void drawWorld(render::RenderContext& ctx, float) {
     // the fixture geometry three blocks to the south, turning slowly
     float spin = static_cast<float>(std::fmod(static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()) / 25.0, 360.0));
     render::drawGeo(ctx, kGeo, tex().geo, {.translation = {bx + .5f, by, bz + 3.5f}, .rotationDeg = {0, spin, 0}, .scale = {1, 1, 1}});
-    if (!st().loggedWorld.exchange(true)) log().info("ui fixture: world lines drawn");
+    // an onWorld callback gets no lightAt: drawGeo lit the geometry at its own translation
+    if (!st().loggedWorld.exchange(true)) log().info("ui fixture: world lines drawn (lightAt {})", ctx.lightAt ? "set" : "none");
 }
 
 /// An item space as the fixture draws it: a box of half size `half`, the axes and the geometry.
@@ -230,8 +234,9 @@ constexpr char kStageLeaves[] = "twilightforest:twilight_oak_leaves";
 struct StageAt {
     std::atomic<bool> on{false};
     std::atomic<int>  x{0}, y{0}, z{0};
-    std::atomic<bool> loggedBlock{false}, loggedTint{false};
+    std::atomic<bool> loggedBlock{false}, loggedTint{false}, loggedHiddenTag{false}, loggedShownTag{false};
     int               ticks = 0; // client thread: ticks since the stage renderers came on
+    std::optional<render::NameTagFn> keptStandRule; // client thread: the armor stand rule before the stage
 };
 StageAt& stageAt() {
     static StageAt s;
@@ -267,21 +272,43 @@ unsigned tintStageLeaves(BlockPos const& p, tint::GameColors const& game) {
     return swapped;
 }
 
+constexpr char kStageStand[] = "minecraft:armor_stand";
+
+/// The name tag rule of the stage's armor stands (gf::ui::fixture::placeNameTagStands): the one named
+/// kHiddenNameTag is hidden, the one named kShownNameTag keeps its name tag (render thread).
+bool hideStageStandTag(Actor const& a) {
+    auto const& name = a.getNameTag();
+    if (name == gf::ui::fixture::kHiddenNameTag) {
+        if (!stageAt().loggedHiddenTag.exchange(true)) log().info("ui fixture: name tag of '{}' hidden", name);
+        return true;
+    }
+    if (name == gf::ui::fixture::kShownNameTag && !stageAt().loggedShownTag.exchange(true)) log().info("ui fixture: name tag of '{}' left drawn", name);
+    return false;
+}
+
 void setStage(std::optional<BlockPos> origin) {
     auto& s = stageAt();
     if (!origin) {
         if (!s.on.exchange(false)) return;
         render::unregisterBlockRenderer(kFixtureHead);
         tint::unregisterBlock(kStageLeaves);
+        // the armor stand rule from before the stage is back (or none)
+        if (s.keptStandRule) render::hideNameTag(kStageStand, *s.keptStandRule);
+        else render::showNameTag(kStageStand);
+        s.keptStandRule.reset();
         return;
     }
     s.x = origin->x, s.y = origin->y, s.z = origin->z;
     s.loggedBlock = false;
-    s.loggedTint  = false;
-    s.ticks       = 0;
-    s.on          = true;
+    if (!s.on) s.keptStandRule = render::nameTagRule(kStageStand); // (a stage moved keeps the first one)
+    s.loggedTint      = false;
+    s.loggedHiddenTag = false;
+    s.loggedShownTag  = false;
+    s.ticks           = 0;
+    s.on              = true;
     render::registerBlockRenderer(kFixtureHead, drawStageBlock);
     tint::registerBlock(kStageLeaves, tint::GameTintFn{tintStageLeaves});
+    render::hideNameTag(kStageStand, hideStageStandTag);
     log().info("ui fixture: stage renderers on at {} {} {}", origin->x, origin->y, origin->z);
 }
 
