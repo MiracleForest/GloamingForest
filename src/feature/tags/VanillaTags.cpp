@@ -296,7 +296,8 @@ Rules buildRules() {
                    "structure_block", "jigsaw", "moving_block", "obsidian", "crying_obsidian", "end_stone", "iron_bars", "respawn_anchor", "reinforced_deepslate"}});
 
     // ---- items -------------------------------------------------------------------------------------
-    item("minecraft:swords", {.native = {"minecraft:is_sword"}});
+    // Bedrock tags the mace minecraft:is_sword; Java's #swords does not hold it
+    item("minecraft:swords", {.excludes = {"mace"}, .native = {"minecraft:is_sword"}});
     item("minecraft:pickaxes", {.native = {"minecraft:is_pickaxe"}});
     item("minecraft:axes", {.native = {"minecraft:is_axe"}});
     item("minecraft:shovels", {.native = {"minecraft:is_shovel"}});

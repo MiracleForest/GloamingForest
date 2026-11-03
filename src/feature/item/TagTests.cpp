@@ -181,7 +181,9 @@ GF_REGISTER_SELFTEST("item.tags_remove", [](Context& ctx) {
     ctx.check(has("gf_test:hot", "gf_test:plain") && has("gf_test:hot", "gf_test:other"), "but the rest");
     auto hot = gf::tags::members(Registry::Item, "gf_test:hot");
     ctx.check(contains(hot, "gf_test:plain") && !contains(hot, "gf_test:fiery") && contains(hot, "minecraft:mace"), "members agree");
-    ctx.check(has("gf_test:blunt", "minecraft:iron_axe") && has("gf_test:blunt", "minecraft:mace"), "#tag removal: the axes and the mace stay");
+    ctx.check(!has("minecraft:swords", "minecraft:mace"), "the mace is no sword (Bedrock's is_sword holds it, Java's #swords does not)");
+    ctx.check(has("gf_test:blunt", "minecraft:iron_axe"), "#tag removal: the axes stay");
+    ctx.check(has("gf_test:blunt", "minecraft:mace"), "#tag removal: the mace stays");
     ctx.check(!has("gf_test:blunt", "minecraft:iron_sword") && !has("gf_test:blunt", "gf_test:plain"), "the swords (bridge and data) are gone");
 });
 
