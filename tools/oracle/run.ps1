@@ -10,7 +10,7 @@
   3. Takes a bds throttle slot (rule R23) and, for each seed of tools/oracle/spec.json, starts a
      fresh server (new world, default TF config, flat overworld, RCON on a free local port), runs
      the dumps over RCON and stops it. Seed-independent kinds run with the first seed only.
-  4. Writes tests/golden/<kind>.json (rng, noise, mobs, loot, recipes, uncrafting) and
+  4. Writes tests/golden/<kind>.json (rng, noise, mobs, loot, recipes, uncrafting, structure_steps) and
      tests/golden/<kind>/seed-<seed>.json (biomes, heights, density, landmarks, surface), and
      records each file's size, FNV-1a 64 and SHA-256 in tests/golden/manifest.json.
 
