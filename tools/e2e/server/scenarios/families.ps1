@@ -6,9 +6,11 @@
 # shapes and interactions, saplings, the block events contract, waterlogging, the loot of a broken
 # unopened chest, hanging signs chained, TF's own blocks through the kit, TF's chests as block actor
 # containers (hoppers on, beside and under single and double chests, the comparator of a single and
-# of a double chest, 0 while blocked, a dropper, a hopper minecart, a hopper unpacking a loot table, a
-# chest hidden from hoppers, an open client mod chest screen refreshed by a hopper, block data stacks
-# moved before a hopper or a click reaches them); then what a world reload keeps: the
+# of a double chest, 0 while blocked, a dropper, a crafter, a hopper minecart, a hopper unpacking a
+# loot table, a chest hidden from hoppers, open client mod chest screens refreshed by a hopper,
+# another player's click and code, block data stacks moved before a hopper or a click reaches them
+# or by a neighbouring chunk's first tick, and dropped when the chest breaks before that); then what
+# a world reload keeps: the
 # sign text (and its display entity), the release of switches saved while pressed, the chests'
 # stacks in their block actors, and a chest saved without a block actor (its stacks in block data, as
 # the BlockData backend kept them) moving its stacks into one.
@@ -18,8 +20,8 @@ Wait-LogLine 'families: installed' 60 | Out-Null
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'families.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) families selftest(s) failed" }
-if ($r.Pass -lt 28) { throw "expected at least 28 families selftests to pass, got $($r.Pass)" }
-foreach ($t in 'families.chest_hoppers', 'families.chest_hoppers_more', 'families.chest_hoppers_screen', 'families.chest_migrate_lazy', 'families.chest_persist_a_write', 'families.chest_persist_b_read') {
+if ($r.Pass -lt 32) { throw "expected at least 32 families selftests to pass, got $($r.Pass)" }
+foreach ($t in 'families.chest_hoppers', 'families.chest_hoppers_more', 'families.chest_hoppers_screen', 'families.chest_migrate_lazy', 'families.chest_migrate_removed', 'families.chest_crafter', 'families.chest_persist_a_write', 'families.chest_persist_b_read') {
     if (-not (Get-ServerLog -Since $mark | Select-String -Pattern "SELFTEST PASS $([regex]::Escape($t))$" -Quiet)) { throw "$t did not pass" }
 }
 if (Get-ServerLog -Since $mark | Select-String -Pattern 'no TF chests in this build' -Quiet) { throw "TF's chests are not in this build" }

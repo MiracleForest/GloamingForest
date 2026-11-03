@@ -1,11 +1,12 @@
 // Block families (F11): selftests of the chests' native containers (testPos dx 6100..6199): TF's
 // chests keep their slots in the block actor of minecraft:block_entity (F10's native backend), so
-// hoppers, hopper minecarts and droppers fill and empty them as Java's do (Hoppers.cpp: a double
-// chest is one CompoundContainer, the right half first, the blocked rule ignored), comparators read
-// a single chest and the double inventory (0 while a half is blocked), a client mod user's open
-// chest screen shows what a hopper changed, the stacks survive a server restart, and a chest whose
-// stacks were kept in block data (no block actor) moves them into its container (Chests.cpp
-// migrateChest: in its chunk's first tick, or before a hopper or a player reaches it).
+// hoppers, hopper minecarts, droppers and crafters fill and empty them as Java's do (Hoppers.cpp: a
+// double chest is one CompoundContainer, the right half first, the blocked rule ignored),
+// comparators read a single chest and the double inventory (0 while a half is blocked), client mod
+// users' open chest screens show what a hopper, another player or code changed, the stacks survive
+// a server restart, and a chest whose stacks were kept in block data (no block actor) moves them
+// into its container (Chests.cpp migrateChest: in its chunk's or a neighbouring chunk's first tick,
+// or before a hopper or a player reaches it) and loses none when broken before that.
 
 #include <algorithm>
 #include <functional>
@@ -37,6 +38,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/CrafterBlockActor.h"
 #include "mc/world/level/block/actor/DropperBlockActor.h"
 #include "mc/world/level/block/actor/HopperBlockActor.h"
 #include "mc/world/level/block/actor/VanillaBlockActorFactory.h"
@@ -96,6 +98,7 @@ Container* vanillaContainer(BlockSource& region, GlobalPos const& p) {
     if (!a) return nullptr;
     if (a->getType() == BlockActorType::Hopper) return static_cast<Container*>(static_cast<HopperBlockActor*>(a));
     if (a->getType() == BlockActorType::Dropper) return static_cast<Container*>(static_cast<DropperBlockActor*>(a));
+    if (a->getType() == BlockActorType::Crafter) return static_cast<Container*>(static_cast<CrafterBlockActor*>(a));
     return nullptr;
 }
 
@@ -172,21 +175,51 @@ bool stacksInBlockData(BlockSource& region, GlobalPos const& p, int slot, ItemSt
     return inv::nativeContainer(region, bp(p)) != nullptr;
 }
 
-/// The player stands south of `p` looking at it with an empty hand, then right-clicks its top as the
-/// network handler runs a click (GameMode::useItemOn, a first event).
-ll::coro::CoroTask<> clickChest(Context& ctx, GlobalPos p) {
-    {
-        auto& sp = static_cast<SimulatedPlayer&>(ctx.player());
-        sp.teleport(Vec3{p.x + .5f, static_cast<float>(p.y), p.z + 2.5f}, sp.getDimensionId());
-        sp.simulateLookAt(bp(p), sim::LookDuration::Instant);
-        sp.simulateSetItem(ItemStack::EMPTY_ITEM(), true, 0);
+/// A player of the test by its unique id (nullptr: gone).
+SimulatedPlayer* simPlayerById(Context& ctx, std::int64_t uid) {
+    auto* region = ctx.region();
+    if (!region) return nullptr;
+    ActorUniqueID id;
+    id.rawID = uid;
+    return static_cast<SimulatedPlayer*>(region->getLevel().getPlayer(id));
+}
+
+/// The test player `uid` (the test's own player by default) stands south of `p` looking at it with
+/// an empty hand, then right-clicks its top as the network handler runs a click
+/// (GameMode::useItemOn, a first event).
+ll::coro::CoroTask<> clickChestAs(Context& ctx, std::int64_t uid, GlobalPos p) {
+    if (auto* sp = simPlayerById(ctx, uid)) {
+        sp->teleport(Vec3{p.x + .5f, static_cast<float>(p.y), p.z + 2.5f}, sp->getDimensionId());
+        sp->simulateLookAt(bp(p), sim::LookDuration::Instant);
+        sp->simulateSetItem(ItemStack::EMPTY_ITEM(), true, 0);
     }
     co_await ctx.ticks(8); // the look applies on the player's next tick; Bedrock drops a use-on right after another
-    auto& sp   = static_cast<SimulatedPlayer&>(ctx.player());
-    auto  b    = bp(p);
-    auto& held = const_cast<ItemStack&>(sp.getSelectedItem());
-    sp.mGameMode->useItemOn(held, b, 1, Vec3{b.x + .5f, b.y + 1.f, b.z + .5f}, HandSlot::Mainhand, nullptr, true);
+    if (auto* sp = simPlayerById(ctx, uid)) {
+        auto  b    = bp(p);
+        auto& held = const_cast<ItemStack&>(sp->getSelectedItem());
+        sp->mGameMode->useItemOn(held, b, 1, Vec3{b.x + .5f, b.y + 1.f, b.z + .5f}, HandSlot::Mainhand, nullptr, true);
+    }
     co_await ctx.ticks(1);
+}
+ll::coro::CoroTask<> clickChest(Context& ctx, GlobalPos p) { co_await clickChestAs(ctx, ctx.player().getOrCreateUniqueID().rawID, p); }
+
+/// The items of `id` lying in the world within 3 blocks of `p`.
+int droppedNear(Context& ctx, GlobalPos const& p, std::string const& id) {
+    auto* region = ctx.region();
+    if (!region) return 0;
+    AABB box{Vec3{p.x - 3.f, p.y - 3.f, p.z - 3.f}, Vec3{p.x + 4.f, p.y + 4.f, p.z + 4.f}};
+    int  n = 0;
+    for (Actor* a : region->getEntities(box, 0.0f))
+        if (a && a->getTypeName() == "minecraft:item")
+            if (auto const& s = static_cast<ItemActor*>(a)->item(); !items::isEmpty(s) && items::idOf(s) == id) n += items::countOf(s);
+    return n;
+}
+void clearDropsNear(Context& ctx, GlobalPos const& p) {
+    auto* region = ctx.region();
+    if (!region) return;
+    AABB box{Vec3{p.x - 3.f, p.y - 3.f, p.z - 3.f}, Vec3{p.x + 4.f, p.y + 4.f, p.z + 4.f}};
+    for (Actor* a : region->getEntities(box, 0.0f))
+        if (a && a->getTypeName() == "minecraft:item") a->remove();
 }
 
 /// The client mod's messages of the inventory contract's chest screen sent to the player since the
@@ -602,6 +635,46 @@ GF_REGISTER_SELFTEST("families.chest_hoppers_screen", [](Context& ctx) -> ll::co
     ctx.check(msgs.contains("screen.update") && shownSlot(msgs["screen.update"], 0) == "minecraft:diamond x1" && shownSlot(msgs["screen.update"], 27) == "empty x0",
               "the open screen shows the diamond in the right half's first slot, the first of the 54 (" + (msgs.contains("screen.update") ? shownSlot(msgs["screen.update"], 0) : std::string("no update")) + ")");
     ctx.check(!msgs.contains("screen.close") && inv::openedParts(ctx.player()).size() == 2, "and stays open");
+    // ---- a second client mod user looking inside: every viewer sees every change ----
+    // (Java: each player's ChestMenu#broadcastChanges; here another player's click and code's write)
+    emptyAndClear(region, topA);
+    auto& two  = ctx.spawnPlayer("gf_chest_viewer");
+    auto  uid2 = two.getOrCreateUniqueID().rawID;
+    gf::net::setTestCompanion(two, true);
+    co_await clickChestAs(ctx, uid2, a);
+    auto* p2 = simPlayerById(ctx, uid2);
+    ctx.require(p2 != nullptr, "the second player");
+    msgs = chestScreenMessages(*p2);
+    ctx.require(msgs.contains("screen.open") && inv::openedParts(*p2).size() == 2, "the second player's click on the left half opened the double chest's screen too");
+    ctx.check(shownSlot(msgs["screen.open"], 0) == "minecraft:diamond x1", "showing the diamond (" + shownSlot(msgs["screen.open"], 0) + ")");
+    (void)chestScreenMessages(ctx.player());
+    // the first player takes the diamond out with a shift-click on its screen
+    auto pctx = JsonT{{"pos", {a.dim, a.x, a.y, a.z}}, {"rows", 6}, {"title", "container.chestDouble"}};
+    gf::net::injectFromClient(ctx.player(), "screen.action", {{"type", "inventory.chest"}, {"context", pctx}, {"action", {{"op", "click"}, {"slot", 0}, {"button", 0}, {"type", "quick_move"}}}});
+    co_await ctx.ticks(2);
+    ctx.check(countIn(inv::contents(b), "minecraft:diamond") == 0, "the first player's shift-click took the diamond out");
+    p2   = simPlayerById(ctx, uid2);
+    msgs = p2 ? chestScreenMessages(*p2) : std::map<std::string, JsonT>{};
+    ctx.check(msgs.contains("screen.update") && shownSlot(msgs["screen.update"], 0) == "empty x0",
+              "the second player's open screen shows the first slot empty (" + (msgs.contains("screen.update") ? shownSlot(msgs["screen.update"], 0) : std::string("no update")) + ")");
+    // code writes a stack into the right half: both screens show it
+    (void)chestScreenMessages(ctx.player());
+    auto hb = inv::find(region, bp(b));
+    ctx.require(hb.has_value(), "the right half's handler");
+    hb->set(b, 1, stack("minecraft:apple", 3));
+    co_await ctx.ticks(2);
+    auto m1 = chestScreenMessages(ctx.player());
+    p2      = simPlayerById(ctx, uid2);
+    auto m2 = p2 ? chestScreenMessages(*p2) : std::map<std::string, JsonT>{};
+    ctx.check(m1.contains("screen.update") && shownSlot(m1["screen.update"], 1) == "minecraft:apple x3" && m2.contains("screen.update") && shownSlot(m2["screen.update"], 1) == "minecraft:apple x3",
+              "a stack code wrote shows on both screens (" + (m1.contains("screen.update") ? shownSlot(m1["screen.update"], 1) : std::string("no update")) + ", "
+                  + (m2.contains("screen.update") ? shownSlot(m2["screen.update"], 1) : std::string("no update")) + ")");
+    ctx.check(inv::openedParts(ctx.player()).size() == 2 && p2 && inv::openedParts(*p2).size() == 2, "and both stay open");
+    if (p2) {
+        gf::net::injectFromClient(*p2, "screen.closed", {{"type", "inventory.chest"}});
+        (void)gf::net::takeTestMessages(*p2);
+        gf::net::setTestCompanion(*p2, false);
+    }
     gf::net::injectFromClient(ctx.player(), "screen.closed", {{"type", "inventory.chest"}});
     for (auto const& q : {topA, a, b}) emptyAndClear(region, q);
     (void)box;
@@ -650,5 +723,102 @@ GF_REGISTER_SELFTEST("families.chest_migrate_lazy", [](Context& ctx) -> ll::coro
         ctx.check(cc && countIn(cc, "minecraft:emerald") == 2 && gf::blockdata::get(region, bp(c), fam::kInventoryDataKey) == nullptr, "they moved into its block actor before the screen opened");
     }
     emptyAndClear(region, c);
+    (void)box;
+});
+
+// ---- a chest broken while its stacks wait in block data loses none; a neighbouring chunk moves them ---
+
+GF_REGISTER_SELFTEST("families.chest_migrate_removed", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // a chest saved before the chests had block actors, in a chunk loaded but not yet ticked (its
+    // stacks still in block data), broken by an explosion from a ticking neighbour or by code:
+    // every stack drops, as Java's Containers#dropContents (F10 drops the block data stacks with
+    // the block, blockdata::onErase, and the block actor's own, DataDrivenBlockActor::onRemoved).
+    // A neighbouring chunk's first tick moves such a chest's stacks into its block actor (Chests.cpp
+    // settleNeighbourChests), so a comparator or a hopper next to an unticked chunk reads them.
+    if (!tfChests(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6100, 5);
+    auto p   = ctx.testPos(6100, 0);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto& region = *ctx.region();
+    auto  c      = at(p, 2, 0, 2);
+    ctx.require(ctx.setBlock(c, kChest, {{kFacingState, "north"}}), "a canopy chest");
+    co_await ctx.ticks(1);
+    ctx.require(stacksInBlockData(region, c, 4, stack("minecraft:emerald", 2)), "its 2 emeralds in block data, its block actor empty");
+    auto* cc = inv::nativeContainer(region, bp(c));
+    ctx.require(cc != nullptr, "its block actor's container");
+    cc->setItem(0, stack("minecraft:flint", 1));
+    clearDropsNear(ctx, c);
+    // broken by code (the block change of an explosion: no player)
+    ctx.require(gf::game::clearBlock(region, bp(c)), "the chest broken");
+    co_await ctx.ticks(2);
+    int emeralds = droppedNear(ctx, c, "minecraft:emerald"), flint = droppedNear(ctx, c, "minecraft:flint");
+    ctx.check(emeralds == 2 && flint == 1, "its block data stacks and its block actor's dropped (" + std::to_string(emeralds) + " emeralds, " + std::to_string(flint) + " flint)");
+    ctx.check(gf::blockdata::get(region, bp(c), fam::kInventoryDataKey) == nullptr, "and its block data went with it");
+    clearDropsNear(ctx, c);
+    // the first tick of the chunk east of the chest's moves its stacks (the chest's own chunk may be
+    // loaded without ticking)
+    ctx.require(ctx.setBlock(c, kChest, {{kFacingState, "north"}}), "a canopy chest again");
+    co_await ctx.ticks(1);
+    ctx.require(stacksInBlockData(region, c, 4, stack("minecraft:emerald", 2)), "its 2 emeralds in block data, its block actor empty");
+    co_await ctx.ticks(1);
+    ctx.info("while they wait in block data the inventory contract reads " + std::to_string(countIn(inv::contents(c), "minecraft:emerald")) + " emerald(s), the comparator "
+             + std::to_string(inv::comparatorSignal(c).value_or(-1)));
+    int moved = fam::detail::settleNeighbourChests(region, (bp(c).x >> 4) + 1, bp(c).z >> 4);
+    co_await ctx.ticks(1);
+    auto* after = inv::nativeContainer(region, bp(c));
+    ctx.check(moved >= 1 && after && countIn(after, "minecraft:emerald") == 2 && items::idOf(after->getItem(4)) == "minecraft:emerald"
+                  && gf::blockdata::get(region, bp(c), fam::kInventoryDataKey) == nullptr,
+              "the neighbouring chunk's first tick moved them into its block actor, in their slot (" + std::to_string(moved) + " stack(s) moved)");
+    ctx.check(inv::comparatorSignal(c).value_or(-1) == 1, "and the comparator reads them (" + std::to_string(inv::comparatorSignal(c).value_or(-1)) + ")");
+    emptyAndClear(region, c);
+    (void)box;
+});
+
+// ---- a crafter puts what it crafts into the chest in front of it ---------------------------------------
+
+GF_REGISTER_SELFTEST("families.chest_crafter", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // Java 1.21 CrafterBlock#dispenseItem: HopperBlockEntity.getContainerAt(level, pos.relative(front))
+    // finds the chest in front of the crafter and HopperBlockEntity.addItem puts the crafted stack in
+    // it (a double chest: its CompoundContainer, the RIGHT half first); only what does not fit would
+    // be ejected into the world
+    if (!tfChests(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6145, 5);
+    auto p   = ctx.testPos(6145, 0);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto& region = *ctx.region();
+    // ---- a single chest west of a crafter that faces it; a redstone block east of the crafter ----
+    auto s = at(p, 1, 0, 1), crafter = at(p, 2, 0, 1), power = at(p, 3, 0, 1);
+    ctx.require(ctx.setBlock(s, kChest, {{kFacingState, "north"}}), "a canopy chest");
+    ctx.require(ctx.setBlock(crafter, "minecraft:crafter", {{"orientation", "west_up"}}), "a crafter east of it facing it (orientation west_up)");
+    co_await ctx.ticks(1);
+    ctx.require(vanillaContainer(region, crafter) != nullptr, "the crafter's container");
+    vanillaContainer(region, crafter)->setItem(0, stack("minecraft:oak_log", 1));
+    clearDropsNear(ctx, crafter);
+    ctx.require(ctx.setBlock(power, "minecraft:redstone_block"), "a redstone block powers the crafter");
+    bool in = co_await until(ctx, 60, [&] { return countIn(inv::contents(s), "minecraft:oak_planks") == 4; });
+    co_await ctx.ticks(4);
+    int planks = countIn(inv::contents(s), "minecraft:oak_planks"), ejected = droppedNear(ctx, crafter, "minecraft:oak_planks");
+    ctx.check(in && ejected == 0, "the crafter put its 4 oak planks into the chest in front of it (" + std::to_string(planks) + " in the chest, " + std::to_string(ejected) + " ejected)");
+    ctx.check(countIn(vanillaContainer(region, crafter), "minecraft:oak_log") == 0, "it used its log");
+    for (auto const& q : {power, crafter, s}) emptyAndClear(region, q);
+    clearDropsNear(ctx, crafter);
+    co_await ctx.ticks(2);
+    // ---- a double chest: a crafter south of its LEFT half facing north fills the RIGHT half first ----
+    auto a = at(p, 1, 0, 1), b = at(p, 2, 0, 1), under = at(p, 1, 0, 2), power2 = at(p, 1, 0, 3);
+    ctx.require(ctx.setBlock(a, kChest, {{kFacingState, "north"}, {kTypeState, "left"}}), "the left half");
+    ctx.require(ctx.setBlock(b, kChest, {{kFacingState, "north"}, {kTypeState, "right"}}), "the right half east of it");
+    ctx.require(ctx.setBlock(under, "minecraft:crafter", {{"orientation", "north_up"}}), "a crafter south of the left half facing it");
+    co_await ctx.ticks(1);
+    ctx.require(vanillaContainer(region, under) != nullptr, "its container");
+    vanillaContainer(region, under)->setItem(4, stack("minecraft:oak_log", 1));
+    ctx.require(ctx.setBlock(power2, "minecraft:redstone_block"), "a redstone block powers it");
+    bool right = co_await until(ctx, 60, [&] { return countIn(inv::contents(b), "minecraft:oak_planks") == 4; });
+    co_await ctx.ticks(4);
+    ejected = droppedNear(ctx, under, "minecraft:oak_planks");
+    ctx.check(right && emptySlots(inv::contents(a)) && ejected == 0 && slotId(inv::contents(b), 0) == "minecraft:oak_planks",
+              "the crafter facing the LEFT half filled the RIGHT half's first slot (CompoundContainer; " + std::to_string(countIn(inv::contents(b), "minecraft:oak_planks")) + " in it, "
+                  + std::to_string(ejected) + " ejected)");
+    for (auto const& q : {power2, under, a, b}) emptyAndClear(region, q);
+    clearDropsNear(ctx, under);
     (void)box;
 });

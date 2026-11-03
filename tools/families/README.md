@@ -149,27 +149,41 @@ reaches the native containers of the blocks hoppers may reach
 chest-like (`Declared::chest`, so TF's chests); a unit opts another Container block entity of Java in
 (the skull chest, the keepsake casket: `gf::families_ext::setHopperVisible(id, true)`) or hides one
 (`false`). A block kept in block data stays invisible to hoppers whatever is set. A lookup stays
-cheap for hoppers that look every tick: what it found at a position (visible or not, the halves) is
-kept while the block and the neighbour its pairing depends on stay the same, and block data is read
-only for a key that is there.
+cheap for hoppers that look every tick: what it found at a position (visible or not, the halves and
+their containers) is kept while the block and the neighbour its pairing depends on stay the same; a
+half's container is handed out again while the live block actor at its position still holds it
+(the cached pointers are compared with the live ones, never dereferenced), and a half's block data
+is read once a tick.
+
+A crafter puts what it crafts into the chest it faces (Java's `CrafterBlock#dispenseItem`:
+`HopperBlockEntity.getContainerAt` then `addItem`; a double chest's right half first);
+`families.chest_crafter` checks a single and a double chest.
 
 The comparator reads a chest as Java's `ChestBlock#getAnalogOutputSignal` (F10's
 `comparatorSignal`): `getRedstoneSignalFromContainer` over the single chest or the double chest's 54
 slots, and 0 while a half is blocked (`getContainer(.., false)` finds none) even though hoppers still
-fill it. What a hopper, a hopper minecart or a dropper changes reaches an open chest screen after
-the tick, as Java's `ChestMenu#broadcastChanges` does: the container a hopper gets notes the halves
-it changed, and the client mod's chest screens showing one are refreshed (the screens contract's
-`refresh` of F10's `inventory.chest`, in the context the player opened it with: a single chest's
-own position, a double chest's half the player used, noted by the chest's use handler); the game's
-chest screen of a vanilla client follows through F10's proxy.
+fill it. Every change reaches every open chest screen at the end of the tick, as Java's
+`ChestMenu#broadcastChanges` does for each player looking inside: the slots each client mod chest
+screen shows are compared with the last tick's (a hopper's, a dropper's or a crafter's change,
+another player's click, any code's write), and the container a hopper gets notes the halves it
+changed (a change in the tick the screen opened); a screen showing a changed half is refreshed (the
+screens contract's `refresh` of F10's `inventory.chest`, in the context the player opened it with:
+a single chest's own position, a double chest's half the player used, noted by the chest's use
+handler). A double chest screen opened by code has no such context in F11 and shows a change on its
+next click (F10 knows the position: routed). The game's chest screen of a vanilla client follows
+through F10's proxy.
 
 A chest whose stacks are still in block data (placed while the chests used F10's BlockData backend)
 moves them into its block actor in its chunk's first tick after it loads; a chunk saved without the
 chest's block actor gets one first (the game's block actor factory makes the one the block type
-declares and the chunk takes it; a state change of the block does not create it). Before that, a
-hopper's look at the chest (either half of a double chest) or a player's click on it moves them
-first, so neither finds the chest empty or one half missing (a hopper's look does not make a block
-actor: the game may be iterating the chunk's block actors then). The stacks are read in F10's
+declares and the chunk takes it; a state change of the block does not create it). That first tick
+also moves the stacks of the chests in the loaded chunks around it (into the block actors they
+have), which may be loaded without ticking while a comparator or a hopper next to them reads them.
+Before that, a hopper's look at the chest (either half of a double chest) or a player's click on it
+moves them first, so neither finds the chest empty or one half missing (a hopper's look does not
+make a block actor: the game may be iterating the chunk's block actors then). A chest broken before
+its stacks moved loses none: F10 drops the block data stacks with the block (`blockdata::onErase`)
+and the block actor's own (`families.chest_migrate_removed`). The stacks are read in F10's
 layout (`kInventoryDataKey` in `Families.h`; `src/feature/inventory/Inventory.cpp`'s `kDataKey`,
 `storageOf` and `writeSlot` are the source of truth), and `families.chest_persist_a_write` writes
 them through F10's own handler, so a change of that layout fails the test. No world with such chests
