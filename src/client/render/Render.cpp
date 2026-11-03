@@ -20,7 +20,10 @@
 //   Rendering::_renderHeadGear: Head, in the head pose the game leaves for its head gear);
 // - maps: the TF decorations of gf::client::maps on held maps (ItemInHandRenderer::renderFirstPerson)
 //   and framed maps (the item frame dispatch), in the space MapRenderer::_getMapInstance sees;
-// - tint: ClientBlockPipeline::PositionDependentTintResolver::_get (TF's leaf / grass colours).
+// - tint: ClientBlockPipeline::PositionDependentTintResolver::_get (TF's leaf / grass colours; the
+//   game's own colours at the position come from the same resolver, the original function, when a
+//   tint function asks for them);
+// - name tags: ActorRenderDispatcher::extractRenderTextObjects (hideNameTag).
 //
 // The registries are immutable snapshots (copy on write): the render thread and the chunk builder
 // threads read them without a lock; each builder thread keeps its own per-block-state cache for the
@@ -28,7 +31,10 @@
 //
 // Lines and drawGeo tessellate immediately with the engine's materials: lines with "wireframe"
 // (depth tested, vertex colour) or, through walls, "ui_fill_gradient" (no depth test); geometry
-// with the moving-block alpha-test material and the geometry's own texture (as Levitate's rotors).
+// with the moving-block alpha-test material and the geometry's own texture (as Levitate's rotors),
+// lit by the light drawGeo sets at its position (ActorShaderManager::setupShaderParameters: the
+// entity constants that material reads). Every renderer starts with the light of its own place
+// (feature/ext/ui/Client.h, "What a renderer finds at entry").
 
 #ifdef GF_CLIENT
 
@@ -52,10 +58,12 @@
 #include "ll/api/memory/Hook.h"
 
 #include "mc/client/game/ClientInstance.h"
+#include "mc/client/game/IClientInstance.h"
 #include "mc/client/gui/controls/UIControl.h"
 #include "mc/client/gui/controls/renderers/InventoryItemRenderer.h"
 #include "mc/client/gui/screens/ScreenContext.h"
 #include "mc/client/player/LocalPlayer.h"
+#include "mc/client/renderer/ActorShaderManager.h"
 #include "mc/client/renderer/BaseActorRenderContext.h"
 #include "mc/client/renderer/RenderMaterialGroup.h"
 #include "mc/client/renderer/SupplementaryFieldAutoGenerationMode.h"
@@ -80,12 +88,14 @@
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/math/Matrix.h"
 #include "mc/deps/core/math/Vec2.h"
+#include "mc/deps/core/math/Vec4.h"
 #include "mc/deps/core/resource/ResourceLocation.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/core_graphics/TextureSetLayerType.h"
 #include "mc/deps/core_graphics/enums/PrimitiveMode.h"
 #include "mc/deps/minecraft_renderer/framebuilder/dragon/RenderMetadata.h"
 #include "mc/deps/minecraft_renderer/game/ItemContextFlags.h"
+#include "mc/deps/minecraft_renderer/objects/NameTagRenderObject.h"
 #include "mc/deps/minecraft_renderer/renderer/MaterialPtr.h"
 #include "mc/deps/minecraft_renderer/renderer/TexturePtr.h"
 #include "mc/deps/minecraft_renderer/resources/ClientTexture.h"
@@ -93,6 +103,7 @@
 #include "mc/deps/minecraft_renderer/resources/ServerTexture.h"
 #include "mc/deps/renderer/Camera.h"
 #include "mc/deps/renderer/MatrixStack.h"
+#include "mc/deps/renderer/ShaderColor.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/animation/BoneOrientation.h"
 #include "mc/world/item/ItemInstance.h"
@@ -101,6 +112,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockRenderLayer.h"
+#include "mc/world/level/block/TintMethod.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorRendererId.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
@@ -223,7 +235,9 @@ struct Snapshot {
     std::unordered_map<std::string, ItemEntry>                   items;
     std::unordered_map<std::string, std::vector<EntityRenderFn>> entities;
     std::vector<WorldFn>                                         world;
-    std::unordered_map<std::string, tint::TintFn>                tints;
+    std::unordered_map<std::string, tint::GameTintFn>            tints; ///< plain TintFns wrapped
+    std::unordered_map<std::string, NameTagFn>                   nameTagTypes;   ///< empty fn: every entity of the type
+    std::vector<std::pair<std::size_t, NameTagFn>>               nameTagFilters; ///< handle, predicate
 };
 using SnapshotPtr = std::shared_ptr<Snapshot const>;
 
@@ -231,7 +245,8 @@ struct Registry {
     std::mutex                write; ///< writers only
     std::atomic<SnapshotPtr>  snapshot{std::make_shared<Snapshot const>()};
     std::atomic<std::uint64_t> version{0};
-    std::atomic<bool>         anyBlocks{false}, anyTints{false}, anyItems{false}; ///< fast paths
+    std::atomic<bool>         anyBlocks{false}, anyTints{false}, anyItems{false}, anyNameTags{false}; ///< fast paths
+    std::size_t               nextNameTagHandle = 1; ///< writers only
     // tracked block positions (chunk builders insert, the render thread scans)
     std::mutex                                   trackedMutex;
     std::unordered_set<BlockPos, PosHash, PosEq> tracked;
@@ -252,9 +267,10 @@ void update(F&& change) {
     std::lock_guard lock(r.write);
     auto            next = std::make_shared<Snapshot>(*snap());
     change(*next);
-    r.anyBlocks = !next->blocks.empty();
-    r.anyTints  = !next->tints.empty();
-    r.anyItems  = !next->items.empty();
+    r.anyBlocks   = !next->blocks.empty();
+    r.anyTints    = !next->tints.empty();
+    r.anyItems    = !next->items.empty();
+    r.anyNameTags = !next->nameTagTypes.empty() || !next->nameTagFilters.empty();
     r.snapshot.store(std::move(next), std::memory_order_release);
     r.version.fetch_add(1, std::memory_order_acq_rel);
 }
@@ -265,7 +281,7 @@ struct ThreadView {
     std::uint64_t                                             version = ~std::uint64_t{0};
     SnapshotPtr                                               snapshot;
     std::unordered_map<Block const*, BlockEntry const*>       blocks; ///< nullptr: no renderer
-    std::unordered_map<Block const*, tint::TintFn const*>     tints;  ///< nullptr: no tint
+    std::unordered_map<Block const*, tint::GameTintFn const*> tints;  ///< nullptr: no tint
 };
 ThreadView& threadView() {
     thread_local ThreadView v;
@@ -288,7 +304,7 @@ BlockEntry const* blockEntryOf(ThreadView& v, Block const& block) {
     return it->second;
 }
 
-tint::TintFn const* tintOfBlock(ThreadView& v, Block const& block) {
+tint::GameTintFn const* tintOfBlock(ThreadView& v, Block const& block) {
     auto [it, fresh] = v.tints.try_emplace(&block, nullptr);
     if (fresh) {
         auto e     = v.snapshot->tints.find(game::blockId(block));
@@ -296,6 +312,43 @@ tint::TintFn const* tintOfBlock(ThreadView& v, Block const& block) {
     }
     return it->second;
 }
+
+/// The game's colours without a world (registry lookups outside a chunk mesh).
+class NoGameColors final : public tint::GameColors {
+public:
+    std::optional<unsigned> foliage() const override { return std::nullopt; }
+    std::optional<unsigned> grass() const override { return std::nullopt; }
+    std::optional<unsigned> water() const override { return std::nullopt; }
+};
+
+unsigned rgbOf(mce::Color const& c) {
+    auto ch = [](float v) { return static_cast<unsigned>(std::clamp(v, 0.0f, 1.0f) * 255.0f + 0.5f); };
+    return ch(c.r) << 16 | ch(c.g) << 8 | ch(c.b);
+}
+
+/// The game's colours at the position a tint resolver is asked for: `ask(method)` runs the resolver's
+/// own (original) function for a tint method, at most once per method.
+template <class Ask>
+class ResolverColors final : public tint::GameColors {
+public:
+    explicit ResolverColors(Ask& ask) : mAsk(ask) {}
+    std::optional<unsigned> foliage() const override { return get(0, TintMethod::DefaultFoliage); }
+    std::optional<unsigned> grass() const override { return get(1, TintMethod::Grass); }
+    std::optional<unsigned> water() const override { return get(2, TintMethod::Water); }
+    [[nodiscard]] bool asked() const { return mHave[0] || mHave[1] || mHave[2]; }
+
+private:
+    std::optional<unsigned> get(int i, TintMethod method) const {
+        if (!mHave[i]) {
+            mValue[i] = rgbOf(mAsk(method));
+            mHave[i]  = true;
+        }
+        return mValue[i];
+    }
+    Ask&             mAsk;
+    mutable unsigned mValue[3]{};
+    mutable bool     mHave[3]{};
+};
 
 RenderContext contextOf(BaseActorRenderContext& rc) {
     RenderContext ctx(rc.mScreenContext);
@@ -305,7 +358,57 @@ RenderContext contextOf(BaseActorRenderContext& rc) {
     return ctx;
 }
 
+std::atomic<std::uint64_t> gLightSetups{0};
+
+/// The world position at the middle of block `p`.
+Vec3 centreOf(BlockPos const& p) { return Vec3{static_cast<float>(p.x) + .5f, static_cast<float>(p.y) + .5f, static_cast<float>(p.z) + .5f}; }
+
+/// A renderer's context with its light: lightAt / fullBright set and the light applied (Render.h,
+/// "What a renderer finds at entry").
+void lightFor(RenderContext& ctx, Vec3 const& at, bool fullBright = false) {
+    ctx.lightAt    = at;
+    ctx.fullBright = fullBright;
+    setupLight(ctx, at, fullBright);
+}
+
+/// The screen context's shader colour and dark colour, put back when a pass that set the light for
+/// its renderers ends: the game's next draw may read them without setting them (as F11's sign text
+/// keeps them). The entity constants themselves cannot be read back; every game renderer sets them
+/// before it draws.
+class ShaderColours {
+public:
+    explicit ShaderColours(ScreenContext& screen) : mScreen(screen), mColor(screen.currentShaderColor), mDark(screen.currentShaderDarkColor) {}
+    ~ShaderColours() {
+        ShaderColor& color = mScreen.currentShaderColor;
+        ShaderColor& dark  = mScreen.currentShaderDarkColor;
+        color              = mColor;
+        color.dirty        = true;
+        dark               = mDark;
+        dark.dirty         = true;
+    }
+    ShaderColours(ShaderColours const&)            = delete;
+    ShaderColours& operator=(ShaderColours const&) = delete;
+
+private:
+    ScreenContext& mScreen;
+    ShaderColor    mColor, mDark;
+};
+
 } // namespace
+
+bool setupLight(RenderContext& ctx, Vec3 const& at, bool fullBright) {
+    if (!ctx.actors) return false;
+    IClientInstance& client = ctx.actors->mClientInstance;
+    auto*            region = client.getRegion();
+    auto*            light  = client.getLightTexture();
+    if (!region || !light) return false;
+    BlockPos pos{static_cast<int>(std::floor(at.x)), static_cast<int>(std::floor(at.y)), static_cast<int>(std::floor(at.z))};
+    ActorShaderManager::setupShaderParameters(ctx.screen, *region, pos, ctx.partialTicks, fullBright, *light, ctx.actors->mLightVolumeManager, Vec2{1.0f, 1.0f}, Vec4{0.0f, 0.0f, 0.0f, 0.0f});
+    gLightSetups.fetch_add(1, std::memory_order_relaxed);
+    return true;
+}
+
+std::uint64_t lightSetups() { return gLightSetups.load(std::memory_order_relaxed); }
 
 // ---- Lines ---------------------------------------------------------------------------------------------
 
@@ -387,6 +490,11 @@ void drawGeo(RenderContext& ctx, std::string const& geoId, std::string const& te
     }
     auto* tex = textureOf(texture);
     if (!tex) return;
+    // the light of this draw (the material multiplies by the entity constants): at lightAt, else at
+    // the geometry's own place (world space); never the light the draw before it left
+    if (ctx.lightAt) setupLight(ctx, *ctx.lightAt, ctx.fullBright);
+    else if (!ctx.itemSpace) setupLight(ctx, transform.translation, ctx.fullBright);
+    else warn("geo_light", "drawGeo in an item space without RenderContext::lightAt: the light is the item's");
     auto&        screen = ctx.screen;
     Tessellator& tess   = screen.tessellator;
     auto&        world  = screen.camera.worldMatrixStack.get();
@@ -464,11 +572,53 @@ bool hasItemRenderer(std::string const& itemId, ItemContext where) {
     return it != s->items.end() && (it->second.contexts & where);
 }
 
-std::optional<unsigned> tintOf(std::string const& blockId, int x, int y, int z) {
+std::optional<unsigned> tintOf(std::string const& blockId, int x, int y, int z) { return tintOf(blockId, x, y, z, NoGameColors{}); }
+
+std::optional<unsigned> tintOf(std::string const& blockId, int x, int y, int z, tint::GameColors const& game) {
     auto s  = snap();
     auto it = s->tints.find(blockId);
     if (it == s->tints.end() || !it->second) return std::nullopt;
-    return it->second(BlockPos{x, y, z});
+    return it->second(BlockPos{x, y, z}, game);
+}
+
+// ---- name tags ---------------------------------------------------------------------------------------------
+
+void hideNameTag(std::string const& entityId, NameTagFn when) {
+    update([&](Snapshot& s) { s.nameTagTypes[entityId] = std::move(when); });
+}
+
+std::size_t hideNameTag(NameTagFn when) {
+    if (!when) return 0;
+    std::size_t handle = 0;
+    update([&](Snapshot& s) {
+        handle = reg().nextNameTagHandle++; // under the writers' lock
+        s.nameTagFilters.emplace_back(handle, std::move(when));
+    });
+    return handle;
+}
+
+bool showNameTag(std::string const& entityId) {
+    bool had = false;
+    update([&](Snapshot& s) { had = s.nameTagTypes.erase(entityId) > 0; });
+    return had;
+}
+
+bool showNameTag(std::size_t handle) {
+    bool had = false;
+    update([&](Snapshot& s) { had = std::erase_if(s.nameTagFilters, [handle](auto const& f) { return f.first == handle; }) > 0; });
+    return had;
+}
+
+bool nameTagHidden(Actor const& entity) {
+    if (!reg().anyNameTags.load(std::memory_order_relaxed)) return false;
+    auto s = snap();
+    if (!s->nameTagTypes.empty()) {
+        if (auto it = s->nameTagTypes.find(entity.getTypeName()); it != s->nameTagTypes.end() && (!it->second || it->second(entity))) return true;
+    }
+    for (auto const& [handle, fn] : s->nameTagFilters) {
+        if (fn(entity)) return true;
+    }
+    return false;
 }
 
 // ---- per-frame work --------------------------------------------------------------------------------------
@@ -515,8 +665,15 @@ void renderWorld(BaseActorRenderContext& rc) {
         for (auto const& p : stale) r.tracked.erase(p);
     }
     if (s->world.empty() && blocks.empty()) return;
-    auto ctx = contextOf(rc);
+    auto const base   = contextOf(rc);
+    Vec3 const camera = rc.mImpl->mCameraPosition;
+    // every renderer gets a context of its own (what one changes never reaches the next), the light
+    // of its own place (never the one the draw before it left) and the shader colours the game left
+    // (put back after it; Render.h)
     for (auto const& fn : s->world) {
+        RenderContext ctx = base;
+        ShaderColours keep(rc.mScreenContext);
+        lightFor(ctx, camera);
         try {
             fn(ctx, ctx.partialTicks);
         } catch (std::exception const& e) {
@@ -524,7 +681,10 @@ void renderWorld(BaseActorRenderContext& rc) {
         }
     }
     for (auto const& [pos, block, entry] : blocks) {
-        ctx.throughWalls = entry->flags.throughWalls;
+        RenderContext ctx = base;
+        ctx.throughWalls  = entry->flags.throughWalls;
+        ShaderColours keep(rc.mScreenContext);
+        lightFor(ctx, centreOf(pos)); // Java's BlockEntityRenderer: the light at the block
         try {
             entry->fn(ctx, pos, *block, ctx.partialTicks);
         } catch (std::exception const& e) {
@@ -535,6 +695,7 @@ void renderWorld(BaseActorRenderContext& rc) {
         r.loggedWorld = true;
         log().info("render: world pass active ({} world renderers, {} blocks)", s->world.size(), blocks.size());
     }
+    if (!blocks.empty()) infoOnce("block_light", "block renderers drawn, each with the light at its block (" + std::to_string(blocks.size()) + " this frame)");
 }
 
 /// The item renderer of `itemId` for `where` (nullptr: none); valid while `s` is held.
@@ -624,6 +785,9 @@ void renderFramed(BaseActorRenderContext& rc, IVanillaRenderBlockActorComponent&
     ref.mat->_m.get()     = ref.mat->_m.get() * frameItemSpace(min, game::intState(block, "facing_direction").value_or(2), frame.mRotation);
     ctx.itemSpace         = true;
     ctx.lineHalfWidth     = 1.0f / 32; // the space is scaled by 0.5
+    // ItemFrameRenderer: the frame's light; a glow frame's item full bright (getLightVal 15728880)
+    ShaderColours keep(rc.mScreenContext);
+    lightFor(ctx, centreOf(at), type == BlockActorType::GlowItemFrame);
     runItem(*e, ctx, *stack, ItemContext::Fixed);
     infoOnce("fixed", "item frame renderer dispatched (" + item.getTypeName() + ")");
 }
@@ -763,6 +927,10 @@ void drawMapDecorations(BaseActorRenderContext& rc, std::int64_t mapId, glm::mat
 namespace gf::client::tint {
 void registerBlock(std::string const& blockId, TintFn fn) {
     if (!fn) return;
+    render::update([&](render::Snapshot& s) { s.tints[blockId] = [fn = std::move(fn)](BlockPos const& pos, GameColors const&) { return fn(pos); }; });
+}
+void registerBlock(std::string const& blockId, GameTintFn fn) {
+    if (!fn) return;
     render::update([&](render::Snapshot& s) { s.tints[blockId] = std::move(fn); });
 }
 bool unregisterBlock(std::string const& blockId) {
@@ -844,10 +1012,42 @@ LL_TYPE_INSTANCE_HOOK(
         if (s->entities.empty()) return;
         auto it = s->entities.find(entity.getTypeName());
         if (it == s->entities.end()) return;
-        auto ctx   = r::contextOf(context);
-        ctx.camera = cameraTargetPos;
-        for (auto const& fn : it->second) fn(ctx, entity, ctx.partialTicks);
+        auto base   = r::contextOf(context);
+        base.camera = cameraTargetPos;
+        Vec3 eyes   = entity.getEyePos(); // Java's getPackedLightCoords: the light at the eyes
+        for (auto const& fn : it->second) {
+            RenderContext    ctx = base;
+            r::ShaderColours keep(context.mScreenContext);
+            r::lightFor(ctx, eyes);
+            fn(ctx, entity, ctx.partialTicks);
+        }
     } catch (...) {}
+}
+
+// Name tags (hideNameTag): the name tag of one actor is extracted here for the frame.
+LL_TYPE_INSTANCE_HOOK(
+    RenderNameTagHook,
+    ll::memory::HookPriority::Normal,
+    ActorRenderDispatcher,
+    &ActorRenderDispatcher::extractRenderTextObjects,
+    std::vector<NameTagRenderObject>,
+    Font&              font,
+    Tessellator&       tessellator,
+    Actor&             actor,
+    std::string const& str,
+    Vec3               camTargetPos,
+    float              a,
+    mce::Color         color
+) {
+    if (r::reg().anyNameTags.load(std::memory_order_relaxed)) {
+        try {
+            if (r::nameTagHidden(actor)) {
+                r::infoOnce("name_tag:" + actor.getTypeName(), "name tag hidden (" + actor.getTypeName() + ")");
+                return {};
+            }
+        } catch (...) {}
+    }
+    return origin(font, tessellator, actor, str, camTargetPos, a, color);
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -881,6 +1081,8 @@ LL_TYPE_INSTANCE_HOOK(
         if (!e) return;
         auto ctx      = r::contextOf(renderContext);
         ctx.itemSpace = true;
+        r::ShaderColours keep(renderContext.mScreenContext);
+        r::lightFor(ctx, entity.getEyePos()); // ItemInHandRenderer: the holder's light
         r::runItem(*e, ctx, item, where);
     } catch (...) {}
 }
@@ -908,6 +1110,13 @@ LL_TYPE_INSTANCE_HOOK(
         Vec3  p           = entityRenderData.position;
         ref.mat->_m.get() = glm::translate(ref.mat->_m.get(), glm::vec3{p.x, p.y, p.z});
         ctx.itemSpace     = true;
+        Actor*           actor = entityRenderData.mActor;
+        r::ShaderColours keep(renderContext.mScreenContext);
+        if (actor) r::lightFor(ctx, actor->getPosition()); // ItemEntityRenderer: the item entity's light
+        else { // the position is relative to the camera (not to its target, which differs in third person)
+            Vec3 const cam = renderContext.mImpl->mCameraPosition;
+            r::lightFor(ctx, Vec3{p.x + cam.x, p.y + cam.y, p.z + cam.z});
+        }
         r::runItem(*e, ctx, *stack, ItemContext::Ground);
     } catch (...) {}
 }
@@ -948,7 +1157,14 @@ LL_TYPE_INSTANCE_HOOK(
     auto list = std::move(r::pendingGui());
     r::pendingGui().clear();
     try {
-        auto s = r::snap();
+        auto  s      = r::snap();
+        auto* client = gf::client::currentClient();
+        // the light of GUI items: full bright (Java's GUI item lighting, 15728880), set for every
+        // renderer (feature/ext/ui/Client.h, "What a renderer finds at entry")
+        std::optional<BaseActorRenderContext> actors;
+        if (client) actors.emplace(mScreenContext, *client, client->getMinecraftGame());
+        Vec3 at{};
+        if (auto* player = client ? client->getLocalPlayer() : nullptr) at = player->getPosition();
         for (auto const& g : list) {
             auto e = r::itemEntry(*s, g.stack->getTypeName(), ItemContext::Gui);
             if (!e) continue;
@@ -957,6 +1173,9 @@ LL_TYPE_INSTANCE_HOOK(
             ctx.guiX    = g.x;
             ctx.guiY    = g.y;
             ctx.guiSize = g.size;
+            ctx.actors  = actors ? &*actors : nullptr;
+            r::ShaderColours keep(mScreenContext);
+            r::lightFor(ctx, at, true);
             r::runItem(*e, ctx, *g.stack, ItemContext::Gui);
         }
     } catch (...) {}
@@ -1065,6 +1284,9 @@ LL_TYPE_INSTANCE_HOOK(
         ref.mat->_m.get() = ref.mat->_m.get() * m;
         ctx.itemSpace     = true;
         ctx.lineHalfWidth = 1.0f / 40;
+        r::ShaderColours keep(renderContext.mScreenContext);
+        if (actor) r::lightFor(ctx, actor->getEyePos()); // CustomHeadLayer: the wearer's light
+        else r::lightFor(ctx, ctx.camera);
         r::runItem(*e, ctx, headGear, ItemContext::Head);
         r::infoOnce("head", "head item renderer dispatched (" + headGear.getTypeName() + ")");
     } catch (...) {}
@@ -1124,7 +1346,16 @@ LL_TYPE_INSTANCE_HOOK(
         auto& view = r::threadView();
         if (auto const* fn = r::tintOfBlock(view, block)) {
             BlockPos const& min = mMinPos;
-            unsigned        rgb = (*fn)(BlockPos{min.x + blockPos.x, min.y + blockPos.y, min.z + blockPos.z});
+            // the game's own colours at this position: the resolver's original function for the tint
+            // method asked (the biomes' colours blended as for the game's own blocks; computed only
+            // when the tint function asks)
+            auto ask = [&](TintMethod method) { return origin(block, blockPos, method, biomeTintCache); };
+            r::ResolverColors<decltype(ask)> colors(ask);
+            BlockPos const                   at{min.x + blockPos.x, min.y + blockPos.y, min.z + blockPos.z};
+            unsigned                         rgb = (*fn)(at, colors);
+            static std::atomic<bool> logged{false};
+            if (colors.asked() && !logged.load(std::memory_order_relaxed) && !logged.exchange(true))
+                gf::log().info("render: a tint function read the game's colours ({} at {} {} {} gave #{:06X})", gf::game::blockId(block), at.x, at.y, at.z, rgb);
             return mce::Color{static_cast<float>((rgb >> 16) & 0xFF) / 255.f, static_cast<float>((rgb >> 8) & 0xFF) / 255.f, static_cast<float>(rgb & 0xFF) / 255.f, 1.f};
         }
     } catch (...) {}
@@ -1172,8 +1403,10 @@ public:
         render_hooks::RenderMapInstanceHook::hook();
         render_hooks::RenderFirstPersonHook::hook();
         render_hooks::RenderTintHook::hook();
+        render_hooks::RenderNameTagHook::hook();
     }
     void uninstall() {
+        render_hooks::RenderNameTagHook::unhook();
         render_hooks::RenderTintHook::unhook();
         render_hooks::RenderFirstPersonHook::unhook();
         render_hooks::RenderMapInstanceHook::unhook();

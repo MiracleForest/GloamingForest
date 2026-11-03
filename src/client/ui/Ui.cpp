@@ -20,7 +20,9 @@
 //   (6, 8), title at (25, 7) and body at (25, 18) in the toast's colours (LockedBiomeToast: -256 and
 //   white, the contract's default; MissingAdvancementToast: white and white), hidden after `ms`
 //   shown; nothing is drawn (and the queue waits) while the GUI is hidden (F1), as ToastComponent.
-//   The background is a redraw of the advancement frame (Mojang's sprite is not reused).
+//   The frame is the texture Bedrock draws its own toasts on (textures/ui/greyBorder, the dark
+//   advancement-toast look of Java's toast/advancement sprite, which is Mojang's and not reused) as
+//   a nine-slice over the 160 x 32; each line is the spec's literal text, else its key translated.
 // - tooltip: lines under the item name of every hover text (ItemStackBase::getFormattedHovertext);
 //   ContainerScreen's hover tooltips show that whole hover text (Java's getTooltipFromItem).
 // - textures: resource pack paths, or absolute file paths read from the disk (client/render/TexturePath.h).
@@ -213,6 +215,23 @@ bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const
     static HashedString const flush("ui_flush");
     static HashedString const glcolor("ui_textured_and_glcolor");
     ctx.flushImages(mce::Color{1, 1, 1, 1}, 1.0f, method == kBlitFlushGlColor ? glcolor : flush);
+    return true;
+}
+
+bool blitNineSlice(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float texW, float texH, float slice) {
+    // columns and rows: the corners `slice` pixels on both sides, 1:1; the rest stretched
+    float const sw = std::min(slice, dst.w / 2), sh = std::min(slice, dst.h / 2);
+    float const xs[3]{dst.x, dst.x + sw, dst.x + dst.w - sw}, ws[3]{sw, dst.w - 2 * sw, sw};
+    float const ys[3]{dst.y, dst.y + sh, dst.y + dst.h - sh}, hs[3]{sh, dst.h - 2 * sh, sh};
+    float const us[3]{0, slice, texW - slice}, uw[3]{slice, texW - 2 * slice, slice};
+    float const vs[3]{0, slice, texH - slice}, vh[3]{slice, texH - 2 * slice, slice};
+    for (int row = 0; row < 3; ++row) {
+        for (int col = 0; col < 3; ++col) {
+            if (ws[col] <= 0 || hs[row] <= 0) continue;
+            // false only when nothing was drawn (the texture is not loaded), never half a frame
+            if (!blit(canvas, texture, {xs[col], ys[row], ws[col], hs[row]}, us[col], vs[row], uw[col], vh[row], texW, texH) && row == 0 && col == 0) return false;
+        }
+    }
     return true;
 }
 
@@ -494,7 +513,7 @@ constexpr char  kToastSound[] = "random.toast";
 
 /// A toast on screen (Java's ToastInstance): it keeps its slot until it has slid out.
 struct Shown {
-    ToastSpec                  spec;
+    LiteralToastSpec           spec;
     Style                      style;
     std::shared_ptr<ItemStack> icon;
     std::string                title, body;
@@ -504,8 +523,8 @@ struct Shown {
     bool                       show          = true; ///< Visibility.SHOW / HIDE
 };
 struct Queued {
-    ToastSpec spec;
-    Style     style;
+    LiteralToastSpec spec;
+    Style            style;
 };
 struct Toasts {
     std::mutex         mutex;
@@ -533,13 +552,25 @@ void playSound(bool show) {
     }
 }
 
+/// Java's blitSprite(toast/advancement, 0, 0, 160, 32): the game's own toast frame (kFrameTexture) as
+/// a nine-slice; while it loads (or should it be missing), its colours as plain fills.
 void drawBackground(screen::Canvas& c, float x, float y) {
-    // a redraw of the advancement toast frame: dark body, light rim, darker inner border
-    c.fill({x + 1, y, kToastWidth - 2, kToastHeight}, 0xFF1F1F1F);
-    c.fill({x, y + 1, kToastWidth, kToastHeight - 2}, 0xFF1F1F1F);
-    c.frame({x + 1, y + 1, kToastWidth - 2, kToastHeight - 2}, 0xFF6B6B6B);
-    c.frame({x + 2, y + 2, kToastWidth - 4, kToastHeight - 4}, 0xFF0F0F0F);
+    static std::atomic<bool> logged{false};
+    if (ui::blitNineSlice(c, kFrameTexture, {x, y, kToastWidth, kToastHeight}, kFrameSize, kFrameSize, kFrameSlice)) {
+        if (!logged.exchange(true)) log().info("ui: toast frame drawn with {}", kFrameTexture);
+        return;
+    }
+    c.fill({x + 2, y, kToastWidth - 4, kToastHeight}, 0xFF000000);
+    c.fill({x, y + 2, kToastWidth, kToastHeight - 4}, 0xFF000000);
+    c.fill({x + 1, y + 1, kToastWidth - 2, kToastHeight - 2}, 0xFF555555);
+    c.fill({x + 3, y + 3, kToastWidth - 6, kToastHeight - 6}, 0xFF212121);
 }
+
+/// What a toast's line shows: the literal text, else the key translated on this client.
+std::string lineOf(std::string const& literal, std::string const& key) { return literal.empty() ? translateAny(key) : literal; }
+
+/// Whether a toast answers to `title` (its key or its literal title).
+bool named(LiteralToastSpec const& t, std::string const& title) { return !title.empty() && (t.spec.titleKey == title || t.title == title); }
 
 /// ToastInstance.getVisibility: f = clamp(t / 600)², 1 - f while hiding.
 float visibility(Shown const& s, long now) {
@@ -562,7 +593,7 @@ bool renderOne(screen::Canvas& c, float guiWidth, Shown& s, long now) {
     c.text(x + 25, y + 7, s.title, s.style.titleColor, screen::Align::Left, false);
     c.text(x + 25, y + 18, s.body, s.style.bodyColor, screen::Align::Left, false);
     // the toast's own render: hidden once it was shown `ms` (LockedBiomeToast: timer >= 10000)
-    bool show = now - s.visibleTime < std::max(0, s.spec.ms);
+    bool show = now - s.visibleTime < std::max(0, s.spec.spec.ms);
     if (show != s.show) {
         s.animationTime = now - static_cast<long>((1.0f - visibility(s, now)) * static_cast<float>(kSlideMs));
         s.show          = show;
@@ -608,11 +639,11 @@ void render(screen::Canvas& c, float guiWidth) {
         s.style = t.queued.front().style;
         s.index = free;
         t.queued.pop_front();
-        if (!s.spec.iconItem.empty()) {
-            if (auto st = game::items::make(s.spec.iconItem)) s.icon = std::make_shared<ItemStack>(std::move(*st));
+        if (!s.spec.spec.iconItem.empty()) {
+            if (auto st = game::items::make(s.spec.spec.iconItem)) s.icon = std::make_shared<ItemStack>(std::move(*st));
         }
-        s.title          = translateAny(s.spec.titleKey);
-        s.body           = translateAny(s.spec.bodyKey);
+        s.title          = lineOf(s.spec.title, s.spec.spec.titleKey);
+        s.body           = lineOf(s.spec.body, s.spec.spec.bodyKey);
         t.occupied[free] = true;
         t.visible.push_back(std::move(s));
     }
@@ -621,19 +652,21 @@ void render(screen::Canvas& c, float guiWidth) {
 
 void show(ToastSpec const& spec) { show(spec, Style{}); }
 
-void show(ToastSpec const& spec, Style style) {
+void show(ToastSpec const& spec, Style style) { show(LiteralToastSpec{spec, {}, {}}, style); }
+
+void show(LiteralToastSpec const& toast, Style style) {
     auto&           t = toasts();
     std::lock_guard lock(t.mutex);
-    t.queued.push_back({spec, style});
+    t.queued.push_back({toast, style});
     t.logged = false;
 }
 
-std::size_t cancel(std::string const& titleKey) {
+std::size_t cancel(std::string const& title) {
     auto&           t = toasts();
     std::lock_guard lock(t.mutex);
-    std::size_t     n = std::erase_if(t.queued, [&](Queued const& q) { return q.spec.titleKey == titleKey; });
+    std::size_t     n = std::erase_if(t.queued, [&](Queued const& q) { return named(q.spec, title); });
     for (auto it = t.visible.begin(); it != t.visible.end();) {
-        if (it->spec.titleKey != titleKey) {
+        if (!named(it->spec, title)) {
             ++it;
             continue;
         }
@@ -644,14 +677,32 @@ std::size_t cancel(std::string const& titleKey) {
     return n;
 }
 
-std::optional<Style> styleOfToast(std::string const& titleKey) {
+std::optional<Style> styleOfToast(std::string const& title) {
     auto&           t = toasts();
     std::lock_guard lock(t.mutex);
     for (auto const& s : t.visible)
-        if (s.spec.titleKey == titleKey) return s.style;
+        if (named(s.spec, title)) return s.style;
     for (auto const& q : t.queued)
-        if (q.spec.titleKey == titleKey) return q.style;
+        if (named(q.spec, title)) return q.style;
     return std::nullopt;
+}
+
+std::optional<std::pair<std::string, std::string>> linesOfToast(std::string const& title) {
+    std::optional<LiteralToastSpec> waiting;
+    {
+        auto&           t = toasts();
+        std::lock_guard lock(t.mutex);
+        for (auto const& s : t.visible)
+            if (named(s.spec, title)) return std::pair{s.title, s.body};
+        for (auto const& q : t.queued) {
+            if (named(q.spec, title)) {
+                waiting = q.spec;
+                break;
+            }
+        }
+    }
+    if (!waiting) return std::nullopt;
+    return std::pair{lineOf(waiting->title, waiting->spec.titleKey), lineOf(waiting->body, waiting->spec.bodyKey)};
 }
 } // namespace toast
 

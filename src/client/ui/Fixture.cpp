@@ -3,8 +3,12 @@
 // turns it on with "ui.fixture" {show, hud, toast, world, fog, map} (feature/ui/Fixture.cpp):
 //
 // - HUD layer "ui.fixture": a panel with an item, the graphics mode and the three blit methods;
-// - two toasts (Java's toast layout) with a map icon: LockedBiomeToast's colours (yellow title) and
-//   MissingAdvancementToast's (white title);
+// - two toasts (Java's toast layout on the game's toast frame): LockedBiomeToast's colours (yellow
+//   title) with a flat icon (a map) and MissingAdvancementToast's (white title) with a block icon
+//   (grass) and a literal body;
+// - stage renderers (the frame step, "stage": its origin): a block renderer on the fixture block left
+//   of the frame (the fixture geometry, lit by the block above it) and a tint of the oak leaves right
+//   of it built on the game's foliage colour (red and blue swapped on the stage only);
 // - world: a line box around the block below the player, a line up to the sky and the fixture
 //   geometry (geometry.gf_ui.fixture) drawn with drawGeo in front of the player;
 // - fog: a provider for the player's dimension (red fog 4..24 blocks, clouds at y 160), and a sky
@@ -14,7 +18,8 @@
 // - map: TF-style decorations (gf_test:fixture_icon*) on the map the player holds, one of them
 //   conquered (TF's red X) and the vanilla player icon drawn on top (MagicMapPlayerIconRenderer);
 // - screen "ui.fixture": a ContainerScreen with the fixture GUI skin (an original texture with
-//   the layout of TF's container GUIs), nine container slots and the player inventory;
+//   the layout of TF's container GUIs), nine container slots (flat and block items) and the player
+//   inventory;
 // - key "ui.fixture" (J, registered at mod load) and "ui.fixture_late" (K, registered at install,
 //   after the game built its input handler): forwarded to the server, which logs the presses;
 // - native particle "gf_test:fixture_particle": the client scenario runs /particle with it and the
@@ -32,6 +37,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/client/ClientExitLevelEvent.h"
@@ -43,6 +49,9 @@
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/options/GraphicsMode.h"
 #include "mc/world/item/ItemStack.h"
+#include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
+#include "mc/world/level/block/Block.h"
 
 #include "client/Client.h"
 #include "client/input/Input.h"
@@ -54,6 +63,7 @@
 #include "feature/ext/ui/Client.h"
 #include "feature/net/Net.h"
 #include "feature/ui/Fixture.h"
+#include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 #include "mod/Main.h"
@@ -194,6 +204,83 @@ void drawHead(render::RenderContext& ctx, ItemStack const&, render::ItemContext)
     if (!st().loggedHead.exchange(true)) log().info("ui fixture: head item drawn");
 }
 
+// ---- the stage's renderers (the frame step): a block renderer and a tint on the game's foliage ----
+
+constexpr char kStageLeaves[] = "minecraft:oak_leaves";
+
+/// The stage's origin (its feet block) while the stage renderers are on (chunk builders read it).
+struct StageAt {
+    std::atomic<bool> on{false};
+    std::atomic<int>  x{0}, y{0}, z{0};
+    std::atomic<bool> loggedBlock{false}, loggedTint{false};
+    int               ticks = 0; // client thread: ticks since the stage renderers came on
+};
+StageAt& stageAt() {
+    static StageAt s;
+    return s;
+}
+
+/// Whether `p` lies in the stage box (fixture::prepareStage: x -1..1, y -1..3, z 0..4 of the origin).
+bool onStage(BlockPos const& p) {
+    auto& s = stageAt();
+    if (!s.on) return false;
+    int x = s.x, y = s.y, z = s.z;
+    return p.x >= x - 1 && p.x <= x + 1 && p.y >= y - 1 && p.y <= y + 3 && p.z >= z && p.z <= z + 4;
+}
+
+/// The fixture block's renderer: the fixture geometry on top, lit by the light of the block above
+/// (a renderer moving its light: the fixture block is a full cube, dark inside).
+void drawStageBlock(render::RenderContext& ctx, BlockPos const& pos, Block const&, float) {
+    if (!onStage(pos)) return;
+    float x = static_cast<float>(pos.x), y = static_cast<float>(pos.y), z = static_cast<float>(pos.z);
+    ctx.lightAt = Vec3{x + .5f, y + 1.5f, z + .5f};
+    render::drawGeo(ctx, kGeo, tex().geo, {.translation = {x + .5f, y + 1.f, z + .5f}, .rotationDeg = {0, 45, 0}, .scale = {.5f, .5f, .5f}});
+    if (!stageAt().loggedBlock.exchange(true))
+        log().info("ui fixture: stage block renderer drawn at {} {} {} (light set {} time(s) so far)", pos.x, pos.y, pos.z, render::lightSetups());
+}
+
+/// Oak leaves: the game's own foliage colour, with red and blue swapped on the stage (the screenshot
+/// shows the game's colour went through the tint function); everywhere else as the game tints them.
+unsigned tintStageLeaves(BlockPos const& p, tint::GameColors const& game) {
+    unsigned f = game.foliage().value_or(0x48B518u); // FoliageColor.getDefaultColor without a world
+    if (!onStage(p)) return f;
+    unsigned swapped = (f & 0x00FF00u) | ((f >> 16) & 0xFFu) | ((f & 0xFFu) << 16);
+    if (!stageAt().loggedTint.exchange(true)) log().info("ui fixture: stage leaves tinted from the game's foliage #{:06X} (drawn #{:06X})", f, swapped);
+    return swapped;
+}
+
+void setStage(std::optional<BlockPos> origin) {
+    auto& s = stageAt();
+    if (!origin) {
+        if (!s.on.exchange(false)) return;
+        render::unregisterBlockRenderer(kFixtureHead);
+        tint::unregisterBlock(kStageLeaves);
+        return;
+    }
+    s.x = origin->x, s.y = origin->y, s.z = origin->z;
+    s.loggedBlock = false;
+    s.loggedTint  = false;
+    s.ticks       = 0;
+    s.on          = true;
+    render::registerBlockRenderer(kFixtureHead, drawStageBlock);
+    tint::registerBlock(kStageLeaves, tint::GameTintFn{tintStageLeaves});
+    log().info("ui fixture: stage renderers on at {} {} {}", origin->x, origin->y, origin->z);
+}
+
+/// What the client sees on the stage 3 s after the renderers came on, when none of them ran yet.
+void tickStage() {
+    auto& s = stageAt();
+    if (!s.on || ++s.ticks != 60 || (s.loggedBlock && s.loggedTint)) return;
+    auto* p = currentPlayer();
+    if (!p) return;
+    auto& region = p->getDimensionBlockSource();
+    int   x = s.x, y = s.y, z = s.z;
+    log().warn(
+        "ui fixture: stage renderers not run yet (block {}, tint {}); the client sees {} and {} beside the frame", s.loggedBlock.load(), s.loggedTint.load(),
+        game::blockId(region.getBlock(BlockPos{x - 1, y, z + 2})), game::blockId(region.getBlock(BlockPos{x + 1, y, z + 2}))
+    );
+}
+
 void setFog(bool on) {
     auto* player = currentPlayer();
     int   dim    = player ? static_cast<int>(player->getDimensionId()) : 0;
@@ -267,9 +354,11 @@ void onMessage(Json const& msg) {
         st().world = false;
         setFog(false);
         clearMap();
+        setStage(std::nullopt);
         log().info("ui fixture: hidden");
         return;
     }
+    if (auto const& at = msg.value("stage", Json()); at.is_array() && at.size() == 3) setStage(BlockPos{at[0].get<int>(), at[1].get<int>(), at[2].get<int>()});
     if (msg.value("hud", false)) {
         st().hud       = true;
         st().loggedHud = false;
@@ -279,10 +368,12 @@ void onMessage(Json const& msg) {
         st().loggedWorld = false;
     }
     if (msg.value("toast", false)) {
-        // LockedBiomeToast's colours (the contract's default), then MissingAdvancementToast's
+        // LockedBiomeToast's colours (the contract's default) with a flat icon, then
+        // MissingAdvancementToast's with a block icon (TF's advancement icons are often blocks:
+        // its FALLBACK is the portal miniature) and a literal body (an advancement title as text)
         toast::show({.iconItem = "minecraft:map", .titleKey = "gf.ui.fixture.toast_title", .bodyKey = "gf.ui.fixture.toast_body", .ms = 30000});
         toast::show(
-            {.iconItem = "minecraft:compass", .titleKey = "gf.ui.fixture.toast_advancement", .bodyKey = "gf.ui.fixture.toast_body", .ms = 30000},
+            toast::LiteralToastSpec{{.iconItem = "minecraft:grass_block", .titleKey = "gf.ui.fixture.toast_advancement", .ms = 30000}, {}, "Literal: The Twilight Forest"},
             toast::styleOf(toast::Kind::MissingAdvancement)
         );
     }
@@ -353,8 +444,12 @@ public:
             st().world = false;
             setFog(false);
             clearMap();
+            setStage(std::nullopt);
         }));
-        mListeners.push_back(bus.emplaceListener<ll::event::ClientLevelTickEvent>([](auto&) { tickMap(); }));
+        mListeners.push_back(bus.emplaceListener<ll::event::ClientLevelTickEvent>([](auto&) {
+            tickMap();
+            tickStage();
+        }));
     }
     void uninstall() {
         auto& bus = ll::event::EventBus::getInstance();

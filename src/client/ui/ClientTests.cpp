@@ -8,6 +8,8 @@
 #include <cmath>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <string_view>
 #include <vector>
 
 #include "ll/api/service/Bedrock.h"
@@ -63,6 +65,17 @@ GF_REGISTER_SELFTEST("ui.client_ui", [](Context& ctx) {
     ctx.check(styleB && styleB->titleColor == 0xFFFFFFFFu && styleB->bodyColor == 0xFFFFFFFFu, "MissingAdvancementToast: white title and body");
     ctx.check(cl::toast::cancel("gf_test.ui.toast_a") == 1 && cl::toast::cancel("gf_test.ui.toast_b") == 1, "the toasts are cancelled");
     ctx.check(cl::ui::toastCount() == before && !cl::toast::styleOfToast("gf_test.ui.toast_a"), "no toast is left");
+    // literal lines win over the keys (F10's MissingAdvancementToast: the advancement's title as text)
+    cl::toast::show(cl::toast::LiteralToastSpec{{.iconItem = "minecraft:map", .titleKey = "gf_test.ui.toast_c", .bodyKey = "gf_test.ui.toast_body", .ms = 1}, {}, "gf_test literal body"});
+    cl::toast::show(cl::toast::LiteralToastSpec{{.iconItem = "minecraft:grass_block", .ms = 1}, "gf_test literal title", "gf_test literal second"}, cl::toast::styleOf(cl::toast::Kind::MissingAdvancement));
+    auto linesC = cl::toast::linesOfToast("gf_test.ui.toast_c"), linesD = cl::toast::linesOfToast("gf_test literal title");
+    ctx.check(linesC && linesC->first == "gf_test.ui.toast_c" && linesC->second == "gf_test literal body", "a key without a translation shows as itself, the literal body wins over the body key");
+    ctx.check(linesD && linesD->first == "gf_test literal title" && linesD->second == "gf_test literal second", "a toast with literal lines only");
+    auto styleD = cl::toast::styleOfToast("gf_test literal title");
+    ctx.check(styleD && styleD->titleColor == 0xFFFFFFFFu, "a toast is found by its literal title");
+    ctx.check(cl::toast::cancel("gf_test.ui.toast_c") == 1 && cl::toast::cancel("gf_test literal title") == 1 && cl::toast::cancel("") == 0, "cancelled by key and by literal title (an empty title matches none)");
+    ctx.check(cl::ui::toastCount() == before, "no toast is left");
+    ctx.check(std::string_view(cl::toast::kFrameTexture) == "textures/ui/greyBorder" && cl::toast::kFrameSlice == 4 && cl::toast::kFrameSize == 16, "the toast frame is Bedrock's own toast texture, a 16 px nine-slice with 4 px corners");
     ctx.info(std::string("GUI hidden (F1): ") + (cl::hud::guiHidden() ? "yes" : "no"));
 
     // tooltips: lines of the item's providers, removed again at the end
@@ -138,6 +151,52 @@ GF_REGISTER_SELFTEST("ui.client_render", [](Context& ctx) {
     ctx.check(r::unregisterEntityRenderers("gf_test:ui_test_entity"), "entity renderer removed");
     ctx.check(r::unregisterItemRenderer("gf_test:ui_test_item") && !r::hasItemRenderer("gf_test:ui_test_item", r::Gui), "item renderer removed");
     ctx.check(!r::unregisterItemRenderer("gf_test:ui_test_item"), "only once");
+
+    // a tint that builds on the game's colours: the game's foliage reaches the function; without a
+    // world there is none (TF then takes its colour without a world)
+    struct Colours final : cl::tint::GameColors {
+        std::optional<unsigned> foliage() const override { return 0x48B518u; }
+        std::optional<unsigned> grass() const override { return 0x91BD59u; }
+        std::optional<unsigned> water() const override { return std::nullopt; }
+    };
+    cl::tint::registerBlock("gf_test:ui_test_leaves", [](BlockPos const& p, cl::tint::GameColors const& game) {
+        auto f = game.foliage();
+        return f ? (*f & 0xFEFEFEu) / 2 + static_cast<unsigned>(p.x & 1) : 0x112233u;
+    });
+    auto none = r::tintOf("gf_test:ui_test_leaves", 0, 0, 0);
+    auto with = r::tintOf("gf_test:ui_test_leaves", 1, 0, 0, Colours{});
+    ctx.check(none && *none == 0x112233u, "without a world the function gets no game colour");
+    ctx.check(with && *with == (0x48B518u & 0xFEFEFEu) / 2 + 1, "the game's foliage colour reaches the function");
+    // a plain TintFn keeps working next to it, and gets the absolute position only
+    cl::tint::registerBlock("gf_test:ui_test_block", [](BlockPos const& p) { return 0x000100u * static_cast<unsigned>(p.z & 0xFF); });
+    auto plain = r::tintOf("gf_test:ui_test_block", 0, 0, 3, Colours{});
+    ctx.check(plain && *plain == 0x000300u, "a plain tint function ignores the game's colours");
+    ctx.check(cl::tint::unregisterBlock("gf_test:ui_test_leaves") && cl::tint::unregisterBlock("gf_test:ui_test_block"), "tints removed");
+});
+
+// Name tags: hidden by entity type (all, or with a predicate) or by a predicate of any type, shown
+// again by type or handle. Checked on the test player (no real entity's tag is hidden for longer than
+// the test).
+GF_REGISTER_SELFTEST("ui.client_name_tags", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace r = cl::render;
+    (void)ctx.player();
+    co_await ctx.ticks(1);
+    auto&        p    = ctx.player();
+    std::int64_t self = p.getOrCreateUniqueID().rawID;
+    auto         isMe = [self](Actor const& a) { return a.getOrCreateUniqueID().rawID == self; };
+    ctx.check(!r::nameTagHidden(p), "no rule hides the test player's name tag");
+    r::hideNameTag(p.getTypeName(), isMe);
+    ctx.check(r::nameTagHidden(p), "hidden by its type and the predicate");
+    r::hideNameTag(p.getTypeName(), [](Actor const&) { return false; });
+    ctx.check(!r::nameTagHidden(p), "a later rule for the type replaces the earlier one");
+    ctx.check(r::showNameTag(p.getTypeName()) && !r::showNameTag(p.getTypeName()), "the type's rule is removed once");
+    r::hideNameTag("gf_test:ui_test_entity");
+    ctx.check(!r::nameTagHidden(p), "a rule for another type leaves it alone");
+    ctx.check(r::showNameTag("gf_test:ui_test_entity"), "removed");
+    auto handle = r::hideNameTag(isMe);
+    ctx.check(handle != 0 && r::nameTagHidden(p), "hidden by a predicate of any type");
+    ctx.check(r::hideNameTag(r::NameTagFn{}) == 0, "an empty predicate is refused");
+    ctx.check(r::showNameTag(handle) && !r::showNameTag(handle) && !r::nameTagHidden(p), "the predicate is removed by its handle, once");
 });
 
 GF_REGISTER_SELFTEST("ui.client_geo", [](Context& ctx) {

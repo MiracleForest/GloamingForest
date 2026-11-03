@@ -89,6 +89,47 @@ function Wait-UiStage([int]$Since) {
     } else { Start-Sleep -Seconds 6 }
 }
 
+# How much of the width of container slot `slot` of the fixture screen is drawn on (0..1), against the
+# empty slot `empty` of the same row in the same screenshot: `px`, `py` the panel and `gw` x `gh` the
+# GUI size from the 'screen opened' line; the slots are Java's (8 + 18 i, 18), 16 x 16. A flat item
+# covers most of its slot, and so does a block item drawn as a cube; the edge-on sliver of a block item
+# seen in W0c covered about a third. (Bedrock still draws the block items of the mod's screens face
+# on, not with Java's GUI block transform: docs/spikes/S5.md, round 5.)
+function Get-UiSlotCoverage([string]$png, [double]$px, [double]$py, [double]$gw, [double]$gh, [int]$slot, [int]$empty) {
+    Add-Type -AssemblyName System.Drawing
+    $bmp = [System.Drawing.Bitmap]::FromFile($png)
+    try {
+        $sx = $bmp.Width / $gw; $sy = $bmp.Height / $gh
+        $x0 = [int][Math]::Round(($px + 8 + 18 * $slot) * $sx); $e0 = [int][Math]::Round(($px + 8 + 18 * $empty) * $sx)
+        $y0 = [int][Math]::Round(($py + 18) * $sy)
+        $w = [int][Math]::Floor(16 * $sx); $h = [int][Math]::Floor(16 * $sy)
+        $cols = 0
+        for ($dx = 1; $dx -lt $w - 1; $dx++) {
+            $hit = 0
+            for ($dy = 1; $dy -lt $h - 1; $dy++) {
+                $a = $bmp.GetPixel($x0 + $dx, $y0 + $dy); $b = $bmp.GetPixel($e0 + $dx, $y0 + $dy)
+                if (([Math]::Abs([int]$a.R - [int]$b.R) + [Math]::Abs([int]$a.G - [int]$b.G) + [Math]::Abs([int]$a.B - [int]$b.B)) -gt 24) { $hit++ }
+            }
+            if ($hit -ge 2) { $cols++ }
+        }
+        return [Math]::Round($cols / [double]($w - 2), 2)
+    } finally { $bmp.Dispose() }
+}
+
+# The fixture screen's block items (2: cobblestone, 6: twilight oak planks) and flat items (0: map,
+# 4: compass) are not slivers: each covers at least 60% of its slot's width.
+function Assert-UiSlotItems([string]$png, [string]$layout) {
+    if ($layout -notmatch 'panel=([-\d.]+),([-\d.]+) inv=[-\d.,]+ gui=([\d.]+)x([\d.]+)') { throw "no layout in '$layout'" }
+    $px = [double]$Matches[1]; $py = [double]$Matches[2]; $gw = [double]$Matches[3]; $gh = [double]$Matches[4]
+    $report = @()
+    foreach ($s in @(@{ slot = 0; empty = 1; what = 'map (flat)' }, @{ slot = 2; empty = 1; what = 'cobblestone (block)' }, @{ slot = 4; empty = 5; what = 'compass (flat)' }, @{ slot = 6; empty = 5; what = 'twilight oak planks (block)' })) {
+        $cover = Get-UiSlotCoverage $png $px $py $gw $gh $s.slot $s.empty
+        $report += "$($s.what) $cover"
+        if ($cover -lt 0.6) { throw "slot $($s.slot), $($s.what), covers only $cover of its width in $(Split-Path $png -Leaf) (a sliver?)" }
+    }
+    Write-Step "slot items cover their slots: $($report -join ', ')"
+}
+
 # The `ui.*` run must not touch the untagged real player.
 function Assert-UiUntouched([int]$Since) {
     $lines = @(Get-LeviLog -Since $Since)
@@ -134,7 +175,7 @@ Invoke-Chat "/tag @s remove $tag"   # a world that kept it from an earlier run
 $untagged = Get-LogMark
 $r = Invoke-SelfTest 'ui.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) ui selftest(s) failed" }
-if ($script:Mode -eq 'local' -and $r.Pass -lt 34) { throw "expected at least 34 ui selftests in the client build, got $($r.Pass)" }
+if ($script:Mode -eq 'local' -and $r.Pass -lt 35) { throw "expected at least 35 ui selftests in the client build, got $($r.Pass)" }
 Start-Sleep -Seconds 1
 Assert-UiUntouched $untagged
 
@@ -176,6 +217,8 @@ function Invoke-UiFixture([string]$mode) {
     Write-Step "fixture shown: $shown"
     Wait-LogLine 'ui fixture: hud layer drawn' 30 -Since $mark | Out-Null
     Wait-LogLine 'ui: toast drawn' 30 -Since $mark | Out-Null
+    # the toasts' frame is the game's own toast texture (logged once per game session)
+    Wait-LogLine 'ui: toast frame drawn with textures/ui/greyBorder' 30 | Out-Null
     Wait-LogLine 'ui fixture: world lines drawn' 30 -Since $mark | Out-Null
     Start-Sleep -Seconds 2
     Save-Screenshot "$mode-hud-toast-world" | Out-Null
@@ -204,7 +247,9 @@ function Invoke-UiFixture([string]$mode) {
     Invoke-UiTest 'ui.fixture_screen' | Out-Null
     $open = Wait-LogLine 'screen opened: GloamingForest UI fixture' 30 -Since $mark
     Start-Sleep -Seconds 2
-    Save-Screenshot "$mode-screen" | Out-Null
+    $shot = Save-Screenshot "$mode-screen"
+    # block items (cobblestone, twilight oak planks) cover their slots like the flat ones (map, compass)
+    Assert-UiSlotItems $shot $open
     # a click on container slot 4 (the compass) reaches the server's screen type
     if ($open -match 'panel=([-\d.]+),([-\d.]+) inv=[-\d.,]+ gui=([\d.]+)x([\d.]+)') {
         $px = [double]$Matches[1]; $py = [double]$Matches[2]; $gw = [double]$Matches[3]; $gh = [double]$Matches[4]
@@ -226,6 +271,14 @@ function Invoke-UiItems([string]$mode) {
     Wait-LogLine "${hostRx}ui fixture: item frame with gf_test:fixture_item placed" 20 -Since $mark | Out-Null
     Wait-UiStage $mark
     Wait-UiLine 'ui fixture: item frame item drawn' 20 $mark | Out-Null
+    # the stage's block renderer (fixture block, left of the frame: the fixture geometry lit by the
+    # block above) and the oak leaves right of it, tinted from the game's foliage (red and blue swapped)
+    # reported, not required: in W0d neither ran in either graphics mode although the client saw both
+    # blocks (the chunk hooks did not fire for them: docs/spikes/S5.md, round 5)
+    Start-Sleep -Seconds 4
+    $ran = @(Get-LeviLog -Since $mark | Where-Object { $_ -match '^(?!\[host\]).*ui fixture: stage (block renderer drawn|leaves tinted)' })
+    $any = @(Get-LeviLog -Since 0 | Where-Object { $_ -match '^(?!\[host\]).*render: block renderers drawn, each with the light at its block' }).Count
+    Write-Step "${mode}: $($ran.Count) of the 2 stage renderers ran ($($ran -join ' | ')); block renderers with their light this session: $any"
     Start-Sleep -Seconds 1
     Save-Screenshot "$mode-frame" | Out-Null
     Invoke-UiTest 'ui.fixture_clear' | Out-Null

@@ -78,8 +78,12 @@ std::atomic<int> gForms{0};
 
 Json screenData() {
     Json items = Json::object();
+    // flat items (0, 4, 8) and block items (2: a vanilla block, 6: a TF block): the client scenario
+    // checks the block items cover their slots (no sliver)
     if (auto s = game::items::make("minecraft:map")) items["0"] = game::items::toJson(*s);
+    if (auto s = game::items::make("minecraft:cobblestone")) items["2"] = game::items::toJson(*s); // one: no count over the icon
     if (auto s = game::items::make("minecraft:compass")) items["4"] = game::items::toJson(*s);
+    if (auto s = game::items::make("twilightforest:twilight_oak_planks")) items["6"] = game::items::toJson(*s);
     if (auto s = game::items::make("minecraft:oak_sapling", 3)) items["8"] = game::items::toJson(*s);
     return Json{{"clicks", gClicks.load()}, {"items", items}};
 }
