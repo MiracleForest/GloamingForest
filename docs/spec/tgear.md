@@ -13,8 +13,10 @@ items, recipes and tooltips are U11's.
 - The **modifier framework**: registry `twilightforest:travellers_modifiers` (data-driven), modifier types
   (`twilightforest:component`, `builtin`, `attribute`, `transferable_component` — `TravellersModifierTypes`), recipe serializers
   `travellers_gear_modifier_shaped_recipe`, `travellers_gear_modifier_shapeless_recipe`,
-  `travellers_vest_gloves_merge_recipe`, 33 recipes, trigger `twilightforest:add_modifier`, subcommand
-  `/twilightforest travellers_gear add_modifier|remove_modifier <modifier>` (owners.tsv id `travellersgear`).
+  `travellers_vest_gloves_merge_recipe`, 33 recipes, trigger `twilightforest:add_modifier`, subcommands
+  `/twilightforest travellers_gear add_modifier <modifier>` and `/twilightforest travellers_gear remove_modifier
+  <modifier>` (owners.tsv `subcommand` rows `travellers_gear`, `travellers_gear add_modifier`,
+  `travellers_gear remove_modifier`; 3.1).
 - U11 modifiers: `all_night_goggles`, `arrow_magnetism`, `auto_repair`, `efficient_eater`, `haste`, `item_display`,
   `perfect_dodge`, `red_thread_vision`, `stealth`, `swap_hotbar`, `swap_hotbar_ability`, `zoom` (+ their data
   components) and the gear-state components `has_travellers_belt/boots/chestplate/gloves/wings`, `travellers_armor`,
@@ -91,10 +93,52 @@ layer `twilightforest:travellers`. All pieces carry `twilightforest:travellers_a
   one ingredient carries the transferable component; the result is a copy of the gear with the modifier added (or
   transferred, e.g. the belt's container for `swap_hotbar`). Crafting a piece with new modifiers fires
   `twilightforest:add_modifier` per new modifier (`ItemCraftedEvent`).
-- `/twilightforest travellers_gear add_modifier|remove_modifier <modifier>` (game masters): applies to the main-hand
-  piece; errors `commands.tffeature.not_player`, `not_travellers_gear`, `ability_modifier`, `too_many_modifiers`,
-  `has_modifier`, `wrong_modifier_slot`, `no_modifier`, `invalid_modifier`; success `commands.tffeature.added_modifier`
-  / `removed_modifier`.
+- Command (`TravellersGearCommand`), TF's literals below `/twilightforest` (aliases `/tf`, `/tffeature`):
+  `/twilightforest travellers_gear add_modifier <modifier>` and `/twilightforest travellers_gear remove_modifier
+  <modifier>`. Permission 2 (`LEVEL_GAMEMASTERS`, on the `travellers_gear` literal); `travellers_gear` alone or a
+  child without `<modifier>` is incomplete (no executor). `<modifier>` is a resource location naming a key of the
+  `twilightforest:travellers_modifiers` registry (`ResourceKeyArgument`, suggestions = the registry's keys; a
+  malformed id is a parse error). Both act on the executing player's main-hand stack; checks in this order, the
+  first failure is the command error:
+  - both: the key is not in the registry -> `commands.tffeature.invalid_modifier` (the id) — checked first, by
+    `ResourceKeyArgument.resolveKey` in the `executes` lambda before `validate()`, so the console naming an unknown id
+    gets `invalid_modifier`, not `not_player`; the source is not a player, or is a fake player ->
+    `commands.tffeature.not_player`; the main-hand item is not `TravellersModifiable` (the six items of 3.1) ->
+    `not_travellers_gear`; the modifier is an ability (`builtin` type, or `attribute` with `builtin_modifier`:
+    `zoom`, `swift_swim`, `swap_hotbar_ability`, `high_jump`, `step_up`) -> `ability_modifier`;
+  - `add_modifier`: insertable modifiers on the stack >= the item's modifier slots (always for gloves and belt, 0
+    slots) -> `too_many_modifiers`; the stack already has it -> `has_modifier` (modifier name); the item's equipment
+    slot (`getEquipmentSlotForItem`) is not in the modifier's slot group -> `wrong_modifier_slot` (modifier name);
+    then the modifier is added with its default value (`component`: the registry default; `transferable_component`
+    `swap_hotbar`: the marker + an empty 9-slot `minecraft:container`; `attribute` `aquatic_agility`: the marker +
+    its attribute entries) and `commands.tffeature.added_modifier` (modifier name, stack hover name) is sent to the
+    source and broadcast to operators;
+  - `remove_modifier`: the stack lacks it -> `no_modifier` (modifier name); otherwise its component(s) are removed
+    (`aquatic_agility`: the marker and its attribute entries; `swap_hotbar`: the marker and the `minecraft:container`;
+    the items stored by `swap_hotbar` / `item_display` are deleted, not given back as by the grindstone) and
+    `commands.tffeature.removed_modifier` (modifier name, stack hover name) is sent and broadcast.
+  The modifier name (`TravellersModifiersManager.getModifierTooltipComponent`, built only after the four common
+  checks) is **a literal rendered on the server**, not a translatable component: `TooltipStringInterpolator.render`
+  translates `travellers_gear.modifier.twilightforest.<id>` with the server's language (`Component.translatable(key)
+  .getString()`: the host's selected language on an integrated server; en_us on a dedicated server, where NeoForge's
+  `LanguageHook` loads the mods' en_us), replaces every `${tfkeybinds/<key name>}` with that key mapping's current
+  binding name (`KeyModifier.getCombinedName`, e.g. `C`; an unbound key gives `key.keyboard.unknown`, "Not Bound"; a
+  key name TF does not register gives "Nonexistent key") and wraps the result in `Component.literal`. The same
+  literal goes to the source and into the operator broadcast; the stack name stays a translatable hover name. Three
+  insertable modifiers have a placeholder in their name: `item_display` (`key.twilightforest.item_display_map_cycle`),
+  `red_thread_vision` and `swap_hotbar` (`zoom` and `swap_hotbar_ability` have one too but are rejected as abilities
+  before the name is built). On a dedicated server TF's placeholder lookup loads `TFKeyBinds`, whose
+  `net.minecraft.client.KeyMapping` does not exist there (not in the 1.21.1 server jar), so for these three TF ends
+  in a `NoClassDefFoundError`, an `Error` that `Commands.performCommand` (it catches `Exception`) does not turn into a
+  command failure. Neither path checks the broken state or fires `twilightforest:add_modifier` (only crafting does).
+  The ten `commands.tffeature.*` keys are F6's in owners.tsv (the partition of TF's `commands.tffeature.*` keys), so
+  U11 uses them with `tr(key, fallback)` and these English texts: `not_player` "This command must be run by a valid
+  player!", `not_travellers_gear` "You are not holding a piece of Traveller's Gear", `ability_modifier` "Abilities
+  cannot be added or removed from Traveller's Gear", `too_many_modifiers` "This piece of Traveller's Gear already
+  has the maximum amount of modifiers", `has_modifier` "This piece of Traveller's Gear already has %s",
+  `wrong_modifier_slot` "%s is not allowed on this piece of Traveller's Gear", `no_modifier` "%s is not applied to
+  this piece of Traveller's Gear", `invalid_modifier` "%s is not a valid Traveller's Gear Modifier", `added_modifier`
+  "Added %s to %s!", `removed_modifier` "Removed %s from %s!".
 
 ### 3.2 Modifier framework
 
@@ -181,6 +225,16 @@ corners; full-bright glow render type while the viewer holds red thread or has r
   `render`); vanilla clients get a form-based view of the stored items and no zoom.
 - Perfect dodge / arrow magnetism: `combat::onIncoming` + projectile hit handlers (`projectile` contract hooks for
   vanilla arrows).
+- `/twilightforest travellers_gear` messages: render the modifier name once on the server, as TF does, in the
+  server's language (`tr("travellers_gear.modifier.twilightforest.<id>", English name)`; not the source player's
+  language: TF's integrated server uses the host's language for every source, its dedicated server en_us), expand
+  each `${tfkeybinds/<key name>}` the way `TooltipStringInterpolator` does, and send that same text to the source and
+  in the operator broadcast (the stack name is the item's own name). The client build in a local world (TF's
+  integrated server) uses the host's language and puts in the host's current binding of that key (`client::keys`,
+  "Not Bound" when unbound). The server build (BDS) has no player key bindings and must not fail as TF's dedicated
+  server does: it puts in TF's
+  default binding (`C` for `item_display_map_cycle`, `V` for `swap_hotbar`, "Not Bound" for `red_thread_vision`), a
+  deviation from a TF failure that U11 records in `docs/units/tgear.md` for A8's deviation list.
 - Stealth: hidden Invisibility effect works on vanilla clients.
 - Red thread: multiface block family; the glow is client-mod rendering, vanilla shows the normal texture.
 
@@ -189,7 +243,8 @@ corners; full-bright glow render type while the viewer holds red thread or has r
 - Six items with TF defense, slots and durability; never-break clamp; broken state disables modifiers except auto
   repair; anvil/grindstone rules.
 - Every modifier recipe adds its modifier (respecting free slots and duplicates) and fires `add_modifier`;
-  vest + gloves merge; `/twilightforest travellers_gear` errors and success messages.
+  vest + gloves merge; `/twilightforest travellers_gear add_modifier` / `remove_modifier` errors (in TF's check
+  order) and success messages.
 - Auto repair probability with sky boost (Twilight: 1.5 tries day and night; elsewhere 3 tries by day only), none
   within 200 ticks of armor damage; haste, stealth, perfect dodge (seeded 0.3), arrow magnetism, efficient
   eater halving exhaustion, all-night goggles blocking phantoms.
@@ -226,7 +281,7 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the TF 4.8 data the W1 w
 | `selftest` | 1 |
 | `selftest_dx` | 1 |
 | `sound_event` | 9 |
-| `subcommand` | 1 |
+| `subcommand` | 3 |
 | `tag` | 1 |
 | `trigger` | 1 |
 | `worlddb` | 1 |
@@ -429,9 +484,9 @@ See [config.md](config.md) for the section mapping; defaults and translation ids
 | `client.Item Display Modifier Settings.screenScale` | `1.0D` | `screen_scale` | Display Scale — Defines the scale of all display modifiers on the screen. |
 | `client.Item Display Modifier Settings.twentyFourHourFormat` | `TFConfig.use24HourTimeDefault()` | `twenty_four_hour_format` | 24-Hour Format — If ON, the clock upgrade displays time in 24-hour format instead of 12-hour format. |
 
-### subcommand (1)
+### subcommand (3)
 
-`travellersgear`
+`travellers_gear`, `travellers_gear add_modifier`, `travellers_gear remove_modifier`
 
 ## Appendix B: Strings (84 en_us keys owned)
 
