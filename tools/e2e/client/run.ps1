@@ -142,8 +142,19 @@ function Start-RemoteHost {
     $harnessLog = Join-Path $outDir 'host-harness.log'
     # Own server output folder per client run (out/client-host-<unit>), so parallel remote runs don't collide.
     $script:HostOutName = "client-host-$script:Unit"
-    $script:HostProc = Start-Process pwsh -ArgumentList @('-NoProfile', '-File', $serverRun, '-Scenario', 'client-host', '-OutName', $script:HostOutName, '-Quiet', '-TimeoutSec', '7200') `
-        -PassThru -WindowStyle Hidden -RedirectStandardOutput $harnessLog -RedirectStandardError (Join-Path $outDir 'host-harness.err')
+    # CreateNoWindow, not Start-Process -WindowStyle Hidden: Start-Process gives the host a new console,
+    # and with Windows Terminal as the default terminal that console opens as a visible window.
+    $psi = [System.Diagnostics.ProcessStartInfo]::new('pwsh')
+    foreach ($a in @('-NoProfile', '-File', $serverRun, '-Scenario', 'client-host', '-OutName', $script:HostOutName, '-Quiet', '-TimeoutSec', '7200')) { $psi.ArgumentList.Add($a) }
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $script:HostProc = [System.Diagnostics.Process]::Start($psi)
+    # Copied straight into the files (unbuffered, readable meanwhile): the wait below reads the log.
+    foreach ($s in @(@($script:HostProc.StandardOutput, $harnessLog), @($script:HostProc.StandardError, (Join-Path $outDir 'host-harness.err')))) {
+        $null = $s[0].BaseStream.CopyToAsync([IO.FileStream]::new($s[1], 'Create', 'Write', 'ReadWrite', 1))
+    }
     Write-Step "starting the BDS host (pid $($script:HostProc.Id))"
     $ready = Join-Path $script:HostDir 'ready.json'
     $start = Get-Date
