@@ -13,7 +13,7 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'landmark.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) landmark selftest(s) failed" }
-if ($r.Pass -lt 18) { throw "expected at least 18 landmark selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 19) { throw "expected at least 19 landmark selftests to pass, got $($r.Pass)" }
 
 # The commands (console origin: the overworld at 0 0 0)
 $mark = Get-LogMark

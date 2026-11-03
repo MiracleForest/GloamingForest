@@ -39,7 +39,11 @@ The selftest `landmark.spawns` checks the dome on a small hollow hill start with
 "gf_mirror", "gf_rotation"}` plus the piece's `Piece::save()` fields such as `"Template"`),
 `protectedPiece` and `spawnIndex`. The start returned by `landmark::startAt` also carries the tags in
 `data["pieces"]` (the shape F7's `structure_util display_pieces` and `count_template` read);
-`startsIntersecting` leaves them out (it runs per feature placement). A piece whose type has no
+`startsIntersecting` leaves them out (it runs per feature placement). `startAt` saves every piece of
+the start on each call: use it for one-off lookups (commands, tests, an interaction), not per tick or
+per block; per-tick callers use `startsIntersecting` and the boxes, then `startPieces` for the one
+start they act on. For a `Start` the store does not hold, `startPieces` gives its boxes with type `""`,
+`protectedPiece` false and `spawnIndex` -1 (unknown: nothing claimed). A piece whose type has no
 factory yet (a W1 unit's, before it registers) keeps the tag it was saved with: it is written back
 unchanged and `startPieces` returns it. This is an extension and not a field of the contract's
 `Start` because `Landmark.h` is F0's file (owners.tsv) and a `Start` copy must stay cheap.
@@ -65,9 +69,19 @@ ctx.require(forced && forced->generated, "forced the fixture landmark");
 // or: gf::landmark::ext::forgetStartForTest(center, "gf_test:landmark_fixture_open");
 ```
 
-`forgetStartForTest` also forgets the chunk's structure set evaluation, so a natural start that a
-forced one replaced comes back on the next lookup. Server thread only. Do not include
-`feature/landmark/Internal.h` from another unit.
+`ScopedStart` puts back the start of the same key and start chunk that its forced start replaced (a
+natural one or an earlier forced one), as it was, its conquered flag included. `forgetStartForTest`
+by hand instead forgets the chunk's structure set evaluation, so a natural start that a forced one
+replaced is made again on the next lookup: unconquered (forceStart copied its flag onto the forced
+start, and removing that loses it). Server thread only. Do not include `feature/landmark/Internal.h`
+from another unit.
+
+The task text of W0d asked for a `"piece"` spawn override on `gf_test:landmark_fixture`. It is on
+`gf_test:landmark_fixture_open` instead: a ControlledSpawns start (the locked fixture) answers every
+non-monster category itself and its monster lists come from `Generator::spawnIndex`, as TF's
+`EntityEvents#gatherPotentialSpawns` does, so a monster override there would apply where the spawn
+index gives no list: the shell's ground floor, which F5's `worldgen.landmark_rules` expects to have
+none. Tests of `structureSpecialSpawns`' override path use the open fixture.
 
 The fixtures (development builds, `src/feature/landmark/Helpers.cpp`), both a 7x7x7 stone brick
 shell around the center (x and z within 3, y up to +6) and a 7x1x3 oak porch in front of it

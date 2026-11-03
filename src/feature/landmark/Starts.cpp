@@ -536,7 +536,10 @@ RecordPtr findLocked(Records& r, int dim, int chunkX, int chunkZ, std::string co
 
 /// Stores a record (records lock held).
 void storeLocked(Records& r, RecordPtr const& record) {
-    record->start.data["chunk"] = Json::array({record->chunkX, record->chunkZ});
+    // written only when it differs: a record stored again (a test putting back the start it replaced)
+    // is read by worldgen threads outside the lock
+    auto chunk = Json::array({record->chunkX, record->chunkZ});
+    if (!record->start.data.is_object() || !record->start.data.contains("chunk") || record->start.data["chunk"] != chunk) record->start.data["chunk"] = std::move(chunk);
     indexRecord(r, record);
     r.dirty.emplace(record->start.dimension, record->chunkX, record->chunkZ);
     bumpVersion();
@@ -1463,9 +1466,10 @@ std::vector<StartPiece> startPieces(Start const& start) {
     auto chunk = start.data.is_object() ? start.data.value("chunk", Json::array()) : Json::array();
     if (chunk.is_array() && chunk.size() == 2 && chunk[0].is_number_integer() && chunk[1].is_number_integer())
         if (auto rec = fl::findRecord(start.dimension, chunk[0].get<int>(), chunk[1].get<int>(), start.key)) return fl::piecesOf(*rec);
-    // a Start the store does not hold (built by a test or another unit): its boxes
+    // a Start the store does not hold (built by a test or another unit): its boxes, claiming no
+    // protection and no spawn list (their flags are unknown)
     std::vector<StartPiece> out;
-    for (auto const& b : start.pieceBoxes) out.push_back(StartPiece{"", b, Json{{"BB", Json::array({b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ})}}, true, -1});
+    for (auto const& b : start.pieceBoxes) out.push_back(StartPiece{"", b, Json{{"BB", Json::array({b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ})}}, false, -1});
     return out;
 }
 

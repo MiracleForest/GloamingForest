@@ -918,8 +918,16 @@ GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTas
         for (auto* a : r->getEntities(box)) {
             if (!a) continue;
             if (!dropped) seen += (seen.empty() ? "" : ", ") + a->getTypeName();
-            if (isHintBook(a)) a->remove(); // the drop of the test
         }
+    }
+    // what the carrier left: the book, the zombie's own loot (rotten flesh, sometimes iron, a carrot
+    // or a potato) and its experience orbs; flatArea restores blocks only, so they go here, after
+    // `dropped` is known (the tests run one at a time: nothing else of another test is in the box)
+    if (auto* r = ctx.region()) {
+        std::vector<Actor*> left;
+        for (auto* a : r->getEntities(box))
+            if (a && (a->getTypeName() == "minecraft:item" || a->getTypeName() == "minecraft:xp_orb")) left.push_back(a);
+        for (auto* a : left) a->remove();
     }
     if (!dropped) {
         bool picked = false;
@@ -1032,6 +1040,35 @@ std::string entriesText(JsonT const& list) {
 /// stays inside the chunk).
 GlobalPos farCenter(GlobalPos const& base, int chunksSouth) { return {base.dim, ((base.x >> 4) << 4) + 8, 64, (((base.z >> 4) + chunksSouth) << 4) + 6}; }
 
+/// A copy of a stored record (Record holds an atomic and is not copyable as a whole).
+fl::RecordPtr copyRecord(fl::Record const& r) {
+    auto c        = std::make_shared<fl::Record>();
+    c->start      = r.start;
+    c->chunkX     = r.chunkX;
+    c->chunkZ     = r.chunkZ;
+    c->forced     = r.forced;
+    c->placed     = r.placed;
+    c->pieces     = r.pieces;
+    c->livePieces = r.livePieces;
+    c->reviveTried.store(r.reviveTried.load());
+    return c;
+}
+
+/// A conquered copy of a stored start in its place for a scope; the original record is stored again
+/// when the scope ends, also on abort. The shared record itself is never written (worldgen threads
+/// read it).
+struct ConqueredCopy {
+    fl::RecordPtr original;
+    explicit ConqueredCopy(fl::RecordPtr rec) : original(std::move(rec)) {
+        auto copy             = copyRecord(*original);
+        copy->start.conquered = true;
+        fl::putRecord(copy);
+    }
+    ConqueredCopy(ConqueredCopy const&)            = delete;
+    ConqueredCopy& operator=(ConqueredCopy const&) = delete;
+    ~ConqueredCopy() { fl::putRecord(original); }
+};
+
 } // namespace
 
 // StructureStart#isValid: a site F6 reserves for a landmark without a generator (before W1: no
@@ -1052,6 +1089,11 @@ GF_REGISTER_SELFTEST("landmark.reserved_sites", [](Context& ctx) {
     fl::ensureStartsAround(dim, cx, cz); // the natural starts first: the queries below evaluate nothing more
     lm::ChunkPos chunk{cx, cz};
     bool         baseline = lm::decorationAllowed(chunk, lm::DecoKind::Surface);
+    gf::landmark::ext::Occupancy surface{.surface = true};
+    // the natural starts' answers at the two points (a natural start with pieces covering one would
+    // block it whatever the reserved site does: the seed decides)
+    bool const blockedCenter = gf::landmark::ext::featureBlocked(dim, center.x, center.y, center.z, surface);
+    bool const blockedCorner = gf::landmark::ext::featureBlocked(dim, cx * 16, center.y, cz * 16, surface);
 
     auto const* tower = fl::info("twilightforest:dark_tower");
     ctx.require(tower && tower->decoration.chunkClearanceRadius > 0 && !tower->decoration.surfaceDecorations,
@@ -1064,9 +1106,10 @@ GF_REGISTER_SELFTEST("landmark.reserved_sites", [](Context& ctx) {
     reserved->start.pieceBoxes.clear();
     reserved->start.generated = false;
     fl::putRecord(reserved);
-    gf::landmark::ext::Occupancy surface{.surface = true};
-    ctx.check(!gf::landmark::ext::featureBlocked(dim, center.x, center.y, center.z, surface), "a reserved site blocks no surface feature at its center");
-    ctx.check(!gf::landmark::ext::featureBlocked(dim, cx * 16, center.y, cz * 16, surface), "nor anywhere in its clearance square");
+    if (!blockedCenter) ctx.check(!gf::landmark::ext::featureBlocked(dim, center.x, center.y, center.z, surface), "a reserved site blocks no surface feature at its center");
+    else ctx.info("a natural start with pieces blocks the center: not checked");
+    if (!blockedCorner) ctx.check(!gf::landmark::ext::featureBlocked(dim, cx * 16, center.y, cz * 16, surface), "nor anywhere in its clearance square");
+    else ctx.info("a natural start with pieces blocks the chunk corner: not checked");
     if (baseline) ctx.check(lm::decorationAllowed(chunk, lm::DecoKind::Surface), "a reserved site suppresses no surface decoration of its chunk");
     else ctx.info("a natural start with pieces covers the test chunk: decorationAllowed is not checked");
 
@@ -1123,13 +1166,17 @@ GF_REGISTER_SELFTEST("landmark.spawns", [](Context& ctx) {
         ctx.check(special(center, 6, 0, 0, "monster") == "none", "beside the start: none " + special(center, 6, 0, 0, "monster"));
         ctx.check(special(center, 0, 1, 0, "ambient") == "[]" && special(center, 0, 1, 0, "water_creature") == "[]", "the empty ambient and water lists");
         ctx.check(special(center, -8, 0, -6, "creature") == "[]", "no creatures anywhere in a chunk the start reaches (ConfigurableSpawns)");
-        // TFStructureStart#isConquered: no monster list once conquered
+        // TFStructureStart#isConquered: no monster list once conquered (a conquered copy of the stored
+        // start in its place while the guard lives: the shared record is never written)
         auto rec = fl::findRecord(center.dim, center.x >> 4, center.z >> 4, kFixture);
         ctx.require(rec != nullptr, "the stored start");
-        rec->start.conquered = true;
-        auto conquered = special(center, 0, 5, 0, "monster");
-        rec->start.conquered = false;
+        std::string conquered;
+        {
+            ConqueredCopy copy(rec);
+            conquered = special(center, 0, 5, 0, "monster");
+        }
         ctx.check(conquered == "none", "conquered: no list on the upper floor " + conquered);
+        ctx.check(fl::findRecord(center.dim, center.x >> 4, center.z >> 4, kFixture) == rec && !rec->start.conquered, "the stored start is back, unconquered");
     }
 
     // the open fixture: no controlled spawns, its spawn overrides
@@ -1181,6 +1228,43 @@ GF_REGISTER_SELFTEST("landmark.spawns", [](Context& ctx) {
     }
 });
 
+// ext::ScopedStart over a start it replaces: the forced start takes over the conquered flag
+// (forceStart), and the replaced start (here a stand-in natural one, conquered) is stored again as it
+// was when the scope ends, not made again unconquered
+GF_REGISTER_SELFTEST("landmark.scoped_start", [](Context& ctx) {
+    auto        center  = farCenter(ctx.testPos(5649, 2), 30060);
+    int const   cx      = center.x >> 4, cz = center.z >> 4;
+    auto const* fixture = fl::info(kFixture);
+    ctx.require(fixture != nullptr, "the fixture descriptor");
+    (void)gf::landmark::ext::forgetStartForTest(center, kFixture); // a leftover of an aborted run
+    ctx.require(fl::findRecord(center.dim, cx, cz, kFixture) == nullptr, "no fixture start there yet");
+    auto natural = fl::createStart(*fixture, center.dim, cx, cz, center, false);
+    ctx.require(natural != nullptr, "a stand-in natural start");
+    natural->start.conquered = true;
+    fl::putRecord(natural);
+    struct Drop {
+        GlobalPos at;
+        ~Drop() { (void)gf::landmark::ext::forgetStartForTest(at, kFixture); }
+    } drop{center};
+    {
+        gf::landmark::ext::ScopedStart forced(kFixture, center);
+        ctx.require(static_cast<bool>(forced), "forced the fixture over it");
+        auto stored = fl::findRecord(center.dim, cx, cz, kFixture);
+        ctx.check(stored != nullptr && stored != natural && stored->forced, "the forced start is stored in its place");
+        ctx.check(forced->conquered && stored && stored->start.conquered, "and took over its conquered flag");
+    }
+    auto back = fl::findRecord(center.dim, cx, cz, kFixture);
+    ctx.check(back == natural, "the replaced start is stored again when the scope ends");
+    ctx.check(back && back->start.conquered && !back->forced, "as it was: conquered, not forced");
+    // a scope over nothing removes its start
+    auto empty = farCenter(ctx.testPos(5649, 2), 30064);
+    {
+        gf::landmark::ext::ScopedStart forced(kFixture, empty);
+        ctx.require(static_cast<bool>(forced), "forced the fixture on its own");
+    }
+    ctx.check(fl::findRecord(empty.dim, empty.x >> 4, empty.z >> 4, kFixture) == nullptr, "a scope that replaced nothing leaves no start");
+});
+
 // StructureStart#getPieces through F6's extension: ext::startPieces gives each piece's type id,
 // box, saved tag (StructurePiece#createTag) and flags, startAt's start carries the tags in
 // data["pieces"] (where F7's structure_util display_pieces and count_template read them), the
@@ -1214,6 +1298,7 @@ GF_REGISTER_SELFTEST("landmark.pieces", [](Context& ctx) {
     loose.pieceBoxes = {gf::core::BlockBox{0, 0, 0, 1, 1, 1}};
     auto loosePieces = gf::landmark::ext::startPieces(loose);
     ctx.check(loosePieces.size() == 1 && loosePieces[0].type.empty() && loosePieces[0].tag.contains("BB"), "a start outside the store: its boxes");
+    ctx.check(!loosePieces[0].protectedPiece && loosePieces[0].spawnIndex == -1, "claiming no protection and no spawn list");
 
     // F6's own piece factories: the shell's tag loads back as F6's piece (its postProcess reports to
     // the fixture probe, which the structure kit's fallback piece does not)

@@ -150,9 +150,17 @@ struct StartPiece {
 };
 /// The pieces of `start` with their type ids and saved tags: the stored start of its key, dimension
 /// and start chunk (start.data["chunk"]); none for a reserved site. A Start the store does not hold
-/// gives its pieceBoxes, with type "" and tag {"BB"}. landmark::startAt's start carries the same
-/// tags in data["pieces"] (the one-start lookup of commands: F7's structure_util reads them there);
+/// gives its pieceBoxes, with type "" and tag {"BB"}; its flags are then unknown and set to "nothing
+/// claimed" (protectedPiece false, spawnIndex -1): a caller building protection or spawns from them
+/// skips pieces whose type is empty. landmark::startAt's start carries the same tags in
+/// data["pieces"] (the one-start lookup of commands: F7's structure_util reads them there);
 /// startsIntersecting's starts do not (it runs per feature placement): ask this.
+///
+/// Cost of landmark::startAt: it saves every piece of the start it finds (StructurePiece#createTag, a
+/// JSON object per piece) on each call. It is meant for one-off lookups on the server thread
+/// (commands, tests, an interaction). Per-tick or per-block callers (a player's position every tick,
+/// a feature placement) use startsIntersecting(dim, chunk) and Start::box / pieceBoxes, and call
+/// startPieces only for the start they act on.
 [[nodiscard]] std::vector<StartPiece> startPieces(Start const& start);
 
 // ---- spawns ------------------------------------------------------------------------------------------

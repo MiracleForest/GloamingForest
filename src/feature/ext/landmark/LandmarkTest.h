@@ -32,6 +32,13 @@
 #include "core/GlobalPos.h"
 #include "feature/landmark/Landmark.h"
 
+#include <cstdint>
+#include <memory>
+
+namespace gf::feature::landmark {
+struct Record; // F6's stored start (feature/landmark/Internal.h, no contract)
+}
+
 namespace gf::landmark::ext {
 
 /// Removes the start of `key` stored with start chunk (pos.x >> 4, pos.z >> 4) of pos.dim (the chunk
@@ -39,10 +46,16 @@ namespace gf::landmark::ext {
 /// there, from memory and the world DB. The chunk's structure sets count as not evaluated afterwards,
 /// so a natural start a forced one replaced comes back on the next lookup. Returns how many starts
 /// were removed. Server thread.
+///
+/// A natural start comes back as the start chunk's structure sets make it again: unconquered, and
+/// without anything set on it at run time. A forced start that replaced a natural one took over its
+/// conquered flag, and forgetting it by hand loses that flag; ScopedStart keeps it (below).
 std::size_t forgetStartForTest(core::GlobalPos const& pos, std::string const& key = {});
 
-/// landmark::forceStart for a scope: the start it stored is removed (forgetStartForTest with its key)
-/// when the object is destroyed. Not copyable or movable.
+/// landmark::forceStart for a scope. When the object is destroyed, the start it stored is removed
+/// (forgetStartForTest with its key); a start of the same key and start chunk that it replaced (a
+/// natural one, or an earlier forced one) is put back as it was before, its conquered flag included,
+/// instead of being made again. Not copyable or movable.
 class ScopedStart {
 public:
     ScopedStart(std::string const& key, core::GlobalPos const& pos);
@@ -57,9 +70,11 @@ public:
     [[nodiscard]] Start const*                operator->() const { return &*mStart; }
 
 private:
-    std::string          mKey;
-    core::GlobalPos      mPos;
-    std::optional<Start> mStart;
+    std::string                                       mKey;
+    core::GlobalPos                                   mPos;
+    std::shared_ptr<gf::feature::landmark::Record>    mReplaced; ///< the start forceStart replaced
+    std::uint64_t                                     mWorld = 0; ///< the world generation it belongs to
+    std::optional<Start>                              mStart;
 };
 
 } // namespace gf::landmark::ext

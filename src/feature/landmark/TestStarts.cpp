@@ -26,14 +26,27 @@ std::size_t forgetStartForTest(core::GlobalPos const& pos, std::string const& ke
     return removed;
 }
 
-ScopedStart::ScopedStart(std::string const& key, core::GlobalPos const& pos) : mKey(fl::normalizeKey(key)), mPos(pos), mStart(forceStart(key, pos)) {
+ScopedStart::ScopedStart(std::string const& key, core::GlobalPos const& pos)
+: mKey(fl::normalizeKey(key)),
+  mPos(pos),
+  mReplaced(fl::findRecord(pos.dim, pos.x >> 4, pos.z >> 4, fl::normalizeKey(key))),
+  mWorld(fl::recordWorld()),
+  mStart(forceStart(key, pos)) {
     if (mStart) mKey = mStart->key;
 }
 
 ScopedStart::~ScopedStart() {
     if (!mStart) return; // forceStart stored nothing
     try {
-        (void)forgetStartForTest(mPos, mKey);
+        if (mReplaced && fl::recordWorld() == mWorld) {
+            // the start forceStart replaced, as it was (its conquered flag included): stored in place
+            // of the forced one, the chunk's evaluation untouched
+            fl::putRecord(mReplaced);
+            fl::flushRecords();
+            gf::log().info("landmark: put back the start of {} that a test start replaced in chunk {} {}", mKey, mPos.x >> 4, mPos.z >> 4);
+        } else if (fl::recordWorld() == mWorld) {
+            (void)forgetStartForTest(mPos, mKey);
+        } // another world now: its starts are not this scope's
     } catch (...) {}
 }
 
