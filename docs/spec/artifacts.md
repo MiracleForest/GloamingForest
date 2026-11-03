@@ -111,8 +111,8 @@ chance to summon a baby zombie.
   `subcommand` rows `shield`, `shield set`, `shield add`): `<target>` is one entity (`EntityArgument.entity()`),
   `<amount>` any integer, `<temp>` a boolean (default true = temporary shields). Sets / adds the target's shields
   (`setShields` / `addShields`); a target that is not a living entity is ignored; no feedback message, result 1.
-  `function twilightforest:give_3_shields` (Appendix A) runs `twilightforest shield @p add 3 false`. Attribute
-  `twilightforest:max_shield_strength` (`attribute.name.lich.shield_strength`, default 6, 0..1024, synced).
+  `function twilightforest:give_3_shields` (Appendix A; Bedrock port in 4) runs `twilightforest shield @p add 3 false`.
+  Attribute `twilightforest:max_shield_strength` (`attribute.name.lich.shield_strength`, default 6, 0..1024, synced).
 - **Exanimate essence** (stack 16, UNCOMMON): use on a lit vanilla candle with an ominous counterpart turns it into
   the ominous candle (same count, flame burst); otherwise places `twilightforest:ominous_fire` on the clicked face if
   it can survive; sound `block.twilightforest.ominous_fire` (1.5, 0.75 +- 0.2), consumes one.
@@ -258,6 +258,20 @@ Only for real, non-creative, non-spectator players; server side.
 - Emperor's cloth hiding armor needs the client mod (render hook); vanilla clients still see the armor.
 - Ore meter HUD: client mod (`client::hud`); vanilla: send the result lines as a chat/form message.
 - Charm animation: client mod (`artifacts.spawn_charm`), vanilla: totem particle + title.
+- Function `twilightforest:give_3_shields`: a Bedrock pack function cannot name `/twilightforest` (BDS parses pack
+  functions before the mod's commands exist; F5's `src/feature/worldgen/Functions.cpp`), and Bedrock functions have
+  no namespace. U9 ports it the way F5 ported `dev_new_world`: when the mod loads, the module writes
+  `functions/twilightforest/give_3_shields.mcfunction` into the mod's behavior pack, so it runs as
+  `/function twilightforest/give_3_shields` (TF's id with `/` for `:`), with the single line
+  `execute as @p run scriptevent twilightforest:give_3_shields` (Bedrock's `@p` is Java's nearest player to the
+  function's source). The mod answers that message id by adding 3 permanent shields to the entity running it,
+  exactly `/twilightforest shield <that player> add 3 false`; with no player nothing happens (Java's line fails with
+  "No entity was found"). There is no W0 scriptevent contract: the handler is a `ScriptEventCommand::$execute` hook
+  that handles only its own id and passes every other one on, as F4's and F5's do, placed in
+  `src/feature/ext/artifacts/` (R18; A8 folds the three into one dispatcher). The imported Java file
+  `assets/gen/import/artifacts/data/twilightforest/function/give_3_shields.mcfunction` ships to `<mod>/data/`
+  (Java-format data), where Bedrock never loads it as a function; U9 may drop it with
+  `tools/import/overrides/artifacts.json`. A selftest runs the function and checks the shields.
 
 ## 5. Acceptance checklist (selftests `artifacts.*`, dx 900-999)
 

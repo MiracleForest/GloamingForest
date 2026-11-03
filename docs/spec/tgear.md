@@ -96,14 +96,16 @@ layer `twilightforest:travellers`. All pieces carry `twilightforest:travellers_a
 - Command (`TravellersGearCommand`), TF's literals below `/twilightforest` (aliases `/tf`, `/tffeature`):
   `/twilightforest travellers_gear add_modifier <modifier>` and `/twilightforest travellers_gear remove_modifier
   <modifier>`. Permission 2 (`LEVEL_GAMEMASTERS`, on the `travellers_gear` literal); `travellers_gear` alone or a
-  child without `<modifier>` is incomplete (no executor). `<modifier>` is a key of the
-  `twilightforest:travellers_modifiers` registry (`ResourceKeyArgument`, suggestions = the registry's keys); a key
-  that is not in the registry fails with `commands.tffeature.invalid_modifier` (the id). Both act on the executing player's main-hand stack; checks in this
-  order, the first failure is the command error:
-  - both: the source is not a player, or is a fake player -> `commands.tffeature.not_player`; the main-hand item is
-    not `TravellersModifiable` (the six items of 3.1) -> `not_travellers_gear`; the modifier is an ability (`builtin`
-    type, or `attribute` with `builtin_modifier`: `zoom`, `swift_swim`, `swap_hotbar_ability`, `high_jump`,
-    `step_up`) -> `ability_modifier`;
+  child without `<modifier>` is incomplete (no executor). `<modifier>` is a resource location naming a key of the
+  `twilightforest:travellers_modifiers` registry (`ResourceKeyArgument`, suggestions = the registry's keys; a
+  malformed id is a parse error). Both act on the executing player's main-hand stack; checks in this order, the
+  first failure is the command error:
+  - both: the key is not in the registry -> `commands.tffeature.invalid_modifier` (the id) — checked first, by
+    `ResourceKeyArgument.resolveKey` in the `executes` lambda before `validate()`, so the console naming an unknown id
+    gets `invalid_modifier`, not `not_player`; the source is not a player, or is a fake player ->
+    `commands.tffeature.not_player`; the main-hand item is not `TravellersModifiable` (the six items of 3.1) ->
+    `not_travellers_gear`; the modifier is an ability (`builtin` type, or `attribute` with `builtin_modifier`:
+    `zoom`, `swift_swim`, `swap_hotbar_ability`, `high_jump`, `step_up`) -> `ability_modifier`;
   - `add_modifier`: insertable modifiers on the stack >= the item's modifier slots (always for gloves and belt, 0
     slots) -> `too_many_modifiers`; the stack already has it -> `has_modifier` (modifier name); the item's equipment
     slot (`getEquipmentSlotForItem`) is not in the modifier's slot group -> `wrong_modifier_slot` (modifier name);
@@ -115,16 +117,28 @@ layer `twilightforest:travellers`. All pieces carry `twilightforest:travellers_a
     (`aquatic_agility`: the marker and its attribute entries; `swap_hotbar`: the marker and the `minecraft:container`;
     the items stored by `swap_hotbar` / `item_display` are deleted, not given back as by the grindstone) and
     `commands.tffeature.removed_modifier` (modifier name, stack hover name) is sent and broadcast.
-  The modifier name is `travellers_gear.modifier.twilightforest.<id>` (as in tooltips). Neither path checks the
-  broken state or fires `twilightforest:add_modifier` (only crafting does). The ten `commands.tffeature.*` keys are
-  F6's in owners.tsv (the partition of TF's `commands.tffeature.*` keys), so U11 uses them with `tr(key, fallback)`
-  and these English texts: `not_player` "This command must be run by a valid player!", `not_travellers_gear` "You are
-  not holding a piece of Traveller's Gear", `ability_modifier` "Abilities cannot be added or removed from Traveller's
-  Gear", `too_many_modifiers` "This piece of Traveller's Gear already has the maximum amount of modifiers",
-  `has_modifier` "This piece of Traveller's Gear already has %s", `wrong_modifier_slot` "%s is not allowed on this
-  piece of Traveller's Gear", `no_modifier` "%s is not applied to this piece of Traveller's Gear", `invalid_modifier`
-  "%s is not a valid Traveller's Gear Modifier", `added_modifier` "Added %s to %s!", `removed_modifier` "Removed %s
-  from %s!".
+  The modifier name (`TravellersModifiersManager.getModifierTooltipComponent`, built only after the four common
+  checks) is **a literal rendered on the server**, not a translatable component: `TooltipStringInterpolator.render`
+  translates `travellers_gear.modifier.twilightforest.<id>` with the server's language (`Component.translatable(key)
+  .getString()`: the host's selected language on an integrated server; en_us on a dedicated server, where NeoForge's
+  `LanguageHook` loads the mods' en_us), replaces every `${tfkeybinds/<key name>}` with that key mapping's current
+  binding name (`KeyModifier.getCombinedName`, e.g. `C`; an unbound key gives `key.keyboard.unknown`, "Not Bound"; a
+  key name TF does not register gives "Nonexistent key") and wraps the result in `Component.literal`. The same
+  literal goes to the source and into the operator broadcast; the stack name stays a translatable hover name. Three
+  insertable modifiers have a placeholder in their name: `item_display` (`key.twilightforest.item_display_map_cycle`),
+  `red_thread_vision` and `swap_hotbar` (`zoom` and `swap_hotbar_ability` have one too but are rejected as abilities
+  before the name is built). On a dedicated server TF's placeholder lookup loads `TFKeyBinds`, whose
+  `net.minecraft.client.KeyMapping` does not exist there (not in the 1.21.1 server jar), so for these three TF ends
+  in a `NoClassDefFoundError`, an `Error` that `Commands.performCommand` (it catches `Exception`) does not turn into a
+  command failure. Neither path checks the broken state or fires `twilightforest:add_modifier` (only crafting does).
+  The ten `commands.tffeature.*` keys are F6's in owners.tsv (the partition of TF's `commands.tffeature.*` keys), so
+  U11 uses them with `tr(key, fallback)` and these English texts: `not_player` "This command must be run by a valid
+  player!", `not_travellers_gear` "You are not holding a piece of Traveller's Gear", `ability_modifier` "Abilities
+  cannot be added or removed from Traveller's Gear", `too_many_modifiers` "This piece of Traveller's Gear already
+  has the maximum amount of modifiers", `has_modifier` "This piece of Traveller's Gear already has %s",
+  `wrong_modifier_slot` "%s is not allowed on this piece of Traveller's Gear", `no_modifier` "%s is not applied to
+  this piece of Traveller's Gear", `invalid_modifier` "%s is not a valid Traveller's Gear Modifier", `added_modifier`
+  "Added %s to %s!", `removed_modifier` "Removed %s from %s!".
 
 ### 3.2 Modifier framework
 
@@ -211,6 +225,14 @@ corners; full-bright glow render type while the viewer holds red thread or has r
   `render`); vanilla clients get a form-based view of the stored items and no zoom.
 - Perfect dodge / arrow magnetism: `combat::onIncoming` + projectile hit handlers (`projectile` contract hooks for
   vanilla arrows).
+- `/twilightforest travellers_gear` messages: render the modifier name once on the server, as TF does, with
+  `trFor(source player, "travellers_gear.modifier.twilightforest.<id>", English name)`, expand each
+  `${tfkeybinds/<key name>}` the way `TooltipStringInterpolator` does, and send that same text to the source and in
+  the operator broadcast (the stack name is the item's own name). The client build in a local world (TF's
+  integrated server) puts in the host's current binding of that key (`client::keys`, "Not Bound" when unbound). The
+  server build (BDS) has no player key bindings and must not fail as TF's dedicated server does: it puts in TF's
+  default binding (`C` for `item_display_map_cycle`, `V` for `swap_hotbar`, "Not Bound" for `red_thread_vision`), a
+  deviation from a TF failure that U11 records in `docs/units/tgear.md` for A8's deviation list.
 - Stealth: hidden Invisibility effect works on vanilla clients.
 - Red thread: multiface block family; the glow is client-mod rendering, vanilla shows the normal texture.
 

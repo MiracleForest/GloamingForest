@@ -151,27 +151,77 @@ TF's literals below `/twilightforest` (aliases `/tf`, `/tffeature`), both permis
   is a structure id or `#tag` of the structure registry (`ResourceOrTagKeyArgument`, any namespace), `<player>` one or
   more players (`EntityArgument.players()`, default: the executing player, so the console must name one),
   `<skip_known_structures>` a boolean (default false). An id or tag the registry does not have -> vanilla
-  `commands.locate.structure.invalid`. Searches like vanilla `/locate structure` from the source's block position in
-  the source's dimension (`findNearestMapStructure`, radius 100 chunks; with the flag, as for vanilla explorer maps,
-  starts already referenced by an earlier explorer map or flagged search are skipped and the found start is marked
-  referenced); nothing found (also an empty tag) ->
-  `commands.locate.structure.not_found`. Otherwise creates a vanilla filled map of the found x/z (`MapItem.create`,
-  scale 4 with vanilla's centre snapping to the 2048-block map grid, tracking position, unlimited tracking) with a
-  `red_x` target decoration (`"+"`), adds a copy to each target player's inventory (`Inventory.add`: lost when it is
-  full) and prints vanilla `commands.locate.structure.success` (the structure, green `[x, ~, z]` that suggests
-  `/tp @s x ~ z` on click, distance). TF passes the found position as the "source" position to
-  `LocateCommand.showLocateResult`, so the printed distance (and the command result) is always 0. The
-  `commands.locate.structure.*` keys are Java vanilla's, absent from Bedrock's lang: use `tr(key, ...)` with Java's
-  English texts ("The nearest %s is at %s (%s blocks away)", "There is no structure with type \"%s\"", "Could not
-  find a structure of type \"%s\" nearby").
-- `/twilightforest biomepng [<width> [<height> [<showBiomePercents>]]]` (`MapBiomesCommand`): integers >= 0 and a
-  boolean; no arguments = 4096 x 4096, `<width>` alone = width x width, `showBiomePercents` default true. On a
-  dedicated server TF returns -1 at once (no image, no message: `NativeImage` is client code); in single player
-  (integrated server):
+  `commands.locate.structure.invalid`. The search is `ChunkGenerator.findNearestMapStructure(level, targets,
+  BlockPos.containing(source position), 100, skip_known_structures)` in the source's dimension as TF patches it: the
+  tf-asm transformer `ResolveNearestNonRandomSpreadMapStructureTransformer` inserts
+  `MapHooks.resolveNearestNonRandomSpreadMapStructure` before the method's **last** `return` (of its three; the one
+  reached when no random-spread ring returned). The targets are grouped by structure placement (no placement at all,
+  e.g. an empty tag: nothing found). Two searches, by placement:
+  - **Random spread** (Minecraft's structures and TF's `avoid_landmark_grid` sets `camp`, `fallen_trunk`,
+    `hollow_tree` with `swamp_hollow_tree`) and **concentric rings** (Minecraft's strongholds): vanilla's search, as
+    for `/locate structure`. Concentric rings: the nearest of the ring positions with a start. Random spread: rings
+    k = 0..100 around the source chunk, ring k being the perimeter of the (2k + 1) x (2k + 1) square of the
+    placement's `spacing`-chunk cells (so the radius is 100 rings, not 100 chunks); per placement the first start
+    found on the ring's perimeter counts (`getStructureGeneratingAt`, in vanilla's perimeter order); the first ring on
+    which any placement has one returns at once the nearest of everything found so far (concentric-ring results
+    included), and **TF's landmark search below never runs**. With the flag, as for vanilla explorer maps, a start
+    already referenced (by an explorer map or an earlier flagged search: `StructureStart.references` at its maximum,
+    1) is skipped and the start found gets a reference (`StructureManager.addReference`); an existing start without
+    a reference is found and referenced; without the flag references are neither read nor written. That reference
+    count belongs to the start, so it is kept with F6's start records.
+  - **TF landmark grid** (`LandmarkGridPlacement`: TF's 15 other structure sets, `aurora_palace` to `yeti_cave`),
+    reached only when no random-spread ring returned: `WorldUtil.findNearestMapLandmark`, whose result, when it finds
+    one, replaces vanilla's (even a nearer concentric-ring one):
+    - candidates: the centres of `LegacyLandmarkPlacements.landmarkCenterScanner(pos, 100)`, an `XZQuadrantIterator`
+      over **landmark grid cells of 16 chunks** (256 blocks) around chunk ((x >> 4) & ~15, (z >> 4) & ~15), 100 cells
+      out (TF passes vanilla's radius on unchanged), each cell mapped by `getNearestCenterXZ` to its landmark centre;
+    - a centre counts for a target when the target's placement has `isStructureChunk` in the centre's chunk (the grid
+      pick, `structure_grid_lock`) and the target's `biomes` contain `level.getBiome(centre)` (at y 0); TF does not
+      check that a start was, or could be, generated there;
+    - with the flag, `checkStructurePresence(centre chunk, target, placement, true) == START_PRESENT` skips the centre
+      (`break`: the remaining targets of that placement at that centre too). With the flag that result means a valid
+      start with **0** references (`StructureCheck.checkStructureInfo`: references -1 or, with the flag, != 0 ->
+      `START_NOT_PRESENT`); nothing ever references a landmark start, so every landmark whose start already exists is
+      skipped, and centres not generated yet are kept. **No reference is added**;
+    - the nearest by `distToLowCornerSqr(x, 0, z)` (squared horizontal distance from the source to the centre), the
+      first in scan order on a tie; the position found is the landmark centre at **y 0**.
+
+  Nothing found -> `commands.locate.structure.not_found`. U13 does not re-implement the search: F6's
+  `gf::landmark::ext::locate(dimension, keyOrTag, x, z, 100, skipKnownStructures)` (`src/feature/ext/landmark/
+  LandmarkExt.h`, implemented in `src/feature/landmark/Commands.cpp`) runs the random-spread rings first and the
+  landmark override after, and returns the structure key and the position found (y 0 for a landmark). Otherwise TF
+  creates a vanilla filled map of the found x/z (`MapItem.create`, scale 4 with vanilla's centre snapping to the
+  2048-block map grid, tracking position, unlimited tracking) with a `red_x` target decoration (`"+"`), adds a copy
+  to each target player's inventory (`Inventory.add`: lost when it is full) and prints vanilla
+  `commands.locate.structure.success` through `LocateCommand.showLocateResult`: the structure (its id; for a tag
+  `#<tag> (<id found>)`), the coordinates and the distance. The coordinates are Java's `chat.coordinates` ("%s, %s,
+  %s") of x, `~`, z in square brackets, green, with a click event that suggests `/tp @s <x> ~ <z>` and the hover text
+  `chat.coordinates.tooltip` ("Click to teleport"). TF passes the found position as the "source" position, so the
+  printed distance (and the command result) is always 0. The `commands.locate.structure.*` and `chat.coordinates` keys
+  are Java vanilla's, absent from Bedrock's lang: use `tr(key, ...)` with Java's English texts ("The nearest %s is at
+  %s (%s blocks away)", "There is no structure with type \"%s\"", "Could not find a structure of type \"%s\" nearby",
+  "%s, %s, %s"). Bedrock chat has no click or hover events, so the coordinates are the plain text `[x, ~, z]` in green
+  (`§a[x, ~, z]§r`), with no click-to-suggest and no tooltip.
+- `/twilightforest biomepng [<width> [<height> [<showBiomePercents>]]]` (`MapBiomesCommand`): integers >= 0
+  (`IntegerArgumentType.integer(0)`) and a boolean; no arguments = 4096 x 4096, `<width>` alone = width x width,
+  `showBiomePercents` default true. On a dedicated server (`FMLEnvironment.dist.isDedicatedServer()`) TF returns -1 at
+  once: no image, no file, no message (`NativeImage` is client code). On an integrated server (single player, the
+  host of a LAN world):
+  - the image is created first, `new NativeImage(width, height, false)`: a width or height of 0 (`biomepng 0`,
+    `biomepng 64 0`) throws `IllegalArgumentException("Invalid texture size: <width>x<height>")` before any output.
+    Every exception here ends the command with vanilla's generic failure `command.failed` ("An unexpected error
+    occurred trying to execute that command"; Java puts the exception message in its hover text), from
+    `Commands.performCommand`, which catches `Exception`; messages already sent stay;
   - the image is `width` x `height` pixels; pixel (x, z) is `getNoiseBiome(x - width/2, 0, z - height/2)` of the
     source's level, i.e. **quart** (4-block) coordinates around the world origin at block y 0..3, not around the
-    source. TF loops x over `0..height-1` and z over `0..width-1`, so only square sizes stay inside the image (a
-    non-square size writes outside it; `NativeImage.setPixelRGBA` rejects that, so the command errors);
+    source. TF loops x over `0..height-1` and z over `0..width-1` and writes `setPixelRGBA(x, z)`, so only square
+    sizes stay inside the image: `setPixelRGBA` throws `IllegalArgumentException("(x, z) outside of image bounds
+    (width, height)")` at the first pixel outside, and the command fails with `command.failed` (width > height: in
+    the first row, before any progress message; height > width: at row x = width, after the progress messages of
+    the rows before). Both checks are in Minecraft 1.21.1's client `NativeImage` (`com.mojang.blaze3d.platform.
+    NativeImage`, obfuscated `faj` in the official 1.21.1 `client.jar`: the constructor throws unless width > 0 and
+    height > 0; `setPixelRGBA` throws when `isOutsideBounds(x, y)`, x outside 0..width-1 or y outside
+    0..height-1);
   - colours: a fixed table for 20 TF biomes (stream and lake 0,0,255; clearing 132,245,130; oak savannah 239,245,130;
     forest 0,255,0; dense forest 0,170,0; firefly forest 88,252,102; enchanted forest 0,255,255; spooky forest
     119,0,255; mushroom forest 204,0,139; dense mushroom forest 184,48,184; swamp 0,204,187; fire swamp 140,0,0;
@@ -182,7 +232,8 @@ TF's literals below `/twilightforest` (aliases `/tf`, `/tffeature`), both permis
     a data-map entry the colour is opaque black (`0xFF000000` is non-zero, so the grass-colour fallback never runs);
     each colour is cached for the rest of the session;
   - every `height / 8` rows `commands.tffeature.biomepng.progress` with x / height x 100 formatted `#.00` (so the
-    first is `.00`; a height from 1 to 7 makes the step 0 and the command fails on the modulo); then, with
+    first is `.00`; a height from 1 to 7 makes the step 0: after the first row `x % 0` throws `ArithmeticException`
+    and the command fails with `command.failed`); then, with
     `showBiomePercents`, `commands.tffeature.biomepng.counts_header` (width, height) and one line per biome
     `<biome id>: <count>` + `§7 (<percent formatted #.00>%)` (TF's counter starts at 0 for the first pixel, so each
     count is one short);
@@ -202,10 +253,21 @@ TF's literals below `/twilightforest` (aliases `/tf`, `/tffeature`), both permis
 - Maps: Bedrock map items are vanilla `filled_map`s; TF map ids are custom items whose map data U13 renders with
   `client::maps::view` / `setIcon` (client mod) and `ClientboundMapItemData` equivalents (MapItemDataPacket) for
   vanilla clients with decorations mapped to the 30 vanilla types (README deviation).
-- `biomepng` writes the PNG from the world's server side (TF's integrated server; GloamingForest's client build in a
-  local world) to the world folder path above. TF does nothing on a dedicated server; GloamingForest also writes the
-  PNG on BDS (a debugging aid; U13 records it as a deviation in `docs/units/uncraftmaps.md`). Register both commands
-  under F0's `/twilightforest` with `GF_REGISTER_SUBCOMMAND`, spelled as TF's literals (R14).
+- `biomepng` follows TF per build, with no deviation: the server build (BDS, TF's dedicated server) returns at once
+  with no message, no image and no file; the client build in a local world (TF's integrated server) samples, reports
+  and writes the PNG under that world's folder (`<world>/generated/biomemaps/...` above). Its failures (a 0 size, a
+  non-square size, a height from 1 to 7) end it with `tr("command.failed", "An unexpected error occurred trying to
+  execute that command")` as an error, after the messages already sent, with no file; Bedrock has no hover text for
+  the exception message. Never write outside the image.
+- `map_locator` finds TF's structures through F6's `gf::landmark::ext::locate` (3.6). Minecraft's own structures
+  (`minecraft:` ids and tags) are generated by Bedrock, not by Java's structure sets: F6's locate returns nothing for
+  them. For those U13 maps the Java id to Bedrock's structure feature name and asks Bedrock's own search,
+  `WorldGenerator::findNearestStructureFeature(feature, origin, pos, mustBeInNewChunks = skip_known_structures,
+  nullopt)` (a callable virtual in the 26.51.7 headers; its radius and its new-chunk rule are Bedrock's, as Bedrock's
+  world generation is); an id with no Bedrock counterpart -> `commands.locate.structure.not_found`. The map is a
+  vanilla `filled_map`; its `red_x` target (a Java vanilla decoration) uses the closest of Bedrock's 30 map decoration
+  types (an X; the README deviation on map decorations).
+- Register both commands under F0's `/twilightforest` with `GF_REGISTER_SUBCOMMAND`, spelled as TF's literals (R14).
 
 ## 5. Acceptance checklist (selftests `uncraftmaps.*`, dx 1300-1399)
 
@@ -216,8 +278,11 @@ TF's literals below `/twilightforest` (aliases `/tf`, `/tffeature`), both permis
 - GUI screenshot vs `guigoblintinkering.png` (buttons, costs, ghost overlays).
 - Magic map centre snapping and biome colours from the data map; landmark icons with conquered state.
 - Maze map snaps to labyrinth centre; ore map highlights ores; cloning recipes.
-- `map_locator` gives a map with a red X to each named player; `biomepng` writes TF's file name with the progress
-  and count messages.
+- `map_locator` gives a map with a red X to each named player; a landmark is found at its grid centre (y 0) within
+  100 grid cells, with the flag a landmark whose start exists is skipped and no reference is added, and for targets
+  of both kinds a random-spread hit returns before the landmark search; `biomepng` writes TF's file name with the
+  progress and count messages in a local world, does nothing on BDS, and fails with `command.failed` for a 0 or
+  non-square size.
 
 ## Appendix A: Owned ids (generated inventory)
 
