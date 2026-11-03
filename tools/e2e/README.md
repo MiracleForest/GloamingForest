@@ -90,16 +90,26 @@ runs `scenarios/<name>.prelaunch.ps1` if present; boots and waits for `GloamingF
 
 **Client** (`client/run.ps1`): optional `-Build` (before any lock); takes a client slot and a game
 instance lock; remote modes start the BDS host now; closes a running game of that instance;
-deploys the mod to `mods\GloamingForest` (fresh copy) and BeDD; moves every other mod (a leftover
-Levitate, BEI, ...) to `mods.lv-e2e-aside\`; installs the `GF-Test` world (or adds the server
-entry); launches the game, waits for `GloamingForest enabled`, enters the world and waits for the
-HUD; dot-sources the scenario; **always** cleans up (game closed, world and mod removed, other mods
-restored, locks released).
+deletes copies of our mod another harness parked in a `mods.<harness>-aside` folder; deploys the mod
+to `mods\GloamingForest` (fresh copy) and BeDD with a pipe of this run only
+(`BeDD-<instance>-gf<pid>`); moves every other mod (a leftover Levitate, BEI, ...) to
+`mods.lv-e2e-aside\`; installs the `GF-Test` world (or adds the server entry); puts the options
+scenarios toggle back (`gfx_hidehud:0`, `gfx_hidehand:0`, `game_thirdperson:0`, `graphics_mode:2`)
+and turns the game's content log on; launches the game, waits for `GloamingForest enabled`, enters
+the world, checks it is `GF-Test` (else one more fresh game, then NOT RUN) and waits for the HUD;
+dot-sources the scenario; **always** cleans up (game closed, content log checked, world and mod
+removed, other mods restored, `content_log_file` put back, locks released). Every BeDD pipe call and
+window capture runs under a watchdog: a game that does not answer within 120 s (plus the call's own
+waits; `$env:GF_E2E_PIPE_TIMEOUT_SEC`) is killed and the run is NOT RUN (`[e2e] WATCHDOG: ...`).
 
 A run **fails** when the scenario throws; a selftest fails, never prints `DONE` or matches no test;
-an `ERR`/`FTL` line comes from `GloamingForest`, `LeviLamina` or `CrashLogger`; a Bedrock content
-error is logged (`ERR [Server] [Blocks|Items|Recipes|Components|Geometry|...]`); a crash file
-appears; the server exits non-zero or has to be killed.
+any `ERR`/`FTL` line appears in the log, of any logger (`GloamingForest`, `LeviLamina`,
+`CrashLogger`, Bedrock content errors `ERR [Server] [Blocks|Items|...]`, other `ERR [Server]` lines,
+...), except BDS's six-line "TRANSPORT TYPE ERROR" banner and the console's echo of a command reply the
+mod logged as `Command error:` ([docs/spec/e2e.md](../../docs/spec/e2e.md#error-lines)); the client's
+content log has an error (warnings are listed, and fail with `-StrictContentLog` or
+`$script:ContentLogStrict = $true`; `out/<scenario>/client-content-log.txt`); a crash file appears;
+the server exits non-zero or has to be killed.
 
 ## Writing a scenario
 
@@ -134,6 +144,8 @@ Save-Screenshot 'canopy-tree' | Out-Null      # -> client/out/trees/canopy-tree.
 | `Click x y -Relative [-Right]`, `Move-Mouse`, `Scroll n`, `Press-Key`, `Type-Text` | | x | Input (fractions of the 1600x900 client area). |
 | `Save-Screenshot 'name'` | | x | `client/out/<scenario>/name.png` (1280 wide). |
 | `Send-HostConsole 'cmd'` | | x | Remote modes: a console command on the BDS host. |
+| `Invoke-Guarded 'what' { ... } [-Seconds n]` | | x | Runs a block that waits on the game under the watchdog (the game is killed and the run is NOT RUN when it takes longer). BeDD pipe calls and `Save-Screenshot` are guarded already. |
+| `$script:ContentLogExpected += 'regex'`, `$script:ContentLogStrict = $true` | | x | Content-log lines the scenario causes on purpose; warnings fail too. |
 
 The client mod logs `client screen: <name>` when the top screen changes and `client teleported to
 x y z` on server teleports (`src/client/Trace.cpp`); the client helpers wait for these lines.

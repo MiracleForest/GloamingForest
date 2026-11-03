@@ -16,7 +16,7 @@
      always day / clear weather / no mobs.
   6. Dot-sources scenarios/<name>.ps1 (helpers: see lib.ps1 "Scenario API" and README).
   7. Stops the server with "stop" and fails the run on: scenario exception, failing/empty/
-     unfinished selftests, ERR/FTL lines from GloamingForest/LeviLamina/CrashLogger, Bedrock content log errors, crash
+     unfinished selftests, ERR/FTL lines (any logger; only the transport banner is not an error), crash
      dumps, non-zero exit code or a server that does not stop.
   Output: tools/e2e/server/out/<scenario>/server.log (full console), selftest.json, crash/.
   Exit code 0 = pass, 1 = fail, 2 = NOT RUN (no server slot in time; retry, never a pass).
@@ -136,7 +136,7 @@ try {
         if ($script:ExitCode -ne 0) { $failures.Add("server exit code $script:ExitCode") }
         $errs = Get-ErrorLines
         if ($errs) {
-            $failures.Add("$($errs.Count) ERR/FTL line(s) from $script:ModName/LeviLamina/CrashLogger")
+            $failures.Add("$($errs.Count) ERR/FTL line(s) in the log (docs/spec/e2e.md: every ERR line but the transport banner fails)")
             $errs | Select-Object -First 20 | ForEach-Object { Write-Host "  ! $_" -ForegroundColor Red }
         }
         $crashDirs = @(Join-Path $script:SlotDir 'logs\crash') | Where-Object { Test-Path $_ }

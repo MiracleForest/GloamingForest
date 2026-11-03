@@ -67,8 +67,12 @@ function Set-E2EInstance([int]$Slot) {
     # Other mods are moved here for the duration of a run (outside mods\, so LeviLamina ignores them).
     $script:AsideDir     = Join-Path $script:VersionDir 'mods.lv-e2e-aside'
     $script:LockFile     = if ($Slot -le 1) { Join-Path $script:LauncherData 'bei-e2e.lock' } else { Join-Path $script:LauncherData "hi$Slot-e2e.lock" }
-    # BeDD control pipe of this instance's game.
-    $script:BeDDPipe = "BeDD-$script:VersionName"
+    # BeDD control pipe of this run's game: a name of this run only. BeDD's own tools address an
+    # instance's game by "BeDD-<instance>" (Initialize-BeDDInstance), and a client of that name
+    # that is still retrying (BeDD.psm1 resends a request after a broken pipe and Connect-BeDD
+    # waits for the pipe to come back) would reach our game: on clone hi2 a leftover `join
+    # 127.0.0.1:19140` of another harness took the game off its world (docs/spec/e2e.md, Pending joins).
+    $script:BeDDPipe = "BeDD-$script:VersionName-gf$PID"
     # Child pwsh processes that source this file (helpers, scenario scripts) start on the same slot.
     $env:GF_E2E_INSTANCE_SLOT = "$Slot"
 }
@@ -174,6 +178,123 @@ public static class Native {
 [BsE2E.Native]::SetProcessDpiAwarenessContext([IntPtr]::new(-4)) | Out-Null
 
 # ---------------------------------------------------------------------------------------
+# Watchdog: no call into the game may block the harness for ever
+# ---------------------------------------------------------------------------------------
+# A BeDD pipe call waits for the game's answer with no timeout of its own (BeDD.psm1 Invoke-BeDD:
+# StreamReader.ReadLine on the pipe): a game hung in "Enabling mods" held a run for more than
+# 10 minutes. Every pipe call (Register-PipeWatchdog) and every window capture (Invoke-Guarded)
+# arms this timer; when it runs out, the timer thread kills the process tree of this run's game
+# (Minecraft.Windows.exe of the instance folder), which breaks the pipe and ends the blocked call,
+# and the run ends NOT RUN (exit 2) with a "WATCHDOG" line. It kills a game only while this run
+# holds the instance's game lock (Enter-E2ELock sets InstanceDir, Exit-E2ELock clears it): without
+# the lock the game is somebody else's.
+if (-not ('GfE2E.Watchdog' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
+namespace GfE2E {
+public static class Watchdog {
+    class Guard { public DateTime Deadline; public string What; public int Ms; }
+    static readonly object Gate = new object();
+    static readonly List<Guard> guards = new List<Guard>(); // nested calls: innermost last
+    static Timer timer;
+    static long armed;
+    /// The game's folder (versions\<instance>\): only games started from it are killed.
+    public static string InstanceDir;
+    /// What hung and what was killed, once the watchdog fired (null until then).
+    public static volatile string Fired;
+    /// Starts guarding a call of at most `ms` (calls nest: Disarm ends the innermost).
+    public static void Arm(int ms, string what) {
+        ms = Math.Max(ms, 1000);
+        lock (Gate) {
+            guards.Add(new Guard { Deadline = DateTime.UtcNow.AddMilliseconds(ms), What = what, Ms = ms });
+            Schedule();
+        }
+    }
+    public static void Disarm() {
+        lock (Gate) {
+            if (guards.Count > 0) guards.RemoveAt(guards.Count - 1);
+            Schedule();
+        }
+    }
+    public static void Reset() {
+        lock (Gate) { guards.Clear(); Schedule(); }
+        Fired = null;
+    }
+    // The timer for the earliest deadline of the guarded calls (Gate held).
+    static void Schedule() {
+        long id = ++armed;
+        if (timer != null) { timer.Dispose(); timer = null; }
+        if (guards.Count == 0) return;
+        Guard first = guards[0];
+        foreach (var g in guards) if (g.Deadline < first.Deadline) first = g;
+        long due = Math.Max(0L, (long)(first.Deadline - DateTime.UtcNow).TotalMilliseconds);
+        timer = new Timer(_ => Fire(id, first.What, first.Ms), null, due, Timeout.Infinite);
+    }
+    static void Fire(long id, string what, int ms) {
+        lock (Gate) {
+            if (id != armed) return;
+            guards.Clear();
+            if (timer != null) { timer.Dispose(); timer = null; }
+        }
+        var killed = new List<string>();
+        foreach (var p in Process.GetProcessesByName("Minecraft.Windows")) {
+            try {
+                string exe = p.MainModule.FileName;
+                if (InstanceDir == null || !exe.StartsWith(InstanceDir, StringComparison.OrdinalIgnoreCase)) continue;
+                p.Kill(true);
+                killed.Add(p.Id.ToString());
+            } catch (Exception) { }
+        }
+        Fired = what + " got no answer within " + (ms / 1000) + " s; "
+            + (killed.Count > 0 ? "killed the game's process tree (pid " + string.Join(", ", killed) + ")"
+               : InstanceDir == null ? "killed nothing (this run holds no game lock)" : "no game of " + InstanceDir + " was running");
+        Console.WriteLine("[e2e] WATCHDOG: " + Fired);
+    }
+}
+}
+'@
+}
+
+# Seconds a pipe call or window capture may take before the watchdog kills the game (on top of the
+# call's own hold, delay and timeout). $env:GF_E2E_PIPE_TIMEOUT_SEC overrides the default.
+$script:PipeTimeoutSec = if ($env:GF_E2E_PIPE_TIMEOUT_SEC -match '^\d+$') { [int]$env:GF_E2E_PIPE_TIMEOUT_SEC } else { 120 }
+
+# Runs $Action with the watchdog armed (-What names it in the WATCHDOG line).
+function Invoke-Guarded([string]$What, [scriptblock]$Action, [int]$Seconds = $script:PipeTimeoutSec) {
+    [GfE2E.Watchdog]::Arm($Seconds * 1000, $What)
+    try { & $Action } finally { [GfE2E.Watchdog]::Disarm() }
+}
+
+# Wraps BeDD.psm1's Invoke-BeDD (the one function every pipe call goes through) in the watchdog,
+# inside the module, so its own functions (Send-BeDDKey, Connect-BeDD, ...) use the wrapper too.
+# A call's budget is $script:PipeTimeoutSec plus what the request asks the game to wait for
+# (timeoutMs, holdMs, delayMs per character of text).
+function Register-PipeWatchdog {
+    $bedd = Get-Module BeDD
+    if (-not $bedd) { throw 'Register-PipeWatchdog: the BeDD module is not loaded (harness-shim.ps1 first)' }
+    & $bedd {
+        param([int]$BaseSeconds)
+        $script:GfPipeBaseMs = $BaseSeconds * 1000
+        if (Get-Variable -Name GfInvokeBeDD -Scope Script -ErrorAction SilentlyContinue) { return }
+        $script:GfInvokeBeDD = ${function:Invoke-BeDD}
+        function script:Invoke-BeDD([Parameter(Mandatory)][hashtable]$Request, [switch]$NoThrow) {
+            $ms = $script:GfPipeBaseMs
+            foreach ($k in 'timeoutMs', 'holdMs') { if ($Request[$k] -is [ValueType]) { $ms += [int]$Request[$k] } }
+            if ($Request['text'] -is [string] -and $Request['delayMs'] -is [ValueType]) { $ms += $Request['text'].Length * [int]$Request['delayMs'] }
+            [GfE2E.Watchdog]::Arm($ms, "the BeDD pipe call '$($Request['op'])'")
+            try { & $script:GfInvokeBeDD -Request $Request -NoThrow:$NoThrow } finally { [GfE2E.Watchdog]::Disarm() }
+        }
+    } $script:PipeTimeoutSec
+    Write-Step "pipe watchdog: every BeDD call gets $script:PipeTimeoutSec s (+ its own waits); then the game is killed and the run is NOT RUN"
+}
+
+# The WATCHDOG line once it fired ($null before).
+function Get-WatchdogFired { [GfE2E.Watchdog]::Fired }
+
+# ---------------------------------------------------------------------------------------
 # Lock (one per game instance; slot 1's is shared with BEI's and BeetrootSkin's harnesses)
 # ---------------------------------------------------------------------------------------
 # Takes the lock of the first free slot in -Slots (default: the current one, see Set-E2EInstance)
@@ -199,9 +320,12 @@ function Enter-E2ELock([int]$TimeoutMinutes = 120, [int[]]$Slots = @($script:Ins
         }
     }
     Write-Step "game lock acquired (slot $script:InstanceSlot, instance $script:VersionName, $script:LockFile)"
+    # the watchdog may kill this instance's game now (and only now: see Invoke-Guarded)
+    [GfE2E.Watchdog]::InstanceDir = $script:VersionDir.TrimEnd('\') + '\'
 }
 
 function Exit-E2ELock {
+    [GfE2E.Watchdog]::InstanceDir = $null
     if ($script:LockStream) { Exit-FileLock $script:LockStream; $script:LockStream = $null; Write-Step "game lock released" }
 }
 
@@ -225,6 +349,167 @@ function Reset-CameraPerspective {
             $lines -replace '^game_thirdperson:\d+', 'game_thirdperson:0' | Set-Content $o.FullName
             Write-Step "reset camera perspective to first person in $($o.FullName)"
         }
+    }
+}
+
+# The game's options files of this instance (one per signed-in user, and "Shared").
+function Get-OptionsFiles {
+    @(Get-ChildItem -Recurse -Path (Get-GameDataDir) -Filter 'options.txt' -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -match '\\minecraftpe\\options\.txt$' })
+}
+
+# Sets `key:value` in every options file (appended when missing); returns the old values
+# (path -> line value, $null when the key was missing).
+function Set-GameOption([string]$Key, [string]$Value) {
+    $old = [ordered]@{}
+    foreach ($f in Get-OptionsFiles) {
+        $lines = @(Get-Content $f.FullName)
+        $line = $lines | Where-Object { $_ -match "^$([regex]::Escape($Key)):" } | Select-Object -First 1
+        $old[$f.FullName] = if ($line) { $line.Substring($Key.Length + 1) } else { $null }
+        if ($old[$f.FullName] -eq $Value) { continue }
+        $lines = if ($line) { $lines -replace "^$([regex]::Escape($Key)):.*$", "${Key}:$Value" } else { $lines + "${Key}:$Value" }
+        Set-Content -Path $f.FullName -Value $lines
+    }
+    return $old
+}
+
+# Options a scenario may toggle in the instance's options.txt, put back to these values before every
+# run (Reset-GameOptions), so a killed or failed run cannot leave the shared instance changed:
+#   gfx_hidehud      F1 hides the HUD (models, ui and families' name-tag shots): toasts, the hotbar
+#                    and name tags are then not drawn (a models run left an instance so)
+#   gfx_hidehand     ui.prelaunch.ps1 shows the hand for its held-map step (0, restored by ui.restore.ps1)
+#   game_thirdperson F5 (ui's head step); first person
+#   graphics_mode    ui switches between Classic (1) and Vibrant Visuals (2) (restored by ui.restore.ps1);
+#                    2 is what every instance of the e2e machines uses
+# content_log_file is on for the run itself (Enable-ContentLog) and put back afterwards.
+$script:ForcedOptions = [ordered]@{ gfx_hidehud = '0'; gfx_hidehand = '0'; game_thirdperson = '0'; graphics_mode = '2' }
+
+function Reset-GameOptions {
+    $files = Get-OptionsFiles
+    if (-not $files) { Write-Step "warning: no options.txt below $(Get-GameDataDir) (the game writes it on its first start)"; return }
+    foreach ($k in $script:ForcedOptions.Keys) {
+        $old = Set-GameOption $k $script:ForcedOptions[$k]
+        foreach ($p in $old.Keys) { if ($old[$p] -ne $script:ForcedOptions[$k]) { Write-Step "options: ${k}:$($old[$p]) -> $($script:ForcedOptions[$k]) in $p" } }
+    }
+}
+
+# ---------------------------------------------------------------------------------------
+# Content log: the game's own report on the packs (every client run)
+# ---------------------------------------------------------------------------------------
+# options.txt content_log_file:1 makes the game write <game data>\logs\ContentLog<date>_<time>_1.txt,
+# one file per game session, written as the game closes. Every run turns it on before the first
+# launch (the old value is put back at the end) and checks the files of its sessions after the
+# game closed (Test-ContentLog in run.ps1): an error fails the run, warnings are listed (and fail
+# when the scenario sets $script:ContentLogStrict = $true, or with run.ps1 -StrictContentLog).
+$script:ContentLogBackup = $null
+$script:ContentLogSince  = $null
+# Entries that are not about this build's packs (regexes over the entry's text and continuation lines):
+#   gfpreview_canary  the models scenario's deliberately broken canary files (test-only preview
+#                     pack; models.ps1 checks that the content log reports them)
+#   diving_helmet     the game's own cached diving-helmet fog definitions (a vanilla pack in the
+#                     packcache that fails the fog schema)
+# A scenario may add its own ($script:ContentLogExpected += 'regex') for lines it causes on purpose.
+$script:ContentLogExpected = @('gfpreview_canary', 'fogs/(netherite_)?diving_helmet\.json')
+
+function Enable-ContentLog {
+    $script:ContentLogSince = (Get-Date).AddSeconds(-2)
+    $script:ContentLogBackup = Set-GameOption 'content_log_file' '1'
+    if ($script:ContentLogBackup.Count -eq 0) { Write-Step 'warning: no options.txt to turn the content log on in' }
+    else { Write-Step "content log on ($(Join-Path (Get-GameDataDir) 'logs'))" }
+}
+
+function Restore-ContentLogOption {
+    if (-not $script:ContentLogBackup) { return }
+    foreach ($p in $script:ContentLogBackup.Keys) {
+        if (-not (Test-Path $p)) { continue }
+        $v = $script:ContentLogBackup[$p]
+        $lines = @(Get-Content $p)
+        $lines = if ($null -ne $v) { $lines -replace '^content_log_file:.*$', "content_log_file:$v" } else { @($lines | Where-Object { $_ -notmatch '^content_log_file:' }) }
+        Set-Content -Path $p -Value $lines
+    }
+    $script:ContentLogBackup = $null
+}
+
+# The content-log files this run's game sessions wrote.
+function Get-ContentLogFiles {
+    if (-not $script:ContentLogSince) { return @() }
+    $dir = Join-Path (Get-GameDataDir) 'logs'
+    @(Get-ChildItem $dir -Filter 'ContentLog*.txt' -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -ge $script:ContentLogSince } | Sort-Object Name)
+}
+
+# Entries of this run's content logs: {Time, Category, Level (error|warning|inform|...), Text, More, Expected}.
+function Get-ContentLogEntries {
+    $entries = [System.Collections.Generic.List[object]]::new()
+    foreach ($f in Get-ContentLogFiles) {
+        $fs = [System.IO.File]::Open($f.FullName, 'Open', 'Read', 'ReadWrite')
+        try { $text = (New-Object System.IO.StreamReader($fs, [Text.Encoding]::UTF8)).ReadToEnd() } finally { $fs.Dispose() }
+        $current = $null
+        foreach ($line in ($text -split "`r?`n")) {
+            if ($line -match '^(\d\d:\d\d:\d\d)\[([^\]]*)\]\[(\w+)\]-(.*)$') {
+                $current = [pscustomobject]@{ Time = $Matches[1]; Category = $Matches[2]; Level = $Matches[3].ToLowerInvariant(); Text = $Matches[4]; More = [System.Text.StringBuilder]::new(); Expected = $false; File = $f.Name }
+                $entries.Add($current)
+            } elseif ($current -and $line.Trim()) { [void]$current.More.AppendLine($line.TrimEnd()) }
+        }
+    }
+    foreach ($e in $entries) {
+        $all = "$($e.Text) $($e.More)"
+        foreach ($re in $script:ContentLogExpected) { if ($all -match $re) { $e.Expected = $true; break } }
+    }
+    return $entries
+}
+
+# One line per distinct entry: "[Category][level] text (xN)".
+function Format-ContentLogEntries($Entries) {
+    @($Entries | Group-Object { "[$($_.Category)][$($_.Level)] $($_.Text)" } | ForEach-Object {
+        if ($_.Count -gt 1) { "$($_.Name) (x$($_.Count))" } else { $_.Name }
+    })
+}
+
+# Checks this run's content logs once the game closed: writes <out>\client-content-log.txt, prints
+# a summary and returns the run's failures: every error (and with -Strict every warning) that is not
+# in $script:ContentLogExpected. Warnings go to $script:ContentLogWarnings for the run's summary.
+function Get-ContentLogProblems([string]$OutDir, [switch]$Strict) {
+    $script:ContentLogWarnings = @()
+    if (-not $script:ContentLogSince -or $script:GamesStarted -eq 0) { return @() }
+    $files = @(Get-ContentLogFiles)
+    if (-not $files) {
+        if ($script:GameKilled -or (Get-WatchdogFired)) { Write-Step 'content log: not checked (the game was killed before it wrote its log)'; return @() }
+        return @("the game wrote no content log in $(Join-Path (Get-GameDataDir) 'logs') (options.txt content_log_file:1 did not take effect)")
+    }
+    $entries = @(Get-ContentLogEntries)
+    if ($OutDir) {
+        New-Item -ItemType Directory -Force $OutDir | Out-Null
+        $entries | ForEach-Object { "$($_.File) $($_.Time) [$($_.Category)][$($_.Level)]$(if ($_.Expected) { ' (expected)' }) $($_.Text)$(if ($_.More.Length) { "`n$($_.More.ToString().TrimEnd())" })" } |
+            Set-Content -Path (Join-Path $OutDir 'client-content-log.txt') -Encoding UTF8
+    }
+    $errors   = @($entries | Where-Object { $_.Level -in 'error', 'fatal' -and -not $_.Expected })
+    $warnings = @($entries | Where-Object { $_.Level -eq 'warning' -and -not $_.Expected })
+    $expected = @($entries | Where-Object { $_.Level -in 'error', 'fatal', 'warning' -and $_.Expected })
+    Write-Step ("content log: {0} file(s), {1} error(s), {2} warning(s){3}" -f $files.Count, $errors.Count, $warnings.Count,
+        $(if ($expected) { ", $($expected.Count) expected (`$script:ContentLogExpected)" } else { '' }))
+    $script:ContentLogWarnings = @(Format-ContentLogEntries $warnings)
+    $problems = [System.Collections.Generic.List[string]]::new()
+    if ($errors) {
+        $lines = @(Format-ContentLogEntries $errors)
+        $lines | Select-Object -First 20 | ForEach-Object { Write-Host "  ! content log: $_" -ForegroundColor Red }
+        $problems.Add("$($errors.Count) content-log error(s) ($($lines.Count) distinct; see client-content-log.txt): $($lines[0])")
+    }
+    if ($Strict -and $warnings) {
+        $problems.Add("$($warnings.Count) content-log warning(s) in a strict run ($($script:ContentLogWarnings.Count) distinct): $($script:ContentLogWarnings[0])")
+    }
+    return $problems.ToArray()
+}
+
+# Copies of our mod that another harness parked in an aside folder of this instance
+# (mods.<harness>-aside\GloamingForest, e.g. mods.bedd-it-aside on clone hi2) are stale builds: that
+# harness would put them back into mods\ later. Every run deploys a fresh copy, so they are deleted.
+function Remove-StaleModCopies {
+    foreach ($d in Get-ChildItem $script:VersionDir -Directory -ErrorAction SilentlyContinue | Where-Object Name -match '^mods\..+-aside$') {
+        if ($d.FullName -eq $script:AsideDir) { continue }
+        $copy = Join-Path $d.FullName $script:ModName
+        if (-not (Test-Path (Join-Path $copy "$script:ModName.dll"))) { continue }
+        Remove-Item -Recurse -Force $copy -ErrorAction SilentlyContinue
+        if (Test-Path $copy) { Write-Step "warning: could not delete the stale copy $copy" } else { Write-Step "deleted a stale copy of the mod: $copy" }
     }
 }
 
@@ -385,9 +670,11 @@ function Start-Game([int]$TimeoutSeconds = 180) {
 }
 
 function Stop-Game {
+    # Closed, not killed, when it can be: the game writes its content log (Get-ContentLogEntries)
+    # only as it closes. $script:GameKilled tells the content-log check that a session's file may be missing.
     Get-InstanceProcesses | ForEach-Object {
         $_.CloseMainWindow() | Out-Null
-        if (-not $_.WaitForExit(10000)) { $_.Kill() }
+        if (-not $_.WaitForExit(30000)) { $_.Kill($true); $script:GameKilled = $true; Write-Step "the game did not close within 30 s; killed it" }
     }
     if (-not $script:Headless) { Get-Process -Name 'LeviLauncher' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue }
     Write-Step "game stopped"
@@ -504,6 +791,11 @@ function Type-Text([string]$text) {
 # ---------------------------------------------------------------------------------------
 # Saves out\<unit>\<name>.png (unit defaults to the running scenario), downscaled to 1280 wide.
 function Save-Screenshot([string]$name, [string]$unit = $script:Unit) {
+    # PrintWindow waits for the game's window: never for ever (a hung game is killed, see Invoke-Guarded)
+    Invoke-Guarded "the screenshot '$name'" { Save-ScreenshotUnguarded $name $unit }
+}
+
+function Save-ScreenshotUnguarded([string]$name, [string]$unit) {
     $c = Get-ClientRect
     $dir = Join-Path $script:OutRoot $unit
     New-Item -ItemType Directory -Force $dir | Out-Null
@@ -660,7 +952,7 @@ function Wait-HudReady([int]$TimeoutSeconds = 60) {
 function Send-SelfTestCommand([string]$Command) { Invoke-Chat "/$Command" }
 function Assert-NoErrors {
     $bad = Get-ErrorLines
-    if ($bad) { $bad | Select-Object -First 20 | ForEach-Object { Write-Host "  ! $_" -ForegroundColor Red }; throw "$($bad.Count) ERR/FTL line(s) from $script:ModName/LeviLamina/CrashLogger in the log" }
+    if ($bad) { $bad | Select-Object -First 20 | ForEach-Object { Write-Host "  ! $_" -ForegroundColor Red }; throw "$($bad.Count) ERR/FTL line(s) in the log" }
     Write-Step "no errors in log"
 }
 
@@ -694,7 +986,7 @@ function Wait-GameReady([int]$TimeoutSeconds = 180, [switch]$WithoutMod) {
 # game's picture; without one, $null = unknown).
 function Test-TitleScreen {
     if (-not (Get-Command Get-ClientBitmap -ErrorAction SilentlyContinue)) { return $null }
-    try { $bmp = Get-ClientBitmap } catch { return $null }
+    try { $bmp = Invoke-Guarded 'the title screen capture' { Get-ClientBitmap } } catch { return $null }
     if (-not $bmp) { return $null }
     try {
         $green = 0
@@ -738,6 +1030,40 @@ function Enter-PlayScreen([int]$Attempts = 6) {
     throw "the title screen ignored $Attempts clicks / Enter on Play (game input, not the mod; BeDD state above)"
 }
 
+# Thrown by Enter-TestWorld when the game is in another world than the scenario's GF-Test (run.ps1
+# then restarts the game once and reports NOT RUN the second time: nothing of the scenario ran).
+if (-not ('GfE2E.WrongWorldException' -as [type])) {
+    Add-Type -TypeDefinition @'
+namespace GfE2E {
+public class WrongWorldException : System.Exception {
+    public WrongWorldException(string message) : base(message) { }
+}
+}
+'@
+}
+
+# Where the game went since log mark $Since: $null when it is the GF-Test world, else why not. The mod
+# logs "world: level '<LevelName>' opened" as the integrated server opens a world (src/game/WorldDb.cpp);
+# a "[BeDD] join: connecting to" line means a pipe client of another harness sent the game to a server
+# (no local-mode run joins one).
+function Get-WrongWorld([int]$Since, [int]$TimeoutSeconds = 15) {
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ($true) {
+        $log = @(Get-LeviLog -Since $Since)
+        # any time in this game session (a stray join may come before the harness clicked anything)
+        $join = @(Get-LeviLog) | Select-String -Pattern '\[BeDD\] join: connecting to (\S+)' | Select-Object -Last 1
+        if ($join) { return "the game was sent to the server $($join.Matches[0].Groups[1].Value) (a BeDD 'join' this run did not send)" }
+        $level = $log | Select-String -Pattern "world: level '(.*)' opened" | Select-Object -Last 1
+        if ($level) {
+            $name = $level.Matches[0].Groups[1].Value
+            if ($name -eq $script:WorldName) { return $null }
+            return "the game entered the world '$name', not $($script:WorldName)"
+        }
+        if ((Get-Date) -gt $deadline) { return "the game is in a world that never logged ""world: level '...' opened"" (not the local $($script:WorldName))" }
+        Start-Sleep -Milliseconds 500
+    }
+}
+
 function Enter-TestWorld([int]$LoadSeconds = 10, [int]$Attempts = 3) {
     for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
         Focus-Game
@@ -746,13 +1072,14 @@ function Enter-TestWorld([int]$LoadSeconds = 10, [int]$Attempts = 3) {
         Start-Sleep -Seconds 4
         Click 0.173 0.43 -Relative      # first world thumbnail (GF-Test: LastPlayed = now)
         Start-Sleep -Seconds $LoadSeconds
+        $spawned = $false
         try {
             Wait-LogLine 'Player Spawned' 75 -Since $mark | Out-Null
-            Start-Sleep -Seconds 3
-            Focus-Game
-            Write-Step "in world"
-            return
+            $spawned = $true
         } catch {
+            # a game sent to another server never spawns in a local world: say so instead of retrying
+            $wrong = Get-WrongWorld $mark 0
+            if ($wrong -and $wrong -match 'BeDD') { Save-Screenshot "wrong-world-$attempt" | Out-Null; throw [GfE2E.WrongWorldException]::new($wrong) }
             if ($attempt -eq $Attempts) { throw }
             # The game sometimes fails to join its own local world ("Connection timed out").
             # Leave the error dialog and try again.
@@ -761,6 +1088,14 @@ function Enter-TestWorld([int]$LoadSeconds = 10, [int]$Attempts = 3) {
             Focus-Game
             Click 0.24 0.68 -Relative   # "Back to menu" on the connection error dialog
             Start-Sleep -Seconds 5
+        }
+        if ($spawned) {
+            $wrong = Get-WrongWorld $mark
+            if ($wrong) { Save-Screenshot "wrong-world-$attempt" | Out-Null; throw [GfE2E.WrongWorldException]::new($wrong) }
+            Start-Sleep -Seconds 3
+            Focus-Game
+            Write-Step "in world $($script:WorldName)"
+            return
         }
     }
 }

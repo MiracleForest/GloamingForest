@@ -17,16 +17,26 @@
   deployed with ours and every click, key, text and screenshot goes through its control pipe. The
   game stays in the background and never takes the real mouse, keyboard or foreground, so the PC
   stays usable during a run. -Foreground uses real SendInput as before (slot 1 only).
-  3. Closes a running game, restores mods a killed run left aside, deploys the mod to
-     mods\GloamingForest, moves every other mod (e.g. BEI) aside, installs the GF-Test world.
+  3. Closes a running game, restores mods a killed run left aside, deletes stale copies of our mod
+     that other harnesses parked (mods.<harness>-aside), deploys the mod to mods\GloamingForest,
+     moves every other mod (e.g. BEI) aside, installs the GF-Test world, puts the options scenarios
+     toggle back (gfx_hidehud, gfx_hidehand, game_thirdperson, graphics_mode) and turns the game's
+     content log on (content_log_file:1, the old value is put back at the end).
   4. Runs optional scenarios/<name>.prelaunch.ps1, launches the game, waits for
-     "GloamingForest enabled", enters the world, dot-sources scenarios/<name>.ps1.
-  5. Fails on: scenario exception, failing/empty/unfinished selftests, ERR/FTL lines from
-     Levitate/LeviLamina/CrashLogger.
+     "GloamingForest enabled", enters the world, checks that it is GF-Test (the mod's
+     "world: level 'GF-Test' opened" line; another world: one more fresh game, then NOT RUN),
+     dot-sources scenarios/<name>.ps1.
+  5. Fails on: scenario exception, failing/empty/unfinished selftests, ERR/FTL lines (any logger;
+     only BDS's transport banner and the console's echo of a command reply are not errors), errors
+     in the game's content log (warnings are listed; they fail with -StrictContentLog or when the
+     scenario sets $script:ContentLogStrict = $true).
   6. Always: closes the game, removes the GF-Test world and our mod, restores the other mods,
-     runs scenarios/<name>.restore.ps1, releases the lock.
-  Output: tools/e2e/client/out/<scenario>/ (screenshots, client.log, selftest.json). Look at the
-  screenshots.
+     runs scenarios/<name>.restore.ps1, restores content_log_file, releases the lock.
+  Every BeDD pipe call and window capture is guarded by a watchdog (lib.ps1 Invoke-Guarded,
+  $env:GF_E2E_PIPE_TIMEOUT_SEC, default 120 s on top of the call's own waits): a game that does not
+  answer is killed with its process tree and the run is NOT RUN (exit 2, a "WATCHDOG:" line).
+  Output: tools/e2e/client/out/<scenario>/ (screenshots, client.log, client-content-log.txt,
+  selftest.json). Look at the screenshots.
 
   Modes (-Mode):
     local           (default) the GF-Test local world: the integrated server runs the mod too.
@@ -57,6 +67,7 @@ param(
     [int]$HostTimeoutMinutes = 15,   # remote modes: max wait for the BDS host (slot + boot), game lock held
     [switch]$HeadlessTrace,          # BeDD trace mode: log every key/mouse event reaching the game's input layer
     [switch]$Foreground,             # real SendInput, game in the foreground (takes over the PC); slot 1 only
+    [switch]$StrictContentLog,       # content-log warnings fail the run too (a scenario: $script:ContentLogStrict = $true)
     # Game instances this run may use (headless only); the first free one is taken. Default:
     # $env:LEVI_E2E_SLOTS ("1,2,3") or 1. Slots 2.. are clones (versions\<base>-hi<N>) made on first
     # use, so several runs can play at once.
@@ -77,6 +88,13 @@ if (-not $Foreground) {
     . $shim
     Register-BeDDNative ([BsE2E.Native])
 }
+[GfE2E.Watchdog]::Reset()
+if ($script:Headless) { Register-PipeWatchdog }
+$script:ContentLogStrict = [bool]$StrictContentLog
+$script:ContentLogWarnings = @()
+$script:GamesStarted = 0
+$script:GameKilled = $false
+$script:NotRunReason = $null
 # Game instances: -Slot, $env:GF_E2E_CLIENT_SLOTS / $env:LEVI_E2E_SLOTS ("1,2,3"), or every instance
 # that exists (the base and its -hi<N> clones); the first free one is taken.
 $slotList = if ($env:GF_E2E_CLIENT_SLOTS) { $env:GF_E2E_CLIENT_SLOTS } else { $env:LEVI_E2E_SLOTS }
@@ -191,6 +209,7 @@ try {
         if ($script:InstanceSlot -gt 1) { & (Join-Path $script:BeDDDir 'clone-instance.ps1') -Slot $script:InstanceSlot -Source $script:BaseVersion }
         if (Get-GameProcess) { Write-Step "closing a running game first"; Stop-Game }
         Restore-OtherMods
+        Remove-StaleModCopies       # our mod parked by another harness (mods.<harness>-aside)
         if ($Mode -eq 'remote-vanilla') {
             Remove-DeployedMod # vanilla client: only LeviLamina (+ CrashLogger)
         } else {
@@ -206,20 +225,40 @@ try {
             if ($script:Headless) { Set-WorldSinglePlayer (Join-Path (Get-WorldsDir) $script:WorldName) }
         }
         Reset-CameraPerspective
+        Reset-GameOptions           # HUD, hand, camera, graphics mode as every run expects them
+        Enable-ContentLog           # checked after the game closed (Get-ContentLogProblems)
         Clear-CachedGfPacks         # never a stale pack cached by another build
         $prelaunch = Join-Path $PSScriptRoot "scenarios/$Scenario.prelaunch.ps1"
         if (Test-Path $prelaunch) { . $prelaunch }
         try {
             # Joining the local world sometimes fails with "Connection timed out (Kelp)" and,
             # once it does, keeps failing in that game session: retry with a fresh game.
+            # A game in another world than GF-Test (Enter-TestWorld) gets one more fresh game; the
+            # second time the run is NOT RUN (nothing of the scenario ran there).
+            $wrongWorlds = 0
             for ($launch = 1; ; $launch++) {
                 if ($remote) { Clear-OurServerEntries }
                 Start-Game | Out-Null
+                $script:GamesStarted++
                 Wait-GameReady -WithoutMod:($Mode -eq 'remote-vanilla')
                 try {
                     if ($remote) { Enter-RemoteServer -Attempts 1 } else { Enter-TestWorld -Attempts 2 }
                     break
                 } catch {
+                    if ($_.Exception -is [GfE2E.WrongWorldException]) {
+                        $wrongWorlds++
+                        if ($wrongWorlds -ge 2) {
+                            $script:NotRunReason = "the game was not in the scenario's $($script:WorldName) world, twice: $($_.Exception.Message)"
+                            throw
+                        }
+                        Write-Step "WRONG WORLD: $($_.Exception.Message); restarting the game with a fresh $($script:WorldName) (once)"
+                        Stop-Game
+                        Restore-TestWorld
+                        if ($script:Headless) { Set-WorldSinglePlayer (Join-Path (Get-WorldsDir) $script:WorldName) }
+                        Start-Sleep -Seconds 3
+                        continue
+                    }
+                    if (Get-WatchdogFired) { throw }
                     if ($launch -ge 3) { throw }
                     Write-Step "could not enter the world ($_); restarting the game (launch $($launch + 1)/3)"
                     Stop-Game
@@ -230,14 +269,18 @@ try {
             Write-Step "running scenario '$Scenario'"
             . $scenarioFile
         } catch {
-            $failures.Add("scenario: $_")
-            Write-Host "[e2e] $($_.ScriptStackTrace)" -ForegroundColor DarkGray
-            try { Save-Screenshot 'failure' | Out-Null } catch {}
+            if ($script:NotRunReason -or (Get-WatchdogFired)) {
+                Write-Step "scenario stopped: $_"
+            } else {
+                $failures.Add("scenario: $_")
+                Write-Host "[e2e] $($_.ScriptStackTrace)" -ForegroundColor DarkGray
+                try { Save-Screenshot 'failure' | Out-Null } catch {}
+            }
             Get-LeviLog | Select-Object -Last 40 | ForEach-Object { Write-Host "  | $_" }
         }
         $errs = Get-ErrorLines
         if ($errs) {
-            $failures.Add("$($errs.Count) ERR/FTL line(s) from $script:ModName/LeviLamina/CrashLogger")
+            $failures.Add("$($errs.Count) ERR/FTL line(s) in the log (docs/spec/e2e.md: every ERR line but the transport banner fails)")
             $errs | Select-Object -First 20 | ForEach-Object { Write-Host "  ! $_" -ForegroundColor Red }
         }
         foreach ($p in Get-SelfTestProblems) { $failures.Add($p) }
@@ -254,6 +297,9 @@ try {
         }
         Stop-Game
         Request-HostStop # the host shuts down while we clean up
+        # the game's content log of every session of the run (written as the game closed)
+        try { foreach ($p in Get-ContentLogProblems -OutDir $outDir -Strict:([bool]$script:ContentLogStrict)) { $failures.Add($p) } }
+        catch { $failures.Add("content log: $_") }
         if ($remote) { Restore-ExternalServers } else { Remove-TestWorld }
         Remove-DeployedMod
         Remove-BeDDLeftover
@@ -262,6 +308,7 @@ try {
         # Dot-sourced (like the prelaunch script) so it sees this run's slot ($script:VersionName,
         # Get-GameDataDir, ...); a failing restore must not keep the lock.
         if (Test-Path $restore) { try { . $restore } catch { Write-Host "[e2e] restore script failed: $_" -ForegroundColor Red } }
+        Restore-ContentLogOption    # after the scenario's own restore (models turns the log on itself)
         Exit-E2ELock
     }
 } catch {
@@ -294,6 +341,18 @@ if ($lockTimeout) {
     exit 2
 }
 
+# The run could not test the scenario: a game call hung (the watchdog killed the game) or the game
+# was in another world than GF-Test twice. Never a pass, never a scenario failure: retry.
+$notRun = if (Get-WatchdogFired) { "WATCHDOG: $(Get-WatchdogFired)" } elseif ($script:NotRunReason) { $script:NotRunReason }
+if ($notRun) {
+    Write-Host "[e2e] client scenario '$Scenario' NOT RUN (the run could not test the scenario; retry it)" -ForegroundColor Yellow
+    Write-Host "[e2e]   $notRun" -ForegroundColor Yellow
+    foreach ($f in $failures) { Write-Host "[e2e]   (not counted: $f)" -ForegroundColor DarkYellow }
+    Write-Host "[e2e] output: $outDir"
+    exit 2
+}
+
+foreach ($w in $script:ContentLogWarnings) { Write-Host "[e2e] content-log warning: $w" -ForegroundColor Yellow }
 if ($failures.Count -gt 0) {
     Write-Host "[e2e] client scenario '$Scenario' FAILED:" -ForegroundColor Red
     $failures | ForEach-Object { Write-Host "[e2e]   - $_" -ForegroundColor Red }

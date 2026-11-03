@@ -28,11 +28,71 @@ pwsh tools/ci/arr-guard.ps1 -Range origin/main                                 #
 `main` of a worktree is usually behind, and a stale base lists other units' merged changes as violations.
 
 A run passes when it exits 0: the scenario finished, every `Invoke-SelfTest` printed
-`SELFTEST DONE pass=<N> fail=0` with at least one test, and no `ERR` / `FTL` line from GloamingForest,
-LeviLamina or CrashLogger and no Bedrock content-log error appeared. **Exit code 2 is NOT RUN** (no throttle
-slot or game lock in time): retry later, never count it as a pass. Exit code 1 is a failure: the console
-lists the reasons; `tools/e2e/<server|client>/out/<scenario>/` holds the logs, `selftest.json` and the
-screenshots.
+`SELFTEST DONE pass=<N> fail=0` with at least one test, no `ERR` / `FTL` line appeared in the log (see
+[Error lines](#error-lines)) and, on the client, the game's content log has no error. **Exit code 2 is NOT
+RUN**: no throttle slot or game lock in time, a game that stopped answering (client watchdog) or a client that
+was not in its test world: retry later, never count it as a pass. Exit code 1 is a failure: the console lists
+the reasons; `tools/e2e/<server|client>/out/<scenario>/` holds the logs, `selftest.json` and the screenshots.
+
+### Error lines
+
+Every `ERR` / `FTL` line of the run fails it, whatever the logger (`GloamingForest`, `LeviLamina`,
+`CrashLogger`, Bedrock's `[Server]` with or without a content category such as `[Blocks]`, BeDD, ...), on the
+server console, in the client log and in a remote client run's `[host]` lines (`Select-ErrorLines` in
+`tools/e2e/common/common.ps1`). So an `ERR` line always means a real error, with exactly two exceptions:
+
+- **BDS's transport banner.** Every boot prints six `ERR [Server]` lines, `================ TRANSPORT TYPE ERROR
+  ===================` through `=======================================================`, because the harness
+  runs RakNet on purpose (`transport=raknet`: the client harness joins `127.0.0.1` without the online signaling
+  service that NetherNet needs). Exactly those six texts are skipped; any other line of the same look fails.
+- **The console's echo of a command reply.** BDS prints the error reply of a command run on its console as
+  `ERR [Server] <reply>`, and scenarios run failing commands on purpose (a refused `/twilightforest locate`). The
+  mod logs every command error first as `[GloamingForest] Command error: <reply>` (`src/mod/Commands.cpp`); an
+  `ERR [Server]` line whose text is such a reply of the same run is the echo, not an error. A scenario checks
+  the replies it provokes itself.
+
+### Client runs: content log, game options, watchdog, test world
+
+- **Content log.** Every client run turns the game's content log file on (`options.txt content_log_file:1`,
+  the old value is put back afterwards) and reads the `ContentLog*.txt` of its game sessions in
+  `<instance>\Minecraft Bedrock\logs` once the game closed (the game writes them as it closes): every entry of
+  level `error` fails the run, `warning` entries are listed in the summary (`content-log warning: ...`) and
+  fail only in a strict run (`-StrictContentLog`, or a scenario sets `$script:ContentLogStrict = $true`). All
+  entries go to `out/<scenario>/client-content-log.txt`. Entries that are not about this build's packs are
+  expected (`$script:ContentLogExpected` in `tools/e2e/client/lib.ps1`: the models scenario's deliberately
+  broken `gfpreview_canary` files, the game's cached diving-helmet fogs); a scenario adds the lines it causes on
+  purpose with `$script:ContentLogExpected += '<regex>'`.
+- **Game options.** Before every run the harness puts back the options scenarios toggle, in every
+  `minecraftpe\options.txt` of the instance: `gfx_hidehud:0` (F1 hides the HUD: models, ui, families),
+  `gfx_hidehand:0` (ui), `game_thirdperson:0` (F5: ui) and `graphics_mode:2` (ui switches Classic / Vibrant
+  Visuals). A scenario that changes another option restores it in its `<unit>.restore.ps1` and adds it to
+  `$script:ForcedOptions` (lib.ps1).
+- **Watchdog.** A BeDD pipe call waits for the game's answer without a timeout of its own. The harness wraps
+  every pipe call and window capture (`Invoke-Guarded`): when one takes longer than 120 s plus the waits it asked
+  for (`$env:GF_E2E_PIPE_TIMEOUT_SEC` changes the 120), the process tree of the run's game is killed (only while
+  the run holds that instance's game lock), the console shows `[e2e] WATCHDOG: ...` and the run is NOT RUN.
+- **Test world.** After joining, `Enter-TestWorld` checks the mod's `world: level '<LevelName>' opened` line
+  (`src/game/WorldDb.cpp`): a world other than `GF-Test`, or a BeDD `join` the run did not send, gets one more
+  fresh game with a freshly installed `GF-Test`; the second time the run is NOT RUN (the console says why).
+
+### Pending joins on a shared instance
+
+On clone `hi2` the game left its world and joined `127.0.0.1:19140` ("[BeDD] join: connecting to
+127.0.0.1:19140", screen `joining_multiplayer_external_server`), and the harness's retry then entered another
+world. Nothing in the instance's files asked for it (BeDD's `config.json` said `mode ClientOnly`, LeviLauncher's
+files and `external_servers.txt` name no such server): another harness drove the same instance through the
+instance's default BeDD pipe `BeDD-<instance>` without taking our `hi<N>-e2e.lock`. 19140 is the first port of
+BeDD's own development servers (`%LOCALAPPDATA%\BeDD\servers`), and BeDD's tools address a game by
+`BeDD-<instance>` (`Initialize-BeDDInstance`); its client resends a request after a broken pipe and waits for the
+pipe to come back, so a request of that harness reached the next game started in the instance, ours. The same
+harness parked our deployed mod in `mods.bedd-it-aside\GloamingForest`. Fixes in the harness:
+
+- each run gives its game a pipe of its own, `BeDD-<instance>-gf<pid>` (`Install-BeDDMod -PipeName`): a client
+  of the default name can no longer reach it;
+- before every run, copies of our mod in another harness's `mods.<harness>-aside` folder are deleted
+  (`Remove-StaleModCopies`), so no stale build comes back into `mods\`;
+- the test-world check above turns any remaining stray join into a retry and then NOT RUN, never a pass or a
+  scenario failure.
 
 Open **every** screenshot of the client run and compare it with TF's textures and GUI images in
 `%LOCALAPPDATA%\gf-tf` (never with TF's audio or templates, which are not in the checkout).

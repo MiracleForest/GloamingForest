@@ -231,8 +231,43 @@ function Invoke-ModBuild([ValidateSet('server', 'client')] [string]$Target) {
 $script:ErrorLineRegex = '\b(ERR|FTL)\]?\s?\[(GloamingForest|LeviLamina|CrashLogger)\]'
 # Bedrock's own content errors (pack loading: "ERR [Server] [Recipes] ...", "[Components]",
 # "[Blocks]", "[Geometry]", "[Texture]", "[JSON]", ...) fail runs too, so units catch pack mistakes.
-# The transport banner ("TRANSPORT TYPE ERROR", NetherNet lines) has no [Category] and stays out.
 $script:ContentErrorRegex = '\b(ERR|FTL)\]?\s?\[Server\]\s*(<[^>]*>\s*)?\[[A-Za-z][A-Za-z ]*\]'
+# Every other ERR / FTL line of any logger fails the run as well, so that an ERR line in a log always
+# means a real error: "12:00:00.000 ERR [Logger] text" (server console), "[2026-01-01 12:00:00.000
+# ERR][Logger] text" (client log), with "[host] " before the server's lines in remote client runs.
+$script:AnyErrorRegex = '^(?:\[host\] )?(?:\d\d:\d\d:\d\d\.\d+ (?:ERR|FTL) \[(?<logger>[^\]]+)\]|\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+ (?:ERR|FTL)\]\[(?<logger>[^\]]+)\])\s?(?<text>.*)$'
+# The only ERR text that is not an error: BDS prints this banner on every boot because the harness
+# runs RakNet on purpose (server/lib.ps1 Set-ServerProperties: real clients join 127.0.0.1 without
+# the online signaling service NetherNet needs). Exactly these six lines of the [Server] logger.
+$script:TransportBanner = @(
+    '================ TRANSPORT TYPE ERROR  ==================='
+    'Your current connection type is not set to NetherNet. In this release, NetherNet is the only supported transport type.'
+    'Players will not be able to connect to your game without NetherNet.'
+    "To switch, set 'transport=nethernet' in server.properties."
+    'For more information, please reference the included bedrock_server_how_to.html file.'
+    '======================================================='
+)
+
+# The lines of $Lines that fail a run: ERR / FTL lines (the three regexes above) except the transport
+# banner, and except the console's own echo of a command's error reply: BDS prints the error output
+# of a command run on its console as "ERR [Server] <reply>", and scenarios run failing commands on
+# purpose (a refused /twilightforest locate); the mod logs every command error first as
+# "[GloamingForest] Command error: <reply>" (src/mod/Commands.cpp), so an [Server] ERR line whose
+# text is such a reply of this run is the echo, not an error.
+function Select-ErrorLines([string[]]$Lines) {
+    $replies = [System.Collections.Generic.HashSet[string]]::new()
+    foreach ($l in $Lines) { if ($l -match '\[GloamingForest\]\s?Command error: (.*)$') { [void]$replies.Add($Matches[1].TrimEnd()) } }
+    @(foreach ($l in $Lines) {
+        if ($l -match $script:ErrorLineRegex -or $l -match $script:ContentErrorRegex) { $l; continue }
+        $m = [regex]::Match($l, $script:AnyErrorRegex)
+        if (-not $m.Success) { continue }
+        if ($m.Groups['logger'].Value -eq 'Server') {
+            $text = $m.Groups['text'].Value.TrimEnd()
+            if ($script:TransportBanner -ccontains $text -or $replies.Contains($text)) { continue }
+        }
+        $l
+    })
+}
 
 # ---------------------------------------------------------------------------------------
 # Shared scenario helpers. They rely on functions each platform's lib.ps1 defines:
@@ -263,9 +298,9 @@ function Invoke-SelfTest([string]$Glob = '', [int]$TimeoutSeconds = 600, [switch
     return $r
 }
 
-# Lines of this run that make it fail (ERR/FTL from the mod, LeviLamina or CrashLogger).
+# Lines of this run that make it fail (Select-ErrorLines).
 function Get-ErrorLines {
-    @(Get-ServerLog | Where-Object { $_ -match $script:ErrorLineRegex -or $_ -match $script:ContentErrorRegex })
+    @(Select-ErrorLines @(Get-ServerLog))
 }
 
 # Config files written into the deployed mod before every run (`$Scenario` of run.ps1 is in
