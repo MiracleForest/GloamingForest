@@ -51,6 +51,7 @@ namespace gf::feature::entity {
 namespace {
 
 constexpr int kThrowCooldown = 200; ///< YetiThrowAttachment.THROW_COOLDOWN
+constexpr int kRemountTries  = 20;  ///< ticks a held rider that left the seat is tried to be put back
 
 struct ThrowState {
     bool         thrown   = false;
@@ -188,14 +189,26 @@ void tickMount(Mob& mob, ActorState& s) {
         s.grabbed = 0;
         return;
     }
-    if (player->getVehicle() == &mob) return;
+    if (player->getVehicle() == &mob) {
+        s.remountTries = 0;
+        return;
+    }
     // the player left the seat: HostileMountEvents#preventMountDismount puts it back
     bool invulnerable = player->isCreative() || player->isSpectator();
     if (player->isAlive() && mob.isAlive() && !invulnerable && !S().allowDismount && player->getDimensionId() == mob.getDimensionId()) {
         player->startRiding(mob, true);
-        if (player->getVehicle() == &mob) return;
+        if (player->getVehicle() == &mob) {
+            s.remountTries = 0;
+            return;
+        }
+        // Java cancels the dismount itself; here the engine may still be taking the rider out of
+        // the seat (the passenger list is updated after the mob's tick), so startRiding can fail on
+        // the first ticks after the dismount: keep holding the player and try again next tick
+        if (++s.remountTries < kRemountTries) return;
+        log().warn("entity: could not put {} back on {} after {} ticks: letting go", player->getRealName(), mob.getTypeName(), kRemountTries);
     }
-    s.grabbed = 0;
+    s.remountTries = 0;
+    s.grabbed      = 0;
     setRidingUnfriendly(*player, uidOf(mob), false);
 }
 
@@ -323,7 +336,8 @@ bool grab(Mob& mob, Player& player) {
         fe::S().allowDismount = false;
     }
     if (!player.startRiding(mob, true) || player.getVehicle() != &mob) return false;
-    s.grabbed = fe::uidOf(player);
+    s.grabbed      = fe::uidOf(player);
+    s.remountTries = 0;
     fe::setRidingUnfriendly(player, fe::uidOf(mob), true);
     log().info("entity: {} grabbed {}", mob.getTypeName(), player.getRealName());
     return true;

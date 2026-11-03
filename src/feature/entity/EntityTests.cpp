@@ -680,10 +680,19 @@ GF_REGISTER_SELFTEST("entity.mount_type", [](Context& ctx) -> ll::coro::CoroTask
     ctx.require(p && mount, "player and pig present");
     ctx.check(p->startRiding(*mount, true) && p->getVehicle() == mount, "the player gets on by itself");
     ctx.check(ge::ext::isRidingUnfriendly(*p), "a marked IHostileMount type: riding unfriendly without a grab");
-    co_await ctx.ticks(2);
+    // the pig takes the rider that got on by itself as held on its own next tick (tickMount); a
+    // dismount before that tick is one Java would not see either (the player rode for no tick).
+    // Both waits count server ticks (currentTick), not awaits, so a slow server gets as many.
+    bool held = false;
+    for (auto end = currentTick() + 20; !held && currentTick() < end;) {
+        co_await ctx.ticks(1);
+        auto* s = findState(mid);
+        held    = s && s->grabbed == spId;
+    }
+    ctx.require(held, "the pig holds the player that got on by itself");
     if ((p = playerById(spId))) p->stopRiding(true, false, false, false);
     bool back = false;
-    for (int i = 0; i < 10 && !back; ++i) {
+    for (auto end = currentTick() + 20; !back && currentTick() < end;) {
         co_await ctx.ticks(1);
         p     = playerById(spId);
         mount = mobById(mid);

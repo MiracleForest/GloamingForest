@@ -101,6 +101,7 @@ struct ActorState {
     // hostile mount
     std::int64_t grabbed = 0; ///< the player this mob holds as a rider
     bool         hostileMount = false; ///< grabbed a rider (mount::grab) or an IHostileMount type
+    int          remountTries = 0;     ///< ticks in a row the held rider could not be put back yet
     unsigned     disabledFlags = 0;    ///< GoalSelector#disabledFlags (Mob#updateControlFlags, every 5 ticks)
     // the last time anything touched the state (sweep)
     std::uint64_t lastSeen = 0;
