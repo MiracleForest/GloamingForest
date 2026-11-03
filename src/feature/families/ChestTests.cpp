@@ -46,6 +46,7 @@
 #include "mc/world/phys/AABB.h"
 
 #include "feature/common/BlockData.h"
+#include "feature/common/Interactions.h"
 #include "feature/common/Redstone.h"
 #include "feature/ext/families/Hoppers.h"
 #include "feature/families/Families.h"
@@ -157,10 +158,9 @@ bool placeComparator(Context& ctx, GlobalPos const& comp, GlobalPos const& out) 
 }
 
 /// Puts `s` in slot `slot` of the chest at `p` the way F10's BlockData backend keeps it (through the
-/// inventory contract's own handler while the chest has no block actor), then gives the chest an
-/// empty block actor again: a chest saved before the chests had block actors, after the reload made
-/// its block actor and before its chunk's first tick.
-bool stacksInBlockData(BlockSource& region, GlobalPos const& p, int slot, ItemStack const& s) {
+/// inventory contract's own handler while the chest has no block actor), leaving it without a block
+/// actor: a chest saved before the chests had block actors.
+bool stacksWithoutActor(BlockSource& region, GlobalPos const& p, int slot, ItemStack const& s) {
     auto* chunk = region.getChunkAt(bp(p));
     if (!chunk) return false;
     (void)chunk->removeBlockEntity(bp(p));
@@ -168,7 +168,15 @@ bool stacksInBlockData(BlockSource& region, GlobalPos const& p, int slot, ItemSt
     if (region.getBlockEntity(bp(p)) || !h) return false;
     h->set(p, slot, s);
     auto const* data = gf::blockdata::get(region, bp(p), "inventory");
-    if (!data || !data->is_object() || !data->contains("items")) return false;
+    return data && data->is_object() && data->contains("items") && !region.getBlockEntity(bp(p));
+}
+
+/// stacksWithoutActor, then the chest gets an empty block actor again: a chest saved before the
+/// chests had block actors, after the reload made its block actor and before its stacks moved.
+bool stacksInBlockData(BlockSource& region, GlobalPos const& p, int slot, ItemStack const& s) {
+    if (!stacksWithoutActor(region, p, slot, s)) return false;
+    auto* chunk = region.getChunkAt(bp(p));
+    if (!chunk) return false;
     auto actor = VanillaBlockActorFactory::createBlockActor(bp(p), region.getBlock(bp(p)).getBlockType());
     if (!actor || actor->getType() != BlockActorType::DataDriven) return false;
     chunk->_placeBlockEntity(actor);
@@ -401,13 +409,27 @@ GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::Cor
     co_await ctx.ticks(10);
     ctx.check(output() == 8 && inv::comparatorSignal(a).value_or(-1) == 8, "27 full stacks in the 54 slots give 8 (Mth.lerpDiscrete: output " + std::to_string(output()) + ")");
     for (int i = 0; i < 27; ++i) hb->set(b, i, ItemStack{});
-    // a hopper under the LEFT half takes from the right half first
+    // a hopper under the LEFT half takes from the RIGHT half first: a stack in each half (the left
+    // half's first slot, the right half's sixth), and HopperBlockEntity#suckInItems tries the
+    // CompoundContainer's slots in order (the right half's are 0..26, the left half's 27..53)
     for (auto const& q : {topA, westA}) emptyAndClear(region, q);
-    hb->set(b, 5, stack("minecraft:diamond", 1));
+    auto ha = inv::find(region, bp(a));
+    ctx.require(ha.has_value(), "the left half's handler");
+    ha->set(a, 0, stack("minecraft:diamond", 1));
+    hb->set(b, 5, stack("minecraft:emerald", 1));
     auto underA = at(a, 0, -1, 0);
     ctx.require(ctx.setBlock(underA, "minecraft:hopper", {{"facing_direction", 0}}), "a hopper under the left half");
+    bool first = co_await until(ctx, 60, [&] {
+        auto* h = vanillaContainer(region, underA);
+        return countIn(h, "minecraft:emerald") + countIn(h, "minecraft:diamond") >= 1;
+    });
+    auto* hu1         = vanillaContainer(region, underA);
+    int   emeraldsIn1 = countIn(hu1, "minecraft:emerald"), diamondsIn1 = countIn(hu1, "minecraft:diamond");
+    ctx.check(first && emeraldsIn1 == 1 && diamondsIn1 == 0 && countIn(inv::contents(a), "minecraft:diamond") == 1,
+              "the hopper under the left half took the RIGHT half's emerald first, the left half's diamond still in it (" + std::to_string(emeraldsIn1) + " emerald, "
+                  + std::to_string(diamondsIn1) + " diamond in the hopper)");
     bool took = co_await until(ctx, 60, [&] { return countIn(vanillaContainer(region, underA), "minecraft:diamond") == 1; });
-    ctx.check(took && emptySlots(inv::contents(b)), "the hopper under the left half took the right half's diamond");
+    ctx.check(took && emptySlots(inv::contents(a)) && emptySlots(inv::contents(b)), "then the left half's diamond (both halves empty)");
     co_await ctx.ticks(10);
     ctx.check(output() == 0, "and the comparator reads 0 again (" + std::to_string(output()) + ")");
     for (auto const& q : {underA, comp, outStone, a, b}) emptyAndClear(region, q);
@@ -493,6 +515,25 @@ GF_REGISTER_SELFTEST("families.chest_hoppers_more", [](Context& ctx) -> ll::coro
             e->remove();
         }
     for (auto const& q : {m, rail}) emptyAndClear(region, q);
+    // a declaration changed later (inventory::declare, unregisterBlock) reaches the kept lookups in
+    // the next tick: the fixture chest redeclared without ChestBlock's rules is out of reach
+    if (auto original = inv::declared("gf_test:family_chest"); original && gf::game::blockWith("gf_test:family_chest")) {
+        auto f = at(p, 4, 1, 1);
+        ctx.require(ctx.setBlock(f, "gf_test:family_chest", {{kFacingState, "north"}}), "a fixture chest");
+        co_await ctx.ticks(1);
+        ctx.check(fam::hopperContainerAt(region, bp(f)) != nullptr, "hoppers reach the fixture chest (declared chest-like)");
+        auto hidden  = *original;
+        hidden.chest = false;
+        inv::declare(hidden);
+        co_await ctx.ticks(1);
+        bool gone = fam::hopperContainerAt(region, bp(f)) == nullptr;
+        inv::declare(*original);
+        co_await ctx.ticks(1);
+        bool back = fam::hopperContainerAt(region, bp(f)) != nullptr;
+        ctx.check(gone && back, "redeclared without the chest rules it is out of their reach in the next tick, and back once declared again (" + std::string(gone ? "gone" : "still seen") + ", "
+                                    + (back ? "back" : "not back") + ")");
+        emptyAndClear(region, f);
+    }
     (void)box;
 });
 
@@ -726,6 +767,127 @@ GF_REGISTER_SELFTEST("families.chest_migrate_lazy", [](Context& ctx) -> ll::coro
     (void)box;
 });
 
+GF_REGISTER_SELFTEST("families.chest_migrate_click", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // a chest saved without a block actor, its stacks still in block data, clicked before anything
+    // moved them: no block actor is made inside the click (GameMode::useItemOn); the screen shows the
+    // block data stacks (F10's BlockData backend) and the next tick gives the chest its block actor
+    // with them, the screen staying open and following the block actor's container from then on
+    if (!tfChests(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6100, 5);
+    auto p   = ctx.testPos(6100, 0);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto& region = *ctx.region();
+    auto  c      = at(p, 3, 0, 1);
+    ctx.require(ctx.setBlock(c, kChest, {{kFacingState, "north"}}), "a canopy chest");
+    co_await ctx.ticks(1);
+    ctx.require(stacksWithoutActor(region, c, 4, stack("minecraft:emerald", 2)), "its 2 emeralds in block data, no block actor");
+    CompanionScope companion(ctx);
+    auto           uid = ctx.player().getOrCreateUniqueID().rawID;
+    if (auto* sp = simPlayerById(ctx, uid)) {
+        sp->teleport(Vec3{c.x + .5f, static_cast<float>(c.y), c.z + 2.5f}, sp->getDimensionId());
+        sp->simulateLookAt(bp(c), sim::LookDuration::Instant);
+        sp->simulateSetItem(ItemStack::EMPTY_ITEM(), true, 0);
+    }
+    co_await ctx.ticks(8);
+    auto* sp = simPlayerById(ctx, uid);
+    ctx.require(sp != nullptr, "the player");
+    auto  b    = bp(c);
+    auto& held = const_cast<ItemStack&>(sp->getSelectedItem());
+    sp->mGameMode->useItemOn(held, b, 1, Vec3{b.x + .5f, b.y + 1.f, b.z + .5f}, HandSlot::Mainhand, nullptr, true);
+    bool noActor = region.getBlockEntity(b) == nullptr; // (still inside the click's tick)
+    auto msgs    = chestScreenMessages(*sp);
+    ctx.check(noActor, "no block actor was made inside the click");
+    ctx.require(msgs.contains("screen.open"), "the click opened the chest screen");
+    ctx.check(shownSlot(msgs["screen.open"], 4) == "minecraft:emerald x2", "showing the block data emeralds in their slot (" + shownSlot(msgs["screen.open"], 4) + ")");
+    co_await ctx.ticks(2);
+    auto* cc = inv::nativeContainer(region, b);
+    ctx.check(cc && countIn(cc, "minecraft:emerald") == 2 && items::idOf(cc->getItem(4)) == "minecraft:emerald" && gf::blockdata::get(region, b, fam::kInventoryDataKey) == nullptr,
+              "the next tick gave the chest its block actor with the emeralds in their slot");
+    msgs = chestScreenMessages(ctx.player());
+    ctx.check(!msgs.contains("screen.close") && inv::openedParts(ctx.player()).size() == 1, "the screen stays open");
+    ctx.check(fam::detail::chestHalfWatched(c), "and a change listener sits on the new block actor's container");
+    if (cc) cc->setItem(5, stack("minecraft:flint", 1));
+    co_await ctx.ticks(2);
+    msgs = chestScreenMessages(ctx.player());
+    ctx.check(msgs.contains("screen.update") && shownSlot(msgs["screen.update"], 5) == "minecraft:flint x1",
+              "a write to it shows on the open screen (" + (msgs.contains("screen.update") ? shownSlot(msgs["screen.update"], 5) : std::string("no update")) + ")");
+    gf::net::injectFromClient(ctx.player(), "screen.closed", {{"type", "inventory.chest"}});
+    co_await ctx.ticks(1);
+    ctx.check(!fam::detail::chestHalfWatched(c), "the listener goes once nobody looks inside");
+    emptyAndClear(region, c);
+    (void)box;
+});
+
+// ---- the context of a double chest's screen ----------------------------------------------------------
+
+GF_REGISTER_SELFTEST("families.chest_screen_context", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // a client mod chest screen is refreshed under its context, the position the inventory contract
+    // opened it for: a double chest's is the half clicked, taken only when the inventory contract's
+    // use handler opened the screen for that click. A click that opens nothing (sneaking with an
+    // item: the item is used) leaves no context behind for a screen code opens in the same tick, and
+    // a double chest screen opened by code (context unknown here) is left open, never refreshed under
+    // a wrong context (which would close it)
+    if (!tfChests(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6145, 5);
+    auto p   = ctx.testPos(6145, 0);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto& region = *ctx.region();
+    auto  a = at(p, 1, 0, 1), b = at(p, 2, 0, 1);
+    ctx.require(ctx.setBlock(a, kChest, {{kFacingState, "north"}, {kTypeState, "left"}}), "the left half");
+    ctx.require(ctx.setBlock(b, kChest, {{kFacingState, "north"}, {kTypeState, "right"}}), "the right half east of it");
+    co_await ctx.ticks(2);
+    CompanionScope companion(ctx);
+    auto           uid = ctx.player().getOrCreateUniqueID().rawID;
+    if (auto* sp = simPlayerById(ctx, uid)) sp->teleport(Vec3{a.x + .5f, static_cast<float>(a.y), a.z + 2.5f}, sp->getDimensionId());
+    co_await ctx.ticks(2);
+    auto hb = inv::find(region, bp(b));
+    ctx.require(hb.has_value(), "the right half's handler");
+    (void)chestScreenMessages(ctx.player());
+    // ---- a sneaking click on the left half with a stick, then code opens the double chest for the right half ----
+    {
+        auto&        pl      = ctx.player();
+        auto         held    = stack("minecraft:stick", 1);
+        std::string  heldId  = "minecraft:stick";
+        std::string  blockId = kChest;
+        Block const& block   = region.getBlock(bp(a));
+        gf::interactions::UseOnContext use{pl, held, heldId, block, blockId, a, 1, {0.5, 1.0, 0.5}, true, true};
+        (void)gf::interactions::dispatchUseOn(use);
+        ctx.check(inv::openedParts(pl).empty(), "a sneaking click with a stick opens no screen (ServerPlayerGameMode#useItemOn: the item is used)");
+        ctx.require(inv::openChestLike(pl, b, 3, "container.chest"), "code opens the double chest's screen for the right half in the same tick");
+        ctx.check(inv::openedParts(pl).size() == 2 && !fam::detail::chestScreenContext(pl).has_value(), "its context is not taken from the click that opened nothing");
+    }
+    hb->set(b, 2, stack("minecraft:apple", 1));
+    co_await ctx.ticks(2);
+    auto msgs = chestScreenMessages(ctx.player());
+    ctx.check(!msgs.contains("screen.close") && inv::openedParts(ctx.player()).size() == 2, "a change leaves the screen open (no refresh under a context the families do not know)");
+    ctx.check(fam::detail::chestHalfWatched(a) && fam::detail::chestHalfWatched(b), "both halves' containers are watched while it is open");
+    gf::net::injectFromClient(ctx.player(), "screen.closed", {{"type", "inventory.chest"}});
+    co_await ctx.ticks(1);
+    ctx.check(!fam::detail::chestHalfWatched(a) && !fam::detail::chestHalfWatched(b), "and no longer once it closed");
+    // ---- the player's own click on the left half: the left half is the context, a change refreshes the screen ----
+    co_await clickChest(ctx, a);
+    msgs = chestScreenMessages(ctx.player());
+    ctx.require(msgs.contains("screen.open"), "the click on the left half opened the double chest's screen");
+    auto context = fam::detail::chestScreenContext(ctx.player());
+    ctx.check(context && *context == a, "the clicked half is the screen's context");
+    hb->set(b, 3, stack("minecraft:bread", 2));
+    co_await ctx.ticks(2);
+    msgs = chestScreenMessages(ctx.player());
+    ctx.check(msgs.contains("screen.update") && shownSlot(msgs["screen.update"], 3) == "minecraft:bread x2" && !msgs.contains("screen.close"),
+              "a change refreshes the open screen (" + (msgs.contains("screen.update") ? shownSlot(msgs["screen.update"], 3) : std::string("no update")) + ")");
+    // ---- code opens the double chest again over it, for the right half: the old context goes ----
+    ctx.require(inv::openChestLike(ctx.player(), b, 3, "container.chest"), "code opens the double chest's screen again, for the right half");
+    ctx.check(!fam::detail::chestScreenContext(ctx.player()).has_value(), "the replaced screen's context is gone (the new one's is not known)");
+    (void)chestScreenMessages(ctx.player());
+    hb->set(b, 4, stack("minecraft:carrot", 1));
+    co_await ctx.ticks(2);
+    msgs = chestScreenMessages(ctx.player());
+    ctx.check(!msgs.contains("screen.close") && inv::openedParts(ctx.player()).size() == 2, "and a change leaves it open");
+    gf::net::injectFromClient(ctx.player(), "screen.closed", {{"type", "inventory.chest"}});
+    for (auto const& q : {a, b}) emptyAndClear(region, q);
+    (void)box;
+});
+
 // ---- a chest broken while its stacks wait in block data loses none; a neighbouring chunk moves them ---
 
 GF_REGISTER_SELFTEST("families.chest_migrate_removed", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -770,7 +932,33 @@ GF_REGISTER_SELFTEST("families.chest_migrate_removed", [](Context& ctx) -> ll::c
                   && gf::blockdata::get(region, bp(c), fam::kInventoryDataKey) == nullptr,
               "the neighbouring chunk's first tick moved them into its block actor, in their slot (" + std::to_string(moved) + " stack(s) moved)");
     ctx.check(inv::comparatorSignal(c).value_or(-1) == 1, "and the comparator reads them (" + std::to_string(inv::comparatorSignal(c).value_or(-1)) + ")");
+    // a comparator's read moves them itself (the comparator output of TF's chests settles their halves
+    // into the block actors they have first), so it reads the chest's own slots at once
+    for (int i = 0; i < 27; ++i)
+        if (auto* own = inv::nativeContainer(region, bp(c))) own->setItem(i, ItemStack{});
+    ctx.require(stacksInBlockData(region, c, 4, stack("minecraft:emerald", 2)), "its 2 emeralds in block data again, its block actor empty");
+    co_await ctx.ticks(1); // (a comparator's reads are kept for the tick)
+    auto signal = gf::redstone::analogOutput(region, bp(c));
+    auto* read  = inv::nativeContainer(region, bp(c));
+    ctx.check(signal.value_or(-1) == 1 && read && countIn(read, "minecraft:emerald") == 2 && gf::blockdata::get(region, bp(c), fam::kInventoryDataKey) == nullptr,
+              "a comparator's read moved them into its block actor first and reads 1 (" + std::to_string(signal.value_or(-1)) + ")");
     emptyAndClear(region, c);
+    co_await ctx.ticks(1);
+    // a chunk that loads (ticking or not) gives its chests saved without a block actor one, with their
+    // stacks, at the end of the tick it loaded
+    ctx.require(ctx.setBlock(c, kChest, {{kFacingState, "north"}}), "a canopy chest once more");
+    co_await ctx.ticks(1);
+    ctx.require(stacksWithoutActor(region, c, 4, stack("minecraft:emerald", 2)), "its 2 emeralds in block data, no block actor (a chunk saved before the chests had block actors)");
+    fam::detail::chunkLoaded(c.dim, bp(c).x >> 4, bp(c).z >> 4);
+    fam::detail::settleLoadedChunksNow();
+    auto* loaded = inv::nativeContainer(region, bp(c));
+    ctx.check(loaded && countIn(loaded, "minecraft:emerald") == 2 && items::idOf(loaded->getItem(4)) == "minecraft:emerald" && gf::blockdata::get(region, bp(c), fam::kInventoryDataKey) == nullptr,
+              "the end of the tick its chunk loaded gave it a block actor with the emeralds in their slot");
+    emptyAndClear(region, c);
+    // the game's chunk loads reach the families (BlockActorLevelListener::onChunkLoaded)
+    auto before = fam::detail::chunkLoadsSeen();
+    bool far    = co_await ctx.ensureLoaded(at(p, 2048, 0, 0));
+    ctx.check(far && fam::detail::chunkLoadsSeen() > before, "the chunks loaded far away were heard (" + std::to_string(fam::detail::chunkLoadsSeen() - before) + " chunk loads)");
     (void)box;
 });
 

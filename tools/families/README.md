@@ -70,7 +70,7 @@ Every family:
 | `menu_category` | when there is no skeleton |
 | `sound` | the Bedrock block sound in `blocks.json` (default per family) |
 | `sound_type` | a TF sound type (`twilightforest.jar`, TFSoundTypes; the jars get it from TFBlocks) |
-| `components` | raw Bedrock components merged last |
+| `components` | raw Bedrock components merged last (their tags join the block's tags, see Block tags) |
 | `waterlogged` / `waterloggable` | adds the waterloggable modifier |
 | `traits` | F1's modifiers of the entry (`["waterloggable", "climbable"]`) |
 
@@ -150,10 +150,13 @@ chest-like (`Declared::chest`, so TF's chests); a unit opts another Container bl
 (the skull chest, the keepsake casket: `gf::families_ext::setHopperVisible(id, true)`) or hides one
 (`false`). A block kept in block data stays invisible to hoppers whatever is set. A lookup stays
 cheap for hoppers that look every tick: what it found at a position (visible or not, the halves and
-their containers) is kept while the block and the neighbour its pairing depends on stay the same; a
-half's container is handed out again while the live block actor at its position still holds it
-(the cached pointers are compared with the live ones, never dereferenced), and a half's block data
-is read once a tick.
+their containers) is kept while the block, the neighbour its pairing depends on and the inventory
+contract's declaration of the block (checked once a tick per block type, so `inventory::declare` or
+`unregisterBlock` reach it in the next tick) stay the same; a half's container is handed out again
+while the live block actor at its position still holds it (the cached pointers are compared with the
+live ones, never dereferenced), and a half's block data is read once a tick (Java's
+`RandomizableContainer` checks its pending loot table on every access; the block data contract has
+no write notification that would let a flag stand in for that read).
 
 A crafter puts what it crafts into the chest it faces (Java's `CrafterBlock#dispenseItem`:
 `HopperBlockEntity.getContainerAt` then `addItem`; a double chest's right half first);
@@ -162,26 +165,39 @@ A crafter puts what it crafts into the chest it faces (Java's `CrafterBlock#disp
 The comparator reads a chest as Java's `ChestBlock#getAnalogOutputSignal` (F10's
 `comparatorSignal`): `getRedstoneSignalFromContainer` over the single chest or the double chest's 54
 slots, and 0 while a half is blocked (`getContainer(.., false)` finds none) even though hoppers still
-fill it. Every change reaches every open chest screen at the end of the tick, as Java's
-`ChestMenu#broadcastChanges` does for each player looking inside: the slots each client mod chest
-screen shows are compared with the last tick's (a hopper's, a dropper's or a crafter's change,
-another player's click, any code's write), and the container a hopper gets notes the halves it
-changed (a change in the tick the screen opened); a screen showing a changed half is refreshed (the
-screens contract's `refresh` of F10's `inventory.chest`, in the context the player opened it with:
-a single chest's own position, a double chest's half the player used, noted by the chest's use
-handler). A double chest screen opened by code has no such context in F11 and shows a change on its
-next click (F10 knows the position: routed). The game's chest screen of a vanilla client follows
+fill it. TF's chests register that output themselves (`redstone::registerAnalog`, over F10's
+registration of the declared chest): a comparator's read first moves stacks still in block data into
+the half's block actor (see below), then returns F10's `comparatorSignal`.
+
+Every change reaches every open chest screen at the end of the tick, as Java's
+`ChestMenu#broadcastChanges` does for each player looking inside: while anyone looks inside a half,
+a change listener sits on its native container (the game's `ContainerContentChangeListener`, called
+for every slot write: a hopper's, a dropper's or a crafter's change, another player's click, any
+code's write), the container a hopper gets notes the halves it changed, and a half without a native
+container yet is compared with the last tick's slots; a screen showing a changed half is refreshed
+(the screens contract's `refresh` of F10's `inventory.chest`) in its context, the position F10
+opened it for: a single chest's own, a double chest's clicked half, taken only when F10's use handler
+opened the screen during that click (the openers count rises while the click runs; a click F10
+answers with nothing, such as a sneaking click with an item, leaves no context behind). A double
+chest screen opened by code has no context known to F11 and is not refreshed (a wrong context would
+close it; F10 knows the position: routed). The game's chest screen of a vanilla client follows
 through F10's proxy.
 
 A chest whose stacks are still in block data (placed while the chests used F10's BlockData backend)
-moves them into its block actor in its chunk's first tick after it loads; a chunk saved without the
-chest's block actor gets one first (the game's block actor factory makes the one the block type
-declares and the chunk takes it; a state change of the block does not create it). That first tick
-also moves the stacks of the chests in the loaded chunks around it (into the block actors they
-have), which may be loaded without ticking while a comparator or a hopper next to them reads them.
-Before that, a hopper's look at the chest (either half of a double chest) or a player's click on it
-moves them first, so neither finds the chest empty or one half missing (a hopper's look does not
-make a block actor: the game may be iterating the chunk's block actors then). A chest broken before
+moves them into its block actor at the end of the tick its chunk loaded, whether the chunk ticks or
+not (the game's block actor chunk listener, `BlockActorLevelListener::onChunkLoaded`, tells; the
+sections whose palette holds no chest are skipped, and only a chest's own block data is read); a
+chunk saved without the chest's block actor gets one first (the game's block actor factory makes the
+one the block type declares and the chunk takes it; a state change of the block does not create it).
+The chunk's first tick does the same, and moves the stacks of the chests in the loaded chunks around
+it into the block actors they have (chunks loaded before the mod heard them load); a neighbour whose
+chest still waits for a block actor is tried again at the next neighbour's first tick. Before all
+that, a hopper's or a comparator's read of the chest (either half of a double chest) moves them into
+the block actor the chest has, and a player's click too; a chest without a block actor that is
+clicked gets it on the next tick (no block actor is made inside the click), its screen showing the
+block data stacks meanwhile (`families.chest_migrate_click`). So nothing finds the chest empty or one
+half missing (a hopper's or a comparator's read does not make a block actor: the game may be
+iterating the chunk's block actors or evaluating the circuit then). A chest broken before
 its stacks moved loses none: F10 drops the block data stacks with the block (`blockdata::onErase`)
 and the block actor's own (`families.chest_migrate_removed`). The stacks are read in F10's
 layout (`kInventoryDataKey` in `Families.h`; `src/feature/inventory/Inventory.cpp`'s `kDataKey`,
@@ -196,7 +212,11 @@ mines, its tier tag; spike S7), else from the document the block starts from (th
 `params.base`, in either form), plus `params.tool`'s tag, and writes them in the form of the format
 it writes the block in: one `minecraft:tags` array from 1.26.20 (the chests, 1.26.50), a
 `"tag:<id>": {}` component per tag up to 1.26.10 (every other family block, 1.26.0). Whatever tag
-form the skeleton copy carries is dropped first, so the skeleton's own format does not matter.
+form the skeleton copy carries is dropped first, so the skeleton's own format does not matter. A tag
+an entry's `params.components` carries (a `"tag:<id>"` key or a `minecraft:tags` array) joins the
+list before it is written, and only the other components are merged after it, so `components` can
+never put back a tag form the block's format refuses (the fixture `gf_test:family_trapped_chest`
+carries one).
 
 ## Lang strings
 

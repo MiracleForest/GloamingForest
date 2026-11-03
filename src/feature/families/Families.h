@@ -359,10 +359,21 @@ void pairChest(BlockSource& region, BlockPos const& pos, int facing, bool sneaki
 /// table is rolled (RandomizableContainer). nullptr: no native container there, a block hoppers do
 /// not reach, or the client's level. Valid for the current tick only.
 [[nodiscard]] Container* hopperContainerAt(BlockSource& region, BlockPos const& pos);
-/// A player used (right-clicked) the chest half at `pos`: the position the inventory contract opens
-/// that player's chest screen for (the screen's context), which Hoppers.cpp names when it refreshes
-/// the screen of a double chest.
-void chestUsedBy(Player& player, GlobalPos const& pos);
+namespace detail {
+/// A player clicked the TF chest half at `pos` (the halves `parts`); `opens`: the inventory
+/// contract's use handler answers with a screen (Chests.cpp checks Java's rules as F10 runs them).
+/// Hoppers.cpp takes `pos` as that screen's context once it sees the screen open.
+void chestClicked(Player& player, GlobalPos const& pos, std::vector<GlobalPos> const& parts, bool opens);
+/// The openers of the TF chest half at `pos` changed (the inventory contract counts right as a screen
+/// opens or closes): Hoppers.cpp confirms a clicked screen's context, forgets the contexts of screens
+/// that closed, and listens to the half's container while someone looks inside.
+void chestOpenersChanged(GlobalPos const& pos, int count);
+/// The context Hoppers.cpp knows for `player`'s open chest screen (the position the inventory
+/// contract opened it for; nullopt: none known, e.g. a double chest screen opened by code). Selftests.
+[[nodiscard]] std::optional<GlobalPos> chestScreenContext(Player& player);
+/// Whether a change listener watches the container of the chest half at `pos` (selftests).
+[[nodiscard]] bool chestHalfWatched(GlobalPos const& pos);
+} // namespace detail
 
 /// The block data key of the inventory contract's BlockData container backend (F10):
 /// {"items": [stack JSON | null, ...], "loot": {"table", "seed"}}. The source of truth is
@@ -373,17 +384,28 @@ inline constexpr char kInventoryDataKey[] = "inventory";
 /// A chest whose stacks are still kept in block data (placed while the chests had no block actor,
 /// F10's BlockData backend): its stacks move into its native container; with `makeActor` a chunk
 /// saved without the chest's block actor gets one first (never while the game may be iterating the
-/// chunk's block actors, as during a hopper's tick). Runs for every chest in a chunk's first tick
-/// after it loaded, and lazily before a hopper looks at the chest or a player opens it. Returns the
-/// stacks moved (0: nothing to move, or no native container to move them to).
+/// chunk's block actors, as during a hopper's tick, or inside a click). Runs for the chests of a
+/// chunk at the end of the tick it loaded and in its first tick, and lazily before a hopper or a
+/// comparator reads the chest or a player opens it. Returns the stacks moved (0: nothing to move, or
+/// no native container to move them to).
 int migrateChest(BlockSource& region, BlockPos const& pos, bool makeActor = true);
 namespace detail {
 /// The chests of the loaded chunks around chunk (cx, cz), that chunk excepted, move their block
 /// data stacks into the block actors they have (migrateChest without making one). A chunk's first
-/// tick after it loaded does it for its neighbours, which may be loaded without ticking (beyond the
-/// simulation distance) while a comparator or a hopper next to them reads their chests. Returns the
-/// stacks moved.
+/// tick after it loaded does it for its neighbours (loaded before the mod saw them load, they may be
+/// loaded without ticking). Returns the stacks moved.
 int settleNeighbourChests(BlockSource& region, int cx, int cz);
+/// Before a hopper or a comparator reads the chest half at `pos`: stacks it still keeps in block
+/// data move into the block actor it has (none is made) and a pending loot table rolls
+/// (RandomizableContainer#unpackLootTable(null)); at most once a tick per half.
+void settleForAccess(BlockSource& region, GlobalPos const& pos);
+/// The game loaded chunk (cx, cz) of dimension `dim` (any thread): its chests are settled at the end
+/// of the tick (migrateChest, a block actor made for a chest saved without one).
+void chunkLoaded(int dim, int cx, int cz);
+/// Chunk loads noted so far (selftests).
+[[nodiscard]] long long chunkLoadsSeen();
+/// Settles the chunks noted since the last tick now (selftests).
+void settleLoadedChunksNow();
 } // namespace detail
 
 } // namespace gf::feature::families
