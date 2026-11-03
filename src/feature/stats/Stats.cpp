@@ -5,12 +5,17 @@
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The statistics part of contract "data" (F9): TF's 10 custom statistics (TFStats: bugs_squished,
-// uncrafting_table_interactions, trophy_pedestals_activated, e115_slices_eaten,
-// torchberries_harvested, blocks_crumbled, life_charms_activated, keeping_charms_activated,
-// skull_candles_made, tf_shields_broken; StatFormatter.DEFAULT), counted per player in the world
-// DB ("gf:stats:<player uuid>" {stat: value}), written at every world save. Bedrock has no
-// statistics screen; companions get "stats.sync" with their values.
+// The statistics part of contract "data" (F9): the custom statistics (Java's Stats.CUSTOM, the
+// registry minecraft:custom_stat): TF's 10 (TFStats: bugs_squished, uncrafting_table_interactions,
+// trophy_pedestals_activated, e115_slices_eaten, torchberries_harvested, blocks_crumbled,
+// life_charms_activated, keeping_charms_activated, skull_candles_made, tf_shields_broken;
+// StatFormatter.DEFAULT) and Minecraft 1.21.1's 75 (minecraft:open_chest, which TF's chests award,
+// minecraft:trigger_trapped_chest, ...), counted per player in the world DB
+// ("gf:stats:<player uuid>" {stat: value}), written at every world save. Bedrock keeps no player
+// statistics a server can award (its statistics screen shows the client's Xbox Live user
+// statistics, fed by the client's own telemetry), so no vanilla statistic maps to a Bedrock
+// counterpart: every one is counted here. Bedrock has no screen for them; companions get
+// "stats.sync" with their values.
 #include "feature/stats/Stats.h"
 
 #include <map>
@@ -39,6 +44,107 @@ constexpr char const* kTfStats[] = {
     "twilightforest:life_charms_activated",  "twilightforest:keeping_charms_activated",      "twilightforest:skull_candles_made",
     "twilightforest:tf_shields_broken",
 };
+
+/// Minecraft 1.21.1's custom statistics (net.minecraft.stats.Stats, its makeCustomStat calls in
+/// registration order).
+constexpr char const* kVanillaStats[] = {
+    "minecraft:leave_game",
+    "minecraft:play_time",
+    "minecraft:total_world_time",
+    "minecraft:time_since_death",
+    "minecraft:time_since_rest",
+    "minecraft:sneak_time",
+    "minecraft:walk_one_cm",
+    "minecraft:crouch_one_cm",
+    "minecraft:sprint_one_cm",
+    "minecraft:walk_on_water_one_cm",
+    "minecraft:fall_one_cm",
+    "minecraft:climb_one_cm",
+    "minecraft:fly_one_cm",
+    "minecraft:walk_under_water_one_cm",
+    "minecraft:minecart_one_cm",
+    "minecraft:boat_one_cm",
+    "minecraft:pig_one_cm",
+    "minecraft:horse_one_cm",
+    "minecraft:aviate_one_cm",
+    "minecraft:swim_one_cm",
+    "minecraft:strider_one_cm",
+    "minecraft:jump",
+    "minecraft:drop",
+    "minecraft:damage_dealt",
+    "minecraft:damage_dealt_absorbed",
+    "minecraft:damage_dealt_resisted",
+    "minecraft:damage_taken",
+    "minecraft:damage_blocked_by_shield",
+    "minecraft:damage_absorbed",
+    "minecraft:damage_resisted",
+    "minecraft:deaths",
+    "minecraft:mob_kills",
+    "minecraft:animals_bred",
+    "minecraft:player_kills",
+    "minecraft:fish_caught",
+    "minecraft:talked_to_villager",
+    "minecraft:traded_with_villager",
+    "minecraft:eat_cake_slice",
+    "minecraft:fill_cauldron",
+    "minecraft:use_cauldron",
+    "minecraft:clean_armor",
+    "minecraft:clean_banner",
+    "minecraft:clean_shulker_box",
+    "minecraft:interact_with_brewingstand",
+    "minecraft:interact_with_beacon",
+    "minecraft:inspect_dropper",
+    "minecraft:inspect_hopper",
+    "minecraft:inspect_dispenser",
+    "minecraft:play_noteblock",
+    "minecraft:tune_noteblock",
+    "minecraft:pot_flower",
+    "minecraft:trigger_trapped_chest",
+    "minecraft:open_enderchest",
+    "minecraft:enchant_item",
+    "minecraft:play_record",
+    "minecraft:interact_with_furnace",
+    "minecraft:interact_with_crafting_table",
+    "minecraft:open_chest",
+    "minecraft:sleep_in_bed",
+    "minecraft:open_shulker_box",
+    "minecraft:open_barrel",
+    "minecraft:interact_with_blast_furnace",
+    "minecraft:interact_with_smoker",
+    "minecraft:interact_with_lectern",
+    "minecraft:interact_with_campfire",
+    "minecraft:interact_with_cartography_table",
+    "minecraft:interact_with_loom",
+    "minecraft:interact_with_stonecutter",
+    "minecraft:bell_ring",
+    "minecraft:raid_trigger",
+    "minecraft:raid_win",
+    "minecraft:interact_with_anvil",
+    "minecraft:interact_with_grindstone",
+    "minecraft:target_hit",
+    "minecraft:interact_with_smithing_table",
+};
+
+/// The custom statistic registry: TF's statistics and Minecraft's.
+std::set<std::string> const& registered() {
+    static std::set<std::string> const s = [] {
+        std::set<std::string> out(std::begin(kTfStats), std::end(kTfStats));
+        out.insert(std::begin(kVanillaStats), std::end(kVanillaStats));
+        return out;
+    }();
+    return s;
+}
+
+/// The ids award() warned about (once each): neither TF's nor Minecraft's.
+struct Warned {
+    std::mutex            mutex;
+    std::set<std::string> ids;
+};
+
+Warned& warned() {
+    static Warned w;
+    return w;
+}
 
 struct PlayerStats {
     std::map<std::string, long long> values;
@@ -95,10 +201,12 @@ void sync(Player& player, PlayerStats const& p) {
 void award(Player& player, std::string const& statId, int amount) {
     if (amount == 0) return;
     auto id = fullId(statId);
-    {
-        static std::set<std::string> const known(std::begin(kTfStats), std::end(kTfStats));
-        static std::set<std::string>       warned;
-        if (!known.contains(id) && warned.insert(id).second) log().warn("stats: {} is not one of TF's statistics", id);
+    // Stats.CUSTOM.get(id): an id of the custom statistic registry (TF's or Minecraft's) counts
+    // silently; any other id counts too, with one warning
+    if (!registered().contains(id)) {
+        auto&           w = warned();
+        std::lock_guard lock(w.mutex);
+        if (w.ids.insert(id).second) log().warn("stats: {} is not a custom statistic of TF or Minecraft", id);
     }
     auto&           s = store();
     std::lock_guard lock(s.mutex);
@@ -117,6 +225,16 @@ long long value(Player const& player, std::string const& statId) {
 }
 
 namespace internal {
+
+bool isRegistered(std::string const& statId) { return registered().contains(fullId(statId)); }
+
+std::size_t registeredCount() { return registered().size(); }
+
+bool warnedAbout(std::string const& statId) {
+    auto&           w = warned();
+    std::lock_guard lock(w.mutex);
+    return w.ids.contains(fullId(statId));
+}
 
 void forget(Player const& player) {
     auto&           s = store();
