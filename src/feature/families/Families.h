@@ -377,5 +377,13 @@ inline constexpr char kInventoryDataKey[] = "inventory";
 /// after it loaded, and lazily before a hopper looks at the chest or a player opens it. Returns the
 /// stacks moved (0: nothing to move, or no native container to move them to).
 int migrateChest(BlockSource& region, BlockPos const& pos, bool makeActor = true);
+namespace detail {
+/// The chests of the loaded chunks around chunk (cx, cz), that chunk excepted, move their block
+/// data stacks into the block actors they have (migrateChest without making one). A chunk's first
+/// tick after it loaded does it for its neighbours, which may be loaded without ticking (beyond the
+/// simulation distance) while a comparator or a hopper next to them reads their chests. Returns the
+/// stacks moved.
+int settleNeighbourChests(BlockSource& region, int cx, int cz);
+} // namespace detail
 
 } // namespace gf::feature::families

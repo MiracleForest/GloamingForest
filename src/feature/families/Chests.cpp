@@ -13,10 +13,12 @@
 // (format 1.26.50, spike S7), so each half has a data-driven block actor holding a game container,
 // saved with its chunk; Hoppers.cpp shows that container to hoppers, hopper minecarts and droppers.
 // A chest whose stacks are still in block data (placed while the chests had no block actor) moves
-// them into its container (migrateChest) in its chunk's first tick, and before that whenever a
-// hopper looks at it (Hoppers.cpp) or a player opens it (the use handler below runs before F10's),
-// so it never shows an empty container while its stacks wait in block data where a player or a
-// hopper can reach it.
+// them into its container (migrateChest) in its chunk's first tick or in a neighbouring chunk's
+// (its own may be loaded without ticking), and before that whenever a hopper looks at it
+// (Hoppers.cpp) or a player opens it (the use handler below runs before F10's), so it never shows
+// an empty container while its stacks wait in block data where a player or a hopper can reach it.
+// Broken before that, it loses nothing: F10 drops its block data stacks with the block
+// (blockdata::onErase) and the block actor's own (families.chest_migrate_removed).
 // This file keeps what the chest block itself does:
 // - facing and type on placement (ChestBlock#getStateForPlacement) and when a neighbour changes
 //   (ChestBlock#updateShape): the pairs F10's screens follow;
@@ -172,14 +174,24 @@ void tickLids() {
     }
 }
 
-/// A chunk's first tick after it loaded: a chest whose stacks are still in block data moves them
-/// into its block actor (migrateChest); nobody is inside its chests yet, so a lid or a trapped
-/// chest's signal left up (saved while open) goes down.
-void settleChunk(BlockSource& region, LevelChunk& chunk) {
-    int                   dim = static_cast<int>(region.getDimensionId());
+/// The chests of `chunk`.
+std::vector<BlockPos> chestsIn(BlockSource& region, LevelChunk& chunk) {
     std::vector<BlockPos> chests;
     detail::forEachInChunk(region, chunk, [](BlockType const& t) { return isChest(entryOf(t)); }, [&](BlockPos const& p, Block const&) { chests.push_back(p); });
-    for (auto const& p : chests) {
+    return chests;
+}
+
+/// A chunk's first tick after it loaded: a chest whose stacks are still in block data moves them
+/// into its block actor (migrateChest); nobody is inside its chests yet, so a lid or a trapped
+/// chest's signal left up (saved while open) goes down. The loaded chunks around it may not tick
+/// (beyond the simulation distance) while a comparator or a hopper in this one reads their chests:
+/// their chests' block data stacks move too (into a block actor the chunk already has: none is made
+/// there).
+void settleChunk(BlockSource& region, LevelChunk& chunk) {
+    int            dim = static_cast<int>(region.getDimensionId());
+    ChunkPos const cp  = chunk.mPosition;
+    detail::settleNeighbourChests(region, cp.x, cp.z);
+    for (auto const& p : chestsIn(region, chunk)) {
         migrateChest(region, p);
         Block const* b = blockAt(region, p);
         if (!b || !isChest(entryOf(*b))) continue;
@@ -264,6 +276,19 @@ int migrateChest(BlockSource& region, BlockPos const& pos, bool makeActor) {
     data.erase("items");
     blockdata::set(region, pos, kInventoryDataKey, data.empty() ? Json(nullptr) : data);
     if (moved || dropped) log().info("families: moved {} stack(s) of the chest at {} {} {} from block data into its block actor ({} dropped: no room)", moved, pos.x, pos.y, pos.z, dropped);
+    return moved;
+}
+
+int detail::settleNeighbourChests(BlockSource& region, int cx, int cz) {
+    int moved = 0;
+    for (int dx = -1; dx <= 1; ++dx)
+        for (int dz = -1; dz <= 1; ++dz) {
+            if (dx == 0 && dz == 0) continue;
+            if (!region.areChunksFullyLoaded(BlockPos{(cx + dx) * 16 + 8, 0, (cz + dz) * 16 + 8}, 0)) continue;
+            auto* chunk = region.getChunk(cx + dx, cz + dz);
+            if (!chunk) continue;
+            for (auto const& p : chestsIn(region, *chunk)) moved += migrateChest(region, p, false);
+        }
     return moved;
 }
 
