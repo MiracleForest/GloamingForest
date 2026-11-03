@@ -250,26 +250,28 @@ $script:TransportBanner = @(
 
 # The lines of $Lines that fail a run: ERR / FTL lines (the three regexes above) except the transport
 # banner, and except the console's own echo of a command's error reply: BDS prints the error output
-# of a command run on its console as "ERR [Server] <reply>", and scenarios run failing commands on
-# purpose (a refused /twilightforest locate); the mod logs every command error first as
-# "[GloamingForest] Command error: <reply>" (src/mod/Commands.cpp), so an [Server] ERR line with the
-# same text within $script:CommandEchoWindow lines after such a reply is its echo, not an error. Each
-# reply excuses one echo only; an ERR line before the reply, further away or with other text counts.
-$script:CommandEchoWindow = 5
+# of a command run on its console as "ERR [Server] <reply>" right after the command, and scenarios run
+# failing commands on purpose (a refused /twilightforest locate). The mod logs a command error first as
+# "[GloamingForest] Command error: <reply>" (src/mod/Commands.cpp), but the same text only once per
+# $script:CommandEchoSeconds (10 s, its spam guard for ticking functions): an [Server] ERR line is the
+# echo when the mod logged the same text, from the same source (in a remote client run the host's
+# "[host] " lines), at most that long before it. An ERR line before any such reply, later, or with other
+# text counts.
+$script:CommandEchoSeconds = 10
+function Get-LineSeconds([string]$Line) {
+    $m = [regex]::Match($Line, '(\d\d):(\d\d):(\d\d)\.(\d+)')
+    if (-not $m.Success) { return $null }
+    return [int]$m.Groups[1].Value * 3600 + [int]$m.Groups[2].Value * 60 + [int]$m.Groups[3].Value + [double]("0." + $m.Groups[4].Value)
+}
 function Select-ErrorLines([string[]]$Lines) {
-    # open replies: text -> queue of the line numbers still waiting for their echo. Lines are counted
-    # per source: a remote client run appends the host's lines ("[host] ...") in batches between its own.
-    $open = @{}
-    $seen = @{ host = 0; own = 0 }
-    @(for ($j = 0; $j -lt $Lines.Count; $j++) {
-        $l = $Lines[$j]
+    # source + text -> time of day (s) the mod last logged that reply
+    $replies = @{}
+    @(foreach ($l in $Lines) {
         $src = if ($l.StartsWith('[host] ')) { 'host' } else { 'own' }
-        $i = ++$seen[$src]
         if ($l -match '\[GloamingForest\]\s?Command error: (.*)$') {
-            $t = $Matches[1].TrimEnd()
-            $t = "$src`u{1}$t"
-            if (-not $open.ContainsKey($t)) { $open[$t] = [System.Collections.Generic.Queue[int]]::new() }
-            $open[$t].Enqueue($i)
+            $key = "$src`u{1}$($Matches[1].TrimEnd())"
+            $at = Get-LineSeconds $l
+            if ($null -ne $at) { $replies[$key] = $at }
         }
         if ($l -match $script:ErrorLineRegex -or $l -match $script:ContentErrorRegex) { $l; continue }
         $m = [regex]::Match($l, $script:AnyErrorRegex)
@@ -277,10 +279,12 @@ function Select-ErrorLines([string[]]$Lines) {
         if ($m.Groups['logger'].Value -eq 'Server') {
             $text = $m.Groups['text'].Value.TrimEnd()
             if ($script:TransportBanner -ccontains $text) { continue }
-            $q = $open["$src`u{1}$text"]
-            if ($q) {
-                while ($q.Count -gt 0 -and $i - $q.Peek() -gt $script:CommandEchoWindow) { [void]$q.Dequeue() }
-                if ($q.Count -gt 0) { [void]$q.Dequeue(); continue }
+            $key = "$src`u{1}$text"
+            $at = Get-LineSeconds $l
+            if ($replies.ContainsKey($key) -and $null -ne $at) {
+                $age = $at - $replies[$key]
+                if ($age -lt -43200) { $age += 86400 }   # past midnight
+                if ($age -ge 0 -and $age -le $script:CommandEchoSeconds + 0.5) { continue }
             }
         }
         $l

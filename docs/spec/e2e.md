@@ -47,10 +47,11 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   service that NetherNet needs). Exactly those six texts are skipped; any other line of the same look fails.
 - **The console's echo of a command reply.** BDS prints the error reply of a command run on its console as
   `ERR [Server] <reply>`, and scenarios run failing commands on purpose (a refused `/twilightforest locate`). The
-  mod logs every command error first as `[GloamingForest] Command error: <reply>` (`src/mod/Commands.cpp`); an
-  `ERR [Server]` line with the same text at most 5 lines after such a reply (counting only the lines of the same
-  source: in a remote client run the host's `[host]` lines separately) is its echo, not an error (each
-  reply excuses one echo; an earlier, later or second line of that text still fails the run). A scenario checks
+  mod logs a command error first as `[GloamingForest] Command error: <reply>` (`src/mod/Commands.cpp`; the same
+  text at most once per 10 s, its guard against ticking functions), and BDS prints the echo right after it. An
+  `ERR [Server]` line is that echo when the mod logged the same text from the same source (in a remote client
+  run the host's `[host]` lines) at most 10 s before it; an `ERR [Server]` line with no such reply before it, a
+  later one or one with other text still fails the run. A scenario checks
   the replies it provokes itself. The mod logs a reply as its message id and parameters, so this covers the
   mod's own literal replies; a vanilla command's translated reply (`commands.tickingarea-remove...` logged, "No
   ticking area ..." printed) is not recognised: a scenario does not send failing vanilla commands on the console
