@@ -68,26 +68,6 @@ int rowOf(int hundreds) {
     return 58 + (((hundreds % 6) + 6) % 6);
 }
 
-struct CommandResult {
-    bool        ok = false;
-    std::string messages; ///< the output message ids and parameters, for failure reports
-};
-
-/// Runs a console command with an origin in dimension `dim` (ticking areas are per dimension).
-CommandResult runServerCommand(std::string const& command, int dim = 0) {
-    auto level = ll::service::getLevel();
-    if (!level) return {false, "no level"};
-    ServerCommandOrigin origin("gloamingforest-selftest", level->asServer(), CommandPermissionLevel::Owner, DimensionType(dim));
-    auto          out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
-    CommandResult r{out.mSuccessCount > 0, {}};
-    for (auto const& m : out.mMessages) {
-        if (!r.messages.empty()) r.messages += "; ";
-        r.messages += m.mMessageId;
-        for (auto const& p : m.mParams) r.messages += " " + p;
-    }
-    return r;
-}
-
 std::string bossEventType(BossEventUpdateType t) {
     switch (t) {
     case BossEventUpdateType::Add:
@@ -141,6 +121,20 @@ void inspectPacket(Packet const& packet) {
     BossEventCapture::record(e);
 }
 } // namespace
+
+CommandResult runServerCommand(std::string const& command, int dim, CommandPermissionLevel permission) {
+    auto level = ll::service::getLevel();
+    if (!level) return {false, 0, "no level"};
+    ServerCommandOrigin origin("gloamingforest-selftest", level->asServer(), permission, DimensionType(dim));
+    auto          out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
+    CommandResult r{out.mSuccessCount > 0, static_cast<int>(out.mSuccessCount), {}};
+    for (auto const& m : out.mMessages) {
+        if (!r.messages.empty()) r.messages += "; ";
+        r.messages += m.mMessageId;
+        for (auto const& p : m.mParams) r.messages += " " + p;
+    }
+    return r;
+}
 
 LL_TYPE_INSTANCE_HOOK(
     SelftestBossToClientHook,
