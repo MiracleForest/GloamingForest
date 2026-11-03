@@ -21,9 +21,16 @@
 //     chorus fruit, commands, enderman / shulker teleports): Player::teleportTo and Mob::teleportTo
 //     are cancelled for a rider of a hostile mount (every cause but the engine's internal
 //     "unknown" moves), Actor::tryTeleportTo (the random teleports) fails for one.
-//   - preventMountDismount: Bedrock has no dismount event to cancel, so a rider that left the
-//     seat is put back on the next tick, unless the mob let go (hostileDismount) or the player is
-//     invulnerable (creative / spectator, as Java's `!player.getAbilities().invulnerable`).
+//   - preventMountDismount (EntityMountEvent, cancelled): Actor::stopRiding of a held player is
+//     cancelled, unless the mob let go (hostileDismount), the player is invulnerable (creative /
+//     spectator, as Java's `!player.getAbilities().invulnerable`), one of the two is dead, or the
+//     engine is removing, teleporting, disconnecting or moving either of them to another
+//     dimension (a passenger left behind there would point to a freed actor). The player's own
+//     client may already have left the seat: it gets the riding link back. A dismount that does
+//     not go through stopRiding is caught by the mob's next tick, which puts the rider back
+//     (startRiding) for up to kRemountTries ticks; while it does, the player still counts as
+//     riding unfriendly (no teleport, no suffocation damage) and keeps the synced trait, since
+//     it is still held and normally back on the seat a tick later.
 //   - preventHostilMountCrouching: every passenger of a hostile mount stops sneaking each tick.
 
 #include <unordered_map>
@@ -31,11 +38,17 @@
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/network/MinecraftPacketIds.h"
+#include "mc/network/MinecraftPackets.h"
+#include "mc/network/packet/SetActorLinkPacket.h"
+#include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorCategory.h"
+#include "mc/world/actor/ActorLink.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/ChangeDimensionRequest.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/phys/AABB.h"
 
@@ -61,9 +74,11 @@ struct ThrowState {
 };
 
 struct MountState {
-    std::unordered_map<std::int64_t, ThrowState> throws; ///< player -> YetiThrowAttachment
-    bool                                         allowDismount = false;
-    int                                          blockedTeleports = 0; ///< selftests
+    std::unordered_map<std::int64_t, ThrowState>   throws;      ///< player -> YetiThrowAttachment
+    std::unordered_map<std::int64_t, std::int64_t> puttingBack; ///< held player off its seat -> mob
+    bool                                           allowDismount    = false;
+    int                                            blockedTeleports = 0; ///< selftests
+    MountCountersForTest                           counters;             ///< selftests
 };
 MountState& S() {
     static MountState s;
@@ -146,6 +161,38 @@ bool hostileMount(Actor const& vehicle) {
     return s && s->hostileMount;
 }
 
+/// The mob that holds `actor` (a player) but has not put it back on its seat yet.
+Actor* puttingBackOn(Actor const& actor) {
+    if (!actor.isPlayer()) return nullptr;
+    auto uid = uidOf(actor);
+    auto it  = S().puttingBack.find(uid);
+    if (it == S().puttingBack.end()) return nullptr;
+    auto* mob = actorById(it->second);
+    auto* s   = findState(it->second);
+    if (mob && mob->isAlive() && s && s->grabbed == uid && s->remountTries > 0) return mob;
+    S().puttingBack.erase(it); // the mob is gone or let go without its tick (dead, unloaded)
+    return nullptr;
+}
+
+/// Sets (or clears, uid 0) the rider a mob holds; every change starts the put-back count anew.
+void setGrabbed(ActorState& s, std::int64_t player) {
+    if (s.grabbed) S().puttingBack.erase(s.grabbed);
+    s.grabbed      = player;
+    s.remountTries = 0;
+}
+
+/// The player's client gets the riding link back (its own dismount was cancelled on the server).
+void resendRidingLink(Player& player, Actor& vehicle) {
+    for (auto const& link : vehicle.getLinks()) {
+        if (link.B->rawID != uidOf(player)) continue;
+        auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::SetActorLink);
+        if (!packet) return;
+        static_cast<SetActorLinkPacket&>(*packet).mLink = link;
+        packet->sendTo(player);
+        return;
+    }
+}
+
 } // namespace
 
 bool ridingUnfriendly(Actor const& actor) {
@@ -153,19 +200,55 @@ bool ridingUnfriendly(Actor const& actor) {
     return vehicle && hostileMount(*vehicle);
 }
 
+bool heldUnfriendly(Actor const& actor) { return ridingUnfriendly(actor) || puttingBackOn(actor) != nullptr; }
+
+MountCountersForTest mountCountersForTest() { return S().counters; }
+
+void leaveSeatForTest(Actor& rider) {
+    auto* vehicle = rider.getVehicle();
+    S().allowDismount = true;
+    rider.stopRiding(true, false, false, false);
+    S().allowDismount = false;
+    // as if the mob's tick had already failed one put-back: the retry window starts now
+    if (auto* s = vehicle ? findState(uidOf(*vehicle)) : nullptr; s && s->grabbed == uidOf(rider)) {
+        s->remountTries                  = std::max(s->remountTries, 1);
+        S().puttingBack[uidOf(rider)] = uidOf(*vehicle);
+    }
+}
+
 /// The mount itself is being teleported: its passengers go with it (Java moves riders with their
 /// vehicle; only the vehicle's own teleport is an event).
 int gMountTeleports = 0;
+
+/// Removals, disconnects and dimension changes the engine is doing: a dismount inside one is never
+/// cancelled (a passenger left behind would point to a freed actor).
+int gEngineRemovals = 0;
+
+/// HostileMountEvents#preventMountDismount for Actor::stopRiding.
+bool cancelsDismount(Actor& actor, bool actorIsBeingDestroyed, bool switchingVehicles, bool isBeingTeleported) {
+    if (actor.isClientSide() || !actor.isPlayer() || S().allowDismount || gEngineRemovals > 0 || gMountTeleports > 0) return false;
+    if (actorIsBeingDestroyed || switchingVehicles || isBeingTeleported) return false;
+    auto* vehicle = actor.getVehicle();
+    if (!vehicle || !vehicle->isAlive() || vehicle->mRemoved || !hostileMount(*vehicle)) return false;
+    auto& player = static_cast<Player&>(actor);
+    if (!player.isAlive() || player.mRemoved || player.isCreative() || player.isSpectator()) return false;
+    if (static_cast<ServerPlayer&>(player).mIsPendingDisconnect) return false;
+    if (player.getDimensionId() != vehicle->getDimensionId()) return false;
+    ++S().counters.cancelledDismounts;
+    resendRidingLink(player, *vehicle);
+    return true;
+}
 
 /// HostileMountEvents#preventTeleportingOffHostileMounts (EntityTeleportEvent of any living rider:
 /// commands, ender pearls, chorus fruit, enderman / shulker teleports) for Actor::teleportTo,
 /// Player::teleportTo and Actor::tryTeleportTo.
 bool blocksTeleport(Actor& actor, int cause, bool anyCause) {
-    if (actor.isClientSide() || (cause == 0 && !anyCause) || S().allowDismount || gMountTeleports > 0 || !ridingUnfriendly(actor)) return false;
+    if (actor.isClientSide() || (cause == 0 && !anyCause) || S().allowDismount || gMountTeleports > 0 || !heldUnfriendly(actor)) return false;
     if (!actor.isPlayer() && !actor.hasCategory(ActorCategory::Mob)) return false; // LivingEntity only
     ++S().blockedTeleports;
-    auto name = actor.isPlayer() ? static_cast<Player&>(actor).getRealName() : actor.getTypeName();
-    log().info("entity: the teleport of {} was cancelled (riding {})", name, actor.getVehicle()->getTypeName());
+    auto  name    = actor.isPlayer() ? static_cast<Player&>(actor).getRealName() : actor.getTypeName();
+    auto* vehicle = actor.getVehicle() ? actor.getVehicle() : puttingBackOn(actor);
+    log().info("entity: the teleport of {} was cancelled (riding {})", name, vehicle ? vehicle->getTypeName() : std::string{"?"});
     return true;
 }
 
@@ -179,36 +262,40 @@ void tickMount(Mob& mob, ActorState& s) {
     if (!s.grabbed)
         for (auto* rider : riders)
             if (rider->isPlayer()) {
-                s.grabbed = uidOf(*rider);
+                setGrabbed(s, uidOf(*rider));
                 setRidingUnfriendly(static_cast<Player&>(*rider), uidOf(mob), true);
                 break;
             }
     if (!s.grabbed) return;
     auto* player = playerById(s.grabbed);
     if (!player) {
-        s.grabbed = 0;
+        setGrabbed(s, 0);
         return;
     }
     if (player->getVehicle() == &mob) {
-        s.remountTries = 0;
+        if (s.remountTries) setGrabbed(s, s.grabbed);
         return;
     }
-    // the player left the seat: HostileMountEvents#preventMountDismount puts it back
+    // the player left the seat by a path other than Actor::stopRiding (that one is cancelled):
+    // HostileMountEvents#preventMountDismount puts it back
     bool invulnerable = player->isCreative() || player->isSpectator();
     if (player->isAlive() && mob.isAlive() && !invulnerable && !S().allowDismount && player->getDimensionId() == mob.getDimensionId()) {
+        ++S().counters.putBackAttempts;
         player->startRiding(mob, true);
         if (player->getVehicle() == &mob) {
-            s.remountTries = 0;
+            setGrabbed(s, s.grabbed);
             return;
         }
-        // Java cancels the dismount itself; here the engine may still be taking the rider out of
-        // the seat (the passenger list is updated after the mob's tick), so startRiding can fail on
-        // the first ticks after the dismount: keep holding the player and try again next tick
+        // the engine may still be taking the rider out of the seat (the passenger list is updated
+        // after the mob's tick), so startRiding can fail on the first ticks: keep holding the
+        // player (it still rides unfriendly: no teleport, no suffocation damage, the trait stays)
+        // and try again next tick
+        ++S().counters.failedPutBacks;
+        S().puttingBack[s.grabbed] = uidOf(mob);
         if (++s.remountTries < kRemountTries) return;
         log().warn("entity: could not put {} back on {} after {} ticks: letting go", player->getRealName(), mob.getTypeName(), kRemountTries);
     }
-    s.remountTries = 0;
-    s.grabbed      = 0;
+    setGrabbed(s, 0);
     setRidingUnfriendly(*player, uidOf(mob), false);
 }
 
@@ -280,9 +367,98 @@ LL_TYPE_INSTANCE_HOOK(
     --gf::feature::entity::gMountTeleports;
 }
 
+// HostileMountEvents#preventMountDismount: a held player does not leave its seat
+LL_TYPE_INSTANCE_HOOK(
+    EntityRiderDismountHook,
+    ll::memory::HookPriority::Normal,
+    Actor,
+    &Actor::stopRiding,
+    void,
+    bool exitFromPassenger,
+    bool actorIsBeingDestroyed,
+    bool switchingVehicles,
+    bool isBeingTeleported
+) {
+    if (gf::feature::entity::cancelsDismount(*this, actorIsBeingDestroyed, switchingVehicles, isBeingTeleported)) return;
+    origin(exitFromPassenger, actorIsBeingDestroyed, switchingVehicles, isBeingTeleported);
+}
+
+namespace {
+/// Marks a removal / disconnect / dimension change of the engine for the dismount hook.
+struct EngineRemoval {
+    EngineRemoval() { ++gf::feature::entity::gEngineRemovals; }
+    ~EngineRemoval() { --gf::feature::entity::gEngineRemovals; }
+    EngineRemoval(EngineRemoval const&)            = delete;
+    EngineRemoval& operator=(EngineRemoval const&) = delete;
+};
+} // namespace
+
+LL_TYPE_INSTANCE_HOOK(EntityActorRemoveHook, ll::memory::HookPriority::Normal, Actor, &Actor::$remove, void) {
+    EngineRemoval guard;
+    origin();
+}
+
+LL_TYPE_INSTANCE_HOOK(EntityPlayerRemoveHook, ll::memory::HookPriority::Normal, Player, &Player::$remove, void) {
+    EngineRemoval guard;
+    origin();
+}
+
+LL_TYPE_INSTANCE_HOOK(EntityPlayerDisconnectHook, ll::memory::HookPriority::Normal, ServerPlayer, &ServerPlayer::disconnect, void) {
+    EngineRemoval guard;
+    origin();
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    EntityPlayerDimensionHook,
+    ll::memory::HookPriority::Normal,
+    ServerPlayer,
+    &ServerPlayer::$changeDimension,
+    void,
+    DimensionType toId
+) {
+    EngineRemoval guard;
+    origin(toId);
+}
+
+// the engine moves a player to another dimension later (the transfer system): a held player is let
+// go when the change is requested, so no seat is kept across dimensions (Java: a passenger does
+// not use portals, and a teleport off a hostile mount is cancelled before it gets here)
+LL_TYPE_INSTANCE_HOOK(
+    EntityPlayerDimensionRequestHook,
+    ll::memory::HookPriority::Normal,
+    Level,
+    &Level::$requestPlayerChangeDimension,
+    void,
+    Player&                  player,
+    ChangeDimensionRequest&& changeRequest
+) {
+    if (!player.isClientSide() && gf::feature::entity::heldUnfriendly(player)) gf::entity::ext::hostileDismount(player);
+    origin(player, std::move(changeRequest));
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    EntityRemovePassengersHook,
+    ll::memory::HookPriority::Normal,
+    Actor,
+    &Actor::removeAllPassengers,
+    void,
+    bool actorIsBeingDestroyed,
+    bool exitFromPassenger
+) {
+    EngineRemoval guard;
+    origin(actorIsBeingDestroyed, exitFromPassenger);
+}
+
 namespace gf::feature::entity {
 
 void installMounts() {
+    EntityActorRemoveHook::hook();
+    EntityPlayerRemoveHook::hook();
+    EntityPlayerDisconnectHook::hook();
+    EntityPlayerDimensionHook::hook();
+    EntityPlayerDimensionRequestHook::hook();
+    EntityRemovePassengersHook::hook();
+    EntityRiderDismountHook::hook();
     EntityRiderTeleportHook::hook();
     EntityActorRiderTeleportHook::hook();
     EntityRiderTryTeleportHook::hook();
@@ -292,7 +468,7 @@ void installMounts() {
     onLevelTick(tickThrows);
     gf::combat::onIncoming(gf::combat::priority::High, [](gf::combat::DamageInfo& d) {
         // lets not make the player take suffocation damage if riding something
-        if (d.victim.isPlayer() && ridingUnfriendly(d.victim) && d.type == "minecraft:in_wall") return gf::combat::Verdict::Cancel;
+        if (d.victim.isPlayer() && heldUnfriendly(d.victim) && d.type == "minecraft:in_wall") return gf::combat::Verdict::Cancel;
         if (d.type == "minecraft:fall" && d.victim.isPlayer()) {
             auto it = S().throws.find(uidOf(d.victim));
             if (it != S().throws.end() && it->second.thrown) {
@@ -303,10 +479,20 @@ void installMounts() {
         }
         return gf::combat::Verdict::Pass;
     });
-    game::db::onWorldClosed([] { S().throws.clear(); });
+    game::db::onWorldClosed([] {
+        S().throws.clear();
+        S().puttingBack.clear();
+    });
 }
 
 void uninstallMounts() {
+    EntityRiderDismountHook::unhook();
+    EntityRemovePassengersHook::unhook();
+    EntityPlayerDimensionRequestHook::unhook();
+    EntityPlayerDimensionHook::unhook();
+    EntityPlayerDisconnectHook::unhook();
+    EntityPlayerRemoveHook::unhook();
+    EntityActorRemoveHook::unhook();
     EntityMountTeleportHook::unhook();
     EntityRiderTryTeleportHook::unhook();
     EntityActorRiderTeleportHook::unhook();
@@ -326,7 +512,7 @@ bool grab(Mob& mob, Player& player) {
     auto& s        = fe::stateOf(mob);
     s.hostileMount = true;
     if (player.getVehicle() == &mob) {
-        s.grabbed = fe::uidOf(player);
+        if (s.grabbed != fe::uidOf(player)) fe::setGrabbed(s, fe::uidOf(player));
         return true;
     }
     // pluck them from the boat, minecart, donkey, or whatever
@@ -336,8 +522,7 @@ bool grab(Mob& mob, Player& player) {
         fe::S().allowDismount = false;
     }
     if (!player.startRiding(mob, true) || player.getVehicle() != &mob) return false;
-    s.grabbed      = fe::uidOf(player);
-    s.remountTries = 0;
+    fe::setGrabbed(s, fe::uidOf(player));
     fe::setRidingUnfriendly(player, fe::uidOf(mob), true);
     log().info("entity: {} grabbed {}", mob.getTypeName(), player.getRealName());
     return true;
@@ -371,12 +556,13 @@ namespace ext {
 bool isRidingUnfriendly(Actor const& actor) { return fe::ridingUnfriendly(actor); }
 
 void hostileDismount(Actor& rider) {
-    auto* vehicle = rider.getVehicle();
+    Actor* vehicle = rider.getVehicle();
+    if (!vehicle) vehicle = fe::puttingBackOn(rider); // held, but off the seat for a put-back retry
     fe::S().allowDismount = true;
-    rider.stopRiding(true, false, false, false);
+    if (rider.getVehicle()) rider.stopRiding(true, false, false, false);
     fe::S().allowDismount = false;
     if (!vehicle) return;
-    if (auto* s = fe::findState(fe::uidOf(*vehicle)); s && s->grabbed == fe::uidOf(rider)) s->grabbed = 0;
+    if (auto* s = fe::findState(fe::uidOf(*vehicle)); s && s->grabbed == fe::uidOf(rider)) fe::setGrabbed(*s, 0);
     if (rider.isPlayer()) fe::setRidingUnfriendly(static_cast<Player&>(rider), fe::uidOf(*vehicle), false);
 }
 

@@ -690,7 +690,24 @@ GF_REGISTER_SELFTEST("entity.mount_type", [](Context& ctx) -> ll::coro::CoroTask
         held    = s && s->grabbed == spId;
     }
     ctx.require(held, "the pig holds the player that got on by itself");
-    if ((p = playerById(spId))) p->stopRiding(true, false, false, false);
+    // preventMountDismount: the dismount itself is cancelled (Actor::stopRiding), no tick needed
+    p     = playerById(spId);
+    mount = mobById(mid);
+    ctx.require(p && mount, "player and pig still present");
+    auto counters = mountCountersForTest();
+    p->stopRiding(true, false, false, false);
+    ctx.check(mountCountersForTest().cancelledDismounts == counters.cancelledDismounts + 1, "the dismount was cancelled");
+    ctx.check(p->getVehicle() == mount, "it can't get off either");
+    // a dismount that bypasses stopRiding: the pig puts the player back on its next ticks, and the
+    // player counts as held (no teleport) until it is back
+    leaveSeatForTest(*p);
+    ctx.check(p->getVehicle() == nullptr, "the player is off the seat");
+    ctx.check(heldUnfriendly(*p), "a player off the seat while held still counts as held");
+    int  blocked = blockedTeleportsForTest();
+    auto before  = p->getFeetPos();
+    p->teleportTo(Vec3{before.x + 40.0f, before.y, before.z}, true, 1 /* projectile */, 0, false);
+    ctx.check(blockedTeleportsForTest() == blocked + 1 && dist(p->getFeetPos(), before) < 4.0, "a player off the seat while held can't teleport");
+    counters  = mountCountersForTest();
     bool back = false;
     for (auto end = currentTick() + 20; !back && currentTick() < end;) {
         co_await ctx.ticks(1);
@@ -699,7 +716,9 @@ GF_REGISTER_SELFTEST("entity.mount_type", [](Context& ctx) -> ll::coro::CoroTask
         ctx.require(p && mount, "player and pig still present");
         back = p->getVehicle() == mount;
     }
-    ctx.check(back, "it can't get off either");
+    auto after = mountCountersForTest();
+    ctx.info("put-back: " + std::to_string(after.putBackAttempts - counters.putBackAttempts) + " attempts, " + std::to_string(after.failedPutBacks - counters.failedPutBacks) + " failed");
+    ctx.check(back, "a rider off the seat is put back");
     ge::ext::hostileDismount(*p);
     co_await ctx.ticks(2);
     if ((p = playerById(spId))) ctx.check(p->getVehicle() == nullptr, "hostileDismount lets it go");
