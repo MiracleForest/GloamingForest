@@ -74,6 +74,7 @@
 #include "core/Keys.h"
 #include "feature/common/BlockData.h"
 #include "feature/ext/item/Item.h"
+#include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/structure/TemplateDefinitions.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/loot/Loot.h"
@@ -253,15 +254,11 @@ std::optional<landmark::Start> startAt(Where const& w, std::string const& key, C
     return start;
 }
 
-/// The saved pieces of a start ({"pieces": [Piece#save]} in the start's data), or its boxes.
-std::vector<Json> piecesOf(landmark::Start const& start) {
-    std::vector<Json> out;
-    if (start.data.is_object() && start.data.contains("pieces") && start.data["pieces"].is_array())
-        for (auto const& p : start.data["pieces"]) out.push_back(p);
-    if (out.empty())
-        for (auto const& b : start.pieceBoxes) out.push_back(Json{{"BB", boxToJson(b)}});
-    return out;
-}
+/// StructureStart#getPieces of a start: F6's stored pieces with their type ids, boxes, saved tags
+/// (StructurePiece#createTag plus the piece's own fields, "Template" for template pieces) and
+/// protection flags (landmark ext). A start the store does not hold gives its boxes with an empty
+/// type and no protection.
+std::vector<landmark::ext::StartPiece> piecesOf(landmark::Start const& start) { return landmark::ext::startPieces(start); }
 
 void displayPieces(CommandOrigin const& origin, CommandOutput& output, std::string const& key) {
     auto w = where(origin, output);
@@ -272,10 +269,10 @@ void displayPieces(CommandOrigin const& origin, CommandOutput& output, std::stri
     addOutline(w->dim, start->box, "minecraft:redstone_ore_dust_particle");
     auto pieces = piecesOf(*start);
     for (auto const& p : pieces) {
-        BlockBox box = boxFromJson(p.value("BB", Json::array()));
-        std::string id = p.value("id", std::string{});
-        bool protectedPiece = !id.empty() && start->generated; // ProgressionPiece#isComponentProtected defaults to true
-        addOutline(w->dim, box, protectedPiece ? "minecraft:villager_happy" : "minecraft:water_wake_particle");
+        BlockBox const&    box = p.box;
+        std::string const& id  = p.type;
+        // lime glass for a ProgressionPiece whose isComponentProtected is true, light blue otherwise
+        addOutline(w->dim, box, p.protectedPiece ? "minecraft:villager_happy" : "minecraft:water_wake_particle");
         w->player->sendMessage((id.empty() ? tr("commands.tffeature.display_pieces.missing_key", "missing key") : id) + " " + boxToJson(box).dump());
         successes++;
     }
@@ -456,7 +453,7 @@ std::map<std::string, int> countLootIn(BlockSource& source, landmark::Start cons
     // CountLootCommand: the block entities of the start box's loaded chunks, once each, that lie
     // inside any piece box, each container unpacked first
     std::vector<BlockBox> boxes;
-    for (auto const& p : piecesOf(start)) boxes.push_back(boxFromJson(p.value("BB", Json::array())));
+    for (auto const& p : piecesOf(start)) boxes.push_back(p.box);
     auto inside = [&](BlockPos const& pos) {
         return std::any_of(boxes.begin(), boxes.end(), [&](BlockBox const& b) { return b.contains(pos.x, pos.y, pos.z); });
     };
@@ -517,8 +514,9 @@ void countTemplate(CommandOrigin const& origin, CommandOutput& output, std::stri
     auto start = startAt(*w, key, output);
     if (!start) return;
     std::map<std::string, int> counts;
+    // TemplateStructurePiece#makeTemplateLocation: the "Template" a template piece saves
     for (auto const& p : piecesOf(*start))
-        if (p.contains("Template")) counts[p["Template"].get<std::string>()]++;
+        if (p.tag.is_object() && p.tag.contains("Template") && p.tag["Template"].is_string()) counts[p.tag["Template"].get<std::string>()]++;
     std::vector<std::pair<std::string, int>> sorted(counts.begin(), counts.end());
     std::stable_sort(sorted.begin(), sorted.end(), [](auto const& a, auto const& b) { return a.second < b.second; });
     for (auto const& [t, n] : sorted) w->player->sendMessage(t + "    " + std::to_string(n));
