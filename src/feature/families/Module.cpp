@@ -26,7 +26,7 @@ void clearQueues();
 void clearDoors();
 void chestsTick(int tick);
 void clearChests();
-void trimHopperViews();
+void hoppersTick();
 void clearHopperViews();
 void signsTick(int tick);
 void clearSigns();
@@ -68,7 +68,7 @@ public:
             detail::runQueues();
             detail::tickBlockEvents();
             detail::chestsTick(mTicks);
-            detail::trimHopperViews();
+            detail::hoppersTick();
             detail::signsTick(mTicks);
         });
         static bool registered = false;

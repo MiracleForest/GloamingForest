@@ -13,7 +13,10 @@
 // (format 1.26.50, spike S7), so each half has a data-driven block actor holding a game container,
 // saved with its chunk; Hoppers.cpp shows that container to hoppers, hopper minecarts and droppers.
 // A chest whose stacks are still in block data (placed while the chests had no block actor) moves
-// them into its container in its chunk's first tick (migrateChest).
+// them into its container (migrateChest) in its chunk's first tick, and before that whenever a
+// hopper looks at it (Hoppers.cpp) or a player opens it (the use handler below runs before F10's),
+// so it never shows an empty container while its stacks wait in block data where a player or a
+// hopper can reach it.
 // This file keeps what the chest block itself does:
 // - facing and type on placement (ChestBlock#getStateForPlacement) and when a neighbour changes
 //   (ChestBlock#updateShape): the pairs F10's screens follow;
@@ -188,24 +191,22 @@ void settleChunk(BlockSource& region, LevelChunk& chunk) {
     }
 }
 
-/// The block data key of F10's BlockData container backend: {"items": [stack | null, ...], "loot":
-/// {table, seed}} (src/feature/inventory/Inventory.cpp).
-constexpr char kInventoryKey[] = "inventory";
-
 } // namespace
 
-int migrateChest(BlockSource& region, BlockPos const& pos) {
+int migrateChest(BlockSource& region, BlockPos const& pos, bool makeActor) {
     Block const* b = blockAt(region, pos);
     if (!b || !isChest(entryOf(*b))) return 0;
+    // F10's BlockData layout (kInventoryDataKey, Families.h: src/feature/inventory/Inventory.cpp's
+    // kDataKey / storageOf / writeSlot are the source of truth)
     Json data;
-    if (auto const* inv = blockdata::get(region, pos, kInventoryKey); inv && inv->is_object() && inv->contains("items")) data = *inv;
+    if (auto const* inv = blockdata::get(region, pos, kInventoryDataKey); inv && inv->is_object() && inv->contains("items")) data = *inv;
     else return 0;
     std::vector<ItemStack> stacks;
     if (auto const& items = data["items"]; items.is_array())
         for (auto const& j : items) stacks.push_back(j.is_null() ? ItemStack{} : game::items::fromJson(j));
     bool any = std::any_of(stacks.begin(), stacks.end(), [](ItemStack const& s) { return !game::items::isEmpty(s); });
     auto* c   = any ? inventory::nativeContainer(region, pos) : nullptr;
-    if (any && !c && !region.getBlockEntity(pos) && b->getBlockType().getBlockEntityType() != BlockActorType::Undefined) {
+    if (any && !c && makeActor && !region.getBlockEntity(pos) && b->getBlockType().getBlockEntityType() != BlockActorType::Undefined) {
         // the chunk was saved without the chest's block actor (the chests had none then; a state
         // change of the block does not make one): the game's factory makes the one its type
         // declares (with the inventory contract's container) and the chunk takes it
@@ -219,6 +220,20 @@ int migrateChest(BlockSource& region, BlockPos const& pos) {
         if (c) log().info("families: the chest at {} {} {} got its block actor", pos.x, pos.y, pos.z);
     }
     if (any && !c) return 0; // no block actor to move them to: F10 keeps reading them from block data
+    if (any && !makeActor) {
+        // the lazy move (a hopper's look, maybe inside the game's block actor ticks): only when every
+        // stack finds an empty slot; one that would drop waits for the end of the tick
+        int want = static_cast<int>(std::count_if(stacks.begin(), stacks.end(), [](ItemStack const& s) { return !game::items::isEmpty(s); }));
+        int room = 0;
+        for (int i = 0; i < c->getContainerSize(); ++i)
+            if (game::items::isEmpty(c->getItem(i))) ++room;
+        if (want > room) {
+            defer([gp = game::globalPos(region, pos)] {
+                if (auto* r = regionOf(gp.dim)) migrateChest(*r, game::blockPos(gp));
+            });
+            return 0;
+        }
+    }
     int                    moved = 0, dropped = 0;
     std::vector<ItemStack> rest;
     for (std::size_t i = 0; any && i < stacks.size(); ++i) {
@@ -247,9 +262,14 @@ int migrateChest(BlockSource& region, BlockPos const& pos) {
     }
     // the block data keeps what is not a slot (a pending loot table)
     data.erase("items");
-    blockdata::set(region, pos, kInventoryKey, data.empty() ? Json(nullptr) : data);
+    blockdata::set(region, pos, kInventoryDataKey, data.empty() ? Json(nullptr) : data);
     if (moved || dropped) log().info("families: moved {} stack(s) of the chest at {} {} {} from block data into its block actor ({} dropped: no room)", moved, pos.x, pos.y, pos.z, dropped);
     return moved;
+}
+
+std::optional<BlockPos> chestPairingNeighbour(Block const& block, BlockPos const& pos) {
+    if (!isChest(entryOf(block)) || typeOf(block) == "single") return std::nullopt;
+    return offset(pos, connectedDirection(block));
 }
 
 std::optional<BlockPos> chestPartner(BlockSource& region, BlockPos const& pos) {
@@ -304,6 +324,20 @@ void installChests() {
     for (auto family : {Family::Chest, Family::TrappedChest}) {
         for (auto const* e : entriesOf(family)) {
             inventory::onViewersChanged(e->id, viewersChanged);
+            // before the inventory contract's own use handler (it opens the screen): the halves'
+            // stacks still in block data move into their block actors first, and the half used is
+            // noted (the context of the screen it opens: Hoppers.cpp refreshes that screen)
+            ia::onUseOn(
+                {.block = e->id},
+                [](ia::UseOnContext const& c) {
+                    if (!c.firstEvent) return ia::Result::Pass;
+                    if (auto* region = regionOf(c.pos.dim))
+                        for (auto const& p : inventory::partsOf(c.pos)) migrateChest(*region, game::blockPos(p));
+                    chestUsedBy(c.player, c.pos);
+                    return ia::Result::Pass;
+                },
+                ia::priority::High
+            );
             blockevents::onNeighborChanged(e->id, [](BlockSource& region, BlockPos const& pos, BlockPos const& from) {
                 for (int d : kHorizontal) {
                     BlockPos n = offset(pos, d);

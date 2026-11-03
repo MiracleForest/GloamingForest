@@ -346,17 +346,36 @@ void pairChest(BlockSource& region, BlockPos const& pos, int facing, bool sneaki
 [[nodiscard]] std::optional<BlockPos> chestPartner(BlockSource& region, BlockPos const& pos);
 /// The lid step (gloamingforest:lid) drawn for a ChestLidController openness in tenths (0..10).
 [[nodiscard]] int chestLidStep(int openness);
+/// The neighbour whose block decides whether the chest half `block` at `pos` pairs (Java
+/// ChestBlock.getConnectedDirection; nullopt: a single chest, or not a chest).
+[[nodiscard]] std::optional<BlockPos> chestPairingNeighbour(Block const& block, BlockPos const& pos);
 /// What hoppers, hopper minecarts and droppers see at `pos` (Java HopperBlockEntity#getContainerAt
-/// of a container block, Hoppers.cpp): the inventory contract's native container of the block (the
-/// data-driven block actor of minecraft:block_entity), for a paired half of a declared double
-/// chest both halves as one 54-slot CompoundContainer (the right half first; ChestBlock#getContainer
-/// ignoring the blocked rule); a pending loot table is rolled first (RandomizableContainer). nullptr:
-/// no native container there (or the client's level). Valid for the current tick only.
+/// of a container block, Hoppers.cpp): the inventory contract's native container of a block hoppers
+/// may reach (feature/ext/families/Hoppers.h: by default the chest-like declarations), for a paired
+/// half of a declared double chest both halves as one 54-slot CompoundContainer (the right half
+/// first; ChestBlock#getContainer ignoring the blocked rule), as a view that notes what hoppers
+/// change (an open client mod chest screen is refreshed after the tick). A half whose stacks are
+/// still in block data moves them first (migrateChest without a new block actor) and a pending loot
+/// table is rolled (RandomizableContainer). nullptr: no native container there, a block hoppers do
+/// not reach, or the client's level. Valid for the current tick only.
 [[nodiscard]] Container* hopperContainerAt(BlockSource& region, BlockPos const& pos);
+/// A player used (right-clicked) the chest half at `pos`: the position the inventory contract opens
+/// that player's chest screen for (the screen's context), which Hoppers.cpp names when it refreshes
+/// the screen of a double chest.
+void chestUsedBy(Player& player, GlobalPos const& pos);
+
+/// The block data key of the inventory contract's BlockData container backend (F10):
+/// {"items": [stack JSON | null, ...], "loot": {"table", "seed"}}. The source of truth is
+/// src/feature/inventory/Inventory.cpp (kDataKey; storageOf / writeSlot write it, pendingLoot reads
+/// "loot"); families.chest_persist_a_write writes a chest's stacks through F10's own handler, so a
+/// change of that layout fails the migration test instead of hiding stacks.
+inline constexpr char kInventoryDataKey[] = "inventory";
 /// A chest whose stacks are still kept in block data (placed while the chests had no block actor,
-/// F10's BlockData backend): its stacks move into its native container (a chunk saved without the
-/// chest's block actor gets one first). Runs for every chest in a chunk's first tick after it
-/// loaded. Returns the stacks moved (0: nothing to move, or no native container to move them to).
-int migrateChest(BlockSource& region, BlockPos const& pos);
+/// F10's BlockData backend): its stacks move into its native container; with `makeActor` a chunk
+/// saved without the chest's block actor gets one first (never while the game may be iterating the
+/// chunk's block actors, as during a hopper's tick). Runs for every chest in a chunk's first tick
+/// after it loaded, and lazily before a hopper looks at the chest or a player opens it. Returns the
+/// stacks moved (0: nothing to move, or no native container to move them to).
+int migrateChest(BlockSource& region, BlockPos const& pos, bool makeActor = true);
 
 } // namespace gf::feature::families
