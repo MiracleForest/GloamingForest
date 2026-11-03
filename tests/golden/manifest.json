@@ -128,6 +128,12 @@
       "fnv1a64": "3ecbc2988c1c3ff2",
       "sha256": "c5c47dfbe9cf8328170dcb10680cca3d75c145df5bd0005b523368c1d8479336"
     },
+    "structure_steps.json": {
+      "kind": "structure_steps",
+      "bytes": 4886,
+      "fnv1a64": "506b683032ccabe0",
+      "sha256": "fea5696c3050757bd608163cbe78e2f3f62e26040610c1ea9de37907d75caae0"
+    },
     "surface/seed-0.json": {
       "kind": "surface",
       "seed": 0,
