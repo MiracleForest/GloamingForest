@@ -2099,12 +2099,23 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             end
             if shape and behaviour[shape] then behaviour[shape](doc, e, ctx) end
             for _, m in ipairs(sorted_keys(g.modifiers)) do modifiers[m](doc, e, t, ctx) end
-            -- the tags last: a behaviour may have moved the document to another format (chests)
+            -- the tags last: a behaviour may have moved the document to another format (chests). A
+            -- tag the entry's own components carry (either form) joins them, so the components
+            -- copied below never put a tag form back that this document's format refuses
             local tags = block_tags(e, (skel and skel.doc) or (base and base.doc) or nil)
+            local extra = type(g.params.components) == "table" and g.params.components or nil
+            if extra then
+                local seen = {}
+                for _, t in ipairs(tags) do seen[t] = true end
+                tags_in(extra, tags, seen)
+            end
             write_tags(doc, tags)
             result.tags[id] = tags
-            if g.params.components then
-                for k, v in pairs(g.params.components) do comps(doc)[k] = v end
+            if extra then
+                for k, v in pairs(extra) do
+                    local tag_form = type(k) == "string" and (k:match("^tag:") or k == "minecraft:tags")
+                    if not tag_form then comps(doc)[k] = v end
+                end
             end
             if block_of(doc).permutations and #block_of(doc).permutations == 0 then block_of(doc).permutations = nil end
             local file = skel and skel.file or path.join(bpdir, "blocks", "gf_families", safe_name(id) .. ".json")
