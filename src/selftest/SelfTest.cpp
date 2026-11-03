@@ -35,6 +35,7 @@
 #include "feature/dimension/World.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "mod/Commands.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
@@ -126,7 +127,13 @@ CommandResult runServerCommand(std::string const& command, int dim, CommandPermi
     auto level = ll::service::getLevel();
     if (!level) return {false, 0, "no level"};
     ServerCommandOrigin origin("gloamingforest-selftest", level->asServer(), permission, DimensionType(dim));
-    auto          out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
+    // the caller gets the reply in the result: no "Command error:" log line (mod/Commands.h); the
+    // framework's own clean-up removes ticking areas that may not exist on every run
+    struct Quiet {
+        Quiet() { ++commands::detail::quietCommandErrors; }
+        ~Quiet() { --commands::detail::quietCommandErrors; }
+    } quiet;
+    auto out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
     CommandResult r{out.mSuccessCount > 0, static_cast<int>(out.mSuccessCount), {}};
     for (auto const& m : out.mMessages) {
         if (!r.messages.empty()) r.messages += "; ";

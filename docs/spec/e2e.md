@@ -32,7 +32,9 @@ A run passes when it exits 0: the scenario finished, every `Invoke-SelfTest` pri
 [Error lines](#error-lines)) and, on the client, the game's content log has no error. **Exit code 2 is NOT
 RUN**: no throttle slot or game lock in time, a game that stopped answering (client watchdog) or a client that
 was not in its test world: retry later, never count it as a pass. Exit code 1 is a failure: the console lists
-the reasons; `tools/e2e/<server|client>/out/<scenario>/` holds the logs, `selftest.json` and the screenshots.
+the reasons; `tools/e2e/server/out/<scenario>/` and `tools/e2e/client/out/<scenario>[-<mode>][-slot<N>]/`
+(remote modes add the mode, clone instances the slot, so no run deletes another mode's or slot's output) hold the
+logs, `selftest.json` and the screenshots.
 
 ### Error lines
 
@@ -86,8 +88,10 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   of retrying until its own deadline. A game that is still running without `GloamingForest enabled` after 180 s
   (`$env:GF_E2E_ENABLE_TIMEOUT_SEC`) is hung in "Enabling mods" when it used under 0.5 s of CPU in the next
   10 s, and gets 120 s more when it is busy; a game whose BeDD pipe never answers while it loads is hung too.
-  Each prints `[e2e] WATCHDOG: ...`, writes a minidump of the game (`out/<scenario>/hang-<pid>.dmp`: every
-  thread's stack, the module list, a few MB; open it in WinDbg or Visual Studio) and kills it, prints the mod's
+  Each prints `[e2e] WATCHDOG: ...`, writes a minidump of the game (`out/hangs/<scenario>-<mode>-<instance>-<time>-<pid>.dmp`:
+  every thread's stack, the module list, a few MB; open it in WinDbg or Visual Studio; the run's client log and
+  install trace are saved next to it as `-client.log` and `-install-trace.txt`; no run clears `out/hangs`, so the
+  retry a NOT RUN asks for keeps them; files older than 30 days go) and kills it, prints the mod's
   install trace (below) and makes the run NOT RUN, with two exceptions that fail it (exit 1): failures recorded
   before the hang (ERR lines, failing selftests, content-log errors of a session that closed), and repeated
   hangs of the same scenario and mode on the same build: two runs in a row that hung on two different

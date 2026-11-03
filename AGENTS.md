@@ -195,7 +195,7 @@ Registrations live in `.cpp` files linked directly into the DLL, so they are nev
   `captureBossEvent()` (records BossEventPackets), `snapshotVolume(box)` (golden volume hash),
   `check / require / fail / info`. `gf::selftest::runServerCommand(command, dim = 0, permission =
   CommandPermissionLevel::Owner)` runs a command as the server in a dimension at a permission level
-  and returns `{ok, successCount, messages}` (`if (r)`; `r.messages` for the report): use it
+  and returns `{ok, successCount, messages}` (`if (r)`; `r.messages` for the report; its errors are not logged): use it
   instead of a copy of your own. `/twilightforest selftest` and the server scenario `full` run every
   unit's tests together: keep yours passing there. Rows are 5 blocks apart in z: keep `testPos(dx, dz)`
   within dz 0..4 and leave no blocks behind outside it (a larger `flatArea` reaches into the next

@@ -71,7 +71,8 @@ struct CommandResult {
 /// Runs `command` (no leading '/') as the server, with an origin in dimension `dim` (ticking areas,
 /// `~` coordinates and `@` selectors resolve there) at `permission` (`Owner` by default; a lower
 /// level tests what a non-operator may run). Server thread only. The selftest framework's own
-/// commands (ticking areas) use it; units' selftests call it instead of keeping a copy.
+/// commands (ticking areas) use it; units' selftests call it instead of keeping a copy. Its error
+/// replies are not logged as "Command error:" (they are in the result; the console never echoes them).
 ///     auto r = gf::selftest::runServerCommand("tickingarea list", ctx.dimension());
 ///     ctx.check(r.ok, "ticking areas listed: " + r.messages);
 CommandResult runServerCommand(

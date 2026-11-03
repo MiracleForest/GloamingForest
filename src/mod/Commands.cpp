@@ -57,7 +57,11 @@ bool isAdmin(CommandOrigin const& origin) { return origin.getPermissionsLevel() 
 
 // Command error replies go only to the sender's chat. Log them too, so e2e scenarios and server
 // admins can see why a player's command failed. A repeated error (a repeating command block, a
-// ticking function) is logged once per 10 s, never per tick.
+// ticking function) is logged once per 10 s, never per tick. Commands the mod runs itself through
+// selftest::runServerCommand (detail::quietCommandErrors) are not logged: the caller gets the reply.
+namespace detail {
+thread_local int quietCommandErrors = 0;
+}
 namespace {
 bool shouldLogCommandError(std::string const& line) {
     static std::mutex                                                             mutex;
@@ -82,7 +86,7 @@ LL_TYPE_INSTANCE_HOOK(
     std::vector<CommandOutputParameter> const& params,
     CommandOutputMessageType                   type
 ) {
-    if (type == CommandOutputMessageType::Error) {
+    if (type == CommandOutputMessageType::Error && detail::quietCommandErrors <= 0) {
         std::string args;
         for (auto const& p : params) {
             args += args.empty() ? " [" : ", ";

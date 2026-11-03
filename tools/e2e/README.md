@@ -9,7 +9,7 @@ Two harnesses, one per LeviLamina platform. Both run the real game binaries:
 | Mod taken from | `bin/server/GloamingForest` | `bin/client/GloamingForest` |
 | Driven by | console stdin/stdout | **headless input** through the [BeDD](https://docs.levimc.org/BeDD/) mod's pipe (the game stays in the background, your mouse and keyboard are untouched; `-Foreground` = real `SendInput`) and window screenshots |
 | Parallel runs | the throttle's **bds** pool: 5 slots | the throttle's **client** pool: 2 runs, each on a free game instance |
-| Output | `server/out/<scenario>/` `server.log`, `selftest.json` | `client/out/<scenario>/` `*.png`, `client.log`, `selftest.json` |
+| Output | `server/out/<scenario>/` `server.log`, `selftest.json` | `client/out/<scenario>[-<mode>][-slot<N>]/` `*.png`, `client.log`, `selftest.json` |
 
 Prefer the **server** harness for logic: it is fast, headless and parallel, and selftests spawn
 SimulatedPlayers there. Use the **client** for UI, rendering and anything that needs a real player.
@@ -101,7 +101,8 @@ dot-sources the scenario; **always** cleans up (game closed, content log checked
 removed, other mods restored, `content_log_file` put back, locks released). Every BeDD pipe call and
 window capture runs under a watchdog: a game that does not answer within 120 s (plus the call's own
 waits; `$env:GF_E2E_PIPE_TIMEOUT_SEC`) is killed and the run is NOT RUN (`[e2e] WATCHDOG: ...`), with a
-minidump of the game in `out/<scenario>/hang-<pid>.dmp` and the mod's install trace printed.
+minidump of the game in `out/hangs/<scenario>-<mode>-<instance>-<time>-<pid>.dmp` (its client log and
+install trace next to it; no run clears `out/hangs`) and the mod's install trace printed.
 
 A run **fails** when the scenario throws; a selftest fails, never prints `DONE` or matches no test;
 any `ERR`/`FTL` line appears in the log, of any logger (`GloamingForest`, `LeviLamina`,

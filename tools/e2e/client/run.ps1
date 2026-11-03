@@ -40,10 +40,11 @@
   NOT RUN (exit 2, a "WATCHDOG:" line). It fails (exit 1) instead when ERR lines, failing selftests
   or content-log errors came before the hang, or when the same scenario and mode hung on the same
   build in the runs before (two in a row on different instances, three on one). A hung game gets a
-  minidump (out/<scenario>/hang-<pid>.dmp) and the mod's install trace is printed.
+  minidump in out/hangs/ (<scenario>-<mode>-<instance>-<time>-<pid>.dmp, with -client.log and
+  -install-trace.txt next to it; no run clears that folder) and the mod's install trace is printed.
   $env:GF_E2E_TEST_HANG=enable|pipe freezes the game on purpose to test this.
-  Output: tools/e2e/client/out/<scenario>/ (screenshots, client.log, client-content-log.txt,
-  selftest.json). Look at the screenshots.
+  Output: tools/e2e/client/out/<scenario>[-<mode>][-slot<N>]/ (screenshots, client.log,
+  client-content-log.txt, selftest.json; local runs: no mode suffix). Look at the screenshots.
 
   Modes (-Mode):
     local           (default) the GF-Test local world: the integrated server runs the mod too.
@@ -114,11 +115,16 @@ $scenarioFile = Join-Path $PSScriptRoot "scenarios/$Scenario.ps1"
 if (-not (Test-Path $scenarioFile)) { throw "Unknown scenario: $scenarioFile" }
 if (-not $ModDir) { $ModDir = Join-Path $script:RepoRoot "bin/client/$script:ModName" }
 $script:Unit = $Scenario
-# The output folder is fixed once the game lock (and so the instance slot) is ours: slot 1 keeps
-# out/<scenario>, slots 2.. use out/<scenario>-slot<N> so parallel runs of one scenario don't collide.
+# The output folder is fixed once the game lock (and so the instance slot) is ours:
+# out/<scenario>[-<mode>][-slot<N>]: local runs keep out/<scenario>, remote modes add the mode, slots
+# 2.. add the slot, so a run of another mode or slot never deletes this one's screenshots and logs.
+# Hang minidumps and their install trace go to out/hangs/ instead, which no run clears (a hung run
+# is NOT RUN, and its retry would otherwise delete the dump before anyone opened it).
 $outDir = Join-Path $script:OutRoot $Scenario
+$script:HangDir = Join-Path $script:OutRoot 'hangs'
 function Set-RunOutDir {
-    $script:Unit = if ($script:InstanceSlot -gt 1) { "$Scenario-slot$($script:InstanceSlot)" } else { $Scenario }
+    $name = if ($Mode -ne 'local') { "$Scenario-$Mode" } else { $Scenario }
+    $script:Unit = if ($script:InstanceSlot -gt 1) { "$name-slot$($script:InstanceSlot)" } else { $name }
     $dir = Join-Path $script:OutRoot $script:Unit
     if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }
     New-Item -ItemType Directory -Force $dir | Out-Null
@@ -217,7 +223,9 @@ try {
         $left = if ($LockTimeoutMinutes -gt 0) { [Math]::Max(1, [int][Math]::Ceiling(($lockDeadline - (Get-Date)).TotalMinutes)) } else { 0 }
         Enter-E2ELock -TimeoutMinutes $left -Slots $slots
         $outDir = Set-RunOutDir
-        [GfE2E.Watchdog]::DumpDir = $outDir   # a hung game's minidump (lib.ps1 WriteDump)
+        # a hung game's minidump (lib.ps1 WriteDump): out/hangs/<scenario>-<mode>-<instance>-<time>-<pid>.dmp
+        [GfE2E.Watchdog]::DumpDir = $script:HangDir
+        [GfE2E.Watchdog]::DumpPrefix = "$Scenario-$Mode-$($script:VersionName)-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
         if (-not $remote) { break }
         try { $hostInfo = Start-RemoteHost } catch { Exit-E2ELock; throw }
         if ($hostInfo) { break }
@@ -395,6 +403,20 @@ if ($notRun) {
         $trace = @(Get-ModEnableTrace)
         if ($trace.Count -gt 0) { Write-Host "[e2e] the mod's install trace before the hang:" -ForegroundColor Yellow; $trace | Select-Object -Last 12 | ForEach-Object { Write-Host "  | $_" } }
         elseif ($script:GamesStarted -gt 0) { Write-Host "[e2e] the mod logged no install trace: the hang came before its enable() (see client.log)" -ForegroundColor Yellow }
+    }
+    # Next to each minidump (out/hangs, never cleared by a run): the run's log and the install trace,
+    # so the retry this NOT RUN asks for does not lose them.
+    if ($hung) {
+        # (hangs older than 30 days go: a few MB each)
+        Get-ChildItem $script:HangDir -File -ErrorAction SilentlyContinue | Where-Object LastWriteTime -lt (Get-Date).AddDays(-30) | Remove-Item -Force -ErrorAction SilentlyContinue
+        foreach ($dump in @([GfE2E.Watchdog]::Dumps)) {
+            $base = [IO.Path]::ChangeExtension($dump, $null).TrimEnd('.')
+            try {
+                Get-LeviLog | Set-Content -Path "$base-client.log" -Encoding UTF8
+                @(Get-ModEnableTrace) | Set-Content -Path "$base-install-trace.txt" -Encoding UTF8
+                Write-Host "[e2e] hang kept: $dump (+ $(Split-Path -Leaf "$base-client.log"), $(Split-Path -Leaf "$base-install-trace.txt"))" -ForegroundColor Yellow
+            } catch { Write-Host "[e2e] could not save the log next to $dump`: $_" -ForegroundColor Red }
+        }
     }
     # only for a hang: a wrong world's own ERR lines (another world's mod state) are not this scenario's
     if ($hung -and $hardFailures.Count -gt 0) {

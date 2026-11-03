@@ -220,7 +220,7 @@ public static class Watchdog {
         }
     }
     public static void Reset() {
-        lock (Gate) { guards.Clear(); Schedule(); }
+        lock (Gate) { guards.Clear(); Dumps.Clear(); Schedule(); }
         Fired = null;
     }
     // The timer for the earliest deadline of the guarded calls (Gate held).
@@ -258,9 +258,13 @@ public static class Watchdog {
     public static void Suspend(int pid) {
         using (var p = Process.GetProcessById(pid)) { NtSuspendProcess(p.Handle); }
     }
-    /// Where the watchdog writes a minidump of the hung game before it kills it (the run's output
-    /// folder; null: no dump).
+    /// Where the watchdog writes a minidump of the hung game before it kills it (out/hangs, which
+    /// no run clears; null: no dump), and the file name's prefix (scenario, mode, instance, time):
+    /// <DumpDir>/<DumpPrefix>-<pid>.dmp.
     public static string DumpDir;
+    public static string DumpPrefix = "hang";
+    /// The dumps written so far in this run (run.ps1 saves the install trace next to them).
+    public static readonly List<string> Dumps = new List<string>();
     [System.Runtime.InteropServices.DllImport("dbghelp.dll", SetLastError = true)]
     static extern bool MiniDumpWriteDump(IntPtr process, uint pid, Microsoft.Win32.SafeHandles.SafeFileHandle file,
         uint type, IntPtr exception, IntPtr userStream, IntPtr callback);
@@ -269,11 +273,14 @@ public static class Watchdog {
     const uint DumpType = 0x20 | 0x100 | 0x1000;
     static string WriteDump(Process p) {
         if (DumpDir == null) return null;
-        string path = System.IO.Path.Combine(DumpDir, "hang-" + p.Id + ".dmp");
+        string path = System.IO.Path.Combine(DumpDir, DumpPrefix + "-" + p.Id + ".dmp");
         try {
             System.IO.Directory.CreateDirectory(DumpDir);
             using (var fs = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.ReadWrite, System.IO.FileShare.None)) {
-                if (MiniDumpWriteDump(p.Handle, (uint)p.Id, fs.SafeFileHandle, DumpType, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)) return path;
+                if (MiniDumpWriteDump(p.Handle, (uint)p.Id, fs.SafeFileHandle, DumpType, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero)) {
+                    lock (Gate) { Dumps.Add(path); }
+                    return path;
+                }
             }
             int err = System.Runtime.InteropServices.Marshal.GetLastWin32Error();
             try { System.IO.File.Delete(path); } catch (Exception) { }
@@ -1273,7 +1280,8 @@ function Wait-ModEnabled([int]$TimeoutSeconds, [int]$Since = 0) {
 # Test switch: $env:GF_E2E_TEST_HANG = 'enable' (freeze the game before "GloamingForest enabled" is
 # awaited) or 'pipe' (freeze it right before the scenario, so its first pipe call or capture hangs).
 # The game is suspended (every thread stops: a real hang), so the watchdog's NOT RUN paths can be
-# run on purpose (docs/spec/e2e.md, Hangs). Such runs never count toward Test-RepeatedHang.
+# run on purpose (docs/spec/e2e.md, Hangs). Update-HangRecord leaves out only a run that reached
+# the freeze point ($script:TestHang); a real hang before it counts like any other.
 function Invoke-TestHang([string]$Stage) {
     if ($env:GF_E2E_TEST_HANG -ne $Stage) { return }
     $script:TestHang = $true
