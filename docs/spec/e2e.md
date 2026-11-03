@@ -67,7 +67,7 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   `<instance>\Minecraft Bedrock\logs` once the game closed (the game writes them as it closes): every entry of
   level `error` fails the run, `warning` entries are listed in the summary (`content-log warning: ...`) and
   fail only in a strict run (`-StrictContentLog`, or a scenario sets `$script:ContentLogStrict = $true`).
-  `out/<scenario>/client-content-log.txt` lists every distinct entry with its count, then the first 2000 entries
+  `out/<scenario>[-<mode>][-slot<N>]/client-content-log.txt` lists every distinct entry with its count, then the first 2000 entries
   as written (a broken particle can log hundreds of thousands). Entries that are not about this build's packs are
   expected (`$script:ContentLogExpected` in `tools/e2e/client/lib.ps1`: the models scenario's deliberately
   broken `gfpreview_canary` files, the game's cached diving-helmet fogs); a scenario adds the lines it causes on

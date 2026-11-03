@@ -413,8 +413,13 @@ if ($notRun) {
             $base = [IO.Path]::ChangeExtension($dump, $null).TrimEnd('.')
             try {
                 Get-LeviLog | Set-Content -Path "$base-client.log" -Encoding UTF8
-                @(Get-ModEnableTrace) | Set-Content -Path "$base-install-trace.txt" -Encoding UTF8
-                Write-Host "[e2e] hang kept: $dump (+ $(Split-Path -Leaf "$base-client.log"), $(Split-Path -Leaf "$base-install-trace.txt"))" -ForegroundColor Yellow
+                $kept = @(Split-Path -Leaf "$base-client.log")
+                # (remote-vanilla runs without the mod: no install trace to keep)
+                if ($Mode -ne 'remote-vanilla') {
+                    @(Get-ModEnableTrace) | Set-Content -Path "$base-install-trace.txt" -Encoding UTF8
+                    $kept += Split-Path -Leaf "$base-install-trace.txt"
+                }
+                Write-Host "[e2e] hang kept: $dump (+ $($kept -join ', '))" -ForegroundColor Yellow
             } catch { Write-Host "[e2e] could not save the log next to $dump`: $_" -ForegroundColor Red }
         }
     }

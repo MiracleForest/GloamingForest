@@ -110,7 +110,7 @@ any `ERR`/`FTL` line appears in the log, of any logger (`GloamingForest`, `LeviL
 ...), except BDS's six-line "TRANSPORT TYPE ERROR" banner and the console's echo of a command reply the
 mod logged as `Command error:` or `Command error text:` ([docs/spec/e2e.md](../../docs/spec/e2e.md#error-lines)); the client's
 content log has an error (warnings are listed, and fail with `-StrictContentLog` or
-`$script:ContentLogStrict = $true`; `out/<scenario>/client-content-log.txt`); a crash file appears;
+`$script:ContentLogStrict = $true`; `out/<scenario>[-<mode>][-slot<N>]/client-content-log.txt`); a crash file appears;
 the server exits non-zero or has to be killed.
 
 ## Writing a scenario
@@ -144,7 +144,7 @@ Save-Screenshot 'canopy-tree' | Out-Null      # -> client/out/trees/canopy-tree.
 | `Invoke-Chat '/cmd'`, `Invoke-Teleport '/tp ...'`, `Invoke-ChatConfirmed` | | x | Chat commands (confirmed through the client trace lines). |
 | `Open-Inventory` / `Close-Screen` | | x | `E` / `Esc` and wait. |
 | `Click x y -Relative [-Right]`, `Move-Mouse`, `Scroll n`, `Press-Key`, `Type-Text` | | x | Input (fractions of the 1600x900 client area). |
-| `Save-Screenshot 'name'` | | x | `client/out/<scenario>/name.png` (1280 wide). |
+| `Save-Screenshot 'name'` | | x | `client/out/<scenario>[-<mode>][-slot<N>]/name.png` (1280 wide). |
 | `Send-HostConsole 'cmd'` | | x | Remote modes: a console command on the BDS host. |
 | `Invoke-Guarded 'what' { ... } [-Seconds n]` | | x | Runs a block that waits on the game under the watchdog (the game is killed and the run is NOT RUN when it takes longer). BeDD pipe calls and `Save-Screenshot` are guarded already. |
 | `$script:ContentLogExpected += 'regex'`, `$script:ContentLogStrict = $true` | | x | Content-log lines the scenario causes on purpose; warnings fail too. |
