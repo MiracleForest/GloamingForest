@@ -147,10 +147,15 @@ deco / rack), the marker names above, and a footprint matching its name (e.g. `p
 ## 4. Template features (21 original templates under `assets/structures/questcamps/feature/**`)
 
 Two placement models. The druid hut, simple well, fancy well, grove ruins and stone circle extend `TemplateFeature`
-(4.1). The graveyard does **not**: `GraveyardFeature` extends `Feature<NoneFeatureConfiguration>` directly and has
-its own snapping, RNG, mirror distribution and offsets (4.2). `SwizzleConfig` features (the hut and both wells) apply
-weighted wood palette swaps (`#twilightforest:common` 8, `uncommon` 4, `rare` 3, `treasure` 1) and 50 % mossy
-cobblestone / cobblestone-stair preprocessing.
+(4.1). The graveyard does **not**: `GraveyardFeature` extends `Feature<NoneFeatureConfiguration>` directly and has its
+own snapping, RNG, mirror distribution and offsets (4.2). `SwizzleConfig` features (the hut and both wells) apply
+weighted wood palette swaps (`#twilightforest:common` 8, `#twilightforest:uncommon` 4, `#twilightforest:rare` 3,
+`#twilightforest:treasure` 1: tags of TF's `twilight:wood_palettes` registry, data
+`tags/twilight/wood_palettes/<name>.json`, like the `#twilightforest:druid_hut_swizzle_mask` /
+`#twilightforest:well_swizzle_mask` masks below) and 50 % mossy cobblestone / cobblestone-stair preprocessing. The six
+tags are F9's in owners.tsv today, spelled `tag twilight/#twilightforest:wood_palettes/<name>`; F0 and F1's joint
+`tags/twilight/` change (docs/spec/README.md, after the dangling-reference check) respells them
+`twilight/wood_palettes/#twilightforest:<name>` and moves them to F7, so refer to them by tag id, not by that row.
 
 ### 4.1 `TemplateFeature.place` (druid hut, wells, grove ruins, stone circle; translate exactly)
 
