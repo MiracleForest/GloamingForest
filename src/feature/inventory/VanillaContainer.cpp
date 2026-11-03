@@ -23,9 +23,10 @@
 //     written to the storage as they happen (a content change listener on the proxy's container);
 //   - every write through a handler from gf::inventory::find (the client mod's screen, the forms,
 //     units) and every write to the injected native container itself (game code that sets its
-//     slots) reaches the proxy at once (proxyMirror / proxyPull). Hoppers do not see custom
-//     containers (spike S3: no IVanillaMainBlockActorComponent); anything that changes the proxy's
-//     own container (the screen, a hopper reaching the minecart) goes through the listener;
+//     slots: the hoppers, hopper minecarts, droppers and crafters F11's hooks let reach it,
+//     src/feature/families/Hoppers.cpp) reaches the proxy at once (proxyMirror / proxyPull); a
+//     BlockData container is out of their reach (no game container). Anything that changes the
+//     proxy's own container (the screen, a hopper reaching the minecart) goes through the listener;
 //   - code that changes the storage behind the handler (a unit's own get / set storage written
 //     directly) is pulled in right before each item request of a viewer's screen (the client's
 //     ItemStackRequestPacket) and every tick, and a slot changed on both sides keeps the storage's

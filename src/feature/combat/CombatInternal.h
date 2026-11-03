@@ -26,16 +26,24 @@ struct DamageTypeSpec {
     std::string effects = "hurt"; ///< hurt / burning / freezing / ... / "twilightforest:pinch"
     std::string scaling = "when_caused_by_living_non_player";
     std::string deathMessageType = "default";
+    /// One of Minecraft 1.21.1's damage types (data/minecraft/damage_type, and NeoForge's
+    /// neoforge:poison): Bedrock names these deaths itself (its message for the Bedrock cause), or
+    /// with Bedrock's own key `bedrockMessageId` where the cause would name it otherwise.
+    bool        vanilla = false;
+    std::string bedrockMessageId;
 };
 
-/// The damage type `id` (TF's 40 are known without data; data files override and add).
+/// The damage type `id` (TF's 40 and Minecraft's 47 (+ neoforge:poison) are known without data;
+/// data files override and add).
 [[nodiscard]] DamageTypeSpec const* damageType(std::string const& id);
 /// Every known damage type id, sorted.
 [[nodiscard]] std::vector<std::string> damageTypeIds();
-/// Whether damage type `id` is in damage type tag `tag` ("minecraft:bypasses_armor"): TF's own
-/// tag memberships are built in, everything else is asked from gf::tags.
+/// Whether damage type `id` is in damage type tag `tag` ("minecraft:bypasses_armor"): the tag data
+/// through gf::tags (TF's memberships, the units' fragments) plus Minecraft 1.21.1's and NeoForge
+/// 21.1's own damage type tags (built in: Bedrock has no data for them), nested tags resolved.
 [[nodiscard]] bool damageTypeHasTag(std::string const& id, std::string const& tag);
-/// The Bedrock cause that carries damage type `id` (armour, resistances, enchantments).
+/// The Bedrock cause that carries damage type `id` (armour, resistances, enchantments): a vanilla
+/// type its Bedrock counterpart, any other type the cause its tags call for.
 [[nodiscard]] SharedTypes::Legacy::ActorDamageCause causeFor(std::string const& id, bool hasAttacker);
 /// The Java damage type id of a Bedrock source ("minecraft:player_attack", ...) for `victim`;
 /// the TF type while gf::combat::hurt applies it.

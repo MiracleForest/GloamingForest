@@ -145,9 +145,18 @@ struct CompanionScope {
     CompanionScope& operator=(CompanionScope const&) = delete;
 };
 
+/// Empties the native container of `pos` (TF's chests with a block actor): nothing drops when the
+/// block goes.
+void emptyNative(GlobalPos const& pos) {
+    auto* region = gf::game::regionOf(pos.dim);
+    if (!region || !region->hasChunksAt(gf::game::blockPos(pos), 0, false)) return;
+    if (auto* c = inv::nativeContainer(*region, gf::game::blockPos(pos)))
+        for (int i = 0; i < c->getContainerSize(); ++i) c->setItem(i, ItemStack{});
+}
+
 /// The containers of a test go without dropping anything when the test ends (its blocks are
-/// restored after it): open screens are closed, proxies end, the block data (slots, a pending
-/// table) is taken away.
+/// restored after it): open screens are closed, proxies end, the native containers are emptied and
+/// the block data (slots, a pending table) is taken away.
 struct ChestsScope {
     std::vector<GlobalPos> positions;
     std::int64_t           player = 0;
@@ -164,6 +173,7 @@ struct ChestsScope {
         }
         for (auto const& pos : positions) {
             if (inv::proxyOpen(pos)) inv::proxyEnd(pos);
+            emptyNative(pos);
             (void)gf::blockdata::take(pos);
         }
     }
@@ -263,8 +273,20 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
     hr->set(right, 0, *items::make("minecraft:redstone", 2));
     hl->set(left, 0, *items::make("minecraft:lapis_lazuli", 3));
     hl->set(left, 26, *items::make("minecraft:stick", 5));
-    auto const* doc = gf::blockdata::get(left);
-    ctx.check(doc && doc->contains("inventory") && items::countOf(hl->get(left, 26)) == 5, "the slots live in the half's block data (BlockData backend)");
+    // the backend TF's chests use: the native one when the half has a block actor with the
+    // contract's game container (F11's chests with minecraft:block_entity), BlockData otherwise;
+    // the slots are in exactly one of them
+    region = ctx.region();
+    auto*       native      = inv::nativeContainer(*region, gf::game::blockPos(left));
+    auto const* doc         = gf::blockdata::get(left);
+    bool        inBlockData = doc && doc->contains("inventory") && (*doc)["inventory"].is_object() && (*doc)["inventory"].contains("items");
+    if (native) {
+        ctx.check(!inBlockData && items::countOf(native->getItem(26)) == 5 && items::countOf(hl->get(left, 26)) == 5,
+                  "the slots live in the half's block actor (native backend), not in its block data");
+    } else {
+        ctx.check(inBlockData && items::countOf(hl->get(left, 26)) == 5, "the slots live in the half's block data (BlockData backend)");
+    }
+    ctx.info(native ? "TF's chests use the native backend" : "TF's chests use the BlockData backend");
 
     // a click of a client mod user on the left half: the 54-slot screen, the stat, the sound
     auto&    p = ctx.player();
@@ -780,6 +802,7 @@ GF_REGISTER_SELFTEST("combat.tf_chest_persist_verify", [](Context& ctx) -> ll::c
     }
     // the blocks that were there come back (the slots go without dropping)
     for (auto const& [pos, key] : {std::pair{left, "wasLeft"}, std::pair{right, "wasRight"}}) {
+        emptyNative(pos);
         (void)gf::blockdata::take(pos);
         auto was = marker->value(key, std::string{});
         if (auto const* original = was.empty() ? nullptr : gf::game::blockWith(was)) gf::game::setBlock(*region, gf::game::blockPos(pos), *original);
