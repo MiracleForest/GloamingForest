@@ -144,13 +144,15 @@ constexpr char kOpenFixtureKey[] = "gf_test:landmark_fixture_open";
 std::mutex                                     gProbeMutex;
 std::function<void(worldgen::RandomSource&, BlockBox const&)> gFixtureProbe;
 
+constexpr char kShellPiece[] = "gf_test:landmark_fixture_shell";
+constexpr char kPorchPiece[] = "gf_test:landmark_fixture_porch";
+
 /// A 7x7x7 stone brick shell (the protected main piece) and a 7x1x3 porch in front of it (not
-/// protected, through Generator::pieceProtected).
+/// protected, through Generator::pieceProtected). Their piece types are registered with the
+/// structure kit (structure::registerPieceType), so a persisted fixture start loads them back.
 class FixturePiece final : public structure::Piece {
 public:
-    FixturePiece(BlockBox box, bool shell) : Piece(shell ? "gf_test:landmark_fixture_shell" : "gf_test:landmark_fixture_porch"), mShell(shell) {
-        bbox = box;
-    }
+    FixturePiece(BlockBox box, bool shell) : Piece(shell ? kShellPiece : kPorchPiece), mShell(shell) { bbox = box; }
     void postProcess(worldgen::Region& region, worldgen::RandomSource& random, BlockBox const& chunkBox, BlockPos const&) override {
         {
             std::lock_guard lock(gProbeMutex);
@@ -173,6 +175,16 @@ private:
 
 BlockBox shellBox(Start const& s) { return {s.center.x - 3, s.center.y, s.center.z - 3, s.center.x + 3, s.center.y + 6, s.center.z + 3}; }
 BlockBox porchBox(Start const& s) { return {s.center.x - 3, s.center.y, s.center.z + 4, s.center.x + 3, s.center.y, s.center.z + 6}; }
+
+/// The locked fixture's Generator::spawnIndex (a landmark's own lookup, like the dark tower's
+/// floors): labelled monster list 1 on the shell's upper floor (from center.y + 4 up), list 0 on the
+/// porch, -1 (no list) elsewhere, the shell's ground floor included, where F5's
+/// worldgen.landmark_rules expects the biome's list.
+int fixtureSpawnIndex(Start const& s, BlockPos const& pos) {
+    if (shellBox(s).contains(pos.x, pos.y, pos.z)) return pos.y >= s.center.y + 4 ? 1 : -1;
+    if (porchBox(s).contains(pos.x, pos.y, pos.z)) return 0;
+    return -1;
+}
 
 } // namespace
 
@@ -198,14 +210,27 @@ bool registerFixture() {
                 "author": "twilightforest.book.author", "generation": 3, "resolved": true,
                 "pages": [{"raw": "1"}, {"raw": "2"}, {"raw": "3"}, {"raw": "4"}]}}}},
         "controlled_spawns": {"ambient_spawns": [], "water_spawns": [],
-            "labelled_monster_spawns": {"0": [{"type": "minecraft:zombie", "weight": 1, "minCount": 1, "maxCount": 1}]}},
+            "labelled_monster_spawns": {
+                "0": [{"type": "minecraft:zombie", "weight": 1, "minCount": 1, "maxCount": 1}],
+                "1": [{"type": "minecraft:skeleton", "weight": 4, "minCount": 2, "maxCount": 3},
+                      {"type": "minecraft:spider", "weight": 1, "minCount": 1, "maxCount": 2}]}},
         "step": "surface_structures"
     })"));
     fixture.traits.landmarkTag      = true;
     fixture.traits.controlledSpawns = true;
     registerInfo(std::move(fixture));
-    // the same shape, conquerable without a lock (like TF's quest grove): never protects anything
-    Info open = parseRecord(kOpenFixtureKey, Json::parse(R"({"type": "twilightforest:quest_grove", "step": "surface_structures"})"));
+    // the same shape, conquerable without a lock (like TF's quest grove): never protects anything. No
+    // ControlledSpawns structure, so its spawn overrides (Structure#spawnOverrides) answer: monsters
+    // in its pieces ("piece"), no ambient mobs anywhere in its box ("full"). The locked fixture cannot
+    // carry an observable override: a ControlledSpawns start answers every category but monsters
+    // itself, and its monster override would cover the shell's ground floor, which F5's
+    // worldgen.landmark_rules checks for the biome's list
+    Info open = parseRecord(kOpenFixtureKey, Json::parse(R"({"type": "twilightforest:quest_grove", "step": "surface_structures",
+        "spawn_overrides": {
+            "monster": {"bounding_box": "piece", "spawns": [{"type": "minecraft:witch", "weight": 3, "minCount": 1, "maxCount": 1},
+                                                             {"type": "minecraft:creeper", "weight": 7, "minCount": 2, "maxCount": 4}]},
+            "ambient": {"bounding_box": "full", "spawns": []}}
+    })"));
     open.traits.landmarkTag = true;
     registerInfo(std::move(open));
     auto layout = [](gf::landmark::LayoutContext& ctx) {
@@ -216,10 +241,18 @@ bool registerFixture() {
     setGenerator(kFixtureKey, Generator{
         .layout         = layout,
         .terraform      = {},
-        .spawnIndex     = {},
+        .spawnIndex     = fixtureSpawnIndex,
         .pieceProtected = [](Start const& s, BlockPos const& pos) { return shellBox(s).contains(pos.x, pos.y, pos.z); },
     });
     setGenerator(kOpenFixtureKey, Generator{.layout = layout});
+    // the pieces' types (StructurePieceType): a persisted fixture start loads its pieces back with
+    // them (the structure kit's fallback factories for these ids are no longer used)
+    for (bool shell : {true, false})
+        structure::registerPieceType(shell ? kShellPiece : kPorchPiece, [shell](Json const& saved) -> std::unique_ptr<structure::Piece> {
+            auto piece = std::make_unique<FixturePiece>(BlockBox{}, shell);
+            piece->load(saved);
+            return piece;
+        });
     return true;
 }
 

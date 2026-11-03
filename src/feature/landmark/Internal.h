@@ -22,7 +22,8 @@
 //                    protection packets, boxes and particles, the structure protection sync
 //   Hints.cpp        hint books per player and the hint monster
 //   Commands.cpp     /twilightforest center | info | conquer | genbook | locate | place
-//   Module.cpp       install / uninstall, world lifecycle, the server tick
+//   Module.cpp       install / uninstall, world lifecycle, the server tick, structureSpecialSpawns
+//   TestStarts.cpp   the selftests' start removal (ext/landmark/LandmarkTest.h)
 
 #include <array>
 #include <atomic>
@@ -41,7 +42,9 @@
 #include "core/landmark/Clearance.h"
 #include "core/landmark/Decoration.h"
 #include "core/landmark/Placement.h"
+#include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/landmark/Landmark.h"
+#include "feature/spawn/Spawn.h"
 #include "feature/worldgen/Worldgen.h"
 
 namespace gf::worldgen::ext {
@@ -181,6 +184,10 @@ struct PieceInfo {
     int         spawnIndex            = -1;   ///< SpawnIndexProvider#getSpawnIndex (-1: none)
     bool        utilityAllowsFeatures = false;
     std::string type;                         ///< piece type id
+    /// The piece's saved tag as read back from the world DB while the record's pieces are not in
+    /// memory (a type without a factory yet): written again unchanged, so a later factory still finds
+    /// it. Null while the pieces are live (their tag is saved from the piece itself).
+    Json        saved;
 };
 
 /// A start with its pieces.
@@ -197,6 +204,11 @@ struct Record {
     std::atomic<bool>                              reviveTried{false}; ///< reviveRecord ran (once per record)
 };
 using RecordPtr = std::shared_ptr<Record>;
+
+/// A copy of a record with every field (its live pieces shared, not copied: their saves and
+/// postProcess calls lock per piece, whichever record reaches them): Record holds an atomic and is not
+/// copyable as a whole. Kept next to Record: a field added there is added here.
+[[nodiscard]] RecordPtr cloneRecord(Record const& r);
 
 /// The record of `key` started in chunk (cx, cz) of `dim`.
 [[nodiscard]] RecordPtr findRecord(int dim, int chunkX, int chunkZ, std::string const& key);
@@ -222,7 +234,9 @@ void flushRecords();
 void loadRecords();
 /// Drops the cache (world closed).
 void clearRecords();
-[[nodiscard]] Json recordToJson(Record const& r);
+/// The record as persisted. `stale` (when given) is set when a piece was in a postProcess on another
+/// thread and its snapshot from before that postProcess was written: flushRecords writes it again later.
+[[nodiscard]] Json recordToJson(Record const& r, bool* stale = nullptr);
 [[nodiscard]] RecordPtr recordFromJson(Json const& j);
 [[nodiscard]] std::string recordDbKey(int dim, int chunkX, int chunkZ);
 
@@ -336,6 +350,18 @@ void registerWorldgenStages();
 [[nodiscard]] std::vector<BlockBox> pieceBoxesAt(Record const& r, int x, int y, int z);
 /// The controlled-spawn list index at a position (EntityEvents#getSpawnListIndexAt; -1: none).
 [[nodiscard]] int spawnIndexAt(Record const& r, int x, int y, int z);
+/// The pieces of a record with their type ids and tags (landmark::ext::startPieces).
+[[nodiscard]] std::vector<gf::landmark::ext::StartPiece> piecesOf(Record const& r);
+/// The structure type of TF's hollow hills (HollowHillStructure): their monsters spawn in the dome only.
+inline constexpr char kHollowHillType[] = "twilightforest:hollow_hill";
+
+// ---- spawns (Module.cpp) -----------------------------------------------------------------------------
+
+/// EntityEvents#structureSpecialSpawns, the function F6 registers with gf::spawn::onSpecialSpawn:
+/// the controlled list of a ControlledSpawns start reaching the position's chunk
+/// (ext::potentialSpawns), else the spawn override of a start whose piece ("piece") or box ("full")
+/// holds it, as SpawnEntries; nullopt: the biome's list.
+[[nodiscard]] std::optional<std::vector<gf::spawn::SpawnEntry>> structureSpecialSpawns(BlockSource& region, BlockPos const& pos, std::string const& category);
 
 // ---- protection (Protection.cpp) ---------------------------------------------------------------------
 
