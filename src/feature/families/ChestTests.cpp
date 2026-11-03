@@ -1,12 +1,15 @@
 // Block families (F11): selftests of the chests' native containers (testPos dx 6100..6199): TF's
 // chests keep their slots in the block actor of minecraft:block_entity (F10's native backend), so
 // hoppers, hopper minecarts and droppers fill and empty them as Java's do (Hoppers.cpp: a double
-// chest is one CompoundContainer, the right half first), comparators read the double inventory,
-// the stacks survive a server restart, and a chest whose stacks were kept in block data (no block
-// actor) moves them into its container (Chests.cpp migrateChest).
+// chest is one CompoundContainer, the right half first, the blocked rule ignored), comparators read
+// a single chest and the double inventory (0 while a half is blocked), a client mod user's open
+// chest screen shows what a hopper changed, the stacks survive a server restart, and a chest whose
+// stacks were kept in block data (no block actor) moves them into its container (Chests.cpp
+// migrateChest: in its chunk's first tick, or before a hopper or a player reaches it).
 
 #include <algorithm>
 #include <functional>
+#include <map>
 #include <random>
 #include <string>
 #include <vector>
@@ -16,11 +19,16 @@
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/entity/components_json_legacy/ContainerComponent.h"
 #include "mc/legacy/ActorUniqueID.h"
+#include "mc/server/SimulatedPlayer.h"
 #include "mc/server/commands/CommandUtils.h"
+#include "mc/server/sim/LookDuration.h"
 #include "mc/world/Container.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/item/ItemActor.h"
+#include "mc/world/gamemode/GameMode.h"
+#include "mc/world/gamemode/InteractionResult.h"
+#include "mc/world/item/HandSlot.h"
 #include "mc/world/inventory/FillingContainer.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -31,13 +39,16 @@
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/DropperBlockActor.h"
 #include "mc/world/level/block/actor/HopperBlockActor.h"
+#include "mc/world/level/block/actor/VanillaBlockActorFactory.h"
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/phys/AABB.h"
 
 #include "feature/common/BlockData.h"
 #include "feature/common/Redstone.h"
+#include "feature/ext/families/Hoppers.h"
 #include "feature/families/Families.h"
 #include "feature/inventory/InventoryInternal.h"
+#include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
@@ -133,6 +144,93 @@ ll::coro::CoroTask<bool> until(Context& ctx, int ticks, std::function<bool()> do
     co_return done();
 }
 
+/// A comparator at `comp` (its rear towards the container north of it) and the block it powers at
+/// `out`, each on a stone.
+bool placeComparator(Context& ctx, GlobalPos const& comp, GlobalPos const& out) {
+    if (!ctx.setBlock(at(comp, 0, -1, 0), "minecraft:stone") || !ctx.setBlock(at(out, 0, -1, 0), "minecraft:stone")) return false;
+    bool placed = ctx.setBlock(comp, "minecraft:unpowered_comparator", {{"minecraft:cardinal_direction", "north"}})
+               || ctx.setBlock(comp, "minecraft:unpowered_comparator", {{"direction", 2}});
+    return placed && ctx.setBlock(out, "minecraft:stone");
+}
+
+/// Puts `s` in slot `slot` of the chest at `p` the way F10's BlockData backend keeps it (through the
+/// inventory contract's own handler while the chest has no block actor), then gives the chest an
+/// empty block actor again: a chest saved before the chests had block actors, after the reload made
+/// its block actor and before its chunk's first tick.
+bool stacksInBlockData(BlockSource& region, GlobalPos const& p, int slot, ItemStack const& s) {
+    auto* chunk = region.getChunkAt(bp(p));
+    if (!chunk) return false;
+    (void)chunk->removeBlockEntity(bp(p));
+    auto h = inv::find(region, bp(p));
+    if (region.getBlockEntity(bp(p)) || !h) return false;
+    h->set(p, slot, s);
+    auto const* data = gf::blockdata::get(region, bp(p), "inventory");
+    if (!data || !data->is_object() || !data->contains("items")) return false;
+    auto actor = VanillaBlockActorFactory::createBlockActor(bp(p), region.getBlock(bp(p)).getBlockType());
+    if (!actor || actor->getType() != BlockActorType::DataDriven) return false;
+    chunk->_placeBlockEntity(actor);
+    return inv::nativeContainer(region, bp(p)) != nullptr;
+}
+
+/// The player stands south of `p` looking at it with an empty hand, then right-clicks its top as the
+/// network handler runs a click (GameMode::useItemOn, a first event).
+ll::coro::CoroTask<> clickChest(Context& ctx, GlobalPos p) {
+    {
+        auto& sp = static_cast<SimulatedPlayer&>(ctx.player());
+        sp.teleport(Vec3{p.x + .5f, static_cast<float>(p.y), p.z + 2.5f}, sp.getDimensionId());
+        sp.simulateLookAt(bp(p), sim::LookDuration::Instant);
+        sp.simulateSetItem(ItemStack::EMPTY_ITEM(), true, 0);
+    }
+    co_await ctx.ticks(8); // the look applies on the player's next tick; Bedrock drops a use-on right after another
+    auto& sp   = static_cast<SimulatedPlayer&>(ctx.player());
+    auto  b    = bp(p);
+    auto& held = const_cast<ItemStack&>(sp.getSelectedItem());
+    sp.mGameMode->useItemOn(held, b, 1, Vec3{b.x + .5f, b.y + 1.f, b.z + .5f}, HandSlot::Mainhand, nullptr, true);
+    co_await ctx.ticks(1);
+}
+
+/// The client mod's messages of the inventory contract's chest screen sent to the player since the
+/// last call: the last payload of each channel ("screen.open", "screen.update", "screen.close").
+std::map<std::string, JsonT> chestScreenMessages(Player& player) {
+    std::map<std::string, JsonT> out;
+    for (auto const& m : gf::net::takeTestMessages(player))
+        if (m.channel.rfind("screen.", 0) == 0 && m.payload.value("type", std::string{}) == "inventory.chest") out[m.channel] = m.payload;
+    return out;
+}
+
+/// The stack a chest screen message's data shows in `slot` ("empty x0" for none).
+std::string shownSlot(JsonT const& payload, std::size_t slot) {
+    auto shown = payload.value("data", JsonT::object()).value("items", JsonT::array());
+    if (slot >= shown.size() || shown[slot].is_null()) return "empty x0";
+    auto s = items::fromJson(shown[slot]);
+    return items::isEmpty(s) ? "empty x0" : items::idOf(s) + " x" + std::to_string(items::countOf(s));
+}
+
+/// The player counts as a client mod user while it lives; its chest screen is closed at the end.
+struct CompanionScope {
+    Context& ctx;
+    explicit CompanionScope(Context& c) : ctx(c) {
+        gf::net::setTestCompanion(ctx.player(), true);
+        (void)gf::net::takeTestMessages(ctx.player());
+    }
+    ~CompanionScope() {
+        gf::net::injectFromClient(ctx.player(), "screen.closed", {{"type", "inventory.chest"}});
+        (void)gf::net::takeTestMessages(ctx.player());
+        gf::net::setTestCompanion(ctx.player(), false);
+    }
+    CompanionScope(CompanionScope const&)            = delete;
+    CompanionScope& operator=(CompanionScope const&) = delete;
+};
+
+/// A block's hopper visibility set for a test, back to the default when it ends.
+struct VisibilityScope {
+    std::string id;
+    VisibilityScope(std::string blockId, bool visible) : id(std::move(blockId)) { gf::families_ext::setHopperVisible(id, visible); }
+    ~VisibilityScope() { gf::families_ext::resetHopperVisible(id); }
+    VisibilityScope(VisibilityScope const&)            = delete;
+    VisibilityScope& operator=(VisibilityScope const&) = delete;
+};
+
 } // namespace
 
 GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -141,6 +239,8 @@ GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::Cor
     // CompoundContainer of 54 slots, the RIGHT half first (a hopper on the left half fills the right
     // half's first slot, one under the left half takes from the right half); a comparator reads the
     // double inventory (ChestBlock#getAnalogOutputSignal: getRedstoneSignalFromContainer of both)
+    // and a single chest's own; while a half is blocked (a redstone conductor on it) the comparator
+    // reads 0 (getContainer(.., false) finds none) but hoppers still reach it (getContainer(.., true))
     if (!tfChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6145, 5);
     auto p   = ctx.testPos(6145, 0);
@@ -153,7 +253,22 @@ GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::Cor
     auto* own = inv::nativeContainer(region, bp(s));
     ctx.require(own != nullptr, "the TF chest keeps its slots in its block actor (minecraft:block_entity: F10's native backend)");
     ctx.check(own->getContainerSize() == 27, "27 slots (" + std::to_string(own->getContainerSize()) + ")");
-    ctx.check(fam::hopperContainerAt(region, bp(s)) == own, "a hopper sees the chest's own container");
+    if (auto* seen = fam::hopperContainerAt(region, bp(s)); seen) {
+        seen->setItem(4, stack("minecraft:flint", 1));
+        bool same = seen->getContainerSize() == 27 && items::idOf(own->getItem(4)) == "minecraft:flint";
+        seen->setItem(4, ItemStack{});
+        ctx.check(same && items::isEmpty(own->getItem(4)), "a hopper sees the chest's own 27 slots (a write reaches its block actor)");
+    } else {
+        ctx.check(false, "a hopper sees the chest's own container");
+    }
+    ctx.check(gf::families_ext::hopperVisible(kChest) && gf::families_ext::hopperVisible(kTrappedChest) && !gf::families_ext::hopperVisible("minecraft:stone"),
+              "hoppers reach the chest-like declarations (TF's chests), nothing else by default (feature/ext/families/Hoppers.h)");
+    // a comparator south of the chest (its rear towards it), a block in front of it
+    auto sComp = at(s, 0, 0, 1), sOut = at(s, 0, 0, 2);
+    ctx.require(placeComparator(ctx, sComp, sOut), "a comparator behind the single chest and a block in front of it");
+    auto sOutput = [&] { return gf::redstone::signalFrom(region, bp(sComp), bp(sOut)); };
+    co_await ctx.ticks(10);
+    ctx.check(sOutput() == 0, "an empty single chest gives the comparator 0 (" + std::to_string(sOutput()) + ")");
     auto top = at(s, 0, 1, 0), side = at(s, 1, 0, 0), under = at(s, 0, -1, 0);
     ctx.require(ctx.setBlock(top, "minecraft:hopper", {{"facing_direction", 0}}), "a hopper on the chest, facing down");
     ctx.require(ctx.setBlock(side, "minecraft:hopper", {{"facing_direction", 4}}), "a hopper east of it, facing west into it");
@@ -172,6 +287,19 @@ GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::Cor
     ht = vanillaContainer(region, top);
     hs = vanillaContainer(region, side);
     ctx.check(countIn(ht, "minecraft:dirt") == 0 && countIn(hs, "minecraft:cobblestone") == 0, "and are empty");
+    // the single chest's comparator: 4 items of 64 in 27 slots, then 27 full stacks (Mth.lerpDiscrete)
+    co_await ctx.ticks(10);
+    ctx.check(sOutput() == 1 && inv::comparatorSignal(s).value_or(-1) == 1, "the single chest's comparator reads 1 from the hoppers' items (" + std::to_string(sOutput()) + ")");
+    {
+        auto hsg  = inv::find(region, bp(s));
+        ctx.require(hsg.has_value(), "the single chest's handler");
+        auto kept = inv::contents(s);
+        for (int i = 0; i < 27; ++i) hsg->set(s, i, stack("minecraft:cobblestone", 64));
+        co_await ctx.ticks(10);
+        ctx.check(sOutput() == 15 && inv::comparatorSignal(s).value_or(-1) == 15, "a full single chest gives 15 (" + std::to_string(sOutput()) + ")");
+        for (int i = 0; i < 27; ++i) hsg->set(s, i, i < static_cast<int>(kept.size()) ? kept[static_cast<std::size_t>(i)] : ItemStack{});
+    }
+    for (auto const& q : {sComp, sOut}) emptyAndClear(region, q);
     // the hopper under the chest pulls its stacks out, one item per transfer
     ctx.require(ctx.setBlock(under, "minecraft:hopper", {{"facing_direction", 0}}), "a hopper under the chest");
     bool out = co_await until(ctx, 140, [&] { return emptySlots(inv::contents(s)); });
@@ -217,6 +345,23 @@ GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::Cor
     co_await ctx.ticks(10);
     auto sa = inv::comparatorSignal(a).value_or(-1), sb = inv::comparatorSignal(b).value_or(-1);
     ctx.check(sa == 1 && sb == 1 && output() == 1, "the comparator reads 1 from the hoppers' items (halves " + std::to_string(sa) + ", " + std::to_string(sb) + ", output " + std::to_string(output()) + ")");
+    // a stone on the right half blocks the chest (ChestBlock#isChestBlockedAt): the comparator reads
+    // 0 (getContainer(.., false) finds no container), the hopper beside the left half still puts its
+    // emerald in (getContainer(.., true))
+    auto block = at(b, 0, 1, 0);
+    ctx.require(ctx.setBlock(block, "minecraft:stone"), "a stone on the right half");
+    co_await ctx.ticks(10);
+    ctx.check(inv::chestBlocked(a) && output() == 0 && inv::comparatorSignal(a).value_or(-1) == 0 && inv::comparatorSignal(b).value_or(-1) == 0,
+              "a blocked double chest gives the comparator 0 (output " + std::to_string(output()) + ")");
+    ctx.require(vanillaContainer(region, westA) != nullptr, "the hopper beside the left half");
+    vanillaContainer(region, westA)->setItem(0, stack("minecraft:emerald", 1));
+    bool blockedIn = co_await until(ctx, 60, [&] { return countIn(inv::contents(b), "minecraft:emerald") == 1; });
+    ctx.check(blockedIn && countIn(vanillaContainer(region, westA), "minecraft:emerald") == 0, "the hopper still put its emerald into the blocked chest (its right half)");
+    co_await ctx.ticks(10);
+    ctx.check(output() == 0, "and the comparator still reads 0 (" + std::to_string(output()) + ")");
+    emptyAndClear(region, block);
+    co_await ctx.ticks(10);
+    ctx.check(!inv::chestBlocked(a) && output() == 1, "the stone gone, it reads 1 again from 3 items (" + std::to_string(output()) + ")");
     auto hb = inv::find(region, bp(b));
     ctx.require(hb.has_value(), "the right half's handler");
     for (int i = 0; i < 27; ++i) hb->set(b, i, stack("minecraft:cobblestone", 64));
@@ -239,7 +384,8 @@ GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::Cor
 GF_REGISTER_SELFTEST("families.chest_hoppers_more", [](Context& ctx) -> ll::coro::CoroTask<> {
     // the trapped chest takes a hopper's items too; a dropper drops into the chest in front of it
     // (DropperBlock#dispenseFrom); a hopper's first look at an unopened chest rolls its loot table
-    // (RandomizableContainer#unpackLootTable(null)); a hopper minecart under a chest empties it
+    // (RandomizableContainer#unpackLootTable(null)); a hopper minecart under a chest empties it; a
+    // block hidden from hoppers (feature/ext/families/Hoppers.h) gives them nothing
     if (!tfChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6100, 5);
     auto p   = ctx.testPos(6100, 0);
@@ -253,7 +399,15 @@ GF_REGISTER_SELFTEST("families.chest_hoppers_more", [](Context& ctx) -> ll::coro
     co_await ctx.ticks(1);
     ctx.require(inv::nativeContainer(region, bp(t)) != nullptr, "the trapped chest keeps its slots in its block actor");
     ctx.require(vanillaContainer(region, top) && vanillaContainer(region, dropper), "the hopper's and the dropper's containers");
-    vanillaContainer(region, top)->setItem(0, stack("minecraft:apple", 1));
+    {
+        // hidden from hoppers: no container, the hopper on it keeps its apple
+        VisibilityScope hidden(kTrappedChest, false);
+        ctx.check(!gf::families_ext::hopperVisible(kTrappedChest) && fam::hopperContainerAt(region, bp(t)) == nullptr, "a trapped chest hidden from hoppers gives them no container");
+        vanillaContainer(region, top)->setItem(0, stack("minecraft:apple", 1));
+        co_await ctx.ticks(24); // three of the hopper's 8-tick transfers
+        ctx.check(countIn(inv::contents(t), "minecraft:apple") == 0 && countIn(vanillaContainer(region, top), "minecraft:apple") == 1, "and the hopper on it keeps its apple");
+    }
+    ctx.check(gf::families_ext::hopperVisible(kTrappedChest) && fam::hopperContainerAt(region, bp(t)) != nullptr, "back to the default, hoppers reach it again");
     vanillaContainer(region, dropper)->setItem(0, stack("minecraft:bread", 1));
     ctx.require(ctx.setBlock(at(dropper, 1, 0, 0), "minecraft:redstone_block"), "a redstone block powers the dropper");
     bool filled = co_await until(ctx, 60, [&] {
@@ -343,7 +497,12 @@ GF_REGISTER_SELFTEST("families.chest_persist_a_write", [](Context& ctx) -> ll::c
         auto removed = chunk->removeBlockEntity(bp(old));
         ctx.require(removed != nullptr && region.getBlockEntity(bp(old)) == nullptr, "its block actor removed");
     }
-    gf::blockdata::set(region, bp(old), "inventory", JsonT{{"items", JsonT::array({nullptr, items::toJson(stack("minecraft:apple", 5))})}});
+    // written by the inventory contract itself (its BlockData backend: the layout migrateChest reads)
+    auto ho = inv::find(region, bp(old));
+    ctx.require(ho.has_value(), "the third chest's handler");
+    ho->set(old, 1, stack("minecraft:apple", 5));
+    auto const* kept = gf::blockdata::get(region, bp(old), fam::kInventoryDataKey);
+    ctx.check(kept && kept->is_object() && kept->contains("items"), "F10 kept the stack in block data under \"" + std::string(fam::kInventoryDataKey) + "\" items (the layout migrateChest reads)");
     auto shown = inv::contents(old);
     ctx.check(countIn(shown, "minecraft:apple") == 5 && slotId(shown, 1) == "minecraft:apple", "without a block actor the chest shows its block data stacks (F10's BlockData backend)");
     gf::game::db::put(kChestsMarker, {{"session", sessionId()}});
@@ -386,4 +545,110 @@ GF_REGISTER_SELFTEST("families.chest_persist_b_read", [](Context& ctx) -> ll::co
     ctx.check(countIn(shown, "minecraft:apple") == 5, "the inventory contract shows the moved stacks");
     if (reloaded) ctx.info("chests verified after the reload at " + where(q));
     for (auto const& p : {left, right, old}) emptyAndClear(region, p);
+});
+
+// ---- what a hopper changes reaches an open client mod chest screen ------------------------------------
+
+GF_REGISTER_SELFTEST("families.chest_hoppers_screen", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // Java's ChestMenu shows a hopper's change at once (AbstractContainerMenu#broadcastChanges): a
+    // client mod user's open chest screen gets fresh data after the tick a hopper filled the chest,
+    // for a single chest and for a double chest opened on its LEFT half (the screen's context; the
+    // hopper on that half fills the right half's first slot)
+    if (!tfChests(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6145, 5);
+    auto p   = ctx.testPos(6145, 0);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto&          region = *ctx.region();
+    CompanionScope companion(ctx);
+    // ---- a single chest ----
+    auto s = at(p, 1, 0, 1), top = at(s, 0, 1, 0);
+    ctx.require(ctx.setBlock(s, kChest, {{kFacingState, "north"}}), "a canopy chest");
+    co_await clickChest(ctx, s);
+    auto msgs = chestScreenMessages(ctx.player());
+    ctx.require(msgs.contains("screen.open"), "a client mod user's click opened the chest screen");
+    ctx.check(inv::openedParts(ctx.player()).size() == 1, "of the single chest");
+    ctx.require(ctx.setBlock(top, "minecraft:hopper", {{"facing_direction", 0}}), "a hopper on the chest");
+    co_await ctx.ticks(1);
+    ctx.require(vanillaContainer(region, top) != nullptr, "its container");
+    vanillaContainer(region, top)->setItem(0, stack("minecraft:gold_ingot", 2));
+    bool in = co_await until(ctx, 60, [&] { return countIn(inv::contents(s), "minecraft:gold_ingot") == 2; });
+    co_await ctx.ticks(2);
+    msgs = chestScreenMessages(ctx.player());
+    ctx.check(in, "the hopper filled the chest");
+    ctx.check(msgs.contains("screen.update") && shownSlot(msgs["screen.update"], 0) == "minecraft:gold_ingot x2",
+              "the open screen shows the hopper's 2 gold ingots in the first slot (" + (msgs.contains("screen.update") ? shownSlot(msgs["screen.update"], 0) : std::string("no update")) + ")");
+    ctx.check(!msgs.contains("screen.close") && inv::openedParts(ctx.player()).size() == 1, "and stays open");
+    gf::net::injectFromClient(ctx.player(), "screen.closed", {{"type", "inventory.chest"}});
+    for (auto const& q : {top, s}) emptyAndClear(region, q);
+    co_await ctx.ticks(2);
+    // ---- a double chest opened on its LEFT half ----
+    auto a = at(p, 1, 0, 1), b = at(p, 2, 0, 1), topA = at(a, 0, 1, 0);
+    ctx.require(ctx.setBlock(a, kChest, {{kFacingState, "north"}, {kTypeState, "left"}}), "the left half");
+    ctx.require(ctx.setBlock(b, kChest, {{kFacingState, "north"}, {kTypeState, "right"}}), "the right half east of it");
+    co_await ctx.ticks(2);
+    (void)chestScreenMessages(ctx.player());
+    co_await clickChest(ctx, a);
+    msgs = chestScreenMessages(ctx.player());
+    ctx.require(msgs.contains("screen.open"), "the click on the left half opened the double chest's screen");
+    ctx.check(inv::openedParts(ctx.player()).size() == 2, "of both halves");
+    ctx.require(ctx.setBlock(topA, "minecraft:hopper", {{"facing_direction", 0}}), "a hopper on the left half");
+    co_await ctx.ticks(1);
+    ctx.require(vanillaContainer(region, topA) != nullptr, "its container");
+    vanillaContainer(region, topA)->setItem(0, stack("minecraft:diamond", 1));
+    bool both = co_await until(ctx, 60, [&] { return countIn(inv::contents(b), "minecraft:diamond") == 1; });
+    co_await ctx.ticks(2);
+    msgs = chestScreenMessages(ctx.player());
+    ctx.check(both, "the hopper on the left half filled the right half");
+    ctx.check(msgs.contains("screen.update") && shownSlot(msgs["screen.update"], 0) == "minecraft:diamond x1" && shownSlot(msgs["screen.update"], 27) == "empty x0",
+              "the open screen shows the diamond in the right half's first slot, the first of the 54 (" + (msgs.contains("screen.update") ? shownSlot(msgs["screen.update"], 0) : std::string("no update")) + ")");
+    ctx.check(!msgs.contains("screen.close") && inv::openedParts(ctx.player()).size() == 2, "and stays open");
+    gf::net::injectFromClient(ctx.player(), "screen.closed", {{"type", "inventory.chest"}});
+    for (auto const& q : {topA, a, b}) emptyAndClear(region, q);
+    (void)box;
+});
+
+// ---- a chest whose stacks wait in block data moves them before a hopper or a player reaches it ---------
+
+GF_REGISTER_SELFTEST("families.chest_migrate_lazy", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // a chest saved before the chests had block actors gets an empty one when its chunk loads; its
+    // stacks wait in block data until the chunk's first tick moves them (families.chest_persist_b_read
+    // covers that). A hopper's look at it, or a player's click, moves them first: the hopper reaches
+    // a double chest of 54 slots with the stacks in place (not one half), the screen shows them.
+    if (!tfChests(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6100, 5);
+    auto p   = ctx.testPos(6100, 0);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto& region = *ctx.region();
+    // ---- a double chest, raised a block: the right half's stacks still in block data ----
+    auto a = at(p, 1, 1, 1), b = at(p, 2, 1, 1), underA = at(a, 0, -1, 0);
+    ctx.require(ctx.setBlock(a, kChest, {{kFacingState, "north"}, {kTypeState, "left"}}), "the left half");
+    ctx.require(ctx.setBlock(b, kChest, {{kFacingState, "north"}, {kTypeState, "right"}}), "the right half east of it");
+    co_await ctx.ticks(2);
+    ctx.require(stacksInBlockData(region, b, 0, stack("minecraft:diamond", 3)), "the right half's 3 diamonds in block data, its block actor empty");
+    auto* view = fam::hopperContainerAt(region, bp(a));
+    ctx.check(view && view->getContainerSize() == 54 && items::idOf(view->getItem(0)) == "minecraft:diamond" && items::countOf(view->getItem(0)) == 3,
+              "a hopper's look at the LEFT half moves the right half's diamonds into its block actor first: 54 slots, the diamonds in the first (" + std::string(view ? slotId({view->getItem(0)}, 0) : "no container") + ")");
+    auto* cb = inv::nativeContainer(region, bp(b));
+    ctx.check(cb && countIn(cb, "minecraft:diamond") == 3 && gf::blockdata::get(region, bp(b), fam::kInventoryDataKey) == nullptr, "they are in the right half's block actor, nothing left in block data");
+    ctx.require(ctx.setBlock(underA, "minecraft:hopper", {{"facing_direction", 0}}), "a hopper under the left half");
+    bool took = co_await until(ctx, 60, [&] { return countIn(vanillaContainer(region, underA), "minecraft:diamond") >= 1; });
+    ctx.check(took, "the hopper under the left half takes them out");
+    for (auto const& q : {underA, a, b}) emptyAndClear(region, q);
+    co_await ctx.ticks(2);
+    // ---- a single chest opened by a client mod user ----
+    auto c = at(p, 3, 0, 1);
+    ctx.require(ctx.setBlock(c, kChest, {{kFacingState, "north"}}), "a single chest");
+    co_await ctx.ticks(1);
+    ctx.require(stacksInBlockData(region, c, 4, stack("minecraft:emerald", 2)), "its 2 emeralds in block data, its block actor empty");
+    {
+        CompanionScope companion(ctx);
+        co_await clickChest(ctx, c);
+        auto msgs = chestScreenMessages(ctx.player());
+        ctx.require(msgs.contains("screen.open"), "the click opened the chest screen");
+        ctx.check(shownSlot(msgs["screen.open"], 4) == "minecraft:emerald x2", "the screen shows the emeralds in their slot (" + shownSlot(msgs["screen.open"], 4) + ")");
+        auto* cc = inv::nativeContainer(region, bp(c));
+        ctx.check(cc && countIn(cc, "minecraft:emerald") == 2 && gf::blockdata::get(region, bp(c), fam::kInventoryDataKey) == nullptr, "they moved into its block actor before the screen opened");
+    }
+    emptyAndClear(region, c);
+    (void)box;
 });
