@@ -16,16 +16,15 @@ mark adaptation notes.
 | Data | `loot_table/chests/tower_*.json`, `loot_table/entities/{lich,lich_minion,death_tome*,rising_zombie}.json`, `damage_type/{leaf_brain,lich_bolt,lich_bomb,lost_words,schooled}.json`, `worldgen/structure/lich_tower.json`, `worldgen/structure_set/lich_tower.json`, `twilight/template_definition/lich_tower/**` (165 files), tags `damage_type/breaks_lich_shields`, `entity_type/lich_deflects_phase_2`, `entity_type/lich_poppables`, `banner_pattern/pattern_item/lich` |
 
 Not owned here (string references only, R2): `twilightforest:lich_boss_spawner`, `twilightforest:lich_trophy`, the
-scepters `twilightforest:twilight_scepter` / `lifedrain_scepter` / `zombie_scepter` / `fortification_scepter`
-(U9; the Lich only holds them as display items), the attribute `twilightforest:max_shield_strength` and the
-fortification shield attachment (U9), the sounds `entity.twilightforest.fortification_shield.add` /
-`.block` / `.break` (U9; TFSounds `SHIELD_ADD` / `SHIELD_BLOCK` / `SHIELD_BREAK`, written `shield_add` /
-`shield_block` / `shield_break` below),
-`twilightforest:ominous_flame` and `twilightforest:magic_effect` particles, ominous candles and lightable blocks
-(U22), the candelabra, skull candles, sinister spawner, chiseled canopy shelf, wrought iron fence, magic painting
-(U22), mason jar / firefly jar (U6/U4), `twilightforest:bold_stone_pillar` and `twisted_stone_pillar` (U5),
-the Kobold hint mob (U17), the `tower_paintings` / `tower_boss_paintings` painting tags (U26), the processors
-(F7), `twilightforest:progress_naga` (U14).
+scepters `twilightforest:twilight_scepter` / `lifedrain_scepter` / `zombie_scepter` / `fortification_scepter` (U9; the
+Lich only holds them as display items), the attribute `twilightforest:max_shield_strength` and the fortification shield
+attachment (U9), the sounds `entity.twilightforest.fortification_shield.add` / `.block` / `.break` (U9; TFSounds
+`SHIELD_ADD` / `SHIELD_BLOCK` / `SHIELD_BREAK`) and the particles `twilightforest:shield_break` and
+`twilightforest:magic_effect` (U9), the `twilightforest:ominous_flame` particle, ominous candles and lightable blocks
+(U22), the candelabra, skull candles, sinister spawner, chiseled canopy shelf, wrought iron fence, magic painting (U22),
+mason jar / firefly jar (U6/U4), `twilightforest:bold_stone_pillar` and `twisted_stone_pillar` (U5), the Kobold hint mob
+(U17), the `tower_paintings` / `tower_boss_paintings` painting tags (U26), the processors (F7),
+`twilightforest:progress_naga` (U14).
 
 ## 1. Entity `twilightforest:lich` (Twilight Lich)
 
@@ -53,8 +52,8 @@ MOTION_BLOCKING_NO_LEAVES / `checkMonsterSpawnRules`. Name `entity.twilightfores
 | death animation | PARTICLE_BURST_COOLDOWN 23; POINT_A = 115; POINT_B = 131; POINT_C = 163; DURATION = 295 ticks (`BossSpec.deathTicks = 295`) |
 
 Constructor: shield strength and minions-to-summon are initialised from the attributes (6, 9).
-`finalizeSpawn` (not a clone): hold `twilightforest:fortification_scepter`, play `shield_add` (1.5, voice pitch),
-swing the main hand.
+`finalizeSpawn` (not a clone): hold `twilightforest:fortification_scepter`, play
+`entity.twilightforest.fortification_shield.add` (1.5, voice pitch), swing the main hand.
 
 ### 1.2 Synced data and saved data
 
@@ -178,19 +177,30 @@ nextInt(3)`, holding the twilight scepter, same teleport invisibility; its UUID 
 3. Shadow clone and not bypassing -> play `entity.twilightforest.lich_clone.hurt` (1.0, pitch * 2) and ignore.
 4. Attacker is a Lich -> ignore (unreflected bolts).
 5. Shield up (> 0) and not bypassing: damage of `#twilightforest:breaks_lich_shields` with amount > 2 removes one
-   shield (shield break particles, `shield_break` at volume `1.5 + 0.25 * (6 - new)` + 0.5 when it reaches 0, pitch
-   * 1.25, ENTITY_DAMAGE); anything else plays `shield_block` (0.75, pitch * 1.75), ENTITY_DAMAGE and records the
-   attacker as last hurt-by. No health damage either way.
+   shield, emits 16 `twilightforest:shield_break` particles (below), plays the sound
+   `entity.twilightforest.fortification_shield.break` at volume `1.5 + 0.25 * (6 - new)` (+ 0.5 more when it
+   reaches 0), pitch * 1.25, and fires ENTITY_DAMAGE; anything else plays the sound
+   `entity.twilightforest.fortification_shield.block` (0.75, pitch * 1.75), fires ENTITY_DAMAGE and, when the
+   causing entity is living, records it as last hurt-by. No health damage either way.
+   The particles are `FortificationShieldAttachment.addShieldBreakParticles(src, lich)` (server side, sent to the
+   players tracking the Lich; U21 reproduces it, R2), drawn from the Lich's random. The source position starts as
+   `src.getSourcePosition()`, becomes the direct entity's eye position when that entity is living, and then the
+   owner's eye position when the causing entity is a `TraceableEntity` with a living owner. Let
+   `base = position + (0, 0.65 * height, 0)`. With a source position: `offset` = the horizontal unit vector from
+   `base` towards it, `centre = base + 0.55 * offset`; per particle `h = rand - 0.5`, then
+   `d = (0.85 * offset.z * h, 0.85 * (rand - 0.5), -0.85 * offset.x * h)`, at `centre + d` with velocity `0.5 * d`.
+   Without one: per particle at `base + d` with `d = (rand - 0.5, 0.25 * (rand - 0.5), rand - 0.5)` (drawn in that
+   order) and velocity `0.33 * d`.
 6. Otherwise vanilla damage; on success, when `nextInt(phase == 3 ? 6 : 3) <= hitsWithoutTeleport++` and alive:
    reset the counter and `teleportToNewTarget(target, 20, null)`.
 
 `die`: the master despawns its clones (128 SMOKE each, discarded) and, if a shield was left, sets it to 0 and plays
-`shield_break` (1.2, pitch * 2). Clones drop no loot (`getDefaultLootTable` null), create no spawner and spawn no
-loot chest.
+`entity.twilightforest.fortification_shield.break` (1.2, pitch * 2). Clones drop no loot (`getDefaultLootTable` null),
+create no spawner and spawn no loot chest.
 
 `deflection(projectile)`: projectiles of `#twilightforest:lich_deflects_phase_2` owned by a player, a Lich or no
 one are deflected in phases 2-3: velocity `(lich motion + (0.5 - rand, 0.75, 0.5 - rand)) * (0.75, 1.5, 0.75)`, owner
-becomes the Lich, `shield_block` (0.5, pitch * 1.5), swing.
+becomes the Lich, sound `entity.twilightforest.fortification_shield.block` (0.5, pitch * 1.5), swing.
 
 ### 1.12 Candles (`turnNearbyCandles`, `lightNearbyCandles`)
 
@@ -363,10 +373,12 @@ egg**, zombie attributes, tag `minecraft:zombies`. Spawned by the tower yard's c
 | `twilightforest:clone_count` | 0..1024, synced | 2 | `attribute.name.lich.clone_count` |
 | `twilightforest:minion_count` | 0..1024, synced | 9 | `attribute.name.lich.minion_count` |
 
-Bedrock: no custom attributes exist; store them as actor data (`entity::data`) with these defaults. In Java only
-vanilla means change them (`/attribute`, or the `attributes` tag of `/summon`), which Bedrock does not have. TF
-registers no `/twilightforest` subcommand for them (owners.tsv has no `subcommand` row for them), so U21 adds none
-(R14).
+Bedrock: no custom attributes exist; store them as actor data (`entity::data`) with these defaults. In Java only vanilla
+means change them (`/attribute`, or the `attributes` tag of `/summon`), which Bedrock does not have. TF registers no
+`/twilightforest` subcommand for them (owners.tsv has no `subcommand` row for them), so U21 adds none (R14). Platform
+deviation (with or without the client mod, and the same for U9's `twilightforest:max_shield_strength` that the Lich
+reads): U21 records it in `docs/units/lich.md` (section "Not ported") for `docs/spec/not-ported.md` section 4, as a row
+the client mod does not restore; A7/A8 fold it in W2.
 
 ### 3.8 Damage types (data)
 

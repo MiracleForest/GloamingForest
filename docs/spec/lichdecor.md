@@ -216,10 +216,37 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
     table id. The spawner stores only the table's key, so an inline loot table (no key) stores none: like
     `clear_loot`.
   - `sinister_spawner clear_loot <pos>`: removes the loot table.
-  - `<pos>` is a loaded block position (`BlockPosArgument.getLoadedBlockPos`: `argument.pos.unloaded`,
-    `argument.pos.outofworld`). Each child returns 1 when it changed the spawner and 0 otherwise (also when `<pos>`
-    is not a sinister spawner); it sends no chat feedback. A particle change marks the block entity changed (saved
-    and re-sent to clients).
+  - `<pos>` is a loaded block position (`BlockPosArgument.getLoadedBlockPos`, checked when the child runs: a
+    position in an unloaded chunk fails with `argument.pos.unloaded` "That position is not loaded", then a y outside
+    the world with `argument.pos.outofworld` "That position is out of this world!"). Each child returns 1 when it
+    changed the spawner and 0 otherwise (also when `<pos>` is not a sinister spawner); it sends no chat feedback. A
+    particle change marks the block entity changed (saved and re-sent to clients).
+  - `set_loot` and `clear_loot` only replace the stored key (`SinisterSpawnerBlockEntity.setLootTable`, lines
+    131-135: `updated = this.lootTable != lootTable`, a reference compare of the interned `ResourceKey`, so the same
+    id again returns 0). They call neither `setChanged()` nor `sendChanges()`: TF does not flag the change for
+    saving (it reaches disk only when something else marks the chunk unsaved before the chunk is saved or unloaded)
+    and sends no block update (clients never read the loot table; only `SinisterSpawnerBlock.getDrops` rolls it, on
+    the server). U22 does not keep the unsaved-change quirk: it stores the key with `blockdata::set`, which always
+    marks the chunk's BlockData dirty (the contract has no write that skips saving, and Bedrock's chunk save points
+    are not Java's), so a loot change always survives a save and reload; it sends nothing to clients. U22 records
+    this in `docs/units/lichdecor.md` (section "Not ported") for `docs/spec/not-ported.md`.
+  - Argument errors. `<particle>` and `<loot>` are parsed before anything runs, so their errors come before the
+    `<pos>` errors, and the command fails with the error message (Java adds the `<--[HERE]` context line): it never
+    runs, so it changes nothing and fails instead of returning 0.
+    - `<particle>` (`ParticleArgument`): an id that the 1.21.1 particle registry does not have fails with
+      `particle.notFound` "Unknown particle: %s" (the id, with the default `minecraft:` namespace added); an id
+      that is not a valid resource location with `argument.id.invalid` "Invalid ID"; `{...}` options that the
+      type's codec rejects, including missing required fields (`minecraft:dust` without `color` and `scale`), with
+      `particle.invalidOptions` "Can't parse particle options: %s" (the codec message); an SNBT syntax error with
+      the parser's `argument.nbt.*` message ("Expected key", "Expected value", ...). The registry is the 109
+      `minecraft:` ids of 1.21.1's `ParticleTypes` plus TF's 29 particle ids (owners.tsv kind `particle`).
+    - `<loot>` (`ResourceOrIdArgument.parseInlineOrId`, then `LootTable.CODEC`): the text is read as SNBT, else
+      as an id. When neither reading consumes the whole argument it fails with `argument.resource_or_id.invalid`
+      "Invalid id or tag"; an invalid id fails with `argument.id.invalid` and an SNBT syntax error with
+      `argument.nbt.*`. An id that names no loot table fails with `argument.resource_or_id.failed_to_parse`
+      "Failed to parse structure: %s", where %s is `Failed to get element ResourceKey[minecraft:loot_table /
+      <id>]`; an inline value that does not decode as a loot table fails with the same key and the codec's
+      message. A valid inline table (`{}` included) has no key and acts like `clear_loot`.
   - Set membership is Java `equals` on a `HashSet`: plain particles (`SimpleParticleType`, e.g. `minecraft:smoke`,
     `twilightforest:ominous_flame`) and the record options (`minecraft:sculk_charge`, TF's
     `twilightforest:fallen_leaf`) compare by value, so a second `add_particle` returns 0 and `remove_particle` finds
@@ -228,10 +255,18 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
     `twilightforest:magic_effect`, a `ColorParticleOption`) has no `equals` in 1.21.1: each `add_particle` adds
     another entry and returns 1 (the spawner then emits it once per entry), and `remove_particle` never matches and
     returns 0. Keep that behaviour.
-- U22 registers exactly these literals with `GF_REGISTER_SUBCOMMAND` (R14) and no `spawner` alias, because TF has
-  none. Bedrock has no particle, SNBT or loot-table argument types: take `<particle>` and `<loot>` as one string
-  each (quoted when it carries Java's `{...}` options), `<pos>` as a block position (`~` relative to the source),
-  in TF's order; the particles are emitted by id with their options through `fx::particle` (R10).
+- U22 registers exactly these literals with `GF_REGISTER_SUBCOMMAND` (R14) and no `spawner` alias, because TF has none.
+  Bedrock has no particle, SNBT or loot-table argument types: take `<particle>` and `<loot>` as one string each (quoted
+  when it carries Java's `{...}` options), `<pos>` as a block position (`~` relative to the source), in TF's order; the
+  particles are emitted by id with their options through `fx::particle` (R10). U22 checks both strings itself, in Java's
+  order (the argument first, then `<pos>`), and fails the command with the errors above (their Java keys through
+  `gf::trFor` with the English texts as fallbacks: they are vanilla Java keys, not TF's). The `{...}` part is SNBT
+  (`CompoundTag::fromSnbt`, LLNDAPI in `mc/deps/nbt/CompoundTag.h`). A loot id is known when F10's table store has it
+  (`<mod>/data/<ns>/loot_table/<path>.json`, the files `gf::loot::roll` reads); the loot contract has no existence
+  query, so U22 checks that file in an extension under `src/feature/ext/lichdecor/` (R18) unless F10 adds a query to
+  `Loot.h` before W1. Java also accepts vanilla's `minecraft:` tables; GloamingForest ships no Java vanilla loot tables
+  (Mojang data; Bedrock's own tables have other ids and formats), so such an id is unknown on Bedrock: U22 records that
+  in `docs/units/lichdecor.md` (section "Not ported") as well.
 
 ### 2.6 Skull chest
 
@@ -504,6 +539,9 @@ fire; a zombie takes no damage; a netherite ingot resting in it is gone after 5 
 portal; in the Twilight Forest it does not), `lichdecor.skull_chest_lock`,
 `lichdecor.fence_finial`, `lichdecor.sinister_spawner_command` (on a sinister spawner: `/twilightforest
 sinister_spawner add_particle minecraft:smoke <pos>` returns 1, then 0; `remove_particle minecraft:smoke <pos>` 1,
-then 0; `set_loot twilightforest:blocks/ominous_spawner_drops <pos>` 1, then 0; `clear_loot <pos>` 1, then 0; every
-child returns 0 on a block that is not a sinister spawner; `/twilightforest spawner` is not registered),
-`lichdecor.recipes`.
+then 0; `set_loot twilightforest:blocks/ominous_spawner_drops <pos>` 1, then 0, and the key is in the spawner's
+BlockData; `clear_loot <pos>` 1, then 0; every child returns 0 on a block that is not a sinister spawner;
+`add_particle twilightforest:no_such_particle <pos>` fails with "Unknown particle: twilightforest:no_such_particle",
+`set_loot twilightforest:no_such_table <pos>` fails with "Failed to parse structure: Failed to get element
+ResourceKey[minecraft:loot_table / twilightforest:no_such_table]", and neither changes the spawner;
+`/twilightforest spawner` is not registered), `lichdecor.recipes`.
