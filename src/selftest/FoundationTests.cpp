@@ -64,6 +64,19 @@ GF_REGISTER_SELFTEST("core.world_db", [](Context& ctx) {
     ctx.check(!gf::core::validWorldKey("lv:common:probe") && gf::core::validWorldKey(key), "keys must be gf:<unit>:...");
 });
 
+// selftest::runServerCommand (SelfTest.h): success, output messages and the permission level.
+GF_REGISTER_SELFTEST("core.server_command", [](Context& ctx) {
+    using gf::selftest::runServerCommand;
+    auto owner = runServerCommand("time query daytime");
+    ctx.check(owner.ok && owner.successCount >= 1, "'time query daytime' succeeds as the server (" + owner.messages + ")");
+    ctx.check(!owner.messages.empty(), "the command's output messages are returned");
+    auto any = runServerCommand("time query daytime", 0, CommandPermissionLevel::Any);
+    ctx.check(!any.ok, "the same command fails at permission level Any (" + any.messages + ")");
+    // (not an unknown command: the e2e harness reads a "Syntax error" line as a rejected selftest command)
+    auto failing = runServerCommand("tickingarea remove gf_selftest_no_such_area");
+    ctx.check(!failing && failing.messages.find("tickingarea") != std::string::npos, "a failing command returns its message (" + failing.messages + ")");
+});
+
 // ---- persistence across a world reload (tools/e2e/server/scenarios/smoke.ps1) --------------------
 // core.persist_write leaves a marker in the world: a world DB record, a stone block 3 blocks below
 // testPos(5006) and a block data document on it, none of them flushed by the test, so they reach

@@ -34,6 +34,11 @@ inline constexpr char kRootCommand[] = "twilightforest";
 [[nodiscard]] bool isAdmin(CommandOrigin const& origin);
 
 namespace detail {
+/// While above 0 on the current thread, command error replies are not logged ("Command error:",
+/// Commands.cpp): `selftest::runServerCommand` sets it, since its caller gets the messages in the
+/// result and BDS never echoes them on its console.
+extern thread_local int quietCommandErrors;
+
 struct SubcommandRegistrar {
     explicit SubcommandRegistrar(SubcommandFn fn) { SubcommandRegistry::add(std::move(fn)); }
 };
