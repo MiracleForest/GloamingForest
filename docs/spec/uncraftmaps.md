@@ -169,12 +169,15 @@ TF's literals below `/twilightforest` (aliases `/tf`, `/tffeature`), both permis
     1) is skipped and the start found gets a reference (`StructureManager.addReference`); an existing start without
     a reference is found and referenced; without the flag references are neither read nor written. That reference
     count belongs to the start, so it is kept with F6's start records.
-  - **TF landmark grid** (`LandmarkGridPlacement`: TF's 15 other structure sets, `aurora_palace` to `yeti_cave`),
+  - **TF landmark grid** (`LandmarkGridPlacement`: TF's 16 other structure sets, `aurora_palace` to `yeti_cave`),
     reached only when no random-spread ring returned: `WorldUtil.findNearestMapLandmark`, whose result, when it finds
     one, replaces vanilla's (even a nearer concentric-ring one):
     - candidates: the centres of `LegacyLandmarkPlacements.landmarkCenterScanner(pos, 100)`, an `XZQuadrantIterator`
-      over **landmark grid cells of 16 chunks** (256 blocks) around chunk ((x >> 4) & ~15, (z >> 4) & ~15), 100 cells
-      out (TF passes vanilla's radius on unchanged), each cell mapped by `getNearestCenterXZ` to its landmark centre;
+      over **landmark grid cells of 16 chunks** (256 blocks) around chunk ((x >> 4) & ~15, (z >> 4) & ~15), r = 100
+      cells (TF passes vanilla's radius on unchanged), each cell mapped by `getNearestCenterXZ` to its landmark centre.
+      The iterator is not a full square: it yields the centre cell, then for dX = 0..r-1 and dZ = 1..r the offsets
+      (dZ, -dX), (-dX, -dZ), (-dZ, dX), (dX, dZ) in that order, i.e. 1 + 4r^2 cells, a pinwheel that leaves out the
+      4r edge cells (r, 1..r), (1..r, -r), (-r, -1..-r) and (-1..-r, r);
     - a centre counts for a target when the target's placement has `isStructureChunk` in the centre's chunk (the grid
       pick, `structure_grid_lock`) and the target's `biomes` contain `level.getBiome(centre)` (at y 0); TF does not
       check that a start was, or could be, generated there;
@@ -189,7 +192,12 @@ TF's literals below `/twilightforest` (aliases `/tf`, `/tffeature`), both permis
   Nothing found -> `commands.locate.structure.not_found`. U13 does not re-implement the search: F6's
   `gf::landmark::ext::locate(dimension, keyOrTag, x, z, 100, skipKnownStructures)` (`src/feature/ext/landmark/
   LandmarkExt.h`, implemented in `src/feature/landmark/Commands.cpp`) runs the random-spread rings first and the
-  landmark override after, and returns the structure key and the position found (y 0 for a landmark). Otherwise TF
+  landmark override after, and returns the structure key and the position found (y 0 for a landmark). Two of its
+  flag rules differ from TF on main at W0d (routed to F6, which owns the fix; U13's selftests check TF's rules): for
+  random-spread starts it skips every start already evaluated and never adds a reference (`structureAt`, TF: skip only
+  referenced starts, reference the one found), and at a landmark centre it also skips `placed` records, which
+  `generateAt` (`/twilightforest place`, saplings) makes without a start (TF: no start there, so the centre is kept).
+  Otherwise TF
   creates a vanilla filled map of the found x/z (`MapItem.create`, scale 4 with vanilla's centre snapping to the
   2048-block map grid, tracking position, unlimited tracking) with a `red_x` target decoration (`"+"`), adds a copy
   to each target player's inventory (`Inventory.add`: lost when it is full) and prints vanilla

@@ -225,12 +225,14 @@ corners; full-bright glow render type while the viewer holds red thread or has r
   `render`); vanilla clients get a form-based view of the stored items and no zoom.
 - Perfect dodge / arrow magnetism: `combat::onIncoming` + projectile hit handlers (`projectile` contract hooks for
   vanilla arrows).
-- `/twilightforest travellers_gear` messages: render the modifier name once on the server, as TF does, with
-  `trFor(source player, "travellers_gear.modifier.twilightforest.<id>", English name)`, expand each
-  `${tfkeybinds/<key name>}` the way `TooltipStringInterpolator` does, and send that same text to the source and in
-  the operator broadcast (the stack name is the item's own name). The client build in a local world (TF's
-  integrated server) puts in the host's current binding of that key (`client::keys`, "Not Bound" when unbound). The
-  server build (BDS) has no player key bindings and must not fail as TF's dedicated server does: it puts in TF's
+- `/twilightforest travellers_gear` messages: render the modifier name once on the server, as TF does, in the
+  server's language (`tr("travellers_gear.modifier.twilightforest.<id>", English name)`; not the source player's
+  language: TF's integrated server uses the host's language for every source, its dedicated server en_us), expand
+  each `${tfkeybinds/<key name>}` the way `TooltipStringInterpolator` does, and send that same text to the source and
+  in the operator broadcast (the stack name is the item's own name). The client build in a local world (TF's
+  integrated server) uses the host's language and puts in the host's current binding of that key (`client::keys`,
+  "Not Bound" when unbound). The server build (BDS) has no player key bindings and must not fail as TF's dedicated
+  server does: it puts in TF's
   default binding (`C` for `item_display_map_cycle`, `V` for `swap_hotbar`, "Not Bound" for `red_thread_vision`), a
   deviation from a TF failure that U11 records in `docs/units/tgear.md` for A8's deviation list.
 - Stealth: hidden Invisibility effect works on vanilla clients.

@@ -150,7 +150,7 @@ applies to a player in that biome until they have **all** listed advancements.
   default). TF's `/gamerule tfEnforcedProgression <value>` is `/twilightforest gamerule tfEnforcedProgression
   <true|false>` on Bedrock (F10's `gamerule` subcommand: Bedrock's `/gamerule` cannot hold custom rules). TF's
   `twilightforest:dev_new_world` function sets it with `/gamerule tfEnforcedProgression false`; F5's Bedrock port of
-  that function cannot, so it ends with `scriptevent twilightforest:dev_new_world`, whose handler sets the rule
+  that function cannot, so it ends with `scriptevent twilightforest:dev_new_world teleport`, whose handler sets the rule
   through `gf::gamerules::set` (`src/feature/worldgen/Functions.cpp`). F10 already sends every rule value to
   companions over `gamerules.sync` on join and on each change (TF's `EnforceProgressionStatusPacket`), and
   `progression::client::enforced()` reads that copy; U14 sends `progression.enforce_status` only if it needs more
