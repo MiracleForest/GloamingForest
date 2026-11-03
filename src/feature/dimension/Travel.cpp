@@ -386,6 +386,33 @@ bool canUsePortal(Actor& actor) {
 
 namespace {
 
+std::int64_t    gDecisionWatch = 0;
+PortalDecisions gDecisions;
+
+/// canUsePortal as the portal itself asks it (entityInside, handlePortal), counted for a watched actor.
+bool portalDecision(Actor& actor) {
+    bool may = canUsePortal(actor);
+    if (gDecisionWatch != 0 && idOf(actor) == gDecisionWatch) {
+        bool ridden = actor.hasPassenger();
+        ++gDecisions.asked;
+        if (!may) ++gDecisions.refused;
+        if (ridden) ++gDecisions.askedRidden;
+        if (ridden && !may) ++gDecisions.refusedRidden;
+    }
+    return may;
+}
+
+} // namespace
+
+void watchPortalDecisions(std::int64_t id) {
+    gDecisionWatch = id;
+    gDecisions     = {};
+}
+
+PortalDecisions portalDecisions() { return gDecisions; }
+
+namespace {
+
 /// Entity#setAsInsidePortal.
 void setAsInsidePortal(State& st, BlockPos const& pos, int cooldownDelay) {
     if (st.portalCooldown > 0) {
@@ -931,7 +958,7 @@ void handlePortal(Actor& actor, State& st, int transitionTime) {
         st.portalTime = std::max(st.portalTime - 4, 0); // decayTick
     } else {
         st.insideThisTick = false;
-        teleport          = canUsePortal(actor) && st.portalTime++ >= transitionTime;
+        teleport          = portalDecision(actor) && st.portalTime++ >= transitionTime;
     }
     if (teleport) {
         // the process stays (portalTime transition + 1) and decays from the arrival on: a player
@@ -1028,8 +1055,9 @@ void tickEntities() {
             for (auto* actor : region->getEntities(box, 0.0f)) {
                 if (!actor) continue;
                 wet.emplace_back(idOf(*actor), dim);
-                if (actor->isPlayer() || !canUsePortal(*actor)) continue;
-                if (auto pos = touchedPortal(*actor, *region)) inside.emplace_back(idOf(*actor), *pos);
+                if (actor->isPlayer()) continue;
+                auto pos = touchedPortal(*actor, *region);
+                if (pos && portalDecision(*actor)) inside.emplace_back(idOf(*actor), *pos);
             }
         }
     }

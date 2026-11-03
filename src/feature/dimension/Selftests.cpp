@@ -1046,60 +1046,50 @@ GF_REGISTER_SELFTEST("dimension.area_loader", [](Context& ctx) -> ll::coro::Coro
     ctx.check(heldAreas() == held, "released with its handle");
 });
 
-// A hold released while its area is still loading (teleport_riders: the ground of a column) and a
-// larger area over the same chunks asked for in the same tick (the trip's destination): the larger
-// one loads all the same. Fresh, far columns; a column counts when some chunk next to it was still
-// on its way when its hold was released (the hold ends as soon as the column itself is loaded). By
-// turns: released at once as before (information: the engine strands chunks that were on their
-// way, and then a fresh area is tried once more), released the way the loader does it (it
-// finishes its loading first), and kept until the second loaded.
+// An area released halfway through its loading (teleport_riders: the ground of a column) and a
+// larger area over the same chunks asked for in the same tick (the trip's destination). The race
+// is forced: each fresh, far column is asked for without waiting (requestArea) and released two
+// ticks later, long before its loading is over. The loader keeps a released area until its own
+// loading is over (removed at once, it would strand the chunks it was bringing in: W0d, docs/spikes
+// S1.md), so every destination loads and no wait meets stranded chunks.
 GF_REGISTER_SELFTEST("dimension.area_handover", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto tf = world::twilight();
     ctx.require(tf.has_value(), "the Twilight Forest exists");
-    int tfId = static_cast<int>(*tf);
-    struct Restore {
-        ~Restore() { setSettleOnReleaseForTest(true); }
-    } restore;
-    std::array<int, 3>    racing{}, stuck{};
-    int                   retried = 0;
-    constexpr char const* kModes[3] = {"released at once", "released when settled", "kept"};
-    int                   mode      = 0;
-    for (int i = 0; i < 24 && std::min({racing[0], racing[1], racing[2]}) < 2; ++i) {
+    int tfId     = static_cast<int>(*tf);
+    int stranded = strandedWaits();
+    int raced = 0, loadedCount = 0;
+    for (int i = 0; i < 3; ++i) {
         BlockPos column{-61000 + i * 512 + 7, 0, 47000 + 9};
-        setSettleOnReleaseForTest(mode != 0);
-        auto first = co_await loadArea(tfId, column, 0);
-        ctx.require(first != nullptr, "column " + std::to_string(i) + " loaded");
-        // were its neighbours still on their way?
-        bool on = false;
-        if (auto* region = game::regionOf(tfId))
-            for (int dx = -16; dx <= 16 && !on; dx += 16)
-                for (int dz = -16; dz <= 16 && !on; dz += 16)
-                    on = !region->hasChunksAt(BlockPos{column.x + dx, 0, column.z + dz}, 0, false);
-        std::string const when = loadReport(tfId, column, 18);
-        int const         m    = mode;
-        if (on) {
-            ++racing[m];
-            mode = (mode + 1) % 3;
+        auto     first = requestArea(tfId, column, 0);
+        ctx.require(first != nullptr, "column " + std::to_string(i) + " asked for");
+        co_await ctx.ticks(2);
+        int  inPipeline = 0, missing = 0;
+        auto states     = chunkStates(tfId, column, 0);
+        for (int s : states) {
+            if (s >= 1 && s <= 10) ++inPipeline;
+            if (s < 1) ++missing;
         }
-        if (m != 2) first.reset();
-        setSettleOnReleaseForTest(true);
+        int const settlingBefore = settlingAreas();
+        first.reset();
+        bool const settling = settlingAreas() == settlingBefore + 1;
+        if (settling) ++raced;
+        ctx.info(std::format(
+            "column {}: released after 2 ticks with {} of its {} chunks (and ring) in the pipeline, {} not there yet: {}",
+            i,
+            inPipeline,
+            states.size(),
+            missing,
+            settling ? "it finishes its loading before it goes" : "its loading was over"
+        ));
         auto second = co_await loadArea(tfId, column, 18);
-        if (!second && on) {
-            ++stuck[m];
-            ctx.info(std::format("column {} ({}): its destination did not load; at the hand-over: {}", i, kModes[m], when));
-            auto again = co_await loadArea(tfId, column, 18);
-            if (again) ++retried;
-            ctx.info(std::string("asked for once more with a fresh area: ") + (again ? "it loaded" : "it did not load either"));
-        } else if (!second) {
-            ctx.check(false, std::format("column {} ({}): its destination did not load, all its neighbours loaded at the hand-over", i, kModes[m]));
-        }
+        if (second) ++loadedCount;
+        ctx.check(second != nullptr, std::format("column {}: its destination loaded", i));
     }
-    ctx.info(std::format(
-        "hand-overs with neighbours on their way / destinations that did not load: {} {}/{}, {} {}/{}, {} {}/{}; a fresh area loaded {} of the stuck",
-        kModes[0], racing[0], stuck[0], kModes[1], racing[1], stuck[1], kModes[2], racing[2], stuck[2], retried
-    ));
-    ctx.check(stuck[1] == 0 && stuck[2] == 0, "every destination over a hold released the loader's way or kept loaded");
+    ctx.info(std::format("{} of 3 hand-overs released an area that was still loading; {} destinations loaded", raced, loadedCount));
+    ctx.check(raced >= 1, "the race was exercised (an area released while it was still loading)");
+    ctx.check(strandedWaits() == stranded, "no wait met stranded chunks");
 });
+
 
 // ---- BlockHooks: mushrooms next to a portal ------------------------------------------------------------------------------
 
@@ -2027,6 +2017,7 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
         ~Cleanup() {
             ge::ext::setCanUsePortal("gf_test:boss", true);
             ge::ext::setCanUsePortal("minecraft:boat", true);
+            watchPortalDecisions(0);
             if (auto level = ll::service::getLevel())
                 for (auto id : ids)
                     if (auto* a = level->fetchEntity(ActorUniqueID{id}, false)) a->remove();
@@ -2090,12 +2081,17 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
         return false;
     };
     struct Stay {
-        bool stayed = true, process = false, asked = true;
-        int  inside = 0, ridden = 0;
+        bool            stayed = true, process = false, asked = true;
+        int             inside = 0, ridden = 0;
+        PortalDecisions portal; ///< what the portal's own ticks decided (entityInside, handlePortal)
     };
     // 40 ticks in the portal; the rider is put back on whenever it got off
     auto stayInPortal = [&](std::int64_t vehicleId, std::int64_t riderId) -> ll::coro::CoroTask<Stay> {
         Stay out;
+        struct Unwatch {
+            ~Unwatch() { watchPortalDecisions(0); }
+        } unwatch;
+        watchPortalDecisions(vehicleId);
         if (auto* v = actor(vehicleId)) inPortal(*v);
         for (int i = 0; i < 40; ++i) {
             auto* v = actor(vehicleId);
@@ -2113,13 +2109,21 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
             ++out.ridden;
             out.asked &= !canUsePortal(*v);
         }
+        out.portal = portalDecisions();
         co_return out;
+    };
+    auto decided = [](PortalDecisions const& d) {
+        return std::format("the portal asked {} times, {} while ridden, refused {} / {} of those", d.asked, d.askedRidden, d.refused, d.refusedRidden);
     };
     auto stay = co_await stayInPortal(bossId, riderId);
     ctx.check(stay.stayed, "the ridden TF boss stays out of the portal for 2 s");
     ctx.check(!stay.process, "it never starts a portal process");
     ctx.check(stay.inside >= 30, std::format("it stood in the portal ({} of 40 ticks)", stay.inside));
     ctx.check(stay.ridden >= 1 && stay.asked, std::format("with its rider on it refused the portal ({} of 40 ticks)", stay.ridden));
+    ctx.check(
+        stay.portal.askedRidden >= 1 && stay.portal.refusedRidden == stay.portal.askedRidden && stay.portal.refused == stay.portal.asked,
+        "the portal's own ticks refused the ridden boss every time (" + decided(stay.portal) + ")"
+    );
     if (auto* b = actor(bossId)) b->remove();
     if (auto* r = actor(riderId)) r->remove();
 
@@ -2137,6 +2141,10 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
     stay = co_await stayInPortal(markedId, markedPigId);
     ctx.check(stay.stayed && !stay.process, "the marked boat stays out of the portal for 2 s, pig and all");
     ctx.check(stay.inside >= 30 && stay.ridden >= 30 && stay.asked, std::format("in the portal {} and with its pig {} of 40 ticks", stay.inside, stay.ridden));
+    ctx.check(
+        stay.portal.askedRidden >= 30 && stay.portal.refusedRidden == stay.portal.askedRidden,
+        "the portal's own ticks refused the marked boat with its pig every time (" + decided(stay.portal) + ")"
+    );
     if (auto* b = actor(markedId)) b->remove();
     if (auto* r = actor(markedPigId)) r->remove();
     ge::ext::setCanUsePortal("minecraft:boat", true);
@@ -2152,6 +2160,7 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
     ctx.check(canUsePortal(*boat), "Entity#canUsePortal(false) of the boat with its rider is true (no rule against riders)");
     if (auto* pig = actor(pigId)) ctx.check(!canUsePortal(*pig), "its rider is not asked (a passenger never uses a portal itself)");
     int const destX = pool.x * 8, destZ = pool.z * 8;
+    watchPortalDecisions(boatId);
     inPortal(*boat);
     if (auto* p = actor(pigId); p && p->getVehicle() != actor(boatId)) p->startRiding(*actor(boatId), true);
     Actor*                  boatThere = nullptr;
@@ -2170,6 +2179,12 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
             else if (e->getTypeName() == "minecraft:pig") pigThere = e;
         }
     }
+    auto boatDecisions = portalDecisions();
+    watchPortalDecisions(0);
+    ctx.check(
+        boatDecisions.askedRidden >= 1 && boatDecisions.refused == 0,
+        "the portal's own ticks let the boat with its pig go (" + decided(boatDecisions) + ")"
+    );
     if (boatThere) {
         spawned.push_back(idOf(*boatThere));
         arrival = game::blockPosOf(boatThere->getFeetPos());
