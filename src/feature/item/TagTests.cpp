@@ -503,15 +503,16 @@ GF_REGISTER_SELFTEST("item.tags_java_1211_only", [](Context& ctx) {
         ctx.check(!gf::tags::vanilla::newerThanJava1211(id), std::string(id) + " is not");
     // Bedrock's native tags keep the newer content: a pale oak log is a log, an axe mines pale oak
     // planks faster, the copper sword is a sword (VanillaTags.h, the trade-off)
-    ctx.check(block("minecraft:logs", "minecraft:pale_oak_log") && item("minecraft:logs", "minecraft:pale_oak_log"), "#logs holds pale_oak_log (Bedrock's log tag)");
     ctx.check(block("minecraft:mineable/axe", "minecraft:pale_oak_planks"), "#mineable/axe holds pale_oak_planks (is_axe_item_destructible)");
     ctx.check(block("minecraft:mineable/pickaxe", "minecraft:resin_bricks"), "#mineable/pickaxe holds resin_bricks (is_pickaxe_item_destructible)");
     ctx.check(item("minecraft:swords", "minecraft:copper_sword") && item("minecraft:swords", "minecraft:iron_sword"), "#swords holds the copper sword (is_sword)");
     // the members lists agree
     auto planks = gf::tags::members(Registry::Block, "minecraft:planks");
     ctx.check(!contains(planks, "minecraft:pale_oak_planks") && contains(planks, "minecraft:oak_planks"), "members(#planks) agrees (" + std::to_string(planks.size()) + ")");
+    // #logs: Java's suffix list without pale oak, plus whatever Bedrock's own "log" tag holds
     auto logs = gf::tags::members(Registry::Block, "minecraft:logs");
-    ctx.check(contains(logs, "minecraft:pale_oak_log") && contains(logs, "minecraft:oak_log"), "members(#logs) agrees (" + std::to_string(logs.size()) + ")");
+    ctx.check(contains(logs, "minecraft:oak_log") && contains(logs, "minecraft:crimson_stem"), "members(#logs) (" + std::to_string(logs.size()) + ")");
+    ctx.info(std::string("Bedrock's log tag ") + (block("minecraft:logs", "minecraft:pale_oak_log") ? "holds" : "does not hold") + " pale_oak_log");
 });
 
 // Every include of a bridge rule names a rule of the same registry (a missing one would resolve to

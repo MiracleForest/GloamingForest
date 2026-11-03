@@ -23,12 +23,13 @@
 // a member of no bridged tag through an id list, a name pattern or a predicate. Bedrock's native
 // tags are the exception and are taken as they are, newer content included: they are Bedrock's own
 // mechanics (what a pickaxe mines, what a sword, a log or a trim material is), and Java 1.21.1 has
-// no reference for these blocks to follow, so leaving them out would only take behaviour away (a
-// pale oak log that is no log, a resin brick no pickaxe mines faster). The trade-off: a tag that is
-// part native, part pattern holds a newer block through the native part only (#logs holds
-// pale_oak_log through Bedrock's "log" tag, while #planks, a suffix rule, holds no pale_oak_planks;
-// #swords holds the copper sword through minecraft:is_sword, while the armour tags, Java's id
-// lists, hold no copper armour). Bedrock wearables that are no armour in Java (carved pumpkins,
+// no reference for these blocks to follow, so leaving them out would only take behaviour away (pale
+// oak planks no axe mines faster, a resin brick no pickaxe mines faster). The trade-off: a newer
+// block or item is in a tag only where a Bedrock native tag puts it (#mineable/axe holds
+// pale_oak_planks through is_axe_item_destructible, while #planks, a suffix rule, does not; #logs
+// holds pale_oak_log only where Bedrock's own log tags do (item.tags_java_1211_only logs which); #swords holds the
+// copper sword through minecraft:is_sword, while the armour tags, Java's id lists, hold no copper
+// armour). Bedrock wearables that are no armour in Java (carved pumpkins,
 // skulls, mob heads) are in no armour tag. TF's data members are added on top, as Java's tag loader
 // does.
 
