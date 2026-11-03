@@ -23,8 +23,9 @@
 // generateAt (commands, saplings, selftests) and on demand by lookups (protection, clearance,
 // terraforming; /twilightforest locate only probes and stores nothing), so a site is reserved even
 // before its generator exists (rule: placement is exact before W1 lands). Generation may run on
-// worker threads: the cache is locked, the server thread never waits for a worker, and the DB is
-// written on the server thread only.
+// worker threads: the cache is locked, the server thread never waits for a worker (a piece being
+// post-processed on a worker is saved from its last snapshot, see PieceGuard), and the DB is written
+// on the server thread only.
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -216,24 +217,75 @@ BlockBox boxOf(Json const& j) {
     return {v(0), v(1), v(2), v(3), v(4), v(5)};
 }
 
-/// The lock of a live piece's fields (by its address, 64 stripes; recursive: a postProcess that
-/// places or saves its own piece again on the same thread goes on). Each postProcess call holds its
-/// piece's lock and savePiece takes it, so a piece that changes its fields in postProcess (TF's chest
-/// and spawner flags) is never saved torn, whichever record (a copy shares the pieces) it is reached
-/// through. Held for one piece at a time; a save waits for one chunk's postProcess of that piece at
-/// most.
-static std::recursive_mutex& pieceLock(structure::Piece const& p) {
-    static std::array<std::recursive_mutex, 64> locks;
-    return locks[(reinterpret_cast<std::uintptr_t>(&p) >> 4) % locks.size()];
+/// The guard of a live piece's fields, one per piece (no stripes: unrelated pieces never share it).
+/// A postProcess call holds `fields` (recursive: a postProcess that places or saves its own piece
+/// again on the same thread goes on), so two generation threads never run one piece's postProcess at
+/// once and nobody saves the piece while its fields change (TF's chest and spawner flags). A save
+/// never waits for it: savePiece only try-locks, and while a postProcess runs it takes `snapshot`,
+/// the piece's own tag as it was before that postProcess began (placeInChunk takes one before the
+/// first postProcess and after every one; a save that finds none yet writes the base fields and marks
+/// the start stale, so the next flush writes it whole). So the server thread (flushRecords, startAt, startPieces) never waits for
+/// a worker, as the file header says; a flush that got a snapshot writes the start again on the next
+/// flush. A Piece::postProcess must not wait for another thread's piece while it holds its own.
+struct PieceGuard {
+    std::recursive_mutex        fields;
+    std::mutex                  snapshotMutex; ///< held only to copy `snapshot` in or out
+    std::shared_ptr<Json const> snapshot;      ///< the piece's own save() (null: none taken yet)
+    std::weak_ptr<structure::Piece const> owner; ///< the piece (an address reused later is another piece)
+};
+
+/// The guard of `p` (made on first use; the table is locked only for the lookup).
+std::shared_ptr<PieceGuard> guardOf(std::shared_ptr<structure::Piece> const& p) {
+    static std::mutex                                                                 mutex;
+    static std::unordered_map<structure::Piece const*, std::shared_ptr<PieceGuard>> table;
+    static std::size_t                                                                pruneAt = 256;
+    std::lock_guard                                                                   lock(mutex);
+    auto& slot = table[p.get()];
+    if (!slot || slot->owner.lock() != p) { // new, or a dead piece's at a reused address
+        slot        = std::make_shared<PieceGuard>();
+        slot->owner = p;
+    }
+    auto guard = slot;
+    if (table.size() >= pruneAt) { // drop the guards of pieces that are gone
+        std::erase_if(table, [](auto const& e) { return e.second->owner.expired(); });
+        pruneAt = std::max<std::size_t>(256, table.size() * 2);
+    }
+    return guard;
 }
 
-Json savePiece(structure::Piece const& p) {
-    Json                                   j = Json::object();
-    std::scoped_lock<std::recursive_mutex> fields(pieceLock(p));
+/// The piece's own fields (Piece::save()); call with its guard's `fields` held.
+std::shared_ptr<Json const> ownTag(structure::Piece const& p) {
+    Json j = Json::object();
     try {
         auto extra = p.save();
-        if (extra.is_object()) j = extra;
+        if (extra.is_object()) j = std::move(extra);
     } catch (...) {}
+    return std::make_shared<Json const>(std::move(j));
+}
+
+void storeSnapshot(PieceGuard& g, std::shared_ptr<Json const> tag) {
+    std::lock_guard lock(g.snapshotMutex);
+    g.snapshot = std::move(tag);
+}
+
+/// StructurePiece#createTag. `stale` (when given) is set when the piece was in a postProcess on
+/// another thread and its last snapshot was used instead of its live fields.
+Json savePiece(std::shared_ptr<structure::Piece> const& piece, bool* stale = nullptr) {
+    auto const&                 p     = *piece;
+    auto                        guard = guardOf(piece);
+    std::shared_ptr<Json const> own;
+    {
+        std::unique_lock<std::recursive_mutex> fields(guard->fields, std::try_to_lock);
+        if (fields.owns_lock()) {
+            own = ownTag(p);
+            storeSnapshot(*guard, own);
+        } else {
+            std::lock_guard lock(guard->snapshotMutex);
+            own = guard->snapshot; // taken by placeInChunk before the running postProcess began
+            if (stale) *stale = true;
+        }
+    }
+    Json j = own ? *own : Json::object();
     j["id"]          = p.typeId;
     j["BB"]          = boxJson(p.bbox);
     j["O"]           = orientationData(p.orientation);
@@ -334,9 +386,24 @@ void placeInChunk(Record const& rec, worldgen::Region& region, int chunkX, int c
     BlockPos    pivot{c.x, first.minY, c.z};
     for (auto const& piece : rec.livePieces) {
         if (!piece->bbox.intersects(chunkBox)) continue;
+        auto guard = guardOf(piece);
         try {
-            std::scoped_lock<std::recursive_mutex> fields(pieceLock(*piece)); // no save meanwhile
-            piece->postProcess(region, random, chunkBox, pivot);
+            // one postProcess of a piece at a time; a save meanwhile takes the snapshot made first
+            std::scoped_lock<std::recursive_mutex> fields(guard->fields);
+            bool first;
+            {
+                std::lock_guard lock(guard->snapshotMutex);
+                first = !guard->snapshot;
+            }
+            // the fields change only in postProcess: the snapshot after the last one is still current
+            if (first) storeSnapshot(*guard, ownTag(*piece));
+            try {
+                piece->postProcess(region, random, chunkBox, pivot);
+            } catch (...) {
+                storeSnapshot(*guard, ownTag(*piece));
+                throw;
+            }
+            storeSnapshot(*guard, ownTag(*piece));
         } catch (std::exception const& e) {
             log().error("landmark: piece {} of {} failed: {}", piece->typeId, rec.start.key, e.what());
         }
@@ -629,12 +696,12 @@ void markDirty(Record const& rec) {
     r.dirty.emplace(rec.start.dimension, rec.chunkX, rec.chunkZ);
 }
 
-Json recordToJson(Record const& rec) {
+Json recordToJson(Record const& rec, bool* stale) {
     Json pieces = Json::array();
     for (std::size_t i = 0; i < rec.pieces.size(); ++i) {
         auto const& pi = rec.pieces[i];
         Json        p{{"box", boxJson(pi.box)}, {"protected", pi.protectedPiece}, {"spawn_index", pi.spawnIndex}, {"allow_features", pi.utilityAllowsFeatures}, {"type", pi.type}};
-        if (i < rec.livePieces.size() && rec.livePieces[i]) p["piece"] = savePiece(*rec.livePieces[i]);
+        if (i < rec.livePieces.size() && rec.livePieces[i]) p["piece"] = savePiece(rec.livePieces[i], stale);
         else if (pi.saved.is_object()) p["piece"] = pi.saved; // not loadable yet: kept as read
         pieces.push_back(std::move(p));
     }
@@ -714,14 +781,22 @@ void flushRecords() {
             if (auto it = r.byStartChunk.find({dim, cx, cz}); it != r.byStartChunk.end()) recs.assign(it->second.begin(), it->second.end());
         }
     }
-    // saved outside the records lock: saving a piece waits for its running postProcess (pieceLock),
-    // which may itself look records up
+    // saved outside the records lock (a piece's save() is the piece's code). A piece in a postProcess
+    // on another thread is written as its snapshot from before it (savePiece never waits): its start
+    // chunk is written again on the next flush
+    std::vector<std::tuple<int, int, int>> again;
     for (auto const& [k, recs] : stored) {
         auto const& [dim, cx, cz] = k;
         Json doc                  = Json::object();
-        for (auto const& rec : recs) doc[rec->start.key] = recordToJson(*rec);
+        bool stale                = false;
+        for (auto const& rec : recs) doc[rec->start.key] = recordToJson(*rec, &stale);
         if (doc.empty()) game::db::erase(recordDbKey(dim, cx, cz));
         else game::db::put(recordDbKey(dim, cx, cz), doc);
+        if (stale) again.push_back(k);
+    }
+    if (!again.empty()) {
+        std::unique_lock lock(r.mutex);
+        r.dirty.insert(again.begin(), again.end());
     }
 }
 
@@ -1180,10 +1255,17 @@ int spawnIndexAt(Record const& r, int x, int y, int z) {
 std::vector<gf::landmark::ext::StartPiece> piecesOf(Record const& r) {
     std::vector<gf::landmark::ext::StartPiece> out;
     out.reserve(r.pieces.size());
+    auto gen = generatorFor(r.start.key);
     for (std::size_t i = 0; i < r.pieces.size(); ++i) {
-        auto const&              pi = r.pieces[i];
-        gf::landmark::ext::StartPiece p{pi.type, pi.box, Json(), pi.protectedPiece, pi.spawnIndex};
-        if (i < r.livePieces.size() && r.livePieces[i]) p.tag = savePiece(*r.livePieces[i]);
+        auto const& pi = r.pieces[i];
+        // the flags protection and the controlled spawns use, asked at the piece's center as the
+        // structure protection sync does: Generator::pieceProtected / spawnIndex replace the piece's own
+        auto        c  = cl::boxCenter(pi.box);
+        BlockPos    at{c.x, (pi.box.minY + pi.box.maxY) / 2, c.z};
+        bool        prot  = pieceProtectedAt(r, i, at.x, at.y, at.z);
+        int         spawn = gen && gen->spawnIndex ? gen->spawnIndex(r.start, at) : pi.spawnIndex;
+        gf::landmark::ext::StartPiece p{pi.type, pi.box, Json(), prot, spawn};
+        if (i < r.livePieces.size() && r.livePieces[i]) p.tag = savePiece(r.livePieces[i]);
         else if (pi.saved.is_object()) p.tag = pi.saved;
         else p.tag = Json{{"id", pi.type}, {"BB", boxJson(pi.box)}};
         out.push_back(std::move(p));

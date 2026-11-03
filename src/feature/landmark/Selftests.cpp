@@ -198,21 +198,20 @@ bool hasChannel(std::vector<gf::core::Envelope> const& msgs, std::string const& 
 
 /// The start chunks a test evaluates with TF's structure sets placed in the test's own dimension
 /// (setStructureDimOverride, while the Twilight Forest is the dimension contract's stub). Afterwards,
-/// also on abort: the override is lifted, the chunks are released and forgotten, and every record
-/// the test added there is erased (memory and world DB).
+/// also on abort: the override is lifted, the chunks are released and forgotten, every record the
+/// test added there is erased and every record it replaced there is stored again as it was (memory
+/// and world DB): the chunks' starts are what the test found, a leftover of an aborted run included.
 struct StartsScope {
-    int                                   dim;
-    std::vector<std::pair<int, int>>      chunks;
-    std::vector<std::vector<std::string>> before; ///< the keys started in each chunk before the test
+    int                                 dim;
+    std::vector<std::pair<int, int>>    chunks;
+    std::vector<std::vector<fl::RecordPtr>> before; ///< the records started in each chunk before the test
     explicit StartsScope(int d) : dim(d) { fl::setStructureDimOverride(d); }
     StartsScope(StartsScope const&)            = delete;
     StartsScope& operator=(StartsScope const&) = delete;
     void touch(int cx, int cz) {
         if (std::any_of(chunks.begin(), chunks.end(), [&](auto const& c) { return c.first == cx && c.second == cz; })) return;
         chunks.emplace_back(cx, cz);
-        std::vector<std::string> keys;
-        for (auto const& r : fl::recordsStartedIn(dim, cx, cz)) keys.push_back(r->start.key);
-        before.push_back(std::move(keys));
+        before.push_back(fl::recordsStartedIn(dim, cx, cz));
     }
     void lift() { fl::setStructureDimOverride(std::nullopt); }
     ~StartsScope() {
@@ -220,8 +219,15 @@ struct StartsScope {
         for (std::size_t i = 0; i < chunks.size(); ++i) {
             auto [cx, cz] = chunks[i];
             fl::setEvaluationBusy(dim, cx, cz, false);
+            auto was = [&](std::string const& key) -> fl::RecordPtr {
+                for (auto const& r : before[i])
+                    if (r->start.key == key) return r;
+                return nullptr;
+            };
             for (auto const& r : fl::recordsStartedIn(dim, cx, cz))
-                if (std::find(before[i].begin(), before[i].end(), r->start.key) == before[i].end()) fl::eraseRecord(dim, cx, cz, r->start.key);
+                if (!was(r->start.key)) fl::eraseRecord(dim, cx, cz, r->start.key);
+            for (auto const& r : before[i])
+                if (fl::findRecord(dim, cx, cz, r->start.key) != r) fl::putRecord(r); // replaced (or erased) by the test
             fl::forgetEvaluation(dim, cx, cz);
         }
         fl::flushRecords();
@@ -901,15 +907,24 @@ GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTas
     // only those that were not there before the kill (nothing of a neighbouring test row)
     AABB own{Vec3{static_cast<float>(area.minX) - 3.0f, static_cast<float>(area.minY) - 4.0f, static_cast<float>(area.minZ) - 3.0f},
              Vec3{static_cast<float>(area.maxX) + 4.0f, static_cast<float>(area.minY) + 16.0f, static_cast<float>(area.maxZ) + 4.0f}};
-    std::set<std::int64_t> before;
-    for (auto* a : region->getEntities(box))
-        if (a) before.insert(a->getOrCreateUniqueID().rawID);
-    mob->kill();
     auto isHintBook = [](Actor* a) {
         if (!a || a->getTypeName() != "minecraft:item") return false;
         auto const& item = static_cast<ItemActor*>(a)->item();
         return gf::game::items::idOf(item) == "minecraft:written_book" && gf::game::items::getData(item, "translatable_book").value("name", std::string{}) == "lichtower";
     };
+    // a lich tower hint book already lying in the box (a leftover of an aborted run) is no drop of this
+    // kill, and the new book would merge into it (an identical written book stacks): removed first
+    {
+        std::vector<Actor*> stale;
+        for (auto* a : region->getEntities(box))
+            if (isHintBook(a)) stale.push_back(a);
+        for (auto* a : stale) a->remove();
+        if (!stale.empty()) ctx.info("removed " + std::to_string(stale.size()) + " hint book(s) left in the area before the kill");
+    }
+    std::set<std::int64_t> before;
+    for (auto* a : region->getEntities(box))
+        if (a) before.insert(a->getOrCreateUniqueID().rawID);
+    mob->kill();
     constexpr int kDropTicks = 200;
     int           waited     = 0;
     bool          dropped    = false;
@@ -1233,7 +1248,7 @@ GF_REGISTER_SELFTEST("landmark.scoped_start", [](Context& ctx) {
     int const   cx      = center.x >> 4, cz = center.z >> 4;
     auto const* fixture = fl::info(kFixture);
     ctx.require(fixture != nullptr, "the fixture descriptor");
-    (void)gf::landmark::ext::forgetStartForTest(center, kFixture); // a leftover of an aborted run
+    (void)gf::landmark::ext::forgetStartForTest(center, kFixture, false); // a leftover of an aborted run
     ctx.require(fl::findRecord(center.dim, cx, cz, kFixture) == nullptr, "no fixture start there yet");
     auto natural = fl::createStart(*fixture, center.dim, cx, cz, center, false);
     ctx.require(natural != nullptr, "a stand-in natural start");
@@ -1241,8 +1256,11 @@ GF_REGISTER_SELFTEST("landmark.scoped_start", [](Context& ctx) {
     fl::putRecord(natural);
     struct Drop {
         GlobalPos at;
-        ~Drop() { (void)gf::landmark::ext::forgetStartForTest(at, kFixture); }
+        ~Drop() { (void)gf::landmark::ext::forgetStartForTest(at, kFixture, false); } // the stand-in natural start
     } drop{center};
+    // the keyed by-hand form removes forced starts only: a natural start of the key stays
+    ctx.check(gf::landmark::ext::forgetStartForTest(center, kFixture) == 0 && fl::findRecord(center.dim, cx, cz, kFixture) == natural,
+              "forgetStartForTest leaves a natural start of its key alone");
     {
         gf::landmark::ext::ScopedStart forced(kFixture, center);
         ctx.require(static_cast<bool>(forced), "forced the fixture over it");
@@ -1281,7 +1299,12 @@ GF_REGISTER_SELFTEST("landmark.pieces", [](Context& ctx) {
     auto const  bb  = JsonT::array({b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ});
     ctx.check(pieces[0].tag.value("id", std::string{}) == kShell && pieces[0].tag.value("BB", JsonT()) == bb && pieces[0].tag.contains("O") && pieces[0].tag.contains("GD"),
               "the shell's tag is StructurePiece#createTag: " + pieces[0].tag.dump());
-    ctx.check(pieces[0].protectedPiece && pieces[1].protectedPiece && pieces[0].spawnIndex == -1, "the pieces' flags");
+    // the flags protection and spawns use: the fixture's Generator::pieceProtected leaves the porch
+    // unprotected, its Generator::spawnIndex gives the porch list 0 and the shell's center (its ground
+    // floor half) none
+    ctx.check(pieces[0].protectedPiece && !pieces[1].protectedPiece, "the shell is protected, the porch is not (Generator::pieceProtected)");
+    ctx.check(pieces[0].spawnIndex == -1 && pieces[1].spawnIndex == 0,
+              "spawn indexes from Generator::spawnIndex: " + std::to_string(pieces[0].spawnIndex) + ", " + std::to_string(pieces[1].spawnIndex));
     // startAt: the tags in data["pieces"]
     auto found = lm::startAt(center.dim, BlockPos{center.x, center.y + 1, center.z});
     ctx.require(found && found->key == kFixture, "startAt finds the start");

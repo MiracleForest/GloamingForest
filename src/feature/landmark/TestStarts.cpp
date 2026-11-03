@@ -10,12 +10,13 @@ namespace gf::landmark::ext {
 
 namespace fl = gf::feature::landmark;
 
-std::size_t forgetStartForTest(core::GlobalPos const& pos, std::string const& key) {
+std::size_t forgetStartForTest(core::GlobalPos const& pos, std::string const& key, bool forcedOnly) {
     int const   cx = pos.x >> 4, cz = pos.z >> 4;
     auto const  wanted = key.empty() ? std::string{} : fl::normalizeKey(key);
     std::size_t removed = 0;
     for (auto const& rec : fl::recordsStartedIn(pos.dim, cx, cz)) {
-        if (wanted.empty() ? !rec->forced : rec->start.key != wanted) continue;
+        if (!wanted.empty() && rec->start.key != wanted) continue;
+        if ((wanted.empty() || forcedOnly) && !rec->forced) continue; // a natural start stays unless asked for
         fl::eraseRecord(pos.dim, cx, cz, rec->start.key);
         ++removed;
     }
@@ -55,7 +56,7 @@ ScopedStart::~ScopedStart() {
             fl::flushRecords();
             gf::log().info("landmark: put back the start of {} that a test start replaced in chunk {} {}", mKey, mPos.x >> 4, mPos.z >> 4);
         } else if (fl::recordWorld() == mWorld) {
-            (void)forgetStartForTest(mPos, mKey);
+            (void)forgetStartForTest(mPos, mKey); // the forced one only
         } // another world now: its starts are not this scope's
     } catch (...) {}
 }

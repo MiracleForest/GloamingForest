@@ -234,7 +234,9 @@ void flushRecords();
 void loadRecords();
 /// Drops the cache (world closed).
 void clearRecords();
-[[nodiscard]] Json recordToJson(Record const& r);
+/// The record as persisted. `stale` (when given) is set when a piece was in a postProcess on another
+/// thread and its snapshot from before that postProcess was written: flushRecords writes it again later.
+[[nodiscard]] Json recordToJson(Record const& r, bool* stale = nullptr);
 [[nodiscard]] RecordPtr recordFromJson(Json const& j);
 [[nodiscard]] std::string recordDbKey(int dim, int chunkX, int chunkZ);
 

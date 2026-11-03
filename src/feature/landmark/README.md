@@ -37,7 +37,10 @@ The selftest `landmark.spawns` checks the dome on a small hollow hill start with
 `gf::landmark::ext::startPieces(start)` (`LandmarkExt.h`) returns every piece of a stored start
 (`StructureStart#getPieces`): type id, box, `StructurePiece#createTag` (`{"id", "BB", "O", "GD",
 "gf_mirror", "gf_rotation"}` plus the piece's `Piece::save()` fields such as `"Template"`),
-`protectedPiece` and `spawnIndex`. The start returned by `landmark::startAt` also carries the tags in
+`protectedPiece` and `spawnIndex`. The two flags are the ones protection and the controlled spawns
+use, asked at the piece's box center: `Generator::pieceProtected` / `Generator::spawnIndex` when the
+generator has them, else the piece's own `isComponentProtected` / `getSpawnIndex` (the fixture's
+porch: not protected, list 0). The start returned by `landmark::startAt` also carries the tags in
 `data["pieces"]` (the shape F7's `structure_util display_pieces` and `count_template` read);
 `startsIntersecting` leaves them out (it runs per feature placement). `startAt` saves every piece of
 the start on each call: use it for one-off lookups (commands, tests, an interaction), not per tick or
@@ -48,11 +51,14 @@ factory yet (a W1 unit's, before it registers) keeps the tag it was saved with: 
 unchanged and `startPieces` returns it. This is an extension and not a field of the contract's
 `Start` because `Landmark.h` is F0's file (owners.tsv) and a `Start` copy must stay cheap.
 
-Saving a piece (the world DB, `startAt`, `startPieces`) never races its `postProcess`: each
-`postProcess` call holds that piece's lock (striped by address, recursive) and a save takes it, so
-fields a piece sets in `postProcess` (TF's chest and spawner flags) are saved whole. A save waits for
-at most one chunk's `postProcess` of the piece; a `postProcess` that saves or places its own start
-again on its thread goes on. Do not hold one piece's lock while waiting for another thread.
+Saving a piece (the world DB, `startAt`, `startPieces`) never races its `postProcess` and never
+waits for it: each `postProcess` call holds that piece's own lock (one per piece, recursive), and
+`placeInChunk` snapshots the piece's `save()` before and after it. A save only try-locks: while a
+`postProcess` runs on another thread it takes the snapshot from before it, and `flushRecords` writes
+that start again on the next flush, so fields a piece sets in `postProcess` (TF's chest and spawner
+flags) are saved whole and the server thread never waits for a worldgen thread. One piece's
+`postProcess` runs on one thread at a time (its fields are not thread-safe). A `postProcess` must not
+wait for another thread's piece while it runs.
 
 ## Reserved sites
 

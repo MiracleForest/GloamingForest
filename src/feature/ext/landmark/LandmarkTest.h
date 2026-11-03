@@ -11,9 +11,15 @@
 //     ctx.require(forced && forced->generated, "forced the fixture landmark");
 //     auto start = gf::landmark::startAt(center.dim, gf::game::blockPos(center));
 //
-//     // or by hand, for a start made some other way (setConquered keeps a start's flag otherwise)
+//     // or by hand, for a start forceStart made some other way (only forced starts are removed: a
+//     // natural start of the key in that chunk, a real landmark site, stays as it is)
 //     (void)gf::landmark::forceStart("gf_test:landmark_fixture", center);
 //     gf::landmark::ext::forgetStartForTest(center, "gf_test:landmark_fixture");
+//
+// Prefer ScopedStart, above all with a real landmark key (twilightforest:dark_tower, ...): it puts
+// back the natural start a forced one replaced, conquest state included. The by-hand form is for
+// forced starts only; forcedOnly = false (also erasing a natural start) is for a test that stored a
+// stand-in natural start itself.
 //
 // Users: F5 worldgen.landmark_rules (its forced fixture and dark tower), F7 structure.count_loot,
 // F8 entity.boss_conquest (in place of Internal.h's eraseRecord + flushRecords), F6's own selftests.
@@ -43,14 +49,16 @@ namespace gf::landmark::ext {
 
 /// Removes the start of `key` stored with start chunk (pos.x >> 4, pos.z >> 4) of pos.dim (the chunk
 /// forceStart stores its start in), or, with no key, every start forceStart or generateAt stored
-/// there, from memory and the world DB. The chunk's structure sets count as not evaluated afterwards,
+/// there, from memory and the world DB. Only starts forceStart or generateAt made are removed, unless
+/// `forcedOnly` is false (then a keyed call also erases a natural start of the key there, resetting
+/// that site, its conquest included: only for a stand-in the test stored itself). The chunk's structure sets count as not evaluated afterwards,
 /// so a natural start a forced one replaced comes back on the next lookup. Returns how many starts
 /// were removed. Server thread.
 ///
 /// A natural start comes back as the start chunk's structure sets make it again: unconquered, and
 /// without anything set on it at run time. A forced start that replaced a natural one took over its
 /// conquered flag, and forgetting it by hand loses that flag; ScopedStart keeps it (below).
-std::size_t forgetStartForTest(core::GlobalPos const& pos, std::string const& key = {});
+std::size_t forgetStartForTest(core::GlobalPos const& pos, std::string const& key = {}, bool forcedOnly = true);
 
 /// landmark::forceStart for a scope. When the object is destroyed, the start it stored is removed
 /// (forgetStartForTest with its key); a start of the same key and start chunk that it replaced (a

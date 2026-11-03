@@ -145,8 +145,15 @@ struct StartPiece {
     /// StructurePiece#createTag (the persisted shape above): from the piece in memory, else the tag it
     /// was last saved with (its type has no factory yet), else {"id", "BB"}.
     nlohmann::json tag;
-    bool           protectedPiece = true; ///< ProgressionPiece#isComponentProtected
-    int            spawnIndex     = -1;   ///< SpawnIndexProvider#getSpawnIndex (-1: none)
+    /// Whether protection covers the piece, as isProtectedFor and the structure protection sync decide
+    /// it: Generator::pieceProtected at the piece's box center when the generator has one, else the
+    /// piece's own ProgressionPiece#isComponentProtected.
+    bool           protectedPiece = true;
+    /// The piece's spawn list index (-1: none), as potentialSpawns picks it: Generator::spawnIndex at
+    /// the piece's box center when the generator has one, else the piece's own
+    /// SpawnIndexProvider#getSpawnIndex. (Per position the rule may differ inside one piece: ask
+    /// potentialSpawns for a position.)
+    int            spawnIndex     = -1;
 };
 /// The pieces of `start` with their type ids and saved tags: the stored start of its key, dimension
 /// and start chunk (start.data["chunk"]); none for a reserved site. A Start the store does not hold
