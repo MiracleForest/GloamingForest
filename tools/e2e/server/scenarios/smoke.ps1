@@ -16,6 +16,13 @@ $mark = Get-LogMark
 Send-Console 'tffeature stubs'
 Wait-LogLine 'contract stubs called: ' 30 -Since $mark | Out-Null
 
+# A failing vanilla command with a parameter on the console: BDS echoes its translated reply as
+# "ERR [Server] <text>"; the mod's "Command error text:" line makes the run's error check excuse
+# exactly that echo (docs/spec/e2e.md, Error lines), so this run still passes.
+$mark = Get-LogMark
+Send-Console 'tickingarea remove gf_smoke_no_such_area'
+Wait-LogLine 'Command error text: ' 30 -Since $mark | Out-Null
+
 $r = Invoke-SelfTest 'core.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) core selftest(s) failed" }
 if ($r.Pass -lt 18) { throw "expected at least 18 core selftests to pass, got $($r.Pass)" }
