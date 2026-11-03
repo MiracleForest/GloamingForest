@@ -48,7 +48,8 @@ server console, in the client log and in a remote client run's `[host]` lines (`
 - **The console's echo of a command reply.** BDS prints the error reply of a command run on its console as
   `ERR [Server] <reply>`, and scenarios run failing commands on purpose (a refused `/twilightforest locate`). The
   mod logs every command error first as `[GloamingForest] Command error: <reply>` (`src/mod/Commands.cpp`); an
-  `ERR [Server]` line with the same text at most 5 lines after such a reply is its echo, not an error (each
+  `ERR [Server]` line with the same text at most 5 lines after such a reply (counting only the lines of the same
+  source: in a remote client run the host's `[host]` lines separately) is its echo, not an error (each
   reply excuses one echo; an earlier, later or second line of that text still fails the run). A scenario checks
   the replies it provokes itself. The mod logs a reply as its message id and parameters, so this covers the
   mod's own literal replies; a vanilla command's translated reply (`commands.tickingarea-remove...` logged, "No

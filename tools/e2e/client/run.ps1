@@ -384,9 +384,11 @@ if ($lockTimeout) {
 $hung = [bool](Get-WatchdogFired)
 $notRun = if ($hung) { "WATCHDOG: $(Get-WatchdogFired)" } elseif ($script:NotRunReason) { $script:NotRunReason }
 $dll = Join-Path $ModDir "$script:ModName.dll"
-$hangs = if ($script:TestHang -or ($lockTimeout -and -not $lockAcquired)) { 0 } elseif ($hung) { Update-HangRecord $Scenario $Mode $dll -Hung } else { Update-HangRecord $Scenario $Mode $dll }
+# (a run that never started a game, or a test hang, leaves the count as it is)
+$hangs = if ($script:TestHang -or $script:GamesStarted -eq 0) { 0 } elseif ($hung) { Update-HangRecord $Scenario $Mode $dll -Hung } else { Update-HangRecord $Scenario $Mode $dll }
 if ($notRun) {
-    if ($hardFailures.Count -gt 0) {
+    # only for a hang: a wrong world's own ERR lines (another world's mod state) are not this scenario's
+    if ($hung -and $hardFailures.Count -gt 0) {
         Write-Host "[e2e] client scenario '$Scenario' FAILED (it also could not finish: $notRun)" -ForegroundColor Red
         $hardFailures | ForEach-Object { Write-Host "[e2e]   - $_" -ForegroundColor Red }
         foreach ($f in $failures) { if (-not $hardFailures.Contains($f)) { Write-Host "[e2e]   (after the hang, not counted: $f)" -ForegroundColor DarkYellow } }

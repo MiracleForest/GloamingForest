@@ -454,21 +454,29 @@ function Reset-GameOptions {
 }
 
 # The instance's own values of the options this run set: path -> {key -> value ($null: the line was
-# missing)}. Kept in the e2e home until they are put back, so a killed run's backup survives and the
-# next run restores the instance's values, not the ones the killed run left behind.
+# missing)}, and the values the run set ($script:OptionsSet, same shape). Kept in the e2e home until
+# they are put back, so a killed run's backup survives and the next run restores the instance's
+# values, not the ones the killed run left behind; an option whose value is no longer the one the
+# killed run set was changed since (by a person or another harness) and keeps that newer value.
 $script:OptionsBackup = $null
+$script:OptionsSet = $null
 function Get-OptionsBackupPath { Join-Path (Get-E2EHome) "game-options.$($script:VersionName).json" }
 
 # Loads what a killed run left (the backup file, and the content-log-only backup of older harnesses).
 function Initialize-OptionsBackup {
     if ($null -ne $script:OptionsBackup) { return }
     $script:OptionsBackup = [ordered]@{}
+    $script:OptionsSet = [ordered]@{}
     $file = Get-OptionsBackupPath
     if (Test-Path $file) {
         try {
             $saved = Get-Content $file -Raw | ConvertFrom-Json -AsHashtable
-            foreach ($p in $saved.Keys) { $script:OptionsBackup[$p] = [ordered]@{}; foreach ($k in $saved[$p].Keys) { $script:OptionsBackup[$p][$k] = $saved[$p][$k] } }
-            Write-Step "options: a killed run left $file; its values are what this run puts back"
+            foreach ($part in @(@('old', $script:OptionsBackup), @('set', $script:OptionsSet))) {
+                $src = $saved[$part[0]]
+                if (-not $src) { continue }
+                foreach ($p in $src.Keys) { $part[1][$p] = [ordered]@{}; foreach ($k in $src[$p].Keys) { $part[1][$p][$k] = $src[$p][$k] } }
+            }
+            Write-Step "options: a killed run left $file; its values are what this run puts back (unless changed since)"
         } catch { Write-Step "warning: unreadable $file ($_)" }
     }
     $legacy = Join-Path (Get-E2EHome) "content-log-option.$($script:VersionName).json"
@@ -485,7 +493,7 @@ function Initialize-OptionsBackup {
     }
 }
 
-function Save-OptionsBackup { $script:OptionsBackup | ConvertTo-Json -Depth 4 | Set-Content -Path (Get-OptionsBackupPath) -Encoding UTF8 }
+function Save-OptionsBackup { @{ old = $script:OptionsBackup; set = $script:OptionsSet } | ConvertTo-Json -Depth 5 | Set-Content -Path (Get-OptionsBackupPath) -Encoding UTF8 }
 
 # Set-GameOption for the run: remembers each file's own value first (once per key), returns the
 # values it replaced.
@@ -493,8 +501,12 @@ function Set-RunOption([string]$Key, [string]$Value) {
     Initialize-OptionsBackup
     $old = Set-GameOption $Key $Value
     foreach ($p in $old.Keys) {
-        if (-not $script:OptionsBackup.Contains($p)) { $script:OptionsBackup[$p] = [ordered]@{} }
-        if (-not $script:OptionsBackup[$p].Contains($Key)) { $script:OptionsBackup[$p][$Key] = $old[$p] }
+        foreach ($m in $script:OptionsBackup, $script:OptionsSet) { if (-not $m.Contains($p)) { $m[$p] = [ordered]@{} } }
+        $known = $script:OptionsBackup[$p].Contains($Key)
+        # a value from a killed run counts only while the option still has the value that run set
+        if ($known -and $script:OptionsSet[$p].Contains($Key) -and $old[$p] -ne $script:OptionsSet[$p][$Key]) { $known = $false }
+        if (-not $known) { $script:OptionsBackup[$p][$Key] = $old[$p] }
+        $script:OptionsSet[$p][$Key] = $Value
     }
     Save-OptionsBackup
     return $old
@@ -523,6 +535,7 @@ function Restore-RunOptions {
         if ($changed) { Set-Content -Path $p -Value $lines }
     }
     $script:OptionsBackup = $null
+    $script:OptionsSet = $null
     Remove-Item (Get-OptionsBackupPath) -Force -ErrorAction SilentlyContinue
     Write-Step 'options: the instance''s own values are back'
 }

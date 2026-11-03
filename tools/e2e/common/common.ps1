@@ -257,12 +257,17 @@ $script:TransportBanner = @(
 # reply excuses one echo only; an ERR line before the reply, further away or with other text counts.
 $script:CommandEchoWindow = 5
 function Select-ErrorLines([string[]]$Lines) {
-    # open replies: text -> queue of the line indexes still waiting for their echo
+    # open replies: text -> queue of the line numbers still waiting for their echo. Lines are counted
+    # per source: a remote client run appends the host's lines ("[host] ...") in batches between its own.
     $open = @{}
-    @(for ($i = 0; $i -lt $Lines.Count; $i++) {
-        $l = $Lines[$i]
+    $seen = @{ host = 0; own = 0 }
+    @(for ($j = 0; $j -lt $Lines.Count; $j++) {
+        $l = $Lines[$j]
+        $src = if ($l.StartsWith('[host] ')) { 'host' } else { 'own' }
+        $i = ++$seen[$src]
         if ($l -match '\[GloamingForest\]\s?Command error: (.*)$') {
             $t = $Matches[1].TrimEnd()
+            $t = "$src`u{1}$t"
             if (-not $open.ContainsKey($t)) { $open[$t] = [System.Collections.Generic.Queue[int]]::new() }
             $open[$t].Enqueue($i)
         }
@@ -272,7 +277,7 @@ function Select-ErrorLines([string[]]$Lines) {
         if ($m.Groups['logger'].Value -eq 'Server') {
             $text = $m.Groups['text'].Value.TrimEnd()
             if ($script:TransportBanner -ccontains $text) { continue }
-            $q = $open[$text]
+            $q = $open["$src`u{1}$text"]
             if ($q) {
                 while ($q.Count -gt 0 -and $i - $q.Peek() -gt $script:CommandEchoWindow) { [void]$q.Dequeue() }
                 if ($q.Count -gt 0) { [void]$q.Dequeue(); continue }
