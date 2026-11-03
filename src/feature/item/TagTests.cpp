@@ -3,14 +3,15 @@
 // "remove" included), the vanilla tags of Java 1.21.1 the W0 runtimes read (fences, doors,
 // trapdoors, overworld_natural_logs, the river biome tags, replaceable, the structure tags and
 // /twilightforest locate with one, the mineable/* includes), the bridge's Java 1.21.1 policy (armour
-// tags hold armour only; newer Bedrock content is in no bridged tag), the lock-free snapshot across
-// reloads (synthetic trees private to the test's thread), and the custom statistics (TF's and
-// Minecraft's).
+// tags hold armour only; newer Bedrock content is in no bridged tag but through Bedrock's native
+// tags), the lock-free snapshot across reloads (synthetic trees private to the test's thread), and
+// the custom statistics (TF's and Minecraft's).
 
 #include <algorithm>
 #include <atomic>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <optional>
 #include <random>
 #include <set>
@@ -166,7 +167,16 @@ GF_REGISTER_SELFTEST("item.tags_cycles", [](Context& ctx) {
         {"gf_test/tags/block/outside.json", {{"values", {"#gf_test:cycle_b"}}}},
         {"gf_test/tags/block/self.json", {{"values", {"#gf_test:self", "gf_test:s"}}}},
         {"minecraft/tags/block/planks.json", {{"values", {"#gf_test:cycle_a"}}}},
+        // a cycle where one tag removes an id: every tag of the cycle loses it
+        {"gf_test/tags/block/pair_x.json", {{"values", {"#gf_test:pair_y", "gf_test:x1", "gf_test:x2"}}}},
+        {"gf_test/tags/block/pair_y.json", {{"values", {"#gf_test:pair_x", "gf_test:y1"}}, {"remove", {"gf_test:x2"}}}},
+        {"gf_test/tags/block/pair_outside.json", {{"values", {"#gf_test:pair_x"}}}},
     });
+    for (auto const* tag : {"gf_test:pair_x", "gf_test:pair_y", "gf_test:pair_outside"}) {
+        ctx.check(gf::tags::has(Registry::Block, tag, "gf_test:x1") && gf::tags::has(Registry::Block, tag, "gf_test:y1"), std::string(tag) + " holds the pair's members");
+        ctx.check(!gf::tags::has(Registry::Block, tag, "gf_test:x2"), std::string(tag) + ": pair_y's removal applies to the whole cycle");
+        ctx.check(!contains(gf::tags::members(Registry::Block, tag), "gf_test:x2"), std::string(tag) + ": members agree");
+    }
     for (auto const* tag : {"gf_test:cycle_a", "gf_test:cycle_b", "gf_test:cycle_c", "gf_test:outside", "minecraft:planks"}) {
         for (auto const* id : {"gf_test:a", "gf_test:b", "gf_test:c", "minecraft:oak_planks"})
             ctx.check(gf::tags::has(Registry::Block, tag, id), std::string(tag) + " holds " + id);
@@ -325,7 +335,8 @@ GF_REGISTER_SELFTEST("item.tags_structures", [](Context& ctx) {
 GF_REGISTER_SELFTEST("item.tags_concurrent_reload", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto              before = gf::tags::internal::generation();
     std::atomic<bool> stop{false};
-    std::atomic<bool> reloaded{false};
+    // shared with the reload thread, which is detached (not joined) if it hangs
+    auto              reloaded = std::make_shared<std::atomic<bool>>(false);
     std::atomic<int>  wrong{0};
     std::atomic<long> asked{0};
     // answers from the data and the bridge's id lists (no pattern rule: the game's registries are
@@ -353,16 +364,24 @@ GF_REGISTER_SELFTEST("item.tags_concurrent_reload", [](Context& ctx) -> ll::coro
         }
     } threads{stop, {}};
     for (int i = 0; i < 4; ++i) threads.all.emplace_back(worker);
-    threads.all.emplace_back([&] {
+    // the reloads: joined when they finish in time, detached otherwise (a hung load must fail the
+    // test, not block the server thread); the thread touches only `reloaded`, which it co-owns
+    struct Detached {
+        std::thread t;
+        ~Detached() {
+            if (t.joinable()) t.detach(); // an aborted coroutine frame too
+        }
+    } reloads{std::thread([reloaded] {
         for (int i = 0; i < 3; ++i) gf::tags::internal::reload();
-        reloaded = true;
-    });
+        reloaded->store(true);
+    })};
     int ticks = 0, serverWrong = 0;
-    for (; !reloaded.load() && ticks < 20 * 120; ++ticks) {
+    for (; !reloaded->load() && ticks < 20 * 120; ++ticks) {
         if (!gf::tags::has(Registry::Block, "minecraft:fences", "minecraft:oak_fence")) ++serverWrong;
         co_await ctx.ticks(1);
     }
-    bool done = reloaded.load();
+    bool done = reloaded->load();
+    if (done) reloads.t.join(); // else ~Detached lets it go
     stop = true;
     for (auto& t : threads.all) t.join();
     ctx.check(done, "the 3 reloads finished within 2 minutes");
@@ -442,8 +461,9 @@ GF_REGISTER_SELFTEST("item.tags_armor_only", [](Context& ctx) {
     }
 });
 
-// Bedrock content newer than Java 1.21.1 is in no bridged tag (pale oak, resin, the 1.21.5 plants),
-// whatever its name pattern or Bedrock native tag.
+// Bedrock content newer than Java 1.21.1 (pale oak, resin, the 1.21.5 plants, the copper families
+// with their waxed and oxidised variants) is in no bridged tag through an id list, a name pattern or
+// a predicate; Bedrock's native tags keep it (VanillaTags.h, policy: its mechanics).
 GF_REGISTER_SELFTEST("item.tags_java_1211_only", [](Context& ctx) {
     auto block = [](char const* tag, char const* id) { return gf::tags::has(Registry::Block, tag, id); };
     auto item  = [](char const* tag, char const* id) { return gf::tags::has(Registry::Item, tag, id); };
@@ -452,7 +472,8 @@ GF_REGISTER_SELFTEST("item.tags_java_1211_only", [](Context& ctx) {
         char const* newer;
         char const* older;
     };
-    for (auto const& c : {Case{"minecraft:logs", "minecraft:pale_oak_log", "minecraft:oak_log"}, Case{"minecraft:planks", "minecraft:pale_oak_planks", "minecraft:oak_planks"},
+    for (auto const& c : {Case{"minecraft:planks", "minecraft:pale_oak_planks", "minecraft:oak_planks"},
+                          Case{"minecraft:logs_that_burn", "minecraft:pale_oak_log", "minecraft:oak_log"},
                           Case{"minecraft:leaves", "minecraft:pale_oak_leaves", "minecraft:oak_leaves"},
                           Case{"minecraft:saplings", "minecraft:pale_oak_sapling", "minecraft:oak_sapling"},
                           Case{"minecraft:fences", "minecraft:pale_oak_fence", "minecraft:oak_fence"}, Case{"minecraft:doors", "minecraft:pale_oak_door", "minecraft:oak_door"},
@@ -467,13 +488,30 @@ GF_REGISTER_SELFTEST("item.tags_java_1211_only", [](Context& ctx) {
         ctx.check(!block(c.tag, c.newer), std::string("#") + c.tag + " (block) has no " + c.newer);
         ctx.check(block(c.tag, c.older), std::string("#") + c.tag + " (block) has " + c.older);
     }
-    ctx.check(!item("minecraft:swords", "minecraft:copper_sword") && item("minecraft:swords", "minecraft:iron_sword"), "#swords: no copper sword (1.21.9)");
-    ctx.check(!item("minecraft:boats", "minecraft:pale_oak_boat") && item("minecraft:boats", "minecraft:oak_boat"), "#boats: no pale oak boat");
+    ctx.check(!item("minecraft:head_armor", "minecraft:copper_helmet") && !item("minecraft:trimmable_armor", "minecraft:copper_chestplate"),
+              "no copper armour in the armour tags (1.21.9; Java's id lists)");
+    ctx.check(!item("minecraft:boats", "minecraft:pale_oak_boat") && item("minecraft:boats", "minecraft:oak_boat"), "#boats: no pale oak boat (a predicate)");
     ctx.check(!item("c:eggs", "minecraft:blue_egg") && item("c:eggs", "minecraft:egg"), "c:eggs: the egg only");
     ctx.check(!gf::tags::has(Registry::EntityType, "minecraft:fall_damage_immune", "minecraft:happy_ghast"), "no happy ghast (1.21.6)");
+    // the copper families with every waxed and oxidised variant; the 1.21 copper blocks are older
+    for (auto const* id : {"minecraft:copper_chest", "minecraft:waxed_copper_chest", "minecraft:waxed_exposed_copper_chest", "minecraft:oxidized_copper_lantern",
+                           "minecraft:waxed_copper_bars", "minecraft:weathered_copper_chain", "minecraft:waxed_weathered_copper_golem_statue",
+                           "minecraft:exposed_lightning_rod", "minecraft:waxed_lightning_rod", "minecraft:pale_oak_log", "minecraft:resin_bricks"})
+        ctx.check(gf::tags::vanilla::newerThanJava1211(id), std::string(id) + " is newer than Java 1.21.1");
+    for (auto const* id : {"minecraft:lightning_rod", "minecraft:copper_door", "minecraft:waxed_oxidized_copper_door", "minecraft:waxed_cut_copper_stairs",
+                           "minecraft:exposed_copper_bulb", "minecraft:oxidized_copper", "minecraft:oak_log", "twilightforest:pale_oak_log"})
+        ctx.check(!gf::tags::vanilla::newerThanJava1211(id), std::string(id) + " is not");
+    // Bedrock's native tags keep the newer content: a pale oak log is a log, an axe mines pale oak
+    // planks faster, the copper sword is a sword (VanillaTags.h, the trade-off)
+    ctx.check(block("minecraft:logs", "minecraft:pale_oak_log") && item("minecraft:logs", "minecraft:pale_oak_log"), "#logs holds pale_oak_log (Bedrock's log tag)");
+    ctx.check(block("minecraft:mineable/axe", "minecraft:pale_oak_planks"), "#mineable/axe holds pale_oak_planks (is_axe_item_destructible)");
+    ctx.check(block("minecraft:mineable/pickaxe", "minecraft:resin_bricks"), "#mineable/pickaxe holds resin_bricks (is_pickaxe_item_destructible)");
+    ctx.check(item("minecraft:swords", "minecraft:copper_sword") && item("minecraft:swords", "minecraft:iron_sword"), "#swords holds the copper sword (is_sword)");
     // the members lists agree
+    auto planks = gf::tags::members(Registry::Block, "minecraft:planks");
+    ctx.check(!contains(planks, "minecraft:pale_oak_planks") && contains(planks, "minecraft:oak_planks"), "members(#planks) agrees (" + std::to_string(planks.size()) + ")");
     auto logs = gf::tags::members(Registry::Block, "minecraft:logs");
-    ctx.check(!contains(logs, "minecraft:pale_oak_log") && contains(logs, "minecraft:oak_log"), "members(#logs) agrees (" + std::to_string(logs.size()) + ")");
+    ctx.check(contains(logs, "minecraft:pale_oak_log") && contains(logs, "minecraft:oak_log"), "members(#logs) agrees (" + std::to_string(logs.size()) + ")");
 });
 
 // Every include of a bridge rule names a rule of the same registry (a missing one would resolve to
@@ -500,7 +538,8 @@ GF_REGISTER_SELFTEST("item.tags_bridge_includes", [](Context& ctx) {
     for (auto const& c : std::vector<Case>{
              {"minecraft:shulker_boxes", {"minecraft:undyed_shulker_box", "minecraft:white_shulker_box", "minecraft:black_shulker_box"}, "minecraft:chest"},
              {"minecraft:anvil", {"minecraft:anvil", "minecraft:chipped_anvil", "minecraft:damaged_anvil"}, "minecraft:iron_block"},
-             {"minecraft:cauldrons", {"minecraft:cauldron", "minecraft:lava_cauldron"}, "minecraft:hopper"},
+             // Bedrock's water, lava and powder snow cauldrons are minecraft:cauldron (cauldron_liquid)
+             {"minecraft:cauldrons", {"minecraft:cauldron"}, "minecraft:hopper"},
              {"minecraft:rails", {"minecraft:rail", "minecraft:golden_rail", "minecraft:detector_rail", "minecraft:activator_rail"}, "minecraft:ladder"},
              {"minecraft:bamboo_blocks", {"minecraft:bamboo_block", "minecraft:stripped_bamboo_block"}, "minecraft:bamboo_planks"},
              {"minecraft:concrete_powder", {"minecraft:white_concrete_powder", "minecraft:light_gray_concrete_powder"}, "minecraft:white_concrete"},

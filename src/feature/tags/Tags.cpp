@@ -191,13 +191,23 @@ void readEntries(nlohmann::json const& doc, char const* key, std::vector<std::st
     }
 }
 
+/// True the first time `key` is warned about in this process: the tag warnings repeat neither per
+/// registry variant nor per /twilightforest reload.
+bool warnOnce(std::string key) {
+    static std::mutex            m;
+    static std::set<std::string> warned;
+    std::lock_guard              lock(m);
+    return warned.insert(std::move(key)).second;
+}
+
 /// Resolves the tags of one directory for one registry variant (the bridge's includes and rules
 /// only with a registry). Tarjan's strongly connected components: a tag is resolved after every tag
 /// it includes; tags that include each other (a cycle) are one component and share its members.
 class Builder {
 public:
-    Builder(std::optional<Registry> registry, std::string dir, RawDir const* raw, std::set<std::string>& warned)
-    : mRegistry(registry), mDir(std::move(dir)), mRaw(raw), mWarned(warned) {}
+    /// `quiet`: no warnings (the selftests' private snapshots of synthetic data).
+    Builder(std::optional<Registry> registry, std::string dir, RawDir const* raw, bool quiet)
+    : mRegistry(registry), mDir(std::move(dir)), mRaw(raw), mQuiet(quiet) {}
 
     std::shared_ptr<Resolved const> get(std::string const& tag) {
         if (!mIndex.contains(tag)) connect(tag);
@@ -217,6 +227,7 @@ private:
         return it == mRaw->end() ? nullptr : &it->second;
     }
     vanilla::Rule const* ruleOf(std::string const& tag) const { return mRegistry ? vanilla::find(*mRegistry, tag) : nullptr; }
+    bool                 firstWarning(std::string key) const { return !mQuiet && warnOnce(std::move(key)); }
 
     Edges edgesOf(std::string const& tag) const {
         Edges e;
@@ -251,6 +262,7 @@ private:
                 }
             }
         }
+        mEdges.emplace(v, std::move(e)); // finish() reads them (map nodes keep their address)
         if (mLow[v] != index) return;
         std::vector<std::string> scc;
         while (true) {
@@ -272,7 +284,7 @@ private:
         for (auto const& w : includes) {
             if (rawOf(w) || ruleOf(w)) continue;
             bool optional = raw && std::any_of(raw->optional.begin(), raw->optional.end(), [&](std::string const& o) { return o.starts_with('#') && stripHash(o) == w; });
-            if (optional || !mWarned.insert(mDir + "|dangling|" + tag + "|" + w).second) continue;
+            if (optional || !firstWarning(mDir + "|dangling|" + tag + "|" + w)) continue;
             log().warn("tags: {} tag {} includes #{}, which has no data and no bridge rule: it adds nothing", mDir, tag, w);
         }
     }
@@ -284,21 +296,21 @@ private:
     /// Resolves one component (its includes outside it are resolved already).
     void finish(std::vector<std::string> const& scc) {
         StringSet inScc(scc.begin(), scc.end());
-        std::vector<Edges> edges;
-        for (auto const& v : scc) edges.push_back(edgesOf(v));
-        bool cyclic = scc.size() > 1 || std::find(edges[0].include.begin(), edges[0].include.end(), scc[0]) != edges[0].include.end();
+        std::vector<Edges const*> edges;
+        for (auto const& v : scc) edges.push_back(&mEdges.at(v));
+        bool cyclic = scc.size() > 1 || std::find(edges[0]->include.begin(), edges[0]->include.end(), scc[0]) != edges[0]->include.end();
         if (cyclic) {
             std::vector<std::string> sorted(scc.begin(), scc.end());
             std::sort(sorted.begin(), sorted.end());
             std::string names;
             for (auto const& t : sorted) names += (names.empty() ? "" : ", ") + t;
-            if (mWarned.insert(mDir + "|" + names).second)
-                log().warn("tags: {} tags include each other ({}): Java rejects the cycle, here they share their members", mDir, names);
+            if (firstWarning(mDir + "|" + names))
+                log().warn("tags: {} tags include each other ({}): Java rejects the cycle, here they share their members (and the removals of each)", mDir, names);
         }
         auto base = std::make_shared<Resolved>();
         for (std::size_t i = 0; i < scc.size(); ++i) {
             auto const& v = scc[i];
-            warnDangling(v, edges[i].include);
+            warnDangling(v, edges[i]->include);
             if (auto const* raw = rawOf(v))
                 for (auto const& value : raw->values)
                     if (!value.starts_with('#'))
@@ -308,7 +320,7 @@ private:
                 for (auto& id : vanilla::listedIds(*rule)) base->listed.insert(std::move(id));
                 if (vanilla::hasPatterns(*rule)) base->patterns.push_back(rule);
             }
-            for (auto const& w : edges[i].include) {
+            for (auto const& w : edges[i]->include) {
                 if (inScc.contains(w)) continue;
                 auto const& sub = mDone.at(w);
                 if (sub->opaque()) {
@@ -333,42 +345,43 @@ private:
             std::sort(r.dataSorted.begin(), r.dataSorted.end());
         };
         sortData(*base);
-        std::shared_ptr<Resolved const> shared = base;
-        for (std::size_t i = 0; i < scc.size(); ++i) {
-            auto const& v   = scc[i];
+        // NeoForge's "remove": taken out of the tag (and of the tags that include it). The tags of a
+        // cycle share their members, so the removals of each apply to all of them.
+        std::shared_ptr<Resolved> own;
+        for (auto const& v : scc) {
             auto const* raw = rawOf(v);
-            bool removes    = raw && !raw->removes.empty();
-            if (!removes) {
-                mDone[v] = shared;
-                continue;
-            }
-            // NeoForge's "remove": taken out of this tag (and of the tags that include it)
-            auto own = std::make_shared<Resolved>(*base);
+            if (!raw || raw->removes.empty()) continue;
+            if (!own) own = std::make_shared<Resolved>(*base);
             for (auto const& entry : raw->removes) {
                 if (entry.starts_with('#')) {
                     auto t = stripHash(entry);
-                    if (!inScc.contains(t)) own->removedTags.push_back(mDone.at(t));
-                    else if (mWarned.insert(mDir + "|remove|" + v + "|" + t).second)
+                    if (!inScc.contains(t)) addUnique(own->removedTags, mDone.at(t));
+                    else if (firstWarning(mDir + "|remove|" + v + "|" + t))
                         // the removed tag includes this one back: removing it would empty the tag
                         log().warn("tags: {} tag {} removes #{}, which includes it back (a cycle Java rejects): the removal is ignored", mDir, v, t);
                 } else {
                     for (auto& id : javaids::bedrock(mDir, data::withNamespace(entry))) own->removed.insert(std::move(id));
                 }
             }
+        }
+        std::shared_ptr<Resolved const> shared = base;
+        if (own) {
             std::erase_if(own->data, [&](std::string const& id) {
                 return own->removed.contains(id)
                     || std::any_of(own->removedTags.begin(), own->removedTags.end(), [&](auto const& t) { return t->has(mRegistry, id); });
             });
             sortData(*own);
-            mDone[v] = own;
+            shared = own;
         }
+        for (auto const& v : scc) mDone[v] = shared;
     }
 
     std::optional<Registry>    mRegistry;
     std::string                mDir;
     RawDir const*              mRaw;
-    std::set<std::string>&     mWarned;
+    bool                       mQuiet;
     ResolvedMap                mDone;
+    StringMap<Edges>           mEdges;
     StringMap<int>             mIndex;
     StringMap<int>             mLow;
     std::vector<std::string>   mStack;
@@ -393,11 +406,11 @@ std::shared_ptr<Snapshot const> build(bool withData, std::filesystem::path const
         readEntries(doc, "remove", tag.removes, nullptr);
         ++s->files;
     }
-    std::set<std::string> warned;
+    bool const quiet = base != nullptr;
     for (auto registry : kRegistries) {
         std::string dir = registryName(registry);
         auto        d   = s->raw.find(dir);
-        Builder     b(registry, dir, d == s->raw.end() ? nullptr : &d->second, warned);
+        Builder     b(registry, dir, d == s->raw.end() ? nullptr : &d->second, quiet);
         if (d != s->raw.end())
             for (auto const& [tag, raw] : d->second) (void)b.get(tag);
         for (auto const& tag : vanilla::knownTags(registry)) (void)b.get(tag);
@@ -406,7 +419,7 @@ std::shared_ptr<Snapshot const> build(bool withData, std::filesystem::path const
     // TF's own registries ("twilight", ...): data members only
     for (auto const& [dir, tags] : s->raw) {
         if (registryOf(dir)) continue;
-        Builder b(std::nullopt, dir, &tags, warned);
+        Builder b(std::nullopt, dir, &tags, quiet);
         for (auto const& [tag, raw] : tags) (void)b.get(tag);
         s->dataOnly[dir] = b.take();
     }
@@ -428,11 +441,25 @@ Published& published() {
 }
 
 /// A private snapshot this thread reads instead of the published one (internal::ScopedSnapshot:
-/// selftests' synthetic data, never seen by other threads).
-thread_local std::shared_ptr<Snapshot const> tPrivate;
+/// selftests' synthetic data, never seen by other threads), and the ones it shadows.
+struct Private {
+    std::shared_ptr<Snapshot const>    snapshot;
+    std::shared_ptr<std::atomic<bool>> alive; ///< false once its ScopedSnapshot is gone (on any thread)
+    std::shared_ptr<Private>           outer;
+};
+thread_local std::shared_ptr<Private> tPrivate;
+
+/// Drops this thread's private snapshots whose scope ended (also one destroyed on another thread:
+/// the owner thread lets go of it at its next query).
+void dropEndedPrivate() {
+    while (tPrivate && !tPrivate->alive->load(std::memory_order_acquire)) tPrivate = tPrivate->outer;
+}
 
 std::shared_ptr<Snapshot const> const& current() {
-    if (tPrivate) return tPrivate;
+    if (tPrivate) [[unlikely]] {
+        dropEndedPrivate();
+        if (tPrivate) return tPrivate->snapshot;
+    }
     struct Local {
         std::shared_ptr<Snapshot const> snapshot;
         std::shared_ptr<Snapshot const> previous; ///< one refresh back: a caller up the stack may still read it
@@ -615,17 +642,21 @@ std::uint64_t generation() { return published().generation.load(std::memory_orde
 
 void reload() { load(); }
 
-ScopedSnapshot::ScopedSnapshot(std::filesystem::path const& root) : mPrevious(std::move(tPrivate)), mThread(std::this_thread::get_id()) {
-    tPrivate = build(true, &root);
+ScopedSnapshot::ScopedSnapshot(std::filesystem::path const& root)
+: mAlive(std::make_shared<std::atomic<bool>>(true)),
+  mThread(std::this_thread::get_id()) {
+    tPrivate = std::make_shared<Private>(Private{build(true, &root), mAlive, std::move(tPrivate)});
 }
 
 ScopedSnapshot::~ScopedSnapshot() {
-    if (std::this_thread::get_id() != mThread) {
-        // the private snapshot belongs to the constructing thread: it cannot be restored from here
-        log().error("tags: a ScopedSnapshot was destroyed on another thread than the one that made it");
+    mAlive->store(false, std::memory_order_release);
+    if (std::this_thread::get_id() == mThread) {
+        dropEndedPrivate();
         return;
     }
-    tPrivate = std::static_pointer_cast<Snapshot const>(std::move(mPrevious));
+    // a scope that spanned a thread switch (a co_await): the owner thread drops the snapshot at its
+    // next query, so it never keeps answering from the synthetic data
+    log().error("tags: a ScopedSnapshot was destroyed on another thread than the one that made it (it must not span a co_await)");
 }
 
 } // namespace internal

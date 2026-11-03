@@ -98,18 +98,33 @@ std::vector<std::string_view> armorIds(std::string_view suffix) {
 }
 
 /// Bedrock content newer than Java 1.21.1 (the bridge's policy, VanillaTags.h): never a member of a
-/// bridged tag, whatever a name pattern or a Bedrock native tag says.
+/// bridged tag through an id list, a name pattern or a predicate. The copper families count with
+/// their waxed and oxidised variants (waxed_exposed_copper_chest, oxidized_copper_lantern, ...), and
+/// the oxidised and waxed lightning rods are 1.21.9's (the plain one is older).
 bool newerThan1211(std::string_view name) {
+    std::string_view base         = name;
+    bool             copperPrefix = false;
+    if (base.starts_with("waxed_")) {
+        base.remove_prefix(6);
+        copperPrefix = true;
+    }
+    for (std::string_view stage : {"exposed_", "weathered_", "oxidized_"})
+        if (base.starts_with(stage)) {
+            base.remove_prefix(stage.size());
+            copperPrefix = true;
+            break;
+        }
+    if (copperPrefix && base == "lightning_rod") return true;
     for (std::string_view p : {"pale_", "stripped_pale_", "resin_", "chiseled_resin_", "creaking", "dried_ghast", "happy_ghast", "copper_golem"})
-        if (name.starts_with(p)) return true;
+        if (base.starts_with(p)) return true;
     for (std::string_view x : {"_spear", "_harness", "_shelf"})
-        if (name.ends_with(x)) return true;
+        if (base.ends_with(x)) return true;
     static std::unordered_set<std::string_view> const ids{
         "open_eyeblossom", "closed_eyeblossom", "bush", "firefly_bush", "short_dry_grass", "tall_dry_grass", "leaf_litter", "cactus_flower",
         "wildflowers", "blue_egg", "brown_egg", "copper_sword", "copper_pickaxe", "copper_axe", "copper_shovel", "copper_hoe",
         "copper_helmet", "copper_chestplate", "copper_leggings", "copper_boots", "copper_horse_armor", "copper_nugget", "copper_chest",
         "copper_bars", "copper_chain", "copper_lantern", "copper_torch", "nautilus", "zombie_nautilus", "camel_husk", "parched"};
-    return ids.contains(name);
+    return ids.contains(base);
 }
 
 Item const* itemOf(std::string const& id) {
@@ -257,10 +272,11 @@ Rules buildRules() {
 
     // the block tags Java's mineable/* include (Java 1.21.1, Bedrock ids: undyed_shulker_box is the
     // plain shulker box, golden_rail the powered rail, standing_banner / wall_banner every banner;
-    // Bedrock has no water or powder snow cauldron block)
+    // Bedrock's water, lava and powder snow cauldrons are all minecraft:cauldron, told apart by its
+    // cauldron_liquid state: Java's cauldron, water_cauldron, lava_cauldron and powder_snow_cauldron)
     block("minecraft:shulker_boxes", {.ids = concat(colorIds("_shulker_box"), {"shulker_box", "undyed_shulker_box"})});
     block("minecraft:anvil", {.ids = {"anvil", "chipped_anvil", "damaged_anvil"}});
-    block("minecraft:cauldrons", {.ids = {"cauldron", "lava_cauldron"}});
+    block("minecraft:cauldrons", {.ids = {"cauldron"}});
     block("minecraft:rails", {.ids = {"rail", "golden_rail", "detector_rail", "activator_rail"}});
     block("minecraft:bamboo_blocks", {.ids = {"bamboo_block", "stripped_bamboo_block"}});
     block("minecraft:concrete_powder", {.ids = colorIds("_concrete_powder")});
@@ -640,6 +656,10 @@ constexpr std::string_view kMinecraft = "minecraft:";
 
 } // namespace
 
+bool newerThanJava1211(std::string const& id) {
+    return id.starts_with(kMinecraft) && newerThan1211(std::string_view(id).substr(kMinecraft.size()));
+}
+
 Rule const* find(Registry registry, std::string const& tag) {
     auto it = rules().find({registry, tag});
     return it == rules().end() ? nullptr : &it->second;
@@ -661,8 +681,15 @@ bool hasPatterns(Rule const& rule) { return !rule.suffixes.empty() || !rule.nati
 bool matchesPattern(Registry registry, Rule const& rule, std::string const& id) {
     if (id.starts_with(kMinecraft)) {
         std::string_view name = std::string_view(id).substr(kMinecraft.size());
-        if (excluded(rule, name) || newerThan1211(name)) return false;
-        for (auto s : rule.suffixes)
+        if (excluded(rule, name)) return false;
+        if (newerThan1211(name)) {
+            // only Bedrock's native tags keep newer content: they are Bedrock's own mechanics (what a
+            // pickaxe mines, what a sword or a log is; VanillaTags.h, policy)
+            for (auto const& t : rule.nativeHashed)
+                if (nativeHas(registry, id, t)) return true;
+            return false;
+        }
+        for (auto s : rule.suffixes) // the cheap test first (world generation asks per block)
             if (name.size() > s.size() && name.ends_with(s)) return true;
     }
     for (auto const& t : rule.nativeHashed)

@@ -20,7 +20,7 @@ if (-not ($log | Select-String -Pattern 'item: S6 trim probe registered at load'
 
 $r = Invoke-SelfTest 'item.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) item selftest(s) failed: $($r.Failed -join ', ')" }
-if ($r.Pass -lt 43) { throw "expected at least 43 item selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 54) { throw "expected at least 54 item selftests to pass, got $($r.Pass)" }
 # Minecraft's structure tags: in the Twilight Forest /twilightforest locate #minecraft:village knows
 # the tag and finds none (Java's not_found), as item.tags_locate_village ran it
 if (-not (Get-ServerLog | Select-String -Pattern 'landmark: locate #minecraft:village from -?\d+ -?\d+: none' -Quiet)) {

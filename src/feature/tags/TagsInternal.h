@@ -2,6 +2,7 @@
 
 // Internals of the tag runtime shared with F9's selftests and extension headers.
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -35,7 +36,9 @@ void                        reload();
 /// While it lives, the queries of the constructing thread (and only of it) read a snapshot built
 /// from the data tree below `root` (`<root>/<ns>/tags/...`) in place of the published one: the
 /// selftests' synthetic trees, which world generation on other threads never sees. Nothing is
-/// published; destroy it on the thread that made it, before that thread suspends (a synchronous test).
+/// published; destroy it on the thread that made it, before that thread suspends (a synchronous test:
+/// it must never span a co_await). Destroyed on another thread it logs an error, and the
+/// constructing thread drops the snapshot at its next query (it never keeps the synthetic data).
 class ScopedSnapshot {
 public:
     explicit ScopedSnapshot(std::filesystem::path const& root);
@@ -44,8 +47,8 @@ public:
     ScopedSnapshot& operator=(ScopedSnapshot const&) = delete;
 
 private:
-    std::shared_ptr<void const> mPrevious;
-    std::thread::id             mThread;
+    std::shared_ptr<std::atomic<bool>> mAlive;
+    std::thread::id                    mThread;
 };
 
 } // namespace gf::tags::internal

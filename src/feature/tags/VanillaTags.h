@@ -18,10 +18,19 @@
 //
 // Policy: the vanilla members are exactly Java 1.21.1's (TF 4.8's Minecraft; NeoForge 21.1 for c:),
 // spelled with Bedrock's ids (a Bedrock id that names the same block or item, legacy aliases
-// included). Bedrock content newer than 1.21.1 (pale oak, resin, the 1.21.5 plants, copper tools
-// and armour, ...) is a member of no bridged tag, even where a name pattern or a Bedrock native tag
-// would match it; Bedrock wearables that are no armour in Java (carved pumpkins, skulls, mob heads)
-// are in no armour tag. TF's data members are added on top, as Java's tag loader does.
+// included). Bedrock content newer than 1.21.1 (pale oak, resin, the 1.21.5 plants, copper tools,
+// armour, chests, bars, chains, lanterns and golems with their waxed and oxidised variants, ...) is
+// a member of no bridged tag through an id list, a name pattern or a predicate. Bedrock's native
+// tags are the exception and are taken as they are, newer content included: they are Bedrock's own
+// mechanics (what a pickaxe mines, what a sword, a log or a trim material is), and Java 1.21.1 has
+// no reference for these blocks to follow, so leaving them out would only take behaviour away (a
+// pale oak log that is no log, a resin brick no pickaxe mines faster). The trade-off: a tag that is
+// part native, part pattern holds a newer block through the native part only (#logs holds
+// pale_oak_log through Bedrock's "log" tag, while #planks, a suffix rule, holds no pale_oak_planks;
+// #swords holds the copper sword through minecraft:is_sword, while the armour tags, Java's id
+// lists, hold no copper armour). Bedrock wearables that are no armour in Java (carved pumpkins,
+// skulls, mob heads) are in no armour tag. TF's data members are added on top, as Java's tag loader
+// does.
 
 #include <string>
 #include <vector>
@@ -48,6 +57,8 @@ struct Rule;
 /// The ids of the game's registry the bridge enumerates for members (blocks / items: every
 /// registered id, empty without a level; other registries: every id the bridge's rules list).
 [[nodiscard]] std::vector<std::string> registryIds(Registry registry);
+/// Whether `id` (namespaced) is Bedrock content newer than Java 1.21.1 (the policy above).
+[[nodiscard]] bool newerThanJava1211(std::string const& id);
 /// The vanilla tags the bridge knows for `registry` (diagnostics, selftests).
 [[nodiscard]] std::vector<std::string> knownTags(Registry registry);
 

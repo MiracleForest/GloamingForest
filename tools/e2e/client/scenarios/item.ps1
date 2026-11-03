@@ -29,7 +29,7 @@ if ($script:IsLocal) {
     if (-not (Get-LeviLog | Select-String -Pattern 'item: S6 trim probe registered at load' -Quiet)) { throw 'the S6 trim probe was not registered at load (prelaunch flag)' }
     $r = Invoke-SelfTest 'item.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) item selftest(s) failed in the local world: $($r.Failed -join ', ')" }
-    if ($r.Pass -lt 43) { throw "expected at least 43 item selftests, got $($r.Pass)" }
+    if ($r.Pass -lt 55) { throw "expected at least 55 item selftests, got $($r.Pass)" }
 } else {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
 }
