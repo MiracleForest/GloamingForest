@@ -2160,6 +2160,17 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
     ctx.check(canUsePortal(*boat), "Entity#canUsePortal(false) of the boat with its rider is true (no rule against riders)");
     if (auto* pig = actor(pigId)) ctx.check(!canUsePortal(*pig), "its rider is not asked (a passenger never uses a portal itself)");
     int const destX = pool.x * 8, destZ = pool.z * 8;
+    AABB const near{Vec3(destX - 24, world::kMinY, destZ - 24), Vec3(destX + 24, world::kMinY + world::kHeight, destZ + 24)};
+    // what is there already: a rider that slid off a vehicle above into the portal went on its
+    // own (an unridden pig may use portals), and is no part of this trip
+    std::set<std::int64_t> before;
+    if (auto* r = game::regionOf(tfId))
+        for (auto* e : r->getEntities(near, 0.0f))
+            if (e && (e->getTypeName() == "minecraft:boat" || e->getTypeName() == "minecraft:pig")) {
+                before.insert(idOf(*e));
+                spawned.push_back(idOf(*e));
+            }
+    if (!before.empty()) ctx.info(std::to_string(before.size()) + " boat(s) / pig(s) of the earlier parts went through on their own");
     watchPortalDecisions(boatId);
     inPortal(*boat);
     if (auto* p = actor(pigId); p && p->getVehicle() != actor(boatId)) p->startRiding(*actor(boatId), true);
@@ -2171,10 +2182,9 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
         co_await ctx.ticks(1);
         auto* r = game::regionOf(tfId);
         if (!r) continue;
-        AABB near{Vec3(destX - 24, world::kMinY, destZ - 24), Vec3(destX + 24, world::kMinY + world::kHeight, destZ + 24)};
         boatThere = pigThere = nullptr;
         for (auto* e : r->getEntities(near, 0.0f)) {
-            if (!e) continue;
+            if (!e || before.contains(idOf(*e))) continue;
             if (e->getTypeName() == "minecraft:boat") boatThere = e;
             else if (e->getTypeName() == "minecraft:pig") pigThere = e;
         }
