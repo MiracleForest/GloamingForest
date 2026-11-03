@@ -1,0 +1,4 @@
+## F9 (item): the material names of the spike S6 trim probes (src/feature/item/SpikeTests.cpp).
+trim_material.iron_darker.name=暗铁
+trim_material.gold_darker.name=暗金
+trim_material.gf_test_trim.name=测试
