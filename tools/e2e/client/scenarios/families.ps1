@@ -63,7 +63,8 @@
 #                                           black one keeps it
 #   out/families/families-19-sign-written.png       the sign families.sign_a_write wrote (server
 #                                           side): client mod on the board, vanilla client as the
-#                                           display entity's name tag
+#                                           name tag of the side facing it (the front; the back's
+#                                           "back side" is hidden for this viewer)
 #   out/families/families-20-compare-black.png ... families-23-compare-glow-blue.png   client mod:
 #                                           TF's canopy signs (right) next to the game's own oak
 #                                           signs (left) in the same light, written and coloured
@@ -522,7 +523,8 @@ if ($script:Mode -ne 'remote-vanilla') {
 }
 
 # The text of a sign written by the server (families.sign_a_write): the client mod draws it on the
-# board (front: four lines), a vanilla client shows the display entity's name tag
+# board (front: four lines), a vanilla client shows the name tag of the side facing it (the front:
+# the viewer stands south of it; the back's name tag is hidden for this viewer)
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'families.sign_a_write'
 if ($r.Pass -ne 1) { throw 'families.sign_a_write did not pass' }
@@ -545,10 +547,13 @@ $clientLines = @(
     'families: canopy and mangrove leaves blend the biome foliage colour'
 )
 $sentLine = 'families: sign text sent to the companion'
+$sidesLine = 'families: the vanilla client .* is shown the sign sides facing it'
 if ($script:Mode -eq 'remote-vanilla') {
     Start-Sleep -Seconds 2
     $sent = Get-LeviLog | Where-Object { $_ -match "^\[host\].*$([regex]::Escape($sentLine))" }
     if ($sent) { throw "the host sent sign text to the vanilla client: $($sent | Select-Object -First 1)" }
+    # the vanilla client is told which side's name tag shows (the one facing it)
+    Wait-LogLine "^\[host\].*$sidesLine" 20 | Out-Null
 } else {
     foreach ($l in $clientLines) { Wait-LogLine "^(?!\[host\]).*$([regex]::Escape($l))" 20 | Out-Null }
     if ($script:Mode -eq 'remote-mod') { Wait-LogLine "^\[host\].*$([regex]::Escape($sentLine))" 20 | Out-Null }
