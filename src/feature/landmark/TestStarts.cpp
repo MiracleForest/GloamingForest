@@ -26,10 +26,20 @@ std::size_t forgetStartForTest(core::GlobalPos const& pos, std::string const& ke
     return removed;
 }
 
+namespace {
+/// The start of `key` stored with pos's start chunk, that chunk's natural starts made first
+/// (ensureStartsIn): one the chunk's structure sets would make is captured too, also when
+/// nothing evaluated them yet, and put back as it is (not made again) when the scope ends.
+std::shared_ptr<fl::Record> storedStart(std::string const& key, core::GlobalPos const& pos) {
+    (void)fl::ensureStartsIn(pos.dim, pos.x >> 4, pos.z >> 4);
+    return fl::findRecord(pos.dim, pos.x >> 4, pos.z >> 4, key);
+}
+} // namespace
+
 ScopedStart::ScopedStart(std::string const& key, core::GlobalPos const& pos)
 : mKey(fl::normalizeKey(key)),
   mPos(pos),
-  mReplaced(fl::findRecord(pos.dim, pos.x >> 4, pos.z >> 4, fl::normalizeKey(key))),
+  mReplaced(storedStart(fl::normalizeKey(key), pos)),
   mWorld(fl::recordWorld()),
   mStart(forceStart(key, pos)) {
     if (mStart) mKey = mStart->key;

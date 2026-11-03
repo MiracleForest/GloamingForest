@@ -26,13 +26,16 @@
 // worker threads: the cache is locked, the server thread never waits for a worker, and the DB is
 // written on the server thread only.
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
+#include <cstdint>
 #include <cstdlib>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <set>
 #include <shared_mutex>
 #include <thread>
@@ -213,8 +216,20 @@ BlockBox boxOf(Json const& j) {
     return {v(0), v(1), v(2), v(3), v(4), v(5)};
 }
 
+/// The lock of a live piece's fields (by its address, 64 stripes; recursive: a postProcess that
+/// places or saves its own piece again on the same thread goes on). Each postProcess call holds its
+/// piece's lock and savePiece takes it, so a piece that changes its fields in postProcess (TF's chest
+/// and spawner flags) is never saved torn, whichever record (a copy shares the pieces) it is reached
+/// through. Held for one piece at a time; a save waits for one chunk's postProcess of that piece at
+/// most.
+static std::recursive_mutex& pieceLock(structure::Piece const& p) {
+    static std::array<std::recursive_mutex, 64> locks;
+    return locks[(reinterpret_cast<std::uintptr_t>(&p) >> 4) % locks.size()];
+}
+
 Json savePiece(structure::Piece const& p) {
-    Json j = Json::object();
+    Json                                   j = Json::object();
+    std::scoped_lock<std::recursive_mutex> fields(pieceLock(p));
     try {
         auto extra = p.save();
         if (extra.is_object()) j = extra;
@@ -320,6 +335,7 @@ void placeInChunk(Record const& rec, worldgen::Region& region, int chunkX, int c
     for (auto const& piece : rec.livePieces) {
         if (!piece->bbox.intersects(chunkBox)) continue;
         try {
+            std::scoped_lock<std::recursive_mutex> fields(pieceLock(*piece)); // no save meanwhile
             piece->postProcess(region, random, chunkBox, pivot);
         } catch (std::exception const& e) {
             log().error("landmark: piece {} of {} failed: {}", piece->typeId, rec.start.key, e.what());
@@ -538,8 +554,10 @@ RecordPtr findLocked(Records& r, int dim, int chunkX, int chunkZ, std::string co
 void storeLocked(Records& r, RecordPtr const& record) {
     // written only when it differs: a record stored again (a test putting back the start it replaced)
     // is read by worldgen threads outside the lock
+    // (a non-object, from a damaged entry, becomes an object: Start::data is one by contract)
     auto chunk = Json::array({record->chunkX, record->chunkZ});
-    if (!record->start.data.is_object() || !record->start.data.contains("chunk") || record->start.data["chunk"] != chunk) record->start.data["chunk"] = std::move(chunk);
+    if (!record->start.data.is_object()) record->start.data = Json::object();
+    if (!record->start.data.contains("chunk") || record->start.data["chunk"] != chunk) record->start.data["chunk"] = std::move(chunk);
     indexRecord(r, record);
     r.dirty.emplace(record->start.dimension, record->chunkX, record->chunkZ);
     bumpVersion();
@@ -568,6 +586,19 @@ void replaceRecord(RecordPtr const& existing, RecordPtr const& revived, std::uin
 }
 
 } // namespace
+
+RecordPtr cloneRecord(Record const& r) {
+    auto c        = std::make_shared<Record>();
+    c->start      = r.start;
+    c->chunkX     = r.chunkX;
+    c->chunkZ     = r.chunkZ;
+    c->forced     = r.forced;
+    c->placed     = r.placed;
+    c->pieces     = r.pieces;
+    c->livePieces = r.livePieces;
+    c->reviveTried.store(r.reviveTried.load());
+    return c;
+}
 
 void putRecord(RecordPtr record) {
     if (!record) return;
@@ -640,6 +671,7 @@ RecordPtr recordFromJson(Json const& j) {
     rec->forced           = j.value("forced", false);
     rec->placed           = j.value("placed", false);
     rec->start.data       = j.value("data", Json::object());
+    if (!rec->start.data.is_object()) rec->start.data = Json::object(); // a damaged entry: Start::data is an object
     bool allLive          = true;
     std::vector<std::shared_ptr<structure::Piece>> live;
     for (auto const& p : j.value("pieces", Json::array())) {
@@ -673,19 +705,21 @@ void flushRecords() {
     if (!game::db::available()) return;
     auto&                               r = records();
     std::set<std::tuple<int, int, int>> dirty;
-    std::map<std::tuple<int, int, int>, Json> docs;
+    std::map<std::tuple<int, int, int>, std::vector<RecordPtr>> stored;
     {
         std::unique_lock lock(r.mutex);
         dirty.swap(r.dirty);
         for (auto const& [dim, cx, cz] : dirty) {
-            Json doc = Json::object();
-            if (auto it = r.byStartChunk.find({dim, cx, cz}); it != r.byStartChunk.end())
-                for (auto const& rec : it->second) doc[rec->start.key] = recordToJson(*rec);
-            docs[{dim, cx, cz}] = std::move(doc);
+            auto& recs = stored[{dim, cx, cz}];
+            if (auto it = r.byStartChunk.find({dim, cx, cz}); it != r.byStartChunk.end()) recs.assign(it->second.begin(), it->second.end());
         }
     }
-    for (auto const& [k, doc] : docs) {
+    // saved outside the records lock: saving a piece waits for its running postProcess (pieceLock),
+    // which may itself look records up
+    for (auto const& [k, recs] : stored) {
         auto const& [dim, cx, cz] = k;
+        Json doc                  = Json::object();
+        for (auto const& rec : recs) doc[rec->start.key] = recordToJson(*rec);
         if (doc.empty()) game::db::erase(recordDbKey(dim, cx, cz));
         else game::db::put(recordDbKey(dim, cx, cz), doc);
     }

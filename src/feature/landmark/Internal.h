@@ -205,6 +205,11 @@ struct Record {
 };
 using RecordPtr = std::shared_ptr<Record>;
 
+/// A copy of a record with every field (its live pieces shared, not copied: their saves and
+/// postProcess calls lock per piece, whichever record reaches them): Record holds an atomic and is not
+/// copyable as a whole. Kept next to Record: a field added there is added here.
+[[nodiscard]] RecordPtr cloneRecord(Record const& r);
+
 /// The record of `key` started in chunk (cx, cz) of `dim`.
 [[nodiscard]] RecordPtr findRecord(int dim, int chunkX, int chunkZ, std::string const& key);
 /// Records whose start chunk is (cx, cz).

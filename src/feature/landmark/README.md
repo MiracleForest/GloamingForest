@@ -48,6 +48,12 @@ factory yet (a W1 unit's, before it registers) keeps the tag it was saved with: 
 unchanged and `startPieces` returns it. This is an extension and not a field of the contract's
 `Start` because `Landmark.h` is F0's file (owners.tsv) and a `Start` copy must stay cheap.
 
+Saving a piece (the world DB, `startAt`, `startPieces`) never races its `postProcess`: each
+`postProcess` call holds that piece's lock (striped by address, recursive) and a save takes it, so
+fields a piece sets in `postProcess` (TF's chest and spawner flags) are saved whole. A save waits for
+at most one chunk's `postProcess` of the piece; a `postProcess` that saves or places its own start
+again on its thread goes on. Do not hold one piece's lock while waiting for another thread.
+
 ## Reserved sites
 
 Before a structure unit registers its generator, F6 stores a start for every site the structure
@@ -70,8 +76,9 @@ ctx.require(forced && forced->generated, "forced the fixture landmark");
 ```
 
 `ScopedStart` puts back the start of the same key and start chunk that its forced start replaced (a
-natural one or an earlier forced one), as it was, its conquered flag included. `forgetStartForTest`
-by hand instead forgets the chunk's structure set evaluation, so a natural start that a forced one
+natural one or an earlier forced one), as it was, its conquered flag included. It evaluates the
+start chunk's structure sets first, so a natural start nothing had looked up yet is captured too.
+`forgetStartForTest` by hand instead forgets the chunk's structure set evaluation, so a natural start that a forced one
 replaced is made again on the next lookup: unconquered (forceStart copied its flag onto the forced
 start, and removing that loses it). Server thread only. Do not include `feature/landmark/Internal.h`
 from another unit.

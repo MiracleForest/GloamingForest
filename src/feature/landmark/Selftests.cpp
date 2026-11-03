@@ -892,12 +892,19 @@ GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTas
     auto chance = fl::mainHandDropChance(*mob);
     ctx.check(chance.has_value() && *chance >= 2.0f, "its main hand always drops (chance " + std::to_string(chance.value_or(-1.0f)) + ")");
     auto mobId = mob->getOrCreateUniqueID();
-    mob->kill();
     // the drop appears when the death is processed (Bedrock may wait for the end of the death
     // animation): watched every tick for a bounded time, in the area widened by 8 blocks around and
     // from 4 below the floor to 16 above it (a thrown item never leaves that)
     AABB box{Vec3{static_cast<float>(area.minX) - 8.0f, static_cast<float>(area.minY) - 4.0f, static_cast<float>(area.minZ) - 8.0f},
              Vec3{static_cast<float>(area.maxX) + 9.0f, static_cast<float>(area.minY) + 16.0f, static_cast<float>(area.maxZ) + 9.0f}};
+    // the carrier's leftovers are removed afterwards from the area and 3 blocks around it only, and
+    // only those that were not there before the kill (nothing of a neighbouring test row)
+    AABB own{Vec3{static_cast<float>(area.minX) - 3.0f, static_cast<float>(area.minY) - 4.0f, static_cast<float>(area.minZ) - 3.0f},
+             Vec3{static_cast<float>(area.maxX) + 4.0f, static_cast<float>(area.minY) + 16.0f, static_cast<float>(area.maxZ) + 4.0f}};
+    std::set<std::int64_t> before;
+    for (auto* a : region->getEntities(box))
+        if (a) before.insert(a->getOrCreateUniqueID().rawID);
+    mob->kill();
     auto isHintBook = [](Actor* a) {
         if (!a || a->getTypeName() != "minecraft:item") return false;
         auto const& item = static_cast<ItemActor*>(a)->item();
@@ -911,7 +918,7 @@ GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTas
         ++waited;
         if (auto* r = ctx.region())
             for (auto* a : r->getEntities(box))
-                if (isHintBook(a)) dropped = true;
+                if (isHintBook(a) && !before.contains(a->getOrCreateUniqueID().rawID)) dropped = true; // this kill's book
     }
     std::string seen; // what the area holds, for a failure
     if (auto* r = ctx.region()) {
@@ -920,13 +927,17 @@ GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTas
             if (!dropped) seen += (seen.empty() ? "" : ", ") + a->getTypeName();
         }
     }
-    // what the carrier left: the book, the zombie's own loot (rotten flesh, sometimes iron, a carrot
-    // or a potato) and its experience orbs; flatArea restores blocks only, so they go here, after
-    // `dropped` is known (the tests run one at a time: nothing else of another test is in the box)
+    // what the carrier left: the book (wherever in the watched box it landed), the zombie's own loot
+    // (rotten flesh, sometimes iron, a carrot or a potato) and its experience orbs, appeared since the
+    // kill near the area; flatArea restores blocks only, so they go here, after `dropped` is known
     if (auto* r = ctx.region()) {
         std::vector<Actor*> left;
-        for (auto* a : r->getEntities(box))
-            if (a && (a->getTypeName() == "minecraft:item" || a->getTypeName() == "minecraft:xp_orb")) left.push_back(a);
+        for (auto* a : r->getEntities(box)) {
+            if (!a || before.contains(a->getOrCreateUniqueID().rawID)) continue;
+            auto const& type = a->getTypeName();
+            bool        near = own.intersects(a->getAABB());
+            if (isHintBook(a) || (near && (type == "minecraft:item" || type == "minecraft:xp_orb"))) left.push_back(a);
+        }
         for (auto* a : left) a->remove();
     }
     if (!dropped) {
@@ -1040,27 +1051,13 @@ std::string entriesText(JsonT const& list) {
 /// stays inside the chunk).
 GlobalPos farCenter(GlobalPos const& base, int chunksSouth) { return {base.dim, ((base.x >> 4) << 4) + 8, 64, (((base.z >> 4) + chunksSouth) << 4) + 6}; }
 
-/// A copy of a stored record (Record holds an atomic and is not copyable as a whole).
-fl::RecordPtr copyRecord(fl::Record const& r) {
-    auto c        = std::make_shared<fl::Record>();
-    c->start      = r.start;
-    c->chunkX     = r.chunkX;
-    c->chunkZ     = r.chunkZ;
-    c->forced     = r.forced;
-    c->placed     = r.placed;
-    c->pieces     = r.pieces;
-    c->livePieces = r.livePieces;
-    c->reviveTried.store(r.reviveTried.load());
-    return c;
-}
-
 /// A conquered copy of a stored start in its place for a scope; the original record is stored again
 /// when the scope ends, also on abort. The shared record itself is never written (worldgen threads
 /// read it).
 struct ConqueredCopy {
     fl::RecordPtr original;
     explicit ConqueredCopy(fl::RecordPtr rec) : original(std::move(rec)) {
-        auto copy             = copyRecord(*original);
+        auto copy             = fl::cloneRecord(*original);
         copy->start.conquered = true;
         fl::putRecord(copy);
     }
