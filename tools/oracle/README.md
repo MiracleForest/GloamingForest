@@ -83,9 +83,13 @@ gtest checks `rng.json`, `landmarks/` and the biome columns against reference C+
 implementations against `rng.json`, `noise.json` and `landmarks/seed-*.json`; A2 / A8 then replace the test-local
 reference code with the real implementations. U1 and U2 compare against `biomes/`, `heights/`, `density/` and
 `surface/`, U13 against `uncrafting.json`, the recipe and loot owners against `recipes.json` and `loot.json`.
-`structure_steps.json` is compared with F6's `src/core/landmark/Decoration` in `tests/golden/StructureStepsTest.cpp`;
-F5's runtime table (`worldgen::ext::structuresByStep` / `structureSlot`, which the landmark starts are seeded with
-first) is feature code outside the gtest and is not compared yet: F5 should check it against this golden.
+`structure_steps.json` is compared in `tests/golden/StructureStepsTest.cpp` with F6's `src/core/landmark/Decoration`
+(Minecraft's structures, the registry order, `slotOf`, plus TF's steps from `assets/data/landmarks/twilightforest`) and
+with F5's built-in table (the `kVanilla` / `kTwilight` rows of `src/feature/worldgen/Structures.cpp` and the
+`DecorationStep` enumerators of `src/feature/ext/worldgen/Generation.h`, read as text: feature code the gtests cannot
+link), which `worldgen::ext::structuresByStep` / `structureSlot` sort into the runtime registry the landmark starts are
+seeded with first. F6's selftest `landmark.decoration` then checks in game that `structuresByStep()` is F6's table entry
+by entry, so the runtime order is tied to the golden too.
 
 To change what is dumped, edit `spec.json` or the dumper, rerun `run.ps1`, and review the diff of `tests/golden`
 like code: the goldens are only ever written by the oracle.
@@ -104,6 +108,7 @@ exactly that table (seed-independent: one file, no `seed`):
 | `steps` | `steps[o]`: the ids of the structures whose `step().ordinal()` is `o`, in registry stream order; `[]` for a step without structures. Every ordinal is present, so `steps[o][l]` is the structure seeded with `setFeatureSeed(decorationSeed, l, o)`. |
 | `order` | Every id in registry stream order (`MappedRegistry#stream`: registration order, which `RegistryDataLoader` takes from the sorted file locations `<ns>:worldgen/structure/<path>.json`, path first, then namespace). |
 
-The dumper checks that the groups partition the registry (every id once, no ordinal outside `GenerationStep.Decoration`).
+The dumper checks that the groups partition the registry (every id once; a structure at an ordinal outside
+`GenerationStep.Decoration` would be in no group and fail the count).
 `tests/golden/StructureStepsTest.cpp` compares the golden with F6's pure table: the steps of `vanillaStructures()` and of
 TF's records in `assets/data/landmarks/twilightforest`, `slotOf` for every entry, and `registryBefore` over `order`.

@@ -5,21 +5,20 @@
 // the salt of setFeatureSeed(decorationSeed, index, step)). Compared with F6's pure decoration-step
 // table: core/landmark/Decoration (Minecraft's 34 structures, the registry order, slotOf) plus TF's
 // structures with the steps of their worldgen/structure JSON (assets/data/landmarks/twilightforest).
-
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS // std::getenv (GF_REPO_DIR)
-#endif
+// Also compared: F5's built-in structure table (src/feature/worldgen/Structures.cpp kVanilla /
+// kTwilight), which worldgen::ext::structuresByStep / structureSlot sort into the runtime registry the
+// landmark starts are seeded with first.
 
 #include <gtest/gtest.h>
 
 #include <nlohmann/json.hpp>
 
-#include <cstdlib>
+#include <algorithm>
+#include <cctype>
 #include <filesystem>
-#include <fstream>
 #include <map>
+#include <regex>
 #include <set>
-#include <sstream>
 #include <string>
 #include <system_error>
 #include <utility>
@@ -27,36 +26,16 @@
 
 #include "core/landmark/Decoration.h"
 
+#include "GoldenRepo.h"
+
 namespace {
 
 namespace fs  = std::filesystem;
 namespace dec = gf::core::landmark::decoration;
+using gf::tests::golden::readFile;
+using gf::tests::golden::readJson;
+using gf::tests::golden::repoDir;
 using nlohmann::json;
-
-// The repository root: $GF_REPO_DIR, or found walking up from this file / the working directory
-// (xmake runs the tests from the build directory) to tests/golden/manifest.json. Empty: not found.
-fs::path repoDir() {
-    static fs::path const dir = [] {
-        std::error_code ec;
-        auto isRoot = [&](fs::path const& p) { return fs::exists(p / "tests/golden/manifest.json", ec); };
-        if (char const* env = std::getenv("GF_REPO_DIR"); env && *env && isRoot(env)) return fs::path(env);
-        for (fs::path start : {fs::path(__FILE__).parent_path(), fs::current_path(ec)}) {
-            for (fs::path p = start; !p.empty(); p = p.parent_path()) {
-                if (isRoot(p)) return p;
-                if (p == p.root_path()) break;
-            }
-        }
-        return fs::path();
-    }();
-    return dir;
-}
-
-json readJson(fs::path const& p) {
-    std::ifstream      in(p, std::ios::binary);
-    std::ostringstream ss;
-    ss << in.rdbuf();
-    return json::parse(ss.str(), nullptr, false);
-}
 
 json const& golden() {
     static json const g = readJson(repoDir() / "tests/golden/structure_steps.json");
@@ -64,15 +43,60 @@ json const& golden() {
 }
 
 // TF's structures: the key and the "step" of TF's worldgen/structure JSON (F6's landmark records).
+// A record without a key or with an unknown step fails here, by file name, and is left out.
 std::vector<dec::Structure> twilightStructures() {
     std::vector<dec::Structure> out;
     std::error_code             ec;
-    for (auto const& e : fs::directory_iterator(repoDir() / "assets/data/landmarks/twilightforest", ec)) {
+    fs::path const              dir = repoDir() / "assets/data/landmarks/twilightforest";
+    for (auto const& e : fs::directory_iterator(dir, ec)) {
         if (e.path().extension() != ".json") continue;
-        json j = readJson(e.path());
-        if (!j.is_object()) continue;
-        auto step = j.value("structure", json::object()).value("step", std::string{});
-        out.push_back({j.value("key", std::string{}), dec::stepIndex(step)});
+        auto const file = e.path().filename().string();
+        json       j    = readJson(e.path());
+        if (!j.is_object()) {
+            ADD_FAILURE() << dir.generic_string() << "/" << file << " is not a JSON object";
+            continue;
+        }
+        auto key  = j.value("key", std::string{});
+        auto name = j.value("structure", json::object()).value("step", std::string{});
+        auto step = dec::stepIndex(name);
+        if (key.empty() || step < 0) {
+            ADD_FAILURE() << file << ": landmark record without a key (\"" << key << "\") or with an unknown structure.step (\"" << name << "\")";
+            continue;
+        }
+        out.push_back({std::move(key), step});
+    }
+    EXPECT_FALSE(ec) << dir.generic_string() << ": " << ec.message();
+    return out;
+}
+
+// CamelCase enumerator -> Java's serialized name (UndergroundStructures -> underground_structures).
+std::string snakeCase(std::string const& camel) {
+    std::string out;
+    for (char c : camel) {
+        if (std::isupper(static_cast<unsigned char>(c))) {
+            if (!out.empty()) out += '_';
+            out += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        } else {
+            out += c;
+        }
+    }
+    return out;
+}
+
+// F5's built-in table: the {"<id>", DecorationStep::<Step>} rows of kVanilla and kTwilight in
+// src/feature/worldgen/Structures.cpp (feature code the gtests cannot link), steps by their
+// serialized names. Empty when the file or the arrays are not found.
+std::map<std::string, std::vector<std::pair<std::string, std::string>>> worldgenBuiltins() {
+    std::map<std::string, std::vector<std::pair<std::string, std::string>>> out;
+    std::string const src = readFile(repoDir() / "src/feature/worldgen/Structures.cpp");
+    for (char const* table : {"kVanilla", "kTwilight"}) {
+        auto start = src.find(std::string("Builtin ") + table + "[]");
+        if (start == std::string::npos) continue;
+        auto end = src.find("};", start);
+        std::string const body = src.substr(start, end == std::string::npos ? std::string::npos : end - start);
+        static std::regex const row(R"re(\{\s*"([^"]+)"\s*,\s*DecorationStep::(\w+)\s*\})re");
+        auto& rows = out[table];
+        for (std::sregex_iterator it(body.begin(), body.end(), row), last; it != last; ++it) rows.emplace_back((*it)[1].str(), snakeCase((*it)[2].str()));
     }
     return out;
 }
@@ -178,4 +202,48 @@ TEST(OracleStructureSteps, MatchLandmarkDecorationSlots) {
     for (std::size_t i = 1; i < order.size(); ++i) {
         EXPECT_TRUE(dec::registryBefore(order[i - 1], order[i])) << order[i - 1] << " comes before " << order[i] << " in Java's registry";
     }
+}
+
+// F5's built-in table, which worldgen::ext::structuresByStep() / structureSlot() sort into the runtime
+// registry (path, then namespace: F6's registryBefore, checked against the golden's order above; the
+// selftest landmark.decoration compares structuresByStep() with F6's table entry by entry): every
+// structure of the golden once, at Java's step, and F5's DecorationStep enumerators at Java's ordinals.
+TEST(OracleStructureSteps, MatchWorldgenBuiltinTable) {
+    REQUIRE_GOLDEN();
+    // enum class DecorationStep (src/feature/ext/worldgen/Generation.h): static_cast<int> is the step
+    std::string const header = readFile(repoDir() / "src/feature/ext/worldgen/Generation.h");
+    std::smatch       decl;
+    ASSERT_TRUE(std::regex_search(header, decl, std::regex(R"(enum class DecorationStep\s*\{([^}]*)\})")))
+        << "enum class DecorationStep not found in src/feature/ext/worldgen/Generation.h";
+    // the enumerators without comments (a comment's words are not enumerators)
+    std::string const        list = std::regex_replace(std::regex_replace(decl[1].str(), std::regex(R"(//[^\n]*)"), ""), std::regex(R"(/\*[\s\S]*?\*/)"), "");
+    std::vector<std::string> enumerators;
+    static std::regex const  word(R"(\w+)");
+    for (std::sregex_iterator it(list.begin(), list.end(), word), last; it != last; ++it) enumerators.push_back(it->str());
+    ASSERT_EQ(enumerators.size(), static_cast<std::size_t>(dec::kSteps)) << "DecorationStep has GenerationStep.Decoration's 11 values";
+    for (int i = 0; i < dec::kSteps; ++i) EXPECT_EQ(snakeCase(enumerators[static_cast<std::size_t>(i)]), dec::stepName(i)) << "DecorationStep ordinal " << i;
+
+    std::map<std::string, int> stepOf;
+    auto                       steps = goldenSteps();
+    for (int s = 0; s < static_cast<int>(steps.size()); ++s)
+        for (auto const& id : steps[s]) stepOf[id] = s;
+
+    auto builtins = worldgenBuiltins();
+    ASSERT_EQ(builtins["kVanilla"].size(), dec::vanillaStructures().size()) << "kVanilla rows in src/feature/worldgen/Structures.cpp: Minecraft 1.21.1's 34 structures";
+    ASSERT_EQ(builtins["kTwilight"].size(), 21u) << "kTwilight rows in src/feature/worldgen/Structures.cpp: TF 4.8's 21 structures";
+    std::set<std::string> seen;
+    for (auto const& [table, rows] : builtins) {
+        std::string const ns = table == "kVanilla" ? "minecraft:" : "twilightforest:";
+        for (auto const& [id, stepName] : rows) {
+            EXPECT_TRUE(seen.insert(id).second) << id << " twice in F5's table";
+            EXPECT_EQ(id.rfind(ns, 0), 0u) << id << " in " << table;
+            auto it = stepOf.find(id);
+            if (it == stepOf.end()) {
+                ADD_FAILURE() << id << " (" << table << ") is not in Java's registry";
+                continue;
+            }
+            EXPECT_EQ(dec::stepIndex(stepName), it->second) << id << ": Java's step " << dec::stepName(it->second) << ", F5's " << stepName;
+        }
+    }
+    for (auto const& [id, s] : stepOf) EXPECT_TRUE(seen.contains(id)) << id << " (step " << dec::stepName(s) << ") is in Java's registry but not in F5's table";
 }

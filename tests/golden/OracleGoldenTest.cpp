@@ -40,6 +40,8 @@
 
 #include "core/VolumeHash.h"
 
+#include "GoldenRepo.h"
+
 namespace {
 
 namespace fs = std::filesystem;
@@ -51,30 +53,10 @@ constexpr char const* kTfCommit  = "9e40a75721c716b2fdf80c16d1058fe718825e9f";
 // ---------------------------------------------------------------------------------------------
 // files
 
-// tests/golden: $GF_GOLDEN_DIR, this source file's directory, or found walking up from the
-// working directory (xmake runs the tests from the build directory).
-fs::path goldenDir() {
-    static fs::path const dir = [] {
-        if (char const* env = std::getenv("GF_GOLDEN_DIR"); env && *env) return fs::path(env);
-        std::error_code ec;
-        fs::path here = fs::path(__FILE__).parent_path();
-        if (here.is_absolute() && fs::exists(here / "manifest.json", ec)) return here;
-        for (fs::path p = fs::current_path(ec); !p.empty(); p = p.parent_path()) {
-            if (fs::exists(p / "tests/golden/manifest.json", ec)) return p / "tests/golden";
-            if (!here.is_absolute() && fs::exists(p / here / "manifest.json", ec)) return p / here;
-            if (p == p.root_path()) break;
-        }
-        return fs::path();
-    }();
-    return dir;
-}
-
-std::string readFile(fs::path const& p) {
-    std::ifstream in(p, std::ios::binary);
-    std::ostringstream ss;
-    ss << in.rdbuf();
-    return ss.str();
-}
+// tests/golden ($GF_GOLDEN_DIR or the repository's), the repository and file reading: GoldenRepo.h
+using gf::tests::golden::goldenDir;
+using gf::tests::golden::readFile;
+using gf::tests::golden::repoDir;
 
 json const& golden(std::string const& rel) {
     static std::map<std::string, json> cache;
@@ -461,9 +443,9 @@ std::map<std::string, std::string> const& biomeLandmarks() {
 // working directory (empty when not found: the coverage tests then fail).
 fs::path ownersTsv() {
     static fs::path const file = [] {
-        if (char const* env = std::getenv("GF_OWNERS_TSV"); env && *env) return fs::path(env);
+        if (auto env = gf::tests::golden::envPath("GF_OWNERS_TSV"); !env.empty()) return env;
         std::error_code ec;
-        for (fs::path start : {goldenDir(), fs::current_path(ec)}) {
+        for (fs::path start : {repoDir(), goldenDir(), fs::current_path(ec)}) {
             if (start.empty()) continue;
             start = fs::absolute(start, ec);
             for (fs::path p = start; !p.empty(); p = p.parent_path()) {
@@ -529,11 +511,25 @@ TEST(OracleGolden, ManifestListsEveryFileUnchanged) {
         if (rel == "manifest.json") continue;
         EXPECT_TRUE(listed.contains(rel)) << rel << " is not in tests/golden/manifest.json";
     }
-    // every kind, and every seed for the seed-dependent ones
-    for (char const* kind : {"rng", "noise", "mobs", "loot", "recipes", "uncrafting", "structure_steps"}) EXPECT_EQ(filesOfKind(kind).size(), 1u) << kind;
-    for (char const* kind : {"biomes", "heights", "density", "landmarks", "surface"}) {
+    // every kind tools/oracle/spec.json dumps, and every seed for the seed-dependent ones
+    ASSERT_FALSE(repoDir().empty()) << "repository not found (set GF_REPO_DIR): tools/oracle/spec.json lists the kinds";
+    json const spec = gf::tests::golden::readJson(repoDir() / "tools/oracle/spec.json");
+    ASSERT_TRUE(spec.is_object() && spec.contains("globalKinds") && spec.contains("seedKinds")) << "tools/oracle/spec.json missing or without globalKinds / seedKinds";
+    auto const globalKinds = spec.at("globalKinds").get<std::vector<std::string>>();
+    auto const seedKinds   = spec.at("seedKinds").get<std::vector<std::string>>();
+    EXPECT_FALSE(globalKinds.empty());
+    EXPECT_FALSE(seedKinds.empty());
+    EXPECT_EQ(m.at("seeds"), spec.at("seeds")) << "the manifest's seeds are spec.json's";
+    std::set<std::string> kinds;
+    for (auto const& kind : globalKinds) {
+        EXPECT_TRUE(kinds.insert(kind).second) << kind << " twice in spec.json";
+        EXPECT_EQ(filesOfKind(kind).size(), 1u) << kind;
+    }
+    for (auto const& kind : seedKinds) {
+        EXPECT_TRUE(kinds.insert(kind).second) << kind << " twice in spec.json";
         EXPECT_EQ(filesOfKind(kind).size(), m.at("seeds").size()) << kind;
     }
+    for (auto const& [rel, e] : m.at("files").items()) EXPECT_TRUE(kinds.contains(e.value("kind", ""))) << rel << ": kind " << e.value("kind", "?") << " is not in spec.json";
 }
 
 // =============================================================================================

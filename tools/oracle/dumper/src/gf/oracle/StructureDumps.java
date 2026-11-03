@@ -55,13 +55,13 @@ final class StructureDumps {
 			}
 			steps.add(ids);
 		}
-		for (Integer ordinal : byStep.keySet()) {
-			if (ordinal < 0 || ordinal >= decorations.length) throw new IllegalStateException("structures at step ordinal " + ordinal + " outside GenerationStep.Decoration");
-		}
 		List<Object> order = Json.arr();
 		registry.stream().forEach(s -> order.add(id(registry, s)));
+		// the groups partition the stream (a structure at an ordinal outside GenerationStep.Decoration
+		// would be left out of every group)
 		if (order.size() != registry.size() || seen.size() != order.size()) {
-			throw new IllegalStateException("the registry stream has " + order.size() + " structures, the groups " + seen.size() + ", Registry#size " + registry.size());
+			throw new IllegalStateException("the registry stream has " + order.size() + " structures, the groups of GenerationStep.Decoration " + seen.size()
+				+ " (step ordinals present: " + byStep.keySet() + "), Registry#size " + registry.size());
 		}
 
 		Map<String, Object> out = Json.obj();
