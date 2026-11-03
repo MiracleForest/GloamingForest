@@ -96,13 +96,18 @@ std::unordered_map<std::string, std::string> const& vanillaParticles() {
     return m;
 }
 
-// Java vanilla sound events TF plays (SoundEvents) -> Bedrock sound names (best match).
+// Java vanilla sound events TF plays -> Bedrock sound names (best match; every name is one of the
+// game's sound_definitions of 1.26.51): the SoundEvents TF's code names, and the ones Java's own
+// classes play for TF's subclasses and damage, which the W0 kits play through gf::fx
+// (AbstractArrow's hits and pickup for TF's arrows, the DamageEffects sounds of a hurt player).
 std::unordered_map<std::string, std::string> const& vanillaSounds() {
     static std::unordered_map<std::string, std::string> const m{
         {"block.anvil.land", "random.anvil_land"},
         {"item.armor.equip_generic", "armor.equip_generic"},
         {"item.armor.equip_leather", "armor.equip_leather"},
         {"item.armor.equip_netherite", "armor.equip_netherite"},
+        {"entity.arrow.hit", "random.bowhit"},         // AbstractArrow: hitting a block or a mob
+        {"entity.arrow.hit_player", "random.orb"},     // AbstractArrow#onHitEntity: the owner's "ding" (random/successful_hit)
         {"entity.arrow.shoot", "random.bow"},
         {"item.axe.strip", "use.wood"},
         {"entity.bat.takeoff", "mob.bat.takeoff"},
@@ -114,7 +119,7 @@ std::unordered_map<std::string, std::string> const& vanillaSounds() {
         {"item.bundle.insert", "bundle.insert"},
         {"item.bundle.remove_one", "bundle.remove_one"},
         {"block.candle.ambient", "ambient.candle"},
-        {"block.candle.break", "break.candle"},
+        {"block.candle.break", "dig.candle"}, // the candle block's break sound
         {"block.candle.extinguish", "extinguish.candle"},
         {"block.candle.place", "place.candle"},
         {"block.chest.locked", "random.door_close"},
@@ -129,6 +134,7 @@ std::unordered_map<std::string, std::string> const& vanillaSounds() {
         {"entity.cow.hurt", "mob.cow.hurt"},
         {"entity.cow.step", "mob.cow.step"},
         {"block.dispenser.dispense", "random.click"},
+        {"enchant.thorns.hit", "damage.thorns"}, // DamageEffects.THORNS
         {"block.end_portal.spawn", "block.end_portal.spawn"},
         {"entity.evoker.prepare_summon", "mob.evocation_illager.prepare_summon"},
         {"block.fire.ambient", "fire.fire"},
@@ -154,7 +160,7 @@ std::unordered_map<std::string, std::string> const& vanillaSounds() {
         {"entity.item_frame.add_item", "block.itemframe.add_item"},
         {"block.lava.pop", "liquid.lavapop"},
         {"entity.lightning_bolt.impact", "ambient.weather.lightning.impact"},
-        {"block.lily_pad.place", "block.lily_pad.place"},
+        {"block.lily_pad.place", "dig.grass"}, // Bedrock's lily pad sounds as grass (no lily pad sound)
         {"item.lodestone_compass.lock", "lodestone_compass.link_compass_to_lodestone"},
         {"block.note_block.harp", "note.harp"},
         {"entity.painting.break", "random.break"},
@@ -175,6 +181,7 @@ std::unordered_map<std::string, std::string> const& vanillaSounds() {
         {"entity.player.hurt_drown", "mob.player.hurt_drown"},
         {"entity.player.hurt_freeze", "mob.player.hurt_freeze"},
         {"entity.player.hurt_on_fire", "mob.player.hurt_on_fire"},
+        {"entity.player.hurt_sweet_berry_bush", "block.sweet_berry_bush.hurt"}, // DamageEffects.POKING
         {"entity.player.levelup", "random.levelup"},
         {"block.portal.ambient", "portal.portal"},
         {"entity.rabbit.ambient", "mob.rabbit.idle"},
@@ -219,7 +226,7 @@ std::unordered_map<std::string, std::string> const& vanillaSounds() {
         {"entity.wolf.death", "mob.wolf.death"},
         {"entity.wolf.step", "mob.wolf.step"},
         {"entity.zombie.ambient", "mob.zombie.say"},
-        {"entity.zombie.attack_iron_door", "mob.zombie.metal"},
+        {"entity.zombie.attack_iron_door", "random.anvil_land"}, // a metal clang (Bedrock has no zombie metal sound)
         {"entity.zombie.break_wooden_door", "mob.zombie.woodbreak"},
         {"entity.zombie.death", "mob.zombie.death"},
         {"entity.zombie.hurt", "mob.zombie.hurt"},

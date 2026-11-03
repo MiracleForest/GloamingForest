@@ -2,9 +2,12 @@
 //
 // Containers on custom blocks. Two backends behind one Handler:
 //   - native: a block with the `minecraft:block_entity` component gets a data-driven block actor
-//     (format_version 1.26.x); for a registered container block, this module gives that actor a
-//     game Container (one ContainerBlockActorComponent::tryCreateFor hook), saved with the block
-//     actor (its own NBT, "GfItems");
+//     (format_version 1.26.50, spikes S3 and S7); for a registered container block, this module
+//     gives that actor a game Container (one ContainerBlockActorComponent::tryCreateFor hook), saved
+//     with the block actor (its own NBT, "GfItems"). TF's chests use it (tools/families writes them
+//     with minecraft:block_entity); stacks stored in block data before the block had its block actor
+//     are read where a move would put them until the first write through the contract moves them
+//     (feature/ext/combat/InventoryMigrate.h);
 //   - BlockData: any other block keeps its slots in its block data ("inventory": {items, loot}).
 // Both are shown with the client mod's chest screen ("inventory.chest"; the server keeps what each
 // player opened and refuses screen data / actions for anything else) and, on vanilla clients,
@@ -13,7 +16,12 @@
 // form (take a stack, put stacks in) for other sizes: the client does not show the game's screen
 // for a custom block's own container (S3; openNativeScreen keeps the experiment).
 // While a proxy is open, every write through a handler from `find` reaches it at once, so the
-// screen never shows a stack the storage no longer has.
+// screen never shows a stack the storage no longer has. The client mod's screens follow every
+// change too (Java's AbstractContainerMenu#broadcastChanges): each write (a handler's, the BlockData
+// backend's, a native container's setItem from any game code) bumps the container's change
+// counter, and at the end of the tick the screens showing a changed container get fresh data in
+// the context they were opened with (feature/ext/combat/InventoryChanges.h); nothing is polled
+// while nothing changes.
 //
 // The client mod's screen follows Java's ChestMenu (AbstractContainerMenu#doClick): pickup, quick
 // move (ChestMenu#quickMoveStack with moveItemStackTo's order), swap with the hotbar keys and the
@@ -36,8 +44,11 @@
 // comparators Java's container signal (redstone::registerAnalog, `comparator`) and drops the
 // contents when the block is broken. A pending loot table (placeContainer / setLootTable) rolls on
 // the first access (Java's RandomizableContainer#unpackLootTable: the opener's luck; a comparator
-// reading the container unpacks it too, as Java's getItem does). Hoppers do not see custom
-// containers (spike S3).
+// reading the container unpacks it too, as Java's getItem does). The game's hoppers, hopper
+// minecarts, droppers and crafters reach a native container through F11's hooks
+// (src/feature/families/Hoppers.cpp; which blocks: feature/ext/families/Hoppers.h, by default the
+// chest-like declarations) and write it with its setItem; a BlockData container stays out of their
+// reach (it has no game container).
 
 #include "feature/inventory/Inventory.h"
 
@@ -99,6 +110,8 @@
 #include "feature/common/Interactions.h"
 #include "feature/common/Redstone.h"
 #include "feature/common/Screens.h"
+#include "feature/ext/combat/InventoryChanges.h"
+#include "feature/ext/combat/InventoryMigrate.h"
 #include "feature/ext/combat/InventoryViewers.h"
 #include "feature/fx/Fx.h"
 #include "feature/inventory/InventoryInternal.h"
@@ -119,6 +132,43 @@ namespace gf::inventory {
 namespace {
 
 using Json = nlohmann::json;
+
+// ---- change notices (feature/ext/combat/InventoryChanges.h) -------------------------------------------
+
+/// The change counters: one sequence for every container; each position keeps the number of its
+/// last change. The client mod's screens remember the number their data was made at (OpenScreen).
+struct Changes {
+    std::mutex                         mutex;
+    std::uint64_t                      sequence = 0; ///< the number of the last change anywhere
+    std::uint64_t                      flushed  = 0; ///< `sequence` when the screens were last brought up to date
+    std::map<GlobalPos, std::uint64_t> last;         ///< each position's last change
+    std::uint64_t                      refreshes = 0; ///< screens refreshed for a change (selftests)
+};
+
+Changes& changes() {
+    static Changes c;
+    return c;
+}
+
+/// The container at `pos` changed (any backend, any writer).
+void noteChanged(GlobalPos const& pos) {
+    auto&           c = changes();
+    std::lock_guard lock(c.mutex);
+    c.last[pos] = ++c.sequence;
+}
+
+std::uint64_t changeSequence() {
+    auto&           c = changes();
+    std::lock_guard lock(c.mutex);
+    return c.sequence;
+}
+
+std::uint64_t lastChangeOf(GlobalPos const& pos) {
+    auto&           c = changes();
+    std::lock_guard lock(c.mutex);
+    auto            it = c.last.find(pos);
+    return it == c.last.end() ? 0 : it->second;
+}
 
 // ---- native backend: a game Container inside the data-driven block actor ----------------------------
 
@@ -142,9 +192,11 @@ public:
             if (auto* region = game::regionOf(where->dim); region && region->hasChunksAt(game::blockPos(*where), 0, false)) {
                 if (auto* actor = region->getBlockEntity(game::blockPos(*where))) region->fireBlockEntityChanged(*actor);
             }
-            // game code writing the container directly (not hoppers: they do not see it, S3): an
-            // open proxy shows it at once
+            // game code writing the container directly (hoppers, hopper minecarts, droppers and
+            // crafters through F11's hooks, src/feature/families/Hoppers.cpp): an open proxy shows
+            // it at once, the client mod's screens at the end of the tick
             if (proxyOpen(*where)) proxyMirror(*where, slot, item);
+            noteChanged(*where);
         }
     }
     int  getContainerSize() const override { return static_cast<int>(mItems.size()); }
@@ -254,15 +306,92 @@ void writeStorage(GlobalPos const& pos, Json const& data) {
     auto* region = regionFor(pos);
     if (!region) return;
     blockdata::set(*region, game::blockPos(pos), kDataKey, data);
+    noteChanged(pos);
 }
 
-/// The slot stacks of `pos` (BlockData or native), `size` long.
+/// The stacks of the BlockData layout's "items" of `pos`, by slot (empty: none stored).
+std::vector<ItemStack> blockDataItems(GlobalPos const& pos) {
+    std::vector<ItemStack> out;
+    // (no copy of the document: native reads and writes ask this every time)
+    auto const* doc = blockdata::get(pos);
+    if (!doc || !doc->is_object()) return out;
+    auto data = doc->find(kDataKey);
+    if (data == doc->end() || !data->is_object()) return out;
+    auto found = data->find("items");
+    if (found == data->end() || !found->is_array()) return out;
+    auto const& items = *found;
+    bool any = false;
+    for (auto const& j : items) {
+        out.push_back(j.is_null() ? ItemStack{} : game::items::fromJson(j));
+        any = any || !game::items::isEmpty(out.back());
+    }
+    if (!any) out.clear();
+    return out;
+}
+
+/// Puts stacks waiting in block data over the slots of a native container as a move does
+/// (InventoryMigrate.h): each into its own slot when that is empty, else into the first empty slot.
+/// Returns what found no room.
+std::vector<ItemStack> overlay(std::vector<ItemStack>& slots, std::vector<ItemStack> const& waiting) {
+    std::vector<ItemStack> rest, dropped;
+    for (std::size_t i = 0; i < waiting.size(); ++i) {
+        if (game::items::isEmpty(waiting[i])) continue;
+        if (i < slots.size() && game::items::isEmpty(slots[i])) slots[i] = waiting[i];
+        else rest.push_back(waiting[i]);
+    }
+    for (auto const& s : rest) {
+        auto free = std::find_if(slots.begin(), slots.end(), [](ItemStack const& x) { return game::items::isEmpty(x); });
+        if (free != slots.end()) *free = s;
+        else dropped.push_back(s);
+    }
+    return dropped;
+}
+
+void spawnAll(BlockSource& region, BlockPos const& bp, std::vector<ItemStack> const& stuff);
+
+/// Moves the stacks of `pos` waiting in block data into its native container `c`
+/// (InventoryMigrate.h); the stacks moved, -1 when nothing moved because one would have to drop.
+int moveWaiting(BlockSource& region, GlobalPos const& pos, Container& c, bool allowDrops) {
+    auto waiting = blockDataItems(pos);
+    if (waiting.empty()) {
+        // an "items" list without a stack goes (nothing to move)
+        auto const* doc = blockdata::get(pos);
+        bool        has = doc && doc->is_object() && doc->contains(kDataKey) && (*doc)[kDataKey].is_object() && (*doc)[kDataKey].contains("items");
+        if (auto data = has ? storageOf(pos) : Json::object(); has) {
+            data.erase("items");
+            writeStorage(pos, data.empty() ? Json(nullptr) : data);
+        }
+        return 0;
+    }
+    std::vector<ItemStack> before(static_cast<std::size_t>(c.getContainerSize()));
+    for (int i = 0; i < c.getContainerSize(); ++i) before[static_cast<std::size_t>(i)] = c.getItem(i);
+    auto after   = before;
+    auto dropped = overlay(after, waiting);
+    if (!dropped.empty() && !allowDrops) return -1;
+    int moved = 0;
+    for (std::size_t i = 0; i < after.size(); ++i) {
+        if (game::items::isEmpty(after[i]) || !game::items::isEmpty(before[i])) continue;
+        c.setItem(static_cast<int>(i), after[i]);
+        ++moved;
+    }
+    // the block data keeps what is not a slot (a pending loot table)
+    auto data = storageOf(pos);
+    data.erase("items");
+    writeStorage(pos, data.empty() ? Json(nullptr) : data);
+    if (!dropped.empty()) spawnAll(region, game::blockPos(pos), dropped);
+    log().info("inventory: moved {} stack(s) of the container at {} {} {} from block data into its block actor ({} dropped: no room)", moved, pos.x, pos.y, pos.z, dropped.size());
+    return moved;
+}
+
+/// The slot stacks of `pos` (BlockData or native), `size` long. A native container whose stacks
+/// still wait in block data shows them where a move would put them (InventoryMigrate.h).
 std::vector<ItemStack> readSlots(GlobalPos const& pos, int size) {
     std::vector<ItemStack> out(static_cast<std::size_t>(std::max(0, size)));
     auto*                  region = regionFor(pos);
     if (!region) return out;
     if (auto* c = nativeContainer(*region, game::blockPos(pos))) {
         for (int i = 0; i < size && i < c->getContainerSize(); ++i) out[static_cast<std::size_t>(i)] = c->getItem(i);
+        if (auto waiting = blockDataItems(pos); !waiting.empty()) (void)overlay(out, waiting);
         return out;
     }
     auto items = storageOf(pos).value("items", Json::array());
@@ -274,6 +403,8 @@ void writeSlot(GlobalPos const& pos, int slot, ItemStack const& stack, int size)
     auto* region = regionFor(pos);
     if (!region || slot < 0 || slot >= size) return;
     if (auto* c = nativeContainer(*region, game::blockPos(pos))) {
+        // the stacks still in block data move first: one copy before anything changes
+        (void)moveWaiting(*region, pos, *c, true);
         c->setItem(slot, stack);
         return;
     }
@@ -365,22 +496,30 @@ Handler withDefaults(Handler h) {
 }
 
 /// The handler units and screens use: every write reaches an open vanilla chest screen proxy at
-/// once (one copy of the slots while it is open).
+/// once (one copy of the slots while it is open) and the client mod's screens at the end of the
+/// tick (the change counter, also for a registration that keeps its slots itself).
 Handler routed(Handler raw) {
     Handler h = raw;
     h.set     = [raw](GlobalPos const& pos, int slot, ItemStack const& stack) {
         raw.set(pos, slot, stack);
         // the stack written (a handler that stores something else is reconciled next tick)
         if (proxyOpen(pos)) proxyMirror(pos, slot, stack);
+        noteChanged(pos);
     };
     h.insert = [raw](GlobalPos const& pos, ItemStack const& stack, bool simulate) {
         auto rest = raw.insert(pos, stack, simulate);
-        if (!simulate && proxyOpen(pos)) proxyPull(pos);
+        if (!simulate) {
+            if (proxyOpen(pos)) proxyPull(pos);
+            noteChanged(pos);
+        }
         return rest;
     };
     h.extract = [raw](GlobalPos const& pos, int slot, int count, bool simulate) {
         auto taken = raw.extract(pos, slot, count, simulate);
-        if (!simulate && proxyOpen(pos)) proxyPull(pos);
+        if (!simulate) {
+            if (proxyOpen(pos)) proxyPull(pos);
+            noteChanged(pos);
+        }
         return taken;
     };
     return h;
@@ -478,7 +617,11 @@ struct OpenScreen {
     std::string            title;
     ItemStack              carried; ///< the stack on the cursor of the native screen
     bool                   valid = false;
+    std::uint64_t          shown = 0; ///< the change counter its last data was made at (Changes)
 };
+
+/// The context the screen was opened with (what screen data and actions are checked against).
+Json contextOf(OpenScreen const& open) { return Json{{"pos", {open.pos.dim, open.pos.x, open.pos.y, open.pos.z}}, {"rows", open.rows}, {"title", open.title}}; }
 
 std::map<std::int64_t, OpenScreen>& openScreens() {
     static std::map<std::int64_t, OpenScreen> m;
@@ -892,6 +1035,10 @@ std::optional<Json> screenData(Player& player, Json const& ctx) {
     }
     Json items = Json::array();
     auto all   = partsSlots(open->parts);
+    // the data shows every change up to now, a loot table it unpacked included (a later change
+    // refreshes the screen at the end of the tick; one made by this player's own click is in the
+    // update that answers it)
+    open->shown = changeSequence();
     int  shown = std::min(static_cast<int>(all.size()), open->rows * 9);
     for (int i = 0; i < shown; ++i) items.push_back(game::items::isEmpty(all[static_cast<std::size_t>(i)]) ? Json(nullptr) : game::items::toJson(all[static_cast<std::size_t>(i)]));
     return Json{
@@ -966,6 +1113,10 @@ void returnAllCarried() {
     openScreens().clear();
     formViewers().clear();
     openers().counts.clear();
+    auto&           c = changes();
+    std::lock_guard lock(c.mutex);
+    c.last.clear(); // (the sequence goes on: a number is never reused)
+    c.flushed = c.sequence;
 }
 
 /// A player joins: a cursor stack kept from a world that closed while its screen was open.
@@ -1314,6 +1465,8 @@ bool unpackLoot(GlobalPos const& pos, Player* opener) {
     writeStorage(pos, data); // first: the fill below reads the slots through the handler
     auto h = rawHandlerFor(game::blockIdAt(*region, game::blockPos(pos)));
     if (!h) return false;
+    // a native container's stacks still in block data move before the fill picks the empty slots
+    if (auto* c = nativeContainer(*region, game::blockPos(pos))) (void)moveWaiting(*region, pos, *c, true);
     // RandomizableContainer#unpackLootTable: THIS_ENTITY is the opener, with the opener's luck;
     // no killer player (killed_by_player fails)
     loot::LootContext ctx;
@@ -1532,6 +1685,44 @@ int viewers(GlobalPos const& pos) { return viewerCount(pos); }
 
 void onViewersChanged(std::string const& blockId, ViewersFn fn) { openers().listeners[blockId].push_back(std::move(fn)); }
 
+std::uint64_t screenRefreshes() {
+    auto&           c = changes();
+    std::lock_guard lock(c.mutex);
+    return c.refreshes;
+}
+
+// ---- contract extensions (feature/ext/combat/InventoryChanges.h, InventoryMigrate.h) ---------------
+
+namespace ext {
+
+std::uint64_t changeCount(GlobalPos const& pos) { return lastChangeOf(pos); }
+
+void markChanged(GlobalPos const& pos) {
+    noteChanged(pos);
+    if (proxyOpen(pos)) proxyPull(pos); // an open vanilla screen takes it in too
+}
+
+std::optional<GlobalPos> chestScreenOf(Player& player) {
+    auto it = openScreens().find(player.getOrCreateUniqueID().rawID);
+    if (it == openScreens().end() || !it->second.valid) return std::nullopt;
+    return it->second.pos;
+}
+
+bool hasBlockDataStacks(GlobalPos const& pos) {
+    auto* region = regionFor(pos);
+    if (!region || !nativeContainer(*region, game::blockPos(pos))) return false;
+    return !blockDataItems(pos).empty();
+}
+
+int migrateBlockDataToNative(GlobalPos const& pos, bool allowDrops) {
+    auto* region = regionFor(pos);
+    auto* c      = region ? nativeContainer(*region, game::blockPos(pos)) : nullptr;
+    if (!c) return 0;
+    return std::max(0, moveWaiting(*region, pos, *c, allowDrops));
+}
+
+} // namespace ext
+
 // ---- contract -------------------------------------------------------------------------------------
 
 void registerBlock(std::string const& blockId, Handler handler) {
@@ -1661,8 +1852,42 @@ void onDisconnect(Player& player) {
     formClosed(player);
 }
 
+/// AbstractContainerMenu#broadcastChanges for the client mod's chest screens, once a tick: a screen
+/// showing a container changed since its last data gets fresh data in its own context (the position
+/// it was opened for). Nothing is looked at when nothing changed since the last time.
+void refreshChangedScreens(Level& level) {
+    auto& c = changes();
+    {
+        std::lock_guard lock(c.mutex);
+        if (c.sequence == c.flushed) return;
+        c.flushed = c.sequence;
+    }
+    std::vector<std::pair<std::int64_t, Json>> due;
+    for (auto const& [uid, open] : openScreens()) {
+        if (!open.valid) continue;
+        bool changed = std::any_of(open.parts.begin(), open.parts.end(), [&](GlobalPos const& p) { return lastChangeOf(p) > open.shown; });
+        if (changed) due.emplace_back(uid, contextOf(open));
+    }
+    for (auto const& [uid, ctx] : due) {
+        ActorUniqueID id;
+        id.rawID = uid;
+        auto* p  = level.getPlayer(id);
+        if (!p || !net::isCompanion(*p)) continue;
+        screens::refresh(*p, "inventory.chest", ctx); // screenData: the data, or a close when it is gone
+        std::lock_guard lock(c.mutex);
+        ++c.refreshes;
+    }
+    // the counters of positions nobody looks at go after a while (a forgotten counter reads 0: a change)
+    std::lock_guard lock(c.mutex);
+    if (c.last.size() <= 4096) return;
+    std::set<GlobalPos> viewed;
+    for (auto const& [_, open] : openScreens()) viewed.insert(open.parts.begin(), open.parts.end());
+    std::erase_if(c.last, [&](auto const& e) { return e.second <= c.flushed && !viewed.contains(e.first); });
+}
+
 /// Every tick (Player#tick: an invalid menu closes): the client mod's screens whose container is
-/// gone or out of reach close, and the openers of every counted position are counted again.
+/// gone or out of reach close, the openers of every counted position are counted again, and the
+/// screens of changed containers get fresh data.
 void onTick() {
     auto level = ll::service::getLevel();
     if (!level) return;
@@ -1687,6 +1912,7 @@ void onTick() {
         return !p || std::any_of(e.second.begin(), e.second.end(), [&](GlobalPos const& pos) { return !inReach(*p, pos); });
     });
     for (auto const& pos : positionsWithOpeners()) recountViewers(pos);
+    refreshChangedScreens(*level);
 }
 
 class InventoryModule {
