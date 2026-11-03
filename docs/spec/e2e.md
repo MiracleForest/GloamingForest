@@ -48,7 +48,8 @@ server console, in the client log and in a remote client run's `[host]` lines (`
 - **The console's echo of a command reply.** BDS prints the error reply of a command run on its console as
   `ERR [Server] <reply>`, and scenarios run failing commands on purpose (a refused `/twilightforest locate`). The
   mod logs every command error first as `[GloamingForest] Command error: <reply>` (`src/mod/Commands.cpp`); an
-  `ERR [Server]` line whose text is such a reply of the same run is the echo, not an error. A scenario checks
+  `ERR [Server]` line with the same text at most 5 lines after such a reply is its echo, not an error (each
+  reply excuses one echo; an earlier, later or second line of that text still fails the run). A scenario checks
   the replies it provokes itself. The mod logs a reply as its message id and parameters, so this covers the
   mod's own literal replies; a vanilla command's translated reply (`commands.tickingarea-remove...` logged, "No
   ticking area ..." printed) is not recognised: a scenario does not send failing vanilla commands on the console
@@ -60,20 +61,35 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   the old value is put back afterwards) and reads the `ContentLog*.txt` of its game sessions in
   `<instance>\Minecraft Bedrock\logs` once the game closed (the game writes them as it closes): every entry of
   level `error` fails the run, `warning` entries are listed in the summary (`content-log warning: ...`) and
-  fail only in a strict run (`-StrictContentLog`, or a scenario sets `$script:ContentLogStrict = $true`). All
-  entries go to `out/<scenario>/client-content-log.txt`. Entries that are not about this build's packs are
+  fail only in a strict run (`-StrictContentLog`, or a scenario sets `$script:ContentLogStrict = $true`).
+  `out/<scenario>/client-content-log.txt` lists every distinct entry with its count, then the first 2000 entries
+  as written (a broken particle can log hundreds of thousands). Entries that are not about this build's packs are
   expected (`$script:ContentLogExpected` in `tools/e2e/client/lib.ps1`: the models scenario's deliberately
   broken `gfpreview_canary` files, the game's cached diving-helmet fogs); a scenario adds the lines it causes on
   purpose with `$script:ContentLogExpected += '<regex>'`.
-- **Game options.** Before every run the harness puts back the options scenarios toggle, in every
+- **Game options.** Before every launch the harness sets the options scenarios toggle, in every
   `minecraftpe\options.txt` of the instance: `gfx_hidehud:0` (F1 hides the HUD: models, ui, families),
   `gfx_hidehand:0` (ui), `game_thirdperson:0` (F5: ui) and `graphics_mode:2` (ui switches Classic / Vibrant
-  Visuals). A scenario that changes another option restores it in its `<unit>.restore.ps1` and adds it to
-  `$script:ForcedOptions` (lib.ps1).
-- **Watchdog.** A BeDD pipe call waits for the game's answer without a timeout of its own. The harness wraps
-  every pipe call and window capture (`Invoke-Guarded`): when one takes longer than 120 s plus the waits it asked
-  for (`$env:GF_E2E_PIPE_TIMEOUT_SEC` changes the 120), the process tree of the run's game is killed (only while
-  the run holds that instance's game lock), the console shows `[e2e] WATCHDOG: ...` and the run is NOT RUN.
+  Visuals), plus `content_log_file:1`. When the run ends (after the scenario's `<unit>.restore.ps1`) every one
+  of them gets the instance's own value back (`Restore-RunOptions`): slot 1 is shared with BEI's and
+  BeetrootSkin's harnesses and with a person's own play. The old values wait in
+  `%LOCALAPPDATA%\lv-e2e\game-options.<instance>.json` until then, so the next run puts back what a killed run
+  found, not what it left. A scenario that changes another option restores it in its `<unit>.restore.ps1` and
+  adds it to `$script:ForcedOptions` (lib.ps1).
+- **Hangs (watchdog).** A BeDD pipe call waits for the game's answer without a timeout of its own. The harness
+  wraps every pipe call and window capture (`Invoke-Guarded`): when one takes longer than 120 s plus the waits
+  it asked for (`$env:GF_E2E_PIPE_TIMEOUT_SEC` changes the 120), the process tree of the run's game is killed
+  (only while the run holds that instance's game lock). The BeDD connect loop stops at once after that instead
+  of retrying until its own deadline. A game that is still running without `GloamingForest enabled` after 180 s
+  (`$env:GF_E2E_ENABLE_TIMEOUT_SEC`) is hung in "Enabling mods" when it used under 0.5 s of CPU in the next
+  10 s, and gets 120 s more when it is busy; a game whose BeDD pipe never answers while it loads is hung too.
+  Each prints `[e2e] WATCHDOG: ...`, kills the game and makes the run NOT RUN, with two exceptions that fail it
+  (exit 1): failures recorded before the hang (ERR lines, failing selftests, content-log errors of a session
+  that closed), and a second hung run in a row of the same scenario and mode on the same build (counted in
+  `%LOCALAPPDATA%\lv-e2e\gf-hang.<scenario>.<mode>.<dll hash>.json`; a run that does not hang clears it), so a
+  deadlock in the mod's own code cannot be retried as NOT RUN for ever. `$env:GF_E2E_TEST_HANG=enable` (freeze
+  the game before `GloamingForest enabled`) or `=pipe` (freeze it right before the scenario) suspends the game
+  on purpose to exercise both paths; such runs are not counted.
 - **Test world.** After joining, `Enter-TestWorld` checks the mod's `world: level '<LevelName>' opened` line
   (`src/game/WorldDb.cpp`): a world other than `GF-Test`, or a BeDD `join` the run did not send, gets one more
   fresh game with a freshly installed `GF-Test`; the second time the run is NOT RUN (the console says why).
@@ -100,6 +116,14 @@ harness parked our deployed mod in `mods.bedd-it-aside\GloamingForest`. Fixes in
   exiting after it gave the lock back keeps `mods\GloamingForest\GloamingForest.dll` open) is closed, given 60 s
   and then killed (`Clear-InstanceGames`); `Deploy-Mod` retries the removal of the old mod folder for 30 s, and a
   folder that stays open makes the run NOT RUN.
+
+Residual risk: that harness (BeDD's own integration tests, `bedd-it`, outside this repository) still does not
+take `hi<N>-e2e.lock`. Its pipe requests no longer reach our game, but while a GloamingForest run holds the
+instance it can still move our deployed mod aside or start a game of its own in the instance. Such a run ends in
+a wrong world, a missing `GloamingForest enabled` or a game the harness did not start, i.e. NOT RUN or a
+visible failure, never a false pass. The fix belongs to that harness: it should take the instance's
+`%APPDATA%\levilauncher.exe\hi<N>-e2e.lock` (slot 1: `bei-e2e.lock`) for as long as it uses the instance, as
+BEI's, BeetrootSkin's and our harnesses do.
 
 Open **every** screenshot of the client run and compare it with TF's textures and GUI images in
 `%LOCALAPPDATA%\gf-tf` (never with TF's audio or templates, which are not in the checkout).

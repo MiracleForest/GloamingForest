@@ -31,10 +31,15 @@
      in the game's content log (warnings are listed; they fail with -StrictContentLog or when the
      scenario sets $script:ContentLogStrict = $true).
   6. Always: closes the game, removes the GF-Test world and our mod, restores the other mods,
-     runs scenarios/<name>.restore.ps1, restores content_log_file, releases the lock.
+     runs scenarios/<name>.restore.ps1, puts back the instance's own values of every option the run
+     set (HUD, hand, camera, graphics mode, content log), releases the lock.
   Every BeDD pipe call and window capture is guarded by a watchdog (lib.ps1 Invoke-Guarded,
-  $env:GF_E2E_PIPE_TIMEOUT_SEC, default 120 s on top of the call's own waits): a game that does not
-  answer is killed with its process tree and the run is NOT RUN (exit 2, a "WATCHDOG:" line).
+  $env:GF_E2E_PIPE_TIMEOUT_SEC, default 120 s on top of the call's own waits), and a game still
+  running without "GloamingForest enabled" after $env:GF_E2E_ENABLE_TIMEOUT_SEC (180 s; idle, or
+  120 s more when busy) counts as hung too: the game is killed with its process tree and the run is
+  NOT RUN (exit 2, a "WATCHDOG:" line). It fails (exit 1) instead when ERR lines, failing selftests
+  or content-log errors came before the hang, or when the same scenario and mode hung on the same
+  build in the run before. $env:GF_E2E_TEST_HANG=enable|pipe freezes the game on purpose to test this.
   Output: tools/e2e/client/out/<scenario>/ (screenshots, client.log, client-content-log.txt,
   selftest.json). Look at the screenshots.
 
@@ -119,6 +124,10 @@ function Set-RunOutDir {
 }
 
 $failures = [System.Collections.Generic.List[string]]::new()
+# The failures a hang cannot explain (ERR lines, failing selftests, content-log errors): they fail
+# the run even when it ends in a hang.
+$hardFailures = [System.Collections.Generic.List[string]]::new()
+$script:TestHang = $false
 $script:Mode   = $Mode
 $remote        = $Mode -ne 'local'
 $hostInfo      = $null
@@ -276,6 +285,7 @@ try {
                 }
             }
             Wait-HudReady
+            Invoke-TestHang 'pipe'      # $env:GF_E2E_TEST_HANG=pipe only (lib.ps1)
             Write-Step "running scenario '$Scenario'"
             . $scenarioFile
         } catch {
@@ -294,10 +304,15 @@ try {
         }
         $errs = Get-ErrorLines
         if ($errs) {
-            $failures.Add("$($errs.Count) ERR/FTL line(s) in the log (docs/spec/e2e.md, Error lines)")
+            $f = "$($errs.Count) ERR/FTL line(s) in the log (docs/spec/e2e.md, Error lines)"
+            $failures.Add($f); $hardFailures.Add($f)
             $errs | Select-Object -First 20 | ForEach-Object { Write-Host "  ! $_" -ForegroundColor Red }
         }
         foreach ($p in Get-SelfTestProblems) { $failures.Add($p) }
+        # failing tests (not the unfinished ones a hang leaves) fail the run even when it hung later
+        foreach ($r in @($script:SelfTestRuns | Where-Object { @($_.Failed).Count -gt 0 })) {
+            $hardFailures.Add("selftest '$($r.Glob)': $(@($r.Failed).Count) failing: $((@($r.Failed) | ForEach-Object Name) -join ', ')")
+        }
         Save-SelfTestReport (Join-Path $outDir 'selftest.json')
         Get-LeviLog | Set-Content -Path (Join-Path $outDir 'client.log') -Encoding UTF8
     } finally {
@@ -313,7 +328,8 @@ try {
             Stop-Game
             Request-HostStop # the host shuts down while we clean up
             # the game's content log of every session of the run (written as the game closed)
-            try { foreach ($p in Get-ContentLogProblems -OutDir $outDir -Strict:([bool]$script:ContentLogStrict)) { $failures.Add($p) } }
+            # (the sessions that closed normally: a killed game writes none)
+            try { foreach ($p in Get-ContentLogProblems -OutDir $outDir -Strict:([bool]$script:ContentLogStrict)) { $failures.Add($p); $hardFailures.Add($p) } }
             catch { $failures.Add("content log: $_") }
             if ($remote) { Restore-ExternalServers } else { Remove-TestWorld }
             Remove-DeployedMod
@@ -325,8 +341,9 @@ try {
             if (Test-Path $restore) { try { . $restore } catch { Write-Host "[e2e] restore script failed: $_" -ForegroundColor Red } }
         } finally {
             # after the scenario's own restore (models turns the log on itself), and also when a
-            # cleanup step above failed
-            try { Restore-ContentLogOption } catch { Write-Host "[e2e] could not put content_log_file back: $_" -ForegroundColor Red }
+            # cleanup step above failed: the instance's own option values (HUD, hand, camera,
+            # graphics mode, content log) as they were before the run
+            try { Restore-RunOptions } catch { Write-Host "[e2e] could not put the game options back: $_" -ForegroundColor Red }
             Exit-E2ELock
         }
     }
@@ -361,11 +378,30 @@ if ($lockTimeout) {
 }
 
 # The run could not test the scenario: a game call hung (the watchdog killed the game) or the game
-# was in another world than GF-Test twice. Never a pass, never a scenario failure: retry.
-$notRun = if (Get-WatchdogFired) { "WATCHDOG: $(Get-WatchdogFired)" } elseif ($script:NotRunReason) { $script:NotRunReason }
+# was in another world than GF-Test twice. Never a pass: NOT RUN (retry), unless the run had
+# already failed before (ERR lines, failing selftests, content-log errors) or the same scenario hung
+# on the same build in the run before as well (a hang of the mod's own making): then it fails.
+$hung = [bool](Get-WatchdogFired)
+$notRun = if ($hung) { "WATCHDOG: $(Get-WatchdogFired)" } elseif ($script:NotRunReason) { $script:NotRunReason }
+$dll = Join-Path $ModDir "$script:ModName.dll"
+$hangs = if ($script:TestHang -or ($lockTimeout -and -not $lockAcquired)) { 0 } elseif ($hung) { Update-HangRecord $Scenario $Mode $dll -Hung } else { Update-HangRecord $Scenario $Mode $dll }
 if ($notRun) {
+    if ($hardFailures.Count -gt 0) {
+        Write-Host "[e2e] client scenario '$Scenario' FAILED (it also could not finish: $notRun)" -ForegroundColor Red
+        $hardFailures | ForEach-Object { Write-Host "[e2e]   - $_" -ForegroundColor Red }
+        foreach ($f in $failures) { if (-not $hardFailures.Contains($f)) { Write-Host "[e2e]   (after the hang, not counted: $f)" -ForegroundColor DarkYellow } }
+        Write-Host "[e2e] output: $outDir"
+        exit 1
+    }
+    if ($hangs -ge 2) {
+        Write-Host "[e2e] client scenario '$Scenario' FAILED: the game hung in $hangs runs in a row of this scenario ($Mode) on the same build" -ForegroundColor Red
+        Write-Host "[e2e]   $notRun" -ForegroundColor Red
+        Write-Host "[e2e] output: $outDir"
+        exit 1
+    }
     Write-Host "[e2e] client scenario '$Scenario' NOT RUN (the run could not test the scenario; retry it)" -ForegroundColor Yellow
     Write-Host "[e2e]   $notRun" -ForegroundColor Yellow
+    if ($hung -and -not $script:TestHang) { Write-Host "[e2e]   (a second hang in a row of '$Scenario' ($Mode) on this build fails)" -ForegroundColor Yellow }
     foreach ($f in $failures) { Write-Host "[e2e]   (not counted: $f)" -ForegroundColor DarkYellow }
     Write-Host "[e2e] output: $outDir"
     exit 2

@@ -239,6 +239,26 @@ public static class Watchdog {
             guards.Clear();
             if (timer != null) { timer.Dispose(); timer = null; }
         }
+        KillAndRecord(what + " got no answer within " + (ms / 1000) + " s");
+    }
+    /// Fires now, from the harness itself (a hang it saw without a pipe call, e.g. a game that
+    /// never finishes enabling mods): kills this instance's games and sets Fired.
+    public static void Trip(string what) {
+        lock (Gate) {
+            ++armed;
+            guards.Clear();
+            if (timer != null) { timer.Dispose(); timer = null; }
+        }
+        KillAndRecord(what);
+    }
+    [System.Runtime.InteropServices.DllImport("ntdll.dll")]
+    static extern int NtSuspendProcess(IntPtr handle);
+    /// Freezes a process (every thread): the harness's test switch $env:GF_E2E_TEST_HANG makes a
+    /// real hang with it, so the NOT RUN paths can be exercised on purpose.
+    public static void Suspend(int pid) {
+        using (var p = Process.GetProcessById(pid)) { NtSuspendProcess(p.Handle); }
+    }
+    static void KillAndRecord(string what) {
         var killed = new List<string>();
         foreach (var p in Process.GetProcessesByName("Minecraft.Windows")) {
             try {
@@ -248,7 +268,7 @@ public static class Watchdog {
                 killed.Add(p.Id.ToString());
             } catch (Exception) { }
         }
-        Fired = what + " got no answer within " + (ms / 1000) + " s; "
+        Fired = what + "; "
             + (killed.Count > 0 ? "killed the game's process tree (pid " + string.Join(", ", killed) + ")"
                : InstanceDir == null ? "killed nothing (this run holds no game lock)" : "no game of " + InstanceDir + " was running");
         Console.WriteLine("[e2e] WATCHDOG: " + Fired);
@@ -280,11 +300,27 @@ function Register-PipeWatchdog {
         $script:GfPipeBaseMs = $BaseSeconds * 1000
         if (Get-Variable -Name GfInvokeBeDD -Scope Script -ErrorAction SilentlyContinue) { return }
         $script:GfInvokeBeDD = ${function:Invoke-BeDD}
-        $script:GfConnectBeDD = ${function:Connect-BeDD}
-        # once the watchdog killed the game, every later call fails at once (no reconnect attempts)
+        # BeDD.psm1's Connect-BeDD loop, re-checking the watchdog between attempts: once it killed
+        # the game (a ping that hung inside this loop, or a Trip), the loop stops at once instead of
+        # retrying the pipe until its own deadline.
         function script:Connect-BeDD([int]$TimeoutSeconds = 180, [string]$PipeName) {
-            if ([GfE2E.Watchdog]::Fired) { throw "BeDD: not connecting: the watchdog killed the game ($([GfE2E.Watchdog]::Fired))" }
-            & $script:GfConnectBeDD @PSBoundParameters
+            if ($PipeName) { Set-BeDDPipe $PipeName }
+            $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+            $last = $null
+            while ((Get-Date) -lt $deadline) {
+                if ([GfE2E.Watchdog]::Fired) { Disconnect-BeDD; throw "BeDD: not connecting: the watchdog killed the game ($([GfE2E.Watchdog]::Fired))" }
+                try {
+                    if (-not $script:Pipe -or -not $script:Pipe.IsConnected) { Open-BeDDPipe 2000 }
+                    $r = Invoke-BeDD @{ op = 'ping' } -NoThrow
+                    if ($r.ok -and ($r.hwnd -ne 0 -or $r.target -eq 'server')) { return $r }
+                    $last = 'game window not created yet'
+                } catch {
+                    $last = $_.Exception.Message
+                    Disconnect-BeDD
+                }
+                Start-Sleep -Milliseconds 500
+            }
+            throw "BeDD did not answer within $TimeoutSeconds s ($last). Is the mod deployed and the game running?"
         }
         function script:Invoke-BeDD([Parameter(Mandatory)][hashtable]$Request, [switch]$NoThrow) {
             if ([GfE2E.Watchdog]::Fired) { throw "BeDD: $($Request['op']) not sent: the watchdog killed the game ($([GfE2E.Watchdog]::Fired))" }
@@ -304,6 +340,21 @@ function Register-PipeWatchdog {
 
 # The WATCHDOG line once it fired ($null before).
 function Get-WatchdogFired { [GfE2E.Watchdog]::Fired }
+
+# A hang is NOT RUN, so that a stuck machine or instance is retried, but a hang the mod causes
+# itself (a deadlock in client code) must not be retried for ever: the second watchdog run in a row
+# of the same scenario, mode and build fails (exit 1). The count lives in the e2e home per
+# scenario, mode and hash of the mod DLL; a run that does not hang clears it. Returns the number of
+# consecutive hung runs including this one (0 when -Hung is not set).
+function Update-HangRecord([string]$Scenario, [string]$Mode, [string]$Dll, [switch]$Hung) {
+    $hash = if ($Dll -and (Test-Path $Dll)) { (Get-FileHash $Dll -Algorithm SHA256).Hash.Substring(0, 16) } else { 'nodll' }
+    $file = Join-Path (Get-E2EHome) "gf-hang.$Scenario.$Mode.$hash.json"
+    if (-not $Hung) { Remove-Item $file -Force -ErrorAction SilentlyContinue; return 0 }
+    $n = 1
+    if (Test-Path $file) { try { $n = [int](Get-Content $file -Raw | ConvertFrom-Json).count + 1 } catch { $n = 1 } }
+    @{ count = $n; last = (Get-Date).ToString('o'); what = "$(Get-WatchdogFired)" } | ConvertTo-Json | Set-Content $file -Encoding UTF8
+    return $n
+}
 
 # ---------------------------------------------------------------------------------------
 # Lock (one per game instance; slot 1's is shared with BEI's and BeetrootSkin's harnesses)
@@ -378,24 +429,102 @@ function Set-GameOption([string]$Key, [string]$Value) {
     return $old
 }
 
-# Options a scenario may toggle in the instance's options.txt, put back to these values before every
-# run (Reset-GameOptions), so a killed or failed run cannot leave the shared instance changed:
+# Options a scenario may toggle in the instance's options.txt, put to these values before every
+# launch (Reset-GameOptions), so a killed or failed run (or another harness) cannot leave the
+# instance in a state the scenarios do not expect:
 #   gfx_hidehud      F1 hides the HUD (models, ui and families' name-tag shots): toasts, the hotbar
 #                    and name tags are then not drawn (a models run left an instance so)
 #   gfx_hidehand     ui.prelaunch.ps1 shows the hand for its held-map step (0, restored by ui.restore.ps1)
 #   game_thirdperson F5 (ui's head step); first person
 #   graphics_mode    ui switches between Classic (1) and Vibrant Visuals (2) (restored by ui.restore.ps1);
-#                    2 is what every instance of the e2e machines uses
-# content_log_file is on for the run itself (Enable-ContentLog) and put back afterwards.
+#                    2 is what every scenario's screenshots expect
+# content_log_file is on for the run itself (Enable-ContentLog).
+# Every option the harness sets (Set-RunOption) is put back to the instance's own value when the run
+# ends (Restore-RunOptions): slot 1 is shared with BEI's and BeetrootSkin's harnesses and a person's
+# own play, so a Classic graphics mode or a hidden hand there survives our runs.
 $script:ForcedOptions = [ordered]@{ gfx_hidehud = '0'; gfx_hidehand = '0'; game_thirdperson = '0'; graphics_mode = '2' }
 
 function Reset-GameOptions {
     $files = Get-OptionsFiles
     if (-not $files) { Write-Step "warning: no options.txt below $(Get-GameDataDir) (the game writes it on its first start)"; return }
     foreach ($k in $script:ForcedOptions.Keys) {
-        $old = Set-GameOption $k $script:ForcedOptions[$k]
-        foreach ($p in $old.Keys) { if ($old[$p] -ne $script:ForcedOptions[$k]) { Write-Step "options: ${k}:$($old[$p]) -> $($script:ForcedOptions[$k]) in $p" } }
+        $old = Set-RunOption $k $script:ForcedOptions[$k]
+        foreach ($p in $old.Keys) { if ($old[$p] -ne $script:ForcedOptions[$k]) { Write-Step "options: ${k}:$($old[$p]) -> $($script:ForcedOptions[$k]) in $p (put back after the run)" } }
     }
+}
+
+# The instance's own values of the options this run set: path -> {key -> value ($null: the line was
+# missing)}. Kept in the e2e home until they are put back, so a killed run's backup survives and the
+# next run restores the instance's values, not the ones the killed run left behind.
+$script:OptionsBackup = $null
+function Get-OptionsBackupPath { Join-Path (Get-E2EHome) "game-options.$($script:VersionName).json" }
+
+# Loads what a killed run left (the backup file, and the content-log-only backup of older harnesses).
+function Initialize-OptionsBackup {
+    if ($null -ne $script:OptionsBackup) { return }
+    $script:OptionsBackup = [ordered]@{}
+    $file = Get-OptionsBackupPath
+    if (Test-Path $file) {
+        try {
+            $saved = Get-Content $file -Raw | ConvertFrom-Json -AsHashtable
+            foreach ($p in $saved.Keys) { $script:OptionsBackup[$p] = [ordered]@{}; foreach ($k in $saved[$p].Keys) { $script:OptionsBackup[$p][$k] = $saved[$p][$k] } }
+            Write-Step "options: a killed run left $file; its values are what this run puts back"
+        } catch { Write-Step "warning: unreadable $file ($_)" }
+    }
+    $legacy = Join-Path (Get-E2EHome) "content-log-option.$($script:VersionName).json"
+    if (Test-Path $legacy) {
+        try {
+            $saved = Get-Content $legacy -Raw | ConvertFrom-Json -AsHashtable
+            foreach ($p in $saved.Keys) {
+                if (-not $script:OptionsBackup.Contains($p)) { $script:OptionsBackup[$p] = [ordered]@{} }
+                if (-not $script:OptionsBackup[$p].Contains('content_log_file')) { $script:OptionsBackup[$p]['content_log_file'] = $saved[$p] }
+            }
+        } catch {}
+        Save-OptionsBackup
+        Remove-Item $legacy -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Save-OptionsBackup { $script:OptionsBackup | ConvertTo-Json -Depth 4 | Set-Content -Path (Get-OptionsBackupPath) -Encoding UTF8 }
+
+# Set-GameOption for the run: remembers each file's own value first (once per key), returns the
+# values it replaced.
+function Set-RunOption([string]$Key, [string]$Value) {
+    Initialize-OptionsBackup
+    $old = Set-GameOption $Key $Value
+    foreach ($p in $old.Keys) {
+        if (-not $script:OptionsBackup.Contains($p)) { $script:OptionsBackup[$p] = [ordered]@{} }
+        if (-not $script:OptionsBackup[$p].Contains($Key)) { $script:OptionsBackup[$p][$Key] = $old[$p] }
+    }
+    Save-OptionsBackup
+    return $old
+}
+
+# Puts back every option the run set (after the scenario's own restore script).
+function Restore-RunOptions {
+    if ($null -eq $script:OptionsBackup) { return }
+    foreach ($p in $script:OptionsBackup.Keys) {
+        if (-not (Test-Path $p)) { continue }
+        $lines = @(Get-Content $p)
+        $changed = $false
+        foreach ($k in $script:OptionsBackup[$p].Keys) {
+            $v = $script:OptionsBackup[$p][$k]
+            $re = "^$([regex]::Escape($k)):"
+            $cur = $lines | Where-Object { $_ -match $re } | Select-Object -First 1
+            if ($null -ne $v) {
+                if ($cur -eq "${k}:$v") { continue }
+                $lines = if ($cur) { $lines -replace "$re.*$", "${k}:$v" } else { $lines + "${k}:$v" }
+            } else {
+                if (-not $cur) { continue }
+                $lines = @($lines | Where-Object { $_ -notmatch $re })
+            }
+            $changed = $true
+        }
+        if ($changed) { Set-Content -Path $p -Value $lines }
+    }
+    $script:OptionsBackup = $null
+    Remove-Item (Get-OptionsBackupPath) -Force -ErrorAction SilentlyContinue
+    Write-Step 'options: the instance''s own values are back'
 }
 
 # ---------------------------------------------------------------------------------------
@@ -403,10 +532,10 @@ function Reset-GameOptions {
 # ---------------------------------------------------------------------------------------
 # options.txt content_log_file:1 makes the game write <game data>\logs\ContentLog<date>_<time>_1.txt,
 # one file per game session, written as the game closes. Every run turns it on before the first
-# launch (the old value is put back at the end) and checks the files of its sessions after the
-# game closed (Test-ContentLog in run.ps1): an error fails the run, warnings are listed (and fail
-# when the scenario sets $script:ContentLogStrict = $true, or with run.ps1 -StrictContentLog).
-$script:ContentLogBackup = $null
+# launch (Restore-RunOptions puts the old value back at the end) and checks the files of its
+# sessions after the game closed (Get-ContentLogProblems): an error fails the run, warnings are
+# listed (and fail when the scenario sets $script:ContentLogStrict = $true, or with run.ps1
+# -StrictContentLog).
 $script:ContentLogSince  = $null
 # Entries that are not about this build's packs (regexes over the entry's text and continuation lines):
 #   gfpreview_canary  the models scenario's deliberately broken canary files (test-only preview
@@ -416,39 +545,11 @@ $script:ContentLogSince  = $null
 # A scenario may add its own ($script:ContentLogExpected += 'regex') for lines it causes on purpose.
 $script:ContentLogExpected = @('gfpreview_canary', 'fogs/(netherite_)?diving_helmet\.json')
 
-# The instance's own content_log_file values, kept in the e2e home until they are put back: a killed
-# run's backup survives, so the next run restores the instance's value, not the 1 it left behind.
-function Get-ContentLogBackupPath { Join-Path (Get-E2EHome) "content-log-option.$($script:VersionName).json" }
-
 function Enable-ContentLog {
     $script:ContentLogSince = (Get-Date).AddSeconds(-2)
-    $old = Set-GameOption 'content_log_file' '1'
-    $file = Get-ContentLogBackupPath
-    $saved = $null
-    if (Test-Path $file) { try { $saved = Get-Content $file -Raw | ConvertFrom-Json -AsHashtable } catch { $saved = $null } }
-    if ($saved) {
-        # a killed run turned it on: its backup holds the instance's value
-        $script:ContentLogBackup = [ordered]@{}
-        foreach ($p in $old.Keys) { $script:ContentLogBackup[$p] = if ($saved.ContainsKey($p)) { $saved[$p] } else { $old[$p] } }
-    } else {
-        $script:ContentLogBackup = $old
-    }
-    $script:ContentLogBackup | ConvertTo-Json | Set-Content -Path $file -Encoding UTF8
-    if ($script:ContentLogBackup.Count -eq 0) { Write-Step 'warning: no options.txt to turn the content log on in' }
+    $old = Set-RunOption 'content_log_file' '1'
+    if ($old.Count -eq 0) { Write-Step 'warning: no options.txt to turn the content log on in' }
     else { Write-Step "content log on ($(Join-Path (Get-GameDataDir) 'logs'))" }
-}
-
-function Restore-ContentLogOption {
-    if (-not $script:ContentLogBackup) { return }
-    foreach ($p in $script:ContentLogBackup.Keys) {
-        if (-not (Test-Path $p)) { continue }
-        $v = $script:ContentLogBackup[$p]
-        $lines = @(Get-Content $p)
-        $lines = if ($null -ne $v) { $lines -replace '^content_log_file:.*$', "content_log_file:$v" } else { @($lines | Where-Object { $_ -notmatch '^content_log_file:' }) }
-        Set-Content -Path $p -Value $lines
-    }
-    $script:ContentLogBackup = $null
-    Remove-Item (Get-ContentLogBackupPath) -Force -ErrorAction SilentlyContinue
 }
 
 # The content-log files this run's game sessions wrote.
@@ -458,35 +559,98 @@ function Get-ContentLogFiles {
     @(Get-ChildItem $dir -Filter 'ContentLog*.txt' -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -ge $script:ContentLogSince } | Sort-Object Name)
 }
 
-# Entries of this run's content logs: {Time, Category, Level (error|warning|inform|...), Text, More, Expected}.
-function Get-ContentLogEntries {
-    $entries = [System.Collections.Generic.List[object]]::new()
-    foreach ($f in Get-ContentLogFiles) {
-        $fs = [System.IO.File]::Open($f.FullName, 'Open', 'Read', 'ReadWrite')
-        try { $text = (New-Object System.IO.StreamReader($fs, [Text.Encoding]::UTF8)).ReadToEnd() } finally { $fs.Dispose() }
-        $current = $null
-        foreach ($line in ($text -split "`r?`n")) {
-            if ($line -match '^(\d\d:\d\d:\d\d)\[([^\]]*)\]\[(\w+)\]-(.*)$') {
-                $current = [pscustomobject]@{ Time = $Matches[1]; Category = $Matches[2]; Level = $Matches[3].ToLowerInvariant(); Text = $Matches[4]; More = [System.Text.StringBuilder]::new(); Expected = $false; File = $f.Name }
-                $entries.Add($current)
-            } elseif ($current -and $line.Trim()) { [void]$current.More.AppendLine($line.TrimEnd()) }
+# The parser runs in C#: a broken pack can log hundreds of thousands of entries (one per particle
+# frame), which took about 45 s through PowerShell objects. It keeps one record per distinct entry
+# (category, level, text and continuation lines) with its count, plus the first entries as written.
+if (-not ('GfE2E.ContentLog' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
+namespace GfE2E {
+public sealed class ContentLogEntry {
+    public string File, Time, Category, Level, Text, More;
+    public long Count;
+    public bool Expected;
+}
+public sealed class ContentLogResult {
+    public List<ContentLogEntry> Distinct = new List<ContentLogEntry>();
+    public List<string> Raw = new List<string>();
+    public long Total;
+}
+public static class ContentLog {
+    static readonly Regex Head = new Regex(@"^(\d\d:\d\d:\d\d)\[([^\]]*)\]\[(\w+)\]-(.*)$", RegexOptions.Compiled);
+    public static ContentLogResult Parse(string[] files, string[] expected, int rawCap) {
+        var res = new ContentLogResult();
+        var byKey = new Dictionary<string, ContentLogEntry>();
+        var exp = new List<Regex>();
+        foreach (var e in expected) exp.Add(new Regex(e));
+        string file = null, time = null, cat = null, level = null, text = null;
+        var more = new StringBuilder();
+        Action flush = () => {
+            if (text == null) return;
+            string m = more.ToString().TrimEnd();
+            res.Total++;
+            if (res.Raw.Count < rawCap) res.Raw.Add(file + " " + time + " [" + cat + "][" + level + "] " + text + (m.Length > 0 ? "\n" + m : ""));
+            string key = cat + "\u0001" + level + "\u0001" + text + "\u0001" + m;
+            ContentLogEntry ent;
+            if (!byKey.TryGetValue(key, out ent)) {
+                ent = new ContentLogEntry { File = file, Time = time, Category = cat, Level = level, Text = text, More = m };
+                string all = text + " " + m;
+                foreach (var r in exp) if (r.IsMatch(all)) { ent.Expected = true; break; }
+                byKey[key] = ent;
+                res.Distinct.Add(ent);
+            }
+            ent.Count++;
+            text = null;
+            more.Clear();
+        };
+        foreach (var path in files) {
+            file = Path.GetFileName(path);
+            using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var rd = new StreamReader(fs, Encoding.UTF8)) {
+                string line;
+                while ((line = rd.ReadLine()) != null) {
+                    var hm = Head.Match(line);
+                    if (hm.Success) {
+                        flush();
+                        time = hm.Groups[1].Value; cat = hm.Groups[2].Value; level = hm.Groups[3].Value.ToLowerInvariant(); text = hm.Groups[4].Value;
+                    } else if (text != null && line.Trim().Length > 0) {
+                        more.AppendLine(line.TrimEnd());
+                    }
+                }
+            }
+            flush();
         }
+        return res;
     }
-    foreach ($e in $entries) {
-        $all = "$($e.Text) $($e.More)"
-        foreach ($re in $script:ContentLogExpected) { if ($all -match $re) { $e.Expected = $true; break } }
-    }
-    return $entries
+}
+}
+'@
 }
 
-# One line per distinct entry: "[Category][level] text (xN)".
+# This run's content logs: {Distinct = [{File, Time, Category, Level (error|warning|inform|...), Text,
+# More, Count, Expected}] (first occurrence's file and time), Raw = the first entries as written, Total}.
+$script:ContentLogRawCap = 2000
+function Get-ContentLogEntries {
+    $files = @(Get-ContentLogFiles | ForEach-Object FullName)
+    [GfE2E.ContentLog]::Parse([string[]]$files, [string[]]@($script:ContentLogExpected), $script:ContentLogRawCap)
+}
+
+# One line per distinct entry text: "[Category][level] text (xN)" (continuation lines not shown).
 function Format-ContentLogEntries($Entries) {
-    @($Entries | Group-Object { "[$($_.Category)][$($_.Level)] $($_.Text)" } | ForEach-Object {
-        if ($_.Count -gt 1) { "$($_.Name) (x$($_.Count))" } else { $_.Name }
-    })
+    $sum = [ordered]@{}
+    foreach ($e in $Entries) { $k = "[$($e.Category)][$($e.Level)] $($e.Text)"; $sum[$k] = [long]$sum[$k] + $e.Count }
+    @(foreach ($k in $sum.Keys) { if ($sum[$k] -gt 1) { "$k (x$($sum[$k]))" } else { $k } })
 }
 
-# Checks this run's content logs once the game closed: writes <out>\client-content-log.txt, prints
+# Sum of the Count of entries.
+function Measure-ContentLogCount($Entries) { [long](@($Entries) | Measure-Object -Property Count -Sum).Sum }
+
+# Checks this run's content logs once the game closed: writes <out>\client-content-log.txt (every
+# distinct entry with its count, then the first $script:ContentLogRawCap entries as written), prints
 # a summary and returns the run's failures: every error (and with -Strict every warning) that is not
 # in $script:ContentLogExpected. Warnings go to $script:ContentLogWarnings for the run's summary.
 function Get-ContentLogProblems([string]$OutDir, [switch]$Strict) {
@@ -497,26 +661,35 @@ function Get-ContentLogProblems([string]$OutDir, [switch]$Strict) {
         if ($script:GameKilled -or (Get-WatchdogFired)) { Write-Step 'content log: not checked (the game was killed before it wrote its log)'; return @() }
         return @("the game wrote no content log in $(Join-Path (Get-GameDataDir) 'logs') (options.txt content_log_file:1 did not take effect)")
     }
-    $entries = @(Get-ContentLogEntries)
+    $log = Get-ContentLogEntries
+    $distinct = @($log.Distinct)
+    $errors   = @($distinct | Where-Object { $_.Level -in 'error', 'fatal' -and -not $_.Expected })
+    $warnings = @($distinct | Where-Object { $_.Level -eq 'warning' -and -not $_.Expected })
+    $expected = @($distinct | Where-Object { $_.Level -in 'error', 'fatal', 'warning' -and $_.Expected })
     if ($OutDir) {
         New-Item -ItemType Directory -Force $OutDir | Out-Null
-        $entries | ForEach-Object { "$($_.File) $($_.Time) [$($_.Category)][$($_.Level)]$(if ($_.Expected) { ' (expected)' }) $($_.Text)$(if ($_.More.Length) { "`n$($_.More.ToString().TrimEnd())" })" } |
-            Set-Content -Path (Join-Path $OutDir 'client-content-log.txt') -Encoding UTF8
+        $out = [System.Collections.Generic.List[string]]::new()
+        $out.Add("# $($log.Total) entries in $($files.Count) file(s): $(($files | ForEach-Object Name) -join ', ')")
+        $out.Add("# $($distinct.Count) distinct entries: count, first file and time, [category][level], text")
+        foreach ($d in $distinct) {
+            $out.Add("x$($d.Count) $($d.File) $($d.Time) [$($d.Category)][$($d.Level)]$(if ($d.Expected) { ' (expected)' }) $($d.Text)$(if ($d.More) { "`n$($d.More)" })")
+        }
+        $out.Add("# the first $($log.Raw.Count) of $($log.Total) entries as written")
+        foreach ($r in $log.Raw) { $out.Add($r) }
+        Set-Content -Path (Join-Path $OutDir 'client-content-log.txt') -Value $out -Encoding UTF8
     }
-    $errors   = @($entries | Where-Object { $_.Level -in 'error', 'fatal' -and -not $_.Expected })
-    $warnings = @($entries | Where-Object { $_.Level -eq 'warning' -and -not $_.Expected })
-    $expected = @($entries | Where-Object { $_.Level -in 'error', 'fatal', 'warning' -and $_.Expected })
-    Write-Step ("content log: {0} file(s), {1} error(s), {2} warning(s){3}" -f $files.Count, $errors.Count, $warnings.Count,
-        $(if ($expected) { ", $($expected.Count) expected (`$script:ContentLogExpected)" } else { '' }))
+    $nErr = Measure-ContentLogCount $errors; $nWarn = Measure-ContentLogCount $warnings; $nExp = Measure-ContentLogCount $expected
+    Write-Step ("content log: {0} file(s), {1} entries, {2} error(s), {3} warning(s){4}" -f $files.Count, $log.Total, $nErr, $nWarn,
+        $(if ($nExp) { ", $nExp expected (`$script:ContentLogExpected)" } else { '' }))
     $script:ContentLogWarnings = @(Format-ContentLogEntries $warnings)
     $problems = [System.Collections.Generic.List[string]]::new()
     if ($errors) {
         $lines = @(Format-ContentLogEntries $errors)
         $lines | Select-Object -First 20 | ForEach-Object { Write-Host "  ! content log: $_" -ForegroundColor Red }
-        $problems.Add("$($errors.Count) content-log error(s) ($($lines.Count) distinct; see client-content-log.txt): $($lines[0])")
+        $problems.Add("$nErr content-log error(s) ($($lines.Count) distinct; see client-content-log.txt): $($lines[0])")
     }
     if ($Strict -and $warnings) {
-        $problems.Add("$($warnings.Count) content-log warning(s) in a strict run ($($script:ContentLogWarnings.Count) distinct): $($script:ContentLogWarnings[0])")
+        $problems.Add("$nWarn content-log warning(s) in a strict run ($($script:ContentLogWarnings.Count) distinct): $($script:ContentLogWarnings[0])")
     }
     return $problems.ToArray()
 }
@@ -1005,8 +1178,64 @@ function Assert-NoErrors {
 # ---------------------------------------------------------------------------------------
 # Menu navigation (calibrated for a 1600x900 client area; coordinates are fractions)
 # ---------------------------------------------------------------------------------------
-function Wait-GameReady([int]$TimeoutSeconds = 180, [switch]$WithoutMod) {
-    Set-GameWindowSize
+# Seconds a game may take from its window to "GloamingForest enabled" ($env:GF_E2E_ENABLE_TIMEOUT_SEC).
+$script:EnableTimeoutSec = if ($env:GF_E2E_ENABLE_TIMEOUT_SEC -match '^\d+$') { [int]$env:GF_E2E_ENABLE_TIMEOUT_SEC } else { 180 }
+
+# A hang the harness saw itself (no pipe call blocked): kills this instance's game through the
+# watchdog, so the run ends NOT RUN with a "WATCHDOG:" line like a hung pipe call.
+function Stop-HungGame([string]$What) { [GfE2E.Watchdog]::Trip($What) }
+
+# CPU seconds the game used during a sample of -Seconds ($null: no game).
+function Measure-GameCpu([int]$Seconds = 10) {
+    $p = Get-GameProcess
+    if (-not $p) { return $null }
+    $t0 = $p.TotalProcessorTime
+    Start-Sleep -Seconds $Seconds
+    $p.Refresh()
+    if ($p.HasExited) { return $null }
+    return [Math]::Round(($p.TotalProcessorTime - $t0).TotalSeconds, 2)
+}
+
+# Waits for "GloamingForest enabled" (or LeviLamina's failure line). A game that is still running
+# when the time is up is hung in "Enabling mods" (W0c: one sat there with no CPU use and held the
+# harness for more than 10 minutes): idle (under 0.5 s of CPU in 10 s) it is killed at once; busy
+# (a loaded machine) it gets 120 s more, then it is killed too. Either way the run is NOT RUN.
+function Wait-ModEnabled([int]$TimeoutSeconds, [int]$Since = 0) {
+    $pattern = "$script:ModName enabled|Failed to (load|enable) mod $script:ModName"
+    $isTimeout = { param($e) "$e" -match '^Timed out after' -and (Get-GameProcess) }
+    try { return Wait-LogLine $pattern $TimeoutSeconds -Since $Since } catch { if (-not (& $isTimeout $_)) { throw } }
+    $cpu = Measure-GameCpu 10
+    if ($null -eq $cpu) { throw "the game exited while enabling mods" }
+    if ($cpu -lt 0.5) {
+        Stop-HungGame "game hung while enabling mods: no '$script:ModName enabled' within $TimeoutSeconds s, and the game used $cpu s of CPU in 10 s"
+        throw "the game hung while enabling mods"
+    }
+    Write-Step "no '$script:ModName enabled' within $TimeoutSeconds s, but the game is busy ($cpu s of CPU in 10 s); waiting 120 s more"
+    try { return Wait-LogLine $pattern 120 -Since $Since } catch { if (-not (& $isTimeout $_)) { throw } }
+    Stop-HungGame "game hung while enabling mods: no '$script:ModName enabled' within $($TimeoutSeconds + 130) s (busy)"
+    throw "the game hung while enabling mods"
+}
+
+# Test switch: $env:GF_E2E_TEST_HANG = 'enable' (freeze the game before "GloamingForest enabled" is
+# awaited) or 'pipe' (freeze it right before the scenario, so its first pipe call or capture hangs).
+# The game is suspended (every thread stops: a real hang), so the watchdog's NOT RUN paths can be
+# run on purpose (docs/spec/e2e.md, Hangs). Such runs never count toward Test-RepeatedHang.
+function Invoke-TestHang([string]$Stage) {
+    if ($env:GF_E2E_TEST_HANG -ne $Stage) { return }
+    $script:TestHang = $true
+    foreach ($p in @(Get-InstanceProcesses)) {
+        Write-Step "TEST (GF_E2E_TEST_HANG=$Stage): freezing the game (pid $($p.Id))"
+        [GfE2E.Watchdog]::Suspend($p.Id)
+    }
+}
+
+function Wait-GameReady([int]$TimeoutSeconds = $script:EnableTimeoutSec, [switch]$WithoutMod) {
+    try { Set-GameWindowSize }
+    catch {
+        # BeDD (a mod too) never answered: a game that is still running is stuck while loading
+        if (-not (Get-WatchdogFired) -and "$_" -match 'did not answer within' -and (Get-GameProcess)) { Stop-HungGame "the game still running but BeDD's pipe never answered while loading ($($_.Exception.Message))" }
+        throw
+    }
     if ($WithoutMod) {
         # With no mods at all LeviLamina logs "0 mod(s) loaded" and never "enabled"; that early line
         # is sometimes missed after a game restart, so a running game counts as ready after 90 s.
@@ -1017,7 +1246,9 @@ function Wait-GameReady([int]$TimeoutSeconds = 180, [switch]$WithoutMod) {
             Write-Step "no LeviLamina mod line in the log; the game is running, continuing"
         }
     } else {
-        $hit = Wait-LogLine "$script:ModName enabled|Failed to (load|enable) mod $script:ModName" $TimeoutSeconds
+        $since = 0
+        if ($env:GF_E2E_TEST_HANG -eq 'enable') { $since = Get-LogMark; Invoke-TestHang 'enable' }
+        $hit = Wait-ModEnabled $TimeoutSeconds $since
         if ($hit -notmatch "$script:ModName enabled") { throw "LeviLamina failed to load $($script:ModName): $hit" }
     }
     # The title screen takes a while after mods are enabled.

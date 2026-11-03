@@ -252,18 +252,31 @@ $script:TransportBanner = @(
 # banner, and except the console's own echo of a command's error reply: BDS prints the error output
 # of a command run on its console as "ERR [Server] <reply>", and scenarios run failing commands on
 # purpose (a refused /twilightforest locate); the mod logs every command error first as
-# "[GloamingForest] Command error: <reply>" (src/mod/Commands.cpp), so an [Server] ERR line whose
-# text is such a reply of this run is the echo, not an error.
+# "[GloamingForest] Command error: <reply>" (src/mod/Commands.cpp), so an [Server] ERR line with the
+# same text within $script:CommandEchoWindow lines after such a reply is its echo, not an error. Each
+# reply excuses one echo only; an ERR line before the reply, further away or with other text counts.
+$script:CommandEchoWindow = 5
 function Select-ErrorLines([string[]]$Lines) {
-    $replies = [System.Collections.Generic.HashSet[string]]::new()
-    foreach ($l in $Lines) { if ($l -match '\[GloamingForest\]\s?Command error: (.*)$') { [void]$replies.Add($Matches[1].TrimEnd()) } }
-    @(foreach ($l in $Lines) {
+    # open replies: text -> queue of the line indexes still waiting for their echo
+    $open = @{}
+    @(for ($i = 0; $i -lt $Lines.Count; $i++) {
+        $l = $Lines[$i]
+        if ($l -match '\[GloamingForest\]\s?Command error: (.*)$') {
+            $t = $Matches[1].TrimEnd()
+            if (-not $open.ContainsKey($t)) { $open[$t] = [System.Collections.Generic.Queue[int]]::new() }
+            $open[$t].Enqueue($i)
+        }
         if ($l -match $script:ErrorLineRegex -or $l -match $script:ContentErrorRegex) { $l; continue }
         $m = [regex]::Match($l, $script:AnyErrorRegex)
         if (-not $m.Success) { continue }
         if ($m.Groups['logger'].Value -eq 'Server') {
             $text = $m.Groups['text'].Value.TrimEnd()
-            if ($script:TransportBanner -ccontains $text -or $replies.Contains($text)) { continue }
+            if ($script:TransportBanner -ccontains $text) { continue }
+            $q = $open[$text]
+            if ($q) {
+                while ($q.Count -gt 0 -and $i - $q.Peek() -gt $script:CommandEchoWindow) { [void]$q.Dequeue() }
+                if ($q.Count -gt 0) { [void]$q.Dequeue(); continue }
+            }
         }
         $l
     })
