@@ -184,8 +184,12 @@ GF_REGISTER_SELFTEST("ui.client_name_tags", [](Context& ctx) -> ll::coro::CoroTa
     auto&        p    = ctx.player();
     std::int64_t self = p.getOrCreateUniqueID().rawID;
     auto         isMe = [self](Actor const& a) { return a.getOrCreateUniqueID().rawID == self; };
+    // the rules of the player type are replaced below: another module's rule is put back at the end
+    std::string const type  = p.getTypeName();
+    auto const        saved = r::nameTagRule(type);
+    if (saved) r::showNameTag(type);
     ctx.check(!r::nameTagHidden(p), "no rule hides the test player's name tag");
-    r::hideNameTag(p.getTypeName(), isMe);
+    r::hideNameTag(type, isMe);
     ctx.check(r::nameTagHidden(p), "hidden by its type and the predicate");
     r::hideNameTag(p.getTypeName(), [](Actor const&) { return false; });
     ctx.check(!r::nameTagHidden(p), "a later rule for the type replaces the earlier one");
@@ -197,6 +201,8 @@ GF_REGISTER_SELFTEST("ui.client_name_tags", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(handle != 0 && r::nameTagHidden(p), "hidden by a predicate of any type");
     ctx.check(r::hideNameTag(r::NameTagFn{}) == 0, "an empty predicate is refused");
     ctx.check(r::showNameTag(handle) && !r::showNameTag(handle) && !r::nameTagHidden(p), "the predicate is removed by its handle, once");
+    if (saved) r::hideNameTag(type, *saved);
+    ctx.check(r::nameTagRule(type).has_value() == saved.has_value(), "the player type's rule from before the test is back");
 });
 
 GF_REGISTER_SELFTEST("ui.client_geo", [](Context& ctx) {

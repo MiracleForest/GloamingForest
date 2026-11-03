@@ -80,21 +80,30 @@ namespace gf::client::render {
 // What a renderer finds at entry (block, item and entity renderers, onWorld callbacks):
 // - the world matrix of its space (world space relative to the camera, or the item's space; see
 //   RenderContext below), which it may push onto and must leave balanced;
-// - the light: the entity constants of the actor materials (ActorShaderManager::
-//   setupShaderParameters: the block and sky light the lit materials multiply by) set for the
-//   renderer, never left over from the draw before it: a block renderer gets the light at its block
-//   (Java's BlockEntityRenderer packedLight), an entity renderer and the items an entity holds or
-//   wears the light at the entity's eyes (Java's getPackedLightCoords), an item on the ground the
+// - the place of its light, RenderContext::lightAt / fullBright: a block renderer the light at its
+//   block (Java's BlockEntityRenderer packedLight), an entity renderer and the items an entity holds
+//   or wears the light at the entity's eyes (Java's getPackedLightCoords), an item on the ground the
 //   light at the item, an item in a frame the light at the frame block (full bright in a glow
 //   frame), an item in a GUI slot full bright (Java's GUI items), an onWorld callback the light at
-//   the camera. drawGeo sets the light again before every draw (at RenderContext::lightAt, else at
-//   its own position), so draws in between (text, the game's own renderers) never change the light
-//   of a geometry;
+//   the camera. The light itself (the entity constants of the actor materials:
+//   ActorShaderManager::setupShaderParameters, the block and sky light the lit materials multiply
+//   by) is applied where it is drawn with: drawGeo sets it before every draw (at lightAt, else at
+//   its own position), so neither the draw before the renderer nor draws in between (text, the
+//   game's own renderers) change the light of a geometry, and a renderer that draws nothing costs no
+//   light lookup. A renderer that draws with the game's lit materials itself calls
+//   setupLight(ctx, *ctx.lightAt, ctx.fullBright) before it draws; what the constants hold at
+//   entry is unspecified (the last draw's);
 // - the screen context's shader colour and dark colour as the game left them (put back after every
 //   renderer, whatever the light setup or the renderer changed); materials and the tessellator are
 //   whatever the game left (Lines and drawGeo set what they draw with);
 // - a RenderContext of its own: what one renderer changes in it (lightAt, throughWalls, ...) never
 //   reaches the next.
+
+// Which blocks a block renderer runs for: the positions of its block are recorded when the game builds
+// the render chunk (16^3 section) that holds them (RenderChunkBuilder::build, whatever tessellator then
+// meshes the block), and a rebuild of the section (a block placed or broken in it) replaces them.
+// Register block renderers at install (before the world's chunks are meshed): a section built before
+// the registration is not scanned again until it is rebuilt.
 
 /// Name tags: whether the game draws the name tag (the text over an entity) of `entity`. Render
 /// thread, once per entity with a visible name tag per frame: keep it cheap; the entity is the
@@ -131,7 +140,10 @@ public:
     explicit RenderContext(ScreenContext& screenContext) : screen(screenContext) {}
 
     ScreenContext&          screen;           ///< tessellator, camera matrix stacks
-    BaseActorRenderContext* actors = nullptr; ///< world passes (blocks, entities, items, onWorld); null for the sky
+    /// The actor render context drawGeo draws with: every world pass (blocks, entities, items,
+    /// onWorld) and the GUI item pass (ItemContext::Gui, built on the UI's screen context); null for
+    /// the sky. Tell the GUI pass from the world passes by `ui` (non-null only there).
+    BaseActorRenderContext* actors = nullptr;
     Vec3                    camera{};         ///< camera position, world coordinates
     float                   partialTicks = 0;
     bool                    throughWalls = false; ///< Lines / drawGeo skip the depth test
@@ -140,7 +152,8 @@ public:
     bool                    itemSpace = false;
     /// Half the width of Lines' bars in units of the current space (1/64 block in the world).
     float                   lineHalfWidth = 1.0f / 64;
-    /// ItemContext::Gui: the UI context and the slot's rectangle in GUI pixels.
+    /// ItemContext::Gui: the UI context and the slot's rectangle in GUI pixels (null in every other
+    /// pass).
     MinecraftUIRenderContext* ui = nullptr;
     float                     guiX = 0, guiY = 0, guiSize = 16;
     /// Where the light of this renderer is taken (world coordinates; "What a renderer
@@ -160,8 +173,7 @@ public:
 /// actor. For renderers that draw with the game's lit materials themselves (drawGeo does it on its
 /// own). False when there is no world pass (ctx.actors null) or no client world.
 bool setupLight(RenderContext& ctx, Vec3 const& at, bool fullBright = false);
-/// How many times the passes and drawGeo set the light (tests and e2e: the block renderers of a frame
-/// each set it).
+/// How many times the light was set (setupLight, drawGeo before each draw; tests and e2e).
 [[nodiscard]] std::uint64_t lightSetups();
 
 /// Number of block positions currently tracked for block renderers (tests).
@@ -186,6 +198,9 @@ bool showNameTag(std::size_t handle);
 /// Whether the name tag of `entity` is hidden by a hideNameTag rule (what the name tag pass asks;
 /// tests).
 [[nodiscard]] bool nameTagHidden(Actor const& entity);
+/// The hideNameTag rule of type `entityId` (nullopt: none; an empty function: every entity of the
+/// type), so a selftest can put back what another module registered.
+[[nodiscard]] std::optional<NameTagFn> nameTagRule(std::string const& entityId);
 
 } // namespace gf::client::render
 

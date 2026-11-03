@@ -300,7 +300,7 @@ GF_REGISTER_SELFTEST("ui.fixture_frame", [](Context& ctx) -> ll::coro::CoroTask<
         for (auto* rp : players) {
             fx::standOnStage(*rp, *st->region, origin, 1.5f); // the frame's middle
             // the client's stage renderers first (a block renderer for the fixture block, a tint on the
-            // game's foliage for the oak leaves), then their blocks, so the client meshes them with both
+            // game's foliage for the twilight oak leaves), then their blocks, so the client meshes them with both
             fx::show(*rp, {{"show", true}, {"stage", {origin.x, origin.y, origin.z}}});
         }
         ctx.info("item frame placed on the stage for " + names(players));
@@ -308,9 +308,11 @@ GF_REGISTER_SELFTEST("ui.fixture_frame", [](Context& ctx) -> ll::coro::CoroTask<
         auto* region = ctx.region(); // again after the wait (rule R16)
         ctx.require(region != nullptr, "a region for the stage");
         auto const* block  = gf::game::blockWith(kFixtureBlock);
-        auto const* leaves = gf::game::blockWithStates("minecraft:oak_leaves", Json{{"persistent_bit", true}}); // no decay
+        // TF leaves with the "default_foliage" tint method (tools/families): their mesh asks the tint
+        // resolver, so the tint registry runs (vanilla oak leaves are tinted without it)
+        auto const* leaves = gf::game::blockWithStates("twilightforest:twilight_oak_leaves", Json{{"twilightforest:persistent", true}}); // no decay
         ctx.check(block && gf::game::setBlock(*region, {origin.x - 1, origin.y, origin.z + 2}, *block), "the fixture block (block renderer) is on the stage");
-        ctx.check(leaves && gf::game::setBlock(*region, {origin.x + 1, origin.y, origin.z + 2}, *leaves), "the oak leaves (tint on the game's foliage) are on the stage");
+        ctx.check(leaves && gf::game::setBlock(*region, {origin.x + 1, origin.y, origin.z + 2}, *leaves), "the twilight oak leaves (tint on the game's foliage) are on the stage");
         ctx.info(
             "stage blocks: " + gf::game::blockId(region->getBlock({origin.x - 1, origin.y, origin.z + 2})) + " and " +
             gf::game::blockId(region->getBlock({origin.x + 1, origin.y, origin.z + 2}))

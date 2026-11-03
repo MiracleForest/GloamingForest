@@ -4,11 +4,11 @@
 //
 // - HUD layer "ui.fixture": a panel with an item, the graphics mode and the three blit methods;
 // - two toasts (Java's toast layout on the game's toast frame): LockedBiomeToast's colours (yellow
-//   title) with a flat icon (a map) and MissingAdvancementToast's (white title) with a block icon
-//   (grass) and a literal body;
+//   title) with a flat icon (a map) and MissingAdvancementToast's (white title) with a TF block
+//   icon (twilight oak planks) and a literal body;
 // - stage renderers (the frame step, "stage": its origin): a block renderer on the fixture block left
-//   of the frame (the fixture geometry, lit by the block above it) and a tint of the oak leaves right
-//   of it built on the game's foliage colour (red and blue swapped on the stage only);
+//   of the frame (the fixture geometry, lit by the block above it) and a tint of the twilight oak
+//   leaves right of it built on the game's foliage colour (red and blue swapped on the stage only);
 // - world: a line box around the block below the player, a line up to the sky and the fixture
 //   geometry (geometry.gf_ui.fixture) drawn with drawGeo in front of the player;
 // - fog: a provider for the player's dimension (red fog 4..24 blocks, clouds at y 160), and a sky
@@ -118,7 +118,8 @@ struct State {
     std::atomic<bool> hud{false}, world{false}, mapPending{false};
     std::atomic<int>  fogDim{-1};
     std::atomic<bool> loggedHud{false}, loggedWorld{false}, loggedFixed{false}, loggedHead{false};
-    std::shared_ptr<ItemStack> hudItem; // client thread
+    std::shared_ptr<ItemStack> hudItem;                // client thread
+    std::shared_ptr<ItemStack> hudBlock, hudTfBlock;   // client thread: a vanilla and a TF block item
     std::int64_t               mapId = 0; // client thread
 };
 State& st() {
@@ -160,7 +161,21 @@ void drawHud(screen::Canvas& c, float) {
         c.text(r.x + 2, r.y + r.h + 2, std::to_string(m) + (ok ? "" : " -"), 0xFFFFFFFF);
     }
     ui::setBlitMethod(keep);
-    if (!st().loggedHud.exchange(true)) log().info("ui fixture: hud layer drawn ({})", graphicsModeName());
+    // block items on a HUD layer (drawn after the game's UI pass, as toast icons): a vanilla block and
+    // a data-driven TF block, each in a grey 18 x 18 cell, an empty cell between them (the client
+    // scenario checks they are GUI cubes, as in the inventory)
+    if (!st().hudBlock) {
+        if (auto s = game::items::make("minecraft:cobblestone")) st().hudBlock = std::make_shared<ItemStack>(std::move(*s));
+        if (auto s = game::items::make("twilightforest:twilight_oak_planks")) st().hudTfBlock = std::make_shared<ItemStack>(std::move(*s));
+    }
+    float const cellX = panel.x + panel.w + 6, cellY = panel.y + 1;
+    for (int i = 0; i < 3; ++i) c.fill({cellX + static_cast<float>(i) * 18 - 1, cellY - 1, 18, 18}, 0xFF8B8B8B);
+    if (st().hudBlock) c.item(*st().hudBlock, cellX, cellY);
+    if (st().hudTfBlock) c.item(*st().hudTfBlock, cellX + 36, cellY);
+    if (!st().loggedHud.exchange(true)) {
+        auto [gw, gh] = screen::guiSize();
+        log().info("ui fixture: hud layer drawn ({}) cells={},{} gui={}x{}", graphicsModeName(), cellX, cellY, gw, gh);
+    }
 }
 
 void drawWorld(render::RenderContext& ctx, float) {
@@ -206,7 +221,10 @@ void drawHead(render::RenderContext& ctx, ItemStack const&, render::ItemContext)
 
 // ---- the stage's renderers (the frame step): a block renderer and a tint on the game's foliage ----
 
-constexpr char kStageLeaves[] = "minecraft:oak_leaves";
+// TF leaves whose material has the "default_foliage" tint method (tools/families) and no tint of
+// F11's: their mesh asks the tint resolver, so a registered tint runs (vanilla oak leaves are tinted
+// by the game without asking it)
+constexpr char kStageLeaves[] = "twilightforest:twilight_oak_leaves";
 
 /// The stage's origin (its feet block) while the stage renderers are on (chunk builders read it).
 struct StageAt {
@@ -239,8 +257,8 @@ void drawStageBlock(render::RenderContext& ctx, BlockPos const& pos, Block const
         log().info("ui fixture: stage block renderer drawn at {} {} {} (light set {} time(s) so far)", pos.x, pos.y, pos.z, render::lightSetups());
 }
 
-/// Oak leaves: the game's own foliage colour, with red and blue swapped on the stage (the screenshot
-/// shows the game's colour went through the tint function); everywhere else as the game tints them.
+/// Twilight oak leaves: the game's own foliage colour, with red and blue swapped on the stage (the
+/// screenshot shows the game's colour went through the tint function); elsewhere the game's colour.
 unsigned tintStageLeaves(BlockPos const& p, tint::GameColors const& game) {
     unsigned f = game.foliage().value_or(0x48B518u); // FoliageColor.getDefaultColor without a world
     if (!onStage(p)) return f;
@@ -373,7 +391,7 @@ void onMessage(Json const& msg) {
         // its FALLBACK is the portal miniature) and a literal body (an advancement title as text)
         toast::show({.iconItem = "minecraft:map", .titleKey = "gf.ui.fixture.toast_title", .bodyKey = "gf.ui.fixture.toast_body", .ms = 30000});
         toast::show(
-            toast::LiteralToastSpec{{.iconItem = "minecraft:grass_block", .titleKey = "gf.ui.fixture.toast_advancement", .ms = 30000}, {}, "Literal: The Twilight Forest"},
+            toast::LiteralToastSpec{{.iconItem = "twilightforest:twilight_oak_planks", .titleKey = "gf.ui.fixture.toast_advancement", .ms = 30000}, {}, "Literal line"},
             toast::styleOf(toast::Kind::MissingAdvancement)
         );
     }
