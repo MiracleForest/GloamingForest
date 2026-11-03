@@ -18,17 +18,21 @@
 //   of the hurt sound (Player#getHurtSound: burning, freezing, TF's pinch): the game's hurt sound
 //   for that hurt (Player::getCustomHurtSound) becomes Bedrock's matching player hurt sound, or
 //   silence for TF's pinch, which gf::fx plays.
-// - Damage types: TF's 40 (TFDamageTypes#bootstrap: message id, exhaustion, effects) are built
-//   in; <mod>/data/<ns>/damage_type/*.json (F1's import) override and add. Vanilla damage is
-//   named by Java's ids ("minecraft:player_attack", "minecraft:fall", ...) from the Bedrock cause.
+// - Damage types: TF's 40 (TFDamageTypes#bootstrap: message id, exhaustion, effects) and
+//   Minecraft 1.21.1's 47 (data/minecraft/damage_type, with NeoForge's neoforge:poison) are built
+//   in; <mod>/data/<ns>/damage_type/*.json (F1's import) override and add. Bedrock's own damage is
+//   named by Java's ids ("minecraft:player_attack", "minecraft:arrow", ...) from its cause (and the
+//   attacker / projectile), and gf::combat::hurt with a vanilla type uses that type's Bedrock cause.
+// - Damage type tags: the data through gf::tags (F9: TF's memberships, the units' fragments) plus
+//   Minecraft 1.21.1's own tags with NeoForge 21.1's additions and neoforge: tags (is_physical,
+//   is_magic, ...), built in (Bedrock has no data for them), nested tags resolved.
 // - gf::combat::hurt(victim, amount, type, attacker, direct) builds the Bedrock damage source:
-//   the cause follows the type's tags (bypasses_armor -> Magic, is_fire -> Fire, is_explosion ->
-//   EntityExplosion, is_fall -> Fall, is_projectile -> Projectile, ...; the memberships are the
-//   damage type tags of the data through gf::tags, F9, plus vanilla's own members, which
-//   Bedrock has no data for), no_knockback turns the
-//   knockback off, the type's exhaustion is added to a hurt player, and the death message is
-//   Java's (DamageSource#getLocalizedDeathMessage: "death.attack.<msgId>", ".player" with the kill
-//   credit, ".item" with a named weapon) through one ActorDamageSource#getDeathMessage hook.
+//   the cause of a TF type follows its tags (bypasses_armor -> Magic, is_fire -> Fire,
+//   is_explosion -> EntityExplosion, is_fall -> Fall, is_projectile -> Projectile, ...),
+//   no_knockback turns the knockback off, the type's exhaustion is added to a hurt player, and the
+//   death message of a TF type is Java's (DamageSource#getLocalizedDeathMessage:
+//   "death.attack.<msgId>", ".player" with the kill credit, ".item" with a named weapon) through one
+//   ActorDamageSource#getDeathMessage hook; a vanilla type keeps Bedrock's message for its cause.
 
 #include "feature/combat/Combat.h"
 
@@ -138,27 +142,222 @@ std::map<std::string, DamageTypeSpec> builtinTypes() {
         s.effects    = r.effects;
         out[s.id]    = s;
     }
+    // Minecraft 1.21.1's damage types (data/minecraft/damage_type/*.json: message_id, exhaustion,
+    // effects, scaling, death_message_type) and NeoForge 21.1's neoforge:poison (its poison effect's
+    // damage). Bedrock has no data for them; Bedrock's own message names their deaths except where
+    // `bedrock` gives its key (the Bedrock cause would name it otherwise).
+    struct VanillaRow {
+        char const* id;
+        char const* msg;
+        float       exhaustion;
+        char const* effects;
+        char const* scaling;
+        char const* deathMessageType;
+        char const* bedrock;
+    };
+    static constexpr char const* kNp  = "when_caused_by_living_non_player";
+    static constexpr char const* kAll = "always";
+    static constexpr VanillaRow vanilla[] = {
+        {"minecraft:arrow", "arrow", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:bad_respawn_point", "badRespawnPoint", 0.1f, "hurt", kAll, "intentional_game_design", ""},
+        {"minecraft:cactus", "cactus", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:campfire", "inFire", 0.1f, "burning", kNp, "default", ""},
+        {"minecraft:cramming", "cramming", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:dragon_breath", "dragonBreath", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:drown", "drown", 0.0f, "drowning", kNp, "default", ""},
+        {"minecraft:dry_out", "dryout", 0.1f, "hurt", kNp, "default", "dehydration"},
+        {"minecraft:explosion", "explosion", 0.1f, "hurt", kAll, "default", ""},
+        {"minecraft:fall", "fall", 0.0f, "hurt", kNp, "fall_variants", ""},
+        {"minecraft:falling_anvil", "anvil", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:falling_block", "fallingBlock", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:falling_stalactite", "fallingStalactite", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:fireball", "fireball", 0.1f, "burning", kNp, "default", ""},
+        {"minecraft:fireworks", "fireworks", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:fly_into_wall", "flyIntoWall", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:freeze", "freeze", 0.0f, "freezing", kNp, "default", ""},
+        {"minecraft:generic", "generic", 0.0f, "hurt", kNp, "default", "generic"},
+        {"minecraft:generic_kill", "genericKill", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:hot_floor", "hotFloor", 0.1f, "burning", kNp, "default", ""},
+        {"minecraft:in_fire", "inFire", 0.1f, "burning", kNp, "default", ""},
+        {"minecraft:in_wall", "inWall", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:indirect_magic", "indirectMagic", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:lava", "lava", 0.1f, "burning", kNp, "default", ""},
+        {"minecraft:lightning_bolt", "lightningBolt", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:magic", "magic", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:mob_attack", "mob", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:mob_attack_no_aggro", "mob", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:mob_projectile", "mob", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:on_fire", "onFire", 0.0f, "burning", kNp, "default", ""},
+        {"minecraft:out_of_world", "outOfWorld", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:outside_border", "outsideBorder", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:player_attack", "player", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:player_explosion", "explosion.player", 0.1f, "hurt", kAll, "default", ""},
+        {"minecraft:sonic_boom", "sonic_boom", 0.0f, "hurt", kAll, "default", ""},
+        {"minecraft:spit", "mob", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:stalagmite", "stalagmite", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:starve", "starve", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:sting", "sting", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:sweet_berry_bush", "sweetBerryBush", 0.1f, "poking", kNp, "default", "sweetBerry"},
+        {"minecraft:thorns", "thorns", 0.1f, "thorns", kNp, "default", ""},
+        {"minecraft:thrown", "thrown", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:trident", "trident", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:unattributed_fireball", "onFire", 0.1f, "burning", kNp, "default", ""},
+        {"minecraft:wind_charge", "mob", 0.1f, "hurt", kNp, "default", ""},
+        {"minecraft:wither", "wither", 0.0f, "hurt", kNp, "default", ""},
+        {"minecraft:wither_skull", "witherSkull", 0.1f, "hurt", kNp, "default", ""},
+        {"neoforge:poison", "magic", 0.0f, "hurt", kNp, "default", ""},
+    };
+    for (auto const& r : vanilla) {
+        DamageTypeSpec s;
+        s.id               = r.id;
+        s.messageId        = r.msg;
+        s.exhaustion       = r.exhaustion;
+        s.effects          = r.effects;
+        s.scaling          = r.scaling;
+        s.deathMessageType = r.deathMessageType;
+        s.vanilla          = true;
+        s.bedrockMessageId = r.bedrock;
+        out[s.id]          = s;
+    }
     return out;
 }
 
-/// Vanilla's own members of the vanilla damage type tags TF relies on (Mojang's data, which Bedrock
-/// does not have). TF's memberships (its generated tag data: minecraft:is_fire holds
-/// twilightforest:hydra_fire, ...) and every unit's union fragments come from the data through F9's
-/// gf::tags.
-std::map<std::string, std::set<std::string>> const& vanillaTags() {
-    static std::map<std::string, std::set<std::string>> const t = [] {
-        std::map<std::string, std::set<std::string>> m;
-        m["minecraft:is_fire"].insert({"minecraft:in_fire", "minecraft:on_fire", "minecraft:lava", "minecraft:hot_floor", "minecraft:fireball", "minecraft:unattributed_fireball", "minecraft:campfire"});
-        m["minecraft:is_projectile"].insert({"minecraft:arrow", "minecraft:trident", "minecraft:mob_projectile", "minecraft:fireball", "minecraft:wither_skull", "minecraft:thrown", "minecraft:unattributed_fireball", "minecraft:wind_charge"});
-        m["minecraft:is_fall"].insert({"minecraft:fall", "minecraft:stalagmite", "minecraft:ender_pearl"});
-        m["minecraft:is_explosion"].insert({"minecraft:explosion", "minecraft:player_explosion", "minecraft:fireworks", "minecraft:bad_respawn_point"});
-        m["minecraft:bypasses_armor"].insert({"minecraft:magic", "minecraft:indirect_magic", "minecraft:wither", "minecraft:starve", "minecraft:drown", "minecraft:fall", "minecraft:out_of_world", "minecraft:generic_kill", "minecraft:freeze", "minecraft:in_wall", "minecraft:cramming", "minecraft:fly_into_wall", "minecraft:sonic_boom", "minecraft:dragon_breath", "minecraft:on_fire", "minecraft:stalagmite", "minecraft:outside_border"});
-        m["minecraft:is_freezing"] = {"minecraft:freeze"};
-        m["minecraft:is_drowning"] = {"minecraft:drown"};
-        m["minecraft:is_lightning"] = {"minecraft:lightning_bolt"};
-        return m;
+/// Minecraft 1.21.1's own damage type tags (data/minecraft/tags/damage_type) with NeoForge 21.1's
+/// additions and its neoforge: tags (TF's code asks neoforge:is_physical / is_magic /
+/// is_environment / is_technical): the game data Bedrock does not have. Members without a namespace
+/// are minecraft:, "#..." are nested tags. TF's memberships (its generated tag data:
+/// minecraft:is_fire holds twilightforest:hydra_fire, ...) and every unit's union fragments come
+/// from the data through F9's gf::tags.
+std::map<std::string, std::vector<std::string>> const& vanillaTags() {
+    static std::map<std::string, std::vector<std::string>> const t = [] {
+        static char const* const kPoison = "#neoforge:is_poison";
+        std::map<std::string, std::vector<std::string>> raw{
+            {"minecraft:always_hurts_ender_dragons", {"#is_explosion"}},
+            {"minecraft:always_kills_armor_stands", {"arrow", "trident", "fireball", "wither_skull", "wind_charge"}},
+            {"minecraft:always_most_significant_fall", {"out_of_world"}},
+            {"minecraft:always_triggers_silverfish", {"magic", kPoison}},
+            {"minecraft:avoids_guardian_thorns", {"magic", "thorns", "#is_explosion", kPoison}},
+            {"minecraft:burn_from_stepping", {"campfire", "hot_floor"}},
+            {"minecraft:burns_armor_stands", {"on_fire"}},
+            {"minecraft:bypasses_armor", {"on_fire", "in_wall", "cramming", "drown", "fly_into_wall", "generic", "wither", "dragon_breath", "starve", "fall", "freeze", "stalagmite", "magic", "indirect_magic", "out_of_world", "generic_kill", "sonic_boom", "outside_border", kPoison}},
+            {"minecraft:bypasses_effects", {"starve"}},
+            {"minecraft:bypasses_enchantments", {"sonic_boom"}},
+            {"minecraft:bypasses_invulnerability", {"out_of_world", "generic_kill"}},
+            {"minecraft:bypasses_resistance", {"out_of_world", "generic_kill"}},
+            {"minecraft:bypasses_shield", {"#bypasses_armor", "falling_anvil", "falling_stalactite"}},
+            {"minecraft:bypasses_wolf_armor", {"#bypasses_invulnerability", "cramming", "drown", "dry_out", "freeze", "in_wall", "indirect_magic", "magic", "outside_border", "starve", "thorns", "wither", kPoison}},
+            {"minecraft:can_break_armor_stand", {"player_attack", "player_explosion"}},
+            {"minecraft:damages_helmet", {"falling_anvil", "falling_block", "falling_stalactite"}},
+            {"minecraft:ignites_armor_stands", {"in_fire", "campfire"}},
+            {"minecraft:is_drowning", {"drown"}},
+            {"minecraft:is_explosion", {"fireworks", "explosion", "player_explosion", "bad_respawn_point"}},
+            {"minecraft:is_fall", {"fall", "stalagmite"}},
+            {"minecraft:is_fire", {"in_fire", "campfire", "on_fire", "lava", "hot_floor", "unattributed_fireball", "fireball"}},
+            {"minecraft:is_freezing", {"freeze"}},
+            {"minecraft:is_lightning", {"lightning_bolt"}},
+            {"minecraft:is_player_attack", {"player_attack"}},
+            {"minecraft:is_projectile", {"arrow", "trident", "mob_projectile", "unattributed_fireball", "fireball", "wither_skull", "thrown", "wind_charge"}},
+            {"minecraft:no_anger", {"mob_attack_no_aggro"}},
+            {"minecraft:no_impact", {"drown"}},
+            {"minecraft:no_knockback", {"explosion", "player_explosion", "bad_respawn_point", "in_fire", "lightning_bolt", "on_fire", "lava", "hot_floor", "in_wall", "cramming", "drown", "starve", "cactus", "fall", "fly_into_wall", "out_of_world", "generic", "magic", "wither", "dragon_breath", "dry_out", "sweet_berry_bush", "freeze", "stalagmite", "outside_border", "generic_kill", "campfire", kPoison}},
+            {"minecraft:panic_causes", {"#panic_environmental_causes", "arrow", "dragon_breath", "explosion", "fireball", "fireworks", "indirect_magic", "magic", "mob_attack", "mob_projectile", "player_attack", "player_explosion", "sonic_boom", "sting", "thrown", "trident", "unattributed_fireball", "wind_charge", "wither", "wither_skull", kPoison}},
+            {"minecraft:panic_environmental_causes", {"cactus", "freeze", "hot_floor", "in_fire", "lava", "lightning_bolt", "on_fire"}},
+            {"minecraft:witch_resistant_to", {"magic", "indirect_magic", "sonic_boom", "thorns", kPoison}},
+            {"minecraft:wither_immune_to", {"drown"}},
+            {"neoforge:is_environment", {"in_fire", "on_fire", "lava", "hot_floor", "drown", "starve", "dry_out", "freeze", "lightning_bolt", "cactus", "stalagmite", "falling_stalactite", "falling_block", "falling_anvil", "cramming", "fly_into_wall", "sweet_berry_bush", "in_wall"}},
+            {"neoforge:is_magic", {"magic", "indirect_magic", "thorns", "dragon_breath", kPoison, "#neoforge:is_wither"}},
+            {"neoforge:is_physical", {"cactus", "stalagmite", "falling_stalactite", "falling_block", "falling_anvil", "cramming", "fly_into_wall", "sweet_berry_bush", "fall", "sting", "mob_attack", "player_attack", "mob_attack_no_aggro", "arrow", "thrown", "trident", "mob_projectile", "sonic_boom", "in_wall", "generic"}},
+            {"neoforge:is_poison", {"neoforge:poison"}},
+            {"neoforge:is_technical", {"generic_kill", "outside_border", "out_of_world"}},
+            {"neoforge:is_wither", {"wither", "wither_skull"}},
+            {"neoforge:no_flinch", {}},
+        };
+        // the full ids: "arrow" -> "minecraft:arrow", "#is_fire" -> "#minecraft:is_fire"
+        for (auto& [_, members] : raw)
+            for (auto& m : members) {
+                bool tag  = !m.empty() && m[0] == '#';
+                auto name = tag ? m.substr(1) : m;
+                if (name.find(':') == std::string::npos) name = "minecraft:" + name;
+                m = tag ? "#" + name : name;
+            }
+        return raw;
     }();
     return t;
+}
+
+/// damageTypeHasTag with the nesting depth (a nested tag of the built-in table, its members from
+/// the data and the table again).
+bool hasTagAt(std::string const& id, std::string const& tag, int depth) {
+    if (tags::has(tags::Registry::DamageType, tag, id)) return true; // the data (TF's, the units' fragments)
+    auto const& v  = vanillaTags();
+    auto        it = v.find(tag);
+    if (it == v.end()) return false;
+    for (auto const& m : it->second) {
+        if (m == id) return true;
+        if (m[0] == '#' && depth < 8 && hasTagAt(id, m.substr(1), depth + 1)) return true;
+    }
+    return false;
+}
+
+/// The Bedrock counterpart of a vanilla damage type (Java's DamageSources -> the ActorDamageCause
+/// Bedrock's own damage of that kind has: its armour, enchantment, resistance and immunity rules,
+/// and its death message); nullopt for any other type.
+std::optional<SharedTypes::Legacy::ActorDamageCause> vanillaCause(std::string const& id, bool hasAttacker) {
+    using C = SharedTypes::Legacy::ActorDamageCause;
+    static std::map<std::string, C> const m{
+        {"minecraft:arrow", C::Projectile},
+        {"minecraft:bad_respawn_point", C::BlockExplosion},
+        {"minecraft:cactus", C::Contact},
+        {"minecraft:campfire", C::Campfire},
+        {"minecraft:cramming", C::Suffocation},
+        {"minecraft:dragon_breath", C::Magic},
+        {"minecraft:drown", C::Drowning},
+        {"minecraft:dry_out", C::Suffocation},
+        {"minecraft:fall", C::Fall},
+        {"minecraft:falling_anvil", C::Anvil},
+        {"minecraft:falling_block", C::FallingBlock},
+        {"minecraft:falling_stalactite", C::Stalactite},
+        {"minecraft:fireball", C::Fire}, // is_fire and is_projectile: fire immunity decides (a blaze)
+        {"minecraft:fireworks", C::Fireworks},
+        {"minecraft:fly_into_wall", C::FlyIntoWall},
+        {"minecraft:freeze", C::Freezing},
+        {"minecraft:generic", C::Magic}, // bypasses armour only
+        {"minecraft:generic_kill", C::Override},
+        {"minecraft:hot_floor", C::Magma},
+        {"minecraft:in_fire", C::Fire},
+        {"minecraft:in_wall", C::Suffocation},
+        {"minecraft:indirect_magic", C::Magic},
+        {"minecraft:lava", C::Lava},
+        {"minecraft:lightning_bolt", C::Lightning},
+        {"minecraft:magic", C::Magic},
+        {"minecraft:mob_attack", C::EntityAttack},
+        {"minecraft:mob_attack_no_aggro", C::EntityAttack},
+        {"minecraft:mob_projectile", C::Projectile},
+        {"minecraft:on_fire", C::FireTick},
+        {"minecraft:out_of_world", C::Void},
+        {"minecraft:outside_border", C::Magic},
+        {"minecraft:player_attack", C::EntityAttack},
+        {"minecraft:player_explosion", C::EntityExplosion},
+        {"minecraft:sonic_boom", C::SonicBoom},
+        {"minecraft:spit", C::Projectile},
+        {"minecraft:stalagmite", C::Stalagmite},
+        {"minecraft:starve", C::Starve},
+        {"minecraft:sting", C::EntityAttack},
+        {"minecraft:sweet_berry_bush", C::Contact},
+        {"minecraft:thorns", C::Thorns},
+        {"minecraft:thrown", C::Projectile},
+        {"minecraft:trident", C::Projectile},
+        {"minecraft:unattributed_fireball", C::Fire},
+        {"minecraft:wind_charge", C::Projectile},
+        {"minecraft:wither", C::Wither},
+        {"minecraft:wither_skull", C::Projectile},
+        {"neoforge:poison", C::Magic},
+    };
+    // Explosion#getDamageSource: an explosion with a causing entity (a creeper) is the entity's
+    if (id == "minecraft:explosion") return hasAttacker ? C::EntityExplosion : C::BlockExplosion;
+    auto it = m.find(id);
+    if (it == m.end()) return std::nullopt;
+    return it->second;
 }
 
 struct Types {
@@ -198,7 +397,12 @@ void loadTypes(Types& t) {
                 s.effects          = j.value("effects", std::string{"hurt"});
                 s.scaling          = j.value("scaling", s.scaling);
                 s.deathMessageType = j.value("death_message_type", s.deathMessageType);
-                t.types[s.id]      = std::move(s);
+                if (auto old = t.types.find(s.id); old != t.types.end()) {
+                    // a data file of a vanilla type: still Bedrock's own damage
+                    s.vanilla          = old->second.vanilla;
+                    s.bedrockMessageId = old->second.bedrockMessageId;
+                }
+                t.types[s.id] = std::move(s);
             } catch (std::exception const& ex) {
                 log().warn("combat: bad damage type {}: {}", f.path().string(), ex.what());
             }
@@ -302,22 +506,33 @@ void restoreMark(Actor& victim, std::optional<Mark> const& previous) {
     else marks().erase(id);
 }
 
+/// The Java damage type of Bedrock's own damage (Minecraft 1.21.1's DamageSources as Java's game
+/// code picks them for the same event).
 std::string vanillaTypeOf(Actor& victim, ActorDamageSource const& source) {
     auto [attacker, direct] = entitiesOf(source);
     (void)victim;
     switch (source.mCause) {
     case Cause::EntityAttack:
-    case Cause::RamAttack: return attacker && attacker->isPlayer() ? "minecraft:player_attack" : "minecraft:mob_attack";
+    case Cause::RamAttack:  // Goat: mobAttack
+    case Cause::Charging:   // a charging mob's hit
+    case Cause::MaceSmash:  // 1.21.1's mace hits with playerAttack (no mace_smash type yet)
+        if (attacker && attacker->isPlayer()) return "minecraft:player_attack";
+        if (attacker && attacker->getTypeName() == "minecraft:bee") return "minecraft:sting"; // Bee#doHurtTarget
+        return "minecraft:mob_attack";
     case Cause::Projectile: {
         std::string d = direct ? direct->getTypeName() : std::string{};
         if (d == "minecraft:arrow") return "minecraft:arrow";
         if (d == "minecraft:thrown_trident") return "minecraft:trident";
         if (d == "minecraft:fireball" || d == "minecraft:small_fireball") return attacker ? "minecraft:fireball" : "minecraft:unattributed_fireball";
-        if (d == "minecraft:wither_skull") return "minecraft:wither_skull";
-        if (d == "minecraft:wind_charge" || d == "minecraft:breeze_wind_charge") return "minecraft:wind_charge";
-        if (d == "minecraft:llama_spit" || d == "minecraft:shulker_bullet") return "minecraft:mob_projectile";
+        if (d == "minecraft:wither_skull" || d == "minecraft:wither_skull_dangerous") return "minecraft:wither_skull";
+        if (d == "minecraft:wind_charge_projectile" || d == "minecraft:breeze_wind_charge_projectile" || d == "minecraft:wind_charge" || d == "minecraft:breeze_wind_charge")
+            return "minecraft:wind_charge";
+        if (d == "minecraft:llama_spit") return "minecraft:spit";            // LlamaSpit#onHitEntity
+        if (d == "minecraft:shulker_bullet") return "minecraft:mob_projectile"; // ShulkerBullet#onHitEntity
         return "minecraft:thrown";
     }
+    case Cause::Temperature: return "minecraft:on_fire"; // SnowGolem#aiStep in a warm biome
+    case Cause::Override: return "minecraft:generic_kill";
     case Cause::Suffocation: return "minecraft:in_wall";
     case Cause::Fall: return "minecraft:fall";
     case Cause::Fire: return "minecraft:in_fire";
@@ -344,7 +559,6 @@ std::string vanillaTypeOf(Actor& victim, ActorDamageSource const& source) {
     case Cause::SonicBoom: return "minecraft:sonic_boom";
     case Cause::Campfire:
     case Cause::SoulCampfire: return "minecraft:campfire";
-    case Cause::MaceSmash: return "minecraft:mace_smash";
     case Cause::Contact: return "minecraft:cactus";
     default: return "minecraft:generic";
     }
@@ -418,6 +632,10 @@ std::optional<int> hurtEventCause(Actor const& actor, int data) {
         if (data != static_cast<int>(it->cause)) return std::nullopt;
         auto const&          fx = it->effects;
         std::optional<Cause> cause;
+        // a fire cause of the game's own (a campfire, magma, lava) already sounds like burning
+        bool burningCause = it->cause == Cause::Fire || it->cause == Cause::FireTick || it->cause == Cause::Lava || it->cause == Cause::Magma
+                         || it->cause == Cause::Campfire || it->cause == Cause::SoulCampfire;
+        if (fx == "burning" && burningCause) return std::nullopt;
         if (fx == "burning") cause = Cause::Fire;
         else if (fx == "freezing") cause = Cause::Freezing;
         else if (fx == "drowning") cause = Cause::Drowning;
@@ -439,7 +657,9 @@ void playDamageEffect(Actor& victim, std::string const& typeId, Cause cause, boo
     if (effects.empty() || (replaced && effects != "twilightforest:pinch")) return;
     std::string event;
     if (effects == "burning") {
-        if (cause == Cause::Fire || cause == Cause::FireTick || cause == Cause::Lava || cause == Cause::Magma) return;
+        if (cause == Cause::Fire || cause == Cause::FireTick || cause == Cause::Lava || cause == Cause::Magma || cause == Cause::Campfire
+            || cause == Cause::SoulCampfire)
+            return;
         event = "minecraft:entity.player.hurt_on_fire";
     } else if (effects == "freezing") {
         if (cause == Cause::Freezing) return;
@@ -489,14 +709,10 @@ std::vector<std::string> damageTypeIds() {
     return out;
 }
 
-bool damageTypeHasTag(std::string const& id, std::string const& tag) {
-    if (tags::has(tags::Registry::DamageType, tag, id)) return true; // the data (TF's, the units' fragments)
-    auto const& v  = vanillaTags();
-    auto        it = v.find(tag);
-    return it != v.end() && it->second.contains(id);
-}
+bool damageTypeHasTag(std::string const& id, std::string const& tag) { return hasTagAt(id, tag, 0); }
 
 Cause causeFor(std::string const& id, bool hasAttacker) {
+    if (auto vanilla = vanillaCause(id, hasAttacker)) return *vanilla;
     if (damageTypeHasTag(id, "minecraft:bypasses_invulnerability")) return Cause::Override;
     if (damageTypeHasTag(id, "minecraft:bypasses_armor") && !damageTypeHasTag(id, "minecraft:is_fall")) return Cause::Magic;
     if (damageTypeHasTag(id, "minecraft:is_fire")) return Cause::Fire;
@@ -540,6 +756,12 @@ std::pair<std::string, std::vector<std::string>> deathMessageFor(Actor& victim, 
     if (killingCause && *killingCause != causeFor(m->type, m->attacker != 0)) return {};
     auto const* spec = damageType(m->type);
     if (!spec) return {};
+    // a vanilla type: Bedrock's own message for its cause (its lang names the deaths of its own
+    // damage), or Bedrock's key for it where the cause would name it otherwise
+    if (spec->vanilla) {
+        if (spec->bedrockMessageId.empty()) return {};
+        return {"death.attack." + spec->bedrockMessageId, {deadName}};
+    }
     std::string key      = "death.attack." + spec->messageId;
     Actor*      attacker = fetch(m->attacker);
     Actor*      direct   = fetch(m->direct);

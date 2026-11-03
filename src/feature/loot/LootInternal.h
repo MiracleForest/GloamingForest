@@ -10,6 +10,7 @@
 
 #include "core/GlobalPos.h"
 #include "feature/combat/Combat.h"
+#include "feature/ext/combat/LootFill.h" // gf::loot::fill (LootTable#fill)
 #include "feature/loot/Loot.h"
 
 class Container;
@@ -27,15 +28,7 @@ void clearCache();
 [[nodiscard]] std::vector<ItemStack> rollRaw(Json const& table, std::string const& tableId, LootContext const& ctx, RandomSource& random);
 /// Rolls a table with `random` and applies the global modifiers (LootTable#getRandomItems).
 [[nodiscard]] std::vector<ItemStack> rollWith(std::string const& tableId, LootContext const& ctx, RandomSource& random);
-/// LootTable#fill: rolls `tableId` and spreads the stacks over the empty slots of a container of
-/// `size` slots, as Java does (split stacks, shuffled slots). `get` / `set` access the slots.
-void fill(
-    std::string const&                                  tableId,
-    LootContext const&                                  ctx,
-    int                                                 size,
-    std::function<ItemStack const&(int)> const&         get,
-    std::function<void(int, ItemStack const&)> const&   set
-);
+// LootTable#fill (gf::loot::fill) is declared in feature/ext/combat/LootFill.h (units use it).
 
 /// The number of players taking part in the fight against `boss` (gf::boss::participants), or
 /// the selftest override.
