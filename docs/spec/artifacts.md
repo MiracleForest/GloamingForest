@@ -106,9 +106,13 @@ chance to summon a baby zombie.
   `fortificationShieldIndicatorInCreative`) and `fortificationShieldIndicator` is on, draws up to 10
   `twilightforest:fortification_shield` sprites (9x9) at x = width/2 - 91 + 8i, y = height - leftHeight, then raises
   leftHeight by 10.
-- `/twilightforest shield <target> set|add <amount> [temp=true]` (permission 2) sets / adds shields;
-  `function twilightforest:give_3_shields` (Appendix A). Attribute `twilightforest:max_shield_strength`
-  (`attribute.name.lich.shield_strength`, default 6, 0..1024, synced).
+- `/twilightforest shield <target> set <amount> [<temp>]` and `/twilightforest shield <target> add <amount> [<temp>]`
+  (`ShieldCommand`, TF's literals below `/twilightforest`, aliases `/tf`, `/tffeature`; permission 2; owners.tsv
+  `subcommand` rows `shield`, `shield set`, `shield add`): `<target>` is one entity (`EntityArgument.entity()`),
+  `<amount>` any integer, `<temp>` a boolean (default true = temporary shields). Sets / adds the target's shields
+  (`setShields` / `addShields`); a target that is not a living entity is ignored; no feedback message, result 1.
+  `function twilightforest:give_3_shields` (Appendix A) runs `twilightforest shield @p add 3 false`. Attribute
+  `twilightforest:max_shield_strength` (`attribute.name.lich.shield_strength`, default 6, 0..1024, synced).
 - **Exanimate essence** (stack 16, UNCOMMON): use on a lit vanilla candle with an ominous counterpart turns it into
   the ominous candle (same count, flame burst); otherwise places `twilightforest:ominous_fire` on the clicked face if
   it can survive; sound `block.twilightforest.ominous_fire` (1.5, 0.75 +- 0.2), consumes one.
@@ -298,7 +302,7 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the TF 4.8 data the W1 w
 | `selftest_dx` | 1 |
 | `sound_event` | 25 |
 | `stat` | 3 |
-| `subcommand` | 1 |
+| `subcommand` | 3 |
 | `tag` | 3 |
 | `trigger` | 1 |
 | `worlddb` | 1 |
@@ -518,9 +522,9 @@ See [config.md](config.md) for the section mapping; defaults and translation ids
 twilightforest shield @p add 3 false
 ```
 
-### subcommand (1)
+### subcommand (3)
 
-`shield`
+`shield`, `shield add`, `shield set`
 
 ## Appendix B: Strings (91 en_us keys owned)
 

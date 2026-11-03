@@ -18,7 +18,8 @@ lists every id U13 owns with TF's registration and data; Appendix B the strings.
   `magic_map_focus`, `maze_map_focus`; cloning recipe types `magic_map_cloning_recipe`, `maze_map_cloning_recipe`;
   data maps `magic_map_color` (biome -> map colour) and `ore_map_color` (block -> map colour) (R7); tag
   `dimension_type/#allows_magic_map_charting`; net `uncraftmaps.magic_map`, `uncraftmaps.maze_map`; subcommands
-  `/twilightforest map_locator ...` (owners id `maplocator`) and `/twilightforest biomepng ...` (owners id `mapbiomes`).
+  `/twilightforest map_locator ...` and `/twilightforest biomepng ...` (owners.tsv `subcommand` rows `map_locator`,
+  `biomepng`; 3.6).
 
 Not U13: landmark map decorations and the conquest flag (F6 landmark contract; U13 reads them), TF's map decoration
 types (owned by the structure units), the recipes it uncrafts (everyone's).
@@ -144,12 +145,51 @@ Slot indices / positions (GUI pixels, relative to the 176x166 frame):
 
 ### 3.6 Commands
 
-- `/twilightforest map_locator <structure|#tag> [players] [skip_known_structures]` (permission 2): finds the nearest
-  structure (search radius 100 chunks) and gives each player a vanilla filled map (scale 4) with a red X target; prints
-  the vanilla locate result.
-- `/twilightforest biomepng [width height [showBiomePercents]]` (permission 2, default 4096x4096): renders the biome
-  layout around the source to `generated/biomemaps/<seed>/biome_map-<seed>-(x.z)-(x2.z2).png` with progress messages
-  `commands.tffeature.biomepng.progress` and biome counts.
+TF's literals below `/twilightforest` (aliases `/tf`, `/tffeature`), both permission 2:
+
+- `/twilightforest map_locator <structure> [<player> [<skip_known_structures>]]` (`MapLocatorCommand`): `<structure>`
+  is a structure id or `#tag` of the structure registry (`ResourceOrTagKeyArgument`, any namespace), `<player>` one or
+  more players (`EntityArgument.players()`, default: the executing player, so the console must name one),
+  `<skip_known_structures>` a boolean (default false). An id or tag the registry does not have -> vanilla
+  `commands.locate.structure.invalid`. Searches like vanilla `/locate structure` from the source's block position in
+  the source's dimension (`findNearestMapStructure`, radius 100 chunks; with the flag, as for vanilla explorer maps,
+  starts already referenced by an earlier explorer map or flagged search are skipped and the found start is marked
+  referenced); nothing found (also an empty tag) ->
+  `commands.locate.structure.not_found`. Otherwise creates a vanilla filled map of the found x/z (`MapItem.create`,
+  scale 4 with vanilla's centre snapping to the 2048-block map grid, tracking position, unlimited tracking) with a
+  `red_x` target decoration (`"+"`), adds a copy to each target player's inventory (`Inventory.add`: lost when it is
+  full) and prints vanilla `commands.locate.structure.success` (the structure, green `[x, ~, z]` that suggests
+  `/tp @s x ~ z` on click, distance). TF passes the found position as the "source" position to
+  `LocateCommand.showLocateResult`, so the printed distance (and the command result) is always 0. The
+  `commands.locate.structure.*` keys are Java vanilla's, absent from Bedrock's lang: use `tr(key, ...)` with Java's
+  English texts ("The nearest %s is at %s (%s blocks away)", "There is no structure with type \"%s\"", "Could not
+  find a structure of type \"%s\" nearby").
+- `/twilightforest biomepng [<width> [<height> [<showBiomePercents>]]]` (`MapBiomesCommand`): integers >= 0 and a
+  boolean; no arguments = 4096 x 4096, `<width>` alone = width x width, `showBiomePercents` default true. On a
+  dedicated server TF returns -1 at once (no image, no message: `NativeImage` is client code); in single player
+  (integrated server):
+  - the image is `width` x `height` pixels; pixel (x, z) is `getNoiseBiome(x - width/2, 0, z - height/2)` of the
+    source's level, i.e. **quart** (4-block) coordinates around the world origin at block y 0..3, not around the
+    source. TF loops x over `0..height-1` and z over `0..width-1`, so only square sizes stay inside the image (a
+    non-square size writes outside it; `NativeImage.setPixelRGBA` rejects that, so the command errors);
+  - colours: a fixed table for 20 TF biomes (stream and lake 0,0,255; clearing 132,245,130; oak savannah 239,245,130;
+    forest 0,255,0; dense forest 0,170,0; firefly forest 88,252,102; enchanted forest 0,255,255; spooky forest
+    119,0,255; mushroom forest 204,0,139; dense mushroom forest 184,48,184; swamp 0,204,187; fire swamp 140,0,0;
+    dark forest 25,61,13; dark forest center 157,79,0; snowy forest 255,255,255; glacier 130,191,245; highlands
+    100,65,0; thornlands 128,100,90; final plateau 128,128,128); any other biome (`underground`,
+    `highlands_underground`, other dimensions' biomes) takes its `magic_map_color` data-map colour (U13's data map)
+    converted to ABGR by `getMapColor` and converted again when written, so its red and blue end up swapped; without
+    a data-map entry the colour is opaque black (`0xFF000000` is non-zero, so the grass-colour fallback never runs);
+    each colour is cached for the rest of the session;
+  - every `height / 8` rows `commands.tffeature.biomepng.progress` with x / height x 100 formatted `#.00` (so the
+    first is `.00`; a height from 1 to 7 makes the step 0 and the command fails on the modulo); then, with
+    `showBiomePercents`, `commands.tffeature.biomepng.counts_header` (width, height) and one line per biome
+    `<biome id>: <count>` + `§7 (<percent formatted #.00>%)` (TF's counter starts at 0 for the first pixel, so each
+    count is one short);
+  - the PNG goes to `<world>/generated/biomemaps/<seed>/biome_map-<seed>-(<startX>.<startZ>)-(<startX + width>.<startZ
+    + height>).png` with startX = floor(source x) - width/2, startZ = floor(source z) - height/2 (the name uses the
+    source position, unlike the sampling); an existing file is kept, not overwritten; an I/O error ->
+    `commands.tffeature.biomepng.save_failed` (failure, result 0), else `commands.tffeature.biomepng.save_success`.
 
 ## 4. Bedrock adaptation notes
 
@@ -162,7 +202,10 @@ Slot indices / positions (GUI pixels, relative to the 176x166 frame):
 - Maps: Bedrock map items are vanilla `filled_map`s; TF map ids are custom items whose map data U13 renders with
   `client::maps::view` / `setIcon` (client mod) and `ClientboundMapItemData` equivalents (MapItemDataPacket) for
   vanilla clients with decorations mapped to the 30 vanilla types (README deviation).
-- `biomepng` writes a PNG from the server: keep it (useful for debugging) under the world folder.
+- `biomepng` writes the PNG from the world's server side (TF's integrated server; GloamingForest's client build in a
+  local world) to the world folder path above. TF does nothing on a dedicated server; GloamingForest also writes the
+  PNG on BDS (a debugging aid; U13 records it as a deviation in `docs/units/uncraftmaps.md`). Register both commands
+  under F0's `/twilightforest` with `GF_REGISTER_SUBCOMMAND`, spelled as TF's literals (R14).
 
 ## 5. Acceptance checklist (selftests `uncraftmaps.*`, dx 1300-1399)
 
@@ -173,7 +216,8 @@ Slot indices / positions (GUI pixels, relative to the 176x166 frame):
 - GUI screenshot vs `guigoblintinkering.png` (buttons, costs, ghost overlays).
 - Magic map centre snapping and biome colours from the data map; landmark icons with conquered state.
 - Maze map snaps to labyrinth centre; ore map highlights ores; cloning recipes.
-- `map_locator` gives a map with a red X.
+- `map_locator` gives a map with a red X to each named player; `biomepng` writes TF's file name with the progress
+  and count messages.
 
 ## Appendix A: Owned ids (generated inventory)
 
@@ -337,7 +381,7 @@ See [config.md](config.md) for the section mapping; defaults and translation ids
 
 ### subcommand (2)
 
-`mapbiomes`, `maplocator`
+`biomepng`, `map_locator`
 
 ## Appendix B: Strings (49 en_us keys owned)
 

@@ -146,8 +146,13 @@ applies to a player in that biome until they have **all** listed advancements.
 - Recipe-unlock advancements are generated into recipe JSON by F1 (R21); U14 does not handle them.
 - Enforcement every 20 ticks with the per-player tick counters (`progression::events::onTick`); effects through
   `effects::apply` (frosted is U10's custom effect) and `combat::hurt` for acid rain.
-- Gamerule via `gamerules::registerBool("tfEnforcedProgression", true)`; sync to companions with
-  `progression.enforce_status`.
+- Gamerule via `gamerules::registerBool("tfEnforcedProgression", true)` (F10's store already knows it with TF's
+  default). TF's `/gamerule tfEnforcedProgression <value>` is `/twilightforest gamerule tfEnforcedProgression
+  <true|false>` on Bedrock (F10's `gamerule` subcommand: Bedrock's `/gamerule` cannot hold custom rules; TF's
+  `twilightforest:dev_new_world` function, F5's, sets it with vanilla `/gamerule`). F10 already sends every rule value to companions over
+  `gamerules.sync` on join and on each change (TF's `EnforceProgressionStatusPacket`), and
+  `progression::client::enforced()` reads that copy; U14 sends `progression.enforce_status` only if it needs more than
+  the rule value.
 
 ## 5. Acceptance checklist (selftests `progression.*`, dx 1400-1499)
 
