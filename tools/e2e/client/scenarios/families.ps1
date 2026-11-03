@@ -45,6 +45,12 @@
 #                                           54-slot chest screen (local, remote-mod) or the game's large
 #                                           chest screen (remote-vanilla) with the hopper's 3 gold
 #                                           ingots and 2 diamonds in the right half's first slots
+#   out/families/families-27-tf-chest-hopper-live-a.png  the same screen opened again while the hopper
+#                                           on the left half feeds it 64 cobblestone (one per 8 ticks)
+#   out/families/families-28-tf-chest-hopper-live-b.png  6 seconds later, the screen still open: more
+#                                           cobblestone in the right half's third slot (Java's ChestMenu
+#                                           broadcastChanges: the client mod's screen is refreshed after a
+#                                           hopper's tick, the vanilla screen follows F10's proxy)
 #   out/families/families-16-tf-sign-text.png        client mod: TF's canopy signs written through the
 #                                           editor and coloured with items, from the north: the wall
 #                                           sign's front (4 black lines), the standing sign's back
@@ -310,6 +316,24 @@ Start-Sleep -Seconds 2
 Save-Screenshot 'families-26-tf-chest-hopper-screen' | Out-Null
 Close-Screen
 Start-Sleep -Seconds 1
+# the hopper on the left half gets 64 cobblestone and the screen opens again at once: it moves one
+# item every 8 ticks (25 s for all), so two shots 6 s apart show the stack in the right half's third
+# slot growing while the screen stays open
+Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 0 cobblestone 64"
+$mark = Get-LogMark
+Click 0.5 0.5 -Relative -Right
+if (Test-ClientTrace) {
+    Wait-LogLine 'client screen: (inventory\.chest|large_chest_screen)' 20 -Since $mark | Out-Null
+} else {
+    Wait-LogLine 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)' 20 -Since $mark | Out-Null
+}
+Start-Sleep -Seconds 1
+Save-Screenshot 'families-27-tf-chest-hopper-live-a' | Out-Null
+Start-Sleep -Seconds 6
+Save-Screenshot 'families-28-tf-chest-hopper-live-b' | Out-Null
+Close-Screen
+Start-Sleep -Seconds 1
+Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 0 air"
 
 # a sign written in game: the client mod's native editor (an empty-hand click on the sign), the
 # text on the sign's display entity; vanilla clients get the editor as a form
