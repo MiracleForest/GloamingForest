@@ -19,12 +19,14 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <set>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -262,6 +264,19 @@ private:
         finish(scc);
     }
 
+    /// One warning per include of `tag` that names neither a tag of the data nor one of the bridge
+    /// (Java fails such a tag for a required entry; here it resolves to nothing), so a misspelt or
+    /// missing bridge rule shows. Optional ("required": false) data entries stay quiet.
+    void warnDangling(std::string const& tag, std::vector<std::string> const& includes) {
+        auto const* raw = rawOf(tag);
+        for (auto const& w : includes) {
+            if (rawOf(w) || ruleOf(w)) continue;
+            bool optional = raw && std::any_of(raw->optional.begin(), raw->optional.end(), [&](std::string const& o) { return o.starts_with('#') && stripHash(o) == w; });
+            if (optional || !mWarned.insert(mDir + "|dangling|" + tag + "|" + w).second) continue;
+            log().warn("tags: {} tag {} includes #{}, which has no data and no bridge rule: it adds nothing", mDir, tag, w);
+        }
+    }
+
     static void addUnique(std::vector<std::shared_ptr<Resolved const>>& to, std::shared_ptr<Resolved const> const& r) {
         if (std::find(to.begin(), to.end(), r) == to.end()) to.push_back(r);
     }
@@ -283,6 +298,7 @@ private:
         auto base = std::make_shared<Resolved>();
         for (std::size_t i = 0; i < scc.size(); ++i) {
             auto const& v = scc[i];
+            warnDangling(v, edges[i].include);
             if (auto const* raw = rawOf(v))
                 for (auto const& value : raw->values)
                     if (!value.starts_with('#'))
@@ -332,6 +348,9 @@ private:
                 if (entry.starts_with('#')) {
                     auto t = stripHash(entry);
                     if (!inScc.contains(t)) own->removedTags.push_back(mDone.at(t));
+                    else if (mWarned.insert(mDir + "|remove|" + v + "|" + t).second)
+                        // the removed tag includes this one back: removing it would empty the tag
+                        log().warn("tags: {} tag {} removes #{}, which includes it back (a cycle Java rejects): the removal is ignored", mDir, v, t);
                 } else {
                     for (auto& id : javaids::bedrock(mDir, data::withNamespace(entry))) own->removed.insert(std::move(id));
                 }
@@ -357,11 +376,12 @@ private:
     int                        mNext = 0;
 };
 
-/// Reads the data tree (`withData`) and resolves every tag (the data's and the bridge's) into a new
-/// snapshot. Without the data it holds the bridge's rules only: the answers before the first load.
-std::shared_ptr<Snapshot const> build(bool withData) {
-    auto s = std::make_shared<Snapshot>();
-    auto const files = withData ? data::list("tags") : std::vector<data::File>{};
+/// Reads the data tree (`withData`: the mod's, or the one below `base`) and resolves every tag (the
+/// data's and the bridge's) into a new snapshot. Without the data it holds the bridge's rules only:
+/// the answers before the first load.
+std::shared_ptr<Snapshot const> build(bool withData, std::filesystem::path const* base = nullptr) {
+    auto       s     = std::make_shared<Snapshot>();
+    auto const files = !withData ? std::vector<data::File>{} : base ? data::list("tags", *base) : data::list("tags");
     for (auto const& f : files) {
         auto [dir, path] = splitRegistry(f.rel);
         if (dir.empty() || path.empty()) continue;
@@ -407,7 +427,12 @@ Published& published() {
     return p;
 }
 
+/// A private snapshot this thread reads instead of the published one (internal::ScopedSnapshot:
+/// selftests' synthetic data, never seen by other threads).
+thread_local std::shared_ptr<Snapshot const> tPrivate;
+
 std::shared_ptr<Snapshot const> const& current() {
+    if (tPrivate) return tPrivate;
     struct Local {
         std::shared_ptr<Snapshot const> snapshot;
         std::shared_ptr<Snapshot const> previous; ///< one refresh back: a caller up the stack may still read it
@@ -589,6 +614,19 @@ std::size_t fileCount() { return current()->files; }
 std::uint64_t generation() { return published().generation.load(std::memory_order_acquire); }
 
 void reload() { load(); }
+
+ScopedSnapshot::ScopedSnapshot(std::filesystem::path const& root) : mPrevious(std::move(tPrivate)), mThread(std::this_thread::get_id()) {
+    tPrivate = build(true, &root);
+}
+
+ScopedSnapshot::~ScopedSnapshot() {
+    if (std::this_thread::get_id() != mThread) {
+        // the private snapshot belongs to the constructing thread: it cannot be restored from here
+        log().error("tags: a ScopedSnapshot was destroyed on another thread than the one that made it");
+        return;
+    }
+    tPrivate = std::static_pointer_cast<Snapshot const>(std::move(mPrevious));
+}
 
 } // namespace internal
 

@@ -21,6 +21,14 @@ if (-not ($log | Select-String -Pattern 'item: S6 trim probe registered at load'
 $r = Invoke-SelfTest 'item.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) item selftest(s) failed: $($r.Failed -join ', ')" }
 if ($r.Pass -lt 43) { throw "expected at least 43 item selftests to pass, got $($r.Pass)" }
+# Minecraft's structure tags: in the Twilight Forest /twilightforest locate #minecraft:village knows
+# the tag and finds none (Java's not_found), as item.tags_locate_village ran it
+if (-not (Get-ServerLog | Select-String -Pattern 'landmark: locate #minecraft:village from -?\d+ -?\d+: none' -Quiet)) {
+    throw "/twilightforest locate #minecraft:village did not answer not_found in the Twilight Forest"
+}
+if (Get-ServerLog | Select-String -Pattern 'landmark: locate #minecraft:village: invalid' -Quiet) { throw '#minecraft:village was an invalid structure tag' }
+# every bridge include resolves (no dangling include warning of the tag runtime)
+if (Get-ServerLog | Select-String -Pattern 'tags: .* which has no data and no bridge rule' -Quiet) { throw 'a tag includes a tag that has neither data nor a bridge rule' }
 # TF's recipes, tags and data maps name only ids the game knows (item.java_ids_registry's counts)
 Get-ServerLog | Select-String -Pattern 'SELFTEST INFO item\.(java_ids_registry|recipes_java_ids)' | ForEach-Object { Write-Step $_.Line }
 

@@ -15,6 +15,13 @@
 // A rule is one vanilla tag file: its own members (the id list and the patterns) and the tags it
 // includes (Java's "#minecraft:..." entries). The tag runtime (Tags.cpp) walks the includes itself,
 // so an included tag brings its data members (TF's additions) as well as its rule.
+//
+// Policy: the vanilla members are exactly Java 1.21.1's (TF 4.8's Minecraft; NeoForge 21.1 for c:),
+// spelled with Bedrock's ids (a Bedrock id that names the same block or item, legacy aliases
+// included). Bedrock content newer than 1.21.1 (pale oak, resin, the 1.21.5 plants, copper tools
+// and armour, ...) is a member of no bridged tag, even where a name pattern or a Bedrock native tag
+// would match it; Bedrock wearables that are no armour in Java (carved pumpkins, skulls, mob heads)
+// are in no armour tag. TF's data members are added on top, as Java's tag loader does.
 
 #include <string>
 #include <vector>

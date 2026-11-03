@@ -14,7 +14,11 @@
 // ("gf:stats:<player uuid>" {stat: value}), written at every world save. Bedrock keeps no player
 // statistics a server can award (its statistics screen shows the client's Xbox Live user
 // statistics, fed by the client's own telemetry), so no vanilla statistic maps to a Bedrock
-// counterpart: every one is counted here. Bedrock has no screen for them; companions get
+// counterpart: every one is counted here. (LeviLamina 26.51.7's headers: the only player statistics
+// are the client's OreUI PlayerStatisticsFacet over Social::XboxLiveUserStatistics; the server
+// side has ServerStatsPacket (network timings), ServerLevelStatCollectors (performance) and
+// PlayerMovementStatsEventSystem (an empty telemetry system), and no stat registry, stat counter or
+// award call a server could use.) Bedrock has no screen for them; companions get
 // "stats.sync" with their values.
 #include "feature/stats/Stats.h"
 

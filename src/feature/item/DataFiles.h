@@ -33,6 +33,8 @@ struct File {
 
 /// Every JSON file below `data/<ns>/<dir>/` for every namespace, sorted by namespace and path.
 [[nodiscard]] std::vector<File> list(std::string_view dir);
+/// The same below another data tree (`base` in place of `root()`: selftests' private trees).
+[[nodiscard]] std::vector<File> list(std::string_view dir, std::filesystem::path const& base);
 /// The file parsed (null with one warning when it is not valid JSON).
 [[nodiscard]] nlohmann::json read(std::filesystem::path const& file);
 

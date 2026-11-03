@@ -3,15 +3,12 @@
 
 #include <algorithm>
 #include <map>
-#include <mutex>
 #include <set>
 #include <string_view>
-#include <unordered_map>
+#include <unordered_set>
 
 #include "mc/deps/core/string/HashedString.h"
-#include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/world/item/Item.h"
-#include "mc/world/item/ItemStack.h"
 #include "mc/world/item/registry/ItemRegistry.h"
 #include "mc/world/item/registry/ItemRegistryManager.h"
 #include "mc/world/item/registry/ItemRegistryRef.h"
@@ -21,8 +18,6 @@
 #include "mc/world/level/block/BlockType.h"
 
 #include "ll/api/service/Bedrock.h"
-
-#include "game/Items.h"
 
 namespace gf::tags::vanilla {
 
@@ -42,7 +37,8 @@ struct Rule {
 
 namespace {
 
-constexpr std::string_view kWoods[] = {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "pale_oak", "bamboo", "crimson", "warped"};
+// Java 1.21.1's wood types (pale oak came with 1.21.4)
+constexpr std::string_view kWoods[] = {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "bamboo", "crimson", "warped"};
 constexpr std::string_view kColors[] = {"white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
                                         "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"};
 
@@ -91,23 +87,29 @@ std::vector<std::string_view> concat(std::vector<std::string_view> a, std::vecto
     return a;
 }
 
-/// The stack's armour slot (-1: not humanoid armour).
-int armorSlotOf(std::string const& id) {
-    static std::unordered_map<std::string, int> cache;
-    static std::mutex                           m;
-    {
-        std::lock_guard lock(m);
-        if (auto it = cache.find(id); it != cache.end()) return it->second;
-    }
-    int  slot  = -1;
-    auto stack = game::items::make(id);
-    if (stack && (stack->isArmorItem() || stack->isHumanoidWearableItem())) {
-        auto s = stack->getArmorSlot();
-        if (s >= SharedTypes::Legacy::ArmorSlot::Head && s <= SharedTypes::Legacy::ArmorSlot::Feet) slot = static_cast<int>(s);
-    }
-    std::lock_guard lock(m);
-    cache[id] = slot;
-    return slot;
+/// Java 1.21.1's humanoid armour of one slot ("_helmet", ...): the six armour materials, plus the
+/// turtle shell for the head. Only armour: carved pumpkins, skulls and mob heads (Bedrock's other
+/// humanoid wearables) are no armour in Java's tags; TF's data adds TF's armour to these tags.
+std::vector<std::string_view> armorIds(std::string_view suffix) {
+    std::vector<std::string_view> out;
+    for (std::string_view m : {"leather", "chainmail", "golden", "iron", "diamond", "netherite"}) out.push_back(stored(std::string(m) + std::string(suffix)));
+    if (suffix == "_helmet") out.push_back("turtle_helmet");
+    return out;
+}
+
+/// Bedrock content newer than Java 1.21.1 (the bridge's policy, VanillaTags.h): never a member of a
+/// bridged tag, whatever a name pattern or a Bedrock native tag says.
+bool newerThan1211(std::string_view name) {
+    for (std::string_view p : {"pale_", "stripped_pale_", "resin_", "chiseled_resin_", "creaking", "dried_ghast", "happy_ghast", "copper_golem"})
+        if (name.starts_with(p)) return true;
+    for (std::string_view x : {"_spear", "_harness", "_shelf"})
+        if (name.ends_with(x)) return true;
+    static std::unordered_set<std::string_view> const ids{
+        "open_eyeblossom", "closed_eyeblossom", "bush", "firefly_bush", "short_dry_grass", "tall_dry_grass", "leaf_litter", "cactus_flower",
+        "wildflowers", "blue_egg", "brown_egg", "copper_sword", "copper_pickaxe", "copper_axe", "copper_shovel", "copper_hoe",
+        "copper_helmet", "copper_chestplate", "copper_leggings", "copper_boots", "copper_horse_armor", "copper_nugget", "copper_chest",
+        "copper_bars", "copper_chain", "copper_lantern", "copper_torch", "nautilus", "zombie_nautilus", "camel_husk", "parched"};
+    return ids.contains(name);
 }
 
 Item const* itemOf(std::string const& id) {
@@ -116,16 +118,8 @@ Item const* itemOf(std::string const& id) {
     return item.get();
 }
 
-bool isHead(std::string const& id) { return armorSlotOf(id) == 0; }
-bool isChest(std::string const& id) { return armorSlotOf(id) == 1; }
-bool isLegs(std::string const& id) { return armorSlotOf(id) == 2; }
-bool isFeet(std::string const& id) { return armorSlotOf(id) == 3; }
 bool isBoat(std::string const& id) {
     return id.starts_with("minecraft:") && id.ends_with("_boat") && !id.ends_with("_chest_boat");
-}
-bool isDamageable(std::string const& id) {
-    auto const* item = itemOf(id);
-    return item && item->isDamageable();
 }
 
 using Key   = std::pair<Registry, std::string>;
@@ -204,7 +198,7 @@ Rules buildRules() {
     item("minecraft:beacon_payment_items", {.ids = {"iron_ingot", "gold_ingot", "emerald", "diamond", "netherite_ingot"}});
 
     // ---- ground ------------------------------------------------------------------------------------
-    both("minecraft:dirt", {.ids = {"dirt", "coarse_dirt", "grass_block", "grass", "podzol", "mycelium", "rooted_dirt", "dirt_with_roots", "moss_block", "mud", "muddy_mangrove_roots", "pale_moss_block"}});
+    both("minecraft:dirt", {.ids = {"dirt", "coarse_dirt", "grass_block", "grass", "podzol", "mycelium", "rooted_dirt", "dirt_with_roots", "moss_block", "mud", "muddy_mangrove_roots"}});
     both("minecraft:nylium", {.ids = {"crimson_nylium", "warped_nylium"}});
     both("minecraft:wart_blocks", {.ids = {"nether_wart_block", "warped_wart_block"}});
     both("minecraft:base_stone_overworld", {.ids = {"stone", "granite", "diorite", "andesite", "tuff", "deepslate"}});
@@ -240,28 +234,37 @@ Rules buildRules() {
     // ---- plants ------------------------------------------------------------------------------------
     both("minecraft:small_flowers",
          {.ids = {"dandelion", "poppy", "blue_orchid", "allium", "azure_bluet", "red_tulip", "orange_tulip", "white_tulip", "pink_tulip", "oxeye_daisy",
-                  "cornflower", "lily_of_the_valley", "wither_rose", "torchflower", "closed_eyeblossom", "open_eyeblossom", "red_flower", "yellow_flower"}});
+                  "cornflower", "lily_of_the_valley", "wither_rose", "torchflower", "red_flower", "yellow_flower"}});
     both("minecraft:tall_flowers", {.ids = {"sunflower", "lilac", "rose_bush", "peony", "pitcher_plant"}});
     both("minecraft:flowers",
-         {.ids = {"flowering_azalea", "azalea_leaves_flowered", "mangrove_propagule", "cherry_leaves", "pink_petals", "chorus_flower", "spore_blossom", "cactus_flower", "wildflowers"},
+         {.ids = {"flowering_azalea", "azalea_leaves_flowered", "mangrove_propagule", "cherry_leaves", "pink_petals", "chorus_flower", "spore_blossom"},
           .include = {"minecraft:small_flowers", "minecraft:tall_flowers"}});
     block("minecraft:crops", {.ids = {"wheat", "carrots", "potatoes", "beetroot", "melon_stem", "pumpkin_stem", "torchflower_crop", "pitcher_crop"}});
     // Java 1.21.1 with Bedrock ids (tall_seagrass is Bedrock's seagrass, void_air / cave_air its air,
-    // light its 16 light blocks), and the plants later Java versions add (bush, firefly_bush, dry
-    // grass, leaf litter), which Bedrock has
+    // light its 16 light blocks)
     block("minecraft:replaceable",
           {.ids = concat({"air", "water", "flowing_water", "lava", "flowing_lava", "short_grass", "tallgrass", "fern", "deadbush", "dead_bush", "seagrass", "fire",
                           "soul_fire", "snow_layer", "vine", "glow_lichen", "tall_grass", "large_fern", "structure_void", "bubble_column", "hanging_roots",
-                          "crimson_roots", "warped_roots", "nether_sprouts", "bush", "firefly_bush", "short_dry_grass", "tall_dry_grass", "leaf_litter"},
+                          "crimson_roots", "warped_roots", "nether_sprouts"},
                          lightIds())});
     block("minecraft:replaceable_by_trees",
           {.ids = {"short_grass", "tallgrass", "fern", "deadbush", "dead_bush", "vine", "glow_lichen", "sunflower", "lilac", "rose_bush", "peony", "tall_grass",
-                   "large_fern", "hanging_roots", "pitcher_plant", "water", "flowing_water", "seagrass", "warped_roots", "nether_sprouts", "crimson_roots",
-                   "leaf_litter", "bush", "firefly_bush", "short_dry_grass", "tall_dry_grass"},
+                   "large_fern", "hanging_roots", "pitcher_plant", "water", "flowing_water", "seagrass", "warped_roots", "nether_sprouts", "crimson_roots"},
            .include = {"minecraft:leaves"}});
     block("minecraft:features_cannot_replace", {.ids = {"bedrock", "mob_spawner", "spawner", "chest", "end_portal_frame", "reinforced_deepslate", "trial_spawner", "vault"}});
     block("minecraft:lava_pool_stone_cannot_replace", {.include = {"minecraft:features_cannot_replace", "minecraft:leaves", "minecraft:logs"}});
     block("minecraft:frog_prefer_jump_to", {.ids = {"waterlily", "lily_pad", "big_dripleaf"}});
+
+    // the block tags Java's mineable/* include (Java 1.21.1, Bedrock ids: undyed_shulker_box is the
+    // plain shulker box, golden_rail the powered rail, standing_banner / wall_banner every banner;
+    // Bedrock has no water or powder snow cauldron block)
+    block("minecraft:shulker_boxes", {.ids = concat(colorIds("_shulker_box"), {"shulker_box", "undyed_shulker_box"})});
+    block("minecraft:anvil", {.ids = {"anvil", "chipped_anvil", "damaged_anvil"}});
+    block("minecraft:cauldrons", {.ids = {"cauldron", "lava_cauldron"}});
+    block("minecraft:rails", {.ids = {"rail", "golden_rail", "detector_rail", "activator_rail"}});
+    block("minecraft:bamboo_blocks", {.ids = {"bamboo_block", "stripped_bamboo_block"}});
+    block("minecraft:concrete_powder", {.ids = colorIds("_concrete_powder")});
+    block("minecraft:banners", {.ids = {"standing_banner", "wall_banner"}});
 
     // ---- mining ------------------------------------------------------------------------------------
     // Bedrock's native tags hold the vanilla blocks; the includes are Java 1.21.1's (they bring the
@@ -302,10 +305,12 @@ Rules buildRules() {
     item("minecraft:axes", {.native = {"minecraft:is_axe"}});
     item("minecraft:shovels", {.native = {"minecraft:is_shovel"}});
     item("minecraft:hoes", {.native = {"minecraft:is_hoe"}});
-    item("minecraft:head_armor", {.pred = isHead});
-    item("minecraft:chest_armor", {.pred = isChest});
-    item("minecraft:leg_armor", {.pred = isLegs});
-    item("minecraft:foot_armor", {.pred = isFeet});
+    // Java 1.21.1's armour lists (no carved pumpkin, skull or mob head: Bedrock wears those, Java's
+    // armour tags do not hold them)
+    item("minecraft:head_armor", {.ids = armorIds("_helmet")});
+    item("minecraft:chest_armor", {.ids = armorIds("_chestplate")});
+    item("minecraft:leg_armor", {.ids = armorIds("_leggings")});
+    item("minecraft:foot_armor", {.ids = armorIds("_boots")});
     // the enchantable tags nest as Java 1.21.1's do
     item("minecraft:enchantable/head_armor", {.include = {"minecraft:head_armor"}});
     item("minecraft:enchantable/chest_armor", {.include = {"minecraft:chest_armor"}});
@@ -323,8 +328,7 @@ Rules buildRules() {
          {.ids     = {"elytra", "shield", "bow", "crossbow", "trident", "flint_and_steel", "shears", "brush", "fishing_rod", "carrot_on_a_stick",
                       "warped_fungus_on_a_stick", "mace"},
           .include = {"minecraft:foot_armor", "minecraft:leg_armor", "minecraft:chest_armor", "minecraft:head_armor", "minecraft:swords", "minecraft:axes",
-                      "minecraft:pickaxes", "minecraft:shovels", "minecraft:hoes"},
-          .pred    = isDamageable});
+                      "minecraft:pickaxes", "minecraft:shovels", "minecraft:hoes"}});
     item("minecraft:enchantable/bow", {.ids = {"bow"}});
     item("minecraft:enchantable/crossbow", {.ids = {"crossbow"}});
     item("minecraft:enchantable/fishing", {.ids = {"fishing_rod"}});
@@ -341,8 +345,7 @@ Rules buildRules() {
     item("minecraft:skulls", {.ids = {"skull", "skeleton_skull", "wither_skeleton_skull", "zombie_head", "player_head", "creeper_head", "dragon_head", "piglin_head"}});
     item("minecraft:banners", {.ids = {"banner"}});
     item("minecraft:trim_materials", {.native = {"minecraft:trim_materials"}});
-    item("minecraft:trimmable_armor",
-         {.native = {"minecraft:trimmable_armors"}, .include = {"minecraft:foot_armor", "minecraft:leg_armor", "minecraft:chest_armor", "minecraft:head_armor"}});
+    item("minecraft:trimmable_armor", {.include = {"minecraft:foot_armor", "minecraft:leg_armor", "minecraft:chest_armor", "minecraft:head_armor"}});
     item("minecraft:dyeable", {.ids = {"leather_helmet", "leather_chestplate", "leather_leggings", "leather_boots", "leather_horse_armor", "wolf_armor"}});
     item("minecraft:freeze_immune_wearables", {.ids = {"leather_helmet", "leather_chestplate", "leather_leggings", "leather_boots", "leather_horse_armor"}});
 
@@ -357,7 +360,7 @@ Rules buildRules() {
     entity("minecraft:freeze_hurts_extra_types", {.ids = {"strider", "blaze", "magma_cube"}});
     entity("minecraft:fall_damage_immune",
            {.ids = {"iron_golem", "snow_golem", "shulker", "allay", "bat", "bee", "blaze", "cat", "chicken", "ghast", "phantom", "magma_cube", "ocelot", "parrot",
-                    "wither", "breeze", "happy_ghast"}});
+                    "wither", "breeze"}});
     // Java 1.21.1: #arrows, firework_rocket, snowball, small_fireball, fireball, wither_skull, egg,
     // trident, dragon_fireball, wind_charge, breeze_wind_charge
     entity("minecraft:impact_projectiles",
@@ -467,10 +470,10 @@ Rules buildRules() {
     both("c:player_workstations/furnaces", {.ids = {"furnace"}});
     both("c:stripped_logs",
          {.ids = {"stripped_oak_log", "stripped_spruce_log", "stripped_birch_log", "stripped_jungle_log", "stripped_acacia_log", "stripped_dark_oak_log",
-                  "stripped_mangrove_log", "stripped_cherry_log", "stripped_pale_oak_log", "stripped_crimson_stem", "stripped_warped_stem"}});
+                  "stripped_mangrove_log", "stripped_cherry_log", "stripped_crimson_stem", "stripped_warped_stem"}});
     both("c:stripped_woods",
          {.ids = {"stripped_oak_wood", "stripped_spruce_wood", "stripped_birch_wood", "stripped_jungle_wood", "stripped_acacia_wood", "stripped_dark_oak_wood",
-                  "stripped_mangrove_wood", "stripped_cherry_wood", "stripped_pale_oak_wood", "stripped_crimson_hyphae", "stripped_warped_hyphae"}});
+                  "stripped_mangrove_wood", "stripped_cherry_wood", "stripped_crimson_hyphae", "stripped_warped_hyphae"}});
     // storage blocks
     both("c:storage_blocks/bone_meal", {.ids = {"bone_block"}});
     both("c:storage_blocks/coal", {.ids = {"coal_block"}});
@@ -549,7 +552,7 @@ Rules buildRules() {
     item("c:bones", {.ids = {"bone"}});
     item("c:feathers", {.ids = {"feather"}});
     item("c:gunpowders", {.ids = {"gunpowder"}});
-    item("c:eggs", {.ids = {"egg", "blue_egg", "brown_egg"}});
+    item("c:eggs", {.ids = {"egg"}});
     item("c:paper", {.ids = {"paper"}});
     item("c:bricks/normal", {.ids = {"brick"}});
     item("c:bricks/nether", {.ids = {"netherbrick", "nether_brick"}});
@@ -649,7 +652,7 @@ std::vector<std::string> includes(Rule const& rule) { return {rule.include.begin
 std::vector<std::string> listedIds(Rule const& rule) {
     std::vector<std::string> out;
     for (auto id : rule.ids)
-        if (!excluded(rule, id)) out.push_back(std::string(kMinecraft) + std::string(id));
+        if (!excluded(rule, id) && !newerThan1211(id)) out.push_back(std::string(kMinecraft) + std::string(id));
     return out;
 }
 
@@ -658,7 +661,7 @@ bool hasPatterns(Rule const& rule) { return !rule.suffixes.empty() || !rule.nati
 bool matchesPattern(Registry registry, Rule const& rule, std::string const& id) {
     if (id.starts_with(kMinecraft)) {
         std::string_view name = std::string_view(id).substr(kMinecraft.size());
-        if (excluded(rule, name)) return false;
+        if (excluded(rule, name) || newerThan1211(name)) return false;
         for (auto s : rule.suffixes)
             if (name.size() > s.size() && name.ends_with(s)) return true;
     }

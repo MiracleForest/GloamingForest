@@ -1,23 +1,31 @@
 // Selftests of F9 (prefix "item.", no world positions): the tag runtime's nesting (a tag's includes
 // bring their data members as well as the bridge's rules, recursively, cycles and NeoForge's
 // "remove" included), the vanilla tags of Java 1.21.1 the W0 runtimes read (fences, doors,
-// trapdoors, overworld_natural_logs, the river biome tags, replaceable, the structure tags), the
-// lock-free snapshot across reloads, and the custom statistics (TF's and Minecraft's).
+// trapdoors, overworld_natural_logs, the river biome tags, replaceable, the structure tags and
+// /twilightforest locate with one, the mineable/* includes), the bridge's Java 1.21.1 policy (armour
+// tags hold armour only; newer Bedrock content is in no bridged tag), the lock-free snapshot across
+// reloads (synthetic trees private to the test's thread), and the custom statistics (TF's and
+// Minecraft's).
 
 #include <algorithm>
 #include <atomic>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <random>
 #include <set>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/server/commands/CommandPermissionLevel.h"
+#include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
+#include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 
 #include "feature/item/DataFiles.h"
@@ -35,12 +43,14 @@ namespace {
 using gf::selftest::Context;
 using gf::tags::Registry;
 using JsonDoc = nlohmann::json;
-namespace data  = gf::feature::item::data;
 namespace items = gf::game::items;
 
-/// A synthetic data tree (files by path below data/) loaded for the duration of a test.
+/// A synthetic data tree (files by path below data/) that this thread's tag queries read for the
+/// duration of a (synchronous) test. Private: nothing is published, so world generation on other
+/// threads and the other data runtimes keep the real data meanwhile.
 struct Tree {
-    std::filesystem::path dir;
+    std::filesystem::path                                  dir;
+    std::optional<gf::tags::internal::ScopedSnapshot>      snapshot;
     explicit Tree(std::vector<std::pair<std::string, JsonDoc>> const& files) {
         std::random_device rd;
         dir = std::filesystem::temp_directory_path() / ("gf-item-tags-" + std::to_string(rd()));
@@ -49,12 +59,10 @@ struct Tree {
             std::filesystem::create_directories(p.parent_path());
             std::ofstream(p) << doc.dump(2);
         }
-        data::setRoot(dir);
-        data::reloadAll();
+        snapshot.emplace(dir);
     }
     ~Tree() {
-        data::setRoot({});
-        data::reloadAll();
+        snapshot.reset();
         std::error_code ec;
         std::filesystem::remove_all(dir, ec);
     }
@@ -119,6 +127,14 @@ GF_REGISTER_SELFTEST("item.tags_nested_data", [](Context& ctx) {
         {"gf_test/tags/block/deep.json", {{"values", {"#gf_test:worldgen"}}}},
     });
     auto has = [](char const* tag, char const* id) { return gf::tags::has(Registry::Block, tag, id); };
+    // the tree is this thread's only: another thread (world generation) still reads the real data
+    bool elsewhere = true, realThere = false;
+    std::thread([&] {
+        elsewhere = gf::tags::has(Registry::Block, "minecraft:dirt", "gf_test:soil");
+        realThere = gf::tags::has(Registry::Block, "gf_test:fixture_blocks", "gf_test:fixture_block") || gf::tags::internal::fileCount() > 0;
+    }).join();
+    ctx.check(!elsewhere && realThere, "the synthetic tree is private to the test's thread (other threads keep the published data)");
+    ctx.check(!has("gf_test:fixture_blocks", "gf_test:fixture_block"), "while this thread reads the synthetic tree only");
     ctx.check(has("minecraft:overworld_carver_replaceables", "gf_test:soil"), "#overworld_carver_replaceables > #dirt: the data member");
     ctx.check(has("gf_test:carver", "gf_test:soil"), "a data tag including it: too");
     ctx.check(has("gf_test:carver", "minecraft:dirt") && has("gf_test:carver", "minecraft:stone"), "and the bridge's members");
@@ -305,10 +321,11 @@ GF_REGISTER_SELFTEST("item.tags_structures", [](Context& ctx) {
 
 // Queries from other threads (world generation asks per block) while the data reloads: no lock on
 // the read path, the answers stay right through every reload, and each reload publishes a new
-// snapshot.
-GF_REGISTER_SELFTEST("item.tags_concurrent_reload", [](Context& ctx) {
+// snapshot. The reloads run on a thread of their own (the server thread keeps ticking and asking).
+GF_REGISTER_SELFTEST("item.tags_concurrent_reload", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto              before = gf::tags::internal::generation();
     std::atomic<bool> stop{false};
+    std::atomic<bool> reloaded{false};
     std::atomic<int>  wrong{0};
     std::atomic<long> asked{0};
     // answers from the data and the bridge's id lists (no pattern rule: the game's registries are
@@ -325,15 +342,35 @@ GF_REGISTER_SELFTEST("item.tags_concurrent_reload", [](Context& ctx) {
         }
         asked += n;
     };
-    std::vector<std::thread> threads;
-    for (int i = 0; i < 4; ++i) threads.emplace_back(worker);
-    for (int i = 0; i < 3; ++i) gf::tags::internal::reload();
+    // joined however the test ends (an aborted coroutine frame too: a joinable std::thread would terminate)
+    struct Threads {
+        std::atomic<bool>&       stop;
+        std::vector<std::thread> all;
+        ~Threads() {
+            stop = true;
+            for (auto& t : all)
+                if (t.joinable()) t.join();
+        }
+    } threads{stop, {}};
+    for (int i = 0; i < 4; ++i) threads.all.emplace_back(worker);
+    threads.all.emplace_back([&] {
+        for (int i = 0; i < 3; ++i) gf::tags::internal::reload();
+        reloaded = true;
+    });
+    int ticks = 0, serverWrong = 0;
+    for (; !reloaded.load() && ticks < 20 * 120; ++ticks) {
+        if (!gf::tags::has(Registry::Block, "minecraft:fences", "minecraft:oak_fence")) ++serverWrong;
+        co_await ctx.ticks(1);
+    }
+    bool done = reloaded.load();
     stop = true;
-    for (auto& t : threads) t.join();
+    for (auto& t : threads.all) t.join();
+    ctx.check(done, "the 3 reloads finished within 2 minutes");
     ctx.check(gf::tags::internal::generation() >= before + 3, "each reload published a snapshot");
     ctx.check(wrong.load() == 0, std::to_string(wrong.load()) + " wrong answers of " + std::to_string(asked.load()) + " during 3 reloads");
+    ctx.check(serverWrong == 0, "the server thread kept ticking and answering (" + std::to_string(ticks) + " ticks during the reloads)");
     ctx.check(gf::tags::has(Registry::Block, "gf_test:fixture_blocks", "gf_test:fixture_block"), "the server thread reads the newest snapshot");
-    ctx.info(std::to_string(asked.load()) + " queries from 4 threads during 3 reloads");
+    ctx.info(std::to_string(asked.load()) + " queries from 4 threads during 3 reloads, off the server thread (" + std::to_string(ticks) + " ticks)");
 });
 
 // ---- statistics ----------------------------------------------------------------------------------------
@@ -355,5 +392,155 @@ GF_REGISTER_SELFTEST("item.stats_vanilla", [](Context& ctx) {
     ctx.check(st::value(player, "minecraft:open_chest") == opens + 2, "minecraft:open_chest counted twice");
     ctx.check(st::value(player, "minecraft:trigger_trapped_chest") == traps + 3, "minecraft:trigger_trapped_chest counted");
     ctx.check(!st::internal::warnedAbout("minecraft:open_chest") && !st::internal::warnedAbout("minecraft:trigger_trapped_chest"), "without a warning");
+    // an id of neither registry: counted all the same, with one warning
+    auto other = st::value(player, "gf_test:not_a_statistic");
+    st::award(player, "gf_test:not_a_statistic");
+    st::award(player, "gf_test:not_a_statistic", 2);
+    ctx.check(st::value(player, "gf_test:not_a_statistic") == other + 3, "an unregistered statistic is counted too");
+    ctx.check(st::internal::warnedAbout("gf_test:not_a_statistic"), "with a warning (once)");
     st::internal::forget(player); // no record of the simulated player stays in the world DB
+});
+
+// ---- the bridge's Java 1.21.1 policy ------------------------------------------------------------
+
+// The armour tags hold armour only: Bedrock's other humanoid wearables (carved pumpkins, skulls, mob
+// heads) are in no armour tag, so not trimmable, not head-armour enchantable (Java's #skulls and
+// carved_pumpkin reach equippable and vanishing by name).
+GF_REGISTER_SELFTEST("item.tags_armor_only", [](Context& ctx) {
+    auto item = [](char const* tag, char const* id) { return gf::tags::has(Registry::Item, tag, id); };
+    for (auto const* id : {"minecraft:carved_pumpkin", "minecraft:skeleton_skull", "minecraft:zombie_head", "minecraft:player_head", "minecraft:dragon_head",
+                           "minecraft:skull", "minecraft:elytra"})
+        for (auto const* tag : {"minecraft:trimmable_armor", "minecraft:head_armor", "minecraft:chest_armor", "minecraft:enchantable/head_armor",
+                                "minecraft:enchantable/armor", "c:armors"})
+            ctx.check(!item(tag, id), std::string(id) + " is not in #" + tag);
+    for (auto const* id : {"minecraft:carved_pumpkin", "minecraft:skeleton_skull"})
+        ctx.check(item("minecraft:enchantable/equippable", id) && item("minecraft:enchantable/vanishing", id), std::string(id) + " is equippable and vanishing (Java's own entries)");
+    ctx.check(item("minecraft:enchantable/equippable", "minecraft:elytra"), "the elytra is equippable");
+    struct Slot {
+        char const* tag;
+        char const* suffix;
+    };
+    for (auto const& s : {Slot{"minecraft:head_armor", "_helmet"}, Slot{"minecraft:chest_armor", "_chestplate"}, Slot{"minecraft:leg_armor", "_leggings"},
+                          Slot{"minecraft:foot_armor", "_boots"}})
+        for (auto const* m : {"leather", "chainmail", "golden", "iron", "diamond", "netherite"}) {
+            auto id = std::string("minecraft:") + m + s.suffix;
+            ctx.check(item(s.tag, id.c_str()) && item("minecraft:trimmable_armor", id.c_str()) && item("minecraft:enchantable/armor", id.c_str())
+                          && item("minecraft:enchantable/durability", id.c_str()),
+                      id + " is " + s.tag + ", trimmable, enchantable armour with durability");
+            if (auto why = unknownItem(id); !why.empty()) ctx.check(false, id + ": " + why);
+        }
+    ctx.check(item("minecraft:head_armor", "minecraft:turtle_helmet") && !item("minecraft:chest_armor", "minecraft:turtle_helmet"), "the turtle shell is head armour");
+    ctx.check(!item("minecraft:head_armor", "minecraft:iron_chestplate") && !item("minecraft:foot_armor", "minecraft:iron_leggings"), "one slot each");
+    ctx.check(!item("minecraft:enchantable/durability", "minecraft:carrot") && item("minecraft:enchantable/durability", "minecraft:flint_and_steel"),
+              "durability: Java's list, no predicate");
+    // TF's armour comes from TF's data (its head_armor ... tags), with its trimmable_armor removals
+    if (contains(gf::tags::internal::tagsOf("item"), "minecraft:head_armor")) {
+        ctx.check(item("minecraft:head_armor", "twilightforest:ironwood_helmet") && item("minecraft:trimmable_armor", "twilightforest:ironwood_helmet"),
+                  "TF's ironwood helmet is trimmable head armour");
+        ctx.check(item("minecraft:head_armor", "twilightforest:yeti_helmet") && !item("minecraft:trimmable_armor", "twilightforest:yeti_helmet"),
+                  "TF's data removes the yeti helmet from #trimmable_armor");
+    }
+});
+
+// Bedrock content newer than Java 1.21.1 is in no bridged tag (pale oak, resin, the 1.21.5 plants),
+// whatever its name pattern or Bedrock native tag.
+GF_REGISTER_SELFTEST("item.tags_java_1211_only", [](Context& ctx) {
+    auto block = [](char const* tag, char const* id) { return gf::tags::has(Registry::Block, tag, id); };
+    auto item  = [](char const* tag, char const* id) { return gf::tags::has(Registry::Item, tag, id); };
+    struct Case {
+        char const* tag;
+        char const* newer;
+        char const* older;
+    };
+    for (auto const& c : {Case{"minecraft:logs", "minecraft:pale_oak_log", "minecraft:oak_log"}, Case{"minecraft:planks", "minecraft:pale_oak_planks", "minecraft:oak_planks"},
+                          Case{"minecraft:leaves", "minecraft:pale_oak_leaves", "minecraft:oak_leaves"},
+                          Case{"minecraft:saplings", "minecraft:pale_oak_sapling", "minecraft:oak_sapling"},
+                          Case{"minecraft:fences", "minecraft:pale_oak_fence", "minecraft:oak_fence"}, Case{"minecraft:doors", "minecraft:pale_oak_door", "minecraft:oak_door"},
+                          Case{"minecraft:trapdoors", "minecraft:pale_oak_trapdoor", "minecraft:oak_trapdoor"},
+                          Case{"minecraft:stairs", "minecraft:resin_brick_stairs", "minecraft:stone_brick_stairs"},
+                          Case{"minecraft:walls", "minecraft:resin_brick_wall", "minecraft:cobblestone_wall"},
+                          Case{"minecraft:dirt", "minecraft:pale_moss_block", "minecraft:moss_block"},
+                          Case{"minecraft:replaceable", "minecraft:leaf_litter", "minecraft:short_grass"},
+                          Case{"minecraft:replaceable_by_trees", "minecraft:bush", "minecraft:fern"},
+                          Case{"minecraft:flowers", "minecraft:wildflowers", "minecraft:pink_petals"},
+                          Case{"minecraft:small_flowers", "minecraft:open_eyeblossom", "minecraft:poppy"}}) {
+        ctx.check(!block(c.tag, c.newer), std::string("#") + c.tag + " (block) has no " + c.newer);
+        ctx.check(block(c.tag, c.older), std::string("#") + c.tag + " (block) has " + c.older);
+    }
+    ctx.check(!item("minecraft:swords", "minecraft:copper_sword") && item("minecraft:swords", "minecraft:iron_sword"), "#swords: no copper sword (1.21.9)");
+    ctx.check(!item("minecraft:boats", "minecraft:pale_oak_boat") && item("minecraft:boats", "minecraft:oak_boat"), "#boats: no pale oak boat");
+    ctx.check(!item("c:eggs", "minecraft:blue_egg") && item("c:eggs", "minecraft:egg"), "c:eggs: the egg only");
+    ctx.check(!gf::tags::has(Registry::EntityType, "minecraft:fall_damage_immune", "minecraft:happy_ghast"), "no happy ghast (1.21.6)");
+    // the members lists agree
+    auto logs = gf::tags::members(Registry::Block, "minecraft:logs");
+    ctx.check(!contains(logs, "minecraft:pale_oak_log") && contains(logs, "minecraft:oak_log"), "members(#logs) agrees (" + std::to_string(logs.size()) + ")");
+});
+
+// Every include of a bridge rule names a rule of the same registry (a missing one would resolve to
+// nothing): the block tags Java's mineable/* include are bridged, with Java 1.21.1's members.
+GF_REGISTER_SELFTEST("item.tags_bridge_includes", [](Context& ctx) {
+    namespace v = gf::tags::vanilla;
+    std::vector<std::string> dangling;
+    int                      n = 0;
+    for (auto r : {Registry::Block, Registry::Item, Registry::EntityType, Registry::Biome, Registry::Fluid, Registry::Structure})
+        for (auto const& tag : v::knownTags(r))
+            for (auto const& inc : v::includes(*v::find(r, tag))) {
+                ++n;
+                if (!v::known(r, inc)) dangling.push_back(std::string(gf::tags::registryName(r)) + " " + tag + " > " + inc);
+            }
+    std::string list;
+    for (auto const& d : dangling) list += (list.empty() ? "" : "; ") + d;
+    ctx.check(dangling.empty(), std::to_string(n) + " includes of the bridge, every one bridged" + (list.empty() ? std::string() : ": " + list));
+    auto block = [](char const* tag, char const* id) { return gf::tags::has(Registry::Block, tag, id); };
+    struct Case {
+        char const*              tag;
+        std::vector<char const*> in;
+        char const*              out;
+    };
+    for (auto const& c : std::vector<Case>{
+             {"minecraft:shulker_boxes", {"minecraft:undyed_shulker_box", "minecraft:white_shulker_box", "minecraft:black_shulker_box"}, "minecraft:chest"},
+             {"minecraft:anvil", {"minecraft:anvil", "minecraft:chipped_anvil", "minecraft:damaged_anvil"}, "minecraft:iron_block"},
+             {"minecraft:cauldrons", {"minecraft:cauldron", "minecraft:lava_cauldron"}, "minecraft:hopper"},
+             {"minecraft:rails", {"minecraft:rail", "minecraft:golden_rail", "minecraft:detector_rail", "minecraft:activator_rail"}, "minecraft:ladder"},
+             {"minecraft:bamboo_blocks", {"minecraft:bamboo_block", "minecraft:stripped_bamboo_block"}, "minecraft:bamboo_planks"},
+             {"minecraft:concrete_powder", {"minecraft:white_concrete_powder", "minecraft:light_gray_concrete_powder"}, "minecraft:white_concrete"},
+             {"minecraft:banners", {"minecraft:standing_banner", "minecraft:wall_banner"}, "minecraft:white_wool"},
+         }) {
+        for (auto const* id : c.in) {
+            ctx.check(block(c.tag, id), std::string("#") + c.tag + " holds " + id);
+            if (auto why = unknownBlock(id); !why.empty()) ctx.check(false, std::string(id) + ": " + why);
+        }
+        ctx.check(!block(c.tag, c.out), std::string("#") + c.tag + " does not hold " + c.out);
+    }
+    ctx.check(block("minecraft:mineable/pickaxe", "minecraft:chipped_anvil") && block("minecraft:mineable/axe", "minecraft:standing_banner")
+                  && block("minecraft:mineable/shovel", "minecraft:red_concrete_powder"),
+              "mineable/* reach them");
+});
+
+// Task item 3 end to end: in the Twilight Forest `/twilightforest locate #minecraft:village` knows
+// the tag (Minecraft's structure tags) and finds none there, as Java does: not_found, not invalid.
+GF_REGISTER_SELFTEST("item.tags_locate_village", [](Context& ctx) -> ll::coro::CoroTask<> {
+    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    auto level = ll::service::getLevel();
+    ctx.require(static_cast<bool>(level), "a level");
+    auto run = [&](std::string const& command) {
+        ServerCommandOrigin origin("gloamingforest-item-selftest", level->asServer(), CommandPermissionLevel::Owner, DimensionType(ctx.dimension()));
+        auto        out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
+        std::string messages;
+        for (auto const& m : out.mMessages) {
+            if (!messages.empty()) messages += "; ";
+            messages += m.mMessageId;
+            for (auto const& p : m.mParams) messages += " " + p;
+        }
+        return std::pair{out.mSuccessCount > 0, messages};
+    };
+    for (auto const* tag : {"#minecraft:village", "#minecraft:on_treasure_maps", "#minecraft:ruined_portal"}) {
+        auto [ok, messages] = run(std::string("twilightforest locate ") + tag);
+        ctx.check(!ok && messages.find(std::string("Could not find a structure of type \"") + tag + "\" nearby") != std::string::npos,
+                  std::string("/twilightforest locate ") + tag + " in the Twilight Forest: not_found (got " + (ok ? "success" : "failure") + ": " + messages + ")");
+        ctx.check(messages.find("There is no structure with type") == std::string::npos, std::string(tag) + " is a known tag (not invalid)");
+    }
+    auto [ok, messages] = run("twilightforest locate #minecraft:not_a_structure_tag");
+    ctx.check(!ok && messages.find("There is no structure with type \"#minecraft:not_a_structure_tag\"") != std::string::npos,
+              "an unknown tag is still invalid (got " + messages + ")");
 });

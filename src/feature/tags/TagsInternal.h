@@ -4,7 +4,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
+#include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "feature/tags/Tags.h"
@@ -28,5 +31,21 @@ namespace gf::tags::internal {
 /// The published snapshot's generation (every load publishes a new one).
 [[nodiscard]] std::uint64_t generation();
 void                        reload();
+
+/// While it lives, the queries of the constructing thread (and only of it) read a snapshot built
+/// from the data tree below `root` (`<root>/<ns>/tags/...`) in place of the published one: the
+/// selftests' synthetic trees, which world generation on other threads never sees. Nothing is
+/// published; destroy it on the thread that made it, before that thread suspends (a synchronous test).
+class ScopedSnapshot {
+public:
+    explicit ScopedSnapshot(std::filesystem::path const& root);
+    ~ScopedSnapshot();
+    ScopedSnapshot(ScopedSnapshot const&)            = delete;
+    ScopedSnapshot& operator=(ScopedSnapshot const&) = delete;
+
+private:
+    std::shared_ptr<void const> mPrevious;
+    std::thread::id             mThread;
+};
 
 } // namespace gf::tags::internal
