@@ -17,6 +17,7 @@
 //     biome column layers (TerrainColumn#getBiome) - so the goldens are checked against the
 //     algorithms, and the reference code below documents them for the units that port them
 //     (F5 jrand, F6 landmark, U1 biomes).
+// structure_steps.json is compared with F6's decoration-step table in StructureStepsTest.cpp.
 
 #include <gtest/gtest.h>
 
@@ -529,7 +530,7 @@ TEST(OracleGolden, ManifestListsEveryFileUnchanged) {
         EXPECT_TRUE(listed.contains(rel)) << rel << " is not in tests/golden/manifest.json";
     }
     // every kind, and every seed for the seed-dependent ones
-    for (char const* kind : {"rng", "noise", "mobs", "loot", "recipes", "uncrafting"}) EXPECT_EQ(filesOfKind(kind).size(), 1u) << kind;
+    for (char const* kind : {"rng", "noise", "mobs", "loot", "recipes", "uncrafting", "structure_steps"}) EXPECT_EQ(filesOfKind(kind).size(), 1u) << kind;
     for (char const* kind : {"biomes", "heights", "density", "landmarks", "surface"}) {
         EXPECT_EQ(filesOfKind(kind).size(), m.at("seeds").size()) << kind;
     }

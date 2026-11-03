@@ -49,7 +49,8 @@ public final class OracleMod {
 		Map.entry("mobs", DataDumps::mobs),
 		Map.entry("loot", DataDumps::loot),
 		Map.entry("recipes", DataDumps::recipes),
-		Map.entry("uncrafting", DataDumps::uncrafting)
+		Map.entry("uncrafting", DataDumps::uncrafting),
+		Map.entry("structure_steps", StructureDumps::structureSteps)
 	);
 
 	private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {

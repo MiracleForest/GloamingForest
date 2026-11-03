@@ -2,9 +2,10 @@
 
 The oracle runs **The Twilight Forest 4.8** on a local **NeoForge 1.21.1** dedicated server and dumps
 *derived facts* about it into `tests/golden/`, so the Bedrock port can be checked against the real mod:
-biome and height grids, landmark picks, mob attributes, loot statistics, recipes, uncrafting outputs and
-reference values of Minecraft's random and noise generators. It never exports an asset: no texture,
-model, sound, music or structure template, and no file is ever extracted from the TF jar (rules R10, R11).
+biome and height grids, landmark picks, the structure decoration steps, mob attributes, loot statistics,
+recipes, uncrafting outputs and reference values of Minecraft's random and noise generators. It never exports
+an asset: no texture, model, sound, music or structure template, and no file is ever extracted from the TF jar
+(rules R10, R11).
 
 | File | What |
 |---|---|
@@ -69,6 +70,7 @@ Numbers are exact: doubles use Java's shortest round-trip form (read them with `
 | `surface/seed-*.json` | Chunks generated to `minecraft:surface` (noise, landmark terraforming, surface rules; no carvers or features): heights and the top block, 128x128 at step 2 around the origin; `samples.chunks`: whole 16x16 chunks for every main biome of the search grid (step-8 quart grid over +-4096 blocks, at most 2 per biome, the most interior cells nearest the origin first) with heights, the top block, the 8 blocks from the floor down (`profile`) and the quart biome of each column; `samples.unsampled`: key biomes the grid never reaches (none for the 3 seeds). | U2, U1 |
 | `density/seed-*.json` | The seeded noise router of `twilightforest:twilight_noise_gen` at 256 points (`compute` on a single point: no interpolation or blending; constant functions listed as such) and `BiomeDensitySource#sampleTerrain` depth/scale. | U2, F5 |
 | `landmarks/seed-*.json` | One center per region over 16x16 regions: `getNearestCenterXZ`, `pickVarietyLandmark`, `pickLandmarkForChunk` (with the biome it read), the main biome, and the structures that actually start in the center chunk; 1024 sampled chunks (half near the origin) with nearest center, `chunkHasLandmarkCenter`, Manhattan distance and variety pick; the variety weights. | F6, landmark units |
+| `structure_steps.json` | The Structure registry (`registryAccess().registryOrThrow(Registries.STRUCTURE)`, every enabled data pack: Minecraft's 34 structures and TF's 21) the way `ChunkGenerator#applyBiomeDecoration` walks it, see below. | F6 (`src/core/landmark/Decoration`), F5 (`worldgen::ext::structuresByStep`) |
 | `mobs.json` | Every `twilightforest:` entity type: category, size, fire immunity, tracking; `DefaultAttributes` base values; the attributes (base and value), max health, armor and experience range of a freshly created instance. | U16, U17, boss units, W2 |
 | `loot.json` | Every loot table of TF's data pack rolled 2048 times (fixed seed, documented context): per item the rolls containing it, the total count and the per-roll min/max. `variants`: the same rolls with the player holding shears, a silk touch pickaxe or a fortune III pickaxe (block tables, also the tool) or a looting III sword (entity tables); variants equal to the default are listed in `variantsSameAsDefault`. Statistics, not rules: compare with a tolerance. | loot owners, W2 |
 | `recipes.json` | Every recipe of TF's data pack: type, serializer, result and count, shaped size, cooking time and experience, ingredients (item ids, tags expanded) and `data` (the recipe encoded with its serializer's codec: drying time, travellers' gear modifier key, scepter repair durability, ...). `probe`: what each travellers' gear modifier recipe crafts from its ingredients (the modifier components); `probes`: the code-only recipes (casket, essence, moonworm queen and scepter repair, emperor's cloth, map cloning, vest and gloves merge) crafted from the inputs in `spec.json`. | F9, recipe owners |
@@ -81,6 +83,27 @@ gtest checks `rng.json`, `landmarks/` and the biome columns against reference C+
 implementations against `rng.json`, `noise.json` and `landmarks/seed-*.json`; A2 / A8 then replace the test-local
 reference code with the real implementations. U1 and U2 compare against `biomes/`, `heights/`, `density/` and
 `surface/`, U13 against `uncrafting.json`, the recipe and loot owners against `recipes.json` and `loot.json`.
+`structure_steps.json` is compared with F6's `src/core/landmark/Decoration` in `tests/golden/StructureStepsTest.cpp`;
+F5's runtime table (`worldgen::ext::structuresByStep` / `structureSlot`, which the landmark starts are seeded with
+first) is feature code outside the gtest and is not compared yet: F5 should check it against this golden.
 
 To change what is dumped, edit `spec.json` or the dumper, rerun `run.ps1`, and review the diff of `tests/golden`
 like code: the goldens are only ever written by the oracle.
+
+### `structure_steps.json`
+
+`applyBiomeDecoration` groups the registry with `registry.stream().collect(Collectors.groupingBy(s -> s.step().ordinal()))`
+and, at decoration step `o`, calls `worldgenrandom.setFeatureSeed(decorationSeed, l, o)` before placing the starts of the
+`l`-th structure of `map.getOrDefault(o, emptyList())`, whether or not it has a start in the chunk. The golden records
+exactly that table (seed-independent: one file, no `seed`):
+
+| Field | What |
+|---|---|
+| `count` | `Registry#size` (55). |
+| `stepNames` | `GenerationStep.Decoration#getSerializedName` of every ordinal (`raw_generation` .. `top_layer_modification`, 11). |
+| `steps` | `steps[o]`: the ids of the structures whose `step().ordinal()` is `o`, in registry stream order; `[]` for a step without structures. Every ordinal is present, so `steps[o][l]` is the structure seeded with `setFeatureSeed(decorationSeed, l, o)`. |
+| `order` | Every id in registry stream order (`MappedRegistry#stream`: registration order, which `RegistryDataLoader` takes from the sorted file locations `<ns>:worldgen/structure/<path>.json`, path first, then namespace). |
+
+The dumper checks that the groups partition the registry (every id once, no ordinal outside `GenerationStep.Decoration`).
+`tests/golden/StructureStepsTest.cpp` compares the golden with F6's pure table: the steps of `vanillaStructures()` and of
+TF's records in `assets/data/landmarks/twilightforest`, `slotOf` for every entry, and `registryBefore` over `order`.
