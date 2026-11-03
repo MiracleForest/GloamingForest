@@ -149,7 +149,9 @@ deco / rack), the marker names above, and a footprint matching its name (e.g. `p
 Two placement models. The druid hut, simple well, fancy well, grove ruins and stone circle extend `TemplateFeature`
 (4.1). The graveyard does **not**: `GraveyardFeature` extends `Feature<NoneFeatureConfiguration>` directly and has
 its own snapping, RNG, mirror distribution and offsets (4.2). `SwizzleConfig` features (the hut and both wells) apply
-weighted wood palette swaps (`#twilightforest:common` 8, `uncommon` 4, `rare` 3, `treasure` 1) and 50 % mossy
+weighted wood palette swaps (`#twilightforest:common` 8, `uncommon` 4, `rare` 3, `treasure` 1: tags of TF's
+`twilight:wood_palettes` registry, like the `#twilightforest:druid_hut_swizzle_mask` / `well_swizzle_mask` masks
+below; owners rows `tag twilight/#twilightforest:wood_palettes/<name>`, F9) and 50 % mossy
 cobblestone / cobblestone-stair preprocessing.
 
 ### 4.1 `TemplateFeature.place` (druid hut, wells, grove ruins, stone circle; translate exactly)

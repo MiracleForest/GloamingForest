@@ -18,7 +18,9 @@ mark adaptation notes.
 Not owned here (string references only, R2): `twilightforest:lich_boss_spawner`, `twilightforest:lich_trophy`, the
 scepters `twilightforest:twilight_scepter` / `lifedrain_scepter` / `zombie_scepter` / `fortification_scepter`
 (U9; the Lich only holds them as display items), the attribute `twilightforest:max_shield_strength` and the
-fortification shield attachment (U9), `twilightforest:shield_add` / `shield_block` / `shield_break` sounds (U9),
+fortification shield attachment (U9), the sounds `entity.twilightforest.fortification_shield.add` /
+`.block` / `.break` (U9; TFSounds `SHIELD_ADD` / `SHIELD_BLOCK` / `SHIELD_BREAK`, written `shield_add` /
+`shield_block` / `shield_break` below),
 `twilightforest:ominous_flame` and `twilightforest:magic_effect` particles, ominous candles and lightable blocks
 (U22), the candelabra, skull candles, sinister spawner, chiseled canopy shelf, wrought iron fence, magic painting
 (U22), mason jar / firefly jar (U6/U4), `twilightforest:bold_stone_pillar` and `twisted_stone_pillar` (U5),
@@ -361,8 +363,10 @@ egg**, zombie attributes, tag `minecraft:zombies`. Spawned by the tower yard's c
 | `twilightforest:clone_count` | 0..1024, synced | 2 | `attribute.name.lich.clone_count` |
 | `twilightforest:minion_count` | 0..1024, synced | 9 | `attribute.name.lich.minion_count` |
 
-Bedrock: no custom attributes exist; store them as actor data (`entity::data`) with these defaults and accept
-`/attribute`-style overrides through `/twilightforest` only if a later unit adds one.
+Bedrock: no custom attributes exist; store them as actor data (`entity::data`) with these defaults. In Java only
+vanilla means change them (`/attribute`, or the `attributes` tag of `/summon`), which Bedrock does not have. TF
+registers no `/twilightforest` subcommand for them (owners.tsv has no `subcommand` row for them), so U21 adds none
+(R14).
 
 ### 3.8 Damage types (data)
 

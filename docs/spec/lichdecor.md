@@ -204,15 +204,34 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
   final boss spawner -> annihilate; quest ram trophy -> transformation particle.
 - Lich tower rooms place it through `sinister_spawner[:mobs[:range[:scan]]]` with ominous flame particles and loot
   `twilightforest:blocks/ominous_spawner_drops` (= one `twilightforest:exanimate_essence`).
-- Subcommand: TF literal **`/twilightforest sinister_spawner`**, permission 2. Children: `add_particle <particle>
-  <pos>`, `remove_particle <particle> <pos>`, `set_loot <loot_table> <pos>` (suggests loot tables) and `clear_loot
-  <pos>`. Each returns 1 on a change, 0 otherwise.
-- Ownership conflict: owners.tsv (row `subcommand spawner U22`) and AGENTS.md R14 name the subcommand `spawner`, but
-  TF registers `sinister_spawner` (`SinisterSpawnerCommand.java:31`). For parity the command players type is
-  `/twilightforest sinister_spawner`. The owners id is raised with the coordinator in
-  [issue #5](https://github.com/MiracleForest/GloamingForest/issues/5), so that F0/A8 can rename the owners.tsv row
-  to `sinister_spawner`. Until then the row `spawner` is the ownership record for this one subcommand. U22 registers
-  only the `sinister_spawner` literal with `GF_REGISTER_SUBCOMMAND` and adds no `spawner` alias, because TF has none.
+- Subcommand **`/twilightforest sinister_spawner`** (also under `/tf` and `/tffeature`), TF's literal from
+  `command/SinisterSpawnerCommand.java:30-37`, chained directly below `/twilightforest` by `TFCommand`. Owners rows
+  (all U22): `subcommand sinister_spawner`, `sinister_spawner add_particle`, `sinister_spawner remove_particle`,
+  `sinister_spawner set_loot`, `sinister_spawner clear_loot`. Permission level 2. The bare literal has no executor
+  (incomplete command); the four children, with TF's argument names and order:
+  - `sinister_spawner add_particle <particle> <pos>`: adds the particle (`ParticleArgument`: a particle id with its
+    options) to the spawner's particle set.
+  - `sinister_spawner remove_particle <particle> <pos>`: removes it from the set.
+  - `sinister_spawner set_loot <loot> <pos>`: `<loot>` is `ResourceOrIdArgument.lootTable`, suggesting every loot
+    table id. The spawner stores only the table's key, so an inline loot table (no key) stores none: like
+    `clear_loot`.
+  - `sinister_spawner clear_loot <pos>`: removes the loot table.
+  - `<pos>` is a loaded block position (`BlockPosArgument.getLoadedBlockPos`: `argument.pos.unloaded`,
+    `argument.pos.outofworld`). Each child returns 1 when it changed the spawner and 0 otherwise (also when `<pos>`
+    is not a sinister spawner); it sends no chat feedback. A particle change marks the block entity changed (saved
+    and re-sent to clients).
+  - Set membership is Java `equals` on a `HashSet`: plain particles (`SimpleParticleType`, e.g. `minecraft:smoke`,
+    `twilightforest:ominous_flame`) and the record options (`minecraft:sculk_charge`, TF's
+    `twilightforest:fallen_leaf`) compare by value, so a second `add_particle` returns 0 and `remove_particle` finds
+    them. Every other parametrised option (`minecraft:dust`, `dust_color_transition`, `block`, `block_marker`,
+    `falling_dust`, `dust_pillar`, `item`, `entity_effect`, `vibration`, `shriek`, and TF's
+    `twilightforest:magic_effect`, a `ColorParticleOption`) has no `equals` in 1.21.1: each `add_particle` adds
+    another entry and returns 1 (the spawner then emits it once per entry), and `remove_particle` never matches and
+    returns 0. Keep that behaviour.
+- U22 registers exactly these literals with `GF_REGISTER_SUBCOMMAND` (R14) and no `spawner` alias, because TF has
+  none. Bedrock has no particle, SNBT or loot-table argument types: take `<particle>` and `<loot>` as one string
+  each (quoted when it carries Java's `{...}` options), `<pos>` as a block position (`~` relative to the source),
+  in TF's order; the particles are emitted by id with their options through `fx::particle` (R10).
 
 ### 2.6 Skull chest
 
@@ -483,4 +502,8 @@ not undead standing in it takes `twilightforest:ominous_fire` damage and never g
 fire; a zombie takes no damage; a netherite ingot resting in it is gone after 5 hits, about 20 ticks),
 `lichdecor.ominous_fire_portal` (placed on the bottom of an empty obsidian frame in the Overworld it lights a nether
 portal; in the Twilight Forest it does not), `lichdecor.skull_chest_lock`,
-`lichdecor.fence_finial`, `lichdecor.sinister_spawner_command`, `lichdecor.recipes`.
+`lichdecor.fence_finial`, `lichdecor.sinister_spawner_command` (on a sinister spawner: `/twilightforest
+sinister_spawner add_particle minecraft:smoke <pos>` returns 1, then 0; `remove_particle minecraft:smoke <pos>` 1,
+then 0; `set_loot twilightforest:blocks/ominous_spawner_drops <pos>` 1, then 0; `clear_loot <pos>` 1, then 0; every
+child returns 0 on a block that is not a sinister spawner; `/twilightforest spawner` is not registered),
+`lichdecor.recipes`.

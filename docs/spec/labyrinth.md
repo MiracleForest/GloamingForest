@@ -106,8 +106,9 @@ lootTable "twilightforest:entities/minoshroom", deathChestBlock "twilightforest:
 MONSTER 0.6 x 2.1; egg `twilightforest:minotaur_spawn_egg` (`0x3f3024` / `0xaa7d66`). Attributes: monster defaults,
 max health 30, speed 0.25. Goals: Float 0; Charge(1.5, canBreak false) 2; Melee(1.0) 3; Stroll 6; LookAtPlayer 7;
 RandomLook 7; targets HurtBy 1, NearestAttackable(Player) 2. Synced `CHARGING`.
-Equipment: `random = nextInt(10)`; `(int)(random / (effectiveDifficulty + 1)) == 0` -> `twilightforest:golden_minotaur_axe`
-else `minecraft:golden_axe` (default drop chance), then difficulty enchantments. Melee as 1.3 with the minotaur
+Equipment: `random = nextInt(10)`; `(int)(random / (effectiveDifficulty + 1)) == 0` ->
+`twilightforest:gold_minotaur_axe` (TFItems `GOLDEN_MINOTAUR_AXE`) else `minecraft:golden_axe` (default drop chance),
+then difficulty enchantments. Melee as 1.3 with the minotaur
 attack sound; voice pitch as the Minoshroom.
 
 | Event | Use |
