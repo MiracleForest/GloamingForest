@@ -1,7 +1,7 @@
 {
   "comment": "What tools/oracle/run.ps1 dumps (unit F13). Grids of 'biomes' and surface.samples.grid are in quart (4-block) units, the others in blocks. Stacks: an item id, or ItemStack's codec {id, count?, components?}. Changing a value changes the goldens: rerun the oracle and review the diff.",
   "seeds": [0, 123456789, -8346138912345678901],
-  "globalKinds": ["rng", "noise", "mobs", "loot", "recipes", "uncrafting"],
+  "globalKinds": ["rng", "noise", "mobs", "loot", "recipes", "uncrafting", "structure_steps"],
   "seedKinds": ["biomes", "heights", "density", "landmarks", "surface"],
   "biomes": {
     "main": { "x0": -128, "z0": -128, "width": 256, "height": 256, "step": 1 },
