@@ -24,12 +24,28 @@
 //   - structure units (U18-U30): the terraformer shapes TF's structures use (inverted pyramid,
 //     box density);
 //   - maps / commands (U13, U14): locating landmarks (WorldUtil#findNearestMapLandmark) and the
-//     protected boxes the client weather renderer draws (U15, StructureProtectionPacket).
+//     protected boxes the client weather renderer draws (U15, StructureProtectionPacket);
+//   - structure units and the structure kit's commands (U18-U30, F7's structure_util display_pieces
+//     and count_template): a start's pieces with their type ids and saved tags
+//     (StructureStart#getPieces; the contract's Start holds their boxes only).
 //
 // Persisted pieces: a start's pieces are saved as Java's StructurePiece#createTag does, one object
 // per piece: {"id": type id, "BB": [minX, minY, minZ, maxX, maxY, maxZ], "O": 2D direction data
 // value (S 0, W 1, N 2, E 3, -1 none), "GD": gen depth, "gf_mirror", "gf_rotation"} plus the
-// piece's own Piece::save() fields merged in; gf::structure::loadPiece receives that object.
+// piece's own Piece::save() fields merged in; gf::structure::loadPiece receives that object. A piece
+// whose type has no factory yet (a W1 unit's, before it registers) keeps the tag it was saved with:
+// it is written back unchanged and startPieces returns it.
+//
+// Reserved sites: before a structure unit registers its generator, F6 stores a start for every site
+// its structure sets choose, without pieces (Start::generated false, the clearance square as its
+// box). Such a start is no StructureStart#isValid start: protection, conquest, terraforming, the
+// controlled spawns and spawn overrides, featureBlocked and landmark::decorationAllowed skip it
+// (landmark::startAt and startsIntersecting still list it, without pieceBoxes). Once the generator
+// exists, the pieces are rebuilt from its deterministic layout when the start chunk is evaluated
+// again or a chunk the site reaches generates.
+//
+// Selftests remove the starts they force with feature/ext/landmark/LandmarkTest.h (ScopedStart,
+// forgetStartForTest), which also describes the gf_test fixture landmarks.
 
 #include <cstdint>
 #include <functional>
@@ -120,11 +136,59 @@ struct Occupancy {
 /// referencing its chunk.
 [[nodiscard]] bool featureBlocked(int dimension, int x, int y, int z, Occupancy const& occupancy);
 
+// ---- pieces ------------------------------------------------------------------------------------------
+
+/// A piece of a stored start (StructureStart#getPieces), in placement order.
+struct StartPiece {
+    std::string type; ///< the piece type id (StructurePieceType: "twilightforest:TFHill", ...)
+    BlockBox    box;
+    /// StructurePiece#createTag (the persisted shape above): from the piece in memory, else the tag it
+    /// was last saved with (its type has no factory yet), else {"id", "BB"}.
+    nlohmann::json tag;
+    /// Whether protection covers the piece, as isProtectedFor and the structure protection sync decide
+    /// it: Generator::pieceProtected at the piece's box center when the generator has one, else the
+    /// piece's own ProgressionPiece#isComponentProtected.
+    bool           protectedPiece = true;
+    /// The piece's spawn list index (-1: none), as potentialSpawns picks it: Generator::spawnIndex at
+    /// the piece's box center when the generator has one, else the piece's own
+    /// SpawnIndexProvider#getSpawnIndex. (Per position the rule may differ inside one piece: ask
+    /// potentialSpawns for a position.)
+    int            spawnIndex     = -1;
+};
+/// The pieces of `start` with their type ids and saved tags: the stored start of its key, dimension
+/// and start chunk (start.data["chunk"]); none for a reserved site. A Start the store does not hold
+/// gives its pieceBoxes, with type "" and tag {"BB"}; its flags are then unknown and set to "nothing
+/// claimed" (protectedPiece false, spawnIndex -1): a caller building protection or spawns from them
+/// skips pieces whose type is empty. landmark::startAt's start carries the same tags in
+/// data["pieces"] (the one-start lookup of commands: F7's structure_util reads them there);
+/// startsIntersecting's starts do not (it runs per feature placement): ask this.
+///
+/// Cost of landmark::startAt: it saves every piece of the start it finds (StructurePiece#createTag, a
+/// JSON object per piece) on each call. It is meant for one-off lookups on the server thread
+/// (commands, tests, an interaction). Per-tick or per-block callers (a player's position every tick,
+/// a feature placement) use startsIntersecting(dim, chunk) and Start::box / pieceBoxes, and call
+/// startPieces only for the start they act on.
+[[nodiscard]] std::vector<StartPiece> startPieces(Start const& start);
+
 // ---- spawns ------------------------------------------------------------------------------------------
 
 /// EntityEvents#gatherPotentialSpawns: the controlled spawn list (SpawnerData JSON objects
 /// {"type", "weight", "minCount", "maxCount"}) for `category` ("monster", "ambient",
-/// "water_creature", ...) at a position; nullopt to keep the biome's list.
+/// "water_creature", ...) at a position; nullopt to keep the biome's list. For a ControlledSpawns
+/// start reaching the position's chunk: the ambient / water lists, an empty list for the other
+/// non-monster categories, and for monsters (not once conquered) the labelled list of the spawn
+/// index at the position: Generator::spawnIndex when the generator has one (a landmark's own lookup:
+/// the dark tower's floors), else EntityEvents#getSpawnListIndexAt (the highest
+/// structure::bases::Component::getSpawnIndex of the pieces holding the position); -1: nullopt.
+///
+/// Hollow hills (U18): HollowHillStructure#canSpawnMob is applied here, keyed on the structure type
+/// as Java's `instanceof` is: for a start whose descriptor type is twilightforest:hollow_hill, a
+/// position outside the half dome of the start box (core/landmark/Spawning.h,
+/// hollowHillCanSpawnMob(start.box, x, y, z)) gets nullopt before the spawn index is asked, so the
+/// hill's empty "full" spawn override applies there. U18 registers no hook for it: its layout gives
+/// the HollowHillComponent (a bases::Component, spawn index 0) TF's box, so the start box (the union
+/// of the pieces, terrain adaptation none) is Java's start.getBoundingBox(), and it leaves
+/// Generator::spawnIndex unset (that would replace the piece lookup).
 [[nodiscard]] std::optional<std::vector<nlohmann::json>> potentialSpawns(int dimension, std::string const& category, int x, int y, int z);
 
 // ---- locating ----------------------------------------------------------------------------------------
