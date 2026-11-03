@@ -1048,8 +1048,8 @@ GF_REGISTER_SELFTEST("dimension.area_loader", [](Context& ctx) -> ll::coro::Coro
 
 // An area released halfway through its loading (teleport_riders: the ground of a column) and a
 // larger area over the same chunks asked for in the same tick (the trip's destination). The race
-// is forced: each fresh, far column is asked for without waiting (requestArea) and released two
-// ticks later, long before its loading is over. The loader keeps a released area until its own
+// is forced: each fresh, far column is asked for without waiting (requestArea) and released one
+// tick later, long before its loading is over. The loader keeps a released area until its own
 // loading is over (removed at once, it would strand the chunks it was bringing in: W0d, docs/spikes
 // S1.md), so every destination loads and no wait meets stranded chunks.
 GF_REGISTER_SELFTEST("dimension.area_handover", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -1062,7 +1062,7 @@ GF_REGISTER_SELFTEST("dimension.area_handover", [](Context& ctx) -> ll::coro::Co
         BlockPos column{-61000 + i * 512 + 7, 0, 47000 + 9};
         auto     first = requestArea(tfId, column, 0);
         ctx.require(first != nullptr, "column " + std::to_string(i) + " asked for");
-        co_await ctx.ticks(2);
+        co_await ctx.ticks(1);
         int  inPipeline = 0, missing = 0;
         auto states     = chunkStates(tfId, column, 0);
         for (int s : states) {
@@ -1074,7 +1074,7 @@ GF_REGISTER_SELFTEST("dimension.area_handover", [](Context& ctx) -> ll::coro::Co
         bool const settling = settlingAreas() == settlingBefore + 1;
         if (settling) ++raced;
         ctx.info(std::format(
-            "column {}: released after 2 ticks with {} of its {} chunks (and ring) in the pipeline, {} not there yet: {}",
+            "column {}: released after 1 tick with {} of its {} chunks (and ring) in the pipeline, {} not there yet: {}",
             i,
             inPipeline,
             states.size(),

@@ -155,7 +155,6 @@ public:
             }
         return out;
     }
-    void reset() { mSeen.clear(); }
 
 private:
     ChunkBox                                           mBox;
@@ -231,6 +230,11 @@ void removeWhenSettled(mce::UUID uuid, std::string name, int dim, ChunkBox box, 
                 if (!kept)
                     log().warn("dimension: the released area {} is still loading after {} ticks; kept until it settles or the world closes", name, waited);
                 kept = true;
+            }
+            if (kept) { // past the cap: look again every kSettleCheck ticks only
+                co_await ll::chrono::ticks(kSettleCheck);
+                waited += kSettleCheck - 1;
+                continue;
             }
             co_await ll::chrono::ticks(1);
         }
@@ -461,8 +465,8 @@ ll::coro::CoroTask<AreaHandle> loadArea(int dim, BlockPos center, int radius, in
         level = ll::service::getLevel();
         if (!level) co_return nullptr;
     }
-    auto fresh = newArea(*level, dim, box);
-    if (!hold) shared()[key] = fresh;
+    auto fresh    = newArea(*level, dim, box);
+    shared()[key] = fresh; // later requests share the fresh area, not one that did not load
     if (co_await waitLoaded(dim, center, radius, timeoutTicks, fresh)) co_return fresh;
     log().warn(
         "dimension: the area {} at {} {} {} of dimension {} did not load within {} ticks: {}",
