@@ -1613,7 +1613,7 @@ GF_REGISTER_SELFTEST("structure.count_loot", [](Context& ctx) -> ll::coro::CoroT
         std::string types;
         for (auto const& p : pieces) types += p.type + " ";
         ctx.check(pieces.size() == 2 && pieces[0].type == "gf_test:landmark_fixture_shell" && pieces[1].type == "gf_test:landmark_fixture_porch" &&
-                      pieces[0].tag.value("id", std::string{}) == pieces[0].type && pieces[0].box == forced->pieceBoxes[0],
+                      pieces[0].tag.is_object() && pieces[0].tag.value("id", std::string{}) == pieces[0].type && pieces[0].box == forced->pieceBoxes[0],
                   "the start's pieces carry their type ids, boxes and saved tags (" + types + ")");
         ctx.check(start->data.contains("pieces") && start->data["pieces"].is_array() && start->data["pieces"].size() == pieces.size(),
                   "startAt hands out the same pieces' tags");
@@ -2731,6 +2731,37 @@ GF_REGISTER_SELFTEST("structure.pending_read", [](Context& ctx) -> ll::coro::Cor
     auto nonce = probe->value("nonce", std::string{});
     auto pos   = probe->value("pos", Json::array());
     game::db::erase("gf:structure:probe");
+    // the fixture landmark start pending_probe forced (unplaced, in an unloaded chunk) was reloaded
+    // from the world DB: its pieces came back through F6's own piece factories (no "unknown piece
+    // type" for them), with their type ids and saved tags; then it is forgotten again
+    if (auto const startProbe = probe->value("start", Json()); startProbe.is_object()) {
+        auto key = startProbe.value("key", std::string{});
+        auto sp  = startProbe.value("pos", Json::array());
+        if (!key.empty() && sp.is_array() && sp.size() == 3) {
+            core::GlobalPos startPos{probe->value("dim", 0), sp[0].get<int>(), sp[1].get<int>(), sp[2].get<int>()};
+            auto            start = landmark::startAt(startPos.dim, BlockPos{startPos.x, startPos.y + 1, startPos.z});
+            ctx.check(start.has_value() && start->key == key, "the forced start of " + key + " is stored after the restart");
+            if (start) {
+                auto        pieces = landmark::ext::startPieces(*start);
+                std::string types;
+                bool        loaded = pieces.size() == startProbe.value("pieces", std::size_t{0});
+                for (auto const& p : pieces) {
+                    types += p.type + " ";
+                    // the piece's type has a factory: the saved tag loads into a live piece again
+                    std::unique_ptr<Piece> live;
+                    if (p.tag.is_object() && p.tag.value("id", std::string{}) == p.type) {
+                        try {
+                            live = loadPiece(p.tag);
+                        } catch (...) {}
+                    }
+                    loaded = loaded && live != nullptr && !p.type.empty();
+                }
+                ctx.check(loaded, "the reloaded start's pieces load through their piece types (" + types + ")");
+                if (loaded) ctx.info("start probe verified " + key + " pieces=" + types);
+            }
+            ctx.check(landmark::ext::forgetStartForTest(startPos, key) == 1, "the probe's forced start is removed again");
+        }
+    }
     ctx.require(!nonce.empty() && pos.is_array() && pos.size() == 3, "the probe record is complete");
     core::GlobalPos at{probe->value("dim", 0), pos[0].get<int>(), pos[1].get<int>(), pos[2].get<int>()};
     ctx.check(!game::db::get("gf:structure:test_mark"), "the probe job did not run before its chunk was loaded");
