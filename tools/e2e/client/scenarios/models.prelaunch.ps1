@@ -9,7 +9,7 @@
 #     earlier run left behind (F1 persists both); models.ps1 then hides them with F1 for the preview
 #     shots and shows them again, checking each press (models.client_hud);
 #   the instance's own values are saved first in the e2e home (models.restore.ps1 puts them back
-#   however the run ends). The backup lives outside out/ (cleaned at the start of every run), so a
+#   however the run ends; a hidden HUD or hand found here is saved as shown, never put back). The backup lives outside out/ (cleaned at the start of every run), so a
 #   killed run's backup survives: the next run keeps it (it holds the values from before the killed
 #   run) and restores it at its end.
 # Dot-sourced by tools/e2e/client/run.ps1.
@@ -35,10 +35,15 @@ if (Test-Path $gfBackupFile) {
             $old = $lines | Select-String -Pattern "^${k}:(.*)$" | Select-Object -First 1
             $values[$k] = if ($old) { $old.Matches[0].Groups[1].Value } else { $null }   # $null: no such line
         }
-        $gfBackup[$o.FullName] = $values
+        # A hidden HUD or hand is never put back: it is what a lost or killed F1 of an earlier run
+        # leaves behind, and every other client scenario needs the HUD (toasts, hotbar, screens).
         foreach ($k in 'gfx_hidehud', 'gfx_hidehand') {
-            if ($values[$k] -eq '1') { Write-Step "warning: $($o.FullName) had ${k}:1 before this run (an earlier run's F1?); it is put back as it was" }
+            if ($values[$k] -and $values[$k] -ne '0') {
+                Write-Step "warning: $($o.FullName) had ${k}:$($values[$k]) before this run (an earlier run's F1?); it is restored as ${k}:0"
+                $values[$k] = '0'
+            }
         }
+        $gfBackup[$o.FullName] = $values
     }
     [ordered]@{ instance = $script:VersionName; saved = (Get-Date).ToString('o'); options = $gfBackup } | ConvertTo-Json -Depth 4 |
         Set-Content -Path $gfBackupFile -Encoding UTF8
