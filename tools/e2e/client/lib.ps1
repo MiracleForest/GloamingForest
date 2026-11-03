@@ -548,8 +548,16 @@ function Get-WorldsDir {
 function Deploy-Mod([string]$BinDir) {
     if (-not (Test-Path (Join-Path $BinDir "$script:ModName.dll"))) { throw "Build output not found: $BinDir (run 'pwsh tools/build.ps1 -Target client' or pass -Build)" }
     $dest = Join-Path $script:ModsDir $script:ModName
-    # Fresh copy every run (no config/data carried over), so runs are reproducible.
-    if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+    # Fresh copy every run (no config/data carried over), so runs are reproducible. A game of
+    # another harness that is still exiting can hold the old DLL for a while (Clear-InstanceGames
+    # ran first): retry, and when it stays open nothing of the scenario can run (NOT RUN).
+    for ($i = 0; $i -lt 15 -and (Test-Path $dest); $i++) {
+        try { Remove-Item -Recurse -Force $dest -ErrorAction Stop } catch { $lastErr = $_; Start-Sleep -Seconds 2 }
+    }
+    if (Test-Path $dest) {
+        $script:NotRunReason = "$dest is held open by another process (a game of another harness?): $lastErr"
+        throw "could not replace the deployed mod: $lastErr"
+    }
     Copy-Item -Recurse -Force $BinDir $dest
     Set-TestModConfig $dest
     Write-Step "deployed $BinDir -> $dest"
@@ -662,6 +670,23 @@ function Get-InstanceProcesses {
         Where-Object { $_.Path -and $_.Path.StartsWith($dir, [StringComparison]::OrdinalIgnoreCase) }
 }
 function Get-GameProcess { Get-InstanceProcesses | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1 }
+
+# Before a launch, with the instance's game lock held: a game of this instance still running (another
+# harness's, closing after it gave the lock back, or one left by a killed run) keeps the mods' DLLs
+# open. Close it, give it 60 s to exit, then kill its process tree.
+function Clear-InstanceGames {
+    $procs = @(Get-InstanceProcesses)
+    if (-not $procs) { return }
+    Write-Step "a game of this instance is still running (pid $(($procs | ForEach-Object Id) -join ', ')); closing it first"
+    foreach ($p in $procs) {
+        try { $p.CloseMainWindow() | Out-Null } catch {}
+        if (-not $p.WaitForExit(60000)) {
+            try { $p.Kill($true) } catch {}
+            $p.WaitForExit(15000) | Out-Null
+            Write-Step "killed pid $($p.Id) (it did not exit within 60 s)"
+        }
+    }
+}
 
 function Start-Game([int]$TimeoutSeconds = 180) {
     if (Get-GameProcess) { throw "Minecraft is already running; close it first" }

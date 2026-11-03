@@ -207,7 +207,7 @@ try {
     try {
         # A clone instance is made on first use (cheap: hard links); it keeps its own mods and data.
         if ($script:InstanceSlot -gt 1) { & (Join-Path $script:BeDDDir 'clone-instance.ps1') -Slot $script:InstanceSlot -Source $script:BaseVersion }
-        if (Get-GameProcess) { Write-Step "closing a running game first"; Stop-Game }
+        Clear-InstanceGames         # also a window-less game that is still exiting (it holds the DLLs)
         Restore-OtherMods
         Remove-StaleModCopies       # our mod parked by another harness (mods.<harness>-aside)
         if ($Mode -eq 'remote-vanilla') {

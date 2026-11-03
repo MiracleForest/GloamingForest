@@ -95,7 +95,11 @@ harness parked our deployed mod in `mods.bedd-it-aside\GloamingForest`. Fixes in
 - before every run, copies of our mod in another harness's `mods.<harness>-aside` folder are deleted
   (`Remove-StaleModCopies`), so no stale build comes back into `mods\`;
 - the test-world check above turns any remaining stray join into a retry and then NOT RUN, never a pass or a
-  scenario failure.
+  scenario failure;
+- a game of the instance that is still running once the run holds the game lock (another harness's game still
+  exiting after it gave the lock back keeps `mods\GloamingForest\GloamingForest.dll` open) is closed, given 60 s
+  and then killed (`Clear-InstanceGames`); `Deploy-Mod` retries the removal of the old mod folder for 30 s, and a
+  folder that stays open makes the run NOT RUN.
 
 Open **every** screenshot of the client run and compare it with TF's textures and GUI images in
 `%LOCALAPPDATA%\gf-tf` (never with TF's audio or templates, which are not in the checkout).
