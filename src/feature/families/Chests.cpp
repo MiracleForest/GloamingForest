@@ -34,6 +34,8 @@
 #include <algorithm>
 #include <cmath>
 #include <map>
+#include <set>
+#include <tuple>
 #include <vector>
 
 #include "mc/world/Container.h"
@@ -181,6 +183,40 @@ std::vector<BlockPos> chestsIn(BlockSource& region, LevelChunk& chunk) {
     return chests;
 }
 
+/// The chunks (dimension, x, z) whose chests a neighbour's first tick settled in this world: their
+/// block data stacks went into the block actors they had, and a chest without one keeps its stacks
+/// in block data (F10 reads them there) until its own chunk's first tick makes it one, so a chunk
+/// is settled for its neighbours once.
+std::set<std::tuple<int, int, int>>& neighbourSettled() {
+    static std::set<std::tuple<int, int, int>> s;
+    return s;
+}
+
+/// Moves the block data stacks of `chunk`'s chests into the block actors they have.
+int settleChestsOf(BlockSource& region, LevelChunk& chunk) {
+    int moved = 0;
+    for (auto const& p : chestsIn(region, chunk)) moved += migrateChest(region, p, false);
+    return moved;
+}
+
+/// The loaded chunks around (cx, cz) (that chunk excepted); `once`: only those not settled yet.
+int settleAround(BlockSource& region, int cx, int cz, bool once) {
+    int dim   = static_cast<int>(region.getDimensionId());
+    int moved = 0;
+    for (int dx = -1; dx <= 1; ++dx)
+        for (int dz = -1; dz <= 1; ++dz) {
+            if (dx == 0 && dz == 0) continue;
+            auto key = std::make_tuple(dim, cx + dx, cz + dz);
+            if (once && neighbourSettled().contains(key)) continue;
+            if (!region.areChunksFullyLoaded(BlockPos{(cx + dx) * 16 + 8, 0, (cz + dz) * 16 + 8}, 0)) continue;
+            auto* chunk = region.getChunk(cx + dx, cz + dz);
+            if (!chunk) continue;
+            moved += settleChestsOf(region, *chunk);
+            neighbourSettled().insert(key);
+        }
+    return moved;
+}
+
 /// A chunk's first tick after it loaded: a chest whose stacks are still in block data moves them
 /// into its block actor (migrateChest); nobody is inside its chests yet, so a lid or a trapped
 /// chest's signal left up (saved while open) goes down. The loaded chunks around it may not tick
@@ -190,7 +226,7 @@ std::vector<BlockPos> chestsIn(BlockSource& region, LevelChunk& chunk) {
 void settleChunk(BlockSource& region, LevelChunk& chunk) {
     int            dim = static_cast<int>(region.getDimensionId());
     ChunkPos const cp  = chunk.mPosition;
-    detail::settleNeighbourChests(region, cp.x, cp.z);
+    settleAround(region, cp.x, cp.z, true);
     for (auto const& p : chestsIn(region, chunk)) {
         migrateChest(region, p);
         Block const* b = blockAt(region, p);
@@ -279,18 +315,7 @@ int migrateChest(BlockSource& region, BlockPos const& pos, bool makeActor) {
     return moved;
 }
 
-int detail::settleNeighbourChests(BlockSource& region, int cx, int cz) {
-    int moved = 0;
-    for (int dx = -1; dx <= 1; ++dx)
-        for (int dz = -1; dz <= 1; ++dz) {
-            if (dx == 0 && dz == 0) continue;
-            if (!region.areChunksFullyLoaded(BlockPos{(cx + dx) * 16 + 8, 0, (cz + dz) * 16 + 8}, 0)) continue;
-            auto* chunk = region.getChunk(cx + dx, cz + dz);
-            if (!chunk) continue;
-            for (auto const& p : chestsIn(region, *chunk)) moved += migrateChest(region, p, false);
-        }
-    return moved;
-}
+int detail::settleNeighbourChests(BlockSource& region, int cx, int cz) { return settleAround(region, cx, cz, false); }
 
 std::optional<BlockPos> chestPairingNeighbour(Block const& block, BlockPos const& pos) {
     if (!isChest(entryOf(block)) || typeOf(block) == "single") return std::nullopt;
@@ -339,7 +364,10 @@ void placeChest(ia::PlaceContext const& c) {
     if (auto const* b = blockAt(*region, game::blockPos(c.pos))) log().info("families: {} placed at {} {} {} ({})", c.blockId, c.pos.x, c.pos.y, c.pos.z, typeOf(*b));
 }
 void chestsTick(int) { tickLids(); }
-void clearChests() { lids().clear(); }
+void clearChests() {
+    lids().clear();
+    neighbourSettled().clear();
+}
 } // namespace detail
 
 void installChests() {
