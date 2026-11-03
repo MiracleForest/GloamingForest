@@ -25,10 +25,18 @@
 //                             off-grid natural start untouched; structure_cleared's player boxes
 //   landmark.persistence      a start written to the world DB reads back (pieces, flags)
 //   landmark.hint_book        the hint book written for a player, rewritten for another language
-//   landmark.hint_drop        the hint mob carries the book and always drops it (drop chance 2.0)
+//   landmark.hint_drop        the hint mob carries the book and always drops it (drop chance 2.0),
+//                             watched for until it appears, with nobody about to pick it up
 //   landmark.hint_timer       the hint timer's game time advances every tick (300 ticks sampled)
 //   landmark.clearance        decorationAllowed / featureBlocked / startsIntersecting / spawns, and
 //                             the terraformers over every chunk a start references
+//   landmark.reserved_sites   a reserved site (no pieces) blocks no feature or decoration whatever
+//                             its clearance radius (StructureStart#isValid); with a piece it does
+//   landmark.spawns           gatherPotentialSpawns / structureSpecialSpawns: the fixtures' labelled
+//                             lists (Generator::spawnIndex), conquest, spawn overrides ("piece",
+//                             "full") as SpawnEntries, a hollow hill's dome (canSpawnMob)
+//   landmark.pieces           startPieces / startAt's piece types and tags, F6's fixture piece
+//                             factories, saved tags of pieces without a factory kept through a save
 //   landmark.starts           the start evaluation never blocks the server thread (a generation
 //                             thread waits), locate's probe stores nothing and agrees with the
 //                             Starts stage, nearestLandmark's ready check and valid starts only
@@ -57,6 +65,7 @@
 #include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/item/ItemActor.h"
+#include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/item/ItemStack.h"
@@ -75,6 +84,7 @@
 #include "core/landmark/Landmark.h"
 #include "feature/common/Interactions.h"
 #include "feature/ext/landmark/LandmarkExt.h"
+#include "feature/ext/landmark/LandmarkTest.h"
 #include "feature/ext/worldgen/Generation.h"
 #include "feature/gamerules/GameRules.h"
 #include "feature/landmark/Internal.h"
@@ -106,11 +116,8 @@ GlobalPos at(GlobalPos p, int dx, int dy, int dz) { return {p.dim, p.x + dx, p.y
 /// The unlocked fixture (conquerable, no protection): the persistence tests leave it in the world.
 constexpr char kOpenFixture[] = "gf_test:landmark_fixture_open";
 
-/// Removes a forced start made by a test (memory and world DB).
-void dropStart(GlobalPos const& center, char const* key = kFixture) {
-    fl::eraseRecord(center.dim, center.x >> 4, center.z >> 4, key);
-    fl::flushRecords();
-}
+/// Removes a start a test made (memory and world DB): the contract extension other units use too.
+void dropStart(GlobalPos const& center, char const* key = kFixture) { (void)gf::landmark::ext::forgetStartForTest(center, key); }
 
 /// Undoes what a test changed, also when it aborts (require / fail throw): the enforcement
 /// override, the test companion flag, the lock advancement (the progression store keeps it per
@@ -864,9 +871,21 @@ GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTas
     auto* region     = ctx.region();
     ctx.require(region != nullptr, "the test region");
     HostileMobsAllowed hostile; // the e2e worlds are peaceful
-    (void)ctx.player();
+    // Nothing but the test may take the dropped book. The test player picks up items like any player
+    // (it stood 3 blocks from the drop, where a book thrown its way is picked up): it watches as a
+    // spectator, which picks up nothing, from the far corner of the area. The area is air above a
+    // grass floor (no hopper reaches a drop), the tests run one at a time (no other test's mob or
+    // player is about), a written book merges only with an identical book (still the book) and an
+    // item despawns after 6000 ticks.
+    {
+        auto& watcher = ctx.player();
+        watcher.setPlayerGameType(GameType::Spectator);
+        watcher.teleport(Vec3{static_cast<float>(area.maxX) + 0.5f, static_cast<float>(area.minY) + 3.0f, static_cast<float>(area.maxZ) + 0.5f},
+                         DimensionType(pos.dim));
+    }
     co_await ctx.ticks(1);
-    region   = ctx.region();
+    region = ctx.region();
+    ctx.require(region != nullptr, "the test region");
     auto* mob = fl::spawnHintCarrier(carrier, *region, static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + 0.5f, &ctx.player());
     ctx.require(mob != nullptr, "the hint mob spawned");
     ctx.check(gf::game::items::idOf(mob->getCarriedItem()) == "minecraft:written_book", "it holds the hint book");
@@ -874,18 +893,42 @@ GF_REGISTER_SELFTEST("landmark.hint_drop", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(chance.has_value() && *chance >= 2.0f, "its main hand always drops (chance " + std::to_string(chance.value_or(-1.0f)) + ")");
     auto mobId = mob->getOrCreateUniqueID();
     mob->kill();
-    co_await ctx.ticks(30);
-    AABB box{Vec3{static_cast<float>(area.minX), static_cast<float>(area.minY) - 2.0f, static_cast<float>(area.minZ)},
-             Vec3{static_cast<float>(area.maxX + 1), static_cast<float>(area.minY) + 8.0f, static_cast<float>(area.maxZ + 1)}};
-    bool dropped = false;
+    // the drop appears when the death is processed (Bedrock may wait for the end of the death
+    // animation): watched every tick for a bounded time, in the area widened by 8 blocks around and
+    // from 4 below the floor to 16 above it (a thrown item never leaves that)
+    AABB box{Vec3{static_cast<float>(area.minX) - 8.0f, static_cast<float>(area.minY) - 4.0f, static_cast<float>(area.minZ) - 8.0f},
+             Vec3{static_cast<float>(area.maxX) + 9.0f, static_cast<float>(area.minY) + 16.0f, static_cast<float>(area.maxZ) + 9.0f}};
+    auto isHintBook = [](Actor* a) {
+        if (!a || a->getTypeName() != "minecraft:item") return false;
+        auto const& item = static_cast<ItemActor*>(a)->item();
+        return gf::game::items::idOf(item) == "minecraft:written_book" && gf::game::items::getData(item, "translatable_book").value("name", std::string{}) == "lichtower";
+    };
+    constexpr int kDropTicks = 200;
+    int           waited     = 0;
+    bool          dropped    = false;
+    while (!dropped && waited < kDropTicks) {
+        co_await ctx.ticks(1);
+        ++waited;
+        if (auto* r = ctx.region())
+            for (auto* a : r->getEntities(box))
+                if (isHintBook(a)) dropped = true;
+    }
+    std::string seen; // what the area holds, for a failure
     if (auto* r = ctx.region()) {
         for (auto* a : r->getEntities(box)) {
-            if (!a || a->getTypeName() != "minecraft:item") continue;
-            if (gf::game::items::idOf(static_cast<ItemActor*>(a)->item()) == "minecraft:written_book") dropped = true;
-            a->remove(); // the drops of the test
+            if (!a) continue;
+            if (!dropped) seen += (seen.empty() ? "" : ", ") + a->getTypeName();
+            if (isHintBook(a)) a->remove(); // the drop of the test
         }
     }
-    ctx.check(dropped, "killing it dropped the hint book");
+    if (!dropped) {
+        bool picked = false;
+        auto& inv   = ctx.player().getInventory();
+        for (int i = 0; i < inv.getContainerSize(); ++i) picked = picked || gf::game::items::idOf(inv.getItem(i)) == "minecraft:written_book";
+        auto* dead = level->fetchEntity(mobId, false);
+        seen += std::string("; the mob ") + (dead ? (dead->isAlive() ? "is alive" : "is dying") : "is gone") + (picked ? "; the test player holds a book" : "");
+    }
+    ctx.check(dropped, "killing it dropped the hint book (watched " + std::to_string(waited) + " ticks" + (dropped ? "" : "; in the area: " + seen) + ")");
     if (auto* left = level->fetchEntity(mobId, false)) left->remove();
 });
 
@@ -932,9 +975,9 @@ GF_REGISTER_SELFTEST("landmark.clearance", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(!gf::landmark::ext::featureBlocked(center.dim, center.x, center.y + 1, center.z, under), "underground features are allowed");
     surface.structuresAllowed = {kFixture};
     ctx.check(!gf::landmark::ext::featureBlocked(center.dim, center.x, center.y + 1, center.z, surface), "structures_allowed lifts it");
-    // controlled spawns: list 0 inside, nothing outside, nothing once conquered
+    // controlled spawns (landmark.spawns has the lists): the shell's ground floor has none
     auto spawns = gf::landmark::ext::potentialSpawns(center.dim, "monster", center.x, center.y + 1, center.z);
-    ctx.check(!spawns.has_value(), "the fixture's pieces have no spawn index (no list)");
+    ctx.check(!spawns.has_value(), "the fixture's shell has no monster list on its ground floor");
     // terraforming (WorldgenHooks#gatherCustomTerrain): a start's terraformer counts everywhere in the
     // chunks it references, outside its box too, and nowhere else
     static std::atomic<int> terraformCalls{0};
@@ -965,6 +1008,251 @@ GF_REGISTER_SELFTEST("landmark.clearance", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(!gf::landmark::ext::hasTerraformers(center.dim, farCx, cz) && gf::landmark::ext::terraformDensity(center.dim, farCx << 4, center.y, center.z) == 0.0,
               "a chunk the box does not reach has none");
     ctx.check(terraformCalls.load() >= 3, "the terraformer was evaluated");
+});
+
+namespace {
+
+/// "[id weight min-max, ...]" of a special spawn answer ("none": nullopt, the biome's list).
+std::string entriesText(std::optional<std::vector<gf::spawn::SpawnEntry>> const& list) {
+    if (!list) return "none";
+    std::string s;
+    for (auto const& e : *list)
+        s += (s.empty() ? "" : ", ") + e.entityId + " " + std::to_string(e.weight) + " " + std::to_string(e.minCount) + "-" + std::to_string(e.maxCount);
+    return "[" + s + "]";
+}
+/// The same text of a SpawnerData JSON list (a descriptor's).
+std::string entriesText(JsonT const& list) {
+    std::vector<gf::spawn::SpawnEntry> entries;
+    for (auto const& e : list) entries.push_back({e.value("type", std::string{}), e.value("weight", 1), e.value("minCount", 1), e.value("maxCount", 1)});
+    return entriesText(std::optional<std::vector<gf::spawn::SpawnEntry>>(std::move(entries)));
+}
+
+/// A test position in chunks nobody loads, `chunksSouth` chunks past the row (starts stored there
+/// place no block): the middle of a chunk in x, 6 into it in z (the fixture's box, x +-3 and z -3..+6,
+/// stays inside the chunk).
+GlobalPos farCenter(GlobalPos const& base, int chunksSouth) { return {base.dim, ((base.x >> 4) << 4) + 8, 64, (((base.z >> 4) + chunksSouth) << 4) + 6}; }
+
+} // namespace
+
+// StructureStart#isValid: a site F6 reserves for a landmark without a generator (before W1: no
+// pieces, the clearance square as its box) is no start for AvoidLandmarkModifier
+// (ext::featureBlocked) or the decoration clearance (decorationAllowed), whatever its
+// chunk_clearance_radius; the same start with a piece blocks its clearance square
+GF_REGISTER_SELFTEST("landmark.reserved_sites", [](Context& ctx) {
+    auto      base = ctx.testPos(5645, 2);
+    int const dim  = base.dim;
+    auto      center = farCenter(base, 30000);
+    int const cx = center.x >> 4, cz = center.z >> 4;
+    // decorationAllowed asks the Twilight Forest: TF's structure sets are placed in the test
+    // dimension meanwhile, and every start chunk the queries evaluate (those that can reach chunk
+    // cx, cz) is forgotten afterwards with the starts made there
+    StartsScope scope(dim);
+    for (int dx = -fl::kReferenceRange; dx <= fl::kReferenceRange; ++dx)
+        for (int dz = -fl::kReferenceRange; dz <= fl::kReferenceRange; ++dz) scope.touch(cx + dx, cz + dz);
+    fl::ensureStartsAround(dim, cx, cz); // the natural starts first: the queries below evaluate nothing more
+    lm::ChunkPos chunk{cx, cz};
+    bool         baseline = lm::decorationAllowed(chunk, lm::DecoKind::Surface);
+
+    auto const* tower = fl::info("twilightforest:dark_tower");
+    ctx.require(tower && tower->decoration.chunkClearanceRadius > 0 && !tower->decoration.surfaceDecorations,
+                "the dark tower clears surface decorations within its chunk clearance radius");
+    auto reserved = fl::createStart(*tower, dim, cx, cz, center, true);
+    ctx.require(reserved != nullptr, "a dark tower start");
+    // no generator before W1: a reserved site (made so here once U26's generator exists)
+    reserved->pieces.clear();
+    reserved->livePieces.clear();
+    reserved->start.pieceBoxes.clear();
+    reserved->start.generated = false;
+    fl::putRecord(reserved);
+    gf::landmark::ext::Occupancy surface{.surface = true};
+    ctx.check(!gf::landmark::ext::featureBlocked(dim, center.x, center.y, center.z, surface), "a reserved site blocks no surface feature at its center");
+    ctx.check(!gf::landmark::ext::featureBlocked(dim, cx * 16, center.y, cz * 16, surface), "nor anywhere in its clearance square");
+    if (baseline) ctx.check(lm::decorationAllowed(chunk, lm::DecoKind::Surface), "a reserved site suppresses no surface decoration of its chunk");
+    else ctx.info("a natural start with pieces covers the test chunk: decorationAllowed is not checked");
+
+    // the same start with a piece is valid: its clearance square (radius 1 chunk around the box's
+    // center) blocks surface features and decorations
+    auto valid = fl::createStart(*tower, dim, cx, cz, center, true);
+    ctx.require(valid != nullptr, "a second dark tower start");
+    if (valid->pieces.empty()) {
+        gf::core::BlockBox piece{center.x - 2, center.y, center.z - 2, center.x + 2, center.y + 10, center.z + 2};
+        valid->pieces.push_back(fl::PieceInfo{.box = piece, .type = "gf_test:landmark_stand_in"});
+        valid->start.pieceBoxes.push_back(piece);
+        valid->start.generated = true;
+    }
+    fl::putRecord(valid); // in place of the reserved one
+    ctx.check(gf::landmark::ext::featureBlocked(dim, center.x, center.y, center.z, surface), "with a piece it blocks a surface feature at its center");
+    ctx.check(!gf::landmark::ext::featureBlocked(dim, center.x, center.y, center.z, {.underground = true}), "an underground one stays (allowed by the dark tower)");
+    ctx.check(!lm::decorationAllowed(chunk, lm::DecoKind::Surface), "and suppresses its chunk's surface decorations");
+    ctx.check(lm::decorationAllowed(chunk, lm::DecoKind::Underground), "but not the underground ones");
+});
+
+// EntityEvents#gatherPotentialSpawns (ext::potentialSpawns) and #structureSpecialSpawns (F6's
+// gf::spawn::onSpecialSpawn function) on the fixtures, as SpawnEntries (weights and group sizes):
+// the locked fixture's controlled lists through its Generator::spawnIndex (list 1 on the shell's
+// upper floor, list 0 on the porch, none on the ground floor nor once conquered; its empty ambient
+// and water lists and no creatures anywhere in the chunks it reaches), the open fixture's spawn
+// overrides (Structure#spawnOverrides: "piece" monsters, "full" ambient), and
+// HollowHillStructure#canSpawnMob on a hollow hill start (its monster list in the dome, its empty
+// "full" override elsewhere in its box)
+GF_REGISTER_SELFTEST("landmark.spawns", [](Context& ctx) {
+    auto  base   = ctx.testPos(5647, 2);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "the test region");
+    auto special = [&](GlobalPos const& p, int dx, int dy, int dz, char const* category) {
+        return entriesText(fl::structureSpecialSpawns(*region, BlockPos{p.x + dx, p.y + dy, p.z + dz}, category));
+    };
+    auto const* fixture = lm::descriptor(kFixture);
+    ctx.require(fixture != nullptr, "the fixture descriptor");
+    auto const& labelled = fixture->controlledSpawns["labelled_monster_spawns"];
+    ctx.require(labelled.contains("0") && labelled.contains("1"), "the fixture's labelled monster lists 0 and 1");
+    auto const list0 = entriesText(labelled["0"]), list1 = entriesText(labelled["1"]);
+    ctx.check(list1 == "[minecraft:skeleton 4 2-3, minecraft:spider 1 1-2]", "list 1 as SpawnEntries: " + list1);
+
+    // the locked fixture: controlled spawns
+    {
+        auto                           center = farCenter(base, 30020);
+        gf::landmark::ext::ScopedStart locked(kFixture, center);
+        ctx.require(locked && locked->generated, "forced the fixture landmark");
+        auto upper = special(center, 0, 5, 0, "monster");
+        ctx.check(upper == list1, "the shell's upper floor: list 1 " + upper);
+        auto raw = gf::landmark::ext::potentialSpawns(center.dim, "monster", center.x, center.y + 5, center.z);
+        ctx.check(raw.has_value() && raw->size() == 2 && (*raw)[0].value("type", std::string{}) == "minecraft:skeleton", "gatherPotentialSpawns' SpawnerData for list 1");
+        ctx.check(special(center, 0, 0, 5, "monster") == list0, "the porch: list 0 " + special(center, 0, 0, 5, "monster"));
+        ctx.check(special(center, 0, 1, 0, "monster") == "none", "the shell's ground floor: no list (the biome's) " + special(center, 0, 1, 0, "monster"));
+        ctx.check(special(center, 6, 0, 0, "monster") == "none", "beside the start: none " + special(center, 6, 0, 0, "monster"));
+        ctx.check(special(center, 0, 1, 0, "ambient") == "[]" && special(center, 0, 1, 0, "water_creature") == "[]", "the empty ambient and water lists");
+        ctx.check(special(center, -8, 0, -6, "creature") == "[]", "no creatures anywhere in a chunk the start reaches (ConfigurableSpawns)");
+        // TFStructureStart#isConquered: no monster list once conquered
+        auto rec = fl::findRecord(center.dim, center.x >> 4, center.z >> 4, kFixture);
+        ctx.require(rec != nullptr, "the stored start");
+        rec->start.conquered = true;
+        auto conquered = special(center, 0, 5, 0, "monster");
+        rec->start.conquered = false;
+        ctx.check(conquered == "none", "conquered: no list on the upper floor " + conquered);
+    }
+
+    // the open fixture: no controlled spawns, its spawn overrides
+    {
+        auto                           center = farCenter(base, 30024);
+        gf::landmark::ext::ScopedStart open(kOpenFixture, center);
+        ctx.require(open && open->generated, "forced the open fixture landmark");
+        auto const* d = lm::descriptor(kOpenFixture);
+        ctx.require(d && d->spawnOverrides.contains("monster"), "the open fixture's spawn overrides");
+        auto const monsters = entriesText(d->spawnOverrides["monster"]["spawns"]);
+        ctx.check(monsters == "[minecraft:witch 3 1-1, minecraft:creeper 7 2-4]", "the override list as SpawnEntries " + monsters);
+        ctx.check(special(center, 0, 1, 0, "monster") == monsters && special(center, 2, 5, -2, "monster") == monsters, "\"piece\": monsters in the shell " + special(center, 0, 1, 0, "monster"));
+        ctx.check(special(center, 0, 0, 5, "monster") == monsters, "and on the porch");
+        ctx.check(special(center, 0, 3, 5, "monster") == "none", "above the porch (in the box, in no piece): none " + special(center, 0, 3, 5, "monster"));
+        ctx.check(special(center, 0, 3, 5, "ambient") == "[]", "\"full\": no ambient mobs anywhere in the box " + special(center, 0, 3, 5, "ambient"));
+        ctx.check(special(center, 6, 0, 0, "ambient") == "none" && special(center, 6, 0, 0, "monster") == "none", "outside the box: none");
+        ctx.check(!gf::landmark::ext::potentialSpawns(center.dim, "monster", center.x, center.y + 1, center.z).has_value(), "no controlled spawns");
+    }
+
+    // a hollow hill: U18's generator gives its HollowHillComponent (spawn index 0); a stand-in piece
+    // over the start box here
+    {
+        auto        center = farCenter(base, 30028);
+        auto const* hill   = fl::info("twilightforest:small_hollow_hill");
+        ctx.require(hill && hill->type == fl::kHollowHillType && hill->traits.controlledSpawns, "the small hollow hill is a ControlledSpawns hollow hill");
+        auto rec = fl::createStart(*hill, center.dim, center.x >> 4, center.z >> 4, center, true);
+        ctx.require(rec != nullptr, "a small hollow hill start");
+        gf::core::BlockBox box{center.x - 11, center.y - 5, center.z - 11, center.x + 11, center.y + 10, center.z + 11};
+        rec->pieces = {fl::PieceInfo{.box = box, .protectedPiece = true, .spawnIndex = 0, .type = "gf_test:hollow_hill_stand_in"}};
+        rec->livePieces.clear();
+        rec->start.pieceBoxes = {box};
+        rec->start.box        = box;
+        rec->start.generated  = true;
+        fl::putRecord(rec);
+        struct Drop {
+            GlobalPos at;
+            ~Drop() { (void)gf::landmark::ext::forgetStartForTest(at, "twilightforest:small_hollow_hill"); }
+        } drop{center};
+        auto const hillList = entriesText(hill->d.controlledSpawns["labelled_monster_spawns"]["0"]);
+        auto       floor    = special(center, 0, -5, 0, "monster");
+        ctx.check(floor == hillList, "the middle of the hill's floor (in the dome): list 0 " + floor);
+        ctx.check(special(center, 9, -5, 0, "monster") == hillList, "9 of 11 blocks out on the floor: still in the dome");
+        auto top = special(center, 0, 10, 0, "monster");
+        ctx.check(top == "[]" && !gf::landmark::ext::potentialSpawns(center.dim, "monster", center.x, center.y + 10, center.z).has_value(),
+                  "the top of the box is outside the dome: no list, the hill's empty \"full\" override " + top);
+        ctx.check(special(center, -11, -5, -11, "monster") == "[]", "a floor corner is outside the dome too");
+        ctx.check(special(center, 7, 3, 7, "monster") == "[]", "and a point half way up near the side (0.64, 0.53, 0.64: 1.05 out)");
+        ctx.check(special(center, 4, 3, 4, "monster") == hillList, "while one as high, further in, is in it (0.36, 0.53, 0.36: 0.74 out)");
+    }
+});
+
+// StructureStart#getPieces through F6's extension: ext::startPieces gives each piece's type id,
+// box, saved tag (StructurePiece#createTag) and flags, startAt's start carries the tags in
+// data["pieces"] (where F7's structure_util display_pieces and count_template read them), the
+// fixture's piece types load back through F6's own factories (structure::registerPieceType), and a
+// piece whose type has no factory yet keeps its saved tag through a save
+GF_REGISTER_SELFTEST("landmark.pieces", [](Context& ctx) {
+    constexpr char kShell[] = "gf_test:landmark_fixture_shell";
+    constexpr char kPorch[] = "gf_test:landmark_fixture_porch";
+    auto           center   = farCenter(ctx.testPos(5648, 2), 30040);
+    gf::landmark::ext::ScopedStart forced(kFixture, center);
+    ctx.require(forced && forced->generated && forced->pieceBoxes.size() == 2, "forced the fixture landmark");
+    auto pieces = gf::landmark::ext::startPieces(*forced);
+    ctx.require(pieces.size() == 2, "startPieces: two pieces (got " + std::to_string(pieces.size()) + ")");
+    ctx.check(pieces[0].type == kShell && pieces[1].type == kPorch, "their types: " + pieces[0].type + ", " + pieces[1].type);
+    ctx.check(pieces[0].box == forced->pieceBoxes[0] && pieces[1].box == forced->pieceBoxes[1], "their boxes");
+    auto const& b   = pieces[0].box;
+    auto const  bb  = JsonT::array({b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ});
+    ctx.check(pieces[0].tag.value("id", std::string{}) == kShell && pieces[0].tag.value("BB", JsonT()) == bb && pieces[0].tag.contains("O") && pieces[0].tag.contains("GD"),
+              "the shell's tag is StructurePiece#createTag: " + pieces[0].tag.dump());
+    ctx.check(pieces[0].protectedPiece && pieces[1].protectedPiece && pieces[0].spawnIndex == -1, "the pieces' flags");
+    // startAt: the tags in data["pieces"]
+    auto found = lm::startAt(center.dim, BlockPos{center.x, center.y + 1, center.z});
+    ctx.require(found && found->key == kFixture, "startAt finds the start");
+    auto const& tags = found->data.value("pieces", JsonT::array());
+    ctx.check(tags.size() == 2 && tags[0].value("id", std::string{}) == kShell && tags[1].value("id", std::string{}) == kPorch && tags[0] == pieces[0].tag,
+              "startAt's data carries the pieces' tags: " + tags.dump());
+    ctx.check(found->data.contains("chunk"), "and the start chunk");
+    // a Start the store does not hold: its boxes
+    lm::Start loose;
+    loose.key        = "gf_test:no_such_start";
+    loose.pieceBoxes = {gf::core::BlockBox{0, 0, 0, 1, 1, 1}};
+    auto loosePieces = gf::landmark::ext::startPieces(loose);
+    ctx.check(loosePieces.size() == 1 && loosePieces[0].type.empty() && loosePieces[0].tag.contains("BB"), "a start outside the store: its boxes");
+
+    // F6's own piece factories: the shell's tag loads back as F6's piece (its postProcess reports to
+    // the fixture probe, which the structure kit's fallback piece does not)
+    auto piece = gf::structure::loadPiece(pieces[0].tag);
+    ctx.require(piece != nullptr && piece->typeId == kShell && piece->bbox == pieces[0].box, "the shell loads back from its tag");
+    std::atomic<int> probed{0};
+    auto const       shellBox = pieces[0].box;
+    fl::setFixtureProbe([&probed, shellBox](gf::worldgen::RandomSource&, gf::core::BlockBox const& box) {
+        if (box == shellBox) ++probed;
+    });
+    struct ProbeOff {
+        ~ProbeOff() { fl::setFixtureProbe(nullptr); }
+    } probeOff;
+    int const      cx = center.x >> 4, cz = center.z >> 4;
+    CountingRegion region(center.dim, cx, cz, 0);
+    auto           random = fl::decorationRandom(0, cx, cz, kFixture);
+    piece->postProcess(region, *random, gf::core::BlockBox{cx * 16, -63, cz * 16, cx * 16 + 15, 319, cz * 16 + 15}, BlockPos{center.x, center.y, center.z});
+    fl::setFixtureProbe(nullptr);
+    ctx.check(probed.load() == 1 && region.placed > 0, "it is F6's fixture piece (" + std::to_string(region.placed) + " blocks)");
+    auto rec = fl::findRecord(center.dim, cx, cz, kFixture);
+    ctx.require(rec != nullptr, "the stored start");
+    auto back = fl::recordFromJson(fl::recordToJson(*rec));
+    ctx.check(back && back->livePieces.size() == 2 && back->livePieces[0] && back->livePieces[0]->typeId == kShell, "a stored fixture start reads back with live pieces");
+
+    // a piece type without a factory (a W1 unit's, before it registers): the start keeps its boxes
+    // and the saved tags, written back unchanged and given by startPieces
+    auto json                          = fl::recordToJson(*rec);
+    json["pieces"][1]["type"]          = "gf_test:landmark_unloadable";
+    json["pieces"][1]["piece"]["id"]   = "gf_test:landmark_unloadable";
+    json["pieces"][1]["piece"]["Template"] = "gf_test:fixture";
+    auto partial = fl::recordFromJson(json);
+    ctx.require(partial != nullptr && partial->pieces.size() == 2, "the start reads back");
+    ctx.check(partial->livePieces.empty(), "with a piece the kit cannot load it has no live pieces");
+    auto again = fl::recordToJson(*partial);
+    ctx.check(again["pieces"][1]["piece"].value("Template", std::string{}) == "gf_test:fixture" && again["pieces"][0]["piece"].value("id", std::string{}) == kShell,
+              "both saved tags are written back unchanged");
+    auto partialPieces = fl::piecesOf(*partial);
+    ctx.check(partialPieces.size() == 2 && partialPieces[1].type == "gf_test:landmark_unloadable" && partialPieces[1].tag.value("Template", std::string{}) == "gf_test:fixture",
+              "startPieces gives the saved tag of the piece that is not loaded");
 });
 
 GF_REGISTER_SELFTEST("landmark.starts", [](Context& ctx) -> ll::coro::CoroTask<> {

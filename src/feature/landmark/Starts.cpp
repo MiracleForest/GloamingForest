@@ -56,6 +56,7 @@
 #include "core/landmark/Grid.h"
 #include "core/landmark/JavaMath.h"
 #include "core/landmark/Landmark.h"
+#include "core/landmark/Spawning.h"
 #include "feature/dimension/World.h"
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/worldgen/Generation.h"
@@ -600,6 +601,7 @@ Json recordToJson(Record const& rec) {
         auto const& pi = rec.pieces[i];
         Json        p{{"box", boxJson(pi.box)}, {"protected", pi.protectedPiece}, {"spawn_index", pi.spawnIndex}, {"allow_features", pi.utilityAllowsFeatures}, {"type", pi.type}};
         if (i < rec.livePieces.size() && rec.livePieces[i]) p["piece"] = savePiece(*rec.livePieces[i]);
+        else if (pi.saved.is_object()) p["piece"] = pi.saved; // not loadable yet: kept as read
         pieces.push_back(std::move(p));
     }
     return Json{
@@ -644,16 +646,23 @@ RecordPtr recordFromJson(Json const& j) {
         pi.spawnIndex            = p.value("spawn_index", -1);
         pi.utilityAllowsFeatures = p.value("allow_features", false);
         pi.type                  = p.value("type", std::string{});
-        rec->pieces.push_back(pi);
-        rec->start.pieceBoxes.push_back(pi.box);
         std::shared_ptr<structure::Piece> piece;
-        if (p.contains("piece")) piece = loadPiece(p["piece"]);
+        if (p.contains("piece")) {
+            piece = loadPiece(p["piece"]);
+            if (p["piece"].is_object()) pi.saved = p["piece"];
+        }
         if (!piece) allLive = false;
+        rec->pieces.push_back(std::move(pi));
+        rec->start.pieceBoxes.push_back(rec->pieces.back().box);
         live.push_back(std::move(piece));
     }
     // CustomStructureData#forDeserialization: a start is usable with every piece back, else it
-    // keeps its boxes only (protection, spawns and clearance still work)
-    if (allLive) rec->livePieces = std::move(live);
+    // keeps its boxes only (protection, spawns and clearance still work) and its pieces' saved tags,
+    // written back unchanged until their types have factories
+    if (allLive) {
+        rec->livePieces = std::move(live);
+        for (auto& pi : rec->pieces) pi.saved = Json(); // the live pieces save themselves
+    }
     return rec;
 }
 
@@ -1131,6 +1140,20 @@ int spawnIndexAt(Record const& r, int x, int y, int z) {
     return highest;
 }
 
+std::vector<gf::landmark::ext::StartPiece> piecesOf(Record const& r) {
+    std::vector<gf::landmark::ext::StartPiece> out;
+    out.reserve(r.pieces.size());
+    for (std::size_t i = 0; i < r.pieces.size(); ++i) {
+        auto const&              pi = r.pieces[i];
+        gf::landmark::ext::StartPiece p{pi.type, pi.box, Json(), pi.protectedPiece, pi.spawnIndex};
+        if (i < r.livePieces.size() && r.livePieces[i]) p.tag = savePiece(*r.livePieces[i]);
+        else if (pi.saved.is_object()) p.tag = pi.saved;
+        else p.tag = Json{{"id", pi.type}, {"BB", boxJson(pi.box)}};
+        out.push_back(std::move(p));
+    }
+    return out;
+}
+
 // ---- worldgen stages ---------------------------------------------------------------------------------
 
 int decorateStep(worldgen::Region& region, int chunkX, int chunkZ, worldgen::ext::DecorationContext const& d) {
@@ -1198,8 +1221,16 @@ void registerGenerator(std::string const& key, Generator generator) { fl::setGen
 
 std::optional<Start> startAt(int dimension, BlockPos const& pos) {
     fl::ensureStartsAround(dimension, pos.x >> 4, pos.z >> 4);
-    for (auto const& rec : fl::recordsIntersecting(dimension, pos.x >> 4, pos.z >> 4))
-        if (!rec->placed && rec->start.box.contains(pos.x, pos.y, pos.z)) return rec->start;
+    for (auto const& rec : fl::recordsIntersecting(dimension, pos.x >> 4, pos.z >> 4)) {
+        if (rec->placed || !rec->start.box.contains(pos.x, pos.y, pos.z)) continue;
+        // StructureManager#getStructureAt hands out the start with its pieces: their tags in data
+        Start start  = rec->start;
+        Json  pieces = Json::array();
+        for (auto& p : fl::piecesOf(*rec)) pieces.push_back(std::move(p.tag));
+        if (!start.data.is_object()) start.data = Json::object();
+        start.data["pieces"] = std::move(pieces);
+        return start;
+    }
     return std::nullopt;
 }
 
@@ -1301,6 +1332,9 @@ bool decorationAllowed(ChunkPos chunk, DecoKind kind) {
     int x = chunk.x * 16 + 8, z = chunk.z * 16 + 8;
     for (auto const& rec : fl::recordsIntersecting(*tf, chunk.x, chunk.z)) {
         if (rec->placed) continue; // no structure references the chunk
+        // StructureStart#isValid: a reserved site (no generator yet, no pieces) is no start, whatever
+        // its clearance square
+        if (rec->pieces.empty()) continue;
         auto const* inf = fl::info(rec->start.key);
         if (!inf || core::landmark::clearFromStructureZone(inf->decoration, occ)) continue;
         if (inf->decoration.chunkClearanceRadius > 0) {
@@ -1425,11 +1459,24 @@ double boxDensity(std::vector<BlockBox> const& boxes, int dYMin, int dYMax, std:
     return core::landmark::combinedBoxDensity(list, x, y, z);
 }
 
+std::vector<StartPiece> startPieces(Start const& start) {
+    auto chunk = start.data.is_object() ? start.data.value("chunk", Json::array()) : Json::array();
+    if (chunk.is_array() && chunk.size() == 2 && chunk[0].is_number_integer() && chunk[1].is_number_integer())
+        if (auto rec = fl::findRecord(start.dimension, chunk[0].get<int>(), chunk[1].get<int>(), start.key)) return fl::piecesOf(*rec);
+    // a Start the store does not hold (built by a test or another unit): its boxes
+    std::vector<StartPiece> out;
+    for (auto const& b : start.pieceBoxes) out.push_back(StartPiece{"", b, Json{{"BB", Json::array({b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ})}}, true, -1});
+    return out;
+}
+
 bool featureBlocked(int dimension, int x, int y, int z, Occupancy const& occupancy) {
     fl::ensureStartsAround(dimension, x >> 4, z >> 4);
     core::landmark::FeatureOccupancy occ{occupancy.surface, occupancy.underground, occupancy.vegetation, occupancy.additionalClearance};
     for (auto const& rec : fl::recordsIntersecting(dimension, x >> 4, z >> 4)) {
         if (rec->placed) continue; // no structure references the chunk
+        // AvoidLandmarkModifier#structureTypeBlocksFeaturePlacement skips a start that is not
+        // StructureStart#isValid: a reserved site (no generator yet, no pieces) blocks nothing
+        if (rec->pieces.empty()) continue;
         if (std::find(occupancy.structuresAllowed.begin(), occupancy.structuresAllowed.end(), rec->start.key) != occupancy.structuresAllowed.end()) continue;
         auto const* inf = fl::info(rec->start.key);
         if (!inf || core::landmark::clearFromStructureZone(inf->decoration, occ)) continue;
@@ -1462,7 +1509,9 @@ std::optional<std::vector<nlohmann::json>> potentialSpawns(int dimension, std::s
             return std::vector<Json>{};
         }
         if (rec->start.conquered) return std::nullopt;
-        // HollowHillStructure#canSpawnMob: the hollow hill unit refines this through its generator
+        // `landmark instanceof HollowHillStructure && !canSpawnMob(pos, start.getBoundingBox())`: a
+        // hollow hill's monsters spawn in the half dome of its start box only
+        if (inf->type == fl::kHollowHillType && !core::landmark::hollowHillCanSpawnMob(rec->start.box, x, y, z)) return std::nullopt;
         int index = fl::spawnIndexAt(*rec, x, y, z);
         if (index < 0) return std::nullopt;
         return list(cs.value("labelled_monster_spawns", Json::object()).value(std::to_string(index), Json::array()));
