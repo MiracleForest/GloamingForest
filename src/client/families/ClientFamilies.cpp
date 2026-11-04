@@ -17,7 +17,7 @@
 //   leaves, LeafColors.h) through the client.render contract's tint (gf::client::tint, F12): their
 //   materials carry a tint method (tools/families), which a vanilla client fills with the biome's
 //   foliage colour. Canopy and mangrove leaves blend the biome foliage colour there
-//   (CANOPY_COLORIZER / MANGROVE_COLORIZER; the game's foliage tint at the position, LeafTint.h);
+//   (CANOPY_COLORIZER / MANGROVE_COLORIZER of the game's foliage colour at the position, F12's
 //   a vanilla client keeps their evergreen / birch tint methods.
 // - Snowy grass under snowloggables: TFBushBlock.updateSnowBeneath sets the grass below a bush
 //   with snow in it SNOWY. Bedrock's grass has no such state: it draws its snowed side when the
@@ -36,8 +36,8 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/GrassBlock.h"
 
-#include "client/families/LeafTint.h"
 #include "client/render/Render.h"
+#include "feature/ext/ui/Client.h"
 #include "feature/families/Families.h"
 #include "feature/families/LeafColors.h"
 #include "mod/Log.h"
@@ -97,14 +97,14 @@ public:
                     tint::registerBlock(e->id, [fn = *color](BlockPos const& p) { return fn(p.x, p.y, p.z); });
                     ++n;
                 } else if (auto blend = fam::leafcolors::blendOf(e->id)) {
-                    // CANOPY_COLORIZER / MANGROVE_COLORIZER of the biome foliage colour there; when the
-                    // game can't be asked for it (a tint function reached outside a chunk mesh's tint
-                    // resolver, or before a world is joined), ColorHandler's colour without a world:
+                    // CANOPY_COLORIZER / MANGROVE_COLORIZER of the biome foliage colour there (the
+                    // game's, BiomeColors.getAverageFoliageColor); without a world (a tint asked
+                    // outside a chunk mesh), ColorHandler's colour without a world:
                     // FoliageColor.getEvergreenColor / getBirchColor, without the colorizer
-                    tint::registerBlock(e->id, [b = *blend](BlockPos const& p) {
-                        auto foliage = biomeFoliageAt(p);
+                    tint::registerBlock(e->id, tint::GameTintFn{[b = *blend](BlockPos const&, tint::GameColors const& game) {
+                        auto foliage = game.foliage();
                         return foliage ? b.fn(*foliage) : b.withoutWorld;
-                    });
+                    }});
                     ++blended;
                 }
             }

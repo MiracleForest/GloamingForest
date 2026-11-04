@@ -12,17 +12,17 @@
 // The slots are F10's native backend: tools/families gives the chests minecraft:block_entity
 // (format 1.26.50, spike S7), so each half has a data-driven block actor holding a game container,
 // saved with its chunk; Hoppers.cpp shows that container to hoppers, hopper minecarts and droppers.
-// A chest whose stacks are still in block data (placed while the chests had no block actor) moves
-// them into its container (migrateChest) at the end of the tick its chunk loaded (ticking or not:
+// A chest saved without its block actor gets one, and stacks still in block data (placed while the
+// chests had no block actor) move into its container (migrateChest, through F10's
+// feature/ext/combat/InventoryMigrate.h), at the end of the tick its chunk loaded (ticking or not:
 // the game's block actor chunk listener tells, BlockActorLevelListener::onChunkLoaded), in its
-// chunk's first tick or a neighbouring chunk's (chunks loaded before the mod), and before that
-// whenever a hopper or a comparator reads it (into the block actor it has: none is made while the
-// game iterates block actors or evaluates the circuit) or a player opens it (the use handler below
-// runs before F10's; a chest without a block actor gets one on the next tick, not inside the click,
-// and its screen shows the block data stacks meanwhile), so it never shows an empty container while
-// its stacks wait in block data where a player, a hopper or a comparator can reach it. Broken
-// before that, it loses nothing: F10 drops its block data stacks with the block
-// (blockdata::onErase) and the block actor's own (families.chest_migrate_removed).
+// chunk's first tick or a neighbouring chunk's (chunks loaded before the mod), before a hopper
+// reads it (into the block actor it has: none is made while the game iterates block actors) and on
+// the tick after a player opens it (no block actor is made inside the click). Until then the
+// inventory contract reads the waiting stacks itself (its screens and its comparator output show
+// each where a move would put it), and its first write moves them. Broken before that, it loses
+// nothing: F10 drops its block data stacks with the block (blockdata::onErase) and the block
+// actor's own (families.chest_migrate_removed).
 // This file keeps what the chest block itself does:
 // - facing and type on placement (ChestBlock#getStateForPlacement) and when a neighbour changes
 //   (ChestBlock#updateShape): the pairs F10's screens follow;
@@ -62,9 +62,8 @@
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/dimension/Dimension.h"
 
-#include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
-#include "feature/common/Redstone.h"
+#include "feature/ext/combat/InventoryMigrate.h"
 #include "feature/ext/combat/InventoryViewers.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/families/Families.h"
@@ -155,10 +154,8 @@ int opennessAt(int step) {
 }
 
 /// The openers of the container at `pos` changed (feature/ext/combat/InventoryViewers.h):
-/// ChestBlockEntity's ContainerOpenersCounter.openerCountChanged. The inventory contract counts
-/// right as a screen opens or closes, so Hoppers.cpp learns here which screens show the chest.
+/// ChestBlockEntity's ContainerOpenersCounter.openerCountChanged.
 void viewersChanged(GlobalPos const& pos, int count) {
-    detail::chestOpenersChanged(pos, count);
     auto* region = regionOf(pos.dim);
     if (!region) return;
     BlockPos     bp = game::blockPos(pos);
@@ -200,29 +197,29 @@ std::vector<BlockPos> chestsIn(BlockSource& region, LevelChunk& chunk) {
     return chests;
 }
 
-/// The chunks (dimension, x, z) whose chests a neighbour's first tick settled in this world: no
-/// chest of theirs keeps stacks in block data any more. A chunk with a chest left waiting (no block
-/// actor to move them into: F10 reads them in block data meanwhile) is not one of them, so the next
+/// The chunks (dimension, x, z) whose chests a neighbour's first tick settled in this world: every
+/// chest of theirs has its block actor and no stacks in block data. A chunk with a chest left
+/// waiting (no block actor yet: F10 reads its block data meanwhile) is not one of them, so the next
 /// first tick of one of its neighbours tries again.
 std::set<std::tuple<int, int, int>>& neighbourSettled() {
     static std::set<std::tuple<int, int, int>> s;
     return s;
 }
 
-/// Whether the chest at `pos` still keeps stacks in F10's block data layout.
-bool stacksInBlockData(BlockSource& region, BlockPos const& pos) {
-    auto const* inv = blockdata::get(region, pos, kInventoryDataKey);
-    return inv && inv->is_object() && inv->contains("items");
+/// Whether the chest at `pos` still waits for migrateChest: no block actor (native container) yet,
+/// or stacks in block data (F10's feature/ext/combat/InventoryMigrate.h).
+bool unsettled(BlockSource& region, BlockPos const& pos) {
+    if (!inventory::nativeContainer(region, pos)) return true;
+    return inventory::ext::hasBlockDataStacks(game::globalPos(region, pos));
 }
 
-/// The chests of chunk (cx, cz) whose stacks are still in block data (the chunk's sections whose
-/// palette holds no chest are skipped, and only a chest's own block data is read: a chunk without
-/// chests loads no block data).
+/// The chests of chunk (cx, cz) that wait for migrateChest (the chunk's sections whose palette holds
+/// no chest are skipped: a chunk without chests loads no block data).
 std::vector<BlockPos> chestsWaitingIn(BlockSource& region, int cx, int cz) {
     auto* chunk = region.getChunk(cx, cz);
     if (!chunk) return {};
     auto out = chestsIn(region, *chunk);
-    std::erase_if(out, [&](BlockPos const& p) { return !stacksInBlockData(region, p); });
+    std::erase_if(out, [&](BlockPos const& p) { return !unsettled(region, p); });
     return out;
 }
 
@@ -233,7 +230,7 @@ std::pair<int, bool> settleChestsOf(BlockSource& region, int cx, int cz, bool ma
     bool waiting = false;
     for (auto const& p : chestsWaitingIn(region, cx, cz)) {
         moved += migrateChest(region, p, makeActor);
-        waiting = waiting || stacksInBlockData(region, p);
+        waiting = waiting || unsettled(region, p);
     }
     return {moved, waiting};
 }
@@ -343,74 +340,32 @@ void settleChunk(BlockSource& region, LevelChunk& chunk) {
 int migrateChest(BlockSource& region, BlockPos const& pos, bool makeActor) {
     Block const* b = blockAt(region, pos);
     if (!b || !isChest(entryOf(*b))) return 0;
-    // F10's BlockData layout (kInventoryDataKey, Families.h: src/feature/inventory/Inventory.cpp's
-    // kDataKey / storageOf / writeSlot are the source of truth)
-    Json data;
-    if (auto const* inv = blockdata::get(region, pos, kInventoryDataKey); inv && inv->is_object() && inv->contains("items")) data = *inv;
-    else return 0;
-    std::vector<ItemStack> stacks;
-    if (auto const& items = data["items"]; items.is_array())
-        for (auto const& j : items) stacks.push_back(j.is_null() ? ItemStack{} : game::items::fromJson(j));
-    bool any = std::any_of(stacks.begin(), stacks.end(), [](ItemStack const& s) { return !game::items::isEmpty(s); });
-    auto* c   = any ? inventory::nativeContainer(region, pos) : nullptr;
-    if (any && !c && makeActor && !region.getBlockEntity(pos) && b->getBlockType().getBlockEntityType() != BlockActorType::Undefined) {
+    auto gp = game::globalPos(region, pos);
+    if (!inventory::nativeContainer(region, pos)) {
         // the chunk was saved without the chest's block actor (the chests had none then; a state
         // change of the block does not make one): the game's factory makes the one its type
         // declares (with the inventory contract's container) and the chunk takes it
-        if (auto* chunk = region.getChunkAt(pos)) {
-            if (auto actor = VanillaBlockActorFactory::createBlockActor(pos, b->getBlockType()); actor && actor->getType() == BlockActorType::DataDriven) {
-                chunk->_placeBlockEntity(actor);
-                region.fireBlockEntityChanged(*actor); // saved with the chunk
-            }
+        if (!makeActor || region.getBlockEntity(pos) || b->getBlockType().getBlockEntityType() == BlockActorType::Undefined) return 0;
+        auto* chunk = region.getChunkAt(pos);
+        if (!chunk) return 0;
+        if (auto actor = VanillaBlockActorFactory::createBlockActor(pos, b->getBlockType()); actor && actor->getType() == BlockActorType::DataDriven) {
+            chunk->_placeBlockEntity(actor);
+            region.fireBlockEntityChanged(*actor); // saved with the chunk
         }
-        c = inventory::nativeContainer(region, pos);
-        if (c) log().info("families: the chest at {} {} {} got its block actor", pos.x, pos.y, pos.z);
+        if (!inventory::nativeContainer(region, pos)) return 0; // F10 keeps reading its block data
+        log().info("families: the chest at {} {} {} got its block actor", pos.x, pos.y, pos.z);
     }
-    if (any && !c) return 0; // no block actor to move them to: F10 keeps reading them from block data
-    if (any && !makeActor) {
-        // the lazy move (a hopper's look, maybe inside the game's block actor ticks): only when every
-        // stack finds an empty slot; one that would drop waits for the end of the tick
-        int want = static_cast<int>(std::count_if(stacks.begin(), stacks.end(), [](ItemStack const& s) { return !game::items::isEmpty(s); }));
-        int room = 0;
-        for (int i = 0; i < c->getContainerSize(); ++i)
-            if (game::items::isEmpty(c->getItem(i))) ++room;
-        if (want > room) {
-            defer([gp = game::globalPos(region, pos)] {
-                if (auto* r = regionOf(gp.dim)) migrateChest(*r, game::blockPos(gp));
-            });
-            return 0;
-        }
-    }
-    int                    moved = 0, dropped = 0;
-    std::vector<ItemStack> rest;
-    for (std::size_t i = 0; any && i < stacks.size(); ++i) {
-        auto const& s = stacks[i];
-        if (game::items::isEmpty(s)) continue;
-        int slot = static_cast<int>(i);
-        if (slot < c->getContainerSize() && game::items::isEmpty(c->getItem(slot))) {
-            c->setItem(slot, s);
-            ++moved;
-        } else {
-            rest.push_back(s);
-        }
-    }
-    // a slot taken in both (or beyond the container): the first empty one, else dropped
-    for (auto const& s : rest) {
-        int slot = -1;
-        for (int i = 0; i < c->getContainerSize() && slot < 0; ++i)
-            if (game::items::isEmpty(c->getItem(i))) slot = i;
-        if (slot >= 0) {
-            c->setItem(slot, s);
-            ++moved;
-        } else {
-            drop(region, pos, s);
-            ++dropped;
-        }
-    }
-    // the block data keeps what is not a slot (a pending loot table)
-    data.erase("items");
-    blockdata::set(region, pos, kInventoryDataKey, data.empty() ? Json(nullptr) : data);
-    if (moved || dropped) log().info("families: moved {} stack(s) of the chest at {} {} {} from block data into its block actor ({} dropped: no room)", moved, pos.x, pos.y, pos.z, dropped);
+    if (!inventory::ext::hasBlockDataStacks(gp)) return 0;
+    // F10's move: each stack into its own slot when that is empty, else the first empty one; the
+    // block data keeps what is not a slot (a pending loot table)
+    if (makeActor) return inventory::ext::migrateBlockDataToNative(gp, true);
+    // the lazy move (a hopper's look, maybe inside the game's block actor ticks): only when every
+    // stack finds an empty slot; one that would drop waits for the end of the tick
+    int moved = inventory::ext::migrateBlockDataToNative(gp, false);
+    if (moved == 0 && inventory::ext::hasBlockDataStacks(gp))
+        defer([gp] {
+            if (auto* r = regionOf(gp.dim)) migrateChest(*r, game::blockPos(gp));
+        });
     return moved;
 }
 
@@ -423,14 +378,8 @@ void detail::settleForAccess(BlockSource& region, GlobalPos const& pos) {
         memo.settled.clear();
     }
     if (!memo.settled.insert(pos).second) return;
-    auto bp     = game::blockPos(pos);
-    bool stacks = false, loot = false;
-    if (auto const* data = blockdata::get(region, bp, kInventoryDataKey); data && data->is_object()) {
-        stacks = data->contains("items");
-        loot   = data->contains("loot");
-    }
-    if (stacks) migrateChest(region, bp, false);
-    if (loot) inventory::unpackLoot(pos, nullptr);
+    if (inventory::ext::hasBlockDataStacks(pos)) migrateChest(region, game::blockPos(pos), false);
+    if (inventory::pendingLoot(pos)) inventory::unpackLoot(pos, nullptr);
 }
 
 void detail::chunkLoaded(int dim, int cx, int cz) {
@@ -506,53 +455,23 @@ void clearChests() {
 
 namespace {
 
-/// Before the inventory contract's own use handler (F10's, which opens the screen): the halves'
-/// stacks still in block data move into the block actors they have; a half saved without one gets
-/// it on the next tick (no block actor is made inside GameMode::useItemOn), the screen showing its
-/// block data stacks meanwhile (F10's BlockData backend). Then Hoppers.cpp learns whether F10's
-/// handler opens a screen for the click (Java ChestBlock#useWithoutItem as F10 runs it: a declared
-/// chest, not a sneaking player with an item in a hand, not blocked, within reach), so it can confirm
-/// the screen's context as it opens.
+/// A click on a chest: a half saved without its block actor, or whose stacks still wait in block
+/// data, is settled on the next tick (no block actor is made and nothing moves inside
+/// GameMode::useItemOn). Meanwhile the screen the inventory contract's own use handler opens for the
+/// click shows the waiting stacks itself (F10's BlockData backend without a block actor, else the
+/// native container with each waiting stack where the move puts it) and follows the move once it
+/// happens (feature/ext/combat/InventoryChanges.h).
 ia::Result useChest(ia::UseOnContext const& c) {
-    if (!c.firstEvent) return ia::Result::Pass;
+    if (!c.firstEvent || c.offhand) return ia::Result::Pass;
     auto* region = regionOf(c.pos.dim);
     if (!region) return ia::Result::Pass;
     auto parts = inventory::partsOf(c.pos);
-    bool later = false;
-    for (auto const& p : parts) {
-        auto bp = game::blockPos(p);
-        migrateChest(*region, bp, false);
-        later = later || stacksInBlockData(*region, bp);
-    }
-    if (later)
+    if (std::any_of(parts.begin(), parts.end(), [&](GlobalPos const& p) { return unsettled(*region, game::blockPos(p)); }))
         ia::nextTick([parts] {
             for (auto const& p : parts)
                 if (auto* r = regionOf(p.dim)) migrateChest(*r, game::blockPos(p));
         });
-    bool emptyHands = c.itemId.empty() && game::items::isEmpty(c.player.getOffhandSlot());
-    bool opens      = !parts.empty() && inventory::declared(c.blockId).has_value() && !(c.sneaking && !emptyHands) && !inventory::chestBlocked(c.pos)
-              && std::all_of(parts.begin(), parts.end(), [&](GlobalPos const& p) { return inventory::withinReach(c.player, p); });
-    // (the off hand's use-on of a click the main hand already answered must not undo its note)
-    if (c.offhand && !opens) return ia::Result::Pass;
-    detail::chestClicked(c.player, c.pos, parts, opens);
     return ia::Result::Pass;
-}
-
-/// ChestBlock#getAnalogOutputSignal (the inventory contract's comparator output) of a chest whose
-/// halves are settled first (settleForAccess, once a tick per position: comparators ask whenever
-/// their circuit component is evaluated).
-std::optional<int> chestSignal(BlockSource& region, BlockPos const& bp, Block const&) {
-    static std::int64_t        tick = -1;
-    static std::set<GlobalPos> done;
-    auto                       gp = game::globalPos(region, bp);
-    if (auto now = families::now(); now != tick) {
-        tick = now;
-        done.clear();
-    }
-    if (done.insert(gp).second)
-        for (auto const& p : inventory::partsOf(gp))
-            if (auto* r = regionOf(p.dim)) detail::settleForAccess(*r, p);
-    return inventory::comparatorSignal(gp);
 }
 
 } // namespace
@@ -599,8 +518,6 @@ void installChests() {
                     if (n.x == from.x && n.y == from.y && n.z == from.z) updateChest(region, pos, d);
                 }
             });
-            // the comparator output F10 registers for a declared chest, its halves settled first
-            if (auto d = inventory::declared(e->id); d && d->comparator) redstone::registerAnalog(e->id, chestSignal);
         }
     }
     detail::onChunkLoaded(settleChunk);

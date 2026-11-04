@@ -16,20 +16,9 @@
 // other units opt their Container block entities in); a block kept in block data (no
 // minecraft:block_entity) stays invisible to them.
 //
-// Java's ChestMenu shows every change at once to every player looking inside
-// (AbstractContainerMenu#broadcastChanges every tick: a hopper's, another player's, any code's).
-// While anyone looks inside a TF chest half, a change listener sits on its native container (the
-// game's Container content change listeners: every write of a slot calls them), and the container a
-// hopper gets is a view that notes the halves it changed; at the end of the tick a client mod chest
-// screen showing a changed half gets fresh data (the screens contract's refresh of the inventory
-// contract's "inventory.chest" screen; the game's own chest screen of a vanilla client follows
-// through F10's proxy already). A half without a native container yet (its stacks still in block
-// data) is compared with the last tick's slots instead. The refresh names the screen's context, the
-// position the inventory contract opened the screen for: a single chest's own; for a double chest
-// the half the player clicked, taken only when the inventory contract's use handler opened the
-// screen for that click (the openers count rises during the click). A double chest screen opened
-// by code has no context known here and is not refreshed (a wrong context would close it; only the
-// inventory contract knows the position).
+// Java's ChestMenu shows every change at once to every player looking inside: the inventory contract
+// notes every write of its native containers (GfBlockContainer::setItem, the hoppers' included) and
+// refreshes the client mod's chest screens after the tick (feature/ext/combat/InventoryChanges.h).
 //
 // A lookup runs for every hopper next to a chest on every tick it looks, so it stays cheap: what it
 // found at a position (whether hoppers reach the block, the halves and their containers) is kept
@@ -53,16 +42,12 @@
 #include <vector>
 
 #include "ll/api/memory/Hook.h"
-#include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/shared_types/legacy/ContainerType.h"
-#include "mc/legacy/ActorUniqueID.h"
 #include "mc/world/Container.h"
-#include "mc/world/ContainerContentChangeListener.h"
 #include "mc/world/DataDrivenBlockContainer.h"
 #include "mc/world/actor/Hopper.h"
-#include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -73,11 +58,10 @@
 #include "mc/world/level/block/actor/DropperBlockActor.h"
 #include "mc/world/level/block/actor/component/ContainerBlockActorComponent.h"
 
-#include "feature/common/Screens.h"
+#include "feature/ext/combat/InventoryChanges.h"
 #include "feature/ext/families/Hoppers.h"
 #include "feature/families/Families.h"
 #include "feature/inventory/InventoryInternal.h"
-#include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Log.h"
@@ -135,37 +119,10 @@ namespace gf::feature::families {
 
 namespace {
 
-bool contains(std::vector<GlobalPos> const& parts, GlobalPos const& p) {
-    // (no std::find: MSVC's vectorised find refuses a 16-byte element)
-    return std::any_of(parts.begin(), parts.end(), [&](GlobalPos const& q) { return q == p; });
-}
-
-bool sameParts(std::vector<GlobalPos> const& a, std::vector<GlobalPos> const& b) {
-    if (a.size() != b.size()) return false;
-    for (std::size_t i = 0; i < a.size(); ++i)
-        if (!(a[i] == b[i])) return false;
-    return true;
-}
-
-Player* playerById(std::int64_t uid) {
-    auto level = ll::service::getLevel();
-    if (!level) return nullptr;
-    ActorUniqueID id;
-    id.rawID = uid;
-    return level->getPlayer(id);
-}
-
-/// The halves whose slots changed this tick (their client mod chest screens are refreshed after it):
-/// the change listeners' and the hopper views'.
-std::set<GlobalPos>& changedHalves() {
-    static std::set<GlobalPos> s;
-    return s;
-}
-
 /// Java's CompoundContainer over the two halves of a double chest (slots 0..26 the first (right)
-/// half's, 27..53 the second's), or one chest's own container (no second half). Every write notes
-/// the half it changed (screens to refresh). The halves' containers are the native ones of this
-/// tick (set again on every lookup; nobody keeps the view across ticks).
+/// half's, 27..53 the second's), or one chest's own container (no second half). The halves'
+/// containers are the native ones of this tick (set again on every lookup; nobody keeps the view
+/// across ticks).
 class ChestView final : public Container {
 public:
     ChestView() : Container(SharedTypes::Legacy::ContainerType::Container) {}
@@ -181,14 +138,13 @@ public:
     }
     void setItem(int slot, ItemStack const& item) override {
         if (auto [c, i] = part(slot); c) {
-            c->setItem(i, item);
-            changed(c);
+            c->setItem(i, item); // (the inventory contract notes the change)
         }
     }
     void removeItem(int slot, int count) override {
         if (auto [c, i] = part(slot); c) {
             c->removeItem(i, count);
-            changed(c);
+            inventory::ext::markChanged(c == first ? firstPos : secondPos); // (the game's removeItem may not go through setItem)
         }
     }
     int getContainerSize() const override { return sizeOf(first) + sizeOf(second); }
@@ -228,7 +184,6 @@ private:
         if (slot - n < sizeOf(second)) return {second, slot - n};
         return {nullptr, 0};
     }
-    void changed(Container const* c) const { changedHalves().insert(c == first ? firstPos : secondPos); }
 };
 
 /// The views handed out (by the first half's position). Dropped between ticks once unused for a
@@ -366,161 +321,6 @@ Container* containerOf(BlockSource& region, Half& h) {
     return h.container;
 }
 
-// ---- the client mod's chest screens --------------------------------------------------------------------
-
-/// A click on a TF chest half that the inventory contract's use handler answers with a screen
-/// (Chests.cpp): its position becomes the screen's context when the screen opens during the click.
-struct PendingOpen {
-    std::int64_t           uid = 0;
-    GlobalPos              pos;
-    std::vector<GlobalPos> parts;
-    std::int64_t           tick = 0;
-};
-std::optional<PendingOpen>& pendingOpen() {
-    static std::optional<PendingOpen> p;
-    return p;
-}
-
-/// The position each player's open chest screen was opened for (the inventory contract's context of
-/// the screen), known when the player's own click opened it.
-std::map<std::int64_t, GlobalPos>& screenContexts() {
-    static std::map<std::int64_t, GlobalPos> m;
-    return m;
-}
-
-/// The opener counts of the TF chest halves someone looks into (inventory::onViewersChanged).
-std::map<GlobalPos, int>& openerCounts() {
-    static std::map<GlobalPos, int> m;
-    return m;
-}
-
-/// The change listener of a watched half: every write of one of its container's slots notes the half.
-class HalfWatch final : public ContainerContentChangeListener {
-public:
-    GlobalPos pos;
-    bool      active = false;
-    void      containerContentChanged(int) override {
-        if (active) changedHalves().insert(pos);
-    }
-};
-
-/// The halves watched (someone looks inside) and the native container each listener sits on, with
-/// the block actor and component that held it when the listener went on.
-struct Watched {
-    Container*        container = nullptr; ///< (compared with the live one, dereferenced only while it is)
-    HalfWatch*        listener  = nullptr;
-    BlockActor const* actor     = nullptr;
-    void const*       component = nullptr;
-};
-struct Watches {
-    std::map<GlobalPos, Watched> byPos;
-    /// Every listener ever made. A listener left on a container that may still live elsewhere (a
-    /// chunk unloaded, a block actor moved: the container at the position is not the one it sits
-    /// on) stays inactive and is never freed nor reused; one taken off a live container is reused.
-    /// Leaked on purpose: a container the game keeps may still name one at shutdown.
-    std::vector<HalfWatch*>* all = new std::vector<HalfWatch*>();
-    std::vector<HalfWatch*>  free;
-};
-Watches& watches() {
-    static Watches w;
-    return w;
-}
-
-/// The native container of the half at `pos` now (nullptr: none, or not loaded).
-Container* liveContainer(GlobalPos const& pos) {
-    auto* region = regionOf(pos.dim);
-    auto  bp     = game::blockPos(pos);
-    if (!region || !region->hasChunksAt(bp, 0, false)) return nullptr;
-    return inventory::nativeContainer(*region, bp);
-}
-
-/// Takes the listener off the half at `pos`.
-void unwatch(GlobalPos const& pos) {
-    auto& w  = watches();
-    auto  it = w.byPos.find(pos);
-    if (it == w.byPos.end()) return;
-    auto* container = it->second.container;
-    auto* listener  = it->second.listener;
-    w.byPos.erase(it);
-    listener->active = false;
-    if (liveContainer(pos) == container) {
-        container->removeContentChangeListener(listener);
-        w.free.push_back(listener);
-    }
-}
-
-/// Forgets the listener of the half at `pos` without touching the world (its chunk unloaded, or the
-/// world closes): it stays inactive on whatever container still holds it, never reused.
-void abandonWatch(GlobalPos const& pos) {
-    auto& w  = watches();
-    auto  it = w.byPos.find(pos);
-    if (it == w.byPos.end()) return;
-    it->second.listener->active = false;
-    w.byPos.erase(it);
-}
-
-/// Puts a listener on the native container of the half at `pos` (none while it has none: its slots
-/// are compared every tick instead).
-void watch(GlobalPos const& pos) {
-    auto& w = watches();
-    auto* c = liveContainer(pos);
-    if (auto it = w.byPos.find(pos); it != w.byPos.end()) {
-        // (the live container at the same address may be a new one that never had the listener)
-        if (c && it->second.container == c && c->mContentChangeListeners.contains(it->second.listener)) return;
-        unwatch(pos);
-    }
-    if (!c) return;
-    HalfWatch* listener = nullptr;
-    if (!w.free.empty()) {
-        listener = w.free.back();
-        w.free.pop_back();
-    } else {
-        listener = new HalfWatch();
-        w.all->push_back(listener);
-    }
-    listener->pos    = pos;
-    listener->active = true;
-    c->addContentChangeListener(listener);
-    auto* actor  = regionOf(pos.dim)->getBlockEntity(game::blockPos(pos)); // (liveContainer found the region and the actor)
-    w.byPos[pos] = Watched{c, listener, actor, actor ? static_cast<void const*>(actor->mContainer.get()) : nullptr};
-}
-
-/// The listener of the watched half at `pos` still sits on the container its block actor holds (a
-/// chest replaced while its screen stays open has a new block actor and container): compared, never
-/// dereferenced from what was kept.
-bool watchHolds(GlobalPos const& pos, Watched const& w) {
-    auto* region = regionOf(pos.dim);
-    auto  bp     = game::blockPos(pos);
-    if (!region || !region->hasChunksAt(bp, 0, false)) return false;
-    auto* a = region->getBlockEntity(bp);
-    return a && a == w.actor && static_cast<void const*>(a->mContainer.get()) == w.component && containerFieldOf(*a) == static_cast<void const*>(w.container);
-}
-
-/// The slots each unwatched half a client mod chest screen showed at the last tick held.
-std::map<GlobalPos, std::vector<ItemStack>>& shownSlots() {
-    static std::map<GlobalPos, std::vector<ItemStack>> m;
-    return m;
-}
-
-bool sameSlots(std::vector<ItemStack> const& a, std::vector<ItemStack> const& b) {
-    if (a.size() != b.size()) return false;
-    for (std::size_t i = 0; i < a.size(); ++i) {
-        bool ea = game::items::isEmpty(a[i]), eb = game::items::isEmpty(b[i]);
-        if (ea != eb) return false;
-        if (!ea && (game::items::countOf(a[i]) != game::items::countOf(b[i]) || !game::items::sameItemSameData(a[i], b[i]))) return false;
-    }
-    return true;
-}
-
-/// Forgets the contexts of the screens that no longer show their context's position (closed, or
-/// replaced by a screen whose context is unknown).
-void pruneContexts() {
-    std::erase_if(screenContexts(), [](auto const& e) {
-        auto* player = playerById(e.first);
-        return !player || !contains(inventory::openedParts(*player), e.second);
-    });
-}
-
 } // namespace
 
 Container* hopperContainerAt(BlockSource& region, BlockPos const& pos) {
@@ -556,122 +356,9 @@ Container* hopperContainerAt(BlockSource& region, BlockPos const& pos) {
 
 namespace detail {
 
-void chestClicked(Player& player, GlobalPos const& pos, std::vector<GlobalPos> const& parts, bool opens) {
-    auto uid = player.getOrCreateUniqueID().rawID;
-    if (!opens || !net::isCompanion(player)) {
-        if (pendingOpen() && pendingOpen()->uid == uid) pendingOpen().reset();
-        return;
-    }
-    pendingOpen() = PendingOpen{uid, pos, parts, families::now()};
-}
-
-void chestOpenersChanged(GlobalPos const& pos, int count) {
-    auto& counts = openerCounts();
-    int   before = 0;
-    if (auto it = counts.find(pos); it != counts.end()) before = it->second;
-    if (count > 0) counts[pos] = count;
-    else counts.erase(pos);
-    // a screen that closed (or was replaced) no longer has the context it had
-    pruneContexts();
-    // the screen a click asked for opened: the inventory contract opened it for the clicked half
-    // (it counts the openers of the new screen's halves right after it opened it)
-    if (auto& pending = pendingOpen(); pending && count > before && contains(pending->parts, pos)) {
-        if (pending->tick == families::now())
-            if (auto* player = playerById(pending->uid); player && sameParts(inventory::openedParts(*player), pending->parts))
-                screenContexts()[pending->uid] = pending->pos;
-        pending.reset();
-    }
-    // a change listener while someone looks inside
-    if (count > 0) watch(pos);
-    else unwatch(pos);
-}
-
-std::optional<GlobalPos> chestScreenContext(Player& player) {
-    auto parts = inventory::openedParts(player);
-    if (parts.size() == 1) return parts[0];
-    auto it = screenContexts().find(player.getOrCreateUniqueID().rawID);
-    if (it == screenContexts().end() || !contains(parts, it->second)) return std::nullopt;
-    return it->second;
-}
-
-bool chestHalfWatched(GlobalPos const& pos) { return watches().byPos.contains(pos); }
-
-/// Every tick, Java's AbstractContainerMenu#broadcastChanges for the client mod's TF chest screens:
-/// a screen showing a half whose slots changed this tick (the listeners, the hopper views, or for a
-/// half without a native container the comparison with the last tick's slots) gets fresh data, named
-/// by its context (chestScreenContext).
-void refreshChestScreens() {
-    auto level = ll::service::getLevel();
-    if (!level) {
-        changedHalves().clear();
-        shownSlots().clear();
-        return;
-    }
-    pendingOpen().reset(); // a click whose screen did not open in its tick
-    pruneContexts();
-    // a half whose chunk unloaded: the inventory contract counts no openers there (it tells nobody
-    // when the chunk is gone), so its count and listener are dropped here (its container went with
-    // the chunk, or is kept by the game: never touched)
-    std::vector<GlobalPos> gone;
-    for (auto const& [pos, _] : openerCounts()) {
-        auto* region = regionOf(pos.dim);
-        if (!region || !region->hasChunksAt(game::blockPos(pos), 0, false)) gone.push_back(pos);
-    }
-    for (auto const& [pos, _] : watches().byPos) {
-        auto* region = regionOf(pos.dim);
-        if (!region || !region->hasChunksAt(game::blockPos(pos), 0, false)) gone.push_back(pos);
-    }
-    for (auto const& pos : gone) {
-        openerCounts().erase(pos);
-        abandonWatch(pos);
-    }
-    struct Viewer {
-        std::int64_t             uid = 0;
-        std::vector<GlobalPos>   parts;
-        std::optional<GlobalPos> at;
-    };
-    std::vector<Viewer> viewers;
-    level->forEachPlayer(std::function<bool(Player&)>([&](Player& player) {
-        if (!gf::net::isCompanion(player)) return true;
-        auto parts = inventory::openedParts(player);
-        // TF chest screens (the halves whose openers the families count)
-        if (parts.empty() || std::any_of(parts.begin(), parts.end(), [](GlobalPos const& p) { return !openerCounts().contains(p); })) return true;
-        viewers.push_back({player.getOrCreateUniqueID().rawID, std::move(parts), chestScreenContext(player)});
-        return true;
-    }));
-    auto changed = std::move(changedHalves());
-    changedHalves().clear();
-    // a half without a listener: a native container found since gets one; until then (its stacks in
-    // block data) its slots are compared with the last tick's (a half shown for the first time has
-    // nothing to compare with: its screen just got its data)
-    std::map<GlobalPos, std::vector<ItemStack>> slotsNow;
-    for (auto const& v : viewers)
-        for (auto const& p : v.parts) {
-            // a watched half whose block actor or container is not the one the listener went on (the
-            // chest replaced while the screen stays open): watched anew, its screen refreshed
-            if (auto it = watches().byPos.find(p); it != watches().byPos.end() && !watchHolds(p, it->second)) {
-                unwatch(p);
-                watch(p);
-                changed.insert(p);
-            }
-            if (chestHalfWatched(p) || slotsNow.contains(p)) continue;
-            auto slots = inventory::contents(p);
-            if (auto it = shownSlots().find(p); it != shownSlots().end() && !sameSlots(it->second, slots)) changed.insert(p);
-            watch(p);
-            if (!chestHalfWatched(p)) slotsNow.emplace(p, std::move(slots));
-        }
-    shownSlots() = std::move(slotsNow);
-    if (changed.empty()) return;
-    for (auto const& v : viewers) {
-        if (!v.at || std::none_of(v.parts.begin(), v.parts.end(), [&](GlobalPos const& p) { return changed.contains(p); })) continue;
-        if (auto* player = playerById(v.uid)) screens::refresh(*player, "inventory.chest", {{"pos", {v.at->dim, v.at->x, v.at->y, v.at->z}}});
-    }
-}
-
-/// Between ticks: the chest screens are refreshed; views unused for a second go, and the kept
-/// lookups are dropped now and then (they hold positions of chunks that may have gone).
+/// Between ticks: views unused for a second go, and the kept lookups are dropped now and then (they
+/// hold positions of chunks that may have gone).
 void hoppersTick() {
-    refreshChestScreens();
     auto now = families::now();
     if (now % 20 == 0) std::erase_if(views(), [now](auto const& e) { return now - e.second->lastUsed > 20; });
     if (now % 100 == 0 || seen().size() > 4096) seen().clear();
@@ -683,16 +370,6 @@ void clearHopperViews() {
     seen().clear();
     registry().types.clear();
     ++registry().generation;
-    changedHalves().clear();
-    pendingOpen().reset();
-    screenContexts().clear();
-    openerCounts().clear();
-    shownSlots().clear();
-    // the world closes (or the module goes): the listeners stay inactive on the containers, which
-    // are not touched while the world is torn down
-    std::vector<GlobalPos> watched;
-    for (auto const& [pos, _] : watches().byPos) watched.push_back(pos);
-    for (auto const& pos : watched) abandonWatch(pos);
 }
 
 } // namespace detail

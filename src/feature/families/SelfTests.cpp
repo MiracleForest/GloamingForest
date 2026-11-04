@@ -47,6 +47,7 @@
 #include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
 #include "feature/common/Redstone.h"
+#include "feature/ext/combat/InventoryMigrate.h"
 #include "feature/ext/combat/InventoryViewers.h"
 #include "feature/ext/families/Growers.h"
 #include "feature/families/BlockEvents.h"
@@ -834,8 +835,8 @@ GF_REGISTER_SELFTEST("families.double_chest", [](Context& ctx) -> ll::coro::Coro
         ctx.check(st(a, fam::state::Lid) == 0 && st(b, fam::state::Lid) == 0, "and the lids close again");
         ctx.check(gf::game::items::idOf(ha->get(a, 0)) == "minecraft:dirt" && gf::game::items::idOf(hb->get(b, 0)) == "minecraft:stone" && itemsNear(ctx, a).empty(),
                   "the halves keep their stacks while their states change (pairing, lids)");
-        auto const* inA = gf::blockdata::get(region, gf::game::blockPos(a), "inventory");
-        ctx.check(gf::inventory::nativeContainer(region, gf::game::blockPos(a)) != nullptr && gf::inventory::nativeContainer(region, gf::game::blockPos(b)) != nullptr && (!inA || !inA->contains("items")),
+        ctx.check(gf::inventory::nativeContainer(region, gf::game::blockPos(a)) != nullptr && gf::inventory::nativeContainer(region, gf::game::blockPos(b)) != nullptr
+                      && !gf::inventory::ext::hasBlockDataStacks(a) && !gf::inventory::ext::hasBlockDataStacks(b),
                   "in their block actors through every state change, nothing in block data");
     }
     ctx.check(fam::chestLidStep(0) == 0 && fam::chestLidStep(1) == 1 && fam::chestLidStep(3) == 3 && fam::chestLidStep(5) == 4 && fam::chestLidStep(10) == 4,

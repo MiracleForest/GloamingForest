@@ -416,14 +416,6 @@ local CHEST_TEXTURE_DIRS = {
     time = "time", transformation = "transformation", mining = "mining", sorting = "sorting",
 }
 
--- TFSoundTypes.JAR (TFSounds block.twilightforest.jar.*) and the blocks of that type (TFBlocks)
-local SOUND_TYPES = {
-    ["twilightforest.jar"] = {volume = 1.0, pitch = 1.0, prefix = "block.twilightforest.jar."},
-}
-local SOUND_TYPE_BLOCKS = {
-    ["twilightforest:mason_jar"] = "twilightforest.jar", ["twilightforest:firefly_jar"] = "twilightforest.jar",
-    ["twilightforest:firefly_particle_spawner"] = "twilightforest.jar", ["twilightforest:cicada_jar"] = "twilightforest.jar",
-}
 
 -- ColorHandler: the leaves Bedrock tints by biome. Biome foliage (twilight oak, dark leaves) as
 -- Java; canopy and mangrove leaves blend the biome foliage with 0x469A66 / 0xC0E694
@@ -1986,39 +1978,6 @@ local function sign_text_entity(bpdir, rpdir)
     }
 end
 
--- TF's sound types as Bedrock block sounds (sounds.json block_sounds and interactive_sounds),
--- with the volume and pitch Java plays them at (SoundType: break / place (v + 1) / 2 at p * 0.8,
--- hit (v + 1) / 8 at p * 0.5, step v * 0.15, fall v * 0.5 at p * 0.75).
-local function sound_types(rpdir, used)
-    if table.empty(used) then return end
-    merge_json_file(path.join(rpdir, "sounds.json"), function (doc)
-        doc = doc or {}
-        doc.block_sounds = doc.block_sounds or {}
-        doc.interactive_sounds = doc.interactive_sounds or {}
-        doc.interactive_sounds.block_sounds = doc.interactive_sounds.block_sounds or {}
-        for name, _ in pairs(used) do
-            local s = SOUND_TYPES[name]
-            if s then
-                local v, p, pre = s.volume, s.pitch, s.prefix
-                doc.block_sounds[name] = {volume = 1.0, pitch = 1.0, events = {
-                    default = "",
-                    ["break"] = {sound = pre .. "break", volume = (v + 1) / 2, pitch = p * 0.8},
-                    place = {sound = pre .. "place", volume = (v + 1) / 2, pitch = p * 0.8},
-                    hit = {sound = pre .. "hit", volume = (v + 1) / 8, pitch = p * 0.5},
-                }}
-                doc.interactive_sounds.block_sounds[name] = {volume = 1.0, pitch = 1.0, events = {
-                    default = "",
-                    step = {sound = pre .. "step", volume = v * 0.15, pitch = p},
-                    fall = {sound = pre .. "fall", volume = v * 0.5, pitch = p * 0.75},
-                    jump = {sound = pre .. "step", volume = v * 0.15, pitch = p},
-                    land = {sound = pre .. "fall", volume = v * 0.5, pitch = p * 0.75},
-                }}
-            end
-        end
-        return doc
-    end)
-end
-
 -- ---- generation ----------------------------------------------------------------------------------
 
 -- The entity textures of signs and chests (the assembled RP's TF textures, registered in
@@ -2133,15 +2092,6 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
     for id, g in pairs(by_id) do
         if g.shape == "chest" or g.shape == "trapped_chest" then result.chests[id] = g.shape end
     end
-    -- TF's sound types for the blocks that use them (any block of the pack)
-    local used = {}
-    for id, name in pairs(SOUND_TYPE_BLOCKS) do
-        if existing[id] then result.sounds[id] = name; used[name] = true end
-    end
-    for id, g in pairs(by_id) do
-        if type(g.params.sound_type) == "string" and SOUND_TYPES[g.params.sound_type] then result.sounds[id] = g.params.sound_type; used[g.params.sound_type] = true end
-    end
-    sound_types(rpdir, used)
     -- the sign text display entity, when there are signs
     for _, g in pairs(by_id) do
         if g.shape == "sign" or g.shape == "wall_sign" or g.shape == "hanging_sign" or g.shape == "wall_hanging_sign" then
@@ -2168,14 +2118,16 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
     for _, m in ipairs(ctx.missing) do
         if opts.strict_textures then table.insert(errors, "families: texture " .. m .. " is not in the resource pack") end
     end
-    -- block sounds (RP blocks.json; an id that has an entry keeps it, TF's sound types replace it)
+    -- block sounds (RP blocks.json): the kit's default per family where the block has no sound yet.
+    -- An id that has one keeps it: TF's sound types (the jars' twilightforest.jar, TFSoundTypes) are
+    -- F1's import, its rp/blocks.d and rp/sounds.json.d fragments (block_sounds and the step, fall,
+    -- jump and land interactive_sounds)
     if not table.empty(result.sounds) then
         merge_json_file(path.join(rpdir, "blocks.json"), function (doc)
             doc = doc or {format_version = "1.21.40"}
             for id, sound in pairs(result.sounds) do
-                local tf_type = SOUND_TYPES[sound] ~= nil
                 if doc[id] == nil then doc[id] = {sound = sound}
-                elseif type(doc[id]) == "table" and (doc[id].sound == nil or tf_type) then doc[id].sound = sound end
+                elseif type(doc[id]) == "table" and doc[id].sound == nil then doc[id].sound = sound end
             end
             return doc
         end)

@@ -34,9 +34,9 @@
 // colours shift alike (client scenario families, pictures 20 to 23); the Classic look shows Java's
 // colours (scenario families.classic).
 // The server's display entities (gloamingforest:sign_text: the name tag vanilla clients read) show
-// no name tag here once the client has their sign's text, which names them by unique id:
-// ActorRenderDispatcher::extractRenderTextObjects (the name tag of one actor for the frame) gives
-// nothing for them on the client of a companion (the only hook of name tags; F11 owns it). The
+// no name tag here once the client has their sign's text, which names them by unique id: a name tag
+// rule of their type (F12's render::hideNameTag, feature/ext/ui/Client.h) hides it on the client of
+// a companion. The
 // server withdraws a sign's text ("gone") when the sign, its text or its chunk goes, so the client's
 // list holds the signs of loaded chunks only.
 // An outlined line (glowing text) is drawn over its 8 outline copies nearer to the camera along the
@@ -59,7 +59,6 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/client/ClientExitLevelEvent.h"
 #include "ll/api/event/client/ClientJoinLevelEvent.h"
-#include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 #include "ll/api/thread/ClientThreadExecutor.h"
 
@@ -72,14 +71,12 @@
 #include "mc/client/renderer/ActorShaderManager.h"
 #include "mc/client/renderer/BaseActorRenderContext.h"
 #include "mc/client/renderer/Tessellator.h"
-#include "mc/client/renderer/actor/ActorRenderDispatcher.h"
 #include "mc/client/renderer/blockactor/BlockActorRenderDispatcher.h"
 #include "mc/client/renderer/blockactor/SignRenderer.h"
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/math/Matrix.h"
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/math/Vec4.h"
-#include "mc/deps/minecraft_renderer/objects/NameTagRenderObject.h"
 #include "mc/deps/minecraft_renderer/renderer/MaterialPtr.h"
 #include "mc/deps/minecraft_renderer/resources/OffscreenCaptureDescription.h"
 #include "mc/deps/renderer/Camera.h"
@@ -513,39 +510,26 @@ bool hidesSignName(Actor const& actor) {
 
 } // namespace gf::client::families
 
-// The name tag of an actor is extracted here for the frame (one call per actor with a visible name).
-LL_TYPE_INSTANCE_HOOK(
-    FamiliesSignNameTagHook,
-    ll::memory::HookPriority::Normal,
-    ActorRenderDispatcher,
-    &ActorRenderDispatcher::extractRenderTextObjects,
-    std::vector<NameTagRenderObject>,
-    Font&               font,
-    Tessellator&        tessellator,
-    Actor&              actor,
-    std::string const&  str,
-    Vec3                camTargetPos,
-    float               a,
-    mce::Color          color
-) {
-    try {
-        if (gf::client::families::hidesSignName(actor)) {
-            static std::atomic<bool> logged{false};
-            if (!logged.exchange(true)) gf::log().info("families: the sign text display entities show no name tag (the client mod draws the text)");
-            return {};
-        }
-    } catch (...) {}
-    return origin(font, tessellator, actor, str, camTargetPos, a, color);
-}
-
 namespace gf::client::families {
 
 namespace {
 
+/// The name tag rule of the display entities (F12's name tag pass, render thread).
+bool hideDisplayName(Actor const& actor) {
+    try {
+        if (!hidesSignName(actor)) return false;
+    } catch (...) {
+        return false;
+    }
+    static std::atomic<bool> logged{false};
+    if (!logged.exchange(true)) log().info("families: the sign text display entities show no name tag (the client mod draws the text)");
+    return true;
+}
+
 class SignTextModule {
 public:
     void install() {
-        FamiliesSignNameTagHook::hook();
+        render::hideNameTag(std::string(fam::kSignTextDisplayType), hideDisplayName);
         net::client::on("families.sign_text", onText);
         mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientJoinLevelEvent>([](auto&) { clearTexts(); });
         mExit = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) { clearTexts(); });
@@ -566,7 +550,7 @@ public:
         if (mExit) ll::event::EventBus::getInstance().removeListener(mExit);
         mJoin = nullptr;
         mExit = nullptr;
-        FamiliesSignNameTagHook::unhook();
+        render::showNameTag(std::string(fam::kSignTextDisplayType));
         clearTexts();
     }
 

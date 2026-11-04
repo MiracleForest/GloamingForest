@@ -13,9 +13,9 @@ pwsh tools/families/run.ps1 -Out <dir>  # an assembled or deployed mod directory
 ```
 
 `tools/xmake/assemble.lua` (F0) runs the generator on every build and in `tools/assemble.ps1 -Check`
-once its hook is in (F0's file: the hook is a separate F0 pull request that does nothing until this
-directory exists, so it can be merged first); without it `run.ps1` applies the generator, and the
-e2e prelaunch scripts of F11 apply it to the deployed copy when the build has not.
+(its families hook). `run.ps1` applies the generator to a directory the build did not assemble; the
+server e2e prelaunch script of F11 still runs it on the deployed copy as a safety net, a no-op on a
+copy the build already generated.
 
 ## Data
 
@@ -68,8 +68,7 @@ Every family:
 | `hardness`, `resistance`, `map_color`, `light`, `loot`, `tool` | base components (otherwise the skeleton's) |
 | `tags` | F1's import: the block's Bedrock block tags, free of any format (see Block tags) |
 | `menu_category` | when there is no skeleton |
-| `sound` | the Bedrock block sound in `blocks.json` (default per family) |
-| `sound_type` | a TF sound type (`twilightforest.jar`, TFSoundTypes; the jars get it from TFBlocks) |
+| `sound` | the Bedrock block sound in `blocks.json` (default per family), for a block that has none yet: TF's sound types (`twilightforest.jar`, TFSoundTypes) and the blocks using them come from F1's import (`rp/blocks.d`, `rp/sounds.json.d`), which the kit leaves alone |
 | `components` | raw Bedrock components merged last (their tags join the block's tags, see Block tags) |
 | `waterlogged` / `waterloggable` | adds the waterloggable modifier |
 | `traits` | F1's modifiers of the entry (`["waterloggable", "climbable"]`) |
@@ -165,23 +164,17 @@ A crafter puts what it crafts into the chest it faces (Java's `CrafterBlock#disp
 The comparator reads a chest as Java's `ChestBlock#getAnalogOutputSignal` (F10's
 `comparatorSignal`): `getRedstoneSignalFromContainer` over the single chest or the double chest's 54
 slots, and 0 while a half is blocked (`getContainer(.., false)` finds none) even though hoppers still
-fill it. TF's chests register that output themselves (`redstone::registerAnalog`, over F10's
-registration of the declared chest): a comparator's read first moves stacks still in block data into
-the half's block actor (see below), then returns F10's `comparatorSignal`.
+fill it. Stacks still waiting in block data (see below) count where a move would put them (F10's
+reads, `feature/ext/combat/InventoryMigrate.h`).
 
 Every change reaches every open chest screen at the end of the tick, as Java's
-`ChestMenu#broadcastChanges` does for each player looking inside: while anyone looks inside a half,
-a change listener sits on its native container (the game's `ContainerContentChangeListener`, called
-for every slot write: a hopper's, a dropper's or a crafter's change, another player's click, any
-code's write), the container a hopper gets notes the halves it changed, and a half without a native
-container yet is compared with the last tick's slots; a screen showing a changed half is refreshed
-(the screens contract's `refresh` of F10's `inventory.chest`) in its context, the position F10
-opened it for: a single chest's own, a double chest's clicked half, taken only when F10's use handler
-opened the screen during that click (the openers count rises while the click runs; a click F10
-answers with nothing, such as a sneaking click with an item, leaves no context behind). A double
-chest screen opened by code has no context known to F11 and is not refreshed (a wrong context would
-close it; F10 knows the position: routed). The game's chest screen of a vanilla client follows
-through F10's proxy.
+`ChestMenu#broadcastChanges` does for each player looking inside: F10 notes every write of a native
+container (its `setItem`: a hopper's, a dropper's or a crafter's change, another player's click, any
+code's write; the hopper view's `removeItem` notes its half itself) and refreshes each client mod
+chest screen showing a changed container in the context it opened the screen with
+(`feature/ext/combat/InventoryChanges.h`: a double chest's clicked half, or the half code opened it
+for; `families.chest_screen_context`). The game's chest screen of a vanilla client follows through
+F10's proxy.
 
 A chest whose stacks are still in block data (placed while the chests used F10's BlockData backend)
 moves them into its block actor at the end of the tick its chunk loaded, whether the chunk ticks or
@@ -192,18 +185,18 @@ one the block type declares and the chunk takes it; a state change of the block 
 The chunk's first tick does the same, and moves the stacks of the chests in the loaded chunks around
 it into the block actors they have (chunks loaded before the mod heard them load); a neighbour whose
 chest still waits for a block actor is tried again at the next neighbour's first tick. Before all
-that, a hopper's or a comparator's read of the chest (either half of a double chest) moves them into
-the block actor the chest has, and a player's click too; a chest without a block actor that is
-clicked gets it on the next tick (no block actor is made inside the click), its screen showing the
-block data stacks meanwhile (`families.chest_migrate_click`). So nothing finds the chest empty or one
-half missing (a hopper's or a comparator's read does not make a block actor: the game may be
-iterating the chunk's block actors or evaluating the circuit then). A chest broken before
-its stacks moved loses none: F10 drops the block data stacks with the block (`blockdata::onErase`)
-and the block actor's own (`families.chest_migrate_removed`). The stacks are read in F10's
-layout (`kInventoryDataKey` in `Families.h`; `src/feature/inventory/Inventory.cpp`'s `kDataKey`,
-`storageOf` and `writeSlot` are the source of truth), and `families.chest_persist_a_write` writes
-them through F10's own handler, so a change of that layout fails the test. No world with such chests
-shipped (W0 builds only), but development worlds have them.
+that, a hopper's read of the chest (either half of a double chest) moves them into the block actor
+the chest has (it makes none: the game may be iterating the chunk's block actors then). A player's
+click moves nothing and makes no block actor inside `GameMode::useItemOn`: the chest is settled on
+the next tick (`interactions::nextTick`), and the screen F10 opens for the click shows the waiting
+stacks meanwhile and follows the move (`families.chest_migrate_click`). The inventory contract reads
+waiting stacks itself (its screens, its comparator output) and moves them on its first write, so
+nothing finds the chest empty or one half missing. The moves are F10's
+(`feature/ext/combat/InventoryMigrate.h`: `hasBlockDataStacks`, `migrateBlockDataToNative`), so the
+kit never reads F10's block data layout. A chest broken before its stacks moved loses none: F10 drops
+the block data stacks with the block (`blockdata::onErase`) and the block actor's own
+(`families.chest_migrate_removed`). `families.chest_persist_a_write` writes such stacks through F10's
+own handler. No world with such chests shipped (W0 builds only), but development worlds have them.
 
 ## Block tags
 
