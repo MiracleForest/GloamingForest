@@ -4,9 +4,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <random>
 #include <string>
+#include <string_view>
+#include <vector>
 
 #include "nlohmann/json.hpp"
 
@@ -16,11 +19,47 @@ class MolangVariableMap;
 
 namespace gf::fx {
 
-struct Resolved {
-    std::string effect;        ///< Bedrock particle effect to send to vanilla clients ("" = none)
-    bool        native = false; ///< a mod particle companions may draw natively
-    bool        vanilla = false; ///< a vanilla particle type (mapped)
+/// The molang variables a Bedrock particle effect reads (and gf::fx sets), and what a legacy
+/// particle's data comes from.
+enum EffectVar : std::uint32_t {
+    kVarVelocity        = 1u << 0, ///< `variable.velocity` {x, y, z}, set even when still
+    kVarDirection       = 1u << 1, ///< `variable.direction` {x, y, z}: the particle's velocity
+    kVarSplashDirection = 1u << 2, ///< with kVarDirection: SplashParticle's motion (splashDirection)
+    kVarColorRgb        = 1u << 3, ///< `variable.color` {r, g, b}
+    kVarColorRgba       = 1u << 4, ///< `variable.color` {r, g, b, a}
+    kVarNoteColor       = 1u << 5, ///< `variable.note_color` {r, g, b}: NoteParticle's hue of the x speed
+    kVarItem            = 1u << 6, ///< legacy data: params "item" (id, optional "aux")
+    kVarBlock           = 1u << 7, ///< legacy data: params "block" (id, optional "states")
+    kVarExplosionVelocity = 1u << 8, ///< with kVarVelocity: explosion_particle's `-velocity * 10` blocks/s (effectVelocity)
+    kVarCritDirection   = 1u << 9,  ///< with kVarDirection: CritParticle's motion (critDirection)
+    kVarDustColor       = 1u << 10, ///< params "color" (DustParticleOptions) picks the particle (dustFor)
 };
+
+struct Rgba {
+    float r = 1.f, g = 1.f, b = 1.f, a = 1.f;
+};
+
+/// How a Java vanilla particle type is shown on Bedrock (Fx.cpp's table).
+struct VanillaParticle {
+    std::string         effect;     ///< the Bedrock effect ("" with `legacy`)
+    std::uint32_t       vars = 0;   ///< EffectVar bits
+    Vec3                offset{};   ///< added to the position
+    int                 legacy = 0; ///< a legacy ParticleType (LevelEventPacket) instead of an effect
+    std::optional<Rgba> color;      ///< the colour when params give none
+};
+
+struct Resolved {
+    std::string         effect;          ///< Bedrock particle effect to send to vanilla clients ("" = none)
+    bool                native  = false; ///< a mod particle companions may draw natively
+    bool                vanilla = false; ///< a vanilla particle type (mapped)
+    std::uint32_t       vars    = 0;     ///< EffectVar bits of the effect
+    Vec3                offset{};        ///< added to the position
+    int                 legacy = 0;      ///< legacy ParticleType (0: the effect)
+    std::optional<Rgba> color;           ///< default colour (kVarColorRgb / kVarColorRgba)
+    [[nodiscard]] bool  shown() const { return !effect.empty() || legacy != 0; }
+};
+/// The Java vanilla particle types gf::fx maps (selftests).
+[[nodiscard]] std::vector<std::string> vanillaParticleIds();
 /// How a particle id is played (warns once for unknown ids).
 [[nodiscard]] Resolved resolveParticle(std::string const& particleId);
 /// The Bedrock sound name of a sound event ("" = unknown, warned once).
@@ -32,6 +71,8 @@ struct Counters {
     std::uint64_t particlePackets = 0;
     std::uint64_t soundPackets    = 0;
     std::uint64_t movingPackets   = 0; ///< particle packets with `variable.velocity`
+    std::uint64_t variablePackets = 0; ///< particle packets with any molang variable
+    std::uint64_t legacyPackets   = 0; ///< legacy particles (LevelEventPacket)
 };
 /// Packets sent so far (selftests).
 [[nodiscard]] Counters counters();
@@ -77,6 +118,12 @@ public:
     /// `variable.velocity` {x, y, z}: the particle's velocity (blocks per tick), the name F12's
     /// native particle factories read (feature/ext/ui/Client.h) and a resource pack effect may use.
     void setVelocity(Vec3 const& velocity);
+    /// `name` as a struct {x, y, z}.
+    void setVec3(char const* name, Vec3 const& value);
+    /// `name` as a struct {r, g, b} or, with `alpha`, {r, g, b, a}.
+    void setColor(char const* name, Rgba const& color, bool alpha);
+    /// How many variables the map holds (selftests).
+    [[nodiscard]] std::size_t size() const;
 
 private:
     alignas(8) std::byte mStorage[56];
@@ -84,6 +131,52 @@ private:
 
 /// The map gf::fx gives an effect for `velocity`: `variable.velocity` when it moves, nothing otherwise.
 void fillVariables(MolangMap& map, Vec3 const& velocity);
+
+/// The variables an effect with `vars` (EffectVar bits) reads: `variable.velocity` when it moves
+/// or kVarVelocity asks for it, `variable.direction` (`direction`), `variable.color` (`color`),
+/// `variable.note_color` (NoteParticle's colour of `velocity.x`).
+void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocity, Vec3 const& direction, Rgba const& color);
+
+/// NoteParticle's colour for the x speed (0..1: the note / 24).
+[[nodiscard]] Rgba noteColor(float xSpeed);
+
+/// The `variable.velocity` an effect with `vars` gets for Java's velocity (blocks per tick):
+/// explosion_particle (kVarExplosionVelocity) starts at `-variable.velocity * 10` blocks per second,
+/// so it gets -2 * velocity (Java's ExplodeParticle moves velocity blocks per tick: 20 * velocity
+/// blocks per second); any other effect gets the velocity itself.
+[[nodiscard]] Vec3 effectVelocity(std::uint32_t vars, Vec3 const& velocity);
+
+/// Particle(level, x, y, z, xSpeed, ySpeed, zSpeed)'s initial motion (Java): the speed plus a
+/// random +-0.4 per axis, rescaled to a random length (0.15..0.45 * 0.4 = 0.06..0.18) with 0.1
+/// added to y.
+[[nodiscard]] Vec3 particleMotion(std::mt19937& rng, Vec3 const& speed);
+
+/// SplashParticle's motion: its speed with yd 0.1 when ySpeed is 0 and xSpeed or zSpeed is not;
+/// any other speed is dropped for WaterDropParticle's own motion (Particle's motion of a still
+/// particle, x and z times 0.3, y 0.1..0.3).
+[[nodiscard]] Vec3 splashDirection(std::mt19937& rng, Vec3 const& velocity);
+
+/// CritParticle's motion: Particle's motion of a still particle times 0.1 plus 0.4 * the speed.
+[[nodiscard]] Vec3 critDirection(std::mt19937& rng, Vec3 const& velocity);
+
+/// How a dust particle (kVarDustColor) of DustParticleOptions' colour (params "color", `r.color`
+/// without) is shown: Java's redstone red (1, 0, 0) as Bedrock's legacy RedDust (its data is no
+/// colour: the game draws it red), any other colour as the falling_dust effect tinted with it.
+[[nodiscard]] Resolved dustFor(Resolved r, nlohmann::json const& params);
+
+/// The colour a particle gets: params "color", else `fallback` (white without). An integer is
+/// 0xAARRGGBB (Java's ColorParticleOption ARGB int) when any of bits 24-31 is set, else an opaque
+/// 0xRRGGBB: an ARGB colour with alpha 0 (invisible in Java) cannot be told from an opaque RGB one,
+/// so a caller that needs alpha 0 passes [r, g, b, 0]. An array is [r, g, b(, a)] in 0..1.
+[[nodiscard]] Rgba colorOf(nlohmann::json const& params, std::optional<Rgba> const& fallback);
+
+/// FallingDustParticle's colour of a block (FxBlockColor.cpp): a FallingBlock's dust colour, else
+/// the block's BlockColor without a level (vanilla's and TF's, tint index 0) as 0xRRGGBB, -1 for
+/// one that draws white; nullopt when the block has none (the map colour applies). `intState`
+/// reads the block's integer states (redstone_signal, growth, facing_direction).
+[[nodiscard]] std::optional<int> fallingDustColor(std::string const& blockId, std::function<std::optional<int>(std::string_view)> const& intState);
+/// A fallingDustColor value as a colour (-1: white).
+[[nodiscard]] Rgba dustRgb(int color);
 
 #ifdef GF_CLIENT
 namespace client {

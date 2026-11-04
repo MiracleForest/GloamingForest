@@ -10,7 +10,9 @@
 //     the same identifier (vanilla particle types are mapped to Bedrock's effects): one per
 //     particle up to 8 per call (kMaxVanillaParticles), offset by params "spread" (Java's
 //     gaussian x distance), with the velocity as the molang variable `variable.velocity` {x, y, z}
-//     (FxMolang.cpp; an effect that does not read it moves on its own).
+//     (FxMolang.cpp; an effect that does not read it moves on its own) and the variables the
+//     mapped vanilla effect reads (`variable.direction`, `variable.color`, `variable.note_color`;
+//     see vanillaParticles). Java's item and block particles go as Bedrock's legacy particles.
 // Sounds: TF's sound events ("entity.twilightforest.naga.hiss", the sound_definitions names F3
 // generates) and the vanilla events TF plays ("minecraft:entity.ghast.shoot", mapped to Bedrock's
 // names) go out as PlaySoundPacket to the players in range (16 blocks, more for volume > 1, as
@@ -36,16 +38,25 @@
 
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
+#include "mc/comprehensive/ParticleType.h"
+#include "mc/deps/core/math/Color.h"
+#include "mc/deps/shared_types/legacy/LevelEvent.h"
+#include "mc/network/packet/LevelEventPacket.h"
 #include "mc/network/packet/PlaySoundPacket.h"
 #include "mc/network/packet/SpawnParticleEffectPacket.h"
 #include "mc/util/MolangVariableMap.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/dimension/Dimension.h"
 
 #include "feature/fx/FxInternal.h"
 #include "feature/net/Net.h"
+#include "game/Blocks.h"
+#include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
 #include "mod/Main.h"
@@ -55,47 +66,83 @@ namespace gf::fx {
 
 namespace {
 
-// Java vanilla particle types TF spawns -> Bedrock particle effects (best match).
-std::unordered_map<std::string, std::string> const& vanillaParticles() {
-    static std::unordered_map<std::string, std::string> const m{
-        {"minecraft:smoke", "minecraft:basic_smoke_particle"},
-        {"minecraft:large_smoke", "minecraft:large_explosion"},
-        {"minecraft:flame", "minecraft:basic_flame_particle"},
-        {"minecraft:small_flame", "minecraft:candle_flame_particle"},
-        {"minecraft:poof", "minecraft:explosion_particle"},
-        {"minecraft:explosion", "minecraft:large_explosion"},
-        {"minecraft:splash", "minecraft:water_splash_particle"},
-        {"minecraft:rain", "minecraft:rain_splash_particle"},
-        {"minecraft:falling_water", "minecraft:water_drip_particle"},
-        {"minecraft:crit", "minecraft:critical_hit_emitter"},
-        {"minecraft:cloud", "minecraft:white_smoke_particle"},
-        {"minecraft:note", "minecraft:note_particle"},
-        {"minecraft:item_snowball", "minecraft:snowball_poof"},
-        {"minecraft:item_slime", "minecraft:slime_particle"},
-        {"minecraft:happy_villager", "minecraft:villager_happy"},
-        {"minecraft:angry_villager", "minecraft:villager_angry"},
-        {"minecraft:entity_effect", "minecraft:mobspell_emitter"},
-        {"minecraft:effect", "minecraft:mobspell_emitter"},
-        {"minecraft:witch", "minecraft:witchspell_emitter"},
-        {"minecraft:crimson_spore", "minecraft:crimson_spore_particle"},
-        {"minecraft:white_ash", "minecraft:white_ash_particle"},
-        {"minecraft:portal", "minecraft:portal_directional"},
-        {"minecraft:mycelium", "minecraft:mycelium_dust_particle"},
-        {"minecraft:lava", "minecraft:lava_particle"},
-        {"minecraft:enchant", "minecraft:enchanting_table_particle"},
-        {"minecraft:electric_spark", "minecraft:electric_spark_particle"},
-        {"minecraft:composter", "minecraft:crop_growth_emitter"},
-        {"minecraft:block", "minecraft:breaking_item_terrain"},
-        {"minecraft:falling_dust", "minecraft:falling_dust"},
-        {"minecraft:item", "minecraft:breaking_item_icon"},
-        {"minecraft:heart", "minecraft:heart_particle"},
-        {"minecraft:dust", "minecraft:redstone_wire_dust_particle"},
-        {"minecraft:end_rod", "minecraft:endrod"},
-        {"minecraft:snowflake", "minecraft:snowflake_particle"},
+// Java vanilla particle types TF spawns -> Bedrock particle effects (best match), with the molang
+// variables the effect reads (Bedrock's vanilla effects of 1.26.51; an effect that reads a variable
+// nobody set logs a content-log error per particle) and where Bedrock draws a Java type through a
+// legacy particle (LevelEventPacket) instead of an effect.
+//   - portal: portal_directional is Java's PortalParticle (the same lifetime, size and path:
+//     start + direction * (1 - (2a^2 - a)) at age fraction a) except that Java adds (1 - a) to y
+//     where Bedrock subtracts a: spawned one block higher, it follows Java's path exactly (from
+//     pos + speed + (0, 1, 0) down to pos). Its colour is not Java's: with f = 0.4..1 Bedrock tints
+//     (f, 0.3f, 0.9f) where Java tints (0.9f, 0.3f, f), so the specks are pinker than Java's
+//     blue-violet. No vanilla effect has the portal path with a settable colour (mob_portal and
+//     portal_east_west compute their own); exact colours need an own copy of the effect in the
+//     resource pack, a path F10 does not own yet (owners.rules.json has no
+//     assets/pack/rp/**/combat/** for F10).
+//   - enchant: enchanting_table_particle flies from pos + direction to pos (FlyTowardsPositionParticle).
+//   - electric_spark: the effect's shape direction is Java's velocity.
+//   - splash: the direction is SplashParticle's motion (splashDirection: the x/z speed with y 0.1
+//     when ySpeed is 0, WaterDropParticle's random motion otherwise).
+//   - crit: the direction is CritParticle's motion (critDirection: Particle's random motion of a
+//     still particle * 0.1 plus 0.4 * the speed), so a still crit scatters as in Java.
+//   - poof: explosion_particle's speed is -variable.velocity * 10 blocks/s plus its own noise
+//     (always set): it gets -2 * velocity, Java's ExplodeParticle speed of velocity blocks/tick.
+//   - dust: DustParticleOptions' colour (params "color", red by default) picks the particle
+//     (dustFor): redstone red is Bedrock's legacy RedDust (always red: its data is no colour, a
+//     client check showed purple data drawn red), any other colour the falling_dust effect tinted
+//     with it (a small square drifting for 1.4..7 s, Java's DustParticle lives 0.4..2 s and hovers).
+//     The scale is not carried.
+//   - note: note_particle's colour is NoteParticle's hue from the x speed.
+//   - entity_effect / effect: mobspell_emitter's colour (params "color", white by default).
+//   - falling_dust: params "color", else FallingDustParticle's colour of params "block" (its dust
+//     colour, its BlockColor without a level or its map colour; FxBlockColor.cpp).
+//   - colours (params "color"): an integer is 0xAARRGGBB when any of bits 24-31 is set, else an
+//     opaque 0xRRGGBB (pass [r, g, b, 0] for alpha 0); an array is [r, g, b(, a)] in 0..1.
+//   - crimson_spore / white_ash: Bedrock has no effect for them (its own are drawn by the engine
+//     only for its biomes): falling_dust tinted with Java's colours, a small particle drifting down.
+//   - item / block: Bedrock's item and block break particles take the texture from the engine
+//     (legacy IconCrack and Terrain with params "item" / "block"); item_snowball and item_slime are
+//     the legacy SnowballPoof and Slime. Legacy particles carry no velocity.
+std::unordered_map<std::string, VanillaParticle> const& vanillaParticles() {
+    static Vec3 const                                                   up{0.f, 1.f, 0.f};
+    static std::unordered_map<std::string, VanillaParticle> const m{
+        {"minecraft:smoke", {"minecraft:basic_smoke_particle"}},
+        {"minecraft:large_smoke", {"minecraft:large_explosion"}},
+        {"minecraft:flame", {"minecraft:basic_flame_particle"}},
+        {"minecraft:small_flame", {"minecraft:candle_flame_particle"}},
+        {"minecraft:poof", {"minecraft:explosion_particle", kVarVelocity | kVarExplosionVelocity}},
+        {"minecraft:explosion", {"minecraft:large_explosion"}},
+        {"minecraft:splash", {"minecraft:water_splash_particle", kVarDirection | kVarSplashDirection}},
+        {"minecraft:rain", {"minecraft:rain_splash_particle"}},
+        {"minecraft:falling_water", {"minecraft:water_drip_particle"}},
+        {"minecraft:crit", {"minecraft:basic_crit_particle", kVarDirection | kVarCritDirection}},
+        {"minecraft:cloud", {"minecraft:white_smoke_particle"}},
+        {"minecraft:note", {"minecraft:note_particle", kVarNoteColor}},
+        {"minecraft:item_snowball", {"", 0, {}, static_cast<int>(ParticleType::SnowballPoof)}},
+        {"minecraft:item_slime", {"", 0, {}, static_cast<int>(ParticleType::Slime)}},
+        {"minecraft:happy_villager", {"minecraft:villager_happy"}},
+        {"minecraft:angry_villager", {"minecraft:villager_angry"}},
+        {"minecraft:entity_effect", {"minecraft:mobspell_emitter", kVarColorRgba}},
+        {"minecraft:effect", {"minecraft:mobspell_emitter", kVarColorRgba}},
+        {"minecraft:witch", {"minecraft:witchspell_emitter"}},
+        {"minecraft:crimson_spore", {"minecraft:falling_dust", kVarColorRgb, {}, 0, Rgba{0.9f, 0.4f, 0.5f, 1.f}}},
+        {"minecraft:white_ash", {"minecraft:falling_dust", kVarColorRgb, {}, 0, Rgba{0.7294118f, 0.69411767f, 0.7607843f, 1.f}}},
+        {"minecraft:portal", {"minecraft:portal_directional", kVarDirection, up}},
+        {"minecraft:mycelium", {"minecraft:mycelium_dust_particle"}},
+        {"minecraft:lava", {"minecraft:lava_particle"}},
+        {"minecraft:enchant", {"minecraft:enchanting_table_particle", kVarDirection}},
+        {"minecraft:electric_spark", {"minecraft:electric_spark_particle", kVarDirection}},
+        {"minecraft:composter", {"minecraft:crop_growth_emitter"}},
+        {"minecraft:block", {"", kVarBlock, {}, static_cast<int>(ParticleType::Terrain)}},
+        {"minecraft:falling_dust", {"minecraft:falling_dust", kVarColorRgb}},
+        {"minecraft:item", {"", kVarItem, {}, static_cast<int>(ParticleType::IconCrack)}},
+        {"minecraft:heart", {"minecraft:heart_particle"}},
+        {"minecraft:dust", {"", kVarDustColor, {}, static_cast<int>(ParticleType::RedDust), Rgba{1.f, 0.f, 0.f, 1.f}}},
+        {"minecraft:end_rod", {"minecraft:endrod"}},
+        {"minecraft:snowflake", {"minecraft:snowflake_particle"}},
     };
     return m;
 }
-
 // Java vanilla sound events TF plays -> Bedrock sound names (best match; every name is one of the
 // game's sound_definitions of 1.26.51): the SoundEvents TF's code names, and the ones Java's own
 // classes play for TF's subclasses and damage, which the W0 kits play through gf::fx
@@ -300,6 +347,13 @@ std::string stripNs(std::string const& id) {
 
 } // namespace
 
+std::vector<std::string> vanillaParticleIds() {
+    std::vector<std::string> ids;
+    for (auto const& [id, _] : vanillaParticles()) ids.push_back(id);
+    std::sort(ids.begin(), ids.end());
+    return ids;
+}
+
 Resolved resolveParticle(std::string const& particleId) {
     auto&           k = known();
     std::lock_guard lock(k.mutex);
@@ -309,7 +363,11 @@ Resolved resolveParticle(std::string const& particleId) {
     if (id.rfind("minecraft:", 0) == 0) {
         auto it = vanillaParticles().find(id);
         if (it != vanillaParticles().end()) {
-            r.effect = it->second;
+            r.effect  = it->second.effect;
+            r.vars    = it->second.vars;
+            r.offset  = it->second.offset;
+            r.legacy  = it->second.legacy;
+            r.color   = it->second.color;
             r.vanilla = true;
         } else if (k.particles.contains(id)) {
             r.effect = id; // already a Bedrock effect name
@@ -382,47 +440,153 @@ nlohmann::json vecJson(Vec3 const& v) { return {v.x, v.y, v.z}; }
 std::uint64_t gParticlePackets = 0;
 std::uint64_t gSoundPackets    = 0;
 std::uint64_t gMovingPackets   = 0;
+std::uint64_t gVarPackets      = 0;
+std::uint64_t gLegacyPackets   = 0;
+
+void warnParticle(std::string const& what) {
+    auto&           k = known();
+    std::lock_guard lock(k.mutex);
+    warnOnce(k, what);
+}
+
+/// The block of params "block" (+ "states"), nullptr when it names none.
+Block const* paramBlock(nlohmann::json const& params) {
+    if (!params.is_object()) return nullptr;
+    auto it = params.find("block");
+    if (it == params.end() || !it->is_string()) return nullptr;
+    auto states = params.value("states", nlohmann::json::object());
+    return game::blockWithStates(it->get<std::string>(), states.is_object() ? states : nlohmann::json::object());
+}
+
+/// The data of a legacy particle: IconCrack (item network id << 16 | aux), Terrain (block network
+/// id), 0 for the others. nullopt (warned once) when params name no known
+/// item / block.
+std::optional<int> legacyData(Resolved const& r, std::string const& particleId, nlohmann::json const& params) {
+    if (r.vars & kVarItem) {
+        std::string id = params.is_object() && params.contains("item") && params["item"].is_string() ? params["item"].get<std::string>() : std::string{};
+        int         aux = params.is_object() && params.contains("aux") && params["aux"].is_number_integer() ? params["aux"].get<int>() : 0;
+        auto        stack = id.empty() ? std::nullopt : game::items::make(id, 1, aux);
+        if (!stack || stack->isNull()) {
+            warnParticle("particle '" + particleId + "' needs params \"item\" naming a known item (got '" + id + "')");
+            return std::nullopt;
+        }
+        return (static_cast<int>(stack->getId()) << 16) | (static_cast<int>(stack->getAuxValue()) & 0xffff);
+    }
+    if (r.vars & kVarBlock) {
+        auto const* block = paramBlock(params);
+        if (!block) {
+            warnParticle("particle '" + particleId + "' needs params \"block\" naming a known block");
+            return std::nullopt;
+        }
+        return static_cast<int>(block->mNetworkId);
+    }
+    return 0;
+}
+
+/// The colour of a coloured effect: params "color", else FallingDustParticle's colour of params
+/// "block" (a falling block's dust colour, else its BlockColor without a level, else its map
+/// colour; FxBlockColor.cpp), else the type's own colour, else white.
+Rgba particleColor(Resolved const& r, nlohmann::json const& params) {
+    if (params.is_object() && !params.contains("color")) {
+        if (auto const* block = paramBlock(params)) {
+            auto tint = fallingDustColor(game::blockId(*block), [block](std::string_view state) { return game::intState(*block, state); });
+            if (tint) return dustRgb(*tint);
+            mce::Color const& c = block->getBlockType().mMapColor;
+            return Rgba{c.r, c.g, c.b, 1.f};
+        }
+    }
+    return colorOf(params, r.color);
+}
 
 } // namespace
 
-Counters counters() { return {gParticlePackets, gSoundPackets, gMovingPackets}; }
+Counters counters() { return {gParticlePackets, gSoundPackets, gMovingPackets, gVarPackets, gLegacyPackets}; }
+
+Resolved dustFor(Resolved r, nlohmann::json const& params) {
+    auto c = colorOf(params, r.color);
+    r.vars &= ~static_cast<std::uint32_t>(kVarDustColor);
+    if (c.r >= 0.995f && c.g <= 0.005f && c.b <= 0.005f) {
+        r.effect.clear();
+        r.legacy = static_cast<int>(ParticleType::RedDust);
+    } else {
+        r.effect = "minecraft:falling_dust";
+        r.legacy = 0;
+        r.vars |= kVarColorRgb;
+        r.color  = c;
+    }
+    return r;
+}
 
 void particle(Dimension& dimension, std::string const& particleId, Vec3 const& pos, Vec3 const& velocity, int count, nlohmann::json const& params) {
     auto r = resolveParticle(particleId);
-    if (r.effect.empty() && !r.native) return;
+    if (r.vars & kVarDustColor) r = dustFor(std::move(r), params);
+    if (!r.shown() && !r.native) return;
     nlohmann::json msg;
     if (r.native) msg = {{"id", particleId}, {"pos", vecJson(pos)}, {"vel", vecJson(velocity)}, {"count", count}, {"params", params}, {"effect", r.effect}};
     // Vanilla clients: one SpawnParticleEffectPacket per effect instance (the packet has no
     // count), at most kMaxVanillaParticles per call; with params "spread" [dx, dy, dz] each one is
-    // offset as ServerLevel#sendParticles offsets them (gaussian x distance). The velocity goes as
-    // the molang variable `variable.velocity`.
+    // offset as ServerLevel#sendParticles offsets them (gaussian x distance). Each packet carries
+    // the molang variables its effect reads (Fx.cpp's table, fillEffectVariables), and
+    // `variable.velocity` whenever the particle moves. A legacy particle goes as a LevelEventPacket.
     int  n     = std::clamp(count, 1, kMaxVanillaParticles);
     auto dimId = static_cast<uchar>(static_cast<int>(dimension.getDimensionId()));
-    std::vector<Vec3> at(static_cast<std::size_t>(n), pos);
-    if (auto spread = spreadOf(params); spread && n > 1) {
-        static thread_local std::mt19937 rng{std::random_device{}()};
+    static thread_local std::mt19937 rng{std::random_device{}()};
+    std::vector<Vec3>                at(static_cast<std::size_t>(n), pos);
+    if (auto spread = spreadOf(params); spread && n > 1)
         for (auto& v : at) v = spreadAt(pos, *spread, rng);
+    for (auto& v : at) v = Vec3{v.x + r.offset.x, v.y + r.offset.y, v.z + r.offset.z};
+    std::optional<int> legacy;
+    if (r.legacy != 0) {
+        legacy = legacyData(r, particleId, params);
+        if (!legacy && !r.native) return;
     }
-    bool const               moving = velocity.x != 0.f || velocity.y != 0.f || velocity.z != 0.f;
-    std::optional<MolangMap> vars; // made for the first vanilla client when the particle moves
+    bool const moving = velocity.x != 0.f || velocity.y != 0.f || velocity.z != 0.f;
+    bool const needsVars = moving || (r.vars & (kVarVelocity | kVarDirection | kVarColorRgb | kVarColorRgba | kVarNoteColor)) != 0;
+    // the maps, one per particle (a still splash gets its own random motion), made for the first
+    // vanilla client
+    std::vector<std::unique_ptr<MolangMap>> vars;
+    auto makeVars = [&] {
+        Rgba const color = particleColor(r, params);
+        for (int i = 0; i < n; ++i) {
+            Vec3 direction = velocity;
+            if (r.vars & kVarSplashDirection) direction = splashDirection(rng, velocity);
+            else if (r.vars & kVarCritDirection) direction = critDirection(rng, velocity);
+            auto& map = vars.emplace_back(std::make_unique<MolangMap>());
+            fillEffectVariables(*map, r.vars, velocity, direction, color);
+        }
+    };
     forPlayersNear(dimension, pos, 32.f, [&](Player& p) {
         if (r.native && net::isCompanion(p)) {
             net::send(p, "fx.particle", msg);
             ++gParticlePackets;
             return;
         }
+        if (legacy) {
+            for (auto const& v : at) {
+                auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::LevelEvent);
+                if (!packet) return;
+                auto& pkt    = static_cast<LevelEventPacket&>(*packet);
+                pkt.mEventId = static_cast<int>(SharedTypes::Legacy::LevelEvent::ParticleLegacyEvent) | r.legacy;
+                pkt.mPos     = v;
+                pkt.mData    = *legacy;
+                pkt.sendTo(p);
+                ++gParticlePackets;
+                ++gLegacyPackets;
+            }
+            return;
+        }
         if (r.effect.empty()) return;
-        if (moving && !vars) fillVariables(vars.emplace(), velocity);
-        for (auto const& v : at) {
-            auto molang = vars ? std::optional<MolangVariableMap>(vars->get()) : std::nullopt;
-            SpawnParticleEffectPacket pkt(SpawnParticleEffectPacketPayload(v, r.effect, dimId, std::move(molang)));
+        if (needsVars && vars.empty()) makeVars();
+        for (std::size_t i = 0; i < at.size(); ++i) {
+            auto molang = needsVars ? std::optional<MolangVariableMap>(vars[i]->get()) : std::nullopt;
+            SpawnParticleEffectPacket pkt(SpawnParticleEffectPacketPayload(at[i], r.effect, dimId, std::move(molang)));
             pkt.sendTo(p);
             ++gParticlePackets;
-            if (vars) ++gMovingPackets;
+            if (needsVars) ++gVarPackets;
+            if (moving || (r.vars & kVarVelocity)) ++gMovingPackets;
         }
     });
 }
-
 void sound(Dimension& dimension, std::string const& event, Vec3 const& pos, float volume, float pitch) {
     auto name = resolveSound(event);
     if (name.empty()) return;

@@ -10,6 +10,8 @@
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/world/item/registry/TrimMaterial.h"
 #include "mc/world/item/registry/TrimMaterialRegistry.h"
+#include "mc/world/item/registry/TrimPattern.h"
+#include "mc/world/item/registry/TrimPatternRegistry.h"
 #include "mc/world/level/Level.h"
 
 #include "feature/ext/item/Item.h"
@@ -96,12 +98,41 @@ LL_TYPE_INSTANCE_HOOK(ItemTrimInitHook, ll::memory::HookPriority::Normal, TrimMa
     }
 }
 
+#ifdef GF_CLIENT
+// A client adds every pattern of a TrimDataPacket to the ones it has and logs "Overwriting pattern
+// template. Duplicate entries with template item: ..." for each one it already knows: a server that
+// sends the packet again (a material appended while players are in the world) would fill the content
+// log with the 18 vanilla patterns. The client mod takes only the patterns it lacks.
+LL_TYPE_INSTANCE_HOOK(
+    ItemTrimPatternsHook,
+    ll::memory::HookPriority::Normal,
+    TrimPatternRegistry,
+    &TrimPatternRegistry::initializeFromTrimPatterns,
+    void,
+    std::vector<TrimPattern> const& patterns
+) {
+    auto const&              known = this->mTemplateItemToPatternIdMap.get();
+    std::vector<TrimPattern> missing;
+    missing.reserve(patterns.size());
+    for (auto const& p : patterns) {
+        auto it = known.find(p.mItemName.get());
+        if (it != known.end() && it->second == p.mPatternId.get()) continue;
+        missing.push_back(p);
+    }
+    if (missing.size() == patterns.size()) return origin(patterns);
+    origin(missing);
+}
+#endif
+
 namespace gf::item::ext {
 namespace {
 class TrimsModule {
 public:
     void install() {
         ItemTrimInitHook::hook();
+#ifdef GF_CLIENT
+        ItemTrimPatternsHook::hook();
+#endif
         static bool registered = false;
         if (!registered) {
             registered = true;
@@ -109,7 +140,12 @@ public:
             game::db::onWorldReady([] { appendToLevel(); });
         }
     }
-    void uninstall() { ItemTrimInitHook::unhook(); }
+    void uninstall() {
+        ItemTrimInitHook::unhook();
+#ifdef GF_CLIENT
+        ItemTrimPatternsHook::unhook();
+#endif
+    }
 };
 } // namespace
 } // namespace gf::item::ext
