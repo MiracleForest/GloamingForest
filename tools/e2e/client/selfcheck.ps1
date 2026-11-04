@@ -125,6 +125,20 @@ try {
     Assert-True ((Get-GameSessionEnd -Killed $false -Running 0 -Process $exit1 -Watchdog $false) -eq 'gone') 'session end: exited by itself with a non-zero code (crash) -> gone'
     Assert-True ((Get-GameSessionEnd -Killed $false -Running 0 -Process $null -Watchdog $false) -eq 'gone') 'session end: exited by itself, exit code unknown -> gone'
     Assert-True ((Get-GameSessionEnd -Killed $false -Running 0 -Process $exit0 -Watchdog $true) -eq 'gone') 'session end: the watchdog fired -> gone'
+    # Stop-Game itself, with no game running (GfE2E.Watchdog.Fired is a string: null, '' or the reason)
+    function Get-InstanceProcesses { @() }
+    $script:Headless = $true
+    foreach ($case in @(@{ Fired = $null; Process = $exit0; Want = 'closed' }, @{ Fired = ''; Process = $exit0; Want = 'closed' },
+            @{ Fired = 'hung'; Process = $exit0; Want = 'gone' }, @{ Fired = ''; Process = $exit1; Want = 'gone' })) {
+        [GfE2E.Watchdog]::Fired = $case.Fired
+        $script:GameSessions.Clear()
+        $script:GameSessions.Add([pscustomobject]@{ Launch = 1; Start = (Get-Date); End = $null; Ended = 'open'; Pid = $case.Process.Id; InWorld = $true; CanaryOnJoin = $false; Process = $case.Process })
+        $err = $null
+        try { Stop-Game } catch { $err = "$_" }
+        Assert-True (-not $err -and $script:GameSessions[0].Ended -eq $case.Want) "Stop-Game after the game exited by itself (exit $($case.Process.ExitCode), watchdog '$($case.Fired)'): $($case.Want)$(if ($err) { " (threw: $err)" })"
+    }
+    [GfE2E.Watchdog]::Fired = $null
+    $script:GameSessions.Clear()
 
     $verbose = New-Log 'ContentLog_verbose.txt' @($canaryLine,
         '12:00:02[Sound][verbose]-No sound found for block type ''wood'' and event type ''chest.open''',

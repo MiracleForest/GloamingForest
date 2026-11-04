@@ -1235,7 +1235,7 @@ function Stop-Game {
     $s = $script:GameSessions | Where-Object { $_.Ended -eq 'open' } | Select-Object -Last 1
     if ($s) {
         $s.End = Get-Date
-        $s.Ended = Get-GameSessionEnd -Killed $killed -Running $procs.Count -Process $s.Process -Watchdog (Get-WatchdogFired)
+        $s.Ended = Get-GameSessionEnd -Killed $killed -Running $procs.Count -Process $s.Process -Watchdog ([bool](Get-WatchdogFired))
         if ($procs.Count -eq 0) {
             $code = $null
             try { if ($s.Process) { $code = $s.Process.ExitCode } } catch {}
