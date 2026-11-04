@@ -26,6 +26,8 @@
 
 #ifdef GF_CLIENT
 
+#include <atomic>
+
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/client/ClientJoinLevelEvent.h"
 #include "ll/api/memory/Hook.h"
@@ -103,7 +105,10 @@ public:
                     // FoliageColor.getEvergreenColor / getBirchColor, without the colorizer
                     tint::registerBlock(e->id, tint::GameTintFn{[b = *blend](BlockPos const&, tint::GameColors const& game) {
                         auto foliage = game.foliage();
-                        return foliage ? b.fn(*foliage) : b.withoutWorld;
+                        if (!foliage) return b.withoutWorld;
+                        static std::atomic<bool> logged{false};
+                        if (!logged.exchange(true)) log().info("families: canopy and mangrove leaves blend the biome foliage colour (#{:06X})", *foliage);
+                        return b.fn(*foliage);
                     }});
                     ++blended;
                 }

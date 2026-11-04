@@ -209,7 +209,9 @@ std::set<std::tuple<int, int, int>>& neighbourSettled() {
 /// Whether the chest at `pos` still waits for migrateChest: no block actor (native container) yet,
 /// or stacks in block data (F10's feature/ext/combat/InventoryMigrate.h).
 bool unsettled(BlockSource& region, BlockPos const& pos) {
-    if (!inventory::nativeContainer(region, pos)) return true;
+    // (a chest block whose type declares no block actor, e.g. a hand-made file without
+    // minecraft:block_entity, keeps F10's BlockData backend: nothing to settle)
+    if (!inventory::nativeContainer(region, pos)) return region.getBlock(pos).getBlockType().getBlockEntityType() != BlockActorType::Undefined;
     return inventory::ext::hasBlockDataStacks(game::globalPos(region, pos));
 }
 

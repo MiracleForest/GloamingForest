@@ -53,7 +53,7 @@ $r = Invoke-SelfTest 'families.chest_persist_b_read'
 if ($r.Pass -ne 1) { throw 'families.chest_persist_b_read did not pass after the reload' }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'chests verified after the reload' -Quiet)) { throw "the chests' stacks were not checked after the reload" }
 # (the chunk may load and take its first tick before the mark: the whole boot's log)
-if (-not (Get-ServerLog | Select-String -Pattern 'families: moved 1 stack\(s\) of the chest at' -Quiet)) { throw 'the chest saved with its stacks in block data did not move them into its block actor' }
+if (-not (Get-ServerLog | Select-String -Pattern 'inventory: moved 1 stack\(s\) of the container at' -Quiet)) { throw 'the chest saved with its stacks in block data did not move them into its block actor' }
 Write-Step "the chests' stacks survived the reload in their block actors; the block data chest moved its stacks into one"
 
 # The doors of a reloaded world are watched again (their chunk's first tick).
