@@ -14,7 +14,9 @@
 #   must run its factory, a jump must give JumpPressed / LeftGround / Landed edges, a movement rule
 #   must correct a real client's move and a distance rule must not correct a respawn (the server
 #   turns doimmediaterespawn / keepinventory on and puts their earlier values back). The framed map
-#   leaves the player icon out (Java's showOnItemFrame). Blocks go on the stage in the ui selftest
+#   leaves the player icon out (Java's showOnItemFrame). The frame step's stage also holds a block
+#   renderer, a tint on the game's foliage and two named simulated players, one of whose name tags the
+#   client hides with render::hideNameTag (the other stays drawn). Blocks go on the stage in the ui selftest
 #   row; ui.fixture_clear puts the stage and the player back after each step. All of it twice in
 #   local mode: Classic (graphics_mode 1, set by ui.prelaunch.ps1) and Vibrant Visuals (graphics_mode
 #   2, after a game restart; the restarted world may still carry the tag and the fixture's leftovers
@@ -89,6 +91,108 @@ function Wait-UiStage([int]$Since) {
     } else { Start-Sleep -Seconds 6 }
 }
 
+# Pixel helpers on a screenshot: a 16 x 16 item cell at GUI pixels (`gx`, `gy`) of a `gw` x `gh` GUI
+# (the GUI size from the 'screen opened' or 'hud layer drawn' line).
+function Get-UiCell([System.Drawing.Bitmap]$bmp, [double]$gx, [double]$gy, [double]$gw, [double]$gh) {
+    $sx = $bmp.Width / $gw; $sy = $bmp.Height / $gh
+    return @{ sx = $sx; sy = $sy; x0 = $gx * $sx; y0 = $gy * $sy }
+}
+# The fixture screen's container slot `slot` (Java's (8 + 18 i, 18) of the panel at `px`, `py`).
+function Get-UiSlotGeometry([System.Drawing.Bitmap]$bmp, [double]$px, [double]$py, [double]$gw, [double]$gh, [int]$slot) {
+    return Get-UiCell $bmp ($px + 8 + 18 * $slot) ($py + 18) $gw $gh
+}
+# The mean colour of a patch of slot `g` in GUI pixels (x, y, w, h inside the 16 x 16 slot).
+function Get-UiPatch([System.Drawing.Bitmap]$bmp, $g, [double]$x, [double]$y, [double]$w, [double]$h) {
+    $x0 = [int][Math]::Round($g.x0 + $x * $g.sx); $x1 = [int][Math]::Round($g.x0 + ($x + $w) * $g.sx)
+    $y0 = [int][Math]::Round($g.y0 + $y * $g.sy); $y1 = [int][Math]::Round($g.y0 + ($y + $h) * $g.sy)
+    $r = 0.0; $gr = 0.0; $b = 0.0; $n = 0
+    for ($xx = $x0; $xx -lt [Math]::Max($x1, $x0 + 1); $xx++) {
+        for ($yy = $y0; $yy -lt [Math]::Max($y1, $y0 + 1); $yy++) {
+            $p = $bmp.GetPixel($xx, $yy); $r += $p.R; $gr += $p.G; $b += $p.B; $n++
+        }
+    }
+    return @{ R = $r / $n; G = $gr / $n; B = $b / $n; L = (0.299 * $r + 0.587 * $gr + 0.114 * $b) / $n }
+}
+function Get-UiColourDistance($a, $b) { return [Math]::Abs($a.R - $b.R) + [Math]::Abs($a.G - $b.G) + [Math]::Abs($a.B - $b.B) }
+
+# How much of the width of cell `g` is drawn on (0..1), against the empty cell `e` (same background):
+# a flat item covers most of its slot, a GUI cube too (an edge-on sliver about a third).
+function Get-UiCellCoverage([System.Drawing.Bitmap]$bmp, $g, $e) {
+    $w = [int][Math]::Floor(16 * $g.sx); $h = [int][Math]::Floor(16 * $g.sy)
+    $cols = 0
+    for ($dx = 1; $dx -lt $w - 1; $dx++) {
+        $hit = 0
+        for ($dy = 1; $dy -lt $h - 1; $dy++) {
+            $a = $bmp.GetPixel([int]$g.x0 + $dx, [int]$g.y0 + $dy); $b = $bmp.GetPixel([int]$e.x0 + $dx, [int]$e.y0 + $dy)
+            if (([Math]::Abs([int]$a.R - [int]$b.R) + [Math]::Abs([int]$a.G - [int]$b.G) + [Math]::Abs([int]$a.B - [int]$b.B)) -gt 24) { $hit++ }
+        }
+        if ($hit -ge 2) { $cols++ }
+    }
+    return [Math]::Round($cols / [double]($w - 2), 2)
+}
+
+# A block item drawn with the GUI block transform (Java's block/block.json "gui": rotation 30 225 0,
+# scale 0.625) is an isometric cube: a hexagon about 14 x 16 GUI pixels, so the four corners of its
+# slot stay empty (the slot's own colour, as in the empty slot), and the top face is lit more than the
+# two side faces. A block drawn face on (W0d review) fills the corners and is evenly lit.
+# The game's own inventory and hotbar draw block items so (the vanilla look the mod's GUI items match).
+function Test-UiCellCube([System.Drawing.Bitmap]$bmp, $g, $e) {
+    $corners = @(@(0.6, 0.6), @(13.9, 0.6), @(0.6, 14.4), @(13.9, 14.4))
+    $worst = 0
+    foreach ($k in $corners) {
+        $d = Get-UiColourDistance (Get-UiPatch $bmp $g $k[0] $k[1] 1.5 1.0) (Get-UiPatch $bmp $e $k[0] $k[1] 1.5 1.0)
+        $worst = [Math]::Max($worst, $d)
+    }
+    $top = (Get-UiPatch $bmp $g 6.5 2.8 3 2).L
+    $left = (Get-UiPatch $bmp $g 3 8 3 3).L
+    $right = (Get-UiPatch $bmp $g 10 8 3 3).L
+    $cover = Get-UiCellCoverage $bmp $g $e
+    return @{ Corners = [Math]::Round($worst, 1); Top = [Math]::Round($top, 1); Left = [Math]::Round($left, 1); Right = [Math]::Round($right, 1); Cover = $cover
+        Cube = ($worst -le 30) -and ($top -gt $left + 3) -and ($top -gt $right + 3) -and ($cover -ge 0.75) }
+}
+# Throws unless cell `g` (against the empty cell `e`) holds a GUI cube; returns the report.
+function Assert-UiCellCube([System.Drawing.Bitmap]$bmp, $g, $e, [string]$what, [string]$png) {
+    $t = Test-UiCellCube $bmp $g $e
+    $line = "$what corners $($t.Corners) top $($t.Top) left $($t.Left) right $($t.Right) covers $($t.Cover)"
+    if (-not $t.Cube) { throw "$what is not drawn as a GUI cube in $(Split-Path $png -Leaf): $line (cube: corners <= 30, top lit more than both sides, covers >= 0.75)" }
+    return $line
+}
+
+# The fixture screen's flat items (0: map, 4: compass) cover their slots; its block items (2:
+# cobblestone, 6: twilight oak planks, a TF block) are isometric cubes.
+function Assert-UiSlotItems([string]$png, [string]$layout) {
+    if ($layout -notmatch 'panel=([-\d.]+),([-\d.]+) inv=[-\d.,]+ gui=([\d.]+)x([\d.]+)') { throw "no layout in '$layout'" }
+    $px = [double]$Matches[1]; $py = [double]$Matches[2]; $gw = [double]$Matches[3]; $gh = [double]$Matches[4]
+    Add-Type -AssemblyName System.Drawing
+    $bmp = [System.Drawing.Bitmap]::FromFile($png)
+    try {
+        $report = @()
+        foreach ($s in @(@{ slot = 0; empty = 1; what = 'map (flat)' }, @{ slot = 4; empty = 5; what = 'compass (flat)' })) {
+            $cover = Get-UiCellCoverage $bmp (Get-UiSlotGeometry $bmp $px $py $gw $gh $s.slot) (Get-UiSlotGeometry $bmp $px $py $gw $gh $s.empty)
+            $report += "$($s.what) covers $cover"
+            if ($cover -lt 0.6) { throw "slot $($s.slot), $($s.what), covers only $cover of its width in $(Split-Path $png -Leaf)" }
+        }
+        foreach ($s in @(@{ slot = 2; empty = 1; what = 'cobblestone (block)' }, @{ slot = 6; empty = 5; what = 'twilight oak planks (block)' })) {
+            $report += Assert-UiCellCube $bmp (Get-UiSlotGeometry $bmp $px $py $gw $gh $s.slot) (Get-UiSlotGeometry $bmp $px $py $gw $gh $s.empty) "slot $($s.slot), $($s.what)," $png
+        }
+        Write-Step "slot items: $($report -join '; ')"
+    } finally { $bmp.Dispose() }
+}
+# The fixture HUD layer's cells (from its 'hud layer drawn ... cells=x,y gui=WxH' line): cobblestone,
+# an empty cell, twilight oak planks, 18 GUI pixels apart; both blocks are GUI cubes.
+function Assert-UiHudCubes([string]$png, [string]$line) {
+    if ($line -notmatch 'cells=([-\d.]+),([-\d.]+) gui=([\d.]+)x([\d.]+)') { throw "no cells in '$line'" }
+    $cx = [double]$Matches[1]; $cy = [double]$Matches[2]; $gw = [double]$Matches[3]; $gh = [double]$Matches[4]
+    Add-Type -AssemblyName System.Drawing
+    $bmp = [System.Drawing.Bitmap]::FromFile($png)
+    try {
+        $empty = Get-UiCell $bmp ($cx + 18) $cy $gw $gh
+        $a = Assert-UiCellCube $bmp (Get-UiCell $bmp $cx $cy $gw $gh) $empty 'HUD cobblestone' $png
+        $b = Assert-UiCellCube $bmp (Get-UiCell $bmp ($cx + 36) $cy $gw $gh) $empty 'HUD twilight oak planks' $png
+        Write-Step "HUD block items: $a; $b"
+    } finally { $bmp.Dispose() }
+}
+
 # The `ui.*` run must not touch the untagged real player.
 function Assert-UiUntouched([int]$Since) {
     $lines = @(Get-LeviLog -Since $Since)
@@ -134,7 +238,7 @@ Invoke-Chat "/tag @s remove $tag"   # a world that kept it from an earlier run
 $untagged = Get-LogMark
 $r = Invoke-SelfTest 'ui.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) ui selftest(s) failed" }
-if ($script:Mode -eq 'local' -and $r.Pass -lt 34) { throw "expected at least 34 ui selftests in the client build, got $($r.Pass)" }
+if ($script:Mode -eq 'local' -and $r.Pass -lt 35) { throw "expected at least 35 ui selftests in the client build, got $($r.Pass)" }
 Start-Sleep -Seconds 1
 Assert-UiUntouched $untagged
 
@@ -174,11 +278,16 @@ function Invoke-UiFixture([string]$mode) {
     Invoke-UiTest 'ui.fixture_show' | Out-Null
     $shown = Wait-LogLine 'ui fixture: shown \(' 30 -Since $mark
     Write-Step "fixture shown: $shown"
-    Wait-LogLine 'ui fixture: hud layer drawn' 30 -Since $mark | Out-Null
+    $hud = Wait-LogLine 'ui fixture: hud layer drawn' 30 -Since $mark
     Wait-LogLine 'ui: toast drawn' 30 -Since $mark | Out-Null
-    Wait-LogLine 'ui fixture: world lines drawn' 30 -Since $mark | Out-Null
+    # the toasts' frame is the game's own toast texture (logged once per game session)
+    Wait-LogLine 'ui: toast frame drawn with textures/ui/greyBorder' 30 | Out-Null
+    # an onWorld callback gets no lightAt (drawGeo lights each geometry at its own place)
+    Wait-LogLine 'ui fixture: world lines drawn \(lightAt none\)' 30 -Since $mark | Out-Null
     Start-Sleep -Seconds 2
-    Save-Screenshot "$mode-hud-toast-world" | Out-Null
+    $shot = Save-Screenshot "$mode-hud-toast-world"
+    # the HUD layer's block items (drawn after the game's UI pass): a vanilla and a TF block, cubes
+    Assert-UiHudCubes $shot $hud
 
     # Java's ToastComponent draws nothing while the GUI is hidden (F1)
     $mark = Get-LogMark
@@ -204,7 +313,9 @@ function Invoke-UiFixture([string]$mode) {
     Invoke-UiTest 'ui.fixture_screen' | Out-Null
     $open = Wait-LogLine 'screen opened: GloamingForest UI fixture' 30 -Since $mark
     Start-Sleep -Seconds 2
-    Save-Screenshot "$mode-screen" | Out-Null
+    $shot = Save-Screenshot "$mode-screen"
+    # block items (cobblestone, twilight oak planks) cover their slots like the flat ones (map, compass)
+    Assert-UiSlotItems $shot $open
     # a click on container slot 4 (the compass) reaches the server's screen type
     if ($open -match 'panel=([-\d.]+),([-\d.]+) inv=[-\d.,]+ gui=([\d.]+)x([\d.]+)') {
         $px = [double]$Matches[1]; $py = [double]$Matches[2]; $gw = [double]$Matches[3]; $gh = [double]$Matches[4]
@@ -226,7 +337,25 @@ function Invoke-UiItems([string]$mode) {
     Wait-LogLine "${hostRx}ui fixture: item frame with gf_test:fixture_item placed" 20 -Since $mark | Out-Null
     Wait-UiStage $mark
     Wait-UiLine 'ui fixture: item frame item drawn' 20 $mark | Out-Null
-    Start-Sleep -Seconds 1
+    # the stage's block renderer (fixture block, left of the frame: the fixture geometry lit by the
+    # block above, tracked from its built render chunk) and the twilight oak leaves right of it, tinted
+    # from the game's foliage (red and blue swapped): both must run
+    if (-not $remote -or (Test-ClientTrace)) {
+        $block = Wait-UiLine '^(?!\[host\]).*ui fixture: stage block renderer drawn at' 20 $mark
+        $light = Wait-UiLine '^(?!\[host\]).*render: block renderers drawn, each with the light at its block' 20 0   # once per game session
+        $tint  = Wait-UiLine '^(?!\[host\]).*ui fixture: stage leaves tinted from the game''s foliage' 20 $mark
+        Write-Step "${mode}: stage renderers ran: $block | $light | $tint"
+        # render::hideNameTag in a real frame: of the two named simulated players behind the stage
+        # blocks (a player's name tag is always drawn), the client fixture's rule (type and predicate)
+        # hides one; the name tag pass (ActorRenderDispatcher::extractRenderTextObjects) drops it and
+        # draws the other
+        Wait-LogLine "${hostRx}ui fixture: 2 named player\(s\) placed on the stage" 20 -Since $mark | Out-Null
+        $hidden = Wait-UiLine '^(?!\[host\]).*ui fixture: name tag of ''GF_UI_hidden_tag'' hidden' 20 $mark
+        $pass   = Wait-UiLine '^(?!\[host\]).*render: name tag hidden \(minecraft:player\)' 20 0   # once per game session
+        $shown  = Wait-UiLine '^(?!\[host\]).*ui fixture: name tag of ''GF_UI_shown_tag'' left drawn' 20 $mark
+        Write-Step "${mode}: name tags: $hidden | $pass | $shown"
+    }
+    Start-Sleep -Seconds 2
     Save-Screenshot "$mode-frame" | Out-Null
     Invoke-UiTest 'ui.fixture_clear' | Out-Null
 
