@@ -327,7 +327,13 @@ Container* hopperContainerAt(BlockSource& region, BlockPos const& pos) {
     if (region.getLevel().isClientSide()) return nullptr;
     // a data-driven block actor (minecraft:block_entity) of a block hoppers may reach
     auto* actor = region.getBlockEntity(pos);
-    if (!actor || actor->getType() != BlockActorType::DataDriven) return nullptr;
+    if (!actor) {
+        // a TF chest half saved without its block actor: it gets one at the end of the tick (with
+        // its partner), and the hopper sees the chest from the next tick on
+        detail::settleWithoutActor(region, pos);
+        return nullptr;
+    }
+    if (actor->getType() != BlockActorType::DataDriven) return nullptr;
     auto  gp = game::globalPos(region, pos);
     auto& s  = lookup(region, pos, gp, region.getBlock(pos));
     if (!s.visible || s.halves.empty()) return nullptr;

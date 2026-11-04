@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <initializer_list>
 #include <map>
 #include <random>
 #include <string>
@@ -196,6 +197,12 @@ bool stacksInBlockData(BlockSource& region, GlobalPos const& p, int slot, ItemSt
     chunk->_placeBlockEntity(actor);
     auto* c = inv::nativeContainer(region, bp(p));
     return c != nullptr && countIn(c, items::idOf(s)) == 0 && gf::inventory::ext::hasBlockDataStacks(p);
+}
+
+/// Forgets the waiting loads of the chunks of `ps` (a chunk the test area loaded may still be on the
+/// loaded-chunk retry, which would give a chest the test left without a block actor one meanwhile).
+void forgetLoads(std::initializer_list<GlobalPos> ps) {
+    for (auto const& p : ps) fam::detail::forgetLoadedChunk(p.dim, bp(p).x >> 4, bp(p).z >> 4);
 }
 
 /// A player of the test by its unique id (nullptr: gone).
@@ -857,6 +864,7 @@ GF_REGISTER_SELFTEST("families.chest_migrate_click_double", [](Context& ctx) -> 
     ctx.require(ca != nullptr, "the left half has its block actor");
     ca->setItem(0, stack("minecraft:flint", 1));
     ctx.require(stacksWithoutActor(region(), b, 4, stack("minecraft:emerald", 2)), "the right half's 2 emeralds in block data, no block actor");
+    forgetLoads({a, b});
     ctx.require(inv::nativeContainer(region(), bp(a)) != nullptr, "the left half keeps its block actor");
     CompanionScope companion(ctx);
     auto           uid = ctx.player().getOrCreateUniqueID().rawID;
@@ -917,6 +925,7 @@ GF_REGISTER_SELFTEST("families.chest_hopper_half_without_actor", [](Context& ctx
     co_await ctx.ticks(2);
     ctx.require(inv::nativeContainer(region(), bp(a)) != nullptr, "the left half has its block actor");
     ctx.require(stacksWithoutActor(region(), b, 4, stack("minecraft:emerald", 2)), "the right half's 2 emeralds in block data, no block actor");
+    forgetLoads({a, b});
     co_await ctx.ticks(3);
     ctx.require(region().getBlockEntity(bp(b)) == nullptr && waitingInBlockData(region(), b), "nothing else gives the right half its block actor meanwhile (the chunk ticked long ago)");
     auto* view = fam::hopperContainerAt(region(), bp(a));
@@ -929,6 +938,23 @@ GF_REGISTER_SELFTEST("families.chest_hopper_half_without_actor", [](Context& ctx
     view = fam::hopperContainerAt(region(), bp(a));
     ctx.check(view && view->getContainerSize() == 54 && items::idOf(view->getItem(4)) == "minecraft:emerald",
               "the next look sees the double chest's 54 slots, the right half first (" + std::to_string(view ? view->getContainerSize() : 0) + " slots)");
+    // a look at the half WITHOUT a block actor (Java's getContainer reaches the double chest from
+    // either half): nothing that tick, no block actor made inside the look; at the end of the tick
+    // the half gets its block actor, and the next look sees the 54 slots from that half too
+    ctx.require(stacksWithoutActor(region(), b, 5, stack("minecraft:apple", 1)), "the right half without its block actor again, an apple in block data");
+    forgetLoads({a, b});
+    co_await ctx.ticks(3);
+    ctx.require(region().getBlockEntity(bp(b)) == nullptr && waitingInBlockData(region(), b), "nothing else gives the right half its block actor meanwhile");
+    view = fam::hopperContainerAt(region(), bp(b));
+    ctx.check(view == nullptr, "the hopper's first look at the right half sees nothing yet");
+    ctx.check(region().getBlockEntity(bp(b)) == nullptr, "no block actor was made inside that look");
+    co_await ctx.ticks(2);
+    cb = inv::nativeContainer(region(), bp(b));
+    ctx.check(cb && items::idOf(cb->getItem(5)) == "minecraft:apple" && !waitingInBlockData(region(), b),
+              "the end of that tick gave the right half its block actor with the apple in its slot");
+    view = fam::hopperContainerAt(region(), bp(b));
+    ctx.check(view && view->getContainerSize() == 54 && items::idOf(view->getItem(5)) == "minecraft:apple",
+              "the next look at the right half sees the 54 slots, the right half first (" + std::to_string(view ? view->getContainerSize() : 0) + " slots)");
     for (auto const& q : {a, b}) emptyAndClear(region(), q);
     (void)box;
 });

@@ -387,6 +387,14 @@ void chunkLoaded(int dim, int cx, int cz);
 [[nodiscard]] long long chunkLoadsSeen();
 /// Settles the chunks noted since the last tick now (selftests).
 void settleLoadedChunksNow();
+/// Forgets the loads of chunk (cx, cz) of dimension `dim` that still wait to be settled (selftests
+/// that set up a chest without a block actor and must not see a retry give it one).
+void forgetLoadedChunk(int dim, int cx, int cz);
+/// A hopper looks at `pos`, which has no block actor: when it is a TF chest half (saved without its
+/// block actor), it and its partner are settled as settleForAccess does it (the block actor is made
+/// at the end of the tick, never inside the game's hopper code), so from the next tick on the
+/// hopper sees the chest from this half too.
+void settleWithoutActor(BlockSource& region, BlockPos const& pos);
 } // namespace detail
 
 } // namespace gf::feature::families

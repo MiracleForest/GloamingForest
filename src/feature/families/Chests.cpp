@@ -261,21 +261,32 @@ int settleAround(BlockSource& region, int cx, int cz, bool once) {
 
 // ---- chunks that load (BlockActorLevelListener::onChunkLoaded) --------------------------------------
 
-struct LoadedChunk {
-    int          dim = 0, cx = 0, cz = 0;
-    std::int64_t since = -1; ///< families::now() of the first tick that saw it (-1: none yet)
-};
+using ChunkKey = std::tuple<int, int, int>; ///< (dimension, x, z)
 
 /// The chunks the game loaded since the last tick (the hook may run off the server thread: only
 /// noted here, settled in the tick).
 struct LoadedChunks {
-    std::mutex               mutex;
-    std::vector<LoadedChunk> chunks;
-    std::atomic<long long>   seen{0}; ///< chunk loads noted (selftests)
+    std::mutex             mutex;
+    std::vector<ChunkKey>  noted;
+    std::atomic<long long> seen{0}; ///< chunk loads noted (selftests)
 };
 LoadedChunks& loadedChunks() {
     static LoadedChunks l;
     return l;
+}
+
+/// A loaded chunk that waits to be settled (server thread only).
+struct PendingChunk {
+    std::int64_t since   = 0; ///< families::now() of the tick that heard its (last) load
+    std::int64_t nextDue = 0; ///< the tick it is tried again
+};
+struct PendingChunks {
+    std::map<ChunkKey, PendingChunk> chunks;
+    bool                             warned = false; ///< the overflow was logged in this world
+};
+PendingChunks& pendingChunks() {
+    static PendingChunks p;
+    return p;
 }
 
 /// The chunks loaded since the last tick: their chests with stacks still in block data get their
@@ -283,51 +294,58 @@ LoadedChunks& loadedChunks() {
 /// or not (beyond the simulation distance a chunk is loaded without ticking, while a comparator or a
 /// hopper next to it, or any code through the inventory contract, reads its chests). A chunk not
 /// fully loaded yet is tried again every tick for kFastRetryTicks, then once every kSlowRetryTicks
-/// for as long as the game keeps it loaded (one that unloads is noted again when it loads again).
-constexpr std::int64_t kFastRetryTicks = 100;
-constexpr std::int64_t kSlowRetryTicks = 20;
+/// for as long as the game keeps it loaded (one that unloads is noted again when it loads again; a
+/// new load of a chunk that still waits starts its fast retry again).
+constexpr std::int64_t kFastRetryTicks  = 100;
+constexpr std::int64_t kSlowRetryTicks  = 20;
 constexpr std::size_t  kMaxLoadedChunks = 16384;
 void settleLoadedChunks() {
-    std::vector<LoadedChunk> chunks;
+    std::vector<ChunkKey> noted;
     {
         auto&           l = loadedChunks();
         std::lock_guard lock(l.mutex);
-        chunks.swap(l.chunks);
+        noted.swap(l.noted);
     }
-    if (chunks.empty()) return;
-    auto                     now = families::now();
-    std::vector<LoadedChunk>            later;
-    std::set<std::tuple<int, int, int>> handled; // (a chunk noted again while it waits: once a tick)
-    for (auto c : chunks) {
-        if (!handled.insert(std::make_tuple(c.dim, c.cx, c.cz)).second) continue;
-        if (c.since < 0) c.since = now;
-        auto age    = now - c.since;
-        auto region = regionOf(c.dim);
-        if (age >= kFastRetryTicks) {
-            // the slow retry: dropped once the chunk is gone (or its dimension never got a region)
-            if (!region || !region->getChunk(c.cx, c.cz)) continue;
-            if (age % kSlowRetryTicks != 0) {
-                later.push_back(c);
-                continue;
-            }
-        }
-        // (no region for the dimension yet, or the chunk not fully loaded: tried again)
-        if (!region || !region->areChunksFullyLoaded(BlockPos{c.cx * 16 + 8, 0, c.cz * 16 + 8}, 0)) {
-            later.push_back(c);
+    auto& pending = pendingChunks();
+    auto  now     = families::now();
+    for (auto const& k : noted) pending.chunks[k] = PendingChunk{now, now};
+    if (pending.chunks.empty()) return;
+    for (auto it = pending.chunks.begin(); it != pending.chunks.end();) {
+        auto& c = it->second;
+        if (c.nextDue > now) { // (waiting for its next retry: costs one comparison)
+            ++it;
             continue;
         }
-        (void)settleChestsOf(*region, c.cx, c.cz, true);
+        auto [dim, cx, cz] = it->first;
+        auto age           = now - c.since;
+        auto region        = regionOf(dim);
+        // the slow retry: dropped once the chunk is gone (or its dimension never got a region)
+        if (age >= kFastRetryTicks && (!region || !region->getChunk(cx, cz))) {
+            it = pending.chunks.erase(it);
+            continue;
+        }
+        // (no region for the dimension yet, or the chunk not fully loaded: tried again)
+        if (!region || !region->areChunksFullyLoaded(BlockPos{cx * 16 + 8, 0, cz * 16 + 8}, 0)) {
+            c.nextDue = now + (age < kFastRetryTicks ? 1 : kSlowRetryTicks);
+            ++it;
+            continue;
+        }
+        (void)settleChestsOf(*region, cx, cz, true);
+        it = pending.chunks.erase(it);
     }
-    if (later.size() > kMaxLoadedChunks) {
-        log().warn("families: {} loaded chunks still wait to be settled, the oldest {} are left to their first tick", later.size(), later.size() - kMaxLoadedChunks);
-        later.erase(later.begin(), later.end() - static_cast<std::ptrdiff_t>(kMaxLoadedChunks));
+    if (pending.chunks.size() <= kMaxLoadedChunks) return;
+    // the oldest are left to their first tick (or a neighbour's): logged once a world
+    auto excess = pending.chunks.size() - kMaxLoadedChunks;
+    if (!pending.warned) {
+        pending.warned = true;
+        log().warn("families: {} loaded chunks still wait to be settled, the oldest {} are left to their first tick", pending.chunks.size(), excess);
     }
-    if (later.empty()) return;
-    auto&           l = loadedChunks();
-    std::lock_guard lock(l.mutex);
-    l.chunks.insert(l.chunks.end(), later.begin(), later.end());
+    std::vector<std::pair<std::int64_t, ChunkKey>> bySince;
+    bySince.reserve(pending.chunks.size());
+    for (auto const& [k, c] : pending.chunks) bySince.emplace_back(c.since, k);
+    std::nth_element(bySince.begin(), bySince.begin() + static_cast<std::ptrdiff_t>(excess), bySince.end());
+    for (std::size_t i = 0; i < excess; ++i) pending.chunks.erase(bySince[i].second);
 }
-
 // ---- a hopper's or a comparator's read -------------------------------------------------------------------
 
 /// The halves settled this tick (settleForAccess).
@@ -421,8 +439,28 @@ void detail::settleForAccess(BlockSource& region, GlobalPos const& pos) {
 void detail::chunkLoaded(int dim, int cx, int cz) {
     auto&           l = loadedChunks();
     std::lock_guard lock(l.mutex);
-    l.chunks.push_back(LoadedChunk{dim, cx, cz, -1}); // (the tick is noted on the server thread)
+    l.noted.emplace_back(dim, cx, cz); // (the tick is noted on the server thread)
     ++l.seen;
+}
+
+void detail::forgetLoadedChunk(int dim, int cx, int cz) {
+    auto key = std::make_tuple(dim, cx, cz);
+    {
+        auto&           l = loadedChunks();
+        std::lock_guard lock(l.mutex);
+        std::erase(l.noted, key);
+    }
+    pendingChunks().chunks.erase(key);
+}
+
+void detail::settleWithoutActor(BlockSource& region, BlockPos const& pos) {
+    // (the cheap test first: a hopper looks at many blocks that have no container)
+    Block const& b = region.getBlock(pos);
+    if (b.getBlockType().getBlockEntityType() == BlockActorType::Undefined || !isChest(entryOf(b))) return;
+    // Java's ChestBlock#getContainer reaches both halves from either: the half looked at and its
+    // partner settle the way settleForAccess does it from the half that has a block actor
+    detail::settleForAccess(region, game::globalPos(region, pos));
+    if (auto other = chestPartner(region, pos)) detail::settleForAccess(region, game::globalPos(region, *other));
 }
 
 long long detail::chunkLoadsSeen() { return loadedChunks().seen.load(); }
@@ -482,10 +520,11 @@ void chestsTick(int) {
 void clearChests() {
     lids().clear();
     neighbourSettled().clear();
-    accessMemo() = AccessMemo{};
+    accessMemo()    = AccessMemo{};
+    pendingChunks() = PendingChunks{};
     auto&           l = loadedChunks();
     std::lock_guard lock(l.mutex);
-    l.chunks.clear();
+    l.noted.clear();
 }
 } // namespace detail
 
