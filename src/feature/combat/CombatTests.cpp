@@ -304,7 +304,13 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
     auto note = fx::noteColor(0.f);
     ctx.check(std::abs(note.r - 0.35f) < 1e-4f && std::abs(note.g - 0.9129f) < 1e-3f && note.b == 0.f, "note 0 is NoteParticle's green");
     auto orange = fx::colorOf(JsonT{{"color", 0xFF8000}}, std::nullopt);
-    ctx.check(orange.r == 1.f && std::abs(orange.g - 128 / 255.f) < 1e-4f && orange.b == 0.f, "params color 0xRRGGBB");
+    ctx.check(orange.r == 1.f && std::abs(orange.g - 128 / 255.f) < 1e-4f && orange.b == 0.f && orange.a == 1.f, "params color 0xRRGGBB is opaque");
+    // ColorParticleOption (entity_effect) colours are ARGB ints: the alpha byte is kept
+    auto argb = fx::colorOf(JsonT{{"color", std::int64_t{0x80FF8000}}}, std::nullopt);
+    ctx.check(argb.r == 1.f && std::abs(argb.g - 128 / 255.f) < 1e-4f && argb.b == 0.f && std::abs(argb.a - 128 / 255.f) < 1e-4f,
+              "params color 0xAARRGGBB keeps alpha 0x80");
+    auto opaqueArgb = fx::colorOf(JsonT{{"color", std::int64_t{0xFF7F33CC}}}, std::nullopt);
+    ctx.check(opaqueArgb.a == 1.f && std::abs(opaqueArgb.r - 0x7F / 255.f) < 1e-4f, "params color 0xFF7F33CC is opaque");
     auto listed = fx::colorOf(JsonT{{"color", {0.1, 0.2, 0.3, 0.4}}}, std::nullopt);
     ctx.check(listed.r == 0.1f && listed.a == 0.4f && fx::colorOf(JsonT::object(), fx::Rgba{0.5f, 0.5f, 0.5f, 1.f}).r == 0.5f, "params color [r, g, b, a] and the fallback");
 

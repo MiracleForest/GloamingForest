@@ -129,8 +129,11 @@ Rgba colorOf(nlohmann::json const& params, std::optional<Rgba> const& fallback) 
         auto c = params.find("color");
         if (c != params.end()) {
             if (c->is_number_integer()) {
-                auto v = c->get<std::int64_t>();
-                return Rgba{((v >> 16) & 0xff) / 255.f, ((v >> 8) & 0xff) / 255.f, (v & 0xff) / 255.f, 1.f};
+                // 0xRRGGBB, or ColorParticleOption's ARGB int (entity_effect): the alpha byte when
+                // any of bits 24-31 is set, else opaque
+                auto       v = c->get<std::int64_t>();
+                auto const a = (v >> 24) & 0xff;
+                return Rgba{((v >> 16) & 0xff) / 255.f, ((v >> 8) & 0xff) / 255.f, (v & 0xff) / 255.f, a != 0 ? a / 255.f : 1.f};
             }
             if (c->is_array() && (c->size() == 3 || c->size() == 4) && std::all_of(c->begin(), c->end(), [](auto const& x) { return x.is_number(); })) {
                 return Rgba{(*c)[0].get<float>(), (*c)[1].get<float>(), (*c)[2].get<float>(), c->size() == 4 ? (*c)[3].get<float>() : 1.f};

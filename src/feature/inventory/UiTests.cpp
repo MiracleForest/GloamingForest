@@ -517,13 +517,14 @@ GF_REGISTER_SELFTEST("combat.ui_fx_vanilla", [](Context& ctx) -> ll::coro::CoroT
     }
     beginUiTest(*p);
     // every mapped Java particle type, 3 blocks ahead, with the velocity and params TF passes
-    emitEachTick(p->getOrCreateUniqueID().rawID, 40, [](Player& pl) {
+    // the mapped types once (vanillaParticleIds builds and sorts the list), not on every tick
+    emitEachTick(p->getOrCreateUniqueID().rawID, 40, [ids = gf::fx::vanillaParticleIds()](Player& pl) {
         auto at = pl.getPosition() + pl.getViewVector(0.f) * 3.f;
-        for (auto const& id : gf::fx::vanillaParticleIds()) {
+        for (auto const& id : ids) {
             nlohmann::json params = nlohmann::json::object();
             if (id == "minecraft:item") params = {{"item", "minecraft:bone"}};
             if (id == "minecraft:block" || id == "minecraft:falling_dust") params = {{"block", "minecraft:oak_leaves"}};
-            if (id == "minecraft:entity_effect") params = {{"color", 0x7F33CC}};
+            if (id == "minecraft:entity_effect") params = {{"color", 0xFF7F33CC}}; // ColorParticleOption ARGB
             gf::fx::particle(pl.getDimension(), id, at, Vec3{0.f, 0.05f, 0.f}, 1, params);
         }
     });
