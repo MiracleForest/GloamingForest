@@ -9,8 +9,8 @@
 // - stage renderers (the frame step, "stage": its origin): a block renderer on the fixture block left
 //   of the frame (the fixture geometry, lit by the block above it) and a tint of the twilight oak
 //   leaves right of it built on the game's foliage colour (red and blue swapped on the stage only),
-//   and a name tag rule for the two named armor stands behind them (render::hideNameTag by type and
-//   predicate: the one named "GF UI hidden name tag" loses its name tag, the other keeps it);
+//   and a name tag rule for the two named simulated players behind them (render::hideNameTag by type
+//   and predicate: the one named GF_UI_hidden_tag loses its name tag, the other keeps it);
 // - world: a line box around the block below the player, a line up to the sky and the fixture
 //   geometry (geometry.gf_ui.fixture) drawn with drawGeo in front of the player;
 // - fog: a provider for the player's dimension (red fog 4..24 blocks, clouds at y 160), and a sky
@@ -236,7 +236,7 @@ struct StageAt {
     std::atomic<int>  x{0}, y{0}, z{0};
     std::atomic<bool> loggedBlock{false}, loggedTint{false}, loggedHiddenTag{false}, loggedShownTag{false};
     int               ticks = 0; // client thread: ticks since the stage renderers came on
-    std::optional<render::NameTagFn> keptStandRule; // client thread: the armor stand rule before the stage
+    std::optional<render::NameTagFn> keptStandRule; // client thread: the player rule before the stage
 };
 StageAt& stageAt() {
     static StageAt s;
@@ -272,9 +272,9 @@ unsigned tintStageLeaves(BlockPos const& p, tint::GameColors const& game) {
     return swapped;
 }
 
-constexpr char kStageStand[] = "minecraft:armor_stand";
+constexpr char kStageStand[] = "minecraft:player";
 
-/// The name tag rule of the stage's armor stands (gf::ui::fixture::placeNameTagStands): the one named
+/// The name tag rule of the stage's players (gf::ui::fixture::placeNameTagPlayers): the one named
 /// kHiddenNameTag is hidden, the one named kShownNameTag keeps its name tag (render thread).
 bool hideStageStandTag(Actor const& a) {
     auto const& name = a.getNameTag();
@@ -292,7 +292,7 @@ void setStage(std::optional<BlockPos> origin) {
         if (!s.on.exchange(false)) return;
         render::unregisterBlockRenderer(kFixtureHead);
         tint::unregisterBlock(kStageLeaves);
-        // the armor stand rule from before the stage is back (or none)
+        // the player rule from before the stage is back (or none)
         if (s.keptStandRule) render::hideNameTag(kStageStand, *s.keptStandRule);
         else render::showNameTag(kStageStand);
         s.keptStandRule.reset();
@@ -315,11 +315,12 @@ void setStage(std::optional<BlockPos> origin) {
 /// What the client sees on the stage 3 s after the renderers came on, when none of them ran yet.
 void tickStage() {
     auto& s = stageAt();
-    if (!s.on || ++s.ticks != 60 || (s.loggedBlock && s.loggedTint)) return;
+    if (!s.on || ++s.ticks != 60) return;
     auto* p = currentPlayer();
     if (!p) return;
     auto& region = p->getDimensionBlockSource();
     int   x = s.x, y = s.y, z = s.z;
+    if (s.loggedBlock && s.loggedTint) return;
     log().warn(
         "ui fixture: stage renderers not run yet (block {}, tint {}); the client sees {} and {} beside the frame", s.loggedBlock.load(), s.loggedTint.load(),
         game::blockId(region.getBlock(BlockPos{x - 1, y, z + 2})), game::blockId(region.getBlock(BlockPos{x + 1, y, z + 2}))

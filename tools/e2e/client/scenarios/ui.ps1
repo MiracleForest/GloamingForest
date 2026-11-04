@@ -15,7 +15,7 @@
 #   must correct a real client's move and a distance rule must not correct a respawn (the server
 #   turns doimmediaterespawn / keepinventory on and puts their earlier values back). The framed map
 #   leaves the player icon out (Java's showOnItemFrame). The frame step's stage also holds a block
-#   renderer, a tint on the game's foliage and two named armor stands, one of whose name tags the
+#   renderer, a tint on the game's foliage and two named simulated players, one of whose name tags the
 #   client hides with render::hideNameTag (the other stays drawn). Blocks go on the stage in the ui selftest
 #   row; ui.fixture_clear puts the stage and the player back after each step. All of it twice in
 #   local mode: Classic (graphics_mode 1, set by ui.prelaunch.ps1) and Vibrant Visuals (graphics_mode
@@ -345,13 +345,14 @@ function Invoke-UiItems([string]$mode) {
         $light = Wait-UiLine '^(?!\[host\]).*render: block renderers drawn, each with the light at its block' 20 0   # once per game session
         $tint  = Wait-UiLine '^(?!\[host\]).*ui fixture: stage leaves tinted from the game''s foliage' 20 $mark
         Write-Step "${mode}: stage renderers ran: $block | $light | $tint"
-        # render::hideNameTag in a real frame: of the two named armor stands behind the stage blocks
-        # (name tags always shown), the client fixture's rule (type and predicate) hides one; the name
-        # tag pass (ActorRenderDispatcher::extractRenderTextObjects) drops it and draws the other
-        Wait-LogLine "${hostRx}ui fixture: 2 named armor stand\(s\) placed on the stage" 20 -Since $mark | Out-Null
-        $hidden = Wait-UiLine '^(?!\[host\]).*ui fixture: name tag of ''GF UI hidden name tag'' hidden' 20 $mark
-        $pass   = Wait-UiLine '^(?!\[host\]).*render: name tag hidden \(minecraft:armor_stand\)' 20 0   # once per game session
-        $shown  = Wait-UiLine '^(?!\[host\]).*ui fixture: name tag of ''GF UI shown name tag'' left drawn' 20 $mark
+        # render::hideNameTag in a real frame: of the two named simulated players behind the stage
+        # blocks (a player's name tag is always drawn), the client fixture's rule (type and predicate)
+        # hides one; the name tag pass (ActorRenderDispatcher::extractRenderTextObjects) drops it and
+        # draws the other
+        Wait-LogLine "${hostRx}ui fixture: 2 named player\(s\) placed on the stage" 20 -Since $mark | Out-Null
+        $hidden = Wait-UiLine '^(?!\[host\]).*ui fixture: name tag of ''GF_UI_hidden_tag'' hidden' 20 $mark
+        $pass   = Wait-UiLine '^(?!\[host\]).*render: name tag hidden \(minecraft:player\)' 20 0   # once per game session
+        $shown  = Wait-UiLine '^(?!\[host\]).*ui fixture: name tag of ''GF_UI_shown_tag'' left drawn' 20 $mark
         Write-Step "${mode}: name tags: $hidden | $pass | $shown"
     }
     Start-Sleep -Seconds 2

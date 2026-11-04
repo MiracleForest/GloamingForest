@@ -24,6 +24,7 @@
 #include <filesystem>
 #include <map>
 #include <optional>
+#include <string_view>
 #include <unordered_map>
 
 #include "ll/api/command/CommandRegistrar.h"
@@ -34,11 +35,9 @@
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/server/commands/CommandPermissionLevel.h"
+#include "mc/server/SimulatedPlayer.h"
 #include "mc/server/commands/ServerCommandOrigin.h"
-#include "mc/world/actor/Actor.h"
-#include "mc/world/actor/ActorFlags.h"
 #include "mc/world/actor/ActorType.h"
-#include "mc/world/actor/provider/SynchedActorDataAccess.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemInstance.h"
@@ -60,7 +59,6 @@
 #include "feature/ext/ui/Server.h"
 #include "feature/movement/Movement.h"
 #include "feature/net/Net.h"
-#include "feature/spawn/Spawn.h"
 #include "feature/ui/Ui.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -380,7 +378,7 @@ int clearStage() {
         log().warn("ui fixture: the stage is not loaded; a later ui.fixture_clear restores it");
         return 0;
     }
-    removeNameTagStands(*region, s.blocks.front().pos);
+    removeNameTagPlayers();
     for (auto const& b : s.blocks) emptyFrame(*region, b.pos);
     for (auto const& b : s.blocks) {
         auto const* want = game::blockWithStates(b.id, b.states);
@@ -431,7 +429,7 @@ bool prepareStage(BlockSource& region, BlockPos const& origin) {
     // the fixture's own frames are emptied (nothing drops); a frame of the untouched world is left as
     // the game removes it (its item drops rather than vanishes: the snapshot keeps no block entities)
     if (fixtureBlocks) {
-        removeNameTagStands(region, BlockPos{origin.x - 1, origin.y - 1, origin.z});
+        removeNameTagPlayers();
         forStageBox(origin, [&](BlockPos const& p) { emptyFrame(region, p); });
     }
     forStageBox(origin, [&](BlockPos const& p) {
@@ -442,46 +440,52 @@ bool prepareStage(BlockSource& region, BlockPos const& origin) {
 }
 
 namespace {
-/// The armor stands of placeNameTagStands in the stage box whose north-west bottom corner is `min`.
-std::vector<Actor*> nameTagStands(BlockSource& region, BlockPos const& min) {
-    AABB box{
-        Vec3{static_cast<float>(min.x), static_cast<float>(min.y), static_cast<float>(min.z)},
-        Vec3{static_cast<float>(min.x + 3), static_cast<float>(min.y + 5), static_cast<float>(min.z + 5)}
-    };
-    std::vector<Actor*> out;
-    for (auto* a : region.getEntities(box, 0.f, ActorType::ArmorStand)) {
-        if (!a) continue;
-        auto const& name = a->getNameTag();
-        if (name == kHiddenNameTag || name == kShownNameTag) out.push_back(a);
-    }
+/// The simulated players of placeNameTagPlayers in the level named `name` (the game appends "(2)", ...
+/// to a name that is taken), or with either name when `name` is null.
+std::vector<SimulatedPlayer*> nameTagPlayers(char const* name = nullptr) {
+    std::vector<SimulatedPlayer*> out;
+    auto                          level = ll::service::getLevel();
+    if (!level) return out;
+    level->forEachPlayer([&out, name](Player& p) {
+        if (!p.isSimulated()) return true;
+        auto const& n = p.getRealName();
+        for (char const* want : {kHiddenNameTag, kShownNameTag}) {
+            if ((!name || std::string_view(name) == want) && n.starts_with(want)) {
+                out.push_back(static_cast<SimulatedPlayer*>(&p));
+                break;
+            }
+        }
+        return true;
+    });
     return out;
 }
 } // namespace
 
-int placeNameTagStands(BlockSource& region, BlockPos const& origin) {
-    removeNameTagStands(region, BlockPos{origin.x - 1, origin.y - 1, origin.z});
+int placeNameTagPlayers(BlockSource& region, BlockPos const& origin) {
     int n = 0;
-    // behind the stage's blocks (z + 4), their name tags above them: the client fixture hides the
+    // behind the stage's blocks (z + 4), their name tags above them (a player's name tag is always
+    // drawn, unlike a named mob's, which needs the crosshair on it): the client fixture hides the
     // first one (render::hideNameTag) and leaves the second one drawn
-    std::pair<int, char const*> const stands[] = {{-1, kHiddenNameTag}, {1, kShownNameTag}};
-    for (auto const& [dx, name] : stands) {
+    std::pair<int, char const*> const players[] = {{-1, kHiddenNameTag}, {1, kShownNameTag}};
+    for (auto const& [dx, name] : players) {
         Vec3 at{static_cast<float>(origin.x + dx) + .5f, static_cast<float>(origin.y), static_cast<float>(origin.z + 4) + .5f};
-        auto* a = spawn::spawnMob(region, "minecraft:armor_stand", at, spawn::SpawnReason::Command);
-        if (!a) continue;
-        a->setNameTag(name);
-        // a Bedrock name tag is drawn while the crosshair is on the entity unless it is always shown
-        // (what the client's ActorRenderDispatcher::extractRenderTextObjects runs for)
-        SynchedActorDataAccess::setActorFlag(a->getEntityContext(), ActorFlags::AlwaysShowName, true);
-        ++n;
+        // one player per name: an earlier one is moved here (a disconnected one leaves only at the
+        // end of the tick, and a new player with its name would get another name)
+        auto existing = nameTagPlayers(name);
+        for (std::size_t i = 1; i < existing.size(); ++i) existing[i]->simulateDisconnect();
+        if (!existing.empty()) {
+            existing.front()->teleport(at, region.getDimensionId(), Vec2{0.f, 180.f});
+            ++n;
+        } else if (SimulatedPlayer::create(name, at, region.getDimensionId())) ++n;
     }
-    log().info("ui fixture: {} named armor stand(s) placed on the stage ('{}' hidden, '{}' shown)", n, kHiddenNameTag, kShownNameTag);
+    log().info("ui fixture: {} named player(s) placed on the stage ('{}' hidden, '{}' shown)", n, kHiddenNameTag, kShownNameTag);
     return n;
 }
 
-int removeNameTagStands(BlockSource& region, BlockPos const& min) {
+int removeNameTagPlayers() {
     int n = 0;
-    for (auto* a : nameTagStands(region, min)) {
-        a->despawn(); // nothing drops
+    for (auto* p : nameTagPlayers()) {
+        p->simulateDisconnect();
         ++n;
     }
     return n;
