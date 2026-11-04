@@ -30,7 +30,7 @@ enum EffectVar : std::uint32_t {
     kVarBlock           = 1u << 7, ///< legacy data: params "block" (id, optional "states")
     kVarExplosionVelocity = 1u << 8, ///< with kVarVelocity: explosion_particle's `-velocity * 10` blocks/s (effectVelocity)
     kVarCritDirection   = 1u << 9,  ///< with kVarDirection: CritParticle's motion (critDirection)
-    kVarDustColor       = 1u << 10, ///< legacy data: params "color" (DustParticleOptions) as ARGB
+    kVarDustColor       = 1u << 10, ///< params "color" (DustParticleOptions) picks the particle (dustFor)
 };
 
 struct Rgba {
@@ -157,9 +157,10 @@ void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocit
 /// CritParticle's motion: Particle's motion of a still particle times 0.1 plus 0.4 * the speed.
 [[nodiscard]] Vec3 critDirection(std::mt19937& rng, Vec3 const& velocity);
 
-/// The legacy RedDust data of a dust particle: DustParticleOptions' colour (params "color",
-/// `fallback` without) as 0xAARRGGBB with alpha 255.
-[[nodiscard]] int dustArgb(nlohmann::json const& params, std::optional<Rgba> const& fallback);
+/// How a dust particle (kVarDustColor) of DustParticleOptions' colour (params "color", `r.color`
+/// without) is shown: Java's redstone red (1, 0, 0) as Bedrock's legacy RedDust (its data is no
+/// colour: the game draws it red), any other colour as the falling_dust effect tinted with it.
+[[nodiscard]] Resolved dustFor(Resolved r, nlohmann::json const& params);
 
 /// The colour a particle gets: params "color" (an integer 0xRRGGBB, or [r, g, b(, a)] in 0..1),
 /// else `fallback` (white without).

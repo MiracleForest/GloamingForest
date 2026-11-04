@@ -124,12 +124,6 @@ Vec3 critDirection(std::mt19937& rng, Vec3 const& velocity) {
     return Vec3{m.x * 0.1f + velocity.x * 0.4f, m.y * 0.1f + velocity.y * 0.4f, m.z * 0.1f + velocity.z * 0.4f};
 }
 
-int dustArgb(nlohmann::json const& params, std::optional<Rgba> const& fallback) {
-    auto c       = colorOf(params, fallback);
-    auto channel = [](float v) { return static_cast<std::uint32_t>(std::lround(std::clamp(v, 0.f, 1.f) * 255.f)); };
-    return static_cast<int>(0xFF000000u | (channel(c.r) << 16) | (channel(c.g) << 8) | channel(c.b));
-}
-
 Rgba colorOf(nlohmann::json const& params, std::optional<Rgba> const& fallback) {
     if (params.is_object()) {
         auto c = params.find("color");

@@ -87,8 +87,11 @@ namespace {
 //     still particle * 0.1 plus 0.4 * the speed), so a still crit scatters as in Java.
 //   - poof: explosion_particle's speed is -variable.velocity * 10 blocks/s plus its own noise
 //     (always set): it gets -2 * velocity, Java's ExplodeParticle speed of velocity blocks/tick.
-//   - dust: Bedrock's legacy RedDust particle with DustParticleOptions' colour (params "color",
-//     red by default) as its ARGB data (the scale is not carried).
+//   - dust: DustParticleOptions' colour (params "color", red by default) picks the particle
+//     (dustFor): redstone red is Bedrock's legacy RedDust (always red: its data is no colour, a
+//     client check showed purple data drawn red), any other colour the falling_dust effect tinted
+//     with it (a small square drifting for 1.4..7 s, Java's DustParticle lives 0.4..2 s and hovers).
+//     The scale is not carried.
 //   - note: note_particle's colour is NoteParticle's hue from the x speed.
 //   - entity_effect / effect: mobspell_emitter's colour (params "color", white by default).
 //   - falling_dust: the block's map colour (params "block") or params "color".
@@ -453,10 +456,9 @@ Block const* paramBlock(nlohmann::json const& params) {
 }
 
 /// The data of a legacy particle: IconCrack (item network id << 16 | aux), Terrain (block network
-/// id), RedDust (ARGB colour), 0 for the others. nullopt (warned once) when params name no known
+/// id), 0 for the others. nullopt (warned once) when params name no known
 /// item / block.
 std::optional<int> legacyData(Resolved const& r, std::string const& particleId, nlohmann::json const& params) {
-    if (r.vars & kVarDustColor) return dustArgb(params, r.color);
     if (r.vars & kVarItem) {
         std::string id = params.is_object() && params.contains("item") && params["item"].is_string() ? params["item"].get<std::string>() : std::string{};
         int         aux = params.is_object() && params.contains("aux") && params["aux"].is_number_integer() ? params["aux"].get<int>() : 0;
@@ -494,8 +496,24 @@ Rgba particleColor(Resolved const& r, nlohmann::json const& params) {
 
 Counters counters() { return {gParticlePackets, gSoundPackets, gMovingPackets, gVarPackets, gLegacyPackets}; }
 
+Resolved dustFor(Resolved r, nlohmann::json const& params) {
+    auto c = colorOf(params, r.color);
+    r.vars &= ~static_cast<std::uint32_t>(kVarDustColor);
+    if (c.r >= 0.995f && c.g <= 0.005f && c.b <= 0.005f) {
+        r.effect.clear();
+        r.legacy = static_cast<int>(ParticleType::RedDust);
+    } else {
+        r.effect = "minecraft:falling_dust";
+        r.legacy = 0;
+        r.vars |= kVarColorRgb;
+        r.color  = c;
+    }
+    return r;
+}
+
 void particle(Dimension& dimension, std::string const& particleId, Vec3 const& pos, Vec3 const& velocity, int count, nlohmann::json const& params) {
     auto r = resolveParticle(particleId);
+    if (r.vars & kVarDustColor) r = dustFor(std::move(r), params);
     if (!r.shown() && !r.native) return;
     nlohmann::json msg;
     if (r.native) msg = {{"id", particleId}, {"pos", vecJson(pos)}, {"vel", vecJson(velocity)}, {"count", count}, {"params", params}, {"effect", r.effect}};

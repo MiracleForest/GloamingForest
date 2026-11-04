@@ -30,8 +30,8 @@
 #                          them pink-magenta (f, 0.3f, 0.9f), Java blue-violet (0.9f, 0.3f, f)
 #   fx-vanilla.png         every Java particle type gf::fx maps, 3 blocks ahead; the content log must
 #                          hold no particle error (variables the effects read are all set)
-#   fx-legacy.png          left to right: purple dust (TrollsteinnBlock's DustParticleOptions colour,
-#                          legacy RedDust), twilight oak log item particles (a block item's IconCrack),
+#   fx-legacy.png          left to right: red dust (legacy RedDust), purple dust (TrollsteinnBlock's
+#                          DustParticleOptions colour: falling_dust tinted), twilight oak log item particles (a block item's IconCrack),
 #                          still crits scattering, poofs rising (explosion_particle's -velocity * 10)
 #   missing-advancement-toast.png  TF's MissingAdvancementToast for progress_lich: the client mod's
 #                          toast through F12 (UPPER_TEXT and the title in white, the lich tower

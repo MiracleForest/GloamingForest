@@ -27,7 +27,7 @@
 //                               fall back onto it as Java's PortalParticle
 //   combat.ui_fx_vanilla        every Java particle type gf::fx maps, in front of the player for 2 s
 //                               (the content log must stay free of particle errors)
-//   combat.ui_fx_legacy         purple dust, a block item's item particles, still crits and rising
+//   combat.ui_fx_legacy         red and purple dust, a block item's item particles, still crits and rising
 //                               poofs, 3 blocks ahead for 3 s
 //   combat.ui_cleanup           removes what the tests above placed (the scenario runs it last)
 //
@@ -538,7 +538,8 @@ GF_REGISTER_SELFTEST("combat.ui_fx_legacy", [](Context& ctx) -> ll::coro::CoroTa
         co_return;
     }
     beginUiTest(*p);
-    // 3 blocks ahead, left to right: TrollsteinnBlock's purple dust (DustParticleOptions (0.25, 0,
+    // 3 blocks ahead, left to right: the Ur-Ghast trophy's red dust (DustParticleOptions.REDSTONE),
+    // TrollsteinnBlock's purple dust (DustParticleOptions (0.25, 0,
     // 0.5)), the item particles of a block item (twilightforest:twilight_oak_log: a negative item
     // id in the legacy IconCrack data), still crits (Naga's) and poofs rising at 0.1 blocks/tick
     emitEachTick(p->getOrCreateUniqueID().rawID, 60, [](Player& pl) {
@@ -547,6 +548,7 @@ GF_REGISTER_SELFTEST("combat.ui_fx_legacy", [](Context& ctx) -> ll::coro::CoroTa
         Vec3 side{-view.z, 0.f, view.x};
         auto slot = [&](float k) { return Vec3{at.x + side.x * k, at.y - 0.5f, at.z + side.z * k}; };
         auto& dim = pl.getDimension();
+        gf::fx::particle(dim, "minecraft:dust", slot(-2.5f), Vec3{}, 4, nlohmann::json{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}, {"spread", {0.2, 0.2, 0.2}}});
         gf::fx::particle(dim, "minecraft:dust", slot(-1.5f), Vec3{}, 4, nlohmann::json{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}, {"spread", {0.2, 0.2, 0.2}}});
         gf::fx::particle(dim, "minecraft:item", slot(-0.5f), Vec3{0.f, 0.1f, 0.f}, 2, nlohmann::json{{"item", "twilightforest:twilight_oak_log"}, {"spread", {0.1, 0.1, 0.1}}});
         gf::fx::particle(dim, "minecraft:crit", slot(0.5f), Vec3{}, 2);

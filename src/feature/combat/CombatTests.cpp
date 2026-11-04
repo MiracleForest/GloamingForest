@@ -15,6 +15,7 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/comprehensive/ParticleType.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 #include "mc/legacy/ActorUniqueID.h"
@@ -286,11 +287,17 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
         ctx.check(std::abs(moving.x - 0.4f) <= 0.0181f && std::abs(moving.z + 0.2f) <= 0.0181f && moving.y >= -0.0081f && moving.y <= 0.0281f,
                   "crit: a moving crit gets 0.4 * its speed plus the scatter");
     }
-    // dust: legacy RedDust with DustParticleOptions' colour as ARGB (TrollsteinnBlock's purple)
+    // dust: redstone red as the legacy RedDust, any other DustParticleOptions colour (TrollsteinnBlock's
+    // purple) as falling_dust tinted with it
     {
-        auto dust = fx::resolveParticle("minecraft:dust");
-        ctx.check(fx::dustArgb(JsonT{{"color", {0.25, 0.0, 0.5}}}, dust.color) == static_cast<int>(0xFF400080u), "dust: purple (0.25, 0, 0.5) -> 0xFF400080");
-        ctx.check(fx::dustArgb(JsonT::object(), dust.color) == static_cast<int>(0xFFFF0000u), "dust: red without params (DustParticleOptions.REDSTONE)");
+        auto dust   = fx::resolveParticle("minecraft:dust");
+        auto red    = fx::dustFor(dust, JsonT::object());
+        auto red2   = fx::dustFor(dust, JsonT{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}});
+        auto purple = fx::dustFor(dust, JsonT{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}});
+        ctx.check(red.legacy == static_cast<int>(ParticleType::RedDust) && red.effect.empty() && red2.legacy == red.legacy, "dust: redstone red (default or params) is the legacy RedDust");
+        ctx.check(purple.legacy == 0 && purple.effect == "minecraft:falling_dust" && (purple.vars & fx::kVarColorRgb) && purple.color && purple.color->r == 0.25f &&
+                      purple.color->g == 0.f && purple.color->b == 0.5f,
+                  "dust: purple (0.25, 0, 0.5) is falling_dust with variable.color (0.25, 0, 0.5)");
     }
     for (auto const& id : fx::vanillaParticleIds()) ctx.check(fx::resolveParticle(id).shown(), id + " is shown");
     // NoteParticle's colour and the params colour
@@ -316,14 +323,18 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
     fx::particle(dim, "minecraft:item", at, Vec3{0, 0.1f, 0}, 2, JsonT{{"item", "minecraft:bone"}});
     fx::particle(dim, "minecraft:block", at, Vec3{}, 1, JsonT{{"block", "minecraft:oak_leaves"}});
     fx::particle(dim, "minecraft:item_slime", at);
-    fx::particle(dim, "minecraft:dust", at, Vec3{}, 1, JsonT{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}});
     fx::particle(dim, "minecraft:item", at, Vec3{}, 1, JsonT{{"item", "twilightforest:twilight_oak_log"}}); // a block item (negative id)
     auto c2 = fx::counters();
-    ctx.check(c2.legacyPackets >= c1.legacyPackets + 6, "item, block item, block, slime and dust particles go as legacy particles (" + std::to_string(c2.legacyPackets - c1.legacyPackets) + ")");
+    ctx.check(c2.legacyPackets >= c1.legacyPackets + 5, "item, block item, block and slime particles go as legacy particles (" + std::to_string(c2.legacyPackets - c1.legacyPackets) + ")");
     fx::particle(dim, "minecraft:item", at, Vec3{}, 1, JsonT{{"item", "minecraft:no_such_item"}});
     fx::particle(dim, "minecraft:block", at);
     auto c3 = fx::counters();
     ctx.check(c3.particlePackets == c2.particlePackets, "an item / block particle without a known item / block is silent");
+    fx::particle(dim, "minecraft:dust", at, Vec3{}, 1, JsonT{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}});
+    auto c4 = fx::counters();
+    ctx.check(c4.variablePackets >= c3.variablePackets + 1 && c4.legacyPackets == c3.legacyPackets, "purple dust goes as falling_dust with its colour");
+    fx::particle(dim, "minecraft:dust", at, Vec3{}, 1, JsonT{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}});
+    ctx.check(fx::counters().legacyPackets >= c4.legacyPackets + 1, "red dust goes as the legacy RedDust");
 });
 
 // ---- combat --------------------------------------------------------------------------------------
