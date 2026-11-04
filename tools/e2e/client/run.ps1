@@ -28,11 +28,17 @@
      dot-sources scenarios/<name>.ps1.
   5. Fails on: scenario exception, failing/empty/unfinished selftests, ERR/FTL lines (any logger;
      only BDS's transport banner and the console's echo of a command reply are not errors), errors
-     in the game's content log (warnings are listed; they fail with -StrictContentLog or when the
-     scenario sets $script:ContentLogStrict = $true).
+     in the game's content log, and a content log without the canary of GloamingForest_Test_RP
+     (lib.ps1, Content log: then the check cannot see the log). Warnings are listed; they fail with
+     -StrictContentLog or when the scenario sets $script:ContentLogStrict = $true. Verbose and info
+     lines are listed and never fail.
   6. Always: closes the game, removes the GF-Test world and our mod, restores the other mods,
      runs scenarios/<name>.restore.ps1, puts back the instance's own values of every option the run
-     set (HUD, hand, camera, graphics mode, content log), releases the lock.
+     set (camera, graphics mode, content log), shows the HUD and the hand again (gfx_hidehud:0,
+     gfx_hidehand:0, never put back: lib.ps1 Reset-HudOptions), releases the lock.
+  Remote modes: when no server slot is free within -SlotWaitMinutes, the host harness's process tree
+  is killed and waited for, its redirected output files are closed, the game lock is given back and
+  the run queues again; an output folder that cannot be cleared within 20 s is NOT RUN (exit 2).
   Every BeDD pipe call and window capture is guarded by a watchdog (lib.ps1 Invoke-Guarded,
   $env:GF_E2E_PIPE_TIMEOUT_SEC, default 120 s on top of the call's own waits), and a game still
   running without "GloamingForest enabled" after $env:GF_E2E_ENABLE_TIMEOUT_SEC (180 s; idle, or
@@ -100,6 +106,7 @@ if (-not $Foreground) {
 if ($script:Headless) { Register-PipeWatchdog }
 $script:ContentLogStrict = [bool]$StrictContentLog
 $script:ContentLogWarnings = @()
+$script:ContentLogNotes = @()
 $script:GamesStarted = 0
 $script:GameKilled = $false
 $script:NotRunReason = $null
@@ -126,7 +133,9 @@ function Set-RunOutDir {
     $name = if ($Mode -ne 'local') { "$Scenario-$Mode" } else { $Scenario }
     $script:Unit = if ($script:InstanceSlot -gt 1) { "$name-slot$($script:InstanceSlot)" } else { $name }
     $dir = Join-Path $script:OutRoot $script:Unit
-    if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }
+    # (a file still locked after the retries, e.g. by another run of the same scenario and slot
+    # or a host harness that is still exiting: lib.ps1 Clear-RunOutDir throws, the run is NOT RUN)
+    Clear-RunOutDir $dir
     New-Item -ItemType Directory -Force $dir | Out-Null
     return $dir
 }
@@ -169,9 +178,8 @@ function Start-RemoteHost {
     $psi.RedirectStandardError = $true
     $script:HostProc = [System.Diagnostics.Process]::Start($psi)
     # Copied straight into the files (unbuffered, readable meanwhile): the wait below reads the log.
-    foreach ($s in @(@($script:HostProc.StandardOutput, $harnessLog), @($script:HostProc.StandardError, (Join-Path $outDir 'host-harness.err')))) {
-        $null = $s[0].BaseStream.CopyToAsync([IO.FileStream]::new($s[1], 'Create', 'Write', 'ReadWrite', 1))
-    }
+    # Stop-HostHarness closes them again (a requeue clears this folder).
+    $script:HostOutputs = @(Start-RedirectedOutput $script:HostProc $harnessLog (Join-Path $outDir 'host-harness.err'))
     Write-Step "starting the BDS host (pid $($script:HostProc.Id))"
     $ready = Join-Path $script:HostDir 'ready.json'
     $start = Get-Date
@@ -182,8 +190,8 @@ function Start-RemoteHost {
         if ($script:HostProc.HasExited) { throw "the BDS host exited early (see $harnessLog)" }
         if ((Get-Date) -gt $slotDeadline -and -not (Select-String -Path $harnessLog -Pattern 'acquired server slot' -Quiet -ErrorAction SilentlyContinue)) {
             Write-Step "no free server slot within $SlotWaitMinutes min; stopping the host"
-            $script:HostProc.Kill($true); $script:HostProc.WaitForExit(15000) | Out-Null
-            $script:HostProc = $null
+            # the whole tree and its redirected files: the requeue clears this output folder
+            if (-not (Stop-HostHarness -Kill)) { Write-Step 'warning: a process of the host did not exit (clearing the output folder may then fail: NOT RUN)' }
             return $null
         }
         if ((Get-Date) -gt $deadline) { throw "the BDS host did not get ready in $HostTimeoutMinutes min (see $harnessLog)" }
@@ -208,8 +216,26 @@ function Request-HostStop {
     }
 }
 
+# Ends the host harness (server/run.ps1 -Scenario client-host): -Kill kills its process tree (a host
+# that never got ready, or one that did not stop when asked) and waits until every process of the
+# tree has exited; then closes the files its output was copied into (Close-RedirectedOutput). After
+# it, nothing of the host holds a file of the run's output folder, so a requeue can clear it.
+# Returns $false when a process of the tree did not exit in time.
+function Stop-HostHarness([switch]$Kill, [int]$TimeoutSec = 60) {
+    $hp = $script:HostProc
+    if (-not $hp) { return $true }
+    $ok = $true
+    if ($Kill) { $ok = Stop-ProcessTree $hp -TimeoutSec $TimeoutSec }
+    Close-RedirectedOutput $script:HostOutputs
+    $script:HostOutputs = @()
+    $script:HostProc = $null
+    return $ok
+}
+
 $script:HostProc = $null
+$script:HostOutputs = @()
 $script:HostSlotTimedOut = $false
+$script:OutDirLocked = $false
 try {
     if ($Build) { Invoke-ModBuild client; if ($remote) { Invoke-ModBuild server } }
     # One of the throttle's two client slots for the whole run (tools/lib/Throttle.psm1), then a
@@ -222,7 +248,12 @@ try {
     while ($true) {
         $left = if ($LockTimeoutMinutes -gt 0) { [Math]::Max(1, [int][Math]::Ceiling(($lockDeadline - (Get-Date)).TotalMinutes)) } else { 0 }
         Enter-E2ELock -TimeoutMinutes $left -Slots $slots
-        $outDir = Set-RunOutDir
+        try { $outDir = Set-RunOutDir }
+        catch {
+            Exit-E2ELock
+            if ($_.Exception -is [GfE2E.OutDirLockedException]) { $script:OutDirLocked = $true }
+            throw
+        }
         # a hung game's minidump (lib.ps1 WriteDump): out/hangs/<scenario>-<mode>-<instance>-<time>-<pid>.dmp
         [GfE2E.Watchdog]::DumpDir = $script:HangDir
         [GfE2E.Watchdog]::DumpPrefix = "$Scenario-$Mode-$($script:VersionName)-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
@@ -352,14 +383,17 @@ try {
             if (Test-Path $restore) { try { . $restore } catch { Write-Host "[e2e] restore script failed: $_" -ForegroundColor Red } }
         } finally {
             # after the scenario's own restore (models turns the log on itself), and also when a
-            # cleanup step above failed: the instance's own option values (HUD, hand, camera,
-            # graphics mode, content log) as they were before the run
+            # cleanup step above failed: the instance's own option values (camera, graphics mode,
+            # content log) as they were before the run
             try { Restore-RunOptions } catch { Write-Host "[e2e] could not put the game options back: $_" -ForegroundColor Red }
+            # HUD safety net: HUD and hand shown, whatever the scenario (models hides the HUD with F1)
+            # or its restore script left
+            try { Reset-HudOptions } catch { Write-Host "[e2e] could not show the HUD again: $_" -ForegroundColor Red }
             Exit-E2ELock
         }
     }
 } catch {
-    if (($script:LockTimedOut -and -not $lockAcquired) -or $script:HostSlotTimedOut) {
+    if (($script:LockTimedOut -and -not $lockAcquired) -or $script:HostSlotTimedOut -or $script:OutDirLocked) {
         $lockTimeout = "$_"
     } else {
         $failures.Add("harness: $_")
@@ -371,11 +405,15 @@ try {
         $hp = $script:HostProc
         if (-not $hostInfo) {
             # Not ready yet (still waiting for a slot or booting): nobody needs it, kill it now.
-            if (-not $hp.HasExited) { Write-Step "killing the BDS host that never got ready"; $hp.Kill($true) }
+            if (-not $hp.HasExited) { Write-Step "killing the BDS host that never got ready" }
+            $null = Stop-HostHarness -Kill
         } else {
             Request-HostStop
-            if (-not $hp.WaitForExit(120000)) { $hp.Kill($true); $failures.Add('BDS host did not stop') }
-            elseif ($hp.ExitCode -ne 0) { $failures.Add("BDS host failed (exit $($hp.ExitCode), see tools/e2e/server/out/$script:HostOutName/)") }
+            if (-not $hp.WaitForExit(120000)) { $null = Stop-HostHarness -Kill; $failures.Add('BDS host did not stop') }
+            else {
+                if ($hp.ExitCode -ne 0) { $failures.Add("BDS host failed (exit $($hp.ExitCode), see tools/e2e/server/out/$script:HostOutName/)") }
+                $null = Stop-HostHarness
+            }
         }
         Remove-Item Env:GF_E2E_HOST_DIR, Env:GF_E2E_HOST_OWNER_PID, Env:GF_E2E_HOST_SCENARIO, Env:GF_E2E_HOST_MODE -ErrorAction SilentlyContinue
     }
@@ -383,7 +421,7 @@ try {
 }
 
 if ($lockTimeout) {
-    Write-Host "[e2e] client scenario '$Scenario' NOT RUN (game lock or server slot not free in time; nothing was tested)" -ForegroundColor Yellow
+    Write-Host "[e2e] client scenario '$Scenario' NOT RUN (game lock, server slot or output folder not free in time; nothing was tested)" -ForegroundColor Yellow
     Write-Host "[e2e]   $lockTimeout" -ForegroundColor Yellow
     exit 2
 }
@@ -445,6 +483,8 @@ if ($notRun) {
     exit 2
 }
 
+# (listed, never a failure: verbose / info lines; warnings fail only in a strict run)
+foreach ($n in $script:ContentLogNotes) { Write-Host "[e2e] content-log verbose/info: $n" -ForegroundColor DarkCyan }
 foreach ($w in $script:ContentLogWarnings) { Write-Host "[e2e] content-log warning: $w" -ForegroundColor Yellow }
 if ($failures.Count -gt 0) {
     Write-Host "[e2e] client scenario '$Scenario' FAILED:" -ForegroundColor Red
