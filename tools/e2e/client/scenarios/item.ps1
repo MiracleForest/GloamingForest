@@ -224,27 +224,27 @@ if (-not $script:IsLocal) {
 # be in the new level's registry, and the TrimDataPackets of the join and of the probe must not log
 # "Overwriting pattern template" (the run's content-log check covers the whole session).
 if ($script:IsLocal) {
-    function Test-InLevel { try { [bool](Get-BeDDWorld).inLevel } catch { $null } }
     Focus-Game
     try { Invoke-BeDDAction pause | Out-Null } catch { Press-Key ESC }
     Start-Sleep -Seconds 2
     Save-Screenshot 'reload-pause-menu' | Out-Null
     # Save & Quit: the fourth button of the pause menu's left column (375 x 480 px of 1280 x 720)
-    $left = $false
-    foreach ($attempt in 1..2) {
-        Move-Mouse 0.293 0.667 -Relative
-        Start-Sleep -Milliseconds 300
-        Click 0.293 0.667 -Relative
-        $deadline = (Get-Date).AddSeconds(20)
-        while ((Get-Date) -lt $deadline -and (Test-InLevel) -ne $false) { Start-Sleep -Seconds 1 }
-        if ((Test-InLevel) -eq $false) { $left = $true; Write-Step 'left the world (Save & Quit)'; break }
-    }
-    if (-not $left) { Save-Screenshot 'reload-not-left' | Out-Null; throw 'Save & Quit was not found on the pause menu (see reload-pause-menu.png)' }
-    $deadline = (Get-Date).AddSeconds(60)
-    while ((Test-TitleScreen) -eq $false -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 1 }
+    # one click: the game saves and goes to the worlds list (a second click there would open a
+    # world's Edit screen)
+    Move-Mouse 0.293 0.667 -Relative
+    Start-Sleep -Milliseconds 300
+    Click 0.293 0.667 -Relative
+    Start-Sleep -Seconds 15
+    Save-Screenshot 'reload-worlds-list' | Out-Null
+    # back in through the first world thumbnail (GF-Test was played last), as Enter-TestWorld does
     $mark = Get-LogMark
-    Enter-TestWorld -Attempts 2
-    Wait-LogLine 'GloamingForest world ready' 120 -Since $mark | Out-Null
+    Focus-Game
+    Click 0.173 0.43 -Relative
+    Wait-LogLine 'Player Spawned' 90 -Since $mark | Out-Null
+    Wait-LogLine "world: level '$($script:WorldName)' opened" 30 -Since $mark | Out-Null
+    Wait-LogLine 'GloamingForest world ready' 60 -Since $mark | Out-Null
+    Write-Step "back in $($script:WorldName) after Save & Quit"
+    Start-Sleep -Seconds 3
     Wait-HudReady
     $r = Invoke-SelfTest 'item.spike_trim_materials'
     if ($r.Fail -gt 0) { throw 'item.spike_trim_materials failed after the world reload' }
