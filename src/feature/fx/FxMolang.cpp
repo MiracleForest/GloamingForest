@@ -3,7 +3,10 @@
 // SpawnParticleEffectPackets (vanilla clients) and the client's resource pack effects (companions
 // whose particle has no native factory).
 //
-// noteColor follows Java Edition's NoteParticle colour (the hue of the x speed).
+// noteColor follows Java Edition's NoteParticle colour (the hue of the x speed); particleMotion,
+// splashDirection and critDirection follow the initial motion of Java Edition's Particle,
+// SplashParticle (WaterDropParticle) and CritParticle; effectVelocity converts Java's velocity to
+// the convention of Bedrock's explosion_particle.
 
 #include <algorithm>
 #include <cmath>
@@ -75,7 +78,7 @@ void fillVariables(MolangMap& map, Vec3 const& velocity) {
 
 void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocity, Vec3 const& direction, Rgba const& color) {
     bool const moving = velocity.x != 0.f || velocity.y != 0.f || velocity.z != 0.f;
-    if (moving || (vars & kVarVelocity)) map.setVelocity(velocity);
+    if (moving || (vars & kVarVelocity)) map.setVelocity(effectVelocity(vars, velocity));
     if (vars & kVarDirection) map.setVec3("variable.direction", direction);
     if (vars & kVarColorRgba) map.setColor("variable.color", color, true);
     else if (vars & kVarColorRgb) map.setColor("variable.color", color, false);
@@ -87,6 +90,44 @@ Rgba noteColor(float xSpeed) {
     constexpr float twoPi = 6.2831855f;
     auto channel = [&](float k) { return std::max(0.f, std::sin((xSpeed + k) * twoPi) * 0.65f + 0.35f); };
     return Rgba{channel(0.f), channel(0.33333334f), channel(0.6666667f), 1.f};
+}
+
+Vec3 effectVelocity(std::uint32_t vars, Vec3 const& velocity) {
+    if (vars & kVarExplosionVelocity) return Vec3{-2.f * velocity.x, -2.f * velocity.y, -2.f * velocity.z};
+    return velocity;
+}
+
+Vec3 particleMotion(std::mt19937& rng, Vec3 const& speed) {
+    // Particle(level, x, y, z, xSpeed, ySpeed, zSpeed) (Math.random() per draw)
+    std::uniform_real_distribution<double> u(0.0, 1.0);
+    double xd = speed.x + (u(rng) * 2.0 - 1.0) * 0.4f;
+    double yd = speed.y + (u(rng) * 2.0 - 1.0) * 0.4f;
+    double zd = speed.z + (u(rng) * 2.0 - 1.0) * 0.4f;
+    double f  = (u(rng) + u(rng) + 1.0) * 0.15f;
+    double d  = std::sqrt(xd * xd + yd * yd + zd * zd);
+    if (d <= 0.0) return Vec3{0.f, 0.1f, 0.f};
+    return Vec3{static_cast<float>(xd / d * f * 0.4f), static_cast<float>(yd / d * f * 0.4f + 0.1f), static_cast<float>(zd / d * f * 0.4f)};
+}
+
+Vec3 splashDirection(std::mt19937& rng, Vec3 const& velocity) {
+    // SplashParticle: ySpeed == 0 && (xSpeed != 0 || zSpeed != 0) -> (xSpeed, 0.1, zSpeed)
+    if (velocity.y == 0.f && (velocity.x != 0.f || velocity.z != 0.f)) return Vec3{velocity.x, 0.1f, velocity.z};
+    // WaterDropParticle: super(level, x, y, z, 0, 0, 0); xd *= 0.3; yd = random * 0.2 + 0.1; zd *= 0.3
+    auto                                   m = particleMotion(rng, Vec3{});
+    std::uniform_real_distribution<double> u(0.0, 1.0);
+    return Vec3{m.x * 0.3f, static_cast<float>(u(rng) * 0.2f + 0.1f), m.z * 0.3f};
+}
+
+Vec3 critDirection(std::mt19937& rng, Vec3 const& velocity) {
+    // CritParticle: super(level, x, y, z, 0, 0, 0); d *= 0.1; d += speed * 0.4
+    auto m = particleMotion(rng, Vec3{});
+    return Vec3{m.x * 0.1f + velocity.x * 0.4f, m.y * 0.1f + velocity.y * 0.4f, m.z * 0.1f + velocity.z * 0.4f};
+}
+
+int dustArgb(nlohmann::json const& params, std::optional<Rgba> const& fallback) {
+    auto c       = colorOf(params, fallback);
+    auto channel = [](float v) { return static_cast<std::uint32_t>(std::lround(std::clamp(v, 0.f, 1.f) * 255.f)); };
+    return static_cast<int>(0xFF000000u | (channel(c.r) << 16) | (channel(c.g) << 8) | channel(c.b));
 }
 
 Rgba colorOf(nlohmann::json const& params, std::optional<Rgba> const& fallback) {

@@ -27,6 +27,8 @@
 //                               fall back onto it as Java's PortalParticle
 //   combat.ui_fx_vanilla        every Java particle type gf::fx maps, in front of the player for 2 s
 //                               (the content log must stay free of particle errors)
+//   combat.ui_fx_legacy         purple dust, a block item's item particles, still crits and rising
+//                               poofs, 3 blocks ahead for 3 s
 //   combat.ui_cleanup           removes what the tests above placed (the scenario runs it last)
 //
 // Rule R12 exception (client only): the blocks go right beside the real player, not in the test
@@ -526,6 +528,31 @@ GF_REGISTER_SELFTEST("combat.ui_fx_vanilla", [](Context& ctx) -> ll::coro::CoroT
         }
     });
     gf::log().info("combat ui: fx vanilla particles for {}", p->getRealName());
+    co_return;
+});
+
+GF_REGISTER_SELFTEST("combat.ui_fx_legacy", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        co_return;
+    }
+    beginUiTest(*p);
+    // 3 blocks ahead, left to right: TrollsteinnBlock's purple dust (DustParticleOptions (0.25, 0,
+    // 0.5)), the item particles of a block item (twilightforest:twilight_oak_log: a negative item
+    // id in the legacy IconCrack data), still crits (Naga's) and poofs rising at 0.1 blocks/tick
+    emitEachTick(p->getOrCreateUniqueID().rawID, 60, [](Player& pl) {
+        auto view = pl.getViewVector(0.f);
+        auto at   = pl.getPosition() + view * 3.f;
+        Vec3 side{-view.z, 0.f, view.x};
+        auto slot = [&](float k) { return Vec3{at.x + side.x * k, at.y - 0.5f, at.z + side.z * k}; };
+        auto& dim = pl.getDimension();
+        gf::fx::particle(dim, "minecraft:dust", slot(-1.5f), Vec3{}, 4, nlohmann::json{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}, {"spread", {0.2, 0.2, 0.2}}});
+        gf::fx::particle(dim, "minecraft:item", slot(-0.5f), Vec3{0.f, 0.1f, 0.f}, 2, nlohmann::json{{"item", "twilightforest:twilight_oak_log"}, {"spread", {0.1, 0.1, 0.1}}});
+        gf::fx::particle(dim, "minecraft:crit", slot(0.5f), Vec3{}, 2);
+        gf::fx::particle(dim, "minecraft:poof", slot(1.5f), Vec3{0.f, 0.1f, 0.f});
+    });
+    gf::log().info("combat ui: fx legacy particles for {}", p->getRealName());
     co_return;
 });
 

@@ -22,12 +22,15 @@ namespace gf::fx {
 enum EffectVar : std::uint32_t {
     kVarVelocity        = 1u << 0, ///< `variable.velocity` {x, y, z}, set even when still
     kVarDirection       = 1u << 1, ///< `variable.direction` {x, y, z}: the particle's velocity
-    kVarSplashDirection = 1u << 2, ///< with kVarDirection: WaterDropParticle's motion when still
+    kVarSplashDirection = 1u << 2, ///< with kVarDirection: SplashParticle's motion (splashDirection)
     kVarColorRgb        = 1u << 3, ///< `variable.color` {r, g, b}
     kVarColorRgba       = 1u << 4, ///< `variable.color` {r, g, b, a}
     kVarNoteColor       = 1u << 5, ///< `variable.note_color` {r, g, b}: NoteParticle's hue of the x speed
     kVarItem            = 1u << 6, ///< legacy data: params "item" (id, optional "aux")
     kVarBlock           = 1u << 7, ///< legacy data: params "block" (id, optional "states")
+    kVarExplosionVelocity = 1u << 8, ///< with kVarVelocity: explosion_particle's `-velocity * 10` blocks/s (effectVelocity)
+    kVarCritDirection   = 1u << 9,  ///< with kVarDirection: CritParticle's motion (critDirection)
+    kVarDustColor       = 1u << 10, ///< legacy data: params "color" (DustParticleOptions) as ARGB
 };
 
 struct Rgba {
@@ -134,6 +137,28 @@ void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocit
 
 /// NoteParticle's colour for the x speed (0..1: the note / 24).
 [[nodiscard]] Rgba noteColor(float xSpeed);
+
+/// The `variable.velocity` an effect with `vars` gets for Java's velocity (blocks per tick):
+/// explosion_particle (kVarExplosionVelocity) starts at `-variable.velocity * 10` blocks per second,
+/// so it gets -2 * velocity (Java's ExplodeParticle moves velocity blocks per tick: 20 * velocity
+/// blocks per second); any other effect gets the velocity itself.
+[[nodiscard]] Vec3 effectVelocity(std::uint32_t vars, Vec3 const& velocity);
+
+/// Particle(level, x, y, z, xSpeed, ySpeed, zSpeed)'s initial motion (Java): the speed plus a
+/// random +-0.4 per axis, rescaled to a random length (0.06..0.18 * 0.4) with 0.1 added to y.
+[[nodiscard]] Vec3 particleMotion(std::mt19937& rng, Vec3 const& speed);
+
+/// SplashParticle's motion: its speed with yd 0.1 when ySpeed is 0 and xSpeed or zSpeed is not;
+/// any other speed is dropped for WaterDropParticle's own motion (Particle's motion of a still
+/// particle, x and z times 0.3, y 0.1..0.3).
+[[nodiscard]] Vec3 splashDirection(std::mt19937& rng, Vec3 const& velocity);
+
+/// CritParticle's motion: Particle's motion of a still particle times 0.1 plus 0.4 * the speed.
+[[nodiscard]] Vec3 critDirection(std::mt19937& rng, Vec3 const& velocity);
+
+/// The legacy RedDust data of a dust particle: DustParticleOptions' colour (params "color",
+/// `fallback` without) as 0xAARRGGBB with alpha 255.
+[[nodiscard]] int dustArgb(nlohmann::json const& params, std::optional<Rgba> const& fallback);
 
 /// The colour a particle gets: params "color" (an integer 0xRRGGBB, or [r, g, b(, a)] in 0..1),
 /// else `fallback` (white without).

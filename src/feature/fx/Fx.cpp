@@ -70,13 +70,25 @@ namespace {
 // variables the effect reads (Bedrock's vanilla effects of 1.26.51; an effect that reads a variable
 // nobody set logs a content-log error per particle) and where Bedrock draws a Java type through a
 // legacy particle (LevelEventPacket) instead of an effect.
-//   - portal: portal_directional is Java's PortalParticle (the same lifetime, colours, size and
-//     path: start + direction * (1 - (2a^2 - a)) at age fraction a) except that Java adds (1 - a)
-//     to y where Bedrock subtracts a: spawned one block higher, it follows Java's path exactly
-//     (from pos + speed + (0, 1, 0) down to pos).
+//   - portal: portal_directional is Java's PortalParticle (the same lifetime, size and path:
+//     start + direction * (1 - (2a^2 - a)) at age fraction a) except that Java adds (1 - a) to y
+//     where Bedrock subtracts a: spawned one block higher, it follows Java's path exactly (from
+//     pos + speed + (0, 1, 0) down to pos). Its colour is not Java's: with f = 0.4..1 Bedrock tints
+//     (f, 0.3f, 0.9f) where Java tints (0.9f, 0.3f, f), so the specks are pinker than Java's
+//     blue-violet. No vanilla effect has the portal path with a settable colour (mob_portal and
+//     portal_east_west compute their own); exact colours need an own copy of the effect in the
+//     resource pack, a path F10 does not own yet (owners.rules.json has no
+//     assets/pack/rp/**/combat/** for F10).
 //   - enchant: enchanting_table_particle flies from pos + direction to pos (FlyTowardsPositionParticle).
-//   - splash, crit, electric_spark: the effect's shape direction is Java's velocity.
-//   - poof: explosion_particle's speed is -velocity * 10 plus its own noise (always set).
+//   - electric_spark: the effect's shape direction is Java's velocity.
+//   - splash: the direction is SplashParticle's motion (splashDirection: the x/z speed with y 0.1
+//     when ySpeed is 0, WaterDropParticle's random motion otherwise).
+//   - crit: the direction is CritParticle's motion (critDirection: Particle's random motion of a
+//     still particle * 0.1 plus 0.4 * the speed), so a still crit scatters as in Java.
+//   - poof: explosion_particle's speed is -variable.velocity * 10 blocks/s plus its own noise
+//     (always set): it gets -2 * velocity, Java's ExplodeParticle speed of velocity blocks/tick.
+//   - dust: Bedrock's legacy RedDust particle with DustParticleOptions' colour (params "color",
+//     red by default) as its ARGB data (the scale is not carried).
 //   - note: note_particle's colour is NoteParticle's hue from the x speed.
 //   - entity_effect / effect: mobspell_emitter's colour (params "color", white by default).
 //   - falling_dust: the block's map colour (params "block") or params "color".
@@ -92,12 +104,12 @@ std::unordered_map<std::string, VanillaParticle> const& vanillaParticles() {
         {"minecraft:large_smoke", {"minecraft:large_explosion"}},
         {"minecraft:flame", {"minecraft:basic_flame_particle"}},
         {"minecraft:small_flame", {"minecraft:candle_flame_particle"}},
-        {"minecraft:poof", {"minecraft:explosion_particle", kVarVelocity}},
+        {"minecraft:poof", {"minecraft:explosion_particle", kVarVelocity | kVarExplosionVelocity}},
         {"minecraft:explosion", {"minecraft:large_explosion"}},
         {"minecraft:splash", {"minecraft:water_splash_particle", kVarDirection | kVarSplashDirection}},
         {"minecraft:rain", {"minecraft:rain_splash_particle"}},
         {"minecraft:falling_water", {"minecraft:water_drip_particle"}},
-        {"minecraft:crit", {"minecraft:basic_crit_particle", kVarDirection}},
+        {"minecraft:crit", {"minecraft:basic_crit_particle", kVarDirection | kVarCritDirection}},
         {"minecraft:cloud", {"minecraft:white_smoke_particle"}},
         {"minecraft:note", {"minecraft:note_particle", kVarNoteColor}},
         {"minecraft:item_snowball", {"", 0, {}, static_cast<int>(ParticleType::SnowballPoof)}},
@@ -119,7 +131,7 @@ std::unordered_map<std::string, VanillaParticle> const& vanillaParticles() {
         {"minecraft:falling_dust", {"minecraft:falling_dust", kVarColorRgb}},
         {"minecraft:item", {"", kVarItem, {}, static_cast<int>(ParticleType::IconCrack)}},
         {"minecraft:heart", {"minecraft:heart_particle"}},
-        {"minecraft:dust", {"minecraft:redstone_wire_dust_particle"}},
+        {"minecraft:dust", {"", kVarDustColor, {}, static_cast<int>(ParticleType::RedDust), Rgba{1.f, 0.f, 0.f, 1.f}}},
         {"minecraft:end_rod", {"minecraft:endrod"}},
         {"minecraft:snowflake", {"minecraft:snowflake_particle"}},
     };
@@ -431,17 +443,6 @@ void warnParticle(std::string const& what) {
     warnOnce(k, what);
 }
 
-/// Particle(level, x, y, z, 0, 0, 0)'s random motion as WaterDropParticle keeps it (a splash of
-/// Entity#doWaterSplashEffect has no velocity): the x/z spread times 0.3, y 0.1..0.3 up.
-Vec3 splashMotion(std::mt19937& rng) {
-    std::uniform_real_distribution<float> u(0.f, 1.f);
-    float xd = (u(rng) * 2.f - 1.f) * 0.4f, yd = (u(rng) * 2.f - 1.f) * 0.4f, zd = (u(rng) * 2.f - 1.f) * 0.4f;
-    float f = (u(rng) + u(rng) + 1.f) * 0.15f;
-    float d = std::sqrt(xd * xd + yd * yd + zd * zd);
-    if (d > 0.f) xd = xd / d * f * 0.4f, zd = zd / d * f * 0.4f;
-    return Vec3{xd * 0.3f, u(rng) * 0.2f + 0.1f, zd * 0.3f};
-}
-
 /// The block of params "block" (+ "states"), nullptr when it names none.
 Block const* paramBlock(nlohmann::json const& params) {
     if (!params.is_object()) return nullptr;
@@ -452,8 +453,10 @@ Block const* paramBlock(nlohmann::json const& params) {
 }
 
 /// The data of a legacy particle: IconCrack (item network id << 16 | aux), Terrain (block network
-/// id), 0 for the others. nullopt (warned once) when params name no known item / block.
+/// id), RedDust (ARGB colour), 0 for the others. nullopt (warned once) when params name no known
+/// item / block.
 std::optional<int> legacyData(Resolved const& r, std::string const& particleId, nlohmann::json const& params) {
+    if (r.vars & kVarDustColor) return dustArgb(params, r.color);
     if (r.vars & kVarItem) {
         std::string id = params.is_object() && params.contains("item") && params["item"].is_string() ? params["item"].get<std::string>() : std::string{};
         int         aux = params.is_object() && params.contains("aux") && params["aux"].is_number_integer() ? params["aux"].get<int>() : 0;
@@ -522,12 +525,8 @@ void particle(Dimension& dimension, std::string const& particleId, Vec3 const& p
         Rgba const color = particleColor(r, params);
         for (int i = 0; i < n; ++i) {
             Vec3 direction = velocity;
-            if (r.vars & kVarSplashDirection) {
-                // SplashParticle: still -> WaterDropParticle's own motion; ySpeed 0 with an x/z
-                // speed -> that speed with yd 0.1
-                if (!moving) direction = splashMotion(rng);
-                else if (velocity.y == 0.f) direction = Vec3{velocity.x, 0.1f, velocity.z};
-            }
+            if (r.vars & kVarSplashDirection) direction = splashDirection(rng, velocity);
+            else if (r.vars & kVarCritDirection) direction = critDirection(rng, velocity);
             auto& map = vars.emplace_back(std::make_unique<MolangMap>());
             fillEffectVariables(*map, r.vars, velocity, direction, color);
         }

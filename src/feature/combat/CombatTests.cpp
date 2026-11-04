@@ -214,9 +214,9 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
         {"minecraft:portal", "minecraft:portal_directional", fx::kVarDirection},
         {"minecraft:enchant", "minecraft:enchanting_table_particle", fx::kVarDirection},
         {"minecraft:splash", "minecraft:water_splash_particle", fx::kVarDirection | fx::kVarSplashDirection},
-        {"minecraft:crit", "minecraft:basic_crit_particle", fx::kVarDirection},
+        {"minecraft:crit", "minecraft:basic_crit_particle", fx::kVarDirection | fx::kVarCritDirection},
         {"minecraft:electric_spark", "minecraft:electric_spark_particle", fx::kVarDirection},
-        {"minecraft:poof", "minecraft:explosion_particle", fx::kVarVelocity},
+        {"minecraft:poof", "minecraft:explosion_particle", fx::kVarVelocity | fx::kVarExplosionVelocity},
         {"minecraft:note", "minecraft:note_particle", fx::kVarNoteColor},
         {"minecraft:entity_effect", "minecraft:mobspell_emitter", fx::kVarColorRgba},
         {"minecraft:effect", "minecraft:mobspell_emitter", fx::kVarColorRgba},
@@ -239,9 +239,58 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
     }
     auto portal = fx::resolveParticle("minecraft:portal");
     ctx.check(portal.offset.x == 0.f && portal.offset.y == 1.f && portal.offset.z == 0.f, "the portal particle starts one block higher (Java's PortalParticle y path)");
-    for (auto const* id : {"minecraft:item", "minecraft:block", "minecraft:item_slime", "minecraft:item_snowball"}) {
+    for (auto const* id : {"minecraft:item", "minecraft:block", "minecraft:item_slime", "minecraft:item_snowball", "minecraft:dust"}) {
         auto r = fx::resolveParticle(id);
         ctx.check(r.legacy != 0 && r.effect.empty() && r.shown(), std::string(id) + " is a legacy particle");
+    }
+    auto near = [](float a, float b) { return std::abs(a - b) < 1e-5f; };
+    // poof: explosion_particle starts at -variable.velocity * 10 blocks/s; Java's ExplodeParticle
+    // moves velocity blocks/tick (20 * velocity blocks/s), same direction
+    {
+        auto poof = fx::resolveParticle("minecraft:poof");
+        Vec3 v{0.1f, 0.2f, -0.3f};
+        auto ev = fx::effectVelocity(poof.vars, v);
+        ctx.check(near(ev.x, -0.2f) && near(ev.y, -0.4f) && near(ev.z, 0.6f), "poof: variable.velocity is -2 * Java's velocity");
+        ctx.check(near(-ev.x * 10.f, 20.f * v.x) && near(-ev.y * 10.f, 20.f * v.y) && near(-ev.z * 10.f, 20.f * v.z),
+                  "poof: explosion_particle's speed is Java's 20 * velocity blocks/s in Java's direction");
+        auto other = fx::effectVelocity(fx::resolveParticle("minecraft:flame").vars, v);
+        ctx.check(other.x == v.x && other.y == v.y && other.z == v.z, "other effects get Java's velocity as is");
+    }
+    std::mt19937 rng{6001};
+    // splash: SplashParticle keeps (xSpeed, 0.1, zSpeed) only for ySpeed 0 with an x/z speed
+    {
+        auto flat = fx::splashDirection(rng, Vec3{0.3f, 0.f, -0.2f});
+        ctx.check(flat.x == 0.3f && flat.y == 0.1f && flat.z == -0.2f, "splash: ySpeed 0 with an x/z speed -> (xSpeed, 0.1, zSpeed)");
+        bool        random = true;
+        std::set<float> xs;
+        for (Vec3 v : {Vec3{-0.4f, 0.5f, -0.4f}, Vec3{}, Vec3{0.f, 0.2f, 0.f}}) {
+            for (int i = 0; i < 50; ++i) {
+                auto d = fx::splashDirection(rng, v);
+                random = random && std::abs(d.x) <= 0.0541f && std::abs(d.z) <= 0.0541f && d.y >= 0.1f && d.y <= 0.3f;
+                xs.insert(d.x);
+            }
+        }
+        ctx.check(random && xs.size() > 100, "splash: any other speed is dropped for WaterDropParticle's random motion");
+    }
+    // crit: CritParticle = 0.1 * Particle's random motion + 0.4 * speed; a still crit still scatters
+    {
+        std::set<float> xs;
+        bool            ok = true;
+        for (int i = 0; i < 50; ++i) {
+            auto d = fx::critDirection(rng, Vec3{});
+            ok     = ok && std::abs(d.x) <= 0.0181f && std::abs(d.z) <= 0.0181f && d.y >= -0.0081f && d.y <= 0.0281f && (d.x != 0.f || d.y != 0.f || d.z != 0.f);
+            xs.insert(d.x);
+        }
+        ctx.check(ok && xs.size() > 40, "crit: a still crit gets Particle's random motion * 0.1");
+        auto moving = fx::critDirection(rng, Vec3{1.f, 0.f, -0.5f});
+        ctx.check(std::abs(moving.x - 0.4f) <= 0.0181f && std::abs(moving.z + 0.2f) <= 0.0181f && moving.y >= -0.0081f && moving.y <= 0.0281f,
+                  "crit: a moving crit gets 0.4 * its speed plus the scatter");
+    }
+    // dust: legacy RedDust with DustParticleOptions' colour as ARGB (TrollsteinnBlock's purple)
+    {
+        auto dust = fx::resolveParticle("minecraft:dust");
+        ctx.check(fx::dustArgb(JsonT{{"color", {0.25, 0.0, 0.5}}}, dust.color) == static_cast<int>(0xFF400080u), "dust: purple (0.25, 0, 0.5) -> 0xFF400080");
+        ctx.check(fx::dustArgb(JsonT::object(), dust.color) == static_cast<int>(0xFFFF0000u), "dust: red without params (DustParticleOptions.REDSTONE)");
     }
     for (auto const& id : fx::vanillaParticleIds()) ctx.check(fx::resolveParticle(id).shown(), id + " is shown");
     // NoteParticle's colour and the params colour
@@ -267,8 +316,10 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
     fx::particle(dim, "minecraft:item", at, Vec3{0, 0.1f, 0}, 2, JsonT{{"item", "minecraft:bone"}});
     fx::particle(dim, "minecraft:block", at, Vec3{}, 1, JsonT{{"block", "minecraft:oak_leaves"}});
     fx::particle(dim, "minecraft:item_slime", at);
+    fx::particle(dim, "minecraft:dust", at, Vec3{}, 1, JsonT{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}});
+    fx::particle(dim, "minecraft:item", at, Vec3{}, 1, JsonT{{"item", "twilightforest:twilight_oak_log"}}); // a block item (negative id)
     auto c2 = fx::counters();
-    ctx.check(c2.legacyPackets >= c1.legacyPackets + 4, "item, block and slime particles go as legacy particles (" + std::to_string(c2.legacyPackets - c1.legacyPackets) + ")");
+    ctx.check(c2.legacyPackets >= c1.legacyPackets + 6, "item, block item, block, slime and dust particles go as legacy particles (" + std::to_string(c2.legacyPackets - c1.legacyPackets) + ")");
     fx::particle(dim, "minecraft:item", at, Vec3{}, 1, JsonT{{"item", "minecraft:no_such_item"}});
     fx::particle(dim, "minecraft:block", at);
     auto c3 = fx::counters();

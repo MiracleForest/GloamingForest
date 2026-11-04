@@ -24,11 +24,15 @@
 #                          fx.particle (F12's native sink first, else the resource pack effect), a
 #                          vanilla client the game's particle packets
 #   fx-portal.png          TF's portal particles (TFPortalBlock#animateTick, minecraft:portal) over a
-#                          3-block row ahead: purple specks rising above it and falling back onto
-#                          it (Java's PortalParticle path; Bedrock's portal_directional with
-#                          variable.direction, one block higher)
+#                          3-block row ahead: specks rising above it and falling back onto it
+#                          (Java's PortalParticle path; Bedrock's portal_directional with
+#                          variable.direction, one block higher). Known deviation: Bedrock tints
+#                          them pink-magenta (f, 0.3f, 0.9f), Java blue-violet (0.9f, 0.3f, f)
 #   fx-vanilla.png         every Java particle type gf::fx maps, 3 blocks ahead; the content log must
 #                          hold no particle error (variables the effects read are all set)
+#   fx-legacy.png          left to right: purple dust (TrollsteinnBlock's DustParticleOptions colour,
+#                          legacy RedDust), twilight oak log item particles (a block item's IconCrack),
+#                          still crits scattering, poofs rising (explosion_particle's -velocity * 10)
 #   missing-advancement-toast.png  TF's MissingAdvancementToast for progress_lich: the client mod's
 #                          toast through F12 (UPPER_TEXT and the title in white, the lich tower
 #                          miniature), the game's toast on a vanilla client
@@ -162,6 +166,11 @@ $r = Invoke-SelfTest 'combat.ui_fx_vanilla'
 if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_fx_vanilla failed') }
 Start-Sleep -Seconds 1
 Save-Screenshot 'fx-vanilla' | Out-Null
+Start-Sleep -Seconds 2
+$r = Invoke-SelfTest 'combat.ui_fx_legacy'
+if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_fx_legacy failed') }
+Start-Sleep -Seconds 1
+Save-Screenshot 'fx-legacy' | Out-Null
 Start-Sleep -Seconds 2
 
 # the missing advancement toast (shown 10 s; 600 ms slide in)
