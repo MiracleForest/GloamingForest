@@ -35,9 +35,6 @@ namespace {
 struct Registries {
     std::shared_mutex                    mutex;
     std::map<std::string, Factory>       pieces;
-    /// Factories used only while `pieces` has none for the id (selftest stand-ins for other units'
-    /// fixture pieces): a unit's own registration wins whatever the order.
-    std::map<std::string, Factory>       fallbackPieces;
     std::map<std::string, ProcessorFn>   processors;
     std::map<std::string, MarkerFn>      markers;
 };
@@ -355,11 +352,6 @@ void registerPieceType(std::string const& typeId, Factory factory) {
     if (replaced) log().warn("structure: piece type '{}' was registered again with another factory; the later one replaces it", typeId);
 }
 
-void registerFallbackPieceType(std::string const& typeId, Factory factory) {
-    std::unique_lock lock(reg().mutex);
-    reg().fallbackPieces[typeId] = std::move(factory);
-}
-
 std::unique_ptr<Piece> loadPiece(Json const& saved) {
     std::string id = saved.value("id", std::string{});
     Factory     factory;
@@ -367,7 +359,6 @@ std::unique_ptr<Piece> loadPiece(Json const& saved) {
         std::shared_lock lock(reg().mutex);
         auto             it = reg().pieces.find(id);
         if (it != reg().pieces.end() && it->second) factory = it->second;
-        else if (auto fb = reg().fallbackPieces.find(id); fb != reg().fallbackPieces.end()) factory = fb->second;
     }
     if (!factory) {
         warnOnce("piece:" + id, "structure: unknown piece type '" + id + "' (piece skipped)");

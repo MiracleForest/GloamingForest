@@ -1,7 +1,7 @@
-# Families (F11), before the server boots: the block family generator (tools/families) on the
-# deployed mod copy, so the gf_test fixture families exist in the gf_test packs. tools/xmake/
-# assemble.lua will run the generator itself once its hook is in (see tools/families/run.ps1);
-# running it again here is harmless.
+# Families (F11), before the server boots: a safety net. tools/xmake/assemble.lua runs the block
+# family generator (tools/families) on every build, so the deployed copy already carries the
+# generated blocks (families-generated.txt) and this run is a no-op; it only completes a copy
+# deployed from a directory the build did not assemble.
 $deployed = Join-Path $script:SlotDir "$(Get-ModsDirName $script:BaseDir)\$script:ModName"
 Write-Step "families: generating the block families into $deployed"
 & pwsh -NoProfile -File (Join-Path $script:RepoRoot 'tools/families/run.ps1') -Out $deployed

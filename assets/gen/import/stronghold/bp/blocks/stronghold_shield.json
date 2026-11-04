@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:stronghold_shield",
@@ -13,7 +13,7 @@
     "components": {
       "minecraft:destructible_by_mining": false,
       "minecraft:destructible_by_explosion": false,
-      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#707070",
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {

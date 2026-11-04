@@ -231,8 +231,67 @@ function Invoke-ModBuild([ValidateSet('server', 'client')] [string]$Target) {
 $script:ErrorLineRegex = '\b(ERR|FTL)\]?\s?\[(GloamingForest|LeviLamina|CrashLogger)\]'
 # Bedrock's own content errors (pack loading: "ERR [Server] [Recipes] ...", "[Components]",
 # "[Blocks]", "[Geometry]", "[Texture]", "[JSON]", ...) fail runs too, so units catch pack mistakes.
-# The transport banner ("TRANSPORT TYPE ERROR", NetherNet lines) has no [Category] and stays out.
 $script:ContentErrorRegex = '\b(ERR|FTL)\]?\s?\[Server\]\s*(<[^>]*>\s*)?\[[A-Za-z][A-Za-z ]*\]'
+# Every other ERR / FTL line of any logger fails the run as well, so that an ERR line in a log always
+# means a real error: "12:00:00.000 ERR [Logger] text" (server console), "[2026-01-01 12:00:00.000
+# ERR][Logger] text" (client log), with "[host] " before the server's lines in remote client runs.
+$script:AnyErrorRegex = '^(?:\[host\] )?(?:\d\d:\d\d:\d\d\.\d+ (?:ERR|FTL) \[(?<logger>[^\]]+)\]|\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+ (?:ERR|FTL)\]\[(?<logger>[^\]]+)\])\s?(?<text>.*)$'
+# The only ERR text that is not an error: BDS prints this banner on every boot because the harness
+# runs RakNet on purpose (server/lib.ps1 Set-ServerProperties: real clients join 127.0.0.1 without
+# the online signaling service NetherNet needs). Exactly these six lines of the [Server] logger.
+$script:TransportBanner = @(
+    '================ TRANSPORT TYPE ERROR  ==================='
+    'Your current connection type is not set to NetherNet. In this release, NetherNet is the only supported transport type.'
+    'Players will not be able to connect to your game without NetherNet.'
+    "To switch, set 'transport=nethernet' in server.properties."
+    'For more information, please reference the included bedrock_server_how_to.html file.'
+    '======================================================='
+)
+
+# The lines of $Lines that fail a run: ERR / FTL lines (the three regexes above) except the transport
+# banner, and except the console's own echo of a command's error reply: BDS prints the error output
+# of a command run on its console as "ERR [Server] <reply>" right after the command, and scenarios run
+# failing commands on purpose (a refused /twilightforest locate). The mod logs a command error first as
+# "[GloamingForest] Command error: <msgId> [params]" and, when the server language prints it otherwise (a
+# translated vanilla reply, parameters filled in), "Command error text: <text>" (src/mod/Commands.cpp),
+# but the same reply only once per
+# $script:CommandEchoSeconds (10 s, its spam guard for ticking functions): an [Server] ERR line is the
+# echo when the mod logged the same text, from the same source (in a remote client run the host's
+# "[host] " lines), at most that long before it. An ERR line before any such reply, later, or with other
+# text counts.
+$script:CommandEchoSeconds = 10
+function Get-LineSeconds([string]$Line) {
+    $m = [regex]::Match($Line, '(\d\d):(\d\d):(\d\d)\.(\d+)')
+    if (-not $m.Success) { return $null }
+    return [int]$m.Groups[1].Value * 3600 + [int]$m.Groups[2].Value * 60 + [int]$m.Groups[3].Value + [double]("0." + $m.Groups[4].Value)
+}
+function Select-ErrorLines([string[]]$Lines) {
+    # source + text -> time of day (s) the mod last logged that reply
+    $replies = @{}
+    @(foreach ($l in $Lines) {
+        $src = if ($l.StartsWith('[host] ')) { 'host' } else { 'own' }
+        if ($l -match '\[GloamingForest\]\s?Command error(?: text)?: (.*)$') {
+            $key = "$src`u{1}$($Matches[1].TrimEnd())"
+            $at = Get-LineSeconds $l
+            if ($null -ne $at) { $replies[$key] = $at }
+        }
+        if ($l -match $script:ErrorLineRegex -or $l -match $script:ContentErrorRegex) { $l; continue }
+        $m = [regex]::Match($l, $script:AnyErrorRegex)
+        if (-not $m.Success) { continue }
+        if ($m.Groups['logger'].Value -eq 'Server') {
+            $text = $m.Groups['text'].Value.TrimEnd()
+            if ($script:TransportBanner -ccontains $text) { continue }
+            $key = "$src`u{1}$text"
+            $at = Get-LineSeconds $l
+            if ($replies.ContainsKey($key) -and $null -ne $at) {
+                $age = $at - $replies[$key]
+                if ($age -lt -43200) { $age += 86400 }   # past midnight
+                if ($age -ge 0 -and $age -le $script:CommandEchoSeconds + 0.5) { continue }
+            }
+        }
+        $l
+    })
+}
 
 # ---------------------------------------------------------------------------------------
 # Shared scenario helpers. They rely on functions each platform's lib.ps1 defines:
@@ -252,8 +311,12 @@ function Invoke-SelfTest([string]$Glob = '', [int]$TimeoutSeconds = 600, [switch
         try { Wait-LogLine "SELFTEST (START|BUSY|DONE)|$script:CommandErrorRegex" $StartSeconds -Since $mark | Out-Null; break }
         catch { if ($i -lt $Attempts) { Write-Step "selftest '$label' did not start (attempt $i/$Attempts); sending it again" } }
     }
+    # Once the run started, only DONE ends the wait: tests may run failing commands on purpose, and
+    # their "Syntax error" / "Unknown command" lines are not a rejected selftest command.
+    $started = [bool](Get-ServerLog -Since $mark | Select-String -Pattern 'SELFTEST START' -Quiet)
+    $endRegex = if ($started) { $script:SelfTestDoneRegex } else { "$script:SelfTestDoneRegex|$script:CommandErrorRegex" }
     try {
-        $hit = Wait-LogLine "$script:SelfTestDoneRegex|$script:CommandErrorRegex" $TimeoutSeconds -Since $mark
+        $hit = Wait-LogLine $endRegex $TimeoutSeconds -Since $mark
         if ($hit -notmatch $script:SelfTestDoneRegex) { Write-Step "selftest command rejected: $hit" }
     } catch {
         Write-Step "selftest '$label' did not finish: $_"
@@ -263,9 +326,9 @@ function Invoke-SelfTest([string]$Glob = '', [int]$TimeoutSeconds = 600, [switch
     return $r
 }
 
-# Lines of this run that make it fail (ERR/FTL from the mod, LeviLamina or CrashLogger).
+# Lines of this run that make it fail (Select-ErrorLines).
 function Get-ErrorLines {
-    @(Get-ServerLog | Where-Object { $_ -match $script:ErrorLineRegex -or $_ -match $script:ContentErrorRegex })
+    @(Select-ErrorLines @(Get-ServerLog))
 }
 
 # Config files written into the deployed mod before every run (`$Scenario` of run.ps1 is in

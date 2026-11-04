@@ -1,14 +1,14 @@
 # Spike S7 follow-up (F1): before the server boots, add a throw-away behavior pack of probe blocks that declare
-# block tags in each form, in each block format_version from the import's 1.21.80 to 1.26.50, so import.s7_probe
+# block tags in each form, in each block format_version from 1.21.80 to 1.26.50, so import.s7_probe
 # can read what the game made of them (docs/spikes/S7.md). The pack lives only in this run's slot; nothing ships.
 # Forms: "legacy" ("tag:<id>": {} components), "object" ("minecraft:tags": {"tags": [...]}, the item form), "array"
 # ("minecraft:tags": [...]); "array_entity" / "legacy_entity" add minecraft:block_entity (F10's native container
 # backend). A form a format rejects logs a content error, which fails the run: the run is the evidence, not a gate.
 #
-# The family blocks: F11's families kit rewrites them at assemble in its format 1.26.0 from the import's skeleton,
-# which therefore keeps the pre-1.26.20 "tag:<id>" form for them. To show that the import's whole skeleton loads at
-# 1.26.50, this run replaces the kit's file of every family block in the slot by the import's own skeleton converted
-# to 1.26.50 as the import writes the other blocks ("tag:<id>" components -> the minecraft:tags array).
+# The family blocks: F11's families kit rewrites them at assemble in its format 1.26.0 from the import's skeleton.
+# To show that the import's whole skeleton loads at 1.26.50, this run replaces the kit's file of every family block in
+# the slot by the import's own skeleton at 1.26.50 (since W0d the import writes them so, Blocks.FamilyBlockFormat; a
+# skeleton still in the "tag:<id>" form is converted to the minecraft:tags array).
 $mod = Join-Path $script:SlotDir "$(Get-ModsDirName $script:SlotDir)\$script:ModName"
 $familyIds = @(Get-ChildItem (Join-Path $script:RepoRoot 'assets/gen/import') -Recurse -Filter '*.json' |
     Where-Object { $_.FullName -match '[\\/]data[\\/]gf[\\/]families[\\/]' } |
@@ -53,7 +53,8 @@ New-Item -ItemType Directory -Force (Join-Path $s7Pack 'blocks') | Out-Null
 }
 '@ | Set-Content -Encoding UTF8 (Join-Path $s7Pack 'manifest.json')
 
-# keep in step with kS7Formats / kS7Forms in src/feature/ext/import/S7Probe.cpp
+# The single list of the probes: every probe written here is listed in the pack's probes.json, which import.s7_probe
+# reads (src/feature/ext/import/S7Probe.cpp), so a format or form added here is probed there.
 $formats = @('1.21.80', '1.26.0', '1.26.10', '1.26.20', '1.26.30', '1.26.40', '1.26.50')
 $tags = '"minecraft:is_pickaxe_item_destructible", "gf_s7:probe"'
 $forms = [ordered]@{
@@ -64,9 +65,11 @@ $forms = [ordered]@{
     legacy_entity = "$('"tag:minecraft:is_pickaxe_item_destructible": {}, "tag:gf_s7:probe": {}'), `"minecraft:block_entity`": {}"
 }
 $written = 0
+$probes = [System.Collections.Generic.List[object]]::new()
 foreach ($fv in $formats) {
     foreach ($form in $forms.Keys) {
         $name = "${form}_$($fv -replace '\.', '_')"
+        $probes.Add([ordered]@{ id = "gf_s7:$name"; form = $form; format = $fv })
         @"
 {
   "format_version": "$fv",
@@ -84,4 +87,6 @@ foreach ($fv in $formats) {
         $written++
     }
 }
-Write-Step "S7 probe pack: $written blocks written to $s7Pack"
+# (a file at the pack's root outside its known folders is not read by the game)
+[ordered]@{ probes = $probes } | ConvertTo-Json -Depth 4 | Set-Content -Encoding UTF8 (Join-Path $s7Pack 'probes.json')
+Write-Step "S7 probe pack: $written blocks written to $s7Pack (listed in probes.json)"

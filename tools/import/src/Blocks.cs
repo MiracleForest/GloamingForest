@@ -360,7 +360,7 @@ namespace GfImport
                 comps.Set("minecraft:destructible_by_explosion", ExplosionComponent(jb.Resistance));
                 // the tools that mine it faster and the tier a tool needs (Harvest.cs), in the form of the block's format
                 string format = FormatOf(bi);
-                HarvestTags(bi, comps, format == BlockFormat);
+                HarvestTags(bi, comps, ModernBlockFormat(format));
                 // light: a constant, or a function of the block's states (one permutation per other light level)
                 var lightPerms = new List<J>();
                 var lf = Light.Of(this, bi, Warn);
@@ -549,12 +549,12 @@ namespace GfImport
         /// and minecraft:block_entity is), and a bone_visibility value is a Molang string, not a boolean.</summary>
         public const string BlockFormat = "1.26.50";
 
-        /// <summary>The block format of the family blocks' skeletons. The families kit (F11, tools/families) rewrites
-        /// every block of the families data at assemble in its own format (families.lua FORMAT, 1.26.0), copying the
-        /// skeleton whole or its "tag:" components: a format before 1.26.20, whose blocks declare tags as "tag:&lt;id&gt;"
-        /// components (minecraft:tags is not valid there). These files are the kit's input and never load as written;
-        /// once the kit writes 1.26.20 or later, they take BlockFormat (docs/spikes/S7.md).</summary>
-        public const string FamilyBlockFormat = "1.21.80";
+        /// <summary>The block format of the family blocks' skeletons: BlockFormat, as every other block. The families kit
+        /// (F11, tools/families) rewrites every block of the families data at assemble from a copy of the skeleton; it
+        /// drops both tag forms of the copy and writes the entry's params.tags in the form of the format it writes the
+        /// block in (families.lua base_doc / write_tags), so the skeleton's own format and tag form do not reach it
+        /// (docs/spikes/S7.md).</summary>
+        public const string FamilyBlockFormat = BlockFormat;
 
         /// <summary>The format the import writes a block in.</summary>
         static string FormatOf(BlockInfo bi) { return bi.Family != null ? FamilyBlockFormat : BlockFormat; }
@@ -734,11 +734,14 @@ namespace GfImport
 
         /// <summary>TF's own sound types (TFSoundTypes.java) as Bedrock block sound types of the pack's sounds.json
         /// (rp/sounds.json.d/import-<unit>.json, merged by assemble per id): block_sounds (break, place, hit) and
-        /// interactive_sounds (step, fall; jump and land, which Java has no sound of their own for, play the step and
-        /// the fall sound), each with F3's sound event and the volume and pitch Java plays it at for a SoundType of
-        /// volume v and pitch p (break and place: (v + 1) / 2 at p * 0.8, LevelRenderer / BlockItem.place; hit: (v + 1) / 8
-        /// at p * 0.5, MultiPlayerGameMode; step: v * 0.15 at p, Entity.playStepSound; fall: v * 0.5 at p * 0.75,
-        /// LivingEntity.playBlockFallSound). One file per owner of the blocks using the type (F1 when several units do).</summary>
+        /// interactive_sounds (step, fall), each with F3's sound event and the volume and pitch Java plays it at for a
+        /// SoundType of volume v and pitch p (break and place: (v + 1) / 2 at p * 0.8, LevelRenderer / BlockItem.place;
+        /// hit: (v + 1) / 8 at p * 0.5, MultiPlayerGameMode; step: v * 0.15 at p, Entity.playStepSound; fall: v * 0.5 at
+        /// p * 0.75, LivingEntity.playBlockFallSound, only with fall damage). Bedrock's jump and land events have no Java
+        /// counterpart (Java plays no block sound for a jump, nor for a landing without fall damage): both are written
+        /// silent ("", as the "default" event), so no fallback of the engine plays a sound TF does not. One file per
+        /// owner of the blocks using the type (F1 when several units do). Checked against the hand-written soundTypes of
+        /// tools/import/expected-behaviour.json (Checks.CheckSoundTypes).</summary>
         void ImportSoundTypes()
         {
             var perOwner = new SortedDictionary<string, J>(StringComparer.Ordinal);
@@ -761,8 +764,8 @@ namespace GfImport
                     .Set("default", "")
                     .Set("step", ev(t.Step, v * 0.15, p))
                     .Set("fall", ev(t.Fall, v * 0.5, p * 0.75))
-                    .Set("jump", ev(t.Step, v * 0.15, p))
-                    .Set("land", ev(t.Fall, v * 0.5, p * 0.75))));
+                    .Set("jump", "")
+                    .Set("land", "")));
                 Log.Add("TF sound type TFSoundTypes." + t.Name + " -> block sound " + id + " (" + string.Join(", ", kv.Value.Select(NameOf)) + ")");
             }
             foreach (var kv in perOwner)

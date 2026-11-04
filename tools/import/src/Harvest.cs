@@ -201,13 +201,15 @@ namespace GfImport
 
         /// <summary>data/gf/import/harvest.json: the blocks that drop only for a correct tool (the runtime sets the engine's
         /// requires-correct-tool flag on them, which Bedrock's JSON blocks cannot declare) and every block's tools and tier,
-        /// for the selftests.</summary>
+        /// for the selftests. Every block's tools and tier come from the Bedrock block tags of its final skeleton file
+        /// (after the overrides; a family block's follow its params.tags, SyncFamilyTags), so harvest.json lists what the
+        /// game reads, whatever override changed them (FinalHarvest).</summary>
         public void ImportHarvestIndex()
         {
             var blocks = J.Obj();
             foreach (var kv in Harvests)
             {
-                var h = kv.Value;
+                var h = FinalHarvest(kv.Key, kv.Value);
                 if (h.Tools.Count == 0 && h.Tier == null && !h.RequiresTool) continue;
                 var e = J.Obj();
                 if (h.Tools.Count > 0) e.Set("tools", J.Strs(h.Tools));
@@ -216,6 +218,74 @@ namespace GfImport
                 blocks.Set("twilightforest:" + kv.Key, e);
             }
             EmitJson("skeleton", ImportUnit, "data/gf/import/harvest.json", J.Obj().Set("blocks", blocks));
+        }
+
+        /// <summary>The harvest tags the import knows: the tool tags (BedrockToolTag) and Bedrock's tier tags (TierBlockTags,
+        /// with netherite, which no TF block needs: harvest.json lists no tier for it).</summary>
+        static readonly HashSet<string> KnownHarvestTags = new HashSet<string>(BedrockToolTag.Values.Concat(TierBlockTags.Select(t => t[1])), StringComparer.Ordinal);
+
+        /// <summary>A minecraft: tag of a harvest tag's form (..._item_destructible, ..._tier_destructible) that the import
+        /// does not know: a misspelling ("minecraft:is_pickax_item_destructible") the game ignores, so the block would lose
+        /// the tool or tier without a word. A unit's own namespace is free.</summary>
+        public static bool UnknownHarvestTag(string tag)
+        {
+            return !KnownHarvestTags.Contains(tag) && Regex.IsMatch(tag, @"^minecraft:.*_(item|tier)_destructible$");
+        }
+
+        /// <summary>The known harvest tags, for messages.</summary>
+        public static string KnownHarvestTagList { get { return string.Join(", ", KnownHarvestTags.OrderBy(x => x, StringComparer.Ordinal)); } }
+
+        /// <summary>Reports, in one error, the tags `where` lists more than once (block tags are a set: every check then
+        /// compares them as one). Returns whether there were any.</summary>
+        public bool ReportDuplicateTags(string where, IEnumerable<string> tags)
+        {
+            var dups = tags.GroupBy(t => t, StringComparer.Ordinal).Where(g => g.Count() > 1).Select(g => g.Key).OrderBy(x => x, StringComparer.Ordinal).ToList();
+            if (dups.Count == 0) return false;
+            Errors.Add(where + " lists the tag(s) " + string.Join(", ", dups) + " more than once (block tags are a set)");
+            return true;
+        }
+
+        /// <summary>The harvest of a block as the Bedrock block tags of its final skeleton file declare them (after the
+        /// overrides; a family block's follow its params.tags): the tools of its tool tags (BedrockToolTag), the highest
+        /// tier of its tier tags (BedrockTierTag), and TF's drop rule (requiresCorrectToolForDrops, which no tag carries).
+        /// Other tags are not harvest facts and are left out. A tag of a harvest tag's form the import does not know is an
+        /// error, as a duplicated tag of a non-family block (a family block's are reported by SyncFamilyTags). An override
+        /// that leaves a block TF drops only for a correct tool without a pickaxe, axe, shovel or hoe tag (it then never
+        /// drops) is a warning, as a tier tag without one. Java's harvest when the skeleton file is missing or has no
+        /// components (reported by CheckEmittedBlocks / SyncFamilyTags).</summary>
+        Harvest FinalHarvest(string id, Harvest java)
+        {
+            BlockInfo bi;
+            SortedDictionary<string, GenFile> files;
+            GenFile f;
+            if (!BlockInfos.TryGetValue(id, out bi) || !Out.TryGetValue(NameOf(bi.Owner), out files) || !files.TryGetValue("bp/blocks/" + id + ".json", out f)) return java;
+            var root = J.Parse(System.Text.Encoding.UTF8.GetString(f.Bytes));
+            var block = root.IsObj ? root["minecraft:block"] : null;
+            var comps = block != null && block.IsObj ? block["components"] : null;
+            if (comps == null || !comps.IsObj) return java;
+            var list = BlockTagsIn(comps);
+            // a family block's skeleton follows params.tags, unless a patch changed it (an error of SyncFamilyTags)
+            string rel = "bp/blocks/" + id + ".json", source = bi.Family != null && !familyTagOverrides.Contains(id)
+                ? "params.tags of its data/gf/families entry"
+                : "its skeleton, as tools/import/overrides/" + NameOf(bi.Owner) + ".json patches it";
+            if (bi.Family == null) ReportDuplicateTags(rel, list);
+            foreach (var t in list.Where(UnknownHarvestTag).Distinct(StringComparer.Ordinal))
+                Errors.Add(rel + ": unknown harvest tag " + t + " (from " + source + "; the import knows " + KnownHarvestTagList + ")");
+            var tags = new HashSet<string>(list, StringComparer.Ordinal);
+            var h = new Harvest { RequiresTool = java.RequiresTool };
+            foreach (var kv in BedrockToolTag)
+                if (tags.Contains(kv.Value)) h.Tools.Add(kv.Key);
+            // the highest tier tag (as a block in several #minecraft:needs_<tier>_tool tags needs the highest)
+            foreach (var n in NeedsTags)
+                if (h.Tier == null && tags.Contains(BedrockTierTag[n[1]])) h.Tier = n[1];
+            if (h.Tier != null && !h.Digger)
+                Warn(rel + ": the tier tag " + BedrockTierTag[h.Tier] + " (from " + source
+                    + ") without a pickaxe, axe, shovel or hoe tag has no effect (not listed in data/gf/import/harvest.json)");
+            // TF's own never-dropping blocks are listed by ComputeHarvest; this is one an override made so
+            if (h.RequiresTool && !h.Digger && java.Digger)
+                Warn(rel + ": TF drops twilightforest:" + id + " only for a correct tool, and its final tags (from " + source
+                    + ") have no pickaxe, axe, shovel or hoe tag: no tool is correct, so the block never drops (harvest.json lists requiresTool without a digger)");
+            return h;
         }
     }
 }

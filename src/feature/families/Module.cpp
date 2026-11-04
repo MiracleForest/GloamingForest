@@ -26,6 +26,8 @@ void clearQueues();
 void clearDoors();
 void chestsTick(int tick);
 void clearChests();
+void hoppersTick();
+void clearHopperViews();
 void signsTick(int tick);
 void clearSigns();
 void refreshTypes();
@@ -59,12 +61,14 @@ public:
         installSwitches();
         installPlants();
         installChests();
+        installHoppers();
         installSigns();
         mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([this](auto&) {
             ++mTicks;
             detail::runQueues();
             detail::tickBlockEvents();
             detail::chestsTick(mTicks);
+            detail::hoppersTick();
             detail::signsTick(mTicks);
         });
         static bool registered = false;
@@ -79,6 +83,7 @@ public:
                 detail::clearQueues();
                 detail::clearDoors();
                 detail::clearChests();
+                detail::clearHopperViews();
                 detail::clearSigns();
                 detail::resetBlockEvents();
             });
@@ -94,6 +99,7 @@ public:
     void uninstall() {
         ll::event::EventBus::getInstance().removeListener(mTick);
         uninstallSigns();
+        uninstallHoppers();
         uninstallChests();
         uninstallPlants();
         uninstallSwitches();
