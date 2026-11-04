@@ -14,13 +14,10 @@
 #include <set>
 #include <unordered_map>
 
-#include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/legacy/ActorUniqueID.h"
-#include "mc/server/commands/CommandPermissionLevel.h"
-#include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/HangingActor.h"
@@ -2212,15 +2209,6 @@ GF_REGISTER_SELFTEST("structure.template_definitions", [](Context& ctx) {
 
 namespace {
 
-/// Runs a command as the server (selftests only).
-bool runCommand(std::string const& command) {
-    auto level = ll::service::getLevel();
-    if (!level) return false;
-    ServerCommandOrigin origin("gloamingforest-structure-selftest", level->asServer(), CommandPermissionLevel::Owner, DimensionType(0));
-    auto out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
-    return out.mSuccessCount > 0;
-}
-
 AABB aabbOf(BlockBox const& b) {
     return AABB{Vec3{static_cast<float>(b.minX), static_cast<float>(b.minY), static_cast<float>(b.minZ)},
                 Vec3{static_cast<float>(b.maxX + 1), static_cast<float>(b.maxY + 1), static_cast<float>(b.maxZ + 1)}};
@@ -2314,9 +2302,9 @@ GF_REGISTER_SELFTEST("structure.spawner_scale", [](Context& ctx) -> ll::coro::Co
 
     // growing up: a calf given the factor keeps it as an adult (the game sets the adult size from
     // the cow's definition, the kit puts the factor on top again)
-    ctx.require(runCommand("summon minecraft:cow " + std::to_string(area.minX + 2) + " " + std::to_string(area.minY) + " " + std::to_string(area.minZ + 2) +
-                           " 0 0 minecraft:entity_born gf_scale_calf"),
-                "a calf is summoned");
+    auto summoned = gf::selftest::runServerCommand("summon minecraft:cow " + std::to_string(area.minX + 2) + " " + std::to_string(area.minY) + " " +
+                                                   std::to_string(area.minZ + 2) + " 0 0 minecraft:entity_born gf_scale_calf");
+    ctx.require(summoned.ok, "a calf is summoned (" + summoned.messages + ")");
     co_await ctx.ticks(2);
     source = ctx.region();
     ctx.require(source != nullptr, "block source");
@@ -2334,7 +2322,8 @@ GF_REGISTER_SELFTEST("structure.spawner_scale", [](Context& ctx) -> ll::coro::Co
     ctx.check(std::abs(widthOf(*calf) - calfWidth * 0.5f) < 0.02f, "the calf is scaled to 0.5 (width " + std::to_string(widthOf(*calf)) + ", unscaled " +
                                                                         std::to_string(calfWidth) + ")");
     ctx.check(spawners::scaleOf(*calf) == 0.5f, "the factor is kept on the mob");
-    ctx.require(runCommand("event entity @e[name=gf_scale_calf] minecraft:ageable_grow_up"), "the calf grows up");
+    auto grown = gf::selftest::runServerCommand("event entity @e[name=gf_scale_calf] minecraft:ageable_grow_up");
+    ctx.require(grown.ok, "the calf grows up (" + grown.messages + ")");
     co_await ctx.ticks(25);
     calf = fetch(*calfId);
     ctx.require(calf != nullptr, "the grown cow is there");
@@ -2474,9 +2463,9 @@ GF_REGISTER_SELFTEST("structure.template_entities", [](Context& ctx) -> ll::coro
     auto area = co_await ctx.flatArea(5758, 6, 4);
     ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5758)), "test area loaded");
     BlockPos at{area.minX + 1, area.minY, area.minZ + 1};
-    ctx.require(runCommand("summon minecraft:armor_stand " + std::to_string(at.x + 0.5) + " " + std::to_string(at.y) + " " + std::to_string(at.z + 0.5) +
-                           " 30 0 minecraft:entity_spawned gf_capture_stand"),
-                "an armor stand is summoned");
+    auto stand = gf::selftest::runServerCommand("summon minecraft:armor_stand " + std::to_string(at.x + 0.5) + " " + std::to_string(at.y) + " " +
+                                                std::to_string(at.z + 0.5) + " 30 0 minecraft:entity_spawned gf_capture_stand");
+    ctx.require(stand.ok, "an armor stand is summoned (" + stand.messages + ")");
     co_await ctx.ticks(2);
     auto* source = ctx.region();
     ctx.require(source != nullptr, "block source");
@@ -2561,9 +2550,9 @@ GF_REGISTER_SELFTEST("structure.scale_probe", [](Context& ctx) -> ll::coro::Coro
                 pen.push_back(Json::array({p.x, p.y, p.z}));
             }
         for (auto const& p : pen) (void)game::setBlock(*source, BlockPos{p[0].get<int>(), p[1].get<int>(), p[2].get<int>()}, blocks::java("minecraft:glass"));
-        ctx.require(runCommand("summon minecraft:cow " + std::to_string(at.x + 0.5) + " " + std::to_string(at.y) + " " + std::to_string(at.z + 0.5) +
-                               " 0 0 minecraft:entity_born gf_scale_probe"),
-                    "a calf is summoned");
+        auto summoned = gf::selftest::runServerCommand("summon minecraft:cow " + std::to_string(at.x + 0.5) + " " + std::to_string(at.y) + " " +
+                                                       std::to_string(at.z + 0.5) + " 0 0 minecraft:entity_born gf_scale_probe");
+        ctx.require(summoned.ok, "a calf is summoned (" + summoned.messages + ")");
         co_await ctx.ticks(2);
         source = ctx.region();
         ctx.require(source != nullptr, "block source");
@@ -2616,7 +2605,7 @@ GF_REGISTER_SELFTEST("structure.scale_probe", [](Context& ctx) -> ll::coro::Coro
     // the calf grows up: the game sets its size from the adult's definition (the kit's size checks
     // are held while that is measured), then the kit puts the factor on the new size
     spawners::holdSizeChecks(true);
-    bool fired = runCommand("event entity @e[name=gf_scale_probe] minecraft:ageable_grow_up");
+    bool fired = gf::selftest::runServerCommand("event entity @e[name=gf_scale_probe] minecraft:ageable_grow_up").ok;
     co_await ctx.ticks(2);
     mob            = fetch(id);
     float reset    = mob ? widthOf(*mob) : 0.0f;

@@ -16,9 +16,15 @@ $mark = Get-LogMark
 Send-Console 'twilightforest structure_util scale_probe'
 Wait-LogLine 'structure_util scale_probe armed' 30 -Since $mark | Out-Null
 
+$mark = Get-LogMark
 $r = Invoke-SelfTest 'structure.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) structure selftest(s) failed" }
 if ($r.Pass -lt 31) { throw "expected at least 31 structure selftests to pass, got $($r.Pass)" }
+# the tests run their commands through selftest::runServerCommand, whose replies are not logged:
+# no "Command error" line comes from them
+$cmdErrors = @(Get-ServerLog -Since $mark | Select-String -Pattern 'Command error' | ForEach-Object { $_.Line.Trim() })
+if ($cmdErrors.Count -gt 0) { throw "the structure selftests logged command errors: $($cmdErrors -join ' | ')" }
+Write-Step 'the structure selftests logged no command error'
 $probeWritten = Get-ServerLog | Select-String -Pattern 'scale probe written id=(-?\d+)' | Select-Object -Last 1
 if (-not $probeWritten) { throw 'structure.scale_probe did not leave its scaled mob for the restart' }
 
