@@ -451,13 +451,9 @@ extracts), 45 attachables. The Curios charm of life necklace (`CuriosCompat`) is
   - client `models` (BeDD, local world): the prelaunch step builds a test-only preview pack
     (`tools/models/e2e/preview.ps1`): one actor per geometry with its TF texture and base animation, the x-sign
     actor, armor stands (facing the camera) with every attachable on test items in every slot it is drawn in
-    (head, main hand, off hand), and two broken canary files; it also sets the instance's options for the run:
-    the game's content log file on (`options.txt content_log_file:1`) and the HUD and hand shown
-    (`gfx_hidehud:0`, `gfx_hidehand:0`, whatever an earlier run left). The instance's own values are saved in the
-    e2e home (`models-options.<instance>.json`, outside `out/`) and put back by `models.restore.ps1` however the
-    run ends (a backup that a killed run left behind is kept by the next models run and restored at its end; a
-    hidden HUD or hand found before the run is restored as shown, since it can only be a lost F1's leftover).
-    The scenario runs the selftests, turns off command feedback, hides the HUD with F1, takes 31 screenshots of
+    (head, main hand, off hand), and two broken canary files. The game options of the run (content log file on,
+    HUD and hand shown) and putting the instance's own values back however the run ends are the harness's
+    (F0: `Reset-GameOptions`, `Enable-ContentLog`, `Restore-RunOptions`). The scenario runs the selftests, turns off command feedback, hides the HUD with F1, takes 31 screenshots of
     four models each, shows the HUD again with F1 (`hud_back.png`, in creative mode: the hotbar), then reads the
     client's content log (`<game data>/logs/ContentLog*.txt`): the canary geometry must be reported (the log is
     captured), and any other error or warning fails the run (`out/models/content-log.txt`). Every F1 press is

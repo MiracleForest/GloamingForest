@@ -9,8 +9,8 @@
 # Open every screenshot and compare the models with TF's textures. Last, the client's content log:
 # the two canaries of the preview pack must be reported (the log is captured), and any other error or
 # warning (geometry, animation Molang, attachables, render controllers, client entities, items, JSON)
-# fails the run; out/models/content-log.txt keeps every entry. models.restore.ps1 puts the instance's
-# options back. Dot-sourced by tools/e2e/client/run.ps1.
+# fails the run; out/models/content-log.txt keeps every entry. The harness puts the instance's own options
+# back (run.ps1 Restore-RunOptions). Dot-sourced by tools/e2e/client/run.ps1.
 $gfOut = Join-Path $script:OutRoot $script:Unit
 $planFile = Join-Path $gfOut 'preview-shots.json'
 if (-not (Test-Path $planFile)) { throw "no preview plan: $planFile (models.prelaunch.ps1 did not run)" }
@@ -60,7 +60,7 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 $gfMark = Get-LogMark
 $r = Invoke-SelfTest 'models.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) models selftest(s) failed" }
-# the game started with the HUD shown (models.prelaunch.ps1 set gfx_hidehud:0 / gfx_hidehand:0)
+# the game started with the HUD shown (the harness sets gfx_hidehud:0 / gfx_hidehand:0, lib.ps1 Reset-GameOptions)
 $gfHud = Get-GfHudState -Since $gfMark
 if (-not $gfHud) { throw "no 'SELFTEST INFO models.client_hud: hud ...' line in the models.* run" }
 Write-Step "HUD at the start: hud $($gfHud.Hud), hand $($gfHud.Hand)"
@@ -91,8 +91,8 @@ foreach ($s in $plan.shots) {
     Write-Step "$($s.name): $($s.label)"
 }
 Invoke-Chat '/function gfpreview/clear'
-# the HUD again (the game keeps F1's choice in options.txt for later runs; models.restore.ps1 puts
-# the instance's own values back as well), and a picture of it: the hotbar is shown in creative mode
+# the HUD again (the game keeps F1's choice in options.txt for later runs; the harness's
+# Restore-RunOptions puts the instance's own values back as well), and a picture of it: the hotbar is shown in creative mode
 Set-GfHud shown
 Invoke-Chat '/gamemode creative'
 Start-Sleep -Seconds 2
@@ -126,12 +126,12 @@ $gfEntries | ForEach-Object { "[$($_.Category)][$($_.Level)] $($_.Text)$(if ($_.
     Set-Content -Path (Join-Path $gfOut 'content-log.txt') -Encoding UTF8
 $gfSummary = $gfEntries | Group-Object Category, Level | Sort-Object Name | ForEach-Object { "$($_.Name) x$($_.Count)" }
 Write-Step "content log: $($gfEntries.Count) entries in $($gfLogs.Count) file(s): $($gfSummary -join '; ')"
-# Known lines that are not about this mod's packs: the game's own cached diving-helmet fog
-# definitions (a vanilla pack in the packcache that fails the fog schema on every start).
-$gfNoise = 'fogs/(netherite_)?diving_helmet\.json'
+# Known lines that are not problems: the harness's list (lib.ps1 $script:ContentLogExpected: its own
+# canary, these canaries, the game's cached diving-helmet fog definitions, ...).
+$gfNoise = (@($script:ContentLogExpected) | Where-Object { $_ }) -join '|'
 $gfBad = @($gfEntries | Where-Object { $_.Level -in 'error', 'warning' })
 $gfCanary = @($gfBad | Where-Object { "$($_.Text) $($_.More)" -match 'gfpreview_canary' })
-$gfProblems = @($gfBad | Where-Object { "$($_.Text) $($_.More)" -notmatch 'gfpreview_canary' -and $_.Text -notmatch $gfNoise })
+$gfProblems = @($gfBad | Where-Object { "$($_.Text) $($_.More)" -notmatch 'gfpreview_canary' -and -not ($gfNoise -and "$($_.Text) $($_.More)" -match $gfNoise) })
 foreach ($c in $gfCanary) { Write-Step "content log canary: [$($c.Category)][$($c.Level)] $($c.Text)" }
 foreach ($want in @(@{ re = 'gfpreview_canary\.geo\.json'; what = 'geometry (models/entity/gfpreview_canary.geo.json)' }, @{ re = 'gfpreview_canary\.animation\.json'; what = 'animation Molang (animations/gfpreview_canary.animation.json)' })) {
     if (-not ($gfCanary | Where-Object { "$($_.Text) $($_.More)" -match $want.re })) { throw "the content log does not report the broken canary $($want.what): the check cannot see those errors" }
