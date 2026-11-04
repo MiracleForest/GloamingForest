@@ -522,7 +522,12 @@ void particle(Dimension& dimension, std::string const& particleId, Vec3 const& p
         Rgba const color = particleColor(r, params);
         for (int i = 0; i < n; ++i) {
             Vec3 direction = velocity;
-            if ((r.vars & kVarSplashDirection) && !moving) direction = splashMotion(rng);
+            if (r.vars & kVarSplashDirection) {
+                // SplashParticle: still -> WaterDropParticle's own motion; ySpeed 0 with an x/z
+                // speed -> that speed with yd 0.1
+                if (!moving) direction = splashMotion(rng);
+                else if (velocity.y == 0.f) direction = Vec3{velocity.x, 0.1f, velocity.z};
+            }
             auto& map = vars.emplace_back(std::make_unique<MolangMap>());
             fillEffectVariables(*map, r.vars, velocity, direction, color);
         }

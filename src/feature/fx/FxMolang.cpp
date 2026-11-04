@@ -3,7 +3,7 @@
 // SpawnParticleEffectPackets (vanilla clients) and the client's resource pack effects (companions
 // whose particle has no native factory).
 //
-// noteColor translates NoteParticle (net.minecraft.client.particle, Java Edition) as TF 4.8 calls it.
+// noteColor follows Java Edition's NoteParticle colour (the hue of the x speed).
 
 #include <algorithm>
 #include <cmath>
