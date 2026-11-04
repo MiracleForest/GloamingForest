@@ -949,9 +949,9 @@ function Get-ProcessDescendants([int]$ProcessId) {
 
 # Kills a process and everything it started, and waits until all of them have exited (up to
 # -TimeoutSec; each process still gets up to 2 s once the deadline passed, but the whole wait never
-# exceeds -TimeoutSec + $script:ProcessTreeGraceSec). Returns $true when the whole tree is gone. The descendants are listed before the
-# kill: Process.Kill($true) does not wait for them, and one that is still exiting keeps the handles
-# it inherited (a redirected output pipe, an open log file).
+# exceeds -TimeoutSec + $script:ProcessTreeGraceSec). Returns $true when the whole tree is gone.
+# The descendants are listed before the kill: Process.Kill($true) does not wait for them, and one
+# that is still exiting keeps the handles it inherited (a redirected output pipe, an open log file).
 $script:ProcessTreeGraceSec = 10
 function Stop-ProcessTree([System.Diagnostics.Process]$Process, [int]$TimeoutSec = 30) {
     if (-not $Process) { return $true }
@@ -1236,7 +1236,11 @@ function Stop-Game {
     if ($s) {
         $s.End = Get-Date
         $s.Ended = Get-GameSessionEnd -Killed $killed -Running $procs.Count -Process $s.Process -Watchdog (Get-WatchdogFired)
-        if ($procs.Count -eq 0) { Write-Step "the game had exited by itself (exit code $(try { $s.Process.ExitCode } catch { 'unknown' })): session $($s.Launch) $($s.Ended)" }
+        if ($procs.Count -eq 0) {
+            $code = $null
+            try { if ($s.Process) { $code = $s.Process.ExitCode } } catch {}
+            Write-Step "the game had exited by itself (exit code $(if ($null -ne $code) { $code } else { 'unknown' })): session $($s.Launch) $($s.Ended)"
+        }
     }
     if (-not $script:Headless) { Get-Process -Name 'LeviLauncher' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue }
     Write-Step "game stopped"

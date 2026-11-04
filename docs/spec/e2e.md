@@ -83,8 +83,8 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   exited by itself with a non-zero or unknown exit code: a crash), and whether it reached the world
   (`Enter-TestWorld` / `Enter-RemoteServer`). A `remote-vanilla` session that never joined the host (a
   failed join the harness relaunched) gets no canary and needs none. The harness assigns each
-  `ContentLog*.txt` to the last session started before the file was created. Every `closed` session must
-  have a file that reports the canary: no file, or files without it, fail the run ("the check cannot see
+  `ContentLog*.txt` to the last session started before the file was created. Every `closed` session (in
+  `remote-vanilla`: every `closed` session that joined the host) must have a file that reports the canary: no file, or files without it, fail the run ("the check cannot see
   that session's pack errors"), even when another session of the run (a relaunch, ui's Vibrant Visuals
   half) logged it. A `killed` or `gone` session is listed and needs no canary, for itself only: it never
   waives the check for the run's other sessions. A file with only the canary is clean. The summary and
