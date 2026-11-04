@@ -326,9 +326,9 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
         ctx.check(colour("twilightforest:canopy_leaves") == 0x619961 && colour("twilightforest:mangrove_leaves") == 0x80A755 && colour("twilightforest:twilight_oak_leaves") == 0x48B518 &&
                       colour("twilightforest:time_leaves") == 0x6A9C17 && colour("twilightforest:violet_force_field") == 0x5C1074,
                   "TF's ColorHandler colours without a level");
-        ctx.check(colour("twilightforest:aurora_block") == 0x00FFB3, "the aurora block is hsvToRGB(0.45, 1, 1)");
+        ctx.check(colour("twilightforest:aurora_block") == 0x00FFB2, "the aurora block is hsvToRGB(0.45, 1, 1) (float: t = 0.6999999, 178)");
         auto pale = colour("twilightforest:aurora_pillar");
-        ctx.check(pale && *pale != 0x00FFB3 && ((*pale >> 8) & 0xFF) == 0xE6, "the aurora pillar is the aurora colour paled (value 0.9)");
+        ctx.check(pale && *pale != 0x00FFB2 && ((*pale >> 8) & 0xFF) == 0xE6, "the aurora pillar is the aurora colour paled (value 0.9)");
         auto signal = [](int power) { return [power](std::string_view s) -> std::optional<int> { return s == "redstone_signal" ? std::optional<int>(power) : std::nullopt; }; };
         auto lit = fx::fallingDustColor("minecraft:redstone_wire", signal(15)).value_or(0);
         // power 15: (255, floor(0.19999999f * 255) = 50, 0); power 0: (floor(0.3f * 255) = 76, 0, 0)
