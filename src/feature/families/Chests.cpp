@@ -291,8 +291,8 @@ void settleLoadedChunks() {
     for (auto c : chunks) {
         if (c.since < 0) c.since = now;
         auto* region = regionOf(c.dim);
-        if (!region) continue;
-        if (!region->areChunksFullyLoaded(BlockPos{c.cx * 16 + 8, 0, c.cz * 16 + 8}, 0)) {
+        // (no region for the dimension yet, or the chunk not fully loaded: tried again for a while)
+        if (!region || !region->areChunksFullyLoaded(BlockPos{c.cx * 16 + 8, 0, c.cz * 16 + 8}, 0)) {
             if (now - c.since < 100) later.push_back(c);
             continue;
         }

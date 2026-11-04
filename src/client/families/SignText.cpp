@@ -503,7 +503,7 @@ bool clientActor(Actor const& a) {
 /// matched to its own sign only: one whose sign's text has not arrived keeps its tag, whatever its
 /// neighbours have.
 bool hidesSignName(Actor const& actor) {
-    if (!net::client::connected() || actor.getTypeName() != fam::kSignTextDisplayType || !clientActor(actor) || !actor.hasUniqueID()) return false;
+    if (actor.getTypeName() != fam::kSignTextDisplayType || !net::client::connected() || !clientActor(actor) || !actor.hasUniqueID()) return false;
     auto t = sharedTextOfDisplay(actor.getOrCreateUniqueID().rawID);
     return t && !(t->front.empty() && t->back.empty());
 }
@@ -529,7 +529,10 @@ bool hideDisplayName(Actor const& actor) {
 class SignTextModule {
 public:
     void install() {
-        render::hideNameTag(std::string(fam::kSignTextDisplayType), hideDisplayName);
+        // by predicate (hidesSignName matches the display type first): a rule another module sets for
+        // the type is neither replaced here nor removed on uninstall
+        if (mNameTag) render::showNameTag(mNameTag); // (installed again without an uninstall)
+        mNameTag = render::hideNameTag(hideDisplayName);
         net::client::on("families.sign_text", onText);
         mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientJoinLevelEvent>([](auto&) { clearTexts(); });
         mExit = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) { clearTexts(); });
@@ -550,13 +553,15 @@ public:
         if (mExit) ll::event::EventBus::getInstance().removeListener(mExit);
         mJoin = nullptr;
         mExit = nullptr;
-        render::showNameTag(std::string(fam::kSignTextDisplayType));
+        if (mNameTag) render::showNameTag(mNameTag);
+        mNameTag = 0;
         clearTexts();
     }
 
 private:
     ll::event::ListenerPtr mJoin;
     ll::event::ListenerPtr mExit;
+    std::size_t            mNameTag = 0; ///< the hideNameTag(predicate) handle
 };
 
 } // namespace

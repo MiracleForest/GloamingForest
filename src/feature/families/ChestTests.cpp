@@ -837,6 +837,68 @@ GF_REGISTER_SELFTEST("families.chest_migrate_click", [](Context& ctx) -> ll::cor
     (void)box;
 });
 
+GF_REGISTER_SELFTEST("families.chest_migrate_click_double", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // a double chest whose RIGHT half was saved without a block actor (its stacks in block data) while
+    // the left half has its own, clicked on the LEFT half: the click settles the half it did not hit
+    // too, on the next tick, never inside GameMode::useItemOn; meanwhile the screen shows the native
+    // stacks of the left half and the block data stacks of the right half side by side (the right half
+    // first: slots 0..26)
+    if (!tfChests(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6100, 5);
+    auto p   = ctx.testPos(6100, 0);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto& region = *ctx.region();
+    auto  a = at(p, 1, 0, 1), b = at(p, 2, 0, 1);
+    ctx.require(ctx.setBlock(a, kChest, {{kFacingState, "north"}, {kTypeState, "left"}}), "the left half");
+    ctx.require(ctx.setBlock(b, kChest, {{kFacingState, "north"}, {kTypeState, "right"}}), "the right half east of it");
+    co_await ctx.ticks(2);
+    auto* ca = inv::nativeContainer(region, bp(a));
+    ctx.require(ca != nullptr, "the left half has its block actor");
+    ca->setItem(0, stack("minecraft:flint", 1));
+    ctx.require(stacksWithoutActor(region, b, 4, stack("minecraft:emerald", 2)), "the right half's 2 emeralds in block data, no block actor");
+    ctx.require(inv::nativeContainer(region, bp(a)) != nullptr, "the left half keeps its block actor");
+    CompanionScope companion(ctx);
+    auto           uid = ctx.player().getOrCreateUniqueID().rawID;
+    if (auto* sp = simPlayerById(ctx, uid)) {
+        sp->teleport(Vec3{a.x + .5f, static_cast<float>(a.y), a.z + 2.5f}, sp->getDimensionId());
+        sp->simulateLookAt(bp(a), sim::LookDuration::Instant);
+        sp->simulateSetItem(ItemStack::EMPTY_ITEM(), true, 0);
+    }
+    co_await ctx.ticks(8);
+    auto* sp = simPlayerById(ctx, uid);
+    ctx.require(sp != nullptr, "the player");
+    ctx.require(region.getBlockEntity(bp(b)) == nullptr && waitingInBlockData(region, b), "the right half still waits (no block actor, emeralds in block data) before the click");
+    auto  ba   = bp(a);
+    auto& held = const_cast<ItemStack&>(sp->getSelectedItem());
+    sp->mGameMode->useItemOn(held, ba, 1, Vec3{ba.x + .5f, ba.y + 1.f, ba.z + .5f}, HandSlot::Mainhand, nullptr, true);
+    bool noActor = region.getBlockEntity(bp(b)) == nullptr; // (still inside the click's tick)
+    bool waiting = waitingInBlockData(region, b);
+    auto msgs    = chestScreenMessages(*sp);
+    ctx.check(noActor && waiting, "no block actor was made for the right half and nothing moved inside the click");
+    ctx.require(msgs.contains("screen.open"), "the click on the left half opened the chest screen");
+    ctx.check(inv::openedParts(*sp).size() == 2, "of both halves");
+    ctx.check(shownSlot(msgs["screen.open"], 4) == "minecraft:emerald x2" && shownSlot(msgs["screen.open"], 27) == "minecraft:flint x1",
+              "showing the right half's block data emeralds in slot 4 and the left half's native flint in slot 27 (" + shownSlot(msgs["screen.open"], 4) + ", "
+                  + shownSlot(msgs["screen.open"], 27) + ")");
+    co_await ctx.ticks(2);
+    auto* cb = inv::nativeContainer(region, bp(b));
+    ca       = inv::nativeContainer(region, bp(a));
+    ctx.check(cb && countIn(cb, "minecraft:emerald") == 2 && items::idOf(cb->getItem(4)) == "minecraft:emerald" && !waitingInBlockData(region, b),
+              "the next tick gave the right half its block actor with the emeralds in their slot");
+    ctx.check(ca && countIn(ca, "minecraft:flint") == 1 && !waitingInBlockData(region, a), "the left half keeps its flint, natively");
+    msgs = chestScreenMessages(ctx.player());
+    ctx.check(!msgs.contains("screen.close") && inv::openedParts(ctx.player()).size() == 2, "the screen stays open on both halves");
+    if (cb) cb->setItem(5, stack("minecraft:apple", 1));
+    co_await ctx.ticks(2);
+    msgs = chestScreenMessages(ctx.player());
+    ctx.check(msgs.contains("screen.update") && shownSlot(msgs["screen.update"], 5) == "minecraft:apple x1",
+              "a write to the right half's new block actor shows on the open screen (" + (msgs.contains("screen.update") ? shownSlot(msgs["screen.update"], 5) : std::string("no update")) + ")");
+    gf::net::injectFromClient(ctx.player(), "screen.closed", {{"type", "inventory.chest"}});
+    co_await ctx.ticks(1);
+    for (auto const& q : {a, b}) emptyAndClear(region, q);
+    (void)box;
+});
+
 // ---- the context of a double chest's screen ----------------------------------------------------------
 
 GF_REGISTER_SELFTEST("families.chest_screen_context", [](Context& ctx) -> ll::coro::CoroTask<> {

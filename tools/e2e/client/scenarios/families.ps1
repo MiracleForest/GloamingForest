@@ -350,7 +350,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     Save-Screenshot 'families-9-sign-editor' | Out-Null
     Close-Screen
     # the typed line reached the server (Esc keeps it, as Java's SignEditScreen)
-    Wait-LogLine 'edited the sign at 60 .*\(1 of 4 lines written\)' 20 -Since $mark | Out-Null
+    Wait-LogLine 'edited the sign at 60 .*\(1 of 4 lines written; lines \[0\]\)' 20 -Since $mark | Out-Null
     Start-Sleep -Seconds 2
     Save-Screenshot 'families-6-sign-text' | Out-Null
     # the text is a name tag, and a hidden HUD (gfx_hidehud, some client instances) hides name tags
@@ -381,7 +381,11 @@ if ($script:Mode -ne 'remote-vanilla') {
         }
         Start-Sleep -Milliseconds 500
         Close-Screen
-        Wait-LogLine 'edited the sign at' 20 -Since $m | Out-Null
+        $edited = Wait-LogLine 'edited the sign at' 20 -Since $m
+        # the lines written are the first ones, one after another (an Enter handled twice, or a key
+        # held into auto-repeat by a slow connection, skips a line: the log names the slots used)
+        $want = (0..($lines.Count - 1)) -join ','
+        if ($edited -notmatch "lines \[$([regex]::Escape($want))\]") { Write-Warning "the sign editor wrote other slots than [$want]: $edited" }
     }
     function Use-OnSign([double]$x, [double]$yy, [double]$zz, [double]$pitch, [string]$item) {
         Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 $item"

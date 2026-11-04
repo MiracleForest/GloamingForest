@@ -720,13 +720,17 @@ bool editText(Player& player, GlobalPos const& pos, bool front, std::vector<std:
     auto const* b = blockAt(pos);
     auto const* e = b ? entryOf(*b) : nullptr;
     if (!isSign(e) || docAt(pos).value("waxed", false) || !mayBuild(player) || tooFar(player, pos)) return false;
-    int written = 0;
-    for (auto& l : lines) {
-        l = fitLine(stripFormatting(l), maxWidthOf(e));
-        if (!l.empty()) ++written;
+    int         written = 0;
+    std::string slots; // the indices of the lines written (an editor that skipped a line shows here)
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        auto& l = lines[i];
+        l       = fitLine(stripFormatting(l), maxWidthOf(e));
+        if (l.empty()) continue;
+        ++written;
+        slots += (slots.empty() ? "" : ",") + std::to_string(i);
     }
     signs::setText(pos, lines, front);
-    log().info("families: {} edited the sign at {} {} {} ({} of 4 lines written)", player.getRealName(), pos.x, pos.y, pos.z, written);
+    log().info("families: {} edited the sign at {} {} {} ({} of 4 lines written; lines [{}])", player.getRealName(), pos.x, pos.y, pos.z, written, slots);
     return true;
 }
 
