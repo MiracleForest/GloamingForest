@@ -220,15 +220,16 @@ namespace GfImport
             EmitJson("skeleton", ImportUnit, "data/gf/import/harvest.json", J.Obj().Set("blocks", blocks));
         }
 
-        /// <summary>The harvest tags the import knows: the tool tags (BedrockToolTag) and the tier tags (BedrockTierTag).</summary>
-        static readonly HashSet<string> KnownHarvestTags = new HashSet<string>(BedrockToolTag.Values.Concat(BedrockTierTag.Values), StringComparer.Ordinal);
+        /// <summary>The harvest tags the import knows: the tool tags (BedrockToolTag) and Bedrock's tier tags (TierBlockTags,
+        /// with netherite, which no TF block needs: harvest.json lists no tier for it).</summary>
+        static readonly HashSet<string> KnownHarvestTags = new HashSet<string>(BedrockToolTag.Values.Concat(TierBlockTags.Select(t => t[1])), StringComparer.Ordinal);
 
-        /// <summary>A tag of a harvest tag's form (..._item_destructible, ..._tier_destructible) that the import does not
-        /// know: a misspelling ("minecraft:is_pickax_item_destructible") the game ignores, so the block would lose the
-        /// tool or tier without a word.</summary>
+        /// <summary>A minecraft: tag of a harvest tag's form (..._item_destructible, ..._tier_destructible) that the import
+        /// does not know: a misspelling ("minecraft:is_pickax_item_destructible") the game ignores, so the block would lose
+        /// the tool or tier without a word. A unit's own namespace is free.</summary>
         public static bool UnknownHarvestTag(string tag)
         {
-            return !KnownHarvestTags.Contains(tag) && Regex.IsMatch(tag, @"_(item|tier)_destructible$");
+            return !KnownHarvestTags.Contains(tag) && Regex.IsMatch(tag, @"^minecraft:.*_(item|tier)_destructible$");
         }
 
         /// <summary>The known harvest tags, for messages.</summary>
@@ -263,7 +264,8 @@ namespace GfImport
             var comps = block != null && block.IsObj ? block["components"] : null;
             if (comps == null || !comps.IsObj) return java;
             var list = BlockTagsIn(comps);
-            string rel = "bp/blocks/" + id + ".json", source = bi.Family != null
+            // a family block's skeleton follows params.tags, unless a patch changed it (an error of SyncFamilyTags)
+            string rel = "bp/blocks/" + id + ".json", source = bi.Family != null && !familyTagOverrides.Contains(id)
                 ? "params.tags of its data/gf/families entry"
                 : "its skeleton, as tools/import/overrides/" + NameOf(bi.Owner) + ".json patches it";
             if (bi.Family == null) ReportDuplicateTags(rel, list);

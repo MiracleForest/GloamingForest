@@ -205,9 +205,19 @@ namespace GfImport
                 if (!UnitNames.ContainsValue(unit)) { Errors.Add("override tools/import/overrides/" + Path.GetFileName(file) + " is not named after a unit"); continue; }
                 SortedDictionary<string, GenFile> files;
                 if (!Out.TryGetValue(unit, out files)) continue;
-                var ov = ReadJson(file);
+                J ov;
+                try { ov = ReadJson(file); }
+                catch (Exception ex) { Errors.Add("override " + unit + ": tools/import/overrides/" + unit + ".json is not valid JSON (" + ex.Message + ")"); continue; }
+                if (ov == null || !ov.IsObj) { Errors.Add("override " + unit + ": tools/import/overrides/" + unit + ".json is not a JSON object"); continue; }
+                // every section of the wrong shape is an error line, and that section is not applied
+                foreach (var sec in new[] { "patch", "familyTags", "rename" })
+                    if (ov[sec] != null && !ov[sec].IsObj) Errors.Add("override " + unit + ": " + sec + " is not an object, not applied");
+                foreach (var k in ov.Keys)
+                    if (k != "drop" && k != "patch" && k != "familyTags" && k != "rename") Errors.Add("override " + unit + ": unknown section " + k);
                 // drop: globs of generated paths to leave out
-                if (ov["drop"] != null)
+                if (ov["drop"] != null && !(ov["drop"].IsArr && ov["drop"].A.All(x => x.IsStr)))
+                    Errors.Add("override " + unit + ": drop is not an array of globs, not applied");
+                else if (ov["drop"] != null)
                 {
                     foreach (var g in ov["drop"].A)
                     {
@@ -218,7 +228,7 @@ namespace GfImport
                     }
                 }
                 // patch: {"<rel>": [JSON patch ops]} applied to generated JSON files
-                if (ov["patch"] != null)
+                if (ov["patch"] != null && ov["patch"].IsObj)
                 {
                     foreach (var rel in ov["patch"].Keys)
                     {
@@ -227,7 +237,7 @@ namespace GfImport
                         var doc = J.Parse(Encoding.UTF8.GetString(f.Bytes));
                         var before = IsFamiliesData(rel) ? FamilyTagsById(doc) : null;
                         try { doc = J.ApplyPatch(doc, ov["patch"][rel], "override " + unit + " " + rel); }
-                        catch (Exception ex) { Errors.Add(ex.Message + ", not applied"); continue; }
+                        catch (Exception ex) { Errors.Add("override " + unit + ": patch of " + rel + " fails (" + ex.Message + "), not applied"); continue; }
                         // a family block's tags are overridden by id (familyTags), never through the entries' array index,
                         // which moves when a regeneration adds an earlier entry: such a patch is an error and is not applied
                         // (the run goes on, so it reports every other problem too)
@@ -251,14 +261,13 @@ namespace GfImport
                 }
                 // familyTags: {"twilightforest:<id>": [tag ids]} sets params.tags of the unit's families entry of that id
                 // (data/gf/families/<unit>.json), the single source of a family block's Bedrock block tags (SyncFamilyTags)
-                if (ov["familyTags"] != null)
+                if (ov["familyTags"] != null && ov["familyTags"].IsObj)
                 {
                     // each problem is an error line and that entry (or the whole familyTags) is not applied
                     string rel = "data/gf/families/" + unit + ".json";
                     GenFile f = null;
                     J doc = null;
-                    if (!ov["familyTags"].IsObj) Errors.Add("override " + unit + ": familyTags is not an object of block id -> [tag ids], not applied");
-                    else if (!files.TryGetValue(rel, out f)) Errors.Add("override " + unit + ": familyTags needs " + rel + ", which is not generated (the unit owns no family block)");
+                    if (!files.TryGetValue(rel, out f)) Errors.Add("override " + unit + ": familyTags needs " + rel + ", which is not generated (the unit owns no family block)");
                     else if (!(doc = J.Parse(Encoding.UTF8.GetString(f.Bytes))).IsArr) { Errors.Add("override " + unit + ": " + rel + " is not an array of family entries"); doc = null; }
                     foreach (var id in doc != null ? ov["familyTags"].Keys : Enumerable.Empty<string>())
                     {
@@ -279,7 +288,7 @@ namespace GfImport
                     if (doc != null) f.Bytes = new UTF8Encoding(false).GetBytes(doc.ToText());
                 }
                 // rename: {"<rel>": "<new rel>"}
-                if (ov["rename"] != null)
+                if (ov["rename"] != null && ov["rename"].IsObj)
                 {
                     foreach (var rel in ov["rename"].Keys)
                     {

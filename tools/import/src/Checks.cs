@@ -263,8 +263,10 @@ namespace GfImport
                     string javaSound = e["sound"].AsString(), want;
                     if (javaSound.StartsWith("TFSoundTypes.", StringComparison.Ordinal))
                     {
-                        want = soundTypes != null ? soundTypes.Keys.FirstOrDefault(k => soundTypes[k]["javaType"] != null && soundTypes[k]["javaType"].AsString() == javaSound) : null;
-                        if (want == null) Errors.Add("tools/import/expected-behaviour.json: " + id + " has sound " + javaSound + ", which no soundTypes entry names as its javaType");
+                        var named = soundTypes != null ? soundTypes.Keys.Where(k => soundTypes[k]["javaType"] != null && soundTypes[k]["javaType"].AsString() == javaSound).ToList() : new List<string>();
+                        // two entries naming it are reported by CheckSoundTypes; the block is not checked against either
+                        want = named.Count == 1 ? named[0] : null;
+                        if (named.Count == 0) Errors.Add("tools/import/expected-behaviour.json: " + id + " has sound " + javaSound + ", which no soundTypes entry names as its javaType");
                     }
                     else want = BedrockSound(javaSound);
                     if (want != null && sound != want) Errors.Add("rp/blocks.d: twilightforest:" + id + " sound " + (sound ?? "(none)") + ", TF gives " + javaSound + " -> " + want);

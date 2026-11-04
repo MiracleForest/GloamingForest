@@ -387,13 +387,15 @@ For every block, family or not, `data/gf/import/harvest.json` lists the tools an
 its final skeleton file (after the overrides and `Ctx.SyncFamilyTags`; `Ctx.FinalHarvest`), with TF's drop rule
 (`requiresCorrectToolForDrops`, which no tag carries), so the runtime's correct-tool flag and the `import.harvest_*`
 selftests always follow what the game reads. Tags are a set: a reorder is no change, and a tag listed twice (in a
-skeleton, in `params.tags` or in `familyTags`) is one error of its own. A tag of a harvest tag's form
+skeleton, in `params.tags` or in `familyTags`) is one error of its own. A `minecraft:` tag of a harvest tag's form
 (`..._item_destructible`, `..._tier_destructible`) that is not one of the import's tool or tier tags (*Tools and drops*
 above: `minecraft:is_{pickaxe,axe,shovel,hoe,sword,shears}_item_destructible`, `minecraft:leaves`,
-`minecraft:{stone,iron,diamond}_tier_destructible`) is an error: the game would ignore a misspelt one and the block
-would lose its tool. A warning names a block an override leaves without a pickaxe, axe, shovel or hoe tag while TF
-drops it only for a correct tool (it then never drops), and a tier tag without such a tool tag (no effect). Every
-override problem is an `[import] error:` line, and the run reports them all before it fails.
+`minecraft:{stone,iron,diamond,netherite}_tier_destructible`; no TF block needs netherite, so harvest.json lists no
+tier for it) is an error: the game would ignore a misspelt one and the block would lose its tool. A warning names a
+block an override leaves without a pickaxe, axe, shovel or hoe tag while TF drops it only for a correct tool (it then
+never drops), and a tier tag without such a tool tag (no effect). Every override problem (an invalid file, a section
+of the wrong shape, an unknown section, a target that is not generated, a failing patch operation) is an
+`[import] error:` line, the faulty part is not applied, and the run reports them all before it fails.
 
 ## Determinism
 
