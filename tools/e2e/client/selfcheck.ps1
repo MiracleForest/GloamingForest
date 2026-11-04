@@ -4,13 +4,18 @@
 
 .DESCRIPTION
   Checks, with temporary files only (under %TEMP%, removed afterwards):
-  - content log (lib.ps1 Get-ContentLogProblems): no file -> failure (or "not checked" after a
-    killed session); only the canary of GloamingForest_Test_RP -> clean; no canary -> failure;
-    verbose / info lines -> listed in $script:ContentLogNotes, never a failure; errors -> failure;
-    warnings -> listed, a failure only with -Strict; the canary file in assets/test parses as JSON
-    and names the canary;
+  - content log (lib.ps1 Get-ContentLogProblems), per game session: a session that closed normally
+    with no file, or with files without the canary of GloamingForest_Test_RP -> failure, even when
+    another session's file holds it; a killed (or crashed) session needs no canary, for itself only;
+    only the canary -> clean; verbose / info lines -> listed in $script:ContentLogNotes, never a
+    failure; errors -> failure; warnings -> listed, a failure only with -Strict; the canary file in
+    assets/test parses as JSON and names the canary;
+  - game options (lib.ps1 Reset-GameOptions, Restore-RunOptions, on a temporary options.txt): the HUD
+    and hand are shown during a run, a person's own hidden HUD comes back afterwards, and after a
+    run killed while its scenario hid the HUD the next run leaves it shown;
   - output folder (lib.ps1 Clear-RunOutDir): a file held open by another process is retried and
-    cleared once released; one that stays open throws GfE2E.OutDirLockedException (run.ps1: NOT RUN);
+    cleared once released; one that stays open throws GfE2E.OutDirLockedException (run.ps1: NOT RUN)
+    and leaves every file of the folder in place;
   - host harness teardown (lib.ps1 Start-RedirectedOutput, Stop-ProcessTree, Close-RedirectedOutput):
     a pwsh child whose redirected output goes into files and that started a grandchild of its own is
     killed with its tree, and its folder can be cleared at once (the remote-vanilla requeue).
@@ -42,43 +47,101 @@ try {
     function New-Log([string]$Name, [string[]]$Lines) { $p = Join-Path $tmp $Name; Set-Content -Path $p -Value $Lines -Encoding UTF8; $p }
     $out = Join-Path $tmp 'out'
 
-    $r = @(Get-ContentLogProblems -Files @() -OutDir $out)
-    Assert-True ($r.Count -eq 1 -and $r[0] -match 'no content log') 'no file: failure (logging not captured)'
-    $r = @(Get-ContentLogProblems -Files @() -Killed)
+    # game sessions as Start-Game / Stop-Game record them; a file belongs to the last session that
+    # started before it was created
+    $t0 = (Get-Date).AddMinutes(-10)
+    function New-Session([int]$Launch, [int]$StartMin, [string]$Ended) {
+        [pscustomobject]@{ Launch = $Launch; Start = $t0.AddMinutes($StartMin); End = $t0.AddMinutes($StartMin + 1); Ended = $Ended; Pid = 1000 + $Launch }
+    }
+    function Set-LogTime([string]$Path, [int]$Min) { $t = $t0.AddMinutes($Min); [IO.File]::SetCreationTime($Path, $t); [IO.File]::SetLastWriteTime($Path, $t) }
+    $one = @(New-Session 1 0 'closed')
+
+    $r = @(Get-ContentLogProblems -Files @() -Sessions $one -OutDir $out)
+    Assert-True ($r.Count -eq 1 -and $r[0] -match 'session 1 .*wrote no content log') 'no file: failure (logging not captured)'
+    $r = @(Get-ContentLogProblems -Files @() -Sessions @(New-Session 1 0 'killed'))
     Assert-True ($r.Count -eq 0) 'no file after a killed session: not checked'
+    $r = @(Get-ContentLogProblems -Files @() -Sessions @(New-Session 1 0 'gone'))
+    Assert-True ($r.Count -eq 0) 'no file after a session that exited by itself (crash, watchdog): not checked'
 
     $clean = New-Log 'ContentLog_clean.txt' @($canaryLine, $canaryLine)
-    $r = @(Get-ContentLogProblems -Files @($clean) -OutDir $out)
+    $r = @(Get-ContentLogProblems -Files @($clean) -Sessions $one -OutDir $out)
     Assert-True ($r.Count -eq 0) 'only the canary: clean'
     Assert-True ((Get-Content (Join-Path $out 'client-content-log.txt') -Raw) -match '\(canary\)') 'client-content-log.txt marks the canary'
 
     $none = New-Log 'ContentLog_nocanary.txt' @('12:00:02[Sound][verbose]-No sound found for block type ''wood'' and event type ''chest.open''')
-    $r = @(Get-ContentLogProblems -Files @($none))
+    $r = @(Get-ContentLogProblems -Files @($none) -Sessions $one)
     Assert-True ($r.Count -eq 1 -and $r[0] -match 'does not report the canary') 'no canary: failure'
-    $r = @(Get-ContentLogProblems -Files @($none) -Killed)
+    $r = @(Get-ContentLogProblems -Files @($none) -Sessions @(New-Session 1 0 'killed'))
     Assert-True ($r.Count -eq 0) 'no canary after a killed session: not counted'
+
+    # per session: two sessions, the canary in the first one's file only
+    $s1 = New-Log 'ContentLog_s1.txt' @($canaryLine); Set-LogTime $s1 1
+    $s2 = New-Log 'ContentLog_s2.txt' @('12:00:02[Sound][verbose]-a verbose line'); Set-LogTime $s2 3
+    $two = @((New-Session 1 0 'closed'), (New-Session 2 2 'closed'))
+    $r = @(Get-ContentLogProblems -Files @($s1) -Sessions $two)
+    Assert-True ($r.Count -eq 1 -and $r[0] -match 'session 2 .*wrote no content log') 'two closed sessions, a file for the first only: the second fails'
+    $r = @(Get-ContentLogProblems -Files @($s1, $s2) -Sessions $two)
+    Assert-True ($r.Count -eq 1 -and $r[0] -match 'session 2 .*does not report the canary') 'two closed sessions, the canary in the first file only: the second fails'
+    $s2c = New-Log 'ContentLog_s2c.txt' @($canaryLine); Set-LogTime $s2c 3
+    $r = @(Get-ContentLogProblems -Files @($s1, $s2c) -Sessions $two)
+    Assert-True ($r.Count -eq 0) 'two closed sessions, a canary in each: clean'
+    # a killed session waives the canary for itself only
+    $killedFirst = @((New-Session 1 0 'killed'), (New-Session 2 2 'closed'))
+    $r = @(Get-ContentLogProblems -Files @() -Sessions $killedFirst)
+    Assert-True ($r.Count -eq 1 -and $r[0] -match 'session 2 ') 'a killed session, then a closed one with no file: the closed one fails'
+    $r = @(Get-ContentLogProblems -Files @($s2c) -Sessions $killedFirst)
+    Assert-True ($r.Count -eq 0) 'a killed session, then a closed one with the canary: clean'
 
     $verbose = New-Log 'ContentLog_verbose.txt' @($canaryLine,
         '12:00:02[Sound][verbose]-No sound found for block type ''wood'' and event type ''chest.open''',
         '12:00:03[Sound][verbose]-No sound found for block type ''wood'' and event type ''chest.open''',
         '12:00:04[Pack][info]-Some informational line')
-    $r = @(Get-ContentLogProblems -Files @($verbose))
+    $r = @(Get-ContentLogProblems -Files @($verbose) -Sessions $one)
     Assert-True ($r.Count -eq 0) 'verbose / info lines: no failure'
     Assert-True ($script:ContentLogNotes.Count -eq 2 -and $script:ContentLogNotes[0] -match '\(x2\)$') 'verbose / info lines: listed with their count'
 
     $err = New-Log 'ContentLog_error.txt' @($canaryLine, '12:00:05[Item][error]-Overwriting pattern template. Duplicate entries', '12:00:06[Json][warning]-some warning')
-    $r = @(Get-ContentLogProblems -Files @($err))
+    $r = @(Get-ContentLogProblems -Files @($err) -Sessions $one)
     Assert-True ($r.Count -eq 1 -and $r[0] -match '1 content-log error') 'an error: failure'
     Assert-True ($script:ContentLogWarnings.Count -eq 1) 'a warning: listed'
     $warn = New-Log 'ContentLog_warning.txt' @($canaryLine, '12:00:06[Json][warning]-some warning')
-    $r = @(Get-ContentLogProblems -Files @($warn))
+    $r = @(Get-ContentLogProblems -Files @($warn) -Sessions $one)
     Assert-True ($r.Count -eq 0) 'a warning: no failure in a normal run'
-    $r = @(Get-ContentLogProblems -Files @($warn) -Strict)
+    $r = @(Get-ContentLogProblems -Files @($warn) -Sessions $one -Strict)
     Assert-True ($r.Count -eq 1 -and $r[0] -match 'strict') 'a warning: failure in a strict run'
 
     $noise = New-Log 'ContentLog_noise.txt' @($canaryLine, '12:00:07[Fog][error]-fogs/diving_helmet.json | bad')
-    $r = @(Get-ContentLogProblems -Files @($noise))
+    $r = @(Get-ContentLogProblems -Files @($noise) -Sessions $one)
     Assert-True ($r.Count -eq 0) 'expected entries ($script:ContentLogExpected): no failure'
+
+    # ---- game options: the HUD safety net keeps a person's own values ----
+    Write-Host '[selfcheck] game options'
+    $optFile = Join-Path $tmp 'minecraftpe\options.txt'
+    $optBackup = Join-Path $tmp 'game-options.selfcheck.json'
+    New-Item -ItemType Directory -Force (Split-Path $optFile) | Out-Null
+    # (never an instance's real options or backup: the files, the backup and the e2e home are ours)
+    function Get-OptionsFiles { @(Get-Item -LiteralPath $optFile) }
+    function Get-OptionsBackupPath { $optBackup }
+    function Get-E2EHome { $tmp }
+    $script:VersionName = 'selfcheck'
+    function Get-Opt([string]$Key) { ((Get-Content $optFile) | Where-Object { $_ -match "^${Key}:" } | Select-Object -First 1) -replace "^${Key}:", '' }
+    # a person's own hidden HUD and hand: 0 while the run plays, theirs again afterwards
+    Set-Content $optFile @('gfx_hidehud:1', 'gfx_hidehand:1', 'graphics_mode:2', 'game_thirdperson:0')
+    Reset-GameOptions
+    Assert-True ((Get-Opt gfx_hidehud) -eq '0' -and (Get-Opt gfx_hidehand) -eq '0') 'during a run: HUD and hand shown'
+    Set-Content $optFile @((Get-Content $optFile) -replace '^gfx_hidehud:.*$', 'gfx_hidehud:1')   # the scenario pressed F1
+    Restore-RunOptions
+    Assert-True ((Get-Opt gfx_hidehud) -eq '1' -and (Get-Opt gfx_hidehand) -eq '1' -and -not (Test-Path $optBackup)) 'after a run: the person''s own hidden HUD and hand are back'
+    # a run killed after its scenario hid the HUD: the next run shows it again and keeps it shown
+    Set-Content $optFile @('gfx_hidehud:0', 'gfx_hidehand:0', 'graphics_mode:2', 'game_thirdperson:0')
+    Reset-GameOptions
+    Set-Content $optFile @((Get-Content $optFile) -replace '^gfx_hidehud:.*$', 'gfx_hidehud:1')   # F1, then the run is killed
+    $script:OptionsBackup = $null; $script:OptionsSet = $null                                       # (a new harness process)
+    Assert-True (Test-Path $optBackup) 'a killed run leaves its options backup'
+    Reset-GameOptions
+    Assert-True ((Get-Opt gfx_hidehud) -eq '0') 'the run after a killed one: HUD shown'
+    Restore-RunOptions
+    Assert-True ((Get-Opt gfx_hidehud) -eq '0' -and (Get-Opt gfx_hidehand) -eq '0') 'the run after a killed one: HUD and hand stay shown afterwards (the killed run''s F1 is not taken for the person''s choice)'
 
     # ---- output folder ----
     Write-Host '[selfcheck] output folder'
@@ -98,11 +161,17 @@ try {
 
     New-Item -ItemType Directory -Force $dir | Out-Null
     Set-Content -Path $held -Value 'x'
+    $evidence = @('client.log', 'client-content-log.txt', 'shot-hud.png') | ForEach-Object { $p = Join-Path $dir $_; Set-Content -Path $p -Value 'evidence'; $p }
     $fs = [IO.File]::Open($held, 'Open', 'Read', 'Read')
     $kind = $null
     try { Clear-RunOutDir $dir -TimeoutSec 2 } catch { $kind = $_.Exception.GetType().FullName }
     $fs.Dispose()
     Assert-True ($kind -eq 'GfE2E.OutDirLockedException') 'a file that stays in use: OutDirLockedException (NOT RUN)'
+    Assert-True (-not @($evidence | Where-Object { -not (Test-Path $_) })) 'a folder that could not be cleared keeps every file of the previous run'
+    Assert-True (-not @(Get-ChildItem $tmp -Directory -Filter 'run-out.trash-*')) 'no renamed copy is left behind'
+    $ok = $true
+    try { Clear-RunOutDir $dir -TimeoutSec 2 } catch { $ok = $false; Write-Host "    $_" }
+    Assert-True ($ok -and -not (Test-Path $dir)) 'released: the folder clears'
 
     # ---- host harness teardown ----
     Write-Host '[selfcheck] host harness teardown'

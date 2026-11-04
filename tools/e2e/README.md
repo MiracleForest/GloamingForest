@@ -101,8 +101,9 @@ are closed, and the run gives the game lock back and queues again; an output fol
 after 20 s of retries is NOT RUN); launches the game, waits for `GloamingForest enabled`, enters
 the world, checks it is `GF-Test` (else one more fresh game, then NOT RUN) and waits for the HUD;
 dot-sources the scenario; **always** cleans up (game closed, content log checked, world and mod
-removed, other mods restored, `content_log_file` put back, `gfx_hidehud:0` / `gfx_hidehand:0` set
-again and never put back (the HUD safety net), locks released). Every BeDD pipe call and
+removed, other mods restored, the instance's own values of the options put back: a person's own
+hidden HUD or hand on slot 1 survives, and after a killed run the values its backup recorded win, so
+a killed models run never leaves the HUD hidden (the HUD safety net), locks released). Every BeDD pipe call and
 window capture runs under a watchdog: a game that does not answer within 120 s (plus the call's own
 waits; `$env:GF_E2E_PIPE_TIMEOUT_SEC`) is killed and the run is NOT RUN (`[e2e] WATCHDOG: ...`), with a
 minidump of the game in `out/hangs/<scenario>-<mode>-<instance>-<time>-<pid>.dmp` (its client log and
@@ -113,8 +114,8 @@ any `ERR`/`FTL` line appears in the log, of any logger (`GloamingForest`, `LeviL
 `CrashLogger`, Bedrock content errors `ERR [Server] [Blocks|Items|...]`, other `ERR [Server]` lines,
 ...), except BDS's six-line "TRANSPORT TYPE ERROR" banner and the console's echo of a command reply the
 mod logged as `Command error:` or `Command error text:` ([docs/spec/e2e.md](../../docs/spec/e2e.md#error-lines)); the client's
-content log has an error, or lacks the canary of `GloamingForest_Test_RP` (then the check cannot see
-the log; [docs/spec/e2e.md](../../docs/spec/e2e.md#client-runs-content-log-game-options-watchdog-test-world)) (warnings are listed, and fail with `-StrictContentLog` or
+content log has an error, or a game session that closed normally has no content log with the canary of
+`GloamingForest_Test_RP` (then the check cannot see that session's log; per session, a killed one is exempt; [docs/spec/e2e.md](../../docs/spec/e2e.md#client-runs-content-log-game-options-watchdog-test-world)) (warnings are listed, and fail with `-StrictContentLog` or
 `$script:ContentLogStrict = $true`; verbose and info lines are listed and never fail;
 `out/<scenario>[-<mode>][-slot<N>]/client-content-log.txt`); a crash file appears;
 the server exits non-zero or has to be killed.

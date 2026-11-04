@@ -28,14 +28,14 @@
      dot-sources scenarios/<name>.ps1.
   5. Fails on: scenario exception, failing/empty/unfinished selftests, ERR/FTL lines (any logger;
      only BDS's transport banner and the console's echo of a command reply are not errors), errors
-     in the game's content log, and a content log without the canary of GloamingForest_Test_RP
-     (lib.ps1, Content log: then the check cannot see the log). Warnings are listed; they fail with
-     -StrictContentLog or when the scenario sets $script:ContentLogStrict = $true. Verbose and info
-     lines are listed and never fail.
+     in the game's content log, and a game session that closed normally without a content log
+     holding the canary of GloamingForest_Test_RP (lib.ps1, Content log: then the check cannot see
+     that session's log). Warnings are listed; they fail with -StrictContentLog or when the scenario
+     sets $script:ContentLogStrict = $true. Verbose and info lines are listed and never fail.
   6. Always: closes the game, removes the GF-Test world and our mod, restores the other mods,
      runs scenarios/<name>.restore.ps1, puts back the instance's own values of every option the run
-     set (camera, graphics mode, content log), shows the HUD and the hand again (gfx_hidehud:0,
-     gfx_hidehand:0, never put back: lib.ps1 Reset-HudOptions), releases the lock.
+     set (HUD, hand, camera, graphics mode, content log; after a killed run, the values its backup
+     recorded: lib.ps1 $script:ForcedOptions), releases the lock.
   Remote modes: when no server slot is free within -SlotWaitMinutes, the host harness's process tree
   is killed and waited for, its redirected output files are closed, the game lock is given back and
   the run queues again; an output folder that cannot be cleared within 20 s is NOT RUN (exit 2).
@@ -383,12 +383,10 @@ try {
             if (Test-Path $restore) { try { . $restore } catch { Write-Host "[e2e] restore script failed: $_" -ForegroundColor Red } }
         } finally {
             # after the scenario's own restore (models turns the log on itself), and also when a
-            # cleanup step above failed: the instance's own option values (camera, graphics mode,
-            # content log) as they were before the run
+            # cleanup step above failed: the instance's own option values (HUD, hand, camera,
+            # graphics mode, content log) as they were before the run, whatever the scenario (models
+            # hides the HUD with F1) or its restore script left
             try { Restore-RunOptions } catch { Write-Host "[e2e] could not put the game options back: $_" -ForegroundColor Red }
-            # HUD safety net: HUD and hand shown, whatever the scenario (models hides the HUD with F1)
-            # or its restore script left
-            try { Reset-HudOptions } catch { Write-Host "[e2e] could not show the HUD again: $_" -ForegroundColor Red }
             Exit-E2ELock
         }
     }

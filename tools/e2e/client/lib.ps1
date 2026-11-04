@@ -456,19 +456,6 @@ function Reset-CameraPerspective {
     foreach ($p in $old.Keys) { if ($null -ne $old[$p] -and $old[$p] -ne '0') { Write-Step "reset camera perspective to first person in $p" } }
 }
 
-# HUD safety net: shows the HUD and the hand again (options.txt `gfx_hidehud:0`, `gfx_hidehand:0`) in
-# every options file of the instance. Called before every launch and again after the run put the
-# instance's options back (run.ps1), and never undone: a models run killed while F1 hid the HUD
-# (the game writes `gfx_hidehud:1` itself) must not leave the instance without a HUD, and a hidden
-# HUD also hides toasts, the hotbar and name tags in every later run's screenshots.
-$script:HudOptions = @('gfx_hidehud', 'gfx_hidehand')
-function Reset-HudOptions {
-    foreach ($k in $script:HudOptions) {
-        $old = Set-GameOption $k '0'
-        foreach ($p in $old.Keys) { if ($null -ne $old[$p] -and $old[$p] -ne '0') { Write-Step "options: ${k}:$($old[$p]) -> 0 in $p (HUD safety net)" } }
-    }
-}
-
 # The game's options files of this instance (one per signed-in user, and "Shared").
 function Get-OptionsFiles {
     @(Get-ChildItem -Recurse -Path (Get-GameDataDir) -Filter 'options.txt' -ErrorAction SilentlyContinue |
@@ -493,25 +480,30 @@ function Set-GameOption([string]$Key, [string]$Value) {
 # Options a scenario may toggle in the instance's options.txt, put to these values before every
 # launch (Reset-GameOptions), so a killed or failed run (or another harness) cannot leave the
 # instance in a state the scenarios do not expect:
+#   gfx_hidehud      F1 hides the HUD (models, ui and families' name-tag shots; the game then writes
+#                    gfx_hidehud:1 itself): toasts, the hotbar and name tags are not drawn
+#   gfx_hidehand     ui.prelaunch.ps1 shows the hand for its held-map step (0, restored by ui.restore.ps1)
 #   game_thirdperson F5 (ui's head step); first person
 #   graphics_mode    ui switches between Classic (1) and Vibrant Visuals (2) (restored by ui.restore.ps1);
 #                    2 is what every scenario's screenshots expect
 # content_log_file is on for the run itself (Enable-ContentLog).
 # Every option the harness sets (Set-RunOption) is put back to the instance's own value when the run
 # ends (Restore-RunOptions): slot 1 is shared with BEI's and BeetrootSkin's harnesses and a person's
-# own play, so a Classic graphics mode there survives our runs.
-# The HUD options are not among them: gfx_hidehud (F1: models, ui and families' name-tag shots) and
-# gfx_hidehand (ui's held-map step) are set to 0 before and after every run and never put back
-# (Reset-HudOptions), so a killed run can never leave an instance without its HUD.
-$script:ForcedOptions = [ordered]@{ game_thirdperson = '0'; graphics_mode = '2' }
+# own play, so a person's own hidden HUD or hand, or a Classic graphics mode, survives our runs.
+# HUD safety net: while a run plays these options always have the values above, whatever an earlier
+# run left. After a KILLED run (its backup file is still there, Initialize-OptionsBackup) the value
+# that run's backup recorded is the instance's own one even when the option changed since: a scenario
+# toggles these in game (models hides the HUD with F1, and the game writes that value itself), so the
+# toggled value is never taken for a person's choice, and a killed models run can never leave the
+# instance without its HUD past the next run.
+$script:ForcedOptions = [ordered]@{ gfx_hidehud = '0'; gfx_hidehand = '0'; game_thirdperson = '0'; graphics_mode = '2' }
 
 function Reset-GameOptions {
     $files = Get-OptionsFiles
     if (-not $files) { Write-Step "warning: no options.txt below $(Get-GameDataDir) (the game writes it on its first start)"; return }
-    Reset-HudOptions
     foreach ($k in $script:ForcedOptions.Keys) {
         $old = Set-RunOption $k $script:ForcedOptions[$k]
-        foreach ($p in $old.Keys) { if ($old[$p] -ne $script:ForcedOptions[$k]) { Write-Step "options: ${k}:$($old[$p]) -> $($script:ForcedOptions[$k]) in $p (put back after the run)" } }
+        foreach ($p in $old.Keys) { if ($old[$p] -ne $script:ForcedOptions[$k]) { Write-Step "options: ${k}:$($old[$p]) -> $($script:ForcedOptions[$k]) in $p (the instance's own value is put back after the run)" } }
     }
 }
 
@@ -519,7 +511,8 @@ function Reset-GameOptions {
 # missing)}, and the values the run set ($script:OptionsSet, same shape). Kept in the e2e home until
 # they are put back, so a killed run's backup survives and the next run restores the instance's
 # values, not the ones the killed run left behind; an option whose value is no longer the one the
-# killed run set was changed since (by a person or another harness) and keeps that newer value.
+# killed run set was changed since (by a person or another harness) and keeps that newer value,
+# except the options a scenario toggles in game ($script:ForcedOptions: the HUD safety net).
 $script:OptionsBackup = $null
 $script:OptionsSet = $null
 function Get-OptionsBackupPath { Join-Path (Get-E2EHome) "game-options.$($script:VersionName).json" }
@@ -538,7 +531,7 @@ function Initialize-OptionsBackup {
                 if (-not $src) { continue }
                 foreach ($p in $src.Keys) { $part[1][$p] = [ordered]@{}; foreach ($k in $src[$p].Keys) { $part[1][$p][$k] = $src[$p][$k] } }
             }
-            Write-Step "options: a killed run left $file; its values are what this run puts back (unless changed since)"
+            Write-Step "options: a killed run left $file; its values are what this run puts back (an option changed since keeps that newer value, except the ones a scenario toggles in game: `$script:ForcedOptions)"
         } catch { Write-Step "warning: unreadable $file ($_)" }
     }
     $legacy = Join-Path (Get-E2EHome) "content-log-option.$($script:VersionName).json"
@@ -566,7 +559,10 @@ function Set-RunOption([string]$Key, [string]$Value) {
         foreach ($m in $script:OptionsBackup, $script:OptionsSet) { if (-not $m.Contains($p)) { $m[$p] = [ordered]@{} } }
         $known = $script:OptionsBackup[$p].Contains($Key)
         # a value from a killed run counts only while the option still has the value that run set
-        if ($known -and $script:OptionsSet[$p].Contains($Key) -and $old[$p] -ne $script:OptionsSet[$p][$Key]) { $known = $false }
+        # (else a person or another harness changed it since), except for the options a scenario
+        # toggles in game ($script:ForcedOptions): the killed run's scenario changed those
+        if ($known -and $script:OptionsSet[$p].Contains($Key) -and $old[$p] -ne $script:OptionsSet[$p][$Key] -and
+            -not $script:ForcedOptions.Contains($Key)) { $known = $false }
         if (-not $known) { $script:OptionsBackup[$p][$Key] = $old[$p] }
         $script:OptionsSet[$p][$Key] = $Value
     }
@@ -582,8 +578,6 @@ function Restore-RunOptions {
         $lines = @(Get-Content $p)
         $changed = $false
         foreach ($k in $script:OptionsBackup[$p].Keys) {
-            # (a backup of an older harness may hold the HUD options: they stay 0, Reset-HudOptions)
-            if ($k -in $script:HudOptions) { continue }
             $v = $script:OptionsBackup[$p][$k]
             $re = "^$([regex]::Escape($k)):"
             $cur = $lines | Where-Object { $_ -match $re } | Select-Object -First 1
@@ -621,14 +615,19 @@ function Restore-RunOptions {
 # host sends in remote modes, so a vanilla client loads it too) has an animation whose Molang does
 # not parse (animations/gf_e2e_content_log_canary.animation.json, used by nothing). The client
 # reports it as it loads the pack ("[Molang][error] ... gf_e2e_content_log_canary ..."). Its bone is
-# named gfpreview_canary, so the models scenario's own filter (models.ps1) counts it among its
-# canaries. A run whose game closed normally (not killed) must show that line: a missing file, or a
-# file without it, means the check cannot see the content log and fails the run; a file with only
-# the canary means clean. This is more robust than counting a missing file as clean once
-# content_log_file:1 was verified: it also catches a log written elsewhere (another data folder or
-# file name), a game that never loaded the packs, and a game that stopped writing the file, none of
-# which the options check can see.
+# named gfpreview_canary, so the models scenario's own filter (models.ps1, F2's) counts it among its
+# canaries. Every game session of the run that closed normally (Stop-Game closed it, not killed)
+# must have written a file that shows that line: no file, or files without it, mean the check cannot
+# see that session's content log and fail the run; a file with only the canary means clean. The
+# check is per session (a run may start several games: relaunches, ui's Vibrant Visuals half), so a
+# session that wrote nothing is caught even when another session's file holds the canary, and a
+# killed session waives the canary for itself only. This is more robust than counting a missing
+# file as clean once content_log_file:1 was verified: it also catches a log written elsewhere
+# (another data folder or file name), a game that never loaded the packs, and a game that stopped
+# writing the file, none of which the options check can see.
 $script:ContentLogSince  = $null
+# The run's game sessions (Start-Game adds one, Stop-Game says how it ended).
+$script:GameSessions = [System.Collections.Generic.List[object]]::new()
 $script:ContentLogCanary = 'gf_e2e_content_log_canary'
 # Entries that are not about this build's packs (regexes over the entry's text and continuation lines):
 #   gf_e2e_content_log_canary  the harness canary above (required, never a failure)
@@ -676,20 +675,25 @@ public sealed class ContentLogResult {
     public List<ContentLogEntry> Distinct = new List<ContentLogEntry>();
     public List<string> Raw = new List<string>();
     public long Total;
+    // per file (full path): the entries that match the marker regex (the canary), 0 when none
+    public Dictionary<string, long> MarkerByFile = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
 }
 public static class ContentLog {
     static readonly Regex Head = new Regex(@"^(\d\d:\d\d:\d\d)\[([^\]]*)\]\[(\w+)\]-(.*)$", RegexOptions.Compiled);
-    public static ContentLogResult Parse(string[] files, string[] expected, int rawCap) {
+    public static ContentLogResult Parse(string[] files, string[] expected, int rawCap) { return Parse(files, expected, rawCap, null); }
+    public static ContentLogResult Parse(string[] files, string[] expected, int rawCap, string marker) {
         var res = new ContentLogResult();
         var byKey = new Dictionary<string, ContentLogEntry>();
         var exp = new List<Regex>();
         foreach (var e in expected) exp.Add(new Regex(e));
-        string file = null, time = null, cat = null, level = null, text = null;
+        var mark = string.IsNullOrEmpty(marker) ? null : new Regex(marker);
+        string file = null, path = null, time = null, cat = null, level = null, text = null;
         var more = new StringBuilder();
         Action flush = () => {
             if (text == null) return;
             string m = more.ToString().TrimEnd();
             res.Total++;
+            if (mark != null && mark.IsMatch(text + " " + m)) res.MarkerByFile[path]++;
             if (res.Raw.Count < rawCap) res.Raw.Add(file + " " + time + " [" + cat + "][" + level + "] " + text + (m.Length > 0 ? "\n" + m : ""));
             string key = cat + "\u0001" + level + "\u0001" + text + "\u0001" + m;
             ContentLogEntry ent;
@@ -704,8 +708,10 @@ public static class ContentLog {
             text = null;
             more.Clear();
         };
-        foreach (var path in files) {
+        foreach (var f in files) {
+            path = f;
             file = Path.GetFileName(path);
+            res.MarkerByFile[path] = 0;
             using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var rd = new StreamReader(fs, Encoding.UTF8)) {
                 string line;
@@ -731,9 +737,20 @@ public static class ContentLog {
 # This run's content logs: {Distinct = [{File, Time, Category, Level (error|warning|inform|...), Text,
 # More, Count, Expected}] (first occurrence's file and time), Raw = the first entries as written, Total}.
 $script:ContentLogRawCap = 2000
+# MarkerByFile = per file, the entries that name the canary ($script:ContentLogCanary).
 function Get-ContentLogEntries([string[]]$Files = @(Get-ContentLogFiles | ForEach-Object FullName)) {
     $files = @($Files | Where-Object { $_ })
-    [GfE2E.ContentLog]::Parse([string[]]$files, [string[]]@($script:ContentLogExpected), $script:ContentLogRawCap)
+    [GfE2E.ContentLog]::Parse([string[]]$files, [string[]]@($script:ContentLogExpected), $script:ContentLogRawCap, $script:ContentLogCanary)
+}
+
+# The game session (Start-Game's records, in launch order) a content-log file belongs to: the last
+# session that started before the file was created (sessions never overlap: Stop-Game waits for the
+# game to exit before the next launch). A file older than every session belongs to the first one.
+function Get-ContentLogSession([System.IO.FileInfo]$File, [object[]]$Sessions) {
+    $t = if ($File.CreationTime -lt $File.LastWriteTime) { $File.CreationTime } else { $File.LastWriteTime }
+    $owner = $Sessions[0]
+    foreach ($s in $Sessions) { if ($s.Start.AddSeconds(-2) -le $t) { $owner = $s } }
+    $owner
 }
 
 # One line per distinct entry text: "[Category][level] text (xN)" (continuation lines not shown).
@@ -748,28 +765,62 @@ function Measure-ContentLogCount($Entries) { [long](@($Entries) | Measure-Object
 
 # Checks this run's content logs once the game closed: writes <out>\client-content-log.txt (every
 # distinct entry with its count, then the first $script:ContentLogRawCap entries as written), prints
-# a summary and returns the run's failures: a missing canary (the check cannot see the content log),
-# every error (and with -Strict every warning) that is not in $script:ContentLogExpected. Warnings go
-# to $script:ContentLogWarnings and the entries of the other levels (verbose, info) to
+# a summary and returns the run's failures:
+# - per game session (Start-Game's records): a session that closed normally ('closed') must have
+#   written a content-log file that reports the canary; no file, or files without it, mean the check
+#   cannot see that session's log. A session that was killed, or had exited by itself (a crash, the
+#   watchdog), or never closed is listed and needs no canary (its file may be missing or cut short);
+#   one killed session never waives the check for the run's other sessions;
+# - every error (and with -Strict every warning) that is not in $script:ContentLogExpected.
+# Warnings go to $script:ContentLogWarnings and the entries of the other levels (verbose, info) to
 # $script:ContentLogNotes, for the run's summary; they never fail a run.
-# -Files replaces this run's files from the game's logs folder and -Killed says that a game session
-# was killed (it may have written no file, or one cut short) (the harness self-check, selfcheck.ps1).
-function Get-ContentLogProblems([string]$OutDir, [switch]$Strict, [string[]]$Files, [switch]$Killed) {
+# -Files and -Sessions ([{Launch, Start, End, Ended (closed|killed|gone|open), Pid}]) replace this
+# run's files from the game's logs folder and its sessions (the harness self-check, selfcheck.ps1).
+function Get-ContentLogProblems([string]$OutDir, [switch]$Strict, [string[]]$Files, [object[]]$Sessions) {
     $script:ContentLogWarnings = @()
     $script:ContentLogNotes = @()
+    if (-not $PSBoundParameters.ContainsKey('Sessions')) { $Sessions = @($script:GameSessions) }
+    $Sessions = @($Sessions | Where-Object { $_ })
     $given = $PSBoundParameters.ContainsKey('Files')
     if (-not $given) {
-        if (-not $script:ContentLogSince -or $script:GamesStarted -eq 0) { return @() }
+        if (-not $script:ContentLogSince -or $Sessions.Count -eq 0) { return @() }
         $Files = @(Get-ContentLogFiles | ForEach-Object FullName)
     }
+    if ($Sessions.Count -eq 0) { return @() }
     $files = @($Files | Where-Object { $_ })
-    $killed = $Killed -or $script:GameKilled -or [bool](Get-WatchdogFired)
     $where = if ($given) { 'the given files' } else { Join-Path (Get-GameDataDir) 'logs' }
-    if (-not $files) {
-        if ($killed) { Write-Step 'content log: not checked (the game was killed before it wrote its log)'; return @() }
-        return @("the game wrote no content log in $where, not even the canary of GloamingForest_Test_RP ($script:ContentLogCanary): the content log is not captured (options.txt content_log_file:1 did not take effect, or the game never loaded the packs)")
+    $log = Get-ContentLogEntries -Files $files
+    $problems = [System.Collections.Generic.List[string]]::new()
+
+    # ---- the canary, per session ----
+    $bySession = @{}
+    foreach ($f in $files) {
+        $s = Get-ContentLogSession (Get-Item -LiteralPath $f) $Sessions
+        if (-not $bySession.Contains($s.Launch)) { $bySession[$s.Launch] = [System.Collections.Generic.List[string]]::new() }
+        $bySession[$s.Launch].Add($f)
     }
-    $log = [GfE2E.ContentLog]::Parse([string[]]$files, [string[]]@($script:ContentLogExpected), $script:ContentLogRawCap)
+    $sessionLines = foreach ($s in $Sessions) {
+        $mine = @(if ($bySession.Contains($s.Launch)) { $bySession[$s.Launch] })
+        $n = [long]0
+        foreach ($f in $mine) { $n += $log.MarkerByFile[$f] }
+        $what = "game session $($s.Launch)$(if ($s.Pid) { " (pid $($s.Pid))" }), $($s.Ended)"
+        $names = if ($mine) { ($mine | ForEach-Object { Split-Path -Leaf $_ }) -join ', ' } else { 'no file' }
+        $line = "$what`: $names, canary x$n"
+        Write-Step "content log: $line"
+        $line
+        if ($n -gt 0) { continue }
+        if ($s.Ended -eq 'closed') {
+            if (-not $mine) {
+                $problems.Add("$what normally but wrote no content log in $where, not even the canary of GloamingForest_Test_RP ($script:ContentLogCanary): its content log is not captured (options.txt content_log_file:1 did not take effect, or the game never loaded the packs)")
+            } else {
+                $problems.Add("$what normally but its content log ($names) does not report the canary of GloamingForest_Test_RP ($script:ContentLogCanary): the game did not load the test pack or did not log it, so the check cannot see that session's pack errors")
+            }
+        } else {
+            Write-Step "content log: game session $($s.Launch) was not closed normally (its log may be missing or cut short): no canary needed"
+        }
+    }
+
+    # ---- the entries ----
     $distinct = @($log.Distinct)
     $isCanary = { param($e) "$($e.Text) $($e.More)" -match $script:ContentLogCanary }
     $canary   = @($distinct | Where-Object { & $isCanary $_ })
@@ -781,6 +832,7 @@ function Get-ContentLogProblems([string]$OutDir, [switch]$Strict, [string[]]$Fil
         New-Item -ItemType Directory -Force $OutDir | Out-Null
         $out = [System.Collections.Generic.List[string]]::new()
         $out.Add("# $($log.Total) entries in $($files.Count) file(s): $(($files | ForEach-Object { Split-Path -Leaf $_ }) -join ', ')")
+        foreach ($l in $sessionLines) { $out.Add("# $l") }
         $out.Add("# $($distinct.Count) distinct entries: count, first file and time, [category][level], text")
         foreach ($d in $distinct) {
             $tag = if (& $isCanary $d) { ' (canary)' } elseif ($d.Expected) { ' (expected)' } else { '' }
@@ -792,15 +844,10 @@ function Get-ContentLogProblems([string]$OutDir, [switch]$Strict, [string[]]$Fil
     }
     $nErr = Measure-ContentLogCount $errors; $nWarn = Measure-ContentLogCount $warnings; $nExp = Measure-ContentLogCount $expected
     $nNote = Measure-ContentLogCount $notes; $nCanary = Measure-ContentLogCount $canary
-    Write-Step ("content log: {0} file(s), {1} entries: canary x{2}, {3} error(s), {4} warning(s), {5} verbose/info{6}" -f $files.Count, $log.Total, $nCanary, $nErr, $nWarn, $nNote,
+    Write-Step ("content log: {0} session(s), {1} file(s), {2} entries: canary x{3}, {4} error(s), {5} warning(s), {6} verbose/info{7}" -f $Sessions.Count, $files.Count, $log.Total, $nCanary, $nErr, $nWarn, $nNote,
         $(if ($nExp) { ", $nExp other expected (`$script:ContentLogExpected)" } else { '' }))
     $script:ContentLogWarnings = @(Format-ContentLogEntries $warnings)
     $script:ContentLogNotes = @(Format-ContentLogEntries $notes)
-    $problems = [System.Collections.Generic.List[string]]::new()
-    if (-not $canary) {
-        if ($killed) { Write-Step "content log: no canary ($script:ContentLogCanary), but a game session was killed (its log may be cut short); not counted" }
-        else { $problems.Add("the content log ($where) does not report the canary of GloamingForest_Test_RP ($script:ContentLogCanary): the game did not load the test pack or did not log it, so the check cannot see pack errors") }
-    }
     if ($errors) {
         $lines = @(Format-ContentLogEntries $errors)
         $lines | Select-Object -First 20 | ForEach-Object { Write-Host "  ! content log: $_" -ForegroundColor Red }
@@ -826,24 +873,40 @@ public class OutDirLockedException : System.Exception {
 '@
 }
 
-# Deletes a run's output folder. A file still in use (a host harness that is still exiting holds its
+# Deletes a run's output folder. It is first renamed aside (<dir>.trash-<pid>-<n>-<ticks>, one atomic
+# step that fails while any file in it is open), then the renamed copy is deleted: a folder that
+# cannot be cleared keeps every file of the previous run (client.log, screenshots, the content-log
+# report), never half of them. A file still in use (a host harness that is still exiting holds its
 # redirected host-harness.log / .err, a viewer or another process reads a file) is retried for
 # -TimeoutSec; then [GfE2E.OutDirLockedException]: the run could not start, NOT RUN (exit 2), never a
-# failure of the scenario.
+# failure of the scenario. Copies a run could not delete (a file opened with delete sharing) are
+# deleted by a later run.
 function Clear-RunOutDir([string]$Dir, [int]$TimeoutSec = 20) {
+    $parent = Split-Path -Parent $Dir
+    $leaf = Split-Path -Leaf $Dir
+    foreach ($old in @(Get-ChildItem -LiteralPath $parent -Directory -Filter "$leaf.trash-*" -ErrorAction SilentlyContinue)) {
+        Remove-Item -LiteralPath $old.FullName -Recurse -Force -ErrorAction SilentlyContinue
+    }
     $deadline = (Get-Date).AddSeconds($TimeoutSec)
     $tries = 0
+    $aside = $null
     while (Test-Path -LiteralPath $Dir) {
         $tries++
-        try { Remove-Item -LiteralPath $Dir -Recurse -Force -ErrorAction Stop }
+        $to = Join-Path $parent "$leaf.trash-$PID-$tries-$([DateTime]::UtcNow.Ticks)"
+        try { [IO.Directory]::Move($Dir, $to); $aside = $to; break }
         catch {
+            if (-not (Test-Path -LiteralPath $Dir)) { break }
             if ((Get-Date) -ge $deadline) {
-                throw [GfE2E.OutDirLockedException]::new("could not clear $Dir in $TimeoutSec s ($tries tries; a file is still in use): $($_.Exception.Message)")
+                throw [GfE2E.OutDirLockedException]::new("could not clear $Dir in $TimeoutSec s ($tries tries; a file is still in use; the folder was left as it is): $($_.Exception.Message)")
             }
             Start-Sleep -Milliseconds 500
         }
     }
     if ($tries -gt 1) { Write-Step "cleared $Dir after $tries tries (a file was still in use)" }
+    if ($aside) {
+        try { Remove-Item -LiteralPath $aside -Recurse -Force -ErrorAction Stop }
+        catch { Write-Step "warning: could not delete $aside ($($_.Exception.Message)); a later run deletes it" }
+    }
 }
 
 # The live descendants of a process (children, grandchildren, ...) as Process objects: a Process
@@ -888,7 +951,8 @@ function Stop-ProcessTree([System.Diagnostics.Process]$Process, [int]$TimeoutSec
     foreach ($p in @($Process) + $tree) {
         try {
             if (-not $p.HasExited) { try { $p.Kill() } catch {} }
-            $left = [int][Math]::Max(0, ($deadline - (Get-Date)).TotalMilliseconds)
+            # (at least 2 s each: one slow process must not leave the others unwaited for)
+            $left = [int][Math]::Max(2000, ($deadline - (Get-Date)).TotalMilliseconds)
             if (-not $p.WaitForExit($left)) { $ok = $false; Write-Step "warning: process $($p.Id) ($($p.ProcessName)) did not exit in $TimeoutSec s" }
         } catch {}
     }
@@ -1086,6 +1150,8 @@ function Start-Game([int]$TimeoutSeconds = 180) {
     if (Get-GameProcess) { throw "Minecraft is already running; close it first" }
     # latest.log is appended across sessions: remember where this session starts.
     Start-LogSession
+    # one record per game session, for the content-log check (Stop-Game says how it ended)
+    $script:GameSessions.Add([pscustomobject]@{ Launch = $script:GameSessions.Count + 1; Start = (Get-Date); End = $null; Ended = 'open'; Pid = $null })
     if ($script:Headless) {
         # Straight from the instance folder (the exe loads PreLoader/LeviLamina itself), with a
         # window that is shown without being activated; no launcher window either.
@@ -1103,7 +1169,7 @@ function Start-Game([int]$TimeoutSeconds = 180) {
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
         $p = Get-GameProcess
-        if ($p) { $script:Game = $p; Write-Step "game window found (pid $($p.Id))"; return $p }
+        if ($p) { $script:Game = $p; $script:GameSessions[-1].Pid = $p.Id; Write-Step "game window found (pid $($p.Id))"; return $p }
         Start-Sleep -Seconds 2
     }
     throw "Game window did not appear within $TimeoutSeconds s"
@@ -1111,10 +1177,19 @@ function Start-Game([int]$TimeoutSeconds = 180) {
 
 function Stop-Game {
     # Closed, not killed, when it can be: the game writes its content log (Get-ContentLogEntries)
-    # only as it closes. $script:GameKilled tells the content-log check that a session's file may be missing.
-    Get-InstanceProcesses | ForEach-Object {
-        $_.CloseMainWindow() | Out-Null
-        if (-not $_.WaitForExit(30000)) { $_.Kill($true); $script:GameKilled = $true; Write-Step "the game did not close within 30 s; killed it" }
+    # only as it closes. The session's record (Start-Game) says how it ended, for the content-log
+    # check: 'closed' (it must have logged the canary), 'killed' (its file may be missing or cut
+    # short), or 'gone' (it had exited by itself: a crash or the watchdog).
+    $procs = @(Get-InstanceProcesses)
+    $killed = $false
+    foreach ($p in $procs) {
+        $p.CloseMainWindow() | Out-Null
+        if (-not $p.WaitForExit(30000)) { $p.Kill($true); $killed = $true; $script:GameKilled = $true; Write-Step "the game did not close within 30 s; killed it" }
+    }
+    $s = $script:GameSessions | Where-Object { $_.Ended -eq 'open' } | Select-Object -Last 1
+    if ($s) {
+        $s.End = Get-Date
+        $s.Ended = if ($killed) { 'killed' } elseif ($procs.Count -eq 0 -or (Get-WatchdogFired)) { 'gone' } else { 'closed' }
     }
     if (-not $script:Headless) { Get-Process -Name 'LeviLauncher' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue }
     Write-Step "game stopped"
