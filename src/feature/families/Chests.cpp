@@ -200,7 +200,9 @@ std::vector<BlockPos> chestsIn(BlockSource& region, LevelChunk& chunk) {
 /// The chunks (dimension, x, z) whose chests a neighbour's first tick settled in this world: every
 /// chest of theirs has its block actor and no stacks in block data. A chunk with a chest left
 /// waiting (no block actor yet: F10 reads its block data meanwhile) is not one of them, so the next
-/// first tick of one of its neighbours tries again.
+/// first tick of one of its neighbours tries again. Bounded (kMaxNeighbourSettled): forgetting a
+/// chunk only means its chests are looked at again (settling is idempotent).
+constexpr std::size_t kMaxNeighbourSettled = 4096;
 std::set<std::tuple<int, int, int>>& neighbourSettled() {
     static std::set<std::tuple<int, int, int>> s;
     return s;
@@ -249,7 +251,10 @@ int settleAround(BlockSource& region, int cx, int cz, bool once) {
             if (!region.areChunksFullyLoaded(BlockPos{(cx + dx) * 16 + 8, 0, (cz + dz) * 16 + 8}, 0)) continue;
             auto [n, waiting] = settleChestsOf(region, cx + dx, cz + dz, false);
             moved += n;
-            if (!waiting) neighbourSettled().insert(key);
+            if (!waiting) {
+                if (neighbourSettled().size() >= kMaxNeighbourSettled) neighbourSettled().clear();
+                neighbourSettled().insert(key);
+            }
         }
     return moved;
 }
@@ -277,7 +282,11 @@ LoadedChunks& loadedChunks() {
 /// block actor (if the chunk was saved without it) and the stacks, at once, whether the chunk ticks
 /// or not (beyond the simulation distance a chunk is loaded without ticking, while a comparator or a
 /// hopper next to it, or any code through the inventory contract, reads its chests). A chunk not
-/// fully loaded yet is tried again for a while.
+/// fully loaded yet is tried again every tick for kFastRetryTicks, then once every kSlowRetryTicks
+/// for as long as the game keeps it loaded (one that unloads is noted again when it loads again).
+constexpr std::int64_t kFastRetryTicks = 100;
+constexpr std::int64_t kSlowRetryTicks = 20;
+constexpr std::size_t  kMaxLoadedChunks = 16384;
 void settleLoadedChunks() {
     std::vector<LoadedChunk> chunks;
     {
@@ -287,16 +296,31 @@ void settleLoadedChunks() {
     }
     if (chunks.empty()) return;
     auto                     now = families::now();
-    std::vector<LoadedChunk> later;
+    std::vector<LoadedChunk>            later;
+    std::set<std::tuple<int, int, int>> handled; // (a chunk noted again while it waits: once a tick)
     for (auto c : chunks) {
+        if (!handled.insert(std::make_tuple(c.dim, c.cx, c.cz)).second) continue;
         if (c.since < 0) c.since = now;
-        auto* region = regionOf(c.dim);
-        // (no region for the dimension yet, or the chunk not fully loaded: tried again for a while)
+        auto age    = now - c.since;
+        auto region = regionOf(c.dim);
+        if (age >= kFastRetryTicks) {
+            // the slow retry: dropped once the chunk is gone (or its dimension never got a region)
+            if (!region || !region->getChunk(c.cx, c.cz)) continue;
+            if (age % kSlowRetryTicks != 0) {
+                later.push_back(c);
+                continue;
+            }
+        }
+        // (no region for the dimension yet, or the chunk not fully loaded: tried again)
         if (!region || !region->areChunksFullyLoaded(BlockPos{c.cx * 16 + 8, 0, c.cz * 16 + 8}, 0)) {
-            if (now - c.since < 100) later.push_back(c);
+            later.push_back(c);
             continue;
         }
         (void)settleChestsOf(*region, c.cx, c.cz, true);
+    }
+    if (later.size() > kMaxLoadedChunks) {
+        log().warn("families: {} loaded chunks still wait to be settled, the oldest {} are left to their first tick", later.size(), later.size() - kMaxLoadedChunks);
+        later.erase(later.begin(), later.end() - static_cast<std::ptrdiff_t>(kMaxLoadedChunks));
     }
     if (later.empty()) return;
     auto&           l = loadedChunks();
@@ -380,7 +404,17 @@ void detail::settleForAccess(BlockSource& region, GlobalPos const& pos) {
         memo.settled.clear();
     }
     if (!memo.settled.insert(pos).second) return;
-    if (inventory::ext::hasBlockDataStacks(pos)) migrateChest(region, game::blockPos(pos), false);
+    auto bp = game::blockPos(pos);
+    // a half saved without its block actor (a chunk loaded but not settled yet): no block actor is
+    // made inside the game's hopper or comparator code; it gets one at the end of the tick, so the
+    // double chest's halves join the hoppers' 54-slot view from the next tick on
+    if (!inventory::nativeContainer(region, bp)) {
+        // (a block actor of another kind there gets no container: nothing to defer)
+        if (!region.getBlockEntity(bp) && unsettled(region, bp))
+            defer([pos] {
+                if (auto* r = regionOf(pos.dim)) migrateChest(*r, game::blockPos(pos), true);
+            });
+    } else if (inventory::ext::hasBlockDataStacks(pos)) migrateChest(region, bp, false);
     if (inventory::pendingLoot(pos)) inventory::unpackLoot(pos, nullptr);
 }
 

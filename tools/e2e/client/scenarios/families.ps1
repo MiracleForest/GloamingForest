@@ -369,6 +369,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     # (blue dye, then glow ink: glowing blue with its outline), the hanging sign's front (glow ink:
     # black with the cream outline), the wall hanging sign's front (red dye: dark red)
     $tf = $rows[4]
+    $script:signSlotWarnings = 0
     function Write-Sign([double]$x, [double]$yy, [double]$zz, [double]$pitch, [string[]]$lines) {
         Invoke-Teleport "/tp @s $x $yy $zz 0 $pitch"
         Start-Sleep -Seconds 1
@@ -383,9 +384,16 @@ if ($script:Mode -ne 'remote-vanilla') {
         Close-Screen
         $edited = Wait-LogLine 'edited the sign at' 20 -Since $m
         # the lines written are the first ones, one after another (an Enter handled twice, or a key
-        # held into auto-repeat by a slow connection, skips a line: the log names the slots used)
+        # held into auto-repeat by a slow connection, skips a line: the log names the slots used). In
+        # the local mode a skipped line is a regression and fails; over a remote connection the key
+        # timing is suspect, so one sign there may warn and a second fails.
         $want = (0..($lines.Count - 1)) -join ','
-        if ($edited -notmatch "lines \[$([regex]::Escape($want))\]") { Write-Warning "the sign editor wrote other slots than [$want]: $edited" }
+        if ($edited -notmatch "lines \[$([regex]::Escape($want))\]") {
+            if ($script:Mode -eq 'local') { throw "the sign editor wrote other slots than [$want]: $edited" }
+            $script:signSlotWarnings++
+            if ($script:signSlotWarnings -gt 1) { throw "the sign editor wrote other slots than [$want] on $($script:signSlotWarnings) signs: $edited" }
+            Write-Warning "the sign editor wrote other slots than [$want]: $edited"
+        }
     }
     function Use-OnSign([double]$x, [double]$yy, [double]$zz, [double]$pitch, [string]$item) {
         Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 $item"

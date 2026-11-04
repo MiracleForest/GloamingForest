@@ -847,16 +847,17 @@ GF_REGISTER_SELFTEST("families.chest_migrate_click_double", [](Context& ctx) -> 
     auto box = co_await ctx.flatArea(6100, 5);
     auto p   = ctx.testPos(6100, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
-    auto& region = *ctx.region();
+    // (the block source is taken again after every co_await: R16)
+    auto region = [&]() -> BlockSource& { return *ctx.region(); };
     auto  a = at(p, 1, 0, 1), b = at(p, 2, 0, 1);
     ctx.require(ctx.setBlock(a, kChest, {{kFacingState, "north"}, {kTypeState, "left"}}), "the left half");
     ctx.require(ctx.setBlock(b, kChest, {{kFacingState, "north"}, {kTypeState, "right"}}), "the right half east of it");
     co_await ctx.ticks(2);
-    auto* ca = inv::nativeContainer(region, bp(a));
+    auto* ca = inv::nativeContainer(region(), bp(a));
     ctx.require(ca != nullptr, "the left half has its block actor");
     ca->setItem(0, stack("minecraft:flint", 1));
-    ctx.require(stacksWithoutActor(region, b, 4, stack("minecraft:emerald", 2)), "the right half's 2 emeralds in block data, no block actor");
-    ctx.require(inv::nativeContainer(region, bp(a)) != nullptr, "the left half keeps its block actor");
+    ctx.require(stacksWithoutActor(region(), b, 4, stack("minecraft:emerald", 2)), "the right half's 2 emeralds in block data, no block actor");
+    ctx.require(inv::nativeContainer(region(), bp(a)) != nullptr, "the left half keeps its block actor");
     CompanionScope companion(ctx);
     auto           uid = ctx.player().getOrCreateUniqueID().rawID;
     if (auto* sp = simPlayerById(ctx, uid)) {
@@ -867,12 +868,12 @@ GF_REGISTER_SELFTEST("families.chest_migrate_click_double", [](Context& ctx) -> 
     co_await ctx.ticks(8);
     auto* sp = simPlayerById(ctx, uid);
     ctx.require(sp != nullptr, "the player");
-    ctx.require(region.getBlockEntity(bp(b)) == nullptr && waitingInBlockData(region, b), "the right half still waits (no block actor, emeralds in block data) before the click");
+    ctx.require(region().getBlockEntity(bp(b)) == nullptr && waitingInBlockData(region(), b), "the right half still waits (no block actor, emeralds in block data) before the click");
     auto  ba   = bp(a);
     auto& held = const_cast<ItemStack&>(sp->getSelectedItem());
     sp->mGameMode->useItemOn(held, ba, 1, Vec3{ba.x + .5f, ba.y + 1.f, ba.z + .5f}, HandSlot::Mainhand, nullptr, true);
-    bool noActor = region.getBlockEntity(bp(b)) == nullptr; // (still inside the click's tick)
-    bool waiting = waitingInBlockData(region, b);
+    bool noActor = region().getBlockEntity(bp(b)) == nullptr; // (still inside the click's tick)
+    bool waiting = waitingInBlockData(region(), b);
     auto msgs    = chestScreenMessages(*sp);
     ctx.check(noActor && waiting, "no block actor was made for the right half and nothing moved inside the click");
     ctx.require(msgs.contains("screen.open"), "the click on the left half opened the chest screen");
@@ -881,11 +882,11 @@ GF_REGISTER_SELFTEST("families.chest_migrate_click_double", [](Context& ctx) -> 
               "showing the right half's block data emeralds in slot 4 and the left half's native flint in slot 27 (" + shownSlot(msgs["screen.open"], 4) + ", "
                   + shownSlot(msgs["screen.open"], 27) + ")");
     co_await ctx.ticks(2);
-    auto* cb = inv::nativeContainer(region, bp(b));
-    ca       = inv::nativeContainer(region, bp(a));
-    ctx.check(cb && countIn(cb, "minecraft:emerald") == 2 && items::idOf(cb->getItem(4)) == "minecraft:emerald" && !waitingInBlockData(region, b),
+    auto* cb = inv::nativeContainer(region(), bp(b));
+    ca       = inv::nativeContainer(region(), bp(a));
+    ctx.check(cb && countIn(cb, "minecraft:emerald") == 2 && items::idOf(cb->getItem(4)) == "minecraft:emerald" && !waitingInBlockData(region(), b),
               "the next tick gave the right half its block actor with the emeralds in their slot");
-    ctx.check(ca && countIn(ca, "minecraft:flint") == 1 && !waitingInBlockData(region, a), "the left half keeps its flint, natively");
+    ctx.check(ca && countIn(ca, "minecraft:flint") == 1 && !waitingInBlockData(region(), a), "the left half keeps its flint, natively");
     msgs = chestScreenMessages(ctx.player());
     ctx.check(!msgs.contains("screen.close") && inv::openedParts(ctx.player()).size() == 2, "the screen stays open on both halves");
     if (cb) cb->setItem(5, stack("minecraft:apple", 1));
@@ -895,7 +896,40 @@ GF_REGISTER_SELFTEST("families.chest_migrate_click_double", [](Context& ctx) -> 
               "a write to the right half's new block actor shows on the open screen (" + (msgs.contains("screen.update") ? shownSlot(msgs["screen.update"], 5) : std::string("no update")) + ")");
     gf::net::injectFromClient(ctx.player(), "screen.closed", {{"type", "inventory.chest"}});
     co_await ctx.ticks(1);
-    for (auto const& q : {a, b}) emptyAndClear(region, q);
+    for (auto const& q : {a, b}) emptyAndClear(region(), q);
+    (void)box;
+});
+
+GF_REGISTER_SELFTEST("families.chest_hopper_half_without_actor", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // a double chest whose RIGHT half has no block actor (a chunk that loaded and has not been
+    // settled: not fully loaded yet, or not ticking) and whose left half has one: a hopper's look at
+    // the left half makes no block actor inside the game's hopper code and sees the left half alone
+    // that tick; the right half gets its block actor (with its block data stacks) at the end of the
+    // tick, and from then on the hopper sees Java's 54-slot CompoundContainer
+    if (!tfChests(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6100, 5);
+    auto p   = ctx.testPos(6100, 0);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto region = [&]() -> BlockSource& { return *ctx.region(); }; // (taken again after every co_await: R16)
+    auto a = at(p, 1, 0, 1), b = at(p, 2, 0, 1);
+    ctx.require(ctx.setBlock(a, kChest, {{kFacingState, "north"}, {kTypeState, "left"}}), "the left half");
+    ctx.require(ctx.setBlock(b, kChest, {{kFacingState, "north"}, {kTypeState, "right"}}), "the right half east of it");
+    co_await ctx.ticks(2);
+    ctx.require(inv::nativeContainer(region(), bp(a)) != nullptr, "the left half has its block actor");
+    ctx.require(stacksWithoutActor(region(), b, 4, stack("minecraft:emerald", 2)), "the right half's 2 emeralds in block data, no block actor");
+    co_await ctx.ticks(3);
+    ctx.require(region().getBlockEntity(bp(b)) == nullptr && waitingInBlockData(region(), b), "nothing else gives the right half its block actor meanwhile (the chunk ticked long ago)");
+    auto* view = fam::hopperContainerAt(region(), bp(a));
+    ctx.check(view && view->getContainerSize() == 27, "the hopper's first look sees the left half alone (" + std::to_string(view ? view->getContainerSize() : 0) + " slots)");
+    ctx.check(region().getBlockEntity(bp(b)) == nullptr, "no block actor was made inside the look");
+    co_await ctx.ticks(2);
+    auto* cb = inv::nativeContainer(region(), bp(b));
+    ctx.check(cb && countIn(cb, "minecraft:emerald") == 2 && items::idOf(cb->getItem(4)) == "minecraft:emerald" && !waitingInBlockData(region(), b),
+              "the end of that tick gave the right half its block actor with the emeralds in their slot");
+    view = fam::hopperContainerAt(region(), bp(a));
+    ctx.check(view && view->getContainerSize() == 54 && items::idOf(view->getItem(4)) == "minecraft:emerald",
+              "the next look sees the double chest's 54 slots, the right half first (" + std::to_string(view ? view->getContainerSize() : 0) + " slots)");
+    for (auto const& q : {a, b}) emptyAndClear(region(), q);
     (void)box;
 });
 
