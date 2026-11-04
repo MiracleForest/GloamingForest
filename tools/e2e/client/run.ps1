@@ -107,7 +107,6 @@ if ($script:Headless) { Register-PipeWatchdog }
 $script:ContentLogStrict = [bool]$StrictContentLog
 $script:ContentLogWarnings = @()
 $script:ContentLogNotes = @()
-$script:GamesStarted = 0
 $script:NotRunReason = $null
 # Game instances: -Slot, $env:GF_E2E_CLIENT_SLOTS / $env:LEVI_E2E_SLOTS ("1,2,3"), or every instance
 # that exists (the base and its -hi<N> clones); the first free one is taken.
@@ -225,6 +224,15 @@ function Stop-HostHarness([switch]$Kill, [int]$TimeoutSec = 60) {
     if (-not $hp) { return $true }
     $ok = $true
     if ($Kill) { $ok = Stop-ProcessTree $hp -TimeoutSec $TimeoutSec }
+    elseif ($hp.HasExited) {
+        # The host stopped by itself: a descendant still exiting holds the redirected pipe it
+        # inherited. Give the tree up to 5 s, then each copy at most 2 s (what the host wrote is in
+        # the pipe already; only a lingering writer would keep the copy open).
+        $left = @(Wait-ProcessDescendants $hp.Id -TimeoutSec 5)
+        if ($left) { Write-Step "warning: $($left.Count) process(es) of the host still running after it exited: $(($left | ForEach-Object { "$($_.Id) ($($_.ProcessName))" }) -join ', ')" }
+        Close-RedirectedOutput $script:HostOutputs -TimeoutSec 2
+        $script:HostOutputs = @()
+    }
     Close-RedirectedOutput $script:HostOutputs
     $script:HostOutputs = @()
     $script:HostProc = $null
@@ -299,7 +307,6 @@ try {
             for ($launch = 1; ; $launch++) {
                 if ($remote) { Clear-OurServerEntries }
                 Start-Game | Out-Null
-                $script:GamesStarted++
                 Wait-GameReady -WithoutMod:($Mode -eq 'remote-vanilla')
                 try {
                     if ($remote) { Enter-RemoteServer -Attempts 1 } else { Enter-TestWorld -Attempts 2 }
@@ -431,13 +438,13 @@ $hung = [bool](Get-WatchdogFired)
 $notRun = if ($hung) { "WATCHDOG: $(Get-WatchdogFired)" } elseif ($script:NotRunReason) { $script:NotRunReason }
 $dll = Join-Path $ModDir "$script:ModName.dll"
 # (a run that never started a game, or a test hang, leaves the count as it is)
-$hangs = if ($script:TestHang -or $script:GamesStarted -eq 0) { @{ Count = 0; Instances = @(); Fails = $false } } else { Update-HangRecord $Scenario $Mode $dll -Instance $script:VersionName -Hung:$hung }
+$hangs = if ($script:TestHang -or $script:GameSessions.Count -eq 0) { @{ Count = 0; Instances = @(); Fails = $false } } else { Update-HangRecord $Scenario $Mode $dll -Instance $script:VersionName -Hung:$hung }
 if ($notRun) {
     if ($hung -and $Mode -ne 'remote-vanilla') {
         # what the mod logged about its module installs (which install() was still running)
         $trace = @(Get-ModEnableTrace)
         if ($trace.Count -gt 0) { Write-Host "[e2e] the mod's install trace before the hang:" -ForegroundColor Yellow; $trace | Select-Object -Last 12 | ForEach-Object { Write-Host "  | $_" } }
-        elseif ($script:GamesStarted -gt 0) { Write-Host "[e2e] the mod logged no install trace: the hang came before its enable() (see client.log)" -ForegroundColor Yellow }
+        elseif ($script:GameSessions.Count -gt 0) { Write-Host "[e2e] the mod logged no install trace: the hang came before its enable() (see client.log)" -ForegroundColor Yellow }
     }
     # Next to each minidump (out/hangs, never cleared by a run): the run's log and the install trace,
     # so the retry this NOT RUN asks for does not lose them.

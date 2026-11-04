@@ -7,8 +7,9 @@
   - content log (lib.ps1 Get-ContentLogProblems), per game session: a session that closed normally
     with no file, or with files without the canary of GloamingForest_Test_RP -> failure, even when
     another session's file holds it; a killed (or crashed) session needs no canary, for itself only;
-    a remote-vanilla session needs it only once it joined the host (a failed join that was
-    relaunched is waived); how a session ended (Get-GameSessionEnd: exit code 0 -> closed, a
+    a remote-vanilla session needs it only once it joined the host or downloaded its packs (the
+    test pack's folder in the pack cache dates from that session; a failed join before that, then
+    relaunched, is waived); how a session ended (Get-GameSessionEnd: exit code 0 -> closed, a
     non-zero or unknown one or the watchdog -> gone);
     only the canary -> clean; verbose / info lines -> listed in $script:ContentLogNotes, never a
     failure; errors -> failure; warnings -> listed, a failure only with -Strict; the canary file in
@@ -53,9 +54,9 @@ try {
     # game sessions as Start-Game / Stop-Game record them; a file belongs to the last session that
     # started before it was created
     $t0 = (Get-Date).AddMinutes(-10)
-    function New-Session([int]$Launch, [int]$StartMin, [string]$Ended, [switch]$Vanilla, [switch]$NeverJoined) {
+    function New-Session([int]$Launch, [int]$StartMin, [string]$Ended, [switch]$Vanilla, [switch]$NeverJoined, [switch]$PacksLoaded) {
         [pscustomobject]@{ Launch = $Launch; Start = $t0.AddMinutes($StartMin); End = $t0.AddMinutes($StartMin + 1); Ended = $Ended; Pid = 1000 + $Launch
-            InWorld = -not $NeverJoined; CanaryOnJoin = [bool]$Vanilla; Process = $null }
+            InWorld = -not $NeverJoined; PacksLoaded = [bool]$PacksLoaded; CanaryOnJoin = [bool]$Vanilla; Process = $null }
     }
     function Set-LogTime([string]$Path, [int]$Min) { $t = $t0.AddMinutes($Min); [IO.File]::SetCreationTime($Path, $t); [IO.File]::SetLastWriteTime($Path, $t) }
     $one = @(New-Session 1 0 'closed')
@@ -112,6 +113,27 @@ try {
     Assert-True ($r.Count -eq 0) 'remote-vanilla: a failed join relaunched, the second session joined with the canary: clean'
     $r = @(Get-ContentLogProblems -Files @() -Sessions $relaunch)
     Assert-True ($r.Count -eq 1 -and $r[0] -match 'session 2 ') 'remote-vanilla: a failed join relaunched, the joined session wrote nothing: it fails'
+    # remote-vanilla: a session that downloaded the host's packs but missed the spawn wait still needs it
+    $r = @(Get-ContentLogProblems -Files @() -Sessions @(New-Session 1 0 'closed' -Vanilla -NeverJoined -PacksLoaded))
+    Assert-True ($r.Count -eq 1 -and $r[0] -match 'session 1 .*wrote no content log') 'remote-vanilla: a closed session that downloaded the host''s packs but never spawned, no file: failure'
+    $r = @(Get-ContentLogProblems -Files @($clean) -Sessions @(New-Session 1 0 'closed' -Vanilla -NeverJoined -PacksLoaded))
+    Assert-True ($r.Count -eq 0) 'remote-vanilla: a closed session that downloaded the host''s packs but never spawned, with the canary: clean'
+    # Update-GameSessionPacks: the test pack's folder in the pack cache, created during a session
+    $origDataDir = ${function:Get-GameDataDir}
+    $data = Join-Path $tmp 'gamedata'
+    ${function:Get-GameDataDir} = { $data }.GetNewClosure()
+    try {
+        $testUuid = (Get-Content (Join-Path $script:RepoRoot 'assets/test/rp/manifest.json') -Raw | ConvertFrom-Json).header.uuid
+        $cached = Join-Path $data 'minecraftpe\packcache\resource\abc='
+        New-Item -ItemType Directory -Force $cached | Out-Null
+        Set-Content (Join-Path $cached 'manifest.json') (@{ format_version = 2; header = @{ uuid = $testUuid } } | ConvertTo-Json)
+        [IO.Directory]::SetCreationTime($cached, $t0.AddMinutes(2).AddSeconds(30))
+        $pk = @((New-Session 1 0 'closed' -Vanilla -NeverJoined), (New-Session 2 2 'closed' -Vanilla -NeverJoined), (New-Session 3 4 'closed' -NeverJoined))
+        Update-GameSessionPacks $pk
+        Assert-True (-not $pk[0].PacksLoaded -and $pk[1].PacksLoaded -and -not $pk[2].PacksLoaded) 'pack cache: only the vanilla session during which the test pack was downloaded is PacksLoaded'
+        $r = @(Get-ContentLogProblems -Files @() -Sessions @($pk[0], $pk[1]))
+        Assert-True ($r.Count -eq 1 -and $r[0] -match 'session 2 ') 'pack cache: that session needs the canary, the one before it does not'
+    } finally { ${function:Get-GameDataDir} = $origDataDir }
     $r = @(Get-ContentLogProblems -Files @() -Sessions @(New-Session 1 0 'closed' -NeverJoined))
     Assert-True ($r.Count -eq 1) 'local / remote-mod: a closed session that never reached the world still needs the canary (the global test pack logs it at start)'
 
@@ -244,6 +266,30 @@ try {
     $ok = $true
     try { Clear-RunOutDir $dir -TimeoutSec 1 } catch { $ok = $false; Write-Host "    $_" }
     Assert-True ($ok -and -not (Test-Path $dir)) 'the folder clears at once after the teardown'
+
+    # the normal end (run.ps1 Stop-HostHarness without -Kill): the host exited by itself, a
+    # grandchild that inherited the redirected pipe still exits for 3 s
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    $psi = [System.Diagnostics.ProcessStartInfo]::new('pwsh')
+    $inherit = '$g = [System.Diagnostics.ProcessStartInfo]::new(''pwsh''); foreach ($a in @(''-NoProfile'', ''-Command'', ''Start-Sleep -Seconds 3'')) { $g.ArgumentList.Add($a) }; $g.UseShellExecute = $false; [void][System.Diagnostics.Process]::Start($g); Write-Output ''host done''; exit 0'
+    foreach ($a in @('-NoProfile', '-Command', $inherit)) { $psi.ArgumentList.Add($a) }
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $proc = [System.Diagnostics.Process]::Start($psi)
+    $outputs = @(Start-RedirectedOutput $proc (Join-Path $dir 'host-harness.log') (Join-Path $dir 'host-harness.err'))
+    $exited = $proc.WaitForExit(30000)
+    $t1 = Get-Date
+    $left = @(Wait-ProcessDescendants $proc.Id -TimeoutSec 5)
+    Close-RedirectedOutput $outputs -TimeoutSec 2
+    $took = ((Get-Date) - $t1).TotalSeconds
+    Assert-True ($exited -and $left.Count -eq 0) ("host exited by itself: its still-exiting grandchild was waited for ({0:N1} s)" -f $took)
+    Assert-True ($took -lt 8) ("host exited by itself: the teardown is bounded ({0:N1} s < 8 s)" -f $took)
+    Assert-True ((Get-Content (Join-Path $dir 'host-harness.log') -Raw) -match 'host done') 'host exited by itself: its output reached the file'
+    $ok = $true
+    try { Clear-RunOutDir $dir -TimeoutSec 1 } catch { $ok = $false; Write-Host "    $_" }
+    Assert-True ($ok -and -not (Test-Path $dir)) 'host exited by itself: the folder clears at once after the teardown'
 } finally {
     Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
 }

@@ -776,12 +776,13 @@ function Measure-ContentLogCount($Entries) { [long](@($Entries) | Measure-Object
 #   a non-zero exit code, the watchdog), or never closed is listed and needs no canary (its file may
 #   be missing or cut short); one killed session never waives the check for the run's other
 #   sessions. A remote-vanilla session (CanaryOnJoin) gets the canary only with the host's packs, so
-#   it needs it only once it joined (InWorld): a launch whose join failed and was retried is waived;
+#   it needs it only once it joined (InWorld) or downloaded them (PacksLoaded: Update-GameSessionPacks);
+#   a launch whose join failed before the packs came is waived;
 # - every error (and with -Strict every warning) that is not in $script:ContentLogExpected.
 # Warnings go to $script:ContentLogWarnings and the entries of the other levels (verbose, info) to
 # $script:ContentLogNotes, for the run's summary; they never fail a run.
 # -Files and -Sessions ([{Launch, Start, End, Ended (closed|killed|gone|open), Pid, InWorld,
-# CanaryOnJoin}]) replace this
+# PacksLoaded, CanaryOnJoin}]) replace this
 # run's files from the game's logs folder and its sessions (the harness self-check, selfcheck.ps1).
 function Get-ContentLogProblems([string]$OutDir, [switch]$Strict, [string[]]$Files, [object[]]$Sessions) {
     $script:ContentLogWarnings = @()
@@ -795,6 +796,7 @@ function Get-ContentLogProblems([string]$OutDir, [switch]$Strict, [string[]]$Fil
     if (-not $given) {
         if (-not $script:ContentLogSince -or $Sessions.Count -eq 0) { return @() }
         $Files = @(Get-ContentLogFiles | ForEach-Object FullName)
+        Update-GameSessionPacks $Sessions
     }
     if ($Sessions.Count -eq 0) { return @() }
     $files = @($Files | Where-Object { $_ })
@@ -819,8 +821,8 @@ function Get-ContentLogProblems([string]$OutDir, [switch]$Strict, [string[]]$Fil
         Write-Step "content log: $line"
         $line
         if ($n -gt 0) { continue }
-        if ($s.Ended -eq 'closed' -and $s.CanaryOnJoin -and -not $s.InWorld) {
-            Write-Step "content log: game session $($s.Launch) is a vanilla client that never joined the host (the canary comes only with the host's packs): no canary needed"
+        if ($s.Ended -eq 'closed' -and $s.CanaryOnJoin -and -not $s.InWorld -and -not $s.PacksLoaded) {
+            Write-Step "content log: game session $($s.Launch) is a vanilla client that never joined the host nor downloaded its packs (the canary comes only with them): no canary needed"
         } elseif ($s.Ended -eq 'closed') {
             if (-not $mine) {
                 $problems.Add("$what normally but wrote no content log in $where, not even the canary of GloamingForest_Test_RP ($script:ContentLogCanary): its content log is not captured (options.txt content_log_file:1 did not take effect, or the game never loaded the packs)")
@@ -948,8 +950,8 @@ function Get-ProcessDescendants([int]$ProcessId) {
 }
 
 # Kills a process and everything it started, and waits until all of them have exited (up to
-# -TimeoutSec; each process still gets up to 2 s once the deadline passed, but the whole wait never
-# exceeds -TimeoutSec + $script:ProcessTreeGraceSec). Returns $true when the whole tree is gone.
+# -TimeoutSec; each process gets up to 2 s past that deadline, and the whole wait never exceeds
+# -TimeoutSec + $script:ProcessTreeGraceSec). Returns $true when the whole tree is gone.
 # The descendants are listed before the kill: Process.Kill($true) does not wait for them, and one
 # that is still exiting keeps the handles it inherited (a redirected output pipe, an open log file).
 $script:ProcessTreeGraceSec = 10
@@ -975,6 +977,19 @@ function Stop-ProcessTree([System.Diagnostics.Process]$Process, [int]$TimeoutSec
         } catch {}
     }
     return $ok
+}
+
+# Waits (up to -TimeoutSec together, never killing) for the descendants of a process that exited by
+# itself: one that is still exiting (a server, a crash reporter) holds the redirected output pipe it
+# inherited, and Close-RedirectedOutput would otherwise wait for it. Returns the ones still running.
+# (The parent is gone, so its id may have been reused meanwhile: then the processes waited for may be
+# another tree's. Harmless: nothing is killed and the wait is bounded.)
+function Wait-ProcessDescendants([int]$ProcessId, [int]$TimeoutSec = 5) {
+    $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    @(foreach ($p in @(Get-ProcessDescendants $ProcessId)) {
+        $left = [int][Math]::Max(0, ($deadline - (Get-Date)).TotalMilliseconds)
+        try { if (-not $p.WaitForExit($left)) { $p } } catch {}
+    })
 }
 
 # Redirects a started process's stdout and stderr (UseShellExecute = $false, both redirected) into
@@ -1089,6 +1104,15 @@ function Restore-OtherMods {
 # branches can carry the same version, so a cached GloamingForest pack could hide this build's: drop every
 # cached copy of our packs (matched by the header uuids of assets/pack/*/manifest.json) before a launch.
 function Clear-CachedGfPacks {
+    foreach ($pack in Get-CachedGfPacks) {
+        Remove-Item -Recurse -Force $pack.Dir.FullName -ErrorAction SilentlyContinue
+        Write-Step "dropped cached GloamingForest pack $($pack.Dir.FullName)"
+    }
+}
+
+# The packs of ours (assets/pack/*, assets/test/*) in the game's pack caches (where a client puts
+# the packs a server sent it): [{Dir (DirectoryInfo), Uuid}].
+function Get-CachedGfPacks {
     $uuids = @(foreach ($m in @(Get-ChildItem (Join-Path $script:RepoRoot 'assets/pack'), (Join-Path $script:RepoRoot 'assets/test') -Directory -ErrorAction SilentlyContinue | ForEach-Object { Join-Path $_.FullName 'manifest.json' })) {
         if (Test-Path $m) { (Get-Content $m -Raw | ConvertFrom-Json).header.uuid }
     })
@@ -1100,10 +1124,27 @@ function Clear-CachedGfPacks {
             $manifest = Join-Path $pack.FullName 'manifest.json'
             if (-not (Test-Path $manifest)) { continue }
             try { $uuid = (Get-Content $manifest -Raw | ConvertFrom-Json).header.uuid } catch { continue }
-            if ($uuids -contains $uuid) {
-                Remove-Item -Recurse -Force $pack.FullName -ErrorAction SilentlyContinue
-                Write-Step "dropped cached GloamingForest pack $($pack.FullName)"
-            }
+            if ($uuids -contains $uuid) { [pscustomobject]@{ Dir = $pack; Uuid = $uuid } }
+        }
+    }
+}
+
+# Marks the vanilla-client sessions (CanaryOnJoin) that downloaded the host's test resource pack
+# (GloamingForest_Test_RP, which holds the canary) as PacksLoaded, even when they never spawned:
+# the pack's folder in the game's pack cache was created while the session ran. Clear-CachedGfPacks
+# dropped every cached copy before the run, so a folder of ours there was downloaded by this run.
+function Update-GameSessionPacks($Sessions) {
+    $todo = @($Sessions | Where-Object { $_ -and $_.CanaryOnJoin -and -not $_.InWorld -and -not $_.PacksLoaded })
+    if (-not $todo) { return }
+    $testRp = Join-Path $script:RepoRoot 'assets/test/rp/manifest.json'
+    if (-not (Test-Path $testRp)) { return }
+    $uuid = (Get-Content $testRp -Raw | ConvertFrom-Json).header.uuid
+    $created = @(Get-CachedGfPacks | Where-Object Uuid -eq $uuid | ForEach-Object { $_.Dir.CreationTime })
+    foreach ($s in $todo) {
+        $end = if ($s.End) { $s.End } else { Get-Date }
+        if (@($created | Where-Object { $_ -ge $s.Start.AddSeconds(-2) -and $_ -le $end.AddSeconds(2) }).Count -gt 0) {
+            $s.PacksLoaded = $true
+            Write-Step "content log: game session $($s.Launch) downloaded the host's test pack (its folder in the pack cache is from that session): it needs the canary although it never spawned"
         }
     }
 }
@@ -1171,11 +1212,12 @@ function Start-Game([int]$TimeoutSeconds = 180) {
     # one record per game session, for the content-log check (Stop-Game says how it ended).
     # CanaryOnJoin: a vanilla client (remote-vanilla) has no GloamingForest_Test_RP of its own; it
     # gets the canary only with the host's packs, so only once it joined (InWorld, set by
-    # Enter-TestWorld / Enter-RemoteServer). Process: the game's process, opened while it runs, so
-    # Stop-Game can read the exit code of a game that exited by itself.
+    # Enter-TestWorld / Enter-RemoteServer) or downloaded them (PacksLoaded, Update-GameSessionPacks).
+    # Process: the game's process, opened while it runs, so Stop-Game can read the exit code of a
+    # game that exited by itself.
     $script:GameSessions.Add([pscustomobject]@{
         Launch = $script:GameSessions.Count + 1; Start = (Get-Date); End = $null; Ended = 'open'; Pid = $null
-        InWorld = $false; CanaryOnJoin = ($script:Mode -eq 'remote-vanilla'); Process = $null
+        InWorld = $false; PacksLoaded = $false; CanaryOnJoin = ($script:Mode -eq 'remote-vanilla'); Process = $null
     })
     if ($script:Headless) {
         # Straight from the instance folder (the exe loads PreLoader/LeviLamina itself), with a

@@ -81,10 +81,12 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   (`Start-Game`) and how it ended (`Stop-Game`, `Get-GameSessionEnd`: `closed` when Stop-Game closed it or
   it had exited by itself with exit code 0, `killed` after 30 s, or `gone` when the watchdog fired or it had
   exited by itself with a non-zero or unknown exit code: a crash), and whether it reached the world
-  (`Enter-TestWorld` / `Enter-RemoteServer`). A `remote-vanilla` session that never joined the host (a
-  failed join the harness relaunched) gets no canary and needs none. The harness assigns each
+  (`Enter-TestWorld` / `Enter-RemoteServer`) or, in `remote-vanilla`, downloaded the host's test pack (its
+  folder in the game's `packcache` was created while the session ran; `Clear-CachedGfPacks` drops every cached copy
+  before the run). A `remote-vanilla` session that did neither (a failed join the harness relaunched before the
+  packs came) gets no canary and needs none. The harness assigns each
   `ContentLog*.txt` to the last session started before the file was created. Every `closed` session (in
-  `remote-vanilla`: every `closed` session that joined the host) must have a file that reports the canary: no file, or files without it, fail the run ("the check cannot see
+  `remote-vanilla`: every `closed` session that joined the host or downloaded its packs) must have a file that reports the canary: no file, or files without it, fail the run ("the check cannot see
   that session's pack errors"), even when another session of the run (a relaunch, ui's Vibrant Visuals
   half) logged it. A `killed` or `gone` session is listed and needs no canary, for itself only: it never
   waives the check for the run's other sessions. A file with only the canary is clean. The summary and
@@ -204,7 +206,9 @@ Exceptions:
   output folder is cleared again on re-entry, with retries for 20 s; a file still in use after that makes the run
   NOT RUN (exit 2), never FAILED. The folder is renamed aside first and only then deleted, so a folder that cannot
   be cleared keeps every file of the previous run (client log, screenshots, content-log report). Each process of
-  the host tree gets at least 2 s to exit, even after a slow one used up the shared deadline.
+  the host tree gets up to 2 s past the shared deadline to exit; the whole wait never exceeds `-TimeoutSec` + 10 s.
+  When the host stopped by itself (the normal end of a remote run), its leftover descendants get up to 5 s together
+  to exit before the redirected output files are closed, and each copy then gets at most 2 s to finish.
 - Put the logic in selftests inside the mod (`GF_REGISTER_SELFTEST("<unit>.<case>", ...)`, dx range of the unit,
   rule R12) and start them from the scenario with `Invoke-SelfTest '<unit>.*'`. The scenario adds what only the
   harness can do: restarts (`Restart-Server`), chat commands, keys and clicks, screenshots.
