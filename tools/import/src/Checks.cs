@@ -71,8 +71,9 @@ namespace GfImport
                 else if (fam != null && !familyTagOverrides.Contains(bi.Id))
                 {
                     var pt = fam["params"] != null ? fam["params"]["tags"] : null;
-                    var want = BlockTagsIn(doc["components"]).OrderBy(x => x, StringComparer.Ordinal).ToList();
-                    var have = (pt != null && pt.IsArr ? pt.A.Select(x => x.AsString()) : Enumerable.Empty<string>()).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    // compared as sets (a duplicate is reported by SyncFamilyTags on its own)
+                    var want = BlockTagsIn(doc["components"]).Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    var have = (pt != null && pt.IsArr ? pt.A.Select(x => x.AsString()) : Enumerable.Empty<string>()).Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     if (!want.SequenceEqual(have))
                         Errors.Add("data/gf/families: twilightforest:" + bi.Id + " params.tags [" + string.Join(", ", have) + "], its bp/blocks file has [" + string.Join(", ", want) + "] (the skeleton follows params.tags, SyncFamilyTags)");
                     checkedFamilyTags++;
@@ -227,7 +228,7 @@ namespace GfImport
                 // the tools that mine it (Bedrock tool tags), the tier a tool needs (Bedrock tier tag) and the drop rule
                 if (e["tools"] != null)
                 {
-                    var tags = BlockTagsIn(doc["components"]);
+                    var tags = BlockTagsIn(doc["components"]).Distinct(StringComparer.Ordinal).ToList(); // a set (duplicates: SyncFamilyTags / FinalHarvest)
                     var wantTools = e["tools"].A.Select(t => BedrockToolTag[t.AsString()]).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     var haveTools = tags.Where(k => BedrockToolTag.Values.Contains(k)).OrderBy(x => x, StringComparer.Ordinal).ToList();
                     if (!wantTools.SequenceEqual(haveTools))
@@ -307,6 +308,10 @@ namespace GfImport
                         list.Add(Tuple.Create(where, bs != null ? bs[id] : null, ib != null ? ib[id] : null));
                     }
                 }
+            // a javaType names one pack type: CheckBehaviour maps a block's TFSoundTypes.* sound to the entry that names it
+            foreach (var grp in golden.Keys.Where(k => golden[k].IsObj && golden[k]["javaType"] != null && golden[k]["javaType"].IsStr)
+                         .GroupBy(k => golden[k]["javaType"].S, StringComparer.Ordinal).Where(g => g.Count() > 1))
+                Errors.Add("tools/import/expected-behaviour.json: soundTypes " + string.Join(", ", grp) + " share the javaType " + grp.Key + " (one entry per Java sound type)");
             int checkedEvents = 0;
             foreach (var id in golden.Keys)
             {

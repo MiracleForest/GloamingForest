@@ -369,19 +369,31 @@ or rename target that is not generated fails the run.
 A family block's Bedrock block tags (tools, tier, `minecraft:leaves`) are overridden through its families entry
 only, by block id: `familyTags` maps a block id of the unit's `data/gf/families/<unit>.json` to its new tag list
 (applied after `patch`; an empty list removes `params.tags`, a block without tags). An id that is not exactly one entry
-of that file, or a list that is not distinct tag ids, fails the run. The import writes the skeleton's tags from
-`params.tags` in the form of the skeleton's format (the `minecraft:tags` array of 1.26.50; `"tag:<id>"` components for
-a format before 1.26.20), so the override does not depend on the skeleton's format, and `data/gf/import/harvest.json`
-lists the tools and tier of the final `params.tags` (`Ctx.FamilyHarvest`). A `patch` of a families data file that
-changes any entry's `params.tags` (the entries are an array, whose indices move when a regeneration adds an entry)
-fails the run with the `familyTags` hint, as does a patch of a family block's skeleton tags (`bp/blocks/<id>.json`
-`tag:*` or `minecraft:tags`). Tags are a set: a reorder is no change.
+of that file, a list that is not tag ids, a tag listed twice, or an unknown harvest tag (below) is an error, and that
+entry is not applied. The import writes the skeleton's tags from `params.tags` in the form of the skeleton's format
+(the `minecraft:tags` array of 1.26.50; `"tag:<id>"` components for a format before 1.26.20), so the override does
+not depend on the skeleton's format. A `patch` of a families data file that changes any entry's `params.tags` (the
+entries are an array, whose indices move when a regeneration adds an entry) is an error with the `familyTags` hint and
+is not applied, and a patch of a family block's skeleton tags (`bp/blocks/<id>.json` `tag:*` or `minecraft:tags`) is
+an error with the same hint.
 
 ```json
 {"familyTags": {"twilightforest:twilight_oak_chest": ["minecraft:is_axe_item_destructible"]}}
 ```
 
 A non-family block keeps its tags in its skeleton file only (patch `/minecraft:block/components/minecraft:tags`).
+
+For every block, family or not, `data/gf/import/harvest.json` lists the tools and tier of the Bedrock block tags of
+its final skeleton file (after the overrides and `Ctx.SyncFamilyTags`; `Ctx.FinalHarvest`), with TF's drop rule
+(`requiresCorrectToolForDrops`, which no tag carries), so the runtime's correct-tool flag and the `import.harvest_*`
+selftests always follow what the game reads. Tags are a set: a reorder is no change, and a tag listed twice (in a
+skeleton, in `params.tags` or in `familyTags`) is one error of its own. A tag of a harvest tag's form
+(`..._item_destructible`, `..._tier_destructible`) that is not one of the import's tool or tier tags (*Tools and drops*
+above: `minecraft:is_{pickaxe,axe,shovel,hoe,sword,shears}_item_destructible`, `minecraft:leaves`,
+`minecraft:{stone,iron,diamond}_tier_destructible`) is an error: the game would ignore a misspelt one and the block
+would lose its tool. A warning names a block an override leaves without a pickaxe, axe, shovel or hoe tag while TF
+drops it only for a correct tool (it then never drops), and a tier tag without such a tool tag (no effect). Every
+override problem is an `[import] error:` line, and the run reports them all before it fails.
 
 ## Determinism
 

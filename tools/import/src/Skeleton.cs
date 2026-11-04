@@ -446,7 +446,8 @@ namespace GfImport
                 if (comps == null || !comps.IsObj) { Errors.Add(rel + ": no minecraft:block components"); continue; }
                 var current = BlockTagsIn(comps);
                 var generated = BedrockBlockTags(bi.Id);
-                // tags are a set: an override that only reorders them changes nothing
+                // tags are a set: a duplicate is reported once, on its own; an override that only reorders them changes nothing
+                ReportDuplicateTags(rel, current);
                 if (!new HashSet<string>(current, StringComparer.Ordinal).SetEquals(generated))
                 {
                     Errors.Add(rel + ": an override changes the family block's tags [" + string.Join(", ", generated) + "] to [" + string.Join(", ", current)
@@ -460,7 +461,8 @@ namespace GfImport
                     Errors.Add("data/gf/families: twilightforest:" + bi.Id + " params.tags is not an array of tag ids: " + pt.ToCompact());
                     continue;
                 }
-                var want = pt != null ? pt.A.Select(x => x.S).ToList() : new List<string>();
+                if (pt != null) ReportDuplicateTags("data/gf/families: twilightforest:" + bi.Id + " params.tags", pt.A.Select(x => x.S));
+                var want = pt != null ? pt.A.Select(x => x.S).Distinct(StringComparer.Ordinal).ToList() : new List<string>();
                 if (new HashSet<string>(want, StringComparer.Ordinal).SetEquals(current)) continue;
                 foreach (var k in comps.Keys.Where(k => k.StartsWith("tag:", StringComparison.Ordinal)).ToList()) comps.Remove(k);
                 comps.Remove("minecraft:tags");
