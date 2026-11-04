@@ -108,7 +108,6 @@ $script:ContentLogStrict = [bool]$StrictContentLog
 $script:ContentLogWarnings = @()
 $script:ContentLogNotes = @()
 $script:GamesStarted = 0
-$script:GameKilled = $false
 $script:NotRunReason = $null
 # Game instances: -Slot, $env:GF_E2E_CLIENT_SLOTS / $env:LEVI_E2E_SLOTS ("1,2,3"), or every instance
 # that exists (the base and its -hi<N> clones); the first free one is taken.

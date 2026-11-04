@@ -749,7 +749,9 @@ function Get-ContentLogEntries([string[]]$Files = @(Get-ContentLogFiles | ForEac
 function Get-ContentLogSession([System.IO.FileInfo]$File, [object[]]$Sessions) {
     $t = if ($File.CreationTime -lt $File.LastWriteTime) { $File.CreationTime } else { $File.LastWriteTime }
     $owner = $Sessions[0]
-    foreach ($s in $Sessions) { if ($s.Start.AddSeconds(-2) -le $t) { $owner = $s } }
+    # (no slack: Start is taken before the launch, so a session's file is never older than its Start,
+    # while the previous session's file may be written just before it)
+    foreach ($s in $Sessions) { if ($s.Start -le $t) { $owner = $s } }
     $owner
 }
 
@@ -779,9 +781,12 @@ function Measure-ContentLogCount($Entries) { [long](@($Entries) | Measure-Object
 function Get-ContentLogProblems([string]$OutDir, [switch]$Strict, [string[]]$Files, [object[]]$Sessions) {
     $script:ContentLogWarnings = @()
     $script:ContentLogNotes = @()
-    if (-not $PSBoundParameters.ContainsKey('Sessions')) { $Sessions = @($script:GameSessions) }
-    $Sessions = @($Sessions | Where-Object { $_ })
     $given = $PSBoundParameters.ContainsKey('Files')
+    if (-not $PSBoundParameters.ContainsKey('Sessions')) {
+        if ($given) { throw 'Get-ContentLogProblems: -Files needs -Sessions (the game sessions the files belong to)' }
+        $Sessions = @($script:GameSessions)
+    }
+    $Sessions = @($Sessions | Where-Object { $_ })
     if (-not $given) {
         if (-not $script:ContentLogSince -or $Sessions.Count -eq 0) { return @() }
         $Files = @(Get-ContentLogFiles | ForEach-Object FullName)
@@ -1184,7 +1189,7 @@ function Stop-Game {
     $killed = $false
     foreach ($p in $procs) {
         $p.CloseMainWindow() | Out-Null
-        if (-not $p.WaitForExit(30000)) { $p.Kill($true); $killed = $true; $script:GameKilled = $true; Write-Step "the game did not close within 30 s; killed it" }
+        if (-not $p.WaitForExit(30000)) { $p.Kill($true); $killed = $true; Write-Step "the game did not close within 30 s; killed it" }
     }
     $s = $script:GameSessions | Where-Object { $_.Ended -eq 'open' } | Select-Object -Last 1
     if ($s) {

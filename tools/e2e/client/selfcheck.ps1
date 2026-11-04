@@ -85,6 +85,11 @@ try {
     $s2c = New-Log 'ContentLog_s2c.txt' @($canaryLine); Set-LogTime $s2c 3
     $r = @(Get-ContentLogProblems -Files @($s1, $s2c) -Sessions $two)
     Assert-True ($r.Count -eq 0) 'two closed sessions, a canary in each: clean'
+    # a file the first session wrote as it closed, 1 s before the second one started, is the first one's
+    $late = New-Log 'ContentLog_s1late.txt' @($canaryLine)
+    $tl = $t0.AddMinutes(2).AddSeconds(-1); [IO.File]::SetCreationTime($late, $tl); [IO.File]::SetLastWriteTime($late, $tl)
+    $r = @(Get-ContentLogProblems -Files @($late, $s2c) -Sessions $two)
+    Assert-True ($r.Count -eq 0) 'a file written just before the next session started belongs to the session before'
     # a killed session waives the canary for itself only
     $killedFirst = @((New-Session 1 0 'killed'), (New-Session 2 2 'closed'))
     $r = @(Get-ContentLogProblems -Files @() -Sessions $killedFirst)
