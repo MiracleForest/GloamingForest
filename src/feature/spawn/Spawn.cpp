@@ -479,14 +479,10 @@ bool obstructionDefault(
 }
 
 bool biomeHasTag(std::string const& biome, std::string const& tag) {
-    // gf::tags (F9): TF's biome tags and the units' fragments
-    if (tags::has(tags::Registry::Biome, tag, biome)) return true;
-    // the vanilla biome tags the spawner reads, which neither TF's data nor gf::tags' vanilla bridge
-    // holds (1.21.1 data): BiomeTags.REDUCED_WATER_AMBIENT_SPAWNS = minecraft:reduce_water_ambient_spawns:
-    // [#minecraft:is_river], minecraft:is_river: [river, frozen_river]
-    if (tag == "minecraft:reduce_water_ambient_spawns" || tag == "minecraft:is_river")
-        return biome == "minecraft:river" || biome == "minecraft:frozen_river";
-    return false;
+    // gf::tags (F9): TF's biome tags, the units' fragments and the vanilla bridge, which holds the
+    // 1.21.1 tags the spawner reads (BiomeTags.REDUCED_WATER_AMBIENT_SPAWNS =
+    // minecraft:reduce_water_ambient_spawns: [#minecraft:is_river], is_river: [river, frozen_river])
+    return tags::has(tags::Registry::Biome, tag, biome);
 }
 
 int worldSurfaceY(BlockSource& region, int x, int z) {

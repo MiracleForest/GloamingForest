@@ -1007,8 +1007,8 @@ GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
 });
 
 // The block and biome tags world generation and the spawner read, against F9's gf::tags: TF's tag
-// data (Java ids renamed to the game's), its vanilla bridge, and the Java 1.21.1 vanilla tags the
-// bridge does not answer; BlockState#canBeReplaced with TF's replaceable blocks.
+// data (Java ids renamed to the game's) and its vanilla bridge of the Java 1.21.1 tags, with nothing
+// built into F5; BlockState#canBeReplaced with TF's replaceable blocks.
 GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
     namespace sd = gf::spawn::detail;
     struct Case {
@@ -1041,7 +1041,7 @@ GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
         {"minecraft:snow", "twilightforest:carver_replaceables", true},
         {"minecraft:stone", "twilightforest:carver_replaceables", true},
         {"minecraft:obsidian", "twilightforest:carver_replaceables", false},
-        // the vanilla tags the bridge does not answer (built in, TF's members through the nested tags)
+        // vanilla tags with nested tags (the bridge's includes bring TF's members from its data)
         {"minecraft:oak_fence", "minecraft:fences", true},
         {"minecraft:nether_brick_fence", "minecraft:fences", true},
         {"twilightforest:twilight_oak_fence", "minecraft:fences", true},
@@ -1106,7 +1106,7 @@ GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
         ++checked;
     }
 
-    // biome tags: TF's from gf::tags, the spawner's vanilla river tag built in
+    // biome tags: TF's and the spawner's vanilla river tag, both from gf::tags
     ctx.check(sd::biomeHasTag("twilightforest:dark_forest", "twilightforest:in_twilight_forest") && !sd::biomeHasTag("minecraft:plains", "twilightforest:in_twilight_forest"),
               "#twilightforest:in_twilight_forest holds TF's biomes (gf::tags)");
     ctx.check(sd::biomeHasTag("minecraft:river", "minecraft:reduce_water_ambient_spawns") && sd::biomeHasTag("minecraft:frozen_river", "minecraft:reduce_water_ambient_spawns")

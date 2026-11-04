@@ -235,29 +235,6 @@ bool endsWith(std::string const& s, std::string_view suffix) {
     return s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
-/// Vanilla tags of Minecraft 1.21.1's data pack, by Java id, where gf::tags falls short of Java: the
-/// tags its vanilla bridge does not answer, and the nested tag of minecraft:replaceable_by_trees
-/// (#minecraft:leaves, to which TF's data adds TF's leaves: the bridge's include reaches only the
-/// vanilla leaves). A "#tag" entry includes that tag through hasTag, TF's members with it.
-std::unordered_map<std::string, std::vector<std::string>> const& vanillaTags() {
-    static std::unordered_map<std::string, std::vector<std::string>> const m{
-        {"minecraft:replaceable_by_trees", {"#minecraft:leaves"}},
-        {"minecraft:fences", {"#minecraft:wooden_fences", "minecraft:nether_brick_fence"}},
-        {"minecraft:doors",
-         {"#minecraft:wooden_doors", "minecraft:copper_door", "minecraft:exposed_copper_door", "minecraft:weathered_copper_door",
-          "minecraft:oxidized_copper_door", "minecraft:waxed_copper_door", "minecraft:waxed_exposed_copper_door",
-          "minecraft:waxed_weathered_copper_door", "minecraft:waxed_oxidized_copper_door", "minecraft:iron_door"}},
-        {"minecraft:trapdoors",
-         {"#minecraft:wooden_trapdoors", "minecraft:iron_trapdoor", "minecraft:copper_trapdoor", "minecraft:exposed_copper_trapdoor",
-          "minecraft:weathered_copper_trapdoor", "minecraft:oxidized_copper_trapdoor", "minecraft:waxed_copper_trapdoor",
-          "minecraft:waxed_exposed_copper_trapdoor", "minecraft:waxed_weathered_copper_trapdoor", "minecraft:waxed_oxidized_copper_trapdoor"}},
-        {"minecraft:overworld_natural_logs",
-         {"minecraft:acacia_log", "minecraft:birch_log", "minecraft:oak_log", "minecraft:jungle_log", "minecraft:spruce_log", "minecraft:dark_oak_log",
-          "minecraft:mangrove_log", "minecraft:cherry_log"}},
-    };
-    return m;
-}
-
 /// BlockStateBase#canBeReplaced: the blocks built with BlockBehaviour.Properties#replaceable, by
 /// Java id. Vanilla 1.21.1's are the members of its minecraft:replaceable tag; TF's come from
 /// TFBlocks (fiddlehead, fallen leaves, ominous fire, wispy cloud), which no tag lists.
@@ -320,17 +297,10 @@ TagCache& tagCache() {
 
 /// kit::hasTag without the scope's cache.
 bool hasTagUncached(Block const& block, std::string_view tagIn) {
-    std::string tag = normalizeId(std::string(tagIn));
     // gf::tags (F9): TF's tag data with the units' fragments, nested tags, and the vanilla members
-    // of the vanilla tags its bridge answers; it takes the game's (Bedrock) ids
-    if (tags::has(tags::Registry::Block, tag, block.getTypeName())) return true;
-    // the vanilla tags the bridge does not answer
-    auto it = vanillaTags().find(tag);
-    if (it == vanillaTags().end()) return false;
-    std::string const id = kit::javaId(block);
-    for (auto const& entry : it->second)
-        if (entry.starts_with('#') ? kit::hasTag(block, std::string_view(entry).substr(1)) : entry == id) return true;
-    return false;
+    // of Minecraft 1.21.1's tags through its vanilla bridge (the data members its includes reach
+    // too); it takes the game's (Bedrock) ids
+    return tags::has(tags::Registry::Block, normalizeId(std::string(tagIn)), block.getTypeName());
 }
 
 std::shared_ptr<std::vector<std::string> const> structureIdsUncached(Json const& set) {
@@ -444,11 +414,10 @@ bool isReplaceable(Block const& block) {
 bool hasTag(Block const& block, std::string_view tag) {
     auto& cache = tagCache();
     if (cache.depth == 0) return hasTagUncached(block, tag);
-    if (auto byTag = cache.blocks.find(tag); byTag != cache.blocks.end())
-        if (auto known = byTag->second.find(&block); known != byTag->second.end()) return known->second;
-    bool member = hasTagUncached(block, tag); // may add other tags' answers (the built-in includes)
-    auto byTag  = cache.blocks.find(tag);
+    auto byTag = cache.blocks.find(tag);
     if (byTag == cache.blocks.end()) byTag = cache.blocks.emplace(std::string(tag), std::unordered_map<Block const*, bool>{}).first;
+    if (auto known = byTag->second.find(&block); known != byTag->second.end()) return known->second;
+    bool member = hasTagUncached(block, tag); // gf::tags alone: it never re-enters hasTag
     byTag->second.emplace(&block, member);
     return member;
 }
