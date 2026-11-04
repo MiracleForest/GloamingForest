@@ -225,9 +225,50 @@ namespace GfImport
                         GenFile f;
                         if (!files.TryGetValue(rel, out f)) throw new Exception("override " + unit + ": patch target " + rel + " is not generated");
                         var doc = J.Parse(Encoding.UTF8.GetString(f.Bytes));
+                        var before = IsFamiliesData(rel) ? FamilyTagsById(doc) : null;
                         doc = J.ApplyPatch(doc, ov["patch"][rel], "override " + unit + " " + rel);
+                        // a family block's tags are overridden by id (familyTags), never through the entries' array index,
+                        // which moves when a regeneration adds an earlier entry
+                        if (before != null)
+                        {
+                            var after = FamilyTagsById(doc);
+                            // (an entry the patch adds or removes is reported by CheckEmittedBlocks / FamilyEntries)
+                            foreach (var id in before.Keys.Intersect(after.Keys).OrderBy(x => x, StringComparer.Ordinal))
+                            {
+                                string b = before[id], a = after[id];
+                                if (b != a)
+                                    throw new Exception("override " + unit + ": patch of " + rel + " changes params.tags of " + id + " (" + (b ?? "(none)") + " -> " + (a ?? "(none)")
+                                        + "): override a family block's tags with \"familyTags\": {\"" + id + "\": [...]} (docs/spec/import.md, Overrides)");
+                            }
+                        }
                         f.Bytes = new UTF8Encoding(false).GetBytes(doc.ToText());
                     }
+                }
+                // familyTags: {"twilightforest:<id>": [tag ids]} sets params.tags of the unit's families entry of that id
+                // (data/gf/families/<unit>.json), the single source of a family block's Bedrock block tags (SyncFamilyTags)
+                if (ov["familyTags"] != null)
+                {
+                    if (!ov["familyTags"].IsObj) throw new Exception("override " + unit + ": familyTags is not an object of block id -> [tag ids]");
+                    string rel = "data/gf/families/" + unit + ".json";
+                    GenFile f;
+                    if (!files.TryGetValue(rel, out f)) throw new Exception("override " + unit + ": familyTags needs " + rel + ", which is not generated (the unit owns no family block)");
+                    var doc = J.Parse(Encoding.UTF8.GetString(f.Bytes));
+                    if (!doc.IsArr) throw new Exception("override " + unit + ": " + rel + " is not an array of family entries");
+                    foreach (var id in ov["familyTags"].Keys)
+                    {
+                        var tags = ov["familyTags"][id];
+                        if (!tags.IsArr || !tags.A.All(x => x.IsStr) || tags.A.Select(x => x.S).Distinct(StringComparer.Ordinal).Count() != tags.A.Count)
+                            throw new Exception("override " + unit + ": familyTags " + id + " is not an array of distinct tag ids: " + tags.ToCompact());
+                        var entries = doc.A.Where(e => e.IsObj && e["id"] != null && e["id"].IsStr && e["id"].S == id).ToList();
+                        if (entries.Count != 1)
+                            throw new Exception("override " + unit + ": familyTags " + id + " names " + (entries.Count == 0 ? "no entry" : entries.Count + " entries") + " of " + rel);
+                        var entry = entries[0];
+                        if (entry["params"] == null) entry.Set("params", J.Obj());
+                        if (!entry["params"].IsObj) throw new Exception("override " + unit + ": " + rel + " " + id + " params is not an object");
+                        if (tags.A.Count > 0) entry["params"].Set("tags", J.Strs(tags.A.Select(x => x.S)));
+                        else entry["params"].Remove("tags"); // absent for a block without tags (docs/spec/import.md, Families)
+                    }
+                    f.Bytes = new UTF8Encoding(false).GetBytes(doc.ToText());
                 }
                 // rename: {"<rel>": "<new rel>"}
                 if (ov["rename"] != null)
@@ -244,6 +285,29 @@ namespace GfImport
                     }
                 }
             }
+        }
+
+        static bool IsFamiliesData(string rel)
+        {
+            return rel.StartsWith("data/gf/families/", StringComparison.Ordinal) && rel.EndsWith(".json", StringComparison.Ordinal);
+        }
+
+        /// <summary>params.tags of every entry of a families data file, by id, sorted (a reorder is no change; a duplicated
+        /// tag is); an entry without tags maps to "". Entries without an id are left out (an error later).</summary>
+        static Dictionary<string, string> FamilyTagsById(J doc)
+        {
+            var r = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (doc == null || !doc.IsArr) return r;
+            foreach (var e in doc.A)
+            {
+                if (!e.IsObj || e["id"] == null || !e["id"].IsStr) continue;
+                var pt = e["params"] != null && e["params"].IsObj ? e["params"]["tags"] : null;
+                string v = pt == null ? "" : pt.IsArr && pt.A.All(x => x.IsStr)
+                    ? string.Join(",", pt.A.Select(x => x.S).OrderBy(x => x, StringComparer.Ordinal))
+                    : pt.ToCompact();
+                r[e["id"].S] = v; // a duplicated id keeps the last (FamilyEntries reports it)
+            }
+            return r;
         }
 
         public static Regex GlobRegex(string glob)

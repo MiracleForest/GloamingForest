@@ -468,8 +468,11 @@ GF_REGISTER_SELFTEST("import.sound_types", [](Context& ctx) {
             ctx.check(false, what + " is not defined (TF plays " + e.sound + ")");
             continue;
         }
+        // (a sound that is not a string is a readable failure, not a json type_error)
+        auto sound = ev->find("sound");
+        bool named = sound != ev->end() && sound->is_string() && sound->get<std::string>() == e.sound;
         ctx.check(
-            ev->value("sound", std::string()) == e.sound && near(num(*ev, "volume"), e.volume) && near(num(*ev, "pitch"), e.pitch),
+            named && near(num(*ev, "volume"), e.volume) && near(num(*ev, "pitch"), e.pitch),
             what + " " + ev->dump() + ", TF plays " + e.sound + " at " + std::to_string(e.volume) + " / " + std::to_string(e.pitch)
         );
         ctx.check(defs["sound_definitions"].contains(e.sound), what + ": " + e.sound + " is a sound definition (F3)");
@@ -484,7 +487,11 @@ GF_REGISTER_SELFTEST("import.sound_types", [](Context& ctx) {
     }
     for (auto const* id : {"twilightforest:mason_jar", "twilightforest:firefly_jar", "twilightforest:firefly_particle_spawner", "twilightforest:cicada_jar"}) {
         JDoc const* b = at(blocks, {id});
-        std::string s = b && b->is_object() ? b->value("sound", std::string("(none)")) : std::string("(no entry)");
+        JDoc const* snd = b ? at(*b, {"sound"}) : nullptr;
+        std::string s   = !b || !b->is_object() ? std::string("(no entry)")
+                        : !snd                  ? std::string("(none)")
+                        : snd->is_string()      ? snd->get<std::string>()
+                                                : snd->dump();
         ctx.check(s == "twilightforest.jar", std::string(id) + ": RP blocks.json sound " + s + ", TF gives TFSoundTypes.JAR -> twilightforest.jar");
     }
 });

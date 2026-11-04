@@ -357,24 +357,28 @@ the files are written or checked):
 {
   "drop":   ["bp/blocks/some_block.json", "rp/textures/twilightforest/block/unused_*.png"],
   "patch":  {"bp/blocks/naga_stone.json": [{"op": "replace", "path": "/minecraft:block/components/minecraft:light_emission", "value": 15}]},
-  "rename": {"rp/particles/x.json": "rp/particles/y.json"}
+  "rename": {"rp/particles/x.json": "rp/particles/y.json"},
+  "familyTags": {"twilightforest:twilight_oak_chest": ["minecraft:is_axe_item_destructible"]}
 }
 ```
 
 `drop` takes globs over the unit's generated paths, `patch` RFC 6902 operations `add` / `replace` / `remove` on a
-generated JSON file, `rename` moves a generated file. A patch or rename target that is not generated fails the run.
+generated JSON file, `rename` moves a generated file, `familyTags` sets the tags of a family block (below). A patch
+or rename target that is not generated fails the run.
 
 A family block's Bedrock block tags (tools, tier, `minecraft:leaves`) are overridden through its families entry
-only: patch `params.tags` of the entry in `data/gf/families/<unit>.json` (the entries are an array, so the pointer
-is its index, `/<n>/params/tags`: look the index up in the generated file, 198 below is `twilight_oak_chest` at
-9e40a757, and re-check it after a regeneration that adds blocks), and the import writes the skeleton's tags from it in the form of the skeleton's
-format (the `minecraft:tags` array of 1.26.50; `"tag:<id>"` components for a format before 1.26.20), so the
-override does not depend on the skeleton's format. A patch of a family block's skeleton tags (`bp/blocks/<id>.json`
-`tag:*` or `minecraft:tags`) fails the run with that hint:
+only, by block id: `familyTags` maps a block id of the unit's `data/gf/families/<unit>.json` to its new tag list
+(applied after `patch`; an empty list removes `params.tags`, a block without tags). An id that is not exactly one entry
+of that file, or a list that is not distinct tag ids, fails the run. The import writes the skeleton's tags from
+`params.tags` in the form of the skeleton's format (the `minecraft:tags` array of 1.26.50; `"tag:<id>"` components for
+a format before 1.26.20), so the override does not depend on the skeleton's format, and `data/gf/import/harvest.json`
+lists the tools and tier of the final `params.tags` (`Ctx.FamilyHarvest`). A `patch` of a families data file that
+changes any entry's `params.tags` (the entries are an array, whose indices move when a regeneration adds an entry)
+fails the run with the `familyTags` hint, as does a patch of a family block's skeleton tags (`bp/blocks/<id>.json`
+`tag:*` or `minecraft:tags`). Tags are a set: a reorder is no change.
 
 ```json
-{"patch": {"data/gf/families/woodwork.json": [
-  {"op": "replace", "path": "/198/params/tags", "value": ["minecraft:is_axe_item_destructible"]}]}}
+{"familyTags": {"twilightforest:twilight_oak_chest": ["minecraft:is_axe_item_destructible"]}}
 ```
 
 A non-family block keeps its tags in its skeleton file only (patch `/minecraft:block/components/minecraft:tags`).

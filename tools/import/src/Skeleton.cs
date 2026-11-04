@@ -424,7 +424,7 @@ namespace GfImport
 
         /// <summary>A family block's Bedrock block tags have one source, params.tags of its families entry (after the
         /// overrides): its skeleton file's tags follow them, in the form of the file's format. A unit changes a family
-        /// block's tags by patching params.tags in data/gf/families/&lt;unit&gt;.json (docs/spec/import.md, Overrides); an
+        /// block's tags with a familyTags override (params.tags of its entry, docs/spec/import.md, Overrides); an
         /// override that changes the skeleton's tags instead is an error (the skeleton's tag form changes with
         /// Blocks.FamilyBlockFormat). After ApplyOverrides, before CheckEmittedBlocks.</summary>
         public void SyncFamilyTags()
@@ -446,10 +446,11 @@ namespace GfImport
                 if (comps == null || !comps.IsObj) { Errors.Add(rel + ": no minecraft:block components"); continue; }
                 var current = BlockTagsIn(comps);
                 var generated = BedrockBlockTags(bi.Id);
-                if (!current.SequenceEqual(generated, StringComparer.Ordinal))
+                // tags are a set: an override that only reorders them changes nothing
+                if (!new HashSet<string>(current, StringComparer.Ordinal).SetEquals(generated))
                 {
                     Errors.Add(rel + ": an override changes the family block's tags [" + string.Join(", ", generated) + "] to [" + string.Join(", ", current)
-                        + "]: patch params.tags of twilightforest:" + bi.Id + " in data/gf/families/" + NameOf(bi.Owner) + ".json instead (their single source, docs/spec/import.md Overrides)");
+                        + "]: override them with \"familyTags\": {\"twilightforest:" + bi.Id + "\": [...]} in tools/import/overrides/" + NameOf(bi.Owner) + ".json instead (params.tags, their single source, docs/spec/import.md Overrides)");
                     familyTagOverrides.Add(bi.Id);
                     continue;
                 }
@@ -460,7 +461,7 @@ namespace GfImport
                     continue;
                 }
                 var want = pt != null ? pt.A.Select(x => x.S).ToList() : new List<string>();
-                if (want.SequenceEqual(current, StringComparer.Ordinal)) continue;
+                if (new HashSet<string>(want, StringComparer.Ordinal).SetEquals(current)) continue;
                 foreach (var k in comps.Keys.Where(k => k.StartsWith("tag:", StringComparison.Ordinal)).ToList()) comps.Remove(k);
                 comps.Remove("minecraft:tags");
                 if (want.Count > 0)

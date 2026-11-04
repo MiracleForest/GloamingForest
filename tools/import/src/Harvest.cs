@@ -201,13 +201,15 @@ namespace GfImport
 
         /// <summary>data/gf/import/harvest.json: the blocks that drop only for a correct tool (the runtime sets the engine's
         /// requires-correct-tool flag on them, which Bedrock's JSON blocks cannot declare) and every block's tools and tier,
-        /// for the selftests.</summary>
+        /// for the selftests. A family block's tools and tier come from its final params.tags (after the overrides,
+        /// FamilyHarvest), the single source of its Bedrock block tags, so harvest.json lists what its skeleton and the
+        /// families kit write.</summary>
         public void ImportHarvestIndex()
         {
             var blocks = J.Obj();
             foreach (var kv in Harvests)
             {
-                var h = kv.Value;
+                var h = FamilyHarvest(kv.Key) ?? kv.Value;
                 if (h.Tools.Count == 0 && h.Tier == null && !h.RequiresTool) continue;
                 var e = J.Obj();
                 if (h.Tools.Count > 0) e.Set("tools", J.Strs(h.Tools));
@@ -216,6 +218,33 @@ namespace GfImport
                 blocks.Set("twilightforest:" + kv.Key, e);
             }
             EmitJson("skeleton", ImportUnit, "data/gf/import/harvest.json", J.Obj().Set("blocks", blocks));
+        }
+
+        /// <summary>The harvest of a family block as its final params.tags (data/gf/families after the overrides) declare
+        /// it: the tools of its Bedrock tool tags (BedrockToolTag), the tier of its tier tag (BedrockTierTag), the drop rule
+        /// of TF (requiresCorrectToolForDrops, which no tag carries). Other tags are not harvest facts and are left out.
+        /// Null for a block that is no family block, has no entry or no valid params.tags (reported by SyncFamilyTags /
+        /// CheckEmittedBlocks); an absent params.tags is a block without tags.</summary>
+        Harvest FamilyHarvest(string id)
+        {
+            BlockInfo bi;
+            J fam;
+            Harvest java;
+            if (!BlockInfos.TryGetValue(id, out bi) || bi.Family == null || !Harvests.TryGetValue(id, out java)) return null;
+            if (!FamilyEntries().TryGetValue("twilightforest:" + id, out fam)) return null;
+            var pt = fam["params"] != null && fam["params"].IsObj ? fam["params"]["tags"] : null;
+            if (pt != null && !(pt.IsArr && pt.A.All(x => x.IsStr))) return null;
+            var h = new Harvest { RequiresTool = java.RequiresTool };
+            var tags = new HashSet<string>(pt != null ? pt.A.Select(x => x.S) : Enumerable.Empty<string>(), StringComparer.Ordinal);
+            foreach (var kv in BedrockToolTag)
+                if (tags.Contains(kv.Value)) h.Tools.Add(kv.Key);
+            // the highest tier tag (as a block in several #minecraft:needs_<tier>_tool tags needs the highest)
+            foreach (var n in NeedsTags)
+                if (h.Tier == null && tags.Contains(BedrockTierTag[n[1]])) h.Tier = n[1];
+            if (h.Tier != null && !h.Digger)
+                Warn("data/gf/families: twilightforest:" + id + " params.tags has the tier tag " + BedrockTierTag[h.Tier]
+                    + " but no pickaxe, axe, shovel or hoe tag: the tier has no effect (not listed in data/gf/import/harvest.json)");
+            return h;
         }
     }
 }

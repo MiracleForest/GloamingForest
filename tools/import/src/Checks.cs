@@ -136,13 +136,30 @@ namespace GfImport
         /// <summary>The behaviour values of the generated BP block files (after the overrides) and their RP sounds against
         /// the hand-written golden tools/import/expected-behaviour.json: hardness, explosion resistance and map colour (per
         /// state where TF makes them state-dependent) and sound.</summary>
+        J expectedBehaviour;
+        bool expectedBehaviourRead;
+
+        /// <summary>tools/import/expected-behaviour.json, parsed once for CheckBehaviour and CheckSoundTypes; null (one
+        /// error) when it is missing or not a JSON object.</summary>
+        J ExpectedBehaviour()
+        {
+            if (expectedBehaviourRead) return expectedBehaviour;
+            expectedBehaviourRead = true;
+            string gf = Path.Combine(Root, "tools", "import", "expected-behaviour.json");
+            if (!File.Exists(gf)) { Errors.Add("tools/import/expected-behaviour.json is missing"); return null; }
+            var doc = ReadJson(gf);
+            if (doc == null || !doc.IsObj) { Errors.Add("tools/import/expected-behaviour.json is not a JSON object"); return null; }
+            return expectedBehaviour = doc;
+        }
+
         public void CheckBehaviour()
         {
-            string gf = Path.Combine(Root, "tools", "import", "expected-behaviour.json");
-            if (!File.Exists(gf)) { Errors.Add("tools/import/expected-behaviour.json is missing"); return; }
-            var goldenDoc = ReadJson(gf);
+            var goldenDoc = ExpectedBehaviour();
+            if (goldenDoc == null) return;
             var golden = goldenDoc["blocks"];
+            if (golden == null || !golden.IsObj) { Errors.Add("tools/import/expected-behaviour.json has no blocks object"); return; }
             var soundTypes = goldenDoc["soundTypes"];
+            if (soundTypes != null && !soundTypes.IsObj) soundTypes = null; // reported by CheckSoundTypes
             int checkedValues = 0;
             foreach (var id in golden.Keys)
             {
@@ -264,9 +281,9 @@ namespace GfImport
         /// no type the golden lacks and nothing but those two categories.</summary>
         public void CheckSoundTypes()
         {
-            string gf = Path.Combine(Root, "tools", "import", "expected-behaviour.json");
-            if (!File.Exists(gf)) { Errors.Add("tools/import/expected-behaviour.json is missing"); return; }
-            var golden = ReadJson(gf)["soundTypes"];
+            var goldenDoc = ExpectedBehaviour();
+            if (goldenDoc == null) return;
+            var golden = goldenDoc["soundTypes"];
             if (golden == null || !golden.IsObj) { Errors.Add("tools/import/expected-behaviour.json has no soundTypes object"); return; }
             // every type the fragments define: id -> [(fragment, block_sounds entry, interactive_sounds entry)]
             var defined = new SortedDictionary<string, List<Tuple<string, J, J>>>(StringComparer.Ordinal);
@@ -294,6 +311,15 @@ namespace GfImport
             foreach (var id in golden.Keys)
             {
                 var g = golden[id];
+                // a hand-written entry: {javaType, blocks: [TF block paths], block_sounds, interactive_sounds}
+                if (!g.IsObj) { Errors.Add("tools/import/expected-behaviour.json: soundTypes " + id + " is not an object: " + g.ToCompact()); continue; }
+                var gBlocks = g["blocks"];
+                if (gBlocks != null && !(gBlocks.IsArr && gBlocks.A.All(x => x.IsStr)))
+                {
+                    Errors.Add("tools/import/expected-behaviour.json: soundTypes " + id + " blocks is not an array of block paths: " + gBlocks.ToCompact());
+                    gBlocks = null;
+                }
+                if (g["javaType"] != null && !g["javaType"].IsStr) Errors.Add("tools/import/expected-behaviour.json: soundTypes " + id + " javaType is not a string: " + g["javaType"].ToCompact());
                 List<Tuple<string, J, J>> defs;
                 if (!defined.TryGetValue(id, out defs)) { Errors.Add("sound type " + id + " (tools/import/expected-behaviour.json soundTypes) is defined by no rp/sounds.json.d fragment"); continue; }
                 if (defs.Count > 1) Errors.Add("sound type " + id + " is defined by " + defs.Count + " fragments: " + string.Join(", ", defs.Select(d => d.Item1)));
@@ -301,7 +327,7 @@ namespace GfImport
                 checkedEvents += CheckSoundEntry(def.Item1 + " block_sounds." + id, def.Item2, g["block_sounds"]);
                 checkedEvents += CheckSoundEntry(def.Item1 + " interactive_sounds.block_sounds." + id, def.Item3, g["interactive_sounds"]);
                 // the blocks of the type name it (their owner's rp/blocks.d fragment)
-                foreach (var b in g["blocks"] != null ? g["blocks"].A.Select(x => x.AsString()) : Enumerable.Empty<string>())
+                foreach (var b in gBlocks != null ? gBlocks.A.Select(x => x.S) : Enumerable.Empty<string>())
                 {
                     BlockInfo bi;
                     SortedDictionary<string, GenFile> files;
