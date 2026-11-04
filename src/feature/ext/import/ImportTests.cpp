@@ -4,7 +4,7 @@
 // 5100..5199). They read data/gf/import/skeleton.json (written by tools/import/run.ps1) and check
 // that the game loaded what the import generated: every TF block with its frozen states
 // (docs/spec/blockstates.md), every item, block item and spawn egg, every entity definition, the
-// imported lang and data, and that every block can be placed.
+// imported lang and data, TF's own sound type in the assembled resource pack, and that every block can be placed.
 //
 // F1 owns no source directory, so these tests live in src/feature/ext/import/ (new files only,
 // rule R18); A8 may fold them into a unit directory.
@@ -405,6 +405,94 @@ GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
         if (c.resistance == kIndestructible)
             ctx.check(r >= 3600000.0 * rs, what + ": indestructible by explosions in TF, resistance " + std::to_string(r));
         else ctx.check(near(r, c.resistance * rs), what + ": explosion resistance " + std::to_string(r) + ", TF gives " + std::to_string(c.resistance * rs));
+    }
+});
+
+// TF's own sound type (TFSoundTypes.JAR = DeferredSoundType(1.0F, 1.0F, JAR_BREAK, JAR_STEP, JAR_PLACE, JAR_HIT, JAR_FALL),
+// TFSounds "block.twilightforest.jar.<event>") in the assembled resource pack the game plays from, written down by hand
+// from TF 4.8 and Minecraft 1.21.1, independent of the generator: a SoundType of volume v and pitch p plays break
+// (LevelRenderer.levelEvent 2001) and place (BlockItem.place) at (v + 1) / 2, pitch p x 0.8, hit
+// (MultiPlayerGameMode.continueDestroyBlock) at (v + 1) / 8, pitch p x 0.5, step (Entity.playStepSound) at v x 0.15,
+// pitch p, fall (LivingEntity.playBlockFallSound, with fall damage) at v x 0.5, pitch p x 0.75; every event is one of
+// F3's sound definitions, and TF's four jar blocks use the type (RP blocks.json).
+GF_REGISTER_SELFTEST("import.sound_types", [](Context& ctx) {
+    namespace fs = std::filesystem;
+    auto rp   = modDir() / "resource_packs" / "GloamingForest_RP";
+    auto read = [](fs::path const& p) {
+        std::ifstream in(p);
+        return in ? JDoc::parse(in, nullptr, false) : JDoc();
+    };
+    auto sounds = read(rp / "sounds.json");
+    auto blocks = read(rp / "blocks.json");
+    auto defs   = read(rp / "sounds" / "sound_definitions.json");
+    ctx.require(sounds.is_object(), "resource_packs/GloamingForest_RP/sounds.json is assembled and readable");
+    ctx.require(blocks.is_object(), "resource_packs/GloamingForest_RP/blocks.json is assembled and readable");
+    ctx.require(defs.is_object() && defs.contains("sound_definitions"), "resource_packs/GloamingForest_RP/sounds/sound_definitions.json is assembled and readable");
+    // (find() only: a missing key on a json must not be created or indexed)
+    auto at = [](JDoc const& doc, std::vector<char const*> const& path) -> JDoc const* {
+        JDoc const* cur = &doc;
+        for (auto const* k : path) {
+            if (!cur->is_object()) return nullptr;
+            auto it = cur->find(k);
+            if (it == cur->end()) return nullptr;
+            cur = &*it;
+        }
+        return cur;
+    };
+    auto num  = [](JDoc const& o, char const* k) { return o.is_object() && o.contains(k) && o[k].is_number() ? o[k].get<double>() : 1.0; };
+    auto near = [](double a, double b) { return std::abs(a - b) <= 1e-4; };
+    struct Event {
+        bool        interactive;
+        char const* event;
+        char const* sound;
+        double      volume;
+        double      pitch;
+    };
+    std::vector<Event> const events{
+        {false, "break", "block.twilightforest.jar.break", 1.0, 0.8},
+        {false, "place", "block.twilightforest.jar.place", 1.0, 0.8},
+        {false, "hit", "block.twilightforest.jar.hit", 0.25, 0.5},
+        {true, "step", "block.twilightforest.jar.step", 0.15, 1.0},
+        {true, "fall", "block.twilightforest.jar.fall", 0.5, 0.75},
+    };
+    JDoc const* type        = at(sounds, {"block_sounds", "twilightforest.jar"});
+    JDoc const* interactive = at(sounds, {"interactive_sounds", "block_sounds", "twilightforest.jar"});
+    ctx.require(type && type->is_object(), "sounds.json block_sounds defines twilightforest.jar");
+    ctx.require(interactive && interactive->is_object(), "sounds.json interactive_sounds.block_sounds defines twilightforest.jar");
+    for (auto const* t : {type, interactive})
+        ctx.check(near(num(*t, "volume"), 1.0) && near(num(*t, "pitch"), 1.0), "twilightforest.jar " + t->value("volume", JDoc()).dump() + " / " + t->value("pitch", JDoc()).dump() + ": volume and pitch 1 (the events carry Java's)");
+    for (auto const& e : events) {
+        std::string what = std::string(e.interactive ? "interactive_sounds" : "block_sounds") + " twilightforest.jar " + e.event;
+        JDoc const* ev   = at(e.interactive ? *interactive : *type, {"events", e.event});
+        if (!ev || !ev->is_object()) {
+            ctx.check(false, what + " is not defined (TF plays " + e.sound + ")");
+            continue;
+        }
+        // (a sound that is not a string is a readable failure, not a json type_error)
+        auto sound = ev->find("sound");
+        bool named = sound != ev->end() && sound->is_string() && sound->get<std::string>() == e.sound;
+        ctx.check(
+            named && near(num(*ev, "volume"), e.volume) && near(num(*ev, "pitch"), e.pitch),
+            what + " " + ev->dump() + ", TF plays " + e.sound + " at " + std::to_string(e.volume) + " / " + std::to_string(e.pitch)
+        );
+        ctx.check(defs["sound_definitions"].contains(e.sound), what + ": " + e.sound + " is a sound definition (F3)");
+    }
+    // Bedrock's jump and land: TF plays no block sound for a jump, nor for a landing without fall damage. The import's
+    // fragment is the type's only source (the families kit no longer writes a copy of it) and declares both silent
+    // (""), so no engine fallback plays a sound TF does not.
+    for (auto const* x : {"jump", "land"}) {
+        JDoc const* ev     = at(*interactive, {"events", x});
+        bool        silent = ev && ev->is_string() && ev->get<std::string>().empty();
+        ctx.check(silent, std::string("interactive_sounds twilightforest.jar ") + x + " " + (ev ? ev->dump() : "(none)") + ": TF plays nothing (\"\")");
+    }
+    for (auto const* id : {"twilightforest:mason_jar", "twilightforest:firefly_jar", "twilightforest:firefly_particle_spawner", "twilightforest:cicada_jar"}) {
+        JDoc const* b = at(blocks, {id});
+        JDoc const* snd = b ? at(*b, {"sound"}) : nullptr;
+        std::string s   = !b || !b->is_object() ? std::string("(no entry)")
+                        : !snd                  ? std::string("(none)")
+                        : snd->is_string()      ? snd->get<std::string>()
+                                                : snd->dump();
+        ctx.check(s == "twilightforest.jar", std::string(id) + ": RP blocks.json sound " + s + ", TF gives TFSoundTypes.JAR -> twilightforest.jar");
     }
 });
 

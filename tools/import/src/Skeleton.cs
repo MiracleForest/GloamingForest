@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace GfImport
@@ -377,6 +378,103 @@ namespace GfImport
                 arr.Add(J.Obj().Set("id", "twilightforest:" + bi.Id).Set("family", fam).Set("params", p));
             }
             foreach (var kv in perUnit) EmitJson("families", kv.Key, "data/gf/families/" + NameOf(kv.Key) + ".json", kv.Value);
+        }
+
+        Dictionary<string, J> familyEntries;
+        /// <summary>The family blocks whose skeleton tags an override changed (reported by SyncFamilyTags).</summary>
+        readonly HashSet<string> familyTagOverrides = new HashSet<string>(StringComparer.Ordinal);
+
+        /// <summary>The families data entries (data/gf/families/&lt;unit&gt;.json after the overrides) by block id, read once
+        /// after the overrides. A file that is not an array, an entry without an id and an id listed twice (in one file or
+        /// across units) are errors; the first entry of a duplicated id is kept.</summary>
+        Dictionary<string, J> FamilyEntries()
+        {
+            if (familyEntries != null) return familyEntries;
+            var entries = new Dictionary<string, J>(StringComparer.Ordinal);
+            var where = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var unit in Out)
+                foreach (var gen in unit.Value)
+                {
+                    if (!gen.Key.StartsWith("data/gf/families/", StringComparison.Ordinal) || !gen.Key.EndsWith(".json", StringComparison.Ordinal)) continue;
+                    string file = unit.Key + "/" + gen.Key;
+                    var list = J.Parse(Encoding.UTF8.GetString(gen.Value.Bytes));
+                    if (!list.IsArr) { Errors.Add(file + ": not an array of family entries"); continue; }
+                    foreach (var entry in list.A)
+                    {
+                        if (!entry.IsObj || entry["id"] == null || !entry["id"].IsStr) { Errors.Add(file + ": a family entry without an id: " + entry.ToCompact()); continue; }
+                        string id = entry["id"].AsString(), first;
+                        if (where.TryGetValue(id, out first)) { Errors.Add("data/gf/families: " + id + " is listed twice (" + first + " and " + file + ")"); continue; }
+                        where[id] = file;
+                        entries[id] = entry;
+                    }
+                }
+            return familyEntries = entries;
+        }
+
+        /// <summary>A block format that the SharedTypes::v1_26_20 block schema reads (1.26.20 or later), whose blocks take
+        /// the minecraft:tags array; earlier formats take "tag:&lt;id&gt;" components (docs/spikes/S7.md).</summary>
+        public static bool ModernBlockFormat(string format)
+        {
+            var parts = (format ?? "").Split('.');
+            var v = new int[3];
+            for (int i = 0; i < 3; i++)
+                if (i >= parts.Length || !int.TryParse(parts[i], NumberStyles.None, CultureInfo.InvariantCulture, out v[i])) return false;
+            return v[0] != 1 ? v[0] > 1 : v[1] != 26 ? v[1] > 26 : v[2] >= 20;
+        }
+
+        /// <summary>A family block's Bedrock block tags have one source, params.tags of its families entry (after the
+        /// overrides): its skeleton file's tags follow them, in the form of the file's format. A unit changes a family
+        /// block's tags with a familyTags override (params.tags of its entry, docs/spec/import.md, Overrides); an
+        /// override that changes the skeleton's tags instead is an error (the skeleton's tag form changes with
+        /// Blocks.FamilyBlockFormat). After ApplyOverrides, before CheckEmittedBlocks.</summary>
+        public void SyncFamilyTags()
+        {
+            var entries = FamilyEntries();
+            int synced = 0;
+            foreach (var bi in BlockInfos.Values)
+            {
+                if (bi.Family == null) continue;
+                SortedDictionary<string, GenFile> files;
+                GenFile f;
+                J fam;
+                // a missing skeleton file or families entry is reported by CheckEmittedBlocks
+                if (!Out.TryGetValue(NameOf(bi.Owner), out files) || !files.TryGetValue("bp/blocks/" + bi.Id + ".json", out f)) continue;
+                if (!entries.TryGetValue("twilightforest:" + bi.Id, out fam)) continue;
+                string rel = "bp/blocks/" + bi.Id + ".json";
+                var root = J.Parse(Encoding.UTF8.GetString(f.Bytes));
+                var comps = root["minecraft:block"] != null ? root["minecraft:block"]["components"] : null;
+                if (comps == null || !comps.IsObj) { Errors.Add(rel + ": no minecraft:block components"); continue; }
+                var current = BlockTagsIn(comps);
+                var generated = BedrockBlockTags(bi.Id);
+                // tags are a set: a duplicate is reported once, on its own; an override that only reorders them changes nothing
+                ReportDuplicateTags(rel, current);
+                if (!new HashSet<string>(current, StringComparer.Ordinal).SetEquals(generated))
+                {
+                    Errors.Add(rel + ": an override changes the family block's tags [" + string.Join(", ", generated) + "] to [" + string.Join(", ", current)
+                        + "]: override them with \"familyTags\": {\"twilightforest:" + bi.Id + "\": [...]} in tools/import/overrides/" + NameOf(bi.Owner) + ".json instead (params.tags, their single source, docs/spec/import.md Overrides)");
+                    familyTagOverrides.Add(bi.Id);
+                    continue;
+                }
+                var pt = fam["params"] != null ? fam["params"]["tags"] : null;
+                if (pt != null && !(pt.IsArr && pt.A.All(x => x.IsStr)))
+                {
+                    Errors.Add("data/gf/families: twilightforest:" + bi.Id + " params.tags is not an array of tag ids: " + pt.ToCompact());
+                    continue;
+                }
+                if (pt != null) ReportDuplicateTags("data/gf/families: twilightforest:" + bi.Id + " params.tags", pt.A.Select(x => x.S));
+                var want = pt != null ? pt.A.Select(x => x.S).Distinct(StringComparer.Ordinal).ToList() : new List<string>();
+                if (new HashSet<string>(want, StringComparer.Ordinal).SetEquals(current)) continue;
+                foreach (var k in comps.Keys.Where(k => k.StartsWith("tag:", StringComparison.Ordinal)).ToList()) comps.Remove(k);
+                comps.Remove("minecraft:tags");
+                if (want.Count > 0)
+                {
+                    if (ModernBlockFormat(root["format_version"] != null ? root["format_version"].AsString() : null)) comps.Set("minecraft:tags", J.Strs(want));
+                    else foreach (var t in want) comps.Set("tag:" + t, J.Obj());
+                }
+                f.Bytes = new UTF8Encoding(false).GetBytes(root.ToText());
+                synced++;
+            }
+            if (synced > 0) Log.Add(synced + " family block skeleton(s) take their tags from an override of params.tags");
         }
 
         // ---- particles ------------------------------------------------------------------------------------

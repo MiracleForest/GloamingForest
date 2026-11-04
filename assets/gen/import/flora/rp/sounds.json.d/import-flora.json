@@ -40,16 +40,8 @@
             "volume": 0.5,
             "pitch": 0.75
           },
-          "jump": {
-            "sound": "block.twilightforest.jar.step",
-            "volume": 0.15,
-            "pitch": 1
-          },
-          "land": {
-            "sound": "block.twilightforest.jar.fall",
-            "volume": 0.5,
-            "pitch": 0.75
-          }
+          "jump": "",
+          "land": ""
         }
       }
     }
