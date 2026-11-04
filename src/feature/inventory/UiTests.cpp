@@ -22,6 +22,13 @@
 //   combat.ui_fx_particles      TF's large_flame through gf::fx in front of the player for 5 s (the
 //                               client mod: fx.particle, its native factory or resource pack effect;
 //                               vanilla clients: the game's particle packets)
+//   combat.ui_fx_portal         TF's portal particles (TFPortalBlock#animateTick: minecraft:portal) of a
+//                               3-block row in front of the player for 5 s: they rise from the row and
+//                               fall back onto it as Java's PortalParticle
+//   combat.ui_fx_vanilla        every Java particle type gf::fx maps, in front of the player for 2 s
+//                               (the content log must stay free of particle errors)
+//   combat.ui_fx_legacy         red and purple dust, a block item's item particles, still crits and rising
+//                               poofs, 3 blocks ahead for 3 s
 //   combat.ui_cleanup           removes what the tests above placed (the scenario runs it last)
 //
 // Rule R12 exception (client only): the blocks go right beside the real player, not in the test
@@ -32,7 +39,11 @@
 // puts the block that was there back and takes back the fixture block's container declaration.
 
 #include <algorithm>
+#include <cmath>
+#include <functional>
+#include <memory>
 #include <optional>
+#include <random>
 #include <tuple>
 #include <vector>
 
@@ -57,6 +68,7 @@
 #include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
 #include "feature/fx/Fx.h"
+#include "feature/fx/FxInternal.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/inventory/InventoryInternal.h"
 #include "feature/loot/Loot.h"
@@ -447,6 +459,103 @@ GF_REGISTER_SELFTEST("combat.ui_fx_particles", [](Context& ctx) -> ll::coro::Cor
     };
     Emitter::run(p->getOrCreateUniqueID().rawID, 100);
     gf::log().info("combat ui: fx particles for {}", p->getRealName());
+    co_return;
+});
+
+namespace {
+/// Runs `emit(player)` for the real player `playerId` on each of the next `ticks` ticks.
+void emitEachTick(std::int64_t playerId, int ticks, std::function<void(Player&)> emit) {
+    if (ticks <= 0) return;
+    gf::interactions::nextTick([playerId, ticks, emit = std::move(emit)]() mutable {
+        ActorUniqueID uid;
+        uid.rawID   = playerId;
+        auto  level = ll::service::getLevel();
+        auto* pl    = level ? level->getPlayer(uid) : nullptr;
+        if (!pl) return;
+        emit(*pl);
+        emitEachTick(playerId, ticks - 1, std::move(emit));
+    });
+}
+} // namespace
+
+GF_REGISTER_SELFTEST("combat.ui_fx_portal", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        co_return;
+    }
+    beginUiTest(*p);
+    // TFPortalBlock#animateTick for three portal blocks 4 blocks ahead at the feet, every tick (Java
+    // picks a block now and then; every tick shows the path densely): 4 particles at the top of the
+    // block, speed ((r - 0.5) / 2, r, (r - 0.5) / 2)
+    auto rng = std::make_shared<std::mt19937>(std::random_device{}());
+    emitEachTick(p->getOrCreateUniqueID().rawID, 100, [rng](Player& pl) {
+        std::uniform_real_distribution<float> u(0.f, 1.f);
+        auto view = pl.getViewVector(0.f);
+        auto feet = pl.getFeetPos();
+        Vec3 ahead{feet.x + view.x * 4.f, feet.y, feet.z + view.z * 4.f};
+        Vec3 side{-view.z, 0.f, view.x};
+        for (int b = -1; b <= 1; ++b) {
+            BlockPos block{static_cast<int>(std::floor(ahead.x + side.x * b)), static_cast<int>(std::floor(ahead.y)) - 1,
+                           static_cast<int>(std::floor(ahead.z + side.z * b))};
+            for (int i = 0; i < 4; ++i) {
+                Vec3 at{block.x + u(*rng), block.y + 1.0f, block.z + u(*rng)};
+                Vec3 speed{(u(*rng) - 0.5f) * 0.5f, u(*rng), (u(*rng) - 0.5f) * 0.5f};
+                gf::fx::particle(pl.getDimension(), "minecraft:portal", at, speed);
+            }
+        }
+    });
+    gf::log().info("combat ui: fx portal particles for {}", p->getRealName());
+    co_return;
+});
+
+GF_REGISTER_SELFTEST("combat.ui_fx_vanilla", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        co_return;
+    }
+    beginUiTest(*p);
+    // every mapped Java particle type, 3 blocks ahead, with the velocity and params TF passes
+    // the mapped types once (vanillaParticleIds builds and sorts the list), not on every tick
+    emitEachTick(p->getOrCreateUniqueID().rawID, 40, [ids = gf::fx::vanillaParticleIds()](Player& pl) {
+        auto at = pl.getPosition() + pl.getViewVector(0.f) * 3.f;
+        for (auto const& id : ids) {
+            nlohmann::json params = nlohmann::json::object();
+            if (id == "minecraft:item") params = {{"item", "minecraft:bone"}};
+            if (id == "minecraft:block" || id == "minecraft:falling_dust") params = {{"block", "minecraft:oak_leaves"}};
+            if (id == "minecraft:entity_effect") params = {{"color", 0xFF7F33CC}}; // ColorParticleOption ARGB
+            gf::fx::particle(pl.getDimension(), id, at, Vec3{0.f, 0.05f, 0.f}, 1, params);
+        }
+    });
+    gf::log().info("combat ui: fx vanilla particles for {}", p->getRealName());
+    co_return;
+});
+
+GF_REGISTER_SELFTEST("combat.ui_fx_legacy", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto* p = realPlayer();
+    if (!p) {
+        ctx.info("no real player: nothing to show");
+        co_return;
+    }
+    beginUiTest(*p);
+    // 3 blocks ahead, left to right: the Ur-Ghast trophy's red dust (DustParticleOptions.REDSTONE),
+    // TrollsteinnBlock's purple dust (DustParticleOptions (0.25, 0,
+    // 0.5)), the item particles of a block item (twilightforest:twilight_oak_log: a negative item
+    // id in the legacy IconCrack data), still crits (Naga's) and poofs rising at 0.1 blocks/tick
+    emitEachTick(p->getOrCreateUniqueID().rawID, 60, [](Player& pl) {
+        auto view = pl.getViewVector(0.f);
+        auto at   = pl.getPosition() + view * 3.f;
+        Vec3 side{-view.z, 0.f, view.x};
+        auto slot = [&](float k) { return Vec3{at.x + side.x * k, at.y - 0.5f, at.z + side.z * k}; };
+        auto& dim = pl.getDimension();
+        gf::fx::particle(dim, "minecraft:dust", slot(-2.5f), Vec3{}, 4, nlohmann::json{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}, {"spread", {0.2, 0.2, 0.2}}});
+        gf::fx::particle(dim, "minecraft:dust", slot(-1.5f), Vec3{}, 4, nlohmann::json{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}, {"spread", {0.2, 0.2, 0.2}}});
+        gf::fx::particle(dim, "minecraft:item", slot(-0.5f), Vec3{0.f, 0.1f, 0.f}, 2, nlohmann::json{{"item", "twilightforest:twilight_oak_log"}, {"spread", {0.1, 0.1, 0.1}}});
+        gf::fx::particle(dim, "minecraft:crit", slot(0.5f), Vec3{}, 2);
+        gf::fx::particle(dim, "minecraft:poof", slot(1.5f), Vec3{0.f, 0.1f, 0.f});
+    });
+    gf::log().info("combat ui: fx legacy particles for {}", p->getRealName());
     co_return;
 });
 

@@ -7,6 +7,7 @@
 // handler only acts while its test runs (a static "active" id) and is registered once.
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <optional>
 #include <random>
@@ -14,6 +15,7 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/comprehensive/ParticleType.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 #include "mc/legacy/ActorUniqueID.h"
@@ -197,6 +199,176 @@ GF_REGISTER_SELFTEST("combat.fx", [](Context& ctx) -> ll::coro::CoroTask<> {
     gf::net::setTestCompanion(p, false);
     bool got = std::any_of(msgs.begin(), msgs.end(), [](auto const& m) { return m.channel == "fx.particle" && m.payload.value("id", std::string{}) == "twilightforest:firefly"; });
     ctx.check(got, "a companion got fx.particle for a TF particle");
+});
+
+// The molang variables of the vanilla effects gf::fx maps Java's particle types to: every effect
+// that reads one gets it (a missing one is a content-log error per particle on the client), the
+// portal follows Java's PortalParticle path, item and block particles go as legacy particles.
+GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace fx = gf::fx;
+    struct Row {
+        char const*   id;
+        char const*   effect;
+        std::uint32_t vars;
+    };
+    static constexpr Row rows[] = {
+        {"minecraft:portal", "minecraft:portal_directional", fx::kVarDirection},
+        {"minecraft:enchant", "minecraft:enchanting_table_particle", fx::kVarDirection},
+        {"minecraft:splash", "minecraft:water_splash_particle", fx::kVarDirection | fx::kVarSplashDirection},
+        {"minecraft:crit", "minecraft:basic_crit_particle", fx::kVarDirection | fx::kVarCritDirection},
+        {"minecraft:electric_spark", "minecraft:electric_spark_particle", fx::kVarDirection},
+        {"minecraft:poof", "minecraft:explosion_particle", fx::kVarVelocity | fx::kVarExplosionVelocity},
+        {"minecraft:note", "minecraft:note_particle", fx::kVarNoteColor},
+        {"minecraft:entity_effect", "minecraft:mobspell_emitter", fx::kVarColorRgba},
+        {"minecraft:effect", "minecraft:mobspell_emitter", fx::kVarColorRgba},
+        {"minecraft:falling_dust", "minecraft:falling_dust", fx::kVarColorRgb},
+        {"minecraft:crimson_spore", "minecraft:falling_dust", fx::kVarColorRgb},
+        {"minecraft:white_ash", "minecraft:falling_dust", fx::kVarColorRgb},
+        {"minecraft:flame", "minecraft:basic_flame_particle", 0},
+    };
+    for (auto const& row : rows) {
+        auto r = fx::resolveParticle(row.id);
+        ctx.check(r.effect == row.effect && r.vars == row.vars && r.legacy == 0,
+                  std::string(row.id) + " -> " + row.effect + " with its variables (got '" + r.effect + "', vars " + std::to_string(r.vars) + ")");
+        // the map the effect gets for a still particle: exactly the variables it reads
+        fx::MolangMap map;
+        fx::fillEffectVariables(map, r.vars, Vec3{}, Vec3{0.1f, 0.2f, 0.3f}, fx::Rgba{});
+        std::size_t want = 0;
+        for (auto bit : {fx::kVarVelocity, fx::kVarDirection, fx::kVarNoteColor}) want += (r.vars & bit) ? 1 : 0;
+        want += (r.vars & (fx::kVarColorRgb | fx::kVarColorRgba)) ? 1 : 0;
+        ctx.check(map.size() == want, std::string(row.id) + ": " + std::to_string(want) + " variable(s) set (got " + std::to_string(map.size()) + ")");
+    }
+    auto portal = fx::resolveParticle("minecraft:portal");
+    ctx.check(portal.offset.x == 0.f && portal.offset.y == 1.f && portal.offset.z == 0.f, "the portal particle starts one block higher (Java's PortalParticle y path)");
+    for (auto const* id : {"minecraft:item", "minecraft:block", "minecraft:item_slime", "minecraft:item_snowball", "minecraft:dust"}) {
+        auto r = fx::resolveParticle(id);
+        ctx.check(r.legacy != 0 && r.effect.empty() && r.shown(), std::string(id) + " is a legacy particle");
+    }
+    auto near = [](float a, float b) { return std::abs(a - b) < 1e-5f; };
+    // poof: explosion_particle starts at -variable.velocity * 10 blocks/s; Java's ExplodeParticle
+    // moves velocity blocks/tick (20 * velocity blocks/s), same direction
+    {
+        auto poof = fx::resolveParticle("minecraft:poof");
+        Vec3 v{0.1f, 0.2f, -0.3f};
+        auto ev = fx::effectVelocity(poof.vars, v);
+        ctx.check(near(ev.x, -0.2f) && near(ev.y, -0.4f) && near(ev.z, 0.6f), "poof: variable.velocity is -2 * Java's velocity");
+        ctx.check(near(-ev.x * 10.f, 20.f * v.x) && near(-ev.y * 10.f, 20.f * v.y) && near(-ev.z * 10.f, 20.f * v.z),
+                  "poof: explosion_particle's speed is Java's 20 * velocity blocks/s in Java's direction");
+        auto other = fx::effectVelocity(fx::resolveParticle("minecraft:flame").vars, v);
+        ctx.check(other.x == v.x && other.y == v.y && other.z == v.z, "other effects get Java's velocity as is");
+    }
+    std::mt19937 rng{6001};
+    // splash: SplashParticle keeps (xSpeed, 0.1, zSpeed) only for ySpeed 0 with an x/z speed
+    {
+        auto flat = fx::splashDirection(rng, Vec3{0.3f, 0.f, -0.2f});
+        ctx.check(flat.x == 0.3f && flat.y == 0.1f && flat.z == -0.2f, "splash: ySpeed 0 with an x/z speed -> (xSpeed, 0.1, zSpeed)");
+        bool        random = true;
+        std::set<float> xs;
+        for (Vec3 v : {Vec3{-0.4f, 0.5f, -0.4f}, Vec3{}, Vec3{0.f, 0.2f, 0.f}}) {
+            for (int i = 0; i < 50; ++i) {
+                auto d = fx::splashDirection(rng, v);
+                random = random && std::abs(d.x) <= 0.0541f && std::abs(d.z) <= 0.0541f && d.y >= 0.1f && d.y <= 0.3f;
+                xs.insert(d.x);
+            }
+        }
+        ctx.check(random && xs.size() > 100, "splash: any other speed is dropped for WaterDropParticle's random motion");
+    }
+    // crit: CritParticle = 0.1 * Particle's random motion + 0.4 * speed; a still crit still scatters
+    {
+        std::set<float> xs;
+        bool            ok = true;
+        for (int i = 0; i < 50; ++i) {
+            auto d = fx::critDirection(rng, Vec3{});
+            ok     = ok && std::abs(d.x) <= 0.0181f && std::abs(d.z) <= 0.0181f && d.y >= -0.0081f && d.y <= 0.0281f && (d.x != 0.f || d.y != 0.f || d.z != 0.f);
+            xs.insert(d.x);
+        }
+        ctx.check(ok && xs.size() > 40, "crit: a still crit gets Particle's random motion * 0.1");
+        auto moving = fx::critDirection(rng, Vec3{1.f, 0.f, -0.5f});
+        ctx.check(std::abs(moving.x - 0.4f) <= 0.0181f && std::abs(moving.z + 0.2f) <= 0.0181f && moving.y >= -0.0081f && moving.y <= 0.0281f,
+                  "crit: a moving crit gets 0.4 * its speed plus the scatter");
+    }
+    // dust: redstone red as the legacy RedDust, any other DustParticleOptions colour (TrollsteinnBlock's
+    // purple) as falling_dust tinted with it
+    {
+        auto dust   = fx::resolveParticle("minecraft:dust");
+        auto red    = fx::dustFor(dust, JsonT::object());
+        auto red2   = fx::dustFor(dust, JsonT{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}});
+        auto purple = fx::dustFor(dust, JsonT{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}});
+        ctx.check(red.legacy == static_cast<int>(ParticleType::RedDust) && red.effect.empty() && red2.legacy == red.legacy, "dust: redstone red (default or params) is the legacy RedDust");
+        ctx.check(purple.legacy == 0 && purple.effect == "minecraft:falling_dust" && (purple.vars & fx::kVarColorRgb) && purple.color && purple.color->r == 0.25f &&
+                      purple.color->g == 0.f && purple.color->b == 0.5f,
+                  "dust: purple (0.25, 0, 0.5) is falling_dust with variable.color (0.25, 0, 0.5)");
+    }
+    for (auto const& id : fx::vanillaParticleIds()) ctx.check(fx::resolveParticle(id).shown(), id + " is shown");
+    // NoteParticle's colour and the params colour
+    auto note = fx::noteColor(0.f);
+    ctx.check(std::abs(note.r - 0.35f) < 1e-4f && std::abs(note.g - 0.9129f) < 1e-3f && note.b == 0.f, "note 0 is NoteParticle's green");
+    auto orange = fx::colorOf(JsonT{{"color", 0xFF8000}}, std::nullopt);
+    ctx.check(orange.r == 1.f && std::abs(orange.g - 128 / 255.f) < 1e-4f && orange.b == 0.f && orange.a == 1.f, "params color 0xRRGGBB is opaque");
+    // ColorParticleOption (entity_effect) colours are ARGB ints: the alpha byte is kept
+    auto argb = fx::colorOf(JsonT{{"color", std::int64_t{0x80FF8000}}}, std::nullopt);
+    ctx.check(argb.r == 1.f && std::abs(argb.g - 128 / 255.f) < 1e-4f && argb.b == 0.f && std::abs(argb.a - 128 / 255.f) < 1e-4f,
+              "params color 0xAARRGGBB keeps alpha 0x80");
+    auto opaqueArgb = fx::colorOf(JsonT{{"color", std::int64_t{0xFF7F33CC}}}, std::nullopt);
+    ctx.check(opaqueArgb.a == 1.f && std::abs(opaqueArgb.r - 0x7F / 255.f) < 1e-4f, "params color 0xFF7F33CC is opaque");
+    auto listed = fx::colorOf(JsonT{{"color", {0.1, 0.2, 0.3, 0.4}}}, std::nullopt);
+    ctx.check(listed.r == 0.1f && listed.a == 0.4f && fx::colorOf(JsonT::object(), fx::Rgba{0.5f, 0.5f, 0.5f, 1.f}).r == 0.5f, "params color [r, g, b, a] and the fallback");
+    // FallingDustParticle's block colour: dust colour, BlockColor without a level, map colour
+    {
+        auto none   = [](std::string_view) -> std::optional<int> { return std::nullopt; };
+        auto colour = [&](std::string const& id) { return fx::fallingDustColor(id, none); };
+        ctx.check(!colour("minecraft:snow") && !colour("minecraft:stone"), "snow and stone have no BlockColor (the map colour)");
+        ctx.check(colour("minecraft:sand") == 0xDBD3A0 && colour("minecraft:red_sand") == 0xA95821 && colour("minecraft:gravel") == 0x807C7B, "sand, red sand and gravel use their dust colours");
+        ctx.check(colour("minecraft:oak_leaves") == 0x48B518 && colour("minecraft:spruce_leaves") == 0x619961 && colour("minecraft:birch_leaves") == 0x80A755 &&
+                      colour("minecraft:mangrove_leaves") == 0x92C648,
+                  "vanilla leaves use FoliageColor's colours without a level");
+        ctx.check(colour("minecraft:water") == -1 && fx::dustRgb(-1).r == 1.f && fx::dustRgb(-1).b == 1.f, "water's BlockColor needs a level: white");
+        ctx.check(colour("twilightforest:canopy_leaves") == 0x619961 && colour("twilightforest:mangrove_leaves") == 0x80A755 && colour("twilightforest:twilight_oak_leaves") == 0x48B518 &&
+                      colour("twilightforest:time_leaves") == 0x6A9C17 && colour("twilightforest:violet_force_field") == 0x5C1074,
+                  "TF's ColorHandler colours without a level");
+        ctx.check(colour("twilightforest:aurora_block") == 0x00FFB2, "the aurora block is hsvToRGB(0.45, 1, 1) (float: t = 0.6999999, 178)");
+        auto pale = colour("twilightforest:aurora_pillar");
+        ctx.check(pale && *pale != 0x00FFB2 && ((*pale >> 8) & 0xFF) == 0xE6, "the aurora pillar is the aurora colour paled (value 0.9)");
+        auto signal = [](int power) { return [power](std::string_view s) -> std::optional<int> { return s == "redstone_signal" ? std::optional<int>(power) : std::nullopt; }; };
+        auto lit = fx::fallingDustColor("minecraft:redstone_wire", signal(15)).value_or(0);
+        // power 15: (255, floor(0.19999999f * 255) = 50, 0); power 0: (floor(0.3f * 255) = 76, 0, 0)
+        ctx.check(lit == (255 << 16 | 50 << 8) && fx::fallingDustColor("minecraft:redstone_wire", signal(0)) == 0x4C0000,
+                  "redstone wire: RedStoneWireBlock#getColorForPower");
+        auto stem = [](int growth, int facing) {
+            return [=](std::string_view s) -> std::optional<int> { return s == "growth" ? std::optional<int>(growth) : s == "facing_direction" ? std::optional<int>(facing) : std::nullopt; };
+        };
+        ctx.check(fx::fallingDustColor("minecraft:pumpkin_stem", stem(7, 0)) == (224 << 16 | 199 << 8 | 28) && fx::fallingDustColor("minecraft:melon_stem", stem(0, 0)) == 0x00FF00 &&
+                      fx::fallingDustColor("minecraft:melon_stem", stem(7, 3)) == 14731036,
+                  "stems: StemBlock's age colour, the attached stem's colour");
+    }
+
+    // the packets: every mapped type reaches the player, with variables or as a legacy particle
+    auto pos = ctx.testPos(6001);
+    ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    auto& p   = ctx.player();
+    auto& dim = p.getDimension();
+    auto  at  = p.getPosition();
+    auto  c0  = fx::counters();
+    fx::particle(dim, "minecraft:portal", at, Vec3{0.1f, 0.5f, -0.1f});
+    fx::particle(dim, "minecraft:note", at);
+    fx::particle(dim, "minecraft:falling_dust", at, Vec3{}, 1, JsonT{{"block", "minecraft:snow"}});
+    auto c1 = fx::counters();
+    ctx.check(c1.variablePackets >= c0.variablePackets + 3, "portal, note and falling dust carry their variables");
+    fx::particle(dim, "minecraft:item", at, Vec3{0, 0.1f, 0}, 2, JsonT{{"item", "minecraft:bone"}});
+    fx::particle(dim, "minecraft:block", at, Vec3{}, 1, JsonT{{"block", "minecraft:oak_leaves"}});
+    fx::particle(dim, "minecraft:item_slime", at);
+    fx::particle(dim, "minecraft:item", at, Vec3{}, 1, JsonT{{"item", "twilightforest:twilight_oak_log"}}); // a block item (negative id)
+    auto c2 = fx::counters();
+    ctx.check(c2.legacyPackets >= c1.legacyPackets + 5, "item, block item, block and slime particles go as legacy particles (" + std::to_string(c2.legacyPackets - c1.legacyPackets) + ")");
+    fx::particle(dim, "minecraft:item", at, Vec3{}, 1, JsonT{{"item", "minecraft:no_such_item"}});
+    fx::particle(dim, "minecraft:block", at);
+    auto c3 = fx::counters();
+    ctx.check(c3.particlePackets == c2.particlePackets, "an item / block particle without a known item / block is silent");
+    fx::particle(dim, "minecraft:dust", at, Vec3{}, 1, JsonT{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}});
+    auto c4 = fx::counters();
+    ctx.check(c4.variablePackets >= c3.variablePackets + 1 && c4.legacyPackets == c3.legacyPackets, "purple dust goes as falling_dust with its colour");
+    fx::particle(dim, "minecraft:dust", at, Vec3{}, 1, JsonT{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}});
+    ctx.check(fx::counters().legacyPackets >= c4.legacyPackets + 1, "red dust goes as the legacy RedDust");
 });
 
 // ---- combat --------------------------------------------------------------------------------------
