@@ -57,12 +57,10 @@
 #include <utility>
 #include <vector>
 
-#include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/commands/CommandPermissionLevel.h"
-#include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/player/Inventory.h"
@@ -75,6 +73,7 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Tick.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/level/storage/LevelData.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
@@ -400,24 +399,6 @@ private:
     std::int64_t mSeed;
 };
 
-/// Runs a command as the server console in dimension `dim` at permission level `level`: (success,
-/// the output messages: ids and parameters). The selftest framework's runServerCommand
-/// (src/selftest/SelfTest.cpp) is file-local and has no permission level; F0 is asked to expose
-/// one in SelfTest.h, which replaces this copy.
-std::pair<bool, std::string> runCommand(std::string const& command, int dim, CommandPermissionLevel permission = CommandPermissionLevel::Owner) {
-    auto level = ll::service::getLevel();
-    if (!level) return {false, "no level"};
-    ServerCommandOrigin origin("gloamingforest-landmark-selftest", level->asServer(), permission, DimensionType(dim));
-    auto        out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
-    std::string messages;
-    for (auto const& m : out.mMessages) {
-        if (!messages.empty()) messages += "; ";
-        messages += m.mMessageId;
-        for (auto const& p : m.mParams) messages += " " + p;
-    }
-    return {out.mSuccessCount > 0, messages};
-}
-
 } // namespace
 
 // ChunkGenerator#applyBiomeDecoration's structure part: each landmark's pieces are placed at its
@@ -604,8 +585,10 @@ GF_REGISTER_SELFTEST("landmark.commands", [](Context& ctx) {
     int  dim      = ctx.testPos(5670).dim;
     auto expectIn = [&](std::string const& command, bool ok, std::vector<std::string> const& texts,
                         CommandPermissionLevel permission = CommandPermissionLevel::Owner) {
-        auto [success, messages] = runCommand(command, dim, permission);
-        bool        all          = true;
+        auto const  r        = gf::selftest::runServerCommand(command, dim, permission);
+        bool const  success  = r.ok;
+        auto const& messages = r.messages;
+        bool        all      = true;
         std::string want;
         for (auto const& t : texts) {
             all = all && messages.find(t) != std::string::npos;
