@@ -11,9 +11,14 @@
 # genbook [<structure>] (+ the generatebook alias) from the console.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
+$mark = Get-LogMark
 $r = Invoke-SelfTest 'landmark.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) landmark selftest(s) failed" }
 if ($r.Pass -lt 19) { throw "expected at least 19 landmark selftests to pass, got $($r.Pass)" }
+# landmark.commands runs refused commands on purpose through selftest::runServerCommand, which hands
+# the reply to the test instead of logging it: the selftests leave no "Command error" line
+$cmdErrors = @(Get-ServerLog -Since $mark | Select-String -Pattern 'Command error')
+if ($cmdErrors.Count -gt 0) { throw "the landmark selftests logged $($cmdErrors.Count) command error line(s): $($cmdErrors[0].Line)" }
 
 # The commands (console origin: the overworld at 0 0 0)
 $mark = Get-LogMark
