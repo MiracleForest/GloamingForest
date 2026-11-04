@@ -115,7 +115,7 @@ any `ERR`/`FTL` line appears in the log, of any logger (`GloamingForest`, `LeviL
 ...), except BDS's six-line "TRANSPORT TYPE ERROR" banner and the console's echo of a command reply the
 mod logged as `Command error:` or `Command error text:` ([docs/spec/e2e.md](../../docs/spec/e2e.md#error-lines)); the client's
 content log has an error, or a game session that closed normally has no content log with the canary of
-`GloamingForest_Test_RP` (then the check cannot see that session's log; per session, a killed one is exempt; [docs/spec/e2e.md](../../docs/spec/e2e.md#client-runs-content-log-game-options-watchdog-test-world)) (warnings are listed, and fail with `-StrictContentLog` or
+`GloamingForest_Test_RP` (then the check cannot see that session's log; per session, a killed or crashed one is exempt, and so is a remote-vanilla one that never joined the host; [docs/spec/e2e.md](../../docs/spec/e2e.md#client-runs-content-log-game-options-watchdog-test-world)) (warnings are listed, and fail with `-StrictContentLog` or
 `$script:ContentLogStrict = $true`; verbose and info lines are listed and never fail;
 `out/<scenario>[-<mode>][-slot<N>]/client-content-log.txt`); a crash file appears;
 the server exits non-zero or has to be killed.

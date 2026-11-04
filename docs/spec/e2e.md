@@ -75,10 +75,14 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   has an animation used by nothing whose Molang does not parse
   (`animations/gf_e2e_content_log_canary.animation.json`). The client logs it as it loads the pack:
   `[Molang][error] ... gf_e2e_content_log_canary ...` (the client mod's global pack in `local` and
-  `remote-mod` runs; in remote modes the BDS host sends the same pack, so a `remote-vanilla` client logs it
-  too). The canary is expected (never an error of the run), but it is **required per game session**: the
-  harness records every game it starts (`Start-Game`) and how it ended (`Stop-Game`: `closed`, `killed`
-  after 30 s, or `gone` when it had already exited: a crash or the watchdog), and assigns each
+  `remote-mod` runs, logged at game start; in remote modes the BDS host sends the same pack, so a
+  `remote-vanilla` client logs it too, but only once it joined the host). The canary is expected (never an
+  error of the run), but it is **required per game session**: the harness records every game it starts
+  (`Start-Game`) and how it ended (`Stop-Game`, `Get-GameSessionEnd`: `closed` when Stop-Game closed it or
+  it had exited by itself with exit code 0, `killed` after 30 s, or `gone` when the watchdog fired or it had
+  exited by itself with a non-zero or unknown exit code: a crash), and whether it reached the world
+  (`Enter-TestWorld` / `Enter-RemoteServer`). A `remote-vanilla` session that never joined the host (a
+  failed join the harness relaunched) gets no canary and needs none. The harness assigns each
   `ContentLog*.txt` to the last session started before the file was created. Every `closed` session must
   have a file that reports the canary: no file, or files without it, fail the run ("the check cannot see
   that session's pack errors"), even when another session of the run (a relaunch, ui's Vibrant Visuals

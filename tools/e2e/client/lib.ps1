@@ -621,7 +621,9 @@ function Restore-RunOptions {
 # see that session's content log and fail the run; a file with only the canary means clean. The
 # check is per session (a run may start several games: relaunches, ui's Vibrant Visuals half), so a
 # session that wrote nothing is caught even when another session's file holds the canary, and a
-# killed session waives the canary for itself only. This is more robust than counting a missing
+# killed session waives the canary for itself only. A vanilla client (remote-vanilla) has no test
+# pack of its own and logs the canary only once it joined the host: its sessions that never joined
+# (a failed join, relaunched) need none. This is more robust than counting a missing
 # file as clean once content_log_file:1 was verified: it also catches a log written elsewhere
 # (another data folder or file name), a game that never loaded the packs, and a game that stopped
 # writing the file, none of which the options check can see.
@@ -770,13 +772,16 @@ function Measure-ContentLogCount($Entries) { [long](@($Entries) | Measure-Object
 # a summary and returns the run's failures:
 # - per game session (Start-Game's records): a session that closed normally ('closed') must have
 #   written a content-log file that reports the canary; no file, or files without it, mean the check
-#   cannot see that session's log. A session that was killed, or had exited by itself (a crash, the
-#   watchdog), or never closed is listed and needs no canary (its file may be missing or cut short);
-#   one killed session never waives the check for the run's other sessions;
+#   cannot see that session's log. A session that was killed, or crashed (Get-GameSessionEnd 'gone':
+#   a non-zero exit code, the watchdog), or never closed is listed and needs no canary (its file may
+#   be missing or cut short); one killed session never waives the check for the run's other
+#   sessions. A remote-vanilla session (CanaryOnJoin) gets the canary only with the host's packs, so
+#   it needs it only once it joined (InWorld): a launch whose join failed and was retried is waived;
 # - every error (and with -Strict every warning) that is not in $script:ContentLogExpected.
 # Warnings go to $script:ContentLogWarnings and the entries of the other levels (verbose, info) to
 # $script:ContentLogNotes, for the run's summary; they never fail a run.
-# -Files and -Sessions ([{Launch, Start, End, Ended (closed|killed|gone|open), Pid}]) replace this
+# -Files and -Sessions ([{Launch, Start, End, Ended (closed|killed|gone|open), Pid, InWorld,
+# CanaryOnJoin}]) replace this
 # run's files from the game's logs folder and its sessions (the harness self-check, selfcheck.ps1).
 function Get-ContentLogProblems([string]$OutDir, [switch]$Strict, [string[]]$Files, [object[]]$Sessions) {
     $script:ContentLogWarnings = @()
@@ -814,7 +819,9 @@ function Get-ContentLogProblems([string]$OutDir, [switch]$Strict, [string[]]$Fil
         Write-Step "content log: $line"
         $line
         if ($n -gt 0) { continue }
-        if ($s.Ended -eq 'closed') {
+        if ($s.Ended -eq 'closed' -and $s.CanaryOnJoin -and -not $s.InWorld) {
+            Write-Step "content log: game session $($s.Launch) is a vanilla client that never joined the host (the canary comes only with the host's packs): no canary needed"
+        } elseif ($s.Ended -eq 'closed') {
             if (-not $mine) {
                 $problems.Add("$what normally but wrote no content log in $where, not even the canary of GloamingForest_Test_RP ($script:ContentLogCanary): its content log is not captured (options.txt content_log_file:1 did not take effect, or the game never loaded the packs)")
             } else {
@@ -941,9 +948,11 @@ function Get-ProcessDescendants([int]$ProcessId) {
 }
 
 # Kills a process and everything it started, and waits until all of them have exited (up to
-# -TimeoutSec). Returns $true when the whole tree is gone. The descendants are listed before the
+# -TimeoutSec; each process still gets up to 2 s once the deadline passed, but the whole wait never
+# exceeds -TimeoutSec + $script:ProcessTreeGraceSec). Returns $true when the whole tree is gone. The descendants are listed before the
 # kill: Process.Kill($true) does not wait for them, and one that is still exiting keeps the handles
 # it inherited (a redirected output pipe, an open log file).
+$script:ProcessTreeGraceSec = 10
 function Stop-ProcessTree([System.Diagnostics.Process]$Process, [int]$TimeoutSec = 30) {
     if (-not $Process) { return $true }
     $tree = @(Get-ProcessDescendants $Process.Id)
@@ -952,12 +961,16 @@ function Stop-ProcessTree([System.Diagnostics.Process]$Process, [int]$TimeoutSec
     $known = @($tree | ForEach-Object Id)
     foreach ($p in @(Get-ProcessDescendants $Process.Id)) { if ($p.Id -notin $known) { $tree += $p } }
     $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    $hardDeadline = $deadline.AddSeconds($script:ProcessTreeGraceSec)
     $ok = $true
     foreach ($p in @($Process) + $tree) {
         try {
             if (-not $p.HasExited) { try { $p.Kill() } catch {} }
-            # (at least 2 s each: one slow process must not leave the others unwaited for)
-            $left = [int][Math]::Max(2000, ($deadline - (Get-Date)).TotalMilliseconds)
+            # (up to 2 s each past the deadline: one slow process must not leave the others unwaited
+            # for; never past the hard deadline)
+            $now = Get-Date
+            $grace = [Math]::Max(0, [Math]::Min(2000, ($hardDeadline - $now).TotalMilliseconds))
+            $left = [int][Math]::Max($grace, ($deadline - $now).TotalMilliseconds)
             if (-not $p.WaitForExit($left)) { $ok = $false; Write-Step "warning: process $($p.Id) ($($p.ProcessName)) did not exit in $TimeoutSec s" }
         } catch {}
     }
@@ -1155,8 +1168,15 @@ function Start-Game([int]$TimeoutSeconds = 180) {
     if (Get-GameProcess) { throw "Minecraft is already running; close it first" }
     # latest.log is appended across sessions: remember where this session starts.
     Start-LogSession
-    # one record per game session, for the content-log check (Stop-Game says how it ended)
-    $script:GameSessions.Add([pscustomobject]@{ Launch = $script:GameSessions.Count + 1; Start = (Get-Date); End = $null; Ended = 'open'; Pid = $null })
+    # one record per game session, for the content-log check (Stop-Game says how it ended).
+    # CanaryOnJoin: a vanilla client (remote-vanilla) has no GloamingForest_Test_RP of its own; it
+    # gets the canary only with the host's packs, so only once it joined (InWorld, set by
+    # Enter-TestWorld / Enter-RemoteServer). Process: the game's process, opened while it runs, so
+    # Stop-Game can read the exit code of a game that exited by itself.
+    $script:GameSessions.Add([pscustomobject]@{
+        Launch = $script:GameSessions.Count + 1; Start = (Get-Date); End = $null; Ended = 'open'; Pid = $null
+        InWorld = $false; CanaryOnJoin = ($script:Mode -eq 'remote-vanilla'); Process = $null
+    })
     if ($script:Headless) {
         # Straight from the instance folder (the exe loads PreLoader/LeviLamina itself), with a
         # window that is shown without being activated; no launcher window either.
@@ -1174,17 +1194,38 @@ function Start-Game([int]$TimeoutSeconds = 180) {
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
         $p = Get-GameProcess
-        if ($p) { $script:Game = $p; $script:GameSessions[-1].Pid = $p.Id; Write-Step "game window found (pid $($p.Id))"; return $p }
+        if ($p) {
+            $script:Game = $p
+            # (reading Handle opens the process now: its exit code stays readable after it exited)
+            try { [void]$p.Handle; $script:GameSessions[-1].Process = $p } catch {}
+            $script:GameSessions[-1].Pid = $p.Id
+            Write-Step "game window found (pid $($p.Id))"
+            return $p
+        }
         Start-Sleep -Seconds 2
     }
     throw "Game window did not appear within $TimeoutSeconds s"
 }
 
+# How a game session ended, for the content-log check: 'killed' when Stop-Game had to kill it; 'gone'
+# when the watchdog fired, or when it had exited by itself (-Running 0) with a non-zero or unknown
+# exit code (a crash); 'closed' when Stop-Game closed it, or when it had exited by itself with exit
+# code 0 (a scenario closed it from its own menu): such a game wrote its content log as it closed.
+function Get-GameSessionEnd([bool]$Killed, [int]$Running, $Process, [bool]$Watchdog) {
+    if ($Killed) { return 'killed' }
+    if ($Watchdog) { return 'gone' }
+    if ($Running -gt 0) { return 'closed' }
+    $code = $null
+    try { if ($Process -and $Process.HasExited) { $code = $Process.ExitCode } } catch {}
+    if ($code -eq 0) { return 'closed' }
+    return 'gone'
+}
+
 function Stop-Game {
     # Closed, not killed, when it can be: the game writes its content log (Get-ContentLogEntries)
     # only as it closes. The session's record (Start-Game) says how it ended, for the content-log
-    # check: 'closed' (it must have logged the canary), 'killed' (its file may be missing or cut
-    # short), or 'gone' (it had exited by itself: a crash or the watchdog).
+    # check (Get-GameSessionEnd): 'closed' (it must have logged the canary), 'killed' (its file may
+    # be missing or cut short), or 'gone' (it crashed, or the watchdog fired).
     $procs = @(Get-InstanceProcesses)
     $killed = $false
     foreach ($p in $procs) {
@@ -1194,7 +1235,8 @@ function Stop-Game {
     $s = $script:GameSessions | Where-Object { $_.Ended -eq 'open' } | Select-Object -Last 1
     if ($s) {
         $s.End = Get-Date
-        $s.Ended = if ($killed) { 'killed' } elseif ($procs.Count -eq 0 -or (Get-WatchdogFired)) { 'gone' } else { 'closed' }
+        $s.Ended = Get-GameSessionEnd -Killed $killed -Running $procs.Count -Process $s.Process -Watchdog (Get-WatchdogFired)
+        if ($procs.Count -eq 0) { Write-Step "the game had exited by itself (exit code $(try { $s.Process.ExitCode } catch { 'unknown' })): session $($s.Launch) $($s.Ended)" }
     }
     if (-not $script:Headless) { Get-Process -Name 'LeviLauncher' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue }
     Write-Step "game stopped"
@@ -1643,6 +1685,13 @@ function Get-WrongWorld([int]$Since, [int]$TimeoutSeconds = 15) {
     }
 }
 
+# The current game session reached a world (its packs, the host's in remote modes, are loaded):
+# from now on a remote-vanilla session must report the canary too (Get-ContentLogProblems).
+function Set-GameSessionInWorld {
+    $s = $script:GameSessions | Where-Object { $_.Ended -eq 'open' } | Select-Object -Last 1
+    if ($s) { $s.InWorld = $true }
+}
+
 function Enter-TestWorld([int]$LoadSeconds = 10, [int]$Attempts = 3) {
     for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
         Focus-Game
@@ -1673,6 +1722,7 @@ function Enter-TestWorld([int]$LoadSeconds = 10, [int]$Attempts = 3) {
             if ($wrong) { Save-Screenshot "wrong-world-$attempt" | Out-Null; throw [GfE2E.WrongWorldException]::new($wrong.Reason) }
             Start-Sleep -Seconds 3
             Focus-Game
+            Set-GameSessionInWorld
             Write-Step "in world $($script:WorldName)"
             return
         }
@@ -1766,6 +1816,7 @@ function Enter-RemoteServer([int]$Attempts = 3) {
             Wait-LogLine '\[host\].*Player Spawned' 90 -Since $mark | Out-Null
             Start-Sleep -Seconds 4
             Focus-Game
+            Set-GameSessionInWorld
             Write-Step "joined the remote server"
             return
         } catch {

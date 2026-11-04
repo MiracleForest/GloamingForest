@@ -7,6 +7,9 @@
   - content log (lib.ps1 Get-ContentLogProblems), per game session: a session that closed normally
     with no file, or with files without the canary of GloamingForest_Test_RP -> failure, even when
     another session's file holds it; a killed (or crashed) session needs no canary, for itself only;
+    a remote-vanilla session needs it only once it joined the host (a failed join that was
+    relaunched is waived); how a session ended (Get-GameSessionEnd: exit code 0 -> closed, a
+    non-zero or unknown one or the watchdog -> gone);
     only the canary -> clean; verbose / info lines -> listed in $script:ContentLogNotes, never a
     failure; errors -> failure; warnings -> listed, a failure only with -Strict; the canary file in
     assets/test parses as JSON and names the canary;
@@ -50,8 +53,9 @@ try {
     # game sessions as Start-Game / Stop-Game record them; a file belongs to the last session that
     # started before it was created
     $t0 = (Get-Date).AddMinutes(-10)
-    function New-Session([int]$Launch, [int]$StartMin, [string]$Ended) {
-        [pscustomobject]@{ Launch = $Launch; Start = $t0.AddMinutes($StartMin); End = $t0.AddMinutes($StartMin + 1); Ended = $Ended; Pid = 1000 + $Launch }
+    function New-Session([int]$Launch, [int]$StartMin, [string]$Ended, [switch]$Vanilla, [switch]$NeverJoined) {
+        [pscustomobject]@{ Launch = $Launch; Start = $t0.AddMinutes($StartMin); End = $t0.AddMinutes($StartMin + 1); Ended = $Ended; Pid = 1000 + $Launch
+            InWorld = -not $NeverJoined; CanaryOnJoin = [bool]$Vanilla; Process = $null }
     }
     function Set-LogTime([string]$Path, [int]$Min) { $t = $t0.AddMinutes($Min); [IO.File]::SetCreationTime($Path, $t); [IO.File]::SetLastWriteTime($Path, $t) }
     $one = @(New-Session 1 0 'closed')
@@ -96,6 +100,31 @@ try {
     Assert-True ($r.Count -eq 1 -and $r[0] -match 'session 2 ') 'a killed session, then a closed one with no file: the closed one fails'
     $r = @(Get-ContentLogProblems -Files @($s2c) -Sessions $killedFirst)
     Assert-True ($r.Count -eq 0) 'a killed session, then a closed one with the canary: clean'
+    # remote-vanilla: the canary comes only with the host's packs, once the client joined
+    $r = @(Get-ContentLogProblems -Files @() -Sessions @(New-Session 1 0 'closed' -Vanilla -NeverJoined))
+    Assert-True ($r.Count -eq 0) 'remote-vanilla: a closed session that never joined the host, no file: not checked'
+    $r = @(Get-ContentLogProblems -Files @($none) -Sessions @(New-Session 1 0 'closed' -Vanilla -NeverJoined))
+    Assert-True ($r.Count -eq 0) 'remote-vanilla: a closed session that never joined the host, a file without the canary: not checked'
+    $r = @(Get-ContentLogProblems -Files @() -Sessions @(New-Session 1 0 'closed' -Vanilla))
+    Assert-True ($r.Count -eq 1 -and $r[0] -match 'session 1 .*wrote no content log') 'remote-vanilla: a closed session that joined, no file: failure'
+    $relaunch = @((New-Session 1 0 'closed' -Vanilla -NeverJoined), (New-Session 2 2 'closed' -Vanilla))
+    $r = @(Get-ContentLogProblems -Files @($s2c) -Sessions $relaunch)
+    Assert-True ($r.Count -eq 0) 'remote-vanilla: a failed join relaunched, the second session joined with the canary: clean'
+    $r = @(Get-ContentLogProblems -Files @() -Sessions $relaunch)
+    Assert-True ($r.Count -eq 1 -and $r[0] -match 'session 2 ') 'remote-vanilla: a failed join relaunched, the joined session wrote nothing: it fails'
+    $r = @(Get-ContentLogProblems -Files @() -Sessions @(New-Session 1 0 'closed' -NeverJoined))
+    Assert-True ($r.Count -eq 1) 'local / remote-mod: a closed session that never reached the world still needs the canary (the global test pack logs it at start)'
+
+    # how a session ended (Stop-Game, Get-GameSessionEnd)
+    $exit0 = Start-Process pwsh -PassThru -WindowStyle Hidden -ArgumentList @('-NoProfile', '-Command', 'exit 0'); [void]$exit0.Handle
+    $exit1 = Start-Process pwsh -PassThru -WindowStyle Hidden -ArgumentList @('-NoProfile', '-Command', 'exit 3'); [void]$exit1.Handle
+    $exit0.WaitForExit(30000) | Out-Null; $exit1.WaitForExit(30000) | Out-Null
+    Assert-True ((Get-GameSessionEnd -Killed $true -Running 1 -Process $null -Watchdog $false) -eq 'killed') 'session end: killed by Stop-Game -> killed'
+    Assert-True ((Get-GameSessionEnd -Killed $false -Running 1 -Process $null -Watchdog $false) -eq 'closed') 'session end: closed by Stop-Game -> closed'
+    Assert-True ((Get-GameSessionEnd -Killed $false -Running 0 -Process $exit0 -Watchdog $false) -eq 'closed') 'session end: exited by itself with code 0 (closed from its menu) -> closed (canary required)'
+    Assert-True ((Get-GameSessionEnd -Killed $false -Running 0 -Process $exit1 -Watchdog $false) -eq 'gone') 'session end: exited by itself with a non-zero code (crash) -> gone'
+    Assert-True ((Get-GameSessionEnd -Killed $false -Running 0 -Process $null -Watchdog $false) -eq 'gone') 'session end: exited by itself, exit code unknown -> gone'
+    Assert-True ((Get-GameSessionEnd -Killed $false -Running 0 -Process $exit0 -Watchdog $true) -eq 'gone') 'session end: the watchdog fired -> gone'
 
     $verbose = New-Log 'ContentLog_verbose.txt' @($canaryLine,
         '12:00:02[Sound][verbose]-No sound found for block type ''wood'' and event type ''chest.open''',
