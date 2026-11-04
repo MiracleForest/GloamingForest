@@ -20,6 +20,9 @@
 #    check gives the player its levels back). A vanilla client offers no result there (its own
 #    preview): it then holds the book and uses the anvil, closes the anvil screen its client opens,
 #    gets the anvil form and takes the sword.
+# 4. Local mode: Save & Quit and back into the world in the same game session, then the trim probe
+#    and the carriers again (out/item/reload-*.png): the material registered at load is in the new
+#    level's registry, and no TrimDataPacket logs "Overwriting pattern template".
 # Local mode also runs every item selftest in the integrated server; remote modes run them on the
 # BDS host and check that a vanilla client stays connected with the carriers in its inventory.
 $script:IsLocal = $script:Mode -eq 'local'
@@ -214,4 +217,51 @@ Invoke-Chat '/setblock ~3 ~ ~ air'
 if (-not $script:IsLocal) {
     $r = Invoke-SelfTest 'item.tags_fixture'
     if ($r.Fail -gt 0) { throw 'the host stopped answering after the carriers' }
+}
+
+# ---- 4. a world reload in the same game session (local) ---------------------------------------------
+# The level's trim registries are made again for the new world: the material registered at load must
+# be in the new level's registry, and the TrimDataPackets of the join and of the probe must not log
+# "Overwriting pattern template" (the run's content-log check covers the whole session).
+if ($script:IsLocal) {
+    function Test-InLevel { try { [bool](Get-BeDDWorld).inLevel } catch { $null } }
+    Focus-Game
+    try { Invoke-BeDDAction pause | Out-Null } catch { Press-Key ESC }
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'reload-pause-menu' | Out-Null
+    # Save & Quit is the lowest button of the pause menu's left column: try from the bottom up, and
+    # step back to the pause menu when a click opened something else
+    $left = $false
+    foreach ($y in @(0.90, 0.86, 0.82, 0.78, 0.74, 0.70)) {
+        Move-Mouse 0.25 $y -Relative
+        Start-Sleep -Milliseconds 300
+        Click 0.25 $y -Relative
+        Start-Sleep -Seconds 3
+        if ((Test-InLevel) -eq $false) { $left = $true; Write-Step "left the world (Save & Quit at y $y)"; break }
+        $top = try { (Get-BeDDWorld).topScreen } catch { '' }
+        if ($top -and $top -ne 'pause_screen') { Write-Step "the click at y $y opened $top; back to the pause menu"; Press-Key ESC; Start-Sleep -Seconds 1 }
+    }
+    if (-not $left) { Save-Screenshot 'reload-not-left' | Out-Null; throw 'Save & Quit was not found on the pause menu (see reload-pause-menu.png)' }
+    $deadline = (Get-Date).AddSeconds(60)
+    while ((Test-TitleScreen) -eq $false -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 1 }
+    $mark = Get-LogMark
+    Enter-TestWorld -Attempts 2
+    Wait-LogLine 'GloamingForest world ready' 120 -Since $mark | Out-Null
+    Wait-HudReady
+    $r = Invoke-SelfTest 'item.spike_trim_materials'
+    if ($r.Fail -gt 0) { throw 'item.spike_trim_materials failed after the world reload' }
+    $mark = Get-LogMark
+    $r = Invoke-SelfTest 'item.spike_client'
+    if ($r.Fail -gt 0) { throw 'item.spike_client failed after the world reload' }
+    Wait-LogLine 'S6 carriers given to' 30 -Since $mark | Out-Null
+    Start-Sleep -Seconds 5
+    Press-Key '7'
+    Start-Sleep -Milliseconds 700
+    Save-Screenshot 'reload-slot7-trim-emerald' | Out-Null
+    Press-Key '6'
+    Start-Sleep -Milliseconds 700
+    Save-Screenshot 'reload-slot6-trim-at-load' | Out-Null
+    Press-Key '1'
+    $r = Invoke-SelfTest 'item.spike_client_clear'
+    if ($r.Fail -gt 0) { throw 'item.spike_client_clear failed after the world reload' }
 }
