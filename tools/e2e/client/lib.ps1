@@ -1140,9 +1140,12 @@ function Update-GameSessionPacks($Sessions) {
     if (-not (Test-Path $testRp)) { return }
     $uuid = (Get-Content $testRp -Raw | ConvertFrom-Json).header.uuid
     $created = @(Get-CachedGfPacks | Where-Object Uuid -eq $uuid | ForEach-Object { $_.Dir.CreationTime })
+    # (a folder belongs to the last session started before it was created, as a content-log file does)
+    $all = @($Sessions | Where-Object { $_ } | Sort-Object Start)
     foreach ($s in $todo) {
-        $end = if ($s.End) { $s.End } else { Get-Date }
-        if (@($created | Where-Object { $_ -ge $s.Start.AddSeconds(-2) -and $_ -le $end.AddSeconds(2) }).Count -gt 0) {
+        $next = $all | Where-Object { $_.Start -gt $s.Start } | Select-Object -First 1
+        $until = if ($next) { $next.Start } else { [datetime]::MaxValue }
+        if (@($created | Where-Object { $_ -ge $s.Start -and $_ -lt $until }).Count -gt 0) {
             $s.PacksLoaded = $true
             Write-Step "content log: game session $($s.Launch) downloaded the host's test pack (its folder in the pack cache is from that session): it needs the canary although it never spawned"
         }

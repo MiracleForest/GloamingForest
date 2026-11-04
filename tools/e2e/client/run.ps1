@@ -437,14 +437,16 @@ if ($lockTimeout) {
 $hung = [bool](Get-WatchdogFired)
 $notRun = if ($hung) { "WATCHDOG: $(Get-WatchdogFired)" } elseif ($script:NotRunReason) { $script:NotRunReason }
 $dll = Join-Path $ModDir "$script:ModName.dll"
-# (a run that never started a game, or a test hang, leaves the count as it is)
-$hangs = if ($script:TestHang -or $script:GameSessions.Count -eq 0) { @{ Count = 0; Instances = @(); Fails = $false } } else { Update-HangRecord $Scenario $Mode $dll -Instance $script:VersionName -Hung:$hung }
+# (a run that never started a game, or a test hang, leaves the count as it is; a session counts once
+# its game process was found: Start-Game records it before the launch)
+$gamesStarted = @($script:GameSessions | Where-Object Pid).Count
+$hangs = if ($script:TestHang -or $gamesStarted -eq 0) { @{ Count = 0; Instances = @(); Fails = $false } } else { Update-HangRecord $Scenario $Mode $dll -Instance $script:VersionName -Hung:$hung }
 if ($notRun) {
     if ($hung -and $Mode -ne 'remote-vanilla') {
         # what the mod logged about its module installs (which install() was still running)
         $trace = @(Get-ModEnableTrace)
         if ($trace.Count -gt 0) { Write-Host "[e2e] the mod's install trace before the hang:" -ForegroundColor Yellow; $trace | Select-Object -Last 12 | ForEach-Object { Write-Host "  | $_" } }
-        elseif ($script:GameSessions.Count -gt 0) { Write-Host "[e2e] the mod logged no install trace: the hang came before its enable() (see client.log)" -ForegroundColor Yellow }
+        elseif ($gamesStarted -gt 0) { Write-Host "[e2e] the mod logged no install trace: the hang came before its enable() (see client.log)" -ForegroundColor Yellow }
     }
     # Next to each minidump (out/hangs, never cleared by a run): the run's log and the install trace,
     # so the retry this NOT RUN asks for does not lose them.
