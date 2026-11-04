@@ -472,10 +472,6 @@ namespace GfImport
                 synced++;
             }
             if (synced > 0) Log.Add(synced + " family block skeleton(s) take their tags from an override of params.tags");
-            // the tracked follow-up of docs/spikes/S7.md, on every run until it is done
-            if (!ModernBlockFormat(FamilyBlockFormat))
-                Log.Add(BlockInfos.Values.Count(b => b.Family != null) + " family block skeletons stay at format " + FamilyBlockFormat
-                    + " (\"tag:<id>\" components) until F11's families kit takes params.tags instead of the skeleton's tag form; then FamilyBlockFormat = BlockFormat (docs/spikes/S7.md, Path for F11)");
         }
 
         // ---- particles ------------------------------------------------------------------------------------

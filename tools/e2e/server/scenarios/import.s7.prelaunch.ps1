@@ -1,14 +1,14 @@
 # Spike S7 follow-up (F1): before the server boots, add a throw-away behavior pack of probe blocks that declare
-# block tags in each form, in each block format_version from the import's 1.21.80 to 1.26.50, so import.s7_probe
+# block tags in each form, in each block format_version from 1.21.80 to 1.26.50, so import.s7_probe
 # can read what the game made of them (docs/spikes/S7.md). The pack lives only in this run's slot; nothing ships.
 # Forms: "legacy" ("tag:<id>": {} components), "object" ("minecraft:tags": {"tags": [...]}, the item form), "array"
 # ("minecraft:tags": [...]); "array_entity" / "legacy_entity" add minecraft:block_entity (F10's native container
 # backend). A form a format rejects logs a content error, which fails the run: the run is the evidence, not a gate.
 #
-# The family blocks: F11's families kit rewrites them at assemble in its format 1.26.0 from the import's skeleton,
-# which therefore keeps the pre-1.26.20 "tag:<id>" form for them. To show that the import's whole skeleton loads at
-# 1.26.50, this run replaces the kit's file of every family block in the slot by the import's own skeleton converted
-# to 1.26.50 as the import writes the other blocks ("tag:<id>" components -> the minecraft:tags array).
+# The family blocks: F11's families kit rewrites them at assemble in its format 1.26.0 from the import's skeleton.
+# To show that the import's whole skeleton loads at 1.26.50, this run replaces the kit's file of every family block in
+# the slot by the import's own skeleton at 1.26.50 (since W0d the import writes them so, Blocks.FamilyBlockFormat; a
+# skeleton still in the "tag:<id>" form is converted to the minecraft:tags array).
 $mod = Join-Path $script:SlotDir "$(Get-ModsDirName $script:SlotDir)\$script:ModName"
 $familyIds = @(Get-ChildItem (Join-Path $script:RepoRoot 'assets/gen/import') -Recurse -Filter '*.json' |
     Where-Object { $_.FullName -match '[\\/]data[\\/]gf[\\/]families[\\/]' } |

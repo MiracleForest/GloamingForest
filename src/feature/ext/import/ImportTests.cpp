@@ -475,20 +475,12 @@ GF_REGISTER_SELFTEST("import.sound_types", [](Context& ctx) {
         ctx.check(defs["sound_definitions"].contains(e.sound), what + ": " + e.sound + " is a sound definition (F3)");
     }
     // Bedrock's jump and land: TF plays no block sound for a jump, nor for a landing without fall damage. The import's
-    // fragment writes them silent; F11's families kit still writes its own copy of the type after the merge
-    // (tools/families/families.lua sound_types: the step and fall sounds), the one tolerated difference until it drops it.
-    struct Extra {
-        char const* event;
-        char const* kitSound;
-        double      kitVolume;
-        double      kitPitch;
-    };
-    for (auto const& x : {Extra{"jump", "block.twilightforest.jar.step", 0.15, 1.0}, Extra{"land", "block.twilightforest.jar.fall", 0.5, 0.75}}) {
-        JDoc const* ev     = at(*interactive, {"events", x.event});
-        bool        silent = !ev || (ev->is_string() && ev->get<std::string>().empty());
-        bool        kit    = ev && ev->is_object() && ev->value("sound", std::string()) == x.kitSound && near(num(*ev, "volume"), x.kitVolume) && near(num(*ev, "pitch"), x.kitPitch);
-        ctx.check(silent || kit, std::string("interactive_sounds twilightforest.jar ") + x.event + " " + (ev ? ev->dump() : "(none)") + ": TF plays nothing");
-        if (!silent && kit) ctx.info(std::string(x.event) + " plays " + ev->dump() + ": the families kit's copy of the type (tools/families/families.lua), not the import's silent event");
+    // fragment is the type's only source (the families kit no longer writes a copy of it) and declares both silent
+    // (""), so no engine fallback plays a sound TF does not.
+    for (auto const* x : {"jump", "land"}) {
+        JDoc const* ev     = at(*interactive, {"events", x});
+        bool        silent = ev && ev->is_string() && ev->get<std::string>().empty();
+        ctx.check(silent, std::string("interactive_sounds twilightforest.jar ") + x + " " + (ev ? ev->dump() : "(none)") + ": TF plays nothing (\"\")");
     }
     for (auto const* id : {"twilightforest:mason_jar", "twilightforest:firefly_jar", "twilightforest:firefly_particle_spawner", "twilightforest:cicada_jar"}) {
         JDoc const* b = at(blocks, {id});

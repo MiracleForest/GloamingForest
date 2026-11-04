@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:nagastone_stairs_left",
@@ -19,7 +19,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 30
       },
-      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#707070",
       "minecraft:geometry": "geometry.tf.twilightforest.block.util.bisected_stairs",
       "minecraft:material_instances": {

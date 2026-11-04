@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:aurora_slab",
@@ -17,7 +17,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 30
       },
-      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#a0a0ff",
       "minecraft:geometry": "geometry.tf.twilightforest.block.aurora_slab",
       "minecraft:material_instances": {

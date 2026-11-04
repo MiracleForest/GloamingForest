@@ -549,12 +549,12 @@ namespace GfImport
         /// and minecraft:block_entity is), and a bone_visibility value is a Molang string, not a boolean.</summary>
         public const string BlockFormat = "1.26.50";
 
-        /// <summary>The block format of the family blocks' skeletons. The families kit (F11, tools/families) rewrites
-        /// every block of the families data at assemble in its own format (families.lua FORMAT, 1.26.0), copying the
-        /// skeleton whole or its "tag:" components: a format before 1.26.20, whose blocks declare tags as "tag:&lt;id&gt;"
-        /// components (minecraft:tags is not valid there). These files are the kit's input and never load as written;
-        /// once the kit writes 1.26.20 or later, they take BlockFormat (docs/spikes/S7.md).</summary>
-        public const string FamilyBlockFormat = "1.21.80";
+        /// <summary>The block format of the family blocks' skeletons: BlockFormat, as every other block. The families kit
+        /// (F11, tools/families) rewrites every block of the families data at assemble from a copy of the skeleton; it
+        /// drops both tag forms of the copy and writes the entry's params.tags in the form of the format it writes the
+        /// block in (families.lua base_doc / write_tags), so the skeleton's own format and tag form do not reach it
+        /// (docs/spikes/S7.md).</summary>
+        public const string FamilyBlockFormat = BlockFormat;
 
         /// <summary>The format the import writes a block in.</summary>
         static string FormatOf(BlockInfo bi) { return bi.Family != null ? FamilyBlockFormat : BlockFormat; }
