@@ -64,9 +64,40 @@ server console, in the client log and in a remote client run's `[host]` lines (`
 
 - **Content log.** Every client run turns the game's content log file on (`options.txt content_log_file:1`,
   the old value is put back afterwards) and reads the `ContentLog*.txt` of its game sessions in
-  `<instance>\Minecraft Bedrock\logs` once the game closed (the game writes them as it closes): every entry of
-  level `error` fails the run, `warning` entries are listed in the summary (`content-log warning: ...`) and
-  fail only in a strict run (`-StrictContentLog`, or a scenario sets `$script:ContentLogStrict = $true`).
+  `<instance>\Minecraft Bedrock\logs` once the game closed: every entry of level `error` fails the run,
+  `warning` entries are listed in the summary (`content-log warning: ...`) and fail only in a strict run
+  (`-StrictContentLog`, or a scenario sets `$script:ContentLogStrict = $true`), and entries of every other
+  level (`verbose`, `info`) are listed in the summary (`content-log verbose/info: ...`) and **never** fail a
+  run (they can still point at a parity bug: read them).
+- **Content-log canary.** The game creates a `ContentLog*.txt` only on its first entry, so a clean session
+  writes no file, and "no file" alone cannot tell "clean" from "logging broken". Every run therefore loads
+  one deliberate, harmless bad line: `GloamingForest_Test_RP` (`assets/test/rp`, development builds only)
+  has an animation used by nothing whose Molang does not parse
+  (`animations/gf_e2e_content_log_canary.animation.json`). The client logs it as it loads the pack:
+  `[Molang][error] ... gf_e2e_content_log_canary ...` (the client mod's global pack in `local` and
+  `remote-mod` runs, logged at game start; in remote modes the BDS host sends the same pack, so a
+  `remote-vanilla` client logs it too, but only once it joined the host). The canary is expected (never an
+  error of the run), but it is **required per game session**: the harness records every game it starts
+  (`Start-Game`) and how it ended (`Stop-Game`, `Get-GameSessionEnd`: `closed` when Stop-Game closed it or
+  it had exited by itself with exit code 0, `killed` after 30 s, or `gone` when the watchdog fired or it had
+  exited by itself with a non-zero or unknown exit code: a crash), and whether it reached the world
+  (`Enter-TestWorld` / `Enter-RemoteServer`) or, in `remote-vanilla`, downloaded the host's test pack (its
+  folder in the game's `packcache` was created while the session ran; `Clear-CachedGfPacks` drops every cached copy
+  before the run). A `remote-vanilla` session that did neither (a failed join the harness relaunched before the
+  packs came) gets no canary and needs none. The harness assigns each
+  `ContentLog*.txt` to the last session started before the file was created. Every `closed` session (in
+  `remote-vanilla`: every `closed` session that joined the host or downloaded its packs) must have a file that reports the canary: no file, or files without it, fail the run ("the check cannot see
+  that session's pack errors"), even when another session of the run (a relaunch, ui's Vibrant Visuals
+  half) logged it. A `killed` or `gone` session is listed and needs no canary, for itself only: it never
+  waives the check for the run's other sessions. A file with only the canary is clean. The summary and
+  `client-content-log.txt` list every session with its files and canary count. The canary was chosen over
+  "a missing file counts as clean once `content_log_file:1` was verified": that check cannot see a log
+  written elsewhere, a game that never loaded the packs or stopped writing the file, and the canary proves
+  the whole path (option, pack load, file, parser) in every session. Its bone is named `gfpreview_canary`
+  because the models scenario (F2's `models.ps1`) treats every error that names `gfpreview_canary` as one
+  of its own canaries and fails on any other Molang error; once that scenario drops the entries matching
+  `$script:ContentLogExpected` first, the bone can get a neutral name.
+  `pwsh -NoProfile -File tools/e2e/client/selfcheck.ps1` checks these verdicts without a game.
   `out/<scenario>[-<mode>][-slot<N>]/client-content-log.txt` lists every distinct entry with its count, then the first 2000 entries
   as written (a broken particle can log hundreds of thousands). Entries that are not about this build's packs are
   expected (`$script:ContentLogExpected` in `tools/e2e/client/lib.ps1`: the models scenario's deliberately
@@ -75,12 +106,18 @@ server console, in the client log and in a remote client run's `[host]` lines (`
 - **Game options.** Before every launch the harness sets the options scenarios toggle, in every
   `minecraftpe\options.txt` of the instance: `gfx_hidehud:0` (F1 hides the HUD: models, ui, families),
   `gfx_hidehand:0` (ui), `game_thirdperson:0` (F5: ui) and `graphics_mode:2` (ui switches Classic / Vibrant
-  Visuals), plus `content_log_file:1`. When the run ends (after the scenario's `<unit>.restore.ps1`) every one
-  of them gets the instance's own value back (`Restore-RunOptions`): slot 1 is shared with BEI's and
-  BeetrootSkin's harnesses and with a person's own play. The old values wait in
-  `%LOCALAPPDATA%\lv-e2e\game-options.<instance>.json` until then, so the next run puts back what a killed run
-  found, not what it left. A scenario that changes another option restores it in its `<unit>.restore.ps1` and
-  adds it to `$script:ForcedOptions` (lib.ps1).
+  Visuals), plus `content_log_file:1`. When the run ends (after the scenario's `<unit>.restore.ps1`) each
+  gets the instance's own value back (`Restore-RunOptions`): slot 1 is shared with BEI's and BeetrootSkin's
+  harnesses and with a person's own play, so a person's own `gfx_hidehud:1`, `gfx_hidehand:1` or Classic
+  graphics mode survives our runs. The old values wait in `%LOCALAPPDATA%\lv-e2e\game-options.<instance>.json`
+  until then, so the next run puts back what a killed run found, not what it left. HUD safety net: every run
+  plays with the HUD and hand shown, and for the options in `$script:ForcedOptions` the value a killed run's
+  backup recorded wins even when the option changed since (the killed run's scenario toggled it in game:
+  models hides the HUD with F1 and the game writes `gfx_hidehud:1` itself), so a killed models run never
+  leaves an instance without its HUD past the next run. Its one cost: a person who changes one of these
+  options between a killed run and the next run gets the killed run's backup value back. Other options a
+  killed run's backup holds keep a value that changed since. A scenario that changes another option
+  restores it in its `<unit>.restore.ps1` and adds it to `$script:ForcedOptions` (lib.ps1).
 - **Hangs (watchdog).** A BeDD pipe call waits for the game's answer without a timeout of its own. The harness
   wraps every pipe call and window capture (`Invoke-Guarded`): when one takes longer than 120 s plus the waits
   it asked for (`$env:GF_E2E_PIPE_TIMEOUT_SEC` changes the 120), the process tree of the run's game is killed
@@ -163,7 +200,15 @@ Exceptions:
   dot-sourced in the server harness (after the slot reset, the mod deployment and `server.properties`), so a unit can
   install a probe pack on the host: `Join-Path $script:SlotDir "$(Get-ModsDirName $script:SlotDir)\$script:ModName"`
   is the host's mod folder, `$HostMode` the client mode. The client's own `<unit>.prelaunch.ps1` does not reach the
-  host.
+  host. The host starts only once the game lock is the run's; when no server slot frees up within
+  `-SlotWaitMinutes` (3), the run kills the host harness with its whole process tree, waits until every process of
+  it has exited, closes the files its output was redirected into, gives the game lock back and queues again. Its
+  output folder is cleared again on re-entry, with retries for 20 s; a file still in use after that makes the run
+  NOT RUN (exit 2), never FAILED. The folder is renamed aside first and only then deleted, so a folder that cannot
+  be cleared keeps every file of the previous run (client log, screenshots, content-log report). Each process of
+  the host tree gets up to 2 s past the shared deadline to exit; the whole wait never exceeds `-TimeoutSec` + 10 s.
+  When the host stopped by itself (the normal end of a remote run), its leftover descendants get up to 5 s together
+  to exit before the redirected output files are closed, and each copy then gets at most 2 s to finish.
 - Put the logic in selftests inside the mod (`GF_REGISTER_SELFTEST("<unit>.<case>", ...)`, dx range of the unit,
   rule R12) and start them from the scenario with `Invoke-SelfTest '<unit>.*'`. The scenario adds what only the
   harness can do: restarts (`Restart-Server`), chat commands, keys and clicks, screenshots.
