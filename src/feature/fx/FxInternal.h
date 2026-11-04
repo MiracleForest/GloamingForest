@@ -145,7 +145,8 @@ void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocit
 [[nodiscard]] Vec3 effectVelocity(std::uint32_t vars, Vec3 const& velocity);
 
 /// Particle(level, x, y, z, xSpeed, ySpeed, zSpeed)'s initial motion (Java): the speed plus a
-/// random +-0.4 per axis, rescaled to a random length (0.06..0.18 * 0.4) with 0.1 added to y.
+/// random +-0.4 per axis, rescaled to a random length (0.15..0.45 * 0.4 = 0.06..0.18) with 0.1
+/// added to y.
 [[nodiscard]] Vec3 particleMotion(std::mt19937& rng, Vec3 const& speed);
 
 /// SplashParticle's motion: its speed with yd 0.1 when ySpeed is 0 and xSpeed or zSpeed is not;
