@@ -17,7 +17,6 @@
 #include <vector>
 
 #include "ll/api/Config.h"
-#include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
 #include "ll/api/thread/ServerThreadExecutor.h"
@@ -31,9 +30,7 @@
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/sim/LookDuration.h"
-#include "mc/server/commands/CommandPermissionLevel.h"
 #include "mc/server/commands/CommandUtils.h"
-#include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/level/storage/GameRule.h"
 #include "mc/world/level/storage/GameRules.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
@@ -92,21 +89,6 @@ struct ConfigGuard {
         if (save) ll::config::saveConfig(keep, gf::config::configDir() / "dimension.json");
     }
 };
-
-/// Runs a command as the server in dimension `dim`; the output messages ("" on success).
-std::pair<bool, std::string> runCommand(std::string const& command, int dim = 0) {
-    auto level = ll::service::getLevel();
-    if (!level) return {false, "no level"};
-    ServerCommandOrigin origin("gloamingforest-dimension-selftest", level->asServer(), CommandPermissionLevel::Owner, DimensionType(dim));
-    auto        out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
-    std::string messages;
-    for (auto const& m : out.mMessages) {
-        if (!messages.empty()) messages += "; ";
-        messages += m.mMessageId;
-        for (auto const& p : m.mParams) messages += " " + p;
-    }
-    return {out.mSuccessCount > 0, messages};
-}
 
 /// Builds a 2x2 water pool at `corner` (lowest x / z) in a flat area: the surface block of the
 /// pool turns to water on its ground, the rim keeps its grass and gets short grass on top.
@@ -427,8 +409,8 @@ GF_REGISTER_SELFTEST("dimension.portal_delay", [](Context& ctx) {
     ctx.info(std::format("the world's delays: {} / {} (TF's defaults 60 / 1)", gamerules::getInt(kDefaultDelayRule), gamerules::getInt(kCreativeDelayRule)));
     ctx.require(gamerules::set(kDefaultDelayRule, 30), "playersTfPortalDefaultDelay set to 30");
     ctx.check(portalDelay(p) == 30, "a survival player's delay follows it (" + std::to_string(portalDelay(p)) + ")");
-    auto [ok, msg] = runCommand(std::string("twilightforest gamerule ") + kDefaultDelayRule + " 45");
-    ctx.check(ok, "/twilightforest gamerule " + std::string(kDefaultDelayRule) + " 45 (" + msg + ")");
+    auto cmd = selftest::runServerCommand(std::string("twilightforest gamerule ") + kDefaultDelayRule + " 45");
+    ctx.check(cmd.ok, "/twilightforest gamerule " + std::string(kDefaultDelayRule) + " 45 (" + cmd.messages + ")");
     ctx.check(portalDelay(p) == 45, "and through the command (" + std::to_string(portalDelay(p)) + ")");
     ctx.require(gamerules::set(kCreativeDelayRule, 7), "playersTfPortalCreativeDelay set to 7");
     p.setPlayerGameType(GameType::Creative);
@@ -1305,19 +1287,19 @@ GF_REGISTER_SELFTEST("dimension.execute_in", [](Context& ctx) -> ll::coro::CoroT
     auto& p    = ctx.player();
     auto  id   = idOf(p);
     auto  name = p.getRealName();
-    auto [ok, out] = runCommand("execute as \"" + name + "\" at @s in twilightforest:twilight_forest run tp @s ~ ~ ~");
-    ctx.check(ok, "execute in twilightforest:twilight_forest runs (" + out + ")");
+    auto toTf = selftest::runServerCommand("execute as \"" + name + "\" at @s in twilightforest:twilight_forest run tp @s ~ ~ ~");
+    ctx.check(toTf.ok, "execute in twilightforest:twilight_forest runs (" + toTf.messages + ")");
     bool there = false;
-    for (int i = 0; ok && i < 200 && !there; ++i) {
+    for (int i = 0; toTf.ok && i < 200 && !there; ++i) {
         co_await ctx.ticks(1);
         auto* pl = playerById(id);
         there    = pl && world::isTwilight(pl->getDimensionId());
     }
     ctx.check(there, "the player is in the Twilight Forest");
-    auto [ok2, out2] = runCommand("execute as \"" + name + "\" at @s in overworld run tp @s ~ ~ ~");
-    ctx.check(ok2, "execute in overworld runs (" + out2 + ")");
+    auto toOw = selftest::runServerCommand("execute as \"" + name + "\" at @s in overworld run tp @s ~ ~ ~");
+    ctx.check(toOw.ok, "execute in overworld runs (" + toOw.messages + ")");
     bool back = false;
-    for (int i = 0; ok2 && i < 200 && !back; ++i) {
+    for (int i = 0; toOw.ok && i < 200 && !back; ++i) {
         co_await ctx.ticks(1);
         auto* pl = playerById(id);
         back     = pl && static_cast<int>(pl->getDimensionId()) == 0;
@@ -1374,10 +1356,10 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
         ctx.info("another player is nearer to the scaled position: the in-game part is skipped");
         co_return;
     }
-    auto [okF, outF] = runCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function twilightforest/dimension/tp_twilight", name, ground));
-    ctx.check(okF, "function tp_twilight runs (" + outF + ")");
+    auto fnTf = selftest::runServerCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function twilightforest/dimension/tp_twilight", name, ground));
+    ctx.check(fnTf.ok, "function tp_twilight runs (" + fnTf.messages + ")");
     bool there = false;
-    for (int i = 0; okF && i < 200 && !there; ++i) {
+    for (int i = 0; fnTf.ok && i < 200 && !there; ++i) {
         co_await ctx.ticks(1);
         pl    = playerById(id);
         there = pl && world::isTwilight(pl->getDimensionId());
@@ -1400,10 +1382,10 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
         pl->teleport(Vec3{at.x + 0.5f, static_cast<float>(at.y), at.z + 0.5f}, DimensionType(ctx.dimension()));
         co_return;
     }
-    auto [okB, outB] = runCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function twilightforest/dimension/tp_overworld", name, at.y));
-    ctx.check(okB, "function tp_overworld runs (" + outB + ")");
+    auto fnOw = selftest::runServerCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function twilightforest/dimension/tp_overworld", name, at.y));
+    ctx.check(fnOw.ok, "function tp_overworld runs (" + fnOw.messages + ")");
     bool home2 = false;
-    for (int i = 0; okB && i < 200 && !home2; ++i) {
+    for (int i = 0; fnOw.ok && i < 200 && !home2; ++i) {
         co_await ctx.ticks(1);
         pl    = playerById(id);
         home2 = pl && static_cast<int>(pl->getDimensionId()) == 0;
@@ -1468,8 +1450,8 @@ GF_REGISTER_SELFTEST("dimension.portal_block", [](Context& ctx) -> ll::coro::Cor
     // the portal block's rim (its neighbour rule keeps a portal ringed by portal/edge blocks)
     for (auto [dx, dz] : {std::pair{-1, 0}, std::pair{1, 0}, std::pair{0, -1}, std::pair{0, 1}}) ctx.setBlock(portalBase.offset(dx, 1, dz), "minecraft:dirt");
     for (auto base : {stoneBase, portalBase}) {
-        auto [ok, msg] = runCommand(std::format("setblock {} {} {} redstone_block", base.x + 1, base.y, base.z), ctx.dimension());
-        ctx.check(ok, "redstone block next to the piston (" + msg + ")");
+        auto cmd = selftest::runServerCommand(std::format("setblock {} {} {} redstone_block", base.x + 1, base.y, base.z), ctx.dimension());
+        ctx.check(cmd.ok, "redstone block next to the piston (" + cmd.messages + ")");
     }
     co_await ctx.ticks(20);
     ctx.info("after the pistons fired: stone column " + ctx.blockAt(stoneBase.offset(0, 1, 0)) + " / " + ctx.blockAt(stoneBase.offset(0, 2, 0)) + ", portal column "

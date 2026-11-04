@@ -202,12 +202,22 @@ namespace GfImport
             foreach (var file in Directory.GetFiles(dir, "*.json").OrderBy(f => f, StringComparer.Ordinal))
             {
                 string unit = Path.GetFileNameWithoutExtension(file);
-                if (!UnitNames.ContainsValue(unit)) throw new Exception("override " + file + " is not named after a unit");
+                if (!UnitNames.ContainsValue(unit)) { Errors.Add("override tools/import/overrides/" + Path.GetFileName(file) + " is not named after a unit"); continue; }
                 SortedDictionary<string, GenFile> files;
                 if (!Out.TryGetValue(unit, out files)) continue;
-                var ov = ReadJson(file);
+                J ov;
+                try { ov = ReadJson(file); }
+                catch (Exception ex) { Errors.Add("override " + unit + ": tools/import/overrides/" + unit + ".json is not valid JSON (" + ex.Message + ")"); continue; }
+                if (ov == null || !ov.IsObj) { Errors.Add("override " + unit + ": tools/import/overrides/" + unit + ".json is not a JSON object"); continue; }
+                // every section of the wrong shape is an error line, and that section is not applied
+                foreach (var sec in new[] { "patch", "familyTags", "rename" })
+                    if (ov[sec] != null && !ov[sec].IsObj) Errors.Add("override " + unit + ": " + sec + " is not an object, not applied");
+                foreach (var k in ov.Keys)
+                    if (k != "drop" && k != "patch" && k != "familyTags" && k != "rename") Errors.Add("override " + unit + ": unknown section " + k);
                 // drop: globs of generated paths to leave out
-                if (ov["drop"] != null)
+                if (ov["drop"] != null && !(ov["drop"].IsArr && ov["drop"].A.All(x => x.IsStr)))
+                    Errors.Add("override " + unit + ": drop is not an array of globs, not applied");
+                else if (ov["drop"] != null)
                 {
                     foreach (var g in ov["drop"].A)
                     {
@@ -218,32 +228,105 @@ namespace GfImport
                     }
                 }
                 // patch: {"<rel>": [JSON patch ops]} applied to generated JSON files
-                if (ov["patch"] != null)
+                if (ov["patch"] != null && ov["patch"].IsObj)
                 {
                     foreach (var rel in ov["patch"].Keys)
                     {
                         GenFile f;
-                        if (!files.TryGetValue(rel, out f)) throw new Exception("override " + unit + ": patch target " + rel + " is not generated");
+                        if (!files.TryGetValue(rel, out f)) { Errors.Add("override " + unit + ": patch target " + rel + " is not generated"); continue; }
                         var doc = J.Parse(Encoding.UTF8.GetString(f.Bytes));
-                        doc = J.ApplyPatch(doc, ov["patch"][rel], "override " + unit + " " + rel);
+                        var before = IsFamiliesData(rel) ? FamilyTagsById(doc) : null;
+                        try { doc = J.ApplyPatch(doc, ov["patch"][rel], "override " + unit + " " + rel); }
+                        catch (Exception ex) { Errors.Add("override " + unit + ": patch of " + rel + " fails (" + ex.Message + "), not applied"); continue; }
+                        // a family block's tags are overridden by id (familyTags), never through the entries' array index,
+                        // which moves when a regeneration adds an earlier entry: such a patch is an error and is not applied
+                        // (the run goes on, so it reports every other problem too)
+                        if (before != null)
+                        {
+                            var after = FamilyTagsById(doc);
+                            bool rejected = false;
+                            // (an entry the patch adds or removes is reported by CheckEmittedBlocks / FamilyEntries)
+                            foreach (var id in before.Keys.Intersect(after.Keys).OrderBy(x => x, StringComparer.Ordinal))
+                            {
+                                string b = before[id], a = after[id];
+                                if (b == a) continue;
+                                Errors.Add("override " + unit + ": patch of " + rel + " changes params.tags of " + id + " ([" + b + "] -> [" + a
+                                    + "]), not applied: override a family block's tags with \"familyTags\": {\"" + id + "\": [...]} (docs/spec/import.md, Overrides)");
+                                rejected = true;
+                            }
+                            if (rejected) continue;
+                        }
                         f.Bytes = new UTF8Encoding(false).GetBytes(doc.ToText());
                     }
                 }
+                // familyTags: {"twilightforest:<id>": [tag ids]} sets params.tags of the unit's families entry of that id
+                // (data/gf/families/<unit>.json), the single source of a family block's Bedrock block tags (SyncFamilyTags)
+                if (ov["familyTags"] != null && ov["familyTags"].IsObj)
+                {
+                    // each problem is an error line and that entry (or the whole familyTags) is not applied
+                    string rel = "data/gf/families/" + unit + ".json";
+                    GenFile f = null;
+                    J doc = null;
+                    if (!files.TryGetValue(rel, out f)) Errors.Add("override " + unit + ": familyTags needs " + rel + ", which is not generated (the unit owns no family block)");
+                    else if (!(doc = J.Parse(Encoding.UTF8.GetString(f.Bytes))).IsArr) { Errors.Add("override " + unit + ": " + rel + " is not an array of family entries"); doc = null; }
+                    foreach (var id in doc != null ? ov["familyTags"].Keys : Enumerable.Empty<string>())
+                    {
+                        string where = "override " + unit + ": familyTags " + id;
+                        var tags = ov["familyTags"][id];
+                        if (!tags.IsArr || !tags.A.All(x => x.IsStr)) { Errors.Add(where + " is not an array of tag ids: " + tags.ToCompact() + ", not applied"); continue; }
+                        var bad = tags.A.Select(x => x.S).Where(UnknownHarvestTag).Distinct(StringComparer.Ordinal).ToList();
+                        foreach (var t in bad) Errors.Add(where + ": unknown harvest tag " + t + ", not applied (the import knows " + KnownHarvestTagList + ")");
+                        if (ReportDuplicateTags(where, tags.A.Select(x => x.S)) || bad.Count > 0) continue;
+                        var entries = doc.A.Where(e => e.IsObj && e["id"] != null && e["id"].IsStr && e["id"].S == id).ToList();
+                        if (entries.Count != 1) { Errors.Add(where + " names " + (entries.Count == 0 ? "no entry" : entries.Count + " entries") + " of " + rel + ", not applied"); continue; }
+                        var entry = entries[0];
+                        if (entry["params"] == null) entry.Set("params", J.Obj());
+                        if (!entry["params"].IsObj) { Errors.Add(where + ": " + rel + " " + id + " params is not an object, not applied"); continue; }
+                        if (tags.A.Count > 0) entry["params"].Set("tags", J.Strs(tags.A.Select(x => x.S)));
+                        else entry["params"].Remove("tags"); // absent for a block without tags (docs/spec/import.md, Families)
+                    }
+                    if (doc != null) f.Bytes = new UTF8Encoding(false).GetBytes(doc.ToText());
+                }
                 // rename: {"<rel>": "<new rel>"}
-                if (ov["rename"] != null)
+                if (ov["rename"] != null && ov["rename"].IsObj)
                 {
                     foreach (var rel in ov["rename"].Keys)
                     {
                         GenFile f;
-                        if (!files.TryGetValue(rel, out f)) throw new Exception("override " + unit + ": rename source " + rel + " is not generated");
+                        if (!files.TryGetValue(rel, out f)) { Errors.Add("override " + unit + ": rename source " + rel + " is not generated"); continue; }
                         string to = ov["rename"][rel].AsString();
-                        if (files.ContainsKey(to)) throw new Exception("override " + unit + ": rename target " + to + " exists");
+                        if (to == null) { Errors.Add("override " + unit + ": rename " + rel + " to " + ov["rename"][rel].ToCompact() + ", not a path"); continue; }
+                        if (files.ContainsKey(to)) { Errors.Add("override " + unit + ": rename target " + to + " exists"); continue; }
                         files.Remove(rel);
                         f.Rel = to;
                         files[to] = f;
                     }
                 }
             }
+        }
+
+        static bool IsFamiliesData(string rel)
+        {
+            return rel.StartsWith("data/gf/families/", StringComparison.Ordinal) && rel.EndsWith(".json", StringComparison.Ordinal);
+        }
+
+        /// <summary>params.tags of every entry of a families data file, by id, as a set (sorted, distinct: a reorder or a
+        /// duplicated tag is no change; SyncFamilyTags reports a duplicate on its own); an entry without tags maps to "".
+        /// Entries without an id are left out (an error later).</summary>
+        static Dictionary<string, string> FamilyTagsById(J doc)
+        {
+            var r = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (doc == null || !doc.IsArr) return r;
+            foreach (var e in doc.A)
+            {
+                if (!e.IsObj || e["id"] == null || !e["id"].IsStr) continue;
+                var pt = e["params"] != null && e["params"].IsObj ? e["params"]["tags"] : null;
+                string v = pt == null ? "" : pt.IsArr && pt.A.All(x => x.IsStr)
+                    ? string.Join(",", pt.A.Select(x => x.S).Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal))
+                    : pt.ToCompact();
+                r[e["id"].S] = v; // a duplicated id keeps the last (FamilyEntries reports it)
+            }
+            return r;
         }
 
         public static Regex GlobRegex(string glob)

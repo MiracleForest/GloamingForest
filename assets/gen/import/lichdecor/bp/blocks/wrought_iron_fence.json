@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:wrought_iron_fence",
@@ -21,7 +21,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 100
       },
-      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:geometry": {
         "identifier": "geometry.tf.twilightforest.block.wrought_iron_fence.multipart",
         "bone_visibility": {

@@ -348,7 +348,7 @@ function Restart-Server([int]$BootTimeoutSeconds = 600) {
 
 # Every boot of this run (see Restart-Server); overrides common.ps1.
 function Get-ErrorLines {
-    @(@($script:PreviousLines) + @(Get-ServerLog) | Where-Object { $_ -match $script:ErrorLineRegex -or $_ -match $script:ContentErrorRegex })
+    @(Select-ErrorLines (@($script:PreviousLines) + @(Get-ServerLog)))
 }
 # Wait a number of seconds while echoing server output.
 function Wait-Seconds([double]$Seconds) {

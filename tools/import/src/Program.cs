@@ -49,8 +49,10 @@ namespace GfImport
             ctx.ImportFamilies();
             ctx.FlushFragments();
             ctx.ApplyOverrides();
+            ctx.SyncFamilyTags();         // a family block's skeleton tags follow its (overridden) params.tags
             ctx.CheckEmittedBlocks();     // states and variant rotations of the final BP block files
             ctx.CheckBehaviour();         // their behaviour values against tools/import/expected-behaviour.json
+            ctx.CheckSoundTypes();        // TF's sound types (rp/sounds.json.d) against the same golden
             ctx.ImportSkeletonIndex();    // the id list the import.* selftests check
             ctx.ImportHarvestIndex();     // the drop rule the runtime applies, tools and tiers for the selftests
             ctx.ImportKnownIndex();       // after every data file is final

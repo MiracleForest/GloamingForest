@@ -23,6 +23,16 @@
 #   fx-particles.png       TF's large_flame through gf::fx in front of the player: the client mod gets
 #                          fx.particle (F12's native sink first, else the resource pack effect), a
 #                          vanilla client the game's particle packets
+#   fx-portal.png          TF's portal particles (TFPortalBlock#animateTick, minecraft:portal) over a
+#                          3-block row ahead: specks rising above it and falling back onto it
+#                          (Java's PortalParticle path; Bedrock's portal_directional with
+#                          variable.direction, one block higher). Known deviation: Bedrock tints
+#                          them pink-magenta (f, 0.3f, 0.9f), Java blue-violet (0.9f, 0.3f, f)
+#   fx-vanilla.png         every Java particle type gf::fx maps, 3 blocks ahead; the content log must
+#                          hold no particle error (variables the effects read are all set)
+#   fx-legacy.png          left to right: red dust (legacy RedDust), purple dust (TrollsteinnBlock's
+#                          DustParticleOptions colour: falling_dust tinted), twilight oak log item particles (a block item's IconCrack),
+#                          still crits scattering, poofs rising (explosion_particle's -velocity * 10)
 #   missing-advancement-toast.png  TF's MissingAdvancementToast for progress_lich: the client mod's
 #                          toast through F12 (UPPER_TEXT and the title in white, the lich tower
 #                          miniature), the game's toast on a vanilla client
@@ -33,7 +43,7 @@ $ready = if ($script:Mode -eq 'local') { 'GloamingForest world ready' } else { '
 Wait-LogLine $ready 120 | Out-Null
 Save-Screenshot 'hud' | Out-Null
 
-foreach ($t in 'combat.loot_tf_functions', 'combat.loot_number_rounding', 'combat.loot_set_contents', 'combat.fx', 'combat.progression',
+foreach ($t in 'combat.loot_tf_functions', 'combat.loot_number_rounding', 'combat.loot_set_contents', 'combat.fx', 'combat.fx_effect_variables', 'combat.progression',
     'combat.missing_advancement', 'combat.damage_type_tags', 'combat.loot_tags') {
     $r = Invoke-SelfTest $t
     if ($r.Fail -gt 0) { throw "$t failed" }
@@ -144,6 +154,27 @@ if (Test-ClientTrace) {
 }
 Start-Sleep -Seconds 2 # the emitter runs from the next tick for 5 s; the chat that ran the test closes
 Save-Screenshot 'fx-particles' | Out-Null
+
+# TF's portal particles (5 s) and every mapped vanilla particle type (2 s). The game writes its
+# content log only as it closes, so a missing molang variable ("unable to find member variable",
+# "unhandled request for unknown variable": one error per particle frame) cannot be seen here; the
+# run checks the log after the game closed (Get-ContentLogProblems: any error fails the run), and
+# the selftest combat.fx_effect_variables checks the variables every mapped effect gets.
+$r = Invoke-SelfTest 'combat.ui_fx_portal'
+if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_fx_portal failed') }
+Start-Sleep -Seconds 2
+Save-Screenshot 'fx-portal' | Out-Null
+Start-Sleep -Seconds 4 # the portal emitter ends before the next one
+$r = Invoke-SelfTest 'combat.ui_fx_vanilla'
+if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_fx_vanilla failed') }
+Start-Sleep -Seconds 1
+Save-Screenshot 'fx-vanilla' | Out-Null
+Start-Sleep -Seconds 2
+$r = Invoke-SelfTest 'combat.ui_fx_legacy'
+if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_fx_legacy failed') }
+Start-Sleep -Seconds 1
+Save-Screenshot 'fx-legacy' | Out-Null
+Start-Sleep -Seconds 2
 
 # the missing advancement toast (shown 10 s; 600 ms slide in)
 $mark = Get-LogMark

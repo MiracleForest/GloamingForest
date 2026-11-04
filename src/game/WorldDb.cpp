@@ -2,6 +2,7 @@
 #include "game/WorldDb.h"
 
 #include <exception>
+#include <string>
 #include <vector>
 
 #include "ll/api/event/EventBus.h"
@@ -11,10 +12,12 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/world/level/Level.h"
+#include "mc/world/level/storage/LevelData.h"
 #include "mc/world/level/storage/LevelStorage.h"
 #include "mc/world/level/storage/db_helpers/Category.h"
 
 #include "core/Keys.h"
+#include "core/WorldLifecycle.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
@@ -29,27 +32,23 @@ LevelStorage* levelStorage() {
     return &level->getLevelStorage();
 }
 
-std::vector<std::function<void()>>& readyListeners() {
-    static std::vector<std::function<void()>> v;
-    return v;
-}
-std::vector<std::function<void()>>& saveListeners() {
-    static std::vector<std::function<void()>> v;
-    return v;
-}
-std::vector<std::function<void()>>& closedListeners() {
-    static std::vector<std::function<void()>> v;
-    return v;
-}
-
-void fire(std::vector<std::function<void()>> const& list, char const* what) {
-    for (auto const& fn : list) {
+/// The lifecycle rules (core/WorldLifecycle.h, gtested): ready, autosave and close listeners; no save
+/// listener runs while no world is open. A listener that throws is logged and the others still run.
+core::WorldLifecycle& lifecycle() {
+    static core::WorldLifecycle life(kAutosaveTicks, [](core::WorldLifecycle::Listener const& fn, char const* what) {
         try {
             fn();
         } catch (std::exception const& e) {
             log().error("world {} listener failed: {}", what, e.what());
         }
-    }
+    });
+    return life;
+}
+
+/// The name of the loaded level (its level.dat LevelName), "" without one.
+std::string levelName() {
+    auto level = ll::service::getLevel();
+    return level ? std::string(level->getLevelData().mLevelName.get()) : std::string();
 }
 } // namespace
 
@@ -104,9 +103,9 @@ void forEachKey(std::string const& prefix, std::function<void(std::string_view)>
     });
 }
 
-void onWorldReady(std::function<void()> fn) { readyListeners().push_back(std::move(fn)); }
-void onWorldSave(std::function<void()> fn) { saveListeners().push_back(std::move(fn)); }
-void onWorldClosed(std::function<void()> fn) { closedListeners().push_back(std::move(fn)); }
+void onWorldReady(std::function<void()> fn) { lifecycle().onReady(std::move(fn)); }
+void onWorldSave(std::function<void()> fn) { lifecycle().onSave(std::move(fn)); }
+void onWorldClosed(std::function<void()> fn) { lifecycle().onClosed(std::move(fn)); }
 
 class WorldDbModule {
 public:
@@ -115,37 +114,26 @@ public:
         // Client: every local world load. (BDS: already started when mods are enabled.)
         mListeners.push_back(bus.emplaceListener<ll::event::ServerStartedEvent>([](auto&) { ready(); }));
         if (available()) ready();
-        mListeners.push_back(bus.emplaceListener<ll::event::ServerStoppingEvent>([](auto&) { close(); }));
-        mListeners.push_back(bus.emplaceListener<ll::event::ServerLevelTickEvent>([this](auto&) {
-            if (++mTicks < kAutosaveTicks) return;
-            mTicks = 0;
-            fire(saveListeners(), "save");
-        }));
+        mListeners.push_back(bus.emplaceListener<ll::event::ServerStoppingEvent>([](auto&) { lifecycle().close(); }));
+        // Autosave; nothing once the world closed (BDS ticks on while the mods are disabled).
+        mListeners.push_back(bus.emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { lifecycle().tick(); }));
     }
     void uninstall() {
         auto& bus = ll::event::EventBus::getInstance();
         for (auto& l : mListeners) bus.removeListener(l);
         mListeners.clear();
-        close();
+        lifecycle().close(); // BDS: ServerStoppingEvent closed it already
     }
 
 private:
     static void ready() {
-        gOpen = true;
-        fire(readyListeners(), "ready");
+        lifecycle().open();
+        // e2e: the client harness checks that it entered its own test world (GF-Test)
+        log().info("world: level '{}' opened", levelName());
         log().info("GloamingForest world ready");
     }
-    static void close() {
-        if (!gOpen) return; // BDS: ServerStoppingEvent, then the mod is disabled with the level still alive
-        gOpen = false;
-        fire(saveListeners(), "save");
-        fire(closedListeners(), "closed");
-    }
-
-    static inline bool gOpen = false;
 
     std::vector<ll::event::ListenerPtr> mListeners;
-    int                                 mTicks = 0;
 };
 
 } // namespace gf::game::db

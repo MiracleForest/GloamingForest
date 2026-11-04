@@ -30,6 +30,8 @@
 
 #include "ll/api/coro/CoroTask.h"
 
+#include "mc/server/commands/CommandPermissionLevel.h"
+
 #include "core/GlobalPos.h"
 #include "mod/Registry.h"
 
@@ -56,6 +58,28 @@ struct BossEvent {
     int          color   = 0;   ///< BossBarColor (0 pink .. 7 rebecca purple / 8 colours)
     int          overlay = 0;   ///< BossBarOverlay
 };
+
+/// The outcome of `runServerCommand`.
+struct CommandResult {
+    bool        ok           = false; ///< the command succeeded at least once (its success count > 0)
+    int         successCount = 0;
+    std::string messages; ///< the output messages, ids and parameters ("id p1 p2; id2 ..."), for reports
+
+    explicit operator bool() const { return ok; }
+};
+
+/// Runs `command` (no leading '/') as the server, with an origin in dimension `dim` (ticking areas,
+/// `~` coordinates and `@` selectors resolve there) at `permission` (`Owner` by default; a lower
+/// level tests what a non-operator may run). Server thread only. The selftest framework's own
+/// commands (ticking areas) use it; units' selftests call it instead of keeping a copy. Its error
+/// replies are not logged as "Command error:" (they are in the result; the console never echoes them).
+///     auto r = gf::selftest::runServerCommand("tickingarea list", ctx.dimension());
+///     ctx.check(r.ok, "ticking areas listed: " + r.messages);
+CommandResult runServerCommand(
+    std::string const&     command,
+    int                    dim        = 0,
+    CommandPermissionLevel permission = CommandPermissionLevel::Owner
+);
 
 /// Records the boss bar packets sent to any player while it is alive (`Context::captureBossEvent`).
 class BossEventCapture {

@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:knightmetal_block",
@@ -14,8 +14,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 200
       },
-      "tag:minecraft:is_pickaxe_item_destructible": {},
-      "tag:minecraft:iron_tier_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:iron_tier_destructible"],
       "minecraft:map_color": "#a7a7a7",
       "minecraft:geometry": "geometry.tf.twilightforest.block.knightmetal_block",
       "minecraft:material_instances": {

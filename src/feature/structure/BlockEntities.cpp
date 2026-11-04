@@ -84,9 +84,7 @@
 #include "feature/ext/structure/HopperAccess.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/loot/Loot.h"
-// LootTable#fill (roll and spread with one random): F10 declares it here; F10 is asked to move it
-// into a contract extension header (the PR's notes for other units)
-#include "feature/loot/LootInternal.h"
+#include "feature/ext/combat/LootFill.h" // LootTable#fill (roll and spread with one random), F10's extension
 #include "feature/spawn/Spawn.h"
 #include "game/Blocks.h"
 #include "game/Items.h"

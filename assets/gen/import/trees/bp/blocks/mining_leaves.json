@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:mining_leaves",
@@ -18,10 +18,12 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 1
       },
-      "tag:minecraft:is_hoe_item_destructible": {},
-      "tag:minecraft:leaves": {},
-      "tag:minecraft:is_shears_item_destructible": {},
-      "tag:minecraft:is_sword_item_destructible": {},
+      "minecraft:tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ],
       "minecraft:map_color": "#007c00",
       "minecraft:flammable": {
         "catch_chance_modifier": 30,

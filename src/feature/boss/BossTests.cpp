@@ -45,7 +45,7 @@
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/inventory/Inventory.h"
-#include "feature/landmark/Internal.h" // F6's record store: entity.boss_conquest drops its forced start
+#include "feature/ext/landmark/LandmarkTest.h" // entity.boss_conquest's forced start (ScopedStart)
 #include "feature/landmark/Landmark.h"
 #include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
@@ -289,14 +289,6 @@ struct TriggerRecorder {
 
 namespace {
 
-/// Forgets the forced start of the conquest fixture at `center` in memory and in the world DB, as
-/// F6's own selftests do with theirs (landmark/Selftests.cpp dropStart): the landmark contract has
-/// no removal of a start yet, so the test reaches into F6's record store for its cleanup only.
-void dropConquestStart(core::GlobalPos const& center) {
-    gf::feature::landmark::eraseRecord(center.dim, center.x >> 4, center.z >> 4, kConquestLandmark);
-    gf::feature::landmark::flushRecords();
-}
-
 /// The item entities of `itemId` within `range` blocks of the block `pos` (removed; their count).
 int collectDrops(core::GlobalPos const& pos, std::string const& itemId, float range) {
     auto level = ll::service::getLevel();
@@ -340,14 +332,13 @@ GF_REGISTER_SELFTEST("entity.boss_conquest", [](Context& ctx) -> ll::coro::CoroT
     auto box    = co_await ctx.flatArea(5805, 12);
     auto center = ctx.testPos(5809, 3);
     auto home   = center.offset(0, 1, 0); // on the shell's floor
-    // the landmark start around the home point, fresh (forceStart would keep an old start's flag)
-    dropConquestStart(center);
-    struct DropStart {
-        core::GlobalPos at;
-        ~DropStart() { dropConquestStart(at); }
-    } dropStart{center};
-    auto forced = gf::landmark::forceStart(kConquestLandmark, center);
-    ctx.require(forced.has_value() && forced->generated, "forceStart made the fixture landmark");
+    // the landmark start around the home point, fresh: a forced start an aborted run of an older
+    // build left is dropped first (forceStart would keep its flag), then the scope forces one and
+    // removes it again when the test ends, also when it aborts (F6's LandmarkTest.h)
+    (void)gf::landmark::ext::forgetStartForTest(center, kConquestLandmark);
+    std::optional<gf::landmark::ext::ScopedStart> forced;
+    forced.emplace(kConquestLandmark, center);
+    ctx.require(*forced && (*forced)->generated, "forceStart made the fixture landmark");
     auto start = gf::landmark::startAt(home.dim, game::blockPos(home));
     ctx.require(start.has_value() && start->key == kConquestLandmark, "the home point is inside the landmark start");
     ctx.check(!gf::landmark::isConquered(*start), "the start is not conquered before the fight");
@@ -405,7 +396,7 @@ GF_REGISTER_SELFTEST("entity.boss_conquest", [](Context& ctx) -> ll::coro::CoroT
     if (auto* c = chestAt(*chest))
         for (int i = 0; i < c->getContainerSize(); ++i) c->setItem(i, game::items::empty());
     // the start is dropped when the test ends: nothing of it stays in the world
-    dropConquestStart(center);
+    forced.reset();
     ctx.check(!gf::landmark::startAt(home.dim, game::blockPos(home)).has_value(), "the forced start is gone again");
     (void)box;
 });

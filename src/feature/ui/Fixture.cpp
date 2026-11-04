@@ -24,6 +24,7 @@
 #include <filesystem>
 #include <map>
 #include <optional>
+#include <string_view>
 #include <unordered_map>
 
 #include "ll/api/command/CommandRegistrar.h"
@@ -34,6 +35,7 @@
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/server/commands/CommandPermissionLevel.h"
+#include "mc/server/SimulatedPlayer.h"
 #include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/player/Inventory.h"
@@ -78,8 +80,12 @@ std::atomic<int> gForms{0};
 
 Json screenData() {
     Json items = Json::object();
+    // flat items (0, 4, 8) and block items (2: a vanilla block, 6: a TF block): the client scenario
+    // checks the block items cover their slots (no sliver)
     if (auto s = game::items::make("minecraft:map")) items["0"] = game::items::toJson(*s);
+    if (auto s = game::items::make("minecraft:cobblestone")) items["2"] = game::items::toJson(*s); // one: no count over the icon
     if (auto s = game::items::make("minecraft:compass")) items["4"] = game::items::toJson(*s);
+    if (auto s = game::items::make("twilightforest:twilight_oak_planks")) items["6"] = game::items::toJson(*s);
     if (auto s = game::items::make("minecraft:oak_sapling", 3)) items["8"] = game::items::toJson(*s);
     return Json{{"clicks", gClicks.load()}, {"items", items}};
 }
@@ -372,6 +378,7 @@ int clearStage() {
         log().warn("ui fixture: the stage is not loaded; a later ui.fixture_clear restores it");
         return 0;
     }
+    removeNameTagPlayers();
     for (auto const& b : s.blocks) emptyFrame(*region, b.pos);
     for (auto const& b : s.blocks) {
         auto const* want = game::blockWithStates(b.id, b.states);
@@ -421,12 +428,67 @@ bool prepareStage(BlockSource& region, BlockPos const& origin) {
     if (!floor || !air) return false;
     // the fixture's own frames are emptied (nothing drops); a frame of the untouched world is left as
     // the game removes it (its item drops rather than vanishes: the snapshot keeps no block entities)
-    if (fixtureBlocks) forStageBox(origin, [&](BlockPos const& p) { emptyFrame(region, p); });
+    if (fixtureBlocks) {
+        removeNameTagPlayers();
+        forStageBox(origin, [&](BlockPos const& p) { emptyFrame(region, p); });
+    }
     forStageBox(origin, [&](BlockPos const& p) {
         auto const& want = p.y == origin.y - 1 ? *floor : *air;
         if (&region.getBlock(p) != &want) game::setBlock(region, p, want);
     });
     return true;
+}
+
+namespace {
+/// The simulated players of placeNameTagPlayers in the level named `name` (the game appends "(2)", ...
+/// to a name that is taken), or with either name when `name` is null.
+std::vector<SimulatedPlayer*> nameTagPlayers(char const* name = nullptr) {
+    std::vector<SimulatedPlayer*> out;
+    auto                          level = ll::service::getLevel();
+    if (!level) return out;
+    level->forEachPlayer([&out, name](Player& p) {
+        if (!p.isSimulated()) return true;
+        auto const& n = p.getRealName();
+        for (char const* want : {kHiddenNameTag, kShownNameTag}) {
+            if ((!name || std::string_view(name) == want) && n.starts_with(want)) {
+                out.push_back(static_cast<SimulatedPlayer*>(&p));
+                break;
+            }
+        }
+        return true;
+    });
+    return out;
+}
+} // namespace
+
+int placeNameTagPlayers(BlockSource& region, BlockPos const& origin) {
+    int n = 0;
+    // behind the stage's blocks (z + 4), their name tags above them (a player's name tag is always
+    // drawn, unlike a named mob's, which needs the crosshair on it): the client fixture hides the
+    // first one (render::hideNameTag) and leaves the second one drawn
+    std::pair<int, char const*> const players[] = {{-1, kHiddenNameTag}, {1, kShownNameTag}};
+    for (auto const& [dx, name] : players) {
+        Vec3 at{static_cast<float>(origin.x + dx) + .5f, static_cast<float>(origin.y), static_cast<float>(origin.z + 4) + .5f};
+        // one player per name: an earlier one is moved here (a disconnected one leaves only at the
+        // end of the tick, and a new player with its name would get another name)
+        auto existing = nameTagPlayers(name);
+        for (std::size_t i = 1; i < existing.size(); ++i) existing[i]->simulateDisconnect();
+        if (!existing.empty()) {
+            existing.front()->teleport(at, region.getDimensionId(), Vec2{0.f, 180.f});
+            ++n;
+        } else if (SimulatedPlayer::create(name, at, region.getDimensionId())) ++n;
+    }
+    log().info("ui fixture: {} named player(s) placed on the stage ('{}' hidden, '{}' shown)", n, kHiddenNameTag, kShownNameTag);
+    return n;
+}
+
+int removeNameTagPlayers() {
+    int n = 0;
+    for (auto* p : nameTagPlayers()) {
+        p->simulateDisconnect();
+        ++n;
+    }
+    return n;
 }
 
 std::size_t itemEntitiesNear(BlockSource& region, BlockPos const& origin, int radius) {

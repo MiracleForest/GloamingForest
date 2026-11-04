@@ -13,7 +13,6 @@
     "twilightforest:arctic_fur_block": {
       "tools": ["hoe"]
     },
-    "twilightforest:aurora_block": {},
     "twilightforest:aurora_pillar": {
       "tools": ["pickaxe"],
       "requiresTool": true

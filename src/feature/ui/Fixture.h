@@ -75,6 +75,16 @@ void discardStage();
 /// Empties the item frame at `pos` (ItemFrameBlockActor::onRemoved drops the framed item when the
 /// block is replaced); false when there is no frame or it holds nothing.
 bool emptyFrame(BlockSource& region, BlockPos const& pos);
+/// The names of the stage's simulated players (placeNameTagPlayers): the client fixture hides the
+/// first one's name tag (render::hideNameTag by type and predicate) and leaves the second one's drawn.
+inline constexpr char kHiddenNameTag[] = "GF_UI_hidden_tag";
+inline constexpr char kShownNameTag[]  = "GF_UI_shown_tag";
+/// Two simulated players at the south end of the stage (z + 4, x - 1 and x + 1), named kHiddenNameTag
+/// and kShownNameTag (a player's name tag is always drawn), facing north; returns how many are there
+/// (earlier ones are moved there).
+int placeNameTagPlayers(BlockSource& region, BlockPos const& origin);
+/// Disconnects those simulated players; clearStage and prepareStage do it too. Returns how many went.
+int removeNameTagPlayers();
 /// The item entities within `radius` blocks of `origin` (selftests: nothing dropped).
 [[nodiscard]] std::size_t itemEntitiesNear(BlockSource& region, BlockPos const& origin, int radius);
 

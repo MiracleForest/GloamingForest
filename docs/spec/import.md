@@ -38,7 +38,7 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 |---|---|---|
 | `textures` | 1197 PNG (+ `.mcmeta`) | `rp/textures/twilightforest/<tf path>.png`; atlas keys `tf_<path with _>` in `rp/terrain_texture.d`, `rp/item_texture.d`; animated block textures in `rp/flipbook_textures.d`; vanilla textures TF reuses as `tf_vanilla_<path>` keys pointing at the game's own files (never copied) |
 | `models` | 523 blockstates, 2984 generated + 123 hand models, a built-in library of the vanilla parent shapes they extend (`Models.cs`, `Vanilla`) | `rp/models/blocks/twilightforest/*.geo.json`: one geometry per element-defining model (`geometry.tf.<model id>`), shared by every block using it, material instances named after the Java texture variables; one geometry per multipart block (a bone per part, shown by Molang `bone_visibility`) |
-| `blockstates` | blockstates, the TF block classes (`createBlockStateDefinition`, `registerDefaultState`, `getLightEmission`), `TFBlocks.java` (class, strength, light, sound, map colour, collision, `requiresCorrectToolForDrops`), `RegistrationEvents.java` (`setFlammable`), the tool tags (`#minecraft:mineable/*`, `#minecraft:needs_*_tool`, `#minecraft:sword_efficient`, `#minecraft:leaves`) | `bp/blocks/<id>.json` (format 1.26.50; the family blocks, which F11's families kit rewrites, 1.21.80: see *Block format* below): states, permutations, `minecraft:geometry` / `material_instances` / `transformation`, collision and selection boxes from the model bounds, destructibility, tool and tier tags, light (per state where TF computes it), map colour, flammability, friction; `rp/blocks.d` sounds and `rp/sounds.json.d` TF's own sound types; [blockstates.md](blockstates.md) |
+| `blockstates` | blockstates, the TF block classes (`createBlockStateDefinition`, `registerDefaultState`, `getLightEmission`), `TFBlocks.java` (class, strength, light, sound, map colour, collision, `requiresCorrectToolForDrops`), `RegistrationEvents.java` (`setFlammable`), the tool tags (`#minecraft:mineable/*`, `#minecraft:needs_*_tool`, `#minecraft:sword_efficient`, `#minecraft:leaves`) | `bp/blocks/<id>.json` (format 1.26.50, the family blocks too: see *Block format* below): states, permutations, `minecraft:geometry` / `material_instances` / `transformation`, collision and selection boxes from the model bounds, destructibility, tool and tier tags, light (per state where TF computes it), map colour, flammability, friction; `rp/blocks.d` sounds and `rp/sounds.json.d` TF's own sound types; [blockstates.md](blockstates.md) |
 | `lang` | en_us (2061 keys) + 99 translations | `lang/<locale>/<unit>.json` (every TF key a locale translates; `gf::tr` falls back to en_US) and `rp/texts.d/<locale>/<unit>.lang` (the same keys for rawtext, plus the Bedrock names `tile.twilightforest:<id>.name`, `item.twilightforest:<id>.name`, `entity.twilightforest:<id>.name`, `item.spawn_egg.entity.twilightforest:<id>.name`, the creative group titles) for the 29 Bedrock locales (below); other TF locales (`en_ud`, ...) are dropped |
 | `tags` | 393 tag files (TF, minecraft, c, neoforge and compat namespaces) | `data/<ns>/tags/<registry>/<path>.json` of the tag owner (other namespaces: F1) |
 | `loot` | 634 loot tables, 2 loot modifiers, NeoForge's global modifier list | `data/<ns>/loot_table/**`, `data/<ns>/loot_modifiers/**` (TF functions and conditions kept by id for F10) |
@@ -187,9 +187,14 @@ Shared files get one owner by rule:
   per id; one file per owner of the blocks using the type, F1 when several units do): `block_sounds` break, place
   and hit, `interactive_sounds.block_sounds` step and fall, each with F3's event (`block.twilightforest.jar.*`) at the
   volume and pitch Java plays it for a type of volume v and pitch p (break and place (v + 1) / 2 at p x 0.8, hit
-  (v + 1) / 8 at p x 0.5, step v x 0.15 at p, fall v x 0.5 at p x 0.75); Bedrock's jump and land, which Java has no
-  sound of their own for, play the step and the fall. F11's family generator writes the same entries after the
-  merge (`tools/families/families.lua` `SOUND_TYPES`), identical, so the result does not depend on the order. Flammability: only the 180 blocks TF registers with
+  (v + 1) / 8 at p x 0.5, step v x 0.15 at p, fall v x 0.5 at p x 0.75, the fall only with fall damage). Bedrock's
+  jump and land events have no Java counterpart (Java plays no block sound for a jump, nor for a landing without
+  fall damage): they are written silent (`""`, as the `default` event), so no engine fallback plays a sound TF does
+  not. The fragment is checked on every run against the hand-written `soundTypes` of
+  `tools/import/expected-behaviour.json` (`Checks.CheckSoundTypes`: event names, volumes, pitches, silent events, the
+  blocks of each type), and the assembled `sounds.json` / `blocks.json` in game by `import.sound_types`, which
+  requires jump and land to be `""` there. The fragment is the type's only source: the families kit no longer
+  writes a copy of it (F11, W0d) and keeps an id's `blocks.json` sound when it has one. Flammability: only the 180 blocks TF registers with
   `FireBlock.setFlammable(block, encouragement, flammability)` (`RegistrationEvents.java`) get
   `minecraft:flammable` (`catch_chance_modifier` = encouragement, `destroy_chance_modifier` = flammability);
   `ignitedByLava` alone does not make a block burn in Java. Blocks not listed in a creative tab get
@@ -261,11 +266,11 @@ Shared files get one owner by rule:
   the item form `{"tags": [...]}` is refused, "expected an array"), refuses the older `"tag:<id>": {}` components
   ("not present in the Schema": the block does not load) and takes `minecraft:block_entity`; formats up to 1.26.10
   take only `"tag:<id>"` components (`minecraft:tags` is "not valid here") and refuse `minecraft:block_entity`. The
-  import writes every block the game loads as written in **1.26.50** with the `minecraft:tags` array. The family
-  blocks (the 347 of `data/gf/families`) are rewritten at assemble by F11's families kit, in its own format 1.26.0
-  (`tools/families/families.lua` `FORMAT`), from a copy of the skeleton or from its `"tag:"` components: their
-  skeleton is the kit's input, never loaded as written, and keeps 1.21.80 with `"tag:<id>"` components until the kit
-  no longer reads the skeleton's tag form (then `FamilyBlockFormat` becomes `BlockFormat`). The kit's format-free
+  import writes every block in **1.26.50** with the `minecraft:tags` array, the family blocks too
+  (`FamilyBlockFormat = BlockFormat` since W0d). The family blocks (the 347 of `data/gf/families`) are rewritten at
+  assemble by F11's families kit, in its own format 1.26.0 (`tools/families/families.lua` `FORMAT`), from a copy of
+  the skeleton: the kit drops both tag forms of the copy, so the skeleton's format and tag form do not reach it (the
+  assembled family blocks are the same JSON with either skeleton format). The kit's format-free
   input is the families data's `params.tags` (*Families* below): for a family block the kit writes in 1.26.50 (the
   chests, with `minecraft:block_entity` for F10's native container backend) they are its `minecraft:tags` array, for
   one in 1.26.0 its `"tag:<id>"` components. In the v1_26_20 schema a `bone_visibility`
@@ -321,8 +326,10 @@ trapped_chest, horizontal, directional, climbable for `LadderBlock`), else the b
 `connected_texture_block` loader). `params.tags` lists the block's Bedrock block tags (*Tools and drops* above:
 `minecraft:is_<tool>_item_destructible`, `minecraft:leaves`, the tier tag), free of the block format, so that the
 kit writes them in the form of whatever format it writes the block in (`minecraft:tags` array from 1.26.20,
-`"tag:<id>"` components up to 1.26.10, *Block format* above); absent for a block without tags. The import fails
-when a family block's `params.tags` and its skeleton file's tags differ (after the overrides).
+`"tag:<id>"` components up to 1.26.10, *Block format* above); absent for a block without tags. `params.tags` is the
+single source of a family block's tags: after the overrides, the skeleton file's tags are rewritten from it in the
+form of the file's format (`Ctx.SyncFamilyTags`, *Overrides* below), and the import fails when they still differ, when
+a family block has no entry, or when an id is listed twice (in one file or across units).
 
 ## Lang
 
@@ -350,12 +357,45 @@ the files are written or checked):
 {
   "drop":   ["bp/blocks/some_block.json", "rp/textures/twilightforest/block/unused_*.png"],
   "patch":  {"bp/blocks/naga_stone.json": [{"op": "replace", "path": "/minecraft:block/components/minecraft:light_emission", "value": 15}]},
-  "rename": {"rp/particles/x.json": "rp/particles/y.json"}
+  "rename": {"rp/particles/x.json": "rp/particles/y.json"},
+  "familyTags": {"twilightforest:twilight_oak_chest": ["minecraft:is_axe_item_destructible"]}
 }
 ```
 
 `drop` takes globs over the unit's generated paths, `patch` RFC 6902 operations `add` / `replace` / `remove` on a
-generated JSON file, `rename` moves a generated file. A patch or rename target that is not generated fails the run.
+generated JSON file, `rename` moves a generated file, `familyTags` sets the tags of a family block (below). A patch
+or rename target that is not generated fails the run.
+
+A family block's Bedrock block tags (tools, tier, `minecraft:leaves`) are overridden through its families entry
+only, by block id: `familyTags` maps a block id of the unit's `data/gf/families/<unit>.json` to its new tag list
+(applied after `patch`; an empty list removes `params.tags`, a block without tags). An id that is not exactly one entry
+of that file, a list that is not tag ids, a tag listed twice, or an unknown harvest tag (below) is an error, and that
+entry is not applied. The import writes the skeleton's tags from `params.tags` in the form of the skeleton's format
+(the `minecraft:tags` array of 1.26.50; `"tag:<id>"` components for a format before 1.26.20), so the override does
+not depend on the skeleton's format. A `patch` of a families data file that changes any entry's `params.tags` (the
+entries are an array, whose indices move when a regeneration adds an entry) is an error with the `familyTags` hint and
+is not applied, and a patch of a family block's skeleton tags (`bp/blocks/<id>.json` `tag:*` or `minecraft:tags`) is
+an error with the same hint.
+
+```json
+{"familyTags": {"twilightforest:twilight_oak_chest": ["minecraft:is_axe_item_destructible"]}}
+```
+
+A non-family block keeps its tags in its skeleton file only (patch `/minecraft:block/components/minecraft:tags`).
+
+For every block, family or not, `data/gf/import/harvest.json` lists the tools and tier of the Bedrock block tags of
+its final skeleton file (after the overrides and `Ctx.SyncFamilyTags`; `Ctx.FinalHarvest`), with TF's drop rule
+(`requiresCorrectToolForDrops`, which no tag carries), so the runtime's correct-tool flag and the `import.harvest_*`
+selftests always follow what the game reads. Tags are a set: a reorder is no change, and a tag listed twice (in a
+skeleton, in `params.tags` or in `familyTags`) is one error of its own. A `minecraft:` tag of a harvest tag's form
+(`..._item_destructible`, `..._tier_destructible`) that is not one of the import's tool or tier tags (*Tools and drops*
+above: `minecraft:is_{pickaxe,axe,shovel,hoe,sword,shears}_item_destructible`, `minecraft:leaves`,
+`minecraft:{stone,iron,diamond,netherite}_tier_destructible`; no TF block needs netherite, so harvest.json lists no
+tier for it) is an error: the game would ignore a misspelt one and the block would lose its tool. A warning names a
+block an override leaves without a pickaxe, axe, shovel or hoe tag while TF drops it only for a correct tool (it then
+never drops), and a tier tag without such a tool tag (no effect). Every override problem (an invalid file, a section
+of the wrong shape, an unknown section, a target that is not generated, a failing patch operation) is an
+`[import] error:` line, the faulty part is not applied, and the run reports them all before it fails.
 
 ## Determinism
 

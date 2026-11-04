@@ -4,11 +4,25 @@
 // The container is the inventory contract's (F10, spike S3: src/feature/inventory): tools/families
 // declares every chest family block as a container (data/gf/containers/families.json; a unit's own
 // declaration of the block wins), so the slots (each half its own 27), the screen (the client
-// mod's "inventory.chest"; on vanilla clients the game's chest screen through a proxy, a form for a
-// double chest), a double chest's 54 slots (ChestBlock#combine: the right half first), the open /
-// close sounds, the opening stat (TrappedChestBlock: trigger_trapped_chest), the comparator output,
-// the blocked rule (a redstone conductor or a sitting cat above), loot tables (LootTable#fill on the
-// first access) and the contents a broken half drops are F10's.
+// mod's "inventory.chest"; on vanilla clients the game's chest screen through a proxy, the game's
+// large chest screen for a double chest), a double chest's 54 slots (ChestBlock#combine: the right
+// half first), the open / close sounds, the opening stat (TrappedChestBlock: trigger_trapped_chest),
+// the comparator output, the blocked rule (a redstone conductor or a sitting cat above), loot tables
+// (LootTable#fill on the first access) and the contents a broken half drops are F10's.
+// The slots are F10's native backend: tools/families gives the chests minecraft:block_entity
+// (format 1.26.50, spike S7), so each half has a data-driven block actor holding a game container,
+// saved with its chunk; Hoppers.cpp shows that container to hoppers, hopper minecarts and droppers.
+// A chest saved without its block actor gets one, and stacks still in block data (placed while the
+// chests had no block actor) move into its container (migrateChest, through F10's
+// feature/ext/combat/InventoryMigrate.h), at the end of the tick its chunk loaded (ticking or not:
+// the game's block actor chunk listener tells, BlockActorLevelListener::onChunkLoaded), in its
+// chunk's first tick or a neighbouring chunk's (chunks loaded before the mod), before a hopper
+// reads it (into the block actor it has: none is made while the game iterates block actors) and on
+// the tick after a player opens it (no block actor is made inside the click). Until then the
+// inventory contract reads the waiting stacks itself (its screens and its comparator output show
+// each where a move would put it), and its first write moves them. Broken before that, it loses
+// nothing: F10 drops its block data stacks with the block (blockdata::onErase) and the block
+// actor's own (families.chest_migrate_removed).
 // This file keeps what the chest block itself does:
 // - facing and type on placement (ChestBlock#getStateForPlacement) and when a neighbour changes
 //   (ChestBlock#updateShape): the pairs F10's screens follow;
@@ -22,22 +36,41 @@
 // first tick.
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
+#include <exception>
 #include <map>
+#include <mutex>
+#include <set>
+#include <tuple>
 #include <vector>
 
+#include "ll/api/memory/Hook.h"
+
+#include "mc/world/Container.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/item/ItemStack.h"
+#include "mc/world/level/BlockActorLevelListener.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/ChunkPos.h"
+#include "mc/world/level/ILevel.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockType.h"
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/VanillaBlockActorFactory.h"
 #include "mc/world/level/chunk/LevelChunk.h"
+#include "mc/world/level/dimension/Dimension.h"
 
 #include "feature/common/Interactions.h"
+#include "feature/ext/combat/InventoryMigrate.h"
 #include "feature/ext/combat/InventoryViewers.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/families/Families.h"
+#include "feature/inventory/InventoryInternal.h"
+#include "feature/net/Net.h"
 #include "game/Blocks.h"
+#include "game/Items.h"
 #include "mod/Log.h"
 
 namespace gf::feature::families {
@@ -157,15 +190,188 @@ void tickLids() {
     }
 }
 
-/// A chunk's first tick after it loaded: nobody is inside its chests yet, so a lid or a trapped
-/// chest's signal left up (saved while open) goes down.
+/// The chests of `chunk`.
+std::vector<BlockPos> chestsIn(BlockSource& region, LevelChunk& chunk) {
+    std::vector<BlockPos> chests;
+    detail::forEachInChunk(region, chunk, [](BlockType const& t) { return isChest(entryOf(t)); }, [&](BlockPos const& p, Block const&) { chests.push_back(p); });
+    return chests;
+}
+
+/// The chunks (dimension, x, z) whose chests a neighbour's first tick settled in this world: every
+/// chest of theirs has its block actor and no stacks in block data. A chunk with a chest left
+/// waiting (no block actor yet: F10 reads its block data meanwhile) is not one of them, so the next
+/// first tick of one of its neighbours tries again. Bounded (kMaxNeighbourSettled): forgetting a
+/// chunk only means its chests are looked at again (settling is idempotent).
+constexpr std::size_t kMaxNeighbourSettled = 4096;
+std::set<std::tuple<int, int, int>>& neighbourSettled() {
+    static std::set<std::tuple<int, int, int>> s;
+    return s;
+}
+
+/// Whether the chest at `pos` still waits for migrateChest: no block actor (native container) yet,
+/// or stacks in block data (F10's feature/ext/combat/InventoryMigrate.h).
+bool unsettled(BlockSource& region, BlockPos const& pos) {
+    // (a chest block whose type declares no block actor, e.g. a hand-made file without
+    // minecraft:block_entity, keeps F10's BlockData backend: nothing to settle)
+    if (!inventory::nativeContainer(region, pos)) return region.getBlock(pos).getBlockType().getBlockEntityType() != BlockActorType::Undefined;
+    return inventory::ext::hasBlockDataStacks(game::globalPos(region, pos));
+}
+
+/// The chests of chunk (cx, cz) that wait for migrateChest (the chunk's sections whose palette holds
+/// no chest are skipped: a chunk without chests loads no block data).
+std::vector<BlockPos> chestsWaitingIn(BlockSource& region, int cx, int cz) {
+    auto* chunk = region.getChunk(cx, cz);
+    if (!chunk) return {};
+    auto out = chestsIn(region, *chunk);
+    std::erase_if(out, [&](BlockPos const& p) { return !unsettled(region, p); });
+    return out;
+}
+
+/// Moves the block data stacks of the chests of chunk (cx, cz) into their block actors (made
+/// first with `makeActor`); the stacks moved and whether a chest still waits.
+std::pair<int, bool> settleChestsOf(BlockSource& region, int cx, int cz, bool makeActor) {
+    int  moved   = 0;
+    bool waiting = false;
+    for (auto const& p : chestsWaitingIn(region, cx, cz)) {
+        moved += migrateChest(region, p, makeActor);
+        waiting = waiting || unsettled(region, p);
+    }
+    return {moved, waiting};
+}
+
+/// The loaded chunks around (cx, cz) (that chunk excepted); `once`: only those not settled yet.
+int settleAround(BlockSource& region, int cx, int cz, bool once) {
+    int dim   = static_cast<int>(region.getDimensionId());
+    int moved = 0;
+    for (int dx = -1; dx <= 1; ++dx)
+        for (int dz = -1; dz <= 1; ++dz) {
+            if (dx == 0 && dz == 0) continue;
+            auto key = std::make_tuple(dim, cx + dx, cz + dz);
+            if (once && neighbourSettled().contains(key)) continue;
+            if (!region.areChunksFullyLoaded(BlockPos{(cx + dx) * 16 + 8, 0, (cz + dz) * 16 + 8}, 0)) continue;
+            auto [n, waiting] = settleChestsOf(region, cx + dx, cz + dz, false);
+            moved += n;
+            if (!waiting) {
+                if (neighbourSettled().size() >= kMaxNeighbourSettled) neighbourSettled().clear();
+                neighbourSettled().insert(key);
+            }
+        }
+    return moved;
+}
+
+// ---- chunks that load (BlockActorLevelListener::onChunkLoaded) --------------------------------------
+
+using ChunkKey = std::tuple<int, int, int>; ///< (dimension, x, z)
+
+/// The chunks the game loaded since the last tick (the hook may run off the server thread: only
+/// noted here, settled in the tick).
+struct LoadedChunks {
+    std::mutex             mutex;
+    std::vector<ChunkKey>  noted;
+    std::atomic<long long> seen{0}; ///< chunk loads noted (selftests)
+};
+LoadedChunks& loadedChunks() {
+    static LoadedChunks l;
+    return l;
+}
+
+/// A loaded chunk that waits to be settled (server thread only).
+struct PendingChunk {
+    std::int64_t since   = 0; ///< families::now() of the tick that heard its (last) load
+    std::int64_t nextDue = 0; ///< the tick it is tried again
+};
+struct PendingChunks {
+    std::map<ChunkKey, PendingChunk> chunks;
+    bool                             warned = false; ///< the overflow was logged in this world
+};
+PendingChunks& pendingChunks() {
+    static PendingChunks p;
+    return p;
+}
+
+/// The chunks loaded since the last tick: their chests with stacks still in block data get their
+/// block actor (if the chunk was saved without it) and the stacks, at once, whether the chunk ticks
+/// or not (beyond the simulation distance a chunk is loaded without ticking, while a comparator or a
+/// hopper next to it, or any code through the inventory contract, reads its chests). A chunk not
+/// fully loaded yet is tried again every tick for kFastRetryTicks, then once every kSlowRetryTicks
+/// for as long as the game keeps it loaded (one that unloads is noted again when it loads again; a
+/// new load of a chunk that still waits starts its fast retry again).
+constexpr std::int64_t kFastRetryTicks  = 100;
+constexpr std::int64_t kSlowRetryTicks  = 20;
+constexpr std::size_t  kMaxLoadedChunks = 16384;
+void settleLoadedChunks() {
+    std::vector<ChunkKey> noted;
+    {
+        auto&           l = loadedChunks();
+        std::lock_guard lock(l.mutex);
+        noted.swap(l.noted);
+    }
+    auto& pending = pendingChunks();
+    auto  now     = families::now();
+    for (auto const& k : noted) pending.chunks[k] = PendingChunk{now, now};
+    if (pending.chunks.empty()) return;
+    for (auto it = pending.chunks.begin(); it != pending.chunks.end();) {
+        auto& c = it->second;
+        if (c.nextDue > now) { // (waiting for its next retry: costs one comparison)
+            ++it;
+            continue;
+        }
+        auto [dim, cx, cz] = it->first;
+        auto age           = now - c.since;
+        auto region        = regionOf(dim);
+        // the slow retry: dropped once the chunk is gone (or its dimension never got a region)
+        if (age >= kFastRetryTicks && (!region || !region->getChunk(cx, cz))) {
+            it = pending.chunks.erase(it);
+            continue;
+        }
+        // (no region for the dimension yet, or the chunk not fully loaded: tried again)
+        if (!region || !region->areChunksFullyLoaded(BlockPos{cx * 16 + 8, 0, cz * 16 + 8}, 0)) {
+            c.nextDue = now + (age < kFastRetryTicks ? 1 : kSlowRetryTicks);
+            ++it;
+            continue;
+        }
+        (void)settleChestsOf(*region, cx, cz, true);
+        it = pending.chunks.erase(it);
+    }
+    if (pending.chunks.size() <= kMaxLoadedChunks) return;
+    // the oldest are left to their first tick (or a neighbour's): logged once a world
+    auto excess = pending.chunks.size() - kMaxLoadedChunks;
+    if (!pending.warned) {
+        pending.warned = true;
+        log().warn("families: {} loaded chunks still wait to be settled, the oldest {} are left to their first tick", pending.chunks.size(), excess);
+    }
+    std::vector<std::pair<std::int64_t, ChunkKey>> bySince;
+    bySince.reserve(pending.chunks.size());
+    for (auto const& [k, c] : pending.chunks) bySince.emplace_back(c.since, k);
+    std::nth_element(bySince.begin(), bySince.begin() + static_cast<std::ptrdiff_t>(excess), bySince.end());
+    for (std::size_t i = 0; i < excess; ++i) pending.chunks.erase(bySince[i].second);
+}
+// ---- a hopper's or a comparator's read -------------------------------------------------------------------
+
+/// The halves settled this tick (settleForAccess).
+struct AccessMemo {
+    std::int64_t        tick = -1;
+    std::set<GlobalPos> settled;
+};
+AccessMemo& accessMemo() {
+    static AccessMemo m;
+    return m;
+}
+
+/// A chunk's first tick after it loaded: a chest whose stacks are still in block data moves them
+/// into its block actor (migrateChest); nobody is inside its chests yet, so a lid or a trapped
+/// chest's signal left up (saved while open) goes down. The loaded chunks around it (loaded before
+/// the mod heard chunks load, they may not tick) have their chests' block data stacks moved too (into
+/// a block actor the chunk already has: none is made there).
 void settleChunk(BlockSource& region, LevelChunk& chunk) {
-    int                                           dim = static_cast<int>(region.getDimensionId());
-    std::vector<std::pair<BlockPos, Block const*>> up;
-    detail::forEachInChunk(region, chunk, [](BlockType const& t) { return isChest(entryOf(t)); }, [&](BlockPos const& p, Block const& b) {
-        if (intState(b, state::Lid).value_or(0) > 0 || intState(b, state::OpenCount).value_or(0) > 0) up.emplace_back(p, &b);
-    });
-    for (auto const& [p, b] : up) {
+    int            dim = static_cast<int>(region.getDimensionId());
+    ChunkPos const cp  = chunk.mPosition;
+    settleAround(region, cp.x, cp.z, true);
+    for (auto const& p : chestsIn(region, chunk)) {
+        migrateChest(region, p);
+        Block const* b = blockAt(region, p);
+        if (!b || !isChest(entryOf(*b))) continue;
+        if (intState(*b, state::Lid).value_or(0) == 0 && intState(*b, state::OpenCount).value_or(0) == 0) continue;
         auto gp = game::globalPos(dim, p);
         if (lids().contains(gp) || inventory::viewers(gp) > 0) continue;
         if (intState(*b, state::OpenCount).value_or(0) > 0) setStates(region, p, {{state::OpenCount, 0}});
@@ -174,6 +380,97 @@ void settleChunk(BlockSource& region, LevelChunk& chunk) {
 }
 
 } // namespace
+
+int migrateChest(BlockSource& region, BlockPos const& pos, bool makeActor) {
+    Block const* b = blockAt(region, pos);
+    if (!b || !isChest(entryOf(*b))) return 0;
+    auto gp = game::globalPos(region, pos);
+    if (!inventory::nativeContainer(region, pos)) {
+        // the chunk was saved without the chest's block actor (the chests had none then; a state
+        // change of the block does not make one): the game's factory makes the one its type
+        // declares (with the inventory contract's container) and the chunk takes it
+        if (!makeActor || region.getBlockEntity(pos) || b->getBlockType().getBlockEntityType() == BlockActorType::Undefined) return 0;
+        auto* chunk = region.getChunkAt(pos);
+        if (!chunk) return 0;
+        if (auto actor = VanillaBlockActorFactory::createBlockActor(pos, b->getBlockType()); actor && actor->getType() == BlockActorType::DataDriven) {
+            chunk->_placeBlockEntity(actor);
+            region.fireBlockEntityChanged(*actor); // saved with the chunk
+        }
+        if (!inventory::nativeContainer(region, pos)) return 0; // F10 keeps reading its block data
+        log().info("families: the chest at {} {} {} got its block actor", pos.x, pos.y, pos.z);
+    }
+    if (!inventory::ext::hasBlockDataStacks(gp)) return 0;
+    // F10's move: each stack into its own slot when that is empty, else the first empty one; the
+    // block data keeps what is not a slot (a pending loot table)
+    if (makeActor) return inventory::ext::migrateBlockDataToNative(gp, true);
+    // the lazy move (a hopper's look, maybe inside the game's block actor ticks): only when every
+    // stack finds an empty slot; one that would drop waits for the end of the tick
+    int moved = inventory::ext::migrateBlockDataToNative(gp, false);
+    if (moved == 0 && inventory::ext::hasBlockDataStacks(gp))
+        defer([gp] {
+            if (auto* r = regionOf(gp.dim)) migrateChest(*r, game::blockPos(gp));
+        });
+    return moved;
+}
+
+int detail::settleNeighbourChests(BlockSource& region, int cx, int cz) { return settleAround(region, cx, cz, false); }
+
+void detail::settleForAccess(BlockSource& region, GlobalPos const& pos) {
+    auto& memo = accessMemo();
+    if (auto now = families::now(); memo.tick != now) {
+        memo.tick = now;
+        memo.settled.clear();
+    }
+    if (!memo.settled.insert(pos).second) return;
+    auto bp = game::blockPos(pos);
+    // a half saved without its block actor (a chunk loaded but not settled yet): no block actor is
+    // made inside the game's hopper or comparator code; it gets one at the end of the tick, so the
+    // double chest's halves join the hoppers' 54-slot view from the next tick on
+    if (!inventory::nativeContainer(region, bp)) {
+        // (a block actor of another kind there gets no container: nothing to defer)
+        if (!region.getBlockEntity(bp) && unsettled(region, bp))
+            defer([pos] {
+                if (auto* r = regionOf(pos.dim)) migrateChest(*r, game::blockPos(pos), true);
+            });
+    } else if (inventory::ext::hasBlockDataStacks(pos)) migrateChest(region, bp, false);
+    if (inventory::pendingLoot(pos)) inventory::unpackLoot(pos, nullptr);
+}
+
+void detail::chunkLoaded(int dim, int cx, int cz) {
+    auto&           l = loadedChunks();
+    std::lock_guard lock(l.mutex);
+    l.noted.emplace_back(dim, cx, cz); // (the tick is noted on the server thread)
+    ++l.seen;
+}
+
+void detail::forgetLoadedChunk(int dim, int cx, int cz) {
+    auto key = std::make_tuple(dim, cx, cz);
+    {
+        auto&           l = loadedChunks();
+        std::lock_guard lock(l.mutex);
+        std::erase(l.noted, key);
+    }
+    pendingChunks().chunks.erase(key);
+}
+
+void detail::settleWithoutActor(BlockSource& region, BlockPos const& pos) {
+    // (the cheap test first: a hopper looks at many blocks that have no container)
+    Block const& b = region.getBlock(pos);
+    if (b.getBlockType().getBlockEntityType() == BlockActorType::Undefined || !isChest(entryOf(b))) return;
+    // Java's ChestBlock#getContainer reaches both halves from either: the half looked at and its
+    // partner settle the way settleForAccess does it from the half that has a block actor
+    detail::settleForAccess(region, game::globalPos(region, pos));
+    if (auto other = chestPartner(region, pos)) detail::settleForAccess(region, game::globalPos(region, *other));
+}
+
+long long detail::chunkLoadsSeen() { return loadedChunks().seen.load(); }
+
+void detail::settleLoadedChunksNow() { settleLoadedChunks(); }
+
+std::optional<BlockPos> chestPairingNeighbour(Block const& block, BlockPos const& pos) {
+    if (!isChest(entryOf(block)) || typeOf(block) == "single") return std::nullopt;
+    return offset(pos, connectedDirection(block));
+}
 
 std::optional<BlockPos> chestPartner(BlockSource& region, BlockPos const& pos) {
     Block const* b = blockAt(region, pos);
@@ -216,17 +513,80 @@ void placeChest(ia::PlaceContext const& c) {
     pairChest(*region, game::blockPos(c.pos), opposite(lookDir(c.player)), c.sneaking, c.face);
     if (auto const* b = blockAt(*region, game::blockPos(c.pos))) log().info("families: {} placed at {} {} {} ({})", c.blockId, c.pos.x, c.pos.y, c.pos.z, typeOf(*b));
 }
-void chestsTick(int) { tickLids(); }
-void clearChests() { lids().clear(); }
+void chestsTick(int) {
+    settleLoadedChunks();
+    tickLids();
+}
+void clearChests() {
+    lids().clear();
+    neighbourSettled().clear();
+    accessMemo()    = AccessMemo{};
+    pendingChunks() = PendingChunks{};
+    auto&           l = loadedChunks();
+    std::lock_guard lock(l.mutex);
+    l.noted.clear();
+}
 } // namespace detail
 
+namespace {
+
+/// A click on a chest: a half saved without its block actor, or whose stacks still wait in block
+/// data, is settled on the next tick (no block actor is made and nothing moves inside
+/// GameMode::useItemOn). Meanwhile the screen the inventory contract's own use handler opens for the
+/// click shows the waiting stacks itself (F10's BlockData backend without a block actor, else the
+/// native container with each waiting stack where the move puts it) and follows the move once it
+/// happens (feature/ext/combat/InventoryChanges.h).
+ia::Result useChest(ia::UseOnContext const& c) {
+    if (!c.firstEvent || c.offhand) return ia::Result::Pass;
+    auto* region = regionOf(c.pos.dim);
+    if (!region) return ia::Result::Pass;
+    auto parts = inventory::partsOf(c.pos);
+    if (std::any_of(parts.begin(), parts.end(), [&](GlobalPos const& p) { return unsettled(*region, game::blockPos(p)); }))
+        ia::nextTick([parts] {
+            for (auto const& p : parts)
+                if (auto* r = regionOf(p.dim)) migrateChest(*r, game::blockPos(p));
+        });
+    return ia::Result::Pass;
+}
+
+} // namespace
+
+} // namespace gf::feature::families
+
+// The game's block actor chunk listener hears every chunk that loads (BlockActor::onChunkLoaded of
+// its block actors, ticking or not): the server's are noted for settleLoadedChunks.
+LL_TYPE_INSTANCE_HOOK(
+    FamiliesChunkLoadedHook,
+    ll::memory::HookPriority::Normal,
+    BlockActorLevelListener,
+    &BlockActorLevelListener::$onChunkLoaded,
+    void,
+    ChunkSource& source,
+    LevelChunk&  lc
+) {
+    origin(source, lc);
+    try {
+        ILevel& level = lc.mLevel;
+        if (level.isClientSide()) return;
+        Dimension&     dimension = lc.mDimension;
+        ChunkPos const cp        = lc.mPosition;
+        gf::feature::families::detail::chunkLoaded(static_cast<int>(dimension.getDimensionId()), cp.x, cp.z);
+    } catch (...) {
+        // (a chunk not noted is settled by its first tick or a neighbour's)
+    }
+}
+
+namespace gf::feature::families {
+
 void installChests() {
+    FamiliesChunkLoadedHook::hook();
     static bool registered = false;
     if (registered) return;
     registered = true;
     for (auto family : {Family::Chest, Family::TrappedChest}) {
         for (auto const* e : entriesOf(family)) {
             inventory::onViewersChanged(e->id, viewersChanged);
+            ia::onUseOn({.block = e->id}, useChest, ia::priority::High);
             blockevents::onNeighborChanged(e->id, [](BlockSource& region, BlockPos const& pos, BlockPos const& from) {
                 for (int d : kHorizontal) {
                     BlockPos n = offset(pos, d);
@@ -238,6 +598,9 @@ void installChests() {
     detail::onChunkLoaded(settleChunk);
 }
 
-void uninstallChests() { detail::clearChests(); }
+void uninstallChests() {
+    FamiliesChunkLoadedHook::unhook();
+    detail::clearChests();
+}
 
 } // namespace gf::feature::families

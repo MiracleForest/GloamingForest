@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:potted_green_thorn",
