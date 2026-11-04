@@ -22,6 +22,9 @@ namespace gf::feature::item::data {
 /// `<mod dir>/data` (an override for selftests: `setRoot`).
 [[nodiscard]] std::filesystem::path root();
 void                                setRoot(std::filesystem::path dir);
+/// Whether a selftest's override is set (the tag runtime then publishes nothing: the test reads its
+/// tags through a private tags::internal::ScopedSnapshot, other threads keep the mod's tags).
+[[nodiscard]] bool rootOverridden();
 
 struct File {
     std::string           ns;   ///< "twilightforest"
@@ -33,6 +36,8 @@ struct File {
 
 /// Every JSON file below `data/<ns>/<dir>/` for every namespace, sorted by namespace and path.
 [[nodiscard]] std::vector<File> list(std::string_view dir);
+/// The same below another data tree (`base` in place of `root()`: selftests' private trees).
+[[nodiscard]] std::vector<File> list(std::string_view dir, std::filesystem::path const& base);
 /// The file parsed (null with one warning when it is not valid JSON).
 [[nodiscard]] nlohmann::json read(std::filesystem::path const& file);
 
