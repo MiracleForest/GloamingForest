@@ -90,6 +90,20 @@ struct PortalProcessView {
     bool preloaded  = false;
 };
 [[nodiscard]] PortalProcessView portalProcessOf(Actor const& actor);
+/// Entity#canUsePortal(false) as TFPortalBlock#entityInside and Entity#handlePortal ask it: alive,
+/// riding nothing, of a kind that goes through portals, and the actor's own answer whether or not
+/// something rides it (Actor::canChangeDimensionsUsingPortal: F8's refusals of TF's bosses, parts
+/// and marked types, then the engine's).
+[[nodiscard]] bool canUsePortal(Actor& actor);
+/// The portal's own decisions about one watched actor (tests): how often TFPortalBlock#entityInside
+/// and Entity#handlePortal asked canUsePortal while it was in a portal, and how often the answer
+/// was no, in all and while something rode the actor.
+struct PortalDecisions {
+    int asked = 0, refused = 0, askedRidden = 0, refusedRidden = 0;
+};
+/// Watches the actor with this unique id (0: none) from zero.
+void watchPortalDecisions(std::int64_t id);
+[[nodiscard]] PortalDecisions portalDecisions();
 /// Entity#setPortalCooldown with a given length (tests: an entity on cooldown that stays in a
 /// portal never goes through it, its cooldown starts again every tick it is inside).
 void setPortalCooldown(Actor& actor, int ticks);

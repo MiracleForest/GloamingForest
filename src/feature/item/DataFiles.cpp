@@ -29,11 +29,14 @@ std::filesystem::path root() {
 
 void setRoot(std::filesystem::path dir) { rootOverride() = std::move(dir); }
 
-std::vector<File> list(std::string_view dir) {
+bool rootOverridden() { return !rootOverride().empty(); }
+
+std::vector<File> list(std::string_view dir) { return list(dir, root()); }
+
+std::vector<File> list(std::string_view dir, std::filesystem::path const& base) {
     namespace fs = std::filesystem;
     std::vector<File> out;
     std::error_code   ec;
-    auto              base = root();
     for (auto const& nsEntry : fs::directory_iterator(base, ec)) {
         if (!nsEntry.is_directory()) continue;
         auto ns  = nsEntry.path().filename().string();

@@ -1,0 +1,7 @@
+## F9 (item): the material names of the spike S6 trim probes (src/feature/item/SpikeTests.cpp), which
+## only development builds register. Bedrock names a trim material trim_material.<id>.name. These three
+## strings ship in release packs too, unused there (texts.d/<locale>/item.lang is F9's; the test pack
+## assets/test is F0's): three dead lines, kept on purpose so the probes' tooltips read in every build.
+trim_material.iron_darker.name=Darker Iron
+trim_material.gold_darker.name=Darker Gold
+trim_material.gf_test_trim.name=Fixture

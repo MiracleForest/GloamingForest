@@ -643,6 +643,35 @@ local function check_owners(projectdir, cfg, owners)
     return count
 end
 
+-- Lang keys with an owner (the lang rows of owners.tsv: TF's keys by import partition, plus the
+-- vanilla keys a unit defines, e.g. F11's container.chest) may be defined in assets/lang only by
+-- that owner's file (assets/lang/<locale>/<u>.json): rule R9. Keys without a row are the unit's own
+-- mod strings. Returns the number of owned keys checked.
+local function check_lang_owners(projectdir, owners)
+    local keys = owners.kinds["lang"] or {}
+    local count = 0
+    local dir = path.join(projectdir, "assets", "lang")
+    if not os.isdir(dir) then return 0 end
+    for _, file in ipairs(os.files(path.join(dir, "*", "*.json"))) do
+        local r = rel(file, projectdir)
+        local fileowner = owner_of(owners, r)
+        local doc = load_json(file)
+        if type(doc) == "table" then
+            for k, _ in json_pairs(doc) do
+                local keyowner = keys[k]
+                if keyowner then
+                    count = count + 1
+                    if keyowner ~= fileowner then
+                        fail("lang key '%s' in %s belongs to %s (docs/spec/owners.tsv), not to the file's owner %s: use tr(key, fallback) instead of defining it (R9)",
+                            k, r, keyowner, fileowner or "(none)")
+                    end
+                end
+            end
+        end
+    end
+    return count
+end
+
 -- ---- dangling references -----------------------------------------------------------------------------
 --
 -- Known ids are kept per kind: known[kind][id]. Kinds: block, item (blocks, block items and spawn
@@ -1327,12 +1356,13 @@ local function assemble_content(projectdir, outdir, version)
     local permutations = check_blocks(bpdirs, cfg)
     local owners = load_owners(projectdir, cfg)
     local owned = check_owners(projectdir, cfg, owners)
+    local langkeys = check_lang_owners(projectdir, owners)
     local reviewed = load_reviewed(projectdir, cfg)
     local refs = check_dangling(alljsons, known_ids(bpdirs, outdir, owners, reviewed), cfg, path.join(outdir, "data"), reviewed)
     local scanned = check_arr(projectdir, cfg)
     report(outdir)
-    return string.format("%d block permutations, %s, %d owned files, %d references (%d warning(s)), %d files hash-checked",
-        permutations, families_summary, owned, refs, #warnings, scanned)
+    return string.format("%d block permutations, %s, %d owned files, %d owned lang keys, %d references (%d warning(s)), %d files hash-checked",
+        permutations, families_summary, owned, langkeys, refs, #warnings, scanned)
 end
 
 function main(target, target_type)

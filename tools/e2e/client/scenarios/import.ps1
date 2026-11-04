@@ -16,7 +16,7 @@ if (-not $remote) {
     $r = Invoke-SelfTest 'import.*' -TimeoutSeconds 900
     if ($r.Fail -gt 0) { throw "$($r.Fail) import selftest(s) failed" }
     $expected = @('import.blocks', 'import.items', 'import.entities', 'import.lang_and_data', 'import.java_states',
-        'import.rotations', 'import.light', 'import.behaviour', 'import.bool_defaults', 'import.place_blocks',
+        'import.rotations', 'import.light', 'import.behaviour', 'import.sound_types', 'import.bool_defaults', 'import.place_blocks',
         'import.harvest_tags', 'import.harvest_mining', 'import.harvest_drops')
     $missing = @($expected | Where-Object { $r.Passed -notcontains $_ })
     if ($missing.Count -gt 0) { throw "import selftest(s) did not pass: $($missing -join ', ')" }

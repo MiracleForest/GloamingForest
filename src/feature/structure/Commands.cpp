@@ -26,7 +26,8 @@
 //   templates                        lists the known templates, pools and data counts
 //   outline <x1> <y1> <z1> <x2> <y2> <z2> [seconds]  outlines a box (server e2e)
 //   pending_probe / scale_probe      restart probes of the server e2e (a queued job in an unloaded
-//                                    chunk; a scaled mob left by the next structure.scale_probe)
+//                                    chunk and a forced fixture landmark start there; a scaled
+//                                    mob left by the next structure.scale_probe)
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -74,6 +75,7 @@
 #include "core/Keys.h"
 #include "feature/common/BlockData.h"
 #include "feature/ext/item/Item.h"
+#include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/structure/TemplateDefinitions.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/loot/Loot.h"
@@ -253,16 +255,6 @@ std::optional<landmark::Start> startAt(Where const& w, std::string const& key, C
     return start;
 }
 
-/// The saved pieces of a start ({"pieces": [Piece#save]} in the start's data), or its boxes.
-std::vector<Json> piecesOf(landmark::Start const& start) {
-    std::vector<Json> out;
-    if (start.data.is_object() && start.data.contains("pieces") && start.data["pieces"].is_array())
-        for (auto const& p : start.data["pieces"]) out.push_back(p);
-    if (out.empty())
-        for (auto const& b : start.pieceBoxes) out.push_back(Json{{"BB", boxToJson(b)}});
-    return out;
-}
-
 void displayPieces(CommandOrigin const& origin, CommandOutput& output, std::string const& key) {
     auto w = where(origin, output);
     if (!w) return;
@@ -270,13 +262,14 @@ void displayPieces(CommandOrigin const& origin, CommandOutput& output, std::stri
     if (!start) return;
     int successes = 1;
     addOutline(w->dim, start->box, "minecraft:redstone_ore_dust_particle");
-    auto pieces = piecesOf(*start);
-    for (auto const& p : pieces) {
-        BlockBox box = boxFromJson(p.value("BB", Json::array()));
-        std::string id = p.value("id", std::string{});
-        bool protectedPiece = !id.empty() && start->generated; // ProgressionPiece#isComponentProtected defaults to true
-        addOutline(w->dim, box, protectedPiece ? "minecraft:villager_happy" : "minecraft:water_wake_particle");
-        w->player->sendMessage((id.empty() ? tr("commands.tffeature.display_pieces.missing_key", "missing key") : id) + " " + boxToJson(box).dump());
+    // StructureStart#getPieces with each piece's type id and protection flag (F6's landmark ext;
+    // startAt's data["pieces"] carries the tags only, so the pieces are saved a second time here:
+    // fine for a one-off command)
+    for (auto const& p : landmark::ext::startPieces(*start)) {
+        // lime glass for a ProgressionPiece whose isComponentProtected is true, light blue otherwise
+        addOutline(w->dim, p.box, p.protectedPiece ? "minecraft:villager_happy" : "minecraft:water_wake_particle");
+        w->player->sendMessage((p.type.empty() ? tr("commands.tffeature.display_pieces.missing_key", "missing key") : p.type) + " " +
+                               boxToJson(p.box).dump());
         successes++;
     }
     log().info("structure_util display_pieces {}: {} outlines", start->key, successes);
@@ -455,8 +448,7 @@ std::optional<std::vector<ItemStack>> containerItems(BlockSource& source, BlockP
 std::map<std::string, int> countLootIn(BlockSource& source, landmark::Start const& start, bool showCommon) {
     // CountLootCommand: the block entities of the start box's loaded chunks, once each, that lie
     // inside any piece box, each container unpacked first
-    std::vector<BlockBox> boxes;
-    for (auto const& p : piecesOf(start)) boxes.push_back(boxFromJson(p.value("BB", Json::array())));
+    std::vector<BlockBox> const& boxes = start.pieceBoxes;
     auto inside = [&](BlockPos const& pos) {
         return std::any_of(boxes.begin(), boxes.end(), [&](BlockBox const& b) { return b.contains(pos.x, pos.y, pos.z); });
     };
@@ -517,8 +509,15 @@ void countTemplate(CommandOrigin const& origin, CommandOutput& output, std::stri
     auto start = startAt(*w, key, output);
     if (!start) return;
     std::map<std::string, int> counts;
-    for (auto const& p : piecesOf(*start))
-        if (p.contains("Template")) counts[p["Template"].get<std::string>()]++;
+    // TemplateStructurePiece#makeTemplateLocation: the "Template" a template piece saves (the piece
+    // tags landmark::startAt hands out in data["pieces"]; F6's startPieces for a start without them)
+    Json fallback = Json::array();
+    bool saved    = start->data.is_object() && start->data.contains("pieces") && start->data["pieces"].is_array();
+    if (!saved)
+        for (auto& p : landmark::ext::startPieces(*start)) fallback.push_back(std::move(p.tag));
+    Json const& tags = saved ? start->data["pieces"] : fallback;
+    for (auto const& tag : tags)
+        if (tag.is_object() && tag.contains("Template") && tag["Template"].is_string()) counts[tag["Template"].get<std::string>()]++;
     std::vector<std::pair<std::string, int>> sorted(counts.begin(), counts.end());
     std::stable_sort(sorted.begin(), sorted.end(), [](auto const& a, auto const& b) { return a.second < b.second; });
     for (auto const& [t, n] : sorted) w->player->sendMessage(t + "    " + std::to_string(n));
@@ -670,9 +669,18 @@ void pendingProbe(CommandOrigin const& origin, CommandOutput& output) {
     if (source && source->hasChunksAt(at, 0, false)) return output.error("the probe chunk is loaded");
     std::random_device rd;
     auto               nonce = std::to_string(rd()) + std::to_string(rd());
+    // a landmark start whose pieces must load through F6's piece factories after the restart (the
+    // open fixture landmark, 512 blocks south of the probe chunk, out of reach of the chunks
+    // structure.pending_read loads; it stays unplaced until pending_read forgets it)
+    core::GlobalPos startPos{0, at.x, at.y, at.z + 512};
+    if (source && source->hasChunksAt(BlockPos{startPos.x, startPos.y, startPos.z}, 0, false)) return output.error("the probe start's chunk is loaded");
     blockentities::queueTestMark(0, at, nonce);
-    game::db::put("gf:structure:probe", Json{{"nonce", nonce}, {"dim", 0}, {"pos", {at.x, at.y, at.z}}});
-    log().info("structure_util pending_probe queued nonce={} at {} {} {} ({} jobs pending)", nonce, at.x, at.y, at.z, blockentities::pending());
+    Json probe{{"nonce", nonce}, {"dim", 0}, {"pos", {at.x, at.y, at.z}}};
+    if (auto forced = landmark::forceStart("gf_test:landmark_fixture_open", startPos); forced && !forced->pieceBoxes.empty())
+        probe["start"] = Json{{"key", forced->key}, {"pos", {startPos.x, startPos.y, startPos.z}}, {"pieces", forced->pieceBoxes.size()}};
+    game::db::put("gf:structure:probe", probe);
+    log().info("structure_util pending_probe queued nonce={} at {} {} {} ({} jobs pending, start probe {})", nonce, at.x, at.y, at.z,
+               blockentities::pending(), probe.contains("start") ? "stored" : "not stored");
     output.success("queued " + nonce);
 }
 

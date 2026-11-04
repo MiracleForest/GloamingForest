@@ -1,11 +1,13 @@
 // Selftests of unit F4 (dimension): `/twilightforest selftest "dimension.*"`, dx 5400..5499 (rule R12).
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cmath>
 #include <format>
 #include <limits>
 #include <map>
+#include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -15,7 +17,6 @@
 #include <vector>
 
 #include "ll/api/Config.h"
-#include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
 #include "ll/api/thread/ServerThreadExecutor.h"
@@ -29,9 +30,7 @@
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/sim/LookDuration.h"
-#include "mc/server/commands/CommandPermissionLevel.h"
 #include "mc/server/commands/CommandUtils.h"
-#include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/level/storage/GameRule.h"
 #include "mc/world/level/storage/GameRules.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
@@ -58,6 +57,7 @@
 #include "feature/dimension/Teleporter.h"
 #include "feature/dimension/World.h"
 #include "feature/ext/dimension/DimensionType.h"
+#include "feature/ext/entity/EntityExt.h"
 #include "feature/gamerules/GameRules.h"
 #include "feature/progression/Progression.h"
 #include "feature/tags/Tags.h"
@@ -73,6 +73,7 @@ namespace {
 
 using selftest::Context;
 namespace tp = teleporter;
+namespace ge = gf::entity;
 
 std::string str(BlockPos const& p) { return std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z); }
 
@@ -88,21 +89,6 @@ struct ConfigGuard {
         if (save) ll::config::saveConfig(keep, gf::config::configDir() / "dimension.json");
     }
 };
-
-/// Runs a command as the server in dimension `dim`; the output messages ("" on success).
-std::pair<bool, std::string> runCommand(std::string const& command, int dim = 0) {
-    auto level = ll::service::getLevel();
-    if (!level) return {false, "no level"};
-    ServerCommandOrigin origin("gloamingforest-dimension-selftest", level->asServer(), CommandPermissionLevel::Owner, DimensionType(dim));
-    auto        out = ll::command::CommandRegistrar::getServerInstance().executeCommand(command, origin);
-    std::string messages;
-    for (auto const& m : out.mMessages) {
-        if (!messages.empty()) messages += "; ";
-        messages += m.mMessageId;
-        for (auto const& p : m.mParams) messages += " " + p;
-    }
-    return {out.mSuccessCount > 0, messages};
-}
 
 /// Builds a 2x2 water pool at `corner` (lowest x / z) in a flat area: the surface block of the
 /// pool turns to water on its ground, the rim keeps its grass and gets short grass on top.
@@ -423,8 +409,8 @@ GF_REGISTER_SELFTEST("dimension.portal_delay", [](Context& ctx) {
     ctx.info(std::format("the world's delays: {} / {} (TF's defaults 60 / 1)", gamerules::getInt(kDefaultDelayRule), gamerules::getInt(kCreativeDelayRule)));
     ctx.require(gamerules::set(kDefaultDelayRule, 30), "playersTfPortalDefaultDelay set to 30");
     ctx.check(portalDelay(p) == 30, "a survival player's delay follows it (" + std::to_string(portalDelay(p)) + ")");
-    auto [ok, msg] = runCommand(std::string("twilightforest gamerule ") + kDefaultDelayRule + " 45");
-    ctx.check(ok, "/twilightforest gamerule " + std::string(kDefaultDelayRule) + " 45 (" + msg + ")");
+    auto cmd = selftest::runServerCommand(std::string("twilightforest gamerule ") + kDefaultDelayRule + " 45");
+    ctx.check(cmd.ok, "/twilightforest gamerule " + std::string(kDefaultDelayRule) + " 45 (" + cmd.messages + ")");
     ctx.check(portalDelay(p) == 45, "and through the command (" + std::to_string(portalDelay(p)) + ")");
     ctx.require(gamerules::set(kCreativeDelayRule, 7), "playersTfPortalCreativeDelay set to 7");
     p.setPlayerGameType(GameType::Creative);
@@ -1031,6 +1017,7 @@ GF_REGISTER_SELFTEST("dimension.area_loader", [](Context& ctx) -> ll::coro::Coro
     BlockPos far{-77712, 64, 54321}; // far from every test and player
     auto*    region = game::regionOf(tfId);
     ctx.info(std::string("loaded before: ") + (region && region->hasChunksAt(far, 2, false) ? "yes" : "no"));
+    ctx.info("the engine's ticking areas now: " + loadReport(tfId, far, 0));
     int  held = heldAreas();
     auto hold = co_await loadArea(tfId, far, 18);
     ctx.require(hold != nullptr, "the area loads without a player");
@@ -1040,6 +1027,51 @@ GF_REGISTER_SELFTEST("dimension.area_loader", [](Context& ctx) -> ll::coro::Coro
     hold.reset();
     ctx.check(heldAreas() == held, "released with its handle");
 });
+
+// An area released halfway through its loading (teleport_riders: the ground of a column) and a
+// larger area over the same chunks asked for in the same tick (the trip's destination). The race
+// is forced: each fresh, far column is asked for without waiting (requestArea) and released one
+// tick later, long before its loading is over. The loader keeps a released area until its own
+// loading is over (removed at once, it would strand the chunks it was bringing in: W0d, docs/spikes
+// S1.md), so every destination loads and no wait meets stranded chunks.
+GF_REGISTER_SELFTEST("dimension.area_handover", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto tf = world::twilight();
+    ctx.require(tf.has_value(), "the Twilight Forest exists");
+    int tfId     = static_cast<int>(*tf);
+    int stranded = strandedWaits();
+    int raced = 0, loadedCount = 0;
+    for (int i = 0; i < 3; ++i) {
+        BlockPos column{-61000 + i * 512 + 7, 0, 47000 + 9};
+        auto     first = requestArea(tfId, column, 0);
+        ctx.require(first != nullptr, "column " + std::to_string(i) + " asked for");
+        co_await ctx.ticks(1);
+        int  inPipeline = 0, missing = 0;
+        auto states     = chunkStates(tfId, column, 0);
+        for (int s : states) {
+            if (s >= 1 && s <= 10) ++inPipeline;
+            if (s < 1) ++missing;
+        }
+        int const settlingBefore = settlingAreas();
+        first.reset();
+        bool const settling = settlingAreas() == settlingBefore + 1;
+        if (settling) ++raced;
+        ctx.info(std::format(
+            "column {}: released after 1 tick with {} of its {} chunks (and ring) in the pipeline, {} not there yet: {}",
+            i,
+            inPipeline,
+            states.size(),
+            missing,
+            settling ? "it finishes its loading before it goes" : "its loading was over"
+        ));
+        auto second = co_await loadArea(tfId, column, 18);
+        if (second) ++loadedCount;
+        ctx.check(second != nullptr, std::format("column {}: its destination loaded", i));
+    }
+    ctx.info(std::format("{} of 3 hand-overs released an area that was still loading; {} destinations loaded", raced, loadedCount));
+    ctx.check(raced >= 1, "the race was exercised (an area released while it was still loading)");
+    ctx.check(strandedWaits() == stranded, "no wait met stranded chunks");
+});
+
 
 // ---- BlockHooks: mushrooms next to a portal ------------------------------------------------------------------------------
 
@@ -1255,19 +1287,19 @@ GF_REGISTER_SELFTEST("dimension.execute_in", [](Context& ctx) -> ll::coro::CoroT
     auto& p    = ctx.player();
     auto  id   = idOf(p);
     auto  name = p.getRealName();
-    auto [ok, out] = runCommand("execute as \"" + name + "\" at @s in twilightforest:twilight_forest run tp @s ~ ~ ~");
-    ctx.check(ok, "execute in twilightforest:twilight_forest runs (" + out + ")");
+    auto toTf = selftest::runServerCommand("execute as \"" + name + "\" at @s in twilightforest:twilight_forest run tp @s ~ ~ ~");
+    ctx.check(toTf.ok, "execute in twilightforest:twilight_forest runs (" + toTf.messages + ")");
     bool there = false;
-    for (int i = 0; ok && i < 200 && !there; ++i) {
+    for (int i = 0; toTf.ok && i < 200 && !there; ++i) {
         co_await ctx.ticks(1);
         auto* pl = playerById(id);
         there    = pl && world::isTwilight(pl->getDimensionId());
     }
     ctx.check(there, "the player is in the Twilight Forest");
-    auto [ok2, out2] = runCommand("execute as \"" + name + "\" at @s in overworld run tp @s ~ ~ ~");
-    ctx.check(ok2, "execute in overworld runs (" + out2 + ")");
+    auto toOw = selftest::runServerCommand("execute as \"" + name + "\" at @s in overworld run tp @s ~ ~ ~");
+    ctx.check(toOw.ok, "execute in overworld runs (" + toOw.messages + ")");
     bool back = false;
-    for (int i = 0; ok2 && i < 200 && !back; ++i) {
+    for (int i = 0; toOw.ok && i < 200 && !back; ++i) {
         co_await ctx.ticks(1);
         auto* pl = playerById(id);
         back     = pl && static_cast<int>(pl->getDimensionId()) == 0;
@@ -1324,10 +1356,10 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
         ctx.info("another player is nearer to the scaled position: the in-game part is skipped");
         co_return;
     }
-    auto [okF, outF] = runCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function twilightforest/dimension/tp_twilight", name, ground));
-    ctx.check(okF, "function tp_twilight runs (" + outF + ")");
+    auto fnTf = selftest::runServerCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function twilightforest/dimension/tp_twilight", name, ground));
+    ctx.check(fnTf.ok, "function tp_twilight runs (" + fnTf.messages + ")");
     bool there = false;
-    for (int i = 0; okF && i < 200 && !there; ++i) {
+    for (int i = 0; fnTf.ok && i < 200 && !there; ++i) {
         co_await ctx.ticks(1);
         pl    = playerById(id);
         there = pl && world::isTwilight(pl->getDimensionId());
@@ -1350,10 +1382,10 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
         pl->teleport(Vec3{at.x + 0.5f, static_cast<float>(at.y), at.z + 0.5f}, DimensionType(ctx.dimension()));
         co_return;
     }
-    auto [okB, outB] = runCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function twilightforest/dimension/tp_overworld", name, at.y));
-    ctx.check(okB, "function tp_overworld runs (" + outB + ")");
+    auto fnOw = selftest::runServerCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function twilightforest/dimension/tp_overworld", name, at.y));
+    ctx.check(fnOw.ok, "function tp_overworld runs (" + fnOw.messages + ")");
     bool home2 = false;
-    for (int i = 0; okB && i < 200 && !home2; ++i) {
+    for (int i = 0; fnOw.ok && i < 200 && !home2; ++i) {
         co_await ctx.ticks(1);
         pl    = playerById(id);
         home2 = pl && static_cast<int>(pl->getDimensionId()) == 0;
@@ -1418,8 +1450,8 @@ GF_REGISTER_SELFTEST("dimension.portal_block", [](Context& ctx) -> ll::coro::Cor
     // the portal block's rim (its neighbour rule keeps a portal ringed by portal/edge blocks)
     for (auto [dx, dz] : {std::pair{-1, 0}, std::pair{1, 0}, std::pair{0, -1}, std::pair{0, 1}}) ctx.setBlock(portalBase.offset(dx, 1, dz), "minecraft:dirt");
     for (auto base : {stoneBase, portalBase}) {
-        auto [ok, msg] = runCommand(std::format("setblock {} {} {} redstone_block", base.x + 1, base.y, base.z), ctx.dimension());
-        ctx.check(ok, "redstone block next to the piston (" + msg + ")");
+        auto cmd = selftest::runServerCommand(std::format("setblock {} {} {} redstone_block", base.x + 1, base.y, base.z), ctx.dimension());
+        ctx.check(cmd.ok, "redstone block next to the piston (" + cmd.messages + ")");
     }
     co_await ctx.ticks(20);
     ctx.info("after the pistons fired: stone column " + ctx.blockAt(stoneBase.offset(0, 1, 0)) + " / " + ctx.blockAt(stoneBase.offset(0, 2, 0)) + ", portal column "
@@ -1870,6 +1902,7 @@ GF_REGISTER_SELFTEST("dimension.teleport_riders", [](Context& ctx) -> ll::coro::
     Vec3 dest{column.x + 0.5f, static_cast<float>(ground), column.z + 0.5f};
     pl = playerById(id);
     ctx.require(pl != nullptr, "player");
+    ctx.info("before the trip: " + loadReport(tfId, game::blockPosOf(dest), 18));
     ctx.require(world::teleport(*pl, *tf, dest, 0.0f), "the teleport into the Twilight Forest started");
     ctx.check(static_cast<int>(pl->getDimensionId()) == home, "the player waits at home while the destination loads");
     bool there = false;
@@ -1879,6 +1912,7 @@ GF_REGISTER_SELFTEST("dimension.teleport_riders", [](Context& ctx) -> ll::coro::
         pl    = playerById(id);
         there = pl && static_cast<int>(pl->getDimensionId()) == tfId && heard(id, home, tfId);
     }
+    if (!there) ctx.info("not there after 300 ticks: " + loadReport(tfId, game::blockPosOf(dest), 18));
     ctx.require(there, "the player arrived in the Twilight Forest (portal::onTeleported)");
     co_await ctx.ticks(10);
     pl = playerById(id);
@@ -1936,6 +1970,237 @@ GF_REGISTER_SELFTEST("dimension.teleport_riders", [](Context& ctx) -> ll::coro::
             ctx.check(near, "the parrot came home with it");
         }
     }
+});
+
+// ---- ridden actors in the portal -------------------------------------------------------------------------------------
+
+// TFPortalBlock#entityInside and Entity#handlePortal ask Entity#canUsePortal(false) of the actor
+// itself first: BaseTFBoss (and TF's parts, and the types F8 marks with ext::setCanUsePortal) answer
+// false whether or not something rides them, so a TF boss carrying a rider stays out of the portal:
+// the fixture boss (it has no seat, so its rider keeps sliding off and is put back on) and a boat of
+// a type marked the same way, which holds its pig. Vanilla's answer has no rule against riders, nor
+// has the engine's: an unmarked boat with a pig in it travels, and changeDimension takes the pig
+// along.
+GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto tf = world::twilight();
+    ctx.require(tf.has_value(), "the Twilight Forest exists");
+    int   tfId   = static_cast<int>(*tf);
+    auto  box    = co_await ctx.flatArea(5410, 12, 8);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    int  dim  = ctx.dimension();
+    auto pool = core::GlobalPos{dim, box.minX + 4, box.minY - 1, box.minZ + 4};
+    ctx.require(buildPool(ctx, pool), "pool built");
+    TerrainRestore terrain; // the boat's return portal is built into the generated Twilight Forest
+    terrain.watchSites();
+    std::vector<std::int64_t> spawned;
+    struct Cleanup {
+        std::vector<std::int64_t>& ids;
+        ~Cleanup() {
+            ge::ext::setCanUsePortal("gf_test:boss", true);
+            ge::ext::setCanUsePortal("minecraft:boat", true);
+            watchPortalDecisions(0);
+            if (auto level = ll::service::getLevel())
+                for (auto id : ids)
+                    if (auto* a = level->fetchEntity(ActorUniqueID{id}, false)) a->remove();
+        }
+    } cleanup{spawned};
+    auto actor = [](std::int64_t id) -> Actor* {
+        auto level = ll::service::getLevel();
+        return level ? level->fetchEntity(ActorUniqueID{id}, false) : nullptr;
+    };
+    auto spawn = [&](char const* type, Vec3 const& at) -> Actor* {
+        auto* r = game::regionOf(dim);
+        if (!r) return nullptr;
+        ActorUniqueID uid{};
+        auto*         a = CommandUtils::spawnEntityAt(*r, at, ActorDefinitionIdentifier(type), uid, nullptr);
+        if (a) spawned.push_back(idOf(*a));
+        return a;
+    };
+    auto inPortal = [&](Actor& a) {
+        a.teleport(Vec3{pool.x + 1.0f, pool.y + 0.2f, pool.z + 1.0f}, DimensionType(dim));
+    };
+    // a rider that sits on `vehicle` (a forced ride: the fixture boss has no seats of its own)
+    auto mount = [&](Actor& vehicle, Vec3 const& at) -> std::int64_t {
+        for (auto const* type : {"minecraft:pig", "minecraft:chicken", "minecraft:parrot"}) {
+            auto* rider = spawn(type, at);
+            if (!rider) continue;
+            if (rider->startRiding(vehicle, true) && rider->getVehicle() == &vehicle) return idOf(*rider);
+            ctx.info(std::string(type) + " could not ride " + vehicle.getTypeName());
+            rider->remove();
+        }
+        return 0;
+    };
+
+    // the fixture boss stands for a TF boss: Entity#canUsePortal false (BaseTFBoss), which F8 answers
+    // through canChangeDimensionsUsingPortal for the types marked with ext::setCanUsePortal(false)
+    ge::ext::setCanUsePortal("gf_test:boss", false);
+    Vec3  beside{box.minX + 9.5f, static_cast<float>(box.minY), box.minZ + 9.5f};
+    auto* boss = spawn("gf_test:boss", beside);
+    ctx.require(boss != nullptr, "the fixture boss spawns");
+    auto bossId  = idOf(*boss);
+    auto riderId = mount(*boss, beside);
+    ctx.require(riderId != 0, "something rides the fixture boss");
+    boss = actor(bossId);
+    ctx.require(boss != nullptr, "the boss is there");
+    ctx.check(boss->hasPassenger(), "the boss carries its rider");
+    ctx.check(!canUsePortal(*boss), "Entity#canUsePortal(false) of the ridden boss is false (its own answer first)");
+    ge::ext::setCanUsePortal("gf_test:boss", true);
+    ctx.check(canUsePortal(*boss), "the same mob unmarked (a plain mob) may use portals with its rider");
+    ge::ext::setCanUsePortal("gf_test:boss", false);
+
+    // in a lit portal it stays where it is, rider and all (asked every tick, never a process)
+    ctx.require(portal::tryActivate(*region, game::blockPos(pool)), "lit");
+    co_await ctx.ticks(10); // the lightning is gone
+    auto touches = [&](Actor& a) { // Entity#checkInsideBlocks: a portal block in its box
+        auto* r = game::regionOf(dim);
+        if (!r) return false;
+        AABB box = a.getAABB();
+        for (int x = static_cast<int>(std::floor(box.min.x)); x <= static_cast<int>(std::floor(box.max.x)); ++x)
+            for (int y = static_cast<int>(std::floor(box.min.y)); y <= static_cast<int>(std::floor(box.max.y)); ++y)
+                for (int z = static_cast<int>(std::floor(box.min.z)); z <= static_cast<int>(std::floor(box.max.z)); ++z)
+                    if (isPortal(r->getBlock(BlockPos{x, y, z}))) return true;
+        return false;
+    };
+    struct Stay {
+        bool            stayed = true, process = false, asked = true;
+        int             inside = 0, ridden = 0;
+        PortalDecisions portal; ///< what the portal's own ticks decided (entityInside, handlePortal)
+    };
+    // 40 ticks in the portal; the rider is put back on whenever it got off
+    auto stayInPortal = [&](std::int64_t vehicleId, std::int64_t riderId) -> ll::coro::CoroTask<Stay> {
+        Stay out;
+        struct Unwatch {
+            ~Unwatch() { watchPortalDecisions(0); }
+        } unwatch;
+        watchPortalDecisions(vehicleId);
+        if (auto* v = actor(vehicleId)) inPortal(*v);
+        for (int i = 0; i < 40; ++i) {
+            auto* v = actor(vehicleId);
+            if (auto* r = actor(riderId); r && v && r->getVehicle() != v) r->startRiding(*v, true);
+            co_await ctx.ticks(1);
+            v = actor(vehicleId);
+            if (!v || static_cast<int>(v->getDimensionId()) != dim) {
+                out.stayed = false;
+                break;
+            }
+            out.process |= portalProcessOf(*v).hasProcess || portalProcessOf(*v).travelling;
+            if (!touches(*v)) continue;
+            ++out.inside;
+            if (!v->hasPassenger()) continue;
+            ++out.ridden;
+            out.asked &= !canUsePortal(*v);
+        }
+        out.portal = portalDecisions();
+        co_return out;
+    };
+    auto decided = [](PortalDecisions const& d) {
+        return std::format("the portal asked {} times, {} while ridden, refused {} / {} of those", d.asked, d.askedRidden, d.refused, d.refusedRidden);
+    };
+    auto stay = co_await stayInPortal(bossId, riderId);
+    ctx.check(stay.stayed, "the ridden TF boss stays out of the portal for 2 s");
+    ctx.check(!stay.process, "it never starts a portal process");
+    ctx.check(stay.inside >= 30, std::format("it stood in the portal ({} of 40 ticks)", stay.inside));
+    ctx.check(stay.ridden >= 1 && stay.asked, std::format("with its rider on it refused the portal ({} of 40 ticks)", stay.ridden));
+    ctx.check(
+        stay.portal.askedRidden >= 1 && stay.portal.refusedRidden == stay.portal.askedRidden && stay.portal.refused == stay.portal.asked,
+        "the portal's own ticks refused the ridden boss every time (" + decided(stay.portal) + ")"
+    );
+    if (auto* b = actor(bossId)) b->remove();
+    if (auto* r = actor(riderId)) r->remove();
+
+    // a type marked the same way that holds its rider: a boat with a pig in it stays too
+    ge::ext::setCanUsePortal("minecraft:boat", false);
+    Vec3  shore{box.minX + 9.5f, static_cast<float>(box.minY), box.minZ + 2.5f};
+    auto* marked = spawn("minecraft:boat", shore);
+    ctx.require(marked != nullptr, "a boat spawns");
+    auto markedId    = idOf(*marked);
+    auto markedPigId = mount(*marked, shore);
+    ctx.require(markedPigId != 0, "a pig sits in the boat");
+    marked = actor(markedId);
+    ctx.require(marked != nullptr, "the boat is there");
+    ctx.check(!canUsePortal(*marked), "Entity#canUsePortal(false) of the marked boat with its rider is false");
+    stay = co_await stayInPortal(markedId, markedPigId);
+    ctx.check(stay.stayed && !stay.process, "the marked boat stays out of the portal for 2 s, pig and all");
+    ctx.check(stay.inside >= 30 && stay.ridden >= 30 && stay.asked, std::format("in the portal {} and with its pig {} of 40 ticks", stay.inside, stay.ridden));
+    ctx.check(
+        stay.portal.askedRidden >= 30 && stay.portal.refusedRidden == stay.portal.askedRidden,
+        "the portal's own ticks refused the marked boat with its pig every time (" + decided(stay.portal) + ")"
+    );
+    if (auto* b = actor(markedId)) b->remove();
+    if (auto* r = actor(markedPigId)) r->remove();
+    ge::ext::setCanUsePortal("minecraft:boat", true);
+
+    // an unmarked boat with a pig in it: the vehicle may go, so it does, and its rider comes along
+    auto* boat = spawn("minecraft:boat", shore);
+    ctx.require(boat != nullptr, "a boat spawns");
+    auto boatId = idOf(*boat);
+    auto pigId  = mount(*boat, shore);
+    ctx.require(pigId != 0, "a pig sits in the boat");
+    boat = actor(boatId);
+    ctx.require(boat != nullptr && boat->hasPassenger(), "the boat carries the pig");
+    ctx.check(canUsePortal(*boat), "Entity#canUsePortal(false) of the boat with its rider is true (no rule against riders)");
+    if (auto* pig = actor(pigId)) ctx.check(!canUsePortal(*pig), "its rider is not asked (a passenger never uses a portal itself)");
+    int const destX = pool.x * 8, destZ = pool.z * 8;
+    AABB const near{Vec3(destX - 24, world::kMinY, destZ - 24), Vec3(destX + 24, world::kMinY + world::kHeight, destZ + 24)};
+    // what is there already: a rider that slid off a vehicle above into the portal went on its
+    // own (an unridden pig may use portals), and is no part of this trip
+    std::set<std::int64_t> before;
+    if (auto* r = game::regionOf(tfId))
+        for (auto* e : r->getEntities(near, 0.0f))
+            if (e && (e->getTypeName() == "minecraft:boat" || e->getTypeName() == "minecraft:pig")) {
+                before.insert(idOf(*e));
+                spawned.push_back(idOf(*e));
+            }
+    if (!before.empty()) ctx.info(std::to_string(before.size()) + " boat(s) / pig(s) of the earlier parts went through on their own");
+    watchPortalDecisions(boatId);
+    inPortal(*boat);
+    if (auto* p = actor(pigId); p && p->getVehicle() != actor(boatId)) p->startRiding(*actor(boatId), true);
+    Actor*                  boatThere = nullptr;
+    Actor*                  pigThere  = nullptr;
+    std::optional<BlockPos> arrival;
+    int                     ticks = 0;
+    for (; ticks < 300 && !(boatThere && pigThere); ++ticks) {
+        co_await ctx.ticks(1);
+        auto* r = game::regionOf(tfId);
+        if (!r) continue;
+        boatThere = pigThere = nullptr;
+        for (auto* e : r->getEntities(near, 0.0f)) {
+            if (!e || before.contains(idOf(*e))) continue;
+            if (e->getTypeName() == "minecraft:boat") boatThere = e;
+            else if (e->getTypeName() == "minecraft:pig") pigThere = e;
+        }
+    }
+    auto boatDecisions = portalDecisions();
+    watchPortalDecisions(0);
+    ctx.check(
+        boatDecisions.askedRidden >= 1 && boatDecisions.refused == 0,
+        "the portal's own ticks let the boat with its pig go (" + decided(boatDecisions) + ")"
+    );
+    if (boatThere) {
+        spawned.push_back(idOf(*boatThere));
+        arrival = game::blockPosOf(boatThere->getFeetPos());
+    }
+    if (pigThere) spawned.push_back(idOf(*pigThere));
+    ctx.check(boatThere != nullptr, "the boat is in the Twilight Forest (after " + std::to_string(ticks) + " ticks)");
+    ctx.check(pigThere != nullptr, "the pig came along");
+    if (boatThere && pigThere) {
+        co_await ctx.ticks(5);
+        auto* b = actor(spawned[spawned.size() - 2]);
+        auto* p = actor(spawned.back());
+        ctx.check(b && p && p->getVehicle() == b, "and sits in the boat again");
+    }
+    for (auto* e : {actor(boatId), actor(pigId)})
+        ctx.check(e == nullptr || static_cast<int>(e->getDimensionId()) != dim, "nothing of the trip stayed at home");
+    // the teleporter cache entries of the trip
+    for (int dx = 0; dx < 2; ++dx)
+        for (int dz = 0; dz < 2; ++dz) tp::cacheRemove(world::kDimensionId, pool.x + dx, pool.z + dz);
+    if (auto* tfr = game::regionOf(tfId); tfr && arrival)
+        for (auto const& b : tp::portalBlocksNear(*tfr, *arrival, 4)) tp::cacheRemove("minecraft:overworld", b.x, b.z);
+    for (auto id : spawned)
+        if (auto* a = actor(id)) a->remove();
+    int put = co_await terrain.restore();
+    ctx.info("put back " + std::to_string(put) + " blocks of the generated terrain at the boat's return portal");
 });
 
 } // namespace

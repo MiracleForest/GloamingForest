@@ -5,11 +5,17 @@
 //
 // - render::RenderContext, declared opaque in client/render/Render.h, is defined here so renderers
 //   can reach the engine's contexts (tessellator, matrices, camera) beyond Lines / drawGeo; the
-//   threads and spaces every registry runs in; removal of registrations (fixtures, selftests).
+//   threads and spaces every registry runs in; removal of registrations (fixtures, selftests); the
+//   light a renderer gets (what a renderer finds at entry, lightAt, setupLight); name tags
+//   (hideNameTag by type or predicate, showNameTag, nameTagHidden).
+// - tint: tints built on the game's own colours at the position (GameColors, GameTintFn).
 // - ui: textures in GUI pixels (TF's GUI skins), the item stacks of a ContainerScreen's slots, the
 //   hit tests of its slots and of the player inventory drawn inside a TF skin, an item's hover text.
-// - toast: TF's two toast styles (LockedBiomeToast, MissingAdvancementToast) and their colours;
-//   toasts are not drawn while the GUI is hidden (F1), as Java's ToastComponent.
+// - toast: literal lines (LiteralToastSpec: Java's Component.literal, e.g. F10's
+//   MissingAdvancementToast showing an advancement's title); TF's two toast styles
+//   (LockedBiomeToast, MissingAdvancementToast) and their colours;
+//   toasts are not drawn while the GUI is hidden (F1), as Java's ToastComponent; the frame texture;
+//   lookups by key or literal title (tests).
 // - hud::guiHidden: Java's options.hideGui for HUD layers (TF's overlays check it themselves).
 // - particles::spawn: runs a native particle factory; F12 connects the registry to F10's client
 //   handler of fx.particle (gf::fx::particle) through gf::fx::client::setNativeSink
@@ -25,7 +31,9 @@
 
 #ifdef GF_CLIENT
 
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -40,11 +48,75 @@
 #include "client/ui/Ui.h"
 #include "client/world/Sky.h"
 
+class Actor;
 class BaseActorRenderContext;
 class ScreenContext;
 class MinecraftUIRenderContext;
 
+namespace gf::client::tint {
+/// The game's own colours at the position being tinted: Bedrock's tint methods, the biomes' colours
+/// blended around the position as the game blends them for its own blocks (Java's
+/// BiomeColors.getAverageFoliageColor / getAverageGrassColor / getAverageWaterColor). Each is
+/// computed when asked. nullopt without a world (a tint asked outside a chunk mesh, e.g. selftests):
+/// TF then uses its colours without a world (FoliageColor.getDefaultColor, GrassColor.getDefaultColor).
+class GameColors {
+public:
+    [[nodiscard]] virtual std::optional<unsigned> foliage() const = 0; ///< tint method "default_foliage"
+    [[nodiscard]] virtual std::optional<unsigned> grass() const   = 0; ///< tint method "grass"
+    [[nodiscard]] virtual std::optional<unsigned> water() const   = 0; ///< tint method "water"
+
+protected:
+    ~GameColors() = default;
+};
+/// A tint that builds on the game's colours at the position (TF's ColorHandler: CANOPY_COLORIZER of
+/// the biome foliage colour, the fiddlehead's grass colour, ...). Same threads and rules as TintFn;
+/// a later registration for the block (either kind) replaces the earlier one.
+using GameTintFn = std::function<unsigned(BlockPos const& pos, GameColors const& game)>;
+void registerBlock(std::string const& blockId, GameTintFn fn);
+} // namespace gf::client::tint
+
 namespace gf::client::render {
+
+// What a renderer finds at entry (block, item and entity renderers, onWorld callbacks):
+// - the world matrix of its space (world space relative to the camera, or the item's space; see
+//   RenderContext below), which it may push onto and must leave balanced;
+// - the place of its light, RenderContext::lightAt / fullBright: a block renderer the light at its
+//   block (Java's BlockEntityRenderer packedLight), an entity renderer and the items an entity holds
+//   or wears the light at the entity's eyes (Java's getPackedLightCoords), an item on the ground the
+//   light at the item, an item in a frame the light at the frame block (full bright in a glow
+//   frame), an item in a GUI slot full bright (Java's GUI items). An onWorld callback gets no
+//   lightAt (nullopt): drawGeo lights each geometry it draws at that geometry's own translation (a
+//   world position), wherever in the world it is; a callback that draws with the game's lit
+//   materials itself calls setupLight(ctx, place) for each place it draws at. The light itself (the entity constants of the actor materials:
+//   ActorShaderManager::setupShaderParameters, the block and sky light the lit materials multiply
+//   by) is applied where it is drawn with: drawGeo sets it before every draw (at lightAt, else at
+//   its own position), so neither the draw before the renderer nor draws in between (text, the
+//   game's own renderers) change the light of a geometry, and a renderer that draws nothing costs no
+//   light lookup. A renderer that draws with the game's lit materials itself calls
+//   setupLight(ctx, *ctx.lightAt, ctx.fullBright) before it draws; what the constants hold at
+//   entry is unspecified (the last draw's);
+// - the screen context's shader colour and dark colour as the game left them (put back after every
+//   renderer, whatever the light setup or the renderer changed); materials and the tessellator are
+//   whatever the game left (Lines and drawGeo set what they draw with);
+// - a RenderContext of its own: what one renderer changes in it (lightAt, throughWalls, ...) never
+//   reaches the next.
+
+// Which blocks a block renderer runs for: the positions of its block are recorded when the game builds
+// the render chunk (16^3 section) that holds them (RenderChunkBuilder::build, whatever tessellator then
+// meshes the block), and a rebuild of the section (a block placed or broken in it) replaces them.
+// Register block renderers at install (before the world's chunks are meshed): a section built before
+// the registration is not scanned again until it is rebuilt.
+
+/// Name tags: whether the game draws the name tag (the text over an entity) of `entity`. Render
+/// thread, once per entity with a visible name tag per frame: keep it cheap; the entity is the
+/// client's copy (its unique id is the server's).
+using NameTagFn = std::function<bool(Actor const& entity)>;
+/// Hides the name tag of every entity of type `entityId` (`when` empty), or of those for which
+/// `when` returns true. A later call for the same type replaces the earlier one.
+void hideNameTag(std::string const& entityId, NameTagFn when = {});
+/// Hides the name tag of every entity for which `when` returns true, whatever its type. Returns a
+/// handle for showNameTag (0: `when` was empty, nothing registered).
+std::size_t hideNameTag(NameTagFn when);
 
 /// The per-frame render context handed to renderers (valid during the callback only).
 ///
@@ -70,7 +142,10 @@ public:
     explicit RenderContext(ScreenContext& screenContext) : screen(screenContext) {}
 
     ScreenContext&          screen;           ///< tessellator, camera matrix stacks
-    BaseActorRenderContext* actors = nullptr; ///< world passes (blocks, entities, items, onWorld); null for the sky
+    /// The actor render context drawGeo draws with: every world pass (blocks, entities, items,
+    /// onWorld) and the GUI item pass (ItemContext::Gui, built on the UI's screen context); null for
+    /// the sky. Tell the GUI pass from the world passes by `ui` (non-null only there).
+    BaseActorRenderContext* actors = nullptr;
     Vec3                    camera{};         ///< camera position, world coordinates
     float                   partialTicks = 0;
     bool                    throughWalls = false; ///< Lines / drawGeo skip the depth test
@@ -79,10 +154,29 @@ public:
     bool                    itemSpace = false;
     /// Half the width of Lines' bars in units of the current space (1/64 block in the world).
     float                   lineHalfWidth = 1.0f / 64;
-    /// ItemContext::Gui: the UI context and the slot's rectangle in GUI pixels.
+    /// ItemContext::Gui: the UI context and the slot's rectangle in GUI pixels (null in every other
+    /// pass).
     MinecraftUIRenderContext* ui = nullptr;
     float                     guiX = 0, guiY = 0, guiSize = 16;
+    /// Where the light of this renderer is taken (world coordinates; "What a renderer
+    /// finds at entry"): the block of a block renderer, the eyes of the entity of an entity renderer
+    /// and of the holder / wearer of an item, the item entity on the ground, the frame block of a
+    /// framed item; nullopt for onWorld. drawGeo draws with the light here (nullopt: at its own
+    /// translation, which is then a world position). A renderer may move it (e.g. to light a
+    /// geometry by the block above).
+    std::optional<Vec3> lightAt;
+    /// Full brightness instead of the light at lightAt (a glow item frame: Java's 15728880).
+    bool fullBright = false;
 };
+
+/// Sets the light of the actor materials (ActorShaderManager::setupShaderParameters: the entity
+/// constants the moving-block / entity materials multiply by) to the block and sky light at the
+/// world position `at` (full bright with `fullBright`), as the game does before it draws a block
+/// actor. For renderers that draw with the game's lit materials themselves (drawGeo does it on its
+/// own). False when there is no world pass (ctx.actors null) or no client world.
+bool setupLight(RenderContext& ctx, Vec3 const& at, bool fullBright = false);
+/// How many times the light was set (setupLight, drawGeo before each draw; tests and e2e).
+[[nodiscard]] std::uint64_t lightSetups();
 
 /// Number of block positions currently tracked for block renderers (tests).
 [[nodiscard]] std::size_t trackedBlockCount();
@@ -90,12 +184,25 @@ public:
 [[nodiscard]] bool hasBlockRenderer(std::string const& blockId);
 /// Whether an item renderer of `itemId` draws in `where`.
 [[nodiscard]] bool hasItemRenderer(std::string const& itemId, ItemContext where);
-/// The tint of `blockId` at `pos` from the registry (0xRRGGBB; nullopt: none registered).
+/// The tint of `blockId` at `pos` from the registry (0xRRGGBB; nullopt: none registered), with the
+/// game's colours of `game` (default: none, as without a world).
 [[nodiscard]] std::optional<unsigned> tintOf(std::string const& blockId, int x, int y, int z);
+[[nodiscard]] std::optional<unsigned> tintOf(std::string const& blockId, int x, int y, int z, tint::GameColors const& game);
 /// Removals (fixtures and selftests); false when nothing was registered.
 bool unregisterBlockRenderer(std::string const& blockId);
 bool unregisterItemRenderer(std::string const& itemId);
 bool unregisterEntityRenderers(std::string const& entityId);
+
+/// Shows the name tags of `entityId` again (hideNameTag by type); false when they were not hidden.
+bool showNameTag(std::string const& entityId);
+/// Removes a hideNameTag(predicate) by its handle; false when there was none.
+bool showNameTag(std::size_t handle);
+/// Whether the name tag of `entity` is hidden by a hideNameTag rule (what the name tag pass asks;
+/// tests).
+[[nodiscard]] bool nameTagHidden(Actor const& entity);
+/// The hideNameTag rule of type `entityId` (nullopt: none; an empty function: every entity of the
+/// type), so a selftest can put back what another module registered.
+[[nodiscard]] std::optional<NameTagFn> nameTagRule(std::string const& entityId);
 
 } // namespace gf::client::render
 
@@ -111,6 +218,10 @@ namespace gf::client::ui {
 /// canvas (canvas origin applies), source (u, v, w, h) in texture pixels of a `texW` x `texH`
 /// texture. Returns false when the texture can't be loaded.
 bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float u, float v, float w, float h, float texW = 256, float texH = 256);
+/// A nine-slice of a `texW` x `texH` texture over `dst` (the game's nineslice_size): the corners of
+/// `slice` texture pixels drawn 1:1, the edges and the middle stretched. False when the texture
+/// can't be loaded.
+bool blitNineSlice(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float texW, float texH, float slice);
 /// How blit draws: 0 the UI image batch flushed with "ui_flush", 1 flushed with
 /// "ui_textured_and_glcolor", 2 a textured mesh with the "ui_textured" material (default; spike S5).
 [[nodiscard]] int blitMethod();
@@ -157,6 +268,15 @@ namespace gf::client::hud {
 } // namespace gf::client::hud
 
 namespace gf::client::toast {
+/// A toast with literal lines (Java's Component.literal; e.g. a name the server sent): each line is
+/// the literal text when it is set, else the spec's translation key translated on this client (the
+/// mod's strings, then the game's; an unknown key is shown as it is). Drawn as Java's ToastComponent
+/// draws TF's toasts (160 x 32, the icon at (6, 8), the title at (25, 7), the body at (25, 18)).
+struct LiteralToastSpec {
+    ToastSpec   spec;  ///< icon, keys (used for a line without literal text) and display time
+    std::string title; ///< literal title, wins over spec.titleKey
+    std::string body;  ///< literal body, wins over spec.bodyKey
+};
 /// A toast's text colours (ARGB, as Java's drawString).
 struct Style {
     unsigned titleColor = 0xFFFFFF00; ///< LockedBiomeToast's title: -256
@@ -172,10 +292,24 @@ enum class Kind { LockedBiome, MissingAdvancement };
 /// Shows a toast with `style` (Java's ToastComponent: 5 slots, a queue, 600 ms slides; not drawn while
 /// the GUI is hidden).
 void show(ToastSpec const& spec, Style style);
-/// Removes the toasts with `titleKey`, waiting or shown (selftests); returns how many.
-std::size_t cancel(std::string const& titleKey);
-/// The style of the first toast with `titleKey`, waiting or shown (tests).
-[[nodiscard]] std::optional<Style> styleOfToast(std::string const& titleKey);
+/// Shows a toast with literal lines, in LockedBiomeToast's colours (show) or with `style`.
+void show(LiteralToastSpec const& toast, Style style = {});
+/// Removes the toasts whose titleKey or literal title is `title`, waiting or shown (selftests);
+/// returns how many.
+std::size_t cancel(std::string const& title);
+/// The style of the first toast whose titleKey or literal title is `title`, waiting or shown (tests).
+[[nodiscard]] std::optional<Style> styleOfToast(std::string const& title);
+/// The two lines the first toast whose titleKey or literal title is `title` shows (the literal text,
+/// else the key translated on this client), waiting or shown (tests).
+[[nodiscard]] std::optional<std::pair<std::string, std::string>> linesOfToast(std::string const& title);
+/// The frame every toast is drawn on, in place of Java's sprite toast/advancement (160 x 32, blitted
+/// whole): the texture Bedrock draws its own toasts with (toast_screen.json's popup background
+/// "textures/ui/greyBorder": the dark advancement-toast look, a black outline with cut corners, a
+/// 2 px #555555 border and the #212121 body; a 16 x 16 nine-slice with 4 px corners), stretched to
+/// the toast's 160 x 32 as the game's nine-slice does.
+inline constexpr char kFrameTexture[] = "textures/ui/greyBorder";
+inline constexpr int  kFrameSlice     = 4;  ///< nineslice_size of textures/ui/greyBorder.json
+inline constexpr int  kFrameSize      = 16; ///< base_size
 } // namespace gf::client::toast
 
 namespace gf::client::particles {

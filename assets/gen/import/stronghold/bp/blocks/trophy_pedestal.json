@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:trophy_pedestal",
@@ -15,7 +15,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 10000
       },
-      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#707070",
       "minecraft:geometry": "geometry.tf.twilightforest.block.trophy_pedestal",
       "minecraft:material_instances": {

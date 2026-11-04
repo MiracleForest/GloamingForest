@@ -162,5 +162,8 @@ struct SoundCounters {
 [[nodiscard]] std::vector<GlobalPos> openedParts(Player& player);
 /// The stack on the cursor of `player`'s chest screen (selftests).
 [[nodiscard]] ItemStack carriedOf(Player& player);
+/// The client mod chest screens refreshed so far because a container they show changed
+/// (feature/ext/combat/InventoryChanges.h; selftests).
+[[nodiscard]] std::uint64_t screenRefreshes();
 
 } // namespace gf::inventory

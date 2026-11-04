@@ -101,6 +101,7 @@ struct ActorState {
     // hostile mount
     std::int64_t grabbed = 0; ///< the player this mob holds as a rider
     bool         hostileMount = false; ///< grabbed a rider (mount::grab) or an IHostileMount type
+    int          remountTries = 0;     ///< ticks in a row the held rider could not be put back yet
     unsigned     disabledFlags = 0;    ///< GoalSelector#disabledFlags (Mob#updateControlFlags, every 5 ticks)
     // the last time anything touched the state (sweep)
     std::uint64_t lastSeen = 0;
@@ -273,6 +274,20 @@ void uninstallMounts();
 void tickMount(Mob& mob, ActorState& state);
 /// HostileMountEvents#isRidingUnfriendly.
 [[nodiscard]] bool ridingUnfriendly(Actor const& actor);
+/// ridingUnfriendly, or a held player its mob is still putting back on the seat.
+[[nodiscard]] bool heldUnfriendly(Actor const& actor);
+/// Whether Actor::stopRiding of `actor` is cancelled (HostileMountEvents#preventMountDismount).
+[[nodiscard]] bool cancelsDismount(Actor& actor, bool actorIsBeingDestroyed, bool switchingVehicles, bool isBeingTeleported);
+/// What the hostile mounts did so far (selftests: which path kept a rider on its seat).
+struct MountCountersForTest {
+    int cancelledDismounts = 0; ///< Actor::stopRiding calls cancelled
+    int putBackAttempts    = 0; ///< startRiding calls of tickMount for a rider off its seat
+    int failedPutBacks     = 0; ///< of those, the ones that did not put it back
+};
+[[nodiscard]] MountCountersForTest mountCountersForTest();
+/// Takes `rider` off its seat without letting go (a dismount that bypasses Actor::stopRiding's
+/// cancel, which the mob's tick puts back).
+void leaveSeatForTest(Actor& rider);
 /// Whether a teleport with `cause` of the living `actor` is cancelled (it rides a hostile mount);
 /// `anyCause`: also the engine's cause 0 (the random teleports of Actor::tryTeleportTo).
 [[nodiscard]] bool blocksTeleport(Actor& actor, int cause, bool anyCause);

@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.80",
+  "format_version": "1.26.50",
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:dark_tower_miniature_structure",
@@ -17,7 +17,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 3.75
       },
-      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:collision_box": false,
       "minecraft:geometry": "geometry.tf.twilightforest.block.miniature.dark_tower",
       "minecraft:material_instances": {

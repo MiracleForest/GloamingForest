@@ -2,16 +2,23 @@
 # (break / use / multi-place refused for a survival player without the lock advancement, the boxes
 # and packets shown, allowed after progression::grant and locked again after revoke), conquest,
 # the start store (written, read back, kept over a server restart), hint books and the hint mob's
-# guaranteed book drop, the hint timer's game time, decoration clearance, the start evaluation
-# threading and locate probe, the descriptors' full TF records, Java's decoration slots and seeds of
-# the landmark pieces, the biome checks against TF's biome tags and TF's command literals and texts;
-# then /twilightforest center | info | conquer [reactivate] | locate <structure or #tag> | place |
+# guaranteed book drop, the hint timer's game time, decoration clearance (reserved sites without
+# pieces block nothing), the controlled spawns and spawn overrides of the fixtures and a hollow
+# hill's dome, the starts' piece types and saved tags, the start evaluation threading and locate
+# probe, the descriptors' full TF records, Java's decoration slots and seeds of the landmark pieces,
+# the biome checks against TF's biome tags and TF's command literals and texts; then
+# /twilightforest center | info | conquer [reactivate] | locate <structure or #tag> | place |
 # genbook [<structure>] (+ the generatebook alias) from the console.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
+$mark = Get-LogMark
 $r = Invoke-SelfTest 'landmark.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) landmark selftest(s) failed" }
-if ($r.Pass -lt 15) { throw "expected at least 15 landmark selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 19) { throw "expected at least 19 landmark selftests to pass, got $($r.Pass)" }
+# landmark.commands runs refused commands on purpose through selftest::runServerCommand, which hands
+# the reply to the test instead of logging it: the selftests leave no "Command error" line
+$cmdErrors = @(Get-ServerLog -Since $mark | Select-String -Pattern 'Command error')
+if ($cmdErrors.Count -gt 0) { throw "the landmark selftests logged $($cmdErrors.Count) command error line(s): $($cmdErrors[0].Line)" }
 
 # The commands (console origin: the overworld at 0 0 0)
 $mark = Get-LogMark

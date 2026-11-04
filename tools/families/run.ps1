@@ -6,13 +6,13 @@
   tools/families/families.lua turns the family data (assets/data/families/<unit>.json, assembled
   into data/gf/families/) into Bedrock block definitions, shared geometries, block sounds and
   double slab loot tables, and the fixture families (tools/families/fixtures/*.json) into the
-  gf_test packs. tools/xmake/assemble.lua runs it right after the packs are built once F0's hook
-  is in; this script applies it to an assembled directory the build did not complete (a pack it
+  gf_test packs. tools/xmake/assemble.lua runs it right after the packs are built (its families
+  hook); this script applies it to an assembled directory the build did not complete (a pack it
   completed carries families-generated.txt, and a second run is a no-op):
 
     -Out <dir>   one or more assembled mod directories (default: bin/server/GloamingForest and
-                 bin/client/GloamingForest, those that exist). The e2e scenarios of F11 run it on
-                 the deployed copy (scenarios/families.prelaunch.ps1).
+                 bin/client/GloamingForest, those that exist). The e2e prelaunch scripts of F11
+                 run it on the deployed copy as a safety net (a no-op after a build).
     -Check       assembles into build/assemble-check (tools/assemble.ps1 -Check) and runs the
                  generator and its checks there (integer states, permutation budget, geometry).
 
