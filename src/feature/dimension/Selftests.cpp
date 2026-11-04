@@ -30,7 +30,6 @@
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/sim/LookDuration.h"
-#include "mc/server/commands/CommandPermissionLevel.h"
 #include "mc/server/commands/CommandUtils.h"
 #include "mc/world/level/storage/GameRule.h"
 #include "mc/world/level/storage/GameRules.h"
