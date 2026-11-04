@@ -294,10 +294,31 @@ GF_REGISTER_SELFTEST("ui.fixture_chest_plain", [](Context& ctx) -> ll::coro::Cor
 GF_REGISTER_SELFTEST("ui.fixture_frame", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (fixtureOff(ctx)) co_return;
     if (auto st = co_await stageFor(ctx, fixturePlayersNow())) {
-        ctx.check(fx::placeFrame(*st->region, {st->origin.x, st->origin.y + 1, st->origin.z + 2}, kFixtureItem), "the stage frame is placed");
+        BlockPos const origin = st->origin;
+        ctx.check(fx::placeFrame(*st->region, {origin.x, origin.y + 1, origin.z + 2}, kFixtureItem), "the stage frame is placed");
         auto players = fixturePlayersNow();
-        for (auto* rp : players) fx::standOnStage(*rp, *st->region, st->origin, 1.5f); // the frame's middle
+        for (auto* rp : players) {
+            fx::standOnStage(*rp, *st->region, origin, 1.5f); // the frame's middle
+            // the client's stage renderers first (a block renderer for the fixture block, a tint on the
+            // game's foliage for the twilight oak leaves), then their blocks, so the client meshes them with both
+            fx::show(*rp, {{"show", true}, {"stage", {origin.x, origin.y, origin.z}}});
+        }
         ctx.info("item frame placed on the stage for " + names(players));
+        co_await ctx.ticks(2);
+        auto* region = ctx.region(); // again after the wait (rule R16)
+        ctx.require(region != nullptr, "a region for the stage");
+        auto const* block  = gf::game::blockWith(kFixtureBlock);
+        // TF leaves with the "default_foliage" tint method (tools/families): their mesh asks the tint
+        // resolver, so the tint registry runs (vanilla oak leaves are tinted without it)
+        auto const* leaves = gf::game::blockWithStates("twilightforest:twilight_oak_leaves", Json{{"twilightforest:persistent", true}}); // no decay
+        ctx.check(block && gf::game::setBlock(*region, {origin.x - 1, origin.y, origin.z + 2}, *block), "the fixture block (block renderer) is on the stage");
+        ctx.check(leaves && gf::game::setBlock(*region, {origin.x + 1, origin.y, origin.z + 2}, *leaves), "the twilight oak leaves (tint on the game's foliage) are on the stage");
+        ctx.info(
+            "stage blocks: " + gf::game::blockId(region->getBlock({origin.x - 1, origin.y, origin.z + 2})) + " and " +
+            gf::game::blockId(region->getBlock({origin.x + 1, origin.y, origin.z + 2}))
+        );
+        // two named simulated players behind them: the client fixture hides one name tag (render::hideNameTag)
+        ctx.check(fx::placeNameTagPlayers(*region, origin) == 2, "the named players are on the stage");
     }
     auto pos = ctx.testPos(6230, 1);
     co_await ctx.ensureLoaded(pos);
@@ -309,6 +330,26 @@ GF_REGISTER_SELFTEST("ui.fixture_frame", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.require(fx::placeFrame(*region, at, kFixtureItem), "the frame is placed");
     ctx.check(fx::frameItem(*region, at) == kFixtureItem, "the frame holds the fixture item");
     co_await removeFrame(ctx, pos);
+});
+
+// The stage's named simulated players (the client fixture's name tag step) are placed and removed
+// again (dx 6236: the row, dz 0..4).
+GF_REGISTER_SELFTEST("ui.fixture_name_players", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (fixtureOff(ctx)) co_return;
+    auto pos = ctx.testPos(6236, 0);
+    co_await ctx.ensureLoaded(gf::core::GlobalPos{pos.dim, pos.x, pos.y, pos.z + 4});
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto origin = gf::game::blockPos(pos);
+    ctx.require(fx::placeNameTagPlayers(*region, origin) == 2, "two named players are placed");
+    co_await ctx.ticks(2);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    ctx.check(fx::placeNameTagPlayers(*region, origin) == 2, "placing them again moves the earlier ones");
+    co_await ctx.ticks(2);
+    ctx.check(fx::removeNameTagPlayers() == 2, "both are removed (and no more than two were there)");
+    co_await ctx.ticks(2);
+    ctx.check(fx::removeNameTagPlayers() == 0, "none is left");
 });
 
 // ItemContext::Head: the fixture block on the tagged players' heads (their helmet is kept and put

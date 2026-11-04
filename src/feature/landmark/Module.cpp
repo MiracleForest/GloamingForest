@@ -39,12 +39,8 @@
 
 namespace gf::feature::landmark {
 
-namespace {
-
-constexpr char kStructureHuntTag[] = "gf_landmark_structure_hunt";
-
 /// EntityEvents#structureSpecialSpawns: the controlled list, else the structure's spawn override.
-std::optional<std::vector<spawn::SpawnEntry>> specialSpawns(BlockSource& region, BlockPos const& pos, std::string const& category) {
+std::optional<std::vector<spawn::SpawnEntry>> structureSpecialSpawns(BlockSource& region, BlockPos const& pos, std::string const& category) {
     int  dim     = static_cast<int>(region.getDimensionId());
     auto convert = [](std::vector<Json> const& list) {
         std::vector<spawn::SpawnEntry> out;
@@ -69,6 +65,10 @@ std::optional<std::vector<spawn::SpawnEntry>> specialSpawns(BlockSource& region,
     }
     return std::nullopt;
 }
+
+namespace {
+
+constexpr char kStructureHuntTag[] = "gf_landmark_structure_hunt";
 
 /// setup_structure_hunt: the tagged player goes to the Twilight Forest (TFTeleportCommand#run).
 void structureHunt(Level& level) {
@@ -109,7 +109,7 @@ public:
         if (!once) {
             once = true;
             registerWorldgenStages();
-            spawn::onSpecialSpawn(specialSpawns);
+            spawn::onSpecialSpawn(structureSpecialSpawns);
             game::db::onWorldReady([] {
                 noteServerThread(); // a new world's server thread is known before its first tick
                 resetProtection();

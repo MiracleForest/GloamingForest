@@ -23,7 +23,7 @@ are listed in the appendices; none of them has runtime behaviour in GloamingFore
 | Cosmetic Armor (`compat/CosmeticArmorCompat`) | 1 class | not ported | emperor's cloth (U9) hides armor with the client mod |
 | Default modified travellers' gear getter (`compat/common`) | 1 class | not ported (recipe-viewer helper) | - |
 | Museum Curator exhibits (`data/twilightforest/museumexhibits/**`) | 67 JSON files, 22 `museumcurator.*` keys | not ported | none |
-| Tips mod tips (`assets/twilightforest/tips/*.json`) | 99 tips, 99 `twilightforest.tips.*` keys | not ported | candidate for loading-screen tips or a `/twilightforest tips` page later (F12); the strings stay in the lang files |
+| Tips mod tips (`assets/twilightforest/tips/*.json`) | 99 tips, 99 `twilightforest.tips.*` keys | not ported | candidate for loading-screen tips or an in-game tips page later (F12; TF has no tips subcommand, so a command for it would be a GloamingForest addition with its own owners.tsv `subcommand` row, R14); the strings stay in the lang files |
 | JEED effect providers (`data/twilightforest/recipe/jeed/*.json`, type `jeed:effect_provider`, condition `neoforge:mod_loaded jeed`) | 13 files (`twilightforest:jeed/{blindness,fire_resistance,frosted,hunger,jump_boost,mining_fatigue,night_vision,poison,regeneration,resistance,slowness,strength,wither}`, owned by U6, U9, U16, U17, U27 per owners.tsv) | inert | the condition is never true; owners keep the ids (R1) but implement nothing; importers may skip the type |
 | Other mods' tags (`data/{aether,alexscaves,ars_nouveau,artifacts,create,createaddition,farmersdelight,forbidden_arcanus,immersiveengineering,randomium}/tags/**`) | tag files | imported as data only (F1) | harmless without those mods |
 | Shield Parry mod detection (`EntityEvents.SHIELD_PARRY_MOD_LOADED`) | - | always "not loaded" | TF's own parrying applies (U8) |
@@ -102,7 +102,7 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the TF 4.8 data the W1 w
 | `config_key` | 1 |
 | `lang` | 127 |
 | `net` | 1 |
-| `path` | 2 |
+| `path` | 5 |
 | `selftest` | 1 |
 | `selftest_dx` | 1 |
 | `structure` | 4 |
@@ -116,7 +116,7 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the TF 4.8 data the W1 w
 | Selftest dx range (`selftest_dx`) | `6600-6699` |
 | World DB keys (`worlddb`) | `gf:spec-items:*` |
 | Net channels (`net`) | `spec-items.*` |
-| Owned paths (`path`) | `docs/spec/{woodwork,building,flora,armory,weapons,artifacts,provisions,tgear,tgmove,uncraftmaps,progression,atmosphere}.md`, `docs/spec/not-ported.md` |
+| Owned paths (`path`) | `assets/gen/audio/spec-items/**`, `assets/gen/geo/spec-items/**`, `assets/gen/import/spec-items/**`, `docs/spec/{woodwork,building,flora,armory,weapons,artifacts,provisions,tgear,tgmove,uncraftmaps,progression,atmosphere}.md`, `docs/spec/not-ported.md` |
 
 ### Config keys (1)
 

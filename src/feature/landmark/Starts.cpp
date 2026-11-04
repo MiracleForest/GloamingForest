@@ -23,16 +23,20 @@
 // generateAt (commands, saplings, selftests) and on demand by lookups (protection, clearance,
 // terraforming; /twilightforest locate only probes and stores nothing), so a site is reserved even
 // before its generator exists (rule: placement is exact before W1 lands). Generation may run on
-// worker threads: the cache is locked, the server thread never waits for a worker, and the DB is
-// written on the server thread only.
+// worker threads: the cache is locked, the server thread never waits for a worker (a piece being
+// post-processed on a worker is saved from its last snapshot, see PieceGuard), and the DB is written
+// on the server thread only.
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
+#include <cstdint>
 #include <cstdlib>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <set>
 #include <shared_mutex>
 #include <thread>
@@ -56,6 +60,7 @@
 #include "core/landmark/Grid.h"
 #include "core/landmark/JavaMath.h"
 #include "core/landmark/Landmark.h"
+#include "core/landmark/Spawning.h"
 #include "feature/dimension/World.h"
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/worldgen/Generation.h"
@@ -212,12 +217,75 @@ BlockBox boxOf(Json const& j) {
     return {v(0), v(1), v(2), v(3), v(4), v(5)};
 }
 
-Json savePiece(structure::Piece const& p) {
+/// The guard of a live piece's fields, one per piece (no stripes: unrelated pieces never share it).
+/// A postProcess call holds `fields` (recursive: a postProcess that places or saves its own piece
+/// again on the same thread goes on), so two generation threads never run one piece's postProcess at
+/// once and nobody saves the piece while its fields change (TF's chest and spawner flags). A save
+/// never waits for it: savePiece only try-locks, and while a postProcess runs it takes `snapshot`,
+/// the piece's own tag as it was before that postProcess began (placeInChunk takes one before the
+/// first postProcess and after every one; a save that finds none yet writes the base fields and marks
+/// the start stale, so the next flush writes it whole). So the server thread (flushRecords, startAt, startPieces) never waits for
+/// a worker, as the file header says; a flush that got a snapshot writes the start again on the next
+/// flush. A Piece::postProcess must not wait for another thread's piece while it holds its own.
+struct PieceGuard {
+    std::recursive_mutex        fields;
+    std::mutex                  snapshotMutex; ///< held only to copy `snapshot` in or out
+    std::shared_ptr<Json const> snapshot;      ///< the piece's own save() (null: none taken yet)
+    std::weak_ptr<structure::Piece const> owner; ///< the piece (an address reused later is another piece)
+};
+
+/// The guard of `p` (made on first use; the table is locked only for the lookup).
+std::shared_ptr<PieceGuard> guardOf(std::shared_ptr<structure::Piece> const& p) {
+    static std::mutex                                                                 mutex;
+    static std::unordered_map<structure::Piece const*, std::shared_ptr<PieceGuard>> table;
+    static std::size_t                                                                pruneAt = 256;
+    std::lock_guard                                                                   lock(mutex);
+    auto& slot = table[p.get()];
+    if (!slot || slot->owner.lock() != p) { // new, or a dead piece's at a reused address
+        slot        = std::make_shared<PieceGuard>();
+        slot->owner = p;
+    }
+    auto guard = slot;
+    if (table.size() >= pruneAt) { // drop the guards of pieces that are gone
+        std::erase_if(table, [](auto const& e) { return e.second->owner.expired(); });
+        pruneAt = std::max<std::size_t>(256, table.size() * 2);
+    }
+    return guard;
+}
+
+/// The piece's own fields (Piece::save()); call with its guard's `fields` held.
+std::shared_ptr<Json const> ownTag(structure::Piece const& p) {
     Json j = Json::object();
     try {
         auto extra = p.save();
-        if (extra.is_object()) j = extra;
+        if (extra.is_object()) j = std::move(extra);
     } catch (...) {}
+    return std::make_shared<Json const>(std::move(j));
+}
+
+void storeSnapshot(PieceGuard& g, std::shared_ptr<Json const> tag) {
+    std::lock_guard lock(g.snapshotMutex);
+    g.snapshot = std::move(tag);
+}
+
+/// StructurePiece#createTag. `stale` (when given) is set when the piece was in a postProcess on
+/// another thread and its last snapshot was used instead of its live fields.
+Json savePiece(std::shared_ptr<structure::Piece> const& piece, bool* stale = nullptr) {
+    auto const&                 p     = *piece;
+    auto                        guard = guardOf(piece);
+    std::shared_ptr<Json const> own;
+    {
+        std::unique_lock<std::recursive_mutex> fields(guard->fields, std::try_to_lock);
+        if (fields.owns_lock()) {
+            own = ownTag(p);
+            storeSnapshot(*guard, own);
+        } else {
+            std::lock_guard lock(guard->snapshotMutex);
+            own = guard->snapshot; // taken by placeInChunk before the running postProcess began
+            if (stale) *stale = true;
+        }
+    }
+    Json j = own ? *own : Json::object();
     j["id"]          = p.typeId;
     j["BB"]          = boxJson(p.bbox);
     j["O"]           = orientationData(p.orientation);
@@ -318,8 +386,24 @@ void placeInChunk(Record const& rec, worldgen::Region& region, int chunkX, int c
     BlockPos    pivot{c.x, first.minY, c.z};
     for (auto const& piece : rec.livePieces) {
         if (!piece->bbox.intersects(chunkBox)) continue;
+        auto guard = guardOf(piece);
         try {
-            piece->postProcess(region, random, chunkBox, pivot);
+            // one postProcess of a piece at a time; a save meanwhile takes the snapshot made first
+            std::scoped_lock<std::recursive_mutex> fields(guard->fields);
+            bool first;
+            {
+                std::lock_guard lock(guard->snapshotMutex);
+                first = !guard->snapshot;
+            }
+            // the fields change only in postProcess: the snapshot after the last one is still current
+            if (first) storeSnapshot(*guard, ownTag(*piece));
+            try {
+                piece->postProcess(region, random, chunkBox, pivot);
+            } catch (...) {
+                storeSnapshot(*guard, ownTag(*piece));
+                throw;
+            }
+            storeSnapshot(*guard, ownTag(*piece));
         } catch (std::exception const& e) {
             log().error("landmark: piece {} of {} failed: {}", piece->typeId, rec.start.key, e.what());
         }
@@ -535,7 +619,12 @@ RecordPtr findLocked(Records& r, int dim, int chunkX, int chunkZ, std::string co
 
 /// Stores a record (records lock held).
 void storeLocked(Records& r, RecordPtr const& record) {
-    record->start.data["chunk"] = Json::array({record->chunkX, record->chunkZ});
+    // written only when it differs: a record stored again (a test putting back the start it replaced)
+    // is read by worldgen threads outside the lock
+    // (a non-object, from a damaged entry, becomes an object: Start::data is one by contract)
+    auto chunk = Json::array({record->chunkX, record->chunkZ});
+    if (!record->start.data.is_object()) record->start.data = Json::object();
+    if (!record->start.data.contains("chunk") || record->start.data["chunk"] != chunk) record->start.data["chunk"] = std::move(chunk);
     indexRecord(r, record);
     r.dirty.emplace(record->start.dimension, record->chunkX, record->chunkZ);
     bumpVersion();
@@ -564,6 +653,19 @@ void replaceRecord(RecordPtr const& existing, RecordPtr const& revived, std::uin
 }
 
 } // namespace
+
+RecordPtr cloneRecord(Record const& r) {
+    auto c        = std::make_shared<Record>();
+    c->start      = r.start;
+    c->chunkX     = r.chunkX;
+    c->chunkZ     = r.chunkZ;
+    c->forced     = r.forced;
+    c->placed     = r.placed;
+    c->pieces     = r.pieces;
+    c->livePieces = r.livePieces;
+    c->reviveTried.store(r.reviveTried.load());
+    return c;
+}
 
 void putRecord(RecordPtr record) {
     if (!record) return;
@@ -594,12 +696,13 @@ void markDirty(Record const& rec) {
     r.dirty.emplace(rec.start.dimension, rec.chunkX, rec.chunkZ);
 }
 
-Json recordToJson(Record const& rec) {
+Json recordToJson(Record const& rec, bool* stale) {
     Json pieces = Json::array();
     for (std::size_t i = 0; i < rec.pieces.size(); ++i) {
         auto const& pi = rec.pieces[i];
         Json        p{{"box", boxJson(pi.box)}, {"protected", pi.protectedPiece}, {"spawn_index", pi.spawnIndex}, {"allow_features", pi.utilityAllowsFeatures}, {"type", pi.type}};
-        if (i < rec.livePieces.size() && rec.livePieces[i]) p["piece"] = savePiece(*rec.livePieces[i]);
+        if (i < rec.livePieces.size() && rec.livePieces[i]) p["piece"] = savePiece(rec.livePieces[i], stale);
+        else if (pi.saved.is_object()) p["piece"] = pi.saved; // not loadable yet: kept as read
         pieces.push_back(std::move(p));
     }
     return Json{
@@ -635,6 +738,7 @@ RecordPtr recordFromJson(Json const& j) {
     rec->forced           = j.value("forced", false);
     rec->placed           = j.value("placed", false);
     rec->start.data       = j.value("data", Json::object());
+    if (!rec->start.data.is_object()) rec->start.data = Json::object(); // a damaged entry: Start::data is an object
     bool allLive          = true;
     std::vector<std::shared_ptr<structure::Piece>> live;
     for (auto const& p : j.value("pieces", Json::array())) {
@@ -644,16 +748,23 @@ RecordPtr recordFromJson(Json const& j) {
         pi.spawnIndex            = p.value("spawn_index", -1);
         pi.utilityAllowsFeatures = p.value("allow_features", false);
         pi.type                  = p.value("type", std::string{});
-        rec->pieces.push_back(pi);
-        rec->start.pieceBoxes.push_back(pi.box);
         std::shared_ptr<structure::Piece> piece;
-        if (p.contains("piece")) piece = loadPiece(p["piece"]);
+        if (p.contains("piece")) {
+            piece = loadPiece(p["piece"]);
+            if (p["piece"].is_object()) pi.saved = p["piece"];
+        }
         if (!piece) allLive = false;
+        rec->pieces.push_back(std::move(pi));
+        rec->start.pieceBoxes.push_back(rec->pieces.back().box);
         live.push_back(std::move(piece));
     }
     // CustomStructureData#forDeserialization: a start is usable with every piece back, else it
-    // keeps its boxes only (protection, spawns and clearance still work)
-    if (allLive) rec->livePieces = std::move(live);
+    // keeps its boxes only (protection, spawns and clearance still work) and its pieces' saved tags,
+    // written back unchanged until their types have factories
+    if (allLive) {
+        rec->livePieces = std::move(live);
+        for (auto& pi : rec->pieces) pi.saved = Json(); // the live pieces save themselves
+    }
     return rec;
 }
 
@@ -661,21 +772,31 @@ void flushRecords() {
     if (!game::db::available()) return;
     auto&                               r = records();
     std::set<std::tuple<int, int, int>> dirty;
-    std::map<std::tuple<int, int, int>, Json> docs;
+    std::map<std::tuple<int, int, int>, std::vector<RecordPtr>> stored;
     {
         std::unique_lock lock(r.mutex);
         dirty.swap(r.dirty);
         for (auto const& [dim, cx, cz] : dirty) {
-            Json doc = Json::object();
-            if (auto it = r.byStartChunk.find({dim, cx, cz}); it != r.byStartChunk.end())
-                for (auto const& rec : it->second) doc[rec->start.key] = recordToJson(*rec);
-            docs[{dim, cx, cz}] = std::move(doc);
+            auto& recs = stored[{dim, cx, cz}];
+            if (auto it = r.byStartChunk.find({dim, cx, cz}); it != r.byStartChunk.end()) recs.assign(it->second.begin(), it->second.end());
         }
     }
-    for (auto const& [k, doc] : docs) {
+    // saved outside the records lock (a piece's save() is the piece's code). A piece in a postProcess
+    // on another thread is written as its snapshot from before it (savePiece never waits): its start
+    // chunk is written again on the next flush
+    std::vector<std::tuple<int, int, int>> again;
+    for (auto const& [k, recs] : stored) {
         auto const& [dim, cx, cz] = k;
+        Json doc                  = Json::object();
+        bool stale                = false;
+        for (auto const& rec : recs) doc[rec->start.key] = recordToJson(*rec, &stale);
         if (doc.empty()) game::db::erase(recordDbKey(dim, cx, cz));
         else game::db::put(recordDbKey(dim, cx, cz), doc);
+        if (stale) again.push_back(k);
+    }
+    if (!again.empty()) {
+        std::unique_lock lock(r.mutex);
+        r.dirty.insert(again.begin(), again.end());
     }
 }
 
@@ -1131,6 +1252,27 @@ int spawnIndexAt(Record const& r, int x, int y, int z) {
     return highest;
 }
 
+std::vector<gf::landmark::ext::StartPiece> piecesOf(Record const& r) {
+    std::vector<gf::landmark::ext::StartPiece> out;
+    out.reserve(r.pieces.size());
+    auto gen = generatorFor(r.start.key);
+    for (std::size_t i = 0; i < r.pieces.size(); ++i) {
+        auto const& pi = r.pieces[i];
+        // the flags protection and the controlled spawns use, asked at the piece's center as the
+        // structure protection sync does: Generator::pieceProtected / spawnIndex replace the piece's own
+        auto        c  = cl::boxCenter(pi.box);
+        BlockPos    at{c.x, (pi.box.minY + pi.box.maxY) / 2, c.z};
+        bool        prot  = pieceProtectedAt(r, i, at.x, at.y, at.z);
+        int         spawn = gen && gen->spawnIndex ? gen->spawnIndex(r.start, at) : pi.spawnIndex;
+        gf::landmark::ext::StartPiece p{pi.type, pi.box, Json(), prot, spawn};
+        if (i < r.livePieces.size() && r.livePieces[i]) p.tag = savePiece(r.livePieces[i]);
+        else if (pi.saved.is_object()) p.tag = pi.saved;
+        else p.tag = Json{{"id", pi.type}, {"BB", boxJson(pi.box)}};
+        out.push_back(std::move(p));
+    }
+    return out;
+}
+
 // ---- worldgen stages ---------------------------------------------------------------------------------
 
 int decorateStep(worldgen::Region& region, int chunkX, int chunkZ, worldgen::ext::DecorationContext const& d) {
@@ -1198,8 +1340,16 @@ void registerGenerator(std::string const& key, Generator generator) { fl::setGen
 
 std::optional<Start> startAt(int dimension, BlockPos const& pos) {
     fl::ensureStartsAround(dimension, pos.x >> 4, pos.z >> 4);
-    for (auto const& rec : fl::recordsIntersecting(dimension, pos.x >> 4, pos.z >> 4))
-        if (!rec->placed && rec->start.box.contains(pos.x, pos.y, pos.z)) return rec->start;
+    for (auto const& rec : fl::recordsIntersecting(dimension, pos.x >> 4, pos.z >> 4)) {
+        if (rec->placed || !rec->start.box.contains(pos.x, pos.y, pos.z)) continue;
+        // StructureManager#getStructureAt hands out the start with its pieces: their tags in data
+        Start start  = rec->start;
+        Json  pieces = Json::array();
+        for (auto& p : fl::piecesOf(*rec)) pieces.push_back(std::move(p.tag));
+        if (!start.data.is_object()) start.data = Json::object();
+        start.data["pieces"] = std::move(pieces);
+        return start;
+    }
     return std::nullopt;
 }
 
@@ -1301,6 +1451,9 @@ bool decorationAllowed(ChunkPos chunk, DecoKind kind) {
     int x = chunk.x * 16 + 8, z = chunk.z * 16 + 8;
     for (auto const& rec : fl::recordsIntersecting(*tf, chunk.x, chunk.z)) {
         if (rec->placed) continue; // no structure references the chunk
+        // StructureStart#isValid: a reserved site (no generator yet, no pieces) is no start, whatever
+        // its clearance square
+        if (rec->pieces.empty()) continue;
         auto const* inf = fl::info(rec->start.key);
         if (!inf || core::landmark::clearFromStructureZone(inf->decoration, occ)) continue;
         if (inf->decoration.chunkClearanceRadius > 0) {
@@ -1425,11 +1578,25 @@ double boxDensity(std::vector<BlockBox> const& boxes, int dYMin, int dYMax, std:
     return core::landmark::combinedBoxDensity(list, x, y, z);
 }
 
+std::vector<StartPiece> startPieces(Start const& start) {
+    auto chunk = start.data.is_object() ? start.data.value("chunk", Json::array()) : Json::array();
+    if (chunk.is_array() && chunk.size() == 2 && chunk[0].is_number_integer() && chunk[1].is_number_integer())
+        if (auto rec = fl::findRecord(start.dimension, chunk[0].get<int>(), chunk[1].get<int>(), start.key)) return fl::piecesOf(*rec);
+    // a Start the store does not hold (built by a test or another unit): its boxes, claiming no
+    // protection and no spawn list (their flags are unknown)
+    std::vector<StartPiece> out;
+    for (auto const& b : start.pieceBoxes) out.push_back(StartPiece{"", b, Json{{"BB", Json::array({b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ})}}, false, -1});
+    return out;
+}
+
 bool featureBlocked(int dimension, int x, int y, int z, Occupancy const& occupancy) {
     fl::ensureStartsAround(dimension, x >> 4, z >> 4);
     core::landmark::FeatureOccupancy occ{occupancy.surface, occupancy.underground, occupancy.vegetation, occupancy.additionalClearance};
     for (auto const& rec : fl::recordsIntersecting(dimension, x >> 4, z >> 4)) {
         if (rec->placed) continue; // no structure references the chunk
+        // AvoidLandmarkModifier#structureTypeBlocksFeaturePlacement skips a start that is not
+        // StructureStart#isValid: a reserved site (no generator yet, no pieces) blocks nothing
+        if (rec->pieces.empty()) continue;
         if (std::find(occupancy.structuresAllowed.begin(), occupancy.structuresAllowed.end(), rec->start.key) != occupancy.structuresAllowed.end()) continue;
         auto const* inf = fl::info(rec->start.key);
         if (!inf || core::landmark::clearFromStructureZone(inf->decoration, occ)) continue;
@@ -1462,7 +1629,9 @@ std::optional<std::vector<nlohmann::json>> potentialSpawns(int dimension, std::s
             return std::vector<Json>{};
         }
         if (rec->start.conquered) return std::nullopt;
-        // HollowHillStructure#canSpawnMob: the hollow hill unit refines this through its generator
+        // `landmark instanceof HollowHillStructure && !canSpawnMob(pos, start.getBoundingBox())`: a
+        // hollow hill's monsters spawn in the half dome of its start box only
+        if (inf->type == fl::kHollowHillType && !core::landmark::hollowHillCanSpawnMob(rec->start.box, x, y, z)) return std::nullopt;
         int index = fl::spawnIndexAt(*rec, x, y, z);
         if (index < 0) return std::nullopt;
         return list(cs.value("labelled_monster_spawns", Json::object()).value(std::to_string(index), Json::array()));

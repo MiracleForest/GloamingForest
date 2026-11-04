@@ -50,6 +50,8 @@
 #include "core/Keys.h"
 #include "core/VolumeHash.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/landmark/LandmarkExt.h"
+#include "feature/ext/landmark/LandmarkTest.h"
 #include "feature/ext/structure/HopperAccess.h"
 #include "feature/ext/structure/Placement.h"
 #include "feature/ext/structure/Processors.h"
@@ -465,24 +467,12 @@ GF_REGISTER_SELFTEST("structure.piece_coordinates", [](Context& ctx) {
     BlockBox     chunk{100, 10, 200, 104, 19, 214};
     south.fill(mem, chunk, 0, 0, 0, 9, 0, 0, blocks::java("minecraft:stone"), blocks::java("minecraft:stone"), false);
     ctx.check(mem.size() == 5, "a fill is clipped to the chunk box (" + std::to_string(mem.size()) + " blocks)");
-    // a fallback piece factory (the kit's stand-ins for other units' fixture pieces) loads a piece
-    // only while no factory is registered for its id: the owner's registration wins in any order
-    std::string const probe = "gf_test:structure/fallback_probe";
-    auto              make  = [](int marker) {
-        return [marker](Json const& saved) -> std::unique_ptr<Piece> {
-            auto piece = std::make_unique<TestPiece>(boxFromJson(saved.value("BB", Json::array())), std::nullopt);
-            piece->genDepth = marker;
-            return piece;
-        };
-    };
-    Json saved{{"id", probe}, {"BB", Json::array({0, 0, 0, 1, 1, 1})}};
-    registerFallbackPieceType(probe, make(7));
-    auto viaFallback = loadPiece(saved);
-    registerPieceType(probe, make(9));
-    registerFallbackPieceType(probe, make(7));
-    auto viaOwner = loadPiece(saved);
-    ctx.check(viaFallback && viaFallback->genDepth == 7 && viaOwner && viaOwner->genDepth == 9,
-              "a fallback piece factory serves only until the type's own factory is registered");
+    // F6 registers its fixture landmark's piece types itself (structure::registerPieceType), so a
+    // persisted fixture start loads its pieces back through the kit
+    for (auto const* id : {"gf_test:landmark_fixture_shell", "gf_test:landmark_fixture_porch"}) {
+        auto loaded = loadPiece(Json{{"id", id}, {"BB", Json::array({0, 0, 0, 2, 2, 2})}});
+        ctx.check(loaded && loaded->bbox == BlockBox::of(0, 0, 0, 2, 2, 2), std::string("F6's piece type ") + id + " loads through its own factory");
+    }
 });
 
 // ---- templates ----------------------------------------------------------------------------------------------------
@@ -1580,42 +1570,6 @@ GF_REGISTER_SELFTEST("structure.markers", [](Context& ctx) -> ll::coro::CoroTask
 
 namespace {
 
-/// F6's fixture landmark pieces (feature/landmark/Helpers.cpp: a stone brick shell, an oak porch)
-/// have no registered piece type, so a start that persisted them (F6's landmark.persistence and
-/// structure.count_loot leave their forced starts in the world: the landmark contract cannot remove
-/// a start) was reloaded with a warning and without its pieces. Until F6 registers them, the kit
-/// gives them fallback factories (used only while no factory is registered for the id, so F6's own
-/// wins once it exists): rebuilt from their saved box, they place what F6's FixturePiece places.
-class LandmarkFixturePiece final : public Piece {
-public:
-    explicit LandmarkFixturePiece(bool shell) : Piece(shell ? "gf_test:landmark_fixture_shell" : "gf_test:landmark_fixture_porch"), mShell(shell) {}
-    void postProcess(Region& region, RandomSource&, BlockBox const& chunkBox, BlockPos const&) override {
-        auto const* wall = game::blockWith(mShell ? "minecraft:stone_bricks" : "minecraft:oak_planks");
-        if (!wall) return;
-        for (int x = bbox.minX; x <= bbox.maxX; ++x)
-            for (int y = bbox.minY; y <= bbox.maxY; ++y)
-                for (int z = bbox.minZ; z <= bbox.maxZ; ++z) {
-                    if (!chunkBox.contains(x, y, z)) continue;
-                    bool edge = x == bbox.minX || x == bbox.maxX || y == bbox.minY || y == bbox.maxY || z == bbox.minZ || z == bbox.maxZ;
-                    if (!mShell || edge) region.setBlock(BlockPos{x, y, z}, *wall);
-                }
-    }
-
-private:
-    bool mShell;
-};
-
-struct LandmarkFixturePieces {
-    LandmarkFixturePieces() {
-        for (bool shell : {true, false})
-            registerFallbackPieceType(shell ? "gf_test:landmark_fixture_shell" : "gf_test:landmark_fixture_porch", [shell](Json const& saved) -> std::unique_ptr<Piece> {
-                auto piece = std::make_unique<LandmarkFixturePiece>(shell);
-                piece->load(saved);
-                return piece;
-            });
-    }
-} const gLandmarkFixturePieces;
-
 /// The items of the container at `pos` (0 when none).
 int itemCount(BlockSource& source, BlockPos const& pos) {
     int n = 0;
@@ -1638,8 +1592,10 @@ GF_REGISTER_SELFTEST("structure.count_loot", [](Context& ctx) -> ll::coro::CoroT
     ctx.require(source != nullptr, "block source");
     // the shell (x and z within 3 of the center) and the porch (z 4..6 ahead) inside the 10 x 10 area
     core::GlobalPos center{ctx.dimension(), area.minX + 6, area.minY, area.minZ + 3};
-    auto            forced = landmark::forceStart("gf_test:landmark_fixture_open", center);
-    ctx.require(forced.has_value() && forced->pieceBoxes.size() == 2, "the fixture landmark starts with its shell and porch");
+    // the forced start is removed again when the test ends (or aborts), so the test runs again in
+    // the same world (F6's ScopedStart; it puts back a start of the key it replaced)
+    landmark::ext::ScopedStart forced("gf_test:landmark_fixture_open", center);
+    ctx.require(forced && forced->pieceBoxes.size() == 2, "the fixture landmark starts with its shell and porch");
     BlockPos chestPos{center.x, center.y + 1, center.z};
     BlockPos hopperPos{center.x + 2, center.y + 1, center.z};      // an enabled hopper
     BlockPos poweredPos{center.x - 2, center.y + 1, center.z - 2}; // a hopper powered by the block beside it
@@ -1650,6 +1606,18 @@ GF_REGISTER_SELFTEST("structure.count_loot", [](Context& ctx) -> ll::coro::CoroT
     auto start = landmark::startAt(center.dim, chestPos);
     ctx.require(start.has_value() && start->key == "gf_test:landmark_fixture_open" && start->box.contains(abovePorch.x, abovePorch.y, abovePorch.z),
                 "the start is found where the command looks");
+    // StructureStart#getPieces as display_pieces, count_loot and count_template read them: F6's
+    // piece type ids and saved tags, the same pieces startAt hands out in data["pieces"]
+    {
+        auto        pieces = landmark::ext::startPieces(*start);
+        std::string types;
+        for (auto const& p : pieces) types += p.type + " ";
+        ctx.check(pieces.size() == 2 && pieces[0].type == "gf_test:landmark_fixture_shell" && pieces[1].type == "gf_test:landmark_fixture_porch" &&
+                      pieces[0].tag.is_object() && pieces[0].tag.value("id", std::string{}) == pieces[0].type && pieces[0].box == forced->pieceBoxes[0],
+                  "the start's pieces carry their type ids, boxes and saved tags (" + types + ")");
+        ctx.check(start->data.contains("pieces") && start->data["pieces"].is_array() && start->data["pieces"].size() == pieces.size(),
+                  "startAt hands out the same pieces' tags");
+    }
     auto const* hopper   = game::blockWith("minecraft:hopper");
     auto const* redstone = game::blockWith("minecraft:redstone_block");
     auto const* furnace  = game::blockWith("minecraft:furnace");
@@ -2763,6 +2731,37 @@ GF_REGISTER_SELFTEST("structure.pending_read", [](Context& ctx) -> ll::coro::Cor
     auto nonce = probe->value("nonce", std::string{});
     auto pos   = probe->value("pos", Json::array());
     game::db::erase("gf:structure:probe");
+    // the fixture landmark start pending_probe forced (unplaced, in an unloaded chunk) was reloaded
+    // from the world DB: its pieces came back through F6's own piece factories (no "unknown piece
+    // type" for them), with their type ids and saved tags; then it is forgotten again
+    if (auto const startProbe = probe->value("start", Json()); startProbe.is_object()) {
+        auto key = startProbe.value("key", std::string{});
+        auto sp  = startProbe.value("pos", Json::array());
+        if (!key.empty() && sp.is_array() && sp.size() == 3) {
+            core::GlobalPos startPos{probe->value("dim", 0), sp[0].get<int>(), sp[1].get<int>(), sp[2].get<int>()};
+            auto            start = landmark::startAt(startPos.dim, BlockPos{startPos.x, startPos.y + 1, startPos.z});
+            ctx.check(start.has_value() && start->key == key, "the forced start of " + key + " is stored after the restart");
+            if (start) {
+                auto        pieces = landmark::ext::startPieces(*start);
+                std::string types;
+                bool        loaded = pieces.size() == startProbe.value("pieces", std::size_t{0});
+                for (auto const& p : pieces) {
+                    types += p.type + " ";
+                    // the piece's type has a factory: the saved tag loads into a live piece again
+                    std::unique_ptr<Piece> live;
+                    if (p.tag.is_object() && p.tag.value("id", std::string{}) == p.type) {
+                        try {
+                            live = loadPiece(p.tag);
+                        } catch (...) {}
+                    }
+                    loaded = loaded && live != nullptr && !p.type.empty();
+                }
+                ctx.check(loaded, "the reloaded start's pieces load through their piece types (" + types + ")");
+                if (loaded) ctx.info("start probe verified " + key + " pieces=" + types);
+            }
+            ctx.check(landmark::ext::forgetStartForTest(startPos, key) == 1, "the probe's forced start is removed again");
+        }
+    }
     ctx.require(!nonce.empty() && pos.is_array() && pos.size() == 3, "the probe record is complete");
     core::GlobalPos at{probe->value("dim", 0), pos[0].get<int>(), pos[1].get<int>(), pos[2].get<int>()};
     ctx.check(!game::db::get("gf:structure:test_mark"), "the probe job did not run before its chunk was loaded");

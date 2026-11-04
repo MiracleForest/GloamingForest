@@ -293,7 +293,7 @@ their grid; keep these constraints:
 
 | Template | Slot / constraints |
 |---|---|
-| `courtyard/hedge_end`, `hedge_end_pillar`, `hedge_corner`, `hedge_t`, `hedge_line`, `hedge_intersection` | one 12-block cell, origin at the cell origin, hedge (`twilightforest:hedge`) walls of the connection shape; base orientation per the rotation table above; naga stone accents where TF uses them (NagastoneVariants randomises `twilightforest:naga_stone*` variants) |
+| `courtyard/hedge_end`, `hedge_end_pillar`, `hedge_corner`, `hedge_t`, `hedge_line`, `hedge_intersection` | one 12-block cell, origin at the cell origin, hedge (`twilightforest:hedge`) walls of the connection shape; base orientation per the rotation table above; naga stone accents where TF uses them (NagastoneVariants turns half of the `twilightforest:etched_nagastone`, `nagastone_pillar`, `nagastone_stairs_left` and `nagastone_stairs_right` into their `mossy_` / `cracked_` variants, half each) |
 | `..._big` variants of the six above + `hedge_between_big` | overlay leaves/hedge "floof" placed at 50 % integrity, air ignored, same footprint |
 | `courtyard/hedge_between` (+ `_big`) | 1-block padder between hedge pieces (placed at -1 / +5 / -7 offsets; NONE or CLOCKWISE_90) |
 | `courtyard/pathway` | path tile 1 block below the hedge base, ~7 x 7 (placed at -1/-7/+5 offsets around a cell; naga stone / stone brick path) |

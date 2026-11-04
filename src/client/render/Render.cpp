@@ -10,8 +10,9 @@
 //
 // One hook per render event (rule R8: units register here):
 // - world: LevelRendererCamera::renderBlockEntities, opaque pass: onWorld callbacks, then the block
-//   renderers of the tracked block positions (blocks with a renderer are recorded while their chunk
-//   is meshed: ClientBlockPipeline::WorldExtractorStep::extractCustomBlock);
+//   renderers of the tracked block positions (the blocks with a renderer are recorded when their
+//   render chunk is built: RenderChunkBuilder::build, every 16^3 section the game meshes, whatever
+//   tessellator draws the block; a rebuild replaces the section's positions);
 // - entities: ActorRenderDispatcher::render, after the entity's own geometry;
 // - items: ItemInHandRenderer::renderItem (first / third person), ItemRenderer::render (item
 //   entities on the ground), InventoryItemRenderer::render (GUI slots, drawn after the slot batch),
@@ -20,7 +21,10 @@
 //   Rendering::_renderHeadGear: Head, in the head pose the game leaves for its head gear);
 // - maps: the TF decorations of gf::client::maps on held maps (ItemInHandRenderer::renderFirstPerson)
 //   and framed maps (the item frame dispatch), in the space MapRenderer::_getMapInstance sees;
-// - tint: ClientBlockPipeline::PositionDependentTintResolver::_get (TF's leaf / grass colours).
+// - tint: ClientBlockPipeline::PositionDependentTintResolver::_get (TF's leaf / grass colours; the
+//   game's own colours at the position come from the same resolver, the original function asked for
+//   a vanilla block of that tint method, when a tint function asks for them);
+// - name tags: ActorRenderDispatcher::extractRenderTextObjects (hideNameTag).
 //
 // The registries are immutable snapshots (copy on write): the render thread and the chunk builder
 // threads read them without a lock; each builder thread keeps its own per-block-state cache for the
@@ -28,7 +32,12 @@
 //
 // Lines and drawGeo tessellate immediately with the engine's materials: lines with "wireframe"
 // (depth tested, vertex colour) or, through walls, "ui_fill_gradient" (no depth test); geometry
-// with the moving-block alpha-test material and the geometry's own texture (as Levitate's rotors).
+// with the moving-block alpha-test material and the geometry's own texture (as Levitate's rotors),
+// lit by the light drawGeo sets before every draw (ActorShaderManager::setupShaderParameters at
+// RenderContext::lightAt, or the geometry's own place: the entity constants that material reads).
+// Every renderer but onWorld gets the place of its light (lightAt) and the light is applied only
+// when something draws with it (drawGeo, or the renderer's own setupLight; feature/ext/ui/Client.h,
+// "What a renderer finds at entry").
 
 #ifdef GF_CLIENT
 
@@ -37,11 +46,12 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
-#include <unordered_set>
 #include <variant>
 
 #include "glm/gtc/matrix_transform.hpp"
@@ -49,13 +59,17 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/client/ClientExitLevelEvent.h"
 #include "ll/api/event/client/ClientJoinLevelEvent.h"
+#include "ll/api/event/render/UIRenderEvent.h"
 #include "ll/api/memory/Hook.h"
 
 #include "mc/client/game/ClientInstance.h"
+#include "mc/client/game/IClientInstance.h"
 #include "mc/client/gui/controls/UIControl.h"
 #include "mc/client/gui/controls/renderers/InventoryItemRenderer.h"
 #include "mc/client/gui/screens/ScreenContext.h"
+#include "mc/client/gui/screens/ScreenView.h"
 #include "mc/client/player/LocalPlayer.h"
+#include "mc/client/renderer/ActorShaderManager.h"
 #include "mc/client/renderer/BaseActorRenderContext.h"
 #include "mc/client/renderer/RenderMaterialGroup.h"
 #include "mc/client/renderer/SupplementaryFieldAutoGenerationMode.h"
@@ -66,8 +80,9 @@
 #include "mc/client/renderer/actor/DataDrivenRenderer_tempComponent_HumanoidAdditionalRendering.h"
 #include "mc/client/renderer/actor/ItemRenderer.h"
 #include "mc/client/renderer/actor/MapRenderer.h"
-#include "mc/client/renderer/block/tessellation_pipeline/client_block_pipeline/PipelineError.h"
-#include "mc/client/renderer/block/tessellation_pipeline/client_block_pipeline/WorldExtractorStep.h"
+#include "mc/client/renderer/block/BakedBlockLightType.h"
+#include "mc/client/renderer/chunks/RenderChunkBuilder.h"
+#include "mc/client/renderer/chunks/RenderChunkGeometry.h"
 #include "mc/client/renderer/block/tessellation_pipeline/helper/client_block_pipeline/PositionDependentTintResolver.h"
 #include "mc/client/renderer/blockactor/BlockActorRenderDispatcher.h"
 #include "mc/client/renderer/blockactor/BlockActorRenderer.h"
@@ -80,12 +95,15 @@
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/math/Matrix.h"
 #include "mc/deps/core/math/Vec2.h"
+#include "mc/deps/core/math/Vec4.h"
 #include "mc/deps/core/resource/ResourceLocation.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/core_graphics/TextureSetLayerType.h"
 #include "mc/deps/core_graphics/enums/PrimitiveMode.h"
+#include "mc/deps/minecraft_renderer/framebuilder/FrameLightingModelCapabilities.h"
 #include "mc/deps/minecraft_renderer/framebuilder/dragon/RenderMetadata.h"
 #include "mc/deps/minecraft_renderer/game/ItemContextFlags.h"
+#include "mc/deps/minecraft_renderer/objects/NameTagRenderObject.h"
 #include "mc/deps/minecraft_renderer/renderer/MaterialPtr.h"
 #include "mc/deps/minecraft_renderer/renderer/TexturePtr.h"
 #include "mc/deps/minecraft_renderer/resources/ClientTexture.h"
@@ -93,14 +111,22 @@
 #include "mc/deps/minecraft_renderer/resources/ServerTexture.h"
 #include "mc/deps/renderer/Camera.h"
 #include "mc/deps/renderer/MatrixStack.h"
+#include "mc/deps/renderer/ShaderColor.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/animation/BoneOrientation.h"
 #include "mc/world/item/ItemInstance.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/ChunkBlockPos.h"
+#include "mc/world/level/ChunkPos.h"
+#include "mc/world/level/chunk/ChunkViewSource.h"
+#include "mc/world/level/chunk/LevelChunk.h"
+#include "mc/world/level/chunk/SubChunk.h"
+#include "mc/world/level/chunk/SubChunkStorage.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockRenderLayer.h"
+#include "mc/world/level/block/TintMethod.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorRendererId.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
@@ -223,7 +249,9 @@ struct Snapshot {
     std::unordered_map<std::string, ItemEntry>                   items;
     std::unordered_map<std::string, std::vector<EntityRenderFn>> entities;
     std::vector<WorldFn>                                         world;
-    std::unordered_map<std::string, tint::TintFn>                tints;
+    std::unordered_map<std::string, tint::GameTintFn>            tints; ///< plain TintFns wrapped
+    std::unordered_map<std::string, NameTagFn>                   nameTagTypes;   ///< empty fn: every entity of the type
+    std::vector<std::pair<std::size_t, NameTagFn>>               nameTagFilters; ///< handle, predicate
 };
 using SnapshotPtr = std::shared_ptr<Snapshot const>;
 
@@ -231,12 +259,14 @@ struct Registry {
     std::mutex                write; ///< writers only
     std::atomic<SnapshotPtr>  snapshot{std::make_shared<Snapshot const>()};
     std::atomic<std::uint64_t> version{0};
-    std::atomic<bool>         anyBlocks{false}, anyTints{false}, anyItems{false}; ///< fast paths
-    // tracked block positions (chunk builders insert, the render thread scans)
-    std::mutex                                   trackedMutex;
-    std::unordered_set<BlockPos, PosHash, PosEq> tracked;
-    int                                          dim         = -1; ///< render thread
+    std::atomic<bool>         anyBlocks{false}, anyTints{false}, anyItems{false}, anyNameTags{false}; ///< fast paths
+    std::size_t               nextNameTagHandle = 1; ///< writers only
+    // tracked block positions per render chunk section (keyed by the section's origin): a chunk
+    // builder replaces the entry of the section it built, the render thread reads them all
+    std::mutex                                                            trackedMutex;
+    std::unordered_map<BlockPos, std::vector<BlockPos>, PosHash, PosEq> tracked;
     bool                                         loggedWorld = false;
+    bool                                         loggedTracked = false; ///< under trackedMutex
 };
 Registry& reg() {
     static Registry r;
@@ -252,9 +282,10 @@ void update(F&& change) {
     std::lock_guard lock(r.write);
     auto            next = std::make_shared<Snapshot>(*snap());
     change(*next);
-    r.anyBlocks = !next->blocks.empty();
-    r.anyTints  = !next->tints.empty();
-    r.anyItems  = !next->items.empty();
+    r.anyBlocks   = !next->blocks.empty();
+    r.anyTints    = !next->tints.empty();
+    r.anyItems    = !next->items.empty();
+    r.anyNameTags = !next->nameTagTypes.empty() || !next->nameTagFilters.empty();
     r.snapshot.store(std::move(next), std::memory_order_release);
     r.version.fetch_add(1, std::memory_order_acq_rel);
 }
@@ -265,7 +296,7 @@ struct ThreadView {
     std::uint64_t                                             version = ~std::uint64_t{0};
     SnapshotPtr                                               snapshot;
     std::unordered_map<Block const*, BlockEntry const*>       blocks; ///< nullptr: no renderer
-    std::unordered_map<Block const*, tint::TintFn const*>     tints;  ///< nullptr: no tint
+    std::unordered_map<Block const*, tint::GameTintFn const*> tints;  ///< nullptr: no tint
 };
 ThreadView& threadView() {
     thread_local ThreadView v;
@@ -288,7 +319,7 @@ BlockEntry const* blockEntryOf(ThreadView& v, Block const& block) {
     return it->second;
 }
 
-tint::TintFn const* tintOfBlock(ThreadView& v, Block const& block) {
+tint::GameTintFn const* tintOfBlock(ThreadView& v, Block const& block) {
     auto [it, fresh] = v.tints.try_emplace(&block, nullptr);
     if (fresh) {
         auto e     = v.snapshot->tints.find(game::blockId(block));
@@ -296,6 +327,44 @@ tint::TintFn const* tintOfBlock(ThreadView& v, Block const& block) {
     }
     return it->second;
 }
+
+/// The game's colours without a world (registry lookups outside a chunk mesh).
+class NoGameColors final : public tint::GameColors {
+public:
+    std::optional<unsigned> foliage() const override { return std::nullopt; }
+    std::optional<unsigned> grass() const override { return std::nullopt; }
+    std::optional<unsigned> water() const override { return std::nullopt; }
+};
+
+unsigned rgbOf(mce::Color const& c) {
+    auto ch = [](float v) { return static_cast<unsigned>(std::clamp(v, 0.0f, 1.0f) * 255.0f + 0.5f); };
+    return ch(c.r) << 16 | ch(c.g) << 8 | ch(c.b);
+}
+
+/// The game's colours at the position a tint resolver is asked for: `ask(method)` runs the resolver's
+/// own (original) function for a tint method (nullopt: no game colour), at most once per method.
+template <class Ask>
+class ResolverColors final : public tint::GameColors {
+public:
+    explicit ResolverColors(Ask& ask) : mAsk(ask) {}
+    std::optional<unsigned> foliage() const override { return get(0, TintMethod::DefaultFoliage); }
+    std::optional<unsigned> grass() const override { return get(1, TintMethod::Grass); }
+    std::optional<unsigned> water() const override { return get(2, TintMethod::Water); }
+    [[nodiscard]] bool asked() const { return mHave[0] || mHave[1] || mHave[2]; }
+
+private:
+    std::optional<unsigned> get(int i, TintMethod method) const {
+        if (!mHave[i]) {
+            auto c    = mAsk(method);
+            mValue[i] = c ? std::optional<unsigned>(rgbOf(*c)) : std::nullopt;
+            mHave[i]  = true;
+        }
+        return mValue[i];
+    }
+    Ask&                            mAsk;
+    mutable std::optional<unsigned> mValue[3]{};
+    mutable bool                    mHave[3]{};
+};
 
 RenderContext contextOf(BaseActorRenderContext& rc) {
     RenderContext ctx(rc.mScreenContext);
@@ -305,7 +374,74 @@ RenderContext contextOf(BaseActorRenderContext& rc) {
     return ctx;
 }
 
+std::atomic<std::uint64_t> gLightSetups{0};
+
+/// Vanilla blocks whose own tint is the game's colour of a tint method (oak leaves: foliage, the grass
+/// block: grass, water: water), asked in place of the TF block when a tint function wants the game's
+/// colour (as F11's LeafTint asks for the foliage). Resolved on the client thread when a world is
+/// joined, cleared when it is left (the chunk builders of the next world never see an old Block).
+std::atomic<Block const*> gProbes[3]{};
+
+void resolveProbes(bool on) {
+    char const* ids[3] = {"minecraft:oak_leaves", "minecraft:grass_block", "minecraft:water"};
+    for (int i = 0; i < 3; ++i) gProbes[i].store(on ? game::blockWith(ids[i]) : nullptr, std::memory_order_release);
+}
+
+Block const* probeBlock(TintMethod method) {
+    int i = method == TintMethod::Grass ? 1 : method == TintMethod::Water ? 2 : 0;
+    return gProbes[i].load(std::memory_order_acquire);
+}
+
+/// The world position at the middle of block `p`.
+Vec3 centreOf(BlockPos const& p) { return Vec3{static_cast<float>(p.x) + .5f, static_cast<float>(p.y) + .5f, static_cast<float>(p.z) + .5f}; }
+
+/// A renderer's context with the place of its light: lightAt / fullBright set; the light itself is
+/// applied by what draws with it (drawGeo before every draw, or the renderer's setupLight), so a
+/// renderer that draws nothing costs no light lookup (feature/ext/ui/Client.h, "What a renderer finds
+/// at entry").
+void lightFor(RenderContext& ctx, Vec3 const& at, bool fullBright = false) {
+    ctx.lightAt    = at;
+    ctx.fullBright = fullBright;
+}
+
+/// The screen context's shader colour and dark colour, put back when a pass that set the light for
+/// its renderers ends: the game's next draw may read them without setting them (as F11's sign text
+/// keeps them). The entity constants themselves cannot be read back; every game renderer sets them
+/// before it draws.
+class ShaderColours {
+public:
+    explicit ShaderColours(ScreenContext& screen) : mScreen(screen), mColor(screen.currentShaderColor), mDark(screen.currentShaderDarkColor) {}
+    ~ShaderColours() {
+        ShaderColor& color = mScreen.currentShaderColor;
+        ShaderColor& dark  = mScreen.currentShaderDarkColor;
+        color              = mColor;
+        color.dirty        = true;
+        dark               = mDark;
+        dark.dirty         = true;
+    }
+    ShaderColours(ShaderColours const&)            = delete;
+    ShaderColours& operator=(ShaderColours const&) = delete;
+
+private:
+    ScreenContext& mScreen;
+    ShaderColor    mColor, mDark;
+};
+
 } // namespace
+
+bool setupLight(RenderContext& ctx, Vec3 const& at, bool fullBright) {
+    if (!ctx.actors) return false;
+    IClientInstance& client = ctx.actors->mClientInstance;
+    auto*            region = client.getRegion();
+    auto*            light  = client.getLightTexture();
+    if (!region || !light) return false;
+    BlockPos pos{static_cast<int>(std::floor(at.x)), static_cast<int>(std::floor(at.y)), static_cast<int>(std::floor(at.z))};
+    ActorShaderManager::setupShaderParameters(ctx.screen, *region, pos, ctx.partialTicks, fullBright, *light, ctx.actors->mLightVolumeManager, Vec2{1.0f, 1.0f}, Vec4{0.0f, 0.0f, 0.0f, 0.0f});
+    gLightSetups.fetch_add(1, std::memory_order_relaxed);
+    return true;
+}
+
+std::uint64_t lightSetups() { return gLightSetups.load(std::memory_order_relaxed); }
 
 // ---- Lines ---------------------------------------------------------------------------------------------
 
@@ -387,6 +523,12 @@ void drawGeo(RenderContext& ctx, std::string const& geoId, std::string const& te
     }
     auto* tex = textureOf(texture);
     if (!tex) return;
+    // the light of this draw (the material multiplies by the entity constants): at lightAt, else at
+    // the geometry's own place (world space); never the light the draw before it left
+    if (ctx.lightAt) setupLight(ctx, *ctx.lightAt, ctx.fullBright);
+    else if (ctx.fullBright) setupLight(ctx, ctx.camera, true);
+    else if (!ctx.itemSpace) setupLight(ctx, transform.translation, ctx.fullBright);
+    else warn("geo_light", "drawGeo in an item space without RenderContext::lightAt: the light is the item's");
     auto&        screen = ctx.screen;
     Tessellator& tess   = screen.tessellator;
     auto&        world  = screen.camera.worldMatrixStack.get();
@@ -453,7 +595,9 @@ bool unregisterEntityRenderers(std::string const& entityId) {
 
 std::size_t trackedBlockCount() {
     std::lock_guard lock(reg().trackedMutex);
-    return reg().tracked.size();
+    std::size_t     n = 0;
+    for (auto const& [section, positions] : reg().tracked) n += positions.size();
+    return n;
 }
 
 bool hasBlockRenderer(std::string const& blockId) { return snap()->blocks.contains(blockId); }
@@ -464,16 +608,133 @@ bool hasItemRenderer(std::string const& itemId, ItemContext where) {
     return it != s->items.end() && (it->second.contexts & where);
 }
 
-std::optional<unsigned> tintOf(std::string const& blockId, int x, int y, int z) {
+std::optional<unsigned> tintOf(std::string const& blockId, int x, int y, int z) { return tintOf(blockId, x, y, z, NoGameColors{}); }
+
+std::optional<unsigned> tintOf(std::string const& blockId, int x, int y, int z, tint::GameColors const& game) {
     auto s  = snap();
     auto it = s->tints.find(blockId);
     if (it == s->tints.end() || !it->second) return std::nullopt;
-    return it->second(BlockPos{x, y, z});
+    return it->second(BlockPos{x, y, z}, game);
+}
+
+// ---- name tags ---------------------------------------------------------------------------------------------
+
+void hideNameTag(std::string const& entityId, NameTagFn when) {
+    update([&](Snapshot& s) { s.nameTagTypes[entityId] = std::move(when); });
+}
+
+std::size_t hideNameTag(NameTagFn when) {
+    if (!when) return 0;
+    std::size_t handle = 0;
+    update([&](Snapshot& s) {
+        handle = reg().nextNameTagHandle++; // under the writers' lock
+        s.nameTagFilters.emplace_back(handle, std::move(when));
+    });
+    return handle;
+}
+
+bool showNameTag(std::string const& entityId) {
+    bool had = false;
+    update([&](Snapshot& s) { had = s.nameTagTypes.erase(entityId) > 0; });
+    return had;
+}
+
+bool showNameTag(std::size_t handle) {
+    bool had = false;
+    update([&](Snapshot& s) { had = std::erase_if(s.nameTagFilters, [handle](auto const& f) { return f.first == handle; }) > 0; });
+    return had;
+}
+
+std::optional<NameTagFn> nameTagRule(std::string const& entityId) {
+    auto s  = snap();
+    auto it = s->nameTagTypes.find(entityId);
+    if (it == s->nameTagTypes.end()) return std::nullopt;
+    return it->second;
+}
+
+bool nameTagHidden(Actor const& entity) {
+    if (!reg().anyNameTags.load(std::memory_order_relaxed)) return false;
+    auto s = snap();
+    if (!s->nameTagTypes.empty()) {
+        if (auto it = s->nameTagTypes.find(entity.getTypeName()); it != s->nameTagTypes.end() && (!it->second || it->second(entity))) return true;
+    }
+    for (auto const& [handle, fn] : s->nameTagFilters) {
+        if (fn(entity)) return true;
+    }
+    return false;
 }
 
 // ---- per-frame work --------------------------------------------------------------------------------------
 
 namespace {
+
+/// Set once a subchunk returned by LevelChunk::getSubChunk(y >> 4) carried that absolute index: from
+/// then on a missing subchunk is read as an all-air section.
+std::atomic<bool> gSubChunkIndexChecked{false};
+
+/// Whether the 16^3 section at height `sectionY` (block y >> 4) of `chunk` may hold a block with a
+/// block renderer: false when its subchunk's palettes have none (most sections, so their 4096 blocks
+/// are never read), or when it has no subchunk (all air, once the index was seen to be y >> 4). True
+/// when it cannot tell.
+bool sectionMayHaveRenderer(LevelChunk& chunk, int sectionY, ThreadView& view) {
+    try {
+        auto* sub = chunk.getSubChunk(static_cast<short>(sectionY));
+        if (!sub) return !gSubChunkIndexChecked.load(std::memory_order_relaxed); // no subchunk: air
+        if (static_cast<int>(sub->mAbsoluteIndex) != sectionY) {
+            warn("subchunk_index", "LevelChunk::getSubChunk(y >> 4) gave another section: block renderer sections are scanned whole");
+            return true;
+        }
+        gSubChunkIndexChecked.store(true, std::memory_order_relaxed);
+        std::function<bool(Block const&)> const hasRenderer = [&view](Block const& b) { return blockEntryOf(view, b) != nullptr; };
+        bool any = false;
+        for (int layer = 0; layer < 2; ++layer) {
+            auto* storage = sub->mBlocksReadPtr[layer];
+            if (!storage) {
+                if (layer == 0) return true; // no standard layer to read: scan
+                continue;
+            }
+            any = any || storage->hasAnyElementMatchingFilterInPalette(hasRenderer);
+        }
+        return any;
+    } catch (...) {
+        return true;
+    }
+}
+
+/// Records the blocks with a block renderer of the render chunk (16^3 section) at `origin`, read from
+/// its level chunk, in place of what the section held before (builder threads).
+void trackSection(ChunkSource& source, BlockPos const& origin) {
+    auto chunk = source.getExistingChunk(ChunkPos{origin.x >> 4, origin.z >> 4});
+    if (!chunk) return;
+    BlockPos const min  = chunk->mMin;
+    auto&          view = threadView();
+    int const      x0 = origin.x & ~15, y0 = origin.y & ~15, z0 = origin.z & ~15;
+    std::vector<BlockPos> found;
+    if (sectionMayHaveRenderer(*chunk, y0 >> 4, view)) {
+        for (int y = 0; y < 16; ++y) {
+            int const wy = y0 + y;
+            if (wy < min.y) continue;
+            for (int z = 0; z < 16; ++z) {
+                for (int x = 0; x < 16; ++x) {
+                    Block const& b = chunk->getBlock(ChunkBlockPos{static_cast<uchar>(x), ChunkLocalHeight{static_cast<short>(wy - min.y)}, static_cast<uchar>(z)});
+                    if (blockEntryOf(view, b)) found.push_back(BlockPos{x0 + x, wy, z0 + z});
+                }
+            }
+        }
+    }
+    auto&           rg = reg();
+    std::lock_guard lock(rg.trackedMutex);
+    BlockPos const  key{x0, y0, z0};
+    if (found.empty()) {
+        rg.tracked.erase(key);
+        return;
+    }
+    if (!rg.loggedTracked) {
+        rg.loggedTracked = true;
+        log().info("render: block renderer positions tracked from built render chunks ({} in the section at {} {} {})", found.size(), x0, y0, z0);
+    }
+    rg.tracked[key] = std::move(found);
+}
 
 void renderWorld(BaseActorRenderContext& rc) {
     auto* client = currentClient();
@@ -485,12 +746,10 @@ void renderWorld(BaseActorRenderContext& rc) {
     std::vector<BlockPos> positions;
     {
         std::lock_guard lock(r.trackedMutex);
-        int             dim = static_cast<int>(player->getDimensionId());
-        if (dim != r.dim) { // another dimension: its chunks are meshed again
-            r.tracked.clear();
-            r.dim = dim;
-        }
-        if (!s->blocks.empty()) positions.assign(r.tracked.begin(), r.tracked.end());
+        // another dimension: the positions of the old one go below (no loaded chunk there, or not a
+        // block with a renderer); the new one's sections record theirs as they are built
+        if (!s->blocks.empty())
+            for (auto const& [section, inSection] : r.tracked) positions.insert(positions.end(), inSection.begin(), inSection.end());
     }
     std::vector<std::tuple<BlockPos, Block const*, BlockEntry const*>> blocks;
     std::vector<BlockPos>                                              stale;
@@ -512,11 +771,24 @@ void renderWorld(BaseActorRenderContext& rc) {
     }
     if (!stale.empty()) {
         std::lock_guard lock(r.trackedMutex);
-        for (auto const& p : stale) r.tracked.erase(p);
+        for (auto const& p : stale) {
+            auto it = r.tracked.find(BlockPos{p.x & ~15, p.y & ~15, p.z & ~15});
+            if (it == r.tracked.end()) continue;
+            std::erase(it->second, p);
+            if (it->second.empty()) r.tracked.erase(it);
+        }
     }
     if (s->world.empty() && blocks.empty()) return;
-    auto ctx = contextOf(rc);
+    auto const base = contextOf(rc);
+    // every renderer gets a context of its own (what one changes never reaches the next), the light
+    // of its own place (never the one the draw before it left) and the shader colours the game left
+    // (put back after it; Render.h)
     for (auto const& fn : s->world) {
+        // no lightAt: an onWorld callback draws anywhere in the world, so drawGeo lights each of its
+        // geometries at that geometry's own translation (a renderer may set lightAt to light by one
+        // place)
+        RenderContext ctx = base;
+        ShaderColours keep(rc.mScreenContext);
         try {
             fn(ctx, ctx.partialTicks);
         } catch (std::exception const& e) {
@@ -524,7 +796,10 @@ void renderWorld(BaseActorRenderContext& rc) {
         }
     }
     for (auto const& [pos, block, entry] : blocks) {
-        ctx.throughWalls = entry->flags.throughWalls;
+        RenderContext ctx = base;
+        ctx.throughWalls  = entry->flags.throughWalls;
+        ShaderColours keep(rc.mScreenContext);
+        lightFor(ctx, centreOf(pos)); // Java's BlockEntityRenderer: the light at the block
         try {
             entry->fn(ctx, pos, *block, ctx.partialTicks);
         } catch (std::exception const& e) {
@@ -535,6 +810,7 @@ void renderWorld(BaseActorRenderContext& rc) {
         r.loggedWorld = true;
         log().info("render: world pass active ({} world renderers, {} blocks)", s->world.size(), blocks.size());
     }
+    if (!blocks.empty()) infoOnce("block_light", "block renderers drawn, each with the light at its block (" + std::to_string(blocks.size()) + " this frame)");
 }
 
 /// The item renderer of `itemId` for `where` (nullptr: none); valid while `s` is held.
@@ -560,6 +836,67 @@ struct PendingGui {
 std::vector<PendingGui>& pendingGui() {
     static std::vector<PendingGui> v; // client (UI) thread only
     return v;
+}
+
+/// 1 while a scene renders outside the game's own UI pass, that is while LeviLamina's UI render events
+/// run their listeners (a GUI item draw there is the mod's: screen::Canvas::item): RenderUiSceneHook,
+/// the outermost hook of ScreenView::render, sets it for the call and puts the old value back after
+/// it. 0 inside the game's own UI pass (RenderUiPassHook, the innermost hook: ScreenView::render's
+/// original, between the Before and After events) and outside every ScreenView::render, so a GUI item
+/// draw of the game or another mod elsewhere keeps the game's path.
+int& modUiDepth() {
+    static int depth = 0; // UI thread only
+    return depth;
+}
+
+/// InventoryItemRenderer::getRenderTypeFromItem of a block drawn as a block in the GUI: the chunk the
+/// inventory draws in a mesh batch of the terrain atlas (spike S5 round 5: the other chunks are the
+/// item atlas and flat block icons).
+constexpr int kBlockTypeChunk = 0;
+
+/// Bumped when a world is joined or left (dropGuiAtlas): flushGuiBlock then looks its material and
+/// the terrain atlas up again (a world's resource packs, or a pack reload, may replace them).
+std::atomic<std::uint64_t> gGuiAtlasGeneration{1};
+
+void dropGuiAtlas() { gGuiAtlasGeneration.fetch_add(1, std::memory_order_acq_rel); }
+
+/// Draws what a GUI block item left open in the screen's tessellator (the geometry of a data-driven
+/// block, which the inventory's terrain atlas batch draws at its end) with the UI item material and
+/// the terrain atlas.
+void flushGuiBlock(ScreenContext& screen, Tessellator& tess) {
+    // UI thread only: the handles of the current generation, looked up again after a world change and
+    // while the atlas is not there yet (released then on this thread; never destroyed at exit, when
+    // the renderer may be gone)
+    static mce::MaterialPtr* material   = nullptr;
+    static mce::TexturePtr*  atlas      = nullptr;
+    static std::uint64_t     generation = 0;
+    auto const               now        = gGuiAtlasGeneration.load(std::memory_order_acquire);
+    if (generation != now) {
+        generation = now;
+        delete material;
+        delete atlas;
+        material = nullptr;
+        atlas    = nullptr;
+    }
+    if (!material) {
+        material = new mce::MaterialPtr(mce::RenderMaterialGroup::common(), HashedString("ui_item"));
+        if (!valid(material)) {
+            delete material;
+            material = new mce::MaterialPtr(mce::RenderMaterialGroup::common(), HashedString("ui_textured"));
+        }
+    }
+    if (!atlas) {
+        if (auto* c = currentClient()) {
+            if (auto group = c->getTextureGroup())
+                atlas = new mce::TexturePtr(group->getTexture(ResourceLocation(Core::PathView("atlas.terrain")), false, std::nullopt, cg::TextureSetLayerType::Color));
+        }
+    }
+    if (!valid(material) || !atlas) {
+        warn("gui_block_flush", "no UI item material or terrain atlas: a data-driven GUI block item is left to the next UI draw");
+        return;
+    }
+    TextureVariant tex{*atlas};
+    MeshHelpers::renderMeshImmediately(screen, tess, *material, tex, OffscreenCaptureDescription{});
 }
 
 /// An ItemStack with the item, count, aux and user data of `item` (the renderers take stacks).
@@ -624,6 +961,9 @@ void renderFramed(BaseActorRenderContext& rc, IVanillaRenderBlockActorComponent&
     ref.mat->_m.get()     = ref.mat->_m.get() * frameItemSpace(min, game::intState(block, "facing_direction").value_or(2), frame.mRotation);
     ctx.itemSpace         = true;
     ctx.lineHalfWidth     = 1.0f / 32; // the space is scaled by 0.5
+    // ItemFrameRenderer: the frame's light; a glow frame's item full bright (getLightVal 15728880)
+    ShaderColours keep(rc.mScreenContext);
+    lightFor(ctx, centreOf(at), type == BlockActorType::GlowItemFrame);
     runItem(*e, ctx, *stack, ItemContext::Fixed);
     infoOnce("fixed", "item frame renderer dispatched (" + item.getTypeName() + ")");
 }
@@ -763,6 +1103,10 @@ void drawMapDecorations(BaseActorRenderContext& rc, std::int64_t mapId, glm::mat
 namespace gf::client::tint {
 void registerBlock(std::string const& blockId, TintFn fn) {
     if (!fn) return;
+    render::update([&](render::Snapshot& s) { s.tints[blockId] = [fn = std::move(fn)](BlockPos const& pos, GameColors const&) { return fn(pos); }; });
+}
+void registerBlock(std::string const& blockId, GameTintFn fn) {
+    if (!fn) return;
     render::update([&](render::Snapshot& s) { s.tints[blockId] = std::move(fn); });
 }
 bool unregisterBlock(std::string const& blockId) {
@@ -794,35 +1138,33 @@ LL_TYPE_INSTANCE_HOOK(
     } catch (...) {}
 }
 
-// Chunk meshes: remember the blocks that have a block renderer (builder threads).
-LL_STATIC_HOOK(
-    RenderExtractHook,
+// Chunk meshes: the blocks that have a block renderer in each render chunk (a 16^3 section) the game
+// builds (builder threads). Every section the game meshes is built here, whatever tessellator then
+// draws its blocks (the legacy block tessellator for unit cubes and vanilla shapes, the block
+// pipeline for custom geometry), so the section is scanned from its level chunk; a rebuild (a block
+// placed or broken) replaces the section's positions. A section without such blocks costs one block
+// lookup per position (cached per Block).
+LL_TYPE_INSTANCE_HOOK(
+    RenderChunkBuildHook,
     ll::memory::HookPriority::Normal,
-    &ClientBlockPipeline::WorldExtractorStep::extractCustomBlock,
-    std::optional<ClientBlockPipeline::PipelineError>,
-    Block const&                                                       block,
-    ClientBlockPipeline::WorldExtractorStep::BlockIterationData const& iterData,
-    ClientBlockPipeline::WorldExtractorStep::ExtractionData&           extraction,
-    ClientBlockPipeline::WorldView::Interface*                         worldView,
-    bool                                                               shouldGenerateFaceCulling,
-    ClientBlockPipeline::VisualReference                               visualReference,
-    ClientBlockPipeline::ITintResolver&                                tintResolver,
-    BiomeTintCache*                                                    biomeTintCache,
-    BlockPos const&                                                    chunkMinPos,
-    bool                                                               checkIgnoreBlockTransforms
+    RenderChunkBuilder,
+    &RenderChunkBuilder::build,
+    void,
+    RenderChunkGeometry&                                       renderChunkGeometry,
+    bool                                                       transparentLeaves,
+    BakedBlockLightType                                        lightingType,
+    bool                                                       forExport,
+    mce::framebuilder::FrameLightingModelCapabilities const& lightingModelCapabilities
 ) {
-    if (visualReference == ClientBlockPipeline::VisualReference::Block && r::reg().anyBlocks.load(std::memory_order_relaxed)) {
-        try {
-            auto& view = r::threadView();
-            if (r::blockEntryOf(view, block)) {
-                BlockPos const& rel = iterData.relativePos;
-                auto&           rg  = r::reg();
-                std::lock_guard lock(rg.trackedMutex);
-                rg.tracked.insert(BlockPos{chunkMinPos.x + rel.x, chunkMinPos.y + rel.y, chunkMinPos.z + rel.z});
-            }
-        } catch (...) {}
-    }
-    return origin(block, iterData, extraction, worldView, shouldGenerateFaceCulling, visualReference, tintResolver, biomeTintCache, chunkMinPos, checkIgnoreBlockTransforms);
+    origin(renderChunkGeometry, transparentLeaves, lightingType, forExport, lightingModelCapabilities);
+    if (forExport || !r::reg().anyBlocks.load(std::memory_order_relaxed)) return;
+    try {
+        std::shared_ptr<ChunkViewSource> const& local  = mLocalSource;
+        ChunkViewSource*                        source = local.get();
+        if (!source) return;
+        BlockPos const o = renderChunkGeometry.mPosition;
+        r::trackSection(*source, o);
+    } catch (...) {}
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -844,10 +1186,42 @@ LL_TYPE_INSTANCE_HOOK(
         if (s->entities.empty()) return;
         auto it = s->entities.find(entity.getTypeName());
         if (it == s->entities.end()) return;
-        auto ctx   = r::contextOf(context);
-        ctx.camera = cameraTargetPos;
-        for (auto const& fn : it->second) fn(ctx, entity, ctx.partialTicks);
+        auto base   = r::contextOf(context);
+        base.camera = cameraTargetPos;
+        Vec3 eyes   = entity.getEyePos(); // Java's getPackedLightCoords: the light at the eyes
+        for (auto const& fn : it->second) {
+            RenderContext    ctx = base;
+            r::ShaderColours keep(context.mScreenContext);
+            r::lightFor(ctx, eyes);
+            fn(ctx, entity, ctx.partialTicks);
+        }
     } catch (...) {}
+}
+
+// Name tags (hideNameTag): the name tag of one actor is extracted here for the frame.
+LL_TYPE_INSTANCE_HOOK(
+    RenderNameTagHook,
+    ll::memory::HookPriority::Normal,
+    ActorRenderDispatcher,
+    &ActorRenderDispatcher::extractRenderTextObjects,
+    std::vector<NameTagRenderObject>,
+    Font&              font,
+    Tessellator&       tessellator,
+    Actor&             actor,
+    std::string const& str,
+    Vec3               camTargetPos,
+    float              a,
+    mce::Color         color
+) {
+    if (r::reg().anyNameTags.load(std::memory_order_relaxed)) {
+        try {
+            if (r::nameTagHidden(actor)) {
+                r::infoOnce("name_tag:" + actor.getTypeName(), "name tag hidden (" + actor.getTypeName() + ")");
+                return {};
+            }
+        } catch (...) {}
+    }
+    return origin(font, tessellator, actor, str, camTargetPos, a, color);
 }
 
 LL_TYPE_INSTANCE_HOOK(
@@ -881,6 +1255,8 @@ LL_TYPE_INSTANCE_HOOK(
         if (!e) return;
         auto ctx      = r::contextOf(renderContext);
         ctx.itemSpace = true;
+        r::ShaderColours keep(renderContext.mScreenContext);
+        r::lightFor(ctx, entity.getEyePos()); // ItemInHandRenderer: the holder's light
         r::runItem(*e, ctx, item, where);
     } catch (...) {}
 }
@@ -908,6 +1284,13 @@ LL_TYPE_INSTANCE_HOOK(
         Vec3  p           = entityRenderData.position;
         ref.mat->_m.get() = glm::translate(ref.mat->_m.get(), glm::vec3{p.x, p.y, p.z});
         ctx.itemSpace     = true;
+        Actor*           actor = entityRenderData.mActor;
+        r::ShaderColours keep(renderContext.mScreenContext);
+        if (actor) r::lightFor(ctx, actor->getPosition()); // ItemEntityRenderer: the item entity's light
+        else { // the position is relative to the camera (not to its target, which differs in third person)
+            Vec3 const cam = renderContext.mImpl->mCameraPosition;
+            r::lightFor(ctx, Vec3{p.x + cam.x, p.y + cam.y, p.z + cam.z});
+        }
         r::runItem(*e, ctx, *stack, ItemContext::Ground);
     } catch (...) {}
 }
@@ -949,17 +1332,107 @@ LL_TYPE_INSTANCE_HOOK(
     r::pendingGui().clear();
     try {
         auto s = r::snap();
+        // the light of GUI items: full bright (Java's GUI item lighting, 15728880), set for every
+        // renderer (feature/ext/ui/Client.h, "What a renderer finds at entry"); the actor context
+        // (drawGeo's material and light) is built once, for the first item that has a renderer
+        std::optional<BaseActorRenderContext> actors;
+        bool                                  built = false;
+        Vec3                                  at{};
         for (auto const& g : list) {
             auto e = r::itemEntry(*s, g.stack->getTypeName(), ItemContext::Gui);
             if (!e) continue;
+            if (!built) {
+                built = true;
+                if (auto* client = gf::client::currentClient()) {
+                    actors.emplace(mScreenContext, *client, client->getMinecraftGame());
+                    if (auto* player = client->getLocalPlayer()) at = player->getPosition();
+                }
+            }
             RenderContext ctx(mScreenContext);
             ctx.ui      = this;
             ctx.guiX    = g.x;
             ctx.guiY    = g.y;
             ctx.guiSize = g.size;
+            ctx.actors  = actors ? &*actors : nullptr;
+            r::ShaderColours keep(mScreenContext);
+            r::lightFor(ctx, at, true);
             r::runItem(*e, ctx, *g.stack, ItemContext::Gui);
         }
     } catch (...) {}
+}
+
+// Items the mod draws on the GUI (screen::Canvas::item in the screen framework's screens, HUD layers
+// and toasts: ItemRenderer::renderGuiItemNew from a UI render event, outside the game's own UI pass).
+// That function draws a block item with its own block path, which in a screen of the framework is
+// not the inventory's isometric cube (a flatter top, spike S5 round 5). The inventory draws block
+// items through renderGuiItemInChunk inside a UI mesh batch of the terrain atlas ("BlockType" chunk:
+// the GUI block transform, as Java's "gui" display of block/block.json); the same call is made here,
+// and the geometry a data-driven (TF) block leaves in the screen's tessellator for that batch is
+// drawn right away with the UI item material and the terrain atlas, as the batch would. Flat block
+// items (saplings, ...) and other items keep the game's own path.
+LL_TYPE_INSTANCE_HOOK(
+    RenderGuiNewHook,
+    ll::memory::HookPriority::Normal,
+    ItemRenderer,
+    &ItemRenderer::renderGuiItemNew,
+    void,
+    BaseActorRenderContext& renderContext,
+    ItemStack const&        item,
+    int                     frame,
+    float                   x,
+    float                   y,
+    bool                    renderEnchantmentFoil,
+    float                   transparency,
+    float                   lightMultiplier,
+    float                   scale,
+    int                     zOrder
+) {
+    // (an enchanted stack keeps the game's path: renderGuiItemInChunk draws no foil)
+    if (r::modUiDepth() > 0 && !renderEnchantmentFoil && item.mBlock && !item.isNull()) {
+        try {
+            auto type = InventoryItemRenderer::getRenderTypeFromItem(item);
+            if (static_cast<int>(type) == r::kBlockTypeChunk) {
+                Tessellator& tess = renderContext.mScreenContext.tessellator;
+                bool const   open = tess.mTessellating;
+                this->renderGuiItemInChunk(renderContext, type, item, x, y, lightMultiplier, transparency, scale, frame, false, zOrder, std::nullopt);
+                if (!open && tess.mTessellating) r::flushGuiBlock(renderContext.mScreenContext, tess);
+                r::infoOnce("gui_block", "GUI block items drawn with the inventory's block transform (" + item.getTypeName() + ")");
+                return;
+            }
+        } catch (...) {}
+    }
+    origin(renderContext, item, frame, x, y, renderEnchantmentFoil, transparency, lightMultiplier, scale, zOrder);
+}
+
+// A scene's render with LeviLamina's UI render events (outermost hook, so around LeviLamina's own
+// hook that fires them): the mod's GUI draws in their listeners count as the mod's (modUiDepth 1) for
+// this call only.
+LL_TYPE_INSTANCE_HOOK(RenderUiSceneHook, ll::memory::HookPriority::Highest, ScreenView, &ScreenView::render, void, UIRenderContext& uiRenderContext) {
+    int& depth = r::modUiDepth();
+    int  keep  = depth;
+    depth      = 1;
+    try {
+        origin(uiRenderContext);
+    } catch (...) {
+        depth = keep;
+        throw;
+    }
+    depth = keep;
+}
+
+// The game's own UI pass of a scene (innermost hook, so inside LeviLamina's UI render event hooks):
+// its item draws are the game's (RenderGuiNewHook leaves them alone).
+LL_TYPE_INSTANCE_HOOK(RenderUiPassHook, ll::memory::HookPriority::Lowest, ScreenView, &ScreenView::render, void, UIRenderContext& uiRenderContext) {
+    int& depth = r::modUiDepth();
+    int  keep  = depth;
+    depth      = 0;
+    try {
+        origin(uiRenderContext);
+    } catch (...) {
+        depth = keep;
+        throw;
+    }
+    depth = keep;
 }
 
 // Item frames (ItemContext::Fixed): block actors are drawn through the dispatcher.
@@ -1065,6 +1538,9 @@ LL_TYPE_INSTANCE_HOOK(
         ref.mat->_m.get() = ref.mat->_m.get() * m;
         ctx.itemSpace     = true;
         ctx.lineHalfWidth = 1.0f / 40;
+        r::ShaderColours keep(renderContext.mScreenContext);
+        if (actor) r::lightFor(ctx, actor->getEyePos()); // CustomHeadLayer: the wearer's light
+        else r::lightFor(ctx, ctx.camera);
         r::runItem(*e, ctx, headGear, ItemContext::Head);
         r::infoOnce("head", "head item renderer dispatched (" + headGear.getTypeName() + ")");
     } catch (...) {}
@@ -1124,7 +1600,28 @@ LL_TYPE_INSTANCE_HOOK(
         auto& view = r::threadView();
         if (auto const* fn = r::tintOfBlock(view, block)) {
             BlockPos const& min = mMinPos;
-            unsigned        rgb = (*fn)(BlockPos{min.x + blockPos.x, min.y + blockPos.y, min.z + blockPos.z});
+            // the game's own colours at this position: the resolver's original function for the tint
+            // method asked, for a vanilla block of that method (the biomes' colours blended as for
+            // the game's own blocks, whatever the TF block's own material says; computed only when
+            // the tint function asks). No probe block yet (no world joined, or the block registry was
+            // not there when it was looked up): no game colour (nullopt), so the tint function uses
+            // its no-world default rather than what the TF block's own material would give.
+            auto ask = [&](TintMethod method) -> std::optional<mce::Color> {
+                Block const* probe = r::probeBlock(method);
+                if (!probe) {
+                    static std::atomic<bool> told{false};
+                    if (!told.load(std::memory_order_relaxed) && !told.exchange(true))
+                        gf::log().info("render: a tint function asked the game's colours before the probe blocks were resolved: no game colour");
+                    return std::nullopt;
+                }
+                return origin(*probe, blockPos, method, biomeTintCache);
+            };
+            r::ResolverColors<decltype(ask)> colors(ask);
+            BlockPos const                   at{min.x + blockPos.x, min.y + blockPos.y, min.z + blockPos.z};
+            unsigned                         rgb = (*fn)(at, colors);
+            static std::atomic<bool> logged{false};
+            if (colors.asked() && !logged.load(std::memory_order_relaxed) && !logged.exchange(true))
+                gf::log().info("render: a tint function read the game's colours ({} at {} {} {} gave #{:06X})", gf::game::blockId(block), at.x, at.y, at.z, rgb);
             return mce::Color{static_cast<float>((rgb >> 16) & 0xFF) / 255.f, static_cast<float>((rgb >> 8) & 0xFF) / 255.f, static_cast<float>(rgb & 0xFF) / 255.f, 1.f};
         }
     } catch (...) {}
@@ -1148,45 +1645,58 @@ public:
                 {
                     std::lock_guard lock(rg.trackedMutex);
                     rg.tracked.clear();
-                    rg.dim = -1;
                 }
+                resolveProbes(false);
+                dropGuiAtlas();
                 rg.version.fetch_add(1, std::memory_order_acq_rel);
             });
             mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientJoinLevelEvent>([](auto&) {
                 reg().version.fetch_add(1, std::memory_order_acq_rel);
+                resolveProbes(true);
+                dropGuiAtlas(); // the world's resource packs may bring another terrain atlas
             });
         }
     }
     void install() {
         load();
+        resolveProbes(true); // a world already joined (the server-side enable of a local world)
         render_hooks::RenderWorldHook::hook();
-        render_hooks::RenderExtractHook::hook();
+        render_hooks::RenderChunkBuildHook::hook();
         render_hooks::RenderEntityHook::hook();
         render_hooks::RenderItemInHandHook::hook();
         render_hooks::RenderItemEntityHook::hook();
         render_hooks::RenderGuiItemHook::hook();
         render_hooks::RenderGuiBatchHook::hook();
+        render_hooks::RenderGuiNewHook::hook();
+        render_hooks::RenderUiPassHook::hook();
+        render_hooks::RenderUiSceneHook::hook();
         render_hooks::RenderFrameHook::hook();
         render_hooks::RenderFrameAtHook::hook();
         render_hooks::RenderHeadHook::hook();
         render_hooks::RenderMapInstanceHook::hook();
         render_hooks::RenderFirstPersonHook::hook();
         render_hooks::RenderTintHook::hook();
+        render_hooks::RenderNameTagHook::hook();
     }
     void uninstall() {
+        render_hooks::RenderNameTagHook::unhook();
         render_hooks::RenderTintHook::unhook();
         render_hooks::RenderFirstPersonHook::unhook();
         render_hooks::RenderMapInstanceHook::unhook();
         render_hooks::RenderHeadHook::unhook();
         render_hooks::RenderFrameAtHook::unhook();
         render_hooks::RenderFrameHook::unhook();
+        render_hooks::RenderUiSceneHook::unhook();
+        render_hooks::RenderUiPassHook::unhook();
+        render_hooks::RenderGuiNewHook::unhook();
         render_hooks::RenderGuiBatchHook::unhook();
         render_hooks::RenderGuiItemHook::unhook();
         render_hooks::RenderItemEntityHook::unhook();
         render_hooks::RenderItemInHandHook::unhook();
         render_hooks::RenderEntityHook::unhook();
-        render_hooks::RenderExtractHook::unhook();
+        render_hooks::RenderChunkBuildHook::unhook();
         render_hooks::RenderWorldHook::unhook();
+        resolveProbes(false);
         if (mExit) ll::event::EventBus::getInstance().removeListener(mExit);
         if (mJoin) ll::event::EventBus::getInstance().removeListener(mJoin);
         mExit = nullptr;

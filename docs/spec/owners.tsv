@@ -3246,6 +3246,8 @@ lang	config.twilightforest.uncrafting_recipes.tooltip	U13	gen
 lang	config.twilightforest.uncrafting_xp_cost	U13	gen
 lang	config.twilightforest.uncrafting_xp_cost.tooltip	U13	gen
 lang	config.twilightforest.uncrafting.tooltip	U13	gen
+lang	container.chest	F11	manual
+lang	container.chestDouble	F11	manual
 lang	container.twilightforest.uncrafting_table	U13	gen
 lang	container.twilightforest.uncrafting_table.cycle_back_ingredient	U13	gen
 lang	container.twilightforest.uncrafting_table.cycle_back_recipe	U13	gen
@@ -3438,6 +3440,7 @@ lang	gui.twilightforest.progression_end.discord	F12	gen
 lang	gui.twilightforest.progression_end.message	F12	gen
 lang	gui.twilightforest.transformation_jei	F12	gen
 lang	gui.twilightforest.uncrafting_jei	U13	gen
+lang	hanging_sign.edit	F11	manual
 lang	item.twilightforest.adherent_spawn_egg	U30	gen
 lang	item.twilightforest.alpha_yeti_banner_pattern	U5	gen
 lang	item.twilightforest.alpha_yeti_banner_pattern.desc	U5	gen
@@ -3804,6 +3807,7 @@ lang	museumcurator.machinery.twilightforest.carminitemachines	F16	gen
 lang	museumcurator.metallurgy.twilightforest.fiery	F16	gen
 lang	museumcurator.metallurgy.twilightforest.ironwood	F16	gen
 lang	museumcurator.metallurgy.twilightforest.knightmetal	F16	gen
+lang	sign.edit	F11	manual
 lang	stat.twilightforest.blocks_crumbled	U8	gen
 lang	stat.twilightforest.bugs_squished	U6	gen
 lang	stat.twilightforest.e115_slices_eaten	U10	gen
@@ -5711,7 +5715,7 @@ path	src/client/uncraftmaps/**	U13	manual
 path	src/client/weapons/**	U8	manual
 path	src/client/woodwork/**	U4	manual
 path	src/client/world/Sky.h	F0	manual
-path	src/core/{Format,Glob,GlobalPos,Holiday,Protocol,Layout,Keys,Stub,VolumeHash}.{h,cpp}	F0	manual
+path	src/core/{Format,Glob,GlobalPos,Holiday,Protocol,Layout,Keys,Stub,VolumeHash,WorldLifecycle}.{h,cpp}	F0	manual
 path	src/core/{jrand,noise}/**	F5	manual
 path	src/core/armory/**	U7	manual
 path	src/core/artifacts/**	U9	manual
