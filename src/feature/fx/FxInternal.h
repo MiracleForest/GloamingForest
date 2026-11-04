@@ -4,9 +4,11 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <random>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "nlohmann/json.hpp"
@@ -162,9 +164,19 @@ void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocit
 /// colour: the game draws it red), any other colour as the falling_dust effect tinted with it.
 [[nodiscard]] Resolved dustFor(Resolved r, nlohmann::json const& params);
 
-/// The colour a particle gets: params "color" (an integer 0xRRGGBB, or [r, g, b(, a)] in 0..1),
-/// else `fallback` (white without).
+/// The colour a particle gets: params "color", else `fallback` (white without). An integer is
+/// 0xAARRGGBB (Java's ColorParticleOption ARGB int) when any of bits 24-31 is set, else an opaque
+/// 0xRRGGBB: an ARGB colour with alpha 0 (invisible in Java) cannot be told from an opaque RGB one,
+/// so a caller that needs alpha 0 passes [r, g, b, 0]. An array is [r, g, b(, a)] in 0..1.
 [[nodiscard]] Rgba colorOf(nlohmann::json const& params, std::optional<Rgba> const& fallback);
+
+/// FallingDustParticle's colour of a block (FxBlockColor.cpp): a FallingBlock's dust colour, else
+/// the block's BlockColor without a level (vanilla's and TF's, tint index 0) as 0xRRGGBB, -1 for
+/// one that draws white; nullopt when the block has none (the map colour applies). `intState`
+/// reads the block's integer states (redstone_signal, growth, facing_direction).
+[[nodiscard]] std::optional<int> fallingDustColor(std::string const& blockId, std::function<std::optional<int>(std::string_view)> const& intState);
+/// A fallingDustColor value as a colour (-1: white).
+[[nodiscard]] Rgba dustRgb(int color);
 
 #ifdef GF_CLIENT
 namespace client {

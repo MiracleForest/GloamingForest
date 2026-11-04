@@ -155,8 +155,11 @@ if (Test-ClientTrace) {
 Start-Sleep -Seconds 2 # the emitter runs from the next tick for 5 s; the chat that ran the test closes
 Save-Screenshot 'fx-particles' | Out-Null
 
-# TF's portal particles (5 s) and every mapped vanilla particle type (2 s)
-$mark = Get-LogMark
+# TF's portal particles (5 s) and every mapped vanilla particle type (2 s). The game writes its
+# content log only as it closes, so a missing molang variable ("unable to find member variable",
+# "unhandled request for unknown variable": one error per particle frame) cannot be seen here; the
+# run checks the log after the game closed (Get-ContentLogProblems: any error fails the run), and
+# the selftest combat.fx_effect_variables checks the variables every mapped effect gets.
 $r = Invoke-SelfTest 'combat.ui_fx_portal'
 if ($r.Fail -gt 0) { $screenFailures.Add('combat.ui_fx_portal failed') }
 Start-Sleep -Seconds 2

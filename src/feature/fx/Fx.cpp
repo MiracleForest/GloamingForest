@@ -94,7 +94,10 @@ namespace {
 //     The scale is not carried.
 //   - note: note_particle's colour is NoteParticle's hue from the x speed.
 //   - entity_effect / effect: mobspell_emitter's colour (params "color", white by default).
-//   - falling_dust: the block's map colour (params "block") or params "color".
+//   - falling_dust: params "color", else FallingDustParticle's colour of params "block" (its dust
+//     colour, its BlockColor without a level or its map colour; FxBlockColor.cpp).
+//   - colours (params "color"): an integer is 0xAARRGGBB when any of bits 24-31 is set, else an
+//     opaque 0xRRGGBB (pass [r, g, b, 0] for alpha 0); an array is [r, g, b(, a)] in 0..1.
 //   - crimson_spore / white_ash: Bedrock has no effect for them (its own are drawn by the engine
 //     only for its biomes): falling_dust tinted with Java's colours, a small particle drifting down.
 //   - item / block: Bedrock's item and block break particles take the texture from the engine
@@ -480,11 +483,14 @@ std::optional<int> legacyData(Resolved const& r, std::string const& particleId, 
     return 0;
 }
 
-/// The colour of a coloured effect: params "color", else the map colour of params "block"
-/// (FallingDustParticle's colour), else the type's own colour, else white.
+/// The colour of a coloured effect: params "color", else FallingDustParticle's colour of params
+/// "block" (a falling block's dust colour, else its BlockColor without a level, else its map
+/// colour; FxBlockColor.cpp), else the type's own colour, else white.
 Rgba particleColor(Resolved const& r, nlohmann::json const& params) {
     if (params.is_object() && !params.contains("color")) {
         if (auto const* block = paramBlock(params)) {
+            auto tint = fallingDustColor(game::blockId(*block), [block](std::string_view state) { return game::intState(*block, state); });
+            if (tint) return dustRgb(*tint);
             mce::Color const& c = block->getBlockType().mMapColor;
             return Rgba{c.r, c.g, c.b, 1.f};
         }

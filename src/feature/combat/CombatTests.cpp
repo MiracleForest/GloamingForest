@@ -313,6 +313,34 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
     ctx.check(opaqueArgb.a == 1.f && std::abs(opaqueArgb.r - 0x7F / 255.f) < 1e-4f, "params color 0xFF7F33CC is opaque");
     auto listed = fx::colorOf(JsonT{{"color", {0.1, 0.2, 0.3, 0.4}}}, std::nullopt);
     ctx.check(listed.r == 0.1f && listed.a == 0.4f && fx::colorOf(JsonT::object(), fx::Rgba{0.5f, 0.5f, 0.5f, 1.f}).r == 0.5f, "params color [r, g, b, a] and the fallback");
+    // FallingDustParticle's block colour: dust colour, BlockColor without a level, map colour
+    {
+        auto none   = [](std::string_view) -> std::optional<int> { return std::nullopt; };
+        auto colour = [&](std::string const& id) { return fx::fallingDustColor(id, none); };
+        ctx.check(!colour("minecraft:snow") && !colour("minecraft:stone"), "snow and stone have no BlockColor (the map colour)");
+        ctx.check(colour("minecraft:sand") == 0xDBD3A0 && colour("minecraft:red_sand") == 0xA95821 && colour("minecraft:gravel") == 0x807C7B, "sand, red sand and gravel use their dust colours");
+        ctx.check(colour("minecraft:oak_leaves") == 0x48B518 && colour("minecraft:spruce_leaves") == 0x619961 && colour("minecraft:birch_leaves") == 0x80A755 &&
+                      colour("minecraft:mangrove_leaves") == 0x92C648,
+                  "vanilla leaves use FoliageColor's colours without a level");
+        ctx.check(colour("minecraft:water") == -1 && fx::dustRgb(-1).r == 1.f && fx::dustRgb(-1).b == 1.f, "water's BlockColor needs a level: white");
+        ctx.check(colour("twilightforest:canopy_leaves") == 0x619961 && colour("twilightforest:mangrove_leaves") == 0x80A755 && colour("twilightforest:twilight_oak_leaves") == 0x48B518 &&
+                      colour("twilightforest:time_leaves") == 0x6A9C17 && colour("twilightforest:violet_force_field") == 0x5C1074,
+                  "TF's ColorHandler colours without a level");
+        ctx.check(colour("twilightforest:aurora_block") == 0x00FFB3, "the aurora block is hsvToRGB(0.45, 1, 1)");
+        auto pale = colour("twilightforest:aurora_pillar");
+        ctx.check(pale && *pale != 0x00FFB3 && ((*pale >> 8) & 0xFF) == 0xE6, "the aurora pillar is the aurora colour paled (value 0.9)");
+        auto signal = [](int power) { return [power](std::string_view s) -> std::optional<int> { return s == "redstone_signal" ? std::optional<int>(power) : std::nullopt; }; };
+        auto lit = fx::fallingDustColor("minecraft:redstone_wire", signal(15)).value_or(0);
+        // power 15: (255, floor(0.19999999f * 255) = 50, 0); power 0: (floor(0.3f * 255) = 76, 0, 0)
+        ctx.check(lit == (255 << 16 | 50 << 8) && fx::fallingDustColor("minecraft:redstone_wire", signal(0)) == 0x4C0000,
+                  "redstone wire: RedStoneWireBlock#getColorForPower");
+        auto stem = [](int growth, int facing) {
+            return [=](std::string_view s) -> std::optional<int> { return s == "growth" ? std::optional<int>(growth) : s == "facing_direction" ? std::optional<int>(facing) : std::nullopt; };
+        };
+        ctx.check(fx::fallingDustColor("minecraft:pumpkin_stem", stem(7, 0)) == (224 << 16 | 199 << 8 | 28) && fx::fallingDustColor("minecraft:melon_stem", stem(0, 0)) == 0x00FF00 &&
+                      fx::fallingDustColor("minecraft:melon_stem", stem(7, 3)) == 14731036,
+                  "stems: StemBlock's age colour, the attached stem's colour");
+    }
 
     // the packets: every mapped type reaches the player, with variables or as a legacy particle
     auto pos = ctx.testPos(6001);
