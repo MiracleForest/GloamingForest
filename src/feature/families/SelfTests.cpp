@@ -18,6 +18,7 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/deps/core/string/HashedString.h"
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/commands/CommandPermissionLevel.h"
@@ -46,6 +47,7 @@
 #include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
 #include "feature/common/Redstone.h"
+#include "feature/ext/combat/InventoryMigrate.h"
 #include "feature/ext/combat/InventoryViewers.h"
 #include "feature/ext/families/Growers.h"
 #include "feature/families/BlockEvents.h"
@@ -54,6 +56,7 @@
 #include "feature/families/SignFont.h"
 #include "feature/families/Signs.h"
 #include "feature/inventory/Inventory.h"
+#include "feature/inventory/InventoryInternal.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -71,6 +74,9 @@ bool   signEdit(Player& player, GlobalPos const& pos, bool front, std::vector<st
 Json   signSentText(GlobalPos const& pos);
 void   signSendAll(Player& player);
 void   signForgetUnloaded(GlobalPos const& pos);
+void   signChooseSides();
+std::optional<bool> signNameHiddenFor(Player& viewer, Actor& display);
+std::int64_t        signNamePackets();
 } // namespace gf::feature::families::detail
 
 namespace {
@@ -337,6 +343,10 @@ GF_REGISTER_SELFTEST("families.fixtures", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(chest && fam::strState(*chest, fam::state::Type) == "single" && fam::intState(*chest, fam::state::Lid) == 0 && !fam::intState(*chest, fam::state::OpenCount),
               "a chest has type and the lid (no signal)");
     ctx.check(trapped && fam::intState(*trapped, fam::state::Lid) == 0 && fam::intState(*trapped, fam::state::OpenCount) == 0, "a trapped chest has the lid and open_count");
+    // a tag in an entry's params.components ("tag:<id>") joins the block's tags in its format's form
+    // (the chests' 1.26.50 takes only the minecraft:tags array; a "tag:" component would fail it)
+    ctx.check(trapped && trapped->getBlockType().hasTag(HashedString("gf_test:family_component_tag")),
+              "a tag component of params.components becomes one of the trapped chest's tags (format 1.26.50: the minecraft:tags array)");
     // tools/families declares the chest families as containers of the inventory contract (F10)
     auto declared = containerDeclarations("families_test.json");
     ctx.check(declared.value("gf_test:family_chest", fam::Json{}).value("stat", "") == "minecraft:open_chest"
@@ -780,6 +790,7 @@ GF_REGISTER_SELFTEST("families.double_chest", [](Context& ctx) -> ll::coro::Coro
     auto ha = gf::inventory::find(region, gf::game::blockPos(a));
     ctx.require(ha.has_value(), "the chest is a container of the inventory contract (tools/families declared it)");
     ctx.check(ha->slots == 27, "a half has 27 slots (" + std::to_string(ha->slots) + ")");
+    ctx.check(gf::inventory::nativeContainer(region, gf::game::blockPos(a)) != nullptr, "it keeps them in its block actor (minecraft:block_entity: the inventory contract's native backend)");
     ha->set(a, 0, *gf::game::items::make("minecraft:dirt", 5));
     // b east of a, facing north: b is the RIGHT (first) half, a the LEFT
     ctx.require(ctx.setBlock(b, "gf_test:family_chest"), "chest b east of it");
@@ -824,6 +835,9 @@ GF_REGISTER_SELFTEST("families.double_chest", [](Context& ctx) -> ll::coro::Coro
         ctx.check(st(a, fam::state::Lid) == 0 && st(b, fam::state::Lid) == 0, "and the lids close again");
         ctx.check(gf::game::items::idOf(ha->get(a, 0)) == "minecraft:dirt" && gf::game::items::idOf(hb->get(b, 0)) == "minecraft:stone" && itemsNear(ctx, a).empty(),
                   "the halves keep their stacks while their states change (pairing, lids)");
+        ctx.check(gf::inventory::nativeContainer(region, gf::game::blockPos(a)) != nullptr && gf::inventory::nativeContainer(region, gf::game::blockPos(b)) != nullptr
+                      && !gf::inventory::ext::hasBlockDataStacks(a) && !gf::inventory::ext::hasBlockDataStacks(b),
+                  "in their block actors through every state change, nothing in block data");
     }
     ctx.check(fam::chestLidStep(0) == 0 && fam::chestLidStep(1) == 1 && fam::chestLidStep(3) == 3 && fam::chestLidStep(5) == 4 && fam::chestLidStep(10) == 4,
               "ChestRenderer's eased lid: 1 - (1 - o)^3 in 22.5 degree steps");
@@ -1287,6 +1301,9 @@ GF_REGISTER_SELFTEST("families.tf_blocks", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(ctx.setBlock(ch, "twilightforest:canopy_trapped_chest", {{kFacing, "north"}}), "a canopy trapped chest");
     co_await ctx.ticks(1);
     ctx.check(gf::inventory::find(region, gf::game::blockPos(ch)).has_value(), "TF's chests are containers of the inventory contract");
+    ctx.check(gf::inventory::nativeContainer(region, gf::game::blockPos(ch)) != nullptr, "their slots are in their block actor (minecraft:block_entity, format 1.26.50)");
+    if (auto const* blk = fam::blockAt(ch))
+        ctx.check(blk->getBlockType().hasTag(HashedString("minecraft:is_axe_item_destructible")), "and they keep their tool tag (the minecraft:tags array of that format, params.tags)");
     auto declared = containerDeclarations("families.json");
     ctx.check(declared.value("twilightforest:canopy_trapped_chest", fam::Json{}).value("stat", "") == "minecraft:trigger_trapped_chest"
                   && declared.value("twilightforest:canopy_chest", fam::Json{}).value("stat", "") == "minecraft:open_chest",
@@ -1453,5 +1470,80 @@ GF_REGISTER_SELFTEST("families.sign_sync", [](Context& ctx) -> ll::coro::CoroTas
     for (auto const& m : sent) gone = gone || names(m, "gone");
     ctx.check(gone, "a broken sign's text is gone for the companions");
     ctx.check(fam::detail::signSentText(p).is_null(), "and the server forgets it");
+    (void)box;
+});
+
+GF_REGISTER_SELFTEST("families.sign_facing_vanilla", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // Java draws each side's text on its own face of the board: a viewer reads the side facing it
+    // and nothing of the other. A vanilla client reads the text from the display entities' name
+    // tags, which face every viewer and show through the board, so each vanilla viewer's client is
+    // told to show the name of the side facing it and to hide the other's (edge on, both); a
+    // companion is told nothing (the client mod draws the text, the name tags hidden)
+    if (!fixturesReady(ctx)) co_return;
+    auto box = co_await ctx.flatArea(6182, 5);
+    auto p   = ctx.testPos(6184, 2);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    ctx.require(ctx.setBlock(at(p, 0, -1, 0), "minecraft:stone"), "ground");
+    // rotation 8: the front faces north (Java's yaw 180)
+    ctx.require(ctx.setBlock(p, "gf_test:family_sign", {{fam::state::Rotation, 8}}), "a sign facing north");
+    co_await ctx.ticks(1);
+    gf::signs::setText(p, {"front", "side"}, true);
+    gf::signs::setText(p, {"back", "side"}, false);
+    co_await ctx.ticks(2);
+    auto* front = fam::detail::signDisplay(p, true);
+    auto* back  = fam::detail::signDisplay(p, false);
+    ctx.require(front && back, "both written sides have a display entity");
+    auto frontId = front->getOrCreateUniqueID().rawID, backId = back->getOrCreateUniqueID().rawID;
+    auto uid     = ctx.player().getOrCreateUniqueID().rawID;
+    auto display = [&](std::int64_t id) -> Actor* {
+        ActorUniqueID a;
+        a.rawID = id;
+        return ctx.region() ? ctx.region()->getLevel().fetchEntity(a, false) : nullptr;
+    };
+    auto viewer = [&]() -> Player* {
+        ActorUniqueID a;
+        a.rawID = uid;
+        return ctx.region() ? ctx.region()->getLevel().getPlayer(a) : nullptr;
+    };
+    auto stand = [&](float dz) {
+        if (auto* v = viewer()) v->teleport(Vec3{p.x + .5f, static_cast<float>(p.y), p.z + .5f + dz}, v->getDimensionId());
+    };
+    auto hidden = [&](std::int64_t id) -> std::optional<bool> {
+        auto* v = viewer();
+        auto* a = display(id);
+        return v && a ? fam::detail::signNameHiddenFor(*v, *a) : std::nullopt;
+    };
+    auto str = [](std::optional<bool> h) { return std::string(!h ? "nothing" : *h ? "hidden" : "shown"); };
+    gf::net::setTestCompanion(ctx.player(), false);
+    // north of the sign: the front faces the viewer
+    stand(-3.f);
+    co_await ctx.ticks(2);
+    auto packets = fam::detail::signNamePackets();
+    fam::detail::signChooseSides();
+    ctx.check(hidden(frontId) == std::optional<bool>(false) && hidden(backId) == std::optional<bool>(true),
+              "a vanilla viewer north of a north-facing sign is shown the front's name, the back's hidden (front " + str(hidden(frontId)) + ", back " + str(hidden(backId)) + ")");
+    ctx.check(fam::detail::signNamePackets() > packets, "its client was told (an actor data packet of each name)");
+    // the same again: nothing new to tell
+    packets = fam::detail::signNamePackets();
+    fam::detail::signChooseSides();
+    ctx.check(fam::detail::signNamePackets() == packets, "nothing is sent again while nothing changed");
+    // south of it: the back faces the viewer
+    stand(3.f);
+    co_await ctx.ticks(2);
+    fam::detail::signChooseSides();
+    ctx.check(hidden(frontId) == std::optional<bool>(true) && hidden(backId) == std::optional<bool>(false),
+              "south of it the back's name shows, the front's is hidden (front " + str(hidden(frontId)) + ", back " + str(hidden(backId)) + ")");
+    // the server's name stays the text (a client not told yet shows it as before)
+    ctx.check(display(frontId) && display(frontId)->getNameTag().find("front") != std::string::npos && display(backId) && display(backId)->getNameTag().find("back") != std::string::npos,
+              "the display entities keep their text as their name");
+    // a companion is told nothing
+    {
+        CompanionGuard guard(ctx);
+        fam::detail::signChooseSides();
+        ctx.check(!hidden(frontId) && !hidden(backId), "a companion is told nothing (the client mod draws the text)");
+    }
+    ctx.setBlock(p, "minecraft:air");
+    ctx.setBlock(at(p, 0, -1, 0), "minecraft:air");
+    co_await ctx.ticks(2);
     (void)box;
 });

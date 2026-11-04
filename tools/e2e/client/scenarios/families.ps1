@@ -39,6 +39,18 @@
 #                                           mod: the corner piece at the L's inner corner)
 #   out/families/families-14-sign-form.png  remote-vanilla: the sign editor form (its title is the
 #                                           game's own sign.edit text)
+#   out/families/families-25-tf-chest-hopper.png   TF's canopy double chest with a hopper on its left
+#                                           half that emptied itself into the chest
+#   out/families/families-26-tf-chest-hopper-screen.png   that chest right-clicked: the client mod's
+#                                           54-slot chest screen (local, remote-mod) or the game's large
+#                                           chest screen (remote-vanilla) with the hopper's 3 gold
+#                                           ingots and 2 diamonds in the right half's first slots
+#   out/families/families-27-tf-chest-hopper-live-a.png  the same screen opened again while the hopper
+#                                           on the left half feeds it 64 cobblestone (one per 8 ticks)
+#   out/families/families-28-tf-chest-hopper-live-b.png  6 seconds later, the screen still open: more
+#                                           cobblestone in the right half's third slot (Java's ChestMenu
+#                                           broadcastChanges: the client mod's screen is refreshed after a
+#                                           hopper's tick, the vanilla screen follows F10's proxy)
 #   out/families/families-16-tf-sign-text.png        client mod: TF's canopy signs written through the
 #                                           editor and coloured with items, from the north: the wall
 #                                           sign's front (4 black lines), the standing sign's back
@@ -51,7 +63,8 @@
 #                                           black one keeps it
 #   out/families/families-19-sign-written.png       the sign families.sign_a_write wrote (server
 #                                           side): client mod on the board, vanilla client as the
-#                                           display entity's name tag
+#                                           name tag of the side facing it (the front; the back's
+#                                           "back side" is hidden for this viewer)
 #   out/families/families-20-compare-black.png ... families-23-compare-glow-blue.png   client mod:
 #                                           TF's canopy signs (right) next to the game's own oak
 #                                           signs (left) in the same light, written and coloured
@@ -273,6 +286,56 @@ Invoke-Teleport "/tp @s 99.5 $($y + 1) $($z - 2.5) 0 10"
 Start-Sleep -Seconds 3
 Save-Screenshot 'families-15-ct-close' | Out-Null
 
+# TF's canopy double chest fed by a hopper on its LEFT half (Hoppers.cpp: the game's hopper sees the
+# chest's block actor container, the double chest as Java's CompoundContainer, the right half first),
+# then opened by a right click: the client mod's 54-slot chest screen (local, remote-mod) or the
+# game's large chest screen through F10's proxy (remote-vanilla), the hopper's 3 gold ingots and 2
+# diamonds in the first slots (the right half's), the left half's rows empty
+$hx = 190
+Invoke-Teleport "/tp @s $($hx + 1) $($y + 2) $($z - 6) 0 15"
+Start-Sleep -Seconds 4
+Invoke-Build "setblock $hx $y $z twilightforest:canopy_chest [`"$f`"=`"north`",`"twilightforest:type`"=`"left`"]"
+Invoke-Build "setblock $($hx + 1) $y $z twilightforest:canopy_chest [`"$f`"=`"north`",`"twilightforest:type`"=`"right`"]"
+Invoke-Build "setblock $hx $($y + 1) $z hopper [`"facing_direction`"=0]"
+Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 0 gold_ingot 3"
+Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 1 diamond 2"
+Start-Sleep -Seconds 12 # 5 transfers of 8 ticks; the chat fades
+Invoke-Teleport "/tp @s $($hx + 1) $($y + 1) $($z - 4) 0 20"
+Start-Sleep -Seconds 3
+Save-Screenshot 'families-25-tf-chest-hopper' | Out-Null
+# stand south of the chest, looking north at it
+Invoke-Teleport "/tp @s $($hx + 0.5) $y $($z + 2.5) 180 30"
+Start-Sleep -Seconds 2
+$mark = Get-LogMark
+Click 0.5 0.5 -Relative -Right
+if (Test-ClientTrace) {
+    Wait-LogLine 'client screen: (inventory\.chest|large_chest_screen)' 20 -Since $mark | Out-Null
+} else {
+    Wait-LogLine 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)' 20 -Since $mark | Out-Null
+}
+Start-Sleep -Seconds 2
+Save-Screenshot 'families-26-tf-chest-hopper-screen' | Out-Null
+Close-Screen
+Start-Sleep -Seconds 1
+# the hopper on the left half gets 64 cobblestone and the screen opens again at once: it moves one
+# item every 8 ticks (25 s for all), so two shots 6 s apart show the stack in the right half's third
+# slot growing while the screen stays open
+Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 0 cobblestone 64"
+$mark = Get-LogMark
+Click 0.5 0.5 -Relative -Right
+if (Test-ClientTrace) {
+    Wait-LogLine 'client screen: (inventory\.chest|large_chest_screen)' 20 -Since $mark | Out-Null
+} else {
+    Wait-LogLine 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)' 20 -Since $mark | Out-Null
+}
+Start-Sleep -Seconds 1
+Save-Screenshot 'families-27-tf-chest-hopper-live-a' | Out-Null
+Start-Sleep -Seconds 6
+Save-Screenshot 'families-28-tf-chest-hopper-live-b' | Out-Null
+Close-Screen
+Start-Sleep -Seconds 1
+Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 0 air"
+
 # a sign written in game: the client mod's native editor (an empty-hand click on the sign), the
 # text on the sign's display entity; vanilla clients get the editor as a form
 if ($script:Mode -ne 'remote-vanilla') {
@@ -287,7 +350,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     Save-Screenshot 'families-9-sign-editor' | Out-Null
     Close-Screen
     # the typed line reached the server (Esc keeps it, as Java's SignEditScreen)
-    Wait-LogLine 'edited the sign at 60 .*\(1 of 4 lines written\)' 20 -Since $mark | Out-Null
+    Wait-LogLine 'edited the sign at 60 .*\(1 of 4 lines written; lines \[0\]\)' 20 -Since $mark | Out-Null
     Start-Sleep -Seconds 2
     Save-Screenshot 'families-6-sign-text' | Out-Null
     # the text is a name tag, and a hidden HUD (gfx_hidehud, some client instances) hides name tags
@@ -306,6 +369,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     # (blue dye, then glow ink: glowing blue with its outline), the hanging sign's front (glow ink:
     # black with the cream outline), the wall hanging sign's front (red dye: dark red)
     $tf = $rows[4]
+    $script:signSlotWarnings = 0
     function Write-Sign([double]$x, [double]$yy, [double]$zz, [double]$pitch, [string[]]$lines) {
         Invoke-Teleport "/tp @s $x $yy $zz 0 $pitch"
         Start-Sleep -Seconds 1
@@ -318,7 +382,18 @@ if ($script:Mode -ne 'remote-vanilla') {
         }
         Start-Sleep -Milliseconds 500
         Close-Screen
-        Wait-LogLine 'edited the sign at' 20 -Since $m | Out-Null
+        $edited = Wait-LogLine 'edited the sign at' 20 -Since $m
+        # the lines written are the first ones, one after another (an Enter handled twice, or a key
+        # held into auto-repeat by a slow connection, skips a line: the log names the slots used). In
+        # the local mode a skipped line is a regression and fails; over a remote connection the key
+        # timing is suspect, so one sign there may warn and a second fails.
+        $want = (0..($lines.Count - 1)) -join ','
+        if ($edited -notmatch "lines \[$([regex]::Escape($want))\]") {
+            if ($script:Mode -eq 'local') { throw "the sign editor wrote other slots than [$want]: $edited" }
+            $script:signSlotWarnings++
+            if ($script:signSlotWarnings -gt 1) { throw "the sign editor wrote other slots than [$want] on $($script:signSlotWarnings) signs: $edited" }
+            Write-Warning "the sign editor wrote other slots than [$want]: $edited"
+        }
     }
     function Use-OnSign([double]$x, [double]$yy, [double]$zz, [double]$pitch, [string]$item) {
         Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 $item"
@@ -460,7 +535,8 @@ if ($script:Mode -ne 'remote-vanilla') {
 }
 
 # The text of a sign written by the server (families.sign_a_write): the client mod draws it on the
-# board (front: four lines), a vanilla client shows the display entity's name tag
+# board (front: four lines), a vanilla client shows the name tag of the side facing it (the front:
+# the viewer stands south of it; the back's name tag is hidden for this viewer)
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'families.sign_a_write'
 if ($r.Pass -ne 1) { throw 'families.sign_a_write did not pass' }
@@ -483,10 +559,13 @@ $clientLines = @(
     'families: canopy and mangrove leaves blend the biome foliage colour'
 )
 $sentLine = 'families: sign text sent to the companion'
+$sidesLine = 'families: the vanilla client .* is shown the sign sides facing it'
 if ($script:Mode -eq 'remote-vanilla') {
     Start-Sleep -Seconds 2
     $sent = Get-LeviLog | Where-Object { $_ -match "^\[host\].*$([regex]::Escape($sentLine))" }
     if ($sent) { throw "the host sent sign text to the vanilla client: $($sent | Select-Object -First 1)" }
+    # the vanilla client is told which side's name tag shows (the one facing it)
+    Wait-LogLine "^\[host\].*$sidesLine" 20 | Out-Null
 } else {
     foreach ($l in $clientLines) { Wait-LogLine "^(?!\[host\]).*$([regex]::Escape($l))" 20 | Out-Null }
     if ($script:Mode -eq 'remote-mod') { Wait-LogLine "^\[host\].*$([regex]::Escape($sentLine))" 20 | Out-Null }
