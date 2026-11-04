@@ -229,17 +229,15 @@ if ($script:IsLocal) {
     try { Invoke-BeDDAction pause | Out-Null } catch { Press-Key ESC }
     Start-Sleep -Seconds 2
     Save-Screenshot 'reload-pause-menu' | Out-Null
-    # Save & Quit is the lowest button of the pause menu's left column: try from the bottom up, and
-    # step back to the pause menu when a click opened something else
+    # Save & Quit: the fourth button of the pause menu's left column (375 x 480 px of 1280 x 720)
     $left = $false
-    foreach ($y in @(0.90, 0.86, 0.82, 0.78, 0.74, 0.70)) {
-        Move-Mouse 0.25 $y -Relative
+    foreach ($attempt in 1..2) {
+        Move-Mouse 0.293 0.667 -Relative
         Start-Sleep -Milliseconds 300
-        Click 0.25 $y -Relative
-        Start-Sleep -Seconds 3
-        if ((Test-InLevel) -eq $false) { $left = $true; Write-Step "left the world (Save & Quit at y $y)"; break }
-        $top = try { (Get-BeDDWorld).topScreen } catch { '' }
-        if ($top -and $top -ne 'pause_screen') { Write-Step "the click at y $y opened $top; back to the pause menu"; Press-Key ESC; Start-Sleep -Seconds 1 }
+        Click 0.293 0.667 -Relative
+        $deadline = (Get-Date).AddSeconds(20)
+        while ((Get-Date) -lt $deadline -and (Test-InLevel) -ne $false) { Start-Sleep -Seconds 1 }
+        if ((Test-InLevel) -eq $false) { $left = $true; Write-Step 'left the world (Save & Quit)'; break }
     }
     if (-not $left) { Save-Screenshot 'reload-not-left' | Out-Null; throw 'Save & Quit was not found on the pause menu (see reload-pause-menu.png)' }
     $deadline = (Get-Date).AddSeconds(60)
