@@ -589,7 +589,10 @@ GF_REGISTER_SELFTEST("woodwork.boats", [](Context& ctx) -> ll::coro::CoroTask<> 
         }
         ctx.check(boatsNear(ctx, c, k.entity).empty(), "the boat broke");
         co_await ctx.ticks(2);
-        ctx.check(droppedNear(ctx, c, k.item), std::string("it dropped ") + k.item);
+        ctx.check(droppedNear(ctx, c, k.item) || carried(ctx, k.item) == 1, std::string("it dropped ") + k.item + " (or the player picked it up)");
+        bool vanillaCarried = false;
+        for (auto const* v : {"minecraft:oak_boat", "minecraft:oak_chest_boat"}) vanillaCarried |= carried(ctx, v) > 0;
+        ctx.check(!vanillaCarried, "the player picked up no vanilla boat");
         bool vanilla = false;
         for (auto* a : itemsNear(ctx, c)) {
             auto id = gf::game::items::idOf(static_cast<ItemActor*>(a)->item());

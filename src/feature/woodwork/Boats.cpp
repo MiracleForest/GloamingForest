@@ -41,7 +41,9 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/Level.h"
 #include "mc/world/level/ShapeType.h"
+#include "mc/world/level/Spawner.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/phys/HitResult.h"
 
@@ -146,10 +148,18 @@ void replaceDrop(Actor& boat) {
         auto& stack = static_cast<ItemActor*>(a)->item();
         auto  id    = game::items::idOf(stack);
         if (!id.starts_with("minecraft:") || !(id.ends_with("_boat") || id.ends_with("_raft"))) continue;
-        Vec3 at = a->getPosition();
-        int  n  = stack.mCount;
+        Vec3 at     = a->getPosition();
+        Vec3 motion = a->getPosDelta();
+        int  delay  = static_cast<ItemActor*>(a)->pickupDelay();
+        int  n      = stack.mCount;
         a->remove();
-        if (auto s = game::items::make(*tf, n)) spawnItem(region, at, *s);
+        if (auto s = game::items::make(*tf, n)) {
+            // the same spot, motion and pickup delay as the game's drop
+            if (auto* fresh = region.getLevel().getSpawner().spawnItem(region, *s, nullptr, at, 0)) {
+                static_cast<ItemActor*>(fresh)->pickupDelay() = delay;
+                const_cast<Vec3&>(fresh->getPosDelta())       = motion;
+            }
+        }
         log().info("woodwork: a destroyed TF boat dropped {}", *tf);
         return;
     }
