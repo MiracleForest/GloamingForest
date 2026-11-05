@@ -1005,7 +1005,7 @@ void onSpawn(Actor& actor) {
 
 void applyRotation(Mob& hydra, Runtime const& rt) {
     // the rendered body faces yBodyRot (the Java yRot is kept in the runtime for the brain)
-    hydra.setRotationWrapped(Vec2{rt.xRot, rt.bodyYaw});
+    const_cast<Vec2&>(hydra.getRotation()) = Vec2{rt.xRot, rt.bodyYaw};
     hydra.setYBodyRotation(rt.bodyYaw);
     hydra.setYHeadRot(rt.bodyYaw);
 }

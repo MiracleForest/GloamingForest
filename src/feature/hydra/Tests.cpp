@@ -173,7 +173,7 @@ GF_REGISTER_SELFTEST("hydra.spawn_parts", [](Context& ctx) -> ll::coro::CoroTask
         if (auto* a = ge::partActor(p); a && a->getTypeName() == kHydraPart) ++typed;
     ctx.check(typed == ch::kPartCount, "every part is a twilightforest:hydra_part (" + std::to_string(typed) + ")");
     // turn the body and check that the parts follow the formulas
-    h->setRotationWrapped(Vec2{0, 90});
+    const_cast<Vec2&>(h->getRotation()) = Vec2{0, 90};
     co_await ctx.ticks(10);
     h = byId(uid);
     ctx.require(h != nullptr, "the hydra is still there");
@@ -609,7 +609,7 @@ GF_REGISTER_SELFTEST("hydra.client_showcase", [](Context& ctx) -> ll::coro::Coro
     ctx.require(uid != 0, "the hydra spawns");
     if (auto* h = byId(uid)) {
         float yaw = static_cast<float>(std::atan2(-fz, -fx) * 180.0 / 3.141592653589793) - 90.0F;
-        h->setRotationWrapped(Vec2{0.0F, yaw});
+        const_cast<Vec2&>(h->getRotation()) = Vec2{0.0F, yaw};
     }
     ctx.require(co_await ready(uid), "the hydra ticks");
     co_await ctx.ticks(40);

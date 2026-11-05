@@ -24,6 +24,7 @@
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/dimension/DimensionType.h"
 
 #include "core/hydra/Lair.h"
 #include "core/jrand/JRand.h"
@@ -272,7 +273,7 @@ BlockBox placeLairForTest(BlockSource& source, BlockBox const& clip, int x, int 
 // ---- registration ------------------------------------------------------------------------------------
 
 void installLair() {
-    st::registerPieceType(kPieceType, [](Json const& saved) -> std::unique_ptr<st::Piece> {
+    st::registerPieceType(kPieceType, [](st::Json const& saved) -> std::unique_ptr<st::Piece> {
         auto p = std::make_unique<HydraLair>(0, 0, 0, 0);
         p->load(saved);
         return p;
