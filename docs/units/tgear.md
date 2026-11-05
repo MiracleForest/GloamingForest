@@ -65,4 +65,5 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   U12's.
 - Tooltip images (TravellersBeltTooltipComponent, ItemDisplayTooltipComponent) are text lines.
 - Keys are keyboard bindings of the client mod (`tgear.zoom` Z, `tgear.swap_hotbar` V,
-  `tgear.item_display_map_cycle` C, `tgear.red_thread_vision` unbound).
+  `tgear.item_display_map_cycle` C, `tgear.red_thread_vision` unbound), TF's defaults. Bedrock's own keyboard
+  binding of Z also opens a screen over the view: remap one of the two in the controls to zoom without it.

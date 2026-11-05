@@ -10,7 +10,7 @@
     },
     "components": {
       "minecraft:emitter_initialization": {
-        "creation_expression": "v.vx = v.velocity.x ?? 0; v.vy = v.velocity.y ?? 0; v.vz = v.velocity.z ?? 0;"
+        "creation_expression": "v.vx = v.velocity.x; v.vy = v.velocity.y; v.vz = v.velocity.z;"
       },
       "minecraft:emitter_rate_instant": { "num_particles": 1 },
       "minecraft:emitter_lifetime_once": { "active_time": 0 },

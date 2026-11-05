@@ -40,16 +40,21 @@ if ($script:Mode -ne 'remote-vanilla') {
     try {
         Wait-LogLine 'tgear: zoom in' 10 -Since $mark | Out-Null
         Start-Sleep -Milliseconds 600
+        # Bedrock's own binding of Z opens a screen over the view: close it while Z stays held
+        if ((Get-ClientScreen) -ne 'hud_screen') { Press-Key ESC; Start-Sleep -Milliseconds 600 }
         Save-Screenshot 'zoom' | Out-Null
     } finally { [BsE2E.Native]::Key([uint16]0x5A, $true) }
     Wait-LogLine 'tgear: zoom out' 10 -Since $mark | Out-Null
     Start-Sleep -Milliseconds 400
+    if ((Get-ClientScreen) -ne 'hud_screen') { Press-Key ESC; Start-Sleep -Milliseconds 600 }
     Save-Screenshot 'zoom-off' | Out-Null
 
     # 3. map cycle key
     $mark = Get-LogMark
     Press-Key C
     Wait-LogLine 'tgear: map cycle key' 10 -Since $mark | Out-Null
+    Start-Sleep -Milliseconds 400
+    if ((Get-ClientScreen) -ne 'hud_screen') { Press-Key ESC; Start-Sleep -Milliseconds 600 }
 }
 
 # 4. red thread on the floor and a wall, behind a stone wall in front of the player
@@ -72,6 +77,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     Start-Sleep -Seconds 1
     $mark = Get-LogMark
     Focus-Game
+    if ((Get-ClientScreen) -ne 'hud_screen') { Press-Key ESC; Start-Sleep -Milliseconds 600 }
     Press-Key V
     Wait-LogLine 'tgear: swap hotbar key' 10 -Since $mark | Out-Null
     Wait-LogLine "${hostPrefix}tgear: .+ swapped the hotbar" 10 -Since $mark | Out-Null
