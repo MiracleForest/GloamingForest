@@ -506,6 +506,8 @@ GF_REGISTER_SELFTEST("terrain.showcase", [](Context& ctx) -> ll::coro::CoroTask<
                     }
         }
         int vx = box.minX - 14, vy = box.minY + (maxTop - yBase) + 12, vz = box.minZ + 24;
+        // a glass block to stand on at the viewpoint (restored by the test)
+        ctx.setBlock(core::GlobalPos{ctx.dimension(), vx, vy - 1, vz}, "minecraft:glass");
         gf::log().info("terrain showcase {} ready at {} {} {} (generated surface {}..{})", name, vx, vy, vz, minTop, maxTop);
         ctx.info(std::string(name) + " sample copied");
         if (hold > 0) co_await ctx.ticks(hold);
