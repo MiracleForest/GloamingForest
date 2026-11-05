@@ -39,6 +39,21 @@
           ]
         }
       }
+    },
+    "controller.animation.twilightforest.snow_queen.effects": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "animations": [
+            {
+              "ice_beam": "q.property('twilightforest:beam')"
+            },
+            {
+              "drop_warning": "q.property('twilightforest:phase') == 1"
+            }
+          ]
+        }
+      }
     }
   }
 }

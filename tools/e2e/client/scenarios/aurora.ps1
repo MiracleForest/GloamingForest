@@ -69,17 +69,48 @@ Start-Sleep -Seconds 2
 Save-Screenshot 'blocks' | Out-Null
 # a beacon under auroralized glass: the beam takes the glass's aurora colour (getBeaconColorMultiplier)
 $cx = $bx + 14
+$beaconMark = Get-LogMark
 Invoke-Chat "/fill $($cx - 1) $($by) $($bz + 4) $($cx + 1) $($by) $($bz + 6) iron_block"
 Invoke-Chat "/setblock $cx $($by + 1) $($bz + 5) beacon"
 Invoke-Chat "/setblock $cx $($by + 3) $($bz + 5) twilightforest:auroralized_glass"
 Invoke-Teleport "/tp @s $($cx + 8) $($by + 6) $($bz + 5) facing $cx $($by + 8) $($bz + 5)"
 Start-Sleep -Seconds 6
 Save-Screenshot 'beacon-beam' | Out-Null
+# the client-only beam hook (BDS never computes beam sections): the client mod recoloured this beam
+if ($script:Mode -ne 'remote-vanilla') {
+    Wait-LogLine "^(?!\[host\]).*aurora: beacon beam at $cx $($by + 1) $($bz + 5) coloured" 20 -Since $beaconMark | Out-Null
+}
 # the block items in the hotbar (ColorHandler's item colours: hue 0.45, the pale colour)
 Invoke-Chat '/clear @s'
 foreach ($i in 'aurora_block', 'aurora_pillar', 'aurora_slab', 'auroralized_glass') { Invoke-Chat "/give @s twilightforest:$i" }
 Start-Sleep -Seconds 1
 Save-Screenshot 'block-items' | Out-Null
+
+# ---- aurora block mining (AuroraBrickBlock#getDestroyProgress: 0.1 a tick with progress_glacier) -------
+# a held left button breaks it in about 10 ticks: on the integrated server (local), and on BDS with
+# the companion's own client-side progress (remote-mod) without the break being rolled back
+$mx = 4300; $mz = 4300; $my = -60
+Invoke-Chat '/clear @s'
+Invoke-Chat "/setblock $mx $($my + 1) $($mz + 2) twilightforest:aurora_block"
+Invoke-Teleport "/tp @s $($mx + 0.5) $my $($mz + 0.5) facing $($mx + 0.5) $($my + 1.5) $($mz + 2.5)"
+Invoke-SelfTest 'aurora.client_miner' | Out-Null
+Invoke-Chat '/gamemode survival'
+Start-Sleep -Seconds 2
+$mineMark = Get-LogMark
+Focus-Game; Assert-GameForeground
+[BsE2E.Native]::MouseButton(0, $false); Start-Sleep -Milliseconds 1500; [BsE2E.Native]::MouseButton(0, $true)
+try {
+    $mined = Wait-LogLine 'aurora: aurora block broken after (\d+) ticks of mining' 10 -Since $mineMark
+    Write-Host "[aurora] $mined"
+    if ($mined -match 'after (\d+) ticks' -and [int]$Matches[1] -gt 14 -and $script:Mode -ne 'remote-vanilla') { throw "the aurora block took $($Matches[1]) ticks" }
+} catch {
+    if ($script:Mode -ne 'remote-vanilla') { throw }
+    Write-Host "[aurora] remote-vanilla: no sped-up break ($_)"
+}
+Start-Sleep -Seconds 2
+# the block stays broken (no rollback by the server)
+Save-Screenshot 'mining' | Out-Null
+Invoke-Chat '/gamemode creative'
 
 # ---- mobs -----------------------------------------------------------------------------------------
 function Show-Mob([string]$id, [string]$shot, [double]$dy = 0, [double]$dist = 4, [double]$wait = 1.2) {

@@ -11,7 +11,7 @@
 #   (death chest, progress_glacier), aurora.snow_queen_spawner, aurora.aurora_block_mining (10 ticks held,
 #   a tap does not break it), aurora.aurora_block_variant, aurora.ice_mobs_melt, aurora.snow_guardian_gear,
 #   aurora.boss_wing_in_world (R19: the queen's tower placed in the world, volume hash),
-#   aurora.auroralized_glass_beacon (the beam's colour above auroralized glass)
+#   aurora.client_miner (the client scenario's setup: progress_glacier for real players; none here)
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 $r = Invoke-SelfTest 'aurora.*' -TimeoutSeconds 900
 if ($r.Fail -gt 0) { throw "$($r.Fail) aurora selftest(s) failed: $($r.Failed -join ', ')" }

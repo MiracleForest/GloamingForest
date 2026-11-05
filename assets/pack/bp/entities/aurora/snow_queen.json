@@ -85,7 +85,7 @@
       "minecraft:nameable": {},
       "minecraft:persistent": {},
       "minecraft:experience_reward": {
-        "on_death": "317"
+        "on_death": "query.last_hit_by_player ? 317 : 0"
       },
       "minecraft:behavior.hurt_by_target": {
         "priority": 1

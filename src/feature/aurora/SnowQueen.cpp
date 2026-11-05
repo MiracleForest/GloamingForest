@@ -20,13 +20,16 @@
 #include <cmath>
 #include <map>
 #include <set>
+#include <unordered_map>
 #include <numbers>
 
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/entity/components/ActorRotationComponent.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/BuiltInActorComponents.h"
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
@@ -156,14 +159,14 @@ std::pair<float, float> anglesTo(Mob& m, Actor& t) {
     return {yaw, pitch};
 }
 
-/// Mob#lookAt(target, maxYRot, maxXRot): turns the yaw and pitch themselves (rotlerp), and the head
-/// with them (her view vector reads the head's yaw: LookControl#tick's rotateTowards on yHeadRot,
-/// which the engine's LookControl repeats towards the same target).
+/// Mob#lookAt(target, maxYRot, maxXRot): turns only the yaw and pitch themselves (rotlerp). The head
+/// (yHeadRot, which her view vector reads) is turned by the LookControl alone (mobs::lookAt), as in
+/// Java. Writes the rotation component directly: Actor::setRotationWrapped is client-only.
 void mobLookAt(Mob& m, Actor& t, float maxY, float maxX) {
     auto [yaw, pitch] = anglesTo(m, t);
-    auto rot          = m.getRotation(); // (pitch, yaw)
-    m.setRotationWrapped(Vec2{rotlerp(rot.x, pitch, maxX), rotlerp(rot.y, yaw, maxY)});
-    m.setYHeadRot(rotlerp(m.getYHeadRot(), yaw, maxY));
+    auto& rc          = *m.mBuiltInComponents->mActorRotationComponent;
+    Vec2  rot         = rc.mRot; // (pitch, yaw)
+    rc.mRot           = Vec2{wrapDegrees(rotlerp(rot.x, pitch, maxX)), wrapDegrees(rotlerp(rot.y, yaw, maxY))};
 }
 
 /// SnowQueen#countMyMinions: ice crystals in the queen's 1 x 1 x 1 box inflated by 32 / 16 / 32.
@@ -744,6 +747,7 @@ void applyShieldCollisions(Mob& self) {
 // ---- SnowQueen#tick / aiStep / customServerAiStep --------------------------------------------------------
 
 void queenSpawn(Actor& actor);
+void recordArrows(Mob& self);
 
 void queenTick(Actor& actor) {
     auto* self = fe::asMob(actor);
@@ -756,6 +760,7 @@ void queenTick(Actor& actor) {
 
     ensureShields(*self);
     applyShieldCollisions(*self);
+    recordArrows(*self);
     // the shields' angle is 60 x i + tick x 5 (shieldAngle): the client entity turns its shield
     // geometry from this anchor and its own clock (snow_queen.entity.json, v.shield_t)
     if (self->mTickCount % 20 == 0) gf::entity::setProperty(*self, "twilightforest:shield_tick", static_cast<int>(self->mTickCount % 72));
@@ -765,25 +770,10 @@ void queenTick(Actor& actor) {
     if (q.phase == Phase::Drop && q.successfulDrops >= q.maxDrops) setCurrentPhase(*self, Phase::Beam);
     if (q.phase == Phase::Beam && q.damageWhileBeaming >= MAX_DAMAGE_WHILE_BEAMING) setCurrentPhase(*self, Phase::Summon);
 
-    // the client effects (SnowQueen#spawnParticles), sent through fx
-    // (the snow around her is the client entity's emitter, gloamingforest:aurora_snow_queen)
-    auto& dim = self->getDimension();
-    if (q.phase == Phase::Drop)
-        for (auto const& h : gf::entity::ext::parts(*self))
-            if (auto* part = gf::entity::partActor(h)) gf::fx::particle(dim, "twilightforest:snow_warning", feet(*part), Vec3{}, 1, nlohmann::json{{"spread", {0.2, 0.2, 0.2}}});
-    if (q.breathing) {
-        Vec3   look = viewVector(*self);
-        auto   p    = feet(*self);
-        Vec3   at{p.x + look.x * 0.5f, p.y + 1.7f + look.y * 0.5f, p.z + look.z * 0.5f};
-        for (int i = 0; i < 10; i++) {
-            double spread   = 2.0 + rng().nextDouble() * 2.5;
-            double velocity = 2.0 + rng().nextDouble() * 0.15;
-            double dx       = (look.x + rng().nextGaussian() * 0.0075 * spread) * velocity;
-            double dy       = (rng().nextGaussian() * 0.0075 * spread) * velocity;
-            double dz       = (look.z + rng().nextGaussian() * 0.0075 * spread) * velocity;
-            gf::fx::particle(dim, "twilightforest:ice_beam", at, Vec3{static_cast<float>(dx), static_cast<float>(dy), static_cast<float>(dz)});
-        }
-    }
+    // the client effects (SnowQueen#spawnParticles) are the client entity's own emitters, driven by
+    // the synced phase and beam properties (snow_queen.entity.json, aurora.animation.json): the snow
+    // around her, the ice beam along her look (10 a tick) and the drop warning at each shield. The
+    // server sends no particle packets for them.
 }
 
 void queenSpawn(Actor& actor) {
@@ -814,6 +804,36 @@ bool queenHurt(Actor& actor, float&, std::string const&, Actor*) {
     return true;
 }
 
+/// An arrow's motion (F8's projectiles keep their own velocity).
+Vec3 currentVelocity(Actor& e) { return gf::projectile::ext::isProjectile(e) ? gf::projectile::ext::velocity(e) : e.getPosDelta(); }
+
+/// The arrows near a queen as they were at her last tick (position and motion): the engine may
+/// stop an arrow on contact before the hurt reaches the shield, so the pierce pass-through reads
+/// the flight from here.
+struct ArrowSnap {
+    Vec3          pos;
+    Vec3          vel;
+    std::uint64_t stamp;
+};
+std::unordered_map<std::int64_t, ArrowSnap>& arrowSnaps() {
+    static std::unordered_map<std::int64_t, ArrowSnap> m;
+    return m;
+}
+
+void recordArrows(Mob& self) {
+    static std::uint64_t clock = 0;
+    auto                 now   = ++clock;
+    AABB                 b     = boxOf(self);
+    AABB                 around{Vec3{b.min.x - 6.0f, b.min.y - 6.0f, b.min.z - 6.0f}, Vec3{b.max.x + 6.0f, b.max.y + 6.0f, b.max.z + 6.0f}};
+    for (auto* e : fe::actorsIn(self.getDimensionBlockSource(), static_cast<int>(self.getDimensionId()), around)) {
+        if (!e || !e->isAlive() || !e->getEntityContext().tryGetComponent<ProjectileComponent>()) continue;
+        auto v = currentVelocity(*e);
+        if (std::abs(v.x) + std::abs(v.y) + std::abs(v.z) < 0.05f) continue; // stopped: keep its last flight
+        arrowSnaps()[uidOf(*e)] = ArrowSnap{feet(*e), v, now};
+    }
+    if (now % 40 == 0) std::erase_if(arrowSnaps(), [now](auto const& kv) { return now - kv.second.stamp > 200; });
+}
+
 /// The piercing level of an arrow (ProjectileComponent; 0 for anything else).
 int pierceLevel(Actor& projectile) {
     auto pc = projectile.getEntityContext().tryGetComponent<ProjectileComponent>();
@@ -840,6 +860,7 @@ void installSnowQueen() {
     gf::game::db::onWorldClosed([] {
         queens().clear();
         queenGoals().clear();
+        arrowSnaps().clear();
     });
     // SnowQueen#hurt: damageWhileBeaming += damage when the hurt succeeded (not the shields' hits)
     gf::combat::onDealt(gf::combat::priority::Normal, [](gf::combat::DamageInfo const& d) {
@@ -853,30 +874,46 @@ void installSnowQueen() {
         auto* parent = gf::entity::ext::parentOf(d.victim);
         if (!parent || parent->getTypeName() != kSnowQueen) return gf::combat::Verdict::Pass;
         // the arrow: the damage's direct entity, or (F10 reports an arrow's hit with the shooter as
-        // the direct entity, type minecraft:thrown) the piercing arrow at the shield
+        // the direct entity, type minecraft:thrown) the arrow at the shield that made this hit
         Actor* projectile = d.direct && pierceLevel(*d.direct) > 0 ? d.direct : nullptr;
         if (!projectile && (d.type == "minecraft:thrown" || d.type == "minecraft:arrow" || d.type == "minecraft:projectile")) {
-            // the arrow that made this hit: of every arrow near the shield (piercing or not), the one
-            // whose flight this tick (its motion back and forth from where it is) crosses the shield's
-            // box first; a plain arrow there means a plain hit (blocked as TF), even with a piercing
-            // one nearby
-            AABB   b = d.victim.getAABB();
-            AABB   near{Vec3{b.min.x - 3.0f, b.min.y - 3.0f, b.min.z - 3.0f}, Vec3{b.max.x + 3.0f, b.max.y + 3.0f, b.max.z + 3.0f}};
-            AABB   hitBox{Vec3{b.min.x - 0.3f, b.min.y - 0.3f, b.min.z - 0.3f}, Vec3{b.max.x + 0.3f, b.max.y + 0.3f, b.max.z + 0.3f}};
-            double best    = 1e9;
-            Actor* hitting = nullptr;
+            // of every arrow of this shooter near the shield (piercing or not): the one whose flight
+            // (its motion now, or the one recorded at the queen's last tick, before the engine
+            // stopped it) crosses the shield's box first, else the nearest one. A plain arrow there
+            // means a plain hit (blocked as TF), even with a piercing one nearby.
+            AABB         b = d.victim.getAABB();
+            AABB         near{Vec3{b.min.x - 3.0f, b.min.y - 3.0f, b.min.z - 3.0f}, Vec3{b.max.x + 3.0f, b.max.y + 3.0f, b.max.z + 3.0f}};
+            AABB         hitBox{Vec3{b.min.x - 0.3f, b.min.y - 0.3f, b.min.z - 0.3f}, Vec3{b.max.x + 0.3f, b.max.y + 0.3f, b.max.z + 0.3f}};
+            Vec3         centre{(b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, (b.min.z + b.max.z) / 2};
+            std::int64_t shooter = d.attacker ? uidOf(*d.attacker) : 0;
+            double       best    = 1e9;
+            Actor*       hitting = nullptr;
             for (auto* e : fe::actorsIn(d.victim.getDimensionBlockSource(), static_cast<int>(d.victim.getDimensionId()), near)) {
                 if (!e || !e->isAlive() || !e->getEntityContext().tryGetComponent<ProjectileComponent>()) continue;
-                if (d.attacker && e->getOwner() && e->getOwner() != d.attacker) continue; // another shooter's arrow
-                auto p = feet(*e);
-                auto v = gf::projectile::ext::isProjectile(*e) ? gf::projectile::ext::velocity(*e) : e->getPosDelta();
-                Vec3 from{p.x - v.x, p.y - v.y, p.z - v.z}, to{p.x + v.x, p.y + v.y, p.z + v.z};
-                double dist;
-                if (hitBox.contains(p)) dist = 0.0;
-                else if (auto hit = clip(hitBox, from, to)) dist = std::sqrt((hit->x - p.x) * (hit->x - p.x) + (hit->y - p.y) * (hit->y - p.y) + (hit->z - p.z) * (hit->z - p.z));
-                else continue;
-                if (dist < best) {
-                    best    = dist;
+                std::int64_t owner = e->getOwnerId().rawID;
+                if (shooter != 0 && owner != 0 && owner != -1 && owner != shooter) continue; // another shooter's arrow
+                auto   p = feet(*e);
+                double score;
+                if (hitBox.contains(p)) score = 0.0;
+                else {
+                    score        = 1e9;
+                    auto segment = [&](Vec3 from, Vec3 to) {
+                        if (auto hit = clip(hitBox, from, to)) {
+                            double hx = hit->x - from.x, hy = hit->y - from.y, hz = hit->z - from.z;
+                            score     = std::min(score, std::sqrt(hx * hx + hy * hy + hz * hz));
+                        }
+                    };
+                    auto v = currentVelocity(*e);
+                    segment(Vec3{p.x - v.x, p.y - v.y, p.z - v.z}, Vec3{p.x + v.x, p.y + v.y, p.z + v.z});
+                    if (auto it = arrowSnaps().find(uidOf(*e)); it != arrowSnaps().end()) {
+                        auto const& r = it->second;
+                        segment(r.pos, Vec3{r.pos.x + r.vel.x * 2.0f, r.pos.y + r.vel.y * 2.0f, r.pos.z + r.vel.z * 2.0f});
+                    }
+                    // none crosses: the nearest arrow, after any that does
+                    if (score >= 1e9) score = 100.0 + std::sqrt((p.x - centre.x) * (p.x - centre.x) + (p.y - centre.y) * (p.y - centre.y) + (p.z - centre.z) * (p.z - centre.z));
+                }
+                if (score < best) {
+                    best    = score;
                     hitting = e;
                 }
             }
@@ -884,8 +921,11 @@ void installSnowQueen() {
         }
         if (!projectile) return gf::combat::Verdict::Pass;
         auto arrow = projectile->getOrCreateUniqueID().rawID;
-        auto v     = gf::projectile::ext::isProjectile(*projectile) ? gf::projectile::ext::velocity(*projectile) : projectile->getPosDelta();
+        auto v     = currentVelocity(*projectile);
         auto at    = feet(*projectile);
+        // stopped on contact: the motion it had at the queen's last tick
+        if (std::abs(v.x) + std::abs(v.y) + std::abs(v.z) < 0.05f)
+            if (auto it = arrowSnaps().find(arrow); it != arrowSnaps().end()) v = it->second.vel;
         gf::interactions::nextTick([arrow, v, at] {
             auto* a = fe::actorById(arrow);
             if (!a || !a->isAlive()) return;

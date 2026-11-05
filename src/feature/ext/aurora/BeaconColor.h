@@ -5,8 +5,10 @@
 // IBlockExtension#getBeaconColorMultiplier for custom blocks. Bedrock colours a beacon beam only for
 // its own stained glass; a block registered here colours the beam above a beacon as Java does
 // (BeaconBlockEntity#tick: the first colour replaces the beacon's white, every further change is
-// the average of the section's colour and the new one). Server and client builds: the beam
-// sections are rebuilt after the engine's BeaconBlockActor::generateBeamSections.
+// the average of the section's colour and the new one). Client build only: the beam sections are
+// rebuilt after the engine's BeaconBlockActor::generateBeamSections, which exists only in the
+// client (LL_PLAT_C; BDS never computes beam sections). registerColorMultiplier is callable in both
+// builds and does nothing on BDS, where every client (with or without the mod) draws its own beam.
 
 #include <functional>
 #include <string>

@@ -8,14 +8,35 @@
 //
 // U28's contract extension (R18): see BeaconColor.h. The engine's beam sections stay as they are
 // unless a registered block is in the beam; then the sections over the same blocks (the engine's
-// total height, so its opacity rule is kept) are rebuilt with Java's colour rule: the vanilla
-// stained glass by DyeColor#getTextureDiffuseColor, the registered blocks by their multiplier.
+// total height, so its opacity rule is kept) are rebuilt with Java's colour rule
+// (core::aurora::beaconSections): the vanilla stained glass by DyeColor#getTextureDiffuseColor, the
+// registered blocks by their multiplier.
 #include "feature/ext/aurora/BeaconColor.h"
 
-#include <array>
+#include <unordered_map>
+
+namespace gf::feature::ext::aurora::beacon {
+namespace {
+std::unordered_map<std::string, ColorFn>& multipliers() {
+    static std::unordered_map<std::string, ColorFn> m;
+    return m;
+}
+} // namespace
+
+void registerColorMultiplier(std::string const& blockId, ColorFn fn) { multipliers()[blockId] = std::move(fn); }
+
+} // namespace gf::feature::ext::aurora::beacon
+
+// The beam sections exist only in the client: BeaconBlockActor::generateBeamSections is declared for
+// LL_PLAT_C only (BDS never computes them; each client draws the beam). BDS and vanilla clients
+// draw the engine's beam. Built into the client build (GF_CLIENT) only.
+#ifdef GF_CLIENT
+
+#include <algorithm>
+#include <cstdint>
 #include <optional>
 #include <string>
-#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "ll/api/memory/Hook.h"
@@ -27,17 +48,14 @@
 #include "mc/world/level/block/actor/BeaconBeamSection.h"
 #include "mc/world/level/block/actor/BeaconBlockActor.h"
 
+#include "core/aurora/BeaconSections.h"
 #include "game/Blocks.h"
+#include "mod/Log.h"
 #include "mod/Module.h"
 
 namespace gf::feature::ext::aurora::beacon {
 
 namespace {
-
-std::unordered_map<std::string, ColorFn>& multipliers() {
-    static std::unordered_map<std::string, ColorFn> m;
-    return m;
-}
 
 /// DyeColor#getTextureDiffuseColor of the vanilla stained glass and panes.
 std::unordered_map<std::string, unsigned> const& glassColors() {
@@ -59,8 +77,14 @@ std::unordered_map<std::string, unsigned> const& glassColors() {
     return m;
 }
 
-std::array<float, 3> rgbOf(unsigned c) {
-    return {static_cast<float>((c >> 16) & 255) / 255.0F, static_cast<float>((c >> 8) & 255) / 255.0F, static_cast<float>(c & 255) / 255.0F};
+std::unordered_set<std::int64_t>& logged() {
+    static std::unordered_set<std::int64_t> s;
+    return s;
+}
+
+unsigned rgbOf(mce::Color const& c) {
+    auto ch = [](float f) { return static_cast<unsigned>(std::clamp(f, 0.0F, 1.0F) * 255.0F + 0.5F); };
+    return ch(c.r) << 16 | ch(c.g) << 8 | ch(c.b);
 }
 
 void recolour(BeaconBlockActor& beacon, BlockSource& region) {
@@ -70,46 +94,36 @@ void recolour(BeaconBlockActor& beacon, BlockSource& region) {
     if (total <= 0 || multipliers().empty()) return;
     BlockPos const base = beacon.getPosition();
     // the colour multiplier of each block of the beam (nullopt: none)
-    std::vector<std::optional<std::array<float, 3>>> colours(static_cast<std::size_t>(total));
-    bool                                            custom = false;
+    std::vector<std::optional<unsigned>> colours(static_cast<std::size_t>(total));
+    bool                                 custom = false;
     for (int i = 0; i < total; i++) {
-        BlockPos    pos{base.x, base.y + 1 + i, base.z};
+        BlockPos pos{base.x, base.y + 1 + i, base.z};
         if (pos.y >= region.getMaxHeight()) break;
         std::string id = gf::game::blockId(region.getBlock(pos));
         if (auto it = multipliers().find(id); it != multipliers().end()) {
-            colours[static_cast<std::size_t>(i)] = rgbOf(it->second(pos));
+            colours[static_cast<std::size_t>(i)] = it->second(pos);
             custom                               = true;
         } else if (auto g = glassColors().find(id); g != glassColors().end()) {
-            colours[static_cast<std::size_t>(i)] = rgbOf(g->second);
+            colours[static_cast<std::size_t>(i)] = g->second;
         }
     }
     if (!custom) return;
-    // BeaconBlockEntity#tick: the beacon's own white section, then the blocks above
-    struct Section {
-        std::array<float, 3> rgb;
-        int                  height;
-    };
-    std::vector<Section> rebuilt{{{1.0F, 1.0F, 1.0F}, 0}};
-    for (auto const& c : colours) {
-        if (!c) {
-            rebuilt.back().height++;
-            continue;
-        }
-        if (rebuilt.size() <= 1) rebuilt.push_back({*c, 1});
-        else if (*c == rebuilt.back().rgb) rebuilt.back().height++;
-        else {
-            auto const& prev = rebuilt.back().rgb;
-            rebuilt.push_back({{(prev[0] + (*c)[0]) / 2.0F, (prev[1] + (*c)[1]) / 2.0F, (prev[2] + (*c)[2]) / 2.0F}, 1});
-        }
-    }
+    unsigned beaconRgb = sections.empty() ? 0xFFFFFFU : rgbOf(sections.front().mColor.get());
+    auto     rebuilt   = gf::core::aurora::beaconSections(colours, beaconRgb);
     sections.clear();
     for (auto const& s : rebuilt) {
         if (s.height <= 0) continue;
         BeaconBeamSection out{};
         out.mHeight = s.height;
-        out.mColor  = mce::Color(s.rgb[0], s.rgb[1], s.rgb[2], 1.0F);
+        out.mColor  = mce::Color(static_cast<float>((s.rgb >> 16) & 255) / 255.0F, static_cast<float>((s.rgb >> 8) & 255) / 255.0F,
+                                 static_cast<float>(s.rgb & 255) / 255.0F, 1.0F);
         sections.push_back(out);
     }
+    // one line per beacon position (the client scenario waits for it next to its beam screenshot)
+    std::int64_t key = (static_cast<std::int64_t>(base.x) & 0x3FFFFFF) << 38 | (static_cast<std::int64_t>(base.z) & 0x3FFFFFF) << 12 |
+                       (static_cast<std::int64_t>(base.y) & 0xFFF);
+    if (rebuilt.size() >= 2 && logged().insert(key).second)
+        gf::log().info("aurora: beacon beam at {} {} {} coloured {:06X}", base.x, base.y, base.z, rebuilt[1].rgb);
 }
 
 } // namespace
@@ -126,8 +140,8 @@ struct BeaconColorModule {
 };
 } // namespace
 
-void registerColorMultiplier(std::string const& blockId, ColorFn fn) { multipliers()[blockId] = std::move(fn); }
-
 } // namespace gf::feature::ext::aurora::beacon
 
 GF_REGISTER_MODULE(gf::feature::ext::aurora::beacon::BeaconColorModule);
+
+#endif // GF_CLIENT

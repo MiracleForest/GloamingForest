@@ -79,6 +79,36 @@
         "op": "add",
         "path": "/minecraft:client_entity/description/scripts/animate/-",
         "value": "snow_aura"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/particle_effects/ice_beam",
+        "value": "gloamingforest:aurora_ice_beam"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/particle_effects/shield_warning",
+        "value": "gloamingforest:aurora_shield_warning"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/animations/ice_beam",
+        "value": "animation.twilightforest.snow_queen.ice_beam"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/animations/drop_warning",
+        "value": "animation.twilightforest.snow_queen.drop_warning"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/animations/effects",
+        "value": "controller.animation.twilightforest.snow_queen.effects"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/scripts/animate/-",
+        "value": "effects"
       }
     ],
     "rp/entity/snow_guardian.entity.json": [

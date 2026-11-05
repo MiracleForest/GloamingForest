@@ -1163,6 +1163,52 @@
           ]
         }
       }
+    },
+    "animation.twilightforest.snow_queen.ice_beam": {
+      "loop": true,
+      "animation_length": 0.05,
+      "particle_effects": {
+        "0.0": {
+          "effect": "ice_beam",
+          "pre_effect_script": "variable.yr = query.body_y_rotation; variable.xr = query.target_x_rotation; variable.look_x = -math.sin(variable.yr) * math.cos(variable.xr); variable.look_y = -math.sin(variable.xr); variable.look_z = math.cos(variable.yr) * math.cos(variable.xr);"
+        }
+      }
+    },
+    "animation.twilightforest.snow_queen.drop_warning": {
+      "loop": true,
+      "animation_length": 0.05,
+      "particle_effects": {
+        "0.0": [
+          {
+            "effect": "shield_warning",
+            "pre_effect_script": "variable.a = 60 * 0 + (variable.shield_t ?? (query.life_time * 20)) * 5; variable.shield_x = math.cos(variable.a); variable.shield_y = 0.1; variable.shield_z = math.sin(variable.a);"
+          },
+          {
+            "effect": "shield_warning",
+            "pre_effect_script": "variable.a = 60 * 1 + (variable.shield_t ?? (query.life_time * 20)) * 5; variable.shield_x = math.cos(variable.a); variable.shield_y = 0.1; variable.shield_z = math.sin(variable.a);"
+          },
+          {
+            "effect": "shield_warning",
+            "pre_effect_script": "variable.a = 60 * 2 + (variable.shield_t ?? (query.life_time * 20)) * 5; variable.shield_x = math.cos(variable.a); variable.shield_y = 0.1; variable.shield_z = math.sin(variable.a);"
+          },
+          {
+            "effect": "shield_warning",
+            "pre_effect_script": "variable.a = 60 * 3 + (variable.shield_t ?? (query.life_time * 20)) * 5; variable.shield_x = math.cos(variable.a); variable.shield_y = 0.1; variable.shield_z = math.sin(variable.a);"
+          },
+          {
+            "effect": "shield_warning",
+            "pre_effect_script": "variable.a = 60 * 4 + (variable.shield_t ?? (query.life_time * 20)) * 5; variable.shield_x = math.cos(variable.a); variable.shield_y = 0.1; variable.shield_z = math.sin(variable.a);"
+          },
+          {
+            "effect": "shield_warning",
+            "pre_effect_script": "variable.a = 60 * 5 + (variable.shield_t ?? (query.life_time * 20)) * 5; variable.shield_x = math.cos(variable.a); variable.shield_y = 0.1; variable.shield_z = math.sin(variable.a);"
+          },
+          {
+            "effect": "shield_warning",
+            "pre_effect_script": "variable.shield_x = 0; variable.shield_y = -1; variable.shield_z = 0;"
+          }
+        ]
+      }
     }
   }
 }

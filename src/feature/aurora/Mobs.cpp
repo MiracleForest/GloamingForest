@@ -371,7 +371,7 @@ std::optional<unsigned> javaMapColor(std::string const& id) {
             {"minecraft:podzol", 0x815631},      {"minecraft:mycelium", 0x7F3FB2},     {"minecraft:farmland", 0x976D4D},    {"minecraft:dirt_path", 0x976D4D},
             {"minecraft:stone", 0x707070},       {"minecraft:cobblestone", 0x707070},  {"minecraft:stone_bricks", 0x707070}, {"minecraft:mossy_cobblestone", 0x707070},
             {"minecraft:andesite", 0x707070},    {"minecraft:granite", 0x976D4D},      {"minecraft:diorite", 0xFFFCF5},     {"minecraft:gravel", 0x707070},
-            {"minecraft:deepslate", 0x646464},   {"minecraft:cobbled_deepslate", 0x646464}, {"minecraft:tuff", 0x575C5C},  {"minecraft:calcite", 0xD1B1A1},
+            {"minecraft:deepslate", 0x646464},   {"minecraft:cobbled_deepslate", 0x646464}, {"minecraft:tuff", 0x392923},  {"minecraft:calcite", 0xD1B1A1},
             {"minecraft:sand", 0xF7E9A3},        {"minecraft:sandstone", 0xF7E9A3},    {"minecraft:red_sand", 0xD87F33},    {"minecraft:clay", 0xA4A8B8},
             {"minecraft:snow", 0xFFFFFF},        {"minecraft:snow_layer", 0xFFFFFF},   {"minecraft:powder_snow", 0xFFFFFF}, {"minecraft:ice", 0xA0A0FF},
             {"minecraft:packed_ice", 0xA0A0FF},  {"minecraft:blue_ice", 0xA0A0FF},     {"minecraft:moss_block", 0x667F33},  {"minecraft:glass", 0x000000},
@@ -491,8 +491,9 @@ void unstableCoreTick(Actor& self) {
         Actor*      direct   = lethal.is_object() ? fe::actorById(lethal.value("direct", std::int64_t{0})) : nullptr;
         if (direct && !direct->isAlive()) direct = attacker;
         float health = static_cast<float>(std::max(self.getHealth(), 1));
-        if (!gf::combat::hurt(self, health + 1000.0f, type, attacker, direct) && self.isAlive()) {
-            if (!gf::combat::hurt(self, health + 1000.0f, "minecraft:generic", attacker, attacker) && self.isAlive()) self.kill();
+        // a hit of its remaining health: onDealt listeners (stats, damage dealt) see no inflated amount
+        if (!gf::combat::hurt(self, health, type, attacker, direct) && self.isAlive()) {
+            if (!gf::combat::hurt(self, health, "minecraft:generic", attacker, attacker) && self.isAlive()) self.kill();
         }
     }
 }

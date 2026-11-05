@@ -86,30 +86,6 @@ std::map<std::int64_t, Mining>& mining() {
     return m;
 }
 
-/// Whether the player's view ray (6 blocks from the eyes) passes through the block at `pos`: the
-/// evidence of continued mining when the server sees no destroy progress of its own.
-bool looksAt(Player const& player, BlockPos const& pos) {
-    auto   eye   = player.getEyePos();
-    auto   rot   = player.getRotation(); // (pitch, yaw)
-    double pitch = rot.x * 3.14159265358979 / 180.0, yaw = -rot.y * 3.14159265358979 / 180.0;
-    double d[3]  = {std::sin(yaw) * std::cos(pitch) * 6.0, -std::sin(pitch) * 6.0, std::cos(yaw) * std::cos(pitch) * 6.0};
-    double f[3]  = {eye.x, eye.y, eye.z};
-    double lo[3] = {static_cast<double>(pos.x), static_cast<double>(pos.y), static_cast<double>(pos.z)};
-    double tmin = 0.0, tmax = 1.0;
-    for (int i = 0; i < 3; i++) {
-        if (std::abs(d[i]) < 1e-9) {
-            if (f[i] < lo[i] || f[i] > lo[i] + 1.0) return false;
-            continue;
-        }
-        double t1 = (lo[i] - f[i]) / d[i], t2 = (lo[i] + 1.0 - f[i]) / d[i];
-        if (t1 > t2) std::swap(t1, t2);
-        tmin = std::max(tmin, t1);
-        tmax = std::min(tmax, t2);
-        if (tmin > tmax) return false;
-    }
-    return true;
-}
-
 void tickMining() {
     for (auto it = mining().begin(); it != mining().end();) {
         auto* actor = fe::actorById(it->first);
@@ -140,15 +116,13 @@ void tickMining() {
             it = mining().erase(it);
             continue;
         }
-        if (!m.progressed) {
-            // no destroy progress on the server (client-authoritative breaking): a companion's client
-            // applies the 0.1 a tick itself (client/aurora) and breaks the block on its own; a vanilla
-            // client's mining counts only while the player keeps looking at the block
-            if (!gf::net::isCompanion(player) && !looksAt(player, m.pos)) {
-                gf::log().info("aurora: aurora block mining stopped after {} ticks", m.ticks);
-                it = mining().erase(it);
-                continue;
-            }
+        if (!m.progressed && !gf::net::isCompanion(player) && m.ticks >= 3) {
+            // no destroy progress on the server within 3 ticks: without it nothing tells a held button
+            // from a tap, so a vanilla client's mining is not sped up (the engine's own break time
+            // applies). A companion's client applies the 0.1 a tick itself (client/aurora).
+            gf::log().info("aurora: aurora block mining not sped up: no server destroy progress");
+            it = mining().erase(it);
+            continue;
         }
         // 0.1 per tick: the block breaks on the tenth tick of mining
         ++m.ticks;
@@ -226,6 +200,13 @@ void installAuroraBlocks() {
         if (gf::progression::has(ctx.player, "twilightforest:progress_glacier"))
             mining()[ctx.player.getOrCreateUniqueID().rawID] = Mining{BlockPos{ctx.pos.x, ctx.pos.y, ctx.pos.z}, ctx.face};
         return gf::interactions::Result::Pass;
+    });
+    // one line per sped-up break (the client scenario's companion mining check reads it)
+    gf::interactions::onDestroyed({.block = kAuroraBlock}, [](gf::interactions::DestroyContext const& ctx, bool destroyed) {
+        auto it = mining().find(ctx.player.getOrCreateUniqueID().rawID);
+        if (!destroyed || it == mining().end() || !(it->second.pos == BlockPos{ctx.pos.x, ctx.pos.y, ctx.pos.z})) return;
+        gf::log().info("aurora: aurora block broken after {} ticks of mining ({})", it->second.ticks,
+                       it->second.progressed ? "server progress" : (gf::net::isCompanion(ctx.player) ? "companion" : "no progress"));
     });
     fe::onLevelTick(tickMining);
     // AuroralizedGlassBlock#getBeaconColorMultiplier: the aurora colour of its position

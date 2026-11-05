@@ -49,36 +49,49 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
   on the material (F12's tint hook only reaches tinted materials) and the tint method is part of the block
   definition the server sends to every client, so vanilla clients multiply the texture with the biome's
   `water` colour. A baked texture for vanilla clients would be multiplied again on top of that; there is no
-  constant tint method. Closest workaround: the pre-tinted item visuals show TF's colours in the inventory
-  for every client.
+  constant tint method, and the block definition (material, texture, tint method) is one for every client, so
+  a baked fallback would also be what companions draw unless the client mod rewrote the block's material
+  instances client side (an F12 renderer extension that does not exist). Closest workaround: the pre-tinted
+  item visuals show TF's colours in the inventory for every client.
 - Auroralized glass beacon colour (`getBeaconColorMultiplier`): Bedrock's beacon takes beam colours only from
   vanilla stained glass. The contract extension `src/feature/ext/aurora/BeaconColor.{h,cpp}` (R18, for A8 to
-  fold) rebuilds the beam sections after `BeaconBlockActor::generateBeamSections` (server and client builds)
-  with Java's rule whenever a registered block is in the beam: the beacon's white, the first colour replacing
-  it, every further change averaged; the auroralized glass registers its aurora colour
-  (`aurora.auroralized_glass_beacon`). Vanilla clients draw the engine's own beam.
+  fold) rebuilds the beam sections after `BeaconBlockActor::generateBeamSections` with Java's rule
+  (`core::aurora::beaconSections`, gtest `AuroraBeacon.Sections`) whenever a registered block is in the beam:
+  the beacon's white, the first colour replacing it, every further change averaged (FastColor's integer
+  average); the auroralized glass registers its aurora colour. Client build only: `generateBeamSections` is
+  declared for `LL_PLAT_C` only in LeviLamina's server headers, because BDS never computes beam sections (the
+  beam is drawn by each client). So the client mod colours the beam in local worlds and on BDS, while vanilla
+  clients draw the engine's own beam. Checked by the client scenario (the `aurora: beacon beam at ... coloured`
+  line and the `beacon-beam` screenshot).
 - The aurora block's 10-tick break with `progress_glacier` (AuroraBrickBlock#getDestroyProgress, both sides in
   Java): the server turns its own destroy progress into 0.1 a tick (server-authoritative breaking), and the client
   mod does the same to the local player's game mode (`src/client/aurora`), so the crack animation and the client's
-  break prediction run at TF's speed. Without server-side progress (client-authoritative breaking) a companion's
-  client breaks the block itself; a vanilla client's mining counts only while the player keeps looking at the
-  block, then the server breaks it on the tenth tick.
+  break prediction run at TF's speed. Without server-side progress within 3 ticks (client-authoritative breaking)
+  a companion's client breaks the block itself; for a vanilla client nothing tells a held button from a tap then,
+  so its mining is not sped up (the engine's own break time). The client scenario mines a block with a held
+  button and waits for the server's `aurora: aurora block broken after N ticks of mining` line (local and
+  remote-mod: N <= 14), then screenshots the spot (no rollback).
 - Ice mobs' vanilla goals are BP behaviours; the stable ice core's RangedAttackGoal, the queen's hover goals and
   MeleeAttackGoal, LookAtPlayerGoal and RandomLookAroundGoal and everything TF-specific are native (the
   queen's look goals are F8 goals so that the hover goals' LOOK flag keeps them off her head while she beams).
-  HoverBeamGoal turns her as Mob#lookAt does (yaw and pitch by rotlerp, the head with them) besides the
-  LookControl, so her view vector, and the ray along it, follow the target. The snow guardian's gear is
+  HoverBeamGoal turns her as Mob#lookAt does (yaw and pitch by rotlerp, written to the rotation component:
+  `Actor::setRotationWrapped` is client-only) and the head only through the LookControl, as in Java, so her
+  view vector, and the ray along it, follow the target at TF's rate. The snow guardian's gear is
   enchanted by DifficultyInstance#getSpecialMultiplier (day time and moon phase, as Java) without the chunk's
   inhabited time (Bedrock has none). Its chestplate goes into the armour container directly (the engine's
   setItemSlot refuses an item without `minecraft:wearable`, which U7's chestplates do not have yet).
 - The unstable ice core's death: the lethal hit is remembered and, after the 60 ticks of TF's tickDeath, the core
-  is finished with the same damage type and entities, so the kill (progression's onKilled, twilight_hunter),
-  looting and XP stay the killer's. Its death sound plays once, at the lethal hit (the RP gives the core no
+  is finished with the same damage type and entities and a hit of its remaining health (so `combat::onDealt`
+  listeners see no inflated amount), so the kill (progression's onKilled, twilight_hunter), looting and XP stay
+  the killer's. Its death sound plays once, at the lethal hit (the RP gives the core no
   engine death sound).
 - The ice crystal's age (crystalAge / maxCrystalAge, not saved in TF) lives in memory only: a reloaded summoned
   crystal stays, as in TF.
 - Snow Queen shields: F8 parts; a hit is blocked with TF's break sound; a piercing arrow is let through (the
-  damage is cancelled before the shield forwards it and the arrow keeps its flight past the shield). The
+  damage is cancelled before the shield forwards it and the arrow keeps its flight past the shield). The arrow
+  that hit is the shooter's arrow (by unique id) whose flight, now or as recorded at the queen's last tick
+  before the engine stopped it, crosses the shield first, else the nearest one; a plain arrow next to a
+  piercing one is blocked (`aurora.snow_queen_shields`). The
   shields are drawn by a second geometry of the queen turned from a synced anchor
   (`twilightforest:shield_tick`, every second) and the client's clock, so the drawn shields follow the hit
   boxes on every client.
@@ -91,8 +104,15 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
   tick), drag ln(0.7) x 20 = 7.13 / s and an acceleration of 9.51 / s^2, the continuous form of
   `v = 0.7 v - 0.02` a tick (same terminal speed 1.33 / s; time constant 2.8 against 3.3 ticks).
 - The snow around ice mobs and the queen is a looping emitter of their client entities (TF spawns it on the
-  client); the melting, beam and drop warning particles are sent by the server through F10's fx (TF spawns the
-  beam's 10 particles a tick and the drop warnings on the client; on Bedrock they would need entity-attached
-  emitters following the head's pitch and the orbiting shields, which the client entity cannot express without
-  locators in F2's generated geometry, so the server sends them: about 200 packets a second per nearby player
-  while she beams).
+  client). The beam (10 particles a tick, `gloamingforest:aurora_ice_beam`) and the drop warnings at the seven
+  shields (`gloamingforest:aurora_shield_warning`) are emitted by the queen's client entity too, from one-tick
+  looping animations started by the synced `twilightforest:beam` / `twilightforest:phase` properties, with
+  `pre_effect_script` variables for her look (body yaw, pitch towards her target: getLookAngle) and each
+  shield's angle (60 i + tick x 5 from the synced shield anchor); the server sends no particle packets for them.
+  The melting particles are still sent through F10's fx (one burst per event).
+- Eye height: Bedrock has no eye-height component; the engine puts a mob's eyes at 0.9 x its collision height
+  (1.62 for the 1.8-high mobs, 2.25 for the queen), where Java has 1.53 (snow guardian, ice crystal), 1.35
+  (ice cores) and 2.125 (queen). `aurora.mob_attributes` reports both (the offsets component holds no eye
+  offset the engine reads for mobs). The other golden attributes (health, speeds, attack, follow range,
+  knockback resistance, box, XP only for a player kill) are gtested against `tests/golden/mobs.json`
+  (`AuroraMobs.MatchJavaGoldens`).

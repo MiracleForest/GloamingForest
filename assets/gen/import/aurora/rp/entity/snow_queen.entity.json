@@ -36,7 +36,8 @@
           {
             "attack": "v.attack_time > 0.0"
           },
-          "snow_aura"
+          "snow_aura",
+          "effects"
         ]
       },
       "animations": {
@@ -50,7 +51,10 @@
         "arms_up": "animation.twilightforest.snow_queen.arms_up",
         "phase": "controller.animation.twilightforest.snow_queen.phase",
         "shields_spin": "animation.twilightforest.snow_queen.shields",
-        "snow_aura": "controller.animation.twilightforest.ice_mob.snow"
+        "snow_aura": "controller.animation.twilightforest.ice_mob.snow",
+        "ice_beam": "animation.twilightforest.snow_queen.ice_beam",
+        "drop_warning": "animation.twilightforest.snow_queen.drop_warning",
+        "effects": "controller.animation.twilightforest.snow_queen.effects"
       },
       "render_controllers": ["controller.render.default", "controller.render.twilightforest.snow_queen_shields"],
       "spawn_egg": {
@@ -58,7 +62,9 @@
         "overlay_color": "#87006e"
       },
       "particle_effects": {
-        "snow_aura": "gloamingforest:aurora_snow_queen"
+        "snow_aura": "gloamingforest:aurora_snow_queen",
+        "ice_beam": "gloamingforest:aurora_ice_beam",
+        "shield_warning": "gloamingforest:aurora_shield_warning"
       }
     }
   }

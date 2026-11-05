@@ -2,9 +2,11 @@
 // gtests of src/core/aurora (U28): the aurora palace's floor plans and the aurora block colours.
 #include <gtest/gtest.h>
 
+#include <optional>
 #include <set>
 
 #include "core/aurora/AuroraColor.h"
+#include "core/aurora/BeaconSections.h"
 #include "core/aurora/FloorPlan.h"
 #include "core/jrand/JRand.h"
 
@@ -167,4 +169,29 @@ TEST(AuroraColor, JavaGoldens) {
     // pillar, slab and glass its pale form 73E6C3 (terrain_texture.d/aurora.json's tint_color)
     EXPECT_EQ(hsvToRGB(0.45F, 1.0F, 1.0F), 0x00FFB2u);
     EXPECT_EQ(auroraPaleColor(hsvToRGB(0.45F, 1.0F, 1.0F)), 0x73E6C3u);
+}
+
+TEST(AuroraBeacon, Sections) {
+    using O = std::optional<unsigned>;
+    // no coloured block: one white section over everything
+    auto s = beaconSections({O{}, O{}, O{}}, 0xFFFFFF);
+    ASSERT_EQ(s.size(), 1U);
+    EXPECT_EQ(s[0].height, 3);
+    // the first colour replaces the beacon's white (a new section of its own colour)
+    s = beaconSections({O{}, O{0x112233}, O{}, O{0x112233}, O{0x334455}, O{}}, 0xFFFFFF);
+    ASSERT_EQ(s.size(), 3U);
+    EXPECT_EQ(s[0].rgb, 0xFFFFFFU);
+    EXPECT_EQ(s[0].height, 1);
+    EXPECT_EQ(s[1].rgb, 0x112233U);
+    EXPECT_EQ(s[1].height, 3);
+    // a different colour: the average of the section's colour and the new one (FastColor average)
+    EXPECT_EQ(s[2].rgb, averageColor(0x112233, 0x334455));
+    EXPECT_EQ(s[2].rgb, 0x223344U);
+    EXPECT_EQ(s[2].height, 2);
+    // an equal colour after an averaged section compares with the average, as Java
+    s = beaconSections({O{0x000000}, O{0x020202}, O{0x020202}}, 0xFFFFFF);
+    ASSERT_EQ(s.size(), 4U);
+    EXPECT_EQ(s[2].rgb, 0x010101U);
+    EXPECT_EQ(s[3].rgb, averageColor(0x010101, 0x020202));
+    EXPECT_EQ(averageColor(0x010101, 0x020202), 0x010101U);
 }

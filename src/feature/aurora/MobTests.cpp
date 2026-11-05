@@ -32,8 +32,7 @@
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/deps/core/math/Color.h"
-#include "mc/world/level/block/actor/BeaconBeamSection.h"
-#include "mc/world/level/block/actor/BeaconBlockActor.h"
+#include "mc/deps/vanilla_components/OffsetsComponent.h"
 #include "mc/world/attribute/Attribute.h"
 #include "mc/world/attribute/AttributeInstance.h"
 #include "mc/world/attribute/AttributeInstanceConstRef.h"
@@ -141,8 +140,16 @@ GF_REGISTER_SELFTEST("aurora.mob_attributes", [](Context& ctx) -> ll::coro::Coro
         auto const& b = m->getAABB();
         ctx.check(near(b.max.x - b.min.x, r.width) && near(b.max.y - b.min.y, r.height),
                   id + " box " + std::to_string(b.max.x - b.min.x) + " x " + std::to_string(b.max.y - b.min.y));
+        // the eye height: Bedrock has no eye-height component; the engine puts a mob's eyes at 0.9 x
+        // its collision height (1.62 for 1.8, 2.25 for 2.5), where Java has 1.53 / 1.35 / 2.125 for
+        // these mobs. Reported, not checked (docs/units/aurora.md, deviations).
         float eye = m->getEyePos().y - m->getFeetPos().y;
-        ctx.check(std::abs(eye - r.eye) < 0.05f, id + " eye height " + std::to_string(eye) + " (Java " + std::to_string(r.eye) + ")");
+        std::string offsets;
+        if (auto oc = m->getEntityContext().tryGetComponent<OffsetsComponent>())
+            offsets = " (offsets: height " + std::to_string(oc->mHeightOffset) + ", eye y " + std::to_string(oc->mEyeOffset->y) + ", head y " +
+                      std::to_string(oc->mHeadOffset->y) + ")";
+        ctx.check(std::abs(eye - r.height * 0.9f) < 0.05f || std::abs(eye - r.eye) < 0.05f, id + " eye height " + std::to_string(eye));
+        ctx.info(id + " eye height " + std::to_string(eye) + ", Java " + std::to_string(r.eye) + (std::abs(eye - r.eye) < 0.05f ? " (matches)" : " (Bedrock 0.9 x height)") + offsets);
         spawned.push_back(uidOf(*m));
     }
     co_await ctx.ticks(5);
@@ -513,7 +520,34 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_shields", [](Context& ctx) -> ll::coro::
     ctx.require(q != nullptr, "the queen is still there");
     ctx.check(static_cast<float>(q->getHealth()) >= before, "the piercing arrow did not hurt her");
     ctx.check(maxX > sp.x + 1.0f, "the arrow flew on through the shield: reached x " + std::to_string(maxX - sp.x) + " past it");
-    if (auto* a = fe::actorById(arrowId)) a->remove();    // whatever touches a shield is hurt and lifted by 0.4 (applyShieldCollisions)
+    if (auto* a = fe::actorById(arrowId)) a->remove();
+    // a plain arrow at the shield is blocked, even with a piercing arrow of the same shooter flying
+    // by next to it (the pass-through goes to the arrow that hit, not the nearest piercing one)
+    {
+        q = mobById(uid);
+        ctx.require(q != nullptr, "the queen is still there");
+        shield = gf::entity::partActor(gf::entity::ext::parts(*q)[6]);
+        ctx.require(shield != nullptr, "the shield under her");
+        sp           = shield->getFeetPos();
+        auto* plain  = level->getSpawner().spawnProjectile(*ctx.region(), ActorDefinitionIdentifier("minecraft:arrow"), &ctx.player(),
+                                                          Vec3{sp.x - 2.5f, sp.y + 0.35f, sp.z}, Vec3{1.0f, 0.0f, 0.0f});
+        auto* beside = level->getSpawner().spawnProjectile(*ctx.region(), ActorDefinitionIdentifier("minecraft:arrow"), &ctx.player(),
+                                                           Vec3{sp.x - 2.5f, sp.y + 0.35f, sp.z + 2.0f}, Vec3{1.0f, 0.0f, 0.0f});
+        ctx.require(plain != nullptr && beside != nullptr, "two arrows");
+        if (auto pc = beside->getEntityContext().tryGetComponent<ProjectileComponent>()) pc->mPiercingEnchantLevel = 1;
+        fe::setMotion(*plain, Vec3{1.2f, 0.0f, 0.0f});
+        fe::setMotion(*beside, Vec3{1.2f, 0.0f, 0.0f});
+        auto  plainId = uidOf(*plain), besideId = uidOf(*beside);
+        float plainX  = sp.x - 2.5f;
+        for (int i = 0; i < 8; i++) {
+            co_await ctx.ticks(1);
+            if (auto* a = fe::actorById(plainId)) plainX = std::max(plainX, a->getFeetPos().x);
+        }
+        ctx.check(plainX < sp.x + 1.0f, "the plain arrow is blocked by the shield: reached x " + std::to_string(plainX - sp.x) + " past it");
+        if (auto* a = fe::actorById(plainId)) a->remove();
+        if (auto* a = fe::actorById(besideId)) a->remove();
+    }
+    // whatever touches a shield is hurt and lifted by 0.4 (applyShieldCollisions)
     ctx.player().setPlayerGameType(GameType::Survival);
     dealt().hits.clear();
     dealt().victim = uidOf(ctx.player());
@@ -633,7 +667,23 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_mining", [](Context& ctx) -> ll::coro:
     ctx.cleanupBlock(block);
 });
 
-GF_REGISTER_SELFTEST("aurora.aurora_block_variant", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("aurora.client_miner", [](Context& ctx) {
+    // the client scenario's setup (the companion mining check): progress_glacier (after
+    // progress_yeti, its previous progression) for every real player in creative mode, who then
+    // mines an aurora block in survival. Without real players (the server's runs) it does nothing.
+    int granted = 0;
+    if (auto level = ll::service::getLevel())
+        level->forEachPlayer([&](Player& p) {
+            if (p.isSimulatedPlayer() || p.getPlayerGameType() != GameType::Creative) return true;
+            gf::progression::grant(p, "twilightforest:progress_yeti");
+            gf::progression::grant(p, "twilightforest:progress_glacier");
+            if (gf::progression::has(p, "twilightforest:progress_glacier")) granted++;
+            return true;
+        });
+    ctx.info("progress_glacier granted to " + std::to_string(granted) + " real player(s)");
+});
+
+GF_REGISTER_SELFTEST("aurora.aurora_block_variant",[](Context& ctx) -> ll::coro::CoroTask<> {
     // NoiseVaryingModel: the variant of a placed aurora block is calcVariant of its position
     auto box = co_await ctx.flatArea(2840, 8);
     int  differs = 0;
@@ -729,34 +779,8 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_spawner", [](Context& ctx) -> ll::coro::
     discardAround(spawner, 30);
 });
 
-GF_REGISTER_SELFTEST("aurora.auroralized_glass_beacon", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // AuroralizedGlassBlock#getBeaconColorMultiplier: the beam above the glass takes the aurora
-    // colour of the glass's position (the beacon's white replaced by the first colour, as Java)
-    auto box    = co_await ctx.flatArea(2890, 8, 16);
-    auto beacon = core::GlobalPos{ctx.dimension(), box.minX + 3, box.minY + 2, box.minZ + 2};
-    for (int dx = -1; dx <= 1; dx++)
-        for (int dz = -1; dz <= 1; dz++) ctx.require(ctx.setBlock(at(beacon, dx, -1, dz), "minecraft:iron_block"), "the pyramid");
-    ctx.require(ctx.setBlock(beacon, "minecraft:beacon"), "a beacon");
-    auto glass = at(beacon, 0, 2, 0);
-    ctx.require(ctx.setBlock(glass, "twilightforest:auroralized_glass"), "auroralized glass two above it");
-    std::vector<BeaconBeamSection> sections;
-    for (int i = 0; i < 12 && sections.size() < 2; i++) {
-        co_await ctx.ticks(20);
-        if (auto* be = ctx.region()->getBlockEntity(game::blockPos(beacon)))
-            if (game::blockIdAt(*ctx.region(), game::blockPos(beacon)) == "minecraft:beacon") sections = static_cast<BeaconBlockActor*>(be)->mBeamSections.get();
-    }
-    auto want = mce::Color(core::aurora::auroraBlockColor(glass.x, glass.y, glass.z));
-    std::string got;
-    for (auto const& s : sections) got += std::to_string(s.mHeight) + "x(" + std::to_string(s.mColor->r) + "," + std::to_string(s.mColor->g) + "," + std::to_string(s.mColor->b) + ") ";
-    ctx.info("beam sections: " + (got.empty() ? std::string("none") : got));
-    ctx.check(sections.size() >= 2, "the beam has a section above the glass");
-    if (sections.size() >= 2) {
-        auto const& c = sections[1].mColor.get();
-        ctx.check(std::abs(c.r - want.r) < 0.01f && std::abs(c.g - want.g) < 0.01f && std::abs(c.b - want.b) < 0.01f, "the glass colours the beam with its aurora colour");
-    }
-    for (int dx = -1; dx <= 1; dx++)
-        for (int dz = -1; dz <= 1; dz++) ctx.cleanupBlock(at(beacon, dx, -1, dz));
-    ctx.cleanupBlock(beacon);
-    ctx.cleanupBlock(glass);
-});
+// aurora.auroralized_glass_beacon is gone: BDS never computes beacon beam sections (the beam is
+// the client's, BeaconBlockActor::generateBeamSections is LL_PLAT_C only). The colour rule is the
+// gtest AuroraBeacon.Sections, the client hook is proved by the client scenario's beacon-beam
+// screenshot and its "aurora: beacon beam at ... coloured" line.
 } // namespace gf::feature::aurora::tests
