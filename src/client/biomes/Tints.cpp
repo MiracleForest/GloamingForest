@@ -24,8 +24,11 @@
 
 #ifdef GF_CLIENT
 
+#include <algorithm>
 #include <atomic>
+#include <mutex>
 #include <string>
+#include <vector>
 
 #include "mc/world/level/BlockPos.h"
 
@@ -92,9 +95,22 @@ std::optional<unsigned> positional(BlockPos const& pos, unsigned game, bool foli
     return static_cast<unsigned>(c);
 }
 
+/// The first distinct game colours a tint sees (at most 24 lines per session): what the markers are
+/// compared with, for the e2e log.
+void noteGameColour(bool foliage, unsigned c) {
+    static std::mutex                 m;
+    static std::vector<unsigned>      seen;
+    std::lock_guard                   lock(m);
+    unsigned                          key = c | (foliage ? 0x1000000u : 0u);
+    if (seen.size() >= 24 || std::find(seen.begin(), seen.end(), key) != seen.end()) return;
+    seen.push_back(key);
+    log().info("biomes: game {} colour #{:06X} seen by the tint", foliage ? "foliage" : "grass", c);
+}
+
 unsigned grassAt(BlockPos const& pos, tint::GameColors const& game) {
     auto g = game.grass();
     if (!g) return kDefaultGrass;
+    noteGameColour(false, *g);
     if (!enabled()) return *g;
     return positional(pos, *g, false).value_or(*g);
 }
@@ -102,6 +118,7 @@ unsigned grassAt(BlockPos const& pos, tint::GameColors const& game) {
 unsigned foliageAt(BlockPos const& pos, tint::GameColors const& game) {
     auto f = game.foliage();
     if (!f) return kDefaultFoliage;
+    noteGameColour(true, *f);
     if (!enabled()) return *f;
     return positional(pos, *f, true).value_or(*f);
 }

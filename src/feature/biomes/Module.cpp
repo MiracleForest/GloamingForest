@@ -114,6 +114,11 @@ std::atomic<std::shared_ptr<BiomeProvider const>>& current() {
     return p;
 }
 
+std::atomic<std::uint64_t>& generation() {
+    static std::atomic<std::uint64_t> g{0};
+    return g;
+}
+
 } // namespace
 
 std::shared_ptr<SourceData const> sourceData() {
@@ -141,10 +146,22 @@ std::shared_ptr<BiomeProvider const> providerFor(std::int64_t seed) {
     }
     // concurrent first calls may each build one; any of them is equal
     current().store(fresh, std::memory_order_release);
+    generation().fetch_add(1, std::memory_order_acq_rel);
     return fresh;
 }
 
-std::shared_ptr<BiomeProvider const> provider() { return providerFor(worldgen::seed()); }
+std::shared_ptr<BiomeProvider const> provider() {
+    // per thread: the generation workers ask for every quart; the shared atomic is read only when
+    // the provider changed (another seed, uninstall)
+    thread_local std::shared_ptr<BiomeProvider const> cached;
+    thread_local std::uint64_t                        cachedGeneration = ~std::uint64_t(0);
+    auto                                              seed             = worldgen::seed();
+    auto                                              gen              = generation().load(std::memory_order_acquire);
+    if (cached && cachedGeneration == gen && cached->seed() == seed) return cached;
+    cached           = providerFor(seed);
+    cachedGeneration = generation().load(std::memory_order_acquire);
+    return cached;
+}
 
 struct BiomesModule {
     void install() {
@@ -168,6 +185,7 @@ struct BiomesModule {
         worldgen::setBiomeSource({});
         worldgen::setMainBiomeSource({});
         current().store(nullptr);
+        generation().fetch_add(1, std::memory_order_acq_rel);
     }
 };
 
