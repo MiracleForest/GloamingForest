@@ -169,7 +169,8 @@ GF_REGISTER_SELFTEST("atmosphere.show_ashes", [](Context& ctx) { preview(ctx, {{
 GF_REGISTER_SELFTEST("atmosphere.show_dark_streams", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:dark_forest"}, {"locked", true}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_big_rain", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:highlands"}, {"locked", true}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_sparkles", [](Context& ctx) {
-    preview(ctx, {{"biome", "twilightforest:forest"}, {"protectedAround", Json::array({Json::array({-8, -4, -8, 8, 12, 8, true}), Json::array({-1, -4, -1, 1, 12, 1, false})})}});
+    // "locked": the preview stands in for enforced progression (TF draws the sparkles only then)
+    preview(ctx, {{"biome", "twilightforest:forest"}, {"locked", true}, {"protectedAround", Json::array({Json::array({-8, -4, -8, 8, 12, 8, true}), Json::array({-1, -4, -1, 1, 12, 1, false})})}});
 });
 GF_REGISTER_SELFTEST("atmosphere.show_ur_ghast", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:forest"}, {"urGhast", true}}); });
 
