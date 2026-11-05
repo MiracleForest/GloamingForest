@@ -16,6 +16,8 @@
 #include "mc/network/packet/AddActorPacket.h"
 #include "mc/network/packet/AddActorPacketPayload.h"
 #include "mc/network/packet/RemoveActorPacket.h"
+#include "mc/network/packet/SyncedAttribute.h"
+#include "mc/world/actor/ActorLink.h"
 #include "mc/network/packet/SetActorMotionPacket.h"
 #include "mc/world/actor/state/PropertySyncData.h"
 #include "mc/world/actor/Actor.h"
