@@ -860,41 +860,5 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     log().info("lich.client_showcase: stage tower_side");
     co_await holdView(ctx, sideView, shaft, 20 * 5);
 });
-    co_await ctx.ticks(20 * 6); // the chunks around the tower load
-    real = realPlayer();
-    if (!real) co_return;
-    region       = &real->getDimensionBlockSource();
-    BlockPos at  = BlockPos{int(std::floor(towerAt.x)), int(std::floor(f.y)) - 1, int(std::floor(towerAt.z))};
-    bool placed  = gf::landmark::generateAt(kTowerKey, *region, at);
-    log().info("lich.client_showcase: tower {} at {} {} {}", placed ? "placed" : "not placed", at.x, at.y, at.z);
-    co_await ctx.ticks(20 * 8);
-    log().info("lich.client_showcase: stage tower_far");
-    co_await ctx.ticks(20 * 5);
-    // the yard: from beside the far end of the path, looking at the foyer
-    std::optional<gf::landmark::Start> start;
-    for (auto const& d : {std::pair{0, 0}, std::pair{24, 0}, std::pair{-24, 0}, std::pair{0, 24}, std::pair{0, -24}})
-        if (!start) start = gf::landmark::startAt(dim, BlockPos{at.x + d.first, at.y + 1, at.z + d.second});
-    if (start) {
-        core::BlockBox foyer{}, path{};
-        bool           haveFoyer = false, havePath = false;
-        for (auto const& p : gf::landmark::ext::startPieces(*start)) {
-            if (p.type == "twilightforest:TFLTTFoy") foyer = p.box, haveFoyer = true;
-            if (p.type == "twilightforest:TFLTFence" && !havePath) path = p.box, havePath = true;
-        }
-        if (haveFoyer) {
-            Vec3 foyerC{(foyer.minX + foyer.maxX) / 2.0f, float(foyer.minY), (foyer.minZ + foyer.maxZ) / 2.0f};
-            Vec3 from = havePath ? Vec3{(path.minX + path.maxX) / 2.0f, float(path.maxY) + 6.0f, (path.minZ + path.maxZ) / 2.0f} : Vec3{foyerC.x, foyerC.y + 12.0f, foyerC.z};
-            if (auto* p = realPlayer()) lookFrom(*p, from, Vec3{foyerC.x, foyerC.y + 4.0f, foyerC.z});
-            co_await ctx.ticks(20 * 4);
-            log().info("lich.client_showcase: stage tower_yard");
-            co_await ctx.ticks(20 * 5);
-            // the tower from the foot of the base, looking up
-            if (auto* p = realPlayer()) lookFrom(*p, Vec3{foyerC.x, foyerC.y + 30.0f, foyerC.z}, Vec3{float(at.x), float(at.y) + 60.0f, float(at.z)});
-            co_await ctx.ticks(20 * 4);
-            log().info("lich.client_showcase: stage tower_side");
-            co_await ctx.ticks(20 * 5);
-        }
-    }
-});
 
 } // namespace gf::feature::lich
