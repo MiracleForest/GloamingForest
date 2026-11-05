@@ -58,7 +58,7 @@ SubChunkStorage<Block> const* layerOf(LevelChunk& lc, int chunkMinY, int y, int 
     auto idx = static_cast<std::size_t>(rel >> 4);
     if (idx >= subs.size()) return nullptr;
     *ly = rel & 15;
-    return subs[idx].mBlocksReadPtr.get()[layer];
+    return subs[idx].mBlocksReadPtr[layer]; // a trivial TypedStorage is the array itself
 }
 
 /// Whether the index order above is the game's: the standard layer read through it equals
