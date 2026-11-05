@@ -84,9 +84,14 @@ bool fullCubeCollision(BlockSource& region, BlockPos const& pos, Block const& bl
     boxes.clear();
     block.getBlockType().addCollisionShapes(block, region, pos, nullptr, boxes, {});
     if (boxes.size() != 1) return false;
-    AABB const& b  = boxes.front();
+    AABB        b  = boxes.front();
     auto        eq = [](float a, float c) { return a > c - 1e-4f && a < c + 1e-4f; };
-    // the engine answers in world space
+    // the engine answers in world space; a local (0..1) answer is moved to the block (as F4's
+    // teleporter guards against)
+    if (b.min.x >= -1e-4f && b.max.x <= 1.0001f && b.min.z >= -1e-4f && b.max.z <= 1.0001f && (pos.x < -1 || pos.x > 1 || pos.z < -1 || pos.z > 1)) {
+        Vec3 o(static_cast<float>(pos.x), static_cast<float>(pos.y), static_cast<float>(pos.z));
+        b = AABB{b.min + o, b.max + o};
+    }
     return eq(b.min.x, float(pos.x)) && eq(b.min.y, float(pos.y)) && eq(b.min.z, float(pos.z)) && eq(b.max.x, float(pos.x + 1))
         && eq(b.max.y, float(pos.y + 1)) && eq(b.max.z, float(pos.z + 1));
 }

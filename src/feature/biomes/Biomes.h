@@ -46,6 +46,9 @@ struct SourceData {
 [[nodiscard]] std::shared_ptr<SourceData const> sourceData();
 /// Lets the next sourceData() call retry a failed load (install, each world load).
 void retrySourceData();
+/// Changes whenever a world is loaded or closed: caches keyed by game object addresses (biomes,
+/// block states) or ticks compare it and start over (the client loads many worlds in one process).
+[[nodiscard]] std::uint64_t worldGeneration();
 
 /// The biome provider for `seed` (cached for the last seed asked; thread-safe). nullptr without data.
 [[nodiscard]] std::shared_ptr<core::biomes::BiomeProvider const> providerFor(std::int64_t seed);

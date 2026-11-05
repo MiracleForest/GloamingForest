@@ -112,6 +112,8 @@ std::shared_ptr<SourceData const> loadSourceData() {
 
 std::shared_ptr<SourceData const> gSourceData;   ///< guarded by dataMutex()
 bool                              gSourceFailed = false;
+std::atomic<bool>                 gSourceFailedFast{false}; ///< gSourceFailed, read without the lock
+std::atomic<std::uint64_t>        gWorldGeneration{0};
 
 std::atomic<std::shared_ptr<BiomeProvider const>>& current() {
     static std::atomic<std::shared_ptr<BiomeProvider const>> p;
@@ -129,10 +131,12 @@ std::shared_ptr<SourceData const> sourceData() {
     // a failed load is retried on the next call (the client loads many worlds in one process: one
     // early failure must not disable the biomes of every later world); the error is logged per try
     // (generation workers ask per quart: a failure is not retried before the next world)
+    if (gSourceFailedFast.load(std::memory_order_acquire)) return nullptr;
     std::lock_guard lock(dataMutex());
     if (!gSourceData && !gSourceFailed) {
         gSourceData   = loadSourceData();
         gSourceFailed = gSourceData == nullptr;
+        gSourceFailedFast.store(gSourceFailed, std::memory_order_release);
     }
     return gSourceData;
 }
@@ -140,7 +144,10 @@ std::shared_ptr<SourceData const> sourceData() {
 void retrySourceData() {
     std::lock_guard lock(dataMutex());
     gSourceFailed = false;
+    gSourceFailedFast.store(false, std::memory_order_release);
 }
+
+std::uint64_t worldGeneration() { return gWorldGeneration.load(std::memory_order_acquire); }
 
 std::shared_ptr<BiomeProvider const> providerFor(std::int64_t seed) {
     auto p = current().load(std::memory_order_acquire);
@@ -182,7 +189,9 @@ struct BiomesModule {
         static bool hooked = false;
         if (!hooked) {
             hooked = true;
+            game::db::onWorldClosed([] { gWorldGeneration.fetch_add(1, std::memory_order_acq_rel); });
             game::db::onWorldReady([this] {
+                gWorldGeneration.fetch_add(1, std::memory_order_acq_rel);
                 if (!mInstalled || mSourceInstalled) return;
                 retrySourceData();
                 tryInstall();

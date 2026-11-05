@@ -30,12 +30,10 @@
 
 #include "client/biomes/Tints.h"
 
-#include <algorithm>
 #include <atomic>
-#include <mutex>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -94,9 +92,15 @@ void noteDrawn(std::string_view biome, bool foliage) {
     if (!(logged.fetch_or(bit) & bit)) log().info("biomes: client draws TF's {} colours of {}", foliage ? "foliage" : "grass", biome);
 }
 
-/// The biome id of a Biome (cached per biome object: the registry's biomes live as long as the level).
+/// The biome id of a Biome (cached per biome object while the world lasts: the registry's biomes
+/// live as long as the level, and another world may reuse their addresses).
 std::string const& idOf(Biome const& b) {
     thread_local std::unordered_map<Biome const*, std::string> ids;
+    thread_local std::uint64_t                                 world = ~std::uint64_t(0);
+    if (auto now = feature::biomes::worldGeneration(); now != world) {
+        ids.clear();
+        world = now;
+    }
     auto [it, fresh] = ids.try_emplace(&b);
     if (fresh) {
         auto const& name = b.mHash->getString();
@@ -138,23 +142,26 @@ std::optional<unsigned> fromMarker(BlockPos const& pos, unsigned game, bool foli
     return static_cast<unsigned>(colors::blend(pos.x, pos.z, radius(), [&](int x, int z) { return tfColour(id, x, z, foliage, game); }));
 }
 
-/// The first distinct game colours a tint sees (at most 24 lines per session), for the e2e log.
-void noteGameColour(bool foliage, unsigned c) {
-    static std::mutex            m;
-    static std::vector<unsigned> seen;
-    std::lock_guard              lock(m);
-    unsigned                     key = c | (foliage ? 0x1000000u : 0u);
-    if (seen.size() >= 24 || std::find(seen.begin(), seen.end(), key) != seen.end()) return;
-    seen.push_back(key);
-    log().info("biomes: game {} colour #{:06X} seen by the tint", foliage ? "foliage" : "grass", c);
-}
-
 unsigned colourAt(BlockSource* region, BlockPos const& pos, std::optional<unsigned> game, bool foliage) {
     if (!game) return foliage ? kDefaultFoliage : kDefaultGrass;
-    noteGameColour(foliage, *game);
     if (!enabled()) return *game;
-    auto tf = region ? fromRegion(*region, pos, *game, foliage) : fromMarker(pos, *game, foliage);
-    return tf.value_or(*game);
+    // the game asks a block's tint several times while it builds the block (faces, vertices): the
+    // last answer of this thread is kept (a blend reads up to 225 biomes)
+    struct Last {
+        BlockSource*  region = nullptr;
+        BlockPos      pos{0, 0, 0};
+        unsigned      game = 0, result = 0;
+        bool          foliage = false, valid = false;
+        std::uint64_t world   = 0;
+    };
+    thread_local Last last;
+    std::uint64_t     world = feature::biomes::worldGeneration();
+    if (last.valid && last.region == region && last.pos == pos && last.game == *game && last.foliage == foliage && last.world == world)
+        return last.result;
+    auto     tf     = region ? fromRegion(*region, pos, *game, foliage) : fromMarker(pos, *game, foliage);
+    unsigned result = tf.value_or(*game);
+    last            = Last{region, pos, *game, result, foliage, true, world};
+    return result;
 }
 
 // Vanilla blocks drawn with the biome grass / foliage colour (Java: BlockColors with

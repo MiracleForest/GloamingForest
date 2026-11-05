@@ -37,6 +37,7 @@
 #include "feature/ext/biomes/Biomes.h"
 #include "feature/ext/ui/Client.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
@@ -61,9 +62,17 @@ mce::Color colorOf(unsigned rgb, float alpha) {
     return mce::Color{static_cast<float>((rgb >> 16) & 0xFF) / 255.f, static_cast<float>((rgb >> 8) & 0xFF) / 255.f, static_cast<float>(rgb & 0xFF) / 255.f, alpha};
 }
 
-/// The block's id, cached per block state on this thread (builder threads).
+std::atomic<std::uint64_t> gWorld{0}; ///< bumped when a world loads or closes
+
+/// The block's id, cached per block state on this thread (builder threads) while the world lasts
+/// (another world's block registry may reuse the addresses).
 std::string const& idOf(Block const& block) {
     thread_local std::unordered_map<Block const*, std::string> ids;
+    thread_local std::uint64_t                                 world = ~std::uint64_t(0);
+    if (auto now = gWorld.load(std::memory_order_acquire); now != world) {
+        ids.clear();
+        world = now;
+    }
     auto [it, fresh] = ids.try_emplace(&block);
     if (fresh) it->second = game::blockId(block);
     return it->second;
@@ -181,6 +190,12 @@ LL_TYPE_INSTANCE_HOOK(
 
 struct VanillaTintModule {
     void install() {
+        static bool once = false;
+        if (!once) {
+            once = true;
+            game::db::onWorldReady([] { gWorld.fetch_add(1, std::memory_order_acq_rel); });
+            game::db::onWorldClosed([] { gWorld.fetch_add(1, std::memory_order_acq_rel); });
+        }
         int a = VanillaGrassTintHook::hook();
         int b = VanillaFoliageTintHook::hook();
         gf::log().info("biomes: vanilla tint hooks installed (grass {}, foliage {})", a == 0 ? "ok" : "failed", b == 0 ? "ok" : "failed");

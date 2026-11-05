@@ -64,6 +64,18 @@ std::unordered_map<std::string, std::unordered_map<std::string, Cost>> const& co
     return table;
 }
 
+/// spawnsOf(biome).table, built once per biome (the natural spawner asks per pack member).
+spawn::Table const& tableOf(std::string const& biome) {
+    static auto const tables = [] {
+        std::unordered_map<std::string, spawn::Table> t;
+        for (auto const& id : biomeIds()) t[id] = spawnsOf(id).table;
+        return t;
+    }();
+    static spawn::Table const empty;
+    auto                      it = tables.find(biome);
+    return it == tables.end() ? empty : it->second;
+}
+
 Cost const* costOf(std::string const& biome, std::string const& entity) {
     auto b = costs().find(biome);
     if (b == costs().end()) return nullptr;
@@ -75,8 +87,9 @@ Cost const* costOf(std::string const& biome, std::string const& entity) {
 bool persistent(Actor& a) { return a.getEntityContext().hasComponent<PersistentComponent>() || !a.getNameTag().empty(); }
 
 struct Potential {
-    std::uint64_t                    tick = ~std::uint64_t(0);
-    int                              dim  = -1;
+    std::uint64_t                    tick  = ~std::uint64_t(0);
+    std::uint64_t                    world = ~std::uint64_t(0);
+    int                              dim   = -1;
     core::biomes::PotentialCalculator calc;
 };
 
@@ -85,9 +98,11 @@ core::biomes::PotentialCalculator const& potentialOf(int dim) {
     static Potential p;
     auto             level = ll::service::getLevel();
     std::uint64_t    tick  = level ? static_cast<std::uint64_t>(level->getCurrentTick().tickID) : 0;
-    if (p.tick == tick && p.dim == dim) return p.calc;
-    p.tick = tick;
-    p.dim  = dim;
+    std::uint64_t    world = worldGeneration();
+    if (p.tick == tick && p.dim == dim && p.world == world) return p.calc;
+    p.tick  = tick;
+    p.dim   = dim;
+    p.world = world;
     p.calc.clear();
     if (!level) return p.calc;
     for (Actor* a : level->getRuntimeActorList()) {
@@ -101,9 +116,11 @@ core::biomes::PotentialCalculator const& potentialOf(int dim) {
 } // namespace
 
 std::vector<spawn::SpawnEntry> costFiltered(std::string const& biome, std::string const& category, core::biomes::PotentialCalculator const& potential, BlockPos const& pos) {
-    auto                           table = spawnsOf(biome).table;
+    auto const&                    table = tableOf(biome);
     std::vector<spawn::SpawnEntry> out;
-    for (auto const& e : table.byCategory[category]) {
+    auto                           list = table.byCategory.find(category);
+    if (list == table.byCategory.end()) return out;
+    for (auto const& e : list->second) {
         auto const* c = costOf(biome, e.entityId);
         if (!c || core::biomes::withinBudget(potential, pos.x, pos.y, pos.z, c->charge, c->energyBudget)) out.push_back(e);
     }
@@ -119,7 +136,7 @@ void registerSpawnCosts() {
         std::string biome = worldgen::biomeAt(pos);
         auto        b     = costs().find(biome);
         if (b == costs().end() || b->second.empty()) return std::nullopt;
-        auto        table = spawnsOf(biome).table;
+        auto const& table = tableOf(biome);
         auto        it    = table.byCategory.find(category);
         if (it == table.byCategory.end()) return std::nullopt;
         bool anyCost = false;
