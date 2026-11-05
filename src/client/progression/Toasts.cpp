@@ -192,17 +192,23 @@ bool renderOne(screen::Canvas& c, float guiWidth, Instance& s, long now) {
     return !s.show && now - s.animationTime > kSlideMs;
 }
 
-void renderAll(screen::Canvas& c) {
-    auto& st = state();
-    std::lock_guard lock(st.mutex);
-    // a new world (another local player): the toasts of the last one are gone, as F12's queue
+/// A new world (another local player): the toasts of the last one are gone, as F12's queue does on
+/// leaving a level. A missing player (between worlds, a transient frame) changes nothing. Lock held.
+void adoptPlayer(State& st) {
     auto const* player = currentPlayer();
-    if (player != st.player) {
-        st.player = player;
+    if (!player || player == st.player) return;
+    if (st.player) {
         st.visible.clear();
         st.queued.clear();
         std::fill(std::begin(st.occupied), std::end(st.occupied), false);
     }
+    st.player = player;
+}
+
+void renderAll(screen::Canvas& c) {
+    auto& st = state();
+    std::lock_guard lock(st.mutex);
+    adoptPlayer(st);
     if (hud::guiHidden()) return; // ToastComponent#render does nothing while options.hideGui
     float      guiWidth = screen::guiSize().first;
     long const now      = nowMs();
@@ -239,6 +245,7 @@ void queueToast(ToastInfo info, nlohmann::json const& iconItem) {
     if (!t.icon && !t.info.icon.empty()) t.icon = screen::iconOf(nlohmann::json{{"id", t.info.icon}, {"count", 1}, {"aux", 0}});
     auto& st = state();
     std::lock_guard lock(st.mutex);
+    adoptPlayer(st); // queued in a new world: the old world's toasts go first, not this one
     st.queued.push_back(std::move(t));
 }
 
