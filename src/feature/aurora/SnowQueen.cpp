@@ -746,7 +746,7 @@ void installSnowQueen() {
         auto* parent = gf::entity::ext::parentOf(d.victim);
         if (!parent || parent->getTypeName() != kSnowQueen) return gf::combat::Verdict::Pass;
         if (!d.direct || pierceLevel(*d.direct) <= 0) {
-            gf::log().info("aurora: a shield hit by {} ({})", d.type, d.direct ? std::to_string(pierceLevel(*d.direct)) : std::string("no projectile"));
+            gf::log().info("aurora: a shield hit by {} (direct {}, pierce {})", d.type, d.direct ? d.direct->getTypeName() : std::string("none"), d.direct ? pierceLevel(*d.direct) : 0);
             return gf::combat::Verdict::Pass;
         }
         auto arrow = d.direct->getOrCreateUniqueID().rawID;

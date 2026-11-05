@@ -405,6 +405,9 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_beam", [](Context& ctx) -> ll::coro::Cor
     }
     if (auto* q = mobById(uid)) {
         auto qp = q->getFeetPos();
+        auto pp = ctx.player().getFeetPos();
+        ctx.info("player at " + std::to_string(pp.x) + " " + std::to_string(pp.y) + " " + std::to_string(pp.z) + ", queen head yaw " + std::to_string(q->getYHeadRot()) +
+                 ", pitch " + std::to_string(q->getRotation().x));
         ctx.info("queen at " + std::to_string(qp.x) + " " + std::to_string(qp.y) + " " + std::to_string(qp.z) + ", phase " + std::to_string(queenPhaseForTest(*q)) +
                  (breathing ? ", she breathed" : ", she never breathed"));
     }
@@ -428,31 +431,30 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_shields", [](Context& ctx) -> ll::coro::
     co_await ctx.ticks(2);
     auto* q = mobById(uid);
     ctx.require(q && gf::entity::ext::parts(*q).size() == 7, "seven shields");
-    // a piercing arrow passes a shield: no damage to her, the arrow flies on at its speed
-    auto* shield = gf::entity::partActor(gf::entity::ext::parts(*q)[0]);
-    ctx.require(shield != nullptr, "a shield");
+    // a piercing arrow passes a shield: shot at the shield under her (index 6, it does not orbit), it
+    // hurts nobody and flies on beyond the shield
+    auto* shield = gf::entity::partActor(gf::entity::ext::parts(*q)[6]);
+    ctx.require(shield != nullptr, "the shield under her");
     auto  sp    = shield->getFeetPos();
     auto  level = ll::service::getLevel();
-    auto* arrow = level->getSpawner().spawnProjectile(*ctx.region(), ActorDefinitionIdentifier("minecraft:arrow"), &ctx.player(),
-                                                      Vec3{sp.x - 3.0f, sp.y + 0.3f, sp.z}, Vec3{1.0f, 0.0f, 0.0f});
+    float before = static_cast<float>(q->getHealth());
+    auto* arrow  = level->getSpawner().spawnProjectile(*ctx.region(), ActorDefinitionIdentifier("minecraft:arrow"), &ctx.player(),
+                                                      Vec3{sp.x - 2.5f, sp.y + 0.35f, sp.z}, Vec3{1.0f, 0.0f, 0.0f});
     ctx.require(arrow != nullptr, "an arrow");
     if (auto pc = arrow->getEntityContext().tryGetComponent<ProjectileComponent>()) pc->mPiercingEnchantLevel = 1;
-    else ctx.info("the arrow has no ProjectileComponent");
     ctx.check(pierceLevelForTest(*arrow) == 1, "the arrow pierces: level " + std::to_string(pierceLevelForTest(*arrow)));
-    gf::projectile::ext::setVelocity(*arrow, Vec3{1.5f, 0.0f, 0.0f});
-    float before = static_cast<float>(q->getHealth());
-    gf::combat::hurt(*shield, 6.0f, "minecraft:arrow", &ctx.player(), arrow);
+    gf::projectile::ext::setVelocity(*arrow, Vec3{1.2f, 0.0f, 0.0f});
     auto arrowId = uidOf(*arrow);
-    co_await ctx.ticks(1);
+    float maxX   = sp.x - 2.5f;
+    for (int i = 0; i < 8; i++) {
+        co_await ctx.ticks(1);
+        if (auto* a = fe::actorById(arrowId)) maxX = std::max(maxX, a->getFeetPos().x);
+    }
     q = mobById(uid);
     ctx.require(q != nullptr, "the queen is still there");
     ctx.check(static_cast<float>(q->getHealth()) >= before, "the piercing arrow did not hurt her");
-    if (auto* a = fe::actorById(arrowId)) {
-        auto v = gf::projectile::ext::velocity(*a);
-        ctx.check(v.x > 0.5f, "the arrow flies on through the shield: vx " + std::to_string(v.x));
-        a->remove();
-    }
-    // whatever touches a shield is hurt and lifted by 0.4 (applyShieldCollisions)
+    ctx.check(maxX > sp.x + 1.0f, "the arrow flew on through the shield: reached x " + std::to_string(maxX - sp.x) + " past it");
+    if (auto* a = fe::actorById(arrowId)) a->remove();    // whatever touches a shield is hurt and lifted by 0.4 (applyShieldCollisions)
     ctx.player().setPlayerGameType(GameType::Survival);
     dealt().hits.clear();
     dealt().victim = uidOf(ctx.player());

@@ -111,7 +111,17 @@ void tickMining() {
             continue;
         }
         // 0.1 per tick: the block breaks on the tenth tick of mining
-        if (++m.ticks >= 10) {
+        ++m.ticks;
+        if (m.progressed) {
+            // server-authoritative breaking: the engine's own progress becomes TF's 0.1 a tick, so the
+            // engine breaks the block itself (drops, sound, particles) when it reaches 1
+            gameMode->mDestroyProgress = std::max(static_cast<float>(gameMode->mDestroyProgress), std::min(1.0F, 0.1F * static_cast<float>(m.ticks)));
+            if (m.ticks <= 12) {
+                ++it;
+                continue;
+            }
+        }
+        if (m.ticks >= 10) {
             auto& region = player.getDimensionBlockSource();
             if (gf::game::blockId(region.getBlock(m.pos)) == kAuroraBlock) {
                 auto   eye = player.getEyePos();
