@@ -507,7 +507,9 @@ GF_REGISTER_SELFTEST("uncraftmaps.commands", [](Context& ctx) -> ll::coro::CoroT
     int   maps = 0;
     for (int i = 0; i < 36; ++i)
         if (items::idOf(p.getInventory().getItem(i)) == "minecraft:filled_map") ++maps;
-    auto r = selftest::runServerCommand("twilightforest map_locator twilightforest:lich_tower @a[name=\"" + name + "\"]", ctx.dimension());
+    // (a structure tag is typed as the rest of the line; the player is named there: selectors do not
+    // reach the simulated test players from the console)
+    auto r = selftest::runServerCommand("twilightforest map_locator #twilightforest:landmark " + name, ctx.dimension());
     ctx.info("map_locator: " + r.messages);
     auto& p2    = ctx.player();
     int   after = 0;
@@ -515,7 +517,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.commands", [](Context& ctx) -> ll::coro::CoroT
         if (items::idOf(p2.getInventory().getItem(i)) == "minecraft:filled_map") ++after;
     if (r.ok) ctx.check(after == maps + 1, "the player got the map");
     else ctx.check(r.messages.find("commands.locate.structure.not_found") != std::string::npos || r.messages.find("Could not find") != std::string::npos, "not found is reported");
-    auto bad = selftest::runServerCommand("twilightforest map_locator twilightforest:no_such_structure @a[name=\"" + name + "\"]", ctx.dimension());
+    auto bad = selftest::runServerCommand("twilightforest map_locator #twilightforest:no_such_tag " + name, ctx.dimension());
     ctx.check(!bad.ok, "an unknown structure is refused");
 #ifndef GF_CLIENT
     auto png = selftest::runServerCommand("twilightforest biomepng 0", ctx.dimension());

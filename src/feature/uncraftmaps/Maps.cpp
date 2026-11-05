@@ -429,11 +429,22 @@ MapItemSavedData* createData(Player& player, int centerX, int centerZ, int scale
     return &data;
 }
 
+/// The filled map tags of a map item (MapItem::setItemInstanceInfo's: the id, its scale, initialised,
+/// player markers shown), written through the stack's user data as game::items::setData does.
+void writeMapTags(ItemStack& stack, MapItemSavedData const& data) {
+    auto tag = stack.mUserData ? stack.mUserData->clone() : std::make_unique<CompoundTag>();
+    tag->putInt64(MapItem::TAG_MAP_UUID(), data.mMapId.get().rawID);
+    tag->putInt(MapItem::TAG_MAP_SCALE(), static_cast<int>(data.mScale));
+    tag->putByte(MapItem::TAG_MAP_INIT(), 1);
+    tag->putByte(MapItem::TAG_MAP_PLAYER_DISPLAY(), 1);
+    stack.setUserData(std::move(tag));
+}
+
 ItemStack stackFor(Player& player, MapItemSavedData& data, MapKind kind) {
     auto stack = items::make(kFilledMap);
     if (!stack) return {};
-    items::setData(*stack, kMapData, {{"kind", kindName(kind)}}); // (the user data exists before the map writes into it)
-    MapItem::setItemInstanceInfo(*stack, data);
+    items::setData(*stack, kMapData, {{"kind", kindName(kind)}});
+    writeMapTags(*stack, data);
     char const* key      = kind == MapKind::Magic ? "item.twilightforest.filled_magic_map" : kind == MapKind::Maze ? "item.twilightforest.filled_maze_map" : "item.twilightforest.filled_ore_map";
     char const* fallback = kind == MapKind::Magic ? "Magic Map" : kind == MapKind::Maze ? "Maze Map" : "Maze/Ore Map";
     stack->setCustomName(Bedrock::Safety::RedactableString("§r" + trFor(player, key, fallback)));
@@ -630,8 +641,7 @@ ItemStack locatorMap(int dimension, int x, int z) {
     if (auto at = cu::decorationPos(x, z, cx, cz, 4, 180.0)) putVanillaDecoration(data, MapDecoration::Type::XWhite, x, z, 2, *at);
     auto stack = items::make(kFilledMap);
     if (!stack) return {};
-    if (!stack->mUserData) stack->mUserData = std::make_unique<CompoundTag>();
-    MapItem::setItemInstanceInfo(*stack, data);
+    writeMapTags(*stack, data);
     return *stack;
 }
 

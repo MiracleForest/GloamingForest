@@ -24,6 +24,7 @@
 #include "ll/api/event/world/ClientLevelTickEvent.h"
 
 #include "mc/client/game/ClientInstance.h"
+#include "mc/client/multiplayer/ClientLevel.h"
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/saveddata/maps/MapDecoration.h"
