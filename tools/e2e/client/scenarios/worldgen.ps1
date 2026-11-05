@@ -30,6 +30,15 @@ function Get-GroundTint([string]$path) {
     } finally { $bmp.Dispose() }
 }
 function Format-Tint($t) { '#{0:X2}{1:X2}{2:X2} (R-G {3:N1})' -f [int]$t.R, [int]$t.G, [int]$t.B, $t.RminusG }
+# The probe's client biome file tints grass and foliage #FF00FF: the ground turns magenta (red over green,
+# blue over green) where the plains grass is green. Measured: home R-G -23.7, probe +22.1 (remote vanilla) /
+# +37.2 (client build), blue over green by 22 / 28. Fails when the probe draws like plains, for example when
+# the host's test resource pack stops reaching the client.
+function Assert-ProbeTint($homeTint, $probeTint, [string]$who) {
+    if ($probeTint.RminusG - $homeTint.RminusG -lt 15 -or $probeTint.B - $probeTint.G -lt 8) {
+        throw "the $who does not draw the probe biome's magenta tint (home $(Format-Tint $homeTint), probe $(Format-Tint $probeTint))"
+    }
+}
 
 Save-Screenshot 'world' | Out-Null
 if ($script:Mode -eq 'local') {
@@ -74,6 +83,7 @@ if ($script:Mode -eq 'local') {
     $desertTint = Get-GroundTint (Save-Screenshot 'custom_biome_desert')
     Write-BiomeView 'painted desert (south)' 'minecraft:desert'
     Write-Step "ground tint: home $(Format-Tint $homeTint), probe $(Format-Tint $probeTint), desert $(Format-Tint $desertTint)"
+    Assert-ProbeTint $homeTint $probeTint 'client build'
     Invoke-Teleport '/tp @s ~ ~ ~-3000'
     $restore = Invoke-SelfTest 'worldgen.custom_biome_restore'
     if ($restore.Fail -gt 0) { throw 'worldgen.custom_biome_restore failed' }
@@ -141,6 +151,7 @@ if ($script:Mode -eq 'local') {
     Write-Step "ground tint ($script:Mode client): home $(Format-Tint $homeTint), painted probe $(Format-Tint $probe), painted desert $(Format-Tint $desert)"
     # plains grass #91BD59 (R-G -44), desert grass #BFB755 (R-G +8): the client draws the desert
     if ($desert.RminusG - $homeTint.RminusG -lt 15) { throw "the client does not draw the painted desert (ground R-G $($homeTint.RminusG) at home, $($desert.RminusG) on the desert)" }
+    Assert-ProbeTint $homeTint $probe "$script:Mode client"
     Invoke-Teleport '/tp @s ~ ~ ~-3000'
     $restore = Invoke-SelfTest 'worldgen.custom_biome_restore'
     if ($restore.Fail -gt 0) { throw 'worldgen.custom_biome_restore failed on the host' }
