@@ -412,6 +412,8 @@ void registerMobs() {
     gf::combat::onIncoming(gf::combat::priority::Normal, [](gf::combat::DamageInfo& d) {
         // DeathTome#hurt: fire damage doubled
         if (isType(d.victim, kTome) && damageTypeIn("minecraft:is_fire", d.type)) d.amount *= 2;
+        // a lectern is no full block in Java: a tome resting in one does not suffocate (Bedrock says it does)
+        if (isType(d.victim, kTome) && d.type == "minecraft:in_wall" && tomeOnLectern(d.victim)) return gf::combat::Verdict::Cancel;
         // RisingZombie#isInvulnerableTo: only in_wall
         if (isType(d.victim, kRising) && d.type == "minecraft:in_wall") return gf::combat::Verdict::Cancel;
         return gf::combat::Verdict::Pass;

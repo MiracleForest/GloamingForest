@@ -187,7 +187,14 @@ GF_REGISTER_SELFTEST("lich.minions", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.require(lich != nullptr, "the lich is still there");
     lichState(*lich)->attackCooldown = 1000; // no shadow attacks or teleports during the test
     setShield(*lich, 0);
-    setTarget(*lich, &ctx.player());
+    // the minions appear around the target: a player near the lich (countMyMinions looks within 32)
+    auto& sim = ctx.spawnPlayer("lich_minions");
+    auto  pid = uidOf(sim);
+    sim.teleport(at(c.offset(-8, 1, 0)), static_cast<DimensionType>(c.dim));
+    co_await ctx.ticks(2);
+    lich = mobById(uid);
+    ctx.require(lich != nullptr && actorById(pid) != nullptr, "the lich and the player are there");
+    setTarget(*lich, actorById(pid));
     for (int i = 0; i < 6; ++i) checkAndSpawnMinions(*lich);
     co_await ctx.ticks(1);
     lich = mobById(uid);
