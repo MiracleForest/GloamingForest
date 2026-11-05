@@ -674,6 +674,16 @@ void lookFrom(Player& p, Vec3 const& at, Vec3 const& target) {
     (void)gf::selftest::runServerCommand(cmd, dimOf(p));
 }
 
+Player* realPlayer();
+
+/// Holds the real player at a viewpoint for `ticks` (creative players fall: the teleport repeats).
+ll::coro::CoroTask<> holdView(Context& ctx, Vec3 at, Vec3 target, int ticks) {
+    for (int i = 0; i < ticks; i += 10) {
+        if (auto* p = realPlayer()) lookFrom(*p, at, target);
+        co_await ctx.ticks(10);
+    }
+}
+
 Player* realPlayer() {
     Player* real = nullptr;
     if (auto level = ll::service::getLevel())
@@ -741,7 +751,11 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     BlockPos lectern = game::blockPosOf(ahead(4, -2));
     float    toPlayer = yawToward(Vec3{lectern.x + 0.5f, float(lectern.y), lectern.z + 0.5f}, eye);
     int      dir      = ((static_cast<int>(std::lround(toPlayer / 90.0f)) % 4) + 4) % 4; // 0 south, 1 west, 2 north, 3 east
-    if (auto const* lb = game::blockWithStates("minecraft:lectern", Json{{"direction", dir}})) game::setBlock(*region, lectern, *lb);
+    static char const* const kCardinal[] = {"south", "west", "north", "east"};
+    Block const*             lb       = game::blockWithStates("minecraft:lectern", Json{{"minecraft:cardinal_direction", kCardinal[dir]}});
+    if (!lb) lb = game::blockWithStates("minecraft:lectern", Json{{"direction", dir}});
+    if (!lb) lb = game::blockWith("minecraft:lectern");
+    if (lb) game::setBlock(*region, lectern, *lb);
     if (Mob* tome = spawnLecternTome(*region, lectern)) shown.push_back(uidOf(*tome));
     int k = 0;
     for (int ticks : {20, 60, 100}) {
@@ -808,11 +822,44 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     }
 
     // ---- the tower, generated ahead, seen from afar and from its yard ----
-    Vec3 towerAt   = ahead(140, 0);
-    Vec3 viewpoint = ahead(20, 0, 55.0f);
-    real           = realPlayer(); // never kept across ticks (R16)
+    Vec3 towerAt   = ahead(110, 0);
+    Vec3 viewpoint = ahead(10, 0, 50.0f);
+    Vec3 aim{towerAt.x, towerAt.y + 40.0f, towerAt.z};
+    co_await holdView(ctx, viewpoint, aim, 20 * 6); // the chunks around the tower load
+    real = realPlayer(); // never kept across ticks (R16)
     if (!real) co_return;
-    lookFrom(*real, viewpoint, Vec3{towerAt.x, towerAt.y + 45.0f, towerAt.z});
+    region      = &real->getDimensionBlockSource();
+    BlockPos at = BlockPos{int(std::floor(towerAt.x)), int(std::floor(f.y)) - 1, int(std::floor(towerAt.z))};
+    bool placed = gf::landmark::generateAt(kTowerKey, *region, at);
+    log().info("lich.client_showcase: tower {} at {} {} {}", placed ? "placed" : "not placed", at.x, at.y, at.z);
+    co_await holdView(ctx, viewpoint, aim, 20 * 8);
+    log().info("lich.client_showcase: stage tower_far");
+    co_await holdView(ctx, viewpoint, aim, 20 * 5);
+    // the yard: from above, outside the foyer, looking down at the paths, graves and lights
+    Vec3 foyerC{towerAt.x, float(at.y + 1), towerAt.z};
+    std::optional<gf::landmark::Start> start;
+    for (int dx = -48; dx <= 48 && !start; dx += 8)
+        for (int dz = -48; dz <= 48 && !start; dz += 8) start = gf::landmark::startAt(dim, BlockPos{at.x + dx, at.y + 2, at.z + dz});
+    if (start)
+        for (auto const& p : gf::landmark::ext::startPieces(*start))
+            if (p.type == "twilightforest:TFLTTFoy") foyerC = Vec3{(p.box.minX + p.box.maxX) / 2.0f, float(p.box.minY), (p.box.minZ + p.box.maxZ) / 2.0f};
+    Vec3  outward{foyerC.x - towerAt.x, 0.0f, foyerC.z - towerAt.z};
+    float olen = std::sqrt(outward.x * outward.x + outward.z * outward.z);
+    if (olen < 1.0f) {
+        outward = Vec3{float(-fx), 0.0f, float(-fz)};
+        olen    = 1.0f;
+    }
+    Vec3 yardView{foyerC.x + outward.x / olen * 40.0f, foyerC.y + 22.0f, foyerC.z + outward.z / olen * 40.0f};
+    co_await holdView(ctx, yardView, foyerC, 20 * 4);
+    log().info("lich.client_showcase: stage tower_yard");
+    co_await holdView(ctx, yardView, foyerC, 20 * 5);
+    // the shaft from beside the base, looking up
+    Vec3 sideView{towerAt.x + outward.z / olen * 45.0f, foyerC.y + 30.0f, towerAt.z - outward.x / olen * 45.0f};
+    Vec3 shaft{towerAt.x, foyerC.y + 55.0f, towerAt.z};
+    co_await holdView(ctx, sideView, shaft, 20 * 4);
+    log().info("lich.client_showcase: stage tower_side");
+    co_await holdView(ctx, sideView, shaft, 20 * 5);
+});
     co_await ctx.ticks(20 * 6); // the chunks around the tower load
     real = realPlayer();
     if (!real) co_return;

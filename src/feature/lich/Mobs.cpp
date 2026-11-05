@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <map>
 #include <numbers>
 #include <unordered_map>
 
@@ -253,6 +254,17 @@ struct RangedAttackGoal final : ge::Goal {
 
 bool isLecternAt(BlockSource& region, BlockPos const& pos) { return game::blockIdAt(region, pos) == "minecraft:lectern"; }
 
+/// The lectern's facing as 0 south, 1 west, 2 north, 3 east (Bedrock's minecraft:cardinal_direction,
+/// or the older integer direction state).
+int lecternDirection(Block const& block) {
+    auto states = game::statesOf(block);
+    if (auto it = states.find("minecraft:cardinal_direction"); it != states.end()) {
+        static std::map<std::string, int> const k{{"south", 0}, {"west", 1}, {"north", 2}, {"east", 3}};
+        if (auto d = k.find(it->second); d != k.end()) return d->second;
+    }
+    return game::intState(block, "direction").value_or(0);
+}
+
 /// DeathTome's lectern target selector: the nearest player within 3 that looks at the tome.
 Player* lecternTarget(Mob& tome) {
     auto    p    = tome.getFeetPos();
@@ -307,7 +319,7 @@ void tomeAiStep(Actor& a) {
             setMotion(a, Vec3{0.0f, 0.0f, 0.0f});
             if (distSqr(m->getFeetPos(), rest) > 0.0025) teleportTo(a, rest);
             // face the lectern's FACING (Bedrock: direction 0 south .. 3 east -> yaw)
-            int   dir = game::intState(region.getBlock(at), "direction").value_or(0);
+            int   dir = lecternDirection(region.getBlock(at));
             float yaw = static_cast<float>(dir) * 90.0F;
             m->setYBodyRotation(yaw);
             m->setYHeadRot(yaw);
@@ -568,8 +580,8 @@ void setRisingTicks(Actor& zombie, int ticks) {
 
 Mob* spawnLecternTome(BlockSource& region, BlockPos const& pos) {
     if (!isLecternAt(region, pos)) return nullptr;
-    // facing the lectern (HorizontalDirectionalBlock.FACING#toYRot; Bedrock's direction 0 south .. 3 east)
-    int  dir  = game::intState(region.getBlock(pos), "direction").value_or(0);
+    // facing the lectern (HorizontalDirectionalBlock.FACING#toYRot; Bedrock: 0 south .. 3 east)
+    int  dir  = lecternDirection(region.getBlock(pos));
     Mob* tome = spawnMob(region, kTome, Vec3{pos.x + 0.5f, float(pos.y) + kLecternTop, pos.z + 0.5f}, static_cast<float>(dir) * 90.0F);
     if (!tome) return nullptr;
     setTomeOnLectern(*tome, true, &pos);
