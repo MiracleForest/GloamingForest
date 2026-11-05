@@ -13,6 +13,7 @@ What the unit implements, how it maps TF 4.8 onto Bedrock, and what is still mis
 | `src/feature/lich/Tower.cpp` | `LichTowerStructure` and all 21 lichtowerrevamp pieces (foyer, foyer decor, base with its `TrimProcessor`, base trim, segments, boss room / boundary / roof, spawner bridges with the 180-degree flip, wing bridges, wing rooms with ladders / roofs / beards / decor and every room marker, room decor with TF's trees, magic gallery with its magic painting, and the yard: `LichYardBox`, `LichPerimeterFence`, `LichYardGrave`, `LichYardLights`), their piece type factories, the spawn labels (yard 0, interior 1, empty 2, Deny) and the terraformer |
 | `src/feature/lich/Pending.*`, `Edits.cpp` | the block entity contents and entities the pieces add while a chunk generates (lectern book or Death Tome mimic, brewing stand, mason jar, chiseled shelf, sinister spawner, chest loot with facing, leashed zombies, magic painting): rolled at generation as TF rolls them, applied on the server thread once the chunk is loaded (`gf:lich:pending`) |
 | `src/feature/lich/Module.cpp` | registration, the `twilightforest:is_minion` loot condition, the level tick (phase-1 boss bar progress, the queued edits, the leashes) |
+| `src/client/lich/MapIcon.cpp` | client mod: the magic map icon of `twilightforest:lich_tower` (`TFMapDecorations.LICH_TOWER`) |
 | `src/core/lich/TowerMath.*`, `Simplex.*` | pure parts (BlockPos#asLong, Mth tables, boss room candle ring, stair decay levels, JOML's simplex noise for the yard), gtested in `tests/lich` |
 | `tools/structures/lich/**` | the original template designs (rule R19): `root/` (tower, bridges, mob bridges, placeholder rooms, yard graves and fences, one-block stamps) and `gallery/` |
 | `tools/import/overrides/lich.json` | the client entity definitions (geometry, textures, animations, render controllers) and the `angry_lich` particle, patched into the imported files |
@@ -42,8 +43,27 @@ What the unit implements, how it maps TF 4.8 onto Bedrock, and what is still mis
 - A Death Tome put on a lectern remembers the lectern (its seat) and is kept in the lectern's block; Bedrock's
   collision would push it out.
 - Zombies tied to an iron post (the rooms' zombie traps, the perimeter fence) are persistent zombies whose leash
-  holder is a leash knot on the post; Bedrock zombies have no leashable component, so the unit applies
-  `Mob#tickLeash` itself (pulled back beyond 6 blocks, loose beyond 10).
+  holder is a leash knot on the post (the client draws the lead from the leash holder); Bedrock zombies have no
+  leashable component, so the unit applies `Mob#tickLeash` itself (pulled back beyond 6 blocks, loose beyond 10: the
+  knot goes and a lead drops). The tied zombies are kept by actor id in the world DB (`gf:lich:tethers`), so a zombie
+  loaded later is held again without scanning for it; one whose chunk is loaded three checks in a row without it is
+  dropped.
+- `EntityEvents#lichBombsDontBlowUpItems` removes item entities from the explosion's affected list. Bedrock has no such
+  list: for the bomb's `Level::explode` call every item in reach gets a health it cannot lose (`ItemActor#_hurt`
+  removes an item at 0 whatever path the damage takes), its knockback is undone afterwards, and the damage pipeline
+  cancels the bomb's damage to items; an item the engine removed all the same is put back as it was.
+- `LichMinionModel#renderToBuffer`'s tint (red and blue x0.5, x0.25 while the minion has Strength) is the render
+  controller's `color` on the `entity_alphatest_change_color` material; the server mirrors `hasEffect(DAMAGE_BOOST)`
+  into the `twilightforest:strong` property.
+- The yard pieces (`LichYardBox`, `LichYardLights`, `LichYardGrave`) read `WorldGenLevel#getHeight` from the blocks of
+  the column (the heightmap rules of each type), not from the region's `height()`: F6's loaded-chunk adapter
+  (`landmark::generateAt`, `/tf place`) answers `BlockSource#getAboveTopSolidBlock`, through which the yard turned
+  no ground (`lich.tower_yard_loaded` places through an adapter that answers the same way). Where no terrain
+  provider gives a height (outside the Twilight Forest, or before U2 registers one) the layout reads the loaded ground
+  on the server thread and the start's height elsewhere, so heightmap-projected pieces (the perimeter fence) stand on
+  the ground instead of at y 0.
+- The magic map icon of the lich tower (`twilightforest:lich_tower`, `map/decorations/lich_tower`) is registered on the
+  client with `gf::client::maps::setIcon` (`src/client/lich/MapIcon.cpp`).
 - Room spawners get TF's spawn data (one mob, custom spawn rules block light 0..7 / sky light 0..15, the marker's
   spawn range) by placing a one-block stamp template with `SpawnerProcessor.compile`; that processor also sets the
   start delay to a quarter of the default (TF's `putSpawner` keeps the default 20 ticks).

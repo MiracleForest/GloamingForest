@@ -53,6 +53,7 @@
 #include "feature/loot/Loot.h"
 #include "feature/projectile/Projectile.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 
 namespace gf::feature::lich {
@@ -131,6 +132,16 @@ void minionWaterConversion(Mob& m) {
     if (!d.is_object() || d.value("in", 0) != inWater || d.value("conversion", -1) != conversion) d = Json{{"in", inWater}, {"conversion", conversion}};
 }
 
+/// LichMinionModel#renderToBuffer tints the minion by hasEffect(DAMAGE_BOOST) (r, b x0.5; x0.25
+/// with Strength): the client reads it from the twilightforest:strong property.
+void syncMinionStrength(Mob& m) {
+    bool  strong = m.getEffect(5) != nullptr; // DAMAGE_BOOST
+    auto& d      = ge::data(m, "lich:strong");
+    if (d.is_boolean() && d.get<bool>() == strong) return;
+    d = strong;
+    ge::setProperty(m, "twilightforest:strong", strong);
+}
+
 void minionAiStep(Actor& a) {
     auto* m = asMob(a);
     if (!m || !m->isAlive()) return;
@@ -141,6 +152,7 @@ void minionAiStep(Actor& a) {
         return;
     }
     minionWaterConversion(*m);
+    syncMinionStrength(*m);
 }
 
 /// Zombie#handleAttributes: the reinforcement chance a zombie spawns with (nextDouble() * 0.1;
@@ -589,6 +601,11 @@ Mob* spawnLecternTome(BlockSource& region, BlockPos const& pos) {
 }
 
 void registerMobs() {
+    game::db::onWorldClosed([] {
+        masters().clear();
+        lecterns().clear();
+        rising().clear();
+    });
     // MiscEvents#addTomesToLecterns: a Death Tome spawn egg used on a lectern without a book puts a
     // tome mimic on it
     ia::onUseOn({.block = "minecraft:lectern", .item = "twilightforest:death_tome_spawn_egg"}, [](ia::UseOnContext const& c) {

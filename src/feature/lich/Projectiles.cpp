@@ -14,6 +14,7 @@
 
 #include <cfloat>
 #include <cmath>
+#include <limits>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -24,6 +25,7 @@
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/item/ItemActor.h"
+#include "mc/world/item/ItemStack.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/actor/player/Player.h"
@@ -43,6 +45,7 @@
 #include "feature/lich/Lich.h"
 #include "feature/projectile/Projectile.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 
 namespace gf::feature::lich {
@@ -226,28 +229,44 @@ void explodeBomb(Actor& bomb) {
     if (!exploding.insert(uid).second) return;
     auto pos = bomb.getPosition();
     // EntityEvents#lichBombsDontBlowUpItems (Detonate: getAffectedEntities().removeIf(ItemEntity)):
-    // the item entities in reach step out of the blast while it goes off and come back as they were;
-    // the damage pipeline also spares items from a blast it sees later (recentBlasts)
+    // the item entities in reach are left out of the blast. Bedrock has no affected-entity list to
+    // filter, so for the explosion call every item in reach cannot lose health (ItemActor#_hurt
+    // removes an item at health 0, whatever damage path reaches it), its knockback is undone, and
+    // the damage pipeline cancels the bomb's damage to items (also a blast it sees later,
+    // recentBlasts). An item the engine removed all the same comes back as it was.
     struct Kept {
         std::int64_t uid;
+        int          health;
         Vec3         at;
         Vec3         motion;
+        ItemStack    stack;
     };
     std::vector<Kept> kept;
     auto&             region = bomb.getDimensionBlockSource();
     AABB              reach{Vec3{pos.x - 6.0f, pos.y - 6.0f, pos.z - 6.0f}, Vec3{pos.x + 6.0f, pos.y + 6.0f, pos.z + 6.0f}};
     for (auto* a : actorsIn(region, dimOf(bomb), reach))
-        if (a && a->getTypeName() == "minecraft:item") {
-            kept.push_back(Kept{uidOf(*a), a->getPosition(), a->getPosDelta()});
-            teleportTo(*a, Vec3{a->getPosition().x, a->getPosition().y + 64.0f, a->getPosition().z});
+        if (a && a->isAlive() && a->getTypeName() == "minecraft:item") {
+            auto& item = static_cast<ItemActor&>(*a);
+            kept.push_back(Kept{uidOf(*a), item.mHealth, a->getPosition(), a->getPosDelta(), item.item()});
+            item.mHealth = std::numeric_limits<int>::max() / 2;
         }
     recentBlasts().push_back(Blast{dimOf(bomb), pos, currentTick(), projectileOwner(bomb) ? uidOf(*projectileOwner(bomb)) : 0});
     level->explode(region, &bomb, pos, 2.0F, false, false, FLT_MAX, false);
-    for (auto const& k : kept)
-        if (auto* a = actorById(k.uid)) {
-            teleportTo(*a, k.at);
+    int restored = 0;
+    for (auto const& k : kept) {
+        auto* a = actorById(k.uid);
+        if (a && a->isAlive()) {
+            static_cast<ItemActor&>(*a).mHealth = k.health;
             setMotion(*a, k.motion);
+            continue;
         }
+        if (a) a->remove();
+        if (auto* again = level->getSpawner().spawnItem(region, k.stack, nullptr, k.at, 0)) {
+            setMotion(*again, k.motion);
+            ++restored;
+        }
+    }
+    if (restored > 0) log().info("lich: {} item(s) a lich bomb's blast removed came back", restored);
     exploding.erase(uid);
     owners().erase(uid);
     discard(bomb);
@@ -255,6 +274,10 @@ void explodeBomb(Actor& bomb) {
 }
 
 void registerProjectiles() {
+    game::db::onWorldClosed([] {
+        owners().clear();
+        recentBlasts().clear();
+    });
     gp::registerType(kLichBolt, {
         .gravity     = 0.001F,
         .drag        = 0.99F,
@@ -307,6 +330,8 @@ void registerProjectiles() {
         // the bomb's own explosion and the bolts' and bombs' blasts leave them be (ignoreExplosion)
         Actor* blast = d.direct && isType(*d.direct, kLichBomb) ? d.direct : d.attacker && isType(*d.attacker, kLichBomb) ? d.attacker : nullptr;
         if (blast) return gf::combat::Verdict::Cancel;
+        // LichBomb#hurt: a source tagged IS_EXPLOSION (a creeper, TNT, another blast) leaves it be
+        if (bomb && damageTypeIn("minecraft:is_explosion", d.type)) return gf::combat::Verdict::Cancel;
         if (bomb && d.direct && d.direct != &d.victim) explodeBomb(d.victim);                   // source.getDirectEntity() != null
         else if (bolt && d.attacker && d.attacker != &d.victim) reflectBolt(d.victim, *d.attacker, d.direct); // source.getEntity() != null
         return gf::combat::Verdict::Cancel; // a projectile has no health

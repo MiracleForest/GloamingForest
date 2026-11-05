@@ -1,8 +1,9 @@
 # U21 (lich): the Lich and its company on a real client. The selftest lich.client_showcase shows, in
 # stages, each facing the player (out/lich/<stage>-<mode>.png):
-#   mobs        the Lich (phase 1, shield up), a translucent shadow clone with glowing eyes, a Lich
-#               Minion (it burns in daylight, a Zombie as in TF), a Death Tome resting on a lectern and
-#               rising zombies at 20, 60 and 100 ticks of their rise;
+#   mobs        the Lich (phase 1, shield up), a translucent shadow clone with glowing eyes, two Lich
+#               Minions (green: red and blue x0.5; the one with Strength x0.25), a Death Tome resting on a
+#               lectern, rising zombies at 20, 60 and 100 ticks of their rise and a zombie tied to an iron
+#               post by a lead;
 #   projectiles a lich bolt, a lich bomb and a tome bolt in the air;
 #   phase3      a Lich without shield or summons: the angry_lich particles and the phase-3 arms;
 #   death60, death140  the death animation (shaking; the crown sinking);
@@ -26,7 +27,8 @@ foreach ($stage in 'mobs', 'projectiles', 'phase3', 'death60', 'death140', 'towe
     Start-Sleep -Seconds 2
     Save-Screenshot "$stage-$($script:Mode)" | Out-Null
 }
-Wait-LogLine "${hostLine}SELFTEST (PASS|FAIL) lich\.client_showcase" 180 -Since $mark | Out-Null
+$showcase = Wait-LogLine "${hostLine}SELFTEST (PASS|FAIL) lich\.client_showcase" 180 -Since $mark
+if ($showcase -match 'SELFTEST FAIL') { throw "lich.client_showcase failed: $showcase" }
 
 if (-not $remote) {
     $mark = Get-LogMark

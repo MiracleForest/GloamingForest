@@ -105,6 +105,23 @@
           "leftLeg": "query.property('twilightforest:rising_ticks') > 40"
         }
       ]
+    },
+    "controller.render.twilightforest.lich_minion": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.tinted"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "color": {
+        "r": "query.property('twilightforest:strong') ? 0.25 : 0.5",
+        "g": "1.0",
+        "b": "query.property('twilightforest:strong') ? 0.25 : 0.5",
+        "a": "1.0"
+      }
     }
   }
 }

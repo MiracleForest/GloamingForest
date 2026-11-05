@@ -15,7 +15,7 @@
       "minecraft:collision_box": { "width": 0.6, "height": 1.95 },
       "minecraft:health": { "value": 20, "max": 20 },
       "minecraft:attack": { "damage": 3 },
-      "minecraft:movement": { "value": 0.0 },
+      "minecraft:movement": { "value": 0.23 },
       "minecraft:follow_range": { "value": 35, "max": 35 },
       "minecraft:physics": { "has_gravity": true },
       "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": false },

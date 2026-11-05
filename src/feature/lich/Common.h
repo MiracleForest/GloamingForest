@@ -121,6 +121,12 @@ void discard(Actor& actor);
 void discardLater(Actor& actor);
 /// Drops the random sources of actors that are gone.
 void pruneRandoms();
+/// Drops every actor's random (a world closed).
+void forgetAllRandoms();
+/// The server thread (the level tick notes it): the lich tower's layout reads the loaded terrain
+/// only there.
+void               noteServerThread();
+[[nodiscard]] bool onServerThread();
 
 /// LivingEntity#randomTeleport's checks without moving: the spot (x, y, z) dropped onto the first
 /// block below that blocks motion (not below the world), clear of collisions and liquids for an

@@ -44,7 +44,9 @@
 #include <vector>
 
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/material/Material.h"
 
 #include "core/lich/Simplex.h"
 #include "core/lich/TowerMath.h"
@@ -1617,6 +1619,43 @@ bool isDirt(std::string const& id) {
     return kDirt.contains(id) || gf::tags::has(gf::tags::Registry::Block, "minecraft:dirt", id);
 }
 
+/// WorldGenLevel#getHeight(type, x, z) of the yard pieces, read from the blocks: the y above the
+/// highest block of the column that the heightmap counts (WORLD_SURFACE_WG: any block;
+/// OCEAN_FLOOR_WG: blocking motion; MOTION_BLOCKING: blocking motion or fluid; ..._NO_LEAVES: and
+/// no leaves). The regions differ in what their own height() answers (a loaded world's
+/// BlockSource#getAboveTopSolidBlock has its own idea of solid), so the yard asks the blocks.
+template <class BlockAt>
+int columnHeight(BlockAt const& blockAt, int minY, int maxY, gf::worldgen::Heightmap type, int x, int z) {
+    using H = gf::worldgen::Heightmap;
+    for (int y = maxY - 1; y >= minY; --y) {
+        Block const& b = blockAt(BlockPos{x, y, z});
+        if (b.isAir()) continue;
+        if (type == H::WorldSurfaceWg || type == H::WorldSurface) return y + 1;
+        auto const& m      = b.getMaterial();
+        bool        fluid  = m.mLiquid;
+        bool        blocks = m.mBlocksMotion && !fluid;
+        switch (type) {
+        case H::OceanFloorWg:
+        case H::OceanFloor:
+            if (blocks) return y + 1;
+            break;
+        case H::MotionBlocking:
+            if (blocks || fluid) return y + 1;
+            break;
+        case H::MotionBlockingNoLeaves: {
+            bool leaves = game::blockId(b).ends_with("leaves") || gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", game::blockId(b));
+            if ((blocks || fluid) && !leaves) return y + 1;
+            break;
+        }
+        default: return y + 1;
+        }
+    }
+    return minY;
+}
+int surfaceHeight(Region const& region, gf::worldgen::Heightmap type, int x, int z) {
+    return columnHeight([&](BlockPos const& p) -> Block const& { return region.getBlock(p); }, region.minY(), region.maxY(), type, x, z);
+}
+
 /// LichYardBox: the dirt of the yard (doDirtMotley) and its paths; a path along an axis places
 /// its spruce fence and gets the graves along it.
 class YardBox final : public gs::Piece, public sb::SortablePiece {
@@ -1671,7 +1710,7 @@ private:
     }
 
     void processPos(Region& region, RandomSource& random, int x, int z, BlockBox const& fenceBounds, BlockBox const& chunk) {
-        int      y = region.height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, x, z) - 1;
+        int      y = surfaceHeight(region, gf::worldgen::Heightmap::MotionBlockingNoLeaves, x, z) - 1;
         BlockPos at{x, y, z};
         if (!isDirt(game::blockId(region.getBlock(at)))) return;
         int   xBorder = std::min(x - bbox.minX, bbox.maxX - x);
@@ -1728,7 +1767,7 @@ public:
         auto isAir = [&](BlockPos const& p) { return game::blockId(region.getBlock(p)) == "minecraft:air"; }; // not cave air
         for (int z = inter->minZ; z <= inter->maxZ; ++z)
             for (int x = inter->minX; x <= inter->maxX; ++x) {
-                int      y = region.height(gf::worldgen::Heightmap::WorldSurfaceWg, x, z);
+                int      y = surfaceHeight(region, gf::worldgen::Heightmap::WorldSurfaceWg, x, z);
                 BlockPos at{x, y, z};
                 if (!isAir(at) || random.nextFloat() > 0.125F) continue;
                 if (!isAir(BlockPos{x, y, z - 1}) || !isAir(BlockPos{x, y, z + 1}) || !isAir(BlockPos{x + 1, y, z}) || !isAir(BlockPos{x - 1, y, z})) continue;
@@ -1789,7 +1828,7 @@ public:
             if (auto const* dirtBlock = game::blockWith("minecraft:dirt"))
                 for (int x = applicable->minX; x <= applicable->maxX; ++x)
                     for (int z = applicable->minZ; z <= applicable->maxZ; ++z) {
-                        int bottom = region.height(gf::worldgen::Heightmap::OceanFloorWg, x, z);
+                        int bottom = surfaceHeight(region, gf::worldgen::Heightmap::OceanFloorWg, x, z);
                         for (int y = yUnder; y >= bottom; --y) region.setBlock(BlockPos{x, y, z}, *dirtBlock, 3);
                     }
         }
@@ -1881,8 +1920,23 @@ private:
         Orientation ladderDir = opposite(src.top);
         BlockPos    column    = relative(getSourcePosition(), ladderDir);
         if (!chunk.contains(column.x, column.y, column.z)) return;
-        for (int dy = 1; dy <= 4; ++dy) placeBlock(region, "minecraft:ladder", Json{{"facing", orientationName(ladderDir)}}, column.x, column.y + dy, column.z, chunk);
+        // level.setBlock for all four once the column's base is in the chunk (not clipped to it)
+        BlockBox ladder{column.x, column.y + 1, column.z, column.x, column.y + 4, column.z};
+        for (int dy = 1; dy <= 4; ++dy) placeBlock(region, "minecraft:ladder", Json{{"facing", orientationName(ladderDir)}}, column.x, column.y + dy, column.z, ladder);
     }
+
+public:
+    /// LichPerimeterFence#addJigsaws: a fence with one spare post (not the front one) keeps the
+    /// trees off its escape ladder with a UtilityPiece, a box of 3 around the column 2 out and 2 up.
+    void addTreeClearance(PieceList& pieces) const {
+        auto const& src = getSourceJigsaw();
+        if (spareJigsaws.size() != 1 || !src.frontVertical) return; // ladderDirection.getAxis() != Y
+        BlockPos column = up(relative(getSourcePosition(), opposite(src.top), 2), 2);
+        BlockBox box{column.x - 3, column.y - 3, column.z - 3, column.x + 3, column.y + 3, column.z + 3};
+        pieces.push_back(std::make_unique<sb::UtilityPiece>(genDepth + 1, box, false));
+    }
+
+private:
 
     std::optional<BlockPos> leashPos;
 };
@@ -1911,6 +1965,7 @@ PerimeterFence* nextFence(PerimeterFence& parent, PieceList& pieces, RandomSourc
     auto* raw   = fence.get();
     pieces.push_back(std::move(fence));
     grow(*raw, parent, pieces, random);
+    raw->addTreeClearance(pieces);
     return raw;
 }
 
@@ -2010,6 +2065,7 @@ void generateFence(JigsawPiece& vestibule, PieceList& pieces, RandomSource& rand
     auto* front   = starter.get();
     pieces.push_back(std::move(starter));
     grow(*front, vestibule, pieces, random);
+    front->addTreeClearance(pieces);
     // the two sides run to the grounded wing trims beside the tower base
     TowerBase const* base = nullptr;
     for (auto const& p : pieces)
@@ -2183,8 +2239,19 @@ bool layoutWith(gf::landmark::LayoutContext& ctx, RandomSource& contextRandom, s
 bool layout(gf::landmark::LayoutContext& ctx) {
     auto ctxRandom = gf::landmark::ext::contextRandom(ctx.start);
     int  dim       = ctx.start.dimension;
-    sx::GenerationContext gctx{ctxRandom.get(), gf::worldgen::seed(), [dim](gf::worldgen::Heightmap type, int x, int z) {
-                                   return gf::landmark::ext::firstOccupiedHeight(dim, x, z, type).value_or(0);
+    // ChunkGenerator#getFirstOccupiedHeight: the terrain provider's noise height. Where none answers
+    // (no provider for the dimension: /tf place and generateAt outside the Twilight Forest, or
+    // before U2's terrain registers one) the loaded ground stands in when the layout runs on the
+    // server thread (a generation thread must not touch the level), else the start's own height.
+    int  fallbackY = ctx.start.center.y - 1;
+    auto* loaded   = onServerThread() ? game::regionOf(dim) : nullptr;
+    sx::GenerationContext gctx{ctxRandom.get(), gf::worldgen::seed(), [dim, fallbackY, loaded](gf::worldgen::Heightmap type, int x, int z) {
+                                   if (auto h = gf::landmark::ext::firstOccupiedHeight(dim, x, z, type)) return *h;
+                                   if (loaded && loaded->hasChunksAt(BlockPos{x, loaded->getMinHeight(), z}, 0, false)) {
+                                       return columnHeight([&](BlockPos const& p) -> Block const& { return loaded->getBlock(p); }, loaded->getMinHeight(),
+                                                           loaded->getMaxHeight(), type, x, z) - 1;
+                                   }
+                                   return fallbackY;
                                }};
     return layoutWith(ctx, *ctxRandom, gctx);
 }
@@ -2241,7 +2308,18 @@ std::vector<PieceBox> layoutForTest(BlockPos const& origin, std::int64_t seed) {
 void placeForTest(std::function<std::unique_ptr<Region>(BlockPos const&)> const& regionAt, BlockBox const& clip, std::int64_t seed) {
     pending::Suppress quiet;
     gf::core::jrand::LegacyRandom random(seed);
-    for (auto& p : testPieces()) {
+    // in F6's order: LandmarkStructure sorts the pieces by SortablePiece key (the yard's dirt and
+    // paths first, before the tower stands over them; higher fences later)
+    std::vector<gs::Piece*> order;
+    for (auto& p : testPieces()) order.push_back(p.get());
+    std::stable_sort(order.begin(), order.end(), [](gs::Piece const* a, gs::Piece const* b) {
+        auto key = [](gs::Piece const* p) {
+            auto const* s = dynamic_cast<sb::SortablePiece const*>(p);
+            return s ? s->getSortKey() : 0;
+        };
+        return key(a) < key(b);
+    });
+    for (auto* p : order) {
         if (p->bbox.minY > clip.maxY || p->bbox.maxY < clip.minY) continue; // nothing of it inside the area
         // one call per chunk column the piece meets, each clipped to `clip` (Java's postProcess per chunk)
         for (int cx = (std::max(p->bbox.minX, clip.minX)) >> 4; cx <= (std::min(p->bbox.maxX, clip.maxX)) >> 4; ++cx)
@@ -2257,6 +2335,52 @@ void placeForTest(std::function<std::unique_ptr<Region>(BlockPos const&)> const&
 }
 
 void forgetTestPieces() { testPieces().clear(); }
+
+std::string yardProbe(Region const& region, int x, int z) {
+    std::string out;
+    for (auto type : {gf::worldgen::Heightmap::MotionBlockingNoLeaves, gf::worldgen::Heightmap::WorldSurfaceWg, gf::worldgen::Heightmap::OceanFloorWg}) {
+        int h = surfaceHeight(region, type, x, z);
+        out += " h" + std::to_string(static_cast<int>(type)) + "=" + std::to_string(h);
+    }
+    for (int y = region.minY(); y < region.minY() + 8; ++y) {
+        auto const& b = region.getBlock(BlockPos{x, y, z});
+        auto const& m = b.getMaterial();
+        out += " | " + std::to_string(y) + " " + game::blockId(b) + " dirt=" + (isDirt(game::blockId(b)) ? "1" : "0") + " liq=" + (m.mLiquid ? "1" : "0") + " bm=" + (m.mBlocksMotion ? "1" : "0")
+             + " solid=" + (m.mSolid ? "1" : "0") + " air=" + (b.isAir() ? "1" : "0");
+    }
+    return out;
+}
+
+std::vector<PieceBox> perimeterForTest(int lateral, std::int64_t seed) {
+    std::vector<PieceBox> out;
+    PerimeterFence*       front = nullptr;
+    TowerBase const*      base  = nullptr;
+    for (auto& p : testPieces()) {
+        if (!front) front = dynamic_cast<PerimeterFence*>(p.get());
+        if (!base) base = dynamic_cast<TowerBase const*>(p.get());
+    }
+    if (!front || !base) return out;
+    // two grounded trims `lateral` blocks to the sides of the tower base (LichPerimeterFence
+    // #generateFence's destinations, getClosestTrimOnGround, then inflatedBy(-1))
+    BlockPos    bottom = bottomCenter(base->bbox);
+    Orientation facing = base->getSourceJigsaw().front;
+    auto        trimAt = [&](Orientation side) {
+        BlockPos c = relative(bottom, side, lateral);
+        return inflated(BlockBox{c.x - 4, bottom.y, c.z - 4, c.x + 4, bottom.y + 8, c.z + 4}, -1);
+    };
+    gf::core::jrand::LegacyRandom random(seed);
+    auto&                         pieces = testPieces();
+    std::size_t                   before = pieces.size();
+    std::string                   full   = gid("outer_fence_7");
+    generateSidedPerimeter(*front, pieces, random, full, trimAt(clockwise(facing)), &PerimeterFence::leftJunctions, Rotation::Clockwise90);
+    generateSidedPerimeter(*front, pieces, random, full, trimAt(counterClockwise(facing)), &PerimeterFence::rightJunctions, Rotation::Counterclockwise90);
+    for (std::size_t i = before; i < pieces.size(); ++i) {
+        auto const& p = pieces[i];
+        auto const* f = dynamic_cast<PerimeterFence const*>(p.get());
+        out.push_back(PieceBox{f ? p->typeId + "|" + f->templateId() : p->typeId, p->bbox, p.get()});
+    }
+    return out;
+}
 
 void registerTower() {
     gf::landmark::registerGenerator(kTowerKey, {.layout = layout, .terraform = terraform, .spawnIndex = spawnIndex});

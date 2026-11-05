@@ -29,9 +29,11 @@ void add(int dim, BlockPos const& pos, std::string const& kind, Json data);
 
 /// Applies the queued edits whose chunks are loaded (the level tick calls it).
 void tick();
-/// Loads / stores the queue (world lifecycle).
+/// Loads / stores the queue (world lifecycle). load() adds the saved entries in front of the ones
+/// queued before the world was ready; clear() empties it when a world closes.
 void load();
 void save();
+void clear();
 /// The number of queued edits (selftests).
 [[nodiscard]] std::size_t size();
 

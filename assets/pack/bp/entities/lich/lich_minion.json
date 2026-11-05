@@ -5,7 +5,10 @@
       "identifier": "twilightforest:lich_minion",
       "is_spawnable": false,
       "is_summonable": true,
-      "is_experimental": false
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:strong": { "type": "bool", "default": false, "client_sync": true }
+      }
     },
     "component_groups": {
       "gf:baby": {

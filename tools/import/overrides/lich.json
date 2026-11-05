@@ -127,7 +127,8 @@
         "value": {
           "identifier": "twilightforest:lich_minion",
           "materials": {
-            "default": "zombie"
+            "default": "zombie",
+            "tinted": "entity_alphatest_change_color"
           },
           "textures": {
             "default": "textures/entity/zombie/zombie"
@@ -160,7 +161,7 @@
             "base": "animation.twilightforest.lich_minion.base"
           },
           "render_controllers": [
-            "controller.render.default"
+            "controller.render.twilightforest.lich_minion"
           ],
           "enable_attachables": true
         }

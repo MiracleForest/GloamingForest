@@ -48,6 +48,7 @@
 #include "feature/lich/Pending.h"
 #include "feature/projectile/Projectile.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 
 namespace gf::feature::lich {
@@ -1240,21 +1241,11 @@ bool deflect(Mob& lich, Actor& projectile, Actor* owner) {
 }
 
 void levelTick() {
-    static int sweep = 0, queued = 0, leashes = 0;
+    static int sweep = 0, queued = 0;
+    noteServerThread();
     if (++queued >= 20) {
         queued = 0;
         pending::tick();
-    }
-    if (++leashes >= 100) {
-        leashes = 0;
-        if (auto level = ll::service::getLevel())
-            level->forEachPlayer(std::function<bool(Player&)>([](Player& p) {
-                auto f = p.getFeetPos();
-                // the dimension's main block source (a joining player's own one may not be ready)
-                if (auto* region = game::regionOf(dimOf(p)); region && p.isAlive())
-                    edits::tickTethers(*region, dimOf(p), AABB{Vec3{f.x - 48.0f, f.y - 24.0f, f.z - 48.0f}, Vec3{f.x + 48.0f, f.y + 24.0f, f.z + 48.0f}});
-                return true;
-            }));
     }
     edits::tickLeashes();
     if (++sweep >= 200) {
@@ -1278,6 +1269,7 @@ void levelTick() {
 }
 
 void registerLich() {
+    game::db::onWorldClosed([] { states().clear(); }); // keyed by actor ids of the closed world
     ge::registerType(kLich, {
         .onSpawn = onSpawn,
         .tick    = serverStep,

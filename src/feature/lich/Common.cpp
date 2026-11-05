@@ -3,6 +3,8 @@
 
 #include "feature/lich/Common.h"
 
+#include <atomic>
+#include <thread>
 #include <algorithm>
 #include <cmath>
 #include <numbers>
@@ -319,6 +321,13 @@ void pruneRandoms() {
     for (auto it = randoms().begin(); it != randoms().end();) it = actorById(it->first) ? std::next(it) : randoms().erase(it);
 }
 
+void forgetAllRandoms() { randoms().clear(); }
+
+namespace {
+std::atomic<std::thread::id> gServerThread{};
+}
+void noteServerThread() { gServerThread.store(std::this_thread::get_id(), std::memory_order_relaxed); }
+bool onServerThread() { return gServerThread.load(std::memory_order_relaxed) == std::this_thread::get_id(); }
 std::optional<Vec3> randomTeleportSpot(BlockSource& region, Vec3 const& at, float width, float height) {
     // LivingEntity#randomTeleport(x, y, z, false): down to the first motion-blocking block below
     BlockPos p{int(std::floor(at.x)), int(std::floor(at.y)), int(std::floor(at.z))};

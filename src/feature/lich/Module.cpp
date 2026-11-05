@@ -43,6 +43,11 @@ public:
             edits::registerEdits();
             game::db::onWorldReady([] { pending::load(); });
             game::db::onWorldSave([] { pending::save(); });
+            // the client opens many worlds in one process: nothing of a closed world stays queued
+            game::db::onWorldClosed([] {
+                pending::clear();
+                forgetAllRandoms();
+            });
             // IsMinionCondition(inverse): THIS_ENTITY is a Carminite Ghastling whose isMinion() == !inverse
             gf::loot::registerCondition("twilightforest:is_minion", [](gf::loot::LootContext const& ctx, Json const& config, gf::loot::RandomSource&) {
                 bool inverse = config.is_object() && config.value("inverse", false);

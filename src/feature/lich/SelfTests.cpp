@@ -24,6 +24,8 @@
 #include "mc/world/attribute/AttributeInstance.h"
 #include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/SharedAttributes.h"
+#include "mc/world/effect/EffectDuration.h"
+#include "mc/world/effect/MobEffectInstance.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -33,6 +35,7 @@
 #include "feature/combat/Combat.h"
 #include "feature/entity/Entity.h"
 #include "feature/lich/Common.h"
+#include "feature/lich/Edits.h"
 #include "feature/lich/Lich.h"
 #include "feature/lich/Tower.h"
 #include "feature/structure/Region.h"
@@ -349,8 +352,10 @@ GF_REGISTER_SELFTEST("lich.projectile_hits", [](Context& ctx) -> ll::coro::CoroT
     auto level = ll::service::getLevel();
     auto bone  = game::items::make("minecraft:bone", 1);
     ctx.require(level && bone && ctx.region(), "an item to drop");
-    auto* dropped = level->getSpawner().spawnItem(*ctx.region(), *bone, nullptr, Vec3{front.x, float(c.y + 1), front.z + 1.0f}, 0);
+    // on the far side of the bomb from the player (out of its pickup reach), lying still
+    auto* dropped = level->getSpawner().spawnItem(*ctx.region(), *bone, nullptr, Vec3{front.x + 1.0f, float(c.y + 1), front.z + 1.0f}, 0);
     ctx.require(dropped != nullptr, "the bone was dropped");
+    setMotion(*dropped, Vec3{0.0f, 0.0f, 0.0f});
     auto boneId = uidOf(*dropped);
     co_await ctx.ticks(2);
     int items = countAround(ctx, c, "minecraft:item", 8.0f);
@@ -369,7 +374,13 @@ GF_REGISTER_SELFTEST("lich.projectile_hits", [](Context& ctx) -> ll::coro::CoroT
         co_await ctx.ticks(2);
     }
     ctx.check(actorById(bombId) == nullptr, "the attacked bomb exploded");
-    ctx.check(countAround(ctx, c, "minecraft:item", 8.0f) >= items, "the explosion left the dropped item alone (" + std::to_string(countAround(ctx, c, "minecraft:item", 8.0f)) + " of " + std::to_string(items) + " items near" + (actorById(boneId) ? "" : ", the bone was put back") + ")");
+    int after = countAround(ctx, c, "minecraft:item", 8.0f);
+    ctx.check(after >= items, "the explosion left the dropped item alone (" + std::to_string(after) + " of " + std::to_string(items) + " items near"
+                                  + (actorById(boneId) ? ", the same item entity" : ", the bone came back as a new item entity") + ")");
+    if (auto* b = actorById(boneId)) {
+        auto bp = b->getPosition();
+        ctx.check(std::abs(bp.x - (front.x + 1.0f)) < 1.0f && std::abs(bp.z - (front.z + 1.0f)) < 1.0f, "the blast did not push the bone away");
+    }
     removeAround(ctx, c, "minecraft:item", 6.0f);
     removeAround(ctx, c, kLichBolt, 16.0f);
     removeById(uid);
@@ -455,21 +466,39 @@ GF_REGISTER_SELFTEST("lich.attributes", [](Context& ctx) -> ll::coro::CoroTask<>
     co_await ctx.flatArea(2100, 16);
     struct Row {
         char const* id;
-        float       health, speed, attack;
+        float       health, speed, attack, follow, armor, flying;
     };
+    // max_health, movement_speed, attack_damage, follow_range, armor, flying_speed (0: none)
     Row const rows[] = {
-        {kLich,   100.0f, 0.45f, 3.0f},
-        {kMinion, 20.0f,  0.23f, 3.0f},
-        {kTome,   20.0f,  0.25f, 4.0f},
+        {kLich,   100.0f, 0.45f, 3.0f, 35.0f, 0.0f, 0.0f},
+        {kMinion, 20.0f,  0.23f, 3.0f, 35.0f, 2.0f, 0.0f},
+        {kTome,   20.0f,  0.25f, 4.0f, 16.0f, 0.0f, 0.6f},
+        {kRising, 20.0f,  0.23f, 3.0f, 35.0f, 2.0f, 0.0f},
     };
     int i = 0;
     for (auto const& r : rows) {
         auto p = ctx.testPos(2102 + 4 * i++, 2).offset(0, 1, 0);
         Mob* m = spawnAt(ctx, r.id, p);
         ctx.require(m != nullptr, std::string("spawned ") + r.id);
+        auto uid = uidOf(*m);
+        if (r.id == std::string(kRising)) setRisingTicks(*m, 130); // risen: no longer hidden in the ground
         ctx.check(m->getMaxHealth() == static_cast<int>(r.health), std::string(r.id) + " max health");
         ctx.check(std::abs(attr(*m, SharedAttributes::MOVEMENT_SPEED()) - r.speed) < 1e-3f, std::string(r.id) + " movement speed");
         ctx.check(std::abs(attr(*m, SharedAttributes::ATTACK_DAMAGE()) - r.attack) < 1e-3f, std::string(r.id) + " attack damage");
+        ctx.check(std::abs(attr(*m, SharedAttributes::FOLLOW_RANGE()) - r.follow) < 1e-3f,
+                  std::string(r.id) + " follow range " + std::to_string(attr(*m, SharedAttributes::FOLLOW_RANGE())));
+        if (r.flying > 0.0f)
+            ctx.check(std::abs(gf::entity::ext::flyingSpeed(*m) - r.flying) < 1e-3, std::string(r.id) + " flying speed " + std::to_string(gf::entity::ext::flyingSpeed(*m)));
+        // the armor (Bedrock mobs have no armor attribute: the damage pipeline applies it): 4 mob
+        // damage loses CombatRules#getDamageAfterAbsorb's share, 4 * (1 - max(armor - 4 / 2, armor / 5) / 25)
+        float before = attr(*m, SharedAttributes::HEALTH());
+        gf::combat::hurt(*m, 4.0f, "minecraft:mob_attack");
+        m = mobById(uid);
+        ctx.require(m != nullptr, std::string(r.id) + " survives the hit");
+        float lost     = before - attr(*m, SharedAttributes::HEALTH());
+        float expected = 4.0f * (1.0f - std::max(r.armor - 2.0f, r.armor * 0.2f) / 25.0f);
+        if (r.id == std::string(kLich)) expected = lost; // the Lich's shield and phases decide its damage (lich.shield_break)
+        ctx.check(std::abs(lost - expected) < 0.05f, std::string(r.id) + " armor " + std::to_string(r.armor) + ": lost " + std::to_string(lost) + " of 4, TF " + std::to_string(expected));
         m->remove();
     }
     co_await ctx.ticks(1);
@@ -528,7 +557,7 @@ constexpr std::int64_t  kGoldenSeed   = 21;
 constexpr std::uint64_t kGoldenLayout = 9018693297151821187ull; // U22 absent
 // the placed layout depends on where it stands (its chunk seeds the layout): the golden holds for
 // the test area of the e2e worlds (seed 20260521, the BDS spawn); elsewhere it is logged only
-constexpr char const* kGoldenVolume   = "42aa3923e38e53c8"; // U22 absent
+constexpr char const* kGoldenVolume   = "a6cad5e5eb1dc5ad"; // U22 absent (pieces placed in F6's sort-key order)
 constexpr int         kGoldenVolumeAt[2] = {64, 100};
 
 std::uint64_t layoutHash(std::vector<tower::PieceBox> const& pieces, BlockPos const& origin, std::map<std::string, int>& counts) {
@@ -652,6 +681,211 @@ GF_REGISTER_SELFTEST("lich.yard_spawns", [](Context& ctx) -> ll::coro::CoroTask<
     co_return;
 });
 
+namespace {
+
+/// A worldgen::Region over the server's BlockSource that answers heights the way F6's loaded-chunk
+/// adapter (landmark::generateAt, /tf place, forceStart) does: BlockSource#getAboveTopSolidBlock.
+/// The yard read its heights from the region before and turned nothing through that adapter.
+class LoadedLikeRegion final : public gf::worldgen::Region {
+public:
+    LoadedLikeRegion(BlockSource& r, BlockPos const& c) : mR(r), mCX(c.x >> 4), mCZ(c.z >> 4) {}
+    [[nodiscard]] int          centerChunkX() const override { return mCX; }
+    [[nodiscard]] int          centerChunkZ() const override { return mCZ; }
+    [[nodiscard]] int          minY() const override { return mR.getMinHeight(); }
+    [[nodiscard]] int          maxY() const override { return mR.getMaxHeight(); }
+    [[nodiscard]] bool         isInside(int x, int z) const override { return mR.hasChunksAt(BlockPos{x, minY(), z}, 0, false); }
+    [[nodiscard]] Block const& getBlock(BlockPos const& pos) const override { return mR.getBlock(pos); }
+    bool                       setBlock(BlockPos const& pos, Block const& block, int) override {
+        if (pos.y < minY() || pos.y >= maxY() || !isInside(pos.x, pos.z)) return false;
+        return game::setBlock(mR, pos, block);
+    }
+    [[nodiscard]] int height(gf::worldgen::Heightmap type, int x, int z) const override {
+        using H    = gf::worldgen::Heightmap;
+        bool water = type == H::WorldSurface || type == H::WorldSurfaceWg || type == H::MotionBlocking;
+        return mR.getAboveTopSolidBlock(x, z, water, type != H::MotionBlockingNoLeaves);
+    }
+    [[nodiscard]] std::string  biome(BlockPos const&) const override { return "minecraft:plains"; }
+    [[nodiscard]] std::int64_t seed() const override { return 0; }
+    [[nodiscard]] int          dimension() const override { return static_cast<int>(mR.getDimensionId()); }
+
+private:
+    BlockSource& mR;
+    int          mCX, mCZ;
+};
+
+} // namespace
+
+// The lich tower as F6 places it into loaded chunks (landmark::generateAt, /tf place): the yard turns
+// the ground to dirt and paths, lines a path with spruce fences and lights, and the perimeter fence
+// (here run toward two stand-in grounded trims, as U22's wings bring them) stands on the ground
+// with its side fences, outer_fence_1..7 steps, escape ladders and tree clearances.
+GF_REGISTER_SELFTEST("lich.tower_yard_loaded", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
+    auto     area = co_await ctx.flatArea(2100, 120);
+    BlockPos at{(area.minX + area.maxX) / 2, area.minY - 1, (area.minZ + area.maxZ) / 2};
+    auto*    source = ctx.region();
+    ctx.require(source != nullptr, "the test region");
+    core::BlockBox clip{area.minX, area.minY - 1, area.minZ, area.maxX, area.maxY, area.maxZ};
+    auto count = [&]() {
+        std::map<std::string, int> found;
+        for (int x = clip.minX; x <= clip.maxX; ++x)
+            for (int z = clip.minZ; z <= clip.maxZ; ++z)
+                for (int y = clip.minY; y <= clip.minY + 6; ++y) {
+                    auto id = game::blockIdAt(*source, BlockPos{x, y, z});
+                    if (y == clip.minY && (id == "minecraft:coarse_dirt" || id == "minecraft:dirt_with_roots" || id == "minecraft:grass_path" || id == "minecraft:dirt_path"))
+                        found["ground"]++;
+                    if (id == "minecraft:spruce_fence") found["spruce_fence"]++;
+                    if (id == "minecraft:candle") found["candle"]++;
+                    if (id == "twilightforest:wrought_iron_fence") found["iron_fence"]++;
+                    if (id == "minecraft:ladder") found["ladder"]++;
+                }
+        return found;
+    };
+    auto loaded = [source](BlockPos const& c) -> std::unique_ptr<gf::worldgen::Region> { return std::make_unique<LoadedLikeRegion>(*source, c); };
+    // what F6's adapter answers on this flat ground, next to what the blocks say
+    int              gx = area.minX + 2, gz = area.minZ + 2;
+    LoadedLikeRegion probe(*source, BlockPos{gx, 0, gz});
+    gf::structure::BlockSourceRegion blocks(*source, BlockPos{gx, 0, gz});
+    ctx.info("heights at the ground (grass at " + std::to_string(area.minY - 1) + "): getAboveTopSolidBlock " + std::to_string(probe.height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, gx, gz))
+             + ", the blocks " + std::to_string(blocks.height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, gx, gz)));
+    ctx.info("yard probe:" + tower::yardProbe(probe, gx, gz));
+    // 1. the tower and its yard through the loaded-chunk adapter
+    for (auto const& p : tower::layoutForTest(at, kGoldenSeed))
+        if (p.typeId == "twilightforest:TFLTPath" || p.typeId == "twilightforest:TFLTLight" || p.typeId == "twilightforest:TFLTTFoy")
+            ctx.info(p.typeId.substr(15) + " box " + std::to_string(p.box.minX - at.x) + " " + std::to_string(p.box.minY - at.y) + " " + std::to_string(p.box.minZ - at.z) + " .. "
+                     + std::to_string(p.box.maxX - at.x) + " " + std::to_string(p.box.maxY - at.y) + " " + std::to_string(p.box.maxZ - at.z));
+    tower::placeForTest(loaded, clip, kGoldenSeed);
+    tower::forgetTestPieces();
+    auto yard = count();
+    {
+        std::map<std::string, int> ground;
+        for (int x = clip.minX; x <= clip.maxX; ++x)
+            for (int z = clip.minZ; z <= clip.maxZ; ++z)
+                for (int dy = -2; dy <= 1; ++dy) ground[std::to_string(dy) + ":" + game::blockIdAt(*source, BlockPos{x, clip.minY + dy, z})]++;
+        std::string h;
+        for (auto const& [id, n] : ground) h += " " + id + "=" + std::to_string(n);
+        ctx.info("ground layer after the loaded placement:" + h);
+    }
+    ctx.info("the yard through the loaded-chunk adapter: " + std::to_string(yard["ground"]) + " dirt/path, " + std::to_string(yard["spruce_fence"]) + " spruce fences, "
+             + std::to_string(yard["candle"]) + " candles");
+    // (without U22's trims the perimeter is the front fence alone: the dirt box spans the foyer to it)
+    ctx.check(yard["ground"] > 20, "the yard turns the ground to dirt and paths");
+    ctx.check(yard["spruce_fence"] > 0, "spruce fences along the paths");
+    ctx.check(yard["candle"] > 0, "the yard lights (candles on iron posts)");
+    // 2. the whole perimeter toward two stand-in trims
+    (void)tower::layoutForTest(at, kGoldenSeed);
+    auto perimeter = tower::perimeterForTest(24, kGoldenSeed);
+    std::map<std::string, int> fences;
+    int clearances = 0, sideFences = 0;
+    for (auto const& p : perimeter) {
+        if (p.typeId.starts_with("twilightforest:TFLTFence|")) {
+            ++sideFences;
+            fences[p.typeId.substr(p.typeId.find('|') + 1)]++;
+        } else if (p.typeId == "twilightforest:TFUtilityPiece") ++clearances;
+    }
+    std::string summary;
+    for (auto const& [id, n] : fences) summary += " " + id + "=" + std::to_string(n);
+    ctx.info("perimeter: " + std::to_string(sideFences) + " side fences," + summary + "; " + std::to_string(clearances) + " tree clearances");
+    ctx.check(sideFences >= 8, "both sides of the perimeter run from the front fence to the trims (" + std::to_string(sideFences) + " fences)");
+    ctx.check(fences.size() >= 2, "full fences and shorter steps toward the trims");
+    ctx.check(clearances >= 1, "fences with one spare post keep the trees off their ladders (UtilityPiece)");
+    tower::placeForTest(loaded, clip, kGoldenSeed);
+    tower::forgetTestPieces();
+    auto all = count();
+    ctx.info("with the perimeter: " + std::to_string(all["iron_fence"]) + " iron fence blocks, " + std::to_string(all["ladder"]) + " ladders, " + std::to_string(all["ground"]) + " dirt/path left");
+    ctx.check(all["iron_fence"] > 20, "the perimeter fence stands on the ground");
+    ctx.check(all["ladder"] > 0, "escape ladders on the fences with one spare post");    removeAround(ctx, core::GlobalPos{ctx.dimension(), at.x, at.y, at.z}, "minecraft:painting", 90.0f);
+});
+
+// putZombieTrap / LichPerimeterFence#generateBoundZombie and Mob#tickLeash: a zombie tied to an
+// iron post is leashed to a knot there, kept by id, pulled back beyond 6 blocks, and loose beyond
+// 10 (the knot goes with the leash).
+GF_REGISTER_SELFTEST("lich.zombie_tether", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
+    co_await ctx.flatArea(2160, 32);
+    auto post = ctx.testPos(2170, 2).offset(0, 1, 0);
+    ctx.require(ctx.setBlock(post, "twilightforest:wrought_iron_fence"), "the iron post is placed");
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "the test region");
+    auto before = edits::tetheredCount();
+    Mob* zombie = edits::tieZombie(*region, BlockPos{post.x, post.y, post.z}, at(post.offset(1, 0, 0)));
+    ctx.require(zombie != nullptr, "a zombie is tied to the post");
+    auto uid = uidOf(*zombie);
+    ctx.check(zombie->isLeashed(), "the zombie is leashed");
+    ctx.check(countAround(ctx, post, "minecraft:leash_knot", 1.5f) == 1, "a leash knot on the post");
+    ctx.check(edits::tetheredCount() == before + 1, "the unit keeps the tied zombie");
+    co_await ctx.ticks(10);
+    zombie = mobById(uid);
+    ctx.require(zombie != nullptr && zombie->isLeashed(), "still tied after 10 ticks");
+    // 8 blocks away: pulled toward the post
+    teleportTo(*zombie, at(post.offset(8, 0, 0)));
+    setMotion(*zombie, Vec3{0.0f, 0.0f, 0.0f});
+    co_await ctx.ticks(1);
+    zombie = mobById(uid);
+    ctx.require(zombie != nullptr, "the zombie is there");
+    ctx.check(zombie->getPosDelta().x < 0.0f || zombie->getFeetPos().x < post.x + 8.0f, "beyond 6 blocks the leash pulls it back toward the post");
+    // 13 blocks away: the leash breaks
+    teleportTo(*zombie, at(post.offset(13, 0, 0)));
+    co_await ctx.ticks(2);
+    zombie = mobById(uid);
+    ctx.require(zombie != nullptr, "the zombie is there");
+    ctx.check(!zombie->isLeashed(), "beyond 10 blocks the leash breaks");
+    ctx.check(countAround(ctx, post, "minecraft:leash_knot", 1.5f) == 0, "the knot goes with the leash");
+    ctx.check(edits::tetheredCount() == before, "the loose zombie is no longer kept");
+    ctx.check(countAround(ctx, post.offset(13, 0, 0), "minecraft:item", 3.0f) >= 1, "the broken leash drops a lead (Leashable#dropLeash)");
+    removeById(uid);
+    removeAround(ctx, post, "minecraft:leash_knot", 3.0f);
+    removeAround(ctx, post.offset(13, 0, 0), "minecraft:item", 4.0f);
+});
+
+// LichMinionModel's tint follows the minion's Strength: hit by its Lich, the minion gets
+// DAMAGE_BOOST and the client property twilightforest:strong; without it the property is off.
+GF_REGISTER_SELFTEST("lich.minion_strength", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
+    co_await ctx.flatArea(2160, 32);
+    auto c    = ctx.testPos(2176, 2);
+    Mob* lich = spawnAt(ctx, kLich, c, 1.0f);
+    ctx.require(lich != nullptr, "a lich spawned");
+    auto lid = uidOf(*lich);
+    lichState(*lich)->attackCooldown = 100000;
+    Mob* minion = spawnAt(ctx, kMinion, c.offset(3, 0, 0), 1.0f);
+    ctx.require(minion != nullptr, "a minion spawned");
+    auto mid = uidOf(*minion);
+    setMinionMaster(*minion, lich);
+    co_await ctx.ticks(2);
+    minion = mobById(mid);
+    ctx.require(minion != nullptr, "the minion is there");
+    ctx.check(!gf::entity::data(*minion, "lich:strong").is_boolean() || !gf::entity::data(*minion, "lich:strong").get<bool>(), "a fresh minion is not strong");
+    lich = mobById(lid);
+    ctx.require(lich != nullptr, "the lich is there");
+    // (a hit within the minion's hurt cooldown of an earlier one is not dealt: try for a second)
+    float hpBefore = attr(*minion, SharedAttributes::HEALTH());
+    bool  hit      = false;
+    for (int t = 0; t < 20 && !hit; ++t) {
+        minion = mobById(mid);
+        lich   = mobById(lid);
+        ctx.require(minion && lich, "the minion and the lich are there");
+        hpBefore = attr(*minion, SharedAttributes::HEALTH());
+        hit      = gf::combat::hurt(*minion, 1.0f, "minecraft:mob_attack", lich, lich);
+        if (!hit) co_await ctx.ticks(1);
+    }
+    minion = mobById(mid);
+    ctx.require(minion != nullptr, "the minion is there");    ctx.info("the lich's hit: " + std::string(hit ? "dealt" : "not dealt") + ", health " + std::to_string(hpBefore) + " -> " + std::to_string(attr(*minion, SharedAttributes::HEALTH())));
+    co_await ctx.ticks(2);
+    minion = mobById(mid);
+    ctx.require(minion != nullptr, "the minion survived the hit");
+    ctx.check(minion->getEffect(5) != nullptr, "its lich's hit gave it Strength (DAMAGE_BOOST II)");
+    auto const& strong = gf::entity::data(*minion, "lich:strong");
+    ctx.check(strong.is_boolean() && strong.get<bool>(), "the minion shows its strength (twilightforest:strong)");
+    minion->removeEffect(5);
+    co_await ctx.ticks(2);
+    minion = mobById(mid);
+    ctx.require(minion != nullptr, "the minion is there");
+    auto const& weak = gf::entity::data(*minion, "lich:strong");
+    ctx.check(weak.is_boolean() && !weak.get<bool>(), "without Strength the tint is back to normal");
+    removeById(mid);
+    removeById(lid);
+});
 // For the client e2e's screenshots, in stages the scenario waits for ("lich.client_showcase: stage
 // <name>"), each held for a few seconds in front of the real player (creative, so the hostile ones
 // leave it alone):
@@ -756,7 +990,25 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
             shown.push_back(uidOf(*clone));
         }
     }
-    if (Mob* minion = spawnMob(*region, kMinion, ahead(7, 3))) shown.push_back(uidOf(*minion));
+    // two minions: plain (LichMinionModel: red and blue x0.5) and with Strength (x0.25)
+    std::int64_t lichId = shown.empty() ? 0 : shown.front();
+    for (int strong = 0; strong < 2; ++strong)
+        if (Mob* minion = spawnMob(*region, kMinion, ahead(7, 3 + 1.5 * strong))) {
+            if (auto* l = mobById(lichId)) setMinionMaster(*minion, l);
+            if (strong) {
+                MobEffectInstance e(5, EffectDuration{20 * 60}); // DAMAGE_BOOST
+                minion->addEffect(e);
+            }
+            shown.push_back(uidOf(*minion));
+        }
+    // a zombie trap: a zombie tied to an iron post by a lead
+    BlockPos trapPost = game::blockPosOf(ahead(5, 4.5));
+    std::int64_t trapped = 0;
+    if (auto const* post = game::blockWith("twilightforest:wrought_iron_fence")) {
+        game::setBlock(*region, trapPost, *post);
+        Vec3 beside = ahead(6, 4.5);
+        if (Mob* z = edits::tieZombie(*region, trapPost, Vec3{beside.x, float(trapPost.y), beside.z})) trapped = uidOf(*z);
+    }
     // the lectern facing the player, the tome on it
     BlockPos lectern = game::blockPosOf(ahead(4, -2));
     float    toPlayer = yawToward(Vec3{lectern.x + 0.5f, float(lectern.y), lectern.z + 0.5f}, eye);
@@ -779,7 +1031,16 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     log().info("lich.client_showcase: stage mobs ({} shown)", shown.size());
     co_await hold(20 * 6);
     clear();
-    if (auto const* air = game::blockWith("minecraft:air")) game::setBlock(*region, lectern, *air);
+    real = realPlayer(); // never kept across ticks (R16)
+    if (!real) co_return;
+    region = &real->getDimensionBlockSource();
+    if (trapped) removeById(trapped);
+    for (auto* a : actorsIn(*region, dim, AABB{Vec3{trapPost.x - 2.0f, trapPost.y - 2.0f, trapPost.z - 2.0f}, Vec3{trapPost.x + 3.0f, trapPost.y + 3.0f, trapPost.z + 3.0f}}))
+        if (a && a->getTypeName() == "minecraft:leash_knot") a->remove();
+    if (auto const* air = game::blockWith("minecraft:air")) {
+        game::setBlock(*region, lectern, *air);
+        game::setBlock(*region, trapPost, *air);
+    }
 
     // ---- the projectiles ----
     std::vector<std::int64_t> flying;

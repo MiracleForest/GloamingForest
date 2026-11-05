@@ -118,9 +118,19 @@ void load() {
     if (auto j = game::db::get(kKey); j && j->is_array())
         for (auto const& e : *j)
             if (auto entry = fromJson(e)) loaded.push_back(std::move(*entry));
+    // edits queued by chunks generated before the world was ready (the client generates its spawn
+    // before onWorldReady) stay: the saved ones are added in front of them
     std::lock_guard lock(queue().mutex);
+    bool queuedBefore = !queue().entries.empty();
+    for (auto& e : queue().entries) loaded.push_back(std::move(e));
     queue().entries = std::move(loaded);
-    queue().dirty   = false;
+    queue().dirty   = queuedBefore;
+}
+
+void clear() {
+    std::lock_guard lock(queue().mutex);
+    queue().entries.clear();
+    queue().dirty = false;
 }
 
 void save() {
