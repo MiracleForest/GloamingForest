@@ -117,6 +117,10 @@ void setMotion(Actor& actor, Vec3 const& v);
 Mob* spawnMob(BlockSource& region, std::string const& id, Vec3 const& pos, float yaw = 0.0f);
 /// Removes an actor (Entity#discard).
 void discard(Actor& actor);
+/// Removes an actor on the next server tick (an actor removing itself during its own tick).
+void discardLater(Actor& actor);
+/// Drops the random sources of actors that are gone.
+void pruneRandoms();
 
 /// LivingEntity#randomTeleport's checks without moving: the spot (x, y, z) dropped onto the first
 /// block below that blocks motion (not below the world), clear of collisions and liquids for an

@@ -38,6 +38,7 @@
 #include "mc/world/phys/AABB.h"
 #include "mc/world/phys/HitResult.h"
 
+#include "feature/common/Interactions.h"
 #include "feature/fx/Fx.h"
 #include "feature/tags/Tags.h"
 #include "game/Items.h"
@@ -306,6 +307,17 @@ Mob* spawnMob(BlockSource& region, std::string const& id, Vec3 const& pos, float
 }
 
 void discard(Actor& actor) { actor.remove(); }
+
+void discardLater(Actor& actor) {
+    // never inside the actor's own tick: the next server tick removes it
+    gf::feature::common::interactions::nextTick([uid = uidOf(actor)] {
+        if (auto* a = actorById(uid)) a->remove();
+    });
+}
+
+void pruneRandoms() {
+    for (auto it = randoms().begin(); it != randoms().end();) it = actorById(it->first) ? std::next(it) : randoms().erase(it);
+}
 
 std::optional<Vec3> randomTeleportSpot(BlockSource& region, Vec3 const& at, float width, float height) {
     // LivingEntity#randomTeleport(x, y, z, false): down to the first motion-blocking block below

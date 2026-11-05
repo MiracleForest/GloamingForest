@@ -167,6 +167,10 @@ void setProjectileOwner(Actor const& projectile, Actor* owner) {
     else owners()[uidOf(projectile)] = 0;
 }
 
+void pruneProjectiles() {
+    std::erase_if(owners(), [](auto const& kv) { return actorById(kv.first) == nullptr; });
+}
+
 void reflectBolt(Actor& bolt, Actor& by) {
     // shoot(look, 1.5, 0.1): normalized look plus a tiny triangle spread
     Vec3   look = viewVector(by);

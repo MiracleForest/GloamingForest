@@ -40,7 +40,12 @@ struct LichState {
     bool goalsAdded  = false;
     int  lastPropPhase = -1, lastPropShield = -1, lastPropClone = -1;
     bool lastInvisible = false;
+    std::uint64_t minionCountTick  = 0; ///< countMyMinions cache (one count per tick)
+    int           minionCountCache = 0;
 };
+
+/// Drops the per-tick minion count of `lich` (a minion was added or removed this tick).
+void forgetMinionCount(Mob& lich);
 
 /// The state of a Lich actor (nullptr: not a Lich).
 [[nodiscard]] LichState* lichState(Actor const& actor);
@@ -115,5 +120,8 @@ void registerMobs();
 void registerProjectiles();
 /// The per-tick work outside the actors' ticks (boss bar progress of phase 1).
 void levelTick();
+/// Drop the per-actor records of actors that are gone (levelTick, every 200 ticks).
+void pruneMobs();
+void pruneProjectiles();
 
 } // namespace gf::feature::lich

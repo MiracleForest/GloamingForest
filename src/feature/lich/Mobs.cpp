@@ -80,6 +80,7 @@ void findNewMaster(Mob& minion) {
         auto* lich = asMob(*a);
         if (!lich || isShadowClone(*lich) || !wantsNewMinion(*lich)) continue;
         setMinionMaster(minion, lich);
+        forgetMinionCount(*lich);
         makeMagicTrail(*lich, eyeOf(minion), eyeOf(*lich), 0.0F, 0.0F, 0.0F);
         setTarget(minion, targetOf(*lich));
         break;
@@ -320,7 +321,7 @@ void risingAiStep(Actor& a) {
             zombie->setPersistent();
         }
         rising().erase(uidOf(a));
-        discard(a);
+        discardLater(a);
         log().info("lich: a rising zombie became a zombie");
     }
 }
@@ -354,6 +355,7 @@ Mob* spawnMinion(Mob& lich, Vec3 const& pos, Actor* target) {
     Mob*        minion = spawnMob(lich.getDimensionBlockSource(), id, pos, lich.getRotation().y);
     if (!minion) return nullptr;
     setMinionMaster(*minion, &lich);
+    forgetMinionCount(lich);
     if (target) setTarget(*minion, target);
     // Mob#spawnAnim: 20 poof particles
     auto& r = randomOf(lich);
@@ -366,6 +368,13 @@ Mob* spawnMinion(Mob& lich, Vec3 const& pos, Actor* target) {
     }
     log().info("lich: minion summoned ({} left)", s ? s->minionsLeft - 1 : 0);
     return minion;
+}
+
+void pruneMobs() {
+    auto gone = [](std::int64_t uid) { return actorById(uid) == nullptr; };
+    std::erase_if(masters(), [&](auto const& kv) { return gone(kv.first); });
+    std::erase_if(lecterns(), [&](auto const& kv) { return gone(kv.first); });
+    std::erase_if(rising(), [&](auto const& kv) { return gone(kv.first); });
 }
 
 bool tomeOnLectern(Actor const& tome) {

@@ -1283,12 +1283,11 @@ void Segment::process(JigsawPiece&, PieceList& pieces, RandomSource& random, Jig
             WingBridge::tryRoomAndBridge(*this, pieces, random, c, true, 4, false, genDepth + 1, std::nullopt);
         }
     } else if (c.target == "gf:mob_bridge" && putMobBridge) {
+        // FrontAndTop.fromFrontAndTop(front, top.getOpposite()) of a horizontal jigsaw (top UP -> DOWN)
+        // names no FrontAndTop value: the roll is kept for the random sequence, the placement uses
+        // the jigsaw as it is
         JigsawRecord forPlacement = c;
-        if (!random.nextBoolean()) {
-            // FrontAndTop(front, top.getOpposite()): the bridge upside down (its other jigsaw)
-            forPlacement.top = opposite(c.top);
-            forPlacement.frontUp = !c.frontUp;
-        }
+        (void)random.nextBoolean();
         auto id = randomTemplate(random, tid("mob_bridge"));
         auto pc = pick(templatePos(), forPlacement, id, "gf:mob_bridge", random);
         if (!pc) return;

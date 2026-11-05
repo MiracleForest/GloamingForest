@@ -218,6 +218,7 @@ void popMob(Mob& lich, Mob& mob, bool absorb) {
     float mobPitch     = voicePitch(mob);
     animateTargetShatter(lich, mob);
     discard(mob);
+    forgetMinionCount(lich);
     if (!deathSound.empty()) playSoundAt(lich, pos, deathSound, 1.0F, mobPitch);
     auto& r = randomOf(lich);
     playSound(lich, "entity.twilightforest.lich.pop_mob", 3.0F, 0.4F + r.nextFloat() * 0.2F);
@@ -358,7 +359,7 @@ struct ShadowsGoal final : Goal {
     void checkForMaster() {
         if (!masterOf(m)) findNewMaster();
         Mob* master = masterOf(m);
-        if (!master || !master->isAlive() || phaseOf(*master) != 1) discard(m);
+        if (!master || !master->isAlive() || phaseOf(*master) != 1) discardLater(m);
     }
     void findNewMaster() {
         for (auto* a : actorsIn(m.getDimensionBlockSource(), dimOf(m), unitBoxInflated(m))) {
@@ -934,12 +935,22 @@ int countMyClones(Mob& lich) {
 }
 
 int countMyMinions(Mob& lich) {
+    // asked many times a tick (getPhase): counted once per tick and Lich
+    auto* s     = lichState(lich);
+    auto  level = ll::service::getLevel();
+    std::uint64_t tick = level ? level->getCurrentServerTick().tickID : 0;
+    if (s && s->minionCountTick == tick && tick != 0) return s->minionCountCache;
     int  n = 0;
     auto p = lich.getFeetPos();
     AABB box{Vec3{p.x - 32.0f, p.y - 16.0f, p.z - 32.0f}, Vec3{p.x + 33.0f, p.y + 17.0f, p.z + 33.0f}};
     for (auto* a : actorsIn(lich.getDimensionBlockSource(), dimOf(lich), box))
         if (isType(*a, kMinion) && a->isAlive() && minionMaster(*a) == &lich) ++n;
+    if (s) s->minionCountTick = tick, s->minionCountCache = n;
     return n;
+}
+
+void forgetMinionCount(Mob& lich) {
+    if (auto* s = lichState(lich)) s->minionCountTick = 0;
 }
 
 bool wantsNewMinion(Mob& lich) { return countMyMinions(lich) < kMaxActiveMinions; }
@@ -1196,6 +1207,13 @@ bool deflect(Mob& lich, Actor& projectile, Actor* owner) {
 }
 
 void levelTick() {
+    static int sweep = 0;
+    if (++sweep >= 200) {
+        sweep = 0;
+        pruneRandoms();
+        pruneMobs();
+        pruneProjectiles();
+    }
     // ServerTFBossBar of phase 1 shows the shield (the boss kit sets the health fraction every tick)
     for (auto it = states().begin(); it != states().end();) {
         auto* m = mobById(it->first);
