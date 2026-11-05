@@ -714,6 +714,7 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     // the minion and the tome are hostile: the player watches in creative mode, at noon, still
     (void)gf::selftest::runServerCommand("gamemode creative \"" + name + "\"", dim);
     (void)gf::selftest::runServerCommand("time set 6000", dim);
+    (void)gf::selftest::runServerCommand("gamerule sendcommandfeedback false", dim); // no teleport lines over the screenshots
     Vec3 eye{f.x, f.y + 1.62f, f.z};
     std::vector<std::int64_t> shown;
     std::map<std::int64_t, int> frozenRise;

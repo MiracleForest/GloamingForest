@@ -59,6 +59,33 @@ std::unordered_map<std::int64_t, std::int64_t>& owners() {
     return m;
 }
 
+std::uint64_t currentTick() {
+    auto level = ll::service::getLevel();
+    return level ? level->getCurrentServerTick().tickID : 0;
+}
+
+/// The lich bomb blasts of the last ticks (an explosion the engine applies after the bomb is gone
+/// still counts as the bomb's).
+struct Blast {
+    int           dim;
+    Vec3          pos;
+    std::uint64_t tick;
+    std::int64_t  owner;
+};
+std::vector<Blast>& recentBlasts() {
+    static std::vector<Blast> b;
+    return b;
+}
+/// The recent lich bomb blast whose reach (6 blocks) holds `victim`, if any.
+Blast const* blastAround(Actor const& victim) {
+    auto now = currentTick();
+    std::erase_if(recentBlasts(), [&](Blast const& b) { return now > b.tick + 2; });
+    auto p = victim.getPosition();
+    for (auto const& b : recentBlasts())
+        if (b.dim == dimOf(victim) && distSqr(p, b.pos) <= 36.0) return &b;
+    return nullptr;
+}
+
 bool isLiving(Actor const& a) { return a.isPlayer() || a.hasCategory(ActorCategory::Mob); }
 
 /// An ItemParticleOption burst (EntityEvent.DEATH / 3 of the projectiles).
@@ -198,27 +225,29 @@ void explodeBomb(Actor& bomb) {
     auto uid = uidOf(bomb);
     if (!exploding.insert(uid).second) return;
     auto pos = bomb.getPosition();
-    // EntityEvents#lichBombsDontBlowUpItems: the item entities in reach keep their place (the
-    // damage pipeline cancels their damage; one the engine removed by other means comes back)
+    // EntityEvents#lichBombsDontBlowUpItems (Detonate: getAffectedEntities().removeIf(ItemEntity)):
+    // the item entities in reach step out of the blast while it goes off and come back as they were;
+    // the damage pipeline also spares items from a blast it sees later (recentBlasts)
     struct Kept {
         std::int64_t uid;
-        ItemStack    stack;
         Vec3         at;
         Vec3         motion;
     };
     std::vector<Kept> kept;
     auto&             region = bomb.getDimensionBlockSource();
-    AABB              reach{Vec3{pos.x - 5.0f, pos.y - 5.0f, pos.z - 5.0f}, Vec3{pos.x + 5.0f, pos.y + 5.0f, pos.z + 5.0f}};
+    AABB              reach{Vec3{pos.x - 6.0f, pos.y - 6.0f, pos.z - 6.0f}, Vec3{pos.x + 6.0f, pos.y + 6.0f, pos.z + 6.0f}};
     for (auto* a : actorsIn(region, dimOf(bomb), reach))
-        if (a && a->getTypeName() == "minecraft:item")
-            kept.push_back(Kept{uidOf(*a), static_cast<ItemActor*>(a)->item(), a->getPosition(), a->getPosDelta()});
+        if (a && a->getTypeName() == "minecraft:item") {
+            kept.push_back(Kept{uidOf(*a), a->getPosition(), a->getPosDelta()});
+            teleportTo(*a, Vec3{a->getPosition().x, a->getPosition().y + 64.0f, a->getPosition().z});
+        }
+    recentBlasts().push_back(Blast{dimOf(bomb), pos, currentTick(), projectileOwner(bomb) ? uidOf(*projectileOwner(bomb)) : 0});
     level->explode(region, &bomb, pos, 2.0F, false, false, FLT_MAX, false);
-    // Bedrock's explosion destroys item actors on its own path (the damage pipeline never sees it)
-    // and pushes them: each one is put back as it was, a fresh actor with the same stack and motion
-    for (auto const& k : kept) {
-        if (auto* a = actorById(k.uid)) a->remove();
-        if (auto* again = level->getSpawner().spawnItem(region, k.stack, nullptr, k.at, 0)) setMotion(*again, k.motion);
-    }
+    for (auto const& k : kept)
+        if (auto* a = actorById(k.uid)) {
+            teleportTo(*a, k.at);
+            setMotion(*a, k.motion);
+        }
     exploding.erase(uid);
     owners().erase(uid);
     discard(bomb);
@@ -285,13 +314,21 @@ void registerProjectiles() {
     // EntityEvents#lichBombsDontBlowUpItems: a lich bomb's explosion leaves item entities alone
     gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
         if (d.victim.getTypeName() != "minecraft:item") return gf::combat::Verdict::Pass;
-        bool fromBomb = (d.direct && isType(*d.direct, kLichBomb)) || (d.attacker && isType(*d.attacker, kLichBomb));
+        bool fromBomb = (d.direct && isType(*d.direct, kLichBomb)) || (d.attacker && isType(*d.attacker, kLichBomb))
+                     || (damageTypeIn("minecraft:is_explosion", d.type) && blastAround(d.victim));
         return fromBomb ? gf::combat::Verdict::Cancel : gf::combat::Verdict::Pass;
     });
     // the bomb's explosion is TFDamageTypes.LICH_BOMB, attributed to the bomb's owner
     gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
         Actor* bomb = d.direct && isType(*d.direct, kLichBomb) ? d.direct : d.attacker && isType(*d.attacker, kLichBomb) ? d.attacker : nullptr;
-        if (!bomb) return gf::combat::Verdict::Pass;
+        if (!bomb) {
+            // the blast of a bomb already gone: still the bomb's damage, the owner's kill
+            Blast const* b = !d.direct && !d.attacker && damageTypeIn("minecraft:is_explosion", d.type) ? blastAround(d.victim) : nullptr;
+            if (!b) return gf::combat::Verdict::Pass;
+            d.type = "twilightforest:lich_bomb";
+            if (b->owner) d.attacker = actorById(b->owner);
+            return gf::combat::Verdict::Pass;
+        }
         d.type     = "twilightforest:lich_bomb";
         d.direct   = bomb;
         d.attacker = projectileOwner(*bomb);
