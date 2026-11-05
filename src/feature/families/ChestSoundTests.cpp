@@ -559,16 +559,18 @@ GF_REGISTER_SELFTEST("families.chest_sounds_double", [](Context& ctx) -> ll::cor
 
 GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::coro::CoroTask<> {
     // Java: BlockItem#place plays the block's SoundType#getPlaceSound once at the block, also when a
-    // SimpleWaterloggedBlock takes the water it is placed into. Bedrock plays the place sound of a
-    // block placed into water as LevelSoundEvent PlaceInWater (the type's place_in_water, which
-    // tools/families defines as its place event): a player placing a TF waterloggable slab or stairs
-    // into a water source makes exactly one place sound, and it is PlaceInWater (Place and ItemUseOn
-    // are counted too, so a second sound of another kind fails the test).
-    // These are the server's sends (the broadcast to the other players, here a listener). Whether
-    // the placing player's own client predicts a second sound locally is not visible on the server:
-    // the client e2e (tools/e2e/client/scenarios/families.ps1) covers it through the content log,
-    // which must show no "No sound found ... place_in_water" verbose line.
-    std::string const kPlaceInWater = "event:" + std::to_string(static_cast<int>(SharedTypes::Legacy::LevelSoundEvent::PlaceInWater));
+    // SimpleWaterloggedBlock takes the water it is placed into. Bedrock's placing client plays the
+    // place sound of a block placed into water as LevelSoundEvent PlaceInWater (the type's
+    // place_in_water, which tools/families defines as its place event): a player placing a TF waterloggable slab or stairs
+    // into a water source makes exactly one place sound (PlaceInWater, Place and ItemUseOn are all
+    // counted, so a second sound of another kind fails the test).
+    // These are the server's sends: the game broadcasts LevelSoundEvent Place (the type's place
+    // event, Java's place sound) to the other players, here a listener, past the placing player,
+    // whose own client plays the sound itself as PlaceInWater (the type's place_in_water). That
+    // client-side sound is not visible on the server: the client e2e
+    // (tools/e2e/client/scenarios/families.ps1) places a slab into water and fails on a content-log
+    // "No sound found ... 'place_in_water'" line.
+    std::string const kPlace = "event:" + std::to_string(static_cast<int>(SharedTypes::Legacy::LevelSoundEvent::Place));
     constexpr char const* kCandidates[] = {"twilightforest:twilight_oak_slab", "twilightforest:castle_brick_stairs"};
     std::vector<std::string> ids;
     for (auto const* id : kCandidates) {
@@ -635,8 +637,8 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
         auto place = sent;
         std::erase_if(place, [&](HeardSound const& h) { return !placeSound(h); });
         ctx.check(place.size() == 1, id + ": one place sound for the block placed into water (sent: " + describe(sent) + ")");
-        // the block kept the water: the sound is the type's place_in_water (tools/families' definition)
-        if (place.size() == 1) ctx.check(place[0].name == kPlaceInWater, id + ": the place sound is LevelSoundEvent PlaceInWater (sent: " + describe(sent) + ")");
+        // the others hear the type's place event, as for a block placed in the air
+        if (place.size() == 1) ctx.check(place[0].name == kPlace, id + ": the others hear LevelSoundEvent Place (sent: " + describe(sent) + ")");
         ctx.setBlock(w, "minecraft:air");
     }
     (void)box;
