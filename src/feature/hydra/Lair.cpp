@@ -103,6 +103,10 @@ void replaceBlocksDome(st::Region& region, BlockPos const& center, float radius,
 
 // ---- HydraLairComponent ------------------------------------------------------------------------------
 
+int gSpeleothemTries = 0; ///< lattice points that got a speleothem try (selftests)
+
+int speleothemTriesForTest() { return gSpeleothemTries; }
+
 HydraLair::HydraLair(int depth, int x, int y, int z) : HollowHill(kPieceType, depth, 2, x, y + 2, z, kSpeleothem), mBaseOffset(bbox.minY - y) {}
 
 void HydraLair::addChildren(Piece&, std::vector<std::unique_ptr<Piece>>&, RandomSource&) {
@@ -139,6 +143,7 @@ void HydraLair::generateSpeleothems(Region& region, RandomSource& rand, BlockBox
         if (distSq > rand.nextFloat() * 0.9F * radiusSq) continue;
         // an absolute height (TF sets the lattice position's y, not a piece-relative one)
         dest.y = speleothemBase + core::mth::floorf(core::jrand::mthCos(std::sqrt(distSq) / static_cast<float>(hdiam) * 3.1415927F) * (static_cast<float>(hdiam) / 4.0F));
+        ++gSpeleothemTries;
         if (rand.nextFloat() < ch::kStalactiteChance) generateSpeleothem(region, dest, writeableBounds, true);
         if (rand.nextFloat() < ch::kStalagmiteChance) {
             if ((rand.nextFloat() * 0.667F + 0.333F) * distSq / radiusSq < 0.333F) continue;
@@ -250,7 +255,17 @@ public:
         if (!mClip.contains(pos.x, pos.y, pos.z)) return false;
         return game::setBlock(mSource, pos, block);
     }
-    [[nodiscard]] int height(worldgen::Heightmap, int, int) const override { return mClip.minY; }
+    /// The heightmaps of the clipped column (the hill the test built included): one above the top
+    /// motion-blocking block (leaves skipped for the *_NO_LEAVES map), the clip's floor without one.
+    [[nodiscard]] int height(worldgen::Heightmap map, int x, int z) const override {
+        for (int y = mClip.maxY; y >= mClip.minY; --y) {
+            Block const& b = mSource.getBlock(BlockPos{x, y, z});
+            if (kit::isAir(b) || !kit::blocksMotion(b)) continue;
+            if (map == worldgen::Heightmap::MotionBlockingNoLeaves && kit::isLeaves(b)) continue;
+            return y + 1;
+        }
+        return mClip.minY;
+    }
     [[nodiscard]] std::string biome(BlockPos const&) const override { return "twilightforest:fire_swamp"; }
     [[nodiscard]] std::int64_t seed() const override { return mSeed; }
     [[nodiscard]] int dimension() const override { return static_cast<int>(mSource.getDimensionId()); }

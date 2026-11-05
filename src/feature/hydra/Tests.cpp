@@ -31,6 +31,7 @@
 #include "mc/world/phys/AABB.h"
 
 #include "core/hydra/Head.h"
+#include "core/hydra/Lair.h"
 #include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
 #include "feature/entity/Entity.h"
@@ -144,7 +145,7 @@ double dist(Vec3 const& a, Vec3 const& b) { return std::sqrt((a.x - b.x) * (a.x 
 // The lair piece (HydraLairComponent#postProcess, rule R19): stone dome, grass patch, speleothems,
 // the boss spawner at local (27, 3, 27); a golden volume hash of the clipped test volume.
 GF_REGISTER_SELFTEST("hydra.lair_golden", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box    = co_await ctx.flatArea(2400, 80, 48);
+    auto box    = co_await ctx.flatArea(2400, 80, 64); // up to the hill's roof (the stalactites' heightmap)
     auto region = ctx.region();
     ctx.require(region != nullptr, "test region");
     // a known floor: four layers of dirt at the bottom of the volume, grass on top
@@ -174,6 +175,21 @@ GF_REGISTER_SELFTEST("hydra.lair_golden", [](Context& ctx) -> ll::coro::CoroTask
             if (game::blockIdAt(*region, BlockPos{x, box.minY, z}) == "minecraft:stone") ++stone;
     ctx.check(stone > 1000, "the dome turned the dirt to stone (" + std::to_string(stone) + " columns)");
     // the ore stalactites (iron, coal, copper, glowstone, gold, redstone) hang inside the volume
+    {
+        int  hill = 0;
+        auto c    = ch::boxCenter(pieceBox);
+        std::string profile;
+        for (int y = cy; y <= box.maxY; ++y) {
+            auto id = game::blockIdAt(*region, BlockPos{c.x + 10, y, c.z + 10});
+            profile += id == "minecraft:air" ? '.' : (id.ends_with("_ore") ? 'o' : '#');
+        }
+        for (int x = box.minX; x <= box.maxX; ++x)
+            for (int z = box.minZ; z <= box.maxZ; ++z)
+                for (int y = cy; y <= box.maxY; ++y)
+                    if (game::blockIdAt(*region, BlockPos{x, y, z}) != "minecraft:air") ++hill;
+        ctx.info("hill blocks above the ground " + std::to_string(hill) + ", speleothem tries " + std::to_string(speleothemTriesForTest()) + ", column at the centre +10 from y " +
+                 std::to_string(cy) + ": " + profile);
+    }
     int ores = 0;
     for (int x = box.minX; x <= box.maxX; ++x)
         for (int z = box.minZ; z <= box.maxZ; ++z)

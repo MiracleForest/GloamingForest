@@ -46,6 +46,9 @@ private:
 /// Builds the lair piece of a start at (x, y, z) and post-processes it into `region`, writing only
 /// inside `clip` (selftests: the golden volume hash), as TF builds it at sea level, translated to
 /// `y`. Returns the piece's box.
+/// Lattice points of all lairs built so far that tried a speleothem (selftests).
+int speleothemTriesForTest();
+
 /// With `terraform` the hill of the lair's terraformer is built first (a flat ground at y).
 core::BlockBox placeLairForTest(BlockSource& region, core::BlockBox const& clip, int x, int y, int z, std::int64_t seed, bool terraform = false);
 
