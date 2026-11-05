@@ -8,7 +8,9 @@
 
 #include "ll/api/coro/CoroTask.h"
 
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
+#include "mc/entity/components_json_legacy/InsomniaComponent.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
@@ -81,6 +83,7 @@ GF_REGISTER_SELFTEST("tgear.modifier_recipes", [](Context& ctx) {
     int checked = 0;
     for (auto const* type : {"twilightforest:travellers_gear_modifier_shaped_recipe", "twilightforest:travellers_gear_modifier_shapeless_recipe"}) {
         for (auto const* r : gf::recipes::ofType(type)) {
+            if (!r->id.starts_with("twilightforest:add_modifier_to_travellers_gear/")) continue;
             auto mod  = r->data.value("modifier_key", std::string());
             auto slash = r->id.find('/');
             auto gear = "twilightforest:" + r->id.substr(slash + 1, r->id.find('/', slash + 1) - slash - 1);
@@ -383,9 +386,33 @@ GF_REGISTER_SELFTEST("tgear.red_thread", [](Context& ctx) -> ll::coro::CoroTask<
     auto const& block = region->getBlock(bp);
     // placed against the ground (clicked face up = 1): attached down
     std::string id = tg::ids::kRedThread, item = tg::ids::kRedThread;
-    gf::interactions::PlaceContext pc{ctx.player(), item, block, id, pos, gf::core::GlobalPos{pos.x, pos.y - 1, pos.z, pos.dim}, 1, {0.5, 1.0, 0.5}, false};
+    gf::interactions::PlaceContext pc{ctx.player(), item, block, id, pos, gf::core::GlobalPos{pos.dim, pos.x, pos.y - 1, pos.z}, 1, {0.5, 1.0, 0.5}, false};
     gf::interactions::dispatchPlace(pc);
     auto const& placed = region->getBlock(bp);
     ctx.check(gf::game::intState(placed, "twilightforest:down").value_or(0) == 1, "the thread lies on the ground");
     ctx.check(gf::game::intState(placed, "twilightforest:up").value_or(0) == 0, "and not on the ceiling");
+});
+
+GF_REGISTER_SELFTEST("tgear.all_night_goggles", [](Context& ctx) -> ll::coro::CoroTask<> {
+    {
+        auto& p = ctx.player();
+        clearArmor(p);
+        auto goggles = make(tg::ids::kGoggles);
+        tg::addModifier(goggles, tg::ids::kAllNight);
+        p.setArmor(Slot::Head, goggles);
+        auto insomnia = p.getEntityContext().tryGetComponent<InsomniaComponent>();
+        if (!insomnia) {
+            ctx.info("the simulated player has no insomnia component: nothing to check");
+            clearArmor(p);
+            co_return;
+        }
+        insomnia->mTimeSinceRest = 100000;
+    }
+    co_await ctx.ticks(2);
+    {
+        auto& p        = ctx.player();
+        auto insomnia = p.getEntityContext().tryGetComponent<InsomniaComponent>();
+        ctx.check(insomnia && insomnia->mTimeSinceRest < 10, "the goggles keep the time since rest at 0 (no phantoms)");
+        clearArmor(p);
+    }
 });

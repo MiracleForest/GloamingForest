@@ -16,13 +16,15 @@
 // while Shift is held (TF's Shift tooltip; the rest of the tooltip is the server's lore).
 #ifdef GF_CLIENT
 
+#include <algorithm>
+#include <array>
 #include <atomic>
 #include <cmath>
 #include <optional>
 #include <vector>
 
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
-#include "mc/world/actor/player/LocalPlayer.h"
+#include "mc/client/player/LocalPlayer.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -135,17 +137,17 @@ struct Widget {
 
 bool natural(Dimension const& dim) {
     auto id = static_cast<int>(dim.getDimensionId());
-    return id == 0 || feature::world::isTwilight(dim);
+    return id == 0 || gf::world::isTwilight(dim);
 }
 
 std::int64_t dayTime(Player const& player) {
-    if (feature::world::isTwilight(player.getDimension()))
-        if (auto fixed = feature::world::fixedTime()) return *fixed;
+    if (gf::world::isTwilight(player.getDimension()))
+        if (auto fixed = gf::world::fixedTime()) return *fixed;
     return player.getLevel().getTime();
 }
 
 bool use24Hours() {
-    auto const& cfg = config::get<tg::TgearConfig>().itemDisplay;
+    auto const& cfg = gf::config::get<tg::TgearConfig>().itemDisplay;
     if (cfg.followLocale) {
         auto loc = clientLocale();
         return !(loc == "en_US" || loc == "en_CA" || loc == "en_AU");
@@ -222,7 +224,7 @@ void drawHud(screen::Canvas& canvas, float) {
     std::stable_sort(widgets.begin(), widgets.end(), [](Widget const& a, Widget const& b) {
         return (a.type == core::tgear::DisplayType::Map) > (b.type == core::tgear::DisplayType::Map);
     });
-    auto const& cfg   = config::get<tg::TgearConfig>().itemDisplay;
+    auto const& cfg   = gf::config::get<tg::TgearConfig>().itemDisplay;
     float       scale = static_cast<float>(cfg.screenScale);
     float       x0    = static_cast<float>(cfg.screenOffsetX);
     float       y     = static_cast<float>(cfg.screenOffsetY);

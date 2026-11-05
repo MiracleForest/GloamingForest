@@ -69,7 +69,7 @@ public:
         static bool once = false;
         if (once) return;
         once = true;
-        for (auto const* id : kGearItems) item::addTooltip(id, &gearLines);
+        for (auto const* id : kGearItems) gf::item::addTooltip(id, &gearLines);
     }
     void uninstall() {}
 };

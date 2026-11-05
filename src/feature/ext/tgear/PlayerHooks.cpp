@@ -18,6 +18,7 @@
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/AttributeInstanceRef.h"
 #include "mc/world/attribute/MutableAttributeWithContext.h"
 #include "mc/world/item/ItemStack.h"

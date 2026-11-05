@@ -147,7 +147,7 @@ void registerRecipes() {
             );
             // a potion ingredient: one BP recipe per potion (assets/pack/bp/recipes/tgear)
             for (int v = 1; v <= 3; ++v) recipes::ext::addSpecialLayout(r->id, r->id + "_" + std::to_string(v));
-            ++n;
+            if (r->id.starts_with("twilightforest:")) ++n;
         }
     }
     recipes::registerSpecialCrafting(

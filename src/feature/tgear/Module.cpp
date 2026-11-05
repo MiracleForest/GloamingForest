@@ -30,7 +30,10 @@
 #include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
+#include "mc/entity/components_json_legacy/InsomniaComponent.h"
+#include "mc/entity/components_json_legacy/ProjectileComponent.h"
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
@@ -120,8 +123,8 @@ void hiddenEffect(Player& player, unsigned id, int amplifier) {
 
 /// Level#isDay for the auto repair boost: !fixed time and skyDarken < 4 (Java's formula over the
 /// dimension's time of day; the weather terms are left out).
-bool isDay(Dimension& dim) {
-    float  t  = dim.getTimeOfDay(1.f);
+bool isDay(Dimension& dim, int time) {
+    float  t  = dim.getTimeOfDay(time, 1.f);
     double d2 = 0.5 + 2.0 * std::clamp(std::cos(t * 6.283185307179586), -0.25, 0.25);
     int    darken = static_cast<int>((1.0 - d2) * 11.0);
     return darken < 4;
@@ -138,6 +141,10 @@ void tickPlayer(Player& player, std::int64_t now) {
     if (isActive(player, ids::kStealth) && player.isSneaking()) hiddenEffect(player, kInvisibilityEffect, 0);
     autoRepair(player, now);
     tickDisplayMap(player);
+    // TravellersGearEvents#cancelPhantomSpawns: Bedrock spawns phantoms once the insomnia component's
+    // time since rest passes its threshold; the active goggles keep it at 0
+    if (isActive(player, ids::kAllNight))
+        if (auto insomnia = player.getEntityContext().tryGetComponent<InsomniaComponent>()) insomnia->mTimeSinceRest = 0;
 }
 
 /// TravellersGearEvents#magnetizeArrows for vanilla arrows: an arrow of a player wearing the modifier
@@ -242,7 +249,7 @@ void onArmorHurt(Player& player, std::array<ItemStack, 4> const& before) {
 // ---- perfect dodge -------------------------------------------------------------------------------------
 
 combat::Verdict onIncoming(combat::DamageInfo& d) {
-    if (!d.direct || d.direct == &d.victim || !d.direct->hasCategory(ActorCategory::Projectile)) return combat::Verdict::Pass;
+    if (!d.direct || d.direct == &d.victim || !d.direct->getEntityContext().tryGetComponent<ProjectileComponent>()) return combat::Verdict::Pass;
     return rollPerfectDodge(d.victim, d.direct) ? combat::Verdict::Cancel : combat::Verdict::Pass;
 }
 
@@ -314,7 +321,7 @@ int autoRepair(Player& player, std::int64_t now) {
         BlockPos pos  = game::blockPosOf(player.getPosition());
         bool     sky  = player.getDimensionBlockSource().canSeeSky(pos);
         double   base = numberOf(ids::kAutoRepair, 0.001);
-        double   p    = core::tgear::autoRepairChance(base, sky, world::isTwilight(dim), isDay(dim));
+        double   p    = core::tgear::autoRepairChance(base, sky, gf::world::isTwilight(dim), isDay(dim, player.getLevel().getTime()));
         if (p > nextFloat()) {
             stack.setDamageValue(static_cast<short>(std::max(stack.getDamageValue() - 1, 0)));
             player.setArmor(static_cast<Slot>(i), stack);
@@ -369,12 +376,12 @@ namespace {
 class TgearModule {
 public:
     void install() {
-        ext::tgear::installHooks();
+        gf::ext::tgear::installHooks();
         static bool once = false;
         if (!once) {
             once = true;
-            ext::tgear::onArmorHurt(&onArmorHurt);
-            ext::tgear::setMovementExhaustionDivisor([](Player& p) {
+            gf::ext::tgear::onArmorHurt(&onArmorHurt);
+            gf::ext::tgear::setMovementExhaustionDivisor([](Player& p) {
                 // PlayerHooks: movement exhaustion divided by the efficient eater component (2)
                 return isActive(p, ids::kEfficientEater) ? static_cast<float>(numberOf(ids::kEfficientEater, 2.0)) : 1.f;
             });
@@ -395,7 +402,7 @@ public:
         });
     }
     void uninstall() {
-        ext::tgear::uninstallHooks();
+        gf::ext::tgear::uninstallHooks();
         ll::event::EventBus::getInstance().removeListener(mTick);
         ll::event::EventBus::getInstance().removeListener(mLeave);
     }

@@ -46,8 +46,10 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   CREATIVE_ONLY.
 - Perfect dodge cancels the projectile's damage (combat contract); the projectile is not made to pass
   through as TF's cancelled impact does.
-- All-night goggles: no phantom spawn prevention and no ender mask (Bedrock's insomnia and enderman
-  gaze are not reachable through a contract yet).
+- All-night goggles: phantoms are kept away by holding the wearer's insomnia counter (Bedrock's
+  InsomniaComponent time since rest) at 0 while the modifier is active; TF only denies the spawn event and
+  lets the counter run on. No ender mask: Bedrock's enderman gaze check is data-driven (the vanilla
+  enderman's carved pumpkin filter) and no contract reaches it.
 - Item display: the map in the HUD is drawn from the client's map view (F12's maps::view) as coloured
   runs at TF's 0.7075 scale, without the map decorations; only vanilla filled maps tick from the goggles.
   The compass shows the player position (no lodestone line). `twentyFourHourFormat` follows the
