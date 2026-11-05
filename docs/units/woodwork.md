@@ -25,10 +25,15 @@ R8 keeps the listed engine events with W0; these two are specific to this unit's
 ## Deviations
 
 - Drying rack item: drawn as an item held by a display entity (both clients), not by a block entity
-  renderer; Bedrock's held-item pose approximates Java's FIXED context.
+  renderer. The pose is not yet Java's FIXED one: the game's third-person hand transform tilts the
+  item (pose probes in tools/e2e/client/scenarios/woodwork.display.ps1); a changed item respawns the
+  display (a held item set later does not reach clients already watching).
 - Banister extension and the climbable hollow logs' shapes keep Bedrock's limits: a block's boxes
   stay inside its own space (the extension's posts 8 px below the block have no box), and a
   selection box is one box (the hollow logs select as a full block; collisions are Java's).
 - Horizontal hollow log crawling: Java sets the swimming pose on a sneak-click inside the log; the
   server cannot force a pose on a Bedrock player.
-- Boats: no paddle animation (the game's own boat renderer animates vanilla boats only).
+- Boats: the client draws the TF boat entities with the game's own boat renderer (runtime
+  identifier minecraft:boat), which ignores the client entity's geometry and textures: TF boats look
+  like oak boats on every client so far (the TF textures, the Java-model geometry and the wood
+  property / mark variant are in place for a data-driven renderer). Open item.

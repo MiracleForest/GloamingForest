@@ -96,6 +96,12 @@ void refresh(GlobalPos const& gp) {
     auto [where, yaw] = placement(pos, stateOf(region->getBlock(pos), "twilightforest:facing"), r->item);
     Actor* a = entityById(displayIdAt(*region, pos));
     if (a && (!a->isAlive() || a->getTypeName() != kDisplayType)) a = nullptr;
+    // a held item set later does not reach the clients that already see the entity: a new item
+    // gets a new display entity (its spawn carries the item)
+    if (a && !game::items::sameItemSameData(a->getCarriedItem(), r->item)) {
+        a->remove();
+        a = nullptr;
+    }
     if (!a) {
         auto& level = region->getLevel();
         auto  ctx   = level.getActorFactory().createSpawnedActor(ActorDefinitionIdentifier(std::string(kDisplayType)), nullptr, where, Vec2{0.f, yaw});
@@ -107,6 +113,7 @@ void refresh(GlobalPos const& gp) {
         }
         a = level.addEntity(*region, std::move(ctx));
         if (!a) return;
+        a->setCarriedItem(r->item);
         a->addTag("gf_drying_rack");
         bd::set(*region, pos, kDisplayKey, a->getOrCreateUniqueID().rawID);
     }
