@@ -746,13 +746,26 @@ void installSnowQueen() {
     gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
         auto* parent = gf::entity::ext::parentOf(d.victim);
         if (!parent || parent->getTypeName() != kSnowQueen) return gf::combat::Verdict::Pass;
-        if (!d.direct || pierceLevel(*d.direct) <= 0) {
-            gf::log().info("aurora: a shield hit by {} (direct {}, pierce {})", d.type, d.direct ? d.direct->getTypeName() : std::string("none"), d.direct ? pierceLevel(*d.direct) : 0);
-            return gf::combat::Verdict::Pass;
+        // the arrow: the damage's direct entity, or (F10 reports an arrow's hit with the shooter as
+        // the direct entity, type minecraft:thrown) the piercing arrow at the shield
+        Actor* projectile = d.direct && pierceLevel(*d.direct) > 0 ? d.direct : nullptr;
+        if (!projectile && (d.type == "minecraft:thrown" || d.type == "minecraft:arrow" || d.type == "minecraft:projectile")) {
+            AABB   b = d.victim.getAABB();
+            AABB   near{Vec3{b.min.x - 1.5f, b.min.y - 1.5f, b.min.z - 1.5f}, Vec3{b.max.x + 1.5f, b.max.y + 1.5f, b.max.z + 1.5f}};
+            double best = 1e9;
+            for (auto* e : fe::actorsIn(d.victim.getDimensionBlockSource(), static_cast<int>(d.victim.getDimensionId()), near)) {
+                if (!e || !e->isAlive() || pierceLevel(*e) <= 0) continue;
+                double dist = mobs::distanceSqr(d.victim, *e);
+                if (dist < best) {
+                    best       = dist;
+                    projectile = e;
+                }
+            }
         }
-        auto arrow = d.direct->getOrCreateUniqueID().rawID;
-        auto v     = gf::projectile::ext::isProjectile(*d.direct) ? gf::projectile::ext::velocity(*d.direct) : d.direct->getPosDelta();
-        auto at    = feet(*d.direct);
+        if (!projectile) return gf::combat::Verdict::Pass;
+        auto arrow = projectile->getOrCreateUniqueID().rawID;
+        auto v     = gf::projectile::ext::isProjectile(*projectile) ? gf::projectile::ext::velocity(*projectile) : projectile->getPosDelta();
+        auto at    = feet(*projectile);
         gf::interactions::nextTick([arrow, v, at] {
             auto* a = fe::actorById(arrow);
             if (!a || !a->isAlive()) return;
