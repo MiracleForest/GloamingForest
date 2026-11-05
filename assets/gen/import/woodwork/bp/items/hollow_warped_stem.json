@@ -15,6 +15,12 @@
       },
       "minecraft:display_name": {
         "value": "item.twilightforest:hollow_warped_stem.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:hollow_warped_stem_vertical"
+      },
+      "minecraft:fuel": {
+        "duration": 15
       }
     }
   }

@@ -1,0 +1,27 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:boat",
+      "materials": {
+        "default": "entity"
+      },
+      "textures": {
+        "twilight_oak": "textures/twilightforest/entity/boat/twilight_oak",
+        "canopy": "textures/twilightforest/entity/boat/canopy",
+        "mangrove": "textures/twilightforest/entity/boat/mangrove",
+        "dark": "textures/twilightforest/entity/boat/dark",
+        "time": "textures/twilightforest/entity/boat/time",
+        "transformation": "textures/twilightforest/entity/boat/transformation",
+        "mining": "textures/twilightforest/entity/boat/mining",
+        "sorting": "textures/twilightforest/entity/boat/sorting"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.boat"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.boat"
+      ]
+    }
+  }
+}

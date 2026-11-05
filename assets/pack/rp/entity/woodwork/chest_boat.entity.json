@@ -1,0 +1,27 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:chest_boat",
+      "materials": {
+        "default": "entity"
+      },
+      "textures": {
+        "twilight_oak": "textures/twilightforest/entity/chest_boat/twilight_oak",
+        "canopy": "textures/twilightforest/entity/chest_boat/canopy",
+        "mangrove": "textures/twilightforest/entity/chest_boat/mangrove",
+        "dark": "textures/twilightforest/entity/chest_boat/dark",
+        "time": "textures/twilightforest/entity/chest_boat/time",
+        "transformation": "textures/twilightforest/entity/chest_boat/transformation",
+        "mining": "textures/twilightforest/entity/chest_boat/mining",
+        "sorting": "textures/twilightforest/entity/chest_boat/sorting"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.chest_boat"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.chest_boat"
+      ]
+    }
+  }
+}

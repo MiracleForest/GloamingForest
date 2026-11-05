@@ -15,6 +15,12 @@
       },
       "minecraft:display_name": {
         "value": "item.twilightforest:hollow_spruce_log.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:hollow_spruce_log_vertical"
+      },
+      "minecraft:fuel": {
+        "duration": 15
       }
     }
   }

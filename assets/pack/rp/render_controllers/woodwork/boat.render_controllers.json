@@ -1,0 +1,55 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.twilightforest.boat": {
+      "arrays": {
+        "textures": {
+          "Array.woods": [
+            "Texture.twilight_oak",
+            "Texture.canopy",
+            "Texture.mangrove",
+            "Texture.dark",
+            "Texture.time",
+            "Texture.transformation",
+            "Texture.mining",
+            "Texture.sorting"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.woods[q.property('twilightforest:wood')]"
+      ]
+    },
+    "controller.render.twilightforest.chest_boat": {
+      "arrays": {
+        "textures": {
+          "Array.woods": [
+            "Texture.twilight_oak",
+            "Texture.canopy",
+            "Texture.mangrove",
+            "Texture.dark",
+            "Texture.time",
+            "Texture.transformation",
+            "Texture.mining",
+            "Texture.sorting"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.woods[q.property('twilightforest:wood')]"
+      ]
+    }
+  }
+}
