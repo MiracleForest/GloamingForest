@@ -138,6 +138,21 @@ LL_TYPE_INSTANCE_HOOK(
     origin(user, packet);
 }
 
+// Packet::sendTo(Player) (gf::fx::sound) goes through this overload
+LL_TYPE_INSTANCE_HOOK(
+    FamiliesSoundToNetIdHook,
+    ll::memory::HookPriority::Normal,
+    LoopbackPacketSender,
+    static_cast<void (LoopbackPacketSender::*)(NetworkIdentifier const&, Packet const&, SubClientId)>(&LoopbackPacketSender::$sendToClient),
+    void,
+    NetworkIdentifier const& id,
+    Packet const&            packet,
+    SubClientId              sub
+) {
+    inspect(packet);
+    origin(id, packet, sub);
+}
+
 LL_TYPE_INSTANCE_HOOK(
     FamiliesSoundToClientsHook,
     ll::memory::HookPriority::Normal,
@@ -171,6 +186,7 @@ public:
     SoundCapture() {
         if (soundLog().captures.fetch_add(1) == 0) {
             FamiliesSoundToUserHook::hook();
+            FamiliesSoundToNetIdHook::hook();
             FamiliesSoundToClientsHook::hook();
             FamiliesSoundBroadcastHook::hook();
         }
@@ -179,6 +195,7 @@ public:
     ~SoundCapture() {
         if (soundLog().captures.fetch_sub(1) == 1) {
             FamiliesSoundToUserHook::unhook();
+            FamiliesSoundToNetIdHook::unhook();
             FamiliesSoundToClientsHook::unhook();
             FamiliesSoundBroadcastHook::unhook();
         }
