@@ -20,6 +20,7 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
 
@@ -576,25 +577,33 @@ GF_REGISTER_SELFTEST("progression.chicken_jockey", [](Context& ctx) -> ll::coro:
     resetProgress(ctx.player());
     auto base = ctx.testPos(1404, 3);
     ctx.require(co_await ctx.ensureLoaded(base), "the test position is loaded");
-    auto jockey = [&](std::string const& name) -> Actor* {
-        auto* p = playerById(id);
-        if (!p) return nullptr;
-        Vec3 pos{static_cast<float>(base.x) + 0.5f, static_cast<float>(base.y) + 1.0f, static_cast<float>(base.z) + 0.5f};
-        auto& region  = p->getDimensionBlockSource();
-        auto* chicken = gf::spawn::spawnMob(region, "minecraft:chicken", pos, gf::spawn::SpawnReason::MobSummoned);
-        auto* zombie  = gf::spawn::spawnMob(region, "minecraft:zombie", pos, gf::spawn::SpawnReason::MobSummoned);
-        if (!chicken || !zombie) return nullptr;
-        zombie->setNameTag(name);
-        (void)gf::selftest::runServerCommand("event entity @e[name=" + name + "] minecraft:as_baby", base.dim);
-        zombie->startRiding(*chicken, true);
-        return zombie;
-    };
-    auto jerky = gf::game::items::make("twilightforest:chicken_jerky", 1);
+    // hostile mobs cannot be summoned in peaceful: easy while the test runs
+    struct EasyScope {
+        SharedTypes::Legacy::Difficulty previous = SharedTypes::Legacy::Difficulty::Peaceful;
+        EasyScope() {
+            if (auto level = ll::service::getLevel()) {
+                previous = level->getDifficulty();
+                if (previous == SharedTypes::Legacy::Difficulty::Peaceful) level->setDifficulty(SharedTypes::Legacy::Difficulty::Easy);
+            }
+        }
+        ~EasyScope() {
+            if (auto level = ll::service::getLevel()) level->setDifficulty(previous);
+        }
+    } easy;
+    // a baby zombie (spawn event minecraft:as_baby) riding a chicken, both summoned by name
+    auto jockey = [&](std::string const& name) -> bool {
+        auto at = std::to_string(base.x) + " " + std::to_string(base.y + 1) + " " + std::to_string(base.z);
+        auto c1 = gf::selftest::runServerCommand("summon minecraft:chicken " + at + " 0 0 minecraft:entity_spawned " + name + "_mount", base.dim);
+        auto c2 = gf::selftest::runServerCommand("summon minecraft:zombie " + at + " 0 0 minecraft:as_baby " + name, base.dim);
+        auto c3 = gf::selftest::runServerCommand("ride @e[name=" + name + "] start_riding @e[name=" + name + "_mount] teleport_rider", base.dim);
+        if (!c1 || !c2 || !c3) ctx.info("jockey commands: " + c1.messages + " / " + c2.messages + " / " + c3.messages);
+        return c1 && c2 && c3;
+    };    auto jerky = gf::game::items::make("twilightforest:chicken_jerky", 1);
     ctx.require(jerky.has_value(), "chicken jerky exists");
     playerById(id)->setSelectedItem(*jerky);
     // a blow whose direct entity is another entity (a projectile's place): not the jerky's holder
     {
-        ctx.require(jockey("gf_jockey_a") != nullptr, "a jockey spawns");
+        ctx.require(jockey("gf_jockey_a"), "a jockey spawns");
         co_await ctx.ticks(2);
         Actor* rider = nullptr;
         auto   level = ll::service::getLevel();
@@ -607,7 +616,7 @@ GF_REGISTER_SELFTEST("progression.chicken_jockey", [](Context& ctx) -> ll::coro:
         ctx.check(!pr::has(*playerById(id), "twilightforest:chicken_jerky"), "a kill whose direct entity is not the player does not count");
     }
     {
-        ctx.require(jockey("gf_jockey_b") != nullptr, "a second jockey spawns");
+        ctx.require(jockey("gf_jockey_b"), "a second jockey spawns");
         co_await ctx.ticks(2);
         Actor* rider = nullptr;
         for (auto* a : ll::service::getLevel()->getRuntimeActorList())

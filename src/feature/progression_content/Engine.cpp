@@ -352,11 +352,16 @@ public:
         // captured in F10's lethal pipeline (last, so only deaths nobody prevents) and read back
         // when F10 fires onKilled after die()
         death::onLethal(-1000000, [](Actor& victim, combat::DamageInfo const& d) {
-            // only kills a player can be credited with (the attacker is the responsible entity)
-            if (victim.isClientSide() || !d.attacker || !d.attacker->isPlayer()) return false;
+            // only kills a player can be credited with; the direct entity is the one of the two
+            // source entities that is not the player (whichever way round the damage source names
+            // them: F10's combat::entitiesOf reads a child-actor source's ids as (owner, child))
+            if (victim.isClientSide()) return false;
+            Actor* player = d.attacker && d.attacker->isPlayer() ? d.attacker : d.direct && d.direct->isPlayer() ? d.direct : nullptr;
+            if (!player) return false;
+            Actor* other = d.attacker && d.attacker != player ? d.attacker : d.direct && d.direct != player ? d.direct : nullptr;
             KillSnapshot snap;
             if (auto* veh = victim.getVehicle()) snap.vehicle = std::make_shared<cp::EntityView>(entityView(*veh, false));
-            if (d.direct && d.direct != d.attacker) snap.direct = entityView(*d.direct, false);
+            if (other) snap.direct = entityView(*other, false);
             snap.tick = currentTick();
             auto& k   = kills();
             std::lock_guard lock(k.mutex);
