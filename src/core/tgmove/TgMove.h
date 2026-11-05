@@ -277,6 +277,13 @@ struct WingPose {
 
 /// handleStraightAhead: the speed multiplier while moving forward, the strafe impulse / it.
 [[nodiscard]] double straightAheadMultiplier(bool active, double multiplier, float forwardImpulse);
+/// handleStraightAhead's input from Bedrock's: the engine hands a key input already normalized
+/// (0.707, 0.707 for W + A); Java divides the raw impulse (1, 1) by the multiplier and normalizes
+/// after (getInputVector). Returns TF's input (x strafe, y forward) at most length 1.
+struct Input2 {
+    float strafe = 0, forward = 0;
+};
+[[nodiscard]] Input2 straightAheadInput(float strafe, float forward, double multiplier);
 /// The FOV factor (AbstractClientPlayer#getFieldOfViewModifier's walking part) that TF keeps
 /// unchanged by straight ahead: Java's (speed / walkSpeed + 1) / 2.
 [[nodiscard]] float speedFovFactor(double speed, double walkSpeed);

@@ -132,6 +132,7 @@ struct PlayerState {
     int                        pendingJumpTries     = 0;
     int                        pendingSidestepTries = 0;
     bool                       pendingSidestepLeft  = false;
+    bool                       loggedAgile          = false; ///< the e2e line of the input while drawing
 };
 /// The state of `entity` (created on first use).
 [[nodiscard]] PlayerState& stateOf(Actor const& entity);
@@ -192,6 +193,12 @@ bool applyAgileRanger(Player& player, std::optional<float>& base, float& set, bo
 /// (MoveInputComponent: x strafe, y forward); without it (mobs) the input acceleration is estimated
 /// from the last step. Client mod and server copy alike, before the engine's step.
 [[nodiscard]] Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool active, Vec3 v, bool onGround, bool steppingCarefully, Vec2 const* move);
+/// The velocity an input change makes in one engine step (Entity#moveRelative): TF changes the
+/// input (straight ahead's strafe / 1.4, the glide's unsneaked input) where Bedrock reads it after
+/// any hook, so both simulations add the difference of the accelerations of `tfMove` and
+/// `engineMove` (x strafe, y forward) instead: on the ground speed x the block's friction factor,
+/// in the air the flying speed (0.02, 0.026 sprinting).
+[[nodiscard]] Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting);
 /// The friction the engine gives the block at `pos` (Block friction; 0.6 for most blocks).
 [[nodiscard]] double blockFriction(Block const& block);
 /// The engine's own slowdowns of a ground step on `blockId`, which unrestrained undoes (1 = none):

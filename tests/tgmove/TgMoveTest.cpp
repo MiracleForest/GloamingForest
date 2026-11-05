@@ -411,3 +411,19 @@ TEST(TgMove, WingsPhaseSeed) {
     seedPhase(a, 0.999);
     EXPECT_LT(a.phase, 2 * 3.14159265358979);
 }
+TEST(TgMove, StraightAheadInput) {
+    // W + A: Bedrock's (0.707, 0.707) -> Java's (1 / 1.4, 1) normalized
+    auto in = straightAheadInput(0.70710677f, 0.70710677f, 1.4);
+    float j = std::sqrt(1.0f / (1.4f * 1.4f) + 1.0f);
+    EXPECT_NEAR(in.strafe, (1.0f / 1.4f) / j, 1e-5);
+    EXPECT_NEAR(in.forward, 1.0f / j, 1e-5);
+    EXPECT_NEAR(std::sqrt(in.strafe * in.strafe + in.forward * in.forward), 1.0f, 1e-5);
+    // W alone: unchanged
+    in = straightAheadInput(0, 1, 1.4);
+    EXPECT_FLOAT_EQ(in.forward, 1.0f);
+    EXPECT_FLOAT_EQ(in.strafe, 0.0f);
+    // an analog input under length 1: divided as it is
+    in = straightAheadInput(0.4f, 0.5f, 1.4);
+    EXPECT_NEAR(in.strafe, 0.4f / 1.4f, 1e-6);
+    EXPECT_NEAR(in.forward, 0.5f, 1e-6);
+}

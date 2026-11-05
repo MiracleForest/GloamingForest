@@ -321,6 +321,21 @@ double blockFriction(Block const& block) {
     return f > 0 && f < 1.5f ? static_cast<double>(f) : tg::kUnrestrainedFriction;
 }
 
+Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting) {
+    double scale = sprinting ? 0.026 : 0.02; // LivingEntity#getFlyingSpeed of players
+    if (onGround) {
+        Vec3     feet = a.getFeetPos();
+        BlockPos below{static_cast<int>(std::floor(feet.x)), static_cast<int>(std::floor(feet.y - 0.5000001)), static_cast<int>(std::floor(feet.z))};
+        float    speed = 0.1f;
+        if (auto attr = a.getAttribute(SharedAttributes::MOVEMENT_SPEED()); attr.mPtr) speed = attr.mPtr->mCurrentValue;
+        scale = speed * tg::groundAccelFactor(blockFriction(a.getDimensionBlockSource().getBlock(below)));
+    }
+    double yaw = a.getRotation().y;
+    auto   e   = tg::inputAcceleration(engineMove.x, engineMove.y, yaw, scale);
+    auto   t   = tg::inputAcceleration(tfMove.x, tfMove.y, yaw, scale);
+    return Vec3{static_cast<float>(t.x - e.x), 0.0f, static_cast<float>(t.z - e.z)};
+}
+
 EngineSlowdown engineSlowdown(std::string const& blockId, double vy, bool steppingCarefully) {
     // measured (tgmove.unrestrained_blocks): Bedrock's slime and honey blocks multiply a ground
     // step's velocity by Java's SlimeBlock#stepOn factor (0.4 + |vy| x 0.2) on top of their friction
@@ -889,6 +904,30 @@ void tickPlayer(Player& player) {
         Vec3 nv       = applyUnrestrained(player, st, unrestrained, delta, onGround, player.isSneaking(), useInput ? &move : nullptr);
         if (nv != delta) {
             delta = nv;
+            setPosDelta(player, delta);
+        }
+    }
+
+    // the input changes of the companion's client (straight ahead's strafe / 1.4, the glide's
+    // unsneaked input) as the velocity they make, as the client adds them
+    if (companion && in) {
+        Vec2 const move = in->mMove;
+        Vec2       tf   = move;
+        if (st.straightAhead) {
+            auto s2 = tg::straightAheadInput(move.x, move.y, tg::kStraightAheadMultiplier);
+            tf      = Vec2{s2.strafe, s2.forward};
+        }
+        if (has(mask, Mod::AgileRanger) && player.getItemUseDuration() > 0 && player.getVehicle() == nullptr && agileRangerItem(player.getCarriedItem()))
+        {
+            tf = Vec2{tf.x * static_cast<float>(tg::kAgileRangerModifier), tf.y * static_cast<float>(tg::kAgileRangerModifier)}; // handleAgileRanger
+            if (!st.loggedAgile && (move.x != 0 || move.y != 0)) {
+                st.loggedAgile = true;
+                log().info("tgmove: {} agile ranger, server input length while drawing {:.3f}", player.getRealName(), std::sqrt(move.x * move.x + move.y * move.y));
+            }
+        }
+        if (st.gliding && player.isSneaking() && !onGround) tg::unsneakImpulse(tf.y, tf.x, false);
+        if (tf.x != move.x || tf.y != move.y) {
+            delta = delta + inputDelta(player, move, tf, onGround, player.isSprinting());
             setPosDelta(player, delta);
         }
     }

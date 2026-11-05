@@ -48,7 +48,10 @@
 #include "mc/entity/components/MoveInputComponent.h"
 #include "mc/input/MoveInputState.h"
 #include "mc/util/MolangScriptArg.h"
+#include "mc/util/MolangVariable.h"
 #include "mc/util/MolangVariableMap.h"
+#include "mc/util/MolangVariableSetting_AccessSpecifier.h"
+#include "mc/util/MolangVariableSettings.h"
 #include "mc/world/actor/ActorFlags.h"
 #include "mc/world/actor/player/Ability.h"
 #include "mc/world/actor/player/AbilitiesIndex.h"
@@ -122,7 +125,8 @@ struct Local {
     bool             waterWalking = false;
     bool             sneakScaledLater = false; ///< Bedrock applies its sneak factor after MoveInputComponent::mMove
     bool             loggedSneakInput = false;
-    bool             sneakChecked = false;     ///< this glide's first sneaking input was looked at
+    bool             sneakChecked = false;
+    bool             loggedAgileInput = false;     ///< this glide's first sneaking input was looked at
     // measurements for the e2e scenario
     std::optional<double> jumpBaseY;  ///< double jump: the y it started at
     double                jumpPeakY = 0;
@@ -187,6 +191,7 @@ std::string blockBelow(LocalPlayer& p, Vec3 const& feet) {
 std::string speedContext(LocalPlayer& p, movement::MoveState const& s, Vec3 const& feet) {
     auto& region = p.getDimensionBlockSource();
     auto  at     = p.getFeetBlockPos();
+    if (s.forward <= 0) return ""; // the runs are walks with W held
     auto  in     = game::blockIdAt(region, at);
     if (in == "minecraft:web" || game::blockIdAt(region, BlockPos{at.x, at.y + 1, at.z}) == "minecraft:web") return "cobweb";
     if (p.getItemUseDuration() > 0 && feature::tgmove::agileRangerItem(p.getCarriedItem())) return "bow";
@@ -332,21 +337,35 @@ void tick(movement::MoveState& s) {
     }
 
     // ---- input: straight ahead, gliding sneak ----
+    // the engine reads its input after this hook, so TF's input changes go in as the velocity they
+    // make (feature::tgmove::inputDelta), as on the server copy
     if (auto in = ctx.tryGetComponent<MoveInputComponent>()) {
-        Vec2& move = in->mMove.get();
-        double mult = tg::straightAheadMultiplier(act(Mod::StraightAhead), tg::kStraightAheadMultiplier, move.y);
+        Vec2 const move = in->mMove;
+        Vec2       tf   = move;
+        double     mult = tg::straightAheadMultiplier(act(Mod::StraightAhead), tg::kStraightAheadMultiplier, move.y);
         l.straightForward = mult != 1.0;
-        float before      = move.x;
-        move.x            = static_cast<float>(move.x / mult);
-        if (l.straightForward && before != 0 && !l.loggedStraight) {
+        if (l.straightForward) { // handleStraightAhead: strafe / 1.4 of the raw impulses
+            auto s2 = tg::straightAheadInput(move.x, move.y, mult);
+            tf      = Vec2{s2.strafe, s2.forward};
+        }
+        if (l.straightForward && move.x != 0 && !l.loggedStraight) {
             l.loggedStraight = true;
-            log().info("tgmove: straight ahead strafe {:.3f} -> {:.3f}", before, move.x);
+            log().info("tgmove: straight ahead strafe {:.3f} -> {:.3f}", move.x, tf.x);
+        }
+        Vec2 engine = move;
+        // handleAgileRanger: drawing a projectile weapon, the input x 5 (cancelling Java's 0.2 use
+        // slowdown); where Bedrock's input carries its slowdown the velocity makes up the rest
+        if (act(Mod::AgileRanger) && p->getItemUseDuration() > 0 && p->getVehicle() == nullptr && feature::tgmove::agileRangerItem(p->getCarriedItem())) {
+            tf = Vec2{tf.x * static_cast<float>(tg::kAgileRangerModifier), tf.y * static_cast<float>(tg::kAgileRangerModifier)};
+            if (!l.loggedAgileInput && (move.x != 0 || move.y != 0)) {
+                l.loggedAgileInput = true;
+                log().info("tgmove: agile ranger, input length while drawing {:.3f}", std::sqrt(move.x * move.x + move.y * move.y));
+            }
         }
         if (l.gliding && sneak) {
             // speedUpControlledWhileSneaking: Java's impulses carry the 0.3 sneak factor before TF's
-            // / 0.2; when Bedrock's input is the unscaled one (longer than 0.3 while sneaking), its
-            // factor comes later and is undone in advance
-            // decided on the glide's first sneaking tick, before any of this unit's own writes
+            // / 0.2; when Bedrock's input is the unscaled one (longer than 0.35 while sneaking), its
+            // factor comes later (decided on the glide's first sneaking tick)
             float len = std::sqrt(move.x * move.x + move.y * move.y);
             if (!l.sneakChecked && len > 0.01f) {
                 l.sneakChecked     = true;
@@ -357,10 +376,15 @@ void tick(movement::MoveState& s) {
                 log().info("tgmove: gliding with sneak, input length {:.3f} (the engine's sneak factor {})", len,
                            l.sneakScaledLater ? "comes after the input" : "is in the input");
             }
-            tg::unsneakImpulse(move.y, move.x, l.sneakScaledLater);
+            if (l.sneakScaledLater) engine = Vec2{move.x * 0.3f, move.y * 0.3f};
+            tg::unsneakImpulse(tf.y, tf.x, false);
+            if (l.sneakScaledLater) { // the raw input: TF's is its unit length
+                tf = Vec2{static_cast<float>(move.x / mult), move.y};
+                tg::unsneakImpulse(tf.y, tf.x, true, 1.0f);
+            }
         }
-    }
-    // ---- agile ranger: the bow's use slowdown x5 (the server's copy does the same) ----
+        if (tf.x != engine.x || tf.y != engine.y) s.velocity = s.velocity + feature::tgmove::inputDelta(*p, engine, tf, s.onGround, s.sprinting);
+    }    // ---- agile ranger: the bow's use slowdown x5 (the server's copy does the same) ----
     (void)feature::tgmove::applyAgileRanger(*p, l.eng.agileBase, l.eng.agileSet);
     {
         auto attr = p->getAttribute(SharedAttributes::MOVEMENT_SPEED());
@@ -460,6 +484,22 @@ WingVars const& wingVars() {
     return v;
 }
 
+/// Sets a public Molang variable on the wearer: the wings' attachable reads it as
+/// c.owning_entity->v.<name> (an attachable's own v. map is not the wearer's; only public variables
+/// of another entity can be read through ->).
+void setPublic(MolangVariableMap& vars, HashedString const& name, float value) {
+    MolangScriptArg arg(value);
+    vars.setMolangVariable(name, arg);
+    if (MolangVariable* v = vars._getOrAddMolangVariable(MolangVariable::getVariableIndex(name.getHash()))) {
+        MolangVariableSettings& settings = v->mSettings;
+        settings.mAccessSpecifier         = MolangVariableSetting_AccessSpecifier::Public;
+        std::unique_ptr<MolangScriptArg>& pub = v->mPublicValue;
+        if (pub) *pub = arg;
+        else pub = std::make_unique<MolangScriptArg>(arg);
+    }
+    vars.mHasPublicVariables = true;
+}
+
 bool wearsWings(Actor const& a) {
     return game::items::idOf(a.getArmor(SharedTypes::Legacy::ArmorSlot::Legs)) == "twilightforest:travellers_wings";
 }
@@ -487,12 +527,12 @@ void animate(Actor& a, float partialTicks) {
     auto pose = tg::animateWings(anim, w, age, walk.second, a.isSneaking());
     auto& vars = a.mMolangVariables.get();
     auto const& n = wingVars();
-    vars.setMolangVariable(n.on, MolangScriptArg(1.0f));
-    vars.setMolangVariable(n.rx, MolangScriptArg(static_cast<float>(pose.rightX * kToDeg)));
-    vars.setMolangVariable(n.ry, MolangScriptArg(static_cast<float>(pose.rightY * kToDeg)));
-    vars.setMolangVariable(n.rz, MolangScriptArg(static_cast<float>(pose.rightZ * kToDeg)));
-    vars.setMolangVariable(n.ly, MolangScriptArg(static_cast<float>(pose.leftY * kToDeg)));
-    vars.setMolangVariable(n.drop, MolangScriptArg(pose.drop));
+    setPublic(vars, n.on, 1.0f);
+    setPublic(vars, n.rx, static_cast<float>(pose.rightX * kToDeg));
+    setPublic(vars, n.ry, static_cast<float>(pose.rightY * kToDeg));
+    setPublic(vars, n.rz, static_cast<float>(pose.rightZ * kToDeg));
+    setPublic(vars, n.ly, static_cast<float>(pose.leftY * kToDeg));
+    setPublic(vars, n.drop, pose.drop);
     // the e2e trace: the local player's pose whenever its state changes
     if (auto* me = currentPlayer(); me && me->getOrCreateUniqueID().rawID == id && (!r.loggedAny || r.loggedState != w.state)) {
         r.loggedAny   = true;

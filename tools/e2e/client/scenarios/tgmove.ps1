@@ -276,7 +276,8 @@ try {
     $results['agile ranger'] = "bow draw walk $($with.bow) with, $($without.bow) without (walk $($with.forward))"
     if ($with.bow -lt 3 * $without.bow -or $with.bow -lt 0.6 * $with.forward) { Add-Failure "agile ranger: walking while drawing a bow $($with.bow) with, $($without.bow) without, walking $($with.forward)" }
     $results['unrestrained'] = "soul sand $($with.soul) / $($without.soul), cobweb $($with.web) / $($without.web), honey jump $($with.honey) / $($without.honey)"
-    if ($with.soul -lt 1.8 * $without.soul) { Add-Failure "unrestrained on soul sand: $($with.soul) with, $($without.soul) without" }
+    # TF: walking speed on soul sand (Bedrock's own slowdown there is milder than Java's 0.4)
+    if ($with.soul -lt 0.9 * $with.forward -or $with.soul -lt 1.1 * $without.soul) { Add-Failure "unrestrained on soul sand: $($with.soul) with, $($without.soul) without, walk $($with.forward)" }
     if ($with.web -lt 3 * $without.web) { Add-Failure "unrestrained in cobweb: $($with.web) with, $($without.web) without" }
     if ($with.honey -lt $without.honey + 0.5) { Add-Failure "unrestrained honey jump: $($with.honey) with, $($without.honey) without" }
     $results['swift swim'] = "swim $($with.swim) with the vest, $($without.swim) without"

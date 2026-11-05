@@ -6,19 +6,19 @@
       "bones": {
         "wingBaseRight": {
           "rotation": [
-            "v.tgmove_wing_on ? v.tgmove_wing_rx - 30 : 3.8197 * math.sin(q.life_time * 57.2958)",
-            "v.tgmove_wing_on ? v.tgmove_wing_ry + 30 : 3.8197 * math.sin(q.life_time * 57.2958) - 4.3775",
-            "v.tgmove_wing_on ? v.tgmove_wing_rz : 3.8197 * math.sin(q.life_time * 57.2958) - 17.1887"
+            "c.owning_entity->v.tgmove_wing_on ? c.owning_entity->v.tgmove_wing_rx - 30 : 3.8197 * math.sin(q.life_time * 57.2958)",
+            "c.owning_entity->v.tgmove_wing_on ? c.owning_entity->v.tgmove_wing_ry + 30 : 3.8197 * math.sin(q.life_time * 57.2958) - 4.3775",
+            "c.owning_entity->v.tgmove_wing_on ? c.owning_entity->v.tgmove_wing_rz : 3.8197 * math.sin(q.life_time * 57.2958) - 17.1887"
           ],
-          "position": [0, "v.tgmove_wing_on ? -v.tgmove_wing_drop : (q.is_sneaking ? -2 : 0)", 0]
+          "position": [0, "c.owning_entity->v.tgmove_wing_on ? -c.owning_entity->v.tgmove_wing_drop : (q.is_sneaking ? -2 : 0)", 0]
         },
         "wingBaseLeft": {
           "rotation": [
-            "v.tgmove_wing_on ? v.tgmove_wing_rx - 30 : 3.8197 * math.sin(q.life_time * 57.2958)",
-            "v.tgmove_wing_on ? v.tgmove_wing_ly - 30 : 4.3775 - 3.8197 * math.sin(q.life_time * 57.2958)",
-            "v.tgmove_wing_on ? -v.tgmove_wing_rz : 17.1887 - 3.8197 * math.sin(q.life_time * 57.2958)"
+            "c.owning_entity->v.tgmove_wing_on ? c.owning_entity->v.tgmove_wing_rx - 30 : 3.8197 * math.sin(q.life_time * 57.2958)",
+            "c.owning_entity->v.tgmove_wing_on ? c.owning_entity->v.tgmove_wing_ly - 30 : 4.3775 - 3.8197 * math.sin(q.life_time * 57.2958)",
+            "c.owning_entity->v.tgmove_wing_on ? -c.owning_entity->v.tgmove_wing_rz : 17.1887 - 3.8197 * math.sin(q.life_time * 57.2958)"
           ],
-          "position": [0, "v.tgmove_wing_on ? -v.tgmove_wing_drop : (q.is_sneaking ? -2 : 0)", 0]
+          "position": [0, "c.owning_entity->v.tgmove_wing_on ? -c.owning_entity->v.tgmove_wing_drop : (q.is_sneaking ? -2 : 0)", 0]
         }
       }
     }

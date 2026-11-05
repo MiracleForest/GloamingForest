@@ -370,6 +370,22 @@ double straightAheadMultiplier(bool active, double multiplier, float forwardImpu
     return multiplier;
 }
 
+Input2 straightAheadInput(float strafe, float forward, double multiplier) {
+    float len = std::sqrt(strafe * strafe + forward * forward);
+    float x = strafe, y = forward;
+    if (len > 0.99f) { // a normalized key input: back to the raw impulses (each -1, 0 or 1 for keys)
+        float m = std::max(std::abs(x), std::abs(y));
+        if (m > 0) x /= m, y /= m;
+    }
+    if (multiplier > 0) x = static_cast<float>(x / multiplier);
+    float l2 = x * x + y * y;
+    if (l2 > 1.0f) {
+        float l = std::sqrt(l2);
+        x /= l, y /= l;
+    }
+    return {x, y};
+}
+
 float speedFovFactor(double speed, double walkSpeed) {
     if (walkSpeed <= 0) return 1.0f;
     return static_cast<float>((speed / walkSpeed + 1.0) / 2.0);
