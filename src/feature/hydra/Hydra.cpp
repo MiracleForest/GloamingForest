@@ -29,6 +29,7 @@
 #include <cmath>
 #include <limits>
 #include <numbers>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
@@ -144,7 +145,9 @@ struct State_ {
     std::unique_ptr<fe::JavaRandom>               levelRandom;
     /// The direct entity of the damage now going through the pipeline to a hydra (DamageSource#
     /// getDirectEntity: Behaviour::hurt only gets the causing entity), by uid (0: none).
-    std::int64_t                                  hurtDirect  = 0;
+    std::int64_t                                  hurtDirect  = 0; ///< noteDirect: the direct entity of the hit on its way
+    std::int64_t                                  hurtVictim  = 0; ///< ... to this hydra
+    std::uint64_t                                 hurtTick    = 0; ///< ... in this tick
     bool                                          combatHooked = false;
 };
 State_& S() {
@@ -1166,10 +1169,23 @@ void aiStep(Actor& actor) {
     tickHydra(*mob, *rt);
 }
 
+/// Damage type tag minecraft:is_fire: the tag data (TF's members, the units' fragments) plus
+/// Minecraft 1.21.1's own members, which Bedrock has no data for.
+bool isFireDamage(std::string const& type) {
+    static constexpr std::string_view kVanilla[] = {"minecraft:in_fire", "minecraft:campfire", "minecraft:on_fire", "minecraft:lava",
+                                                    "minecraft:hot_floor", "minecraft:unattributed_fireball", "minecraft:fireball"};
+    for (auto v : kVanilla)
+        if (type == v) return true;
+    return gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_fire", type);
+}
+
 /// Hydra#attackEntityFromPart, Hydra#hurt and #isInvulnerableTo.
 bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) {
     // read once: a later hit never sees this one's direct entity (noteDirect)
-    std::int64_t const directId = std::exchange(S().hurtDirect, 0);
+    // (only a note for this very hydra in this very tick: a hit a handler cancelled between
+    // noteDirect and this dispatch leaves a note that a later hit never reads)
+    std::int64_t const directId    = std::exchange(S().hurtDirect, 0);
+    bool const         noteMatches = std::exchange(S().hurtVictim, 0) == fe::uidOf(self) && S().hurtTick == fe::currentTick();
     std::string const& part     = ge::ext::hurtPart();
     if (part.empty()) {
         // the hydra itself only takes damage that bypasses invulnerability (/kill)
@@ -1178,13 +1194,18 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
     }
     auto* rt = find(fe::uidOf(self));
     if (!rt) return true;
-    // a fire-immune boss ignores fire, except its own mortars (Hydra#isInvulnerableTo)
-    if (type != "twilightforest:hydra_mortar" && gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_fire", type)) return false;
+    // a fire-immune boss ignores fire, except its own mortars (Hydra#isInvulnerableTo, checked by
+    // super.hurt): the hit is refused below, after the head counted it (attackEntityFromPart calls
+    // headCon.addDamage whatever super.hurt returns)
+    bool const fireRefused = type != "twilightforest:hydra_mortar" && isFireDamage(type);
     // explosions reach the parts (NeoForge's Level#getEntities returns PartEntity instances): a
     // player's TNT, a creeper, a reflected mortar; the hydra's own mortars are refused just below
     // (their causing entity is the hydra)
     auto   uid    = fe::uidOf(self);
-    Actor* direct = directId ? fe::actorById(directId) : nullptr;
+    Actor* direct = directId && noteMatches ? fe::actorById(directId) : nullptr;
+    // the causing entity is the living one of the pair (F10 reports a child source, a projectile
+    // and its shooter, with the two swapped when the victim is hit directly)
+    if (attacker && direct && !fe::asMob(*attacker) && fe::asMob(*direct)) std::swap(attacker, direct);
     // the explosion of a mortar (Explosion#getIndirectSourceEntity): caused by the mortar's owner (the
     // hydra for its own mortars, the player who reflected one), the mortar is the direct entity
     if (attacker && attacker->getTypeName() == kMortar) {
@@ -1212,6 +1233,8 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
         amount      = static_cast<float>(armored);
         if (headCon >= 0) rt->heads[headCon].head.addDamage(static_cast<float>(armored));
     }
+    // super.hurt refuses fire before its invulnerability window (no state changes, no tookDamage)
+    if (fireRefused) return false;
     // super.hurt (LivingEntity#hurt): tookDamage. Inside the second half of the 20-tick
     // invulnerability window only a stronger hit lands (for the difference, without a new hurt
     // flash); outside it every hit lands, a hit of 0 too (the flash, the heal timer)
@@ -1236,7 +1259,10 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
 /// Behaviour::hurt calls with the causing entity only). Runs after F8's part forwarding (High) and
 /// before F8's Behaviour::hurt dispatch (Normal).
 gf::combat::Verdict noteDirect(gf::combat::DamageInfo& d) {
-    if (d.victim.getTypeName() == kHydra) S().hurtDirect = d.direct ? fe::uidOf(*d.direct) : 0;
+    if (d.victim.getTypeName() != kHydra) return gf::combat::Verdict::Pass;
+    S().hurtDirect = d.direct ? fe::uidOf(*d.direct) : 0;
+    S().hurtVictim = fe::uidOf(d.victim);
+    S().hurtTick   = fe::currentTick();
     return gf::combat::Verdict::Pass;
 }
 

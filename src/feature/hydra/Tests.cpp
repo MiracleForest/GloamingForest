@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <functional>
 #include <optional>
 
@@ -45,6 +46,7 @@
 #include "feature/projectile/Projectile.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "game/WorldDb.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::feature::hydra::tests {
@@ -317,6 +319,20 @@ GF_REGISTER_SELFTEST("hydra.part_damage", [](Context& ctx) -> ll::coro::CoroTask
     ctx.require(h != nullptr, "the hydra is there");
     ctx.check(before - h->getHealth() == 2, "a closed mouth takes round(16 / 8) = 2 (" + std::to_string(before - h->getHealth()) + ")");
     ctx.check(headView(*h, 0)->damageTaken == 2, "head 0 counted 2 (" + std::to_string(headView(*h, 0)->damageTaken) + ")");
+    // a fire-typed hit (a reflected ghast fireball): attackEntityFromPart counts it on the head before
+    // super.hurt refuses fire (isInvulnerableTo, fire immune): the head +2, the hydra's health unchanged
+    {
+        int hpFire = h->getHealth();
+        head0      = ge::partActor(ge::ext::parts(*fe::asMob(*h))[ch::headPartIndex(0)]);
+        pl         = fe::playerById(spId);
+        ctx.require(head0 && pl, "head part and player");
+        gf::combat::hurt(*head0, 16.0F, "minecraft:fireball", pl, pl);
+        co_await ctx.ticks(1);
+        h = byId(uid);
+        ctx.require(h != nullptr, "the hydra is there");
+        ctx.check(h->getHealth() == hpFire, "a fire hit is refused (" + std::to_string(hpFire - h->getHealth()) + ")");
+        ctx.check(headView(*h, 0)->damageTaken == 4, "but head 0 counts it: 4 (" + std::to_string(headView(*h, 0)->damageTaken) + ")");
+    }
     // the hydra itself takes nothing but /kill
     int mid = h->getHealth();
     gf::combat::hurt(*h, 10.0F, "minecraft:player_attack", fe::playerById(spId));
@@ -675,6 +691,26 @@ GF_REGISTER_SELFTEST("hydra.jets_remembered", [](Context& ctx) -> ll::coro::Coro
     (void)box;
 });
 
+// A jet or smoker placed in the Twilight Forest is remembered too (not only by the scan around the
+// players), and written to the world DB at the end of its tick, without waiting for an autosave.
+GF_REGISTER_SELFTEST("hydra.jets_remembered_twilight", [](Context& ctx) -> ll::coro::CoroTask<> {
+    ctx.require(co_await ctx.inTwilight(), "in the Twilight Forest");
+    auto box = co_await ctx.flatArea(2476, 4, 8);
+    auto esm = ctx.testPos(2477, 2);
+    ctx.require(ctx.setBlock(esm, kEncasedSmoker), "an encased smoker");
+    co_await ctx.ticks(2);
+    ctx.check(jetRemembered(esm), "remembered with the world");
+    bool stored = false;
+    if (auto j = gf::game::db::get("gf:hydra:jets"); j && j->is_array())
+        for (auto const& e : *j)
+            if (e == nlohmann::json::array({esm.dim, esm.x, esm.y, esm.z})) stored = true;
+    ctx.check(stored, "and already in gf:hydra:jets");
+    ctx.setBlock(esm, "minecraft:air");
+    for (int t = 0; t < 45 && jetRemembered(esm); ++t) co_await ctx.ticks(1);
+    ctx.check(!jetRemembered(esm), "forgotten once removed");
+    (void)box;
+});
+
 // LivingEntity#hurt's invulnerability window on the part path (Hydra#attackEntityFromPart's
 // tookDamage): inside the window a hit lands only when stronger than the last one, and only a hit
 // that lands resets the heal timer; the head counts every armoured hit.
@@ -774,6 +810,63 @@ GF_REGISTER_SELFTEST("hydra.mortar_leeway", [](Context& ctx) -> ll::coro::CoroTa
     h = byId(uid);
     ctx.require(h != nullptr, "the hydra is there");
     ctx.check(damageTakenForTest(*h) > before, "the reflected mortar's explosion from 22 blocks lands (" + std::to_string(damageTakenForTest(*h) - before) + ")");
+    if (auto* mm = byId(mid)) mm->remove();
+    discard(uid);
+    co_await ctx.ticks(2);
+    (void)box;
+});
+
+// HydraMortar's boxes: the pick radius 1.5 (custom_hit_test, a player's melee) is not what a
+// projectile hits; a Java projectile clips the 0.75 box inflated by 0.3. A vanilla arrow beside the
+// mortar (1.4 blocks off, inside the pick box) does not reflect it; one inside the Java box does.
+GF_REGISTER_SELFTEST("hydra.mortar_projectile_box", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
+    auto            home = ctx.testPos(2444, 2);
+    auto            uid  = spawnHydra(ctx, home, 2428);
+    ctx.require(uid != 0, "the hydra spawns");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    auto& sp   = ctx.spawnPlayer();
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z + 8.5f}, DimensionType(home.dim));
+    co_await ctx.ticks(2);
+    auto* h = byId(uid);
+    ctx.require(h != nullptr, "the hydra");
+    auto  v = headView(*h, 0);
+    auto* m = launchMortar(*fe::asMob(*h), 0, v->pos, v->xRot, v->yRot, false);
+    ctx.require(m != nullptr, "a mortar");
+    auto mid    = fe::uidOf(*m);
+    auto region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    // an arrow summoned at `off` from the mortar (still, in the air): hit the mortar with it now
+    auto hitWithArrow = [&](float off) -> bool {
+        auto* mm = byId(mid);
+        auto* pl = fe::playerById(spId);
+        if (!mm || !pl) return false;
+        Vec3 at{home.x + 0.5f, float(home.y) + 20.0f, home.z + 0.5f};
+        mm->moveTo(at, Vec2{0, 0});
+        gf::projectile::ext::setVelocity(*mm, Vec3{0.0f, 0.0f, 0.0f});
+        auto const& bb = mm->getAABB();
+        float       cx = (bb.min.x + bb.max.x) / 2.0f, cz = (bb.min.z + bb.max.z) / 2.0f;
+        Vec3        ap{cx + off, bb.min.y + 0.3f, cz};
+        char        cmd[160];
+        std::snprintf(cmd, sizeof cmd, "summon minecraft:arrow %.3f %.3f %.3f", ap.x, ap.y, ap.z);
+        (void)gf::selftest::runServerCommand(cmd, home.dim);
+        Actor* arrow = nullptr;
+        for (auto* a : fe::actorsIn(*region, home.dim, AABB{Vec3{ap.x - 0.6f, ap.y - 0.6f, ap.z - 0.6f}, Vec3{ap.x + 0.6f, ap.y + 0.6f, ap.z + 0.6f}}))
+            if (a->getTypeName() == "minecraft:arrow") arrow = a;
+        if (!arrow) return false;
+        gf::combat::hurt(*mm, 2.0F, "minecraft:arrow", pl, arrow);
+        arrow->remove();
+        return true;
+    };
+    ctx.require(hitWithArrow(1.4f), "an arrow 1.4 blocks beside the mortar");
+    auto mv = mortarView(*byId(mid));
+    ctx.check(mv && mv->owner == uid, "the arrow beside it does not reflect the mortar (Java misses)");
+    ctx.require(byId(mid) != nullptr, "the mortar is still there");
+    ctx.require(hitWithArrow(0.4f), "an arrow inside the mortar's Java box");
+    mv = mortarView(*byId(mid));
+    ctx.check(mv && mv->owner == spId, "the arrow inside the Java box reflects it: the shooter owns it");
     if (auto* mm = byId(mid)) mm->remove();
     discard(uid);
     co_await ctx.ticks(2);

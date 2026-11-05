@@ -428,6 +428,9 @@ void onLevelTick() {
         scan();
         revisit();
     }
+    // a placement is written at the end of its tick (not only at the next autosave): the client
+    // leaves a world without a final save of the mod's data
+    saveKnown();
     for (auto it = s.jets.begin(); it != s.jets.end();) it = tickJet(it->first, it->second) ? std::next(it) : s.jets.erase(it);
     // a smoker ticks while its chunk is loaded (it is forgotten with the chunk; the scan finds it again)
     for (auto it = s.smokers.begin(); it != s.smokers.end();) it = tickSmoker(it->first, it->second) ? std::next(it) : s.smokers.erase(it);
@@ -496,11 +499,12 @@ void installJets() {
             });
         for (auto const* id : {kSmoker, kEncasedSmoker})
             gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { J().smokers.try_emplace(game::globalPos(region, pos)); });
-        // every jet and smoker placed outside the Twilight Forest is remembered with the world (the
-        // palette scan, which also finds the generated ones, covers only the Twilight Forest)
+        // every jet and smoker placed, in any dimension, is remembered with the world: its "block
+        // entity" comes back with its chunk however far it is from the players (the palette scan
+        // around the players still finds the generated ones)
         for (auto const* id : {kFireJet, kEncasedJet, kSmoker, kEncasedSmoker})
             gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) {
-                if (!gf::world::isTwilight(region.getDimension())) remember(game::globalPos(region, pos));
+                remember(game::globalPos(region, pos));
             });
         gf::game::db::onWorldReady([] { loadKnown(); });
         gf::game::db::onWorldSave([] { saveKnown(); });
