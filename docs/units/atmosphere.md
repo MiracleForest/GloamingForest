@@ -42,19 +42,41 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 
 ## Bedrock adaptation
 
-- No GLSL: the stars are a vertex-coloured mesh drawn with the level renderer's stars material in the sky pass
-  (additive, no fog, like TF's stars). The aurora is drawn in the sky pass with the particle engine's blend material
-  and a white texture (`textures/atmosphere/white`; TF alpha-blends it). Its grid (96 x 96 cells, each drawn in the
-  mean colour of its corners, over the faded radius 2.75 x fog end) is evaluated on a worker thread and drawn scaled
-  towards the camera (the same picture inside the sky's depth range). The stars material ignores vertex alpha (the
-  e2e's `aurora-stars-material` calibration shot). The weather columns use the particle engine's blend material,
-  split at the texture's edges (TF relies on a repeating sampler).
-- Vibrant Visuals: the sky provider runs, but the VV sky draws over TF's stars (none show), and F12's volumetric fog
-  of the provider's fog colour tints the sky strongly (the glacier's purple). The weather columns draw with VV's
-  lighting. Classic is the faithful mode.
+- No GLSL: TF's shaders become CPU-built meshes drawn with the game's own materials.
+  - Stars: a vertex-coloured mesh, the level renderer's stars material, sky pass (no fog, full brightness).
+  - Aurora: aurora.fsh is evaluated per vertex of a polar mesh around the zenith (128 rings x 256 segments, about
+    0.55 x 1.4 degrees a cell seen from the camera, whatever the render distance) on two worker threads every
+    ~120 ms; the colours and alphas are interpolated across the cells. In Classic it is drawn in the sky pass with the
+    particle engine's blend material over a white texture (SRC_ALPHA / ONE_MINUS_SRC_ALPHA like TF, no fog), scaled
+    towards the camera (the same picture): terrain and clouds then draw over it as Java's depth test does. The e2e
+    calibration (`GF_ATMOSPHERE_CALIBRATE=1`) shot the other choices: `ui_fill_gradient` draws nothing in the sky
+    pass, the stars material ignores vertex alpha, `wireframe` is opaque, and the world pass fogs the far cells into
+    the fog colour (Bedrock fogs particles by distance; TF's shader fogs by its own rule).
+  - Outside the Twilight Forest (a dimension without TF's sky provider) the aurora draws in the world pass
+    (`render::onWorld`, depth tested), with that fog.
+  - Weather columns: the particle engine's blend material, split at the texture's edges (TF relies on a repeating
+    sampler); 10 columns with fancy graphics, 5 without. Bedrock has no "decreased particles" option.
+  - Void plate (TFSkyRenderer's dark disc below y -32): the stars material in black, sky pass.
 - No sun / moon: the level renderer's sun, moon and star meshes are swapped for an empty mesh while the player is in
-  the Twilight Forest and put back outside it; TF's star field is drawn by the provider at full brightness.
+  the Twilight Forest and put back outside it.
+- Clouds and sunrise: `ext/atmosphere/SkyView` sets the frame's cloud colour to `ClientLevel#getCloudColor` at the fixed
+  time (rain and thunder included) and clears the sunrise colour band (`getSunriseColor` is null in TF).
 - Fog: Bedrock has one distance fog; it takes FogHandler's terrain planes (the sky fog is smoothed alongside), stepped
-  by the time since the last step in frames of 1/60 s (TF steps per rendered frame).
+  by the time since the last step in frames of 1/60 s (TF steps per rendered frame). A boss bar asking for world fog
+  (the companion's TFBossBarPacket state) gives the near fog, as `BossOverlay#shouldCreateWorldFog`.
+- Vibrant Visuals (deferred PBR, no way to add a shader):
+  - VV paints its own sky after the sky pass, so the stars, the aurora and the void plate draw in the world pass there
+    (at 90 % of the far plane, depth tested). VV lights those draws with the scene light: at night the aurora shows as
+    darker ribbons and the stars as dark points (vertex emissive MERS does not change it; `vibrant-aurora.png`). The
+    shape and motion are TF's; the glow is not reachable without a shader.
+  - F12 turns the provider fog into a uniform air fog; VV fogs its sky with it too, so the planes are stretched x3 under
+    VV (the sky stays visible, the spooky forest still reads; colour distance 6 against the forest).
+  - VV draws its own dusk from the sun direction at the fixed time 13000 (an orange band low in the west); the sunrise
+    colour override does not reach VV's physical sky.
+- Render distance: `LevelRendererCamera::mRenderDistance` is in blocks (the e2e pins 12 chunks = 192 blocks).
 - The fixed time (13000) and the per-player time of vanilla clients are F4's (`feature/dimension/Clock.cpp`,
   `Dimension.cpp`).
+- Vanilla clients: the PlayerFogPacket stack is resent after a respawn or a dimension change.
+- `auroraBiomes` UI: `/twilightforest config atmosphere` edits the list as text (F0's config screen); the per-key
+  label `config.twilightforest.aurora_biomes`, its "Edit Biomes" list editor and a client-local editor for a client
+  joined to a remote server are F0's / F12's screen work (reported to the coordinator).
