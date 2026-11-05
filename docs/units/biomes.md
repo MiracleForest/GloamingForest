@@ -61,8 +61,11 @@ block pipeline, so `src/feature/ext/biomes/VanillaTint.cpp` hooks the game's gra
 tessellation policies (`BiomeColorSampling::GrassTessellationPolicy` /
 `FoliageTessellationPolicy::get`) and applies the registry there. The tint reads the biome of every
 column of the blend (`tintBlendRadius`, default 2 = 5x5) from the tessellated block source (the
-client's synced chunks, so remote worlds need no seed): TF's colour in a position-dependent biome,
-the game's colour elsewhere, averaged as Java does. TF blocks tinted by the biome colour belong to
+client's synced chunks, so remote worlds need no seed): TF's colour where TF's biome has one
+(position-dependent, modifier or flat: the fire swamp, the snowy forest), the game's colour
+elsewhere, averaged as Java does. The game draws oak leaves green in the snowy forest whatever its
+`foliage_appearance` says (seen in the e2e screenshots), so vanilla clients see green leaves there;
+the client mod draws TF's white. TF blocks tinted by the biome colour belong to
 their owners; they can call `gf::biomes::ext::grassColor / foliageColor`.
 
 ## Spawn costs

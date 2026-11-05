@@ -83,6 +83,12 @@ if ($script:Mode -ne 'remote-vanilla') {
     $applied = $log | Select-String -Pattern 'biomes: vanilla tint hook applied the tint of .*' | Select-Object -First 1
     if (-not $applied) { throw 'the vanilla tint hook never applied a tint (vanilla grass and leaves drew without TF colours)' }
     Write-Step "hook: $($applied.Matches[0].Value)"
+    # the chunks drawn in the TF biomes got TF's colours from the hook (not only the selftest's)
+    foreach ($kind in 'grass', 'foliage') {
+        $changed = $log | Select-String -Pattern "biomes: vanilla tint hook changed the $kind colour of .*" | Select-Object -First 1
+        if (-not $changed) { throw "the vanilla tint hook never drew a TF $kind colour on a vanilla block" }
+        Write-Step "hook: $($changed.Matches[0].Value)"
+    }
     foreach ($b in 'spooky_forest', 'dark_forest_center', 'enchanted_forest') {
         if ($places.Contains($b) -and -not ($log | Select-String -Pattern "biomes: client draws TF's grass colours of twilightforest:$b" -Quiet)) {
             throw "the client mod did not draw TF's grass colours in twilightforest:$b"

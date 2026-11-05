@@ -136,6 +136,11 @@ dispatch(Block const& block, BlockSource& region, BlockPos const& pos, BiomeTint
     if (!rgb) return std::nullopt;
     if (gApplied.fetch_add(1, std::memory_order_relaxed) == 0)
         gf::log().info("biomes: vanilla tint hook applied the tint of {} at {} {} {} (#{:06X} over the game's #{:06X})", id, pos.x, pos.y, pos.z, *rgb, rgbOf(game));
+    // the first tint that changed the game's colour, per tint method (the e2e scenario waits for it)
+    static std::atomic<unsigned> changed{0};
+    unsigned                     bit = method == TintMethod::Grass ? 1u : 2u;
+    if (*rgb != rgbOf(game) && !(changed.fetch_or(bit) & bit))
+        gf::log().info("biomes: vanilla tint hook changed the {} colour of {} at {} {} {} to #{:06X} (the game's #{:06X})", method == TintMethod::Grass ? "grass" : "foliage", id, pos.x, pos.y, pos.z, *rgb, rgbOf(game));
     return colorOf(*rgb, game.a);
 }
 

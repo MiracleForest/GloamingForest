@@ -109,21 +109,37 @@ std::string const& idOf(Biome const& b) {
     return it->second;
 }
 
-int tfColour(std::string const& biome, int x, int z, bool foliage, unsigned game) {
-    auto v = foliage ? colors::foliage(biome, kEnchantedJson, x, z) : colors::grass(biome, kEnchantedJson, x, z);
-    return v.value_or(static_cast<int>(game));
+/// The flat colours of TF's biome JSON for the biomes that have one without a modifier (the fire
+/// swamp, the snowy forest): drawn by the mod too, since the game does not apply every client biome
+/// colour (Bedrock draws oak leaves green in the snowy forest whatever its foliage_appearance says).
+std::optional<int> flatColour(std::string_view biome, bool foliage) {
+    if (biome == "twilightforest:fire_swamp") return foliage ? 0x64260F : 0x572E23;
+    if (biome == "twilightforest:snowy_forest") return 0xFFFFFF;
+    return std::nullopt;
 }
 
-/// TF's colour at `pos` with the biomes read from `region` (nullopt: no position-dependent biome in
-/// the blend, the game's colour stays).
+/// TF's colour of `biome` at (x, z) (nullopt: TF has none, the colour map's: the game's).
+std::optional<int> tfColourOf(std::string const& biome, int x, int z, bool foliage) {
+    auto v = foliage ? colors::foliage(biome, kEnchantedJson, x, z) : colors::grass(biome, kEnchantedJson, x, z);
+    return v ? v : flatColour(biome, foliage);
+}
+
+int tfColour(std::string const& biome, int x, int z, bool foliage, unsigned game) {
+    return tfColourOf(biome, x, z, foliage).value_or(static_cast<int>(game));
+}
+
+/// TF's colour at `pos` with the biomes read from `region`: every column of the blend gets TF's
+/// colour of its biome (modifiers, position-dependent colours, flat colours) or, without one, the
+/// game's (nullopt: no column has a TF colour, the game's colour stays).
 std::optional<unsigned> fromRegion(BlockSource& region, BlockPos const& pos, unsigned game, bool foliage) {
     bool any = false;
     int  c   = colors::blend(pos.x, pos.z, radius(), [&](int x, int z) {
         std::string const& biome = idOf(region.getBiome(BlockPos{x, pos.y, z}));
-        if (!colors::isPositional(biome)) return static_cast<int>(game);
+        auto               tf    = tfColourOf(biome, x, z, foliage);
+        if (!tf) return static_cast<int>(game);
         any = true;
-        noteDrawn(biome, foliage);
-        return tfColour(biome, x, z, foliage, game);
+        if (colors::isPositional(biome)) noteDrawn(biome, foliage);
+        return *tf;
     });
     if (!any) return std::nullopt;
     return static_cast<unsigned>(c);
