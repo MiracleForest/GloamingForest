@@ -21,6 +21,7 @@
 
 #include <cmath>
 #include <map>
+#include <set>
 #include <random>
 
 #include "ll/api/service/Bedrock.h"
@@ -303,6 +304,13 @@ void unstableCoreTick(Actor& self) {
     if (!d.is_number_integer()) return;
     int t = d.get<int>() + 1;
     d     = t;
+    // the body lies still while it waits (the BP's behaviours would move and attack)
+    if (auto* mob = fe::asMob(self)) {
+        mobs::stopNavigation(*mob);
+        mob->setTarget(nullptr);
+        auto v = self.getPosDelta();
+        fe::setMotion(self, Vec3{0.0f, std::min(v.y, 0.0f), 0.0f});
+    }
     if (t % 2 == 0 || t >= 60) gf::entity::setProperty(self, "twilightforest:dying", std::min(t, 60));
     if (t == 60) {
         auto level = ll::service::getLevel();
@@ -312,6 +320,11 @@ void unstableCoreTick(Actor& self) {
         gf::entity::data(self, "aurora:explode") = true;
         self.kill();
     }
+}
+
+std::set<std::int64_t>& goalsAdded() {
+    static std::set<std::int64_t> s;
+    return s;
 }
 
 // ---- the aurora block's progress with progress_glacier ----------------------------------------------
@@ -360,6 +373,9 @@ void installMobs() {
         std::string type = id;
         gf::entity::Behaviour b;
         b.tick = [type](Actor& self) {
+            // the native goals, once per actor in this process (spawned or loaded)
+            if (type == kStableIceCore && goalsAdded().insert(self.getOrCreateUniqueID().rawID).second)
+                if (auto* mob = fe::asMob(self)) gf::entity::addGoal(*mob, 1, std::make_shared<RangedAttackGoal>(*mob, 1.25, 20, 10.0F));
             baseIceMobTick(self, type);
             if (type == kUnstableIceCore) unstableCoreTick(self);
             if (type == kIceCrystal) {
@@ -376,9 +392,6 @@ void installMobs() {
             if (done.is_boolean()) return;
             done = true;
             equipSnowGuardian(self);
-        };
-        if (type == kStableIceCore) b.onSpawn = [](Actor& self) {
-            if (auto* mob = fe::asMob(self)) gf::entity::addGoal(*mob, 1, std::make_shared<RangedAttackGoal>(*mob, 1.25, 20, 10.0F));
         };
         if (type == kUnstableIceCore) b.hurt = [](Actor& self, float&, std::string const&, Actor*) {
             // the body is invulnerable while it waits for the explosion

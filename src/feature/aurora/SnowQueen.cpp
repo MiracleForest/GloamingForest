@@ -18,6 +18,7 @@
 #include <array>
 #include <cmath>
 #include <map>
+#include <set>
 #include <numbers>
 
 #include "ll/api/service/Bedrock.h"
@@ -78,6 +79,12 @@ std::map<std::int64_t, Queen>& queens() {
 }
 
 std::int64_t uidOf(Actor const& a) { return a.getOrCreateUniqueID().rawID; }
+
+/// The queens whose native goals are added (in this process).
+std::set<std::int64_t>& queenGoals() {
+    static std::set<std::int64_t> s;
+    return s;
+}
 
 Queen& stateOf(Actor& self) {
     auto [it, fresh] = queens().try_emplace(uidOf(self));
@@ -516,9 +523,12 @@ void applyShieldCollisions(Mob& self) {
 
 // ---- SnowQueen#tick / aiStep / customServerAiStep --------------------------------------------------------
 
+void queenSpawn(Actor& actor);
+
 void queenTick(Actor& actor) {
     auto* self = fe::asMob(actor);
     if (!self || !self->isAlive()) return;
+    if (!queenGoals().contains(uidOf(*self))) queenSpawn(*self); // a queen loaded from disk: her goals (and a fresh SUMMON)
     auto& q = stateOf(*self);
     // the hover goals push up; she sinks 0.05 a tick
     auto v = self->getPosDelta();
@@ -555,7 +565,7 @@ void queenTick(Actor& actor) {
 
 void queenSpawn(Actor& actor) {
     auto* self = fe::asMob(actor);
-    if (!self) return;
+    if (!self || !queenGoals().insert(uidOf(*self)).second) return;
     (void)stateOf(*self);
     gf::entity::setMoveControl(*self, gf::entity::MoveKind::Hovering);
     gf::entity::addGoal(*self, 1, std::make_shared<HoverSummonGoal>(*self));
