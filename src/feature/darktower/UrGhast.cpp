@@ -291,7 +291,7 @@ void urFireballTick(Actor& fb) {
         AABB   box{Vec3{q.x - hw, q.y, q.z - hw}, Vec3{q.x + hw, q.y + hw * 2.0f, q.z + hw}};
         Actor* hit = nullptr;
         for (auto* a : region.getEntities(box, 0.0f)) {
-            if (!a || a == &fb || a == owner || !a->isAlive() || a->isSpectator() || ge::ext::isProjectile(*a)) continue;
+            if (!a || a == &fb || a == owner || !a->isAlive() || a->isSpectator() || gf::projectile::ext::isProjectile(*a)) continue;
             if (typeOf(*a) == "minecraft:fireball" || typeOf(*a) == "minecraft:small_fireball" || typeOf(*a) == "minecraft:item" || typeOf(*a) == "minecraft:xp_orb") continue;
             hit = a;
             break;
