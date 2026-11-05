@@ -573,6 +573,7 @@ struct TerrainModule {
         features::registerPlacement("twilightforest:chunk_blanketing", chunkBlanketing);
         landmark::ext::setHeightProvider(heightProvider);
         game::db::onWorldReady(onWorldReady);
+        if (game::db::available()) onWorldReady(); // BDS: the world was ready before the mods were enabled
         game::db::onWorldClosed([] {
             skylightFlag() = -1;
             std::lock_guard lock(stateMutex());

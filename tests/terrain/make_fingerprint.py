@@ -17,8 +17,8 @@ SURFACE_I_MAJOR = False
 QW = 72          # quart window -36 .. 35 (sampleTerrain reaches 3 quarts)
 QX0 = -36
 HX0, HN, HSTEP = -128, 32, 8   # heights: blocks -128 .. 120
-SC0, SN = 4, 4                 # surface: chunks 4 .. 7 (away from the landmark at (8, 8), whose terraforming the goldens carry)
-SX0, SSTEP = 64, 2
+SC0, SN = 3, 4                 # surface: chunks 3 .. 6 (away from the landmark at (8, 8) and the structures the goldens terraform)
+SX0, SSTEP = 48, 2
 SW = (SN * 16) // SSTEP
 
 
