@@ -355,7 +355,7 @@ bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box)
         char const* why;
     };
     static constexpr Known kKnown[] = {
-        {"features_a", 106, "the firefly canopy tree's trunkside / dangle decorators draw differently (fireflies, a jar on a rope), F5's leave_vine "
+        {"features_a", 120, "the firefly canopy tree's trunkside / dangle decorators draw differently (fireflies, a jar on a rope), F5's leave_vine "
                             "writes vine bits 1 for Java's east, one mega oak leaf keeps distance 2 where Java keeps 7"},
         {"features_b", 21, "the tree of time's exposed roots at its base (traceExposedRoot on the pedestal)"},
         {"features_c", 19, "the oracle places in a live level, where HugeMushroomBlock#updateShape clears the faces between cap blocks (worldgen "

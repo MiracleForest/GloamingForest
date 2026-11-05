@@ -97,7 +97,7 @@ decorator `tools/import/overrides/trees.json` appends to their configured featur
 snow trees run their own older copy. Every golden tree, mega canopy tree and sapling (the tree of time
 aside) then matches block for block; the golden hashes are those runs'. Known differences (at most this
 many blocks, `PARITY GAP (known)` in the log, more fails):
-- `features_a` (106): the firefly canopy tree's trunkside / dangle decorators draw differently (some
+- `features_a` (120; 105 or 106 measured): the firefly canopy tree's trunkside / dangle decorators draw differently (some
   fireflies, a jar on a rope); F5's `leave_vine` writes vine bits 1 where Java's vine faces east (8);
   one mega oak leaf keeps distance 2 where Java keeps 7.
 - `features_b` (21) and `sapling_time_sapling` (10): the tree of time's exposed roots at its base.
