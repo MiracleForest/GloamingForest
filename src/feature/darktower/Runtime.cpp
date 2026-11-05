@@ -121,26 +121,29 @@ void load() {
     s.loadedFromDb = true;
 }
 
-void runGenerated(BlockSource& region, BlockPos const& bp, Json const& job) {
+/// false: the block (actor) is not there yet; the job is tried again later (at most 60 times).
+bool runGenerated(BlockSource& region, BlockPos const& bp, Json const& job) {
     auto kind = job.value("k", std::string{});
     if (kind == "track") {
         auto& s  = st();
         auto  id = game::blockIdAt(region, bp);
         auto  p  = game::globalPos(region, bp);
-        if (s.deviceFns.contains(id) && s.devices.insert(p).second) s.deviceIds[p] = id;
+        if (!s.deviceFns.contains(id)) return false;
+        if (s.devices.insert(p).second) s.deviceIds[p] = id;
     } else if (kind == "frame") {
         auto* actor = region.getBlockEntity(bp);
-        if (!actor || (actor->getType() != BlockActorType::ItemFrame && actor->getType() != BlockActorType::GlowItemFrame)) return;
+        if (!actor || (actor->getType() != BlockActorType::ItemFrame && actor->getType() != BlockActorType::GlowItemFrame)) return false;
         auto stack = game::items::make(job.value("item", std::string{}), 1);
-        if (!stack || stack->isNull()) return;
+        if (!stack || stack->isNull()) return true;
         static_cast<ItemFrameBlockActor&>(*actor).setItem(region, ItemInstance(*stack), nullptr);
     } else if (kind == "fuel") {
         auto* actor = region.getBlockEntity(bp);
-        if (!actor || actor->getType() != BlockActorType::Furnace) return;
+        if (!actor || actor->getType() != BlockActorType::Furnace) return false;
         auto* container = static_cast<FurnaceBlockActor&>(*actor).getContainer();
         auto  stack     = game::items::make(job.value("item", std::string{}), job.value("count", 1));
         if (container && stack && !stack->isNull()) container->setItem(1, *stack);
     }
+    return true;
 }
 
 void flushGenerated() {
@@ -158,8 +161,15 @@ void flushGenerated() {
             }
         }
     }
-    for (auto const& g : ready)
-        if (auto* region = game::regionOf(g.pos.dim)) runGenerated(*region, game::blockPos(g.pos), g.job);
+    for (auto& g : ready) {
+        auto* region = game::regionOf(g.pos.dim);
+        if (!region || runGenerated(*region, game::blockPos(g.pos), g.job)) continue;
+        int tries = g.job.value("tries", 0) + 1;
+        if (tries >= 60) continue;
+        g.job["tries"] = tries;
+        std::lock_guard lock(s.genMutex);
+        s.generated.push_back(std::move(g));
+    }
 }
 
 void tick() {
