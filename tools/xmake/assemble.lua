@@ -1117,51 +1117,59 @@ end
 -- -PackProbes holds its own resolver to the same expectations). It proves
 -- a granted directory is neither dropped by the assembly (fragment directories, "*.d", are merged,
 -- never copied) nor unowned, before the unit's first file lands there. Returns the probe count.
+local function probe_one(projectdir, cfg, owners, i, probe, scratch)
+    local pack
+    if type(probe) ~= "table" or type(probe.file) ~= "string" or type(probe.owner) ~= "string"
+        or (probe.out ~= nil and type(probe.out) ~= "string") then
+        fail("packPathProbes: entry %d needs a string file and owner (and out, when given)", i)
+    else
+        for _, p in ipairs(cfg.packs) do
+            if not p.test and probe.file:sub(1, #p.manual + 1) == p.manual .. "/" then
+                pack = p
+                break
+            end
+        end
+        if not pack then
+            fail("packPathProbes: %s is not under the manual directory of a shipped pack", probe.file)
+        end
+    end
+    local out = pack and probe.file:sub(#pack.manual + 2)
+    if pack and probe.out and probe.out ~= out then
+        fail("packPathProbes: %s has out %s, but it lands at %s", probe.file, probe.out, out)
+        pack = nil
+    end
+    if pack then
+        local proj = path.join(scratch, tostring(i))
+        local manifest = path.join(projectdir, pack.manual, "manifest.json")
+        os.mkdir(path.join(proj, pack.manual))
+        os.cp(manifest, path.join(proj, pack.manual, "manifest.json"))
+        local text = string.format('{"gf_pack_probe": "%s"}\n', probe.file)
+        os.mkdir(path.directory(path.join(proj, probe.file)))
+        io.writefile(path.join(proj, probe.file), text)
+        -- test = true: no licence files (they are copied from the real project, not the scratch one)
+        local scratch_pack = {name = pack.name, dir = pack.dir, root = pack.root, manual = pack.manual, test = true}
+        local dst = build_pack(proj, cfg, scratch_pack, path.join(proj, "out"), {0, 0, 0}, false)
+        local got = path.join(dst, out)
+        if not os.isfile(got) then
+            fail("packPathProbes: %s did not reach %s/%s in the assembled pack", probe.file, pack.name, out)
+        elseif io.readfile(got) ~= text then
+            fail("packPathProbes: %s reached %s/%s with other content", probe.file, pack.name, out)
+        end
+        local owner, why = owner_of(owners, probe.file)
+        if owner ~= probe.owner then
+            fail("packPathProbes: %s is owned by %s in %s, expected %s", probe.file, owner or why or "nobody",
+                cfg.checks.owners, probe.owner)
+        end
+    end
+end
+
 local function probe_each(projectdir, cfg, owners, probes, scratch)
     for i, probe in ipairs(probes) do
-        local pack
-        if type(probe) ~= "table" or type(probe.file) ~= "string" or type(probe.owner) ~= "string"
-            or (probe.out ~= nil and type(probe.out) ~= "string") then
-            fail("packPathProbes: entry %d needs a string file and owner (and out, when given)", i)
-        else
-            for _, p in ipairs(cfg.packs) do
-                if not p.test and probe.file:sub(1, #p.manual + 1) == p.manual .. "/" then
-                    pack = p
-                    break
-                end
-            end
-            if not pack then
-                fail("packPathProbes: %s is not under the manual directory of a shipped pack", probe.file)
-            end
-        end
-        local out = pack and probe.file:sub(#pack.manual + 2)
-        if pack and probe.out and probe.out ~= out then
-            fail("packPathProbes: %s has out %s, but it lands at %s", probe.file, probe.out, out)
-            pack = nil
-        end
-        if pack then
-            local proj = path.join(scratch, tostring(i))
-            local manifest = path.join(projectdir, pack.manual, "manifest.json")
-            os.mkdir(path.join(proj, pack.manual))
-            os.cp(manifest, path.join(proj, pack.manual, "manifest.json"))
-            local text = string.format('{"gf_pack_probe": "%s"}\n', probe.file)
-            os.mkdir(path.directory(path.join(proj, probe.file)))
-            io.writefile(path.join(proj, probe.file), text)
-            -- test = true: no licence files (they are copied from the real project, not the scratch one)
-            local scratch_pack = {name = pack.name, dir = pack.dir, root = pack.root, manual = pack.manual, test = true}
-            local dst = build_pack(proj, cfg, scratch_pack, path.join(proj, "out"), {0, 0, 0}, false)
-            local got = path.join(dst, out)
-            if not os.isfile(got) then
-                fail("packPathProbes: %s did not reach %s/%s in the assembled pack", probe.file, pack.name, out)
-            elseif io.readfile(got) ~= text then
-                fail("packPathProbes: %s reached %s/%s with other content", probe.file, pack.name, out)
-            end
-            local owner, why = owner_of(owners, probe.file)
-            if owner ~= probe.owner then
-                fail("packPathProbes: %s is owned by %s in %s, expected %s", probe.file, owner or why or "nobody",
-                    cfg.checks.owners, probe.owner)
-            end
-        end
+        -- a raise fails the check (the sandbox's try swallows it without a catch) and the next probes still run
+        try {
+            function () probe_one(projectdir, cfg, owners, i, probe, scratch) end,
+            catch { function (e) fail("packPathProbes: probe %d raised: %s", i, tostring(e)) end }
+        }
     end
 end
 
@@ -1170,11 +1178,10 @@ local function probe_pack_paths(projectdir, cfg, owners)
     if #probes == 0 then return 0 end
     local scratch = os.tmpfile() .. ".packprobe"
     os.tryrm(scratch)
-    -- a raise inside a probe fails the check (the sandbox's try swallows it without a catch), and the
-    -- scratch project goes either way
+    -- the scratch project goes either way
     try {
         function () probe_each(projectdir, cfg, owners, probes, scratch) end,
-        catch { function (e) fail("packPathProbes: a probe raised: %s", tostring(e)) end },
+        catch { function (e) fail("packPathProbes: %s", tostring(e)) end },
         finally { function () os.tryrm(scratch) end }
     }
     return #probes

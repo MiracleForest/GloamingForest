@@ -135,9 +135,14 @@ function Get-PathOwner([string]$path) {
 # owner assemble.lua's owner_of gives them, so both implementations of the rule agree
 if ($PackProbes) {
     $merges = Get-Content (Join-Path $root 'tools/xmake/merges.json') -Raw | ConvertFrom-Json -AsHashtable
-    $probes = @($merges.checks.packPathProbes)
+    $probes = @(if ($merges.checks.packPathProbes) { $merges.checks.packPathProbes })
     $bad = 0
     foreach ($p in $probes) {
+        if ($p -isnot [hashtable] -or $p.file -isnot [string] -or $p.owner -isnot [string]) {
+            Write-Host "[ownership] probe entry $($probes.IndexOf($p) + 1) needs a string file and owner" -ForegroundColor Red
+            $bad++
+            continue
+        }
         $o = Get-PathOwner $p.file
         if ($o.owner -ne $p.owner) {
             $who = if ($o.owner) { "$($o.owner) ($($o.why))" } else { $o.why }

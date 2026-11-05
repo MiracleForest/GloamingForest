@@ -29,5 +29,5 @@ if (-not (Get-Command xmake -ErrorAction SilentlyContinue)) { Write-Host 'xmake 
 & xmake lua -P $root (Join-Path $root 'tools/xmake/assemble_check.lua') $root $Out
 $assembled = $LASTEXITCODE -eq 0 # xmake exits 255 on a raise
 # the pack path probes against tools/ci/ownership.ps1's resolver too (assemble.lua checked its own)
-& pwsh -NoProfile -File (Join-Path $root 'tools/ci/ownership.ps1') -PackProbes
+& (Join-Path $root 'tools/ci/ownership.ps1') -PackProbes
 exit $(if ($assembled -and $LASTEXITCODE -eq 0) { 0 } else { 1 })
