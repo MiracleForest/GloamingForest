@@ -102,14 +102,12 @@ struct HeardSound {
     Vec3          pos;    ///< where it plays
     float         volume = 0;
     float         pitch  = 0;
-    std::uint64_t seq    = 0;     ///< the send's number (sends are numbered in order)
     bool          toWatched = false; ///< the send reached the watched receiver (the test player)
 };
 
 struct SoundLog {
     std::mutex              mutex;
     std::vector<HeardSound> heard;
-    std::uint64_t           seq = 0;
     Receiver                watched;
     std::atomic<int>        captures{0};
 };
@@ -149,7 +147,6 @@ void inspect(Packet const& packet, Reaches&& reaches) {
     }
     std::lock_guard lock(log.mutex);
     h.toWatched = reaches(log.watched);
-    h.seq       = ++log.seq;
     log.heard.push_back(std::move(h));
 }
 
@@ -565,9 +562,10 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
     auto box = co_await ctx.flatArea(6143, 5);
     auto p   = ctx.testPos(6143, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
-    auto& region = *ctx.region();
-    auto  wet    = [&region](GlobalPos const& q) {
-        auto const& extra = region.getExtraBlock(gf::game::blockPos(q)).getTypeName();
+    auto wet = [&ctx](GlobalPos const& q) { // (the block source looked up again: R16)
+        auto* region = ctx.region();
+        if (!region) return false;
+        auto const& extra = region->getExtraBlock(gf::game::blockPos(q)).getTypeName();
         return extra == "minecraft:water" || extra == "minecraft:flowing_water";
     };
     // a second player in hearing range: the game sends the placing player's own sounds to the others
