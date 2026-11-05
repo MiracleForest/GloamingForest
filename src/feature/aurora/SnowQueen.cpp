@@ -475,6 +475,14 @@ private:
     double mDropY      = 0;
 };
 
+/// Entity#calculateViewVector(xRot, yHeadRot) (LivingEntity#getViewYRot is the head's yaw).
+Vec3 viewVector(Mob const& m) {
+    double pitch = m.getRotation().x * std::numbers::pi / 180.0;
+    double yaw   = -m.getYHeadRot() * std::numbers::pi / 180.0;
+    double cy = std::cos(yaw), sy = std::sin(yaw), cp = std::cos(pitch), sp = std::sin(pitch);
+    return Vec3{static_cast<float>(sy * cp), static_cast<float>(-sp), static_cast<float>(cy * cp)};
+}
+
 /// AABB#clip (the slab test): the entry point of the segment from -> to, nullopt when it misses.
 std::optional<Vec3> clip(AABB const& b, Vec3 const& from, Vec3 const& to) {
     double tmin = 0.0, tmax = 1.0;
@@ -551,7 +559,7 @@ private:
         double range = 20.0, offset = 10.0;
         auto   p     = feet(m);
         Vec3   src{p.x, p.y + 0.25f, p.z};
-        Vec3   look = m.getHeadLookVector(1.0f); // LivingEntity#getViewYRot: the head's yaw
+        Vec3   look = viewVector(m);
         Vec3   dest{src.x + look.x * static_cast<float>(range), src.y + look.y * static_cast<float>(range), src.z + look.z * static_cast<float>(range)};
         auto   b = boxOf(m);
         AABB   search{Vec3{b.min.x + look.x * 10 - 20, b.min.y + look.y * 10 - 20, b.min.z + look.z * 10 - 20},
@@ -659,7 +667,7 @@ void queenTick(Actor& actor) {
         for (auto const& h : gf::entity::ext::parts(*self))
             if (auto* part = gf::entity::partActor(h)) gf::fx::particle(dim, "twilightforest:snow_warning", feet(*part), Vec3{}, 1, nlohmann::json{{"spread", {0.2, 0.2, 0.2}}});
     if (q.breathing) {
-        Vec3   look = self->getHeadLookVector(1.0f);
+        Vec3   look = viewVector(*self);
         auto   p    = feet(*self);
         Vec3   at{p.x + look.x * 0.5f, p.y + 1.7f + look.y * 0.5f, p.z + look.z * 0.5f};
         for (int i = 0; i < 10; i++) {
@@ -736,8 +744,11 @@ void installSnowQueen() {
     // returns true without any effect: the piercing arrow flies on through the shield
     gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
         auto* parent = gf::entity::ext::parentOf(d.victim);
-        if (!parent || parent->getTypeName() != kSnowQueen || !d.direct) return gf::combat::Verdict::Pass;
-        if (pierceLevel(*d.direct) <= 0) return gf::combat::Verdict::Pass;
+        if (!parent || parent->getTypeName() != kSnowQueen) return gf::combat::Verdict::Pass;
+        if (!d.direct || pierceLevel(*d.direct) <= 0) {
+            gf::log().info("aurora: a shield hit by {} ({})", d.type, d.direct ? std::to_string(pierceLevel(*d.direct)) : std::string("no projectile"));
+            return gf::combat::Verdict::Pass;
+        }
         auto arrow = d.direct->getOrCreateUniqueID().rawID;
         auto v     = gf::projectile::ext::velocity(*d.direct);
         auto at    = feet(*d.direct);

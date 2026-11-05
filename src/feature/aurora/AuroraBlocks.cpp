@@ -34,6 +34,7 @@
 #include "feature/progression/Progression.h"
 #include "game/Blocks.h"
 #include "game/WorldDb.h"
+#include "mod/Log.h"
 
 namespace gf::feature::aurora {
 
@@ -73,6 +74,7 @@ struct Mining {
     int          face        = 0;
     int          ticks       = 0;
     bool         progressed  = false; ///< the server saw destroy progress (server-authoritative breaking)
+    int          idle        = 0;     ///< ticks at progress 0 since then
 };
 std::map<std::int64_t, Mining>& mining() {
     static std::map<std::int64_t, Mining> m;
@@ -100,8 +102,11 @@ void tickMining() {
         BlockPos const  at       = gameMode->mDestroyBlockPos;
         float const     progress = gameMode->mDestroyProgress;
         if (progress > 0.0F && at == m.pos) m.progressed = true;
-        bool stopped = m.progressed && (!(at == m.pos) || progress <= 0.0F);
+        // stopDestroyBlock resets the progress; one tick at 0 can be the engine's own restart
+        m.idle       = (m.progressed && progress <= 0.0F) ? m.idle + 1 : 0;
+        bool stopped = m.progressed && (!(at == m.pos) || m.idle >= 2);
         if (stopped && m.ticks > 0) {
+            gf::log().info("aurora: aurora block mining stopped after {} ticks", m.ticks);
             it = mining().erase(it);
             continue;
         }
@@ -111,7 +116,8 @@ void tickMining() {
             if (gf::game::blockId(region.getBlock(m.pos)) == kAuroraBlock) {
                 auto   eye = player.getEyePos();
                 double dx = m.pos.x + 0.5 - eye.x, dy = m.pos.y + 0.5 - eye.y, dz = m.pos.z + 0.5 - eye.z;
-                if (dx * dx + dy * dy + dz * dz <= 36.0) gameMode->destroyBlock(m.pos, static_cast<uchar>(m.face));
+                bool ok = dx * dx + dy * dy + dz * dz <= 36.0 && gameMode->destroyBlock(m.pos, static_cast<uchar>(m.face));
+                gf::log().info("aurora: aurora block mined in 10 ticks at {} {} {}: {}", m.pos.x, m.pos.y, m.pos.z, ok ? "broken" : "refused");
             }
             it = mining().erase(it);
             continue;

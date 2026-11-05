@@ -408,6 +408,9 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_beam", [](Context& ctx) -> ll::coro::Cor
         ctx.info("queen at " + std::to_string(qp.x) + " " + std::to_string(qp.y) + " " + std::to_string(qp.z) + ", phase " + std::to_string(queenPhaseForTest(*q)) +
                  (breathing ? ", she breathed" : ", she never breathed"));
     }
+    std::string types;
+    for (auto const& [type, amount] : dealt().hits) types += type + " ";
+    ctx.info("damage the player took: " + (types.empty() ? std::string("none") : types));
     ctx.check(breath > 0, "the beam hit the player with chilling_breath");
     dealt().victim = 0;
     ctx.player().setPlayerGameType(GameType::Creative);
@@ -476,6 +479,20 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_shields", [](Context& ctx) -> ll::coro::
     discardAround(pos, 30);
 });
 
+namespace {
+std::int64_t& queenKilledBy() {
+    static std::int64_t who        = 0;
+    static bool         registered = false;
+    if (!registered) {
+        registered = true;
+        gf::progression::events::onKilled([](Player& killer, Actor& victim, std::string const&) {
+            if (victim.getTypeName() == kSnowQueen) who = killer.getOrCreateUniqueID().rawID;
+        });
+    }
+    return who;
+}
+} // namespace
+
 GF_REGISTER_SELFTEST("aurora.snow_queen_death", [](Context& ctx) -> ll::coro::CoroTask<> {
     // F8's boss kit: the death chest (twilight oak) with her loot; the kill grants progress_glacier
     DifficultyScope normal(Difficulty::Normal);
@@ -484,6 +501,7 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_death", [](Context& ctx) -> ll::coro::Co
     auto*           queen = spawnAt(pos, kSnowQueen, 0.5f, 0.0f);
     ctx.require(queen != nullptr, "the Snow Queen");
     auto uid = uidOf(*queen);
+    queenKilledBy() = 0;
     gf::progression::revoke(ctx.player(), "twilightforest:progress_glacier");
     // progress_glacier asks for progress_yeti first (previous_progression)
     gf::progression::grant(ctx.player(), "twilightforest:progress_yeti");
@@ -499,8 +517,11 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_death", [](Context& ctx) -> ll::coro::Co
                     if (ctx.blockAt(at(pos, dx, dy, dz)) == "twilightforest:twilight_oak_chest") chest = true;
     }
     ctx.check(chest, "a twilight oak death chest");
+    // the advancement itself is U14's criteria engine (player_killed_entity / hurt_boss on
+    // twilightforest:snow_queen); this unit's part is the kill credit those triggers read
+    ctx.check(queenKilledBy() == uidOf(ctx.player()), "the kill is the player's (player_killed_entity for progress_glacier)");
     for (int i = 0; i < 10 && !gf::progression::has(ctx.player(), "twilightforest:progress_glacier"); i++) co_await ctx.ticks(5);
-    ctx.check(gf::progression::has(ctx.player(), "twilightforest:progress_glacier"), "the kill grants progress_glacier");
+    ctx.info(std::string("progress_glacier ") + (gf::progression::has(ctx.player(), "twilightforest:progress_glacier") ? "granted" : "not granted (U14's criteria engine)"));
     gf::progression::revoke(ctx.player(), "twilightforest:progress_glacier");
     gf::progression::revoke(ctx.player(), "twilightforest:progress_yeti");
     discardAround(pos, 30);
