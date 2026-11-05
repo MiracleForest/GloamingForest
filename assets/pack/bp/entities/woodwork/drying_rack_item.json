@@ -5,7 +5,10 @@
       "identifier": "gloamingforest:drying_rack_item",
       "is_spawnable": false,
       "is_summonable": true,
-      "is_experimental": false
+      "is_experimental": false,
+      "properties": {
+        "gloamingforest:pose": {"type": "int", "range": [0, 7], "default": 0, "client_sync": true}
+      }
     },
     "components": {
       "minecraft:type_family": {"family": ["inanimate", "gloamingforest_display"]},
@@ -18,6 +21,16 @@
       "minecraft:fire_immune": {},
       "minecraft:persistent": {},
       "minecraft:conditional_bandwidth_optimization": {}
+    },
+    "events": {
+      "gloamingforest:pose_0": {"set_property": {"gloamingforest:pose": 0}},
+      "gloamingforest:pose_1": {"set_property": {"gloamingforest:pose": 1}},
+      "gloamingforest:pose_2": {"set_property": {"gloamingforest:pose": 2}},
+      "gloamingforest:pose_3": {"set_property": {"gloamingforest:pose": 3}},
+      "gloamingforest:pose_4": {"set_property": {"gloamingforest:pose": 4}},
+      "gloamingforest:pose_5": {"set_property": {"gloamingforest:pose": 5}},
+      "gloamingforest:pose_6": {"set_property": {"gloamingforest:pose": 6}},
+      "gloamingforest:pose_7": {"set_property": {"gloamingforest:pose": 7}}
     }
   }
 }

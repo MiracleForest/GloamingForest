@@ -21,6 +21,25 @@ Invoke-Teleport "/tp @s $($rx + 6.5) $($ry - 0.6) $($rz + 0.5) 90 5"
 Start-Sleep -Seconds 3
 Save-Screenshot 'woodwork-rack-side' | Out-Null
 
+# the display entity's hand poses side by side (gloamingforest:pose 0..7): a stick above, a log below
+$px = 950
+Invoke-Teleport "/tp @s $($px + 8) $($y + 2) $($z - 8) 0 10"
+Start-Sleep -Seconds 3
+Invoke-Build "fill $($px - 1) $y $($z + 1) $($px + 17) $($y + 3) $($z + 1) minecraft:stone"
+for ($i = 0; $i -lt 8; $i++) {
+    Invoke-Build "summon gloamingforest:drying_rack_item $($px + 2 * $i + 0.5) $($y + 2.45) $($z + 0.9) 0 0 gloamingforest:pose_$i pose$i"
+    Invoke-Build "summon gloamingforest:drying_rack_item $($px + 2 * $i + 0.5) $($y + 0.5) $($z + 0.9) 0 0 gloamingforest:pose_$i log$i"
+}
+Start-Sleep -Seconds 2
+for ($i = 0; $i -lt 8; $i++) {
+    Invoke-Build "replaceitem entity @e[type=gloamingforest:drying_rack_item,name=pose$i] slot.weapon.mainhand 0 stick"
+    Invoke-Build "replaceitem entity @e[type=gloamingforest:drying_rack_item,name=log$i] slot.weapon.mainhand 0 oak_log"
+}
+Start-Sleep -Seconds 3
+Invoke-Teleport "/tp @s $($px + 8) $($y + 1.5) $($z - 6) 0 5"
+Start-Sleep -Seconds 3
+Save-Screenshot 'woodwork-rack-poses' | Out-Null
+
 $bx = 900
 Invoke-Teleport "/tp @s $($bx + 3) $($y + 3) $($z - 8) 0 25"
 Start-Sleep -Seconds 3

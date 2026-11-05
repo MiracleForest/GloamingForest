@@ -5,8 +5,12 @@
       "loop": true,
       "bones": {
         "rightItem": {
-          "rotation": [0, 90, 0],
-          "scale": 4
+          "rotation": [
+            "v.t = q.property('gloamingforest:pose'); return (v.t == 1 || v.t == 4) ? 90 : ((v.t == 2 || v.t == 6) ? -90 : 0);",
+            "return q.property('gloamingforest:pose') >= 4 ? 90 : 0;",
+            "v.t = q.property('gloamingforest:pose'); return (v.t == 3 || v.t == 5) ? 90 : (v.t == 7 ? -90 : 0);"
+          ],
+          "scale": 1.6
         }
       }
     }
