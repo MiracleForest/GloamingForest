@@ -134,7 +134,8 @@ std::optional<Advancement> parseAdvancement(std::string const& id, Json const& j
         a.announceToChat = d->value("announce_to_chat", true);
         a.background     = d->value("background", std::string{});
     }
-    for (auto const& [name, c] : j.value("criteria", Json::object()).items())
+    auto const criteria = j.value("criteria", Json::object()); // items() must not outlive its object
+    for (auto const& [name, c] : criteria.items())
         a.criteria.push_back({name, c.value("trigger", std::string{}), c.value("conditions", Json::object())});
     for (auto const& group : j.value("requirements", Json::array())) {
         std::vector<std::string> g;

@@ -101,7 +101,7 @@ GF_REGISTER_SELFTEST("progression.advancements", [](Context& ctx) {
         if (a.frame == pc::Frame::Challenge) challenges.insert(id);
         if (a.hidden) hidden.insert(id);
     }
-    ctx.check(goals.size() == 17, "17 goal frames (11 progress_*, beanstalk, giants, maze_map, quest_ram, progression_end: " + std::to_string(goals.size()) + ")");
+    ctx.check(goals.size() == 16, "16 goal frames (11 progress_*, beanstalk, giants, maze_map, quest_ram, progression_end: " + std::to_string(goals.size()) + ")");
     ctx.check(challenges.size() == 12, "12 challenge frames (" + std::to_string(challenges.size()) + ")");
     ctx.check(hidden == std::set<std::string>{"break_glass_sword", "chicken_jerky", "experiment_115_115", "experiment_115_self_replenishing", "full_mettle_alchemist",
                                               "kill_cicada", "lich_scepters", "ore_map", "uncraft_uncrafting_table"},
