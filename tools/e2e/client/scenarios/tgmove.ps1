@@ -61,10 +61,14 @@ if ($script:Mode -eq 'remote-vanilla') {
     if ($screen -match 'disconnect') { throw "the client was disconnected after the double jump fallback ($screen)" }
     if (Get-LeviLog | Select-String -Pattern "${client}tgmove: double jump at" -Quiet) { throw 'a vanilla client ran the client mod' }
     # the glide fallback: sneaking in the air gets Slow Falling
-    Invoke-Teleport '/tp @s 300.5 -30 310.5 0 0'
+    Invoke-Teleport '/tp @s 300.5 -60 310.5 0 0'
     $mark = Get-LogMark
-    Hold-Key $VK_SHIFT 2500
-    Wait-LogLine '\[host\].*tgmove: .* glides \(Slow Falling\)' 20 -Since $mark | Out-Null
+    Invoke-Chat '/twilightforest selftest "tgmove.e2e.lift"'
+    Focus-Game
+    [BsE2E.Native]::Key([uint16]$VK_SHIFT, $false)
+    try {
+        Wait-LogLine '\[host\].*tgmove: .* glides \(Slow Falling\)' 20 -Since $mark | Out-Null
+    } finally { [BsE2E.Native]::Key([uint16]$VK_SHIFT, $true) }
     Write-Step 'vanilla fallbacks: double jump by motion packet and Slow Falling glide, no disconnect'
     Save-Screenshot 'glide' | Out-Null
     return
@@ -99,18 +103,15 @@ if ($remote) { Wait-LogLine '\[host\].*tgmove: .* sidestepped left' 20 -Since $m
 
 # ---- gradual glide (SHIFT held while falling) ----
 try {
-# land on a glass platform high up, hold SHIFT there, then break the platform away under the player
+# hold SHIFT on the ground, then the selftest tgmove.e2e.lift lifts the player 35 blocks (typing a
+# command would release the key)
 Invoke-Teleport '/tp @s 300.5 -60 310.5 0 0'
-Invoke-Chat '/setblock 300 -26 310 glass'
-Invoke-Teleport '/tp @s 300.5 -25 310.5 0 0'
-Start-Sleep -Milliseconds 800
-Focus-Game
 $mark = Get-LogMark
+Invoke-Chat '/twilightforest selftest "tgmove.e2e.lift"'
+Focus-Game
 [BsE2E.Native]::Key([uint16]$VK_SHIFT, $false)
 try {
-Start-Sleep -Milliseconds 400
-Invoke-Chat '/setblock 300 -26 310 air'
-Focus-Game
+Wait-LogLine 'tgmove.e2e.lift: lifted' 20 -Since $mark | Out-Null
 Start-Sleep -Milliseconds 1500
 Save-Screenshot 'glide' | Out-Null
 $glide = Wait-LogLine "${client}tgmove: glide ended after (\d+) ticks, sink ([0-9.]+) blocks per tick" 20 -Since $mark

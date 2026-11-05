@@ -386,4 +386,20 @@ GF_REGISTER_SELFTEST("tgmove.e2e.equip", [](Context& ctx) -> ll::coro::CoroTask<
     co_return;
 });
 
+// The client e2e scenario's glide: 2 s after it starts (the scenario holds SHIFT meanwhile, typing
+// a command would release it), the real players are lifted 35 blocks.
+GF_REGISTER_SELFTEST("tgmove.e2e.lift", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.ticks(40);
+    auto level = ll::service::getLevel();
+    ctx.require(level.has_value(), "a level");
+    int n = 0;
+    level->forEachPlayer([&](Player& p) {
+        if (p.isSimulated()) return true;
+        p.teleport(p.getFeetPos() + Vec3{0, 35, 0}, p.getDimensionId());
+        ++n;
+        return true;
+    });
+    ctx.info("lifted " + std::to_string(n) + " players");
+});
+
 } // namespace

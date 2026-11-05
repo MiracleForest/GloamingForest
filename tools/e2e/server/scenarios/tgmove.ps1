@@ -12,4 +12,4 @@ Wait-LogLine 'tgmove: travellers movement modifiers installed' 30 | Out-Null
 
 $r = Invoke-SelfTest 'tgmove.*' -TimeoutSeconds 300
 if ($r.Fail -gt 0) { throw "$($r.Fail) tgmove selftest(s) failed" }
-if ($r.Pass -lt 12) { throw "expected 12 tgmove selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 13) { throw "expected 13 tgmove selftests to pass, got $($r.Pass)" }
