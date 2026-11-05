@@ -306,16 +306,18 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
         ctx.check(fx::dustScale(JsonT::object()) == 1.f && fx::dustScale(JsonT{{"scale", 2.5}}) == 2.5f && fx::dustScale(JsonT{{"scale", 9.0}}) == 4.f &&
                       fx::dustScale(JsonT{{"scale", 0.0}}) == 0.01f,
                   "dust: the scale is params scale clamped to 0.01..4 (1 without)");
-        // DustParticleBase: Particle's motion * 0.1: |x|, |z| <= 0.018, y 0.01 - 0.008 .. 0.01 + 0.008
-        bool            ok = true, up = false;
+        // DustParticleBase: Particle's motion * 0.1: |x|, |z| <= 0.018, y 0.01 - 0.018 .. 0.01 + 0.018,
+        // 0.01 blocks/tick up on average
+        bool            ok = true;
+        float           sumY = 0.f;
         std::set<float> xs;
-        for (int i = 0; i < 100; ++i) {
+        for (int i = 0; i < 200; ++i) {
             auto d = fx::dustDirection(rng, Vec3{});
-            ok     = ok && std::abs(d.x) <= 0.0181f && std::abs(d.z) <= 0.0181f && d.y >= 0.0019f && d.y <= 0.0181f;
-            up     = up || d.y > 0.01f;
+            ok     = ok && std::abs(d.x) <= 0.0181f && std::abs(d.z) <= 0.0181f && d.y >= -0.0081f && d.y <= 0.0281f;
+            sumY += d.y;
             xs.insert(d.x);
         }
-        ctx.check(ok && up && xs.size() > 90, "dust: a still dust particle drifts up slowly (Particle's motion * 0.1)");
+        ctx.check(ok && sumY / 200.f > 0.007f && sumY / 200.f < 0.013f && xs.size() > 190, "dust: a still dust particle drifts up slowly (Particle's motion * 0.1)");
         // DustParticleBase's size 0.1..0.2 * 0.75 * scale and lifetime max((int)(8 / (0.2..1)) * scale, 1)
         bool  looks = true;
         float minTicks = 1e9f, maxTicks = 0.f;
