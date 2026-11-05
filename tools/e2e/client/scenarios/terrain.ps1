@@ -46,6 +46,8 @@ if (-not $live) { throw 'terrain.live_view did not send the player into the Twil
 $targets = @($liveLog | Select-String -Pattern 'terrain live view target (\S+) at (-?\d+) (-?\d+) (-?\d+) \(terrain height (-?\d+)\)')
 if (-not $targets.Count) { throw 'terrain.live_view logged no target' }
 Write-Step "live Twilight Forest landscapes: $(($targets | ForEach-Object { $_.Matches[0].Groups[1].Value }) -join ', ')"
+# spectators fly where they are put (a creative player falls back onto the ground)
+Invoke-Chat '/gamemode spectator'
 Start-Sleep -Seconds 15
 $first = $true
 foreach ($tg in $targets) {
@@ -63,6 +65,7 @@ foreach ($tg in $targets) {
         $first = $false
     }
 }
+Invoke-Chat '/gamemode creative'
 $back = Invoke-SelfTest 'terrain.live_view_restore'
 if ($back.Fail -gt 0) { throw 'terrain.live_view_restore failed' }
 Start-Sleep -Seconds 5
