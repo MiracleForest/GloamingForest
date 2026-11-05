@@ -187,7 +187,7 @@ GF_REGISTER_SELFTEST("darktower.builder_bridge", [](Context& ctx) -> ll::coro::C
     ctx.check(ctx.blockAt(b.offset(18, 0, 0)) == "minecraft:air", "the 18th position stays empty");
     // power off: the built blocks expire in a chain
     ctx.cleanupBlock(b.offset(0, 1, 0));
-    region->removeBlock(bp(b.offset(0, 1, 0)), {});
+    remove(*region, bp(b.offset(0, 1, 0)));
     co_await ctx.ticks(10);
     ctx.check(textState(region->getBlock(bp(b)), "twilightforest:state") != "builder_active", "the unpowered builder is no longer active");
     co_await ctx.ticks(17 * 10 + 40);
@@ -214,7 +214,7 @@ GF_REGISTER_SELFTEST("darktower.antibuilder", [](Context& ctx) -> ll::coro::Coro
     ctx.require(s && !s->snapshot.empty(), "the antibuilder captured its 9x9x9 snapshot");
     ctx.check(s->slowScan, "it starts in slow scan");
     // break a motion-blocking block: refilled with an antibuilt block
-    region->removeBlock(bp(c.offset(1, -2, 0)), {});
+    remove(*region, bp(c.offset(1, -2, 0)));
     // place a block into snapshot air: destroyed
     ctx.require(ctx.setBlock(c.offset(2, 1, 0), "minecraft:oak_planks"), "a block placed into snapshot air");
     bool refilled = false, destroyed = false;
@@ -288,9 +288,13 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
     auto trap = ctx.testPos(2615, 2).offset(0, 1, 0);
     ctx.require(ctx.setBlock(trap, id::GhastTrap), "ghast trap placed");
     placePlayer(ctx, trap, 3.5f, 0.5f);
-    static int fired = 0;
-    fired            = 0;
-    progression::onTrigger("twilightforest:activate_ghast_trap", [](Player&, nlohmann::json const&) { ++fired; });
+    static int  fired      = 0;
+    static bool listening  = false;
+    fired                  = 0;
+    if (!listening) {
+        listening = true;
+        progression::onTrigger("twilightforest:activate_ghast_trap", [](Player&, nlohmann::json const&) { ++fired; });
+    }
     co_await ctx.ticks(3);
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
@@ -342,18 +346,22 @@ GF_REGISTER_SELFTEST("darktower.urghast_phases", [](Context& ctx) -> ll::coro::C
     auto id = uidOf(*ur);
     co_await ctx.ticks(2);
     ctx.check(!ghasts::inTantrum(*ur), "it starts calm");
-    combat::hurt(*actorById(id), 11.0f, "minecraft:player_attack", &ctx.player());
+    auto alive = [&]() -> Actor& {
+        auto* a = actorById(id);
+        ctx.require(a != nullptr, "the Ur-Ghast is still there");
+        return *a;
+    };
+    combat::hurt(alive(), 11.0f, "minecraft:player_attack", &ctx.player());
     co_await ctx.ticks(12);
-    ctx.require(actorById(id) != nullptr, "alive");
-    ctx.check(ghasts::inTantrum(*actorById(id)), "10 damage started the tantrum");
-    int h0 = actorById(id)->getHealth();
-    combat::hurt(*actorById(id), 30.0f, "minecraft:player_attack", &ctx.player());
+    ctx.check(ghasts::inTantrum(alive()), "10 damage started the tantrum");
+    int h0 = alive().getHealth();
+    combat::hurt(alive(), 30.0f, "minecraft:player_attack", &ctx.player());
     co_await ctx.ticks(12);
-    int h1 = actorById(id)->getHealth();
+    int h1 = alive().getHealth();
     ctx.check(h0 - h1 <= 3 && h0 - h1 >= 2, "in tantrum damage is divided by 10 (lost " + std::to_string(h0 - h1) + ")");
-    ctx.check(!ghasts::inTantrum(*actorById(id)) || ghasts::damageUntilNextPhase(*actorById(id)) < 18.0f, "the tantrum counts toward the next switch");
-    ctx.check(combat::hurt(*actorById(id), 5.0f, "minecraft:in_fire") == false, "fire does not hurt the Ur-Ghast");
-    actorById(id)->remove();
+    ctx.check(!ghasts::inTantrum(alive()) || ghasts::damageUntilNextPhase(alive()) < 18.0f, "the tantrum counts toward the next switch");
+    ctx.check(combat::hurt(alive(), 5.0f, "minecraft:in_fire") == false, "fire does not hurt the Ur-Ghast");
+    alive().remove();
     removeAround(ctx, at, id::Ghastling, 30.0f);
 });
 

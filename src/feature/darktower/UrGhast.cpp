@@ -219,7 +219,7 @@ void fireball(Mob& m, Vec3 const& at, Vec3 const& dir) {
     if (!owned) return;
     auto* fb = l->addEntity(m.getDimensionBlockSource(), std::move(owned));
     if (!fb) return;
-    if (auto* pc = fb->getEntityContext().tryGetComponent<ProjectileComponent>())
+    if (auto pc = fb->getEntityContext().tryGetComponent<ProjectileComponent>())
         pc->shoot(*fb, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, 1.0f, 0.0f, Vec3{0, 0, 0}, nullptr);
     ge::data(*fb, "darktower:urghast_fireball") = true;
 }
@@ -521,6 +521,7 @@ void install() {
                 auto p = self.getFeetPos();
                 auto b = self.getAABB();
                 visualLightning(self.getDimensionBlockSource(), Vec3{p.x, p.y + (b.max.y - b.min.y) * 0.5f, p.z});
+                states().erase(uidOf(self));
                 gf::log().info("darktower: the Ur-Ghast died");
             },
     });

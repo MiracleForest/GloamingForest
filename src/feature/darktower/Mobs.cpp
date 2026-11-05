@@ -120,6 +120,7 @@ void hideTick(Mob& self) {
     if (r.nextInt(5) != 0) return; // doMerge chance
     set(region, p, id::InfestedTowerwood);
     particle(region, "minecraft:poof", self.getFeetPos(), {}, 20); // spawnAnim
+    borers().erase(uidOf(self));
     self.remove();
 }
 
@@ -136,7 +137,7 @@ void borerTick(Actor& self) {
 } // namespace
 
 void install() {
-    ge::registerType(id::Golem, {.tick = golemTick});
+    ge::registerType(id::Golem, {.tick = golemTick, .die = [](Actor& a, std::string const&, Actor*) { golemTimers().erase(uidOf(a)); }});
     // CarminiteGolem#doHurtTarget: attack timer 10, entity event 4 (the swing sound), push up 0.4
     combat::onDealt(combat::priority::Normal, [](combat::DamageInfo const& d) {
         if (!d.attacker || typeOf(*d.attacker) != id::Golem || d.direct != d.attacker && d.direct) return;
@@ -145,7 +146,7 @@ void install() {
         soundAt(d.attacker->getDimensionBlockSource(), d.attacker->getFeetPos(), "entity.twilightforest.carminite_golem.attack", 1.0f, 1.0f);
         push(d.victim, Vec3{0.0f, 0.4f, 0.0f});
     });
-    ge::registerType(id::Borer, {.tick = borerTick});
+    ge::registerType(id::Borer, {.tick = borerTick, .die = [](Actor& a, std::string const&, Actor*) { borers().erase(uidOf(a)); }});
     // SummonBorersGoal#notifyHurt: by an entity or #minecraft:always_triggers_silverfish
     combat::onDealt(combat::priority::Normal, [](combat::DamageInfo const& d) {
         if (typeOf(d.victim) != id::Borer) return;

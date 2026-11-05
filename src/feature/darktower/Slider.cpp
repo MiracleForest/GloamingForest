@@ -113,7 +113,9 @@ void sliderTick(BlockSource& region, BlockPos const& pos, Block const& block) {
     scheduleUpdate(region, pos);
 }
 
-void dropSelf(Actor& self) { self.spawnAtLocation(*game::items::make(id::Slider), 0.0f); }
+void dropSelf(Actor& self) {
+    if (auto stack = game::items::make(id::Slider)) self.spawnAtLocation(*stack, 0.0f);
+}
 
 void damageKnockback(BlockSource& region, Actor& self, Vec3 const& p) {
     AABB box{Vec3{p.x - 0.49f, p.y, p.z - 0.49f}, Vec3{p.x + 0.49f, p.y + 0.98f, p.z + 0.49f}};

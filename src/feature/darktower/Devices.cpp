@@ -277,9 +277,24 @@ core::jrand::LegacyRandom& antibuilderRandom() {
 }
 
 /// A stable identity per block type for the snapshot (blocks, not states, are compared).
-int blockIdentity(Block const& b) {
-    static std::unordered_map<std::string, int> ids;
-    auto [it, fresh] = ids.try_emplace(game::blockId(b), static_cast<int>(ids.size()) + 1);
+/// The per-type facts of a block for the snapshot (blocks, not states, are compared): a stable
+/// identity, unbreakable and #twilightforest:antibuilder_ignores, cached per block type.
+struct TypeFacts {
+    int  id = 0;
+    bool unbreakable = false;
+    bool ignored = false;
+};
+TypeFacts const& typeFacts(Block const& b) {
+    static std::unordered_map<std::string, TypeFacts> facts;
+    auto id = game::blockId(b);
+    auto it = facts.find(id);
+    if (it == facts.end()) {
+        TypeFacts f;
+        f.id          = static_cast<int>(facts.size()) + 1;
+        f.unbreakable = !b.isAir() && unbreakable(b);
+        f.ignored     = !b.isAir() && tags::has(tags::Registry::Block, "twilightforest:antibuilder_ignores", id);
+        it            = facts.emplace(id, f).first;
+    }
     return it->second;
 }
 
@@ -287,18 +302,18 @@ void antibuilderDevice(BlockSource& region, BlockPos const& pos, Block const&) {
     auto gp      = game::globalPos(region, pos);
     auto& s      = antibuilders()[gp];
     int  dim     = dimOf(region);
-    bool inRange = !playersNear(dim, center(pos), dt::kAntibuilderPlayerRange, true).empty();
+    bool inRange = !playersNear(dim, center(pos), dt::kAntibuilderPlayerRange, false).empty();
     auto read    = [&](int i) {
         auto         o = dt::antibuilderOffset(i);
         BlockPos     p{pos.x + o[0], pos.y + o[1], pos.z + o[2]};
         Block const& b  = region.getBlock(p);
-        auto         id = game::blockId(b);
+        auto const&  f = typeFacts(b);
         dt::AntiBlock a;
-        a.id           = blockIdentity(b);
+        a.id           = f.id;
         a.air          = b.isAir();
         a.blocksMotion = !a.air && blocksMotion(region, p);
-        a.unbreakable  = !a.air && unbreakable(b);
-        a.ignored      = !a.air && tags::has(tags::Registry::Block, "twilightforest:antibuilder_ignores", id);
+        a.unbreakable  = f.unbreakable;
+        a.ignored      = f.ignored;
         return a;
     };
     auto reverts = dt::tickAntibuilder(s, inRange, loaded(region, pos, dt::kAntibuilderRadius), read, antibuilderRandom());
@@ -338,8 +353,8 @@ bool reactorImmune(Block const& b) {
 
 void createFakeBlock(BlockSource& region, BlockPos const& p, bool diamond) {
     Block const& there = region.getBlock(p);
-    if (!there.isAir() && reactorImmune(there)) return;
-    if (there.isAir() || !reactorImmune(there)) set(region, p, diamond ? id::FakeDiamond : id::FakeGold);
+    if (!there.isAir() && reactorImmune(there)) return; // don't destroy unbreakable stuff
+    set(region, p, diamond ? id::FakeDiamond : id::FakeGold);
 }
 
 void transformBlock(BlockSource& region, BlockPos const& p, char const* stateId, int fuzz, bool nether) {
