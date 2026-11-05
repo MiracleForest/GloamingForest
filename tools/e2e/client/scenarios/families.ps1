@@ -51,6 +51,9 @@
 #                                           cobblestone in the right half's third slot (Java's ChestMenu
 #                                           broadcastChanges: the client mod's screen is refreshed after a
 #                                           hopper's tick, the vanilla screen follows F10's proxy)
+#   out/families/families-29-tf-slab-in-water.png  a twilight oak slab the player placed into a water
+#                                           source (waterlogged; the content log names no missing
+#                                           place_in_water or chest sound)
 #   out/families/families-16-tf-sign-text.png        client mod: TF's canopy signs written through the
 #                                           editor and coloured with items, from the north: the wall
 #                                           sign's front (4 black lines), the standing sign's back
@@ -534,6 +537,23 @@ if ($script:Mode -ne 'remote-vanilla') {
     Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
 }
 
+# A TF waterloggable slab placed by the player into a water source (Java: BlockItem#place plays the
+# place sound once): the game plays the sound type's place_in_water (tools/families defines it as
+# the type's place event), on this client too (its own prediction); checked at the end through the
+# content log, which must not say "No sound found ... 'place_in_water'" (nor the same for the chest
+# events of the chest opened above). The water sits in the ground, so nothing stands between the
+# player and the dirt below it, whose top is clicked through the water.
+$px = 230
+Invoke-Build "setblock $px $($y - 1) $z water"
+Invoke-Teleport "/tp @s $($px + 0.5) $y $($z + 2.5) 180 52.6"
+Start-Sleep -Seconds 3
+Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 twilightforest:twilight_oak_slab 4"
+Start-Sleep -Seconds 2
+Click 0.5 0.5 -Relative -Right
+Start-Sleep -Seconds 2
+Save-Screenshot 'families-29-tf-slab-in-water' | Out-Null
+Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
+
 # The text of a sign written by the server (families.sign_a_write): the client mod draws it on the
 # board (front: four lines), a vanilla client shows the name tag of the side facing it (the front:
 # the viewer stands south of it; the back's name tag is hidden for this viewer)
@@ -581,3 +601,15 @@ if ($script:Mode -eq 'remote-vanilla') {
     Save-Screenshot 'families-14-sign-form' | Out-Null
     Close-Screen
 }
+
+# The client played the families' sound events from their definitions: its content log (written as
+# the game closes, so close it here; run.ps1's own Stop-Game then finds nothing to stop) has no
+# "[Sound][verbose] No sound found for block type '<t>' and event type 'place_in_water' / 'chest.open'
+# / 'chest.closed'" line, which the run's own check only lists (verbose lines never fail it).
+Stop-Game
+Start-Sleep -Seconds 2
+$missingSounds = @((Get-ContentLogEntries).Distinct | Where-Object { $_.Text -match "No sound found for block type '[^']*' and event type '(place_in_water|chest\.open|chest\.closed)'" })
+if ($missingSounds) {
+    throw "the client found no definition for a families sound event: $(($missingSounds | ForEach-Object { "[$($_.Category)][$($_.Level)] $($_.Text) (x$($_.Count))" }) -join '; ')"
+}
+Write-Step "content log: no 'No sound found' line for place_in_water or the chest events ($(@(Get-ContentLogFiles).Count) file(s))"

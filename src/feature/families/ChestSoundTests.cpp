@@ -116,18 +116,18 @@ SoundLog& soundLog() {
     return l;
 }
 
-/// The nesting of the hooked packet sender calls on this thread: when one overload forwards to
-/// another (say sendToClients to sendToClient per receiver), only the outermost call records, so a
-/// logical send is one record.
-thread_local int tSendDepth = 0;
+/// The packet a hooked packet sender call on this thread is sending: when one overload forwards the
+/// same packet to another (say sendToClients to sendToClient per receiver), only the outermost call
+/// records, so a logical send is one record; another packet sent from inside a send still records.
+thread_local Packet const* tSending = nullptr;
 struct SendScope {
-    bool outermost;
-    SendScope() : outermost(tSendDepth++ == 0) {}
-    ~SendScope() { --tSendDepth; }
+    Packet const* previous;
+    bool          outermost;
+    explicit SendScope(Packet const& packet) : previous(tSending), outermost(tSending != &packet) { tSending = &packet; }
+    ~SendScope() { tSending = previous; }
     SendScope(SendScope const&)            = delete;
     SendScope& operator=(SendScope const&) = delete;
 };
-
 /// Records one send of `packet` when it is a sound; `reaches` tells whether the send reaches the
 /// watched receiver. Only the outermost hooked call of a send records (`scope`).
 template <class Reaches>
@@ -173,7 +173,7 @@ LL_TYPE_INSTANCE_HOOK(
     UserEntityIdentifierComponent const* user,
     Packet const&                        packet
 ) {
-    SendScope scope;
+    SendScope scope(packet);
     inspect(scope, packet, [user](Receiver const& w) { return user && w.is(user->mNetworkId.get(), user->mClientSubId); });
     origin(user, packet);
 }
@@ -189,7 +189,7 @@ LL_TYPE_INSTANCE_HOOK(
     Packet const&            packet,
     SubClientId              sub
 ) {
-    SendScope scope;
+    SendScope scope(packet);
     inspect(scope, packet, [&id, sub](Receiver const& w) { return w.is(id, sub); });
     origin(id, packet, sub);
 }
@@ -203,7 +203,7 @@ LL_TYPE_INSTANCE_HOOK(
     std::vector<NetworkIdentifierWithSubId> const& ids,
     Packet const&                                  packet
 ) {
-    SendScope scope;
+    SendScope scope(packet);
     inspect(scope, packet, [&ids](Receiver const& w) {
         return std::any_of(ids.begin(), ids.end(), [&w](NetworkIdentifierWithSubId const& r) { return w.is(r.id, r.subClientId); });
     });
@@ -218,7 +218,7 @@ LL_TYPE_INSTANCE_HOOK(
     void,
     Packet const& packet
 ) {
-    SendScope scope;
+    SendScope scope(packet);
     inspect(scope, packet, [](Receiver const& w) { return w.set; });
     origin(packet);
 }
@@ -234,7 +234,7 @@ LL_TYPE_INSTANCE_HOOK(
     SubClientId              exceptSub,
     Packet const&            packet
 ) {
-    SendScope scope;
+    SendScope scope(packet);
     inspect(scope, packet, [&exceptId, exceptSub](Receiver const& w) { return w.set && !w.is(exceptId, exceptSub); });
     origin(exceptId, exceptSub, packet);
 }
@@ -636,7 +636,7 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
         std::erase_if(place, [&](HeardSound const& h) { return !placeSound(h); });
         ctx.check(place.size() == 1, id + ": one place sound for the block placed into water (sent: " + describe(sent) + ")");
         // the block kept the water: the sound is the type's place_in_water (tools/families' definition)
-        ctx.check(place.size() == 1 && place[0].name == kPlaceInWater, id + ": the place sound is LevelSoundEvent PlaceInWater (sent: " + describe(sent) + ")");
+        if (place.size() == 1) ctx.check(place[0].name == kPlaceInWater, id + ": the place sound is LevelSoundEvent PlaceInWater (sent: " + describe(sent) + ")");
         ctx.setBlock(w, "minecraft:air");
     }
     (void)box;
