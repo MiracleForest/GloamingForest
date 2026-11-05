@@ -134,32 +134,6 @@ bool agileRangerItem(ItemStack const& stack) {
     return legal && !tags::has(tags::Registry::Item, "twilightforest:travellers_agile_ranger_blacklisted", id);
 }
 
-bool isWater(Block const& b) {
-    auto id = game::blockId(b);
-    return id == "minecraft:water" || id == "minecraft:flowing_water";
-}
-
-/// WaterWalkTransformer: the y of the water surface (the stable half-block shape of a water source
-/// whose block above is not water) that the player's box lands on this tick, if any.
-std::optional<double> waterSurface(LocalPlayer& p, Vec3 const& feet, double vy) {
-    auto& region = p.getDimensionBlockSource();
-    int   top    = static_cast<int>(std::floor(feet.y - tg::kWaterWalkSurface + 1e-4));
-    int   bottom = static_cast<int>(std::floor(feet.y + std::min(vy, 0.0) - tg::kWaterWalkSurface));
-    for (int by = top; by >= bottom; --by) {
-        double surface = by + tg::kWaterWalkSurface;
-        if (surface > feet.y + 1e-4 || surface < feet.y + vy - 1e-4) continue;
-        for (double dx : {-0.299, 0.299})
-            for (double dz : {-0.299, 0.299}) {
-                BlockPos at{static_cast<int>(std::floor(feet.x + dx)), by, static_cast<int>(std::floor(feet.z + dz))};
-                auto const& b = region.getBlock(at);
-                if (!isWater(b) || game::intState(b, "liquid_depth").value_or(0) != 0) continue;
-                if (isWater(region.getBlock(BlockPos{at.x, at.y + 1, at.z}))) continue;
-                return surface;
-            }
-    }
-    return std::nullopt;
-}
-
 void tick(movement::MoveState& s) {
     auto* p = currentPlayer();
     if (!p) return;
@@ -184,7 +158,7 @@ void tick(movement::MoveState& s) {
     bool waterWalk = active(*p, Mod::WaterWalk) && !s.sneakHeld;
     l.waterWalking = false;
     if (waterWalk) {
-        if (auto surface = waterSurface(*p, feet, s.velocity.y)) {
+        if (auto surface = feature::tgmove::waterSurface(*p, feet, s.velocity.y)) {
             s.velocity.y = static_cast<float>(*surface - feet.y);
             if (!ctx.hasComponent<OnGroundFlagComponent>()) ctx.getRegistry().emplace<OnGroundFlagComponent>(ctx.mEntity);
             s.onGround     = true;
@@ -220,8 +194,13 @@ void tick(movement::MoveState& s) {
                 auto        v   = tg::jumpFromGround({s.velocity.x, s.velocity.y, s.velocity.z}, tg::jumpPower(jb ? jb->mAmplifier : -1), s.sprinting, yawOf(*p));
                 v.y             = tg::boostedJump(v.y, l.doubleJumpBoost);
                 l.doubleJumpBoost = 0;
-                s.velocity      = Vec3{static_cast<float>(v.x), static_cast<float>(v.y), static_cast<float>(v.z)};
-                s.fallDistance  = 0;
+                // the server pushes the jump (SetActorMotionPacket): Bedrock's server-authoritative
+                // movement would put a jump the server does not know back (e2e: the player is
+                // corrected 2 ticks later); without a server running the mod the client jumps
+                if (!connected()) {
+                    s.velocity     = Vec3{static_cast<float>(v.x), static_cast<float>(v.y), static_cast<float>(v.z)};
+                    s.fallDistance = 0;
+                }
                 l.hasDoubleJump = false;
                 l.jumpBaseY     = feet.y;
                 l.jumpPeakY     = feet.y;
@@ -237,7 +216,7 @@ void tick(movement::MoveState& s) {
     if (auto left = tg::detectSidestep(l.tap, s.strafe, tickCount, s.onGround)) {
         if (active(*p, Mod::SideStep) && tg::sidestepReady(tickCount, l.lastSidestepTime, tg::kSidestepCooldown) && !s.gliding && s.onGround && !s.sneakHeld) {
             auto push = tg::sidestepPush(yawOf(*p), *left);
-            s.velocity = s.velocity + Vec3{static_cast<float>(push.x), 0.0f, static_cast<float>(push.z)};
+            if (!connected()) s.velocity = s.velocity + Vec3{static_cast<float>(push.x), 0.0f, static_cast<float>(push.z)}; // else the server pushes it
             l.lastSidestepTime = tickCount;
             l.stepStart        = feet;
             l.stepTicks        = 0;
@@ -248,11 +227,13 @@ void tick(movement::MoveState& s) {
 
     // ---- gradual glide (updateGradualGlideState, travellersWingsGradualGlide) ----
     bool glideActive = active(*p, Mod::GradualGlide);
-    bool glide       = glideActive && tg::wantsGlide(cfg.travellersWingsGradualGlide, s.sneakHeld, s.velocity.y, s.onGround);
+    bool sneak       = s.sneakHeld || p->isSneaking();
+    bool glide       = glideActive && tg::wantsGlide(cfg.travellersWingsGradualGlide, sneak, s.velocity.y, s.onGround);
     if (glide != l.gliding) {
         l.gliding = glide;
         if (connected()) net::client::send("tgmove.gradual_glide", {{"gliding", glide}});
         if (glide) {
+            log().info("tgmove: glide started at y {:.2f}", feet.y);
             l.glideTicks = 0;
             l.glideSink  = 0;
         } else if (l.glideTicks > 0) {
@@ -272,7 +253,7 @@ void tick(movement::MoveState& s) {
         double mult = tg::straightAheadMultiplier(active(*p, Mod::StraightAhead), tg::kStraightAheadMultiplier, move.y);
         l.straightForward = mult != 1.0;
         move.x = static_cast<float>(move.x / mult);
-        if (l.gliding && s.sneakHeld) tg::unsneakImpulse(move.y, move.x);
+        if (l.gliding && sneak) tg::unsneakImpulse(move.y, move.x);
     }
     if (active(*p, Mod::AgileRanger) && p->getItemUseDuration() > 0 && p->getVehicle() == nullptr && agileRangerItem(p->getCarriedItem())) {
         if (auto slow = ctx.tryGetComponent<ItemUseSlowdownModifierComponent>())

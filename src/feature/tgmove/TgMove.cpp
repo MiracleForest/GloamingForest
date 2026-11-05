@@ -34,7 +34,10 @@
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
+#include "mc/deps/vanilla_components/OnGroundFlagComponent.h"
+#include "mc/deps/vanilla_components/StateVectorComponent.h"
 #include "mc/entity/components/BlockMovementSlowdownImmunityComponent.h"
+#include "mc/world/actor/BuiltInActorComponents.h"
 #include "mc/entity/components/MaxAutoStepComponent.h"
 #include "mc/entity/components/MoveInputComponent.h"
 #include "mc/entity/components/WaterWalkSpeedEnchantComponent.h"
@@ -260,6 +263,34 @@ bool validatorEnabled() {
 
 void forceValidator(std::optional<bool> on) { store().forceValidator = on; }
 
+// ---- water walk --------------------------------------------------------------------------------
+
+namespace {
+bool isWater(Block const& b) {
+    auto id = game::blockId(b);
+    return id == "minecraft:water" || id == "minecraft:flowing_water";
+}
+} // namespace
+
+std::optional<double> waterSurface(Actor& actor, Vec3 const& feet, double vy) {
+    auto& region = actor.getDimensionBlockSource();
+    int   top    = static_cast<int>(std::floor(feet.y - tg::kWaterWalkSurface + 1e-4));
+    int   bottom = static_cast<int>(std::floor(feet.y + std::min(vy, 0.0) - tg::kWaterWalkSurface));
+    for (int by = top; by >= bottom; --by) {
+        double surface = by + tg::kWaterWalkSurface;
+        if (surface > feet.y + 1e-4 || surface < feet.y + vy - 1e-4) continue;
+        for (double dx : {-0.299, 0.299})
+            for (double dz : {-0.299, 0.299}) {
+                BlockPos at{static_cast<int>(std::floor(feet.x + dx)), by, static_cast<int>(std::floor(feet.z + dz))};
+                auto const& b = region.getBlock(at);
+                if (!isWater(b) || game::intState(b, "liquid_depth").value_or(0) != 0) continue;
+                if (isWater(region.getBlock(BlockPos{at.x, at.y + 1, at.z}))) continue;
+                return surface;
+            }
+    }
+    return std::nullopt;
+}
+
 // ---- wings ---------------------------------------------------------------------------------------
 
 void syncWings(Player& player) {
@@ -300,7 +331,7 @@ bool performDoubleJump(Player& player, bool sendMotion) {
         sendSlimyBoost(player, 0);
     }
     Vec3 nv{static_cast<float>(v.x), static_cast<float>(v.y), static_cast<float>(v.z)};
-    if (sendMotion) movement::applyMotion(player, nv);
+    movement::applyMotion(player, nv); // the client mod does not push itself (server-authoritative movement)
     player.setFallDistance(0);
     jumpExhaustion(player);
     playAt(player, "item.twilightforest.travellers_gear.double_jump", 1.5f, tg::doubleJumpPitch(voicePitch()));
@@ -331,7 +362,7 @@ bool tryPerformSidestep(Player& player, bool left, bool sendMotion) {
         || !player.isOnGround() || player.isSneaking())
         return false;
     auto push = tg::sidestepPush(player.getRotation().y, left);
-    if (sendMotion) movement::applyMotion(player, player.getPosDelta() + Vec3{static_cast<float>(push.x), 0.0f, static_cast<float>(push.z)});
+    movement::applyMotion(player, player.getPosDelta() + Vec3{static_cast<float>(push.x), 0.0f, static_cast<float>(push.z)});
     playAt(player, "item.twilightforest.travellers_gear.side_step", 1.0f, voicePitch());
     tg::startSidestep(st.wings, left);
     syncWings(player);
@@ -407,7 +438,23 @@ void tickPlayer(Player& player) {
         st.gliding = false;
         broadcastGlide(player, false);
     }
-    if (glideActive && st.gliding && delta.y < 0 && !player.isGliding()) player.setFallDistance(tg::glideFallDistance(delta.y));
+    // the server's copy of a gliding companion glides too (Bedrock's server-authoritative movement
+    // simulates it from the client's input and corrects a client that falls slower than it)
+    if (auto vy = tg::glide(delta.y, tg::kGradualGlideMultiplier, glideActive, st.gliding, player.isGliding())) {
+        delta.y = static_cast<float>(*vy);
+        player.mBuiltInComponents->mStateVectorComponent->mPosDelta = delta;
+        player.setFallDistance(tg::glideFallDistance(*vy));
+    }
+    // the server's copy of a companion walks on water as its client does
+    if (active(player, Mod::WaterWalk) && !player.isSneaking() && net::isCompanion(player)) {
+        if (auto surface = waterSurface(player, pos, delta.y)) {
+            delta.y = static_cast<float>(*surface - pos.y);
+            player.mBuiltInComponents->mStateVectorComponent->mPosDelta = delta;
+            if (!ctx.hasComponent<OnGroundFlagComponent>()) ctx.getRegistry().emplace<OnGroundFlagComponent>(ctx.mEntity);
+            auto& ds = ctx.getOrAddComponent<WaterWalkSpeedEnchantComponent>();
+            if (ds.mValue < tg::kSwiftSwimDepthStrider) ds.mValue = tg::kSwiftSwimDepthStrider;
+        }
+    }
     // vanilla clients: sneak in the air = Slow Falling (the client config's default)
     bool vanillaGlide = glideActive && !net::isCompanion(player)
                      && tg::wantsGlide(true, player.isSneaking(), delta.y, onGround && !st.airborne) && !player.isGliding();

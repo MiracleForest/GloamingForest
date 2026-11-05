@@ -29,6 +29,8 @@ Save-Screenshot 'start' | Out-Null
 # the test area: x 300..320, z 300..320 of the flat test world (grass at y -61)
 Invoke-Chat '/gamemode survival'
 Invoke-Chat '/effect @s resistance 600 4 true'
+Invoke-Teleport '/tp @s 310.5 -60 310.5 0 0' # load the area's chunks before filling it
+Start-Sleep -Seconds 3
 Invoke-Chat '/fill 298 -60 296 322 -40 322 air'
 Invoke-Chat '/fill 298 -61 296 322 -61 322 grass_block'
 Invoke-Chat '/setblock 305 -60 300 stone'
@@ -38,8 +40,8 @@ Invoke-Chat '/twilightforest selftest "tgmove.e2e.equip"'
 $done = Wait-LogLine 'SELFTEST DONE pass=(\d+) fail=(\d+)' 60 -Since $mark
 if ($done -notmatch 'pass=1 fail=0') { throw "tgmove.e2e.equip: $done" }
 $results = [ordered]@{}
-$script:failures = @()
-function Add-Failure([string]$m) { $script:failures += $m; Write-Step "FAIL: $m" }
+$script:tgFailures = @()
+function Add-Failure([string]$m) { $script:tgFailures += $m; Write-Step "FAIL: $m" }
 
 # ---- double jump ----
 Invoke-Teleport '/tp @s 300.5 -60 302.5 0 0'
@@ -76,6 +78,7 @@ if ($h -lt 2.0 -or $h -gt 3.0) { Add-Failure "double jump peak $h blocks, TF's i
 if ($remote) { Wait-LogLine '\[host\].*tgmove: .* double jumped \(vy' 20 -Since $mark | Out-Null }
 
 # ---- sidestep (A twice within 4 ticks) ----
+try {
 Invoke-Teleport '/tp @s 300.5 -60 304.5 0 0'
 Start-Sleep -Seconds 3 # the 40 tick cooldown since the teleport is not relevant: last sidestep long ago
 Focus-Game
@@ -92,24 +95,29 @@ $results['sidestep distance'] = "$d blocks (TF 1.6 / 0.454 = 3.5)"
 if ($d -lt 2.5 -or $d -gt 6.0) { Add-Failure "sidestep moved $d blocks, TF's push 1.6 gives about 3.5" }
 Save-Screenshot 'sidestep' | Out-Null
 if ($remote) { Wait-LogLine '\[host\].*tgmove: .* sidestepped left' 20 -Since $mark | Out-Null }
+} catch { Add-Failure "sidestep: $_" }
 
 # ---- gradual glide (SHIFT held while falling) ----
+try {
 Invoke-Teleport '/tp @s 300.5 -25 310.5 0 0'
 Start-Sleep -Milliseconds 500
 Focus-Game
 $mark = Get-LogMark
 [BsE2E.Native]::Key([uint16]$VK_SHIFT, $false)
+try {
 Start-Sleep -Milliseconds 1500
 Save-Screenshot 'glide' | Out-Null
 $glide = Wait-LogLine "${client}tgmove: glide ended after (\d+) ticks, sink ([0-9.]+) blocks per tick" 20 -Since $mark
-[BsE2E.Native]::Key([uint16]$VK_SHIFT, $true)
+} finally { [BsE2E.Native]::Key([uint16]$VK_SHIFT, $true) }
 if ($glide -notmatch 'after (\d+) ticks, sink ([0-9.]+)') { throw "no glide line in '$glide'" }
 $ticks = [int]$Matches[1]; $sink = [double]$Matches[2]
 $results['glide sink rate'] = "$sink blocks/tick over $ticks ticks (TF terminal 0.357)"
 if ($ticks -lt 40) { Add-Failure "the glide lasted only $ticks ticks" }
 if ($sink -lt 0.25 -or $sink -gt 0.40) { Add-Failure "glide sink $sink blocks per tick, TF's terminal is 0.357" }
+} catch { Add-Failure "glide: $_" }
 
 # ---- water walk ----
+try {
 Invoke-Teleport '/tp @s 312.5 -59 301.5 0 0'
 $mark = Get-LogMark
 $ww = Wait-LogLine "${client}tgmove: walking on water at y (-?[0-9.]+)" 10 -Since $mark
@@ -121,8 +129,10 @@ Focus-Game
 Hold-Key $VK_W 1200
 Start-Sleep -Milliseconds 300
 Save-Screenshot 'water-walk' | Out-Null
+} catch { Add-Failure "water walk: $_" }
 
 # ---- step up (walk into a full block) ----
+try {
 Invoke-Teleport '/tp @s 305.5 -60 298.5 0 0'
 Start-Sleep -Seconds 1
 Focus-Game
@@ -132,6 +142,7 @@ $step = Wait-LogLine "${client}tgmove: stepped up ([0-9.]+) blocks" 10 -Since $m
 if ($step -notmatch 'stepped up ([0-9.]+)') { throw "no step up line in '$step'" }
 $results['step up'] = "$($Matches[1]) blocks (TF step height 0.6 + 0.5)"
 Save-Screenshot 'step-up' | Out-Null
+} catch { Add-Failure "step up: $_" }
 
 foreach ($k in $results.Keys) { Write-Step "${k}: $($results[$k])" }
-if ($script:failures.Count -gt 0) { throw ($script:failures -join '; ') }
+if ($script:tgFailures.Count -gt 0) { throw ($script:tgFailures -join '; ') }

@@ -214,7 +214,8 @@ GF_REGISTER_SELFTEST("tgmove.glide", [](Context& ctx) -> ll::coro::CoroTask<> {
     tm::stateOf(p1).gliding = true;
     p1.lerpMotion(Vec3{0, -0.5f, 0});
     tm::tickPlayer(p1);
-    ctx.check(std::abs(p1.getFallDistance() - 1.5625f) < 0.01f, "fall distance 0.5^2 / 0.16: " + num(p1.getFallDistance()));
+    ctx.check(std::abs(p1.getPosDelta().y + 0.5f * 5 / 6) < 1e-3f, "the server copy glides: vy x 5/6 (" + num(p1.getPosDelta().y) + ")");
+    ctx.check(std::abs(p1.getFallDistance() - tg::glideFallDistance(-0.5 * 5 / 6)) < 0.01f, "fall distance v^2 / 2g: " + num(p1.getFallDistance()));
     // without the modifier the glide stops
     unequipAll(p1);
     tm::tickPlayer(p1);

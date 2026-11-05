@@ -30,8 +30,10 @@
 
 #include "core/tgmove/TgMove.h"
 
+class Actor;
 class Player;
 class ItemStack;
+class Vec3;
 
 namespace gf::feature::tgmove {
 
@@ -107,6 +109,11 @@ bool onFall(Player& player, float& amount);
 void syncWings(Player& player);
 /// The voice pitch of a player (LivingEntity#getVoicePitch).
 [[nodiscard]] float voicePitch();
+
+/// WaterWalkTransformer: the y of the water surface (the half-block stable shape of a water source
+/// whose block above is not water) that `actor`'s box (feet `feet`, y velocity `vy`) lands on this
+/// tick, if any. The client mod and the server's copy of a companion apply it alike.
+[[nodiscard]] std::optional<double> waterSurface(Actor& actor, Vec3 const& feet, double vy);
 
 /// Server game time (Level#getCurrentTick).
 [[nodiscard]] long long gameTime();
