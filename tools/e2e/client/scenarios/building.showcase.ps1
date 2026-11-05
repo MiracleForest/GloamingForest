@@ -17,7 +17,8 @@ function Get-BuildingShowcase {
     $spawners = 'naga', 'lich', 'hydra', 'ur_ghast', 'knight_phantom', 'snow_queen', 'minoshroom', 'alpha_yeti', 'final_boss'
     $minis = 'twilight_portal', 'naga_courtyard', 'lich_tower', 'minotaur_labyrinth', 'dark_tower'
     $lines = [System.Collections.Generic.List[string]]::new()
-    $lines.Add('fill 16 -61 16 44 -61 128 grass_block')
+    $lines.Add('fill 16 -61 16 44 -61 72 grass_block')
+    $lines.Add('fill 16 -61 73 44 -61 128 grass_block')
     $lines.Add('fill 16 -60 16 44 -50 72 air')
     $lines.Add('fill 16 -60 73 44 -50 128 air')
     for ($i = 0; $i -lt 9; $i++) {

@@ -24,10 +24,13 @@ Invoke-Chat '/gamerule showcoordinates false'
 Invoke-Chat '/time set noon'
 Invoke-Chat '/weather clear'
 Invoke-Chat '/gamemode creative'
-Invoke-Teleport '/tp @s 30 -60 10'
-Start-Sleep -Seconds 2
-Invoke-Chat '/function gfbuilding/showcase'
-Start-Sleep -Seconds 4
+# setblock only reaches loaded chunks: the showcase runs from both halves of its rows
+foreach ($z in 40, 100) {
+    Invoke-Teleport "/tp @s 30 -60 $z"
+    Start-Sleep -Seconds 3
+    Invoke-Chat '/function gfbuilding/showcase'
+    Start-Sleep -Seconds 3
+}
 Invoke-Chat '/gamemode spectator'
 Start-Sleep -Seconds 2
 
