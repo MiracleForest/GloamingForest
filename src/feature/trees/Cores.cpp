@@ -121,12 +121,11 @@ void save() {
 }
 
 void load() {
-    state().due.clear();
     state().loaded = true;
     auto j         = game::db::get(kDbKey);
     if (!j || !j->is_array()) return;
     for (auto const& e : *j)
-        if (e.is_array() && e.size() == 4) state().due[GlobalPos{e[0].get<int>(), e[1].get<int>(), e[2].get<int>(), e[3].get<int>()}] = state().tick + kTickRate;
+        if (e.is_array() && e.size() == 4) state().due.try_emplace(GlobalPos{e[0].get<int>(), e[1].get<int>(), e[2].get<int>(), e[3].get<int>()}, state().tick + kTickRate);
 }
 
 bool isActive(Block const& b) {

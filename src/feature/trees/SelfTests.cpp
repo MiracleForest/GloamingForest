@@ -92,12 +92,47 @@ private:
 
 BlockPos bp(GlobalPos const& p) { return game::blockPos(p); }
 
+/// The vanilla huge mushrooms as Minecraft 1.21.1 configures them (huge_brown_mushroom /
+/// huge_red_mushroom: the features data has no configured feature of these ids).
+nlohmann::json vanillaMushroom(bool red) {
+    auto face = [](bool up, bool down) {
+        return nlohmann::json{{"down", down ? "true" : "false"}, {"east", "true"}, {"north", "true"}, {"south", "true"}, {"up", up ? "true" : "false"}, {"west", "true"}};
+    };
+    nlohmann::json cap  = nlohmann::json::object();
+    cap["type"]         = "minecraft:simple_state_provider";
+    cap["state"]        = {{"Name", red ? "minecraft:red_mushroom_block" : "minecraft:brown_mushroom_block"}, {"Properties", face(true, false)}};
+    nlohmann::json stem = nlohmann::json::object();
+    stem["type"]        = "minecraft:simple_state_provider";
+    stem["state"]       = {{"Name", "minecraft:mushroom_stem"}, {"Properties", face(false, false)}};
+    nlohmann::json config = nlohmann::json::object();
+    config["cap_provider"]   = cap;
+    config["stem_provider"]  = stem;
+    config["foliage_radius"] = red ? 2 : 3;
+    nlohmann::json out       = nlohmann::json::object();
+    out["type"]              = red ? "minecraft:huge_red_mushroom" : "minecraft:huge_brown_mushroom";
+    out["config"]            = config;
+    return out;
+}
+
 bool placeSeeded(Context& ctx, std::string const& id, BlockPos const& pos, std::int64_t seed) {
     auto* region = ctx.region();
     if (!region) return false;
     LiveRegion                live(*region, pos);
     core::jrand::LegacyRandom random(seed);
+    if (id == "minecraft:huge_brown_mushroom" || id == "minecraft:huge_red_mushroom") return gf::features::placeJson(vanillaMushroom(id == "minecraft:huge_red_mushroom"), live, pos, random);
     return gf::features::place(id, live, pos, random);
+}
+
+/// The tree of time checks 4 blocks under its base for #minecraft:features_cannot_replace (the flat
+/// world's bedrock is there): a 3x4x3 dirt pedestal topped with grass lifts it; returns the new base.
+BlockPos pedestal(BlockSource& region, BlockPos const& pos) {
+    auto const* dirt  = game::blockWith("minecraft:dirt");
+    auto const* grass = game::blockWith("minecraft:grass_block");
+    for (int dx = -1; dx <= 1; ++dx)
+        for (int dy = 0; dy < 4; ++dy)
+            for (int dz = -1; dz <= 1; ++dz)
+                if (auto const* b = dy == 3 ? grass : dirt) game::setBlock(region, BlockPos{pos.x + dx, pos.y + dy, pos.z + dz}, *b);
+    return BlockPos{pos.x, pos.y + 4, pos.z};
 }
 
 int countBlocks(BlockSource& region, BlockBox const& box, std::string_view needle) {
@@ -116,6 +151,7 @@ ll::coro::CoroTask<> placeAll(Context& ctx, int dx, std::vector<std::string> con
         int      cx  = static_cast<int>(i % 4), cz = static_cast<int>(i / 4);
         BlockPos pos{box.minX + 18 + cx * 36, box.minY, box.minZ + 18 + cz * 36};
         co_await ctx.ensureLoaded(game::globalPos(ctx.dimension(), pos));
+        if (ids[i].ends_with("time_tree") && ctx.region()) pos = pedestal(*ctx.region(), pos);
         bool ok = placeSeeded(ctx, ids[i], pos, 1234 + static_cast<std::int64_t>(i));
         ctx.check(ok, ids[i] + " placed");
         if (ok) ctx.info(ids[i] + " placed");
@@ -160,10 +196,10 @@ ll::coro::CoroTask<> golden(Context& ctx, int dx, std::string const& id, std::st
 
 } // namespace
 
-GF_REGISTER_SELFTEST("trees.golden_canopy_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 330, tree("canopy_tree"), ""); });
-GF_REGISTER_SELFTEST("trees.golden_mega_canopy_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 335, tree("mega_canopy_tree"), ""); });
-GF_REGISTER_SELFTEST("trees.golden_darkwood_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 340, tree("darkwood_tree"), ""); });
-GF_REGISTER_SELFTEST("trees.golden_mangrove_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 345, tree("mangrove_tree"), ""); });
+GF_REGISTER_SELFTEST("trees.golden_canopy_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 330, tree("canopy_tree"), "bcb7ce14451f3461"); });
+GF_REGISTER_SELFTEST("trees.golden_mega_canopy_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 335, tree("mega_canopy_tree"), "f8ad57ebe7d2135f"); });
+GF_REGISTER_SELFTEST("trees.golden_darkwood_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 340, tree("darkwood_tree"), "4b02f8878de8e514"); });
+GF_REGISTER_SELFTEST("trees.golden_mangrove_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 345, tree("mangrove_tree"), "cf0c7c46e51a5599"); });
 
 namespace {
 
@@ -209,6 +245,7 @@ GF_REGISTER_SELFTEST("trees.sapling_growers", [](Context& ctx) -> ll::coro::Coro
     for (int i = 0; i < 9; ++i) {
         GlobalPos p = game::globalPos(ctx.dimension(), BlockPos{box.minX + 24 + (i % 3) * 48, box.minY, box.minZ + 24 + (i / 3) * 48});
         std::string id = std::string("twilightforest:") + saplings[i];
+        if (id == "twilightforest:time_sapling" && ctx.region()) p = game::globalPos(ctx.dimension(), pedestal(*ctx.region(), bp(p)));
         ctx.require(ctx.setBlock(p, id), id + " planted");
         bool grown = false;
         for (int tries = 0; tries < 40 && !grown; ++tries) {
@@ -435,7 +472,9 @@ GF_REGISTER_SELFTEST("trees.showcase", [](Context& ctx) -> ll::coro::CoroTask<> 
                 for (int dy = 0; dy < 50; ++dy)
                     if (auto const* a = game::blockWith("minecraft:air")) game::setBlock(*region, BlockPos{b.x, p.y + dy, b.z}, *a);
             }
-        bool ok = placeSeeded(ctx, ids[i], bp(p), 4242 + static_cast<std::int64_t>(i));
+        BlockPos at = bp(p);
+        if (ids[i].ends_with("time_tree")) at = pedestal(*region, at);
+        bool ok = placeSeeded(ctx, ids[i], at, 4242 + static_cast<std::int64_t>(i));
         ctx.check(ok, ids[i] + " placed");
         ctx.info("trees showcase " + std::to_string(i) + " " + ids[i] + " at " + std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z));
     }
