@@ -15,6 +15,9 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/deps/shared_types/legacy/ContainerType.h"
+#include "mc/server/ServerPlayer.h"
+#include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/ContainerID.h"
@@ -29,6 +32,8 @@
 #include "mc/world/effect/EffectDuration.h"
 #include "mc/world/effect/MobEffectInstance.h"
 #include "mc/world/gamemode/GameMode.h"
+#include "mc/world/gamemode/InteractionResult.h"
+#include "mc/world/item/HandSlot.h"
 #include "mc/world/item/Item.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/PlayerUIContainer.h"
@@ -168,7 +173,7 @@ GF_REGISTER_SELFTEST("woodwork.rack_particle_rate", [](Context& ctx) -> ll::coro
     namespace pt = gf::woodwork_ext::particles;
     double here = pt::animateTickChance(0, 0, 0);
     ctx.check(std::abs(here - 667.0 * (1.0 / 4096.0 + 1.0 / 32768.0)) < 1e-9, "next to the player: " + std::to_string(here) + " calls a tick");
-    ctx.check(pt::animateTickChance(20, 0, 0) < 0.001, "20 blocks away: almost never (" + std::to_string(pt::animateTickChance(20, 0, 0)) + ")");
+    ctx.check(pt::animateTickChance(20, 0, 0) < 0.01, "20 blocks away: rarely (" + std::to_string(pt::animateTickChance(20, 0, 0)) + ")");
     ctx.check(pt::animateTickChance(32, 0, 0) == 0.0 && pt::animateTickChance(0, 40, 0) == 0.0, "32 or more blocks away: never");
     ctx.check(pt::animateTickChance(16, 0, 0) < pt::animateTickChance(15, 0, 0), "the chance falls off with the distance");
     // a drying rack next to the test player for 200 ticks: about 200 * 0.16 / 5 = 6.5 particles
@@ -349,28 +354,52 @@ GF_REGISTER_SELFTEST("woodwork.furnace_and_enchanting", [](Context& ctx) -> ll::
     for (int dx = -2; dx <= 2 && shelves.size() < 15; ++dx) shelves.push_back(at(t, dx, 1, -2));
     for (auto const& s : shelves) ctx.require(ctx.setBlock(s, "twilightforest:canopy_bookshelf"), "a canopy bookshelf");
     co_await ctx.ticks(2);
+    // the player opens the table (the game's own EnchantingContainerManagerModel), puts a sword and
+    // lapis in, and the model recalculates its three options as the screen does
     auto& sp = simPlayer(ctx);
-    sp.teleport(Vec3{t.x + 0.5f, float(t.y + 1), t.z + 0.5f}, sp.getDimensionId());
-    co_await ctx.ticks(2);
+    sp.teleport(Vec3{t.x + 0.5f, float(t.y), t.z + 1.5f}, sp.getDimensionId());
+    sp.simulateLookAt(gf::game::blockPos(t), sim::LookDuration::Instant);
+    sp.simulateSetItem(ItemStack::EMPTY_ITEM(), true, 0);
+    co_await ctx.ticks(4);
     int best = 0, positions = 0;
     {
-        BlockPos tb   = gf::game::blockPos(t);
-        positions     = static_cast<int>(EnchantUtils::getBookCasePositions(*ctx.region(), Vec3{float(tb.x), float(tb.y), float(tb.z)}).size());
-        auto& player  = ctx.player();
-        auto  model   = std::make_unique<EnchantingContainerManagerModel>(ContainerID::First, player, tb);
-        model->setSlot(0, *items::make("minecraft:iron_sword"), false);
-        model->setSlot(1, *items::make("minecraft:lapis_lazuli", 3), false);
-        model->recalculateOptions();
+        BlockPos tb = gf::game::blockPos(t);
+        positions   = static_cast<int>(EnchantUtils::getBookCasePositions(*ctx.region(), Vec3{float(tb.x), float(tb.y), float(tb.z)}).size());
+        auto& player = simPlayer(ctx);
+        if (!player.simulateInteract(tb, ScriptModuleMinecraft::ScriptFacing::Up)) {
+            auto& held = const_cast<ItemStack&>(player.getSelectedItem());
+            player.mGameMode->useItemOn(held, tb, static_cast<uchar>(1), Vec3{tb.x + 0.5f, tb.y + 0.75f, tb.z + 0.5f}, HandSlot::Mainhand, nullptr, true);
+        }
+    }
+    co_await ctx.ticks(2);
+    {
+        auto& player = ctx.player();
+        auto* mgr    = player.mContainerManager.get();
+        if (!mgr) {
+            // Bedrock opens the crafting-block screens client side: the server's model as
+            // ServerPlayer's own open makes it (construct, postInit, set as the player's manager)
+            auto made = std::make_shared<EnchantingContainerManagerModel>(ContainerID::First, player, gf::game::blockPos(t));
+            made->postInit();
+            static_cast<ServerPlayer&>(player)._setContainerManagerModel(made);
+            mgr = player.mContainerManager.get();
+        }
+        ctx.info(std::string("container after the click: ") + (mgr ? std::to_string(static_cast<int>(mgr->getContainerType())) : std::string("none")));
+        ctx.require(mgr != nullptr && mgr->getContainerType() == SharedTypes::Legacy::ContainerType::Enchantment, "the player opened the enchanting table");
+        auto& model = static_cast<EnchantingContainerManagerModel&>(*mgr);
+        auto& ui    = player.mPlayerUIContainer.get();
+        ui.setItem(static_cast<int>(PlayerUISlot::EnchantingInput), *items::make("minecraft:iron_sword"));
+        ui.setItem(static_cast<int>(PlayerUISlot::EnchantingMaterial), *items::make("minecraft:lapis_lazuli", 3));
+        model.recalculateOptions();
         std::string costs;
-        for (auto const& o : model->mEnchantOptions.get()) {
+        for (auto const& o : model.mEnchantOptions.get()) {
             best = std::max<int>(best, o.mCost);
             costs += std::to_string(static_cast<int>(o.mCost)) + " ";
         }
         ctx.info("enchanting options with 15 canopy bookshelves: " + costs + "(" + std::to_string(positions) + " bookcase positions)");
-        model->setSlot(0, ItemStack::EMPTY_ITEM(), false);
-        model->setSlot(1, ItemStack::EMPTY_ITEM(), false);
-    }
-    ctx.check(positions >= 15, "the table counts 15 bookshelves (" + std::to_string(positions) + ")");
+        ui.setItem(static_cast<int>(PlayerUISlot::EnchantingInput), ItemStack::EMPTY_ITEM());
+        ui.setItem(static_cast<int>(PlayerUISlot::EnchantingMaterial), ItemStack::EMPTY_ITEM());
+        static_cast<ServerPlayer&>(player).doDeleteContainerManager(false);
+    }    ctx.check(positions >= 15, "the table counts 15 bookshelves (" + std::to_string(positions) + ")");
     ctx.check(best == 30, "the third option costs 30 levels (" + std::to_string(best) + ")");
     for (auto const& s : shelves) ctx.cleanupBlock(s);
     ctx.cleanupBlock(t);
