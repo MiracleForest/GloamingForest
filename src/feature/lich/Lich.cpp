@@ -1250,7 +1250,9 @@ void levelTick() {
         if (auto level = ll::service::getLevel())
             level->forEachPlayer(std::function<bool(Player&)>([](Player& p) {
                 auto f = p.getFeetPos();
-                edits::tickTethers(p.getDimensionBlockSource(), dimOf(p), AABB{Vec3{f.x - 48.0f, f.y - 24.0f, f.z - 48.0f}, Vec3{f.x + 48.0f, f.y + 24.0f, f.z + 48.0f}});
+                // the dimension's main block source (a joining player's own one may not be ready)
+                if (auto* region = game::regionOf(dimOf(p)); region && p.isAlive())
+                    edits::tickTethers(*region, dimOf(p), AABB{Vec3{f.x - 48.0f, f.y - 24.0f, f.z - 48.0f}, Vec3{f.x + 48.0f, f.y + 24.0f, f.z + 48.0f}});
                 return true;
             }));
     }
