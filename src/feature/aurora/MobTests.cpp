@@ -426,7 +426,7 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_beam", [](Context& ctx) -> ll::coro::Cor
         auto pp = ctx.player().getFeetPos();
         // straight at the player, level
         float yaw = static_cast<float>(-std::atan2(pp.x - qp.x, pp.z - qp.z) * 180.0 / 3.14159265358979);
-        q->setRotationWrapped(Vec2{0.0f, yaw});
+        q->moveTo(qp, Vec2{0.0f, yaw}); // (pitch, yaw)
         q->setYHeadRot(yaw);
         dealt().hits.clear();
         ctx.player().heal(20);
