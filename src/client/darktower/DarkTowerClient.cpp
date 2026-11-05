@@ -177,8 +177,7 @@ void tickTears(BlockSource& region) {
 
 /// The dimension's weather (null: none). Dimension::mWeather is a std::unique_ptr, kept in a TypedStorage.
 Weather* weatherOf(Dimension& d) {
-    if constexpr (requires { d.mWeather.get().get(); }) return d.mWeather.get().get();
-    else return d.mWeather.get();
+    return d.mWeather.get();
 }
 
 /// TFWeatherRenderer#tickRain's urGhastRain, applied to the client dimension's rain level.
