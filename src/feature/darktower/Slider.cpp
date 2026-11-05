@@ -143,9 +143,29 @@ void slideTick(Actor& self) {
     if (time > kWarmup) {
         auto o = dt::offsetOf(dir);
         v      = Vec3{v.x + o[0] * 0.04f, v.y + o[1] * 0.04f, v.z + o[2] * 0.04f};
-        Vec3 next{p.x + v.x, p.y + v.y, p.z + v.z};
-        if (boxCollides(region, next)) hit = true; // move() clipped: vertical or horizontal collision
-        else p = next;
+        // Entity#move(SELF): sweep the box along the motion (steps of at most 0.49, so no block is
+        // skipped at the slider's 1.6 blocks per tick) and clip it flush against the first block in
+        // the way (vertical or horizontal collision)
+        double len   = std::sqrt(double(v.x) * v.x + double(v.y) * v.y + double(v.z) * v.z);
+        int    steps = std::max(1, static_cast<int>(std::ceil(len / 0.49)));
+        double done  = 0.0;
+        for (int i = 1; i <= steps && !hit; ++i) {
+            double f = double(i) / steps;
+            Vec3   q{float(p.x + v.x * f), float(p.y + v.y * f), float(p.z + v.z * f)};
+            if (!boxCollides(region, q)) {
+                done = f;
+                continue;
+            }
+            hit       = true;
+            double lo = done, hi = f;
+            for (int k = 0; k < 16; ++k) {
+                double mid = (lo + hi) / 2;
+                if (boxCollides(region, Vec3{float(p.x + v.x * mid), float(p.y + v.y * mid), float(p.z + v.z * mid)})) hi = mid;
+                else lo = mid;
+            }
+            done = lo;
+        }
+        p = Vec3{float(p.x + v.x * done), float(p.y + v.y * done), float(p.z + v.z * done)};
     }
     d["pos"] = {p.x, p.y, p.z};
     d["vel"] = {v.x, v.y, v.z};

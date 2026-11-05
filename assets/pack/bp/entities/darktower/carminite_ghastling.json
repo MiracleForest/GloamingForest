@@ -77,7 +77,12 @@
       "minecraft:despawn": {
         "despawn_from_distance": {}
       },
-      "minecraft:conditional_bandwidth_optimization": {}
+      "minecraft:conditional_bandwidth_optimization": {},
+      "minecraft:ambient_sound_interval": {
+        "value": 8.0,
+        "range": 8.0,
+        "event_name": "ambient"
+      }
     }
   }
 }

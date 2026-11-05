@@ -115,6 +115,7 @@ void vanishingTick(BlockSource& region, BlockPos const& pos, Block const& block)
         return;
     }
     if (!active) return;
+    sparkle(region, pos); // VanishingBlock#animateTick while active
     if (hasVanished(id)) {
         setStates(region, pos, {{kActive, false}, {kVanished, true}});
         runtime::schedule(region, pos, 80);
@@ -228,6 +229,7 @@ void builderDevice(BlockSource& region, BlockPos const& pos, Block const& block)
     }
     Block const& now = region.getBlock(pos);
     if (textState(now, kState) != "builder_active") return; // the ticker exists only while active
+    if (random().nextInt(4) == 0) sparkle(region, pos);    // BuilderBlock#animateTick
     auto& s   = builders()[gp];
     int   dim = dimOf(region);
     auto  r   = dt::tickBuilder(
@@ -298,6 +300,48 @@ TypeFacts const& typeFacts(Block const& b) {
     return it->second;
 }
 
+/// AntibuilderBlockEntity#drawParticleLine: 16 redstone dust along the line.
+void drawParticleLine(BlockSource& region, double sx, double sy, double sz, double dx, double dy, double dz) {
+    auto& r         = random();
+    int   particles = 16;
+    for (int i = 0; i < particles; i++) {
+        double t = i / (particles - 1.0);
+        redstoneDust(region, Vec3{float(sx + (dx - sx) * t + r.nextFloat() * 0.005), float(sy + (dy - sy) * t + r.nextFloat() * 0.005),
+                                  float(sz + (dz - sz) * t + r.nextFloat() * 0.005)});
+    }
+}
+
+/// AntibuilderBlockEntity#makeOutline: one of the 12 edges of the antibuilder's cube, plus a line
+/// from the block's centre to one of its ends.
+void makeOutline(BlockSource& region, BlockPos const& pos, int outline) {
+    double const R  = dt::kAntibuilderRadius;
+    double       sx = pos.x, sy = pos.y, sz = pos.z, dx = pos.x, dy = pos.y, dz = pos.z;
+    switch (outline) {
+    case 0: case 8: sx -= R; dx += R + 1; sz -= R; dz -= R; break;
+    case 1: case 9: sx -= R; dx -= R; sz -= R; dz += R + 1; break;
+    case 2: case 10: sx -= R; dx += R + 1; sz += R + 1; dz += R + 1; break;
+    case 3: case 11: sx += R + 1; dx += R + 1; sz -= R; dz += R + 1; break;
+    case 4: sx -= R; dx -= R; sz -= R; dz -= R; break;
+    case 5: sx += R + 1; dx += R + 1; sz -= R; dz -= R; break;
+    case 6: sx += R + 1; dx += R + 1; sz += R + 1; dz += R + 1; break;
+    case 7: sx -= R; dx -= R; sz += R + 1; dz += R + 1; break;
+    default: break;
+    }
+    if (outline <= 3) {
+        sy += R + 1;
+        dy += R + 1;
+    } else if (outline <= 7) {
+        sy -= R;
+        dy += R + 1;
+    } else {
+        sy -= R;
+        dy -= R;
+    }
+    if (random().nextBoolean()) drawParticleLine(region, pos.x + 0.5, pos.y + 0.5, pos.z + 0.5, dx, dy, dz);
+    else drawParticleLine(region, sx, sy, sz, pos.x + 0.5, pos.y + 0.5, pos.z + 0.5);
+    drawParticleLine(region, sx, sy, sz, dx, dy, dz);
+}
+
 void antibuilderDevice(BlockSource& region, BlockPos const& pos, Block const&) {
     auto gp      = game::globalPos(region, pos);
     auto& s      = antibuilders()[gp];
@@ -333,10 +377,19 @@ void antibuilderDevice(BlockSource& region, BlockPos const& pos, Block const&) {
     if (inRange) {
         auto& rnd = random();
         redstoneDust(region, Vec3{pos.x + rnd.nextFloat(), pos.y + rnd.nextFloat(), pos.z + rnd.nextFloat()});
+        // occasionally make a little red dust line to outline our radius
+        if (rnd.nextInt(10) == 0)
+            for (int i = 0; i < 3; i++) makeOutline(region, pos, rnd.nextInt(12));
     }
 }
 
 // ---- carminite reactor -------------------------------------------------------------------------------
+
+/// Set while the reactor's explosion runs (its entity damage becomes twilightforest:reactor).
+bool& reactorBlast() {
+    static bool b = false;
+    return b;
+}
 
 struct Reactor {
     int               counter = 0;
@@ -416,7 +469,11 @@ void reactorDevice(BlockSource& region, BlockPos const& pos, Block const& block)
         auto bursts = te.bursts;
         reactors().erase(gp);
         destroy(region, pos, false);
+        // CarminiteReactorBlockEntity: level.explode(null, TFDamageTypes.getDamageSource(REACTOR), ...): the
+        // explosion's entity damage is retyped to twilightforest:reactor while it runs
+        reactorBlast() = true;
         region.getLevel().explode(region, nullptr, Vec3{float(pos.x), float(pos.y), float(pos.z)}, 4.0f, true, true, 3.40282347e38f, false);
+        reactorBlast() = false;
         auto& r = random();
         for (int i = 0; i < 3; i++) {
             for (auto const* c : {&bursts.secondary, &bursts.tertiary}) {
@@ -585,6 +642,7 @@ void trapDevice(BlockSource& region, BlockPos const& pos, Block const& block) {
 void infestedBroken(ia::DestroyContext const& c, bool destroyed) {
     if (!destroyed) return;
     if (c.player.getPlayerGameType() == GameType::Creative) return; // no drops in creative
+    if (!doTileDrops()) return;                                       // InfestedBlock#spawnAfterBreak
     // the tool lacks an enchantment of #minecraft:prevents_infested_spawns (silk touch)
     if (!c.itemId.empty() && EnchantUtils::getEnchantLevel(Enchant::Type::SilkTouch, c.item) > 0) return;
     auto* region = game::regionOf(c.pos.dim);
@@ -733,6 +791,14 @@ void install() {
         blockevents::onPlaced(id, onDevicePlaced);
     // infested towerwood
     ia::onDestroyed({.block = id::InfestedTowerwood}, infestedBroken);
+    // the reactor's explosion damage
+    combat::onIncoming(combat::priority::High, [](combat::DamageInfo& d) {
+        if (!reactorBlast() || d.type == "twilightforest:reactor") return combat::Verdict::Pass;
+        if (d.type.find("explosion") == std::string::npos) return combat::Verdict::Pass;
+        float amount = d.amount;
+        combat::hurt(d.victim, amount, "twilightforest:reactor");
+        return combat::Verdict::Cancel;
+    });
 }
 
 } // namespace gf::feature::darktower::devices

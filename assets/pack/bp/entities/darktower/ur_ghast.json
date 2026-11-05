@@ -111,7 +111,12 @@
       },
       "minecraft:persistent": {},
       "minecraft:nameable": {},
-      "minecraft:conditional_bandwidth_optimization": {}
+      "minecraft:conditional_bandwidth_optimization": {},
+      "minecraft:ambient_sound_interval": {
+        "value": 4.0,
+        "range": 4.0,
+        "event_name": "ambient"
+      }
     },
     "component_groups": {
       "twilightforest:solid": {
