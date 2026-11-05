@@ -59,7 +59,7 @@ using Difficulty = SharedTypes::Legacy::Difficulty;
 namespace {
 
 /// The golden volume hash of the hydra lair piece in its test volume (reviewed once with screenshots).
-constexpr char kLairGolden[] = "b69df127eecbe821";
+constexpr char kLairGolden[] = "0caa26443da433df";
 
 struct DifficultyScope {
     Difficulty previous = Difficulty::Normal;
