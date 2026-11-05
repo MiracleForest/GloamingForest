@@ -1,0 +1,21 @@
+# Trees (U3): TF's tree features, placers and decorators, saplings and the magic log cores. The
+# selftests grow every sapling from bone meal (the real click), place every owned tree and mushroom
+# feature, compare seeded canopy / mega canopy / darkwood / mangrove trees with their golden volume
+# hashes, and run each core on a fixture (time: a crop grows; transformation: a column becomes
+# enchanted forest; mining: an ore vein moves toward the core; sorting: a chest item moves into the
+# chest holding more of it); a core toggles with a block in hand without placing it, and a core
+# disabled by config stays off and names itself in the message.
+Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
+Wait-LogLine 'trees: installed' 60 | Out-Null
+
+$mark = Get-LogMark
+$r = Invoke-SelfTest 'trees.*'
+if ($r.Fail -gt 0) { throw "$($r.Fail) trees selftest(s) failed" }
+if ($r.Pass -lt 16) { throw "expected at least 16 trees selftests to pass, got $($r.Pass)" }
+foreach ($t in 'trees.sapling_growers', 'trees.mega_2x2', 'trees.time_core_ticks', 'trees.mining_core_magnet', 'trees.sorting_core_moves_item', 'trees.core_toggle_held_item') {
+    if (-not (Get-ServerLog -Since $mark | Select-String -Pattern "SELFTEST PASS $([regex]::Escape($t))$" -Quiet)) { throw "$t did not pass" }
+}
+# the features contract knows every type and placer this unit registers (no unknown-id warnings)
+$unknown = @(Get-ServerLog -Since $mark | Select-String -Pattern 'unknown (trunk placer|foliage placer|tree decorator|feature type|block state provider) twilightforest:' | ForEach-Object { $_.Line.Trim() })
+if ($unknown.Count -gt 0) { throw "unknown tree parts: $($unknown -join ' | ')" }
+Write-Step 'every trees selftest passed'

@@ -1,0 +1,69 @@
+#pragma once
+
+// U3 trees (unit-internal header): TF's trees, leaves, saplings and magic log cores.
+//
+//   TreePlacers.cpp   branching_trunk_placer, trunk_mover_upper, spheroid_foliage_placer, core_placer,
+//                     trunkside_decorator, tree_roots, dangle_from_tree_decorator
+//   TreeFeatures.cpp  mega_oak, mega_canopy, large_winter_tree, miners_tree, tree_of_time,
+//                     dark_canopy_tree, anywhere_tree, snow_under_trees
+//   Mushrooms.cpp     canopy_brown_mushroom, canopy_red_{vanilla,smooth,spheroid,flat}_mushroom
+//   Cores.cpp         the four magic log cores (toggle, 20-tick cycle, effects)
+//   Leaves.cpp        transformation leaves' runes, mangrove sapling water, hollow oak sapling
+//   Module.cpp        the module and the config section "trees"
+
+#include <string>
+
+#include "nlohmann/json.hpp"
+
+#include "feature/features/Features.h"
+
+class Block;
+class BlockPos;
+class BlockSource;
+class Player;
+
+namespace gf::feature::trees {
+
+/// Config section "trees" (docs/spec/config.md): TFConfig's Magic Trees ranges (0..128, default 16;
+/// a value <= 0 disables that core).
+struct TreesConfig {
+    int version                 = 1;
+    int timeCoreRange           = 16;
+    int transformationCoreRange = 16;
+    int miningCoreRange         = 16;
+    int sortingCoreRange        = 16;
+};
+[[nodiscard]] TreesConfig const& config();
+
+/// TreeFeature's trunk / foliage setters for a tree being placed by the features contract.
+void setLog(gf::features::TreeContext& tree, BlockPos const& pos, Block const& block);
+void setLeaf(gf::features::TreeContext& tree, BlockPos const& pos, Block const& block);
+/// Runs one of TF's tree decorators on a tree (TF's own tree features).
+void runDecorator(gf::features::TreeContext& tree, nlohmann::json const& decorator);
+
+void registerTreePlacers();
+void registerTreeFeatures();
+void registerMushrooms();
+
+void installCores();
+void uninstallCores();
+void tickCores();
+void installLeaves();
+void uninstallLeaves();
+void tickLeaves();
+
+/// The four cores.
+enum class Core { Time, Transformation, Mining, Sorting };
+/// The core of a block id (nullopt: not a core).
+[[nodiscard]] bool coreOf(std::string const& blockId, Core& out);
+/// The configured range of a core (<= 0: disabled).
+[[nodiscard]] int coreRange(Core core);
+/// One cycle of a core's effect at `pos` (SpecialMagicLogBlock#tick without the reschedule); the
+/// return value counts what it did (blocks ticked, columns transformed, ores moved, items sorted).
+int performCoreEffect(Core core, BlockSource& region, BlockPos const& pos);
+/// The action bar text a disabled core shows (misc.twilightforest.core_disabled with the core's name).
+[[nodiscard]] std::string coreDisabledMessage(Player const& player, Core core);
+/// The cores known to tick (selftests).
+[[nodiscard]] std::size_t activeCoreCount();
+
+} // namespace gf::feature::trees

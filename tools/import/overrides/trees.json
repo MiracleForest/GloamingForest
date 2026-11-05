@@ -1,0 +1,9 @@
+{
+  "patch": {
+    "data/twilightforest/worldgen/configured_feature/tree/mangrove_tree.json": [
+      {"op": "add", "path": "/config/trunk_placer/base_height", "value": 7},
+      {"op": "add", "path": "/config/trunk_placer/height_rand_a", "value": 4},
+      {"op": "add", "path": "/config/trunk_placer/height_rand_b", "value": 0}
+    ]
+  }
+}
